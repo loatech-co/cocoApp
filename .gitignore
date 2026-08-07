@@ -13,6 +13,12 @@ node_modules/
 .env.*
 !.env.example
 !.env.*.example
+
+# frontend/.env.production SÍ se versiona. No es una excepción descuidada: TODO
+# lo que lleva prefijo VITE_ acaba dentro del JavaScript que descarga el
+# navegador, así que por definición ahí no puede haber un secreto. Versionarlo
+# es lo que hace que el build de producción sea reproducible.
+!frontend/.env.production
 *.key
 *.pem
 *.p12
