@@ -53,16 +53,34 @@ const oyentes = new Set<(estado: EstadoDeSesion) => void>();
 
 export function suscribirse(oyente: (estado: EstadoDeSesion) => void): () => void {
   oyentes.add(oyente);
-  return () => oyentes.delete(oyente);
+  return () => {
+    oyentes.delete(oyente);
+  };
 }
 
+/**
+ * Instantánea del estado, ESTABLE entre llamadas.
+ *
+ * Que sea el mismo objeto mientras nada cambie no es un detalle de eficiencia:
+ * `useSyncExternalStore` compara instantáneas con `Object.is` para decidir si
+ * hay que volver a pintar. Devolviendo `{ usuario, cargando }` recién creado en
+ * cada llamada, React ve un objeto distinto en cada render, cree que el estado
+ * cambió, vuelve a pintar, vuelve a pedir la instantánea… y a los pocos ciclos
+ * aborta el árbol entero.
+ *
+ * El síntoma es una PANTALLA EN BLANCO sin un solo error en el servidor: el
+ * HTML, los assets y la API responden perfectamente. Pasó en producción.
+ */
+let instantanea: EstadoDeSesion = { usuario: null, cargando: true };
+
 export function estadoActual(): EstadoDeSesion {
-  return { usuario, cargando };
+  return instantanea;
 }
 
 function avisar(): void {
-  const estado = estadoActual();
-  for (const oyente of oyentes) oyente(estado);
+  // Se construye UNA vez por cambio real, no una por lectura.
+  instantanea = { usuario, cargando };
+  for (const oyente of oyentes) oyente(instantanea);
 }
 
 // ── Token ────────────────────────────────────────────────────────────────────
