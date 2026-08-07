@@ -22,7 +22,9 @@
     "prisma:migrate:status": "dotenv -e .env.migrate -- prisma migrate status",
     "prisma:migrate:reset": "dotenv -e .env.migrate -- prisma migrate reset",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "db:test:push": "dotenv -e .env.test -- prisma migrate deploy"
+    "db:test:push": "dotenv -e .env.test -- prisma migrate deploy",
+    "prebuild": "prisma generate",
+    "migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
