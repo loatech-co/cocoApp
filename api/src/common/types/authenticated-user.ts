@@ -1,15 +1,16 @@
+import type { UserRole } from '@prisma/client';
+
 /**
- * Usuario resuelto por el FirebaseAuthGuard a partir del ID token verificado.
+ * Usuario resuelto por el JwtAuthGuard a partir del access token verificado.
  *
- * `id` es el user_id interno de la tabla `users`, y es el ÚNICO valor que la
- * aplicación usa para scopear consultas. Nunca proviene del cliente.
+ * `id` es el user_id interno y es el ÚNICO valor que la aplicación usa para
+ * scopear consultas. Nunca proviene del cliente.
  */
 export interface AuthenticatedUser {
   /** PK interna en `users`. Todo `where` la usa para scopear. */
   id: bigint;
-  /** `sub` del ID token. Llave estable del proveedor de identidad. */
-  firebaseUid: string;
   email: string;
+  role: UserRole;
 }
 
 declare module 'express' {

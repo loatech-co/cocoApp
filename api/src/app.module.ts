@@ -4,16 +4,18 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { firebaseAdminProvider } from './common/firebase/firebase-admin.provider';
-import { FirebaseAuthGuard } from './common/guards/firebase-auth.guard';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AccountsModule } from './modules/accounts/accounts.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { CategorizationModule } from './modules/categorization/categorization.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthModule } from './modules/health/health.module';
+import { ImportsModule } from './modules/imports/imports.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
-import { UsersModule } from './modules/users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -27,28 +29,31 @@ import { PrismaModule } from './prisma/prisma.module';
 
     // Rate limiting. El proceso es único, así que el contador en memoria
     // alcanza; si algún día hubiera varias instancias, se cambia a un store
-    // compartido sin tocar los controladores.
+    // compartido sin tocar los controladores. Los endpoints sensibles
+    // (registro, login) llevan además su propio @Throttle más estricto.
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
 
     PrismaModule,
-    UsersModule,
+    AuthModule,
     HealthModule,
+    AdminModule,
 
-    // Fase 1 — el núcleo. Todo lo demás se deriva de estos.
+    // El núcleo. Todo lo demás se deriva de estos.
     AccountsModule,
     CategoriesModule,
     TagsModule,
     TransactionsModule,
     DashboardModule,
+
+    // Fase 2 — importación y categorización automática.
+    CategorizationModule,
+    ImportsModule,
   ],
   providers: [
-    firebaseAdminProvider,
-
     // El orden importa: primero se limita la tasa (para que una ráfaga sin
-    // token ni siquiera llegue a verificarse contra Firebase), después se
-    // autentica.
+    // token ni siquiera llegue a consultar la base), después se autentica.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    { provide: APP_GUARD, useClass: FirebaseAuthGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
 
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },

@@ -3,8 +3,6 @@ import { createRoot } from 'react-dom/client';
 
 import { Providers } from '@/app/providers';
 import { AppRouter } from '@/app/router';
-import { SetupNotice } from '@/app/setup-notice';
-import { firebaseConfigurado } from '@/lib/firebase';
 import './index.css';
 
 // Tema inicial: se respeta la preferencia del sistema. Más adelante (T5) el
@@ -20,12 +18,8 @@ if (!container) {
 
 createRoot(container).render(
   <StrictMode>
-    {firebaseConfigurado ? (
-      <Providers>
-        <AppRouter />
-      </Providers>
-    ) : (
-      <SetupNotice />
-    )}
+    <Providers>
+      <AppRouter />
+    </Providers>
   </StrictMode>,
 );

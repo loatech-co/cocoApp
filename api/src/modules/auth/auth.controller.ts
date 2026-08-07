@@ -1,0 +1,216 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
+import type { CookieOptions, Request, Response } from 'express';
+
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { AuthService, type ContextoDePeticion, type PerfilPublico } from './auth.service';
+import { ChangePasswordDto, LoginDto, RegisterDto } from './dto/auth.dto';
+import type { ParDeTokens } from './token.service';
+
+/** El refresh token viaja SOLO en esta cookie; nunca en el cuerpo ni en la URL. */
+const COOKIE_REFRESH = 'coco_refresh';
+const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+interface RespuestaDeSesion {
+  access_token: string;
+  expires_in: number;
+  user: PerfilPublico;
+}
+
+@Controller('auth')
+export class AuthController {
+  private readonly enProduccion: boolean;
+
+  constructor(
+    private readonly auth: AuthService,
+    config: ConfigService,
+  ) {
+    this.enProduccion = config.get<string>('NODE_ENV') === 'production';
+  }
+
+  // ── Público ────────────────────────────────────────────────────────────────
+
+  /**
+   * Límite estricto: el registro crea filas y consume un hash argon2 de 19 MiB
+   * por intento, así que sin tope sería un vector de agotamiento de recursos.
+   */
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('register')
+  async registrar(
+    @Body() dto: RegisterDto,
+    @Req() request: Request,
+  ): Promise<{ pending_approval: boolean; message: string }> {
+    const { pendienteDeAprobacion } = await this.auth.registrar(dto, contextoDe(request));
+
+    return {
+      pending_approval: pendienteDeAprobacion,
+      message: pendienteDeAprobacion
+        ? 'Recibimos tu solicitud. Un administrador debe aprobarla antes de que puedas entrar.'
+        : 'Tu cuenta de administrador quedó lista. Ya puedes entrar.',
+    };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async entrar(
+    @Body() dto: LoginDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<RespuestaDeSesion> {
+    const { tokens, perfil } = await this.auth.entrar(dto, contextoDe(request));
+    this.ponerCookie(response, tokens.refreshToken);
+    return respuestaDeSesion(tokens, perfil);
+  }
+
+  /**
+   * Renueva el access token. Es público porque el access token ya expiró: la
+   * credencial aquí es la cookie de refresh.
+   */
+  @Public()
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refrescar(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<RespuestaDeSesion> {
+    const refreshToken = leerCookie(request, COOKIE_REFRESH);
+    if (!refreshToken) {
+      throw new UnauthorizedException('No hay sesión que renovar.');
+    }
+
+    try {
+      const { tokens, perfil } = await this.auth.refrescar(refreshToken, contextoDe(request));
+      this.ponerCookie(response, tokens.refreshToken);
+      return respuestaDeSesion(tokens, perfil);
+    } catch (error) {
+      // Si la sesión murió, la cookie sobra: dejarla haría que el cliente
+      // reintentara en bucle contra un token que ya no sirve.
+      this.borrarCookie(response);
+      throw error;
+    }
+  }
+
+  /**
+   * Cerrar sesión es público a propósito: la credencial aquí es la cookie, no
+   * el access token. Si exigiera un access token vigente, quien lo tuviera
+   * expirado quedaría en un callejón sin salida —sin poder cerrar sesión y con
+   * la cookie de refresh todavía viva—, que es justo lo contrario de lo que
+   * uno quiere de un botón de "salir".
+   */
+  @Public()
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async salir(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<void> {
+    await this.auth.salir(leerCookie(request, COOKIE_REFRESH), contextoDe(request));
+    this.borrarCookie(response);
+  }
+
+  /** Cierra la sesión en todos los dispositivos, con efecto inmediato. */
+  @Post('logout-all')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async salirDeTodo(
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<void> {
+    await this.auth.salirDeTodoslosDispositivos(user.id, contextoDe(request));
+    this.borrarCookie(response);
+  }
+
+  @Get('me')
+  perfil(@CurrentUser() user: AuthenticatedUser): Promise<PerfilPublico> {
+    return this.auth.perfilDe(user.id);
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async cambiarContrasena(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<void> {
+    await this.auth.cambiarContrasena(
+      user.id,
+      { actual: dto.currentPassword, nueva: dto.newPassword },
+      contextoDe(request),
+    );
+    // Cambiar la contraseña cierra todas las sesiones, incluida esta: si un
+    // atacante tenía una abierta, muere aquí.
+    this.borrarCookie(response);
+  }
+
+  // ── Cookie ─────────────────────────────────────────────────────────────────
+
+  /**
+   * `httpOnly` para que ningún JavaScript pueda leerla —ni siquiera el nuestro,
+   * ni un XSS—. `sameSite: strict` para que no viaje en peticiones iniciadas
+   * desde otro sitio, que es lo que neutraliza el CSRF sobre este endpoint.
+   * `path` acotado a /auth para que no se envíe en cada llamada a la API.
+   */
+  private opcionesDeCookie(): CookieOptions {
+    return {
+      httpOnly: true,
+      secure: this.enProduccion,
+      sameSite: 'strict',
+      path: '/api/v1/auth',
+    };
+  }
+
+  private ponerCookie(response: Response, refreshToken: string): void {
+    response.cookie(COOKIE_REFRESH, refreshToken, {
+      ...this.opcionesDeCookie(),
+      maxAge: REFRESH_TTL_MS,
+    });
+  }
+
+  private borrarCookie(response: Response): void {
+    response.clearCookie(COOKIE_REFRESH, this.opcionesDeCookie());
+  }
+}
+
+function respuestaDeSesion(tokens: ParDeTokens, perfil: PerfilPublico): RespuestaDeSesion {
+  // El refresh token NO se devuelve en el cuerpo: solo va en la cookie httpOnly.
+  return {
+    access_token: tokens.accessToken,
+    expires_in: tokens.expiresIn,
+    user: perfil,
+  };
+}
+
+function contextoDe(request: Request): ContextoDePeticion {
+  return {
+    ip: request.ip,
+    userAgent: request.headers['user-agent'],
+  };
+}
+
+function leerCookie(request: Request, nombre: string): string | undefined {
+  // cookie-parser deja aquí las cookies ya decodificadas. Express no las tipa,
+  // así que se estrecha explícitamente en vez de arrastrar un `any`.
+  const cookies: unknown = (request as Request & { cookies?: unknown }).cookies;
+  if (typeof cookies !== 'object' || cookies === null) return undefined;
+
+  const valor = (cookies as Record<string, unknown>)[nombre];
+  return typeof valor === 'string' ? valor : undefined;
+}

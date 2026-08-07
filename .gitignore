@@ -62,3 +62,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Recursos de Tesseract: los genera scripts/preparar-tesseract.mjs.
+# Son artefactos reproducibles, no fuente.
+frontend/public/tesseract/

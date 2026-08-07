@@ -78,6 +78,135 @@ export interface ApiError {
   };
 }
 
+// ─── Autenticación ───────────────────────────────────────────────────────────
+
+export const USER_ROLES = ['admin', 'user'] as const;
+export type UserRole = (typeof USER_ROLES)[number];
+
+/**
+ * `pending` es el estado inicial de toda cuenta: nadie entra sin que un
+ * administrador la apruebe. Es el filtro contra registros no deseados.
+ */
+export const USER_STATUSES = ['pending', 'active', 'suspended'] as const;
+export type UserStatus = (typeof USER_STATUSES)[number];
+
+/** Lo único que la API cuenta de un usuario. Jamás incluye el hash. */
+export interface PerfilPublico {
+  id: Id;
+  email: string;
+  display_name: string | null;
+  role: UserRole;
+  status: UserStatus;
+  created_at: DateTimeString;
+}
+
+/**
+ * Respuesta de login y de refresh.
+ *
+ * El refresh token NO aparece aquí a propósito: viaja solo en una cookie
+ * httpOnly, donde ningún JavaScript —ni un XSS— puede leerlo. El access token
+ * sí viene en el cuerpo porque el cliente lo guarda en memoria y lo adjunta a
+ * cada llamada.
+ */
+export interface SesionResponse {
+  access_token: string;
+  /** Segundos de vida del access token. Corto (900) para acotar un robo. */
+  expires_in: number;
+  user: PerfilPublico;
+}
+
+export interface RegistroResponse {
+  pending_approval: boolean;
+  message: string;
+}
+
+/** Acciones que quedan en la bitácora. Espejo de `AccionAuditada` en la API. */
+export type AuditAction =
+  | 'auth.register'
+  | 'auth.login'
+  | 'auth.login_failed'
+  | 'auth.logout'
+  | 'auth.logout_all'
+  | 'auth.token_reuse_detected'
+  | 'auth.password_changed'
+  | 'admin.user_approved'
+  | 'admin.user_rejected'
+  | 'admin.user_suspended'
+  | 'admin.user_reactivated'
+  | 'admin.password_reset'
+  | 'admin.role_changed';
+
+export interface AuditEntry {
+  id: Id;
+  action: AuditAction;
+  entity: string;
+  entity_id: Id | null;
+  user: { email: string; name: string | null } | null;
+  changes: Record<string, unknown> | null;
+  ip: string | null;
+  created_at: DateTimeString;
+}
+
+// ─── Importación (M4) ────────────────────────────────────────────────────────
+
+export const IMPORT_STATUSES = ['draft', 'committed', 'discarded'] as const;
+export type ImportStatus = (typeof IMPORT_STATUSES)[number];
+
+/**
+ * `duplicate` es una SOSPECHA, no un veredicto: dos cafés de $5.000 el mismo
+ * día en el mismo sitio son dos movimientos reales. El sistema lo señala y la
+ * persona decide.
+ */
+export const IMPORT_ROW_STATUSES = ['pending', 'accepted', 'duplicate', 'skipped'] as const;
+export type ImportRowStatus = (typeof IMPORT_ROW_STATUSES)[number];
+
+export const IMPORT_SOURCES = ['image', 'pdf', 'manual'] as const;
+export type ImportSource = (typeof IMPORT_SOURCES)[number];
+
+export interface ImportRow {
+  id: Id;
+  /** Orden en el documento original. */
+  position: number;
+  date: DateOnlyString;
+  amount: DecimalString;
+  type: TransactionType;
+  description: string | null;
+  status: ImportRowStatus;
+  /** Sugerencia de T1. Es una sugerencia: se puede cambiar o quitar. */
+  category_id: Id | null;
+  /** 0–100. Cuánto fiarse de la sugerencia. */
+  confidence: number | null;
+  /** A qué movimiento ya existente se parece, si se sospecha repetición. */
+  duplicate_of_id: Id | null;
+}
+
+export interface ImportBatch {
+  id: Id;
+  uuid: string;
+  account_id: Id;
+  source: ImportSource;
+  status: ImportStatus;
+  /** Nombre del archivo, para reconocer el lote. NUNCA su contenido. */
+  label: string | null;
+  ocr_provider: string | null;
+  committed_at: DateTimeString | null;
+  created_at: DateTimeString;
+  counts: Record<ImportRowStatus, number>;
+  /** Solo en el detalle: el listado de lotes no arrastra todas las filas. */
+  rows?: ImportRow[];
+}
+
+// ─── Categorización automática (T1) ──────────────────────────────────────────
+
+/** Por qué se sugirió. La interfaz lo muestra: "porque siempre lo clasificas así". */
+export type MotivoDeSugerencia = 'historial' | 'regla' | 'regla-sembrada';
+
+export interface SugerenciaDeCategoria {
+  category_id: Id;
+  confidence: number;
+  reason: MotivoDeSugerencia;
+}
+
 // ─── Entidades ───────────────────────────────────────────────────────────────
 
 export interface User {
@@ -85,6 +214,8 @@ export interface User {
   uuid: string;
   email: string;
   display_name: string | null;
+  role: UserRole;
+  status: UserStatus;
   created_at: DateTimeString;
 }
 

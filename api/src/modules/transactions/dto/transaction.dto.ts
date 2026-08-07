@@ -230,6 +230,6 @@ export class ListTransactionsQueryDto {
   /** `-campo` para descendente. Solo se aceptan campos de una lista blanca. */
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
   sort?: string;
 }

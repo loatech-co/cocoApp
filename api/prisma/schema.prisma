@@ -73,29 +73,169 @@ enum TransferDirection {
   in
 }
 
+/// Rol de la cuenta. Solo `admin` ve el panel de administración.
+enum UserRole {
+  admin
+  user
+}
+
+/// Ciclo de vida de la cuenta.
+///
+/// `pending` es el estado inicial de todo registro: la cuenta existe pero NO
+/// puede entrar hasta que un admin la apruebe. Es lo que evita que cualquiera
+/// con el enlace se meta a una app de finanzas.
+enum UserStatus {
+  pending
+  active
+  suspended
+}
+
+/// Ciclo de vida de un lote de importación (M4).
+///
+/// `draft` es el estado en el que se revisa: las filas existen pero todavía no
+/// hay ni un movimiento en `transactions`. Nada entra a las finanzas del
+/// usuario sin que confirme.
+enum ImportStatus {
+  draft
+  committed
+  discarded
+}
+
+/// Qué se decidió sobre cada fila leída del documento.
+///
+/// `duplicate` es una SOSPECHA, no un veredicto: dos cafés de $5.000 el mismo
+/// día en el mismo sitio son dos movimientos reales. El sistema lo señala y la
+/// persona decide — informar, no bloquear.
+enum ImportRowStatus {
+  pending
+  accepted
+  duplicate
+  skipped
+}
+
+/// De dónde salió el texto que se parseó.
+///
+/// Se guarda para poder depurar un parseo malo sin conservar el documento: si
+/// veinte filas de `pdf` salen torcidas y las de `image` no, el problema está
+/// en el extractor de PDF.
+enum ImportSource {
+  image
+  pdf
+  manual
+}
+
 // ── users ────────────────────────────────────────────────────────────────────
-// Raíz de todo el scoping. Se puebla de forma perezosa la primera vez que llega
-// un ID token de Firebase válido sin usuario asociado. `firebase_uid` es la
-// única llave de vínculo con el proveedor de identidad; la autoridad de
-// identidad siempre es Firebase, no esta tabla.
+// Raíz de todo el scoping y, desde ahora, también la autoridad de identidad:
+// la autenticación es propia, no delegada.
 
 model User {
-  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  uuid        String   @unique(map: "uq_users_uuid") @default(uuid()) @db.Char(36)
-  firebaseUid String   @unique(map: "uq_users_firebase_uid") @map("firebase_uid") @db.VarChar(128)
-  email       String   @db.VarChar(255)
-  displayName String?  @map("display_name") @db.VarChar(255)
-  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+  id           BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid         String     @unique(map: "uq_users_uuid") @default(uuid()) @db.Char(36)
+  email        String     @unique(map: "uq_users_email") @db.VarChar(255)
+  /// Hash argon2id. La contraseña en claro no existe en ningún lado: ni en la
+  /// base, ni en los logs, ni en memoria más allá del tiempo de verificar.
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  displayName  String?    @map("display_name") @db.VarChar(255)
+  role         UserRole   @default(user)
+  status       UserStatus @default(pending)
 
-  accounts     Account[]
-  categories   Category[]
-  tags         Tag[]
-  transactions Transaction[]
-  preferences  UserPreference[]
+  /// Revocación inmediata de sesiones. Todo access token emitido ANTES de esta
+  /// marca se rechaza, sin salir a la red: el guard ya lee esta fila en cada
+  /// petición. Cambiar la contraseña, suspender la cuenta o "cerrar sesión en
+  /// todos los dispositivos" simplemente adelantan este valor.
+  sessionsValidFrom DateTime @default(now()) @map("sessions_valid_from") @db.DateTime(3)
 
-  @@index([email], map: "idx_users_email")
+  /// Defensa contra fuerza bruta. Se usa retraso progresivo, no bloqueo duro:
+  /// un bloqueo duro permitiría que alguien deje a otro fuera de su cuenta a
+  /// propósito con solo fallar el login varias veces.
+  failedLoginCount Int       @default(0) @map("failed_login_count")
+  lockedUntil      DateTime? @map("locked_until") @db.DateTime(0)
+  lastLoginAt      DateTime? @map("last_login_at") @db.DateTime(0)
+
+  /// Traza de quién aprobó la cuenta y cuándo.
+  approvedAt   DateTime? @map("approved_at") @db.DateTime(0)
+  approvedById BigInt?   @map("approved_by_id") @db.UnsignedBigInt
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+
+  approvedBy    User?            @relation("AprobadoPor", fields: [approvedById], references: [id], onDelete: SetNull, map: "fk_users_approved_by")
+  aprobados     User[]           @relation("AprobadoPor")
+  refreshTokens RefreshToken[]
+  auditEvents   AuditLog[]
+  accounts      Account[]
+  categories    Category[]
+  tags          Tag[]
+  transactions  Transaction[]
+  preferences   UserPreference[]
+  importBatches ImportBatch[]
+  categoryRules CategoryRule[]
+
+  @@index([status], map: "idx_users_status")
   @@map("users")
+}
+
+// ── refresh_tokens ───────────────────────────────────────────────────────────
+// Sesiones de larga vida.
+//
+// El token NUNCA se guarda: solo su SHA-256. Un volcado de esta tabla no le
+// sirve a nadie para entrar. SHA-256 basta —y argon2 sería un desperdicio de
+// CPU— porque el token es aleatorio de 256 bits: no hay diccionario que
+// atacar, a diferencia de una contraseña elegida por una persona.
+//
+// ROTACIÓN CON DETECCIÓN DE REUSO: cada refresh consume el token y emite uno
+// nuevo de la misma `family_id`. Si alguna vez se presenta un token ya usado,
+// significa que alguien tiene una copia robada, y se revoca la familia entera.
+// Es el patrón que recomienda la OAuth 2.0 Security BCP para clientes públicos.
+
+model RefreshToken {
+  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt    @map("user_id") @db.UnsignedBigInt
+  tokenHash String    @unique(map: "uq_refresh_token_hash") @map("token_hash") @db.Char(64)
+  /// Agrupa la cadena de rotaciones que nació de un mismo login.
+  familyId  String    @map("family_id") @db.Char(36)
+  expiresAt DateTime  @map("expires_at") @db.DateTime(0)
+  /// Marca el momento en que se rotó. Un token con `used_at` que vuelve a
+  /// aparecer es la señal de robo.
+  usedAt    DateTime? @map("used_at") @db.DateTime(0)
+  revokedAt DateTime? @map("revoked_at") @db.DateTime(0)
+  userAgent String?   @map("user_agent") @db.VarChar(255)
+  ip        String?   @db.VarChar(45)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_refresh_user")
+
+  @@index([userId, revokedAt], map: "idx_refresh_user_revoked")
+  @@index([familyId], map: "idx_refresh_family")
+  @@index([expiresAt], map: "idx_refresh_expires")
+  @@map("refresh_tokens")
+}
+
+// ── audit_log (T4) ───────────────────────────────────────────────────────────
+// Bitácora de solo-inserción. Se adelanta a la Fase 1 en vez de esperar a la 5:
+// en una app de finanzas, poder reconstruir qué pasó y cuándo no es un extra.
+//
+// `user_id` es NULL-able —a diferencia del esquema canónico— porque un intento
+// de login contra un correo inexistente también debe quedar registrado, y ahí
+// no hay usuario al que atribuirlo.
+
+model AuditLog {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId      BigInt?  @map("user_id") @db.UnsignedBigInt
+  entity      String   @db.VarChar(64)
+  entityId    BigInt?  @map("entity_id")
+  action      String   @db.VarChar(64)
+  changesJson Json?    @map("changes_json")
+  ip          String?  @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(0)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull, map: "fk_audit_user")
+
+  @@index([userId, createdAt], map: "idx_audit_user_created")
+  @@index([entity, entityId], map: "idx_audit_entity")
+  @@index([action, createdAt], map: "idx_audit_action_created")
+  @@map("audit_log")
 }
 
 // ── accounts ─────────────────────────────────────────────────────────────────
@@ -119,8 +259,9 @@ model Account {
   createdAt      DateTime    @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt      DateTime    @updatedAt @map("updated_at") @db.DateTime(0)
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_accounts_user")
-  transactions Transaction[]
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_accounts_user")
+  transactions  Transaction[]
+  importBatches ImportBatch[]
 
   @@index([userId, isArchived], map: "idx_accounts_user_archived")
   @@map("accounts")
@@ -147,6 +288,8 @@ model Category {
   parent       Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull, map: "fk_categories_parent")
   children     Category[]         @relation("CategoryTree")
   transactions Transaction[]
+  importRows   ImportRow[]
+  rules        CategoryRule[]
   splits       TransactionSplit[]
 
   @@index([userId, kind, parentId], map: "idx_categories_user_kind_parent")
@@ -188,23 +331,30 @@ model Tag {
 // como migraciones nuevas, nunca reescribiendo una ya aplicada.
 
 model Transaction {
-  id              BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
-  uuid            String            @unique(map: "uq_transactions_uuid") @default(uuid()) @db.Char(36)
-  userId          BigInt            @map("user_id") @db.UnsignedBigInt
-  accountId       BigInt            @map("account_id") @db.UnsignedBigInt
-  date            DateTime          @db.Date
-  amount          Decimal           @db.Decimal(15, 2)
-  type            TransactionType   @default(expense)
-  categoryId      BigInt?           @map("category_id") @db.UnsignedBigInt
-  description     String?           @db.VarChar(255)
-  merchant        String?           @db.VarChar(255)
-  notes           String?           @db.Text
+  id              BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid            String             @unique(map: "uq_transactions_uuid") @default(uuid()) @db.Char(36)
+  userId          BigInt             @map("user_id") @db.UnsignedBigInt
+  accountId       BigInt             @map("account_id") @db.UnsignedBigInt
+  date            DateTime           @db.Date
+  amount          Decimal            @db.Decimal(15, 2)
+  type            TransactionType    @default(expense)
+  categoryId      BigInt?            @map("category_id") @db.UnsignedBigInt
+  description     String?            @db.VarChar(255)
+  merchant        String?            @db.VarChar(255)
+  notes           String?            @db.Text
   transferGroupId String?            @map("transfer_group_id") @db.Char(36)
   transferDir     TransferDirection? @map("transfer_direction")
+  /// Huella del movimiento cuando vino de una importación. Sirve para detectar
+  /// repeticiones en importaciones futuras. NO lleva UNIQUE a propósito: dos
+  /// cafés de $5.000 el mismo día en el mismo sitio son dos movimientos reales,
+  /// y un constraint rechazaría el segundo. Se informa, no se bloquea.
   externalRef     String?            @map("external_ref") @db.VarChar(255)
-  status          TransactionStatus @default(cleared)
-  createdAt       DateTime          @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt       DateTime          @updatedAt @map("updated_at") @db.DateTime(0)
+  /// De qué importación salió, si salió de alguna. Es lo que permite deshacer
+  /// un lote entero sin borrar cuarenta movimientos a mano.
+  importBatchId   BigInt?            @map("import_batch_id") @db.UnsignedBigInt
+  status          TransactionStatus  @default(cleared)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   user     User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_tx_user")
   account  Account            @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_tx_account")
@@ -212,6 +362,12 @@ model Transaction {
   splits   TransactionSplit[]
   tags     TransactionTag[]
 
+  /// SetNull y no Cascade: borrar el registro de una importación no puede
+  /// llevarse por delante movimientos que la persona ya dio por buenos.
+  importBatch    ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull, map: "fk_tx_import_batch")
+  posiblesCopias ImportRow[]  @relation("PosibleDuplicado")
+
+  @@index([userId, importBatchId], map: "idx_tx_user_import_batch")
   @@index([userId, date], map: "idx_tx_user_date")
   @@index([userId, categoryId], map: "idx_tx_user_category")
   @@index([accountId, date], map: "idx_tx_account_date")
@@ -261,6 +417,110 @@ model TransactionTag {
   @@id([transactionId, tagId])
   @@index([tagId], map: "idx_tt_tag")
   @@map("transaction_tags")
+}
+
+// ── import_batches (M4) ──────────────────────────────────────────────────────
+// Un documento leído: un screenshot, un PDF de extracto, un pegado de texto.
+//
+// QUÉ NO SE GUARDA AQUÍ, a propósito: ni la imagen, ni el PDF, ni el texto
+// crudo del OCR. Todo el beneficio de hacer OCR en el navegador es que el
+// extracto NUNCA sale del equipo del usuario (análisis 5.6); subirlo al
+// servidor destruiría exactamente eso. Lo que se guarda son las filas ya
+// parseadas, que es lo que la persona va a revisar.
+//
+// El lote sobrevive al commit porque es lo que permite DESHACER: sin él, una
+// importación mal parseada solo se arregla borrando cuarenta movimientos a
+// mano.
+
+model ImportBatch {
+  id          BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid        String       @unique(map: "uq_import_batches_uuid") @default(uuid()) @db.Char(36)
+  userId      BigInt       @map("user_id") @db.UnsignedBigInt
+  accountId   BigInt       @map("account_id") @db.UnsignedBigInt
+  source      ImportSource @default(image)
+  status      ImportStatus @default(draft)
+  /// Nombre del archivo, solo para que la persona reconozca el lote. Nunca su contenido.
+  label       String?      @db.VarChar(255)
+  /// Qué implementación de OcrProvider lo produjo. Sirve para comparar calidad
+  /// el día que exista una alternativa de servidor.
+  ocrProvider String?      @map("ocr_provider") @db.VarChar(64)
+  committedAt DateTime?    @map("committed_at") @db.DateTime(0)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.DateTime(0)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_import_batch_user")
+  account      Account       @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_import_batch_account")
+  rows         ImportRow[]
+  transactions Transaction[]
+
+  @@index([userId, status], map: "idx_import_batch_user_status")
+  @@map("import_batches")
+}
+
+// ── import_rows (M4) ─────────────────────────────────────────────────────────
+// Una línea candidata del documento. Vive en `draft` mientras se revisa y no
+// toca las finanzas del usuario hasta que el lote se confirma.
+//
+// `amount` es Decimal como cualquier otro dinero de la app: parsear a `number`
+// aquí y convertir después ya habría perdido centavos.
+
+model ImportRow {
+  id            BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  batchId       BigInt          @map("batch_id") @db.UnsignedBigInt
+  /// Orden en el documento. Revisar en desorden es desorientador.
+  position      Int
+  date          DateTime        @db.Date
+  amount        Decimal         @db.Decimal(15, 2)
+  type          TransactionType @default(expense)
+  description   String?         @db.VarChar(255)
+  status        ImportRowStatus @default(pending)
+  /// Categoría sugerida por T1. Es una SUGERENCIA: la persona la cambia o la quita.
+  categoryId    BigInt?         @map("category_id") @db.UnsignedBigInt
+  /// 0–100. Se muestra para que se sepa cuánto fiarse de la sugerencia.
+  confidence    Int?            @db.UnsignedTinyInt
+  /// Huella determinista para detectar repeticiones. Ver `fingerprint.ts`.
+  fingerprint   String          @db.Char(64)
+  /// Si se sospecha repetición, a qué movimiento ya existente se parece.
+  duplicateOfId BigInt?         @map("duplicate_of_id") @db.UnsignedBigInt
+
+  batch       ImportBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade, map: "fk_import_row_batch")
+  category    Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_import_row_category")
+  duplicateOf Transaction? @relation("PosibleDuplicado", fields: [duplicateOfId], references: [id], onDelete: SetNull, map: "fk_import_row_duplicate")
+
+  @@index([batchId, position], map: "idx_import_row_batch_position")
+  @@map("import_rows")
+}
+
+// ── category_rules (T1) ──────────────────────────────────────────────────────
+// Reglas de categorización automática: "si la descripción contiene X, sugiere
+// la categoría Y".
+//
+// Son SUGERENCIAS. El principio de no-rigidez del producto manda: el sistema
+// informa, nunca bloquea, y un movimiento sin categoría siempre se puede
+// guardar.
+//
+// Además de estas reglas explícitas, el servicio aprende del historial del
+// propio usuario, que es la señal más fuerte y no exige mantener listas.
+
+model CategoryRule {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId     BigInt   @map("user_id") @db.UnsignedBigInt
+  /// Fragmento a buscar en la descripción, ya en minúsculas y sin tildes.
+  pattern    String   @db.VarChar(120)
+  categoryId BigInt   @map("category_id") @db.UnsignedBigInt
+  /// Mayor prioridad gana cuando varias reglas coinciden. Las creadas por la
+  /// persona pesan más que las sembradas por defecto.
+  priority   Int      @default(0)
+  /// Cuántas veces ha acertado. Sube cuando se acepta la sugerencia.
+  hits       Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(0)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_rule_user")
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "fk_rule_category")
+
+  @@unique([userId, pattern], map: "uq_rule_user_pattern")
+  @@index([userId, priority], map: "idx_rule_user_priority")
+  @@map("category_rules")
 }
 
 // ── user_preferences (T5) ────────────────────────────────────────────────────

@@ -32,10 +32,10 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Envelope<T> |
     return next.handle().pipe(
       map((payload) => {
         if (payload === undefined || payload === null) {
-          return payload as T;
+          return payload;
         }
         if (hasEnvelope(payload)) {
-          return payload as unknown as Envelope<T>;
+          return payload;
         }
         return { data: payload, meta: {} };
       }),

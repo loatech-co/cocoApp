@@ -1,5 +1,6 @@
 import { ValidationPipe, type INestApplication } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 /**
@@ -13,6 +14,9 @@ import helmet from 'helmet';
  */
 export function configureApp(app: INestApplication, config: ConfigService): void {
   app.setGlobalPrefix('api/v1');
+
+  // El refresh token viaja en una cookie httpOnly; sin esto no se puede leer.
+  app.use(cookieParser());
 
   app.use(
     helmet({
@@ -42,7 +46,10 @@ export function configureApp(app: INestApplication, config: ConfigService): void
     origin: parseOrigins(config),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key'],
-    credentials: false,
+    // El navegador debe poder enviar la cookie de refresh. Es seguro porque el
+    // origen está en lista blanca exacta: con `credentials: true` un comodín
+    // en `origin` sería una brecha, y por eso aquí nunca se usa uno.
+    credentials: true,
   });
 
   app.useGlobalPipes(

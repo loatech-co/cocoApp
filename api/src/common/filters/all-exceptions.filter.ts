@@ -48,7 +48,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const who = request.user ? `user=${request.user.id}` : 'anon';
     const line = `${request.method} ${request.url} → ${status} [${code}] ${who}`;
 
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (status >= Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
       this.logger.error(line, exception instanceof Error ? exception.stack : String(exception));
     } else {
       this.logger.warn(line);
@@ -102,7 +102,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let message = exception.message;
 
     if (typeof payload === 'object' && payload !== null) {
-      const body = payload as { message?: string | string[]; error?: string };
+      const body = payload as {
+        message?: string | string[];
+        details?: ErrorDetail[];
+        error?: string;
+      };
 
       // El ValidationPipe entrega un array con un mensaje por campo inválido.
       if (Array.isArray(body.message)) {
@@ -110,6 +114,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = 'Hay campos inválidos en la solicitud.';
       } else if (typeof body.message === 'string') {
         message = body.message;
+      }
+
+      // Detalles que el propio servicio armó por campo (la política de
+      // contraseñas, por ejemplo). Sin esto se perderían y el cliente recibiría
+      // "no cumple los requisitos" sin poder decir CUÁL.
+      if (Array.isArray(body.details)) {
+        details.push(...body.details);
       }
     }
 

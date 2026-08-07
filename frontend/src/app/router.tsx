@@ -2,24 +2,28 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import { AppShell } from '@/app/app-shell';
 import { AccountsPage } from '@/features/accounts/accounts-page';
+import { BitacoraPage } from '@/features/admin/bitacora-page';
+import { UsuariosPage } from '@/features/admin/usuarios-page';
 import { LoginPage } from '@/features/auth/login-page';
-import { RequireAuth } from '@/features/auth/require-auth';
+import { RegisterPage } from '@/features/auth/register-page';
+import { RequireAdmin, RequireAuth } from '@/features/auth/require-auth';
 import { CategoriesPage } from '@/features/categories/categories-page';
+import { CuentaPage } from '@/features/cuenta/cuenta-page';
 import { DashboardPage } from '@/features/dashboard/dashboard-page';
+import { ImportarPage } from '@/features/imports/importar-page';
+import { RevisarPage } from '@/features/imports/revisar-page';
 import { TransactionsPage } from '@/features/transactions/transactions-page';
 
 /**
  * Rutas en español, una por módulo del catálogo.
  *
- * Por ahora solo existen las de la Fase 1. Importar, Presupuestos, Fijos,
- * Deudas, Metas y Reportes se añaden en su fase, cada una como un `feature`
- * propio bajo `src/features/`.
+ * Por ahora solo existen las de la Fase 1 más las de auth y administración.
+ * Importar, Presupuestos, Fijos, Deudas, Metas y Reportes se añaden en su fase,
+ * cada una como un `feature` propio bajo `src/features/`.
  */
 const router = createBrowserRouter([
-  {
-    path: '/entrar',
-    element: <LoginPage />,
-  },
+  { path: '/entrar', element: <LoginPage /> },
+  { path: '/registro', element: <RegisterPage /> },
   {
     path: '/',
     element: (
@@ -32,6 +36,28 @@ const router = createBrowserRouter([
       { path: 'movimientos', element: <TransactionsPage /> },
       { path: 'cuentas', element: <AccountsPage /> },
       { path: 'categorias', element: <CategoriesPage /> },
+      { path: 'importar', element: <ImportarPage /> },
+      { path: 'importar/:id', element: <RevisarPage /> },
+      { path: 'mi-cuenta', element: <CuentaPage /> },
+
+      // Administración. El RequireAdmin es comodidad de navegación; quien
+      // decide de verdad es el RolesGuard del backend.
+      {
+        path: 'administracion',
+        element: (
+          <RequireAdmin>
+            <UsuariosPage />
+          </RequireAdmin>
+        ),
+      },
+      {
+        path: 'administracion/bitacora',
+        element: (
+          <RequireAdmin>
+            <BitacoraPage />
+          </RequireAdmin>
+        ),
+      },
     ],
   },
   {

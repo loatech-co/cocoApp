@@ -13,9 +13,9 @@ interface HealthPayload {
  * Healthcheck AUTENTICADO.
  *
  * No lleva @Public() a propósito: su trabajo no es solo decir "el proceso está
- * vivo", sino probar la cadena completa de la Fase 0 —el cliente obtiene un ID
- * token real de Firebase, el guard lo verifica, resuelve el user_id y la API
- * alcanza MariaDB—. Es el criterio de aceptación de la fase.
+ * vivo", sino probar la cadena completa —el cliente presenta un access token,
+ * el guard lo verifica, resuelve el user_id contra `users` y la API alcanza
+ * MariaDB—. Es el criterio de aceptación de la Fase 0.
  */
 @Controller('health')
 export class HealthController {

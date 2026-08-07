@@ -1,6 +1,8 @@
 import type { TransactionType } from '@coco/types';
-import { AlertCircle, Loader2, X } from 'lucide-react';
+import { AlertCircle, Loader2, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+
+import { useSugerenciaDeCategoria } from '@/features/categorization/use-sugerencia';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -42,6 +44,9 @@ export function CapturaRapida({ abierta, onCerrar }: { abierta: boolean; onCerra
   const [merchant, setMerchant] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // La sugerencia sale del comercio, que es lo que identifica el movimiento.
+  const sugerencia = useSugerenciaDeCategoria(merchant);
+
   const campoMonto = useRef<HTMLInputElement>(null);
 
   // Preselecciona la primera cuenta: un toque menos en el caso típico.
@@ -69,6 +74,10 @@ export function CapturaRapida({ abierta, onCerrar }: { abierta: boolean; onCerra
     padre,
     ...(padre.children ?? []),
   ]);
+
+  const categoriaSugerida = categoriasPlanas.find(
+    (categoria) => categoria.id === sugerencia?.category_id,
+  );
 
   function limpiar(): void {
     setAmount('');
@@ -212,6 +221,7 @@ export function CapturaRapida({ abierta, onCerrar }: { abierta: boolean; onCerra
             </div>
           </div>
 
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="merchant">
               Comercio <span className="text-muted-foreground">(opcional)</span>
@@ -222,6 +232,27 @@ export function CapturaRapida({ abierta, onCerrar }: { abierta: boolean; onCerra
               onChange={(evento) => setMerchant(evento.target.value)}
               placeholder="Éxito, Uber, Celsia…"
             />
+
+            {/*
+              La sugerencia NUNCA se impone: aparece como una propuesta que hay
+              que pulsar, y solo mientras no haya categoría elegida. El
+              principio de no-rigidez manda — el sistema sugiere, no decide.
+            */}
+            {categoriaSugerida && !categoryId && (
+              <button
+                type="button"
+                onClick={() => setCategoryId(String(categoriaSugerida.id))}
+                className="flex items-center gap-1.5 self-start rounded-md bg-info-surface px-2.5 py-1.5 text-xs text-info transition-opacity hover:opacity-80"
+              >
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                ¿Categorizar como <strong className="font-semibold">{categoriaSugerida.name}</strong>?
+                <span className="text-info/70">
+                  {sugerencia?.reason === 'historial'
+                    ? 'es como sueles clasificarlo'
+                    : 'según tus reglas'}
+                </span>
+              </button>
+            )}
           </div>
 
           <Button type="submit" size="lg" className="w-full" disabled={crear.isPending}>

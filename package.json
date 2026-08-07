@@ -19,6 +19,8 @@
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev:api": "npm run dev --workspace api",
-    "dev:web": "npm run dev --workspace frontend"
+    "dev:web": "npm run dev --workspace frontend",
+    "prepare:ocr": "node scripts/preparar-tesseract.mjs",
+    "postinstall": "node scripts/preparar-tesseract.mjs"
   }
 }

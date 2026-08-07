@@ -12,11 +12,13 @@ describe('Fase 1 — Núcleo (e2e)', () => {
   let entorno: EntornoDePruebas;
   let http: ReturnType<typeof request>;
 
-  const ANA = 'e2e-ana';
-  const BETO = 'e2e-beto';
+  // Dos personas distintas: todo lo que verifica el aislamiento se apoya en
+  // que Beto no pueda ver ni un byte de lo de Ana.
+  let ana: string;
+  let beto: string;
 
-  const comoAna = (): string => entorno.como(ANA);
-  const comoBeto = (): string => entorno.como(BETO);
+  const comoAna = (): string => ana;
+  const comoBeto = (): string => beto;
 
   beforeAll(async () => {
     entorno = await levantarApp();
@@ -29,6 +31,8 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
   beforeEach(async () => {
     await entorno.limpiar();
+    ana = entorno.como(await entorno.crearUsuario({ displayName: 'Ana' }));
+    beto = entorno.como(await entorno.crearUsuario({ displayName: 'Beto' }));
   });
 
   // ── Helpers ────────────────────────────────────────────────────────────────

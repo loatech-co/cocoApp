@@ -1,52 +1,60 @@
-import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  type User,
-} from 'firebase/auth';
-import { createContext, use, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { auth } from './firebase';
+import type { PerfilPublico } from '@coco/types';
+import { createContext, use, useEffect, useMemo, useSyncExternalStore } from 'react';
+import type { ReactNode } from 'react';
+
+import * as sesion from './session';
 
 interface AuthState {
-  user: User | null;
-  /** `true` mientras Firebase resuelve si ya había sesión. Sin esto, la app
-   *  parpadearía mostrando el login a alguien que sí estaba autenticado. */
+  usuario: PerfilPublico | null;
+  /** `true` mientras se intenta restaurar la sesión desde la cookie de refresh.
+   *  Sin esto, la app parpadearía mostrando el login a alguien ya autenticado. */
   cargando: boolean;
-  entrarConGoogle: () => Promise<void>;
-  entrarConCorreo: (email: string, password: string) => Promise<void>;
+  esAdmin: boolean;
+  entrar: (email: string, password: string) => Promise<void>;
+  registrarse: (
+    email: string,
+    password: string,
+    nombre: string,
+  ) => Promise<{ pending_approval: boolean; message: string }>;
   salir: () => Promise<void>;
+  salirDeTodosLosDispositivos: () => Promise<void>;
+  cambiarContrasena: (actual: string, nueva: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 
+/**
+ * Capa fina de React sobre `session.ts`.
+ *
+ * La lógica de sesión vive fuera de React porque el cliente de API la necesita
+ * sin estar dentro de un componente. Aquí solo se suscribe a los cambios con
+ * `useSyncExternalStore`, que es la forma correcta de leer un estado externo
+ * sin desincronizarse durante el renderizado concurrente de React 19.
+ *
+ * Solo correo y contraseña. Sin proveedores externos: la autenticación es
+ * propia de punta a punta.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [cargando, setCargando] = useState(true);
+  const estado = useSyncExternalStore(sesion.suscribirse, sesion.estadoActual);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, (siguiente) => {
-      setUser(siguiente);
-      setCargando(false);
-    });
+    // Un único intento al arrancar: si hay cookie de refresh viva, la sesión
+    // vuelve sola; si no, `cargando` pasa a false y se muestra el login.
+    void sesion.restaurar();
   }, []);
 
   const value = useMemo<AuthState>(
     () => ({
-      user,
-      cargando,
-      entrarConGoogle: async () => {
-        await signInWithPopup(auth, new GoogleAuthProvider());
-      },
-      entrarConCorreo: async (email, password) => {
-        await signInWithEmailAndPassword(auth, email, password);
-      },
-      salir: async () => {
-        await signOut(auth);
-      },
+      usuario: estado.usuario,
+      cargando: estado.cargando,
+      esAdmin: estado.usuario?.role === 'admin',
+      entrar: sesion.entrar,
+      registrarse: sesion.registrarse,
+      salir: sesion.salir,
+      salirDeTodosLosDispositivos: sesion.salirDeTodosLosDispositivos,
+      cambiarContrasena: sesion.cambiarContrasena,
     }),
-    [user, cargando],
+    [estado],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;
@@ -60,26 +68,25 @@ export function useAuth(): AuthState {
   return context;
 }
 
-/** Traduce los códigos de Firebase a mensajes en español, sin filtrar detalle
- *  técnico ni revelar si un correo existe. */
+/**
+ * Mensaje legible para un error de sesión.
+ *
+ * Los mensajes vienen del servidor ya en español y ya pensados para no revelar
+ * de más —"correo o contraseña incorrectos" es idéntico exista o no la cuenta—.
+ * Aquí solo se cubre el caso de que no haya respuesta útil.
+ */
 export function mensajeDeErrorDeAuth(error: unknown): string {
-  const code = (error as { code?: string } | null)?.code ?? '';
-
-  switch (code) {
-    case 'auth/invalid-email':
-      return 'El correo no tiene un formato válido.';
-    case 'auth/invalid-credential':
-    case 'auth/wrong-password':
-    case 'auth/user-not-found':
-      return 'Correo o contraseña incorrectos.';
-    case 'auth/too-many-requests':
-      return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
-    case 'auth/popup-closed-by-user':
-    case 'auth/cancelled-popup-request':
-      return 'Cerraste la ventana antes de terminar.';
-    case 'auth/network-request-failed':
-      return 'No hay conexión. Revisa tu red e inténtalo de nuevo.';
-    default:
-      return 'No se pudo iniciar sesión. Inténtalo de nuevo.';
+  if (error instanceof sesion.SesionError) return error.message;
+  if (error instanceof TypeError) {
+    return 'No hay conexión con el servidor. Revisa tu red e inténtalo de nuevo.';
   }
+  return 'No se pudo completar la operación. Inténtalo de nuevo.';
+}
+
+/** Detalles por campo de un error de validación (p. ej. la política de contraseñas). */
+export function detallesDeError(error: unknown): string[] {
+  if (error instanceof sesion.SesionError) {
+    return error.details.map((detalle) => detalle.message);
+  }
+  return [];
 }

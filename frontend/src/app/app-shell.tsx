@@ -1,4 +1,15 @@
-import { ArrowLeftRight, LayoutDashboard, LogOut, Plus, Tags, Wallet } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  LayoutDashboard,
+  LogOut,
+  Plus,
+  ScrollText,
+  ScanLine,
+  ShieldCheck,
+  Tags,
+  UserCog,
+  Wallet,
+} from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
@@ -16,10 +27,23 @@ const SECCIONES = [
   { to: '/movimientos', label: 'Movimientos', Icono: ArrowLeftRight, exact: false },
   { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false },
   { to: '/categorias', label: 'Categorías', Icono: Tags, exact: false },
+  { to: '/importar', label: 'Importar', Icono: ScanLine, exact: false },
+] as const;
+
+/**
+ * Solo para administradores.
+ *
+ * No se muestran ocultos con CSS ni "deshabilitados": si no eres admin, estos
+ * enlaces no existen en el DOM. Aun así, quien decide de verdad es el
+ * RolesGuard del backend — esto es presentación, no control de acceso.
+ */
+const SECCIONES_DE_ADMIN = [
+  { to: '/administracion', label: 'Cuentas', Icono: ShieldCheck, exact: true },
+  { to: '/administracion/bitacora', label: 'Bitácora', Icono: ScrollText, exact: false },
 ] as const;
 
 export function AppShell() {
-  const { user, salir } = useAuth();
+  const { usuario, esAdmin, salir } = useAuth();
   const [capturaAbierta, setCapturaAbierta] = useState(false);
 
   return (
@@ -29,7 +53,7 @@ export function AppShell() {
         <div className="mb-8 px-2">
           <p className="font-serif text-2xl font-semibold text-primary">Coco</p>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {user?.displayName ?? user?.email}
+            {usuario?.display_name ?? usuario?.email}
           </p>
         </div>
 
@@ -40,7 +64,26 @@ export function AppShell() {
               {label}
             </Enlace>
           ))}
+
+          {esAdmin && (
+            <>
+              <p className="mt-6 px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Administración
+              </p>
+              {SECCIONES_DE_ADMIN.map(({ to, label, Icono, exact }) => (
+                <Enlace key={to} to={to} exact={exact}>
+                  <Icono className="size-4 shrink-0" aria-hidden="true" />
+                  {label}
+                </Enlace>
+              ))}
+            </>
+          )}
         </nav>
+
+        <Enlace to="/mi-cuenta" exact={false}>
+          <UserCog className="size-4 shrink-0" aria-hidden="true" />
+          Mi cuenta
+        </Enlace>
 
         <button
           type="button"
