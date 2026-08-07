@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  // Las pruebas no se despliegan, así que no tienen por qué poder tumbar un
+  // despliegue. `npm run typecheck` sí las cubre — ahí es donde importan.
+  //
+  // Esto además evita tener que arrastrar vitest a las dependencias de
+  // producción solo para que `tsc` encuentre sus tipos al compilar.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "dist", "node_modules"]
+}
