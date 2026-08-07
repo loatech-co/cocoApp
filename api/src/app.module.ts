@@ -16,6 +16,7 @@ import { HealthModule } from './modules/health/health.module';
 import { ImportsModule } from './modules/imports/imports.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { SpaModule } from './modules/spa/spa.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -48,6 +49,10 @@ import { PrismaModule } from './prisma/prisma.module';
     // Fase 2 — importación y categorización automática.
     CategorizationModule,
     ImportsModule,
+
+    // La SPA compilada, servida por este mismo proceso. Va AL FINAL: su ruta
+    // comodín tiene que ceder ante todas las de la API.
+    SpaModule.forRoot(),
   ],
   providers: [
     // El orden importa: primero se limita la tasa (para que una ráfaga sin

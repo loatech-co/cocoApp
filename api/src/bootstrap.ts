@@ -23,17 +23,31 @@ export function configureApp(app: INestApplication, config: ConfigService): void
       hsts: { maxAge: 63_072_000, includeSubDomains: true, preload: true },
       referrerPolicy: { policy: 'no-referrer' },
       frameguard: { action: 'deny' },
+      /**
+       * CSP para el proceso que sirve TAMBIÉN la SPA.
+       *
+       * Cada permiso de aquí abajo está por una razón concreta; ninguno es
+       * "por si acaso". Lo que no aparece, está prohibido.
+       */
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", 'data:'],
-          connectSrc: [
-            "'self'",
-            'https://securetoken.googleapis.com',
-            'https://identitytoolkit.googleapis.com',
-          ],
+          // `wasm-unsafe-eval` habilita WebAssembly, que es lo que ejecuta
+          // Tesseract. Pese al nombre, NO habilita eval(): es un permiso
+          // mucho más estrecho, creado precisamente para no tener que abrir
+          // 'unsafe-eval' entero por culpa del WASM.
+          scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+          // 'unsafe-inline' lo exige el estilo en línea que genera Tailwind.
+          // fonts.googleapis.com sirve la hoja de Montserrat y Lora.
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+          // blob: para las vistas previas de las imágenes que se importan.
+          imgSrc: ["'self'", 'data:', 'blob:'],
+          // Solo a nosotros mismos. La consulta a Have I Been Pwned la hace el
+          // SERVIDOR, nunca el navegador, así que no hace falta abrirla aquí.
+          connectSrc: ["'self'"],
+          // Tesseract y pdf.js crean sus Web Workers desde blobs.
+          workerSrc: ["'self'", 'blob:'],
           frameAncestors: ["'none'"],
           baseUri: ["'self'"],
           formAction: ["'self'"],
