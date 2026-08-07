@@ -1,0 +1,293 @@
+@import 'tailwindcss';
+
+/* Modo oscuro por clase en <html>, con preferencia persistida en user_preferences. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PALETA — cerrada y no negociable.
+
+   Solo estos cinco tonos, escala de grises, y rojo EXCLUSIVAMENTE para errores
+   y acciones destructivas. Ningún otro hue entra a la app.
+
+     #2A2058  índigo   · color base de marca, superficies oscuras
+     #7F4886  morado   · gasto
+     #FBBF40  ámbar    · alerta, sobre-presupuesto
+     #089C89  teal     · ingreso
+     #77BFC9  azul     · neutro informativo
+
+   Semántica de dinero: el PRD pedía "verde ingreso / rojo gasto", pero el rojo
+   está reservado para errores. Se reasignó a teal/morado, que separan bien en
+   tono y son legibles en ambos temas. El estado NUNCA depende solo del color:
+   ingreso y gasto llevan además signo e icono.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Tipografía: las dos únicas familias ───────────────────────────────── */
+  --font-sans: 'Montserrat', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: 'Lora', ui-serif, Georgia, serif;
+
+  /* ── Índigo (marca) ────────────────────────────────────────────────────── */
+  --color-indigo-50: #f2f1f7;
+  --color-indigo-100: #e3e0ee;
+  --color-indigo-200: #c6c0dc;
+  --color-indigo-300: #a29ac6;
+  --color-indigo-400: #7d71ac;
+  --color-indigo-500: #5a4c8c;
+  --color-indigo-600: #43356f;
+  --color-indigo-700: #2a2058;
+  --color-indigo-800: #221a47;
+  --color-indigo-900: #1a1436;
+  --color-indigo-950: #100c21;
+
+  /* ── Morado (gasto) ────────────────────────────────────────────────────── */
+  --color-grape-50: #faf5fb;
+  --color-grape-100: #f3e9f5;
+  --color-grape-200: #e6d2ea;
+  --color-grape-300: #d2b0d9;
+  --color-grape-400: #b885c3;
+  --color-grape-500: #9c60ab;
+  --color-grape-600: #7f4886;
+  --color-grape-700: #693a6e;
+  --color-grape-800: #56305a;
+  --color-grape-900: #46284a;
+  --color-grape-950: #2c182f;
+
+  /* ── Teal (ingreso) ────────────────────────────────────────────────────── */
+  --color-teal-50: #effcf9;
+  --color-teal-100: #d5f7f0;
+  --color-teal-200: #aeeee3;
+  --color-teal-300: #78e0d2;
+  --color-teal-400: #3dcbbb;
+  --color-teal-500: #17b0a2;
+  --color-teal-600: #089c89;
+  --color-teal-700: #0a7063;
+  --color-teal-800: #0d5a50;
+  --color-teal-900: #104a43;
+  --color-teal-950: #032b27;
+
+  /* ── Ámbar (alerta) ────────────────────────────────────────────────────── */
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf40;
+  --color-amber-500: #f0a81b;
+  --color-amber-600: #d48806;
+  --color-amber-700: #a96209;
+  --color-amber-800: #8a4d0f;
+  --color-amber-900: #733f10;
+  --color-amber-950: #431f04;
+
+  /* ── Azul claro (neutro informativo) ───────────────────────────────────── */
+  --color-sky-50: #f1f9fa;
+  --color-sky-100: #dcf0f3;
+  --color-sky-200: #bde2e8;
+  --color-sky-300: #77bfc9;
+  --color-sky-400: #56a8b5;
+  --color-sky-500: #3b8b99;
+  --color-sky-600: #337280;
+  --color-sky-700: #2e5d69;
+  --color-sky-800: #2c4e58;
+  --color-sky-900: #28424b;
+  --color-sky-950: #162a32;
+
+  /* ── Grises ────────────────────────────────────────────────────────────── */
+  --color-ash-50: #f8f8fa;
+  --color-ash-100: #f1f1f4;
+  --color-ash-200: #e4e4ea;
+  --color-ash-300: #cfcfd8;
+  --color-ash-400: #a3a3b2;
+  --color-ash-500: #78788c;
+  --color-ash-600: #585869;
+  --color-ash-700: #454553;
+  --color-ash-800: #2f2f3a;
+  --color-ash-900: #1e1e26;
+  --color-ash-950: #131318;
+
+  /* ── Rojo — SOLO errores y acciones destructivas ───────────────────────── */
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-400: #f87171;
+  --color-danger-500: #dc2626;
+  --color-danger-600: #b91c1c;
+  --color-danger-700: #991b1b;
+  --color-danger-900: #7f1d1d;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOKENS SEMÁNTICOS
+   Los componentes consumen SIEMPRE estos, nunca un hex suelto. Cambiar el tema
+   es cambiar este bloque, no rastrear colores por toda la app.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --radius: 0.625rem;
+
+  --background: var(--color-ash-50);
+  --foreground: var(--color-ash-900);
+
+  --card: #ffffff;
+  --card-foreground: var(--color-ash-900);
+  --popover: #ffffff;
+  --popover-foreground: var(--color-ash-900);
+
+  --primary: var(--color-indigo-700);
+  --primary-foreground: #ffffff;
+
+  --secondary: var(--color-ash-100);
+  --secondary-foreground: var(--color-ash-800);
+
+  --muted: var(--color-ash-100);
+  --muted-foreground: var(--color-ash-500);
+
+  --accent: var(--color-sky-100);
+  --accent-foreground: var(--color-sky-800);
+
+  /* Rojo: solo aquí. */
+  --destructive: var(--color-danger-500);
+  --destructive-foreground: #ffffff;
+
+  --border: var(--color-ash-200);
+  --input: var(--color-ash-300);
+  --ring: var(--color-indigo-400);
+
+  /* Semántica de dinero */
+  --income: var(--color-teal-700);
+  --income-surface: var(--color-teal-50);
+  --expense: var(--color-grape-600);
+  --expense-surface: var(--color-grape-50);
+  --warning: var(--color-amber-700);
+  --warning-surface: var(--color-amber-50);
+  --info: var(--color-sky-600);
+  --info-surface: var(--color-sky-50);
+
+  /* Series de gráficas: los cinco de marca, en orden de contraste. */
+  --chart-1: var(--color-teal-600);
+  --chart-2: var(--color-grape-600);
+  --chart-3: var(--color-amber-400);
+  --chart-4: var(--color-sky-500);
+  --chart-5: var(--color-indigo-500);
+}
+
+.dark {
+  --background: var(--color-indigo-950);
+  --foreground: var(--color-ash-100);
+
+  --card: var(--color-indigo-900);
+  --card-foreground: var(--color-ash-100);
+  --popover: var(--color-indigo-900);
+  --popover-foreground: var(--color-ash-100);
+
+  --primary: var(--color-indigo-200);
+  --primary-foreground: var(--color-indigo-950);
+
+  --secondary: var(--color-indigo-800);
+  --secondary-foreground: var(--color-ash-200);
+
+  --muted: var(--color-indigo-800);
+  --muted-foreground: var(--color-ash-400);
+
+  --accent: var(--color-sky-900);
+  --accent-foreground: var(--color-sky-100);
+
+  --destructive: var(--color-danger-400);
+  --destructive-foreground: var(--color-ash-950);
+
+  --border: var(--color-indigo-800);
+  --input: var(--color-indigo-800);
+  --ring: var(--color-indigo-400);
+
+  /* En oscuro se suben los tonos para mantener contraste AA sobre el índigo. */
+  --income: var(--color-teal-300);
+  --income-surface: var(--color-teal-950);
+  --expense: var(--color-grape-300);
+  --expense-surface: var(--color-grape-950);
+  --warning: var(--color-amber-300);
+  --warning-surface: var(--color-amber-950);
+  --info: var(--color-sky-300);
+  --info-surface: var(--color-sky-950);
+
+  --chart-1: var(--color-teal-400);
+  --chart-2: var(--color-grape-400);
+  --chart-3: var(--color-amber-300);
+  --chart-4: var(--color-sky-300);
+  --chart-5: var(--color-indigo-300);
+}
+
+/* Expone los tokens como utilidades de Tailwind (bg-background, text-income…). */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-income: var(--income);
+  --color-income-surface: var(--income-surface);
+  --color-expense: var(--expense);
+  --color-expense-surface: var(--expense-surface);
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-info: var(--info);
+  --color-info-surface: var(--info-surface);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: 'tnum' 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Lora para títulos. Montserrat para todo lo demás. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+
+  /* Los montos en cifras tabulares: las columnas de dinero alinean por dígito. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Foco siempre visible — requisito de accesibilidad, no decoración. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}

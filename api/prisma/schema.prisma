@@ -1,0 +1,285 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Coco App — espejo canónico del modelo de datos.
+//
+// Motor: MariaDB (Hostinger). Prisma la trata con provider = "mysql": el código
+// no sabe ni le importa si detrás hay MySQL o MariaDB, y por eso la etapa 2 es
+// un cambio de DATABASE_URL, no una reescritura (análisis 5.1).
+//
+// Se usa el CONECTOR ESTÁNDAR, nunca el driver adapter @prisma/adapter-mariadb:
+// tiene un bug conocido con columnas JSON, y aquí se usa JSON en
+// user_preferences.pref_value y (más adelante) audit_log.changes_json.
+//
+// Reglas inamovibles:
+//   · Nombres físicos snake_case plural vía @@map / @map. Son inamovibles.
+//   · Dinero SIEMPRE Decimal @db.Decimal(15,2). Jamás Float. En TypeScript se
+//     opera con Prisma.Decimal (.plus/.minus/.times), nunca con `number`:
+//     `number` en JS es IEEE-754 y acumula error de redondeo.
+//   · Fechas de negocio: DateTime @db.Date (un movimiento ocurre "un día").
+//     Timestamps: DateTime @db.DateTime(0) en UTC, mostrados en America/Bogota.
+//   · Toda entidad de primer nivel lleva user_id. Ninguna consulta cruza usuarios.
+//   · onDelete explícito en cada relación, elegido por semántica de negocio.
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ── Enums (espejo de las columnas ENUM) ──────────────────────────────────────
+
+enum AccountType {
+  cash
+  debit
+  credit
+  bank
+  savings
+  other
+}
+
+enum CategoryKind {
+  expense
+  income
+  transfer
+}
+
+enum TransactionType {
+  expense
+  income
+  transfer
+}
+
+enum TransactionStatus {
+  cleared
+  pending
+}
+
+/// Distingue las dos patas de una transferencia.
+///
+/// Añadido en Fase 1 sobre el esquema canónico: las dos patas comparten
+/// `transfer_group_id`, son ambas `type='transfer'` y guardan `amount` positivo,
+/// así que sin esta columna es IMPOSIBLE saber de qué cuenta salió el dinero y
+/// a cuál entró — y el saldo derivado depende justamente de eso. El contrato de
+/// la API ya devolvía `direction: "out" | "in"` en las patas, así que esto es
+/// materializar lo que el contrato ya prometía.
+///
+/// Es NULL en todo movimiento que no sea transferencia.
+enum TransferDirection {
+  out
+  in
+}
+
+// ── users ────────────────────────────────────────────────────────────────────
+// Raíz de todo el scoping. Se puebla de forma perezosa la primera vez que llega
+// un ID token de Firebase válido sin usuario asociado. `firebase_uid` es la
+// única llave de vínculo con el proveedor de identidad; la autoridad de
+// identidad siempre es Firebase, no esta tabla.
+
+model User {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid        String   @unique(map: "uq_users_uuid") @default(uuid()) @db.Char(36)
+  firebaseUid String   @unique(map: "uq_users_firebase_uid") @map("firebase_uid") @db.VarChar(128)
+  email       String   @db.VarChar(255)
+  displayName String?  @map("display_name") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+
+  accounts     Account[]
+  categories   Category[]
+  tags         Tag[]
+  transactions Transaction[]
+  preferences  UserPreference[]
+
+  @@index([email], map: "idx_users_email")
+  @@map("users")
+}
+
+// ── accounts ─────────────────────────────────────────────────────────────────
+// Medios de pago. El saldo NO se almacena: se deriva de opening_balance más la
+// suma firmada de los movimientos. Las cuentas con historial se archivan
+// (is_archived), nunca se borran.
+
+model Account {
+  id             BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  userId         BigInt      @map("user_id") @db.UnsignedBigInt
+  name           String      @db.VarChar(255)
+  type           AccountType @default(other)
+  currency       String      @default("COP") @db.Char(3)
+  institution    String?     @db.VarChar(255)
+  last4          String?     @db.Char(4)
+  creditLimit    Decimal?    @map("credit_limit") @db.Decimal(15, 2)
+  cutoffDay      Int?        @map("cutoff_day") @db.TinyInt
+  paymentDay     Int?        @map("payment_day") @db.TinyInt
+  openingBalance Decimal     @default(0.00) @map("opening_balance") @db.Decimal(15, 2)
+  isArchived     Boolean     @default(false) @map("is_archived")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.DateTime(0)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_accounts_user")
+  transactions Transaction[]
+
+  @@index([userId, isArchived], map: "idx_accounts_user_archived")
+  @@map("accounts")
+}
+
+// ── categories ───────────────────────────────────────────────────────────────
+// Taxonomía editable del usuario, jerarquía de 1 nivel (hasta 2) vía parent_id.
+// Se archivan, no se borran. Si aun así se borrara una, las transacciones
+// sobreviven SIN categoría (SetNull) — coherente con la no-rigidez.
+
+model Category {
+  id         BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  userId     BigInt       @map("user_id") @db.UnsignedBigInt
+  name       String       @db.VarChar(255)
+  parentId   BigInt?      @map("parent_id") @db.UnsignedBigInt
+  kind       CategoryKind @default(expense)
+  color      String?      @db.Char(7)
+  icon       String?      @db.VarChar(64)
+  sortOrder  Int          @default(0) @map("sort_order")
+  isArchived Boolean      @default(false) @map("is_archived")
+  createdAt  DateTime     @default(now()) @map("created_at") @db.DateTime(0)
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_categories_user")
+  parent       Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull, map: "fk_categories_parent")
+  children     Category[]         @relation("CategoryTree")
+  transactions Transaction[]
+  splits       TransactionSplit[]
+
+  @@index([userId, kind, parentId], map: "idx_categories_user_kind_parent")
+  @@map("categories")
+}
+
+// ── tags ─────────────────────────────────────────────────────────────────────
+// Etiquetas libres y transversales ("reembolsable", "viaje-cartagena"). A
+// diferencia de las categorías —que son la taxonomía vertical y única— una
+// etiqueta cruza cualquier categoría, cuenta o tipo, y un movimiento puede
+// llevar varias.
+//
+// El unique (user_id, name) permite un "get-or-create" idempotente: la UI las
+// crea al vuelo mientras el usuario escribe, sin pedir permiso.
+
+model Tag {
+  id     BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  userId BigInt  @map("user_id") @db.UnsignedBigInt
+  name   String  @db.VarChar(255)
+  color  String? @db.Char(7)
+
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_tags_user")
+  transactions TransactionTag[]
+
+  @@unique([userId, name], map: "uq_tags_user_name")
+  @@map("tags")
+}
+
+// ── transactions ─────────────────────────────────────────────────────────────
+// EL NÚCLEO. Todo lo demás se deriva de aquí.
+// `amount` se almacena SIEMPRE positivo; el signo económico lo da `type`.
+// `category_id` es NULL-able a propósito: un movimiento puede existir sin
+// categoría y eso jamás bloquea el guardado.
+//
+// account_id es Restrict (no se borra una cuenta con movimientos: se archiva).
+// category_id es SetNull (enriquecimiento opcional que no destruye el movimiento).
+//
+// recurring_concept_id e import_batch_id llegan en sus fases (3 y 2); se añaden
+// como migraciones nuevas, nunca reescribiendo una ya aplicada.
+
+model Transaction {
+  id              BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid            String            @unique(map: "uq_transactions_uuid") @default(uuid()) @db.Char(36)
+  userId          BigInt            @map("user_id") @db.UnsignedBigInt
+  accountId       BigInt            @map("account_id") @db.UnsignedBigInt
+  date            DateTime          @db.Date
+  amount          Decimal           @db.Decimal(15, 2)
+  type            TransactionType   @default(expense)
+  categoryId      BigInt?           @map("category_id") @db.UnsignedBigInt
+  description     String?           @db.VarChar(255)
+  merchant        String?           @db.VarChar(255)
+  notes           String?           @db.Text
+  transferGroupId String?            @map("transfer_group_id") @db.Char(36)
+  transferDir     TransferDirection? @map("transfer_direction")
+  externalRef     String?            @map("external_ref") @db.VarChar(255)
+  status          TransactionStatus @default(cleared)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.DateTime(0)
+
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_tx_user")
+  account  Account            @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_tx_account")
+  category Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_tx_category")
+  splits   TransactionSplit[]
+  tags     TransactionTag[]
+
+  @@index([userId, date], map: "idx_tx_user_date")
+  @@index([userId, categoryId], map: "idx_tx_user_category")
+  @@index([accountId, date], map: "idx_tx_account_date")
+  @@index([userId, externalRef], map: "idx_tx_user_external_ref")
+  @@index([transferGroupId], map: "idx_tx_transfer_group")
+  @@map("transactions")
+}
+
+// ── transaction_splits ───────────────────────────────────────────────────────
+// Reparte un movimiento entre varias categorías (una compra de supermercado que
+// es 70% mercado y 30% aseo).
+//
+// INVARIANTE INVIOLABLE: la suma de los splits debe igualar EXACTAMENTE el
+// `amount` de la transacción. MySQL/MariaDB no puede expresar esa suma como
+// constraint declarativo, así que la valida el servicio con Prisma.Decimal
+// dentro del $transaction, antes de confirmar. Si no cuadra: 422 y ROLLBACK.
+//
+// Cuando un movimiento tiene splits, la agregación por categoría consume los
+// splits, no el category_id de cabecera.
+
+model TransactionSplit {
+  id            BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  transactionId BigInt  @map("transaction_id") @db.UnsignedBigInt
+  categoryId    BigInt? @map("category_id") @db.UnsignedBigInt
+  amount        Decimal @db.Decimal(15, 2)
+  note          String? @db.VarChar(255)
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_splits_tx")
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_splits_category")
+
+  @@index([transactionId], map: "idx_splits_transaction")
+  @@map("transaction_splits")
+}
+
+// ── transaction_tags ─────────────────────────────────────────────────────────
+// Puente N:M entre movimientos y etiquetas. La PK compuesta impide duplicados y
+// hace de índice a la vez. CASCADE por ambos lados: al borrar el movimiento o
+// la etiqueta, la relación desaparece sola.
+
+model TransactionTag {
+  transactionId BigInt @map("transaction_id") @db.UnsignedBigInt
+  tagId         BigInt @map("tag_id") @db.UnsignedBigInt
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_tt_tx")
+  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade, map: "fk_tt_tag")
+
+  @@id([transactionId, tagId])
+  @@index([tagId], map: "idx_tt_tag")
+  @@map("transaction_tags")
+}
+
+// ── user_preferences (T5) ────────────────────────────────────────────────────
+// Almacén clave-valor por usuario. pref_value es JSON para admitir estructuras
+// arbitrarias sin migrar el esquema. El unique (user_id, pref_key) habilita un
+// upsert idempotente.
+//
+// Nota MariaDB: implementa JSON como LONGTEXT con un CHECK de validez, no como
+// tipo nativo. Funciona igual para almacenar y leer; se verifica en la primera
+// migración.
+
+model UserPreference {
+  id        BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt @map("user_id") @db.UnsignedBigInt
+  prefKey   String @map("pref_key") @db.VarChar(64)
+  prefValue Json   @map("pref_value")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_pref_user")
+
+  @@unique([userId, prefKey], map: "uq_pref_user_key")
+  @@map("user_preferences")
+}

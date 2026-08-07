@@ -1,0 +1,24 @@
+{
+  "name": "coco-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Coco App — Finanzas personales. Monorepo: frontend (React 19 + Vite) + api (NestJS 11 + Prisma) + tipos compartidos.",
+  "license": "UNLICENSED",
+  "workspaces": [
+    "packages/*",
+    "api",
+    "frontend"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev:api": "npm run dev --workspace api",
+    "dev:web": "npm run dev --workspace frontend"
+  }
+}
