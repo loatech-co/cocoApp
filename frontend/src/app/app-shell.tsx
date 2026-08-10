@@ -54,7 +54,10 @@ const SECCIONES: readonly Seccion[] = [
  * RolesGuard del backend — esto es presentación, no control de acceso.
  */
 const SECCIONES_DE_ADMIN = [
-  { to: '/administracion', label: 'Cuentas', Icono: ShieldCheck, exact: true },
+  // 'Usuarios', no 'Cuentas': en esta misma barra 'Cuentas' ya significa
+  // tarjetas y ahorros. Dos cosas distintas con el mismo nombre a diez píxeles
+  // de distancia.
+  { to: '/administracion', label: 'Usuarios', Icono: ShieldCheck, exact: true },
   { to: '/administracion/bitacora', label: 'Bitácora', Icono: ScrollText, exact: false },
 ] as const;
 

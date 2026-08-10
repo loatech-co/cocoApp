@@ -128,7 +128,11 @@ export function TransactionsPage() {
               <Fila
                 key={movimiento.id}
                 movimiento={movimiento}
-                nombreDeCuenta={nombreDeCuenta.get(movimiento.account_id) ?? '—'}
+                nombreDeCuenta={
+                  movimiento.account_id !== null
+                    ? (nombreDeCuenta.get(movimiento.account_id) ?? '—')
+                    : null
+                }
                 categoria={
                   movimiento.category_id === null
                     ? null
@@ -175,7 +179,8 @@ function Fila({
   categoria,
 }: {
   movimiento: Transaction;
-  nombreDeCuenta: string;
+  /** `null` cuando el movimiento no pertenece a ninguna cuenta. */
+  nombreDeCuenta: string | null;
   categoria: { name: string; color: string | null } | null;
 }) {
   const eliminar = useEliminarMovimiento();
@@ -200,8 +205,16 @@ function Fila({
 
         <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           <span>{movimiento.date}</span>
-          <span aria-hidden="true">·</span>
-          <span className="truncate">{nombreDeCuenta}</span>
+
+          {/* Sin cuenta no se escribe "—" ni "sin cuenta": simplemente no hay
+              nada que decir, y una etiqueta de relleno solo añade ruido a una
+              lista que se lee de un vistazo. */}
+          {nombreDeCuenta !== null && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className="truncate">{nombreDeCuenta}</span>
+            </>
+          )}
 
           {categoria ? (
             <Badge variant="outline" className="ml-1">

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { ApiClientError } from '@/lib/api-client';
+import { useLlevaCuentas } from '@/lib/preferences';
 import { useAccounts } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import { useCrearLote } from './imports-queries';
@@ -24,6 +25,7 @@ import { parsearExtracto, type ResultadoDeParseo } from './parseo/extracto';
  */
 export function ImportarPage() {
   const navegar = useNavigate();
+  const llevaCuentas = useLlevaCuentas();
   const cuentas = useAccounts();
   const crearLote = useCrearLote();
 
@@ -36,7 +38,10 @@ export function ImportarPage() {
   const [arrastrando, setArrastrando] = useState(false);
 
   const activas = cuentas.data?.filter((cuenta) => !cuenta.is_archived) ?? [];
-  const cuentaElegida = cuentaId ?? activas[0]?.id ?? null;
+  // Sin preselección automática: antes se elegía la primera cuenta por ti, lo
+  // que convertía "opcional" en "obligatoria y además adivinada". Si no eliges,
+  // el lote entra sin cuenta, que es lo correcto.
+  const cuentaElegida = llevaCuentas ? cuentaId : null;
 
   async function leer(archivo: File): Promise<void> {
     setError(null);
@@ -85,11 +90,12 @@ export function ImportarPage() {
   }
 
   function subir(): void {
-    if (!resultado || !cuentaElegida) return;
+    if (!resultado) return;
 
     crearLote.mutate(
       {
-        account_id: cuentaElegida,
+        // Se omite el campo entero cuando no hay cuenta.
+        ...(cuentaElegida !== null ? { account_id: cuentaElegida } : {}),
         source: resultado.esPdf ? 'pdf' : 'image',
         label: resultado.archivo,
         ocr_provider: resultado.proveedor,
@@ -117,20 +123,19 @@ export function ImportarPage() {
         </p>
       </header>
 
-      {activas.length === 0 && !cuentas.isPending && (
-        <Alert variant="warning">
-          <AlertCircle aria-hidden="true" />
-          <AlertTitle>Primero necesitas una cuenta</AlertTitle>
-          <AlertDescription>
-            Los movimientos tienen que entrar a alguna parte. Crea una cuenta y vuelve.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {activas.length > 0 && (
+      {/*
+        El paso de la cuenta solo existe para quien lleva cuentas, y aun así es
+        OPCIONAL. Antes esta pantalla se bloqueaba entera con un "primero
+        necesitas una cuenta": importar un extracto no puede depender de haberse
+        inventado una cuenta primero.
+      */}
+      {llevaCuentas && activas.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>1. ¿A qué cuenta pertenece?</CardTitle>
+            <CardTitle>¿A qué cuenta pertenece?</CardTitle>
+            <CardDescription>
+              Opcional. Sin cuenta, los movimientos entran igual; solo no suman a ningún saldo.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Label htmlFor="cuenta" className="sr-only">
@@ -139,9 +144,12 @@ export function ImportarPage() {
             <select
               id="cuenta"
               className="h-11 w-full max-w-sm rounded-md border border-input bg-background px-3 text-sm"
-              value={cuentaElegida ?? ''}
-              onChange={(evento) => setCuentaId(Number(evento.target.value))}
+              value={cuentaId ?? ''}
+              onChange={(evento) =>
+                setCuentaId(evento.target.value ? Number(evento.target.value) : null)
+              }
             >
+              <option value="">Sin cuenta</option>
               {activas.map((cuenta: Account) => (
                 <option key={cuenta.id} value={cuenta.id}>
                   {cuenta.name}
@@ -152,41 +160,39 @@ export function ImportarPage() {
         </Card>
       )}
 
-      {activas.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>2. El documento</CardTitle>
-            <CardDescription>
-              Un PDF de extracto se lee exacto. Una captura pasa por reconocimiento de texto y
-              puede traer errores — por eso hay un paso de revisión.
-            </CardDescription>
-          </CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>El documento</CardTitle>
+          <CardDescription>
+            Un PDF de extracto se lee exacto. Una captura pasa por reconocimiento de texto y
+            puede traer errores — por eso hay un paso de revisión.
+          </CardDescription>
+        </CardHeader>
 
-          <CardContent className="flex flex-col gap-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle aria-hidden="true" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+        <CardContent className="flex flex-col gap-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle aria-hidden="true" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-            {progreso ? (
-              <Progreso progreso={progreso} />
-            ) : (
-              <ZonaDeSoltar
-                arrastrando={arrastrando}
-                onArrastrar={setArrastrando}
-                onArchivo={(archivo) => void leer(archivo)}
-              />
-            )}
-          </CardContent>
-        </Card>
-      )}
+          {progreso ? (
+            <Progreso progreso={progreso} />
+          ) : (
+            <ZonaDeSoltar
+              arrastrando={arrastrando}
+              onArrastrar={setArrastrando}
+              onArchivo={(archivo) => void leer(archivo)}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       {resultado && (
         <Card>
           <CardHeader>
-            <CardTitle>3. Lo que se reconoció</CardTitle>
+            <CardTitle>Lo que se reconoció</CardTitle>
             <CardDescription>
               Nada de esto ha tocado tus finanzas todavía. En el siguiente paso lo revisas y
               corriges antes de confirmar.
@@ -235,7 +241,7 @@ export function ImportarPage() {
             )}
 
             <div className="flex flex-wrap gap-2">
-              <Button onClick={subir} disabled={crearLote.isPending || !cuentaElegida}>
+              <Button onClick={subir} disabled={crearLote.isPending}>
                 {crearLote.isPending && <Loader2 className="animate-spin" aria-hidden="true" />}
                 Revisar los {resultado.movimientos.length} movimientos
               </Button>

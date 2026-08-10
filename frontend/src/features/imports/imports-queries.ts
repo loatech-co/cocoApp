@@ -51,7 +51,8 @@ export function useCrearLote() {
 
   return useMutation({
     mutationFn: async (cuerpo: {
-      account_id: number;
+      /** Opcional: se puede importar sin declarar a qué cuenta pertenece. */
+      account_id?: number;
       source: 'image' | 'pdf' | 'manual';
       label?: string;
       ocr_provider?: string;
