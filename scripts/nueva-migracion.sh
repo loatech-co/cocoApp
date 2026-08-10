@@ -43,12 +43,25 @@ npx dotenv -e .env.migrate -- npx prisma migrate diff \
   --script > "$SQL"
 
 # Fuera el fantasma: los MODIFY ... JSON sobre columnas que MariaDB ya guarda
-# como longtext, y el "-- AlterTable" que los precede.
+# como longtext, y el encabezado "-- AlterTable" que se queda huérfano cuando su
+# única sentencia era justamente esa.
 FILTRADO=$(mktemp)
-grep -v 'MODIFY .*JSON' "$SQL" \
-  | awk 'BEGIN{RS="";FS="\n"} {gsub(/-- AlterTable\n\nALTER TABLE `[a-z_]+`;\n/,"")} {print $0"\n"}' \
-  | grep -v '^ALTER TABLE `[a-z_]*`;$' \
-  | cat -s > "$FILTRADO"
+python3 - "$SQL" > "$FILTRADO" <<'PY'
+import re, sys
+
+sql = open(sys.argv[1]).read()
+
+# 1. Fuera las sentencias fantasma.
+sql = re.sub(r'^ALTER TABLE `[^`]+` MODIFY `[^`]+` JSON[^;]*;\n?', '', sql, flags=re.M)
+# 2. Fuera el ALTER que quedó sin columnas que modificar.
+sql = re.sub(r'^ALTER TABLE `[^`]+`;\n?', '', sql, flags=re.M)
+# 3. Fuera el encabezado que ya no encabeza nada.
+sql = re.sub(r'-- AlterTable\s*(?=(-- |\Z))', '', sql)
+# 4. Una sola línea en blanco entre bloques.
+sql = re.sub(r'\n{3,}', '\n\n', sql).strip()
+
+print(sql)
+PY
 
 if ! grep -qE '^(CREATE|ALTER|DROP|INSERT|UPDATE)' "$FILTRADO"; then
   echo "No hay cambios que migrar: schema.prisma ya coincide con las migraciones."

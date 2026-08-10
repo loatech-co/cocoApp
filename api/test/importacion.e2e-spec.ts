@@ -118,12 +118,16 @@ describe('Fase 2 — Importación (e2e)', () => {
       expect(respuesta.body.data.rows[2].amount).toBe('12000.50');
     });
 
-    it('rechaza una cuenta ajena con 404, sin confirmar que existe', async () => {
+    it('rechaza una cuenta ajena con 422, sin confirmar que existe', async () => {
+      // 422 y no 404: el cuerpo está bien formado pero referencia algo que no
+      // sirve. El 404 se reserva para "el recurso de esta URL no existe".
+      // El mensaje no distingue "no existe" de "es de otro" — eso es lo que
+      // impide usar este endpoint para enumerar cuentas ajenas.
       await http
         .post('/api/v1/imports')
         .set('Authorization', comoBeto)
         .send({ account_id: cuenta.id, source: 'image', rows: FILAS })
-        .expect(404);
+        .expect(422);
     });
 
     it('rechaza un lote vacío', async () => {
@@ -305,7 +309,7 @@ describe('Fase 2 — Importación (e2e)', () => {
         .patch(`/api/v1/imports/${lote.body.data.id}/rows/${lote.body.data.rows[0].id}`)
         .set('Authorization', comoAna)
         .send({ category_id: deBeto.id })
-        .expect(404);
+        .expect(422);
     });
 
     it('un lote ajeno responde 404, no 403', async () => {

@@ -14,6 +14,7 @@ import { CategorizationModule } from './modules/categorization/categorization.mo
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthModule } from './modules/health/health.module';
 import { ImportsModule } from './modules/imports/imports.module';
+import { PreferencesModule } from './modules/preferences/preferences.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { SpaModule } from './modules/spa/spa.module';
@@ -45,6 +46,10 @@ import { PrismaModule } from './prisma/prisma.module';
     TagsModule,
     TransactionsModule,
     DashboardModule,
+
+    // Preferencias: entre otras cosas, decide si este usuario lleva cuentas.
+    // Va antes que el núcleo porque varios módulos la consultan.
+    PreferencesModule,
 
     // Fase 2 — importación y categorización automática.
     CategorizationModule,

@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import type { ImportBatch, ImportRow, ImportRowStatus, Prisma } from '@prisma/client';
 
@@ -31,7 +32,7 @@ export interface ImportRowView {
 export interface ImportBatchView {
   id: bigint;
   uuid: string;
-  account_id: bigint;
+  account_id: bigint | null;
   source: ImportBatch['source'];
   status: ImportBatch['status'];
   label: string | null;
@@ -68,8 +69,8 @@ export class ImportsService {
    *   · La sugerencia de categoría, por lo mismo.
    */
   async crear(userId: bigint, dto: CreateImportDto): Promise<ImportBatchView> {
-    const accountId = BigInt(dto.account_id);
-    await this.exigirCuentaPropia(userId, accountId);
+    const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : null;
+    if (accountId !== null) await this.exigirCuentaPropia(userId, accountId);
 
     const huellas = dto.rows.map((fila) =>
       calcularHuella({
@@ -355,14 +356,29 @@ export class ImportsService {
     }
   }
 
+  /**
+   * 422 y no 404, igual que en el módulo de movimientos.
+   *
+   * La distinción es la del propio HTTP: 404 es "el recurso de esta URL no
+   * existe" —y por eso `GET /imports/999` sí devuelve 404—; 422 es "el cuerpo
+   * está bien formado pero referencia algo que no sirve", que es exactamente
+   * el caso de un `account_id` inválido dentro del cuerpo.
+   *
+   * El mensaje sigue sin confirmar si la cuenta existe o solo es de otro: eso
+   * es lo que evita que este endpoint sirva para enumerar cuentas ajenas.
+   */
   private async exigirCuentaPropia(userId: bigint, accountId: bigint): Promise<void> {
     const existe = await this.prisma.account.count({ where: { id: accountId, userId } });
-    if (existe === 0) throw new NotFoundException('La cuenta no existe.');
+    if (existe === 0) {
+      throw new UnprocessableEntityException('La cuenta indicada no existe o no es tuya.');
+    }
   }
 
   private async exigirCategoriaPropia(userId: bigint, categoryId: bigint): Promise<void> {
     const existe = await this.prisma.category.count({ where: { id: categoryId, userId } });
-    if (existe === 0) throw new NotFoundException('La categoría no existe.');
+    if (existe === 0) {
+      throw new UnprocessableEntityException('La categoría indicada no existe o no es tuya.');
+    }
   }
 }
 

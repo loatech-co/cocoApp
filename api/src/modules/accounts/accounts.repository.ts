@@ -66,13 +66,23 @@ export class AccountsRepository {
   ): Promise<Map<string, MovimientoDeSaldo[]>> {
     const grupos = await this.prisma.transaction.groupBy({
       by: ['accountId', 'type', 'transferDir', 'status'],
-      where: { userId, ...(hasta ? { date: { lte: hasta } } : {}) },
+      where: {
+        userId,
+        // Un movimiento sin cuenta no participa de ningún saldo, y se descarta
+        // aquí en vez de más abajo para no traerse filas que hay que ignorar.
+        // Los saldos siguen siendo exactos para las cuentas que existan;
+        // sencillamente no hay saldo para lo que no pertenece a ninguna.
+        accountId: { not: null },
+        ...(hasta ? { date: { lte: hasta } } : {}),
+      },
       _sum: { amount: true },
     });
 
     const porCuenta = new Map<string, MovimientoDeSaldo[]>();
 
     for (const grupo of grupos) {
+      // El filtro del where ya lo garantiza; TypeScript no puede saberlo.
+      if (grupo.accountId === null) continue;
       const clave = grupo.accountId.toString();
       const lista = porCuenta.get(clave) ?? [];
 

@@ -122,5 +122,43 @@ describe('Huella de deduplicación', () => {
     it('funciona sin descripción', () => {
       expect(calcularHuella({ ...base, description: null })).toMatch(/^[0-9a-f]{64}$/);
     });
+
+    // ── Movimientos sin cuenta ──
+    describe('cuando no hay cuenta', () => {
+      // Llevar cuentas es una función opcional: un gasto puede existir sin
+      // pertenecer a ninguna, y la huella tiene que seguir funcionando.
+      const sinCuenta = { ...base, accountId: null };
+
+      it('sigue produciendo una huella válida', () => {
+        expect(calcularHuella(sinCuenta)).toMatch(/^[0-9a-f]{64}$/);
+      });
+
+      it('es determinista', () => {
+        expect(calcularHuella(sinCuenta)).toBe(calcularHuella(sinCuenta));
+      });
+
+      it('trata `null` y `undefined` como lo mismo: no hay cuenta', () => {
+        expect(calcularHuella({ ...base, accountId: undefined })).toBe(
+          calcularHuella(sinCuenta),
+        );
+      });
+
+      it('NO colisiona con un movimiento que sí tiene cuenta', () => {
+        // Por eso "sin cuenta" es una etiqueta explícita y no una cadena
+        // vacía: un id vacío o un 0 produciría la misma huella y dos
+        // movimientos distintos se verían como repetidos.
+        expect(calcularHuella(sinCuenta)).not.toBe(calcularHuella(base));
+        expect(calcularHuella(sinCuenta)).not.toBe(calcularHuella({ ...base, accountId: 0n }));
+      });
+
+      it('sigue distinguiendo por fecha, monto y comercio', () => {
+        expect(calcularHuella({ ...sinCuenta, amount: toMoney('45900.01') })).not.toBe(
+          calcularHuella(sinCuenta),
+        );
+        expect(calcularHuella({ ...sinCuenta, description: 'Carulla' })).not.toBe(
+          calcularHuella(sinCuenta),
+        );
+      });
+    });
   });
 });

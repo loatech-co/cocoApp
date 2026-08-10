@@ -179,7 +179,8 @@ export function useTransactions(filtros: FiltrosDeMovimientos = {}) {
 }
 
 export interface NuevoMovimiento {
-  account_id: number;
+  /** Opcional: llevar cuentas es una función que se enciende en los ajustes. */
+  account_id?: number;
   date: string;
   amount: string;
   type: Transaction['type'];

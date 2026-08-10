@@ -15,20 +15,36 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 import { CapturaRapida } from '@/features/transactions/captura-rapida';
 import { useAuth } from '@/lib/auth-context';
+import { useLlevaCuentas } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
 
+interface Seccion {
+  to: string;
+  label: string;
+  Icono: typeof Wallet;
+  exact: boolean;
+  /** Preferencia que debe estar activa para que la sección exista. */
+  requiere?: 'cuentas';
+}
+
 /**
- * Secciones implementadas. El resto (Importar, Presupuestos, Fijos, Deudas,
- * Metas, Reportes) se añaden en su fase: mostrar enlaces muertos es peor que
- * no mostrarlos.
+ * Secciones implementadas. El resto (Presupuestos, Fijos, Deudas, Reportes) se
+ * añaden en su fase: mostrar enlaces muertos es peor que no mostrarlos.
+ *
+ * `requiere` marca las que dependen de una preferencia. Se declara aquí, en la
+ * propia lista, para que el ORDEN del menú sea el orden de este arreglo y nada
+ * más — insertar una sección condicional por posición se rompe en silencio en
+ * cuanto alguien reordena.
  */
-const SECCIONES = [
+const SECCIONES: readonly Seccion[] = [
   { to: '/', label: 'Resumen', Icono: LayoutDashboard, exact: true },
   { to: '/movimientos', label: 'Movimientos', Icono: ArrowLeftRight, exact: false },
-  { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false },
+  // Para quien no lleva cuentas, este enlace no existe. Ni oculto con CSS ni
+  // deshabilitado: ausente.
+  { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false, requiere: 'cuentas' },
   { to: '/categorias', label: 'Categorías', Icono: Tags, exact: false },
   { to: '/importar', label: 'Importar', Icono: ScanLine, exact: false },
-] as const;
+];
 
 /**
  * Solo para administradores.
@@ -44,7 +60,12 @@ const SECCIONES_DE_ADMIN = [
 
 export function AppShell() {
   const { usuario, esAdmin, salir } = useAuth();
+  const llevaCuentas = useLlevaCuentas();
   const [capturaAbierta, setCapturaAbierta] = useState(false);
+
+  const seccionesVisibles = SECCIONES.filter(
+    (seccion) => seccion.requiere !== 'cuentas' || llevaCuentas,
+  );
 
   return (
     <div className="min-h-dvh bg-background">
@@ -58,7 +79,7 @@ export function AppShell() {
         </div>
 
         <nav className="flex flex-1 flex-col gap-1" aria-label="Secciones">
-          {SECCIONES.map(({ to, label, Icono, exact }) => (
+          {seccionesVisibles.map(({ to, label, Icono, exact }) => (
             <Enlace key={to} to={to} exact={exact}>
               <Icono className="size-4 shrink-0" aria-hidden="true" />
               {label}
@@ -107,7 +128,7 @@ export function AppShell() {
         className="fixed inset-x-0 bottom-0 z-10 flex border-t border-border bg-card md:hidden"
         aria-label="Secciones"
       >
-        {SECCIONES.map(({ to, label, Icono, exact }) => (
+        {seccionesVisibles.map(({ to, label, Icono, exact }) => (
           <NavLink
             key={to}
             to={to}

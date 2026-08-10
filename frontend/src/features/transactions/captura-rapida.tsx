@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiClientError } from '@/lib/api-client';
+import { useLlevaCuentas } from '@/lib/preferences';
 import { useAccounts, useCategories, useCrearMovimiento } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 
@@ -26,12 +27,14 @@ const TIPOS: { valor: TransactionType; etiqueta: string; clase: string }[] = [
 /**
  * Captura rápida — la acción más frecuente del producto.
  *
- * Solo monto, tipo y cuenta son obligatorios. La categoría es opcional a
- * propósito: obligar a clasificar en el momento es exactamente la fricción que
- * hace que la gente abandone el hábito de registrar. Se puede categorizar
- * después, en lote y con calma.
+ * Lo único obligatorio es el MONTO. Ni la cuenta ni la categoría lo son, y las
+ * dos ausencias responden al mismo principio: obligar a decidir algo en el
+ * momento de anotar es la fricción que hace que la gente abandone el hábito.
+ * Se categoriza después, en lote y con calma; y llevar cuentas es una función
+ * que se enciende en los ajustes, no un peaje para registrar un café.
  */
 export function CapturaRapida({ abierta, onCerrar }: { abierta: boolean; onCerrar: () => void }) {
+  const llevaCuentas = useLlevaCuentas();
   const cuentas = useAccounts();
   const categorias = useCategories();
   const crear = useCrearMovimiento();
@@ -49,12 +52,12 @@ export function CapturaRapida({ abierta, onCerrar }: { abierta: boolean; onCerra
 
   const campoMonto = useRef<HTMLInputElement>(null);
 
-  // Preselecciona la primera cuenta: un toque menos en el caso típico.
+  // Preselecciona la primera cuenta: un toque menos para quien las lleva.
   useEffect(() => {
-    if (abierta && !accountId && cuentas.data?.length) {
+    if (abierta && llevaCuentas && !accountId && cuentas.data?.length) {
       setAccountId(String(cuentas.data[0]!.id));
     }
-  }, [abierta, accountId, cuentas.data]);
+  }, [abierta, llevaCuentas, accountId, cuentas.data]);
 
   useEffect(() => {
     if (!abierta) return;
@@ -90,14 +93,12 @@ export function CapturaRapida({ abierta, onCerrar }: { abierta: boolean; onCerra
     evento.preventDefault();
     setError(null);
 
-    if (!accountId) {
-      setError('Necesitas al menos una cuenta para registrar movimientos.');
-      return;
-    }
 
     try {
       await crear.mutateAsync({
-        account_id: Number(accountId),
+        // Sin cuenta se omite el campo por completo: la API lo trata como
+        // "este movimiento no pertenece a ninguna", que es lo normal.
+        ...(accountId ? { account_id: Number(accountId) } : {}),
         date,
         amount: amount.replace(/[^\d.]/g, ''),
         type,
@@ -178,19 +179,30 @@ export function CapturaRapida({ abierta, onCerrar }: { abierta: boolean; onCerra
             ))}
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="account">Cuenta</Label>
-            <Selector
-              id="account"
-              value={accountId}
-              onChange={setAccountId}
-              opciones={(cuentas.data ?? []).map((cuenta) => ({
-                valor: String(cuenta.id),
-                etiqueta: cuenta.name,
-              }))}
-              vacio="No tienes cuentas todavía"
-            />
-          </div>
+          {/*
+            El selector de cuenta solo existe para quien lleva cuentas. No se
+            deshabilita ni se muestra vacío: sencillamente no está. Un campo
+            apagado sigue ocupando espacio y sigue haciendo pensar "¿esto qué
+            es y por qué no puedo tocarlo?".
+          */}
+          {llevaCuentas && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="account">
+                Cuenta <span className="text-muted-foreground">(opcional)</span>
+              </Label>
+              <Selector
+                id="account"
+                value={accountId}
+                onChange={setAccountId}
+                opciones={(cuentas.data ?? []).map((cuenta) => ({
+                  valor: String(cuenta.id),
+                  etiqueta: cuenta.name,
+                }))}
+                vacio="Sin cuenta"
+                permitirVacio
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">

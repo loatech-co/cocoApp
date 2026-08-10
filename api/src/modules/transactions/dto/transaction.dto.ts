@@ -31,9 +31,16 @@ export class SplitDto {
 }
 
 export class CreateTransactionDto {
+  /**
+   * OPCIONAL. Llevar cuentas es una función que se enciende en los ajustes, no
+   * un requisito para registrar un gasto: pedirla aquí obligaría a inventarse
+   * una cuenta antes de poder anotar el primer café.
+   */
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
-  account_id!: number;
+  @Min(1)
+  account_id?: number;
 
   @IsDateString({}, { message: 'La fecha debe tener formato YYYY-MM-DD.' })
   date!: string;

@@ -334,7 +334,17 @@ model Transaction {
   id              BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
   uuid            String             @unique(map: "uq_transactions_uuid") @default(uuid()) @db.Char(36)
   userId          BigInt             @map("user_id") @db.UnsignedBigInt
-  accountId       BigInt             @map("account_id") @db.UnsignedBigInt
+  /// OPCIONAL a propósito.
+  ///
+  /// Llevar cuentas —tarjetas, ahorros, efectivo— es una función que se
+  /// enciende en los ajustes, no un requisito para registrar un gasto. Quien
+  /// solo quiere saber cuánto gastó este mes no debería tener que inventarse
+  /// una cuenta primero.
+  ///
+  /// La consecuencia hay que asumirla de frente: un movimiento sin cuenta no
+  /// participa de ningún saldo. Los saldos siguen siendo exactos para las
+  /// cuentas que existan, y sencillamente no hay saldo para lo demás.
+  accountId       BigInt?            @map("account_id") @db.UnsignedBigInt
   date            DateTime           @db.Date
   amount          Decimal            @db.Decimal(15, 2)
   type            TransactionType    @default(expense)
@@ -357,7 +367,7 @@ model Transaction {
   updatedAt       DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   user     User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_tx_user")
-  account  Account            @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_tx_account")
+  account  Account?           @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_tx_account")
   category Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_tx_category")
   splits   TransactionSplit[]
   tags     TransactionTag[]
@@ -436,7 +446,9 @@ model ImportBatch {
   id          BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
   uuid        String       @unique(map: "uq_import_batches_uuid") @default(uuid()) @db.Char(36)
   userId      BigInt       @map("user_id") @db.UnsignedBigInt
-  accountId   BigInt       @map("account_id") @db.UnsignedBigInt
+  /// Opcional, por lo mismo que en transactions: se puede importar un extracto
+  /// sin declarar a qué cuenta pertenece.
+  accountId   BigInt?      @map("account_id") @db.UnsignedBigInt
   source      ImportSource @default(image)
   status      ImportStatus @default(draft)
   /// Nombre del archivo, solo para que la persona reconozca el lote. Nunca su contenido.
@@ -449,7 +461,7 @@ model ImportBatch {
   updatedAt   DateTime     @updatedAt @map("updated_at") @db.DateTime(0)
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_import_batch_user")
-  account      Account       @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_import_batch_account")
+  account      Account?      @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_import_batch_account")
   rows         ImportRow[]
   transactions Transaction[]
 

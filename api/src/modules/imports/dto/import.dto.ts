@@ -45,10 +45,13 @@ export class ImportRowInputDto {
 }
 
 export class CreateImportDto {
+  /** Opcional, igual que en un movimiento suelto: se puede importar un
+   *  extracto sin declarar a qué cuenta pertenece. */
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  account_id!: number;
+  account_id?: number;
 
   @IsEnum(['image', 'pdf', 'manual'])
   source!: 'image' | 'pdf' | 'manual';

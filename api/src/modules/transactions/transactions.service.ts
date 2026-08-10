@@ -25,7 +25,7 @@ export interface SplitView {
 export interface TransactionView {
   id: bigint;
   uuid: string;
-  account_id: bigint;
+  account_id: bigint | null;
   date: string;
   amount: string;
   type: TransactionType;
@@ -92,12 +92,13 @@ export class TransactionsService {
   // ── Escritura ──────────────────────────────────────────────────────────────
 
   async crear(userId: bigint, dto: CreateTransactionDto): Promise<TransactionView> {
-    const accountId = BigInt(dto.account_id);
+    // Sin cuenta es un caso válido, no un error: llevarlas es opcional.
+    const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : null;
     const categoryId = dto.category_id !== undefined ? BigInt(dto.category_id) : null;
     const amount = toMoney(dto.amount);
     const tipo = dto.type ?? 'expense';
 
-    await this.exigirCuentaPropia(userId, accountId);
+    if (accountId !== null) await this.exigirCuentaPropia(userId, accountId);
     if (categoryId !== null) await this.exigirCategoriaPropia(userId, categoryId);
 
     const splits = this.prepararSplits(amount, dto.splits);
@@ -215,7 +216,9 @@ export class TransactionsService {
     const actual = await this.exigirMovimiento(userId, id);
 
     const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : actual.accountId;
-    if (dto.account_id !== undefined) await this.exigirCuentaPropia(userId, accountId);
+    if (accountId !== null && dto.account_id !== undefined) {
+      await this.exigirCuentaPropia(userId, accountId);
+    }
 
     if (dto.category_id !== undefined && dto.category_id !== null) {
       await this.exigirCategoriaPropia(userId, BigInt(dto.category_id));
