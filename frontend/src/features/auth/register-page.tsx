@@ -59,7 +59,7 @@ export function RegisterPage() {
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="font-serif text-4xl font-semibold text-primary">Coco</h1>
+          <h1 className="text-4xl font-semibold text-primary">Coco</h1>
           <p className="mt-2 text-sm text-muted-foreground">Tus finanzas, claras.</p>
         </div>
 
@@ -169,7 +169,7 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm text-center">
-        <h1 className="mb-8 font-serif text-4xl font-semibold text-primary">Coco</h1>
+        <h1 className="mb-8 text-4xl font-semibold text-primary">Coco</h1>
 
         <Alert variant="info" className="text-left">
           {lista ? <Check aria-hidden="true" /> : <Clock aria-hidden="true" />}

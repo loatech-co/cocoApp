@@ -203,7 +203,8 @@ export class CategoriesService {
   private exigirProfundidadValida(profundidad: number): void {
     if (profundidad > PROFUNDIDAD_MAXIMA) {
       throw new UnprocessableEntityException(
-        `El árbol admite hasta ${PROFUNDIDAD_MAXIMA} niveles. Anidar más vuelve los reportes ilegibles.`,
+        `El árbol admite hasta ${PROFUNDIDAD_MAXIMA} niveles: centro de costos, grupo y concepto. ` +
+          'Anidar más vuelve los reportes ilegibles.',
       );
     }
   }

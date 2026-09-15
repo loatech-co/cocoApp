@@ -4,117 +4,105 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PALETA — cerrada y no negociable.
+   PALETA
 
-     #6A7A3E  musgo    · marca, y también INGRESO
-     #2B2F33  carbón   · texto y superficies oscuras
-     #9AA37A  salvia   · acento suave, marca sobre fondo oscuro
-     #E6E1D5  hueso    · fondo claro
-     #4A5660  pizarra  · texto tenue, y también GASTO
+     #0F3B2D  bosque     · barra lateral, botones primarios, gráficas oscuras
+     #DFF264  lima       · acento y llamadas a la acción
+     #17A67F  esmeralda  · gráficas, datos positivos
+     #F4F7F5  lienzo     · fondo de la app
+     #0C1F18  tinta      · texto
 
-   Dos verdes cálidos (76° y 73°), dos grises fríos (207° y 210°) y un hueso
-   cálido (42°). Esa es toda la app.
+   ── La regla que no se puede romper ───────────────────────────────────────
+   Sobre LIMA el texto va en TINTA, nunca en blanco: blanco sobre lima da
+   1.23:1, muy por debajo del 4.5:1 que exige el texto. Con tinta da 13.9:1.
 
-   ── Las dos excepciones, y por qué ────────────────────────────────────────
-   La paleta no trae con qué señalar una ALERTA ni un ERROR, y son funciones
-   que la app necesita. Se añaden exactamente dos familias, ninguna más:
-
-     ocre    · alerta, sobre-presupuesto. Matiz 38°, apagado como el resto.
-     rojo    · EXCLUSIVAMENTE errores y acciones destructivas.
-
-   ── Semántica del dinero ───────────────────────────────────────────────────
-   Ingreso en musgo, gasto en PIZARRA. Lo natural sería terracota para el
-   gasto —es el compañero clásico del oliva—, pero queda a 18° del rojo de
-   error: un gasto corriente se leería como un fallo. Es justo lo que hay que
-   evitar.
-
-   Pizarra dice "sale" sin decir "mal", que es la postura de la app: gastar no
-   es un error, es gastar. Y el estado NUNCA depende solo del color — ingreso y
-   gasto llevan además signo e icono.
+   ── Estados y acentos ──────────────────────────────────────────────────────
+   Los chips de icono usan pasteles (violeta, turquesa, verde, lima) para
+   distinguir tarjetas de un vistazo. Las píldoras de estado tienen su propio
+   par fondo/texto. El rojo sigue reservado a errores.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  /* ── Tipografía: las dos únicas familias ───────────────────────────────── */
-  --font-sans: 'Montserrat', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-serif: 'Lora', ui-serif, Georgia, serif;
+  /* ── Tipografía ─────────────────────────────────────────────────────────
+     Google Sans para titulares, cifras y controles: tiene el aire geométrico
+     de la referencia y sus números son de ancho uniforme, que es lo que
+     necesita una columna de dinero.
 
-  /* ── Musgo (marca · ingreso) ───────────────────────────────────────────── */
-  --color-musgo-50: #f9faf7;
-  --color-musgo-100: #eff1e9;
-  --color-musgo-200: #dde2d0;
-  --color-musgo-300: #c5ceac;
-  --color-musgo-400: #a9b880;
-  --color-musgo-500: #899d53;
-  --color-musgo-600: #6a7a3e;
-  --color-musgo-700: #525e31;
-  --color-musgo-800: #404927;
-  --color-musgo-900: #31381f;
-  --color-musgo-950: #1d2112;
+     Roboto para el texto corrido. Su altura de x es menor y aguanta mejor los
+     párrafos largos; Google Sans a 14px en un párrafo se ve apretada. */
+  --font-display: 'Google Sans', 'Roboto', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Roboto', 'Google Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-display);
 
-  /* ── Salvia (acento · marca en oscuro) ─────────────────────────────────── */
-  --color-salvia-50: #f9faf8;
-  --color-salvia-100: #eff0eb;
-  --color-salvia-200: #dcdfd3;
-  --color-salvia-300: #c3c8b2;
-  --color-salvia-400: #9aa37a;
-  --color-salvia-500: #848d63;
-  --color-salvia-600: #646b4d;
-  --color-salvia-700: #4e523c;
-  --color-salvia-800: #3d4030;
-  --color-salvia-900: #2f3225;
-  --color-salvia-950: #1b1d16;
+  /* ── Bosque (marca) ────────────────────────────────────────────────────── */
+  --color-bosque-50: #eef6f2;
+  --color-bosque-100: #d6ebe1;
+  --color-bosque-200: #aed7c4;
+  --color-bosque-300: #7cbba2;
+  --color-bosque-400: #4a9a7e;
+  --color-bosque-500: #2a7a60;
+  --color-bosque-600: #1b5f4a;
+  --color-bosque-700: #17523e;
+  --color-bosque-800: #0f3b2d;
+  --color-bosque-900: #0c2c22;
+  --color-bosque-950: #071a14;
 
-  /* ── Hueso (fondo claro) ───────────────────────────────────────────────── */
-  --color-hueso-50: #faf9f7;
-  --color-hueso-100: #f2efe6;
-  --color-hueso-200: #e6e1d5;
-  --color-hueso-300: #ccc3ad;
-  --color-hueso-400: #b1a486;
-  --color-hueso-500: #908260;
-  --color-hueso-600: #6d634b;
-  --color-hueso-700: #544c3b;
-  --color-hueso-800: #413c2f;
-  --color-hueso-900: #322e25;
-  --color-hueso-950: #1d1b16;
+  /* ── Lima (acento) ─────────────────────────────────────────────────────── */
+  --color-lima-50: #fbfee9;
+  --color-lima-100: #f5fcc6;
+  --color-lima-200: #ecf99a;
+  --color-lima-300: #dff264;
+  --color-lima-400: #cde33c;
+  --color-lima-500: #b0c722;
+  --color-lima-600: #8a9e18;
+  --color-lima-700: #697717;
+  --color-lima-800: #535d19;
+  --color-lima-900: #454e1a;
+  --color-lima-950: #242b09;
 
-  /* ── Carbón (texto · superficies oscuras) ──────────────────────────────── */
-  --color-carbon-50: #f8f9f9;
-  --color-carbon-100: #ecedee;
-  --color-carbon-200: #d7d9db;
-  --color-carbon-300: #b9bdc1;
-  --color-carbon-400: #959ca2;
-  --color-carbon-500: #6f7880;
-  --color-carbon-600: #555c63;
-  --color-carbon-700: #42474d;
-  --color-carbon-800: #33383d;
-  --color-carbon-900: #2b2f33;
-  --color-carbon-950: #171a1c;
+  /* ── Esmeralda (datos) ─────────────────────────────────────────────────── */
+  --color-esmeralda-50: #ecfdf6;
+  --color-esmeralda-100: #d1fae8;
+  --color-esmeralda-200: #a7f3d4;
+  --color-esmeralda-300: #6ee7bb;
+  --color-esmeralda-400: #3ecf8e;
+  --color-esmeralda-500: #17a67f;
+  --color-esmeralda-600: #0d8467;
+  --color-esmeralda-700: #0c6a54;
+  --color-esmeralda-800: #0d5444;
+  --color-esmeralda-900: #0c4539;
+  --color-esmeralda-950: #042720;
 
-  /* ── Pizarra (texto tenue · gasto) ─────────────────────────────────────── */
-  --color-pizarra-50: #f8f9f9;
-  --color-pizarra-100: #ecedef;
-  --color-pizarra-200: #d5d9dc;
-  --color-pizarra-300: #b6bdc3;
-  --color-pizarra-400: #919da6;
-  --color-pizarra-500: #6a7986;
-  --color-pizarra-600: #4a5660;
-  --color-pizarra-700: #3e4850;
-  --color-pizarra-800: #31393f;
-  --color-pizarra-900: #262c30;
-  --color-pizarra-950: #171a1c;
+  /* ── Neutros, con una pizca de verde para no chocar con el bosque ──────── */
+  --color-tinta-50: #f7f9f8;
+  --color-tinta-100: #f4f7f5;
+  --color-tinta-200: #e6ebe8;
+  --color-tinta-300: #d2dad6;
+  --color-tinta-400: #a2afa9;
+  --color-tinta-500: #74847d;
+  --color-tinta-600: #55635c;
+  --color-tinta-700: #414d47;
+  --color-tinta-800: #2a332f;
+  --color-tinta-900: #16201b;
+  --color-tinta-950: #0c1f18;
 
-  /* ── Ocre — SOLO alertas y sobre-presupuesto ───────────────────────────── */
-  --color-ocre-50: #fdfaf4;
-  --color-ocre-100: #f7eeda;
-  --color-ocre-200: #eedcb6;
-  --color-ocre-300: #e0c389;
-  --color-ocre-400: #cba45f;
-  --color-ocre-500: #b08442;
-  --color-ocre-600: #916a34;
-  --color-ocre-700: #7a5a2b;
-  --color-ocre-800: #5f4622;
-  --color-ocre-900: #49361a;
-  --color-ocre-950: #2a1f0f;
+  /* ── Pasteles de los chips de icono ────────────────────────────────────── */
+  --color-chip-violeta: #ede9fe;
+  --color-chip-violeta-tinta: #6c5ce7;
+  --color-chip-turquesa: #ccfbf1;
+  --color-chip-turquesa-tinta: #0f9488;
+  --color-chip-verde: #dcfce7;
+  --color-chip-verde-tinta: #16a34a;
+  --color-chip-lima: #f2f9cb;
+  --color-chip-lima-tinta: #697717;
+
+  /* ── Píldoras de estado ────────────────────────────────────────────────── */
+  --color-pildora-ok: #bbf7d0;
+  --color-pildora-ok-tinta: #0b6b45;
+  --color-pildora-alerta: #fde68a;
+  --color-pildora-alerta-tinta: #854d0e;
+  --color-pildora-mal: #fecaca;
+  --color-pildora-mal-tinta: #b3261e;
 
   /* ── Rojo — SOLO errores y acciones destructivas ───────────────────────── */
   --color-danger-50: #fdf3f3;
@@ -135,120 +123,116 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Radio generoso: las referencias apoyan mucho de su carácter en esquinas
-     redondas y amplias. 0.625rem se veía de panel administrativo. */
+  /* Esquinas amplias, como en la referencia. */
   --radius: 1rem;
 
-  /* El fondo es el hueso; las tarjetas van MÁS CLARAS que él. Al revés —fondo
-     blanco, tarjeta gris— el hueso se perdería y la app volvería a ser blanca. */
-  --background: var(--color-hueso-200);
-  --foreground: var(--color-carbon-900);
+  --background: var(--color-tinta-100);
+  --foreground: var(--color-tinta-950);
 
-  --card: var(--color-hueso-50);
-  --card-foreground: var(--color-carbon-900);
-  --popover: var(--color-hueso-50);
-  --popover-foreground: var(--color-carbon-900);
+  --card: #ffffff;
+  --card-foreground: var(--color-tinta-950);
+  --popover: #ffffff;
+  --popover-foreground: var(--color-tinta-950);
 
-  --primary: var(--color-musgo-600);
+  --primary: var(--color-bosque-800);
   --primary-foreground: #ffffff;
 
-  --secondary: var(--color-hueso-100);
-  --secondary-foreground: var(--color-carbon-800);
+  /* El acento lima SIEMPRE con texto tinta: en blanco da 1.23:1. */
+  --accent: var(--color-lima-300);
+  --accent-foreground: var(--color-tinta-950);
 
-  --muted: var(--color-hueso-100);
-  --muted-foreground: var(--color-pizarra-600);
+  --secondary: var(--color-tinta-100);
+  --secondary-foreground: var(--color-tinta-800);
 
-  --accent: var(--color-salvia-200);
-  --accent-foreground: var(--color-musgo-800);
+  --muted: var(--color-tinta-100);
+  --muted-foreground: var(--color-tinta-600);
 
-  /* Rojo: solo aquí. */
-  --destructive: var(--color-danger-600);
+  --destructive: #b3261e;
   --destructive-foreground: #ffffff;
 
-  --border: var(--color-hueso-300);
+  --border: var(--color-tinta-200);
+  /* El borde de un CAMPO cumple el 3:1 que WCAG 1.4.11 exige a los controles. */
+  --input: var(--color-tinta-400);
+  --ring: var(--color-esmeralda-500);
 
-  /* El borde de un CAMPO no es decorativo: WCAG 1.4.11 le exige 3:1 contra su
-     fondo, igual que a cualquier control. Un tono más claro se veía elegante y
-     dejaba los campos prácticamente invisibles. */
-  --input: var(--color-hueso-500);
-  --ring: var(--color-musgo-500);
+  /* Dinero */
+  --income: var(--color-esmeralda-600);
+  --income-surface: var(--color-esmeralda-50);
+  --expense: var(--color-bosque-800);
+  --expense-surface: var(--color-bosque-50);
+  --warning: #854d0e;
+  --warning-surface: #fef3c7;
+  --info: var(--color-tinta-600);
+  --info-surface: var(--color-tinta-100);
 
-  /* Semántica de dinero */
-  --income: var(--color-musgo-700);
-  --income-surface: var(--color-musgo-100);
-  --expense: var(--color-pizarra-700);
-  --expense-surface: var(--color-pizarra-100);
-  --warning: var(--color-ocre-700);
-  --warning-surface: var(--color-ocre-100);
-  --info: var(--color-pizarra-600);
-  --info-surface: var(--color-pizarra-100);
+  /* Gráficas: bosque y esmeralda alternando, como las barras de la referencia. */
+  --chart-1: var(--color-bosque-800);
+  --chart-2: var(--color-esmeralda-500);
+  --chart-3: var(--color-lima-400);
+  --chart-4: var(--color-esmeralda-300);
+  --chart-5: var(--color-bosque-400);
 
-  /* ── Barra lateral ───────────────────────────────────────────────────────
-     Oscura SIEMPRE, no sigue el tema. Es el ancla visual de la app: da el
-     carácter de marca sin teñir el área de trabajo, que necesita quedarse
-     clara y neutra para que el dinero se lea. */
-  --sidebar: var(--color-musgo-950);
-  --sidebar-foreground: var(--color-hueso-200);
-  --sidebar-muted: color-mix(in srgb, var(--color-hueso-200) 55%, transparent);
-  --sidebar-active: var(--color-musgo-600);
-  --sidebar-active-foreground: #ffffff;
-  --sidebar-hover: color-mix(in srgb, var(--color-salvia-400) 14%, transparent);
-  --sidebar-border: color-mix(in srgb, var(--color-salvia-400) 18%, transparent);
-
-  /* Series de gráficas: alternan verde y gris para que dos contiguas nunca
-     compartan familia, y el ocre entra tercero para cortar la secuencia. */
-  --chart-1: var(--color-musgo-600);
-  --chart-2: var(--color-pizarra-600);
-  --chart-3: var(--color-ocre-500);
-  --chart-4: var(--color-salvia-400);
-  --chart-5: var(--color-carbon-500);
+  /* Barra lateral: bosque cerrado, activo en lima. */
+  --sidebar: var(--color-bosque-800);
+  --sidebar-foreground: #ffffff;
+  --sidebar-muted: color-mix(in srgb, #ffffff 62%, transparent);
+  --sidebar-active: var(--color-lima-300);
+  --sidebar-active-foreground: var(--color-bosque-900);
+  --sidebar-hover: color-mix(in srgb, #ffffff 10%, transparent);
+  --sidebar-border: color-mix(in srgb, #ffffff 14%, transparent);
 }
 
 .dark {
-  --background: var(--color-carbon-950);
-  --foreground: var(--color-hueso-200);
+  --background: var(--color-bosque-950);
+  --foreground: var(--color-tinta-100);
 
-  --card: var(--color-carbon-900);
-  --card-foreground: var(--color-hueso-200);
-  --popover: var(--color-carbon-900);
-  --popover-foreground: var(--color-hueso-200);
+  --card: var(--color-bosque-900);
+  --card-foreground: var(--color-tinta-100);
+  --popover: var(--color-bosque-900);
+  --popover-foreground: var(--color-tinta-100);
 
-  /* Sobre oscuro la marca sube a salvia: el musgo a 36% de luz no alcanza
-     contraste contra el carbón. */
-  --primary: var(--color-salvia-400);
-  --primary-foreground: var(--color-carbon-950);
+  /* En oscuro la marca sube a lima: el bosque sobre bosque no se ve. */
+  --primary: var(--color-lima-300);
+  --primary-foreground: var(--color-bosque-950);
 
-  --secondary: var(--color-carbon-800);
-  --secondary-foreground: var(--color-hueso-200);
+  --accent: var(--color-bosque-700);
+  --accent-foreground: var(--color-lima-200);
 
-  --muted: var(--color-carbon-800);
-  --muted-foreground: var(--color-pizarra-400);
+  --secondary: var(--color-bosque-800);
+  --secondary-foreground: var(--color-tinta-100);
 
-  --accent: var(--color-salvia-900);
-  --accent-foreground: var(--color-salvia-200);
+  --muted: var(--color-bosque-800);
+  --muted-foreground: var(--color-tinta-400);
 
-  --destructive: var(--color-danger-400);
-  --destructive-foreground: var(--color-carbon-950);
+  --destructive: #f87171;
+  --destructive-foreground: var(--color-bosque-950);
 
-  --border: var(--color-carbon-800);
-  --input: var(--color-pizarra-500);
-  --ring: var(--color-salvia-400);
+  --border: var(--color-bosque-700);
+  --input: var(--color-tinta-600);
+  --ring: var(--color-esmeralda-400);
 
-  /* En oscuro se suben los tonos para mantener contraste AA sobre el carbón. */
-  --income: var(--color-musgo-400);
-  --income-surface: var(--color-musgo-950);
-  --expense: var(--color-pizarra-300);
-  --expense-surface: var(--color-pizarra-900);
-  --warning: var(--color-ocre-300);
-  --warning-surface: var(--color-ocre-950);
-  --info: var(--color-pizarra-300);
-  --info-surface: var(--color-pizarra-900);
+  --income: var(--color-esmeralda-400);
+  --income-surface: var(--color-esmeralda-950);
+  --expense: var(--color-tinta-300);
+  --expense-surface: var(--color-bosque-800);
+  --warning: #fcd34d;
+  --warning-surface: #422006;
+  --info: var(--color-tinta-400);
+  --info-surface: var(--color-bosque-800);
 
-  --chart-1: var(--color-musgo-400);
-  --chart-2: var(--color-pizarra-300);
-  --chart-3: var(--color-ocre-400);
-  --chart-4: var(--color-salvia-300);
-  --chart-5: var(--color-carbon-400);
+  --chart-1: var(--color-esmeralda-400);
+  --chart-2: var(--color-lima-300);
+  --chart-3: var(--color-esmeralda-200);
+  --chart-4: var(--color-bosque-300);
+  --chart-5: var(--color-tinta-400);
+
+  --sidebar: var(--color-bosque-950);
+  --sidebar-foreground: #ffffff;
+  --sidebar-muted: color-mix(in srgb, #ffffff 58%, transparent);
+  --sidebar-active: var(--color-lima-300);
+  --sidebar-active-foreground: var(--color-bosque-950);
+  --sidebar-hover: color-mix(in srgb, #ffffff 10%, transparent);
+  --sidebar-border: color-mix(in srgb, #ffffff 14%, transparent);
 }
 
 /* Expone los tokens como utilidades de Tailwind (bg-background, text-income…). */
@@ -290,6 +274,11 @@
   --color-sidebar-hover: var(--sidebar-hover);
   --color-sidebar-border: var(--sidebar-border);
 
+  --color-chip-violeta-bg: var(--color-chip-violeta);
+  --color-chip-turquesa-bg: var(--color-chip-turquesa);
+  --color-chip-verde-bg: var(--color-chip-verde);
+  --color-chip-lima-bg: var(--color-chip-lima);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -315,12 +304,21 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Lora para títulos. Montserrat para todo lo demás. */
+  /* Titulares en Google Sans, con tracking negativo: es lo que les da el
+     aspecto compacto de la referencia. */
   h1,
   h2,
   h3 {
-    font-family: var(--font-serif);
-    letter-spacing: -0.01em;
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  /* Las cifras también: los números de Roboto bailan de ancho y una columna de
+     montos deja de alinear. */
+  .tabular,
+  .cifra {
+    font-family: var(--font-display);
   }
 
   /* Los montos en cifras tabulares: las columnas de dinero alinean por dígito. */

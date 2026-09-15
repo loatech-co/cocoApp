@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { serializar, toMoney, type Money } from '../../common/money/money';
 import { verificarCuadreDeSplits } from '../../common/money/splits';
 import { PrismaService } from '../../prisma/prisma.service';
+import { descendientesDe } from '../categories/categories.tree';
 import { TagsService } from '../tags/tags.module';
 import type {
   CreateTransactionDto,
@@ -65,7 +66,7 @@ export class TransactionsService {
     userId: bigint,
     query: ListTransactionsQueryDto,
   ): Promise<{ data: TransactionView[]; meta: { page: number; per_page: number; total: number } }> {
-    const where = this.construirFiltro(userId, query);
+    const where = await this.construirFiltro(userId, query);
     const { page, perPage, skip, take } = parsePaginacion(query.page, query.per_page);
 
     const [filas, total] = await Promise.all([
@@ -297,10 +298,26 @@ export class TransactionsService {
 
   // ── Apoyo ──────────────────────────────────────────────────────────────────
 
-  private construirFiltro(
+  /**
+   * Todos los ids de la rama que cuelga de una categoría, ella incluida.
+   *
+   * Filtrar por "Costos fijos" tiene que traer TODO lo que hay debajo: sus
+   * grupos y los conceptos de cada grupo. Comparar `categoryId` contra un solo
+   * id devolvería cero movimientos, porque ninguno se cuelga de un centro de
+   * costos directamente — se cuelgan del concepto, que es la hoja.
+   */
+  private async ramaDe(userId: bigint, categoryId: bigint): Promise<bigint[]> {
+    const todas = await this.prisma.category.findMany({
+      where: { userId },
+      select: { id: true, parentId: true },
+    });
+    return [categoryId, ...descendientesDe(todas, categoryId)];
+  }
+
+  private async construirFiltro(
     userId: bigint,
     query: ListTransactionsQueryDto,
-  ): Prisma.TransactionWhereInput {
+  ): Promise<Prisma.TransactionWhereInput> {
     const where: Prisma.TransactionWhereInput = { userId };
 
     if (query.from || query.to) {
@@ -311,7 +328,10 @@ export class TransactionsService {
     }
 
     if (query.account_id !== undefined) where.accountId = BigInt(query.account_id);
-    if (query.category_id !== undefined) where.categoryId = BigInt(query.category_id);
+
+    if (query.category_id !== undefined) {
+      where.categoryId = { in: await this.ramaDe(userId, BigInt(query.category_id)) };
+    }
     if (query.type) where.type = query.type;
     if (query.status) where.status = query.status;
     if (query.tag_id !== undefined) where.tags = { some: { tagId: BigInt(query.tag_id) } };
@@ -324,10 +344,13 @@ export class TransactionsService {
     }
 
     if (query.q) {
+      // `mode: 'insensitive'` NO es opcional. Postgres compara distinguiendo
+      // mayúsculas —MariaDB no lo hacía—, así que buscar "celsia" no
+      // encontraría "Celsia (Energia)". Quien busca escribe en minúscula.
       where.OR = [
-        { description: { contains: query.q } },
-        { merchant: { contains: query.q } },
-        { notes: { contains: query.q } },
+        { description: { contains: query.q, mode: 'insensitive' } },
+        { merchant: { contains: query.q, mode: 'insensitive' } },
+        { notes: { contains: query.q, mode: 'insensitive' } },
       ];
     }
 

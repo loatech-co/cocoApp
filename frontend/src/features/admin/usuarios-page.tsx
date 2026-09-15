@@ -54,7 +54,7 @@ export function UsuariosPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-serif text-3xl font-semibold">Cuentas</h1>
+        <h1 className="text-3xl font-semibold">Cuentas</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Nadie entra a Coco sin que apruebes su cuenta.
         </p>

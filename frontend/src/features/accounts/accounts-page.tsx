@@ -37,7 +37,7 @@ export function AccountsPage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-serif text-3xl font-semibold">Cuentas</h1>
+          <h1 className="text-3xl font-semibold">Cuentas</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Dónde tienes tu plata. El saldo se calcula de tus movimientos.
           </p>

@@ -11,8 +11,30 @@ export interface NodoDeCategoria {
   parentId: bigint | null;
 }
 
-/** Profundidad máxima: padre → hijo. Dos niveles, no más. */
-export const PROFUNDIDAD_MAXIMA = 2;
+/**
+ * Profundidad máxima: TRES niveles, que es la forma del modelo.
+ *
+ *   Centro de costos  →  Grupo  →  Concepto
+ *   Costos fijos          Servicios públicos   Celsia (Energía)
+ *
+ * El movimiento se cuelga del CONCEPTO, que es la hoja. Los dos niveles de
+ * arriba no se usan para clasificar: existen para sumar. "¿Cuánto se fue en
+ * servicios públicos?" es la suma de sus conceptos, y "¿cuánto en costos
+ * fijos?" la de sus grupos.
+ *
+ * No más de tres: un cuarto nivel obliga a decidir en qué rama va cada cosa
+ * antes de poder registrarla, y esa fricción es la que hace que la gente deje
+ * de registrar.
+ */
+export const PROFUNDIDAD_MAXIMA = 3;
+
+/** Los tres niveles, por su nombre de dominio. `profundidadDe` devuelve 1, 2 o 3. */
+export const NIVELES = ['centro de costos', 'grupo', 'concepto'] as const;
+
+/** El nombre del nivel que ocupa una profundidad dada. */
+export function nombreDelNivel(profundidad: number): string {
+  return NIVELES[profundidad - 1] ?? 'nivel';
+}
 
 const clave = (id: bigint): string => id.toString();
 

@@ -295,20 +295,38 @@ export interface SpendingByCategory {
   count: number;
 }
 
+/** Un punto de la línea de tendencia. */
+export interface TrendPoint {
+  /** `2025-03-14` con granularidad diaria, `2025-03` con mensual. */
+  bucket: string;
+  expense: DecimalString;
+  income: DecimalString;
+  net: DecimalString;
+}
+
+/** Los tres niveles del modelo, de arriba abajo. */
+export const NIVELES_DE_CATEGORIA = ['centro de costos', 'grupo', 'concepto'] as const;
+export type NivelDeCategoria = (typeof NIVELES_DE_CATEGORIA)[number];
+
 export interface Dashboard {
-  period: { month: string; start: DateOnlyString; end: DateOnlyString };
+  period: { from: DateOnlyString; to: DateOnlyString; granularity: 'dia' | 'mes' };
   accounts: Account[];
   totals: {
     assets: DecimalString;
     debts: DecimalString;
     net_worth: DecimalString;
   };
-  month: {
+  /** Del RANGO filtrado. */
+  range: {
     income: DecimalString;
     expense: DecimalString;
     net: DecimalString;
+    count: number;
   };
   by_category: SpendingByCategory[];
+  /** Qué nivel está desglosando `by_category`. */
+  breakdown_level: NivelDeCategoria;
+  trend: TrendPoint[];
 }
 
 export interface UserPreference {

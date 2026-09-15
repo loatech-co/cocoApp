@@ -1,232 +1,269 @@
-import { AlertCircle, Sparkles, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { AlertCircle, ChevronRight, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { Monto, Saldo } from '@/components/monto';
+import { Tendencia } from '@/components/tendencia';
+import { ToolbarFiltros } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
+import { aParametros, useFiltros } from '@/lib/filtros';
 import { useDashboard } from '@/lib/queries';
 import { formatCOP } from '@/lib/utils';
 
 /**
- * M5 — Dashboard.
+ * Resumen.
  *
  * Todas las cifras son DERIVADAS: no hay ni una columna de saldo en la base.
  * Si un movimiento cambia, esto cambia solo.
+ *
+ * La pantalla se lee de arriba abajo como una sola pregunta que se va
+ * acotando: qué recorte estoy mirando (toolbar), cuánto suma (indicadores),
+ * cómo se comportó en el tiempo (tendencia) y en qué se fue (desglose).
  */
 export function DashboardPage() {
-  const dashboard = useDashboard();
-
-  if (dashboard.isPending) return <Esqueleto />;
-
-  if (dashboard.isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle aria-hidden="true" />
-        <AlertTitle>No se pudo cargar el resumen</AlertTitle>
-        <AlertDescription>
-          {dashboard.error instanceof ApiClientError
-            ? dashboard.error.message
-            : 'Revisa que la API esté corriendo.'}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  const { totals, month, by_category, accounts } = dashboard.data;
-  const sinDatos = accounts.length === 0;
+  const { filtros, aplicar, limpiar, hayFiltrosActivos } = useFiltros();
+  const dashboard = useDashboard(aParametros(filtros));
 
   return (
-    <div className="flex flex-col gap-7">
+    <div className="flex flex-col gap-4 sm:gap-5">
       <header>
-        <h1 className="font-serif text-4xl font-semibold tracking-tight">Tu resumen</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Cómo vas este mes. Todo se calcula de tus movimientos.
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Tu resumen</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Todo se calcula de tus movimientos. Filtra arriba y el resto responde.
         </p>
       </header>
 
-      {sinDatos ? (
-        <EstadoVacio />
-      ) : (
+      <ToolbarFiltros
+        filtros={filtros}
+        aplicar={aplicar}
+        limpiar={limpiar}
+        hayFiltrosActivos={hayFiltrosActivos}
+        resumen={
+          dashboard.data ? `${dashboard.data.range.count} movimiento(s)` : undefined
+        }
+      />
+
+      {dashboard.isError && (
+        <Alert variant="destructive">
+          <AlertCircle aria-hidden="true" />
+          <AlertTitle>No se pudo cargar el resumen</AlertTitle>
+          <AlertDescription>
+            {dashboard.error instanceof ApiClientError
+              ? dashboard.error.message
+              : 'Revisa que la API esté corriendo.'}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {dashboard.isPending && <Esqueleto />}
+
+      {dashboard.data && (
         <>
-          <div className="grid gap-5 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
             <Kpi
-              etiqueta="Patrimonio neto"
-              valor={<Saldo amount={totals.net_worth} className="text-[28px] font-semibold leading-tight" />}
-              detalle={`${formatCOP(totals.assets)} en cuentas · ${formatCOP(totals.debts)} en deuda`}
-              Icono={Wallet}
-            />
-            <Kpi
-              etiqueta="Ingresos del mes"
-              valor={<Monto amount={month.income} type="income" className="text-[28px] font-semibold leading-tight" soloTexto />}
-              Icono={TrendingUp}
-            />
-            <Kpi
-              etiqueta="Gastos del mes"
-              valor={<Monto amount={month.expense} type="expense" className="text-[28px] font-semibold leading-tight" soloTexto />}
+              etiqueta="Gastos del periodo"
+              valor={formatCOP(dashboard.data.range.expense)}
               Icono={TrendingDown}
+              acento="expense"
+              chip="violeta"
+            />
+            <Kpi
+              etiqueta="Ingresos del periodo"
+              valor={formatCOP(dashboard.data.range.income)}
+              Icono={TrendingUp}
+              acento="income"
+              chip="verde"
+            />
+            <Kpi
+              etiqueta="Movimientos"
+              valor={String(dashboard.data.range.count)}
+              detalle={`${dashboard.data.period.from} a ${dashboard.data.period.to}`}
+              Icono={Receipt}
+              chip="lima"
             />
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Flujo del mes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Ingresos menos gastos. Las transferencias entre tus cuentas no cuentan: solo
-                cambian de bolsillo.
-              </p>
-              <p className="mt-3">
-                <Saldo amount={month.net} className="text-4xl font-semibold leading-none" />
-              </p>
+            <CardContent className="p-4 sm:p-6">
+              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-xl font-semibold">Comportamiento</h2>
+                <p className="text-xs text-muted-foreground">
+                  Agrupado por {dashboard.data.period.granularity === 'dia' ? 'día' : 'mes'}
+                </p>
+              </div>
+              <Tendencia
+                puntos={dashboard.data.trend}
+                granularidad={dashboard.data.period.granularity}
+              />
             </CardContent>
           </Card>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <GastoPorCategoria filas={by_category} totalGastado={month.expense} />
-            <Cuentas cuentas={accounts} />
-          </div>
+          <Desglose
+            filas={dashboard.data.by_category}
+            nivel={dashboard.data.breakdown_level}
+            totalGastado={dashboard.data.range.expense}
+            onBajar={(id) => aplicar({ categoryId: id })}
+          />
         </>
       )}
     </div>
   );
 }
 
+/** Cada tarjeta lleva su pastel: distinguirlas de un vistazo es más rápido
+    que leer la etiqueta de cada una. */
+const CHIPS = {
+  violeta: { fondo: 'var(--color-chip-violeta)', tinta: 'var(--color-chip-violeta-tinta)' },
+  turquesa: { fondo: 'var(--color-chip-turquesa)', tinta: 'var(--color-chip-turquesa-tinta)' },
+  verde: { fondo: 'var(--color-chip-verde)', tinta: 'var(--color-chip-verde-tinta)' },
+  lima: { fondo: 'var(--color-chip-lima)', tinta: 'var(--color-chip-lima-tinta)' },
+} as const;
+
 function Kpi({
   etiqueta,
   valor,
   detalle,
   Icono,
+  acento,
+  chip = 'turquesa',
 }: {
   etiqueta: string;
-  valor: React.ReactNode;
+  valor: string;
   detalle?: string;
-  Icono: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  Icono: React.ComponentType<{
+    className?: string;
+    'aria-hidden'?: boolean;
+    fill?: string;
+    fillOpacity?: number;
+    strokeWidth?: number;
+  }>;
+  acento?: 'income' | 'expense';
+  chip?: keyof typeof CHIPS;
 }) {
+  const { fondo, tinta } = CHIPS[chip];
+
   return (
     <Card>
-      <CardContent className="flex items-start gap-4 p-6">
-        {/* El icono va en un chip circular, no suelto junto al texto: le da un
-            punto de anclaje a la tarjeta y deja la cifra como único elemento
-            grande. Suelto competía con el número por la atención. */}
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-          <Icono className="size-5" aria-hidden />
+      <CardContent className="flex items-start gap-3 p-4 sm:gap-4 sm:p-6">
+        <span
+          className="flex size-11 shrink-0 items-center justify-center rounded-full sm:size-12"
+          style={{ backgroundColor: fondo, color: tinta }}
+        >
+          <Icono className="size-5" fill="currentColor" fillOpacity={0.2} strokeWidth={1.9} aria-hidden />
         </span>
         <div className="min-w-0">
-          {/* La ETIQUETA va arriba y pequeña; la cifra manda. Es la jerarquía de
-              un tablero financiero: se entra a mirar cuánto, no qué. */}
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {etiqueta}
           </p>
-          <div className="mt-1">{valor}</div>
-          {detalle && <p className="mt-1.5 text-xs text-muted-foreground">{detalle}</p>}
+          <p
+            className={
+              'tabular mt-1 truncate text-2xl font-semibold leading-tight sm:text-[28px] ' +
+              (acento === 'income' ? 'text-income' : acento === 'expense' ? 'text-expense' : '')
+            }
+          >
+            {valor}
+          </p>
+          {detalle && <p className="mt-1 truncate text-xs text-muted-foreground">{detalle}</p>}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function GastoPorCategoria({
+/**
+ * En qué se fue, al nivel que corresponda.
+ *
+ * Cada fila BAJA un nivel al tocarla: de centros a grupos, de grupos a
+ * conceptos. Es la forma de responder "¿y dentro de esto, qué?" sin cambiar de
+ * pantalla ni perder el rango de fechas.
+ */
+function Desglose({
   filas,
+  nivel,
   totalGastado,
+  onBajar,
 }: {
-  filas: { category_id: number | null; name: string; color: string | null; total: string }[];
+  filas: { category_id: number | null; name: string; total: string; count: number }[];
+  nivel: string;
   totalGastado: string;
+  onBajar: (id: number) => void;
 }) {
   const total = Number.parseFloat(totalGastado) || 1;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>En qué se fue</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {filas.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Todavía no hay gastos este mes.
+      <CardContent className="p-4 sm:p-6">
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-xl font-semibold">En qué se fue</h2>
+          <p className="text-xs text-muted-foreground">Por {nivel}</p>
+        </div>
+
+        {filas.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No hay gastos en este recorte.
           </p>
+        ) : (
+          <ul className="flex flex-col">
+            {filas.map((fila) => {
+              const porcentaje = Math.round((Number.parseFloat(fila.total) / total) * 100);
+              const interactiva = fila.category_id !== null && nivel !== 'concepto';
+
+              const contenido = (
+                <>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 truncate text-sm font-medium">{fila.name}</span>
+                    <span className="tabular shrink-0 text-sm font-semibold">
+                      {formatCOP(fila.total)}
+                    </span>
+                  </div>
+                  {/* La barra no es decoración: comparar cifras largas de un
+                      vistazo es difícil, comparar longitudes es inmediato. */}
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className="h-full rounded-full bg-chart-1"
+                        style={{ width: `${Math.max(porcentaje, 1)}%` }}
+                      />
+                    </div>
+                    <span className="w-14 shrink-0 text-right text-xs text-muted-foreground">
+                      {porcentaje}% · {fila.count}
+                    </span>
+                    {interactiva && (
+                      <ChevronRight
+                        className="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                </>
+              );
+
+              return (
+                <li key={fila.category_id ?? 'sin'} className="border-b border-border last:border-0">
+                  {interactiva ? (
+                    <button
+                      type="button"
+                      onClick={() => onBajar(fila.category_id as number)}
+                      className="w-full rounded-lg px-1 py-3 text-left transition-colors hover:bg-secondary"
+                    >
+                      {contenido}
+                    </button>
+                  ) : (
+                    <div className="px-1 py-3">{contenido}</div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         )}
 
-        {/* Ordenadas de mayor a menor: lo que más pesa se lee primero. */}
-        {filas.slice(0, 8).map((fila) => {
-          const porcentaje = (Number.parseFloat(fila.total) / total) * 100;
-
-          return (
-            <div key={fila.category_id ?? 'sin'} className="flex flex-col gap-1">
-              <div className="flex items-baseline justify-between gap-3 text-sm">
-                <span className={fila.category_id === null ? 'text-muted-foreground' : ''}>
-                  {fila.name}
-                </span>
-                <span className="tabular text-muted-foreground">
-                  {formatCOP(fila.total)}
-                  <span className="ml-2 text-xs">{porcentaje.toFixed(0)}%</span>
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.max(2, porcentaje)}%`,
-                    backgroundColor: fila.color ?? 'var(--color-ash-400)',
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
-  );
-}
-
-function Cuentas({
-  cuentas,
-}: {
-  cuentas: { id: number; name: string; type: string; balance: string }[];
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tus cuentas</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        {cuentas.map((cuenta) => (
-          <div
-            key={cuenta.id}
-            className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5"
-          >
-            <div>
-              <p className="text-sm font-medium">{cuenta.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {cuenta.type === 'credit' ? 'Debes' : 'Disponible'}
-              </p>
-            </div>
-            <Saldo amount={cuenta.balance} />
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
-
-function EstadoVacio() {
-  return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-4 p-10 text-center">
-        <Sparkles className="size-8 text-primary" aria-hidden="true" />
-        <div>
-          <h2 className="font-serif text-xl font-semibold">Empecemos por tus cuentas</h2>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Registra dónde tienes tu plata —efectivo, débito, tarjetas— y a partir de ahí todo lo
-            demás se calcula solo.
-          </p>
-        </div>
-        <Button asChild>
-          <Link to="/cuentas">Crear mi primera cuenta</Link>
-        </Button>
+        <Link
+          to="/movimientos"
+          className="mt-4 inline-block text-sm font-medium text-primary underline underline-offset-4"
+        >
+          Ver los movimientos
+        </Link>
       </CardContent>
     </Card>
   );
@@ -234,18 +271,14 @@ function EstadoVacio() {
 
 function Esqueleto() {
   return (
-    <div className="flex flex-col gap-7">
-      <Skeleton className="h-9 w-48" />
-      <div className="grid gap-5 sm:grid-cols-3">
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
+    <div className="flex flex-col gap-5">
+      <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-24 rounded-2xl" />
+        ))}
       </div>
-      <Skeleton className="h-32" />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="h-64" />
-        <Skeleton className="h-64" />
-      </div>
+      <Skeleton className="h-64 rounded-2xl" />
+      <Skeleton className="h-72 rounded-2xl" />
     </div>
   );
 }

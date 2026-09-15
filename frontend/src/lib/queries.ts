@@ -23,7 +23,7 @@ export const keys = {
   categories: ['categories'] as const,
   tags: ['tags'] as const,
   transactions: (filtros?: object) => ['transactions', filtros ?? {}] as const,
-  dashboard: (month?: string) => ['dashboard', month ?? 'actual'] as const,
+  dashboard: (filtros?: object) => ['dashboard', filtros ?? {}] as const,
 };
 
 function useInvalidarDerivados() {
@@ -241,12 +241,65 @@ export function useCrearTransferencia() {
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
-export function useDashboard(month?: string): UseQueryResult<Dashboard> {
+export interface FiltrosDeResumen {
+  from?: string;
+  to?: string;
+  category_id?: number;
+  q?: string;
+}
+
+export function useDashboard(filtros: FiltrosDeResumen = {}): UseQueryResult<Dashboard> {
   return useQuery({
-    queryKey: keys.dashboard(month),
+    queryKey: keys.dashboard(filtros),
     queryFn: async () => {
-      const query = month ? `?month=${month}` : '';
-      return (await apiFetch<Dashboard>(`/dashboard${query}`)).data;
+      const params = new URLSearchParams();
+      for (const [clave, valor] of Object.entries(filtros)) {
+        if (valor !== undefined && valor !== '') params.set(clave, String(valor));
+      }
+      const query = params.toString();
+      return (await apiFetch<Dashboard>(`/dashboard${query ? `?${query}` : ''}`)).data;
+    },
+    // Mantiene el gráfico anterior mientras llega el nuevo: sin esto, cada
+    // cambio de filtro vacía la pantalla y la tendencia parpadea.
+    placeholderData: (anterior) => anterior,
+  });
+}
+
+// ── Edición ──────────────────────────────────────────────────────────────────
+
+export function useActualizarMovimiento() {
+  const invalidar = useInvalidarDerivados();
+
+  return useMutation({
+    mutationFn: async ({ id, cambios }: { id: number; cambios: Record<string, unknown> }) =>
+      (await apiFetch<Transaction>(`/transactions/${id}`, { method: 'PATCH', body: cambios })).data,
+    onSuccess: invalidar,
+  });
+}
+
+export function useActualizarCategoria() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, cambios }: { id: number; cambios: Record<string, unknown> }) =>
+      (await apiFetch<Category>(`/categories/${id}`, { method: 'PATCH', body: cambios })).data,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: keys.categories });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useEliminarCategoria() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await apiFetch(`/categories/${id}`, { method: 'DELETE' });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: keys.categories });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }

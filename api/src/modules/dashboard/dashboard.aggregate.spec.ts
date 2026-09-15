@@ -1,7 +1,11 @@
 import { serializar, toMoney } from '../../common/money/money';
 import {
+  ancestroEnNivel,
   calcularFlujo,
   calcularGastoPorCategoria,
+  cubosDelRango,
+  diasDelRango,
+  granularidadPara,
   type MovimientoAgregable,
 } from './dashboard.aggregate';
 
@@ -133,5 +137,69 @@ describe('Gasto por categoría', () => {
 
     // Si estas dos cifras no coinciden, el dashboard estaría mintiendo.
     expect(serializar(sumaPorCategoria)).toBe(serializar(flujo.expense));
+  });
+});
+
+describe('Jerarquía de tres niveles', () => {
+  // Costos fijos(1) → Servicios públicos(2) → Celsia(3)
+  const arbol = new Map([
+    ['1', { id: BigInt(1), parentId: null }],
+    ['2', { id: BigInt(2), parentId: BigInt(1) }],
+    ['3', { id: BigInt(3), parentId: BigInt(2) }],
+  ]);
+
+  it('sube de un concepto a su centro de costos', () => {
+    expect(ancestroEnNivel(arbol, BigInt(3), 1)).toBe(BigInt(1));
+  });
+
+  it('sube de un concepto a su grupo', () => {
+    expect(ancestroEnNivel(arbol, BigInt(3), 2)).toBe(BigInt(2));
+  });
+
+  it('un concepto pedido a su propio nivel se devuelve a sí mismo', () => {
+    expect(ancestroEnNivel(arbol, BigInt(3), 3)).toBe(BigInt(3));
+  });
+
+  it('un centro no tiene nivel 2: devuelve null en vez de inventarlo', () => {
+    expect(ancestroEnNivel(arbol, BigInt(1), 2)).toBeNull();
+  });
+
+  it('sin categoría no hay ancestro', () => {
+    expect(ancestroEnNivel(arbol, null, 1)).toBeNull();
+  });
+
+  it('un ciclo no cuelga el proceso', () => {
+    const ciclo = new Map([
+      ['1', { id: BigInt(1), parentId: BigInt(2) }],
+      ['2', { id: BigInt(2), parentId: BigInt(1) }],
+    ]);
+    expect(() => ancestroEnNivel(ciclo, BigInt(1), 1)).not.toThrow();
+  });
+});
+
+describe('Tendencia', () => {
+  const d = (iso: string): Date => new Date(`${iso}T00:00:00.000Z`);
+
+  it('un rango corto se agrupa por día', () => {
+    expect(granularidadPara(d('2025-03-01'), d('2025-03-31'))).toBe('dia');
+  });
+
+  it('un rango largo se agrupa por mes: 365 puntos no son una tendencia', () => {
+    expect(granularidadPara(d('2025-01-01'), d('2025-12-31'))).toBe('mes');
+  });
+
+  it('incluye los cubos VACÍOS: un mes en blanco tiene que verse plano', () => {
+    const cubos = cubosDelRango(d('2025-01-01'), d('2025-03-31'), 'mes');
+    expect(cubos).toEqual(['2025-01', '2025-02', '2025-03']);
+  });
+
+  it('el último día del rango entra', () => {
+    const cubos = cubosDelRango(d('2025-03-01'), d('2025-03-03'), 'dia');
+    expect(cubos).toEqual(['2025-03-01', '2025-03-02', '2025-03-03']);
+  });
+
+  it('cuenta ambos extremos del rango', () => {
+    expect(diasDelRango(d('2025-03-01'), d('2025-03-01'))).toBe(1);
+    expect(diasDelRango(d('2025-03-01'), d('2025-03-31'))).toBe(31);
   });
 });

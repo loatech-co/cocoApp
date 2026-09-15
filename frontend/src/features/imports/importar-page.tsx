@@ -170,7 +170,7 @@ export function ImportarPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-serif text-3xl font-semibold">Importar movimientos</h1>
+        <h1 className="text-3xl font-semibold">Importar movimientos</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Sube una captura o el PDF de tu extracto. Se lee <strong>en tu dispositivo</strong>: el
           documento no sale de aquí.
@@ -265,7 +265,7 @@ export function ImportarPage() {
             )}
 
             <p className="text-sm">
-              <strong className="font-serif text-2xl">{resultado.movimientos.length}</strong>{' '}
+              <strong className="text-2xl">{resultado.movimientos.length}</strong>{' '}
               movimientos en <span className="text-muted-foreground">{resultado.archivo}</span>
             </p>
 

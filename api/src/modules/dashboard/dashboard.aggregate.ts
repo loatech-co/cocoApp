@@ -92,3 +92,96 @@ export function calcularGastoPorCategoria(
     }))
     .sort((a, b) => b.total.comparedTo(a.total));
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Jerarquía de tres niveles y tendencia
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Lo mínimo de una categoría para subir por sus ancestros. */
+export interface CategoriaPlana {
+  id: bigint;
+  parentId: bigint | null;
+}
+
+/**
+ * Sube desde una categoría hasta el ancestro que ocupa `nivelObjetivo`.
+ *
+ * Los movimientos se cuelgan del CONCEPTO, que es el nivel 3. Para responder
+ * "¿cuánto se fue en servicios públicos?" hay que subir del concepto a su
+ * grupo; para "¿cuánto en costos fijos?", hasta el centro. Sin esto, un
+ * desglose por centro saldría vacío: ningún movimiento apunta a un centro.
+ *
+ * Devuelve `null` si la categoría no llega a ese nivel —un concepto colgado
+ * directamente de la raíz no tiene grupo— y quien llame decide qué hacer.
+ */
+export function ancestroEnNivel(
+  categorias: ReadonlyMap<string, CategoriaPlana>,
+  categoryId: bigint | null,
+  nivelObjetivo: number,
+): bigint | null {
+  if (categoryId === null) return null;
+
+  // Se sube hasta la raíz guardando el camino, y después se lee por índice.
+  const cadena: bigint[] = [];
+  let actual: bigint | null = categoryId;
+  const visitados = new Set<string>();
+
+  while (actual !== null) {
+    const clave = actual.toString();
+    if (visitados.has(clave)) break;
+    visitados.add(clave);
+    cadena.unshift(actual);
+    actual = categorias.get(clave)?.parentId ?? null;
+  }
+
+  // cadena[0] es el nivel 1. Si la rama es más corta que el nivel pedido, no
+  // existe tal ancestro.
+  return cadena[nivelObjetivo - 1] ?? null;
+}
+
+/**
+ * Cuántos días cubre el rango, ambos extremos incluidos.
+ */
+export function diasDelRango(desde: Date, hasta: Date): number {
+  const MS = 24 * 60 * 60 * 1000;
+  return Math.floor((hasta.getTime() - desde.getTime()) / MS) + 1;
+}
+
+/**
+ * El tamaño de cubo de la tendencia según lo ancho que sea el rango.
+ *
+ * Un año en cubos diarios son 365 puntos: la línea se vuelve ruido y no se lee
+ * ninguna tendencia. Un mes en cubos mensuales es UN punto, que tampoco dice
+ * nada. El corte está en unos dos meses.
+ */
+export function granularidadPara(desde: Date, hasta: Date): 'dia' | 'mes' {
+  return diasDelRango(desde, hasta) <= 62 ? 'dia' : 'mes';
+}
+
+/** La etiqueta del cubo al que cae una fecha: `2025-03-14` o `2025-03`. */
+export function cuboDe(fecha: Date, granularidad: 'dia' | 'mes'): string {
+  const iso = fecha.toISOString().slice(0, 10);
+  return granularidad === 'dia' ? iso : iso.slice(0, 7);
+}
+
+/**
+ * Todos los cubos del rango, incluidos los VACÍOS.
+ *
+ * Los meses sin gasto tienen que aparecer con cero. Si se omitieran, la línea
+ * uniría marzo con mayo y dibujaría una pendiente suave donde en realidad hubo
+ * un mes en blanco: la forma de la curva mentiría.
+ */
+export function cubosDelRango(desde: Date, hasta: Date, granularidad: 'dia' | 'mes'): string[] {
+  const cubos: string[] = [];
+  const cursor = new Date(
+    Date.UTC(desde.getUTCFullYear(), desde.getUTCMonth(), granularidad === 'dia' ? desde.getUTCDate() : 1),
+  );
+
+  while (cursor <= hasta) {
+    cubos.push(cuboDe(cursor, granularidad));
+    if (granularidad === 'dia') cursor.setUTCDate(cursor.getUTCDate() + 1);
+    else cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+
+  return cubos;
+}

@@ -1,7 +1,9 @@
 import {
+  PROFUNDIDAD_MAXIMA,
   anidar,
   descendientesDe,
   generariaCiclo,
+  nombreDelNivel,
   profundidadDe,
   profundidadResultante,
   type NodoDeCategoria,
@@ -113,5 +115,22 @@ describe('Anidar', () => {
 
   it('una lista vacía da un árbol vacío', () => {
     expect(anidar([])).toEqual([]);
+  });
+
+  describe('Los tres niveles del modelo', () => {
+    it('admite centro de costos → grupo → concepto, y nada más', () => {
+      expect(PROFUNDIDAD_MAXIMA).toBe(3);
+    });
+
+    it('nombra cada nivel por su nombre de dominio', () => {
+      expect(nombreDelNivel(1)).toBe('centro de costos');
+      expect(nombreDelNivel(2)).toBe('grupo');
+      expect(nombreDelNivel(3)).toBe('concepto');
+    });
+
+    it('un concepto cabe: colgar un nieto de la raíz da profundidad 3', () => {
+      // 1 (centro) → 2 (grupo) → 3 (concepto)
+      expect(profundidadDe(arbol, BigInt(3))).toBeLessThanOrEqual(PROFUNDIDAD_MAXIMA);
+    });
   });
 });

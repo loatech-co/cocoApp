@@ -546,22 +546,136 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         })
         .expect(201);
 
+      // El resumen se pide por RANGO, no por mes: es el mismo recorte que usa
+      // la lista de movimientos, para que las cifras de una expliquen la otra.
       const respuesta = await http
-        .get('/api/v1/dashboard?month=2026-08')
+        .get('/api/v1/dashboard?from=2026-08-01&to=2026-08-31')
         .set('Authorization', comoAna())
         .expect(200);
 
-      const { month, by_category } = respuesta.body.data;
+      const { range, by_category, trend, breakdown_level } = respuesta.body.data;
 
-      expect(month.income).toBe('5200000.00');
-      expect(month.expense).toBe('89900.00');
-      expect(month.net).toBe('5110100.00');
+      expect(range.income).toBe('5200000.00');
+      expect(range.expense).toBe('89900.00');
+      expect(range.net).toBe('5110100.00');
+
+      // Un mes entero se agrupa por día, y los días sin gasto vienen en cero:
+      // omitirlos haría que la línea uniera el 3 con el 20 en línea recta.
+      expect(breakdown_level).toBe('centro de costos');
+      expect(trend).toHaveLength(31);
+      expect(trend.every((p: { bucket: string }) => p.bucket.startsWith('2026-08'))).toBe(true);
 
       const sumaPorCategoria = by_category.reduce(
         (total: number, fila: { total: string }) => total + Number(fila.total),
         0,
       );
       expect(sumaPorCategoria.toFixed(2)).toBe('89900.00');
+    });
+  });
+
+  // ── Centros de costos, grupos y conceptos ──────────────────────────────────
+
+  describe('Jerarquía de tres niveles', () => {
+    it('filtrar por un CENTRO trae los movimientos de todos sus conceptos', async () => {
+      // Costos fijos → Servicios públicos → Celsia
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
+      const grupo = await crearCategoria(comoAna(), {
+        name: 'Servicios públicos',
+        parent_id: Number(centro.id),
+      });
+      const concepto = await crearCategoria(comoAna(), {
+        name: 'Celsia (Energia)',
+        parent_id: Number(grupo.id),
+      });
+
+      await http
+        .post('/api/v1/transactions')
+        .set('Authorization', comoAna())
+        .send({
+          date: '2026-08-10',
+          amount: '200000',
+          type: 'expense',
+          category_id: Number(concepto.id),
+          description: 'Celsia (Energia)',
+        })
+        .expect(201);
+
+      // El movimiento cuelga del CONCEPTO. Filtrar por el centro tiene que
+      // encontrarlo igual, o un desglose por centro saldría siempre vacío.
+      for (const id of [centro.id, grupo.id, concepto.id]) {
+        const r = await http
+          .get(`/api/v1/transactions?category_id=${Number(id)}`)
+          .set('Authorization', comoAna())
+          .expect(200);
+        expect(r.body.data).toHaveLength(1);
+      }
+    });
+
+    it('la búsqueda NO distingue mayúsculas', async () => {
+      await http
+        .post('/api/v1/transactions')
+        .set('Authorization', comoAna())
+        .send({
+          date: '2026-08-11',
+          amount: '150000',
+          type: 'expense',
+          description: 'Celsia (Energia)',
+        })
+        .expect(201);
+
+      // Postgres compara distinguiendo mayúsculas, a diferencia de MariaDB.
+      // Quien busca escribe en minúscula y espera encontrarlo.
+      const r = await http
+        .get('/api/v1/transactions?q=celsia')
+        .set('Authorization', comoAna())
+        .expect(200);
+
+      expect(r.body.data).toHaveLength(1);
+      expect(r.body.data[0].description).toBe('Celsia (Energia)');
+    });
+
+    it('el desglose del resumen BAJA un nivel al filtrar', async () => {
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
+      const grupo = await crearCategoria(comoAna(), {
+        name: 'Servicios públicos',
+        parent_id: Number(centro.id),
+      });
+      const concepto = await crearCategoria(comoAna(), {
+        name: 'Celsia',
+        parent_id: Number(grupo.id),
+      });
+
+      await http
+        .post('/api/v1/transactions')
+        .set('Authorization', comoAna())
+        .send({
+          date: '2026-08-12',
+          amount: '300000',
+          type: 'expense',
+          category_id: Number(concepto.id),
+        })
+        .expect(201);
+
+      const sinFiltro = await http
+        .get('/api/v1/dashboard?from=2026-08-01&to=2026-08-31')
+        .set('Authorization', comoAna())
+        .expect(200);
+      expect(sinFiltro.body.data.breakdown_level).toBe('centro de costos');
+      expect(sinFiltro.body.data.by_category[0].name).toBe('Costos fijos');
+
+      const dentroDelCentro = await http
+        .get(`/api/v1/dashboard?from=2026-08-01&to=2026-08-31&category_id=${Number(centro.id)}`)
+        .set('Authorization', comoAna())
+        .expect(200);
+      expect(dentroDelCentro.body.data.breakdown_level).toBe('grupo');
+      expect(dentroDelCentro.body.data.by_category[0].name).toBe('Servicios públicos');
+
+      const dentroDelGrupo = await http
+        .get(`/api/v1/dashboard?from=2026-08-01&to=2026-08-31&category_id=${Number(grupo.id)}`)
+        .set('Authorization', comoAna())
+        .expect(200);
+      expect(dentroDelGrupo.body.data.breakdown_level).toBe('concepto');
+      expect(dentroDelGrupo.body.data.by_category[0].name).toBe('Celsia');
     });
   });
 

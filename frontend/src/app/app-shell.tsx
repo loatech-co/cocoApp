@@ -13,7 +13,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
-import { CapturaRapida } from '@/features/transactions/captura-rapida';
+import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { useAuth } from '@/lib/auth-context';
 import { useLlevaCuentas } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,8 @@ import { cn } from '@/lib/utils';
 interface Seccion {
   to: string;
   label: string;
+  /** Lo que se muestra en la barra inferior del móvil, donde no cabe el largo. */
+  corto?: string;
   Icono: typeof Wallet;
   exact: boolean;
   /** Preferencia que debe estar activa para que la sección exista. */
@@ -38,11 +40,11 @@ interface Seccion {
  */
 const SECCIONES: readonly Seccion[] = [
   { to: '/', label: 'Resumen', Icono: LayoutDashboard, exact: true },
-  { to: '/movimientos', label: 'Movimientos', Icono: ArrowLeftRight, exact: false },
+  { to: '/movimientos', label: 'Movimientos', corto: 'Movs.', Icono: ArrowLeftRight, exact: false },
   // Para quien no lleva cuentas, este enlace no existe. Ni oculto con CSS ni
   // deshabilitado: ausente.
   { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false, requiere: 'cuentas' },
-  { to: '/categorias', label: 'Categorías', Icono: Tags, exact: false },
+  { to: '/centros-de-costos', label: 'Centros de costos', corto: 'Centros', Icono: Tags, exact: false },
   { to: '/importar', label: 'Importar', Icono: ScanLine, exact: false },
 ];
 
@@ -76,11 +78,11 @@ export function AppShell() {
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-sidebar p-4 md:flex">
         <div className="mb-8 flex items-center gap-3 px-2 pt-2">
           {/* La marca en un chip: le da peso sin necesitar un logotipo. */}
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-sidebar-active text-lg font-semibold text-sidebar-active-foreground">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sidebar-active text-lg font-bold text-sidebar-active-foreground">
             C
           </span>
           <span className="min-w-0">
-            <span className="block font-serif text-xl font-semibold text-sidebar-foreground">
+            <span className="block text-xl font-semibold text-sidebar-foreground">
               Coco
             </span>
             <span className="block truncate text-xs text-sidebar-muted">
@@ -92,7 +94,7 @@ export function AppShell() {
         <nav className="flex flex-1 flex-col gap-1" aria-label="Secciones">
           {seccionesVisibles.map(({ to, label, Icono, exact }) => (
             <Enlace key={to} to={to} exact={exact}>
-              <Icono className="size-[18px] shrink-0" aria-hidden="true" />
+              <Icono className="size-[18px] shrink-0" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden="true" />
               {label}
             </Enlace>
           ))}
@@ -104,7 +106,7 @@ export function AppShell() {
               </p>
               {SECCIONES_DE_ADMIN.map(({ to, label, Icono, exact }) => (
                 <Enlace key={to} to={to} exact={exact}>
-                  <Icono className="size-[18px] shrink-0" aria-hidden="true" />
+                  <Icono className="size-[18px] shrink-0" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden="true" />
                   {label}
                 </Enlace>
               ))}
@@ -114,7 +116,7 @@ export function AppShell() {
 
         <div className="mt-4 flex flex-col gap-1 border-t border-sidebar-border pt-4">
           <Enlace to="/mi-cuenta" exact={false}>
-            <UserCog className="size-[18px] shrink-0" aria-hidden="true" />
+            <UserCog className="size-[18px] shrink-0" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden="true" />
             Mi cuenta
           </Enlace>
 
@@ -123,7 +125,7 @@ export function AppShell() {
             onClick={() => void salir()}
             className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
           >
-            <LogOut className="size-[18px]" aria-hidden="true" />
+            <LogOut className="size-[18px]" strokeWidth={1.75} aria-hidden="true" />
             Salir
           </button>
         </div>
@@ -131,7 +133,7 @@ export function AppShell() {
 
       {/* Contenido */}
       <div className="md:pl-64">
-        <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:px-10 md:pb-16 md:pt-10">
+        <main className="w-full px-4 pb-28 pt-5 md:px-8 md:pb-16 md:pt-10 lg:px-10">
           <Outlet />
         </main>
       </div>
@@ -141,7 +143,7 @@ export function AppShell() {
         className="fixed inset-x-0 bottom-0 z-10 flex bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden"
         aria-label="Secciones"
       >
-        {seccionesVisibles.map(({ to, label, Icono, exact }) => (
+        {seccionesVisibles.map(({ to, label, corto, Icono, exact }) => (
           <NavLink
             key={to}
             to={to}
@@ -155,8 +157,8 @@ export function AppShell() {
               )
             }
           >
-            <Icono className="size-5" aria-hidden="true" />
-            {label}
+            <Icono className="size-5" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden="true" />
+            <span className="max-w-full truncate px-0.5">{corto ?? label}</span>
           </NavLink>
         ))}
       </nav>
@@ -173,13 +175,17 @@ export function AppShell() {
           'fixed right-4 z-20 flex size-14 items-center justify-center rounded-full',
           'bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105',
           'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-          'bottom-20 md:bottom-8 md:right-8',
+          'bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-8 md:right-8',
         )}
       >
         <Plus className="size-6" aria-hidden="true" />
       </button>
 
-      <CapturaRapida abierta={capturaAbierta} onCerrar={() => setCapturaAbierta(false)} />
+      <MovimientoModal
+        abierta={capturaAbierta}
+        movimiento={null}
+        onCerrar={() => setCapturaAbierta(false)}
+      />
     </div>
   );
 }
@@ -191,12 +197,11 @@ function Enlace({ to, exact, children }: { to: string; exact: boolean; children:
       end={exact}
       className={({ isActive }) =>
         cn(
-          // Pastilla completa, no rectángulo redondeado: es lo que da el aire
-          // de las referencias y separa la navegación del contenido, que es
-          // todo esquinas de tarjeta.
+          // Pastilla completa, no rectángulo: es lo que separa la navegación
+          // del contenido, que es todo esquinas de tarjeta.
           'flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition-colors',
           isActive
-            ? 'bg-sidebar-active text-sidebar-active-foreground'
+            ? 'bg-sidebar-hover text-sidebar-active'
             : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground',
         )
       }

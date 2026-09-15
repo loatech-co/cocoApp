@@ -116,7 +116,7 @@ export function RevisarPage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-serif text-3xl font-semibold">Revisar antes de importar</h1>
+        <h1 className="text-3xl font-semibold">Revisar antes de importar</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {lote.data.label ?? 'Documento sin nombre'} · Nada de esto ha tocado tus finanzas
           todavía.

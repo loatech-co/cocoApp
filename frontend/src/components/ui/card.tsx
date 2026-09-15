@@ -5,14 +5,13 @@ export function Card({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        // Sin borde: la tarjeta se separa del fondo hueso por SOMBRA, no por
-        // línea. Con borde y sombra a la vez el contorno se ve doble y la
-        // interfaz se llena de rayas.
+        // Sin borde: la tarjeta se separa del lienzo por SOMBRA, no por línea.
+        // Con borde y sombra a la vez el contorno se ve doble.
         //
-        // La sombra es cálida, no gris: una sombra neutra sobre un fondo hueso
-        // se ve sucia. Lleva el matiz del propio fondo.
-        'rounded-2xl bg-card text-card-foreground',
-        'shadow-[0_1px_2px_rgba(65,60,47,0.04),0_8px_24px_-12px_rgba(65,60,47,0.16)]',
+        // La sombra lleva el matiz verde del fondo, no gris neutro: una sombra
+        // gris sobre un lienzo verdoso se ve sucia.
+        'rounded-3xl bg-card text-card-foreground',
+        'shadow-[0_1px_2px_rgba(12,31,24,0.04),0_10px_30px_-14px_rgba(12,31,24,0.14)]',
         className,
       )}
       {...props}
@@ -25,7 +24,7 @@ export function CardHeader({ className, ...props }: ComponentProps<'div'>) {
 }
 
 export function CardTitle({ className, ...props }: ComponentProps<'h2'>) {
-  return <h2 className={cn('font-serif text-xl font-semibold leading-tight', className)} {...props} />;
+  return <h2 className={cn('text-lg font-semibold leading-tight tracking-tight', className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: ComponentProps<'p'>) {
