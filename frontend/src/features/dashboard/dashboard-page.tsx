@@ -1,20 +1,22 @@
-import { AlertCircle, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
+import { AlertCircle, ChevronLeft, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { Paginador } from '@/components/paginador';
 import { TablaDeMovimientos } from '@/components/tabla-de-movimientos';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { Tendencia, TendenciaEsqueleto } from '@/components/tendencia';
-import { ToolbarFiltros } from '@/components/toolbar-filtros';
+import { rutaSeleccionada, ToolbarFiltros } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
 import { rangoLargo } from '@/lib/fechas';
+import { useAuth } from '@/lib/auth-context';
 import { aParametros, useFiltros } from '@/lib/filtros';
 import { useCategories, useDashboard, useTransactions } from '@/lib/queries';
 import { formatCOP } from '@/lib/utils';
-import type { Transaction } from '@coco/types';
+import type { Category, Transaction } from '@coco/types';
 
 /**
  * Resumen.
@@ -27,25 +29,51 @@ import type { Transaction } from '@coco/types';
  * cómo se comportó en el tiempo (tendencia) y en qué se fue (desglose).
  */
 /**
- * Cuántas filas entran en una tarjeta del resumen.
+ * Cuántas filas trae cada página de la tabla del resumen.
  *
- * El mismo número en las dos —movimientos y distribución— para que midan
- * igual. Es un resumen: para ver la lista entera está su pantalla.
+ * La tabla enseña TODO lo que cae en el recorte, paginado. Enseñar "solo un
+ * poco" obliga a saltar a otra pantalla para terminar la pregunta que uno ya
+ * estaba haciendo aquí.
  */
-const FILAS_EN_TARJETA = 5;
+const POR_PAGINA = 25;
+
+/**
+ * El nombre con el que saludar.
+ *
+ * Solo el de pila: "Hola de nuevo, Gerardo Andrés Viteri" no saluda a nadie,
+ * recita un documento de identidad. Si no hay nombre, el correo tampoco sirve
+ * para saludar, así que el saludo se queda solo.
+ */
+function nombreDePila(usuario: { display_name?: string | null } | null | undefined): string {
+  return (usuario?.display_name ?? '').trim().split(/\s+/)[0] ?? '';
+}
 
 export function DashboardPage() {
+  const { usuario } = useAuth();
   const { filtros, aplicar, limpiar, hayFiltrosActivos } = useFiltros();
   const dashboard = useDashboard(aParametros(filtros));
 
   // Los mismos filtros que el resto de la pantalla: si la lista de aquí abajo
   // no respondiera al recorte, contradiría las cifras de arriba.
+  const [pagina, setPagina] = useState(1);
   const movimientos = useTransactions({
     ...aParametros(filtros),
-    per_page: FILAS_EN_TARJETA,
+    page: pagina,
+    per_page: POR_PAGINA,
     sort: '-date',
   });
   const categorias = useCategories();
+  const arbol = categorias.data ?? [];
+
+  // El camino hasta lo que se está desglosando. Solo con UNA categoría marcada:
+  // con varias no hay un "dentro de" único del que volver.
+  const ruta =
+    filtros.categoryIds.length === 1
+      ? (() => {
+          const { centro, grupo, concepto } = rutaSeleccionada(arbol, filtros.categoryIds[0]);
+          return [centro, grupo, concepto].filter((n): n is Category => n !== undefined);
+        })()
+      : [];
 
   // El mismo modal que en Movimientos: editar desde el resumen no puede ser
   // otra pantalla ni otro formulario.
@@ -54,15 +82,21 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <ToolbarFiltros
-        titulo="Tu resumen"
+        titulo={`Hola de nuevo${nombreDePila(usuario) ? `, ${nombreDePila(usuario)}` : ''}`}
         subtitulo={
           dashboard.data
             ? `${dashboard.data.range.count} movimientos · ${formatCOP(dashboard.data.range.expense)} gastados`
             : 'Todo se calcula de tus movimientos.'
         }
         filtros={filtros}
-        aplicar={aplicar}
-        limpiar={limpiar}
+        aplicar={(c) => {
+          setPagina(1);
+          aplicar(c);
+        }}
+        limpiar={() => {
+          setPagina(1);
+          limpiar();
+        }}
         hayFiltrosActivos={hayFiltrosActivos}
       />
 
@@ -80,8 +114,8 @@ export function DashboardPage() {
 
       {dashboard.isPending && (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => (
+          <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
+            {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-24 rounded-2xl" />
             ))}
           </div>
@@ -96,9 +130,7 @@ export function DashboardPage() {
 
       {dashboard.data && (
         <>
-          {/* Cuatro en fila desde `xl` y de dos en dos antes: a tres columnas
-              la cuarta tarjeta se quedaba sola en un renglón. */}
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
             <Kpi
               etiqueta="Gastos del periodo"
               valor={formatCOP(dashboard.data.range.expense)}
@@ -120,22 +152,11 @@ export function DashboardPage() {
               Icono={Receipt}
               chip="lima"
             />
-            <Distribucion
-              filas={dashboard.data.by_category}
-              nivel={dashboard.data.breakdown_level}
-              totalGastado={dashboard.data.range.expense}
-              onBajar={(id) => aplicar({ categoryIds: [id] })}
-            />
           </div>
 
           <Card>
             <CardContent className="p-4 sm:p-6">
-              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="font-display text-lg font-semibold">Comportamiento</h2>
-                <p className="text-xs text-muted-foreground">
-                  Agrupado por {dashboard.data.period.granularity === 'dia' ? 'día' : 'mes'}
-                </p>
-              </div>
+              <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
               <Tendencia
                 puntos={dashboard.data.trend}
                 granularidad={dashboard.data.period.granularity}
@@ -143,24 +164,53 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="font-display text-lg font-semibold">Movimientos</h2>
-              <Link
-                to="/movimientos"
-                className="text-sm font-medium text-primary underline underline-offset-4"
-              >
-                Ver todos
-              </Link>
+          {/* Tres décimas y siete: el desglose responde "¿en qué se repartió?"
+              con tres barras, y la tabla necesita todo el ancho que sobre para
+              sus seis columnas. */}
+          <div className="grid gap-4 sm:gap-5 lg:grid-cols-10">
+            <div className="lg:col-span-3">
+              <Distribucion
+                filas={dashboard.data.by_category}
+                nivel={dashboard.data.breakdown_level}
+                totalGastado={dashboard.data.range.expense}
+                ruta={ruta}
+                onBajar={(id) => {
+                  setPagina(1);
+                  aplicar({ categoryIds: [id] });
+                }}
+                onSubir={() => {
+                  setPagina(1);
+                  aplicar({ categoryIds: ruta.length > 1 ? [ruta[ruta.length - 2].id] : [] });
+                }}
+              />
             </div>
 
-            <TablaDeMovimientos
-              movimientos={movimientos.data?.data ?? []}
-              arbol={categorias.data ?? []}
-              cargando={movimientos.isPending}
-              onAbrir={setEditando}
-              filasDelEsqueleto={FILAS_EN_TARJETA}
-            />
+            <div className="flex min-w-0 flex-col gap-3 lg:col-span-7">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="font-display text-lg font-semibold">Movimientos</h2>
+                <Link
+                  to="/movimientos"
+                  className="text-sm font-medium text-primary underline underline-offset-4"
+                >
+                  Ver todos
+                </Link>
+              </div>
+
+              <TablaDeMovimientos
+                movimientos={movimientos.data?.data ?? []}
+                arbol={arbol}
+                cargando={movimientos.isPending}
+                onAbrir={setEditando}
+                filasDelEsqueleto={8}
+              />
+
+              <Paginador
+                pagina={pagina}
+                total={movimientos.data?.meta?.total ?? 0}
+                porPagina={POR_PAGINA}
+                onCambiar={setPagina}
+              />
+            </div>
           </div>
         </>
       )}
@@ -258,15 +308,20 @@ function Distribucion({
   filas,
   nivel,
   totalGastado,
+  ruta,
   onBajar,
+  onSubir,
 }: {
   filas: { category_id: number | null; name: string; total: string; count: number }[];
   nivel: string;
   totalGastado: string;
+  /** El camino hasta donde se bajó. Vacío = se está en los centros de costos. */
+  ruta: { id: number; name: string }[];
   onBajar: (id: number) => void;
+  onSubir: () => void;
 }) {
   const total = Number.parseFloat(totalGastado) || 1;
-  const CABEN = 3;
+  const CABEN = 6;
 
   // Sin gastos muestra CEROS, no un estado vacío: es un indicador, y los otros
   // tres de la fila dicen "$0" en la misma situación. Un cartel aquí rompería
@@ -283,6 +338,22 @@ function Distribucion({
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Distribución de costos
         </p>
+
+        {/* Bajar de nivel es un clic; subir tiene que serlo también. Sin esto,
+            entrar en un centro de costos era un viaje de ida: la única salida
+            era limpiar el filtro entero desde la barra de arriba. */}
+        {ruta.length > 0 ? (
+          <button
+            type="button"
+            onClick={onSubir}
+            className="mt-1 flex min-w-0 items-center gap-1 self-start rounded text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronLeft className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{ruta.map((n) => n.name).join(' · ')}</span>
+          </button>
+        ) : (
+          <p className="mt-1 text-xs text-muted-foreground">Por {nivel}</p>
+        )}
 
         <ul className="mt-2 flex flex-col gap-2">
             {visibles.map((fila) => {

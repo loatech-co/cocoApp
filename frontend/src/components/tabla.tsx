@@ -42,6 +42,7 @@ export function Th({
   children,
   alineado = 'izquierda',
   fija = false,
+  divisor = true,
   orden,
   className,
 }: {
@@ -49,6 +50,13 @@ export function Th({
   alineado?: 'izquierda' | 'derecha';
   /** La primera columna, la que no se va al hacer scroll. */
   fija?: boolean;
+  /**
+   * La línea que separa la columna fija de las que se desplazan.
+   *
+   * Ayuda cuando hay tantas columnas que uno se pierde de qué fila está
+   * leyendo. Con seis columnas que caben casi enteras, es una raya de más.
+   */
+  divisor?: boolean;
   orden?: { activo: 'asc' | 'desc' | null; onCambiar: () => void };
   className?: string;
 }) {
@@ -78,7 +86,8 @@ export function Th({
       className={cn(
         'whitespace-nowrap border-b border-border px-4 py-3 text-xs font-semibold text-muted-foreground',
         alineado === 'derecha' ? 'text-right' : 'text-left',
-        fija && 'sticky left-0 z-10 border-r bg-card',
+        fija && 'sticky left-0 z-10 bg-card',
+        fija && divisor && 'border-r',
         className,
       )}
     >
@@ -123,12 +132,15 @@ export function Td({
   children = null,
   alineado = 'izquierda',
   fija = false,
+  divisor = true,
   atencion = false,
   className,
 }: {
   children?: ReactNode;
   alineado?: 'izquierda' | 'derecha';
   fija?: boolean;
+  /** Ver `Th`. */
+  divisor?: boolean;
   /** Hereda el tinte de la fila: una celda fija sobre fondo propio lo taparía. */
   atencion?: boolean;
   className?: string;
@@ -140,7 +152,8 @@ export function Td({
         alineado === 'derecha' ? 'text-right' : 'text-left',
         // La celda fija necesita fondo PROPIO y opaco, o las columnas de atrás
         // se transparentarían por debajo al desplazarse.
-        fija && 'sticky left-0 z-10 border-r border-border',
+        fija && 'sticky left-0 z-10',
+        fija && divisor && 'border-r border-border',
         fija &&
           (atencion
             ? 'bg-[color-mix(in_srgb,var(--warning-surface)_40%,var(--card))]'
@@ -171,13 +184,26 @@ export function TablaPie({ children }: { children: ReactNode }) {
  * un esqueleto de otra forma es un cambio de página, no una espera, y la vista
  * salta cuando llegan los datos.
  */
-export function TablaEsqueleto({ columnas, filas = 8 }: { columnas: string[]; filas?: number }) {
+export function TablaEsqueleto({
+  columnas,
+  filas = 8,
+  divisor = true,
+}: {
+  columnas: string[];
+  filas?: number;
+  divisor?: boolean;
+}) {
   return (
     <Tabla>
       <thead>
         <tr>
           {columnas.map((nombre, i) => (
-            <Th key={nombre} fija={i === 0} alineado={i === columnas.length - 1 ? 'derecha' : 'izquierda'}>
+            <Th
+              key={nombre}
+              fija={i === 0}
+              divisor={divisor}
+              alineado={i === columnas.length - 1 ? 'derecha' : 'izquierda'}
+            >
               {nombre}
             </Th>
           ))}
@@ -187,7 +213,7 @@ export function TablaEsqueleto({ columnas, filas = 8 }: { columnas: string[]; fi
         {Array.from({ length: filas }, (_, fila) => (
           <tr key={fila} className="border-b border-border last:border-b-0">
             {columnas.map((nombre, i) => (
-              <Td key={nombre} fija={i === 0}>
+              <Td key={nombre} fija={i === 0} divisor={divisor}>
                 <Skeleton className={cn('h-4', i === 0 ? 'w-40' : 'w-20')} />
               </Td>
             ))}

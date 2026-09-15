@@ -1,44 +1,16 @@
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { diaLargo, MESES_LARGOS, rangoLargo } from '@/lib/fechas';
+import { Calendario, mesDeISO, type MesVisible } from '@/components/calendario';
+import { diaLargo, rangoLargo } from '@/lib/fechas';
 import { PRESETS, rangoDe, type Filtros, type Preset } from '@/lib/filtros';
 import { useHistoria } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 
-/**
- * La semana empieza en LUNES, no en domingo: es como se lee un calendario en
- * Colombia, y el fin de semana queda junto al final de la fila en vez de
- * partido entre las dos puntas.
- */
-const DIAS = ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];
-
-const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
-const utc = (anio: number, mes: number, dia: number): Date => new Date(Date.UTC(anio, mes, dia));
-
 /** Las dos fechas en orden, vengan como vengan: se puede pintar al revés. */
 function ordenadas(a: string, b: string): { from: string; to: string } {
   return a <= b ? { from: a, to: b } : { from: b, to: a };
-}
-
-/**
- * Las celdas de un mes, alineadas a la rejilla de siete columnas.
- *
- * Los huecos del principio y del final son `null` en vez de días del mes
- * vecino: un día gris que sí se puede pulsar confunde sobre qué mes se está
- * mirando, y uno que no se puede pulsar es ruido.
- */
-export function celdasDelMes(anio: number, mes: number): (string | null)[] {
-  // getUTCDay() cuenta desde el domingo; con +6 %7 el lunes pasa a ser 0.
-  const hueco = (utc(anio, mes, 1).getUTCDay() + 6) % 7;
-  const total = utc(anio, mes + 1, 0).getUTCDate();
-
-  const celdas: (string | null)[] = Array.from({ length: hueco }, () => null);
-  for (let dia = 1; dia <= total; dia += 1) celdas.push(aISO(utc(anio, mes, dia)));
-  while (celdas.length % 7 !== 0) celdas.push(null);
-
-  return celdas;
 }
 
 interface Borrador {
@@ -48,11 +20,9 @@ interface Borrador {
 }
 
 /** El mes que conviene mostrar al abrir: donde termina el rango. */
-function mesDelBorrador(b: Borrador): { anio: number; mes: number } {
-  // En "Todo" el rango llega cinco años al futuro; abrir allá no ayuda a nadie.
-  const ancla = b.preset === 'todo' ? aISO(new Date()) : b.to;
-  const [a, m] = ancla.split('-');
-  return { anio: Number(a), mes: Number(m) - 1 };
+function mesDelBorrador(b: Borrador): MesVisible {
+  // En "Todo" el rango puede llegar lejos; abrir allá no ayuda a nadie.
+  return mesDeISO(b.preset === 'todo' ? new Date().toISOString().slice(0, 10) : b.to);
 }
 
 /**
@@ -171,14 +141,6 @@ export function SelectorDeRango({
   // calendario entero coloreado, que no informa de nada.
   const pinta = borrador.preset !== 'todo' || ancla !== null;
 
-  const celdas = celdasDelMes(vista.anio, vista.mes);
-  const hoy = aISO(new Date());
-
-  function moverMes(pasos: number): void {
-    const d = utc(vista.anio, vista.mes + pasos, 1);
-    setVista({ anio: d.getUTCFullYear(), mes: d.getUTCMonth() });
-  }
-
   return (
     <div ref={caja} className="relative">
       <Button
@@ -248,92 +210,15 @@ export function SelectorDeRango({
             </ul>
 
             {/* ── Calendario ─────────────────────────────────────────────── */}
-            <div className="min-w-0 flex-1 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => moverMes(-1)}
-                  aria-label="Mes anterior"
-                >
-                  <ChevronLeft className="size-4" aria-hidden="true" />
-                </Button>
-                <span aria-live="polite" className="font-display text-sm font-semibold capitalize">
-                  {MESES_LARGOS[vista.mes]} de {vista.anio}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => moverMes(1)}
-                  aria-label="Mes siguiente"
-                >
-                  <ChevronRight className="size-4" aria-hidden="true" />
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-7">
-                {DIAS.map((d) => (
-                  <span
-                    key={d}
-                    aria-hidden="true"
-                    className="grid h-8 place-items-center text-xs font-medium text-muted-foreground"
-                  >
-                    {d}
-                  </span>
-                ))}
-              </div>
-
-              {/* Sin separación entre celdas: la banda del rango tiene que ser
-                  continua, y un hueco la partiría en cuadritos sueltos. */}
-              <div className="grid grid-cols-7" onMouseLeave={() => ancla && setSobrevolado(ancla)}>
-                {celdas.map((iso, i) => {
-                  if (iso === null) return <span key={`hueco-${i}`} className="h-9" />;
-
-                  const dentro = pinta && iso >= pintado.from && iso <= pintado.to;
-                  const esInicio = pinta && iso === pintado.from;
-                  const esFin = pinta && iso === pintado.to;
-                  const extremo = esInicio || esFin;
-
-                  return (
-                    <div
-                      key={iso}
-                      className={cn(
-                        'h-9',
-                        dentro && 'bg-bosque-100 dark:bg-white/12',
-                        // Las puntas se redondean también al principio y al
-                        // final de cada fila, o la banda quedaría cortada a
-                        // ras contra el borde del calendario.
-                        (esInicio || i % 7 === 0) && 'rounded-l-full',
-                        (esFin || i % 7 === 6) && 'rounded-r-full',
-                      )}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => elegirDia(iso)}
-                        onMouseEnter={() => ancla && setSobrevolado(iso)}
-                        aria-label={diaLargo(iso)}
-                        aria-pressed={extremo}
-                        className={cn(
-                          'size-9 rounded-full text-sm transition-colors',
-                          extremo
-                            ? 'bg-primary font-semibold text-primary-foreground'
-                            : dentro
-                              ? 'text-foreground hover:bg-secondary'
-                              : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
-                          // Hoy lleva anillo, no relleno: el relleno es del
-                          // rango elegido y competirían por significar lo mismo.
-                          iso === hoy && !extremo && 'ring-1 ring-inset ring-input font-semibold text-foreground',
-                        )}
-                      >
-                        {Number(iso.slice(8))}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <Calendario
+              className="flex-1 p-3"
+              desde={pinta ? pintado.from : undefined}
+              hasta={pinta ? pintado.to : undefined}
+              vista={vista}
+              onVista={setVista}
+              onDia={elegirDia}
+              onSobrevolar={(iso) => ancla && setSobrevolado(iso ?? ancla)}
+            />
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3">

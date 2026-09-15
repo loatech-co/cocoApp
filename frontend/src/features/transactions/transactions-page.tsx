@@ -148,7 +148,7 @@ export function TransactionsPage() {
           movimientos.data && movimientos.data.data.length > 0 ? (
             <TablaPie>
               <tr className="border-b border-border">
-                <Td fija className="text-muted-foreground">
+                <Td fija divisor={false} className="text-muted-foreground">
                   Promedio
                 </Td>
                 <Td />
@@ -160,7 +160,9 @@ export function TransactionsPage() {
                 </Td>
               </tr>
               <tr>
-                <Td fija>Total · {total} movimientos</Td>
+                <Td fija divisor={false}>
+                  Total · {total} movimientos
+                </Td>
                 <Td />
                 <Td />
                 <Td />

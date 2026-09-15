@@ -10,7 +10,14 @@ import { cn, formatCOP } from '@/lib/utils';
 import type { Category, Transaction } from '@coco/types';
 
 /** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
-export const COLUMNAS = ['Concepto', 'Centro de costos', 'Grupo', 'Pago', 'Periodo', 'Valor'];
+export const COLUMNAS = [
+  'Concepto',
+  'Periodo',
+  'Fecha de pago',
+  'Centro de costos',
+  'Grupo',
+  'Valor',
+];
 
 export interface OrdenDeColumna {
   activo: 'asc' | 'desc' | null;
@@ -50,7 +57,9 @@ export function TablaDeMovimientos({
   vacio?: ReactNode;
   filasDelEsqueleto?: number;
 }) {
-  if (cargando) return <TablaEsqueleto columnas={COLUMNAS} filas={filasDelEsqueleto} />;
+  if (cargando) {
+    return <TablaEsqueleto columnas={COLUMNAS} filas={filasDelEsqueleto} divisor={false} />;
+  }
 
   if (movimientos.length === 0) {
     return (
@@ -72,11 +81,16 @@ export function TablaDeMovimientos({
     <Tabla>
       <thead>
         <tr>
-          <Th fija orden={orden?.('merchant', 'asc')}>Concepto</Th>
+          <Th fija divisor={false} orden={orden?.('merchant', 'asc')}>
+            Concepto
+          </Th>
+          {/* El periodo antes que el pago: es el eje con el que se mira la app
+              —el mes AL QUE PERTENECE el gasto— y la fecha de pago es el dato
+              de apoyo que explica por qué a veces no coinciden. */}
+          <Th>Periodo</Th>
+          <Th orden={orden?.('date', 'desc')}>Fecha de pago</Th>
           <Th>Centro de costos</Th>
           <Th>Grupo</Th>
-          <Th orden={orden?.('date', 'desc')}>Pago</Th>
-          <Th>Periodo</Th>
           <Th alineado="derecha" orden={orden?.('amount', 'desc')}>
             Valor
           </Th>
@@ -119,7 +133,7 @@ function Fila({
 
   return (
     <Tr onClick={onAbrir} atencion={sinClasificar} atenuada={actualizar.isPending}>
-      <Td fija atencion={sinClasificar}>
+      <Td fija divisor={false} atencion={sinClasificar}>
         <span className="flex items-center gap-2">
           {sinClasificar && (
             <Flag className="size-3.5 shrink-0 text-warning" fill="currentColor" aria-label="Sin clasificar" />
@@ -130,9 +144,23 @@ function Fila({
         </span>
       </Td>
 
+      <Td className="whitespace-nowrap text-muted-foreground">
+        <span
+          className={cn(
+            periodo(movimiento) !== mesDe(movimiento.date) && 'font-medium text-warning',
+          )}
+        >
+          {mesBonito(periodo(movimiento))}
+        </span>
+      </Td>
+
+      <Td className="tabular whitespace-nowrap text-muted-foreground">
+        {diaBonito(movimiento.date)}
+      </Td>
+
       {/* Los selectores paran el clic: desplegar una lista no puede abrir
           además el modal que hay detrás. */}
-      <Td className="w-48" >
+      <Td className="w-48">
         <span onClick={(e) => e.stopPropagation()}>
           <SelectorEnFila
             aria="Centro de costos"
@@ -152,18 +180,6 @@ function Fila({
             deshabilitado={!centro}
             onElegir={(id) => reclasificar(id ?? centro?.id)}
           />
-        </span>
-      </Td>
-
-      <Td className="tabular whitespace-nowrap text-muted-foreground">{diaBonito(movimiento.date)}</Td>
-
-      <Td className="whitespace-nowrap text-muted-foreground">
-        <span
-          className={cn(
-            periodo(movimiento) !== mesDe(movimiento.date) && 'font-medium text-warning',
-          )}
-        >
-          {mesBonito(periodo(movimiento))}
         </span>
       </Td>
 

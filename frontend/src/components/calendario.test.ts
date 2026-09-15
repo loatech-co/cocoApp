@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { rangoLargo } from '@/lib/fechas';
 
-import { celdasDelMes } from './selector-de-rango';
+import { celdasDelMes } from './calendario';
 
 describe('La rejilla del calendario', () => {
   it('empieza en lunes: septiembre de 2026 arranca un martes y deja un hueco', () => {

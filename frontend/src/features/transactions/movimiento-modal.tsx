@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
+import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiClientError } from '@/lib/api-client';
@@ -106,7 +107,10 @@ export function MovimientoModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-carbon-950/50 p-0 sm:items-center sm:p-4"
+      // `bg-carbon-950/50` no pintaba nada: `carbon` no existe en esta paleta,
+      // así que la clase no generaba ningún color y el modal flotaba sobre la
+      // página sin velo detrás.
+      className="fixed inset-0 z-50 flex items-end justify-center bg-tinta-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onCerrar}
     >
       <div
@@ -117,7 +121,8 @@ export function MovimientoModal({
         // En móvil entra desde abajo y ocupa el ancho: es el patrón que la
         // gente espera de una app, y deja el pulgar cerca de los botones.
         className={cn(
-          'max-h-[92dvh] w-full overflow-y-auto bg-card p-5 shadow-xl',
+          'max-h-[92dvh] w-full overflow-y-auto bg-popover p-5',
+          'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
           'rounded-t-3xl sm:max-w-lg sm:rounded-3xl',
           'pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5',
         )}
@@ -185,13 +190,7 @@ export function MovimientoModal({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="mov-fecha">Fecha</Label>
-              <Input
-                id="mov-fecha"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
+              <SelectorDeDia id="mov-fecha" valor={date} onElegir={setDate} requerido />
             </div>
           </div>
 
