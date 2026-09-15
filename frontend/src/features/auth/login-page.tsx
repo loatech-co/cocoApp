@@ -173,7 +173,7 @@ export function LoginPage() {
           */}
           <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-bosque-900 via-bosque-900/70 to-transparent" />
 
-          <p className="absolute inset-x-0 bottom-0 p-10 text-4xl font-bold leading-tight tracking-tight text-white xl:p-14 xl:text-5xl">
+          <p className="absolute inset-x-0 bottom-0 p-10 text-7xl font-bold leading-[1.05] tracking-tight text-white xl:p-14 xl:text-8xl">
             Tus finanzas,
             <br />
             claras.
