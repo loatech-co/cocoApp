@@ -27,21 +27,17 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Tu resumen</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Todo se calcula de tus movimientos. Filtra arriba y el resto responde.
-        </p>
-      </header>
-
       <ToolbarFiltros
+        titulo="Tu resumen"
+        subtitulo={
+          dashboard.data
+            ? `${dashboard.data.range.count} movimientos · ${formatCOP(dashboard.data.range.expense)} gastados`
+            : 'Todo se calcula de tus movimientos.'
+        }
         filtros={filtros}
         aplicar={aplicar}
         limpiar={limpiar}
         hayFiltrosActivos={hayFiltrosActivos}
-        resumen={
-          dashboard.data ? `${dashboard.data.range.count} movimiento(s)` : undefined
-        }
       />
 
       {dashboard.isError && (

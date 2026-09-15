@@ -128,6 +128,15 @@
   /* Esquinas amplias, como en la referencia. */
   --radius: 1rem;
 
+  /* La sombra de lo que FLOTA: menús, calendarios, tarjetas al vuelo.
+     Es un token y no una clase suelta porque en oscuro tiene que ser otra: una
+     sombra verde translúcida sobre un fondo casi negro no se ve, y el panel
+     queda pegado al fondo sin nada que diga que está por encima. */
+  --sombra-flotante:
+    0 2px 6px rgba(12, 31, 24, 0.08),
+    0 12px 28px -8px rgba(12, 31, 24, 0.22),
+    0 32px 64px -24px rgba(12, 31, 24, 0.3);
+
   /* Verde muy suave, no gris neutro: acerca el área de trabajo a la barra
      lateral en vez de dejar el salto de verde oscuro a casi blanco, y de paso
      despega las tarjetas, que son blancas. */
@@ -197,30 +206,46 @@
   --background: var(--color-bosque-925);
   --foreground: var(--color-tinta-100);
 
-  --card: var(--color-bosque-800);
+  /* Las tarjetas bajan un escalón: antes se despegaban demasiado del área de
+     trabajo y la pantalla se leía como bloques flotando, no como una hoja. */
+  --card: var(--color-bosque-900);
   --card-foreground: var(--color-tinta-100);
-  --popover: var(--color-bosque-800);
-  --popover-foreground: var(--color-tinta-100);
+
+  /* El desplegable va al REVÉS que todo lo demás: más CLARO que la tarjeta
+     sobre la que cae. Compartiendo color con la tarjeta, un menú abierto sobre
+     una tarjeta desaparecía —solo lo delataba la sombra, que en oscuro
+     tampoco se ve—. */
+  --popover: var(--color-bosque-700);
+  --popover-foreground: #ffffff;
 
   /* En oscuro la marca sube a lima: el bosque sobre bosque no se ve. */
   --primary: var(--color-lima-300);
   --primary-foreground: var(--color-bosque-950);
 
-  --accent: var(--color-bosque-700);
+  --accent: var(--color-bosque-800);
   --accent-foreground: var(--color-lima-200);
 
-  --secondary: var(--color-bosque-700);
+  /* Un escalón por ENCIMA de la tarjeta: es lo que se ve al pasar por encima
+     de una fila, y tiene que aclararse, no oscurecerse. */
+  --secondary: var(--color-bosque-800);
   --secondary-foreground: var(--color-tinta-100);
 
-  --muted: var(--color-bosque-700);
+  --muted: var(--color-bosque-800);
   --muted-foreground: var(--color-tinta-400);
 
   --destructive: #f87171;
   --destructive-foreground: var(--color-bosque-950);
 
-  --border: var(--color-bosque-700);
+  --border: var(--color-bosque-800);
   --input: var(--color-tinta-600);
   --ring: var(--color-esmeralda-400);
+
+  /* Negra y profunda: sobre un fondo casi negro, la sombra verde del tema
+     claro no separa nada del fondo. */
+  --sombra-flotante:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 14px 32px -8px rgba(0, 0, 0, 0.55),
+    0 40px 72px -24px rgba(0, 0, 0, 0.7);
 
   --income: var(--color-esmeralda-400);
   --income-surface: var(--color-esmeralda-950);

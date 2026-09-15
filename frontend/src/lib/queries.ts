@@ -3,7 +3,7 @@ import type {
   ApiResponse,
   Category,
   Dashboard,
-  PaginationMeta,
+  TransactionsMeta,
   Tag,
   Transaction,
 } from '@coco/types';
@@ -165,13 +165,13 @@ export interface FiltrosDeMovimientos {
 export function useTransactions(filtros: FiltrosDeMovimientos = {}) {
   return useQuery({
     queryKey: keys.transactions(filtros),
-    queryFn: async (): Promise<ApiResponse<Transaction[], PaginationMeta>> => {
+    queryFn: async (): Promise<ApiResponse<Transaction[], TransactionsMeta>> => {
       const params = new URLSearchParams();
       for (const [clave, valor] of Object.entries(filtros)) {
         if (valor !== undefined && valor !== '') params.set(clave, String(valor));
       }
       const query = params.toString();
-      return apiFetch<Transaction[], PaginationMeta>(
+      return apiFetch<Transaction[], TransactionsMeta>(
         `/transactions${query ? `?${query}` : ''}`,
       );
     },

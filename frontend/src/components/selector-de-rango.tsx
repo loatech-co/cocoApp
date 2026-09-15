@@ -229,7 +229,7 @@ export function SelectorDeRango({
           aria-label="Elegir rango de tiempo"
           className={cn(
             'absolute left-0 z-30 mt-2 w-[min(34rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-popover',
-            'shadow-[0_4px_12px_rgba(12,31,24,0.08),0_16px_40px_-12px_rgba(12,31,24,0.25)]',
+            'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
           )}
         >
           <div className="flex flex-col sm:flex-row">
@@ -315,7 +315,7 @@ export function SelectorDeRango({
                       key={iso}
                       className={cn(
                         'h-9',
-                        dentro && 'bg-bosque-100 dark:bg-bosque-700',
+                        dentro && 'bg-bosque-100 dark:bg-white/12',
                         // Las puntas se redondean también al principio y al
                         // final de cada fila, o la banda quedaría cortada a
                         // ras contra el borde del calendario.

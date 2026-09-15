@@ -1,9 +1,9 @@
-import { AlertCircle, Plus } from 'lucide-react';
+import { AlertCircle, Flag, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { Paginador } from '@/components/paginador';
-import { rutaSeleccionada } from '@/components/toolbar-filtros';
-import { ToolbarFiltros } from '@/components/toolbar-filtros';
+import { Tabla, TablaPie, Td, Th, Tr } from '@/components/tabla';
+import { rutaSeleccionada, ToolbarFiltros, type Orden } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,13 +34,14 @@ export function TransactionsPage() {
   // arranca acotado, porque ahí la pregunta es "¿cómo voy este mes?".
   const { filtros, aplicar, limpiar, hayFiltrosActivos } = useFiltros('todo');
   const [pagina, setPagina] = useState(1);
+  const [orden, setOrden] = useState<Orden>('-date');
   const [editando, setEditando] = useState<Transaction | null | undefined>(undefined);
 
   const movimientos = useTransactions({
     ...aParametros(filtros),
     page: pagina,
     per_page: POR_PAGINA,
-    sort: '-date',
+    sort: orden,
   });
 
   const categorias = useCategories();
@@ -48,24 +49,34 @@ export function TransactionsPage() {
 
   const total = movimientos.data?.meta?.total ?? 0;
 
+  /**
+   * Conecta una cabecera con el orden.
+   *
+   * `primero` es la dirección del PRIMER clic, y no es la misma en todas: en
+   * una fecha o un valor uno quiere ver lo más grande y lo más reciente
+   * arriba; en un nombre, la A.
+   */
+  const ordenDe = (campo: string, primero: 'asc' | 'desc') => ({
+    activo: orden === campo ? ('asc' as const) : orden === `-${campo}` ? ('desc' as const) : null,
+    onCambiar: () => {
+      setPagina(1);
+      const descendente = `-${campo}` as Orden;
+      const ascendente = campo as Orden;
+      if (orden === ascendente) setOrden(descendente);
+      else if (orden === descendente) setOrden(ascendente);
+      else setOrden(primero === 'asc' ? ascendente : descendente);
+    },
+  });
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Movimientos
-          </h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            Toca una fila para editarla completa.
-          </p>
-        </div>
-        <Button type="button" onClick={() => setEditando(null)}>
-          <Plus className="size-4" aria-hidden="true" />
-          Nuevo
-        </Button>
-      </header>
-
       <ToolbarFiltros
+        titulo="Movimientos"
+        subtitulo={
+          total > 0
+            ? `Viendo ${Math.min(POR_PAGINA, total - (pagina - 1) * POR_PAGINA)} de ${total} movimientos`
+            : 'Toca una fila para editarla completa.'
+        }
         filtros={filtros}
         aplicar={(c) => {
           setPagina(1);
@@ -76,7 +87,19 @@ export function TransactionsPage() {
           limpiar();
         }}
         hayFiltrosActivos={hayFiltrosActivos}
-        resumen={total > 0 ? `${total} movimiento(s)` : undefined}
+        orden={{
+          valor: orden,
+          onCambiar: (o) => {
+            setPagina(1);
+            setOrden(o);
+          },
+        }}
+        acciones={
+          <Button type="button" size="sm" className="h-9 rounded-lg" onClick={() => setEditando(null)}>
+            <Plus className="size-4" aria-hidden="true" />
+            Nuevo
+          </Button>
+        }
       />
 
       {movimientos.isError && (
@@ -110,15 +133,51 @@ export function TransactionsPage() {
       )}
 
       {movimientos.data && movimientos.data.data.length > 0 && (
-        <Card>
-          <CardContent className="p-0">
-            <ul className="divide-y divide-border">
-              {movimientos.data.data.map((m) => (
-                <Fila key={m.id} movimiento={m} arbol={arbol} onAbrir={() => setEditando(m)} />
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <Tabla>
+          <thead>
+            <tr>
+              <Th fija orden={ordenDe('merchant', 'asc')}>Concepto</Th>
+              <Th>Centro de costos</Th>
+              <Th>Grupo</Th>
+              <Th orden={ordenDe('date', 'desc')}>Pago</Th>
+              <Th>Periodo</Th>
+              <Th alineado="derecha" orden={ordenDe('amount', 'desc')}>
+                Valor
+              </Th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {movimientos.data.data.map((m) => (
+              <Fila key={m.id} movimiento={m} arbol={arbol} onAbrir={() => setEditando(m)} />
+            ))}
+          </tbody>
+
+          {/* El pie suma el FILTRO ENTERO, no la página: pasar de página no
+              puede cambiar el total de lo que se está mirando. */}
+          <TablaPie>
+            <tr className="border-b border-border">
+              <Td fija className="text-muted-foreground">Promedio</Td>
+              <Td />
+              <Td />
+              <Td />
+              <Td />
+              <Td alineado="derecha" className="tabular">
+                {formatCOP(Number(movimientos.data.meta.sum_expense ?? 0) / Math.max(1, total))}
+              </Td>
+            </tr>
+            <tr>
+              <Td fija>Total · {total} movimientos</Td>
+              <Td />
+              <Td />
+              <Td />
+              <Td />
+              <Td alineado="derecha" className="tabular font-semibold text-expense">
+                {formatCOP(movimientos.data.meta.sum_expense ?? '0')}
+              </Td>
+            </tr>
+          </TablaPie>
+        </Tabla>
       )}
 
       <Paginador
@@ -156,40 +215,38 @@ function Fila({
     actualizar.mutate({ id: movimiento.id, cambios: { category_id: id ?? null } });
   };
 
-  return (
-    <li className={cn('transition-opacity', actualizar.isPending && 'opacity-50')}>
-      <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4">
-        {/* Zona que abre el modal. Los selectores quedan FUERA: un clic para
-            desplegar una lista no puede abrir un modal encima. */}
-        <button
-          type="button"
-          onClick={onAbrir}
-          className="flex min-w-0 flex-1 items-baseline justify-between gap-3 rounded-lg text-left sm:block"
-        >
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-medium">
-              {movimiento.description ?? 'Sin concepto'}
-            </span>
-            <span className="mt-0.5 block text-xs text-muted-foreground">{movimiento.date}</span>
-          </span>
-          <span
-            className={cn(
-              'tabular shrink-0 text-sm font-semibold sm:hidden',
-              movimiento.type === 'income' ? 'text-income' : 'text-expense',
-            )}
-          >
-            {movimiento.type === 'income' ? '+' : '−'}
-            {formatCOP(movimiento.amount)}
-          </span>
-        </button>
+  // Sin clasificar no es un error, es algo pendiente: la fila se marca para que
+  // se vea de lejos cuál falta por ordenar después de una importación.
+  const sinClasificar = movimiento.category_id === null;
 
-        <div className="flex gap-2 sm:w-96 sm:shrink-0">
+  return (
+    <Tr onClick={onAbrir} atencion={sinClasificar} atenuada={actualizar.isPending}>
+      <Td fija atencion={sinClasificar}>
+        <span className="flex items-center gap-2">
+          {sinClasificar && (
+            <Flag className="size-3.5 shrink-0 text-warning" fill="currentColor" aria-label="Sin clasificar" />
+          )}
+          <span className="block max-w-[14rem] truncate font-medium">
+            {movimiento.description ?? movimiento.merchant ?? 'Sin concepto'}
+          </span>
+        </span>
+      </Td>
+
+      {/* Los selectores paran el clic: desplegar una lista no puede abrir
+          además el modal que hay detrás. */}
+      <Td className="w-48" >
+        <span onClick={(e) => e.stopPropagation()}>
           <SelectorEnFila
             aria="Centro de costos"
             valor={centro?.id}
             opciones={arbol}
             onElegir={reclasificar}
           />
+        </span>
+      </Td>
+
+      <Td className="w-48">
+        <span onClick={(e) => e.stopPropagation()}>
           <SelectorEnFila
             aria="Grupo"
             valor={grupo?.id}
@@ -197,20 +254,61 @@ function Fila({
             deshabilitado={!centro}
             onElegir={(id) => reclasificar(id ?? centro?.id)}
           />
-        </div>
+        </span>
+      </Td>
 
+      <Td className="tabular whitespace-nowrap text-muted-foreground">{diaBonito(movimiento.date)}</Td>
+
+      <Td className="whitespace-nowrap text-muted-foreground">
         <span
           className={cn(
-            'tabular hidden w-36 shrink-0 text-right text-sm font-semibold sm:block',
-            movimiento.type === 'income' ? 'text-income' : 'text-expense',
+            periodo(movimiento) !== mesDe(movimiento.date) && 'font-medium text-warning',
           )}
         >
-          {movimiento.type === 'income' ? '+' : '−'}
-          {formatCOP(movimiento.amount)}
+          {mesBonito(periodo(movimiento))}
         </span>
-      </div>
-    </li>
+      </Td>
+
+      <Td
+        alineado="derecha"
+        className={cn(
+          'tabular whitespace-nowrap font-semibold',
+          movimiento.type === 'income' ? 'text-income' : 'text-expense',
+        )}
+      >
+        {movimiento.type === 'income' ? '+' : '−'}
+        {formatCOP(movimiento.amount)}
+      </Td>
+    </Tr>
   );
+}
+
+const MESES = [
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+];
+
+const mesDe = (iso: string): string => iso.slice(0, 7);
+
+/**
+ * El periodo del movimiento.
+ *
+ * Con respaldo en la fecha de pago a propósito: durante un despliegue conviven
+ * unos segundos la API vieja —que no manda `period`— y el frontend nuevo, y un
+ * campo ausente no puede dejar la pantalla en blanco.
+ */
+const periodo = (m: Transaction): string => mesDe(m.period ?? m.date);
+
+/** `2026-03-06` → `6 mar 2026`. */
+function diaBonito(iso: string): string {
+  const [a, m, d] = iso.split('-');
+  return `${Number(d)} ${MESES[Number(m) - 1] ?? m} ${a}`;
+}
+
+/** `2026-03-01` → `mar 2026`. El periodo es un mes, no un día. */
+function mesBonito(iso: string): string {
+  const [a, m] = iso.split('-');
+  return `${MESES[Number(m) - 1] ?? m} ${a}`;
 }
 
 function SelectorEnFila({

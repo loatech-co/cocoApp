@@ -66,6 +66,8 @@ export interface PuntoDeTendencia {
   expense: string;
   income: string;
   net: string;
+  /** Cuántos movimientos hay detrás del punto. */
+  count: number;
 }
 
 export interface DashboardPayload {
@@ -237,7 +239,7 @@ export class DashboardService {
     const cubos = new Map(
       cubosDelRango(inicio, fin, granularidad).map((b) => [
         b,
-        { expense: CERO, income: CERO },
+        { expense: CERO, income: CERO, count: 0 },
       ]),
     );
 
@@ -248,6 +250,7 @@ export class DashboardService {
       const actual = cubos.get(cubo);
       if (!actual) continue;
       const monto = toMoney(m.amount);
+      actual.count += 1;
       if (m.type === 'expense') actual.expense = actual.expense.plus(monto);
       else actual.income = actual.income.plus(monto);
     }
@@ -257,6 +260,7 @@ export class DashboardService {
       expense: serializar(toMoney(v.expense)),
       income: serializar(toMoney(v.income)),
       net: serializar(toMoney(v.income.minus(v.expense))),
+      count: v.count,
     }));
 
     const activos = cuentas

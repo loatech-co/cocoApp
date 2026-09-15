@@ -11,9 +11,10 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 import { Logo } from '@/components/logo';
+import { Menu, MenuOpcion, MenuSeparador } from '@/components/menu';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { useAuth } from '@/lib/auth-context';
 import { useLlevaCuentas } from '@/lib/preferences';
@@ -65,7 +66,7 @@ const SECCIONES_DE_ADMIN = [
 ] as const;
 
 export function AppShell() {
-  const { usuario, esAdmin, salir } = useAuth();
+  const { esAdmin } = useAuth();
   const llevaCuentas = useLlevaCuentas();
   const [capturaAbierta, setCapturaAbierta] = useState(false);
 
@@ -108,21 +109,6 @@ export function AppShell() {
           )}
         </nav>
 
-        <div className="mt-4 flex flex-col gap-1 border-t border-sidebar-border pt-4">
-          <Enlace to="/mi-cuenta" exact={false}>
-            <UserCog className="size-[18px] shrink-0" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden="true" />
-            Mi cuenta
-          </Enlace>
-
-          <button
-            type="button"
-            onClick={() => void salir()}
-            className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
-          >
-            <LogOut className="size-[18px]" strokeWidth={1.75} aria-hidden="true" />
-            Salir
-          </button>
-        </div>
       </aside>
 
       {/* Contenido */}
@@ -132,13 +118,8 @@ export function AppShell() {
           contenido no queda tapado debajo, que es lo que obliga a compensar con
           un padding que luego nadie recuerda por qué está.
         */}
-        <header className="sticky top-0 z-10 flex items-center justify-end gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur md:px-8 lg:px-10">
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm font-medium sm:block">
-              {usuario?.display_name ?? usuario?.email}
-            </span>
-            <Avatar nombre={usuario?.display_name ?? usuario?.email ?? '?'} />
-          </div>
+        <header className="sticky top-0 z-20 flex items-center justify-end gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur md:px-8 lg:px-10">
+          <MenuDeLaCuenta />
         </header>
 
         <main className="w-full px-4 pb-28 pt-5 md:px-8 md:pb-16 md:pt-10 lg:px-10">
@@ -195,6 +176,92 @@ export function AppShell() {
         onCerrar={() => setCapturaAbierta(false)}
       />
     </div>
+  );
+}
+
+/**
+ * El menú de la cuenta.
+ *
+ * ── Por qué repite lo que ya está en la barra lateral ───────────────────────
+ * Porque en un teléfono la barra lateral NO EXISTE: abajo solo caben las
+ * secciones del día a día. Sin este menú, "Mi cuenta" y la administración
+ * serían inalcanzables desde el móvil — no escondidas, inalcanzables.
+ *
+ * El correo va debajo del nombre porque la pregunta que uno se hace al pulsar
+ * un avatar es "¿con qué cuenta estoy dentro?", y dos personas pueden llamarse
+ * igual pero no tener el mismo correo.
+ */
+function MenuDeLaCuenta() {
+  const { usuario, esAdmin, salir } = useAuth();
+  const navegar = useNavigate();
+  const nombre = usuario?.display_name ?? usuario?.email ?? '?';
+
+  return (
+    <Menu
+      etiqueta="Tu cuenta"
+      ancho="w-64"
+      disparador={() => (
+        <span className="flex items-center gap-3">
+          <span className="hidden text-sm font-medium sm:block">{nombre}</span>
+          <Avatar nombre={nombre} />
+        </span>
+      )}
+    >
+      {(cerrar) => (
+        <>
+          <div className="flex items-center gap-3 px-3 py-2">
+            <Avatar nombre={nombre} />
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold">{nombre}</span>
+              {usuario?.email && (
+                <span className="block truncate text-xs text-muted-foreground">{usuario.email}</span>
+              )}
+            </span>
+          </div>
+
+          <MenuSeparador />
+
+          <MenuOpcion
+            Icono={UserCog}
+            onClick={() => {
+              cerrar();
+              navegar('/mi-cuenta');
+            }}
+          >
+            Mi cuenta
+          </MenuOpcion>
+
+          {esAdmin && (
+            <>
+              <MenuOpcion
+                Icono={ShieldCheck}
+                onClick={() => {
+                  cerrar();
+                  navegar('/administracion');
+                }}
+              >
+                Usuarios
+              </MenuOpcion>
+              <MenuOpcion
+                Icono={ScrollText}
+                onClick={() => {
+                  cerrar();
+                  navegar('/administracion/bitacora');
+                }}
+              >
+                Bitácora
+              </MenuOpcion>
+            </>
+          )}
+
+          <MenuSeparador />
+
+          <MenuOpcion Icono={LogOut} peligro onClick={() => void salir()}>
+            Cerrar sesión
+          </MenuOpcion>
+        </>
+      )}
+    </Menu>
   );
 }
 

@@ -147,15 +147,30 @@ export function diasDelRango(desde: Date, hasta: Date): number {
   return Math.floor((hasta.getTime() - desde.getTime()) / MS) + 1;
 }
 
+/** Cuántos meses de calendario toca el rango, ambos extremos incluidos. */
+export function mesesDelRango(desde: Date, hasta: Date): number {
+  return (
+    (hasta.getUTCFullYear() - desde.getUTCFullYear()) * 12 +
+    (hasta.getUTCMonth() - desde.getUTCMonth()) +
+    1
+  );
+}
+
 /**
  * El tamaño de cubo de la tendencia según lo ancho que sea el rango.
  *
  * Un año en cubos diarios son 365 puntos: la línea se vuelve ruido y no se lee
  * ninguna tendencia. Un mes en cubos mensuales es UN punto, que tampoco dice
- * nada. El corte está en unos dos meses.
+ * nada. El corte está en TRES MESES.
+ *
+ * Se cuentan MESES DE CALENDARIO y no días a propósito. Contando días, "los
+ * últimos 3 meses" caía a un lado o al otro del corte según el mes en que se
+ * mirara —febrero a abril son 61 días y mayo a julio son 92— y el mismo botón
+ * dibujaba a veces una línea de días y a veces una de meses. El eje de tiempo
+ * no puede cambiar de unidad según el mes en que uno esté.
  */
 export function granularidadPara(desde: Date, hasta: Date): 'dia' | 'mes' {
-  return diasDelRango(desde, hasta) <= 62 ? 'dia' : 'mes';
+  return mesesDelRango(desde, hasta) < 3 ? 'dia' : 'mes';
 }
 
 /** La etiqueta del cubo al que cae una fecha: `2025-03-14` o `2025-03`. */

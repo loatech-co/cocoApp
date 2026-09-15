@@ -1,0 +1,164 @@
+import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
+import type { ReactNode } from 'react';
+
+import { cn } from '@/lib/utils';
+
+/**
+ * Las piezas de una tabla de datos.
+ *
+ * ── Por qué son piezas sueltas y no una `<Tabla columnas={…} filas={…} />` ──
+ * Porque cada columna de esta app hace algo distinto: una edita en sitio, otra
+ * formatea plata, otra abre un modal. Una tabla "genérica" acabaría recibiendo
+ * una función de render por columna, que es exactamente escribir la celda a
+ * mano pero con una capa de indirección encima.
+ *
+ * Lo que sí se comparte es lo que siempre se hace mal: el desplazamiento
+ * horizontal, la primera columna fija y el pie con los totales.
+ */
+export function Tabla({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-card">
+      {/*
+        `min-w` fuerza el desplazamiento en vez de apretar las columnas hasta
+        que el texto se parte en cuatro líneas. Con la primera columna fija, se
+        arrastra a los lados sin perder de vista de qué fila es cada número.
+      */}
+      <table className={cn('w-full min-w-[48rem] border-collapse text-sm', className)}>
+        {children}
+      </table>
+    </div>
+  );
+}
+
+/**
+ * Una cabecera de columna.
+ *
+ * Cuando ordena, la flecha va SIEMPRE visible aunque esté apagada: si solo
+ * apareciera en la columna activa, no habría forma de saber que las demás
+ * también se pueden ordenar sin ir probando una por una.
+ */
+export function Th({
+  children,
+  alineado = 'izquierda',
+  fija = false,
+  orden,
+  className,
+}: {
+  children: ReactNode;
+  alineado?: 'izquierda' | 'derecha';
+  /** La primera columna, la que no se va al hacer scroll. */
+  fija?: boolean;
+  orden?: { activo: 'asc' | 'desc' | null; onCambiar: () => void };
+  className?: string;
+}) {
+  const Flecha = orden?.activo === 'asc' ? ChevronUp : orden?.activo === 'desc' ? ChevronDown : ChevronsUpDown;
+
+  const contenido = orden ? (
+    <button
+      type="button"
+      onClick={orden.onCambiar}
+      className={cn(
+        'inline-flex items-center gap-1 rounded transition-colors hover:text-foreground',
+        alineado === 'derecha' && 'flex-row-reverse',
+        orden.activo && 'text-foreground',
+      )}
+    >
+      {children}
+      <Flecha className={cn('size-3.5 shrink-0', !orden.activo && 'opacity-40')} aria-hidden="true" />
+    </button>
+  ) : (
+    children
+  );
+
+  return (
+    <th
+      scope="col"
+      aria-sort={orden?.activo === 'asc' ? 'ascending' : orden?.activo === 'desc' ? 'descending' : undefined}
+      className={cn(
+        'whitespace-nowrap border-b border-border px-4 py-3 text-xs font-semibold text-muted-foreground',
+        alineado === 'derecha' ? 'text-right' : 'text-left',
+        fija && 'sticky left-0 z-10 border-r bg-card',
+        className,
+      )}
+    >
+      {contenido}
+    </th>
+  );
+}
+
+export function Tr({
+  children,
+  onClick,
+  atencion = false,
+  atenuada = false,
+  className,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  /** La fila pide algo: un movimiento sin clasificar, por ejemplo. */
+  atencion?: boolean;
+  atenuada?: boolean;
+  className?: string;
+}) {
+  return (
+    <tr
+      onClick={onClick}
+      className={cn(
+        'border-b border-border transition-colors last:border-b-0',
+        // Ámbar y no rojo: sin clasificar no es un error, es algo pendiente. En
+        // esta paleta el rojo está reservado a lo que de verdad salió mal.
+        atencion ? 'bg-warning-surface/40 hover:bg-warning-surface/60' : 'hover:bg-secondary/60',
+        atenuada && 'opacity-50',
+        onClick && 'cursor-pointer',
+        className,
+      )}
+    >
+      {children}
+    </tr>
+  );
+}
+
+export function Td({
+  children = null,
+  alineado = 'izquierda',
+  fija = false,
+  atencion = false,
+  className,
+}: {
+  children?: ReactNode;
+  alineado?: 'izquierda' | 'derecha';
+  fija?: boolean;
+  /** Hereda el tinte de la fila: una celda fija sobre fondo propio lo taparía. */
+  atencion?: boolean;
+  className?: string;
+}) {
+  return (
+    <td
+      className={cn(
+        'px-4 py-3',
+        alineado === 'derecha' ? 'text-right' : 'text-left',
+        // La celda fija necesita fondo PROPIO y opaco, o las columnas de atrás
+        // se transparentarían por debajo al desplazarse.
+        fija && 'sticky left-0 z-10 border-r border-border',
+        fija &&
+          (atencion
+            ? 'bg-[color-mix(in_srgb,var(--warning-surface)_40%,var(--card))]'
+            : 'bg-card'),
+        className,
+      )}
+    >
+      {children}
+    </td>
+  );
+}
+
+/**
+ * El pie con los totales.
+ *
+ * Va dentro de la tabla y no debajo a propósito: así se desplaza con las
+ * columnas y cada total queda bajo la suya. Un pie fuera de la tabla obliga a
+ * repetir los anchos a mano y se desalinea al primer cambio.
+ */
+export function TablaPie({ children }: { children: ReactNode }) {
+  return <tfoot className="border-t-2 border-border bg-secondary/40 font-medium">{children}</tfoot>;
+}

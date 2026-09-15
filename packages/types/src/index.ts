@@ -60,6 +60,19 @@ export interface PaginationMeta {
 
 export type PaginatedResponse<TItem> = ApiResponse<TItem[], PaginationMeta>;
 
+/**
+ * Lo que devuelve la lista de movimientos, además de la paginación.
+ *
+ * Las sumas son del FILTRO ENTERO, no de la página que se está viendo. El pie
+ * de la tabla tiene que responder "cuánto suma lo que estoy mirando", y si
+ * sumara solo las cincuenta filas de la página diría otra cosa cada vez que se
+ * pasa de página.
+ */
+export interface TransactionsMeta extends PaginationMeta {
+  sum_expense: DecimalString;
+  sum_income: DecimalString;
+}
+
 /** Detalle de un error de validación, campo a campo. */
 export interface ApiErrorDetail {
   field?: string;
@@ -270,6 +283,11 @@ export interface Transaction {
   uuid: string;
   account_id: Id;
   date: DateOnlyString;
+  /**
+   * El primer día del mes AL QUE PERTENECE el gasto, que no siempre es el del
+   * pago: la factura de marzo se paga el 6 de abril y sigue siendo de marzo.
+   */
+  period: DateOnlyString;
   /** Siempre positivo. El signo económico lo da `type`. */
   amount: DecimalString;
   type: TransactionType;
@@ -302,6 +320,8 @@ export interface TrendPoint {
   expense: DecimalString;
   income: DecimalString;
   net: DecimalString;
+  /** Cuántos movimientos hay detrás del punto. */
+  count: number;
 }
 
 /** Los tres niveles del modelo, de arriba abajo. */

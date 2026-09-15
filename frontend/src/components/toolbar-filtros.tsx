@@ -1,43 +1,70 @@
-import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowDownUp, Filter, Search, X } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Menu, MenuOpcion, MenuSeparador, MenuTitulo } from '@/components/menu';
 import { SelectorDeRango } from '@/components/selector-de-rango';
+import { Input } from '@/components/ui/input';
 import type { Filtros } from '@/lib/filtros';
 import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
 
+/** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
+export const ORDENES = [
+  { valor: '-date', etiqueta: 'Más recientes' },
+  { valor: 'date', etiqueta: 'Más antiguos' },
+  { valor: '-amount', etiqueta: 'Mayor valor' },
+  { valor: 'amount', etiqueta: 'Menor valor' },
+  { valor: 'merchant', etiqueta: 'Concepto A–Z' },
+] as const;
+
+export type Orden = (typeof ORDENES)[number]['valor'];
+
 /**
- * La barra de filtros que comparten el Resumen y los Movimientos.
+ * La cabecera con los filtros que comparten el Resumen y los Movimientos.
+ *
+ * ── Por qué el título vive aquí dentro ──────────────────────────────────────
+ * Porque el título y el recorte son la misma frase: "Movimientos · 377 de
+ * 2022 a 2026". Separarlos en dos bloques deja el qué arriba y el cuánto
+ * abajo, y obliga a mirar dos sitios para saber qué se está viendo.
+ *
+ * ── Por qué los controles son iconos y no una fila de campos ────────────────
+ * Porque casi siempre están vacíos. Una fila de selectores siempre visibles
+ * ocupa el ancho entero para decir "todos, todos, todos"; plegados detrás de
+ * un icono, el espacio se lo queda el contenido, y el icono se enciende cuando
+ * hay algo puesto.
  *
  * ── Por qué es el MISMO componente en las dos pantallas ─────────────────────
  * Porque son dos vistas del mismo recorte. Si el resumen filtrara distinto que
- * la lista, las cifras de arriba no explicarían las filas de abajo y habría que
- * desconfiar de ambas.
- *
- * ── En móvil ────────────────────────────────────────────────────────────────
- * La búsqueda y el rango quedan siempre a la vista, porque son lo que se usa a
- * diario. El resto se pliega detrás de un botón: cinco selectores apilados
- * empujarían el contenido fuera de la pantalla en un teléfono.
+ * la lista, las cifras de arriba no explicarían las filas de abajo y habría
+ * que desconfiar de ambas.
  */
 export function ToolbarFiltros({
+  titulo,
+  subtitulo,
+  resumen,
   filtros,
   aplicar,
   limpiar,
   hayFiltrosActivos,
-  resumen,
+  orden,
+  acciones,
 }: {
+  titulo: string;
+  /** Lo que se está viendo, en una línea. Ej: "377 movimientos". */
+  subtitulo?: string;
+  /** Alias de `subtitulo`, por compatibilidad con las llamadas existentes. */
+  resumen?: string;
   filtros: Filtros;
   aplicar: (cambios: Partial<Filtros>) => void;
   limpiar: () => void;
   hayFiltrosActivos: boolean;
-  /** Texto corto con lo que se está viendo. Ej: "377 movimientos". */
-  resumen?: string;
+  /** Solo donde ordenar significa algo: una lista. */
+  orden?: { valor: Orden; onCambiar: (valor: Orden) => void };
+  /** Botones propios de la pantalla, a la derecha del todo. */
+  acciones?: ReactNode;
 }) {
   const categorias = useCategories();
-  const [abierto, setAbierto] = useState(false);
 
   // La búsqueda se escribe local y se manda con retraso: sin esto cada tecla
   // dispararía una consulta y la lista parpadearía mientras se escribe.
@@ -50,91 +77,182 @@ export function ToolbarFiltros({
     return () => clearTimeout(id);
   }, [busqueda, filtros.q, aplicar]);
 
+  // El campo empieza plegado y se abre al pulsar la lupa. Se queda abierto
+  // mientras haya algo escrito: plegarlo escondería el filtro que está
+  // recortando la pantalla, y no habría forma de saber por qué faltan filas.
+  const [buscando, setBuscando] = useState((filtros.q ?? '') !== '');
+  const campo = useRef<HTMLInputElement>(null);
+
   const arbol = categorias.data ?? [];
   const { centro, grupo, concepto } = rutaSeleccionada(arbol, filtros.categoryId);
 
-  const grupos = centro?.children ?? [];
-  const conceptos = grupo?.children ?? [];
-
   return (
-    <div className="flex flex-col gap-3 rounded-2xl bg-card p-3 shadow-[0_1px_2px_rgba(65,60,47,0.04),0_8px_24px_-12px_rgba(65,60,47,0.16)] sm:p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1 basis-full sm:basis-56">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            type="search"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar: celsia, colegio, sura…"
-            aria-label="Buscar por palabra clave"
-            className="rounded-full pl-9"
-          />
-        </div>
-
-        <SelectorDeRango filtros={filtros} aplicar={aplicar} />
-
-        <Button
-          type="button"
-          variant={abierto ? 'default' : 'outline'}
-          onClick={() => setAbierto((v) => !v)}
-          aria-expanded={abierto}
-          className="shrink-0"
-        >
-          <SlidersHorizontal className="size-4" aria-hidden="true" />
-          <span className="hidden sm:inline">Clasificación</span>
-          {filtros.categoryId !== undefined && (
-            <span className="ml-1 size-2 rounded-full bg-current" aria-hidden="true" />
-          )}
-        </Button>
-
-        {hayFiltrosActivos && (
-          <Button type="button" variant="ghost" onClick={limpiar} className="shrink-0">
-            <X className="size-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Limpiar</span>
-          </Button>
-        )}
-
-        {resumen && (
-          <span className="ml-auto shrink-0 text-xs text-muted-foreground">{resumen}</span>
+    <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 border-b border-border pb-4">
+      <div className="min-w-0">
+        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{titulo}</h1>
+        {(subtitulo ?? resumen) && (
+          <p className="mt-1 truncate text-sm text-muted-foreground">{subtitulo ?? resumen}</p>
         )}
       </div>
 
-      {/* Fila 3 — plegable */}
-      {abierto && (
-        <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Selector
-            etiqueta="Centro de costos"
-            ayuda="Lo más general"
-            valor={centro?.id}
-            opciones={arbol}
-            onElegir={(id) => aplicar({ categoryId: id ?? 0 })}
+      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+        {/* ── Búsqueda ─────────────────────────────────────────────────── */}
+        {buscando ? (
+          <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              ref={campo}
+              type="search"
+              autoFocus
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              onBlur={() => busqueda === '' && setBuscando(false)}
+              placeholder="Buscar: celsia, colegio, sura…"
+              aria-label="Buscar por palabra clave"
+              className="h-9 rounded-lg pl-9"
+            />
+          </div>
+        ) : (
+          <BotonIcono
+            etiqueta="Buscar"
+            Icono={Search}
+            onClick={() => {
+              setBuscando(true);
+              // El foco no se hereda de un elemento que acaba de nacer.
+              setTimeout(() => campo.current?.focus(), 0);
+            }}
           />
-          <Selector
-            etiqueta="Grupo"
-            ayuda={centro ? 'Dentro del centro' : 'Elige un centro primero'}
-            valor={grupo?.id}
-            opciones={grupos}
-            deshabilitado={!centro}
-            onElegir={(id) => aplicar({ categoryId: id ?? centro?.id ?? 0 })}
-          />
-          <Selector
-            etiqueta="Concepto"
-            ayuda={grupo ? 'Lo más específico' : 'Elige un grupo primero'}
-            valor={concepto?.id}
-            opciones={conceptos}
-            deshabilitado={!grupo}
-            onElegir={(id) => aplicar({ categoryId: id ?? grupo?.id ?? 0 })}
-          />
+        )}
 
-        </div>
-      )}
-    </div>
+        {/* ── Orden ────────────────────────────────────────────────────── */}
+        {orden && (
+          <Menu
+            etiqueta="Ordenar"
+            Icono={ArrowDownUp}
+            soloIcono
+            activo={orden.valor !== '-date'}
+            ancho="w-56"
+          >
+            {(cerrar) => (
+              <>
+                <MenuTitulo>Ordenar por</MenuTitulo>
+                {ORDENES.map((o) => (
+                  <MenuOpcion
+                    key={o.valor}
+                    elegida={orden.valor === o.valor}
+                    onClick={() => {
+                      orden.onCambiar(o.valor);
+                      cerrar();
+                    }}
+                  >
+                    {o.etiqueta}
+                  </MenuOpcion>
+                ))}
+              </>
+            )}
+          </Menu>
+        )}
+
+        {/* ── Clasificación ────────────────────────────────────────────── */}
+        <Menu
+          etiqueta="Filtrar por clasificación"
+          Icono={Filter}
+          soloIcono
+          activo={filtros.categoryId !== undefined}
+          ancho="w-72"
+        >
+          {(cerrar) => (
+            <div className="px-3 pb-2">
+              <MenuTitulo>Filtrar por clasificación</MenuTitulo>
+              <div className="flex flex-col gap-3 pt-1">
+                <Selector
+                  etiqueta="Centro de costos"
+                  ayuda="Lo más general"
+                  valor={centro?.id}
+                  opciones={arbol}
+                  onElegir={(id) => aplicar({ categoryId: id ?? 0 })}
+                />
+                <Selector
+                  etiqueta="Grupo"
+                  ayuda={centro ? 'Dentro del centro' : 'Elige un centro primero'}
+                  valor={grupo?.id}
+                  opciones={centro?.children ?? []}
+                  deshabilitado={!centro}
+                  onElegir={(id) => aplicar({ categoryId: id ?? centro?.id ?? 0 })}
+                />
+                <Selector
+                  etiqueta="Concepto"
+                  ayuda={grupo ? 'Lo más específico' : 'Elige un grupo primero'}
+                  valor={concepto?.id}
+                  opciones={grupo?.children ?? []}
+                  deshabilitado={!grupo}
+                  onElegir={(id) => aplicar({ categoryId: id ?? grupo?.id ?? 0 })}
+                />
+              </div>
+
+              {filtros.categoryId !== undefined && (
+                <>
+                  <MenuSeparador />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      aplicar({ categoryId: 0 });
+                      cerrar();
+                    }}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    Quitar la clasificación
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </Menu>
+
+        <SelectorDeRango filtros={filtros} aplicar={aplicar} />
+
+        {hayFiltrosActivos && <BotonIcono etiqueta="Limpiar filtros" Icono={X} onClick={limpiar} />}
+
+        {acciones}
+      </div>
+    </header>
   );
 }
 
+/**
+ * Los botones cuadrados del toolbar.
+ *
+ * Mismo alto y mismo radio que los desplegables de al lado: una fila de
+ * controles con dos alturas distintas se lee como dos filas mal alineadas.
+ */
+function BotonIcono({
+  etiqueta,
+  Icono,
+  onClick,
+}: {
+  etiqueta: string;
+  Icono: typeof Search;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={etiqueta}
+      title={etiqueta}
+      className={cn(
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border',
+        'bg-card text-foreground transition-colors hover:bg-secondary',
+        'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      )}
+    >
+      <Icono className="size-4" aria-hidden="true" />
+    </button>
+  );
+}
 
 function Selector({
   etiqueta,
@@ -161,7 +279,7 @@ function Selector({
         disabled={deshabilitado || opciones.length === 0}
         onChange={(e) => onElegir(e.target.value === '' ? null : Number(e.target.value))}
         className={cn(
-          'h-10 rounded-lg border bg-card px-3 text-sm',
+          'h-9 rounded-lg border bg-card px-3 text-sm',
           'disabled:cursor-not-allowed disabled:opacity-50',
         )}
         style={{ borderColor: 'var(--input)' }}

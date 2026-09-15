@@ -28,6 +28,8 @@ export interface TransactionView {
   uuid: string;
   account_id: bigint | null;
   date: string;
+  /** El mes AL QUE PERTENECE el gasto, que no siempre es el del pago. */
+  period: string;
   amount: string;
   type: TransactionType;
   category_id: bigint | null;
@@ -76,11 +78,23 @@ export class TransactionsService {
   async listar(
     userId: bigint,
     query: ListTransactionsQueryDto,
-  ): Promise<{ data: TransactionView[]; meta: { page: number; per_page: number; total: number } }> {
+  ): Promise<{
+    data: TransactionView[];
+    meta: {
+      page: number;
+      per_page: number;
+      total: number;
+      sum_expense: string;
+      sum_income: string;
+    };
+  }> {
     const where = await this.construirFiltro(userId, query);
     const { page, perPage, skip, take } = parsePaginacion(query.page, query.per_page);
 
-    const [filas, total] = await Promise.all([
+    // Las sumas las hace la BASE, sobre el filtro entero. Traerlas sumando en
+    // memoria obligaría a descargar todas las filas del filtro —no las
+    // cincuenta de la página— solo para pintar un pie de tabla.
+    const [filas, total, sumas] = await Promise.all([
       this.prisma.transaction.findMany({
         where,
         include: INCLUIR_TODO,
@@ -89,11 +103,25 @@ export class TransactionsService {
         take,
       }),
       this.prisma.transaction.count({ where }),
+      this.prisma.transaction.groupBy({
+        by: ['type'],
+        where,
+        _sum: { amount: true },
+      }),
     ]);
+
+    const sumaDe = (tipo: TransactionType): string =>
+      serializar(toMoney(sumas.find((s) => s.type === tipo)?._sum.amount ?? 0));
 
     return {
       data: filas.map((fila) => this.presentar(fila)),
-      meta: { page, per_page: perPage, total },
+      meta: {
+        page,
+        per_page: perPage,
+        total,
+        sum_expense: sumaDe('expense'),
+        sum_income: sumaDe('income'),
+      },
     };
   }
 
@@ -427,6 +455,7 @@ export class TransactionsService {
       uuid: fila.uuid,
       account_id: fila.accountId,
       date: fila.date.toISOString().slice(0, 10),
+      period: fila.period.toISOString().slice(0, 10),
       amount: serializar(toMoney(fila.amount)),
       type: fila.type,
       category_id: fila.categoryId,

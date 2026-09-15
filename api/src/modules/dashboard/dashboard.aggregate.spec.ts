@@ -188,6 +188,17 @@ describe('Tendencia', () => {
     expect(granularidadPara(d('2025-01-01'), d('2025-12-31'))).toBe('mes');
   });
 
+  it('dos meses siguen siendo días', () => {
+    expect(granularidadPara(d('2025-03-01'), d('2025-04-30'))).toBe('dia');
+  });
+
+  it('"los ultimos 3 meses" se agrupa por mes SIEMPRE, caiga en el mes que caiga', () => {
+    // Contando días esto no era estable: feb-abr son 61 días y may-jul son 92,
+    // así que el mismo botón cambiaba la unidad del eje según el mes.
+    expect(granularidadPara(d('2025-02-01'), d('2025-04-02'))).toBe('mes');
+    expect(granularidadPara(d('2025-05-01'), d('2025-07-02'))).toBe('mes');
+  });
+
   it('incluye los cubos VACÍOS: un mes en blanco tiene que verse plano', () => {
     const cubos = cubosDelRango(d('2025-01-01'), d('2025-03-31'), 'mes');
     expect(cubos).toEqual(['2025-01', '2025-02', '2025-03']);
