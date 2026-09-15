@@ -40,6 +40,9 @@ export function Tendencia({
   // Con muchos cubos las etiquetas se pisan: se muestran salteadas.
   const cada = Math.max(1, Math.ceil(puntos.length / 8));
 
+  // Si todo el rango cae en un año, el año sobra en cada etiqueta.
+  const mismoAnio = new Set(puntos.map((p) => p.bucket.slice(0, 4))).size === 1;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs text-muted-foreground">
@@ -164,9 +167,17 @@ const MESES = [
   'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
 ];
 
-/** `2025-03` → `mar 25`. `2025-03-14` → `14 mar`. */
-export function etiquetaDeCubo(bucket: string): string {
+/**
+ * `2025-03-14` → `14 mar`. `2025-03` → `mar 25`, o solo `mar` si todo el rango
+ * cae en el mismo año.
+ *
+ * Repetir el año en los doce puntos de un mismo año es ruido: ocupa espacio,
+ * hace que las etiquetas se pisen y no distingue un punto de otro. Solo aporta
+ * cuando el rango cruza de año.
+ */
+export function etiquetaDeCubo(bucket: string, mismoAnio = false): string {
   const [anio, mes, dia] = bucket.split('-');
   const nombre = MESES[Number(mes) - 1] ?? mes;
-  return dia ? `${Number(dia)} ${nombre}` : `${nombre} ${anio.slice(2)}`;
+  if (dia) return `${Number(dia)} ${nombre}`;
+  return mismoAnio ? nombre : `${nombre} ${anio.slice(2)}`;
 }
