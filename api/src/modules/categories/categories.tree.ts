@@ -193,3 +193,53 @@ export function anidar<T extends NodoDeCategoria>(categorias: readonly T[]): Con
 
   return raices;
 }
+
+/**
+ * Los ids de un filtro de categorías: `"3,7,12"` → `[3n, 7n, 12n]`.
+ *
+ * ── Por qué una lista y no un id ────────────────────────────────────────────
+ * Porque el panel de filtros son casillas: se pueden marcar varios centros a
+ * la vez, o dos grupos de centros distintos. Con un solo id habría que elegir
+ * entre "Casa" y "Transporte" cuando la pregunta real suele ser "¿cuánto me
+ * cuestan los dos juntos?".
+ *
+ * Lo que no sea un número se descarta en silencio. Un parámetro mal escrito en
+ * una URL pegada no debería impedirle a alguien ver sus movimientos, y el
+ * filtro más amplio —sin filtro— nunca esconde datos.
+ */
+export function idsDeCategorias(crudo?: string | number): bigint[] {
+  if (crudo === undefined || crudo === null || crudo === '') return [];
+
+  const partes = String(crudo).split(',');
+  const ids: bigint[] = [];
+
+  for (const parte of partes) {
+    const limpio = parte.trim();
+    if (!/^\d+$/.test(limpio)) continue;
+    const id = BigInt(limpio);
+    if (!ids.includes(id)) ids.push(id);
+  }
+
+  return ids;
+}
+
+/**
+ * Cada id con toda su rama por debajo, sin repetidos.
+ *
+ * Los movimientos cuelgan del CONCEPTO, nunca del centro ni del grupo, así que
+ * filtrar por un centro sin expandir su rama devuelve cero filas — que es
+ * exactamente lo que pasaba antes de esto.
+ */
+export function ramasDe(
+  categorias: readonly NodoDeCategoria[],
+  ids: readonly bigint[],
+): bigint[] {
+  const rama = new Set<string>();
+
+  for (const id of ids) {
+    rama.add(id.toString());
+    for (const hijo of descendientesDe(categorias, id)) rama.add(hijo.toString());
+  }
+
+  return [...rama].map((id) => BigInt(id));
+}

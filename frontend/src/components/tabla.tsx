@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 /**
@@ -161,4 +162,38 @@ export function Td({
  */
 export function TablaPie({ children }: { children: ReactNode }) {
   return <tfoot className="border-t-2 border-border bg-secondary/40 font-medium">{children}</tfoot>;
+}
+
+/**
+ * La tabla mientras llega su dato.
+ *
+ * Con el MISMO número de columnas y el mismo alto de fila que la de verdad:
+ * un esqueleto de otra forma es un cambio de página, no una espera, y la vista
+ * salta cuando llegan los datos.
+ */
+export function TablaEsqueleto({ columnas, filas = 8 }: { columnas: string[]; filas?: number }) {
+  return (
+    <Tabla>
+      <thead>
+        <tr>
+          {columnas.map((nombre, i) => (
+            <Th key={nombre} fija={i === 0} alineado={i === columnas.length - 1 ? 'derecha' : 'izquierda'}>
+              {nombre}
+            </Th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: filas }, (_, fila) => (
+          <tr key={fila} className="border-b border-border last:border-b-0">
+            {columnas.map((nombre, i) => (
+              <Td key={nombre} fija={i === 0}>
+                <Skeleton className={cn('h-4', i === 0 ? 'w-40' : 'w-20')} />
+              </Td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </Tabla>
+  );
 }

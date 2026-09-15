@@ -1,12 +1,13 @@
-import { ArrowDownUp, ChevronRight, Filter, Search, X } from 'lucide-react';
+import { ArrowDownUp, Filter, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { Menu, MenuOpcion, MenuSeparador, MenuTitulo } from '@/components/menu';
+import { FiltroClasificacion } from '@/components/filtro-clasificacion';
+import { Menu, MenuOpcion, MenuTitulo } from '@/components/menu';
 import { SelectorDeRango } from '@/components/selector-de-rango';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Filtros } from '@/lib/filtros';
 import { useCategories } from '@/lib/queries';
-import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
 
 /** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
@@ -91,7 +92,6 @@ export function ToolbarFiltros({
   }, [busqueda, filtros.q, aplicar]);
 
   const arbol = categorias.data ?? [];
-  const { lista, miga } = ramaVisible(arbol, rutaSeleccionada(arbol, filtros.categoryId));
 
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 border-b border-border pb-4">
@@ -123,15 +123,20 @@ export function ToolbarFiltros({
             />
           </div>
         ) : (
-          <BotonIcono
-            etiqueta="Buscar"
-            Icono={Search}
+          <Button
+            type="button"
+            variant="herramienta"
+            size="chip-icon"
+            aria-label="Buscar"
+            title="Buscar"
             onClick={() => {
               setBuscando(true);
               // El foco no se hereda de un elemento que acaba de nacer.
               setTimeout(() => campo.current?.focus(), 0);
             }}
-          />
+          >
+            <Search className="size-4" aria-hidden="true" />
+          </Button>
         )}
 
         {/* ── Orden ────────────────────────────────────────────────────── */}
@@ -168,125 +173,35 @@ export function ToolbarFiltros({
           etiqueta="Filtrar por clasificación"
           Icono={Filter}
           soloIcono
-          activo={filtros.categoryId !== undefined}
+          activo={filtros.categoryIds.length > 0}
           ancho="w-72"
+          tipo="panel"
         >
-          {(cerrar) => (
-            <>
-              <MenuTitulo>Clasificación</MenuTitulo>
-
-              {/* La miga de pan es el camino de vuelta. Sin ella, bajar a los
-                  conceptos de un grupo sería un viaje de ida. */}
-              <div className="flex flex-wrap items-center gap-1 px-3 pb-1.5 text-xs text-muted-foreground">
-                <button
-                  type="button"
-                  onClick={() => aplicar({ categoryId: 0 })}
-                  className="rounded hover:text-foreground hover:underline"
-                >
-                  Todo
-                </button>
-                {miga.map((nodo) => (
-                  <span key={nodo.id} className="flex items-center gap-1">
-                    <ChevronRight className="size-3 opacity-60" aria-hidden="true" />
-                    <button
-                      type="button"
-                      onClick={() => aplicar({ categoryId: nodo.id })}
-                      className="max-w-32 truncate rounded hover:text-foreground hover:underline"
-                    >
-                      {nodo.name}
-                    </button>
-                  </span>
-                ))}
-              </div>
-
-              {/* Se limita el alto: un centro con cuarenta conceptos haría un
-                  menú más largo que la pantalla y sin forma de llegar al pie. */}
-              <div className="max-h-72 overflow-y-auto">
-                {lista.length === 0 ? (
-                  <p className="px-3 py-2 text-sm text-muted-foreground">Nada que desglosar aquí.</p>
-                ) : (
-                  lista.map((nodo) => (
-                    <MenuOpcion
-                      key={nodo.id}
-                      elegida={filtros.categoryId === nodo.id}
-                      onClick={() => {
-                        aplicar({ categoryId: nodo.id });
-                        // Si no tiene nada dentro, el menú ya cumplió: seguir
-                        // abierto sobre una lista vacía no ofrece nada.
-                        if (!nodo.children?.length) cerrar();
-                      }}
-                    >
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="min-w-0 truncate">{nodo.name}</span>
-                        {!!nodo.children?.length && (
-                          <ChevronRight
-                            className="size-3.5 shrink-0 opacity-40"
-                            aria-hidden="true"
-                          />
-                        )}
-                      </span>
-                    </MenuOpcion>
-                  ))
-                )}
-              </div>
-
-              {filtros.categoryId !== undefined && (
-                <>
-                  <MenuSeparador />
-                  <MenuOpcion
-                    Icono={X}
-                    onClick={() => {
-                      aplicar({ categoryId: 0 });
-                      cerrar();
-                    }}
-                  >
-                    Quitar el filtro
-                  </MenuOpcion>
-                </>
-              )}
-            </>
-          )}
+          <FiltroClasificacion
+            arbol={arbol}
+            marcados={filtros.categoryIds}
+            onCambiar={(ids) => aplicar({ categoryIds: ids })}
+          />
         </Menu>
 
         <SelectorDeRango filtros={filtros} aplicar={aplicar} />
 
-        {hayFiltrosActivos && <BotonIcono etiqueta="Limpiar filtros" Icono={X} onClick={limpiar} />}
+        {hayFiltrosActivos && (
+          <Button
+            type="button"
+            variant="herramienta"
+            size="chip-icon"
+            aria-label="Limpiar filtros"
+            title="Limpiar filtros"
+            onClick={limpiar}
+          >
+            <X className="size-4" aria-hidden="true" />
+          </Button>
+        )}
 
         {acciones}
       </div>
     </header>
-  );
-}
-
-/**
- * Los botones cuadrados del toolbar.
- *
- * Mismo alto y mismo radio que los desplegables de al lado: una fila de
- * controles con dos alturas distintas se lee como dos filas mal alineadas.
- */
-function BotonIcono({
-  etiqueta,
-  Icono,
-  onClick,
-}: {
-  etiqueta: string;
-  Icono: typeof Search;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={etiqueta}
-      title={etiqueta}
-      className={cn(
-        'inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-border',
-        'bg-card text-foreground transition-colors hover:bg-secondary',
-        'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-      )}
-    >
-      <Icono className="size-4" aria-hidden="true" />
-    </button>
   );
 }
 
@@ -317,33 +232,4 @@ export function rutaSeleccionada(
   }
 
   return {};
-}
-
-/**
- * Qué nivel se muestra en el panel, y el camino hasta él.
- *
- * ── Por qué no hay estado de navegación ─────────────────────────────────────
- * Porque seleccionar ES navegar: elegir un centro de costos filtra por su rama
- * entera y, de paso, deja a la vista sus grupos para afinar. Un estado aparte
- * de "dónde estoy mirando" podría contradecir a "qué tengo filtrado", y habría
- * que mantener los dos de acuerdo en cada clic.
- *
- * Manda el nodo más profundo que TENGA hijos. Si el elegido no tiene nada
- * dentro —un concepto, o un grupo todavía vacío—, se muestran sus hermanos: la
- * alternativa es un panel en blanco justo después de hacer clic.
- */
-export function ramaVisible(
-  arbol: Category[],
-  ruta: { centro?: Category; grupo?: Category; concepto?: Category },
-): { lista: Category[]; miga: Category[] } {
-  const cadena = [ruta.centro, ruta.grupo, ruta.concepto].filter(
-    (n): n is Category => n !== undefined,
-  );
-
-  for (let i = cadena.length - 1; i >= 0; i -= 1) {
-    const hijos = cadena[i].children ?? [];
-    if (hijos.length > 0) return { lista: hijos, miga: cadena.slice(0, i + 1) };
-  }
-
-  return { lista: arbol, miga: [] };
 }

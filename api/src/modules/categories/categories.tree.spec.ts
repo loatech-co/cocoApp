@@ -3,9 +3,11 @@ import {
   anidar,
   descendientesDe,
   generariaCiclo,
+  idsDeCategorias,
   nombreDelNivel,
   profundidadDe,
   profundidadResultante,
+  ramasDe,
   type NodoDeCategoria,
 } from './categories.tree';
 
@@ -132,5 +134,49 @@ describe('Anidar', () => {
       // 1 (centro) → 2 (grupo) → 3 (concepto)
       expect(profundidadDe(arbol, BigInt(3))).toBeLessThanOrEqual(PROFUNDIDAD_MAXIMA);
     });
+  });
+});
+
+describe('Filtro por varias categorías', () => {
+  const arbol = [
+    { id: BigInt(1), parentId: null },
+    { id: BigInt(2), parentId: BigInt(1) },
+    { id: BigInt(3), parentId: BigInt(2) },
+    { id: BigInt(10), parentId: null },
+    { id: BigInt(11), parentId: BigInt(10) },
+  ];
+
+  it('lee una lista separada por comas', () => {
+    expect(idsDeCategorias('1,10')).toEqual([BigInt(1), BigInt(10)]);
+  });
+
+  it('descarta lo que no sea un número en vez de reventar', () => {
+    // Un parámetro mal escrito en una URL pegada no puede impedirle a alguien
+    // ver sus movimientos.
+    expect(idsDeCategorias('1,abc,,10')).toEqual([BigInt(1), BigInt(10)]);
+    expect(idsDeCategorias('')).toEqual([]);
+    expect(idsDeCategorias(undefined)).toEqual([]);
+  });
+
+  it('no repite ids', () => {
+    expect(idsDeCategorias('4,4,4')).toEqual([BigInt(4)]);
+  });
+
+  it('cada id arrastra su rama entera', () => {
+    // Los movimientos cuelgan del concepto: sin expandir, filtrar por un
+    // centro devolvería cero filas.
+    expect(ramasDe(arbol, [BigInt(1)]).sort()).toEqual([BigInt(1), BigInt(2), BigInt(3)].sort());
+  });
+
+  it('une las ramas de varios sin repetir', () => {
+    const rama = ramasDe(arbol, [BigInt(1), BigInt(2), BigInt(10)]);
+    expect(new Set(rama).size).toBe(rama.length);
+    expect(rama.sort()).toEqual(
+      [BigInt(1), BigInt(2), BigInt(3), BigInt(10), BigInt(11)].sort(),
+    );
+  });
+
+  it('sin ids, ninguna rama', () => {
+    expect(ramasDe(arbol, [])).toEqual([]);
   });
 });

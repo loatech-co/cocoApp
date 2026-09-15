@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { celdasDelMes, rangoBonito } from './selector-de-rango';
+import { rangoLargo } from '@/lib/fechas';
+
+import { celdasDelMes } from './selector-de-rango';
 
 describe('La rejilla del calendario', () => {
   it('empieza en lunes: septiembre de 2026 arranca un martes y deja un hueco', () => {
@@ -39,11 +41,19 @@ describe('La rejilla del calendario', () => {
 });
 
 describe('El rango escrito', () => {
-  it('escribe el año una sola vez cuando el rango no lo cruza', () => {
-    expect(rangoBonito('2026-09-01', '2026-09-10')).toBe('1 sep — 10 sep 2026');
+  it('con mes y año completos, y sin repetirlos cuando son los mismos', () => {
+    expect(rangoLargo('2026-09-01', '2026-09-10')).toBe('1 — 10 de septiembre de 2026');
+  });
+
+  it('repite el mes cuando cambia, pero el año solo una vez', () => {
+    expect(rangoLargo('2026-08-20', '2026-09-10')).toBe(
+      '20 de agosto — 10 de septiembre de 2026',
+    );
   });
 
   it('escribe los dos años cuando el rango cruza de uno a otro', () => {
-    expect(rangoBonito('2025-12-20', '2026-01-05')).toBe('20 dic 2025 — 5 ene 2026');
+    expect(rangoLargo('2025-12-20', '2026-01-05')).toBe(
+      '20 de diciembre de 2025 — 5 de enero de 2026',
+    );
   });
 });

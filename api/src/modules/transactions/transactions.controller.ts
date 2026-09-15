@@ -37,6 +37,17 @@ export class TransactionsController {
 
   /**
    * Va antes de `:id` a propósito: si estuviera después, Express intentaría
+   * interpretar "historia" como un identificador.
+   */
+  @Get('historia')
+  historia(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ first: string | null; last: string | null }> {
+    return this.transactions.historia(user.id);
+  }
+
+  /**
+   * Va antes de `:id` a propósito: si estuviera después, Express intentaría
    * interpretar "transfer" como un identificador.
    */
   @Post('transfer')

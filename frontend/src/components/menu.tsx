@@ -1,6 +1,7 @@
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 /**
@@ -67,41 +68,40 @@ export function Menu({
 
   return (
     <div ref={caja} className="relative">
-      <button
-        type="button"
-        onClick={() => setAbierto((v) => !v)}
-        aria-expanded={abierto}
-        aria-haspopup={tipo === 'menu' ? 'menu' : 'dialog'}
-        aria-label={soloIcono ? etiqueta : undefined}
-        title={soloIcono ? etiqueta : undefined}
-        className={
-          disparador
-            ? 'flex items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
-            : cn(
-                'inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border text-sm font-medium transition-colors',
-                'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                soloIcono ? 'w-9 justify-center' : 'px-3',
-                activo || abierto
-                  ? 'border-primary/30 bg-accent text-accent-foreground'
-                  : 'border-border bg-card text-foreground hover:bg-secondary',
-              )
-        }
-      >
-        {disparador ? (
-          disparador({ abierto })
-        ) : (
-          <>
-            {Icono && <Icono className="size-4 shrink-0" aria-hidden={true} />}
-            {!soloIcono && <span className="truncate">{etiqueta}</span>}
-            {!soloIcono && (
-              <ChevronDown
-                className={cn('size-3.5 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
-                aria-hidden={true}
-              />
-            )}
-          </>
-        )}
-      </button>
+      {disparador ? (
+        <button
+          type="button"
+          onClick={() => setAbierto((v) => !v)}
+          aria-expanded={abierto}
+          aria-haspopup={tipo === 'menu' ? 'menu' : 'dialog'}
+          className="flex items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          {disparador({ abierto })}
+        </button>
+      ) : (
+        <Button
+          type="button"
+          variant="herramienta"
+          size={soloIcono ? 'chip-icon' : 'chip'}
+          onClick={() => setAbierto((v) => !v)}
+          aria-expanded={abierto}
+          aria-haspopup={tipo === 'menu' ? 'menu' : 'dialog'}
+          // Encendido cuando hay algo elegido aquí dentro, o mientras está
+          // abierto: el propio estilo lo resuelve la variante.
+          aria-pressed={activo || abierto}
+          aria-label={soloIcono ? etiqueta : undefined}
+          title={soloIcono ? etiqueta : undefined}
+        >
+          {Icono && <Icono className="size-4 shrink-0" aria-hidden={true} />}
+          {!soloIcono && <span className="truncate">{etiqueta}</span>}
+          {!soloIcono && (
+            <ChevronDown
+              className={cn('size-3.5 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
+              aria-hidden={true}
+            />
+          )}
+        </Button>
+      )}
 
       {abierto && (
         <div

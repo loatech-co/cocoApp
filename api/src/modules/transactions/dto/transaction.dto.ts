@@ -8,6 +8,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -222,6 +223,17 @@ export class ListTransactionsQueryDto {
   @Type(() => Number)
   @IsInt()
   category_id?: number;
+
+  /**
+   * Varios ids separados por coma: `?category_ids=3,7`. Cada uno arrastra su
+   * rama entera. Convive con `category_id` para no romper enlaces guardados.
+   */
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d+(,\d+)*$/, {
+    message: 'Las categorías deben ser números separados por coma.',
+  })
+  category_ids?: string;
 
   @IsOptional()
   @IsEnum(TransactionType)

@@ -1,6 +1,6 @@
 import { Controller, Get, Injectable, Module, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CERO, serializar, toMoney } from '../../common/money/money';
@@ -8,7 +8,7 @@ import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AccountsService, type AccountView } from '../accounts/accounts.service';
-import { descendientesDe } from '../categories/categories.tree';
+import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
 import {
   ancestroEnNivel,
   calcularFlujo,
@@ -43,6 +43,14 @@ export class DashboardQueryDto {
   @Type(() => Number)
   @IsInt()
   category_id?: number;
+
+  /** Varios, separados por coma. Cada uno arrastra su rama entera. */
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d+(,\d+)*$/, {
+    message: 'Las categorías deben ser números separados por coma.',
+  })
+  category_ids?: string;
 
   /** Busca en descripción, comercio y notas. Sin distinguir mayúsculas. */
   @IsOptional()
@@ -144,20 +152,36 @@ export class DashboardService {
     const porId = new Map(planas.map((c) => [c.id.toString(), c]));
     const datosDe = new Map(categorias.map((c) => [c.id.toString(), c]));
 
-    // Filtrar por una categoría trae TODA su rama: los movimientos cuelgan del
+    // Filtrar por categorías trae TODA su rama: los movimientos cuelgan del
     // concepto, nunca del centro ni del grupo.
-    const rama =
-      query.category_id !== undefined
-        ? [BigInt(query.category_id), ...descendientesDe(planas, BigInt(query.category_id))]
-        : null;
+    const pedidas = [
+      ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
+      ...idsDeCategorias(query.category_ids),
+    ];
+    const rama = pedidas.length > 0 ? ramasDe(planas, pedidas) : null;
+
+    // La búsqueda también entra por la clasificación: "servicios públicos" trae
+    // todo lo que cuelga de ese grupo aunque ninguna fila lo diga en su texto.
+    const porNombre = query.q
+      ? (() => {
+          const aguja = query.q.toLowerCase();
+          const coinciden = categorias
+            .filter((c) => c.name.toLowerCase().includes(aguja))
+            .map((c) => c.id);
+          return coinciden.length > 0 ? ramasDe(planas, coinciden) : [];
+        })()
+      : [];
 
     // El desglose baja un nivel respecto de lo que se mira: sin filtro se
     // agrupa por centro; dentro de un centro, por grupo; dentro de un grupo,
     // por concepto. Dentro de un concepto ya no hay a dónde bajar.
+    //
+    // Con VARIAS categorías marcadas no hay un "dentro de" único: dos centros
+    // distintos no comparten nivel inferior. Se baja un nivel solo cuando lo
+    // marcado es una sola cosa; si no, se desglosa por centro, que es la
+    // pregunta que sigue teniendo respuesta.
     const nivelFiltrado =
-      query.category_id === undefined
-        ? 0
-        : profundidadDeCategoria(porId, BigInt(query.category_id));
+      pedidas.length === 1 ? profundidadDeCategoria(porId, pedidas[0]) : 0;
     const nivelDesglose = Math.min(nivelFiltrado + 1, 3);
 
     const [cuentas, movimientos] = await Promise.all([
@@ -174,6 +198,7 @@ export class DashboardService {
               { description: { contains: query.q, mode: 'insensitive' as const } },
               { merchant: { contains: query.q, mode: 'insensitive' as const } },
               { notes: { contains: query.q, mode: 'insensitive' as const } },
+              ...(porNombre.length > 0 ? [{ categoryId: { in: porNombre } }] : []),
             ],
           }),
         },

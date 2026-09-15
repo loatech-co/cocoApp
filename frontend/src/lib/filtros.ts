@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { useHistoria } from './queries';
+
 /**
  * Filtros compartidos por el Resumen y los Movimientos.
  *
@@ -45,8 +47,17 @@ function hoyEnBogota(): Date {
 const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
 const utc = (anio: number, mes: number, dia: number): Date => new Date(Date.UTC(anio, mes, dia));
 
-/** El rango de fechas que representa un preset. */
-export function rangoDe(preset: Preset): { from: string; to: string } {
+/**
+ * El rango de fechas que representa un preset.
+ *
+ * `historia` son las fechas del primer y el último movimiento. Solo la usa
+ * "Todo", y es opcional porque llega de una consulta: mientras no esté, se cae
+ * a un rango amplio, que devuelve exactamente los mismos movimientos.
+ */
+export function rangoDe(
+  preset: Preset,
+  historia?: { first: string | null; last: string | null },
+): { from: string; to: string } {
   const hoy = hoyEnBogota();
   const a = hoy.getUTCFullYear();
   const m = hoy.getUTCMonth();
@@ -54,10 +65,13 @@ export function rangoDe(preset: Preset): { from: string; to: string } {
 
   switch (preset) {
     case 'todo':
-      // Un rango absurdamente amplio en vez de omitir las fechas: así el resto
-      // del código no necesita un caso especial para "sin filtro", y la API
-      // recibe siempre un rango válido.
-      return { from: '1970-01-01', to: aISO(utc(a + 5, 11, 31)) };
+      // Arranca en el PRIMER movimiento, no en 1970: con 1970 la gráfica
+      // estiraba su eje sobre medio siglo vacío para dibujar cuatro años de
+      // datos, y el botón de fechas prometía un periodo que nunca existió.
+      return {
+        from: historia?.first ?? '1970-01-01',
+        to: historia?.last ?? aISO(utc(a + 5, 11, 31)),
+      };
 
     case 'mes-actual':
       // HASTA HOY, no hasta fin de mes: incluir días que no han ocurrido
@@ -88,8 +102,13 @@ export interface Filtros {
   preset: Preset;
   from: string;
   to: string;
-  /** Centro de costos, grupo o concepto. Incluye toda su rama. */
-  categoryId?: number;
+  /**
+   * Centros de costos, grupos o conceptos marcados. Cada uno incluye su rama.
+   *
+   * Es una LISTA porque el panel son casillas: la pregunta "¿cuánto me cuestan
+   * Casa y Transporte juntos?" no se puede hacer con un solo id.
+   */
+  categoryIds: number[];
   q?: string;
 }
 
@@ -110,19 +129,23 @@ export function useFiltros(porDefecto: Preset = 'mes-actual'): {
   hayFiltrosActivos: boolean;
 } {
   const [params, setParams] = useSearchParams();
+  const historia = useHistoria();
 
   const filtros = useMemo<Filtros>(() => {
     const preset = (params.get('rango') as Preset | null) ?? porDefecto;
-    const rango = rangoDe(preset);
+    const rango = rangoDe(preset, historia.data);
 
     return {
       preset,
       from: preset === 'personalizado' ? (params.get('desde') ?? rango.from) : rango.from,
       to: preset === 'personalizado' ? (params.get('hasta') ?? rango.to) : rango.to,
-      categoryId: params.get('categoria') ? Number(params.get('categoria')) : undefined,
+      categoryIds: (params.get('categorias') ?? '')
+        .split(',')
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n > 0),
       q: params.get('busca') ?? undefined,
     };
-  }, [params, porDefecto]);
+  }, [params, porDefecto, historia.data]);
 
   const aplicar = useCallback(
     (cambios: Partial<Filtros>) => {
@@ -151,9 +174,9 @@ export function useFiltros(porDefecto: Preset = 'mes-actual'): {
         siguiente.set('rango', 'personalizado');
       }
 
-      if (cambios.categoryId !== undefined) {
-        if (cambios.categoryId === 0) siguiente.delete('categoria');
-        else siguiente.set('categoria', String(cambios.categoryId));
+      if (cambios.categoryIds !== undefined) {
+        if (cambios.categoryIds.length === 0) siguiente.delete('categorias');
+        else siguiente.set('categorias', cambios.categoryIds.join(','));
       }
       if (cambios.q !== undefined) {
         if (cambios.q.trim() === '') siguiente.delete('busca');
@@ -169,7 +192,7 @@ export function useFiltros(porDefecto: Preset = 'mes-actual'): {
 
   const hayFiltrosActivos =
     filtros.preset !== porDefecto ||
-    filtros.categoryId !== undefined ||
+    filtros.categoryIds.length > 0 ||
     (filtros.q ?? '') !== '';
 
   return { filtros, aplicar, limpiar, hayFiltrosActivos };
@@ -179,13 +202,13 @@ export function useFiltros(porDefecto: Preset = 'mes-actual'): {
 export function aParametros(filtros: Filtros): {
   from: string;
   to: string;
-  category_id?: number;
+  category_ids?: string;
   q?: string;
 } {
   return {
     from: filtros.from,
     to: filtros.to,
-    ...(filtros.categoryId !== undefined && { category_id: filtros.categoryId }),
+    ...(filtros.categoryIds.length > 0 && { category_ids: filtros.categoryIds.join(',') }),
     ...(filtros.q && { q: filtros.q }),
   };
 }

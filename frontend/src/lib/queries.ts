@@ -24,6 +24,7 @@ export const keys = {
   tags: ['tags'] as const,
   transactions: (filtros?: object) => ['transactions', filtros ?? {}] as const,
   dashboard: (filtros?: object) => ['dashboard', filtros ?? {}] as const,
+  historia: ['historia'] as const,
 };
 
 function useInvalidarDerivados() {
@@ -175,6 +176,29 @@ export function useTransactions(filtros: FiltrosDeMovimientos = {}) {
         `/transactions${query ? `?${query}` : ''}`,
       );
     },
+  });
+}
+
+/**
+ * Desde cuándo y hasta cuándo hay historia.
+ *
+ * Es lo que hace que "Todo" signifique algo: sin esto el rango arrancaba en
+ * 1970 y el eje de la gráfica se estiraba sobre medio siglo vacío.
+ *
+ * `staleTime` alto a propósito: el primer movimiento de alguien no cambia
+ * salvo que borre el más antiguo, y volver a preguntarlo en cada pantalla
+ * sería una consulta por nada.
+ */
+export function useHistoria() {
+  return useQuery({
+    queryKey: keys.historia,
+    queryFn: async (): Promise<{ first: string | null; last: string | null }> => {
+      const { data } = await apiFetch<{ first: string | null; last: string | null }>(
+        '/transactions/historia',
+      );
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
   });
 }
 

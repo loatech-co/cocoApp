@@ -1,5 +1,9 @@
+import { ChartLine } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 
+import { EstadoVacio } from '@/components/estado-vacio';
+import { Skeleton } from '@/components/ui/skeleton';
+import { diaLargo, mesLargo } from '@/lib/fechas';
 import { cn, formatCOP } from '@/lib/utils';
 import type { TrendPoint } from '@coco/types';
 
@@ -41,11 +45,19 @@ export function Tendencia({
     );
   }, [activo]);
 
-  if (puntos.length === 0) {
+  // Los cubos vacíos vienen a propósito de la API —un mes en blanco tiene que
+  // verse plano dentro de una serie—, pero si TODOS están en cero no hay serie
+  // que dibujar: una línea pegada al suelo afirma "gastaste cero", que no es lo
+  // mismo que "no hay nada que mostrar".
+  const vacia = puntos.every((p) => Number(p.expense) === 0 && Number(p.income) === 0);
+
+  if (puntos.length === 0 || vacia) {
     return (
-      <p className="py-10 text-center text-sm text-muted-foreground">
-        No hay movimientos en este rango.
-      </p>
+      <EstadoVacio
+        Icono={ChartLine}
+        titulo="Sin movimientos en este periodo"
+        ayuda="Amplía el rango de fechas o quita los filtros para ver la tendencia."
+      />
     );
   }
 
@@ -225,7 +237,7 @@ export function Tendencia({
               )}
             >
               <p className="text-xs font-semibold text-muted-foreground">
-                {etiquetaDeCubo(punto.bucket)}
+                {fechaLarga(punto.bucket)}
               </p>
               <p className="tabular mt-1 font-display text-base font-semibold">
                 {formatCOP(Number(punto.expense))}
@@ -262,6 +274,32 @@ export function Tendencia({
         <Leyenda color="var(--color-chart-1)" texto="Gasto" />
         {hayIngresos && <Leyenda color="var(--color-chart-2)" texto="Ingreso" />}
       </div>
+    </div>
+  );
+}
+
+/**
+ * La gráfica mientras llega su dato.
+ *
+ * Ocupa EXACTAMENTE el mismo alto que la gráfica de verdad —h-40, y h-56 desde
+ * `sm`— más sus dos líneas de texto. Un esqueleto de otro tamaño hace que la
+ * página dé un salto justo cuando llegan los datos, que es el momento en que
+ * alguien está a punto de pulsar algo.
+ */
+export function TendenciaEsqueleto() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-6">
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <Skeleton className="h-40 w-full rounded-xl sm:h-56" />
+      <div className="flex justify-between">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={i} className="h-3 w-8" />
+        ))}
+      </div>
+      <Skeleton className="h-3 w-24" />
     </div>
   );
 }
@@ -325,6 +363,18 @@ const MESES = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
   'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
 ];
+
+/**
+ * La fecha de un punto, entera: `6 de septiembre de 2026` o `Septiembre de
+ * 2026`.
+ *
+ * Aquí sí cabe y aquí sí hace falta. En el eje hay decenas de fechas y el
+ * nombre completo las haría chocar; en la tarjeta hay UNA, y "sep 26" obliga a
+ * descifrar una abreviatura y a adivinar si el 26 es el día o el año.
+ */
+export function fechaLarga(bucket: string): string {
+  return bucket.length > 7 ? diaLargo(bucket) : mesLargo(bucket);
+}
 
 /** El último día de un mes: 28, 29, 30 o 31 según cuál sea. */
 function ultimoDia(anio: number, mes: number): number {

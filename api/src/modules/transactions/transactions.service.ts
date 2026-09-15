@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { serializar, toMoney, type Money } from '../../common/money/money';
 import { verificarCuadreDeSplits } from '../../common/money/splits';
 import { PrismaService } from '../../prisma/prisma.service';
-import { descendientesDe } from '../categories/categories.tree';
+import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
 import { TagsService } from '../tags/tags.module';
 import type {
   CreateTransactionDto,
@@ -123,6 +123,28 @@ export class TransactionsService {
         sum_income: sumaDe('income'),
       },
     };
+  }
+
+  /**
+   * Desde cuándo y hasta cuándo hay historia.
+   *
+   * Existe para que "Todo" signifique algo. Sin esto, el rango arrancaba en
+   * 1970 y terminaba cinco años en el futuro: el eje de la gráfica se estiraba
+   * sobre medio siglo vacío para dibujar cuatro años de datos, y el botón de
+   * fechas prometía un periodo que nunca existió.
+   *
+   * Por PERIODO y no por fecha de pago: es el eje con el que se mira la app.
+   */
+  async historia(userId: bigint): Promise<{ first: string | null; last: string | null }> {
+    const extremos = await this.prisma.transaction.aggregate({
+      where: { userId },
+      _min: { period: true },
+      _max: { period: true },
+    });
+
+    const iso = (fecha: Date | null): string | null => fecha?.toISOString().slice(0, 10) ?? null;
+
+    return { first: iso(extremos._min.period), last: iso(extremos._max.period) };
   }
 
   async obtener(userId: bigint, id: bigint): Promise<TransactionView> {
@@ -347,13 +369,34 @@ export class TransactionsService {
    * id devolvería cero movimientos, porque ninguno se cuelga de un centro de
    * costos directamente — se cuelgan del concepto, que es la hoja.
    */
-  private async ramaDe(userId: bigint, categoryId: bigint): Promise<bigint[]> {
+  /** Varias categorías con sus ramas, de una sola lectura del árbol. */
+  private async ramasDe(userId: bigint, ids: readonly bigint[]): Promise<bigint[]> {
     const todas = await this.prisma.category.findMany({
       where: { userId },
       select: { id: true, parentId: true },
     });
-    return [categoryId, ...descendientesDe(todas, categoryId)];
+    return ramasDe(todas, ids);
   }
+
+  /**
+   * Las categorías cuyo NOMBRE contiene el texto, con toda su rama.
+   *
+   * Con la rama, no solo las que coinciden: los movimientos cuelgan del
+   * concepto, así que buscar el nombre de un grupo sin expandirlo no
+   * devolvería ni una fila.
+   */
+  private async ramaPorNombre(userId: bigint, texto: string): Promise<bigint[]> {
+    const todas = await this.prisma.category.findMany({
+      where: { userId },
+      select: { id: true, parentId: true, name: true },
+    });
+
+    const aguja = texto.toLowerCase();
+    const coinciden = todas.filter((c) => c.name.toLowerCase().includes(aguja)).map((c) => c.id);
+
+    return coinciden.length === 0 ? [] : ramasDe(todas, coinciden);
+  }
+
 
   private async construirFiltro(
     userId: bigint,
@@ -374,8 +417,12 @@ export class TransactionsService {
 
     if (query.account_id !== undefined) where.accountId = BigInt(query.account_id);
 
-    if (query.category_id !== undefined) {
-      where.categoryId = { in: await this.ramaDe(userId, BigInt(query.category_id)) };
+    const pedidas = [
+      ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
+      ...idsDeCategorias(query.category_ids),
+    ];
+    if (pedidas.length > 0) {
+      where.categoryId = { in: await this.ramasDe(userId, pedidas) };
     }
     if (query.type) where.type = query.type;
     if (query.status) where.status = query.status;
@@ -389,6 +436,12 @@ export class TransactionsService {
     }
 
     if (query.q) {
+      // La búsqueda también entra por la CLASIFICACIÓN: escribir "servicios
+      // públicos" tiene que traer todo lo que cuelga de ese grupo, aunque
+      // ninguna fila lo diga en su descripción. Quien busca piensa en el
+      // nombre con el que ordenó su plata, no en cómo vino escrito el cargo.
+      const porClasificacion = await this.ramaPorNombre(userId, query.q);
+
       // `mode: 'insensitive'` NO es opcional. Postgres compara distinguiendo
       // mayúsculas —MariaDB no lo hacía—, así que buscar "celsia" no
       // encontraría "Celsia (Energia)". Quien busca escribe en minúscula.
@@ -396,6 +449,7 @@ export class TransactionsService {
         { description: { contains: query.q, mode: 'insensitive' } },
         { merchant: { contains: query.q, mode: 'insensitive' } },
         { notes: { contains: query.q, mode: 'insensitive' } },
+        ...(porClasificacion.length > 0 ? [{ categoryId: { in: porClasificacion } }] : []),
       ];
     }
 

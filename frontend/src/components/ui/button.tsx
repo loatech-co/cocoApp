@@ -3,8 +3,21 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import type { ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
 
+/**
+ * El botón. TODOS los botones.
+ *
+ * ── Por qué la altura y el radio viven en `size` y no en la base ────────────
+ * Porque son lo que hay que cambiar junto. Cuando el radio estaba en la base,
+ * cualquier botón que necesitara esquinas menos redondas lo pisaba con un
+ * `className`, y con él se colaba también una altura distinta: así acabaron
+ * conviviendo cuatro alturas en una misma barra. Ahora elegir un tamaño elige
+ * las dos cosas, y no hay nada que pisar.
+ *
+ * Si hace falta una medida nueva, se añade un `size` aquí. Un `className` con
+ * `h-` o `rounded-` en una llamada suelta es la señal de que falta un tamaño.
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   {
     variants: {
       variant: {
@@ -20,13 +33,26 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
         /** Rojo. Reservado para acciones destructivas — nada más. */
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        /**
+         * Los controles de una barra de herramientas: sobre el fondo de la
+         * página, con el mismo peso que un campo de texto y no el de una
+         * acción principal. Se encienden con `aria-pressed`.
+         */
+        herramienta:
+          'border border-border bg-card font-medium text-foreground hover:bg-secondary aria-pressed:border-primary/30 aria-pressed:bg-accent aria-pressed:text-accent-foreground',
       },
       size: {
-        default: 'h-10 px-5 py-2',
-        sm: 'h-9 px-4',
-        lg: 'h-12 px-7 text-base',
+        default: 'h-10 rounded-full px-5 py-2',
+        sm: 'h-9 rounded-full px-4',
+        lg: 'h-12 rounded-full px-7 text-base',
         /** 44×44 mínimo en mobile, por objetivo táctil accesible. */
-        icon: 'size-11 sm:size-10',
+        icon: 'size-11 rounded-full sm:size-10',
+        /** El de las barras de herramientas: esquinas menos redondas. */
+        chip: 'h-9 rounded-lg px-3',
+        /** El mismo, cuadrado, para un icono solo. */
+        'chip-icon': 'size-9 rounded-lg',
+        /** Un icono pequeño y redondo: flechas de un calendario, cerrar… */
+        'icon-sm': 'size-8 rounded-full',
       },
     },
     defaultVariants: {

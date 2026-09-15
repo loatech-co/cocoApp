@@ -1,13 +1,13 @@
-import { AlertCircle, Flag, Plus } from 'lucide-react';
+import { AlertCircle, Flag, Plus, SearchX } from 'lucide-react';
 import { useState } from 'react';
 
+import { EstadoVacio } from '@/components/estado-vacio';
 import { Paginador } from '@/components/paginador';
-import { Tabla, TablaPie, Td, Th, Tr } from '@/components/tabla';
+import { Tabla, TablaEsqueleto, TablaPie, Td, Th, Tr } from '@/components/tabla';
 import { rutaSeleccionada, ToolbarFiltros, type Orden } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { ApiClientError } from '@/lib/api-client';
 import { aParametros, useFiltros } from '@/lib/filtros';
@@ -16,6 +16,9 @@ import { cn, formatCOP } from '@/lib/utils';
 import type { Category, Transaction } from '@coco/types';
 
 const POR_PAGINA = 50;
+
+/** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
+const COLUMNAS = ['Concepto', 'Centro de costos', 'Grupo', 'Pago', 'Periodo', 'Valor'];
 
 /**
  * Movimientos.
@@ -95,7 +98,7 @@ export function TransactionsPage() {
           },
         }}
         acciones={
-          <Button type="button" size="sm" className="h-9 rounded-lg" onClick={() => setEditando(null)}>
+          <Button type="button" size="chip" onClick={() => setEditando(null)}>
             <Plus className="size-4" aria-hidden="true" />
             Nuevo
           </Button>
@@ -115,19 +118,36 @@ export function TransactionsPage() {
       )}
 
       {movimientos.isPending && (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 8 }, (_, i) => (
-            <Skeleton key={i} className="h-20 rounded-2xl" />
-          ))}
-        </div>
+        <TablaEsqueleto
+          columnas={COLUMNAS}
+          filas={Math.min(POR_PAGINA, 8)}
+        />
       )}
 
       {movimientos.data && movimientos.data.data.length === 0 && (
         <Card>
-          <CardContent className="p-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              No hay movimientos con estos filtros.
-            </p>
+          <CardContent className="p-0">
+            <EstadoVacio
+              Icono={SearchX}
+              titulo={hayFiltrosActivos ? 'Ningún movimiento coincide' : 'Todavía no hay movimientos'}
+              ayuda={
+                hayFiltrosActivos
+                  ? 'Los filtros están dejando todo fuera. Quítalos para ver la lista completa.'
+                  : 'Registra el primero o importa un extracto para empezar.'
+              }
+              accion={
+                hayFiltrosActivos ? (
+                  <Button type="button" variant="outline" onClick={limpiar}>
+                    Quitar los filtros
+                  </Button>
+                ) : (
+                  <Button type="button" onClick={() => setEditando(null)}>
+                    <Plus className="size-4" aria-hidden="true" />
+                    Nuevo movimiento
+                  </Button>
+                )
+              }
+            />
           </CardContent>
         </Card>
       )}
@@ -332,6 +352,7 @@ function SelectorEnFila({
       onChange={(e) => onElegir(e.target.value === '' ? undefined : Number(e.target.value))}
       className={cn(
         'min-w-0 flex-1 truncate rounded-lg border bg-card px-2 py-1.5 text-xs',
+        'outline-none focus-visible:ring-1 focus-visible:ring-ring',
         'disabled:cursor-not-allowed disabled:opacity-40',
       )}
       style={{ borderColor: 'var(--input)' }}

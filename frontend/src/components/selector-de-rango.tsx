@@ -2,18 +2,10 @@ import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-rea
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { diaLargo, MESES_LARGOS, rangoLargo } from '@/lib/fechas';
 import { PRESETS, rangoDe, type Filtros, type Preset } from '@/lib/filtros';
+import { useHistoria } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-
-const MESES = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-];
-
-const MESES_LARGOS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-];
 
 /**
  * La semana empieza en LUNES, no en domingo: es como se lee un calendario en
@@ -24,22 +16,6 @@ const DIAS = ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];
 
 const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
 const utc = (anio: number, mes: number, dia: number): Date => new Date(Date.UTC(anio, mes, dia));
-
-/** `2026-03-14` → `14 mar 2026`. Las fechas en ISO no se leen de un vistazo. */
-function bonita(iso: string): string {
-  const [a, m, d] = iso.split('-');
-  return `${Number(d)} ${MESES[Number(m) - 1] ?? m} ${a}`;
-}
-
-/**
- * `1 sep — 10 sep 2026`, con el año una sola vez cuando el rango no lo cruza.
- * Repetirlo en los dos extremos ocupa sitio sin decir nada nuevo.
- */
-export function rangoBonito(desde: string, hasta: string): string {
-  if (desde.slice(0, 4) !== hasta.slice(0, 4)) return `${bonita(desde)} — ${bonita(hasta)}`;
-  const [, m, d] = desde.split('-');
-  return `${Number(d)} ${MESES[Number(m) - 1]} — ${bonita(hasta)}`;
-}
 
 /** Las dos fechas en orden, vengan como vengan: se puede pintar al revés. */
 function ordenadas(a: string, b: string): { from: string; to: string } {
@@ -118,6 +94,7 @@ export function SelectorDeRango({
   const [vista, setVista] = useState(() =>
     mesDelBorrador({ preset: filtros.preset, from: filtros.from, to: filtros.to }),
   );
+  const historia = useHistoria();
   const caja = useRef<HTMLDivElement>(null);
 
   // Cerrar al tocar fuera y con Escape: un panel que solo se cierra con su
@@ -152,7 +129,7 @@ export function SelectorDeRango({
   }
 
   function elegirPreset(preset: Preset): void {
-    const siguiente: Borrador = { preset, ...rangoDe(preset) };
+    const siguiente: Borrador = { preset, ...rangoDe(preset, historia.data) };
     setBorrador(siguiente);
     setVista(mesDelBorrador(siguiente));
     setAncla(null);
@@ -184,7 +161,7 @@ export function SelectorDeRango({
     filtros.preset === 'todo'
       ? 'Todo el histórico'
       : filtros.preset === 'personalizado'
-        ? rangoBonito(filtros.from, filtros.to)
+        ? rangoLargo(filtros.from, filtros.to)
         : (activo?.etiqueta ?? 'Rango');
 
   // Mientras hay un clic a medias manda la selección en curso, no el borrador:
@@ -204,24 +181,25 @@ export function SelectorDeRango({
 
   return (
     <div ref={caja} className="relative">
-      <button
+      <Button
         type="button"
+        variant="herramienta"
+        size="chip"
         onClick={() => (abierto ? setAbierto(false) : abrir())}
         aria-expanded={abierto}
+        aria-pressed={abierto}
         aria-haspopup="dialog"
-        className={cn(
-          'flex h-10 w-full items-center gap-2 rounded-full border bg-card px-4 text-sm font-medium',
-          'transition-colors hover:bg-secondary sm:w-auto',
-        )}
-        style={{ borderColor: 'var(--input)' }}
+        // El único ancho a medida de toda la barra, y por una razón: la
+        // etiqueta es el rango entero y tiene que poder encogerse.
+        className="max-w-full"
       >
-        <CalendarDays className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-left">{etiqueta}</span>
+        <CalendarDays className="size-4 shrink-0 opacity-70" aria-hidden="true" />
+        <span className="min-w-0 truncate">{etiqueta}</span>
         <ChevronDown
-          className={cn('size-4 shrink-0 text-muted-foreground transition-transform', abierto && 'rotate-180')}
+          className={cn('size-3.5 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
           aria-hidden="true"
         />
-      </button>
+      </Button>
 
       {abierto && (
         <div
@@ -254,7 +232,10 @@ export function SelectorDeRango({
                     aria-pressed={borrador.preset === p.valor}
                     title={p.ayuda}
                     className={cn(
-                      'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                      // Concéntrico con el panel: 20px del contenedor menos los
+                      // 8px de su relleno. Con un radio mayor, la esquina del
+                      // resaltado se sale de la curva del panel y se ve torcida.
+                      'w-full rounded-[12px] px-3 py-2 text-left text-sm transition-colors',
                       borrador.preset === p.valor
                         ? 'bg-secondary font-semibold text-secondary-foreground'
                         : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
@@ -269,25 +250,27 @@ export function SelectorDeRango({
             {/* ── Calendario ─────────────────────────────────────────────── */}
             <div className="min-w-0 flex-1 p-3">
               <div className="mb-2 flex items-center justify-between">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => moverMes(-1)}
                   aria-label="Mes anterior"
-                  className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
                   <ChevronLeft className="size-4" aria-hidden="true" />
-                </button>
-                <span aria-live="polite" className="font-display text-sm font-semibold">
-                  {MESES_LARGOS[vista.mes]} {vista.anio}
+                </Button>
+                <span aria-live="polite" className="font-display text-sm font-semibold capitalize">
+                  {MESES_LARGOS[vista.mes]} de {vista.anio}
                 </span>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => moverMes(1)}
                   aria-label="Mes siguiente"
-                  className="grid size-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
                   <ChevronRight className="size-4" aria-hidden="true" />
-                </button>
+                </Button>
               </div>
 
               <div className="grid grid-cols-7">
@@ -330,7 +313,7 @@ export function SelectorDeRango({
                         type="button"
                         onClick={() => elegirDia(iso)}
                         onMouseEnter={() => ancla && setSobrevolado(iso)}
-                        aria-label={bonita(iso)}
+                        aria-label={diaLargo(iso)}
                         aria-pressed={extremo}
                         className={cn(
                           'size-9 rounded-full text-sm transition-colors',
@@ -358,14 +341,16 @@ export function SelectorDeRango({
               {ancla !== null
                 ? 'Elige la fecha final'
                 : borrador.preset === 'todo'
-                  ? 'Todo el histórico'
-                  : rangoBonito(borrador.from, borrador.to)}
+                  ? historia.data?.first
+                    ? `Desde ${diaLargo(historia.data.first)}`
+                    : 'Todo el histórico'
+                  : rangoLargo(borrador.from, borrador.to)}
             </span>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setAbierto(false)}>
+              <Button type="button" variant="herramienta" size="chip" onClick={() => setAbierto(false)}>
                 Cancelar
               </Button>
-              <Button type="button" size="sm" onClick={confirmar} disabled={ancla !== null}>
+              <Button type="button" size="chip" onClick={confirmar} disabled={ancla !== null}>
                 Aplicar
               </Button>
             </div>

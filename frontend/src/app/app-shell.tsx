@@ -77,8 +77,11 @@ export function AppShell() {
   return (
     <div className="min-h-dvh bg-background">
       {/* Barra lateral — escritorio */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-sidebar p-4 md:flex">
-        <div className="mb-8 px-3 pt-3">
+      {/* 13rem y no 16: el enlace más largo, "Centros de costos", mide unos
+          120px a 14px, y con el icono y los márgenes cabe de sobra. Lo que
+          sobraba de ancho se lo estaba quitando al contenido. */}
+      <aside className="fixed inset-y-0 left-0 hidden w-52 flex-col bg-sidebar p-3 md:flex">
+        <div className="mb-8 px-2 pt-3">
           {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo dejaría
               demasiado bajo para leerse en una barra de 256px. */}
           {/* Lima sobre la barra oscura: 10.1:1 de contraste, y es el acento de
@@ -112,7 +115,7 @@ export function AppShell() {
       </aside>
 
       {/* Contenido */}
-      <div className="md:pl-64">
+      <div className="md:pl-52">
         {/*
           Cabecera. `sticky` y no `fixed`: así ocupa su sitio en el flujo y el
           contenido no queda tapado debajo, que es lo que obliga a compensar con
@@ -299,9 +302,9 @@ function Enlace({ to, exact, children }: { to: string; exact: boolean; children:
       end={exact}
       className={({ isActive }) =>
         cn(
-          // Pastilla completa, no rectángulo: es lo que separa la navegación
-          // del contenido, que es todo esquinas de tarjeta.
-          'flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition-colors',
+          // Esquinas suaves, no pastilla: en una barra estrecha la pastilla se
+          // come el ancho por los lados y el texto queda pegado al icono.
+          'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
           isActive
             ? 'bg-sidebar-hover text-sidebar-active'
             : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground',

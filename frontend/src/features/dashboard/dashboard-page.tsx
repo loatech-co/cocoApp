@@ -1,15 +1,18 @@
-import { AlertCircle, ChevronRight, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
+import { AlertCircle, ChartPie, ChevronRight, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { Tendencia } from '@/components/tendencia';
+import { EstadoVacio } from '@/components/estado-vacio';
+import { Tendencia, TendenciaEsqueleto } from '@/components/tendencia';
 import { ToolbarFiltros } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
+import { diaCorto } from '@/lib/fechas';
 import { aParametros, useFiltros } from '@/lib/filtros';
-import { useDashboard } from '@/lib/queries';
-import { formatCOP } from '@/lib/utils';
+import { useDashboard, useTransactions } from '@/lib/queries';
+import { cn, formatCOP } from '@/lib/utils';
+import type { Transaction } from '@coco/types';
 
 /**
  * Resumen.
@@ -24,6 +27,10 @@ import { formatCOP } from '@/lib/utils';
 export function DashboardPage() {
   const { filtros, aplicar, limpiar, hayFiltrosActivos } = useFiltros();
   const dashboard = useDashboard(aParametros(filtros));
+
+  // Los mismos filtros que el resto de la pantalla: si la lista de aquí abajo
+  // no respondiera al recorte, contradiría las cifras de arriba.
+  const movimientos = useTransactions({ ...aParametros(filtros), per_page: 8, sort: '-date' });
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
@@ -52,7 +59,21 @@ export function DashboardPage() {
         </Alert>
       )}
 
-      {dashboard.isPending && <Esqueleto />}
+      {dashboard.isPending && (
+        <>
+          <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-2xl" />
+            ))}
+          </div>
+          <Card>
+            <CardContent className="p-4 sm:p-6">
+              <Skeleton className="mb-4 h-6 w-40" />
+              <TendenciaEsqueleto />
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {dashboard.data && (
         <>
@@ -83,7 +104,7 @@ export function DashboardPage() {
           <Card>
             <CardContent className="p-4 sm:p-6">
               <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-xl font-semibold">Comportamiento</h2>
+                <h2 className="font-display text-lg font-semibold">Comportamiento</h2>
                 <p className="text-xs text-muted-foreground">
                   Agrupado por {dashboard.data.period.granularity === 'dia' ? 'día' : 'mes'}
                 </p>
@@ -95,15 +116,107 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Desglose
-            filas={dashboard.data.by_category}
-            nivel={dashboard.data.breakdown_level}
-            totalGastado={dashboard.data.range.expense}
-            onBajar={(id) => aplicar({ categoryId: id })}
-          />
+          {/* Lado a lado en pantalla ancha: la distribución explica en qué se
+              repartió el gasto y la lista enseña las filas concretas que lo
+              componen. Una encima de otra obligaría a desplazarse para
+              contrastar una con la otra. */}
+          <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
+            <UltimosMovimientos
+              movimientos={movimientos.data?.data ?? []}
+              cargando={movimientos.isPending}
+              total={movimientos.data?.meta?.total ?? 0}
+            />
+
+            <Desglose
+              filas={dashboard.data.by_category}
+              nivel={dashboard.data.breakdown_level}
+              totalGastado={dashboard.data.range.expense}
+              onBajar={(id) => aplicar({ categoryIds: [id] })}
+            />
+          </div>
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Las últimas filas del recorte.
+ *
+ * ── Por qué una lista y no la tabla de Movimientos ──────────────────────────
+ * Porque aquí la tarjeta mide media pantalla. La tabla tiene seis columnas y
+ * en ese ancho o se desplaza a los lados —en una pantalla donde nadie espera
+ * desplazarse— o se aprieta hasta que el concepto se parte en cuatro líneas.
+ * Lo que se necesita saber de un vistazo es qué se pagó y cuánto.
+ */
+function UltimosMovimientos({
+  movimientos,
+  cargando,
+  total,
+}: {
+  movimientos: Transaction[];
+  cargando: boolean;
+  total: number;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex h-full flex-col p-4 sm:p-6">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-lg font-semibold">Movimientos</h2>
+          {total > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {movimientos.length} de {total}
+            </p>
+          )}
+        </div>
+
+        {cargando ? (
+          <ul className="flex flex-col gap-2">
+            {Array.from({ length: 6 }, (_, i) => (
+              <li key={i}>
+                <Skeleton className="h-11 rounded-lg" />
+              </li>
+            ))}
+          </ul>
+        ) : movimientos.length === 0 ? (
+          <EstadoVacio
+            Icono={Receipt}
+            titulo="Sin movimientos"
+            ayuda="Nada coincide con este recorte."
+            className="py-8"
+          />
+        ) : (
+          <ul className="flex flex-1 flex-col divide-y divide-border">
+            {movimientos.map((m) => (
+              <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium">
+                    {m.description ?? m.merchant ?? 'Sin concepto'}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">{diaCorto(m.date)}</span>
+                </span>
+                <span
+                  className={cn(
+                    'tabular shrink-0 text-sm font-semibold',
+                    m.type === 'income' ? 'text-income' : 'text-expense',
+                  )}
+                >
+                  {m.type === 'income' ? '+' : '−'}
+                  {formatCOP(m.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <Link
+          to="/movimientos"
+          className="mt-4 inline-block text-sm font-medium text-primary underline underline-offset-4"
+        >
+          Ver todos los movimientos
+        </Link>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -191,14 +304,17 @@ function Desglose({
     <Card>
       <CardContent className="p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-xl font-semibold">En qué se fue</h2>
+          <h2 className="font-display text-lg font-semibold">Distribución de costos</h2>
           <p className="text-xs text-muted-foreground">Por {nivel}</p>
         </div>
 
         {filas.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            No hay gastos en este recorte.
-          </p>
+          <EstadoVacio
+            Icono={ChartPie}
+            titulo="Nada que desglosar"
+            ayuda="No hay gastos en este recorte. Amplía el rango o quita los filtros."
+            className="py-8"
+          />
         ) : (
           <ul className="flex flex-col">
             {filas.map((fila) => {
@@ -254,27 +370,8 @@ function Desglose({
           </ul>
         )}
 
-        <Link
-          to="/movimientos"
-          className="mt-4 inline-block text-sm font-medium text-primary underline underline-offset-4"
-        >
-          Ver los movimientos
-        </Link>
       </CardContent>
     </Card>
   );
 }
 
-function Esqueleto() {
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-24 rounded-2xl" />
-        ))}
-      </div>
-      <Skeleton className="h-64 rounded-2xl" />
-      <Skeleton className="h-72 rounded-2xl" />
-    </div>
-  );
-}
