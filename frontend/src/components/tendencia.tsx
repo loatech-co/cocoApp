@@ -114,7 +114,7 @@ export function Tendencia({
       <div className="flex justify-between text-[11px] text-muted-foreground">
         {puntos.map((punto, i) => (
           <span key={punto.bucket} className="flex-1 text-center">
-            {i % cada === 0 ? etiquetaDeCubo(punto.bucket) : ' '}
+            {i % cada === 0 ? etiquetaDeCubo(punto.bucket, mismoAnio) : '\u00A0'}
           </span>
         ))}
       </div>
