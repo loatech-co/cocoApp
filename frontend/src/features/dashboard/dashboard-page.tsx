@@ -39,10 +39,10 @@ export function DashboardPage() {
   const sinDatos = accounts.length === 0;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-7">
       <header>
-        <h1 className="font-serif text-3xl font-semibold">Tu resumen</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="font-serif text-4xl font-semibold tracking-tight">Tu resumen</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Cómo vas este mes. Todo se calcula de tus movimientos.
         </p>
       </header>
@@ -51,21 +51,21 @@ export function DashboardPage() {
         <EstadoVacio />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-3">
             <Kpi
               etiqueta="Patrimonio neto"
-              valor={<Saldo amount={totals.net_worth} className="text-2xl" />}
+              valor={<Saldo amount={totals.net_worth} className="text-[28px] font-semibold leading-tight" />}
               detalle={`${formatCOP(totals.assets)} en cuentas · ${formatCOP(totals.debts)} en deuda`}
               Icono={Wallet}
             />
             <Kpi
               etiqueta="Ingresos del mes"
-              valor={<Monto amount={month.income} type="income" className="text-2xl" soloTexto />}
+              valor={<Monto amount={month.income} type="income" className="text-[28px] font-semibold leading-tight" soloTexto />}
               Icono={TrendingUp}
             />
             <Kpi
               etiqueta="Gastos del mes"
-              valor={<Monto amount={month.expense} type="expense" className="text-2xl" soloTexto />}
+              valor={<Monto amount={month.expense} type="expense" className="text-[28px] font-semibold leading-tight" soloTexto />}
               Icono={TrendingDown}
             />
           </div>
@@ -80,7 +80,7 @@ export function DashboardPage() {
                 cambian de bolsillo.
               </p>
               <p className="mt-3">
-                <Saldo amount={month.net} className="text-3xl" />
+                <Saldo amount={month.net} className="text-4xl font-semibold leading-none" />
               </p>
             </CardContent>
           </Card>
@@ -108,13 +108,22 @@ function Kpi({
 }) {
   return (
     <Card>
-      <CardContent className="p-5">
-        <div className="mb-2 flex items-center gap-2 text-muted-foreground">
-          <Icono className="size-4" aria-hidden />
-          <span className="text-sm">{etiqueta}</span>
+      <CardContent className="flex items-start gap-4 p-6">
+        {/* El icono va en un chip circular, no suelto junto al texto: le da un
+            punto de anclaje a la tarjeta y deja la cifra como único elemento
+            grande. Suelto competía con el número por la atención. */}
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+          <Icono className="size-5" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          {/* La ETIQUETA va arriba y pequeña; la cifra manda. Es la jerarquía de
+              un tablero financiero: se entra a mirar cuánto, no qué. */}
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {etiqueta}
+          </p>
+          <div className="mt-1">{valor}</div>
+          {detalle && <p className="mt-1.5 text-xs text-muted-foreground">{detalle}</p>}
         </div>
-        <div>{valor}</div>
-        {detalle && <p className="mt-1 text-xs text-muted-foreground">{detalle}</p>}
       </CardContent>
     </Card>
   );
@@ -225,9 +234,9 @@ function EstadoVacio() {
 
 function Esqueleto() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-7">
       <Skeleton className="h-9 w-48" />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-3">
         <Skeleton className="h-28" />
         <Skeleton className="h-28" />
         <Skeleton className="h-28" />

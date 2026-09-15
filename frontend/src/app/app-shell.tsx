@@ -73,30 +73,38 @@ export function AppShell() {
   return (
     <div className="min-h-dvh bg-background">
       {/* Barra lateral — escritorio */}
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-border bg-card p-4 md:flex">
-        <div className="mb-8 px-2">
-          <p className="font-serif text-2xl font-semibold text-primary">Coco</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {usuario?.display_name ?? usuario?.email}
-          </p>
+      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-sidebar p-4 md:flex">
+        <div className="mb-8 flex items-center gap-3 px-2 pt-2">
+          {/* La marca en un chip: le da peso sin necesitar un logotipo. */}
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-sidebar-active text-lg font-semibold text-sidebar-active-foreground">
+            C
+          </span>
+          <span className="min-w-0">
+            <span className="block font-serif text-xl font-semibold text-sidebar-foreground">
+              Coco
+            </span>
+            <span className="block truncate text-xs text-sidebar-muted">
+              {usuario?.display_name ?? usuario?.email}
+            </span>
+          </span>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1" aria-label="Secciones">
           {seccionesVisibles.map(({ to, label, Icono, exact }) => (
             <Enlace key={to} to={to} exact={exact}>
-              <Icono className="size-4 shrink-0" aria-hidden="true" />
+              <Icono className="size-[18px] shrink-0" aria-hidden="true" />
               {label}
             </Enlace>
           ))}
 
           {esAdmin && (
             <>
-              <p className="mt-6 px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <p className="mt-6 mb-1 px-4 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted">
                 Administración
               </p>
               {SECCIONES_DE_ADMIN.map(({ to, label, Icono, exact }) => (
                 <Enlace key={to} to={to} exact={exact}>
-                  <Icono className="size-4 shrink-0" aria-hidden="true" />
+                  <Icono className="size-[18px] shrink-0" aria-hidden="true" />
                   {label}
                 </Enlace>
               ))}
@@ -104,31 +112,33 @@ export function AppShell() {
           )}
         </nav>
 
-        <Enlace to="/mi-cuenta" exact={false}>
-          <UserCog className="size-4 shrink-0" aria-hidden="true" />
-          Mi cuenta
-        </Enlace>
+        <div className="mt-4 flex flex-col gap-1 border-t border-sidebar-border pt-4">
+          <Enlace to="/mi-cuenta" exact={false}>
+            <UserCog className="size-[18px] shrink-0" aria-hidden="true" />
+            Mi cuenta
+          </Enlace>
 
-        <button
-          type="button"
-          onClick={() => void salir()}
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          <LogOut className="size-4" aria-hidden="true" />
-          Salir
-        </button>
+          <button
+            type="button"
+            onClick={() => void salir()}
+            className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
+          >
+            <LogOut className="size-[18px]" aria-hidden="true" />
+            Salir
+          </button>
+        </div>
       </aside>
 
       {/* Contenido */}
-      <div className="md:pl-60">
-        <main className="mx-auto max-w-5xl px-4 pb-28 pt-6 md:px-8 md:pb-12">
+      <div className="md:pl-64">
+        <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:px-10 md:pb-16 md:pt-10">
           <Outlet />
         </main>
       </div>
 
       {/* Barra inferior — móvil */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-10 flex border-t border-border bg-card md:hidden"
+        className="fixed inset-x-0 bottom-0 z-10 flex bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden"
         aria-label="Secciones"
       >
         {seccionesVisibles.map(({ to, label, Icono, exact }) => (
@@ -141,7 +151,7 @@ export function AppShell() {
                 'flex flex-1 flex-col items-center gap-1 py-2 text-[11px] transition-colors',
                 // Objetivo táctil de 44px de alto mínimo.
                 'min-h-[56px] justify-center',
-                isActive ? 'text-primary' : 'text-muted-foreground',
+                isActive ? 'text-sidebar-active-foreground' : 'text-sidebar-muted',
               )
             }
           >
@@ -181,10 +191,13 @@ function Enlace({ to, exact, children }: { to: string; exact: boolean; children:
       end={exact}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+          // Pastilla completa, no rectángulo redondeado: es lo que da el aire
+          // de las referencias y separa la navegación del contenido, que es
+          // todo esquinas de tarjeta.
+          'flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition-colors',
           isActive
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+            ? 'bg-sidebar-active text-sidebar-active-foreground'
+            : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground',
         )
       }
     >
