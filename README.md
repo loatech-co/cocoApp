@@ -340,6 +340,26 @@ hay que invocarlo por `node node_modules/prisma/build/index.js generate`. Y sin
 tubería: con `| tail` el código de salida es el del `tail` y el fallo pasa
 inadvertido.
 
+### El 503 que aparece solo
+
+Si el sitio devuelve 503 sin que nadie haya tocado nada, el sospechoso es el
+motor de Prisma. Tras un rato sin tráfico entraba en pánico con `PANIC: timer
+has gone away` —su hilo de temporizadores desaparece con una espera pendiente—
+y se llevaba el proceso por delante.
+
+La excepción nace dentro de Rust: no hay `try` en JavaScript que la contenga.
+Hay dos mitigaciones, y las dos están puestas:
+
+- **Un latido** en `PrismaService`: una consulta trivial cada cuatro minutos
+  para que no haya ventana de inactividad. No es elegante; lo elegante sería que
+  el motor no entrara en pánico, pero 6.19.3 es la última de la serie 6 y el
+  arreglo vive en un major que sigue en release candidate.
+- **Una red de seguridad** en `main.ts`: deja una línea legible en el log y sale,
+  para que la plataforma levante un proceso sano en vez de quedarse uno que
+  responde 500 a todo.
+
+Para levantarlo a mano: `touch <approot>/tmp/restart.txt`.
+
 ### Comprobar un despliegue
 
 `/api/v1/health` responde **401 antes de tocar la base**, así que no prueba nada
