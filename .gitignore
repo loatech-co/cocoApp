@@ -78,3 +78,7 @@ respaldos/
 
 # Las imágenes fuente SÍ se versionan: son el original del que sale lo que se
 # publica, y perderlas obligaría a recomprimir desde un WebP ya comprimido.
+
+# Data financiera real. No entra al repositorio, pero SÍ vive en disco para
+# poder recargarla sin volver a pedirla.
+datos/

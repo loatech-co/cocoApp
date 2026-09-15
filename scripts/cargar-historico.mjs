@@ -184,6 +184,12 @@ try {
         data: {
           userId: usuario.id,
           date: fecha,
+          // El PERÍODO va en su propia columna, no solo en las notas: es el mes
+          // del que uno habla, y la app agrupa por él. La factura de marzo
+          // pagada el 6 de abril pertenece a marzo.
+          period: periodo
+            ? new Date(`${periodo}-01T00:00:00.000Z`)
+            : new Date(Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), 1)),
           amount: valor.toFixed(2),
           type: 'expense',
           categoryId: concepto?.id ?? null,

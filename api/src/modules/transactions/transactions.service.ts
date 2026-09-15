@@ -53,6 +53,17 @@ const INCLUIR_TODO = {
   tags: { include: { tag: true } },
 } as const;
 
+/**
+ * El primer día del mes de una fecha.
+ *
+ * Es el valor por defecto de `period`: la mayoría de los gastos pertenecen al
+ * mes en que se pagaron, y obligar a declararlo en cada registro sería fricción
+ * para el caso común. Solo las facturas que cruzan de mes necesitan decirlo.
+ */
+function mesDe(fecha: Date): Date {
+  return new Date(Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), 1));
+}
+
 @Injectable()
 export class TransactionsService {
   constructor(
@@ -113,6 +124,7 @@ export class TransactionsService {
           userId,
           accountId,
           date: new Date(dto.date),
+          period: dto.period ? new Date(dto.period) : mesDe(new Date(dto.date)),
           amount,
           type: tipo,
           categoryId,
@@ -184,6 +196,7 @@ export class TransactionsService {
     const base = {
       userId,
       date: fecha,
+      period: dto.period ? new Date(dto.period) : mesDe(fecha),
       amount,
       type: 'transfer' as const,
       description: dto.description ?? null,
@@ -321,7 +334,11 @@ export class TransactionsService {
     const where: Prisma.TransactionWhereInput = { userId };
 
     if (query.from || query.to) {
-      where.date = {
+      // Por PERÍODO: el rango que la persona elige arriba se refiere al mes al
+      // que pertenece el gasto, no al día en que salió la plata. Si filtrara
+      // por `date`, marzo aparecería vacío cuando sus facturas se pagaron en
+      // abril — que es exactamente lo que pasaba.
+      where.period = {
         ...(query.from && { gte: new Date(query.from) }),
         ...(query.to && { lte: new Date(query.to) }),
       };

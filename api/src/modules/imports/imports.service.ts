@@ -253,6 +253,11 @@ export class ImportsService {
           userId,
           accountId: lote.accountId,
           date: fila.date,
+          // Lo importado pertenece al mes de su fecha: un extracto bancario no
+          // trae el período de devengo, solo el día del movimiento.
+          period: new Date(
+            Date.UTC(fila.date.getUTCFullYear(), fila.date.getUTCMonth(), 1),
+          ),
           amount: fila.amount,
           type: fila.type,
           categoryId: fila.categoryId,

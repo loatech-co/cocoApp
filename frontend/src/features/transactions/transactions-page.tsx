@@ -1,6 +1,7 @@
-import { AlertCircle, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { AlertCircle, Plus } from 'lucide-react';
 import { useState } from 'react';
 
+import { Paginador } from '@/components/paginador';
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { ToolbarFiltros } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,7 +29,10 @@ const POR_PAGINA = 50;
  * mismo que se usa para crear.
  */
 export function TransactionsPage() {
-  const { filtros, aplicar, limpiar, hayFiltrosActivos } = useFiltros();
+  // 'todo' por defecto: la lista es el archivo completo. Recortarla sola al mes
+  // en curso escondería movimientos sin que nadie lo haya pedido. El resumen sí
+  // arranca acotado, porque ahí la pregunta es "¿cómo voy este mes?".
+  const { filtros, aplicar, limpiar, hayFiltrosActivos } = useFiltros('todo');
   const [pagina, setPagina] = useState(1);
   const [editando, setEditando] = useState<Transaction | null | undefined>(undefined);
 
@@ -43,7 +47,6 @@ export function TransactionsPage() {
   const arbol = categorias.data ?? [];
 
   const total = movimientos.data?.meta?.total ?? 0;
-  const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
@@ -118,31 +121,12 @@ export function TransactionsPage() {
         </Card>
       )}
 
-      {paginas > 1 && (
-        <nav className="flex items-center justify-between gap-3" aria-label="Paginación">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={pagina <= 1}
-            onClick={() => setPagina((p) => p - 1)}
-          >
-            <ChevronLeft className="size-4" aria-hidden="true" />
-            Anterior
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {pagina} de {paginas}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={pagina >= paginas}
-            onClick={() => setPagina((p) => p + 1)}
-          >
-            Siguiente
-            <ChevronRight className="size-4" aria-hidden="true" />
-          </Button>
-        </nav>
-      )}
+      <Paginador
+        pagina={pagina}
+        total={total}
+        porPagina={POR_PAGINA}
+        onCambiar={setPagina}
+      />
 
       <MovimientoModal
         abierta={editando !== undefined}

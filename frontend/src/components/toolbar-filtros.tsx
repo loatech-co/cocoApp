@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PRESETS, type Filtros } from '@/lib/filtros';
+import { SelectorDeRango } from '@/components/selector-de-rango';
+import type { Filtros } from '@/lib/filtros';
 import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
@@ -57,9 +58,8 @@ export function ToolbarFiltros({
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl bg-card p-3 shadow-[0_1px_2px_rgba(65,60,47,0.04),0_8px_24px_-12px_rgba(65,60,47,0.16)] sm:p-4">
-      {/* Fila 1 — siempre visible */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1 basis-full sm:basis-64">
+        <div className="relative min-w-0 flex-1 basis-full sm:basis-56">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
@@ -70,9 +70,11 @@ export function ToolbarFiltros({
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar: celsia, colegio, sura…"
             aria-label="Buscar por palabra clave"
-            className="pl-9"
+            className="rounded-full pl-9"
           />
         </div>
+
+        <SelectorDeRango filtros={filtros} aplicar={aplicar} />
 
         <Button
           type="button"
@@ -82,9 +84,9 @@ export function ToolbarFiltros({
           className="shrink-0"
         >
           <SlidersHorizontal className="size-4" aria-hidden="true" />
-          Filtros
-          {hayFiltrosActivos && (
-            <span className="ml-1 size-2 rounded-full bg-primary-foreground" aria-hidden="true" />
+          <span className="hidden sm:inline">Clasificación</span>
+          {filtros.categoryId !== undefined && (
+            <span className="ml-1 size-2 rounded-full bg-current" aria-hidden="true" />
           )}
         </Button>
 
@@ -94,26 +96,10 @@ export function ToolbarFiltros({
             <span className="hidden sm:inline">Limpiar</span>
           </Button>
         )}
-      </div>
 
-      {/* Fila 2 — rango de tiempo, siempre visible: es el filtro que más se toca */}
-      <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-        {PRESETS.map(({ valor, etiqueta, ayuda }) => (
-          <button
-            key={valor}
-            type="button"
-            title={ayuda}
-            onClick={() => aplicar({ preset: valor })}
-            className={cn(
-              'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
-              filtros.preset === valor
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-secondary-foreground hover:bg-accent',
-            )}
-          >
-            {etiqueta}
-          </button>
-        ))}
+        {resumen && (
+          <span className="ml-auto shrink-0 text-xs text-muted-foreground">{resumen}</span>
+        )}
       </div>
 
       {/* Fila 3 — plegable */}
@@ -143,46 +129,12 @@ export function ToolbarFiltros({
             onElegir={(id) => aplicar({ categoryId: id ?? grupo?.id ?? 0 })}
           />
 
-          {filtros.preset === 'personalizado' && (
-            <>
-              <Campo etiqueta="Desde">
-                <Input
-                  type="date"
-                  value={filtros.from}
-                  max={filtros.to}
-                  onChange={(e) => aplicar({ from: e.target.value })}
-                />
-              </Campo>
-              <Campo etiqueta="Hasta">
-                <Input
-                  type="date"
-                  value={filtros.to}
-                  min={filtros.from}
-                  onChange={(e) => aplicar({ to: e.target.value })}
-                />
-              </Campo>
-            </>
-          )}
         </div>
       )}
-
-      {/* Lo que se está viendo, en palabras */}
-      <p className="text-xs text-muted-foreground">
-        {filtros.from} a {filtros.to}
-        {resumen ? ` · ${resumen}` : ''}
-      </p>
     </div>
   );
 }
 
-function Campo({ etiqueta, children }: { etiqueta: string; children: React.ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-muted-foreground">{etiqueta}</span>
-      {children}
-    </label>
-  );
-}
 
 function Selector({
   etiqueta,

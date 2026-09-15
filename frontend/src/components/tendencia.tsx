@@ -4,11 +4,9 @@ import type { TrendPoint } from '@coco/types';
 /**
  * El comportamiento del gasto, en barras.
  *
- * ── Por qué barras y no una línea ───────────────────────────────────────────
- * Una línea sugiere continuidad: que entre marzo y abril el gasto "pasó por"
- * los valores intermedios. Con gasto mensual eso es falso — son montos
- * discretos, y compararlos es exactamente lo que se quiere. La barra invita a
- * comparar alturas; la línea, a leer una pendiente que no significa nada.
+ * ── Línea, no barras ────────────────────────────────────────────────────────
+ * Lo que interesa aquí es la TENDENCIA: si el gasto sube o baja mes a mes. La
+ * línea lo dice de un vistazo; una barra obliga a comparar alturas de a pares.
  *
  * ── Por qué SVG a mano ──────────────────────────────────────────────────────
  * Una librería de gráficas pesa más que el resto de la app junta, y trae su
@@ -55,32 +53,60 @@ export function Tendencia({
         </span>
       </div>
 
-      {/* Alto fijo y barras flexibles: así el gráfico se adapta al ancho sin
-          deformar las proporciones verticales, que es lo que se compara. */}
-      <div
-        className="flex h-40 items-end gap-[3px] sm:h-56 sm:gap-1.5"
+      {/* Línea, en un lienzo de 0–100 por lado: el SVG escala solo al ancho
+          disponible y no hay que medir el contenedor. */}
+      <svg
+        viewBox="0 0 100 42"
+        preserveAspectRatio="none"
+        className="h-40 w-full sm:h-56"
         role="img"
         aria-label={`Gasto por ${granularidad === 'dia' ? 'día' : 'mes'}, de ${etiquetaDeCubo(puntos[0].bucket)} a ${etiquetaDeCubo(puntos[puntos.length - 1].bucket)}. Promedio ${formatCOP(promedio)}, pico ${formatCOP(maximo)}.`}
       >
-        {puntos.map((punto, i) => (
-          <div key={punto.bucket} className="group relative flex h-full flex-1 items-end gap-[2px]">
-            <Barra
-              valor={gastos[i]}
-              techo={techo}
-              color="var(--color-chart-1)"
-              titulo={`${etiquetaDeCubo(punto.bucket)}: ${formatCOP(punto.expense)} de gasto`}
-            />
-            {hayIngresos && (
-              <Barra
-                valor={ingresos[i]}
-                techo={techo}
-                color="var(--color-chart-2)"
-                titulo={`${etiquetaDeCubo(punto.bucket)}: ${formatCOP(punto.income)} de ingreso`}
-              />
-            )}
-          </div>
+        <defs>
+          <linearGradient id="tendencia-relleno" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-chart-1)" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="var(--color-chart-1)" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+
+        {/* Tres guías: sin ellas no se puede comparar la altura de un punto con
+            la de otro que esté lejos. */}
+        {[0.25, 0.5, 0.75].map((f) => (
+          <line
+            key={f}
+            x1="0"
+            x2="100"
+            y1={42 * f}
+            y2={42 * f}
+            stroke="var(--color-border)"
+            strokeWidth="0.25"
+            vectorEffect="non-scaling-stroke"
+          />
         ))}
-      </div>
+
+        <path d={area(gastos, techo, puntos.length)} fill="url(#tendencia-relleno)" />
+        <path
+          d={linea(gastos, techo, puntos.length)}
+          fill="none"
+          stroke="var(--color-chart-1)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+
+        {hayIngresos && (
+          <path
+            d={linea(ingresos, techo, puntos.length)}
+            fill="none"
+            stroke="var(--color-chart-2)"
+            strokeWidth="1.75"
+            strokeDasharray="4 3"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
+      </svg>
 
       <div className="flex justify-between text-[11px] text-muted-foreground">
         {puntos.map((punto, i) => (
@@ -98,35 +124,33 @@ export function Tendencia({
   );
 }
 
-function Barra({
-  valor,
-  techo,
-  color,
-  titulo,
-}: {
-  valor: number;
-  techo: number;
-  color: string;
-  titulo: string;
-}) {
-  // Mínimo de 2px: un cubo con gasto muy bajo pero NO cero tiene que verse. A
-  // 0px sería indistinguible de un mes sin movimientos.
-  const alto = valor === 0 ? 0 : Math.max((valor / techo) * 100, 2);
 
-  return (
-    <div
-      title={titulo}
-      className="min-w-0 flex-1 rounded-t-md transition-opacity hover:opacity-80"
-      style={{ height: `${alto}%`, backgroundColor: color }}
-    />
-  );
+/** Coordenada X de un punto en el lienzo de 0–100. */
+function equis(i: number, total: number): number {
+  return total === 1 ? 50 : (i / (total - 1)) * 100;
+}
+
+/** Coordenada Y: se invierte porque en SVG el 0 está arriba. */
+function ye(valor: number, techo: number): number {
+  return 42 - (valor / techo) * 42;
+}
+
+function linea(serie: number[], techo: number, total: number): string {
+  return serie
+    .map((v, i) => `${i === 0 ? 'M' : 'L'} ${equis(i, total).toFixed(2)} ${ye(v, techo).toFixed(2)}`)
+    .join(' ');
+}
+
+/** La misma línea, cerrada contra la base, para el relleno. */
+function area(serie: number[], techo: number, total: number): string {
+  return `${linea(serie, techo, total)} L ${equis(total - 1, total).toFixed(2)} 42 L ${equis(0, total).toFixed(2)} 42 Z`;
 }
 
 function Leyenda({ color, texto }: { color: string; texto: string }) {
   return (
     <span className="flex items-center gap-1.5">
       <span
-        className="inline-block size-2.5 rounded-sm"
+        className="inline-block h-0.5 w-5 rounded-full"
         style={{ backgroundColor: color }}
         aria-hidden="true"
       />

@@ -32,6 +32,16 @@ export class SplitDto {
 
 export class CreateTransactionDto {
   /**
+   * El mes al que PERTENECE el gasto, como YYYY-MM-DD del día 1.
+   *
+   * Opcional: si no viene, se asume el mes de `date`. Solo hace falta cuando el
+   * gasto cruza de mes — la factura de marzo que se paga en abril.
+   */
+  @IsOptional()
+  @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
+  period?: string;
+
+  /**
    * OPCIONAL. Llevar cuentas es una función que se enciende en los ajustes, no
    * un requisito para registrar un gasto: pedirla aquí obligaría a inventarse
    * una cuenta antes de poder anotar el primer café.
@@ -98,6 +108,16 @@ export class CreateTransactionDto {
 }
 
 export class UpdateTransactionDto {
+  /**
+   * El mes al que PERTENECE el gasto, como YYYY-MM-DD del día 1.
+   *
+   * Opcional: si no viene, se asume el mes de `date`. Solo hace falta cuando el
+   * gasto cruza de mes — la factura de marzo que se paga en abril.
+   */
+  @IsOptional()
+  @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
+  period?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -154,6 +174,16 @@ export class UpdateTransactionDto {
 }
 
 export class CreateTransferDto {
+  /**
+   * El mes al que PERTENECE el gasto, como YYYY-MM-DD del día 1.
+   *
+   * Opcional: si no viene, se asume el mes de `date`. Solo hace falta cuando el
+   * gasto cruza de mes — la factura de marzo que se paga en abril.
+   */
+  @IsOptional()
+  @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
+  period?: string;
+
   @Type(() => Number)
   @IsInt()
   from_account_id!: number;

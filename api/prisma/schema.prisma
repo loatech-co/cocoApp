@@ -340,6 +340,20 @@ model Transaction {
   /// cuentas que existan, y sencillamente no hay saldo para lo demás.
   accountId       BigInt?            @map("account_id")
   date            DateTime           @db.Date
+  /// El MES AL QUE PERTENECE el gasto, que no siempre es el de `date`.
+  ///
+  /// La factura de marzo se paga el 6 de abril: `date` guarda el 6 de abril
+  /// —es cuando salió la plata, y los saldos dependen de eso— y `period`
+  /// guarda marzo, que es el mes del que uno habla cuando pregunta "¿cuánto
+  /// gasté en marzo?".
+  ///
+  /// Se guarda como el DÍA 1 del mes. Es una fecha y no un texto "2026-03"
+  /// para poder ordenar, filtrar por rango y agrupar con las mismas
+  /// herramientas que `date`.
+  ///
+  /// Cuando no se sabe, es el mes de `date`: la mayoría de los gastos se pagan
+  /// en su propio mes y obligar a declararlo sería fricción para nada.
+  period          DateTime           @db.Date
   amount          Decimal            @db.Decimal(15, 2)
   type            TransactionType    @default(expense)
   categoryId      BigInt?            @map("category_id")
@@ -373,6 +387,7 @@ model Transaction {
 
   @@index([userId, importBatchId], map: "idx_tx_user_import_batch")
   @@index([userId, date], map: "idx_tx_user_date")
+  @@index([userId, period], map: "idx_tx_user_period")
   @@index([userId, categoryId], map: "idx_tx_user_category")
   @@index([accountId, date], map: "idx_tx_account_date")
   @@index([userId, externalRef], map: "idx_tx_user_external_ref")

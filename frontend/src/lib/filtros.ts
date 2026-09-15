@@ -12,6 +12,7 @@ import { useSearchParams } from 'react-router-dom';
  */
 
 export type Preset =
+  | 'todo'
   | 'mes-actual'
   | 'mes-pasado'
   | 'trimestre'
@@ -20,6 +21,7 @@ export type Preset =
   | 'personalizado';
 
 export const PRESETS: { valor: Preset; etiqueta: string; ayuda: string }[] = [
+  { valor: 'todo', etiqueta: 'Todo', ayuda: 'Sin límite de fechas' },
   { valor: 'mes-actual', etiqueta: 'Mes en curso', ayuda: 'Del 1 hasta hoy' },
   { valor: 'mes-pasado', etiqueta: 'Mes pasado', ayuda: 'El mes anterior completo' },
   { valor: 'trimestre', etiqueta: 'Últimos 3 meses', ayuda: 'Los tres meses anteriores a hoy' },
@@ -51,6 +53,12 @@ export function rangoDe(preset: Preset): { from: string; to: string } {
   const d = hoy.getUTCDate();
 
   switch (preset) {
+    case 'todo':
+      // Un rango absurdamente amplio en vez de omitir las fechas: así el resto
+      // del código no necesita un caso especial para "sin filtro", y la API
+      // recibe siempre un rango válido.
+      return { from: '1970-01-01', to: aISO(utc(a + 5, 11, 31)) };
+
     case 'mes-actual':
       // HASTA HOY, no hasta fin de mes: incluir días que no han ocurrido
       // aplanaría cualquier promedio y haría parecer que se gastó de menos.
@@ -85,7 +93,7 @@ export interface Filtros {
   q?: string;
 }
 
-const PRESET_POR_DEFECTO: Preset = 'mes-actual';
+
 
 /**
  * Lee y escribe los filtros en la URL.
@@ -95,7 +103,7 @@ const PRESET_POR_DEFECTO: Preset = 'mes-actual';
  * puede ser tanto "mes en curso" como un rango escrito a mano: son estados
  * distintos, porque el primero se mueve solo al día siguiente.
  */
-export function useFiltros(): {
+export function useFiltros(porDefecto: Preset = 'mes-actual'): {
   filtros: Filtros;
   aplicar: (cambios: Partial<Filtros>) => void;
   limpiar: () => void;
@@ -104,7 +112,7 @@ export function useFiltros(): {
   const [params, setParams] = useSearchParams();
 
   const filtros = useMemo<Filtros>(() => {
-    const preset = (params.get('rango') as Preset | null) ?? PRESET_POR_DEFECTO;
+    const preset = (params.get('rango') as Preset | null) ?? porDefecto;
     const rango = rangoDe(preset);
 
     return {
@@ -114,14 +122,14 @@ export function useFiltros(): {
       categoryId: params.get('categoria') ? Number(params.get('categoria')) : undefined,
       q: params.get('busca') ?? undefined,
     };
-  }, [params]);
+  }, [params, porDefecto]);
 
   const aplicar = useCallback(
     (cambios: Partial<Filtros>) => {
       const siguiente = new URLSearchParams(params);
 
       if (cambios.preset !== undefined) {
-        if (cambios.preset === PRESET_POR_DEFECTO) siguiente.delete('rango');
+        if (cambios.preset === porDefecto) siguiente.delete('rango');
         else siguiente.set('rango', cambios.preset);
 
         // Cambiar de preset descarta las fechas escritas a mano: dejarlas haría
@@ -154,13 +162,13 @@ export function useFiltros(): {
 
       setParams(siguiente, { replace: true });
     },
-    [params, setParams],
+    [params, setParams, porDefecto],
   );
 
   const limpiar = useCallback(() => setParams(new URLSearchParams(), { replace: true }), [setParams]);
 
   const hayFiltrosActivos =
-    filtros.preset !== PRESET_POR_DEFECTO ||
+    filtros.preset !== porDefecto ||
     filtros.categoryId !== undefined ||
     (filtros.q ?? '') !== '';
 

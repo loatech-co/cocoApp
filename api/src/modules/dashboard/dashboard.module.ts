@@ -163,7 +163,9 @@ export class DashboardService {
       this.prisma.transaction.findMany({
         where: {
           userId,
-          date: { gte: inicio, lte: fin },
+          // Por PERÍODO, no por fecha de pago: la factura de marzo pagada el
+          // 6 de abril pertenece a marzo, y es en marzo donde uno la busca.
+          period: { gte: inicio, lte: fin },
           ...(rama && { categoryId: { in: rama } }),
           ...(query.q && {
             OR: [
@@ -174,7 +176,7 @@ export class DashboardService {
           }),
         },
         select: {
-          date: true,
+          period: true,
           type: true,
           amount: true,
           categoryId: true,
@@ -242,7 +244,7 @@ export class DashboardService {
     for (const m of movimientos) {
       // Las transferencias no son gasto ni ingreso: solo cambian de bolsillo.
       if (m.type === 'transfer') continue;
-      const cubo = cuboDe(m.date, granularidad);
+      const cubo = cuboDe(m.period, granularidad);
       const actual = cubos.get(cubo);
       if (!actual) continue;
       const monto = toMoney(m.amount);
