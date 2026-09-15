@@ -9,11 +9,21 @@
    Solo estos cinco tonos, escala de grises, y rojo EXCLUSIVAMENTE para errores
    y acciones destructivas. Ningún otro hue entra a la app.
 
-     #2A2058  índigo   · color base de marca, superficies oscuras
+     #283E00  oliva    · color base de marca, superficies oscuras
      #7F4886  morado   · gasto
      #FBBF40  ámbar    · alerta, sobre-presupuesto
      #089C89  teal     · ingreso
      #77BFC9  azul     · neutro informativo
+
+   El oliva sustituyó al índigo como color de marca. La escala baja la
+   saturación en los tonos claros: a 100% —que es la del hex base— el verde se
+   vuelve neón en los pasos altos y deja de leerse como el mismo color.
+
+   OJO al usar marca y alerta juntas: oliva (81°) y ámbar (41°) están a solo 40°
+   de matiz, mucho menos que los 170° que separaban al índigo del ámbar. Se
+   distinguen por LUMINOSIDAD, no por tono — el oliva de marca es oscuro y el
+   ámbar es claro. Dos tonos medios de ambos, uno al lado del otro, se
+   confundirían.
 
    Semántica de dinero: el PRD pedía "verde ingreso / rojo gasto", pero el rojo
    está reservado para errores. Se reasignó a teal/morado, que separan bien en
@@ -26,18 +36,18 @@
   --font-sans: 'Montserrat', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: 'Lora', ui-serif, Georgia, serif;
 
-  /* ── Índigo (marca) ────────────────────────────────────────────────────── */
-  --color-indigo-50: #f2f1f7;
-  --color-indigo-100: #e3e0ee;
-  --color-indigo-200: #c6c0dc;
-  --color-indigo-300: #a29ac6;
-  --color-indigo-400: #7d71ac;
-  --color-indigo-500: #5a4c8c;
-  --color-indigo-600: #43356f;
-  --color-indigo-700: #2a2058;
-  --color-indigo-800: #221a47;
-  --color-indigo-900: #1a1436;
-  --color-indigo-950: #100c21;
+  /* ── Oliva (marca) ─────────────────────────────────────────────────────── */
+  --color-olivo-50: #f6f8f2;
+  --color-olivo-100: #eaf0e0;
+  --color-olivo-200: #d4e3ba;
+  --color-olivo-300: #b9d685;
+  --color-olivo-400: #9dd13d;
+  --color-olivo-500: #77ac15;
+  --color-olivo-600: #4e7703;
+  --color-olivo-700: #283e00;
+  --color-olivo-800: #213300;
+  --color-olivo-900: #192600;
+  --color-olivo-950: #0f1700;
 
   /* ── Morado (gasto) ────────────────────────────────────────────────────── */
   --color-grape-50: #faf5fb;
@@ -132,7 +142,7 @@
   --popover: #ffffff;
   --popover-foreground: var(--color-ash-900);
 
-  --primary: var(--color-indigo-700);
+  --primary: var(--color-olivo-700);
   --primary-foreground: #ffffff;
 
   --secondary: var(--color-ash-100);
@@ -150,7 +160,7 @@
 
   --border: var(--color-ash-200);
   --input: var(--color-ash-300);
-  --ring: var(--color-indigo-400);
+  --ring: var(--color-olivo-400);
 
   /* Semántica de dinero */
   --income: var(--color-teal-700);
@@ -167,25 +177,25 @@
   --chart-2: var(--color-grape-600);
   --chart-3: var(--color-amber-400);
   --chart-4: var(--color-sky-500);
-  --chart-5: var(--color-indigo-500);
+  --chart-5: var(--color-olivo-600);
 }
 
 .dark {
-  --background: var(--color-indigo-950);
+  --background: var(--color-olivo-950);
   --foreground: var(--color-ash-100);
 
-  --card: var(--color-indigo-900);
+  --card: var(--color-olivo-900);
   --card-foreground: var(--color-ash-100);
-  --popover: var(--color-indigo-900);
+  --popover: var(--color-olivo-900);
   --popover-foreground: var(--color-ash-100);
 
-  --primary: var(--color-indigo-200);
-  --primary-foreground: var(--color-indigo-950);
+  --primary: var(--color-olivo-200);
+  --primary-foreground: var(--color-olivo-950);
 
-  --secondary: var(--color-indigo-800);
+  --secondary: var(--color-olivo-800);
   --secondary-foreground: var(--color-ash-200);
 
-  --muted: var(--color-indigo-800);
+  --muted: var(--color-olivo-800);
   --muted-foreground: var(--color-ash-400);
 
   --accent: var(--color-sky-900);
@@ -194,9 +204,9 @@
   --destructive: var(--color-danger-400);
   --destructive-foreground: var(--color-ash-950);
 
-  --border: var(--color-indigo-800);
-  --input: var(--color-indigo-800);
-  --ring: var(--color-indigo-400);
+  --border: var(--color-olivo-800);
+  --input: var(--color-olivo-800);
+  --ring: var(--color-olivo-400);
 
   /* En oscuro se suben los tonos para mantener contraste AA sobre el índigo. */
   --income: var(--color-teal-300);
@@ -212,7 +222,7 @@
   --chart-2: var(--color-grape-400);
   --chart-3: var(--color-amber-300);
   --chart-4: var(--color-sky-300);
-  --chart-5: var(--color-indigo-300);
+  --chart-5: var(--color-olivo-300);
 }
 
 /* Expone los tokens como utilidades de Tailwind (bg-background, text-income…). */
