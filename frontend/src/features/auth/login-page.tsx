@@ -43,45 +43,14 @@ export function LoginPage() {
 
   return (
     <main className="min-h-dvh lg:grid lg:grid-cols-2">
-      {/*
-        La mitad de marca. En móvil DESAPARECE, no se apila: un teléfono no
-        tiene alto que gastar en decoración antes del formulario, y empujar el
-        campo de correo bajo el pliegue es la forma más rápida de que alguien
-        abandone. El carácter se mantiene con el color de fondo del formulario.
-      */}
-      <section
-        className="relative hidden overflow-hidden bg-bosque-800 bg-cover bg-center lg:block"
-        // La imagen se referencia por CSS y no por <img>: si el archivo todavía
-        // no está, el color de fondo queda y la pantalla sigue siendo usable.
-        // Un <img> roto dejaría un hueco con el icono de imagen partida.
-        //
-        // Para cambiarla: reemplazar frontend/public/fondo-login.jpg
-        style={{ backgroundImage: 'url(/fondo-login.jpg)' }}
-      >
-        {/* Velo: el texto tiene que leerse sobre una imagen que puede tener
-            zonas muy claras. Sin él, el titular desaparecería sobre ellas. */}
-        <div className="absolute inset-0 bg-gradient-to-t from-bosque-950/90 via-bosque-950/45 to-transparent" />
-
-        <div className="relative flex h-full flex-col justify-end p-12 xl:p-16">
-          <p className="text-4xl font-extrabold leading-tight tracking-tight text-white xl:text-5xl">
-            Tus finanzas,
-            <br />
-            claras.
-          </p>
-          <p className="mt-4 max-w-md text-base leading-relaxed text-white/75">
-            Cada peso que entra y sale, ordenado por centros de costos, grupos y
-            conceptos. Sin hojas de cálculo que mantener a mano.
-          </p>
-        </div>
-      </section>
-
-      {/* La mitad del formulario */}
+      {/* El formulario va PRIMERO en el DOM además de a la izquierda: es lo
+          que la persona viene a hacer, y quien navega con teclado o lector de
+          pantalla lo encuentra sin atravesar antes la decoración. */}
       <section className="flex min-h-dvh items-center justify-center bg-background px-5 py-10 lg:min-h-0">
         <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Logo className="h-9 w-auto text-bosque-800" />
-          <p className="mt-2 text-sm text-muted-foreground">Tus finanzas, claras.</p>
-        </div>
+        {/* `mx-auto`, no `text-center`: el logotipo es un SVG de BLOQUE con
+            ancho automático, y centrar texto no lo mueve. */}
+        <Logo className="mx-auto mb-8 h-9 w-auto text-bosque-800" />
 
         <Card>
           <CardHeader>
@@ -147,6 +116,39 @@ export function LoginPage() {
           ¿Olvidaste tu contraseña? Pídele al administrador que la restablezca.
         </p>
         </div>
+      </section>
+
+      {/*
+        La mitad de marca. En móvil DESAPARECE, no se apila: un teléfono no
+        tiene alto que gastar en decoración antes del formulario, y empujar el
+        campo de correo bajo el pliegue es la forma más rápida de que alguien
+        abandone.
+
+        El padding va en el CONTENEDOR y el redondeo en la imagen: así la
+        imagen respira contra el borde de la pantalla en vez de sangrar, que es
+        lo que pediste.
+      */}
+      <section className="hidden bg-background p-6 lg:block">
+        {/*
+          El padding va en el CONTENEDOR y el redondeo en la imagen: así respira
+          contra el borde de la pantalla en vez de sangrar.
+
+          12px exactos, no `rounded-xl`: este proyecto sobrescribe los tokens de
+          radio y `rounded-xl` aquí son 20px.
+
+          Por CSS y no con <img>: si la imagen no carga —red lenta, navegador
+          sin WebP— queda el verde de fondo y la pantalla sigue siendo usable.
+          Un <img> roto dejaría el icono de imagen partida.
+
+          WebP sin respaldo JPG a propósito: lo soportan todos los navegadores
+          desde 2020. El original vive en frontend/assets-fuente/, con cómo
+          regenerarlo.
+        */}
+        <div
+          className="size-full overflow-hidden rounded-[12px] bg-bosque-800 bg-cover bg-center"
+          style={{ backgroundImage: 'url(/fondo-login.webp)' }}
+          role="presentation"
+        />
       </section>
     </main>
   );

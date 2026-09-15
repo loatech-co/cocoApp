@@ -75,3 +75,6 @@ frontend/public/tesseract/
 
 # Respaldos de la base: nunca al repositorio. Llevan datos financieros reales.
 respaldos/
+
+# Las imágenes fuente SÍ se versionan: son el original del que sale lo que se
+# publica, y perderlas obligaría a recomprimir desde un WebP ya comprimido.
