@@ -126,7 +126,10 @@
   /* Esquinas amplias, como en la referencia. */
   --radius: 1rem;
 
-  --background: var(--color-tinta-100);
+  /* Un paso más abajo que la tarjeta blanca, a propósito: con tinta-100 el
+     área de trabajo y las tarjetas eran casi el mismo blanco y todo se leía
+     como una masa plana junto a la barra lateral oscura. */
+  --background: var(--color-tinta-200);
   --foreground: var(--color-tinta-950);
 
   --card: #ffffff;

@@ -83,9 +83,6 @@ export function AppShell() {
           {/* Lima sobre la barra oscura: 10.1:1 de contraste, y es el acento de
               la marca. En blanco se leería igual pero sin carácter. */}
           <Logo className="h-7 w-auto text-lima-300" />
-          <span className="mt-2 block truncate text-xs text-sidebar-muted">
-            {usuario?.display_name ?? usuario?.email}
-          </span>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1" aria-label="Secciones">
@@ -130,6 +127,20 @@ export function AppShell() {
 
       {/* Contenido */}
       <div className="md:pl-64">
+        {/*
+          Cabecera. `sticky` y no `fixed`: así ocupa su sitio en el flujo y el
+          contenido no queda tapado debajo, que es lo que obliga a compensar con
+          un padding que luego nadie recuerda por qué está.
+        */}
+        <header className="sticky top-0 z-10 flex items-center justify-end gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur md:px-8 lg:px-10">
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm font-medium sm:block">
+              {usuario?.display_name ?? usuario?.email}
+            </span>
+            <Avatar nombre={usuario?.display_name ?? usuario?.email ?? '?'} />
+          </div>
+        </header>
+
         <main className="w-full px-4 pb-28 pt-5 md:px-8 md:pb-16 md:pt-10 lg:px-10">
           <Outlet />
         </main>
@@ -184,6 +195,33 @@ export function AppShell() {
         onCerrar={() => setCapturaAbierta(false)}
       />
     </div>
+  );
+}
+
+/**
+ * Avatar con las iniciales.
+ *
+ * No hay fotos de perfil en el producto, así que una imagen genérica de persona
+ * sería ruido: no identifica a nadie. Las iniciales sí, y de paso confirman con
+ * qué cuenta se está dentro, que es la pregunta que uno se hace al ver un
+ * avatar.
+ */
+function Avatar({ nombre }: { nombre: string }) {
+  const iniciales = nombre
+    .trim()
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => parte[0]?.toUpperCase() ?? '')
+    .join('');
+
+  return (
+    <span
+      title={nombre}
+      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+    >
+      {iniciales || '?'}
+    </span>
   );
 }
 
