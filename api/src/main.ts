@@ -50,6 +50,33 @@ function cargarConfiguracion(): void {
   if (!parsed) {
     Logger.warn(`No se encontró ${archivo}; se usan las variables del entorno.`, 'Bootstrap');
   }
+  desentrecomillar();
+}
+
+/**
+ * Quita las comillas que envuelven un valor heredado del entorno.
+ *
+ * LiteSpeed inyecta las variables de la Node.js App tal como se guardaron,
+ * comillas incluidas: `DATABASE_URL` llega literalmente como
+ * `"postgresql://…"`, con la comilla dentro del valor. Un archivo `.env` lo
+ * tolera porque dotenv interpreta las comillas; una variable de entorno no,
+ * y Prisma rechaza la URL con un P1012 que culpa al protocolo.
+ *
+ * Mientras el `.env` del despliegue exista, esto no cambia nada: ese archivo ya
+ * ganó. Importa el día que falte —un despliegue a medias, un archivo sin
+ * copiar— porque entonces el valor heredado es lo único que queda, y así al
+ * menos es utilizable en vez de fallar por un par de comillas.
+ */
+function desentrecomillar(): void {
+  for (const clave of ['DATABASE_URL', 'DIRECT_URL']) {
+    const valor = process.env[clave];
+    if (!valor) continue;
+    const limpio = valor.replace(/^(['"])(.*)\1$/s, '$2');
+    if (limpio !== valor) {
+      process.env[clave] = limpio;
+      Logger.warn(`Se quitaron las comillas de ${clave}, heredada del entorno.`, 'Bootstrap');
+    }
+  }
 }
 
 async function bootstrap(): Promise<void> {

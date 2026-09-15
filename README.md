@@ -312,8 +312,22 @@ y por ruta absoluta: **el archivo del despliegue es la fuente de verdad, no
 hPanel**.
 
 El síntoma engañaba: Prisma fallaba con `P1012` — *"the URL must start with
-postgresql://"* — que se lee como una URL mal escrita, cuando en realidad
-recibía intacta la URL de MySQL de meses atrás.
+postgresql://"* — que se lee como una URL mal escrita.
+
+Y en parte lo estaba: **la variable llega con las comillas dentro del valor**.
+LiteSpeed inyecta lo que hPanel guardó, sin interpretarlas, así que el proceso
+recibe literalmente `"postgresql://…"`. Un archivo `.env` lo tolera porque
+dotenv sí las interpreta; una variable de entorno no. Por eso `main.ts` también
+desentrecomilla lo que hereda: mientras el `.env` exista no cambia nada, pero el
+día que falte el valor heredado al menos sirve en vez de romper por un par de
+comillas.
+
+Se intentaron tres formas de limpiar esa variable desde SSH y **ninguna
+funciona**: `UnsetEnv` en el `.htaccess` LiteSpeed lo ignora, editar
+`hbuilds/config/.env` no altera lo que se inyecta, y no hay API pública para la
+Node.js App de un plan compartido. Solo se puede quitar desde hPanel. No es
+urgente —el `.env` del despliegue manda y el valor heredado ya apunta a
+Supabase— pero conviene borrarla para que nadie crea que cambiarla ahí hace algo.
 
 **2. El `restart.txt` que importa es el de `tmp/`.** Hay otro en la raíz del
 dominio que no mira nadie. LiteSpeed vigila el que declara `PassengerRestartDir`
