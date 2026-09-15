@@ -186,12 +186,18 @@
 }
 
 .dark {
-  --background: var(--color-bosque-950);
+  /* Tres escalones, y no dos como estaban: la barra lateral es la superficie
+     MÁS oscura, el área de trabajo sube uno y las tarjetas otro.
+
+     Antes la lateral y el fondo eran los dos `bosque-950` —el mismo verde— así
+     que en oscuro la barra desaparecía contra el contenido y la pantalla se
+     leía como un bloque verde uniforme. */
+  --background: var(--color-bosque-900);
   --foreground: var(--color-tinta-100);
 
-  --card: var(--color-bosque-900);
+  --card: var(--color-bosque-800);
   --card-foreground: var(--color-tinta-100);
-  --popover: var(--color-bosque-900);
+  --popover: var(--color-bosque-800);
   --popover-foreground: var(--color-tinta-100);
 
   /* En oscuro la marca sube a lima: el bosque sobre bosque no se ve. */
@@ -201,10 +207,10 @@
   --accent: var(--color-bosque-700);
   --accent-foreground: var(--color-lima-200);
 
-  --secondary: var(--color-bosque-800);
+  --secondary: var(--color-bosque-700);
   --secondary-foreground: var(--color-tinta-100);
 
-  --muted: var(--color-bosque-800);
+  --muted: var(--color-bosque-700);
   --muted-foreground: var(--color-tinta-400);
 
   --destructive: #f87171;
