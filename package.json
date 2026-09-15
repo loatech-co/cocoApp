@@ -22,7 +22,6 @@
     "dev:web": "npm run dev --workspace frontend",
     "prepare:ocr": "node scripts/preparar-tesseract.mjs",
     "sql": "dotenv -e api/.env.migrate -- node scripts/sql.mjs",
-    "sql:online": "bash scripts/sql-remoto.sh",
     "sql:supabase": "dotenv -e api/.env.migrate -- bash scripts/sql-supabase.sh",
     "postinstall": "node scripts/preparar-tesseract.mjs",
     "start": "node api/dist/main.js",

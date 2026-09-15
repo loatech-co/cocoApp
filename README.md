@@ -335,10 +335,13 @@ se ejecutó; un 500 o un 503, que no.
 
 ### Volver atrás
 
-La MariaDB anterior sigue intacta. Su configuración quedó en
-`hbuilds/config/.env.mariadb.bak` y cada despliegue deja un respaldo con fecha
-en `~/respaldos-cocoapp/`. Para consultarla: `scripts/sql-remoto.sh`.
+Ya no hay vuelta atrás a MariaDB: esa base se vació tras confirmar que Postgres
+funcionaba. Su último volcado quedó en `respaldos/mariadb-final.sql`, fuera del
+repositorio.
 
+Lo que sí se puede revertir es el CÓDIGO: cada despliegue deja un respaldo con
+fecha en `~/respaldos-cocoapp/` del servidor, con `api/dist`, `api/prisma`, el
+cliente de Prisma y el `.env` de ese momento.
 
 ## Autenticación
 
