@@ -157,10 +157,28 @@ export function LoginPage() {
           regenerarlo.
         */}
         <div
-          className="size-full overflow-hidden rounded-[32px] bg-bosque-800 bg-cover bg-center"
+          className="relative size-full overflow-hidden rounded-[32px] bg-bosque-800 bg-cover bg-center"
           style={{ backgroundImage: 'url(/fondo-login.webp)' }}
-          role="presentation"
-        />
+        >
+          {/*
+            Degradado en verde británico desde abajo.
+
+            No es decoración: la imagen tiene zonas de lima muy claro, y un
+            texto blanco encima de una de esas franjas desaparece. El degradado
+            garantiza que la parte baja —donde va el texto— sea siempre oscura,
+            se recorte la imagen por donde se recorte.
+
+            Sube hasta el 55% y no hasta arriba para no apagar la imagen entera:
+            arriba queda limpia.
+          */}
+          <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-bosque-900 via-bosque-900/70 to-transparent" />
+
+          <p className="absolute inset-x-0 bottom-0 p-10 text-4xl font-bold leading-tight tracking-tight text-white xl:p-14 xl:text-5xl">
+            Tus finanzas,
+            <br />
+            claras.
+          </p>
+        </div>
       </section>
     </main>
   );
