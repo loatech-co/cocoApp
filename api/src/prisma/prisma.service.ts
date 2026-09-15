@@ -1,3 +1,4 @@
+import { PrismaPg } from '@prisma/adapter-pg';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
@@ -14,62 +15,27 @@ import { PrismaClient } from '@prisma/client';
  *
  * Ningún service ni controller instancia PrismaClient por su cuenta.
  */
-/**
- * Cada cuánto se toca la base para que el motor no quede inactivo.
- *
- * Cuatro minutos es por debajo de cualquier umbral de inactividad razonable, y
- * el costo es una consulta trivial cada 240 segundos: irrelevante incluso en el
- * plan gratuito.
- */
-const LATIDO_MS = 90 * 1000;
-
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
-  private latido: NodeJS.Timeout | null = null;
+
+  constructor() {
+    // El adaptador `pg` reemplaza al motor Rust de Prisma. Ver la nota del
+    // generador en schema.prisma: el motor entraba en pánico al suspenderse el
+    // proceso y tumbaba el sitio.
+    super({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+  }
 
   async onModuleInit(): Promise<void> {
     await this.$connect();
     this.logger.log('Conectado a la base de datos');
-    this.arrancarLatido();
   }
 
   async onModuleDestroy(): Promise<void> {
-    if (this.latido) clearInterval(this.latido);
     await this.$disconnect();
     this.logger.log('Desconectado de la base de datos');
   }
 
-  /**
-   * Mantiene el motor de Prisma despierto.
-   *
-   * ── El fallo que esto evita ─────────────────────────────────────────────────
-   * Tras un rato sin tráfico, el motor Rust de Prisma entraba en pánico con
-   * `PANIC: timer has gone away`: su hilo de temporizadores desaparece mientras
-   * queda una espera pendiente. La excepción no se puede atrapar desde
-   * JavaScript —nace dentro del motor— y tumbaba el proceso entero, dejando el
-   * sitio en 503 hasta un reinicio a mano.
-   *
-   * Una consulta periódica evita esa ventana de inactividad. No es elegante:
-   * lo elegante sería que el motor no entrara en pánico. Pero 6.19.3 es la
-   * última versión de la serie 6 y el arreglo está en un major que todavía es
-   * release candidate, así que esto es lo que hay hasta entonces.
-   *
-   * NO lleva `unref()`. Lo llevaba, y era un error: un temporizador sin
-   * referencia no impide que Node considere el proceso ocioso, que es
-   * exactamente la condición que dispara el pánico. El apagado ordenado lo
-   * resuelve `onModuleDestroy`, que lo limpia.
-   */
-  private arrancarLatido(): void {
-    this.latido = setInterval(() => {
-      void this.$queryRaw`SELECT 1`.catch((error: unknown) => {
-        this.logger.warn(
-          `El latido a la base falló: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      });
-    }, LATIDO_MS);
-
-  }
 
   /**
    * Ping para el healthcheck: confirma que el proceso puede hablar con la base.

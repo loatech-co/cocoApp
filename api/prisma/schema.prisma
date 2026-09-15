@@ -21,7 +21,16 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  // `driverAdapters` hace que Prisma hable con Postgres a través de un cliente
+  // de JavaScript (`pg`) en vez de su propio motor en Rust.
+  //
+  // No es una optimización: el motor Rust entraba en pánico con
+  // "PANIC: timer has gone away" cada vez que la plataforma suspendía el
+  // proceso por inactividad, se llevaba el proceso por delante y dejaba el
+  // sitio en 503 hasta un reinicio. Sin motor Rust no hay hilo de
+  // temporizadores que se pueda morir.
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
