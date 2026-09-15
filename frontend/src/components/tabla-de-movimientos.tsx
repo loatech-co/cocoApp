@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { EstadoVacio } from '@/components/estado-vacio';
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Tabla, TablaEsqueleto, Td, Th, Tr } from '@/components/tabla';
+import { Select } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { useActualizarMovimiento } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
@@ -239,17 +240,12 @@ function SelectorEnFila({
   onElegir: (id: number | undefined) => void;
 }) {
   return (
-    <select
+    <Select
+      tamano="sm"
       aria-label={aria}
       value={valor ?? ''}
       disabled={deshabilitado || opciones.length === 0}
       onChange={(e) => onElegir(e.target.value === '' ? undefined : Number(e.target.value))}
-      className={cn(
-        'min-w-0 flex-1 truncate rounded-lg border bg-card px-2 py-1.5 text-xs',
-        'outline-none focus-visible:ring-1 focus-visible:ring-ring',
-        'disabled:cursor-not-allowed disabled:opacity-40',
-      )}
-      style={{ borderColor: 'var(--input)' }}
     >
       <option value="">{aria}…</option>
       {opciones.map((o) => (
@@ -257,6 +253,6 @@ function SelectorEnFila({
           {o.name}
         </option>
       ))}
-    </select>
+    </Select>
   );
 }

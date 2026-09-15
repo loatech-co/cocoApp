@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select } from '@/components/ui/select';
 import { ApiClientError } from '@/lib/api-client';
 import { useAccounts, useArchivarCuenta, useCrearCuenta } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
@@ -206,18 +207,17 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="type">Tipo</Label>
-              <select
+              <Select
                 id="type"
                 value={type}
                 onChange={(evento) => setType(evento.target.value as Account['type'])}
-                className="h-10 rounded-md border border-input bg-card px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
               >
                 {TIPOS.map((opcion) => (
                   <option key={opcion.valor} value={opcion.valor}>
                     {opcion.etiqueta}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="flex flex-col gap-2">

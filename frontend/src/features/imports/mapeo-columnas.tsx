@@ -1,6 +1,7 @@
 import { AlertCircle } from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Select } from '@/components/ui/select';
 import type { ColumnaDetectada, Papel } from './parseo/csv-columnas';
 
 /**
@@ -82,18 +83,19 @@ export function MapeoDeColumnas({
             <label className="sr-only" htmlFor={`papel-${columna.indice}`}>
               Papel de la columna {columna.cabecera}
             </label>
-            <select
+            <Select
+              tamano="sm"
               id={`papel-${columna.indice}`}
               value={columna.papel}
               onChange={(evento) => asignar(columna.indice, evento.target.value as Papel)}
-              className="h-9 w-40 shrink-0 rounded-md border border-input bg-background px-2 text-xs"
+              className="w-40 shrink-0"
             >
               {PAPELES.map((papel) => (
                 <option key={papel.valor} value={papel.valor}>
                   {papel.etiqueta}
                 </option>
               ))}
-            </select>
+            </Select>
           </li>
         ))}
       </ul>

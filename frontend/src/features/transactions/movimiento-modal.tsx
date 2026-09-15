@@ -5,6 +5,7 @@ import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { ApiClientError } from '@/lib/api-client';
 import { useActualizarMovimiento, useCategories, useCrearMovimiento } from '@/lib/queries';
@@ -275,12 +276,10 @@ function Cascada({
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-xs font-medium text-muted-foreground">{etiqueta}</span>
-      <select
+      <Select
         value={valor ?? ''}
         disabled={deshabilitado || opciones.length === 0}
         onChange={(e) => onElegir(e.target.value === '' ? undefined : Number(e.target.value))}
-        className="h-10 rounded-lg border bg-card px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-        style={{ borderColor: 'var(--input)' }}
       >
         <option value="">Sin elegir</option>
         {opciones.map((o) => (
@@ -288,7 +287,7 @@ function Cascada({
             {o.name}
           </option>
         ))}
-      </select>
+      </Select>
     </label>
   );
 }

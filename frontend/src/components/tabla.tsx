@@ -114,7 +114,11 @@ export function Tr({
     <tr
       onClick={onClick}
       className={cn(
-        'border-b border-border transition-colors last:border-b-0',
+        // `group/fila` deja que la celda FIJA sepa que su fila está bajo el
+        // cursor: esa celda necesita fondo propio y opaco para que las columnas
+        // no se transparenten al desplazarse, y ese fondo opaco tapaba el
+        // resaltado de la fila. Se marcaba todo menos la primera columna.
+        'group/fila border-b border-border transition-colors last:border-b-0',
         // Ámbar y no rojo: sin clasificar no es un error, es algo pendiente. En
         // esta paleta el rojo está reservado a lo que de verdad salió mal.
         atencion ? 'bg-warning-surface/40 hover:bg-warning-surface/60' : 'hover:bg-secondary/60',
@@ -151,13 +155,15 @@ export function Td({
         'px-4 py-3',
         alineado === 'derecha' ? 'text-right' : 'text-left',
         // La celda fija necesita fondo PROPIO y opaco, o las columnas de atrás
-        // se transparentarían por debajo al desplazarse.
-        fija && 'sticky left-0 z-10',
+        // se transparentarían por debajo al desplazarse. Como es opaco, tiene
+        // que repetir a mano el resaltado de su fila: `color-mix` reproduce
+        // exactamente lo que el navegador compone en las demás celdas.
+        fija && 'sticky left-0 z-10 transition-colors',
         fija && divisor && 'border-r border-border',
         fija &&
           (atencion
-            ? 'bg-[color-mix(in_srgb,var(--warning-surface)_40%,var(--card))]'
-            : 'bg-card'),
+            ? 'bg-[color-mix(in_srgb,var(--warning-surface)_40%,var(--card))] group-hover/fila:bg-[color-mix(in_srgb,var(--warning-surface)_60%,var(--card))]'
+            : 'bg-card group-hover/fila:bg-[color-mix(in_srgb,var(--secondary)_60%,var(--card))]'),
         className,
       )}
     >

@@ -12,7 +12,6 @@ import { CuentaPage } from '@/features/cuenta/cuenta-page';
 import { DashboardPage } from '@/features/dashboard/dashboard-page';
 import { ImportarPage } from '@/features/imports/importar-page';
 import { RevisarPage } from '@/features/imports/revisar-page';
-import { TransactionsPage } from '@/features/transactions/transactions-page';
 
 /**
  * Rutas en español, una por módulo del catálogo.
@@ -33,7 +32,6 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <DashboardPage /> },
-      { path: 'movimientos', element: <TransactionsPage /> },
       { path: 'cuentas', element: <AccountsPage /> },
       { path: 'centros-de-costos', element: <CentrosPage /> },
       // La ruta vieja sigue viva y redirige: hay enlaces guardados y marcadores

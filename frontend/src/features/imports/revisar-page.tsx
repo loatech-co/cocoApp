@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select } from '@/components/ui/select';
 import { ApiClientError } from '@/lib/api-client';
 import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
@@ -93,7 +94,7 @@ export function RevisarPage() {
         </Alert>
 
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => navegar('/movimientos')}>Ver los movimientos</Button>
+          <Button onClick={() => navegar('/')}>Ver los movimientos</Button>
           <Button
             variant="outline"
             disabled={deshacer.isPending}
@@ -277,8 +278,8 @@ function Fila({
 
           {editable && (
             <div className="flex flex-wrap items-center gap-2">
-              <select
-                className="h-9 rounded-md border border-input bg-background px-2 text-xs"
+              <Select
+                tamano="sm"
                 value={fila.category_id ?? ''}
                 onChange={(evento) =>
                   cambiar({
@@ -293,7 +294,7 @@ function Fila({
                     {categoria.name}
                   </option>
                 ))}
-              </select>
+              </Select>
 
               {fila.confidence !== null && fila.category_id !== null && (
                 <span
@@ -305,8 +306,8 @@ function Fila({
                 </span>
               )}
 
-              <select
-                className="h-9 rounded-md border border-input bg-background px-2 text-xs"
+              <Select
+                tamano="sm"
                 value={fila.type}
                 onChange={(evento) =>
                   cambiar({ type: evento.target.value as 'expense' | 'income' })
@@ -315,7 +316,7 @@ function Fila({
               >
                 <option value="expense">Gasto</option>
                 <option value="income">Ingreso</option>
-              </select>
+              </Select>
 
               <div className="ml-auto flex gap-1">
                 <BotonDeEstado

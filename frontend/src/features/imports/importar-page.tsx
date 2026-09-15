@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { ApiClientError } from '@/lib/api-client';
 import { useLlevaCuentas } from '@/lib/preferences';
 import { useAccounts } from '@/lib/queries';
@@ -195,9 +196,9 @@ export function ImportarPage() {
             <Label htmlFor="cuenta" className="sr-only">
               Cuenta
             </Label>
-            <select
+            <Select
               id="cuenta"
-              className="h-11 w-full max-w-sm rounded-md border border-input bg-background px-3 text-sm"
+              className="max-w-sm"
               value={cuentaId ?? ''}
               onChange={(evento) =>
                 setCuentaId(evento.target.value ? Number(evento.target.value) : null)
@@ -209,7 +210,7 @@ export function ImportarPage() {
                   {cuenta.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </CardContent>
         </Card>
       )}

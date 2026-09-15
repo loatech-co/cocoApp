@@ -1,12 +1,13 @@
 import { AlertCircle, ChevronLeft, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 
+import { Dona } from '@/components/dona';
 import { Paginador } from '@/components/paginador';
 import { TablaDeMovimientos } from '@/components/tabla-de-movimientos';
+import { TablaPie, Td } from '@/components/tabla';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { Tendencia, TendenciaEsqueleto } from '@/components/tendencia';
-import { rutaSeleccionada, ToolbarFiltros } from '@/components/toolbar-filtros';
+import { rutaSeleccionada, ToolbarFiltros, type Orden } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -56,14 +57,34 @@ export function DashboardPage() {
   // Los mismos filtros que el resto de la pantalla: si la lista de aquí abajo
   // no respondiera al recorte, contradiría las cifras de arriba.
   const [pagina, setPagina] = useState(1);
+  const [orden, setOrden] = useState<Orden>('-date');
   const movimientos = useTransactions({
     ...aParametros(filtros),
     page: pagina,
     per_page: POR_PAGINA,
-    sort: '-date',
+    sort: orden,
   });
   const categorias = useCategories();
   const arbol = categorias.data ?? [];
+
+  /**
+   * Conecta una cabecera con el orden.
+   *
+   * `primero` es la dirección del PRIMER clic, y no es la misma en todas: en
+   * una fecha o un valor uno quiere ver lo más grande y lo más reciente
+   * arriba; en un nombre, la A.
+   */
+  const ordenDe = (campo: string, primero: 'asc' | 'desc') => ({
+    activo: orden === campo ? ('asc' as const) : orden === `-${campo}` ? ('desc' as const) : null,
+    onCambiar: () => {
+      setPagina(1);
+      const descendente = `-${campo}` as Orden;
+      const ascendente = campo as Orden;
+      if (orden === ascendente) setOrden(descendente);
+      else if (orden === descendente) setOrden(ascendente);
+      else setOrden(primero === 'asc' ? ascendente : descendente);
+    },
+  });
 
   // El camino hasta lo que se está desglosando. Solo con UNA categoría marcada:
   // con varias no hay un "dentro de" único del que volver.
@@ -119,12 +140,15 @@ export function DashboardPage() {
               <Skeleton key={i} className="h-24 rounded-2xl" />
             ))}
           </div>
-          <Card>
-            <CardContent className="p-4 sm:p-6">
-              <Skeleton className="mb-4 h-6 w-40" />
-              <TendenciaEsqueleto />
-            </CardContent>
-          </Card>
+          <div className="grid gap-4 sm:gap-5 lg:grid-cols-10">
+            <Card className="lg:col-span-7">
+              <CardContent className="p-4 sm:p-6">
+                <Skeleton className="mb-4 h-6 w-40" />
+                <TendenciaEsqueleto />
+              </CardContent>
+            </Card>
+            <Skeleton className="h-72 rounded-3xl lg:col-span-3" />
+          </div>
         </>
       )}
 
@@ -154,20 +178,20 @@ export function DashboardPage() {
             />
           </div>
 
-          <Card>
-            <CardContent className="p-4 sm:p-6">
-              <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
-              <Tendencia
-                puntos={dashboard.data.trend}
-                granularidad={dashboard.data.period.granularity}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Tres décimas y siete: el desglose responde "¿en qué se repartió?"
-              con tres barras, y la tabla necesita todo el ancho que sobre para
-              sus seis columnas. */}
+          {/* La gráfica dice CUÁNDO se gastó y la dona EN QUÉ. Son la misma
+              pregunta partida en dos, así que van a la misma altura: una
+              debajo de la otra obliga a desplazarse para cruzarlas. */}
           <div className="grid gap-4 sm:gap-5 lg:grid-cols-10">
+            <Card className="lg:col-span-7">
+              <CardContent className="p-4 sm:p-6">
+                <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
+                <Tendencia
+                  puntos={dashboard.data.trend}
+                  granularidad={dashboard.data.period.granularity}
+                />
+              </CardContent>
+            </Card>
+
             <div className="lg:col-span-3">
               <Distribucion
                 filas={dashboard.data.by_category}
@@ -184,33 +208,59 @@ export function DashboardPage() {
                 }}
               />
             </div>
+          </div>
 
-            <div className="flex min-w-0 flex-col gap-3 lg:col-span-7">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="font-display text-lg font-semibold">Movimientos</h2>
-                <Link
-                  to="/movimientos"
-                  className="text-sm font-medium text-primary underline underline-offset-4"
-                >
-                  Ver todos
-                </Link>
-              </div>
+          <div className="flex min-w-0 flex-col gap-3">
+            <h2 className="font-display text-lg font-semibold">Movimientos</h2>
 
-              <TablaDeMovimientos
-                movimientos={movimientos.data?.data ?? []}
-                arbol={arbol}
-                cargando={movimientos.isPending}
-                onAbrir={setEditando}
-                filasDelEsqueleto={8}
-              />
+            <TablaDeMovimientos
+              movimientos={movimientos.data?.data ?? []}
+              arbol={arbol}
+              cargando={movimientos.isPending}
+              onAbrir={setEditando}
+              orden={ordenDe}
+              filasDelEsqueleto={8}
+              pie={
+                movimientos.data && movimientos.data.data.length > 0 ? (
+                  <TablaPie>
+                    <tr className="border-b border-border">
+                      <Td fija divisor={false} className="text-muted-foreground">
+                        Promedio
+                      </Td>
+                      <Td />
+                      <Td />
+                      <Td />
+                      <Td />
+                      <Td alineado="derecha" className="tabular">
+                        {formatCOP(
+                          Number(movimientos.data.meta.sum_expense ?? 0) /
+                            Math.max(1, movimientos.data.meta.total),
+                        )}
+                      </Td>
+                    </tr>
+                    <tr>
+                      <Td fija divisor={false}>
+                        Total · {movimientos.data.meta.total} movimientos
+                      </Td>
+                      <Td />
+                      <Td />
+                      <Td />
+                      <Td />
+                      <Td alineado="derecha" className="tabular font-semibold text-expense">
+                        {formatCOP(movimientos.data.meta.sum_expense ?? '0')}
+                      </Td>
+                    </tr>
+                  </TablaPie>
+                ) : undefined
+              }
+            />
 
-              <Paginador
-                pagina={pagina}
-                total={movimientos.data?.meta?.total ?? 0}
-                porPagina={POR_PAGINA}
-                onCambiar={setPagina}
-              />
-            </div>
+            <Paginador
+              pagina={pagina}
+              total={movimientos.data?.meta?.total ?? 0}
+              porPagina={POR_PAGINA}
+              onCambiar={setPagina}
+            />
           </div>
         </>
       )}
@@ -292,17 +342,13 @@ function Kpi({
  * pantalla ni perder el rango de fechas.
  */
 /**
- * La distribución del gasto, en el tamaño de un indicador.
+ * En qué se repartió el gasto.
  *
- * ── Por qué cabe en una tarjeta pequeña ─────────────────────────────────────
- * Porque la pregunta que responde un resumen es "¿en qué se está yendo?", y
- * eso lo contestan las DOS o TRES primeras líneas. El detalle completo —cada
- * concepto, su porcentaje, su número de movimientos— es la tabla de abajo y la
- * pantalla de Centros de costos.
- *
- * Las barras siguen ahí porque comparar longitudes es inmediato y comparar
- * cifras largas no lo es: $63.412.900 contra $29.847.616 obliga a contar
- * dígitos.
+ * ── Por qué una dona y no barras ────────────────────────────────────────────
+ * Porque la pregunta es de PROPORCIÓN, no de ranking: cuánto se lleva cada
+ * centro DEL TOTAL. Una fila de barras compara unas con otras y deja el total
+ * implícito; la dona lo pone en el centro y cada porción se lee contra él sin
+ * hacer ninguna cuenta.
  */
 function Distribucion({
   filas,
@@ -320,24 +366,10 @@ function Distribucion({
   onBajar: (id: number) => void;
   onSubir: () => void;
 }) {
-  const total = Number.parseFloat(totalGastado) || 1;
-  const CABEN = 6;
-
-  // Sin gastos muestra CEROS, no un estado vacío: es un indicador, y los otros
-  // tres de la fila dicen "$0" en la misma situación. Un cartel aquí rompería
-  // la fila y haría parecer que esta tarjeta falló mientras las demás no.
-  const visibles =
-    filas.length > 0
-      ? filas.slice(0, CABEN)
-      : [{ category_id: null, name: 'Sin gastos', total: '0', count: 0 }];
-  const restantes = Math.max(0, filas.length - CABEN);
-
   return (
     <Card className="h-full">
       <CardContent className="flex h-full flex-col p-4 sm:p-6">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Distribución de costos
-        </p>
+        <h2 className="font-display text-lg font-semibold">Distribución de costos</h2>
 
         {/* Bajar de nivel es un clic; subir tiene que serlo también. Sin esto,
             entrar en un centro de costos era un viaje de ida: la única salida
@@ -346,60 +378,25 @@ function Distribucion({
           <button
             type="button"
             onClick={onSubir}
-            className="mt-1 flex min-w-0 items-center gap-1 self-start rounded text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="mt-1.5 flex min-w-0 items-center gap-1 self-start rounded text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             <ChevronLeft className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{ruta.map((n) => n.name).join(' · ')}</span>
           </button>
         ) : (
-          <p className="mt-1 text-xs text-muted-foreground">Por {nivel}</p>
+          <p className="mt-1.5 text-xs text-muted-foreground">Por {nivel}</p>
         )}
 
-        <ul className="mt-2 flex flex-col gap-2">
-            {visibles.map((fila) => {
-              const porcentaje = Math.round((Number.parseFloat(fila.total) / total) * 100);
-              const interactiva = fila.category_id !== null && nivel !== 'concepto';
-
-              const contenido = (
-                <>
-                  <span className="flex items-baseline justify-between gap-2">
-                    <span className="min-w-0 truncate text-sm font-medium">{fila.name}</span>
-                    <span className="tabular shrink-0 text-xs text-muted-foreground">
-                      {porcentaje}%
-                    </span>
-                  </span>
-                  <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-secondary">
-                    <span
-                      className="block h-full rounded-full bg-chart-1"
-                      style={{ width: `${porcentaje > 0 ? Math.max(porcentaje, 2) : 0}%` }}
-                    />
-                  </span>
-                </>
-              );
-
-              return (
-                <li key={fila.category_id ?? 'sin'}>
-                  {interactiva ? (
-                    <button
-                      type="button"
-                      onClick={() => onBajar(fila.category_id as number)}
-                      className="block w-full rounded-lg text-left transition-opacity hover:opacity-80"
-                    >
-                      {contenido}
-                    </button>
-                  ) : (
-                    <span className="block">{contenido}</span>
-                  )}
-                </li>
-              );
-            })}
-        </ul>
-
-        {restantes > 0 && (
-          <p className="mt-auto pt-2 text-xs text-muted-foreground">
-            y {restantes} {restantes === 1 ? 'más' : 'más'} por {nivel}
-          </p>
-        )}
+        <Dona
+          className="mt-6"
+          total={Number.parseFloat(totalGastado) || 0}
+          porciones={filas.map((f) => ({
+            id: f.category_id,
+            nombre: f.name,
+            valor: Number.parseFloat(f.total) || 0,
+          }))}
+          onElegir={nivel === 'concepto' ? undefined : onBajar}
+        />
       </CardContent>
     </Card>
   );

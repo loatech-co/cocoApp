@@ -1,5 +1,4 @@
 import {
-  ArrowLeftRight,
   LayoutDashboard,
   LogOut,
   Plus,
@@ -42,7 +41,6 @@ interface Seccion {
  */
 const SECCIONES: readonly Seccion[] = [
   { to: '/', label: 'Resumen', Icono: LayoutDashboard, exact: true },
-  { to: '/movimientos', label: 'Movimientos', corto: 'Movs.', Icono: ArrowLeftRight, exact: false },
   // Para quien no lleva cuentas, este enlace no existe. Ni oculto con CSS ni
   // deshabilitado: ausente.
   { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false, requiere: 'cuentas' },
