@@ -53,8 +53,8 @@ export class CreateImportDto {
   @Min(1)
   account_id?: number;
 
-  @IsEnum(['image', 'pdf', 'manual'])
-  source!: 'image' | 'pdf' | 'manual';
+  @IsEnum(['image', 'pdf', 'csv', 'manual'])
+  source!: 'image' | 'pdf' | 'csv' | 'manual';
 
   /** Nombre del archivo, para reconocer el lote. NUNCA su contenido. */
   @IsOptional()

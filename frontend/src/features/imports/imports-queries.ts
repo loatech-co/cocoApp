@@ -1,4 +1,4 @@
-import type { ImportBatch, ImportRow, ImportRowStatus } from '@coco/types';
+import type { ImportBatch, ImportRow, ImportRowStatus, ImportSource } from '@coco/types';
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/api-client';
@@ -53,7 +53,7 @@ export function useCrearLote() {
     mutationFn: async (cuerpo: {
       /** Opcional: se puede importar sin declarar a qué cuenta pertenece. */
       account_id?: number;
-      source: 'image' | 'pdf' | 'manual';
+      source: ImportSource;
       label?: string;
       ocr_provider?: string;
       rows: FilaParaSubir[];

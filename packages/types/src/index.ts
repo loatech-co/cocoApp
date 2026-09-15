@@ -160,7 +160,7 @@ export type ImportStatus = (typeof IMPORT_STATUSES)[number];
 export const IMPORT_ROW_STATUSES = ['pending', 'accepted', 'duplicate', 'skipped'] as const;
 export type ImportRowStatus = (typeof IMPORT_ROW_STATUSES)[number];
 
-export const IMPORT_SOURCES = ['image', 'pdf', 'manual'] as const;
+export const IMPORT_SOURCES = ['image', 'pdf', 'csv', 'manual'] as const;
 export type ImportSource = (typeof IMPORT_SOURCES)[number];
 
 export interface ImportRow {

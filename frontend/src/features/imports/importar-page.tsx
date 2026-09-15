@@ -14,6 +14,31 @@ import { cn } from '@/lib/utils';
 import { useCrearLote } from './imports-queries';
 import { proveedorPara, TIPOS_ACEPTADOS, type ProgresoDeOcr } from './ocr';
 import { parsearExtracto, type ResultadoDeParseo } from './parseo/extracto';
+import { parsearCsv, type ResultadoDeCsv } from './parseo/csv';
+import type { ColumnaDetectada } from './parseo/csv-columnas';
+import { GuiaCsv } from './guia-csv';
+import { MapeoDeColumnas } from './mapeo-columnas';
+
+/** De qué vía vino el documento. Se guarda en el lote para poder comparar
+ *  después qué origen produce menos correcciones en la revisión. */
+type Origen = 'csv' | 'pdf' | 'image';
+
+type Lectura =
+  | ({ tipo: 'csv'; archivo: string; proveedor: string } & ResultadoDeCsv)
+  | ({ tipo: 'documento'; archivo: string; proveedor: string; origen: Origen } & ResultadoDeParseo);
+
+function origenDe(proveedor: string): Origen {
+  if (proveedor === 'csv') return 'csv';
+  if (proveedor === 'pdfjs') return 'pdf';
+  return 'image';
+}
+
+const MENSAJE_VACIO: Record<Origen, string> = {
+  csv: 'El archivo está vacío.',
+  pdf: 'Este PDF no trae texto: probablemente sea un escaneo. Haz una captura de pantalla y súbela como imagen.',
+  image:
+    'No se pudo leer nada de esa imagen. Prueba con una captura más nítida y recortada a la tabla de movimientos.',
+};
 
 /**
  * Importar un extracto.
@@ -31,9 +56,11 @@ export function ImportarPage() {
 
   const [cuentaId, setCuentaId] = useState<number | null>(null);
   const [progreso, setProgreso] = useState<ProgresoDeOcr | null>(null);
-  const [resultado, setResultado] = useState<
-    (ResultadoDeParseo & { archivo: string; proveedor: string; esPdf: boolean }) | null
-  >(null);
+  const [resultado, setResultado] = useState<Lectura | null>(null);
+  // El texto crudo se conserva SOLO en memoria y solo mientras dura la
+  // revisión: es lo que permite volver a parsear cuando se corrige el mapeo de
+  // columnas, sin obligar a subir el archivo otra vez. Nunca sale de aquí.
+  const [textoCrudo, setTextoCrudo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [arrastrando, setArrastrando] = useState(false);
 
@@ -47,9 +74,11 @@ export function ImportarPage() {
     setError(null);
     setResultado(null);
 
+    setTextoCrudo(null);
+
     const proveedor = proveedorPara(archivo);
     if (!proveedor) {
-      setError('Ese tipo de archivo no se puede leer. Usa una imagen o un PDF.');
+      setError('Ese tipo de archivo no se puede leer. Usa un CSV, un PDF o una imagen.');
       return;
     }
 
@@ -57,14 +86,24 @@ export function ImportarPage() {
 
     try {
       const texto = await proveedor.extraerTexto(archivo, setProgreso);
-      const esPdf = archivo.type === 'application/pdf';
+      const origen = origenDe(proveedor.nombre);
 
       if (!texto.trim()) {
-        setError(
-          esPdf
-            ? 'Este PDF no trae texto: probablemente sea un escaneo. Haz una captura de pantalla y súbela como imagen.'
-            : 'No se pudo leer nada de esa imagen. Prueba con una captura más nítida y recortada a la tabla de movimientos.',
-        );
+        setError(MENSAJE_VACIO[origen]);
+        return;
+      }
+
+      setTextoCrudo(texto);
+
+      if (origen === 'csv') {
+        const csv = parsearCsv(texto);
+        setResultado({ tipo: 'csv', ...csv, archivo: archivo.name, proveedor: proveedor.nombre });
+
+        // Faltar una columna no es un error del archivo: es que la detección
+        // no la reconoció. Se enseña el mapeo para corregirlo, no un error.
+        if (csv.faltan.length === 0 && csv.movimientos.length === 0) {
+          setError('El archivo se leyó pero no traía ninguna fila con fecha y monto.');
+        }
         return;
       }
 
@@ -77,16 +116,31 @@ export function ImportarPage() {
       }
 
       setResultado({
+        tipo: 'documento',
         ...parseado,
         archivo: archivo.name,
         proveedor: proveedor.nombre,
-        esPdf,
+        origen,
       });
     } catch {
       setError('Algo falló leyendo el documento. Inténtalo de nuevo.');
     } finally {
       setProgreso(null);
     }
+  }
+
+  /**
+   * Vuelve a parsear con el mapeo corregido.
+   *
+   * Se reutiliza el texto que ya está en memoria: obligar a subir el archivo
+   * otra vez por cambiar qué columna es el monto sería absurdo.
+   */
+  function remapear(columnas: ColumnaDetectada[]): void {
+    if (!textoCrudo || resultado?.tipo !== 'csv') return;
+    setError(null);
+
+    const csv = parsearCsv(textoCrudo, { mapeoManual: columnas });
+    setResultado({ ...resultado, ...csv });
   }
 
   function subir(): void {
@@ -96,7 +150,7 @@ export function ImportarPage() {
       {
         // Se omite el campo entero cuando no hay cuenta.
         ...(cuentaElegida !== null ? { account_id: cuentaElegida } : {}),
-        source: resultado.esPdf ? 'pdf' : 'image',
+        source: resultado.tipo === 'csv' ? 'csv' : resultado.origen,
         label: resultado.archivo,
         ocr_provider: resultado.proveedor,
         rows: resultado.movimientos.map((movimiento) => ({
@@ -170,6 +224,8 @@ export function ImportarPage() {
         </CardHeader>
 
         <CardContent className="flex flex-col gap-4">
+          <GuiaCsv />
+
           {error && (
             <Alert variant="destructive">
               <AlertCircle aria-hidden="true" />
@@ -200,38 +256,43 @@ export function ImportarPage() {
           </CardHeader>
 
           <CardContent className="flex flex-col gap-4">
+            {resultado.tipo === 'csv' && (
+              <MapeoDeColumnas
+                columnas={resultado.columnas}
+                faltan={resultado.faltan}
+                onCambiar={remapear}
+              />
+            )}
+
             <p className="text-sm">
               <strong className="font-serif text-2xl">{resultado.movimientos.length}</strong>{' '}
               movimientos en <span className="text-muted-foreground">{resultado.archivo}</span>
             </p>
 
-            {resultado.huboColumnaDeSaldo && (
+            {resultado.tipo === 'documento' && resultado.huboColumnaDeSaldo && (
               <p className="text-xs text-muted-foreground">
                 El documento traía una columna de saldo corriente. Se tomó el monto del
                 movimiento, no el saldo.
               </p>
             )}
 
-            {resultado.lineasIgnoradas.length > 0 && (
-              <Alert variant="warning">
-                <AlertCircle aria-hidden="true" />
-                <AlertTitle>
-                  {resultado.lineasIgnoradas.length}{' '}
-                  {resultado.lineasIgnoradas.length === 1 ? 'línea' : 'líneas'} sin fecha
-                </AlertTitle>
-                <AlertDescription>
-                  Tenían cifras pero no se les pudo asignar una fecha, así que se dejaron fuera.
-                  Si faltan movimientos, están aquí.
-                  <ul className="mt-2 max-h-32 overflow-y-auto font-mono text-xs">
-                    {resultado.lineasIgnoradas.map((linea, indice) => (
-                      <li key={`${linea}-${indice}`} className="truncate">
-                        {linea}
-                      </li>
-                    ))}
-                  </ul>
-                </AlertDescription>
-              </Alert>
+            {resultado.tipo === 'csv' && resultado.usaSignos && (
+              <p className="text-xs text-muted-foreground">
+                El archivo marca los gastos con signo negativo, así que los montos positivos se
+                tomaron como ingresos.
+              </p>
             )}
+
+            <Ignoradas
+              lineas={
+                resultado.tipo === 'csv' ? resultado.filasIgnoradas : resultado.lineasIgnoradas
+              }
+              motivo={
+                resultado.tipo === 'csv'
+                  ? 'No se les pudo leer la fecha o el monto.'
+                  : 'Tenían cifras pero no se les pudo asignar una fecha.'
+              }
+            />
 
             {errorAlSubir && (
               <Alert variant="destructive">
@@ -241,7 +302,10 @@ export function ImportarPage() {
             )}
 
             <div className="flex flex-wrap gap-2">
-              <Button onClick={subir} disabled={crearLote.isPending}>
+              <Button
+                onClick={subir}
+                disabled={crearLote.isPending || resultado.movimientos.length === 0}
+              >
                 {crearLote.isPending && <Loader2 className="animate-spin" aria-hidden="true" />}
                 Revisar los {resultado.movimientos.length} movimientos
               </Button>
@@ -253,6 +317,36 @@ export function ImportarPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+/**
+ * Lo que no se pudo interpretar.
+ *
+ * Se enseña siempre que haya algo: si el archivo traía cuarenta movimientos y
+ * salieron doce, hay que poder ver los veintiocho que faltan. Descartarlos en
+ * silencio sería la peor forma de perder datos — nadie se entera.
+ */
+function Ignoradas({ lineas, motivo }: { lineas: readonly string[]; motivo: string }) {
+  if (lineas.length === 0) return null;
+
+  return (
+    <Alert variant="warning">
+      <AlertCircle aria-hidden="true" />
+      <AlertTitle>
+        {lineas.length} {lineas.length === 1 ? 'línea quedó' : 'líneas quedaron'} fuera
+      </AlertTitle>
+      <AlertDescription>
+        {motivo} Si faltan movimientos, están aquí.
+        <ul className="mt-2 max-h-32 overflow-y-auto font-mono text-xs">
+          {lineas.map((linea, indice) => (
+            <li key={`${linea}-${indice}`} className="truncate">
+              {linea}
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
   );
 }
 
