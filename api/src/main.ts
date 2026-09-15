@@ -103,7 +103,11 @@ function instalarRedDeSeguridad(): void {
         : `Excepción no atrapada: ${error.message}`,
       error.stack,
     );
-    process.exit(1);
+    // Salida 0 y no 1: LiteSpeed trata un código distinto de cero como fallo de
+    // arranque y aplica una espera antes de reintentar, que es lo que convertía
+    // un pánico puntual en un 503 pegado durante minutos. Con 0 respawnea en la
+    // siguiente petición.
+    process.exit(0);
   });
 
   process.on('unhandledRejection', (razon: unknown) => {

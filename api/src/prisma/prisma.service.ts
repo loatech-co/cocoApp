@@ -21,7 +21,7 @@ import { PrismaClient } from '@prisma/client';
  * el costo es una consulta trivial cada 240 segundos: irrelevante incluso en el
  * plan gratuito.
  */
-const LATIDO_MS = 4 * 60 * 1000;
+const LATIDO_MS = 90 * 1000;
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -55,8 +55,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * última versión de la serie 6 y el arreglo está en un major que todavía es
    * release candidate, así que esto es lo que hay hasta entonces.
    *
-   * `unref()` es importante: sin él, este temporizador mantendría el proceso
-   * vivo y ni `npm test` ni un apagado ordenado terminarían nunca.
+   * NO lleva `unref()`. Lo llevaba, y era un error: un temporizador sin
+   * referencia no impide que Node considere el proceso ocioso, que es
+   * exactamente la condición que dispara el pánico. El apagado ordenado lo
+   * resuelve `onModuleDestroy`, que lo limpia.
    */
   private arrancarLatido(): void {
     this.latido = setInterval(() => {
@@ -67,7 +69,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       });
     }, LATIDO_MS);
 
-    this.latido.unref();
   }
 
   /**
