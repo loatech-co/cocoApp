@@ -45,6 +45,8 @@
   --color-bosque-700: #17523e;
   --color-bosque-800: #0f3b2d;
   --color-bosque-900: #0c2c22;
+  /* Escalón intermedio, solo para el área de trabajo en oscuro. */
+  --color-bosque-925: #0a241c;
   --color-bosque-950: #071a14;
 
   /* ── Lima (acento) ─────────────────────────────────────────────────────── */
@@ -192,7 +194,7 @@
      Antes la lateral y el fondo eran los dos `bosque-950` —el mismo verde— así
      que en oscuro la barra desaparecía contra el contenido y la pantalla se
      leía como un bloque verde uniforme. */
-  --background: var(--color-bosque-900);
+  --background: var(--color-bosque-925);
   --foreground: var(--color-tinta-100);
 
   --card: var(--color-bosque-800);
