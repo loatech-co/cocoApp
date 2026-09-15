@@ -9,7 +9,7 @@ import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { TokenService } from '../../modules/auth/token.service';
+import { SupabaseAuthService } from '../../modules/auth/supabase-auth.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 /**
@@ -19,16 +19,22 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
  * tarde o temprano un controlador nuevo se publicaría sin querer. Aquí es al
  * revés — abrir una ruta exige marcarla con @Public().
  *
- * En cada petición hace una lectura del usuario por PK. Es una consulta
- * indexada y barata, y es lo que permite tres cosas que un JWT solo no puede
- * dar: revocación inmediata de sesiones, expulsión inmediata al suspender una
- * cuenta, y cambio de rol sin esperar a que expire el token.
+ * ── Qué cambió al pasar a Supabase Auth ─────────────────────────────────────
+ * La firma del token la verifica Supabase (ES256, contra su JWKS). Lo que NO
+ * se delegó es la autorización: el rol y el estado siguen saliendo de NUESTRA
+ * base en cada petición. Un JWT de Supabase dice quién es alguien; no sabe si
+ * su cuenta fue aprobada, suspendida o degradada hace diez segundos.
+ *
+ * Esa lectura por petición es una consulta indexada y barata, y es lo que
+ * permite tres cosas que un JWT solo no puede dar: revocación inmediata de
+ * sesiones, expulsión inmediata al suspender una cuenta, y cambio de rol sin
+ * esperar a que expire el token.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly tokens: TokenService,
+    private readonly supabase: SupabaseAuthService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -46,10 +52,10 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Autenticación requerida.');
     }
 
-    const claims = await this.tokens.verificarAccessToken(token);
+    const { authId, iatMs } = await this.supabase.verificarAccessToken(token);
 
     const usuario = await this.prisma.user.findUnique({
-      where: { id: BigInt(claims.sub) },
+      where: { authId },
       select: {
         id: true,
         email: true,
@@ -60,6 +66,9 @@ export class JwtAuthGuard implements CanActivate {
     });
 
     if (!usuario) {
+      // Token válido de Supabase, pero sin perfil en la aplicación. Pasa si la
+      // cuenta se creó desde el panel de Supabase saltándose el registro. Sin
+      // perfil no hay rol ni estado, así que no hay nada que autorizar.
       throw new UnauthorizedException('Token inválido o expirado.');
     }
 
@@ -67,7 +76,18 @@ export class JwtAuthGuard implements CanActivate {
     // muerto. Cambiar la contraseña, suspender la cuenta o "cerrar sesión en
     // todos los dispositivos" solo adelantan `sessionsValidFrom`, y el efecto
     // es instantáneo sin salir a la red ni esperar a que expire nada.
-    if (claims.authTime < usuario.sessionsValidFrom.getTime()) {
+    //
+    // La comparación NO redondea `sessionsValidFrom` al segundo. Hacerlo
+    // parecía razonable —el `iat` de un JWT solo tiene precisión de segundos—
+    // pero abre un hueco: un token emitido en el mismo segundo en que se revoca
+    // la sesión sobreviviría. Esa es justamente la ventana que alguien con un
+    // token robado necesita.
+    //
+    // El precio es un borde de menos de un segundo: si alguien vuelve a entrar
+    // en el mismo segundo en que cerró todas sus sesiones, su token nuevo puede
+    // caer del lado equivocado y tener que reintentar. Rechazar de más durante
+    // 600 ms es preferible a aceptar de menos.
+    if (iatMs < usuario.sessionsValidFrom.getTime()) {
       throw new UnauthorizedException('La sesión fue cerrada. Vuelve a entrar.');
     }
 

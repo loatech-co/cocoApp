@@ -1,6 +1,5 @@
 import request from 'supertest';
 
-import { hashDeToken } from '../src/modules/auth/token.service';
 import {
   PASSWORD_NUEVA,
   PASSWORD_VALIDA,
@@ -54,22 +53,6 @@ describe('Auth propia (e2e)', () => {
     return cookie.split(';')[0];
   };
 
-  /** El valor crudo del refresh token que viaja en esa cookie. */
-  const tokenDe = (respuesta: request.Response): string =>
-    cookieDe(respuesta).slice('coco_refresh='.length);
-
-  /**
-   * La familia a la que pertenece ese refresh token. Hace falta porque
-   * `crearUsuario` ya abre una sesión propia, así que un usuario de prueba
-   * tiene más de una familia viva y hay que apuntar a la correcta.
-   */
-  const familiaDe = async (respuesta: request.Response): Promise<string> => {
-    const fila = await entorno.prisma.refreshToken.findUniqueOrThrow({
-      where: { tokenHash: hashDeToken(tokenDe(respuesta)) },
-    });
-    return fila.familyId;
-  };
-
   // ── Registro ───────────────────────────────────────────────────────────────
 
   describe('Registro', () => {
@@ -82,9 +65,10 @@ describe('Auth propia (e2e)', () => {
       const usuario = await entorno.prisma.user.findUniqueOrThrow({ where: { email } });
       expect(usuario.status).toBe('pending');
       expect(usuario.role).toBe('user');
-      // La contraseña jamás se guarda en claro, y el hash es argon2id.
-      expect(usuario.passwordHash).toMatch(/^\$argon2id\$/);
-      expect(usuario.passwordHash).not.toContain(PASSWORD_VALIDA);
+      // La credencial vive en Supabase, no aquí: esta tabla es el PERFIL. Lo
+      // que sí debe quedar es el enlace a la cuenta de Supabase, porque sin él
+      // la persona no podría entrar nunca.
+      expect(usuario.authId).not.toBeNull();
     });
 
     it('rechaza una contraseña débil diciendo EXACTAMENTE qué le falta', async () => {
@@ -221,118 +205,30 @@ describe('Auth propia (e2e)', () => {
       expect(respuesta.body.error.message).not.toMatch(/pendiente|suspendida/i);
     });
 
-    it('reinicia el contador de fallos tras un login correcto', async () => {
-      const usuario = await entorno.crearUsuario();
-
-      await entrar(usuario.email, 'Zz9$Otra-Cosa-Aqui!').expect(401);
-      await entrar(usuario.email, PASSWORD_VALIDA).expect(200);
-
-      const despues = await entorno.prisma.user.findUniqueOrThrow({
-        where: { id: usuario.id },
-      });
-      expect(despues.failedLoginCount).toBe(0);
-      expect(despues.lockedUntil).toBeNull();
-      expect(despues.lastLoginAt).not.toBeNull();
-    });
   });
 
-  // ── Fuerza bruta ───────────────────────────────────────────────────────────
 
-  describe('Fuerza bruta', () => {
-    it('tras cinco fallos aplica un retraso creciente, y NO un bloqueo permanente', async () => {
-      const usuario = await entorno.crearUsuario();
-
-      for (let intento = 0; intento < 5; intento += 1) {
-        await entrar(usuario.email, 'Zz9$Otra-Cosa-Aqui!').expect(401);
-      }
-
-      const bloqueado = await entorno.prisma.user.findUniqueOrThrow({
-        where: { id: usuario.id },
-      });
-      expect(bloqueado.failedLoginCount).toBe(5);
-      expect(bloqueado.lockedUntil).not.toBeNull();
-
-      // Ni siquiera con la contraseña correcta se entra mientras dura la espera.
-      const durante = await entrar(usuario.email, PASSWORD_VALIDA).expect(401);
-      expect(durante.body.error.message).toMatch(/demasiados intentos/i);
-
-      // Pero es TEMPORAL: la espera es corta y no deja a nadie fuera de su
-      // propia cuenta para siempre, que es lo que permitiría un bloqueo duro.
-      const espera = bloqueado.lockedUntil!.getTime() - Date.now();
-      expect(espera).toBeLessThanOrEqual(1000);
-
-      await entorno.prisma.user.update({
-        where: { id: usuario.id },
-        data: { lockedUntil: new Date(Date.now() - 1000) },
-      });
-      await entrar(usuario.email, PASSWORD_VALIDA).expect(200);
-    });
-  });
 
   // ── Rotación y detección de reuso ──────────────────────────────────────────
 
+  // La ROTACIÓN y la detección de reuso de refresh tokens pasaron a Supabase
+  // con la migración: ya no las implementa este código, así que probarlas aquí
+  // sería probar la biblioteca de otro. Lo que sí se prueba es lo que sigue
+  // siendo nuestro: que sin cookie no se entra, y que una cuenta suspendida no
+  // puede estirar su sesión canjeando un token por otro.
+  // La ROTACIÓN y la detección de reuso pasaron a Supabase con la migración:
+  // ya no las implementa este código, así que probarlas aquí sería probar la
+  // biblioteca de otro. Queda lo que sigue siendo nuestro: que sin cookie no se
+  // entra, y que una cuenta suspendida no puede estirar su sesión canjeando un
+  // token por otro.
   describe('Refresh token', () => {
     it('sin cookie responde 401', async () => {
       await http.post('/api/v1/auth/refresh').expect(401);
     });
 
-    it('rota: entrega un par nuevo y el anterior deja de servir', async () => {
-      const usuario = await entorno.crearUsuario();
-      const login = await entrar(usuario.email, PASSWORD_VALIDA).expect(200);
-      const primera = cookieDe(login);
-
-      const refresco = await http
-        .post('/api/v1/auth/refresh')
-        .set('Cookie', primera)
-        .expect(200);
-
-      const segunda = cookieDe(refresco);
-      expect(segunda).not.toBe(primera);
-      expect(refresco.body.data.access_token).toEqual(expect.any(String));
-
-      // La nueva funciona.
-      await http.post('/api/v1/auth/refresh').set('Cookie', segunda).expect(200);
-    });
 
     // ── El control más importante de todo el módulo ──
-    it('DETECCIÓN DE REUSO: presentar dos veces el mismo refresh mata la sesión entera', async () => {
-      const usuario = await entorno.crearUsuario();
-      const login = await entrar(usuario.email, PASSWORD_VALIDA).expect(200);
-      const robada = cookieDe(login);
 
-      // El legítimo rota con normalidad.
-      const legitimo = await http
-        .post('/api/v1/auth/refresh')
-        .set('Cookie', robada)
-        .expect(200);
-      const vigente = cookieDe(legitimo);
-
-      // El atacante usa su copia del token viejo: ya está consumido.
-      await http.post('/api/v1/auth/refresh').set('Cookie', robada).expect(401);
-
-      // Y como se detectó el reuso, la FAMILIA entera cae: el token que tenía
-      // el usuario legítimo tampoco sirve ya. El robo silencioso se convierte
-      // en un cierre de sesión visible para el dueño.
-      await http.post('/api/v1/auth/refresh').set('Cookie', vigente).expect(401);
-
-      const familia = await entorno.prisma.refreshToken.findMany({
-        where: { userId: usuario.id, familyId: await familiaDe(legitimo) },
-      });
-      expect(familia).not.toHaveLength(0);
-      expect(familia.every((token) => token.revokedAt !== null)).toBe(true);
-    });
-
-    it('un refresh vencido no sirve', async () => {
-      const usuario = await entorno.crearUsuario();
-      const login = await entrar(usuario.email, PASSWORD_VALIDA).expect(200);
-
-      await entorno.prisma.refreshToken.updateMany({
-        where: { userId: usuario.id },
-        data: { expiresAt: new Date(Date.now() - 1000) },
-      });
-
-      await http.post('/api/v1/auth/refresh').set('Cookie', cookieDe(login)).expect(401);
-    });
 
     it('el refresh de una cuenta suspendida no sirve', async () => {
       const usuario = await entorno.crearUsuario();
@@ -346,35 +242,7 @@ describe('Auth propia (e2e)', () => {
       await http.post('/api/v1/auth/refresh').set('Cookie', cookieDe(login)).expect(401);
     });
 
-    it('en la base solo vive el HASH del token, nunca el token', async () => {
-      const usuario = await entorno.crearUsuario();
-      const login = await entrar(usuario.email, PASSWORD_VALIDA).expect(200);
-      const valor = tokenDe(login);
 
-      // Que se pueda encontrar POR el hash ya demuestra lo esencial: lo que se
-      // guardó no es el token, sino su huella.
-      const fila = await entorno.prisma.refreshToken.findUniqueOrThrow({
-        where: { tokenHash: hashDeToken(valor) },
-      });
-      expect(fila.userId).toBe(usuario.id);
-      expect(fila.tokenHash).not.toBe(valor);
-      expect(fila.tokenHash).toHaveLength(64);
-
-      // Y en ninguna fila aparece el valor en claro.
-      const todas = await entorno.prisma.refreshToken.findMany();
-      expect(JSON.stringify(todas)).not.toContain(valor);
-    });
-
-    it('cada login abre su propia familia: cerrar una sesión no tumba las otras', async () => {
-      const usuario = await entorno.crearUsuario();
-      const movil = cookieDe(await entrar(usuario.email, PASSWORD_VALIDA).expect(200));
-      const portatil = cookieDe(await entrar(usuario.email, PASSWORD_VALIDA).expect(200));
-
-      await http.post('/api/v1/auth/logout').set('Cookie', movil).expect(204);
-
-      await http.post('/api/v1/auth/refresh').set('Cookie', movil).expect(401);
-      await http.post('/api/v1/auth/refresh').set('Cookie', portatil).expect(200);
-    });
   });
 
   // ── Revocación inmediata ───────────────────────────────────────────────────
@@ -653,7 +521,11 @@ describe('Auth propia (e2e)', () => {
       });
       expect(eventos).toHaveLength(1);
       expect(eventos[0].userId).toBeNull();
-      expect(eventos[0].changesJson).toEqual({ motivo: 'correo_inexistente' });
+      // Ya no se distingue "el correo no existe" de "la contraseña es
+      // incorrecta": la verificación ocurre dentro de Supabase, que responde
+      // igual en ambos casos. De cara afuera eso es lo deseable; lo que se
+      // pierde es el detalle en la bitácora.
+      expect(eventos[0].changesJson).toEqual({ motivo: 'credenciales_incorrectas' });
     });
 
     it('la bitácora nunca guarda la contraseña ni el token', async () => {

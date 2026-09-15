@@ -16,9 +16,13 @@ import type { CookieOptions, Request, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { AuthService, type ContextoDePeticion, type PerfilPublico } from './auth.service';
+import {
+  AuthService,
+  type ContextoDePeticion,
+  type ParDeTokens,
+  type PerfilPublico,
+} from './auth.service';
 import { ChangePasswordDto, LoginDto, RegisterDto } from './dto/auth.dto';
-import type { ParDeTokens } from './token.service';
 
 /** El refresh token viaja SOLO en esta cookie; nunca en el cuerpo ni en la URL. */
 const COOKIE_REFRESH = 'coco_refresh';
@@ -44,8 +48,9 @@ export class AuthController {
   // ── Público ────────────────────────────────────────────────────────────────
 
   /**
-   * Límite estricto: el registro crea filas y consume un hash argon2 de 19 MiB
-   * por intento, así que sin tope sería un vector de agotamiento de recursos.
+   * Límite estricto: cada intento crea una cuenta en Supabase y una fila aquí,
+   * y consulta el servicio de contraseñas filtradas. Sin tope sería un vector
+   * de agotamiento de recursos ajenos, además de los propios.
    */
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })

@@ -1,21 +1,23 @@
 import { Global, Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 
 import { AuditService } from '../../common/audit/audit.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
-import { TokenService } from './token.service';
+import { SupabaseAuthService } from './supabase-auth.service';
 
 /**
- * Global porque el JwtAuthGuard —que es global— necesita TokenService, y el
- * módulo de administración necesita PasswordService y TokenService.
+ * Global porque el JwtAuthGuard —que es global— necesita SupabaseAuthService
+ * para verificar la firma, y el módulo de administración necesita AuthService
+ * y PasswordService.
+ *
+ * Ya no importa JwtModule: esta API dejó de firmar tokens al migrar a Supabase
+ * Auth. Solo los verifica, y eso lo hace `jose` contra el JWKS del proyecto.
  */
 @Global()
 @Module({
-  imports: [JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthService, PasswordService, TokenService, AuditService],
-  exports: [AuthService, PasswordService, TokenService, AuditService],
+  providers: [AuthService, SupabaseAuthService, PasswordService, AuditService],
+  exports: [AuthService, SupabaseAuthService, PasswordService, AuditService],
 })
 export class AuthModule {}

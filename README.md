@@ -26,7 +26,7 @@ infraestructura profesional sin reescribir la lógica de negocio.
 | Backend | Node.js 20/22 + NestJS 11 + TypeScript `strict` |
 | ORM | Prisma 6 (`schema.prisma` = espejo canónico del modelo) |
 | Base de datos | **PostgreSQL 17** en Supabase (`us-east-1`) |
-| Identidad | **Propia**: argon2id + JWT corto + refresh rotatorio (ver abajo) |
+| Identidad | **Supabase Auth** (GoTrue), con la aprobación y los roles en esta app |
 | OCR | pdf.js (texto exacto) + Tesseract.js (imágenes), **en el cliente**, tras `OcrProvider` |
 | Pruebas | Jest + Supertest (API) · Vitest (frontend) |
 
@@ -359,27 +359,61 @@ cliente de Prisma y el `.env` de ese momento.
 
 ## Autenticación
 
-Es propia, sin proveedor externo. Cada decisión responde a una amenaza concreta.
+Las credenciales las guarda y verifica **Supabase Auth**. Esta app conserva lo
+que Supabase no modela y que es del producto:
 
-| Control | Cómo | Contra qué |
+| Pieza | Quién la tiene | Por qué |
 |---|---|---|
-| Hash de contraseña | argon2id, 19 MiB · t=2 · p=1 (OWASP) | El costo en **memoria** hace inviable el ataque masivo con GPU |
-| Política | 12+ caracteres, mayúscula, minúscula, número y símbolo, no derivada del correo ni del nombre, contrastada contra Have I Been Pwned por k-anonimato | Adivinación y credenciales ya filtradas |
-| Access token | JWT de **15 minutos**, en memoria del cliente — nunca en localStorage | Un XSS no puede leer memoria; y aunque robara el token, vale 15 minutos |
-| Refresh token | Opaco, 256 bits, **rotatorio**, en cookie `httpOnly` + `SameSite=Strict` + `Secure` en producción, guardado solo como SHA-256 | El JavaScript no puede leerlo; sin CSRF sobre `/auth`; una filtración de la base no entrega tokens usables |
-| Detección de reuso | Presentar dos veces el mismo refresh revoca la **familia** entera | Convierte un robo silencioso en un cierre de sesión visible para el dueño |
-| Revocación inmediata | `sessions_valid_from` se compara en cada petición | Cerrar sesión, suspender o cambiar contraseña surte efecto **ya**, sin esperar a que expire nada |
-| Aprobación manual | Toda cuenta nace `pending` | Nadie entra sin que un administrador lo autorice |
-| Roles | `admin` / `user`, leídos de la **base** en cada petición, no del token | Degradar a alguien aplica en la petición siguiente |
-| Anti-enumeración | Registro y login responden idéntico exista o no la cuenta; el correo inexistente gasta el mismo tiempo contra un hash señuelo | Nadie averigua qué correos tienen cuenta, ni por el mensaje ni por el reloj |
-| Anti-fuerza bruta | Retraso exponencial tras 5 fallos, con tope de 15 min — **no** bloqueo duro | Un bloqueo permitiría dejar a alguien fuera de su propia cuenta fallando su login |
-| Límite de tasa | 5 registros/min, 10 logins/min, 30 refresh/min | Cada intento cuesta un argon2 de 19 MiB: sin tope sería agotamiento de recursos |
-| Auditoría | Quién, qué y cuándo — nunca contraseñas, tokens ni montos | Investigar un incidente sin convertir la bitácora en otro botín |
+| Contraseñas, su hash y su verificación | Supabase | No hay motivo para reimplementarlo |
+| Emisión y rotación de tokens | Supabase | ES256, 15 min de vida, refresh rotatorio |
+| **Aprobación por un admin** | Esta app | Toda cuenta nace `pending`. Supabase daría por buena cualquier cuenta con el correo confirmado |
+| **Roles y estado** | Esta app | El guard los lee de la base en CADA petición, no del token |
+| **Revocación inmediata** | Esta app | `users.sessions_valid_from` |
+| **Bitácora** | Esta app | Cada entrada, salida y fallo, con IP y agente |
+| **Política de contraseñas** | Esta app | Comprueba filtraciones conocidas y que no derive del nombre o el correo |
 
-**Lo que todavía no hay, a propósito:** envío de correos (así que no hay autoservicio de
-recuperación — la restablece un administrador) y 2FA. El esquema no impide añadirlos.
+### El navegador no habla con Supabase
 
----
+Lo idiomático sería usar `supabase-js` en el frontend. Aquí la API hace de
+intermediaria por una razón concreta: el refresh token vive en una **cookie
+httpOnly con SameSite=Strict**, y `supabase-js` lo guardaría en `localStorage`,
+donde cualquier script inyectado puede leerlo. Para datos financieros esa
+diferencia pesa más que la comodidad.
+
+### Verificación de la firma
+
+Contra el **JWKS** del proyecto (ES256), con `jose`. La API no guarda ningún
+secreto de firma, y una rotación de claves en Supabase no exige redespliegue.
+
+### La marca de revocación va en segundos
+
+`sessions_valid_from` se compara contra el `iat` del token, que solo tiene
+precisión de SEGUNDOS. De ahí dos detalles que parecen arbitrarios y no lo son:
+
+- Al **crear** una cuenta la marca se recorta al segundo. Con milisegundos, el
+  primer token emitido parecería anterior a su propia sesión y el guard lo
+  rechazaría nada más nacer.
+- Al **revocar** se apunta al segundo SIGUIENTE. Apuntar al actual dejaría vivos
+  los tokens emitidos en ese mismo segundo, que es justo la ventana que
+  necesitaría alguien con un token robado.
+
+Volver a entrar en el mismo segundo en que se cerraron todas las sesiones caería
+del lado equivocado, así que `entrar` baja la marca hasta el token nuevo. Solo
+puede revivir tokens de ESE segundo, y solo después de que alguien demuestre que
+conoce la contraseña.
+
+### Lo que se perdió al migrar
+
+Honestidad sobre el cambio: el login ya no resiste ataques de tiempo. Antes se
+gastaba un argon2 equivalente cuando el correo no existía, para que la duración
+de la respuesta no delatara qué correos tienen cuenta. Esa verificación ahora
+ocurre dentro de Supabase y ese control dejó de ser nuestro. En el **registro**
+sí se conserva el equivalente: se llama a Supabase exista o no el correo, y la
+respuesta es idéntica en ambos casos.
+
+También se perdió el detalle en la bitácora de un login fallido: ya no se
+distingue "el correo no existe" de "la contraseña es incorrecta", porque
+Supabase responde igual a ambos.
 
 ## Documentación
 

@@ -1,4 +1,3 @@
-import { hash, verify, Algorithm } from '@node-rs/argon2';
 import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
@@ -6,31 +5,23 @@ import { createHash } from 'node:crypto';
 import { derivaDeDatosPersonales, evaluarPolitica } from './password.policy';
 
 /**
- * Parámetros de argon2id recomendados por OWASP (Password Storage Cheat Sheet).
+ * Política de contraseñas.
  *
- * argon2id y no bcrypt: es el ganador del Password Hashing Competition, resiste
- * ataques con GPU y con hardware dedicado gracias al costo en MEMORIA, y no
- * tiene el límite de 72 bytes de bcrypt.
+ * ── Por qué sigue existiendo tras migrar a Supabase Auth ────────────────────
+ * Supabase guarda y verifica las credenciales, pero su política por defecto es
+ * mínima: una longitud y poco más. Esta se mantiene porque comprueba tres
+ * cosas que la suya no: longitud y composición propias, que la contraseña no
+ * derive del nombre o del correo de la persona, y —la que más importa— que no
+ * aparezca en filtraciones públicas conocidas.
  *
- * El costo de memoria es lo que hace caro el ataque masivo: 19 MiB por intento
- * significa que una GPU no puede paralelizar miles de hashes a la vez.
+ * Se valida ANTES de mandar la contraseña a Supabase. Si no pasa, Supabase ni
+ * se entera: la cuenta no llega a crearse con una contraseña que ya está en un
+ * diccionario de ataque.
+ *
+ * Lo que ya NO vive aquí es el hasheo. Las credenciales son de Supabase y esta
+ * clase no toca ni un hash: aquí no hay argon2, ni señuelos de tiempo, ni nada
+ * que verificar.
  */
-const ARGON2 = {
-  algorithm: Algorithm.Argon2id,
-  memoryCost: 19_456, // KiB = 19 MiB
-  timeCost: 2,
-  parallelism: 1,
-} as const;
-
-/**
- * Hash de una contraseña inventada, para gastar el mismo tiempo cuando el
- * correo no existe. Sin esto, el login respondería más rápido ante un correo
- * desconocido y cualquiera podría averiguar qué direcciones tienen cuenta
- * midiendo tiempos.
- */
-const SENUELO =
-  '$argon2id$v=19$m=19456,t=2,p=1$wPo9duf/zbMJN4BsNLUqAg$MISlu5iYDV8+sKRW9gMbJvqHzUzSEpBl7Ni1uStMmh0';
-
 @Injectable()
 export class PasswordService {
   private readonly logger = new Logger(PasswordService.name);
@@ -42,34 +33,8 @@ export class PasswordService {
       config.get<string>('CHECK_BREACHED_PASSWORDS', 'true') !== 'false';
   }
 
-  async hashear(password: string): Promise<string> {
-    return hash(password, ARGON2);
-  }
 
-  /**
-   * Verifica una contraseña. Devuelve `false` en vez de lanzar si el hash está
-   * corrupto: un registro dañado no debe tumbar el login de todos.
-   */
-  async verificar(hashAlmacenado: string, password: string): Promise<boolean> {
-    try {
-      return await verify(hashAlmacenado, password, ARGON2);
-    } catch {
-      return false;
-    }
-  }
 
-  /**
-   * Gasta el mismo trabajo que una verificación real contra un hash señuelo.
-   * Se llama cuando el correo no existe, para que el tiempo de respuesta no
-   * distinga "no existe" de "contraseña incorrecta".
-   */
-  async gastarTiempoEquivalente(password: string): Promise<void> {
-    try {
-      await verify(SENUELO, password, ARGON2);
-    } catch {
-      // Da igual el resultado: lo único que importa es haber gastado el tiempo.
-    }
-  }
 
   /**
    * Valida una contraseña candidata contra las tres capas: composición,

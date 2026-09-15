@@ -60,6 +60,18 @@ rsync -az --delete -e "$SSH_CMD" packages/   "$SERVIDOR:$REMOTO/packages/"
 rsync -az          -e "$SSH_CMD" package.json     "$SERVIDOR:$REMOTO/package.json"
 rsync -az          -e "$SSH_CMD" api/package.json "$SERVIDOR:$REMOTO/api/package.json"
 
+echo "▸ Instalando dependencias nuevas…"
+# Se compila en local pero node_modules vive en el servidor: una dependencia
+# nueva en package.json no llega sola, y el fallo aparece recién en runtime como
+# "Cannot find module". `npm install` sin argumentos respeta el lockfile que se
+# acaba de subir y no toca lo que ya está.
+$SSH_CMD "$SERVIDOR" "
+  set -e
+  export PATH=/opt/alt/alt-nodejs20/root/usr/bin:\$PATH
+  cd ~/$REMOTO
+  npm install --no-audit --no-fund 2>&1 | tail -1
+"
+
 echo "▸ Regenerando el cliente de Prisma para Postgres…"
 $SSH_CMD "$SERVIDOR" "
   set -e

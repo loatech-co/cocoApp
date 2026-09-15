@@ -12,6 +12,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import type { UserRole, UserStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
@@ -25,7 +26,8 @@ import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
 import { aPerfilPublico, type PerfilPublico } from '../auth/auth.service';
 import { PasswordService } from '../auth/password.service';
-import { TokenService } from '../auth/token.service';
+import { AuthService } from '../auth/auth.service';
+import { SupabaseAuthService } from '../auth/supabase-auth.service';
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
@@ -65,7 +67,8 @@ export class ResetPasswordDto {
 export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly tokens: TokenService,
+    private readonly auth: AuthService,
+    private readonly supabase: SupabaseAuthService,
     private readonly passwords: PasswordService,
     private readonly audit: AuditService,
   ) {}
@@ -132,7 +135,7 @@ export class AdminService {
       where: { id: userId },
       data: { status: 'suspended' },
     });
-    await this.tokens.revocarTodasLasSesiones(userId);
+    await this.auth.revocarTodasLasSesiones(userId);
 
     await this.audit.registrar({
       userId: adminId,
@@ -187,7 +190,7 @@ export class AdminService {
     // El rol se lee de la base en cada petición, así que el cambio ya aplica.
     // Aun así se cierran las sesiones: un cambio de permisos merece que la
     // persona vuelva a entrar y vea su nuevo contexto desde cero.
-    await this.tokens.revocarTodasLasSesiones(userId);
+    await this.auth.revocarTodasLasSesiones(userId);
 
     await this.audit.registrar({
       userId: adminId,
@@ -204,8 +207,9 @@ export class AdminService {
   /**
    * Restablece la contraseña de otra cuenta.
    *
-   * Existe porque, sin envío de correos, no hay autoservicio de recuperación:
-   * el administrador es el único camino de vuelta para quien olvide su clave.
+   * Existe porque el envío de correos del plan gratuito no da para un
+   * autoservicio de recuperación fiable: el administrador es el camino de
+   * vuelta para quien olvide su clave.
    * Es una operación potente y por eso queda auditada, y cierra todas las
    * sesiones de esa persona.
    */
@@ -222,11 +226,14 @@ export class AdminService {
       displayName: usuario.displayName ?? undefined,
     });
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { passwordHash: await this.passwords.hashear(nueva) },
-    });
-    await this.tokens.revocarTodasLasSesiones(userId);
+    // La contraseña la guarda Supabase; aquí no queda ni rastro de ella.
+    if (!usuario.authId) {
+      throw new UnprocessableEntityException(
+        'Esta cuenta no tiene credenciales gestionadas y no se le puede restablecer la contraseña.',
+      );
+    }
+    await this.supabase.cambiarContrasena(usuario.authId, nueva);
+    await this.auth.revocarTodasLasSesiones(userId);
 
     await this.audit.registrar({
       userId: adminId,

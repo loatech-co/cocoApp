@@ -139,9 +139,14 @@ model User {
   id           BigInt     @id @default(autoincrement())
   uuid         String     @unique(map: "uq_users_uuid") @default(uuid()) @db.Char(36)
   email        String     @unique(map: "uq_users_email") @db.VarChar(255)
-  /// Hash argon2id. La contraseña en claro no existe en ningún lado: ni en la
-  /// base, ni en los logs, ni en memoria más allá del tiempo de verificar.
-  passwordHash String     @map("password_hash") @db.VarChar(255)
+  /// Enlace a `auth.users` de Supabase, que es donde viven las credenciales.
+  /// Aquí no hay ni contraseña ni hash: esta tabla es el PERFIL de la persona
+  /// —rol, estado, quién la aprobó—, no su credencial.
+  ///
+  /// Es opcional solo por la transición: una fila sin `auth_id` es anterior a
+  /// la migración a Supabase Auth y no puede iniciar sesión hasta que se le
+  /// cree la cuenta correspondiente.
+  authId String? @unique(map: "uq_users_auth_id") @map("auth_id") @db.Uuid
   displayName  String?    @map("display_name") @db.VarChar(255)
   role         UserRole   @default(user)
   status       UserStatus @default(pending)
@@ -152,12 +157,10 @@ model User {
   /// todos los dispositivos" simplemente adelantan este valor.
   sessionsValidFrom DateTime @default(now()) @map("sessions_valid_from") @db.Timestamp(3)
 
-  /// Defensa contra fuerza bruta. Se usa retraso progresivo, no bloqueo duro:
-  /// un bloqueo duro permitiría que alguien deje a otro fuera de su cuenta a
-  /// propósito con solo fallar el login varias veces.
-  failedLoginCount Int       @default(0) @map("failed_login_count")
-  lockedUntil      DateTime? @map("locked_until") @db.Timestamp(3)
-  lastLoginAt      DateTime? @map("last_login_at") @db.Timestamp(3)
+  /// La defensa contra fuerza bruta pasó a Supabase con la migración: el login
+  /// ya no atraviesa este código, así que contar fallos aquí no protegería de
+  /// nada. Solo se conserva la última entrada, que sí es dato del perfil.
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamp(3)
 
   /// Traza de quién aprobó la cuenta y cuándo.
   approvedAt   DateTime? @map("approved_at") @db.Timestamp(3)
@@ -168,7 +171,6 @@ model User {
 
   approvedBy    User?            @relation("AprobadoPor", fields: [approvedById], references: [id], onDelete: SetNull, map: "fk_users_approved_by")
   aprobados     User[]           @relation("AprobadoPor")
-  refreshTokens RefreshToken[]
   auditEvents   AuditLog[]
   accounts      Account[]
   categories    Category[]
@@ -182,41 +184,17 @@ model User {
   @@map("users")
 }
 
-// ── refresh_tokens ───────────────────────────────────────────────────────────
-// Sesiones de larga vida.
+// ── Sesiones ─────────────────────────────────────────────────────────────────
+// Aquí había una tabla `refresh_tokens` con rotación y detección de reuso. La
+// emisión y rotación de tokens pasó a Supabase Auth con la migración, así que
+// la tabla se eliminó: mantener dos almacenes de sesiones en paralelo sería
+// garantizar que se desincronicen.
 //
-// El token NUNCA se guarda: solo su SHA-256. Un volcado de esta tabla no le
-// sirve a nadie para entrar. SHA-256 basta —y argon2 sería un desperdicio de
-// CPU— porque el token es aleatorio de 256 bits: no hay diccionario que
-// atacar, a diferencia de una contraseña elegida por una persona.
-//
-// ROTACIÓN CON DETECCIÓN DE REUSO: cada refresh consume el token y emite uno
-// nuevo de la misma `family_id`. Si alguna vez se presenta un token ya usado,
-// significa que alguien tiene una copia robada, y se revoca la familia entera.
-// Es el patrón que recomienda la OAuth 2.0 Security BCP para clientes públicos.
-
-model RefreshToken {
-  id        BigInt    @id @default(autoincrement())
-  userId    BigInt    @map("user_id")
-  tokenHash String    @unique(map: "uq_refresh_token_hash") @map("token_hash") @db.Char(64)
-  /// Agrupa la cadena de rotaciones que nació de un mismo login.
-  familyId  String    @map("family_id") @db.Char(36)
-  expiresAt DateTime  @map("expires_at") @db.Timestamp(3)
-  /// Marca el momento en que se rotó. Un token con `used_at` que vuelve a
-  /// aparecer es la señal de robo.
-  usedAt    DateTime? @map("used_at") @db.Timestamp(3)
-  revokedAt DateTime? @map("revoked_at") @db.Timestamp(3)
-  userAgent String?   @map("user_agent") @db.VarChar(255)
-  ip        String?   @db.VarChar(45)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(3)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_refresh_user")
-
-  @@index([userId, revokedAt], map: "idx_refresh_user_revoked")
-  @@index([familyId], map: "idx_refresh_family")
-  @@index([expiresAt], map: "idx_refresh_expires")
-  @@map("refresh_tokens")
-}
+// Lo que NO se delegó es la revocación inmediata: `users.sessions_valid_from`
+// sigue siendo nuestro, y el guard lo compara contra el `iat` del token de
+// Supabase en cada petición. Suspender una cuenta o cerrar todas las sesiones
+// surte efecto al instante, sin esperar a que expire nada ni depender de que
+// Supabase nos conteste.
 
 // ── audit_log (T4) ───────────────────────────────────────────────────────────
 // Bitácora de solo-inserción. Se adelanta a la Fase 1 en vez de esperar a la 5:

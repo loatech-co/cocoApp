@@ -8,8 +8,8 @@ import type { User, UserRole, UserStatus } from '@prisma/client';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
 import { installBigIntSerializer } from '../../src/common/serialization/bigint';
-import { PasswordService } from '../../src/modules/auth/password.service';
-import { TokenService } from '../../src/modules/auth/token.service';
+import { SupabaseAuthService } from '../../src/modules/auth/supabase-auth.service';
+import { SupabaseAuthFalso } from './supabase-auth-falso';
 import { PrismaService } from '../../src/prisma/prisma.service';
 
 /**
@@ -32,6 +32,8 @@ export interface EntornoDePruebas {
   prisma: PrismaService;
   /** Crea un usuario ya listo para usar, sin pasar por el endpoint de registro. */
   crearUsuario: (datos?: DatosDeUsuario) => Promise<UsuarioDePrueba>;
+  /** El doble de Supabase Auth, para fabricar casos que el flujo normal no da. */
+  supabase: SupabaseAuthFalso;
   /** Cabecera `Authorization` con un access token real para ese usuario. */
   como: (usuario: UsuarioDePrueba) => string;
   limpiar: () => Promise<void>;
@@ -102,6 +104,12 @@ export async function levantarApp(
 
   const constructor = Test.createTestingModule({ imports: [AppModule] });
 
+  // Supabase Auth se sustituye por un doble en memoria. Hablar con el proyecto
+  // real crearía cuentas de verdad en cada corrida —no hay proyecto de pruebas
+  // en el plan gratuito— y ataría las pruebas a la red.
+  const supabase = new SupabaseAuthFalso();
+  constructor.overrideProvider(SupabaseAuthService).useValue(supabase);
+
   if (!opciones.conLimitador) {
     // Se sustituye el ALMACÉN del limitador, no el guard: `APP_GUARD` con
     // `useClass` instancia la clase directamente y `overrideGuard` no llega a
@@ -128,34 +136,37 @@ export async function levantarApp(
   await app.init();
 
   const prisma = app.get(PrismaService);
-  const passwords = app.get(PasswordService);
-  const tokens = app.get(TokenService);
 
   const crearUsuario = async (datos: DatosDeUsuario = {}): Promise<UsuarioDePrueba> => {
     const password = datos.password ?? PASSWORD_VALIDA;
 
+    const email = datos.email ?? correoDePrueba();
+    const authId = supabase.sembrar(email, password);
+
     const usuario = await prisma.user.create({
       data: {
-        email: datos.email ?? correoDePrueba(),
+        authId,
+        email,
         displayName: datos.displayName ?? 'Usuario de Pruebas',
-        passwordHash: await passwords.hashear(password),
         role: datos.role ?? 'user',
         status: datos.status ?? 'active',
-        sessionsValidFrom: new Date(),
+        // Al segundo, como hace el registro real: el `iat` del token no tiene
+        // más precisión y una marca con milisegundos dejaría fuera al token
+        // que se emite justo después.
+        sessionsValidFrom: new Date(Math.floor(Date.now() / 1000) * 1000),
       },
     });
 
-    // Tokens reales, emitidos por el mismo servicio que usa el login. Se emiten
-    // aquí y no llamando a POST /auth/login para no gastar el cupo del
-    // limitador ni un argon2 extra en cada prueba que solo necesita "estar
-    // dentro".
-    const par = await tokens.emitirParaNuevaSesion(usuario, { ip: '127.0.0.1' });
+    // La sesión se abre directamente contra el doble, sin pasar por
+    // POST /auth/login: la mayoría de las pruebas solo necesitan "estar
+    // dentro" y no deben gastar el cupo del limitador para lograrlo.
+    const sesion = supabase.abrirSesion(authId, email);
 
     return {
       ...usuario,
       passwordEnClaro: password,
-      accessToken: par.accessToken,
-      refreshToken: par.refreshToken,
+      accessToken: sesion.accessToken,
+      refreshToken: sesion.refreshToken,
     };
   };
 
@@ -181,10 +192,13 @@ export async function levantarApp(
     await prisma.category.deleteMany({});
     await prisma.account.deleteMany({});
     await prisma.auditLog.deleteMany({});
-    await prisma.refreshToken.deleteMany({});
     // approved_by_id apunta a users: se limpia antes para no chocar con la FK.
     await prisma.user.updateMany({ data: { approvedById: null } });
     await prisma.user.deleteMany({});
+    // El doble guarda sus cuentas en memoria y sobrevive entre pruebas del
+    // mismo archivo: sin esto, un correo reutilizado chocaría con una cuenta
+    // fantasma de la prueba anterior.
+    supabase.limpiar();
   };
 
   await limpiar();
@@ -193,6 +207,7 @@ export async function levantarApp(
     app,
     prisma,
     crearUsuario,
+    supabase,
     como: (usuario: UsuarioDePrueba) => `Bearer ${usuario.accessToken}`,
     limpiar,
     cerrar: async () => {

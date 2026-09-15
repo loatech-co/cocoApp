@@ -1,5 +1,3 @@
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
 
 import { levantarApp, type EntornoDePruebas } from './helpers/app';
@@ -45,36 +43,41 @@ describe('Fase 0 — GET /api/v1/health (e2e)', () => {
       .expect(401);
   });
 
-  it('con un JWT firmado con OTRO secreto responde 401', async () => {
-    const usuario = await entorno.crearUsuario();
-    const jwt = entorno.app.get(JwtService);
+  // La VERIFICACIÓN DE LA FIRMA es de Supabase: la API comprueba el token
+  // contra el JWKS del proyecto con `jose`, y aquí Supabase está sustituido por
+  // un doble. Probar la firma en este arnés sería probar el doble, no el
+  // sistema. Lo que sí se prueba es lo que decide esta aplicación: a quién
+  // reconoce ese token y hasta cuándo lo acepta.
 
-    // Mismos claims exactos, secreto distinto: si esto pasara, la firma no
-    // estaría verificándose y cualquiera podría fabricarse un token.
-    const falsificado = await jwt.signAsync(
-      { sub: usuario.id.toString(), email: usuario.email, role: 'admin', authTime: Date.now() },
-      { secret: 'un-secreto-que-no-es-el-nuestro', expiresIn: '15m' },
-    );
+  it('un token de una cuenta que no tiene perfil aquí responde 401', async () => {
+    // Existe en Supabase pero nadie la registró en la app: sin perfil no hay
+    // rol ni estado, así que no hay nada que autorizar.
+    const huerfano = entorno.supabase.sembrar('sin-perfil@pruebas.coco', 'Loquesea-123!');
+    const token = entorno.supabase.emitirToken(huerfano);
 
     await request(entorno.app.getHttpServer())
       .get('/api/v1/health')
-      .set('Authorization', `Bearer ${falsificado}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(401);
   });
 
-  it('con un token expirado responde 401', async () => {
+  it('un token emitido ANTES de revocar la sesión responde 401', async () => {
     const usuario = await entorno.crearUsuario();
-    const jwt = entorno.app.get(JwtService);
-    const secreto = entorno.app.get(ConfigService).getOrThrow<string>('JWT_SECRET');
 
-    const expirado = await jwt.signAsync(
-      { sub: usuario.id.toString(), email: usuario.email, role: usuario.role, authTime: Date.now() },
-      { secret: secreto, expiresIn: '-1s' },
+    // Un token de hace una hora, con firma impecable. Lo que lo mata es la
+    // marca de revocación, que el guard compara en cada petición.
+    const viejo = entorno.supabase.emitirToken(
+      usuario.authId!,
+      new Date(Date.now() - 60 * 60 * 1000),
     );
+    await entorno.prisma.user.update({
+      where: { id: usuario.id },
+      data: { sessionsValidFrom: new Date() },
+    });
 
     await request(entorno.app.getHttpServer())
       .get('/api/v1/health')
-      .set('Authorization', `Bearer ${expirado}`)
+      .set('Authorization', `Bearer ${viejo}`)
       .expect(401);
   });
 
