@@ -13,6 +13,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
+import { Logo } from '@/components/logo';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { useAuth } from '@/lib/auth-context';
 import { useLlevaCuentas } from '@/lib/preferences';
@@ -76,18 +77,14 @@ export function AppShell() {
     <div className="min-h-dvh bg-background">
       {/* Barra lateral — escritorio */}
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-sidebar p-4 md:flex">
-        <div className="mb-8 flex items-center gap-3 px-2 pt-2">
-          {/* La marca en un chip: le da peso sin necesitar un logotipo. */}
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sidebar-active text-lg font-bold text-sidebar-active-foreground">
-            C
-          </span>
-          <span className="min-w-0">
-            <span className="block text-xl font-semibold text-sidebar-foreground">
-              Coco
-            </span>
-            <span className="block truncate text-xs text-sidebar-muted">
-              {usuario?.display_name ?? usuario?.email}
-            </span>
+        <div className="mb-8 px-3 pt-3">
+          {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo dejaría
+              demasiado bajo para leerse en una barra de 256px. */}
+          {/* Lima sobre la barra oscura: 10.1:1 de contraste, y es el acento de
+              la marca. En blanco se leería igual pero sin carácter. */}
+          <Logo className="h-7 w-auto text-lima-300" />
+          <span className="mt-2 block truncate text-xs text-sidebar-muted">
+            {usuario?.display_name ?? usuario?.email}
           </span>
         </div>
 

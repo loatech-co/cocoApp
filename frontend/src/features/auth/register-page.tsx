@@ -1,3 +1,4 @@
+import { Logo } from '@/components/logo';
 import { AlertCircle, Check, Clock, Loader2, UserPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
@@ -59,7 +60,7 @@ export function RegisterPage() {
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-semibold text-primary">Coco</h1>
+          <Logo className="h-9 w-auto text-bosque-800" />
           <p className="mt-2 text-sm text-muted-foreground">Tus finanzas, claras.</p>
         </div>
 
@@ -169,7 +170,7 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm text-center">
-        <h1 className="mb-8 text-4xl font-semibold text-primary">Coco</h1>
+        <Logo className="mb-8 h-9 w-auto text-bosque-800" />
 
         <Alert variant="info" className="text-left">
           {lista ? <Check aria-hidden="true" /> : <Clock aria-hidden="true" />}

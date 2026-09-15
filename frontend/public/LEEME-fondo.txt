@@ -1,0 +1,13 @@
+El fondo de la pantalla de entrar sale de este archivo:
+
+    frontend/public/fondo-login.jpg
+
+Ponelo ahí con ese nombre exacto y aparece solo: no hay que tocar código.
+Si el archivo no existe, la mitad izquierda queda en verde bosque liso y la
+pantalla sigue funcionando igual.
+
+Recomendaciones:
+  · Apaisada o cuadrada, mínimo 1600px de ancho. Se recorta al centro.
+  · JPG o WebP. Un PNG de una foto pesa tres veces más sin verse mejor.
+  · Si la imagen es muy clara en la parte de abajo, el titular lleva un velo
+    oscuro encima, así que igual se lee.

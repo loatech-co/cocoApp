@@ -1,8 +1,8 @@
+import { Logo } from '@/components/logo';
 import { AlertCircle, Loader2, LogIn } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 
-import { FondoMarca } from '@/components/fondo-marca';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,12 +49,18 @@ export function LoginPage() {
         campo de correo bajo el pliegue es la forma más rápida de que alguien
         abandone. El carácter se mantiene con el color de fondo del formulario.
       */}
-      <section className="relative hidden overflow-hidden bg-bosque-700 lg:block">
-        <FondoMarca className="absolute inset-0 size-full" />
-
-        {/* Velo: el texto tiene que leerse sobre las cápsulas lima, que son muy
-            claras. Sin él, "Coco" caería sobre una franja y desaparecería. */}
-        <div className="absolute inset-0 bg-gradient-to-t from-bosque-900/90 via-bosque-900/45 to-transparent" />
+      <section
+        className="relative hidden overflow-hidden bg-bosque-800 bg-cover bg-center lg:block"
+        // La imagen se referencia por CSS y no por <img>: si el archivo todavía
+        // no está, el color de fondo queda y la pantalla sigue siendo usable.
+        // Un <img> roto dejaría un hueco con el icono de imagen partida.
+        //
+        // Para cambiarla: reemplazar frontend/public/fondo-login.jpg
+        style={{ backgroundImage: 'url(/fondo-login.jpg)' }}
+      >
+        {/* Velo: el texto tiene que leerse sobre una imagen que puede tener
+            zonas muy claras. Sin él, el titular desaparecería sobre ellas. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-bosque-950/90 via-bosque-950/45 to-transparent" />
 
         <div className="relative flex h-full flex-col justify-end p-12 xl:p-16">
           <p className="text-4xl font-extrabold leading-tight tracking-tight text-white xl:text-5xl">
@@ -73,7 +79,7 @@ export function LoginPage() {
       <section className="flex min-h-dvh items-center justify-center bg-background px-5 py-10 lg:min-h-0">
         <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-semibold text-primary">Coco</h1>
+          <Logo className="h-9 w-auto text-bosque-800" />
           <p className="mt-2 text-sm text-muted-foreground">Tus finanzas, claras.</p>
         </div>
 
