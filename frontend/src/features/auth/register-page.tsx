@@ -59,19 +59,10 @@ export function RegisterPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
-        {/*
-          El logotipo va en LIMA, sobre una placa bosque.
-
-          Lima directamente sobre el fondo claro da 1.14:1 de contraste: no es
-          poco, es invisible. Y el único tono de la familia que llega a 3:1 es
-          un oliva oscuro que ya no se lee como lima.
-
-          Así que se hace lo que hace la referencia: el lima vive sobre oscuro.
-          Dentro de la placa da 10.1:1, el mismo par que en la barra lateral.
-        */}
-        <div className="mx-auto mb-8 w-fit rounded-2xl bg-bosque-800 px-6 py-4">
-          <Logo className="h-8 w-auto text-lima-300" />
-        </div>
+        {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
+            (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
+            BLOQUE con ancho automático, y centrar texto no lo movería. */}
+        <Logo className="mx-auto mb-8 h-11 w-auto text-lima-300" />
 
         <Card>
           <CardHeader>
@@ -179,9 +170,10 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm text-center">
-        <div className="mx-auto mb-8 w-fit rounded-2xl bg-bosque-800 px-6 py-4">
-          <Logo className="h-8 w-auto text-lima-300" />
-        </div>
+        {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
+            (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
+            BLOQUE con ancho automático, y centrar texto no lo movería. */}
+        <Logo className="mx-auto mb-8 h-11 w-auto text-lima-300" />
 
         <Alert variant="info" className="text-left">
           {lista ? <Check aria-hidden="true" /> : <Clock aria-hidden="true" />}

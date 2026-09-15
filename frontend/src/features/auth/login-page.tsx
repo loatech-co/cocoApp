@@ -59,9 +59,10 @@ export function LoginPage() {
           Dentro de la placa da 10.1:1, el mismo par que en la barra lateral, y
           la marca queda idéntica en las dos pantallas.
         */}
-        <div className="mx-auto mb-8 w-fit rounded-2xl bg-bosque-800 px-6 py-4">
-          <Logo className="h-8 w-auto text-lima-300" />
-        </div>
+        {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
+            (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
+            BLOQUE con ancho automático, y centrar texto no lo movería. */}
+        <Logo className="mx-auto mb-8 h-11 w-auto text-lima-300" />
 
         <Card>
           <CardHeader>
