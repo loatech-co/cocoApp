@@ -228,7 +228,10 @@ export function SelectorDeRango({
           role="dialog"
           aria-label="Elegir rango de tiempo"
           className={cn(
-            'absolute left-0 z-30 mt-2 w-[min(34rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-popover',
+            // Anclado a la DERECHA: el control vive al final de una barra
+            // alineada a la derecha, y abriendo hacia la derecha un panel de
+            // 34rem se sale de la pantalla.
+            'absolute right-0 z-30 mt-2 w-[min(34rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-popover',
             'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
           )}
         >

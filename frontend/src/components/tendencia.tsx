@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { cn, formatCOP } from '@/lib/utils';
 import type { TrendPoint } from '@coco/types';
@@ -22,7 +22,24 @@ export function Tendencia({
   granularidad: 'dia' | 'mes';
 }) {
   const lienzo = useRef<HTMLDivElement>(null);
+  const tarjeta = useRef<HTMLDivElement>(null);
   const [activo, setActivo] = useState<number | null>(null);
+  /** El tamaño del lienzo en píxeles, para colocar la tarjeta sin que se salga. */
+  const [caja, setCaja] = useState({ ancho: 0, alto: 0 });
+  const [tamTarjeta, setTamTarjeta] = useState({ ancho: 0, alto: 0 });
+
+  // Se mide DESPUÉS de pintar y antes de que el navegador dibuje: midiendo en
+  // el render la tarjeta todavía no existe, y midiendo en un efecto normal se
+  // vería un fotograma con la tarjeta en el sitio equivocado.
+  useLayoutEffect(() => {
+    if (!tarjeta.current) return;
+    const { offsetWidth, offsetHeight } = tarjeta.current;
+    setTamTarjeta((previo) =>
+      previo.ancho === offsetWidth && previo.alto === offsetHeight
+        ? previo
+        : { ancho: offsetWidth, alto: offsetHeight },
+    );
+  }, [activo]);
 
   if (puntos.length === 0) {
     return (
@@ -42,16 +59,15 @@ export function Tendencia({
   const maximo = Math.max(...gastos);
   const pico = puntos[gastos.indexOf(maximo)];
 
-  // Si todo el rango cae en un año, el año sobra en cada etiqueta.
-  const mismoAnio = new Set(puntos.map((p) => p.bucket.slice(0, 4))).size === 1;
-  const etiquetas = etiquetasDelEje(puntos, granularidad, mismoAnio);
+  const etiquetas = etiquetasDelEje(puntos, granularidad);
 
   /** El punto más cercano al dedo o al puntero. */
   function apuntar(clientX: number): void {
-    const caja = lienzo.current?.getBoundingClientRect();
-    if (!caja || caja.width === 0) return;
+    const medida = lienzo.current?.getBoundingClientRect();
+    if (!medida || medida.width === 0) return;
 
-    const fraccion = (clientX - caja.left) / caja.width;
+    setCaja({ ancho: medida.width, alto: medida.height });
+    const fraccion = (clientX - medida.left) / medida.width;
     const indice = Math.round(fraccion * (puntos.length - 1));
     setActivo(Math.min(puntos.length - 1, Math.max(0, indice)));
   }
@@ -59,6 +75,11 @@ export function Tendencia({
   function conTeclado(e: React.KeyboardEvent): void {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     e.preventDefault();
+
+    // Con el teclado no hay puntero, así que la medida hay que tomarla aquí.
+    const medida = lienzo.current?.getBoundingClientRect();
+    if (medida) setCaja({ ancho: medida.width, alto: medida.height });
+
     const paso = e.key === 'ArrowLeft' ? -1 : 1;
     const desde = activo ?? (paso === 1 ? -1 : puntos.length);
     setActivo(Math.min(puntos.length - 1, Math.max(0, desde + paso)));
@@ -66,6 +87,29 @@ export function Tendencia({
 
   const punto = activo === null ? null : puntos[activo];
   const x = activo === null ? 0 : equis(activo, puntos.length);
+
+  /**
+   * Dónde va la tarjeta.
+   *
+   * Al lado del puntero, a doce píxeles, y saltando al otro lado cuando no
+   * cabe: pegada a un extremo fijo obliga a mirar a otra parte para leer el
+   * dato del punto que se está señalando, y siguiendo al puntero sin más se
+   * sale del gráfico en los bordes.
+   */
+  const sitio = ((): { left: number; top: number } => {
+    const px = (x / 100) * caja.ancho;
+    const py = punto ? (ye(Number(punto.expense), techo) / 42) * caja.alto : 0;
+    const MARGEN = 12;
+
+    const cabeADerecha = px + MARGEN + tamTarjeta.ancho <= caja.ancho;
+    const left = cabeADerecha ? px + MARGEN : Math.max(0, px - MARGEN - tamTarjeta.ancho);
+    const top = Math.min(
+      Math.max(0, py - tamTarjeta.alto / 2),
+      Math.max(0, caja.alto - tamTarjeta.alto),
+    );
+
+    return { left, top };
+  })();
 
   return (
     <div className="flex flex-col gap-4">
@@ -170,10 +214,14 @@ export function Tendencia({
               justo el punto que se está mirando.
             */}
             <div
+              ref={tarjeta}
+              style={{ left: `${sitio.left}px`, top: `${sitio.top}px` }}
               className={cn(
-                'pointer-events-none absolute top-0 min-w-36 rounded-xl bg-popover p-3',
+                'pointer-events-none absolute min-w-36 rounded-xl bg-popover p-3',
                 'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
-                x > 50 ? 'left-0' : 'right-0',
+                // Sin medir todavía se pinta invisible: un primer fotograma en
+                // la esquina y otro en su sitio se ve como un salto.
+                tamTarjeta.ancho === 0 && 'opacity-0',
               )}
             >
               <p className="text-xs font-semibold text-muted-foreground">
@@ -300,19 +348,36 @@ function ultimoDia(anio: number, mes: number): number {
  * forma de saber dónde termina uno y empieza el otro.
  *
  * ── Tres meses o más: solo el mes ───────────────────────────────────────────
- * Y si son tantos que no caben, uno de cada tantos. Doce etiquetas de "mar 25"
- * en un teléfono no se leen: se tocan.
+ * "ene feb mar", sin día y sin año. El año se escribe únicamente en el punto
+ * donde cambia, igual que el mes en el eje de días: la unidad de arriba solo
+ * aparece cuando deja de ser la misma.
+ *
+ * Y si son tantos meses que no caben, uno de cada tantos. Doce etiquetas de
+ * "mar 25" en un teléfono no se leen: se tocan.
  */
 export function etiquetasDelEje(
   puntos: readonly { bucket: string }[],
   granularidad: 'dia' | 'mes',
-  mismoAnio: boolean,
 ): { indice: number; texto: string }[] {
   if (granularidad === 'mes') {
     const cada = Math.max(1, Math.ceil(puntos.length / 12));
+    // Arranca con el año del primer punto ya "escrito": el rango completo está
+    // en el botón de fechas, justo encima, así que el eje no tiene que
+    // repetirlo. Solo avisa cuando el año CAMBIA a mitad del gráfico.
+    let anioEscrito = puntos[0]?.bucket.slice(0, 4) ?? '';
+
     return puntos
-      .map((p, indice) => ({ indice, texto: etiquetaDeCubo(p.bucket, mismoAnio) }))
-      .filter(({ indice }) => indice % cada === 0);
+      .map((p, indice) => ({ indice, bucket: p.bucket }))
+      .filter(({ indice }) => indice % cada === 0)
+      .map(({ indice, bucket }) => {
+        const [anio, mes] = bucket.split('-');
+        const nombre = MESES[Number(mes) - 1] ?? mes;
+        // Solo el mes. El año aparece únicamente cuando cambia: repetirlo en
+        // los doce puntos de un mismo año ocupa sitio y no distingue nada.
+        const texto = anio === anioEscrito ? nombre : `${nombre} ${anio.slice(2)}`;
+        anioEscrito = anio;
+        return { indice, texto };
+      });
   }
 
   const etiquetas: { indice: number; texto: string }[] = [];

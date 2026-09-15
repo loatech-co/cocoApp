@@ -1,4 +1,4 @@
-import { ArrowDownUp, Filter, Search, X } from 'lucide-react';
+import { ArrowDownUp, ChevronRight, Filter, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { Menu, MenuOpcion, MenuSeparador, MenuTitulo } from '@/components/menu';
@@ -91,7 +91,7 @@ export function ToolbarFiltros({
   }, [busqueda, filtros.q, aplicar]);
 
   const arbol = categorias.data ?? [];
-  const { centro, grupo, concepto } = rutaSeleccionada(arbol, filtros.categoryId);
+  const { lista, miga } = ramaVisible(arbol, rutaSeleccionada(arbol, filtros.categoryId));
 
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 border-b border-border pb-4">
@@ -170,53 +170,81 @@ export function ToolbarFiltros({
           soloIcono
           activo={filtros.categoryId !== undefined}
           ancho="w-72"
-          tipo="panel"
         >
           {(cerrar) => (
-            <div className="px-3 pb-2">
-              <MenuTitulo>Filtrar por clasificación</MenuTitulo>
-              <div className="flex flex-col gap-3 pt-1">
-                <Selector
-                  etiqueta="Centro de costos"
-                  ayuda="Lo más general"
-                  valor={centro?.id}
-                  opciones={arbol}
-                  onElegir={(id) => aplicar({ categoryId: id ?? 0 })}
-                />
-                <Selector
-                  etiqueta="Grupo"
-                  ayuda={centro ? 'Dentro del centro' : 'Elige un centro primero'}
-                  valor={grupo?.id}
-                  opciones={centro?.children ?? []}
-                  deshabilitado={!centro}
-                  onElegir={(id) => aplicar({ categoryId: id ?? centro?.id ?? 0 })}
-                />
-                <Selector
-                  etiqueta="Concepto"
-                  ayuda={grupo ? 'Lo más específico' : 'Elige un grupo primero'}
-                  valor={concepto?.id}
-                  opciones={grupo?.children ?? []}
-                  deshabilitado={!grupo}
-                  onElegir={(id) => aplicar({ categoryId: id ?? grupo?.id ?? 0 })}
-                />
+            <>
+              <MenuTitulo>Clasificación</MenuTitulo>
+
+              {/* La miga de pan es el camino de vuelta. Sin ella, bajar a los
+                  conceptos de un grupo sería un viaje de ida. */}
+              <div className="flex flex-wrap items-center gap-1 px-3 pb-1.5 text-xs text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={() => aplicar({ categoryId: 0 })}
+                  className="rounded hover:text-foreground hover:underline"
+                >
+                  Todo
+                </button>
+                {miga.map((nodo) => (
+                  <span key={nodo.id} className="flex items-center gap-1">
+                    <ChevronRight className="size-3 opacity-60" aria-hidden="true" />
+                    <button
+                      type="button"
+                      onClick={() => aplicar({ categoryId: nodo.id })}
+                      className="max-w-32 truncate rounded hover:text-foreground hover:underline"
+                    >
+                      {nodo.name}
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              {/* Se limita el alto: un centro con cuarenta conceptos haría un
+                  menú más largo que la pantalla y sin forma de llegar al pie. */}
+              <div className="max-h-72 overflow-y-auto">
+                {lista.length === 0 ? (
+                  <p className="px-3 py-2 text-sm text-muted-foreground">Nada que desglosar aquí.</p>
+                ) : (
+                  lista.map((nodo) => (
+                    <MenuOpcion
+                      key={nodo.id}
+                      elegida={filtros.categoryId === nodo.id}
+                      onClick={() => {
+                        aplicar({ categoryId: nodo.id });
+                        // Si no tiene nada dentro, el menú ya cumplió: seguir
+                        // abierto sobre una lista vacía no ofrece nada.
+                        if (!nodo.children?.length) cerrar();
+                      }}
+                    >
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="min-w-0 truncate">{nodo.name}</span>
+                        {!!nodo.children?.length && (
+                          <ChevronRight
+                            className="size-3.5 shrink-0 opacity-40"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </span>
+                    </MenuOpcion>
+                  ))
+                )}
               </div>
 
               {filtros.categoryId !== undefined && (
                 <>
                   <MenuSeparador />
-                  <button
-                    type="button"
+                  <MenuOpcion
+                    Icono={X}
                     onClick={() => {
                       aplicar({ categoryId: 0 });
                       cerrar();
                     }}
-                    className="text-sm font-medium text-primary hover:underline"
                   >
-                    Quitar la clasificación
-                  </button>
+                    Quitar el filtro
+                  </MenuOpcion>
                 </>
               )}
-            </div>
+            </>
           )}
         </Menu>
 
@@ -262,47 +290,6 @@ function BotonIcono({
   );
 }
 
-function Selector({
-  etiqueta,
-  ayuda,
-  valor,
-  opciones,
-  deshabilitado,
-  onElegir,
-}: {
-  etiqueta: string;
-  ayuda: string;
-  valor?: number;
-  opciones: Category[];
-  deshabilitado?: boolean;
-  onElegir: (id: number | null) => void;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-muted-foreground">
-        {etiqueta} <span className="font-normal opacity-70">· {ayuda}</span>
-      </span>
-      <select
-        value={valor ?? ''}
-        disabled={deshabilitado || opciones.length === 0}
-        onChange={(e) => onElegir(e.target.value === '' ? null : Number(e.target.value))}
-        className={cn(
-          'h-9 rounded-lg border bg-card px-3 text-sm',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-        )}
-        style={{ borderColor: 'var(--input)' }}
-      >
-        <option value="">Todos</option>
-        {opciones.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.name}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
 /**
  * Reconstruye la ruta completa a partir de un solo id.
  *
@@ -330,4 +317,33 @@ export function rutaSeleccionada(
   }
 
   return {};
+}
+
+/**
+ * Qué nivel se muestra en el panel, y el camino hasta él.
+ *
+ * ── Por qué no hay estado de navegación ─────────────────────────────────────
+ * Porque seleccionar ES navegar: elegir un centro de costos filtra por su rama
+ * entera y, de paso, deja a la vista sus grupos para afinar. Un estado aparte
+ * de "dónde estoy mirando" podría contradecir a "qué tengo filtrado", y habría
+ * que mantener los dos de acuerdo en cada clic.
+ *
+ * Manda el nodo más profundo que TENGA hijos. Si el elegido no tiene nada
+ * dentro —un concepto, o un grupo todavía vacío—, se muestran sus hermanos: la
+ * alternativa es un panel en blanco justo después de hacer clic.
+ */
+export function ramaVisible(
+  arbol: Category[],
+  ruta: { centro?: Category; grupo?: Category; concepto?: Category },
+): { lista: Category[]; miga: Category[] } {
+  const cadena = [ruta.centro, ruta.grupo, ruta.concepto].filter(
+    (n): n is Category => n !== undefined,
+  );
+
+  for (let i = cadena.length - 1; i >= 0; i -= 1) {
+    const hijos = cadena[i].children ?? [];
+    if (hijos.length > 0) return { lista: hijos, miga: cadena.slice(0, i + 1) };
+  }
+
+  return { lista: arbol, miga: [] };
 }
