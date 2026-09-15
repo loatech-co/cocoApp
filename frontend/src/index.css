@@ -47,7 +47,7 @@
   --color-bosque-900: #0c2c22;
   /* Escalón intermedio, solo para el área de trabajo en oscuro. */
   --color-bosque-925: #081d16;
-  --color-bosque-950: #04110c;
+  --color-bosque-950: #061912;
 
   /* ── Lima (acento) ─────────────────────────────────────────────────────── */
   --color-lima-50: #fbfee9;
@@ -128,10 +128,10 @@
   /* Esquinas amplias, como en la referencia. */
   --radius: 1rem;
 
-  /* Un paso más abajo que la tarjeta blanca, a propósito: con tinta-100 el
-     área de trabajo y las tarjetas eran casi el mismo blanco y todo se leía
-     como una masa plana junto a la barra lateral oscura. */
-  --background: var(--color-tinta-200);
+  /* Verde muy suave, no gris neutro: acerca el área de trabajo a la barra
+     lateral en vez de dejar el salto de verde oscuro a casi blanco, y de paso
+     despega las tarjetas, que son blancas. */
+  --background: var(--color-bosque-50);
   --foreground: var(--color-tinta-950);
 
   --card: #ffffff;
