@@ -1,0 +1,14 @@
+-- El unique (user_id, name) ya no alcanza.
+--
+-- En MariaDB la colación utf8mb4_general_ci hacía que "Comida" y "comida"
+-- chocaran contra ese unique, y el get-or-create devolvía la etiqueta que ya
+-- existía. Postgres compara distinguiendo mayúsculas: las dos entrarían como
+-- filas separadas y la lista de etiquetas se llenaría de duplicados que se ven
+-- iguales.
+--
+-- Prisma no sabe expresar un índice sobre una FUNCIÓN (lower(name)), así que
+-- este índice vive en SQL. El código lo acompaña buscando con
+-- mode: 'insensitive' en tags.module.ts; el índice es la red que atrapa las
+-- carreras entre dos peticiones simultáneas, que el código por sí solo no
+-- puede evitar.
+CREATE UNIQUE INDEX "uq_tags_user_name_ci" ON "tags" ("user_id", lower("name"));

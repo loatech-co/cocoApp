@@ -12,7 +12,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import type { Tag } from '@prisma/client';
+import { Prisma, type Tag } from '@prisma/client';
 import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -61,13 +61,41 @@ export class TagsService {
   async obtenerOCrear(userId: bigint, name: string, color?: string): Promise<TagView> {
     const nombre = name.trim();
 
-    const tag = await this.prisma.tag.upsert({
-      where: { userId_name: { userId, name: nombre } },
-      update: color ? { color } : {},
-      create: { userId, name: nombre, color: color ?? null },
+    // La comparación ignora mayúsculas A PROPÓSITO. MariaDB lo hacía solo por
+    // su colación; Postgres distingue, y sin esto "Comida" y "comida" serían
+    // dos etiquetas. La UI las crea al vuelo mientras la persona escribe, así
+    // que los duplicados por mayúscula aparecerían enseguida y en silencio.
+    //
+    // El nombre se GUARDA tal cual se escribió: solo la búsqueda es
+    // insensible. Quien escribió "Comida" la sigue viendo así.
+    const existente = await this.prisma.tag.findFirst({
+      where: { userId, name: { equals: nombre, mode: 'insensitive' } },
     });
 
-    return presentar(tag);
+    if (existente) {
+      if (!color) return presentar(existente);
+      return presentar(
+        await this.prisma.tag.update({ where: { id: existente.id }, data: { color } }),
+      );
+    }
+
+    try {
+      return presentar(
+        await this.prisma.tag.create({ data: { userId, name: nombre, color: color ?? null } }),
+      );
+    } catch (error) {
+      // P2002 es la violación del índice único: entre el SELECT y el INSERT,
+      // otra petición creó la misma etiqueta. No es un error para quien pide
+      // —el PRD dice que un nombre repetido devuelve la existente—, así que se
+      // vuelve a buscar y se devuelve la que ganó la carrera.
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+        throw error;
+      }
+      const ganadora = await this.prisma.tag.findFirstOrThrow({
+        where: { userId, name: { equals: nombre, mode: 'insensitive' } },
+      });
+      return presentar(ganadora);
+    }
   }
 
   /** Resuelve una lista de nombres a ids, creando las que falten. */

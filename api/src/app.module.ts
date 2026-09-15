@@ -1,3 +1,5 @@
+import { join } from 'node:path';
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -24,8 +26,21 @@ import { PrismaModule } from './prisma/prisma.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      // La ruta es ABSOLUTA, derivada de dónde está este archivo, y no relativa
+      // al directorio de trabajo.
+      //
+      // Hostinger arranca el proceso con el cwd en el HOME del usuario, no en
+      // la carpeta de la aplicación. Con una ruta relativa, la app buscaba
+      // `.env` en el home, no lo encontraba, y Prisma fallaba al arrancar con
+      // un P1012 que se lee como si la URL estuviera mal escrita:
+      //   "the URL must start with the protocol postgresql://"
+      // cuando en realidad la variable simplemente no existía.
+      //
+      // __dirname es `api/dist`, así que esto apunta a `api/.env` tanto en
+      // desarrollo como compilado.
+      //
       // Las pruebas corren contra su propia base, nunca contra la de desarrollo.
-      envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
+      envFilePath: join(__dirname, '..', process.env.NODE_ENV === 'test' ? '.env.test' : '.env'),
       cache: true,
     }),
 

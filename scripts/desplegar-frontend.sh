@@ -16,7 +16,12 @@ SERVIDOR="u523998927@5.183.10.14"
 PUERTO=65002
 LLAVE="$HOME/.ssh/hostinger_cocoapp"
 DOMINIO="${1:-dev-cocoapp.viteri.me}"
-DESTINO="domains/${DOMINIO}/public_html"
+# ── Por qué NO va a public_html ──────────────────────────────────────────────
+# Porque ahí no lo sirve nadie. La SPA la entrega el propio proceso de la API
+# (SpaModule), que la lee desde su carpeta frontend/dist. public_html quedó
+# vacío cuando se unificaron API y SPA en un solo dominio, y subir ahí producía
+# un despliegue que parecía exitoso y no cambiaba nada de lo que se ve.
+DESTINO="domains/${DOMINIO}/hbuilds/current/nodejs/frontend/dist"
 
 cd "$(dirname "$0")/.."
 
@@ -33,21 +38,17 @@ echo ""
 echo "▸ Subiendo a ${DOMINIO}…"
 
 # --delete limpia los assets de despliegues anteriores: sus nombres llevan
-# hash, así que se acumularían para siempre.
-#
-# Las exclusiones NO son opcionales:
-#   · dev-env  → es donde el despliegue de git de Hostinger clona el repo. Sin
-#                excluirlo, --delete lo borraría y ese despliegue se rompería.
-#   · .well-known → certificados de Let's Encrypt. Borrarlos tumba el HTTPS.
+# hash, así que se acumularían para siempre. Aquí es seguro porque el destino
+# contiene EXCLUSIVAMENTE el build de la SPA, nada compartido con la API.
 rsync -az --delete \
-  --exclude 'dev-env/' \
-  --exclude '.well-known/' \
   -e "ssh -i ${LLAVE} -p ${PUERTO}" \
   frontend/dist/ "${SERVIDOR}:${DESTINO}/"
 
-# La página por defecto de Hostinger gana a index.html en el orden de Apache.
-# Mientras exista, el sitio muestra "¡Ya todo está listo!" en vez de la app.
-ssh -i "$LLAVE" -p "$PUERTO" "$SERVIDOR" "rm -f ${DESTINO}/default.php"
+# El proceso cachea rutas de archivos estáticos al arrancar, así que un build
+# nuevo no se ve hasta reiniciarlo.
+ssh -i "$LLAVE" -p "$PUERTO" "$SERVIDOR" \
+  "touch domains/${DOMINIO}/hbuilds/current/nodejs/tmp/restart.txt"
+sleep 12
 
 echo ""
 echo "▸ Comprobando…"

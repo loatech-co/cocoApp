@@ -15,7 +15,7 @@
 //     opera con Prisma.Decimal (.plus/.minus/.times), nunca con `number`:
 //     `number` en JS es IEEE-754 y acumula error de redondeo.
 //   · Fechas de negocio: DateTime @db.Date (un movimiento ocurre "un día").
-//     Timestamps: DateTime @db.DateTime(0) en UTC, mostrados en America/Bogota.
+//     Timestamps: DateTime @db.Timestamp(3) en UTC, mostrados en America/Bogota.
 //   · Toda entidad de primer nivel lleva user_id. Ninguna consulta cruza usuarios.
 //   · onDelete explícito en cada relación, elegido por semántica de negocio.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -25,9 +25,9 @@ generator client {
 }
 
 datasource db {
-  provider          = "mysql"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ── Enums (espejo de las columnas ENUM) ──────────────────────────────────────
@@ -121,6 +121,13 @@ enum ImportRowStatus {
 enum ImportSource {
   image
   pdf
+  /// Un CSV preparado por la persona.
+  ///
+  /// Es la vía EXACTA: no hay reconocimiento de texto que pueda equivocarse,
+  /// así que es lo indicado para migrar años de historial de una sola vez.
+  /// Se guarda aparte de `pdf` e `image` para poder comparar después qué vía
+  /// produce menos correcciones en la revisión.
+  csv
   manual
 }
 
@@ -129,7 +136,7 @@ enum ImportSource {
 // la autenticación es propia, no delegada.
 
 model User {
-  id           BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  id           BigInt     @id @default(autoincrement())
   uuid         String     @unique(map: "uq_users_uuid") @default(uuid()) @db.Char(36)
   email        String     @unique(map: "uq_users_email") @db.VarChar(255)
   /// Hash argon2id. La contraseña en claro no existe en ningún lado: ni en la
@@ -143,21 +150,21 @@ model User {
   /// marca se rechaza, sin salir a la red: el guard ya lee esta fila en cada
   /// petición. Cambiar la contraseña, suspender la cuenta o "cerrar sesión en
   /// todos los dispositivos" simplemente adelantan este valor.
-  sessionsValidFrom DateTime @default(now()) @map("sessions_valid_from") @db.DateTime(3)
+  sessionsValidFrom DateTime @default(now()) @map("sessions_valid_from") @db.Timestamp(3)
 
   /// Defensa contra fuerza bruta. Se usa retraso progresivo, no bloqueo duro:
   /// un bloqueo duro permitiría que alguien deje a otro fuera de su cuenta a
   /// propósito con solo fallar el login varias veces.
   failedLoginCount Int       @default(0) @map("failed_login_count")
-  lockedUntil      DateTime? @map("locked_until") @db.DateTime(0)
-  lastLoginAt      DateTime? @map("last_login_at") @db.DateTime(0)
+  lockedUntil      DateTime? @map("locked_until") @db.Timestamp(3)
+  lastLoginAt      DateTime? @map("last_login_at") @db.Timestamp(3)
 
   /// Traza de quién aprobó la cuenta y cuándo.
-  approvedAt   DateTime? @map("approved_at") @db.DateTime(0)
-  approvedById BigInt?   @map("approved_by_id") @db.UnsignedBigInt
+  approvedAt   DateTime? @map("approved_at") @db.Timestamp(3)
+  approvedById BigInt?   @map("approved_by_id")
 
-  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(3)
 
   approvedBy    User?            @relation("AprobadoPor", fields: [approvedById], references: [id], onDelete: SetNull, map: "fk_users_approved_by")
   aprobados     User[]           @relation("AprobadoPor")
@@ -189,19 +196,19 @@ model User {
 // Es el patrón que recomienda la OAuth 2.0 Security BCP para clientes públicos.
 
 model RefreshToken {
-  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  userId    BigInt    @map("user_id") @db.UnsignedBigInt
+  id        BigInt    @id @default(autoincrement())
+  userId    BigInt    @map("user_id")
   tokenHash String    @unique(map: "uq_refresh_token_hash") @map("token_hash") @db.Char(64)
   /// Agrupa la cadena de rotaciones que nació de un mismo login.
   familyId  String    @map("family_id") @db.Char(36)
-  expiresAt DateTime  @map("expires_at") @db.DateTime(0)
+  expiresAt DateTime  @map("expires_at") @db.Timestamp(3)
   /// Marca el momento en que se rotó. Un token con `used_at` que vuelve a
   /// aparecer es la señal de robo.
-  usedAt    DateTime? @map("used_at") @db.DateTime(0)
-  revokedAt DateTime? @map("revoked_at") @db.DateTime(0)
+  usedAt    DateTime? @map("used_at") @db.Timestamp(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamp(3)
   userAgent String?   @map("user_agent") @db.VarChar(255)
   ip        String?   @db.VarChar(45)
-  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(3)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_refresh_user")
 
@@ -220,15 +227,15 @@ model RefreshToken {
 // no hay usuario al que atribuirlo.
 
 model AuditLog {
-  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  userId      BigInt?  @map("user_id") @db.UnsignedBigInt
+  id          BigInt   @id @default(autoincrement())
+  userId      BigInt?  @map("user_id")
   entity      String   @db.VarChar(64)
   entityId    BigInt?  @map("entity_id")
   action      String   @db.VarChar(64)
   changesJson Json?    @map("changes_json")
   ip          String?  @db.VarChar(45)
   userAgent   String?  @map("user_agent") @db.VarChar(255)
-  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(3)
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull, map: "fk_audit_user")
 
@@ -244,20 +251,20 @@ model AuditLog {
 // (is_archived), nunca se borran.
 
 model Account {
-  id             BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
-  userId         BigInt      @map("user_id") @db.UnsignedBigInt
+  id             BigInt      @id @default(autoincrement())
+  userId         BigInt      @map("user_id")
   name           String      @db.VarChar(255)
   type           AccountType @default(other)
   currency       String      @default("COP") @db.Char(3)
   institution    String?     @db.VarChar(255)
   last4          String?     @db.Char(4)
   creditLimit    Decimal?    @map("credit_limit") @db.Decimal(15, 2)
-  cutoffDay      Int?        @map("cutoff_day") @db.TinyInt
-  paymentDay     Int?        @map("payment_day") @db.TinyInt
+  cutoffDay      Int?        @map("cutoff_day") @db.SmallInt
+  paymentDay     Int?        @map("payment_day") @db.SmallInt
   openingBalance Decimal     @default(0.00) @map("opening_balance") @db.Decimal(15, 2)
   isArchived     Boolean     @default(false) @map("is_archived")
-  createdAt      DateTime    @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt      DateTime    @updatedAt @map("updated_at") @db.DateTime(0)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamp(3)
 
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_accounts_user")
   transactions  Transaction[]
@@ -273,16 +280,16 @@ model Account {
 // sobreviven SIN categoría (SetNull) — coherente con la no-rigidez.
 
 model Category {
-  id         BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
-  userId     BigInt       @map("user_id") @db.UnsignedBigInt
+  id         BigInt       @id @default(autoincrement())
+  userId     BigInt       @map("user_id")
   name       String       @db.VarChar(255)
-  parentId   BigInt?      @map("parent_id") @db.UnsignedBigInt
+  parentId   BigInt?      @map("parent_id")
   kind       CategoryKind @default(expense)
   color      String?      @db.Char(7)
   icon       String?      @db.VarChar(64)
   sortOrder  Int          @default(0) @map("sort_order")
   isArchived Boolean      @default(false) @map("is_archived")
-  createdAt  DateTime     @default(now()) @map("created_at") @db.DateTime(0)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
 
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_categories_user")
   parent       Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull, map: "fk_categories_parent")
@@ -306,8 +313,8 @@ model Category {
 // crea al vuelo mientras el usuario escribe, sin pedir permiso.
 
 model Tag {
-  id     BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
-  userId BigInt  @map("user_id") @db.UnsignedBigInt
+  id     BigInt  @id @default(autoincrement())
+  userId BigInt  @map("user_id")
   name   String  @db.VarChar(255)
   color  String? @db.Char(7)
 
@@ -331,9 +338,9 @@ model Tag {
 // como migraciones nuevas, nunca reescribiendo una ya aplicada.
 
 model Transaction {
-  id              BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  id              BigInt             @id @default(autoincrement())
   uuid            String             @unique(map: "uq_transactions_uuid") @default(uuid()) @db.Char(36)
-  userId          BigInt             @map("user_id") @db.UnsignedBigInt
+  userId          BigInt             @map("user_id")
   /// OPCIONAL a propósito.
   ///
   /// Llevar cuentas —tarjetas, ahorros, efectivo— es una función que se
@@ -344,11 +351,11 @@ model Transaction {
   /// La consecuencia hay que asumirla de frente: un movimiento sin cuenta no
   /// participa de ningún saldo. Los saldos siguen siendo exactos para las
   /// cuentas que existan, y sencillamente no hay saldo para lo demás.
-  accountId       BigInt?            @map("account_id") @db.UnsignedBigInt
+  accountId       BigInt?            @map("account_id")
   date            DateTime           @db.Date
   amount          Decimal            @db.Decimal(15, 2)
   type            TransactionType    @default(expense)
-  categoryId      BigInt?            @map("category_id") @db.UnsignedBigInt
+  categoryId      BigInt?            @map("category_id")
   description     String?            @db.VarChar(255)
   merchant        String?            @db.VarChar(255)
   notes           String?            @db.Text
@@ -361,10 +368,10 @@ model Transaction {
   externalRef     String?            @map("external_ref") @db.VarChar(255)
   /// De qué importación salió, si salió de alguna. Es lo que permite deshacer
   /// un lote entero sin borrar cuarenta movimientos a mano.
-  importBatchId   BigInt?            @map("import_batch_id") @db.UnsignedBigInt
+  importBatchId   BigInt?            @map("import_batch_id")
   status          TransactionStatus  @default(cleared)
-  createdAt       DateTime           @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt       DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamp(3)
 
   user     User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_tx_user")
   account  Account?           @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_tx_account")
@@ -399,9 +406,9 @@ model Transaction {
 // splits, no el category_id de cabecera.
 
 model TransactionSplit {
-  id            BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
-  transactionId BigInt  @map("transaction_id") @db.UnsignedBigInt
-  categoryId    BigInt? @map("category_id") @db.UnsignedBigInt
+  id            BigInt  @id @default(autoincrement())
+  transactionId BigInt  @map("transaction_id")
+  categoryId    BigInt? @map("category_id")
   amount        Decimal @db.Decimal(15, 2)
   note          String? @db.VarChar(255)
 
@@ -418,8 +425,8 @@ model TransactionSplit {
 // la etiqueta, la relación desaparece sola.
 
 model TransactionTag {
-  transactionId BigInt @map("transaction_id") @db.UnsignedBigInt
-  tagId         BigInt @map("tag_id") @db.UnsignedBigInt
+  transactionId BigInt @map("transaction_id")
+  tagId         BigInt @map("tag_id")
 
   transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_tt_tx")
   tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade, map: "fk_tt_tag")
@@ -443,12 +450,12 @@ model TransactionTag {
 // mano.
 
 model ImportBatch {
-  id          BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  id          BigInt       @id @default(autoincrement())
   uuid        String       @unique(map: "uq_import_batches_uuid") @default(uuid()) @db.Char(36)
-  userId      BigInt       @map("user_id") @db.UnsignedBigInt
+  userId      BigInt       @map("user_id")
   /// Opcional, por lo mismo que en transactions: se puede importar un extracto
   /// sin declarar a qué cuenta pertenece.
-  accountId   BigInt?      @map("account_id") @db.UnsignedBigInt
+  accountId   BigInt?      @map("account_id")
   source      ImportSource @default(image)
   status      ImportStatus @default(draft)
   /// Nombre del archivo, solo para que la persona reconozca el lote. Nunca su contenido.
@@ -456,9 +463,9 @@ model ImportBatch {
   /// Qué implementación de OcrProvider lo produjo. Sirve para comparar calidad
   /// el día que exista una alternativa de servidor.
   ocrProvider String?      @map("ocr_provider") @db.VarChar(64)
-  committedAt DateTime?    @map("committed_at") @db.DateTime(0)
-  createdAt   DateTime     @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt   DateTime     @updatedAt @map("updated_at") @db.DateTime(0)
+  committedAt DateTime?    @map("committed_at") @db.Timestamp(3)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamp(3)
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_import_batch_user")
   account      Account?      @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_import_batch_account")
@@ -477,8 +484,8 @@ model ImportBatch {
 // aquí y convertir después ya habría perdido centavos.
 
 model ImportRow {
-  id            BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
-  batchId       BigInt          @map("batch_id") @db.UnsignedBigInt
+  id            BigInt          @id @default(autoincrement())
+  batchId       BigInt          @map("batch_id")
   /// Orden en el documento. Revisar en desorden es desorientador.
   position      Int
   date          DateTime        @db.Date
@@ -487,13 +494,13 @@ model ImportRow {
   description   String?         @db.VarChar(255)
   status        ImportRowStatus @default(pending)
   /// Categoría sugerida por T1. Es una SUGERENCIA: la persona la cambia o la quita.
-  categoryId    BigInt?         @map("category_id") @db.UnsignedBigInt
+  categoryId    BigInt?         @map("category_id")
   /// 0–100. Se muestra para que se sepa cuánto fiarse de la sugerencia.
-  confidence    Int?            @db.UnsignedTinyInt
+  confidence    Int?            @db.SmallInt
   /// Huella determinista para detectar repeticiones. Ver `fingerprint.ts`.
   fingerprint   String          @db.Char(64)
   /// Si se sospecha repetición, a qué movimiento ya existente se parece.
-  duplicateOfId BigInt?         @map("duplicate_of_id") @db.UnsignedBigInt
+  duplicateOfId BigInt?         @map("duplicate_of_id")
 
   batch       ImportBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade, map: "fk_import_row_batch")
   category    Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_import_row_category")
@@ -515,17 +522,17 @@ model ImportRow {
 // propio usuario, que es la señal más fuerte y no exige mantener listas.
 
 model CategoryRule {
-  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  userId     BigInt   @map("user_id") @db.UnsignedBigInt
+  id         BigInt   @id @default(autoincrement())
+  userId     BigInt   @map("user_id")
   /// Fragmento a buscar en la descripción, ya en minúsculas y sin tildes.
   pattern    String   @db.VarChar(120)
-  categoryId BigInt   @map("category_id") @db.UnsignedBigInt
+  categoryId BigInt   @map("category_id")
   /// Mayor prioridad gana cuando varias reglas coinciden. Las creadas por la
   /// persona pesan más que las sembradas por defecto.
   priority   Int      @default(0)
   /// Cuántas veces ha acertado. Sube cuando se acepta la sugerencia.
   hits       Int      @default(0)
-  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(3)
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_rule_user")
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "fk_rule_category")
@@ -545,8 +552,8 @@ model CategoryRule {
 // migración.
 
 model UserPreference {
-  id        BigInt @id @default(autoincrement()) @db.UnsignedBigInt
-  userId    BigInt @map("user_id") @db.UnsignedBigInt
+  id        BigInt @id @default(autoincrement())
+  userId    BigInt @map("user_id")
   prefKey   String @map("pref_key") @db.VarChar(64)
   prefValue Json   @map("pref_value")
 

@@ -13,16 +13,15 @@
 # vacía que se acaba de crear, produciría un script vacío y `migrate deploy`
 # fallaría con P3006/P3018.
 #
-# ── El fantasma de MariaDB ───────────────────────────────────────────────────
-# MariaDB no tiene tipo JSON nativo: `JSON` es un alias de
-# `longtext CHECK (json_valid(...))`, y `information_schema` reporta `longtext`.
-# Prisma compara su `Json` contra ese `longtext`, ve una diferencia y emite un
-# `MODIFY ... JSON` en CADA diff. Aplicarlo no cambia nada — comprobado: tras
-# el ALTER, MariaDB sigue reportando `longtext`.
+# ── Qué desapareció al pasar a Postgres ──────────────────────────────────────
+# Este script filtraba los `MODIFY ... JSON` fantasma que MariaDB emitía en
+# cada diff, porque allí `JSON` era un alias de `longtext` y Prisma veía una
+# diferencia irresoluble. Postgres tiene `jsonb` de verdad: el fantasma ya no
+# existe y el filtro se eliminó.
 #
-# Es una diferencia irresoluble, no un error. Se filtra aquí para que las
-# migraciones nuevas no arrastren ALTERs que no hacen nada y que, con el
-# tiempo, esconderían un cambio de verdad entre el ruido.
+# ── Dónde se aplica ──────────────────────────────────────────────────────────
+# Solo en la base LOCAL (.env.migrate). Llevarla a Supabase es un paso aparte
+# y deliberado: scripts/desplegar-migraciones.sh
 set -euo pipefail
 
 NOMBRE="${1:-}"
@@ -33,8 +32,9 @@ fi
 
 cd "$(dirname "$0")/../api"
 
-SHADOW=$(grep SHADOW_DATABASE_URL .env.migrate | cut -d'=' -f2- | tr -d '"')
+SHADOW=$(grep '^SHADOW_DATABASE_URL=' .env.migrate | cut -d'=' -f2- | tr -d '"')
 SQL=$(mktemp)
+trap 'rm -f "$SQL"' EXIT
 
 npx dotenv -e .env.migrate -- npx prisma migrate diff \
   --from-migrations ./prisma/migrations \
@@ -42,37 +42,14 @@ npx dotenv -e .env.migrate -- npx prisma migrate diff \
   --shadow-database-url "$SHADOW" \
   --script > "$SQL"
 
-# Fuera el fantasma: los MODIFY ... JSON sobre columnas que MariaDB ya guarda
-# como longtext, y el encabezado "-- AlterTable" que se queda huérfano cuando su
-# única sentencia era justamente esa.
-FILTRADO=$(mktemp)
-python3 - "$SQL" > "$FILTRADO" <<'PY'
-import re, sys
-
-sql = open(sys.argv[1]).read()
-
-# 1. Fuera las sentencias fantasma.
-sql = re.sub(r'^ALTER TABLE `[^`]+` MODIFY `[^`]+` JSON[^;]*;\n?', '', sql, flags=re.M)
-# 2. Fuera el ALTER que quedó sin columnas que modificar.
-sql = re.sub(r'^ALTER TABLE `[^`]+`;\n?', '', sql, flags=re.M)
-# 3. Fuera el encabezado que ya no encabeza nada.
-sql = re.sub(r'-- AlterTable\s*(?=(-- |\Z))', '', sql)
-# 4. Una sola línea en blanco entre bloques.
-sql = re.sub(r'\n{3,}', '\n\n', sql).strip()
-
-print(sql)
-PY
-
-if ! grep -qE '^(CREATE|ALTER|DROP|INSERT|UPDATE)' "$FILTRADO"; then
+if ! grep -qE '^(CREATE|ALTER|DROP|INSERT|UPDATE)' "$SQL"; then
   echo "No hay cambios que migrar: schema.prisma ya coincide con las migraciones."
-  rm -f "$SQL" "$FILTRADO"
   exit 0
 fi
 
 DIR="prisma/migrations/$(date +%Y%m%d%H%M%S)_${NOMBRE}"
 mkdir -p "$DIR"
-mv "$FILTRADO" "$DIR/migration.sql"
-rm -f "$SQL"
+cp "$SQL" "$DIR/migration.sql"
 
 echo "→ $DIR/migration.sql"
 cat "$DIR/migration.sql"
@@ -80,4 +57,4 @@ echo ""
 
 npx dotenv -e .env.migrate -- npx prisma migrate deploy
 npx prisma generate >/dev/null
-echo "Listo. Cliente de Prisma regenerado."
+echo "Listo en local. Para llevarla a Supabase: scripts/desplegar-migraciones.sh"
