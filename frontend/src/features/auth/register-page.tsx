@@ -59,9 +59,18 @@ export function RegisterPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <Logo className="h-9 w-auto text-bosque-800" />
-          <p className="mt-2 text-sm text-muted-foreground">Tus finanzas, claras.</p>
+        {/*
+          El logotipo va en LIMA, sobre una placa bosque.
+
+          Lima directamente sobre el fondo claro da 1.14:1 de contraste: no es
+          poco, es invisible. Y el único tono de la familia que llega a 3:1 es
+          un oliva oscuro que ya no se lee como lima.
+
+          Así que se hace lo que hace la referencia: el lima vive sobre oscuro.
+          Dentro de la placa da 10.1:1, el mismo par que en la barra lateral.
+        */}
+        <div className="mx-auto mb-8 w-fit rounded-2xl bg-bosque-800 px-6 py-4">
+          <Logo className="h-8 w-auto text-lima-300" />
         </div>
 
         <Card>
@@ -147,7 +156,7 @@ export function RegisterPage() {
             <p className="text-center text-sm text-muted-foreground">
               ¿Ya tienes cuenta?{' '}
               <Link to="/entrar" className="text-primary underline-offset-4 hover:underline">
-                Entrar
+                Iniciar sesión
               </Link>
             </p>
           </CardContent>
@@ -170,7 +179,9 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm text-center">
-        <Logo className="mb-8 h-9 w-auto text-bosque-800" />
+        <div className="mx-auto mb-8 w-fit rounded-2xl bg-bosque-800 px-6 py-4">
+          <Logo className="h-8 w-auto text-lima-300" />
+        </div>
 
         <Alert variant="info" className="text-left">
           {lista ? <Check aria-hidden="true" /> : <Clock aria-hidden="true" />}
@@ -186,7 +197,7 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
           to="/entrar"
           className="mt-6 inline-block text-sm text-primary underline-offset-4 hover:underline"
         >
-          {lista ? 'Entrar' : 'Volver a entrar'}
+          {lista ? 'Iniciar sesión' : 'Volver a iniciar sesión'}
         </Link>
       </div>
     </main>

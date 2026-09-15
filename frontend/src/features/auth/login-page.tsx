@@ -48,13 +48,24 @@ export function LoginPage() {
           pantalla lo encuentra sin atravesar antes la decoración. */}
       <section className="flex min-h-dvh items-center justify-center bg-background px-5 py-10 lg:min-h-0">
         <div className="w-full max-w-sm">
-        {/* `mx-auto`, no `text-center`: el logotipo es un SVG de BLOQUE con
-            ancho automático, y centrar texto no lo mueve. */}
-        <Logo className="mx-auto mb-8 h-9 w-auto text-bosque-800" />
+        {/*
+          El logotipo va en LIMA, sobre una placa bosque.
+
+          Lima directamente sobre el fondo claro da 1.14:1 de contraste: no es
+          poco, es invisible. Y el único tono de la familia que llega a 3:1 es
+          un oliva oscuro que ya no se lee como lima.
+
+          Así que se hace lo que hace la referencia: el lima vive sobre oscuro.
+          Dentro de la placa da 10.1:1, el mismo par que en la barra lateral, y
+          la marca queda idéntica en las dos pantallas.
+        */}
+        <div className="mx-auto mb-8 w-fit rounded-2xl bg-bosque-800 px-6 py-4">
+          <Logo className="h-8 w-auto text-lima-300" />
+        </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Entrar</CardTitle>
+            <CardTitle>¡Hola de nuevo!</CardTitle>
             <CardDescription>Accede con tu correo y contraseña.</CardDescription>
           </CardHeader>
 
@@ -99,7 +110,7 @@ export function LoginPage() {
                 ) : (
                   <LogIn aria-hidden="true" />
                 )}
-                {enviando ? 'Un momento…' : 'Entrar'}
+                {enviando ? 'Un momento…' : 'Iniciar sesión'}
               </Button>
             </form>
 
@@ -133,8 +144,8 @@ export function LoginPage() {
           El padding va en el CONTENEDOR y el redondeo en la imagen: así respira
           contra el borde de la pantalla en vez de sangrar.
 
-          12px exactos, no `rounded-xl`: este proyecto sobrescribe los tokens de
-          radio y `rounded-xl` aquí son 20px.
+          32px exactos y escritos a mano: este proyecto sobrescribe los tokens
+          de radio, así que ninguna clase de Tailwind da ese valor.
 
           Por CSS y no con <img>: si la imagen no carga —red lenta, navegador
           sin WebP— queda el verde de fondo y la pantalla sigue siendo usable.
@@ -145,7 +156,7 @@ export function LoginPage() {
           regenerarlo.
         */}
         <div
-          className="size-full overflow-hidden rounded-[12px] bg-bosque-800 bg-cover bg-center"
+          className="size-full overflow-hidden rounded-[32px] bg-bosque-800 bg-cover bg-center"
           style={{ backgroundImage: 'url(/fondo-login.webp)' }}
           role="presentation"
         />
