@@ -79,9 +79,9 @@ $SSH_CMD "$SERVIDOR" "
   cd ~/$REMOTO/api
   # Se invoca por node en vez de npx: en el plan compartido el enlace de
   # node_modules/.bin/prisma no tiene permiso de ejecucion y npx falla con
-  # "Permission denied". Sin el pipe, ademas, `set -e` sí detecta el fallo:
-  # con `| tail` el codigo de salida era el del tail y el error pasaba
-  # inadvertido mientras el despliegue seguia adelante.
+  # "Permission denied". Sin el pipe, ademas, 'set -e' sí detecta el fallo:
+  # canalizando la salida a tail, el codigo de salida era el del tail y el
+  # error pasaba inadvertido mientras el despliegue seguia adelante.
   node ../node_modules/prisma/build/index.js generate
 "
 

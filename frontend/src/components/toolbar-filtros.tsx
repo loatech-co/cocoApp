@@ -69,19 +69,26 @@ export function ToolbarFiltros({
   // La búsqueda se escribe local y se manda con retraso: sin esto cada tecla
   // dispararía una consulta y la lista parpadearía mientras se escribe.
   const [busqueda, setBusqueda] = useState(filtros.q ?? '');
-  useEffect(() => setBusqueda(filtros.q ?? ''), [filtros.q]);
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if ((filtros.q ?? '') !== busqueda) aplicar({ q: busqueda });
-    }, 300);
-    return () => clearTimeout(id);
-  }, [busqueda, filtros.q, aplicar]);
 
   // El campo empieza plegado y se abre al pulsar la lupa. Se queda abierto
   // mientras haya algo escrito: plegarlo escondería el filtro que está
   // recortando la pantalla, y no habría forma de saber por qué faltan filas.
   const [buscando, setBuscando] = useState((filtros.q ?? '') !== '');
   const campo = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setBusqueda(filtros.q ?? '');
+    // Si el filtro llega puesto desde la URL, el campo tiene que estar a la
+    // vista: un recorte activo que no se ve no se puede quitar.
+    if ((filtros.q ?? '') !== '') setBuscando(true);
+  }, [filtros.q]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if ((filtros.q ?? '') !== busqueda) aplicar({ q: busqueda });
+    }, 300);
+    return () => clearTimeout(id);
+  }, [busqueda, filtros.q, aplicar]);
 
   const arbol = categorias.data ?? [];
   const { centro, grupo, concepto } = rutaSeleccionada(arbol, filtros.categoryId);
@@ -163,6 +170,7 @@ export function ToolbarFiltros({
           soloIcono
           activo={filtros.categoryId !== undefined}
           ancho="w-72"
+          tipo="panel"
         >
           {(cerrar) => (
             <div className="px-3 pb-2">

@@ -22,6 +22,7 @@ export function Menu({
   activo = false,
   alineado = 'derecha',
   ancho = 'w-64',
+  tipo = 'menu',
   disparador,
   children,
 }: {
@@ -33,6 +34,12 @@ export function Menu({
   activo?: boolean;
   alineado?: 'izquierda' | 'derecha';
   ancho?: string;
+  /**
+   * `menu` es una lista de opciones; `panel` es un formulario dentro de un
+   * desplegable. Anunciar como menú algo que lleva selectores hace que un
+   * lector de pantalla prometa "elige una opción" y entregue otra cosa.
+   */
+  tipo?: 'menu' | 'panel';
   /** Reemplaza el botón por completo (el avatar, por ejemplo). */
   disparador?: (props: { abierto: boolean }) => ReactNode;
   children: ReactNode | ((cerrar: () => void) => ReactNode);
@@ -64,7 +71,7 @@ export function Menu({
         type="button"
         onClick={() => setAbierto((v) => !v)}
         aria-expanded={abierto}
-        aria-haspopup="menu"
+        aria-haspopup={tipo === 'menu' ? 'menu' : 'dialog'}
         aria-label={soloIcono ? etiqueta : undefined}
         title={soloIcono ? etiqueta : undefined}
         className={
@@ -98,7 +105,7 @@ export function Menu({
 
       {abierto && (
         <div
-          role="menu"
+          role={tipo === 'menu' ? 'menu' : 'dialog'}
           aria-label={etiqueta}
           className={cn(
             'absolute z-30 mt-2 overflow-hidden rounded-2xl bg-popover py-1.5',
