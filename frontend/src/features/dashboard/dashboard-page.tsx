@@ -1,17 +1,19 @@
-import { AlertCircle, ChartPie, ChevronRight, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
+import { AlertCircle, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { EstadoVacio } from '@/components/estado-vacio';
+import { TablaDeMovimientos } from '@/components/tabla-de-movimientos';
+import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { Tendencia, TendenciaEsqueleto } from '@/components/tendencia';
 import { ToolbarFiltros } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
-import { diaCorto } from '@/lib/fechas';
+import { rangoLargo } from '@/lib/fechas';
 import { aParametros, useFiltros } from '@/lib/filtros';
-import { useDashboard, useTransactions } from '@/lib/queries';
-import { cn, formatCOP } from '@/lib/utils';
+import { useCategories, useDashboard, useTransactions } from '@/lib/queries';
+import { formatCOP } from '@/lib/utils';
 import type { Transaction } from '@coco/types';
 
 /**
@@ -24,13 +26,30 @@ import type { Transaction } from '@coco/types';
  * acotando: qué recorte estoy mirando (toolbar), cuánto suma (indicadores),
  * cómo se comportó en el tiempo (tendencia) y en qué se fue (desglose).
  */
+/**
+ * Cuántas filas entran en una tarjeta del resumen.
+ *
+ * El mismo número en las dos —movimientos y distribución— para que midan
+ * igual. Es un resumen: para ver la lista entera está su pantalla.
+ */
+const FILAS_EN_TARJETA = 5;
+
 export function DashboardPage() {
   const { filtros, aplicar, limpiar, hayFiltrosActivos } = useFiltros();
   const dashboard = useDashboard(aParametros(filtros));
 
   // Los mismos filtros que el resto de la pantalla: si la lista de aquí abajo
   // no respondiera al recorte, contradiría las cifras de arriba.
-  const movimientos = useTransactions({ ...aParametros(filtros), per_page: 8, sort: '-date' });
+  const movimientos = useTransactions({
+    ...aParametros(filtros),
+    per_page: FILAS_EN_TARJETA,
+    sort: '-date',
+  });
+  const categorias = useCategories();
+
+  // El mismo modal que en Movimientos: editar desde el resumen no puede ser
+  // otra pantalla ni otro formulario.
+  const [editando, setEditando] = useState<Transaction | null | undefined>(undefined);
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
@@ -61,8 +80,8 @@ export function DashboardPage() {
 
       {dashboard.isPending && (
         <>
-          <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
-            {[0, 1, 2].map((i) => (
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-24 rounded-2xl" />
             ))}
           </div>
@@ -77,7 +96,9 @@ export function DashboardPage() {
 
       {dashboard.data && (
         <>
-          <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
+          {/* Cuatro en fila desde `xl` y de dos en dos antes: a tres columnas
+              la cuarta tarjeta se quedaba sola en un renglón. */}
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
             <Kpi
               etiqueta="Gastos del periodo"
               valor={formatCOP(dashboard.data.range.expense)}
@@ -95,9 +116,15 @@ export function DashboardPage() {
             <Kpi
               etiqueta="Movimientos"
               valor={String(dashboard.data.range.count)}
-              detalle={`${dashboard.data.period.from} a ${dashboard.data.period.to}`}
+              detalle={rangoLargo(dashboard.data.period.from, dashboard.data.period.to)}
               Icono={Receipt}
               chip="lima"
+            />
+            <Distribucion
+              filas={dashboard.data.by_category}
+              nivel={dashboard.data.breakdown_level}
+              totalGastado={dashboard.data.range.expense}
+              onBajar={(id) => aplicar({ categoryIds: [id] })}
             />
           </div>
 
@@ -116,107 +143,34 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Lado a lado en pantalla ancha: la distribución explica en qué se
-              repartió el gasto y la lista enseña las filas concretas que lo
-              componen. Una encima de otra obligaría a desplazarse para
-              contrastar una con la otra. */}
-          <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
-            <UltimosMovimientos
-              movimientos={movimientos.data?.data ?? []}
-              cargando={movimientos.isPending}
-              total={movimientos.data?.meta?.total ?? 0}
-            />
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="font-display text-lg font-semibold">Movimientos</h2>
+              <Link
+                to="/movimientos"
+                className="text-sm font-medium text-primary underline underline-offset-4"
+              >
+                Ver todos
+              </Link>
+            </div>
 
-            <Desglose
-              filas={dashboard.data.by_category}
-              nivel={dashboard.data.breakdown_level}
-              totalGastado={dashboard.data.range.expense}
-              onBajar={(id) => aplicar({ categoryIds: [id] })}
+            <TablaDeMovimientos
+              movimientos={movimientos.data?.data ?? []}
+              arbol={categorias.data ?? []}
+              cargando={movimientos.isPending}
+              onAbrir={setEditando}
+              filasDelEsqueleto={FILAS_EN_TARJETA}
             />
           </div>
         </>
       )}
+
+      <MovimientoModal
+        abierta={editando !== undefined}
+        movimiento={editando}
+        onCerrar={() => setEditando(undefined)}
+      />
     </div>
-  );
-}
-
-/**
- * Las últimas filas del recorte.
- *
- * ── Por qué una lista y no la tabla de Movimientos ──────────────────────────
- * Porque aquí la tarjeta mide media pantalla. La tabla tiene seis columnas y
- * en ese ancho o se desplaza a los lados —en una pantalla donde nadie espera
- * desplazarse— o se aprieta hasta que el concepto se parte en cuatro líneas.
- * Lo que se necesita saber de un vistazo es qué se pagó y cuánto.
- */
-function UltimosMovimientos({
-  movimientos,
-  cargando,
-  total,
-}: {
-  movimientos: Transaction[];
-  cargando: boolean;
-  total: number;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex h-full flex-col p-4 sm:p-6">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-display text-lg font-semibold">Movimientos</h2>
-          {total > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {movimientos.length} de {total}
-            </p>
-          )}
-        </div>
-
-        {cargando ? (
-          <ul className="flex flex-col gap-2">
-            {Array.from({ length: 6 }, (_, i) => (
-              <li key={i}>
-                <Skeleton className="h-11 rounded-lg" />
-              </li>
-            ))}
-          </ul>
-        ) : movimientos.length === 0 ? (
-          <EstadoVacio
-            Icono={Receipt}
-            titulo="Sin movimientos"
-            ayuda="Nada coincide con este recorte."
-            className="py-8"
-          />
-        ) : (
-          <ul className="flex flex-1 flex-col divide-y divide-border">
-            {movimientos.map((m) => (
-              <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium">
-                    {m.description ?? m.merchant ?? 'Sin concepto'}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">{diaCorto(m.date)}</span>
-                </span>
-                <span
-                  className={cn(
-                    'tabular shrink-0 text-sm font-semibold',
-                    m.type === 'income' ? 'text-income' : 'text-expense',
-                  )}
-                >
-                  {m.type === 'income' ? '+' : '−'}
-                  {formatCOP(m.amount)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <Link
-          to="/movimientos"
-          className="mt-4 inline-block text-sm font-medium text-primary underline underline-offset-4"
-        >
-          Ver todos los movimientos
-        </Link>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -287,7 +241,20 @@ function Kpi({
  * conceptos. Es la forma de responder "¿y dentro de esto, qué?" sin cambiar de
  * pantalla ni perder el rango de fechas.
  */
-function Desglose({
+/**
+ * La distribución del gasto, en el tamaño de un indicador.
+ *
+ * ── Por qué cabe en una tarjeta pequeña ─────────────────────────────────────
+ * Porque la pregunta que responde un resumen es "¿en qué se está yendo?", y
+ * eso lo contestan las DOS o TRES primeras líneas. El detalle completo —cada
+ * concepto, su porcentaje, su número de movimientos— es la tabla de abajo y la
+ * pantalla de Centros de costos.
+ *
+ * Las barras siguen ahí porque comparar longitudes es inmediato y comparar
+ * cifras largas no lo es: $63.412.900 contra $29.847.616 obliga a contar
+ * dígitos.
+ */
+function Distribucion({
   filas,
   nivel,
   totalGastado,
@@ -299,79 +266,72 @@ function Desglose({
   onBajar: (id: number) => void;
 }) {
   const total = Number.parseFloat(totalGastado) || 1;
+  const CABEN = 3;
+
+  // Sin gastos muestra CEROS, no un estado vacío: es un indicador, y los otros
+  // tres de la fila dicen "$0" en la misma situación. Un cartel aquí rompería
+  // la fila y haría parecer que esta tarjeta falló mientras las demás no.
+  const visibles =
+    filas.length > 0
+      ? filas.slice(0, CABEN)
+      : [{ category_id: null, name: 'Sin gastos', total: '0', count: 0 }];
+  const restantes = Math.max(0, filas.length - CABEN);
 
   return (
-    <Card>
-      <CardContent className="p-4 sm:p-6">
-        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-display text-lg font-semibold">Distribución de costos</h2>
-          <p className="text-xs text-muted-foreground">Por {nivel}</p>
-        </div>
+    <Card className="h-full">
+      <CardContent className="flex h-full flex-col p-4 sm:p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Distribución de costos
+        </p>
 
-        {filas.length === 0 ? (
-          <EstadoVacio
-            Icono={ChartPie}
-            titulo="Nada que desglosar"
-            ayuda="No hay gastos en este recorte. Amplía el rango o quita los filtros."
-            className="py-8"
-          />
-        ) : (
-          <ul className="flex flex-col">
-            {filas.map((fila) => {
+        <ul className="mt-2 flex flex-col gap-2">
+            {visibles.map((fila) => {
               const porcentaje = Math.round((Number.parseFloat(fila.total) / total) * 100);
               const interactiva = fila.category_id !== null && nivel !== 'concepto';
 
               const contenido = (
                 <>
-                  <div className="flex items-baseline justify-between gap-3">
+                  <span className="flex items-baseline justify-between gap-2">
                     <span className="min-w-0 truncate text-sm font-medium">{fila.name}</span>
-                    <span className="tabular shrink-0 text-sm font-semibold">
-                      {formatCOP(fila.total)}
+                    <span className="tabular shrink-0 text-xs text-muted-foreground">
+                      {porcentaje}%
                     </span>
-                  </div>
-                  {/* La barra no es decoración: comparar cifras largas de un
-                      vistazo es difícil, comparar longitudes es inmediato. */}
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
-                      <div
-                        className="h-full rounded-full bg-chart-1"
-                        style={{ width: `${Math.max(porcentaje, 1)}%` }}
-                      />
-                    </div>
-                    <span className="w-14 shrink-0 text-right text-xs text-muted-foreground">
-                      {porcentaje}% · {fila.count}
-                    </span>
-                    {interactiva && (
-                      <ChevronRight
-                        className="size-4 shrink-0 text-muted-foreground"
-                        aria-hidden="true"
-                      />
-                    )}
-                  </div>
+                  </span>
+                  <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <span
+                      className="block h-full rounded-full bg-chart-1"
+                      style={{ width: `${porcentaje > 0 ? Math.max(porcentaje, 2) : 0}%` }}
+                    />
+                  </span>
                 </>
               );
 
               return (
-                <li key={fila.category_id ?? 'sin'} className="border-b border-border last:border-0">
+                <li key={fila.category_id ?? 'sin'}>
                   {interactiva ? (
                     <button
                       type="button"
                       onClick={() => onBajar(fila.category_id as number)}
-                      className="w-full rounded-lg px-1 py-3 text-left transition-colors hover:bg-secondary"
+                      className="block w-full rounded-lg text-left transition-opacity hover:opacity-80"
                     >
                       {contenido}
                     </button>
                   ) : (
-                    <div className="px-1 py-3">{contenido}</div>
+                    <span className="block">{contenido}</span>
                   )}
                 </li>
               );
             })}
-          </ul>
-        )}
+        </ul>
 
+        {restantes > 0 && (
+          <p className="mt-auto pt-2 text-xs text-muted-foreground">
+            y {restantes} {restantes === 1 ? 'más' : 'más'} por {nivel}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
 }
+
 

@@ -1,24 +1,21 @@
-import { AlertCircle, Flag, Plus, SearchX } from 'lucide-react';
+import { AlertCircle, Plus, SearchX } from 'lucide-react';
 import { useState } from 'react';
 
 import { EstadoVacio } from '@/components/estado-vacio';
 import { Paginador } from '@/components/paginador';
-import { Tabla, TablaEsqueleto, TablaPie, Td, Th, Tr } from '@/components/tabla';
-import { rutaSeleccionada, ToolbarFiltros, type Orden } from '@/components/toolbar-filtros';
+import { TablaDeMovimientos } from '@/components/tabla-de-movimientos';
+import { TablaPie, Td } from '@/components/tabla';
+import { ToolbarFiltros, type Orden } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { ApiClientError } from '@/lib/api-client';
 import { aParametros, useFiltros } from '@/lib/filtros';
-import { useActualizarMovimiento, useCategories, useTransactions } from '@/lib/queries';
-import { cn, formatCOP } from '@/lib/utils';
-import type { Category, Transaction } from '@coco/types';
+import { useCategories, useTransactions } from '@/lib/queries';
+import { formatCOP } from '@/lib/utils';
+import type { Transaction } from '@coco/types';
 
 const POR_PAGINA = 50;
-
-/** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
-const COLUMNAS = ['Concepto', 'Centro de costos', 'Grupo', 'Pago', 'Periodo', 'Valor'];
 
 /**
  * Movimientos.
@@ -117,88 +114,65 @@ export function TransactionsPage() {
         </Alert>
       )}
 
-      {movimientos.isPending && (
-        <TablaEsqueleto
-          columnas={COLUMNAS}
-          filas={Math.min(POR_PAGINA, 8)}
-        />
-      )}
-
-      {movimientos.data && movimientos.data.data.length === 0 && (
-        <Card>
-          <CardContent className="p-0">
-            <EstadoVacio
-              Icono={SearchX}
-              titulo={hayFiltrosActivos ? 'Ningún movimiento coincide' : 'Todavía no hay movimientos'}
-              ayuda={
-                hayFiltrosActivos
-                  ? 'Los filtros están dejando todo fuera. Quítalos para ver la lista completa.'
-                  : 'Registra el primero o importa un extracto para empezar.'
-              }
-              accion={
-                hayFiltrosActivos ? (
-                  <Button type="button" variant="outline" onClick={limpiar}>
-                    Quitar los filtros
-                  </Button>
-                ) : (
-                  <Button type="button" onClick={() => setEditando(null)}>
-                    <Plus className="size-4" aria-hidden="true" />
-                    Nuevo movimiento
-                  </Button>
-                )
-              }
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {movimientos.data && movimientos.data.data.length > 0 && (
-        <Tabla>
-          <thead>
-            <tr>
-              <Th fija orden={ordenDe('merchant', 'asc')}>Concepto</Th>
-              <Th>Centro de costos</Th>
-              <Th>Grupo</Th>
-              <Th orden={ordenDe('date', 'desc')}>Pago</Th>
-              <Th>Periodo</Th>
-              <Th alineado="derecha" orden={ordenDe('amount', 'desc')}>
-                Valor
-              </Th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {movimientos.data.data.map((m) => (
-              <Fila key={m.id} movimiento={m} arbol={arbol} onAbrir={() => setEditando(m)} />
-            ))}
-          </tbody>
-
-          {/* El pie suma el FILTRO ENTERO, no la página: pasar de página no
-              puede cambiar el total de lo que se está mirando. */}
-          <TablaPie>
-            <tr className="border-b border-border">
-              <Td fija className="text-muted-foreground">Promedio</Td>
-              <Td />
-              <Td />
-              <Td />
-              <Td />
-              <Td alineado="derecha" className="tabular">
-                {formatCOP(Number(movimientos.data.meta.sum_expense ?? 0) / Math.max(1, total))}
-              </Td>
-            </tr>
-            <tr>
-              <Td fija>Total · {total} movimientos</Td>
-              <Td />
-              <Td />
-              <Td />
-              <Td />
-              <Td alineado="derecha" className="tabular font-semibold text-expense">
-                {formatCOP(movimientos.data.meta.sum_expense ?? '0')}
-              </Td>
-            </tr>
-          </TablaPie>
-        </Tabla>
-      )}
+      <TablaDeMovimientos
+        movimientos={movimientos.data?.data ?? []}
+        arbol={arbol}
+        cargando={movimientos.isPending}
+        onAbrir={setEditando}
+        orden={ordenDe}
+        filasDelEsqueleto={8}
+        vacio={
+          <EstadoVacio
+            Icono={SearchX}
+            titulo={hayFiltrosActivos ? 'Ningún movimiento coincide' : 'Todavía no hay movimientos'}
+            ayuda={
+              hayFiltrosActivos
+                ? 'Los filtros están dejando todo fuera. Quítalos para ver la lista completa.'
+                : 'Registra el primero o importa un extracto para empezar.'
+            }
+            accion={
+              hayFiltrosActivos ? (
+                <Button type="button" variant="outline" onClick={limpiar}>
+                  Quitar los filtros
+                </Button>
+              ) : (
+                <Button type="button" onClick={() => setEditando(null)}>
+                  <Plus className="size-4" aria-hidden="true" />
+                  Nuevo movimiento
+                </Button>
+              )
+            }
+          />
+        }
+        pie={
+          movimientos.data && movimientos.data.data.length > 0 ? (
+            <TablaPie>
+              <tr className="border-b border-border">
+                <Td fija className="text-muted-foreground">
+                  Promedio
+                </Td>
+                <Td />
+                <Td />
+                <Td />
+                <Td />
+                <Td alineado="derecha" className="tabular">
+                  {formatCOP(Number(movimientos.data.meta.sum_expense ?? 0) / Math.max(1, total))}
+                </Td>
+              </tr>
+              <tr>
+                <Td fija>Total · {total} movimientos</Td>
+                <Td />
+                <Td />
+                <Td />
+                <Td />
+                <Td alineado="derecha" className="tabular font-semibold text-expense">
+                  {formatCOP(movimientos.data.meta.sum_expense ?? '0')}
+                </Td>
+              </tr>
+            </TablaPie>
+          ) : undefined
+        }
+      />
 
       <Paginador
         pagina={pagina}
@@ -213,156 +187,5 @@ export function TransactionsPage() {
         onCerrar={() => setEditando(undefined)}
       />
     </div>
-  );
-}
-
-function Fila({
-  movimiento,
-  arbol,
-  onAbrir,
-}: {
-  movimiento: Transaction;
-  arbol: Category[];
-  onAbrir: () => void;
-}) {
-  const actualizar = useActualizarMovimiento();
-  const { centro, grupo } = rutaSeleccionada(arbol, movimiento.category_id ?? undefined);
-
-  // Cambiar el selector guarda EXACTAMENTE lo elegido, sin adivinar el resto.
-  // La tentación es "conservar el concepto si existe con el mismo nombre en el
-  // grupo nuevo", pero eso mueve plata a un sitio que nadie pidió y nadie ve.
-  const reclasificar = (id: number | undefined): void => {
-    actualizar.mutate({ id: movimiento.id, cambios: { category_id: id ?? null } });
-  };
-
-  // Sin clasificar no es un error, es algo pendiente: la fila se marca para que
-  // se vea de lejos cuál falta por ordenar después de una importación.
-  const sinClasificar = movimiento.category_id === null;
-
-  return (
-    <Tr onClick={onAbrir} atencion={sinClasificar} atenuada={actualizar.isPending}>
-      <Td fija atencion={sinClasificar}>
-        <span className="flex items-center gap-2">
-          {sinClasificar && (
-            <Flag className="size-3.5 shrink-0 text-warning" fill="currentColor" aria-label="Sin clasificar" />
-          )}
-          <span className="block max-w-[14rem] truncate font-medium">
-            {movimiento.description ?? movimiento.merchant ?? 'Sin concepto'}
-          </span>
-        </span>
-      </Td>
-
-      {/* Los selectores paran el clic: desplegar una lista no puede abrir
-          además el modal que hay detrás. */}
-      <Td className="w-48" >
-        <span onClick={(e) => e.stopPropagation()}>
-          <SelectorEnFila
-            aria="Centro de costos"
-            valor={centro?.id}
-            opciones={arbol}
-            onElegir={reclasificar}
-          />
-        </span>
-      </Td>
-
-      <Td className="w-48">
-        <span onClick={(e) => e.stopPropagation()}>
-          <SelectorEnFila
-            aria="Grupo"
-            valor={grupo?.id}
-            opciones={centro?.children ?? []}
-            deshabilitado={!centro}
-            onElegir={(id) => reclasificar(id ?? centro?.id)}
-          />
-        </span>
-      </Td>
-
-      <Td className="tabular whitespace-nowrap text-muted-foreground">{diaBonito(movimiento.date)}</Td>
-
-      <Td className="whitespace-nowrap text-muted-foreground">
-        <span
-          className={cn(
-            periodo(movimiento) !== mesDe(movimiento.date) && 'font-medium text-warning',
-          )}
-        >
-          {mesBonito(periodo(movimiento))}
-        </span>
-      </Td>
-
-      <Td
-        alineado="derecha"
-        className={cn(
-          'tabular whitespace-nowrap font-semibold',
-          movimiento.type === 'income' ? 'text-income' : 'text-expense',
-        )}
-      >
-        {movimiento.type === 'income' ? '+' : '−'}
-        {formatCOP(movimiento.amount)}
-      </Td>
-    </Tr>
-  );
-}
-
-const MESES = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-];
-
-const mesDe = (iso: string): string => iso.slice(0, 7);
-
-/**
- * El periodo del movimiento.
- *
- * Con respaldo en la fecha de pago a propósito: durante un despliegue conviven
- * unos segundos la API vieja —que no manda `period`— y el frontend nuevo, y un
- * campo ausente no puede dejar la pantalla en blanco.
- */
-const periodo = (m: Transaction): string => mesDe(m.period ?? m.date);
-
-/** `2026-03-06` → `6 mar 2026`. */
-function diaBonito(iso: string): string {
-  const [a, m, d] = iso.split('-');
-  return `${Number(d)} ${MESES[Number(m) - 1] ?? m} ${a}`;
-}
-
-/** `2026-03-01` → `mar 2026`. El periodo es un mes, no un día. */
-function mesBonito(iso: string): string {
-  const [a, m] = iso.split('-');
-  return `${MESES[Number(m) - 1] ?? m} ${a}`;
-}
-
-function SelectorEnFila({
-  aria,
-  valor,
-  opciones,
-  deshabilitado,
-  onElegir,
-}: {
-  aria: string;
-  valor?: number;
-  opciones: Category[];
-  deshabilitado?: boolean;
-  onElegir: (id: number | undefined) => void;
-}) {
-  return (
-    <select
-      aria-label={aria}
-      value={valor ?? ''}
-      disabled={deshabilitado || opciones.length === 0}
-      onChange={(e) => onElegir(e.target.value === '' ? undefined : Number(e.target.value))}
-      className={cn(
-        'min-w-0 flex-1 truncate rounded-lg border bg-card px-2 py-1.5 text-xs',
-        'outline-none focus-visible:ring-1 focus-visible:ring-ring',
-        'disabled:cursor-not-allowed disabled:opacity-40',
-      )}
-      style={{ borderColor: 'var(--input)' }}
-    >
-      <option value="">{aria}…</option>
-      {opciones.map((o) => (
-        <option key={o.id} value={o.id}>
-          {o.name}
-        </option>
-      ))}
-    </select>
   );
 }

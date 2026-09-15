@@ -15,6 +15,10 @@ import { cn } from '@/lib/utils';
  *
  * Si hace falta una medida nueva, se añade un `size` aquí. Un `className` con
  * `h-` o `rounded-` en una llamada suelta es la señal de que falta un tamaño.
+ *
+ * El PESO de la letra también es de la base, por lo mismo: una variante lo
+ * bajó a `font-medium` y su botón parecía más pequeño que el de al lado aunque
+ * los dos medían exactamente igual.
  */
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -39,7 +43,7 @@ const buttonVariants = cva(
          * acción principal. Se encienden con `aria-pressed`.
          */
         herramienta:
-          'border border-border bg-card font-medium text-foreground hover:bg-secondary aria-pressed:border-primary/30 aria-pressed:bg-accent aria-pressed:text-accent-foreground',
+          'border border-border bg-card text-foreground hover:bg-secondary aria-pressed:border-primary/30 aria-pressed:bg-accent aria-pressed:text-accent-foreground',
       },
       size: {
         default: 'h-10 rounded-full px-5 py-2',

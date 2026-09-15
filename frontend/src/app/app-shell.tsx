@@ -81,7 +81,7 @@ export function AppShell() {
           120px a 14px, y con el icono y los márgenes cabe de sobra. Lo que
           sobraba de ancho se lo estaba quitando al contenido. */}
       <aside className="fixed inset-y-0 left-0 hidden w-52 flex-col bg-sidebar p-3 md:flex">
-        <div className="mb-8 px-2 pt-3">
+        <div className="mb-8 flex justify-center px-2 pt-3">
           {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo dejaría
               demasiado bajo para leerse en una barra de 256px. */}
           {/* Lima sobre la barra oscura: 10.1:1 de contraste, y es el acento de
