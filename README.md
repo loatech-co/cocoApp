@@ -135,6 +135,7 @@ antes de que el dueño se registre, cualquiera se llevaría el panel.
 | `npm run sql -- "SELECT ..."` | SQL contra la base local |
 | `npm run sql:supabase -- "SELECT ..."` | SQL contra producción |
 | `npm run deploy:api` / `npm run deploy:web` | Despliega API o SPA |
+| `npm run respaldar` | Respalda producción y verifica que se puede restaurar |
 | `npm run prisma:studio --workspace api` | Explorador visual de la base |
 | `npm run prepare:ocr` | Deja los recursos de Tesseract en `frontend/public/` |
 
@@ -260,6 +261,28 @@ migración — `scripts/nueva-migracion.sh` en local,
 `scripts/desplegar-migraciones.sh` a producción — porque un `CREATE TABLE` a
 mano queda fuera de `schema.prisma` y el próximo diff intentaría crearlo de
 nuevo.
+
+---
+
+## Respaldos
+
+```bash
+npm run respaldar          # a ./respaldos
+npm run respaldar -- /ruta # a donde quieras
+```
+
+El plan gratuito de Supabase retiene respaldos poco tiempo y no ofrece
+recuperación a un punto en el tiempo. Este script vuelca esquema y datos a un
+archivo local, **lo restaura en una base desechable y cuenta las filas**: un
+respaldo que nunca se probó no es un respaldo, y el día que hace falta es tarde
+para descubrirlo. Conserva los 14 más recientes.
+
+El volcado se acota al esquema `public` a propósito. Sin eso arrastra las
+extensiones internas de Supabase y el archivo solo sirve para restaurar en otro
+Supabase — justo lo que no querés de un respaldo. Las tablas de la aplicación
+viven todas en `public`.
+
+`respaldos/` está en `.gitignore`: son datos financieros reales.
 
 ---
 

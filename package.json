@@ -27,6 +27,7 @@
     "postinstall": "node scripts/preparar-tesseract.mjs",
     "start": "node api/dist/main.js",
     "deploy:web": "bash scripts/desplegar-frontend.sh",
-    "deploy:api": "bash scripts/desplegar-api.sh"
+    "deploy:api": "bash scripts/desplegar-api.sh",
+    "respaldar": "bash scripts/respaldar.sh"
   }
 }

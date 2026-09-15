@@ -72,3 +72,6 @@ Thumbs.db
 # Recursos de Tesseract: los genera scripts/preparar-tesseract.mjs.
 # Son artefactos reproducibles, no fuente.
 frontend/public/tesseract/
+
+# Respaldos de la base: nunca al repositorio. Llevan datos financieros reales.
+respaldos/
