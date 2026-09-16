@@ -489,28 +489,28 @@ export function MovimientoModal({
             alto mínimo: con eso el formulario puede estirarse y llevarse sus
             botones al fondo en vez de dejarlos a media altura. */}
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pb-6">
-        {paso === 'elegir' && (
-          <ComoEmpezar
-            onArchivo={(a) => void escanear(a)}
-            onCamara={() => setPaso('camara')}
-            onAMano={() => setPaso('formulario')}
-          />
-        )}
+          {paso === 'elegir' && (
+            <ComoEmpezar
+              onArchivo={(a) => void escanear(a)}
+              onCamara={() => setPaso('camara')}
+              onAMano={() => setPaso('formulario')}
+            />
+          )}
 
-        {paso === 'camara' && (
-          <Camara onTomar={(a) => void escanear(a)} onCerrar={() => setPaso('elegir')} />
-        )}
+          {paso === 'camara' && (
+            <Camara onTomar={(a) => void escanear(a)} onCerrar={() => setPaso('elegir')} />
+          )}
 
-        {paso === 'leyendo' && (
-          <Escaneando archivo={pendientes[0]} progreso={progresoDeLectura} />
-        )}
+          {paso === 'leyendo' && (
+            <Escaneando archivo={pendientes[0]} progreso={progresoDeLectura} />
+          )}
 
-        {paso === 'formulario' && (
-        <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
-          {lectura && <LoQueLei />}
-          {editandoCampos ? (
-            <>
-              {/*
+          {paso === 'formulario' && (
+            <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
+              {lectura && <LoQueLei />}
+              {editandoCampos ? (
+                <>
+                  {/*
                 ── Dos columnas: el papel a un lado, los campos al otro ──────
                 Nadie se sabe de memoria el valor de un recibo con sus
                 decimales. Si para comprobar lo que se leyó hay que cerrar la
@@ -519,11 +519,33 @@ export function MovimientoModal({
 
                 Con el soporte al lado, verificar es mirar a la izquierda.
               */}
-              {/* La MITAD para el papel. Con una columna angosta el recibo
+                  {/* La MITAD para el papel. Con una columna angosta el recibo
                   salía del tamaño de un sello y no se podía leer la cifra, que
                   es lo único que esta columna existe para permitir. */}
-              <div className="grid gap-5 lg:grid-cols-2">
-                {/*
+                  {/*
+                  ── `lg:flex-1` y `lg:auto-rows-fr` ──────────────────────────
+                  Es lo que hace que la columna del soporte llegue hasta abajo,
+                  y hacen falta las dos.
+
+                  `flex-1` le da a la REJILLA el alto que sobra en el
+                  formulario. Sola no sirve de nada: una rejilla reparte su alto
+                  entre sus FILAS, y con `grid-auto-rows: auto` la única que hay
+                  mide lo que mida su contenido, así que se queda arriba y el
+                  espacio que acaba de ganar queda vacío debajo. `auto-rows-fr`
+                  es lo que estira esa fila hasta el alto de la rejilla; de ahí
+                  para abajo las dos columnas se estiran solas, que es lo que
+                  hace una celda por defecto.
+
+                  No puede encoger nada: la rejilla es un elemento flexible y
+                  su `min-height` automático es su contenido, así que la fila
+                  nunca baja de lo que miden los campos.
+
+                  Y solo a partir de `lg`, que es donde hay DOS columnas. Por
+                  debajo son dos filas apiladas, y repartir el alto entre ellas
+                  daría media ficha al cuadro de soltar y media a los campos.
+              */}
+                  <div className="grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2">
+                    {/*
                   ── Sin rótulo, y estirando hasta el pie de la columna ──────
                   El rótulo decía "Soporte" encima de un cuadro punteado que ya
                   dice qué es: un sitio donde se sueltan archivos. Dos veces lo
@@ -538,19 +560,19 @@ export function MovimientoModal({
                   —que es además un blanco mucho más fácil de acertar con un
                   archivo agarrado—.
                 */}
-                <div className="flex flex-col">
-                  {movimiento ? (
-                    <Soportes transactionId={movimiento.id} />
-                  ) : (
-                    <SoportesPendientes
-                      archivos={pendientes}
-                      onAñadir={(nuevos) => setPendientes((p) => [...p, ...nuevos])}
-                      onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
-                    />
-                  )}
-                </div>
+                    <div className="flex flex-col">
+                      {movimiento ? (
+                        <Soportes transactionId={movimiento.id} />
+                      ) : (
+                        <SoportesPendientes
+                          archivos={pendientes}
+                          onAñadir={(nuevos) => setPendientes((p) => [...p, ...nuevos])}
+                          onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
+                        />
+                      )}
+                    </div>
 
-                {/*
+                    {/*
                   El orden es el de la pregunta: de qué centro, de qué grupo,
                   qué concepto. Y después cuánto y cuándo, que son los dos
                   datos que se copian del papel.
@@ -558,8 +580,8 @@ export function MovimientoModal({
                   Sin rótulo de sección: tres campos con su nombre encima no
                   necesitan que alguien anuncie que son tres campos.
                 */}
-                <div className="flex flex-col gap-3">
-                  {/*
+                    <div className="flex flex-col gap-3">
+                      {/*
                     Los tres se bloquean si el centro GUARDADO es estático.
 
                     Esta regla estaba y se perdió al rediseñar la ficha: los
@@ -573,103 +595,123 @@ export function MovimientoModal({
                     el movimiento sí se puede —eso es el registro, no la
                     estructura—; moverlo de concepto, no.
                   */}
-                  <Campo etiqueta="Centro de costos" id="mov-centro">
-                    <Combo
-                      id="mov-centro"
-                      etiqueta="Centro de costos"
-                      valor={centro ? String(centro.id) : ''}
-                      opciones={arbol.map((c) => ({ valor: String(c.id), etiqueta: c.name }))}
-                      deshabilitado={estatico}
-                      onCambiar={(v) => setCategoryId(v === '' ? undefined : Number(v))}
-                    />
-                  </Campo>
+                      <Campo etiqueta="Centro de costos" id="mov-centro">
+                        <Combo
+                          id="mov-centro"
+                          etiqueta="Centro de costos"
+                          valor={centro ? String(centro.id) : ''}
+                          opciones={arbol.map((c) => ({ valor: String(c.id), etiqueta: c.name }))}
+                          deshabilitado={estatico}
+                          onCambiar={(v) => setCategoryId(v === '' ? undefined : Number(v))}
+                        />
+                      </Campo>
 
-                  <Campo etiqueta="Grupo" id="mov-grupo">
-                    <Combo
-                      id="mov-grupo"
-                      etiqueta="Grupo"
-                      valor={grupo ? String(grupo.id) : ''}
-                      opciones={(centro?.children ?? []).map((g) => ({
-                        valor: String(g.id),
-                        etiqueta: g.name,
-                      }))}
-                      deshabilitado={estatico || !centro}
-                      vacio={centro ? 'Sin elegir' : 'Elige antes un centro de costos'}
-                      creando={crearCategoria.isPending}
-                      onCambiar={(v) => setCategoryId(v === '' ? centro?.id : Number(v))}
-                      onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
-                    />
-                  </Campo>
+                      <Campo etiqueta="Grupo" id="mov-grupo">
+                        <Combo
+                          id="mov-grupo"
+                          etiqueta="Grupo"
+                          valor={grupo ? String(grupo.id) : ''}
+                          opciones={(centro?.children ?? []).map((g) => ({
+                            valor: String(g.id),
+                            etiqueta: g.name,
+                          }))}
+                          deshabilitado={estatico || !centro}
+                          vacio={centro ? 'Sin elegir' : 'Elige antes un centro de costos'}
+                          creando={crearCategoria.isPending}
+                          onCambiar={(v) => setCategoryId(v === '' ? centro?.id : Number(v))}
+                          onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
+                        />
+                      </Campo>
 
-                  <Campo etiqueta="Concepto" id="mov-concepto">
-                    <Combo
-                      id="mov-concepto"
-                      etiqueta="Concepto"
-                      valor={concepto ? String(concepto.id) : ''}
-                      opciones={(grupo?.children ?? []).map((c) => ({
-                        valor: String(c.id),
-                        etiqueta: c.name,
-                      }))}
-                      deshabilitado={estatico || !grupo}
-                      vacio={grupo ? 'Sin elegir' : 'Elige antes un grupo'}
-                      creando={crearCategoria.isPending}
-                      onCambiar={(v) => setCategoryId(v === '' ? grupo?.id : Number(v))}
-                      onCrear={(nombre) => void crearDentro(nombre, grupo?.id)}
-                    />
-                  </Campo>
+                      <Campo etiqueta="Concepto" id="mov-concepto">
+                        <Combo
+                          id="mov-concepto"
+                          etiqueta="Concepto"
+                          valor={concepto ? String(concepto.id) : ''}
+                          opciones={(grupo?.children ?? []).map((c) => ({
+                            valor: String(c.id),
+                            etiqueta: c.name,
+                          }))}
+                          deshabilitado={estatico || !grupo}
+                          vacio={grupo ? 'Sin elegir' : 'Elige antes un grupo'}
+                          creando={crearCategoria.isPending}
+                          onCambiar={(v) => setCategoryId(v === '' ? grupo?.id : Number(v))}
+                          onCrear={(nombre) => void crearDentro(nombre, grupo?.id)}
+                        />
+                      </Campo>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Campo etiqueta="Valor" id="mov-valor">
-                      <Input
-                        id="mov-valor"
-                        // `inputMode` numérico abre el teclado de números en el
-                        // teléfono; `type=number` traería flechitas y rechazaría
-                        // la coma decimal que se usa en Colombia.
-                        inputMode="decimal"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0"
-                        required
-                      />
-                    </Campo>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Campo etiqueta="Valor" id="mov-valor">
+                          <Input
+                            id="mov-valor"
+                            // `inputMode` numérico abre el teclado de números en el
+                            // teléfono; `type=number` traería flechitas y rechazaría
+                            // la coma decimal que se usa en Colombia.
+                            inputMode="decimal"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            placeholder="0"
+                            required
+                          />
+                        </Campo>
 
-                    <Campo etiqueta="Fecha" id="mov-fecha">
-                      <SelectorDeFecha id="mov-fecha" valor={date} onElegir={setDate} requerido />
-                    </Campo>
+                        <Campo etiqueta="Fecha" id="mov-fecha">
+                          <SelectorDeFecha
+                            id="mov-fecha"
+                            valor={date}
+                            onElegir={setDate}
+                            requerido
+                          />
+                        </Campo>
+                      </div>
+
+                      {/*
+                        Las notas, al PIE de la columna de campos.
+
+                        Estaban debajo de la rejilla y a todo el ancho: un
+                        recuadro de mil píxeles para tres renglones que casi
+                        nunca se escriben, pegado encima de los botones y con
+                        media ficha vacía a su lado. Aquí tapan ese hueco y
+                        dejan de disputarle el ancho al recibo.
+
+                        `mt-auto` las manda al fondo de su columna en vez de
+                        dejarlas pegadas a la fecha: así esta columna cierra a
+                        la misma altura que la del soporte, que es lo que hace
+                        que las dos se lean como una ficha y no como dos listas
+                        de distinto largo.
+                      */}
+                      <Campo etiqueta="Notas" id="mov-notas" className="mt-auto">
+                        {/* Sin marcador. Decía «Opcional», que no es un ejemplo
+                        de lo que va ahí sino una nota sobre la validación: este
+                        campo no lleva `required`, y eso ya se sabe porque el
+                        formulario se envía sin él. Un marcador que explica una
+                        regla en vez de enseñar un ejemplo es un renglón
+                        gastado. */}
+                        <Textarea
+                          id="mov-notas"
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          rows={3}
+                        />
+                      </Campo>
+                    </div>
                   </div>
-
-                </div>
-              </div>
-
-              <Campo etiqueta="Notas" id="mov-notas">
-                {/* Sin marcador. Decía «Opcional», que no es un ejemplo de
-                    lo que va ahí sino una nota sobre la validación: este
-                    campo no lleva `required`, y eso ya se sabe porque el
-                    formulario se envía sin él. Un marcador que explica una
-                    regla en vez de enseñar un ejemplo es un renglón gastado. */}
-                <Textarea
-                  id="mov-notas"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
+                </>
+              ) : (
+                <VistaDeLectura
+                  tipo={type}
+                  // El nombre sale del concepto, igual que en la tabla. Leía
+                  // `description`, que en un movimiento registrado a mano está
+                  // vacío desde que la ficha cambió su campo libre por un selector.
+                  nombre={movimiento ? nombreDelMovimiento(movimiento, arbol) : ''}
+                  valor={amount}
+                  fecha={date}
+                  periodo={movimiento?.period}
+                  ruta={[centro?.name, grupo?.name, concepto?.name].filter(Boolean) as string[]}
                 />
-              </Campo>
-            </>
-          ) : (
-            <VistaDeLectura
-              tipo={type}
-              // El nombre sale del concepto, igual que en la tabla. Leía
-              // `description`, que en un movimiento registrado a mano está
-              // vacío desde que la ficha cambió su campo libre por un selector.
-              nombre={movimiento ? nombreDelMovimiento(movimiento, arbol) : ''}
-              valor={amount}
-              fecha={date}
-              periodo={movimiento?.period}
-              ruta={[centro?.name, grupo?.name, concepto?.name].filter(Boolean) as string[]}
-            />
-          )}
+              )}
 
-          {/*
+              {/*
             Los soportes, solo al EDITAR.
 
             Un movimiento que todavía no existe no puede tener recibos colgando
@@ -680,84 +722,83 @@ export function MovimientoModal({
             siempre a corregir una cifra o una fecha. El recibo es la prueba, y
             la prueba se consulta, no se edita.
           */}
-          {/* Solo al LEER: editando, el soporte vive en la columna de la
+              {/* Solo al LEER: editando, el soporte vive en la columna de la
               izquierda, al lado de los campos que sirve para comprobar. */}
-          {!editandoCampos && movimiento && (
-            <Seccion titulo="Soportes" caja={false}>
-              <Soportes transactionId={movimiento.id} />
-            </Seccion>
-          )}
+              {!editandoCampos && movimiento && (
+                <Seccion titulo="Soportes" caja={false} crece>
+                  <Soportes transactionId={movimiento.id} />
+                </Seccion>
+              )}
 
-          {/* Las notas, DESPUÉS de los soportes. El recibo es la prueba de lo
+              {/* Las notas, DESPUÉS de los soportes. El recibo es la prueba de lo
               que pasó; la nota es el comentario de alguien sobre eso. Primero
               el hecho, luego lo que se dijo de él. */}
-          {!editandoCampos && notes.trim() !== '' && (
-            <Seccion titulo="Notas">
-              {/* `whitespace-pre-line`: las notas se escriben con saltos de
+              {!editandoCampos && notes.trim() !== '' && (
+                <Seccion titulo="Notas">
+                  {/* `whitespace-pre-line`: las notas se escriben con saltos de
                   línea y aplanarlas convierte una lista en un párrafo. */}
-              <p className="whitespace-pre-line text-sm">{notes}</p>
-            </Seccion>
-          )}
+                  <p className="whitespace-pre-line text-sm">{notes}</p>
+                </Seccion>
+              )}
 
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
+              {error && (
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
+              )}
 
-          {/* Leyendo no hay pie: no hay nada que cancelar ni que guardar, y
+              {/* Leyendo no hay pie: no hay nada que cancelar ni que guardar, y
               para salir ya está la equis de la esquina. Un botón "Cerrar"
               debajo de todo es una segunda puerta a la misma salida. */}
-          {editandoCampos && (
-            <PieDeModal>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  if (!editando) return onCerrar();
-                  setDescartes((n) => n + 1);
-                  setEditable(false);
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={guardando}>
-                {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-                {editando ? 'Guardar' : 'Registrar'}
-              </Button>
-            </PieDeModal>
+              {editandoCampos && (
+                <PieDeModal>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (!editando) return onCerrar();
+                      setDescartes((n) => n + 1);
+                      setEditable(false);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={guardando}>
+                    {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                    {editando ? 'Guardar' : 'Registrar'}
+                  </Button>
+                </PieDeModal>
+              )}
+            </form>
           )}
-        </form>
-        )}
 
-        <Confirmacion
-          abierta={confirmandoBorrado}
-          titulo="¿Eliminar este movimiento?"
-          peligrosa
-          etiquetaConfirmar="Eliminar"
-          ocupada={eliminar.isPending}
-          onCancelar={() => setConfirmandoBorrado(false)}
-          onConfirmar={() =>
-            movimiento &&
-            eliminar.mutate(movimiento.id, {
-              onSuccess: () => {
-                setConfirmandoBorrado(false);
-                onCerrar();
-              },
-            })
-          }
-        >
-          {/*
+          <Confirmacion
+            abierta={confirmandoBorrado}
+            titulo="¿Eliminar este movimiento?"
+            peligrosa
+            etiquetaConfirmar="Eliminar"
+            ocupada={eliminar.isPending}
+            onCancelar={() => setConfirmandoBorrado(false)}
+            onConfirmar={() =>
+              movimiento &&
+              eliminar.mutate(movimiento.id, {
+                onSuccess: () => {
+                  setConfirmandoBorrado(false);
+                  onCerrar();
+                },
+              })
+            }
+          >
+            {/*
             Se dice lo que NO se borra, y no es un detalle: el nombre de este
             movimiento es el de su concepto, así que la papelera parece estar
             apuntando al concepto. No lo está. Sin esta frase, nadie borra un
             gasto mal anotado por miedo a llevarse «Aseo» por delante.
           */}
-          Se borra el registro de este mes y no se puede deshacer; sus soportes se van con
-          él. El concepto “{concepto?.name ?? grupo?.name ?? 'al que pertenece'}” no se
-          toca: sigue en Centros de costos, que es el único sitio donde se edita o se
-          elimina.
-        </Confirmacion>
+            Se borra el registro de este mes y no se puede deshacer; sus soportes se van con él. El
+            concepto “{concepto?.name ?? grupo?.name ?? 'al que pertenece'}” no se toca: sigue en
+            Centros de costos, que es el único sitio donde se edita o se elimina.
+          </Confirmacion>
         </div>
       </div>
     </div>
@@ -903,8 +944,6 @@ function VistaDeLectura({
       {ruta.length === 0 && (
         <p className="text-sm text-muted-foreground">Este movimiento está sin clasificar.</p>
       )}
-
-
     </div>
   );
 }
@@ -920,11 +959,23 @@ function VistaDeLectura({
 function Seccion({
   titulo,
   caja = true,
+  crece = false,
   children,
 }: {
   titulo: string;
   /** Con `false`, el contenido va suelto: lo que ya son tarjetas no necesita otra. */
   caja?: boolean;
+  /**
+   * Se come el alto que sobre en la ficha.
+   *
+   * Lo pide la de soportes, y solo ella. La ficha tiene alto mínimo, así que
+   * al leer un movimiento con pocos campos sobra sitio, y el pie se lo lleva
+   * al fondo con su `mt-auto`: el hueco quedaba entre el cuadro de soltar y
+   * los botones. Un cuadro donde se sueltan archivos es además el único
+   * elemento de la ficha al que el tamaño le sirve de algo —es el blanco que
+   * hay que acertar con un archivo agarrado—, así que ese hueco es suyo.
+   */
+  crece?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -932,7 +983,7 @@ function Seccion({
     // píxeles menos hacían que el rótulo pareciera pegado a la primera fila,
     // casi montado encima —que es justo lo que se acaba de arreglar quitando
     // los `legend`—.
-    <section className="flex flex-col gap-3">
+    <section className={cn('flex flex-col gap-3', crece && 'min-h-0 flex-1')}>
       {/*
         Sin mayúsculas sostenidas.
 
@@ -941,14 +992,8 @@ function Seccion({
         ficha, donde todo el texto es corto, ese rótulo gritando compite con lo
         que titula. El tamaño y el gris ya dicen que es un rótulo.
       */}
-      <h3 className="text-xs font-semibold text-muted-foreground">
-        {titulo}
-      </h3>
-      {caja ? (
-        <Bloque className="flex flex-col gap-3">{children}</Bloque>
-      ) : (
-        children
-      )}
+      <h3 className="text-xs font-semibold text-muted-foreground">{titulo}</h3>
+      {caja ? <Bloque className="flex flex-col gap-3">{children}</Bloque> : children}
     </section>
   );
 }
@@ -1040,7 +1085,7 @@ function ComoEmpezar({
         Icono={Pencil}
         color="presupuesto"
         titulo="Registrar manualmente"
-        ayuda="Sin soporte, o con la clasificación ya sabida."
+        ayuda="Sin soporte, o cuando ya sabes cómo clasificarlo."
         onClick={onAMano}
       />
 
@@ -1300,7 +1345,11 @@ function SoportesPendientes({
   return (
     <div className={cn('flex flex-col gap-3', vacio && 'h-full')}>
       {i >= 0 && urls[i] && (
-        <PreviaDeArchivo key={urls[i]} url={urls[i]} esImagen={archivos[i].type.startsWith('image/')} />
+        <PreviaDeArchivo
+          key={urls[i]}
+          url={urls[i]}
+          esImagen={archivos[i].type.startsWith('image/')}
+        />
       )}
 
       <ul className={cn('flex flex-wrap gap-2', vacio && 'min-h-0 flex-1')}>
@@ -1473,8 +1522,7 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
     const elemento = marco.current;
     if (!elemento) return;
 
-    const medir = (): void =>
-      setCaja({ ancho: elemento.clientWidth, alto: elemento.clientHeight });
+    const medir = (): void => setCaja({ ancho: elemento.clientWidth, alto: elemento.clientHeight });
 
     medir();
     const observador = new ResizeObserver(medir);
@@ -1487,9 +1535,7 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
     —que es `contain`— quedarían franjas vacías a los lados.
   */
   const cubrir =
-    natural && caja.ancho > 0
-      ? Math.max(caja.ancho / natural.ancho, caja.alto / natural.alto)
-      : 1;
+    natural && caja.ancho > 0 ? Math.max(caja.ancho / natural.ancho, caja.alto / natural.alto) : 1;
   const escala = cubrir * ZOOMS[zoom];
   const ancho = natural ? natural.ancho * escala : 0;
   const alto = natural ? natural.alto * escala : 0;
