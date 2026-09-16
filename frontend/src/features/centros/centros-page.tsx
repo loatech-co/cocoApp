@@ -424,7 +424,11 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
   const conceptos = grupo.children ?? [];
 
   return (
-    <Bloque className={cn('flex flex-col sm:p-4', ALTO_DE_LA_BALDOSA)}>
+    /* `pt` más corto que el resto del relleno: arriba de la tarjeta manda el
+       kebab, que es un botón de 36 con un icono de 16 dentro, y esos diez
+       píxeles de aire suyo se suman a los del borde. Con el relleno parejo,
+       el título quedaba hundido. */
+    <Bloque className={cn('flex flex-col pt-2 sm:p-4 sm:pt-2.5', ALTO_DE_LA_BALDOSA)}>
       <div className="flex shrink-0 items-center justify-between gap-2">
         {/*
           El icono a la IZQUIERDA del nombre, no encima ni dentro de un pastel.
@@ -450,11 +454,26 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
             pulsarse —en un teléfono hay que acertarle a 16px— y no se ve como
             algo pulsable hasta que uno lo prueba. */}
+        {/*
+          El kebab se acerca al canto con margen NEGATIVO, no encogiéndolo.
+
+          Su blanco son 36px de puntero y 42 de dedo, y el icono son 16: los
+          diez de aire que quedan alrededor se sumaban a los del borde de la
+          tarjeta y el icono acababa a veintiséis píxeles de la esquina,
+          flotando. Recortando el botón se arreglaría la vista y se rompería
+          el blanco, que es lo que hay que acertar con el pulgar.
+
+          Con el margen en negativo el botón sigue midiendo lo mismo —se puede
+          pulsar igual— y lo que se mueve es dónde queda dibujado dentro de
+          él. El área táctil se come el relleno de la tarjeta, que es espacio
+          muerto de todos modos.
+        */}
         <Menu
           etiqueta={`Acciones de ${grupo.name}`}
           Icono={EllipsisVertical}
           soloIcono
           variante="ghost"
+          claseCaja="-my-1 -mr-1.5 sm:-mr-2"
         >
           {(cerrar) => (
             <>

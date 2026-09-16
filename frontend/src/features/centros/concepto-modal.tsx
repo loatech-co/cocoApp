@@ -17,6 +17,7 @@ import type { Category } from '@coco/types';
 import { Bloque } from '@/components/ui/bloque';
 import { PieDeModal } from '@/components/ui/modal-partes';
 import { ConfirmarBorrado } from '@/features/centros/confirmar-borrado';
+import { Select } from '@/components/ui/select';
 
 /**
  * Crear o renombrar un concepto, y decir si se paga cada cierto tiempo.
@@ -59,6 +60,8 @@ export function ConceptoModal({
   });
   const [error, setError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
+  /** El grupo al que pertenece. Vacío mientras no se esté editando. */
+  const [grupo, setGrupo] = useState('');
 
   // Se recarga en cada apertura: sin esto, abrir el segundo concepto mostraría
   // los datos del primero.
@@ -71,6 +74,7 @@ export function ConceptoModal({
       diaDePago: concepto?.dia_de_pago ?? 1,
       mesDePago: concepto?.mes_de_pago ?? new Date().getMonth() + 1,
     });
+    setGrupo(concepto?.parent_id != null ? String(concepto.parent_id) : '');
     setError(null);
   }, [abierta, concepto]);
 
@@ -92,6 +96,26 @@ export function ConceptoModal({
     Sin distinguir mayúsculas ni espacios de sobra, que es justo como se
     escriben distinto dos veces la misma cosa.
   */
+  /*
+    ── Los grupos del MISMO centro, y solo esos ────────────────────────────
+    Mover un concepto de grupo es corregir dónde está dentro de su centro:
+    «Claro Móvil» estaba en Vivienda y va en Servicios públicos. Mover de
+    CENTRO es otra cosa —cambia de qué bolsa sale la plata— y es la clase de
+    decisión que no se toma de pasada en un desplegable mientras se corrige un
+    nombre.
+
+    Y hay una razón práctica encima: un centro puede ser estático, y entonces
+    lo que cuelga de él no se reclasifica. Ofrecer el salto entre centros
+    obligaría a decidir aquí qué pasa con esa regla; limitándolo al centro
+    propio, la pregunta no existe.
+  */
+  const hermanos = (categorias.data ?? []).flatMap((centro) => {
+    const grupos = centro.children ?? [];
+    return grupos.some((g) => Number(g.id) === Number(concepto?.parent_id))
+      ? grupos.map((g) => ({ valor: String(g.id), etiqueta: g.name }))
+      : [];
+  });
+
   const gemelo = conceptosDe(categorias.data ?? []).find(
     (c) => c.id !== concepto?.id && normalizar(c.name) === normalizar(nombre),
   );
@@ -125,7 +149,20 @@ export function ConceptoModal({
     };
 
     try {
-      if (concepto) await actualizar.mutateAsync({ id: concepto.id, cambios: campos });
+      if (concepto) {
+        await actualizar.mutateAsync({
+          id: concepto.id,
+          cambios: {
+            ...campos,
+            // Solo si de verdad cambió: un `parent_id` en cada guardado
+            // dispara la comprobación de ciclos y de profundidad del árbol
+            // para nada.
+            ...(grupo !== '' && Number(grupo) !== Number(concepto.parent_id)
+              ? { parent_id: Number(grupo) }
+              : {}),
+          },
+        });
+      }
       else await crear.mutateAsync({ ...campos, kind: 'expense', parent_id: grupoId });
       onCerrar();
     } catch (e) {
@@ -168,6 +205,25 @@ export function ConceptoModal({
               required
             />
           </Campo>
+
+          {/* Solo al editar: al crear, el grupo es aquel cuyo botón se pulsó
+              para abrir esto, así que preguntarlo otra vez es preguntar por
+              algo que se acaba de decir. */}
+          {concepto && hermanos.length > 1 && (
+            <Campo
+              etiqueta="Grupo"
+              id="concepto-grupo"
+              ayuda="Solo los grupos de su mismo centro de costos."
+            >
+              <Select
+                id="concepto-grupo"
+                etiqueta="Grupo"
+                valor={grupo}
+                opciones={hermanos}
+                onCambiar={setGrupo}
+              />
+            </Campo>
+          )}
 
           <CamposDeRecurrencia valor={recurrencia} onCambiar={setRecurrencia} />
 
