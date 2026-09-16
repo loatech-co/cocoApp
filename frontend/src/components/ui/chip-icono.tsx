@@ -46,24 +46,45 @@ export function ChipIcono({
     strokeWidth?: number;
   }>;
   color: ColorDeChip;
-  /** `sm` para una fila de menú; `default` para una tarjeta. */
-  tamano?: 'sm' | 'default';
+  /**
+   * `sm` para una fila de menú; `default` para una tarjeta.
+   *
+   * `cartel` es otra cosa: no marca, DECORA. Es el pastel a cuatro veces su
+   * tamaño, pensado para desbordar la esquina de la tarjeta que lo lleva y
+   * quedar recortado por ella. Ahí ya no dice «esto es un gasto» —eso lo dice
+   * el texto de debajo— sino que le da cara a una tarjeta que de otro modo
+   * sería un rectángulo con dos renglones dentro.
+   */
+  tamano?: 'sm' | 'default' | 'cartel';
   className?: string;
 }) {
   const { fondo, tinta } = CHIPS[color];
-  const pequeno = tamano === 'sm';
+
+  const CAJA = {
+    sm: 'size-9',
+    default: 'size-11 sm:size-12',
+    // Crece con la tarjeta: apilada en un teléfono mide un tercio de la
+    // pantalla y un círculo de 160 se la comería entera.
+    cartel: 'size-32 sm:size-40',
+  } as const;
+
+  const GLIFO = {
+    sm: 'size-4',
+    default: 'size-5',
+    cartel: 'size-12 sm:size-16',
+  } as const;
 
   return (
     <span
       className={cn(
         'flex shrink-0 items-center justify-center rounded-full',
-        pequeno ? 'size-9' : 'size-11 sm:size-12',
+        CAJA[tamano],
         className,
       )}
       style={{ backgroundColor: fondo, color: tinta }}
     >
       <Icono
-        className={pequeno ? 'size-4' : 'size-5'}
+        className={GLIFO[tamano]}
         fill="currentColor"
         fillOpacity={0.2}
         strokeWidth={1.9}

@@ -1,27 +1,30 @@
 import {
   ArrowUpRight,
   Camera,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
-  Minus,
   Pencil,
   Plus,
   Sparkles,
+  Trash2,
   TrendingDown,
   TrendingUp,
-  Trash2,
+  TriangleAlert,
   Upload,
 } from 'lucide-react';
-import {
-  useEffect,
-  useRef,
-  useState,
-  type ComponentType,
-  type FormEvent,
-  type ReactNode,
-} from 'react';
+import { useEffect, useState, type ComponentType, type FormEvent, type ReactNode } from 'react';
 
-import { LienzoPdf, Soltar, Soportes } from '@/components/soportes';
+import {
+  BotonOscuro,
+  LienzoPdf,
+  PanelDeSubida,
+  PreviaDeArchivo,
+  Soltar,
+  Soportes,
+} from '@/components/soportes';
 import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
+import { Etiqueta } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
@@ -44,7 +47,7 @@ import {
   useCrearMovimiento,
   useEliminarMovimiento,
 } from '@/lib/queries';
-import { cn, formatCOP } from '@/lib/utils';
+import { agruparMiles, cn, formatCOP, soloCifras } from '@/lib/utils';
 import { Camara } from './camara';
 import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
 import { normalizar, type Lectura } from '@coco/lectura';
@@ -147,8 +150,24 @@ export function MovimientoModal({
     formulario entero en el caso más común.
   */
   const [paso, setPaso] = useState<'elegir' | 'camara' | 'leyendo' | 'formulario'>('formulario');
+  /**
+   * El panel de subir, abierto SOBRE la ficha.
+   *
+   * Es el mismo que abre la baldosa de la galería de un movimiento ya
+   * guardado: subir un archivo se hace igual venga de donde venga, y no es
+   * una etapa del formulario sino algo que se hace en medio y se cierra.
+   */
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
   const [progresoDeLectura, setProgresoDeLectura] = useState<ProgresoDeLectura | null>(null);
   const [lectura, setLectura] = useState<Lectura | null>(null);
+  /**
+   * Lo que NO se pudo leer, para decirlo.
+   *
+   * Es un estado aparte del error porque no es un error: el archivo se abrió,
+   * se miró y no se reconoció nada dentro. Un rojo ahí diría que algo salió
+   * mal, y lo que hay que hacer es distinto —escribir los datos a mano—.
+   */
+  const [sinLeer, setSinLeer] = useState<string | null>(null);
   /*
     Los soportes elegidos antes de que el movimiento exista.
 
@@ -185,6 +204,7 @@ export function MovimientoModal({
     setEditable(!movimiento);
     setPaso(movimiento ? 'formulario' : 'elegir');
     setLectura(null);
+    setSinLeer(null);
     setPendientes([]);
     setProgresoDeLectura(null);
     // El foco solo cuando hay algo que escribir: puesto en un campo de solo
@@ -254,12 +274,43 @@ export function MovimientoModal({
     const empezo = Date.now();
 
     try {
-      const { lectura: leida } = await leerSoporte(archivo, {
+      const { lectura: leida, texto } = await leerSoporte(archivo, {
         periodo: date.slice(0, 7),
+        // El árbol, por sus palabras clave: es lo que hace que un recibo que
+        // el catálogo no conoce se reconozca porque alguien escribió en su
+        // concepto lo que dice la factura.
+        arbol: categorias.data ?? [],
         onProgreso: setProgresoDeLectura,
       });
 
-      setLectura(leida);
+      /*
+        ── Leer y no sacar nada NO es haber leído ──────────────────────────
+        Antes se anunciaba «Los datos se extrajeron del soporte» pasara lo que
+        pasara, incluso con los tres campos vacíos: el aviso decía que una
+        máquina había rellenado el formulario y el formulario estaba en
+        blanco. Quien lo mira no sabe si tiene que comprobar lo que hay o
+        escribirlo todo.
+
+        Y hay dos maneras de no sacar nada, que no se arreglan igual:
+
+        · No se pudo sacar TEXTO del archivo —un PDF que no abre, una imagen
+          que el reconocimiento no descifra—. Ahí no hay nada que revisar.
+        · Se sacó el texto pero no se reconoció ni valor ni fecha ni concepto.
+          Ahí el documento sí se leyó; lo que no cuadró es su forma.
+
+        En los dos casos el archivo se queda adjunto: se subió para guardarlo,
+        no solo para leerlo.
+      */
+      const algoUtil = leida.valor !== null || leida.fecha !== null || leida.concepto !== null;
+      setLectura(algoUtil ? leida : null);
+      setSinLeer(
+        algoUtil
+          ? null
+          : texto.trim() === ''
+            ? 'No se pudo extraer el texto de este archivo. Escribe los datos a mano; el archivo queda adjunto al movimiento.'
+            : 'Se leyó el archivo, pero no se reconoció el valor ni la fecha. Escríbelos a mano; el archivo queda adjunto al movimiento.',
+      );
+
       if (leida.valor !== null) setAmount(String(leida.valor));
       if (leida.fecha) setDate(leida.fecha);
       if (leida.concepto) {
@@ -391,12 +442,11 @@ export function MovimientoModal({
           PANEL_DE_MODAL,
           SUPERFICIE_FLOTANTE,
           'emerge',
-          // Más ancho: con dos columnas de campos, `max-w-lg` obligaba a que
-          // cada una midiera menos que el texto que lleva dentro.
-          // Más ancho desde que los soportes se ven en miniatura: con
-          // `max-w-2xl` cabían dos recibos por fila y ocho quedaban en cuatro
-          // renglones, que es más alto que el resto de la ficha junta.
-          'rounded-t-lg sm:max-w-5xl sm:rounded-lg',
+          // El ancho lo pone `PANEL_DE_MODAL`, que lo topa en 720 para todas
+          // las fichas. Esta pedía 1024 por su columna del soporte, y una
+          // ficha de 1024 deja de leerse como algo que está encima de la
+          // aplicación: se lee como otra pantalla.
+          'rounded-t-lg sm:rounded-lg',
         )}
       >
         {/* La misma cabecera que las demás fichas, con el pastel de color en
@@ -488,10 +538,10 @@ export function MovimientoModal({
             máximo del panel. Y es a su vez una columna porque el panel tiene
             alto mínimo: con eso el formulario puede estirarse y llevarse sus
             botones al fondo en vez de dejarlos a media altura. */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pb-6">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
           {paso === 'elegir' && (
             <ComoEmpezar
-              onArchivo={(a) => void escanear(a)}
+              onSubir={() => setSubiendoArchivo(true)}
               onCamara={() => setPaso('camara')}
               onAMano={() => setPaso('formulario')}
             />
@@ -543,7 +593,7 @@ export function MovimientoModal({
                   debajo son dos filas apiladas, y repartir el alto entre ellas
                   daría media ficha al cuadro de soltar y media a los campos.
               */}
-                  <div className="grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2">
+                  <div className={REJILLA_DE_LA_FICHA}>
                     {/*
                   ── Sin rótulo, y estirando hasta el pie de la columna ──────
                   El rótulo decía "Soporte" encima de un cuadro punteado que ya
@@ -592,6 +642,7 @@ export function MovimientoModal({
                         hay debajo; cruzando la ficha entera, era un cartel.
                       */}
                       {lectura && <LoQueLei />}
+                      {sinLeer && <NoSePudoLeer texto={sinLeer} />}
 
                       {/*
                     Los tres se bloquean si el centro GUARDADO es estático.
@@ -660,8 +711,49 @@ export function MovimientoModal({
                             // teléfono; `type=number` traería flechitas y rechazaría
                             // la coma decimal que se usa en Colombia.
                             inputMode="decimal"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
+                            /*
+                              ── Los miles se agrupan mientras se escribe ────
+                              «453132» no se lee: hay que contar los dígitos de
+                              tres en tres con el dedo para saber si son
+                              cuatrocientos mil o cuatro millones. Es el dato
+                              más importante de la ficha y el único que no se
+                              podía leer de un vistazo.
+
+                              Se GUARDA sin puntos y se ENSEÑA con ellos: el
+                              valor que viaja a la API es el que se teclea, no
+                              lo que se ve.
+                            */
+                            icono={SignoDePesos}
+                            value={agruparMiles(amount)}
+                            onChange={(e) => {
+                              const limpio = soloCifras(e.target.value);
+                              const campo = e.target;
+                              // Cuántos dígitos hay ANTES del cursor: es lo
+                              // único que no cambia al reagrupar. Sin esto, el
+                              // cursor salta al final en cuanto aparece un
+                              // punto nuevo y corregir una cifra a la mitad se
+                              // vuelve imposible.
+                              const antes = (
+                                campo.value.slice(0, campo.selectionStart ?? 0).match(/[\d,]/g) ??
+                                []
+                              ).length;
+
+                              setAmount(limpio);
+
+                              requestAnimationFrame(() => {
+                                const pintado = agruparMiles(limpio);
+                                let cifras = 0;
+                                let sitio = pintado.length;
+                                for (let i = 0; i < pintado.length; i += 1) {
+                                  if (/[\d,]/.test(pintado[i])) cifras += 1;
+                                  if (cifras === antes) {
+                                    sitio = i + 1;
+                                    break;
+                                  }
+                                }
+                                campo.setSelectionRange(sitio, sitio);
+                              });
+                            }}
                             placeholder="0"
                             required
                           />
@@ -713,47 +805,52 @@ export function MovimientoModal({
                   </div>
                 </>
               ) : (
-                <VistaDeLectura
-                  tipo={type}
-                  // El nombre sale del concepto, igual que en la tabla. Leía
-                  // `description`, que en un movimiento registrado a mano está
-                  // vacío desde que la ficha cambió su campo libre por un selector.
-                  nombre={movimiento ? nombreDelMovimiento(movimiento, arbol) : ''}
-                  valor={amount}
-                  fecha={date}
-                  periodo={movimiento?.period}
-                  ruta={[centro?.name, grupo?.name, concepto?.name].filter(Boolean) as string[]}
-                />
-              )}
+                /*
+                  ── Leer tiene la MISMA forma que editar ──────────────────
+                  El papel a la izquierda y lo que dice a la derecha, en las
+                  dos. Antes leer era una columna sola con los soportes
+                  colgando al final: al pulsar «Editar» la ficha se
+                  recomponía entera —el recibo saltaba de abajo a la
+                  izquierda y los datos se encogían a media caja—, y lo que
+                  uno estaba mirando cambiaba de sitio en el mismo gesto en
+                  que iba a tocarlo.
 
-              {/*
-            Los soportes, solo al EDITAR.
+                  Es la misma rejilla, con las mismas medidas: media ficha
+                  para el papel, que es lo único que permite leer una cifra
+                  en un recibo.
+                */
+                <div className={REJILLA_DE_LA_FICHA}>
+                  <div className="flex flex-col">
+                    {movimiento && <Soportes transactionId={movimiento.id} />}
+                  </div>
 
-            Un movimiento que todavía no existe no puede tener recibos colgando
-            de él, y enseñar la sección vacía al crear promete un sitio donde
-            soltar un archivo que aquí no existe.
+                  <div className="flex flex-col gap-4">
+                    <VistaDeLectura
+                      tipo={type}
+                      // El nombre sale del concepto, igual que en la tabla. Leía
+                      // `description`, que en un movimiento registrado a mano está
+                      // vacío desde que la ficha cambió su campo libre por un selector.
+                      nombre={movimiento ? nombreDelMovimiento(movimiento, arbol) : ''}
+                      valor={amount}
+                      fecha={date}
+                      periodo={movimiento?.period}
+                      ruta={[centro?.name, grupo?.name, concepto?.name].filter(Boolean) as string[]}
+                    />
 
-            Van al final y no arriba: quien abre un movimiento viene casi
-            siempre a corregir una cifra o una fecha. El recibo es la prueba, y
-            la prueba se consulta, no se edita.
-          */}
-              {/* Solo al LEER: editando, el soporte vive en la columna de la
-              izquierda, al lado de los campos que sirve para comprobar. */}
-              {!editandoCampos && movimiento && (
-                <Seccion titulo="Soportes" caja={false} crece>
-                  <Soportes transactionId={movimiento.id} />
-                </Seccion>
-              )}
-
-              {/* Las notas, DESPUÉS de los soportes. El recibo es la prueba de lo
-              que pasó; la nota es el comentario de alguien sobre eso. Primero
-              el hecho, luego lo que se dijo de él. */}
-              {!editandoCampos && notes.trim() !== '' && (
-                <Seccion titulo="Notas">
-                  {/* `whitespace-pre-line`: las notas se escriben con saltos de
-                  línea y aplanarlas convierte una lista en un párrafo. */}
-                  <p className="whitespace-pre-line text-sm">{notes}</p>
-                </Seccion>
+                    {/* Las notas, con lo que dicen los datos y no debajo de
+                        los soportes: el recibo es la prueba de lo que pasó y
+                        la nota es el comentario de alguien sobre eso, así que
+                        va del lado en el que se cuenta lo que pasó. */}
+                    {notes.trim() !== '' && (
+                      <Seccion titulo="Notas">
+                        {/* `whitespace-pre-line`: las notas se escriben con
+                            saltos de línea y aplanarlas convierte una lista en
+                            un párrafo. */}
+                        <p className="whitespace-pre-line text-sm">{notes}</p>
+                      </Seccion>
+                    )}
+                  </div>
+                </div>
               )}
 
               {error && (
@@ -785,6 +882,24 @@ export function MovimientoModal({
                 </PieDeModal>
               )}
             </form>
+          )}
+
+          {subiendoArchivo && (
+            <PanelDeSubida
+              subiendo={false}
+              progreso={0}
+              onArchivos={(archivos) => {
+                const [primero, ...resto] = archivos;
+                if (!primero) return;
+                setSubiendoArchivo(false);
+                // El primero se lee; los demás quedan adjuntos sin leer, porque lo
+                // que rellena el formulario es UN documento.
+                void escanear(primero).then(() => {
+                  if (resto.length > 0) setPendientes((p) => [...p, ...resto]);
+                });
+              }}
+              onCerrar={() => setSubiendoArchivo(false)}
+            />
           )}
 
           <Confirmacion
@@ -916,7 +1031,10 @@ function VistaDeLectura({
             mismo peso que la cifra, para que se lea como parte de ella y no
             como un adorno al lado.
           */}
-          <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-acento-tinta sm:text-5xl">
+          {/* 36px y los mismos en todas las pantallas. Subía a 48 en escritorio,
+              y desde que la ficha está topada en 720 esa cifra ocupaba media
+              columna: es el dato principal, no el único. */}
+          <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-acento-tinta">
             <ArrowUpRight
               className={cn('size-8 shrink-0 sm:size-10', tipo === 'income' && 'rotate-180')}
               strokeWidth={2.75}
@@ -1052,16 +1170,21 @@ function conceptoLlamado(arbol: Category[], nombre: string): Category | undefine
  * una fila no puede hacer dos cosas.
  */
 function ComoEmpezar({
-  onArchivo,
+  onSubir,
   onCamara,
   onAMano,
 }: {
-  onArchivo: (archivo: File) => void;
+  /**
+   * Lleva a la pantalla de subir, no abre el buscador de archivos.
+   *
+   * Abriéndolo desde aquí, la única forma de dar un archivo era buscarlo en el
+   * disco: ni arrastrarlo ni pegar una captura, que es de donde sale la mitad
+   * de los soportes. La pantalla de al lado tiene las tres.
+   */
+  onSubir: () => void;
   onCamara: () => void;
   onAMano: () => void;
 }) {
-  const campo = useRef<HTMLInputElement>(null);
-
   return (
     /*
       ── TRES opciones, una al lado de la otra ─────────────────────────────
@@ -1079,12 +1202,32 @@ function ComoEmpezar({
       En un teléfono se apilan: tres columnas en 375px dejan cada título
       partido en tres renglones.
     */
-    <div className="grid gap-3 sm:grid-cols-3">
+    /*
+      ── `flex-1` y `auto-rows-fr`: las tres llegan hasta abajo ───────────────
+      La ficha tiene alto mínimo, así que con tres tarjetas del alto de sus dos
+      renglones sobraba media pantalla debajo y las opciones quedaban apretadas
+      contra el título, como una barra de botones.
+
+      Hacen falta las dos, por lo mismo que en la rejilla del formulario:
+      `flex-1` le da a la REJILLA el alto que sobra, y `auto-rows-fr` estira sus
+      filas hasta ese alto —una rejilla reparte su alto entre filas, y con
+      `grid-auto-rows: auto` cada fila mide lo que mida su contenido—.
+
+      Sin `sm:` en ninguna de las dos: apiladas en un teléfono son tres filas de
+      un tercio de la ficha cada una, que es la misma proporción y sigue
+      leyéndose como tres carteles.
+    */
+    <div className="grid flex-1 auto-rows-fr gap-3 sm:grid-cols-3">
+      {/* Apagada, no escondida: es la regla de esta app para lo que va a
+          llegar. Quitarla haría creer que la aplicación no sabe leer una foto
+          —y sabe: es el mismo motor que lee un archivo subido—. */}
       <Via
         Icono={Camera}
         color="gasto"
         titulo="Tomar una foto"
         ayuda="Se leen el valor, la fecha y el concepto."
+        nota="Pronto"
+        deshabilitada
         onClick={onCamara}
       />
 
@@ -1093,7 +1236,7 @@ function ComoEmpezar({
         color="gasto"
         titulo="Subir un archivo"
         ayuda="Un PDF o una imagen del soporte."
-        onClick={() => campo.current?.click()}
+        onClick={onSubir}
       />
 
       <Via
@@ -1102,18 +1245,6 @@ function ComoEmpezar({
         titulo="Registrar manualmente"
         ayuda="Sin soporte, o cuando ya sabes cómo clasificarlo."
         onClick={onAMano}
-      />
-
-      <input
-        ref={campo}
-        type="file"
-        accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
-        className="hidden"
-        onChange={(e) => {
-          const a = e.target.files?.[0];
-          e.target.value = '';
-          if (a) onArchivo(a);
-        }}
       />
     </div>
   );
@@ -1143,18 +1274,25 @@ function Via({
   color,
   titulo,
   ayuda,
+  nota,
+  deshabilitada = false,
   onClick,
 }: {
   Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   color: ColorDeChip;
   titulo: string;
   ayuda: string;
+  /** Dos palabras en una etiqueta: por qué no se puede todavía. */
+  nota?: string;
+  deshabilitada?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={deshabilitada}
+      aria-disabled={deshabilitada}
       // Al pasar por encima se tiñe el borde y se llena con `accent`, que es
       // la superficie de lo que responde en toda la app. Antes era `muted`, y
       // dentro de un modal `muted` y `popover` se llevan un escalón de nada en
@@ -1162,17 +1300,102 @@ function Via({
       // más fuerte que la fila entera— para que se notara algo.
       className={cn(
         BLOQUE,
-        'flex h-full w-full flex-col items-start gap-3 p-4 text-left',
-        'transition-colors hover:border-ring/40',
-        REALCE,
+        /*
+          ── Un cartel, no una fila ────────────────────────────────────────
+          `justify-end` manda el texto al pie de la tarjeta y `relative` +
+          `overflow-hidden` son lo que permite el pastel de la esquina: la
+          tarjeta recorta lo que se le sale, así que el círculo entra por el
+          canto superior izquierdo en vez de asomar por fuera del bloque.
+
+          El texto abajo y la figura arriba es lo que hace que tres tarjetas
+          altas se lean de un vistazo: los tres títulos caen a la misma
+          altura, en una línea, y lo que las distingue —la forma y el color—
+          queda arriba, donde no compite con ellos.
+        */
+        'relative flex h-full w-full flex-col justify-end overflow-hidden p-4 text-left',
+        'transition-colors',
+        // Apagada no responde: ni tiñe el borde ni se realza, o prometería
+        // que al pulsarla pasa algo.
+        deshabilitada ? 'cursor-not-allowed opacity-50' : cn('hover:border-ring/40', REALCE),
       )}
     >
-      <ChipIcono Icono={Icono} color={color} tamano="sm" />
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold">{titulo}</span>
+      {/*
+        Decorativo, y por eso desbordado.
+
+        Un pastel de 36px arriba a la izquierda de una tarjeta de 300 por 500
+        es una mota. A este tamaño y saliéndose por la esquina ya no es un
+        icono que etiqueta la opción: es la cara de la tarjeta, y el ojo la
+        reconoce antes de leer nada.
+
+        `pointer-events-none` porque quien pulsa es la tarjeta entera; sin
+        esto, el círculo se come los clics de su cuarto superior izquierdo y
+        el cursor cambia de forma sobre él como si fuera otra cosa.
+
+        Su icono ya va `aria-hidden` desde `ChipIcono`: lo que esta tarjeta
+        anuncia lo dice su texto.
+      */}
+      <ChipIcono
+        Icono={Icono}
+        color={color}
+        tamano="cartel"
+        className="pointer-events-none absolute -left-8 -top-8 sm:-left-10 sm:-top-10"
+      />
+
+      <span className="relative min-w-0">
+        <span className="flex items-center gap-2">
+          <span className="min-w-0 truncate text-sm font-semibold">{titulo}</span>
+          {/* La misma etiqueta que en el resto de la app, no un rótulo a mano. */}
+          {nota && (
+            <Etiqueta tono="neutro" className="shrink-0 text-muted-foreground">
+              {nota}
+            </Etiqueta>
+          )}
+        </span>
         <span className="mt-0.5 block text-xs text-muted-foreground">{ayuda}</span>
       </span>
     </button>
+  );
+}
+
+/**
+ * LA rejilla de una ficha de movimiento: el papel y lo que dice.
+ *
+ * ── Por qué una clase y no dos rejillas escritas ────────────────────────────
+ * Porque la ficha tiene cinco caras —leer, editar, registrar a mano, registrar
+ * con un archivo y, pronto, con una foto— y las cinco son lo mismo: un
+ * documento a la izquierda y sus datos a la derecha. Escrita en cada una, la
+ * de leer y la de editar ya se habían separado: al pulsar «Editar», el recibo
+ * saltaba de sitio y las columnas cambiaban de ancho en el mismo gesto.
+ *
+ * ── El reparto: mitad y mitad ───────────────────────────────────────────────
+ * Se probó a favor del papel —65 y 35— y no hacía falta. Desde que la columna
+ * del documento perdió su fila de miniaturas, lo que hay en ella es una sola
+ * previsualización de 350px de alto: darle dos tercios del ancho solo la deja
+ * con aire a los lados mientras los campos de al lado se aprietan.
+ *
+ * Por debajo de `lg` no hay reparto: son dos filas apiladas, porque en un
+ * teléfono dos columnas de 170px no son dos columnas.
+ */
+const REJILLA_DE_LA_FICHA = 'grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2';
+
+/**
+ * El signo de pesos del campo del valor.
+ *
+ * Va siempre, aunque el campo esté vacío: un campo de dinero sin signo es un
+ * campo de número, y el número de al lado —el día del mes en la recurrencia—
+ * se escribe igual. El signo dice de qué se está hablando antes de leer nada.
+ *
+ * Es el `icono` del campo, así que no forma parte del valor: lo que se teclea
+ * y lo que se guarda no lo llevan.
+ */
+function SignoDePesos({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(className, 'grid place-items-center text-sm font-medium')}
+      aria-hidden="true"
+    >
+      $
+    </span>
   );
 }
 
@@ -1305,6 +1528,22 @@ function Escaneando({
   );
 }
 
+/**
+ * Lo que el soporte NO dijo.
+ *
+ * Mismo sitio y misma forma que `LoQueLei` —es la otra respuesta a la misma
+ * pregunta— y el tono de lo pendiente, no el del error: no se rompió nada, hay
+ * trabajo que hacer a mano.
+ */
+function NoSePudoLeer({ texto }: { texto: string }) {
+  return (
+    <p className="flex min-h-16 items-center gap-2 rounded-lg bg-warning-surface px-4 py-3 text-sm font-medium text-warning">
+      <TriangleAlert className="size-4 shrink-0" aria-hidden="true" />
+      {texto}
+    </p>
+  );
+}
+
 function LoQueLei() {
   return (
     /*
@@ -1351,6 +1590,9 @@ function SoportesPendientes({
 }) {
   const [activo, setActivo] = useState(0);
   const [urls, setUrls] = useState<string[]>([]);
+  /** El panel de subir, sobre la ficha. El mismo que abre la galería de uno
+      ya guardado. */
+  const [añadiendo, setAñadiendo] = useState(false);
 
   useEffect(() => {
     const creados = archivos.map((a) => URL.createObjectURL(a));
@@ -1364,367 +1606,86 @@ function SoportesPendientes({
   // El que se está viendo, recortado: quitar el último dejaba el índice
   // apuntando a un archivo que ya no existe.
   const i = Math.min(activo, archivos.length - 1);
-  // Sin nada todavía, el cuadro de soltar es lo único que hay y le toca todo
-  // el alto. En cuanto hay un archivo, el alto se lo lleva la
-  // previsualización y la fila de miniaturas mide lo que mide.
   const vacio = archivos.length === 0;
 
   return (
     <div className={cn('flex flex-col gap-3', vacio && 'min-h-0 flex-1')}>
-      {i >= 0 && urls[i] && (
+      {/*
+        La misma columna que la de un movimiento ya guardado: UNA
+        previsualización con sus mandos encima, sin fila de miniaturas. Lo que
+        cambia es de dónde salen los archivos —de la memoria, no del servidor—
+        y que aquí no hay pase a pantalla completa que abrir: el soporte no
+        existe en ninguna parte hasta que se guarda el movimiento.
+      */}
+      {i >= 0 && archivos[i] && (
         <PreviaDeArchivo
-          key={urls[i]}
+          // La clave es el ARCHIVO y no su url: con la url, el marco se
+          // desmontaba y se volvía a montar en cuanto se creaba el `blob:`.
+          key={`${archivos[i].name}-${i}`}
           url={urls[i]}
           esImagen={archivos[i].type.startsWith('image/')}
-        />
-      )}
+          acciones={
+            <>
+              {archivos.length > 1 && (
+                <>
+                  <BotonOscuro
+                    etiqueta="Soporte anterior"
+                    deshabilitado={i === 0}
+                    onClick={() => setActivo(i - 1)}
+                  >
+                    <ChevronLeft className="size-4" aria-hidden="true" />
+                  </BotonOscuro>
+                  <span className="tabular px-1 text-xs font-medium text-sala-tinta">
+                    {i + 1} / {archivos.length}
+                  </span>
+                  <BotonOscuro
+                    etiqueta="Soporte siguiente"
+                    deshabilitado={i === archivos.length - 1}
+                    onClick={() => setActivo(i + 1)}
+                  >
+                    <ChevronRight className="size-4" aria-hidden="true" />
+                  </BotonOscuro>
+                </>
+              )}
 
-      <ul className={cn('flex flex-wrap gap-2', vacio && 'min-h-0 flex-1')}>
-        {archivos.map((archivo, n) => (
-          <li key={`${archivo.name}-${n}`}>
-            <Tile
-              url={urls[n]}
-              esImagen={archivo.type.startsWith('image/')}
-              nombre={archivo.name}
-              activo={n === i}
-              onVer={() => setActivo(n)}
-              onQuitar={() => {
-                onQuitar(n);
-                // Si se va el que estaba puesto, se pasa al anterior.
-                if (n <= i) setActivo(Math.max(0, i - 1));
-              }}
-            />
-          </li>
-        ))}
+              <BotonOscuro etiqueta="Añadir otro soporte" onClick={() => setAñadiendo(true)}>
+                <Plus className="size-4" aria-hidden="true" />
+              </BotonOscuro>
 
-        {/* El MISMO cuadro que en un movimiento ya guardado: vacío ocupa el
-            ancho y explica qué acepta; con algo dentro es una plaza más de la
-            galería. Dos versiones del mismo hueco se separarían. */}
-        {/* `self-stretch` y no `h-full`: el porqué, en `soportes.tsx`. */}
-        <li className={cn(vacio && 'flex w-full self-stretch')}>
-          <Soltar
-            subiendo={false}
-            progreso={0}
-            solo={vacio}
-            onArchivos={(lista) => onAñadir(Array.from(lista ?? []))}
-          />
-        </li>
-      </ul>
-    </div>
-  );
-}
-
-/**
- * Una plaza de la galería.
- *
- * ── La papelera se enseña como el ojo del otro modal ────────────────────────
- * Un velo sobre la plaza entera con el icono en el centro, solo al pasar por
- * encima. Es el lenguaje que ya usa la galería de un movimiento guardado, y
- * repetirlo significa que una miniatura oscurecida quiere decir lo mismo en
- * los dos sitios: "aquí hay algo que hacer con esto".
- *
- * Una pastilla flotando en la esquina no decía eso: parecía un adorno del
- * recorte, y ocho de ellas encendidas a la vez son ocho invitaciones a borrar
- * algo sin querer.
- *
- * ── Por qué la papelera y no el ojo ─────────────────────────────────────────
- * Porque mirar ya se hace pulsando la plaza —y lo que se mira aparece al lado,
- * en grande—. Lo que no tenía sitio era descartar.
- */
-function Tile({
-  url,
-  esImagen,
-  nombre,
-  activo,
-  onVer,
-  onQuitar,
-}: {
-  url: string | undefined;
-  esImagen: boolean;
-  nombre: string;
-  activo: boolean;
-  onVer: () => void;
-  onQuitar: () => void;
-}) {
-  return (
-    <div
-      className={cn(
-        /*
-          La MISMA caja que el cuadro de añadir, que es su vecino en la fila:
-          104px y el radio estándar.
-
-          Y con BORDE de 2px, no con anillo. Los dos tenían el mismo radio
-          nominal, pero un anillo se dibuja por FUERA del borde de la caja: la
-          curva quedaba un píxel más abierta que la del cuadro punteado de al
-          lado, y en dos plazas pegadas eso se ve. Con la misma anchura de
-          trazo, la geometría es idéntica.
-        */
-        'group relative size-[104px] overflow-hidden rounded-lg border-2 bg-card transition-colors',
-        activo ? 'border-acento-tinta' : 'border-border hover:border-muted-foreground',
-      )}
-    >
-      {/* La plaza entera elige qué se previsualiza. */}
-      <button
-        type="button"
-        onClick={onVer}
-        title={nombre}
-        aria-label={`Ver ${nombre}`}
-        aria-pressed={activo}
-        className="absolute inset-0 flex items-center justify-center"
-      >
-        {!url ? (
-          <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden="true" />
-        ) : esImagen ? (
-          <img src={url} alt="" className="size-full object-cover object-top" />
-        ) : (
-          <LienzoPdf url={url} />
-        )}
-      </button>
-
-      {/* El velo no intercepta el puntero: pulsar la plaza sigue eligiéndola,
-          y solo la papelera de encima descarta. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-sala/55 opacity-0 transition-opacity group-hover:opacity-100"
-      />
-
-      <button
-        type="button"
-        onClick={onQuitar}
-        aria-label={`Quitar ${nombre}`}
-        title="Quitar este soporte"
-        className={cn(
-          'absolute inset-0 m-auto flex size-9 items-center justify-center rounded-full',
-          'text-sala-tinta opacity-0 transition-opacity',
-          'group-hover:opacity-100 focus-visible:opacity-100 hover:text-destructive',
-        )}
-      >
-        <Trash2 className="size-5" aria-hidden="true" />
-      </button>
-    </div>
-  );
-}
-
-/**
- * El soporte en grande, recorrible.
- *
- * ── Por qué llena la caja y no entra entera ─────────────────────────────────
- * Porque una hoja completa metida en 30rem de alto deja la letra a un tamaño
- * en el que el total no se lee, y esta columna existe exactamente para leer el
- * total. Llenando la caja, el documento se ve al tamaño en que se puede
- * comprobar, y lo que no cabe se alcanza arrastrando.
- *
- * ── Por qué arrastrar y no barras de desplazamiento ─────────────────────────
- * Porque es un documento, no una página: el gesto con el que todo el mundo
- * mueve un plano o un mapa es agarrarlo. Y con `pointer`, el mismo código
- * sirve para el ratón, el dedo y el lápiz.
- *
- * ── Los topes ───────────────────────────────────────────────────────────────
- * El desplazamiento se recorta a lo que falta por ver, así que nunca aparece
- * un hueco: el borde del documento no pasa del borde de la caja. Y si por el
- * lado corto el documento cabe justo, ese eje no se mueve —en vez de temblar
- * un píxel en cada arrastre—.
- */
-function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) {
-  /** El tamaño natural de lo dibujado, para saber cuánto sobra por cada lado. */
-  const [natural, setNatural] = useState<{ ancho: number; alto: number } | null>(null);
-  const [caja, setCaja] = useState({ ancho: 0, alto: 0 });
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [arrastrando, setArrastrando] = useState(false);
-  /*
-    El zoom multiplica la escala que ya LLENA la caja, así que el 100 % es el
-    documento cubriendo el marco y no su tamaño natural.
-
-    No baja del 100 % a propósito: por debajo aparecerían franjas vacías a los
-    lados, y una previsualización con huecos se lee como un error de montaje.
-    Para ver la hoja entera está el pase a pantalla completa del movimiento ya
-    guardado.
-  */
-  const [zoom, setZoom] = useState(0);
-
-  const marco = useRef<HTMLDivElement>(null);
-  const agarre = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
-
-  // La caja cambia de tamaño con la ventana, y los topes dependen de ella.
-  useEffect(() => {
-    const elemento = marco.current;
-    if (!elemento) return;
-
-    const medir = (): void => setCaja({ ancho: elemento.clientWidth, alto: elemento.clientHeight });
-
-    medir();
-    const observador = new ResizeObserver(medir);
-    observador.observe(elemento);
-    return () => observador.disconnect();
-  }, []);
-
-  /*
-    La escala que LLENA la caja: la mayor de las dos proporciones. Con la menor
-    —que es `contain`— quedarían franjas vacías a los lados.
-  */
-  const cubrir =
-    natural && caja.ancho > 0 ? Math.max(caja.ancho / natural.ancho, caja.alto / natural.alto) : 1;
-  const escala = cubrir * ZOOMS[zoom];
-  const ancho = natural ? natural.ancho * escala : 0;
-  const alto = natural ? natural.alto * escala : 0;
-
-  /** Cuánto se puede mover cada eje. Negativo: es lo que sobra por ver. */
-  const limite = { x: Math.min(0, caja.ancho - ancho), y: Math.min(0, caja.alto - alto) };
-
-  const recortar = (x: number, y: number): { x: number; y: number } => ({
-    x: Math.min(0, Math.max(limite.x, x)),
-    y: Math.min(0, Math.max(limite.y, y)),
-  });
-
-  // Empieza CENTRADO, y se recentra al cambiar el zoom: ampliar desde una
-  // esquina deja mirando un margen en blanco en vez de lo que se estaba
-  // leyendo.
-  useEffect(() => {
-    if (!natural || caja.ancho === 0) return;
-    setPos(recortar(limite.x / 2, limite.y / 2));
-    // Solo al cambiar el documento, la caja o el zoom: recentrar en cada
-    // arrastre pelearía con el dedo.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [natural, caja.ancho, caja.alto, zoom]);
-
-  const sePuedeMover = limite.x < 0 || limite.y < 0;
-
-  const encuadre = {
-    position: 'absolute' as const,
-    left: pos.x,
-    top: pos.y,
-    width: ancho || undefined,
-    height: alto || undefined,
-    // Antes de medir se pinta invisible: un fotograma con el documento a su
-    // tamaño natural y sin encuadrar se ve como un salto.
-    visibility: natural ? ('visible' as const) : ('hidden' as const),
-  };
-
-  return (
-    <div
-      ref={marco}
-      // `touch-action: none` para que el dedo mueva el documento y no desplace
-      // la ficha entera por detrás.
-      className={cn(
-        'relative h-[30rem] touch-none select-none overflow-hidden rounded-lg bg-card ring-1 ring-border',
-        sePuedeMover && (arrastrando ? 'cursor-grabbing' : 'cursor-grab'),
-      )}
-      onPointerDown={(e) => {
-        if (!sePuedeMover) return;
-        /*
-          Los mandos del zoom no arrastran nada.
-
-          Aquí estaba el bug que hacía que el zoom "no funcionara": al pulsar
-          un mando, este marco tomaba `setPointerCapture` para el arrastre, y
-          la captura REDIRIGE también el `click` al elemento que capturó. El
-          estado del zoom nunca cambiaba porque el `onClick` del botón no
-          llegaba a dispararse nunca.
-        */
-        if ((e.target as HTMLElement).closest('[data-mandos]')) return;
-
-        e.currentTarget.setPointerCapture(e.pointerId);
-        agarre.current = { x: pos.x, y: pos.y, px: e.clientX, py: e.clientY };
-        setArrastrando(true);
-      }}
-      onPointerMove={(e) => {
-        const desde = agarre.current;
-        if (!desde) return;
-        setPos(recortar(desde.x + (e.clientX - desde.px), desde.y + (e.clientY - desde.py)));
-      }}
-      onPointerUp={() => {
-        agarre.current = null;
-        setArrastrando(false);
-      }}
-      onPointerCancel={() => {
-        agarre.current = null;
-        setArrastrando(false);
-      }}
-    >
-      {/* Los mandos del zoom, sobre una pastilla oscura: encima de un recibo
-          —que es blanco— cualquier control claro desaparece. */}
-      <div
-        data-mandos=""
-        className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
-      >
-        <MandoDeZoom
-          etiqueta="Alejar"
-          deshabilitado={zoom === 0}
-          onClick={() => setZoom((z) => Math.max(0, z - 1))}
-        >
-          <Minus className="size-4" aria-hidden="true" />
-        </MandoDeZoom>
-        <button
-          type="button"
-          onClick={() => setZoom(0)}
-          title="Volver al tamaño normal"
-          className="tabular min-w-[3rem] text-center text-2xs font-medium text-sala-tinta"
-        >
-          {Math.round(ZOOMS[zoom] * 100)} %
-        </button>
-        <MandoDeZoom
-          etiqueta="Acercar"
-          deshabilitado={zoom === ZOOMS.length - 1}
-          onClick={() => setZoom((z) => Math.min(ZOOMS.length - 1, z + 1))}
-        >
-          <Plus className="size-4" aria-hidden="true" />
-        </MandoDeZoom>
-      </div>
-
-      {esImagen ? (
-        <img
-          src={url}
-          alt=""
-          draggable={false}
-          onLoad={(e) =>
-            setNatural({
-              ancho: e.currentTarget.naturalWidth,
-              alto: e.currentTarget.naturalHeight,
-            })
+              {/* Aquí no se pregunta antes de quitar: lo que se va es un
+                  archivo que todavía no se ha guardado en ninguna parte, así
+                  que volver a ponerlo es arrastrarlo otra vez. */}
+              <BotonOscuro
+                etiqueta="Quitar este soporte"
+                onClick={() => {
+                  onQuitar(i);
+                  if (i > 0) setActivo(i - 1);
+                }}
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+              </BotonOscuro>
+            </>
           }
-          style={encuadre}
         />
-      ) : (
-        <LienzoPdf
-          url={url}
-          // A 1400 y no a 240: esto se mira para leer una cifra, y el tamaño
-          // de una miniatura la deja borrosa.
-          ancho={1400}
-          onTamano={(a, h) => setNatural({ ancho: a, alto: h })}
-          estilo={encuadre}
+      )}
+
+      {vacio && (
+        <div className="flex min-h-0 flex-1">
+          <Soltar subiendo={false} progreso={0} solo onArchivos={onAñadir} />
+        </div>
+      )}
+
+      {añadiendo && (
+        <PanelDeSubida
+          subiendo={false}
+          progreso={0}
+          onArchivos={(nuevos) => {
+            onAñadir(nuevos);
+            setAñadiendo(false);
+          }}
+          onCerrar={() => setAñadiendo(false)}
         />
       )}
     </div>
-  );
-}
-
-/** Los saltos del zoom, como múltiplos de la escala que llena la caja. */
-const ZOOMS = [1, 1.5, 2, 3];
-
-/** Un mando del zoom. Vive sobre el documento, así que no usa la paleta. */
-function MandoDeZoom({
-  etiqueta,
-  deshabilitado,
-  onClick,
-  children,
-}: {
-  etiqueta: string;
-  deshabilitado: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={deshabilitado}
-      aria-label={etiqueta}
-      title={etiqueta}
-      className={cn(
-        'flex size-7 items-center justify-center rounded-full text-sala-tinta transition-colors',
-        deshabilitado ? 'opacity-40' : 'hover:bg-sala-tinta/15',
-      )}
-    >
-      {children}
-    </button>
   );
 }
