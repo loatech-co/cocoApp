@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import type { Category, CategoryKind } from '@prisma/client';
+import type { Category, CategoryKind, Periodicidad } from '@prisma/client';
 
 import { CategoriesRepository } from './categories.repository';
 import { DICCIONARIO_INICIAL } from './categories.seed';
@@ -26,6 +26,15 @@ export interface CategoryView {
   icon: string | null;
   sort_order: number;
   is_archived: boolean;
+  /** Si el concepto se paga cada cierto tiempo. */
+  recurrente: boolean;
+  /** Si el centro de costos no se reclasifica desde la tabla de movimientos. */
+  estatico: boolean;
+  periodicidad: Periodicidad | null;
+  /** Día del mes en que se debe pagar. */
+  dia_de_pago: number | null;
+  /** Mes de referencia del ciclo, 1–12. Solo si la periodicidad no es mensual. */
+  mes_de_pago: number | null;
 }
 
 @Injectable()
@@ -70,6 +79,14 @@ export class CategoriesService {
       color: dto.color ?? null,
       icon: dto.icon ?? null,
       sortOrder: dto.sort_order ?? 0,
+      // La fila se arma campo por campo, así que un dato nuevo del DTO no
+      // llega solo: hay que nombrarlo aquí o se pierde en silencio, con la
+      // API devolviendo 201 y el concepto creado sin su recurrencia.
+      recurrente: dto.recurrente ?? false,
+      estatico: dto.estatico ?? false,
+      periodicidad: dto.periodicidad ?? null,
+      diaDePago: dto.dia_de_pago ?? null,
+      mesDePago: dto.mes_de_pago ?? null,
     });
 
     return this.presentar(categoria);
@@ -106,6 +123,11 @@ export class CategoriesService {
       ...(dto.icon !== undefined && { icon: dto.icon }),
       ...(dto.sort_order !== undefined && { sortOrder: dto.sort_order }),
       ...(dto.is_archived !== undefined && { isArchived: dto.is_archived }),
+      ...(dto.recurrente !== undefined && { recurrente: dto.recurrente }),
+      ...(dto.estatico !== undefined && { estatico: dto.estatico }),
+      ...(dto.periodicidad !== undefined && { periodicidad: dto.periodicidad }),
+      ...(dto.dia_de_pago !== undefined && { diaDePago: dto.dia_de_pago }),
+      ...(dto.mes_de_pago !== undefined && { mesDePago: dto.mes_de_pago }),
     });
 
     return this.obtener(userId, id);
@@ -215,6 +237,59 @@ export class CategoriesService {
     return categoria;
   }
 
+  /**
+   * Funde un concepto en otro: todo lo que colgaba del primero pasa al
+   * segundo y el primero desaparece.
+   *
+   * ── Por qué existe ──────────────────────────────────────────────────────
+   * Porque los duplicados aparecen solos. Una importación crea "Movistar",
+   * otra crea "MOVISTAR S.A.", y a partir de ahí la misma factura está
+   * repartida en dos conceptos que suman por separado: ningún total cuadra y
+   * la dona muestra dos porciones donde hay una.
+   *
+   * ── Por qué no basta con renombrar ──────────────────────────────────────
+   * Renombrar deja dos conceptos con el mismo nombre, que es peor: se ven
+   * iguales y siguen sumando aparte. La única salida es mover los
+   * movimientos y borrar el que sobra.
+   *
+   * Todo en UNA transacción. A medio camino quedarían movimientos apuntando a
+   * una categoría ya borrada, y eso no se arregla mirando la pantalla.
+   */
+  async unificar(
+    userId: bigint,
+    origenId: bigint,
+    destinoId: bigint,
+  ): Promise<{ movidos: number; destino: CategoryView }> {
+    if (origenId === destinoId) {
+      throw new UnprocessableEntityException('Un concepto no se puede unificar consigo mismo.');
+    }
+
+    const origen = await this.exigirCategoria(userId, origenId);
+    const destino = await this.exigirCategoria(userId, destinoId);
+
+    // Solo entre conceptos. Fundir un grupo en otro movería sus hijos sin que
+    // nadie lo haya pedido, y un centro de costos ni siquiera tiene
+    // movimientos propios que mover.
+    if (origen.parentId === null || destino.parentId === null) {
+      throw new UnprocessableEntityException(
+        'Solo se pueden unificar conceptos, no centros de costos ni grupos.',
+      );
+    }
+
+    // Un concepto con cosas dentro no es un concepto: es un grupo mal puesto,
+    // y fundirlo movería sus hijos sin que nadie lo haya pedido.
+    const todas = await this.repo.listar(userId, { incluirArchivadas: true });
+    const conHijos = todas.filter((c) => c.parentId === origenId).length;
+    if (conHijos > 0) {
+      throw new UnprocessableEntityException(
+        'Ese concepto tiene cosas dentro. Vacíalo antes de unificarlo.',
+      );
+    }
+
+    const movidos = await this.repo.unificar(userId, origenId, destinoId);
+    return { movidos, destino: this.presentar(destino) };
+  }
+
   private presentar(categoria: Category): CategoryView {
     return {
       id: categoria.id,
@@ -225,6 +300,11 @@ export class CategoriesService {
       icon: categoria.icon,
       sort_order: categoria.sortOrder,
       is_archived: categoria.isArchived,
+      recurrente: categoria.recurrente,
+      estatico: categoria.estatico,
+      periodicidad: categoria.periodicidad,
+      dia_de_pago: categoria.diaDePago,
+      mes_de_pago: categoria.mesDePago,
     };
   }
 }

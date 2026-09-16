@@ -18,6 +18,7 @@ import { CategoriesService, type CategoryView } from './categories.service';
 import type { ConHijos } from './categories.tree';
 import {
   CreateCategoryDto,
+  UnificarCategoriaDto,
   ListCategoriesQueryDto,
   ReorderCategoriesDto,
   UpdateCategoryDto,
@@ -33,6 +34,11 @@ interface CategoryPayload {
   icon: string | null;
   sort_order: number;
   is_archived: boolean;
+  recurrente: boolean;
+  estatico: boolean;
+  periodicidad: CategoryView['periodicidad'];
+  dia_de_pago: number | null;
+  mes_de_pago: number | null;
   children?: CategoryPayload[];
 }
 
@@ -46,6 +52,15 @@ function aPayload(categoria: CategoryView | ConHijos<CategoryView>): CategoryPay
     icon: categoria.icon,
     sort_order: categoria.sort_order,
     is_archived: categoria.is_archived,
+    // Esta función DESCARTA lo que no esté nombrado aquí. Es su gracia —la
+    // forma pública no cambia porque cambie una columna— y también su trampa:
+    // un campo nuevo en el modelo llega hasta aquí y desaparece sin ruido, con
+    // la API devolviendo 200 y la pantalla mostrando que no se guardó nada.
+    recurrente: categoria.recurrente,
+    estatico: categoria.estatico,
+    periodicidad: categoria.periodicidad,
+    dia_de_pago: categoria.dia_de_pago,
+    mes_de_pago: categoria.mes_de_pago,
   };
 
   if ('children' in categoria) {
@@ -104,6 +119,22 @@ export class CategoriesController {
     return this.categories.reordenar(user.id, dto);
   }
 
+  /**
+   * Funde un concepto en otro.
+   *
+   * Va antes de `:id` en el archivo por costumbre, pero aquí no hace falta:
+   * la ruta lleva un segmento propio después del identificador, así que no
+   * puede confundirse con ninguna otra.
+   */
+  @Post(':id/unificar')
+  unificar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseBigIntPipe) id: bigint,
+    @Body() dto: UnificarCategoriaDto,
+  ): Promise<{ movidos: number; destino: CategoryView }> {
+    return this.categories.unificar(user.id, id, BigInt(dto.destino_id));
+  }
+
   @Patch(':id')
   async actualizar(
     @CurrentUser() user: AuthenticatedUser,
@@ -117,13 +148,23 @@ export class CategoriesController {
    * Archiva. Solo borra físicamente si la categoría nunca se usó — y en ese
    * caso el servicio lo decide, no el cliente.
    */
+  /**
+   * BORRA la categoría. De verdad.
+   *
+   * Antes esta ruta archivaba —dejaba la fila con `is_archived`— y el botón de
+   * la interfaz decía "eliminar": la categoría desaparecía de las listas y
+   * seguía ocupando su nombre, así que crear otra igual chocaba contra una que
+   * nadie podía ver.
+   *
+   * El servicio se niega si hay movimientos usándola. Esa es la red: no se
+   * borra nada que deje filas sin clasificar.
+   */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async archivar(
+  async eliminar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-    @Query('cascade') cascade?: string,
   ): Promise<void> {
-    await this.categories.archivar(user.id, id, cascade === 'true');
+    await this.categories.eliminar(user.id, id);
   }
 }
