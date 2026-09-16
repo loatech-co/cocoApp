@@ -17,6 +17,7 @@ import {
 } from '@/lib/queries';
 import type { Category } from '@coco/types';
 import { Bloque } from '@/components/ui/bloque';
+import { PieDeModal } from '@/components/ui/modal-partes';
 
 /**
  * Crear o renombrar un concepto, y decir si se paga cada cierto tiempo.
@@ -213,19 +214,18 @@ export function ConceptoModal({
             </p>
           )}
 
-          <div className="flex gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={onCerrar} className="flex-1">
+          <PieDeModal>
+            <Button type="button" variant="outline" onClick={onCerrar}>
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={guardando || nombre.trim() === '' || gemelo !== undefined}
-              className="flex-1"
             >
               {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
               {concepto ? 'Guardar' : 'Crear'}
             </Button>
-          </div>
+          </PieDeModal>
         </form>
       </Modal>
 

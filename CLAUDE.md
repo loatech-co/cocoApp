@@ -173,6 +173,73 @@ colgaran los demás.
 pantalla vuelve a escribir su propio `<h1>` o si una acción de cabecera pide
 un tamaño que no sea `sm`.
 
+## 4 sexies. La cabecera y el pie de una ficha
+
+Toda ficha abre con `CabeceraDeModal` y cierra con `PieDeModal`
+(`components/ui/modal-partes.tsx`). Nunca con un `<div>` escrito a mano.
+
+**Por qué están fuera de `Modal`.** Porque hay DOS armazones y siempre los
+va a haber: `ui/modal.tsx` sirve para las fichas que caben en su forma
+—título, una línea de ayuda, una equis— y la del movimiento tiene el suyo,
+porque lleva un pastel de color delante del título y un ancho distinto.
+Encerradas dentro de `Modal`, la del movimiento no podía usarlas y las
+copiaba.
+
+### La cabecera
+
+| Pieza | Dónde va |
+|---|---|
+| `antes` | Delante del título: el pastel de color de un movimiento |
+| `titulo` | `text-lg`, familia de titulares. **Nunca en mayúsculas sostenidas** |
+| `ayuda` | Debajo, `text-sm text-muted-foreground`. Una frase |
+| `acciones` | Botones de icono `sm-icon` a la izquierda de la equis |
+
+La equis la pone el componente y va **junto a las demás acciones**, no en
+la esquina opuesta: eliminar, editar y cerrar son las tres cosas que se
+hacen con la ficha ENTERA, frente a las que se hacen con lo que tiene
+dentro. Repartidas en dos esquinas hay que buscarlas por separado.
+
+La cabecera **no se desplaza** (`shrink-0` dentro de la columna del panel).
+En una ficha larga el título y la equis se iban por arriba, y a mitad de un
+formulario no quedaba en pantalla ni qué se estaba editando ni por dónde
+salir.
+
+La fila interior va centrada y la exterior arranca arriba, y no es lo
+mismo: el pastel tiene que quedar a la altura del título —no de su línea de
+ayuda— y la equis tiene que quedarse arriba aunque debajo haya dos
+renglones de explicación.
+
+### El pie
+
+**Los botones NO se estiran.** Van al tamaño de su texto, alineados a la
+derecha. Los cuatro pies que había —centro de costos, concepto, movimiento
+y cámara— llevaban `flex-1` en los dos botones, así que se repartían el
+ancho a medias: en la ficha del movimiento, que llega a 1024px, cada uno
+medía 480 y «Cancelar» pesaba exactamente lo mismo que «Registrar». Un
+botón del tamaño de su texto dice cuál es la acción principal sin gritarlo.
+
+A la derecha porque es donde termina de leerse un formulario: se recorre de
+arriba abajo y de izquierda a derecha, y la acción que lo cierra va donde
+acaba el recorrido.
+
+**En el teléfono se apilan a ancho completo.** Dos botones del tamaño de su
+texto, en una esquina, son dos blancos pequeños y juntos: es donde se pulsa
+«Cancelar» queriendo pulsar «Guardar».
+
+Y se apilan en el ORDEN en que están escritos, sin invertirlo. La
+convención de escritorio sube el botón primario, pero en el teléfono esta
+ficha está pegada al pie de la pantalla: lo de más abajo es lo que queda
+más cerca del pulgar, y ahí tiene que estar la acción principal.
+
+**Cancelar va en `outline`, no en `ghost`.** Un botón sin contorno al lado
+de uno relleno no se lee como un botón: se lee como el texto de al lado del
+botón.
+
+`components/ui/button.llamadas.test.ts` falla si un `<Button>` vuelve a
+traer `flex-1`. (`w-full` sí se permite: estirar un botón a todo el ancho de
+una columna angosta —el «Iniciar sesión» de una tarjeta de 384px— es otra
+decisión, porque ahí no hay con quién competir.)
+
 ## 5. El rojo es solo para errores
 
 Lo pendiente —un movimiento sin clasificar— va en el oro del tema
@@ -181,10 +248,12 @@ verdad salió mal y a lo que no se puede deshacer.
 
 ## 6. Componentes, no copias
 
-Si algo aparece en dos pantallas, es un componente. La tabla de
+Si algo aparece en dos pantallas, es un componente. Lo son la tabla de
 movimientos, el paginador, la barra de filtros, el calendario, la dona, la
-cabecera de una pantalla (`components/cabecera-de-pagina.tsx`) y el bloque
-dentro de una tarjeta (`components/ui/bloque.tsx`) lo son.
+cabecera de una pantalla (`components/cabecera-de-pagina.tsx`), la cabecera
+y el pie de una ficha (`components/ui/modal-partes.tsx`), el bloque dentro
+de una tarjeta (`components/ui/bloque.tsx`) y la barra de progreso
+(`components/ui/progreso.tsx`).
 
 Lo que no puede ser un componente —porque hace falta un `<label>` o un
 `<button>` en vez de un `<div>`— exporta su CLASE, como hacen `BLOQUE` y

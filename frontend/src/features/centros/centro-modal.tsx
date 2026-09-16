@@ -10,6 +10,7 @@ import { ApiClientError } from '@/lib/api-client';
 import { useCrearCategoria } from '@/lib/queries';
 import { BLOQUE } from '@/components/ui/bloque';
 import { cn } from '@/lib/utils';
+import { PieDeModal } from '@/components/ui/modal-partes';
 
 /**
  * Crear un centro de costos.
@@ -100,19 +101,15 @@ export function CentroModal({ abierta, onCerrar }: { abierta: boolean; onCerrar:
           </p>
         )}
 
-        <div className="flex gap-2 pt-1">
-          <Button type="button" variant="ghost" onClick={onCerrar} className="flex-1">
+        <PieDeModal>
+          <Button type="button" variant="outline" onClick={onCerrar}>
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            disabled={crear.isPending || nombre.trim() === ''}
-            className="flex-1"
-          >
+          <Button type="submit" disabled={crear.isPending || nombre.trim() === ''}>
             {crear.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
             Crear
           </Button>
-        </div>
+        </PieDeModal>
       </form>
     </Modal>
   );

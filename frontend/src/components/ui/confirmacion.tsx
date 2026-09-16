@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
+import { PieDeModal } from '@/components/ui/modal-partes';
 
 /**
  * Pedir confirmación antes de algo que no se deshace solo.
@@ -71,7 +72,7 @@ export function Confirmacion({
         <h2 className="font-display text-lg font-semibold leading-tight">{titulo}</h2>
         <div className="mt-2 text-sm leading-relaxed text-muted-foreground">{children}</div>
 
-        <div className="mt-6 flex justify-end gap-2">
+        <PieDeModal className="mt-6">
           {/*
             `outline` y no `ghost`. Un botón sin contorno al lado de uno
             relleno no se lee como un botón: se lee como el texto de al lado
@@ -90,7 +91,7 @@ export function Confirmacion({
             {ocupada && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
             {etiquetaConfirmar}
           </Button>
-        </div>
+        </PieDeModal>
       </div>
     </div>
   );

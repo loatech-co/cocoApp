@@ -1,7 +1,6 @@
-import { X } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { CabeceraDeModal } from '@/components/ui/modal-partes';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
@@ -89,28 +88,7 @@ export function Modal({
           ancho,
         )}
       >
-        <div className="flex shrink-0 items-start justify-between gap-3 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
-          <div className="min-w-0">
-            <h2 className="font-display text-lg font-semibold leading-tight">{titulo}</h2>
-            {ayuda && <p className="mt-1 text-sm text-muted-foreground">{ayuda}</p>}
-          </div>
-
-          {/* Juntas y del mismo tamaño: son las acciones de la ficha que no
-              son "guardar", y repartidas en dos sitios hay que buscarlas por
-              separado. */}
-          <div className="flex shrink-0 items-center gap-1">
-            {acciones}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm-icon"
-              onClick={onCerrar}
-              aria-label="Cerrar"
-            >
-              <X className="size-4" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
+        <CabeceraDeModal titulo={titulo} ayuda={ayuda} acciones={acciones} onCerrar={onCerrar} />
 
         {/*
           `min-h-0` es lo que permite que esto se encoja: sin él, un hijo de

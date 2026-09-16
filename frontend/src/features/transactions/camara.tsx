@@ -2,6 +2,7 @@ import { Camera, CameraOff, Loader2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { PieDeModal } from '@/components/ui/modal-partes';
 
 /**
  * La cámara, dentro de la aplicación.
@@ -119,21 +120,19 @@ export function Camara({
         )}
       </div>
 
-      <div className="flex gap-2">
-        <Button type="button" variant="ghost" onClick={onCerrar} className="flex-1">
+      {/* El mismo pie que las demás fichas: a la derecha en el escritorio y
+          apilado a ancho completo en el teléfono. Los dos botones se repartían
+          el ancho a medias, así que «Cancelar» pesaba igual que «Capturar». */}
+      <PieDeModal>
+        <Button type="button" variant="outline" onClick={onCerrar}>
           <X className="size-4" aria-hidden="true" />
           Cancelar
         </Button>
-        <Button
-          type="button"
-          onClick={disparar}
-          disabled={estado !== 'lista'}
-          className="flex-1"
-        >
+        <Button type="button" onClick={disparar} disabled={estado !== 'lista'}>
           <Camera className="size-4" aria-hidden="true" />
           Capturar
         </Button>
-      </div>
+      </PieDeModal>
     </div>
   );
 }

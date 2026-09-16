@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Trash2,
   Upload,
-  X,
 } from 'lucide-react';
 import {
   useEffect,
@@ -34,6 +33,7 @@ import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
+import { CabeceraDeModal, PieDeModal } from '@/components/ui/modal-partes';
 import { Progreso } from '@/components/ui/progreso';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { Textarea } from '@/components/ui/textarea';
@@ -366,74 +366,62 @@ export function MovimientoModal({
           'rounded-t-lg sm:max-w-5xl sm:rounded-lg',
         )}
       >
-        {/* La cabecera NO se desplaza: en una ficha de dos columnas con una
-            galería de soportes, el título y la equis se iban por arriba y a
-            mitad del formulario no quedaba en pantalla ni de qué movimiento se
-            trataba ni por dónde salir. */}
-        <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
-          {/* El tipo está en el TÍTULO y en el color, no en un par de botones
-              dentro del formulario. Lo eligió el menú de "Nuevo movimiento"
-              antes de abrir esto, así que aquí ya no es una pregunta: es de
-              qué se está hablando, y el pastel lo dice antes de leer. */}
-          <div className="flex min-w-0 items-center gap-3">
+        {/* La misma cabecera que las demás fichas, con el pastel de color en
+            su hueco. El tipo está en el TÍTULO y en el color, no en un par de
+            botones dentro del formulario: lo eligió el menú de "Nuevo
+            movimiento" antes de abrir esto, así que aquí ya no es una
+            pregunta —es de qué se está hablando, y el pastel lo dice antes de
+            leer—. */}
+        <CabeceraDeModal
+          titulo={
+            !editando
+              ? `Nuevo ${nombreDelTipo(type)}`
+              : editable
+                ? `Editar ${nombreDelTipo(type)}`
+                : mayuscula(nombreDelTipo(type))
+          }
+          antes={
             <ChipIcono
               Icono={type === 'income' ? TrendingUp : TrendingDown}
               color={type === 'income' ? 'ingreso' : 'gasto'}
               tamano="sm"
             />
-            <h2 className="truncate text-lg font-semibold leading-tight">
-              {!editando
-                ? `Nuevo ${nombreDelTipo(type)}`
-                : editable
-                  ? `Editar ${nombreDelTipo(type)}`
-                  : mayuscula(nombreDelTipo(type))}
-            </h2>
-          </div>
+          }
+          acciones={
+            <>
+              {editando && !editable && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm-icon"
+                  onClick={() => setEditable(true)}
+                  aria-label="Editar movimiento"
+                  title="Editar"
+                >
+                  <Pencil className="size-4" aria-hidden="true" />
+                </Button>
+              )}
 
-          {/* Juntas y del mismo tamaño, como en la ficha de un concepto: son
-              las acciones que no son "guardar". */}
-          <div className="flex shrink-0 items-center gap-1">
-            {editando && !editable && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm-icon"
-                onClick={() => setEditable(true)}
-                aria-label="Editar movimiento"
-                title="Editar"
-              >
-                <Pencil className="size-4" aria-hidden="true" />
-              </Button>
-            )}
-
-            {/* Solo en los dinámicos. Un movimiento de un centro estático no
-                se borra desde aquí por la misma razón por la que no se
-                reclasifica: su estructura se decide en Centros de costos. */}
-            {editando && !estatico && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm-icon"
-                onClick={() => setConfirmandoBorrado(true)}
-                aria-label="Eliminar movimiento"
-                title="Eliminar"
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="size-4" aria-hidden="true" />
-              </Button>
-            )}
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm-icon"
-              onClick={onCerrar}
-              aria-label="Cerrar"
-            >
-              <X className="size-4" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
+              {/* Solo en los dinámicos. Un movimiento de un centro estático no
+                  se borra desde aquí por la misma razón por la que no se
+                  reclasifica: su estructura se decide en Centros de costos. */}
+              {editando && !estatico && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm-icon"
+                  onClick={() => setConfirmandoBorrado(true)}
+                  aria-label="Eliminar movimiento"
+                  title="Eliminar"
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="size-4" aria-hidden="true" />
+                </Button>
+              )}
+            </>
+          }
+          onCerrar={onCerrar}
+        />
 
         {/* `min-h-0` es lo que permite que esto se encoja dentro de la columna:
             sin él mide lo que mida su contenido y se lleva por delante el alto
@@ -646,24 +634,23 @@ export function MovimientoModal({
               para salir ya está la equis de la esquina. Un botón "Cerrar"
               debajo de todo es una segunda puerta a la misma salida. */}
           {editandoCampos && (
-            <div className="flex gap-2 pt-1">
+            <PieDeModal>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 onClick={() => {
                   if (!editando) return onCerrar();
                   setDescartes((n) => n + 1);
                   setEditable(false);
                 }}
-                className="flex-1"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={guardando} className="flex-1">
+              <Button type="submit" disabled={guardando}>
                 {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
                 {editando ? 'Guardar' : 'Registrar'}
               </Button>
-            </div>
+            </PieDeModal>
           )}
         </form>
         )}
