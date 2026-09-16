@@ -30,6 +30,7 @@ import type { Category } from '@coco/types';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { Bloque } from '@/components/ui/bloque';
 import { IconoDeCategoria } from '@/components/ui/iconos';
+import { REALCE_DE_SUPERFICIE } from '@/components/ui/superficie';
 
 /**
  * Centros de costos.
@@ -662,12 +663,10 @@ function Agregar({
             sube a plena tinta y el relleno se queda en un tercio del acento
             —lo justo para que se note que la superficie está viva—.
           */
-          // Sin teñir el TRAZO. El borde es punteado y rodea toda la
-          // baldosa: cambiarlo de color redibuja el contorno entero de golpe,
-          // que en una superficie de este tamaño es más movimiento que
-          // respuesta. Se queda quieto y responden el relleno y la letra, que
-          // es donde está mirando quien va a pulsar.
-          'hover:bg-accent/30 hover:text-foreground',
+          // El mismo realce que la zona de soltar un soporte y la de la
+          // importación: son la misma clase de superficie —grande, punteada y
+          // pulsable— y el porqué del volumen está en `superficie.ts`.
+          REALCE_DE_SUPERFICIE,
         )}
       >
         {/*

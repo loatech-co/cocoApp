@@ -22,6 +22,7 @@ import { cargarPdfjs } from '@/lib/pdf';
 import { useEliminarSoporte, useSoportes, useSubirSoportes } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Soporte } from '@coco/types';
+import { REALCE_DE_SUPERFICIE } from '@/components/ui/superficie';
 
 /**
  * Los soportes de un movimiento: el recibo que prueba que ese pago existió.
@@ -249,7 +250,7 @@ export function Soltar({
             ? 'cursor-wait border-border text-muted-foreground'
             : encima
               ? 'border-acento-tinta bg-accent text-accent-foreground'
-              : 'border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              : cn('border-border text-muted-foreground', REALCE_DE_SUPERFICIE),
         )}
       >
         {subiendo ? (

@@ -33,3 +33,26 @@ export const SUPERFICIE_FLOTANTE =
  * movimiento— y aquí solo se nombra.
  */
 export const SURGE = 'surge';
+
+/**
+ * El realce de una superficie GRANDE que responde al cursor.
+ *
+ * ── Por qué no es el mismo que el de una opción ─────────────────────────────
+ * Lo que responde se marca con `accent`, y en una opción de menú o en una fila
+ * de una lista eso es exactamente lo que hace falta: la franja se enciende y
+ * se apaga al pasar. Pero en una superficie de mil por doscientos cincuenta
+ * —la zona donde se sueltan los soportes, el hueco donde va el próximo grupo—
+ * ese mismo relleno a plena intensidad es un fogonazo, no una respuesta.
+ *
+ * Así que el acento baja a un tercio y la letra sube a plena tinta. Sigue
+ * siendo el mismo lenguaje —responde con `accent`, como todo lo demás— a un
+ * volumen proporcional al sitio que ocupa.
+ *
+ * ── Y no toca el trazo ──────────────────────────────────────────────────────
+ * Estas superficies llevan borde punteado. Cambiarle el color redibuja el
+ * contorno entero de golpe, y en un rectángulo de ese tamaño eso se lee como
+ * movimiento y no como respuesta. El trazo se reserva para cuando hay un
+ * archivo encima: ahí sí hay algo que decir —«esto es lo que lo va a
+ * recibir»— y el cambio de color lo dice de una vez.
+ */
+export const REALCE_DE_SUPERFICIE = 'hover:bg-accent/30 hover:text-foreground';

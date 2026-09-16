@@ -21,6 +21,7 @@ import { MapeoDeColumnas } from './mapeo-columnas';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { Progreso } from '@/components/ui/progreso';
 import { Campo } from '@/components/ui/campo';
+import { REALCE_DE_SUPERFICIE } from '@/components/ui/superficie';
 
 /** De qué vía vino el documento. Se guarda en el lote para poder comparar
  *  después qué origen produce menos correcciones en la revisión. */
@@ -416,7 +417,7 @@ function ZonaDeSoltar({
         // notaba justo en el momento en que hace falta saber dónde soltarlo.
         arrastrando
           ? 'border-acento-tinta bg-accent text-accent-foreground'
-          : 'border-border hover:bg-accent hover:text-accent-foreground',
+          : cn('border-border', REALCE_DE_SUPERFICIE),
       )}
     >
       <Upload className="size-8 text-muted-foreground" aria-hidden="true" />
