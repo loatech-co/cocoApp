@@ -145,7 +145,18 @@
 
   --card: #ffffff;
   --card-foreground: var(--color-tinta-950);
-  --popover: #ffffff;
+  /*
+    ── Lo que flota es del color del fondo ─────────────────────────────────
+    Modales y desplegables toman `--background`, el mismo del área principal.
+    No es que se confundan con ella: encima llevan sombra y un anillo, y un
+    modal además oscurece todo lo de atrás. Lo que se gana es que una ficha
+    abierta se lea como la MISMA superficie de la aplicación —algo que se
+    levantó— y no como una tarjeta de otro sitio que aterrizó encima.
+
+    Un solo token para todos: el día que el fondo cambie, cambian con él, sin
+    que nadie tenga que acordarse de los siete sitios donde hay un panel.
+  */
+  --popover: var(--background);
   --popover-foreground: var(--color-tinta-950);
 
   --primary: var(--color-bosque-800);
@@ -245,7 +256,7 @@
      sobre la que cae. Compartiendo color con la tarjeta, un menú abierto sobre
      una tarjeta desaparecía —solo lo delataba la sombra, que en oscuro
      tampoco se ve—. */
-  --popover: var(--color-bosque-700);
+  --popover: var(--background);
   --popover-foreground: #ffffff;
 
   /* En oscuro la marca sube a lima: el bosque sobre bosque no se ve. */
