@@ -1,15 +1,29 @@
 import {
   ArrowUpRight,
+  Camera,
   ExternalLink,
   Loader2,
   Lock,
+  Paperclip,
   Pencil,
-  Trash2,
+  Plus,
+  ScanLine,
+  Sparkles,
   TrendingDown,
   TrendingUp,
+  TriangleAlert,
+  Trash2,
+  Upload,
   X,
 } from 'lucide-react';
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { Link } from 'react-router-dom';
 
 import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-recurrencia';
@@ -23,16 +37,19 @@ import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { ApiClientError } from '@/lib/api-client';
+import { ApiClientError, apiSubir } from '@/lib/api-client';
 import { diaLargo, mesLargo } from '@/lib/fechas';
 import {
   useActualizarCategoria,
   useActualizarMovimiento,
   useCategories,
+  useCrearCategoria,
   useCrearMovimiento,
   useEliminarMovimiento,
 } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
+import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
+import { normalizar, UMBRAL_DE_REVISION, type Lectura } from '@coco/lectura';
 import type { Category, Transaction, TransactionType } from '@coco/types';
 
 /**
@@ -74,6 +91,7 @@ export function MovimientoModal({
   const actualizar = useActualizarMovimiento();
   const actualizarConcepto = useActualizarCategoria();
   const eliminar = useEliminarMovimiento();
+  const crearCategoria = useCrearCategoria();
   const primerCampo = useRef<HTMLInputElement>(null);
 
   const editando = Boolean(movimiento);
@@ -98,6 +116,30 @@ export function MovimientoModal({
     Crear es lo contrario: no hay nada que leer, así que nace editable.
   */
   const [editable, setEditable] = useState(false);
+
+  /*
+    ── Crear un movimiento empieza por decidir CÓMO ────────────────────────
+    Con un recibo en la mano, teclear el valor y la fecha es copiar a mano lo
+    que está escrito en el papel. Sin recibo, esperar a tener uno para
+    registrar un gasto es perder el gasto.
+
+    Son dos caminos de verdad distintos —uno empieza por el documento, el otro
+    por los datos— y preguntarlo de entrada cuesta un clic y ahorra el
+    formulario entero en el caso más común.
+  */
+  const [paso, setPaso] = useState<'elegir' | 'leyendo' | 'formulario'>('formulario');
+  const [progresoDeLectura, setProgresoDeLectura] = useState<ProgresoDeLectura | null>(null);
+  const [lectura, setLectura] = useState<Lectura | null>(null);
+  /*
+    Los soportes elegidos antes de que el movimiento exista.
+
+    Un soporte cuelga de un movimiento, y al crear todavía no hay de qué
+    colgarlo. Se quedan aquí y se suben justo después de guardar: el orden
+    inverso —crear el movimiento para poder adjuntar— obligaría a guardar algo
+    a medias solo para tener un identificador.
+  */
+  const [pendientes, setPendientes] = useState<File[]>([]);
+  const [subiendo, setSubiendo] = useState(false);
   /*
     Sube cada vez que se cancela una edición.
 
@@ -133,6 +175,10 @@ export function MovimientoModal({
     setError(null);
     setConfirmandoBorrado(false);
     setEditable(!movimiento);
+    setPaso(movimiento ? 'formulario' : 'elegir');
+    setLectura(null);
+    setPendientes([]);
+    setProgresoDeLectura(null);
     // El foco solo cuando hay algo que escribir: puesto en un campo de solo
     // lectura, el cursor parpadea en un sitio donde no se puede escribir.
     if (!movimiento) setTimeout(() => primerCampo.current?.focus(), 50);
@@ -186,6 +232,85 @@ export function MovimientoModal({
   /** Lo que se puede tocar ahora mismo. */
   const editandoCampos = editable;
 
+  /**
+   * Lee el recibo y rellena lo que sepa.
+   *
+   * Rellena, no decide: lo leído entra en los mismos campos que se escribirían
+   * a mano, y la persona confirma con el mismo botón de siempre. Un recibo mal
+   * leído que se guarda solo es peor que no leerlo, porque nadie vuelve a
+   * mirar lo que ya quedó registrado.
+   */
+  async function escanear(archivo: File): Promise<void> {
+    setPaso('leyendo');
+    setError(null);
+    setPendientes([archivo]);
+
+    try {
+      const { lectura: leida } = await leerSoporte(archivo, {
+        periodo: date.slice(0, 7),
+        onProgreso: setProgresoDeLectura,
+      });
+
+      setLectura(leida);
+      if (leida.valor !== null) setAmount(String(leida.valor));
+      if (leida.fecha) setDate(leida.fecha);
+      if (leida.concepto) {
+        setDescription(leida.concepto);
+        // Y si ese concepto ya existe en el árbol, se deja elegido: eso es lo
+        // que hace que el movimiento entre clasificado y no "sin clasificar
+        // pero con un nombre que se parece".
+        const suyo = conceptoLlamado(categorias.data ?? [], leida.concepto);
+        if (suyo) setCategoryId(suyo.id);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No pude leer ese archivo.');
+    } finally {
+      setProgresoDeLectura(null);
+      setPaso('formulario');
+    }
+  }
+
+  /**
+   * Crea el concepto que el clasificador reconoció y el árbol no tiene.
+   *
+   * Crea la rama entera si hace falta —centro, grupo y concepto— porque un
+   * concepto suelto no existe: sin su grupo no suma en ningún desglose. Y deja
+   * el nuevo elegido, que es lo que uno venía a hacer.
+   */
+  async function crearLoReconocido(): Promise<void> {
+    if (!lectura?.concepto || !lectura.grupo || !lectura.centro) return;
+    setError(null);
+
+    try {
+      const arbolActual = categorias.data ?? [];
+      const centroExistente = arbolActual.find((c) => normalizar(c.name) === normalizar(lectura.centro!));
+      const centroId =
+        centroExistente?.id ??
+        (await crearCategoria.mutateAsync({ name: lectura.centro, kind: 'expense' })).id;
+
+      const grupoExistente = (centroExistente?.children ?? []).find(
+        (g) => normalizar(g.name) === normalizar(lectura.grupo!),
+      );
+      const grupoId =
+        grupoExistente?.id ??
+        (await crearCategoria.mutateAsync({
+          name: lectura.grupo,
+          kind: 'expense',
+          parent_id: centroId,
+        })).id;
+
+      const nuevo = await crearCategoria.mutateAsync({
+        name: lectura.concepto,
+        kind: 'expense',
+        parent_id: grupoId,
+      });
+
+      setCategoryId(nuevo.id);
+    } catch (e) {
+      setError(e instanceof ApiClientError ? e.message : 'No se pudo crear el concepto.');
+    }
+  }
+
   async function onSubmit(evento: FormEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
     setError(null);
@@ -203,8 +328,21 @@ export function MovimientoModal({
     };
 
     try {
+      let id = movimiento?.id;
+
       if (movimiento) await actualizar.mutateAsync({ id: movimiento.id, cambios: cuerpo });
-      else await crear.mutateAsync(cuerpo as never);
+      else {
+        const creado = await crear.mutateAsync(cuerpo as never);
+        id = (creado as { id: number }).id;
+      }
+
+      // Los soportes, ya con un movimiento del que colgar.
+      if (id !== undefined && pendientes.length > 0) {
+        setSubiendo(true);
+        const datos = new FormData();
+        for (const archivo of pendientes) datos.append('archivos', archivo);
+        await apiSubir(`/transactions/${id}/soportes`, datos);
+      }
 
       // La recurrencia va aparte porque no es del movimiento: es del concepto.
       if (concepto && cambioLaRecurrencia(concepto, recurrencia)) {
@@ -225,10 +363,12 @@ export function MovimientoModal({
       onCerrar();
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : 'No se pudo guardar.');
+    } finally {
+      setSubiendo(false);
     }
   }
 
-  const guardando = crear.isPending || actualizar.isPending;
+  const guardando = crear.isPending || actualizar.isPending || subiendo;
 
   return (
     <div
@@ -322,7 +462,27 @@ export function MovimientoModal({
           </div>
         </div>
 
+        {paso === 'elegir' && <ComoEmpezar onEscanear={(a) => void escanear(a)} onAMano={() => setPaso('formulario')} />}
+
+        {paso === 'leyendo' && (
+          <div className="flex flex-col items-center gap-3 py-10">
+            <Loader2 className="size-7 animate-spin text-muted-foreground" aria-hidden="true" />
+            <p className="text-sm text-muted-foreground">
+              {progresoDeLectura?.etapa ?? 'Leyendo el recibo…'}
+            </p>
+            {/* El OCR de un escaneo tarda segundos y sin barra parece colgado. */}
+            <div className="h-1 w-48 overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full bg-primary transition-[width]"
+                style={{ width: `${Math.round((progresoDeLectura?.avance ?? 0) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {paso === 'formulario' && (
         <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
+          {lectura && <LoQueLei lectura={lectura} />}
           {editandoCampos ? (
             <>
           <div className="flex flex-col gap-1.5">
@@ -433,9 +593,30 @@ export function MovimientoModal({
                 onElegir={(id) => setCategoryId(id ?? grupo?.id)}
               />
 
-              <p className="text-xs text-muted-foreground">
-                Un movimiento puede quedarse sin clasificar. Se guarda igual.
-              </p>
+              {/* Reconocí el acreedor pero no está en el árbol: ofrecerlo con
+                  su rama ahorra ir a Centros de costos, crearlo, y volver. */}
+              {lectura?.concepto &&
+              lectura.grupo &&
+              lectura.centro &&
+              !conceptoLlamado(arbol, lectura.concepto) ? (
+                <button
+                  type="button"
+                  onClick={() => void crearLoReconocido()}
+                  disabled={crearCategoria.isPending}
+                  className="flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+                >
+                  {crearCategoria.isPending ? (
+                    <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Plus className="size-3.5 shrink-0" aria-hidden="true" />
+                  )}
+                  Crear “{lectura.concepto}” en {lectura.centro} › {lectura.grupo}
+                </button>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Un movimiento puede quedarse sin clasificar. Se guarda igual.
+                </p>
+              )}
             </Seccion>
           )}
 
@@ -492,6 +673,18 @@ export function MovimientoModal({
             </Seccion>
           )}
 
+          {/* Creando todavía no hay de qué colgarlos, así que se quedan
+              esperando y se suben en cuanto el movimiento existe. */}
+          {!editando && (
+            <Seccion titulo="Soportes">
+              <SoportesPendientes
+                archivos={pendientes}
+                onAñadir={(nuevos) => setPendientes((p) => [...p, ...nuevos])}
+                onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
+              />
+            </Seccion>
+          )}
+
           {/* Las notas, DESPUÉS de los soportes. El recibo es la prueba de lo
               que pasó; la nota es el comentario de alguien sobre eso. Primero
               el hecho, luego lo que se dijo de él. */}
@@ -533,6 +726,7 @@ export function MovimientoModal({
             </div>
           )}
         </form>
+        )}
 
         <Confirmacion
           abierta={confirmandoBorrado}
@@ -784,5 +978,263 @@ function Seccion({
         children
       )}
     </section>
+  );
+}
+
+/**
+ * Busca un concepto por su nombre en el árbol.
+ *
+ * Sin distinguir mayúsculas ni tildes: lo que devuelve el clasificador viene
+ * de una tabla de firmas escrita a mano, y lo que hay en el árbol lo escribió
+ * una persona. "Celsia (Energia)" y "Celsia (Energía)" son el mismo concepto y
+ * no hay ninguna razón para que un acento los separe.
+ */
+function conceptoLlamado(arbol: Category[], nombre: string): Category | undefined {
+  const buscado = normalizar(nombre);
+
+  for (const centro of arbol) {
+    for (const grupo of centro.children ?? []) {
+      for (const concepto of grupo.children ?? []) {
+        if (normalizar(concepto.name) === buscado) return concepto;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Las dos formas de empezar un movimiento.
+ *
+ * ── Por qué se pregunta en vez de deducirlo ─────────────────────────────────
+ * Porque son dos actos distintos, no dos caminos al mismo sitio. Con el recibo
+ * en la mano, teclear el valor y la fecha es copiar a mano lo que ya está
+ * escrito en el papel —y equivocarse en un dígito—. Sin recibo, esperar a
+ * tener uno para registrar el gasto es perder el gasto.
+ *
+ * ── Por qué la cámara va aparte del archivo ─────────────────────────────────
+ * Porque en un teléfono son gestos distintos: `capture` abre la cámara
+ * directamente, sin pasar por el carrete. Un solo botón obligaría a elegir
+ * "Cámara" en un menú del sistema cada vez, que es justo el paso que hace que
+ * la gente deje de registrar gastos.
+ */
+function ComoEmpezar({
+  onEscanear,
+  onAMano,
+}: {
+  onEscanear: (archivo: File) => void;
+  onAMano: () => void;
+}) {
+  const camara = useRef<HTMLInputElement>(null);
+  const archivo = useRef<HTMLInputElement>(null);
+
+  const TIPOS = 'application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp';
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Via
+        Icono={ScanLine}
+        color="violeta"
+        titulo="Escanear el documento"
+        ayuda="Leo el valor, la fecha y de qué es. Vos confirmás."
+        acciones={
+          <>
+            {/* En escritorio `capture` se ignora y abre el explorador, así que
+                el botón sigue sirviendo: no hay que esconderlo por plataforma. */}
+            <button
+              type="button"
+              onClick={() => camara.current?.click()}
+              className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+            >
+              <Camera className="size-3.5 shrink-0" aria-hidden="true" />
+              Tomar una foto
+            </button>
+            <button
+              type="button"
+              onClick={() => archivo.current?.click()}
+              className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+            >
+              <Upload className="size-3.5 shrink-0" aria-hidden="true" />
+              Elegir un archivo
+            </button>
+          </>
+        }
+      />
+
+      <Via
+        Icono={Pencil}
+        color="turquesa"
+        titulo="Escribirlo a mano"
+        ayuda="Sin recibo, o con uno que ya sabés dónde va."
+        acciones={
+          <button
+            type="button"
+            onClick={onAMano}
+            className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+          >
+            Empezar
+          </button>
+        }
+      />
+
+      <input
+        ref={camara}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const a = e.target.files?.[0];
+          e.target.value = '';
+          if (a) onEscanear(a);
+        }}
+      />
+      <input
+        ref={archivo}
+        type="file"
+        accept={TIPOS}
+        className="hidden"
+        onChange={(e) => {
+          const a = e.target.files?.[0];
+          e.target.value = '';
+          if (a) onEscanear(a);
+        }}
+      />
+    </div>
+  );
+}
+
+function Via({
+  Icono,
+  color,
+  titulo,
+  ayuda,
+  acciones,
+}: {
+  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  color: 'violeta' | 'turquesa';
+  titulo: string;
+  ayuda: string;
+  acciones: ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl bg-secondary/60 p-4">
+      <ChipIcono Icono={Icono} color={color} tamano="sm" />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div>
+          <p className="text-sm font-semibold">{titulo}</p>
+          <p className="text-xs text-muted-foreground">{ayuda}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">{acciones}</div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Lo que la máquina leyó, dicho antes de que se guarde.
+ *
+ * ── Por qué se enseña y no se aplica en silencio ────────────────────────────
+ * Porque un recibo mal leído que se guarda solo es peor que no leerlo: nadie
+ * vuelve a mirar lo que ya quedó registrado, y el error se descubre meses
+ * después cuando un total no cuadra. Dicho aquí, corregirlo cuesta un clic en
+ * el campo de al lado.
+ *
+ * ── Por qué se dice también la confianza ────────────────────────────────────
+ * Porque no todas las lecturas valen lo mismo, y quien confirma merece saber
+ * cuál mirar con cuidado. Un PDF digital con el NIT y la línea de "total a
+ * pagar" es casi seguro; una foto torcida de un recibo térmico, no.
+ */
+function LoQueLei({ lectura }: { lectura: Lectura }) {
+  const seguro = lectura.confianza >= UMBRAL_DE_REVISION;
+
+  return (
+    <div
+      className={cn(
+        'flex items-start gap-2 rounded-2xl p-3 text-xs',
+        // Ámbar para lo que hay que mirar, nunca rojo: no salió nada mal, hay
+        // algo pendiente de confirmar.
+        seguro ? 'bg-secondary/60 text-muted-foreground' : 'bg-warning-surface text-warning',
+      )}
+    >
+      {seguro ? (
+        <Sparkles className="mt-px size-4 shrink-0" aria-hidden="true" />
+      ) : (
+        <TriangleAlert className="mt-px size-4 shrink-0" aria-hidden="true" />
+      )}
+      <span className="min-w-0">
+        {seguro ? 'Leí el recibo. ' : 'Leí el recibo, pero con dudas. '}
+        {lectura.motivo}
+        {!seguro && ' Revisá los campos antes de guardar.'}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Los soportes elegidos antes de que el movimiento exista.
+ *
+ * Se quedan en memoria hasta que hay un movimiento del que colgarlos. La
+ * alternativa —crear el movimiento vacío para tener un identificador y luego
+ * adjuntar— deja movimientos a medias en la base cada vez que alguien abre el
+ * formulario y se arrepiente.
+ */
+function SoportesPendientes({
+  archivos,
+  onAñadir,
+  onQuitar,
+}: {
+  archivos: File[];
+  onAñadir: (archivos: File[]) => void;
+  onQuitar: (indice: number) => void;
+}) {
+  const campo = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex flex-col gap-2">
+      {archivos.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5">
+          {archivos.map((a, i) => (
+            <li
+              key={`${a.name}-${i}`}
+              className="flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 text-xs"
+            >
+              <span className="max-w-[14rem] truncate">{a.name}</span>
+              <span className="tabular shrink-0 text-muted-foreground">
+                {(a.size / 1024).toFixed(0)} KB
+              </span>
+              <button
+                type="button"
+                onClick={() => onQuitar(i)}
+                aria-label={`Quitar ${a.name}`}
+                className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+              >
+                <X className="size-3.5" aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <button
+        type="button"
+        onClick={() => campo.current?.click()}
+        className="flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+      >
+        <Paperclip className="size-3.5 shrink-0" aria-hidden="true" />
+        {archivos.length === 0 ? 'Adjuntar el recibo' : 'Adjuntar otro'}
+      </button>
+
+      <input
+        ref={campo}
+        type="file"
+        multiple
+        accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          onAñadir(Array.from(e.target.files ?? []));
+          e.target.value = '';
+        }}
+      />
+    </div>
   );
 }

@@ -9,6 +9,7 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@coco/types': fileURLToPath(new URL('../packages/types/src/index.ts', import.meta.url)),
+      '@coco/lectura': fileURLToPath(new URL('../packages/lectura/src/index.ts', import.meta.url)),
     },
   },
   build: {

@@ -23,7 +23,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@coco/types": ["../packages/types/src/index.ts"]
+      "@coco/types": ["../packages/types/src/index.ts"],
+      "@coco/lectura": ["../packages/lectura/src/index.ts"]
     },
 
     "types": ["vite/client", "node"]
