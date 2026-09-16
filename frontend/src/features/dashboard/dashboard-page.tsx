@@ -140,14 +140,14 @@ export function DashboardPage() {
               <Skeleton key={i} className="h-24 rounded-2xl" />
             ))}
           </div>
-          <div className="grid gap-4 sm:gap-5 lg:grid-cols-10">
-            <Card className="lg:col-span-7">
+          <div className="grid gap-3 sm:gap-5 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
               <CardContent className="p-4 sm:p-6">
                 <Skeleton className="mb-4 h-6 w-40" />
                 <TendenciaEsqueleto />
               </CardContent>
             </Card>
-            <Skeleton className="h-72 rounded-3xl lg:col-span-3" />
+            <Skeleton className="h-72 rounded-3xl" />
           </div>
         </>
       )}
@@ -181,8 +181,11 @@ export function DashboardPage() {
           {/* La gráfica dice CUÁNDO se gastó y la dona EN QUÉ. Son la misma
               pregunta partida en dos, así que van a la misma altura: una
               debajo de la otra obliga a desplazarse para cruzarlas. */}
-          <div className="grid gap-4 sm:gap-5 lg:grid-cols-10">
-            <Card className="lg:col-span-7">
+          {/* MISMA rejilla y mismo hueco que la fila de indicadores: con 10
+              columnas arriba y 3 abajo, la dona quedaba unos píxeles corrida
+              respecto de la tarjeta que tiene encima y el borde no cuadraba. */}
+          <div className="grid gap-3 sm:gap-5 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
               <CardContent className="p-4 sm:p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
                 <Tendencia
@@ -192,7 +195,7 @@ export function DashboardPage() {
               </CardContent>
             </Card>
 
-            <div className="lg:col-span-3">
+            <div>
               <Distribucion
                 filas={dashboard.data.by_category}
                 nivel={dashboard.data.breakdown_level}
