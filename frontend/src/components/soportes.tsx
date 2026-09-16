@@ -205,11 +205,21 @@ function Soltar({
         className={cn(
           'flex size-[104px] flex-col items-center justify-center gap-1.5 rounded-2xl',
           'border-2 border-dashed transition-colors',
+          /*
+            El resaltado NO va a `primary`.
+
+            En oscuro `--primary` es `bosque-800`, un verde oscuro: sobre el
+            fondo de la ficha el borde no se encendía, se enturbiaba. Al pasar
+            por encima se oscurece el hueco y se aclara el borde —lo mismo que
+            hacen los chips de los conceptos— y solo al soltar algo encima
+            aparece el lima, que ahí sí dice algo: "esto es lo que va a
+            recibir el archivo".
+          */
           subiendo
             ? 'cursor-wait border-border text-muted-foreground'
             : encima
-              ? 'border-primary bg-primary/10 text-foreground'
-              : 'border-border text-muted-foreground hover:border-primary hover:text-foreground',
+              ? 'border-lima-tinta bg-black/10 text-foreground'
+              : 'border-border text-muted-foreground hover:border-muted-foreground hover:bg-black/5 hover:text-foreground',
         )}
       >
         {subiendo ? (
@@ -280,8 +290,11 @@ function Miniatura({
       className={cn(
         'group relative flex size-[104px] items-center justify-center overflow-hidden',
         'rounded-2xl bg-card ring-1 ring-border transition-all',
+        // `lima-tinta` y no `primary`, por lo mismo que el hueco de al lado:
+        // el verde oscuro de `primary` no se ve sobre un fondo oscuro, y las
+        // dos piezas están en la misma fila —tenían que responder igual—.
         soporte.disponible
-          ? 'cursor-pointer hover:ring-2 hover:ring-primary'
+          ? 'cursor-pointer hover:ring-2 hover:ring-lima-tinta'
           : 'cursor-not-allowed opacity-50',
       )}
     >
