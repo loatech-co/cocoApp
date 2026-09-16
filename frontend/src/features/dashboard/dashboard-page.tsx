@@ -21,7 +21,13 @@ import { useAuth } from '@/lib/auth-context';
 import { aParametros, llegaHastaHoy, useFiltros } from '@/lib/filtros';
 import { useCategories, useDashboard, useTransactions } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
-import type { Category, SpendingByCategory, Transaction, TransactionType } from '@coco/types';
+import type {
+  Category,
+  PagoPendiente,
+  SpendingByCategory,
+  Transaction,
+  TransactionType,
+} from '@coco/types';
 
 /**
  * Resumen.
@@ -103,7 +109,8 @@ export function DashboardPage() {
   // El mismo modal que en Movimientos: editar desde el resumen no puede ser
   // otra pantalla ni otro formulario.
   const [editando, setEditando] = useState<Transaction | null | undefined>(undefined);
-  const [conceptoSugerido, setConceptoSugerido] = useState<number | undefined>();
+  /** El pago pendiente que se está confirmando. Cambia la ficha entera. */
+  const [confirmando, setConfirmando] = useState<PagoPendiente | null>(null);
   const [tipoNuevo, setTipoNuevo] = useState<TransactionType>('expense');
 
   /*
@@ -150,7 +157,10 @@ export function DashboardPage() {
         hayFiltrosActivos={hayFiltrosActivos}
         onNuevo={(tipo) => {
           setTipoNuevo(tipo);
-          setConceptoSugerido(undefined);
+          // Un movimiento nuevo empieza de cero, venga uno de donde venga: sin
+          // esto, abrir «Nuevo gasto» después de haber mirado un pendiente
+          // habría reabierto la ficha de confirmar aquel pago.
+          setConfirmando(null);
           setEditando(null);
         }}
       />
@@ -353,10 +363,11 @@ export function DashboardPage() {
               <PagosPendientes
                 className="min-h-0"
                 pagos={dashboard.data.pending}
-                // Abre el modal de CREAR con el concepto ya puesto: el pago
-                // que falta es justo el que se acaba de señalar.
+                // Abre la ficha de «Confirmar pago»: el concepto, el valor
+                // esperado y la fecha de vencimiento ya están dichos aquí, así
+                // que lo que queda es adjuntar el soporte y confirmar.
                 onElegir={(pago) => {
-                  setConceptoSugerido(pago.category_id);
+                  setConfirmando(pago);
                   setTipoNuevo('expense');
                   setEditando(null);
                 }}
@@ -434,11 +445,11 @@ export function DashboardPage() {
       <MovimientoModal
         abierta={editando !== undefined}
         movimiento={editando}
-        categoriaPorDefecto={conceptoSugerido}
+        pago={confirmando}
         tipoPorDefecto={tipoNuevo}
         onCerrar={() => {
           setEditando(undefined);
-          setConceptoSugerido(undefined);
+          setConfirmando(null);
         }}
       />
     </div>

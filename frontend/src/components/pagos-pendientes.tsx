@@ -26,7 +26,12 @@ export function PagosPendientes({
   className,
 }: {
   pagos: PagoPendiente[];
-  /** Registrar el pago: abre el modal con el concepto puesto. */
+  /**
+   * Confirmar el pago: abre la ficha de un movimiento nuevo con el concepto,
+   * el valor esperado y la fecha de vencimiento ya puestos. Se le pasa el pago
+   * ENTERO y no su concepto: los otros dos datos están aquí, y pedirlos otra
+   * vez sería teclear mirando esta misma fila.
+   */
   onElegir?: (pago: PagoPendiente) => void;
   className?: string;
 }) {

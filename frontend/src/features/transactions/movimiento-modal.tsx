@@ -51,7 +51,7 @@ import { agruparMiles, cn, formatCOP, soloCifras } from '@/lib/utils';
 import { Camara } from './camara';
 import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
 import { normalizar, type Lectura } from '@coco/lectura';
-import type { Category, Transaction, TransactionType } from '@coco/types';
+import type { Category, PagoPendiente, Transaction, TransactionType } from '@coco/types';
 
 /**
  * Lo que dura como mínimo el paso de lectura de un soporte.
@@ -93,7 +93,7 @@ const LECTURA_MINIMA_MS = 4000;
 export function MovimientoModal({
   abierta,
   movimiento,
-  categoriaPorDefecto,
+  pago,
   tipoPorDefecto = 'expense',
   onCerrar,
 }: {
@@ -101,11 +101,22 @@ export function MovimientoModal({
   /** Sin movimiento, el formulario crea. Con movimiento, edita ese. */
   movimiento?: Transaction | null;
   /**
-   * Con qué concepto abrir al CREAR. Lo usa la tarjeta de pagos pendientes: el
-   * concepto ya se sabe —es el que falta— y pedirlo otra vez sería preguntar
-   * algo que uno acaba de señalar.
+   * El pago pendiente que se viene a confirmar, desde la tarjeta del resumen.
+   *
+   * ── Por qué es el pago entero y no solo su concepto ─────────────────────
+   * Porque un pago pendiente ya trae dicho casi todo el movimiento: de qué
+   * concepto es, cuándo vencía y cuánto suele costar. Pasando solo el
+   * concepto, las otras dos cosas había que teclearlas mirando la misma
+   * tarjeta que se acababa de pulsar.
+   *
+   * ── Y por qué eso cambia la ficha entera ────────────────────────────────
+   * Confirmar un pago no es registrar un gasto desde cero: no hay que decidir
+   * CÓMO empezar —el concepto ya está, lo que falta es el papel— así que se
+   * abre directamente en el formulario, con los campos puestos y la columna
+   * del soporte esperando. Lo que hay escrito es lo ESPERADO, y el soporte lo
+   * corrige: ver `onAñadir` en la columna de soportes.
    */
-  categoriaPorDefecto?: number;
+  pago?: PagoPendiente | null;
   /** Con qué tipo abrir al CREAR. Lo elige el menú de "Nuevo movimiento". */
   tipoPorDefecto?: TransactionType;
   onCerrar: () => void;
@@ -194,22 +205,48 @@ export function MovimientoModal({
   useEffect(() => {
     if (!abierta) return;
     setDescription(movimiento?.description ?? '');
-    setAmount(movimiento ? String(Number(movimiento.amount)) : '');
-    setDate(movimiento?.date ?? hoyEnBogota());
+    /*
+      Confirmando un pago, el valor y la fecha nacen puestos.
+
+      Son lo ESPERADO: el promedio de los meses que sí se pagaron y el día en
+      que vencía. No son el dato bueno —el dato bueno lo dice el recibo— pero
+      son mucho mejor que una caja vacía, y el gesto que los corrige es
+      adjuntar el soporte, que es a lo que se viene.
+
+      Un valor esperado que nadie corrige se registra como si fuera el real, y
+      por eso la cabecera lo dice con todas las letras en vez de dejar que
+      parezca un dato.
+    */
+    setAmount(
+      movimiento
+        ? String(Number(movimiento.amount))
+        : pago?.expected_amount != null
+          ? String(Number(pago.expected_amount))
+          : '',
+    );
+    setDate(movimiento?.date ?? pago?.due_date ?? hoyEnBogota());
     setType(movimiento?.type ?? tipoPorDefecto);
-    setCategoryId(movimiento?.category_id ?? categoriaPorDefecto);
+    setCategoryId(movimiento?.category_id ?? pago?.category_id);
     setNotes(movimiento?.notes ?? '');
     setError(null);
     setConfirmandoBorrado(false);
     setEditable(!movimiento);
-    setPaso(movimiento ? 'formulario' : 'elegir');
+    /*
+      Confirmar un pago se salta el «cómo empezar».
+
+      Esa pantalla existe para decidir si se parte del papel o de los datos, y
+      aquí esa pregunta ya no está abierta: el concepto se sabe, el valor y la
+      fecha están puestos, y lo único que falta es el soporte —que se adjunta
+      en la columna de al lado, sin cambiar de pantalla—.
+    */
+    setPaso(movimiento || pago ? 'formulario' : 'elegir');
     setLectura(null);
     setSinLeer(null);
     setPendientes([]);
     setProgresoDeLectura(null);
     // El foco solo cuando hay algo que escribir: puesto en un campo de solo
     // lectura, el cursor parpadea en un sitio donde no se puede escribir.
-  }, [abierta, movimiento, categoriaPorDefecto, tipoPorDefecto, descartes]);
+  }, [abierta, movimiento, pago, tipoPorDefecto, descartes]);
 
   /*
     ── La recurrencia NO se edita aquí ─────────────────────────────────────
@@ -237,6 +274,16 @@ export function MovimientoModal({
 
   const arbol = categorias.data ?? [];
   const { centro, grupo, concepto } = rutaSeleccionada(arbol, categoryId);
+
+  /**
+   * Se vino a confirmar un pago pendiente, no a registrar un gasto cualquiera.
+   *
+   * Lleva el `!movimiento` dentro a propósito: `pago` sigue puesto mientras la
+   * ficha está abierta, y en cuanto se guarda deja de ser un pendiente. Sin
+   * eso, la ficha de un movimiento ya existente podría titularse «Confirmar
+   * pago» por venir de esa tarjeta.
+   */
+  const confirmandoUnPago = pago != null && !movimiento;
 
   /*
     ── Lo que ya está en un centro estático no se mueve ──────────────────────
@@ -474,11 +521,29 @@ export function MovimientoModal({
             leer—. */}
         <CabeceraDeModal
           titulo={
-            !editando
-              ? `Nuevo ${nombreDelTipo(type)}`
-              : editable
-                ? `Editar ${nombreDelTipo(type)}`
-                : mayuscula(nombreDelTipo(type))
+            confirmandoUnPago
+              ? 'Confirmar pago'
+              : !editando
+                ? `Nuevo ${nombreDelTipo(type)}`
+                : editable
+                  ? `Editar ${nombreDelTipo(type)}`
+                  : mayuscula(nombreDelTipo(type))
+          }
+          /*
+            Solo al confirmar un pago, y dice las tres cosas que hacen falta:
+            CUÁL es el pago —el título no lo dice—, que lo que hay escrito es
+            un esperado y no un dato, y qué hacer para que deje de serlo.
+
+            Sin la segunda, un valor calculado del promedio de tres meses se
+            ve igual que uno copiado del recibo, y el que confirme sin mirar
+            registra un promedio como si fuera la plata que salió.
+          */
+          ayuda={
+            confirmandoUnPago
+              ? pago.expected_amount != null
+                ? `${pago.name}. El valor y la fecha son los esperados: adjunta el soporte y se corrigen con lo que diga el recibo.`
+                : `${pago.name}. Adjunta el soporte y se leen el valor y la fecha.`
+              : undefined
           }
           antes={
             <ChipIcono
@@ -593,7 +658,36 @@ export function MovimientoModal({
                   ) : (
                     <SoportesPendientes
                       archivos={pendientes}
-                      onAñadir={(nuevos) => setPendientes((p) => [...p, ...nuevos])}
+                      /*
+                        Confirmando un pago, el PRIMER soporte se lee.
+
+                        Es la mitad que faltaba: la ficha se abre con el valor
+                        y la fecha esperados, y el recibo es lo que los
+                        convierte en los de verdad. Adjuntarlo y que no pasara
+                        nada dejaba al soporte de adorno y obligaba a copiar a
+                        mano lo que la app sabe leer.
+
+                        Solo el primero, y solo si no hay ninguno: los demás
+                        quedan adjuntos sin leer, porque lo que rellena el
+                        formulario es UN documento. Es la misma regla que ya
+                        seguía el panel de subir.
+
+                        Y solo confirmando un pago. Quien eligió «Registrar
+                        manualmente» eligió teclearlo: releerle encima lo que
+                        acaba de escribir sería deshacerle el trabajo.
+                      */
+                      onAñadir={(nuevos) => {
+                        const [primero, ...resto] = nuevos;
+
+                        if (confirmandoUnPago && pendientes.length === 0 && primero) {
+                          void escanear(primero).then(() => {
+                            if (resto.length > 0) setPendientes((p) => [...p, ...resto]);
+                          });
+                          return;
+                        }
+
+                        setPendientes((p) => [...p, ...nuevos]);
+                      }}
                       onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
                     />
                   )}
