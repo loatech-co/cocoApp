@@ -83,20 +83,51 @@ export function Chip({
   children: ReactNode;
 }) {
   const forma = cn(
-    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs',
-    'transition-colors [&_svg]:size-3.5',
-    activo
-      ? 'border-transparent bg-primary font-medium text-primary-foreground'
-      : /*
-          El realce compartido, y no un `hover:bg-muted` propio.
+    /*
+      ── La esquina: 6px, no una píldora ─────────────────────────────────────
+      El `rounded-full` no lo decidió nadie: es el redondeo por defecto de un
+      chip en cualquier librería. Pero aquí el chip no anda solo —vive dentro
+      de un bloque de 10px, dentro de una tarjeta de 10px— y una píldora al
+      lado de dos esquinas cuadradas es lo que la regla del radio llama dos
+      sistemas distintos. Menor que el estándar sí, que es lo que la regla
+      permite a un chip; con otra forma, no.
 
-          Era un fallo: este chip vive dentro de un bloque, que ES `muted`, así
-          que al pasar el cursor por encima tomaba exactamente el color de la
-          caja que lo contiene y desaparecía —lo contrario de lo que tiene que
-          hacer al señalarlo—. Y responder es lo mismo en toda la app: el lima
-          al 10 % tiñendo el fondo y la letra.
+      ── El alto: 32px ───────────────────────────────────────────────────────
+      Medía 26, que es lo que salía de sumar 12 de letra y 4 de relleno arriba
+      y abajo: un alto que no eligió nadie tampoco. 32 es el escalón de la
+      escala que queda debajo de los 36 de un control, así que un chip sigue
+      leyéndose como contenido y no como un botón, pero ya se puede pulsar con
+      el dedo. El aire lateral sube con él, de 10 a 12: en una caja más alta,
+      el mismo relleno estrecho hace que el nombre parezca pegado al canto.
+    */
+    'inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-xs',
+    // El nombre de un concepto es un nombre propio: a 12px, el peso normal se
+    // deshace contra el relleno del chip.
+    'font-medium transition-colors [&_svg]:size-3.5',
+    activo
+      ? 'border-transparent bg-primary text-primary-foreground'
+      : /*
+          ── El relleno: la tinta al 10 %, y no una superficie del tema ────────
+          Llevaba `bg-card`, y un relleno fijo solo funciona si queda escalón
+          contra lo que tiene detrás. Este chip vive dentro de un bloque, que es
+          `muted`, y el escalón salía en sentidos contrarios: en claro `card` es
+          blanco sobre un lienzo cálido y el chip se levanta; en oscuro `card`
+          es más OSCURO que el bloque, así que el mismo chip se hunde y se lee
+          como un agujero. Quitarle el relleno del todo tampoco valía: el canto
+          solo está diez puntos por encima de la superficie y no sostiene nada.
+
+          La tinta al 10 % se mueve SIEMPRE hacia el texto: en claro oscurece,
+          en oscuro aclara. Es decir, hace exactamente lo que la regla de las
+          tres superficies pide en cada tema —dentro baja en claro y sube en
+          oscuro— sin depender de qué superficie tenga debajo, que es lo que
+          aquí no se puede saber.
+
+          ── Y responde con el realce compartido ───────────────────────────────
+          El `hover:bg-muted` que tenía era un fallo aparte: dentro de un bloque
+          `muted`, señalar el chip le daba exactamente el color de la caja que
+          lo contiene y desaparecía.
         */
-        cn('border-border bg-card text-foreground', REALCE),
+        cn('border-border bg-foreground/10 text-foreground', REALCE),
   );
 
   if (!onQuitar) {

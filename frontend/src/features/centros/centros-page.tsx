@@ -555,11 +555,11 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
                   Antes eran texto muerto, y el único modo de corregir un
                   nombre mal escrito era borrar el concepto y crearlo de nuevo
                   —con lo que los movimientos se quedaban sin clasificar—. */}
-              {/* El `Chip` compartido, que trae su canto y no un relleno.
+              {/* El `Chip` compartido, que trae su forma y su relleno.
                    Escrito a mano era un `bg-card` dentro de una caja `muted`
                    dentro de una tarjeta `card`, y ese escalón va en sentidos
-                   contrarios según el tema. El canto no: se calcula contra
-                   las superficies del tema y se ve igual en los dos. */}
+                   contrarios según el tema: el chip se levantaba en claro y se
+                   hundía en oscuro. */}
               {/* `max-w-full` y el nombre recortado: en una tarjeta de 17rem,
                   un concepto con nombre largo hacía un chip más ancho que su
                   tarjeta y se salía por el lado. */}
