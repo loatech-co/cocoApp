@@ -170,8 +170,19 @@ export function Tendencia({
         >
           <defs>
             <linearGradient id="tendencia-relleno" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-chart-1)" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="var(--color-chart-1)" stopOpacity="0.02" />
+              {/* `--expense` y `--income`, no `--chart-1` y `--chart-2`.
+                La rampa de gráficas es una serie de colores que se distinguen
+                ENTRE SÍ; aquí las dos series no son dos series cualesquiera,
+                son lo que sale y lo que entra, y eso ya tiene color en esta
+                app. Con la rampa, el gasto salía teal en la gráfica y pino en
+                la tabla, y el ingreso oro aquí y verde allá: la misma plata
+                con cuatro colores según por dónde se mirara.
+
+                La dona sí se queda con su propia rampa, y por un motivo que
+                aquí no aplica: pinta ÁREAS, y un color que se distingue como
+                trazo de 2px puede ser invisible como relleno. */}
+              <stop offset="0%" stopColor="var(--color-expense)" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="var(--color-expense)" stopOpacity="0.02" />
             </linearGradient>
           </defs>
 
@@ -194,7 +205,7 @@ export function Tendencia({
           <path
             d={linea(gastos, techo, puntos.length)}
             fill="none"
-            stroke="var(--color-chart-1)"
+            stroke="var(--color-expense)"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -205,7 +216,7 @@ export function Tendencia({
             <path
               d={linea(ingresos, techo, puntos.length)}
               fill="none"
-              stroke="var(--color-chart-2)"
+              stroke="var(--color-income)"
               strokeWidth="1.75"
               strokeDasharray="4 3"
               strokeLinecap="round"
@@ -221,9 +232,9 @@ export function Tendencia({
               className="pointer-events-none absolute inset-y-0 w-px bg-border"
               style={{ left: `${x}%` }}
             />
-            <Punto x={x} valor={Number(punto.expense)} techo={techo} color="var(--color-chart-1)" />
+            <Punto x={x} valor={Number(punto.expense)} techo={techo} color="var(--color-expense)" />
             {hayIngresos && Number(punto.income) > 0 && (
-              <Punto x={x} valor={Number(punto.income)} techo={techo} color="var(--color-chart-2)" />
+              <Punto x={x} valor={Number(punto.income)} techo={techo} color="var(--color-income)" />
             )}
 
             {/*
@@ -249,7 +260,7 @@ export function Tendencia({
                 {formatCOP(Number(punto.expense))}
               </p>
               {hayIngresos && Number(punto.income) > 0 && (
-                <p className="tabular mt-0.5 text-xs" style={{ color: 'var(--color-chart-2)' }}>
+                <p className="tabular mt-0.5 text-xs text-income">
                   {formatCOP(Number(punto.income))} de ingreso
                 </p>
               )}

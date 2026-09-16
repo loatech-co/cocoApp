@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
+import { ICONOS_DE_TONO, type TonoDeAviso } from '@/components/ui/alert';
 import { SUPERFICIE_FLOTANTE, SURGE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
@@ -23,12 +24,37 @@ import { cn } from '@/lib/utils';
  * ── Dónde se pone ───────────────────────────────────────────────────────────
  * En el teléfono, POR ENCIMA de la barra de abajo: la esquina de siempre es
  * justo donde está la barra.
+ *
+ * ── Los tonos, y por qué el fondo NO se tiñe ────────────────────────────────
+ * Los mismos cuatro que el aviso en línea —`warning`, `info`, `success`,
+ * `destructive`— y con los mismos iconos, importados de allí: un error que en
+ * línea es un círculo y flotando es un triángulo son dos errores distintos
+ * para quien mira.
+ *
+ * Lo que cambia es el ICONO y su color, no la superficie. Un aviso flotante
+ * está encima de todo lo demás, y lo que dice que está encima es la sombra
+ * sobre el color del popover; teñir el rectángulo entero de rojo o de verde
+ * rompe esa lectura —deja de parecer una capa y pasa a parecer un cartel— y
+ * además obliga a un segundo juego de sombras para cada tono.
+ *
+ * El color solo tampoco bastaría: uno de cada doce hombres no distingue el
+ * rojo del verde. Por eso el tono siempre viene con su forma.
  */
 
 interface Aviso {
   id: number;
   texto: string;
+  tono: TonoDeAviso;
 }
+
+/** El color del icono de cada tono. La superficie no cambia. */
+const TINTA: Record<TonoDeAviso, string> = {
+  default: 'text-muted-foreground',
+  destructive: 'text-destructive',
+  warning: 'text-warning',
+  success: 'text-success',
+  info: 'text-info',
+};
 
 let avisos: Aviso[] = [];
 let siguienteId = 1;
@@ -54,14 +80,14 @@ function programarElOlvido(id: number): void {
   );
 }
 
-export function mostrarAviso(texto: string): void {
+export function mostrarAviso(texto: string, tono: TonoDeAviso = 'default'): void {
   const yaEsta = avisos.find((a) => a.texto === texto);
   if (yaEsta) {
     programarElOlvido(yaEsta.id);
     return;
   }
 
-  const aviso = { id: siguienteId++, texto };
+  const aviso = { id: siguienteId++, texto, tono };
   avisos = [...avisos, aviso];
   programarElOlvido(aviso.id);
   anunciar();
@@ -108,19 +134,26 @@ export function PilaDeAvisos() {
       role="status"
       aria-live="polite"
     >
-      {avisos.map((aviso) => (
-        <p
-          key={aviso.id}
-          className={cn(
-            'pointer-events-auto rounded-lg px-4 py-3 text-sm',
-            SUPERFICIE_FLOTANTE,
-            SURGE,
-            'movil:max-w-none escritorio:max-w-sm',
-          )}
-        >
-          {aviso.texto}
-        </p>
-      ))}
+      {avisos.map((aviso) => {
+        const Icono = ICONOS_DE_TONO[aviso.tono];
+
+        return (
+          <div
+            key={aviso.id}
+            className={cn(
+              'pointer-events-auto flex items-start gap-2.5 rounded-lg px-4 py-3 text-sm',
+              SUPERFICIE_FLOTANTE,
+              SURGE,
+              'movil:max-w-none escritorio:max-w-sm',
+            )}
+          >
+            {Icono && (
+              <Icono className={cn('mt-0.5 size-4 shrink-0', TINTA[aviso.tono])} aria-hidden="true" />
+            )}
+            <p className="min-w-0">{aviso.texto}</p>
+          </div>
+        );
+      })}
     </div>,
     document.body,
   );

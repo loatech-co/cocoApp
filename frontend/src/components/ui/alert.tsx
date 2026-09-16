@@ -51,8 +51,14 @@ const alertVariants = cva(
 
 export type TonoDeAviso = NonNullable<VariantProps<typeof alertVariants>['variant']>;
 
-/** El icono de cada tono. `default` no lleva: no anuncia nada. */
-const ICONOS: Record<TonoDeAviso, ComponentType<{ className?: string }> | null> = {
+/**
+ * El icono de cada tono. `default` no lleva: no anuncia nada.
+ *
+ * Se exporta porque el aviso FLOTANTE tiene los mismos cuatro tonos y tiene
+ * que usar los mismos cuatro iconos: un error que en línea es un círculo y
+ * flotando es un triángulo son dos errores distintos para quien mira.
+ */
+export const ICONOS_DE_TONO: Record<TonoDeAviso, ComponentType<{ className?: string }> | null> = {
   default: null,
   destructive: CircleAlert,
   warning: TriangleAlert,
@@ -66,7 +72,7 @@ export function Alert({
   children,
   ...props
 }: ComponentProps<'div'> & VariantProps<typeof alertVariants>) {
-  const Icono = ICONOS[variant ?? 'default'];
+  const Icono = ICONOS_DE_TONO[variant ?? 'default'];
 
   return (
     // `role="alert"` solo en lo que salió mal: un lector de pantalla interrumpe

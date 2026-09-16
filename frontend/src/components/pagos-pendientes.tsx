@@ -77,8 +77,15 @@ export function PagosPendientes({
                     disabled={!onElegir}
                     onClick={() => onElegir?.(pago)}
                     className={cn(
-                      'flex w-full items-center justify-between gap-3 py-2.5 text-left transition-opacity',
-                      onElegir ? 'cursor-pointer hover:opacity-70' : 'cursor-default',
+                      // El resaltado es un FONDO, no una bajada de opacidad.
+                      // Atenuar el texto al pasar por encima es exactamente lo
+                      // que hace un control apagado, así que la fila que sí se
+                      // puede pulsar parecía la que no.
+                      '-mx-2 flex w-full items-center justify-between gap-3 rounded-md px-2 py-2.5',
+                      'text-left transition-colors',
+                      onElegir
+                        ? 'cursor-pointer hover:bg-accent hover:text-accent-foreground'
+                        : 'cursor-default',
                     )}
                   >
                     <span className="min-w-0">
