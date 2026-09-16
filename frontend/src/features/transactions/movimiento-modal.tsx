@@ -1297,6 +1297,21 @@ function Via({
       />
 
       {/*
+        El segundo disco, en la esquina de enfrente y a la mitad.
+
+        Dos manchas del mismo color en esquinas opuestas arman una diagonal, y
+        esa diagonal es lo que hace que el glifo del centro se lea como el
+        centro de algo en vez de como una figura suelta en un rectángulo. A la
+        mitad de tamaño porque no compite: la esquina que manda es la de
+        arriba, que es por donde empieza a recorrerse la tarjeta.
+      */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -bottom-10 -right-10 size-26 rounded-full sm:-bottom-8 sm:-right-8 sm:size-32"
+        style={{ backgroundColor: CHIPS[color].fondo }}
+      />
+
+      {/*
         El glifo, centrado en la tarjeta con `left-1/2 top-1/2` y media
         traslación en cada eje —lo único que centra algo cuyo tamaño no conoce
         el padre—.
@@ -1311,7 +1326,7 @@ function Via({
         className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-40"
         style={{ color: CHIPS[color].tinta }}
       >
-        <Icono className="size-16 sm:size-20" strokeWidth={1.9} aria-hidden />
+        <Icono className="size-10 sm:size-12" strokeWidth={1.9} aria-hidden />
       </span>
 
       <span className="relative min-w-0">
