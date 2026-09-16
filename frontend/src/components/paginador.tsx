@@ -41,7 +41,16 @@ export function Paginador({
 
   return (
     <nav className={cn('flex justify-center', className)} aria-label="Paginación">
-      <ul className="inline-flex items-stretch divide-x divide-border overflow-hidden rounded-lg border border-border bg-card">
+      {/*
+        Sin relleno propio: el paginador se apoya en el fondo de la página en
+        vez de flotar sobre él. Con `bg-card` se leía como una tarjeta más —del
+        mismo color que las que tienen contenido— y competía por atención con
+        la tabla que acaba de terminar de leerse.
+
+        Se queda el marco, fino y tenue, porque es lo que lo presenta como UN
+        control y no como siete botones sueltos.
+      */}
+      <ul className="inline-flex items-stretch divide-x divide-border/70 overflow-hidden rounded-lg border border-border/70">
         <li>
           <Celda
             deshabilitada={pagina <= 1}
@@ -107,7 +116,7 @@ function Celda({
       className={cn(
         'flex h-9 items-center justify-center gap-2 px-3 text-sm font-medium transition-colors',
         'outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
-        actual ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+        actual ? 'bg-secondary/70 text-foreground' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground',
         deshabilitada && 'cursor-not-allowed opacity-40 hover:bg-transparent',
       )}
       {...props}

@@ -134,7 +134,7 @@ export function Calendario({
         onMouseLeave={() => onSobrevolar?.(null)}
       >
         {celdas.map((iso, i) => {
-          if (iso === null) return <span key={`hueco-${i}`} className="h-9" />;
+          if (iso === null) return <span key={`hueco-${i}`} className="aspect-square" />;
 
           const dentro = desde !== undefined && hasta !== undefined && iso >= desde && iso <= hasta;
           const esInicio = iso === desde;
@@ -145,7 +145,11 @@ export function Calendario({
             <div
               key={iso}
               className={cn(
-                'h-9',
+                // CUADRADA, no de alto fijo: la celda mide lo que mida su
+                // columna, y el círculo de dentro mide lo que mida la celda.
+                // Con 36px fijos, en un panel estrecho el círculo se salía por
+                // los lados de su casilla.
+                'aspect-square',
                 dentro && !extremo && 'bg-bosque-100 dark:bg-white/12',
                 dentro && extremo && desde !== hasta && 'bg-bosque-100 dark:bg-white/12',
                 // Las puntas se redondean también al principio y al final de
@@ -161,7 +165,7 @@ export function Calendario({
                 aria-label={diaLargo(iso)}
                 aria-pressed={extremo}
                 className={cn(
-                  'size-9 rounded-full text-sm transition-colors',
+                  'size-full rounded-full text-sm transition-colors',
                   extremo
                     ? 'bg-primary font-semibold text-primary-foreground'
                     : dentro

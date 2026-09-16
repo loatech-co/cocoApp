@@ -5,6 +5,7 @@ import { EstadoVacio } from '@/components/estado-vacio';
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Tabla, TablaEsqueleto, Td, Th, Tr } from '@/components/tabla';
 import { Select } from '@/components/ui/select';
+import { ConTooltip } from '@/components/ui/tooltip';
 import { Card, CardContent } from '@/components/ui/card';
 import { useActualizarMovimiento } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
@@ -146,13 +147,26 @@ function Fila({
       </Td>
 
       <Td className="whitespace-nowrap text-muted-foreground">
-        <span
-          className={cn(
-            periodo(movimiento) !== mesDe(movimiento.date) && 'font-medium text-warning',
-          )}
-        >
-          {mesBonito(periodo(movimiento))}
-        </span>
+        {/*
+          En ámbar cuando el mes al que PERTENECE el gasto no es aquel en que
+          salió la plata: la factura de julio pagada el 4 de agosto. Es el caso
+          que descuadra los totales de quien no lo nota —julio parece barato y
+          agosto caro— así que se marca, con punto y con explicación.
+        */}
+        {desfasado(movimiento) ? (
+          <ConTooltip
+            texto={`Pertenece a ${mesBonito(periodo(movimiento))}, pero se pagó el ${diaBonito(movimiento.date)}`}
+            className="items-center gap-1.5 font-medium text-warning"
+          >
+            {/* El punto hace notar la marca: el color solo se pierde en una
+                columna de texto gris, y quien no lo nota no sabe que hay algo
+                que preguntar. */}
+            <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />
+            {mesBonito(periodo(movimiento))}
+          </ConTooltip>
+        ) : (
+          mesBonito(periodo(movimiento))
+        )}
       </Td>
 
       <Td className="tabular whitespace-nowrap text-muted-foreground">
@@ -213,6 +227,9 @@ const mesDe = (iso: string): string => iso.slice(0, 7);
  * campo ausente no puede dejar la pantalla en blanco.
  */
 const periodo = (m: Transaction): string => mesDe(m.period ?? m.date);
+
+/** El gasto pertenece a un mes y se pagó en otro. */
+const desfasado = (m: Transaction): boolean => periodo(m) !== mesDe(m.date);
 
 /** `2026-03-06` → `6 mar 2026`. */
 function diaBonito(iso: string): string {

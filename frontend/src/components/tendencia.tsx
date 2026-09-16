@@ -111,7 +111,7 @@ export function Tendencia({
    */
   const sitio = ((): { left: number; top: number } => {
     const px = (x / 100) * caja.ancho;
-    const py = punto ? (ye(Number(punto.expense), techo) / 42) * caja.alto : 0;
+    const py = punto ? (ye(Number(punto.expense), techo) / ALTO_LIENZO) * caja.alto : 0;
     const MARGEN = 12;
 
     const cabeADerecha = px + MARGEN + tamTarjeta.ancho <= caja.ancho;
@@ -181,8 +181,8 @@ export function Tendencia({
               key={f}
               x1="0"
               x2="100"
-              y1={42 * f}
-              y2={42 * f}
+              y1={ALTO_LIENZO * f}
+              y2={ALTO_LIENZO * f}
               stroke="var(--color-border)"
               strokeWidth="0.25"
               vectorEffect="non-scaling-stroke"
@@ -321,7 +321,11 @@ function Punto({
     <span
       aria-hidden="true"
       className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-card"
-      style={{ left: `${x}%`, top: `${(ye(valor, techo) / 42) * 100}%`, backgroundColor: color }}
+      style={{
+        left: `${x}%`,
+        top: `${(ye(valor, techo) / ALTO_LIENZO) * 100}%`,
+        backgroundColor: color,
+      }}
     />
   );
 }
@@ -331,22 +335,108 @@ function equis(i: number, total: number): number {
   return total === 1 ? 50 : (i / (total - 1)) * 100;
 }
 
-/** Coordenada Y: se invierte porque en SVG el 0 está arriba. */
+/**
+ * Coordenada Y: se invierte porque en SVG el 0 está arriba.
+ *
+ * ── Por qué hay margen arriba y abajo ───────────────────────────────────────
+ * Porque el punto más alto de la serie vale justo el techo, y sin margen caía
+ * en y=0: la mitad del grosor del trazo quedaba fuera del lienzo y el SVG la
+ * recortaba. La línea aparecía cortada a ras justo en su pico, que es el dato
+ * que uno estaba mirando. Igual abajo con los ceros.
+ */
+const ALTO_LIENZO = 42;
+const MARGEN_Y = 3;
+
 function ye(valor: number, techo: number): number {
-  return 42 - (valor / techo) * 42;
+  const util = ALTO_LIENZO - MARGEN_Y * 2;
+  return ALTO_LIENZO - MARGEN_Y - (valor / techo) * util;
+}
+
+/**
+ * La línea, en curvas.
+ *
+ * ── Por qué curva y no tramos rectos ────────────────────────────────────────
+ * Porque la serie es un MUESTREO de algo continuo: el gasto no salta de un
+ * valor a otro en el instante que cambia el día, va y viene. Los tramos rectos
+ * con sus picos en punta sugieren una precisión que el dato no tiene.
+ *
+ * ── Por qué MONÓTONA y no una curva cualquiera ──────────────────────────────
+ * Una spline normal se pasa de largo al doblar: entre un mes de cero y otro de
+ * un millón, la curva baja por debajo de cero antes de subir. Dibujar un gasto
+ * negativo que nunca existió no es suavizar, es mentir. Esta variante
+ * —Fritsch–Carlson— ajusta las pendientes para que la curva nunca se salga del
+ * rango de los dos puntos que une: si el dato sube, la curva sube; si el dato
+ * no baja de cero, la curva tampoco.
+ */
+export function curva(puntos: { x: number; y: number }[]): string {
+  if (puntos.length === 0) return '';
+  if (puntos.length === 1) return `M ${puntos[0].x} ${puntos[0].y}`;
+
+  const n = puntos.length;
+
+  // Pendiente de cada tramo.
+  const deltas: number[] = [];
+  for (let i = 0; i < n - 1; i += 1) {
+    const dx = puntos[i + 1].x - puntos[i].x;
+    deltas.push(dx === 0 ? 0 : (puntos[i + 1].y - puntos[i].y) / dx);
+  }
+
+  // Tangente en cada punto: el promedio de las pendientes que llegan a él.
+  const tangentes: number[] = [deltas[0]];
+  for (let i = 1; i < n - 1; i += 1) tangentes.push((deltas[i - 1] + deltas[i]) / 2);
+  tangentes.push(deltas[n - 2]);
+
+  // Y aquí está lo que impide el sobrepaso. Donde el tramo es plano, la curva
+  // llega y sale plana; donde no, las tangentes se recortan al círculo de
+  // radio 3, que es la condición de Fritsch–Carlson.
+  for (let i = 0; i < n - 1; i += 1) {
+    if (deltas[i] === 0) {
+      tangentes[i] = 0;
+      tangentes[i + 1] = 0;
+      continue;
+    }
+
+    const a = tangentes[i] / deltas[i];
+    const b = tangentes[i + 1] / deltas[i];
+    const s = a * a + b * b;
+
+    if (s > 9) {
+      const factor = 3 / Math.sqrt(s);
+      tangentes[i] = factor * a * deltas[i];
+      tangentes[i + 1] = factor * b * deltas[i];
+    }
+  }
+
+  let d = `M ${puntos[0].x.toFixed(2)} ${puntos[0].y.toFixed(2)}`;
+  for (let i = 0; i < n - 1; i += 1) {
+    const h = (puntos[i + 1].x - puntos[i].x) / 3;
+    const c1 = { x: puntos[i].x + h, y: puntos[i].y + tangentes[i] * h };
+    const c2 = { x: puntos[i + 1].x - h, y: puntos[i + 1].y - tangentes[i + 1] * h };
+    d +=
+      ` C ${c1.x.toFixed(2)} ${c1.y.toFixed(2)},` +
+      ` ${c2.x.toFixed(2)} ${c2.y.toFixed(2)},` +
+      ` ${puntos[i + 1].x.toFixed(2)} ${puntos[i + 1].y.toFixed(2)}`;
+  }
+
+  return d;
+}
+
+/** La serie en coordenadas del lienzo. */
+function aPuntos(serie: number[], techo: number, total: number): { x: number; y: number }[] {
+  return serie.map((v, i) => ({ x: equis(i, total), y: ye(v, techo) }));
 }
 
 function linea(serie: number[], techo: number, total: number): string {
-  return serie
-    .map((v, i) => `${i === 0 ? 'M' : 'L'} ${equis(i, total).toFixed(2)} ${ye(v, techo).toFixed(2)}`)
-    .join(' ');
+  return curva(aPuntos(serie, techo, total));
 }
 
 /** La misma línea, cerrada contra la base, para el relleno. */
 function area(serie: number[], techo: number, total: number): string {
-  return `${linea(serie, techo, total)} L ${equis(total - 1, total).toFixed(2)} 42 L ${equis(0, total).toFixed(2)} 42 Z`;
+  // Cierra en la línea del CERO, no en el borde del lienzo: cerrando abajo
+  // del todo, el relleno se extendía por debajo de donde vale cero.
+  const base = ye(0, techo).toFixed(2);
+  return `${linea(serie, techo, total)} L ${equis(total - 1, total).toFixed(2)} ${base} L ${equis(0, total).toFixed(2)} ${base} Z`;
 }
-
 
 const MESES = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
@@ -388,7 +478,7 @@ function ultimoDia(anio: number, mes: number): number {
  *
  * ── Tres meses o más: solo el mes ───────────────────────────────────────────
  * "Ene Feb Mar", sin día. Todas con la misma forma: si el rango cruza de año
- * lo llevan todas, y si no lo cruza no lo lleva ninguna. Escribirlo solo donde
+ * lo llevan todas —entero, "Abr 2023"— y si no lo cruza no lo lleva ninguna. Escribirlo solo donde
  * cambia dejaba un eje que mezclaba "ene" con "abr 23" y se leía como si
  * fueran dos cosas distintas.
  *
@@ -415,10 +505,10 @@ export function etiquetasDelEje(
         const [anio, mes] = bucket.split('-');
         const nombre = MESES[Number(mes) - 1] ?? mes;
         const conMayuscula = nombre.charAt(0).toUpperCase() + nombre.slice(1);
-        return {
-          indice,
-          texto: cruzaDeAnio ? `${conMayuscula} ${anio.slice(2)}` : conMayuscula,
-        };
+        // El año ENTERO, no sus dos últimas cifras. "Abr 23" obliga a
+        // completarlo mentalmente, y en un histórico que arranca en 2022 eso
+        // es justo lo que hay que leer sin esfuerzo.
+        return { indice, texto: cruzaDeAnio ? `${conMayuscula} ${anio}` : conMayuscula };
       });
   }
 
