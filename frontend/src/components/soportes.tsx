@@ -4,8 +4,10 @@ import {
   Download,
   Eye,
   FileWarning,
+  FileText,
   ImagePlus,
   Loader2,
+  Upload,
   Minus,
   Plus,
   Trash2,
@@ -128,10 +130,11 @@ export function Soportes({ transactionId }: { transactionId: number }) {
             la misma fila: así se ve que es otra plaza de lo mismo. Sin
             ninguno, es lo único que hay, y un cuadro punteado y vacío se lee
             como "aquí falta algo" mejor que cualquier frase. */}
-        <li>
+        <li className={cn(lista.length === 0 && 'w-full')}>
           <Soltar
             subiendo={subir.isPending}
             progreso={progreso}
+            solo={lista.length === 0}
             onArchivos={(a) => void aceptar(a)}
           />
         </li>
@@ -175,17 +178,20 @@ export function Soportes({ transactionId }: { transactionId: number }) {
 function Soltar({
   subiendo,
   progreso,
+  solo,
   onArchivos,
 }: {
   subiendo: boolean;
   progreso: number;
+  /** Sin ningún soporte todavía: ocupa el ancho y explica. */
+  solo: boolean;
   onArchivos: (archivos: FileList | null) => void;
 }) {
   const campo = useRef<HTMLInputElement>(null);
   const [encima, setEncima] = useState(false);
 
   return (
-    <div
+    <div className={cn(solo && 'w-full')}
       onDragOver={(e) => {
         e.preventDefault();
         setEncima(true);
@@ -203,8 +209,21 @@ function Soltar({
         disabled={subiendo}
         aria-label="Añadir soportes"
         className={cn(
-          'flex size-[104px] flex-col items-center justify-center gap-1.5 rounded-2xl',
+          'flex flex-col items-center justify-center gap-1.5 rounded-2xl',
           'border-2 border-dashed transition-colors',
+          /*
+            Sin ningún soporte, el cuadro ocupa el ANCHO y explica.
+
+            Un cuadrito de 104px solo en una fila vacía se lee como un botón
+            que alguien dejó ahí: no dice qué acepta ni que se pueda arrastrar.
+            Con el ancho entero hay sitio para decir las dos cosas, y es
+            además la forma en la que todo el mundo reconoce una zona donde se
+            sueltan archivos.
+
+            En cuanto hay uno, vuelve a ser una plaza más de la fila: ahí el
+            contexto ya lo dan las miniaturas de al lado.
+          */
+          solo ? 'w-full px-4 py-8' : 'size-[104px]',
           /*
             Al pasar por encima se oscurece EL FONDO, y el trazo no se toca.
 
@@ -231,6 +250,17 @@ function Soltar({
                 cuatro píxeles de alto que no se ven moverse. */}
             <span className="tabular text-xs font-medium">
               {Math.round(progreso * 100)} %
+            </span>
+          </>
+        ) : solo ? (
+          <>
+            <Upload className="size-6" aria-hidden="true" />
+            <span className="text-center text-sm font-medium">
+              Arrastra el archivo o haz clic para elegirlo
+            </span>
+            <span className="flex items-center gap-1.5 text-center text-xs text-muted-foreground">
+              <FileText className="size-3.5 shrink-0" aria-hidden="true" />
+              PDF, JPG, PNG, HEIC o WEBP
             </span>
           </>
         ) : (

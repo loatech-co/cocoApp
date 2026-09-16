@@ -127,6 +127,16 @@ export function DashboardPage() {
   */
   const alDia = llegaHastaHoy(filtros);
 
+  /*
+    La tarjeta de pendientes solo existe si hay algo pendiente.
+
+    Vacía no dice "todo al día": dice "aquí hay una sección", y ocupa un tercio
+    de la fila para decirlo. En un periodo cerrado no puede quedar nada
+    pendiente —ya pasó— y en el mes en curso, con todo pagado, la buena noticia
+    es que la tarjeta no esté.
+  */
+  const hayPendientes = alDia && (dashboard.data?.pending.length ?? 0) > 0;
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <ToolbarFiltros
@@ -192,31 +202,24 @@ export function DashboardPage() {
           {/* Cuatro indicadores: de a dos en una tableta y de a cuatro en una
               pantalla ancha. En tres columnas, el cuarto se quedaba solo en
               una fila para él. */}
-          <div
-            className={cn(
-              'grid gap-3 sm:gap-5',
-              // Tres indicadores en un periodo cerrado, cuatro en el mes en
-              // curso: la rejilla se acomoda para que ninguno quede solo en
-              // una fila para él.
-              alDia ? 'sm:grid-cols-2 xl:grid-cols-4' : 'sm:grid-cols-3',
-            )}
-          >
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
             {/*
               Va PRIMERO, antes de lo gastado, porque se lee antes: cuánto hay
-              que tener este mes y después cuánto se lleva gastado. Y es el
-              único que NO habla del rango filtrado —mira siempre el mes en
-              curso—, así que lo dice en su detalle y desaparece cuando el
-              recorte ya cerró.
+              que tener y después cuánto se lleva gastado.
+
+              En un periodo CERRADO el presupuesto necesario fue exactamente lo
+              que costó: ya no es una previsión, es un hecho. Enseñar ahí la
+              previsión del mes en curso sería contestar con el dato de otro
+              mes, y dejar el hueco vacío haría creer que en 2024 no hubo
+              costos fijos.
             */}
-            {alDia && (
-              <Kpi
-                etiqueta="Presupuesto necesario"
-                valor={formatCOP(dashboard.data.required_budget)}
-                detalle="Costos fijos de este mes"
-                Icono={Wallet}
-                chip="turquesa"
-              />
-            )}
+            <Kpi
+              etiqueta="Presupuesto necesario"
+              valor={formatCOP(alDia ? dashboard.data.required_budget : dashboard.data.range.expense)}
+              detalle={alDia ? 'Costos fijos de este mes' : 'Lo que costó el periodo'}
+              Icono={Wallet}
+              chip="turquesa"
+            />
             <Kpi
               etiqueta="Gastos del periodo"
               valor={formatCOP(dashboard.data.range.expense)}
@@ -296,7 +299,7 @@ export function DashboardPage() {
               // Sin los pagos pendientes, la fila son DOS tarjetas. Dejando
               // tres columnas, la distribución se quedaría en el centro con un
               // hueco del ancho de una tarjeta a su derecha.
-              alDia
+              hayPendientes
                 ? 'lg:grid-cols-[minmax(0,1fr)_repeat(2,minmax(20%,30rem))]'
                 : 'lg:grid-cols-[minmax(0,1fr)_minmax(20%,30rem)]',
             )}
@@ -326,7 +329,7 @@ export function DashboardPage() {
               </CardContent>
             </Card>
 
-            {alDia && (
+            {hayPendientes && (
               <PagosPendientes
                 className="min-h-0"
                 pagos={dashboard.data.pending}

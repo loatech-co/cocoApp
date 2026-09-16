@@ -1,6 +1,3 @@
-import { Check } from 'lucide-react';
-
-import { EstadoVacio } from '@/components/estado-vacio';
 import { Card, CardContent } from '@/components/ui/card';
 import { diaCorto } from '@/lib/fechas';
 import { cn, formatCOP } from '@/lib/utils';
@@ -36,6 +33,21 @@ export function PagosPendientes({
   const ahora = hoy();
   const total = pagos.reduce((s, p) => s + Number(p.expected_amount ?? 0), 0);
 
+  /*
+    Sin pendientes no hay tarjeta.
+
+    Vacía no dice "todo al día": dice "aquí hay una sección", y ocupa un tercio
+    de la fila para decirlo. En un periodo cerrado no puede quedar nada
+    —ya pasó— y en el mes en curso, con todo pagado, la buena noticia es que
+    la tarjeta no esté.
+
+    Se decide también aquí y no solo en el resumen: la rejilla de allá necesita
+    saberlo para repartir las columnas, pero un componente que se pinta vacío
+    cuando lo llaman sin datos es una trampa esperando a la segunda pantalla
+    que lo use.
+  */
+  if (pagos.length === 0) return null;
+
   return (
     <Card className={cn('h-full', className)}>
       <CardContent className="flex h-full flex-col p-4 sm:p-6">
@@ -44,15 +56,7 @@ export function PagosPendientes({
           {total > 0 ? `Unos ${formatCOP(total)} este mes` : 'Este mes'}
         </p>
 
-        {pagos.length === 0 ? (
-          <EstadoVacio
-            className="my-auto py-6"
-            Icono={Check}
-            titulo="Todo al día"
-            ayuda="No queda ningún pago recurrente por registrar este mes."
-          />
-        ) : (
-          /* Se desplaza en vez de crecer: la tarjeta comparte fila con la
+        {/* Se desplaza en vez de crecer: la tarjeta comparte fila con la
              gráfica y la dona, y una lista larga estiraría a las tres.
 
              El par `-mr-3 pr-4` es para la barra de desplazamiento. En macOS
@@ -61,9 +65,9 @@ export function PagosPendientes({
              La lista se sale 12px sobre el relleno de la tarjeta —ahí va la
              barra— y el texto se queda a 20px de ese borde, que es la barra
              más un margen. Con los 8px que había antes, la barra caía justo
-             sobre la cifra. */
-          <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-5">
-            {pagos.map((pago) => {
+             sobre la cifra. */}
+        <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-5">
+          {pagos.map((pago) => {
               const vencido = pago.due_date < ahora;
 
               return (
@@ -104,9 +108,8 @@ export function PagosPendientes({
                   </button>
                 </li>
               );
-            })}
-          </ul>
-        )}
+          })}
+        </ul>
       </CardContent>
     </Card>
   );
