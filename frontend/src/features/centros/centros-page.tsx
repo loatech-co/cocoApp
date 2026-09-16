@@ -221,7 +221,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
         */}
         <div
           className={cn(
-            'flex items-center gap-2 pr-4 transition-colors hover:bg-muted sm:pr-6',
+            'flex items-center gap-2 pr-3 transition-colors hover:bg-muted sm:pr-4',
             'rounded-t-lg',
             // Cerrado, la fila ES la tarjeta: se redondea también por abajo.
             !abierto && 'rounded-b-lg',
@@ -231,7 +231,11 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
             type="button"
             onClick={() => setAbierto((v) => !v)}
             aria-expanded={abierto}
-            className="flex min-w-0 flex-1 items-center gap-3 p-4 text-left sm:p-6"
+            /* `p-3 sm:p-4` y no `p-4 sm:p-6`. Veinticuatro píxeles por encima
+               de un título de 18 son más aire que letra, y la fila de un centro
+               es una CABECERA —lo que se viene a leer está debajo—, no el
+               contenido de la tarjeta. */
+            className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left sm:p-4"
           >
             {abierto ? (
               <ChevronDown className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -328,7 +332,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
         />
 
         {abierto && (
-          <div className="border-t border-border p-4 sm:p-6">
+          <div className="border-t border-border p-3 sm:p-4">
             {/*
               ── Una rejilla, no una columna ─────────────────────────────────
               Los grupos eran filas apiladas, y una fila de ancho completo con
@@ -337,25 +341,23 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
               pantalla de vacío para leerlos. En rejilla se ven todos de un
               vistazo, que es lo que se viene a hacer a esta pantalla.
 
-              ── `auto-fill` y NO `auto-fit` ─────────────────────────────────
-              La diferencia es qué pasa con las columnas que sobran: `auto-fit`
-              las colapsa y reparte su sitio entre las que hay, y `auto-fill`
-              las deja reservadas y vacías.
+              ── Por qué un TOPE de columnas y no un ancho mínimo ────────────
+              Estuvo con `auto-fill` y `minmax(17rem, 1fr)`, que fija el ancho
+              mínimo de una tarjeta y deja que el navegador ponga las que
+              quepan. Eso no tiene techo: en un monitor de 27 pulgadas salían
+              OCHO tarjetas de 288px en una fila, una pared de fichas estrechas
+              donde no se distingue una de otra.
 
-              Con `auto-fit`, el tamaño de una tarjeta acaba dependiendo de
-              cuántas tenga al lado: un centro con dos grupos daba dos tarjetas
-              de 495px y uno con seis, seis de 325. La misma cosa con dos
-              tamaños distintos según el centro en el que esté, y con un solo
-              grupo una tarjeta de mil píxeles con tres chips dentro.
+              Un ancho mínimo dice «no más pequeñas de esto». Lo que hace falta
+              aquí es lo otro: «no más de estas por fila», porque lo que se
+              rompe al crecer la pantalla no es el tamaño de la tarjeta sino
+              cuántas caben antes de que la fila deje de leerse. Cinco es el
+              tope; por encima, la vista ya no las recorre, las barre.
 
-              Con `auto-fill` la tarjeta mide siempre lo mismo y la fila se
-              llena con las que quepan. El hueco que queda a la derecha cuando
-              hay pocas no es un defecto: dice que cabe más, que es cierto. Y
-              casi nunca se ve, porque la baldosa de «agregar» ocupa la celda
-              siguiente.
-
-              El `min(17rem, 100%)` es el seguro del teléfono: un mínimo en
-              rem, a secas, desborda en cuanto el contenedor mide menos que él.
+              1 en un teléfono, 2 desde una tableta, 3 en un portátil pequeño,
+              4 en uno grande y 5 a partir de un monitor. Y con `1fr`, dentro
+              de cada tramo la tarjeta se estira a lo que haya: no hay ningún
+              ancho fijo que pueda quedarse corto o pasarse.
 
               ── `items-start`: cada tarjeta mide lo suyo ────────────────────
               Por defecto una rejilla ESTIRA sus celdas al alto de la más alta
@@ -369,7 +371,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
               dentro, y si sus pies quedan a distinta altura es porque sus
               contenidos son distintos, que es la verdad.
             */}
-            <div className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(17rem,100%),1fr))]">
+            <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {grupos.map((grupo) => (
                 <Grupo key={grupo.id} grupo={grupo} arbol={arbol} />
               ))}

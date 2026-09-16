@@ -91,7 +91,7 @@
    Los componentes consumen SIEMPRE estos tokens, nunca un hex suelto: cambiar
    de tema es cambiar esta capa, no rastrear colores por toda la app.
 
-   Verde británico y latón, con una pelota de tenis dentro.
+   Cuatro verdes y nada más.
 
    En CLARO el acento es el British Racing Green —#004225—, que es un verde
    muy oscuro: su identidad está en la profundidad, no en el brillo. Se usa a
@@ -113,11 +113,26 @@
    fuerza para señalar, y por eso lo que se enciende necesita además otra
    señal —peso de letra, un lavado de fondo— y no solo el color.
 
-   Lo que NO es gasto se queda fuera del lima y con su propio matiz, que es lo
-   que sostiene la lectura: el ingreso en turquesa (166°), lo pendiente en el
-   latón del tema (38°) y lo que salió mal en rojo. El lima está en 71°, así
-   que el par que más cerca queda es lima y latón; se separan por saturación
-   —87 % contra 63 %— y conviene no ponerlos a pintar áreas vecinas.
+   ── La paleta entera, y por qué no hay un ámbar ──────────────────────────
+   Cuatro colores, y los cuatro son verdes:
+
+   · VERDE BRITÁNICO #004225 — el acento en claro, y el fondo de lo que se
+     pulsa. Su identidad está en la profundidad.
+   · LIMA #d3f24b — el acento en oscuro y el color del GASTO, que es la mayor
+     parte de lo que esta app enseña.
+   · TURQUESA #3fc9a8 — lo que ENTRA, y de paso lo que salió bien. En una app
+     de dinero son la misma buena noticia.
+   · VERDE MEDIO #46c285 — lo PENDIENTE y lo informativo.
+
+   Lo pendiente estaba en un latón y ya no: la paleta es verde y un ámbar
+   dentro se leía como de otra parte. Tiene un coste y conviene tenerlo
+   presente: el verde medio (150°) y el turquesa (166°) se llevan 16° de
+   matiz, así que lo pendiente y lo que entra ya no se distinguen SOLO por el
+   color. Donde convivan —una fila vencida en una tabla con ingresos— hace
+   falta que lo diga algo más: la palabra, el signo, el peso de la letra.
+
+   El rojo sigue fuera de la paleta a propósito: no es un color del tema, es
+   la señal de que algo salió mal o de que no se puede deshacer.
 
    ── Tres superficies, no cinco ───────────────────────────────────────────
    Había cinco escalones —riel, lienzo, tarjeta, bloque, chip— y el ojo no
@@ -146,8 +161,8 @@
 
    · Lo que entra y lo que sale. Un tema monocromo no distingue un ingreso de
      un gasto, y aquí esa distinción es el producto.
-   · Lo pendiente. Va en el oro del tema —su `secondary`— y nunca en rojo: el
-     rojo se reserva a lo que salió mal y a lo que no se puede deshacer.
+   · Lo pendiente. Va en el verde medio y nunca en rojo: el rojo se reserva a
+     lo que salió mal y a lo que no se puede deshacer.
    · Las porciones de la dona. Pintan ÁREAS grandes, y un color que se
      distingue como trazo de 2px puede ser invisible como relleno.
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -176,8 +191,8 @@
   --primary: #004225;
   --primary-foreground: #ffffff;
 
-  --secondary: #d4a24c;
-  --secondary-foreground: #3d2b0e;
+  --secondary: #dbeee7;
+  --secondary-foreground: #004225;
 
   /* LO ELEGIDO, y en claro es el mismo valor que el pozo: un bloque dentro de
      una tarjeta es un hueco en la tarjeta, igual que el pozo es un hueco en la
@@ -227,9 +242,11 @@
   --income: #0a7a5f;
   --income-surface: #e0f2ec;
 
-  /* Lo PENDIENTE va en el oro del tema, no en un ámbar traído de fuera. */
-  --warning: #7a5312;
-  --warning-surface: #f7ecd6;
+  /* Lo PENDIENTE va en el verde medio. Llevaba un latón, que era el
+     `secondary` del tema, y se fue con el ámbar: la paleta es de verdes y un
+     color cálido dentro se leía como traído de otra parte. */
+  --warning: #1a7a52;
+  --warning-surface: #e2f2e8;
   --info: #00633b;
   --info-surface: #ddeee6;
 
@@ -278,24 +295,24 @@
      color que se distingue como trazo de 2px puede ser invisible como
      relleno. */
   --chart-1: #00633b;
-  --chart-2: #d4a24c;
+  --chart-2: #1a7a52;
   --chart-3: #004225;
   --chart-4: #4fae86;
-  --chart-5: #b88a40;
+  --chart-5: #8ecdb0;
 
   /* ── Las porciones de la dona ─────────────────────────────────────────────
      Cada una con su TINTA, declarada y no calculada: sobre el pino el blanco
-     se lee, sobre el oro NO y hay que bajar a tinta. */
+     se lee, sobre los claros NO y hay que bajar a tinta. */
   --dona-1: #004225;
   --dona-1-tinta: #ffffff;
   --dona-2: #00734a;
   --dona-2-tinta: #ffffff;
-  --dona-3: #d4a24c;
-  --dona-3-tinta: #3d2b0e;
+  --dona-3: #1a7a52;
+  --dona-3-tinta: #ffffff;
   --dona-4: #4fae86;
   --dona-4-tinta: #06231a;
-  --dona-5: #b88a40;
-  --dona-5-tinta: #ffffff;
+  --dona-5: #8ecdb0;
+  --dona-5-tinta: #06231a;
   
   /* ── Los pasteles de los chips ────────────────────────────────────────────
      Se nombran por su PAPEL —gasto, ingreso— y no por su color.
@@ -314,8 +331,8 @@
   --chip-ingreso-tinta: #0a7a5f;
   --chip-presupuesto: #dbeee7;
   --chip-presupuesto-tinta: #00633b;
-  --chip-movimientos: #f7ecd6;
-  --chip-movimientos-tinta: #7a5312;
+  --chip-movimientos: #e2f2e8;
+  --chip-movimientos-tinta: #1a7a52;
 
   /* ── Barra lateral ────────────────────────────────────────────────────── */
   --sidebar: #ffffff;
@@ -415,8 +432,8 @@
   --primary: #d3f24b;
   --primary-foreground: #14230a;
 
-  --secondary: #e0b976;
-  --secondary-foreground: #2a1c08;
+  --secondary: #1e332b;
+  --secondary-foreground: #cfead9;
 
   --muted: #1b2624;
   --muted-foreground: #8a9693;
@@ -449,8 +466,8 @@
   --income: #3fc9a8;
   --income-surface: #0e2a24;
 
-  --warning: #e0b976;
-  --warning-surface: #2a1c08;
+  --warning: #46c285;
+  --warning-surface: #12251c;
   --info: #46c285;
   --info-surface: #122a26;
   --success: #3fc9a8;
@@ -458,16 +475,16 @@
   --destructive-surface: #2e1211;
 
   /* Aquí los tres colores son CLAROS, así que la tinta de encima se da la
-     vuelta. El oro reutiliza la que el tema ya declara para su `secondary`. */
+     vuelta. */
   --success-foreground: #06120f;
-  --warning-foreground: #2a1c08;
+  --warning-foreground: #06120f;
   --info-foreground: #06120f;
 
   --chart-1: #d3f24b;
-  --chart-2: #e0b976;
+  --chart-2: #3fc9a8;
   --chart-3: #46c285;
   --chart-4: #3fc9a8;
-  --chart-5: #d4a24c;
+  --chart-5: #86dfae;
 
   /* La primera porción NO puede ser el color de la tarjeta: era `bosque-800`
      sobre una tarjeta `bosque-900` y la dona parecía vacía. */
@@ -475,12 +492,12 @@
   --dona-1-tinta: #14230a;
   --dona-2: #46c285;
   --dona-2-tinta: #06120f;
-  --dona-3: #e0b976;
-  --dona-3-tinta: #2a1c08;
-  --dona-4: #3fc9a8;
+  --dona-3: #3fc9a8;
+  --dona-3-tinta: #06120f;
+  --dona-4: #86dfae;
   --dona-4-tinta: #06120f;
-  --dona-5: #86dfae;
-  --dona-5-tinta: #06120f;
+  --dona-5: #2a8f66;
+  --dona-5-tinta: #eafaf1;
   
   --chip-gasto: #242c12;
   --chip-gasto-tinta: #d3f24b;
@@ -488,8 +505,8 @@
   --chip-ingreso-tinta: #3fc9a8;
   --chip-presupuesto: #122a26;
   --chip-presupuesto-tinta: #46c285;
-  --chip-movimientos: #2f2009;
-  --chip-movimientos-tinta: #e0b976;
+  --chip-movimientos: #12251c;
+  --chip-movimientos-tinta: #46c285;
 
   /* Tres escalones: la barra lateral es la superficie MÁS oscura, el área de
      trabajo sube uno y las tarjetas otro. Con dos, la barra desaparecía

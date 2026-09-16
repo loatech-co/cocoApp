@@ -30,17 +30,71 @@ const RADIO = 68;
 const GROSOR = 26;
 const LADO = (RADIO + GROSOR / 2) * 2 + 4;
 const CENTRO = LADO / 2;
-/** El perímetro del aro. Es la unidad en la que se miden los guiones. */
-export const VUELTA = 2 * Math.PI * RADIO;
+/** Los dos cantos del aro. */
+const AFUERA = RADIO + GROSOR / 2;
+const ADENTRO = RADIO - GROSOR / 2;
 
 export interface ArcoDeLaDona extends PorcionDeDona {
   color: string;
   fraccion: number;
   porcentaje: number;
-  /** Largo del guion, en unidades de perímetro: de su sitio al final. */
-  largo: number;
-  /** Desplazamiento del patrón. Negativo: el guion se corre hacia adelante. */
-  desfase: number;
+  /** Dónde arranca, en vueltas. 0 son las doce. */
+  desde: number;
+  /** Dónde termina lo que PINTA, que es donde terminan todos los datos. */
+  hasta: number;
+}
+
+/**
+ * Un punto del aro. `f` va de 0 —las doce— a 1, en el sentido del reloj.
+ *
+ * Empieza arriba y no a las tres en punto porque es donde uno empieza a leer
+ * un reloj y también una dona.
+ */
+function punto(f: number, radio: number): [number, number] {
+  const angulo = f * 2 * Math.PI - Math.PI / 2;
+  return [CENTRO + radio * Math.cos(angulo), CENTRO + radio * Math.sin(angulo)];
+}
+
+/**
+ * El contorno de una porción: un sector de corona, con sus dos cortes RADIALES.
+ *
+ * ── Por qué un contorno y no un trazo con guiones ───────────────────────────
+ * El aro se dibujaba con un círculo por porción, un `stroke` de 26 y un
+ * `stroke-dasharray` que dejaba ver solo su trozo. Es la forma corta de
+ * escribir una dona y tiene un defecto que no se puede ajustar: el corte de un
+ * guion lo pone el navegador PERPENDICULAR A LA TANGENTE del trazo, y esa
+ * tangente sale de una curva aproximada por segmentos. Un error de medio grado
+ * en la tangente, sobre un trazo que mide 26 de ancho, mueve el canto de fuera
+ * varias décimas respecto al de dentro: el corte se ve torcido, o escalonado,
+ * según dónde caiga el punto en la aproximación. Con un aro fino no se nota;
+ * con uno que mide el 38 % del radio, sí.
+ *
+ * Un sector no depende de ninguna tangente. Sus dos cortes son el segmento que
+ * une el canto de dentro con el de fuera EN EL MISMO ÁNGULO, así que son
+ * radiales por construcción y no pueden ser otra cosa.
+ *
+ * `A` con el barrido a 1 va en el sentido del reloj por el canto de fuera, y a
+ * 0 vuelve por el de dentro. El `1` del arco grande hace falta pasada la media
+ * vuelta: sin él, el navegador elige el arco corto y la porción sale al revés.
+ */
+export function sectorDeLaDona(desde: number, hasta: number): string {
+  const vuelta = hasta - desde;
+  if (vuelta <= 0) return '';
+
+  const [x1, y1] = punto(desde, AFUERA);
+  const [x2, y2] = punto(hasta, AFUERA);
+  const [x3, y3] = punto(hasta, ADENTRO);
+  const [x4, y4] = punto(desde, ADENTRO);
+  const grande = vuelta > 0.5 ? 1 : 0;
+  const n = (v: number): string => v.toFixed(3);
+
+  return [
+    `M ${n(x1)} ${n(y1)}`,
+    `A ${AFUERA} ${AFUERA} 0 ${grande} 1 ${n(x2)} ${n(y2)}`,
+    `L ${n(x3)} ${n(y3)}`,
+    `A ${ADENTRO} ${ADENTRO} 0 ${grande} 0 ${n(x4)} ${n(y4)}`,
+    'Z',
+  ].join(' ');
 }
 
 /**
@@ -48,10 +102,10 @@ export interface ArcoDeLaDona extends PorcionDeDona {
  *
  * Es una función aparte y no un cálculo dentro del componente porque es
  * geometría: se puede probar con números, y lo que hace falta comprobar son
- * invariantes que a ojo no se ven —que el período del patrón siga siendo la
- * vuelta entera, que una porción de cero no dibuje nada, que nada se pase de
- * una vuelta—. Es la misma razón por la que las celdas del mes y los números
- * del paginador viven fuera de sus componentes.
+ * invariantes que a ojo no se ven —que las capas lleguen todas al mismo sitio,
+ * que una porción de cero no dibuje nada, que nada se pase de una vuelta—. Es
+ * la misma razón por la que las celdas del mes y los números del paginador
+ * viven fuera de sus componentes.
  *
  * ── Todas las porciones, sin agrupar el final en un "Otros" ────────────────
  * Agrupar parecía razonable hasta que se vio en pantalla: "Otros (1)" es un
@@ -64,33 +118,24 @@ export interface ArcoDeLaDona extends PorcionDeDona {
  * entre las demás. Un anillo cerrado diría que todo el gasto está en estas
  * categorías, y no lo está.
  *
- * ── Por qué cada porción se pinta hasta el FINAL ───────────────────────────
- * Cada porción es su propio círculo con su patrón de guiones y el trazo tiene
- * el tope PLANO. Pintada cada una solo en su sitio, donde una acaba y la
- * siguiente empieza las dos se tocan en el mismo punto exacto: ningún trazo
- * cubre ese píxel entero, el suavizado deja pasar el aro de fondo y aparece
- * un escalón oscuro cruzando el anillo. Con 26px de grosor sobre 68 de radio
- * ese escalón mide lo bastante como para parecer parte del dibujo.
+ * ── Por qué cada porción se pinta hasta el FINAL de los datos ──────────────
+ * Dos sectores pegados que comparten un canto dejan pasar el fondo por esa
+ * línea: el suavizado reparte el píxel entre los dos y ninguno lo cubre
+ * entero, así que aparece un pelo oscuro cruzando el aro.
  *
- * Así que cada porción no termina donde le toca: sigue hasta donde terminan
- * TODOS los datos, y la siguiente la tapa desde su sitio. El aro se construye
- * por capas, como quien pinta una pared y luego otra encima.
+ * Así que ninguna porción termina donde le toca: todas siguen hasta donde
+ * terminan TODOS los datos, y la siguiente las tapa desde su sitio. El aro se
+ * construye por capas, como quien pinta una pared y luego otra encima. Cada
+ * corte a la vista es entonces el canto de ARRANQUE de la porción de encima
+ * —uno solo, y radial— apoyado sobre color opaco y nunca sobre el fondo.
  *
- * De ahí salen tres cosas, y las tres importan:
+ * Tiene dos consecuencias que no se pueden separar de esto:
  *
- * · Cada corte es UN SOLO canto —el de la porción de encima— apoyado sobre un
- *   color opaco, nunca sobre el fondo. No hay nada que el suavizado pueda
- *   dejar pasar, y el corte es recto por construcción y no por un ajuste.
  * · El hueco de lo que falta por clasificar sigue estando, porque las capas
  *   terminan donde terminan los datos y no donde termina el aro.
- * · Señalar una porción tiene que atenuar con COLOR y no con opacidad. Con
- *   capas, una porción translúcida enseña lo que tiene debajo, que es la
- *   porción anterior entera. Está en el `stroke` del componente.
- *
- * Antes esto se resolvía al revés —cada arco se metía 0.75 unidades por
- * debajo del anterior— y tenía dos fallos que las capas no pueden tener: el
- * de la primera porción daba la vuelta y se comía parte del hueco, y en
- * cuanto algo bajaba de opacidad el solape asomaba pegado al corte.
+ * · Señalar una porción tiene que atenuar con COLOR y no con opacidad: una
+ *   capa translúcida enseña la que tiene debajo, que es la porción anterior
+ *   entera.
  */
 export function arcosDeLaDona(porciones: PorcionDeDona[], total: number): ArcoDeLaDona[] {
   const segmentos = [...porciones]
@@ -99,11 +144,8 @@ export function arcosDeLaDona(porciones: PorcionDeDona[], total: number): ArcoDe
 
   const suma = segmentos.reduce((s, p) => s + p.valor, 0);
   const base = total > 0 ? total : suma || 1;
-
   // Dónde acaban los datos. Nunca más de una vuelta: si las porciones suman
-  // más que el total —redondeos—, el aro cierra y ya está. Un
-  // `strokeDasharray` con el hueco en negativo es inválido, y el navegador que
-  // lo rechaza deja el aro entero pintado.
+  // más que el total —redondeos—, el aro cierra y ya está.
   const fin = Math.min(1, suma / base);
 
   let recorrido = 0;
@@ -117,10 +159,8 @@ export function arcosDeLaDona(porciones: PorcionDeDona[], total: number): ArcoDe
       ...seg,
       fraccion,
       porcentaje: Math.round(fraccion * 100),
-      // Desde su sitio hasta el final de los datos. Lo que sobra se lo come
-      // la porción siguiente, que se pinta después y encima.
-      largo: Math.max(0, fin - desde) * VUELTA,
-      desfase: -desde * VUELTA,
+      desde: Math.min(desde, fin),
+      hasta: fin,
     };
   });
 }
@@ -286,52 +326,44 @@ export function Dona({
 
         {trazos.map((seg, i) => {
           const puedeBajar = seg.id !== null && onElegir !== undefined;
+          const vuelta = seg.hasta - seg.desde;
+          if (vuelta <= 0) return null;
 
-          return (
+          /*
+            ── Atenuar con COLOR, nunca con opacidad ─────────────────────────
+            Señalar una porción apaga las demás. Con `opacity` se vuelven
+            translúcidas, y debajo de cada una está la anterior entera —el aro
+            se pinta por capas—, así que asomaría por debajo. Mezclando el
+            color con el de la tarjeta se apaga igual sin dejar de ser opaca.
+            `transition-colors` incluye el relleno, así que sigue siendo
+            gradual.
+          */
+          const color =
+            activa !== null && activa !== i
+              ? `color-mix(in oklab, ${seg.color} 35%, var(--card))`
+              : seg.color;
+
+          const comun = {
+            onPointerEnter: () => setActiva(i),
+            onClick: () => puedeBajar && onElegir(seg.id as number),
+            className: cn('transition-colors', puedeBajar && 'cursor-pointer'),
+          };
+
+          // La vuelta entera no es un sector: sus dos cortes caerían en el
+          // mismo sitio y el arco quedaría indefinido. Ahí es un aro y ya.
+          return vuelta >= 1 ? (
             <circle
               key={seg.id ?? seg.nombre}
               cx={CENTRO}
               cy={CENTRO}
               r={RADIO}
               fill="none"
-              /*
-                ── Atenuar con COLOR, nunca con opacidad ───────────────────
-                Señalar una porción apaga las demás. Hacerlo con `opacity`
-                las vuelve translúcidas, y debajo de cada una está el solape
-                de su vecina: el arco que la precede se le mete 0.75 por
-                debajo para taparle la costura. Con la porción opaca eso no
-                se ve nunca; en cuanto baja de opacidad, el solape asoma como
-                una franja de otro color pegada al corte, y el corte deja de
-                verse recto.
-
-                Y pasaba también SIN señalar nada, porque la transición dura
-                un momento en el que la opacidad está a medias.
-
-                Mezclando el color con el de la tarjeta se consigue lo mismo
-                —el arco se apaga— sin dejar de ser opaco, así que el corte
-                es siempre una línea recta. `transition-colors` incluye el
-                trazo, así que se sigue apagando poco a poco.
-              */
-              stroke={
-                activa !== null && activa !== i
-                  ? `color-mix(in oklab, ${seg.color} 35%, var(--card))`
-                  : seg.color
-              }
+              stroke={color}
               strokeWidth={GROSOR}
-              // Sin patrón cuando da la vuelta entera: un hueco de cero es
-              // un patrón que algunos motores rechazan, y lo que hace falta
-              // ahí es un círculo y ya.
-              strokeDasharray={
-                seg.largo >= VUELTA ? undefined : `${seg.largo} ${VUELTA - seg.largo}`
-              }
-              strokeDashoffset={seg.desfase}
-              // Empieza ARRIBA, no a las tres en punto: es donde uno empieza a
-              // leer un reloj y también una dona.
-              transform={`rotate(-90 ${CENTRO} ${CENTRO})`}
-              onPointerEnter={() => setActiva(i)}
-              onClick={() => puedeBajar && onElegir(seg.id as number)}
-              className={cn('transition-colors', puedeBajar && 'cursor-pointer')}
+              {...comun}
             />
+          ) : (
+            <path key={seg.id ?? seg.nombre} d={sectorDeLaDona(seg.desde, seg.hasta)} fill={color} {...comun} />
           );
         })}
       </svg>
