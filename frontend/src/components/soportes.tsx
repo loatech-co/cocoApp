@@ -175,7 +175,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
  * carpeta de descargas. Obligar a pasar por el diálogo de archivos es pedir
  * que se busque a mano lo que ya se tiene agarrado.
  */
-function Soltar({
+export function Soltar({
   subiendo,
   progreso,
   solo,
@@ -370,7 +370,7 @@ function Miniatura({
  * retina, dibujarla al tamaño de la caja deja un texto borroso que parece un
  * escaneo malo cuando el escaneo está bien.
  */
-function LienzoPdf({ url }: { url: string }) {
+export function LienzoPdf({ url }: { url: string }) {
   const lienzo = useRef<HTMLCanvasElement>(null);
   const [fallo, setFallo] = useState(false);
 

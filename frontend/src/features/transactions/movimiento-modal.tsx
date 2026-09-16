@@ -3,7 +3,6 @@ import {
   Camera,
   Loader2,
   Lock,
-  Paperclip,
   Pencil,
   ScanLine,
   Sparkles,
@@ -22,8 +21,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-recurrencia';
-import { Soportes } from '@/components/soportes';
+import { LienzoPdf, Soltar, Soportes } from '@/components/soportes';
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -36,7 +34,6 @@ import { Label } from '@/components/ui/label';
 import { ApiClientError, apiSubir } from '@/lib/api-client';
 import { diaLargo, mesLargo } from '@/lib/fechas';
 import {
-  useActualizarCategoria,
   useActualizarMovimiento,
   useCategories,
   useCrearCategoria,
@@ -86,7 +83,6 @@ export function MovimientoModal({
   const categorias = useCategories();
   const crear = useCrearMovimiento();
   const actualizar = useActualizarMovimiento();
-  const actualizarConcepto = useActualizarCategoria();
   const eliminar = useEliminarMovimiento();
   const crearCategoria = useCrearCategoria();
   const primerCampo = useRef<HTMLInputElement>(null);
@@ -148,17 +144,6 @@ export function MovimientoModal({
   */
   const [descartes, setDescartes] = useState(0);
 
-  // La recurrencia pertenece al CONCEPTO, así que se carga de él y se guarda
-  // en él. Aquí solo se edita de paso, que es donde uno se acuerda.
-  const [recurrencia, setRecurrencia] = useState<Recurrencia>({
-    recurrente: false,
-    periodicidad: 'mensual',
-    diaDePago: 1,
-    // El mes en curso: si alguien pasa a trimestral, lo más probable es que el
-    // ciclo empiece ahora, no en enero.
-    mesDePago: new Date().getMonth() + 1,
-  });
-
   // Cada vez que se abre se recarga desde el movimiento: sin esto, abrir para
   // editar el segundo movimiento mostraría los datos del primero.
   useEffect(() => {
@@ -181,21 +166,18 @@ export function MovimientoModal({
     if (!movimiento) setTimeout(() => primerCampo.current?.focus(), 50);
   }, [abierta, movimiento, categoriaPorDefecto, tipoPorDefecto, descartes]);
 
-  // Al elegir un concepto se trae SU recurrencia: es lo que ya estaba
-  // guardado, y empezar de cero haría que abrir el modal y guardar sin tocar
-  // nada borrara la marca.
-  const arbolCargado = categorias.data ?? [];
-  const conceptoElegido = rutaSeleccionada(arbolCargado, categoryId).concepto;
+  /*
+    ── La recurrencia NO se edita aquí ─────────────────────────────────────
+    Es del CONCEPTO, no del movimiento, y su sitio es Centros de costos. En un
+    centro estático, además, la clasificación entera vive allá; y en uno
+    dinámico un concepto nunca es recurrente —lo que se improvisa no vuelve
+    solo cada mes—.
 
-  useEffect(() => {
-    if (!abierta) return;
-    setRecurrencia({
-      recurrente: conceptoElegido?.recurrente ?? false,
-      periodicidad: conceptoElegido?.periodicidad ?? 'mensual',
-      diaDePago: conceptoElegido?.dia_de_pago ?? 1,
-      mesDePago: conceptoElegido?.mes_de_pago ?? new Date().getMonth() + 1,
-    });
-  }, [abierta, conceptoElegido]);
+    Editable desde aquí, un formulario que uno abre para corregir una cifra
+    podía cambiar de paso cada cuánto vuelve un pago, y eso reaparece semanas
+    después en la tarjeta de pagos pendientes sin que nadie recuerde haberlo
+    tocado.
+  */
 
   useEffect(() => {
     if (!abierta) return;
@@ -331,22 +313,6 @@ export function MovimientoModal({
         await apiSubir(`/transactions/${id}/soportes`, datos);
       }
 
-      // La recurrencia va aparte porque no es del movimiento: es del concepto.
-      if (concepto && cambioLaRecurrencia(concepto, recurrencia)) {
-        await actualizarConcepto.mutateAsync({
-          id: concepto.id,
-          cambios: {
-            recurrente: recurrencia.recurrente,
-            periodicidad: recurrencia.recurrente ? recurrencia.periodicidad : null,
-            dia_de_pago: recurrencia.recurrente ? recurrencia.diaDePago : null,
-            mes_de_pago:
-              recurrencia.recurrente && recurrencia.periodicidad !== 'mensual'
-                ? recurrencia.mesDePago
-                : null,
-          },
-        });
-      }
-
       onCerrar();
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : 'No se pudo guardar.');
@@ -380,7 +346,7 @@ export function MovimientoModal({
           // Más ancho desde que los soportes se ven en miniatura: con
           // `max-w-2xl` cabían dos recibos por fila y ocho quedaban en cuatro
           // renglones, que es más alto que el resto de la ficha junta.
-          'rounded-t-2xl sm:max-w-3xl sm:rounded-2xl',
+          'rounded-t-2xl sm:max-w-5xl sm:rounded-2xl',
           'pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5',
         )}
       >
@@ -590,17 +556,6 @@ export function MovimientoModal({
                 </div>
               </div>
 
-              {/* Solo con un concepto elegido, y nunca en un estático: la
-                  recurrencia es del CONCEPTO, y el de un centro estático se
-                  configura en Centros de costos. */}
-              {concepto && !estatico && (
-                <CamposDeRecurrencia
-                  valor={recurrencia}
-                  onCambiar={setRecurrencia}
-                  concepto={concepto.name}
-                />
-              )}
-
               <Campo etiqueta="Notas" id="mov-notas">
                 <textarea
                   id="mov-notas"
@@ -712,25 +667,6 @@ export function MovimientoModal({
 
 function hoyEnBogota(): string {
   return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
-}
-
-/** Si hay algo nuevo que guardar en el concepto. */
-function cambioLaRecurrencia(
-  concepto: {
-    recurrente: boolean;
-    periodicidad: string | null;
-    dia_de_pago: number | null;
-    mes_de_pago: number | null;
-  },
-  recurrencia: Recurrencia,
-): boolean {
-  if (concepto.recurrente !== recurrencia.recurrente) return true;
-  if (!recurrencia.recurrente) return false;
-  if (concepto.periodicidad !== recurrencia.periodicidad) return true;
-  if (concepto.dia_de_pago !== recurrencia.diaDePago) return true;
-
-  // El mes solo cuenta si el ciclo no es mensual: ahí no se guarda.
-  return recurrencia.periodicidad !== 'mensual' && concepto.mes_de_pago !== recurrencia.mesDePago;
 }
 
 /** `expense` → "gasto". El tipo, dicho como se dice. */
@@ -1092,10 +1028,16 @@ function LoQueLei() {
 /**
  * Los soportes elegidos antes de que el movimiento exista.
  *
- * Se quedan en memoria hasta que hay un movimiento del que colgarlos. La
- * alternativa —crear el movimiento vacío para tener un identificador y luego
- * adjuntar— deja movimientos a medias en la base cada vez que alguien abre el
- * formulario y se arrepiente.
+ * ── Por qué se PREVISUALIZAN y no solo se listan ────────────────────────────
+ * Porque la razón de que estén aquí es poder comprobar lo que la máquina leyó.
+ * Un nombre de archivo y un tamaño en kilobytes no dicen cuánto se pagó: hay
+ * que ver el papel. Con una lista de nombres, verificar seguía exigiendo abrir
+ * el archivo fuera de la aplicación, que es justo lo que nadie hace.
+ *
+ * ── Por qué se quedan en memoria ────────────────────────────────────────────
+ * Un soporte cuelga de un movimiento y al crear todavía no hay de qué
+ * colgarlo. Crear uno vacío para tener un identificador dejaría movimientos a
+ * medias en la base cada vez que alguien abre el formulario y se arrepiente.
  */
 function SoportesPendientes({
   archivos,
@@ -1106,55 +1048,76 @@ function SoportesPendientes({
   onAñadir: (archivos: File[]) => void;
   onQuitar: (indice: number) => void;
 }) {
-  const campo = useRef<HTMLInputElement>(null);
-
   return (
-    <div className="flex flex-col gap-2">
-      {archivos.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5">
-          {archivos.map((a, i) => (
-            <li
-              key={`${a.name}-${i}`}
-              className="flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 text-xs"
-            >
-              <span className="max-w-[14rem] truncate">{a.name}</span>
-              <span className="tabular shrink-0 text-muted-foreground">
-                {(a.size / 1024).toFixed(0)} KB
-              </span>
-              <button
-                type="button"
-                onClick={() => onQuitar(i)}
-                aria-label={`Quitar ${a.name}`}
-                className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
-              >
-                <X className="size-3.5" aria-hidden="true" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="flex flex-col gap-3">
+      {archivos.map((archivo, i) => (
+        <PreviaDeArchivo
+          key={`${archivo.name}-${i}`}
+          archivo={archivo}
+          onQuitar={() => onQuitar(i)}
+        />
+      ))}
 
-      <button
-        type="button"
-        onClick={() => campo.current?.click()}
-        className="flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
-      >
-        <Paperclip className="size-3.5 shrink-0" aria-hidden="true" />
-        {archivos.length === 0 ? 'Adjuntar un soporte' : 'Adjuntar otro'}
-      </button>
-
-      <input
-        ref={campo}
-        type="file"
-        multiple
-        accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
-        className="hidden"
-        onChange={(e) => {
-          onAñadir(Array.from(e.target.files ?? []));
-          e.target.value = '';
-        }}
+      {/* El MISMO cuadro que en un movimiento ya guardado: vacío ocupa el
+          ancho y explica qué acepta; con algo dentro es una plaza más. Dos
+          versiones del mismo hueco acabarían comportándose distinto. */}
+      <Soltar
+        subiendo={false}
+        progreso={0}
+        solo={archivos.length === 0}
+        onArchivos={(lista) => onAñadir(Array.from(lista ?? []))}
       />
     </div>
+  );
+}
+
+/**
+ * Un archivo que todavía no se ha subido, dibujado.
+ *
+ * El `blob:` se crea aquí y se suelta al desmontar: sin eso, elegir y quitar
+ * cuatro recibos deja cuatro archivos en la memoria de la pestaña hasta que se
+ * recargue la página.
+ */
+function PreviaDeArchivo({ archivo, onQuitar }: { archivo: File; onQuitar: () => void }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const objeto = URL.createObjectURL(archivo);
+    setUrl(objeto);
+    return () => URL.revokeObjectURL(objeto);
+  }, [archivo]);
+
+  const esImagen = archivo.type.startsWith('image/');
+
+  return (
+    <figure className="flex flex-col gap-2">
+      <div className="relative h-64 overflow-hidden rounded-2xl bg-card ring-1 ring-border">
+        {!url ? (
+          <span className="flex size-full items-center justify-center">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden="true" />
+          </span>
+        ) : esImagen ? (
+          <img src={url} alt={archivo.name} className="size-full object-cover object-top" />
+        ) : (
+          <LienzoPdf url={url} />
+        )}
+
+        <button
+          type="button"
+          onClick={onQuitar}
+          aria-label={`Quitar ${archivo.name}`}
+          title="Quitar"
+          className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-tinta-950/70 text-tinta-50 transition-colors hover:bg-destructive"
+        >
+          <X className="size-4" aria-hidden="true" />
+        </button>
+      </div>
+
+      <figcaption className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
+        <span className="min-w-0 truncate">{archivo.name}</span>
+        <span className="tabular shrink-0">{(archivo.size / 1024).toFixed(0)} KB</span>
+      </figcaption>
+    </figure>
   );
 }
 
