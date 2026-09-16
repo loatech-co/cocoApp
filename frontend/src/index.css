@@ -322,19 +322,48 @@
     0 -1px 4px -1px rgba(15, 31, 29, 0.06),
     0 -1px 2px -1px rgba(15, 31, 29, 0.06);
 
-  /* El velo de una superficie a pantalla completa. Es el MISMO de un modal,
-     para que abrir un panel y abrir una ficha oscurezcan igual. */
-  --velo: rgba(10, 22, 20, 0.6);
+  /*
+    El velo: negro al 30 %, y el MISMO para todo lo que se abre encima.
+
+    Un solo token porque abrir un panel, una ficha o una confirmación tienen
+    que oscurecer igual: con tres valores repartidos por el código, cada
+    superficie atenúa un poco distinto y la aplicación parece parpadear al
+    pasar de una a otra.
+
+    Negro y no la tinta del tema: un velo tintado de verde sobre una pantalla
+    verde no oscurece, tiñe. Y al 30 % —no al 60— porque lo de detrás tiene que
+    seguir leyéndose: el velo dice "esto de aquí está en pausa", no "esto de
+    aquí ya no existe". El desenfoque hace el resto del trabajo.
+  */
+  --velo: rgba(0, 0, 0, 0.3);
 }
 
 .dark {
-  --background: #0a1614;
+  /*
+    ── La rampa de superficies ─────────────────────────────────────────────
+    El tema trae cuatro verdes muy juntos —#0a1614, #0f1f1d, #142624,
+    #1a2826—, unos tres puntos de luminosidad entre uno y el siguiente. Eso
+    basta para una página de shadcn con dos niveles, pero esta app apila
+    cinco: barra lateral, lienzo, tarjeta, bloque dentro de la tarjeta y chip
+    dentro del bloque. Con escalones de tres puntos, los cinco acaban siendo
+    el mismo verde y la pantalla se ve LAVADA en vez de oscura.
+
+    Así que la rampa se abre y se ancla más abajo: el lienzo arranca más
+    oscuro que el del tema y cada escalón sube unos cinco puntos. Se conserva
+    el matiz —el mismo teal apagado— y el orden; lo que cambia es la
+    separación, que es lo que hacía falta.
+
+    Y el borde SUBE en vez de bajar: es el que hace el trabajo de separar
+    dentro de un modal, donde todo está a la misma altura y no hay sombra que
+    valga.
+  */
+  --background: #07110f;
   --foreground: #e8edeb;
 
-  --card: #0f1f1d;
+  --card: #0d1917;
   --card-foreground: #e8edeb;
 
-  --popover: #142624;
+  --popover: #12211f;
   --popover-foreground: #e8edeb;
 
   --primary: #5dbfb5;
@@ -343,17 +372,17 @@
   --secondary: #e0b976;
   --secondary-foreground: #2a1c08;
 
-  --muted: #1a2826;
+  --muted: #1b2927;
   --muted-foreground: #8a9693;
 
-  --accent: #1a2826;
+  --accent: #17302c;
   --accent-foreground: #9fe5dc;
 
   --destructive: #e46e6c;
   --destructive-foreground: #160807;
 
-  --border: #263533;
-  --input: #263533;
+  --border: #2b3d3a;
+  --input: #2b3d3a;
   --ring: #5dbfb5;
 
   --acento-tinta: #5dbfb5;
@@ -361,17 +390,17 @@
   /* En oscuro el gasto NO puede ser el pino: sobre un fondo casi negro no se
      ve. Le toca el `primary` de este tema, que aquí es el teal claro. */
   --expense: #5dbfb5;
-  --expense-surface: #142624;
+  --expense-surface: #12211f;
   --income: #4ac382;
   --income-surface: #0f2419;
 
   --warning: #e0b976;
   --warning-surface: #2a1c08;
   --info: #5dbfb5;
-  --info-surface: #14302e;
+  --info-surface: #123330;
   --success: #4ac382;
-  --success-surface: #0f2419;
-  --destructive-surface: #2a1110;
+  --success-surface: #0e2b1d;
+  --destructive-surface: #2e1211;
 
   --chart-1: #5dbfb5;
   --chart-2: #e0b976;
@@ -394,25 +423,25 @@
   --dona-otros: #263533;
   --dona-otros-tinta: #e8edeb;
 
-  --chip-gasto: #1a2826;
+  --chip-gasto: #17302c;
   --chip-gasto-tinta: #9fe5dc;
-  --chip-ingreso: #0f2419;
+  --chip-ingreso: #0e2b1d;
   --chip-ingreso-tinta: #4ac382;
-  --chip-presupuesto: #14302e;
+  --chip-presupuesto: #123330;
   --chip-presupuesto-tinta: #5dbfb5;
-  --chip-movimientos: #2a1c08;
+  --chip-movimientos: #2f2009;
   --chip-movimientos-tinta: #e0b976;
 
   /* Tres escalones: la barra lateral es la superficie MÁS oscura, el área de
      trabajo sube uno y las tarjetas otro. Con dos, la barra desaparecía
      contra el contenido. */
-  --sidebar: #081211;
+  --sidebar: #040c0b;
   --sidebar-foreground: #e8edeb;
   --sidebar-muted: #8a9693;
   --sidebar-active: #5dbfb5;
   --sidebar-active-foreground: #0a1614;
-  --sidebar-hover: #1a2826;
-  --sidebar-border: #1a2826;
+  --sidebar-hover: #17302c;
+  --sidebar-border: #1b2927;
 
   /* Negra y profunda: sobre un fondo casi negro, la sombra del tema claro no
      separa nada del fondo. */
@@ -428,7 +457,7 @@
     0 -1px 3px rgba(0, 0, 0, 0.3),
     0 -1px 2px -1px rgba(0, 0, 0, 0.3);
 
-  --velo: rgba(0, 0, 0, 0.65);
+  --velo: rgba(0, 0, 0, 0.3);
 }
 
 /* Expone los tokens como utilidades de Tailwind (bg-background, text-income…). */

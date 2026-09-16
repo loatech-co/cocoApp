@@ -331,7 +331,7 @@ export function MovimientoModal({
       // `bg-carbon-950/50` no pintaba nada: `carbon` no existe en esta paleta,
       // así que la clase no generaba ningún color y el modal flotaba sobre la
       // página sin velo detrás.
-      className="fixed inset-0 z-50 flex items-end justify-center bg-tinta-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onCerrar}
     >
       <div

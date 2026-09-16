@@ -18,6 +18,7 @@ import { Confirmacion } from '@/components/ui/confirmacion';
 import { CentroModal } from '@/features/centros/centro-modal';
 import { ConceptoModal } from '@/features/centros/concepto-modal';
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -381,22 +382,14 @@ function Grupo({ grupo }: { grupo: Category }) {
                   Antes eran texto muerto, y el único modo de corregir un
                   nombre mal escrito era borrar el concepto y crearlo de nuevo
                   —con lo que los movimientos se quedaban sin clasificar—. */}
-              <button
-                type="button"
+              {/* El `Chip` compartido, que trae su borde. A mano era
+                   `bg-card` dentro de una caja `muted` dentro de una tarjeta
+                   `card`: el chip acababa del mismo color que la tarjeta y
+                   desaparecía. Con borde se ve en los dos temas sin depender
+                   de qué superficie tenga debajo. */}
+              <Chip
                 onClick={() => setEditando(concepto)}
                 title={`Editar ${concepto.name}`}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 text-xs text-card-foreground',
-                  // Se OSCURECE. `background` es más oscuro que `card` en los
-                  // dos temas —bosque-925 contra bosque-900 en oscuro, el
-                  // tinte contra el blanco en claro—, así que el chip se
-                  // separa de su fondo sin cambiar de color ni ganar bordes.
-                  //
-                  // Aclarándolo no servía: la caja del grupo ya es
-                  // `secondary/60`, y el chip acababa del color de su propio
-                  // fondo justo cuando se lo estaba señalando.
-                  'transition-colors hover:bg-background',
-                )}
               >
                 {concepto.recurrente && (
                   <Repeat
@@ -405,7 +398,7 @@ function Grupo({ grupo }: { grupo: Category }) {
                   />
                 )}
                 {concepto.name}
-              </button>
+              </Chip>
             </li>
           ))}
         </ul>

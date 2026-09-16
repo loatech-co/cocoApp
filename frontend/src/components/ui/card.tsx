@@ -10,13 +10,15 @@ export function Card({ className, ...props }: ComponentProps<'div'>) {
         // falta —una casilla, un chip— pero nunca mayor: dos contenedores
         // vecinos con esquinas distintas se leen como dos sistemas distintos.
         //
-        // Sin borde: la tarjeta se separa del lienzo por SOMBRA, no por línea.
-        // Con borde y sombra a la vez el contorno se ve doble.
+        // Borde Y sombra, y no solo sombra como antes.
         //
-        // La sombra lleva el matiz verde del fondo, no gris neutro: una sombra
-        // gris sobre un lienzo verdoso se ve sucia.
-        'rounded-lg bg-card text-card-foreground',
-        'shadow-[0_1px_2px_rgba(12,31,24,0.04),0_10px_30px_-14px_rgba(12,31,24,0.14)]',
+        // La sombra del tema es tinta al 6 %: sobre un lienzo casi blanco se
+        // ve, pero sobre uno casi negro una sombra oscura no separa de nada
+        // —lo oscuro sobre lo oscuro no proyecta—. El borde funciona en los
+        // dos, y con una sombra tan suave no llega a verse el contorno doble
+        // que había que evitar.
+        'rounded-lg border border-border bg-card text-card-foreground',
+        'shadow-[0_1px_2px_rgba(15,31,29,0.04),0_8px_24px_-14px_rgba(15,31,29,0.12)]',
         className,
       )}
       {...props}

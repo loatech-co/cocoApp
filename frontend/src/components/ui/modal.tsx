@@ -65,7 +65,7 @@ export function Modal({
       // la ficha: dos trampas peleándose por el tabulador son un teclado que no
       // hace nada.
       data-modal=""
-      className="fixed inset-0 z-50 flex items-end justify-center bg-tinta-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm sm:items-center sm:p-4"
     >
       <div
         className={cn(

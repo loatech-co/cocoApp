@@ -55,7 +55,7 @@ export function Confirmacion({
       aria-modal="true"
       aria-label={titulo}
       onMouseDown={(e) => e.target === e.currentTarget && onCancelar()}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-tinta-950/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[var(--velo)] p-4 backdrop-blur-sm"
     >
       <div
         className={cn(
