@@ -28,7 +28,13 @@ import { cn } from '@/lib/utils';
 export interface Seccion {
   to: string;
   label: string;
-  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean; fill?: string; fillOpacity?: number; strokeWidth?: number }>;
+  Icono: ComponentType<{
+    className?: string;
+    'aria-hidden'?: boolean;
+    fill?: string;
+    fillOpacity?: number;
+    strokeWidth?: number;
+  }>;
   exact: boolean;
   /** Preferencia que debe estar activa para que la sección exista. */
   requiere?: 'cuentas';
@@ -44,7 +50,7 @@ export interface Seccion {
  * cuanto alguien reordena.
  */
 export const SECCIONES: readonly Seccion[] = [
-  { to: '/', label: 'Resumen', Icono: LayoutDashboard, exact: true },
+  { to: '/', label: 'Dashboard', Icono: LayoutDashboard, exact: true },
   // Para quien no lleva cuentas, este enlace no existe. Ni oculto con CSS ni
   // deshabilitado: ausente.
   { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false, requiere: 'cuentas' },
@@ -60,7 +66,7 @@ export const SECCIONES: readonly Seccion[] = [
  */
 export const SECCIONES_DE_ADMIN: readonly Seccion[] = [
   // Los centros de costos se configuran una vez y casi no se tocan: no es una
-  // sección del día a día como el resumen o los movimientos, es de las de
+  // sección del día a día como el dashboard o los movimientos, es de las de
   // dejar la casa en orden. Por eso baja aquí.
   { to: '/centros-de-costos', label: 'Centros de costos', Icono: Tags, exact: false },
   // 'Usuarios', no 'Cuentas': en esta misma barra 'Cuentas' ya significa
@@ -201,9 +207,7 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
                 {usuario?.display_name ?? '—'}
               </span>
               {usuario?.email && (
-                <span className="block truncate text-2xs text-sidebar-muted">
-                  {usuario.email}
-                </span>
+                <span className="block truncate text-2xs text-sidebar-muted">{usuario.email}</span>
               )}
             </span>
           )}

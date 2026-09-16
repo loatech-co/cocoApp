@@ -131,7 +131,7 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <ToolbarFiltros
-        titulo={`Hola de nuevo${nombreDePila(usuario) ? `, ${nombreDePila(usuario)}` : ''}!`}
+        titulo={`¡Hola de nuevo${nombreDePila(usuario) ? `, ${nombreDePila(usuario)}` : ''}!`}
         subtitulo={
           dashboard.data
             ? `${dashboard.data.range.count} movimientos · ${formatCOP(dashboard.data.range.expense)} gastados`
@@ -156,7 +156,7 @@ export function DashboardPage() {
 
       {dashboard.isError && (
         <Alert variant="destructive">
-          <AlertTitle>No se pudo cargar el resumen</AlertTitle>
+          <AlertTitle>No se pudo cargar el dashboard</AlertTitle>
           <AlertDescription>
             {dashboard.error instanceof ApiClientError
               ? dashboard.error.message
@@ -172,8 +172,10 @@ export function DashboardPage() {
               <Skeleton key={i} className="h-24 rounded-lg" />
             ))}
           </div>
-          <div className="grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_repeat(2,minmax(20%,30rem))] lg:grid-rows-[420px]">
-            <Card className="h-full min-h-0">
+          {/* La misma fila de abajo, con las mismas medidas: un esqueleto que
+              se recoloca al llegar los datos es peor que no ponerlo. */}
+          <div className="grid gap-3 sm:gap-5 lg:auto-rows-[420px] lg:grid-cols-2 xl:grid-cols-4">
+            <Card className="h-full min-h-0 lg:col-span-2">
               <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <Skeleton className="mb-4 h-6 w-40" />
                 <div className="min-h-0 flex-1">
@@ -277,16 +279,45 @@ export function DashboardPage() {
           */}
           <div
             className={cn(
-              'grid gap-3 sm:gap-5 lg:grid-rows-[420px]',
-              // Sin los pagos pendientes, la fila son DOS tarjetas. Dejando
-              // tres columnas, la distribución se quedaría en el centro con un
-              // hueco del ancho de una tarjeta a su derecha.
-              hayPendientes
-                ? 'lg:grid-cols-[minmax(0,1fr)_repeat(2,minmax(20%,30rem))]'
-                : 'lg:grid-cols-[minmax(0,1fr)_minmax(20%,30rem)]',
+              // `auto-rows` y no `grid-rows`: con la gráfica a todo el ancho
+              // hay DOS filas, y las dos miden lo mismo.
+              'grid gap-3 sm:gap-5 lg:auto-rows-[420px]',
+              /*
+                ── La MISMA rejilla que los indicadores de arriba ────────────
+                Cuatro columnas, y cada tarjeta ocupa las que le tocan. Esto
+                no es una coincidencia bonita: es lo único que hace que los
+                cantos de esta fila caigan sobre los de la de arriba, y dos
+                filas de tarjetas desalineadas se leen como dos rejillas.
+
+                Y es además la forma correcta de decir "la mitad". Un
+                `minmax(50%, …)` mide el 50 % del ANCHO TOTAL, huecos
+                incluidos, así que la gráfica salía más ancha que dos
+                indicadores juntos: los huecos se descontaban de las otras
+                dos. Ocupando dos columnas de cuatro, la gráfica mide dos
+                indicadores más el hueco de en medio, que es exactamente la
+                mitad de la fila.
+
+                ── Y por qué a 1280 cambia el reparto ────────────────────────
+                Porque a 1024 la cuenta no da: si la gráfica se lleva la
+                mitad, a la dona y a los pagos pendientes les toca un cuarto
+                cada una, y un cuarto de 1100px son 275 —menos de lo que
+                necesitan—. Así que ahí no se estrecha ninguna: la gráfica
+                pasa a ancho completo y las otras dos bajan debajo, mitad y
+                mitad. Es el mismo corte que ya usan los indicadores, que
+                hasta 1280 van de dos en dos.
+              */
+              'lg:grid-cols-2 xl:grid-cols-4',
             )}
           >
-            <Card className="h-full min-h-0">
+            <Card
+              className={cn(
+                'h-full min-h-0',
+                // Con pendientes: toda la fila hasta 1280, y media a partir
+                // de ahí. Sin ellos son dos tarjetas, y la dona se queda con
+                // una columna —la de un indicador— en vez de con media fila.
+                hayPendientes ? 'lg:col-span-2' : 'xl:col-span-3',
+              )}
+            >
               <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
                 {/*
