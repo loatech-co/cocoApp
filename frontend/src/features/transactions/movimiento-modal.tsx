@@ -1302,12 +1302,14 @@ function Via({
         Dos manchas del mismo color en esquinas opuestas arman una diagonal, y
         esa diagonal es lo que hace que el glifo del centro se lea como el
         centro de algo en vez de como una figura suelta en un rectángulo. A la
-        mitad de tamaño porque no compite: la esquina que manda es la de
-        arriba, que es por donde empieza a recorrerse la tarjeta.
+        Más pequeño que el de arriba porque no compite: la esquina que manda es
+        la de arriba, que es por donde empieza a recorrerse la tarjeta. Y se
+        hunde proporcionalmente más que él, para que lo que asoma guarde la
+        misma relación que su tamaño.
       */}
       <span
         aria-hidden
-        className="pointer-events-none absolute -bottom-10 -right-10 size-26 rounded-full sm:-bottom-8 sm:-right-8 sm:size-32"
+        className="pointer-events-none absolute -bottom-14 -right-14 size-36 rounded-full sm:-bottom-11 sm:-right-11 sm:size-44"
         style={{ backgroundColor: CHIPS[color].fondo }}
       />
 
