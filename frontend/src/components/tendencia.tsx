@@ -54,6 +54,7 @@ export function Tendencia({
   if (puntos.length === 0 || vacia) {
     return (
       <EstadoVacio
+        className="h-full"
         Icono={ChartLine}
         titulo="Sin movimientos en este periodo"
         ayuda="Amplía el rango de fechas o quita los filtros para ver la tendencia."
@@ -124,7 +125,9 @@ export function Tendencia({
   })();
 
   return (
-    <div className="flex flex-col gap-4">
+    // `h-full` y el lienzo en `flex-1`: la tarjeta la estira su vecina de al
+    // lado, y una gráfica de alto fijo dejaba media tarjeta en blanco debajo.
+    <div className="flex h-full flex-col gap-4">
       <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs text-muted-foreground">
         <span>
           Promedio por {granularidad === 'dia' ? 'día' : 'mes'}{' '}
@@ -145,7 +148,9 @@ export function Tendencia({
       */}
       <div
         ref={lienzo}
-        className="relative touch-pan-y outline-none"
+        // `min-h-0` deja que el flex lo encoja; sin eso el hijo impone su alto
+        // mínimo y el contenedor se desborda.
+        className="relative min-h-40 min-w-0 flex-1 touch-pan-y outline-none"
         tabIndex={0}
         role="application"
         aria-label={`Gasto por ${granularidad === 'dia' ? 'día' : 'mes'}. Usa las flechas para recorrer los puntos.`}
@@ -158,7 +163,7 @@ export function Tendencia({
         <svg
           viewBox="0 0 100 42"
           preserveAspectRatio="none"
-          className="h-40 w-full sm:h-56"
+          className="h-full w-full"
           role="img"
           aria-label={`Gasto por ${granularidad === 'dia' ? 'día' : 'mes'}, de ${etiquetaDeCubo(puntos[0].bucket)} a ${etiquetaDeCubo(puntos[puntos.length - 1].bucket)}. Promedio ${formatCOP(promedio)}, pico ${formatCOP(maximo)}.`}
         >
@@ -277,19 +282,19 @@ export function Tendencia({
 /**
  * La gráfica mientras llega su dato.
  *
- * Ocupa EXACTAMENTE el mismo alto que la gráfica de verdad —h-40, y h-56 desde
- * `sm`— más sus dos líneas de texto. Un esqueleto de otro tamaño hace que la
- * página dé un salto justo cuando llegan los datos, que es el momento en que
- * alguien está a punto de pulsar algo.
+ * Con la misma forma que la gráfica de verdad: cabecera, lienzo que se estira
+ * y fila de etiquetas. Un esqueleto de otro tamaño hace que la página dé un
+ * salto justo cuando llegan los datos, que es el momento en que alguien está a
+ * punto de pulsar algo.
  */
 export function TendenciaEsqueleto() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full flex-col gap-4">
       <div className="flex gap-6">
         <Skeleton className="h-4 w-40" />
         <Skeleton className="h-4 w-32" />
       </div>
-      <Skeleton className="h-40 w-full rounded-xl sm:h-56" />
+      <Skeleton className="min-h-40 w-full flex-1 rounded-xl" />
       <div className="flex justify-between">
         {Array.from({ length: 6 }, (_, i) => (
           <Skeleton key={i} className="h-3 w-8" />

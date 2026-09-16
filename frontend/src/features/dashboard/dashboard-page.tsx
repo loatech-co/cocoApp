@@ -142,9 +142,11 @@ export function DashboardPage() {
           </div>
           <div className="grid gap-3 sm:gap-5 lg:grid-cols-3">
             <Card className="lg:col-span-2">
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <Skeleton className="mb-4 h-6 w-40" />
-                <TendenciaEsqueleto />
+                <div className="min-h-0 flex-1">
+                  <TendenciaEsqueleto />
+                </div>
               </CardContent>
             </Card>
             <Skeleton className="h-72 rounded-3xl" />
@@ -186,12 +188,14 @@ export function DashboardPage() {
               respecto de la tarjeta que tiene encima y el borde no cuadraba. */}
           <div className="grid gap-3 sm:gap-5 lg:grid-cols-3">
             <Card className="lg:col-span-2">
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
-                <Tendencia
-                  puntos={dashboard.data.trend}
-                  granularidad={dashboard.data.period.granularity}
-                />
+                <div className="min-h-0 flex-1">
+                  <Tendencia
+                    puntos={dashboard.data.trend}
+                    granularidad={dashboard.data.period.granularity}
+                  />
+                </div>
               </CardContent>
             </Card>
 
