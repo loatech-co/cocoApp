@@ -1,5 +1,5 @@
-import { Loader2 } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { Loader2, Search } from 'lucide-react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +14,28 @@ import { PieDeModal } from '@/components/ui/modal-partes';
 import type { Category } from '@coco/types';
 import { ICONOS_DE_GRUPO, IconoDeCategoria } from '@/components/ui/iconos';
 
+/** Sin tildes ni mayúsculas: «Educación» se encuentra escribiendo «educacion». */
+function normal(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 /**
- * Los cincuenta iconos, abiertos.
+ * Los cincuenta iconos, con un filtro.
+ *
+ * ── Por qué hace falta el filtro ────────────────────────────────────────────
+ * Sin él la rejilla era cincuenta dibujos en una caja que enseña veintitrés:
+ * el resto había que descubrirlo desplazando, sin saber que estaban ahí ni
+ * cuántos quedaban. Y no es un problema hipotético —el de «Educación» era el
+ * número veintitrés, justo en el pliegue—.
+ *
+ * Escribiendo tres letras quedan dos o tres iconos y se elige mirando, que es
+ * para lo que existe un icono. Filtra por el NOMBRE en castellano y no por el
+ * de lucide: quien busca un icono para Educación escribe «educación», no
+ * «graduation cap».
  *
  * ── Por qué se puede quitar ─────────────────────────────────────────────────
  * Porque un grupo sin icono es un caso legítimo —los hay que no se parecen a
@@ -29,13 +49,32 @@ function SelectorDeIcono({
   valor: string | null;
   onElegir: (icono: string | null) => void;
 }) {
+  const [busca, setBusca] = useState('');
+
+  const filtrados = useMemo(() => {
+    const q = normal(busca);
+    if (q === '') return ICONOS_DE_GRUPO;
+    return ICONOS_DE_GRUPO.filter((i) => normal(i.etiqueta).includes(q));
+  }, [busca]);
+
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="mb-2 text-sm font-medium">Icono</legend>
 
-      <div className={cn(BLOQUE, 'max-h-48 overflow-y-auto')}>
-        <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
-          {ICONOS_DE_GRUPO.map(({ nombre, etiqueta }) => {
+      <div className={cn(BLOQUE, 'flex flex-col gap-2')}>
+        <div className="flex items-center gap-2 rounded-md border border-input bg-card px-3">
+          <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar: educación, mercado, salud…"
+            aria-label="Buscar un icono"
+            className="h-9 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </div>
+
+        <div className="grid max-h-44 grid-cols-6 gap-1 overflow-y-auto sm:grid-cols-8">
+          {filtrados.map(({ nombre, etiqueta }) => {
             const elegido = valor === nombre;
 
             return (
@@ -61,6 +100,12 @@ function SelectorDeIcono({
               </button>
             );
           })}
+
+          {filtrados.length === 0 && (
+            <p className="col-span-full px-1 py-2 text-sm text-muted-foreground">
+              Ningún icono se llama así.
+            </p>
+          )}
         </div>
       </div>
     </fieldset>
