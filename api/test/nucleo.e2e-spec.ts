@@ -392,6 +392,35 @@ describe('Fase 1 — Núcleo (e2e)', () => {
   // ── Categorías ─────────────────────────────────────────────────────────────
 
   describe('Categorías', () => {
+    it('un centro estático se guarda al crearlo y se puede cambiar después', async () => {
+      // La forma pública se arma campo por campo, así que un dato nuevo se
+      // pierde en silencio con la API devolviendo 201: ya pasó con la
+      // recurrencia. Esta prueba existe para que no vuelva a pasar.
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos', estatico: true });
+      expect(centro.estatico).toBe(true);
+
+      // Y llega al árbol, que es de donde lo lee la tabla de movimientos.
+      const arbol = await http
+        .get('/api/v1/categories')
+        .set('Authorization', comoAna())
+        .expect(200);
+      expect(
+        arbol.body.data.find((c: { id: number }) => Number(c.id) === Number(centro.id)).estatico,
+      ).toBe(true);
+
+      const suelto = await http
+        .patch(`/api/v1/categories/${Number(centro.id)}`)
+        .set('Authorization', comoAna())
+        .send({ estatico: false })
+        .expect(200);
+      expect(suelto.body.data.estatico).toBe(false);
+    });
+
+    it('un centro nace dinámico si nadie dice lo contrario', async () => {
+      const centro = await crearCategoria(comoAna(), { name: 'Costos variables' });
+      expect(centro.estatico).toBe(false);
+    });
+
     it('rechaza con 422 un ciclo en el árbol', async () => {
       const padre = await crearCategoria(comoAna(), { name: 'Hogar' });
       const hijo = await crearCategoria(comoAna(), {
@@ -635,26 +664,39 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
 
     it('el desglose del resumen BAJA un nivel al filtrar', async () => {
+      // DOS centros con gasto. Con uno solo, el nivel de los centros no
+      // desglosa nada —"el 100 % está en el único sitio donde puede estar"— y
+      // el resumen se lo salta, que es lo que comprueba la prueba de abajo.
       const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
-      const grupo = await crearCategoria(comoAna(), {
+      const servicios = await crearCategoria(comoAna(), {
         name: 'Servicios públicos',
         parent_id: Number(centro.id),
       });
-      const concepto = await crearCategoria(comoAna(), {
+      const celsia = await crearCategoria(comoAna(), {
         name: 'Celsia',
-        parent_id: Number(grupo.id),
+        parent_id: Number(servicios.id),
       });
+      const vivienda = await crearCategoria(comoAna(), {
+        name: 'Vivienda',
+        parent_id: Number(centro.id),
+      });
+      const alquiler = await crearCategoria(comoAna(), {
+        name: 'Alquiler',
+        parent_id: Number(vivienda.id),
+      });
+      const otroCentro = await crearCategoria(comoAna(), { name: 'Costos variables' });
 
-      await http
-        .post('/api/v1/transactions')
-        .set('Authorization', comoAna())
-        .send({
-          date: '2026-08-12',
-          amount: '300000',
-          type: 'expense',
-          category_id: Number(concepto.id),
-        })
-        .expect(201);
+      for (const [id, amount] of [
+        [celsia.id, '300000'],
+        [alquiler.id, '900000'],
+        [otroCentro.id, '50000'],
+      ] as const) {
+        await http
+          .post('/api/v1/transactions')
+          .set('Authorization', comoAna())
+          .send({ date: '2026-08-12', amount, type: 'expense', category_id: Number(id) })
+          .expect(201);
+      }
 
       const sinFiltro = await http
         .get('/api/v1/dashboard?from=2026-08-01&to=2026-08-31')
@@ -663,19 +705,142 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(sinFiltro.body.data.breakdown_level).toBe('centro de costos');
       expect(sinFiltro.body.data.by_category[0].name).toBe('Costos fijos');
 
+      // Fijos contra variables, con los nombres de los centros.
+      expect(
+        sinFiltro.body.data.expense_by_center.map((f: { name: string; total: string }) => [
+          f.name,
+          f.total,
+        ]),
+      ).toEqual([
+        ['Costos fijos', '1200000.00'],
+        ['Costos variables', '50000.00'],
+      ]);
+
       const dentroDelCentro = await http
         .get(`/api/v1/dashboard?from=2026-08-01&to=2026-08-31&category_id=${Number(centro.id)}`)
         .set('Authorization', comoAna())
         .expect(200);
       expect(dentroDelCentro.body.data.breakdown_level).toBe('grupo');
-      expect(dentroDelCentro.body.data.by_category[0].name).toBe('Servicios públicos');
+      expect(dentroDelCentro.body.data.by_category[0].name).toBe('Vivienda');
 
       const dentroDelGrupo = await http
-        .get(`/api/v1/dashboard?from=2026-08-01&to=2026-08-31&category_id=${Number(grupo.id)}`)
+        .get(`/api/v1/dashboard?from=2026-08-01&to=2026-08-31&category_id=${Number(servicios.id)}`)
         .set('Authorization', comoAna())
         .expect(200);
       expect(dentroDelGrupo.body.data.breakdown_level).toBe('concepto');
       expect(dentroDelGrupo.body.data.by_category[0].name).toBe('Celsia');
+    });
+
+    it('con un solo centro con gasto, el desglose se salta ese nivel', async () => {
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
+      const servicios = await crearCategoria(comoAna(), {
+        name: 'Servicios públicos',
+        parent_id: Number(centro.id),
+      });
+      const vivienda = await crearCategoria(comoAna(), {
+        name: 'Vivienda',
+        parent_id: Number(centro.id),
+      });
+      // Un centro más, SIN gasto: existir no basta para salir en el desglose.
+      await crearCategoria(comoAna(), { name: 'Costos variables' });
+
+      for (const [id, amount] of [
+        [servicios.id, '300000'],
+        [vivienda.id, '900000'],
+      ] as const) {
+        await http
+          .post('/api/v1/transactions')
+          .set('Authorization', comoAna())
+          .send({ date: '2026-08-12', amount, type: 'expense', category_id: Number(id) })
+          .expect(201);
+      }
+
+      const r = await http
+        .get('/api/v1/dashboard?from=2026-08-01&to=2026-08-31')
+        .set('Authorization', comoAna())
+        .expect(200);
+
+      // Se muestran los GRUPOS del único centro con gasto, y el nombre del
+      // centro pasa a ser el subtítulo. Enseñar "Costos fijos, 100 %" no
+      // responde nada: eso ya se sabía antes de mirar.
+      expect(r.body.data.breakdown_level).toBe('grupo');
+      expect(r.body.data.breakdown_parent.name).toBe('Costos fijos');
+      expect(r.body.data.by_category.map((f: { name: string }) => f.name)).toEqual([
+        'Vivienda',
+        'Servicios públicos',
+      ]);
+
+      // El reparto fijos/variables NO baja con el desglose: aunque la dona
+      // esté enseñando grupos, esta pregunta se responde en los centros.
+      expect(r.body.data.expense_by_center).toHaveLength(1);
+      expect(r.body.data.expense_by_center[0].name).toBe('Costos fijos');
+      expect(r.body.data.expense_by_center[0].total).toBe('1200000.00');
+    });
+
+    it('el presupuesto del mes suma los recurrentes, pagados o no', async () => {
+      // El mes EN CURSO, calculado igual que la API. Una fecha fija dejaría de
+      // valer el mes que viene: el presupuesto mira siempre hoy.
+      const hoy = new Date(Date.now() - 5 * 60 * 60 * 1000);
+      const mes = hoy.toISOString().slice(0, 7);
+      const diaDe = (mesesAtras: number) =>
+        new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth() - mesesAtras, 10))
+          .toISOString()
+          .slice(0, 10);
+
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
+      const alquiler = await crearCategoria(comoAna(), {
+        name: 'Alquiler',
+        parent_id: Number(centro.id),
+        recurrente: true,
+        periodicidad: 'mensual',
+        dia_de_pago: 15,
+      });
+      const agua = await crearCategoria(comoAna(), {
+        name: 'Agua',
+        parent_id: Number(centro.id),
+        recurrente: true,
+        periodicidad: 'mensual',
+        dia_de_pago: 10,
+      });
+      // Sin marcar: un gasto que no vuelve no es presupuesto.
+      const mercado = await crearCategoria(comoAna(), {
+        name: 'Mercado',
+        parent_id: Number(centro.id),
+      });
+
+      const gasto = async (categoryId: unknown, date: string, amount: string) => {
+        await http
+          .post('/api/v1/transactions')
+          .set('Authorization', comoAna())
+          .send({ date, amount, type: 'expense', category_id: Number(categoryId) })
+          .expect(201);
+      };
+
+      // La historia es de donde sale lo que se ESPERA pagar: el promedio de
+      // los meses con pago dentro de los tres anteriores.
+      await gasto(alquiler.id, diaDe(1), '1000000');
+      await gasto(agua.id, diaDe(2), '100000');
+      await gasto(agua.id, diaDe(1), '140000');
+      // Este mes: el alquiler ya se pagó, y más caro que la última vez.
+      await gasto(alquiler.id, `${mes}-01`, '1100000');
+      await gasto(mercado.id, `${mes}-01`, '80000');
+
+      const r = await http
+        .get(`/api/v1/dashboard?from=${mes}-01&to=${mes}-28`)
+        .set('Authorization', comoAna())
+        .expect(200);
+
+      // 1.100.000 del alquiler PAGADO —por lo que costó de verdad, no por lo
+      // que costaba— más 120.000 del agua, que falta y se estima promediando
+      // sus dos meses: (100.000 + 140.000) / 2. El mercado no entra: no es
+      // recurrente.
+      expect(r.body.data.required_budget).toBe('1220000.00');
+
+      // Y lo que falta es solo el agua. El presupuesto no se encoge al pagar
+      // —esa es la diferencia entre las dos cifras—, la lista de pendientes sí.
+      expect(r.body.data.pending).toHaveLength(1);
+      expect(r.body.data.pending[0].name).toBe('Agua');
+      expect(r.body.data.pending[0].expected_amount).toBe('120000.00');
     });
   });
 

@@ -6,10 +6,12 @@ import {
   Receipt,
   TrendingDown,
   TrendingUp,
+  Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Dona } from '@/components/dona';
+import { PagosPendientes } from '@/components/pagos-pendientes';
 import { Paginador } from '@/components/paginador';
 import { TablaDeMovimientos } from '@/components/tabla-de-movimientos';
 import { TablaPie, Td } from '@/components/tabla';
@@ -26,7 +28,7 @@ import { useAuth } from '@/lib/auth-context';
 import { aParametros, useFiltros } from '@/lib/filtros';
 import { useCategories, useDashboard, useTransactions } from '@/lib/queries';
 import { formatCOP } from '@/lib/utils';
-import type { Category, Transaction } from '@coco/types';
+import type { Category, SpendingByCategory, Transaction } from '@coco/types';
 
 /**
  * Resumen.
@@ -108,11 +110,12 @@ export function DashboardPage() {
   // El mismo modal que en Movimientos: editar desde el resumen no puede ser
   // otra pantalla ni otro formulario.
   const [editando, setEditando] = useState<Transaction | null | undefined>(undefined);
+  const [conceptoSugerido, setConceptoSugerido] = useState<number | undefined>();
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <ToolbarFiltros
-        titulo={`Hola de nuevo${nombreDePila(usuario) ? `, ${nombreDePila(usuario)}` : ''}`}
+        titulo={`Hola de nuevo${nombreDePila(usuario) ? `, ${nombreDePila(usuario)}` : ''}!`}
         subtitulo={
           dashboard.data
             ? `${dashboard.data.range.count} movimientos · ${formatCOP(dashboard.data.range.expense)} gastados`
@@ -144,20 +147,21 @@ export function DashboardPage() {
 
       {dashboard.isPending && (
         <>
-          <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
-            {[0, 1, 2].map((i) => (
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-24 rounded-2xl" />
             ))}
           </div>
-          <div className="grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20%,30rem)]">
-            <Card>
-              <CardContent className="flex flex-col p-4 sm:p-6">
+          <div className="grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_repeat(2,minmax(20%,30rem))] lg:grid-rows-[420px]">
+            <Card className="h-full min-h-0">
+              <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <Skeleton className="mb-4 h-6 w-40" />
-                <div className="aspect-[20/7] max-h-[320px] w-full">
+                <div className="min-h-0 flex-1">
                   <TendenciaEsqueleto />
                 </div>
               </CardContent>
             </Card>
+            <Skeleton className="h-72 w-full rounded-2xl lg:h-full" />
             <Skeleton className="h-72 w-full rounded-2xl lg:h-full" />
           </div>
         </>
@@ -165,10 +169,30 @@ export function DashboardPage() {
 
       {dashboard.data && (
         <>
-          <div className="grid gap-3 sm:grid-cols-3 sm:gap-5">
+          {/* Cuatro indicadores: de a dos en una tableta y de a cuatro en una
+              pantalla ancha. En tres columnas, el cuarto se quedaba solo en
+              una fila para él. */}
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+            {/*
+              Va PRIMERO, antes de lo gastado, porque se lee antes: cuánto hay
+              que tener este mes y después cuánto se lleva gastado. Y es el
+              único que NO habla del rango filtrado —mira siempre el mes en
+              curso—, así que lo dice en su detalle.
+            */}
+            <Kpi
+              etiqueta="Presupuesto necesario"
+              valor={formatCOP(dashboard.data.required_budget)}
+              detalle="Costos fijos de este mes"
+              Icono={Wallet}
+              chip="turquesa"
+            />
             <Kpi
               etiqueta="Gastos del periodo"
               valor={formatCOP(dashboard.data.range.expense)}
+              // Cuánto fue fijo y cuánto variable. Los nombres son los de los
+              // centros de costos, así que si mañana se llaman de otra forma,
+              // el indicador lo dice solo.
+              desglose={dashboard.data.expense_by_center}
               Icono={TrendingDown}
               acento="expense"
               chip="violeta"
@@ -205,16 +229,54 @@ export function DashboardPage() {
             un círculo, y el navegador lo resuelve como puede —que fue lo que
             se salió de la página—.
 
-            ── El ancho de la columna de la dona ─────────────────────────────
-            Nunca menos del 20 % de la fila y nunca más de 30rem. Los dos
-            extremos son valores concretos a propósito: dejarla en `auto` la
-            hacía depender de su contenido, y su contenido depende de ella.
+            ── El alto ──────────────────────────────────────────────────────
+            UN número —420px— y va en la PISTA de la rejilla, no en la caja.
+
+            Con `h-[380px]` en la caja la pista seguía siendo `auto`: nadie le
+            había dicho cuánto mide. Entonces el `h-full` de cada tarjeta no
+            tenía contra qué resolverse, así que cada una crecía con su
+            contenido —la lista de pendientes son ocho filas, 670px—, la pista
+            crecía con ellas y la caja se quedaba en 380. Las tarjetas se
+            salían por debajo y pintaban encima de la tabla de movimientos.
+
+            Declarando la PISTA, el alto es un dato desde el principio: las
+            tres tarjetas miden 420, su `h-full` resuelve, y lo que no quepa se
+            desplaza dentro de la suya.
+
+            El `min-h-0` de cada tarjeta es la otra mitad. Un elemento de
+            rejilla tiene `min-height: auto`, que es su mínimo de contenido: sin
+            ponerlo en cero, la lista larga vuelve a mandar sobre los 420 y
+            estamos donde empezamos.
+
+            ── El ancho de las dos columnas de la derecha ────────────────────
+            Las dos MISMAS: pagos pendientes y distribución son dos respuestas
+            del mismo tamaño y una más angosta que la otra se lee como si
+            importara menos. Se escriben con `repeat(2, …)` para que no puedan
+            separarse cuando alguien toque una y se olvide de la otra.
+
+            Nunca menos del 20 % de la fila y nunca más de 30rem —la medida
+            que ya tenía la distribución—, con los dos extremos concretos:
+            dejarlas en `auto` las haría depender de su contenido, y su
+            contenido depende de ellas.
           */}
-          <div className="grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20%,30rem)]">
-            <Card>
-              <CardContent className="flex flex-col p-4 sm:p-6">
+          <div className="grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_repeat(2,minmax(20%,30rem))] lg:grid-rows-[420px]">
+            <Card className="h-full min-h-0">
+              <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
-                <div className="aspect-[20/7] max-h-[320px] w-full">
+                {/*
+                  `flex-1` con un mínimo, no una proporción fija.
+
+                  Con proporción, el alto de la gráfica salía de su ancho —y al
+                  angostarse su columna, de golpe medía menos que las tarjetas
+                  de al lado—: la fila la estiraban ellas, la gráfica se
+                  quedaba con su alto pequeño y aparecía pegada arriba con el
+                  resto de la tarjeta en blanco.
+
+                  Ahora se estira hasta el alto de la fila, sea quien sea el
+                  que lo fije, y el mínimo evita que se aplaste cuando la fila
+                  es baja.
+                */}
+                <div className="min-h-0 flex-1">
                   <Tendencia
                     puntos={dashboard.data.trend}
                     granularidad={dashboard.data.period.granularity}
@@ -223,7 +285,18 @@ export function DashboardPage() {
               </CardContent>
             </Card>
 
-            <div>
+            <PagosPendientes
+              className="min-h-0"
+              pagos={dashboard.data.pending}
+              // Abre el modal de CREAR con el concepto ya puesto: el pago que
+              // falta es justo el que se acaba de señalar.
+              onElegir={(pago) => {
+                setConceptoSugerido(pago.category_id);
+                setEditando(null);
+              }}
+            />
+
+            <div className="h-full min-h-0">
               <Distribucion
                 filas={dashboard.data.by_category}
                 nivel={dashboard.data.breakdown_level}
@@ -294,7 +367,11 @@ export function DashboardPage() {
       <MovimientoModal
         abierta={editando !== undefined}
         movimiento={editando}
-        onCerrar={() => setEditando(undefined)}
+        categoriaPorDefecto={conceptoSugerido}
+        onCerrar={() => {
+          setEditando(undefined);
+          setConceptoSugerido(undefined);
+        }}
       />
     </div>
   );
@@ -313,6 +390,7 @@ function Kpi({
   etiqueta,
   valor,
   detalle,
+  desglose,
   Icono,
   acento,
   chip = 'turquesa',
@@ -320,6 +398,8 @@ function Kpi({
   etiqueta: string;
   valor: string;
   detalle?: string;
+  /** En qué se reparte la cifra. Se escribe debajo, con su nombre y su monto. */
+  desglose?: SpendingByCategory[];
   Icono: React.ComponentType<{
     className?: string;
     'aria-hidden'?: boolean;
@@ -354,6 +434,22 @@ function Kpi({
             {valor}
           </p>
           {detalle && <p className="mt-1 truncate text-xs text-muted-foreground">{detalle}</p>}
+
+          {/* Envuelve en vez de truncarse: un reparto a medias —"Costos fij…"—
+              no dice menos, dice otra cosa. Cada parte se queda entera y se
+              pasa a la línea de abajo si la tarjeta es angosta. */}
+          {desglose && desglose.length > 0 && (
+            <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+              {desglose.map((parte) => (
+                <span key={parte.category_id ?? parte.name} className="whitespace-nowrap">
+                  {parte.name}{' '}
+                  <strong className="tabular font-semibold text-foreground">
+                    {formatCOP(parte.total)}
+                  </strong>
+                </span>
+              ))}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -399,7 +495,7 @@ function Distribucion({
   const [verLista, setVerLista] = useState(true);
 
   return (
-    <Card className="h-full">
+    <Card className="h-full min-h-0">
       <CardContent className="flex h-full flex-col p-4 sm:p-6">
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-display text-lg font-semibold">Distribución de costos</h2>

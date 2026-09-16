@@ -144,8 +144,11 @@ export function Dona({
       onPointerMove={seguir}
       onPointerLeave={() => setActiva(null)}
     >
+      {/* La lista se desplaza dentro de su tarjeta. Sin esto, con doce
+          conceptos crecía más que la fila y se derramaba por debajo,
+          montándose sobre la tabla de movimientos. */}
       {mostrarLista && (
-      <ul className="flex min-w-0 flex-1 flex-col gap-2">
+        <ul className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto">
         {trazos.map((seg, i) => {
           const puedeBajar = seg.id !== null && onElegir !== undefined;
 

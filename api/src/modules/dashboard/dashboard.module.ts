@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AccountsService, type AccountView } from '../accounts/accounts.service';
 import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
+import { estimadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
 import {
   ancestroEnNivel,
   calcularFlujo,
@@ -59,6 +60,21 @@ export class DashboardQueryDto {
   q?: string;
 }
 
+interface PagoPendientePayload {
+  category_id: bigint;
+  name: string;
+  /** El camino hasta él, para saber de qué parte de la casa se habla. */
+  path: string;
+  periodicidad: string;
+  /** `YYYY-MM-DD`. Ya recortado a los meses cortos. */
+  due_date: string;
+  /**
+   * Lo que se espera que cueste: el promedio de los meses CON pago dentro de
+   * los tres anteriores. `null` si nunca se ha pagado.
+   */
+  expected_amount: string | null;
+}
+
 interface GastoPorCategoriaPayload {
   category_id: bigint | null;
   name: string;
@@ -97,6 +113,15 @@ export interface DashboardPayload {
    * por sus conceptos. Es lo que permite ir bajando sin cambiar de pantalla.
    */
   by_category: GastoPorCategoriaPayload[];
+  /**
+   * El gasto del rango repartido por CENTRO DE COSTOS, siempre en el nivel de
+   * arriba aunque `by_category` haya bajado.
+   *
+   * Son dos preguntas distintas: `by_category` es "¿en qué se fue?" y baja
+   * hasta donde haga falta; esto es "¿de qué tipo era?", y ahí el nivel de
+   * arriba —fijos contra variables— ES la respuesta.
+   */
+  expense_by_center: GastoPorCategoriaPayload[];
   breakdown_level: 'centro de costos' | 'grupo' | 'concepto';
   /**
    * De quién son las filas del desglose.
@@ -107,6 +132,16 @@ export interface DashboardPayload {
    * todas, y es lo único que explica por qué se está viendo ese nivel.
    */
   breakdown_parent: { id: bigint; name: string } | null;
+  /**
+   * Lo que hace falta este mes para los costos fijos: la suma de TODOS los
+   * conceptos recurrentes que vencen en el mes, pagados o no.
+   *
+   * Del mes en curso, como `pending`, y no del rango filtrado: es una
+   * pregunta sobre lo que viene, no sobre lo que se está revisando.
+   */
+  required_budget: string;
+  /** Lo que se espera pagar este mes y todavía no aparece. */
+  pending: PagoPendientePayload[];
   trend: PuntoDeTendencia[];
 }
 
@@ -154,7 +189,17 @@ export class DashboardService {
 
     const categorias = await this.prisma.category.findMany({
       where: { userId },
-      select: { id: true, name: true, color: true, icon: true, parentId: true },
+      select: {
+        id: true,
+        name: true,
+        color: true,
+        icon: true,
+        parentId: true,
+        recurrente: true,
+        periodicidad: true,
+        diaDePago: true,
+        mesDePago: true,
+      },
     });
 
     const planas: CategoriaPlana[] = categorias.map((c) => ({ id: c.id, parentId: c.parentId }));
@@ -283,8 +328,21 @@ export class DashboardService {
       [...acumulado.values()][0].id !== null
     ) {
       const masAbajo = agrupar(nivelMostrado + 1);
-      // Si abajo no hay más detalle del que ya hay, no se gana nada bajando.
-      if (masAbajo.size <= acumulado.size) break;
+      /*
+        Se baja aunque abajo también haya UNA sola fila.
+
+        Antes se frenaba cuando el nivel de abajo no tenía más filas que el de
+        arriba, y eso dejaba clavado justo el caso más común: un solo centro de
+        costos con un solo grupo se quedaba enseñando el centro, que es la fila
+        que no dice nada. "Costos fijos, 100 %" ya se sabía antes de mirar.
+
+        El único motivo para no bajar es que abajo no haya ningún nombre: si
+        todo lo de este centro está clasificado en el centro mismo y no en
+        ninguno de sus grupos, bajar cambiaría un nombre de verdad por un
+        "Sin clasificar" que informa menos.
+      */
+      const hayNombresAbajo = [...masAbajo.values()].some((f) => f.id !== null);
+      if (!hayNombresAbajo) break;
       padre = [...acumulado.values()][0].id;
       nivelMostrado += 1;
       acumulado = masAbajo;
@@ -292,19 +350,38 @@ export class DashboardService {
 
     const datosDelPadre = padre === null ? undefined : datosDe.get(padre.toString());
 
-    const porCategoria: GastoPorCategoriaPayload[] = [...acumulado.values()]
-      .map((fila) => {
-        const datos = fila.id === null ? undefined : datosDe.get(fila.id.toString());
-        return {
-          category_id: fila.id,
-          name: datos?.name ?? 'Sin clasificar',
-          color: datos?.color ?? null,
-          icon: datos?.icon ?? null,
-          total: serializar(toMoney(fila.total)),
-          count: fila.count,
-        };
-      })
-      .sort((a, b) => Number(b.total) - Number(a.total));
+    /** Un nivel agrupado, listo para salir: con nombre, de mayor a menor. */
+    const aFilas = (
+      agrupado: ReturnType<typeof agrupar>,
+    ): GastoPorCategoriaPayload[] =>
+      [...agrupado.values()]
+        .map((fila) => {
+          const datos = fila.id === null ? undefined : datosDe.get(fila.id.toString());
+          return {
+            category_id: fila.id,
+            name: datos?.name ?? 'Sin clasificar',
+            color: datos?.color ?? null,
+            icon: datos?.icon ?? null,
+            total: serializar(toMoney(fila.total)),
+            count: fila.count,
+          };
+        })
+        .sort((a, b) => Number(b.total) - Number(a.total));
+
+    const porCategoria = aFilas(acumulado);
+
+    /*
+      Fijos contra variables.
+
+      Los nombres salen de los CENTROS, no de una lista escrita aquí: quien
+      los llamó "Costos fijos" y "Costos variables" puede llamarlos mañana de
+      otra forma, y el indicador tiene que seguir diciendo la verdad.
+
+      Se recalcula el nivel 1 en vez de reutilizar `acumulado` porque ese ya
+      pudo haber bajado: cuando solo un centro tiene gasto, sus filas son
+      grupos, y ahí ya no hay con qué responder esta pregunta.
+    */
+    const porCentro = aFilas(agrupar(1));
 
     // ── Tendencia ─────────────────────────────────────────────────────────────
     const granularidad = granularidadPara(inicio, fin);
@@ -358,6 +435,114 @@ export class DashboardService {
       count: v.count,
     }));
 
+    // ── Lo que falta pagar este mes ───────────────────────────────────────
+    // Del mes EN CURSO, no del rango que se esté mirando: la pregunta "¿qué me
+    // falta pagar?" es siempre sobre hoy, aunque uno esté revisando 2024.
+    const mesEnCurso = `${new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 7)}-01`;
+
+    const recurrentes = categorias.filter((c) => c.recurrente && c.periodicidad !== null);
+    const pendientes: PagoPendientePayload[] = [];
+
+    /*
+      ── Lo que hace falta este mes ──────────────────────────────────────────
+      La suma de TODOS los conceptos recurrentes que vencen este mes, estén
+      pagados o no. La pregunta es "¿cuánta plata tengo que tener este mes?",
+      y por eso cuenta lo ya pagado: un presupuesto que se encoge cada vez que
+      uno paga algo no es un presupuesto, es el saldo pendiente —y eso ya lo
+      dice la tarjeta de pagos pendientes, que sale de este mismo recorrido—.
+
+      Lo pagado entra por lo que costó DE VERDAD este mes; lo que falta, por
+      lo que costó la última vez, que es lo único que se sabe de antemano.
+    */
+    let presupuesto = CERO;
+
+    if (recurrentes.length > 0) {
+      // La historia de los recurrentes, mes a mes: de aquí sale lo que se
+      // espera que cueste cada uno. Solo lo ANTERIOR a este mes; lo de este
+      // mes es un hecho, no una previsión.
+      const historia = await this.prisma.transaction.findMany({
+        where: {
+          userId,
+          categoryId: { in: recurrentes.map((c) => c.id) },
+          period: { lt: new Date(mesEnCurso) },
+        },
+        select: { categoryId: true, amount: true, period: true },
+      });
+
+      // Cuánto costó cada concepto en cada mes. Un mes con dos pagos suma los
+      // dos: el mes costó lo que costó, no lo que costó uno de los recibos.
+      const historiaDe = new Map<string, Map<string, typeof CERO>>();
+      for (const t of historia) {
+        const clave = t.categoryId?.toString();
+        if (clave === undefined) continue;
+        const mes = t.period.toISOString().slice(0, 7);
+        const meses = historiaDe.get(clave) ?? new Map<string, typeof CERO>();
+        meses.set(mes, (meses.get(mes) ?? CERO).plus(toMoney(t.amount)));
+        historiaDe.set(clave, meses);
+      }
+
+      // Lo ya pagado ESTE mes: saca al concepto de la lista de pendientes, y
+      // entra al presupuesto por su monto real en vez del estimado.
+      const pagadosEsteMes = await this.prisma.transaction.findMany({
+        where: {
+          userId,
+          categoryId: { in: recurrentes.map((c) => c.id) },
+          period: { gte: new Date(mesEnCurso), lte: new Date(mesEnCurso) },
+        },
+        select: { categoryId: true, amount: true },
+      });
+
+      // Se SUMA por concepto: un mismo recurrente puede haberse pagado en dos
+      // partes, y contar solo una diría que el mes costó menos de lo que costó.
+      const pagadoEsteMes = new Map<string, typeof CERO>();
+      for (const t of pagadosEsteMes) {
+        const clave = t.categoryId?.toString();
+        if (clave === undefined) continue;
+        pagadoEsteMes.set(clave, (pagadoEsteMes.get(clave) ?? CERO).plus(toMoney(t.amount)));
+      }
+
+      for (const concepto of recurrentes) {
+        // Primero si toca este mes: un trimestral que no cae aquí no cuenta
+        // para el presupuesto ni aparece como pendiente.
+        if (!tocaEnElMes(concepto.periodicidad!, concepto.mesDePago, mesEnCurso)) continue;
+
+        const clave = concepto.id.toString();
+        const pagado = pagadoEsteMes.get(clave);
+        if (pagado !== undefined) {
+          presupuesto = presupuesto.plus(pagado);
+          continue;
+        }
+
+        // La MISMA cifra que se enseña en la lista de pendientes: si el
+        // presupuesto se estimara de otra forma, las dos tarjetas de la misma
+        // pantalla dirían cosas distintas de la misma plata.
+        const esperado = estimadoDelMes(historiaDe.get(clave) ?? new Map(), mesEnCurso.slice(0, 7));
+        presupuesto = presupuesto.plus(esperado ?? CERO);
+
+        // El camino completo: "Alquiler" solo no dice de qué centro cuelga.
+        const camino: string[] = [];
+        let actual = porId.get(clave);
+        while (actual?.parentId) {
+          const padre = datosDe.get(actual.parentId.toString());
+          if (!padre) break;
+          camino.unshift(padre.name);
+          actual = porId.get(actual.parentId.toString());
+        }
+
+        pendientes.push({
+          category_id: concepto.id,
+          name: concepto.name,
+          path: camino.join(' · '),
+          periodicidad: concepto.periodicidad!,
+          due_date: vencimiento(mesEnCurso, concepto.diaDePago),
+          expected_amount: esperado === null ? null : serializar(toMoney(esperado)),
+        });
+      }
+
+      // Por fecha: lo que vence antes es lo que hay que mirar antes.
+      pendientes.sort((a, b) => a.due_date.localeCompare(b.due_date));
+    }
+
     const activos = cuentas
       .filter((c) => c.type !== 'credit')
       .reduce((total, c) => total.plus(toMoney(c.balance)), CERO);
@@ -380,9 +565,12 @@ export class DashboardService {
         count: movimientos.length,
       },
       by_category: porCategoria,
+      expense_by_center: porCentro,
       breakdown_level: (['centro de costos', 'grupo', 'concepto'] as const)[nivelMostrado - 1],
       breakdown_parent:
         padre !== null && datosDelPadre ? { id: padre, name: datosDelPadre.name } : null,
+      required_budget: serializar(toMoney(presupuesto)),
+      pending: pendientes,
       trend: tendencia,
     };
   }
