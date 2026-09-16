@@ -12,6 +12,60 @@ import { BLOQUE } from '@/components/ui/bloque';
 import { cn } from '@/lib/utils';
 import { PieDeModal } from '@/components/ui/modal-partes';
 import type { Category } from '@coco/types';
+import { ICONOS_DE_GRUPO, IconoDeCategoria } from '@/components/ui/iconos';
+
+/**
+ * Los cincuenta iconos, abiertos.
+ *
+ * ── Por qué se puede quitar ─────────────────────────────────────────────────
+ * Porque un grupo sin icono es un caso legítimo —los hay que no se parecen a
+ * ningún dibujo— y sin una forma de volver atrás, el primer icono que alguien
+ * pulse por curiosidad se queda ahí para siempre.
+ */
+function SelectorDeIcono({
+  valor,
+  onElegir,
+}: {
+  valor: string | null;
+  onElegir: (icono: string | null) => void;
+}) {
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-2 text-sm font-medium">Icono</legend>
+
+      <div className={cn(BLOQUE, 'max-h-48 overflow-y-auto')}>
+        <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
+          {ICONOS_DE_GRUPO.map(({ nombre, etiqueta }) => {
+            const elegido = valor === nombre;
+
+            return (
+              <button
+                key={nombre}
+                type="button"
+                // Pulsar el que ya está puesto lo quita: es el gesto que todo
+                // el mundo prueba para deshacer una elección, y sin él haría
+                // falta un botón de "ninguno" ocupando una plaza de la rejilla.
+                onClick={() => onElegir(elegido ? null : nombre)}
+                aria-pressed={elegido}
+                title={etiqueta}
+                aria-label={etiqueta}
+                className={cn(
+                  'grid aspect-square place-items-center rounded-md transition-colors',
+                  'movil:min-h-[42px]',
+                  elegido
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                )}
+              >
+                <IconoDeCategoria nombre={nombre} className="size-4" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </fieldset>
+  );
+}
 
 /**
  * Crear o editar un centro de costos.
@@ -56,6 +110,7 @@ export function CategoriaModal({
   const actualizar = useActualizarCategoria();
   const [nombre, setNombre] = useState('');
   const [estatico, setEstatico] = useState(false);
+  const [icono, setIcono] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const editando = categoria != null;
@@ -68,6 +123,7 @@ export function CategoriaModal({
     if (!abierta) return;
     setNombre(categoria?.name ?? '');
     setEstatico(categoria?.estatico ?? false);
+    setIcono(categoria?.icon ?? null);
     setError(null);
   }, [abierta, categoria]);
 
@@ -79,13 +135,17 @@ export function CategoriaModal({
       if (editando) {
         await actualizar.mutateAsync({
           id: Number(categoria.id),
-          cambios: esCentro ? { name: nombre.trim(), estatico } : { name: nombre.trim() },
+          cambios: esCentro
+            ? { name: nombre.trim(), estatico }
+            : { name: nombre.trim(), icon: icono },
         });
       } else {
         await crear.mutateAsync({
           name: nombre.trim(),
           kind: 'expense',
-          ...(esCentro ? { estatico } : { parent_id: padreId }),
+          ...(esCentro
+            ? { estatico }
+            : { parent_id: padreId, ...(icono ? { icon: icono } : {}) }),
         });
       }
       onCerrar();
@@ -116,6 +176,20 @@ export function CategoriaModal({
             required
           />
         </Campo>
+
+        {/*
+          El selector de icono, solo en los grupos.
+
+          No está en los centros porque ahí no se ve: la fila de un centro ya
+          lleva su flecha de desplegar a la izquierda del nombre, y un segundo
+          símbolo al lado sería un icono compitiendo con un control.
+
+          Y es una REJILLA y no un desplegable: cincuenta iconos en una lista
+          hay que abrirla, recorrerla y cerrarla; abiertos a la vez se
+          reconocen mirando, que es para lo que existe un icono. Ocupa cuatro
+          filas de ocho, con su propio desplazamiento para no estirar la ficha.
+        */}
+        {!esCentro && <SelectorDeIcono valor={icono} onElegir={setIcono} />}
 
         {/*
           El interruptor a la DERECHA y dentro de una caja.

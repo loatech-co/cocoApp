@@ -461,6 +461,52 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
+  // ── El icono de una categoría ──────────────────────────────────────────────
+
+  describe('El icono de un grupo', () => {
+    it('se guarda al crear, se cambia al editar y se puede quitar', async () => {
+      /*
+        Quitarlo es el caso que hay que probar, y no por capricho: el DTO
+        declara `icon?: string`, así que a simple vista un `null` no cabe. Lo
+        deja pasar `@IsOptional()`, que en class-validator salta la validación
+        tanto con `undefined` como con `null`, y el servicio lo aplica porque
+        distingue «no vino» de «vino vacío» con un `!== undefined`.
+
+        Son dos comportamientos de dos bibliotecas que podrían cambiar sin que
+        nadie lo note, y el síntoma sería silencioso: el icono se queda puesto
+        y nadie sabe por qué.
+      */
+      const grupo = await crearCategoria(comoAna(), { name: 'Servicios', icon: 'house' });
+      expect(grupo.icon).toBe('house');
+
+      const cambiado = await http
+        .patch(`/api/v1/categories/${Number(grupo.id)}`)
+        .set('Authorization', comoAna())
+        .send({ icon: 'zap' })
+        .expect(200);
+
+      expect(cambiado.body.data.icon).toBe('zap');
+
+      const sinIcono = await http
+        .patch(`/api/v1/categories/${Number(grupo.id)}`)
+        .set('Authorization', comoAna())
+        .send({ icon: null })
+        .expect(200);
+
+      expect(sinIcono.body.data.icon).toBeNull();
+    });
+
+    it('no se traga un nombre de más de 64 caracteres', async () => {
+      const grupo = await crearCategoria(comoAna(), { name: 'Servicios' });
+
+      await http
+        .patch(`/api/v1/categories/${Number(grupo.id)}`)
+        .set('Authorization', comoAna())
+        .send({ icon: 'x'.repeat(65) })
+        .expect(400);
+    });
+  });
+
   // ── Eliminar una categoría ─────────────────────────────────────────────────
 
   /**

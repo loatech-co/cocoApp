@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { Bloque } from '@/components/ui/bloque';
+import { IconoDeCategoria } from '@/components/ui/iconos';
 
 /**
  * Centros de costos.
@@ -424,7 +425,27 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
   return (
     <Bloque className={cn('flex flex-col sm:p-4', ALTO_DE_LA_BALDOSA)}>
       <div className="flex shrink-0 items-center justify-between gap-2">
-        <h3 className="min-w-0 truncate text-sm font-semibold">{grupo.name}</h3>
+        {/*
+          El icono a la IZQUIERDA del nombre, no encima ni dentro de un pastel.
+
+          Es lo que hace que una rejilla de doce grupos se recorra mirando en
+          vez de leyendo: la forma se reconoce antes que la palabra. A la
+          izquierda porque es por donde empieza a leerse la fila, y del mismo
+          tamaño que el texto —no un adorno grande— porque acompaña al nombre,
+          no lo sustituye.
+
+          Un grupo sin icono no deja hueco reservado: `IconoDeCategoria`
+          devuelve nada y el nombre arranca donde arrancaba antes. Un hueco
+          vacío alineado con los que sí tienen icono se ve como un icono que
+          no cargó.
+        */}
+        <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
+          <IconoDeCategoria
+            nombre={grupo.icon}
+            className="size-4 shrink-0 text-muted-foreground"
+          />
+          <span className="min-w-0 truncate">{grupo.name}</span>
+        </h3>
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
             pulsarse —en un teléfono hay que acertarle a 16px— y no se ve como
             algo pulsable hasta que uno lo prueba. */}
@@ -641,7 +662,12 @@ function Agregar({
             sube a plena tinta y el relleno se queda en un tercio del acento
             —lo justo para que se note que la superficie está viva—.
           */
-          'hover:border-ring/40 hover:bg-accent/30 hover:text-foreground',
+          // Sin teñir el TRAZO. El borde es punteado y rodea toda la
+          // baldosa: cambiarlo de color redibuja el contorno entero de golpe,
+          // que en una superficie de este tamaño es más movimiento que
+          // respuesta. Se queda quieto y responden el relleno y la letra, que
+          // es donde está mirando quien va a pulsar.
+          'hover:bg-accent/30 hover:text-foreground',
         )}
       >
         {/*
