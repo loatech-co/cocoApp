@@ -24,4 +24,17 @@ if [ "$RESPUESTA" != "si" ]; then
 fi
 
 npx dotenv -e .env.supabase -- npx prisma migrate deploy
+
+# ── La seguridad por filas de las tablas NUEVAS ──────────────────────────────
+# Supabase publica el esquema `public` como API REST y le concede permiso a
+# `anon` sobre cada tabla que aparece. Una tabla recién migrada nace, por tanto,
+# abierta a cualquiera que tenga la clave pública del proyecto.
+#
+# `cerrar-el-api-de-datos.sql` lo deshace y es idempotente, así que se corre
+# siempre: si no había nada que cerrar, no cierra nada.
+echo ""
+echo "▸ Cerrando el API de datos sobre las tablas nuevas…"
+cd ..
+npm run --silent sql:supabase -- "$(cat scripts/cerrar-el-api-de-datos.sql)"
+
 echo "Listo."
