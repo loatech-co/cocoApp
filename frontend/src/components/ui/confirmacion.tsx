@@ -75,7 +75,7 @@ export function Confirmacion({
     >
       <div
         className={cn(
-          'w-full max-w-md rounded-lg p-5 sm:p-6',
+          'w-full max-w-md rounded-lg p-4',
           SUPERFICIE_FLOTANTE,
           'emerge',
         )}

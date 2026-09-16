@@ -30,21 +30,35 @@ import { cn } from '@/lib/utils';
  * con un alto máximo y uno mínimo. Exportar la clase es el mismo recurso que
  * `BLOQUE` y `SUPERFICIE_FLOTANTE`: un solo sitio donde cambia la medida.
  *
- * ── El alto mínimo: 600px ───────────────────────────────────────────────────
+ * ── El alto mínimo: 400px ───────────────────────────────────────────────────
  * Sin él, una ficha mide lo que mida su formulario, y eso hace que la misma
  * ventana sea tres ventanas: «Nuevo grupo» salía de 260px, «Nuevo concepto»
  * de 420 y la del movimiento de 700. Abrir dos seguidas era ver el panel
  * crecer y encogerse en el mismo sitio de la pantalla, y en la corta los
  * botones quedaban a media altura, donde no los busca nadie.
  *
- * ── Por qué `min(600px, 92dvh)` y no 600px a secas ──────────────────────────
+ * ── Por qué `min(400px, 92dvh)` y no 400px a secas ──────────────────────────
  * Porque en CSS el alto mínimo GANA al máximo: en una pantalla baja —un
  * teléfono pequeño, una ventana a media altura— un `min-h` de 600 se comería
  * el `max-h` de 92dvh y la ficha se saldría por abajo, con sus botones fuera.
  * Con `min()` el mínimo nunca puede pasarse del máximo.
+
+ * Fueron 600 y bajaron a 400: con 600, una ficha de dos campos —un grupo, una
+ * confirmación con un selector— se abría con un palmo de vacío debajo de sus
+ * botones. El mínimo está para que abrir dos fichas seguidas no sea ver el
+ * panel crecer y encogerse, no para estirar las cortas.
+ *
+ * ── El ancho máximo: 720px ──────────────────────────────────────────────────
+ * Y aquí, no en cada llamada. La ficha del movimiento llegaba a 1024 porque su
+ * columna del soporte pedía sitio, y una ficha de 1024 en una pantalla de 1440
+ * es una ventana dentro de otra: deja de leerse como algo que está ENCIMA de
+ * la aplicación y empieza a leerse como otra pantalla.
+ *
+ * Una llamada puede pedir MENOS —la confirmación mide `max-w-md`— pero no más:
+ * el tope vive aquí para que el día que cambie, cambie una vez.
  */
 export const PANEL_DE_MODAL =
-  'flex max-h-[92dvh] min-h-[min(600px,92dvh)] w-full flex-col';
+  'flex max-h-[92dvh] min-h-[min(400px,92dvh)] w-full flex-col sm:max-w-[720px]';
 
 /**
  * La cabecera de una ficha.
@@ -81,7 +95,10 @@ export function CabeceraDeModal({
   return (
     <div
       className={cn(
-        'flex shrink-0 items-start justify-between gap-3 px-5 pb-4 pt-5 sm:px-6 sm:pt-6',
+        // 16 por los cuatro lados, como el cuerpo: la cabecera y lo que hay
+        // debajo son la misma columna, y dos sangrados distintos se ven como
+        // un escalón en el canto izquierdo de la ficha.
+        'flex shrink-0 items-start justify-between gap-3 px-4 pb-4 pt-4',
         className,
       )}
     >

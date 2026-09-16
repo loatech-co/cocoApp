@@ -306,7 +306,43 @@ traer `flex-1`. (`w-full` sí se permite: estirar un botón a todo el ancho de
 una columna angosta —el «Iniciar sesión» de una tarjeta de 384px— es otra
 decisión, porque ahí no hay con quién competir.)
 
-## 12. El nombre de un campo va DENTRO, y flota
+## 12. Una ficha mide 720px, y dentro reparte a la mitad
+
+`PANEL_DE_MODAL`, en `components/ui/modal-partes.tsx`, topa el ancho de
+**todas** las fichas en 720px. Una llamada puede pedir menos —la
+confirmación mide `max-w-md`— pero **nunca más**.
+
+**Por qué.** La ficha del movimiento llegaba a 1024 porque su columna del
+soporte pedía sitio. Una ventana de 1024 dentro de una pantalla de 1440
+deja de leerse como algo que está ENCIMA de la aplicación y empieza a
+leerse como otra pantalla.
+
+**Relleno: 16px por los cuatro lados**, y lo mismo en la cabecera y en el
+pie. Eran 24 y sobraban: en una ficha topada a 720, ese marco se comía el
+ancho que necesitan dos columnas. Vive en `Modal`, en `CabeceraDeModal` y
+en `Confirmacion` —una llamada no lo escribe—, porque dos sangrados
+distintos se ven como un escalón en el canto izquierdo de la ficha.
+
+**Alto mínimo: 400px.** Para que abrir dos fichas seguidas no sea ver el
+panel crecer y encogerse. No es para estirar las cortas: con 600 —que fue
+el primer valor— una ficha de dos campos se abría con un palmo de vacío
+debajo de sus botones.
+
+**Y dentro, una sola rejilla.** La ficha del movimiento tiene cinco caras
+—leer, editar, registrar a mano, registrar con un archivo y, pronto, con
+una foto— y las cinco son lo mismo: un documento a la izquierda y sus datos
+a la derecha. Esa rejilla se escribe **una vez**
+(`REJILLA_DE_LA_FICHA`) y reparte mitad y mitad.
+
+La previsualización no pasa de **350px de alto**, y va sola: sin fila de
+miniaturas debajo. Lo que hacía esa fila —contar, elegir, añadir, quitar—
+vive ahora sobre el propio documento, donde no gasta alto. Para mirarlo de
+cerca está el pase a pantalla completa.
+
+Por debajo de `lg` no hay reparto: son dos filas apiladas, porque en un
+teléfono dos columnas de 170px no son dos columnas.
+
+## 13. El nombre de un campo va DENTRO, y flota
 
 Todo campo de formulario se envuelve en `components/ui/campo.tsx`. Nunca un
 `<Label>` encima de un `<Input>`.
@@ -365,7 +401,7 @@ Con las dos había dos iconos diciendo lo mismo, uno a cada lado del valor.
 —el orden de los hermanos, el marcador que siempre está, los `data-` de un
 desplegable— y falla si una pantalla vuelve a escribir un `<Label>` suelto.
 
-## 13. Un aviso flotante dice su severidad de tres maneras
+## 14. Un aviso flotante dice su severidad de tres maneras
 
 `mostrarAviso(titular, { detalle, tono })`. Dos líneas: el titular dice QUÉ
 pasó en tres palabras —se lee de reojo, que es como se leen los avisos— y el
@@ -395,7 +431,7 @@ suelto y lleva su propio contorno (`CircleCheck`); aquí va dentro de una
 pastilla que ya es un círculo, y con un icono circular quedan dos círculos
 concéntricos.
 
-## 14. Un movimiento es un REGISTRO; el concepto es estructura
+## 15. Un movimiento es un REGISTRO; el concepto es estructura
 
 Un movimiento no es una cosa con nombre propio: es la anotación de que tal
 día salió tal plata de tal concepto.
@@ -464,7 +500,7 @@ esa regla se han perdido una vez cada una:
   anotado sin ir a hacer dinámico su centro, que es lo contrario de lo que
   hay que hacer.
 
-## 15. El rojo es solo para errores
+## 16. El rojo es solo para errores
 
 Lo pendiente —un movimiento sin clasificar— va en el verde medio del tema
 (`warning`). El rojo se reserva a lo que de verdad salió mal y a lo que no
@@ -476,7 +512,7 @@ entra, así que donde los dos puedan convivir —una fila vencida en una tabla
 con ingresos— la señal no puede ser solo el color: la palabra, el signo o
 el peso de la letra tienen que decirlo también.
 
-## 16. Componentes, no copias
+## 17. Componentes, no copias
 
 Si algo aparece en dos pantallas, es un componente. Lo son la tabla de
 movimientos, el paginador, la barra de filtros, el calendario, la dona, la
@@ -494,7 +530,7 @@ Dos copias empiezan iguales y se separan: una aprende a marcar lo que
 falta por clasificar y la otra no, y la misma plata acaba viéndose
 distinta según por dónde se entre.
 
-## 17. El foco se pinta cuando se pide
+## 18. El foco se pinta cuando se pide
 
 **Ningún campo nace enfocado**, y la señal de foco —el anillo, el borde
 teñido, la etiqueta verde— **solo se escribe con `:focus-visible`**. Nunca

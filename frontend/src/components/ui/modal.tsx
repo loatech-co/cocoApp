@@ -120,7 +120,7 @@ export function Modal({
           para llevarse sus botones al fondo. En una caja de bloque no habría
           sitio que repartir y el pie se quedaría a media altura.
         */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pb-6">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
           {children}
         </div>
       </div>
