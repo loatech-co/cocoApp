@@ -1,4 +1,4 @@
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
@@ -51,7 +51,6 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
     return (
       <div className="mx-auto max-w-md py-10">
         <Alert variant="destructive">
-          <ShieldAlert aria-hidden="true" />
           <AlertTitle>No tienes acceso a esta sección</AlertTitle>
           <AlertDescription>
             La administración está reservada a las cuentas con rol de administrador.

@@ -76,6 +76,13 @@ para ella (`accent-foreground`, `secondary-foreground`): nunca blanco por
 costumbre. Blanco sobre un acento claro da 1.23:1, muy por debajo del
 4.5:1 que exige el texto.
 
+## 4 bis. En un modal, nada de mayúsculas sostenidas
+
+Una palabra en versalitas pierde la silueta que la hace reconocible
+—"Soporte" y "SOPORTE" no se leen igual de rápido— y dentro de una ficha,
+donde todo el texto es corto, un rótulo gritando compite con lo que
+titula. El tamaño y el gris ya dicen que es un rótulo.
+
 ## 5. El rojo es solo para errores
 
 Lo pendiente —un movimiento sin clasificar— va en el oro del tema

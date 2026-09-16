@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react';
+import {} from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select } from '@/components/ui/select';
@@ -56,7 +56,6 @@ export function MapeoDeColumnas({
     <div className="flex flex-col gap-3">
       {faltan.length > 0 && (
         <Alert variant="warning">
-          <AlertCircle aria-hidden="true" />
           <AlertTitle>
             No se reconoció {faltan.map((papel) => NOMBRE[papel] ?? papel).join(' ni ')}
           </AlertTitle>

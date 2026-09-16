@@ -236,8 +236,23 @@
   /* Lo PENDIENTE va en el oro del tema, no en un ámbar traído de fuera. */
   --warning: #7a5312;
   --warning-surface: #f7ecd6;
-  --info: #5c6663;
-  --info-surface: #efede6;
+  --info: #14807a;
+  --info-surface: #d9f0ed;
+  /*
+    Lo que SALIÓ BIEN comparte el verde del ingreso, y no es un descuido:
+    en una app de dinero "se guardó" y "entró plata" son la misma buena
+    noticia, y dos verdes distintos a un palmo uno del otro se leen como si
+    quisieran decir cosas distintas.
+  */
+  --success: #1a7a52;
+  --success-surface: #e3f3ea;
+  /*
+    El rojo tiene DOS papeles y hacen falta dos tokens: el del botón que borra
+    —fondo rojo, letra clara— y el del aviso que explica un error, que es una
+    superficie tenue con la tinta roja encima. Con uno solo, un aviso de error
+    salía como un rectángulo rojo a sangre.
+  */
+  --destructive-surface: #f7e3e2;
 
   /* ── Gráficas ─────────────────────────────────────────────────────────── */
   --chart-1: #14807a;
@@ -352,8 +367,11 @@
 
   --warning: #e0b976;
   --warning-surface: #2a1c08;
-  --info: #8a9693;
-  --info-surface: #1a2826;
+  --info: #5dbfb5;
+  --info-surface: #14302e;
+  --success: #4ac382;
+  --success-surface: #0f2419;
+  --destructive-surface: #2a1110;
 
   --chart-1: #5dbfb5;
   --chart-2: #e0b976;
@@ -439,6 +457,9 @@
   --color-income-surface: var(--income-surface);
   --color-expense: var(--expense);
   --color-expense-surface: var(--expense-surface);
+  --color-success: var(--success);
+  --color-success-surface: var(--success-surface);
+  --color-destructive-surface: var(--destructive-surface);
   --color-warning: var(--warning);
   --color-warning-surface: var(--warning-surface);
   --color-info: var(--info);

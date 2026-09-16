@@ -1,4 +1,4 @@
-import { AlertCircle, Loader2, Wallet } from 'lucide-react';
+import { Loader2, Wallet } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +30,6 @@ export function Ajustes() {
       <CardContent className="flex flex-col gap-4">
         {error && (
           <Alert variant="destructive">
-            <AlertCircle aria-hidden="true" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}

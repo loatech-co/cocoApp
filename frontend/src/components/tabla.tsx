@@ -121,7 +121,7 @@ export function Tr({
         'group/fila border-b border-border transition-colors last:border-b-0',
         // Ámbar y no rojo: sin clasificar no es un error, es algo pendiente. En
         // esta paleta el rojo está reservado a lo que de verdad salió mal.
-        atencion ? 'bg-warning-surface/40 hover:bg-warning-surface/60' : 'hover:bg-secondary/60',
+        atencion ? 'bg-warning-surface/40 hover:bg-warning-surface/60' : 'hover:bg-muted/60',
         atenuada && 'opacity-50',
         onClick && 'cursor-pointer',
         className,
@@ -163,7 +163,7 @@ export function Td({
         fija &&
           (atencion
             ? 'bg-[color-mix(in_srgb,var(--warning-surface)_40%,var(--card))] group-hover/fila:bg-[color-mix(in_srgb,var(--warning-surface)_60%,var(--card))]'
-            : 'bg-card group-hover/fila:bg-[color-mix(in_srgb,var(--secondary)_60%,var(--card))]'),
+            : 'bg-card group-hover/fila:bg-[color-mix(in_srgb,var(--muted)_60%,var(--card))]'),
         className,
       )}
     >
@@ -180,7 +180,7 @@ export function Td({
  * repetir los anchos a mano y se desalinea al primer cambio.
  */
 export function TablaPie({ children }: { children: ReactNode }) {
-  return <tfoot className="border-t-2 border-border bg-secondary/40 font-medium">{children}</tfoot>;
+  return <tfoot className="border-t-2 border-border bg-muted/40 font-medium">{children}</tfoot>;
 }
 
 /**

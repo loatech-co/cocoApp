@@ -89,7 +89,7 @@ export function GuiaCsv() {
   const [abierta, setAbierta] = useState(false);
 
   return (
-    <div className="rounded-lg border border-border bg-secondary/30">
+    <div className="rounded-lg border border-border bg-muted/30">
       <button
         type="button"
         onClick={() => setAbierta((valor) => !valor)}

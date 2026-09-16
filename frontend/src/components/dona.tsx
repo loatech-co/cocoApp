@@ -211,7 +211,7 @@ export function Dona({
           cy={CENTRO}
           r={RADIO}
           fill="none"
-          stroke="var(--color-secondary)"
+          stroke="var(--muted)"
           strokeWidth={GROSOR}
         />
 

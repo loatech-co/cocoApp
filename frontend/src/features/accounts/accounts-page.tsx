@@ -1,5 +1,5 @@
 import type { Account } from '@coco/types';
-import { AlertCircle, Archive, CreditCard, Loader2, Plus, Wallet } from 'lucide-react';
+import { Archive, CreditCard, Loader2, Plus, Wallet } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
 import { Saldo } from '@/components/monto';
@@ -188,7 +188,6 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
         <form onSubmit={(evento) => void onSubmit(evento)} className="flex flex-col gap-4">
           {error && (
             <Alert variant="destructive">
-              <AlertCircle aria-hidden="true" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}

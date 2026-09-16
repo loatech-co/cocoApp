@@ -329,7 +329,7 @@ function Captura({
       onClick={onClick}
       className={cn(
         'flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors',
-        deshabilitada ? 'cursor-not-allowed opacity-50' : 'hover:bg-secondary',
+        deshabilitada ? 'cursor-not-allowed opacity-50' : 'hover:bg-muted',
       )}
     >
       <ChipIcono Icono={Icono} color={color} tamano="sm" />
@@ -340,7 +340,7 @@ function Captura({
       </span>
 
       {nota && (
-        <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
           {nota}
         </span>
       )}

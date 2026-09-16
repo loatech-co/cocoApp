@@ -1,38 +1,92 @@
 import { cva, type VariantProps } from 'class-variance-authority';
-import type { ComponentProps } from 'react';
+import { CircleAlert, CircleCheck, Info, TriangleAlert } from 'lucide-react';
+import type { ComponentProps, ComponentType } from 'react';
+
 import { cn } from '@/lib/utils';
 
+/**
+ * Un aviso EN LÍNEA: se queda donde está hasta que deja de ser cierto.
+ *
+ * ── En qué se diferencia del aviso flotante ─────────────────────────────────
+ * El de `ui/aviso.tsx` aparece en una esquina, dice algo y se va: sirve para
+ * confirmar una acción que ya pasó —"se guardó"—. Este no se va, porque
+ * explica el estado de lo que tiene debajo: un formulario que no se pudo
+ * enviar, una lista vacía por un filtro, una cuenta sin aprobar. Si se fuera,
+ * el motivo desaparecería y quedaría la pantalla sin explicación.
+ *
+ * ── Los cuatro tonos, y cuándo es cada uno ──────────────────────────────────
+ * · `destructive` — algo FALLÓ. Es el único rojo, y por eso es el único que se
+ *   puede ignorar menos: si todo fuera rojo, el rojo no diría nada.
+ * · `warning` — algo está PENDIENTE y todavía se puede hacer. Va en el oro del
+ *   tema. Un pago sin registrar no es un error.
+ * · `success` — algo salió bien y hace falta decirlo donde ocurrió.
+ * · `info` — un dato que ayuda y que nadie tiene que resolver.
+ *
+ * ── Por qué cada tono trae su icono ─────────────────────────────────────────
+ * Porque el color solo no basta: uno de cada doce hombres no distingue el rojo
+ * del verde, y ninguno de los dos se ve en una captura en blanco y negro. El
+ * icono dice lo mismo por otra vía, y va puesto por el componente para que no
+ * dependa de que cada llamada se acuerde.
+ */
 const alertVariants = cva(
-  'relative w-full rounded-lg border px-4 py-3 text-sm grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1 [&>svg]:size-4 [&>svg]:translate-y-0.5',
+  cn(
+    'relative grid w-full grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1',
+    'rounded-lg border px-4 py-3 text-sm',
+    '[&>svg]:size-4 [&>svg]:translate-y-0.5',
+  ),
   {
     variants: {
       variant: {
-        default: 'bg-card text-card-foreground border-border',
-        /** Rojo. Solo errores. */
-        destructive: 'bg-danger-50 text-danger-700 border-danger-200 dark:bg-danger-900/20 dark:text-danger-400 dark:border-danger-900',
-        warning: 'bg-warning-surface text-warning border-amber-200 dark:border-amber-900',
-        info: 'bg-info-surface text-info border-sky-200 dark:border-sky-900',
-        income: 'bg-income-surface text-income border-teal-200 dark:border-teal-900',
+        default: 'border-border bg-card text-card-foreground',
+        /* Rojo. Solo lo que falló — nunca lo que está pendiente. */
+        destructive: 'border-destructive/30 bg-destructive-surface text-destructive',
+        warning: 'border-warning/30 bg-warning-surface text-warning',
+        success: 'border-success/30 bg-success-surface text-success',
+        info: 'border-info/30 bg-info-surface text-info',
       },
     },
-    defaultVariants: {
-      variant: 'default',
-    },
+    defaultVariants: { variant: 'default' },
   },
 );
 
+export type TonoDeAviso = NonNullable<VariantProps<typeof alertVariants>['variant']>;
+
+/** El icono de cada tono. `default` no lleva: no anuncia nada. */
+const ICONOS: Record<TonoDeAviso, ComponentType<{ className?: string }> | null> = {
+  default: null,
+  destructive: CircleAlert,
+  warning: TriangleAlert,
+  success: CircleCheck,
+  info: Info,
+};
+
 export function Alert({
   className,
-  variant,
+  variant = 'default',
+  children,
   ...props
 }: ComponentProps<'div'> & VariantProps<typeof alertVariants>) {
-  return <div role="alert" className={cn(alertVariants({ variant }), className)} {...props} />;
+  const Icono = ICONOS[variant ?? 'default'];
+
+  return (
+    // `role="alert"` solo en lo que salió mal: un lector de pantalla interrumpe
+    // lo que esté diciendo para leerlo, y hacer eso por un dato informativo es
+    // enseñarle a la gente a ignorar las interrupciones.
+    <div
+      role={variant === 'destructive' ? 'alert' : 'status'}
+      className={cn(alertVariants({ variant }), className)}
+      {...props}
+    >
+      {Icono && <Icono className="size-4 translate-y-0.5" aria-hidden="true" />}
+      {children}
+    </div>
+  );
 }
 
-export function AlertTitle({ className, ...props }: ComponentProps<'p'>) {
-  return <p className={cn('col-start-2 font-medium leading-tight', className)} {...props} />;
+export function AlertTitle({ className, ...props }: ComponentProps<'h5'>) {
+  return <h5 className={cn('col-start-2 font-semibold leading-tight', className)} {...props} />;
 }
 
 export function AlertDescription({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cn('col-start-2 text-sm opacity-90', className)} {...props} />;
+  return <div className={cn('col-start-2 [&_p]:leading-relaxed', className)} {...props} />;
 }

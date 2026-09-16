@@ -1,5 +1,5 @@
 import { Logo } from '@/components/logo';
-import { AlertCircle, Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 
@@ -73,7 +73,6 @@ export function LoginPage() {
           <CardContent className="flex flex-col gap-4">
             {error && (
               <Alert variant="destructive">
-                <AlertCircle aria-hidden="true" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}

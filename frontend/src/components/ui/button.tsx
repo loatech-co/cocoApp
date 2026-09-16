@@ -41,9 +41,16 @@ const buttonVariants = cva(
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
         /** El acento del tema: una superficie tenue con su propia tinta. */
         acento: 'bg-accent text-accent-foreground hover:brightness-95',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        outline: 'border border-input bg-background hover:bg-secondary hover:text-secondary-foreground',
-        ghost: 'hover:bg-secondary hover:text-secondary-foreground',
+        /**
+         * El `secondary` del TEMA, que aquí es el oro.
+         *
+         * No es "un botón gris": para eso están `ghost` y `outline`. Este
+         * existe para la acción secundaria que sí quiere destacar, y lleva la
+         * tinta que el tema declara para él —nunca blanco por costumbre—.
+         */
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/90',
+        outline: 'border border-input bg-background hover:bg-muted hover:text-foreground',
+        ghost: 'hover:bg-muted hover:text-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
         /** Rojo. Reservado para acciones destructivas — nada más. */
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
@@ -53,7 +60,7 @@ const buttonVariants = cva(
          * acción principal. Se encienden con `aria-pressed`.
          */
         herramienta:
-          'border border-border bg-card text-foreground hover:bg-secondary aria-pressed:border-primary/30 aria-pressed:bg-accent aria-pressed:text-accent-foreground',
+          'border border-border bg-card text-foreground hover:bg-muted aria-pressed:border-primary/30 aria-pressed:bg-accent aria-pressed:text-accent-foreground',
       },
       /*
         ── DOS tamaños, y los mismos para todo ──────────────────────────────

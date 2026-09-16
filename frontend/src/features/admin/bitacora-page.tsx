@@ -1,5 +1,5 @@
 import type { AuditAction, AuditEntry } from '@coco/types';
-import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -68,7 +68,6 @@ export function BitacoraPage() {
 
       {consulta.isError && (
         <Alert variant="destructive">
-          <AlertCircle aria-hidden="true" />
           <AlertDescription>No se pudo cargar la bitácora.</AlertDescription>
         </Alert>
       )}

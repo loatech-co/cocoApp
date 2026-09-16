@@ -72,7 +72,7 @@ export function CamposDeRecurrencia({
     */
     <div className={cn('relative z-10 rounded-lg border border-border', className)}>
       <label className="flex cursor-pointer items-center gap-3 p-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
           <Repeat className="size-4" aria-hidden="true" />
         </span>
 
@@ -100,7 +100,7 @@ export function CamposDeRecurrencia({
       {valor.recurrente && (
         <div
           className={cn(
-            'grid gap-3 rounded-b-lg border-t border-border bg-secondary/40 p-3',
+            'grid gap-3 rounded-b-lg border-t border-border bg-muted/40 p-3',
             // Tantas columnas como campos haya: con dos columnas fijas, el
             // tercer campo se quedaba solo en un renglón a media anchura, y la
             // fila parecía cortada por la mitad.

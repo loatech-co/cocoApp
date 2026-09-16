@@ -1,5 +1,5 @@
 import { Logo } from '@/components/logo';
-import { AlertCircle, Check, Clock, Loader2, UserPlus } from 'lucide-react';
+import { Loader2, UserPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 
@@ -75,7 +75,6 @@ export function RegisterPage() {
           <CardContent className="flex flex-col gap-4">
             {error && (
               <Alert variant="destructive">
-                <AlertCircle aria-hidden="true" />
                 <AlertDescription>
                   {error}
                   {problemas.length > 0 && (
@@ -176,7 +175,6 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
         <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
         <Alert variant="info" className="text-left">
-          {lista ? <Check aria-hidden="true" /> : <Clock aria-hidden="true" />}
           <AlertTitle>{lista ? 'Tu cuenta está lista' : 'Recibimos tu solicitud'}</AlertTitle>
           <AlertDescription>
             {lista

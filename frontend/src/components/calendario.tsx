@@ -169,8 +169,8 @@ export function Calendario({
                   extremo
                     ? 'bg-primary font-semibold text-primary-foreground'
                     : dentro
-                      ? 'text-foreground hover:bg-secondary'
-                      : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                      ? 'text-foreground hover:bg-muted'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                   // Hoy lleva anillo, no relleno: el relleno es de lo elegido y
                   // competirían por significar lo mismo.
                   iso === hoy && !extremo && 'font-semibold text-foreground ring-1 ring-inset ring-input',

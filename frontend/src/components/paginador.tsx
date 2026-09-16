@@ -116,7 +116,7 @@ function Celda({
       className={cn(
         'flex h-9 items-center justify-center gap-2 px-3 text-sm font-medium transition-colors',
         'outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
-        actual ? 'bg-secondary/70 text-foreground' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground',
+        actual ? 'bg-muted/70 text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
         deshabilitada && 'cursor-not-allowed opacity-40 hover:bg-transparent',
       )}
       {...props}

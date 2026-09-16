@@ -1,7 +1,6 @@
 import type { Category, ImportRow, ImportRowStatus } from '@coco/types';
 import {
-  AlertCircle,
-  ArrowDownLeft,
+    ArrowDownLeft,
   ArrowUpRight,
   Check,
   CopyCheck,
@@ -64,7 +63,6 @@ export function RevisarPage() {
   if (lote.isError || !lote.data) {
     return (
       <Alert variant="destructive">
-        <AlertCircle aria-hidden="true" />
         <AlertTitle>No se encontró esa importación</AlertTitle>
         <AlertDescription>
           <Link to="/escanear" className="underline underline-offset-4">
@@ -83,7 +81,6 @@ export function RevisarPage() {
     return (
       <div className="flex flex-col gap-4">
         <Alert variant="info">
-          <Check aria-hidden="true" />
           <AlertTitle>
             {confirmado} {confirmado === 1 ? 'movimiento importado' : 'movimientos importados'}
           </AlertTitle>
@@ -145,7 +142,6 @@ export function RevisarPage() {
 
       {counts.duplicate > 0 && (
         <Alert variant="warning">
-          <CopyCheck aria-hidden="true" />
           <AlertTitle>Hay movimientos que se parecen a otros que ya tienes</AlertTitle>
           <AlertDescription>
             Están marcados y quedarán fuera salvo que los aceptes. Ojo: dos compras iguales el
@@ -156,7 +152,6 @@ export function RevisarPage() {
 
       {errorAlConfirmar && (
         <Alert variant="destructive">
-          <AlertCircle aria-hidden="true" />
           <AlertDescription>{errorAlConfirmar}</AlertDescription>
         </Alert>
       )}

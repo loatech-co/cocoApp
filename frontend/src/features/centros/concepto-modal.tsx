@@ -182,7 +182,7 @@ export function ConceptoModal({
               `warning-surface` es un marrón que sobre el verde del modal daba
               un verde oliva sucio.
             */
-            <div className="flex flex-col gap-3 rounded-lg border border-border bg-secondary/60 p-3">
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/60 p-3">
               <p className="text-sm text-muted-foreground">
                 <strong className="font-semibold text-foreground">
                   Ya existe “{gemelo.name}”.

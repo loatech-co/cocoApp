@@ -199,8 +199,8 @@ export function SelectorDeRango({
                       // resaltado se sale de la curva del panel y se ve torcida.
                       'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
                       borrador.preset === p.valor
-                        ? 'bg-secondary font-semibold text-secondary-foreground'
-                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                        ? 'bg-muted font-semibold text-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                     )}
                   >
                     {p.etiqueta}

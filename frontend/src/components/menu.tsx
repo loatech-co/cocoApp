@@ -263,8 +263,8 @@ export function MenuOpcion({
           : peligro
           ? 'font-medium text-destructive hover:bg-destructive/10'
           : elegida
-            ? 'bg-secondary font-medium text-foreground'
-            : 'text-foreground hover:bg-secondary',
+            ? 'bg-muted font-medium text-foreground'
+            : 'text-foreground hover:bg-muted',
       )}
     >
       {Icono && <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />}

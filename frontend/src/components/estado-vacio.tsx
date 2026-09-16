@@ -35,7 +35,7 @@ export function EstadoVacio({
         className,
       )}
     >
-      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground">
+      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
         <Icono className="size-6" aria-hidden={true} />
       </span>
 

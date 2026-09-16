@@ -166,7 +166,7 @@ function Explicacion({ onCerrar }: { onCerrar: () => void }) {
           />
         </ol>
 
-        <p className="mt-4 rounded-lg bg-secondary p-3 text-sm text-muted-foreground">
+        <p className="mt-4 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
           Así, <strong className="text-foreground">¿cuánto se fue en servicios públicos?</strong>{' '}
           es la suma de sus conceptos, y no hay que registrarlo por separado en ningún lado.
         </p>
@@ -222,7 +222,7 @@ function Centro({ centro }: { centro: Category }) {
         */}
         <div
           className={cn(
-            'flex items-center gap-2 pr-4 transition-colors hover:bg-secondary sm:pr-6',
+            'flex items-center gap-2 pr-4 transition-colors hover:bg-muted sm:pr-6',
             'rounded-t-lg',
             // Cerrado, la fila ES la tarjeta: se redondea también por abajo.
             !abierto && 'rounded-b-lg',
@@ -346,7 +346,7 @@ function Grupo({ grupo }: { grupo: Category }) {
   const conceptos = grupo.children ?? [];
 
   return (
-    <div className="rounded-lg bg-secondary/60 p-3 sm:p-4">
+    <div className="rounded-lg border border-border bg-muted/40 p-3 sm:p-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="min-w-0 truncate text-sm font-semibold">{grupo.name}</h3>
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde

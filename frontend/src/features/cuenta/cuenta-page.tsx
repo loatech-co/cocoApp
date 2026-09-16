@@ -1,4 +1,4 @@
-import { AlertCircle, Check, LogOut, ShieldCheck } from 'lucide-react';
+import { LogOut, ShieldCheck } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -85,7 +85,6 @@ function CambiarContrasena() {
   if (hecho) {
     return (
       <Alert variant="info">
-        <Check aria-hidden="true" />
         <AlertTitle>Contraseña cambiada</AlertTitle>
         <AlertDescription>
           Se cerraron todas tus sesiones, incluida esta. Vuelve a entrar con la contraseña nueva.
@@ -107,7 +106,6 @@ function CambiarContrasena() {
       <CardContent>
         {error && (
           <Alert variant="destructive" className="mb-4">
-            <AlertCircle aria-hidden="true" />
             <AlertDescription>
               {error}
               {problemas.length > 0 && (

@@ -1,6 +1,5 @@
 import {
-  AlertCircle,
-  ChevronLeft,
+    ChevronLeft,
   Eye,
   EyeOff,
   Receipt,
@@ -165,7 +164,6 @@ export function DashboardPage() {
 
       {dashboard.isError && (
         <Alert variant="destructive">
-          <AlertCircle aria-hidden="true" />
           <AlertTitle>No se pudo cargar el resumen</AlertTitle>
           <AlertDescription>
             {dashboard.error instanceof ApiClientError

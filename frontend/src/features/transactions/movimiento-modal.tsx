@@ -28,6 +28,7 @@ import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
+import { Bloque } from '@/components/ui/bloque';
 import { Campo } from '@/components/ui/campo';
 import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
@@ -436,7 +437,7 @@ export function MovimientoModal({
               {progresoDeLectura?.etapa ?? 'Leyendo el soporte…'}
             </p>
             {/* El OCR de un escaneo tarda segundos y sin barra parece colgado. */}
-            <div className="h-1 w-48 overflow-hidden rounded-full bg-secondary">
+            <div className="h-1 w-48 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full bg-primary transition-[width]"
                 style={{ width: `${Math.round((progresoDeLectura?.avance ?? 0) * 100)}%` }}
@@ -839,11 +840,19 @@ function Seccion({
     // casi montado encima —que es justo lo que se acaba de arreglar quitando
     // los `legend`—.
     <section className="flex flex-col gap-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      {/*
+        Sin mayúsculas sostenidas.
+
+        Una palabra en versalitas pierde la silueta que la hace reconocible
+        —"Soporte" y "SOPORTE" no se leen igual de rápido— y dentro de una
+        ficha, donde todo el texto es corto, ese rótulo gritando compite con lo
+        que titula. El tamaño y el gris ya dicen que es un rótulo.
+      */}
+      <h3 className="text-xs font-semibold text-muted-foreground">
         {titulo}
       </h3>
       {caja ? (
-        <div className="flex flex-col gap-3 rounded-lg bg-secondary/60 p-3">{children}</div>
+        <Bloque className="flex flex-col gap-3">{children}</Bloque>
       ) : (
         children
       )}
@@ -974,12 +983,21 @@ function Via({
     </>
   );
 
-  const forma = 'flex w-full items-start gap-3 rounded-lg bg-secondary/60 p-4 text-left';
+  const forma = cn(
+    'flex w-full items-start gap-3 rounded-lg border border-border bg-muted/40 p-4 text-left',
+  );
 
   if (!onClick) return <div className={forma}>{dentro}</div>;
 
   return (
-    <button type="button" onClick={onClick} className={cn(forma, 'transition-colors hover:bg-black/10')}>
+    <button
+      type="button"
+      onClick={onClick}
+      // Al pasar por encima se marca el BORDE y se llena un poco más. Solo con
+      // relleno no se notaría: dentro de un modal, `muted` y `popover` se
+      // llevan un escalón de nada en oscuro.
+      className={cn(forma, 'transition-colors hover:border-primary hover:bg-muted')}
+    >
       {dentro}
     </button>
   );
@@ -998,7 +1016,10 @@ function BotonDeVia({
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+      className={cn(
+        'flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5',
+        'text-xs font-medium transition-colors hover:border-primary hover:bg-muted',
+      )}
     >
       <Icono className="size-3.5 shrink-0" aria-hidden={true} />
       {children}

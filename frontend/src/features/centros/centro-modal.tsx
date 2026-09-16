@@ -81,7 +81,7 @@ export function CentroModal({ abierta, onCerrar }: { abierta: boolean; onCerrar:
           improvisan, que un clic distraído mueve plata sin que nadie lo note—
           vive en el código, no en el formulario.
         */}
-        <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-border bg-secondary/60 p-3">
+        <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-border bg-muted/60 p-3">
           <span className="min-w-0">
             <span className="block text-sm font-medium">Estático</span>
             <span className="mt-0.5 block text-xs text-muted-foreground">

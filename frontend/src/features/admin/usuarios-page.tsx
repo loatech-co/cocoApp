@@ -1,7 +1,6 @@
 import type { PerfilPublico, UserStatus } from '@coco/types';
 import {
-  AlertCircle,
-  Check,
+    Check,
   Clock,
   KeyRound,
   Loader2,
@@ -83,7 +82,6 @@ export function UsuariosPage() {
 
       {consulta.isError && (
         <Alert variant="destructive">
-          <AlertCircle aria-hidden="true" />
           <AlertDescription>
             No se pudieron cargar las cuentas. Recarga la página e inténtalo de nuevo.
           </AlertDescription>
@@ -143,7 +141,6 @@ function FilaDeUsuario({ usuario, soyYo }: { usuario: PerfilPublico; soyYo: bool
 
         {error && (
           <Alert variant="destructive">
-            <AlertCircle aria-hidden="true" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -246,7 +243,6 @@ function RestablecerContrasena({
   if (hecho) {
     return (
       <Alert variant="info">
-        <Check aria-hidden="true" />
         <AlertDescription>
           Listo. Comunícale la contraseña nueva a {usuario.display_name ?? usuario.email} por un
           canal seguro. Sus sesiones abiertas se cerraron.
@@ -256,7 +252,7 @@ function RestablecerContrasena({
   }
 
   return (
-    <div className="rounded-md border border-border bg-secondary/40 p-4">
+    <div className="rounded-md border border-border bg-muted/40 p-4">
       <Label htmlFor={`nueva-${usuario.id}`}>Contraseña nueva</Label>
       <Input
         id={`nueva-${usuario.id}`}
@@ -270,7 +266,6 @@ function RestablecerContrasena({
 
       {error && (
         <Alert variant="destructive" className="mt-3">
-          <AlertCircle aria-hidden="true" />
           <AlertDescription>
             {error.message}
             {error.details.length > 0 && (

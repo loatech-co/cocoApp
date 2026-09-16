@@ -1,5 +1,5 @@
 import type { Account } from '@coco/types';
-import { AlertCircle, FileText, Loader2, ScanLine, Upload } from 'lucide-react';
+import { FileText, Loader2, ScanLine, Upload } from 'lucide-react';
 import { useState, type ChangeEvent, type DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -226,7 +226,6 @@ export function ImportarPage() {
 
           {error && (
             <Alert variant="destructive">
-              <AlertCircle aria-hidden="true" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -294,7 +293,6 @@ export function ImportarPage() {
 
             {errorAlSubir && (
               <Alert variant="destructive">
-                <AlertCircle aria-hidden="true" />
                 <AlertDescription>{errorAlSubir}</AlertDescription>
               </Alert>
             )}
@@ -330,7 +328,6 @@ function Ignoradas({ lineas, motivo }: { lineas: readonly string[]; motivo: stri
 
   return (
     <Alert variant="warning">
-      <AlertCircle aria-hidden="true" />
       <AlertTitle>
         {lineas.length} {lineas.length === 1 ? 'línea quedó' : 'líneas quedaron'} fuera
       </AlertTitle>
@@ -357,7 +354,7 @@ function Progreso({ progreso }: { progreso: ProgresoDeOcr }) {
         <ScanLine className="size-4 animate-pulse text-primary" aria-hidden="true" />
         {progreso.etapa}
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
         <div
           className="h-full rounded-full bg-primary transition-[width] duration-300"
           style={{ width: `${porcentaje}%` }}
