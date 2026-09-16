@@ -112,15 +112,19 @@ export function AppShell() {
             ) : (
               <>
                 {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo
-                    dejaría demasiado bajo para leerse. Lima sobre la barra
-                    oscura: 10.1:1 de contraste, y es el acento de la marca. */}
+                    dejaría demasiado bajo para leerse. Va en `sidebar-active`,
+                    que es el color de la marca en cada tema —pino sobre el
+                    riel claro, teal sobre el oscuro—. El comentario de antes
+                    hablaba de lima sobre una barra oscura: ni el acento es
+                    lima desde el cambio de tema ni el riel es oscuro en
+                    claro. */}
                 <Logo className="h-7 w-auto text-sidebar-active" />
                 <button
                   type="button"
                   onClick={alternarBarra}
                   aria-label="Plegar la barra lateral"
                   title="Plegar la barra lateral"
-                  className="grid size-8 shrink-0 place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
+                  className="grid size-9 shrink-0 place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
                 >
                   <PanelLeftClose className="size-[18px]" aria-hidden="true" />
                 </button>
@@ -155,7 +159,7 @@ export function AppShell() {
                 {plegada ? (
                   <hr className="my-3 border-sidebar-border" />
                 ) : (
-                  <p className="mt-6 mb-1 px-3 text-2xs font-semibold uppercase tracking-wider text-sidebar-muted">
+                  <p className="mt-6 mb-1 px-3 text-xs font-semibold text-sidebar-muted">
                     Administración
                   </p>
                 )}

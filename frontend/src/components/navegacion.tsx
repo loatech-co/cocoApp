@@ -129,8 +129,18 @@ export function EnlaceDeSeccion({
           // lista de nueve se recorre con el pulgar.
           'movil:min-h-[48px]',
           plegada ? 'justify-center px-0' : 'px-3',
+          // ── Dónde estoy y qué estoy señalando no pueden pintarse igual ──
+          // Lo activo y el paso del cursor compartían fondo —`sidebar-hover`
+          // los dos— y se distinguían solo por el color de la letra: al pasar
+          // por encima de la sección en la que uno ya está no cambiaba nada, y
+          // al pasar por cualquier otra parecía que se había navegado.
+          //
+          // Lo activo pasa al par que el tema tiene declarado justamente para
+          // eso —`--sidebar-active` y su tinta—, que además es el mismo
+          // tratamiento que ya usa la barra del teléfono. La tinta estaba
+          // declarada y no la usaba nadie en el riel.
           isActive
-            ? 'bg-sidebar-hover text-sidebar-active'
+            ? 'bg-sidebar-active font-semibold text-sidebar-active-foreground'
             : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground',
         )
       }

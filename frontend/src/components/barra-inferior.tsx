@@ -76,8 +76,18 @@ export function BarraInferior({
             'grid size-14 place-items-center rounded-full',
             // 16 por encima de la raya, y quedan 20 de barra por debajo.
             '-mt-4',
-            // Lima con tinta, nunca blanco: blanco sobre lima da 1,23:1.
-            'bg-accent text-accent-foreground shadow-[var(--sombra-flotante)]',
+            // ── El color de la marca, no el acento ───────────────────────
+            // Era `--accent`, que en claro es un verde AGUA muy pálido
+            // (#e0ebe9) sobre una barra de #f1efe8: el control más importante
+            // del teléfono quedaba pálido sobre pálido y había que buscarlo.
+            // El acento es la superficie de lo que RESPONDE al cursor, no la
+            // de lo que llama; para llamar está el color de la marca, que es
+            // además el que ya lleva el avatar cuando está encendido.
+            //
+            // El comentario de antes decía «lima con tinta, nunca blanco»:
+            // desde el cambio de tema no hay lima, y la tinta correcta la
+            // declara el propio par de tokens.
+            'bg-sidebar-active text-sidebar-active-foreground shadow-[var(--sombra-flotante)]',
             // Pulsado se asienta DENTRO de la barra: el dedo ya lo está
             // tapando, así que la respuesta tiene que verse alrededor del dedo
             // y no debajo.
@@ -103,11 +113,10 @@ export function BarraInferior({
           aria-label="Mi cuenta"
         >
           {({ isActive }) => (
-            // Sobre la barra, el avatar NO puede ir del color de la marca: es
-            // el mismo bosque de la barra y el círculo desaparece, dejando
-            // unas iniciales blancas sueltas que además se leen como el hueco
-            // activo. Apagado va del blanco tenue del resto de la barra;
-            // encendido, lima con tinta.
+            // Apagado va de la superficie tenue de la barra y encendido del
+            // color de la marca con su tinta. Nunca al revés: cuando el avatar
+            // llevaba el color de la barra, el círculo desaparecía y quedaban
+            // unas iniciales sueltas que se leían como el hueco activo.
             <Avatar
               nombre={nombre}
               className={cn(
