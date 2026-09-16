@@ -144,7 +144,7 @@ export function DashboardPage() {
             <Card className="lg:col-span-2">
               <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <Skeleton className="mb-4 h-6 w-40" />
-                <div className="min-h-0 flex-1">
+                <div className="min-h-0 max-h-[26rem] flex-1">
                   <TendenciaEsqueleto />
                 </div>
               </CardContent>
@@ -190,7 +190,10 @@ export function DashboardPage() {
             <Card className="lg:col-span-2">
               <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
-                <div className="min-h-0 flex-1">
+                {/* `max-h` además de `flex-1`: llena la tarjeta, pero una
+                    línea de 600px de alto no enseña más tendencia que una de
+                    360, solo estira los picos. */}
+                <div className="min-h-0 max-h-[26rem] flex-1">
                   <Tendencia
                     puntos={dashboard.data.trend}
                     granularidad={dashboard.data.period.granularity}

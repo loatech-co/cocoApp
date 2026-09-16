@@ -144,7 +144,14 @@ export function Dona({
       de esa escala y mide siempre lo que dice que mide. De paso, cortar un
       nombre largo pasa a ser un `truncate` de CSS en vez de contar letras.
     */
-    <div className={cn('relative w-full', className)}>
+    /*
+      El TOPE de ancho es lo que gobierna el alto de toda la fila. El SVG usa
+      `w-full` y conserva la proporción, así que su alto sale de su ancho: sin
+      tope, en una pantalla de 2560px la dona se volvía enorme, estiraba la
+      fila y la gráfica de al lado —que llena su tarjeta— la seguía. Se veía
+      como si el resumen ocupara la pantalla entera.
+    */
+    <div className={cn('relative mx-auto w-full max-w-[26rem]', className)}>
       <svg
         viewBox={`0 0 ${ANCHO} ${ALTO}`}
         className="w-full"
