@@ -1333,6 +1333,17 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
       )}
       onPointerDown={(e) => {
         if (!sePuedeMover) return;
+        /*
+          Los mandos del zoom no arrastran nada.
+
+          Aquí estaba el bug que hacía que el zoom "no funcionara": al pulsar
+          un mando, este marco tomaba `setPointerCapture` para el arrastre, y
+          la captura REDIRIGE también el `click` al elemento que capturó. El
+          estado del zoom nunca cambiaba porque el `onClick` del botón no
+          llegaba a dispararse nunca.
+        */
+        if ((e.target as HTMLElement).closest('[data-mandos]')) return;
+
         e.currentTarget.setPointerCapture(e.pointerId);
         agarre.current = { x: pos.x, y: pos.y, px: e.clientX, py: e.clientY };
         setArrastrando(true);
@@ -1353,7 +1364,10 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
     >
       {/* Los mandos del zoom, sobre una pastilla oscura: encima de un recibo
           —que es blanco— cualquier control claro desaparece. */}
-      <div className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-tinta-950/75 p-0.5">
+      <div
+        data-mandos=""
+        className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-tinta-950/75 p-0.5"
+      >
         <MandoDeZoom
           etiqueta="Alejar"
           deshabilitado={zoom === 0}
