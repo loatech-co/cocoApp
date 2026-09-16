@@ -657,16 +657,17 @@ function Agregar({
           "hover:bg-accent hover:text-accent-foreground",
         )}
       >
+        {/*
+          El mismo texto haya grupos o no.
+
+          Cuando no había ninguno, la baldosa añadía debajo un «El nivel de en
+          medio: …» que la otra no llevaba. Es el mismo botón y hace lo mismo
+          en los dos casos: cambiarle el texto según cuántas tarjetas tenga al
+          lado obliga a leerlo dos veces para comprobar que sigue siendo el
+          mismo. Lo que cambia es su tamaño, que ya dice bastante.
+        */}
         <Plus className="size-5 shrink-0" aria-hidden="true" />
         {etiqueta}
-        {/* Sin ningún grupo, la baldosa es lo único que hay: ahí sí hace falta
-            decir qué es un grupo. Con grupos al lado, el ejemplo sobra —ya se
-            ve lo que es— y solo añade ruido a cada centro. */}
-        {solo && (
-          <span className="text-xs font-normal text-muted-foreground">
-            El nivel de en medio: {marcador}
-          </span>
-        )}
       </button>
     );
   }
