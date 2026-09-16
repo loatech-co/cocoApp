@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 
-import { CabeceraDeModal } from '@/components/ui/modal-partes';
+import { CabeceraDeModal, PANEL_DE_MODAL } from '@/components/ui/modal-partes';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
@@ -95,7 +95,7 @@ export function Modal({
     >
       <div
         className={cn(
-          'flex max-h-[92dvh] w-full flex-col',
+          PANEL_DE_MODAL,
           SUPERFICIE_FLOTANTE,
           'emerge',
           // Pegado abajo se redondea solo arriba: las esquinas de abajo caen
@@ -114,8 +114,13 @@ export function Modal({
 
           Y el relleno de abajo reserva el borde seguro del teléfono: pegada al
           pie, la última fila de la ficha caía debajo de la barra del sistema.
+
+          Es una COLUMNA porque el panel tiene alto mínimo: con un formulario
+          corto sobra sitio, y hace falta que el formulario pueda estirarse
+          para llevarse sus botones al fondo. En una caja de bloque no habría
+          sitio que repartir y el pie se quedaría a media altura.
         */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pb-6">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pb-6">
           {children}
         </div>
       </div>

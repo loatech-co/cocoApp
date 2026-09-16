@@ -105,7 +105,7 @@ export function CategoriaModal({
       }
       onCerrar={onCerrar}
     >
-      <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
+      <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
         <Campo etiqueta="Nombre" id="categoria-nombre">
           <Input
             id="categoria-nombre"

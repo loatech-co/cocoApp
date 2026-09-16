@@ -59,8 +59,17 @@ const buttonVariants = cva(
          * página, con el mismo peso que un campo de texto y no el de una
          * acción principal. Se encienden con `aria-pressed`.
          */
+        /*
+          Encendido lleva el ACENTO, igual que la sección en la que uno está
+          dentro del riel: lavado plano del color al 15 % y la letra del
+          color. Antes se encendía con `accent`, que es la superficie de lo
+          que responde al cursor: encendido y señalado se pintaban casi
+          igual, y en una barra de herramientas —donde lo encendido no tiene
+          ni palomita ni texto que lo diga— el color más fuerte tiene que ir
+          a lo encendido. Es la excepción que la regla 8 ya contemplaba.
+        */
         herramienta:
-          'border border-border bg-card text-foreground hover:bg-muted aria-pressed:border-primary/30 aria-pressed:bg-accent aria-pressed:text-accent-foreground',
+          'border border-border bg-card text-foreground hover:bg-muted aria-pressed:border-primary/40 aria-pressed:bg-primary/15 aria-pressed:text-primary',
         /**
          * Un botón que hace de CAMPO: el selector de fecha, que por dentro es
          * un botón porque abre un calendario, pero en la fila de un formulario

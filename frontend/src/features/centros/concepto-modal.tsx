@@ -158,7 +158,7 @@ export function ConceptoModal({
         }
         onCerrar={onCerrar}
       >
-        <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
+        <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
           <Campo etiqueta="Nombre" id="concepto-nombre">
             <Input
               id="concepto-nombre"

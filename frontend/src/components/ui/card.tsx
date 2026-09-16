@@ -10,20 +10,28 @@ export function Card({ className, ...props }: ComponentProps<'div'>) {
         // falta —una casilla, un chip— pero nunca mayor: dos contenedores
         // vecinos con esquinas distintas se leen como dos sistemas distintos.
         //
-        // Borde Y sombra, y no solo sombra como antes.
+        // ── SIN borde ─────────────────────────────────────────────────────
+        // Lo que separa la tarjeta del fondo es el ESCALÓN DE SUPERFICIE: la
+        // tarjeta es el material y se apoya en el pozo, que va por debajo.
+        // Ese escalón existe en los dos temas y no dibuja ninguna línea.
         //
-        // La sombra del tema es tinta al 6 %: sobre un lienzo casi blanco se
-        // ve, pero sobre uno casi negro una sombra oscura no separa de nada
-        // —lo oscuro sobre lo oscuro no proyecta—. El borde funciona en los
-        // dos, y con una sombra tan suave no llega a verse el contorno doble
-        // que había que evitar.
+        // El borde hacía ese trabajo porque antes no había escalón —el lienzo
+        // y la tarjeta eran casi el mismo color, así que hacía falta una línea
+        // para decir dónde acababa una—. El resultado era una retícula de
+        // líneas de 1px por toda la pantalla, que es la firma visual de un
+        // panel de administración de hace diez años, y encima doblada con la
+        // sombra.
         //
-        // La sombra es `--sombra-pegada`, que es la del tema para lo que está
-        // APOYADO en la página —frente a `--sombra-flotante`, que es para lo
-        // que se levanta encima—. Estaba escrita a mano con la tinta del tema
-        // anterior, así que en oscuro la tarjeta seguía proyectando la sombra
-        // clara y no la negra que le toca.
-        'rounded-lg border border-border bg-card text-card-foreground',
+        // Lo que SÍ conserva el canto es lo que flota (regla 9): un
+        // desplegable del color del material, abierto sobre una tarjeta del
+        // mismo color, no tiene otra forma de decir dónde empieza.
+        //
+        // La sombra se queda, y solo trabaja en claro: es `--sombra-pegada`,
+        // la del tema para lo APOYADO en la página. Sobre un pozo casi negro
+        // no proyecta nada —lo oscuro sobre lo oscuro no hace sombra— y ahí
+        // el escalón es lo único que separa. En claro añade el medio
+        // milímetro de despegue que el escalón por sí solo no da.
+        'rounded-lg bg-card text-card-foreground',
         'shadow-[var(--sombra-pegada)]',
         className,
       )}

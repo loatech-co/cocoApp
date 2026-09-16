@@ -70,7 +70,33 @@ export function PagosPendientes({
               const vencido = pago.due_date < ahora;
 
               return (
-                <li key={pago.category_id}>
+                <li
+                  key={pago.category_id}
+                  /*
+                    Los dos divisores que TOCA la fila señalada se apagan.
+
+                    El resaltado es un rectángulo redondeado, y una línea que
+                    le entra por el canto lo parte: se lee como si la fila
+                    estuviera cortada en vez de levantada. Apagando la raya de
+                    arriba y la de abajo, la fila queda suelta entre las otras
+                    —que es lo que está diciendo— y la lista no pierde su
+                    retícula, porque las demás siguen ahí.
+
+                    En Tailwind 4 el divisor es el borde de ABAJO del elemento
+                    anterior, así que hay dos que apagar y no uno: el propio,
+                    que es el de abajo, y el del que va justo antes, que es el
+                    de arriba. De ahí el `:has()`.
+
+                    Y se desvanecen en vez de desaparecer: la fila ya cambia
+                    de color con una transición, y una raya que salta mientras
+                    el fondo se funde se ve como un fallo de pintado.
+                  */
+                  className={cn(
+                    'transition-colors',
+                    'hover:border-b-transparent',
+                    '[&:has(+li:hover)]:border-b-transparent',
+                  )}
+                >
                   <button
                     type="button"
                     disabled={!onElegir}

@@ -38,42 +38,56 @@ describe('Los arcos de la dona', () => {
     expect(arcos.every((a) => a.largo < VUELTA)).toBe(true);
   });
 
-  it('cada arco arranca antes de su sitio, para taparle la costura al vecino', () => {
+  it('cada porción llega hasta el final de los datos, y la siguiente la tapa', () => {
     /*
-      El invariante del solape: el arco empieza `solape` antes de donde le
-      toca —de ahí el `desfase` positivo— y mide `solape` más de lo que le
-      toca. Así se mete por debajo del anterior y el suavizado no deja pasar el
-      aro de fondo entre los dos.
+      El invariante de las capas, que es lo que hace que el corte sea recto.
 
-      Se comprueba la DIFERENCIA con el nominal, no el 0.75 literal: si algún
-      día hace falta más o menos solape, lo que tiene que seguir siendo cierto
-      es que el arco se pase por los dos extremos en la misma medida.
+      Cada porción se pinta desde su sitio hasta donde terminan TODOS los
+      datos, no hasta donde termina ella. Así cada corte es un solo canto
+      —el de la de encima— apoyado sobre un color opaco y no sobre el fondo,
+      y el suavizado no tiene por dónde dejar pasar el aro de debajo.
+
+      Antes cada arco se metía 0.75 unidades por debajo del anterior, y eso
+      tenía dos fallos: el de la primera daba la vuelta al patrón y se comía
+      parte del hueco, y en cuanto una porción bajaba de opacidad el solape
+      asomaba pegado al corte.
     */
     const arcos = arcosDeLaDona([porcion('a', 50), porcion('b', 50)], 100);
 
-    for (const [i, arco] of arcos.entries()) {
-      const nominalLargo = arco.fraccion * VUELTA;
-      const nominalDesde = i * 0.5 * VUELTA;
+    // La primera cubre el aro entero; la segunda, su mitad.
+    expect(arcos[0].largo).toBeCloseTo(VUELTA);
+    expect(arcos[1].largo).toBeCloseTo(VUELTA / 2);
 
-      const solape = arco.largo - nominalLargo;
-      expect(solape).toBeGreaterThan(0);
-      // El mismo por delante que por detrás.
-      expect(arco.desfase + nominalDesde).toBeCloseTo(solape);
-    }
+    // Y cada una arranca EXACTAMENTE en su sitio: sin eso, el corte que se ve
+    // —que es el canto de la de encima— no caería donde dicen los datos.
+    expect(arcos[0].desfase).toBeCloseTo(0);
+    expect(arcos[1].desfase).toBeCloseTo(-VUELTA / 2);
   });
 
-  it('una sola porción no se solapa consigo misma', () => {
-    // Con un arco no hay costura que tapar, y el solape la haría dar más de
-    // una vuelta: un `strokeDasharray` con el hueco en negativo es inválido.
+  it('con hueco, las capas terminan donde terminan los datos', () => {
+    // Lo que falta por clasificar tiene que seguir viéndose. Si las capas
+    // llegaran al final del ARO en vez de al final de los datos, la primera
+    // taparía el hueco y el aro diría que está todo clasificado.
+    const arcos = arcosDeLaDona([porcion('a', 74), porcion('b', 25)], 100);
+
+    expect(arcos[0].largo).toBeCloseTo(0.99 * VUELTA);
+    expect(arcos[1].largo).toBeCloseTo(0.25 * VUELTA);
+  });
+
+  it('una sola porción da la vuelta entera', () => {
+    // No hay costura que tapar y tampoco nada que la tape a ella: es la única
+    // capa. Pasarse de una vuelta dejaría el hueco del patrón en negativo, que
+    // es un `strokeDasharray` inválido.
     const [arco] = arcosDeLaDona([porcion('todo', 100)], 100);
 
     expect(arco.largo).toBeCloseTo(VUELTA);
-    expect(arco.desfase).toBe(0);
+    expect(arco.desfase).toBeCloseTo(0);
   });
 
   it('una porción sin valor no dibuja nada', () => {
-    // Con solape, un arco de cero mediría 0.75 y se vería como una marquita de
-    // algo que no está.
+    // Las de cero quedan al final del orden, así que arrancan justo donde
+    // acaban los datos y su capa mide cero. Una marquita de algo que no está
+    // es peor que no dibujar nada.
     const arcos = arcosDeLaDona([porcion('a', 100), porcion('vacía', 0)], 100);
     const vacia = arcos.find((a) => a.nombre === 'vacía');
 
@@ -81,7 +95,7 @@ describe('Los arcos de la dona', () => {
   });
 
   it('ningún arco pasa de una vuelta', () => {
-    // El caso del redondeo: porciones que suman justo el total, más el solape.
+    // El caso del redondeo: porciones que suman algo más que el total.
     const arcos = arcosDeLaDona([porcion('a', 99.9), porcion('b', 0.1)], 100);
     expect(arcos.every((a) => a.largo <= VUELTA)).toBe(true);
   });

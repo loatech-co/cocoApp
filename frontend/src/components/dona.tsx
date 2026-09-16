@@ -37,7 +37,7 @@ export interface ArcoDeLaDona extends PorcionDeDona {
   color: string;
   fraccion: number;
   porcentaje: number;
-  /** Largo del guion, en unidades de perímetro. */
+  /** Largo del guion, en unidades de perímetro: de su sitio al final. */
   largo: number;
   /** Desplazamiento del patrón. Negativo: el guion se corre hacia adelante. */
   desfase: number;
@@ -64,30 +64,47 @@ export interface ArcoDeLaDona extends PorcionDeDona {
  * entre las demás. Un anillo cerrado diría que todo el gasto está en estas
  * categorías, y no lo está.
  *
- * ── El solape que tapa la costura ──────────────────────────────────────────
- * Cada porción se pinta como su propio círculo con su patrón de guiones, y el
- * trazo tiene el tope PLANO. Donde una acaba y la siguiente empieza, las dos
- * se tocan en el mismo punto exacto: ningún trazo cubre ese píxel entero, así
- * que el suavizado deja pasar el aro de fondo y aparece un escalón oscuro
- * cruzando el anillo. Con 26px de grosor sobre 68 de radio, ese escalón mide
- * lo bastante como para parecer parte del dibujo.
+ * ── Por qué cada porción se pinta hasta el FINAL ───────────────────────────
+ * Cada porción es su propio círculo con su patrón de guiones y el trazo tiene
+ * el tope PLANO. Pintada cada una solo en su sitio, donde una acaba y la
+ * siguiente empieza las dos se tocan en el mismo punto exacto: ningún trazo
+ * cubre ese píxel entero, el suavizado deja pasar el aro de fondo y aparece
+ * un escalón oscuro cruzando el anillo. Con 26px de grosor sobre 68 de radio
+ * ese escalón mide lo bastante como para parecer parte del dibujo.
  *
- * Así que cada arco arranca un pelo ANTES de donde le toca y se mete por
- * debajo del que tiene delante. Hacia atrás y no hacia adelante por el orden
- * de pintado: los arcos se dibujan en orden, así que el siguiente tapa el
- * borde del anterior. Hacia adelante, el ÚLTIMO taparía el arranque del
- * primero —que ya está pintado— y se comería su primer grado.
+ * Así que cada porción no termina donde le toca: sigue hasta donde terminan
+ * TODOS los datos, y la siguiente la tapa desde su sitio. El aro se construye
+ * por capas, como quien pinta una pared y luego otra encima.
  *
- * 0.75 de unidad sobre un perímetro de 427: seis centésimas de vuelta. Tapa la
- * costura y no llega a mover ninguna porción un píxel.
+ * De ahí salen tres cosas, y las tres importan:
+ *
+ * · Cada corte es UN SOLO canto —el de la porción de encima— apoyado sobre un
+ *   color opaco, nunca sobre el fondo. No hay nada que el suavizado pueda
+ *   dejar pasar, y el corte es recto por construcción y no por un ajuste.
+ * · El hueco de lo que falta por clasificar sigue estando, porque las capas
+ *   terminan donde terminan los datos y no donde termina el aro.
+ * · Señalar una porción tiene que atenuar con COLOR y no con opacidad. Con
+ *   capas, una porción translúcida enseña lo que tiene debajo, que es la
+ *   porción anterior entera. Está en el `stroke` del componente.
+ *
+ * Antes esto se resolvía al revés —cada arco se metía 0.75 unidades por
+ * debajo del anterior— y tenía dos fallos que las capas no pueden tener: el
+ * de la primera porción daba la vuelta y se comía parte del hueco, y en
+ * cuanto algo bajaba de opacidad el solape asomaba pegado al corte.
  */
 export function arcosDeLaDona(porciones: PorcionDeDona[], total: number): ArcoDeLaDona[] {
   const segmentos = [...porciones]
     .sort((a, b) => b.valor - a.valor)
     .map((p, i) => ({ ...p, color: PALETA[i % PALETA.length] }));
 
-  const base = total > 0 ? total : segmentos.reduce((s, p) => s + p.valor, 0) || 1;
-  const SOLAPE = segmentos.length > 1 ? 0.75 : 0;
+  const suma = segmentos.reduce((s, p) => s + p.valor, 0);
+  const base = total > 0 ? total : suma || 1;
+
+  // Dónde acaban los datos. Nunca más de una vuelta: si las porciones suman
+  // más que el total —redondeos—, el aro cierra y ya está. Un
+  // `strokeDasharray` con el hueco en negativo es inválido, y el navegador que
+  // lo rechaza deja el aro entero pintado.
+  const fin = Math.min(1, suma / base);
 
   let recorrido = 0;
 
@@ -96,23 +113,14 @@ export function arcosDeLaDona(porciones: PorcionDeDona[], total: number): ArcoDe
     const desde = recorrido;
     recorrido += fraccion;
 
-    // Una porción sin valor no se solapa: su arco mide cero, y el solape lo
-    // convertiría en una marquita visible de algo que no está.
-    const nominal = fraccion * VUELTA;
-    const solape = nominal > 0 ? SOLAPE : 0;
-    // Y nunca más de una vuelta: un `strokeDasharray` con el hueco en negativo
-    // es inválido, y el navegador que lo rechaza deja el aro entero pintado.
-    const largo = Math.min(VUELTA, nominal + solape);
-
     return {
       ...seg,
       fraccion,
       porcentaje: Math.round(fraccion * 100),
-      largo,
-      // El período del patrón sigue siendo la vuelta entera —el hueco se
-      // encoge lo mismo que crece el guion—, así que el arco no se repite
-      // desplazado.
-      desfase: -desde * VUELTA + solape,
+      // Desde su sitio hasta el final de los datos. Lo que sobra se lo come
+      // la porción siguiente, que se pinta después y encima.
+      largo: Math.max(0, fin - desde) * VUELTA,
+      desfase: -desde * VUELTA,
     };
   });
 }
@@ -286,20 +294,43 @@ export function Dona({
               cy={CENTRO}
               r={RADIO}
               fill="none"
-              stroke={seg.color}
+              /*
+                ── Atenuar con COLOR, nunca con opacidad ───────────────────
+                Señalar una porción apaga las demás. Hacerlo con `opacity`
+                las vuelve translúcidas, y debajo de cada una está el solape
+                de su vecina: el arco que la precede se le mete 0.75 por
+                debajo para taparle la costura. Con la porción opaca eso no
+                se ve nunca; en cuanto baja de opacidad, el solape asoma como
+                una franja de otro color pegada al corte, y el corte deja de
+                verse recto.
+
+                Y pasaba también SIN señalar nada, porque la transición dura
+                un momento en el que la opacidad está a medias.
+
+                Mezclando el color con el de la tarjeta se consigue lo mismo
+                —el arco se apaga— sin dejar de ser opaco, así que el corte
+                es siempre una línea recta. `transition-colors` incluye el
+                trazo, así que se sigue apagando poco a poco.
+              */
+              stroke={
+                activa !== null && activa !== i
+                  ? `color-mix(in oklab, ${seg.color} 35%, var(--card))`
+                  : seg.color
+              }
               strokeWidth={GROSOR}
-              strokeDasharray={`${seg.largo} ${VUELTA - seg.largo}`}
+              // Sin patrón cuando da la vuelta entera: un hueco de cero es
+              // un patrón que algunos motores rechazan, y lo que hace falta
+              // ahí es un círculo y ya.
+              strokeDasharray={
+                seg.largo >= VUELTA ? undefined : `${seg.largo} ${VUELTA - seg.largo}`
+              }
               strokeDashoffset={seg.desfase}
               // Empieza ARRIBA, no a las tres en punto: es donde uno empieza a
               // leer un reloj y también una dona.
               transform={`rotate(-90 ${CENTRO} ${CENTRO})`}
               onPointerEnter={() => setActiva(i)}
               onClick={() => puedeBajar && onElegir(seg.id as number)}
-              className={cn(
-                'transition-opacity',
-                puedeBajar && 'cursor-pointer',
-                activa !== null && activa !== i && 'opacity-35',
-              )}
+              className={cn('transition-colors', puedeBajar && 'cursor-pointer')}
             />
           );
         })}

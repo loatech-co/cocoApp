@@ -34,11 +34,20 @@ const TOPE = 10;
 /**
  * Lo que se permite pasarse, y por qué.
  *
- * Vacío: desde que el radio del tema es el estándar, no ha hecho falta ni una
- * excepción. Se deja el mecanismo porque la primera que aparezca merece
- * escribirse aquí con su motivo, y no colarse sin que nadie se entere.
+ * · `app/app-shell.tsx` — la esquina del POZO, el hueco donde se abre el
+ *   contenido dentro de la página. Lleva `rounded-tl-xl`, que son 14px y es
+ *   un valor de la escala del tema, no un número inventado.
+ *
+ *   Se pasa porque es el contenedor más grande que existe: una esquina de
+ *   10px en un canto que mide toda la altura de la ventana casi no se ve, y
+ *   lo que esa esquina tiene que contar —que el riel envuelve al contenido en
+ *   vez de estar pegado a su lado— depende de que se vea.
+ *
+ *   Y NO rompe la regla que esta prueba defiende, que es que dos contenedores
+ *   VECINOS no tengan esquinas distintas: el pozo no es vecino de ninguna
+ *   tarjeta, es el fondo sobre el que se apoyan todas.
  */
-const PERMITIDOS = new Set<string>();
+const PERMITIDOS = new Set<string>(['app/app-shell.tsx']);
 
 describe('Ningún contenedor se pasa del radio estándar', () => {
   const archivos = fuentes(join(import.meta.dirname, '..', '..'));

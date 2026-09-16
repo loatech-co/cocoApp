@@ -135,12 +135,27 @@ export function EnlaceDeSeccion({
           // por encima de la sección en la que uno ya está no cambiaba nada, y
           // al pasar por cualquier otra parecía que se había navegado.
           //
-          // Lo activo pasa al par que el tema tiene declarado justamente para
-          // eso —`--sidebar-active` y su tinta—, que además es el mismo
-          // tratamiento que ya usa la barra del teléfono. La tinta estaba
-          // declarada y no la usaba nadie en el riel.
+          // Lo activo lleva `--sidebar-active`, que es el color con el que
+          // este tema dice "estás aquí".
+          //
+          // ── Pero LAVADO, no macizo ────────────────────────────────────────
+          // Era un bloque relleno de ese color con la tinta oscura encima. Con
+          // el acento en lima eso es un rectángulo del color más fuerte de la
+          // app encendido de forma permanente, en la columna que uno mira de
+          // reojo: pesaba más que el contenido, que es lo que se ha venido a
+          // leer. Y un color que está siempre a todo volumen deja de señalar.
+          //
+          // Ahora el color lo lleva la LETRA, que es lo que hay que leer, y el
+          // fondo es un lavado PLANO del mismo color.
+          //
+          // Se probó con degradado y con un filo de dentro, y sobraban los
+          // dos: el degradado le da al fondo una dirección que la fila no
+          // tiene —no pasa nada de izquierda a derecha ahí— y el filo dibuja
+          // una caja alrededor de algo que no es un control, solo el sitio
+          // donde uno está. Lo que hace falta es que se distinga del resto, y
+          // para eso basta el lavado.
           isActive
-            ? 'bg-sidebar-active font-semibold text-sidebar-active-foreground'
+            ? 'bg-sidebar-active/15 font-semibold text-sidebar-active'
             : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground',
         )
       }

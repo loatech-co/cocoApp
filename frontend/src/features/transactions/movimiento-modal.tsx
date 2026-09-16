@@ -31,7 +31,7 @@ import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
-import { CabeceraDeModal, PieDeModal } from '@/components/ui/modal-partes';
+import { CabeceraDeModal, PANEL_DE_MODAL, PieDeModal } from '@/components/ui/modal-partes';
 import { Progreso } from '@/components/ui/progreso';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,6 +49,29 @@ import { Camara } from './camara';
 import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
 import { normalizar, type Lectura } from '@coco/lectura';
 import type { Category, Transaction, TransactionType } from '@coco/types';
+
+/**
+ * Lo que dura como mínimo el paso de lectura de un soporte.
+ *
+ * ── Por qué se espera a propósito ───────────────────────────────────────────
+ * Porque la lectura no siempre tarda lo mismo: un PDF con su texto dentro se
+ * resuelve en medio segundo y una foto pasa por el OCR y tarda diez. Con la
+ * espera atada al trabajo, la misma acción daba dos resultados distintos —un
+ * parpadeo o una espera larga— y el parpadeo es el peor de los dos: la banda
+ * no alcanza a cruzar el documento, la barra salta de 0 a nada, y lo que se
+ * ve es un temblor entre dos pantallas del que no queda claro si se leyó
+ * algo. Con un piso, leer un soporte siempre se ve igual.
+ *
+ * ── Por qué cuatro segundos ─────────────────────────────────────────────────
+ * La banda cruza en 1,8s (`barre`, en `index.css`). Cuatro segundos son dos
+ * pasadas completas y un respiro: se ve el barrido entero, se ve que vuelve a
+ * empezar —que es lo que dice «sigue trabajando»— y da tiempo a leer de qué
+ * documento se trata, que es el dato que hace falta si lo que sale no cuadra.
+ *
+ * Y es un MÍNIMO, no una pausa que se suma: si la lectura tarda más, no se
+ * espera nada.
+ */
+const LECTURA_MINIMA_MS = 4000;
 
 /**
  * El ÚNICO formulario de movimiento: crea y edita.
@@ -220,11 +243,15 @@ export function MovimientoModal({
    * a mano, y la persona confirma con el mismo botón de siempre. Un recibo mal
    * leído que se guarda solo es peor que no leerlo, porque nadie vuelve a
    * mirar lo que ya quedó registrado.
+   *
+   * ── Por qué se espera aunque ya esté leído ────────────────────────────────
+   * Ver `LECTURA_MINIMA_MS`.
    */
   async function escanear(archivo: File): Promise<void> {
     setPaso('leyendo');
     setError(null);
     setPendientes([archivo]);
+    const empezo = Date.now();
 
     try {
       const { lectura: leida } = await leerSoporte(archivo, {
@@ -246,6 +273,16 @@ export function MovimientoModal({
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo leer ese archivo.');
     } finally {
+      // El piso de la espera, salga bien o mal. También cuando falla: un
+      // mensaje de error que aparece de un fogonazo se lee como un fallo de
+      // la ficha y no como el resultado de haber intentado leer el archivo.
+      const falta = LECTURA_MINIMA_MS - (Date.now() - empezo);
+      if (falta > 0) {
+        await new Promise<void>((sigue) => {
+          setTimeout(sigue, falta);
+        });
+      }
+
       setProgresoDeLectura(null);
       setPaso('formulario');
     }
@@ -351,7 +388,7 @@ export function MovimientoModal({
         // En móvil entra desde abajo y ocupa el ancho: es el patrón que la
         // gente espera de una app, y deja el pulgar cerca de los botones.
         className={cn(
-          'flex max-h-[92dvh] w-full flex-col',
+          PANEL_DE_MODAL,
           SUPERFICIE_FLOTANTE,
           'emerge',
           // Más ancho: con dos columnas de campos, `max-w-lg` obligaba a que
@@ -448,8 +485,10 @@ export function MovimientoModal({
 
         {/* `min-h-0` es lo que permite que esto se encoja dentro de la columna:
             sin él mide lo que mida su contenido y se lleva por delante el alto
-            máximo del panel. */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pb-6">
+            máximo del panel. Y es a su vez una columna porque el panel tiene
+            alto mínimo: con eso el formulario puede estirarse y llevarse sus
+            botones al fondo en vez de dejarlos a media altura. */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pb-6">
         {paso === 'elegir' && (
           <ComoEmpezar
             onArchivo={(a) => void escanear(a)}
@@ -467,7 +506,7 @@ export function MovimientoModal({
         )}
 
         {paso === 'formulario' && (
-        <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
+        <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
           {lectura && <LoQueLei />}
           {editandoCampos ? (
             <>

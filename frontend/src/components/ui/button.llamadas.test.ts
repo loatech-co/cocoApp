@@ -41,23 +41,67 @@ const PROHIBIDAS = /\b(h-\d|h-\[|size-\d|size-\[|py-\d|py-\[|rounded(-[a-z0-9[]|
  */
 const ESTIRA = /\bflex-1\b/;
 
+/**
+ * Dónde termina una etiqueta `<Button …>`.
+ *
+ * ── Por qué no vale una expresión regular ───────────────────────────────────
+ * Estaba `\/<Button\\b[\\s\\S]*?>\/`, que corta en el primer `>`. Y en JSX el primer
+ * `>` de una etiqueta casi nunca es el suyo: es el de la flecha de un
+ * `onClick={() => …}`. Así que la prueba capturaba «<Button type="button"
+ * onClick={() =>», no encontraba ningún `className` dentro, y se saltaba esa
+ * llamada EN SILENCIO.
+ *
+ * Como la mayoría de los botones de esta app llevan una flecha antes de su
+ * `className`, lo que en realidad se estaba comprobando era una minoría. Es el
+ * mismo fallo que tenía la lista de tamaños de la prueba de al lado: una
+ * comprobación que no mide lo que dice medir no avisa de nada.
+ *
+ * Así que se cuentan las llaves. Dentro de `{…}` va JavaScript —con sus
+ * flechas, sus objetos y sus cadenas— y el `>` que cierra la etiqueta es el
+ * primero que aparece con el contador a cero.
+ */
+function finDeLaEtiqueta(codigo: string, desde: number): number {
+  let llaves = 0;
+  let comilla: string | null = null;
+
+  for (let i = desde; i < codigo.length; i += 1) {
+    const c = codigo[i];
+
+    if (comilla !== null) {
+      if (c === comilla && codigo[i - 1] !== '\\') comilla = null;
+      continue;
+    }
+
+    if (c === '"' || c === "'" || c === '`') comilla = c;
+    else if (c === '{') llaves += 1;
+    else if (c === '}') llaves -= 1;
+    else if (c === '>' && llaves === 0) return i;
+  }
+
+  return codigo.length;
+}
+
+describe('Nadie le cambia el tamaño a un botón desde fuera (continuación)', () => {
+  it('se puede localizar el final de una etiqueta con una flecha dentro', () => {
+    // El caso exacto que se colaba.
+    const codigo = '<Button onClick={() => x()} className="a">';
+    expect(codigo.slice(0, finDeLaEtiqueta(codigo, 0) + 1)).toContain('className');
+  });
+});
+
 describe('Nadie le cambia el tamaño a un botón desde fuera', () => {
   const archivos = fuentes(join(import.meta.dirname, '..', '..'));
 
-  it('encuentra los archivos del proyecto', () => {
-    expect(archivos.length).toBeGreaterThan(10);
-  });
-
-  /** Las clases de cada `<Button ... >` del proyecto, con su archivo. */
+  /** Las clases de cada `<Button … >` del proyecto, con su archivo. */
   function clasesDeCadaLlamada(): { ruta: string; clases: string }[] {
     const salida: { ruta: string; clases: string }[] = [];
 
     for (const ruta of archivos) {
       const codigo = readFileSync(ruta, 'utf8');
 
-      // Cada `<Button ... >`, con sus saltos de línea.
-      for (const etiqueta of codigo.matchAll(/<Button\b[\s\S]*?>/g)) {
-        const className = /className=(?:"([^"]*)"|\{cn\(([\s\S]*?)\)\})/.exec(etiqueta[0]);
+      for (const apertura of codigo.matchAll(/<Button\b/g)) {
+        const etiqueta = codigo.slice(apertura.index, finDeLaEtiqueta(codigo, apertura.index) + 1);
+        const className = /className=(?:"([^"]*)"|\{cn\(([\s\S]*?)\)\})/.exec(etiqueta);
         if (!className) continue;
         salida.push({ ruta: ruta.split('/src/')[1], clases: className[1] ?? className[2] ?? '' });
       }
@@ -65,6 +109,10 @@ describe('Nadie le cambia el tamaño a un botón desde fuera', () => {
 
     return salida;
   }
+
+  it('encuentra los archivos del proyecto', () => {
+    expect(archivos.length).toBeGreaterThan(10);
+  });
 
   it('encuentra llamadas con className que inspeccionar', () => {
     // Sin esto, cualquier cambio en la expresión que las busca dejaría las dos

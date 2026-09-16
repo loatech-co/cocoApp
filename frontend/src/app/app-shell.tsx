@@ -82,11 +82,16 @@ export function AppShell() {
   const corte = Math.ceil(diaADia.length / 2);
 
   return (
-    <div className="min-h-dvh bg-background">
+    // La página entera es EL MATERIAL —el mismo color de la tarjeta y del
+    // riel— y el contenido se abre dentro como un pozo. El armazón entero
+    // está explicado en el `<main>` de más abajo.
+    <div className="flex min-h-dvh flex-col bg-sidebar">
       {/* ── Riel — escritorio ────────────────────────────────────────────────
-          13rem y no 16: el enlace más largo, "Centros de costos", mide unos
-          120px a 14px, y con el icono y los márgenes cabe de sobra. Lo que
-          sobraba de ancho se lo estaba quitando al contenido.
+          14rem. Eran 13, y se quedaba estrecho: "Centros de costos" llegaba
+          casi a tocar el borde del pozo, y el riel se leía como una columna
+          apretada al lado del contenido en vez de como el marco que lo
+          envuelve. El riel no lleva fondo propio —es la página— y lo que lo
+          delimita es el canto del pozo.
 
           Se MONTA o no se monta, no se esconde con CSS: un riel escondido
           sigue siendo nueve enlaces en el orden de tabulación de un teléfono,
@@ -94,8 +99,8 @@ export function AppShell() {
       {!esMovil && (
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 flex flex-col bg-sidebar p-3 transition-[width]',
-            plegada ? 'w-16' : 'w-52',
+            'fixed inset-y-0 left-0 flex flex-col p-3 transition-[width]',
+            plegada ? 'w-16' : 'w-56',
           )}
         >
           <div
@@ -104,7 +109,9 @@ export function AppShell() {
               // Plegada, la marca se centra porque no hay nada más en la fila;
               // desplegada va a la izquierda y el botón de plegar al otro
               // extremo, que es donde uno lo busca.
-              plegada ? 'justify-center px-0' : 'justify-between px-2',
+              // Y la fila no lleva relleno por la DERECHA: el botón de plegar
+              // se alinea solo, con su propio margen negativo. Ver abajo.
+              plegada ? 'justify-center px-0' : 'justify-between pl-2 pr-0',
             )}
           >
             {plegada ? (
@@ -113,18 +120,29 @@ export function AppShell() {
               <>
                 {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo
                     dejaría demasiado bajo para leerse. Va en `sidebar-active`,
-                    que es el color de la marca en cada tema —pino sobre el
-                    riel claro, teal sobre el oscuro—. El comentario de antes
-                    hablaba de lima sobre una barra oscura: ni el acento es
-                    lima desde el cambio de tema ni el riel es oscuro en
-                    claro. */}
+                    que es el color con el que cada tema dice "aquí": verde
+                    británico sobre el riel claro, lima sobre el oscuro. */}
                 <Logo className="h-7 w-auto text-sidebar-active" />
                 <button
                   type="button"
                   onClick={alternarBarra}
                   aria-label="Plegar la barra lateral"
                   title="Plegar la barra lateral"
-                  className="grid size-9 shrink-0 place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
+                  /*
+                    Lo que se alinea es el ICONO, no su área de toque.
+
+                    El botón mide 36 y el icono 18, así que lleva 9 de aire a
+                    cada lado. Con el botón a ras del riel, el icono quedaba
+                    9px por dentro del canto de las filas de navegación —que
+                    ocupan todo el ancho del riel— y se leía como si estuviera
+                    descolgado hacia la izquierda.
+
+                    El margen negativo es exactamente ese aire: saca el área
+                    de toque 9px, que es lo que hace falta para que el canto
+                    derecho del icono caiga sobre el canto derecho de las
+                    filas. El área de toque sigue midiendo 36.
+                  */
+                  className="-mr-[9px] grid size-9 shrink-0 place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
                 >
                   <PanelLeftClose className="size-[18px]" aria-hidden="true" />
                 </button>
@@ -204,11 +222,67 @@ export function AppShell() {
         </header>
       )}
 
-      {/* Contenido */}
-      <div className={cn('transition-[padding]', plegada ? 'escritorio:pl-16' : 'escritorio:pl-52')}>
+      {/* ── EL HUECO DONDE SE ABRE EL POZO ──────────────────────────────────
+          En escritorio esta caja mide EXACTAMENTE la ventana y no se
+          desplaza: lo que se desplaza es el pozo, por dentro. Es lo que hace
+          posible que el pozo tenga cuatro cantos a la vista, porque si la
+          página entera se desplazara, el de arriba se iría en cuanto alguien
+          bajara una pantalla.
+
+          Los 20px de arriba, de la derecha y de abajo son el material que
+          rodea al pozo. Por la izquierda no se escriben: ahí el hueco no lo
+          hace un margen sino el riel, que mide 14rem con 3 de relleno propio,
+          así que entre lo último que escribe y el canto del pozo quedan 12.
+
+          Que no midan lo mismo es correcto y no un descuido: a los otros tres
+          lados el hueco es la distancia al BORDE DE LA VENTANA, y a la
+          izquierda es la distancia a lo que hay escrito en el riel. Son dos
+          relaciones distintas y no tienen por qué empatar. */}
+      <div
+        className={cn(
+          'flex flex-1 flex-col transition-[padding]',
+          'escritorio:h-dvh escritorio:py-5 escritorio:pr-5',
+          plegada ? 'escritorio:pl-16' : 'escritorio:pl-56',
+        )}
+      >
         <main
           className={cn(
-            'w-full px-4 pt-5 escritorio:px-8 escritorio:pb-16 escritorio:pt-10 lg:px-10',
+            // El relleno de arriba es MENOR que el de los lados, y no es un
+            // descuido. Eran 40px, los mismos que el lateral en pantalla
+            // ancha, y se decidieron cuando el contenido se apoyaba
+            // directamente sobre la página: entonces ese hueco era lo único
+            // que separaba el título del borde de la ventana. Ahora, por
+            // encima, hay 20px de material y el canto del pozo, que ya hacen
+            // ese trabajo; los 40 de dentro se sumaban a ellos y dejaban el
+            // título flotando en 60px de nada.
+            'w-full flex-1 px-4 pt-5 escritorio:px-8 escritorio:pb-16 escritorio:pt-6 lg:px-10',
+            // ── EL POZO ─────────────────────────────────────────────────────
+            // El contenido no se apoya sobre la página: se abre DENTRO de
+            // ella. La página es el material —el mismo color de la tarjeta y
+            // del riel— y esto es el hueco, un tono por debajo.
+            //
+            // De ahí salen dos cosas que no se pueden separar. Una, el riel
+            // deja de ser una columna pegada al lado y pasa a leerse como el
+            // marco que envuelve al contenido, porque es el mismo material y
+            // lo rodea por los cuatro lados. Y dos, la tarjeta —que es
+            // material otra vez— se separa del fondo sola, sin borde.
+            //
+            // El canto redondeado es lo que cuenta el truco. Con el pozo
+            // pegado a los bordes de la ventana, el cambio de color es una
+            // raya vertical y se lee como dos columnas; separado y con las
+            // esquinas curvas, se lee como una pieza metida dentro de otra.
+            // Por eso el margen y el radio son la misma decisión y no dos.
+            //
+            // 14px, y es la única excepción al radio estándar de la app: es
+            // el contenedor más grande que hay, y 10 en un canto que mide
+            // toda la ventana casi no se ve. Está registrada, con su motivo,
+            // en `components/ui/radio.test.ts`.
+            'bg-background escritorio:rounded-xl',
+            // El pozo es el que se desplaza, no la página. `min-h-0` es lo
+            // que se lo permite: sin él, un hijo de una columna flexible mide
+            // lo que mide su contenido y estira la caja de fuera, que es
+            // justo la que no puede crecer.
+            'escritorio:min-h-0 escritorio:overflow-y-auto',
             // ── Recorta, no ofrece ──────────────────────────────────────────
             // `auto` no contiene un desbordamiento: lo OFRECE como barra de
             // desplazamiento. Y como la página entera vive aquí dentro, el

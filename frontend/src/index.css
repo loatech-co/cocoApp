@@ -91,8 +91,54 @@
    Los componentes consumen SIEMPRE estos tokens, nunca un hex suelto: cambiar
    de tema es cambiar esta capa, no rastrear colores por toda la app.
 
-   Pino y oro. Los valores son los del tema, copiados tal cual y no
-   interpretados: el día que se cambie de tema se cambia esta capa y nada más.
+   Verde británico y latón, con una pelota de tenis dentro.
+
+   En CLARO el acento es el British Racing Green —#004225—, que es un verde
+   muy oscuro: su identidad está en la profundidad, no en el brillo. Se usa a
+   plena tinta y el blanco encima da 11.6:1.
+
+   En OSCURO no se puede usar tal cual —un verde de luz 13 sobre un lienzo de
+   luz 4 no se ve— y el derivado claro del mismo verde salía a un menta
+   correcto y sin carácter. Así que ahí el acento es LIMA, #d3f24b: el
+   amarillo verdoso de una pelota de tenis, 13.9:1 contra el material.
+
+   Que los dos temas no lleven el mismo tono no es una incoherencia, es la
+   regla de siempre —el acento se resuelve según el tema— llevada hasta el
+   matiz. Y la imagen aguanta: la pista es verde oscuro y la pelota es lima.
+
+   Y el lima lo lleva TODO lo que en esta app significa "gasto": lo activo, lo
+   enfocado, lo que se pulsa, la línea de la tendencia, la porción mayor de la
+   dona y las cifras que salen. Es la decisión del producto y está tomada a
+   propósito, sabiendo lo que cuesta: un color que está en todas partes pierde
+   fuerza para señalar, y por eso lo que se enciende necesita además otra
+   señal —peso de letra, un lavado de fondo— y no solo el color.
+
+   Lo que NO es gasto se queda fuera del lima y con su propio matiz, que es lo
+   que sostiene la lectura: el ingreso en turquesa (166°), lo pendiente en el
+   latón del tema (38°) y lo que salió mal en rojo. El lima está en 71°, así
+   que el par que más cerca queda es lima y latón; se separan por saturación
+   —87 % contra 63 %— y conviene no ponerlos a pintar áreas vecinas.
+
+   ── Tres superficies, no cinco ───────────────────────────────────────────
+   Había cinco escalones —riel, lienzo, tarjeta, bloque, chip— y el ojo no
+   distingue cinco grises casi iguales: lo que veía era una pantalla lavada
+   con bordes por todas partes marcando lo que el color no marcaba.
+
+   Ahora hay tres y cada uno tiene un trabajo:
+
+   · EL MATERIAL (`--card`, `--popover`, `--sidebar`, y son el mismo valor).
+     Es de lo que están hechos el riel y las tarjetas. Que compartan color es
+     lo que hace que el riel parezca envolver el contenido en vez de ser otra
+     columna más.
+   · EL POZO (`--background`). El hueco donde se apoyan las tarjetas. Va por
+     DEBAJO del material, y ese escalón es lo que las separa: por eso la
+     tarjeta ya no lleva borde.
+   · LO ELEGIDO (`--muted`). Un bloque dentro de una tarjeta, la opción ya
+     seleccionada. Sube desde el material, no baja.
+
+   Lo que FLOTA sigue teniendo su anillo (regla 9): un desplegable del color
+   del material, abierto sobre una tarjeta del color del material, solo se
+   separa por el canto.
 
    ── Qué añade la app por encima ──────────────────────────────────────────
    Un tema de componentes no sabe de dinero. Tres familias de tokens son
@@ -118,7 +164,7 @@
   --bajo-la-barra: 1.5rem;
 
   /* ── Superficies y tinta ──────────────────────────────────────────────── */
-  --background: #f7f6f2;
+  --background: #efede6;
   --foreground: #0f1f1d;
 
   --card: #ffffff;
@@ -127,52 +173,65 @@
   --popover: #ffffff;
   --popover-foreground: #0f1f1d;
 
-  --primary: #0b3b36;
+  --primary: #004225;
   --primary-foreground: #ffffff;
 
   --secondary: #d4a24c;
   --secondary-foreground: #3d2b0e;
 
+  /* LO ELEGIDO, y en claro es el mismo valor que el pozo: un bloque dentro de
+     una tarjeta es un hueco en la tarjeta, igual que el pozo es un hueco en la
+     página. En oscuro no puede ser el mismo —allí lo de dentro va hacia
+     ARRIBA—, y por eso este token se declara dos veces. */
   --muted: #efede6;
   --muted-foreground: #5c6663;
 
-  --accent: #e0ebe9;
-  --accent-foreground: #0b3b36;
+  --accent: #e4efe8;
+  --accent-foreground: #004225;
 
   --destructive: #b83432;
   --destructive-foreground: #ffffff;
 
   --border: #dadcd5;
   --input: #dadcd5;
-  --ring: #14807a;
+  --ring: #00633b;
 
   /*
     El acento como TINTA, que no es el acento como fondo.
 
     Hace falta un solo nombre porque el mismo dato —una cifra destacada, el
     borde de la baldosa activa— tiene que resolverse solo según el tema: aquí
-    el teal medio, y en oscuro el claro. Sin esto, cada llamada tendría que
+    el verde británico a media altura —#00633b, que sobre blanco da 7.4:1— y
+    en oscuro su derivado claro. El #004225 a pelo NO sirve de tinta: contra
+    el texto normal, que ya es un casi negro verdoso, no se lee como color
+    sino como texto en negrita. Sin esto, cada llamada tendría que
     acordarse de cuál de los dos le toca.
   */
-  --acento-tinta: #14807a;
+  --acento-tinta: #00633b;
 
   /* ── Dinero ───────────────────────────────────────────────────────────── */
   /* El gasto es el `primary` del tema: es la mayoría de lo que esta app
      enseña, así que le toca el color de la casa. */
-  --expense: #0b3b36;
-  --expense-surface: #e0ebe9;
-  /* Y el ingreso, el verde del tema —el de su `chart-4` en oscuro—, oscurecido
-     para que como TEXTO cumpla el 4,5:1 sobre un fondo casi blanco. Es el
-     único tono que la app añade, y lo añade porque distinguir lo que entra de
-     lo que sale es el producto. */
-  --income: #1a7a52;
-  --income-surface: #e3f3ea;
+  --expense: #004225;
+  --expense-surface: #e4efe8;
+  /* Y el ingreso se va al verde AZULADO, que antes no hacía falta.
+     Mientras el gasto fue pino —un teal oscuro— el ingreso podía ser verde y
+     los separaban 19° de matiz. Con el acento en verde británico, el gasto ES
+     verde: dejar el ingreso donde estaba los habría puesto a 3° uno del otro,
+     o sea el mismo color con dos significados opuestos. Corrido a 163° vuelve
+     a haber matiz Y luminosidad entre los dos, que es lo que hace falta para
+     leer una columna de plata de un vistazo.
+
+     Oscurecido para que como TEXTO cumpla el 4,5:1 sobre el pozo (da 4.5) y
+     sobre el material (5.3). */
+  --income: #0a7a5f;
+  --income-surface: #e0f2ec;
 
   /* Lo PENDIENTE va en el oro del tema, no en un ámbar traído de fuera. */
   --warning: #7a5312;
   --warning-surface: #f7ecd6;
-  --info: #14807a;
-  --info-surface: #d9f0ed;
+  --info: #00633b;
+  --info-surface: #ddeee6;
 
   /*
     ── La tinta que va ENCIMA de cada color de severidad ────────────────────
@@ -198,8 +257,8 @@
     noticia, y dos verdes distintos a un palmo uno del otro se leen como si
     quisieran decir cosas distintas.
   */
-  --success: #1a7a52;
-  --success-surface: #e3f3ea;
+  --success: #0a7a5f;
+  --success-surface: #e0f2ec;
   /*
     El rojo tiene DOS papeles y hacen falta dos tokens: el del botón que borra
     —fondo rojo, letra clara— y el del aviso que explica un error, que es una
@@ -218,23 +277,23 @@
      tabla. La dona sí tiene rampa propia, `--dona-*`, porque pinta ÁREAS y un
      color que se distingue como trazo de 2px puede ser invisible como
      relleno. */
-  --chart-1: #14807a;
+  --chart-1: #00633b;
   --chart-2: #d4a24c;
-  --chart-3: #0b3b36;
-  --chart-4: #5dbfb5;
+  --chart-3: #004225;
+  --chart-4: #4fae86;
   --chart-5: #b88a40;
 
   /* ── Las porciones de la dona ─────────────────────────────────────────────
      Cada una con su TINTA, declarada y no calculada: sobre el pino el blanco
      se lee, sobre el oro NO y hay que bajar a tinta. */
-  --dona-1: #0b3b36;
+  --dona-1: #004225;
   --dona-1-tinta: #ffffff;
-  --dona-2: #14807a;
+  --dona-2: #00734a;
   --dona-2-tinta: #ffffff;
   --dona-3: #d4a24c;
   --dona-3-tinta: #3d2b0e;
-  --dona-4: #5dbfb5;
-  --dona-4-tinta: #0f1f1d;
+  --dona-4: #4fae86;
+  --dona-4-tinta: #06231a;
   --dona-5: #b88a40;
   --dona-5-tinta: #ffffff;
   
@@ -249,23 +308,23 @@
 
      Y salen del @theme estático porque dependen del tema: estos pasteles
      funcionan sobre un fondo casi blanco y brillarían sobre uno casi negro. */
-  --chip-gasto: #e0ebe9;
-  --chip-gasto-tinta: #0b3b36;
-  --chip-ingreso: #e3f3ea;
-  --chip-ingreso-tinta: #1a7a52;
-  --chip-presupuesto: #d9f0ed;
-  --chip-presupuesto-tinta: #14807a;
+  --chip-gasto: #e4efe8;
+  --chip-gasto-tinta: #004225;
+  --chip-ingreso: #e0f2ec;
+  --chip-ingreso-tinta: #0a7a5f;
+  --chip-presupuesto: #dbeee7;
+  --chip-presupuesto-tinta: #00633b;
   --chip-movimientos: #f7ecd6;
   --chip-movimientos-tinta: #7a5312;
 
   /* ── Barra lateral ────────────────────────────────────────────────────── */
-  --sidebar: #f1efe8;
+  --sidebar: #ffffff;
   --sidebar-foreground: #0f1f1d;
   --sidebar-muted: #5c6663;
-  --sidebar-active: #0b3b36;
+  --sidebar-active: #004225;
   --sidebar-active-foreground: #ffffff;
-  --sidebar-hover: #e0ebe9;
-  --sidebar-border: #dadcd5;
+  --sidebar-hover: #e4efe8;
+  --sidebar-border: #e6e5de;
 
   /* ── Sombras ──────────────────────────────────────────────────────────────
      Los parámetros son del tema: tinta #0f1f1d al 6 %, 4px de desenfoque,
@@ -325,120 +384,125 @@
 
 .dark {
   /*
-    ── La rampa de superficies ─────────────────────────────────────────────
-    El tema trae cuatro verdes muy juntos —#0a1614, #0f1f1d, #142624,
-    #1a2826—, unos tres puntos de luminosidad entre uno y el siguiente. Eso
-    basta para una página de shadcn con dos niveles, pero esta app apila
-    cinco: barra lateral, lienzo, tarjeta, bloque dentro de la tarjeta y chip
-    dentro del bloque. Con escalones de tres puntos, los cinco acaban siendo
-    el mismo verde y la pantalla se ve LAVADA en vez de oscura.
+    ── La rampa de superficies: tres, y el pozo abajo ──────────────────────
+    Eran cinco escalones de unos cinco puntos de luz cada uno —riel, lienzo,
+    tarjeta, bloque, chip— y en oscuro cinco verdes casi iguales no se leen
+    como profundidad: se leen como suciedad. La app se veía lavada y cada
+    contenedor necesitaba un borde para existir.
 
-    Así que la rampa se abre y se ancla más abajo: el lienzo arranca más
-    oscuro que el del tema y cada escalón sube unos cinco puntos. Se conserva
-    el matiz —el mismo teal apagado— y el orden; lo que cambia es la
-    separación, que es lo que hacía falta.
+    Ahora el material es UNO —#111b19, y lo comparten la tarjeta, el
+    desplegable y el riel— y el pozo queda por debajo, en #060c0b. Ese
+    escalón, que es el único que hay, es el que separa la tarjeta del fondo:
+    por eso la tarjeta ya no lleva borde y no lo echa de menos.
 
-    Y el borde SUBE en vez de bajar: es el que hace el trabajo de separar
-    dentro de un modal, donde todo está a la misma altura y no hay sombra que
-    valga.
+    En oscuro esto importa más que en claro. Una sombra negra sobre un fondo
+    casi negro no proyecta nada, así que la única forma de decir "esto está
+    encima" es que sea más claro que lo de abajo. Es justo al revés que en el
+    papel, donde lo de encima proyecta y lo de abajo recibe.
+
+    Y el borde SUBE respecto al material: sigue haciendo falta dentro de un
+    modal, donde todo está a la misma altura, y en los campos.
   */
-  --background: #07110f;
+  --background: #060c0b;
   --foreground: #e8edeb;
 
-  --card: #0d1917;
+  --card: #111b19;
   --card-foreground: #e8edeb;
 
-  --popover: #12211f;
+  --popover: #111b19;
   --popover-foreground: #e8edeb;
 
-  --primary: #5dbfb5;
-  --primary-foreground: #0a1614;
+  --primary: #d3f24b;
+  --primary-foreground: #14230a;
 
   --secondary: #e0b976;
   --secondary-foreground: #2a1c08;
 
-  --muted: #1b2927;
+  --muted: #1b2624;
   --muted-foreground: #8a9693;
 
-  /* Sube respecto al #17302c del tema, y por la misma razón que sube toda la
-     rampa: `--accent` es la superficie de LO QUE RESPONDE —la opción bajo el
-     cursor, el botón encendido, la banda de un rango—, y casi siempre se pinta
-     sobre `--popover` (#12211f), no sobre el lienzo. Contra el popover, el
-     valor del tema daba 1.2:1: el resaltado existía y no se veía, así que los
-     desplegables parecían trabados. */
-  --accent: #1d3b36;
-  --accent-foreground: #9fe5dc;
+  /* `--accent` es la superficie de LO QUE RESPONDE —la opción bajo el cursor,
+     el botón encendido, la banda de un rango— y casi siempre se pinta sobre el
+     material (#111b19), no sobre el pozo. Así que se mide contra el material,
+     no contra el fondo de la página: con el valor del tema daba 1.2:1 —el
+     resaltado existía y no se veía, y los desplegables parecían trabados—.
+     Y lleva el matiz del acento: lo que responde es verde, no gris. */
+  --accent: #1e3b30;
+  --accent-foreground: #86dfae;
 
   --destructive: #e46e6c;
   --destructive-foreground: #160807;
 
-  --border: #2b3d3a;
-  --input: #2b3d3a;
-  --ring: #5dbfb5;
+  --border: #23302c;
+  --input: #23302c;
+  --ring: #d3f24b;
 
-  --acento-tinta: #5dbfb5;
+  --acento-tinta: #d3f24b;
 
-  /* En oscuro el gasto NO puede ser el pino: sobre un fondo casi negro no se
-     ve. Le toca el `primary` de este tema, que aquí es el teal claro. */
-  --expense: #5dbfb5;
-  --expense-surface: #12211f;
-  --income: #4ac382;
-  --income-surface: #0f2419;
+  /* En oscuro el gasto NO puede ser el verde británico: un verde de luz 13
+     sobre un pozo de luz 4 no se ve. Le toca el `primary` de este tema, que
+     aquí es el lima. Es el mismo trato que en claro —el gasto lleva el color
+     de la casa, porque es la mayoría de lo que esta app enseña— y lo que
+     cambia es qué color es la casa en cada tema. */
+  --expense: #d3f24b;
+  --expense-surface: #242c12;
+  --income: #3fc9a8;
+  --income-surface: #0e2a24;
 
   --warning: #e0b976;
   --warning-surface: #2a1c08;
-  --info: #5dbfb5;
-  --info-surface: #123330;
-  --success: #4ac382;
-  --success-surface: #0e2b1d;
+  --info: #46c285;
+  --info-surface: #122a26;
+  --success: #3fc9a8;
+  --success-surface: #0e2a24;
   --destructive-surface: #2e1211;
 
   /* Aquí los tres colores son CLAROS, así que la tinta de encima se da la
      vuelta. El oro reutiliza la que el tema ya declara para su `secondary`. */
-  --success-foreground: #0a1614;
+  --success-foreground: #06120f;
   --warning-foreground: #2a1c08;
-  --info-foreground: #0a1614;
+  --info-foreground: #06120f;
 
-  --chart-1: #5dbfb5;
+  --chart-1: #d3f24b;
   --chart-2: #e0b976;
-  --chart-3: #85d5cd;
-  --chart-4: #4ac382;
+  --chart-3: #46c285;
+  --chart-4: #3fc9a8;
   --chart-5: #d4a24c;
 
   /* La primera porción NO puede ser el color de la tarjeta: era `bosque-800`
      sobre una tarjeta `bosque-900` y la dona parecía vacía. */
-  --dona-1: #5dbfb5;
-  --dona-1-tinta: #0a1614;
-  --dona-2: #e0b976;
-  --dona-2-tinta: #2a1c08;
-  --dona-3: #85d5cd;
-  --dona-3-tinta: #0a1614;
-  --dona-4: #4ac382;
-  --dona-4-tinta: #0a1614;
-  --dona-5: #d4a24c;
-  --dona-5-tinta: #2a1c08;
+  --dona-1: #d3f24b;
+  --dona-1-tinta: #14230a;
+  --dona-2: #46c285;
+  --dona-2-tinta: #06120f;
+  --dona-3: #e0b976;
+  --dona-3-tinta: #2a1c08;
+  --dona-4: #3fc9a8;
+  --dona-4-tinta: #06120f;
+  --dona-5: #86dfae;
+  --dona-5-tinta: #06120f;
   
-  --chip-gasto: #17302c;
-  --chip-gasto-tinta: #9fe5dc;
-  --chip-ingreso: #0e2b1d;
-  --chip-ingreso-tinta: #4ac382;
-  --chip-presupuesto: #123330;
-  --chip-presupuesto-tinta: #5dbfb5;
+  --chip-gasto: #242c12;
+  --chip-gasto-tinta: #d3f24b;
+  --chip-ingreso: #0e2a24;
+  --chip-ingreso-tinta: #3fc9a8;
+  --chip-presupuesto: #122a26;
+  --chip-presupuesto-tinta: #46c285;
   --chip-movimientos: #2f2009;
   --chip-movimientos-tinta: #e0b976;
 
   /* Tres escalones: la barra lateral es la superficie MÁS oscura, el área de
      trabajo sube uno y las tarjetas otro. Con dos, la barra desaparecía
      contra el contenido. */
-  --sidebar: #040c0b;
+  --sidebar: #111b19;
   --sidebar-foreground: #e8edeb;
   --sidebar-muted: #8a9693;
-  --sidebar-active: #5dbfb5;
-  --sidebar-active-foreground: #0a1614;
+  --sidebar-active: #d3f24b;
+  --sidebar-active-foreground: #14230a;
   /* El mismo escalón que `--accent`: señalar una sección del riel y señalar
      una opción de un menú son el mismo gesto y tienen que pesar igual. */
-  --sidebar-hover: #1d3b36;
-  --sidebar-border: #1b2927;
+  --sidebar-hover: #1e3b30;
+  --sidebar-border: #23302c;
 
   /* Negra y profunda: sobre un fondo casi negro, la sombra del tema claro no
      separa nada del fondo. */

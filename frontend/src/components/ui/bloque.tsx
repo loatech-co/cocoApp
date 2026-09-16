@@ -6,24 +6,21 @@ import { cn } from '@/lib/utils';
  * Una superficie DENTRO de otra: un apartado de una ficha, una caja de
  * opciones, un aviso con su propio marco.
  *
- * ── Por qué se separa con BORDE y no con relleno ────────────────────────────
- * Porque el relleno no funciona en los dos temas a la vez, y no por descuido
- * del tema sino por cómo está hecho:
+ * ── Por qué se separa con RELLENO y no con borde ────────────────────────────
+ * Llevó borde mientras el relleno no funcionaba: `card` y `popover` eran los
+ * dos blanco en claro, y en oscuro `muted` y `popover` se llevaban un escalón
+ * de nada. Un bloque relleno dentro de un modal era invisible, así que lo que
+ * hacía el trabajo era la línea.
  *
- * · En claro, `card` y `popover` son los DOS blanco. Una tarjeta dentro de un
- *   modal es invisible: mismo color sobre mismo color.
- * · En oscuro, `muted` y `popover` se llevan un escalón de nada —#1a2826
- *   contra #142624—, así que el bloque se intuye pero no se lee.
- * · Y `card` es más OSCURO que `popover` en oscuro y más claro en claro, así
- *   que ni siquiera se puede confiar en el sentido del contraste.
+ * Con tres superficies eso se acabó. `--muted` es LO ELEGIDO y está a un
+ * escalón de verdad del material en los dos temas, y el escalón va en el
+ * sentido que toca en cada uno: en claro hacia abajo —un bloque es un hueco
+ * en la tarjeta, como el pozo lo es en la página— y en oscuro hacia arriba,
+ * porque ahí lo que está más cerca es lo más claro.
  *
- * Un borde no depende de nada de eso: `--border` está calculado para verse
- * sobre cualquiera de las superficies del tema, en los dos modos. El relleno
- * se queda, pero como matiz y no como el que hace el trabajo.
- *
- * Es el mismo problema que ya resolvió la tarjeta del resumen a su manera
- * —sombra en vez de línea—; aquí no sirve la sombra, porque dentro de un modal
- * todo está a la misma altura.
+ * Y va a plena opacidad, no al 40 %: un relleno al 40 % sobre una superficie
+ * que casi no contrasta es la mitad de casi nada, que es justo por lo que
+ * antes hacía falta la línea.
  */
 /**
  * La clase, para lo que no es un `<div>`.
@@ -36,7 +33,7 @@ import { cn } from '@/lib/utils';
  * por ciento— y dos radios, que es exactamente cómo se ve que nadie lo
  * decidió: se escribió seis veces y salieron seis.
  */
-export const BLOQUE = 'rounded-lg border border-border bg-muted/40 p-3';
+export const BLOQUE = 'rounded-lg bg-muted p-3';
 
 export function Bloque({ className, ...props }: ComponentProps<'div'>) {
   return <div className={cn(BLOQUE, className)} {...props} />;

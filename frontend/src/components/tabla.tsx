@@ -18,7 +18,11 @@ import { cn } from '@/lib/utils';
  */
 export function Tabla({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border bg-card">
+    // Sin borde, como la tarjeta y por lo mismo: la tabla es material apoyado
+    // en el pozo, y el escalón de superficie ya dice dónde empieza. Una línea
+    // alrededor de una tabla que ADEMÁS lleva líneas entre sus filas son dos
+    // retículas superpuestas.
+    <div className="overflow-x-auto overscroll-x-contain rounded-lg bg-card">
       {/*
         `min-w` fuerza el desplazamiento en vez de apretar las columnas hasta
         que el texto se parte en cuatro líneas. Con la primera columna fija, se

@@ -329,21 +329,49 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
 
         {abierto && (
           <div className="border-t border-border p-4 sm:p-6">
-            <div className="flex flex-col gap-4">
+            {/*
+              ── Una rejilla, no una columna ─────────────────────────────────
+              Los grupos eran filas apiladas, y una fila de ancho completo con
+              cuatro chips dentro deja tres cuartas partes de su renglón en
+              blanco: en un centro con seis grupos había que recorrer media
+              pantalla de vacío para leerlos. En rejilla se ven todos de un
+              vistazo, que es lo que se viene a hacer a esta pantalla.
+
+              ── `auto-fill` y NO `auto-fit` ─────────────────────────────────
+              La diferencia es qué pasa con las columnas que sobran: `auto-fit`
+              las colapsa y reparte su sitio entre las que hay, y `auto-fill`
+              las deja reservadas y vacías.
+
+              Con `auto-fit`, el tamaño de una tarjeta acaba dependiendo de
+              cuántas tenga al lado: un centro con dos grupos daba dos tarjetas
+              de 495px y uno con seis, seis de 325. La misma cosa con dos
+              tamaños distintos según el centro en el que esté, y con un solo
+              grupo una tarjeta de mil píxeles con tres chips dentro.
+
+              Con `auto-fill` la tarjeta mide siempre lo mismo y la fila se
+              llena con las que quepan. El hueco que queda a la derecha cuando
+              hay pocas no es un defecto: dice que cabe más, que es cierto. Y
+              casi nunca se ve, porque la baldosa de «agregar» ocupa la celda
+              siguiente.
+
+              El `min(17rem, 100%)` es el seguro del teléfono: un mínimo en
+              rem, a secas, desborda en cuanto el contenedor mide menos que él.
+            */}
+            <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(17rem,100%),1fr))]">
               {grupos.map((grupo) => (
                 <Grupo key={grupo.id} grupo={grupo} arbol={arbol} />
               ))}
 
-              {grupos.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Este centro no tiene grupos todavía.
-                </p>
-              )}
-
+              {/* El hueco para el siguiente, como una baldosa más de la
+                  rejilla: es el mismo lenguaje que la galería de soportes y el
+                  hueco de un atajo. Sin ningún grupo es lo único que hay, y un
+                  cuadro punteado y vacío se lee como "aquí falta algo" mejor
+                  que cualquier frase. */}
               <Agregar
                 padreId={centro.id}
                 etiqueta="Agregar grupo"
                 marcador="Servicios públicos, Educación…"
+                solo={grupos.length === 0}
               />
             </div>
           </div>
@@ -361,7 +389,17 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
   const conceptos = grupo.children ?? [];
 
   return (
-    <Bloque className="sm:p-4">
+    /*
+      ── Una tarjeta que llena su celda ────────────────────────────────────
+      `h-full` y columna: en una rejilla las celdas de una misma fila miden lo
+      que mida la más alta, así que sin esto una tarjeta con dos conceptos
+      quedaba flotando arriba de su celda con un palmo de vacío debajo.
+
+      Y con `mt-auto` en su botón —abajo—, el "Agregar concepto" de todas las
+      tarjetas de una fila queda a la misma altura. Pegado al último chip, cada
+      tarjeta lo tenía en un sitio distinto y la fila se leía desalineada.
+    */
+    <Bloque className="flex h-full flex-col sm:p-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="min-w-0 truncate text-sm font-semibold">{grupo.name}</h3>
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
@@ -403,7 +441,7 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
       </div>
 
       {conceptos.length > 0 && (
-        <ul className="mt-2 flex flex-wrap gap-1.5">
+        <ul className="mt-3 flex flex-wrap gap-1.5">
           {conceptos.map((concepto) => (
             <li key={concepto.id}>
               {/* Se abren para editar: renombrar y decir si se pagan solos.
@@ -415,9 +453,13 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
                    `card`: el chip acababa del mismo color que la tarjeta y
                    desaparecía. Con borde se ve en los dos temas sin depender
                    de qué superficie tenga debajo. */}
+              {/* `max-w-full` y el nombre recortado: en una tarjeta de 17rem,
+                  un concepto con nombre largo hacía un chip más ancho que su
+                  tarjeta y se salía por el lado. */}
               <Chip
                 onClick={() => setEditando(concepto)}
                 title={`Editar ${concepto.name}`}
+                className="max-w-full"
               >
                 {concepto.recurrente && (
                   <Repeat
@@ -425,14 +467,16 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
                     aria-label="Se paga cada cierto tiempo"
                   />
                 )}
-                {concepto.name}
+                <span className="min-w-0 truncate">{concepto.name}</span>
               </Chip>
             </li>
           ))}
         </ul>
       )}
 
-      <div className="mt-3">
+      {/* Al pie de la tarjeta, no pegado al último chip: así todas las de una
+          misma fila lo tienen a la misma altura. */}
+      <div className="mt-auto pt-3">
         <Button type="button" variant="ghost" size="sm" onClick={() => setCreando(true)}>
           <Plus className="size-4" aria-hidden="true" />
           Agregar concepto
@@ -463,15 +507,32 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
   );
 }
 
-/** Un campo que aparece al pedirlo: tener veinte inputs abiertos a la vez satura. */
+/**
+ * El hueco del siguiente grupo: una baldosa más de la rejilla.
+ *
+ * ── Por qué un cuadro punteado y no un enlace ───────────────────────────────
+ * Porque ocupa una celda en la misma rejilla que los grupos y con su misma
+ * forma: se lee como el sitio del próximo, no como una acción en otra parte de
+ * la tarjeta. Y el borde punteado es lo que en todas partes significa «aquí
+ * cabe algo que todavía no está» —es el mismo lenguaje que el hueco de un
+ * soporte y el de un atajo—.
+ *
+ * ── Por qué el campo aparece al pedirlo ─────────────────────────────────────
+ * Tener veinte campos abiertos a la vez satura: en una pantalla con seis
+ * centros serían seis cajas de texto vacías compitiendo con la estructura que
+ * se viene a leer.
+ */
 function Agregar({
   padreId,
   etiqueta,
   marcador,
+  solo = false,
 }: {
   padreId: number;
   etiqueta: string;
   marcador: string;
+  /** Sin ningún grupo todavía: la baldosa explica además qué es un grupo. */
+  solo?: boolean;
 }) {
   const crear = useCrearCategoria();
   const [abierto, setAbierto] = useState(false);
@@ -497,18 +558,30 @@ function Agregar({
         type="button"
         onClick={() => setAbierto(true)}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5',
-          'text-xs font-medium text-primary transition-colors hover:bg-accent',
+          'flex h-full min-h-32 w-full flex-col items-center justify-center gap-2 rounded-lg p-4',
+          'border-2 border-dashed border-border text-center transition-colors',
+          'text-sm font-medium text-muted-foreground',
+          'hover:bg-accent hover:text-accent-foreground',
         )}
       >
-        <Plus className="size-3.5" aria-hidden="true" />
+        <Plus className="size-5 shrink-0" aria-hidden="true" />
         {etiqueta}
+        {/* Sin ningún grupo, la baldosa es lo único que hay: ahí sí hace falta
+            decir qué es un grupo. Con grupos al lado, el ejemplo sobra —ya se
+            ve lo que es— y solo añade ruido a cada centro. */}
+        {solo && (
+          <span className="text-xs font-normal text-muted-foreground">
+            El nivel de en medio: {marcador}
+          </span>
+        )}
       </button>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    /* Abierto ocupa la fila entera: encajado en una celda de 17rem, el campo
+       del nombre y sus dos botones no caben y se parten en tres renglones. */
+    <div className="col-span-full flex flex-col gap-2">
       <div className="flex flex-col gap-2 sm:flex-row">
         <Input
           autoFocus
@@ -527,7 +600,7 @@ function Agregar({
             type="button"
             onClick={() => void guardar()}
             disabled={crear.isPending || !nombre.trim()}
-            className="flex-1 sm:flex-none"
+            className="w-full sm:w-auto"
           >
             {crear.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
             Guardar
@@ -536,7 +609,7 @@ function Agregar({
             type="button"
             variant="ghost"
             onClick={() => setAbierto(false)}
-            className="flex-1 sm:flex-none"
+            className="w-full sm:w-auto"
           >
             Cancelar
           </Button>
