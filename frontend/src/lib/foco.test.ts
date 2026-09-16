@@ -59,6 +59,30 @@ const NACEN_ENFOCADOS: Record<string, string> = {
  */
 const NO_SON_SENAL = ['focus:placeholder:text-muted-foreground'];
 
+const css = readFileSync(join(SRC, 'index.css'), 'utf8');
+
+/**
+ * Quién puede dibujar un anillo de foco, y por qué NO es un botón.
+ *
+ * Un botón se pulsa y pasa algo: no guarda nada ni recibe lo que se escribe,
+ * así que no hay nada que señalar en él. Y el foco le vuelve solo cada vez que
+ * se cierra lo que abrió —una ficha, un desplegable—, con lo que el contorno
+ * aparecía al SALIR de otra cosa, que es lo contrario de lo que un contorno de
+ * foco tiene que decir.
+ *
+ * Lo llevan los que sí guardan algo, y los que sin él no se pueden recorrer.
+ */
+const LLEVAN_ANILLO: Record<string, string> = {
+  'components/ui/campo.tsx':
+    'Un campo sí: hace falta saber cuál está recibiendo lo que se teclea. Es `FOCO_DEL_CAMPO`, y un desplegable es un campo aunque esté hecho con un <button>.',
+  'components/ui/input.tsx': 'El del error, que va a plena tinta.',
+  'components/ui/textarea.tsx': 'El del error, que va a plena tinta.',
+  'components/ui/casilla.tsx': 'Una casilla es un <input> y guarda un estado.',
+  'components/ui/interruptor.tsx': 'Un interruptor es un <input> y guarda un estado.',
+  'components/tendencia.tsx':
+    'La gráfica entra en el orden del tabulador y se recorre con las flechas: sin anillo, quien llega con el teclado no sabe que está ahí.',
+};
+
 describe('Nada nace enfocado', () => {
   it('solo los buscadores llevan autoFocus, y están justificados', () => {
     const culpables = archivos
@@ -98,24 +122,26 @@ describe('La señal de foco se escribe con :focus-visible', () => {
     ).toEqual([]);
   });
 
-  it('el anillo de un campo está en un solo sitio', () => {
+  it('ningún botón dibuja un anillo de foco', () => {
     const culpables = archivos
-      .filter((ruta) => /focus-visible:ring-ring\b/.test(readFileSync(ruta, 'utf8')))
+      .filter((ruta) => /focus-visible:(?:ring|border)/.test(readFileSync(ruta, 'utf8')))
       .map(relativa)
-      // Los controles que NO son campos —un botón, una casilla, una fila de
-      // una tabla— traen su propio anillo: el suyo va por fuera y con
-      // separación, porque no tienen un borde que teñir.
-      .filter((ruta) => ['components/ui/input.tsx', 'components/ui/textarea.tsx'].includes(ruta));
+      .filter((ruta) => !(ruta in LLEVAN_ANILLO));
 
-    expect(culpables, 'El anillo de un campo sale de `FOCO_DEL_CAMPO`, en `ui/campo.tsx`').toEqual(
+    expect(culpables, 'Un botón se pulsa y pasa algo: no guarda nada que haya que señalar').toEqual(
       [],
     );
+  });
+
+  it('y la regla base de la hoja los exime del contorno', () => {
+    // Sin esto no habría hecho falta quitar ni un anillo: el contorno de dos
+    // píxeles de `:focus-visible` lo dibuja la capa base sobre CUALQUIER cosa
+    // que reciba el foco, y es el que se veía en el botón de agregar grupo.
+    expect(css).toMatch(/button:focus-visible\s*\{\s*outline:\s*none/);
   });
 });
 
 describe('La etiqueta flotante separa subir de teñirse', () => {
-  const css = readFileSync(join(SRC, 'index.css'), 'utf8');
-
   it('sube con :focus-within, porque si no el texto se pisa', () => {
     expect(css).toContain('.campo:focus-within > label');
   });

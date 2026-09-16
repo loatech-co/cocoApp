@@ -92,7 +92,6 @@ function Interruptor({
         onClick={() => onCambiar(!activo)}
         className={cn(
           'relative mt-1 h-6 w-11 shrink-0 rounded-full transition-colors',
-          'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none',
           'disabled:opacity-50',
           activo ? 'bg-primary' : 'bg-input',
         )}

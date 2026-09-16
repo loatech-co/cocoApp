@@ -140,23 +140,11 @@ export function Chip({
 
   return (
     <span className={cn(forma, 'pr-1', className)}>
-      {/*
-        `outline-none` SIN nada que lo reemplace dejaba este botón sin ningún
-        indicador de foco: la regla global de `index.css` dibuja un contorno en
-        `:focus-visible`, y una utilidad de Tailwind le gana a la capa base. El
-        aspa de al lado sí se veía; la parte que se pulsa para abrir, no.
-
-        El anillo va por dentro —`ring-inset`— porque este botón vive pegado
-        contra el borde redondeado del chip, y uno por fuera se saldría de él.
-      */}
-      <button
-        type="button"
-        className={cn(
-          'min-w-0 truncate rounded-full outline-none',
-          'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-        )}
-        {...props}
-      >
+      {/* Sin contorno de foco, como todos los botones: lo quita la regla de
+          `index.css`. Aquí sobraba además por el sitio —este botón vive pegado
+          contra el canto redondeado del chip, así que cualquier anillo suyo se
+          saldría de él—. */}
+      <button type="button" className="min-w-0 truncate rounded-md" {...props}>
         {children}
       </button>
       <button

@@ -670,10 +670,31 @@
     font-feature-settings: 'tnum' 1;
   }
 
-  /* Foco siempre visible — requisito de accesibilidad, no decoración. */
+  /* El contorno de foco de todo lo que lo recibe: enlaces, celdas
+     tabulables, la gráfica. Dos píxeles del anillo del tema, separados otros
+     dos para que no se coman el canto de lo que rodean. */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+
+  /*
+    ── Salvo los BOTONES, que no lo llevan ──────────────────────────────────
+    Un botón no guarda nada ni recibe lo que se escribe: se pulsa y pasa algo.
+    Y el foco vuelve a él solo, sin que nadie lo pida, cada vez que se cierra
+    lo que abrió —una ficha, un desplegable—; si la ficha se cerró con Escape,
+    la última interacción fue de teclado y `:focus-visible` se enciende. El
+    resultado es un botón con un contorno de dos píxeles del color de acento
+    que aparece al SALIR de otra cosa, que es lo contrario de lo que un
+    contorno de foco tiene que decir.
+
+    Lo que sí lo conserva es el CAMPO —donde de verdad importa saber cuál está
+    recibiendo lo que se teclea—, y lo lleva a su manera: `FOCO_DEL_CAMPO`, un
+    borde teñido y un halo, no este contorno. Un desplegable es un campo aunque
+    esté hecho con un `<button>`, así que también.
+  */
+  button:focus-visible {
+    outline: none;
   }
 }
 

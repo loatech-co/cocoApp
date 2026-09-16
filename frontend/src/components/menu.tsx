@@ -175,10 +175,7 @@ export function Menu({
           }}
           aria-expanded={abierto}
           aria-haspopup={ARIA[tipo]}
-          className={
-            claseDisparador ??
-            'flex items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
-          }
+          className={claseDisparador ?? 'flex items-center rounded-full outline-none'}
         >
           {disparador({ abierto })}
         </button>
@@ -217,7 +214,10 @@ export function Menu({
           {!soloIcono && <span className="truncate">{etiqueta}</span>}
           {!soloIcono && (
             <ChevronDown
-              className={cn('size-3.5 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
+              className={cn(
+                'size-3.5 shrink-0 opacity-60 transition-transform',
+                abierto && 'rotate-180',
+              )}
               aria-hidden={true}
             />
           )}
@@ -363,15 +363,15 @@ export function MenuOpcion({
         deshabilitada
           ? 'cursor-not-allowed text-muted-foreground opacity-60'
           : peligro
-          ? 'font-medium text-destructive hover:bg-destructive/10'
-          // ── Elegida y señalada NO son el mismo color ─────────────────────
-          // Lo elegido se queda en `muted`, que es la superficie quieta; lo
-          // que está bajo el cursor pasa a `accent`, que es la del tema para
-          // lo que responde. Con `muted` en los dos, pasar por encima de la
-          // opción ya elegida no cambiaba nada y el menú parecía trabado.
-          : elegida
-            ? cn('bg-muted font-medium text-foreground', REALCE)
-            : cn('text-foreground', REALCE),
+            ? 'font-medium text-destructive hover:bg-destructive/10'
+            : // ── Elegida y señalada NO son el mismo color ─────────────────────
+              // Lo elegido se queda en `muted`, que es la superficie quieta; lo
+              // que está bajo el cursor pasa a `accent`, que es la del tema para
+              // lo que responde. Con `muted` en los dos, pasar por encima de la
+              // opción ya elegida no cambiaba nada y el menú parecía trabado.
+              elegida
+              ? cn('bg-muted font-medium text-foreground', REALCE)
+              : cn('text-foreground', REALCE),
       )}
     >
       {Icono && <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />}
