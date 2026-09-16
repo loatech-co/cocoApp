@@ -589,12 +589,16 @@ export function MovimientoModal({
               </div>
 
               <Campo etiqueta="Notas" id="mov-notas">
+                {/* Sin marcador. Decía «Opcional», que no es un ejemplo de
+                    lo que va ahí sino una nota sobre la validación: este
+                    campo no lleva `required`, y eso ya se sabe porque el
+                    formulario se envía sin él. Un marcador que explica una
+                    regla en vez de enseñar un ejemplo es un renglón gastado. */}
                 <Textarea
                   id="mov-notas"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
-                  placeholder="Opcional"
                 />
               </Campo>
             </>

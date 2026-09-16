@@ -16,7 +16,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
@@ -33,6 +32,7 @@ import {
 } from './admin-queries';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { Bloque } from '@/components/ui/bloque';
+import { Campo } from '@/components/ui/campo';
 
 const FILTROS: { valor: UserStatus | undefined; etiqueta: string }[] = [
   { valor: 'pending', etiqueta: 'Pendientes' },
@@ -250,15 +250,15 @@ function RestablecerContrasena({
 
   return (
     <Bloque className="p-4">
-      <Label htmlFor={`nueva-${usuario.id}`}>Contraseña nueva</Label>
-      <Input
-        id={`nueva-${usuario.id}`}
-        type="text"
-        autoComplete="off"
-        className="mt-2"
-        value={password}
-        onChange={(evento) => setPassword(evento.target.value)}
-      />
+      <Campo etiqueta="Contraseña nueva" id={`nueva-${usuario.id}`}>
+        <Input
+          id={`nueva-${usuario.id}`}
+          type="text"
+          autoComplete="off"
+          value={password}
+          onChange={(evento) => setPassword(evento.target.value)}
+        />
+      </Campo>
       <PoliticaDeContrasena password={password} />
 
       {error && (

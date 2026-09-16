@@ -7,9 +7,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/lib/auth-context';
 import { PoliticaDeContrasena, cumpleLaPolitica } from './politica-de-contrasena';
+import { Campo } from '@/components/ui/campo';
 
 /**
  * Solicitar acceso.
@@ -100,8 +100,7 @@ export function RegisterPage() {
             )}
 
             <form onSubmit={onSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="nombre">Nombre</Label>
+              <Campo etiqueta="Nombre" id="nombre">
                 <Input
                   id="nombre"
                   autoComplete="name"
@@ -110,10 +109,9 @@ export function RegisterPage() {
                   value={nombre}
                   onChange={(evento) => setNombre(evento.target.value)}
                 />
-              </div>
+              </Campo>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">Correo</Label>
+              <Campo etiqueta="Correo" id="email">
                 <Input
                   id="email"
                   type="email"
@@ -122,19 +120,20 @@ export function RegisterPage() {
                   value={email}
                   onChange={(evento) => setEmail(evento.target.value)}
                 />
-              </div>
+              </Campo>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={password}
-                  onChange={(evento) => setPassword(evento.target.value)}
-                  aria-describedby="requisitos-password"
-                />
+                <Campo etiqueta="Contraseña" id="password">
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={password}
+                    onChange={(evento) => setPassword(evento.target.value)}
+                    aria-describedby="requisitos-password"
+                  />
+                </Campo>
                 <div id="requisitos-password">
                   <PoliticaDeContrasena password={password} />
                   <p className="mt-2 text-xs text-muted-foreground">

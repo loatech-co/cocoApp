@@ -1,5 +1,22 @@
 # Coco — reglas de la interfaz
 
+| | Regla |
+|---|---|
+| 1 | [Ningún control del sistema operativo](#1-ningún-control-del-sistema-operativo) |
+| 2 | [El tamaño de un botón lo decide el botón](#2-el-tamaño-de-un-botón-lo-decide-el-botón) |
+| 3 | [El radio estándar es 10px](#3-el-radio-estándar-es-10px) |
+| 4 | [Dos tamaños, y los mismos para todo](#4-dos-tamaños-y-los-mismos-para-todo) |
+| 5 | [El color vive en `index.css`, y se nombra por su papel](#5-el-color-vive-en-indexcss-y-se-nombra-por-su-papel) |
+| 6 | [Nada de mayúsculas sostenidas](#6-nada-de-mayúsculas-sostenidas) |
+| 7 | [`accent` es lo que responde; `muted` es lo que está quieto](#7-accent-es-lo-que-responde-muted-es-lo-que-está-quieto) |
+| 8 | [Lo que flota se dibuja en un solo sitio](#8-lo-que-flota-se-dibuja-en-un-solo-sitio) |
+| 9 | [La cabecera de una pantalla](#9-la-cabecera-de-una-pantalla) |
+| 10 | [La cabecera y el pie de una ficha](#10-la-cabecera-y-el-pie-de-una-ficha) |
+| 11 | [El nombre de un campo va DENTRO, y flota](#11-el-nombre-de-un-campo-va-dentro-y-flota) |
+| 12 | [Un aviso flotante dice su severidad de tres maneras](#12-un-aviso-flotante-dice-su-severidad-de-tres-maneras) |
+| 13 | [El rojo es solo para errores](#13-el-rojo-es-solo-para-errores) |
+| 14 | [Componentes, no copias](#14-componentes-no-copias) |
+
 ## 1. Ningún control del sistema operativo
 
 **Nunca** se usa el desplegable ni el selector de fecha nativos. Ni
@@ -50,7 +67,7 @@ La escala crece en orden: `sm` 6, `md` 8, `lg` 10, `xl` 14. El `2xl` y el
 `3xl` de Tailwind no leen el tema —valen 16 y 24 fijos— y por eso están
 prohibidos.
 
-## 3 bis. Dos tamaños, y los mismos para todo
+## 4. Dos tamaños, y los mismos para todo
 
 Un botón, un campo de texto, un desplegable y un selector de fecha miden
 lo mismo: `sm` 36px y `md` 44px. Una fila donde el botón mide 40, el campo
@@ -59,7 +76,7 @@ lo mismo: `sm` 36px y `md` 44px. Una fila donde el botón mide 40, el campo
 Las variantes de icono —`sm-icon`, `md-icon`— son esas mismas alturas en
 cuadrado. No son un tamaño más.
 
-## 4. El color vive en `index.css`, y se nombra por su papel
+## 5. El color vive en `index.css`, y se nombra por su papel
 
 Los tokens del tema —Solstice— están en una sola capa de `index.css`. Nada
 de colores escritos a mano en un componente: si hace falta uno que el tema
@@ -76,7 +93,7 @@ para ella (`accent-foreground`, `secondary-foreground`): nunca blanco por
 costumbre. Blanco sobre un acento claro da 1.23:1, muy por debajo del
 4.5:1 que exige el texto.
 
-## 4 bis. Nada de mayúsculas sostenidas
+## 6. Nada de mayúsculas sostenidas
 
 Una palabra en versalitas pierde la silueta que la hace reconocible
 —"Soporte" y "SOPORTE" no se leen igual de rápido— y donde todo el texto
@@ -88,7 +105,7 @@ para los grupos de secciones del riel. El interletraje abierto que suele
 acompañarlas también se va: el tema lo declara en cero y Geist ya viene
 cerrada de por sí.
 
-## 4 ter. `accent` es lo que responde; `muted` es lo que está quieto
+## 7. `accent` es lo que responde; `muted` es lo que está quieto
 
 El acento marca lo que está **bajo el cursor o el foco**: la opción de un
 desplegable, la fila de una lista, un día del calendario, la zona donde se
@@ -105,7 +122,7 @@ texto que lo diga— los papeles se invierten: el acento va a lo encendido y
 tiene otra forma de decirse. Una opción de menú con su palomita no lo
 necesita; un icono encendido, sí.
 
-## 4 quater. Lo que flota se dibuja en un solo sitio
+## 8. Lo que flota se dibuja en un solo sitio
 
 Un desplegable, un calendario, un modal, una confirmación, la pista de una
 gráfica y el aviso de una esquina comparten `SUPERFICIE_FLOTANTE`
@@ -123,7 +140,7 @@ escribirse suelta.
 vuelve a escribir la sombra a mano o a separar un panel con un negro o un
 blanco inventados.
 
-## 4 quinquies. La cabecera de una pantalla
+## 9. La cabecera de una pantalla
 
 Toda pantalla con contenido abre con `components/cabecera-de-pagina.tsx`.
 Nunca con un `<h1>` y un `<p>` escritos a mano.
@@ -173,7 +190,7 @@ colgaran los demás.
 pantalla vuelve a escribir su propio `<h1>` o si una acción de cabecera pide
 un tamaño que no sea `sm`.
 
-## 4 sexies. La cabecera y el pie de una ficha
+## 10. La cabecera y el pie de una ficha
 
 Toda ficha abre con `CabeceraDeModal` y cierra con `PieDeModal`
 (`components/ui/modal-partes.tsx`). Nunca con un `<div>` escrito a mano.
@@ -240,19 +257,109 @@ traer `flex-1`. (`w-full` sí se permite: estirar un botón a todo el ancho de
 una columna angosta —el «Iniciar sesión» de una tarjeta de 384px— es otra
 decisión, porque ahí no hay con quién competir.)
 
-## 5. El rojo es solo para errores
+## 11. El nombre de un campo va DENTRO, y flota
+
+Todo campo de formulario se envuelve en `components/ui/campo.tsx`. Nunca un
+`<Label>` encima de un `<Input>`.
+
+**Cómo se comporta.** La etiqueta empieza donde estaría el marcador, del
+tamaño del texto y en gris. Al enfocar el campo se encoge, se sube a la
+parte de arriba del propio campo y se tiñe del color del anillo, dejando su
+sitio al marcador. Al escribir, el marcador desaparece y queda lo escrito.
+Al soltar el campo, la etiqueta se queda arriba si hay algo y baja si no.
+
+**Por qué dentro.** Antes iba encima, con este argumento: un marcador
+desaparece al escribir, así que al revisar un formulario ya lleno nadie sabe
+qué era cada caja. El argumento sigue en pie, y por eso esta etiqueta NO es
+un marcador: cuando hay algo escrito no se va. Lo que se gana es el renglón
+que ocupaba encima de cada campo —seis campos son seis renglones— y que el
+nombre y el valor se lean como una cosa y no como dos.
+
+**Dónde vive la lógica.** En `index.css`, bajo `.campo`. Son cuatro
+disparadores distintos que significan lo mismo —hay foco, el desplegable
+está abierto, hay algo escrito, hay algo elegido— y escritos con utilidades
+habría que repetir las cuatro propiedades de la posición subida una vez por
+disparador.
+
+**El hueco de arriba lo reserva cada control**, leyendo el contexto
+`useDentroDeUnCampo()`. Hay cinco estructuras distintas —un `<input>`
+suelto, uno con iconos en absoluto, un `<textarea>`, el disparador de un
+desplegable dentro de la caja de `Menu`, y el del selector de fecha— y un
+selector estructural que acertara con las cinco sería más frágil que un
+contexto.
+
+**El marcador es un EJEMPLO, no una regla.** «dd/mm/aaaa» sí; «Opcional»
+no: que un campo no sea obligatorio ya se sabe porque el formulario se
+envía sin él.
+
+### Los iconos de un campo
+
+| Sitio | Qué es | Cuántos |
+|---|---|---|
+| Izquierda (`icono`) | **Informativo.** De qué es el campo. No se pulsa | Uno |
+| Derecha (`acciones`) | **Activas.** Borrar lo escrito, ver la contraseña | Hasta dos |
+
+`acciones` es una lista y no un `ReactNode` suelto porque el campo necesita
+saber cuántas son para reservarles sitio con su relleno derecho, y contar
+los hijos de un fragmento no se puede hacer de forma fiable.
+
+Un icono a la izquierda corre la etiqueta flotante para que no le caiga
+encima; lo dice con `data-icono`, que lee `.campo`.
+
+**El selector de fecha es la excepción:** su calendario va a la DERECHA y no
+lleva flecha. El calendario no es informativo —no hace falta un dibujo para
+saber que «4 de abril de 2022» es una fecha—: es la señal de que esto abre
+un calendario, que es exactamente el papel de la flecha de un desplegable.
+Con las dos había dos iconos diciendo lo mismo, uno a cada lado del valor.
+
+`components/ui/campo.test.tsx` comprueba los ganchos que el CSS necesita
+—el orden de los hermanos, el marcador que siempre está, los `data-` de un
+desplegable— y falla si una pantalla vuelve a escribir un `<Label>` suelto.
+
+## 12. Un aviso flotante dice su severidad de tres maneras
+
+`mostrarAviso(titular, { detalle, tono })`. Dos líneas: el titular dice QUÉ
+pasó en tres palabras —se lee de reojo, que es como se leen los avisos— y el
+detalle explica. El detalle es opcional; un aviso que no necesita
+explicación no se inventa una.
+
+Cada tono se señala **tres veces**: una pastilla redonda del color de la
+severidad con su glifo encima, un resplandor del mismo color entrando por el
+borde izquierdo, y el halo de la pastilla al 15 %. El color solo no basta:
+uno de cada doce hombres no distingue el rojo del verde, así que la forma
+—palomita, triángulo, aspa— lo dice por otra vía.
+
+**La superficie NO se tiñe entera.** Un aviso flotante está encima de todo
+lo demás, y lo que dice que está encima es la sombra sobre el color del
+popover. Teñir el rectángulo de rojo rompe esa lectura: deja de parecer una
+capa y pasa a parecer un cartel.
+
+**Los colores son los nuestros, la severidad es la de siempre.** Verde para
+lo que salió bien, el oro del tema para lo que está pendiente, rojo para lo
+que falló. Y la tinta que va ENCIMA de cada uno está declarada
+—`--success-foreground` y compañía— porque el sentido se invierte con el
+tema: en claro esos colores son oscuros y la tinta es blanca; en oscuro son
+claros y la tinta es casi negra.
+
+El glifo de un aviso flotante NO es el del aviso en línea. Allí el icono va
+suelto y lleva su propio contorno (`CircleCheck`); aquí va dentro de una
+pastilla que ya es un círculo, y con un icono circular quedan dos círculos
+concéntricos.
+
+## 13. El rojo es solo para errores
 
 Lo pendiente —un movimiento sin clasificar— va en el oro del tema
 (`warning`, que sale de su `secondary`). El rojo se reserva a lo que de
 verdad salió mal y a lo que no se puede deshacer.
 
-## 6. Componentes, no copias
+## 14. Componentes, no copias
 
 Si algo aparece en dos pantallas, es un componente. Lo son la tabla de
 movimientos, el paginador, la barra de filtros, el calendario, la dona, la
 cabecera de una pantalla (`components/cabecera-de-pagina.tsx`), la cabecera
-y el pie de una ficha (`components/ui/modal-partes.tsx`), el bloque dentro
-de una tarjeta (`components/ui/bloque.tsx`) y la barra de progreso
+y el pie de una ficha (`components/ui/modal-partes.tsx`), el campo de un
+formulario con su etiqueta flotante (`components/ui/campo.tsx`), el bloque
+dentro de una tarjeta (`components/ui/bloque.tsx`) y la barra de progreso
 (`components/ui/progreso.tsx`).
 
 Lo que no puede ser un componente —porque hace falta un `<label>` o un

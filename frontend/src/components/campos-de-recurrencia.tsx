@@ -2,10 +2,10 @@ import { Repeat } from 'lucide-react';
 
 import { Interruptor } from '@/components/ui/interruptor';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { PERIODICIDADES, type Periodicidad } from '@coco/types';
+import { Campo } from '@/components/ui/campo';
 
 const ETIQUETAS: Record<Periodicidad, string> = {
   mensual: 'Cada mes',
@@ -107,30 +107,32 @@ export function CamposDeRecurrencia({
             valor.periodicidad === 'mensual' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
           )}
         >
-          <label className="flex flex-col gap-1.5">
-            <Label>Cada cuánto</Label>
+          <Campo etiqueta="Cada cuánto" id="periodicidad">
             <Select
+              id="periodicidad"
               etiqueta="Periodicidad"
               valor={valor.periodicidad}
               opciones={PERIODICIDADES.map((p) => ({ valor: p, etiqueta: ETIQUETAS[p] }))}
               onCambiar={(v) => onCambiar({ ...valor, periodicidad: v as Periodicidad })}
             />
-          </label>
+          </Campo>
 
           {valor.periodicidad !== 'mensual' && (
-            <label className="flex flex-col gap-1.5">
-              <Label>{valor.periodicidad === 'anual' ? 'Mes' : 'Mes del ciclo'}</Label>
+            <Campo
+              etiqueta={valor.periodicidad === 'anual' ? 'Mes' : 'Mes del ciclo'}
+              id="mes-de-pago"
+            >
               <Select
+                id="mes-de-pago"
                 etiqueta="Mes"
                 valor={String(valor.mesDePago)}
                 opciones={MESES.map((m, i) => ({ valor: String(i + 1), etiqueta: m }))}
                 onCambiar={(v) => onCambiar({ ...valor, mesDePago: Number(v) })}
               />
-            </label>
+            </Campo>
           )}
 
-          <label className="flex flex-col gap-1.5">
-            <Label htmlFor="dia-de-pago">Día del mes</Label>
+          <Campo etiqueta="Día del mes" id="dia-de-pago">
             <Input
               id="dia-de-pago"
               type="number"
@@ -144,7 +146,7 @@ export function CamposDeRecurrencia({
               onChange={(e) => onCambiar({ ...valor, diaDePago: entre1y31(e.target.value) })}
               className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
-          </label>
+          </Campo>
 
           <p
             className={cn(

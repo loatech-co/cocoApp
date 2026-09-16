@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { ApiClientError } from '@/lib/api-client';
 import { useLlevaCuentas } from '@/lib/preferences';
@@ -21,6 +20,7 @@ import { GuiaCsv } from './guia-csv';
 import { MapeoDeColumnas } from './mapeo-columnas';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { Progreso } from '@/components/ui/progreso';
+import { Campo } from '@/components/ui/campo';
 
 /** De qué vía vino el documento. Se guarda en el lote para poder comparar
  *  después qué origen produce menos correcciones en la revisión. */
@@ -197,21 +197,23 @@ export function ImportarPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Label htmlFor="cuenta" className="sr-only">
-              Cuenta
-            </Label>
-            <Select
-              id="cuenta"
-              etiqueta="Cuenta"
-              className="max-w-sm"
-              vacio="Sin cuenta"
-              valor={cuentaId === null ? '' : String(cuentaId)}
-              opciones={activas.map((cuenta: Account) => ({
-                valor: String(cuenta.id),
-                etiqueta: cuenta.name,
-              }))}
-              onCambiar={(v) => setCuentaId(v === '' ? null : Number(v))}
-            />
+            {/* La etiqueta pasa de `sr-only` a flotante: era el único campo
+                de la app cuyo nombre solo existía para el lector de pantalla,
+                y se apoyaba en el título de la tarjeta para que se entendiera
+                al verlo. */}
+            <Campo etiqueta="Cuenta" id="cuenta" className="max-w-sm">
+              <Select
+                id="cuenta"
+                etiqueta="Cuenta"
+                vacio="Sin cuenta"
+                valor={cuentaId === null ? '' : String(cuentaId)}
+                opciones={activas.map((cuenta: Account) => ({
+                  valor: String(cuenta.id),
+                  etiqueta: cuenta.name,
+                }))}
+                onCambiar={(v) => setCuentaId(v === '' ? null : Number(v))}
+              />
+            </Campo>
           </CardContent>
         </Card>
       )}

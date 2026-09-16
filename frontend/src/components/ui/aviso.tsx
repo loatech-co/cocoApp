@@ -1,7 +1,8 @@
-import { useSyncExternalStore } from 'react';
+import { Check, Info, TriangleAlert, X } from 'lucide-react';
+import { useSyncExternalStore, type ComponentType } from 'react';
 import { createPortal } from 'react-dom';
 
-import { ICONOS_DE_TONO, type TonoDeAviso } from '@/components/ui/alert';
+import type { TonoDeAviso } from '@/components/ui/alert';
 import { SUPERFICIE_FLOTANTE, SURGE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
@@ -18,42 +19,92 @@ import { cn } from '@/lib/utils';
  * se hace la pregunta.
  *
  * ── Una tarjeta, se pulse las veces que se pulse ────────────────────────────
- * El mismo texto no se apila: reinicia su reloj. Diez toques seguidos en el
+ * El mismo aviso no se apila: reinicia su reloj. Diez toques seguidos en el
  * mismo sitio son una insistencia, no diez noticias.
  *
  * ── Dónde se pone ───────────────────────────────────────────────────────────
  * En el teléfono, POR ENCIMA de la barra de abajo: la esquina de siempre es
  * justo donde está la barra.
  *
- * ── Los tonos, y por qué el fondo NO se tiñe ────────────────────────────────
- * Los mismos cuatro que el aviso en línea —`warning`, `info`, `success`,
- * `destructive`— y con los mismos iconos, importados de allí: un error que en
- * línea es un círculo y flotando es un triángulo son dos errores distintos
- * para quien mira.
+ * ── Titular y detalle ───────────────────────────────────────────────────────
+ * Dos líneas y no una: el titular dice QUÉ pasó en tres palabras —se lee de
+ * reojo, que es como se leen los avisos— y el detalle explica. Con una sola
+ * línea había que elegir entre ser legible de un vistazo o ser útil.
  *
- * Lo que cambia es el ICONO y su color, no la superficie. Un aviso flotante
- * está encima de todo lo demás, y lo que dice que está encima es la sombra
- * sobre el color del popover; teñir el rectángulo entero de rojo o de verde
- * rompe esa lectura —deja de parecer una capa y pasa a parecer un cartel— y
- * además obliga a un segundo juego de sombras para cada tono.
+ * El detalle es opcional. Un aviso que no necesita explicación no se inventa
+ * una.
  *
- * El color solo tampoco bastaría: uno de cada doce hombres no distingue el
- * rojo del verde. Por eso el tono siempre viene con su forma.
+ * ── Los tonos ───────────────────────────────────────────────────────────────
+ * Los mismos cuatro que el aviso en línea, con TRES señales a la vez para
+ * cada uno y a propósito:
+ *
+ * · Una pastilla redonda del color de la severidad, con su glifo encima. El
+ *   color solo no basta: uno de cada doce hombres no distingue el rojo del
+ *   verde, así que la forma —palomita, triángulo, aspa— dice lo mismo por
+ *   otra vía.
+ * · Un resplandor del mismo color entrando por el borde izquierdo, que tiñe
+ *   la tarjeta sin llegar a colorearla.
+ * · El halo de la pastilla, que es el mismo color al 15 %.
+ *
+ * ── Por qué la superficie NO se tiñe entera ─────────────────────────────────
+ * Porque un aviso flotante está encima de todo lo demás, y lo que dice que
+ * está encima es la sombra sobre el color del popover. Teñir el rectángulo
+ * entero de rojo rompe esa lectura: deja de parecer una capa y pasa a parecer
+ * un cartel. El resplandor del borde da el color sin perder la elevación.
  */
 
 interface Aviso {
   id: number;
-  texto: string;
+  titulo: string;
+  detalle?: string;
   tono: TonoDeAviso;
 }
 
-/** El color del icono de cada tono. La superficie no cambia. */
-const TINTA: Record<TonoDeAviso, string> = {
-  default: 'text-muted-foreground',
-  destructive: 'text-destructive',
-  warning: 'text-warning',
-  success: 'text-success',
-  info: 'text-info',
+/**
+ * El glifo de cada tono, y por qué NO son los del aviso en línea.
+ *
+ * Allí el icono va suelto sobre el texto, así que lleva su propio contorno
+ * —`CircleCheck`, `CircleAlert`—. Aquí va DENTRO de una pastilla que ya es un
+ * círculo: con un icono circular, el resultado son dos círculos concéntricos y
+ * el glifo se pierde. Así que aquí van los trazos desnudos.
+ */
+const GLIFOS: Record<TonoDeAviso, ComponentType<{ className?: string }> | null> = {
+  default: null,
+  destructive: X,
+  warning: TriangleAlert,
+  success: Check,
+  info: Info,
+};
+
+/**
+ * Los tres colores de cada tono, escritos y no calculados.
+ *
+ * Tailwind no ve una clase construida con una plantilla —`bg-${tono}` no
+ * existe en el CSS final—, así que cada combinación se escribe entera. Es la
+ * misma razón por la que los pasteles de los chips son una tabla.
+ */
+const COLORES: Record<TonoDeAviso, { pastilla: string; halo: string; resplandor: string }> = {
+  default: { pastilla: '', halo: '', resplandor: '' },
+  destructive: {
+    pastilla: 'bg-destructive text-destructive-foreground',
+    halo: 'bg-destructive/15',
+    resplandor: 'bg-gradient-to-r from-destructive/20 to-transparent to-65%',
+  },
+  warning: {
+    pastilla: 'bg-warning text-warning-foreground',
+    halo: 'bg-warning/15',
+    resplandor: 'bg-gradient-to-r from-warning/20 to-transparent to-65%',
+  },
+  success: {
+    pastilla: 'bg-success text-success-foreground',
+    halo: 'bg-success/15',
+    resplandor: 'bg-gradient-to-r from-success/20 to-transparent to-65%',
+  },
+  info: {
+    pastilla: 'bg-info text-info-foreground',
+    halo: 'bg-info/15',
+    resplandor: 'bg-gradient-to-r from-info/20 to-transparent to-65%',
+  },
 };
 
 let avisos: Aviso[] = [];
@@ -61,8 +112,8 @@ let siguienteId = 1;
 const oyentes = new Set<() => void>();
 const relojes = new Map<number, ReturnType<typeof setTimeout>>();
 
-/** Lo que dura en pantalla. Bastante para leer una línea, no tanto que estorbe. */
-const DURACION = 4000;
+/** Lo que dura en pantalla. Bastante para leer dos líneas, no tanto que estorbe. */
+const DURACION = 5000;
 
 function anunciar(): void {
   for (const oyente of oyentes) oyente();
@@ -80,14 +131,22 @@ function programarElOlvido(id: number): void {
   );
 }
 
-export function mostrarAviso(texto: string, tono: TonoDeAviso = 'default'): void {
-  const yaEsta = avisos.find((a) => a.texto === texto);
+export function mostrarAviso(
+  titulo: string,
+  opciones: { detalle?: string; tono?: TonoDeAviso } = {},
+): void {
+  const { detalle, tono = 'default' } = opciones;
+
+  // El mismo aviso reinicia su reloj en vez de apilarse. Se compara por lo que
+  // DICE —titular y detalle—, no por el tono: el mismo texto con otro tono
+  // sería el mismo aviso contado dos veces.
+  const yaEsta = avisos.find((a) => a.titulo === titulo && a.detalle === detalle);
   if (yaEsta) {
     programarElOlvido(yaEsta.id);
     return;
   }
 
-  const aviso = { id: siguienteId++, texto, tono };
+  const aviso: Aviso = { id: siguienteId++, titulo, detalle, tono };
   avisos = [...avisos, aviso];
   programarElOlvido(aviso.id);
   anunciar();
@@ -135,22 +194,58 @@ export function PilaDeAvisos() {
       aria-live="polite"
     >
       {avisos.map((aviso) => {
-        const Icono = ICONOS_DE_TONO[aviso.tono];
+        const Glifo = GLIFOS[aviso.tono];
+        const color = COLORES[aviso.tono];
 
         return (
           <div
             key={aviso.id}
             className={cn(
-              'pointer-events-auto flex items-start gap-2.5 rounded-lg px-4 py-3 text-sm',
+              'pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-lg p-4',
               SUPERFICIE_FLOTANTE,
               SURGE,
-              'movil:max-w-none escritorio:max-w-sm',
+              'movil:max-w-none escritorio:w-[26rem]',
             )}
           >
-            {Icono && (
-              <Icono className={cn('mt-0.5 size-4 shrink-0', TINTA[aviso.tono])} aria-hidden="true" />
+            {/*
+              El resplandor, en su propia capa detrás del contenido.
+
+              En la misma capa que la tarjeta habría que elegir entre el color
+              del popover y el degradado, porque los dos son `background`;
+              aquí el popover se queda de fondo y el degradado se apoya
+              encima, con el texto por delante.
+            */}
+            {color.resplandor && (
+              <span
+                aria-hidden="true"
+                className={cn('pointer-events-none absolute inset-0', color.resplandor)}
+              />
             )}
-            <p className="min-w-0">{aviso.texto}</p>
+
+            {Glifo && (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'relative grid size-10 shrink-0 place-items-center rounded-full',
+                  color.halo,
+                )}
+              >
+                <span
+                  className={cn('grid size-7 place-items-center rounded-full', color.pastilla)}
+                >
+                  <Glifo className="size-4" />
+                </span>
+              </span>
+            )}
+
+            <span className="relative min-w-0">
+              <span className="block text-sm font-semibold leading-tight">{aviso.titulo}</span>
+              {aviso.detalle && (
+                <span className="mt-1 block text-sm leading-snug text-muted-foreground">
+                  {aviso.detalle}
+                </span>
+              )}
+            </span>
           </div>
         );
       })}

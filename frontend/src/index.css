@@ -173,6 +173,25 @@
   --warning-surface: #f7ecd6;
   --info: #14807a;
   --info-surface: #d9f0ed;
+
+  /*
+    ── La tinta que va ENCIMA de cada color de severidad ────────────────────
+    Distinta de la superficie. `--success-surface` es un verde muy claro para
+    poner texto verde encima; esto es lo contrario: el verde a plena tinta
+    haciendo de fondo, con algo legible encima.
+
+    Hace falta para la pastilla redonda de un aviso flotante, donde el glifo
+    va sobre el color y no al lado. Y hace falta DECLARADA y no calculada,
+    porque el sentido se invierte con el tema: en claro estos tres colores son
+    oscuros y la tinta es blanca; en oscuro son claros y la tinta es casi
+    negra. Es el mismo problema que ya resolvieron las porciones de la dona.
+
+    `--destructive` no aparece aquí porque su tinta ya existe:
+    `--destructive-foreground`, que el tema declara para su botón.
+  */
+  --success-foreground: #ffffff;
+  --warning-foreground: #ffffff;
+  --info-foreground: #ffffff;
   /*
     Lo que SALIÓ BIEN comparte el verde del ingreso, y no es un descuido:
     en una app de dinero "se guardó" y "entró plata" son la misma buena
@@ -374,6 +393,12 @@
   --success-surface: #0e2b1d;
   --destructive-surface: #2e1211;
 
+  /* Aquí los tres colores son CLAROS, así que la tinta de encima se da la
+     vuelta. El oro reutiliza la que el tema ya declara para su `secondary`. */
+  --success-foreground: #0a1614;
+  --warning-foreground: #2a1c08;
+  --info-foreground: #0a1614;
+
   --chart-1: #5dbfb5;
   --chart-2: #e0b976;
   --chart-3: #85d5cd;
@@ -460,11 +485,14 @@
   --color-expense-surface: var(--expense-surface);
   --color-success: var(--success);
   --color-success-surface: var(--success-surface);
+  --color-success-foreground: var(--success-foreground);
   --color-destructive-surface: var(--destructive-surface);
   --color-warning: var(--warning);
   --color-warning-surface: var(--warning-surface);
+  --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-surface: var(--info-surface);
+  --color-info-foreground: var(--info-foreground);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -559,6 +587,137 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EL CAMPO Y SU ETIQUETA FLOTANTE
+
+   La etiqueta empieza DENTRO del campo, donde estaría el marcador, y al
+   enfocar se encoge y se sube a apoyarse en el borde. Si se escribió algo, se
+   queda arriba; si no, vuelve a bajar.
+
+   ── Por qué vive aquí y no en el componente ────────────────────────────────
+   Porque es una máquina de estados con CUATRO disparadores que significan lo
+   mismo —«esta etiqueta tiene que estar arriba»— y ninguno de ellos lo sabe
+   el componente que la pinta:
+
+   · el foco está en cualquier parte del campo (`:focus-within`),
+   · el desplegable está abierto (`aria-expanded`),
+   · el campo de texto tiene algo escrito (`:placeholder-shown` al revés),
+   · el desplegable tiene algo elegido (`data-lleno`).
+
+   Escrito con utilidades habría que repetir las cinco propiedades de la
+   posición subida una vez por disparador, y el día que cambie una, cambia en
+   cuatro sitios. Aquí la lista de disparadores es una línea y el estado uno.
+
+   Y va en `@layer components`, no fuera de las capas: así una utilidad en el
+   `className` de una llamada todavía le gana, que es lo que se espera.
+
+   ── Dónde queda subida: DENTRO del campo, arriba ───────────────────────────
+   No apoyada en el borde con una muesca, que es la otra convención. Dentro, lo
+   que obliga es a que el valor baje para dejarle sitio: el campo reserva
+   20px arriba y 4 abajo, así que el valor deja de estar centrado en sus 44px
+   y se apoya en la mitad de abajo. A cambio, el alto sigue siendo el mismo
+   que el de un botón —que es la regla— y no hay que pintar ningún trozo de
+   fondo encima de la línea, que en oscuro nunca acaba de coincidir.
+
+   Ese hueco de arriba lo reserva cada control, no esta hoja: hay cinco
+   estructuras distintas —un `<input>` suelto, un `<input>` con iconos en
+   absoluto, un `<textarea>`, el disparador de un desplegable dentro de la
+   caja de `Menu`, y el del selector de fecha— y un selector estructural que
+   acertara con las cinco sería más frágil que un contexto de React. El
+   contexto está en `ui/campo.tsx`.
+
+   ── Por qué el marcador solo aparece con el foco ───────────────────────────
+   Porque en reposo el sitio del marcador lo ocupa la ETIQUETA. Los dos a la
+   vez serían dos textos grises pisándose. Al enfocar, la etiqueta sube y deja
+   el sitio libre: ahí entra el marcador, que es el ejemplo —«dd/mm/aaaa»,
+   «Opcional»— y no el nombre del campo.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  .campo {
+    position: relative;
+  }
+
+  /* ── En reposo: donde estaría el marcador ──────────────────────────────── */
+  .campo > label {
+    position: absolute;
+    top: 50%;
+    left: 0.75rem;
+    transform: translateY(-50%);
+    max-width: calc(100% - 1.5rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--text-sm);
+    font-weight: 400;
+    line-height: 1;
+    color: var(--muted-foreground);
+    /* El clic atraviesa la etiqueta y llega al control de debajo. Sin esto,
+       la mitad del campo no se puede pulsar. */
+    pointer-events: none;
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Con un icono a la izquierda, la etiqueta arranca después de él. */
+  .campo:has([data-icono]) > label {
+    left: 2.25rem;
+  }
+
+  /* Un área de texto no tiene una línea: la etiqueta se alinea con la
+     PRIMERA, no con el centro de las tres. */
+  .campo:has(textarea) > label {
+    top: 1.125rem;
+  }
+
+  /* ── Subida ──────────────────────────────────────────────────────────────
+     No toca `left`: así se queda alineada con el valor, ya esté indentado por
+     un icono o no. */
+  .campo:focus-within > label,
+  .campo:has([aria-expanded='true']) > label,
+  .campo:has(input:not(:placeholder-shown)) > label,
+  .campo:has(textarea:not(:placeholder-shown)) > label,
+  .campo:has([data-lleno='si']) > label {
+    top: 0.4375rem;
+    transform: none;
+    font-size: var(--text-2xs);
+    font-weight: 500;
+  }
+
+  /* Enfocada, la etiqueta se tiñe como el anillo: dice cuál de los campos
+     está recibiendo lo que se escribe sin tener que mirar el cursor. */
+  .campo:focus-within > label {
+    color: var(--ring);
+  }
+
+  /* ── El marcador, solo con el foco ─────────────────────────────────────── */
+  .campo input::placeholder,
+  .campo textarea::placeholder {
+    color: transparent;
+  }
+
+  .campo:focus-within input::placeholder,
+  .campo:focus-within textarea::placeholder {
+    color: var(--muted-foreground);
+  }
+
+  /*
+    Y su equivalente en un desplegable.
+
+    Un `<select>` de esta app no tiene marcador: tiene el texto de «sin
+    elegir», que hace el mismo papel. Se marca con `data-vacio` y se esconde
+    en reposo por lo mismo que el marcador: ahí está la etiqueta.
+  */
+  .campo [data-vacio] {
+    opacity: 0;
+    transition: opacity 150ms ease-out;
+  }
+
+  .campo:focus-within [data-vacio],
+  .campo:has([aria-expanded='true']) [data-vacio] {
+    opacity: 1;
   }
 }
 

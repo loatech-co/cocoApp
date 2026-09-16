@@ -168,7 +168,14 @@ describe('Los atajos', () => {
 
     // La respuesta llega cuando se hace la pregunta, y es UNA tarjeta por
     // mucho que se insista: ni un contador permanente ni un botón apagado.
-    expect(screen.getAllByText('Solo caben 9 atajos. Quita uno para añadir otro.')).toHaveLength(1);
+    //
+    // Se comprueban el titular Y el detalle: el aviso pasó de una línea a
+    // dos, y con solo el titular la prueba seguiría en verde aunque el
+    // detalle —que es el que dice cuántos caben y qué hacer— desapareciera.
+    expect(screen.getAllByText('No caben más atajos')).toHaveLength(1);
+    expect(
+      screen.getAllByText('El máximo son 9. Quita uno para añadir otro.'),
+    ).toHaveLength(1);
     // Y no entró ninguno.
     expect(screen.getByText('Página 9')).toBeTruthy();
     expect(screen.getByText('Página 10')).toBeTruthy();

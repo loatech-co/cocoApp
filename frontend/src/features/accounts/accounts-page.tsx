@@ -8,13 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select } from '@/components/ui/select';
 import { ApiClientError } from '@/lib/api-client';
 import { useAccounts, useArchivarCuenta, useCrearCuenta } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
+import { Campo } from '@/components/ui/campo';
 
 const TIPOS: { valor: Account['type']; etiqueta: string }[] = [
   { valor: 'cash', etiqueta: 'Efectivo' },
@@ -192,8 +192,7 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Nombre</Label>
+            <Campo etiqueta="Nombre" id="name">
               <Input
                 id="name"
                 required
@@ -201,10 +200,9 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
                 onChange={(evento) => setName(evento.target.value)}
                 placeholder="Bancolombia débito"
               />
-            </div>
+            </Campo>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="type">Tipo</Label>
+            <Campo etiqueta="Tipo" id="type">
               <Select
                 id="type"
                 etiqueta="Tipo de cuenta"
@@ -212,12 +210,9 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
                 opciones={TIPOS.map((o) => ({ valor: o.valor, etiqueta: o.etiqueta }))}
                 onCambiar={(v) => setType(v as Account['type'])}
               />
-            </div>
+            </Campo>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="opening">
-                {esTarjeta ? 'Deuda actual' : 'Saldo inicial'}
-              </Label>
+            <Campo etiqueta={esTarjeta ? 'Deuda actual' : 'Saldo inicial'} id="opening">
               <Input
                 id="opening"
                 inputMode="decimal"
@@ -225,11 +220,10 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
                 onChange={(evento) => setOpeningBalance(evento.target.value)}
                 className="tabular"
               />
-            </div>
+            </Campo>
 
             {esTarjeta && (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="limit">Cupo total</Label>
+              <Campo etiqueta="Cupo total" id="limit">
                 <Input
                   id="limit"
                   inputMode="decimal"
@@ -238,7 +232,7 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
                   className="tabular"
                   placeholder="5000000"
                 />
-              </div>
+              </Campo>
             )}
           </div>
 

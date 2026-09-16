@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronDown } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Calendario } from '@/components/calendario';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { diaLargo } from '@/lib/fechas';
 import { SUPERFICIE_FLOTANTE, SURGE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
+import { useDentroDeUnCampo } from '@/components/ui/campo';
 
 /**
  * Un día, elegido en el calendario de la app.
@@ -35,6 +36,7 @@ export function SelectorDeDia({
 }) {
   const [abierto, setAbierto] = useState(false);
   const caja = useRef<HTMLDivElement>(null);
+  const enCampo = useDentroDeUnCampo();
 
   useEffect(() => {
     if (!abierto) return;
@@ -76,14 +78,34 @@ export function SelectorDeDia({
         aria-haspopup="dialog"
         className="w-full justify-between"
       >
-        <span className="flex min-w-0 items-center gap-2">
-          <CalendarDays className="size-4 shrink-0 opacity-70" aria-hidden="true" />
-          <span className="truncate font-normal">{valor ? diaLargo(valor) : 'Elige una fecha'}</span>
+        <span
+          data-lleno={valor ? 'si' : 'no'}
+          data-vacio={valor ? undefined : ''}
+          className={cn('min-w-0 flex-1 truncate text-left font-normal', enCampo && 'pt-4')}
+        >
+          {valor ? diaLargo(valor) : 'Elige una fecha'}
         </span>
-        <ChevronDown
-          className={cn('size-3.5 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
-          aria-hidden="true"
-        />
+
+        {/*
+          ── El calendario va al FINAL, y no hay flecha ─────────────────────
+          Antes llevaba las dos cosas: el calendario delante del valor y una
+          flecha detrás. Sobraba una.
+
+          El calendario no es informativo —no hace falta un dibujo para saber
+          que un campo que dice "4 de abril de 2022" es una fecha—: es la
+          señal de que ESTO ABRE UN CALENDARIO, que es justo el papel que
+          cumple una flecha en un desplegable. Dos iconos para decir lo mismo,
+          uno a cada lado.
+
+          Así que se queda el que dice más, y se queda donde va lo que abre
+          algo: a la derecha, en el mismo sitio donde el `Select` y el `Combo`
+          ponen su flecha. Y de paso el valor arranca a la misma altura que en
+          los demás campos en vez de ocho píxeles más adentro.
+
+          No gira. Una flecha invertida dice "esto está abierto"; un
+          calendario boca abajo no dice nada.
+        */}
+        <CalendarDays className="size-4 shrink-0 opacity-70" aria-hidden="true" />
       </Button>
 
       {abierto && !deshabilitado && (

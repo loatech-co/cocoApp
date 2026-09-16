@@ -114,7 +114,10 @@ export function useSuperficieDeAtajos({
     if (!anadirAtajo(ruta)) {
       // La respuesta llega cuando se hace la pregunta: ni un contador
       // permanente ni un control apagado, que no contesta nada al pulsarlo.
-      mostrarAviso(`Solo caben ${MAXIMO_DE_ATAJOS} atajos. Quita uno para añadir otro.`, 'warning');
+      mostrarAviso('No caben más atajos', {
+        detalle: `El máximo son ${MAXIMO_DE_ATAJOS}. Quita uno para añadir otro.`,
+        tono: 'warning',
+      });
     }
   }
 

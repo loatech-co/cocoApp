@@ -6,11 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/lib/auth-context';
 import { PoliticaDeContrasena, cumpleLaPolitica } from '@/features/auth/politica-de-contrasena';
 import { Ajustes } from './ajustes';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
+import { Campo } from '@/components/ui/campo';
 
 /**
  * Mi cuenta: cambiar contraseña y cerrar sesión en todas partes.
@@ -118,8 +118,7 @@ function CambiarContrasena() {
         )}
 
         <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="actual">Contraseña actual</Label>
+          <Campo etiqueta="Contraseña actual" id="actual">
             <Input
               id="actual"
               type="password"
@@ -128,19 +127,20 @@ function CambiarContrasena() {
               value={actual}
               onChange={(evento) => setActual(evento.target.value)}
             />
-          </div>
+          </Campo>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="nueva">Contraseña nueva</Label>
-            <Input
-              id="nueva"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={nueva}
-              onChange={(evento) => setNueva(evento.target.value)}
-              aria-describedby="requisitos-nueva"
-            />
+            <Campo etiqueta="Contraseña nueva" id="nueva">
+              <Input
+                id="nueva"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={nueva}
+                onChange={(evento) => setNueva(evento.target.value)}
+                aria-describedby="requisitos-nueva"
+              />
+            </Campo>
             <div id="requisitos-nueva">
               <PoliticaDeContrasena password={nueva} />
             </div>

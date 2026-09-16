@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Menu } from '@/components/menu';
 import { cn } from '@/lib/utils';
+import { useDentroDeUnCampo } from '@/components/ui/campo';
 
 /**
  * Un desplegable en el que se escribe.
@@ -61,6 +62,7 @@ export function Combo({
 }) {
   const [busca, setBusca] = useState('');
   const campo = useRef<HTMLInputElement>(null);
+  const enCampo = useDentroDeUnCampo();
 
   const elegida = opciones.find((o) => o.valor === valor);
 
@@ -88,7 +90,15 @@ export function Combo({
           'border border-input bg-card px-3 text-sm opacity-50',
         )}
       >
-        <span className="min-w-0 flex-1 truncate text-left text-muted-foreground">{vacio}</span>
+        <span
+          data-vacio=""
+          className={cn(
+            'min-w-0 flex-1 truncate text-left text-muted-foreground',
+            enCampo && 'pt-4',
+          )}
+        >
+          {vacio}
+        </span>
         <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden="true" />
       </span>
     );
@@ -111,10 +121,23 @@ export function Combo({
         'hover:border-ring/40',
         'outline-none transition-colors focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
       )}
+      idDisparador={id}
       disparador={({ abierto }) => (
         <>
+          {/*
+            El relleno de arriba va en el TEXTO y no en el botón: con el botón
+            relleno, la flecha quedaría ocho píxeles baja porque
+            `items-center` la centraría en la caja de contenido en vez de en
+            el campo.
+          */}
           <span
-            className={cn('min-w-0 flex-1 truncate text-left', !elegida && 'text-muted-foreground')}
+            data-lleno={elegida ? 'si' : 'no'}
+            data-vacio={elegida ? undefined : ''}
+            className={cn(
+              'min-w-0 flex-1 truncate text-left',
+              !elegida && 'text-muted-foreground',
+              enCampo && 'pt-4',
+            )}
           >
             {elegida?.etiqueta ?? vacio}
           </span>

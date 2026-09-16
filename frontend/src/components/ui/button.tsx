@@ -75,8 +75,16 @@ const buttonVariants = cva(
          *
          * El peso también baja: lo que se lee ahí es un valor, no una acción.
          */
+        /*
+         * El relleno horizontal es de la VARIANTE y no del tamaño, que es la
+         * única excepción a la regla: `size` reparte 20px a los lados porque
+         * un botón necesita aire alrededor de su verbo, y un campo necesita
+         * que su valor arranque a 12 —donde arrancan el `Input` y el
+         * `Select` de la misma fila—. Con 20, el selector de fecha tenía su
+         * texto ocho píxeles más adentro que sus vecinos.
+         */
         campo:
-          'border border-input bg-card font-normal text-foreground transition-colors hover:border-ring/40 aria-expanded:border-ring',
+          'border border-input bg-card px-3 font-normal text-foreground transition-colors hover:border-ring/40 aria-expanded:border-ring',
       },
       /*
         ── DOS tamaños, y los mismos para todo ──────────────────────────────

@@ -34,6 +34,7 @@ export function Menu({
   flotante = false,
   variante = 'herramienta',
   sinRelleno = false,
+  idDisparador,
   disparador,
   children,
 }: {
@@ -92,6 +93,17 @@ export function Menu({
    * esas líneas quedarían cortadas 4px antes de cada lado.
    */
   sinRelleno?: boolean;
+  /**
+   * El `id` del BOTÓN, no de la caja.
+   *
+   * Hace falta para que una etiqueta flotante pueda apuntarle con `htmlFor`.
+   * Y tiene que ser el botón: `htmlFor` solo vale para los elementos que se
+   * pueden etiquetar —`button`, `input`, `select`, `textarea`— y un `div` o un
+   * `span` no está entre ellos, así que una etiqueta apuntando a la caja se
+   * queda sin asociar y quien navega con lector de pantalla oye «botón» y
+   * nada más.
+   */
+  idDisparador?: string;
   /** Reemplaza el botón por completo (el avatar, por ejemplo). */
   disparador?: (props: { abierto: boolean }) => ReactNode;
   children: ReactNode | ((cerrar: () => void) => ReactNode);
@@ -130,6 +142,7 @@ export function Menu({
       {disparador ? (
         <button
           type="button"
+          id={idDisparador}
           onClick={() => {
             if (flotante) medir();
             setAbierto((v) => !v);

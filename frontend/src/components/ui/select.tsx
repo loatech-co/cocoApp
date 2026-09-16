@@ -1,7 +1,9 @@
 import { Check, ChevronDown } from 'lucide-react';
+import type { ComponentType, ReactNode } from 'react';
 
 import { Menu } from '@/components/menu';
 import { cn } from '@/lib/utils';
+import { useDentroDeUnCampo } from '@/components/ui/campo';
 
 export interface OpcionDeSelect {
   valor: string;
@@ -26,6 +28,18 @@ export interface OpcionDeSelect {
  * están bien hechos. Se renuncia a eso a cambio de que la app se vea igual en
  * todas partes; a cambio, esta lista se desplaza, marca lo elegido y cierra al
  * elegir, que es lo que se usa el 99 % de las veces.
+ *
+ * ── Los iconos, los mismos que en un campo de texto ─────────────────────────
+ * `icono` a la izquierda es informativo; `acciones` a la derecha son activas y
+ * van ANTES de la flecha, que es la acción propia del desplegable y siempre la
+ * última. Aquí no hace falta reservarles sitio con relleno como en un
+ * `<input>`: un botón sí puede tener hijos, así que van en la misma fila y el
+ * texto se encoge solo.
+ *
+ * ── Qué es `data-lleno` y qué es `data-vacio` ───────────────────────────────
+ * Los dos los lee la etiqueta flotante de `.campo`, en `index.css`: el primero
+ * para subirse cuando hay algo elegido, el segundo para esconder el texto de
+ * «sin elegir» mientras la etiqueta está ocupando su sitio.
  */
 export function Select({
   valor,
@@ -35,6 +49,8 @@ export function Select({
   vacio,
   tamano = 'md',
   deshabilitado = false,
+  icono: Icono,
+  acciones,
   id,
   className,
 }: {
@@ -49,6 +65,11 @@ export function Select({
   /** Los mismos dos de toda la app: `sm` mide 36 y `md` mide 44. */
   tamano?: 'sm' | 'md';
   deshabilitado?: boolean;
+  /** A la izquierda, informativo: de qué es este campo. */
+  icono?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  /** A la derecha, activas. Una o dos, antes de la flecha. */
+  acciones?: ReactNode[];
+  /** El `id` del BOTÓN, para que una etiqueta pueda apuntarle. */
   id?: string;
   className?: string;
 }) {
@@ -56,13 +77,48 @@ export function Select({
   const elegida = opciones.find((o) => o.valor === valor);
   const vacioEsPosible = vacio !== undefined;
   const sinNada = deshabilitado || (opciones.length === 0 && !vacioEsPosible);
+  const derecha = acciones?.filter(Boolean) ?? [];
+  const enCampo = useDentroDeUnCampo();
 
-  const disparador = (
+  const dentro = (
     <>
-      <span className={cn('min-w-0 flex-1 truncate text-left', !elegida && 'text-muted-foreground')}>
+      {Icono && (
+        <span data-icono="" className="shrink-0 text-muted-foreground">
+          <Icono className={pequeno ? 'size-3.5' : 'size-4'} aria-hidden={true} />
+        </span>
+      )}
+
+      {/*
+        El relleno de arriba va en el TEXTO y no en el botón, y por eso la
+        flecha no se mueve: con el botón relleno, `items-center` centraría la
+        flecha en la caja de contenido en vez de en el campo y quedaría ocho
+        píxeles baja. Estirando solo el texto, la línea crece hacia arriba y la
+        flecha se queda en el centro del campo, que es donde se busca.
+      */}
+      <span
+        data-lleno={elegida ? 'si' : 'no'}
+        data-vacio={elegida ? undefined : ''}
+        className={cn(
+          'min-w-0 flex-1 truncate text-left',
+          !elegida && 'text-muted-foreground',
+          enCampo && 'pt-4',
+        )}
+      >
         {elegida?.etiqueta ?? vacio ?? '—'}
       </span>
-      <ChevronDown className={cn('shrink-0 opacity-60', pequeno ? 'size-3.5' : 'size-4')} aria-hidden="true" />
+
+      {derecha.map((accion, i) => (
+        // El índice como clave: son uno o dos botones fijos que el campo
+        // declara al construirse, no una lista que se reordene.
+        <span key={i} className="shrink-0">
+          {accion}
+        </span>
+      ))}
+
+      <ChevronDown
+        className={cn('shrink-0 opacity-60', pequeno ? 'size-3.5' : 'size-4')}
+        aria-hidden="true"
+      />
     </>
   );
 
@@ -71,6 +127,7 @@ export function Select({
     // sin desplegable detrás, para que el foco no caiga en una trampa.
     return (
       <span
+        id={id}
         className={cn(
           'flex w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg border border-input',
           'bg-card opacity-50',
@@ -80,7 +137,7 @@ export function Select({
         )}
         aria-disabled="true"
       >
-        {disparador}
+        {dentro}
       </span>
     );
   }
@@ -94,6 +151,7 @@ export function Select({
       // desplaza: sin esto, el panel lo recorta la caja que lo contiene.
       flotante
       ancho="w-[max(12rem,100%)]"
+      idDisparador={id}
       claseCaja={cn('w-full min-w-0', className)}
       claseDisparador={cn(
         // El borde es el de los CAMPOS —`--input`—, no el de los contenedores:
@@ -109,10 +167,10 @@ export function Select({
         // ya está dentro del flex: no hay nada que esquivar.
         pequeno ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',
       )}
-      disparador={() => disparador}
+      disparador={() => dentro}
     >
       {(cerrar) => (
-        <ul className="max-h-64 overflow-y-auto" id={id}>
+        <ul className="max-h-64 overflow-y-auto">
           {vacioEsPosible && (
             <Opcion
               elegida={valor === ''}

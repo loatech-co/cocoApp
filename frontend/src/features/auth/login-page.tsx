@@ -7,8 +7,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { mensajeDeErrorDeAuth, useAuth } from '@/lib/auth-context';
+import { Campo } from '@/components/ui/campo';
 
 /**
  * Entrar.
@@ -89,8 +89,7 @@ export function LoginPage() {
             )}
 
             <form onSubmit={onSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">Correo</Label>
+              <Campo etiqueta="Correo" id="email">
                 <Input
                   id="email"
                   type="email"
@@ -100,10 +99,9 @@ export function LoginPage() {
                   onChange={(evento) => setEmail(evento.target.value)}
                   aria-invalid={error !== null}
                 />
-              </div>
+              </Campo>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password">Contraseña</Label>
+              <Campo etiqueta="Contraseña" id="password">
                 <Input
                   id="password"
                   type="password"
@@ -113,7 +111,7 @@ export function LoginPage() {
                   onChange={(evento) => setPassword(evento.target.value)}
                   aria-invalid={error !== null}
                 />
-              </div>
+              </Campo>
 
               <Button type="submit" className="w-full" disabled={enviando}>
                 {enviando ? (
