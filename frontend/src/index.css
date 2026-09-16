@@ -70,6 +70,19 @@
   --font-display: Geist, ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ── El escalón por debajo de `text-xs` ─────────────────────────────────
+     11px. Aparecía escrito a mano —`text-[11px]`— en trece sitios: el correo
+     bajo el nombre de la cuenta, las marcas de una gráfica, el pie de una
+     miniatura, el rótulo de un indicador. Trece copias de una medida son
+     trece sitios donde esa medida puede separarse, y ya habían empezado:
+     algunos llevaban `leading-none` y otros no.
+
+     Existe porque hace falta: `text-xs` son 12px y hay sitios —un eje, una
+     nota bajo un dato— donde 12 pesa igual que el dato que acompaña. Por
+     debajo de 11 no se baja: deja de leerse. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: calc(1 / 0.6875);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

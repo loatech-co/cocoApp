@@ -268,7 +268,7 @@ export function Dona({
           <p className="tabular mt-1 font-display text-base font-semibold">
             {formatCOP(señalada.valor)}
           </p>
-          <p className="tabular mt-0.5 text-[11px] text-muted-foreground">
+          <p className="tabular mt-0.5 text-2xs text-muted-foreground">
             {señalada.porcentaje}% del total
           </p>
         </div>

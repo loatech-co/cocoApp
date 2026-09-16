@@ -455,12 +455,18 @@ function Kpi({
             componente y no copiado en cada pantalla. */}
         <ChipIcono Icono={Icono} color={chip} />
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {etiqueta}
-          </p>
+          {/* Sin mayúsculas sostenidas ni interletraje abierto. Era el
+              rótulo en versalitas del panel de control de siempre, y con la
+              tipografía del tema —que declara el interletraje en cero— se lee
+              como si viniera de otro producto. Un rótulo en minúsculas se lee
+              de un golpe; en sostenidas hay que descifrarlo letra a letra. */}
+          <p className="text-xs font-medium text-muted-foreground">{etiqueta}</p>
           <p
             className={
-              'tabular mt-1 truncate text-2xl font-semibold leading-tight sm:text-[28px] ' +
+              // `sm:text-3xl` y no unos 28px a mano: 30 es el escalón que
+              // sigue a 24 en la escala, y la diferencia con 28 no la nota
+              // nadie —la de tener una medida fuera de la escala, sí—.
+              'tabular mt-1 truncate text-2xl font-semibold leading-tight sm:text-3xl ' +
               (acento === 'income' ? 'text-income' : acento === 'expense' ? 'text-expense' : '')
             }
           >
@@ -562,7 +568,7 @@ function Distribucion({
           <button
             type="button"
             onClick={onSubir}
-            className="flex min-w-0 items-center gap-1 self-start rounded text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="flex min-w-0 items-center gap-1 self-start rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             <ChevronLeft className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{ruta.map((n) => n.name).join(' · ')}</span>

@@ -336,7 +336,7 @@ function Baldosa({
   const contenido = (
     <>
       <Icono className="size-6 shrink-0" aria-hidden={true} />
-      <span className="line-clamp-2 text-[11px] font-medium leading-tight">{etiqueta}</span>
+      <span className="line-clamp-2 text-2xs font-medium leading-tight">{etiqueta}</span>
     </>
   );
 

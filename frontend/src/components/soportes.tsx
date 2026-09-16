@@ -239,8 +239,8 @@ export function Soltar({
           subiendo
             ? 'cursor-wait border-border text-muted-foreground'
             : encima
-              ? 'border-acento-tinta bg-black/15 text-foreground'
-              : 'border-border text-muted-foreground hover:bg-black/10',
+              ? 'border-acento-tinta bg-accent text-accent-foreground'
+              : 'border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground',
         )}
       >
         {subiendo ? (
@@ -266,7 +266,7 @@ export function Soltar({
         ) : (
           <>
             <ImagePlus className="size-6" aria-hidden="true" />
-            <span className="px-2 text-center text-[11px] leading-tight">Añadir soporte</span>
+            <span className="px-2 text-center text-2xs leading-tight">Añadir soporte</span>
           </>
         )}
       </button>
@@ -340,7 +340,7 @@ function Miniatura({
         <LienzoPdf url={url} />
       )}
 
-      <span className="tabular absolute left-1.5 top-1.5 rounded-full bg-sala/70 px-1.5 text-[11px] font-medium text-sala-tinta">
+      <span className="tabular absolute left-1.5 top-1.5 rounded-full bg-sala/70 px-1.5 text-2xs font-medium text-sala-tinta">
         {numero}
       </span>
 
@@ -553,7 +553,7 @@ function Pase({
               download={soporte.nombre_archivo}
               title="Descargar"
               aria-label={`Descargar ${soporte.nombre_archivo}`}
-              className="flex size-9 items-center justify-center rounded-lg text-sala-tinta transition-colors hover:bg-white/10"
+              className="flex size-9 items-center justify-center rounded-lg text-sala-tinta transition-colors hover:bg-sala-tinta/10"
             >
               <Download className="size-4" aria-hidden="true" />
             </a>
@@ -595,7 +595,7 @@ function Pase({
           desplazamiento. Es lo que ya sabe hacer el navegador y no hay que
           reinventar el arrastre.
         */}
-        <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-black/25 p-3 sm:p-6">
+        <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-sala/25 p-3 sm:p-6">
           {!url ? (
             <div className="flex w-full items-center justify-center">
               <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
@@ -634,7 +634,7 @@ function Pase({
 
       {/* ── Controles ─────────────────────────────────────────────────── */}
       <div className="mt-3 flex shrink-0 flex-wrap items-center justify-center gap-3">
-        <div className="flex items-center gap-1 rounded-full bg-white/10 px-1">
+        <div className="flex items-center gap-1 rounded-full bg-sala-tinta/10 px-1">
           <BotonOscuro onClick={() => cambiarZoom(-1)} deshabilitado={zoom === 0} etiqueta="Alejar">
             <Minus className="size-4" aria-hidden="true" />
           </BotonOscuro>
@@ -657,7 +657,7 @@ function Pase({
         </div>
 
         {paginas > 1 && (
-          <div className="flex items-center gap-1 rounded-full bg-white/10 px-1">
+          <div className="flex items-center gap-1 rounded-full bg-sala-tinta/10 px-1">
             <BotonOscuro
               onClick={() => setPagina((p) => p - 1)}
               deshabilitado={pagina === 1}
@@ -728,7 +728,7 @@ function BotonOscuro({
       disabled={deshabilitado}
       aria-label={etiqueta}
       title={etiqueta}
-      className={cn('text-sala-tinta hover:bg-white/10 hover:text-sala-tinta', className)}
+      className={cn('text-sala-tinta hover:bg-sala-tinta/10 hover:text-sala-tinta', className)}
     >
       {children}
     </Button>

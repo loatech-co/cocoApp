@@ -253,7 +253,7 @@ export function Tendencia({
                   {formatCOP(Number(punto.income))} de ingreso
                 </p>
               )}
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-2xs text-muted-foreground">
                 {punto.count} {punto.count === 1 ? 'movimiento' : 'movimientos'}
               </p>
             </div>
@@ -268,7 +268,7 @@ export function Tendencia({
         {etiquetas.map(({ indice, texto }) => (
           <span
             key={indice}
-            className="absolute -translate-x-1/2 whitespace-nowrap text-[11px] text-muted-foreground"
+            className="absolute -translate-x-1/2 whitespace-nowrap text-2xs text-muted-foreground"
             style={{ left: `${equis(indice, puntos.length)}%` }}
           >
             {texto}

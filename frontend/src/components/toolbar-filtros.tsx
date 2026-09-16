@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 
 import { FiltroClasificacion } from '@/components/filtro-clasificacion';
 import { Menu, MenuOpcion, MenuTitulo } from '@/components/menu';
 import { SelectorDeRango } from '@/components/selector-de-rango';
+import { Etiqueta } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
 import { Input } from '@/components/ui/input';
@@ -189,6 +190,10 @@ export function ToolbarFiltros({
           activo={filtros.categoryIds.length > 0}
           ancho="w-72"
           tipo="panel"
+          // Este panel trae cabecera, lista y pie separados por líneas que
+          // cruzan de lado a lado: con el acolchado del menú quedarían
+          // cortadas 4px antes de cada borde.
+          sinRelleno
         >
           <FiltroClasificacion
             arbol={arbol}
@@ -328,8 +333,10 @@ function Captura({
       aria-disabled={deshabilitada}
       onClick={onClick}
       className={cn(
-        'flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors',
-        deshabilitada ? 'cursor-not-allowed opacity-50' : 'hover:bg-muted',
+        'flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left transition-colors',
+        deshabilitada
+          ? 'cursor-not-allowed opacity-50'
+          : 'hover:bg-accent hover:text-accent-foreground',
       )}
     >
       <ChipIcono Icono={Icono} color={color} tamano="sm" />
@@ -339,10 +346,14 @@ function Captura({
         <span className="block truncate text-xs text-muted-foreground">{ayuda}</span>
       </span>
 
+      {/* La misma etiqueta que en el resto de la app. Era un `<span>` con su
+          propio redondeo, su propio relleno y un tamaño de letra a mano —11px,
+          que no está en la escala—: tres decisiones repetidas para decir lo
+          que `Etiqueta` ya dice. */}
       {nota && (
-        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+        <Etiqueta tono="neutro" className="shrink-0 text-muted-foreground">
           {nota}
-        </span>
+        </Etiqueta>
       )}
     </button>
   );

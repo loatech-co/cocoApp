@@ -92,7 +92,7 @@ export function FiltroClasificacion({
                     // ancho del desplegable. Por eso la fila tiene suelo y el
                     // recuadro no.
                     'movil:min-h-[42px]',
-                    'hover:bg-muted',
+                    'hover:bg-accent hover:text-accent-foreground',
                     marcado && 'font-medium',
                   )}
                 >
@@ -113,7 +113,7 @@ export function FiltroClasificacion({
                     onClick={() => setCamino([...camino, nodo])}
                     aria-label={`Ver lo que hay dentro de ${nodo.name}`}
                     title={`Ver lo que hay dentro de ${nodo.name}`}
-                    className="grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     <ChevronRight className="size-4" aria-hidden="true" />
                   </button>
@@ -134,7 +134,7 @@ export function FiltroClasificacion({
           <button
             type="button"
             onClick={() => onCambiar([])}
-            className="rounded font-medium text-primary hover:underline"
+            className="rounded-sm font-medium text-primary hover:underline"
           >
             Limpiar
           </button>

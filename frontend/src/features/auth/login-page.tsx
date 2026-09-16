@@ -144,9 +144,6 @@ export function LoginPage() {
           El padding va en el CONTENEDOR y el redondeo en la imagen: así respira
           contra el borde de la pantalla en vez de sangrar.
 
-          32px exactos y escritos a mano: este proyecto sobrescribe los tokens
-          de radio, así que ninguna clase de Tailwind da ese valor.
-
           Por CSS y no con <img>: si la imagen no carga —red lenta, navegador
           sin WebP— queda el verde de fondo y la pantalla sigue siendo usable.
           Un <img> roto dejaría el icono de imagen partida.
@@ -172,7 +169,12 @@ export function LoginPage() {
           */}
           <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-primary via-primary/70 to-transparent" />
 
-          <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-[1.08] tracking-tight text-white xl:p-14 xl:text-6xl">
+          {/* `text-primary-foreground` y no blanco. El degradado de debajo es
+              `--primary`, y en oscuro ese primario es el teal CLARO del tema:
+              blanco encima daba 1.9:1 y la frase desaparecía. La tinta del
+              primario es, por definición, la que se lee sobre él —blanca en
+              claro, casi negra en oscuro— sin que haya que elegir. */}
+          <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-[1.08] tracking-tight text-primary-foreground xl:p-14 xl:text-6xl">
             Tus finanzas,
             <br />
             claras.

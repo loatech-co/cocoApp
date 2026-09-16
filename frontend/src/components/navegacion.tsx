@@ -176,7 +176,7 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
                 {usuario?.display_name ?? '—'}
               </span>
               {usuario?.email && (
-                <span className="block truncate text-[11px] text-sidebar-muted">
+                <span className="block truncate text-2xs text-sidebar-muted">
                   {usuario.email}
                 </span>
               )}

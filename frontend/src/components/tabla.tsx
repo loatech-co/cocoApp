@@ -67,7 +67,7 @@ export function Th({
       type="button"
       onClick={orden.onCambiar}
       className={cn(
-        'inline-flex items-center gap-1 rounded transition-colors hover:text-foreground',
+        'inline-flex items-center gap-1 rounded-sm transition-colors hover:text-foreground',
         alineado === 'derecha' && 'flex-row-reverse',
         orden.activo && 'text-foreground',
       )}

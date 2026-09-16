@@ -106,7 +106,11 @@ export function Chip({
         title={etiquetaDeQuitar ?? 'Quitar'}
         className={cn(
           'flex size-4 shrink-0 items-center justify-center rounded-full transition-colors',
-          activo ? 'hover:bg-black/20' : 'hover:bg-muted-foreground/20',
+          // Encendido, el chip es `--primary` y el aspa lleva su tinta: el
+          // resaltado tiene que ser esa misma tinta rebajada, no un negro.
+          // En oscuro el primario es teal CLARO, así que un negro al 20 %
+          // hacía un borrón oscuro sobre un chip claro.
+          activo ? 'hover:bg-primary-foreground/20' : 'hover:bg-muted-foreground/20',
         )}
       >
         <X className="size-3" aria-hidden="true" />

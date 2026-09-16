@@ -1406,7 +1406,7 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
           type="button"
           onClick={() => setZoom(0)}
           title="Volver al tamaño normal"
-          className="tabular min-w-[3rem] text-center text-[11px] font-medium text-sala-tinta"
+          className="tabular min-w-[3rem] text-center text-2xs font-medium text-sala-tinta"
         >
           {Math.round(ZOOMS[zoom] * 100)} %
         </button>
@@ -1470,7 +1470,7 @@ function MandoDeZoom({
       title={etiqueta}
       className={cn(
         'flex size-7 items-center justify-center rounded-full text-sala-tinta transition-colors',
-        deshabilitado ? 'opacity-40' : 'hover:bg-white/15',
+        deshabilitado ? 'opacity-40' : 'hover:bg-sala-tinta/15',
       )}
     >
       {children}

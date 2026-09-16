@@ -119,7 +119,7 @@ export function PanelDeSecciones({
 
           {administracion.length > 0 && (
             <>
-              <p className="mt-6 mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted">
+              <p className="mt-6 mb-1 px-3 text-2xs font-semibold uppercase tracking-wider text-sidebar-muted">
                 Administración
               </p>
               {administracion.map(({ to, label, Icono, exact }) => (

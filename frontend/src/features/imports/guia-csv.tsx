@@ -197,7 +197,7 @@ function PromptParaIa() {
         corriges antes de que toque nada.
       </p>
 
-      <pre className="mt-2 max-h-48 overflow-y-auto rounded-md bg-background p-3 font-mono text-[11px] leading-relaxed whitespace-pre-wrap">
+      <pre className="mt-2 max-h-48 overflow-y-auto rounded-md bg-background p-3 font-mono text-2xs leading-relaxed whitespace-pre-wrap">
         {PROMPT}
       </pre>
 
