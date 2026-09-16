@@ -41,7 +41,7 @@ export function AccountsPage() {
         titulo="Cuentas"
         ayuda="Dónde tienes tu plata. El saldo se calcula de tus movimientos."
         acciones={
-          <Button onClick={() => setFormularioAbierto((abierto) => !abierto)}>
+          <Button size="sm" onClick={() => setFormularioAbierto((abierto) => !abierto)}>
             <Plus aria-hidden="true" />
             Nueva cuenta
           </Button>

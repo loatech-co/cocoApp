@@ -12,6 +12,7 @@ import { CuentaPage } from '@/features/cuenta/cuenta-page';
 import { DashboardPage } from '@/features/dashboard/dashboard-page';
 import { ImportarPage } from '@/features/imports/importar-page';
 import { RevisarPage } from '@/features/imports/revisar-page';
+import { TITULO_DE_PAGINA } from '@/components/cabecera-de-pagina';
 
 /**
  * Rutas en español, una por módulo del catálogo.
@@ -71,8 +72,8 @@ const router = createBrowserRouter([
     path: '*',
     element: (
       <main className="flex min-h-dvh flex-col items-center justify-center gap-2 px-4 text-center">
-        <h1 className="text-3xl font-semibold">Esta página no existe</h1>
-        <p className="text-muted-foreground">Revisa la dirección o vuelve al inicio.</p>
+        <h1 className={TITULO_DE_PAGINA}>Esta página no existe</h1>
+        <p className="text-sm text-muted-foreground">Revisa la dirección o vuelve al inicio.</p>
         <a className="text-primary underline underline-offset-4" href="/">
           Ir al inicio
         </a>

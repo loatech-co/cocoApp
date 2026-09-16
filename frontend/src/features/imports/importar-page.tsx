@@ -20,6 +20,7 @@ import type { ColumnaDetectada } from './parseo/csv-columnas';
 import { GuiaCsv } from './guia-csv';
 import { MapeoDeColumnas } from './mapeo-columnas';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
+import { Progreso } from '@/components/ui/progreso';
 
 /** De qué vía vino el documento. Se guarda en el lote para poder comparar
  *  después qué origen produce menos correcciones en la revisión. */
@@ -234,7 +235,7 @@ export function ImportarPage() {
           )}
 
           {progreso ? (
-            <Progreso progreso={progreso} />
+            <ProgresoDeLectura progreso={progreso} />
           ) : (
             <ZonaDeSoltar
               arrastrando={arrastrando}
@@ -264,9 +265,17 @@ export function ImportarPage() {
               />
             )}
 
-            <p className="text-sm">
-              <strong className="text-2xl">{resultado.movimientos.length}</strong>{' '}
-              movimientos en <span className="text-muted-foreground">{resultado.archivo}</span>
+            {/* La cifra en su propia línea y no incrustada en el párrafo. A
+                24px dentro de un texto de 14 estiraba el renglón que la
+                contiene y desalineaba las palabras de al lado. */}
+            <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
+              <strong className="tabular font-display text-lg font-semibold">
+                {resultado.movimientos.length}
+              </strong>
+              <span>
+                movimientos en{' '}
+                <span className="text-muted-foreground">{resultado.archivo}</span>
+              </span>
             </p>
 
             {resultado.tipo === 'documento' && resultado.huboColumnaDeSaldo && (
@@ -348,7 +357,7 @@ function Ignoradas({ lineas, motivo }: { lineas: readonly string[]; motivo: stri
   );
 }
 
-function Progreso({ progreso }: { progreso: ProgresoDeOcr }) {
+function ProgresoDeLectura({ progreso }: { progreso: ProgresoDeOcr }) {
   const porcentaje = Math.round(progreso.avance * 100);
 
   return (
@@ -357,13 +366,8 @@ function Progreso({ progreso }: { progreso: ProgresoDeOcr }) {
         <ScanLine className="size-4 animate-pulse text-primary" aria-hidden="true" />
         {progreso.etapa}
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-primary transition-[width] duration-300"
-          style={{ width: `${porcentaje}%` }}
-        />
-      </div>
-      <p className="text-xs text-muted-foreground">
+      <Progreso avance={progreso.avance} etiqueta={progreso.etapa} />
+      <p className="tabular text-xs text-muted-foreground">
         {porcentaje}% · Todo ocurre en tu dispositivo; el documento no se sube a ninguna parte.
       </p>
     </div>
@@ -403,7 +407,14 @@ function ZonaDeSoltar({
       onDrop={soltar}
       className={cn(
         'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10 text-center transition-colors',
-        arrastrando ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
+        // El mismo idioma que la zona de soltar de los soportes: se rellena con
+        // `accent`, que es la superficie de lo que responde. Era `bg-primary/5`,
+        // y en oscuro el primario es teal CLARO: al 5 % sobre una tarjeta casi
+        // negra no pintaba nada, así que arrastrar un archivo encima no se
+        // notaba justo en el momento en que hace falta saber dónde soltarlo.
+        arrastrando
+          ? 'border-acento-tinta bg-accent text-accent-foreground'
+          : 'border-border hover:bg-accent hover:text-accent-foreground',
       )}
     >
       <Upload className="size-8 text-muted-foreground" aria-hidden="true" />

@@ -34,6 +34,7 @@ import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
+import { Progreso } from '@/components/ui/progreso';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiClientError, apiSubir } from '@/lib/api-client';
@@ -456,13 +457,15 @@ export function MovimientoModal({
             <p className="text-sm text-muted-foreground">
               {progresoDeLectura?.etapa ?? 'Leyendo el soporte…'}
             </p>
-            {/* El OCR de un escaneo tarda segundos y sin barra parece colgado. */}
-            <div className="h-1 w-48 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-primary transition-[width]"
-                style={{ width: `${Math.round((progresoDeLectura?.avance ?? 0) * 100)}%` }}
-              />
-            </div>
+            {/* El OCR de un escaneo tarda segundos y sin barra parece colgado.
+                La barra es la compartida: esta medía 4px de alto y 192 de ancho
+                y la de la importación 8px y todo el ancho, siendo la misma
+                espera del mismo trabajo. */}
+            <Progreso
+              avance={progresoDeLectura?.avance ?? 0}
+              etiqueta={progresoDeLectura?.etapa ?? 'Leyendo el soporte'}
+              className="w-56"
+            />
           </div>
         )}
 

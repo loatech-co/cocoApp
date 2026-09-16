@@ -24,7 +24,33 @@ import { cn } from '@/lib/utils';
  * El tema lo declara en cero y Geist ya viene cerrada de por sí; el
  * `tracking-tight` que arrastraban tres de las ocho compensaba una familia más
  * suelta, y aplicado a esta apiña los títulos.
+ *
+ * ── Por qué la raya es del componente ───────────────────────────────────────
+ * Porque la llevaban DOS de las ocho pantallas —las que pasan por la barra de
+ * filtros, que la escribía en su propia llamada— y las otras seis no. Al
+ * navegar, el título ganaba y perdía una línea debajo según por dónde se
+ * entrara. La raya separa el título del contenido, y eso hace falta en las
+ * ocho o en ninguna.
+ *
+ * ── Y la acción va en `sm` ──────────────────────────────────────────────────
+ * Los 36px, no los 44. No es una preferencia: en la barra de filtros la acción
+ * principal convive con la búsqueda, el orden, el filtro y el rango, y ahí ya
+ * está decidido que todos los controles de la fila midan lo mismo —romperlo
+ * dejaba la fila descuadrada, y está escrito en su código—. Si el botón de
+ * Centros de costos mide 44 y el del resumen 36, la misma acción cambia de
+ * tamaño al cambiar de pantalla.
  */
+/**
+ * La tipografía de un título de pantalla, para lo que no es una cabecera.
+ *
+ * La usa el 404, que no tiene ayuda ni acciones ni contenido que separar: es un
+ * título centrado en una pantalla vacía. Se escribía a mano —`text-3xl` plano,
+ * sin la familia de titulares y sin crecer con la pantalla— y era la novena
+ * pantalla con su propia tipografía de título justo después de unificar las
+ * ocho primeras.
+ */
+export const TITULO_DE_PAGINA = 'font-display text-2xl font-semibold leading-tight sm:text-3xl';
+
 export function CabeceraDePagina({
   titulo,
   ayuda,
@@ -53,14 +79,13 @@ export function CabeceraDePagina({
       className={cn(
         'flex flex-wrap justify-between gap-x-4 gap-y-3',
         alineado === 'abajo' ? 'items-end' : 'items-start',
+        'border-b border-border pb-4',
         className,
       )}
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <h1 className="font-display text-2xl font-semibold leading-tight sm:text-3xl">
-            {titulo}
-          </h1>
+          <h1 className={TITULO_DE_PAGINA}>{titulo}</h1>
           {junto}
         </div>
         {ayuda && <p className="mt-1 text-sm text-muted-foreground">{ayuda}</p>}

@@ -62,6 +62,17 @@ export function LoginPage() {
         {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
             (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
             BLOQUE con ancho automático, y centrar texto no lo movería. */}
+        {/*
+          El encabezado de nivel 1 de esta pantalla.
+
+          No se pinta porque lo que se ve ya es el logotipo, pero tiene que
+          EXISTIR: sin él, la única jerarquía de la página era el `<h2>` de la
+          tarjeta, así que quien navega con lector de pantalla saltaba de
+          encabezado en encabezado y aquí no encontraba ninguno del que
+          colgaran los demás. El logotipo es un SVG y no puede hacer ese papel.
+        */}
+        <h1 className="sr-only">Coco — iniciar sesión</h1>
+
         <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
         <Card>

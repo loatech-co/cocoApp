@@ -123,6 +123,56 @@ escribirse suelta.
 vuelve a escribir la sombra a mano o a separar un panel con un negro o un
 blanco inventados.
 
+## 4 quinquies. La cabecera de una pantalla
+
+Toda pantalla con contenido abre con `components/cabecera-de-pagina.tsx`.
+Nunca con un `<h1>` y un `<p>` escritos a mano.
+
+**Por qué.** Esas tres líneas se escribieron ocho veces y salieron TRES
+tipografías distintas: el resumen y los movimientos en 24/30px con la
+familia de titulares, cinco pantallas en 30px plano con la del cuerpo, y
+los centros de costos en 30/36. Nadie lo decidió. Y se nota al navegar,
+que es lo peor: el título cambia de tamaño al pasar de una pantalla a
+otra, así que la aplicación parece tres aplicaciones.
+
+**Qué fija el componente, y no se pisa desde la llamada:**
+
+| Pieza | Valor | Por qué |
+|---|---|---|
+| Título | `text-2xl sm:text-3xl`, familia de titulares, sin interletraje | Con 30px fijos, "Importar movimientos" ocupa dos renglones en un teléfono |
+| Ayuda | `text-sm text-muted-foreground`, una línea | Es qué es esta pantalla, no un párrafo |
+| Raya | `border-b border-border pb-4`, siempre | La llevaban dos de las ocho; el título ganaba y perdía una línea según por dónde se entrara |
+| Acción | **`size="sm"`** | Ver abajo |
+
+**La acción va en `sm`, los 36px.** No es una preferencia. En la barra de
+filtros la acción principal convive con la búsqueda, el orden, el filtro y
+el rango, y ahí ya está decidido que todos los controles de la fila midan
+lo mismo —romperlo dejaba la fila descuadrada—. Si el botón de Centros de
+costos mide 44 y el del resumen 36, la misma acción cambia de tamaño al
+cambiar de pantalla.
+
+Y su icono va **sin medida propia** (`<Plus />`, no
+`<Plus className="size-4" />`): el tamaño de los iconos lo pone el botón, y
+escribirlo en la llamada duplica una decisión que ya está tomada.
+
+**Los dos huecos.** `junto` va pegado al título —un botón de ayuda, una
+etiqueta de estado—; `acciones` va al extremo opuesto. Nada más entra en la
+cabecera.
+
+**Lo que NO es una pantalla con contenido.** El 404 y las dos de acceso no
+tienen ayuda, ni acciones, ni contenido que separar con una raya. Usan la
+clase `TITULO_DE_PAGINA` del mismo archivo, que es la tipografía sola.
+
+**Y toda pantalla tiene exactamente un `<h1>`.** Las de acceso lo llevan en
+`sr-only`, porque lo que se ve ahí es el logotipo y un SVG no puede hacer
+ese papel: sin él, la única jerarquía de la página era el `<h2>` de la
+tarjeta y quien navega con lector de pantalla no encontraba ninguno del que
+colgaran los demás.
+
+`components/cabecera-de-pagina.test.ts` lee el código fuente y falla si una
+pantalla vuelve a escribir su propio `<h1>` o si una acción de cabecera pide
+un tamaño que no sea `sm`.
+
 ## 5. El rojo es solo para errores
 
 Lo pendiente —un movimiento sin clasificar— va en el oro del tema

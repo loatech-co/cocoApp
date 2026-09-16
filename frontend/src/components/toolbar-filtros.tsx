@@ -113,7 +113,6 @@ export function ToolbarFiltros({
       titulo={titulo}
       ayuda={subtitulo ?? resumen}
       alineado="abajo"
-      className="border-b border-border pb-4"
       acciones={
       <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
         {/* ── Búsqueda ─────────────────────────────────────────────────── */}

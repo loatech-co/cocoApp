@@ -74,8 +74,10 @@ export function CentrosPage() {
           </Button>
         }
         acciones={
-          <Button type="button" onClick={() => setCreando(true)} className="shrink-0">
-            <Plus className="size-4" aria-hidden="true" />
+          // `size="sm"` como la acción principal del resumen, y el icono sin
+          // medida propia: el tamaño de los iconos lo pone el botón.
+          <Button type="button" size="sm" onClick={() => setCreando(true)} className="shrink-0">
+            <Plus aria-hidden="true" />
             Nuevo centro de costos
           </Button>
         }
