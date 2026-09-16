@@ -264,6 +264,7 @@ function MenuDeLaCuenta({ plegada }: { plegada: boolean }) {
       etiqueta="Tu cuenta"
       ancho="w-60"
       alineado="izquierda"
+      direccion="arriba"
       claseCaja="w-full"
       claseDisparador={cn(
         'flex w-full min-w-0 items-center gap-2.5 rounded-lg py-2 text-left transition-colors hover:bg-sidebar-hover outline-none focus-visible:ring-2 focus-visible:ring-ring',

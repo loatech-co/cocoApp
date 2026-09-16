@@ -25,6 +25,7 @@ export function Menu({
   soloIcono = false,
   activo = false,
   alineado = 'derecha',
+  direccion = 'abajo',
   ancho = 'w-64',
   tipo = 'menu',
   claseCaja,
@@ -39,6 +40,12 @@ export function Menu({
   /** Pinta el botón encendido: hay algo elegido aquí dentro. */
   activo?: boolean;
   alineado?: 'izquierda' | 'derecha';
+  /**
+   * Hacia dónde se abre. `arriba` para los disparadores que viven al pie de
+   * algo: abriendo hacia abajo, el panel se sale de la pantalla y la mitad de
+   * las opciones quedan fuera.
+   */
+  direccion?: 'abajo' | 'arriba';
   ancho?: string;
   /**
    * `menu` es una lista de acciones; `panel` es un formulario dentro de un
@@ -121,7 +128,8 @@ export function Menu({
           role={ROL[tipo]}
           aria-label={etiqueta}
           className={cn(
-            'absolute z-30 mt-2 overflow-hidden rounded-2xl bg-popover py-1.5',
+            'absolute z-30 overflow-hidden rounded-2xl bg-popover py-1.5',
+            direccion === 'arriba' ? 'bottom-full mb-2' : 'top-full mt-2',
             'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
             ancho,
             'max-w-[calc(100vw-2rem)]',
