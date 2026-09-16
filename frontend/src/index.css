@@ -591,6 +591,81 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   EL BARRIDO DEL ESCÁNER
+
+   Una banda de luz que cruza el documento de lado a lado mientras se lee.
+
+   ── Por qué no un girador ─────────────────────────────────────────────────
+   Porque un girador dice «espera» y nada más: es el mismo dibujo para cargar
+   una lista, guardar un formulario o leer un recibo. Aquí está pasando algo
+   concreto y que se puede enseñar —una máquina está mirando ese papel— y
+   enseñarlo hace dos cosas que el girador no: se entiende que la espera tiene
+   un motivo, y se ve QUÉ documento se está leyendo, que es el dato que hace
+   falta si lo que salió no cuadra.
+
+   ── Dos capas, y cada una dice algo ──────────────────────────────────────
+   · `barre` es la banda: un degradado que va de transparente al acento y
+     vuelve a transparente, con una línea brillante en su canto de avance.
+   · `se-revela-al-paso` es el rastro: lo ya barrido queda un poco más claro
+     que lo que falta, así que la banda no parece un reflejo suelto sino algo
+     que va dejando el trabajo hecho detrás.
+
+   1.8s por pasada: por debajo de un segundo parece nervioso y por encima de
+   dos parece que se colgó. Y no alterna de vuelta —un escáner de verdad
+   vuelve, pero la vuelta se lee como «va otra vez desde el principio», que es
+   lo contrario de lo que se quiere decir—.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@utility barre {
+  animation: barrer 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes barrer {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(400%);
+    opacity: 0;
+  }
+}
+
+/* El rastro: crece de izquierda a derecha al mismo ritmo que la banda. */
+@utility deja-rastro {
+  animation: rastro 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes rastro {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Quien pide menos movimiento no recibe una banda cruzando la pantalla cada
+   segundo y ocho. Se queda el documento quieto, y la barra de progreso sigue
+   diciendo que la cosa avanza. */
+@media (prefers-reduced-motion: reduce) {
+  .barre,
+  .deja-rastro {
+    animation: none;
+  }
+
+  .barre {
+    opacity: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    EL CAMPO Y SU ETIQUETA FLOTANTE
 
    La etiqueta empieza DENTRO del campo, donde estaría el marcador, y al
