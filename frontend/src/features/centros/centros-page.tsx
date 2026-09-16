@@ -555,11 +555,11 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
                   Antes eran texto muerto, y el único modo de corregir un
                   nombre mal escrito era borrar el concepto y crearlo de nuevo
                   —con lo que los movimientos se quedaban sin clasificar—. */}
-              {/* El `Chip` compartido, que trae su borde. A mano era
-                   `bg-card` dentro de una caja `muted` dentro de una tarjeta
-                   `card`: el chip acababa del mismo color que la tarjeta y
-                   desaparecía. Con borde se ve en los dos temas sin depender
-                   de qué superficie tenga debajo. */}
+              {/* El `Chip` compartido, que trae su canto y no un relleno.
+                   Escrito a mano era un `bg-card` dentro de una caja `muted`
+                   dentro de una tarjeta `card`, y ese escalón va en sentidos
+                   contrarios según el tema. El canto no: se calcula contra
+                   las superficies del tema y se ve igual en los dos. */}
               {/* `max-w-full` y el nombre recortado: en una tarjeta de 17rem,
                   un concepto con nombre largo hacía un chip más ancho que su
                   tarjeta y se salía por el lado. */}
@@ -568,13 +568,24 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
                 title={`Editar ${concepto.name}`}
                 className="max-w-full"
               >
+                {/*
+                  La marca de «se paga cada cierto tiempo» va DETRÁS del
+                  nombre.
+
+                  Delante, empujaba el nombre catorce píxeles a la derecha, y
+                  como solo la llevan algunos conceptos, en una columna de
+                  cuatro chips los nombres arrancaban a dos alturas distintas:
+                  la lista se leía en zigzag. Detrás, todos arrancan en la
+                  misma línea, y la marca queda donde le corresponde —una nota
+                  sobre el concepto, no parte de su nombre—.
+                */}
+                <span className="min-w-0 truncate">{concepto.name}</span>
                 {concepto.recurrente && (
                   <Repeat
                     className="size-3 shrink-0 opacity-70"
                     aria-label="Se paga cada cierto tiempo"
                   />
                 )}
-                <span className="min-w-0 truncate">{concepto.name}</span>
               </Chip>
             </li>
           ))}

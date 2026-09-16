@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { X } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 
+import { REALCE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
 /**
@@ -83,10 +84,34 @@ export function Chip({
 }) {
   const forma = cn(
     'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs',
-    'transition-colors [&_svg]:size-3.5',
+    // Los iconos de dentro, del tamaño de la letra y no un punto más. A 14 el
+    // glifo pesaba más que el nombre al que acompaña, y lo que anota es una
+    // nota: «este se paga cada cierto tiempo».
+    'transition-colors [&_svg]:size-3',
     activo
       ? 'border-transparent bg-primary font-medium text-primary-foreground'
-      : 'border-border bg-card text-foreground hover:bg-muted',
+      : /*
+          ── En reposo no tiene relleno ────────────────────────────────────────
+          Llevaba `bg-card`, y el relleno de un chip solo funciona si queda un
+          escalón contra lo que tiene detrás. Este vive dentro de un bloque, que
+          es `muted`, y ese escalón va en sentidos contrarios según el tema: en
+          claro `card` es blanco sobre un lienzo cálido y la píldora se levanta;
+          en oscuro `card` es más OSCURO que el bloque, así que la misma píldora
+          se hunde y se lee como un agujero, no como una ficha.
+
+          Sin relleno no hay escalón que pueda salir al revés: lo que dibuja el
+          chip es su canto, que se calcula contra las superficies del tema y se
+          ve igual en los dos. Y de paso pesa la mitad —cuatro píldoras rellenas
+          apiladas en una tarjeta estrecha se leen como cuatro botones, no como
+          la lista de lo que hay dentro del grupo—.
+
+          ── Y responde con el realce compartido ───────────────────────────────
+          El `hover:bg-muted` que tenía era además un fallo: dentro de un bloque
+          `muted`, señalar el chip le daba exactamente el color de la caja que
+          lo contiene y desaparecía. Ahora el único relleno que tiene es el del
+          cursor encima, que es lo que hace que se lea de una vez.
+        */
+        cn('border-border font-medium text-foreground', REALCE),
   );
 
   if (!onQuitar) {
