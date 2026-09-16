@@ -1023,16 +1023,20 @@ function BotonDeVia({
  * Y la letra en TINTA, nunca en blanco: blanco sobre lima da 1,23:1 de
  * contraste, muy por debajo del 4,5:1 que exige un texto.
  *
- * ── Al 85 % y con las esquinas más cerradas ─────────────────────────────────
+ * ── Al 70 % y con las esquinas más cerradas ─────────────────────────────────
  * Un lima opaco de esquina a esquina con el radio de una tarjeta pesaba como
  * una tarjeta: se leía como una superficie más de la ficha en vez de como una
  * nota puesta encima. Algo de transparencia lo asienta sobre lo que hay
  * detrás, y 10px —por debajo del radio estándar, que es el de los
  * contenedores— dicen que esto no es un contenedor.
  *
- * La tinta sobre lima al 85 % sigue muy por encima del mínimo: el fondo de
- * debajo es verde oscuro o casi blanco, y en los dos casos el texto queda
- * cómodo.
+ * El 85 % no se veía: quince por ciento de verde oscuro por debajo de un lima
+ * claro no cambia nada a la vista. Al 70 % el fondo se nota y el aviso se
+ * asienta sobre la ficha en vez de flotar como una pegatina.
+ *
+ * Y la tinta sigue holgada: lima-300 al 70 % sobre el verde de la ficha da un
+ * oliva claro, y tinta-950 encima queda alrededor de 6:1 —por encima del 4,5
+ * que exige un texto—.
  *
  * ── Por qué una sola frase ──────────────────────────────────────────────────
  * Porque el detalle de por qué se clasificó así no cambia lo que hay que
@@ -1041,7 +1045,7 @@ function BotonDeVia({
  */
 function LoQueLei() {
   return (
-    <p className="flex items-center gap-2 rounded-[10px] bg-lima-300/85 px-4 py-3 text-sm font-medium text-tinta-950">
+    <p className="flex items-center gap-2 rounded-[10px] bg-lima-300/70 px-4 py-3 text-sm font-medium text-tinta-950">
       <Sparkles className="size-4 shrink-0" aria-hidden="true" />
       Los datos se extrajeron del soporte. Conviene verificarlos antes de guardar.
     </p>
@@ -1051,16 +1055,16 @@ function LoQueLei() {
 /**
  * Los soportes elegidos antes de que el movimiento exista.
  *
- * ── Por qué se PREVISUALIZAN y no solo se listan ────────────────────────────
- * Porque la razón de que estén aquí es poder comprobar lo que la máquina leyó.
- * Un nombre de archivo y un tamaño en kilobytes no dicen cuánto se pagó: hay
- * que ver el papel. Con una lista de nombres, verificar seguía exigiendo abrir
- * el archivo fuera de la aplicación, que es justo lo que nadie hace.
+ * ── Por qué una galería y no una lista ──────────────────────────────────────
+ * Porque con varios recibos lo que uno hace es pasar de uno a otro, y el
+ * nombre del archivo no dice cuál es cuál: `IMG_4821.HEIC` y `scan0007.pdf`
+ * son indistinguibles hasta que se abren. Una fila de miniaturas se reconoce
+ * mirando, y el que se está viendo va marcado.
  *
- * ── Por qué se quedan en memoria ────────────────────────────────────────────
- * Un soporte cuelga de un movimiento y al crear todavía no hay de qué
- * colgarlo. Crear uno vacío para tener un identificador dejaría movimientos a
- * medias en la base cada vez que alguien abre el formulario y se arrepiente.
+ * ── Por qué los `blob:` viven aquí ──────────────────────────────────────────
+ * Porque los mira la previsualización grande Y su miniatura: creados en cada
+ * uno, el mismo archivo se cargaría dos veces en memoria. Aquí se crean una
+ * vez y se sueltan juntos.
  */
 function SoportesPendientes({
   archivos,
@@ -1071,31 +1075,129 @@ function SoportesPendientes({
   onAñadir: (archivos: File[]) => void;
   onQuitar: (indice: number) => void;
 }) {
+  const [activo, setActivo] = useState(0);
+  const [urls, setUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    const creados = archivos.map((a) => URL.createObjectURL(a));
+    setUrls(creados);
+    // Cada blob vive en la memoria de la pestaña hasta que se le suelta.
+    return () => {
+      for (const u of creados) URL.revokeObjectURL(u);
+    };
+  }, [archivos]);
+
+  // El que se está viendo, recortado: quitar el último dejaba el índice
+  // apuntando a un archivo que ya no existe.
+  const i = Math.min(activo, archivos.length - 1);
+
   return (
     <div className="flex flex-col gap-3">
-      {archivos.map((archivo, i) => (
-        <PreviaDeArchivo
-          key={`${archivo.name}-${i}`}
-          archivo={archivo}
-          onQuitar={() => onQuitar(i)}
-        />
-      ))}
+      {i >= 0 && urls[i] && (
+        <PreviaDeArchivo key={urls[i]} url={urls[i]} esImagen={archivos[i].type.startsWith('image/')} />
+      )}
 
-      {/* El MISMO cuadro que en un movimiento ya guardado: vacío ocupa el
-          ancho y explica qué acepta; con algo dentro es una plaza más. Dos
-          versiones del mismo hueco acabarían comportándose distinto. */}
-      <Soltar
-        subiendo={false}
-        progreso={0}
-        solo={archivos.length === 0}
-        onArchivos={(lista) => onAñadir(Array.from(lista ?? []))}
-      />
+      <ul className="flex flex-wrap gap-2">
+        {archivos.map((archivo, n) => (
+          <li key={`${archivo.name}-${n}`}>
+            <Tile
+              url={urls[n]}
+              esImagen={archivo.type.startsWith('image/')}
+              nombre={archivo.name}
+              activo={n === i}
+              onVer={() => setActivo(n)}
+              onQuitar={() => {
+                onQuitar(n);
+                // Si se va el que estaba puesto, se pasa al anterior.
+                if (n <= i) setActivo(Math.max(0, i - 1));
+              }}
+            />
+          </li>
+        ))}
+
+        {/* El MISMO cuadro que en un movimiento ya guardado: vacío ocupa el
+            ancho y explica qué acepta; con algo dentro es una plaza más de la
+            galería. Dos versiones del mismo hueco se separarían. */}
+        <li className={cn(archivos.length === 0 && 'w-full')}>
+          <Soltar
+            subiendo={false}
+            progreso={0}
+            solo={archivos.length === 0}
+            onArchivos={(lista) => onAñadir(Array.from(lista ?? []))}
+          />
+        </li>
+      </ul>
     </div>
   );
 }
 
 /**
- * Un archivo que todavía no se ha subido, dibujado y recorrible.
+ * Una plaza de la galería.
+ *
+ * La papelera vive AQUÍ y no sobre la previsualización grande: encima del
+ * documento parecía una equis de cerrar —prometía cerrar la vista y lo que
+ * hacía era descartar el archivo—, y además obligaba a poner primero uno en
+ * grande para poder quitarlo. En su plaza, cada soporte se descarta desde
+ * donde se ve.
+ */
+function Tile({
+  url,
+  esImagen,
+  nombre,
+  activo,
+  onVer,
+  onQuitar,
+}: {
+  url: string | undefined;
+  esImagen: boolean;
+  nombre: string;
+  activo: boolean;
+  onVer: () => void;
+  onQuitar: () => void;
+}) {
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        onClick={onVer}
+        title={nombre}
+        aria-label={`Ver ${nombre}`}
+        aria-pressed={activo}
+        className={cn(
+          'flex size-[72px] items-center justify-center overflow-hidden rounded-2xl bg-card transition-all',
+          activo ? 'ring-2 ring-lima-tinta' : 'ring-1 ring-border hover:ring-muted-foreground',
+        )}
+      >
+        {!url ? (
+          <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden="true" />
+        ) : esImagen ? (
+          <img src={url} alt="" className="size-full object-cover object-top" />
+        ) : (
+          <LienzoPdf url={url} />
+        )}
+      </button>
+
+      {/* Aparece al pasar por encima: ocho plazas con una papelera encendida
+          cada una son ocho invitaciones a borrar algo sin querer. */}
+      <button
+        type="button"
+        onClick={onQuitar}
+        aria-label={`Quitar ${nombre}`}
+        title="Quitar este soporte"
+        className={cn(
+          'absolute -right-1 -top-1 flex size-6 items-center justify-center rounded-full',
+          'bg-tinta-950/80 text-tinta-50 opacity-0 transition-all',
+          'group-hover:opacity-100 focus-visible:opacity-100 hover:bg-destructive',
+        )}
+      >
+        <Trash2 className="size-3" aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * El soporte en grande, recorrible.
  *
  * ── Por qué llena la caja y no entra entera ─────────────────────────────────
  * Porque una hoja completa metida en 30rem de alto deja la letra a un tamaño
@@ -1114,8 +1216,7 @@ function SoportesPendientes({
  * lado corto el documento cabe justo, ese eje no se mueve —en vez de temblar
  * un píxel en cada arrastre—.
  */
-function PreviaDeArchivo({ archivo, onQuitar }: { archivo: File; onQuitar: () => void }) {
-  const [url, setUrl] = useState<string | null>(null);
+function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) {
   /** El tamaño natural de lo dibujado, para saber cuánto sobra por cada lado. */
   const [natural, setNatural] = useState<{ ancho: number; alto: number } | null>(null);
   const [caja, setCaja] = useState({ ancho: 0, alto: 0 });
@@ -1124,14 +1225,6 @@ function PreviaDeArchivo({ archivo, onQuitar }: { archivo: File; onQuitar: () =>
 
   const marco = useRef<HTMLDivElement>(null);
   const agarre = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
-
-  useEffect(() => {
-    const objeto = URL.createObjectURL(archivo);
-    setUrl(objeto);
-    setNatural(null);
-    setPos({ x: 0, y: 0 });
-    return () => URL.revokeObjectURL(objeto);
-  }, [archivo]);
 
   // La caja cambia de tamaño con la ventana, y los topes dependen de ella.
   useEffect(() => {
@@ -1145,7 +1238,7 @@ function PreviaDeArchivo({ archivo, onQuitar }: { archivo: File; onQuitar: () =>
     const observador = new ResizeObserver(medir);
     observador.observe(elemento);
     return () => observador.disconnect();
-  }, [url]);
+  }, []);
 
   /*
     La escala que LLENA la caja: la mayor de las dos proporciones. Con la menor
@@ -1177,106 +1270,71 @@ function PreviaDeArchivo({ archivo, onQuitar }: { archivo: File; onQuitar: () =>
   }, [natural, caja.ancho, caja.alto]);
 
   const sePuedeMover = limite.x < 0 || limite.y < 0;
-  const esImagen = archivo.type.startsWith('image/');
+
+  const encuadre = {
+    position: 'absolute' as const,
+    left: pos.x,
+    top: pos.y,
+    width: ancho || undefined,
+    height: alto || undefined,
+    // Antes de medir se pinta invisible: un fotograma con el documento a su
+    // tamaño natural y sin encuadrar se ve como un salto.
+    visibility: natural ? ('visible' as const) : ('hidden' as const),
+  };
 
   return (
-    <figure className="flex flex-col gap-2">
-      <div
-        ref={marco}
-        // `touch-action: none` para que el dedo mueva el documento y no
-        // desplace la ficha entera por detrás.
-        className={cn(
-          'relative h-[30rem] touch-none select-none overflow-hidden rounded-2xl bg-card ring-1 ring-border',
-          sePuedeMover && (arrastrando ? 'cursor-grabbing' : 'cursor-grab'),
-        )}
-        onPointerDown={(e) => {
-          if (!sePuedeMover) return;
-          e.currentTarget.setPointerCapture(e.pointerId);
-          agarre.current = { x: pos.x, y: pos.y, px: e.clientX, py: e.clientY };
-          setArrastrando(true);
-        }}
-        onPointerMove={(e) => {
-          const desde = agarre.current;
-          if (!desde) return;
-          setPos(recortar(desde.x + (e.clientX - desde.px), desde.y + (e.clientY - desde.py)));
-        }}
-        onPointerUp={() => {
-          agarre.current = null;
-          setArrastrando(false);
-        }}
-        onPointerCancel={() => {
-          agarre.current = null;
-          setArrastrando(false);
-        }}
-      >
-        {!url ? (
-          <span className="flex size-full items-center justify-center">
-            <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden="true" />
-          </span>
-        ) : esImagen ? (
-          <img
-            src={url}
-            alt={archivo.name}
-            draggable={false}
-            onLoad={(e) =>
-              setNatural({
-                ancho: e.currentTarget.naturalWidth,
-                alto: e.currentTarget.naturalHeight,
-              })
-            }
-            style={{
-              position: 'absolute',
-              left: pos.x,
-              top: pos.y,
-              width: ancho || undefined,
-              height: alto || undefined,
-              // Antes de medir se pinta invisible: un fotograma con la imagen
-              // a su tamaño natural y sin encuadrar se ve como un salto.
-              visibility: natural ? 'visible' : 'hidden',
-            }}
-          />
-        ) : (
-          <LienzoPdf
-            url={url}
-            // A 1400 y no a 240: esto se mira para leer una cifra, y el
-            // tamaño de una miniatura la deja borrosa.
-            ancho={1400}
-            onTamano={(a, h) => setNatural({ ancho: a, alto: h })}
-            estilo={{
-              position: 'absolute',
-              left: pos.x,
-              top: pos.y,
-              width: ancho || undefined,
-              height: alto || undefined,
-              visibility: natural ? 'visible' : 'hidden',
-            }}
-          />
-        )}
-
-        {/* Una papelera, no una equis.
-            Una equis en la esquina de algo significa "cerrar esto" en toda la
-            aplicación —la tiene la ficha, la tiene el pase de soportes—, así
-            que aquí prometía cerrar la previsualización y lo que hacía era
-            descartar el archivo. La papelera dice lo que hace. */}
-        <button
-          type="button"
-          onClick={onQuitar}
-          aria-label={`Quitar ${archivo.name}`}
-          title="Quitar este soporte"
-          className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-tinta-950/70 text-tinta-50 transition-colors hover:bg-destructive"
-        >
-          <Trash2 className="size-4" aria-hidden="true" />
-        </button>
-      </div>
-
-      <figcaption className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-        <span className="min-w-0 truncate">{archivo.name}</span>
-        <span className="tabular shrink-0">
-          {sePuedeMover && 'Arrastrar para recorrer · '}
-          {(archivo.size / 1024).toFixed(0)} KB
-        </span>
-      </figcaption>
-    </figure>
+    <div
+      ref={marco}
+      // `touch-action: none` para que el dedo mueva el documento y no desplace
+      // la ficha entera por detrás.
+      className={cn(
+        'relative h-[30rem] touch-none select-none overflow-hidden rounded-2xl bg-card ring-1 ring-border',
+        sePuedeMover && (arrastrando ? 'cursor-grabbing' : 'cursor-grab'),
+      )}
+      onPointerDown={(e) => {
+        if (!sePuedeMover) return;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        agarre.current = { x: pos.x, y: pos.y, px: e.clientX, py: e.clientY };
+        setArrastrando(true);
+      }}
+      onPointerMove={(e) => {
+        const desde = agarre.current;
+        if (!desde) return;
+        setPos(recortar(desde.x + (e.clientX - desde.px), desde.y + (e.clientY - desde.py)));
+      }}
+      onPointerUp={() => {
+        agarre.current = null;
+        setArrastrando(false);
+      }}
+      onPointerCancel={() => {
+        agarre.current = null;
+        setArrastrando(false);
+      }}
+    >
+      {esImagen ? (
+        <img
+          src={url}
+          alt=""
+          draggable={false}
+          onLoad={(e) =>
+            setNatural({
+              ancho: e.currentTarget.naturalWidth,
+              alto: e.currentTarget.naturalHeight,
+            })
+          }
+          style={encuadre}
+        />
+      ) : (
+        <LienzoPdf
+          url={url}
+          // A 1400 y no a 240: esto se mira para leer una cifra, y el tamaño
+          // de una miniatura la deja borrosa.
+          ancho={1400}
+          onTamano={(a, h) => setNatural({ ancho: a, alto: h })}
+          estilo={encuadre}
+        />
+      )}
+    </div>
   );
 }
 
