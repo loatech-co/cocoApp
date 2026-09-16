@@ -7,16 +7,18 @@
 | 3 | [El radio estándar es 10px](#3-el-radio-estándar-es-10px) |
 | 4 | [Dos tamaños, y los mismos para todo](#4-dos-tamaños-y-los-mismos-para-todo) |
 | 5 | [El color vive en `index.css`, y se nombra por su papel](#5-el-color-vive-en-indexcss-y-se-nombra-por-su-papel) |
-| 6 | [Nada de mayúsculas sostenidas](#6-nada-de-mayúsculas-sostenidas) |
-| 7 | [`accent` es lo que responde; `muted` es lo que está quieto](#7-accent-es-lo-que-responde-muted-es-lo-que-está-quieto) |
-| 8 | [Lo que flota se dibuja en un solo sitio](#8-lo-que-flota-se-dibuja-en-un-solo-sitio) |
-| 9 | [La cabecera de una pantalla](#9-la-cabecera-de-una-pantalla) |
-| 10 | [La cabecera y el pie de una ficha](#10-la-cabecera-y-el-pie-de-una-ficha) |
-| 11 | [El nombre de un campo va DENTRO, y flota](#11-el-nombre-de-un-campo-va-dentro-y-flota) |
-| 12 | [Un aviso flotante dice su severidad de tres maneras](#12-un-aviso-flotante-dice-su-severidad-de-tres-maneras) |
-| 13 | [Un movimiento es un REGISTRO; el concepto es estructura](#13-un-movimiento-es-un-registro-el-concepto-es-estructura) |
-| 14 | [El rojo es solo para errores](#14-el-rojo-es-solo-para-errores) |
-| 15 | [Componentes, no copias](#15-componentes-no-copias) |
+| 6 | [Tres superficies: el material, el pozo y lo elegido](#6-tres-superficies-el-material-el-pozo-y-lo-elegido) |
+| 7 | [Nada de mayúsculas sostenidas](#7-nada-de-mayúsculas-sostenidas) |
+| 8 | [`accent` es lo que responde; `muted` es lo que está quieto](#8-accent-es-lo-que-responde-muted-es-lo-que-está-quieto) |
+| 9 | [Lo que flota se dibuja en un solo sitio](#9-lo-que-flota-se-dibuja-en-un-solo-sitio) |
+| 10 | [La cabecera de una pantalla](#10-la-cabecera-de-una-pantalla) |
+| 11 | [La cabecera y el pie de una ficha](#11-la-cabecera-y-el-pie-de-una-ficha) |
+| 12 | [El nombre de un campo va DENTRO, y flota](#12-el-nombre-de-un-campo-va-dentro-y-flota) |
+| 13 | [Un aviso flotante dice su severidad de tres maneras](#13-un-aviso-flotante-dice-su-severidad-de-tres-maneras) |
+| 14 | [Un movimiento es un REGISTRO; el concepto es estructura](#14-un-movimiento-es-un-registro-el-concepto-es-estructura) |
+| 15 | [El rojo es solo para errores](#15-el-rojo-es-solo-para-errores) |
+| 16 | [Componentes, no copias](#16-componentes-no-copias) |
+| 17 | [El foco se pinta cuando se pide](#17-el-foco-se-pinta-cuando-se-pide) |
 
 ## 1. Ningún control del sistema operativo
 
@@ -68,6 +70,15 @@ La escala crece en orden: `sm` 6, `md` 8, `lg` 10, `xl` 14. El `2xl` y el
 `3xl` de Tailwind no leen el tema —valen 16 y 24 fijos— y por eso están
 prohibidos.
 
+**La única excepción es el pozo** —la esquina donde se abre el contenido
+dentro de la página, en `app/app-shell.tsx`—, que lleva 14px. Se pasa
+porque es el contenedor más grande que hay: 10px en un canto que mide toda
+la altura de la ventana casi no se ve, y lo que esa esquina cuenta depende
+de que se vea. No rompe la regla, que habla de contenedores VECINOS: el
+pozo no es vecino de ninguna tarjeta, es el fondo de todas. Está
+registrada con su motivo en `PERMITIDOS`, dentro de la misma prueba; toda
+excepción nueva se escribe ahí o no existe.
+
 ## 4. Dos tamaños, y los mismos para todo
 
 Un botón, un campo de texto, un desplegable y un selector de fecha miden
@@ -94,7 +105,44 @@ para ella (`accent-foreground`, `secondary-foreground`): nunca blanco por
 costumbre. Blanco sobre un acento claro da 1.23:1, muy por debajo del
 4.5:1 que exige el texto.
 
-## 6. Nada de mayúsculas sostenidas
+## 6. Tres superficies: el material, el pozo y lo elegido
+
+Había cinco escalones —riel, lienzo, tarjeta, bloque, chip— separados por
+unos pocos puntos de luz. El ojo no distingue cinco grises casi iguales: lo
+que veía era una pantalla lavada donde cada contenedor necesitaba un borde
+para existir, y esa retícula de líneas de 1px es la firma visual de un
+panel de administración de hace diez años.
+
+Ahora son tres, y cada uno tiene un trabajo:
+
+| Superficie | Tokens | Qué es |
+|---|---|---|
+| El material | `card`, `popover`, `sidebar` —el **mismo** valor— | De lo que están hechos el riel, las tarjetas y los desplegables |
+| El pozo | `background` | El hueco donde se apoyan. Va por DEBAJO del material |
+| Lo elegido | `muted` | Un bloque dentro de una tarjeta, la opción ya seleccionada |
+
+**La tarjeta no lleva borde.** Lo que la separa del fondo es el escalón: es
+material apoyado en el pozo. Vale igual para la tabla y para cualquier
+contenedor de contenido. Lo que sí conserva el canto es lo que flota, y por
+un motivo que el escalón no resuelve: un desplegable del color del material,
+abierto sobre una tarjeta del mismo color, no tiene otra forma de decir
+dónde empieza.
+
+**El escalón va en el sentido que toca en cada tema.** En claro, lo de
+dentro BAJA —un bloque es un hueco en la tarjeta, igual que el pozo lo es en
+la página—. En oscuro SUBE, porque una sombra negra sobre un fondo casi
+negro no proyecta nada y lo único que dice «esto está encima» es ser más
+claro. Por eso `muted` se declara dos veces con valores que no se
+corresponden.
+
+**Y de ahí sale el armazón.** La página entera es el material y el contenido
+se abre dentro, en el pozo, con la esquina de arriba a la izquierda
+redondeada. Eso es lo que hace que el riel se lea como el marco que envuelve
+al contenido y no como una columna pegada a su lado: es el mismo material
+que lo rodea por arriba y por la izquierda. Sin la esquina, el cambio de
+color es una raya vertical y vuelven a ser dos columnas.
+
+## 7. Nada de mayúsculas sostenidas
 
 Una palabra en versalitas pierde la silueta que la hace reconocible
 —"Soporte" y "SOPORTE" no se leen igual de rápido— y donde todo el texto
@@ -106,7 +154,7 @@ para los grupos de secciones del riel. El interletraje abierto que suele
 acompañarlas también se va: el tema lo declara en cero y Geist ya viene
 cerrada de por sí.
 
-## 7. `accent` es lo que responde; `muted` es lo que está quieto
+## 8. `accent` es lo que responde; `muted` es lo que está quieto
 
 El acento marca lo que está **bajo el cursor o el foco**: la opción de un
 desplegable, la fila de una lista, un día del calendario, la zona donde se
@@ -123,7 +171,7 @@ texto que lo diga— los papeles se invierten: el acento va a lo encendido y
 tiene otra forma de decirse. Una opción de menú con su palomita no lo
 necesita; un icono encendido, sí.
 
-## 8. Lo que flota se dibuja en un solo sitio
+## 9. Lo que flota se dibuja en un solo sitio
 
 Un desplegable, un calendario, un modal, una confirmación, la pista de una
 gráfica y el aviso de una esquina comparten `SUPERFICIE_FLOTANTE`
@@ -141,7 +189,7 @@ escribirse suelta.
 vuelve a escribir la sombra a mano o a separar un panel con un negro o un
 blanco inventados.
 
-## 9. La cabecera de una pantalla
+## 10. La cabecera de una pantalla
 
 Toda pantalla con contenido abre con `components/cabecera-de-pagina.tsx`.
 Nunca con un `<h1>` y un `<p>` escritos a mano.
@@ -191,7 +239,7 @@ colgaran los demás.
 pantalla vuelve a escribir su propio `<h1>` o si una acción de cabecera pide
 un tamaño que no sea `sm`.
 
-## 10. La cabecera y el pie de una ficha
+## 11. La cabecera y el pie de una ficha
 
 Toda ficha abre con `CabeceraDeModal` y cierra con `PieDeModal`
 (`components/ui/modal-partes.tsx`). Nunca con un `<div>` escrito a mano.
@@ -258,7 +306,7 @@ traer `flex-1`. (`w-full` sí se permite: estirar un botón a todo el ancho de
 una columna angosta —el «Iniciar sesión» de una tarjeta de 384px— es otra
 decisión, porque ahí no hay con quién competir.)
 
-## 11. El nombre de un campo va DENTRO, y flota
+## 12. El nombre de un campo va DENTRO, y flota
 
 Todo campo de formulario se envuelve en `components/ui/campo.tsx`. Nunca un
 `<Label>` encima de un `<Input>`.
@@ -317,7 +365,7 @@ Con las dos había dos iconos diciendo lo mismo, uno a cada lado del valor.
 —el orden de los hermanos, el marcador que siempre está, los `data-` de un
 desplegable— y falla si una pantalla vuelve a escribir un `<Label>` suelto.
 
-## 12. Un aviso flotante dice su severidad de tres maneras
+## 13. Un aviso flotante dice su severidad de tres maneras
 
 `mostrarAviso(titular, { detalle, tono })`. Dos líneas: el titular dice QUÉ
 pasó en tres palabras —se lee de reojo, que es como se leen los avisos— y el
@@ -347,7 +395,7 @@ suelto y lleva su propio contorno (`CircleCheck`); aquí va dentro de una
 pastilla que ya es un círculo, y con un icono circular quedan dos círculos
 concéntricos.
 
-## 13. Un movimiento es un REGISTRO; el concepto es estructura
+## 14. Un movimiento es un REGISTRO; el concepto es estructura
 
 Un movimiento no es una cosa con nombre propio: es la anotación de que tal
 día salió tal plata de tal concepto.
@@ -416,13 +464,19 @@ esa regla se han perdido una vez cada una:
   anotado sin ir a hacer dinámico su centro, que es lo contrario de lo que
   hay que hacer.
 
-## 14. El rojo es solo para errores
+## 15. El rojo es solo para errores
 
-Lo pendiente —un movimiento sin clasificar— va en el oro del tema
-(`warning`, que sale de su `secondary`). El rojo se reserva a lo que de
-verdad salió mal y a lo que no se puede deshacer.
+Lo pendiente —un movimiento sin clasificar— va en el verde medio del tema
+(`warning`). El rojo se reserva a lo que de verdad salió mal y a lo que no
+se puede deshacer.
 
-## 15. Componentes, no copias
+La paleta es de cuatro verdes y no tiene un cálido: verde británico, lima,
+turquesa y verde medio. Eso deja lo pendiente a 16° de matiz de lo que
+entra, así que donde los dos puedan convivir —una fila vencida en una tabla
+con ingresos— la señal no puede ser solo el color: la palabra, el signo o
+el peso de la letra tienen que decirlo también.
+
+## 16. Componentes, no copias
 
 Si algo aparece en dos pantallas, es un componente. Lo son la tabla de
 movimientos, el paginador, la barra de filtros, el calendario, la dona, la
@@ -439,3 +493,71 @@ Lo que no puede ser un componente —porque hace falta un `<label>` o un
 Dos copias empiezan iguales y se separan: una aprende a marcar lo que
 falta por clasificar y la otra no, y la misma plata acaba viéndose
 distinta según por dónde se entre.
+
+## 17. El foco se pinta cuando se pide
+
+**Ningún campo nace enfocado**, y la señal de foco —el anillo, el borde
+teñido, la etiqueta verde— **solo se escribe con `:focus-visible`**. Nunca
+con `:focus` ni con `:focus-within`.
+
+**Por qué.** `:focus` se enciende también cuando el foco lo pone el
+programa: al abrir una ficha, al cerrar un desplegable que lo devuelve a su
+botón, al aparecer un formulario. El resultado es una pantalla que arranca
+con algo encendido que nadie eligió: el ojo va solo al sitio equivocado, y
+un campo encendido sin motivo se parece demasiado a un campo con error.
+
+**Y un BOTÓN no lleva ninguna.** Ni anillo ni contorno. Un botón se pulsa y
+pasa algo: no guarda nada ni recibe lo que se escribe, así que no hay nada
+en él que señalar. Y el foco le vuelve solo cada vez que se cierra lo que
+abrió —una ficha, un desplegable—; si se cerró con Escape, la última
+interacción fue de teclado y `:focus-visible` se enciende, así que el
+contorno aparecía al SALIR de otra cosa.
+
+Lo quita una sola línea en `index.css` —`button:focus-visible { outline:
+none }`—, porque la regla base dibuja ese contorno sobre cualquier cosa que
+reciba el foco. Lo llevan los que sí guardan algo o sin él no se pueden
+recorrer: los campos, la casilla y el interruptor —que son `<input>`— y la
+gráfica de tendencia, que entra en el orden del tabulador y se recorre con
+las flechas.
+
+**Dónde vive.** `FOCO_DEL_CAMPO`, en `components/ui/campo.tsx`, y lo usan el
+`Input`, el `Textarea` y `disparadorDeCampo()`. Es el borde del anillo al
+60 % y un halo al 20 %: **un solo píxel de trazo**, el mismo que el campo ya
+tenía en reposo, cambiando de color y no de grosor. Estuvo a plena tinta
+—borde y anillo, dos píxeles de verde saturado— y con cuatro campos en una
+ficha el enfocado no se leía como enfocado sino como marcado.
+
+Lo que es error va a plena tinta: es la excepción, y tiene que verse desde
+el otro lado de la ficha.
+
+**Lo que la regla NO dice es dónde está el cursor.** Son dos cosas, y se
+escriben distinto. Es justo lo que se había perdido en la etiqueta flotante:
+
+| Qué | Selector | Por qué |
+|---|---|---|
+| **Subir** la etiqueta | `:focus-within` | Es estructural: si no sube, lo que se escribe se pisa con el nombre del campo |
+| **Teñirla** | `:focus-visible` | Eso ya es la señal |
+
+Con las dos en `:focus-within` se contradecían en el caso más corriente de
+todos: al pulsar un desplegable con el ratón, un `<button>` no coincide con
+`:focus-visible` —los navegadores lo reservan al teclado—, así que la caja
+no pintaba su anillo y la etiqueta sí se ponía verde.
+
+**Y una superficie con velo mete el foco en su CAJA**, no en su primer
+control (`lib/foco.ts`). Tiene que entrar —si se queda detrás del velo, el
+tabulador recorre una página que no se ve—, pero la caja lleva
+`tabindex="-1"`: recibe el foco sin encender nada, y el primer Tab lleva al
+primer control de dentro.
+
+**La única excepción es un BUSCADOR que aparece porque se pidió buscar**
+—la paleta de páginas, la caja de la lupa, el filtro de un `Combo`—. Ahí el
+campo no se abre con la pantalla sino con el gesto, y pedir buscar y tener
+que pulsar además la caja son dos gestos para una sola intención. Un
+formulario no entra nunca: una ficha se abre para leerla antes que para
+rellenarla, y el campo que el programa decida encender no tiene por qué ser
+el que se venía a cambiar.
+
+`lib/foco.test.ts` lee el código fuente y falla si aparece un `autoFocus`
+fuera de esa lista, si alguien mueve el foco a mano al abrir algo, si la
+señal se escribe con `focus:`, si un botón vuelve a dibujar un anillo, o si
+desaparece la línea que los exime del contorno.
