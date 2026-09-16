@@ -125,7 +125,20 @@ describe('El campo con etiqueta flotante', () => {
   it('el selector de fecha dice lo mismo, y su icono va al final sin flecha', () => {
     const { container } = render(<SelectorDeFecha valor="2026-04-04" onElegir={() => {}} />);
 
-    expect(container.querySelector('[data-lleno]')?.getAttribute('data-lleno')).toBe('si');
+    /*
+      El selector de fecha SE ESCRIBE, así que la etiqueta flota por donde
+      flota la de cualquier campo de texto: `:placeholder-shown`. Para que esa
+      regla enganche hacen falta las dos cosas —un marcador declarado y un
+      valor dentro—, y por eso se comprueban las dos y no la clase que pinta.
+    */
+    const campo = container.querySelector('input:not([type="hidden"])');
+    expect(campo?.getAttribute('placeholder')).toBeTruthy();
+    expect((campo as HTMLInputElement | null)?.value).toBe('4 de abril de 2026');
+
+    // Y el valor viaja en ISO para el formulario, no como se escribe.
+    expect(container.querySelector<HTMLInputElement>('input[type="hidden"]')?.value).toBe(
+      '2026-04-04',
+    );
     // El calendario es la señal de que esto abre un calendario, que es el
     // papel de la flecha en un desplegable: con las dos, había dos iconos
     // diciendo lo mismo, uno a cada lado del valor.
@@ -154,8 +167,11 @@ describe('El campo con etiqueta flotante', () => {
 
     cleanup();
 
+    // La CAJA del campo, que es la que lleva el relleno. El botón de dentro es
+    // el del calendario, y ese se sangra solo.
     const fecha = render(<SelectorDeFecha valor="2026-04-04" onElegir={() => {}} />);
-    const rellenoDeLaFecha = (fecha.container.querySelector('button')?.className ?? '')
+    const caja = fecha.container.querySelector('input:not([type="hidden"])')?.parentElement;
+    const rellenoDeLaFecha = (caja?.className ?? '')
       .split(/\s+/)
       .filter((c) => c.startsWith('px-'));
 

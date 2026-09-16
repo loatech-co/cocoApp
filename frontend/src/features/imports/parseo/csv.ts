@@ -5,7 +5,7 @@ import {
   type ColumnaDetectada,
 } from './csv-columnas';
 import type { MovimientoCandidato } from './extracto';
-import { encontrarFecha } from './fecha';
+import { encontrarFecha } from '@/lib/leer-fecha';
 import { normalizarMonto } from './monto';
 
 /**

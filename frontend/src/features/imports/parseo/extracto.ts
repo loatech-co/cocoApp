@@ -1,4 +1,4 @@
-import { encontrarFecha } from './fecha';
+import { encontrarFecha } from '@/lib/leer-fecha';
 import { encontrarMontos, type MontoLeido } from './monto';
 
 /**

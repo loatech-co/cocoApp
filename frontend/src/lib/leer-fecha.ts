@@ -1,5 +1,11 @@
 /**
- * Lectura de fechas como las escriben los extractos colombianos.
+ * Lectura de una fecha escrita por una persona o por un banco.
+ *
+ * Vive en `lib` y no en la importación porque la usan las dos: el CSV de un
+ * extracto y el campo de fecha de un formulario, donde se puede escribir en
+ * vez de abrir el calendario. Es el mismo problema —un texto que hay que
+ * entender— y una segunda copia acabaría entendiendo cosas distintas según
+ * dónde se escriba.
  *
  * Hay tres formas comunes y ninguna es negociable con el banco:
  *   `01/08/2026` · `2026-08-01` · `01 AGO` (sin año, dentro de un extracto mensual)

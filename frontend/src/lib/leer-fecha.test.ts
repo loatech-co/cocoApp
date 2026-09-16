@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { encontrarFecha } from './fecha';
+import { encontrarFecha } from './leer-fecha';
 
 const ANIO = 2026;
 

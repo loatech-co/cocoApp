@@ -1,11 +1,12 @@
 import { CalendarDays } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Calendario, mesDeISO, type MesVisible } from '@/components/calendario';
 import { Menu } from '@/components/menu';
 import { Button } from '@/components/ui/button';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/components/ui/campo';
 import { diaLargo, rangoLargo } from '@/lib/fechas';
+import { encontrarFecha } from '@/lib/leer-fecha';
 import { PRESETS, rangoDe, type Filtros, type Preset } from '@/lib/filtros';
 import { useHistoria } from '@/lib/queries';
 import { cn } from '@/lib/utils';
@@ -75,51 +76,78 @@ function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false
   const enCampo = useDentroDeUnCampo();
 
   /*
-    El valor y, a la derecha, el calendario.
+    ── El campo se ESCRIBE, y el calendario es la otra puerta ────────────────
+    Era un botón: la única forma de poner una fecha era abrir el mes y buscar
+    el día. Para «hoy» o «ayer» está bien; para el 3 de marzo del año pasado
+    son cuatro clics de flecha antes de empezar a mirar. Quien tiene el recibo
+    delante ya sabe la fecha y lo más rápido es teclearla.
 
-    ── El calendario va al FINAL, y no hay flecha ──────────────────────────
-    Antes llevaba las dos cosas: el calendario delante del valor y una flecha
-    detrás. Sobraba una.
+    Así que aquí se escribe, y lo escrito se entiende: `19 de septiembre 2026`,
+    `sep 10 2026`, `10/09/2026`, `2026-09-10`. Lo hace `lib/leer-fecha`, que es
+    el mismo que lee las fechas de un extracto importado —un segundo
+    analizador acabaría entendiendo cosas distintas según dónde se escriba—.
 
-    El calendario no es informativo —no hace falta un dibujo para saber que un
-    campo que dice "4 de abril de 2022" es una fecha—: es la señal de que ESTO
-    ABRE UN CALENDARIO, que es justo el papel que cumple una flecha en un
-    desplegable. Dos iconos para decir lo mismo, uno a cada lado.
-
-    Así que se queda el que dice más, y se queda donde va lo que abre algo: a
-    la derecha, en el mismo sitio donde el `Select` y el `Combo` ponen su
-    flecha. No gira: una flecha invertida dice "esto está abierto", un
-    calendario boca abajo no dice nada.
+    Y al salir del campo se NORMALIZA a la forma en que esta app escribe una
+    fecha, para que dos movimientos registrados el mismo día no se lean
+    distinto según cómo los tecleó cada quien.
   */
-  const dentro = (
-    <>
-      <span
-        data-lleno={valor ? 'si' : 'no'}
-        data-vacio={valor ? undefined : ''}
-        className={cn('min-w-0 flex-1 truncate font-normal', enCampo && 'pt-4')}
-      >
-        {valor ? diaLargo(valor) : 'Elige una fecha'}
-      </span>
+  const [escrito, setEscrito] = useState(() => (valor ? diaLargo(valor) : ''));
 
-      <CalendarDays className="size-4 shrink-0 opacity-70" aria-hidden="true" />
-    </>
-  );
+  // El campo sigue al valor cuando lo cambia otro: el calendario, o abrir la
+  // ficha de otro movimiento sin desmontar esto.
+  useEffect(() => {
+    setEscrito(valor ? diaLargo(valor) : '');
+  }, [valor]);
 
   /*
-    El valor viaja además en un campo oculto para que el formulario lo envíe y
-    `required` siga funcionando: un botón no es un campo, y sin esto el
-    navegador no tendría nada que validar.
+    Lo escrito se confirma al salir del campo o con Enter, no en cada tecla:
+    «1» es una fecha válida mientras alguien escribe «19 de septiembre», y
+    reescribir el campo debajo de los dedos es lo que hace impredecible a un
+    campo de fecha.
+
+    Si no se entiende, vuelve a lo último válido en vez de quedarse a medias.
+    El valor que se guarda siempre es una fecha de verdad, y lo que no se pudo
+    leer no puede parecer que sí.
   */
-  const oculto = <input type="hidden" name={id} value={valor} required={requerido} />;
+  function confirmar(): void {
+    const texto = escrito.trim();
+
+    if (texto === '') {
+      setEscrito(valor ? diaLargo(valor) : '');
+      return;
+    }
+
+    const leida = encontrarFecha(texto, new Date().getFullYear());
+    if (!leida) {
+      setEscrito(valor ? diaLargo(valor) : '');
+      return;
+    }
+
+    // Si no cambia, el efecto no se dispara y hay que normalizar aquí: quien
+    // escribe «10/09/2026» sobre esa misma fecha tiene que ver cómo se queda.
+    if (leida.iso === valor) setEscrito(diaLargo(leida.iso));
+    else onElegir(leida.iso);
+  }
+
+  /*
+    El valor viaja además en un campo oculto para que el formulario lo envíe en
+    ISO y no como se escribió: un botón no es un campo, y lo que se ve aquí es
+    «19 de septiembre de 2026».
+  */
+  const oculto = <input type="hidden" name={id} value={valor} />;
 
   if (deshabilitado) {
-    // Apagado no puede ser un botón que abre nada: se pinta igual pero sin
-    // desplegable detrás, para que el foco no caiga en una trampa.
+    // Apagado no es un campo que se escriba ni un botón que abra nada: se
+    // pinta igual pero sin nada detrás, para que el foco no caiga en una
+    // trampa.
     return (
       <>
         {oculto}
-        <span id={id} aria-disabled="true" className={cn(disparadorDeCampo(), 'opacity-50')}>
-          {dentro}
+        <span aria-disabled="true" className={cn(disparadorDeCampo(), 'opacity-50')}>
+          <span className={cn('min-w-0 flex-1 truncate', enCampo && 'pt-4')}>
+            {valor ? diaLargo(valor) : 'Elige una fecha'}
+          </span>
+          <CalendarDays className="size-4 shrink-0 opacity-70" aria-hidden="true" />
         </span>
       </>
     );
@@ -128,35 +156,73 @@ function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false
   return (
     <>
       {oculto}
-      <Menu
-        etiqueta="Elegir fecha"
-        tipo="panel"
-        alineado="izquierda"
-        flotante
-        anchoPropio
-        // El calendario trae su propio relleno: con el del menú encima queda
-        // el doble por los cuatro lados.
-        sinRelleno
-        ancho="w-auto"
-        idDisparador={id}
-        claseCaja="w-full min-w-0"
-        claseDisparador={disparadorDeCampo()}
-        disparador={() => dentro}
-      >
-        {(cerrar) => (
-          <Calendario
-            className="p-3"
-            desde={valor || undefined}
-            hasta={valor || undefined}
-            onDia={(iso) => {
-              onElegir(iso);
-              // Un solo día no necesita confirmarse: con el segundo clic ya no
-              // queda nada por decidir.
-              cerrar();
-            }}
-          />
+      {/* El foco se pinta en la CAJA y no en el campo de dentro: lo que se ve
+          como un control es la caja, y un anillo alrededor del texto dejaría
+          el icono fuera de lo enfocado. */}
+      <div
+        className={cn(
+          disparadorDeCampo(),
+          'focus-within:border-ring/60 focus-within:ring-1 focus-within:ring-ring/20',
         )}
-      </Menu>
+      >
+        <input
+          id={id}
+          type="text"
+          value={escrito}
+          required={requerido}
+          // El marcador es un EJEMPLO de lo que se puede escribir, no una
+          // instrucción: enseña el formato sin gastar un renglón de ayuda. Y
+          // hace falta para que la etiqueta flotante sepa cuándo subir.
+          placeholder="19 de septiembre 2026"
+          onChange={(e) => setEscrito(e.target.value)}
+          onBlur={confirmar}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter') return;
+            // Sin esto, Enter envía el formulario con lo que todavía no se ha
+            // interpretado.
+            e.preventDefault();
+            confirmar();
+          }}
+          className={cn(
+            'min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground',
+            enCampo && 'pt-4',
+          )}
+        />
+
+        {/* El calendario ya no es el campo entero: es lo único que lo abre.
+            Va donde va lo que abre algo —a la derecha, como la flecha de un
+            desplegable— y no gira, porque un calendario boca abajo no dice
+            nada. */}
+        <Menu
+          etiqueta="Abrir el calendario"
+          Icono={CalendarDays}
+          soloIcono
+          variante="ghost"
+          tipo="panel"
+          alineado="derecha"
+          flotante
+          anchoPropio
+          // El calendario trae su propio relleno: con el del menú encima queda
+          // el doble por los cuatro lados.
+          sinRelleno
+          ancho="w-auto"
+          claseCaja="shrink-0"
+        >
+          {(cerrar) => (
+            <Calendario
+              className="p-3"
+              desde={valor || undefined}
+              hasta={valor || undefined}
+              onDia={(iso) => {
+                onElegir(iso);
+                // Un solo día no necesita confirmarse: con el segundo clic ya
+                // no queda nada por decidir.
+                cerrar();
+              }}
+            />
+          )}
+        </Menu>
+      </div>
     </>
   );
 }
