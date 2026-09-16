@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 
 
 import { FiltroClasificacion } from '@/components/filtro-clasificacion';
 import { Menu, MenuOpcion, MenuTitulo } from '@/components/menu';
-import { SelectorDeRango } from '@/components/selector-de-rango';
+import { SelectorDeFecha } from '@/components/selector-de-fecha';
 import { Etiqueta } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
@@ -200,7 +200,7 @@ export function ToolbarFiltros({
           />
         </Menu>
 
-        <SelectorDeRango filtros={filtros} aplicar={aplicar} />
+        <SelectorDeFecha rango atajos filtros={filtros} aplicar={aplicar} />
 
         {hayFiltrosActivos && (
           <Button

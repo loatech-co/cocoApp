@@ -4,7 +4,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { SelectorDeDia } from '@/components/selector-de-dia';
+import { SelectorDeFecha } from '@/components/selector-de-fecha';
 import { Campo } from './campo';
 import { Input } from './input';
 import { Select } from './select';
@@ -123,7 +123,7 @@ describe('El campo con etiqueta flotante', () => {
   });
 
   it('el selector de fecha dice lo mismo, y su icono va al final sin flecha', () => {
-    const { container } = render(<SelectorDeDia valor="2026-04-04" onElegir={() => {}} />);
+    const { container } = render(<SelectorDeFecha valor="2026-04-04" onElegir={() => {}} />);
 
     expect(container.querySelector('[data-lleno]')?.getAttribute('data-lleno')).toBe('si');
     // El calendario es la señal de que esto abre un calendario, que es el
@@ -154,7 +154,7 @@ describe('El campo con etiqueta flotante', () => {
 
     cleanup();
 
-    const fecha = render(<SelectorDeDia valor="2026-04-04" onElegir={() => {}} />);
+    const fecha = render(<SelectorDeFecha valor="2026-04-04" onElegir={() => {}} />);
     const rellenoDeLaFecha = (fecha.container.querySelector('button')?.className ?? '')
       .split(/\s+/)
       .filter((c) => c.startsWith('px-'));

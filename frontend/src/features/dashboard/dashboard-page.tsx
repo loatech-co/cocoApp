@@ -1,12 +1,4 @@
-import {
-    ChevronLeft,
-  Eye,
-  EyeOff,
-  Receipt,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
 import { Dona } from '@/components/dona';
@@ -21,7 +13,6 @@ import { rutaSeleccionada } from '@/lib/movimientos';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
 import { rangoLargo } from '@/lib/fechas';
@@ -216,8 +207,6 @@ export function DashboardPage() {
               etiqueta="Presupuesto necesario"
               valor={formatCOP(alDia ? dashboard.data.required_budget : dashboard.data.range.expense)}
               detalle={alDia ? 'Costos fijos de este mes' : 'Lo que costó el periodo'}
-              Icono={Wallet}
-              chip="presupuesto"
             />
             <Kpi
               etiqueta="Gastos del periodo"
@@ -226,23 +215,17 @@ export function DashboardPage() {
               // centros de costos, así que si mañana se llaman de otra forma,
               // el indicador lo dice solo.
               desglose={dashboard.data.expense_by_center}
-              Icono={TrendingDown}
               acento="expense"
-              chip="gasto"
             />
             <Kpi
               etiqueta="Ingresos del periodo"
               valor={formatCOP(dashboard.data.range.income)}
-              Icono={TrendingUp}
               acento="income"
-              chip="ingreso"
             />
             <Kpi
               etiqueta="Movimientos"
               valor={String(dashboard.data.range.count)}
               detalle={rangoLargo(dashboard.data.period.from, dashboard.data.period.to)}
-              Icono={Receipt}
-              chip="movimientos"
             />
           </div>
 
@@ -429,32 +412,30 @@ function Kpi({
   valor,
   detalle,
   desglose,
-  Icono,
   acento,
-  chip = 'presupuesto',
 }: {
   etiqueta: string;
   valor: string;
   detalle?: string;
   /** En qué se reparte la cifra. Se escribe debajo, con su nombre y su monto. */
   desglose?: SpendingByCategory[];
-  Icono: React.ComponentType<{
-    className?: string;
-    'aria-hidden'?: boolean;
-    fill?: string;
-    fillOpacity?: number;
-    strokeWidth?: number;
-  }>;
   acento?: 'income' | 'expense';
-  chip?: ColorDeChip;
 }) {
   return (
     <Card>
-      <CardContent className="flex items-start gap-3 p-4 sm:gap-4 sm:p-6">
-        {/* El mismo pastel que en el menú de "Nuevo movimiento": el violeta es
-            el gasto en los dos sitios, y lo es porque el color vive en un
-            componente y no copiado en cada pantalla. */}
-        <ChipIcono Icono={Icono} color={chip} />
+      {/*
+        ── Sin icono ─────────────────────────────────────────────────────────
+        Llevaba un pastel de color con un glifo dentro, y no decía nada que no
+        dijera ya el rótulo: una cartera junto a «Presupuesto necesario», un
+        recibo junto a «Movimientos». Un icono que repite la palabra que tiene
+        al lado no ayuda a encontrar nada; solo le quita 40px de ancho a la
+        cifra, que es lo único que se viene a leer aquí.
+
+        Distinto es el icono que sustituye a una palabra —el de un botón sin
+        texto— o el que distingue entre cosas del mismo tipo. Ninguno de los
+        dos era el caso.
+      */}
+      <CardContent className="p-4 sm:p-6">
         <div className="min-w-0">
           {/* Sin mayúsculas sostenidas ni interletraje abierto. Era el
               rótulo en versalitas del panel de control de siempre, y con la

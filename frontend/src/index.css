@@ -122,17 +122,22 @@
      parte de lo que esta app enseña.
    · TURQUESA #3fc9a8 — lo que ENTRA, y de paso lo que salió bien. En una app
      de dinero son la misma buena noticia.
-   · VERDE MEDIO #46c285 — lo PENDIENTE y lo informativo.
+   · VERDE MEDIO #46c285 — lo informativo.
 
-   Lo pendiente estaba en un latón y ya no: la paleta es verde y un ámbar
-   dentro se leía como de otra parte. Tiene un coste y conviene tenerlo
-   presente: el verde medio (150°) y el turquesa (166°) se llevan 16° de
-   matiz, así que lo pendiente y lo que entra ya no se distinguen SOLO por el
-   color. Donde convivan —una fila vencida en una tabla con ingresos— hace
-   falta que lo diga algo más: la palabra, el signo, el peso de la letra.
+   ── Y una naranja, que no es de la paleta ────────────────────────────────
+   Lo VENCIDO va en naranja (#f0985a en oscuro, #a8530d en claro), y es el
+   único color cálido que queda en toda la app.
 
-   El rojo sigue fuera de la paleta a propósito: no es un color del tema, es
-   la señal de que algo salió mal o de que no se puede deshacer.
+   Estuvo un rato en verde medio, con el resto, y no funcionaba: en una lista
+   donde todo es verde, un verde más no avisa de nada. Un aviso tiene que
+   salirse de la familia o no es un aviso. El latón de antes se fue porque
+   pintaba ÁREAS —porciones de la dona, chips, series de una gráfica— y ahí sí
+   se leía como un color de adorno traído de otra parte; la naranja no pinta
+   áreas: solo tiñe una fecha que ya pasó.
+
+   Por eso son cosas distintas y conviven: la naranja avisa, el rojo dice que
+   algo salió mal o que no se puede deshacer. El rojo tampoco es de la paleta,
+   y por la misma razón.
 
    ── Tres superficies, no cinco ───────────────────────────────────────────
    Había cinco escalones —riel, lienzo, tarjeta, bloque, chip— y el ojo no
@@ -242,11 +247,12 @@
   --income: #0a7a5f;
   --income-surface: #e0f2ec;
 
-  /* Lo PENDIENTE va en el verde medio. Llevaba un latón, que era el
-     `secondary` del tema, y se fue con el ámbar: la paleta es de verdes y un
-     color cálido dentro se leía como traído de otra parte. */
-  --warning: #1a7a52;
-  --warning-surface: #e2f2e8;
+  /* Lo VENCIDO va en naranja, el único cálido que queda. En una app donde
+     todo es verde, un verde más no avisa de nada: un aviso tiene que salirse
+     de la familia. Y no es el latón de antes, que pintaba áreas enteras —la
+     dona, los chips, las series— y por eso se leía de adorno. */
+  --warning: #a8530d;
+  --warning-surface: #fbeade;
   --info: #00633b;
   --info-surface: #ddeee6;
 
@@ -466,8 +472,8 @@
   --income: #3fc9a8;
   --income-surface: #0e2a24;
 
-  --warning: #46c285;
-  --warning-surface: #12251c;
+  --warning: #f0985a;
+  --warning-surface: #2e1d10;
   --info: #46c285;
   --info-surface: #122a26;
   --success: #3fc9a8;
@@ -477,7 +483,7 @@
   /* Aquí los tres colores son CLAROS, así que la tinta de encima se da la
      vuelta. */
   --success-foreground: #06120f;
-  --warning-foreground: #06120f;
+  --warning-foreground: #2a1408;
   --info-foreground: #06120f;
 
   --chart-1: #d3f24b;

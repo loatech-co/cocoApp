@@ -29,7 +29,7 @@ import { BLOQUE, Bloque } from '@/components/ui/bloque';
 import { Campo } from '@/components/ui/campo';
 import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
-import { SelectorDeDia } from '@/components/selector-de-dia';
+import { SelectorDeFecha } from '@/components/selector-de-fecha';
 import { Input } from '@/components/ui/input';
 import { CabeceraDeModal, PANEL_DE_MODAL, PieDeModal } from '@/components/ui/modal-partes';
 import { Progreso } from '@/components/ui/progreso';
@@ -634,7 +634,7 @@ export function MovimientoModal({
                     </Campo>
 
                     <Campo etiqueta="Fecha" id="mov-fecha">
-                      <SelectorDeDia id="mov-fecha" valor={date} onElegir={setDate} requerido />
+                      <SelectorDeFecha id="mov-fecha" valor={date} onElegir={setDate} requerido />
                     </Campo>
                   </div>
 

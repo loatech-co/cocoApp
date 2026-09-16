@@ -123,13 +123,26 @@ export function Menu({
 }) {
   const [abierto, setAbierto] = useState(false);
   const caja = useRef<HTMLDivElement>(null);
-  const [anclaje, setAnclaje] = useState<{ top: number; left: number; ancho: number } | null>(null);
+  const [anclaje, setAnclaje] = useState<{
+    top: number;
+    left: number;
+    /** Lo que queda desde el canto derecho del disparador hasta la ventana. */
+    derecha: number;
+    ancho: number;
+  } | null>(null);
 
   // Se mide al abrir: la posición de la caja en la ventana es lo único que
   // hace falta para colocar un panel que ya no depende de ella.
   function medir(): void {
     const r = caja.current?.getBoundingClientRect();
-    if (r) setAnclaje({ top: r.bottom, left: r.left, ancho: r.width });
+    if (r) {
+      setAnclaje({
+        top: r.bottom,
+        left: r.left,
+        derecha: window.innerWidth - r.right,
+        ancho: r.width,
+      });
+    }
   }
 
   useEffect(() => {
@@ -218,15 +231,30 @@ export function Menu({
           style={
             flotante && anclaje
               ? anchoPropio
-                ? {
-                    top: `${anclaje.top + 8}px`,
-                    left: `${anclaje.left}px`,
-                    // Se recorta a lo que queda hasta el borde de la ventana.
-                    // Sin esto, un panel de 320px anclado a un campo que vive
-                    // en la mitad derecha se sale de la pantalla, y lo que se
-                    // sale no se puede pulsar.
-                    maxWidth: `calc(100vw - ${anclaje.left}px - 1rem)`,
-                  }
+                ? /*
+                     Se ancla por el canto que dice `alineado`, y no siempre
+                     por la izquierda.
+
+                     Anclando siempre a la izquierda, un panel ancho colgado de
+                     un control que vive al final de una barra —el rango de
+                     fechas— crece hacia fuera de la pantalla: o se sale, o el
+                     recorte lo deja de la mitad de ancho. Por la derecha crece
+                     hacia dentro, que es donde hay sitio.
+
+                     El tope es siempre lo que queda hasta el borde opuesto:
+                     lo que se sale de la ventana no se puede pulsar.
+                   */
+                  alineado === 'derecha'
+                  ? {
+                      top: `${anclaje.top + 8}px`,
+                      right: `${anclaje.derecha}px`,
+                      maxWidth: `calc(100vw - ${anclaje.derecha}px - 1rem)`,
+                    }
+                  : {
+                      top: `${anclaje.top + 8}px`,
+                      left: `${anclaje.left}px`,
+                      maxWidth: `calc(100vw - ${anclaje.left}px - 1rem)`,
+                    }
                 : // El MISMO ancho que el campo, no un mínimo: un panel más
                   // ancho que su disparador se lee como otro elemento, y uno
                   // más angosto corta las opciones que el campo sí muestra
