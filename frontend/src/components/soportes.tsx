@@ -149,15 +149,22 @@ function Visor({ transactionId, soporte }: { transactionId: number; soporte: Sop
             className="max-h-full max-w-full object-contain"
           />
         ) : (
-          <iframe
-            src={url}
-            title={soporte.nombre_archivo}
-            className="size-full border-0"
-            // El PDF viene de un blob del propio origen, pero un PDF puede
-            // llevar enlaces y formularios. El sandbox lo deja enseñarse y
-            // nada más.
-            sandbox=""
-          />
+          /*
+            Sin `sandbox`, y hace falta decir por qué.
+
+            Estaba con `sandbox=""`, que parecía lo prudente: enseñar el
+            documento y no dejarle hacer nada. Pero el visor de PDF de Chrome
+            es él mismo una aplicación, así que un sandbox vacío lo bloquea
+            también a él: en pantalla no salía el recibo sino un cuadro gris
+            que decía "This page has been blocked by Chrome".
+
+            Lo que se pierde es menos de lo que parece. El PDF no corre con
+            los privilegios de la página: Chrome lo abre en su propio proceso
+            aislado, que es donde vive el poco JavaScript que un PDF puede
+            traer. Y estos archivos no son de cualquiera —son los recibos que
+            importamos nosotros, de tipos que el almacén acepta uno por uno—.
+          */
+          <iframe src={url} title={soporte.nombre_archivo} className="size-full border-0" />
         )}
       </div>
 
