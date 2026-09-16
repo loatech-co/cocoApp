@@ -45,6 +45,24 @@ function hoyEnBogota(): Date {
 }
 
 const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
+
+/** Hoy en Bogotá, en `YYYY-MM-DD`. */
+export function hoyISO(): string {
+  return aISO(hoyEnBogota());
+}
+
+/**
+ * Si el recorte que se está mirando llega hasta hoy.
+ *
+ * Lo usan las piezas que hablan del MES EN CURSO —el presupuesto necesario y
+ * los pagos pendientes— para saber si tienen algo que decir. Mirando agosto de
+ * 2024, "lo que falta pagar este mes" no es una respuesta tardía: es la
+ * respuesta a otra pregunta, puesta al lado de las cifras de un periodo que ya
+ * cerró. Y ahí no hay nada pendiente, porque ya pasó.
+ */
+export function llegaHastaHoy(filtros: { to: string }): boolean {
+  return filtros.to >= hoyISO();
+}
 const utc = (anio: number, mes: number, dia: number): Date => new Date(Date.UTC(anio, mes, dia));
 
 /**

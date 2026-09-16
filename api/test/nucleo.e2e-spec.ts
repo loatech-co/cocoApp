@@ -842,6 +842,45 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(r.body.data.pending[0].name).toBe('Agua');
       expect(r.body.data.pending[0].expected_amount).toBe('120000.00');
     });
+
+    it('un movimiento SIN confirmar no saca al concepto de los pendientes', async () => {
+      const hoy = new Date(Date.now() - 5 * 60 * 60 * 1000);
+      const mes = hoy.toISOString().slice(0, 7);
+
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
+      const agua = await crearCategoria(comoAna(), {
+        name: 'Agua',
+        parent_id: Number(centro.id),
+        recurrente: true,
+        periodicidad: 'mensual',
+        dia_de_pago: 10,
+      });
+
+      // Un pago anunciado pero no confirmado: una transferencia programada, un
+      // débito que todavía no aparece en el extracto.
+      await http
+        .post('/api/v1/transactions')
+        .set('Authorization', comoAna())
+        .send({
+          date: `${mes}-01`,
+          amount: '120000',
+          type: 'expense',
+          category_id: Number(agua.id),
+          status: 'pending',
+        })
+        .expect(201);
+
+      const r = await http
+        .get(`/api/v1/dashboard?from=${mes}-01&to=${mes}-28`)
+        .set('Authorization', comoAna())
+        .expect(200);
+
+      // Sigue pendiente: un pago pendiente es lo que está en el presupuesto y
+      // NO tiene todavía un movimiento confirmado que lo respalde. Sacarlo de
+      // la lista prometería que algo está resuelto cuando no lo está.
+      expect(r.body.data.pending).toHaveLength(1);
+      expect(r.body.data.pending[0].name).toBe('Agua');
+    });
   });
 
   // ── Paginación ─────────────────────────────────────────────────────────────

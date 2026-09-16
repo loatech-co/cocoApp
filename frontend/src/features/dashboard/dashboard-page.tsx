@@ -25,9 +25,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
 import { rangoLargo } from '@/lib/fechas';
 import { useAuth } from '@/lib/auth-context';
-import { aParametros, useFiltros } from '@/lib/filtros';
+import { aParametros, llegaHastaHoy, useFiltros } from '@/lib/filtros';
 import { useCategories, useDashboard, useTransactions } from '@/lib/queries';
-import { formatCOP } from '@/lib/utils';
+import { cn, formatCOP } from '@/lib/utils';
 import type { Category, SpendingByCategory, Transaction } from '@coco/types';
 
 /**
@@ -112,6 +112,19 @@ export function DashboardPage() {
   const [editando, setEditando] = useState<Transaction | null | undefined>(undefined);
   const [conceptoSugerido, setConceptoSugerido] = useState<number | undefined>();
 
+  /*
+    ── Lo que habla del mes en curso solo aparece si se está mirando el mes ──
+    El presupuesto necesario y los pagos pendientes NO son del recorte: son
+    siempre del mes de hoy. Puestos al lado de las cifras de agosto de 2024,
+    no llegan tarde —responden otra pregunta—, y en un periodo que ya cerró no
+    queda nada pendiente, porque ya pasó.
+
+    La prueba es si el recorte llega hasta hoy. Así el mes en curso los
+    enseña, y también el año en curso o todo el histórico —que lo contienen—,
+    mientras que cualquier periodo cerrado los esconde.
+  */
+  const alDia = llegaHastaHoy(filtros);
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
       <ToolbarFiltros
@@ -172,20 +185,31 @@ export function DashboardPage() {
           {/* Cuatro indicadores: de a dos en una tableta y de a cuatro en una
               pantalla ancha. En tres columnas, el cuarto se quedaba solo en
               una fila para él. */}
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+          <div
+            className={cn(
+              'grid gap-3 sm:gap-5',
+              // Tres indicadores en un periodo cerrado, cuatro en el mes en
+              // curso: la rejilla se acomoda para que ninguno quede solo en
+              // una fila para él.
+              alDia ? 'sm:grid-cols-2 xl:grid-cols-4' : 'sm:grid-cols-3',
+            )}
+          >
             {/*
               Va PRIMERO, antes de lo gastado, porque se lee antes: cuánto hay
               que tener este mes y después cuánto se lleva gastado. Y es el
               único que NO habla del rango filtrado —mira siempre el mes en
-              curso—, así que lo dice en su detalle.
+              curso—, así que lo dice en su detalle y desaparece cuando el
+              recorte ya cerró.
             */}
-            <Kpi
-              etiqueta="Presupuesto necesario"
-              valor={formatCOP(dashboard.data.required_budget)}
-              detalle="Costos fijos de este mes"
-              Icono={Wallet}
-              chip="turquesa"
-            />
+            {alDia && (
+              <Kpi
+                etiqueta="Presupuesto necesario"
+                valor={formatCOP(dashboard.data.required_budget)}
+                detalle="Costos fijos de este mes"
+                Icono={Wallet}
+                chip="turquesa"
+              />
+            )}
             <Kpi
               etiqueta="Gastos del periodo"
               valor={formatCOP(dashboard.data.range.expense)}
@@ -259,7 +283,17 @@ export function DashboardPage() {
             dejarlas en `auto` las haría depender de su contenido, y su
             contenido depende de ellas.
           */}
-          <div className="grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_repeat(2,minmax(20%,30rem))] lg:grid-rows-[420px]">
+          <div
+            className={cn(
+              'grid gap-3 sm:gap-5 lg:grid-rows-[420px]',
+              // Sin los pagos pendientes, la fila son DOS tarjetas. Dejando
+              // tres columnas, la distribución se quedaría en el centro con un
+              // hueco del ancho de una tarjeta a su derecha.
+              alDia
+                ? 'lg:grid-cols-[minmax(0,1fr)_repeat(2,minmax(20%,30rem))]'
+                : 'lg:grid-cols-[minmax(0,1fr)_minmax(20%,30rem)]',
+            )}
+          >
             <Card className="h-full min-h-0">
               <CardContent className="flex h-full flex-col p-4 sm:p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
@@ -285,16 +319,18 @@ export function DashboardPage() {
               </CardContent>
             </Card>
 
-            <PagosPendientes
-              className="min-h-0"
-              pagos={dashboard.data.pending}
-              // Abre el modal de CREAR con el concepto ya puesto: el pago que
-              // falta es justo el que se acaba de señalar.
-              onElegir={(pago) => {
-                setConceptoSugerido(pago.category_id);
-                setEditando(null);
-              }}
-            />
+            {alDia && (
+              <PagosPendientes
+                className="min-h-0"
+                pagos={dashboard.data.pending}
+                // Abre el modal de CREAR con el concepto ya puesto: el pago
+                // que falta es justo el que se acaba de señalar.
+                onElegir={(pago) => {
+                  setConceptoSugerido(pago.category_id);
+                  setEditando(null);
+                }}
+              />
+            )}
 
             <div className="h-full min-h-0">
               <Distribucion

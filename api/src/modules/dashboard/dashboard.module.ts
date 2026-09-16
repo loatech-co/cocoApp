@@ -481,13 +481,24 @@ export class DashboardService {
         historiaDe.set(clave, meses);
       }
 
-      // Lo ya pagado ESTE mes: saca al concepto de la lista de pendientes, y
-      // entra al presupuesto por su monto real en vez del estimado.
+      /*
+        Lo ya pagado ESTE mes, y CONFIRMADO.
+
+        `status: 'cleared'` no es un detalle: un movimiento en `pending` es uno
+        que todavía no se sabe si ocurrió —una transferencia programada, un
+        débito anunciado—. Sacar el concepto de la lista por un pago que no se
+        ha confirmado es prometer que algo está resuelto cuando no lo está, y
+        el mes se cierra con un recibo sin pagar que nadie volvió a mirar.
+
+        Un pago pendiente es exactamente eso: algo que está en el presupuesto y
+        NO tiene todavía un movimiento confirmado que lo respalde.
+      */
       const pagadosEsteMes = await this.prisma.transaction.findMany({
         where: {
           userId,
           categoryId: { in: recurrentes.map((c) => c.id) },
           period: { gte: new Date(mesEnCurso), lte: new Date(mesEnCurso) },
+          status: 'cleared',
         },
         select: { categoryId: true, amount: true },
       });
