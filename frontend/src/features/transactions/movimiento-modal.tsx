@@ -1144,21 +1144,20 @@ function ComoEmpezar({
       partido en tres renglones.
     */
     /*
-      ── `flex-1` y `auto-rows-fr`: las tres llegan hasta abajo ───────────────
-      La ficha tiene alto mínimo, así que con tres tarjetas del alto de sus dos
-      renglones sobraba media pantalla debajo y las opciones quedaban apretadas
-      contra el título, como una barra de botones.
+      ── Ni estiradas ni pegadas arriba: centradas ───────────────────────────
+      Estuvieron ocupando el alto entero de la ficha, con `flex-1` y
+      `auto-rows-fr`. Era un error de planteamiento y costó cuatro intentos de
+      adorno descubrirlo: esto es un CHOOSER —tres opciones, se elige una y
+      desaparecen— y una opción no tiene nada que hacer con quinientos píxeles
+      de alto. Lo que había debajo del texto no era espacio, era un hueco, y
+      todo lo que se le metió dentro se leyó como relleno.
 
-      Hacen falta las dos, por lo mismo que en la rejilla del formulario:
-      `flex-1` le da a la REJILLA el alto que sobra, y `auto-rows-fr` estira sus
-      filas hasta ese alto —una rejilla reparte su alto entre filas, y con
-      `grid-auto-rows: auto` cada fila mide lo que mida su contenido—.
-
-      Sin `sm:` en ninguna de las dos: apiladas en un teléfono son tres filas de
-      un tercio de la ficha cada una, que es la misma proporción y sigue
-      leyéndose como tres carteles.
+      Miden ahora lo que miden sus dos renglones, y `my-auto` las pone en
+      mitad de la ficha en vez de dejarlas colgando del título. La ficha tiene
+      alto mínimo y aquí no hay nada más: el sitio que sobra es de la ficha, no
+      de las tarjetas.
     */
-    <div className="grid flex-1 auto-rows-fr gap-3 sm:grid-cols-3">
+    <div className="grid my-auto gap-3 sm:grid-cols-3">
       {/* Apagada, no escondida: es la regla de esta app para lo que va a
           llegar. Quitarla haría creer que la aplicación no sabe leer una foto
           —y sabe: es el mismo motor que lee un archivo subido—. */}
@@ -1241,19 +1240,10 @@ function Via({
       // más fuerte que la fila entera— para que se notara algo.
       className={cn(
         BLOQUE,
-        /*
-          ── Un cartel, no una fila ────────────────────────────────────────
-          `justify-end` manda el texto al pie de la tarjeta y `relative` +
-          `overflow-hidden` son lo que permite el pastel de la esquina: la
-          tarjeta recorta lo que se le sale, así que el círculo entra por el
-          canto superior izquierdo en vez de asomar por fuera del bloque.
-
-          El texto abajo y la figura arriba es lo que hace que tres tarjetas
-          altas se lean de un vistazo: los tres títulos caen a la misma
-          altura, en una línea, y lo que las distingue —la forma y el color—
-          queda arriba, donde no compite con ellos.
-        */
-        'flex h-full w-full flex-col justify-end p-4 text-left',
+        // `h-full` para que las tres midan lo que la más alta de la fila: con
+        // una ayuda de dos renglones y otra de uno, tres tarjetas de altos
+        // distintos en una fila se leen como un descuadre.
+        'flex h-full w-full flex-col p-4 text-left',
         'transition-colors',
         // Apagada no responde: ni tiñe el borde ni se realza, o prometería
         // que al pulsarla pasa algo.
