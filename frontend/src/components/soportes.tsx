@@ -114,7 +114,9 @@ export function Soportes({ transactionId }: { transactionId: number }) {
     <>
       {/* Tamaño fijo y que fluyan: con `grid-cols-N` un solo soporte se
           estiraba hasta ocupar un cuarto de la ficha y parecía otra cosa. */}
-      <ul className="flex flex-wrap gap-3">
+      {/* Sin ningún soporte, la lista es solo el cuadro de soltar y le toca
+          todo el alto de su columna. Con miniaturas dentro, mide lo que mide. */}
+      <ul className={cn('flex flex-wrap gap-3', lista.length === 0 && 'min-h-0 flex-1')}>
         {lista.map((s, i) => (
           <li key={String(s.id)}>
             <Miniatura
@@ -130,7 +132,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
             la misma fila: así se ve que es otra plaza de lo mismo. Sin
             ninguno, es lo único que hay, y un cuadro punteado y vacío se lee
             como "aquí falta algo" mejor que cualquier frase. */}
-        <li className={cn(lista.length === 0 && 'w-full')}>
+        <li className={cn(lista.length === 0 && 'h-full w-full')}>
           <Soltar
             subiendo={subir.isPending}
             progreso={progreso}
@@ -223,7 +225,10 @@ export function Soltar({
             En cuanto hay uno, vuelve a ser una plaza más de la fila: ahí el
             contexto ya lo dan las miniaturas de al lado.
           */
-          solo ? 'w-full px-4 py-8' : 'size-[104px]',
+          // `size-full` para que llene la columna, con un suelo de 144px por
+          // si el contenedor no tiene alto que dar —en la ficha de un
+          // movimiento guardado la columna no estira—.
+          solo ? 'size-full min-h-36 px-4 py-8' : 'size-[104px]',
           /*
             Al pasar por encima se oscurece EL FONDO, y el trazo no se toca.
 
@@ -254,11 +259,23 @@ export function Soltar({
           </>
         ) : solo ? (
           <>
+            {/*
+              El texto dice QUÉ va aquí, no solo cómo ponerlo.
+
+              Decía "Arrastrar un archivo aquí": con un rótulo de sección
+              encima que ponía "Soporte", eso bastaba. Sin el rótulo, "un
+              archivo" no dice de qué archivo se trata, y este cuadro es el
+              único sitio de la ficha donde se adjunta el recibo.
+            */}
             <Upload className="size-6" aria-hidden="true" />
-            <span className="text-center text-sm font-medium">
-              Arrastrar un archivo aquí, o seleccionarlo del equipo
+            <span className="text-center text-sm font-medium text-foreground">
+              Adjuntar los soportes del movimiento
             </span>
-            <span className="flex items-center gap-1.5 text-center text-xs text-muted-foreground">
+            <span className="text-center text-xs">
+              El recibo, la factura o el comprobante de pago. Arrastrarlos aquí
+              o seleccionarlos del equipo.
+            </span>
+            <span className="mt-1 flex items-center gap-1.5 text-center text-2xs text-muted-foreground">
               <FileText className="size-3.5 shrink-0" aria-hidden="true" />
               PDF, JPG, PNG, HEIC o WEBP
             </span>

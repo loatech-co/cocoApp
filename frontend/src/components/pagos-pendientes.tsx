@@ -59,14 +59,13 @@ export function PagosPendientes({
         {/* Se desplaza en vez de crecer: la tarjeta comparte fila con la
              gráfica y la dona, y una lista larga estiraría a las tres.
 
-             El par `-mr-3 pr-4` es para la barra de desplazamiento. En macOS
+             El par `-mr-3 pr-3` es para la barra de desplazamiento. En macOS
              la barra FLOTA encima del contenido en vez de ocupar sitio, así
              que no basta con que la lista quepa: hay que dejarle aire propio.
              La lista se sale 12px sobre el relleno de la tarjeta —ahí va la
-             barra— y el texto se queda a 20px de ese borde, que es la barra
-             más un margen. Con los 8px que había antes, la barra caía justo
-             sobre la cifra. */}
-        <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-5">
+             barra, encima del relleno y fuera de las filas— y su contenido
+             termina justo en el borde interior de la tarjeta. */}
+        <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-3">
           {pagos.map((pago) => {
               const vencido = pago.due_date < ahora;
 
@@ -81,7 +80,14 @@ export function PagosPendientes({
                       // Atenuar el texto al pasar por encima es exactamente lo
                       // que hace un control apagado, así que la fila que sí se
                       // puede pulsar parecía la que no.
-                      '-mx-2 flex w-full items-center justify-between gap-3 rounded-md px-2 py-2.5',
+                      //
+                      // Y ese fondo no se sale de la tarjeta: antes sobresalía
+                      // 8px por la izquierda y quedaba a ras por la derecha, de
+                      // modo que el recuadro casi tocaba el canto y el nombre y
+                      // la cifra se apoyaban en su borde. Ahora ocupa el ancho
+                      // de la columna —alineado con el título— y deja 12px de
+                      // aire a cada lado por dentro.
+                      'flex w-full items-center justify-between gap-3 rounded-md px-3 py-2.5',
                       'text-left transition-colors',
                       onElegir
                         ? 'cursor-pointer hover:bg-accent hover:text-accent-foreground'

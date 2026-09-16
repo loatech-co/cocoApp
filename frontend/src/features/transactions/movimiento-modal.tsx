@@ -475,7 +475,22 @@ export function MovimientoModal({
                   salía del tamaño de un sello y no se podía leer la cifra, que
                   es lo único que esta columna existe para permitir. */}
               <div className="grid gap-5 lg:grid-cols-2">
-                <Seccion titulo="Soporte" caja={false}>
+                {/*
+                  ── Sin rótulo, y estirando hasta el pie de la columna ──────
+                  El rótulo decía "Soporte" encima de un cuadro punteado que ya
+                  dice qué es: un sitio donde se sueltan archivos. Dos veces lo
+                  mismo, y la primera gastaba un renglón del alto de la ficha.
+                  Lo que hacía falta no era el título sino que el propio cuadro
+                  lo dijera, y eso se arregla en su texto.
+
+                  `h-full` sobre la columna y `flex` dentro: la rejilla ya
+                  iguala el alto de las dos columnas, pero el contenido de esta
+                  medía lo que medía el cuadro y dejaba medio metro de vacío
+                  debajo. Estirando, el área donde se suelta es toda la columna
+                  —que es además un blanco mucho más fácil de acertar con un
+                  archivo agarrado—.
+                */}
+                <div className="flex flex-col">
                   {movimiento ? (
                     <Soportes transactionId={movimiento.id} />
                   ) : (
@@ -485,7 +500,7 @@ export function MovimientoModal({
                       onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
                     />
                   )}
-                </Seccion>
+                </div>
 
                 {/*
                   El orden es el de la pregunta: de qué centro, de qué grupo,
@@ -1116,14 +1131,18 @@ function SoportesPendientes({
   // El que se está viendo, recortado: quitar el último dejaba el índice
   // apuntando a un archivo que ya no existe.
   const i = Math.min(activo, archivos.length - 1);
+  // Sin nada todavía, el cuadro de soltar es lo único que hay y le toca todo
+  // el alto. En cuanto hay un archivo, el alto se lo lleva la
+  // previsualización y la fila de miniaturas mide lo que mide.
+  const vacio = archivos.length === 0;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={cn('flex flex-col gap-3', vacio && 'h-full')}>
       {i >= 0 && urls[i] && (
         <PreviaDeArchivo key={urls[i]} url={urls[i]} esImagen={archivos[i].type.startsWith('image/')} />
       )}
 
-      <ul className="flex flex-wrap gap-2">
+      <ul className={cn('flex flex-wrap gap-2', vacio && 'min-h-0 flex-1')}>
         {archivos.map((archivo, n) => (
           <li key={`${archivo.name}-${n}`}>
             <Tile
@@ -1144,11 +1163,11 @@ function SoportesPendientes({
         {/* El MISMO cuadro que en un movimiento ya guardado: vacío ocupa el
             ancho y explica qué acepta; con algo dentro es una plaza más de la
             galería. Dos versiones del mismo hueco se separarían. */}
-        <li className={cn(archivos.length === 0 && 'w-full')}>
+        <li className={cn(vacio && 'h-full w-full')}>
           <Soltar
             subiendo={false}
             progreso={0}
-            solo={archivos.length === 0}
+            solo={vacio}
             onArchivos={(lista) => onAñadir(Array.from(lista ?? []))}
           />
         </li>
