@@ -22,12 +22,15 @@ export function SelectorDeDia({
   valor,
   onElegir,
   requerido = false,
+  deshabilitado = false,
 }: {
   id?: string;
   /** `YYYY-MM-DD`. */
   valor: string;
   onElegir: (iso: string) => void;
   requerido?: boolean;
+  /** Se pinta igual pero no abre nada: es un dato que se lee, no se elige. */
+  deshabilitado?: boolean;
 }) {
   const [abierto, setAbierto] = useState(false);
   const caja = useRef<HTMLDivElement>(null);
@@ -65,6 +68,7 @@ export function SelectorDeDia({
         variant="herramienta"
         size="default"
         onClick={() => setAbierto((v) => !v)}
+        disabled={deshabilitado}
         aria-expanded={abierto}
         aria-haspopup="dialog"
         className="w-full justify-between"
@@ -79,7 +83,7 @@ export function SelectorDeDia({
         />
       </Button>
 
-      {abierto && (
+      {abierto && !deshabilitado && (
         <div
           role="dialog"
           aria-label="Elegir fecha"

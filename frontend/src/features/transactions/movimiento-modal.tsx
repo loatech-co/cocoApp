@@ -1,10 +1,12 @@
-import { Loader2, Lock, X } from 'lucide-react';
+import { ExternalLink, Loader2, Lock, Pencil, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 
 import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-recurrencia';
 import { Soportes } from '@/components/soportes';
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
+import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -15,6 +17,7 @@ import {
   useActualizarMovimiento,
   useCategories,
   useCrearMovimiento,
+  useEliminarMovimiento,
 } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Category, Transaction, TransactionType } from '@coco/types';
@@ -54,6 +57,7 @@ export function MovimientoModal({
   const crear = useCrearMovimiento();
   const actualizar = useActualizarMovimiento();
   const actualizarConcepto = useActualizarCategoria();
+  const eliminar = useEliminarMovimiento();
   const primerCampo = useRef<HTMLInputElement>(null);
 
   const editando = Boolean(movimiento);
@@ -65,6 +69,29 @@ export function MovimientoModal({
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
+
+  /*
+    ── Se abre para LEER, no para editar ────────────────────────────────────
+    Abrir un movimiento es casi siempre consultarlo: ver cuánto fue, cuándo se
+    pagó, mirar el recibo. Con todo editable desde el primer instante, cada
+    una de esas consultas es una ocasión de cambiar algo sin querer —un clic
+    en un desplegable, una tecla en el campo del valor— y de esos accidentes
+    no queda rastro.
+
+    Crear es lo contrario: no hay nada que leer, así que nace editable.
+  */
+  const [editable, setEditable] = useState(false);
+  /*
+    Sube cada vez que se cancela una edición.
+
+    Está en las dependencias del efecto que llena los campos, así que
+    cancelar los devuelve a lo que hay GUARDADO. Sin esto, "Cancelar" solo
+    apagaba el modo de edición y dejaba en pantalla lo que se había escrito:
+    la ficha decía una cosa y la base otra, y el siguiente que pulsara el
+    lápiz guardaba sin querer un cambio que alguien ya había descartado.
+  */
+  const [descartes, setDescartes] = useState(0);
 
   // La recurrencia pertenece al CONCEPTO, así que se carga de él y se guarda
   // en él. Aquí solo se edita de paso, que es donde uno se acuerda.
@@ -88,8 +115,12 @@ export function MovimientoModal({
     setCategoryId(movimiento?.category_id ?? categoriaPorDefecto);
     setNotes(movimiento?.notes ?? '');
     setError(null);
-    setTimeout(() => primerCampo.current?.focus(), 50);
-  }, [abierta, movimiento, categoriaPorDefecto]);
+    setConfirmandoBorrado(false);
+    setEditable(!movimiento);
+    // El foco solo cuando hay algo que escribir: puesto en un campo de solo
+    // lectura, el cursor parpadea en un sitio donde no se puede escribir.
+    if (!movimiento) setTimeout(() => primerCampo.current?.focus(), 50);
+  }, [abierta, movimiento, categoriaPorDefecto, descartes]);
 
   // Al elegir un concepto se trae SU recurrencia: es lo que ya estaba
   // guardado, y empezar de cero haría que abrir el modal y guardar sin tocar
@@ -134,7 +165,10 @@ export function MovimientoModal({
     puede, salir es lo que no.
   */
   const centroGuardado = rutaSeleccionada(arbol, movimiento?.category_id ?? undefined).centro;
-  const congelado = centroGuardado?.estatico ?? false;
+  const estatico = centroGuardado?.estatico ?? false;
+
+  /** Lo que se puede tocar ahora mismo. */
+  const editandoCampos = editable;
 
   async function onSubmit(evento: FormEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
@@ -206,16 +240,52 @@ export function MovimientoModal({
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-xl font-semibold">
-            {editando ? 'Editar movimiento' : 'Nuevo movimiento'}
+            {!editando ? 'Nuevo movimiento' : editable ? 'Editar movimiento' : 'Movimiento'}
           </h2>
-          <button
-            type="button"
-            onClick={onCerrar}
-            aria-label="Cerrar"
-            className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary"
-          >
-            <X className="size-5" aria-hidden="true" />
-          </button>
+
+          {/* Juntas y del mismo tamaño, como en la ficha de un concepto: son
+              las acciones que no son "guardar". */}
+          <div className="flex shrink-0 items-center gap-1">
+            {editando && !editable && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setEditable(true)}
+                aria-label="Editar movimiento"
+                title="Editar"
+              >
+                <Pencil className="size-4" aria-hidden="true" />
+              </Button>
+            )}
+
+            {/* Solo en los dinámicos. Un movimiento de un centro estático no
+                se borra desde aquí por la misma razón por la que no se
+                reclasifica: su estructura se decide en Centros de costos. */}
+            {editando && !estatico && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setConfirmandoBorrado(true)}
+                aria-label="Eliminar movimiento"
+                title="Eliminar"
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+              </Button>
+            )}
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={onCerrar}
+              aria-label="Cerrar"
+            >
+              <X className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
         </div>
 
         <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
@@ -225,12 +295,14 @@ export function MovimientoModal({
                 key={t}
                 type="button"
                 onClick={() => setType(t)}
+                disabled={!editandoCampos}
                 aria-pressed={type === t}
                 className={cn(
                   'flex-1 rounded-full py-2.5 text-sm font-medium transition-colors',
                   type === t
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-secondary text-secondary-foreground',
+                  !editandoCampos && 'cursor-default opacity-60',
                 )}
               >
                 {t === 'expense' ? 'Gasto' : 'Ingreso'}
@@ -247,6 +319,17 @@ export function MovimientoModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Celsia, colegio, mercado…"
               maxLength={255}
+              /*
+                En un centro estático el nombre tampoco se escribe aquí.
+
+                Este campo y el concepto del árbol se llaman igual y significan
+                lo mismo para quien los lee: dejar que se separen produce un
+                movimiento que dice "Celsia" colgando de un concepto que se
+                llama "Celsia (Energía)", y a partir de ahí nadie sabe cuál de
+                los dos es el nombre bueno. El nombre de un concepto estático
+                se cambia donde se definió.
+              */
+              disabled={!editandoCampos || estatico}
             />
           </div>
 
@@ -263,57 +346,86 @@ export function MovimientoModal({
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
                 required
+                disabled={!editandoCampos}
               />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="mov-fecha">Fecha</Label>
-              <SelectorDeDia id="mov-fecha" valor={date} onElegir={setDate} requerido />
+              <SelectorDeDia
+                id="mov-fecha"
+                valor={date}
+                onElegir={setDate}
+                requerido
+                deshabilitado={!editandoCampos}
+              />
             </div>
           </div>
 
-          <fieldset className="flex flex-col gap-3 rounded-2xl bg-secondary/60 p-3">
-            <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Dónde se clasifica
-            </legend>
+          {/*
+            ── En un centro estático, aquí no hay nada que decidir ──────────
+            Ni dónde se clasifica ni cada cuánto se paga: las dos cosas son
+            del CONCEPTO, y el concepto de un centro estático se define en
+            Centros de costos. Enseñar los desplegables apagados ocuparía
+            media ficha para no dejar tocar nada; en su lugar va el camino
+            hasta donde sí se cambia.
+          */}
+          {estatico ? (
+            <div className="flex flex-col gap-2 rounded-2xl bg-secondary/60 p-3">
+              <p className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Dónde se clasifica
+              </p>
+              <p className="px-1 text-sm">
+                {[centro?.name, grupo?.name, concepto?.name].filter(Boolean).join(' › ')}
+              </p>
+              <p className="flex items-start gap-1.5 px-1 text-xs text-muted-foreground">
+                <Lock className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                <span>
+                  “{centroGuardado?.name}” es un centro estático. La clasificación y la
+                  periodicidad se modifican desde Centros de costos.
+                </span>
+              </p>
+              <Link
+                to="/centros-de-costos"
+                onClick={onCerrar}
+                className="mx-1 flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+              >
+                <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
+                Editar el concepto en Centros de costos
+              </Link>
+            </div>
+          ) : (
+            <fieldset className="flex flex-col gap-3 rounded-2xl bg-secondary/60 p-3">
+              <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Dónde se clasifica
+              </legend>
 
-            <Cascada
-              etiqueta="Centro de costos"
-              valor={centro?.id}
-              opciones={arbol}
-              deshabilitado={congelado}
-              onElegir={setCategoryId}
-            />
-            <Cascada
-              etiqueta="Grupo"
-              valor={grupo?.id}
-              opciones={centro?.children ?? []}
-              deshabilitado={congelado || !centro}
-              onElegir={(id) => setCategoryId(id ?? centro?.id)}
-            />
-            <Cascada
-              etiqueta="Concepto"
-              valor={concepto?.id}
-              opciones={grupo?.children ?? []}
-              deshabilitado={congelado || !grupo}
-              onElegir={(id) => setCategoryId(id ?? grupo?.id)}
-            />
+              <Cascada
+                etiqueta="Centro de costos"
+                valor={centro?.id}
+                opciones={arbol}
+                deshabilitado={!editandoCampos}
+                onElegir={setCategoryId}
+              />
+              <Cascada
+                etiqueta="Grupo"
+                valor={grupo?.id}
+                opciones={centro?.children ?? []}
+                deshabilitado={!editandoCampos || !centro}
+                onElegir={(id) => setCategoryId(id ?? centro?.id)}
+              />
+              <Cascada
+                etiqueta="Concepto"
+                valor={concepto?.id}
+                opciones={grupo?.children ?? []}
+                deshabilitado={!editandoCampos || !grupo}
+                onElegir={(id) => setCategoryId(id ?? grupo?.id)}
+              />
 
-            {/* Tres desplegables apagados sin decir por qué se leen como una
-                avería. La frase de siempre cede el sitio a la que explica. */}
-            <p className="flex items-start gap-1.5 px-1 text-xs text-muted-foreground">
-              {congelado ? (
-                <>
-                  <Lock className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-                  <span>
-                    “{centroGuardado?.name}” es un centro estático. La clasificación solo
-                    se modifica desde Centros de costos.
-                  </span>
-                </>
-              ) : (
-                <span>Un movimiento puede quedarse sin clasificar. Se guarda igual.</span>
-              )}
-            </p>
-          </fieldset>
+              <p className="px-1 text-xs text-muted-foreground">
+                Un movimiento puede quedarse sin clasificar. Se guarda igual.
+              </p>
+            </fieldset>
+          )}
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="mov-notas">Notas</Label>
@@ -322,15 +434,17 @@ export function MovimientoModal({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
+              disabled={!editandoCampos}
               className="rounded-lg border bg-card px-3 py-2 text-sm"
               style={{ borderColor: 'var(--input)' }}
               placeholder="Opcional"
             />
           </div>
 
-          {/* Solo con un concepto elegido: la recurrencia es suya, y sin él
-              no hay dónde guardarla. */}
-          {concepto && (
+          {/* Solo con un concepto elegido, y nunca en un estático: la
+              recurrencia es del CONCEPTO, y el de un centro estático se
+              configura en Centros de costos —el enlace está arriba—. */}
+          {concepto && !estatico && (
             <CamposDeRecurrencia
               valor={recurrencia}
               onCambiar={setRecurrencia}
@@ -364,16 +478,56 @@ export function MovimientoModal({
             </p>
           )}
 
-          <div className="flex gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={onCerrar} className="flex-1">
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={guardando} className="flex-1">
-              {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-              {editando ? 'Guardar' : 'Registrar'}
-            </Button>
-          </div>
+          {/* Leyendo no hay nada que cancelar ni que guardar: un solo botón
+              que cierra. "Cancelar" al lado de "Guardar" en una ficha que no
+              se ha tocado invita a pensar que algo quedó a medias. */}
+          {editandoCampos ? (
+            <div className="flex gap-2 pt-1">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  if (!editando) return onCerrar();
+                  setDescartes((n) => n + 1);
+                  setEditable(false);
+                }}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={guardando} className="flex-1">
+                {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+                {editando ? 'Guardar' : 'Registrar'}
+              </Button>
+            </div>
+          ) : (
+            <div className="pt-1">
+              <Button type="button" variant="ghost" onClick={onCerrar} className="w-full">
+                Cerrar
+              </Button>
+            </div>
+          )}
         </form>
+
+        <Confirmacion
+          abierta={confirmandoBorrado}
+          titulo="¿Eliminar este movimiento?"
+          peligrosa
+          etiquetaConfirmar="Eliminar"
+          ocupada={eliminar.isPending}
+          onCancelar={() => setConfirmandoBorrado(false)}
+          onConfirmar={() =>
+            movimiento &&
+            eliminar.mutate(movimiento.id, {
+              onSuccess: () => {
+                setConfirmandoBorrado(false);
+                onCerrar();
+              },
+            })
+          }
+        >
+          Se borra y no se puede deshacer. Sus soportes se van con él.
+        </Confirmacion>
       </div>
     </div>
   );
