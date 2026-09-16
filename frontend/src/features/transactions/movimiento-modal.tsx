@@ -1263,31 +1263,33 @@ function Via({
       )}
     >
       {/*
-        Decorativo, centrado y recortado.
+        Decorativo, y por eso desfasado a la esquina.
 
-        Un pastel de 36px en una esquina de una tarjeta de 300 por 500 es una
-        mota. A este tamaño y en el centro ya no es un icono que etiqueta la
-        opción: es el fondo de la tarjeta, y el ojo lo reconoce antes de leer
-        nada.
-
-        Centrado con `left-1/2 top-1/2` y media traslación en cada eje, que es
-        lo único que centra algo cuyo tamaño no conoce el padre. El círculo es
-        más ancho que la tarjeta, así que el `overflow-hidden` de arriba lo
-        recorta contra sus cantos y lo que se ve es una franja: exactamente lo
-        que hace que se lea como fondo y no como una figura puesta encima.
+        Un pastel de 36px arriba a la izquierda de una tarjeta de 300 por 500
+        es una mota. A este tamaño y saliéndose por la esquina ya no es un
+        icono que etiqueta la opción: es la cara de la tarjeta, y el ojo la
+        reconoce antes de leer nada. El `overflow-hidden` de arriba es lo que
+        lo recorta contra el canto redondeado en vez de dejarlo asomar por
+        fuera del bloque.
 
         `pointer-events-none` porque quien se pulsa es la tarjeta entera; sin
-        esto el disco se come los clics de todo su centro y el cursor cambia
-        de forma sobre él como si fuera otra cosa.
+        esto el disco se come los clics de su cuarto superior izquierdo y el
+        cursor cambia de forma sobre él como si fuera otra cosa.
 
         Su glifo ya va `aria-hidden` desde `ChipIcono`: lo que esta tarjeta
         anuncia lo dice su texto.
+
+        Se hunde MÁS en el teléfono que en pantalla grande —80px contra 64—
+        aunque el círculo sea más pequeño. No es un descuido: apilada, la
+        tarjeta mide un tercio de la ficha, así que un disco de 208 hundido
+        solo 64 le dejaría al título cuarenta píxeles libres y el texto se
+        leería sobre el pastel.
       */}
       <ChipIcono
         Icono={Icono}
         color={color}
         tamano="cartel"
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute -left-20 -top-20 sm:-left-16 sm:-top-16"
       />
 
       <span className="relative min-w-0">
@@ -1610,7 +1612,7 @@ function SoportesPendientes({
                 </>
               )}
 
-              <BotonOscuro etiqueta="Añadir otro soporte" onClick={() => setAñadiendo(true)}>
+              <BotonOscuro etiqueta="Agregar otro soporte" onClick={() => setAñadiendo(true)}>
                 <Plus className="size-4" aria-hidden="true" />
               </BotonOscuro>
 

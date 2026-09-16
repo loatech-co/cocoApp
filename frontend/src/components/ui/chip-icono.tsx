@@ -49,11 +49,11 @@ export function ChipIcono({
   /**
    * `sm` para una fila de menú; `default` para una tarjeta.
    *
-   * `cartel` es otra cosa: no marca, DECORA. Es el pastel a seis veces su
-   * tamaño, centrado en la tarjeta que lo lleva y recortado por sus cantos.
-   * Ahí ya no dice «esto es un gasto» —eso lo dice el texto de debajo— sino
-   * que le da cara a una tarjeta que de otro modo sería un rectángulo con dos
-   * renglones dentro.
+   * `cartel` es otra cosa: no marca, DECORA. Es el pastel a cinco veces su
+   * tamaño, desfasado hacia la esquina superior izquierda de la tarjeta que lo
+   * lleva y recortado por sus cantos. Ahí ya no dice «esto es un gasto» —eso
+   * lo dice el texto de debajo— sino que le da cara a una tarjeta que de otro
+   * modo sería un rectángulo con dos renglones dentro.
    */
   tamano?: 'sm' | 'default' | 'cartel';
   className?: string;
@@ -66,9 +66,8 @@ export function ChipIcono({
     default: 'size-11 sm:size-12',
     // Crece con la tarjeta: apilada en un teléfono ocupa un tercio de la
     // ficha, así que el círculo no puede medir lo mismo que en una columna
-    // de quinientos de alto. En los dos casos es MÁS ANCHO que la tarjeta y
-    // se recorta contra sus cantos: es lo que lo convierte en fondo.
-    cartel: 'size-72 sm:size-90',
+    // de quinientos de alto.
+    cartel: 'size-52 sm:size-64',
   } as const;
 
   const GLIFO = {
@@ -84,7 +83,16 @@ export function ChipIcono({
       Los otros dos tamaños NO lo llevan: ahí el pastel sí etiqueta, y un
       icono de 16 al 40 % no se distingue.
     */
-    cartel: 'size-28 opacity-40 sm:size-34',
+    /*
+      El glifo va a un tercio del círculo, no a llenarlo.
+
+      Estuvo a la mitad, y a esa escala el dibujo y el disco se estorban: la
+      figura toca el borde por los cuatro lados y lo que se ve es una mancha
+      con muescas, no una cámara ni un lápiz. Con aire alrededor, la silueta
+      se recorta contra el pastel y se reconoce de un vistazo, que es lo único
+      que este dibujo tiene que hacer.
+    */
+    cartel: 'size-16 opacity-40 sm:size-20',
   } as const;
 
   return (
