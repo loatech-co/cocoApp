@@ -133,7 +133,23 @@ export function Soportes({ transactionId }: { transactionId: number }) {
             la misma fila: así se ve que es otra plaza de lo mismo. Sin
             ninguno, es lo único que hay, y un cuadro punteado y vacío se lee
             como "aquí falta algo" mejor que cualquier frase. */}
-        <li className={cn(lista.length === 0 && 'h-full w-full')}>
+        {/*
+            `flex w-full self-stretch`, y no `h-full w-full`.
+
+            El alto de este cuadro venía de una cadena de porcentajes —lista,
+            plaza, hueco, botón—, y un `height: 100%` necesita que su padre
+            tenga un alto DEFINIDO. Aquí los padres son cajas flexibles cuyo
+            alto sale de repartir el que sobra, así que en el momento de
+            resolver el porcentaje no hay contra qué medir y el cuadro se
+            quedaba en el alto de su contenido: en la ficha de un movimiento
+            guardado se veía el cuadro arriba y un palmo de vacío debajo.
+
+            Estirarse no mide contra nada: `self-stretch` le da a la plaza el
+            alto de su fila, y como la lista es de una sola fila, esa fila es
+            toda la lista. De ahí para abajo, cada caja es flexible y su hijo
+            se estira solo, que es lo que hace una celda por defecto.
+        */}
+        <li className={cn(lista.length === 0 && 'flex w-full self-stretch')}>
           <Soltar
             subiendo={subir.isPending}
             progreso={progreso}
@@ -198,7 +214,8 @@ export function Soltar({
     // alto aquí ese `h-full` se resuelve contra una caja del tamaño de su
     // contenido y no estira. Es el eslabón que rompía la cadena
     // rejilla → lista → plaza → botón.
-    <div className={cn(solo && 'h-full w-full')}
+    <div
+      className={cn(solo && 'flex w-full self-stretch')}
       onDragOver={(e) => {
         e.preventDefault();
         setEncima(true);
@@ -233,7 +250,10 @@ export function Soltar({
           // `size-full` para que llene la columna, con un suelo de 144px por
           // si el contenedor no tiene alto que dar —en la ficha de un
           // movimiento guardado la columna no estira—.
-          solo ? 'size-full min-h-36 px-4 py-8' : 'size-[104px]',
+          // `flex-1` le da el ancho de su hueco y el alto se lo da estirarse,
+          // que es lo que hace un hijo de una caja flexible por defecto. El
+          // suelo de 144px queda para cuando no haya alto que repartir.
+          solo ? 'min-h-36 flex-1 px-4 py-8' : 'size-[104px]',
           /*
             Al pasar por encima se oscurece EL FONDO, y el trazo no se toca.
 
@@ -258,9 +278,7 @@ export function Soltar({
             <Loader2 className="size-5 animate-spin" aria-hidden="true" />
             {/* El porcentaje, no una barra: en una caja de 104px una barra son
                 cuatro píxeles de alto que no se ven moverse. */}
-            <span className="tabular text-xs font-medium">
-              {Math.round(progreso * 100)} %
-            </span>
+            <span className="tabular text-xs font-medium">{Math.round(progreso * 100)} %</span>
           </>
         ) : solo ? (
           <>
@@ -277,8 +295,8 @@ export function Soltar({
               Adjuntar los soportes del movimiento
             </span>
             <span className="text-center text-xs">
-              El recibo, la factura o el comprobante de pago. Arrastrarlos aquí
-              o seleccionarlos del equipo.
+              El recibo, la factura o el comprobante de pago. Arrastrarlos aquí o seleccionarlos del
+              equipo.
             </span>
             <span className="mt-1 flex items-center gap-1.5 text-center text-2xs text-muted-foreground">
               <FileText className="size-3.5 shrink-0" aria-hidden="true" />
@@ -633,12 +651,7 @@ function Pase({
               style={{ width: ANCHO_HOJA * escala }}
             />
           ) : (
-            <PaginaPdf
-              url={url}
-              pagina={pagina}
-              escala={escala}
-              onPaginas={setPaginas}
-            />
+            <PaginaPdf url={url} pagina={pagina} escala={escala} onPaginas={setPaginas} />
           )}
         </div>
 

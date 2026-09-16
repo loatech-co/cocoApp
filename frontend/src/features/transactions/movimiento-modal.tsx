@@ -1370,7 +1370,7 @@ function SoportesPendientes({
   const vacio = archivos.length === 0;
 
   return (
-    <div className={cn('flex flex-col gap-3', vacio && 'h-full')}>
+    <div className={cn('flex flex-col gap-3', vacio && 'min-h-0 flex-1')}>
       {i >= 0 && urls[i] && (
         <PreviaDeArchivo
           key={urls[i]}
@@ -1400,7 +1400,8 @@ function SoportesPendientes({
         {/* El MISMO cuadro que en un movimiento ya guardado: vacío ocupa el
             ancho y explica qué acepta; con algo dentro es una plaza más de la
             galería. Dos versiones del mismo hueco se separarían. */}
-        <li className={cn(vacio && 'h-full w-full')}>
+        {/* `self-stretch` y no `h-full`: el porqué, en `soportes.tsx`. */}
+        <li className={cn(vacio && 'flex w-full self-stretch')}>
           <Soltar
             subiendo={false}
             progreso={0}
