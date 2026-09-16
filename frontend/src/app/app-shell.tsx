@@ -46,8 +46,7 @@ const SECCIONES: readonly Seccion[] = [
   // Para quien no lleva cuentas, este enlace no existe. Ni oculto con CSS ni
   // deshabilitado: ausente.
   { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false, requiere: 'cuentas' },
-  { to: '/centros-de-costos', label: 'Centros de costos', corto: 'Centros', Icono: Tags, exact: false },
-  { to: '/importar', label: 'Importar', Icono: ScanLine, exact: false },
+  { to: '/escanear', label: 'Escanear', Icono: ScanLine, exact: false },
 ];
 
 /**
@@ -58,6 +57,15 @@ const SECCIONES: readonly Seccion[] = [
  * RolesGuard del backend — esto es presentación, no control de acceso.
  */
 const SECCIONES_DE_ADMIN = [
+  // Los centros de costos se configuran una vez y casi no se tocan: no es una
+  // sección del día a día como el resumen o los movimientos, es de las de
+  // dejar la casa en orden. Por eso baja aquí.
+  {
+    to: '/centros-de-costos',
+    label: 'Centros de costos',
+    Icono: Tags,
+    exact: false,
+  },
   // 'Usuarios', no 'Cuentas': en esta misma barra 'Cuentas' ya significa
   // tarjetas y ahorros. Dos cosas distintas con el mismo nombre a diez píxeles
   // de distancia.
@@ -301,6 +309,19 @@ function MenuDeLaCuenta({ plegada }: { plegada: boolean }) {
             }}
           >
             Mi cuenta
+          </MenuOpcion>
+
+          {/* También aquí porque abajo, en el móvil, solo caben las secciones
+              del día a día: sin esto, los centros de costos quedarían sin
+              ninguna puerta de entrada desde un teléfono. */}
+          <MenuOpcion
+            Icono={Tags}
+            onClick={() => {
+              cerrar();
+              navegar('/centros-de-costos');
+            }}
+          >
+            Centros de costos
           </MenuOpcion>
 
           {esAdmin && (

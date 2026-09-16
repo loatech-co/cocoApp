@@ -161,7 +161,7 @@ export function ImportarPage() {
           description: movimiento.description || undefined,
         })),
       },
-      { onSuccess: (lote) => navegar(`/importar/${lote.id}`) },
+      { onSuccess: (lote) => navegar(`/escanear/${lote.id}`) },
     );
   }
 

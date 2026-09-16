@@ -1,4 +1,4 @@
-import { Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Navigate, createBrowserRouter, RouterProvider, useParams } from 'react-router-dom';
 
 import { AppShell } from '@/app/app-shell';
 import { AccountsPage } from '@/features/accounts/accounts-page';
@@ -38,8 +38,13 @@ const router = createBrowserRouter([
       // apuntando a /categorias, y romperlos por un cambio de nombre es gratis
       // de evitar.
       { path: 'categorias', element: <Navigate to="/centros-de-costos" replace /> },
-      { path: 'importar', element: <ImportarPage /> },
-      { path: 'importar/:id', element: <RevisarPage /> },
+      { path: 'escanear', element: <ImportarPage /> },
+      { path: 'escanear/:id', element: <RevisarPage /> },
+      // La ruta vieja sigue viva y redirige: un enlace guardado o el historial
+      // del navegador no tienen por qué romperse porque la sección cambió de
+      // nombre.
+      { path: 'importar', element: <Navigate to="/escanear" replace /> },
+      { path: 'importar/:id', element: <RedirigirEscaneo /> },
       { path: 'mi-cuenta', element: <CuentaPage /> },
 
       // Administración. El RequireAdmin es comodidad de navegación; quien
@@ -78,4 +83,15 @@ const router = createBrowserRouter([
 
 export function AppRouter() {
   return <RouterProvider router={router} />;
+}
+
+/**
+ * La ruta vieja de un escaneo concreto, con su identificador.
+ *
+ * Existe porque la sección cambió de nombre y un enlace guardado —o el botón
+ * de atrás del navegador— no tiene por qué romperse por eso.
+ */
+function RedirigirEscaneo() {
+  const { id } = useParams();
+  return <Navigate to={`/escanear/${id ?? ''}`} replace />;
 }

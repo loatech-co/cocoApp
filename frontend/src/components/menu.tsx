@@ -30,6 +30,8 @@ export function Menu({
   tipo = 'menu',
   claseCaja,
   claseDisparador,
+  flotante = false,
+  variante = 'herramienta',
   disparador,
   children,
 }: {
@@ -58,12 +60,34 @@ export function Menu({
   claseCaja?: string;
   /** Clases del botón cuando se pasa un `disparador` propio. */
   claseDisparador?: string;
+  /**
+   * Coloca el panel contra la VENTANA en vez de contra su caja.
+   *
+   * Para los que viven dentro de algo que se desplaza —un formulario largo en
+   * un modal, una tabla—: ahí cualquier ancestro con `overflow` recorta lo que
+   * se salga de él, y un desplegable, por definición, se sale.
+   */
+  flotante?: boolean;
+  /**
+   * Cómo se ve el botón. `herramienta` es el recuadro de las barras de
+   * filtros; `ghost` es solo el icono, para los que viven dentro de una
+   * tarjeta y no tienen que competir con su contenido.
+   */
+  variante?: 'herramienta' | 'ghost';
   /** Reemplaza el botón por completo (el avatar, por ejemplo). */
   disparador?: (props: { abierto: boolean }) => ReactNode;
   children: ReactNode | ((cerrar: () => void) => ReactNode);
 }) {
   const [abierto, setAbierto] = useState(false);
   const caja = useRef<HTMLDivElement>(null);
+  const [anclaje, setAnclaje] = useState<{ top: number; left: number; ancho: number } | null>(null);
+
+  // Se mide al abrir: la posición de la caja en la ventana es lo único que
+  // hace falta para colocar un panel que ya no depende de ella.
+  function medir(): void {
+    const r = caja.current?.getBoundingClientRect();
+    if (r) setAnclaje({ top: r.bottom, left: r.left, ancho: r.width });
+  }
 
   useEffect(() => {
     if (!abierto) return;
@@ -88,7 +112,10 @@ export function Menu({
       {disparador ? (
         <button
           type="button"
-          onClick={() => setAbierto((v) => !v)}
+          onClick={() => {
+            if (flotante) medir();
+            setAbierto((v) => !v);
+          }}
           aria-expanded={abierto}
           aria-haspopup={ARIA[tipo]}
           className={
@@ -101,9 +128,12 @@ export function Menu({
       ) : (
         <Button
           type="button"
-          variant="herramienta"
+          variant={variante}
           size={soloIcono ? 'chip-icon' : 'chip'}
-          onClick={() => setAbierto((v) => !v)}
+          onClick={() => {
+            if (flotante) medir();
+            setAbierto((v) => !v);
+          }}
           aria-expanded={abierto}
           aria-haspopup={ARIA[tipo]}
           // Encendido cuando hay algo elegido aquí dentro, o mientras está
@@ -112,7 +142,21 @@ export function Menu({
           aria-label={soloIcono ? etiqueta : undefined}
           title={soloIcono ? etiqueta : undefined}
         >
-          {Icono && <Icono className="size-4 shrink-0" aria-hidden={true} />}
+          {Icono && (
+            <Icono
+              className={cn(
+                'size-4 shrink-0',
+                // El kebab, más tenue. Es un control SECUNDARIO: vive en la
+                // esquina de cada fila y se repite tantas veces como filas
+                // haya. A plena tinta, esa columna de puntos pesa más que los
+                // nombres, que es lo que se viene a leer. Va aquí y no en cada
+                // llamada para que los dos kebabs —el del centro y el del
+                // grupo— no puedan separarse.
+                variante === 'ghost' && soloIcono && 'opacity-70',
+              )}
+              aria-hidden={true}
+            />
+          )}
           {!soloIcono && <span className="truncate">{etiqueta}</span>}
           {!soloIcono && (
             <ChevronDown
@@ -127,13 +171,24 @@ export function Menu({
         <div
           role={ROL[tipo]}
           aria-label={etiqueta}
+          style={
+            flotante && anclaje
+              ? // El MISMO ancho que el campo, no un mínimo: un panel más
+                // ancho que su disparador se lee como otro elemento, y uno más
+                // angosto corta las opciones que el campo sí muestra enteras.
+                { top: `${anclaje.top + 8}px`, left: `${anclaje.left}px`, width: `${anclaje.ancho}px` }
+              : undefined
+          }
           className={cn(
-            'absolute z-30 overflow-hidden rounded-2xl bg-popover py-1.5',
-            direccion === 'arriba' ? 'bottom-full mb-2' : 'top-full mt-2',
+            'z-50 overflow-hidden rounded-2xl bg-popover py-1.5',
+            flotante ? 'fixed' : 'absolute',
+            !flotante && (direccion === 'arriba' ? 'bottom-full mb-2' : 'top-full mt-2'),
             'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
-            ancho,
+            // Flotando, el ancho lo da el disparador: la clase mediría contra
+            // la ventana, que no es la caja de nadie.
+            !flotante && ancho,
             'max-w-[calc(100vw-2rem)]',
-            alineado === 'derecha' ? 'right-0' : 'left-0',
+            !flotante && (alineado === 'derecha' ? 'right-0' : 'left-0'),
           )}
         >
           {typeof children === 'function' ? children(() => setAbierto(false)) : children}

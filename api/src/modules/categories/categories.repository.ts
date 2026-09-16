@@ -91,4 +91,42 @@ export class CategoriesRepository {
   async crearVarias(data: Prisma.CategoryUncheckedCreateInput[]): Promise<void> {
     await this.prisma.category.createMany({ data });
   }
+
+  /**
+   * Mueve todo lo que cuelga de un concepto a otro y borra el primero.
+   *
+   * En UNA transacción. A medio camino quedarían movimientos apuntando a una
+   * categoría ya borrada, y eso no se arregla mirando la pantalla.
+   */
+  async unificar(userId: bigint, origenId: bigint, destinoId: bigint): Promise<number> {
+    return this.prisma.$transaction(async (tx) => {
+      const movidos = await tx.transaction.updateMany({
+        where: { userId, categoryId: origenId },
+        data: { categoryId: destinoId },
+      });
+
+      // Los splits reparten un movimiento entre categorías: si uno apuntaba al
+      // concepto que desaparece, hay que moverlo o se quedaría sin clasificar.
+      await tx.transactionSplit.updateMany({
+        where: { categoryId: origenId },
+        data: { categoryId: destinoId },
+      });
+
+      await tx.importRow.updateMany({
+        where: { categoryId: origenId },
+        data: { categoryId: destinoId },
+      });
+
+      // Las reglas aprendidas son únicas por (usuario, patrón), así que
+      // cambiarles la categoría nunca choca con las del destino.
+      await tx.categoryRule.updateMany({
+        where: { userId, categoryId: origenId },
+        data: { categoryId: destinoId },
+      });
+
+      await tx.category.delete({ where: { id: origenId } });
+
+      return movidos.count;
+    });
+  }
 }

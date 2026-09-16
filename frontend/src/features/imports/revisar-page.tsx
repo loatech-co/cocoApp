@@ -67,7 +67,7 @@ export function RevisarPage() {
         <AlertCircle aria-hidden="true" />
         <AlertTitle>No se encontró esa importación</AlertTitle>
         <AlertDescription>
-          <Link to="/importar" className="underline underline-offset-4">
+          <Link to="/escanear" className="underline underline-offset-4">
             Volver a importar
           </Link>
         </AlertDescription>
@@ -99,7 +99,7 @@ export function RevisarPage() {
             variant="outline"
             disabled={deshacer.isPending}
             onClick={() =>
-              deshacer.mutate(loteId, { onSuccess: () => navegar('/importar') })
+              deshacer.mutate(loteId, { onSuccess: () => navegar('/escanear') })
             }
           >
             {deshacer.isPending ? (
@@ -192,7 +192,7 @@ export function RevisarPage() {
           <Button
             variant="destructive"
             disabled={descartar.isPending}
-            onClick={() => descartar.mutate(loteId, { onSuccess: () => navegar('/importar') })}
+            onClick={() => descartar.mutate(loteId, { onSuccess: () => navegar('/escanear') })}
           >
             Descartar todo
           </Button>

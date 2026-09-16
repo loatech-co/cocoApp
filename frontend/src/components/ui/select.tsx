@@ -88,6 +88,9 @@ export function Select({
       etiqueta={etiqueta}
       tipo="lista"
       alineado="izquierda"
+      // Los selectores viven en formularios, y un formulario largo se
+      // desplaza: sin esto, el panel lo recorta la caja que lo contiene.
+      flotante
       ancho="w-[max(12rem,100%)]"
       claseCaja={cn('w-full min-w-0', className)}
       claseDisparador={cn(
