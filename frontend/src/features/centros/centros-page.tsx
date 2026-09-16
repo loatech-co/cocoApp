@@ -568,24 +568,13 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
                 title={`Editar ${concepto.name}`}
                 className="max-w-full"
               >
-                {/*
-                  La marca de «se paga cada cierto tiempo» va DETRÁS del
-                  nombre.
-
-                  Delante, empujaba el nombre catorce píxeles a la derecha, y
-                  como solo la llevan algunos conceptos, en una columna de
-                  cuatro chips los nombres arrancaban a dos alturas distintas:
-                  la lista se leía en zigzag. Detrás, todos arrancan en la
-                  misma línea, y la marca queda donde le corresponde —una nota
-                  sobre el concepto, no parte de su nombre—.
-                */}
-                <span className="min-w-0 truncate">{concepto.name}</span>
                 {concepto.recurrente && (
                   <Repeat
                     className="size-3 shrink-0 opacity-70"
                     aria-label="Se paga cada cierto tiempo"
                   />
                 )}
+                <span className="min-w-0 truncate">{concepto.name}</span>
               </Chip>
             </li>
           ))}
