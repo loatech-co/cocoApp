@@ -156,9 +156,15 @@ export function AppShell() {
 
           {esAdmin && (
             <>
-              <p className="mt-6 mb-1 px-4 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted">
-                Administración
-              </p>
+              {/* Plegada, el rótulo no cabe: se queda la raya, que es lo que
+                  de verdad hace falta —decir que lo de abajo es otra cosa—. */}
+              {plegada ? (
+                <hr className="my-3 border-sidebar-border" />
+              ) : (
+                <p className="mt-6 mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted">
+                  Administración
+                </p>
+              )}
               {SECCIONES_DE_ADMIN.map(({ to, label, Icono, exact }) => (
                 <Enlace key={to} to={to} exact={exact} plegada={plegada} titulo={label}>
                   <Icono className="size-[18px] shrink-0" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden="true" />

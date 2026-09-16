@@ -387,12 +387,13 @@ function ultimoDia(anio: number, mes: number): number {
  * forma de saber dónde termina uno y empieza el otro.
  *
  * ── Tres meses o más: solo el mes ───────────────────────────────────────────
- * "ene feb mar", sin día y sin año. El año se escribe únicamente en el punto
- * donde cambia, igual que el mes en el eje de días: la unidad de arriba solo
- * aparece cuando deja de ser la misma.
+ * "Ene Feb Mar", sin día. Todas con la misma forma: si el rango cruza de año
+ * lo llevan todas, y si no lo cruza no lo lleva ninguna. Escribirlo solo donde
+ * cambia dejaba un eje que mezclaba "ene" con "abr 23" y se leía como si
+ * fueran dos cosas distintas.
  *
- * Y si son tantos meses que no caben, uno de cada tantos. Doce etiquetas de
- * "mar 25" en un teléfono no se leen: se tocan.
+ * Y si son tantos meses que no caben, uno de cada tantos. Cincuenta etiquetas
+ * en un teléfono no se leen: se tocan.
  */
 export function etiquetasDelEje(
   puntos: readonly { bucket: string }[],
@@ -400,10 +401,12 @@ export function etiquetasDelEje(
 ): { indice: number; texto: string }[] {
   if (granularidad === 'mes') {
     const cada = Math.max(1, Math.ceil(puntos.length / 12));
-    // Arranca con el año del primer punto ya "escrito": el rango completo está
-    // en el botón de fechas, justo encima, así que el eje no tiene que
-    // repetirlo. Solo avisa cuando el año CAMBIA a mitad del gráfico.
-    let anioEscrito = puntos[0]?.bucket.slice(0, 4) ?? '';
+
+    // Todas las etiquetas con la MISMA forma. Escribir el año solo donde
+    // cambia deja un eje que mezcla "ene" con "abr 23" y se lee como si
+    // fueran dos cosas distintas. Si el rango cruza de año, el año va en
+    // todas; si no cruza, en ninguna.
+    const cruzaDeAnio = new Set(puntos.map((p) => p.bucket.slice(0, 4))).size > 1;
 
     return puntos
       .map((p, indice) => ({ indice, bucket: p.bucket }))
@@ -411,11 +414,11 @@ export function etiquetasDelEje(
       .map(({ indice, bucket }) => {
         const [anio, mes] = bucket.split('-');
         const nombre = MESES[Number(mes) - 1] ?? mes;
-        // Solo el mes. El año aparece únicamente cuando cambia: repetirlo en
-        // los doce puntos de un mismo año ocupa sitio y no distingue nada.
-        const texto = anio === anioEscrito ? nombre : `${nombre} ${anio.slice(2)}`;
-        anioEscrito = anio;
-        return { indice, texto };
+        const conMayuscula = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+        return {
+          indice,
+          texto: cruzaDeAnio ? `${conMayuscula} ${anio.slice(2)}` : conMayuscula,
+        };
       });
   }
 

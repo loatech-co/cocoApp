@@ -51,18 +51,20 @@ describe('Las etiquetas del eje, por día', () => {
 });
 
 describe('Las etiquetas del eje, por mes', () => {
-  it('muestra SOLO el mes, sin día y sin año', () => {
+  it('dentro de un mismo año: solo el mes, con mayúscula y sin día', () => {
     const meses = Array.from({ length: 12 }, (_, i) => ({
       bucket: `2025-${String(i + 1).padStart(2, '0')}`,
     }));
     const textos = etiquetasDelEje(meses, 'mes').map((e) => e.texto);
     expect(textos).toEqual([
-      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-      'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
     ]);
   });
 
-  it('el año reaparece solo en el mes en que cambia', () => {
+  it('cruzando de año, el año va en TODAS o en ninguna', () => {
+    // Escribirlo solo donde cambia deja un eje que mezcla "Nov" con "Ene 26"
+    // y se lee como si fueran dos cosas distintas.
     const meses = [
       { bucket: '2025-11' },
       { bucket: '2025-12' },
@@ -70,11 +72,20 @@ describe('Las etiquetas del eje, por mes', () => {
       { bucket: '2026-02' },
     ];
     expect(etiquetasDelEje(meses, 'mes').map((e) => e.texto)).toEqual([
-      'nov',
-      'dic',
-      'ene 26',
-      'feb',
+      'Nov 25',
+      'Dic 25',
+      'Ene 26',
+      'Feb 26',
     ]);
+  });
+
+  it('ninguna etiqueta de un eje de meses lleva día', () => {
+    const meses = Array.from({ length: 30 }, (_, i) => ({
+      bucket: `${2024 + Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`,
+    }));
+    for (const { texto } of etiquetasDelEje(meses, 'mes')) {
+      expect(texto).not.toMatch(/^\d/);
+    }
   });
 
   it('con más de doce saltea: no se leen si se tocan', () => {
@@ -83,6 +94,6 @@ describe('Las etiquetas del eje, por mes', () => {
     }));
     const etiquetas = etiquetasDelEje(meses, 'mes');
     expect(etiquetas.length).toBeLessThanOrEqual(12);
-    expect(etiquetas[0].texto).toBe('ene');
+    expect(etiquetas[0].texto).toBe('Ene 23');
   });
 });
