@@ -1,5 +1,7 @@
-import { clasificar, type Lectura } from '@coco/lectura';
+import { clasificar, FIRMAS, type Lectura } from '@coco/lectura';
+import type { Category } from '@coco/types';
 
+import { firmasDelArbol } from '@/lib/palabras-clave';
 import { cargarPdfjs } from '@/lib/pdf';
 
 /**
@@ -130,10 +132,20 @@ async function ocr(
  * `periodo` ayuda a elegir entre las varias fechas que trae un recibo —la de
  * expedición, la de vencimiento, la del próximo corte—: la buena es la que
  * cae en el mes del gasto.
+ *
+ * `arbol` trae las palabras clave que alguien escribió en sus conceptos. Van
+ * DELANTE del catálogo y con más prioridad: el catálogo son las suposiciones
+ * de quien escribió el código; esto es lo que dijo quien tiene el recibo
+ * delante. Sin árbol se clasifica solo con el catálogo, que es lo que hacía
+ * antes de que las palabras clave existieran.
  */
 export async function leerSoporte(
   archivo: File,
-  opciones: { periodo?: string; onProgreso?: (p: ProgresoDeLectura) => void } = {},
+  opciones: {
+    periodo?: string;
+    arbol?: readonly Category[];
+    onProgreso?: (p: ProgresoDeLectura) => void;
+  } = {},
 ): Promise<SoporteLeido> {
   const { onProgreso } = opciones;
   const esPdf = archivo.type === 'application/pdf' || /\.pdf$/i.test(archivo.name);
@@ -174,6 +186,7 @@ export async function leerSoporte(
       fuente,
       nombreDeArchivo: archivo.name.replace(/\.[a-z0-9]+$/i, ''),
       periodo: opciones.periodo,
+      firmas: [...firmasDelArbol(opciones.arbol ?? []), ...FIRMAS],
     }),
   };
 }

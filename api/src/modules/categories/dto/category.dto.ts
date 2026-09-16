@@ -1,6 +1,7 @@
 import { CategoryKind, Periodicidad } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -15,7 +16,39 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { unir } from '../palabras-clave';
+
 const HEX = /^#[0-9A-Fa-f]{6}$/;
+
+/**
+ * Cuántas palabras clave admite un concepto y cuánto puede medir cada una.
+ *
+ * El tope no es un límite técnico: treinta palabras para reconocer un acreedor
+ * ya no son señales, son una red que atrapa cualquier recibo. Y está aquí —en
+ * el contrato— para que un cliente que no sea esta pantalla tampoco pueda
+ * llenar la columna.
+ */
+export const MAXIMO_DE_PALABRAS = 30;
+export const LARGO_DE_UNA_PALABRA = 60;
+
+/**
+ * Limpia la lista antes de validarla: recorta, tira las vacías y quita las
+ * repetidas sin mirar tildes ni mayúsculas.
+ *
+ * Se hace aquí y no en el servicio porque es parte de lo que significa el
+ * campo, no de lo que se hace con él: «Claro» y «claro » son la misma palabra
+ * dicha dos veces, y guardarlas las dos haría que el clasificador sumara
+ * puntos dos veces por una sola coincidencia.
+ *
+ * Lo que no sea una lista de textos se devuelve intacto: rechazarlo es trabajo
+ * de `@IsArray` y `@IsString`, que dan un mensaje que se entiende.
+ */
+export function limpiarPalabras({ value }: { value: unknown }): unknown {
+  if (!Array.isArray(value)) return value;
+  if (value.some((palabra) => typeof palabra !== 'string')) return value;
+
+  return unir(value as string[]);
+}
 
 export class CreateCategoryDto {
   @IsString()
@@ -83,6 +116,22 @@ export class CreateCategoryDto {
   @Min(1, { message: 'El mes va del 1 al 12.' })
   @Max(12, { message: 'El mes va del 1 al 12.' })
   mes_de_pago?: number | null;
+
+  /**
+   * ── Palabras clave ──────────────────────────────────────────────────────
+   * Lo que se busca en el texto de un soporte para reconocer este concepto.
+   * Solo significan algo en un concepto: un centro de costos y un grupo no
+   * aparecen en ninguna factura.
+   */
+  @IsOptional()
+  @Transform(limpiarPalabras)
+  @IsArray()
+  @ArrayMaxSize(MAXIMO_DE_PALABRAS, {
+    message: `Un concepto admite hasta ${MAXIMO_DE_PALABRAS} palabras clave.`,
+  })
+  @IsString({ each: true })
+  @MaxLength(LARGO_DE_UNA_PALABRA, { each: true })
+  palabras_clave?: string[];
 }
 
 export class UpdateCategoryDto {
@@ -159,6 +208,16 @@ export class UpdateCategoryDto {
   @Max(12, { message: 'El mes va del 1 al 12.' })
   mes_de_pago?: number | null;
 
+  /** Ver `CreateCategoryDto`. Una lista vacía las borra todas. */
+  @IsOptional()
+  @Transform(limpiarPalabras)
+  @IsArray()
+  @ArrayMaxSize(MAXIMO_DE_PALABRAS, {
+    message: `Un concepto admite hasta ${MAXIMO_DE_PALABRAS} palabras clave.`,
+  })
+  @IsString({ each: true })
+  @MaxLength(LARGO_DE_UNA_PALABRA, { each: true })
+  palabras_clave?: string[];
 }
 
 export class ListCategoriesQueryDto {

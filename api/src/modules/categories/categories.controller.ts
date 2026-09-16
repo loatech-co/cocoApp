@@ -39,6 +39,7 @@ interface CategoryPayload {
   periodicidad: CategoryView['periodicidad'];
   dia_de_pago: number | null;
   mes_de_pago: number | null;
+  palabras_clave: string[];
   children?: CategoryPayload[];
 }
 
@@ -61,6 +62,7 @@ function aPayload(categoria: CategoryView | ConHijos<CategoryView>): CategoryPay
     periodicidad: categoria.periodicidad,
     dia_de_pago: categoria.dia_de_pago,
     mes_de_pago: categoria.mes_de_pago,
+    palabras_clave: categoria.palabras_clave,
   };
 
   if ('children' in categoria) {

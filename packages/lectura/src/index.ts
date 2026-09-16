@@ -4,5 +4,11 @@ export { fechasDe, leerFecha } from './fecha';
 export type { FechaCandidata } from './fecha';
 export { aNumero, leerMonto } from './monto';
 export type { MontoCandidato } from './monto';
-export { FIRMAS, RECAUDADORES, normalizar } from './firmas';
-export type { Firma } from './firmas';
+export {
+  FIRMAS,
+  PRIORIDAD_DE_LO_ESCRITO,
+  RECAUDADORES,
+  firmasDeConceptos,
+  normalizar,
+} from './firmas';
+export type { ConceptoConPalabras, Firma } from './firmas';

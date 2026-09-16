@@ -189,6 +189,8 @@ export function useCrearCategoria() {
       periodicidad?: Category['periodicidad'];
       dia_de_pago?: number | null;
       mes_de_pago?: number | null;
+      /** Solo en un concepto: lo que se busca en un soporte para reconocerlo. */
+      palabras_clave?: string[];
     }) => {
       const respuesta = await apiFetch<Category>('/categories', {
         method: 'POST',

@@ -140,13 +140,27 @@ export function Chip({
 
   return (
     <span className={cn(forma, 'pr-1', className)}>
-      {/* Sin contorno de foco, como todos los botones: lo quita la regla de
-          `index.css`. Aquí sobraba además por el sitio —este botón vive pegado
-          contra el canto redondeado del chip, así que cualquier anillo suyo se
-          saldría de él—. */}
-      <button type="button" className="min-w-0 truncate rounded-md" {...props}>
-        {children}
-      </button>
+      {/*
+        El nombre es un botón solo si abre algo.
+
+        Con `onQuitar` y sin `onClick` —una palabra clave de un concepto, que se
+        pone y se quita y no lleva a ninguna parte— era un `<button>` que al
+        pulsarlo no hacía nada: un lector de pantalla lo anuncia como pulsable,
+        el cursor cambia a mano, y el único gesto que funciona es el aspa de al
+        lado. Un nombre que no hace nada es texto, y se escribe como texto.
+
+        Sin contorno de foco, como todos los botones: lo quita la regla de
+        `index.css`. Aquí sobraba además por el sitio —este botón vive pegado
+        contra el canto redondeado del chip, así que cualquier anillo suyo se
+        saldría de él—.
+      */}
+      {props.onClick ? (
+        <button type="button" className="min-w-0 truncate rounded-md" {...props}>
+          {children}
+        </button>
+      ) : (
+        <span className="min-w-0 truncate">{children}</span>
+      )}
       <button
         type="button"
         onClick={onQuitar}

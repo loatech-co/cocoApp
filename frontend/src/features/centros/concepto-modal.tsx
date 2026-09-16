@@ -1,6 +1,7 @@
 import { Loader2, Merge, Trash2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 
+import { CamposDePalabrasClave } from '@/components/campos-de-palabras-clave';
 import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-recurrencia';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +61,8 @@ export function ConceptoModal({
   });
   const [error, setError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
+  /** Lo que se busca en un soporte para reconocer este concepto. */
+  const [palabrasClave, setPalabrasClave] = useState<string[]>([]);
   /** El grupo al que pertenece. Vacío mientras no se esté editando. */
   const [grupo, setGrupo] = useState('');
 
@@ -75,6 +78,7 @@ export function ConceptoModal({
       mesDePago: concepto?.mes_de_pago ?? new Date().getMonth() + 1,
     });
     setGrupo(concepto?.parent_id != null ? String(concepto.parent_id) : '');
+    setPalabrasClave(concepto?.palabras_clave ?? []);
     setError(null);
   }, [abierta, concepto]);
 
@@ -146,6 +150,7 @@ export function ConceptoModal({
         recurrencia.recurrente && recurrencia.periodicidad !== 'mensual'
           ? recurrencia.mesDePago
           : null,
+      palabras_clave: palabrasClave,
     };
 
     try {
@@ -226,6 +231,22 @@ export function ConceptoModal({
           )}
 
           <CamposDeRecurrencia valor={recurrencia} onCambiar={setRecurrencia} />
+
+          {/*
+            Después de la recurrencia y no antes del nombre.
+
+            Lo que se viene a hacer a esta ficha es crear o corregir un
+            concepto; que sus recibos se lean solos es lo que se hace DESPUÉS,
+            y la primera vez casi nunca —no se sabe qué dice el recibo hasta
+            que llega—. Arriba obligaría a pasar por encima de un campo que la
+            mayoría de las veces se deja vacío.
+          */}
+          <CamposDePalabrasClave
+            valor={palabrasClave}
+            onCambiar={setPalabrasClave}
+            arbol={categorias.data ?? []}
+            conceptoId={concepto?.id}
+          />
 
           {gemelo && (
             /*

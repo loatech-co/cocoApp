@@ -36,6 +36,8 @@ export interface CategoryView {
   dia_de_pago: number | null;
   /** Mes de referencia del ciclo, 1–12. Solo si la periodicidad no es mensual. */
   mes_de_pago: number | null;
+  /** Lo que se busca en un soporte para reconocer este concepto. */
+  palabras_clave: string[];
 }
 
 @Injectable()
@@ -88,6 +90,7 @@ export class CategoriesService {
       periodicidad: dto.periodicidad ?? null,
       diaDePago: dto.dia_de_pago ?? null,
       mesDePago: dto.mes_de_pago ?? null,
+      palabrasClave: dto.palabras_clave ?? [],
     });
 
     return this.presentar(categoria);
@@ -127,6 +130,7 @@ export class CategoriesService {
       ...(dto.periodicidad !== undefined && { periodicidad: dto.periodicidad }),
       ...(dto.dia_de_pago !== undefined && { diaDePago: dto.dia_de_pago }),
       ...(dto.mes_de_pago !== undefined && { mesDePago: dto.mes_de_pago }),
+      ...(dto.palabras_clave !== undefined && { palabrasClave: dto.palabras_clave }),
     });
 
     return this.obtener(userId, id);
@@ -367,6 +371,7 @@ export class CategoriesService {
       periodicidad: categoria.periodicidad,
       dia_de_pago: categoria.diaDePago,
       mes_de_pago: categoria.mesDePago,
+      palabras_clave: categoria.palabrasClave,
     };
   }
 }

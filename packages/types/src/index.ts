@@ -290,6 +290,20 @@ export interface Category {
    * concepto heredan lo que diga el suyo.
    */
   estatico: boolean;
+  /**
+   * ── Palabras clave ──────────────────────────────────────────────────────
+   * Lo que hay que encontrar en un soporte para saber que es de este concepto:
+   * la razón social del acreedor, su NIT, el nombre con el que sale en la
+   * factura. Se buscan en el texto que se saca del recibo —el embebido del PDF
+   * o el del reconocimiento— y también en el nombre del archivo.
+   *
+   * Solo significan algo en un CONCEPTO: un centro de costos y un grupo son
+   * sumas, y no aparecen en ninguna factura.
+   *
+   * Se guardan tal como se escribieron; quitar tildes y bajar a minúsculas es
+   * cosa de la comparación.
+   */
+  palabras_clave: string[];
   children?: Category[];
 }
 

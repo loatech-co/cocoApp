@@ -367,6 +367,23 @@ model Category {
   /// heredan lo que diga el suyo.
   estatico     Boolean       @default(false)
 
+  /// ── Palabras clave ────────────────────────────────────────────────────
+  /// Lo que hay que encontrar en un soporte para saber que es de este
+  /// concepto: la razón social del acreedor, su NIT, el nombre con el que
+  /// aparece en la factura. Se buscan en el texto que sale del recibo —el
+  /// embebido del PDF o el del OCR— y también en el nombre del archivo.
+  ///
+  /// Vive en la CATEGORÍA y no en una tabla aparte porque se escribe y se
+  /// borra junto con el concepto, nunca por su cuenta: son un dato suyo, como
+  /// su icono o su periodicidad. Una tabla obligaría a mantener su propio
+  /// ciclo de vida —crear, listar, borrar huérfanas al unificar— para guardar
+  /// tres palabras.
+  ///
+  /// Se guardan TAL COMO se escribieron. Quitar las tildes y bajar a
+  /// minúsculas es cosa de la comparación, y hacerlo al guardar convertiría
+  /// «Aquaoccidente» en «aquaoccidente» en la pantalla de quien lo escribió.
+  palabrasClave String[] @default([]) @map("palabras_clave")
+
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_categories_user")
   parent       Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull, map: "fk_categories_parent")
   children     Category[]         @relation("CategoryTree")

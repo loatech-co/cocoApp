@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Category, CategoryKind, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { NodoDeCategoria } from './categories.tree';
+import { unir } from './palabras-clave';
 
 @Injectable()
 export class CategoriesRepository {
@@ -193,6 +194,30 @@ export class CategoriesRepository {
         where: { userId, categoryId: origenId },
         data: { categoryId: destinoId },
       });
+
+      /*
+        Las palabras clave del que desaparece pasan al que queda.
+
+        Son lo que hace que el próximo recibo de ese acreedor se reconozca
+        solo, y unificar «Movistar» en «MOVISTAR S.A.» es decir que son el
+        mismo: las palabras que reconocían al primero reconocen al segundo.
+        Dejándolas morir con la fila, la unificación arreglaba los totales y
+        rompía la lectura, y eso no se ve hasta el mes siguiente —cuando un
+        recibo que entraba clasificado deja de entrar— y para entonces nadie
+        lo relaciona con haber unificado dos conceptos.
+
+        `unir` las junta sin repetir: el nombre del acreedor suele estar en
+        los dos, que es justo por lo que se crearon duplicados.
+      */
+      const [origen, destino] = await Promise.all([
+        tx.category.findUnique({ where: { id: origenId }, select: { palabrasClave: true } }),
+        tx.category.findUnique({ where: { id: destinoId }, select: { palabrasClave: true } }),
+      ]);
+
+      const juntas = unir(destino?.palabrasClave ?? [], origen?.palabrasClave ?? []);
+      if (juntas.length !== (destino?.palabrasClave.length ?? 0)) {
+        await tx.category.update({ where: { id: destinoId }, data: { palabrasClave: juntas } });
+      }
 
       await tx.category.delete({ where: { id: origenId } });
 

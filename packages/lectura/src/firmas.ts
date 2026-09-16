@@ -247,6 +247,58 @@ export const FIRMAS: Firma[] = [
   },
 ];
 
+/**
+ * La prioridad de una firma escrita por una persona.
+ *
+ * Por encima de todas las del catálogo —la más alta es 9— y no por poco: lo
+ * que alguien escribió en su concepto no es otro candidato más, es una
+ * instrucción. «Si el recibo dice Comfandi, es este concepto» gana aunque el
+ * catálogo reconozca a otro acreedor con más señales, porque el catálogo son
+ * mis suposiciones y esto es su cuenta.
+ */
+export const PRIORIDAD_DE_LO_ESCRITO = 100;
+
+/** Un concepto del árbol de alguien, con lo que se busca para reconocerlo. */
+export interface ConceptoConPalabras {
+  concepto: string;
+  grupo: string;
+  centro: string;
+  /** Tal como se escribieron. Se normalizan al comparar. */
+  palabras: readonly string[];
+}
+
+/**
+ * Convierte los conceptos de alguien en firmas.
+ *
+ * ── Por qué la misma palabra va al texto Y al nombre del archivo ────────────
+ * Porque es la misma palabra y los dos sitios fallan de forma distinta. En un
+ * escaneo torcido el reconocimiento se come el nombre del acreedor, y ahí lo
+ * único que queda es que el archivo se llame «comfandi agosto.pdf». Al revés
+ * —un PDF digital con el nombre «documento (3).pdf»— la señal está en el
+ * texto. Pedir dos listas para eso sería pedir que la misma palabra se
+ * escriba dos veces.
+ *
+ * Un NIT escrito como palabra clave entra por `alias` y no por `nits`, y es a
+ * propósito: `nits` compara sin puntos ni espacios, y lo que se escribe a mano
+ * en un campo de texto puede ser cualquier cosa —un nombre, un número, media
+ * frase—. Se busca tal cual, que es lo que quien lo escribió espera.
+ *
+ * Los conceptos sin palabras no producen firma: una firma sin señales no
+ * coincide nunca y solo alarga el recorrido.
+ */
+export function firmasDeConceptos(conceptos: readonly ConceptoConPalabras[]): Firma[] {
+  return conceptos
+    .filter((concepto) => concepto.palabras.length > 0)
+    .map((concepto) => ({
+      concepto: concepto.concepto,
+      grupo: concepto.grupo,
+      centro: concepto.centro,
+      alias: [...concepto.palabras],
+      tokensDeNombre: [...concepto.palabras],
+      prioridad: PRIORIDAD_DE_LO_ESCRITO,
+    }));
+}
+
 /** Sin tildes, en minúscula y con los espacios normalizados. */
 export function normalizar(texto: string): string {
   return texto

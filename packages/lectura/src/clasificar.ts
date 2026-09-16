@@ -181,10 +181,23 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
   */
   const deAcreedor = Math.min(1, ganadora.puntos / 60);
   const porFuente = entrada.fuente === 'texto-embebido' ? 1 : 0.8;
+  /*
+    El margen no baja de 0,6, que es lo que vale un empate.
+
+    La ganadora no siempre es la que más puntos saca: la prioridad va antes, y
+    una firma escrita a mano gana a una del catálogo que reconoció el NIT. Sin
+    suelo, esa resta se vuelve negativa y el término del acreedor no rebaja la
+    confianza: la RESTA, hasta llevarse por delante lo que el valor ya había
+    ganado. Un soporte perfectamente leído acababa con menos confianza que uno
+    del que no se sacó nada.
+
+    Ganar por prioridad y no por puntos es exactamente una duda, y una duda es
+    un empate: 0,6.
+  */
   const segundo = vivas[1];
   const margen =
     segundo && segundo.puntos > 0
-      ? Math.min(1, 0.6 + (ganadora.puntos - segundo.puntos) / 60)
+      ? Math.max(0.6, Math.min(1, 0.6 + (ganadora.puntos - segundo.puntos) / 60))
       : 1;
 
   const confianza = Math.max(
