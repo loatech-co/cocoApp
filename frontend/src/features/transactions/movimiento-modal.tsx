@@ -660,46 +660,62 @@ function VistaDeLectura({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Negro al 5 %: un velo, no una superficie. Cualquier color con cuerpo
-          compite con la cifra que contiene, que es lo que tiene que destacar. */}
-      <div className="flex flex-col gap-1 rounded-2xl bg-black/5 p-4">
-        {/*
-          SIN `tabular`.
+      {/*
+        Partido en dos: arriba CUÁNTO, abajo de qué.
 
-          Las cifras tabulares tienen todas el mismo ancho para que las
-          columnas de una tabla alineen por dígito. Aquí no hay columna, hay un
-          número solo y grande, y ese ancho fijo separa los dígitos como si
-          alguien le hubiera metido interletraje.
-        */}
-        <p className="font-display text-3xl font-bold leading-tight text-lima-tinta sm:text-4xl">
-          {tipo === 'income' ? '+' : '−'}
-          {formatCOP(valor || '0')}
-        </p>
-        <p className="truncate text-base font-medium">{descripcion || 'Sin concepto'}</p>
+        Juntos en una sola caja, la cifra tenía cuatro líneas pegadas debajo y
+        el bloque se leía como un párrafo que empieza con un número grande. La
+        línea los separa en dos registros: el dato que se viene a ver, y el
+        contexto que lo explica. Y deja a la cifra sola en su mitad, que es lo
+        que la hace mandar sin tener que agrandarla más.
 
-        {/* El camino, sin etiqueta y sin fichas. Con fichas parecían pestañas
-            —algo que se pulsa y cambia lo de abajo— y aquí no se pulsa nada:
-            es dónde vive este movimiento, que se lee como una ruta. */}
-        {ruta.length > 0 && (
-          <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-            {ruta.map((nombre, i) => (
-              <span key={nombre} className="flex items-center gap-1.5">
-                {i > 0 && <span aria-hidden="true">›</span>}
-                <span className={cn(i === ruta.length - 1 && 'font-medium text-foreground')}>
-                  {nombre}
+        Negro al 5 %: un velo, no una superficie. Cualquier color con cuerpo
+        compite con la cifra que contiene.
+      */}
+      <div className="overflow-hidden rounded-2xl bg-black/5">
+        <div className="px-4 py-5">
+          {/*
+            SIN `tabular`.
+
+            Las cifras tabulares tienen todas el mismo ancho para que las
+            columnas de una tabla alineen por dígito. Aquí no hay columna, hay
+            un número solo y grande, y ese ancho fijo separa los dígitos como
+            si alguien le hubiera metido interletraje.
+          */}
+          <p className="font-display text-4xl font-bold leading-none text-lima-tinta sm:text-5xl">
+            {tipo === 'income' ? '+' : '−'}
+            {formatCOP(valor || '0')}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1 border-t border-border px-4 py-3">
+          <p className="truncate text-base font-medium">{descripcion || 'Sin concepto'}</p>
+
+          {/* El camino, sin etiqueta y sin fichas. Con fichas parecían
+              pestañas —algo que se pulsa y cambia lo de abajo— y aquí no se
+              pulsa nada: es dónde vive este movimiento, que se lee como una
+              ruta. */}
+          {ruta.length > 0 && (
+            <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+              {ruta.map((nombre, i) => (
+                <span key={nombre} className="flex items-center gap-1.5">
+                  {i > 0 && <span aria-hidden="true">›</span>}
+                  <span className={cn(i === ruta.length - 1 && 'font-medium text-foreground')}>
+                    {nombre}
+                  </span>
                 </span>
-              </span>
-            ))}
-          </p>
-        )}
+              ))}
+            </p>
+          )}
 
-        <p className="mt-1 text-xs text-muted-foreground">Pagado el {diaLargo(fecha)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Pagado el {diaLargo(fecha)}</p>
 
-        {desfasado && (
-          <p className="text-xs font-medium text-warning">
-            Pertenece a {mesLargo(periodo!.slice(0, 7))}
-          </p>
-        )}
+          {desfasado && (
+            <p className="text-xs font-medium text-warning">
+              Pertenece a {mesLargo(periodo!.slice(0, 7))}
+            </p>
+          )}
+        </div>
       </div>
 
       {ruta.length === 0 && (
@@ -730,7 +746,11 @@ function Seccion({
   children: ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-2">
+    // `gap-3` y no `gap-2`: con ocho pulgadas de miniaturas debajo, dos
+    // píxeles menos hacían que el rótulo pareciera pegado a la primera fila,
+    // casi montado encima —que es justo lo que se acaba de arreglar quitando
+    // los `legend`—.
+    <section className="flex flex-col gap-3">
       <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {titulo}
       </h3>
