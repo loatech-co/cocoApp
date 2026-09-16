@@ -97,7 +97,7 @@ export function Camara({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-tinta-950">
+      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-sala">
         {estado === 'lista' ? (
           <video
             ref={video}
@@ -108,9 +108,9 @@ export function Camara({
             aria-label="Vista de la cámara"
           />
         ) : estado === 'pidiendo' ? (
-          <Loader2 className="size-6 animate-spin text-tinta-50/70" aria-hidden="true" />
+          <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
         ) : (
-          <p className="flex max-w-xs flex-col items-center gap-2 px-4 text-center text-sm text-tinta-50/80">
+          <p className="flex max-w-xs flex-col items-center gap-2 px-4 text-center text-sm text-sala-tinta/80">
             <CameraOff className="size-6" aria-hidden="true" />
             {estado === 'sin-permiso'
               ? 'El navegador no concedió acceso a la cámara. Se puede habilitar desde los permisos del sitio.'

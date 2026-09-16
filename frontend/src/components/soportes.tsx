@@ -340,7 +340,7 @@ function Miniatura({
         <LienzoPdf url={url} />
       )}
 
-      <span className="tabular absolute left-1.5 top-1.5 rounded-full bg-tinta-950/70 px-1.5 text-[11px] font-medium text-tinta-50">
+      <span className="tabular absolute left-1.5 top-1.5 rounded-full bg-sala/70 px-1.5 text-[11px] font-medium text-sala-tinta">
         {numero}
       </span>
 
@@ -352,11 +352,11 @@ function Miniatura({
         <span
           aria-hidden="true"
           className={cn(
-            'absolute inset-0 flex items-center justify-center bg-tinta-950/55 opacity-0',
+            'absolute inset-0 flex items-center justify-center bg-sala/55 opacity-0',
             'transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100',
           )}
         >
-          <Eye className="size-6 text-tinta-50" />
+          <Eye className="size-6 text-sala-tinta" />
         </span>
       )}
     </button>
@@ -531,13 +531,13 @@ function Pase({
       aria-label={soporte.nombre_archivo}
       onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
       // Por encima del modal del movimiento, que está en z-50.
-      className="fixed inset-0 z-[60] flex flex-col bg-tinta-950/90 p-3 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[60] flex flex-col bg-sala/90 p-3 backdrop-blur-sm sm:p-6"
     >
       {/* ── Cabecera ──────────────────────────────────────────────────── */}
       <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-tinta-50">{soporte.nombre_archivo}</p>
-          <p className="tabular text-xs text-tinta-50/60">
+          <p className="truncate text-sm font-medium text-sala-tinta">{soporte.nombre_archivo}</p>
+          <p className="tabular text-xs text-sala-tinta/60">
             {lista.length > 1 && `${indice + 1} de ${lista.length} · `}
             {(soporte.tamano / 1024).toFixed(0)} KB
           </p>
@@ -553,7 +553,7 @@ function Pase({
               download={soporte.nombre_archivo}
               title="Descargar"
               aria-label={`Descargar ${soporte.nombre_archivo}`}
-              className="flex size-9 items-center justify-center rounded-lg text-tinta-50 transition-colors hover:bg-white/10"
+              className="flex size-9 items-center justify-center rounded-lg text-sala-tinta transition-colors hover:bg-white/10"
             >
               <Download className="size-4" aria-hidden="true" />
             </a>
@@ -598,7 +598,7 @@ function Pase({
         <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-black/25 p-3 sm:p-6">
           {!url ? (
             <div className="flex w-full items-center justify-center">
-              <Loader2 className="size-6 animate-spin text-tinta-50/70" aria-hidden="true" />
+              <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
             </div>
           ) : esImagen ? (
             <img
@@ -643,7 +643,7 @@ function Pase({
           <button
             type="button"
             onClick={() => setZoom(NORMAL)}
-            className="tabular min-w-[3.5rem] text-center text-xs font-medium text-tinta-50"
+            className="tabular min-w-[3.5rem] text-center text-xs font-medium text-sala-tinta"
           >
             {Math.round(escala * 100)} %
           </button>
@@ -665,7 +665,7 @@ function Pase({
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
             </BotonOscuro>
-            <span className="tabular min-w-[4.5rem] text-center text-xs font-medium text-tinta-50">
+            <span className="tabular min-w-[4.5rem] text-center text-xs font-medium text-sala-tinta">
               Pág. {pagina} / {paginas}
             </span>
             <BotonOscuro
@@ -728,7 +728,7 @@ function BotonOscuro({
       disabled={deshabilitado}
       aria-label={etiqueta}
       title={etiqueta}
-      className={cn('text-tinta-50 hover:bg-white/10 hover:text-tinta-50', className)}
+      className={cn('text-sala-tinta hover:bg-white/10 hover:text-sala-tinta', className)}
     >
       {children}
     </Button>
@@ -802,7 +802,7 @@ function PaginaPdf({
 
   if (fallo) {
     return (
-      <p className="flex items-center gap-2 self-center text-sm text-tinta-50/80">
+      <p className="flex items-center gap-2 self-center text-sm text-sala-tinta/80">
         <FileWarning className="size-5" aria-hidden="true" />
         No se pudo dibujar este PDF.
       </p>
@@ -813,7 +813,7 @@ function PaginaPdf({
     <>
       {pintando && (
         <Loader2
-          className="absolute size-6 animate-spin self-center text-tinta-50/70"
+          className="absolute size-6 animate-spin self-center text-sala-tinta/70"
           aria-hidden="true"
         />
       )}

@@ -56,19 +56,29 @@ export function Confirmacion({
       aria-modal="true"
       aria-label={titulo}
       onMouseDown={(e) => e.target === e.currentTarget && onCancelar()}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-[var(--velo)] p-4 backdrop-blur-sm"
+      className={cn(
+        'fixed inset-0 z-[60] flex items-center justify-center bg-[var(--velo)] p-4 backdrop-blur-sm',
+        'se-revela',
+      )}
     >
       <div
         className={cn(
-          'w-full max-w-md rounded-lg p-5',
+          'w-full max-w-md rounded-lg p-5 sm:p-6',
           SUPERFICIE_FLOTANTE,
+          'emerge',
         )}
       >
-        <h2 className="font-display text-lg font-semibold">{titulo}</h2>
-        <div className="mt-2 text-sm text-muted-foreground">{children}</div>
+        <h2 className="font-display text-lg font-semibold leading-tight">{titulo}</h2>
+        <div className="mt-2 text-sm leading-relaxed text-muted-foreground">{children}</div>
 
-        <div className="mt-5 flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onCancelar} autoFocus>
+        <div className="mt-6 flex justify-end gap-2">
+          {/*
+            `outline` y no `ghost`. Un botón sin contorno al lado de uno
+            relleno no se lee como un botón: se lee como el texto de al lado
+            del botón, y la salida de un diálogo que pregunta antes de borrar
+            algo es exactamente lo que no puede costar encontrar.
+          */}
+          <Button type="button" variant="outline" onClick={onCancelar} autoFocus>
             Cancelar
           </Button>
           <Button

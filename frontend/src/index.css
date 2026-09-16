@@ -36,22 +36,20 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PALETA
+   LO QUE NO DEPENDE DEL TEMA
 
-     #0F3B2D  bosque     · barra lateral, botones primarios, gráficas oscuras
-     #DFF264  lima       · acento y llamadas a la acción
-     #17A67F  esmeralda  · gráficas, datos positivos
-     #F4F7F5  lienzo     · fondo de la app
-     #0C1F18  tinta      · texto
+   Aquí vive lo que vale igual en claro y en oscuro: las familias tipográficas.
+   Los COLORES no están aquí —están abajo, en la capa del tema, declarados dos
+   veces porque valen dos cosas—.
 
-   ── La regla que no se puede romper ───────────────────────────────────────
-   Sobre LIMA el texto va en TINTA, nunca en blanco: blanco sobre lima da
-   1.23:1, muy por debajo del 4.5:1 que exige el texto. Con tinta da 13.9:1.
-
-   ── Estados y acentos ──────────────────────────────────────────────────────
-   Los chips de icono usan pasteles (violeta, turquesa, verde, lima) para
-   distinguir tarjetas de un vistazo. Las píldoras de estado tienen su propio
-   par fondo/texto. El rojo sigue reservado a errores.
+   Hasta el cambio a Solstice este bloque tenía además cinco rampas enteras
+   —bosque, lima, esmeralda, tinta y las píldoras de estado, unas sesenta
+   líneas— y una cabecera que las explicaba: el acento era lima y había una
+   regla sobre escribir en tinta encima. Cuando el tema cambió, ni las rampas
+   ni la regla desaparecieron: dejaron de usarse. El problema de un token
+   muerto no es que ocupe —que también, porque `@theme` los publica todos en
+   `:root` se usen o no—, es que sigue ahí para que alguien lo encuentre y lo
+   use creyendo que es del tema.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @theme {
@@ -72,89 +70,13 @@
   --font-display: Geist, ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-
-  /* ── Bosque (marca) ────────────────────────────────────────────────────── */
-  --color-bosque-50: #eef6f2;
-  --color-bosque-100: #d6ebe1;
-  --color-bosque-200: #aed7c4;
-  --color-bosque-300: #7cbba2;
-  --color-bosque-400: #4a9a7e;
-  --color-bosque-500: #2a7a60;
-  --color-bosque-600: #1b5f4a;
-  --color-bosque-700: #17523e;
-  --color-bosque-800: #0f3b2d;
-  --color-bosque-900: #0c2c22;
-  /* Escalón intermedio, solo para el área de trabajo en oscuro. */
-  --color-bosque-925: #081d16;
-  --color-bosque-950: #061912;
-
-  /* ── Lima (acento) ─────────────────────────────────────────────────────── */
-  --color-lima-50: #fbfee9;
-  --color-lima-100: #f5fcc6;
-  --color-lima-200: #ecf99a;
-  --color-lima-300: #dff264;
-  --color-lima-400: #cde33c;
-  --color-lima-500: #b0c722;
-  --color-lima-600: #8a9e18;
-  --color-lima-700: #697717;
-  --color-lima-800: #535d19;
-  --color-lima-900: #454e1a;
-  --color-lima-950: #242b09;
-
-  /* ── Esmeralda (datos) ─────────────────────────────────────────────────── */
-  --color-esmeralda-50: #ecfdf6;
-  --color-esmeralda-100: #d1fae8;
-  --color-esmeralda-200: #a7f3d4;
-  --color-esmeralda-300: #6ee7bb;
-  --color-esmeralda-400: #3ecf8e;
-  --color-esmeralda-500: #17a67f;
-  --color-esmeralda-600: #0d8467;
-  --color-esmeralda-700: #0c6a54;
-  --color-esmeralda-800: #0d5444;
-  --color-esmeralda-900: #0c4539;
-  --color-esmeralda-950: #042720;
-
-  /* ── Neutros, con una pizca de verde para no chocar con el bosque ──────── */
-  --color-tinta-50: #f7f9f8;
-  --color-tinta-100: #f4f7f5;
-  --color-tinta-200: #e6ebe8;
-  --color-tinta-300: #d2dad6;
-  --color-tinta-400: #a2afa9;
-  --color-tinta-500: #74847d;
-  --color-tinta-600: #55635c;
-  --color-tinta-700: #414d47;
-  --color-tinta-800: #2a332f;
-  --color-tinta-900: #16201b;
-  --color-tinta-950: #0c1f18;
-
-  /* ── Píldoras de estado ────────────────────────────────────────────────── */
-  --color-pildora-ok: #bbf7d0;
-  --color-pildora-ok-tinta: #0b6b45;
-  --color-pildora-alerta: #fde68a;
-  --color-pildora-alerta-tinta: #854d0e;
-  --color-pildora-mal: #fecaca;
-  --color-pildora-mal-tinta: #b3261e;
-
-  /* ── Rojo — SOLO errores y acciones destructivas ───────────────────────── */
-  --color-danger-50: #fdf3f3;
-  --color-danger-100: #fbe4e4;
-  --color-danger-200: #f6caca;
-  --color-danger-300: #ec9f9f;
-  --color-danger-400: #dd6b6b;
-  --color-danger-500: #c73b3b;
-  --color-danger-600: #b91c1c;
-  --color-danger-700: #991b1b;
-  --color-danger-900: #6f1d1d;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TOKENS SEMÁNTICOS
-   Los componentes consumen SIEMPRE estos, nunca un hex suelto. Cambiar el tema
-   es cambiar este bloque, no rastrear colores por toda la app.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ═══════════════════════════════════════════════════════════════════════════
    EL TEMA — Solstice
+
+   Los componentes consumen SIEMPRE estos tokens, nunca un hex suelto: cambiar
+   de tema es cambiar esta capa, no rastrear colores por toda la app.
 
    Pino y oro. Los valores son los del tema, copiados tal cual y no
    interpretados: el día que se cambie de tema se cambia esta capa y nada más.
@@ -336,6 +258,30 @@
     aquí ya no existe". El desenfoque hace el resto del trabajo.
   */
   --velo: rgba(0, 0, 0, 0.3);
+
+  /*
+    ── La sala oscura ───────────────────────────────────────────────────────
+    El visor de un soporte, el encuadre de la cámara y el velo que tapa una
+    miniatura mientras se decide qué hacer con ella.
+
+    Es el único sitio de la app que NO sigue el tema, y no por descuido: lo
+    que se está mirando ahí es un papel blanco o una foto, y lo único que
+    tiene que haber alrededor es lo menos posible. Cualquier verde, por
+    apagado que sea, se le suma al documento y le cambia el color; es el mismo
+    motivo por el que el velo es negro y no la tinta del tema.
+
+    Y por eso tampoco cambia en oscuro: la sala ya está oscura.
+
+    Eran `tinta-950` y `tinta-50`, dos escalones de la paleta ANTERIOR al
+    tema: seguían pintando porque la paleta sigue declarada, no porque
+    alguien hubiera decidido que ese negro era el correcto.
+
+    Se declaran como colores planos —no como rgba— para que la opacidad la
+    ponga cada uso: la cámara necesita el fondo entero, el visor un 90 % y el
+    velo de una miniatura poco más de la mitad.
+  */
+  --sala: #000000;
+  --sala-tinta: #ffffff;
 }
 
 .dark {
@@ -512,6 +458,9 @@
 
   --color-acento-tinta: var(--acento-tinta);
 
+  --color-sala: var(--sala);
+  --color-sala-tinta: var(--sala-tinta);
+
   --color-chip-gasto: var(--chip-gasto);
   --color-chip-gasto-tinta: var(--chip-gasto-tinta);
   --color-chip-ingreso: var(--chip-ingreso);
@@ -616,6 +565,20 @@
   animation: surgir 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Una ficha no SURGE de un botón: llega. Sube 12px y crece un 2 %, que es lo
+   justo para que se vea venir de abajo —de donde llega en el teléfono— sin que
+   parezca que rebota. Y 160ms en vez de 120: es una superficie grande, y a la
+   velocidad de un desplegable un panel de media pantalla da un tirón. */
+@utility emerge {
+  animation: emerger 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* El velo solo se desvanece. Cualquier movimiento suyo se leería como que la
+   página de detrás se mueve, y la página de detrás no se ha movido. */
+@utility se-revela {
+  animation: revelar 160ms ease-out;
+}
+
 @keyframes surgir {
   from {
     opacity: 0;
@@ -627,10 +590,39 @@
   }
 }
 
+@keyframes emerger {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes revelar {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Quien pide menos movimiento recibe la aparición sin el viaje —no la pierde
    entera—: el desvanecido sigue diciendo que algo llegó. */
 @media (prefers-reduced-motion: reduce) {
   @keyframes surgir {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes emerger {
     from {
       opacity: 0;
     }

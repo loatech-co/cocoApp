@@ -332,29 +332,43 @@ export function MovimientoModal({
       // `bg-carbon-950/50` no pintaba nada: `carbon` no existe en esta paleta,
       // así que la clase no generaba ningún color y el modal flotaba sobre la
       // página sin velo detrás.
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm sm:items-center sm:p-4"
-      onClick={onCerrar}
+      className={cn(
+        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm',
+        'se-revela sm:items-center sm:p-4',
+      )}
+      // `onMouseDown` sobre el velo, y no `onClick` en cualquier sitio.
+      //
+      // Con clic, un arrastre que EMPIEZA dentro del panel y termina fuera
+      // —soltar el ratón un dedo más allá del borde— dispara el clic en el
+      // ancestro común, que es el velo, y la ficha se cerraba con todo lo
+      // escrito dentro. Aquí eso no es un caso raro: la previsualización del
+      // soporte se recorre arrastrando, así que el gesto que cierra la ficha
+      // es el mismo con el que se mira el recibo.
+      onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={editando ? 'Editar movimiento' : 'Nuevo movimiento'}
-        onClick={(e) => e.stopPropagation()}
         // En móvil entra desde abajo y ocupa el ancho: es el patrón que la
         // gente espera de una app, y deja el pulgar cerca de los botones.
         className={cn(
-          'max-h-[92dvh] w-full overflow-y-auto p-5',
+          'flex max-h-[92dvh] w-full flex-col',
           SUPERFICIE_FLOTANTE,
+          'emerge',
           // Más ancho: con dos columnas de campos, `max-w-lg` obligaba a que
           // cada una midiera menos que el texto que lleva dentro.
           // Más ancho desde que los soportes se ven en miniatura: con
           // `max-w-2xl` cabían dos recibos por fila y ocho quedaban en cuatro
           // renglones, que es más alto que el resto de la ficha junta.
           'rounded-t-lg sm:max-w-5xl sm:rounded-lg',
-          'pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5',
         )}
       >
-        <div className="mb-4 flex items-center justify-between gap-3">
+        {/* La cabecera NO se desplaza: en una ficha de dos columnas con una
+            galería de soportes, el título y la equis se iban por arriba y a
+            mitad del formulario no quedaba en pantalla ni de qué movimiento se
+            trataba ni por dónde salir. */}
+        <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
           {/* El tipo está en el TÍTULO y en el color, no en un par de botones
               dentro del formulario. Lo eligió el menú de "Nuevo movimiento"
               antes de abrir esto, así que aquí ya no es una pregunta: es de
@@ -365,7 +379,7 @@ export function MovimientoModal({
               color={type === 'income' ? 'ingreso' : 'gasto'}
               tamano="sm"
             />
-            <h2 className="truncate text-xl font-semibold">
+            <h2 className="truncate text-lg font-semibold leading-tight">
               {!editando
                 ? `Nuevo ${nombreDelTipo(type)}`
                 : editable
@@ -419,6 +433,10 @@ export function MovimientoModal({
           </div>
         </div>
 
+        {/* `min-h-0` es lo que permite que esto se encoja dentro de la columna:
+            sin él mide lo que mida su contenido y se lleva por delante el alto
+            máximo del panel. */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pb-6">
         {paso === 'elegir' && (
           <ComoEmpezar
             onArchivo={(a) => void escanear(a)}
@@ -667,6 +685,7 @@ export function MovimientoModal({
         >
           Se borra y no se puede deshacer. Sus soportes se van con él.
         </Confirmacion>
+        </div>
       </div>
     </div>
   );
@@ -1212,7 +1231,7 @@ function Tile({
           y solo la papelera de encima descarta. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-tinta-950/55 opacity-0 transition-opacity group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 bg-sala/55 opacity-0 transition-opacity group-hover:opacity-100"
       />
 
       <button
@@ -1222,7 +1241,7 @@ function Tile({
         title="Quitar este soporte"
         className={cn(
           'absolute inset-0 m-auto flex size-9 items-center justify-center rounded-full',
-          'text-tinta-50 opacity-0 transition-opacity',
+          'text-sala-tinta opacity-0 transition-opacity',
           'group-hover:opacity-100 focus-visible:opacity-100 hover:text-destructive',
         )}
       >
@@ -1374,7 +1393,7 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
           —que es blanco— cualquier control claro desaparece. */}
       <div
         data-mandos=""
-        className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-tinta-950/75 p-0.5"
+        className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
       >
         <MandoDeZoom
           etiqueta="Alejar"
@@ -1387,7 +1406,7 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
           type="button"
           onClick={() => setZoom(0)}
           title="Volver al tamaño normal"
-          className="tabular min-w-[3rem] text-center text-[11px] font-medium text-tinta-50"
+          className="tabular min-w-[3rem] text-center text-[11px] font-medium text-sala-tinta"
         >
           {Math.round(ZOOMS[zoom] * 100)} %
         </button>
@@ -1450,7 +1469,7 @@ function MandoDeZoom({
       aria-label={etiqueta}
       title={etiqueta}
       className={cn(
-        'flex size-7 items-center justify-center rounded-full text-tinta-50 transition-colors',
+        'flex size-7 items-center justify-center rounded-full text-sala-tinta transition-colors',
         deshabilitado ? 'opacity-40' : 'hover:bg-white/15',
       )}
     >

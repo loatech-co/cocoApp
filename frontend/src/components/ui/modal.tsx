@@ -19,6 +19,13 @@ import { cn } from '@/lib/utils';
  * ── Por qué se pega abajo en el teléfono ────────────────────────────────────
  * Porque ahí es donde llega el pulgar. Un panel centrado con los botones a
  * media pantalla obliga a cambiar de mano para guardar.
+ *
+ * ── Por qué la cabecera NO se desplaza ──────────────────────────────────────
+ * El desplazamiento estaba en el panel entero, así que en una ficha larga el
+ * título y la equis se iban por arriba: a mitad de un formulario no quedaba
+ * en pantalla ni qué se estaba editando ni por dónde salir, y la única forma
+ * de cerrar era subir otra vez. Ahora el panel es una columna con dos partes:
+ * la cabecera, que se queda, y el cuerpo, que es lo que se recorre.
  */
 export function Modal({
   abierta,
@@ -66,22 +73,26 @@ export function Modal({
       // la ficha: dos trampas peleándose por el tabulador son un teclado que no
       // hace nada.
       data-modal=""
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className={cn(
+        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm',
+        'se-revela sm:items-center sm:p-4',
+      )}
     >
       <div
         className={cn(
-          'max-h-[92dvh] w-full overflow-y-auto p-5',
+          'flex max-h-[92dvh] w-full flex-col',
           SUPERFICIE_FLOTANTE,
+          'emerge',
           // Pegado abajo se redondea solo arriba: las esquinas de abajo caen
           // fuera de la pantalla y curvarlas deja dos muescas del fondo.
           'rounded-t-lg sm:rounded-lg',
           ancho,
         )}
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex shrink-0 items-start justify-between gap-3 px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
           <div className="min-w-0">
-            <h2 className="font-display text-xl font-semibold">{titulo}</h2>
-            {ayuda && <p className="mt-0.5 text-sm text-muted-foreground">{ayuda}</p>}
+            <h2 className="font-display text-lg font-semibold leading-tight">{titulo}</h2>
+            {ayuda && <p className="mt-1 text-sm text-muted-foreground">{ayuda}</p>}
           </div>
 
           {/* Juntas y del mismo tamaño: son las acciones de la ficha que no
@@ -101,7 +112,18 @@ export function Modal({
           </div>
         </div>
 
-        {children}
+        {/*
+          `min-h-0` es lo que permite que esto se encoja: sin él, un hijo de
+          una columna flexible mide lo que mide su contenido y se lleva por
+          delante el alto máximo del panel —es el mismo motivo por el que la
+          fila del resumen se desbordaba sobre la tabla—.
+
+          Y el relleno de abajo reserva el borde seguro del teléfono: pegada al
+          pie, la última fila de la ficha caía debajo de la barra del sistema.
+        */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:pb-6">
+          {children}
+        </div>
       </div>
     </div>
   );
