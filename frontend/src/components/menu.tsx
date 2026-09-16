@@ -76,7 +76,7 @@ export function Menu({
   /**
    * `default` es el acento: para la acción principal de una barra. Las otras
    * dos son controles secundarios. El ALTO y el radio no se eligen aquí —los
-   * pone `size="chip"` en el botón— para que un menú mida siempre lo mismo
+   * pone `size="sm"` en el botón— para que un menú mida siempre lo mismo
    * que los filtros que tiene al lado.
    */
   variante?: 'herramienta' | 'ghost' | 'default';
@@ -135,7 +135,7 @@ export function Menu({
         <Button
           type="button"
           variant={variante}
-          size={soloIcono ? 'chip-icon' : 'chip'}
+          size={soloIcono ? 'sm-icon' : 'sm'}
           onClick={() => {
             if (flotante) medir();
             setAbierto((v) => !v);
@@ -186,7 +186,7 @@ export function Menu({
               : undefined
           }
           className={cn(
-            'z-50 overflow-hidden rounded-2xl bg-popover py-1.5',
+            'z-50 overflow-hidden rounded-lg bg-popover py-1.5',
             flotante ? 'fixed' : 'absolute',
             !flotante && (direccion === 'arriba' ? 'bottom-full mb-2' : 'top-full mt-2'),
             'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
@@ -256,6 +256,8 @@ export function MenuOpcion({
       aria-disabled={deshabilitada}
       className={cn(
         'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
+        // Una fila de menú son 36 de puntero. Con el dedo, 42.
+        'movil:min-h-[42px]',
         deshabilitada
           ? 'cursor-not-allowed text-muted-foreground opacity-60'
           : peligro

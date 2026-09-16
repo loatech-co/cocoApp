@@ -97,7 +97,7 @@ export function Camara({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-tinta-950">
+      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-tinta-950">
         {estado === 'lista' ? (
           <video
             ref={video}

@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-recurrencia';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Campo } from '@/components/ui/campo';
 import { Modal } from '@/components/ui/modal';
 import { ApiClientError } from '@/lib/api-client';
 import { Confirmacion } from '@/components/ui/confirmacion';
@@ -146,7 +146,7 @@ export function ConceptoModal({
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="sm-icon"
               onClick={() => setConfirmando(true)}
               aria-label={`Eliminar ${concepto.name}`}
               title="Eliminar concepto"
@@ -159,8 +159,7 @@ export function ConceptoModal({
         onCerrar={onCerrar}
       >
         <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="concepto-nombre">Nombre</Label>
+          <Campo etiqueta="Nombre" id="concepto-nombre">
             <Input
               id="concepto-nombre"
               value={nombre}
@@ -169,7 +168,7 @@ export function ConceptoModal({
               required
               autoFocus
             />
-          </div>
+          </Campo>
 
           <CamposDeRecurrencia valor={recurrencia} onCambiar={setRecurrencia} />
 
@@ -183,7 +182,7 @@ export function ConceptoModal({
               `warning-surface` es un marrón que sobre el verde del modal daba
               un verde oliva sucio.
             */
-            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-secondary/60 p-3">
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-secondary/60 p-3">
               <p className="text-sm text-muted-foreground">
                 <strong className="font-semibold text-foreground">
                   Ya existe “{gemelo.name}”.
@@ -195,7 +194,7 @@ export function ConceptoModal({
                 <Button
                   type="button"
                   variant="herramienta"
-                  size="chip"
+                  size="sm"
                   className="self-start"
                   disabled={guardando}
                   onClick={() => void onUnificar(gemelo.id)}

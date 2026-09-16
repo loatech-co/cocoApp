@@ -4,15 +4,21 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * El radio estándar de un contenedor es 16px: `rounded-2xl`.
+ * El radio estándar de un contenedor es 10px: `rounded-lg`.
  *
- * Menor está bien donde haga falta —una casilla, un chip, un botón—. Mayor no:
- * dos contenedores vecinos con esquinas distintas se leen como dos sistemas
- * distintos, y es exactamente lo que pasaba con tarjetas de 24px pegadas a
- * tablas de 16.
+ * Es el `--radius` del tema, y `rounded-lg` es la clase que lo lee. Menor está
+ * bien donde haga falta —una casilla, un chip— pero mayor no: dos contenedores
+ * vecinos con esquinas distintas se leen como dos sistemas distintos, y es
+ * exactamente lo que pasaba con tarjetas de 24px pegadas a tablas de 16.
  *
- * Esta prueba lee el código fuente, como la de los botones, porque el problema
- * no está en el componente sino en quién escribe la clase.
+ * Antes el estándar era `rounded-2xl` y la escala estaba corrida —`rounded-lg`
+ * valía 16 y `rounded-xl` 20, porque `--radius` era 1rem—. Con 10px la escala
+ * vuelve a crecer en orden: sm 6, md 8, lg 10, xl 14. Lo que pasa de ahí es el
+ * 2xl y el 3xl de Tailwind, que no leen el tema, y por eso los prohíbe esta
+ * prueba.
+ *
+ * Lee el código fuente, como la de los botones, porque el problema no está en
+ * el componente sino en quién escribe la clase.
  */
 function fuentes(dir: string): string[] {
   return readdirSync(dir).flatMap((nombre) => {
@@ -22,16 +28,17 @@ function fuentes(dir: string): string[] {
   });
 }
 
-/** El tope, en píxeles. `rounded-2xl` con `--radius-2xl: 1rem`. */
-const TOPE = 16;
+/** El tope, en píxeles: el `--radius` del tema. */
+const TOPE = 10;
 
 /**
  * Lo que se permite pasarse, y por qué.
  *
- * La imagen del login lleva 32px porque se pidió así explícitamente, y no es
- * un contenedor de contenido: es una foto a sangre dentro de su marco.
+ * Vacío: desde que el radio del tema es el estándar, no ha hecho falta ni una
+ * excepción. Se deja el mecanismo porque la primera que aparezca merece
+ * escribirse aquí con su motivo, y no colarse sin que nadie se entere.
  */
-const PERMITIDOS = new Set(['features/auth/login-page.tsx']);
+const PERMITIDOS = new Set<string>();
 
 describe('Ningún contenedor se pasa del radio estándar', () => {
   const archivos = fuentes(join(import.meta.dirname, '..', '..'));
@@ -40,7 +47,7 @@ describe('Ningún contenedor se pasa del radio estándar', () => {
     expect(archivos.length).toBeGreaterThan(10);
   });
 
-  it('no hay `rounded-3xl` ni radios arbitrarios por encima de 16px', () => {
+  it('no hay radios por encima de 10px', () => {
     const culpables: string[] = [];
 
     for (const ruta of archivos) {
@@ -49,7 +56,8 @@ describe('Ningún contenedor se pasa del radio estándar', () => {
 
       const codigo = readFileSync(ruta, 'utf8');
 
-      for (const uso of codigo.matchAll(/\brounded(?:-[tbrl][lr]?)?-3xl\b/g)) {
+      // `xl`, `2xl` y `3xl`: los dos últimos ni siquiera leen el tema.
+      for (const uso of codigo.matchAll(/\brounded(?:-[tbrl][lr]?)?-(?:xl|2xl|3xl)\b/g)) {
         culpables.push(`${relativa}: ${uso[0]}`);
       }
 

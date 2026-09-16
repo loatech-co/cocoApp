@@ -15,7 +15,7 @@ export function Card({ className, ...props }: ComponentProps<'div'>) {
         //
         // La sombra lleva el matiz verde del fondo, no gris neutro: una sombra
         // gris sobre un lienzo verdoso se ve sucia.
-        'rounded-2xl bg-card text-card-foreground',
+        'rounded-lg bg-card text-card-foreground',
         'shadow-[0_1px_2px_rgba(12,31,24,0.04),0_10px_30px_-14px_rgba(12,31,24,0.14)]',
         className,
       )}

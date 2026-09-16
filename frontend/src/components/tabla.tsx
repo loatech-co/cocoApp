@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
  */
 export function Tabla({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-border bg-card">
+    <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-border bg-card">
       {/*
         `min-w` fuerza el desplazamiento en vez de apretar las columnas hasta
         que el texto se parte en cuatro líneas. Con la primera columna fija, se

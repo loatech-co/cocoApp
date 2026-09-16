@@ -72,7 +72,8 @@ export function Select({
       <span
         className={cn(
           'flex w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg border bg-card opacity-50',
-          pequeno ? 'h-8 pl-2.5 pr-2.5 text-xs' : 'h-10 pl-3 pr-3 text-sm',
+          'movil:min-h-[42px]',
+          pequeno ? 'h-9 pl-3 pr-3 text-xs' : 'h-11 pl-3 pr-3 text-sm',
           className,
         )}
         style={{ borderColor: 'var(--input)' }}
@@ -96,9 +97,12 @@ export function Select({
       claseDisparador={cn(
         'flex w-full min-w-0 items-center gap-2 rounded-lg border bg-card transition-colors',
         'outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
+        // El suelo táctil: apagado y encendido miden lo mismo, o la fila salta
+        // al deshabilitarse.
+        'movil:min-h-[42px]',
         // El relleno de la derecha es igual al de la izquierda porque la flecha
         // ya está dentro del flex: no hay nada que esquivar.
-        pequeno ? 'h-8 px-2.5 text-xs' : 'h-10 px-3 text-sm',
+        pequeno ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',
       )}
       disparador={() => disparador}
     >

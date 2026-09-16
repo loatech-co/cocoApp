@@ -95,7 +95,7 @@ export function Calendario({
         <Button
           type="button"
           variant="ghost"
-          size="icon-sm"
+          size="sm-icon"
           onClick={() => moverMes(-1)}
           aria-label="Mes anterior"
         >
@@ -107,7 +107,7 @@ export function Calendario({
         <Button
           type="button"
           variant="ghost"
-          size="icon-sm"
+          size="sm-icon"
           onClick={() => moverMes(1)}
           aria-label="Mes siguiente"
         >
@@ -150,8 +150,8 @@ export function Calendario({
                 // Con 36px fijos, en un panel estrecho el círculo se salía por
                 // los lados de su casilla.
                 'aspect-square',
-                dentro && !extremo && 'bg-bosque-100 dark:bg-white/12',
-                dentro && extremo && desde !== hasta && 'bg-bosque-100 dark:bg-white/12',
+                dentro && !extremo && 'bg-accent dark:bg-white/12',
+                dentro && extremo && desde !== hasta && 'bg-accent dark:bg-white/12',
                 // Las puntas se redondean también al principio y al final de
                 // cada fila, o la banda quedaría cortada a ras contra el borde.
                 (esInicio || i % 7 === 0) && 'rounded-l-full',

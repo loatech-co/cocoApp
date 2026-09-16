@@ -84,7 +84,7 @@ export function Combo({
         id={id}
         aria-disabled="true"
         className={cn(
-          'flex h-10 w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg border',
+          'flex h-11 w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg border',
           'bg-card px-3 text-sm opacity-50',
         )}
         style={{ borderColor: 'var(--input)' }}
@@ -103,7 +103,7 @@ export function Combo({
       flotante
       claseCaja="w-full min-w-0"
       claseDisparador={cn(
-        'flex h-10 w-full min-w-0 items-center gap-2 rounded-lg border bg-card px-3 text-sm',
+        'flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border bg-card px-3 text-sm',
         'outline-none transition-colors focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
       )}
       disparador={({ abierto }) => (

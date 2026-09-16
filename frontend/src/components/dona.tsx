@@ -249,7 +249,7 @@ export function Dona({
           ref={tarjeta}
           style={{ left: `${sitio.left}px`, top: `${sitio.top}px` }}
           className={cn(
-            'pointer-events-none absolute z-10 min-w-36 rounded-2xl bg-popover p-3',
+            'pointer-events-none absolute z-10 min-w-36 rounded-lg bg-popover p-3',
             'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
             // Sin medir todavía se pinta invisible: un primer fotograma en la
             // esquina y otro en su sitio se ve como un salto.

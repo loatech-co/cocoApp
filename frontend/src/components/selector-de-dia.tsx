@@ -68,7 +68,7 @@ export function SelectorDeDia({
         variant="herramienta"
         // `campo` y no `default`: este botón es un CAMPO, y tiene que medir y
         // redondearse como el `Input` y el `Combo` que tiene al lado.
-        size="campo"
+        size="md"
         onClick={() => setAbierto((v) => !v)}
         disabled={deshabilitado}
         aria-expanded={abierto}
@@ -90,7 +90,7 @@ export function SelectorDeDia({
           role="dialog"
           aria-label="Elegir fecha"
           className={cn(
-            'absolute left-0 z-40 mt-2 w-[min(20rem,calc(100vw-3rem))] rounded-2xl bg-popover p-3',
+            'absolute left-0 z-40 mt-2 w-[min(20rem,calc(100vw-3rem))] rounded-lg bg-popover p-3',
             'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
           )}
         >

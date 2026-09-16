@@ -179,7 +179,7 @@ export function DashboardPage() {
         <>
           <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 rounded-2xl" />
+              <Skeleton key={i} className="h-24 rounded-lg" />
             ))}
           </div>
           <div className="grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_repeat(2,minmax(20%,30rem))] lg:grid-rows-[420px]">
@@ -191,8 +191,8 @@ export function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            <Skeleton className="h-72 w-full rounded-2xl lg:h-full" />
-            <Skeleton className="h-72 w-full rounded-2xl lg:h-full" />
+            <Skeleton className="h-72 w-full rounded-lg lg:h-full" />
+            <Skeleton className="h-72 w-full rounded-lg lg:h-full" />
           </div>
         </>
       )}
@@ -218,7 +218,7 @@ export function DashboardPage() {
               valor={formatCOP(alDia ? dashboard.data.required_budget : dashboard.data.range.expense)}
               detalle={alDia ? 'Costos fijos de este mes' : 'Lo que costó el periodo'}
               Icono={Wallet}
-              chip="turquesa"
+              chip="presupuesto"
             />
             <Kpi
               etiqueta="Gastos del periodo"
@@ -229,21 +229,21 @@ export function DashboardPage() {
               desglose={dashboard.data.expense_by_center}
               Icono={TrendingDown}
               acento="expense"
-              chip="violeta"
+              chip="gasto"
             />
             <Kpi
               etiqueta="Ingresos del periodo"
               valor={formatCOP(dashboard.data.range.income)}
               Icono={TrendingUp}
               acento="income"
-              chip="verde"
+              chip="ingreso"
             />
             <Kpi
               etiqueta="Movimientos"
               valor={String(dashboard.data.range.count)}
               detalle={rangoLargo(dashboard.data.period.from, dashboard.data.period.to)}
               Icono={Receipt}
-              chip="lima"
+              chip="movimientos"
             />
           </div>
 
@@ -432,7 +432,7 @@ function Kpi({
   desglose,
   Icono,
   acento,
-  chip = 'turquesa',
+  chip = 'presupuesto',
 }: {
   etiqueta: string;
   valor: string;
@@ -543,7 +543,7 @@ function Distribucion({
           <Button
             type="button"
             variant="herramienta"
-            size="chip-icon"
+            size="sm-icon"
             aria-pressed={!verLista}
             aria-label={verLista ? 'Ocultar los nombres' : 'Mostrar los nombres'}
             title={verLista ? 'Ocultar los nombres' : 'Mostrar los nombres'}

@@ -78,10 +78,10 @@ describe('El botón mide lo mismo con cualquier variante', () => {
     // El par exacto que se veía descuadrado.
     const { getByText } = render(
       <>
-        <Button variant="herramienta" size="chip">
+        <Button variant="herramienta" size="sm">
           Cancelar
         </Button>
-        <Button size="chip">Aplicar</Button>
+        <Button size="sm">Aplicar</Button>
       </>,
     );
 

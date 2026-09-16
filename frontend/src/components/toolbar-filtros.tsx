@@ -5,7 +5,7 @@ import { FiltroClasificacion } from '@/components/filtro-clasificacion';
 import { Menu, MenuOpcion, MenuTitulo } from '@/components/menu';
 import { SelectorDeRango } from '@/components/selector-de-rango';
 import { Button } from '@/components/ui/button';
-import { ChipIcono } from '@/components/ui/chip-icono';
+import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
 import { Input } from '@/components/ui/input';
 import type { Filtros } from '@/lib/filtros';
 import { useCategories } from '@/lib/queries';
@@ -139,7 +139,7 @@ export function ToolbarFiltros({
           <Button
             type="button"
             variant="herramienta"
-            size="chip-icon"
+            size="sm-icon"
             aria-label="Buscar"
             title="Buscar"
             onClick={() => {
@@ -203,7 +203,7 @@ export function ToolbarFiltros({
           <Button
             type="button"
             variant="herramienta"
-            size="chip-icon"
+            size="sm-icon"
             aria-label="Limpiar filtros"
             title="Limpiar filtros"
             onClick={limpiar}
@@ -214,7 +214,7 @@ export function ToolbarFiltros({
 
         {onNuevo && (
           /* Por el mismo camino que los demás menús de esta barra: el alto y
-             el radio se los pone `size="chip"` dentro del botón, que es donde
+             el radio se los pone `size="sm"` dentro del botón, que es donde
              viven. Escritos aquí, este botón medía distinto que el selector
              de fechas que tiene al lado y la fila se veía descuadrada. */
           <Menu
@@ -228,7 +228,7 @@ export function ToolbarFiltros({
               <div className="flex flex-col">
                 <Captura
                   Icono={TrendingDown}
-                  color="violeta"
+                  color="gasto"
                   titulo="Gasto"
                   ayuda="Plata que sale"
                   onClick={() => {
@@ -241,7 +241,7 @@ export function ToolbarFiltros({
                     la aplicación no sabe registrarlos. Apagada dice que sabrá. */}
                 <Captura
                   Icono={TrendingUp}
-                  color="verde"
+                  color="ingreso"
                   titulo="Ingreso"
                   ayuda="Plata que entra"
                   nota="Pronto"
@@ -312,7 +312,7 @@ function Captura({
   onClick,
 }: {
   Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  color: 'violeta' | 'verde';
+  color: ColorDeChip;
   titulo: string;
   ayuda: string;
   /** Por qué no se puede todavía, en una palabra. */

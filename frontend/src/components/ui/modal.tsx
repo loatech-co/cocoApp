@@ -60,6 +60,11 @@ export function Modal({
       // dentro del panel hasta el velo —seleccionando un texto, por ejemplo—
       // cerraba la ficha con todo lo escrito dentro.
       onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
+      // La marca por la que preguntan las superficies de debajo. Una trampa de
+      // foco se aparta mientras hay una ficha abierta, y Escape cierra primero
+      // la ficha: dos trampas peleándose por el tabulador son un teclado que no
+      // hace nada.
+      data-modal=""
       className="fixed inset-0 z-50 flex items-end justify-center bg-tinta-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
     >
       <div
@@ -68,7 +73,7 @@ export function Modal({
           'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
           // Pegado abajo se redondea solo arriba: las esquinas de abajo caen
           // fuera de la pantalla y curvarlas deja dos muescas del fondo.
-          'rounded-t-2xl sm:rounded-2xl',
+          'rounded-t-lg sm:rounded-lg',
           ancho,
         )}
       >
@@ -86,7 +91,7 @@ export function Modal({
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="sm-icon"
               onClick={onCerrar}
               aria-label="Cerrar"
             >

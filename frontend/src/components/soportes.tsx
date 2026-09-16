@@ -209,7 +209,7 @@ export function Soltar({
         disabled={subiendo}
         aria-label="Añadir soportes"
         className={cn(
-          'flex flex-col items-center justify-center gap-1.5 rounded-2xl',
+          'flex flex-col items-center justify-center gap-1.5 rounded-lg',
           'border-2 border-dashed transition-colors',
           /*
             Sin ningún soporte, el cuadro ocupa el ANCHO y explica.
@@ -239,7 +239,7 @@ export function Soltar({
           subiendo
             ? 'cursor-wait border-border text-muted-foreground'
             : encima
-              ? 'border-lima-tinta bg-black/15 text-foreground'
+              ? 'border-acento-tinta bg-black/15 text-foreground'
               : 'border-border text-muted-foreground hover:bg-black/10',
         )}
       >
@@ -321,12 +321,12 @@ function Miniatura({
       aria-label={`Ver ${soporte.nombre_archivo}`}
       className={cn(
         'group relative flex size-[104px] items-center justify-center overflow-hidden',
-        'rounded-2xl bg-card ring-1 ring-border transition-all',
+        'rounded-lg bg-card ring-1 ring-border transition-all',
         // `lima-tinta` y no `primary`, por lo mismo que el hueco de al lado:
         // el verde oscuro de `primary` no se ve sobre un fondo oscuro, y las
         // dos piezas están en la misma fila —tenían que responder igual—.
         soporte.disponible
-          ? 'cursor-pointer hover:ring-2 hover:ring-lima-tinta'
+          ? 'cursor-pointer hover:ring-2 hover:ring-acento-tinta'
           : 'cursor-not-allowed opacity-50',
       )}
     >
@@ -595,7 +595,7 @@ function Pase({
           desplazamiento. Es lo que ya sabe hacer el navegador y no hay que
           reinventar el arrastre.
         */}
-        <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-2xl bg-black/25 p-3 sm:p-6">
+        <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-black/25 p-3 sm:p-6">
           {!url ? (
             <div className="flex w-full items-center justify-center">
               <Loader2 className="size-6 animate-spin text-tinta-50/70" aria-hidden="true" />
@@ -723,7 +723,7 @@ function BotonOscuro({
     <Button
       type="button"
       variant="ghost"
-      size="chip-icon"
+      size="sm-icon"
       onClick={onClick}
       disabled={deshabilitado}
       aria-label={etiqueta}

@@ -62,7 +62,7 @@ export function LoginPage() {
         {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
             (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
             BLOQUE con ancho automático, y centrar texto no lo movería. */}
-        <Logo className="mx-auto mb-8 h-11 w-auto text-lima-300" />
+        <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
         <Card>
           <CardHeader>
@@ -157,7 +157,7 @@ export function LoginPage() {
           regenerarlo.
         */}
         <div
-          className="relative size-full overflow-hidden rounded-[32px] bg-bosque-800 bg-cover bg-center"
+          className="relative size-full overflow-hidden rounded-lg bg-primary bg-cover bg-center"
           style={{ backgroundImage: 'url(/fondo-login.webp)' }}
         >
           {/*
@@ -171,7 +171,7 @@ export function LoginPage() {
             Sube hasta el 55% y no hasta arriba para no apagar la imagen entera:
             arriba queda limpia.
           */}
-          <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-bosque-900 via-bosque-900/70 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-primary via-primary/70 to-transparent" />
 
           <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-[1.08] tracking-tight text-white xl:p-14 xl:text-6xl">
             Tus finanzas,

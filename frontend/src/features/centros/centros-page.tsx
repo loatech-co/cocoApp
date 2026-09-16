@@ -64,7 +64,7 @@ export function CentrosPage() {
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="sm-icon"
               aria-pressed={verAyuda}
               aria-label={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
               title={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
@@ -89,7 +89,7 @@ export function CentrosPage() {
       {categorias.isPending && (
         <div className="flex flex-col gap-3">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-28 rounded-2xl" />
+            <Skeleton key={i} className="h-28 rounded-lg" />
           ))}
         </div>
       )}
@@ -136,7 +136,7 @@ function Explicacion({ onCerrar }: { onCerrar: () => void }) {
           <Button
             type="button"
             variant="ghost"
-            size="icon-sm"
+            size="sm-icon"
             onClick={onCerrar}
             aria-label="Cerrar"
             title="Cerrar"
@@ -166,7 +166,7 @@ function Explicacion({ onCerrar }: { onCerrar: () => void }) {
           />
         </ol>
 
-        <p className="mt-4 rounded-xl bg-secondary p-3 text-sm text-muted-foreground">
+        <p className="mt-4 rounded-lg bg-secondary p-3 text-sm text-muted-foreground">
           Así, <strong className="text-foreground">¿cuánto se fue en servicios públicos?</strong>{' '}
           es la suma de sus conceptos, y no hay que registrarlo por separado en ningún lado.
         </p>
@@ -223,9 +223,9 @@ function Centro({ centro }: { centro: Category }) {
         <div
           className={cn(
             'flex items-center gap-2 pr-4 transition-colors hover:bg-secondary sm:pr-6',
-            'rounded-t-2xl',
+            'rounded-t-lg',
             // Cerrado, la fila ES la tarjeta: se redondea también por abajo.
-            !abierto && 'rounded-b-2xl',
+            !abierto && 'rounded-b-lg',
           )}
         >
           <button
@@ -346,7 +346,7 @@ function Grupo({ grupo }: { grupo: Category }) {
   const conceptos = grupo.children ?? [];
 
   return (
-    <div className="rounded-2xl bg-secondary/60 p-3 sm:p-4">
+    <div className="rounded-lg bg-secondary/60 p-3 sm:p-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="min-w-0 truncate text-sm font-semibold">{grupo.name}</h3>
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde

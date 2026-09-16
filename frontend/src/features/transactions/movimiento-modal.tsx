@@ -27,12 +27,12 @@ import { LienzoPdf, Soltar, Soportes } from '@/components/soportes';
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ChipIcono } from '@/components/ui/chip-icono';
+import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
+import { Campo } from '@/components/ui/campo';
 import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ApiClientError, apiSubir } from '@/lib/api-client';
 import { diaLargo, mesLargo } from '@/lib/fechas';
 import {
@@ -348,7 +348,7 @@ export function MovimientoModal({
           // Más ancho desde que los soportes se ven en miniatura: con
           // `max-w-2xl` cabían dos recibos por fila y ocho quedaban en cuatro
           // renglones, que es más alto que el resto de la ficha junta.
-          'rounded-t-2xl sm:max-w-5xl sm:rounded-2xl',
+          'rounded-t-lg sm:max-w-5xl sm:rounded-lg',
           'pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5',
         )}
       >
@@ -360,7 +360,7 @@ export function MovimientoModal({
           <div className="flex min-w-0 items-center gap-3">
             <ChipIcono
               Icono={type === 'income' ? TrendingUp : TrendingDown}
-              color={type === 'income' ? 'verde' : 'violeta'}
+              color={type === 'income' ? 'ingreso' : 'gasto'}
               tamano="sm"
             />
             <h2 className="truncate text-xl font-semibold">
@@ -379,7 +379,7 @@ export function MovimientoModal({
               <Button
                 type="button"
                 variant="ghost"
-                size="icon-sm"
+                size="sm-icon"
                 onClick={() => setEditable(true)}
                 aria-label="Editar movimiento"
                 title="Editar"
@@ -395,7 +395,7 @@ export function MovimientoModal({
               <Button
                 type="button"
                 variant="ghost"
-                size="icon-sm"
+                size="sm-icon"
                 onClick={() => setConfirmandoBorrado(true)}
                 aria-label="Eliminar movimiento"
                 title="Eliminar"
@@ -408,7 +408,7 @@ export function MovimientoModal({
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="sm-icon"
               onClick={onCerrar}
               aria-label="Cerrar"
             >
@@ -766,7 +766,7 @@ function VistaDeLectura({
             mismo peso que la cifra, para que se lea como parte de ella y no
             como un adorno al lado.
           */}
-          <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-lima-tinta sm:text-5xl">
+          <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-acento-tinta sm:text-5xl">
             <ArrowUpRight
               className={cn('size-8 shrink-0 sm:size-10', tipo === 'income' && 'rotate-180')}
               strokeWidth={2.75}
@@ -843,7 +843,7 @@ function Seccion({
         {titulo}
       </h3>
       {caja ? (
-        <div className="flex flex-col gap-3 rounded-2xl bg-secondary/60 p-3">{children}</div>
+        <div className="flex flex-col gap-3 rounded-lg bg-secondary/60 p-3">{children}</div>
       ) : (
         children
       )}
@@ -904,7 +904,7 @@ function ComoEmpezar({
     <div className="flex flex-col gap-3">
       <Via
         Icono={ScanLine}
-        color="violeta"
+        color="gasto"
         titulo="Escanear un soporte"
         ayuda="Se extraen el valor, la fecha y el concepto. Requieren confirmación antes de guardar."
       >
@@ -918,7 +918,7 @@ function ComoEmpezar({
 
       <Via
         Icono={Pencil}
-        color="turquesa"
+        color="presupuesto"
         titulo="Registro manual"
         ayuda="Para un movimiento sin soporte, o cuando su clasificación ya se conoce."
         onClick={onAMano}
@@ -955,7 +955,7 @@ function Via({
   children,
 }: {
   Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  color: 'violeta' | 'turquesa';
+  color: ColorDeChip;
   titulo: string;
   ayuda: string;
   onClick?: () => void;
@@ -974,7 +974,7 @@ function Via({
     </>
   );
 
-  const forma = 'flex w-full items-start gap-3 rounded-2xl bg-secondary/60 p-4 text-left';
+  const forma = 'flex w-full items-start gap-3 rounded-lg bg-secondary/60 p-4 text-left';
 
   if (!onClick) return <div className={forma}>{dentro}</div>;
 
@@ -1016,29 +1016,15 @@ function BotonDeVia({
  * error, cuando lo que hubo fue un acierto. El lima es el acento de la casa:
  * llama sin alarmar.
  *
- * ── Por qué el lima de la PALETA y no `bg-accent` ───────────────────────────
- * Porque `--accent` se invierte entre temas: en claro es lima-300, pero en
- * oscuro es bosque-800 —un verde oscuro— con la letra en lima. Con `bg-accent`
- * este aviso salía como un rectángulo verde sobre verde: parecía decoración,
- * no un aviso. `bg-lima-300` es lima en los dos temas.
+ * ── Por qué `accent` y no un color escrito a mano ───────────────────────────
+ * Porque en este tema el acento YA es lo que hace falta: una superficie tenue
+ * con su propia tinta, resuelta para los dos modos —verde muy claro sobre
+ * casi blanco, verde muy oscuro con letra menta sobre casi negro—. Antes hubo
+ * que escribir el color a mano porque el acento de entonces se invertía entre
+ * temas y el aviso salía verde sobre verde.
  *
- * Y la letra en TINTA, nunca en blanco: blanco sobre lima da 1,23:1 de
- * contraste, muy por debajo del 4,5:1 que exige un texto.
- *
- * ── Al 70 % y con las esquinas más cerradas ─────────────────────────────────
- * Un lima opaco de esquina a esquina con el radio de una tarjeta pesaba como
- * una tarjeta: se leía como una superficie más de la ficha en vez de como una
- * nota puesta encima. Algo de transparencia lo asienta sobre lo que hay
- * detrás, y 10px —por debajo del radio estándar, que es el de los
- * contenedores— dicen que esto no es un contenedor.
- *
- * El 85 % no se veía: quince por ciento de verde oscuro por debajo de un lima
- * claro no cambia nada a la vista. Al 70 % el fondo se nota y el aviso se
- * asienta sobre la ficha en vez de flotar como una pegatina.
- *
- * Y la tinta sigue holgada: lima-300 al 70 % sobre el verde de la ficha da un
- * oliva claro, y tinta-950 encima queda alrededor de 6:1 —por encima del 4,5
- * que exige un texto—.
+ * Con el token, el contraste lo garantiza el tema y este aviso cambia solo el
+ * día que se cambie de tema.
  *
  * ── Por qué una sola frase ──────────────────────────────────────────────────
  * Porque el detalle de por qué se clasificó así no cambia lo que hay que
@@ -1047,7 +1033,7 @@ function BotonDeVia({
  */
 function LoQueLei() {
   return (
-    <p className="flex items-center gap-2 rounded-[10px] bg-lima-300/70 px-4 py-3 text-sm font-medium text-tinta-950">
+    <p className="flex items-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-medium text-accent-foreground">
       <Sparkles className="size-4 shrink-0" aria-hidden="true" />
       Los datos se extrajeron del soporte. Conviene verificarlos antes de guardar.
     </p>
@@ -1178,8 +1164,8 @@ function Tile({
           lado, y en dos plazas pegadas eso se ve. Con la misma anchura de
           trazo, la geometría es idéntica.
         */
-        'group relative size-[104px] overflow-hidden rounded-2xl border-2 bg-card transition-colors',
-        activo ? 'border-lima-tinta' : 'border-border hover:border-muted-foreground',
+        'group relative size-[104px] overflow-hidden rounded-lg border-2 bg-card transition-colors',
+        activo ? 'border-acento-tinta' : 'border-border hover:border-muted-foreground',
       )}
     >
       {/* La plaza entera elige qué se previsualiza. */}
@@ -1328,7 +1314,7 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
       // `touch-action: none` para que el dedo mueva el documento y no desplace
       // la ficha entera por detrás.
       className={cn(
-        'relative h-[30rem] touch-none select-none overflow-hidden rounded-2xl bg-card ring-1 ring-border',
+        'relative h-[30rem] touch-none select-none overflow-hidden rounded-lg bg-card ring-1 ring-border',
         sePuedeMover && (arrastrando ? 'cursor-grabbing' : 'cursor-grab'),
       )}
       onPointerDown={(e) => {
@@ -1415,30 +1401,6 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
           estilo={encuadre}
         />
       )}
-    </div>
-  );
-}
-
-/**
- * Un campo con su nombre encima.
- *
- * El nombre va FUERA del control y no dentro como marcador de posición: un
- * marcador desaparece al escribir, así que al revisar un formulario ya lleno
- * nadie sabe qué era cada caja.
- */
-function Campo({
-  etiqueta,
-  id,
-  children,
-}: {
-  etiqueta: string;
-  id: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{etiqueta}</Label>
-      {children}
     </div>
   );
 }

@@ -39,10 +39,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        /**
-         * El acento lima. El texto va en TINTA, no en blanco: blanco sobre lima
-         * da 1.23:1 de contraste, muy por debajo del 4.5:1 que exige el texto.
-         */
+        /** El acento del tema: una superficie tenue con su propia tinta. */
         acento: 'bg-accent text-accent-foreground hover:brightness-95',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         outline: 'border border-input bg-background hover:bg-secondary hover:text-secondary-foreground',
@@ -58,33 +55,33 @@ const buttonVariants = cva(
         herramienta:
           'border border-border bg-card text-foreground hover:bg-secondary aria-pressed:border-primary/30 aria-pressed:bg-accent aria-pressed:text-accent-foreground',
       },
+      /*
+        ── DOS tamaños, y los mismos para todo ──────────────────────────────
+        `sm` mide 36 y `md` mide 44, y esas dos alturas valen para un botón,
+        un campo de texto, un desplegable y un selector de fecha. Una fila de
+        controles donde el botón mide 40, el campo 42 y el selector 36 se ve
+        temblorosa aunque nadie sepa decir por qué.
+
+        Eran ocho —default, sm, lg, icon, icon-sm, chip, chip-icon, campo— y
+        cada uno con su alto y su radio. Ocho medidas es no tener ninguna: se
+        elegía la que se pareciera a la de al lado, y así se separaron.
+
+        Las variantes de icono son las mismas alturas en cuadrado. No son un
+        tamaño más: son el mismo, sin texto.
+
+        44 es además el objetivo táctil mínimo que pide la accesibilidad, así
+        que el tamaño de formulario ya lo cumple sin excepciones para el móvil.
+      */
       size: {
-        default: 'h-10 rounded-full px-5 py-2',
-        sm: 'h-9 rounded-full px-4',
-        lg: 'h-12 rounded-full px-7 text-base',
-        /** 44×44 mínimo en mobile, por objetivo táctil accesible. */
-        icon: 'size-11 rounded-full sm:size-10',
-        /** El de las barras de herramientas: esquinas menos redondas. */
-        chip: 'h-9 rounded-lg px-3',
-        /**
-         * El de un CAMPO de formulario: la misma caja que un `Input` o un
-         * `Combo`.
-         *
-         * Existe porque el selector de fecha es un botón por dentro pero un
-         * campo por fuera, y con `size="default"` salía con las esquinas
-         * redondas del todo al lado de tres campos de esquina suave: la fila
-         * se leía como dos sistemas distintos.
-         */
-        campo: 'h-10 rounded-lg px-3',
-        /** El mismo, cuadrado, para un icono solo. */
-        'chip-icon': 'size-9 rounded-lg',
-        /** Un icono pequeño y redondo: flechas de un calendario, cerrar… */
-        'icon-sm': 'size-8 rounded-full',
+        sm: 'h-9 rounded-lg px-3',
+        md: 'h-11 rounded-lg px-5',
+        'sm-icon': 'size-9 rounded-lg',
+        'md-icon': 'size-11 rounded-lg',
       },
     },
     defaultVariants: {
       variant: 'default',
-      size: 'default',
+      size: 'md',
     },
   },
 );

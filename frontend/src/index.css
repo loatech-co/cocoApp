@@ -4,6 +4,38 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   EL CORTE — dónde deja de haber ratón
+
+   Uno solo, y hace DOS preguntas: cuánto mide la ventana Y de qué lado está.
+
+   Una tableta mide entre 768 y 1024 de ancho. Un iPad en vertical queda por
+   encima de cualquier línea de 767px, así que con el ancho solo recibiría el
+   escritorio —riel a la izquierda y todo— dentro de una columna con forma de
+   teléfono. Girado, el mismo aparato mide 1024 o más y ahí el escritorio es lo
+   correcto. 1024 es el techo porque es el iPad más ancho en vertical.
+
+   Las dos son COMPLEMENTARIAS: ningún tamaño cae en las dos ni en ninguna. Eso
+   no se confía a la vista, lo comprueba `app/movil.test.ts` barriendo tamaños.
+
+   Tailwind sí sabe ponerle nombre a una consulta de medios, así que en las
+   clases se escribe `movil:` y `escritorio:` y la cadena no anda copiada por el
+   proyecto. Las únicas copias son esta y la de `app/movil.ts`, que hace falta
+   para decidir qué se MONTA; la prueba comprueba que digan lo mismo.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@custom-variant movil {
+  @media (max-width: 767px), (orientation: portrait) and (max-width: 1024px) {
+    @slot;
+  }
+}
+
+@custom-variant escritorio {
+  @media (min-width: 1025px), (orientation: landscape) and (min-width: 768px) {
+    @slot;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    PALETA
 
      #0F3B2D  bosque     · barra lateral, botones primarios, gráficas oscuras
@@ -24,15 +56,22 @@
 
 @theme {
   /* ── Tipografía ─────────────────────────────────────────────────────────
-     Google Sans para titulares, cifras y controles: tiene el aire geométrico
-     de la referencia y sus números son de ancho uniforme, que es lo que
-     necesita una columna de dinero.
+     Las tres del tema, tal como las declara.
 
-     Roboto para el texto corrido. Su altura de x es menor y aguanta mejor los
-     párrafos largos; Google Sans a 14px en un párrafo se ve apretada. */
-  --font-display: 'Google Sans', 'Roboto', ui-sans-serif, system-ui, sans-serif;
-  --font-sans: 'Roboto', 'Google Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-display);
+     Geist para todo el texto y todos los controles: es una neogrotesca con
+     cifras tabulares de serie, que es lo que necesita una columna de dinero.
+
+     `--font-display` apunta a la misma y no a otra, a propósito. Existía para
+     separar titulares de párrafo cuando eran dos familias distintas; con una
+     sola, mantener el nombre evita tocar los cuarenta sitios que lo usan y
+     deja la puerta abierta a volver a separarlas cambiando esta línea.
+
+     La serif del tema queda disponible para lo editorial —una cifra grande,
+     un vacío— y la mono para lo que tenga que alinear por carácter. */
+  --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: Geist, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* ── Bosque (marca) ────────────────────────────────────────────────────── */
   --color-bosque-50: #eef6f2;
@@ -88,16 +127,6 @@
   --color-tinta-900: #16201b;
   --color-tinta-950: #0c1f18;
 
-  /* ── Pasteles de los chips de icono ────────────────────────────────────── */
-  --color-chip-violeta: #ede9fe;
-  --color-chip-violeta-tinta: #6c5ce7;
-  --color-chip-turquesa: #ccfbf1;
-  --color-chip-turquesa-tinta: #0f9488;
-  --color-chip-verde: #dcfce7;
-  --color-chip-verde-tinta: #16a34a;
-  --color-chip-lima: #f2f9cb;
-  --color-chip-lima-tinta: #697717;
-
   /* ── Píldoras de estado ────────────────────────────────────────────────── */
   --color-pildora-ok: #bbf7d0;
   --color-pildora-ok-tinta: #0b6b45;
@@ -124,212 +153,264 @@
    es cambiar este bloque, no rastrear colores por toda la app.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   EL TEMA — Solstice
+
+   Pino y oro. Los valores son los del tema, copiados tal cual y no
+   interpretados: el día que se cambie de tema se cambia esta capa y nada más.
+
+   ── Qué añade la app por encima ──────────────────────────────────────────
+   Un tema de componentes no sabe de dinero. Tres familias de tokens son
+   nuestras y se derivan de las suyas, nunca inventadas al lado:
+
+   · Lo que entra y lo que sale. Un tema monocromo no distingue un ingreso de
+     un gasto, y aquí esa distinción es el producto.
+   · Lo pendiente. Va en el oro del tema —su `secondary`— y nunca en rojo: el
+     rojo se reserva a lo que salió mal y a lo que no se puede deshacer.
+   · Las porciones de la dona. Pintan ÁREAS grandes, y un color que se
+     distingue como trazo de 2px puede ser invisible como relleno.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 :root {
-  /* Esquinas amplias, como en la referencia. */
-  --radius: 1rem;
+  /* 10px. Es el radio del tema, y a partir de aquí el estándar de la app:
+     lo usan las tarjetas, los desplegables, los modales y los campos. Puede
+     ser MENOR donde haga falta —una casilla, un chip— pero nunca mayor: dos
+     contenedores vecinos con esquinas distintas se leen como dos sistemas. */
+  --radius: 0.625rem;
 
-  /* La sombra de lo que FLOTA: menús, calendarios, tarjetas al vuelo.
-     Es un token y no una clase suelta porque en oscuro tiene que ser otra: una
-     sombra verde translúcida sobre un fondo casi negro no se ve, y el panel
-     queda pegado al fondo sin nada que diga que está por encima. */
-  --sombra-flotante:
-    0 2px 6px rgba(12, 31, 24, 0.08),
-    0 12px 28px -8px rgba(12, 31, 24, 0.22),
-    0 32px 64px -24px rgba(12, 31, 24, 0.3);
+  /* Un aviso, a 24 del borde de abajo. En el teléfono lo pisa la barra, así
+     que allí este mismo nombre vale otra cosa. */
+  --bajo-la-barra: 1.5rem;
 
-  /* Verde muy suave, no gris neutro: acerca el área de trabajo a la barra
-     lateral en vez de dejar el salto de verde oscuro a casi blanco, y de paso
-     despega las tarjetas, que son blancas. */
-  --background: var(--color-bosque-50);
-  --foreground: var(--color-tinta-950);
+  /* ── Superficies y tinta ──────────────────────────────────────────────── */
+  --background: #f7f6f2;
+  --foreground: #0f1f1d;
 
   --card: #ffffff;
-  --card-foreground: var(--color-tinta-950);
-  /*
-    ── Lo que flota es del color del fondo ─────────────────────────────────
-    Modales y desplegables toman `--background`, el mismo del área principal.
-    No es que se confundan con ella: encima llevan sombra y un anillo, y un
-    modal además oscurece todo lo de atrás. Lo que se gana es que una ficha
-    abierta se lea como la MISMA superficie de la aplicación —algo que se
-    levantó— y no como una tarjeta de otro sitio que aterrizó encima.
+  --card-foreground: #0f1f1d;
 
-    Un solo token para todos: el día que el fondo cambie, cambian con él, sin
-    que nadie tenga que acordarse de los siete sitios donde hay un panel.
-  */
-  --popover: var(--background);
-  --popover-foreground: var(--color-tinta-950);
+  --popover: #ffffff;
+  --popover-foreground: #0f1f1d;
 
-  --primary: var(--color-bosque-800);
+  --primary: #0b3b36;
   --primary-foreground: #ffffff;
 
-  /* El acento lima SIEMPRE con texto tinta: en blanco da 1.23:1. */
-  --accent: var(--color-lima-300);
-  --accent-foreground: var(--color-tinta-950);
-  /*
-    El lima como TINTA, que no es el lima como fondo.
-    En claro hace falta el oscuro de la escala: el lima-300 sobre blanco da
-    1,3:1 y no se lee. En oscuro pasa lo contrario. Un solo nombre para los
-    dos casos, para que quien escriba "lima" no tenga que acordarse de cuál.
-  */
-  --lima-tinta: var(--color-lima-700);
+  --secondary: #d4a24c;
+  --secondary-foreground: #3d2b0e;
 
-  --secondary: var(--color-tinta-100);
-  --secondary-foreground: var(--color-tinta-800);
+  --muted: #efede6;
+  --muted-foreground: #5c6663;
 
-  --muted: var(--color-tinta-100);
-  --muted-foreground: var(--color-tinta-600);
+  --accent: #e0ebe9;
+  --accent-foreground: #0b3b36;
 
-  --destructive: #b3261e;
+  --destructive: #b83432;
   --destructive-foreground: #ffffff;
 
-  --border: var(--color-tinta-200);
-  /* El borde de un CAMPO cumple el 3:1 que WCAG 1.4.11 exige a los controles. */
-  --input: var(--color-tinta-400);
-  --ring: var(--color-esmeralda-500);
+  --border: #dadcd5;
+  --input: #dadcd5;
+  --ring: #14807a;
 
-  /* Dinero */
-  --income: var(--color-esmeralda-600);
-  --income-surface: var(--color-esmeralda-50);
-  --expense: var(--color-bosque-800);
-  --expense-surface: var(--color-bosque-50);
-  --warning: #854d0e;
-  --warning-surface: #fef3c7;
-  --info: var(--color-tinta-600);
-  --info-surface: var(--color-tinta-100);
+  /*
+    El acento como TINTA, que no es el acento como fondo.
 
-  /* ── Las porciones de la dona ──────────────────────────────────────────
-     Cada una con su TINTA, declarada y no calculada: en esta paleta no hay
-     una regla que valga para todas. Sobre el bosque el blanco se lee; sobre
-     la lima NO —1.23:1— y hay que bajar a tinta.
+    Hace falta un solo nombre porque el mismo dato —una cifra destacada, el
+    borde de la baldosa activa— tiene que resolverse solo según el tema: aquí
+    el teal medio, y en oscuro el claro. Sin esto, cada llamada tendría que
+    acordarse de cuál de los dos le toca.
+  */
+  --acento-tinta: #14807a;
 
-     Y son tokens propios, no `--chart-N`, porque la dona pinta ÁREAS grandes
-     sobre la tarjeta y una línea de gráfica no: un verde que se distingue
-     como trazo de 2px puede ser invisible como relleno. En oscuro la primera
-     porción era `bosque-800` sobre una tarjeta `bosque-900` y la dona parecía
-     vacía. */
-  --dona-1: var(--color-bosque-800);
+  /* ── Dinero ───────────────────────────────────────────────────────────── */
+  /* El gasto es el `primary` del tema: es la mayoría de lo que esta app
+     enseña, así que le toca el color de la casa. */
+  --expense: #0b3b36;
+  --expense-surface: #e0ebe9;
+  /* Y el ingreso, el verde del tema —el de su `chart-4` en oscuro—, oscurecido
+     para que como TEXTO cumpla el 4,5:1 sobre un fondo casi blanco. Es el
+     único tono que la app añade, y lo añade porque distinguir lo que entra de
+     lo que sale es el producto. */
+  --income: #1a7a52;
+  --income-surface: #e3f3ea;
+
+  /* Lo PENDIENTE va en el oro del tema, no en un ámbar traído de fuera. */
+  --warning: #7a5312;
+  --warning-surface: #f7ecd6;
+  --info: #5c6663;
+  --info-surface: #efede6;
+
+  /* ── Gráficas ─────────────────────────────────────────────────────────── */
+  --chart-1: #14807a;
+  --chart-2: #d4a24c;
+  --chart-3: #0b3b36;
+  --chart-4: #5dbfb5;
+  --chart-5: #b88a40;
+
+  /* ── Las porciones de la dona ─────────────────────────────────────────────
+     Cada una con su TINTA, declarada y no calculada: sobre el pino el blanco
+     se lee, sobre el oro NO y hay que bajar a tinta. */
+  --dona-1: #0b3b36;
   --dona-1-tinta: #ffffff;
-  --dona-2: var(--color-esmeralda-500);
+  --dona-2: #14807a;
   --dona-2-tinta: #ffffff;
-  --dona-3: var(--color-lima-300);
-  --dona-3-tinta: var(--color-tinta-950);
-  --dona-4: var(--color-bosque-400);
-  --dona-4-tinta: #ffffff;
-  --dona-5: var(--color-esmeralda-200);
-  --dona-5-tinta: var(--color-tinta-950);
-  --dona-otros: var(--color-tinta-400);
-  --dona-otros-tinta: var(--color-tinta-950);
+  --dona-3: #d4a24c;
+  --dona-3-tinta: #3d2b0e;
+  --dona-4: #5dbfb5;
+  --dona-4-tinta: #0f1f1d;
+  --dona-5: #b88a40;
+  --dona-5-tinta: #ffffff;
+  --dona-otros: #dadcd5;
+  --dona-otros-tinta: #0f1f1d;
 
-  /* Gráficas: bosque y esmeralda alternando, como las barras de la referencia. */
-  --chart-1: var(--color-bosque-800);
-  --chart-2: var(--color-esmeralda-500);
-  --chart-3: var(--color-lima-400);
-  --chart-4: var(--color-esmeralda-300);
-  --chart-5: var(--color-bosque-400);
+  /* ── Los pasteles de los chips ────────────────────────────────────────────
+     Se nombran por su PAPEL —gasto, ingreso— y no por su color.
 
-  /* Barra lateral: bosque cerrado, activo en lima. */
-  --sidebar: var(--color-bosque-800);
-  --sidebar-foreground: #ffffff;
-  --sidebar-muted: color-mix(in srgb, #ffffff 62%, transparent);
-  --sidebar-active: var(--color-lima-300);
-  --sidebar-active-foreground: var(--color-bosque-900);
-  --sidebar-hover: color-mix(in srgb, #ffffff 10%, transparent);
-  --sidebar-border: color-mix(in srgb, #ffffff 14%, transparent);
+     Estaban como `violeta`, `turquesa`, `verde` y `lima`, y ese nombre es
+     exactamente lo que obliga a renombrarlo todo cuando cambia el tema: el
+     chip del gasto pasó de violeta a pino y el nombre se volvió mentira. Con
+     el papel en el nombre, un tema nuevo cambia dos líneas aquí y ni una
+     llamada.
+
+     Y salen del @theme estático porque dependen del tema: estos pasteles
+     funcionan sobre un fondo casi blanco y brillarían sobre uno casi negro. */
+  --chip-gasto: #e0ebe9;
+  --chip-gasto-tinta: #0b3b36;
+  --chip-ingreso: #e3f3ea;
+  --chip-ingreso-tinta: #1a7a52;
+  --chip-presupuesto: #d9f0ed;
+  --chip-presupuesto-tinta: #14807a;
+  --chip-movimientos: #f7ecd6;
+  --chip-movimientos-tinta: #7a5312;
+
+  /* ── Barra lateral ────────────────────────────────────────────────────── */
+  --sidebar: #f1efe8;
+  --sidebar-foreground: #0f1f1d;
+  --sidebar-muted: #5c6663;
+  --sidebar-active: #0b3b36;
+  --sidebar-active-foreground: #ffffff;
+  --sidebar-hover: #e0ebe9;
+  --sidebar-border: #dadcd5;
+
+  /* ── Sombras ──────────────────────────────────────────────────────────────
+     Los parámetros son del tema: tinta #0f1f1d al 6 %, 4px de desenfoque,
+     −1px de expansión, 1px hacia abajo. La flotante los escala, porque un
+     panel que se levanta necesita más que una tarjeta apoyada. */
+  --sombra-flotante:
+    0 1px 4px -1px rgba(15, 31, 29, 0.06),
+    0 8px 20px -6px rgba(15, 31, 29, 0.12),
+    0 24px 48px -20px rgba(15, 31, 29, 0.18);
+
+  --sombra-pegada:
+    0 1px 4px -1px rgba(15, 31, 29, 0.06),
+    0 1px 2px -1px rgba(15, 31, 29, 0.06);
+  --sombra-pegada-arriba:
+    0 -1px 4px -1px rgba(15, 31, 29, 0.06),
+    0 -1px 2px -1px rgba(15, 31, 29, 0.06);
+
+  /* El velo de una superficie a pantalla completa. Es el MISMO de un modal,
+     para que abrir un panel y abrir una ficha oscurezcan igual. */
+  --velo: rgba(10, 22, 20, 0.6);
 }
 
 .dark {
-  /* Tres escalones, y no dos como estaban: la barra lateral es la superficie
-     MÁS oscura, el área de trabajo sube uno y las tarjetas otro.
+  --background: #0a1614;
+  --foreground: #e8edeb;
 
-     Antes la lateral y el fondo eran los dos `bosque-950` —el mismo verde— así
-     que en oscuro la barra desaparecía contra el contenido y la pantalla se
-     leía como un bloque verde uniforme. */
-  --background: var(--color-bosque-925);
-  --foreground: var(--color-tinta-100);
+  --card: #0f1f1d;
+  --card-foreground: #e8edeb;
 
-  /* Las tarjetas bajan un escalón: antes se despegaban demasiado del área de
-     trabajo y la pantalla se leía como bloques flotando, no como una hoja. */
-  --card: var(--color-bosque-900);
-  --card-foreground: var(--color-tinta-100);
+  --popover: #142624;
+  --popover-foreground: #e8edeb;
 
-  /* El desplegable va al REVÉS que todo lo demás: más CLARO que la tarjeta
-     sobre la que cae. Compartiendo color con la tarjeta, un menú abierto sobre
-     una tarjeta desaparecía —solo lo delataba la sombra, que en oscuro
-     tampoco se ve—. */
-  --popover: var(--background);
-  --popover-foreground: #ffffff;
+  --primary: #5dbfb5;
+  --primary-foreground: #0a1614;
 
-  /* En oscuro la marca sube a lima: el bosque sobre bosque no se ve. */
-  --primary: var(--color-lima-300);
-  --primary-foreground: var(--color-bosque-950);
+  --secondary: #e0b976;
+  --secondary-foreground: #2a1c08;
 
-  --accent: var(--color-bosque-800);
-  --accent-foreground: var(--color-lima-200);
-  --lima-tinta: var(--color-lima-300);
+  --muted: #1a2826;
+  --muted-foreground: #8a9693;
 
-  /* Un escalón por ENCIMA de la tarjeta: es lo que se ve al pasar por encima
-     de una fila, y tiene que aclararse, no oscurecerse. */
-  --secondary: var(--color-bosque-800);
-  --secondary-foreground: var(--color-tinta-100);
+  --accent: #1a2826;
+  --accent-foreground: #9fe5dc;
 
-  --muted: var(--color-bosque-800);
-  --muted-foreground: var(--color-tinta-400);
+  --destructive: #e46e6c;
+  --destructive-foreground: #160807;
 
-  /* Más claro que el rojo de antes (#f87171): sobre los verdes oscuros de
-     esta paleta aquel daba 3.1:1 —por debajo del 4.5:1 que exige el texto— y
-     el rojo terminaba leyéndose como un marrón apagado. Este da 6.4:1. */
-  --destructive: #fca5a5;
-  --destructive-foreground: var(--color-bosque-950);
+  --border: #263533;
+  --input: #263533;
+  --ring: #5dbfb5;
 
-  --border: var(--color-bosque-800);
-  --input: var(--color-tinta-600);
-  --ring: var(--color-esmeralda-400);
+  --acento-tinta: #5dbfb5;
 
-  /* Negra y profunda: sobre un fondo casi negro, la sombra verde del tema
-     claro no separa nada del fondo. */
+  /* En oscuro el gasto NO puede ser el pino: sobre un fondo casi negro no se
+     ve. Le toca el `primary` de este tema, que aquí es el teal claro. */
+  --expense: #5dbfb5;
+  --expense-surface: #142624;
+  --income: #4ac382;
+  --income-surface: #0f2419;
+
+  --warning: #e0b976;
+  --warning-surface: #2a1c08;
+  --info: #8a9693;
+  --info-surface: #1a2826;
+
+  --chart-1: #5dbfb5;
+  --chart-2: #e0b976;
+  --chart-3: #85d5cd;
+  --chart-4: #4ac382;
+  --chart-5: #d4a24c;
+
+  /* La primera porción NO puede ser el color de la tarjeta: era `bosque-800`
+     sobre una tarjeta `bosque-900` y la dona parecía vacía. */
+  --dona-1: #5dbfb5;
+  --dona-1-tinta: #0a1614;
+  --dona-2: #e0b976;
+  --dona-2-tinta: #2a1c08;
+  --dona-3: #85d5cd;
+  --dona-3-tinta: #0a1614;
+  --dona-4: #4ac382;
+  --dona-4-tinta: #0a1614;
+  --dona-5: #d4a24c;
+  --dona-5-tinta: #2a1c08;
+  --dona-otros: #263533;
+  --dona-otros-tinta: #e8edeb;
+
+  --chip-gasto: #1a2826;
+  --chip-gasto-tinta: #9fe5dc;
+  --chip-ingreso: #0f2419;
+  --chip-ingreso-tinta: #4ac382;
+  --chip-presupuesto: #14302e;
+  --chip-presupuesto-tinta: #5dbfb5;
+  --chip-movimientos: #2a1c08;
+  --chip-movimientos-tinta: #e0b976;
+
+  /* Tres escalones: la barra lateral es la superficie MÁS oscura, el área de
+     trabajo sube uno y las tarjetas otro. Con dos, la barra desaparecía
+     contra el contenido. */
+  --sidebar: #081211;
+  --sidebar-foreground: #e8edeb;
+  --sidebar-muted: #8a9693;
+  --sidebar-active: #5dbfb5;
+  --sidebar-active-foreground: #0a1614;
+  --sidebar-hover: #1a2826;
+  --sidebar-border: #1a2826;
+
+  /* Negra y profunda: sobre un fondo casi negro, la sombra del tema claro no
+     separa nada del fondo. */
   --sombra-flotante:
     0 2px 8px rgba(0, 0, 0, 0.4),
     0 14px 32px -8px rgba(0, 0, 0, 0.55),
     0 40px 72px -24px rgba(0, 0, 0, 0.7);
 
-  --income: var(--color-esmeralda-400);
-  --income-surface: var(--color-esmeralda-950);
-  --expense: var(--color-tinta-300);
-  --expense-surface: var(--color-bosque-800);
-  --warning: #fcd34d;
-  --warning-surface: #422006;
-  --info: var(--color-tinta-400);
-  --info-surface: var(--color-bosque-800);
+  --sombra-pegada:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --sombra-pegada-arriba:
+    0 -1px 3px rgba(0, 0, 0, 0.3),
+    0 -1px 2px -1px rgba(0, 0, 0, 0.3);
 
-  /* Todas CLARAS: sobre una tarjeta casi negra, un verde oscuro no es una
-     porción, es un agujero. Y la tinta baja a bosque en todas, porque encima
-     de estos colores el blanco no se lee. */
-  --dona-1: var(--color-esmeralda-400);
-  --dona-1-tinta: var(--color-bosque-950);
-  --dona-2: var(--color-lima-300);
-  --dona-2-tinta: var(--color-bosque-950);
-  --dona-3: var(--color-esmeralda-200);
-  --dona-3-tinta: var(--color-bosque-950);
-  --dona-4: var(--color-bosque-300);
-  --dona-4-tinta: var(--color-bosque-950);
-  --dona-5: var(--color-tinta-300);
-  --dona-5-tinta: var(--color-bosque-950);
-  --dona-otros: var(--color-tinta-500);
-  --dona-otros-tinta: #ffffff;
-
-  --chart-1: var(--color-esmeralda-400);
-  --chart-2: var(--color-lima-300);
-  --chart-3: var(--color-esmeralda-200);
-  --chart-4: var(--color-bosque-300);
-  --chart-5: var(--color-tinta-400);
-
-  --sidebar: var(--color-bosque-950);
-  --sidebar-foreground: #ffffff;
-  --sidebar-muted: color-mix(in srgb, #ffffff 58%, transparent);
-  --sidebar-active: var(--color-lima-300);
-  --sidebar-active-foreground: var(--color-bosque-950);
-  --sidebar-hover: color-mix(in srgb, #ffffff 10%, transparent);
-  --sidebar-border: color-mix(in srgb, #ffffff 14%, transparent);
+  --velo: rgba(0, 0, 0, 0.65);
 }
 
 /* Expone los tokens como utilidades de Tailwind (bg-background, text-income…). */
@@ -371,12 +452,16 @@
   --color-sidebar-hover: var(--sidebar-hover);
   --color-sidebar-border: var(--sidebar-border);
 
-  --color-lima-tinta: var(--lima-tinta);
+  --color-acento-tinta: var(--acento-tinta);
 
-  --color-chip-violeta-bg: var(--color-chip-violeta);
-  --color-chip-turquesa-bg: var(--color-chip-turquesa);
-  --color-chip-verde-bg: var(--color-chip-verde);
-  --color-chip-lima-bg: var(--color-chip-lima);
+  --color-chip-gasto: var(--chip-gasto);
+  --color-chip-gasto-tinta: var(--chip-gasto-tinta);
+  --color-chip-ingreso: var(--chip-ingreso);
+  --color-chip-ingreso-tinta: var(--chip-ingreso-tinta);
+  --color-chip-presupuesto: var(--chip-presupuesto);
+  --color-chip-presupuesto-tinta: var(--chip-presupuesto-tinta);
+  --color-chip-movimientos: var(--chip-movimientos);
+  --color-chip-movimientos-tinta: var(--chip-movimientos-tinta);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -422,18 +507,18 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Titulares en Google Sans, con tracking negativo: es lo que les da el
-     aspecto compacto de la referencia. */
+  /* Titulares sin interletraje: el tema lo declara en 0 y Geist ya viene
+     cerrada de por sí. El −0.02em de antes compensaba una familia más suelta;
+     aplicado a esta, los títulos se apiñan. */
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
     font-weight: 600;
-    letter-spacing: -0.02em;
   }
 
-  /* Las cifras también: los números de Roboto bailan de ancho y una columna de
-     montos deja de alinear. */
+  /* Las cifras, en la misma familia y tabulares: una columna de montos tiene
+     que alinear por dígito. */
   .tabular,
   .cifra {
     font-family: var(--font-display);
@@ -449,5 +534,165 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EL ARMAZÓN DEL TELÉFONO
+
+   Aquí está lo que NINGÚN componente puede decir por su cuenta: quién se mueve
+   cuando otro se abre. La barra de abajo no sabe que existe un panel de
+   secciones, y el panel no tiene por qué saber que hay una barra — pero el
+   armazón sí sabe las dos cosas, porque las dos son suyas.
+
+   Va fuera de `@layer`, así que gana a cualquier utilidad de Tailwind sin
+   necesidad de `!important`.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px), (orientation: portrait) and (max-width: 1024px) {
+  /* ── La barra de desplazamiento no ocupa sitio ───────────────────────────
+     Un teléfono pinta una barra SUPERPUESTA, que no mide nada; un escritorio
+     pinta la clásica, que son 15px de diseño de verdad. Así que una pantalla
+     revisada a 390 está en realidad maquetada a 375 — y se retroalimenta: la
+     columna más angosta es más alta, y más alta mantiene la barra.
+
+     Solo por debajo del corte. En un escritorio de verdad la barra es el
+     mueble que se espera, y la única señal de que una página larga sigue. */
+  html {
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  /* ── Lo que ocupa la barra de abajo ──────────────────────────────────────
+     El hueco que el cuerpo se reserva al pie y la altura a la que empieza un
+     aviso. Los dos salen de aquí porque los dos miden lo MISMO: la barra.
+
+     60 de barra, 16 porque el botón redondo del centro sobresale por encima
+     de ella —el estorbo real es más alto que la barra—, 24 de aire porque una
+     página que termina justo contra la barra se lee cortada y no terminada, y
+     el borde seguro del teléfono encima de todo. */
+  :root {
+    --hueco-de-la-barra: calc(60px + 16px + 24px + env(safe-area-inset-bottom, 0px));
+    --bajo-la-barra: calc(60px + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
+  /* El ancho del panel de secciones. 80 de la ventana: la franja de página que
+     queda al lado es lo que dice que esto es un panel SOBRE la página y no otra
+     pantalla, y es un sitio donde tocar para salir. */
+  :root {
+    --ancho-secciones: 80vw;
+  }
+
+  /* ── La coreografía ──────────────────────────────────────────────────────
+     Las tres reglas se derivan con `:has()` del estado de la PROPIA superficie.
+     Nunca de una clase que mantenga un script: un cierre que se olvide de
+     quitarla deja la página bloqueada sin nada abierto, y eso no se puede
+     depurar mirando lo que hay en pantalla.
+
+     Por qué se bloquea el desplazamiento: una superficie a pantalla completa
+     deja la página DETRÁS, así que un gesto que falle su lista desplazaba la
+     página, y al cerrar la superficie uno aparecía en un sitio que no eligió.
+     La lista de la superficie sigue desplazándose. */
+  html:has([data-superficie='secciones'][data-abierta='si']) {
+    overflow: hidden;
+  }
+
+  /* La barra se retira por ABAJO, por donde vino. Las secciones son a dónde se
+     VA; la barra es lo que se hace con la página en la que se está, así que
+     debajo de un menú abierto ofrece las cinco cosas equivocadas. */
+  html:has([data-superficie='secciones'][data-abierta='si']) [data-armazon='barra'] {
+    transform: translateY(100%);
+  }
+
+  /* Y el techo por ARRIBA, que es el espejo. Cada uno por su borde: es la
+     única forma de que dos barras se muevan a la vez sin parecer que se
+     persiguen. Con el techo se va su propio botón de menú, y se acepta: la
+     vuelta es la equis del panel, el velo, Escape o un deslizamiento. */
+  html:has([data-superficie='secciones'][data-abierta='si']) [data-armazon='techo'] {
+    transform: translateY(-100%);
+  }
+}
+
+/* Misma duración y misma curva que el panel, para que todo junto se lea como
+   un solo gesto: el armazón se aparta y lo que queda es el panel. */
+[data-armazon='barra'],
+[data-armazon='techo'] {
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── El alto de un panel se anima ──────────────────────────────────────────
+   Un panel inferior mide lo que mide su contenido —seis baldosas son dos
+   filas; la lista de páginas es el alto entero—, y pasar de uno a otro era un
+   SALTO mientras entrar y salir eran suaves.
+
+   Quien lo resuelve es la MEDIDA: `panel-inferior.tsx` observa su columna y le
+   pone al panel un alto en píxeles, porque una transición necesita dos valores
+   definidos y de `auto` a `auto` el valor declarado no cambia por mucho que el
+   contenido mida otra cosa.
+
+   Esto de aquí es la red debajo: mientras no hay medida —el primer fotograma,
+   o un navegador sin `ResizeObserver`— el alto sigue siendo `auto`, y con
+   `interpolate-size` una palabra clave puede al menos interpolarse. Donde no
+   esté soportado, el tamaño salta y ya. */
+[data-superficie='panel'] {
+  interpolate-size: allow-keywords;
+}
+
+/* El contenido de un panel entra al EXISTIR: el cuerpo se reemplaza entero en
+   cada llenado, así que no hay nada que disparar. */
+@keyframes panel-entra-el-contenido {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-superficie='panel'] [data-cuerpo] > * {
+  animation: panel-entra-el-contenido 0.18s ease both;
+}
+
+/* Las baldosas tiemblan mientras se arreglan: dice que se pueden mover sin
+   gastar una línea de texto en decirlo, y que lo que se ve no es lo de
+   siempre. Muy poco ángulo —0,6 grados—, que a más parece un error de pintado. */
+@keyframes baldosa-tiembla {
+  0%,
+  100% {
+    transform: rotate(-0.6deg);
+  }
+  50% {
+    transform: rotate(0.6deg);
+  }
+}
+
+/* ── Quien pidió que nada se mueva ─────────────────────────────────────────
+   En un solo sitio, y no variante por variante en cada componente: una
+   superficie nueva que se olvide de honrarlo es una superficie que se mueve
+   para alguien a quien el movimiento le sienta mal. */
+@media (prefers-reduced-motion: reduce) {
+  [data-armazon='barra'],
+  [data-armazon='techo'],
+  [data-superficie],
+  [data-superficie] *,
+  [data-superficie] [data-cuerpo] > * {
+    transition-duration: 0.01ms;
+    animation-duration: 0.01ms;
+  }
+}
+
+/* Una tableta en vertical lo topa: 80vw son de 560 a 819 puntos de navegación
+   para nueve filas, y una lista no necesita ser más ancha que su fila más
+   larga. */
+@media (orientation: portrait) and (min-width: 700px) and (max-width: 1024px) {
+  :root {
+    --ancho-secciones: min(80vw, 400px);
   }
 }

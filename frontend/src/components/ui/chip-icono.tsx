@@ -5,16 +5,22 @@ import { cn } from '@/lib/utils';
 /**
  * Los pasteles con los que la app marca sus cosas.
  *
- * Viven aquí y no en cada pantalla porque el COLOR SIGNIFICA: el violeta es el
- * gasto en el indicador de arriba y tiene que ser el violeta en el menú que lo
- * registra. Repetidos en dos sitios, un día alguien cambia uno y la misma cosa
- * pasa a tener dos colores según por dónde se entre.
+ * ── Se nombran por su PAPEL, no por su color ────────────────────────────────
+ * Eran `violeta`, `turquesa`, `verde` y `lima`, y ese nombre es exactamente lo
+ * que obliga a renombrarlo todo cuando cambia el tema: el chip del gasto pasó
+ * de violeta a pino y el nombre se volvió mentira. Con el papel en el nombre,
+ * un tema nuevo cambia dos líneas en `index.css` y ni una llamada.
+ *
+ * Y viven aquí y no en cada pantalla porque el COLOR SIGNIFICA: el del gasto
+ * es el mismo en el indicador de arriba y en el menú que lo registra.
+ * Repetidos en dos sitios, un día alguien cambia uno y la misma cosa pasa a
+ * tener dos colores según por dónde se entre.
  */
 export const CHIPS = {
-  violeta: { fondo: 'var(--color-chip-violeta)', tinta: 'var(--color-chip-violeta-tinta)' },
-  turquesa: { fondo: 'var(--color-chip-turquesa)', tinta: 'var(--color-chip-turquesa-tinta)' },
-  verde: { fondo: 'var(--color-chip-verde)', tinta: 'var(--color-chip-verde-tinta)' },
-  lima: { fondo: 'var(--color-chip-lima)', tinta: 'var(--color-chip-lima-tinta)' },
+  gasto: { fondo: 'var(--chip-gasto)', tinta: 'var(--chip-gasto-tinta)' },
+  ingreso: { fondo: 'var(--chip-ingreso)', tinta: 'var(--chip-ingreso-tinta)' },
+  presupuesto: { fondo: 'var(--chip-presupuesto)', tinta: 'var(--chip-presupuesto-tinta)' },
+  movimientos: { fondo: 'var(--chip-movimientos)', tinta: 'var(--chip-movimientos-tinta)' },
 } as const;
 
 export type ColorDeChip = keyof typeof CHIPS;

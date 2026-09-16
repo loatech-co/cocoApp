@@ -34,32 +34,53 @@ El alto, el radio y el peso de la letra viven en `size` dentro de
 Hay una prueba que lee el código fuente y falla si alguien lo hace:
 `components/ui/button.llamadas.test.ts`.
 
-## 3. El radio estándar es 16px
+## 3. El radio estándar es 10px
 
-`rounded-2xl`. Lo usan las tarjetas, los desplegables, los modales y las
-tablas. Puede ser **menor** donde haga falta —una casilla, un chip, un
-botón— pero **nunca mayor**: dos contenedores vecinos con esquinas
-distintas se leen como dos sistemas distintos.
+`rounded-lg`, que es el `--radius` del tema. Lo usan las tarjetas, los
+desplegables, los modales, las tablas y los campos. Puede ser **menor**
+donde haga falta —una casilla, un chip— pero **nunca mayor**: dos
+contenedores vecinos con esquinas distintas se leen como dos sistemas
+distintos.
 
 Hay una prueba que lee el código fuente y falla si aparece un
-`rounded-3xl` o un radio arbitrario por encima de 16px:
-`components/ui/radio.test.ts`.
+`rounded-xl`, `rounded-2xl`, `rounded-3xl` o un radio arbitrario por
+encima de 10px: `components/ui/radio.test.ts`.
 
-Ojo con la escala de Tailwind en este proyecto: `--radius: 1rem` hace que
-`rounded-lg` sea 16px y `rounded-xl` sea 20px. `rounded-2xl` es 16px por
-el valor por defecto de Tailwind. No es monótona; por eso el estándar se
-nombra explícitamente y hay una prueba.
+La escala crece en orden: `sm` 6, `md` 8, `lg` 10, `xl` 14. El `2xl` y el
+`3xl` de Tailwind no leen el tema —valen 16 y 24 fijos— y por eso están
+prohibidos.
 
-## 4. Sobre lima, tinta
+## 3 bis. Dos tamaños, y los mismos para todo
 
-El texto sobre el acento lima va en tinta, nunca en blanco: blanco sobre
-lima da 1.23:1 de contraste, muy por debajo del 4.5:1 que exige el texto.
-Con tinta da 13.9:1.
+Un botón, un campo de texto, un desplegable y un selector de fecha miden
+lo mismo: `sm` 36px y `md` 44px. Una fila donde el botón mide 40, el campo
+42 y el selector 36 se ve temblorosa aunque nadie sepa decir por qué.
+
+Las variantes de icono —`sm-icon`, `md-icon`— son esas mismas alturas en
+cuadrado. No son un tamaño más.
+
+## 4. El color vive en `index.css`, y se nombra por su papel
+
+Los tokens del tema —Solstice— están en una sola capa de `index.css`. Nada
+de colores escritos a mano en un componente: si hace falta uno que el tema
+no da, se añade ahí con su razón.
+
+Y se nombran por lo que SIGNIFICAN, no por el color que tienen hoy. Los
+chips eran `violeta`, `turquesa`, `verde` y `lima`; al cambiar de tema el
+del gasto pasó a pino y el nombre se volvió mentira. Ahora son `gasto`,
+`ingreso`, `presupuesto` y `movimientos`, y un tema nuevo no obliga a
+tocar ni una llamada.
+
+Sobre cualquier superficie de acento, la tinta es la que el tema declara
+para ella (`accent-foreground`, `secondary-foreground`): nunca blanco por
+costumbre. Blanco sobre un acento claro da 1.23:1, muy por debajo del
+4.5:1 que exige el texto.
 
 ## 5. El rojo es solo para errores
 
-Lo pendiente —un movimiento sin clasificar— va en ámbar. El rojo se
-reserva a lo que de verdad salió mal y a lo que no se puede deshacer.
+Lo pendiente —un movimiento sin clasificar— va en el oro del tema
+(`warning`, que sale de su `secondary`). El rojo se reserva a lo que de
+verdad salió mal y a lo que no se puede deshacer.
 
 ## 6. Componentes, no copias
 

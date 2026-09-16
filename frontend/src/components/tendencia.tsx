@@ -234,7 +234,7 @@ export function Tendencia({
               ref={tarjeta}
               style={{ left: `${sitio.left}px`, top: `${sitio.top}px` }}
               className={cn(
-                'pointer-events-none absolute min-w-36 rounded-2xl bg-popover p-3',
+                'pointer-events-none absolute min-w-36 rounded-lg bg-popover p-3',
                 'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
                 // Sin medir todavía se pinta invisible: un primer fotograma en
                 // la esquina y otro en su sitio se ve como un salto.
@@ -294,7 +294,7 @@ export function TendenciaEsqueleto() {
         <Skeleton className="h-4 w-40" />
         <Skeleton className="h-4 w-32" />
       </div>
-      <Skeleton className="min-h-40 w-full flex-1 rounded-2xl" />
+      <Skeleton className="min-h-40 w-full flex-1 rounded-lg" />
       <div className="flex justify-between">
         {Array.from({ length: 6 }, (_, i) => (
           <Skeleton key={i} className="h-3 w-8" />

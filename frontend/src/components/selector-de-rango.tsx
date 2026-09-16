@@ -146,7 +146,7 @@ export function SelectorDeRango({
       <Button
         type="button"
         variant="herramienta"
-        size="chip"
+        size="sm"
         onClick={() => (abierto ? setAbierto(false) : abrir())}
         aria-expanded={abierto}
         aria-pressed={abierto}
@@ -171,7 +171,7 @@ export function SelectorDeRango({
             // Anclado a la DERECHA: el control vive al final de una barra
             // alineada a la derecha, y abriendo hacia la derecha un panel de
             // 34rem se sale de la pantalla.
-            'absolute right-0 z-30 mt-2 w-[min(34rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-popover',
+            'absolute right-0 z-30 mt-2 w-[min(34rem,calc(100vw-2rem))] overflow-hidden rounded-lg bg-popover',
             'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
           )}
         >
@@ -197,7 +197,7 @@ export function SelectorDeRango({
                       // Concéntrico con el panel: 20px del contenedor menos los
                       // 8px de su relleno. Con un radio mayor, la esquina del
                       // resaltado se sale de la curva del panel y se ve torcida.
-                      'w-full rounded-[12px] px-3 py-2 text-left text-sm transition-colors',
+                      'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
                       borrador.preset === p.valor
                         ? 'bg-secondary font-semibold text-secondary-foreground'
                         : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
@@ -232,10 +232,10 @@ export function SelectorDeRango({
                   : rangoLargo(borrador.from, borrador.to)}
             </span>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="ghost" size="chip" onClick={() => setAbierto(false)}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setAbierto(false)}>
                 Cancelar
               </Button>
-              <Button type="button" size="chip" onClick={confirmar} disabled={ancla !== null}>
+              <Button type="button" size="sm" onClick={confirmar} disabled={ancla !== null}>
                 Aplicar
               </Button>
             </div>

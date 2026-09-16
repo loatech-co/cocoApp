@@ -62,7 +62,7 @@ export function RegisterPage() {
         {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
             (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
             BLOQUE con ancho automático, y centrar texto no lo movería. */}
-        <Logo className="mx-auto mb-8 h-11 w-auto text-lima-300" />
+        <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
         <Card>
           <CardHeader>
@@ -173,7 +173,7 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
         {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
             (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
             BLOQUE con ancho automático, y centrar texto no lo movería. */}
-        <Logo className="mx-auto mb-8 h-11 w-auto text-lima-300" />
+        <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
         <Alert variant="info" className="text-left">
           {lista ? <Check aria-hidden="true" /> : <Clock aria-hidden="true" />}

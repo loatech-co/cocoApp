@@ -59,7 +59,7 @@ export function Confirmacion({
     >
       <div
         className={cn(
-          'w-full max-w-md rounded-2xl bg-popover p-5',
+          'w-full max-w-md rounded-lg bg-popover p-5',
           'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
         )}
       >

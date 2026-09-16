@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Interruptor } from '@/components/ui/interruptor';
-import { Label } from '@/components/ui/label';
+import { Campo } from '@/components/ui/campo';
 import { Modal } from '@/components/ui/modal';
 import { ApiClientError } from '@/lib/api-client';
 import { useCrearCategoria } from '@/lib/queries';
@@ -53,8 +53,7 @@ export function CentroModal({ abierta, onCerrar }: { abierta: boolean; onCerrar:
       onCerrar={onCerrar}
     >
       <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="centro-nombre">Nombre</Label>
+        <Campo etiqueta="Nombre" id="centro-nombre">
           <Input
             id="centro-nombre"
             value={nombre}
@@ -64,7 +63,7 @@ export function CentroModal({ abierta, onCerrar }: { abierta: boolean; onCerrar:
             required
             autoFocus
           />
-        </div>
+        </Campo>
 
         {/*
           El interruptor a la DERECHA y dentro de una caja.
@@ -82,7 +81,7 @@ export function CentroModal({ abierta, onCerrar }: { abierta: boolean; onCerrar:
           improvisan, que un clic distraído mueve plata sin que nadie lo note—
           vive en el código, no en el formulario.
         */}
-        <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-border bg-secondary/60 p-3">
+        <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-border bg-secondary/60 p-3">
           <span className="min-w-0">
             <span className="block text-sm font-medium">Estático</span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
