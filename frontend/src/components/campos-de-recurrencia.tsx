@@ -1,4 +1,5 @@
 import { Repeat } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { Interruptor } from '@/components/ui/interruptor';
 import { Input } from '@/components/ui/input';
@@ -132,21 +133,10 @@ export function CamposDeRecurrencia({
             </Campo>
           )}
 
-          <Campo etiqueta="Día del mes" id="dia-de-pago">
-            <Input
-              id="dia-de-pago"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={31}
-              value={valor.diaDePago}
-              // Se recorta al ESCRIBIR, no al guardar: un 45 que se queda en
-              // pantalla hasta que uno pulsa guardar es un error que nadie ve
-              // hasta que ya no está mirando el campo.
-              onChange={(e) => onCambiar({ ...valor, diaDePago: entre1y31(e.target.value) })}
-              className="[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-          </Campo>
+          <CampoDelDia
+            dia={valor.diaDePago}
+            onCambiar={(diaDePago) => onCambiar({ ...valor, diaDePago })}
+          />
 
           <p
             className={cn(
@@ -168,6 +158,65 @@ export function CamposDeRecurrencia({
  * Vacío cuenta como 1 en vez de quedar en blanco: un campo numérico sin valor
  * deja el formulario en un estado que no se puede guardar y no lo dice.
  */
+/**
+ * El día del mes, que se puede BORRAR mientras se escribe.
+ *
+ * ── El fallo ────────────────────────────────────────────────────────────────
+ * El campo pintaba directamente el número del valor y recortaba cada tecla con
+ * `entre1y31`. Y `entre1y31('')` devuelve 1 —no hay número, se cae al mínimo—,
+ * así que al borrar el contenido el campo se rescribía solo en el mismo
+ * fotograma: la tecla de borrar no hacía nada visible y para cambiar el día
+ * había que seleccionar y sobrescribir.
+ *
+ * ── Por qué hace falta un borrador ──────────────────────────────────────────
+ * Porque un campo de texto tiene estados que el dato no tiene. «Vacío» es uno
+ * de ellos: no es un día válido, pero es por donde se pasa para escribir otro.
+ * Atando lo que se ve al número recortado, esos estados intermedios no pueden
+ * existir.
+ *
+ * Así que lo escrito vive aquí y el número sale de ello: mientras haya algo
+ * escrito se avisa hacia arriba, y vacío no se avisa —se conserva el último
+ * día válido—. Al salir del campo, lo que se ve vuelve a ser ese día: nadie se
+ * queda con un campo en blanco y un dato que no coincide.
+ *
+ * ── Lo que NO cambia ────────────────────────────────────────────────────────
+ * El recorte sigue siendo al escribir y no al guardar: un 45 que se queda en
+ * pantalla hasta que alguien pulsa «Guardar» es un error que nadie ve hasta
+ * que ya no está mirando el campo.
+ */
+function CampoDelDia({ dia, onCambiar }: { dia: number; onCambiar: (dia: number) => void }) {
+  const [escrito, setEscrito] = useState(String(dia));
+
+  // El día puede cambiar desde fuera —al abrir la ficha de otro concepto— y lo
+  // que se ve tiene que seguirlo.
+  useEffect(() => setEscrito(String(dia)), [dia]);
+
+  return (
+    <Campo etiqueta="Día del mes" id="dia-de-pago">
+      <Input
+        id="dia-de-pago"
+        // `text` y no `number`: un campo numérico devuelve la cadena vacía
+        // cuando su contenido no es un número válido —«3e», «--»—, así que lo
+        // escrito y lo que se lee dejan de coincidir justo mientras se teclea.
+        // Los dígitos los filtra la propia función.
+        type="text"
+        inputMode="numeric"
+        maxLength={2}
+        value={escrito}
+        onChange={(e) => {
+          const limpio = e.target.value.replace(/\D/g, '').slice(0, 2);
+          setEscrito(limpio);
+          if (limpio !== '') onCambiar(entre1y31(limpio));
+        }}
+        // Al salir, lo que se ve vuelve a ser el día guardado: un campo en
+        // blanco con un dato detrás es una mentira que solo se descubre al
+        // volver a abrir la ficha.
+        onBlur={() => setEscrito(String(dia))}
+      />
+    </Campo>
+  );
+}
+
 export function entre1y31(escrito: string): number {
   const numero = Number.parseInt(escrito, 10);
   if (!Number.isFinite(numero)) return 1;

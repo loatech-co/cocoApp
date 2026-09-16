@@ -11,28 +11,24 @@ import {
   Repeat,
   Trash2,
   X,
-} from "lucide-react";
-import { useState } from "react";
+} from 'lucide-react';
+import { useState } from 'react';
 
-import { Menu, MenuOpcion } from "@/components/menu";
-import { CategoriaModal } from "@/features/centros/categoria-modal";
-import { ConfirmarBorrado } from "@/features/centros/confirmar-borrado";
-import { ConceptoModal } from "@/features/centros/concepto-modal";
-import { Button } from "@/components/ui/button";
-import { Chip } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ApiClientError } from "@/lib/api-client";
-import {
-  useActualizarCategoria,
-  useCategories,
-  useCrearCategoria,
-} from "@/lib/queries";
-import { cn } from "@/lib/utils";
-import type { Category } from "@coco/types";
-import { CabeceraDePagina } from "@/components/cabecera-de-pagina";
-import { Bloque } from "@/components/ui/bloque";
+import { Menu, MenuOpcion } from '@/components/menu';
+import { CategoriaModal } from '@/features/centros/categoria-modal';
+import { ConfirmarBorrado } from '@/features/centros/confirmar-borrado';
+import { ConceptoModal } from '@/features/centros/concepto-modal';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ApiClientError } from '@/lib/api-client';
+import { useActualizarCategoria, useCategories, useCrearCategoria } from '@/lib/queries';
+import { cn } from '@/lib/utils';
+import type { Category } from '@coco/types';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
+import { Bloque } from '@/components/ui/bloque';
 
 /**
  * Centros de costos.
@@ -66,8 +62,8 @@ export function CentrosPage() {
             variant="ghost"
             size="sm-icon"
             aria-pressed={verAyuda}
-            aria-label={verAyuda ? "Ocultar cómo funciona" : "Cómo funciona"}
-            title={verAyuda ? "Ocultar cómo funciona" : "Cómo funciona"}
+            aria-label={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
+            title={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
             onClick={() => setVerAyuda((v) => !v)}
           >
             <CircleHelp className="size-5" aria-hidden="true" />
@@ -76,12 +72,7 @@ export function CentrosPage() {
         acciones={
           // `size="sm"` como la acción principal del resumen, y el icono sin
           // medida propia: el tamaño de los iconos lo pone el botón.
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => setCreando(true)}
-            className="shrink-0"
-          >
+          <Button type="button" size="sm" onClick={() => setCreando(true)} className="shrink-0">
             <Plus aria-hidden="true" />
             Nuevo centro de costos
           </Button>
@@ -101,17 +92,11 @@ export function CentrosPage() {
       {arbol.length === 0 && !categorias.isPending && (
         <Card>
           <CardContent className="p-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              Todavía no hay centros de costos.
-            </p>
+            <p className="text-sm text-muted-foreground">Todavía no hay centros de costos.</p>
             {/* El botón aquí además de arriba: en una pantalla vacía, lo
                 único que se puede hacer tiene que estar donde se está
                 mirando. */}
-            <Button
-              type="button"
-              onClick={() => setCreando(true)}
-              className="mt-4"
-            >
+            <Button type="button" onClick={() => setCreando(true)} className="mt-4">
               <Plus className="size-4" aria-hidden="true" />
               Crear un centro de costos
             </Button>
@@ -123,11 +108,7 @@ export function CentrosPage() {
         <Centro key={centro.id} centro={centro} arbol={arbol} />
       ))}
 
-      <CategoriaModal
-        nivel="centro"
-        abierta={creando}
-        onCerrar={() => setCreando(false)}
-      />
+      <CategoriaModal nivel="centro" abierta={creando} onCerrar={() => setCreando(false)} />
     </div>
   );
 }
@@ -139,12 +120,9 @@ function Explicacion({ onCerrar }: { onCerrar: () => void }) {
       <CardContent className="p-4 sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="font-display text-xl font-semibold">
-              Cómo funciona
-            </h2>
+            <h2 className="font-display text-xl font-semibold">Cómo funciona</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Tres niveles. Cada movimiento se guarda en el último, y los de
-              arriba suman solos.
+              Tres niveles. Cada movimiento se guarda en el último, y los de arriba suman solos.
             </p>
           </div>
           <Button
@@ -181,12 +159,8 @@ function Explicacion({ onCerrar }: { onCerrar: () => void }) {
         </ol>
 
         <p className="mt-4 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-          Así,{" "}
-          <strong className="text-foreground">
-            ¿cuánto se fue en servicios públicos?
-          </strong>{" "}
-          es la suma de sus conceptos, y no hay que registrarlo por separado en
-          ningún lado.
+          Así, <strong className="text-foreground">¿cuánto se fue en servicios públicos?</strong> es
+          la suma de sus conceptos, y no hay que registrarlo por separado en ningún lado.
         </p>
       </CardContent>
     </Card>
@@ -205,10 +179,7 @@ function Nivel({
   ejemplo: string;
 }) {
   return (
-    <li
-      className="flex gap-3"
-      style={{ paddingLeft: `${(numero - 1) * 1.25}rem` }}
-    >
+    <li className="flex gap-3" style={{ paddingLeft: `${(numero - 1) * 1.25}rem` }}>
       <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
         {numero}
       </span>
@@ -243,10 +214,10 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
         */}
         <div
           className={cn(
-            "flex items-center gap-2 pr-3 transition-colors hover:bg-muted sm:pr-4",
-            "rounded-t-lg",
+            'flex items-center gap-2 pr-3 transition-colors hover:bg-muted sm:pr-4',
+            'rounded-t-lg',
             // Cerrado, la fila ES la tarjeta: se redondea también por abajo.
-            !abierto && "rounded-b-lg",
+            !abierto && 'rounded-b-lg',
           )}
         >
           <button
@@ -260,24 +231,16 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
             className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left sm:p-4"
           >
             {abierto ? (
-              <ChevronDown
-                className="size-5 shrink-0 text-muted-foreground"
-                aria-hidden="true"
-              />
+              <ChevronDown className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
             ) : (
-              <ChevronRight
-                className="size-5 shrink-0 text-muted-foreground"
-                aria-hidden="true"
-              />
+              <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
             )}
             <span className="min-w-0 flex-1">
               <span className="flex min-w-0 items-center gap-2">
                 {/* `text-lg` y no `text-xl`: el nombre de un centro es el
                     título de una tarjeta, y a 20px competía con el título de
                     la pantalla, que mide 24. */}
-                <span className="truncate text-lg font-semibold">
-                  {centro.name}
-                </span>
+                <span className="truncate text-lg font-semibold">{centro.name}</span>
                 {/* El candado y no la palabra "estático": es un estado del
                     centro, y en una lista se reconoce antes por su forma que
                     leyendo una etiqueta en cada fila. */}
@@ -330,9 +293,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
                     });
                   }}
                 >
-                  {centro.estatico
-                    ? "Marcar como dinámico"
-                    : "Marcar como estático"}
+                  {centro.estatico ? 'Marcar como dinámico' : 'Marcar como estático'}
                 </MenuOpcion>
                 <MenuOpcion
                   Icono={Trash2}
@@ -451,7 +412,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
  * 192px es el alto de una tarjeta con dos filas de conceptos: el caso normal
  * se ve entero y el excepcional se desplaza.
  */
-const ALTO_DE_LA_BALDOSA = "min-h-32 sm:h-48";
+const ALTO_DE_LA_BALDOSA = 'min-h-32 sm:h-48';
 
 function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
   const [editando, setEditando] = useState<Category | null>(null);
@@ -461,7 +422,7 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
   const conceptos = grupo.children ?? [];
 
   return (
-    <Bloque className={cn("flex flex-col sm:p-4", ALTO_DE_LA_BALDOSA)}>
+    <Bloque className={cn('flex flex-col sm:p-4', ALTO_DE_LA_BALDOSA)}>
       <div className="flex shrink-0 items-center justify-between gap-2">
         <h3 className="min-w-0 truncate text-sm font-semibold">{grupo.name}</h3>
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
@@ -547,12 +508,7 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
       </div>
 
       <div className="mt-3 shrink-0">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setCreando(true)}
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={() => setCreando(true)}>
           <Plus className="size-4" aria-hidden="true" />
           Agregar concepto
         </Button>
@@ -577,11 +533,7 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
         concepto={editando}
         onCerrar={() => setEditando(null)}
       />
-      <ConceptoModal
-        abierta={creando}
-        grupoId={grupo.id}
-        onCerrar={() => setCreando(false)}
-      />
+      <ConceptoModal abierta={creando} grupoId={grupo.id} onCerrar={() => setCreando(false)} />
     </Bloque>
   );
 }
@@ -615,7 +567,7 @@ function Agregar({
 }) {
   const crear = useCrearCategoria();
   const [abierto, setAbierto] = useState(false);
-  const [nombre, setNombre] = useState("");
+  const [nombre, setNombre] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   async function guardar(): Promise<void> {
@@ -623,11 +575,11 @@ function Agregar({
     if (!name) return;
     setError(null);
     try {
-      await crear.mutateAsync({ name, kind: "expense", parent_id: padreId });
-      setNombre("");
+      await crear.mutateAsync({ name, kind: 'expense', parent_id: padreId });
+      setNombre('');
       setAbierto(false);
     } catch (e) {
-      setError(e instanceof ApiClientError ? e.message : "No se pudo crear.");
+      setError(e instanceof ApiClientError ? e.message : 'No se pudo crear.');
     }
   }
 
@@ -637,7 +589,7 @@ function Agregar({
         type="button"
         onClick={() => setAbierto(true)}
         className={cn(
-          "flex w-full flex-col items-center justify-center gap-2 rounded-lg p-4",
+          'flex w-full flex-col items-center justify-center gap-2 rounded-lg p-4',
           /*
             Sin ningún grupo, el hueco no es una baldosa más: es lo ÚNICO que
             hay, y una baldosa de 17rem sola en la esquina de un centro vacío
@@ -651,10 +603,23 @@ function Agregar({
 
             Con grupos al lado vuelve a ser una celda como las demás.
           */
-          solo ? "col-span-full min-h-64" : ALTO_DE_LA_BALDOSA,
-          "border-2 border-dashed border-border text-center transition-colors",
-          "text-sm font-medium text-muted-foreground",
-          "hover:bg-accent hover:text-accent-foreground",
+          solo ? 'col-span-full min-h-64' : ALTO_DE_LA_BALDOSA,
+          'border-2 border-dashed border-border text-center transition-colors',
+          'text-sm font-medium text-muted-foreground',
+          /*
+            Un realce a la MEDIDA de lo que ocupa.
+
+            Llevaba `hover:bg-accent`, que es lo que usan las demás zonas donde
+            se suelta algo. En un cuadrito de 104px eso es un apunte; aquí, con
+            el centro vacío, es una superficie de mil por doscientos cincuenta,
+            y llenarla entera de acento al pasar el ratón por encima es un
+            fogonazo.
+
+            Así que responde igual pero más bajo: el trazo se tiñe, la letra
+            sube a plena tinta y el relleno se queda en un tercio del acento
+            —lo justo para que se note que la superficie está viva—.
+          */
+          'hover:border-ring/40 hover:bg-accent/30 hover:text-foreground',
         )}
       >
         {/*
@@ -682,8 +647,8 @@ function Agregar({
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") void guardar();
-            if (e.key === "Escape") setAbierto(false);
+            if (e.key === 'Enter') void guardar();
+            if (e.key === 'Escape') setAbierto(false);
           }}
           placeholder={marcador}
           aria-label={etiqueta}
@@ -696,9 +661,7 @@ function Agregar({
             disabled={crear.isPending || !nombre.trim()}
             className="w-full sm:w-auto"
           >
-            {crear.isPending && (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            )}
+            {crear.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
             Guardar
           </Button>
           <Button
