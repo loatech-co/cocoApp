@@ -32,5 +32,8 @@
     "soportes:reporte": "node scripts/soportes/reporte.mjs",
     "soportes:importar": "dotenv -e api/.env -- node scripts/soportes/importar.mjs",
     "soportes:sincronizar": "bash scripts/soportes/sincronizar.sh"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.13"
   }
 }
