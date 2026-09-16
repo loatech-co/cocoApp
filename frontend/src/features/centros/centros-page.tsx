@@ -508,7 +508,29 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
       </div>
 
       <div className="mt-3 shrink-0">
-        <Button type="button" variant="ghost" size="sm" onClick={() => setCreando(true)}>
+        {/*
+          A ancho completo y con fondo, no un botón fantasma encogido en la
+          esquina.
+
+          Es la única acción de la tarjeta y cierra su lectura: el nombre
+          arriba, los conceptos en medio y dónde se añade el siguiente al pie.
+          Ocupando el ancho, el blanco es toda esa línea en vez de las ciento
+          cuarenta píxeles de su texto —que en un teléfono es la diferencia
+          entre acertarle y no—.
+
+          El fondo va translúcido a propósito. Opaco competiría con los chips,
+          que son lo que se viene a leer; al 40 % del acento se ve que hay algo
+          pulsable sin que la tarjeta pase a tener dos cosas gritando. Y al
+          pasar por encima sube al 70: responde, sin llegar a encenderse del
+          todo.
+        */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setCreando(true)}
+          className="w-full bg-accent/40 hover:bg-accent/70"
+        >
           <Plus className="size-4" aria-hidden="true" />
           Agregar concepto
         </Button>
