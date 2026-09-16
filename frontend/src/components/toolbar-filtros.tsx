@@ -12,6 +12,7 @@ import type { Filtros } from '@/lib/filtros';
 import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Category, TransactionType } from '@coco/types';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 
 /** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
 export const ORDENES = [
@@ -108,14 +109,12 @@ export function ToolbarFiltros({
   const arbol = categorias.data ?? [];
 
   return (
-    <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 border-b border-border pb-4">
-      <div className="min-w-0">
-        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{titulo}</h1>
-        {(subtitulo ?? resumen) && (
-          <p className="mt-1 truncate text-sm text-muted-foreground">{subtitulo ?? resumen}</p>
-        )}
-      </div>
-
+    <CabeceraDePagina
+      titulo={titulo}
+      ayuda={subtitulo ?? resumen}
+      alineado="abajo"
+      className="border-b border-border pb-4"
+      acciones={
       <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
         {/* ── Búsqueda ─────────────────────────────────────────────────── */}
         {buscando ? (
@@ -259,7 +258,8 @@ export function ToolbarFiltros({
 
         {acciones}
       </div>
-    </header>
+      }
+    />
   );
 }
 

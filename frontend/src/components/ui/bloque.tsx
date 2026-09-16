@@ -25,11 +25,19 @@ import { cn } from '@/lib/utils';
  * —sombra en vez de línea—; aquí no sirve la sombra, porque dentro de un modal
  * todo está a la misma altura.
  */
+/**
+ * La clase, para lo que no es un `<div>`.
+ *
+ * Un bloque puede ser una etiqueta que envuelve un interruptor o un botón
+ * entero; ninguno de los dos puede ser un `<div>` sin perder lo que es. Esos
+ * usan la clase y siguen siendo un solo sitio donde cambia el aspecto.
+ *
+ * Seis sitios lo escribían a mano con CUATRO rellenos distintos —30, 40 y 60
+ * por ciento— y dos radios, que es exactamente cómo se ve que nadie lo
+ * decidió: se escribió seis veces y salieron seis.
+ */
+export const BLOQUE = 'rounded-lg border border-border bg-muted/40 p-3';
+
 export function Bloque({ className, ...props }: ComponentProps<'div'>) {
-  return (
-    <div
-      className={cn('rounded-lg border border-border bg-muted/40 p-3', className)}
-      {...props}
-    />
-  );
+  return <div className={cn(BLOQUE, className)} {...props} />;
 }

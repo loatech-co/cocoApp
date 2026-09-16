@@ -1,4 +1,5 @@
 import type { AuditAction, AuditEntry } from '@coco/types';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
@@ -51,12 +52,10 @@ export function BitacoraPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-3xl font-semibold">Bitácora</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Quién hizo qué y cuándo. Nunca registra montos ni contraseñas.
-        </p>
-      </header>
+      <CabeceraDePagina
+        titulo="Bitácora"
+        ayuda="Quién hizo qué y cuándo. Nunca registra montos ni contraseñas."
+      />
 
       {consulta.isPending && (
         <div className="flex flex-col gap-2">

@@ -19,6 +19,7 @@ import { parsearCsv, type ResultadoDeCsv } from './parseo/csv';
 import type { ColumnaDetectada } from './parseo/csv-columnas';
 import { GuiaCsv } from './guia-csv';
 import { MapeoDeColumnas } from './mapeo-columnas';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 
 /** De qué vía vino el documento. Se guarda en el lote para poder comparar
  *  después qué origen produce menos correcciones en la revisión. */
@@ -170,13 +171,15 @@ export function ImportarPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-3xl font-semibold">Importar movimientos</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sube una captura o el PDF de tu extracto. Se lee <strong>en tu dispositivo</strong>: el
-          documento no sale de aquí.
-        </p>
-      </header>
+      <CabeceraDePagina
+        titulo="Importar movimientos"
+        ayuda={
+          <>
+            Sube una captura o el PDF de tu extracto. Se lee <strong>en tu dispositivo</strong>: el
+            documento no sale de aquí.
+          </>
+        }
+      />
 
       {/*
         El paso de la cuenta solo existe para quien lleva cuentas, y aun así es

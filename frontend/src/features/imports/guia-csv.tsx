@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { BLOQUE } from '@/components/ui/bloque';
 
 /**
  * La estructura que debe tener el CSV.
@@ -89,7 +90,7 @@ export function GuiaCsv() {
   const [abierta, setAbierta] = useState(false);
 
   return (
-    <div className="rounded-lg border border-border bg-muted/30">
+    <div className={cn(BLOQUE, 'p-0')}>
       <button
         type="button"
         onClick={() => setAbierta((valor) => !valor)}

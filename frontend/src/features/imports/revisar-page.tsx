@@ -29,6 +29,7 @@ import {
   useEditarFila,
   useLote,
 } from './imports-queries';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 
 /**
  * Revisión antes de confirmar.
@@ -113,13 +114,10 @@ export function RevisarPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-3xl font-semibold">Revisar antes de importar</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {lote.data.label ?? 'Documento sin nombre'} · Nada de esto ha tocado tus finanzas
-          todavía.
-        </p>
-      </header>
+      <CabeceraDePagina
+        titulo="Revisar antes de importar"
+        ayuda={`${lote.data.label ?? 'Documento sin nombre'} · Nada de esto ha tocado tus finanzas todavía.`}
+      />
 
       <div className="flex flex-wrap gap-2">
         <Badge variant="income">

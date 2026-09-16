@@ -14,6 +14,7 @@ import { Select } from '@/components/ui/select';
 import { ApiClientError } from '@/lib/api-client';
 import { useAccounts, useArchivarCuenta, useCrearCuenta } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 
 const TIPOS: { valor: Account['type']; etiqueta: string }[] = [
   { valor: 'cash', etiqueta: 'Efectivo' },
@@ -36,18 +37,16 @@ export function AccountsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">Cuentas</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Dónde tienes tu plata. El saldo se calcula de tus movimientos.
-          </p>
-        </div>
-        <Button onClick={() => setFormularioAbierto((abierto) => !abierto)}>
-          <Plus aria-hidden="true" />
-          Nueva cuenta
-        </Button>
-      </header>
+      <CabeceraDePagina
+        titulo="Cuentas"
+        ayuda="Dónde tienes tu plata. El saldo se calcula de tus movimientos."
+        acciones={
+          <Button onClick={() => setFormularioAbierto((abierto) => !abierto)}>
+            <Plus aria-hidden="true" />
+            Nueva cuenta
+          </Button>
+        }
+      />
 
       {formularioAbierto && <FormularioDeCuenta onListo={() => setFormularioAbierto(false)} />}
 

@@ -8,6 +8,8 @@ import { Campo } from '@/components/ui/campo';
 import { Modal } from '@/components/ui/modal';
 import { ApiClientError } from '@/lib/api-client';
 import { useCrearCategoria } from '@/lib/queries';
+import { BLOQUE } from '@/components/ui/bloque';
+import { cn } from '@/lib/utils';
 
 /**
  * Crear un centro de costos.
@@ -81,7 +83,7 @@ export function CentroModal({ abierta, onCerrar }: { abierta: boolean; onCerrar:
           improvisan, que un clic distraído mueve plata sin que nadie lo note—
           vive en el código, no en el formulario.
         */}
-        <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-border bg-muted/60 p-3">
+        <label className={cn(BLOQUE, 'flex cursor-pointer items-center justify-between gap-4')}>
           <span className="min-w-0">
             <span className="block text-sm font-medium">Estático</span>
             <span className="mt-0.5 block text-xs text-muted-foreground">

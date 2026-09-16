@@ -28,7 +28,7 @@ import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
-import { Bloque } from '@/components/ui/bloque';
+import { BLOQUE, Bloque } from '@/components/ui/bloque';
 import { Campo } from '@/components/ui/campo';
 import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
@@ -1004,7 +1004,8 @@ function Via({
   );
 
   const forma = cn(
-    'flex w-full items-start gap-3 rounded-lg border border-border bg-muted/40 p-4 text-left',
+    BLOQUE,
+    'flex w-full items-start gap-3 p-4 text-left',
   );
 
   if (!onClick) return <div className={forma}>{dentro}</div>;

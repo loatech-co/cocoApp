@@ -16,6 +16,7 @@ import {
   useUnificarCategoria,
 } from '@/lib/queries';
 import type { Category } from '@coco/types';
+import { Bloque } from '@/components/ui/bloque';
 
 /**
  * Crear o renombrar un concepto, y decir si se paga cada cierto tiempo.
@@ -182,12 +183,12 @@ export function ConceptoModal({
               `warning-surface` es un marrón que sobre el verde del modal daba
               un verde oliva sucio.
             */
-            <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/60 p-3">
+            <Bloque className="flex flex-col gap-3">
               <p className="text-sm text-muted-foreground">
                 <strong className="font-semibold text-foreground">
                   Ya existe “{gemelo.name}”.
                 </strong>{' '}
-                Si lo unificás, sus movimientos pasan a ese concepto y{' '}
+                Si lo unificas, sus movimientos pasan a ese concepto y{' '}
                 {concepto ? `“${concepto.name}” desaparece` : 'no se crea uno nuevo'}.
               </p>
               {concepto && (
@@ -203,7 +204,7 @@ export function ConceptoModal({
                   Unificar con “{gemelo.name}”
                 </Button>
               )}
-            </div>
+            </Bloque>
           )}
 
           {error && (

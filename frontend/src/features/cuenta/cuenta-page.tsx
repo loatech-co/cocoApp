@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/lib/auth-context';
 import { PoliticaDeContrasena, cumpleLaPolitica } from '@/features/auth/politica-de-contrasena';
 import { Ajustes } from './ajustes';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 
 /**
  * Mi cuenta: cambiar contraseña y cerrar sesión en todas partes.
@@ -22,10 +23,7 @@ export function CuentaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-3xl font-semibold">Mi cuenta</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{usuario?.email}</p>
-      </header>
+      <CabeceraDePagina titulo="Mi cuenta" ayuda={usuario?.email} />
 
       {esAdmin && (
         <Badge variant="info" className="self-start">

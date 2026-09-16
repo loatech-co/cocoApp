@@ -31,6 +31,8 @@ import {
   useRestablecerContrasena,
   useUsuarios,
 } from './admin-queries';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
+import { Bloque } from '@/components/ui/bloque';
 
 const FILTROS: { valor: UserStatus | undefined; etiqueta: string }[] = [
   { valor: 'pending', etiqueta: 'Pendientes' },
@@ -52,12 +54,7 @@ export function UsuariosPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-3xl font-semibold">Cuentas</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Nadie entra a Coco sin que apruebes su cuenta.
-        </p>
-      </header>
+      <CabeceraDePagina titulo="Cuentas" ayuda="Nadie entra a Coco sin que apruebes su cuenta." />
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
         {FILTROS.map(({ valor, etiqueta }) => (
@@ -252,7 +249,7 @@ function RestablecerContrasena({
   }
 
   return (
-    <div className="rounded-md border border-border bg-muted/40 p-4">
+    <Bloque className="p-4">
       <Label htmlFor={`nueva-${usuario.id}`}>Contraseña nueva</Label>
       <Input
         id={`nueva-${usuario.id}`}
@@ -297,7 +294,7 @@ function RestablecerContrasena({
           Cancelar
         </Button>
       </div>
-    </div>
+    </Bloque>
   );
 }
 

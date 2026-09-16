@@ -31,6 +31,8 @@ import {
 } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
+import { Bloque } from '@/components/ui/bloque';
 
 /**
  * Centros de costos.
@@ -52,38 +54,32 @@ export function CentrosPage() {
       {/* El botón al extremo opuesto del título, como en el resto de la app:
           es la única acción de la pantalla y se busca siempre en la misma
           esquina. */}
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Centros de costos
-            </h1>
-            {/* La explicación se enseña una vez y estorba el resto de las
-                veces. Detrás del signo de interrogación sigue estando para
-                quien la necesite, sin ocupar media pantalla para quien ya la
-                leyó. */}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm-icon"
-              aria-pressed={verAyuda}
-              aria-label={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
-              title={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
-              onClick={() => setVerAyuda((v) => !v)}
-            >
-              <CircleHelp className="size-5" aria-hidden="true" />
-            </Button>
-          </div>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            La estructura con la que se ordena tu plata.
-          </p>
-        </div>
-
-        <Button type="button" onClick={() => setCreando(true)} className="shrink-0">
-          <Plus className="size-4" aria-hidden="true" />
-          Nuevo centro de costos
-        </Button>
-      </header>
+      <CabeceraDePagina
+        titulo="Centros de costos"
+        ayuda="La estructura con la que se ordena tu plata."
+        /* La explicación se enseña una vez y estorba el resto de las veces.
+           Detrás del signo de interrogación sigue estando para quien la
+           necesite, sin ocupar media pantalla para quien ya la leyó. */
+        junto={
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm-icon"
+            aria-pressed={verAyuda}
+            aria-label={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
+            title={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
+            onClick={() => setVerAyuda((v) => !v)}
+          >
+            <CircleHelp className="size-5" aria-hidden="true" />
+          </Button>
+        }
+        acciones={
+          <Button type="button" onClick={() => setCreando(true)} className="shrink-0">
+            <Plus className="size-4" aria-hidden="true" />
+            Nuevo centro de costos
+          </Button>
+        }
+      />
 
       {verAyuda && <Explicacion onCerrar={() => setVerAyuda(false)} />}
 
@@ -242,7 +238,10 @@ function Centro({ centro }: { centro: Category }) {
             )}
             <span className="min-w-0 flex-1">
               <span className="flex min-w-0 items-center gap-2">
-                <span className="truncate text-xl font-semibold">{centro.name}</span>
+                {/* `text-lg` y no `text-xl`: el nombre de un centro es el
+                    título de una tarjeta, y a 20px competía con el título de
+                    la pantalla, que mide 24. */}
+                <span className="truncate text-lg font-semibold">{centro.name}</span>
                 {/* El candado y no la palabra "estático": es un estado del
                     centro, y en una lista se reconoce antes por su forma que
                     leyendo una etiqueta en cada fila. */}
@@ -347,7 +346,7 @@ function Grupo({ grupo }: { grupo: Category }) {
   const conceptos = grupo.children ?? [];
 
   return (
-    <div className="rounded-lg border border-border bg-muted/40 p-3 sm:p-4">
+    <Bloque className="sm:p-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="min-w-0 truncate text-sm font-semibold">{grupo.name}</h3>
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
@@ -432,7 +431,7 @@ function Grupo({ grupo }: { grupo: Category }) {
         onCerrar={() => setEditando(null)}
       />
       <ConceptoModal abierta={creando} grupoId={grupo.id} onCerrar={() => setCreando(false)} />
-    </div>
+    </Bloque>
   );
 }
 
