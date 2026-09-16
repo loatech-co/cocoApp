@@ -1166,6 +1166,7 @@ function ComoEmpezar({
           —y sabe: es el mismo motor que lee un archivo subido—. */}
       <Via
         Icono={Camera}
+        n={0}
         color="gasto"
         titulo="Tomar una foto"
         ayuda="Se leen el valor, la fecha y el concepto."
@@ -1176,6 +1177,7 @@ function ComoEmpezar({
 
       <Via
         Icono={Upload}
+        n={1}
         color="gasto"
         titulo="Subir un archivo"
         ayuda="Un PDF o una imagen del soporte."
@@ -1184,6 +1186,7 @@ function ComoEmpezar({
 
       <Via
         Icono={Pencil}
+        n={2}
         color="presupuesto"
         titulo="Registrar manualmente"
         ayuda="Sin soporte, o cuando ya sabes cómo clasificarlo."
@@ -1226,11 +1229,37 @@ function ComoEmpezar({
  * la ficha: un disco de 208 hundido solo 64 se le comería el centro, que es
  * donde va el glifo.
  */
-const DISCO_DEL_CARTEL = 'pointer-events-none absolute size-52 rounded-full sm:size-64';
+const DISCO_DEL_CARTEL = 'pointer-events-none absolute size-52 rounded-full opacity-70 sm:size-64';
+
+/**
+ * De qué esquina entra cada disco, tarjeta por tarjeta.
+ *
+ * ── Por qué una tabla y no un número al azar ────────────────────────────────
+ * Porque lo que se pide es que las tres tarjetas no se vean calcadas, y eso no
+ * necesita azar: necesita que sean distintas. Un `Math.random()` daría además
+ * una tarjeta que cambia de dibujo cada vez que React la vuelve a pintar —al
+ * abrir la ficha, al cerrarla, al escribir en cualquier campo de arriba— y un
+ * fondo que se mueve solo se lee como un fallo, no como una gracia.
+ *
+ * Con la tabla, cada tarjeta tiene SU composición y la conserva.
+ *
+ * ── Y por qué cambia también la profundidad ─────────────────────────────────
+ * Rotar las esquinas y dejar el mismo hundimiento daría tres veces el mismo
+ * dibujo girado, que se reconoce como tal a la primera. Cambiando cuánto entra
+ * cada disco, las tres se leen como tres fondos y no como uno repetido. En la
+ * tercera los dos entran por arriba a distinta altura, así que se cruzan: es
+ * la que enseña de qué sirve la transparencia.
+ */
+const COLOCACIONES: readonly (readonly [string, string])[] = [
+  ['-left-20 -top-20 sm:-left-16 sm:-top-16', '-bottom-20 -right-20 sm:-bottom-16 sm:-right-16'],
+  ['-right-24 -top-16 sm:-right-20 sm:-top-10', '-bottom-16 -left-24 sm:-bottom-10 sm:-left-20'],
+  ['-left-28 -top-10 sm:-left-24 sm:-top-4', '-right-28 -top-36 sm:-right-24 sm:-top-44'],
+];
 
 function Via({
   Icono,
   color,
+  n,
   titulo,
   ayuda,
   nota,
@@ -1243,6 +1272,8 @@ function Via({
     strokeWidth?: number;
   }>;
   color: ColorDeChip;
+  /** Cuál de las composiciones de `COLOCACIONES` le toca. */
+  n: number;
   titulo: string;
   ayuda: string;
   /** Dos palabras en una etiqueta: por qué no se puede todavía. */
@@ -1250,6 +1281,10 @@ function Via({
   deshabilitada?: boolean;
   onClick: () => void;
 }) {
+  // El módulo para que añadir una cuarta vía no reviente: repetiría una
+  // composición, que es mejor que no pintar ninguna.
+  const [arriba, abajo] = COLOCACIONES[n % COLOCACIONES.length]!;
+
   return (
     <button
       type="button"
@@ -1301,7 +1336,7 @@ function Via({
       */}
       <span
         aria-hidden
-        className={cn(DISCO_DEL_CARTEL, '-left-20 -top-20 sm:-left-16 sm:-top-16')}
+        className={cn(DISCO_DEL_CARTEL, arriba)}
         style={{ backgroundColor: CHIPS[color].fondo }}
       />
 
@@ -1317,7 +1352,7 @@ function Via({
       */}
       <span
         aria-hidden
-        className={cn(DISCO_DEL_CARTEL, '-bottom-20 -right-20 sm:-bottom-16 sm:-right-16')}
+        className={cn(DISCO_DEL_CARTEL, abajo)}
         style={{ backgroundColor: CHIPS[color].fondo }}
       />
 
