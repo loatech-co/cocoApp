@@ -84,21 +84,36 @@ export function ChipIcono({
       icono de 16 al 40 % no se distingue.
     */
     /*
-      El glifo va a un tercio del círculo, no a llenarlo.
+      ── El glifo del cartel es MÁS GRANDE que su disco ────────────────────
+      Un cuarto más, y se sale por los cuatro lados. Es lo contrario de lo que
+      hace un pastel normal —ahí el disco contiene al dibujo y lo enmarca— y
+      es a propósito: aquí el disco ya no es el marco del icono, es una mancha
+      de color detrás de él.
 
-      Estuvo a la mitad, y a esa escala el dibujo y el disco se estorban: la
-      figura toca el borde por los cuatro lados y lo que se ve es una mancha
-      con muescas, no una cámara ni un lápiz. Con aire alrededor, la silueta
-      se recorta contra el pastel y se reconoce de un vistazo, que es lo único
-      que este dibujo tiene que hacer.
+      Las dos alternativas no funcionaban. Con el glifo a la mitad del disco,
+      la figura toca el borde por los cuatro lados y lo que se ve es una
+      mancha con muescas. Con el glifo a un tercio, vuelve a ser un icono
+      centrado en un círculo, que es exactamente lo que este tamaño existe
+      para no ser.
+
+      Saliéndose, las dos formas se leen por separado: el círculo como color y
+      la línea como dibujo. Cabe porque el `<span>` no recorta —el que recorta
+      es la tarjeta, contra su propio canto— y porque el glifo va sin relleno,
+      así que lo que se sale es trazo y no una masa de color.
     */
-    cartel: 'size-16 opacity-40 sm:size-20',
+    // `shrink-0` no es adorno: un hijo de una caja flexible más ancho que
+    // ella se encoge hasta caber, así que sin esto el glifo se quedaría
+    // exactamente del tamaño del disco y no se saldría nunca.
+    cartel: 'size-64 shrink-0 opacity-40 sm:size-80',
   } as const;
 
   return (
     <span
       className={cn(
         'flex shrink-0 items-center justify-center rounded-full',
+        // El cartel deja que su glifo se salga; los otros dos no tienen nada
+        // que sacar, así que la declaración sobra y no se escribe.
+        cartel && 'overflow-visible',
         CAJA[tamano],
         className,
       )}
