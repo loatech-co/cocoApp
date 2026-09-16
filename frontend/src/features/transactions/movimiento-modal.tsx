@@ -666,21 +666,24 @@ export function MovimientoModal({
                       </div>
 
                       {/*
-                        Las notas, al PIE de la columna de campos.
+                        Las notas, dentro de la columna de campos y pegadas a
+                        los demás.
 
                         Estaban debajo de la rejilla y a todo el ancho: un
                         recuadro de mil píxeles para tres renglones que casi
                         nunca se escriben, pegado encima de los botones y con
-                        media ficha vacía a su lado. Aquí tapan ese hueco y
-                        dejan de disputarle el ancho al recibo.
+                        media ficha vacía a su lado.
 
-                        `mt-auto` las manda al fondo de su columna en vez de
-                        dejarlas pegadas a la fecha: así esta columna cierra a
-                        la misma altura que la del soporte, que es lo que hace
-                        que las dos se lean como una ficha y no como dos listas
-                        de distinto largo.
+                        Y sin `mt-auto`, que las mandaba al fondo de la columna
+                        para cerrarla a la altura del soporte. Eso las separaba
+                        de los campos con un palmo de nada en medio, y una nota
+                        sobre este movimiento es un campo más de los que se
+                        rellenan al registrarlo: va donde va el siguiente, no
+                        donde sobra sitio. Que la columna cierre antes que la
+                        del soporte no es un desajuste —son dos cosas de largo
+                        distinto—.
                       */}
-                      <Campo etiqueta="Notas" id="mov-notas" className="mt-auto">
+                      <Campo etiqueta="Notas" id="mov-notas">
                         {/* Sin marcador. Decía «Opcional», que no es un ejemplo
                         de lo que va ahí sino una nota sobre la validación: este
                         campo no lleva `required`, y eso ya se sabe porque el
