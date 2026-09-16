@@ -234,7 +234,7 @@ export function ToolbarFiltros({
                   Icono={TrendingDown}
                   color="gasto"
                   titulo="Gasto"
-                  ayuda="Plata que sale"
+                  ayuda="Dinero que sale"
                   onClick={() => {
                     cerrar();
                     onNuevo('expense');
@@ -247,7 +247,7 @@ export function ToolbarFiltros({
                   Icono={TrendingUp}
                   color="ingreso"
                   titulo="Ingreso"
-                  ayuda="Plata que entra"
+                  ayuda="Dinero que entra"
                   nota="Pronto"
                   deshabilitada
                 />

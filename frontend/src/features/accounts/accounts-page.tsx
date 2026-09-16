@@ -39,7 +39,7 @@ export function AccountsPage() {
     <div className="flex flex-col gap-6">
       <CabeceraDePagina
         titulo="Cuentas"
-        ayuda="Dónde tienes tu plata. El saldo se calcula de tus movimientos."
+        ayuda="Dónde tienes tu dinero. El saldo se calcula de tus movimientos."
         acciones={
           <Button size="sm" onClick={() => setFormularioAbierto((abierto) => !abierto)}>
             <Plus aria-hidden="true" />
@@ -62,7 +62,7 @@ export function AccountsPage() {
           <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
             <Wallet className="size-8 text-primary" aria-hidden="true" />
             <p className="max-w-sm text-sm text-muted-foreground">
-              Aún no tienes cuentas. Crea la primera —efectivo, tu débito o una tarjeta— para
+              Aún no tienes cuentas. Crea la primera —efectivo, tu tarjeta débito o una de crédito— para
               empezar a registrar movimientos.
             </p>
             <Button onClick={() => setFormularioAbierto(true)}>Crear cuenta</Button>

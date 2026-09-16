@@ -115,7 +115,7 @@ export function ConfirmarBorrado({
               </AlertDescription>
             </Alert>
 
-            <Campo etiqueta="Pasan a" id="destino-del-borrado">
+            <Campo etiqueta="Categoría de destino" id="destino-del-borrado">
               <Select
                 id="destino-del-borrado"
                 etiqueta="Categoría de destino"

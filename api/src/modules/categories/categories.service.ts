@@ -344,7 +344,7 @@ export class CategoriesService {
     const conHijos = todas.filter((c) => c.parentId === origenId).length;
     if (conHijos > 0) {
       throw new UnprocessableEntityException(
-        'Ese concepto tiene cosas dentro. Vacíalo antes de unificarlo.',
+        'Ese concepto tiene otras categorías dentro. Vacíalo antes de unificarlo.',
       );
     }
 

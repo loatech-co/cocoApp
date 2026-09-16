@@ -87,7 +87,7 @@ export class SoportesService {
       where: { id: soporteId, transactionId, userId },
     });
 
-    if (!soporte) throw new NotFoundException('No existe ese soporte.');
+    if (!soporte) throw new NotFoundException('El soporte no existe.');
 
     const flujo = abrir(soporte.storageKey);
     if (!flujo) {
@@ -130,7 +130,7 @@ export class SoportesService {
       include: { category: { select: { name: true } } },
     });
 
-    if (!movimiento) throw new NotFoundException('No existe ese movimiento.');
+    if (!movimiento) throw new NotFoundException('El movimiento no existe.');
     if (archivos.length === 0) throw new BadRequestException('No llegó ningún archivo.');
 
     for (const archivo of archivos) {
@@ -208,6 +208,6 @@ export class SoportesService {
       where: { id: soporteId, transactionId, userId },
     });
 
-    if (count === 0) throw new NotFoundException('No existe ese soporte.');
+    if (count === 0) throw new NotFoundException('El soporte no existe.');
   }
 }

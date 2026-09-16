@@ -54,7 +54,7 @@ export function UsuariosPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <CabeceraDePagina titulo="Cuentas" ayuda="Nadie entra a Coco sin que apruebes su cuenta." />
+      <CabeceraDePagina titulo="Usuarios" ayuda="Nadie entra a Coco sin que apruebes su cuenta." />
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
         {FILTROS.map(({ valor, etiqueta }) => (
@@ -241,7 +241,7 @@ function RestablecerContrasena({
     return (
       <Alert variant="info">
         <AlertDescription>
-          Listo. Comunícale la contraseña nueva a {usuario.display_name ?? usuario.email} por un
+          Contraseña restablecida. Comunícasela a {usuario.display_name ?? usuario.email} por un
           canal seguro. Sus sesiones abiertas se cerraron.
         </AlertDescription>
       </Alert>

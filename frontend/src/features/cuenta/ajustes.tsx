@@ -37,7 +37,7 @@ export function Ajustes() {
         <Interruptor
           icono={<Wallet className="size-5" aria-hidden="true" />}
           titulo="Llevar cuentas"
-          descripcion="Tarjetas, ahorros y efectivo, cada uno con su saldo. Si lo apagas, registras gastos sin tener que decir de dónde salió la plata."
+          descripcion="Tarjetas, ahorros y efectivo, cada uno con su saldo. Si lo apagas, registras gastos sin tener que decir de dónde salió el dinero."
           activo={activo}
           cargando={preferencias.isPending || actualizar.isPending}
           onCambiar={(valor) => actualizar.mutate({ cuentas_habilitadas: valor })}
@@ -45,8 +45,8 @@ export function Ajustes() {
 
         {activo && (
           <p className="text-xs text-muted-foreground">
-            Los movimientos que ya registraste sin cuenta siguen ahí y no cuentan para ningún
-            saldo. Puedes asignarles una cuando quieras.
+            Los movimientos que ya registraste sin cuenta siguen ahí y no cuentan para ningún saldo.
+            Puedes asignarles una cuando quieras.
           </p>
         )}
       </CardContent>

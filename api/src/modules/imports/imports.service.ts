@@ -183,7 +183,7 @@ export class ImportsService {
     const fila = await this.prisma.importRow.findFirst({
       where: { id: filaId, batchId: loteId },
     });
-    if (!fila) throw new NotFoundException('Esa fila no existe en este lote.');
+    if (!fila) throw new NotFoundException('Esa fila no existe en esta importación.');
 
     if (dto.category_id !== undefined && dto.category_id !== null) {
       await this.exigirCategoriaPropia(userId, BigInt(dto.category_id));
@@ -239,7 +239,7 @@ export class ImportsService {
       return { creados: yaCreados, lote: aVistaDeLote(lote, lote.rows) };
     }
     if (lote.status === 'discarded') {
-      throw new ConflictException('Este lote fue descartado y ya no se puede confirmar.');
+      throw new ConflictException('Esta importación fue descartada y ya no se puede confirmar.');
     }
 
     const aceptadas = lote.rows.filter((fila) => fila.status === 'accepted');
@@ -309,7 +309,7 @@ export class ImportsService {
     const lote = await this.exigirLote(userId, id, false);
 
     if (lote.status !== 'committed') {
-      throw new ConflictException('Este lote no está confirmado, así que no hay nada que deshacer.');
+      throw new ConflictException('Esta importación no está confirmada, así que no hay nada que deshacer.');
     }
 
     const { count } = await this.prisma.$transaction(async (tx) => {
@@ -331,7 +331,7 @@ export class ImportsService {
     const lote = await this.exigirLote(userId, id, false);
 
     if (lote.status === 'committed') {
-      throw new ConflictException('Este lote ya está confirmado. Usa "deshacer" en su lugar.');
+      throw new ConflictException('Esta importación ya está confirmada. Usa "Deshacer la importación" en su lugar.');
     }
 
     await this.prisma.importBatch.delete({ where: { id } });
@@ -351,13 +351,13 @@ export class ImportsService {
       include: { rows: conFilas ? { orderBy: { position: 'asc' } } : true },
     });
 
-    if (!lote) throw new NotFoundException('El lote de importación no existe.');
+    if (!lote) throw new NotFoundException('Esa importación no existe.');
     return lote;
   }
 
   private exigirBorrador(lote: ImportBatch): void {
     if (lote.status !== 'draft') {
-      throw new ConflictException('El lote ya no está en revisión.');
+      throw new ConflictException('Esa importación ya no está en revisión.');
     }
   }
 

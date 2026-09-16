@@ -142,8 +142,9 @@ export function RevisarPage() {
         <Alert variant="warning">
           <AlertTitle>Hay movimientos que se parecen a otros que ya tienes</AlertTitle>
           <AlertDescription>
-            Están marcados y quedarán fuera salvo que los aceptes. Ojo: dos compras iguales el
-            mismo día en el mismo sitio son dos movimientos reales — decide tú.
+            Están marcados y quedarán fuera salvo que los aceptes. Ten en cuenta que dos compras
+            iguales el mismo día en el mismo sitio son dos movimientos reales: la decisión es
+            tuya.
           </AlertDescription>
         </Alert>
       )}
