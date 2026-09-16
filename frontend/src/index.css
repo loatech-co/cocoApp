@@ -179,6 +179,29 @@
   --info: var(--color-tinta-600);
   --info-surface: var(--color-tinta-100);
 
+  /* ── Las porciones de la dona ──────────────────────────────────────────
+     Cada una con su TINTA, declarada y no calculada: en esta paleta no hay
+     una regla que valga para todas. Sobre el bosque el blanco se lee; sobre
+     la lima NO —1.23:1— y hay que bajar a tinta.
+
+     Y son tokens propios, no `--chart-N`, porque la dona pinta ÁREAS grandes
+     sobre la tarjeta y una línea de gráfica no: un verde que se distingue
+     como trazo de 2px puede ser invisible como relleno. En oscuro la primera
+     porción era `bosque-800` sobre una tarjeta `bosque-900` y la dona parecía
+     vacía. */
+  --dona-1: var(--color-bosque-800);
+  --dona-1-tinta: #ffffff;
+  --dona-2: var(--color-esmeralda-500);
+  --dona-2-tinta: #ffffff;
+  --dona-3: var(--color-lima-300);
+  --dona-3-tinta: var(--color-tinta-950);
+  --dona-4: var(--color-bosque-400);
+  --dona-4-tinta: #ffffff;
+  --dona-5: var(--color-esmeralda-200);
+  --dona-5-tinta: var(--color-tinta-950);
+  --dona-otros: var(--color-tinta-400);
+  --dona-otros-tinta: var(--color-tinta-950);
+
   /* Gráficas: bosque y esmeralda alternando, como las barras de la referencia. */
   --chart-1: var(--color-bosque-800);
   --chart-2: var(--color-esmeralda-500);
@@ -255,6 +278,22 @@
   --warning-surface: #422006;
   --info: var(--color-tinta-400);
   --info-surface: var(--color-bosque-800);
+
+  /* Todas CLARAS: sobre una tarjeta casi negra, un verde oscuro no es una
+     porción, es un agujero. Y la tinta baja a bosque en todas, porque encima
+     de estos colores el blanco no se lee. */
+  --dona-1: var(--color-esmeralda-400);
+  --dona-1-tinta: var(--color-bosque-950);
+  --dona-2: var(--color-lima-300);
+  --dona-2-tinta: var(--color-bosque-950);
+  --dona-3: var(--color-esmeralda-200);
+  --dona-3-tinta: var(--color-bosque-950);
+  --dona-4: var(--color-bosque-300);
+  --dona-4-tinta: var(--color-bosque-950);
+  --dona-5: var(--color-tinta-300);
+  --dona-5-tinta: var(--color-bosque-950);
+  --dona-otros: var(--color-tinta-500);
+  --dona-otros-tinta: #ffffff;
 
   --chart-1: var(--color-esmeralda-400);
   --chart-2: var(--color-lima-300);

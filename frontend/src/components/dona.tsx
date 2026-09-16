@@ -3,21 +3,18 @@ import { useState } from 'react';
 import { cn, formatCOP } from '@/lib/utils';
 
 /**
- * Los colores de las porciones, cada uno con su tinta.
- *
- * La tinta va declarada y no calculada porque en esta paleta no hay una regla
- * que valga para todas: sobre el bosque el blanco se lee, sobre la lima NO
- * —1.23:1— y hay que bajar a tinta. Dejarlo al azar de un color automático es
- * cómo aparece un 13 % blanco sobre verde limón que nadie puede leer.
+ * Los colores de las porciones. Viven en `index.css` porque cambian con el
+ * tema: en claro la primera es bosque oscuro, en oscuro tiene que ser clara o
+ * la porción se confunde con la tarjeta y la dona parece vacía.
  */
 const PALETA = [
-  { fondo: 'var(--color-bosque-800)', tinta: '#ffffff' },
-  { fondo: 'var(--color-esmeralda-500)', tinta: '#ffffff' },
-  { fondo: 'var(--color-lima-300)', tinta: 'var(--color-tinta-950)' },
-  { fondo: 'var(--color-bosque-400)', tinta: '#ffffff' },
-  { fondo: 'var(--color-esmeralda-200)', tinta: 'var(--color-tinta-950)' },
+  { fondo: 'var(--dona-1)', tinta: 'var(--dona-1-tinta)' },
+  { fondo: 'var(--dona-2)', tinta: 'var(--dona-2-tinta)' },
+  { fondo: 'var(--dona-3)', tinta: 'var(--dona-3-tinta)' },
+  { fondo: 'var(--dona-4)', tinta: 'var(--dona-4-tinta)' },
+  { fondo: 'var(--dona-5)', tinta: 'var(--dona-5-tinta)' },
 ];
-const OTROS = { fondo: 'var(--color-tinta-400)', tinta: 'var(--color-tinta-950)' };
+const OTROS = { fondo: 'var(--dona-otros)', tinta: 'var(--dona-otros-tinta)' };
 
 /* ── Geometría ──────────────────────────────────────────────────────────────
    Un lienzo ancho y bajo: la dona en el centro y los nombres a los lados, que
@@ -135,11 +132,22 @@ export function Dona({
     }
   }
 
+  const pct = (v: number, total: number): string => `${(v / total) * 100}%`;
+
   return (
-    <div className={cn('w-full', className)}>
+    /*
+      El dibujo va en SVG y TODO el texto en HTML encima.
+      ── Por qué ──────────────────────────────────────────────────────────────
+      El SVG se estira para llenar la tarjeta, y con él se estira lo que lleve
+      dentro: un `font-size: 11px` escrito en un lienzo de 320 unidades se
+      dibuja a 22px cuando la tarjeta mide 640. El texto en HTML no se entera
+      de esa escala y mide siempre lo que dice que mide. De paso, cortar un
+      nombre largo pasa a ser un `truncate` de CSS en vez de contar letras.
+    */
+    <div className={cn('relative w-full', className)}>
       <svg
         viewBox={`0 0 ${ANCHO} ${ALTO}`}
-        className="w-full overflow-visible"
+        className="w-full"
         role="img"
         aria-label="Distribución del gasto"
       >
@@ -155,7 +163,6 @@ export function Dona({
 
         {trazos.map((seg, i) => {
           const puedeBajar = seg.id !== null && onElegir !== undefined;
-          const apagada = activa !== null && activa !== i;
           const finX = seg.derecha ? ANCHO - MARGEN_TEXTO : MARGEN_TEXTO;
 
           return (
@@ -167,7 +174,7 @@ export function Dona({
               className={cn(
                 'transition-opacity',
                 puedeBajar && 'cursor-pointer',
-                apagada && 'opacity-35',
+                activa !== null && activa !== i && 'opacity-35',
               )}
             >
               <circle
@@ -189,49 +196,69 @@ export function Dona({
                 stroke={seg.fondo}
                 strokeWidth="1.5"
                 strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
               />
               <circle cx={seg.codo.x} cy={seg.codo.y} r="2.5" fill={seg.fondo} />
-
-              <text
-                x={finX}
-                y={seg.codo.y - 4}
-                textAnchor={seg.derecha ? 'end' : 'start'}
-                className="fill-foreground text-[11px] font-semibold"
-              >
-                {recortar(seg.nombre)}
-              </text>
-              <text
-                x={finX}
-                y={seg.codo.y + 8}
-                textAnchor={seg.derecha ? 'end' : 'start'}
-                className="fill-muted-foreground text-[10px]"
-              >
-                {formatCOP(seg.valor)}
-              </text>
-
-              {/* La cifra va SOBRE el color que mide, con la tinta que ese
-                  color admite: blanco sobre lima da 1.23:1 y no se lee. */}
-              {seg.fraccion >= MINIMO_PARA_CIFRA && (
-                <text
-                  x={seg.cifra.x}
-                  y={seg.cifra.y}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill={seg.tinta}
-                  className="pointer-events-none text-[12px] font-semibold"
-                >
-                  {Math.round(seg.fraccion * 100)}%
-                </text>
-              )}
             </g>
           );
         })}
       </svg>
+
+      {/* La cifra, SOBRE el color que mide, con la tinta que ese color admite:
+          blanco sobre lima da 1.23:1 y no se lee. */}
+      {trazos.map((seg, i) =>
+        seg.fraccion >= MINIMO_PARA_CIFRA ? (
+          <span
+            key={`c-${seg.id ?? seg.nombre}`}
+            aria-hidden="true"
+            style={{
+              left: pct(seg.cifra.x, ANCHO),
+              top: pct(seg.cifra.y, ALTO),
+              color: seg.tinta,
+            }}
+            className={cn(
+              'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity',
+              activa !== null && activa !== i && 'opacity-35',
+            )}
+          >
+            {Math.round(seg.fraccion * 100)}%
+          </span>
+        ) : null,
+      )}
+
+      {/* El nombre y el valor, al final de su línea guía. */}
+      {trazos.map((seg, i) => {
+        const puedeBajar = seg.id !== null && onElegir !== undefined;
+
+        return (
+          <button
+            key={`n-${seg.id ?? seg.nombre}`}
+            type="button"
+            disabled={!puedeBajar}
+            onPointerEnter={() => setActiva(i)}
+            onPointerLeave={() => setActiva(null)}
+            onClick={() => puedeBajar && onElegir(seg.id as number)}
+            style={{
+              top: pct(seg.codo.y, ALTO),
+              [seg.derecha ? 'right' : 'left']: pct(MARGEN_TEXTO, ANCHO),
+              maxWidth: `${(1 / 3) * 100}%`,
+            }}
+            className={cn(
+              'absolute -translate-y-1/2 rounded text-left transition-opacity',
+              seg.derecha ? 'text-right' : 'text-left',
+              puedeBajar ? 'cursor-pointer hover:opacity-80' : 'cursor-default',
+              activa !== null && activa !== i && 'opacity-35',
+            )}
+          >
+            <span className="block truncate text-xs font-semibold text-foreground">
+              {seg.nombre}
+            </span>
+            <span className="tabular block truncate text-[11px] text-muted-foreground">
+              {formatCOP(seg.valor)}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
-}
-
-/** Los nombres largos se cortan: el lienzo mide lo que mide. */
-function recortar(nombre: string, maximo = 18): string {
-  return nombre.length <= maximo ? nombre : `${nombre.slice(0, maximo - 1)}…`;
 }
