@@ -66,7 +66,9 @@ export function SelectorDeDia({
         id={id}
         type="button"
         variant="herramienta"
-        size="default"
+        // `campo` y no `default`: este botón es un CAMPO, y tiene que medir y
+        // redondearse como el `Input` y el `Combo` que tiene al lado.
+        size="campo"
         onClick={() => setAbierto((v) => !v)}
         disabled={deshabilitado}
         aria-expanded={abierto}

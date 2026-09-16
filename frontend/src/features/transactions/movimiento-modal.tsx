@@ -457,7 +457,10 @@ export function MovimientoModal({
 
                 Con el soporte al lado, verificar es mirar a la izquierda.
               */}
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+              {/* La MITAD para el papel. Con una columna angosta el recibo
+                  salía del tamaño de un sello y no se podía leer la cifra, que
+                  es lo único que esta columna existe para permitir. */}
+              <div className="grid gap-5 lg:grid-cols-2">
                 <Seccion titulo="Soporte" caja={false}>
                   {movimiento ? (
                     <Soportes transactionId={movimiento.id} />
@@ -1011,6 +1014,26 @@ function BotonDeVia({
  * error, cuando lo que hubo fue un acierto. El lima es el acento de la casa:
  * llama sin alarmar.
  *
+ * ── Por qué el lima de la PALETA y no `bg-accent` ───────────────────────────
+ * Porque `--accent` se invierte entre temas: en claro es lima-300, pero en
+ * oscuro es bosque-800 —un verde oscuro— con la letra en lima. Con `bg-accent`
+ * este aviso salía como un rectángulo verde sobre verde: parecía decoración,
+ * no un aviso. `bg-lima-300` es lima en los dos temas.
+ *
+ * Y la letra en TINTA, nunca en blanco: blanco sobre lima da 1,23:1 de
+ * contraste, muy por debajo del 4,5:1 que exige un texto.
+ *
+ * ── Al 85 % y con las esquinas más cerradas ─────────────────────────────────
+ * Un lima opaco de esquina a esquina con el radio de una tarjeta pesaba como
+ * una tarjeta: se leía como una superficie más de la ficha en vez de como una
+ * nota puesta encima. Algo de transparencia lo asienta sobre lo que hay
+ * detrás, y 10px —por debajo del radio estándar, que es el de los
+ * contenedores— dicen que esto no es un contenedor.
+ *
+ * La tinta sobre lima al 85 % sigue muy por encima del mínimo: el fondo de
+ * debajo es verde oscuro o casi blanco, y en los dos casos el texto queda
+ * cómodo.
+ *
  * ── Por qué una sola frase ──────────────────────────────────────────────────
  * Porque el detalle de por qué se clasificó así no cambia lo que hay que
  * hacer, que es mirar los campos. Contarlo entero ocupaba tres renglones y
@@ -1018,7 +1041,7 @@ function BotonDeVia({
  */
 function LoQueLei() {
   return (
-    <p className="flex items-center gap-2 rounded-2xl bg-accent px-3 py-2.5 text-xs font-medium text-accent-foreground">
+    <p className="flex items-center gap-2 rounded-[10px] bg-lima-300/85 px-4 py-3 text-sm font-medium text-tinta-950">
       <Sparkles className="size-4 shrink-0" aria-hidden="true" />
       Los datos se extrajeron del soporte. Conviene verificarlos antes de guardar.
     </p>
@@ -1072,34 +1095,162 @@ function SoportesPendientes({
 }
 
 /**
- * Un archivo que todavía no se ha subido, dibujado.
+ * Un archivo que todavía no se ha subido, dibujado y recorrible.
  *
- * El `blob:` se crea aquí y se suelta al desmontar: sin eso, elegir y quitar
- * cuatro recibos deja cuatro archivos en la memoria de la pestaña hasta que se
- * recargue la página.
+ * ── Por qué llena la caja y no entra entera ─────────────────────────────────
+ * Porque una hoja completa metida en 30rem de alto deja la letra a un tamaño
+ * en el que el total no se lee, y esta columna existe exactamente para leer el
+ * total. Llenando la caja, el documento se ve al tamaño en que se puede
+ * comprobar, y lo que no cabe se alcanza arrastrando.
+ *
+ * ── Por qué arrastrar y no barras de desplazamiento ─────────────────────────
+ * Porque es un documento, no una página: el gesto con el que todo el mundo
+ * mueve un plano o un mapa es agarrarlo. Y con `pointer`, el mismo código
+ * sirve para el ratón, el dedo y el lápiz.
+ *
+ * ── Los topes ───────────────────────────────────────────────────────────────
+ * El desplazamiento se recorta a lo que falta por ver, así que nunca aparece
+ * un hueco: el borde del documento no pasa del borde de la caja. Y si por el
+ * lado corto el documento cabe justo, ese eje no se mueve —en vez de temblar
+ * un píxel en cada arrastre—.
  */
 function PreviaDeArchivo({ archivo, onQuitar }: { archivo: File; onQuitar: () => void }) {
   const [url, setUrl] = useState<string | null>(null);
+  /** El tamaño natural de lo dibujado, para saber cuánto sobra por cada lado. */
+  const [natural, setNatural] = useState<{ ancho: number; alto: number } | null>(null);
+  const [caja, setCaja] = useState({ ancho: 0, alto: 0 });
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [arrastrando, setArrastrando] = useState(false);
+
+  const marco = useRef<HTMLDivElement>(null);
+  const agarre = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
 
   useEffect(() => {
     const objeto = URL.createObjectURL(archivo);
     setUrl(objeto);
+    setNatural(null);
+    setPos({ x: 0, y: 0 });
     return () => URL.revokeObjectURL(objeto);
   }, [archivo]);
 
+  // La caja cambia de tamaño con la ventana, y los topes dependen de ella.
+  useEffect(() => {
+    const elemento = marco.current;
+    if (!elemento) return;
+
+    const medir = (): void =>
+      setCaja({ ancho: elemento.clientWidth, alto: elemento.clientHeight });
+
+    medir();
+    const observador = new ResizeObserver(medir);
+    observador.observe(elemento);
+    return () => observador.disconnect();
+  }, [url]);
+
+  /*
+    La escala que LLENA la caja: la mayor de las dos proporciones. Con la menor
+    —que es `contain`— quedarían franjas vacías a los lados.
+  */
+  const escala =
+    natural && caja.ancho > 0
+      ? Math.max(caja.ancho / natural.ancho, caja.alto / natural.alto)
+      : 1;
+  const ancho = natural ? natural.ancho * escala : 0;
+  const alto = natural ? natural.alto * escala : 0;
+
+  /** Cuánto se puede mover cada eje. Negativo: es lo que sobra por ver. */
+  const limite = { x: Math.min(0, caja.ancho - ancho), y: Math.min(0, caja.alto - alto) };
+
+  const recortar = (x: number, y: number): { x: number; y: number } => ({
+    x: Math.min(0, Math.max(limite.x, x)),
+    y: Math.min(0, Math.max(limite.y, y)),
+  });
+
+  // Empieza CENTRADO: es lo que uno espera ver de un documento al abrirlo, y
+  // además deja la misma cantidad por descubrir hacia los dos lados.
+  useEffect(() => {
+    if (!natural || caja.ancho === 0) return;
+    setPos(recortar(limite.x / 2, limite.y / 2));
+    // Solo al cambiar el documento o la caja: recentrar en cada arrastre
+    // pelearía con el dedo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [natural, caja.ancho, caja.alto]);
+
+  const sePuedeMover = limite.x < 0 || limite.y < 0;
   const esImagen = archivo.type.startsWith('image/');
 
   return (
     <figure className="flex flex-col gap-2">
-      <div className="relative h-64 overflow-hidden rounded-2xl bg-card ring-1 ring-border">
+      <div
+        ref={marco}
+        // `touch-action: none` para que el dedo mueva el documento y no
+        // desplace la ficha entera por detrás.
+        className={cn(
+          'relative h-[30rem] touch-none select-none overflow-hidden rounded-2xl bg-card ring-1 ring-border',
+          sePuedeMover && (arrastrando ? 'cursor-grabbing' : 'cursor-grab'),
+        )}
+        onPointerDown={(e) => {
+          if (!sePuedeMover) return;
+          e.currentTarget.setPointerCapture(e.pointerId);
+          agarre.current = { x: pos.x, y: pos.y, px: e.clientX, py: e.clientY };
+          setArrastrando(true);
+        }}
+        onPointerMove={(e) => {
+          const desde = agarre.current;
+          if (!desde) return;
+          setPos(recortar(desde.x + (e.clientX - desde.px), desde.y + (e.clientY - desde.py)));
+        }}
+        onPointerUp={() => {
+          agarre.current = null;
+          setArrastrando(false);
+        }}
+        onPointerCancel={() => {
+          agarre.current = null;
+          setArrastrando(false);
+        }}
+      >
         {!url ? (
           <span className="flex size-full items-center justify-center">
             <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden="true" />
           </span>
         ) : esImagen ? (
-          <img src={url} alt={archivo.name} className="size-full object-cover object-top" />
+          <img
+            src={url}
+            alt={archivo.name}
+            draggable={false}
+            onLoad={(e) =>
+              setNatural({
+                ancho: e.currentTarget.naturalWidth,
+                alto: e.currentTarget.naturalHeight,
+              })
+            }
+            style={{
+              position: 'absolute',
+              left: pos.x,
+              top: pos.y,
+              width: ancho || undefined,
+              height: alto || undefined,
+              // Antes de medir se pinta invisible: un fotograma con la imagen
+              // a su tamaño natural y sin encuadrar se ve como un salto.
+              visibility: natural ? 'visible' : 'hidden',
+            }}
+          />
         ) : (
-          <LienzoPdf url={url} />
+          <LienzoPdf
+            url={url}
+            // A 1400 y no a 240: esto se mira para leer una cifra, y el
+            // tamaño de una miniatura la deja borrosa.
+            ancho={1400}
+            onTamano={(a, h) => setNatural({ ancho: a, alto: h })}
+            estilo={{
+              position: 'absolute',
+              left: pos.x,
+              top: pos.y,
+              width: ancho || undefined,
+              height: alto || undefined,
+              visibility: natural ? 'visible' : 'hidden',
+            }}
+          />
         )}
 
         <button
@@ -1115,7 +1266,10 @@ function PreviaDeArchivo({ archivo, onQuitar }: { archivo: File; onQuitar: () =>
 
       <figcaption className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
         <span className="min-w-0 truncate">{archivo.name}</span>
-        <span className="tabular shrink-0">{(archivo.size / 1024).toFixed(0)} KB</span>
+        <span className="tabular shrink-0">
+          {sePuedeMover && 'Arrastrar para recorrer · '}
+          {(archivo.size / 1024).toFixed(0)} KB
+        </span>
       </figcaption>
     </figure>
   );

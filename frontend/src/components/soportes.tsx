@@ -13,7 +13,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Confirmacion } from '@/components/ui/confirmacion';
@@ -370,9 +370,37 @@ function Miniatura({
  * retina, dibujarla al tamaño de la caja deja un texto borroso que parece un
  * escaneo malo cuando el escaneo está bien.
  */
-export function LienzoPdf({ url }: { url: string }) {
+export function LienzoPdf({
+  url,
+  ajuste = 'cover',
+  ancho = 240,
+  onTamano,
+  estilo,
+}: {
+  url: string;
+  /**
+   * `cover` recorta por arriba; `contain` enseña la hoja entera.
+   *
+   * En una miniatura de 104px recortar es lo correcto: lo que distingue un
+   * recibo de otro es el membrete. En una previsualización que existe para
+   * COMPROBAR una cifra, recortar esconde justo lo que se viene a leer, que
+   * casi nunca está en la cabecera.
+   */
+  ajuste?: 'cover' | 'contain';
+  /** A cuántos píxeles se dibuja la página. Más, para verla grande. */
+  ancho?: number;
+  /** El tamaño real del dibujo, para quien necesite encuadrarlo. */
+  onTamano?: (ancho: number, alto: number) => void;
+  /** Si se pasa, el lienzo se mide por aquí en vez de llenar su caja. */
+  estilo?: CSSProperties;
+}) {
   const lienzo = useRef<HTMLCanvasElement>(null);
   const [fallo, setFallo] = useState(false);
+
+  // El aviso del tamaño va en una ref: en las dependencias del efecto haría
+  // que el PDF se volviera a dibujar en cada render del padre.
+  const onTamanoRef = useRef(onTamano);
+  onTamanoRef.current = onTamano;
 
   useEffect(() => {
     let vivo = true;
@@ -385,9 +413,8 @@ export function LienzoPdf({ url }: { url: string }) {
 
         if (!vivo || !lienzo.current) return;
 
-        const ANCHO = 240;
         const base = pagina.getViewport({ scale: 1 });
-        const vista = pagina.getViewport({ scale: ANCHO / base.width });
+        const vista = pagina.getViewport({ scale: ancho / base.width });
 
         const contexto = lienzo.current.getContext('2d');
         if (!contexto) return;
@@ -398,6 +425,7 @@ export function LienzoPdf({ url }: { url: string }) {
         await pagina.render({ canvas: lienzo.current, canvasContext: contexto, viewport: vista })
           .promise;
         await documento.cleanup();
+        if (vivo) onTamanoRef.current?.(vista.width, vista.height);
       } catch {
         if (vivo) setFallo(true);
       }
@@ -406,11 +434,19 @@ export function LienzoPdf({ url }: { url: string }) {
     return () => {
       vivo = false;
     };
-  }, [url]);
+  }, [url, ancho]);
 
   if (fallo) return <FileWarning className="size-6 text-muted-foreground" aria-hidden="true" />;
 
-  return <canvas ref={lienzo} className="size-full object-cover object-top" aria-hidden="true" />;
+  if (estilo) return <canvas ref={lienzo} style={estilo} aria-hidden="true" />;
+
+  return (
+    <canvas
+      ref={lienzo}
+      className={cn('size-full', ajuste === 'cover' ? 'object-cover object-top' : 'object-contain')}
+      aria-hidden="true"
+    />
+  );
 }
 
 /** Los saltos del zoom. Fijos y pocos: un control continuo pide precisión que
