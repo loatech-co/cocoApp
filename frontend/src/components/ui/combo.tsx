@@ -81,23 +81,57 @@ export function Combo({
     busca.trim() !== '' &&
     !opciones.some((o) => normal(o.etiqueta) === normal(busca));
 
+  /*
+    Lo que se ve en el campo, abierto o cerrado, se pueda tocar o no.
+
+    ── Por qué es UNO y no dos ─────────────────────────────────────────────
+    Estaba escrito dos veces, y las dos copias decían cosas distintas: la del
+    control bloqueado pintaba SIEMPRE el marcador e ignoraba lo elegido. En la
+    ficha de un movimiento de un centro estático —donde los tres desplegables
+    salen bloqueados a propósito, porque esa clasificación no se toca desde
+    aquí— eso significaba abrir un movimiento bien clasificado y leer «Elige
+    una opción» en centro, grupo y concepto. El formulario decía que no estaba
+    clasificado, que es exactamente lo contrario de lo que pasaba.
+
+    Bloqueado quiere decir «esto no se cambia desde aquí», nunca «esto está
+    vacío». Es la misma forma que ya tenía `Select`, que sí reutilizaba su
+    contenido.
+  */
+  const dentro = (abierto: boolean) => (
+    <>
+      {/*
+        El relleno de arriba va en el TEXTO y no en el botón: con el botón
+        relleno, la flecha quedaría ocho píxeles baja porque `items-center` la
+        centraría en la caja de contenido en vez de en el campo.
+      */}
+      <span
+        data-lleno={elegida ? 'si' : 'no'}
+        data-vacio={elegida ? undefined : ''}
+        className={cn(
+          'min-w-0 flex-1 truncate text-left',
+          !elegida && 'text-muted-foreground',
+          enCampo && 'pt-4',
+        )}
+      >
+        {elegida?.etiqueta ?? vacio}
+      </span>
+      <ChevronDown
+        className={cn('size-4 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
+        aria-hidden="true"
+      />
+    </>
+  );
+
   if (deshabilitado) {
+    // Bloqueado no puede ser un botón que abre nada: se pinta igual pero sin
+    // desplegable detrás, para que el foco no caiga en una trampa.
     return (
       <span
         id={id}
         aria-disabled="true"
         className={cn(disparadorDeCampo(), 'cursor-not-allowed opacity-50')}
       >
-        <span
-          data-vacio=""
-          className={cn(
-            'min-w-0 flex-1 truncate text-left text-muted-foreground',
-            enCampo && 'pt-4',
-          )}
-        >
-          {vacio}
-        </span>
-        <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden="true" />
+        {dentro(false)}
       </span>
     );
   }
@@ -115,31 +149,7 @@ export function Combo({
       claseCaja="w-full min-w-0"
       claseDisparador={disparadorDeCampo()}
       idDisparador={id}
-      disparador={({ abierto }) => (
-        <>
-          {/*
-            El relleno de arriba va en el TEXTO y no en el botón: con el botón
-            relleno, la flecha quedaría ocho píxeles baja porque
-            `items-center` la centraría en la caja de contenido en vez de en
-            el campo.
-          */}
-          <span
-            data-lleno={elegida ? 'si' : 'no'}
-            data-vacio={elegida ? undefined : ''}
-            className={cn(
-              'min-w-0 flex-1 truncate text-left',
-              !elegida && 'text-muted-foreground',
-              enCampo && 'pt-4',
-            )}
-          >
-            {elegida?.etiqueta ?? vacio}
-          </span>
-          <ChevronDown
-            className={cn('size-4 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
-            aria-hidden="true"
-          />
-        </>
-      )}
+      disparador={({ abierto }) => dentro(abierto)}
     >
       {(cerrar) => (
         <ComboPanel
