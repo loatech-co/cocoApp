@@ -76,12 +76,52 @@ para ella (`accent-foreground`, `secondary-foreground`): nunca blanco por
 costumbre. Blanco sobre un acento claro da 1.23:1, muy por debajo del
 4.5:1 que exige el texto.
 
-## 4 bis. En un modal, nada de mayúsculas sostenidas
+## 4 bis. Nada de mayúsculas sostenidas
 
 Una palabra en versalitas pierde la silueta que la hace reconocible
-—"Soporte" y "SOPORTE" no se leen igual de rápido— y dentro de una ficha,
-donde todo el texto es corto, un rótulo gritando compite con lo que
-titula. El tamaño y el gris ya dicen que es un rótulo.
+—"Soporte" y "SOPORTE" no se leen igual de rápido— y donde todo el texto
+es corto, un rótulo gritando compite con lo que titula. El tamaño y el
+gris ya dicen que es un rótulo.
+
+Vale para los modales, para los rótulos de los indicadores del resumen y
+para los grupos de secciones del riel. El interletraje abierto que suele
+acompañarlas también se va: el tema lo declara en cero y Geist ya viene
+cerrada de por sí.
+
+## 4 ter. `accent` es lo que responde; `muted` es lo que está quieto
+
+El acento marca lo que está **bajo el cursor o el foco**: la opción de un
+desplegable, la fila de una lista, un día del calendario, la zona donde se
+va a soltar un archivo. `muted` marca lo que está **elegido**: la opción ya
+seleccionada, la superficie de un bloque dentro de otro.
+
+Con el mismo color para las dos, pasar por encima de lo que ya está
+elegido no cambia nada y el control parece trabado.
+
+**La excepción, y su regla.** Donde lo elegido no tiene otra señal —un
+botón de la barra de herramientas encendido, que no lleva ni marca ni
+texto que lo diga— los papeles se invierten: el acento va a lo encendido y
+`muted` al paso del cursor. El color más fuerte va siempre a lo que no
+tiene otra forma de decirse. Una opción de menú con su palomita no lo
+necesita; un icono encendido, sí.
+
+## 4 quater. Lo que flota se dibuja en un solo sitio
+
+Un desplegable, un calendario, un modal, una confirmación, la pista de una
+gráfica y el aviso de una esquina comparten `SUPERFICIE_FLOTANTE`
+(`components/ui/superficie.ts`): color, tinta, sombra y canto.
+
+El canto es **obligatorio** y sale del borde del tema. La sombra sola no
+delimita en ningún modo: en claro el popover es blanco sobre un lienzo
+casi blanco, y en oscuro la sombra es negra sobre un fondo casi negro.
+
+Una sombra sobre algo que ya tiene color no es una superficie flotante: es
+un objeto que se levanta —una ficha mientras se arrastra— y esa sí puede
+escribirse suelta.
+
+`components/ui/superficie.test.ts` lee el código fuente y falla si alguien
+vuelve a escribir la sombra a mano o a separar un panel con un negro o un
+blanco inventados.
 
 ## 5. El rojo es solo para errores
 
@@ -92,7 +132,14 @@ verdad salió mal y a lo que no se puede deshacer.
 ## 6. Componentes, no copias
 
 Si algo aparece en dos pantallas, es un componente. La tabla de
-movimientos, el paginador, la barra de filtros, el calendario y la dona
-lo son. Dos copias empiezan iguales y se separan: una aprende a marcar lo
-que falta por clasificar y la otra no, y la misma plata acaba viéndose
+movimientos, el paginador, la barra de filtros, el calendario, la dona, la
+cabecera de una pantalla (`components/cabecera-de-pagina.tsx`) y el bloque
+dentro de una tarjeta (`components/ui/bloque.tsx`) lo son.
+
+Lo que no puede ser un componente —porque hace falta un `<label>` o un
+`<button>` en vez de un `<div>`— exporta su CLASE, como hacen `BLOQUE` y
+`SUPERFICIE_FLOTANTE`. Sigue siendo un solo sitio donde cambia el aspecto.
+
+Dos copias empiezan iguales y se separan: una aprende a marcar lo que
+falta por clasificar y la otra no, y la misma plata acaba viéndose
 distinta según por dónde se entre.

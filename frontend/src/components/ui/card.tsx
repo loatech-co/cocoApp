@@ -37,7 +37,10 @@ export function CardHeader({ className, ...props }: ComponentProps<'div'>) {
 }
 
 export function CardTitle({ className, ...props }: ComponentProps<'h2'>) {
-  return <h2 className={cn('text-lg font-semibold leading-tight tracking-tight', className)} {...props} />;
+  // Sin `tracking-tight`: el tema declara el interletraje en cero y Geist ya
+  // viene cerrada de por sí. Apretarla apiña los títulos de 18px; el −0.025em
+  // que llevaba compensaba una familia más suelta que ya no es esta.
+  return <h2 className={cn('text-lg font-semibold leading-tight', className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: ComponentProps<'p'>) {
