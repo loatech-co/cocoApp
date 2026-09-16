@@ -557,70 +557,33 @@ export function MovimientoModal({
 
           {paso === 'formulario' && (
             <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
-              {editandoCampos ? (
-                <>
-                  {/*
-                ── Dos columnas: el papel a un lado, los campos al otro ──────
-                Nadie se sabe de memoria el valor de un recibo con sus
-                decimales. Si para comprobar lo que se leyó hay que cerrar la
-                ficha, abrir el archivo y volver, lo que pasa de verdad es que
-                nadie comprueba nada y se guarda lo que salga.
+              {/*
+                ── La misma rejilla, se esté leyendo o editando ────────────
+                Y la MISMA en el árbol, no una copia en cada rama: la columna
+                del papel se pinta una vez, fuera del condicional, así que al
+                pulsar «Editar» React no la desmonta. Escrita dentro de las dos
+                ramas, el soporte se descargaba otra vez en cada cambio —el
+                marco se vaciaba, aparecía el girador y volvía la misma imagen
+                que ya estaba en la memoria de la pestaña—.
 
-                Con el soporte al lado, verificar es mirar a la izquierda.
+                Lo único que cambia de lado a lado es la columna derecha: los
+                campos o lo que dicen.
               */}
-                  {/* La MITAD para el papel. Con una columna angosta el recibo
-                  salía del tamaño de un sello y no se podía leer la cifra, que
-                  es lo único que esta columna existe para permitir. */}
-                  {/*
-                  ── `lg:flex-1` y `lg:auto-rows-fr` ──────────────────────────
-                  Es lo que hace que la columna del soporte llegue hasta abajo,
-                  y hacen falta las dos.
+              <div className={REJILLA_DE_LA_FICHA}>
+                <div className="flex flex-col">
+                  {movimiento ? (
+                    <Soportes transactionId={movimiento.id} />
+                  ) : (
+                    <SoportesPendientes
+                      archivos={pendientes}
+                      onAñadir={(nuevos) => setPendientes((p) => [...p, ...nuevos])}
+                      onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
+                    />
+                  )}
+                </div>
 
-                  `flex-1` le da a la REJILLA el alto que sobra en el
-                  formulario. Sola no sirve de nada: una rejilla reparte su alto
-                  entre sus FILAS, y con `grid-auto-rows: auto` la única que hay
-                  mide lo que mida su contenido, así que se queda arriba y el
-                  espacio que acaba de ganar queda vacío debajo. `auto-rows-fr`
-                  es lo que estira esa fila hasta el alto de la rejilla; de ahí
-                  para abajo las dos columnas se estiran solas, que es lo que
-                  hace una celda por defecto.
-
-                  No puede encoger nada: la rejilla es un elemento flexible y
-                  su `min-height` automático es su contenido, así que la fila
-                  nunca baja de lo que miden los campos.
-
-                  Y solo a partir de `lg`, que es donde hay DOS columnas. Por
-                  debajo son dos filas apiladas, y repartir el alto entre ellas
-                  daría media ficha al cuadro de soltar y media a los campos.
-              */}
-                  <div className={REJILLA_DE_LA_FICHA}>
-                    {/*
-                  ── Sin rótulo, y estirando hasta el pie de la columna ──────
-                  El rótulo decía "Soporte" encima de un cuadro punteado que ya
-                  dice qué es: un sitio donde se sueltan archivos. Dos veces lo
-                  mismo, y la primera gastaba un renglón del alto de la ficha.
-                  Lo que hacía falta no era el título sino que el propio cuadro
-                  lo dijera, y eso se arregla en su texto.
-
-                  `h-full` sobre la columna y `flex` dentro: la rejilla ya
-                  iguala el alto de las dos columnas, pero el contenido de esta
-                  medía lo que medía el cuadro y dejaba medio metro de vacío
-                  debajo. Estirando, el área donde se suelta es toda la columna
-                  —que es además un blanco mucho más fácil de acertar con un
-                  archivo agarrado—.
-                */}
-                    <div className="flex flex-col">
-                      {movimiento ? (
-                        <Soportes transactionId={movimiento.id} />
-                      ) : (
-                        <SoportesPendientes
-                          archivos={pendientes}
-                          onAñadir={(nuevos) => setPendientes((p) => [...p, ...nuevos])}
-                          onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
-                        />
-                      )}
-                    </div>
-
+                {editandoCampos ? (
+                  <>
                     {/*
                   El orden es el de la pregunta: de qué centro, de qué grupo,
                   qué concepto. Y después cuánto y cuándo, que son los dos
@@ -802,28 +765,8 @@ export function MovimientoModal({
                         />
                       </Campo>
                     </div>
-                  </div>
-                </>
-              ) : (
-                /*
-                  ── Leer tiene la MISMA forma que editar ──────────────────
-                  El papel a la izquierda y lo que dice a la derecha, en las
-                  dos. Antes leer era una columna sola con los soportes
-                  colgando al final: al pulsar «Editar» la ficha se
-                  recomponía entera —el recibo saltaba de abajo a la
-                  izquierda y los datos se encogían a media caja—, y lo que
-                  uno estaba mirando cambiaba de sitio en el mismo gesto en
-                  que iba a tocarlo.
-
-                  Es la misma rejilla, con las mismas medidas: media ficha
-                  para el papel, que es lo único que permite leer una cifra
-                  en un recibo.
-                */
-                <div className={REJILLA_DE_LA_FICHA}>
-                  <div className="flex flex-col">
-                    {movimiento && <Soportes transactionId={movimiento.id} />}
-                  </div>
-
+                  </>
+                ) : (
                   <div className="flex flex-col gap-4">
                     <VistaDeLectura
                       tipo={type}
@@ -850,8 +793,8 @@ export function MovimientoModal({
                       </Seccion>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {error && (
                 <p role="alert" className="text-sm text-destructive">
@@ -1320,25 +1263,31 @@ function Via({
       )}
     >
       {/*
-        Decorativo, y por eso desbordado.
+        Decorativo, centrado y recortado.
 
-        Un pastel de 36px arriba a la izquierda de una tarjeta de 300 por 500
-        es una mota. A este tamaño y saliéndose por la esquina ya no es un
-        icono que etiqueta la opción: es la cara de la tarjeta, y el ojo la
-        reconoce antes de leer nada.
+        Un pastel de 36px en una esquina de una tarjeta de 300 por 500 es una
+        mota. A este tamaño y en el centro ya no es un icono que etiqueta la
+        opción: es el fondo de la tarjeta, y el ojo lo reconoce antes de leer
+        nada.
 
-        `pointer-events-none` porque quien pulsa es la tarjeta entera; sin
-        esto, el círculo se come los clics de su cuarto superior izquierdo y
-        el cursor cambia de forma sobre él como si fuera otra cosa.
+        Centrado con `left-1/2 top-1/2` y media traslación en cada eje, que es
+        lo único que centra algo cuyo tamaño no conoce el padre. El círculo es
+        más ancho que la tarjeta, así que el `overflow-hidden` de arriba lo
+        recorta contra sus cantos y lo que se ve es una franja: exactamente lo
+        que hace que se lea como fondo y no como una figura puesta encima.
 
-        Su icono ya va `aria-hidden` desde `ChipIcono`: lo que esta tarjeta
+        `pointer-events-none` porque quien se pulsa es la tarjeta entera; sin
+        esto el disco se come los clics de todo su centro y el cursor cambia
+        de forma sobre él como si fuera otra cosa.
+
+        Su glifo ya va `aria-hidden` desde `ChipIcono`: lo que esta tarjeta
         anuncia lo dice su texto.
       */}
       <ChipIcono
         Icono={Icono}
         color={color}
         tamano="cartel"
-        className="pointer-events-none absolute -left-8 -top-8 sm:-left-10 sm:-top-10"
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
       />
 
       <span className="relative min-w-0">
@@ -1351,7 +1300,20 @@ function Via({
             </Etiqueta>
           )}
         </span>
-        <span className="mt-0.5 block text-xs text-muted-foreground">{ayuda}</span>
+        {/*
+          ── `min-h-8`: dos renglones reservados ─────────────────────────────
+          El texto va pegado al pie de la tarjeta, así que lo que queda fijo es
+          el BORDE DE ABAJO del bloque y no su principio: una ayuda de dos
+          renglones empuja su título dieciséis píxeles hacia arriba y el de al
+          lado, con una ayuda de uno, se queda donde estaba. Tres títulos a dos
+          alturas distintas en una fila de tres tarjetas iguales se lee como un
+          descuadre, aunque cada tarjeta por separado esté bien.
+
+          Reservando el alto de dos renglones —`text-xs` mide uno por cada
+          rem—, todas las ayudas ocupan lo mismo aunque una llene solo la
+          mitad, y los tres títulos caen en la misma línea.
+        */}
+        <span className="mt-0.5 block min-h-8 text-xs text-muted-foreground">{ayuda}</span>
       </span>
     </button>
   );

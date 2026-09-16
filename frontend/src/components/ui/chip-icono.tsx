@@ -49,29 +49,42 @@ export function ChipIcono({
   /**
    * `sm` para una fila de menú; `default` para una tarjeta.
    *
-   * `cartel` es otra cosa: no marca, DECORA. Es el pastel a cuatro veces su
-   * tamaño, pensado para desbordar la esquina de la tarjeta que lo lleva y
-   * quedar recortado por ella. Ahí ya no dice «esto es un gasto» —eso lo dice
-   * el texto de debajo— sino que le da cara a una tarjeta que de otro modo
-   * sería un rectángulo con dos renglones dentro.
+   * `cartel` es otra cosa: no marca, DECORA. Es el pastel a seis veces su
+   * tamaño, centrado en la tarjeta que lo lleva y recortado por sus cantos.
+   * Ahí ya no dice «esto es un gasto» —eso lo dice el texto de debajo— sino
+   * que le da cara a una tarjeta que de otro modo sería un rectángulo con dos
+   * renglones dentro.
    */
   tamano?: 'sm' | 'default' | 'cartel';
   className?: string;
 }) {
   const { fondo, tinta } = CHIPS[color];
+  const cartel = tamano === 'cartel';
 
   const CAJA = {
     sm: 'size-9',
     default: 'size-11 sm:size-12',
-    // Crece con la tarjeta: apilada en un teléfono mide un tercio de la
-    // pantalla y un círculo de 160 se la comería entera.
-    cartel: 'size-32 sm:size-40',
+    // Crece con la tarjeta: apilada en un teléfono ocupa un tercio de la
+    // ficha, así que el círculo no puede medir lo mismo que en una columna
+    // de quinientos de alto. En los dos casos es MÁS ANCHO que la tarjeta y
+    // se recorta contra sus cantos: es lo que lo convierte en fondo.
+    cartel: 'size-72 sm:size-90',
   } as const;
 
   const GLIFO = {
     sm: 'size-4',
     default: 'size-5',
-    cartel: 'size-12 sm:size-16',
+    /*
+      ── Por qué el glifo del cartel va al 40 % ────────────────────────────
+      A este tamaño el dibujo deja de ser un icono y pasa a ser una figura de
+      cien píxeles en la esquina de la tarjeta. A plena tinta compite con el
+      título que hay debajo —y el título es lo que hay que leer—, así que se
+      queda como una marca de agua: se reconoce la forma, no se lee.
+
+      Los otros dos tamaños NO lo llevan: ahí el pastel sí etiqueta, y un
+      icono de 16 al 40 % no se distingue.
+    */
+    cartel: 'size-28 opacity-40 sm:size-34',
   } as const;
 
   return (
@@ -83,10 +96,21 @@ export function ChipIcono({
       )}
       style={{ backgroundColor: fondo, color: tinta }}
     >
+      {/*
+        ── El cartel va SIN relleno: solo el trazo ──────────────────────────
+        Los otros dos tamaños pintan el interior del glifo con su propia tinta
+        al 20 %, y a 16 o 20 píxeles eso es lo que le da cuerpo a un dibujo que
+        si no sería un alambre.
+
+        A cien píxeles pasa lo contrario: ese 20 % es una mancha de la mitad
+        del círculo, y el dibujo deja de reconocerse por su forma —que es todo
+        lo que tiene que hacer aquí— para convertirse en un borrón. Sin
+        relleno, lo que queda es la línea, que a ese tamaño se lee sola.
+      */}
       <Icono
         className={GLIFO[tamano]}
-        fill="currentColor"
-        fillOpacity={0.2}
+        fill={cartel ? 'none' : 'currentColor'}
+        fillOpacity={cartel ? undefined : 0.2}
         strokeWidth={1.9}
         aria-hidden
       />
