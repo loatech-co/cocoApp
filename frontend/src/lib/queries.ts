@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   Category,
   Dashboard,
+  Soporte,
   TransactionsMeta,
   Tag,
   Transaction,
@@ -25,7 +26,24 @@ export const keys = {
   transactions: (filtros?: object) => ['transactions', filtros ?? {}] as const,
   dashboard: (filtros?: object) => ['dashboard', filtros ?? {}] as const,
   historia: ['historia'] as const,
+  soportes: (transactionId: number) => ['soportes', transactionId] as const,
 };
+
+/**
+ * Los soportes de un movimiento: la FICHA de cada recibo, no el recibo.
+ *
+ * El binario se pide aparte y solo cuando alguien lo mira (`apiBlob`): traer
+ * ocho PDFs de doscientos kilos cada vez que se abre un movimiento sería pagar
+ * por adelantado por lo que casi nadie va a abrir.
+ */
+export function useSoportes(transactionId: number | undefined) {
+  return useQuery({
+    queryKey: keys.soportes(transactionId ?? 0),
+    enabled: transactionId !== undefined,
+    queryFn: async (): Promise<Soporte[]> =>
+      (await apiFetch<Soporte[]>(`/transactions/${transactionId}/soportes`)).data,
+  });
+}
 
 function useInvalidarDerivados() {
   const queryClient = useQueryClient();
@@ -128,6 +146,12 @@ export function useCrearCategoria() {
       parent_id?: number;
       color?: string;
       icon?: string;
+      recurrente?: boolean;
+      /** Solo en un centro de costos: bloquea reclasificarlo desde la tabla. */
+      estatico?: boolean;
+      periodicidad?: Category['periodicidad'];
+      dia_de_pago?: number | null;
+      mes_de_pago?: number | null;
     }) => {
       const respuesta = await apiFetch<Category>('/categories', {
         method: 'POST',
@@ -309,6 +333,32 @@ export function useActualizarCategoria() {
       (await apiFetch<Category>(`/categories/${id}`, { method: 'PATCH', body: cambios })).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+/**
+ * Funde un concepto en otro: sus movimientos pasan al destino y él desaparece.
+ *
+ * Invalida TODO lo que dependa de categorías —el árbol, el resumen, la lista
+ * de movimientos— porque después de esto no hay una sola pantalla que siga
+ * mostrando lo mismo.
+ */
+export function useUnificarCategoria() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ origenId, destinoId }: { origenId: number; destinoId: number }) =>
+      (
+        await apiFetch<{ movidos: number; destino: Category }>(
+          `/categories/${origenId}/unificar`,
+          { method: 'POST', body: { destino_id: destinoId } },
+        )
+      ).data,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: keys.categories });
+      void queryClient.invalidateQueries({ queryKey: ['transactions'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });

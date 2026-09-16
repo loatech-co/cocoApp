@@ -262,6 +262,34 @@ export interface Category {
   icon: string | null;
   sort_order: number;
   is_archived: boolean;
+  /**
+   * ── Recurrencia ─────────────────────────────────────────────────────────
+   * Vive en la categoría y no en el movimiento porque lo que se repite es el
+   * CONCEPTO —"el alquiler"— y no el pago de un mes concreto. Solo tiene
+   * sentido en los conceptos: un centro de costos no se paga.
+   */
+  recurrente: boolean;
+  periodicidad: Periodicidad | null;
+  /** Día del mes en que se debe pagar. Los meses cortos se recortan. */
+  dia_de_pago: number | null;
+  /**
+   * El mes de referencia del ciclo, 1–12. Solo cuando la periodicidad no es
+   * mensual: "cada tres meses" no dice CUÁLES, y este dato los fija.
+   */
+  mes_de_pago: number | null;
+  /**
+   * ── Estático ────────────────────────────────────────────────────────────
+   * Lo que cuelga de un centro de costos estático no se reclasifica: ni desde
+   * la tabla de movimientos ni desde el modal de un movimiento. Para la
+   * estructura que no se improvisa —el alquiler no cambia de grupo un
+   * martes—, y para que un clic distraído en una tabla larga no mueva plata
+   * de sitio sin que nadie lo note.
+   *
+   * La salida es hacer el centro dinámico en Centros de costos: un acto
+   * deliberado, en otra pantalla. Solo se lee del CENTRO; un grupo o un
+   * concepto heredan lo que diga el suyo.
+   */
+  estatico: boolean;
   children?: Category[];
 }
 
@@ -324,6 +352,25 @@ export interface TrendPoint {
   count: number;
 }
 
+/** Cada cuánto vuelve un pago recurrente. */
+export const PERIODICIDADES = ['mensual', 'bimestral', 'trimestral', 'semestral', 'anual'] as const;
+export type Periodicidad = (typeof PERIODICIDADES)[number];
+
+/** Un pago que se espera este mes y todavía no aparece. */
+export interface PagoPendiente {
+  category_id: Id;
+  name: string;
+  /** El camino hasta él: "Costos fijos · Vivienda". */
+  path: string;
+  periodicidad: Periodicidad;
+  due_date: DateOnlyString;
+  /**
+   * Lo que se espera que cueste: el promedio de los meses CON pago dentro de
+   * los tres anteriores. `null` si nunca se ha pagado.
+   */
+  expected_amount: DecimalString | null;
+}
+
 /** Los tres niveles del modelo, de arriba abajo. */
 export const NIVELES_DE_CATEGORIA = ['centro de costos', 'grupo', 'concepto'] as const;
 export type NivelDeCategoria = (typeof NIVELES_DE_CATEGORIA)[number];
@@ -344,6 +391,11 @@ export interface Dashboard {
     count: number;
   };
   by_category: SpendingByCategory[];
+  /**
+   * El gasto del rango repartido por CENTRO DE COSTOS, siempre en el nivel de
+   * arriba aunque `by_category` haya bajado: cuánto fue fijo y cuánto variable.
+   */
+  expense_by_center: SpendingByCategory[];
   /** Qué nivel está desglosando `by_category`. */
   breakdown_level: NivelDeCategoria;
   /**
@@ -351,7 +403,33 @@ export interface Dashboard {
    * las filas son los centros de costos y no cuelgan de nadie.
    */
   breakdown_parent: { id: Id; name: string } | null;
+  /**
+   * Lo que hace falta este mes para los costos fijos: la suma de todos los
+   * conceptos recurrentes que vencen en el mes, pagados o no. Del mes en
+   * curso, no del rango filtrado.
+   */
+  required_budget: DecimalString;
+  /** Lo que se espera pagar este mes y todavía no aparece. */
+  pending: PagoPendiente[];
   trend: TrendPoint[];
+}
+
+/**
+ * El soporte de un movimiento: el recibo que prueba que ese pago existió.
+ *
+ * Es la FICHA, no el archivo. El binario se pide a un endpoint autenticado que
+ * comprueba de quién es antes de entregarlo; aquí no hay ninguna URL que
+ * funcione por sí sola, y esa es la idea.
+ */
+export interface Soporte {
+  id: Id;
+  /** 1..N: el "1 de 3" del nombre del archivo, el orden en que se miran. */
+  orden: number;
+  nombre_archivo: string;
+  mime_type: string;
+  tamano: number;
+  /** Si el binario está de verdad en el almacén. */
+  disponible: boolean;
 }
 
 export interface UserPreference {

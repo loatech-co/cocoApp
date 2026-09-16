@@ -82,3 +82,8 @@ respaldos/
 # Data financiera real. No entra al repositorio, pero SÍ vive en disco para
 # poder recargarla sin volver a pedirla.
 datos/
+
+# Soportes: recibos reales. Ni al repositorio ni por descuido.
+api/.soportes/
+api/.soportes-test/
+soportes-origen/

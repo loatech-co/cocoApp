@@ -1,4 +1,10 @@
-import { Injectable, type CallHandler, type ExecutionContext, type NestInterceptor } from '@nestjs/common';
+import {
+  Injectable,
+  StreamableFile,
+  type CallHandler,
+  type ExecutionContext,
+  type NestInterceptor,
+} from '@nestjs/common';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -24,7 +30,8 @@ function hasEnvelope(value: unknown): value is Envelope<unknown> {
  * cuando necesitan poblar `meta` (paginación, por ejemplo) devuelven ya
  * `{ data, meta }` y el interceptor lo respeta.
  *
- * Un 204 no lleva cuerpo: se deja pasar tal cual.
+ * Un 204 no lleva cuerpo: se deja pasar tal cual. Un `StreamableFile` tampoco
+ * se toca: es un binario, no un recurso.
  */
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, Envelope<T> | T> {
@@ -35,6 +42,13 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Envelope<T> |
           return payload;
         }
         if (hasEnvelope(payload)) {
+          return payload;
+        }
+        // Un archivo se entrega tal cual. Envuelto en `{ data, meta }` deja de
+        // ser un flujo y pasa a ser un objeto vacío serializado a JSON: el
+        // navegador recibe `{"data":{},"meta":{}}` con el content-type de un
+        // PDF y no enseña nada, sin ningún error que lo explique.
+        if (payload instanceof StreamableFile) {
           return payload;
         }
         return { data: payload, meta: {} };

@@ -91,6 +91,55 @@ export async function apiFetch<TData, TMeta = Record<string, unknown>>(
   return payload as ApiResponse<TData, TMeta>;
 }
 
+/**
+ * Un binario de la API: un recibo, por ejemplo.
+ *
+ * ── Por qué no basta con poner la URL en un `<img>` ─────────────────────────
+ * Porque el token de sesión vive en MEMORIA, no en una cookie (ver
+ * `session.ts`), así que una petición que hace el navegador por su cuenta
+ * —la de un `src`— sale sin cabecera de autorización y el servidor la rechaza
+ * con razón. El archivo hay que pedirlo desde el código, con el token, y
+ * convertirlo en un `blob:` que el visor sí puede consumir.
+ *
+ * Eso no es un rodeo: es lo que permite que el archivo NO tenga una URL
+ * pública que funcione para quien la tenga.
+ *
+ * Quien llama se encarga de `URL.revokeObjectURL` cuando termina, o el blob se
+ * queda en memoria hasta que se recargue la página.
+ */
+export async function apiBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+  if (tokenPorExpirar()) {
+    await renovar();
+  }
+
+  let respuesta = await enviar(path, { signal });
+
+  if (respuesta.status === 401) {
+    const renovada = await renovar();
+    if (!renovada) {
+      descartarSesion();
+      throw new ApiClientError(401, 'unauthenticated', 'Tu sesión expiró. Vuelve a entrar.');
+    }
+    respuesta = await enviar(path, { signal });
+  }
+
+  if (!respuesta.ok) {
+    // El cuerpo de un error SÍ es JSON aunque la ruta devuelva binarios.
+    const payload: unknown = await respuesta.json().catch(() => null);
+    const error = (payload as ApiError | null)?.error;
+    if (respuesta.status === 401) descartarSesion();
+
+    throw new ApiClientError(
+      respuesta.status,
+      error?.code ?? 'unknown_error',
+      error?.message ?? 'No se pudo abrir el archivo.',
+      error?.details ?? [],
+    );
+  }
+
+  return respuesta.blob();
+}
+
 function enviar(path: string, options: RequestOptions): Promise<Response> {
   const { method = 'GET', body, idempotencyKey, signal } = options;
   const token = tokenActual();

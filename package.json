@@ -28,6 +28,9 @@
     "deploy:web": "bash scripts/desplegar-frontend.sh",
     "deploy:api": "bash scripts/desplegar-api.sh",
     "respaldar": "bash scripts/respaldar.sh",
-    "cargar": "dotenv -e api/.env.supabase -- node scripts/cargar-historico.mjs"
+    "cargar": "dotenv -e api/.env.supabase -- node scripts/cargar-historico.mjs",
+    "soportes:reporte": "node scripts/soportes/reporte.mjs",
+    "soportes:importar": "dotenv -e api/.env -- node scripts/soportes/importar.mjs",
+    "soportes:sincronizar": "bash scripts/soportes/sincronizar.sh"
   }
 }

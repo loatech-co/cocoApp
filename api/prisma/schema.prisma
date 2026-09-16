@@ -188,6 +188,7 @@ model User {
   preferences   UserPreference[]
   importBatches ImportBatch[]
   categoryRules CategoryRule[]
+  soportes      Soporte[]
 
   @@index([status], map: "idx_users_status")
   @@map("users")
@@ -266,6 +267,65 @@ model Account {
 // Se archivan, no se borran. Si aun así se borrara una, las transacciones
 // sobreviven SIN categoría (SetNull) — coherente con la no-rigidez.
 
+/// Cada cuánto vuelve un pago recurrente.
+enum Periodicidad {
+  mensual
+  bimestral
+  trimestral
+  semestral
+  anual
+}
+
+/// ── Soportes ─────────────────────────────────────────────────────────────
+/// El recibo de un movimiento: el PDF o la foto que prueba que ese pago
+/// existió.
+///
+/// ── Por qué una tabla y no una columna ──────────────────────────────────
+/// Porque un pago puede traer varios papeles —la factura de Claro llega
+/// partida en tres— y una columna obligaría a inventar un separador, a
+/// mantenerlo y a no poder ordenarlos.
+///
+/// ── Por qué el archivo NO está aquí ─────────────────────────────────────
+/// En la tabla vive la FICHA; el binario vive en un almacén privado fuera del
+/// árbol web. Guardar megabytes en la base engorda cada respaldo, cada
+/// consulta y cada restauración, y no compra nada: igual hace falta un
+/// endpoint que verifique la sesión antes de entregarlo.
+model Soporte {
+  id            BigInt   @id @default(autoincrement())
+  uuid          String   @unique(map: "uq_soportes_uuid") @default(uuid()) @db.Char(36)
+  /// DENORMALIZADO desde el movimiento, y a propósito.
+  ///
+  /// El control de acceso se resuelve con un `where` sobre esta columna, sin
+  /// pasar por un join. Un día alguien escribe una consulta que se olvida del
+  /// join y entrega el recibo de otro; con el dueño aquí, la consulta que se
+  /// olvida no devuelve nada en vez de devolver de más.
+  userId        BigInt   @map("user_id")
+  transactionId BigInt   @map("transaction_id")
+  /// 1..N. Es el "1 de 3" del nombre del archivo: el orden en que se miran.
+  orden         Int      @default(1)
+  /// El nombre con el que llegó. Solo para enseñarlo y para descargarlo con
+  /// un nombre que signifique algo; NUNCA se usa para construir una ruta.
+  nombreArchivo String   @map("nombre_archivo") @db.VarChar(255)
+  mimeType      String   @map("mime_type") @db.VarChar(100)
+  /// La ruta RELATIVA dentro del almacén privado, y la escribe el servidor:
+  /// `<userId>/<uuid>.<ext>`. Opaca a propósito —no lleva nada que venga del
+  /// nombre original— para que no exista forma de salirse del almacén.
+  storageKey    String   @unique(map: "uq_soportes_storage_key") @map("storage_key") @db.VarChar(500)
+  tamano        Int
+  /// sha256 del CONTENIDO. Es lo que hace la importación idempotente: el
+  /// mismo archivo dos veces es el mismo soporte, aunque cambie de nombre.
+  huella        String   @db.Char(64)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_soportes_user")
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_soportes_transaction")
+
+  @@unique([transactionId, huella], map: "uq_soportes_tx_huella")
+  @@index([transactionId, orden], map: "idx_soportes_tx_orden")
+  @@index([userId], map: "idx_soportes_user")
+  @@map("soportes")
+}
+
 model Category {
   id         BigInt       @id @default(autoincrement())
   userId     BigInt       @map("user_id")
@@ -277,6 +337,35 @@ model Category {
   sortOrder  Int          @default(0) @map("sort_order")
   isArchived Boolean      @default(false) @map("is_archived")
   createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
+
+  /// ── Recurrencia ───────────────────────────────────────────────────────
+  /// Vive en la CATEGORÍA y no en el movimiento porque lo que se repite es el
+  /// concepto —"el alquiler"— y no el pago concreto de un mes. Puesta en cada
+  /// movimiento habría que repetirla doce veces al año y mantenerlas de
+  /// acuerdo entre sí; y al mirar un mes sin pagar no habría ningún movimiento
+  /// donde leerla, que es justo cuando hace falta saber que falta.
+  recurrente   Boolean       @default(false)
+  periodicidad Periodicidad?
+  /// Día del mes en que se debe pagar. 1–31, y los meses cortos se recortan al
+  /// último día: un 31 en febrero es el 28.
+  diaDePago    Int?          @map("dia_de_pago") @db.SmallInt
+  /// El mes de referencia del ciclo, 1–12. Solo cuando la periodicidad NO es
+  /// mensual: un pago trimestral no cae "cada tres meses" a secas, cae en
+  /// marzo, junio, septiembre y diciembre, o en enero, abril, julio y octubre,
+  /// según dónde empiece. Sin este dato, "cada tres meses" no dice cuáles.
+  mesDePago    Int?          @map("mes_de_pago") @db.SmallInt
+
+  /// ── Estático ──────────────────────────────────────────────────────────
+  /// Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica: ni desde
+  /// la tabla de movimientos ni desde el modal de un movimiento. Es para la
+  /// estructura que no se improvisa —el alquiler no cambia de grupo un
+  /// martes— y para que un clic distraído en una tabla de cien filas no mueva
+  /// plata de sitio sin que nadie lo note. La salida es hacer el centro
+  /// dinámico en Centros de costos.
+  ///
+  /// Solo se lee del CENTRO, que es el nivel de arriba: un grupo o un concepto
+  /// heredan lo que diga el suyo.
+  estatico     Boolean       @default(false)
 
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_categories_user")
   parent       Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull, map: "fk_categories_parent")
@@ -379,6 +468,7 @@ model Transaction {
   category Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_tx_category")
   splits   TransactionSplit[]
   tags     TransactionTag[]
+  soportes Soporte[]
 
   /// SetNull y no Cascade: borrar el registro de una importación no puede
   /// llevarse por delante movimientos que la persona ya dio por buenos.
