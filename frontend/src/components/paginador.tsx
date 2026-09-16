@@ -1,26 +1,37 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 /**
  * Paginador. Uno solo para toda la app.
  *
  * Existe como componente y no suelto en cada pantalla porque las reglas de
  * borde —deshabilitar en los extremos, no mostrarse con una sola página,
- * decir en qué página se está— se olvidan la mitad de las veces si hay que
- * reescribirlas. Con uno compartido, corregirlo una vez lo corrige en todas.
+ * qué números caben— se olvidan la mitad de las veces si hay que reescribirlas.
+ *
+ * ── Por qué los números y no solo "anterior / siguiente" ────────────────────
+ * Porque con ocho páginas uno quiere saltar a la cinco, no pulsar tres veces.
+ * Y porque el número encendido dice dónde está uno sin tener que leer un
+ * contador aparte.
+ *
+ * ── Por qué es un grupo pegado y no botones sueltos ─────────────────────────
+ * Un solo borde alrededor de todo lo presenta como UN control: los botones
+ * sueltos con espacio entre ellos se leen como acciones distintas, y "3" no es
+ * una acción distinta de "4".
  */
 export function Paginador({
   pagina,
   total,
   porPagina,
   onCambiar,
+  className,
 }: {
   pagina: number;
   /** Total de FILAS, no de páginas: es lo que devuelve la API. */
   total: number;
   porPagina: number;
   onCambiar: (pagina: number) => void;
+  className?: string;
 }) {
   const paginas = Math.max(1, Math.ceil(total / porPagina));
 
@@ -28,47 +39,112 @@ export function Paginador({
   // solo añade ruido.
   if (paginas <= 1) return null;
 
-  const desde = (pagina - 1) * porPagina + 1;
-  const hasta = Math.min(pagina * porPagina, total);
-
   return (
-    <nav
-      className="flex flex-wrap items-center justify-between gap-3"
-      aria-label="Paginación"
-    >
-      {/* Cuántas filas se están viendo, no solo el número de página: "51 a 100
-          de 377" dice dónde está uno; "página 2 de 8" obliga a calcularlo. */}
-      <p className="text-sm text-muted-foreground" aria-live="polite">
-        {desde} a {hasta} de {total}
-      </p>
+    <nav className={cn('flex justify-center', className)} aria-label="Paginación">
+      <ul className="inline-flex items-stretch divide-x divide-border overflow-hidden rounded-lg border border-border bg-card">
+        <li>
+          <Celda
+            deshabilitada={pagina <= 1}
+            onClick={() => onCambiar(pagina - 1)}
+            aria-label="Página anterior"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Anterior</span>
+          </Celda>
+        </li>
 
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={pagina <= 1}
-          onClick={() => onCambiar(pagina - 1)}
-        >
-          <ChevronLeft className="size-4" aria-hidden="true" />
-          <span className="hidden sm:inline">Anterior</span>
-        </Button>
+        {numerosVisibles(pagina, paginas).map((n, i) =>
+          n === null ? (
+            <li key={`salto-${i}`}>
+              <span className="grid h-9 w-9 place-items-center text-sm text-muted-foreground">…</span>
+            </li>
+          ) : (
+            <li key={n}>
+              <Celda
+                actual={n === pagina}
+                onClick={() => onCambiar(n)}
+                aria-label={`Página ${n}`}
+                aria-current={n === pagina ? 'page' : undefined}
+              >
+                <span className="tabular w-4 text-center">{n}</span>
+              </Celda>
+            </li>
+          ),
+        )}
 
-        <span className="px-1 text-sm tabular text-muted-foreground">
-          {pagina} / {paginas}
-        </span>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={pagina >= paginas}
-          onClick={() => onCambiar(pagina + 1)}
-        >
-          <span className="hidden sm:inline">Siguiente</span>
-          <ChevronRight className="size-4" aria-hidden="true" />
-        </Button>
-      </div>
+        <li>
+          <Celda
+            deshabilitada={pagina >= paginas}
+            onClick={() => onCambiar(pagina + 1)}
+            aria-label="Página siguiente"
+          >
+            <span className="hidden sm:inline">Siguiente</span>
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </Celda>
+        </li>
+      </ul>
     </nav>
   );
+}
+
+function Celda({
+  children,
+  actual = false,
+  deshabilitada = false,
+  onClick,
+  ...props
+}: {
+  children: React.ReactNode;
+  actual?: boolean;
+  deshabilitada?: boolean;
+  onClick: () => void;
+} & React.ComponentProps<'button'>) {
+  return (
+    <button
+      type="button"
+      disabled={deshabilitada}
+      onClick={onClick}
+      className={cn(
+        'flex h-9 items-center justify-center gap-2 px-3 text-sm font-medium transition-colors',
+        'outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
+        actual ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+        deshabilitada && 'cursor-not-allowed opacity-40 hover:bg-transparent',
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Qué números se dibujan. `null` es un salto (…).
+ *
+ * Con cincuenta páginas no caben cincuenta botones, así que se muestran los
+ * extremos, la actual y sus vecinas. Los extremos siempre: son los dos saltos
+ * que uno quiere dar —al principio y al final— y sin ellos hay que pulsar
+ * "siguiente" cuarenta veces.
+ */
+export function numerosVisibles(pagina: number, paginas: number, hueco = 1): (number | null)[] {
+  if (paginas <= 7) return Array.from({ length: paginas }, (_, i) => i + 1);
+
+  const cerca = new Set<number>([1, paginas, pagina]);
+  for (let d = 1; d <= hueco; d += 1) {
+    if (pagina - d > 1) cerca.add(pagina - d);
+    if (pagina + d < paginas) cerca.add(pagina + d);
+  }
+
+  const orden = [...cerca].sort((a, b) => a - b);
+  const salida: (number | null)[] = [];
+
+  for (let i = 0; i < orden.length; i += 1) {
+    // Un salto de UN número no se dibuja con puntos: "1 … 3" ocupa lo mismo
+    // que "1 2 3" y esconde una página por nada.
+    if (i > 0 && orden[i] - orden[i - 1] > 1) {
+      salida.push(orden[i] - orden[i - 1] === 2 ? orden[i] - 1 : null);
+    }
+    salida.push(orden[i]);
+  }
+
+  return salida;
 }

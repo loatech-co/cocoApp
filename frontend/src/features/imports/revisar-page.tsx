@@ -280,21 +280,15 @@ function Fila({
             <div className="flex flex-wrap items-center gap-2">
               <Select
                 tamano="sm"
-                value={fila.category_id ?? ''}
-                onChange={(evento) =>
-                  cambiar({
-                    category_id: evento.target.value ? Number(evento.target.value) : null,
-                  })
-                }
-                aria-label="Categoría"
-              >
-                <option value="">Sin categoría</option>
-                {categorias.map((categoria) => (
-                  <option key={categoria.id} value={categoria.id}>
-                    {categoria.name}
-                  </option>
-                ))}
-              </Select>
+                etiqueta="Categoría"
+                vacio="Sin categoría"
+                valor={fila.category_id === null ? '' : String(fila.category_id)}
+                opciones={categorias.map((categoria) => ({
+                  valor: String(categoria.id),
+                  etiqueta: categoria.name,
+                }))}
+                onCambiar={(v) => cambiar({ category_id: v === '' ? null : Number(v) })}
+              />
 
               {fila.confidence !== null && fila.category_id !== null && (
                 <span
@@ -308,15 +302,14 @@ function Fila({
 
               <Select
                 tamano="sm"
-                value={fila.type}
-                onChange={(evento) =>
-                  cambiar({ type: evento.target.value as 'expense' | 'income' })
-                }
-                aria-label="Tipo"
-              >
-                <option value="expense">Gasto</option>
-                <option value="income">Ingreso</option>
-              </Select>
+                etiqueta="Tipo"
+                valor={fila.type}
+                opciones={[
+                  { valor: 'expense', etiqueta: 'Gasto' },
+                  { valor: 'income', etiqueta: 'Ingreso' },
+                ]}
+                onCambiar={(v) => cambiar({ type: v as 'expense' | 'income' })}
+              />
 
               <div className="ml-auto flex gap-1">
                 <BotonDeEstado

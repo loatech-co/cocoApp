@@ -1,5 +1,7 @@
 import {
   LayoutDashboard,
+  PanelLeftClose,
+  PanelLeftOpen,
   LogOut,
   Plus,
   ScrollText,
@@ -12,7 +14,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
-import { Logo } from '@/components/logo';
+import { Logo, LogoCompacto } from '@/components/logo';
 import { Menu, MenuOpcion, MenuSeparador } from '@/components/menu';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { useAuth } from '@/lib/auth-context';
@@ -68,6 +70,24 @@ export function AppShell() {
   const llevaCuentas = useLlevaCuentas();
   const [capturaAbierta, setCapturaAbierta] = useState(false);
 
+  /**
+   * La barra plegada.
+   *
+   * Se recuerda en `localStorage` y no en la URL ni en el servidor: es una
+   * preferencia de ESTA pantalla, de este momento. Pegarle un enlace a alguien
+   * no debería plegarle la barra, y cambiarla no tiene por qué viajar a la red.
+   */
+  const [plegada, setPlegada] = useState(
+    () => localStorage.getItem('sidenav-plegada') === 'si',
+  );
+
+  function alternarBarra(): void {
+    setPlegada((antes) => {
+      localStorage.setItem('sidenav-plegada', antes ? 'no' : 'si');
+      return !antes;
+    });
+  }
+
   const seccionesVisibles = SECCIONES.filter(
     (seccion) => seccion.requiere !== 'cuentas' || llevaCuentas,
   );
@@ -78,20 +98,59 @@ export function AppShell() {
       {/* 13rem y no 16: el enlace más largo, "Centros de costos", mide unos
           120px a 14px, y con el icono y los márgenes cabe de sobra. Lo que
           sobraba de ancho se lo estaba quitando al contenido. */}
-      <aside className="fixed inset-y-0 left-0 hidden w-52 flex-col bg-sidebar p-3 md:flex">
-        <div className="mb-8 flex justify-center px-2 pt-3">
-          {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo dejaría
-              demasiado bajo para leerse en una barra de 256px. */}
-          {/* Lima sobre la barra oscura: 10.1:1 de contraste, y es el acento de
-              la marca. En blanco se leería igual pero sin carácter. */}
-          <Logo className="h-7 w-auto text-lima-300" />
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 hidden flex-col bg-sidebar p-3 transition-[width] md:flex',
+          plegada ? 'w-16' : 'w-52',
+        )}
+      >
+        <div
+          className={cn(
+            'mb-8 flex items-center pt-3',
+            // Plegada, la marca se centra porque no hay nada más en la fila;
+            // desplegada va a la izquierda y el botón de plegar al otro
+            // extremo, que es donde uno lo busca.
+            plegada ? 'justify-center px-0' : 'justify-between px-2',
+          )}
+        >
+          {plegada ? (
+            <LogoCompacto className="size-7 text-lima-300" />
+          ) : (
+            <>
+              {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo
+                  dejaría demasiado bajo para leerse. Lima sobre la barra
+                  oscura: 10.1:1 de contraste, y es el acento de la marca. */}
+              <Logo className="h-7 w-auto text-lima-300" />
+              <button
+                type="button"
+                onClick={alternarBarra}
+                aria-label="Plegar la barra lateral"
+                title="Plegar la barra lateral"
+                className="grid size-8 shrink-0 place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
+              >
+                <PanelLeftClose className="size-[18px]" aria-hidden="true" />
+              </button>
+            </>
+          )}
         </div>
+
+        {plegada && (
+          <button
+            type="button"
+            onClick={alternarBarra}
+            aria-label="Desplegar la barra lateral"
+            title="Desplegar la barra lateral"
+            className="mb-2 grid h-9 w-full place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
+          >
+            <PanelLeftOpen className="size-[18px]" aria-hidden="true" />
+          </button>
+        )}
 
         <nav className="flex flex-1 flex-col gap-1" aria-label="Secciones">
           {seccionesVisibles.map(({ to, label, Icono, exact }) => (
-            <Enlace key={to} to={to} exact={exact}>
+            <Enlace key={to} to={to} exact={exact} plegada={plegada} titulo={label}>
               <Icono className="size-[18px] shrink-0" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden="true" />
-              {label}
+              {!plegada && label}
             </Enlace>
           ))}
 
@@ -101,28 +160,25 @@ export function AppShell() {
                 Administración
               </p>
               {SECCIONES_DE_ADMIN.map(({ to, label, Icono, exact }) => (
-                <Enlace key={to} to={to} exact={exact}>
+                <Enlace key={to} to={to} exact={exact} plegada={plegada} titulo={label}>
                   <Icono className="size-[18px] shrink-0" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden="true" />
-                  {label}
+                  {!plegada && label}
                 </Enlace>
               ))}
             </>
           )}
         </nav>
 
+        {/* Al pie, no en una cabecera aparte: una franja del ancho entero de la
+            pantalla solo para decir con qué cuenta se está dentro es mucha
+            franja. Aquí abajo ocupa un sitio que ya estaba vacío. */}
+        <div className="mt-4 border-t border-sidebar-border pt-3">
+          <MenuDeLaCuenta plegada={plegada} />
+        </div>
       </aside>
 
       {/* Contenido */}
-      <div className="md:pl-52">
-        {/*
-          Cabecera. `sticky` y no `fixed`: así ocupa su sitio en el flujo y el
-          contenido no queda tapado debajo, que es lo que obliga a compensar con
-          un padding que luego nadie recuerda por qué está.
-        */}
-        <header className="sticky top-0 z-20 flex items-center justify-end gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur md:px-8 lg:px-10">
-          <MenuDeLaCuenta />
-        </header>
-
+      <div className={cn('transition-[padding]', plegada ? 'md:pl-16' : 'md:pl-52')}>
         <main className="w-full px-4 pb-28 pt-5 md:px-8 md:pb-16 md:pt-10 lg:px-10">
           <Outlet />
         </main>
@@ -192,7 +248,7 @@ export function AppShell() {
  * un avatar es "¿con qué cuenta estoy dentro?", y dos personas pueden llamarse
  * igual pero no tener el mismo correo.
  */
-function MenuDeLaCuenta() {
+function MenuDeLaCuenta({ plegada }: { plegada: boolean }) {
   const { usuario, esAdmin, salir } = useAuth();
   const navegar = useNavigate();
   const nombre = usuario?.display_name ?? usuario?.email ?? '?';
@@ -200,28 +256,36 @@ function MenuDeLaCuenta() {
   return (
     <Menu
       etiqueta="Tu cuenta"
-      ancho="w-64"
+      ancho="w-60"
+      alineado="izquierda"
+      claseCaja="w-full"
+      claseDisparador={cn(
+        'flex w-full min-w-0 items-center gap-2.5 rounded-lg py-2 text-left transition-colors hover:bg-sidebar-hover outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        plegada ? 'justify-center px-0' : 'px-2',
+      )}
       disparador={() => (
-        <span className="flex items-center gap-3">
-          <span className="hidden text-sm font-medium sm:block">{nombre}</span>
+        <>
           <Avatar nombre={nombre} />
-        </span>
+          {/* El correo debajo y más pequeño: la pregunta que uno se hace al
+              mirar aquí es "¿con qué cuenta estoy dentro?", y dos personas
+              pueden llamarse igual pero no tener el mismo correo. */}
+          {!plegada && (
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium text-sidebar-foreground">
+                {usuario?.display_name ?? '—'}
+              </span>
+              {usuario?.email && (
+                <span className="block truncate text-[11px] text-sidebar-muted">
+                  {usuario.email}
+                </span>
+              )}
+            </span>
+          )}
+        </>
       )}
     >
       {(cerrar) => (
         <>
-          <div className="flex items-center gap-3 px-3 py-2">
-            <Avatar nombre={nombre} />
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold">{nombre}</span>
-              {usuario?.email && (
-                <span className="block truncate text-xs text-muted-foreground">{usuario.email}</span>
-              )}
-            </span>
-          </div>
-
-          <MenuSeparador />
-
           <MenuOpcion
             Icono={UserCog}
             onClick={() => {
@@ -293,16 +357,32 @@ function Avatar({ nombre }: { nombre: string }) {
   );
 }
 
-function Enlace({ to, exact, children }: { to: string; exact: boolean; children: ReactNode }) {
+function Enlace({
+  to,
+  exact,
+  plegada = false,
+  titulo,
+  children,
+}: {
+  to: string;
+  exact: boolean;
+  plegada?: boolean;
+  /** El nombre de la sección. Plegada, es lo único que queda para saberlo. */
+  titulo?: string;
+  children: ReactNode;
+}) {
   return (
     <NavLink
       to={to}
       end={exact}
+      title={plegada ? titulo : undefined}
+      aria-label={plegada ? titulo : undefined}
       className={({ isActive }) =>
         cn(
           // Esquinas suaves, no pastilla: en una barra estrecha la pastilla se
           // come el ancho por los lados y el texto queda pegado al icono.
-          'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+          'flex items-center gap-2.5 rounded-lg py-2.5 text-sm font-medium transition-colors',
+          plegada ? 'justify-center px-0' : 'px-3',
           isActive
             ? 'bg-sidebar-hover text-sidebar-active'
             : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground',

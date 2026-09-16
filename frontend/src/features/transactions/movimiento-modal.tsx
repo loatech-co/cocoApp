@@ -277,17 +277,13 @@ function Cascada({
     <label className="flex flex-col gap-1.5">
       <span className="text-xs font-medium text-muted-foreground">{etiqueta}</span>
       <Select
-        value={valor ?? ''}
-        disabled={deshabilitado || opciones.length === 0}
-        onChange={(e) => onElegir(e.target.value === '' ? undefined : Number(e.target.value))}
-      >
-        <option value="">Sin elegir</option>
-        {opciones.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.name}
-          </option>
-        ))}
-      </Select>
+        etiqueta={etiqueta}
+        vacio="Sin elegir"
+        valor={valor === undefined ? '' : String(valor)}
+        deshabilitado={deshabilitado}
+        opciones={opciones.map((o) => ({ valor: String(o.id), etiqueta: o.name }))}
+        onCambiar={(v) => onElegir(v === '' ? undefined : Number(v))}
+      />
     </label>
   );
 }

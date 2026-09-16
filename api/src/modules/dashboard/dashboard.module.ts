@@ -203,6 +203,7 @@ export class DashboardService {
           }),
         },
         select: {
+          date: true,
           period: true,
           type: true,
           amount: true,
@@ -268,10 +269,33 @@ export class DashboardService {
       ]),
     );
 
+    const llaves = [...cubos.keys()];
+    const primerCubo = llaves[0];
+    const ultimoCubo = llaves[llaves.length - 1];
+
     for (const m of movimientos) {
       // Las transferencias no son gasto ni ingreso: solo cambian de bolsillo.
       if (m.type === 'transfer') continue;
-      const cubo = cuboDe(m.period, granularidad);
+
+      // ── Por qué la fecha del cubo depende de la granularidad ──────────────
+      // `period` es el MES al que pertenece el gasto, y como fecha siempre es
+      // el día 1. En un eje de meses eso es exactamente lo que se quiere. En
+      // un eje de DÍAS, en cambio, todos los movimientos de agosto caían el 1
+      // de agosto: la línea daba un pico el primer día y quedaba plana el
+      // resto, aunque los pagos fueran el 13 y el 25.
+      const cuando = granularidad === 'dia' ? m.date : m.period;
+
+      let cubo = cuboDe(cuando, granularidad);
+
+      if (!cubos.has(cubo)) {
+        // El pago cayó fuera del eje: la factura de marzo pagada el 6 de abril
+        // entra en el rango por su periodo, pero su día no existe en un eje de
+        // marzo. Se arrima al extremo más cercano en vez de descartarse — si
+        // se descartara, la línea sumaría menos que el total de arriba y las
+        // dos cifras de la misma pantalla se contradirían.
+        cubo = cuboDe(cuando, granularidad) < primerCubo ? primerCubo : ultimoCubo;
+      }
+
       const actual = cubos.get(cubo);
       if (!actual) continue;
       const monto = toMoney(m.amount);

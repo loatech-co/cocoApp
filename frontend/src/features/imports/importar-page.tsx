@@ -198,19 +198,16 @@ export function ImportarPage() {
             </Label>
             <Select
               id="cuenta"
+              etiqueta="Cuenta"
               className="max-w-sm"
-              value={cuentaId ?? ''}
-              onChange={(evento) =>
-                setCuentaId(evento.target.value ? Number(evento.target.value) : null)
-              }
-            >
-              <option value="">Sin cuenta</option>
-              {activas.map((cuenta: Account) => (
-                <option key={cuenta.id} value={cuenta.id}>
-                  {cuenta.name}
-                </option>
-              ))}
-            </Select>
+              vacio="Sin cuenta"
+              valor={cuentaId === null ? '' : String(cuentaId)}
+              opciones={activas.map((cuenta: Account) => ({
+                valor: String(cuenta.id),
+                etiqueta: cuenta.name,
+              }))}
+              onCambiar={(v) => setCuentaId(v === '' ? null : Number(v))}
+            />
           </CardContent>
         </Card>
       )}

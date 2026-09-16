@@ -209,15 +209,11 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
               <Label htmlFor="type">Tipo</Label>
               <Select
                 id="type"
-                value={type}
-                onChange={(evento) => setType(evento.target.value as Account['type'])}
-              >
-                {TIPOS.map((opcion) => (
-                  <option key={opcion.valor} value={opcion.valor}>
-                    {opcion.etiqueta}
-                  </option>
-                ))}
-              </Select>
+                etiqueta="Tipo de cuenta"
+                valor={type}
+                opciones={TIPOS.map((o) => ({ valor: o.valor, etiqueta: o.etiqueta }))}
+                onCambiar={(v) => setType(v as Account['type'])}
+              />
             </div>
 
             <div className="flex flex-col gap-2">

@@ -270,10 +270,6 @@ export function Tendencia({
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-        <Leyenda color="var(--color-chart-1)" texto="Gasto" />
-        {hayIngresos && <Leyenda color="var(--color-chart-2)" texto="Ingreso" />}
-      </div>
     </div>
   );
 }
@@ -346,18 +342,6 @@ function area(serie: number[], techo: number, total: number): string {
   return `${linea(serie, techo, total)} L ${equis(total - 1, total).toFixed(2)} 42 L ${equis(0, total).toFixed(2)} 42 Z`;
 }
 
-function Leyenda({ color, texto }: { color: string; texto: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span
-        className="inline-block h-0.5 w-5 rounded-full"
-        style={{ backgroundColor: color }}
-        aria-hidden="true"
-      />
-      {texto}
-    </span>
-  );
-}
 
 const MESES = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',

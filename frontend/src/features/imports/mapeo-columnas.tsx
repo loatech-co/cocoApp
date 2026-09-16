@@ -86,16 +86,15 @@ export function MapeoDeColumnas({
             <Select
               tamano="sm"
               id={`papel-${columna.indice}`}
-              value={columna.papel}
-              onChange={(evento) => asignar(columna.indice, evento.target.value as Papel)}
+              etiqueta="Qué contiene esta columna"
               className="w-40 shrink-0"
-            >
-              {PAPELES.map((papel) => (
-                <option key={papel.valor} value={papel.valor}>
-                  {papel.etiqueta}
-                </option>
-              ))}
-            </Select>
+              valor={columna.papel}
+              opciones={PAPELES.map((papel) => ({
+                valor: papel.valor,
+                etiqueta: papel.etiqueta,
+              }))}
+              onCambiar={(v) => asignar(columna.indice, v as Papel)}
+            />
           </li>
         ))}
       </ul>

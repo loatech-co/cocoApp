@@ -211,7 +211,16 @@ export function DashboardPage() {
           </div>
 
           <div className="flex min-w-0 flex-col gap-3">
-            <h2 className="font-display text-lg font-semibold">Movimientos</h2>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="font-display text-lg font-semibold">Movimientos</h2>
+              {(movimientos.data?.meta?.total ?? 0) > 0 && (
+                <p className="text-sm text-muted-foreground" aria-live="polite">
+                  {(pagina - 1) * POR_PAGINA + 1} a{' '}
+                  {Math.min(pagina * POR_PAGINA, movimientos.data!.meta.total)} de{' '}
+                  {movimientos.data!.meta.total}
+                </p>
+              )}
+            </div>
 
             <TablaDeMovimientos
               movimientos={movimientos.data?.data ?? []}
@@ -223,21 +232,6 @@ export function DashboardPage() {
               pie={
                 movimientos.data && movimientos.data.data.length > 0 ? (
                   <TablaPie>
-                    <tr className="border-b border-border">
-                      <Td fija divisor={false} className="text-muted-foreground">
-                        Promedio
-                      </Td>
-                      <Td />
-                      <Td />
-                      <Td />
-                      <Td />
-                      <Td alineado="derecha" className="tabular">
-                        {formatCOP(
-                          Number(movimientos.data.meta.sum_expense ?? 0) /
-                            Math.max(1, movimientos.data.meta.total),
-                        )}
-                      </Td>
-                    </tr>
                     <tr>
                       <Td fija divisor={false}>
                         Total · {movimientos.data.meta.total} movimientos

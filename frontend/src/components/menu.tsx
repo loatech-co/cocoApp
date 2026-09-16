@@ -4,6 +4,9 @@ import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+const ROL = { menu: 'menu', panel: 'dialog', lista: 'listbox' } as const;
+const ARIA = { menu: 'menu', panel: 'dialog', lista: 'listbox' } as const;
+
 /**
  * Un desplegable.
  *
@@ -24,6 +27,8 @@ export function Menu({
   alineado = 'derecha',
   ancho = 'w-64',
   tipo = 'menu',
+  claseCaja,
+  claseDisparador,
   disparador,
   children,
 }: {
@@ -36,11 +41,16 @@ export function Menu({
   alineado?: 'izquierda' | 'derecha';
   ancho?: string;
   /**
-   * `menu` es una lista de opciones; `panel` es un formulario dentro de un
-   * desplegable. Anunciar como menú algo que lleva selectores hace que un
-   * lector de pantalla prometa "elige una opción" y entregue otra cosa.
+   * `menu` es una lista de acciones; `panel` es un formulario dentro de un
+   * desplegable; `lista` es un campo que elige un valor entre varios.
+   * Anunciar como menú algo que lleva selectores hace que un lector de
+   * pantalla prometa "elige una opción" y entregue otra cosa.
    */
-  tipo?: 'menu' | 'panel';
+  tipo?: 'menu' | 'panel' | 'lista';
+  /** Clases de la caja que envuelve todo. Para estirarla a lo ancho. */
+  claseCaja?: string;
+  /** Clases del botón cuando se pasa un `disparador` propio. */
+  claseDisparador?: string;
   /** Reemplaza el botón por completo (el avatar, por ejemplo). */
   disparador?: (props: { abierto: boolean }) => ReactNode;
   children: ReactNode | ((cerrar: () => void) => ReactNode);
@@ -67,14 +77,17 @@ export function Menu({
   }, [abierto]);
 
   return (
-    <div ref={caja} className="relative">
+    <div ref={caja} className={cn('relative', claseCaja)}>
       {disparador ? (
         <button
           type="button"
           onClick={() => setAbierto((v) => !v)}
           aria-expanded={abierto}
-          aria-haspopup={tipo === 'menu' ? 'menu' : 'dialog'}
-          className="flex items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          aria-haspopup={ARIA[tipo]}
+          className={
+            claseDisparador ??
+            'flex items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+          }
         >
           {disparador({ abierto })}
         </button>
@@ -85,7 +98,7 @@ export function Menu({
           size={soloIcono ? 'chip-icon' : 'chip'}
           onClick={() => setAbierto((v) => !v)}
           aria-expanded={abierto}
-          aria-haspopup={tipo === 'menu' ? 'menu' : 'dialog'}
+          aria-haspopup={ARIA[tipo]}
           // Encendido cuando hay algo elegido aquí dentro, o mientras está
           // abierto: el propio estilo lo resuelve la variante.
           aria-pressed={activo || abierto}
@@ -105,7 +118,7 @@ export function Menu({
 
       {abierto && (
         <div
-          role={tipo === 'menu' ? 'menu' : 'dialog'}
+          role={ROL[tipo]}
           aria-label={etiqueta}
           className={cn(
             'absolute z-30 mt-2 overflow-hidden rounded-2xl bg-popover py-1.5',

@@ -242,17 +242,12 @@ function SelectorEnFila({
   return (
     <Select
       tamano="sm"
-      aria-label={aria}
-      value={valor ?? ''}
-      disabled={deshabilitado || opciones.length === 0}
-      onChange={(e) => onElegir(e.target.value === '' ? undefined : Number(e.target.value))}
-    >
-      <option value="">{aria}…</option>
-      {opciones.map((o) => (
-        <option key={o.id} value={o.id}>
-          {o.name}
-        </option>
-      ))}
-    </Select>
+      etiqueta={aria}
+      vacio={`${aria}…`}
+      valor={valor === undefined ? '' : String(valor)}
+      deshabilitado={deshabilitado}
+      opciones={opciones.map((o) => ({ valor: String(o.id), etiqueta: o.name }))}
+      onCambiar={(v) => onElegir(v === '' ? undefined : Number(v))}
+    />
   );
 }
