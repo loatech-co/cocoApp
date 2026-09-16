@@ -12,6 +12,7 @@ import { ToolbarFiltros, type Orden } from '@/components/toolbar-filtros';
 import { rutaSeleccionada } from '@/lib/movimientos';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Etiqueta } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
@@ -219,10 +220,16 @@ export function DashboardPage() {
               desglose={dashboard.data.expense_by_center}
               acento="expense"
             />
+            {/* Apagada, no escondida: los ingresos existen en el modelo —el
+                resumen ya los suma— y quitar la tarjeta haría creer que la
+                aplicación no sabe de ellos. Apagada dice que sabrá, y el cero
+                se queda porque es el dato de hoy: no hay ingresos
+                registrados. Es el mismo trato que la opción «Ingreso» del
+                menú de nuevo movimiento. */}
             <Kpi
               etiqueta="Ingresos del periodo"
               valor={formatCOP(dashboard.data.range.income)}
-              acento="income"
+              pronto
             />
             <Kpi
               etiqueta="Movimientos"
@@ -444,6 +451,7 @@ function Kpi({
   detalle,
   desglose,
   acento,
+  pronto = false,
 }: {
   etiqueta: string;
   valor: string;
@@ -451,6 +459,15 @@ function Kpi({
   /** En qué se reparte la cifra. Se escribe debajo, con su nombre y su monto. */
   desglose?: SpendingByCategory[];
   acento?: 'income' | 'expense';
+  /**
+   * La cifra es real pero la sección todavía no está: se apaga y se rotula.
+   *
+   * Apagada y no escondida, que es la regla de esta app para lo que va a
+   * llegar: quitarla haría creer que la aplicación no sabe de eso. Y el valor
+   * se queda a la vista —un indicador sin cifra no es un indicador— solo que
+   * sin color de dato, porque pintarlo como los demás diría que ya está vivo.
+   */
+  pronto?: boolean;
 }) {
   return (
     <Card>
@@ -466,21 +483,37 @@ function Kpi({
         texto— o el que distingue entre cosas del mismo tipo. Ninguno de los
         dos era el caso.
       */}
-      <CardContent className="p-4 sm:p-6">
+      <CardContent className={cn('p-4 sm:p-6', pronto && 'opacity-60')}>
         <div className="min-w-0">
           {/* Sin mayúsculas sostenidas ni interletraje abierto. Era el
               rótulo en versalitas del panel de control de siempre, y con la
               tipografía del tema —que declara el interletraje en cero— se lee
               como si viniera de otro producto. Un rótulo en minúsculas se lee
               de un golpe; en sostenidas hay que descifrarlo letra a letra. */}
-          <p className="text-xs font-medium text-muted-foreground">{etiqueta}</p>
+          <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <span className="min-w-0 truncate">{etiqueta}</span>
+            {/* La misma etiqueta que en el resto de la app, no un rótulo a
+                mano: `Etiqueta` ya decide su redondeo, su relleno y su
+                tamaño de letra. */}
+            {pronto && (
+              <Etiqueta tono="neutro" className="shrink-0 text-muted-foreground">
+                Pronto
+              </Etiqueta>
+            )}
+          </p>
           <p
             className={
               // `sm:text-3xl` y no unos 28px a mano: 30 es el escalón que
               // sigue a 24 en la escala, y la diferencia con 28 no la nota
               // nadie —la de tener una medida fuera de la escala, sí—.
               'tabular mt-1 truncate text-2xl font-semibold leading-tight sm:text-3xl ' +
-              (acento === 'income' ? 'text-income' : acento === 'expense' ? 'text-expense' : '')
+              (pronto
+                ? 'text-muted-foreground'
+                : acento === 'income'
+                  ? 'text-income'
+                  : acento === 'expense'
+                    ? 'text-expense'
+                    : '')
             }
           >
             {valor}
