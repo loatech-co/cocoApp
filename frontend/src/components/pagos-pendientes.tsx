@@ -115,8 +115,24 @@ export function PagosPendientes({
                       // aire a cada lado por dentro.
                       'flex w-full items-center justify-between gap-3 rounded-md px-3 py-2.5',
                       'text-left transition-colors',
+                      /*
+                        El realce va en el ACENTO COMO TINTA, no en la
+                        superficie de acento.
+
+                        `accent` es un verde apagado: sobre la tarjeta de
+                        pendientes, que ya es una superficie tenue, la fila
+                        señalada se distinguía apenas de sus vecinas. Aquí hace
+                        falta que se vea cuál se va a registrar, porque pulsarla
+                        abre una ficha con plata dentro.
+
+                        `--acento-tinta` es el mismo acento pero a plena
+                        intensidad —lima en oscuro, verde oscuro en claro—, así
+                        que al 10 % tiñe el fondo sin llegar a pintarlo y a
+                        plena tinta destaca el nombre. Es un token, así que
+                        sigue al tema: no hay ningún lima escrito a mano.
+                      */
                       onElegir
-                        ? 'cursor-pointer hover:bg-accent hover:text-accent-foreground'
+                        ? 'cursor-pointer hover:bg-acento-tinta/10 hover:text-acento-tinta'
                         : 'cursor-default',
                     )}
                   >
