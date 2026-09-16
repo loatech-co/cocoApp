@@ -21,6 +21,7 @@ import { rutaSeleccionada, ToolbarFiltros, type Orden } from '@/components/toolb
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
 import { rangoLargo } from '@/lib/fechas';
@@ -421,15 +422,6 @@ export function DashboardPage() {
   );
 }
 
-/** Cada tarjeta lleva su pastel: distinguirlas de un vistazo es más rápido
-    que leer la etiqueta de cada una. */
-const CHIPS = {
-  violeta: { fondo: 'var(--color-chip-violeta)', tinta: 'var(--color-chip-violeta-tinta)' },
-  turquesa: { fondo: 'var(--color-chip-turquesa)', tinta: 'var(--color-chip-turquesa-tinta)' },
-  verde: { fondo: 'var(--color-chip-verde)', tinta: 'var(--color-chip-verde-tinta)' },
-  lima: { fondo: 'var(--color-chip-lima)', tinta: 'var(--color-chip-lima-tinta)' },
-} as const;
-
 function Kpi({
   etiqueta,
   valor,
@@ -452,19 +444,15 @@ function Kpi({
     strokeWidth?: number;
   }>;
   acento?: 'income' | 'expense';
-  chip?: keyof typeof CHIPS;
+  chip?: ColorDeChip;
 }) {
-  const { fondo, tinta } = CHIPS[chip];
-
   return (
     <Card>
       <CardContent className="flex items-start gap-3 p-4 sm:gap-4 sm:p-6">
-        <span
-          className="flex size-11 shrink-0 items-center justify-center rounded-full sm:size-12"
-          style={{ backgroundColor: fondo, color: tinta }}
-        >
-          <Icono className="size-5" fill="currentColor" fillOpacity={0.2} strokeWidth={1.9} aria-hidden />
-        </span>
+        {/* El mismo pastel que en el menú de "Nuevo movimiento": el violeta es
+            el gasto en los dos sitios, y lo es porque el color vive en un
+            componente y no copiado en cada pantalla. */}
+        <ChipIcono Icono={Icono} color={chip} />
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {etiqueta}

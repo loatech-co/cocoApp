@@ -73,7 +73,13 @@ export function Menu({
    * filtros; `ghost` es solo el icono, para los que viven dentro de una
    * tarjeta y no tienen que competir con su contenido.
    */
-  variante?: 'herramienta' | 'ghost';
+  /**
+   * `default` es el acento: para la acción principal de una barra. Las otras
+   * dos son controles secundarios. El ALTO y el radio no se eligen aquí —los
+   * pone `size="chip"` en el botón— para que un menú mida siempre lo mismo
+   * que los filtros que tiene al lado.
+   */
+  variante?: 'herramienta' | 'ghost' | 'default';
   /** Reemplaza el botón por completo (el avatar, por ejemplo). */
   disparador?: (props: { abierto: boolean }) => ReactNode;
   children: ReactNode | ((cerrar: () => void) => ReactNode);
