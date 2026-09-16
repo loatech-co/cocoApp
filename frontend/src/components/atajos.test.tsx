@@ -67,14 +67,14 @@ describe('Los atajos', () => {
     expect(screen.queryByText('Usuarios')).toBeNull();
   });
 
-  it('«Editar» saca los menos y el hueco de añadir', () => {
+  it('«Editar» saca los menos y el hueco de agregar', () => {
     render(<Superficie />);
     expect(screen.queryByLabelText('Quitar Resumen')).toBeNull();
 
     fireEvent.click(screen.getByText('Editar'));
 
     expect(screen.getByLabelText('Quitar Resumen')).toBeTruthy();
-    expect(screen.getByText('Añadir atajo')).toBeTruthy();
+    expect(screen.getByText('Agregar atajo')).toBeTruthy();
     // Y la salida está donde estaba la entrada.
     expect(screen.getByText('Listo')).toBeTruthy();
   });
@@ -109,7 +109,7 @@ describe('Los atajos', () => {
   it('la lista de páginas enseña solo lo que NO se tiene', () => {
     render(<Superficie />);
     fireEvent.click(screen.getByText('Editar'));
-    fireEvent.click(screen.getByText('Añadir atajo'));
+    fireEvent.click(screen.getByText('Agregar atajo'));
 
     // Una fila para una página que ya se tiene solo podría significar
     // "quitar", y quitar es para lo que está el menos.
@@ -121,7 +121,7 @@ describe('Los atajos', () => {
   it('el buscador filtra sin acentos', () => {
     render(<Superficie />);
     fireEvent.click(screen.getByText('Editar'));
-    fireEvent.click(screen.getByText('Añadir atajo'));
+    fireEvent.click(screen.getByText('Agregar atajo'));
 
     fireEvent.change(screen.getByLabelText('Buscar una página'), { target: { value: 'BITA' } });
     expect(screen.getByText('No hay ninguna página con ese nombre.')).toBeTruthy();
@@ -133,7 +133,7 @@ describe('Los atajos', () => {
   it('elegir una página la añade y la saca de la lista', () => {
     render(<Superficie />);
     fireEvent.click(screen.getByText('Editar'));
-    fireEvent.click(screen.getByText('Añadir atajo'));
+    fireEvent.click(screen.getByText('Agregar atajo'));
 
     fireEvent.click(screen.getByText('Usuarios'));
 
@@ -144,12 +144,12 @@ describe('Los atajos', () => {
     expect(screen.getByText('Usuarios')).toBeTruthy();
   });
 
-  it('sin nada por añadir, la lista lo dice', () => {
+  it('sin nada por agregar, la lista lo dice', () => {
     render(<Superficie porDefecto={BIBLIOTECA.map((p) => p.ruta)} />);
     fireEvent.click(screen.getByText('Editar'));
-    fireEvent.click(screen.getByText('Añadir atajo'));
+    fireEvent.click(screen.getByText('Agregar atajo'));
 
-    expect(screen.getByText('No queda ninguna página por añadir.')).toBeTruthy();
+    expect(screen.getByText('No queda ninguna página por agregar.')).toBeTruthy();
   });
 
   it('el décimo se contesta con un aviso, uno solo por muchas veces que se pida', () => {
@@ -160,7 +160,7 @@ describe('Los atajos', () => {
       />,
     );
     fireEvent.click(screen.getByText('Editar'));
-    fireEvent.click(screen.getByText('Añadir atajo'));
+    fireEvent.click(screen.getByText('Agregar atajo'));
 
     fireEvent.click(screen.getByText('Página 9'));
     fireEvent.click(screen.getByText('Página 10'));
@@ -174,7 +174,7 @@ describe('Los atajos', () => {
     // detalle —que es el que dice cuántos caben y qué hacer— desapareciera.
     expect(screen.getAllByText('No caben más atajos')).toHaveLength(1);
     expect(
-      screen.getAllByText('El máximo son 9. Quita uno para añadir otro.'),
+      screen.getAllByText('El máximo son 9. Quita uno para agregar otro.'),
     ).toHaveLength(1);
     // Y no entró ninguno.
     expect(screen.getByText('Página 9')).toBeTruthy();

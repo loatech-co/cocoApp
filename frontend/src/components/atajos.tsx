@@ -116,7 +116,7 @@ export function useSuperficieDeAtajos({
       // La respuesta llega cuando se hace la pregunta: ni un contador
       // permanente ni un control apagado, que no contesta nada al pulsarlo.
       mostrarAviso('No caben más atajos', {
-        detalle: `El máximo son ${MAXIMO_DE_ATAJOS}. Quita uno para añadir otro.`,
+        detalle: `El máximo son ${MAXIMO_DE_ATAJOS}. Quita uno para agregar otro.`,
         tono: 'warning',
       });
     }
@@ -174,7 +174,7 @@ export function useSuperficieDeAtajos({
         )}
 
         <h2 className="min-w-0 flex-1 truncate font-display text-lg font-semibold">
-          {estado === 'eligiendo' ? 'Añadir atajo' : 'Atajos'}
+          {estado === 'eligiendo' ? 'Agregar atajo' : 'Atajos'}
         </h2>
 
         {estado === 'galeria' ? (
@@ -231,7 +231,7 @@ export function useSuperficieDeAtajos({
         {disponibles.length === 0 && (
           <p className="px-3 py-6 text-center text-sm text-muted-foreground">
             {busqueda.trim() === ''
-              ? 'No queda ninguna página por añadir.'
+              ? 'No queda ninguna página por agregar.'
               : 'No hay ninguna página con ese nombre.'}
           </p>
         )}
@@ -268,7 +268,7 @@ export function useSuperficieDeAtajos({
             className="col-span-3 flex min-h-[42px] items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
           >
             <Plus className="size-4" aria-hidden="true" />
-            Añadir atajo
+            Agregar atajo
           </button>
         )}
       </div>

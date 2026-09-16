@@ -143,6 +143,7 @@ Casos ambiguos, **no aplicados**, con la propuesta al lado.
 | tu débito | tu tarjeta débito |
 | Cuentas _(para las de usuario)_ | Usuarios — «Cuentas» son las bancarias |
 | Pasan a _(como etiqueta)_ | Categoría de destino |
+| añadir · adjuntar · cargar _(como acción)_ | **agregar** |
 
 ### Lo que sí se dice, y no se toca
 
@@ -152,6 +153,12 @@ costos**, **soporte**, **periodo**, **saldo**, **importación**, **bitácora**.
 **Dashboard** es el nombre de la primera pantalla, por decisión del producto (antes se
 llamaba «Resumen»). Es un anglicismo y se acepta como nombre propio de esa sección: no se
 traduce de vuelta, y tampoco se usa como sustantivo común en mitad de una frase.
+
+**«Agregar» es el único verbo para sumar algo**: un soporte, un atajo, una
+palabra clave. Convivían «Añadir soporte», «Adjuntar los soportes» y «Añadir
+atajo» para el mismo gesto. Ojo con lo que NO es agregar: **cargar** en el
+sentido de traer datos —«No se pudo cargar el dashboard», «Cargando el
+soporte»— se queda como está, porque ahí no se suma nada.
 
 ### Forma fija de los mensajes
 
