@@ -356,8 +356,20 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
 
               El `min(17rem, 100%)` es el seguro del teléfono: un mínimo en
               rem, a secas, desborda en cuanto el contenedor mide menos que él.
+
+              ── `items-start`: cada tarjeta mide lo suyo ────────────────────
+              Por defecto una rejilla ESTIRA sus celdas al alto de la más alta
+              de su fila. Eso se puso a propósito, para que el «Agregar
+              concepto» de todas quedara a la misma altura, y fue un mal
+              cambio: un grupo con dos conceptos acababa midiendo lo que uno
+              con doce, así que una fila con un grupo grande inflaba a los
+              otros tres y la pantalla se llenaba de vacío.
+
+              Alinear los botones no vale eso. Una tarjeta mide lo que tiene
+              dentro, y si sus pies quedan a distinta altura es porque sus
+              contenidos son distintos, que es la verdad.
             */}
-            <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(17rem,100%),1fr))]">
+            <div className="grid items-start gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(17rem,100%),1fr))]">
               {grupos.map((grupo) => (
                 <Grupo key={grupo.id} grupo={grupo} arbol={arbol} />
               ))}
@@ -389,17 +401,7 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
   const conceptos = grupo.children ?? [];
 
   return (
-    /*
-      ── Una tarjeta que llena su celda ────────────────────────────────────
-      `h-full` y columna: en una rejilla las celdas de una misma fila miden lo
-      que mida la más alta, así que sin esto una tarjeta con dos conceptos
-      quedaba flotando arriba de su celda con un palmo de vacío debajo.
-
-      Y con `mt-auto` en su botón —abajo—, el "Agregar concepto" de todas las
-      tarjetas de una fila queda a la misma altura. Pegado al último chip, cada
-      tarjeta lo tenía en un sitio distinto y la fila se leía desalineada.
-    */
-    <Bloque className="flex h-full flex-col sm:p-4">
+    <Bloque className="sm:p-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="min-w-0 truncate text-sm font-semibold">{grupo.name}</h3>
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
@@ -474,9 +476,7 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
         </ul>
       )}
 
-      {/* Al pie de la tarjeta, no pegado al último chip: así todas las de una
-          misma fila lo tienen a la misma altura. */}
-      <div className="mt-auto pt-3">
+      <div className="mt-3">
         <Button type="button" variant="ghost" size="sm" onClick={() => setCreando(true)}>
           <Plus className="size-4" aria-hidden="true" />
           Agregar concepto
@@ -558,7 +558,7 @@ function Agregar({
         type="button"
         onClick={() => setAbierto(true)}
         className={cn(
-          'flex h-full min-h-32 w-full flex-col items-center justify-center gap-2 rounded-lg p-4',
+          'flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-lg p-4',
           'border-2 border-dashed border-border text-center transition-colors',
           'text-sm font-medium text-muted-foreground',
           'hover:bg-accent hover:text-accent-foreground',
