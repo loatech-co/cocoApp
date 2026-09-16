@@ -61,16 +61,28 @@ export function ConTooltip({
             // para lograrlo cortaba antes de que la línea se llenara, así que
             // aparecía un salto donde todavía había sitio. El texto fluye.
             'max-w-[200px] whitespace-normal break-words',
-            // Tinta en los DOS temas, no el color de los desplegables. Un
-            // tooltip no es una superficie más de la app: es una nota al
-            // margen, y se lee como tal cuando contrasta con todo lo demás.
-            // En oscuro, además, el verde del desplegable quedaba más claro
-            // que la tarjeta y el globo parecía flotar hacia arriba.
-                        // 6px explícitos. En este proyecto `--radius` vale 1rem, así que
-            // `rounded-md` es 14px y `rounded-sm` 12: la escala de Tailwind
-            // está corrida y ninguno de sus nombres da un valor bajo.
-            'rounded-[6px] bg-tinta-950 px-2.5 py-1.5 text-xs font-normal text-tinta-50',
-            'shadow-[var(--sombra-flotante)] ring-1 ring-white/10',
+            // ── Invertido, y por eso NO usa la superficie compartida ──────
+            // Un tooltip no es una superficie más de la app: es una nota al
+            // margen, y se lee como tal cuando contrasta con todo lo demás. Si
+            // fuera del color de los desplegables, en oscuro quedaría más claro
+            // que la tarjeta y el globo parecería flotar hacia arriba.
+            //
+            // `foreground` sobre `background` con los papeles cambiados: la
+            // tinta de la página hace de fondo y el fondo hace de tinta. Así se
+            // invierte solo con el tema —oscuro en claro, claro en oscuro— sin
+            // que haya que declarar dos colores ni acordarse de mantenerlos.
+            // Antes eran `tinta-950` y `tinta-50`, dos hexadecimales de la
+            // paleta anterior que el cambio de tema no tocó.
+            //
+            // El canto es el mismo borde del tema que el resto de lo que flota;
+            // era un blanco al 10 % que en claro no pintaba nada.
+            //
+            // 6px es `rounded-sm`: `--radius` menos 4. El comentario de antes
+            // decía que la escala estaba corrida y que ningún nombre daba un
+            // valor bajo —cierto cuando `--radius` valía 1rem, falso desde que
+            // vale 0.625rem—, así que el valor a mano ya no hace falta.
+            'rounded-sm bg-foreground px-2.5 py-1.5 text-xs font-normal text-background',
+            'shadow-[var(--sombra-flotante)] ring-1 ring-border',
           )}
         >
           {texto}

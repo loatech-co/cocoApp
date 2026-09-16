@@ -120,7 +120,7 @@ export function Calendario({
           <span
             key={d}
             aria-hidden="true"
-            className="grid h-8 place-items-center text-xs font-medium text-muted-foreground"
+            className="grid h-8 select-none place-items-center text-xs font-medium text-muted-foreground"
           >
             {d}
           </span>
@@ -150,8 +150,12 @@ export function Calendario({
                 // Con 36px fijos, en un panel estrecho el círculo se salía por
                 // los lados de su casilla.
                 'aspect-square',
-                dentro && !extremo && 'bg-accent dark:bg-white/12',
-                dentro && extremo && desde !== hasta && 'bg-accent dark:bg-white/12',
+                // La banda del rango es `--accent`, el token del tema para lo
+                // que está señalado. Llevaba además un `dark:bg-white/12`
+                // encima: un blanco inventado que no sale de ningún token y
+                // que en oscuro pintaba la banda de gris en vez de teal.
+                dentro && !extremo && 'bg-accent',
+                dentro && extremo && desde !== hasta && 'bg-accent',
                 // Las puntas se redondean también al principio y al final de
                 // cada fila, o la banda quedaría cortada a ras contra el borde.
                 (esInicio || i % 7 === 0) && 'rounded-l-full',
@@ -165,15 +169,23 @@ export function Calendario({
                 aria-label={diaLargo(iso)}
                 aria-pressed={extremo}
                 className={cn(
-                  'size-full rounded-full text-sm transition-colors',
+                  'size-full select-none rounded-full text-sm transition-colors',
                   extremo
-                    ? 'bg-primary font-semibold text-primary-foreground'
+                    ? 'bg-primary font-semibold text-primary-foreground hover:bg-primary/90'
                     : dentro
-                      ? 'text-foreground hover:bg-muted'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                      ? 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   // Hoy lleva anillo, no relleno: el relleno es de lo elegido y
                   // competirían por significar lo mismo.
-                  iso === hoy && !extremo && 'font-semibold text-foreground ring-1 ring-inset ring-input',
+                  //
+                  // El anillo va en el acento como TINTA y no en `--input`.
+                  // `--input` es el borde de un campo, calculado para verse
+                  // contra un relleno blanco, no para distinguir una casilla de
+                  // 40px entre otras cuarenta: el círculo de hoy estaba puesto
+                  // y no se encontraba.
+                  iso === hoy &&
+                    !extremo &&
+                    'font-semibold text-foreground ring-1 ring-inset ring-acento-tinta/50',
                 )}
               >
                 {Number(iso.slice(8))}

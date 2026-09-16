@@ -71,12 +71,12 @@ export function Select({
     return (
       <span
         className={cn(
-          'flex w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg border bg-card opacity-50',
+          'flex w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg border border-input',
+          'bg-card opacity-50',
           'movil:min-h-[42px]',
-          pequeno ? 'h-9 pl-3 pr-3 text-xs' : 'h-11 pl-3 pr-3 text-sm',
+          pequeno ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',
           className,
         )}
-        style={{ borderColor: 'var(--input)' }}
         aria-disabled="true"
       >
         {disparador}
@@ -95,7 +95,11 @@ export function Select({
       ancho="w-[max(12rem,100%)]"
       claseCaja={cn('w-full min-w-0', className)}
       claseDisparador={cn(
-        'flex w-full min-w-0 items-center gap-2 rounded-lg border bg-card transition-colors',
+        // El borde es el de los CAMPOS —`--input`—, no el de los contenedores:
+        // un desplegable se rellena, y tiene que pesar igual que el campo de
+        // texto que lleva al lado en la misma fila.
+        'flex w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-card transition-colors',
+        'hover:border-ring/40',
         'outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
         // El suelo táctil: apagado y encendido miden lo mismo, o la fila salta
         // al deshabilitarse.
@@ -155,8 +159,13 @@ function Opcion({
         aria-selected={elegida}
         onClick={onClick}
         className={cn(
-          'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
-          elegida ? 'bg-muted font-medium' : 'hover:bg-muted',
+          'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
+          'movil:min-h-[42px]',
+          // Quieta en `muted`, señalada en `accent`: con el mismo color para
+          // las dos, pasar por encima de la opción ya elegida no cambia nada.
+          elegida
+            ? 'bg-muted font-medium hover:bg-accent hover:text-accent-foreground'
+            : 'hover:bg-accent hover:text-accent-foreground',
         )}
       >
         <span className="min-w-0 flex-1 truncate">{children}</span>

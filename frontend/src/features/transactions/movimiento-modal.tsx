@@ -34,6 +34,7 @@ import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
+import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { ApiClientError, apiSubir } from '@/lib/api-client';
 import { diaLargo, mesLargo } from '@/lib/fechas';
 import {
@@ -342,8 +343,8 @@ export function MovimientoModal({
         // En móvil entra desde abajo y ocupa el ancho: es el patrón que la
         // gente espera de una app, y deja el pulgar cerca de los botones.
         className={cn(
-          'max-h-[92dvh] w-full overflow-y-auto bg-popover p-5',
-          'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
+          'max-h-[92dvh] w-full overflow-y-auto p-5',
+          SUPERFICIE_FLOTANTE,
           // Más ancho: con dos columnas de campos, `max-w-lg` obligaba a que
           // cada una midiera menos que el texto que lleva dentro.
           // Más ancho desde que los soportes se ven en miniatura: con

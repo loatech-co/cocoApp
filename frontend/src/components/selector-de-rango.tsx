@@ -6,6 +6,7 @@ import { Calendario, mesDeISO, type MesVisible } from '@/components/calendario';
 import { diaLargo, rangoLargo } from '@/lib/fechas';
 import { PRESETS, rangoDe, type Filtros, type Preset } from '@/lib/filtros';
 import { useHistoria } from '@/lib/queries';
+import { SUPERFICIE_FLOTANTE, SURGE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
 /** Las dos fechas en orden, vengan como vengan: se puede pintar al revés. */
@@ -171,8 +172,9 @@ export function SelectorDeRango({
             // Anclado a la DERECHA: el control vive al final de una barra
             // alineada a la derecha, y abriendo hacia la derecha un panel de
             // 34rem se sale de la pantalla.
-            'absolute right-0 z-30 mt-2 w-[min(34rem,calc(100vw-2rem))] overflow-hidden rounded-lg bg-popover',
-            'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
+            'absolute right-0 z-30 mt-2 w-[min(34rem,calc(100vw-2rem))] origin-top-right overflow-hidden rounded-lg',
+            SUPERFICIE_FLOTANTE,
+            SURGE,
           )}
         >
           <div className="flex flex-col sm:flex-row">
@@ -194,13 +196,18 @@ export function SelectorDeRango({
                     aria-pressed={borrador.preset === p.valor}
                     title={p.ayuda}
                     className={cn(
-                      // Concéntrico con el panel: 20px del contenedor menos los
-                      // 8px de su relleno. Con un radio mayor, la esquina del
-                      // resaltado se sale de la curva del panel y se ve torcida.
-                      'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                      // Concéntrico con el panel: 10px del contenedor menos los
+                      // 8px de su relleno dan 2, y el escalón de abajo de la
+                      // escala —`rounded-md`, 8px— es el que más se le acerca
+                      // sin pasarse. Con el radio del panel, la esquina del
+                      // resaltado se sale de su curva y se ve torcida.
+                      'w-full rounded-md px-3 py-2 text-left text-sm transition-colors',
+                      'movil:min-h-[42px]',
+                      // Elegido en `muted`, señalado en `accent`: el mismo par
+                      // que en los menús y por la misma razón.
                       borrador.preset === p.valor
-                        ? 'bg-muted font-semibold text-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                        ? 'bg-muted font-semibold text-foreground hover:bg-accent hover:text-accent-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                     )}
                   >
                     {p.etiqueta}

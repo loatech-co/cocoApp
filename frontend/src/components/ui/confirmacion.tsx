@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
 /**
@@ -59,8 +60,8 @@ export function Confirmacion({
     >
       <div
         className={cn(
-          'w-full max-w-md rounded-lg bg-popover p-5',
-          'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
+          'w-full max-w-md rounded-lg p-5',
+          SUPERFICIE_FLOTANTE,
         )}
       >
         <h2 className="font-display text-lg font-semibold">{titulo}</h2>

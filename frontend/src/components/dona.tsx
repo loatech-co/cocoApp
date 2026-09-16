@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
 import { cn, formatCOP } from '@/lib/utils';
+import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 
 /**
  * Los colores de las porciones. Viven en `index.css` porque cambian con el
@@ -249,8 +250,8 @@ export function Dona({
           ref={tarjeta}
           style={{ left: `${sitio.left}px`, top: `${sitio.top}px` }}
           className={cn(
-            'pointer-events-none absolute z-10 min-w-36 rounded-lg bg-popover p-3',
-            'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
+            'pointer-events-none absolute z-10 min-w-36 rounded-lg p-3',
+            SUPERFICIE_FLOTANTE,
             // Sin medir todavía se pinta invisible: un primer fotograma en la
             // esquina y otro en su sitio se ve como un salto.
             tam.ancho === 0 && 'opacity-0',

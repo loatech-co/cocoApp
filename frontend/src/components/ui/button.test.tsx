@@ -10,11 +10,22 @@ const VARIANTES = [
   'secondary',
   'outline',
   'ghost',
+  'link',
   'destructive',
   'herramienta',
+  'campo',
 ] as const;
 
-const TAMANOS = ['default', 'sm', 'lg', 'icon', 'chip', 'chip-icon', 'icon-sm'] as const;
+/**
+ * Los DOS tamaños, y sus dos gemelos en cuadrado.
+ *
+ * Eran ocho —`default`, `lg`, `icon`, `chip`…— y esta lista se quedó nombrando
+ * los viejos cuando se redujeron: al pasarle a `cva` un tamaño que ya no
+ * existe, devuelve la base sin ninguna clase de alto, así que las
+ * comprobaciones seguían en verde comparando el vacío contra el vacío. Una
+ * prueba que mide algo inexistente no avisa de nada.
+ */
+const TAMANOS = ['sm', 'md', 'sm-icon', 'md-icon'] as const;
 
 /** Las clases que fijan el alto: `h-9`, `size-9`, `sm:size-10`… */
 const alturas = (clases: string): string[] =>
@@ -30,7 +41,23 @@ const radios = (clases: string): string[] =>
     .filter((c) => c.startsWith('rounded'))
     .sort();
 
+const peso = (clases: string): string[] =>
+  clases
+    .split(/\s+/)
+    .filter((c) => c.startsWith('font-'))
+    .sort();
+
 describe('El botón mide lo mismo con cualquier variante', () => {
+  it('los tamaños que se prueban son los que existen', () => {
+    // Si alguien añade o quita un tamaño, esta falla antes que las otras y dice
+    // exactamente qué pasó, en vez de dejarlas midiendo el vacío.
+    for (const size of TAMANOS) {
+      expect(alturas(buttonVariants({ size })), `el tamaño ${size} fija un alto`).not.toHaveLength(
+        0,
+      );
+    }
+  });
+
   for (const size of TAMANOS) {
     it(`tamaño ${size}: todas las variantes comparten alto y radio`, () => {
       // Esto es lo que se rompía: el alto y el radio vivían en la base, así que
@@ -47,15 +74,19 @@ describe('El botón mide lo mismo con cualquier variante', () => {
     });
   }
 
-  it('ninguna variante cambia el PESO de la letra', () => {
+  it('ninguna variante de ACCIÓN cambia el peso de la letra', () => {
     // Dos botones del mismo alto pero con pesos distintos se leen como dos
     // tamaños: es lo que pasaba con Cancelar contra Aplicar.
-    const peso = (clases: string): string[] =>
-      clases.split(/\s+/).filter((c) => c.startsWith('font-')).sort();
+    //
+    // `campo` queda fuera a propósito, y es la única: no es una acción sino un
+    // campo —el selector de fecha—, y lo que enseña es un VALOR. Un valor en
+    // semibold dentro de una fila de campos pesa más que la etiqueta que lo
+    // nombra, y la fila se lee al revés.
+    const deAccion = VARIANTES.filter((v) => v !== 'campo');
+    const referencia = peso(buttonVariants({ variant: 'default', size: 'sm' }));
 
-    const referencia = peso(buttonVariants({ variant: 'default', size: 'chip' }));
-    for (const variant of VARIANTES) {
-      expect(peso(buttonVariants({ variant, size: 'chip' })), variant).toEqual(referencia);
+    for (const variant of deAccion) {
+      expect(peso(buttonVariants({ variant, size: 'sm' })), variant).toEqual(referencia);
     }
   });
 

@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
 /**
@@ -69,8 +70,8 @@ export function Modal({
     >
       <div
         className={cn(
-          'max-h-[92dvh] w-full overflow-y-auto bg-popover p-5',
-          'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
+          'max-h-[92dvh] w-full overflow-y-auto p-5',
+          SUPERFICIE_FLOTANTE,
           // Pegado abajo se redondea solo arriba: las esquinas de abajo caen
           // fuera de la pantalla y curvarlas deja dos muescas del fondo.
           'rounded-t-lg sm:rounded-lg',

@@ -61,6 +61,22 @@ const buttonVariants = cva(
          */
         herramienta:
           'border border-border bg-card text-foreground hover:bg-muted aria-pressed:border-primary/30 aria-pressed:bg-accent aria-pressed:text-accent-foreground',
+        /**
+         * Un botón que hace de CAMPO: el selector de fecha, que por dentro es
+         * un botón porque abre un calendario, pero en la fila de un formulario
+         * es un campo más y tiene que leerse como tal.
+         *
+         * Se diferencia de `herramienta` en dos cosas, y las dos importan:
+         * lleva el borde de los campos —`--input`, no `--border`— y al pasar
+         * por encima TIÑE EL BORDE en vez de rellenarse. Un campo que se
+         * rellena al pasar el ratón se lee como un botón, y en una fila donde
+         * el de al lado es un `Select` que solo se tiñe, uno de los dos
+         * parpadea y el otro no.
+         *
+         * El peso también baja: lo que se lee ahí es un valor, no una acción.
+         */
+        campo:
+          'border border-input bg-card font-normal text-foreground transition-colors hover:border-ring/40 aria-expanded:border-ring',
       },
       /*
         ── DOS tamaños, y los mismos para todo ──────────────────────────────

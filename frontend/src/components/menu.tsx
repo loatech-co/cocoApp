@@ -2,6 +2,7 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { SUPERFICIE_FLOTANTE, SURGE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
 const ROL = { menu: 'menu', panel: 'dialog', lista: 'listbox' } as const;
@@ -32,6 +33,7 @@ export function Menu({
   claseDisparador,
   flotante = false,
   variante = 'herramienta',
+  sinRelleno = false,
   disparador,
   children,
 }: {
@@ -80,6 +82,16 @@ export function Menu({
    * que los filtros que tiene al lado.
    */
   variante?: 'herramienta' | 'ghost' | 'default';
+  /**
+   * Quita el acolchado del panel.
+   *
+   * El panel lleva 4px alrededor para que el resaltado de una opción sea una
+   * pastilla por dentro y no una banda que choca contra la curva de la
+   * esquina. Un panel con franjas A SANGRE —un buscador arriba con su línea,
+   * un "crear" abajo con la suya— necesita lo contrario: con el acolchado,
+   * esas líneas quedarían cortadas 4px antes de cada lado.
+   */
+  sinRelleno?: boolean;
   /** Reemplaza el botón por completo (el avatar, por ejemplo). */
   disparador?: (props: { abierto: boolean }) => ReactNode;
   children: ReactNode | ((cerrar: () => void) => ReactNode);
@@ -186,10 +198,24 @@ export function Menu({
               : undefined
           }
           className={cn(
-            'z-50 overflow-hidden rounded-lg bg-popover py-1.5',
+            'z-50 overflow-hidden rounded-lg',
+            sinRelleno ? 'p-0' : 'p-1',
+            SUPERFICIE_FLOTANTE,
+            SURGE,
+            // De dónde SALE. Un panel que crece desde su propio centro no viene
+            // de ningún sitio; creciendo desde la esquina que toca el botón,
+            // se lee como que lo despliega el botón.
+            flotante
+              ? 'origin-top'
+              : direccion === 'arriba'
+                ? alineado === 'derecha'
+                  ? 'origin-bottom-right'
+                  : 'origin-bottom-left'
+                : alineado === 'derecha'
+                  ? 'origin-top-right'
+                  : 'origin-top-left',
             flotante ? 'fixed' : 'absolute',
             !flotante && (direccion === 'arriba' ? 'bottom-full mb-2' : 'top-full mt-2'),
-            'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
             // Flotando, el ancho lo da el disparador: la clase mediría contra
             // la ventana, que no es la caja de nadie.
             !flotante && ancho,
@@ -207,12 +233,18 @@ export function Menu({
 /** El rótulo de un bloque del menú: "Ordenar por", "Filtrar por"… */
 export function MenuTitulo({ children }: { children: ReactNode }) {
   return (
-    <p className="px-3 pb-1 pt-1.5 text-xs font-semibold text-muted-foreground">{children}</p>
+    <p className="px-2.5 pb-1 pt-1.5 text-xs font-semibold text-muted-foreground">{children}</p>
   );
 }
 
+/**
+ * Una línea que cruza el panel ENTERO.
+ *
+ * El `-mx-1` anula el acolchado del panel: un separador que respeta el margen
+ * de las opciones no separa dos bloques, parece una opción más que salió mal.
+ */
 export function MenuSeparador() {
-  return <hr className="my-1.5 border-border" />;
+  return <hr className="-mx-1 my-1 border-border" />;
 }
 
 /**
@@ -255,16 +287,21 @@ export function MenuOpcion({
       disabled={deshabilitada}
       aria-disabled={deshabilitada}
       className={cn(
-        'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
+        'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
         // Una fila de menú son 36 de puntero. Con el dedo, 42.
         'movil:min-h-[42px]',
         deshabilitada
           ? 'cursor-not-allowed text-muted-foreground opacity-60'
           : peligro
           ? 'font-medium text-destructive hover:bg-destructive/10'
+          // ── Elegida y señalada NO son el mismo color ─────────────────────
+          // Lo elegido se queda en `muted`, que es la superficie quieta; lo
+          // que está bajo el cursor pasa a `accent`, que es la del tema para
+          // lo que responde. Con `muted` en los dos, pasar por encima de la
+          // opción ya elegida no cambiaba nada y el menú parecía trabado.
           : elegida
-            ? 'bg-muted font-medium text-foreground'
-            : 'text-foreground hover:bg-muted',
+            ? 'bg-muted font-medium text-foreground hover:bg-accent hover:text-accent-foreground'
+            : 'text-foreground hover:bg-accent hover:text-accent-foreground',
       )}
     >
       {Icono && <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />}

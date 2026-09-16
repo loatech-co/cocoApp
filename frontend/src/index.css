@@ -375,7 +375,13 @@
   --muted: #1b2927;
   --muted-foreground: #8a9693;
 
-  --accent: #17302c;
+  /* Sube respecto al #17302c del tema, y por la misma razón que sube toda la
+     rampa: `--accent` es la superficie de LO QUE RESPONDE —la opción bajo el
+     cursor, el botón encendido, la banda de un rango—, y casi siempre se pinta
+     sobre `--popover` (#12211f), no sobre el lienzo. Contra el popover, el
+     valor del tema daba 1.2:1: el resaltado existía y no se veía, así que los
+     desplegables parecían trabados. */
+  --accent: #1d3b36;
   --accent-foreground: #9fe5dc;
 
   --destructive: #e46e6c;
@@ -440,7 +446,9 @@
   --sidebar-muted: #8a9693;
   --sidebar-active: #5dbfb5;
   --sidebar-active-foreground: #0a1614;
-  --sidebar-hover: #17302c;
+  /* El mismo escalón que `--accent`: señalar una sección del riel y señalar
+     una opción de un menú son el mismo gesto y tienen que pesar igual. */
+  --sidebar-hover: #1d3b36;
   --sidebar-border: #1b2927;
 
   /* Negra y profunda: sobre un fondo casi negro, la sombra del tema claro no
@@ -584,6 +592,51 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LO QUE SURGE
+
+   Un panel que aparece de golpe se lee como un fallo de pintado: en un
+   fotograma no estaba y en el siguiente ocupa un tercio de la pantalla, y la
+   vista tiene que volver a buscar dónde estaba mirando.
+
+   120ms y un 4 % de escala. Es el tiempo que tarda el ojo en seguir un
+   movimiento sin que la mano lo note como espera —por debajo de 100 no se
+   percibe, por encima de 200 estorba—, y la escala dice de dónde SALE el
+   panel: del borde del botón que lo abrió.
+
+   El origen lo pone quien lo usa: un menú alineado a la izquierda crece desde
+   su esquina superior izquierda, y uno pegado al pie desde abajo. Sin eso, el
+   panel parece salir de su propio centro y flota sin venir de ningún sitio.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@utility surge {
+  animation: surgir 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Quien pide menos movimiento recibe la aparición sin el viaje —no la pierde
+   entera—: el desvanecido sigue diciendo que algo llegó. */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes surgir {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 }
 

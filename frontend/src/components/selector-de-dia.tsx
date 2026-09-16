@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Calendario } from '@/components/calendario';
 import { Button } from '@/components/ui/button';
 import { diaLargo } from '@/lib/fechas';
+import { SUPERFICIE_FLOTANTE, SURGE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
 /**
@@ -65,9 +66,9 @@ export function SelectorDeDia({
       <Button
         id={id}
         type="button"
-        variant="herramienta"
-        // `campo` y no `default`: este botón es un CAMPO, y tiene que medir y
-        // redondearse como el `Input` y el `Combo` que tiene al lado.
+        // `campo` y `md`: este botón ES un campo, y tiene que medir, teñirse
+        // y redondearse como el `Input` y el `Combo` que tiene al lado.
+        variant="campo"
         size="md"
         onClick={() => setAbierto((v) => !v)}
         disabled={deshabilitado}
@@ -90,8 +91,9 @@ export function SelectorDeDia({
           role="dialog"
           aria-label="Elegir fecha"
           className={cn(
-            'absolute left-0 z-40 mt-2 w-[min(20rem,calc(100vw-3rem))] rounded-lg bg-popover p-3',
-            'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
+            'absolute left-0 z-40 mt-2 w-[min(20rem,calc(100vw-3rem))] origin-top-left rounded-lg p-3',
+            SUPERFICIE_FLOTANTE,
+            SURGE,
           )}
         >
           <Calendario

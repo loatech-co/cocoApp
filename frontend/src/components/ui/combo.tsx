@@ -84,10 +84,9 @@ export function Combo({
         id={id}
         aria-disabled="true"
         className={cn(
-          'flex h-11 w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg border',
-          'bg-card px-3 text-sm opacity-50',
+          'flex h-11 w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg',
+          'border border-input bg-card px-3 text-sm opacity-50',
         )}
-        style={{ borderColor: 'var(--input)' }}
       >
         <span className="min-w-0 flex-1 truncate text-left text-muted-foreground">{vacio}</span>
         <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden="true" />
@@ -101,9 +100,15 @@ export function Combo({
       tipo="lista"
       alineado="izquierda"
       flotante
+      // El panel dibuja sus propias franjas a sangre —el buscador arriba, el
+      // "crear" abajo—: con el acolchado del menú, esas líneas quedarían
+      // cortadas 4px antes de cada lado.
+      sinRelleno
       claseCaja="w-full min-w-0"
       claseDisparador={cn(
-        'flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border bg-card px-3 text-sm',
+        // Borde de CAMPO, igual que el `Select` y el `Input` de la misma fila.
+        'flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-card px-3 text-sm',
+        'hover:border-ring/40',
         'outline-none transition-colors focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
       )}
       disparador={({ abierto }) => (
@@ -197,7 +202,7 @@ function ComboPanel({
         />
       </div>
 
-      <ul className="max-h-56 overflow-y-auto py-1">
+      <ul className="max-h-64 overflow-y-auto p-1">
         <li>
           <Opcion elegida={valor === ''} onClick={() => onElegir('')}>
             <span className="text-muted-foreground">{vacio}</span>
@@ -213,7 +218,7 @@ function ComboPanel({
         ))}
 
         {filtradas.length === 0 && !puedeCrear && (
-          <li className="px-3 py-2 text-sm text-muted-foreground">Nada coincide.</li>
+          <li className="px-2.5 py-2 text-sm text-muted-foreground">Nada coincide.</li>
         )}
       </ul>
 
@@ -224,7 +229,8 @@ function ComboPanel({
           disabled={creando}
           className={cn(
             'flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm',
-            'font-medium transition-colors hover:bg-muted disabled:opacity-60',
+            'font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+            'disabled:opacity-60',
           )}
         >
           <Plus className="size-4 shrink-0" aria-hidden="true" />
@@ -251,8 +257,11 @@ function Opcion({
       aria-selected={elegida}
       onClick={onClick}
       className={cn(
-        'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
-        elegida ? 'bg-muted font-medium' : 'hover:bg-muted',
+        'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
+        'movil:min-h-[42px]',
+        elegida
+          ? 'bg-muted font-medium hover:bg-accent hover:text-accent-foreground'
+          : 'hover:bg-accent hover:text-accent-foreground',
       )}
     >
       <span className="min-w-0 flex-1 truncate">{children}</span>
