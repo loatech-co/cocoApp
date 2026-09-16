@@ -1,17 +1,14 @@
 import {
   ArrowUpRight,
   Camera,
-  ExternalLink,
   Loader2,
   Lock,
   Paperclip,
   Pencil,
-  Plus,
   ScanLine,
   Sparkles,
   TrendingDown,
   TrendingUp,
-  TriangleAlert,
   Trash2,
   Upload,
   X,
@@ -24,7 +21,6 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react';
-import { Link } from 'react-router-dom';
 
 import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-recurrencia';
 import { Soportes } from '@/components/soportes';
@@ -32,10 +28,10 @@ import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChipIcono } from '@/components/ui/chip-icono';
+import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { ApiClientError, apiSubir } from '@/lib/api-client';
 import { diaLargo, mesLargo } from '@/lib/fechas';
@@ -50,7 +46,7 @@ import {
 import { cn, formatCOP } from '@/lib/utils';
 import { Camara } from './camara';
 import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
-import { normalizar, UMBRAL_DE_REVISION, type Lectura } from '@coco/lectura';
+import { normalizar, type Lectura } from '@coco/lectura';
 import type { Category, Transaction, TransactionType } from '@coco/types';
 
 /**
@@ -272,43 +268,33 @@ export function MovimientoModal({
   }
 
   /**
-   * Crea el concepto que el clasificador reconoció y el árbol no tiene.
+   * Crea un grupo o un concepto dentro de lo que ya está elegido, y lo elige.
    *
-   * Crea la rama entera si hace falta —centro, grupo y concepto— porque un
-   * concepto suelto no existe: sin su grupo no suma en ningún desglose. Y deja
-   * el nuevo elegido, que es lo que uno venía a hacer.
+   * ── Por qué aquí y no en Centros de costos ──────────────────────────────
+   * Porque el momento en que uno descubre que algo no existe es exactamente
+   * el momento en que lo está buscando. Mandarlo a otra pantalla —y a volver,
+   * y a buscar otra vez— es donde se abandona la tarea y el movimiento acaba
+   * sin clasificar.
+   *
+   * ── Por qué no vale para los centros de costos ──────────────────────────
+   * Porque un centro es la estructura de arriba y se define tres veces en la
+   * vida de una cuenta. Poder inventar uno al vuelo mientras se registra un
+   * gasto es como acaban las cuentas con "Casa", "casa" y "Hogar" siendo lo
+   * mismo. Su combo no ofrece crear, y esto no se llama desde ahí.
    */
-  async function crearLoReconocido(): Promise<void> {
-    if (!lectura?.concepto || !lectura.grupo || !lectura.centro) return;
+  async function crearDentro(nombre: string, padreId: number | undefined): Promise<void> {
+    if (nombre.trim() === '' || padreId === undefined) return;
     setError(null);
 
     try {
-      const arbolActual = categorias.data ?? [];
-      const centroExistente = arbolActual.find((c) => normalizar(c.name) === normalizar(lectura.centro!));
-      const centroId =
-        centroExistente?.id ??
-        (await crearCategoria.mutateAsync({ name: lectura.centro, kind: 'expense' })).id;
-
-      const grupoExistente = (centroExistente?.children ?? []).find(
-        (g) => normalizar(g.name) === normalizar(lectura.grupo!),
-      );
-      const grupoId =
-        grupoExistente?.id ??
-        (await crearCategoria.mutateAsync({
-          name: lectura.grupo,
-          kind: 'expense',
-          parent_id: centroId,
-        })).id;
-
       const nuevo = await crearCategoria.mutateAsync({
-        name: lectura.concepto,
+        name: nombre.trim(),
         kind: 'expense',
-        parent_id: grupoId,
+        parent_id: padreId,
       });
-
       setCategoryId(nuevo.id);
     } catch (e) {
-      setError(e instanceof ApiClientError ? e.message : 'No se pudo crear el concepto.');
+      setError(e instanceof ApiClientError ? e.message : 'No se pudo crear.');
     }
   }
 
@@ -493,168 +479,139 @@ export function MovimientoModal({
 
         {paso === 'formulario' && (
         <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
-          {lectura && <LoQueLei lectura={lectura} />}
+          {lectura && <LoQueLei />}
           {editandoCampos ? (
             <>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="mov-concepto">Concepto</Label>
-            <Input
-              id="mov-concepto"
-              ref={primerCampo}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Celsia, colegio, mercado…"
-              maxLength={255}
-              /*
-                En un centro estático el nombre tampoco se escribe aquí.
+              {/*
+                ── Dos columnas: el papel a un lado, los campos al otro ──────
+                Nadie se sabe de memoria el valor de un recibo con sus
+                decimales. Si para comprobar lo que se leyó hay que cerrar la
+                ficha, abrir el archivo y volver, lo que pasa de verdad es que
+                nadie comprueba nada y se guarda lo que salga.
 
-                Este campo y el concepto del árbol se llaman igual y significan
-                lo mismo para quien los lee: dejar que se separen produce un
-                movimiento que dice "Celsia" colgando de un concepto que se
-                llama "Celsia (Energía)", y a partir de ahí nadie sabe cuál de
-                los dos es el nombre bueno. El nombre de un concepto estático
-                se cambia donde se definió.
-              */
-              disabled={!editandoCampos || estatico}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="mov-valor">Valor</Label>
-              <Input
-                id="mov-valor"
-                // `inputMode` numérico abre el teclado de números en el
-                // teléfono; `type=number` traería flechitas y rechazaría la
-                // coma decimal que se usa en Colombia.
-                inputMode="decimal"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0"
-                required
-                disabled={!editandoCampos}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="mov-fecha">Fecha</Label>
-              <SelectorDeDia
-                id="mov-fecha"
-                valor={date}
-                onElegir={setDate}
-                requerido
-                deshabilitado={!editandoCampos}
-              />
-            </div>
-          </div>
-
-          {/*
-            ── En un centro estático, aquí no hay nada que decidir ──────────
-            Ni dónde se clasifica ni cada cuánto se paga: las dos cosas son
-            del CONCEPTO, y el concepto de un centro estático se define en
-            Centros de costos. Enseñar los desplegables apagados ocuparía
-            media ficha para no dejar tocar nada; en su lugar va el camino
-            hasta donde sí se cambia.
-          */}
-          {estatico ? (
-            <div className="flex flex-col gap-2 rounded-2xl bg-secondary/60 p-3">
-              <p className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Dónde se clasifica
-              </p>
-              <p className="px-1 text-sm">
-                {[centro?.name, grupo?.name, concepto?.name].filter(Boolean).join(' › ')}
-              </p>
-              <p className="flex items-start gap-1.5 px-1 text-xs text-muted-foreground">
-                <Lock className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-                <span>
-                  “{centroGuardado?.name}” es un centro estático. La clasificación y la
-                  periodicidad se modifican desde Centros de costos.
-                </span>
-              </p>
-              <Link
-                to="/centros-de-costos"
-                onClick={onCerrar}
-                className="mx-1 flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
-              >
-                <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
-                Editar el concepto en Centros de costos
-              </Link>
-            </div>
-          ) : (
-            <Seccion titulo="Dónde se clasifica">
-
-              <Cascada
-                etiqueta="Centro de costos"
-                valor={centro?.id}
-                opciones={arbol}
-                deshabilitado={!editandoCampos}
-                onElegir={setCategoryId}
-              />
-              <Cascada
-                etiqueta="Grupo"
-                valor={grupo?.id}
-                opciones={centro?.children ?? []}
-                deshabilitado={!editandoCampos || !centro}
-                onElegir={(id) => setCategoryId(id ?? centro?.id)}
-              />
-              <Cascada
-                etiqueta="Concepto"
-                valor={concepto?.id}
-                opciones={grupo?.children ?? []}
-                deshabilitado={!editandoCampos || !grupo}
-                onElegir={(id) => setCategoryId(id ?? grupo?.id)}
-              />
-
-              {/* Reconocí el acreedor pero no está en el árbol: ofrecerlo con
-                  su rama ahorra ir a Centros de costos, crearlo, y volver. */}
-              {lectura?.concepto &&
-              lectura.grupo &&
-              lectura.centro &&
-              !conceptoLlamado(arbol, lectura.concepto) ? (
-                <button
-                  type="button"
-                  onClick={() => void crearLoReconocido()}
-                  disabled={crearCategoria.isPending}
-                  className="flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
-                >
-                  {crearCategoria.isPending ? (
-                    <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden="true" />
+                Con el soporte al lado, verificar es mirar a la izquierda.
+              */}
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+                <Seccion titulo="Soporte" caja={false}>
+                  {movimiento ? (
+                    <Soportes transactionId={movimiento.id} />
                   ) : (
-                    <Plus className="size-3.5 shrink-0" aria-hidden="true" />
+                    <SoportesPendientes
+                      archivos={pendientes}
+                      onAñadir={(nuevos) => setPendientes((p) => [...p, ...nuevos])}
+                      onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
+                    />
                   )}
-                  Crear “{lectura.concepto}” en {lectura.centro} › {lectura.grupo}
-                </button>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Un movimiento puede quedarse sin clasificar. Se guarda igual.
-                </p>
+                </Seccion>
+
+                {/*
+                  El orden es el de la pregunta: de qué centro, de qué grupo,
+                  qué concepto. Y después cuánto y cuándo, que son los dos
+                  datos que se copian del papel.
+
+                  Sin rótulo de sección: tres campos con su nombre encima no
+                  necesitan que alguien anuncie que son tres campos.
+                */}
+                <div className="flex flex-col gap-3">
+                  <Campo etiqueta="Centro de costos" id="mov-centro">
+                    <Combo
+                      id="mov-centro"
+                      etiqueta="Centro de costos"
+                      valor={centro ? String(centro.id) : ''}
+                      opciones={arbol.map((c) => ({ valor: String(c.id), etiqueta: c.name }))}
+                      onCambiar={(v) => setCategoryId(v === '' ? undefined : Number(v))}
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Grupo" id="mov-grupo">
+                    <Combo
+                      id="mov-grupo"
+                      etiqueta="Grupo"
+                      valor={grupo ? String(grupo.id) : ''}
+                      opciones={(centro?.children ?? []).map((g) => ({
+                        valor: String(g.id),
+                        etiqueta: g.name,
+                      }))}
+                      deshabilitado={!centro}
+                      vacio={centro ? 'Sin elegir' : 'Elige antes un centro de costos'}
+                      creando={crearCategoria.isPending}
+                      onCambiar={(v) => setCategoryId(v === '' ? centro?.id : Number(v))}
+                      onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Concepto" id="mov-concepto">
+                    <Combo
+                      id="mov-concepto"
+                      etiqueta="Concepto"
+                      valor={concepto ? String(concepto.id) : ''}
+                      opciones={(grupo?.children ?? []).map((c) => ({
+                        valor: String(c.id),
+                        etiqueta: c.name,
+                      }))}
+                      deshabilitado={!grupo}
+                      vacio={grupo ? 'Sin elegir' : 'Elige antes un grupo'}
+                      creando={crearCategoria.isPending}
+                      onCambiar={(v) => setCategoryId(v === '' ? grupo?.id : Number(v))}
+                      onCrear={(nombre) => void crearDentro(nombre, grupo?.id)}
+                    />
+                  </Campo>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Campo etiqueta="Valor" id="mov-valor">
+                      <Input
+                        id="mov-valor"
+                        ref={primerCampo}
+                        // `inputMode` numérico abre el teclado de números en el
+                        // teléfono; `type=number` traería flechitas y rechazaría
+                        // la coma decimal que se usa en Colombia.
+                        inputMode="decimal"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0"
+                        required
+                      />
+                    </Campo>
+
+                    <Campo etiqueta="Fecha" id="mov-fecha">
+                      <SelectorDeDia id="mov-fecha" valor={date} onElegir={setDate} requerido />
+                    </Campo>
+                  </div>
+
+                  {estatico && (
+                    <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                      <Lock className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                      <span>
+                        “{centroGuardado?.name}” es un centro estático. La clasificación y la
+                        periodicidad se modifican desde Centros de costos.
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Solo con un concepto elegido, y nunca en un estático: la
+                  recurrencia es del CONCEPTO, y el de un centro estático se
+                  configura en Centros de costos. */}
+              {concepto && !estatico && (
+                <CamposDeRecurrencia
+                  valor={recurrencia}
+                  onCambiar={setRecurrencia}
+                  concepto={concepto.name}
+                />
               )}
-            </Seccion>
-          )}
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="mov-notas">Notas</Label>
-            <textarea
-              id="mov-notas"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-              disabled={!editandoCampos}
-              className="rounded-lg border bg-card px-3 py-2 text-sm"
-              style={{ borderColor: 'var(--input)' }}
-              placeholder="Opcional"
-            />
-          </div>
-
-          {/* Solo con un concepto elegido, y nunca en un estático: la
-              recurrencia es del CONCEPTO, y el de un centro estático se
-              configura en Centros de costos —el enlace está arriba—. */}
-          {concepto && !estatico && (
-            <CamposDeRecurrencia
-              valor={recurrencia}
-              onCambiar={setRecurrencia}
-              concepto={concepto.name}
-            />
-          )}
+              <Campo etiqueta="Notas" id="mov-notas">
+                <textarea
+                  id="mov-notas"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  className="rounded-lg border bg-card px-3 py-2 text-sm"
+                  style={{ borderColor: 'var(--input)' }}
+                  placeholder="Opcional"
+                />
+              </Campo>
             </>
           ) : (
             <VistaDeLectura
@@ -678,21 +635,11 @@ export function MovimientoModal({
             siempre a corregir una cifra o una fecha. El recibo es la prueba, y
             la prueba se consulta, no se edita.
           */}
-          {editando && movimiento && (
+          {/* Solo al LEER: editando, el soporte vive en la columna de la
+              izquierda, al lado de los campos que sirve para comprobar. */}
+          {!editandoCampos && movimiento && (
             <Seccion titulo="Soportes" caja={false}>
               <Soportes transactionId={movimiento.id} />
-            </Seccion>
-          )}
-
-          {/* Creando todavía no hay de qué colgarlos, así que se quedan
-              esperando y se suben en cuanto el movimiento existe. */}
-          {!editando && (
-            <Seccion titulo="Soportes">
-              <SoportesPendientes
-                archivos={pendientes}
-                onAñadir={(nuevos) => setPendientes((p) => [...p, ...nuevos])}
-                onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
-              />
             </Seccion>
           )}
 
@@ -763,35 +710,6 @@ export function MovimientoModal({
   );
 }
 
-function Cascada({
-  etiqueta,
-  valor,
-  opciones,
-  deshabilitado,
-  onElegir,
-}: {
-  etiqueta: string;
-  valor?: number;
-  opciones: Category[];
-  deshabilitado?: boolean;
-  onElegir: (id: number | undefined) => void;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-muted-foreground">{etiqueta}</span>
-      <Select
-        etiqueta={etiqueta}
-        vacio="Sin elegir"
-        valor={valor === undefined ? '' : String(valor)}
-        deshabilitado={deshabilitado}
-        opciones={opciones.map((o) => ({ valor: String(o.id), etiqueta: o.name }))}
-        onCambiar={(v) => onElegir(v === '' ? undefined : Number(v))}
-      />
-    </label>
-  );
-}
-
-/** Hoy en America/Bogota, para que la fecha por defecto no dependa del navegador. */
 function hoyEnBogota(): string {
   return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
@@ -1148,42 +1066,26 @@ function BotonDeVia({
 }
 
 /**
- * Lo que se leyó del soporte, dicho antes de que se guarde.
+ * El aviso de que hay datos leídos por la máquina.
  *
- * ── Por qué se enseña y no se aplica en silencio ────────────────────────────
- * Porque un soporte mal leído que se guarda solo es peor que no leerlo: nadie
- * vuelve a mirar lo que ya quedó registrado, y el error se descubre meses
- * después cuando un total no cuadra. Dicho aquí, corregirlo cuesta un clic en
- * el campo de al lado.
+ * ── Por qué lima y no ámbar ─────────────────────────────────────────────────
+ * Porque no ha pasado nada malo. El ámbar de esta app está para lo que está
+ * PENDIENTE —un pago que vence, un movimiento sin clasificar— y un naranja
+ * intenso encima de un formulario que acaba de rellenarse solo se lee como un
+ * error, cuando lo que hubo fue un acierto. El lima es el acento de la casa:
+ * llama sin alarmar.
  *
- * ── Por qué se dice también la confianza ────────────────────────────────────
- * Porque no todas las lecturas valen lo mismo, y quien confirma merece saber
- * cuál mirar con cuidado. Un PDF digital con el NIT y la línea de "total a
- * pagar" es casi seguro; una foto torcida de un recibo térmico, no.
+ * ── Por qué una sola frase ──────────────────────────────────────────────────
+ * Porque el detalle de por qué se clasificó así no cambia lo que hay que
+ * hacer, que es mirar los campos. Contarlo entero ocupaba tres renglones y
+ * empujaba hacia abajo justo lo que se pedía revisar.
  */
-function LoQueLei({ lectura }: { lectura: Lectura }) {
-  const seguro = lectura.confianza >= UMBRAL_DE_REVISION;
-
+function LoQueLei() {
   return (
-    <div
-      className={cn(
-        'flex items-start gap-2 rounded-2xl p-3 text-xs',
-        // Ámbar para lo que hay que mirar, nunca rojo: no salió nada mal, hay
-        // algo pendiente de confirmar.
-        seguro ? 'bg-secondary/60 text-muted-foreground' : 'bg-warning-surface text-warning',
-      )}
-    >
-      {seguro ? (
-        <Sparkles className="mt-px size-4 shrink-0" aria-hidden="true" />
-      ) : (
-        <TriangleAlert className="mt-px size-4 shrink-0" aria-hidden="true" />
-      )}
-      <span className="min-w-0">
-        {seguro ? 'Lectura del soporte. ' : 'Lectura con baja confianza. '}
-        {lectura.motivo}
-        {!seguro && ' Conviene revisar los campos antes de guardar.'}
-      </span>
-    </div>
+    <p className="flex items-center gap-2 rounded-2xl bg-accent px-3 py-2.5 text-xs font-medium text-accent-foreground">
+      <Sparkles className="size-4 shrink-0" aria-hidden="true" />
+      Los datos se extrajeron del soporte. Conviene verificarlos antes de guardar.
+    </p>
   );
 }
 
@@ -1252,6 +1154,30 @@ function SoportesPendientes({
           e.target.value = '';
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * Un campo con su nombre encima.
+ *
+ * El nombre va FUERA del control y no dentro como marcador de posición: un
+ * marcador desaparece al escribir, así que al revisar un formulario ya lleno
+ * nadie sabe qué era cada caja.
+ */
+function Campo({
+  etiqueta,
+  id,
+  children,
+}: {
+  etiqueta: string;
+  id: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{etiqueta}</Label>
+      {children}
     </div>
   );
 }
