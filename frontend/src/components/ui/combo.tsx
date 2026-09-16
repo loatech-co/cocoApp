@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Menu } from '@/components/menu';
 import { cn } from '@/lib/utils';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/components/ui/campo';
+import { REALCE } from '@/components/ui/superficie';
 
 /**
  * Un desplegable en el que se escribe.
@@ -244,7 +245,8 @@ function ComboPanel({
           disabled={creando}
           className={cn(
             'flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm',
-            'font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+            'font-medium transition-colors',
+            REALCE,
             'disabled:opacity-60',
           )}
         >
@@ -275,8 +277,8 @@ function Opcion({
         'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
         'movil:min-h-[42px]',
         elegida
-          ? 'bg-muted font-medium hover:bg-accent hover:text-accent-foreground'
-          : 'hover:bg-accent hover:text-accent-foreground',
+          ? cn('bg-muted font-medium', REALCE)
+          : REALCE,
       )}
     >
       <span className="min-w-0 flex-1 truncate">{children}</span>

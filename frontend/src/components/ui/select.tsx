@@ -4,6 +4,7 @@ import type { ComponentType, ReactNode } from 'react';
 import { Menu } from '@/components/menu';
 import { cn } from '@/lib/utils';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/components/ui/campo';
+import { REALCE } from '@/components/ui/superficie';
 
 export interface OpcionDeSelect {
   valor: string;
@@ -204,8 +205,8 @@ function Opcion({
           // Quieta en `muted`, señalada en `accent`: con el mismo color para
           // las dos, pasar por encima de la opción ya elegida no cambia nada.
           elegida
-            ? 'bg-muted font-medium hover:bg-accent hover:text-accent-foreground'
-            : 'hover:bg-accent hover:text-accent-foreground',
+            ? cn('bg-muted font-medium', REALCE)
+            : REALCE,
         )}
       >
         <span className="min-w-0 flex-1 truncate">{children}</span>

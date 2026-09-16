@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { mostrarAviso } from '@/components/ui/aviso';
 import { MAXIMO_DE_ATAJOS, anadirAtajo, moverAtajo, quitarAtajo, useAtajos } from '@/lib/atajos';
 import { cn } from '@/lib/utils';
+import { REALCE } from '@/components/ui/superficie';
 
 /**
  * Los atajos.
@@ -329,7 +330,8 @@ function Baldosa({
     : undefined;
 
   const caja = cn(
-    'relative flex aspect-square flex-col items-center justify-center gap-2 rounded-lg bg-muted p-2 text-center text-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+    'relative flex aspect-square flex-col items-center justify-center gap-2 rounded-lg bg-muted p-2 text-center text-foreground transition-colors',
+    REALCE,
     // La baldosa que va en el dedo no tiembla: la animación pisaría el
     // desplazamiento en línea y se quedaría quieta bajo el dedo.
     arreglando && !arrastrada && 'animate-[baldosa-tiembla_.4s_ease-in-out_infinite]',

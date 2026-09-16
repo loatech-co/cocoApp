@@ -2,7 +2,7 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { SUPERFICIE_FLOTANTE, SURGE } from '@/components/ui/superficie';
+import { REALCE, SUPERFICIE_FLOTANTE, SURGE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
 const ROL = { menu: 'menu', panel: 'dialog', lista: 'listbox' } as const;
@@ -370,8 +370,8 @@ export function MenuOpcion({
           // lo que responde. Con `muted` en los dos, pasar por encima de la
           // opción ya elegida no cambiaba nada y el menú parecía trabado.
           : elegida
-            ? 'bg-muted font-medium text-foreground hover:bg-accent hover:text-accent-foreground'
-            : 'text-foreground hover:bg-accent hover:text-accent-foreground',
+            ? cn('bg-muted font-medium text-foreground', REALCE)
+            : cn('text-foreground', REALCE),
       )}
     >
       {Icono && <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />}

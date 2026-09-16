@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Casilla } from '@/components/ui/casilla';
 import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
+import { REALCE } from '@/components/ui/superficie';
 
 /**
  * El filtro por centros de costos, grupos y conceptos.
@@ -92,7 +93,7 @@ export function FiltroClasificacion({
                     // ancho del desplegable. Por eso la fila tiene suelo y el
                     // recuadro no.
                     'movil:min-h-[42px]',
-                    'hover:bg-accent hover:text-accent-foreground',
+                    REALCE,
                     marcado && 'font-medium',
                   )}
                 >
@@ -113,7 +114,10 @@ export function FiltroClasificacion({
                     onClick={() => setCamino([...camino, nodo])}
                     aria-label={`Ver lo que hay dentro de ${nodo.name}`}
                     title={`Ver lo que hay dentro de ${nodo.name}`}
-                    className="grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    className={cn(
+                      'grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors',
+                      REALCE,
+                    )}
                   >
                     <ChevronRight className="size-4" aria-hidden="true" />
                   </button>

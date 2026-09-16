@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { diaLargo, MESES_LARGOS } from '@/lib/fechas';
 import { cn } from '@/lib/utils';
+import { REALCE } from '@/components/ui/superficie';
 
 /**
  * La semana empieza en LUNES, no en domingo: es como se lee un calendario en
@@ -216,8 +217,8 @@ export function Calendario({
                     extremo
                       ? 'bg-primary font-semibold text-primary-foreground hover:bg-primary/90'
                       : dentro
-                        ? 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                        ? cn('text-foreground', REALCE)
+                        : cn('text-muted-foreground', REALCE),
                     // Hoy lleva anillo, no relleno: el relleno es de lo elegido y
                     // competirían por significar lo mismo.
                     //

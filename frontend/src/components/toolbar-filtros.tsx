@@ -13,6 +13,7 @@ import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { TransactionType } from '@coco/types';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
+import { REALCE } from '@/components/ui/superficie';
 
 /** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
 export const ORDENES = [
@@ -306,7 +307,7 @@ function Captura({
         'flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left transition-colors',
         deshabilitada
           ? 'cursor-not-allowed opacity-50'
-          : 'hover:bg-accent hover:text-accent-foreground',
+          : REALCE,
       )}
     >
       <ChipIcono Icono={Icono} color={color} tamano="sm" />

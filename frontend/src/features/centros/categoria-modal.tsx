@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { PieDeModal } from '@/components/ui/modal-partes';
 import type { Category } from '@coco/types';
 import { ICONOS_DE_GRUPO, IconoDeCategoria } from '@/components/ui/iconos';
+import { REALCE } from '@/components/ui/superficie';
 
 /** Sin tildes ni mayúsculas: «Educación» se encuentra escribiendo «educacion». */
 function normal(texto: string): string {
@@ -93,7 +94,7 @@ function SelectorDeIcono({
                   'movil:min-h-[42px]',
                   elegido
                     ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    : cn('text-muted-foreground', REALCE),
                 )}
               >
                 <IconoDeCategoria nombre={nombre} className="size-4" />

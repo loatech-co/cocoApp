@@ -35,6 +35,28 @@ export const SUPERFICIE_FLOTANTE =
 export const SURGE = 'surge';
 
 /**
+ * El realce de LO QUE RESPONDE al cursor: una opción, una fila, un día del
+ * calendario, una baldosa.
+ *
+ * ── Por qué el acento como TINTA y no como superficie ───────────────────────
+ * Era `bg-accent`, que en este tema es un verde esmeralda apagado. Funciona
+ * —se ve que algo cambió— pero no se parece a nada: el color con el que esta
+ * app dice «esto» es el lima, y estaba reservado a lo elegido. Así que al
+ * pasar por encima había un verde y al elegir, otro, sin que la relación
+ * entre los dos significara nada.
+ *
+ * Ahora es el mismo lima en los dos, a dos intensidades: al 10 % tiñe el
+ * fondo mientras el cursor está encima, y lo elegido se queda con su fondo
+ * quieto. La diferencia entre «estoy señalando esto» y «esto es lo que hay»
+ * pasa a ser de grado y no de color, que es lo que son.
+ *
+ * `--acento-tinta` y no `--primary`: es el mismo color en oscuro, pero en
+ * claro el primario es un verde casi negro y esto tiene que servir de TINTA
+ * sobre una superficie clara.
+ */
+export const REALCE = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
+
+/**
  * El realce de una superficie GRANDE que responde al cursor.
  *
  * ── Por qué no es el mismo que el de una opción ─────────────────────────────

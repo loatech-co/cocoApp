@@ -33,7 +33,7 @@ import { SelectorDeFecha } from '@/components/selector-de-fecha';
 import { Input } from '@/components/ui/input';
 import { CabeceraDeModal, PANEL_DE_MODAL, PieDeModal } from '@/components/ui/modal-partes';
 import { Progreso } from '@/components/ui/progreso';
-import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
+import { REALCE, SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiClientError, apiSubir } from '@/lib/api-client';
 import { diaLargo, mesLargo } from '@/lib/fechas';
@@ -1103,7 +1103,8 @@ function Via({
       className={cn(
         BLOQUE,
         'flex h-full w-full flex-col items-start gap-3 p-4 text-left',
-        'transition-colors hover:border-ring/40 hover:bg-accent hover:text-accent-foreground',
+        'transition-colors hover:border-ring/40',
+        REALCE,
       )}
     >
       <ChipIcono Icono={Icono} color={color} tamano="sm" />

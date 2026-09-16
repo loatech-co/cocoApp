@@ -9,6 +9,7 @@ import { diaLargo, rangoLargo } from '@/lib/fechas';
 import { PRESETS, rangoDe, type Filtros, type Preset } from '@/lib/filtros';
 import { useHistoria } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { REALCE } from '@/components/ui/superficie';
 
 /**
  * EL selector de fechas. Uno solo, con o sin rango y con o sin atajos.
@@ -344,7 +345,7 @@ function PanelDeRango({
                     'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
                     borrador.preset === p.valor
                       ? 'bg-primary/15 font-medium text-primary'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                      : cn('text-muted-foreground', REALCE),
                   )}
                 >
                   {p.etiqueta}
