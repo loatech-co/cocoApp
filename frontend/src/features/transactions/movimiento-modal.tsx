@@ -447,6 +447,23 @@ export function MovimientoModal({
           // ficha de 1024 deja de leerse como algo que está encima de la
           // aplicación: se lee como otra pantalla.
           'rounded-t-lg sm:rounded-lg',
+          /*
+            ── La ÚNICA ficha que puede ser más baja ────────────────────────
+            El alto mínimo de `PANEL_DE_MODAL` existe para que dos fichas
+            seguidas no hagan crecer y encoger el mismo panel en el mismo sitio
+            de la pantalla. Aquí no aplica: «cómo empezar» no es una ficha más,
+            es el paso previo a todas —tres opciones y nada más—, y no se abre
+            después de otra sino ANTES. No hay con qué compararla.
+
+            Y el mínimo le hacía daño: con tres tarjetas de dos renglones, 600
+            de alto son cuatrocientos de nada debajo. Es exactamente el hueco
+            que llevamos media tarde intentando llenar con adornos.
+
+            `min-h-0` gana al `min-h-[min(600px,92dvh)]` de la clase compartida
+            porque va después y las dos son la misma propiedad; el `max-h` de
+            92dvh sigue en pie, que es el que importa cuando sí hay contenido.
+          */
+          paso === 'elegir' && 'min-h-0',
         )}
       >
         {/* La misma cabecera que las demás fichas, con el pastel de color en
