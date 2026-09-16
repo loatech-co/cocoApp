@@ -18,10 +18,19 @@ const COLORES = [
 ];
 const COLOR_OTROS = 'var(--color-muted-foreground)';
 
-/** Lienzo de 120 con el aro en radio 42: quedan 18 de margen para las cifras. */
-const CENTRO = 60;
-const RADIO = 42;
+/**
+ * Lienzo de 132 con el aro en radio 40.
+ *
+ * El aro llega hasta 49 desde el centro y las cifras se posan en 62: quedan
+ * trece de aire entre el borde del aro y el número. Pegadas al aro parecían
+ * parte de la porción y no una medida de ella, y en las porciones estrechas se
+ * tocaban con el color.
+ */
+const CENTRO = 66;
+const RADIO = 40;
 const GROSOR = 18;
+/** Cuánto se separan las cifras del borde exterior del aro. */
+const AIRE = 13;
 const VUELTA = 2 * Math.PI * RADIO;
 
 /** Por debajo de esto la cifra no cabe sin pisar a la de al lado. */
@@ -116,8 +125,8 @@ export function Dona({
       largo: fraccion * VUELTA,
       desfase: -inicio * VUELTA,
       etiqueta: {
-        x: CENTRO + Math.cos(angulo) * (RADIO + GROSOR / 2 + 7),
-        y: CENTRO + Math.sin(angulo) * (RADIO + GROSOR / 2 + 7),
+        x: CENTRO + Math.cos(angulo) * (RADIO + GROSOR / 2 + AIRE),
+        y: CENTRO + Math.sin(angulo) * (RADIO + GROSOR / 2 + AIRE),
       },
     };
   });
@@ -148,7 +157,7 @@ export function Dona({
       onPointerMove={seguir}
       onPointerLeave={() => setActiva(null)}
     >
-      <svg viewBox="0 0 120 120" className="w-full" role="img" aria-label="Distribución del gasto">
+      <svg viewBox="0 0 132 132" className="w-full" role="img" aria-label="Distribución del gasto">
         {/* El aro de fondo: es lo que se ve donde no llega ninguna porción. */}
         <circle
           cx={CENTRO}
