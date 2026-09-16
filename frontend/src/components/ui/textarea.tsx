@@ -40,7 +40,10 @@ export function Textarea({ className, placeholder, ...props }: ComponentProps<'t
       className={cn(
         'flex w-full rounded-lg border border-input bg-card px-3 py-2 text-base',
         enCampo && 'pb-2 pt-6',
-        'placeholder:text-muted-foreground',
+        // Dentro de un campo, el marcador solo con el foco. Ver `input.tsx`.
+        enCampo
+          ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
+          : 'placeholder:text-muted-foreground',
         'transition-colors hover:border-ring/40',
         'outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',

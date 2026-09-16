@@ -73,6 +73,29 @@ describe('El campo con etiqueta flotante', () => {
     expect(container.querySelector('textarea')?.getAttribute('placeholder')).toBe(' ');
   });
 
+  it('dentro de un campo, el marcador está apagado hasta que hay foco', () => {
+    // Esto se rompió una vez y se veía así: la etiqueta centrada y el
+    // marcador ocho píxeles más abajo, cruzándose. El apagado estaba en la
+    // hoja de estilos, en la capa `components`, y el
+    // `placeholder:text-muted-foreground` del propio campo le ganaba.
+    const dentro = render(
+      <Campo etiqueta="Valor" id="v">
+        <Input id="v" placeholder="0" />
+      </Campo>,
+    );
+    const clases = dentro.container.querySelector('input')?.className ?? '';
+    expect(clases).toContain('placeholder:text-transparent');
+    expect(clases).toContain('focus:placeholder:text-muted-foreground');
+
+    cleanup();
+
+    // Y fuera de un campo no hay etiqueta que estorbe: el marcador se ve.
+    const fuera = render(<Input placeholder="Buscar…" />);
+    expect(fuera.container.querySelector('input')?.className).toContain(
+      'placeholder:text-muted-foreground',
+    );
+  });
+
   it('un desplegable dice si tiene algo elegido, y esconde su «sin elegir» si no', () => {
     const opciones = [{ valor: '1', etiqueta: 'Arriendo' }];
 
@@ -108,6 +131,37 @@ describe('El campo con etiqueta flotante', () => {
     // diciendo lo mismo, uno a cada lado del valor.
     expect(container.querySelector('.lucide-calendar-days')).not.toBeNull();
     expect(container.querySelector('.lucide-chevron-down')).toBeNull();
+  });
+
+  it('el valor de un selector de fecha arranca donde arranca su etiqueta', () => {
+    /*
+      Esto se rompió y se veía como un escalón: la etiqueta a 12px del borde y
+      el valor a 20.
+
+      La causa es de orden, no de valor: `cva` emite base, variante y tamaño en
+      ese orden, así que el `px-5` del tamaño gana a cualquier `px-3` escrito en
+      la variante. Lo tiene que poner la llamada, que es lo último que ve `cn`.
+
+      Se compara contra el `Input`, que es el vecino con el que tiene que
+      alinearse, y no contra un `'px-3'` literal: si algún día el relleno de
+      los campos cambia, esta prueba sigue midiendo lo que importa.
+    */
+    const campoDeTexto = render(<Input />);
+    const rellenoDelCampo = (campoDeTexto.container.querySelector('input')?.className ?? '')
+      .split(/\s+/)
+      .filter((c) => c.startsWith('px-'));
+    expect(rellenoDelCampo).toHaveLength(1);
+
+    cleanup();
+
+    const fecha = render(<SelectorDeDia valor="2026-04-04" onElegir={() => {}} />);
+    const rellenoDeLaFecha = (fecha.container.querySelector('button')?.className ?? '')
+      .split(/\s+/)
+      .filter((c) => c.startsWith('px-'));
+
+    expect(rellenoDeLaFecha, 'el selector de fecha se sangra como un campo de texto').toEqual(
+      rellenoDelCampo,
+    );
   });
 
   it('el campo de texto reserva sitio para sus iconos', () => {

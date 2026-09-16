@@ -76,15 +76,19 @@ const buttonVariants = cva(
          * El peso también baja: lo que se lee ahí es un valor, no una acción.
          */
         /*
-         * El relleno horizontal es de la VARIANTE y no del tamaño, que es la
-         * única excepción a la regla: `size` reparte 20px a los lados porque
-         * un botón necesita aire alrededor de su verbo, y un campo necesita
-         * que su valor arranque a 12 —donde arrancan el `Input` y el
-         * `Select` de la misma fila—. Con 20, el selector de fecha tenía su
-         * texto ocho píxeles más adentro que sus vecinos.
+         * El relleno horizontal NO se puede fijar aquí, y hace falta decirlo
+         * porque se intentó: `cva` emite las clases en el orden de su
+         * configuración —base, variante, tamaño—, así que el `px-5` del
+         * tamaño va DESPUÉS y le gana. Un `px-3` escrito en esta variante no
+         * hace nada, y el selector de fecha quedaba con su valor ocho píxeles
+         * más adentro que la etiqueta que lo nombra.
+         *
+         * Lo pone su llamada, que es lo último que ve `cn`. La prueba de las
+         * llamadas lo permite a propósito: prohíbe el alto, el relleno
+         * VERTICAL y el radio —que son del tamaño— y no el horizontal.
          */
         campo:
-          'border border-input bg-card px-3 font-normal text-foreground transition-colors hover:border-ring/40 aria-expanded:border-ring',
+          'border border-input bg-card font-normal text-foreground transition-colors hover:border-ring/40 aria-expanded:border-ring',
       },
       /*
         ── DOS tamaños, y los mismos para todo ──────────────────────────────

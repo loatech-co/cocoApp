@@ -76,7 +76,12 @@ export function SelectorDeDia({
         disabled={deshabilitado}
         aria-expanded={abierto}
         aria-haspopup="dialog"
-        className="w-full justify-between"
+        // `px-3` como el `Input` y el `Select` de la misma fila. El tamaño de
+        // un botón reparte 20 a los lados —un verbo necesita aire—, y aquí lo
+        // que hay no es un verbo sino un valor, que tiene que arrancar a la
+        // misma altura que la etiqueta que lo nombra y que el texto de los
+        // campos vecinos.
+        className="w-full justify-between px-3"
       >
         <span
           data-lleno={valor ? 'si' : 'no'}

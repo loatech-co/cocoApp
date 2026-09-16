@@ -71,7 +71,17 @@ export function Input({
         // igual porque `piso-tactil.test.ts` pide que quien dibuja un control
         // lo diga, y el día que alguien baje este alto el suelo sigue puesto.
         'movil:min-h-[42px]',
-        'placeholder:text-muted-foreground',
+        /*
+          Dentro de un campo, el marcador SOLO se ve con el foco: en reposo su
+          sitio lo ocupa la etiqueta, y los dos a la vez son dos textos grises
+          pisándose —que es exactamente lo que pasaba—.
+
+          Va aquí y no en la hoja de estilos porque una utilidad le gana a la
+          capa `components`, y esta clase es justo la que ganaba.
+        */
+        enCampo
+          ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
+          : 'placeholder:text-muted-foreground',
         // Al pasar por encima se tiñe el BORDE, igual que el `Select` y el
         // `Combo` que lleva al lado. Sin esto, en una misma fila un control
         // respondía al ratón y el de al lado no, y parecía que uno estaba

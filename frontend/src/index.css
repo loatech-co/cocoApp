@@ -692,16 +692,23 @@
     color: var(--ring);
   }
 
-  /* ── El marcador, solo con el foco ─────────────────────────────────────── */
-  .campo input::placeholder,
-  .campo textarea::placeholder {
-    color: transparent;
-  }
+  /*
+    ── Por qué el MARCADOR no se apaga desde aquí ────────────────────────────
+    Estuvo aquí y no funcionaba. Esta capa es `components`, y una utilidad de
+    Tailwind le gana siempre: el `placeholder:text-muted-foreground` que el
+    propio campo lleva en su `className` pisaba el `color: transparent` de
+    aquí, así que en reposo se veían las dos cosas a la vez —la etiqueta
+    centrada y el marcador ocho píxeles más abajo, cruzándose—.
 
-  .campo:focus-within input::placeholder,
-  .campo:focus-within textarea::placeholder {
-    color: var(--muted-foreground);
-  }
+    Que las utilidades ganen a esta capa es lo correcto y no se toca: es lo
+    que permite que una llamada ajuste un campo concreto. Lo que no se puede
+    es pelear contra eso desde aquí. Así que el marcador lo apaga el propio
+    campo, con utilidades, en `ui/input.tsx` y `ui/textarea.tsx`.
+
+    Lo de abajo sí puede vivir aquí: el texto de «sin elegir» de un
+    desplegable se apaga con `opacity`, y ninguna utilidad del proyecto le
+    pone opacidad a ese `span`.
+  */
 
   /*
     Y su equivalente en un desplegable.
