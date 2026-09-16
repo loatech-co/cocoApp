@@ -27,7 +27,7 @@ import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
 import { Etiqueta } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
+import { CHIPS, ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
 import { BLOQUE, Bloque } from '@/components/ui/bloque';
 import { Campo } from '@/components/ui/campo';
 import { Combo } from '@/components/ui/combo';
@@ -1221,7 +1221,11 @@ function Via({
   deshabilitada = false,
   onClick,
 }: {
-  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  Icono: ComponentType<{
+    className?: string;
+    'aria-hidden'?: boolean;
+    strokeWidth?: number;
+  }>;
   color: ColorDeChip;
   titulo: string;
   ayuda: string;
@@ -1263,34 +1267,52 @@ function Via({
       )}
     >
       {/*
-        Decorativo, y por eso desfasado a la esquina.
+        ── El disco y el glifo son DOS capas, y no van al mismo sitio ────────
+        Esto no es un `ChipIcono`. Ahí el disco enmarca al glifo y los dos
+        comparten centro, que es lo que hace de un icono una etiqueta. Aquí
+        cada uno tiene su papel y su posición: el disco es una mancha de color
+        que entra por la esquina superior izquierda, y el glifo es una marca
+        de agua centrada en la TARJETA.
 
-        Un pastel de 36px arriba a la izquierda de una tarjeta de 300 por 500
-        es una mota. A este tamaño y saliéndose por la esquina ya no es un
-        icono que etiqueta la opción: es la cara de la tarjeta, y el ojo la
-        reconoce antes de leer nada. El `overflow-hidden` de arriba es lo que
-        lo recorta contra el canto redondeado en vez de dejarlo asomar por
-        fuera del bloque.
+        Desencajados, la tarjeta tiene dos puntos de interés en vez de uno y
+        se lee como un cartel. Encajados —que es lo que serían dentro de
+        `ChipIcono`— vuelve a ser un icono grande en una esquina.
 
-        `pointer-events-none` porque quien se pulsa es la tarjeta entera; sin
-        esto el disco se come los clics de su cuarto superior izquierdo y el
-        cursor cambia de forma sobre él como si fuera otra cosa.
-
-        Su glifo ya va `aria-hidden` desde `ChipIcono`: lo que esta tarjeta
-        anuncia lo dice su texto.
-
-        Se hunde MÁS en el teléfono que en pantalla grande —80px contra 64—
-        aunque el círculo sea más pequeño. No es un descuido: apilada, la
-        tarjeta mide un tercio de la ficha, así que un disco de 208 hundido
-        solo 64 le dejaría al título cuarenta píxeles libres y el texto se
-        leería sobre el pastel.
+        Las dos capas van `aria-hidden` y con `pointer-events-none`: no
+        anuncian nada que el texto no diga, y quien se pulsa es la tarjeta
+        entera. Sin lo segundo, el disco se comería los clics de su cuarto
+        superior izquierdo.
       */}
-      <ChipIcono
-        Icono={Icono}
-        color={color}
-        tamano="cartel"
-        className="pointer-events-none absolute -left-20 -top-20 sm:-left-16 sm:-top-16"
+      <span
+        aria-hidden
+        className={cn(
+          'pointer-events-none absolute rounded-full',
+          // Se hunde MÁS en el teléfono que en pantalla grande —80px contra
+          // 64— aunque el disco sea más pequeño. Apilada, la tarjeta mide un
+          // tercio de la ficha: un disco de 208 hundido solo 64 se le comería
+          // el centro, que es donde va el glifo.
+          '-left-20 -top-20 size-52 sm:-left-16 sm:-top-16 sm:size-64',
+        )}
+        style={{ backgroundColor: CHIPS[color].fondo }}
       />
+
+      {/*
+        El glifo, centrado en la tarjeta con `left-1/2 top-1/2` y media
+        traslación en cada eje —lo único que centra algo cuyo tamaño no conoce
+        el padre—.
+
+        Sin relleno: a este tamaño, el 20 % de tinta que llevan los pasteles
+        pequeños es una mancha de media figura, y lo que tiene que leerse aquí
+        es la silueta. Al 40 % para que sea un fondo y no compita con el
+        título que cae justo debajo.
+      */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-40"
+        style={{ color: CHIPS[color].tinta }}
+      >
+        <Icono className="size-16 sm:size-20" strokeWidth={1.9} aria-hidden />
+      </span>
 
       <span className="relative min-w-0">
         <span className="flex items-center gap-2">
@@ -1484,10 +1506,6 @@ function Escaneando({
           la importación 8px y todo el ancho, siendo la misma espera del mismo
           trabajo. */}
       <Progreso avance={progreso?.avance ?? 0} etiqueta={etapa} className="w-full max-w-sm" />
-
-      <p className="max-w-sm text-center text-xs text-muted-foreground">
-        Todo ocurre en este dispositivo: el documento no se sube a ninguna parte.
-      </p>
     </div>
   );
 }
