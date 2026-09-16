@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Menu } from '@/components/menu';
 import { cn } from '@/lib/utils';
-import { useDentroDeUnCampo } from '@/components/ui/campo';
+import { disparadorDeCampo, useDentroDeUnCampo } from '@/components/ui/campo';
 
 /**
  * Un desplegable en el que se escribe.
@@ -85,10 +85,7 @@ export function Combo({
       <span
         id={id}
         aria-disabled="true"
-        className={cn(
-          'flex h-11 w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg',
-          'border border-input bg-card px-3 text-sm opacity-50',
-        )}
+        className={cn(disparadorDeCampo(), 'cursor-not-allowed opacity-50')}
       >
         <span
           data-vacio=""
@@ -115,12 +112,7 @@ export function Combo({
       // cortadas 4px antes de cada lado.
       sinRelleno
       claseCaja="w-full min-w-0"
-      claseDisparador={cn(
-        // Borde de CAMPO, igual que el `Select` y el `Input` de la misma fila.
-        'flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-card px-3 text-sm',
-        'hover:border-ring/40',
-        'outline-none transition-colors focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
-      )}
+      claseDisparador={disparadorDeCampo()}
       idDisparador={id}
       disparador={({ abierto }) => (
         <>

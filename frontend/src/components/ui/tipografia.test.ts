@@ -38,10 +38,17 @@ describe('La tipografía sale de la escala y no grita', () => {
     // expresión que intente abarcar las dos formas se queda corta en la
     // tercera. Aquí «uppercase» solo puede ser la utilidad de Tailwind —los
     // comentarios de este proyecto están en castellano y dicen «mayúsculas
-    // sostenidas»—, así que buscarla a secas no produce falsos positivos.
+    // sostenidas»—, así que buscarla a secas basta.
+    //
+    // Con una excepción: `first-letter:uppercase` NO es gritar, es poner en
+    // mayúscula una inicial. Lo que prohíbe esta regla es la utilidad suelta,
+    // la que pone en versalitas un rótulo entero; de ahí el `(?<![-:\w])`,
+    // que descarta cualquier variante que la preceda.
     for (const ruta of archivos) {
       for (const linea of readFileSync(ruta, 'utf8').split('\n')) {
-        if (/\buppercase\b/.test(linea)) culpables.push(`${relativa(ruta)}: ${linea.trim()}`);
+        if (/(?<![-:\w])uppercase\b/.test(linea)) {
+          culpables.push(`${relativa(ruta)}: ${linea.trim()}`);
+        }
       }
     }
 

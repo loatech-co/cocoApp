@@ -193,7 +193,11 @@ export function Soltar({
   const [encima, setEncima] = useState(false);
 
   return (
-    <div className={cn(solo && 'w-full')}
+    // `h-full` y no solo `w-full`: el botón de dentro pide `size-full`, y sin
+    // alto aquí ese `h-full` se resuelve contra una caja del tamaño de su
+    // contenido y no estira. Es el eslabón que rompía la cadena
+    // rejilla → lista → plaza → botón.
+    <div className={cn(solo && 'h-full w-full')}
       onDragOver={(e) => {
         e.preventDefault();
         setEncima(true);

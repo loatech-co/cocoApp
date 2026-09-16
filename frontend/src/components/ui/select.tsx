@@ -3,7 +3,7 @@ import type { ComponentType, ReactNode } from 'react';
 
 import { Menu } from '@/components/menu';
 import { cn } from '@/lib/utils';
-import { useDentroDeUnCampo } from '@/components/ui/campo';
+import { disparadorDeCampo, useDentroDeUnCampo } from '@/components/ui/campo';
 
 export interface OpcionDeSelect {
   valor: string;
@@ -128,13 +128,7 @@ export function Select({
     return (
       <span
         id={id}
-        className={cn(
-          'flex w-full min-w-0 cursor-not-allowed items-center gap-2 rounded-lg border border-input',
-          'bg-card opacity-50',
-          'movil:min-h-[42px]',
-          pequeno ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',
-          className,
-        )}
+        className={cn(disparadorDeCampo(pequeno), 'cursor-not-allowed opacity-50', className)}
         aria-disabled="true"
       >
         {dentro}
@@ -153,20 +147,7 @@ export function Select({
       ancho="w-[max(12rem,100%)]"
       idDisparador={id}
       claseCaja={cn('w-full min-w-0', className)}
-      claseDisparador={cn(
-        // El borde es el de los CAMPOS —`--input`—, no el de los contenedores:
-        // un desplegable se rellena, y tiene que pesar igual que el campo de
-        // texto que lleva al lado en la misma fila.
-        'flex w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-card transition-colors',
-        'hover:border-ring/40',
-        'outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
-        // El suelo táctil: apagado y encendido miden lo mismo, o la fila salta
-        // al deshabilitarse.
-        'movil:min-h-[42px]',
-        // El relleno de la derecha es igual al de la izquierda porque la flecha
-        // ya está dentro del flex: no hay nada que esquivar.
-        pequeno ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',
-      )}
+      claseDisparador={disparadorDeCampo(pequeno)}
       disparador={() => dentro}
     >
       {(cerrar) => (

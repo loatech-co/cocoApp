@@ -38,6 +38,34 @@ export function useDentroDeUnCampo(): boolean {
 export const HUECO_DE_LA_ETIQUETA = 'pb-1 pt-5';
 
 /**
+ * El aspecto de un campo que se DESPLIEGA: un `Select`, un `Combo`, un
+ * selector de fecha.
+ *
+ * Los tres lo escribían a mano y ya se habían separado —uno tenía
+ * `aria-expanded:border-ring` y los otros no—. Son el mismo objeto: una caja
+ * con el borde de un campo, que se tiñe al pasar por encima y se enciende al
+ * recibir el foco, con su valor a la izquierda y lo que abre a la derecha.
+ *
+ * El borde es el de los CAMPOS —`--input`— y no el de los contenedores: un
+ * desplegable se rellena, y tiene que pesar igual que el campo de texto que
+ * lleva al lado en la misma fila.
+ */
+export function disparadorDeCampo(pequeno = false): string {
+  return cn(
+    'flex w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-card text-left',
+    'transition-colors hover:border-ring/40',
+    'outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
+    'aria-expanded:border-ring',
+    // El suelo táctil: apagado y encendido miden lo mismo, o la fila salta al
+    // deshabilitarse.
+    'movil:min-h-[42px]',
+    // El relleno de la derecha es igual al de la izquierda porque lo que abre
+    // ya está dentro del flex: no hay nada que esquivar.
+    pequeno ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',
+  );
+}
+
+/**
  * Un campo de formulario: su nombre DENTRO del control, y el control.
  *
  * ── Qué hace ────────────────────────────────────────────────────────────────

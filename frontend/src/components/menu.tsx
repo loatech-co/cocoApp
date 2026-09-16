@@ -35,6 +35,7 @@ export function Menu({
   variante = 'herramienta',
   sinRelleno = false,
   idDisparador,
+  anchoPropio = false,
   disparador,
   children,
 }: {
@@ -104,6 +105,18 @@ export function Menu({
    * nada más.
    */
   idDisparador?: string;
+  /**
+   * Flotando, deja que el panel mida lo SUYO en vez de lo que mide el botón.
+   *
+   * Por defecto un panel flotante copia el ancho de su disparador, y eso es lo
+   * correcto para un desplegable: un panel más ancho que su campo se lee como
+   * otro elemento. Pero un calendario no cabe en un campo —necesita siete
+   * columnas— y encogerlo al ancho del botón deja los días de tres píxeles.
+   *
+   * Con esto se aplica la clase `ancho`, y el panel se recorta al hueco que
+   * quede hasta el borde de la ventana en vez de salirse.
+   */
+  anchoPropio?: boolean;
   /** Reemplaza el botón por completo (el avatar, por ejemplo). */
   disparador?: (props: { abierto: boolean }) => ReactNode;
   children: ReactNode | ((cerrar: () => void) => ReactNode);
@@ -204,10 +217,25 @@ export function Menu({
           aria-label={etiqueta}
           style={
             flotante && anclaje
-              ? // El MISMO ancho que el campo, no un mínimo: un panel más
-                // ancho que su disparador se lee como otro elemento, y uno más
-                // angosto corta las opciones que el campo sí muestra enteras.
-                { top: `${anclaje.top + 8}px`, left: `${anclaje.left}px`, width: `${anclaje.ancho}px` }
+              ? anchoPropio
+                ? {
+                    top: `${anclaje.top + 8}px`,
+                    left: `${anclaje.left}px`,
+                    // Se recorta a lo que queda hasta el borde de la ventana.
+                    // Sin esto, un panel de 320px anclado a un campo que vive
+                    // en la mitad derecha se sale de la pantalla, y lo que se
+                    // sale no se puede pulsar.
+                    maxWidth: `calc(100vw - ${anclaje.left}px - 1rem)`,
+                  }
+                : // El MISMO ancho que el campo, no un mínimo: un panel más
+                  // ancho que su disparador se lee como otro elemento, y uno
+                  // más angosto corta las opciones que el campo sí muestra
+                  // enteras.
+                  {
+                    top: `${anclaje.top + 8}px`,
+                    left: `${anclaje.left}px`,
+                    width: `${anclaje.ancho}px`,
+                  }
               : undefined
           }
           className={cn(
@@ -229,9 +257,10 @@ export function Menu({
                   : 'origin-top-left',
             flotante ? 'fixed' : 'absolute',
             !flotante && (direccion === 'arriba' ? 'bottom-full mb-2' : 'top-full mt-2'),
-            // Flotando, el ancho lo da el disparador: la clase mediría contra
-            // la ventana, que no es la caja de nadie.
-            !flotante && ancho,
+            // Flotando, el ancho lo da el disparador —la clase mediría contra
+            // la ventana, que no es la caja de nadie— salvo que se pida lo
+            // contrario.
+            (!flotante || anchoPropio) && ancho,
             'max-w-[calc(100vw-2rem)]',
             !flotante && (alineado === 'derecha' ? 'right-0' : 'left-0'),
           )}

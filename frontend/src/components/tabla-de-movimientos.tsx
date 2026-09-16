@@ -2,7 +2,7 @@ import { Flag, SearchX } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { EstadoVacio } from '@/components/estado-vacio';
-import { rutaSeleccionada } from '@/components/toolbar-filtros';
+import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
 import { Tabla, TablaEsqueleto, Td, Th, Tr } from '@/components/tabla';
 import { Select } from '@/components/ui/select';
 import { ConTooltip } from '@/components/ui/tooltip';
@@ -156,8 +156,13 @@ function Fila({
           {sinClasificar && (
             <Flag className="size-3.5 shrink-0 text-warning" fill="currentColor" aria-label="Sin clasificar" />
           )}
+          {/* El nombre SALE del concepto: un movimiento es un registro y lo
+              toma de donde pertenece. Pintaba `description`, que dejó de
+              rellenarse cuando la ficha cambió su campo libre de «Concepto»
+              por un selector de conceptos —así que todo lo registrado a mano
+              decía «Sin concepto» aunque tuviera su concepto elegido—. */}
           <span className="block max-w-[14rem] truncate font-medium">
-            {movimiento.description ?? movimiento.merchant ?? 'Sin concepto'}
+            {nombreDelMovimiento(movimiento, arbol)}
           </span>
         </span>
       </Td>

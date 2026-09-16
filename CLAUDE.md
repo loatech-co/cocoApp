@@ -14,8 +14,9 @@
 | 10 | [La cabecera y el pie de una ficha](#10-la-cabecera-y-el-pie-de-una-ficha) |
 | 11 | [El nombre de un campo va DENTRO, y flota](#11-el-nombre-de-un-campo-va-dentro-y-flota) |
 | 12 | [Un aviso flotante dice su severidad de tres maneras](#12-un-aviso-flotante-dice-su-severidad-de-tres-maneras) |
-| 13 | [El rojo es solo para errores](#13-el-rojo-es-solo-para-errores) |
-| 14 | [Componentes, no copias](#14-componentes-no-copias) |
+| 13 | [Un movimiento es un REGISTRO; el concepto es estructura](#13-un-movimiento-es-un-registro-el-concepto-es-estructura) |
+| 14 | [El rojo es solo para errores](#14-el-rojo-es-solo-para-errores) |
+| 15 | [Componentes, no copias](#15-componentes-no-copias) |
 
 ## 1. Ningún control del sistema operativo
 
@@ -346,13 +347,58 @@ suelto y lleva su propio contorno (`CircleCheck`); aquí va dentro de una
 pastilla que ya es un círculo, y con un icono circular quedan dos círculos
 concéntricos.
 
-## 13. El rojo es solo para errores
+## 13. Un movimiento es un REGISTRO; el concepto es estructura
+
+Un movimiento no es una cosa con nombre propio: es la anotación de que tal
+día salió tal plata de tal concepto.
+
+**Su nombre lo TOMA del concepto** al que pertenece, y se deriva —nunca se
+guarda una copia—. Si se guardara, renombrar un concepto dejaría atrás a sus
+movimientos: «Aseo» pasaría a llamarse «Aseo y limpieza» en Centros de
+costos y en la tabla seguirían los cuarenta viejos diciendo «Aseo». Dos
+nombres para lo mismo y ninguna forma de saber cuál es el bueno.
+
+Está en `nombreDelMovimiento()` (`lib/movimientos.ts`), con sus dos
+respaldos: si solo está clasificado hasta el grupo, el nombre del grupo; y
+si no tiene clasificación —un movimiento importado y aún sin clasificar—, lo
+que decía el papel (`description`, `merchant`). Ahí «PAGO PSE COMCEL» es
+mejor que «Sin concepto», porque es justo el dato con el que alguien va a
+decidir dónde clasificarlo.
+
+**Borrar un movimiento NO borra su concepto.** Borra el registro de ese mes
+y nada más; el concepto sigue vivo, listo para el mes siguiente. Hay que
+decirlo en la confirmación, y no es un detalle: como el movimiento se llama
+igual que su concepto, la papelera parece estar apuntando al concepto. Sin
+esa frase, nadie borra un gasto mal anotado por miedo a llevarse «Aseo» por
+delante.
+
+**Conceptos, grupos y centros solo se editan y se eliminan desde Centros de
+costos.** Desde la tabla de movimientos y desde la ficha de un movimiento se
+anota y se corrige lo que PASÓ; no se rehace el mapa con el que se ordena.
+Por eso el `Combo` de un concepto ofrece crear lo que falta pero nunca
+renombrar ni borrar, y por eso el de centro de costos no ofrece ni crear.
+
+**Y lo que protege un centro estático es su ESTRUCTURA.** En un centro
+estático, un movimiento no se reclasifica —ni desde la tabla ni desde la
+ficha—: eso se decide en Centros de costos. Pero sí se puede BORRAR, porque
+borrarlo es quitar un registro y no tocar la estructura. Las dos mitades de
+esa regla se han perdido una vez cada una:
+
+- El bloqueo se cayó al rediseñar la ficha —los desplegables pasaron a
+  bloquearse solo por dependencia—, así que la misma plata se podía mover o
+  no según por dónde se entrara.
+- La papelera estaba condicionada a que el centro NO fuera estático, así que
+  en Costos fijos desaparecía y no había forma de borrar un gasto mal
+  anotado sin ir a hacer dinámico su centro, que es lo contrario de lo que
+  hay que hacer.
+
+## 14. El rojo es solo para errores
 
 Lo pendiente —un movimiento sin clasificar— va en el oro del tema
 (`warning`, que sale de su `secondary`). El rojo se reserva a lo que de
 verdad salió mal y a lo que no se puede deshacer.
 
-## 14. Componentes, no copias
+## 15. Componentes, no copias
 
 Si algo aparece en dos pantallas, es un componente. Lo son la tabla de
 movimientos, el paginador, la barra de filtros, el calendario, la dona, la

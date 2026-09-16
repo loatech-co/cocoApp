@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import type { Filtros } from '@/lib/filtros';
 import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-import type { Category, TransactionType } from '@coco/types';
+import type { TransactionType } from '@coco/types';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 
 /** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
@@ -260,35 +260,6 @@ export function ToolbarFiltros({
       }
     />
   );
-}
-
-/**
- * Reconstruye la ruta completa a partir de un solo id.
- *
- * Los filtros guardan UN id —el más específico que se eligió—, no los tres.
- * Guardar los tres obligaría a mantenerlos coherentes entre sí en cada cambio,
- * y bastaría un descuido para tener un grupo que no pertenece al centro
- * seleccionado. Con uno solo, el resto se deduce y no puede contradecirse.
- */
-export function rutaSeleccionada(
-  arbol: Category[],
-  categoryId?: number,
-): { centro?: Category; grupo?: Category; concepto?: Category } {
-  if (categoryId === undefined) return {};
-
-  for (const centro of arbol) {
-    if (centro.id === categoryId) return { centro };
-
-    for (const grupo of centro.children ?? []) {
-      if (grupo.id === categoryId) return { centro, grupo };
-
-      for (const concepto of grupo.children ?? []) {
-        if (concepto.id === categoryId) return { centro, grupo, concepto };
-      }
-    }
-  }
-
-  return {};
 }
 
 /**

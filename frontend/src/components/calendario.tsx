@@ -101,8 +101,22 @@ export function Calendario({
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
         </Button>
-        <span aria-live="polite" className="font-display text-sm font-semibold capitalize">
-          {MESES_LARGOS[actual.mes]} de {actual.anio}
+        {/*
+          La mayúscula va SOLO en el mes.
+
+          Estaba `capitalize` en toda la frase, y eso pone en mayúscula la
+          primera letra de CADA palabra: «septiembre de 2026» salía
+          «Septiembre De 2026». El «de» es una preposición, no una palabra que
+          se titule.
+
+          Y no vale `first-letter:uppercase` en el conjunto: `::first-letter`
+          solo se aplica a contenedores de bloque, y esto es un `span` en
+          línea, así que la regla no engancharía y el mes saldría en
+          minúscula. Envolver la palabra que sí se titula es explícito y no
+          depende de ninguna excepción del selector.
+        */}
+        <span aria-live="polite" className="font-display text-sm font-semibold">
+          <span className="capitalize">{MESES_LARGOS[actual.mes]}</span> de {actual.anio}
         </span>
         <Button
           type="button"

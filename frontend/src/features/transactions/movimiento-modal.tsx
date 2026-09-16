@@ -2,11 +2,9 @@ import {
   ArrowUpRight,
   Camera,
   Loader2,
-  Lock,
   Minus,
   Pencil,
   Plus,
-  ScanLine,
   Sparkles,
   TrendingDown,
   TrendingUp,
@@ -23,7 +21,7 @@ import {
 } from 'react';
 
 import { LienzoPdf, Soltar, Soportes } from '@/components/soportes';
-import { rutaSeleccionada } from '@/components/toolbar-filtros';
+import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
@@ -402,10 +400,24 @@ export function MovimientoModal({
                 </Button>
               )}
 
-              {/* Solo en los dinámicos. Un movimiento de un centro estático no
-                  se borra desde aquí por la misma razón por la que no se
-                  reclasifica: su estructura se decide en Centros de costos. */}
-              {editando && !estatico && (
+              {/*
+                También en los centros estáticos, y no es una excepción a la
+                regla: es que la regla nunca hablaba de esto.
+
+                Lo que un centro estático protege es su ESTRUCTURA —qué
+                conceptos existen y en qué grupo viven—, y por eso no se
+                reclasifica desde aquí. Un movimiento no es estructura: es el
+                registro de que tal mes salió tal plata de un concepto.
+                Borrarlo borra el registro y deja el concepto donde estaba,
+                igual de vivo, listo para el mes siguiente.
+
+                Estaba condicionado a `!estatico`, así que en un centro
+                estático la papelera desaparecía y quedaba un hueco al lado del
+                lápiz: no se podía borrar un gasto mal anotado sin ir a hacer
+                dinámico su centro, que es exactamente lo contrario de lo que
+                hay que hacer.
+              */}
+              {editando && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -511,12 +523,27 @@ export function MovimientoModal({
                   necesitan que alguien anuncie que son tres campos.
                 */}
                 <div className="flex flex-col gap-3">
+                  {/*
+                    Los tres se bloquean si el centro GUARDADO es estático.
+
+                    Esta regla estaba y se perdió al rediseñar la ficha: los
+                    desplegables pasaron a bloquearse solo por dependencia
+                    —«elige antes un centro»— y el estático dejó de contar, así
+                    que un movimiento de Costos fijos se podía reclasificar
+                    desde aquí aunque la tabla no lo permitiera. La misma plata
+                    se movía o no según por dónde se entrara.
+
+                    Lo que protege un centro estático es su estructura. Borrar
+                    el movimiento sí se puede —eso es el registro, no la
+                    estructura—; moverlo de concepto, no.
+                  */}
                   <Campo etiqueta="Centro de costos" id="mov-centro">
                     <Combo
                       id="mov-centro"
                       etiqueta="Centro de costos"
                       valor={centro ? String(centro.id) : ''}
                       opciones={arbol.map((c) => ({ valor: String(c.id), etiqueta: c.name }))}
+                      deshabilitado={estatico}
                       onCambiar={(v) => setCategoryId(v === '' ? undefined : Number(v))}
                     />
                   </Campo>
@@ -530,7 +557,7 @@ export function MovimientoModal({
                         valor: String(g.id),
                         etiqueta: g.name,
                       }))}
-                      deshabilitado={!centro}
+                      deshabilitado={estatico || !centro}
                       vacio={centro ? 'Sin elegir' : 'Elige antes un centro de costos'}
                       creando={crearCategoria.isPending}
                       onCambiar={(v) => setCategoryId(v === '' ? centro?.id : Number(v))}
@@ -547,7 +574,7 @@ export function MovimientoModal({
                         valor: String(c.id),
                         etiqueta: c.name,
                       }))}
-                      deshabilitado={!grupo}
+                      deshabilitado={estatico || !grupo}
                       vacio={grupo ? 'Sin elegir' : 'Elige antes un grupo'}
                       creando={crearCategoria.isPending}
                       onCambiar={(v) => setCategoryId(v === '' ? grupo?.id : Number(v))}
@@ -576,15 +603,6 @@ export function MovimientoModal({
                     </Campo>
                   </div>
 
-                  {estatico && (
-                    <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                      <Lock className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-                      <span>
-                        “{centroGuardado?.name}” es un centro estático. La clasificación y la
-                        periodicidad se modifican desde Centros de costos.
-                      </span>
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -605,7 +623,10 @@ export function MovimientoModal({
           ) : (
             <VistaDeLectura
               tipo={type}
-              descripcion={description}
+              // El nombre sale del concepto, igual que en la tabla. Leía
+              // `description`, que en un movimiento registrado a mano está
+              // vacío desde que la ficha cambió su campo libre por un selector.
+              nombre={movimiento ? nombreDelMovimiento(movimiento, arbol) : ''}
               valor={amount}
               fecha={date}
               periodo={movimiento?.period}
@@ -691,7 +712,16 @@ export function MovimientoModal({
             })
           }
         >
-          Se borra y no se puede deshacer. Sus soportes se van con él.
+          {/*
+            Se dice lo que NO se borra, y no es un detalle: el nombre de este
+            movimiento es el de su concepto, así que la papelera parece estar
+            apuntando al concepto. No lo está. Sin esta frase, nadie borra un
+            gasto mal anotado por miedo a llevarse «Aseo» por delante.
+          */}
+          Se borra el registro de este mes y no se puede deshacer; sus soportes se van con
+          él. El concepto “{concepto?.name ?? grupo?.name ?? 'al que pertenece'}” no se
+          toca: sigue en Centros de costos, que es el único sitio donde se edita o se
+          elimina.
         </Confirmacion>
         </div>
       </div>
@@ -732,14 +762,14 @@ function mayuscula(texto: string): string {
  */
 function VistaDeLectura({
   tipo,
-  descripcion,
+  nombre,
   valor,
   fecha,
   periodo,
   ruta,
 }: {
   tipo: TransactionType;
-  descripcion: string;
+  nombre: string;
   valor: string;
   fecha: string;
   /** `YYYY-MM-DD` del día 1 del mes al que PERTENECE el gasto. */
@@ -806,7 +836,7 @@ function VistaDeLectura({
         </div>
 
         <div className="flex flex-col gap-1 border-t border-border px-4 py-3">
-          <p className="truncate text-base font-medium">{descripcion || 'Sin concepto'}</p>
+          <p className="truncate text-base font-medium">{nombre || 'Sin concepto'}</p>
 
           {/* El camino, sin etiqueta y sin fichas. Con fichas parecían
               pestañas —algo que se pulsa y cambia lo de abajo— y aquí no se
@@ -938,26 +968,44 @@ function ComoEmpezar({
   const campo = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex flex-col gap-3">
+    /*
+      ── TRES opciones, una al lado de la otra ─────────────────────────────
+      Eran dos filas apiladas, y la primera contenía dos botones dentro: una
+      caja que no se podía pulsar con dos pastillas pequeñas debajo de su
+      explicación, y debajo una fila que sí se pulsaba entera. Tres cosas que
+      se pueden hacer, presentadas de dos maneras distintas y en dos niveles
+      —la jerarquía decía que la cámara y el archivo eran subopciones de algo,
+      cuando en realidad son hermanas de registrar a mano—.
+
+      Ahora son tres columnas iguales y los tres son el mismo objeto: una
+      baldosa que se pulsa entera. Se comparan de un vistazo, que es lo que se
+      viene a hacer aquí, y el blanco de cada una es toda la baldosa.
+
+      En un teléfono se apilan: tres columnas en 375px dejan cada título
+      partido en tres renglones.
+    */
+    <div className="grid gap-3 sm:grid-cols-3">
       <Via
-        Icono={ScanLine}
+        Icono={Camera}
         color="gasto"
-        titulo="Escanear un soporte"
-        ayuda="Se extraen el valor, la fecha y el concepto. Requieren confirmación antes de guardar."
-      >
-        <BotonDeVia Icono={Camera} onClick={onCamara}>
-          Usar la cámara
-        </BotonDeVia>
-        <BotonDeVia Icono={Upload} onClick={() => campo.current?.click()}>
-          Seleccionar un archivo
-        </BotonDeVia>
-      </Via>
+        titulo="Tomar una foto"
+        ayuda="Se leen el valor, la fecha y el concepto."
+        onClick={onCamara}
+      />
+
+      <Via
+        Icono={Upload}
+        color="gasto"
+        titulo="Subir un archivo"
+        ayuda="Un PDF o una imagen del soporte."
+        onClick={() => campo.current?.click()}
+      />
 
       <Via
         Icono={Pencil}
         color="presupuesto"
-        titulo="Registro manual"
-        ayuda="Para un movimiento sin soporte, o cuando su clasificación ya se conoce."
+        titulo="Registrar manualmente"
+        ayuda="Sin soporte, o con la clasificación ya sabida."
         onClick={onAMano}
       />
 
@@ -977,11 +1025,23 @@ function ComoEmpezar({
 }
 
 /**
- * Una de las dos vías.
+ * Una de las tres vías.
  *
- * Con `onClick` la fila entera es un botón; sin él, es una caja que contiene
- * los suyos. Las dos formas existen porque una fila no puede hacer dos cosas
- * a la vez, y escanear son dos.
+ * ── Por qué es una baldosa y no una fila ────────────────────────────────────
+ * Porque las tres se comparan entre sí, y lo que se compara se pone al lado,
+ * no debajo: en columna hay que leer las tres explicaciones en orden para
+ * saber cuál es la que se quiere. Una al lado de otra se ven de un vistazo.
+ *
+ * ── Y siempre se pulsa ENTERA ───────────────────────────────────────────────
+ * Antes había dos formas —con `onClick` la fila era un botón; sin él, una caja
+ * que contenía botones más pequeños—, y eso hacía que la cámara y el archivo
+ * parecieran subopciones de «escanear» cuando en realidad son hermanas de
+ * registrar a mano. Con una sola forma, el blanco de cada opción es toda su
+ * baldosa, que es lo que se acierta con el dedo.
+ *
+ * El contenido va en COLUMNA: el pastel arriba y el texto debajo. De lado, en
+ * un tercio del ancho del modal, el texto se queda con setenta píxeles y el
+ * título se parte.
  */
 function Via({
   Icono,
@@ -989,35 +1049,13 @@ function Via({
   titulo,
   ayuda,
   onClick,
-  children,
 }: {
   Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   color: ColorDeChip;
   titulo: string;
   ayuda: string;
-  onClick?: () => void;
-  children?: ReactNode;
+  onClick: () => void;
 }) {
-  const dentro = (
-    <>
-      <ChipIcono Icono={Icono} color={color} tamano="sm" />
-      <span className="flex min-w-0 flex-1 flex-col gap-2">
-        <span className="block">
-          <span className="block text-sm font-semibold">{titulo}</span>
-          <span className="block text-xs text-muted-foreground">{ayuda}</span>
-        </span>
-        {children && <span className="flex flex-wrap gap-2">{children}</span>}
-      </span>
-    </>
-  );
-
-  const forma = cn(
-    BLOQUE,
-    'flex w-full items-start gap-3 p-4 text-left',
-  );
-
-  if (!onClick) return <div className={forma}>{dentro}</div>;
-
   return (
     <button
       type="button"
@@ -1028,36 +1066,16 @@ function Via({
       // oscuro: había que marcar además el borde en `primary` —a plena tinta,
       // más fuerte que la fila entera— para que se notara algo.
       className={cn(
-        forma,
+        BLOQUE,
+        'flex h-full w-full flex-col items-start gap-3 p-4 text-left',
         'transition-colors hover:border-ring/40 hover:bg-accent hover:text-accent-foreground',
       )}
     >
-      {dentro}
-    </button>
-  );
-}
-
-function BotonDeVia({
-  Icono,
-  onClick,
-  children,
-}: {
-  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5',
-        'text-xs font-medium transition-colors',
-        'hover:border-ring/40 hover:bg-accent hover:text-accent-foreground',
-      )}
-    >
-      <Icono className="size-3.5 shrink-0" aria-hidden={true} />
-      {children}
+      <ChipIcono Icono={Icono} color={color} tamano="sm" />
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold">{titulo}</span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">{ayuda}</span>
+      </span>
     </button>
   );
 }
