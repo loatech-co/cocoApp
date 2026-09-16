@@ -121,6 +121,19 @@ const buttonVariants = cva(
         md: 'h-11 rounded-lg px-5',
         'sm-icon': 'size-9 rounded-lg',
         'md-icon': 'size-11 rounded-lg',
+        /*
+          El mismo botón de icono, con el canto redondo.
+
+          Es una EXCEPCIÓN al radio estándar y está aquí y no en una llamada
+          porque el radio es del tamaño: escrito fuera, el siguiente que lo
+          necesite lo escribirá distinto.
+        
+          Existe para los mandos que viven sobre un documento —el zoom, el
+          pase, el borrar— y que van dentro de una pastilla redonda. Un
+          resaltado cuadrado dentro de una píldora deja dos esquinas asomando
+          en cada extremo, y eso se ve más que el propio botón.
+        */
+        'sm-icon-redondo': 'size-9 rounded-full',
       },
     },
     defaultVariants: {
