@@ -45,9 +45,10 @@ export interface PorcionDeDona {
 /**
  * Una dona.
  *
- * ── Por qué el agujero ──────────────────────────────────────────────────────
- * No es adorno: es donde va el total, que es el dato que da sentido a los
- * porcentajes. Sin él habría que escribirlo al lado y leer dos veces.
+ * ── Por qué el agujero va VACÍO ─────────────────────────────────────────────
+ * Porque el total ya está arriba, en el indicador de gastos del periodo.
+ * Repetirlo en el centro de la dona lo dice dos veces en la misma pantalla y
+ * le roba el sitio a lo único que la dona tiene que responder: la proporción.
  *
  * ── Por qué solo porcentajes, y el dinero al pasar por encima ───────────────
  * Porque la dona responde "¿qué proporción?", y una lista de cifras largas al
@@ -208,13 +209,6 @@ export function Dona({
           ) : null,
         )}
       </svg>
-
-      <span className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="tabular font-display text-lg font-semibold leading-none">
-          {formatCOP(total)}
-        </span>
-        <span className="mt-1 text-[11px] text-muted-foreground">en total</span>
-      </span>
 
       {señalada && (
         <div

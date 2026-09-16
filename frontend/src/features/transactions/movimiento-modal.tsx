@@ -246,7 +246,7 @@ export function MovimientoModal({
           )}
 
           <div className="flex gap-2 pt-1">
-            <Button type="button" variant="outline" onClick={onCerrar} className="flex-1">
+            <Button type="button" variant="ghost" onClick={onCerrar} className="flex-1">
               Cancelar
             </Button>
             <Button type="submit" disabled={guardando} className="flex-1">

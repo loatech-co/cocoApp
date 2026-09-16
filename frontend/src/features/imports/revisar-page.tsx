@@ -354,7 +354,7 @@ function BotonDeEstado({
       size="sm"
       variant={activo ? 'default' : 'outline'}
       aria-pressed={activo}
-      className="h-9 text-xs"
+      className="text-xs"
       {...props}
     >
       {children}

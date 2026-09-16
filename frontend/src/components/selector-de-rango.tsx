@@ -232,7 +232,7 @@ export function SelectorDeRango({
                   : rangoLargo(borrador.from, borrador.to)}
             </span>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="herramienta" size="chip" onClick={() => setAbierto(false)}>
+              <Button type="button" variant="ghost" size="chip" onClick={() => setAbierto(false)}>
                 Cancelar
               </Button>
               <Button type="button" size="chip" onClick={confirmar} disabled={ancla !== null}>
