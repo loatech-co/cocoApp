@@ -20,11 +20,11 @@ const OTROS = { fondo: 'var(--dona-otros)', tinta: 'var(--dona-otros-tinta)' };
    Un lienzo ancho y bajo: la dona en el centro y los nombres a los lados, que
    es donde hay sitio. Apilados debajo serían otra vez una leyenda.            */
 const ANCHO = 320;
-const ALTO = 180;
+const ALTO = 168;
 const CX = ANCHO / 2;
 const CY = ALTO / 2;
-const RADIO = 50;
-const GROSOR = 26;
+const RADIO = 56;
+const GROSOR = 15;
 const VUELTA = 2 * Math.PI * RADIO;
 
 /** Dónde dobla la línea guía y dónde empieza el texto. */
@@ -151,7 +151,7 @@ export function Dona({
       fila y la gráfica de al lado —que llena su tarjeta— la seguía. Se veía
       como si el resumen ocupara la pantalla entera.
     */
-    <div className={cn('relative mx-auto w-full max-w-[26rem]', className)}>
+    <div className={cn('relative mx-auto w-full max-w-[28rem]', className)}>
       <svg
         viewBox={`0 0 ${ANCHO} ${ALTO}`}
         className="w-full"
