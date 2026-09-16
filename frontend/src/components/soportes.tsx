@@ -206,20 +206,22 @@ function Soltar({
           'flex size-[104px] flex-col items-center justify-center gap-1.5 rounded-2xl',
           'border-2 border-dashed transition-colors',
           /*
-            El resaltado NO va a `primary`.
+            Al pasar por encima se oscurece EL FONDO, y el trazo no se toca.
 
-            En oscuro `--primary` es `bosque-800`, un verde oscuro: sobre el
-            fondo de la ficha el borde no se encendía, se enturbiaba. Al pasar
-            por encima se oscurece el hueco y se aclara el borde —lo mismo que
-            hacen los chips de los conceptos— y solo al soltar algo encima
-            aparece el lima, que ahí sí dice algo: "esto es lo que va a
-            recibir el archivo".
+            Con el borde cambiando de color, el punteado entero se redibujaba
+            al entrar y al salir: una línea discontinua que parpadea de un gris
+            a otro llama más la atención que el cuadro al que pertenece. El
+            fondo se oscurece sin mover nada de sitio.
+
+            El trazo se reserva para cuando se arrastra un archivo encima: ahí
+            sí hay algo que decir —"esto es lo que lo va a recibir"— y el lima
+            lo dice de una vez.
           */
           subiendo
             ? 'cursor-wait border-border text-muted-foreground'
             : encima
-              ? 'border-lima-tinta bg-black/10 text-foreground'
-              : 'border-border text-muted-foreground hover:border-muted-foreground hover:bg-black/5 hover:text-foreground',
+              ? 'border-lima-tinta bg-black/15 text-foreground'
+              : 'border-border text-muted-foreground hover:bg-black/10',
         )}
       >
         {subiendo ? (
