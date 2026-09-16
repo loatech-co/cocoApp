@@ -33,7 +33,7 @@ export function Select({
   opciones,
   etiqueta,
   vacio,
-  tamano = 'default',
+  tamano = 'md',
   deshabilitado = false,
   id,
   className,
@@ -46,7 +46,8 @@ export function Select({
   etiqueta: string;
   /** Texto de la opción sin valor. Si se omite, elegir es obligatorio. */
   vacio?: string;
-  tamano?: 'default' | 'sm';
+  /** Los mismos dos de toda la app: `sm` mide 36 y `md` mide 44. */
+  tamano?: 'sm' | 'md';
   deshabilitado?: boolean;
   id?: string;
   className?: string;

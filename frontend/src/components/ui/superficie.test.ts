@@ -56,7 +56,9 @@ describe('La superficie de lo que flota está en un solo sitio', () => {
   it('nadie vuelve a escribir la sombra flotante a mano', () => {
     const culpables = archivos
       .filter((ruta) => !LEVANTAN.has(relativa(ruta)))
-      .filter((ruta) => readFileSync(ruta, 'utf8').includes('--sombra-flotante'))
+      // La CLASE, no la mención: un comentario que explique la diferencia
+      // entre lo apoyado y lo que flota nombra la sombra sin usarla.
+      .filter((ruta) => readFileSync(ruta, 'utf8').includes('shadow-[var(--sombra-flotante)]'))
       .map(relativa);
 
     expect(culpables, 'usa SUPERFICIE_FLOTANTE de components/ui/superficie.ts').toEqual([]);

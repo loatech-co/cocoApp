@@ -25,6 +25,17 @@ export function Interruptor({ className, ...props }: ComponentProps<'input'>) {
           'bg-input peer-checked:bg-primary peer-checked:[&>span]:translate-x-4',
           'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background',
           'peer-disabled:opacity-40',
+          // ── La perilla tiene que ser lo CLARO sobre lo oscuro ─────────────
+          // Era `bg-card` siempre. En claro funciona —blanco sobre gris—, pero
+          // en oscuro `--card` es casi negro sobre una vía gris verdosa: la
+          // perilla quedaba más oscura que su carril y se leía como un agujero
+          // en vez de como algo que se desliza.
+          //
+          // Apagado en oscuro pasa a la tinta de la página, que es clara;
+          // encendido, a la tinta del primario, que sobre el teal claro del
+          // carril vuelve a ser la oscura. Los dos son tokens: en cualquier
+          // tema la perilla se separa de su carril sin que haya que elegir.
+          'dark:[&>span]:bg-foreground dark:peer-checked:[&>span]:bg-primary-foreground',
           className,
         )}
       >

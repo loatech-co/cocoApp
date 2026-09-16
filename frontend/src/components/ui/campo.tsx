@@ -30,10 +30,10 @@ export function Campo({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Label htmlFor={id}>{etiqueta}</Label>
       {children}
-      {ayuda && <p className="text-xs text-muted-foreground">{ayuda}</p>}
+      {ayuda && <p className="text-xs leading-relaxed text-muted-foreground">{ayuda}</p>}
     </div>
   );
 }

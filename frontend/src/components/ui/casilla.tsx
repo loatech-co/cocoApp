@@ -31,8 +31,15 @@ export function Casilla({
       <span
         aria-hidden="true"
         className={cn(
-          'pointer-events-none grid size-4 place-items-center rounded-[5px] border transition-colors',
+          // `rounded-sm` es `--radius` menos 4, o sea 6px: sale de la escala
+          // del tema. Era un `rounded-[5px]` a mano, de cuando la escala
+          // estaba corrida y ningún nombre daba un valor bajo.
+          'pointer-events-none grid size-4 place-items-center rounded-sm border transition-colors',
           'border-input bg-card text-primary-foreground',
+          // Se tiñe el borde al pasar por encima, igual que un campo: la
+          // casilla es el control más pequeño de la app y sin esto no hay
+          // forma de saber que se puede pulsar hasta que se pulsa.
+          'peer-hover:border-ring/50',
           'peer-checked:border-primary peer-checked:bg-primary peer-checked:[&>svg]:opacity-100',
           'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',
           'peer-disabled:opacity-40',
