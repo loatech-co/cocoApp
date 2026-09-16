@@ -1,3 +1,5 @@
+import { cargarPdfjs } from '@/lib/pdf';
+
 import { TIPO_PDF, type OcrProvider, type ProgresoDeOcr } from './ocr-provider';
 
 /**
@@ -30,13 +32,10 @@ export class PdfTextProvider implements OcrProvider {
   ): Promise<string> {
     onProgreso?.({ avance: 0, etapa: 'Abriendo el PDF…' });
 
-    const pdfjs = await import('pdfjs-dist');
-    // El worker se sirve desde el propio bundle: un CDN externo rompería la
-    // CSP y, peor, haría que abrir un extracto dependiera de un tercero.
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.mjs',
-      import.meta.url,
-    ).toString();
+    // El worker y la carga los resuelve `lib/pdf`: la misma línea la
+    // necesitan las miniaturas de los soportes, y es justo la clase de detalle
+    // que se copia bien la primera vez y mal la segunda.
+    const pdfjs = await cargarPdfjs();
 
     try {
       const documento = await pdfjs.getDocument({ data: await archivo.arrayBuffer() }).promise;

@@ -1,5 +1,5 @@
 import { ExternalLink, Loader2, Lock, Pencil, Trash2, X } from 'lucide-react';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-recurrencia';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { ApiClientError } from '@/lib/api-client';
+import { diaLargo, mesLargo } from '@/lib/fechas';
 import {
   useActualizarCategoria,
   useActualizarMovimiento,
@@ -19,7 +20,7 @@ import {
   useCrearMovimiento,
   useEliminarMovimiento,
 } from '@/lib/queries';
-import { cn } from '@/lib/utils';
+import { cn, formatCOP } from '@/lib/utils';
 import type { Category, Transaction, TransactionType } from '@coco/types';
 
 /**
@@ -237,13 +238,20 @@ export function MovimientoModal({
           'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
           // Más ancho: con dos columnas de campos, `max-w-lg` obligaba a que
           // cada una midiera menos que el texto que lleva dentro.
-          'rounded-t-2xl sm:max-w-2xl sm:rounded-2xl',
+          // Más ancho desde que los soportes se ven en miniatura: con
+          // `max-w-2xl` cabían dos recibos por fila y ocho quedaban en cuatro
+          // renglones, que es más alto que el resto de la ficha junta.
+          'rounded-t-2xl sm:max-w-3xl sm:rounded-2xl',
           'pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5',
         )}
       >
         <div className="mb-4 flex items-center justify-between gap-3">
+          {/* El tipo está en el TÍTULO, no en un par de botones dentro del
+              formulario. Lo eligió el menú de "Nuevo movimiento" antes de
+              abrir esto, así que aquí ya no es una pregunta: es de qué se
+              está hablando. */}
           <h2 className="text-xl font-semibold">
-            {!editando ? 'Nuevo movimiento' : editable ? 'Editar movimiento' : 'Movimiento'}
+            {!editando ? `Nuevo ${nombreDelTipo(type)}` : editable ? `Editar ${nombreDelTipo(type)}` : mayuscula(nombreDelTipo(type))}
           </h2>
 
           {/* Juntas y del mismo tamaño, como en la ficha de un concepto: son
@@ -292,27 +300,8 @@ export function MovimientoModal({
         </div>
 
         <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
-          <div className="flex gap-2" role="group" aria-label="Tipo de movimiento">
-            {(['expense', 'income'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setType(t)}
-                disabled={!editandoCampos}
-                aria-pressed={type === t}
-                className={cn(
-                  'flex-1 rounded-full py-2.5 text-sm font-medium transition-colors',
-                  type === t
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-secondary-foreground',
-                  !editandoCampos && 'cursor-default opacity-60',
-                )}
-              >
-                {t === 'expense' ? 'Gasto' : 'Ingreso'}
-              </button>
-            ))}
-          </div>
-
+          {editandoCampos ? (
+            <>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="mov-concepto">Concepto</Label>
             <Input
@@ -436,7 +425,7 @@ export function MovimientoModal({
               id="mov-notas"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              rows={2}
+              rows={4}
               disabled={!editandoCampos}
               className="rounded-lg border bg-card px-3 py-2 text-sm"
               style={{ borderColor: 'var(--input)' }}
@@ -452,6 +441,21 @@ export function MovimientoModal({
               valor={recurrencia}
               onCambiar={setRecurrencia}
               concepto={concepto.name}
+            />
+          )}
+            </>
+          ) : (
+            <VistaDeLectura
+              tipo={type}
+              descripcion={description}
+              valor={amount}
+              fecha={date}
+              periodo={movimiento?.period}
+              notas={notes}
+              ruta={[centro?.name, grupo?.name, concepto?.name].filter(Boolean) as string[]}
+              estatico={estatico}
+              nombreDelCentro={centroGuardado?.name}
+              onIrACentros={onCerrar}
             />
           )}
 
@@ -586,4 +590,142 @@ function cambioLaRecurrencia(
 
   // El mes solo cuenta si el ciclo no es mensual: ahí no se guarda.
   return recurrencia.periodicidad !== 'mensual' && concepto.mes_de_pago !== recurrencia.mesDePago;
+}
+
+/** `expense` → "gasto". El tipo, dicho como se dice. */
+function nombreDelTipo(tipo: TransactionType): string {
+  return tipo === 'income' ? 'ingreso' : 'gasto';
+}
+
+function mayuscula(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+/**
+ * El movimiento cuando solo se está mirando.
+ *
+ * ── Por qué no son los mismos campos, apagados ──────────────────────────────
+ * Porque un campo apagado sigue siendo un campo: tiene su marco, su etiqueta
+ * encima y su altura de control, y ocupa el sitio de una caja donde se podría
+ * escribir aunque no se pueda. Ocho de esos, uno debajo de otro, son un
+ * formulario que no deja rellenarse —que se lee como una avería— cuando lo
+ * que uno viene a hacer es LEER un dato: cuánto fue, cuándo, de qué.
+ *
+ * Así que lo mismo, dicho de otra forma. La cifra grande y arriba, porque es
+ * lo que se viene a ver; el resto en una lista de pares, que es como se lee un
+ * recibo. Sin un solo control a la vista: para tocar algo está el lápiz.
+ */
+function VistaDeLectura({
+  tipo,
+  descripcion,
+  valor,
+  fecha,
+  periodo,
+  notas,
+  ruta,
+  estatico,
+  nombreDelCentro,
+  onIrACentros,
+}: {
+  tipo: TransactionType;
+  descripcion: string;
+  valor: string;
+  fecha: string;
+  /** `YYYY-MM-DD` del día 1 del mes al que PERTENECE el gasto. */
+  periodo?: string;
+  notas: string;
+  ruta: string[];
+  estatico: boolean;
+  nombreDelCentro?: string;
+  onIrACentros: () => void;
+}) {
+  // El periodo solo se nombra cuando NO es el mes del pago. Repetir
+  // "septiembre" dos veces seguidas no informa; decirlo cuando la factura de
+  // agosto se pagó en septiembre, sí —es lo que descuadra los totales de quien
+  // no lo nota—.
+  const mesDelPago = fecha.slice(0, 7);
+  const desfasado = Boolean(periodo) && periodo!.slice(0, 7) !== mesDelPago;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <p
+          className={cn(
+            'tabular text-3xl font-semibold leading-tight sm:text-4xl',
+            tipo === 'income' ? 'text-income' : 'text-expense',
+          )}
+        >
+          {tipo === 'income' ? '+' : '−'}
+          {formatCOP(valor || '0')}
+        </p>
+        <p className="mt-1 truncate text-base">{descripcion || 'Sin concepto'}</p>
+      </div>
+
+      <dl className="flex flex-col divide-y divide-border rounded-2xl bg-secondary/60 px-3">
+        <Dato etiqueta="Fecha de pago">{diaLargo(fecha)}</Dato>
+
+        {desfasado && (
+          <Dato etiqueta="Pertenece a" acento>
+            {mayuscula(mesLargo(periodo!.slice(0, 7)))}
+          </Dato>
+        )}
+
+        <Dato etiqueta="Dónde se clasifica">
+          {ruta.length > 0 ? ruta.join(' › ') : 'Sin clasificar'}
+        </Dato>
+      </dl>
+
+      {notas.trim() !== '' && (
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Notas
+          </p>
+          {/* `whitespace-pre-line`: las notas se escriben con saltos de línea y
+              aplanarlas convierte una lista en un párrafo. */}
+          <p className="whitespace-pre-line text-sm">{notas}</p>
+        </div>
+      )}
+
+      {estatico && (
+        <div className="flex flex-col gap-2 rounded-2xl bg-secondary/60 p-3">
+          <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+            <Lock className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+            <span>
+              “{nombreDelCentro}” es un centro estático. La clasificación y la periodicidad
+              se modifican desde Centros de costos.
+            </span>
+          </p>
+          <Link
+            to="/centros-de-costos"
+            onClick={onIrACentros}
+            className="flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+          >
+            <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
+            Editar el concepto en Centros de costos
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Una fila de la ficha: el nombre del dato a la izquierda y el dato a la derecha. */
+function Dato({
+  etiqueta,
+  acento = false,
+  children,
+}: {
+  etiqueta: string;
+  /** Ámbar. Para lo que hay que notar, como un mes que no es el del pago. */
+  acento?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-2.5">
+      <dt className="shrink-0 text-xs text-muted-foreground">{etiqueta}</dt>
+      <dd className={cn('min-w-0 truncate text-right text-sm', acento && 'font-medium text-warning')}>
+        {children}
+      </dd>
+    </div>
+  );
 }
