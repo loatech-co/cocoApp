@@ -1,8 +1,15 @@
-import { rmSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 
 import request from 'supertest';
+import sharp from 'sharp';
 
-import { claveNueva, carpetaDelAlmacen, guardar, huellaDe } from '../src/modules/soportes/soportes.almacen';
+import {
+  claveNueva,
+  carpetaDelAlmacen,
+  guardar,
+  huellaDe,
+  rutaAbsoluta,
+} from '../src/modules/soportes/soportes.almacen';
 import { levantarApp, type EntornoDePruebas } from './helpers/app';
 
 /**
@@ -142,6 +149,54 @@ describe('Soportes (e2e)', () => {
         .expect(404);
     });
 
+    it('Beto no puede subir un soporte a un movimiento de Ana', async () => {
+      const { transactionId } = await conSoportes(ana, anaId, [pdf('recibo')]);
+
+      const hoja = await sharp({
+        create: { width: 400, height: 500, channels: 3, background: { r: 10, g: 10, b: 10 } },
+      })
+        .png()
+        .toBuffer();
+
+      // 404 y no 403: confirmar que el movimiento existe ya es contar algo de
+      // la base de otro.
+      await http
+        .post(`/api/v1/transactions/${transactionId}/soportes`)
+        .set('Authorization', beto)
+        .attach('archivos', hoja, { filename: 'x.png', contentType: 'image/png' })
+        .expect(404);
+
+      // Y no se creó nada: la propiedad se comprueba ANTES de procesar.
+      expect(await entorno.prisma.soporte.count({ where: { transactionId } })).toBe(1);
+    });
+
+    it('sin sesión no se sube ni se borra', async () => {
+      const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
+
+      await http
+        .post(`/api/v1/transactions/${transactionId}/soportes`)
+        .attach('archivos', Buffer.from('%PDF-1.4\n%%EOF\n'), {
+          filename: 'x.pdf',
+          contentType: 'application/pdf',
+        })
+        .expect(401);
+
+      await http
+        .delete(`/api/v1/transactions/${transactionId}/soportes/${soportes[0].id}`)
+        .expect(401);
+    });
+
+    it('Beto no puede borrar un soporte de Ana', async () => {
+      const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
+
+      await http
+        .delete(`/api/v1/transactions/${transactionId}/soportes/${soportes[0].id}`)
+        .set('Authorization', beto)
+        .expect(404);
+
+      expect(await entorno.prisma.soporte.count({ where: { transactionId } })).toBe(1);
+    });
+
     it('una clave que se sale del almacén no entrega nada', async () => {
       const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
 
@@ -233,6 +288,139 @@ describe('Soportes (e2e)', () => {
       // el soporte nunca se cargó, que es un problema distinto.
       expect(r.body.data).toHaveLength(1);
       expect(r.body.data[0].disponible).toBe(false);
+    });
+
+    it('sube un soporte y lo deja en gris, liviano y con el nombre del movimiento', async () => {
+      const movimiento = await http
+        .post('/api/v1/transactions')
+        .set('Authorization', ana)
+        .send({
+          date: '2026-08-12',
+          amount: '120000',
+          type: 'expense',
+          description: 'PILA / Seguridad Social',
+        })
+        .expect(201);
+
+      const id = Number(movimiento.body.data.id);
+
+      // Una imagen A COLOR y grande: es lo que llega de la cámara de un móvil,
+      // y es donde se nota si el tratamiento corrió o no.
+      const color = await sharp({
+        create: { width: 2400, height: 3000, channels: 3, background: { r: 200, g: 40, b: 40 } },
+      })
+        .png()
+        .toBuffer();
+
+      const r = await http
+        .post(`/api/v1/transactions/${id}/soportes`)
+        .set('Authorization', ana)
+        .attach('archivos', color, { filename: 'IMG_4821.PNG', contentType: 'image/png' })
+        .expect(201);
+
+      expect(r.body.data).toHaveLength(1);
+      const soporte = r.body.data[0];
+
+      // El nombre sale del MOVIMIENTO, no del archivo, y la barra que no cabe
+      // en un nombre de archivo se cambia por un guion —igual que en el lote—.
+      expect(soporte.nombre_archivo).toBe('PILA - Seguridad Social - 2026-08-12.jpg');
+      expect(soporte.mime_type).toBe('image/jpeg');
+      expect(soporte.orden).toBe(1);
+
+      // Y el archivo guardado es gris y de 1100 de ancho, no la imagen original.
+      const guardado = await entorno.prisma.soporte.findFirst({ where: { transactionId: BigInt(id) } });
+      const bytes = readFileSync(rutaAbsoluta(guardado!.storageKey));
+      const meta = await sharp(bytes).metadata();
+
+      expect(meta.format).toBe('jpeg');
+      expect(meta.width).toBe(1100);
+      expect(meta.channels).toBe(1);
+      expect(bytes.length).toBeLessThan(color.length / 4);
+    });
+
+    it('el "i de N" se recalcula al agregar, sin renombrar lo anterior', async () => {
+      const movimiento = await http
+        .post('/api/v1/transactions')
+        .set('Authorization', ana)
+        .send({ date: '2026-08-12', amount: '90000', type: 'expense', description: 'Claro Movil' })
+        .expect(201);
+
+      const id = Number(movimiento.body.data.id);
+
+      const hoja = (tono: number) =>
+        sharp({ create: { width: 800, height: 1000, channels: 3, background: { r: tono, g: tono, b: tono } } })
+          .png()
+          .toBuffer();
+
+      const dos = await http
+        .post(`/api/v1/transactions/${id}/soportes`)
+        .set('Authorization', ana)
+        .attach('archivos', await hoja(10), { filename: 'a.png', contentType: 'image/png' })
+        .attach('archivos', await hoja(120), { filename: 'b.png', contentType: 'image/png' })
+        .expect(201);
+
+      expect(dos.body.data.map((s: { orden: number }) => s.orden)).toEqual([1, 2]);
+
+      const tres = await http
+        .post(`/api/v1/transactions/${id}/soportes`)
+        .set('Authorization', ana)
+        .attach('archivos', await hoja(230), { filename: 'c.png', contentType: 'image/png' })
+        .expect(201);
+
+      // El tercero continúa la cuenta, y los dos primeros NO cambian de nombre:
+      // el total no está horneado en ninguno, se cuenta al mirarlos.
+      expect(tres.body.data.map((s: { orden: number }) => s.orden)).toEqual([1, 2, 3]);
+      expect(
+        new Set(tres.body.data.map((s: { nombre_archivo: string }) => s.nombre_archivo)),
+      ).toEqual(new Set(['Claro Movil - 2026-08-12.jpg']));
+    });
+
+    it('subir el mismo archivo dos veces no lo duplica', async () => {
+      const movimiento = await http
+        .post('/api/v1/transactions')
+        .set('Authorization', ana)
+        .send({ date: '2026-08-12', amount: '90000', type: 'expense', description: 'Agua' })
+        .expect(201);
+
+      const id = Number(movimiento.body.data.id);
+      const hoja = await sharp({
+        create: { width: 600, height: 800, channels: 3, background: { r: 90, g: 90, b: 90 } },
+      })
+        .png()
+        .toBuffer();
+
+      await http
+        .post(`/api/v1/transactions/${id}/soportes`)
+        .set('Authorization', ana)
+        .attach('archivos', hoja, { filename: 'recibo.png', contentType: 'image/png' })
+        .expect(201);
+
+      const segunda = await http
+        .post(`/api/v1/transactions/${id}/soportes`)
+        .set('Authorization', ana)
+        .attach('archivos', hoja, { filename: 'otro-nombre.png', contentType: 'image/png' })
+        .expect(201);
+
+      // La huella es del archivo YA TRATADO: dos originales distintos que
+      // acaban en el mismo JPG en gris son el mismo soporte.
+      expect(segunda.body.data).toHaveLength(1);
+    });
+
+    it('rechaza lo que no es un PDF ni una imagen', async () => {
+      const movimiento = await http
+        .post('/api/v1/transactions')
+        .set('Authorization', ana)
+        .send({ date: '2026-08-12', amount: '1000', type: 'expense' })
+        .expect(201);
+
+      await http
+        .post(`/api/v1/transactions/${Number(movimiento.body.data.id)}/soportes`)
+        .set('Authorization', ana)
+        .attach('archivos', Buffer.from('#!/bin/sh\nrm -rf /'), {
+          filename: 'travieso.sh',
+          contentType: 'application/x-sh',
+        })
+        .expect(415);
     });
 
     it('borrar el movimiento se lleva sus soportes', async () => {

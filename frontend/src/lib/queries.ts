@@ -9,7 +9,7 @@ import type {
   Transaction,
 } from '@coco/types';
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
-import { apiFetch } from './api-client';
+import { apiFetch, apiSubir } from './api-client';
 
 /**
  * Claves de caché.
@@ -42,6 +42,43 @@ export function useSoportes(transactionId: number | undefined) {
     enabled: transactionId !== undefined,
     queryFn: async (): Promise<Soporte[]> =>
       (await apiFetch<Soporte[]>(`/transactions/${transactionId}/soportes`)).data,
+  });
+}
+
+/** Sube soportes a un movimiento y devuelve la lista ya actualizada. */
+export function useSubirSoportes(transactionId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      archivos,
+      onProgreso,
+    }: {
+      archivos: File[];
+      onProgreso?: (fraccion: number) => void;
+    }): Promise<Soporte[]> => {
+      const datos = new FormData();
+      for (const archivo of archivos) datos.append('archivos', archivo);
+      return apiSubir<Soporte[]>(`/transactions/${transactionId}/soportes`, datos, onProgreso);
+    },
+    // Se escribe la respuesta en la caché en vez de invalidarla: el servidor
+    // acaba de devolver la lista entera y volver a pedirla es un viaje para
+    // traer lo que ya está en la mano.
+    onSuccess: (lista) => queryClient.setQueryData(keys.soportes(transactionId), lista),
+  });
+}
+
+export function useEliminarSoporte(transactionId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (soporteId: number) => {
+      await apiFetch<void>(`/transactions/${transactionId}/soportes/${soporteId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: keys.soportes(transactionId) }),
   });
 }
 

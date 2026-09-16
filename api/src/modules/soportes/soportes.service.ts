@@ -1,9 +1,29 @@
 import type { Readable } from 'node:stream';
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  PayloadTooLargeException,
+  UnsupportedMediaTypeException,
+} from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { abrir, existe } from './soportes.almacen';
+import { claveNueva, guardar, huellaDe, abrir, existe } from './soportes.almacen';
+import {
+  nombreDeSoporte,
+  optimizar,
+  TAMANO_MAXIMO,
+  TIPOS_DE_ENTRADA,
+} from './soportes.optimizacion';
+
+/** Un archivo tal como llega del formulario. */
+export interface ArchivoSubido {
+  originalname: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
 
 /** La ficha de un soporte, sin el binario. Es lo que se lista en el modal. */
 export interface SoporteView {
@@ -83,5 +103,111 @@ export class SoportesService {
       mime: soporte.mimeType,
       tamano: soporte.tamano,
     };
+  }
+
+  /**
+   * Sube uno o varios soportes a un movimiento.
+   *
+   * ── El orden de las comprobaciones importa ──────────────────────────────
+   * La propiedad del movimiento se verifica ANTES de tocar un solo byte. Al
+   * revés —optimizar y luego mirar de quién es— un desconocido podría hacer
+   * trabajar al servidor con ghostscript y sharp mandando archivos a
+   * movimientos que no son suyos, que es una forma barata de tumbarlo.
+   *
+   * ── Por qué se procesa antes de mirar si está repetido ──────────────────
+   * Porque la huella es del archivo YA TRATADO, no del que llegó. Dos fotos
+   * de la misma hoja tomadas con un segundo de diferencia son dos archivos
+   * distintos en origen y el mismo JPG en gris a 1100px. Comparar lo que
+   * llega dejaría entrar el duplicado que uno quería evitar.
+   */
+  async subir(
+    userId: bigint,
+    transactionId: bigint,
+    archivos: ArchivoSubido[],
+  ): Promise<SoporteView[]> {
+    const movimiento = await this.prisma.transaction.findFirst({
+      where: { id: transactionId, userId },
+      include: { category: { select: { name: true } } },
+    });
+
+    if (!movimiento) throw new NotFoundException('No existe ese movimiento.');
+    if (archivos.length === 0) throw new BadRequestException('No llegó ningún archivo.');
+
+    for (const archivo of archivos) {
+      if (!TIPOS_DE_ENTRADA.has(archivo.mimetype)) {
+        throw new UnsupportedMediaTypeException(
+          `“${archivo.originalname}” no es un PDF ni una imagen.`,
+        );
+      }
+      if (archivo.size > TAMANO_MAXIMO) {
+        throw new PayloadTooLargeException(
+          `“${archivo.originalname}” pesa más de ${Math.round(TAMANO_MAXIMO / 1024 / 1024)} MB.`,
+        );
+      }
+    }
+
+    // El nombre sale del MOVIMIENTO, no del archivo: `IMG_4821.HEIC` no dice
+    // de qué pago es, y así lo subido queda igual que lo importado.
+    const concepto =
+      movimiento.description ?? movimiento.merchant ?? movimiento.category?.name ?? 'Soporte';
+    const fecha = movimiento.date.toISOString().slice(0, 10);
+
+    const ultimo = await this.prisma.soporte.aggregate({
+      where: { transactionId },
+      _max: { orden: true },
+    });
+    let orden = (ultimo._max.orden ?? 0) + 1;
+
+    for (const archivo of archivos) {
+      const { contenido, mime, extension } = await optimizar(archivo.buffer, archivo.mimetype);
+      const huella = huellaDe(contenido);
+
+      // Reintentar la misma subida no duplica: el único de (movimiento,
+      // huella) lo impediría en la base, pero fallar con un 500 no es una
+      // respuesta; se salta y ya.
+      const repetido = await this.prisma.soporte.findFirst({
+        where: { transactionId, huella },
+      });
+      if (repetido) continue;
+
+      const storageKey = claveNueva(userId, extension);
+      // El archivo primero y la ficha después: si se corta en medio queda un
+      // binario que nadie alcanza, que es inofensivo. Al revés quedaría un
+      // soporte que la aplicación promete y no puede enseñar.
+      await guardar(storageKey, contenido);
+
+      await this.prisma.soporte.create({
+        data: {
+          userId,
+          transactionId,
+          orden,
+          nombreArchivo: nombreDeSoporte(concepto, fecha, extension),
+          mimeType: mime,
+          storageKey,
+          tamano: contenido.length,
+          huella,
+        },
+      });
+
+      orden += 1;
+    }
+
+    return this.listar(userId, transactionId);
+  }
+
+  /**
+   * Borra un soporte.
+   *
+   * El binario se queda en el almacén a propósito: es un archivo huérfano que
+   * nadie alcanza —no hay ruta que llegue a él sin su ficha— y borrarlo aquí
+   * haría que un fallo a mitad dejara una ficha apuntando a nada, que sí se
+   * ve. La basura se recoge aparte, si alguna vez hace falta.
+   */
+  async eliminar(userId: bigint, transactionId: bigint, soporteId: bigint): Promise<void> {
+    const { count } = await this.prisma.soporte.deleteMany({
+      where: { id: soporteId, transactionId, userId },
+    });
+
+    if (count === 0) throw new NotFoundException('No existe ese soporte.');
   }
 }

@@ -140,6 +140,74 @@ export async function apiBlob(path: string, signal?: AbortSignal): Promise<Blob>
   return respuesta.blob();
 }
 
+/**
+ * Sube archivos: `multipart/form-data` con el token de la sesión.
+ *
+ * ── Por qué no pasa por `apiFetch` ──────────────────────────────────────────
+ * Porque `apiFetch` serializa el cuerpo a JSON y le pone su cabecera. Un
+ * `FormData` hay que entregárselo al navegador TAL CUAL: es él quien inventa
+ * la frontera entre las partes y la escribe en el `Content-Type`. Poner esa
+ * cabecera a mano —aunque sea la correcta— rompe la petición, porque la
+ * frontera que se declara no es la que el cuerpo lleva dentro.
+ */
+export async function apiSubir<TData>(
+  path: string,
+  datos: FormData,
+  onProgreso?: (fraccion: number) => void,
+): Promise<TData> {
+  if (tokenPorExpirar()) await renovar();
+
+  /*
+    XMLHttpRequest y no `fetch`, y es la única vez en toda la aplicación.
+
+    `fetch` todavía no sabe informar del progreso de una SUBIDA —lo que trae es
+    para la descarga— y aquí hace falta: una foto de móvil tarda lo suyo, y una
+    barra quieta es indistinguible de una aplicación colgada.
+  */
+  return new Promise<TData>((resolver, rechazar) => {
+    const peticion = new XMLHttpRequest();
+    peticion.open('POST', `${BASE_URL}${path}`);
+
+    const token = tokenActual();
+    if (token) peticion.setRequestHeader('Authorization', `Bearer ${token}`);
+
+    peticion.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgreso?.(e.loaded / e.total);
+    };
+
+    peticion.onload = () => {
+      const cuerpo: unknown = ((): unknown => {
+        try {
+          return JSON.parse(peticion.responseText);
+        } catch {
+          return null;
+        }
+      })();
+
+      if (peticion.status >= 200 && peticion.status < 300) {
+        resolver((cuerpo as ApiResponse<TData>).data);
+        return;
+      }
+
+      if (peticion.status === 401) descartarSesion();
+      const error = (cuerpo as ApiError | null)?.error;
+      rechazar(
+        new ApiClientError(
+          peticion.status,
+          error?.code ?? 'unknown_error',
+          error?.message ?? 'No se pudo subir el archivo.',
+          error?.details ?? [],
+        ),
+      );
+    };
+
+    peticion.onerror = () =>
+      rechazar(new ApiClientError(0, 'network_error', 'No hay conexión con el servidor.'));
+
+    peticion.send(datos);
+  });
+}
+
 function enviar(path: string, options: RequestOptions): Promise<Response> {
   const { method = 'GET', body, idempotencyKey, signal } = options;
   const token = tokenActual();

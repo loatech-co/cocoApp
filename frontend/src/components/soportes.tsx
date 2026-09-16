@@ -4,18 +4,20 @@ import {
   Download,
   Eye,
   FileWarning,
+  ImagePlus,
   Loader2,
   Minus,
-  Paperclip,
   Plus,
+  Trash2,
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { apiBlob } from '@/lib/api-client';
+import { Confirmacion } from '@/components/ui/confirmacion';
+import { ApiClientError, apiBlob } from '@/lib/api-client';
 import { cargarPdfjs } from '@/lib/pdf';
-import { useSoportes } from '@/lib/queries';
+import { useEliminarSoporte, useSoportes, useSubirSoportes } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Soporte } from '@coco/types';
 
@@ -40,7 +42,25 @@ import type { Soporte } from '@coco/types';
  */
 export function Soportes({ transactionId }: { transactionId: number }) {
   const soportes = useSoportes(transactionId);
+  const subir = useSubirSoportes(transactionId);
   const lista = soportes.data ?? [];
+
+  const [progreso, setProgreso] = useState(0);
+  const [errorDeSubida, setErrorDeSubida] = useState<string | null>(null);
+
+  async function aceptar(archivos: FileList | null): Promise<void> {
+    if (!archivos || archivos.length === 0) return;
+    setErrorDeSubida(null);
+    setProgreso(0);
+
+    try {
+      await subir.mutateAsync({ archivos: Array.from(archivos), onProgreso: setProgreso });
+    } catch (e) {
+      setErrorDeSubida(
+        e instanceof ApiClientError ? e.message : 'No se pudo subir. Inténtalo otra vez.',
+      );
+    }
+  }
 
   /** El `blob:` de cada soporte, por id. Se descargan una vez y se comparten. */
   const [urls, setUrls] = useState<Record<string, string>>({});
@@ -88,15 +108,6 @@ export function Soportes({ transactionId }: { transactionId: number }) {
     );
   }
 
-  if (lista.length === 0) {
-    return (
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Paperclip className="size-4 shrink-0" aria-hidden="true" />
-        Este movimiento no tiene soportes.
-      </p>
-    );
-  }
-
   return (
     <>
       {/* Tamaño fijo y que fluyan: con `grid-cols-N` un solo soporte se
@@ -112,18 +123,128 @@ export function Soportes({ transactionId }: { transactionId: number }) {
             />
           </li>
         ))}
+
+        {/* El hueco para añadir va CON las miniaturas, del mismo tamaño y en
+            la misma fila: así se ve que es otra plaza de lo mismo. Sin
+            ninguno, es lo único que hay, y un cuadro punteado y vacío se lee
+            como "aquí falta algo" mejor que cualquier frase. */}
+        <li>
+          <Soltar
+            subiendo={subir.isPending}
+            progreso={progreso}
+            onArchivos={(a) => void aceptar(a)}
+          />
+        </li>
       </ul>
+
+      {errorDeSubida && (
+        <p role="alert" className="mt-2 text-xs text-destructive">
+          {errorDeSubida}
+        </p>
+      )}
 
       {enGrande !== null && (
         <Pase
+          transactionId={transactionId}
           lista={lista}
           urls={urls}
-          indice={enGrande}
+          indice={Math.min(enGrande, lista.length - 1)}
           onIr={setEnGrande}
           onCerrar={() => setEnGrande(null)}
         />
       )}
     </>
+  );
+}
+
+/**
+ * El hueco donde se sueltan los recibos.
+ *
+ * ── Por qué es un cuadro punteado y no un botón ─────────────────────────────
+ * Porque ocupa una plaza en la misma fila que las miniaturas y del mismo
+ * tamaño: se lee como el sitio del próximo soporte, no como una acción en otro
+ * sitio de la ficha. Y el borde punteado es lo que en todas partes significa
+ * "aquí cabe algo que todavía no está" —un botón sólido diría lo contrario,
+ * que ahí ya hay una cosa—.
+ *
+ * ── Por qué también acepta que se suelte encima ─────────────────────────────
+ * Porque el recibo casi siempre viene de otra ventana: del correo, de la
+ * carpeta de descargas. Obligar a pasar por el diálogo de archivos es pedir
+ * que se busque a mano lo que ya se tiene agarrado.
+ */
+function Soltar({
+  subiendo,
+  progreso,
+  onArchivos,
+}: {
+  subiendo: boolean;
+  progreso: number;
+  onArchivos: (archivos: FileList | null) => void;
+}) {
+  const campo = useRef<HTMLInputElement>(null);
+  const [encima, setEncima] = useState(false);
+
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setEncima(true);
+      }}
+      onDragLeave={() => setEncima(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setEncima(false);
+        if (!subiendo) onArchivos(e.dataTransfer.files);
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => campo.current?.click()}
+        disabled={subiendo}
+        aria-label="Añadir soportes"
+        className={cn(
+          'flex size-[104px] flex-col items-center justify-center gap-1.5 rounded-2xl',
+          'border-2 border-dashed transition-colors',
+          subiendo
+            ? 'cursor-wait border-border text-muted-foreground'
+            : encima
+              ? 'border-primary bg-primary/10 text-foreground'
+              : 'border-border text-muted-foreground hover:border-primary hover:text-foreground',
+        )}
+      >
+        {subiendo ? (
+          <>
+            <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+            {/* El porcentaje, no una barra: en una caja de 104px una barra son
+                cuatro píxeles de alto que no se ven moverse. */}
+            <span className="tabular text-xs font-medium">
+              {Math.round(progreso * 100)} %
+            </span>
+          </>
+        ) : (
+          <>
+            <ImagePlus className="size-6" aria-hidden="true" />
+            <span className="px-2 text-center text-[11px] leading-tight">Añadir soporte</span>
+          </>
+        )}
+      </button>
+
+      {/* El campo de verdad, escondido: el nativo no se puede peinar y el
+          `<button>` de arriba sí. */}
+      <input
+        ref={campo}
+        type="file"
+        multiple
+        accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          onArchivos(e.target.files);
+          // Se vacía para que subir DOS VECES el mismo archivo dispare el
+          // evento la segunda: sin esto, el valor no cambia y no pasa nada.
+          e.target.value = '';
+        }}
+      />
+    </div>
   );
 }
 
@@ -269,18 +390,22 @@ const ANCHO_HOJA = 620;
  * pdf.js y a cambio el visor se comporta siempre igual.
  */
 function Pase({
+  transactionId,
   lista,
   urls,
   indice,
   onIr,
   onCerrar,
 }: {
+  transactionId: number;
   lista: Soporte[];
   urls: Record<string, string>;
   indice: number;
   onIr: (i: number) => void;
   onCerrar: () => void;
 }) {
+  const eliminar = useEliminarSoporte(transactionId);
+  const [confirmando, setConfirmando] = useState(false);
   const soporte = lista[indice];
   const url = urls[String(soporte.id)];
   const esImagen = soporte.mime_type.startsWith('image/');
@@ -352,6 +477,11 @@ function Pase({
               <Download className="size-4" aria-hidden="true" />
             </a>
           )}
+          {/* Poder quitar lo que se acaba de subir por error. Sin esto, una
+              foto movida se queda para siempre colgando del movimiento. */}
+          <BotonOscuro onClick={() => setConfirmando(true)} etiqueta="Eliminar soporte">
+            <Trash2 className="size-4" aria-hidden="true" />
+          </BotonOscuro>
           <BotonOscuro onClick={onCerrar} etiqueta="Cerrar">
             <X className="size-4" aria-hidden="true" />
           </BotonOscuro>
@@ -467,6 +597,29 @@ function Pase({
           </div>
         )}
       </div>
+
+      {/* Misma capa que el pase y DESPUÉS en el árbol: con el mismo z-index,
+          manda el que va después, así que el diálogo queda encima. */}
+      <Confirmacion
+        abierta={confirmando}
+        titulo="¿Eliminar este soporte?"
+        peligrosa
+        etiquetaConfirmar="Eliminar"
+        ocupada={eliminar.isPending}
+        onCancelar={() => setConfirmando(false)}
+        onConfirmar={() =>
+          eliminar.mutate(Number(soporte.id), {
+            onSuccess: () => {
+              setConfirmando(false);
+              // Era el único: no queda nada que enseñar.
+              if (lista.length === 1) onCerrar();
+              else if (indice === lista.length - 1) onIr(indice - 1);
+            },
+          })
+        }
+      >
+        Se borra y no se puede deshacer. El movimiento se queda como está.
+      </Confirmacion>
     </div>
   );
 }

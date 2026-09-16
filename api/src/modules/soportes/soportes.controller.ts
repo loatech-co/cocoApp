@@ -1,10 +1,27 @@
-import { Controller, Get, Param, Res, StreamableFile } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Res,
+  StreamableFile,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { SoportesService, type SoporteView } from './soportes.service';
+import { TAMANO_MAXIMO } from './soportes.optimizacion';
+import { SoportesService, type ArchivoSubido, type SoporteView } from './soportes.service';
+
+/** Cuántos archivos se aceptan de una vez. Ocho es el récord del lote. */
+const MAXIMO_POR_SUBIDA = 10;
 
 /**
  * Los soportes de un movimiento: el recibo que prueba que ese pago existió.
@@ -28,6 +45,43 @@ export class SoportesController {
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<SoporteView[]> {
     return this.soportes.listar(user.id, id);
+  }
+
+  /**
+   * Sube uno o varios soportes.
+   *
+   * Los archivos van a MEMORIA y no a disco. Dos razones: el tratamiento —gris
+   * y compresión— trabaja sobre el búfer de todas formas, y un archivo
+   * temporal en disco es un recibo de alguien tirado fuera del almacén
+   * privado, aunque sea por un segundo.
+   *
+   * El límite de tamaño se declara DOS veces a propósito: aquí lo corta multer
+   * antes de leer el cuerpo entero —que es lo que protege la memoria— y en el
+   * servicio se vuelve a comprobar para dar un mensaje que diga cuál archivo
+   * fue.
+   */
+  @Post(':id/soportes')
+  @UseInterceptors(
+    FilesInterceptor('archivos', MAXIMO_POR_SUBIDA, {
+      limits: { fileSize: TAMANO_MAXIMO, files: MAXIMO_POR_SUBIDA },
+    }),
+  )
+  subir(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseBigIntPipe) id: bigint,
+    @UploadedFiles() archivos: ArchivoSubido[],
+  ): Promise<SoporteView[]> {
+    return this.soportes.subir(user.id, id, archivos ?? []);
+  }
+
+  @Delete(':id/soportes/:soporteId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  eliminar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseBigIntPipe) id: bigint,
+    @Param('soporteId', ParseBigIntPipe) soporteId: bigint,
+  ): Promise<void> {
+    return this.soportes.eliminar(user.id, id, soporteId);
   }
 
   @Get(':id/soportes/:soporteId')
