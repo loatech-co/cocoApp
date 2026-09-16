@@ -1,4 +1,5 @@
 import {
+  ArrowUpRight,
   ExternalLink,
   Loader2,
   Lock,
@@ -688,8 +689,25 @@ function VistaDeLectura({
             un número solo y grande, y ese ancho fijo separa los dígitos como
             si alguien le hubiera metido interletraje.
           */}
-          <p className="font-display text-4xl font-bold leading-none text-lima-tinta sm:text-5xl">
-            {tipo === 'income' ? '+' : '−'}
+          {/*
+            Una flecha, no un signo.
+
+            El menos delante de una cifra es una convención de TABLA: ahí hay
+            una columna con gastos e ingresos mezclados y el signo los separa
+            sin gastar sitio. Aquí no hay columna ni nada con qué confundirlo
+            —la ficha entera es un gasto, y lo dice el título— así que el menos
+            solo aporta un guion pegado al número.
+
+            La flecha dice lo mismo mejor: sube y sale, baja y entra. Y al
+            mismo peso que la cifra, para que se lea como parte de ella y no
+            como un adorno al lado.
+          */}
+          <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-lima-tinta sm:text-5xl">
+            <ArrowUpRight
+              className={cn('size-8 shrink-0 sm:size-10', tipo === 'income' && 'rotate-180')}
+              strokeWidth={2.75}
+              aria-hidden="true"
+            />
             {formatCOP(valor || '0')}
           </p>
         </div>
