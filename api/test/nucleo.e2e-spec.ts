@@ -461,6 +461,62 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
+  // ── Mover un concepto de grupo ─────────────────────────────────────────────
+
+  describe('Mover un concepto de grupo', () => {
+    it('lo acepta dentro del mismo centro', async () => {
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
+      const vivienda = await crearCategoria(comoAna(), {
+        name: 'Vivienda',
+        parent_id: Number(centro.id),
+      });
+      const servicios = await crearCategoria(comoAna(), {
+        name: 'Servicios públicos',
+        parent_id: Number(centro.id),
+      });
+      const concepto = await crearCategoria(comoAna(), {
+        name: 'Claro Móvil',
+        parent_id: Number(vivienda.id),
+      });
+
+      const movido = await http
+        .patch(`/api/v1/categories/${Number(concepto.id)}`)
+        .set('Authorization', comoAna())
+        .send({ parent_id: Number(servicios.id) })
+        .expect(200);
+
+      expect(Number(movido.body.data.parent_id)).toBe(Number(servicios.id));
+    });
+
+    it('lo acepta junto con el resto de los campos de la ficha', async () => {
+      // Como lo manda la interfaz: el nombre, la recurrencia y el grupo en la
+      // misma petición.
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
+      const a = await crearCategoria(comoAna(), { name: 'A', parent_id: Number(centro.id) });
+      const b = await crearCategoria(comoAna(), { name: 'B', parent_id: Number(centro.id) });
+      const concepto = await crearCategoria(comoAna(), {
+        name: 'Claro',
+        parent_id: Number(a.id),
+      });
+
+      const movido = await http
+        .patch(`/api/v1/categories/${Number(concepto.id)}`)
+        .set('Authorization', comoAna())
+        .send({
+          name: 'Claro Móvil',
+          recurrente: true,
+          periodicidad: 'mensual',
+          dia_de_pago: 1,
+          mes_de_pago: null,
+          parent_id: Number(b.id),
+        })
+        .expect(200);
+
+      expect(Number(movido.body.data.parent_id)).toBe(Number(b.id));
+      expect(movido.body.data.name).toBe('Claro Móvil');
+    });
+  });
+
   // ── El icono de una categoría ──────────────────────────────────────────────
 
   describe('El icono de un grupo', () => {

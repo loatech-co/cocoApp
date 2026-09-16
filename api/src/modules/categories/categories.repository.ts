@@ -40,7 +40,26 @@ export class CategoriesRepository {
     return this.prisma.category.create({ data: { ...data, userId } });
   }
 
-  async actualizar(userId: bigint, id: bigint, data: Prisma.CategoryUpdateInput): Promise<number> {
+  /**
+   * ── Por qué el tipo es `UncheckedUpdateMany` y no `UpdateInput` ───────────
+   * Porque esto es un `updateMany`, y `updateMany` NO acepta escrituras
+   * anidadas de relaciones: ni `connect`, ni `disconnect`, ni `create`. Solo
+   * columnas.
+   *
+   * Estaba declarado como `CategoryUpdateInput`, que sí las admite, así que
+   * TypeScript daba por bueno un `parent: { connect: … }` que Prisma rechaza
+   * en tiempo de ejecución con «Unknown argument `parent`». El resultado era
+   * un 500 al cambiar de grupo un concepto, y nunca lo vio nadie porque el
+   * tipo mentía.
+   *
+   * `Unchecked` es la variante que expone las claves ajenas como lo que son
+   * —`parentId`, un número—, que es como se cambia un padre desde aquí.
+   */
+  async actualizar(
+    userId: bigint,
+    id: bigint,
+    data: Prisma.CategoryUncheckedUpdateManyInput,
+  ): Promise<number> {
     const { count } = await this.prisma.category.updateMany({ where: { id, userId }, data });
     return count;
   }

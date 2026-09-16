@@ -114,11 +114,9 @@ export class CategoriesService {
     await this.repo.actualizar(userId, id, {
       ...(dto.name !== undefined && { name: dto.name }),
       ...(dto.kind !== undefined && { kind: dto.kind }),
+      // La COLUMNA, no la relación: ver el porqué en `repo.actualizar`.
       ...(dto.parent_id !== undefined && {
-        parent:
-          dto.parent_id === null
-            ? { disconnect: true }
-            : { connect: { id: BigInt(dto.parent_id) } },
+        parentId: dto.parent_id === null ? null : BigInt(dto.parent_id),
       }),
       ...(dto.color !== undefined && { color: dto.color }),
       ...(dto.icon !== undefined && { icon: dto.icon }),
