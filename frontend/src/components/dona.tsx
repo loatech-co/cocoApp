@@ -20,18 +20,18 @@ const OTROS = { fondo: 'var(--dona-otros)', tinta: 'var(--dona-otros-tinta)' };
    Un lienzo ancho y bajo: la dona en el centro y los nombres a los lados, que
    es donde hay sitio. Apilados debajo serían otra vez una leyenda.            */
 const ANCHO = 320;
-const ALTO = 210;
+const ALTO = 180;
 const CX = ANCHO / 2;
 const CY = ALTO / 2;
-const RADIO = 62;
-const GROSOR = 30;
+const RADIO = 50;
+const GROSOR = 26;
 const VUELTA = 2 * Math.PI * RADIO;
 
 /** Dónde dobla la línea guía y dónde empieza el texto. */
 const CODO = RADIO + GROSOR / 2 + 10;
 const MARGEN_TEXTO = 8;
 /** Separación mínima entre dos nombres del mismo lado. */
-const ALTO_DE_NOMBRE = 26;
+const ALTO_DE_NOMBRE = 34;
 
 /** Por debajo de esto la cifra no cabe dentro de su porción. */
 const MINIMO_PARA_CIFRA = 0.06;
@@ -217,7 +217,7 @@ export function Dona({
               color: seg.tinta,
             }}
             className={cn(
-              'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-xs font-semibold transition-opacity',
+              'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-[15px] font-semibold transition-opacity',
               activa !== null && activa !== i && 'opacity-35',
             )}
           >
@@ -241,7 +241,7 @@ export function Dona({
             style={{
               top: pct(seg.codo.y, ALTO),
               [seg.derecha ? 'right' : 'left']: pct(MARGEN_TEXTO, ANCHO),
-              maxWidth: `${(1 / 3) * 100}%`,
+              maxWidth: '38%',
             }}
             className={cn(
               'absolute -translate-y-1/2 rounded text-left transition-opacity',
@@ -250,10 +250,10 @@ export function Dona({
               activa !== null && activa !== i && 'opacity-35',
             )}
           >
-            <span className="block truncate text-xs font-semibold text-foreground">
+            <span className="block truncate text-[15px] font-semibold leading-tight text-foreground">
               {seg.nombre}
             </span>
-            <span className="tabular block truncate text-[11px] text-muted-foreground">
+            <span className="tabular block truncate text-[14px] leading-tight text-muted-foreground">
               {formatCOP(seg.valor)}
             </span>
           </button>
