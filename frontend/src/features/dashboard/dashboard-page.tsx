@@ -28,7 +28,7 @@ import { useAuth } from '@/lib/auth-context';
 import { aParametros, llegaHastaHoy, useFiltros } from '@/lib/filtros';
 import { useCategories, useDashboard, useTransactions } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
-import type { Category, SpendingByCategory, Transaction } from '@coco/types';
+import type { Category, SpendingByCategory, Transaction, TransactionType } from '@coco/types';
 
 /**
  * Resumen.
@@ -111,6 +111,7 @@ export function DashboardPage() {
   // otra pantalla ni otro formulario.
   const [editando, setEditando] = useState<Transaction | null | undefined>(undefined);
   const [conceptoSugerido, setConceptoSugerido] = useState<number | undefined>();
+  const [tipoNuevo, setTipoNuevo] = useState<TransactionType>('expense');
 
   /*
     ── Lo que habla del mes en curso solo aparece si se está mirando el mes ──
@@ -144,6 +145,11 @@ export function DashboardPage() {
           limpiar();
         }}
         hayFiltrosActivos={hayFiltrosActivos}
+        onNuevo={(tipo) => {
+          setTipoNuevo(tipo);
+          setConceptoSugerido(undefined);
+          setEditando(null);
+        }}
       />
 
       {dashboard.isError && (
@@ -327,6 +333,7 @@ export function DashboardPage() {
                 // que falta es justo el que se acaba de señalar.
                 onElegir={(pago) => {
                   setConceptoSugerido(pago.category_id);
+                  setTipoNuevo('expense');
                   setEditando(null);
                 }}
               />
@@ -404,6 +411,7 @@ export function DashboardPage() {
         abierta={editando !== undefined}
         movimiento={editando}
         categoriaPorDefecto={conceptoSugerido}
+        tipoPorDefecto={tipoNuevo}
         onCerrar={() => {
           setEditando(undefined);
           setConceptoSugerido(undefined);

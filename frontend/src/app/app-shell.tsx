@@ -3,7 +3,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
-  Plus,
   ScrollText,
   ScanLine,
   ShieldCheck,
@@ -16,7 +15,6 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 import { Logo, LogoCompacto } from '@/components/logo';
 import { Menu, MenuOpcion, MenuSeparador } from '@/components/menu';
-import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { useAuth } from '@/lib/auth-context';
 import { useLlevaCuentas } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
@@ -76,7 +74,6 @@ const SECCIONES_DE_ADMIN = [
 export function AppShell() {
   const { esAdmin } = useAuth();
   const llevaCuentas = useLlevaCuentas();
-  const [capturaAbierta, setCapturaAbierta] = useState(false);
 
   /**
    * La barra plegada.
@@ -224,28 +221,14 @@ export function AppShell() {
       </nav>
 
       {/*
-        Captura rápida siempre a un toque. Registrar un movimiento es la acción
-        más frecuente del producto: si cuesta, el hábito se abandona.
-      */}
-      <button
-        type="button"
-        onClick={() => setCapturaAbierta(true)}
-        aria-label="Registrar movimiento"
-        className={cn(
-          'fixed right-4 z-20 flex size-14 items-center justify-center rounded-full',
-          'bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105',
-          'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-          'bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-8 md:right-8',
-        )}
-      >
-        <Plus className="size-6" aria-hidden="true" />
-      </button>
+        Aquí vivía un botón flotante para registrar un movimiento. Se fue a la
+        barra del resumen, al lado del recorte de fechas.
 
-      <MovimientoModal
-        abierta={capturaAbierta}
-        movimiento={null}
-        onCerrar={() => setCapturaAbierta(false)}
-      />
+        Un botón flotante no dice de QUÉ pantalla es: tapaba una esquina de
+        todas por igual, también las de administración o la de escanear, donde
+        registrar un movimiento a mano no viene a cuento. Y no tenía dónde
+        preguntar si es un gasto o un ingreso sin abrir el formulario entero.
+      */}
     </div>
   );
 }

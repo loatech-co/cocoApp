@@ -40,6 +40,7 @@ export function MovimientoModal({
   abierta,
   movimiento,
   categoriaPorDefecto,
+  tipoPorDefecto = 'expense',
   onCerrar,
 }: {
   abierta: boolean;
@@ -51,6 +52,8 @@ export function MovimientoModal({
    * algo que uno acaba de señalar.
    */
   categoriaPorDefecto?: number;
+  /** Con qué tipo abrir al CREAR. Lo elige el menú de "Nuevo movimiento". */
+  tipoPorDefecto?: TransactionType;
   onCerrar: () => void;
 }) {
   const categorias = useCategories();
@@ -111,7 +114,7 @@ export function MovimientoModal({
     setDescription(movimiento?.description ?? '');
     setAmount(movimiento ? String(Number(movimiento.amount)) : '');
     setDate(movimiento?.date ?? hoyEnBogota());
-    setType(movimiento?.type ?? 'expense');
+    setType(movimiento?.type ?? tipoPorDefecto);
     setCategoryId(movimiento?.category_id ?? categoriaPorDefecto);
     setNotes(movimiento?.notes ?? '');
     setError(null);
@@ -120,7 +123,7 @@ export function MovimientoModal({
     // El foco solo cuando hay algo que escribir: puesto en un campo de solo
     // lectura, el cursor parpadea en un sitio donde no se puede escribir.
     if (!movimiento) setTimeout(() => primerCampo.current?.focus(), 50);
-  }, [abierta, movimiento, categoriaPorDefecto, descartes]);
+  }, [abierta, movimiento, categoriaPorDefecto, tipoPorDefecto, descartes]);
 
   // Al elegir un concepto se trae SU recurrencia: es lo que ya estaba
   // guardado, y empezar de cero haría que abrir el modal y guardar sin tocar

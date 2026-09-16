@@ -220,6 +220,8 @@ export function MenuOpcion({
   Icono,
   elegida = false,
   peligro = false,
+  deshabilitada = false,
+  nota,
   onClick,
   children,
 }: {
@@ -227,6 +229,15 @@ export function MenuOpcion({
   elegida?: boolean;
   /** Rojo. Reservado a lo que no se puede deshacer, como cerrar la sesión. */
   peligro?: boolean;
+  /**
+   * Se ve pero no se puede elegir.
+   *
+   * Se enseña en vez de esconderse cuando la opción EXISTE y todavía no está:
+   * quitarla haría pensar que la aplicación no sabe hacer eso; apagada dice
+   * que sabrá. `nota` es el porqué, en dos palabras.
+   */
+  deshabilitada?: boolean;
+  nota?: string;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -235,9 +246,13 @@ export function MenuOpcion({
       type="button"
       role="menuitem"
       onClick={onClick}
+      disabled={deshabilitada}
+      aria-disabled={deshabilitada}
       className={cn(
         'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
-        peligro
+        deshabilitada
+          ? 'cursor-not-allowed text-muted-foreground opacity-60'
+          : peligro
           ? 'font-medium text-destructive hover:bg-destructive/10'
           : elegida
             ? 'bg-secondary font-medium text-foreground'
@@ -246,6 +261,7 @@ export function MenuOpcion({
     >
       {Icono && <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />}
       <span className="min-w-0 flex-1 truncate">{children}</span>
+      {nota && <span className="shrink-0 text-xs text-muted-foreground">{nota}</span>}
       {elegida && <Check className="size-4 shrink-0 text-primary" aria-hidden={true} />}
     </button>
   );

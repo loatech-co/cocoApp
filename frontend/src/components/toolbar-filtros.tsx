@@ -1,4 +1,4 @@
-import { ArrowDownUp, Filter, Search, X } from 'lucide-react';
+import { ArrowDownUp, ChevronDown, Filter, Plus, Search, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { FiltroClasificacion } from '@/components/filtro-clasificacion';
@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Filtros } from '@/lib/filtros';
 import { useCategories } from '@/lib/queries';
-import type { Category } from '@coco/types';
+import { cn } from '@/lib/utils';
+import type { Category, TransactionType } from '@coco/types';
 
 /** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
 export const ORDENES = [
@@ -49,6 +50,7 @@ export function ToolbarFiltros({
   limpiar,
   hayFiltrosActivos,
   orden,
+  onNuevo,
   acciones,
 }: {
   titulo: string;
@@ -63,6 +65,16 @@ export function ToolbarFiltros({
   /** Solo donde ordenar significa algo: una lista. */
   orden?: { valor: Orden; onCambiar: (valor: Orden) => void };
   /** Botones propios de la pantalla, a la derecha del todo. */
+  /**
+   * Registrar un movimiento nuevo, del tipo que se elija.
+   *
+   * Vive aquí y no en un botón flotante porque un botón flotante no dice de
+   * QUÉ pantalla es: tapaba una esquina de todas por igual, incluidas
+   * aquellas donde registrar un movimiento no significa nada. Al lado del
+   * recorte, en cambio, se lee como lo que es: lo que se puede hacer con lo
+   * que se está mirando.
+   */
+  onNuevo?: (tipo: TransactionType) => void;
   acciones?: ReactNode;
 }) {
   const categorias = useCategories();
@@ -197,6 +209,49 @@ export function ToolbarFiltros({
           >
             <X className="size-4" aria-hidden="true" />
           </Button>
+        )}
+
+        {onNuevo && (
+          <Menu
+            etiqueta="Nuevo movimiento"
+            tipo="menu"
+            alineado="derecha"
+            disparador={({ abierto }) => (
+              <span
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-xs font-semibold',
+                  'text-primary-foreground transition-colors hover:bg-primary/90',
+                )}
+              >
+                <Plus className="size-4 shrink-0" aria-hidden="true" />
+                Nuevo movimiento
+                <ChevronDown
+                  className={cn('size-3.5 shrink-0 opacity-70 transition-transform', abierto && 'rotate-180')}
+                  aria-hidden="true"
+                />
+              </span>
+            )}
+          >
+            {(cerrar) => (
+              <>
+                <MenuOpcion
+                  Icono={TrendingDown}
+                  onClick={() => {
+                    cerrar();
+                    onNuevo('expense');
+                  }}
+                >
+                  Gasto
+                </MenuOpcion>
+                {/* Apagada, no escondida: los ingresos existen en el modelo
+                    —el resumen ya los suma— y esconder la opción haría creer
+                    que la aplicación no sabe registrarlos. */}
+                <MenuOpcion Icono={TrendingUp} deshabilitada nota="Pronto" onClick={() => {}}>
+                  Ingreso
+                </MenuOpcion>
+              </>
+            )}
+          </Menu>
         )}
 
         {acciones}
