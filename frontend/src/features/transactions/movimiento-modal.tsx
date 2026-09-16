@@ -3,7 +3,9 @@ import {
   Camera,
   Loader2,
   Lock,
+  Minus,
   Pencil,
+  Plus,
   ScanLine,
   Sparkles,
   TrendingDown,
@@ -1134,11 +1136,19 @@ function SoportesPendientes({
 /**
  * Una plaza de la galería.
  *
- * La papelera vive AQUÍ y no sobre la previsualización grande: encima del
- * documento parecía una equis de cerrar —prometía cerrar la vista y lo que
- * hacía era descartar el archivo—, y además obligaba a poner primero uno en
- * grande para poder quitarlo. En su plaza, cada soporte se descarta desde
- * donde se ve.
+ * ── La papelera se enseña como el ojo del otro modal ────────────────────────
+ * Un velo sobre la plaza entera con el icono en el centro, solo al pasar por
+ * encima. Es el lenguaje que ya usa la galería de un movimiento guardado, y
+ * repetirlo significa que una miniatura oscurecida quiere decir lo mismo en
+ * los dos sitios: "aquí hay algo que hacer con esto".
+ *
+ * Una pastilla flotando en la esquina no decía eso: parecía un adorno del
+ * recorte, y ocho de ellas encendidas a la vez son ocho invitaciones a borrar
+ * algo sin querer.
+ *
+ * ── Por qué la papelera y no el ojo ─────────────────────────────────────────
+ * Porque mirar ya se hace pulsando la plaza —y lo que se mira aparece al lado,
+ * en grande—. Lo que no tenía sitio era descartar.
  */
 function Tile({
   url,
@@ -1156,17 +1166,30 @@ function Tile({
   onQuitar: () => void;
 }) {
   return (
-    <div className="group relative">
+    <div
+      className={cn(
+        /*
+          La MISMA caja que el cuadro de añadir, que es su vecino en la fila:
+          104px y 16px de radio.
+
+          Y con BORDE de 2px, no con anillo. Los dos tenían el mismo radio
+          nominal, pero un anillo se dibuja por FUERA del borde de la caja: la
+          curva quedaba un píxel más abierta que la del cuadro punteado de al
+          lado, y en dos plazas pegadas eso se ve. Con la misma anchura de
+          trazo, la geometría es idéntica.
+        */
+        'group relative size-[104px] overflow-hidden rounded-2xl border-2 bg-card transition-colors',
+        activo ? 'border-lima-tinta' : 'border-border hover:border-muted-foreground',
+      )}
+    >
+      {/* La plaza entera elige qué se previsualiza. */}
       <button
         type="button"
         onClick={onVer}
         title={nombre}
         aria-label={`Ver ${nombre}`}
         aria-pressed={activo}
-        className={cn(
-          'flex size-[72px] items-center justify-center overflow-hidden rounded-2xl bg-card transition-all',
-          activo ? 'ring-2 ring-lima-tinta' : 'ring-1 ring-border hover:ring-muted-foreground',
-        )}
+        className="absolute inset-0 flex items-center justify-center"
       >
         {!url ? (
           <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden="true" />
@@ -1177,20 +1200,25 @@ function Tile({
         )}
       </button>
 
-      {/* Aparece al pasar por encima: ocho plazas con una papelera encendida
-          cada una son ocho invitaciones a borrar algo sin querer. */}
+      {/* El velo no intercepta el puntero: pulsar la plaza sigue eligiéndola,
+          y solo la papelera de encima descarta. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-tinta-950/55 opacity-0 transition-opacity group-hover:opacity-100"
+      />
+
       <button
         type="button"
         onClick={onQuitar}
         aria-label={`Quitar ${nombre}`}
         title="Quitar este soporte"
         className={cn(
-          'absolute -right-1 -top-1 flex size-6 items-center justify-center rounded-full',
-          'bg-tinta-950/80 text-tinta-50 opacity-0 transition-all',
-          'group-hover:opacity-100 focus-visible:opacity-100 hover:bg-destructive',
+          'absolute inset-0 m-auto flex size-9 items-center justify-center rounded-full',
+          'text-tinta-50 opacity-0 transition-opacity',
+          'group-hover:opacity-100 focus-visible:opacity-100 hover:text-destructive',
         )}
       >
-        <Trash2 className="size-3" aria-hidden="true" />
+        <Trash2 className="size-5" aria-hidden="true" />
       </button>
     </div>
   );
@@ -1222,6 +1250,16 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
   const [caja, setCaja] = useState({ ancho: 0, alto: 0 });
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [arrastrando, setArrastrando] = useState(false);
+  /*
+    El zoom multiplica la escala que ya LLENA la caja, así que el 100 % es el
+    documento cubriendo el marco y no su tamaño natural.
+
+    No baja del 100 % a propósito: por debajo aparecerían franjas vacías a los
+    lados, y una previsualización con huecos se lee como un error de montaje.
+    Para ver la hoja entera está el pase a pantalla completa del movimiento ya
+    guardado.
+  */
+  const [zoom, setZoom] = useState(0);
 
   const marco = useRef<HTMLDivElement>(null);
   const agarre = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
@@ -1244,10 +1282,11 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
     La escala que LLENA la caja: la mayor de las dos proporciones. Con la menor
     —que es `contain`— quedarían franjas vacías a los lados.
   */
-  const escala =
+  const cubrir =
     natural && caja.ancho > 0
       ? Math.max(caja.ancho / natural.ancho, caja.alto / natural.alto)
       : 1;
+  const escala = cubrir * ZOOMS[zoom];
   const ancho = natural ? natural.ancho * escala : 0;
   const alto = natural ? natural.alto * escala : 0;
 
@@ -1259,15 +1298,16 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
     y: Math.min(0, Math.max(limite.y, y)),
   });
 
-  // Empieza CENTRADO: es lo que uno espera ver de un documento al abrirlo, y
-  // además deja la misma cantidad por descubrir hacia los dos lados.
+  // Empieza CENTRADO, y se recentra al cambiar el zoom: ampliar desde una
+  // esquina deja mirando un margen en blanco en vez de lo que se estaba
+  // leyendo.
   useEffect(() => {
     if (!natural || caja.ancho === 0) return;
     setPos(recortar(limite.x / 2, limite.y / 2));
-    // Solo al cambiar el documento o la caja: recentrar en cada arrastre
-    // pelearía con el dedo.
+    // Solo al cambiar el documento, la caja o el zoom: recentrar en cada
+    // arrastre pelearía con el dedo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [natural, caja.ancho, caja.alto]);
+  }, [natural, caja.ancho, caja.alto, zoom]);
 
   const sePuedeMover = limite.x < 0 || limite.y < 0;
 
@@ -1311,6 +1351,33 @@ function PreviaDeArchivo({ url, esImagen }: { url: string; esImagen: boolean }) 
         setArrastrando(false);
       }}
     >
+      {/* Los mandos del zoom, sobre una pastilla oscura: encima de un recibo
+          —que es blanco— cualquier control claro desaparece. */}
+      <div className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-tinta-950/75 p-0.5">
+        <MandoDeZoom
+          etiqueta="Alejar"
+          deshabilitado={zoom === 0}
+          onClick={() => setZoom((z) => Math.max(0, z - 1))}
+        >
+          <Minus className="size-4" aria-hidden="true" />
+        </MandoDeZoom>
+        <button
+          type="button"
+          onClick={() => setZoom(0)}
+          title="Volver al tamaño normal"
+          className="tabular min-w-[3rem] text-center text-[11px] font-medium text-tinta-50"
+        >
+          {Math.round(ZOOMS[zoom] * 100)} %
+        </button>
+        <MandoDeZoom
+          etiqueta="Acercar"
+          deshabilitado={zoom === ZOOMS.length - 1}
+          onClick={() => setZoom((z) => Math.min(ZOOMS.length - 1, z + 1))}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+        </MandoDeZoom>
+      </div>
+
       {esImagen ? (
         <img
           src={url}
@@ -1359,5 +1426,37 @@ function Campo({
       <Label htmlFor={id}>{etiqueta}</Label>
       {children}
     </div>
+  );
+}
+
+/** Los saltos del zoom, como múltiplos de la escala que llena la caja. */
+const ZOOMS = [1, 1.5, 2, 3];
+
+/** Un mando del zoom. Vive sobre el documento, así que no usa la paleta. */
+function MandoDeZoom({
+  etiqueta,
+  deshabilitado,
+  onClick,
+  children,
+}: {
+  etiqueta: string;
+  deshabilitado: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={deshabilitado}
+      aria-label={etiqueta}
+      title={etiqueta}
+      className={cn(
+        'flex size-7 items-center justify-center rounded-full text-tinta-50 transition-colors',
+        deshabilitado ? 'opacity-40' : 'hover:bg-white/15',
+      )}
+    >
+      {children}
+    </button>
   );
 }
