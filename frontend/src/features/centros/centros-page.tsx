@@ -5,7 +5,6 @@ import {
   EllipsisVertical,
   Lock,
   LockOpen,
-  Loader2,
   Pencil,
   Plus,
   Repeat,
@@ -21,10 +20,8 @@ import { ConceptoModal } from '@/features/centros/concepto-modal';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ApiClientError } from '@/lib/api-client';
-import { useActualizarCategoria, useCategories, useCrearCategoria } from '@/lib/queries';
+import { useActualizarCategoria, useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
@@ -161,8 +158,8 @@ function Explicacion({ onCerrar }: { onCerrar: () => void }) {
         </ol>
 
         <p className="mt-4 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-          Así, <strong className="text-foreground">¿cuánto se gastó en servicios públicos?</strong> es
-          la suma de sus conceptos, y no hay que registrarlo por separado en ningún lado.
+          Así, <strong className="text-foreground">¿cuánto se gastó en servicios públicos?</strong>{' '}
+          es la suma de sus conceptos, y no hay que registrarlo por separado en ningún lado.
         </p>
       </CardContent>
     </Card>
@@ -207,14 +204,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
      —dentro de las columnas cuando hay grupos, suelto cuando no— y son el
      mismo botón con los mismos textos: escrito dos veces, cambiar uno y
      olvidar el otro es cuestión de tiempo. */
-  const hueco = (
-    <Agregar
-      padreId={centro.id}
-      etiqueta="Agregar grupo"
-      marcador="Servicios públicos, Educación…"
-      solo={grupos.length === 0}
-    />
-  );
+  const hueco = <Agregar padreId={centro.id} solo={grupos.length === 0} />;
 
   return (
     <Card>
@@ -630,76 +620,77 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
  * centros serían seis cajas de texto vacías compitiendo con la estructura que
  * se viene a leer.
  */
+/**
+ * El hueco del siguiente grupo.
+ *
+ * ── Por qué un cuadro punteado y no un enlace ───────────────────────────────
+ * Porque el borde punteado es lo que en todas partes significa «aquí cabe algo
+ * que todavía no está» —el mismo lenguaje que el hueco de un soporte y el de
+ * un atajo—, y eso se lee como el sitio del próximo grupo, no como una acción
+ * suelta en otra parte de la tarjeta.
+ *
+ * ── Por qué abre la ficha y ya no un campo suelto ───────────────────────────
+ * Tenía su propio formulario en línea: un campo para el nombre y dos botones.
+ * Así, crear un grupo y editarlo eran dos formularios distintos para la misma
+ * cosa, y el de crear no pedía el icono —que es la mitad de lo que hace a un
+ * grupo reconocible en la rejilla—. El resultado es que todo grupo nacía sin
+ * icono y había que abrir la ficha justo después para ponérselo.
+ *
+ * Con la misma ficha en los dos casos, lo que se pide al crear es exactamente
+ * lo que se puede cambiar al editar. Y de paso desaparece el único campo de la
+ * pantalla que nacía enfocado.
+ */
 function Agregar({
   padreId,
-  etiqueta,
-  marcador,
   solo = false,
 }: {
+  /** De qué centro cuelga el grupo que se va a crear. */
   padreId: number;
-  etiqueta: string;
-  marcador: string;
-  /** Sin ningún grupo todavía: la baldosa explica además qué es un grupo. */
+  /** Sin ningún grupo todavía: el hueco es lo único que hay en el centro. */
   solo?: boolean;
 }) {
-  const crear = useCrearCategoria();
-  const [abierto, setAbierto] = useState(false);
-  const [nombre, setNombre] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [abierta, setAbierta] = useState(false);
 
-  async function guardar(): Promise<void> {
-    const name = nombre.trim();
-    if (!name) return;
-    setError(null);
-    try {
-      await crear.mutateAsync({ name, kind: 'expense', parent_id: padreId });
-      setNombre('');
-      setAbierto(false);
-    } catch (e) {
-      setError(e instanceof ApiClientError ? e.message : 'No se pudo crear.');
-    }
-  }
-
-  if (!abierto) {
-    return (
+  return (
+    <>
       <button
         type="button"
-        onClick={() => setAbierto(true)}
+        onClick={() => setAbierta(true)}
         className={cn(
           'flex w-full items-center justify-center gap-2 rounded-lg p-4',
           /*
-            Sin ningún grupo, el hueco no es una baldosa más: es lo ÚNICO que
-            hay, y una baldosa de 17rem sola en la esquina de un centro vacío
-            se lee como un botón que alguien dejó ahí. A ancho completo y alto
-            —`min-h-64`, 256px— se lee como lo que es: el sitio donde va a
-            empezar la estructura de este centro.
+          Sin ningún grupo, el hueco no es una baldosa más: es lo ÚNICO que
+          hay, y una baldosa de 17rem sola en la esquina de un centro vacío
+          se lee como un botón que alguien dejó ahí. A ancho completo y alto
+          —`min-h-64`, 256px— se lee como lo que es: el sitio donde va a
+          empezar la estructura de este centro.
 
-            256 y no 250 exactos porque es el escalón de la escala que los
-            cumple; una medida a mano por seis píxeles es una medida que
-            mañana nadie sabe de dónde salió.
+          256 y no 250 exactos porque es el escalón de la escala que los
+          cumple; una medida a mano por seis píxeles es una medida que
+          mañana nadie sabe de dónde salió.
 
-            Con grupos encima es una BARRA: el icono y el texto en una fila y
-            el alto que le dé su relleno. Apilado y con alto mínimo, a todo el
-            ancho de la pantalla, sería un rectángulo punteado más grande que
-            cualquiera de las tarjetas que lo acompañan, y lo que hay que mirar
-            en esta pantalla son las tarjetas.
-          */
+          Con grupos encima es una BARRA: el icono y el texto en una fila y
+          el alto que le dé su relleno. Apilado y con alto mínimo, a todo el
+          ancho de la pantalla, sería un rectángulo punteado más grande que
+          cualquiera de las tarjetas que lo acompañan, y lo que hay que mirar
+          en esta pantalla son las tarjetas.
+        */
           solo ? 'min-h-64 flex-col' : 'mt-3',
           'border-2 border-dashed border-border text-center transition-colors',
           'text-sm font-medium text-muted-foreground',
           /*
-            Un realce a la MEDIDA de lo que ocupa.
+          Un realce a la MEDIDA de lo que ocupa.
 
-            Llevaba `hover:bg-accent`, que es lo que usan las demás zonas donde
-            se suelta algo. En un cuadrito de 104px eso es un apunte; aquí, con
-            el centro vacío, es una superficie de mil por doscientos cincuenta,
-            y llenarla entera de acento al pasar el ratón por encima es un
-            fogonazo.
+          Llevaba `hover:bg-accent`, que es lo que usan las demás zonas donde
+          se suelta algo. En un cuadrito de 104px eso es un apunte; aquí, con
+          el centro vacío, es una superficie de mil por doscientos cincuenta,
+          y llenarla entera de acento al pasar el ratón por encima es un
+          fogonazo.
 
-            Así que responde igual pero más bajo: el trazo se tiñe, la letra
-            sube a plena tinta y el relleno se queda en un tercio del acento
-            —lo justo para que se note que la superficie está viva—.
-          */
+          Así que responde igual pero más bajo: el trazo se tiñe, la letra
+          sube a plena tinta y el relleno se queda en un tercio del acento
+          —lo justo para que se note que la superficie está viva—.
+        */
           // El mismo realce que la zona de soltar un soporte y la de la
           // importación: son la misma clase de superficie —grande, punteada y
           // pulsable— y el porqué del volumen está en `superficie.ts`.
@@ -707,63 +698,24 @@ function Agregar({
         )}
       >
         {/*
-          El mismo texto haya grupos o no.
+        El mismo texto haya grupos o no.
 
-          Cuando no había ninguno, la baldosa añadía debajo un «El nivel de en
-          medio: …» que la otra no llevaba. Es el mismo botón y hace lo mismo
-          en los dos casos: cambiarle el texto según cuántas tarjetas tenga al
-          lado obliga a leerlo dos veces para comprobar que sigue siendo el
-          mismo. Lo que cambia es su tamaño, que ya dice bastante.
-        */}
+        Cuando no había ninguno, la baldosa añadía debajo un «El nivel de en
+        medio: …» que la otra no llevaba. Es el mismo botón y hace lo mismo
+        en los dos casos: cambiarle el texto según cuántas tarjetas tenga al
+        lado obliga a leerlo dos veces para comprobar que sigue siendo el
+        mismo. Lo que cambia es su tamaño, que ya dice bastante.
+      */}
         <Plus className="size-5 shrink-0" aria-hidden="true" />
-        {etiqueta}
+        Agregar grupo
       </button>
-    );
-  }
 
-  return (
-    /* Ocupa el mismo ancho que la barra que sustituye, así que el campo del
-       nombre y sus dos botones caben en un renglón. Encajado en una columna de
-       250px —que es donde estuvo— se partían en tres. */
-    <div className={cn('flex flex-col gap-2', !solo && 'mt-3')}>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Input
-          autoFocus
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') void guardar();
-            if (e.key === 'Escape') setAbierto(false);
-          }}
-          placeholder={marcador}
-          aria-label={etiqueta}
-          maxLength={255}
-        />
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            onClick={() => void guardar()}
-            disabled={crear.isPending || !nombre.trim()}
-            className="w-full sm:w-auto"
-          >
-            {crear.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            Guardar
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setAbierto(false)}
-            className="w-full sm:w-auto"
-          >
-            Cancelar
-          </Button>
-        </div>
-      </div>
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
+      <CategoriaModal
+        nivel="grupo"
+        padreId={padreId}
+        abierta={abierta}
+        onCerrar={() => setAbierta(false)}
+      />
+    </>
   );
 }
