@@ -15,7 +15,7 @@ import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-re
 import { Soportes } from '@/components/soportes';
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
-import { ChipIcono, CHIPS, type ColorDeChip } from '@/components/ui/chip-icono';
+import { ChipIcono } from '@/components/ui/chip-icono';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
@@ -469,11 +469,7 @@ export function MovimientoModal({
               valor={amount}
               fecha={date}
               periodo={movimiento?.period}
-              notas={notes}
               ruta={[centro?.name, grupo?.name, concepto?.name].filter(Boolean) as string[]}
-              estatico={estatico}
-              nombreDelCentro={centroGuardado?.name}
-              onIrACentros={onCerrar}
             />
           )}
 
@@ -494,16 +490,27 @@ export function MovimientoModal({
             </Seccion>
           )}
 
+          {/* Las notas, DESPUÉS de los soportes. El recibo es la prueba de lo
+              que pasó; la nota es el comentario de alguien sobre eso. Primero
+              el hecho, luego lo que se dijo de él. */}
+          {!editandoCampos && notes.trim() !== '' && (
+            <Seccion titulo="Notas">
+              {/* `whitespace-pre-line`: las notas se escriben con saltos de
+                  línea y aplanarlas convierte una lista en un párrafo. */}
+              <p className="whitespace-pre-line text-sm">{notes}</p>
+            </Seccion>
+          )}
+
           {error && (
             <p role="alert" className="text-sm text-destructive">
               {error}
             </p>
           )}
 
-          {/* Leyendo no hay nada que cancelar ni que guardar: un solo botón
-              que cierra. "Cancelar" al lado de "Guardar" en una ficha que no
-              se ha tocado invita a pensar que algo quedó a medias. */}
-          {editandoCampos ? (
+          {/* Leyendo no hay pie: no hay nada que cancelar ni que guardar, y
+              para salir ya está la equis de la esquina. Un botón "Cerrar"
+              debajo de todo es una segunda puerta a la misma salida. */}
+          {editandoCampos && (
             <div className="flex gap-2 pt-1">
               <Button
                 type="button"
@@ -520,12 +527,6 @@ export function MovimientoModal({
               <Button type="submit" disabled={guardando} className="flex-1">
                 {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
                 {editando ? 'Guardar' : 'Registrar'}
-              </Button>
-            </div>
-          ) : (
-            <div className="pt-1">
-              <Button type="button" variant="ghost" onClick={onCerrar} className="w-full">
-                Cerrar
               </Button>
             </div>
           )}
@@ -640,11 +641,7 @@ function VistaDeLectura({
   valor,
   fecha,
   periodo,
-  notas,
   ruta,
-  estatico,
-  nombreDelCentro,
-  onIrACentros,
 }: {
   tipo: TransactionType;
   descripcion: string;
@@ -652,11 +649,7 @@ function VistaDeLectura({
   fecha: string;
   /** `YYYY-MM-DD` del día 1 del mes al que PERTENECE el gasto. */
   periodo?: string;
-  notas: string;
   ruta: string[];
-  estatico: boolean;
-  nombreDelCentro?: string;
-  onIrACentros: () => void;
 }) {
   // El periodo solo se nombra cuando NO es el mes del pago. Repetir
   // "septiembre" dos veces seguidas no informa; decirlo cuando la factura de
@@ -664,71 +657,56 @@ function VistaDeLectura({
   // no lo nota—.
   const mesDelPago = fecha.slice(0, 7);
   const desfasado = Boolean(periodo) && periodo!.slice(0, 7) !== mesDelPago;
-  const color: ColorDeChip = tipo === 'income' ? 'verde' : 'violeta';
 
   return (
     <div className="flex flex-col gap-5">
-      {/* El tinte es el MISMO pastel del icono de arriba, al 18 %: a plena
-          intensidad el bloque compite con la cifra que contiene, que es
-          justamente lo que tiene que destacar. */}
-      <div
-        className="flex flex-col gap-1 rounded-2xl p-4"
-        style={{ backgroundColor: `color-mix(in srgb, ${CHIPS[color].fondo} 18%, transparent)` }}
-      >
-        <p
-          className={cn(
-            'tabular text-3xl font-semibold leading-tight sm:text-4xl',
-            tipo === 'income' ? 'text-income' : 'text-expense',
-          )}
-        >
+      {/* Negro al 5 %: un velo, no una superficie. Cualquier color con cuerpo
+          compite con la cifra que contiene, que es lo que tiene que destacar. */}
+      <div className="flex flex-col gap-1 rounded-2xl bg-black/5 p-4">
+        {/*
+          SIN `tabular`.
+
+          Las cifras tabulares tienen todas el mismo ancho para que las
+          columnas de una tabla alineen por dígito. Aquí no hay columna, hay un
+          número solo y grande, y ese ancho fijo separa los dígitos como si
+          alguien le hubiera metido interletraje.
+        */}
+        <p className="font-display text-3xl font-bold leading-tight text-lima-tinta sm:text-4xl">
           {tipo === 'income' ? '+' : '−'}
           {formatCOP(valor || '0')}
         </p>
         <p className="truncate text-base font-medium">{descripcion || 'Sin concepto'}</p>
-        <p className="text-xs text-muted-foreground">Pagado el {diaLargo(fecha)}</p>
+
+        {/* El camino, sin etiqueta y sin fichas. Con fichas parecían pestañas
+            —algo que se pulsa y cambia lo de abajo— y aquí no se pulsa nada:
+            es dónde vive este movimiento, que se lee como una ruta. */}
+        {ruta.length > 0 && (
+          <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+            {ruta.map((nombre, i) => (
+              <span key={nombre} className="flex items-center gap-1.5">
+                {i > 0 && <span aria-hidden="true">›</span>}
+                <span className={cn(i === ruta.length - 1 && 'font-medium text-foreground')}>
+                  {nombre}
+                </span>
+              </span>
+            ))}
+          </p>
+        )}
+
+        <p className="mt-1 text-xs text-muted-foreground">Pagado el {diaLargo(fecha)}</p>
 
         {desfasado && (
-          <p className="mt-1 text-xs font-medium text-warning">
+          <p className="text-xs font-medium text-warning">
             Pertenece a {mesLargo(periodo!.slice(0, 7))}
           </p>
         )}
       </div>
 
-      <Seccion titulo="Dónde se clasifica" caja={false}>
-        {ruta.length > 0 ? (
-          <Ruta ruta={ruta} />
-        ) : (
-          <p className="text-sm text-muted-foreground">Sin clasificar</p>
-        )}
-      </Seccion>
-
-      {notas.trim() !== '' && (
-        <Seccion titulo="Notas">
-          {/* `whitespace-pre-line`: las notas se escriben con saltos de línea y
-              aplanarlas convierte una lista en un párrafo. */}
-          <p className="whitespace-pre-line text-sm">{notas}</p>
-        </Seccion>
+      {ruta.length === 0 && (
+        <p className="text-sm text-muted-foreground">Este movimiento está sin clasificar.</p>
       )}
 
-      {estatico && (
-        <div className="flex flex-col gap-2 rounded-2xl bg-secondary/60 p-3">
-          <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-            <Lock className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-            <span>
-              “{nombreDelCentro}” es un centro estático. La clasificación y la periodicidad
-              se modifican desde Centros de costos.
-            </span>
-          </p>
-          <Link
-            to="/centros-de-costos"
-            onClick={onIrACentros}
-            className="flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
-          >
-            <ExternalLink className="size-3.5 shrink-0" aria-hidden="true" />
-            Editar el concepto en Centros de costos
-          </Link>
-        </div>
-      )}
+
     </div>
   );
 }
@@ -762,34 +740,5 @@ function Seccion({
         children
       )}
     </section>
-  );
-}
-
-/** Centro › grupo › concepto, cada uno en su ficha. */
-function Ruta({ ruta }: { ruta: string[] }) {
-  return (
-    <ol className="flex flex-wrap items-center gap-1.5">
-      {ruta.map((nombre, i) => (
-        <li key={nombre} className="flex items-center gap-1.5">
-          {i > 0 && (
-            <span aria-hidden="true" className="text-muted-foreground">
-              ›
-            </span>
-          )}
-          {/* El último es el CONCEPTO, que es donde cuelga la plata: va con
-              más peso. Los de arriba existen para sumar. */}
-          <span
-            className={cn(
-              'rounded-full px-2.5 py-1 text-xs',
-              i === ruta.length - 1
-                ? 'bg-accent font-semibold text-accent-foreground'
-                : 'bg-secondary text-secondary-foreground',
-            )}
-          >
-            {nombre}
-          </span>
-        </li>
-      ))}
-    </ol>
   );
 }
