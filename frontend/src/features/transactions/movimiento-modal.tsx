@@ -124,7 +124,7 @@ export function MovimientoModal({
         className={cn(
           'max-h-[92dvh] w-full overflow-y-auto bg-popover p-5',
           'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
-          'rounded-t-3xl sm:max-w-lg sm:rounded-3xl',
+          'rounded-t-2xl sm:max-w-lg sm:rounded-2xl',
           'pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5',
         )}
       >

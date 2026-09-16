@@ -34,18 +34,34 @@ El alto, el radio y el peso de la letra viven en `size` dentro de
 Hay una prueba que lee el código fuente y falla si alguien lo hace:
 `components/ui/button.llamadas.test.ts`.
 
-## 3. Sobre lima, tinta
+## 3. El radio estándar es 16px
+
+`rounded-2xl`. Lo usan las tarjetas, los desplegables, los modales y las
+tablas. Puede ser **menor** donde haga falta —una casilla, un chip, un
+botón— pero **nunca mayor**: dos contenedores vecinos con esquinas
+distintas se leen como dos sistemas distintos.
+
+Hay una prueba que lee el código fuente y falla si aparece un
+`rounded-3xl` o un radio arbitrario por encima de 16px:
+`components/ui/radio.test.ts`.
+
+Ojo con la escala de Tailwind en este proyecto: `--radius: 1rem` hace que
+`rounded-lg` sea 16px y `rounded-xl` sea 20px. `rounded-2xl` es 16px por
+el valor por defecto de Tailwind. No es monótona; por eso el estándar se
+nombra explícitamente y hay una prueba.
+
+## 4. Sobre lima, tinta
 
 El texto sobre el acento lima va en tinta, nunca en blanco: blanco sobre
 lima da 1.23:1 de contraste, muy por debajo del 4.5:1 que exige el texto.
 Con tinta da 13.9:1.
 
-## 4. El rojo es solo para errores
+## 5. El rojo es solo para errores
 
 Lo pendiente —un movimiento sin clasificar— va en ámbar. El rojo se
 reserva a lo que de verdad salió mal y a lo que no se puede deshacer.
 
-## 5. Componentes, no copias
+## 6. Componentes, no copias
 
 Si algo aparece en dos pantallas, es un componente. La tabla de
 movimientos, el paginador, la barra de filtros, el calendario y la dona

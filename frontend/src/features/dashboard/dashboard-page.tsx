@@ -149,7 +149,7 @@ export function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            <Skeleton className="h-72 rounded-3xl" />
+            <Skeleton className="h-72 rounded-2xl" />
           </div>
         </>
       )}
