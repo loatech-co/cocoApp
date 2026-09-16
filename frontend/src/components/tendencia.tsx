@@ -151,7 +151,15 @@ export function Tendencia({
         ref={lienzo}
         // `min-h-0` deja que el flex lo encoja; sin eso el hijo impone su alto
         // mínimo y el contenedor se desborda.
-        className="relative min-h-40 min-w-0 flex-1 touch-pan-y outline-none"
+        className={cn(
+          'relative min-h-40 min-w-0 flex-1 touch-pan-y rounded-lg',
+          // La gráfica ENTRA en el orden del tabulador y se recorre con las
+          // flechas —lo dice su propia etiqueta—, pero llevaba `outline-none`
+          // sin nada que lo reemplazara: quien llegaba aquí con el teclado no
+          // tenía forma de saberlo. El anillo va por dentro porque la gráfica
+          // llena su tarjeta hasta el borde.
+          'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+        )}
         tabIndex={0}
         role="application"
         aria-label={`Gasto por ${granularidad === 'dia' ? 'día' : 'mes'}. Usa las flechas para recorrer los puntos.`}

@@ -5,8 +5,12 @@ import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 
 /**
  * Los colores de las porciones. Viven en `index.css` porque cambian con el
- * tema: en claro la primera es bosque oscuro, en oscuro tiene que ser clara o
- * la porción se confunde con la tarjeta y la dona parece vacía.
+ * tema: en claro la primera es el pino de la marca, y en oscuro tiene que ser
+ * clara o la porción se confunde con la tarjeta y la dona parece vacía.
+ *
+ * Y son una rampa PROPIA, distinta de la del tema: estas porciones pintan
+ * áreas grandes, y un color que se distingue bien como trazo de 2px puede ser
+ * invisible como relleno.
  */
 const PALETA = [
   'var(--dona-1)',

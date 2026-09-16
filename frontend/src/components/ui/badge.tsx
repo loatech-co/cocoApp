@@ -32,7 +32,10 @@ const etiquetaVariants = cva(
       tono: {
         neutro: 'border-transparent bg-muted text-foreground',
         contorno: 'border-border text-foreground',
-        ingreso: 'border-transparent bg-success-surface text-success',
+        // `income`, no `success`: valen lo mismo —en una app de dinero «se
+        // guardó» y «entró plata» son la misma buena noticia— pero esta
+        // etiqueta dice INGRESO, y el token que lo nombra existe.
+        ingreso: 'border-transparent bg-income-surface text-income',
         gasto: 'border-transparent bg-expense-surface text-expense',
         pendiente: 'border-transparent bg-warning-surface text-warning',
         info: 'border-transparent bg-info-surface text-info',
@@ -96,7 +99,23 @@ export function Chip({
 
   return (
     <span className={cn(forma, 'pr-1', className)}>
-      <button type="button" className="min-w-0 truncate outline-none" {...props}>
+      {/*
+        `outline-none` SIN nada que lo reemplace dejaba este botón sin ningún
+        indicador de foco: la regla global de `index.css` dibuja un contorno en
+        `:focus-visible`, y una utilidad de Tailwind le gana a la capa base. El
+        aspa de al lado sí se veía; la parte que se pulsa para abrir, no.
+
+        El anillo va por dentro —`ring-inset`— porque este botón vive pegado
+        contra el borde redondeado del chip, y uno por fuera se saldría de él.
+      */}
+      <button
+        type="button"
+        className={cn(
+          'min-w-0 truncate rounded-full outline-none',
+          'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+        )}
+        {...props}
+      >
         {children}
       </button>
       <button

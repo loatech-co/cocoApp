@@ -189,7 +189,16 @@
   */
   --destructive-surface: #f7e3e2;
 
-  /* ── Gráficas ─────────────────────────────────────────────────────────── */
+  /* ── Gráficas ─────────────────────────────────────────────────────────────
+     La serie de colores del tema: cinco tonos que se distinguen ENTRE SÍ.
+
+     Son para una gráfica cuyas series no significan nada por sí solas —tres
+     cuentas, cinco meses—. La de tendencia NO las usa, y a propósito: sus dos
+     series son lo que sale y lo que entra, y eso ya tiene color en esta app.
+     Pintadas con la rampa, el gasto salía teal en la gráfica y pino en la
+     tabla. La dona sí tiene rampa propia, `--dona-*`, porque pinta ÁREAS y un
+     color que se distingue como trazo de 2px puede ser invisible como
+     relleno. */
   --chart-1: #14807a;
   --chart-2: #d4a24c;
   --chart-3: #0b3b36;
@@ -209,9 +218,7 @@
   --dona-4-tinta: #0f1f1d;
   --dona-5: #b88a40;
   --dona-5-tinta: #ffffff;
-  --dona-otros: #dadcd5;
-  --dona-otros-tinta: #0f1f1d;
-
+  
   /* ── Los pasteles de los chips ────────────────────────────────────────────
      Se nombran por su PAPEL —gasto, ingreso— y no por su color.
 
@@ -385,9 +392,7 @@
   --dona-4-tinta: #0a1614;
   --dona-5: #d4a24c;
   --dona-5-tinta: #2a1c08;
-  --dona-otros: #263533;
-  --dona-otros-tinta: #e8edeb;
-
+  
   --chip-gasto: #17302c;
   --chip-gasto-tinta: #9fe5dc;
   --chip-ingreso: #0e2b1d;

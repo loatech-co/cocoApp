@@ -35,6 +35,7 @@ import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
+import { Textarea } from '@/components/ui/textarea';
 import { ApiClientError, apiSubir } from '@/lib/api-client';
 import { diaLargo, mesLargo } from '@/lib/fechas';
 import {
@@ -582,13 +583,11 @@ export function MovimientoModal({
               </div>
 
               <Campo etiqueta="Notas" id="mov-notas">
-                <textarea
+                <Textarea
                   id="mov-notas"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
-                  className="rounded-lg border bg-card px-3 py-2 text-sm"
-                  style={{ borderColor: 'var(--input)' }}
                   placeholder="Opcional"
                 />
               </Campo>
