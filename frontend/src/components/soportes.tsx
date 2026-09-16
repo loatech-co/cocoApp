@@ -371,13 +371,23 @@ function Pase({
           </BotonOscuro>
         )}
 
-        {/* `overflow-auto`: ampliado, el recibo se recorre con la barra de
-            desplazamiento. Es lo que ya sabe hacer el navegador y no hay que
-            reinventar el arrastre. */}
-        <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-2xl bg-white p-2">
+        {/*
+          El hueco es OSCURO y la hoja flota encima.
+
+          Antes el contenedor entero era blanco, así que un recibo de 620px en
+          una pantalla ancha dejaba dos franjas blancas enormes a los lados: en
+          una app de fondo verde oscuro, y de noche, eso deslumbra. Lo blanco
+          tiene que ser el papel y nada más, que es además como se ve un
+          documento en cualquier visor.
+
+          `overflow-auto`: ampliado, el recibo se recorre con la barra de
+          desplazamiento. Es lo que ya sabe hacer el navegador y no hay que
+          reinventar el arrastre.
+        */}
+        <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-2xl bg-black/25 p-3 sm:p-6">
           {!url ? (
             <div className="flex w-full items-center justify-center">
-              <Loader2 className="size-6 animate-spin text-tinta-600" aria-hidden="true" />
+              <Loader2 className="size-6 animate-spin text-tinta-50/70" aria-hidden="true" />
             </div>
           ) : esImagen ? (
             <img
@@ -386,7 +396,7 @@ function Pase({
               // El MISMO ancho que una página de PDF: si una imagen midiera
               // otra cosa, el botón de ampliar haría dos cosas distintas
               // según qué soporte estuviera abierto.
-              className="h-fit max-w-none"
+              className="h-fit max-w-none rounded-lg bg-white shadow-2xl"
               style={{ width: ANCHO_HOJA * escala }}
             />
           ) : (
@@ -558,7 +568,7 @@ function PaginaPdf({
 
   if (fallo) {
     return (
-      <p className="flex items-center gap-2 self-center text-sm text-tinta-600">
+      <p className="flex items-center gap-2 self-center text-sm text-tinta-50/80">
         <FileWarning className="size-5" aria-hidden="true" />
         No se pudo dibujar este PDF.
       </p>
@@ -569,13 +579,17 @@ function PaginaPdf({
     <>
       {pintando && (
         <Loader2
-          className="absolute size-6 animate-spin self-center text-tinta-600"
+          className="absolute size-6 animate-spin self-center text-tinta-50/70"
           aria-hidden="true"
         />
       )}
       {/* El lienzo se dibuja al doble de píxeles y se enseña a la mitad: es lo
           que lo deja nítido en una pantalla retina. */}
-      <canvas ref={lienzo} className="h-fit max-w-none" style={{ width: ANCHO_HOJA * escala }} />
+      <canvas
+        ref={lienzo}
+        className="h-fit max-w-none rounded-lg bg-white shadow-2xl"
+        style={{ width: ANCHO_HOJA * escala }}
+      />
     </>
   );
 }
