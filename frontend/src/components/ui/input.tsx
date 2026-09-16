@@ -1,7 +1,7 @@
 import type { ComponentProps, ComponentType, ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
-import { HUECO_DE_LA_ETIQUETA, useDentroDeUnCampo } from '@/components/ui/campo';
+import { FOCO_DEL_CAMPO, HUECO_DE_LA_ETIQUETA, useDentroDeUnCampo } from '@/components/ui/campo';
 
 /**
  * Un campo de texto.
@@ -87,9 +87,8 @@ export function Input({
         // respondía al ratón y el de al lado no, y parecía que uno estaba
         // apagado.
         'transition-colors hover:border-ring/40',
-        // Un anillo de 1px y el borde teñido. Con 2px el campo parecía crecer
-        // al recibir el foco y el halo se comía la separación con el de al lado.
-        'outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
+        // El porqué del grosor y de `:focus-visible`, en `campo.tsx`.
+        FOCO_DEL_CAMPO,
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive',
         // 16px por debajo del corte y 14 por encima, y el corte es el de la

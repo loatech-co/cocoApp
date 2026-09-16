@@ -57,18 +57,24 @@ export const SURGE = 'surge';
 export const REALCE = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
 
 /**
- * El realce de una superficie GRANDE que responde al cursor.
+ * El realce de una superficie GRANDE que responde al cursor: el hueco del
+ * próximo grupo, la zona donde se sueltan los soportes, la de la importación.
  *
- * ── Por qué no es el mismo que el de una opción ─────────────────────────────
- * Lo que responde se marca con `accent`, y en una opción de menú o en una fila
- * de una lista eso es exactamente lo que hace falta: la franja se enciende y
- * se apaga al pasar. Pero en una superficie de mil por doscientos cincuenta
- * —la zona donde se sueltan los soportes, el hueco donde va el próximo grupo—
- * ese mismo relleno a plena intensidad es un fogonazo, no una respuesta.
+ * ── Un quinto de lo que usa una opción, y del mismo color ───────────────────
+ * Lo que responde se tiñe con `--acento-tinta` —eso no cambia, es lo que hace
+ * que toda la app conteste con el mismo color—. Lo que cambia es CUÁNTO, y va
+ * al revés del tamaño: una opción de menú mide 200 por 32 y lleva un 10 %;
+ * esto mide mil por doscientos cincuenta y lleva un 5 %.
  *
- * Así que el acento baja a un tercio y la letra sube a plena tinta. Sigue
- * siendo el mismo lenguaje —responde con `accent`, como todo lo demás— a un
- * volumen proporcional al sitio que ocupa.
+ * No es prudencia: en una superficie grande el ojo integra el tono sobre toda
+ * el área, así que el mismo porcentaje que en una franja estrecha es un apunte,
+ * aquí es un panel de otro color. Ha pasado dos veces —primero con `bg-accent`
+ * entero, luego con un tercio— y las dos se veía lo mismo: un rectángulo verde
+ * encendiéndose y apagándose, que se lee como que la zona cambió de estado y
+ * no como que el cursor está encima.
+ *
+ * La letra sube a plena tinta al mismo tiempo. Sobre un fondo que casi no se
+ * mueve, es lo que hace legible la respuesta.
  *
  * ── Y no toca el trazo ──────────────────────────────────────────────────────
  * Estas superficies llevan borde punteado. Cambiarle el color redibuja el
@@ -77,4 +83,4 @@ export const REALCE = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
  * archivo encima: ahí sí hay algo que decir —«esto es lo que lo va a
  * recibir»— y el cambio de color lo dice de una vez.
  */
-export const REALCE_DE_SUPERFICIE = 'hover:bg-accent/30 hover:text-foreground';
+export const REALCE_DE_SUPERFICIE = 'hover:bg-acento-tinta/5 hover:text-foreground';

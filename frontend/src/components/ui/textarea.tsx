@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 
 import { cn } from '@/lib/utils';
-import { useDentroDeUnCampo } from '@/components/ui/campo';
+import { FOCO_DEL_CAMPO, useDentroDeUnCampo } from '@/components/ui/campo';
 
 /**
  * Un campo de varias líneas.
@@ -45,7 +45,7 @@ export function Textarea({ className, placeholder, ...props }: ComponentProps<'t
           ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
           : 'placeholder:text-muted-foreground',
         'transition-colors hover:border-ring/40',
-        'outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
+        FOCO_DEL_CAMPO,
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive',
         'escritorio:text-sm',

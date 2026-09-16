@@ -848,9 +848,28 @@
     font-weight: 500;
   }
 
-  /* Enfocada, la etiqueta se tiñe como el anillo: dice cuál de los campos
-     está recibiendo lo que se escribe sin tener que mirar el cursor. */
-  .campo:focus-within > label {
+  /*
+    Enfocada, la etiqueta se tiñe como el anillo: dice cuál de los campos está
+    recibiendo lo que se escribe sin tener que mirar el cursor.
+
+    ── Por qué aquí sí es `:focus-visible` y arriba no ─────────────────────
+    Son dos cosas distintas con el mismo disparador, y por eso no llevan el
+    mismo selector:
+
+    · SUBIR la etiqueta es estructural. Tiene que pasar siempre que haya un
+      cursor en el campo, lo haya puesto quien lo haya puesto: si no sube, el
+      texto que se escribe se pisa con el nombre del campo. Va con
+      `:focus-within`.
+    · TEÑIRLA es la señal de foco, y esa solo se pinta cuando el foco se pidió.
+      Va con `:focus-visible`, igual que el anillo del propio campo.
+
+    Escritas las dos con `:focus-within` se contradecían en el caso más
+    corriente de todos: al pulsar un desplegable con el ratón, un `<button>` no
+    coincide con `:focus-visible` —los navegadores lo reservan al teclado—, así
+    que el campo no pintaba su anillo y la etiqueta sí se ponía verde. La
+    etiqueta decía «enfocado» y la caja decía que no.
+  */
+  .campo:has(:focus-visible) > label {
     color: var(--ring);
   }
 

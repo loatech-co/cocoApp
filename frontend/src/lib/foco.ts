@@ -38,8 +38,18 @@ export function useFocoAtrapado(caja: RefObject<HTMLElement | null>, activo: boo
     // botón que se acaba de pulsar.
     const volverA = document.activeElement as HTMLElement | null;
 
-    const primero = enfocables(el)[0];
-    (primero ?? el).focus?.();
+    /*
+      El foco entra en la CAJA, no en su primer control.
+
+      Tiene que entrar —si se queda detrás del velo, el tabulador sigue
+      recorriendo una página que no se ve—, pero llevarlo al primer botón o al
+      primer campo abre el panel con algo encendido que nadie eligió, que es
+      justo lo que la regla del foco prohíbe. La caja lleva `tabindex="-1"`
+      para poder recibirlo: es enfocable a mano pero no está en el recorrido
+      del tabulador, así que el primer Tab lleva al primer control de dentro y
+      desde ahí ya se anda.
+    */
+    el.focus?.();
 
     function alPulsar(e: KeyboardEvent): void {
       if (e.key !== 'Tab' || !el) return;

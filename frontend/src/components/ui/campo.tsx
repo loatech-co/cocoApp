@@ -38,6 +38,33 @@ export function useDentroDeUnCampo(): boolean {
 export const HUECO_DE_LA_ETIQUETA = 'pb-1 pt-5';
 
 /**
+ * Cómo se ve un campo que tiene el foco.
+ *
+ * ── Fino y translúcido ──────────────────────────────────────────────────────
+ * Era el borde a plena tinta del anillo MÁS un anillo de 1px, también a plena
+ * tinta: dos píxeles de verde saturado alrededor de la caja. Con cuatro campos
+ * en una ficha, el que estaba enfocado no se leía como enfocado sino como
+ * seleccionado, o como marcado en rojo pero en verde.
+ *
+ * Ahora es un solo trazo: el borde teñido al 60 % —un píxel, el mismo que
+ * tenía en reposo, cambiando de color y no de grosor— y el anillo bajado al
+ * 20 %, que ya no es un canto sino el halo que lo despega de lo que tiene
+ * detrás. Sigue siendo el primer sitio donde va el ojo al mirar la ficha, que
+ * es todo lo que tiene que hacer.
+ *
+ * ── Y solo con `:focus-visible` ─────────────────────────────────────────────
+ * Nunca con `:focus`. La diferencia es justo la regla: `:focus` se enciende
+ * también cuando el foco lo pone el programa —al abrir una ficha, al cerrar un
+ * desplegable que lo devuelve a su botón— y entonces hay un campo encendido
+ * que nadie eligió.
+ *
+ * El error es la excepción y va a plena tinta: un campo mal rellenado tiene
+ * que verse desde el otro lado de la ficha.
+ */
+export const FOCO_DEL_CAMPO =
+  'outline-none focus-visible:border-ring/60 focus-visible:ring-1 focus-visible:ring-ring/20';
+
+/**
  * El aspecto de un campo que se DESPLIEGA: un `Select`, un `Combo`, un
  * selector de fecha.
  *
@@ -54,7 +81,7 @@ export function disparadorDeCampo(pequeno = false): string {
   return cn(
     'flex w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-card text-left',
     'transition-colors hover:border-ring/40',
-    'outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring',
+    FOCO_DEL_CAMPO,
     'aria-expanded:border-ring',
     // El suelo táctil: apagado y encendido miden lo mismo, o la fila salta al
     // deshabilitarse.

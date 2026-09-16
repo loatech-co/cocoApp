@@ -90,7 +90,14 @@ export function Confirmacion({
             del botón, y la salida de un diálogo que pregunta antes de borrar
             algo es exactamente lo que no puede costar encontrar.
           */}
-          <Button type="button" variant="outline" onClick={onCancelar} autoFocus>
+          {/*
+            Y sin `autoFocus`. Lo llevaba para que la salida fuera lo primero
+            que encontrara el teclado, y el precio era que toda confirmación se
+            abría con un botón encendido que nadie había elegido. La regla del
+            foco vale también aquí: se pinta cuando se pide. La salida sigue
+            estando a un Escape y a un tabulador.
+          */}
+          <Button type="button" variant="outline" onClick={onCancelar}>
             Cancelar
           </Button>
           <Button
