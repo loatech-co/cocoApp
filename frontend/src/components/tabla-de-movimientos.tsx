@@ -133,6 +133,22 @@ function Fila({
   // se vea de lejos cuál falta por ordenar después de una importación.
   const sinClasificar = movimiento.category_id === null;
 
+  /*
+    Un centro ESTÁTICO no se reclasifica desde aquí.
+
+    La estructura de los costos fijos no se improvisa —el alquiler no cambia
+    de grupo un martes—, y en una tabla de cien filas con un desplegable en
+    cada una, un clic distraído mueve plata de sitio sin que nadie lo note.
+
+    Tampoco desde el modal del movimiento: estático es estático. Si de verdad
+    hay que mover algo, se hace dinámico el centro desde Centros de costos —un
+    acto deliberado, en otra pantalla— y entonces se mueve.
+  */
+  const estatico = centro?.estatico ?? false;
+  const motivo = estatico
+    ? `“${centro?.name}” es un centro estático. La clasificación solo se modifica desde Centros de costos.`
+    : undefined;
+
   return (
     <Tr onClick={onAbrir} atencion={sinClasificar} atenuada={actualizar.isPending}>
       <Td fija divisor={false} atencion={sinClasificar}>
@@ -181,6 +197,8 @@ function Fila({
             aria="Centro de costos"
             valor={centro?.id}
             opciones={arbol}
+            deshabilitado={estatico}
+            motivo={motivo}
             onElegir={reclasificar}
           />
         </span>
@@ -192,7 +210,8 @@ function Fila({
             aria="Grupo"
             valor={grupo?.id}
             opciones={centro?.children ?? []}
-            deshabilitado={!centro}
+            deshabilitado={estatico || !centro}
+            motivo={motivo}
             onElegir={(id) => reclasificar(id ?? centro?.id)}
           />
         </span>
@@ -248,15 +267,19 @@ function SelectorEnFila({
   valor,
   opciones,
   deshabilitado,
+  motivo,
   onElegir,
 }: {
   aria: string;
   valor?: number;
   opciones: Category[];
   deshabilitado?: boolean;
+  /** Por qué está bloqueado. Un control apagado sin explicación se lee como
+      un error de la aplicación. */
+  motivo?: string;
   onElegir: (id: number | undefined) => void;
 }) {
-  return (
+  const selector = (
     <Select
       tamano="sm"
       etiqueta={aria}
@@ -266,5 +289,13 @@ function SelectorEnFila({
       opciones={opciones.map((o) => ({ valor: String(o.id), etiqueta: o.name }))}
       onCambiar={(v) => onElegir(v === '' ? undefined : Number(v))}
     />
+  );
+
+  if (!deshabilitado || motivo === undefined) return selector;
+
+  return (
+    <ConTooltip texto={motivo} className="w-full">
+      {selector}
+    </ConTooltip>
   );
 }

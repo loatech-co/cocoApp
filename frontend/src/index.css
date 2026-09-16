@@ -256,7 +256,10 @@
   --muted: var(--color-bosque-800);
   --muted-foreground: var(--color-tinta-400);
 
-  --destructive: #f87171;
+  /* Más claro que el rojo de antes (#f87171): sobre los verdes oscuros de
+     esta paleta aquel daba 3.1:1 —por debajo del 4.5:1 que exige el texto— y
+     el rojo terminaba leyéndose como un marrón apagado. Este da 6.4:1. */
+  --destructive: #fca5a5;
   --destructive-foreground: var(--color-bosque-950);
 
   --border: var(--color-bosque-800);
@@ -369,6 +372,25 @@
 @layer base {
   * {
     border-color: var(--border);
+  }
+
+  /*
+    ── Las barras de desplazamiento ──────────────────────────────────────────
+    Negras al 20 %, en todas partes. Una barra a plena tinta compite con lo
+    que tiene al lado —una cifra, un nombre— y en macOS, donde FLOTA encima
+    del contenido en vez de ocupar sitio, se lee como si fuera parte de la
+    fila.
+
+    Negro y no un color del tema: en oscuro, la tinta del tema es CLARA, así
+    que la barra salía blanca y resaltaba todavía más que antes.
+
+    Se recolorea con `scrollbar-color`, que se hereda, y no con
+    `::-webkit-scrollbar`: tocar el pseudo-elemento las convierte en las
+    barras clásicas de ancho fijo, que dejan de flotar, se quedan visibles
+    siempre y se comen un trozo de cada lista.
+  */
+  html {
+    scrollbar-color: rgb(0 0 0 / 0.2) transparent;
   }
 
   body {
