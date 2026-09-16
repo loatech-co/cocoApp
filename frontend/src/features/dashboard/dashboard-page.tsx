@@ -1,4 +1,12 @@
-import { AlertCircle, ChevronLeft, Receipt, TrendingDown, TrendingUp } from 'lucide-react';
+import {
+  AlertCircle,
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  Receipt,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { Dona } from '@/components/dona';
@@ -9,6 +17,7 @@ import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { Tendencia, TendenciaEsqueleto } from '@/components/tendencia';
 import { rutaSeleccionada, ToolbarFiltros, type Orden } from '@/components/toolbar-filtros';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
@@ -140,16 +149,16 @@ export function DashboardPage() {
               <Skeleton key={i} className="h-24 rounded-2xl" />
             ))}
           </div>
-          <div className="grid gap-3 sm:gap-5 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardContent className="flex h-full flex-col p-4 sm:p-6">
+          <div className="grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20%,30rem)]">
+            <Card>
+              <CardContent className="flex flex-col p-4 sm:p-6">
                 <Skeleton className="mb-4 h-6 w-40" />
-                <div className="h-56 sm:h-72">
+                <div className="aspect-[20/7] max-h-[320px] w-full">
                   <TendenciaEsqueleto />
                 </div>
               </CardContent>
             </Card>
-            <Skeleton className="h-72 rounded-2xl" />
+            <Skeleton className="h-72 w-full rounded-2xl lg:h-full" />
           </div>
         </>
       )}
@@ -183,18 +192,29 @@ export function DashboardPage() {
           {/* La gráfica dice CUÁNDO se gastó y la dona EN QUÉ. Son la misma
               pregunta partida en dos, así que van a la misma altura: una
               debajo de la otra obliga a desplazarse para cruzarlas. */}
-          {/* MISMA rejilla y mismo hueco que la fila de indicadores: con 10
-              columnas arriba y 3 abajo, la dona quedaba unos píxeles corrida
-              respecto de la tarjeta que tiene encima y el borde no cuadraba. */}
-          <div className="grid gap-3 sm:gap-5 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardContent className="flex h-full flex-col p-4 sm:p-6">
+          {/*
+            ── Quién manda sobre el alto de esta fila ────────────────────────
+            La gráfica. Su lienzo tiene una PROPORCIÓN propia —16:7— así que
+            mide por sí mismo, sin preguntarle a nadie, y con un tope para que
+            en una pantalla ancha no se estire sin fin. De ahí sale el alto de
+            su tarjeta, de ahí el de la fila, y la tarjeta de la dona se estira
+            hasta igualarlo.
+
+            Lo que no puede pasar es lo contrario: que la gráfica mida contra
+            su tarjeta y la tarjeta contra la gráfica. Eso no es una cadena, es
+            un círculo, y el navegador lo resuelve como puede —que fue lo que
+            se salió de la página—.
+
+            ── El ancho de la columna de la dona ─────────────────────────────
+            Nunca menos del 20 % de la fila y nunca más de 30rem. Los dos
+            extremos son valores concretos a propósito: dejarla en `auto` la
+            hacía depender de su contenido, y su contenido depende de ella.
+          */}
+          <div className="grid gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20%,30rem)]">
+            <Card>
+              <CardContent className="flex flex-col p-4 sm:p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
-                {/* Alto PROPIO y no `flex-1` a secas. Dejándolo crecer, el SVG
-                    caía en su proporción del viewBox —2.4:1— y en una tarjeta
-                    ancha se estiraba a 340px, arrastrando la fila entera y
-                    dejando media tarjeta vacía en la dona de al lado. */}
-                <div className="h-56 sm:h-72">
+                <div className="aspect-[20/7] max-h-[320px] w-full">
                   <Tendencia
                     puntos={dashboard.data.trend}
                     granularidad={dashboard.data.period.granularity}
@@ -207,6 +227,7 @@ export function DashboardPage() {
               <Distribucion
                 filas={dashboard.data.by_category}
                 nivel={dashboard.data.breakdown_level}
+                padre={dashboard.data.breakdown_parent}
                 totalGastado={dashboard.data.range.expense}
                 ruta={ruta}
                 onBajar={(id) => {
@@ -358,6 +379,7 @@ function Kpi({
 function Distribucion({
   filas,
   nivel,
+  padre,
   totalGastado,
   ruta,
   onBajar,
@@ -365,16 +387,44 @@ function Distribucion({
 }: {
   filas: { category_id: number | null; name: string; total: string; count: number }[];
   nivel: string;
+  /** De quién son las filas. `null` cuando son los centros de costos. */
+  padre: { id: number; name: string } | null;
   totalGastado: string;
   /** El camino hasta donde se bajó. Vacío = se está en los centros de costos. */
   ruta: { id: number; name: string }[];
   onBajar: (id: number) => void;
   onSubir: () => void;
 }) {
+  const total = Number.parseFloat(totalGastado) || 0;
+  const [verLista, setVerLista] = useState(true);
+
   return (
     <Card className="h-full">
       <CardContent className="flex h-full flex-col p-4 sm:p-6">
-        <h2 className="font-display text-lg font-semibold">Distribución de costos</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-display text-lg font-semibold">Distribución de costos</h2>
+          {/* Esconder los nombres no cambia el ancho de la tarjeta: lo fija la
+              rejilla del resumen, no lo que haya dentro. */}
+          {/* Mismo botón que los de la barra de filtros: la variante
+              `herramienta` y el tamaño `chip-icon`. Un control que hace lo
+              mismo —encender y apagar algo de la vista— tiene que verse igual
+              en las dos pantallas. */}
+          <Button
+            type="button"
+            variant="herramienta"
+            size="chip-icon"
+            aria-pressed={!verLista}
+            aria-label={verLista ? 'Ocultar los nombres' : 'Mostrar los nombres'}
+            title={verLista ? 'Ocultar los nombres' : 'Mostrar los nombres'}
+            onClick={() => setVerLista((v) => !v)}
+          >
+            {verLista ? (
+              <Eye className="size-4" aria-hidden="true" />
+            ) : (
+              <EyeOff className="size-4" aria-hidden="true" />
+            )}
+          </Button>
+        </div>
 
         {/* Bajar de nivel es un clic; subir tiene que serlo también. Sin esto,
             entrar en un centro de costos era un viaje de ida: la única salida
@@ -383,18 +433,25 @@ function Distribucion({
           <button
             type="button"
             onClick={onSubir}
-            className="mt-1.5 flex min-w-0 items-center gap-1 self-start rounded text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="flex min-w-0 items-center gap-1 self-start rounded text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             <ChevronLeft className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{ruta.map((n) => n.name).join(' · ')}</span>
           </button>
         ) : (
-          <p className="mt-1.5 text-xs text-muted-foreground">Por {nivel}</p>
+          /* El NOMBRE de a quién pertenecen estas filas, no el nivel al que
+             están. "Por grupo" no dice de qué: los grupos de cuál centro. */
+          <p className="truncate text-xs text-muted-foreground">
+            {padre?.name ?? `Por ${nivel}`}
+          </p>
         )}
 
+        {/* `flex-1` para que la dona tenga contra qué medir: la tarjeta ya
+            tiene alto —se lo dio la fila— y este es el trozo que le queda. */}
         <Dona
-          className="mt-6"
-          total={Number.parseFloat(totalGastado) || 0}
+          className="mt-6 min-h-0 flex-1"
+          mostrarLista={verLista}
+          total={total}
           porciones={filas.map((f) => ({
             id: f.category_id,
             nombre: f.name,

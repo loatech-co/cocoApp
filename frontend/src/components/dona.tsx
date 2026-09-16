@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { cn, formatCOP } from '@/lib/utils';
 
@@ -8,33 +8,24 @@ import { cn, formatCOP } from '@/lib/utils';
  * la porción se confunde con la tarjeta y la dona parece vacía.
  */
 const PALETA = [
-  { fondo: 'var(--dona-1)', tinta: 'var(--dona-1-tinta)' },
-  { fondo: 'var(--dona-2)', tinta: 'var(--dona-2-tinta)' },
-  { fondo: 'var(--dona-3)', tinta: 'var(--dona-3-tinta)' },
-  { fondo: 'var(--dona-4)', tinta: 'var(--dona-4-tinta)' },
-  { fondo: 'var(--dona-5)', tinta: 'var(--dona-5-tinta)' },
+  'var(--dona-1)',
+  'var(--dona-2)',
+  'var(--dona-3)',
+  'var(--dona-4)',
+  'var(--dona-5)',
 ];
-const OTROS = { fondo: 'var(--dona-otros)', tinta: 'var(--dona-otros-tinta)' };
-
-/* ── Geometría ──────────────────────────────────────────────────────────────
-   Un lienzo ancho y bajo: la dona en el centro y los nombres a los lados, que
-   es donde hay sitio. Apilados debajo serían otra vez una leyenda.            */
-const ANCHO = 320;
-const ALTO = 168;
-const CX = ANCHO / 2;
-const CY = ALTO / 2;
-const RADIO = 56;
-const GROSOR = 15;
+/*
+  ── El lienzo es CUADRADO y ajustado al aro ─────────────────────────────────
+  Los nombres viven fuera del SVG, en su propia lista, así que el dibujo no
+  necesita reservar sitio para ellos. Antes el lienzo era mucho más ancho que
+  el aro —para que cupieran los rótulos y sus líneas— y el aro terminaba
+  ocupando menos de la mitad de lo que medía la tarjeta.
+*/
+const RADIO = 68;
+const GROSOR = 26;
+const LADO = (RADIO + GROSOR / 2) * 2 + 4;
+const CENTRO = LADO / 2;
 const VUELTA = 2 * Math.PI * RADIO;
-
-/** Dónde dobla la línea guía y dónde empieza el texto. */
-const CODO = RADIO + GROSOR / 2 + 10;
-const MARGEN_TEXTO = 8;
-/** Separación mínima entre dos nombres del mismo lado. */
-const ALTO_DE_NOMBRE = 34;
-
-/** Por debajo de esto la cifra no cabe dentro de su porción. */
-const MINIMO_PARA_CIFRA = 0.06;
 
 export interface PorcionDeDona {
   id: number | null;
@@ -43,125 +34,178 @@ export interface PorcionDeDona {
 }
 
 /**
- * Una dona con los nombres alrededor.
+ * En qué se reparte el gasto: una lista y un aro.
  *
- * ── Por qué la cifra va DENTRO y el nombre FUERA ────────────────────────────
- * Porque son dos lecturas distintas. El porcentaje se compara de un vistazo
- * entre porciones, y para eso tiene que estar sobre el color que mide. El
- * nombre se lee una vez, y dentro del aro no cabría sin encogerlo hasta que
- * deje de leerse.
+ * ── Por qué la lista y no rótulos alrededor ─────────────────────────────────
+ * Se intentó con nombres alrededor del aro unidos por líneas. En una tarjeta
+ * de un tercio de pantalla no entra: o los nombres se cortan hasta dejar de
+ * decir nada, o el aro se encoge hasta que la proporción —lo único que una
+ * dona responde— deja de leerse.
  *
- * ── Por qué una línea guía y no una leyenda ─────────────────────────────────
- * Una leyenda obliga a emparejar colores a ojo: se lee el nombre, se memoriza
- * su cuadrito y se busca esa misma tinta en el aro. La línea ya hizo ese
- * trabajo. Además una leyenda crece hacia abajo y empuja el resto de la
- * tarjeta; los nombres a los lados ocupan sitio que de otro modo estaría
- * vacío.
+ * Una lista ordenada de mayor a menor responde la misma pregunta mejor: ya
+ * viene con el ranking hecho, los nombres caben enteros y el aro se queda con
+ * todo el espacio que le sobra a la columna.
+ *
+ * ── Por qué la lista son solo nombres ───────────────────────────────────────
+ * Porque el orden ya dice cuál pesa más y el aro ya dice cuánto. Repetirlo en
+ * cifras al lado de cada nombre convierte la lista en una tabla peor que una
+ * tabla, y tapa lo único que hay que leer de un vistazo: en qué se va la
+ * plata. El cuánto exacto es otra pregunta, y se hace señalando.
  */
 export function Dona({
   porciones,
   total,
-  maximo = 5,
+  mostrarLista = true,
   onElegir,
   className,
 }: {
   porciones: PorcionDeDona[];
-  /** El total del recorte. No se dibuja: manda sobre la suma de las porciones. */
+  /** El total del recorte. Manda sobre la suma de las porciones. */
   total: number;
-  maximo?: number;
+  /** Con la lista oculta, el aro se centra pero NO cambia de tamaño. */
+  mostrarLista?: boolean;
   onElegir?: (id: number) => void;
   className?: string;
 }) {
+  const caja = useRef<HTMLDivElement>(null);
+  const tarjeta = useRef<HTMLDivElement>(null);
   const [activa, setActiva] = useState<number | null>(null);
+  const [puntero, setPuntero] = useState({ x: 0, y: 0 });
+  const [medida, setMedida] = useState({ ancho: 0, alto: 0 });
+  const [tam, setTam] = useState({ ancho: 0, alto: 0 });
 
-  const ordenadas = [...porciones].sort((a, b) => b.valor - a.valor);
-  const visibles = ordenadas.slice(0, maximo);
-  const cola = ordenadas.slice(maximo);
-  const sumaCola = cola.reduce((s, p) => s + p.valor, 0);
+  // Se mide después de pintar y antes de que el navegador dibuje: en el render
+  // la tarjeta todavía no existe, y en un efecto normal se vería un fotograma
+  // con ella en el sitio equivocado.
+  useLayoutEffect(() => {
+    if (!tarjeta.current) return;
+    const { offsetWidth, offsetHeight } = tarjeta.current;
+    setTam((previo) =>
+      previo.ancho === offsetWidth && previo.alto === offsetHeight
+        ? previo
+        : { ancho: offsetWidth, alto: offsetHeight },
+    );
+  }, [activa]);
 
-  const segmentos = [
-    ...visibles.map((p, i) => ({ ...p, ...PALETA[i % PALETA.length] })),
-    ...(sumaCola > 0
-      ? [{ id: null, nombre: `Otros (${cola.length})`, valor: sumaCola, ...OTROS }]
-      : []),
-  ];
+  /*
+    Todas las porciones, sin agrupar el final en un "Otros".
 
-  // El total manda sobre la suma: si hay gasto sin clasificar, el aro queda con
-  // un hueco en vez de repartirlo entre las demás porciones.
+    Agrupar parecía razonable hasta que se vio en pantalla: "Otros (1)" es un
+    nombre inventado para UNA categoría que sí existe y sí tiene nombre, y
+    además no se podía pulsar —no hay ninguna categoría a la que bajar—, así
+    que era la única fila de la lista que no filtraba nada.
+  */
+  const segmentos = [...porciones]
+    .sort((a, b) => b.valor - a.valor)
+    .map((p, i) => ({ ...p, color: PALETA[i % PALETA.length] }));
+
+  // El total manda sobre la suma de las porciones: si hay gasto sin clasificar,
+  // el aro queda con un hueco en vez de repartirlo entre las demás.
   const base = total > 0 ? total : segmentos.reduce((s, p) => s + p.valor, 0) || 1;
 
   let recorrido = 0;
   const trazos = segmentos.map((seg) => {
     const fraccion = seg.valor / base;
-    const medio = recorrido + fraccion / 2;
-    const inicio = recorrido;
+    const desde = recorrido;
     recorrido += fraccion;
-
-    // −90° porque el aro empieza ARRIBA, no a las tres en punto: es donde uno
-    // empieza a leer un reloj y también una dona.
-    const angulo = medio * 2 * Math.PI - Math.PI / 2;
-    const derecha = Math.cos(angulo) >= 0;
 
     return {
       ...seg,
       fraccion,
+      porcentaje: Math.round(fraccion * 100),
       largo: fraccion * VUELTA,
-      desfase: -inicio * VUELTA,
-      derecha,
-      cifra: {
-        x: CX + Math.cos(angulo) * RADIO,
-        y: CY + Math.sin(angulo) * RADIO,
-      },
-      codo: {
-        x: CX + Math.cos(angulo) * CODO,
-        y: CY + Math.sin(angulo) * CODO,
-      },
+      desfase: -desde * VUELTA,
     };
   });
 
-  // Los nombres de un mismo lado se separan para que no se pisen: dos porciones
-  // vecinas apuntan casi al mismo alto y sus textos se montarían.
-  for (const lado of [true, false]) {
-    const enEsteLado = trazos.filter((t) => t.derecha === lado).sort((a, b) => a.codo.y - b.codo.y);
-    for (let i = 1; i < enEsteLado.length; i += 1) {
-      const anterior = enEsteLado[i - 1];
-      const actual = enEsteLado[i];
-      if (actual.codo.y - anterior.codo.y < ALTO_DE_NOMBRE) {
-        actual.codo.y = anterior.codo.y + ALTO_DE_NOMBRE;
-      }
-    }
+  function seguir(e: React.PointerEvent): void {
+    const r = caja.current?.getBoundingClientRect();
+    if (!r) return;
+    setMedida({ ancho: r.width, alto: r.height });
+    setPuntero({ x: e.clientX - r.left, y: e.clientY - r.top });
   }
 
-  const pct = (v: number, total: number): string => `${(v / total) * 100}%`;
+  const señalada = activa === null ? null : trazos[activa];
+
+  // La tarjeta salta al lado contrario del puntero cuando no cabe: siguiéndolo
+  // sin más se sale de la tarjeta en los bordes.
+  const sitio = {
+    left: Math.max(
+      0,
+      puntero.x + 14 + tam.ancho <= medida.ancho ? puntero.x + 14 : puntero.x - 14 - tam.ancho,
+    ),
+    top: Math.min(Math.max(0, puntero.y - tam.alto / 2), Math.max(0, medida.alto - tam.alto)),
+  };
 
   return (
-    /*
-      El dibujo va en SVG y TODO el texto en HTML encima.
-      ── Por qué ──────────────────────────────────────────────────────────────
-      El SVG se estira para llenar la tarjeta, y con él se estira lo que lleve
-      dentro: un `font-size: 11px` escrito en un lienzo de 320 unidades se
-      dibuja a 22px cuando la tarjeta mide 640. El texto en HTML no se entera
-      de esa escala y mide siempre lo que dice que mide. De paso, cortar un
-      nombre largo pasa a ser un `truncate` de CSS en vez de contar letras.
-    */
-    /*
-      El TOPE de ancho es lo que gobierna el alto de toda la fila. El SVG usa
-      `w-full` y conserva la proporción, así que su alto sale de su ancho: sin
-      tope, en una pantalla de 2560px la dona se volvía enorme, estiraba la
-      fila y la gráfica de al lado —que llena su tarjeta— la seguía. Se veía
-      como si el resumen ocupara la pantalla entera.
-    */
-    <div className={cn('relative mx-auto w-full max-w-[28rem]', className)}>
+    <div
+      ref={caja}
+      className={cn('relative flex h-full items-center gap-4', className)}
+      onPointerMove={seguir}
+      onPointerLeave={() => setActiva(null)}
+    >
+      {mostrarLista && (
+      <ul className="flex min-w-0 flex-1 flex-col gap-2">
+        {trazos.map((seg, i) => {
+          const puedeBajar = seg.id !== null && onElegir !== undefined;
+
+          return (
+            <li key={seg.id ?? seg.nombre}>
+              <button
+                type="button"
+                disabled={!puedeBajar}
+                title={seg.nombre}
+                onPointerEnter={() => setActiva(i)}
+                onClick={() => puedeBajar && onElegir(seg.id as number)}
+                className={cn(
+                  'flex w-full min-w-0 items-center gap-2 rounded-md text-left transition-opacity',
+                  puedeBajar ? 'cursor-pointer' : 'cursor-default',
+                  activa !== null && activa !== i && 'opacity-40',
+                )}
+              >
+                <span
+                  aria-hidden="true"
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: seg.color }}
+                />
+                <span className="min-w-0 flex-1 truncate text-sm">{seg.nombre}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      )}
+
       <svg
-        viewBox={`0 0 ${ANCHO} ${ALTO}`}
-        className="w-full"
+        viewBox={`0 0 ${LADO} ${LADO}`}
+        /*
+          El tamaño sale del ANCHO, y el alto lo sigue.
+
+          Sacarlo del alto —`h-80% w-auto`— parecía más fino: la dona llenaba
+          su tarjeta. Pero el ancho que salía de ese alto no sabía nada de la
+          lista que tiene al lado, así que el aro se llevaba la fila entera y
+          los nombres se encogían hasta desaparecer.
+
+          Repartiendo el ANCHO entre los dos, cada uno tiene lo suyo: el aro el
+          62 % y la lista el 38 %. `max-h-full` es el freno por si la tarjeta
+          resulta más baja que ancha; el lienzo es cuadrado, así que al
+          achicarse sigue siendo un círculo, solo que más chico.
+
+          Para agrandar el aro hay dos mandos, y los dos están fuera de este
+          archivo o justo aquí: este porcentaje —que se lo quita a la lista— y
+          el ancho de la columna en el resumen, que se lo quita a la gráfica.
+        */
+        // Con la lista oculta el aro se CENTRA, no crece: creciendo, el ancho
+        // de la tarjeta dejaría de ser el mismo con y sin nombres y la fila
+        // entera se recolocaría cada vez que se pulsa el botón.
+        className={cn('max-h-full w-[62%] shrink-0', !mostrarLista && 'mx-auto')}
         role="img"
         aria-label="Distribución del gasto"
       >
         {/* El aro de fondo: es lo que se ve donde no llega ninguna porción. */}
         <circle
-          cx={CX}
-          cy={CY}
+          cx={CENTRO}
+          cy={CENTRO}
           r={RADIO}
           fill="none"
           stroke="var(--color-secondary)"
@@ -170,102 +214,61 @@ export function Dona({
 
         {trazos.map((seg, i) => {
           const puedeBajar = seg.id !== null && onElegir !== undefined;
-          const finX = seg.derecha ? ANCHO - MARGEN_TEXTO : MARGEN_TEXTO;
 
           return (
-            <g
+            <circle
               key={seg.id ?? seg.nombre}
+              cx={CENTRO}
+              cy={CENTRO}
+              r={RADIO}
+              fill="none"
+              stroke={seg.color}
+              strokeWidth={GROSOR}
+              strokeDasharray={`${seg.largo} ${VUELTA - seg.largo}`}
+              strokeDashoffset={seg.desfase}
+              // Empieza ARRIBA, no a las tres en punto: es donde uno empieza a
+              // leer un reloj y también una dona.
+              transform={`rotate(-90 ${CENTRO} ${CENTRO})`}
               onPointerEnter={() => setActiva(i)}
-              onPointerLeave={() => setActiva(null)}
               onClick={() => puedeBajar && onElegir(seg.id as number)}
               className={cn(
                 'transition-opacity',
                 puedeBajar && 'cursor-pointer',
                 activa !== null && activa !== i && 'opacity-35',
               )}
-            >
-              <circle
-                cx={CX}
-                cy={CY}
-                r={RADIO}
-                fill="none"
-                stroke={seg.fondo}
-                strokeWidth={GROSOR}
-                strokeDasharray={`${seg.largo} ${VUELTA - seg.largo}`}
-                strokeDashoffset={seg.desfase}
-                transform={`rotate(-90 ${CX} ${CY})`}
-              />
-
-              {/* La guía: del borde del aro al codo, y del codo al texto. */}
-              <polyline
-                points={`${seg.codo.x},${seg.codo.y} ${seg.derecha ? seg.codo.x + 12 : seg.codo.x - 12},${seg.codo.y} ${seg.derecha ? finX - 2 : finX + 2},${seg.codo.y}`}
-                fill="none"
-                stroke={seg.fondo}
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                vectorEffect="non-scaling-stroke"
-              />
-              <circle cx={seg.codo.x} cy={seg.codo.y} r="2.5" fill={seg.fondo} />
-            </g>
+            />
           );
         })}
       </svg>
 
-      {/* La cifra, SOBRE el color que mide, con la tinta que ese color admite:
-          blanco sobre lima da 1.23:1 y no se lee. */}
-      {trazos.map((seg, i) =>
-        seg.fraccion >= MINIMO_PARA_CIFRA ? (
-          <span
-            key={`c-${seg.id ?? seg.nombre}`}
-            aria-hidden="true"
-            style={{
-              left: pct(seg.cifra.x, ANCHO),
-              top: pct(seg.cifra.y, ALTO),
-              color: seg.tinta,
-            }}
-            className={cn(
-              'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-[15px] font-semibold transition-opacity',
-              activa !== null && activa !== i && 'opacity-35',
-            )}
-          >
-            {Math.round(seg.fraccion * 100)}%
-          </span>
-        ) : null,
+      {señalada && (
+        <div
+          ref={tarjeta}
+          style={{ left: `${sitio.left}px`, top: `${sitio.top}px` }}
+          className={cn(
+            'pointer-events-none absolute z-10 min-w-36 rounded-2xl bg-popover p-3',
+            'shadow-[var(--sombra-flotante)] ring-1 ring-black/5 dark:ring-white/12',
+            // Sin medir todavía se pinta invisible: un primer fotograma en la
+            // esquina y otro en su sitio se ve como un salto.
+            tam.ancho === 0 && 'opacity-0',
+          )}
+        >
+          <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <span
+              aria-hidden="true"
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: señalada.color }}
+            />
+            <span className="min-w-0 truncate">{señalada.nombre}</span>
+          </p>
+          <p className="tabular mt-1 font-display text-base font-semibold">
+            {formatCOP(señalada.valor)}
+          </p>
+          <p className="tabular mt-0.5 text-[11px] text-muted-foreground">
+            {señalada.porcentaje}% del total
+          </p>
+        </div>
       )}
-
-      {/* El nombre y el valor, al final de su línea guía. */}
-      {trazos.map((seg, i) => {
-        const puedeBajar = seg.id !== null && onElegir !== undefined;
-
-        return (
-          <button
-            key={`n-${seg.id ?? seg.nombre}`}
-            type="button"
-            disabled={!puedeBajar}
-            onPointerEnter={() => setActiva(i)}
-            onPointerLeave={() => setActiva(null)}
-            onClick={() => puedeBajar && onElegir(seg.id as number)}
-            style={{
-              top: pct(seg.codo.y, ALTO),
-              [seg.derecha ? 'right' : 'left']: pct(MARGEN_TEXTO, ANCHO),
-              maxWidth: '38%',
-            }}
-            className={cn(
-              'absolute -translate-y-1/2 rounded text-left transition-opacity',
-              seg.derecha ? 'text-right' : 'text-left',
-              puedeBajar ? 'cursor-pointer hover:opacity-80' : 'cursor-default',
-              activa !== null && activa !== i && 'opacity-35',
-            )}
-          >
-            <span className="block truncate text-[15px] font-semibold leading-tight text-foreground">
-              {seg.nombre}
-            </span>
-            <span className="tabular block truncate text-[14px] leading-tight text-muted-foreground">
-              {formatCOP(seg.valor)}
-            </span>
-          </button>
-        );
-      })}
     </div>
   );
 }

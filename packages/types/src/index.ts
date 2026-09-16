@@ -346,6 +346,11 @@ export interface Dashboard {
   by_category: SpendingByCategory[];
   /** Qué nivel está desglosando `by_category`. */
   breakdown_level: NivelDeCategoria;
+  /**
+   * De quién son las filas del desglose. `null` en el nivel más alto, donde
+   * las filas son los centros de costos y no cuelgan de nadie.
+   */
+  breakdown_parent: { id: Id; name: string } | null;
   trend: TrendPoint[];
 }
 

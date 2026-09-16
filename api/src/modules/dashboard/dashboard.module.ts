@@ -98,6 +98,15 @@ export interface DashboardPayload {
    */
   by_category: GastoPorCategoriaPayload[];
   breakdown_level: 'centro de costos' | 'grupo' | 'concepto';
+  /**
+   * De quién son las filas del desglose.
+   *
+   * `null` en el nivel más alto, donde las filas son los centros de costos y
+   * no cuelgan de nadie. En cuanto se baja —porque se filtró por algo, o
+   * porque arriba había una sola fila— es la categoría a la que pertenecen
+   * todas, y es lo único que explica por qué se está viendo ese nivel.
+   */
+  breakdown_parent: { id: bigint; name: string } | null;
   trend: PuntoDeTendencia[];
 }
 
@@ -223,28 +232,65 @@ export class DashboardService {
     const flujo = calcularFlujo(agregables);
 
     // ── Desglose, subiendo cada movimiento al nivel que toca ──────────────────
-    const acumulado = new Map<string, { id: bigint | null; total: typeof CERO; count: number }>();
+    const agrupar = (
+      nivel: number,
+    ): Map<string, { id: bigint | null; total: typeof CERO; count: number }> => {
+      const acumulado = new Map<string, { id: bigint | null; total: typeof CERO; count: number }>();
 
-    for (const m of movimientos) {
-      if (m.type !== 'expense') continue;
+      for (const m of movimientos) {
+        if (m.type !== 'expense') continue;
 
-      // Con splits, cada parte puede ir a una categoría distinta.
-      const partes =
-        m.splits.length > 0
-          ? m.splits.map((s) => ({ categoryId: s.categoryId, amount: toMoney(s.amount) }))
-          : [{ categoryId: m.categoryId, amount: toMoney(m.amount) }];
+        // Con splits, cada parte puede ir a una categoría distinta.
+        const partes =
+          m.splits.length > 0
+            ? m.splits.map((s) => ({ categoryId: s.categoryId, amount: toMoney(s.amount) }))
+            : [{ categoryId: m.categoryId, amount: toMoney(m.amount) }];
 
-      for (const parte of partes) {
-        const destino = ancestroEnNivel(porId, parte.categoryId, nivelDesglose);
-        const clave = destino?.toString() ?? 'sin';
-        const actual = acumulado.get(clave) ?? { id: destino, total: CERO, count: 0 };
-        acumulado.set(clave, {
-          id: destino,
-          total: actual.total.plus(parte.amount),
-          count: actual.count + 1,
-        });
+        for (const parte of partes) {
+          const destino = ancestroEnNivel(porId, parte.categoryId, nivel);
+          const clave = destino?.toString() ?? 'sin';
+          const actual = acumulado.get(clave) ?? { id: destino, total: CERO, count: 0 };
+          acumulado.set(clave, {
+            id: destino,
+            total: actual.total.plus(parte.amount),
+            count: actual.count + 1,
+          });
+        }
       }
+
+      return acumulado;
+    };
+
+    /*
+      ── Si en este nivel solo hay UNA fila, se baja al siguiente ─────────────
+
+      Un desglose de una sola fila no desglosa nada: dice "el 100 % de tu plata
+      está en el único sitio donde puede estar". Pasa todo el tiempo al empezar,
+      cuando existe un solo centro de costos, y también al filtrar por uno.
+
+      Se sigue bajando mientras la respuesta siga siendo una sola fila, hasta
+      llegar a los conceptos, que es donde ya no hay más abajo.
+    */
+    let nivelMostrado = nivelDesglose;
+    let acumulado = agrupar(nivelMostrado);
+    // De quién son las filas que se acaban mostrando. Con un filtro puesto ya
+    // se sabe; si no, lo dirá la fila única por la que se vaya bajando.
+    let padre: bigint | null = pedidas.length === 1 ? pedidas[0] : null;
+
+    while (
+      nivelMostrado < 3 &&
+      acumulado.size === 1 &&
+      [...acumulado.values()][0].id !== null
+    ) {
+      const masAbajo = agrupar(nivelMostrado + 1);
+      // Si abajo no hay más detalle del que ya hay, no se gana nada bajando.
+      if (masAbajo.size <= acumulado.size) break;
+      padre = [...acumulado.values()][0].id;
+      nivelMostrado += 1;
+      acumulado = masAbajo;
     }
+
+    const datosDelPadre = padre === null ? undefined : datosDe.get(padre.toString());
 
     const porCategoria: GastoPorCategoriaPayload[] = [...acumulado.values()]
       .map((fila) => {
@@ -334,7 +380,9 @@ export class DashboardService {
         count: movimientos.length,
       },
       by_category: porCategoria,
-      breakdown_level: (['centro de costos', 'grupo', 'concepto'] as const)[nivelDesglose - 1],
+      breakdown_level: (['centro de costos', 'grupo', 'concepto'] as const)[nivelMostrado - 1],
+      breakdown_parent:
+        padre !== null && datosDelPadre ? { id: padre, name: datosDelPadre.name } : null,
       trend: tendencia,
     };
   }
