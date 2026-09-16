@@ -1253,14 +1253,19 @@ function PreviaDeArchivo({ archivo, onQuitar }: { archivo: File; onQuitar: () =>
           />
         )}
 
+        {/* Una papelera, no una equis.
+            Una equis en la esquina de algo significa "cerrar esto" en toda la
+            aplicación —la tiene la ficha, la tiene el pase de soportes—, así
+            que aquí prometía cerrar la previsualización y lo que hacía era
+            descartar el archivo. La papelera dice lo que hace. */}
         <button
           type="button"
           onClick={onQuitar}
           aria-label={`Quitar ${archivo.name}`}
-          title="Quitar"
-          className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-tinta-950/70 text-tinta-50 transition-colors hover:bg-destructive"
+          title="Quitar este soporte"
+          className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-tinta-950/70 text-tinta-50 transition-colors hover:bg-destructive"
         >
-          <X className="size-4" aria-hidden="true" />
+          <Trash2 className="size-4" aria-hidden="true" />
         </button>
       </div>
 
