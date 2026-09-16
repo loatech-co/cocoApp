@@ -1,6 +1,5 @@
 import {
   ArrowUpRight,
-  Camera,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -11,9 +10,8 @@ import {
   TrendingDown,
   TrendingUp,
   TriangleAlert,
-  Upload,
 } from 'lucide-react';
-import { useEffect, useState, type ComponentType, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 
 import {
   BotonOscuro,
@@ -27,7 +25,7 @@ import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
 import { Etiqueta } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { CHIPS, ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
+import { ChipIcono } from '@/components/ui/chip-icono';
 import { BLOQUE, Bloque } from '@/components/ui/bloque';
 import { Campo } from '@/components/ui/campo';
 import { Combo } from '@/components/ui/combo';
@@ -1165,8 +1163,6 @@ function ComoEmpezar({
           llegar. Quitarla haría creer que la aplicación no sabe leer una foto
           —y sabe: es el mismo motor que lee un archivo subido—. */}
       <Via
-        Icono={Camera}
-        color="gasto"
         titulo="Tomar una foto"
         ayuda="Se leen el valor, la fecha y el concepto."
         nota="Pronto"
@@ -1174,17 +1170,9 @@ function ComoEmpezar({
         onClick={onCamara}
       />
 
-      <Via
-        Icono={Upload}
-        color="gasto"
-        titulo="Subir un archivo"
-        ayuda="Un PDF o una imagen del soporte."
-        onClick={onSubir}
-      />
+      <Via titulo="Subir un archivo" ayuda="Un PDF o una imagen del soporte." onClick={onSubir} />
 
       <Via
-        Icono={Pencil}
-        color="presupuesto"
         titulo="Registrar manualmente"
         ayuda="Sin soporte, o cuando ya sabes cómo clasificarlo."
         onClick={onAMano}
@@ -1227,20 +1215,12 @@ function ComoEmpezar({
  * donde va el glifo.
  */
 function Via({
-  Icono,
-  color,
   titulo,
   ayuda,
   nota,
   deshabilitada = false,
   onClick,
 }: {
-  Icono: ComponentType<{
-    className?: string;
-    'aria-hidden'?: boolean;
-    strokeWidth?: number;
-  }>;
-  color: ColorDeChip;
   titulo: string;
   ayuda: string;
   /** Dos palabras en una etiqueta: por qué no se puede todavía. */
@@ -1273,32 +1253,13 @@ function Via({
           altura, en una línea, y lo que las distingue —la forma y el color—
           queda arriba, donde no compite con ellos.
         */
-        'flex h-full w-full flex-col justify-between p-4 text-left',
+        'flex h-full w-full flex-col justify-end p-4 text-left',
         'transition-colors',
         // Apagada no responde: ni tiñe el borde ni se realza, o prometería
         // que al pulsarla pasa algo.
         deshabilitada ? 'cursor-not-allowed opacity-50' : cn('hover:border-ring/40', REALCE),
       )}
     >
-      {/*
-        El icono, arriba y a la izquierda.
-
-        Lo sostiene `justify-between` en la columna de la tarjeta: el icono es
-        el primer hijo y el texto el último, así que uno se va al techo y el
-        otro al suelo sin que haga falta colocar nada en absoluto ni reservar
-        el hueco entre los dos.
-
-        A plena tinta, que es lo que cambia respecto a cuando había manchas de
-        color detrás: entonces era una marca de agua sobre ellas y tenía que
-        bajar para no competir con el título. Ahora es lo único dibujado en la
-        tarjeta, y al 40 % se leería como un icono a medio cargar.
-
-        Va `aria-hidden`: lo que esta tarjeta anuncia lo dice su texto.
-      */}
-      <span aria-hidden style={{ color: CHIPS[color].tinta }}>
-        <Icono className="size-10 sm:size-12" strokeWidth={1.9} aria-hidden />
-      </span>
-
       <span className="min-w-0">
         <span className="flex items-center gap-2">
           <span className="min-w-0 truncate text-sm font-semibold">{titulo}</span>
