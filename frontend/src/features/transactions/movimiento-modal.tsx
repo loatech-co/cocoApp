@@ -1212,6 +1212,22 @@ function ComoEmpezar({
  * un tercio del ancho del modal, el texto se queda con setenta píxeles y el
  * título se parte.
  */
+/**
+ * Las dos manchas de color de un cartel: mismo tamaño, esquinas opuestas.
+ *
+ * La medida va aquí y no en cada una porque lo que las hace funcionar es que
+ * sean IGUALES —dos discos de tamaños parecidos pero distintos se leen como un
+ * descuido, no como una composición— y escrita dos veces es cuestión de tiempo
+ * que alguien cambie una y se olvide de la otra. Lo único que cambia entre las
+ * dos es de qué esquina entran.
+ *
+ * Y se hunden MÁS en el teléfono que en pantalla grande —80px contra 64—
+ * aunque ahí el disco sea más pequeño. Apilada, la tarjeta mide un tercio de
+ * la ficha: un disco de 208 hundido solo 64 se le comería el centro, que es
+ * donde va el glifo.
+ */
+const DISCO_DEL_CARTEL = 'pointer-events-none absolute size-52 rounded-full sm:size-64';
+
 function Via({
   Icono,
   color,
@@ -1285,31 +1301,23 @@ function Via({
       */}
       <span
         aria-hidden
-        className={cn(
-          'pointer-events-none absolute rounded-full',
-          // Se hunde MÁS en el teléfono que en pantalla grande —80px contra
-          // 64— aunque el disco sea más pequeño. Apilada, la tarjeta mide un
-          // tercio de la ficha: un disco de 208 hundido solo 64 se le comería
-          // el centro, que es donde va el glifo.
-          '-left-20 -top-20 size-52 sm:-left-16 sm:-top-16 sm:size-64',
-        )}
+        className={cn(DISCO_DEL_CARTEL, '-left-20 -top-20 sm:-left-16 sm:-top-16')}
         style={{ backgroundColor: CHIPS[color].fondo }}
       />
 
       {/*
-        El segundo disco, en la esquina de enfrente y a la mitad.
+        El segundo disco, en la esquina de enfrente y exactamente igual.
 
-        Dos manchas del mismo color en esquinas opuestas arman una diagonal, y
-        esa diagonal es lo que hace que el glifo del centro se lea como el
-        centro de algo en vez de como una figura suelta en un rectángulo. A la
-        Más pequeño que el de arriba porque no compite: la esquina que manda es
-        la de arriba, que es por donde empieza a recorrerse la tarjeta. Y se
-        hunde proporcionalmente más que él, para que lo que asoma guarde la
-        misma relación que su tamaño.
+        Dos manchas del mismo color y del mismo tamaño en esquinas opuestas
+        arman una diagonal, y esa diagonal es lo que hace que el glifo del
+        centro se lea como el centro de algo en vez de como una figura suelta
+        en un rectángulo. Del mismo tamaño y no menor: desiguales, la de
+        arriba se lee como la principal y la de abajo como un eco suyo, y
+        entonces ya no hay diagonal sino una figura con una sombra.
       */}
       <span
         aria-hidden
-        className="pointer-events-none absolute -bottom-14 -right-14 size-36 rounded-full sm:-bottom-11 sm:-right-11 sm:size-44"
+        className={cn(DISCO_DEL_CARTEL, '-bottom-20 -right-20 sm:-bottom-16 sm:-right-16')}
         style={{ backgroundColor: CHIPS[color].fondo }}
       />
 
