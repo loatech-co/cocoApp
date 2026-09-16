@@ -60,21 +60,25 @@ export const REALCE = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
  * El realce de una superficie GRANDE que responde al cursor: el hueco del
  * próximo grupo, la zona donde se sueltan los soportes, la de la importación.
  *
- * ── Un quinto de lo que usa una opción, y del mismo color ───────────────────
- * Lo que responde se tiñe con `--acento-tinta` —eso no cambia, es lo que hace
- * que toda la app conteste con el mismo color—. Lo que cambia es CUÁNTO, y va
- * al revés del tamaño: una opción de menú mide 200 por 32 y lleva un 10 %;
- * esto mide mil por doscientos cincuenta y lleva un 5 %.
+ * ── Un negro al 10 %, y no el acento ────────────────────────────────────────
+ * Lo que responde se tiñe con el acento. Aquí no, y es la excepción con más
+ * historia del proyecto: se probó con `bg-accent` entero, con un tercio y con
+ * un 5 % de `--acento-tinta`, y las tres veces se veía lo mismo —un rectángulo
+ * VERDE encendiéndose y apagándose—.
  *
- * No es prudencia: en una superficie grande el ojo integra el tono sobre toda
- * el área, así que el mismo porcentaje que en una franja estrecha es un apunte,
- * aquí es un panel de otro color. Ha pasado dos veces —primero con `bg-accent`
- * entero, luego con un tercio— y las dos se veía lo mismo: un rectángulo verde
- * encendiéndose y apagándose, que se lee como que la zona cambió de estado y
- * no como que el cursor está encima.
+ * El motivo es el tamaño. Un tinte de color sobre 200 por 32 píxeles es un
+ * apunte; sobre mil por doscientos cincuenta, el ojo integra el tono sobre
+ * toda el área y lo lee como que la zona cambió de estado, no como que el
+ * cursor está encima. Bajar el porcentaje no arregla eso: el color sigue
+ * siendo un color, solo que más flojo.
  *
- * La letra sube a plena tinta al mismo tiempo. Sobre un fondo que casi no se
- * mueve, es lo que hace legible la respuesta.
+ * Un negro al 10 % no introduce ningún color: hunde un poco lo que hay debajo,
+ * que es lo que hace una superficie al ser pulsada. Funciona en los dos temas
+ * por lo mismo —oscurece el claro y oscurece el oscuro— y no compite con el
+ * verde de la app, que es de lo que aquí se trataba.
+ *
+ * La letra sube a plena tinta al mismo tiempo, y es lo que hace legible la
+ * respuesta sobre un fondo que apenas se mueve.
  *
  * ── Y no toca el trazo ──────────────────────────────────────────────────────
  * Estas superficies llevan borde punteado. Cambiarle el color redibuja el
@@ -83,4 +87,4 @@ export const REALCE = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
  * archivo encima: ahí sí hay algo que decir —«esto es lo que lo va a
  * recibir»— y el cambio de color lo dice de una vez.
  */
-export const REALCE_DE_SUPERFICIE = 'hover:bg-acento-tinta/5 hover:text-foreground';
+export const REALCE_DE_SUPERFICIE = 'hover:bg-black/10 hover:text-foreground';
