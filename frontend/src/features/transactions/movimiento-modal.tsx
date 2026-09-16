@@ -1,4 +1,13 @@
-import { ExternalLink, Loader2, Lock, Pencil, Trash2, X } from 'lucide-react';
+import {
+  ExternalLink,
+  Loader2,
+  Lock,
+  Pencil,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+  X,
+} from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -6,6 +15,7 @@ import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-re
 import { Soportes } from '@/components/soportes';
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
+import { ChipIcono, CHIPS, type ColorDeChip } from '@/components/ui/chip-icono';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
 import { Input } from '@/components/ui/input';
@@ -246,13 +256,24 @@ export function MovimientoModal({
         )}
       >
         <div className="mb-4 flex items-center justify-between gap-3">
-          {/* El tipo está en el TÍTULO, no en un par de botones dentro del
-              formulario. Lo eligió el menú de "Nuevo movimiento" antes de
-              abrir esto, así que aquí ya no es una pregunta: es de qué se
-              está hablando. */}
-          <h2 className="text-xl font-semibold">
-            {!editando ? `Nuevo ${nombreDelTipo(type)}` : editable ? `Editar ${nombreDelTipo(type)}` : mayuscula(nombreDelTipo(type))}
-          </h2>
+          {/* El tipo está en el TÍTULO y en el color, no en un par de botones
+              dentro del formulario. Lo eligió el menú de "Nuevo movimiento"
+              antes de abrir esto, así que aquí ya no es una pregunta: es de
+              qué se está hablando, y el pastel lo dice antes de leer. */}
+          <div className="flex min-w-0 items-center gap-3">
+            <ChipIcono
+              Icono={type === 'income' ? TrendingUp : TrendingDown}
+              color={type === 'income' ? 'verde' : 'violeta'}
+              tamano="sm"
+            />
+            <h2 className="truncate text-xl font-semibold">
+              {!editando
+                ? `Nuevo ${nombreDelTipo(type)}`
+                : editable
+                  ? `Editar ${nombreDelTipo(type)}`
+                  : mayuscula(nombreDelTipo(type))}
+            </h2>
+          </div>
 
           {/* Juntas y del mismo tamaño, como en la ficha de un concepto: son
               las acciones que no son "guardar". */}
@@ -386,10 +407,7 @@ export function MovimientoModal({
               </Link>
             </div>
           ) : (
-            <fieldset className="flex flex-col gap-3 rounded-2xl bg-secondary/60 p-3">
-              <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Dónde se clasifica
-              </legend>
+            <Seccion titulo="Dónde se clasifica">
 
               <Cascada
                 etiqueta="Centro de costos"
@@ -413,10 +431,10 @@ export function MovimientoModal({
                 onElegir={(id) => setCategoryId(id ?? grupo?.id)}
               />
 
-              <p className="px-1 text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Un movimiento puede quedarse sin clasificar. Se guarda igual.
               </p>
-            </fieldset>
+            </Seccion>
           )}
 
           <div className="flex flex-col gap-1.5">
@@ -471,12 +489,9 @@ export function MovimientoModal({
             la prueba se consulta, no se edita.
           */}
           {editando && movimiento && (
-            <fieldset className="flex flex-col gap-3 rounded-2xl bg-secondary/60 p-3">
-              <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Soportes
-              </legend>
+            <Seccion titulo="Soportes" caja={false}>
               <Soportes transactionId={movimiento.id} />
-            </fieldset>
+            </Seccion>
           )}
 
           {error && (
@@ -611,9 +626,13 @@ function mayuscula(texto: string): string {
  * formulario que no deja rellenarse —que se lee como una avería— cuando lo
  * que uno viene a hacer es LEER un dato: cuánto fue, cuándo, de qué.
  *
- * Así que lo mismo, dicho de otra forma. La cifra grande y arriba, porque es
- * lo que se viene a ver; el resto en una lista de pares, que es como se lee un
- * recibo. Sin un solo control a la vista: para tocar algo está el lápiz.
+ * ── De dónde sale la jerarquía ──────────────────────────────────────────────
+ * De que no todo pese igual. La cifra manda: va grande, en su color y sobre un
+ * tinte del pastel que ya marca el tipo en el resumen. Debajo, sus dos datos
+ * inseparables —de qué es y cuándo se pagó— en la misma caja, porque se leen
+ * juntos. Y después secciones con su nombre encima, cada una respondiendo una
+ * pregunta distinta. Una ficha donde todo es del mismo tamaño y del mismo gris
+ * obliga a leerla entera para encontrar lo que se venía a mirar.
  */
 function VistaDeLectura({
   tipo,
@@ -645,10 +664,17 @@ function VistaDeLectura({
   // no lo nota—.
   const mesDelPago = fecha.slice(0, 7);
   const desfasado = Boolean(periodo) && periodo!.slice(0, 7) !== mesDelPago;
+  const color: ColorDeChip = tipo === 'income' ? 'verde' : 'violeta';
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
+    <div className="flex flex-col gap-5">
+      {/* El tinte es el MISMO pastel del icono de arriba, al 18 %: a plena
+          intensidad el bloque compite con la cifra que contiene, que es
+          justamente lo que tiene que destacar. */}
+      <div
+        className="flex flex-col gap-1 rounded-2xl p-4"
+        style={{ backgroundColor: `color-mix(in srgb, ${CHIPS[color].fondo} 18%, transparent)` }}
+      >
         <p
           className={cn(
             'tabular text-3xl font-semibold leading-tight sm:text-4xl',
@@ -658,32 +684,30 @@ function VistaDeLectura({
           {tipo === 'income' ? '+' : '−'}
           {formatCOP(valor || '0')}
         </p>
-        <p className="mt-1 truncate text-base">{descripcion || 'Sin concepto'}</p>
-      </div>
-
-      <dl className="flex flex-col divide-y divide-border rounded-2xl bg-secondary/60 px-3">
-        <Dato etiqueta="Fecha de pago">{diaLargo(fecha)}</Dato>
+        <p className="truncate text-base font-medium">{descripcion || 'Sin concepto'}</p>
+        <p className="text-xs text-muted-foreground">Pagado el {diaLargo(fecha)}</p>
 
         {desfasado && (
-          <Dato etiqueta="Pertenece a" acento>
-            {mayuscula(mesLargo(periodo!.slice(0, 7)))}
-          </Dato>
+          <p className="mt-1 text-xs font-medium text-warning">
+            Pertenece a {mesLargo(periodo!.slice(0, 7))}
+          </p>
         )}
+      </div>
 
-        <Dato etiqueta="Dónde se clasifica">
-          {ruta.length > 0 ? ruta.join(' › ') : 'Sin clasificar'}
-        </Dato>
-      </dl>
+      <Seccion titulo="Dónde se clasifica" caja={false}>
+        {ruta.length > 0 ? (
+          <Ruta ruta={ruta} />
+        ) : (
+          <p className="text-sm text-muted-foreground">Sin clasificar</p>
+        )}
+      </Seccion>
 
       {notas.trim() !== '' && (
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Notas
-          </p>
+        <Seccion titulo="Notas">
           {/* `whitespace-pre-line`: las notas se escriben con saltos de línea y
               aplanarlas convierte una lista en un párrafo. */}
           <p className="whitespace-pre-line text-sm">{notas}</p>
-        </div>
+        </Seccion>
       )}
 
       {estatico && (
@@ -709,23 +733,63 @@ function VistaDeLectura({
   );
 }
 
-/** Una fila de la ficha: el nombre del dato a la izquierda y el dato a la derecha. */
-function Dato({
-  etiqueta,
-  acento = false,
+/**
+ * Una parte de la ficha, con su nombre ENCIMA y no sobre el borde.
+ *
+ * Antes eran `<fieldset>` con `<legend>`, y un `legend` lo dibuja el navegador
+ * montado sobre la línea del borde: el texto partía la caja por arriba y se
+ * comía un trozo de lo primero que hubiera dentro. El nombre va fuera, que
+ * además es lo que crea la jerarquía —etiqueta pequeña, contenido debajo—.
+ */
+function Seccion({
+  titulo,
+  caja = true,
   children,
 }: {
-  etiqueta: string;
-  /** Ámbar. Para lo que hay que notar, como un mes que no es el del pago. */
-  acento?: boolean;
+  titulo: string;
+  /** Con `false`, el contenido va suelto: lo que ya son tarjetas no necesita otra. */
+  caja?: boolean;
   children: ReactNode;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2.5">
-      <dt className="shrink-0 text-xs text-muted-foreground">{etiqueta}</dt>
-      <dd className={cn('min-w-0 truncate text-right text-sm', acento && 'font-medium text-warning')}>
-        {children}
-      </dd>
-    </div>
+    <section className="flex flex-col gap-2">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {titulo}
+      </h3>
+      {caja ? (
+        <div className="flex flex-col gap-3 rounded-2xl bg-secondary/60 p-3">{children}</div>
+      ) : (
+        children
+      )}
+    </section>
+  );
+}
+
+/** Centro › grupo › concepto, cada uno en su ficha. */
+function Ruta({ ruta }: { ruta: string[] }) {
+  return (
+    <ol className="flex flex-wrap items-center gap-1.5">
+      {ruta.map((nombre, i) => (
+        <li key={nombre} className="flex items-center gap-1.5">
+          {i > 0 && (
+            <span aria-hidden="true" className="text-muted-foreground">
+              ›
+            </span>
+          )}
+          {/* El último es el CONCEPTO, que es donde cuelga la plata: va con
+              más peso. Los de arriba existen para sumar. */}
+          <span
+            className={cn(
+              'rounded-full px-2.5 py-1 text-xs',
+              i === ruta.length - 1
+                ? 'bg-accent font-semibold text-accent-foreground'
+                : 'bg-secondary text-secondary-foreground',
+            )}
+          >
+            {nombre}
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
