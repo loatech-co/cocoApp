@@ -329,9 +329,9 @@ export function MovimientoModal({
 
   return (
     <div
-      // `bg-carbon-950/50` no pintaba nada: `carbon` no existe en esta paleta,
-      // así que la clase no generaba ningún color y el modal flotaba sobre la
-      // página sin velo detrás.
+      // El velo compartido, `--velo`. Aquí hubo un `bg-carbon-950/50` que no
+      // pintaba nada —`carbon` no era un color de ninguna paleta de este
+      // proyecto—, así que el modal flotaba sobre la página sin velo detrás.
       className={cn(
         'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm',
         'se-revela sm:items-center sm:p-4',
@@ -1014,10 +1014,15 @@ function Via({
     <button
       type="button"
       onClick={onClick}
-      // Al pasar por encima se marca el BORDE y se llena un poco más. Solo con
-      // relleno no se notaría: dentro de un modal, `muted` y `popover` se
-      // llevan un escalón de nada en oscuro.
-      className={cn(forma, 'transition-colors hover:border-primary hover:bg-muted')}
+      // Al pasar por encima se tiñe el borde y se llena con `accent`, que es
+      // la superficie de lo que responde en toda la app. Antes era `muted`, y
+      // dentro de un modal `muted` y `popover` se llevan un escalón de nada en
+      // oscuro: había que marcar además el borde en `primary` —a plena tinta,
+      // más fuerte que la fila entera— para que se notara algo.
+      className={cn(
+        forma,
+        'transition-colors hover:border-ring/40 hover:bg-accent hover:text-accent-foreground',
+      )}
     >
       {dentro}
     </button>
@@ -1039,7 +1044,8 @@ function BotonDeVia({
       onClick={onClick}
       className={cn(
         'flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5',
-        'text-xs font-medium transition-colors hover:border-primary hover:bg-muted',
+        'text-xs font-medium transition-colors',
+        'hover:border-ring/40 hover:bg-accent hover:text-accent-foreground',
       )}
     >
       <Icono className="size-3.5 shrink-0" aria-hidden={true} />
@@ -1051,22 +1057,23 @@ function BotonDeVia({
 /**
  * El aviso de que hay datos leídos por la máquina.
  *
- * ── Por qué lima y no ámbar ─────────────────────────────────────────────────
+ * ── Por qué el acento y no el ámbar ─────────────────────────────────────────
  * Porque no ha pasado nada malo. El ámbar de esta app está para lo que está
  * PENDIENTE —un pago que vence, un movimiento sin clasificar— y un naranja
  * intenso encima de un formulario que acaba de rellenarse solo se lee como un
- * error, cuando lo que hubo fue un acierto. El lima es el acento de la casa:
- * llama sin alarmar.
+ * error, cuando lo que hubo fue un acierto. El acento llama sin alarmar.
  *
- * ── Por qué `accent` y no un color escrito a mano ───────────────────────────
- * Porque en este tema el acento YA es lo que hace falta: una superficie tenue
- * con su propia tinta, resuelta para los dos modos —verde muy claro sobre
- * casi blanco, verde muy oscuro con letra menta sobre casi negro—. Antes hubo
- * que escribir el color a mano porque el acento de entonces se invertía entre
- * temas y el aviso salía verde sobre verde.
+ * ── La única cosa quieta que usa `accent` ───────────────────────────────────
+ * En el resto de la app `accent` es la superficie de lo que RESPONDE: la
+ * opción bajo el cursor, la fila señalada, el botón encendido. Este aviso no
+ * responde a nada y aun así lo usa, a propósito: es lo más parecido que tiene
+ * este tema a un realce que llame sin alarmar, y ponerlo en `info` —que es lo
+ * que le tocaría por tono— lo dejaría igual que cualquier otra nota, cuando
+ * este es el único sitio donde la aplicación pide que se revise lo que ella
+ * misma acaba de escribir.
  *
- * Con el token, el contraste lo garantiza el tema y este aviso cambia solo el
- * día que se cambie de tema.
+ * Con el token, el contraste lo garantiza el tema: verde muy claro sobre casi
+ * blanco, verde muy oscuro con letra menta sobre casi negro.
  *
  * ── Por qué una sola frase ──────────────────────────────────────────────────
  * Porque el detalle de por qué se clasificó así no cambia lo que hay que
@@ -1198,7 +1205,7 @@ function Tile({
       className={cn(
         /*
           La MISMA caja que el cuadro de añadir, que es su vecino en la fila:
-          104px y 16px de radio.
+          104px y el radio estándar.
 
           Y con BORDE de 2px, no con anillo. Los dos tenían el mismo radio
           nominal, pero un anillo se dibuja por FUERA del borde de la caja: la
