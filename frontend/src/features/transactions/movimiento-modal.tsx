@@ -15,6 +15,7 @@ import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-re
 import { Soportes } from '@/components/soportes';
 import { rutaSeleccionada } from '@/components/toolbar-filtros';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { ChipIcono } from '@/components/ui/chip-icono';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeDia } from '@/components/selector-de-dia';
@@ -669,10 +670,15 @@ function VistaDeLectura({
         contexto que lo explica. Y deja a la cifra sola en su mitad, que es lo
         que la hace mandar sin tener que agrandarla más.
 
-        Negro al 5 %: un velo, no una superficie. Cualquier color con cuerpo
-        compite con la cifra que contiene.
+        Y es una TARJETA de verdad, no un velo negro al 5 %.
+
+        Desde que el modal es del color del fondo, un tinte sobre él no se
+        levanta de nada: quedaba una mancha apenas más oscura. `Card` es la
+        superficie que la aplicación ya usa para "esto es una cosa" —en el
+        resumen, en los centros de costos— y aquí dice lo mismo: el movimiento
+        es un objeto, y lo de abajo son sus anexos.
       */}
-      <div className="overflow-hidden rounded-2xl bg-black/5">
+      <Card className="overflow-hidden">
         <div className="px-4 py-5">
           {/*
             SIN `tabular`.
@@ -716,7 +722,7 @@ function VistaDeLectura({
             </p>
           )}
         </div>
-      </div>
+      </Card>
 
       {ruta.length === 0 && (
         <p className="text-sm text-muted-foreground">Este movimiento está sin clasificar.</p>
