@@ -458,6 +458,18 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
         >
           {(cerrar) => (
             <>
+              {/* Lo PRIMERO del menú: es lo que más se hace con un grupo.
+                  Eliminar va al final y en rojo, porque es lo que menos. */}
+              <MenuOpcion
+                Icono={Plus}
+                onClick={() => {
+                  cerrar();
+                  setCreando(true);
+                }}
+              >
+                Agregar concepto
+              </MenuOpcion>
+
               {/* Renombrar un grupo no existía por ningún camino, igual que en
                   el centro: la única salida era borrarlo con sus conceptos
                   dentro y volver a escribirlos. */}
@@ -486,12 +498,11 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
       </div>
 
       {/*
-        Siempre está, aunque no haya conceptos: es lo que empuja el botón al
-        pie de una tarjeta de alto fijo. Sin él, en un grupo vacío el botón
-        quedaba pegado al título con un palmo de nada debajo.
+        Se desplaza: con doce conceptos, la alternativa a desplazarlos es que
+        la tarjeta crezca, y la rejilla existe para que todas midan lo mismo.
 
-        Y se desplaza: con doce conceptos, la alternativa a desplazarlos es que
-        la tarjeta crezca, que es justo lo que esta medida existe para evitar.
+        Sigue estando aunque no haya ninguno —con `flex-1`— para que el alto de
+        la tarjeta no dependa de cuántos conceptos tenga dentro.
       */}
       <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
         {conceptos.length > 0 && (
@@ -527,35 +538,6 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
             ))}
           </ul>
         )}
-      </div>
-
-      <div className="mt-3 shrink-0">
-        {/*
-          A ancho completo y con fondo, no un botón fantasma encogido en la
-          esquina.
-
-          Es la única acción de la tarjeta y cierra su lectura: el nombre
-          arriba, los conceptos en medio y dónde se añade el siguiente al pie.
-          Ocupando el ancho, el blanco es toda esa línea en vez de las ciento
-          cuarenta píxeles de su texto —que en un teléfono es la diferencia
-          entre acertarle y no—.
-
-          El fondo va translúcido a propósito. Opaco competiría con los chips,
-          que son lo que se viene a leer; al 40 % del acento se ve que hay algo
-          pulsable sin que la tarjeta pase a tener dos cosas gritando. Y al
-          pasar por encima sube al 70: responde, sin llegar a encenderse del
-          todo.
-        */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setCreando(true)}
-          className="w-full bg-accent/40 hover:bg-accent/70"
-        >
-          <Plus className="size-4" aria-hidden="true" />
-          Agregar concepto
-        </Button>
       </div>
 
       <ConfirmarBorrado
