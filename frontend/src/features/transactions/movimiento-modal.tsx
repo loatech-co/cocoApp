@@ -507,7 +507,6 @@ export function MovimientoModal({
 
           {paso === 'formulario' && (
             <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
-              {lectura && <LoQueLei />}
               {editandoCampos ? (
                 <>
                   {/*
@@ -581,6 +580,19 @@ export function MovimientoModal({
                   necesitan que alguien anuncie que son tres campos.
                 */}
                     <div className="flex flex-col gap-3">
+                      {/*
+                        El aviso de lo que se leyó, DENTRO de la columna de
+                        campos.
+
+                        Estaba encima de la rejilla, a todo el ancho, y lo que
+                        dice —«verifica esto antes de guardar»— no tiene nada
+                        que ver con el recibo de la izquierda: habla de los
+                        campos de la derecha, que son los que se rellenaron
+                        solos. Encabezando su columna, es el rótulo de lo que
+                        hay debajo; cruzando la ficha entera, era un cartel.
+                      */}
+                      {lectura && <LoQueLei />}
+
                       {/*
                     Los tres se bloquean si el centro GUARDADO es estático.
 
@@ -1295,7 +1307,19 @@ function Escaneando({
 
 function LoQueLei() {
   return (
-    <p className="flex items-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-medium text-accent-foreground">
+    /*
+      ── `min-h-16`: la mitad más alto ─────────────────────────────────────────
+      Medía lo que su renglón y su relleno, 44px, y con eso era una tira que la
+      vista se salta para ir a los campos. Es lo primero que hay que leer de
+      esta columna —dice que lo de abajo lo escribió una máquina y hay que
+      comprobarlo—, así que tiene que pesar como algo y no como un borde.
+
+      Y es un MÍNIMO y no un relleno mayor porque en una columna de la mitad de
+      ancho la frase cae en dos renglones, y dos renglones con el relleno de
+      arriba y abajo miden exactamente estos 64: el aviso se ve igual quepa la
+      frase de una o de dos, en vez de dar un salto al cambiar el ancho.
+    */
+    <p className="flex min-h-16 items-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-medium text-accent-foreground">
       <Sparkles className="size-4 shrink-0" aria-hidden="true" />
       Los datos se extrajeron del soporte. Conviene verificarlos antes de guardar.
     </p>
