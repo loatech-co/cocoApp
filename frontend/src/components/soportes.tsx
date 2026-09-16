@@ -256,7 +256,7 @@ function Soltar({
           <>
             <Upload className="size-6" aria-hidden="true" />
             <span className="text-center text-sm font-medium">
-              Arrastra el archivo o haz clic para elegirlo
+              Arrastrar un archivo aquí, o seleccionarlo del equipo
             </span>
             <span className="flex items-center gap-1.5 text-center text-xs text-muted-foreground">
               <FileText className="size-3.5 shrink-0" aria-hidden="true" />

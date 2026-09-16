@@ -48,6 +48,7 @@ import {
   useEliminarMovimiento,
 } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
+import { Camara } from './camara';
 import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
 import { normalizar, UMBRAL_DE_REVISION, type Lectura } from '@coco/lectura';
 import type { Category, Transaction, TransactionType } from '@coco/types';
@@ -127,7 +128,7 @@ export function MovimientoModal({
     por los datos— y preguntarlo de entrada cuesta un clic y ahorra el
     formulario entero en el caso más común.
   */
-  const [paso, setPaso] = useState<'elegir' | 'leyendo' | 'formulario'>('formulario');
+  const [paso, setPaso] = useState<'elegir' | 'camara' | 'leyendo' | 'formulario'>('formulario');
   const [progresoDeLectura, setProgresoDeLectura] = useState<ProgresoDeLectura | null>(null);
   const [lectura, setLectura] = useState<Lectura | null>(null);
   /*
@@ -263,7 +264,7 @@ export function MovimientoModal({
         if (suyo) setCategoryId(suyo.id);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No pude leer ese archivo.');
+      setError(e instanceof Error ? e.message : 'No se pudo leer ese archivo.');
     } finally {
       setProgresoDeLectura(null);
       setPaso('formulario');
@@ -462,13 +463,23 @@ export function MovimientoModal({
           </div>
         </div>
 
-        {paso === 'elegir' && <ComoEmpezar onEscanear={(a) => void escanear(a)} onAMano={() => setPaso('formulario')} />}
+        {paso === 'elegir' && (
+          <ComoEmpezar
+            onArchivo={(a) => void escanear(a)}
+            onCamara={() => setPaso('camara')}
+            onAMano={() => setPaso('formulario')}
+          />
+        )}
+
+        {paso === 'camara' && (
+          <Camara onTomar={(a) => void escanear(a)} onCerrar={() => setPaso('elegir')} />
+        )}
 
         {paso === 'leyendo' && (
           <div className="flex flex-col items-center gap-3 py-10">
             <Loader2 className="size-7 animate-spin text-muted-foreground" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">
-              {progresoDeLectura?.etapa ?? 'Leyendo el recibo…'}
+              {progresoDeLectura?.etapa ?? 'Leyendo el soporte…'}
             </p>
             {/* El OCR de un escaneo tarda segundos y sin barra parece colgado. */}
             <div className="h-1 w-48 overflow-hidden rounded-full bg-secondary">
@@ -1006,135 +1017,141 @@ function conceptoLlamado(arbol: Category[], nombre: string): Category | undefine
  * Las dos formas de empezar un movimiento.
  *
  * ── Por qué se pregunta en vez de deducirlo ─────────────────────────────────
- * Porque son dos actos distintos, no dos caminos al mismo sitio. Con el recibo
- * en la mano, teclear el valor y la fecha es copiar a mano lo que ya está
- * escrito en el papel —y equivocarse en un dígito—. Sin recibo, esperar a
- * tener uno para registrar el gasto es perder el gasto.
+ * Porque son dos actos distintos, no dos caminos al mismo sitio. Con el
+ * soporte a mano, teclear el valor y la fecha es copiar lo que ya está escrito
+ * en el papel —y equivocarse en un dígito—. Sin soporte, esperar a tener uno
+ * para registrar el gasto es perder el gasto.
  *
- * ── Por qué la cámara va aparte del archivo ─────────────────────────────────
- * Porque en un teléfono son gestos distintos: `capture` abre la cámara
- * directamente, sin pasar por el carrete. Un solo botón obligaría a elegir
- * "Cámara" en un menú del sistema cada vez, que es justo el paso que hace que
- * la gente deje de registrar gastos.
+ * ── Por qué la fila entera es el disparador ─────────────────────────────────
+ * Porque la fila ES la opción. Con el clic solo en un botón pequeño al final,
+ * el resto —el icono, el título, la explicación— se ve pulsable y no lo es, y
+ * cada intento fallido enseña a desconfiar del resto de la pantalla.
+ *
+ * La vía de escanear es la excepción: lleva dos acciones distintas dentro, y
+ * una fila no puede hacer dos cosas.
  */
 function ComoEmpezar({
-  onEscanear,
+  onArchivo,
+  onCamara,
   onAMano,
 }: {
-  onEscanear: (archivo: File) => void;
+  onArchivo: (archivo: File) => void;
+  onCamara: () => void;
   onAMano: () => void;
 }) {
-  const camara = useRef<HTMLInputElement>(null);
-  const archivo = useRef<HTMLInputElement>(null);
-
-  const TIPOS = 'application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp';
+  const campo = useRef<HTMLInputElement>(null);
 
   return (
     <div className="flex flex-col gap-3">
       <Via
         Icono={ScanLine}
         color="violeta"
-        titulo="Escanear el documento"
-        ayuda="Leo el valor, la fecha y de qué es. Vos confirmás."
-        acciones={
-          <>
-            {/* En escritorio `capture` se ignora y abre el explorador, así que
-                el botón sigue sirviendo: no hay que esconderlo por plataforma. */}
-            <button
-              type="button"
-              onClick={() => camara.current?.click()}
-              className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
-            >
-              <Camera className="size-3.5 shrink-0" aria-hidden="true" />
-              Tomar una foto
-            </button>
-            <button
-              type="button"
-              onClick={() => archivo.current?.click()}
-              className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
-            >
-              <Upload className="size-3.5 shrink-0" aria-hidden="true" />
-              Elegir un archivo
-            </button>
-          </>
-        }
-      />
+        titulo="Escanear un soporte"
+        ayuda="Se extraen el valor, la fecha y el concepto. Requieren confirmación antes de guardar."
+      >
+        <BotonDeVia Icono={Camera} onClick={onCamara}>
+          Usar la cámara
+        </BotonDeVia>
+        <BotonDeVia Icono={Upload} onClick={() => campo.current?.click()}>
+          Seleccionar un archivo
+        </BotonDeVia>
+      </Via>
 
       <Via
         Icono={Pencil}
         color="turquesa"
-        titulo="Escribirlo a mano"
-        ayuda="Sin recibo, o con uno que ya sabés dónde va."
-        acciones={
-          <button
-            type="button"
-            onClick={onAMano}
-            className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
-          >
-            Empezar
-          </button>
-        }
+        titulo="Registro manual"
+        ayuda="Para un movimiento sin soporte, o cuando su clasificación ya se conoce."
+        onClick={onAMano}
       />
 
       <input
-        ref={camara}
+        ref={campo}
         type="file"
-        accept="image/*"
-        capture="environment"
+        accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
         className="hidden"
         onChange={(e) => {
           const a = e.target.files?.[0];
           e.target.value = '';
-          if (a) onEscanear(a);
+          if (a) onArchivo(a);
         }}
       />
-      <input
-        ref={archivo}
-        type="file"
-        accept={TIPOS}
-        className="hidden"
-        onChange={(e) => {
-          const a = e.target.files?.[0];
-          e.target.value = '';
-          if (a) onEscanear(a);
-        }}
-      />
-    </div>
-  );
-}
-
-function Via({
-  Icono,
-  color,
-  titulo,
-  ayuda,
-  acciones,
-}: {
-  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  color: 'violeta' | 'turquesa';
-  titulo: string;
-  ayuda: string;
-  acciones: ReactNode;
-}) {
-  return (
-    <div className="flex items-start gap-3 rounded-2xl bg-secondary/60 p-4">
-      <ChipIcono Icono={Icono} color={color} tamano="sm" />
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <div>
-          <p className="text-sm font-semibold">{titulo}</p>
-          <p className="text-xs text-muted-foreground">{ayuda}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">{acciones}</div>
-      </div>
     </div>
   );
 }
 
 /**
- * Lo que la máquina leyó, dicho antes de que se guarde.
+ * Una de las dos vías.
+ *
+ * Con `onClick` la fila entera es un botón; sin él, es una caja que contiene
+ * los suyos. Las dos formas existen porque una fila no puede hacer dos cosas
+ * a la vez, y escanear son dos.
+ */
+function Via({
+  Icono,
+  color,
+  titulo,
+  ayuda,
+  onClick,
+  children,
+}: {
+  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  color: 'violeta' | 'turquesa';
+  titulo: string;
+  ayuda: string;
+  onClick?: () => void;
+  children?: ReactNode;
+}) {
+  const dentro = (
+    <>
+      <ChipIcono Icono={Icono} color={color} tamano="sm" />
+      <span className="flex min-w-0 flex-1 flex-col gap-2">
+        <span className="block">
+          <span className="block text-sm font-semibold">{titulo}</span>
+          <span className="block text-xs text-muted-foreground">{ayuda}</span>
+        </span>
+        {children && <span className="flex flex-wrap gap-2">{children}</span>}
+      </span>
+    </>
+  );
+
+  const forma = 'flex w-full items-start gap-3 rounded-2xl bg-secondary/60 p-4 text-left';
+
+  if (!onClick) return <div className={forma}>{dentro}</div>;
+
+  return (
+    <button type="button" onClick={onClick} className={cn(forma, 'transition-colors hover:bg-black/10')}>
+      {dentro}
+    </button>
+  );
+}
+
+function BotonDeVia({
+  Icono,
+  onClick,
+  children,
+}: {
+  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
+    >
+      <Icono className="size-3.5 shrink-0" aria-hidden={true} />
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Lo que se leyó del soporte, dicho antes de que se guarde.
  *
  * ── Por qué se enseña y no se aplica en silencio ────────────────────────────
- * Porque un recibo mal leído que se guarda solo es peor que no leerlo: nadie
+ * Porque un soporte mal leído que se guarda solo es peor que no leerlo: nadie
  * vuelve a mirar lo que ya quedó registrado, y el error se descubre meses
  * después cuando un total no cuadra. Dicho aquí, corregirlo cuesta un clic en
  * el campo de al lado.
@@ -1162,9 +1179,9 @@ function LoQueLei({ lectura }: { lectura: Lectura }) {
         <TriangleAlert className="mt-px size-4 shrink-0" aria-hidden="true" />
       )}
       <span className="min-w-0">
-        {seguro ? 'Leí el recibo. ' : 'Leí el recibo, pero con dudas. '}
+        {seguro ? 'Lectura del soporte. ' : 'Lectura con baja confianza. '}
         {lectura.motivo}
-        {!seguro && ' Revisá los campos antes de guardar.'}
+        {!seguro && ' Conviene revisar los campos antes de guardar.'}
       </span>
     </div>
   );
@@ -1221,7 +1238,7 @@ function SoportesPendientes({
         className="flex w-fit items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-background"
       >
         <Paperclip className="size-3.5 shrink-0" aria-hidden="true" />
-        {archivos.length === 0 ? 'Adjuntar el recibo' : 'Adjuntar otro'}
+        {archivos.length === 0 ? 'Adjuntar un soporte' : 'Adjuntar otro'}
       </button>
 
       <input

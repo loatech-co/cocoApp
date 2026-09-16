@@ -106,12 +106,12 @@ async function ocr(
   onProgreso?: (p: ProgresoDeLectura) => void,
 ): Promise<string> {
   const { createWorker } = await import('tesseract.js');
-  onProgreso?.({ avance: 0.3, etapa: 'Preparando el lector…' });
+  onProgreso?.({ avance: 0.3, etapa: 'Preparando el reconocimiento…' });
 
   const worker = await createWorker('spa', undefined, {
     logger: (m: { status: string; progress: number }) => {
       if (m.status === 'recognizing text') {
-        onProgreso?.({ avance: 0.4 + m.progress * 0.55, etapa: 'Leyendo el recibo…' });
+        onProgreso?.({ avance: 0.4 + m.progress * 0.55, etapa: 'Reconociendo el texto…' });
       }
     },
   });
@@ -151,7 +151,7 @@ export async function leerSoporte(
 
     if (texto.replace(/\s/g, '').length < MINIMO_DE_TEXTO) {
       // Un escaneo: el PDF es una foto con forma de documento.
-      onProgreso?.({ avance: 0.2, etapa: 'Es un escaneo, hay que reconocerlo…' });
+      onProgreso?.({ avance: 0.2, etapa: 'Es un escaneo: se reconoce el texto…' });
       const imagen = await primeraPaginaComoImagen(archivo);
       if (imagen) {
         texto = await ocr(imagen, onProgreso);
