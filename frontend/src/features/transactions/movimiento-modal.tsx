@@ -1591,7 +1591,16 @@ function SoportesPendientes({
   const vacio = archivos.length === 0;
 
   return (
-    <div className={cn('flex flex-col gap-3', vacio && 'min-h-0 flex-1')}>
+    /*
+      `min-h-0 flex-1` SIEMPRE, y no solo cuando está vacía.
+
+      Lo llevaba solo en el caso vacío, que es cuando el hueco de soltar tiene
+      que llenar la columna. Pero con un documento dentro pasa lo mismo: si
+      esta caja mide lo que miden sus hijos, el previsualizador no tiene contra
+      qué crecer y se queda en su alto mínimo con el resto de la columna en
+      blanco debajo.
+    */
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       {/*
         La misma columna que la de un movimiento ya guardado: UNA
         previsualización con sus mandos encima, sin fila de miniaturas. Lo que

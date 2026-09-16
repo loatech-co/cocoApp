@@ -1,19 +1,27 @@
 import {
   ChevronLeft,
   ChevronRight,
+  ClipboardPaste,
   Download,
-  Eye,
-  FileWarning,
   FileText,
+  FileWarning,
   ImagePlus,
   Loader2,
-  Upload,
+  Maximize2,
   Minus,
   Plus,
   Trash2,
+  Upload,
   X,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Confirmacion } from '@/components/ui/confirmacion';
@@ -22,7 +30,7 @@ import { cargarPdfjs } from '@/lib/pdf';
 import { useEliminarSoporte, useSoportes, useSubirSoportes } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Soporte } from '@coco/types';
-import { REALCE_DE_SUPERFICIE } from '@/components/ui/superficie';
+import { REALCE_DE_SUPERFICIE, SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 
 /**
  * Los soportes de un movimiento: el recibo que prueba que ese pago existió.
@@ -50,14 +58,27 @@ export function Soportes({ transactionId }: { transactionId: number }) {
 
   const [progreso, setProgreso] = useState(0);
   const [errorDeSubida, setErrorDeSubida] = useState<string | null>(null);
+  /**
+   * Añadiendo: la columna enseña el cuadro grande en vez de la galería.
+   *
+   * La baldosa de 104px no da para más que un icono: ni explica qué se acepta
+   * ni tiene sitio para el botón de pegar, que es de donde salen la mitad de
+   * los soportes. Así que la baldosa lleva al cuadro grande —el mismo de una
+   * ficha sin soportes— y de ahí se vuelve.
+   */
+  const [añadiendo, setAñadiendo] = useState(false);
+  /** El soporte que se va a borrar desde la columna, a la espera del sí. */
+  const [borrando, setBorrando] = useState<Soporte | null>(null);
+  const eliminar = useEliminarSoporte(transactionId);
 
-  async function aceptar(archivos: FileList | null): Promise<void> {
-    if (!archivos || archivos.length === 0) return;
+  async function aceptar(archivos: File[]): Promise<void> {
+    if (archivos.length === 0) return;
     setErrorDeSubida(null);
     setProgreso(0);
 
     try {
-      await subir.mutateAsync({ archivos: Array.from(archivos), onProgreso: setProgreso });
+      await subir.mutateAsync({ archivos, onProgreso: setProgreso });
+      setAñadiendo(false);
     } catch (e) {
       setErrorDeSubida(
         e instanceof ApiClientError ? e.message : 'No se pudo subir. Inténtalo otra vez.',
@@ -68,6 +89,17 @@ export function Soportes({ transactionId }: { transactionId: number }) {
   /** El `blob:` de cada soporte, por id. Se descargan una vez y se comparten. */
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [enGrande, setEnGrande] = useState<number | null>(null);
+  /**
+   * Cuál se está viendo arriba.
+   *
+   * La columna de un movimiento GUARDADO enseñaba solo la fila de miniaturas,
+   * y la de uno que se está creando enseña el documento en grande con las
+   * miniaturas debajo. Era la misma columna diciendo dos cosas distintas: al
+   * crear, el recibo está para comprobar lo que se leyó; al editar,
+   * exactamente igual —se abre una ficha para mirar el papel, no para mirar
+   * ocho cuadraditos de 104px.
+   */
+  const [activo, setActivo] = useState(0);
 
   useEffect(() => {
     if (lista.length === 0) return;
@@ -111,58 +143,122 @@ export function Soportes({ transactionId }: { transactionId: number }) {
     );
   }
 
+  // El que se está viendo, recortado: borrar el último dejaba el índice
+  // apuntando a un soporte que ya no existe.
+  const i = Math.min(activo, lista.length - 1);
+  const enseñado = i >= 0 ? lista[i] : undefined;
+  const urlDelEnseñado = enseñado ? urls[String(enseñado.id)] : undefined;
+
   return (
-    <>
-      {/* Tamaño fijo y que fluyan: con `grid-cols-N` un solo soporte se
-          estiraba hasta ocupar un cuarto de la ficha y parecía otra cosa. */}
-      {/* Sin ningún soporte, la lista es solo el cuadro de soltar y le toca
-          todo el alto de su columna. Con miniaturas dentro, mide lo que mide. */}
-      <ul className={cn('flex flex-wrap gap-3', lista.length === 0 && 'min-h-0 flex-1')}>
-        {lista.map((s, i) => (
-          <li key={String(s.id)}>
-            <Miniatura
-              soporte={s}
-              url={urls[String(s.id)]}
-              numero={i + 1}
-              onAbrir={() => setEnGrande(i)}
-            />
-          </li>
-        ))}
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      {enseñado && (
+        <PreviaDeArchivo
+          // La clave es el SOPORTE y no su url: con la url, el marco se
+          // desmontaba y se volvía a montar al llegar el archivo, que es
+          // justo el parpadeo que esto viene a quitar.
+          key={String(enseñado.id)}
+          url={urlDelEnseñado}
+          esImagen={enseñado.mime_type.startsWith('image/')}
+          // Aquí SÍ hay pase a pantalla completa —el soporte ya existe en el
+          // servidor, con su descarga y su zoom—, así que la previsualización
+          // es también la puerta.
+          onAbrir={() => setEnGrande(i)}
+          acciones={
+            <>
+              {lista.length > 1 && (
+                <>
+                  <BotonOscuro
+                    etiqueta="Soporte anterior"
+                    deshabilitado={i === 0}
+                    onClick={() => setActivo(i - 1)}
+                  >
+                    <ChevronLeft className="size-4" aria-hidden="true" />
+                  </BotonOscuro>
+                  <span className="tabular px-1 text-xs font-medium text-sala-tinta">
+                    {i + 1} / {lista.length}
+                  </span>
+                  <BotonOscuro
+                    etiqueta="Soporte siguiente"
+                    deshabilitado={i === lista.length - 1}
+                    onClick={() => setActivo(i + 1)}
+                  >
+                    <ChevronRight className="size-4" aria-hidden="true" />
+                  </BotonOscuro>
+                </>
+              )}
 
-        {/* El hueco para añadir va CON las miniaturas, del mismo tamaño y en
-            la misma fila: así se ve que es otra plaza de lo mismo. Sin
-            ninguno, es lo único que hay, y un cuadro punteado y vacío se lee
-            como "aquí falta algo" mejor que cualquier frase. */}
-        {/*
-            `flex w-full self-stretch`, y no `h-full w-full`.
+              <BotonOscuro etiqueta="Agregar otro soporte" onClick={() => setAñadiendo(true)}>
+                <Plus className="size-4" aria-hidden="true" />
+              </BotonOscuro>
 
-            El alto de este cuadro venía de una cadena de porcentajes —lista,
-            plaza, hueco, botón—, y un `height: 100%` necesita que su padre
-            tenga un alto DEFINIDO. Aquí los padres son cajas flexibles cuyo
-            alto sale de repartir el que sobra, así que en el momento de
-            resolver el porcentaje no hay contra qué medir y el cuadro se
-            quedaba en el alto de su contenido: en la ficha de un movimiento
-            guardado se veía el cuadro arriba y un palmo de vacío debajo.
+              {/* Borrar pregunta antes: es lo único de esta barra que no se
+                  puede deshacer. */}
+              <BotonOscuro etiqueta="Eliminar este soporte" onClick={() => setBorrando(enseñado)}>
+                <Trash2 className="size-4" aria-hidden="true" />
+              </BotonOscuro>
+            </>
+          }
+        />
+      )}
 
-            Estirarse no mide contra nada: `self-stretch` le da a la plaza el
-            alto de su fila, y como la lista es de una sola fila, esa fila es
-            toda la lista. De ahí para abajo, cada caja es flexible y su hijo
-            se estira solo, que es lo que hace una celda por defecto.
-        */}
-        <li className={cn(lista.length === 0 && 'flex w-full self-stretch')}>
+      {/*
+        ── Sin fila de miniaturas ────────────────────────────────────────────
+        Eran ocho cuadrados de 104px debajo del papel, y con la ficha topada en
+        720 se comían un tercio de la columna para decir algo que el papel ya
+        dice: cuál se está mirando. Lo que hacían —contar, elegir, añadir,
+        quitar— cabe sobre el propio documento y ahí no gasta alto.
+
+        El contador y las flechas solo aparecen con más de uno: con un único
+        soporte, «1 de 1» y dos flechas apagadas son tres controles que no
+        hacen nada.
+      */}
+      {lista.length === 0 && (
+        <div className="flex min-h-0 flex-1">
           <Soltar
             subiendo={subir.isPending}
             progreso={progreso}
-            solo={lista.length === 0}
+            solo
             onArchivos={(a) => void aceptar(a)}
           />
-        </li>
-      </ul>
+        </div>
+      )}
 
       {errorDeSubida && (
-        <p role="alert" className="mt-2 text-xs text-destructive">
+        <p role="alert" className="text-xs text-destructive">
           {errorDeSubida}
         </p>
+      )}
+
+      {/* Borrar pregunta antes, y con las mismas palabras que el pase: es la
+          misma acción, hecha desde otro sitio. */}
+      <Confirmacion
+        abierta={borrando !== null}
+        titulo="¿Eliminar este soporte?"
+        peligrosa
+        etiquetaConfirmar="Eliminar"
+        ocupada={eliminar.isPending}
+        onCancelar={() => setBorrando(null)}
+        onConfirmar={() => {
+          if (!borrando) return;
+          eliminar.mutate(Number(borrando.id), {
+            onSuccess: () => {
+              setBorrando(null);
+              // Si se va el último de la fila, se enseña el anterior.
+              setActivo((n) => Math.max(0, Math.min(n, lista.length - 2)));
+            },
+          });
+        }}
+      >
+        Se borra y no se puede deshacer. El movimiento se queda como está.
+      </Confirmacion>
+
+      {añadiendo && (
+        <PanelDeSubida
+          subiendo={subir.isPending}
+          progreso={progreso}
+          onArchivos={(a) => void aceptar(a)}
+          onCerrar={() => setAñadiendo(false)}
+        />
       )}
 
       {enGrande !== null && (
@@ -175,7 +271,78 @@ export function Soportes({ transactionId }: { transactionId: number }) {
           onCerrar={() => setEnGrande(null)}
         />
       )}
-    </>
+    </div>
+  );
+}
+
+/**
+ * El cuadro de subir, sobre la ficha que lo pidió.
+ *
+ * ── Por qué un panel encima y no un paso dentro ─────────────────────────────
+ * Porque añadir un soporte no es una etapa del formulario: es algo que se hace
+ * EN MEDIO de otra cosa —revisando una ficha, corrigiendo una cifra— y se
+ * vuelve a lo que se estaba haciendo. Un paso obliga a salir de la ficha,
+ * cambia lo que se ve y deja la duda de si lo escrito sigue ahí; un panel
+ * encima deja la ficha a la vista, detrás.
+ *
+ * Y sirve para los dos sitios que lo abren: la vía «Subir un archivo» de un
+ * movimiento nuevo y la baldosa de la galería de uno que ya tiene soportes. Sin
+ * él eran dos pantallas distintas para el mismo gesto.
+ *
+ * ── Por qué Escape se atrapa en CAPTURA ─────────────────────────────────────
+ * La ficha del movimiento escucha Escape en el documento para cerrarse. Este
+ * panel se monta después, así que su oyente correría el segundo y la ficha se
+ * cerraría igual —con lo escrito dentro—. En captura llega primero y detiene
+ * el evento: Escape cierra el panel y nada más.
+ */
+export function PanelDeSubida({
+  subiendo,
+  progreso,
+  onArchivos,
+  onCerrar,
+}: {
+  subiendo: boolean;
+  progreso: number;
+  onArchivos: (archivos: File[]) => void;
+  onCerrar: () => void;
+}) {
+  useEffect(() => {
+    const alPulsar = (e: KeyboardEvent): void => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      e.preventDefault();
+      onCerrar();
+    };
+
+    document.addEventListener('keydown', alPulsar, true);
+    return () => document.removeEventListener('keydown', alPulsar, true);
+  }, [onCerrar]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Agregar soportes"
+      // Por encima de la ficha, que está en z-50, igual que el pase.
+      className={cn(
+        'fixed inset-0 z-[60] flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm',
+        'se-revela sm:items-center sm:p-4',
+      )}
+      // `onMouseDown` y no `onClick`: con clic, arrastrar desde dentro del
+      // panel hasta el velo —que es justo lo que se hace al soltar un
+      // archivo— lo cerraría a mitad del gesto.
+      onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
+    >
+      <div
+        className={cn(
+          'flex w-full flex-col p-4 sm:max-w-xl sm:p-5',
+          SUPERFICIE_FLOTANTE,
+          'emerge rounded-t-lg sm:rounded-lg',
+        )}
+      >
+        <Soltar subiendo={subiendo} progreso={progreso} solo onArchivos={onArchivos} />
+      </div>
+    </div>
   );
 }
 
@@ -198,22 +365,83 @@ export function Soltar({
   subiendo,
   progreso,
   solo,
+  alPulsar,
   onArchivos,
 }: {
   subiendo: boolean;
   progreso: number;
   /** Sin ningún soporte todavía: ocupa el ancho y explica. */
   solo: boolean;
-  onArchivos: (archivos: FileList | null) => void;
+  /**
+   * Qué hace la baldosa pequeña al pulsarse, si no es abrir el buscador.
+   *
+   * La galería la usa para llevar al cuadro grande en vez de al buscador del
+   * sistema: en 104px no caben ni la explicación de qué se acepta ni el botón
+   * de pegar, así que la baldosa pasó a ser una PUERTA y el cuadro grande el
+   * sitio donde de verdad se añade.
+   */
+  alPulsar?: () => void;
+  onArchivos: (archivos: File[]) => void;
 }) {
   const campo = useRef<HTMLInputElement>(null);
   const [encima, setEncima] = useState(false);
+  const [problemaAlPegar, setProblemaAlPegar] = useState<string | null>(null);
+
+  /*
+    ── Pegar una captura ───────────────────────────────────────────────────
+    Una captura de pantalla vive en el portapapeles y en ningún otro sitio:
+    para adjuntarla había que guardarla primero en el disco, buscarla y
+    arrastrarla. Tres pasos para algo que se acaba de capturar.
+
+    Es un BOTÓN y no un atajo de teclado escuchando en la ficha. Un pegado que
+    solo funciona con el cursor en el sitio correcto no se descubre y falla
+    sin decir por qué; un botón se ve, dice lo que hace y se puede pulsar con
+    el dedo en un teléfono.
+
+    El portapapeles no siempre se deja leer —Safari lo pregunta, y sin HTTPS
+    ni existe—, así que el fallo se cuenta y se ofrece la salida de siempre:
+    arrastrar o elegir del equipo.
+  */
+  async function pegar(): Promise<void> {
+    setProblemaAlPegar(null);
+
+    try {
+      const enElPortapapeles = await navigator.clipboard.read();
+      const capturas: File[] = [];
+
+      for (const elemento of enElPortapapeles) {
+        const tipo = elemento.types.find((t) => t.startsWith('image/'));
+        if (!tipo) continue;
+        capturas.push(nombrarCaptura(await elemento.getType(tipo), tipo));
+      }
+
+      if (capturas.length === 0) {
+        setProblemaAlPegar('En el portapapeles no hay ninguna imagen.');
+        return;
+      }
+
+      onArchivos(capturas);
+    } catch {
+      setProblemaAlPegar(
+        'El navegador no dejó leer el portapapeles. Arrastra la captura o elígela del equipo.',
+      );
+    }
+  }
 
   return (
-    // `h-full` y no solo `w-full`: el botón de dentro pide `size-full`, y sin
-    // alto aquí ese `h-full` se resuelve contra una caja del tamaño de su
-    // contenido y no estira. Es el eslabón que rompía la cadena
-    // rejilla → lista → plaza → botón.
+    /*
+      ── Una CAJA, no un botón ───────────────────────────────────────────────
+      Era un `<button>` entero, y por eso el botón de pegar tuvo que vivir
+      fuera, debajo: un botón dentro de otro no es HTML válido. Pero el pegar
+      es una de las tres formas de dar un archivo —arrastrarlo, elegirlo,
+      pegarlo— y ponerlo fuera lo dejaba pareciendo otra cosa, colgando del
+      cuadro en vez de siendo parte de él.
+
+      Así que el cuadro es una caja, y quien abre el buscador de archivos es un
+      botón que la cubre entera por debajo del contenido. El resultado a la
+      vista es el mismo —se pulsa en cualquier parte del cuadro y se abre el
+      buscador— y encima cabe lo que haga falta dentro.
+    */
     <div
       className={cn(solo && 'flex w-full self-stretch')}
       onDragOver={(e) => {
@@ -224,48 +452,14 @@ export function Soltar({
       onDrop={(e) => {
         e.preventDefault();
         setEncima(false);
-        if (!subiendo) onArchivos(e.dataTransfer.files);
+        if (!subiendo) onArchivos(Array.from(e.dataTransfer.files));
       }}
     >
-      <button
-        type="button"
-        onClick={() => campo.current?.click()}
-        disabled={subiendo}
-        aria-label="Añadir soportes"
+      <div
         className={cn(
-          'flex flex-col items-center justify-center gap-1.5 rounded-lg',
+          'relative flex flex-col items-center justify-center gap-1.5 rounded-lg',
           'border-2 border-dashed transition-colors',
-          /*
-            Sin ningún soporte, el cuadro ocupa el ANCHO y explica.
-
-            Un cuadrito de 104px solo en una fila vacía se lee como un botón
-            que alguien dejó ahí: no dice qué acepta ni que se pueda arrastrar.
-            Con el ancho entero hay sitio para decir las dos cosas, y es
-            además la forma en la que todo el mundo reconoce una zona donde se
-            sueltan archivos.
-
-            En cuanto hay uno, vuelve a ser una plaza más de la fila: ahí el
-            contexto ya lo dan las miniaturas de al lado.
-          */
-          // `size-full` para que llene la columna, con un suelo de 144px por
-          // si el contenedor no tiene alto que dar —en la ficha de un
-          // movimiento guardado la columna no estira—.
-          // `flex-1` le da el ancho de su hueco y el alto se lo da estirarse,
-          // que es lo que hace un hijo de una caja flexible por defecto. El
-          // suelo de 144px queda para cuando no haya alto que repartir.
           solo ? 'min-h-36 flex-1 px-4 py-8' : 'size-[104px]',
-          /*
-            Al pasar por encima se oscurece EL FONDO, y el trazo no se toca.
-
-            Con el borde cambiando de color, el punteado entero se redibujaba
-            al entrar y al salir: una línea discontinua que parpadea de un gris
-            a otro llama más la atención que el cuadro al que pertenece. El
-            fondo se oscurece sin mover nada de sitio.
-
-            El trazo se reserva para cuando se arrastra un archivo encima: ahí
-            sí hay algo que decir —"esto es lo que lo va a recibir"— y el lima
-            lo dice de una vez.
-          */
           subiendo
             ? 'cursor-wait border-border text-muted-foreground'
             : encima
@@ -273,43 +467,78 @@ export function Soltar({
               : cn('border-border text-muted-foreground', REALCE_DE_SUPERFICIE),
         )}
       >
-        {subiendo ? (
-          <>
-            <Loader2 className="size-5 animate-spin" aria-hidden="true" />
-            {/* El porcentaje, no una barra: en una caja de 104px una barra son
-                cuatro píxeles de alto que no se ven moverse. */}
-            <span className="tabular text-xs font-medium">{Math.round(progreso * 100)} %</span>
-          </>
-        ) : solo ? (
-          <>
-            {/*
-              El texto dice QUÉ va aquí, no solo cómo ponerlo.
+        {/* El botón que cubre la caja. Va PRIMERO y sin contenido: lo que se
+            lee encima son los rótulos de abajo, que no interceptan el ratón
+            para que el clic llegue hasta aquí caiga donde caiga. */}
+        <button
+          type="button"
+          onClick={alPulsar ?? (() => campo.current?.click())}
+          disabled={subiendo}
+          aria-label="Agregar soportes"
+          // Sin anillo propio: el foco de un botón lo pinta `index.css` para
+          // todos a la vez, y escribirlo aquí es la excepción que la prueba de
+          // `lib/foco.test.ts` no deja pasar.
+          className="absolute inset-0 rounded-lg"
+        />
 
-              Decía "Arrastrar un archivo aquí": con un rótulo de sección
-              encima que ponía "Soporte", eso bastaba. Sin el rótulo, "un
-              archivo" no dice de qué archivo se trata, y este cuadro es el
-              único sitio de la ficha donde se adjunta el recibo.
-            */}
-            <Upload className="size-6" aria-hidden="true" />
-            <span className="text-center text-sm font-medium text-foreground">
-              Adjuntar los soportes del movimiento
-            </span>
-            <span className="text-center text-xs">
-              El recibo, la factura o el comprobante de pago. Arrastrarlos aquí o seleccionarlos del
-              equipo.
-            </span>
-            <span className="mt-1 flex items-center gap-1.5 text-center text-2xs text-muted-foreground">
-              <FileText className="size-3.5 shrink-0" aria-hidden="true" />
-              PDF, JPG, PNG, HEIC o WEBP
-            </span>
-          </>
-        ) : (
-          <>
-            <ImagePlus className="size-6" aria-hidden="true" />
-            <span className="px-2 text-center text-2xs leading-tight">Añadir soporte</span>
-          </>
+        <div className="pointer-events-none relative flex flex-col items-center gap-1.5">
+          {subiendo ? (
+            <>
+              <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+              {/* El porcentaje, no una barra: en una caja de 104px una barra
+                  son cuatro píxeles de alto que no se ven moverse. */}
+              <span className="tabular text-xs font-medium">{Math.round(progreso * 100)} %</span>
+            </>
+          ) : solo ? (
+            <>
+              {/*
+                El texto dice QUÉ va aquí, no solo cómo ponerlo.
+
+                Decía "Arrastrar un archivo aquí": con un rótulo de sección
+                encima que ponía "Soporte", eso bastaba. Sin el rótulo, "un
+                archivo" no dice de qué archivo se trata, y este cuadro es el
+                único sitio de la ficha donde se adjunta el recibo.
+              */}
+              <Upload className="size-6" aria-hidden="true" />
+              <span className="text-center text-sm font-medium text-foreground">
+                Agregar los soportes del movimiento
+              </span>
+              <span className="text-center text-xs">
+                El recibo, la factura o el comprobante de pago. Arrastrarlos aquí o seleccionarlos
+                del equipo.
+              </span>
+              <span className="mt-1 flex items-center gap-1.5 text-center text-2xs text-muted-foreground">
+                <FileText className="size-3.5 shrink-0" aria-hidden="true" />
+                PDF, JPG, PNG, HEIC o WEBP
+              </span>
+            </>
+          ) : (
+            <>
+              <ImagePlus className="size-6" aria-hidden="true" />
+              <span className="px-2 text-center text-2xs leading-tight">Agregar soporte</span>
+            </>
+          )}
+        </div>
+
+        {/* La tercera forma de dar un archivo, dentro del cuadro y con las
+            otras dos: separada, se leía como otra cosa colgando debajo.
+
+            `relative` para quedar por encima del botón que cubre la caja, o el
+            clic se lo llevaría él. */}
+        {solo && !subiendo && (
+          <div className="relative mt-4 flex flex-col items-center gap-1">
+            <Button type="button" variant="outline" size="sm" onClick={() => void pegar()}>
+              <ClipboardPaste aria-hidden="true" />
+              Pegar una captura
+            </Button>
+            {problemaAlPegar && (
+              <p role="alert" className="max-w-xs text-center text-xs text-muted-foreground">
+                {problemaAlPegar}
+              </p>
+            )}
+          </div>
         )}
-      </button>
+      </div>
 
       {/* El campo de verdad, escondido: el nativo no se puede peinar y el
           `<button>` de arriba sí. */}
@@ -320,7 +549,7 @@ export function Soltar({
         accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
         className="hidden"
         onChange={(e) => {
-          onArchivos(e.target.files);
+          onArchivos(Array.from(e.target.files ?? []));
           // Se vacía para que subir DOS VECES el mismo archivo dispare el
           // evento la segunda: sin esto, el valor no cambia y no pasa nada.
           e.target.value = '';
@@ -331,76 +560,21 @@ export function Soltar({
 }
 
 /**
- * Un soporte en pequeño.
+ * Le pone nombre a una captura pegada.
  *
- * ── Por qué cuadrada y no con la proporción de una hoja ─────────────────────
- * Porque en fila son ocho, y ocho rectángulos altos hacen una pared. El
- * cuadrado ocupa menos alto, deja más por fila y recorta la hoja por donde
- * conviene: por arriba, que es donde están el membrete y el logo —lo que de
- * verdad distingue un recibo de otro de un vistazo—.
+ * El portapapeles no entrega nombres: lo que llega es un blob. Sin esto, todas
+ * las capturas se llamarían igual y en una fila de miniaturas no habría forma
+ * de saber cuál es cuál. Con la fecha y la hora, el nombre dice al menos
+ * cuándo se pegó.
+ *
+ * La extensión sale del TIPO y no de un nombre que no existe: según de dónde
+ * se copie, el portapapeles entrega png, jpeg o webp.
  */
-function Miniatura({
-  soporte,
-  url,
-  numero,
-  onAbrir,
-}: {
-  soporte: Soporte;
-  url?: string;
-  numero: number;
-  onAbrir: () => void;
-}) {
-  const esImagen = soporte.mime_type.startsWith('image/');
+function nombrarCaptura(contenido: Blob, tipo: string): File {
+  const extension = tipo.split('/')[1]?.replace('jpeg', 'jpg') ?? 'png';
+  const sello = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
 
-  return (
-    <button
-      type="button"
-      onClick={onAbrir}
-      disabled={!soporte.disponible}
-      title={soporte.nombre_archivo}
-      aria-label={`Ver ${soporte.nombre_archivo}`}
-      className={cn(
-        'group relative flex size-[104px] items-center justify-center overflow-hidden',
-        'rounded-lg bg-card ring-1 ring-border transition-all',
-        // `lima-tinta` y no `primary`, por lo mismo que el hueco de al lado:
-        // el verde oscuro de `primary` no se ve sobre un fondo oscuro, y las
-        // dos piezas están en la misma fila —tenían que responder igual—.
-        soporte.disponible
-          ? 'cursor-pointer hover:ring-2 hover:ring-acento-tinta'
-          : 'cursor-not-allowed opacity-50',
-      )}
-    >
-      {!soporte.disponible ? (
-        <FileWarning className="size-6 text-muted-foreground" aria-hidden="true" />
-      ) : !url ? (
-        <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden="true" />
-      ) : esImagen ? (
-        <img src={url} alt="" className="size-full object-cover object-top" />
-      ) : (
-        <LienzoPdf url={url} />
-      )}
-
-      <span className="tabular absolute left-1.5 top-1.5 rounded-full bg-sala/70 px-1.5 text-2xs font-medium text-sala-tinta">
-        {numero}
-      </span>
-
-      {/* El velo con el ojo. Una miniatura recortada no dice si se puede
-          abrir: parece una ilustración. El ojo lo dice, y solo cuando hace
-          falta —al pasar por encima—, sin robarle sitio al recibo el resto
-          del tiempo. */}
-      {soporte.disponible && (
-        <span
-          aria-hidden="true"
-          className={cn(
-            'absolute inset-0 flex items-center justify-center bg-sala/55 opacity-0',
-            'transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100',
-          )}
-        >
-          <Eye className="size-6 text-sala-tinta" />
-        </span>
-      )}
-    </button>
-  );
+  return new File([contenido], `captura-${sello}.${extension}`, { type: tipo });
 }
 
 /**
@@ -741,7 +915,16 @@ function Pase({
 }
 
 /** Un botón sobre el velo oscuro del pase. Aquí no vale la paleta de la app. */
-function BotonOscuro({
+/**
+ * Un mando que vive SOBRE el documento.
+ *
+ * No usa la paleta de la aplicación: encima de un recibo —que es blanco— un
+ * control claro desaparece. Se exporta porque los mandos de la
+ * previsualización los pone quien la usa: la ficha de un movimiento sin
+ * guardar quita archivos de la memoria y la de uno guardado los borra del
+ * servidor, pero los dos botones son el mismo objeto.
+ */
+export function BotonOscuro({
   onClick,
   etiqueta,
   deshabilitado = false,
@@ -758,7 +941,9 @@ function BotonOscuro({
     <Button
       type="button"
       variant="ghost"
-      size="sm-icon"
+      // Redondo: estos mandos viven dentro de una pastilla redonda, y un
+      // resaltado cuadrado ahí deja dos esquinas asomando en cada extremo.
+      size="sm-icon-redondo"
       onClick={onClick}
       disabled={deshabilitado}
       aria-label={etiqueta}
@@ -862,3 +1047,287 @@ function PaginaPdf({
     </>
   );
 }
+
+/**
+ * El soporte en grande, recorrible.
+ *
+ * ── Por qué llena la caja y no entra entera ─────────────────────────────────
+ * Porque una hoja completa metida en 30rem de alto deja la letra a un tamaño
+ * en el que el total no se lee, y esta columna existe exactamente para leer el
+ * total. Llenando la caja, el documento se ve al tamaño en que se puede
+ * comprobar, y lo que no cabe se alcanza arrastrando.
+ *
+ * ── Por qué arrastrar y no barras de desplazamiento ─────────────────────────
+ * Porque es un documento, no una página: el gesto con el que todo el mundo
+ * mueve un plano o un mapa es agarrarlo. Y con `pointer`, el mismo código
+ * sirve para el ratón, el dedo y el lápiz.
+ *
+ * ── Los topes ───────────────────────────────────────────────────────────────
+ * El desplazamiento se recorta a lo que falta por ver, así que nunca aparece
+ * un hueco: el borde del documento no pasa del borde de la caja. Y si por el
+ * lado corto el documento cabe justo, ese eje no se mueve —en vez de temblar
+ * un píxel en cada arrastre—.
+ */
+export function PreviaDeArchivo({
+  url,
+  esImagen,
+  onAbrir,
+  acciones,
+}: {
+  /**
+   * El documento. Mientras no esté, se enseña el marco vacío con su girador.
+   *
+   * ── Por qué el marco va PRIMERO ───────────────────────────────────────────
+   * El soporte de un movimiento guardado se descarga: hay un momento —corto en
+   * una imagen, largo en un PDF de varias hojas— en el que no hay nada que
+   * pintar. Sin marco, la columna se queda vacía y aparece de golpe un bloque
+   * que empuja lo de abajo; con él, el sitio ya está hecho y lo único que
+   * cambia es lo que hay dentro.
+   *
+   * Es la misma razón por la que una tabla enseña sus filas en gris antes de
+   * tener datos: lo que no puede cambiar de tamaño es la página.
+   */
+  url?: string;
+  esImagen: boolean;
+  /**
+   * Abre el pase a pantalla completa, si lo hay.
+   *
+   * Solo lo tiene un soporte ya guardado: el que todavía está esperando a que
+   * se guarde el movimiento no existe en ninguna parte que se pueda abrir. Sin
+   * esto, el botón aparecería en los dos sitios y en uno no haría nada.
+   */
+  onAbrir?: () => void;
+  /**
+   * Lo que se puede hacer con ESTE documento: borrarlo, añadir otro, pasar al
+   * siguiente.
+   *
+   * Van aquí desde que no hay miniaturas. La fila de miniaturas era la que
+   * decía cuántos documentos hay, cuál se está viendo y por dónde se añade o
+   * se quita uno; sin ella, todo eso tiene que caber sobre el papel o
+   * desaparece.
+   */
+  acciones?: ReactNode;
+}) {
+  /** El tamaño natural de lo dibujado, para saber cuánto sobra por cada lado. */
+  const [natural, setNatural] = useState<{ ancho: number; alto: number } | null>(null);
+  const [caja, setCaja] = useState({ ancho: 0, alto: 0 });
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [arrastrando, setArrastrando] = useState(false);
+  /*
+    El zoom multiplica la escala que ya LLENA la caja, así que el 100 % es el
+    documento cubriendo el marco y no su tamaño natural.
+
+    No baja del 100 % a propósito: por debajo aparecerían franjas vacías a los
+    lados, y una previsualización con huecos se lee como un error de montaje.
+    Para ver la hoja entera está el pase a pantalla completa del movimiento ya
+    guardado.
+  */
+  const [zoom, setZoom] = useState(0);
+
+  const marco = useRef<HTMLDivElement>(null);
+  const agarre = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+
+  // La caja cambia de tamaño con la ventana, y los topes dependen de ella.
+  useEffect(() => {
+    const elemento = marco.current;
+    if (!elemento) return;
+
+    const medir = (): void => setCaja({ ancho: elemento.clientWidth, alto: elemento.clientHeight });
+
+    medir();
+    const observador = new ResizeObserver(medir);
+    observador.observe(elemento);
+    return () => observador.disconnect();
+  }, []);
+
+  /*
+    La escala que LLENA la caja: la mayor de las dos proporciones. Con la menor
+    —que es `contain`— quedarían franjas vacías a los lados.
+  */
+  const cubrir =
+    natural && caja.ancho > 0 ? Math.max(caja.ancho / natural.ancho, caja.alto / natural.alto) : 1;
+  const escala = cubrir * PASOS_DE_LA_PREVIA[zoom];
+  const ancho = natural ? natural.ancho * escala : 0;
+  const alto = natural ? natural.alto * escala : 0;
+
+  /** Cuánto se puede mover cada eje. Negativo: es lo que sobra por ver. */
+  const limite = { x: Math.min(0, caja.ancho - ancho), y: Math.min(0, caja.alto - alto) };
+
+  const recortar = (x: number, y: number): { x: number; y: number } => ({
+    x: Math.min(0, Math.max(limite.x, x)),
+    y: Math.min(0, Math.max(limite.y, y)),
+  });
+
+  // Empieza CENTRADO, y se recentra al cambiar el zoom: ampliar desde una
+  // esquina deja mirando un margen en blanco en vez de lo que se estaba
+  // leyendo.
+  useEffect(() => {
+    if (!natural || caja.ancho === 0) return;
+    setPos(recortar(limite.x / 2, limite.y / 2));
+    // Solo al cambiar el documento, la caja o el zoom: recentrar en cada
+    // arrastre pelearía con el dedo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [natural, caja.ancho, caja.alto, zoom]);
+
+  const sePuedeMover = limite.x < 0 || limite.y < 0;
+
+  const encuadre = {
+    position: 'absolute' as const,
+    left: pos.x,
+    top: pos.y,
+    width: ancho || undefined,
+    height: alto || undefined,
+    // Antes de medir se pinta invisible: un fotograma con el documento a su
+    // tamaño natural y sin encuadrar se ve como un salto.
+    visibility: natural ? ('visible' as const) : ('hidden' as const),
+  };
+
+  return (
+    <div
+      ref={marco}
+      // `touch-action: none` para que el dedo mueva el documento y no desplace
+      // la ficha entera por detrás.
+      className={cn(
+        /*
+          ── El alto lo pone la COLUMNA, no este marco ──────────────────────
+          Tuvo 480 y luego 350 fijos, y un alto fijo se equivoca por los dos
+          lados: en la ficha del movimiento, que llega a 1024 de ancho, dejaba
+          un palmo de vacío entre el papel y el pie de su columna —la de al
+          lado, con sus cinco campos, llega bastante más abajo—; y en una
+          ventana baja se comía el sitio de todo lo demás.
+
+          Con `flex-1` mide lo que le sobre a su columna, que es exactamente
+          lo que mide la columna de campos: las dos son celdas de la misma
+          fila de la rejilla. El documento se reencuadra solo —el marco se
+          mide con un `ResizeObserver` y la escala sale de ahí— así que crecer
+          no le cuesta nada.
+
+          El suelo de 220 es para el caso en que no haya alto que repartir:
+          una previsualización de cuarenta píxeles no enseña nada y el
+          `ResizeObserver` se quedaría midiendo una franja.
+        */
+        'relative min-h-[220px] flex-1 touch-none select-none overflow-hidden rounded-lg bg-card ring-1 ring-border',
+        sePuedeMover && (arrastrando ? 'cursor-grabbing' : 'cursor-grab'),
+      )}
+      onPointerDown={(e) => {
+        if (!sePuedeMover) return;
+        /*
+          Los mandos del zoom no arrastran nada.
+
+          Aquí estaba el bug que hacía que el zoom "no funcionara": al pulsar
+          un mando, este marco tomaba `setPointerCapture` para el arrastre, y
+          la captura REDIRIGE también el `click` al elemento que capturó. El
+          estado del zoom nunca cambiaba porque el `onClick` del botón no
+          llegaba a dispararse nunca.
+        */
+        if ((e.target as HTMLElement).closest('[data-mandos]')) return;
+
+        e.currentTarget.setPointerCapture(e.pointerId);
+        agarre.current = { x: pos.x, y: pos.y, px: e.clientX, py: e.clientY };
+        setArrastrando(true);
+      }}
+      onPointerMove={(e) => {
+        const desde = agarre.current;
+        if (!desde) return;
+        setPos(recortar(desde.x + (e.clientX - desde.px), desde.y + (e.clientY - desde.py)));
+      }}
+      onPointerUp={() => {
+        agarre.current = null;
+        setArrastrando(false);
+      }}
+      onPointerCancel={() => {
+        agarre.current = null;
+        setArrastrando(false);
+      }}
+    >
+      {/* El pase a pantalla completa, arriba y en la esquina contraria a los
+          mandos del zoom: son dos cosas distintas —una amplía dentro del
+          marco, la otra saca el documento del marco— y juntas se pulsarían la
+          una por la otra. */}
+      {(onAbrir || acciones) && (
+        <div
+          data-mandos=""
+          className="absolute right-2 top-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
+        >
+          {acciones}
+          {onAbrir && (
+            <BotonOscuro etiqueta="Ver en grande" onClick={onAbrir}>
+              <Maximize2 className="size-4" aria-hidden="true" />
+            </BotonOscuro>
+          )}
+        </div>
+      )}
+
+      {/* Los mandos del zoom, sobre una pastilla oscura: encima de un recibo
+          —que es blanco— cualquier control claro desaparece.
+
+          Solo con el documento cargado: ampliar un marco vacío no hace nada, y
+          un control que no responde se lee como un fallo. */}
+      <div
+        data-mandos=""
+        hidden={!url}
+        className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
+      >
+        <BotonOscuro
+          etiqueta="Alejar"
+          deshabilitado={zoom === 0}
+          onClick={() => setZoom((z) => Math.max(0, z - 1))}
+        >
+          <Minus className="size-4" aria-hidden="true" />
+        </BotonOscuro>
+        <button
+          type="button"
+          onClick={() => setZoom(0)}
+          title="Volver al tamaño normal"
+          className="tabular min-w-[3rem] text-center text-2xs font-medium text-sala-tinta"
+        >
+          {Math.round(PASOS_DE_LA_PREVIA[zoom] * 100)} %
+        </button>
+        <BotonOscuro
+          etiqueta="Acercar"
+          deshabilitado={zoom === PASOS_DE_LA_PREVIA.length - 1}
+          onClick={() => setZoom((z) => Math.min(PASOS_DE_LA_PREVIA.length - 1, z + 1))}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+        </BotonOscuro>
+      </div>
+
+      {!url ? (
+        // El girador en el centro del marco, con el mismo gris que el resto de
+        // lo que está esperando en esta app.
+        <span
+          className="grid size-full place-items-center"
+          role="status"
+          aria-label="Cargando el soporte"
+        >
+          <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
+        </span>
+      ) : esImagen ? (
+        <img
+          src={url}
+          alt=""
+          draggable={false}
+          onLoad={(e) =>
+            setNatural({
+              ancho: e.currentTarget.naturalWidth,
+              alto: e.currentTarget.naturalHeight,
+            })
+          }
+          style={encuadre}
+        />
+      ) : (
+        <LienzoPdf
+          url={url}
+          // A 1400 y no a 240: esto se mira para leer una cifra, y el tamaño
+          // de una miniatura la deja borrosa.
+          ancho={1400}
+          onTamano={(a, h) => setNatural({ ancho: a, alto: h })}
+          estilo={encuadre}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Los saltos del zoom, como múltiplos de la escala que llena la caja. */
+const PASOS_DE_LA_PREVIA = [1, 1.5, 2, 3];
