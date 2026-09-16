@@ -26,6 +26,7 @@ export function Confirmacion({
   etiquetaConfirmar = 'Confirmar',
   peligrosa = false,
   ocupada = false,
+  confirmarDeshabilitado = false,
   onConfirmar,
   onCancelar,
 }: {
@@ -37,6 +38,16 @@ export function Confirmacion({
   /** Pinta la acción en rojo. Solo para lo que destruye algo. */
   peligrosa?: boolean;
   ocupada?: boolean;
+  /**
+   * Apaga el botón de confirmar porque falta un dato.
+   *
+   * Distinto de `ocupada`, que dice «ya se pulsó, espera». Esto dice «todavía
+   * no se puede». Lo usa el borrado de una categoría con movimientos dentro:
+   * hasta que se diga a dónde pasan no hay nada que confirmar, y enterarse
+   * después de pulsar «Eliminar» en un diálogo que avisa de que no se puede
+   * deshacer es lo peor que puede pasar ahí.
+   */
+  confirmarDeshabilitado?: boolean;
   onConfirmar: () => void;
   onCancelar: () => void;
 }) {
@@ -85,7 +96,7 @@ export function Confirmacion({
           <Button
             type="button"
             variant={peligrosa ? 'destructive' : 'default'}
-            disabled={ocupada}
+            disabled={ocupada || confirmarDeshabilitado}
             onClick={onConfirmar}
           >
             {ocupada && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}

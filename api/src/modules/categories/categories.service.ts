@@ -10,6 +10,7 @@ import { CategoriesRepository } from './categories.repository';
 import { DICCIONARIO_INICIAL } from './categories.seed';
 import {
   anidar,
+  descendientesDe,
   generariaCiclo,
   profundidadResultante,
   PROFUNDIDAD_MAXIMA,
@@ -160,17 +161,80 @@ export class CategoriesService {
     await this.repo.archivarVarias(userId, enCascada ? [id, ...hijos] : [id]);
   }
 
-  async eliminar(userId: bigint, id: bigint): Promise<void> {
+  /**
+   * Cuánto arrastra un borrado, antes de hacerlo.
+   *
+   * La interfaz lo pregunta al abrir la confirmación: sin esto tendría que
+   * elegir entre no decir nada —y entonces borrar es a ciegas— o intentarlo y
+   * enterarse por el error, que es peor, porque el error llega después de
+   * pulsar «Eliminar».
+   */
+  async usosDe(
+    userId: bigint,
+    id: bigint,
+  ): Promise<{ movimientos: number; subcategorias: number }> {
     await this.exigirCategoria(userId, id);
 
-    const usos = await this.repo.contarUsos(userId, id);
-    if (usos > 0) {
+    const esqueleto = await this.repo.esqueletoDelArbol(userId);
+    const descendientes = descendientesDe(esqueleto, id);
+
+    return {
+      movimientos: await this.repo.contarUsos(userId, [id, ...descendientes]),
+      subcategorias: descendientes.length,
+    };
+  }
+
+  /**
+   * Elimina una categoría —y todo lo que cuelga de ella—, reasignando sus
+   * movimientos.
+   *
+   * ── Por qué ya no se niega ──────────────────────────────────────────────
+   * Antes se negaba en cuanto había un movimiento usándola: «archívala en vez
+   * de borrarla». Eso dejaba la estructura sin forma de corregirse —un
+   * concepto mal creado con un movimiento dentro no se podía quitar nunca— y
+   * obligaba a explicar en la interfaz una regla del sistema en vez de
+   * resolver el problema de quien la está usando.
+   *
+   * Ahora se borra, y lo que hacía falta era preguntar A DÓNDE PASAN sus
+   * movimientos. Eso es un dato, no un impedimento.
+   *
+   * ── Cuándo sigue siendo un error ────────────────────────────────────────
+   * Cuando hay movimientos y no se dice a dónde van. No se eligen solos: el
+   * sistema no sabe si el alquiler mal clasificado pertenece a «Vivienda» o a
+   * «Oficina», y adivinar significa mover plata a un sitio que nadie pidió.
+   *
+   * Y cuando el destino está DENTRO de lo que se va a borrar: reasignar a algo
+   * que desaparece en la misma operación deja los movimientos sin clasificar
+   * por el `ON DELETE SET NULL`, que es exactamente lo que se quería evitar.
+   */
+  async eliminar(
+    userId: bigint,
+    id: bigint,
+    reasignarA?: bigint,
+  ): Promise<{ eliminadas: number; reasignados: number }> {
+    await this.exigirCategoria(userId, id);
+
+    const esqueleto = await this.repo.esqueletoDelArbol(userId);
+    const subarbol = [id, ...descendientesDe(esqueleto, id)];
+    const usos = await this.repo.contarUsos(userId, subarbol);
+
+    if (usos > 0 && reasignarA === undefined) {
       throw new ConflictException(
-        `Esta categoría se usa en ${usos} movimiento(s). Archívala en vez de borrarla.`,
+        `Esta categoría tiene ${usos} movimiento(s). Indica a qué categoría pasan.`,
       );
     }
 
-    await this.repo.borrar(userId, id);
+    if (reasignarA !== undefined) {
+      await this.exigirCategoria(userId, reasignarA);
+
+      if (subarbol.some((candidato) => candidato === reasignarA)) {
+        throw new ConflictException(
+          'El destino está dentro de lo que se va a eliminar. Elige uno de fuera.',
+        );
+      }
+    }
+
+    return this.repo.borrarSubarbolReasignando(userId, subarbol, reasignarA ?? null);
   }
 
   /**

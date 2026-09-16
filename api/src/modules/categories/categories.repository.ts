@@ -54,19 +54,70 @@ export class CategoriesRepository {
     return count;
   }
 
-  async borrar(userId: bigint, id: bigint): Promise<number> {
-    const { count } = await this.prisma.category.deleteMany({ where: { id, userId } });
-    return count;
-  }
+  /**
+   * Cuántos movimientos cuelgan de estas categorías.
+   *
+   * Recibe una LISTA y no un id porque lo que se cuenta es un subárbol: los
+   * movimientos de un centro de costos no están en el centro, están en los
+   * conceptos que hay tres niveles más abajo. Contando solo el id de arriba,
+   * un centro con cuarenta movimientos daba cero.
+   */
+  async contarUsos(userId: bigint, categoryIds: readonly bigint[]): Promise<number> {
+    if (categoryIds.length === 0) return 0;
+    const ids = [...categoryIds];
 
-  async contarUsos(userId: bigint, categoryId: bigint): Promise<number> {
     const [enMovimientos, enSplits] = await Promise.all([
-      this.prisma.transaction.count({ where: { userId, categoryId } }),
+      this.prisma.transaction.count({ where: { userId, categoryId: { in: ids } } }),
       this.prisma.transactionSplit.count({
-        where: { categoryId, transaction: { userId } },
+        where: { categoryId: { in: ids }, transaction: { userId } },
       }),
     ]);
     return enMovimientos + enSplits;
+  }
+
+  /**
+   * Borra un subárbol entero, reasignando antes lo que colgaba de él.
+   *
+   * ── Por qué el subárbol y no la fila ────────────────────────────────────
+   * Porque `parent_id` está declarado `ON DELETE SET NULL`: borrando solo el
+   * grupo, sus conceptos se quedaban con el padre en nulo y ASCENDÍAN a
+   * centros de costos. Un borrado que crea tres centros nuevos no es lo que
+   * nadie pidió.
+   *
+   * ── Por qué en una transacción ──────────────────────────────────────────
+   * Porque si la reasignación pasa y el borrado falla, quedan los movimientos
+   * en su destino nuevo y la categoría vieja todavía viva —y nadie sabe que
+   * se movieron—. Y al revés es peor: `category_id` es `ON DELETE SET NULL`,
+   * así que un borrado sin reasignación previa deja los movimientos sin
+   * clasificar en silencio.
+   */
+  async borrarSubarbolReasignando(
+    userId: bigint,
+    ids: readonly bigint[],
+    reasignarA: bigint | null,
+  ): Promise<{ eliminadas: number; reasignados: number }> {
+    const lista = [...ids];
+
+    return this.prisma.$transaction(async (tx) => {
+      let reasignados = 0;
+
+      if (reasignarA !== null) {
+        const [movimientos, splits] = await Promise.all([
+          tx.transaction.updateMany({
+            where: { userId, categoryId: { in: lista } },
+            data: { categoryId: reasignarA },
+          }),
+          tx.transactionSplit.updateMany({
+            where: { categoryId: { in: lista }, transaction: { userId } },
+            data: { categoryId: reasignarA },
+          }),
+        ]);
+        reasignados = movimientos.count + splits.count;
+      }
+
+      const { count } = await tx.category.deleteMany({ where: { userId, id: { in: lista } } });
+      return { eliminadas: count, reasignados };
+    });
   }
 
   /** Reordena en una sola transacción: o queda todo el orden nuevo, o ninguno. */

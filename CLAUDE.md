@@ -378,6 +378,30 @@ anota y se corrige lo que PASÓ; no se rehace el mapa con el que se ordena.
 Por eso el `Combo` de un concepto ofrece crear lo que falta pero nunca
 renombrar ni borrar, y por eso el de centro de costos no ofrece ni crear.
 
+Y allí los tres niveles se editan y se borran igual: `CategoriaModal` para
+renombrar —y para lo estático, que solo existe en un centro— y
+`ConfirmarBorrado` para quitar.
+
+**Borrar una categoría PREGUNTA a dónde pasan sus movimientos.** No se
+niega. Negarse era lo que había antes —«Si tiene movimientos, el sistema se
+niega»— y dejaba la estructura sin forma de corregirse: un concepto mal
+creado con un movimiento dentro no se podía quitar nunca. Lo que faltaba no
+era una prohibición, era un dato.
+
+Tres cosas que no pueden fallar en silencio, y que tienen prueba e2e:
+
+- Los movimientos acaban donde se dijo. `category_id` es `ON DELETE SET
+  NULL`, así que un borrado sin reasignar los deja sin clasificar sin avisar.
+- Se cuenta el SUBÁRBOL, no la fila. Los movimientos de un centro de costos
+  no están en el centro: están en los conceptos, tres niveles más abajo.
+- Se borra el subárbol entero. `parent_id` también es `ON DELETE SET NULL`,
+  así que borrar un grupo dejaba a sus conceptos con el padre en nulo y los
+  ascendía a centros de costos.
+
+El destino no se elige solo. El sistema no sabe si el alquiler mal
+clasificado pertenece a «Vivienda» o a «Oficina», y adivinar significa mover
+plata a un sitio que nadie pidió.
+
 **Y lo que protege un centro estático es su ESTRUCTURA.** En un centro
 estático, un movimiento no se reclasifica —ni desde la tabla ni desde la
 ficha—: eso se decide en Centros de costos. Pero sí se puede BORRAR, porque

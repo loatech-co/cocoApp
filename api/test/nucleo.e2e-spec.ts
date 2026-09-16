@@ -461,6 +461,146 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
   });
 
+  // ── Eliminar una categoría ─────────────────────────────────────────────────
+
+  /**
+   * Borrar una categoría es la única operación destructiva del árbol, y hasta
+   * ahora no tenía ni una prueba: se limitaba a negarse en cuanto había un
+   * movimiento, así que no había mucho que comprobar.
+   *
+   * Ahora borra de verdad, y hay tres cosas que no pueden fallar en silencio:
+   * que los movimientos acaben donde se dijo, que no se queden sin clasificar
+   * por el `ON DELETE SET NULL`, y que los conceptos de un grupo borrado se
+   * vayan con él en vez de ascender a centros de costos.
+   */
+  describe('Eliminar una categoría', () => {
+    /** Un árbol de tres niveles con un movimiento colgando del concepto. */
+    const conUnMovimiento = async () => {
+      const cuenta = await crearCuenta(comoAna());
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
+      const grupo = await crearCategoria(comoAna(), {
+        name: 'Servicios públicos',
+        parent_id: Number(centro.id),
+      });
+      const concepto = await crearCategoria(comoAna(), {
+        name: 'Aseo',
+        parent_id: Number(grupo.id),
+      });
+      const otro = await crearCategoria(comoAna(), { name: 'Variables' });
+
+      const movimiento = await http
+        .post('/api/v1/transactions')
+        .set('Authorization', comoAna())
+        .send({
+          account_id: Number(cuenta.id),
+          date: '2026-09-16',
+          amount: '450000',
+          type: 'expense',
+          category_id: Number(concepto.id),
+        })
+        .expect(201);
+
+      return { centro, grupo, concepto, otro, movimiento: movimiento.body.data };
+    };
+
+    it('cuenta los movimientos del SUBÁRBOL, no solo los de la fila', async () => {
+      // El movimiento cuelga del concepto, tres niveles por debajo del centro.
+      // Contando solo el id del centro, un centro con cuarenta daba cero.
+      const { centro, grupo, concepto } = await conUnMovimiento();
+
+      for (const [categoria, subcategorias] of [
+        [centro, 2],
+        [grupo, 1],
+        [concepto, 0],
+      ] as const) {
+        const respuesta = await http
+          .get(`/api/v1/categories/${Number(categoria.id)}/usos`)
+          .set('Authorization', comoAna())
+          .expect(200);
+
+        expect(respuesta.body.data).toEqual({ movimientos: 1, subcategorias });
+      }
+    });
+
+    it('se niega si hay movimientos y no se dice a dónde pasan', async () => {
+      const { concepto } = await conUnMovimiento();
+
+      await http
+        .delete(`/api/v1/categories/${Number(concepto.id)}`)
+        .set('Authorization', comoAna())
+        .expect(409);
+    });
+
+    it('reasigna los movimientos y borra', async () => {
+      const { concepto, otro, movimiento } = await conUnMovimiento();
+
+      await http
+        .delete(`/api/v1/categories/${Number(concepto.id)}?reasignar_a=${Number(otro.id)}`)
+        .set('Authorization', comoAna())
+        .expect(204);
+
+      // El movimiento sigue ahí, con su categoría nueva. Lo que NO puede pasar
+      // es que quede en null: `category_id` es `ON DELETE SET NULL`, así que un
+      // borrado sin reasignar lo deja sin clasificar en silencio.
+      const despues = await http
+        .get(`/api/v1/transactions/${Number(movimiento.id)}`)
+        .set('Authorization', comoAna())
+        .expect(200);
+
+      expect(Number(despues.body.data.category_id)).toBe(Number(otro.id));
+    });
+
+    it('se lleva el subárbol entero: los conceptos no ascienden a centros', async () => {
+      // `parent_id` es `ON DELETE SET NULL`. Borrando solo el grupo, sus
+      // conceptos se quedaban con el padre en nulo y aparecían como centros de
+      // costos nuevos en la raíz del árbol.
+      const { grupo, concepto, otro } = await conUnMovimiento();
+
+      await http
+        .delete(`/api/v1/categories/${Number(grupo.id)}?reasignar_a=${Number(otro.id)}`)
+        .set('Authorization', comoAna())
+        .expect(204);
+
+      const arbol = await http
+        .get('/api/v1/categories')
+        .set('Authorization', comoAna())
+        .expect(200);
+
+      const ids = arbol.body.data.map((c: { id: string | number }) => Number(c.id));
+      expect(ids).not.toContain(Number(concepto.id));
+      expect(ids).not.toContain(Number(grupo.id));
+    });
+
+    it('no acepta un destino que también se va a borrar', async () => {
+      // Reasignar al concepto que cuelga del grupo que se está borrando deja
+      // los movimientos sin clasificar, que es justo lo que se quiere evitar.
+      const { grupo, concepto } = await conUnMovimiento();
+
+      await http
+        .delete(`/api/v1/categories/${Number(grupo.id)}?reasignar_a=${Number(concepto.id)}`)
+        .set('Authorization', comoAna())
+        .expect(409);
+    });
+
+    it('sin movimientos no hace falta destino', async () => {
+      const vacia = await crearCategoria(comoAna(), { name: 'Sin usar' });
+
+      await http
+        .delete(`/api/v1/categories/${Number(vacia.id)}`)
+        .set('Authorization', comoAna())
+        .expect(204);
+    });
+
+    it('Beto no puede borrar una categoría de Ana', async () => {
+      const deAna = await crearCategoria(comoAna(), { name: 'Privada' });
+
+      await http
+        .delete(`/api/v1/categories/${Number(deAna.id)}`)
+        .set('Authorization', comoBeto())
+        .expect(404);
+    });
+  });
+
   // ── Etiquetas ──────────────────────────────────────────────────────────────
 
   describe('Etiquetas', () => {

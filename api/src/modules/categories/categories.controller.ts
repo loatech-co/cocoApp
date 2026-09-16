@@ -149,22 +149,49 @@ export class CategoriesController {
    * caso el servicio lo decide, no el cliente.
    */
   /**
-   * BORRA la categoría. De verdad.
+   * Cuánto arrastra un borrado, antes de hacerlo.
+   *
+   * Lo pregunta la interfaz al abrir la confirmación, para poder decir cuántos
+   * movimientos se van a mover y pedir a dónde. Sin esto, borrar sería a
+   * ciegas o habría que enterarse por el error —que llega después de pulsar
+   * «Eliminar»—.
+   */
+  @Get(':id/usos')
+  async usos(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseBigIntPipe) id: bigint,
+  ): Promise<{ movimientos: number; subcategorias: number }> {
+    return this.categories.usosDe(user.id, id);
+  }
+
+  /**
+   * BORRA la categoría —y todo lo que cuelga de ella— de verdad.
    *
    * Antes esta ruta archivaba —dejaba la fila con `is_archived`— y el botón de
    * la interfaz decía "eliminar": la categoría desaparecía de las listas y
    * seguía ocupando su nombre, así que crear otra igual chocaba contra una que
    * nadie podía ver.
    *
-   * El servicio se niega si hay movimientos usándola. Esa es la red: no se
-   * borra nada que deje filas sin clasificar.
+   * ── `reasignar_a` ────────────────────────────────────────────────────────
+   * A dónde pasan sus movimientos. Obligatorio si tiene alguno: el servicio no
+   * los adivina, porque adivinar significa mover plata a un sitio que nadie
+   * pidió. Sin movimientos no hace falta.
+   *
+   * Va en la CONSULTA y no en el cuerpo: un DELETE con cuerpo lo admite la
+   * especificación pero lo tiran por el camino unos cuantos proxies, y este
+   * dato es un identificador, no un documento.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async eliminar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
+    @Query('reasignar_a') reasignarA?: string,
   ): Promise<void> {
-    await this.categories.eliminar(user.id, id);
+    await this.categories.eliminar(
+      user.id,
+      id,
+      reasignarA === undefined || reasignarA === '' ? undefined : BigInt(reasignarA),
+    );
   }
 }

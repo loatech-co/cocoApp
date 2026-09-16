@@ -89,7 +89,6 @@ export function MovimientoModal({
   const actualizar = useActualizarMovimiento();
   const eliminar = useEliminarMovimiento();
   const crearCategoria = useCrearCategoria();
-  const primerCampo = useRef<HTMLInputElement>(null);
 
   const editando = Boolean(movimiento);
 
@@ -167,7 +166,6 @@ export function MovimientoModal({
     setProgresoDeLectura(null);
     // El foco solo cuando hay algo que escribir: puesto en un campo de solo
     // lectura, el cursor parpadea en un sitio donde no se puede escribir.
-    if (!movimiento) setTimeout(() => primerCampo.current?.focus(), 50);
   }, [abierta, movimiento, categoriaPorDefecto, tipoPorDefecto, descartes]);
 
   /*
@@ -425,7 +423,20 @@ export function MovimientoModal({
                   onClick={() => setConfirmandoBorrado(true)}
                   aria-label="Eliminar movimiento"
                   title="Eliminar"
-                  className="text-muted-foreground hover:text-destructive"
+                  /*
+                    El MISMO color y el mismo tamaño que el lápiz y la equis:
+                    llevaba `text-muted-foreground` y los otros dos heredan la
+                    tinta de la página, así que la papelera salía más apagada y
+                    los tres iconos de una misma fila tenían dos pesos.
+                    Apagar uno de tres no dice nada: dice que ese está medio
+                    deshabilitado.
+
+                    Lo que sí cambia es el HOVER, y es la única excepción:
+                    borrar es lo único de esta fila que no se puede deshacer, y
+                    el rojo al pasar por encima es la última señal antes de la
+                    confirmación.
+                  */
+                  className="hover:bg-destructive/10 hover:text-destructive"
                 >
                   <Trash2 className="size-4" aria-hidden="true" />
                 </Button>
@@ -586,7 +597,6 @@ export function MovimientoModal({
                     <Campo etiqueta="Valor" id="mov-valor">
                       <Input
                         id="mov-valor"
-                        ref={primerCampo}
                         // `inputMode` numérico abre el teclado de números en el
                         // teléfono; `type=number` traería flechitas y rechazaría
                         // la coma decimal que se usa en Colombia.

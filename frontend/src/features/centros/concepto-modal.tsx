@@ -7,17 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Campo } from '@/components/ui/campo';
 import { Modal } from '@/components/ui/modal';
 import { ApiClientError } from '@/lib/api-client';
-import { Confirmacion } from '@/components/ui/confirmacion';
 import {
   useActualizarCategoria,
   useCategories,
   useCrearCategoria,
-  useEliminarCategoria,
   useUnificarCategoria,
 } from '@/lib/queries';
 import type { Category } from '@coco/types';
 import { Bloque } from '@/components/ui/bloque';
 import { PieDeModal } from '@/components/ui/modal-partes';
+import { ConfirmarBorrado } from '@/features/centros/confirmar-borrado';
 
 /**
  * Crear o renombrar un concepto, y decir si se paga cada cierto tiempo.
@@ -47,7 +46,6 @@ export function ConceptoModal({
   const crear = useCrearCategoria();
   const actualizar = useActualizarCategoria();
   const unificar = useUnificarCategoria();
-  const archivar = useEliminarCategoria();
   const categorias = useCategories();
 
   const [nombre, setNombre] = useState('');
@@ -168,7 +166,6 @@ export function ConceptoModal({
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Celsia (Energía), Claro Móvil…"
               required
-              autoFocus
             />
           </Campo>
 
@@ -230,25 +227,14 @@ export function ConceptoModal({
       </Modal>
 
       {concepto && (
-        <Confirmacion
+        <ConfirmarBorrado
+          categoria={concepto}
+          arbol={categorias.data ?? []}
           abierta={confirmando}
-          titulo={`¿Eliminar “${concepto.name}”?`}
-          peligrosa
-          etiquetaConfirmar="Eliminar"
-          ocupada={archivar.isPending}
-          onCancelar={() => setConfirmando(false)}
-          onConfirmar={() =>
-            archivar.mutate(concepto.id, {
-              onSuccess: () => {
-                setConfirmando(false);
-                onCerrar();
-              },
-            })
-          }
-        >
-          Se borra y no se puede deshacer. Si tiene movimientos, el sistema se
-          niega: no se elimina nada que deje filas sin clasificar.
-        </Confirmacion>
+          onCerrar={() => setConfirmando(false)}
+          // Sin el concepto, esta ficha no tiene de qué hablar.
+          onEliminada={onCerrar}
+        />
       )}
     </>
   );

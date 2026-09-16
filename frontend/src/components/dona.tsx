@@ -30,7 +30,92 @@ const RADIO = 68;
 const GROSOR = 26;
 const LADO = (RADIO + GROSOR / 2) * 2 + 4;
 const CENTRO = LADO / 2;
-const VUELTA = 2 * Math.PI * RADIO;
+/** El perímetro del aro. Es la unidad en la que se miden los guiones. */
+export const VUELTA = 2 * Math.PI * RADIO;
+
+export interface ArcoDeLaDona extends PorcionDeDona {
+  color: string;
+  fraccion: number;
+  porcentaje: number;
+  /** Largo del guion, en unidades de perímetro. */
+  largo: number;
+  /** Desplazamiento del patrón. Negativo: el guion se corre hacia adelante. */
+  desfase: number;
+}
+
+/**
+ * Los arcos de la dona, en orden de pintado.
+ *
+ * Es una función aparte y no un cálculo dentro del componente porque es
+ * geometría: se puede probar con números, y lo que hace falta comprobar son
+ * invariantes que a ojo no se ven —que el período del patrón siga siendo la
+ * vuelta entera, que una porción de cero no dibuje nada, que nada se pase de
+ * una vuelta—. Es la misma razón por la que las celdas del mes y los números
+ * del paginador viven fuera de sus componentes.
+ *
+ * ── Todas las porciones, sin agrupar el final en un "Otros" ────────────────
+ * Agrupar parecía razonable hasta que se vio en pantalla: "Otros (1)" es un
+ * nombre inventado para UNA categoría que sí existe y sí tiene nombre, y
+ * además no se podía pulsar —no hay ninguna categoría a la que bajar—, así
+ * que era la única fila de la lista que no filtraba nada.
+ *
+ * ── El total manda sobre la suma de las porciones ──────────────────────────
+ * Si hay gasto sin clasificar, el aro queda con un HUECO en vez de repartirlo
+ * entre las demás. Un anillo cerrado diría que todo el gasto está en estas
+ * categorías, y no lo está.
+ *
+ * ── El solape que tapa la costura ──────────────────────────────────────────
+ * Cada porción se pinta como su propio círculo con su patrón de guiones, y el
+ * trazo tiene el tope PLANO. Donde una acaba y la siguiente empieza, las dos
+ * se tocan en el mismo punto exacto: ningún trazo cubre ese píxel entero, así
+ * que el suavizado deja pasar el aro de fondo y aparece un escalón oscuro
+ * cruzando el anillo. Con 26px de grosor sobre 68 de radio, ese escalón mide
+ * lo bastante como para parecer parte del dibujo.
+ *
+ * Así que cada arco arranca un pelo ANTES de donde le toca y se mete por
+ * debajo del que tiene delante. Hacia atrás y no hacia adelante por el orden
+ * de pintado: los arcos se dibujan en orden, así que el siguiente tapa el
+ * borde del anterior. Hacia adelante, el ÚLTIMO taparía el arranque del
+ * primero —que ya está pintado— y se comería su primer grado.
+ *
+ * 0.75 de unidad sobre un perímetro de 427: seis centésimas de vuelta. Tapa la
+ * costura y no llega a mover ninguna porción un píxel.
+ */
+export function arcosDeLaDona(porciones: PorcionDeDona[], total: number): ArcoDeLaDona[] {
+  const segmentos = [...porciones]
+    .sort((a, b) => b.valor - a.valor)
+    .map((p, i) => ({ ...p, color: PALETA[i % PALETA.length] }));
+
+  const base = total > 0 ? total : segmentos.reduce((s, p) => s + p.valor, 0) || 1;
+  const SOLAPE = segmentos.length > 1 ? 0.75 : 0;
+
+  let recorrido = 0;
+
+  return segmentos.map((seg) => {
+    const fraccion = seg.valor / base;
+    const desde = recorrido;
+    recorrido += fraccion;
+
+    // Una porción sin valor no se solapa: su arco mide cero, y el solape lo
+    // convertiría en una marquita visible de algo que no está.
+    const nominal = fraccion * VUELTA;
+    const solape = nominal > 0 ? SOLAPE : 0;
+    // Y nunca más de una vuelta: un `strokeDasharray` con el hueco en negativo
+    // es inválido, y el navegador que lo rechaza deja el aro entero pintado.
+    const largo = Math.min(VUELTA, nominal + solape);
+
+    return {
+      ...seg,
+      fraccion,
+      porcentaje: Math.round(fraccion * 100),
+      largo,
+      // El período del patrón sigue siendo la vuelta entera —el hueco se
+      // encoge lo mismo que crece el guion—, así que el arco no se repite
+      // desplazado.
+      desfase: -desde * VUELTA + solape,
+    };
+  });
+}
 
 export interface PorcionDeDona {
   id: number | null;
@@ -92,36 +177,7 @@ export function Dona({
     );
   }, [activa]);
 
-  /*
-    Todas las porciones, sin agrupar el final en un "Otros".
-
-    Agrupar parecía razonable hasta que se vio en pantalla: "Otros (1)" es un
-    nombre inventado para UNA categoría que sí existe y sí tiene nombre, y
-    además no se podía pulsar —no hay ninguna categoría a la que bajar—, así
-    que era la única fila de la lista que no filtraba nada.
-  */
-  const segmentos = [...porciones]
-    .sort((a, b) => b.valor - a.valor)
-    .map((p, i) => ({ ...p, color: PALETA[i % PALETA.length] }));
-
-  // El total manda sobre la suma de las porciones: si hay gasto sin clasificar,
-  // el aro queda con un hueco en vez de repartirlo entre las demás.
-  const base = total > 0 ? total : segmentos.reduce((s, p) => s + p.valor, 0) || 1;
-
-  let recorrido = 0;
-  const trazos = segmentos.map((seg) => {
-    const fraccion = seg.valor / base;
-    const desde = recorrido;
-    recorrido += fraccion;
-
-    return {
-      ...seg,
-      fraccion,
-      porcentaje: Math.round(fraccion * 100),
-      largo: fraccion * VUELTA,
-      desfase: -desde * VUELTA,
-    };
-  });
+  const trazos = arcosDeLaDona(porciones, total);
 
   function seguir(e: React.PointerEvent): void {
     const r = caja.current?.getBoundingClientRect();

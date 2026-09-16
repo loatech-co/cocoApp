@@ -19,6 +19,22 @@ import { cn } from '@/lib/utils';
  * Porque ahí es donde llega el pulgar. Un panel centrado con los botones a
  * media pantalla obliga a cambiar de mano para guardar.
  *
+ * ── Por qué NO enfoca su primer campo ───────────────────────────────────────
+ * Porque abrir una ficha no es empezar a escribir en ella. El primer campo
+ * enfocado y resaltado dice «escribe aquí» cuando lo que uno viene a hacer casi
+ * siempre es LEER lo que hay —de qué movimiento se trata, qué valor tiene— y
+ * corregir un campo concreto, que rara vez es el primero. Y con la etiqueta
+ * flotante es peor: el campo enfocado sube su etiqueta y enseña su marcador,
+ * así que un formulario vacío parece uno a medio llenar.
+ *
+ * Donde SÍ se enfoca es en un campo que aparece porque alguien lo pidió: la
+ * búsqueda que sale al pulsar la lupa, el «Agregar concepto» que sale al pulsar
+ * su botón. Ahí el foco no es un añadido, es la segunda mitad de ese clic; sin
+ * él habría que pulsar y luego apuntar al campo que acaba de aparecer.
+ *
+ * La confirmación es el otro caso aparte, y enfoca CANCELAR a propósito: quien
+ * llega con Enter puesto no quiso borrar nada, venía de pulsar otra cosa.
+ *
  * ── Por qué la cabecera NO se desplaza ──────────────────────────────────────
  * El desplazamiento estaba en el panel entero, así que en una ficha larga el
  * título y la equis se iban por arriba: a mitad de un formulario no quedaba

@@ -6,6 +6,7 @@ import {
   Lock,
   LockOpen,
   Loader2,
+  Pencil,
   Plus,
   Repeat,
   Trash2,
@@ -14,8 +15,8 @@ import {
 import { useState } from 'react';
 
 import { Menu, MenuOpcion } from '@/components/menu';
-import { Confirmacion } from '@/components/ui/confirmacion';
-import { CentroModal } from '@/features/centros/centro-modal';
+import { CategoriaModal } from '@/features/centros/categoria-modal';
+import { ConfirmarBorrado } from '@/features/centros/confirmar-borrado';
 import { ConceptoModal } from '@/features/centros/concepto-modal';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/badge';
@@ -27,7 +28,6 @@ import {
   useActualizarCategoria,
   useCategories,
   useCrearCategoria,
-  useEliminarCategoria,
 } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
@@ -111,10 +111,10 @@ export function CentrosPage() {
       )}
 
       {arbol.map((centro) => (
-        <Centro key={centro.id} centro={centro} />
+        <Centro key={centro.id} centro={centro} arbol={arbol} />
       ))}
 
-      <CentroModal abierta={creando} onCerrar={() => setCreando(false)} />
+      <CategoriaModal nivel="centro" abierta={creando} onCerrar={() => setCreando(false)} />
     </div>
   );
 }
@@ -200,10 +200,10 @@ function Nivel({
   );
 }
 
-function Centro({ centro }: { centro: Category }) {
+function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
   const [abierto, setAbierto] = useState(true);
   const [confirmando, setConfirmando] = useState(false);
-  const eliminar = useEliminarCategoria();
+  const [editando, setEditando] = useState(false);
   const actualizar = useActualizarCategoria();
   const grupos = centro.children ?? [];
   const conceptos = grupos.reduce((n, g) => n + (g.children?.length ?? 0), 0);
@@ -270,8 +270,22 @@ function Centro({ centro }: { centro: Category }) {
           >
             {(cerrar) => (
               <>
+                {/* Renombrar. No existía por ningún camino: un centro con el
+                    nombre mal escrito había que borrarlo entero —con sus
+                    grupos y sus conceptos— y volver a armarlo. */}
+                <MenuOpcion
+                  Icono={Pencil}
+                  onClick={() => {
+                    cerrar();
+                    setEditando(true);
+                  }}
+                >
+                  Editar
+                </MenuOpcion>
+
                 {/* Poder cambiarlo después, no solo al crearlo: los centros que
-                    ya existían nacieron antes de que esto existiera. */}
+                    ya existían nacieron antes de que esto existiera. Se queda
+                    aquí además de en la ficha porque es de un solo golpe. */}
                 <MenuOpcion
                   Icono={centro.estatico ? LockOpen : Lock}
                   onClick={() => {
@@ -299,26 +313,25 @@ function Centro({ centro }: { centro: Category }) {
           </Menu>
         </div>
 
-        <Confirmacion
+        <ConfirmarBorrado
+          categoria={centro}
+          arbol={arbol}
           abierta={confirmando}
-          titulo={`¿Eliminar “${centro.name}”?`}
-          peligrosa
-          etiquetaConfirmar="Eliminar"
-          ocupada={eliminar.isPending}
-          onCancelar={() => setConfirmando(false)}
-          onConfirmar={() =>
-            eliminar.mutate(centro.id, { onSuccess: () => setConfirmando(false) })
-          }
-        >
-          Se borra y no se puede deshacer. Si tiene movimientos, el sistema se
-          niega: no se elimina nada que deje filas sin clasificar.
-        </Confirmacion>
+          onCerrar={() => setConfirmando(false)}
+        />
+
+        <CategoriaModal
+          nivel="centro"
+          categoria={editando ? centro : null}
+          abierta={editando}
+          onCerrar={() => setEditando(false)}
+        />
 
         {abierto && (
           <div className="border-t border-border p-4 sm:p-6">
             <div className="flex flex-col gap-4">
               {grupos.map((grupo) => (
-                <Grupo key={grupo.id} grupo={grupo} />
+                <Grupo key={grupo.id} grupo={grupo} arbol={arbol} />
               ))}
 
               {grupos.length === 0 && (
@@ -340,11 +353,11 @@ function Centro({ centro }: { centro: Category }) {
   );
 }
 
-function Grupo({ grupo }: { grupo: Category }) {
+function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
   const [editando, setEditando] = useState<Category | null>(null);
+  const [renombrando, setRenombrando] = useState(false);
   const [creando, setCreando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
-  const eliminar = useEliminarCategoria();
   const conceptos = grupo.children ?? [];
 
   return (
@@ -361,16 +374,30 @@ function Grupo({ grupo }: { grupo: Category }) {
           variante="ghost"
         >
           {(cerrar) => (
-            <MenuOpcion
-              Icono={Trash2}
-              peligro
-              onClick={() => {
-                cerrar();
-                setConfirmando(true);
-              }}
-            >
-              Eliminar
-            </MenuOpcion>
+            <>
+              {/* Renombrar un grupo no existía por ningún camino, igual que en
+                  el centro: la única salida era borrarlo con sus conceptos
+                  dentro y volver a escribirlos. */}
+              <MenuOpcion
+                Icono={Pencil}
+                onClick={() => {
+                  cerrar();
+                  setRenombrando(true);
+                }}
+              >
+                Editar
+              </MenuOpcion>
+              <MenuOpcion
+                Icono={Trash2}
+                peligro
+                onClick={() => {
+                  cerrar();
+                  setConfirmando(true);
+                }}
+              >
+                Eliminar
+              </MenuOpcion>
+            </>
           )}
         </Menu>
       </div>
@@ -412,20 +439,19 @@ function Grupo({ grupo }: { grupo: Category }) {
         </Button>
       </div>
 
-      <Confirmacion
+      <ConfirmarBorrado
+        categoria={grupo}
+        arbol={arbol}
         abierta={confirmando}
-        titulo={`¿Eliminar “${grupo.name}”?`}
-        peligrosa
-        etiquetaConfirmar="Eliminar"
-        ocupada={eliminar.isPending}
-        onCancelar={() => setConfirmando(false)}
-        onConfirmar={() =>
-          eliminar.mutate(grupo.id, { onSuccess: () => setConfirmando(false) })
-        }
-      >
-        Se borra y no se puede deshacer. Si tiene movimientos, el sistema se
-        niega: no se elimina nada que deje filas sin clasificar.
-      </Confirmacion>
+        onCerrar={() => setConfirmando(false)}
+      />
+
+      <CategoriaModal
+        nivel="grupo"
+        categoria={renombrando ? grupo : null}
+        abierta={renombrando}
+        onCerrar={() => setRenombrando(false)}
+      />
 
       <ConceptoModal
         abierta={editando !== null}
