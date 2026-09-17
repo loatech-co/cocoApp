@@ -133,13 +133,36 @@ export class SupabaseAuthService {
    * una sesión, cuando aquí toda cuenta nueva nace pendiente de aprobación y
    * no debe poder entrar todavía.
    */
+  /**
+   * Devuelve el `id` de Supabase, o `null` si ese correo YA estaba registrado.
+   *
+   * ── El `null` significa una cosa y solo una ─────────────────────────────
+   * Quien llama traduce ese `null` a «tu solicitud quedó pendiente» sin crear
+   * nada, porque para un correo que ya existe eso es justo lo correcto: no se
+   * confirma ni se desmiente que la cuenta esté, y el usuario legítimo espera
+   * igual que esperaría.
+   *
+   * Lo que NO puede es significar «pasó algo raro». Antes cualquier 422 volvía
+   * como `null`, y GoTrue contesta 422 a varias cosas distintas: el correo ya
+   * registrado, sí, pero también una contraseña que no pasa SU política —que
+   * es otra que la nuestra—, un correo con formato inválido y los registros
+   * deshabilitados en el proyecto. En todos esos casos la solicitud se perdía
+   * en silencio: quien la mandaba leía «Recibimos tu solicitud», no se creaba
+   * ninguna fila, no se escribía nada en la bitácora, y el administrador no
+   * tenía nada que aprobar ni forma de enterarse. Si la política de Supabase
+   * era más estricta que la nuestra, eso les pasaba a TODOS.
+   *
+   * Ahora solo el correo repetido vuelve como `null`. Lo demás revienta con
+   * 500, que es lo que es: quien solicita ve que algo falló y puede reintentar
+   * o avisar, y el registro del servidor dice qué contestó Supabase.
+   */
   async crearUsuario(email: string, password: string): Promise<string | null> {
     const respuesta = await this.llamar('POST', '/admin/users', {
       cuerpo: { email, password, email_confirm: true },
       clave: this.serviceKey,
     });
 
-    if (respuesta.estado === 422 || respuesta.estado === 409) return null;
+    if (esCorreoRepetido(respuesta.estado, respuesta.datos)) return null;
     if (respuesta.estado >= 400) this.reventar(respuesta, 'crear el usuario');
 
     const id = respuesta.datos?.id;
@@ -250,6 +273,46 @@ export interface SesionDeSupabase {
 interface Respuesta {
   estado: number;
   datos: Record<string, unknown> | null;
+}
+
+/**
+ * ¿Esta respuesta de GoTrue dice «ese correo ya está registrado»?
+ *
+ * ── Por qué no basta con mirar el código de estado ──────────────────────────
+ * Porque 422 no identifica nada por sí solo. GoTrue lo usa para el correo
+ * repetido, para una contraseña que no pasa su política, para un correo con
+ * formato inválido y para los registros deshabilitados. Tratarlos a todos
+ * igual era perder solicitudes sin dejar rastro.
+ *
+ * ── Qué se mira, y en este orden ────────────────────────────────────────────
+ * 1. `409`, que es el conflicto de toda la vida y no admite otra lectura.
+ * 2. `error_code` o `code`, que es lo que GoTrue trae desde 2024 y es dato,
+ *    no prosa: `email_exists` (crear) y `user_already_exists` (invitar).
+ * 3. El texto del mensaje, para las versiones anteriores, que solo mandaban
+ *    `msg`. Va el ÚLTIMO a propósito: leer prosa para decidir es frágil —una
+ *    traducción o una reescritura de GoTrue la rompe— y por eso es el
+ *    respaldo y no el criterio.
+ *
+ * Es una función suelta y exportada para poder probarla con las respuestas de
+ * verdad, sin levantar el servicio ni tocar la red.
+ */
+export function esCorreoRepetido(estado: number, datos: Record<string, unknown> | null): boolean {
+  if (estado === 409) return true;
+  if (estado !== 422 && estado !== 400) return false;
+
+  const codigo = String(datos?.error_code ?? datos?.code ?? '').toLowerCase();
+  if (codigo === 'email_exists' || codigo === 'user_already_exists') return true;
+
+  // Solo se consulta el texto cuando no vino código: con código, el código
+  // manda, y un `msg` que hable de otra cosa no puede contradecirlo.
+  if (codigo !== '' && codigo !== '422' && codigo !== '400') return false;
+
+  const mensaje = String(datos?.msg ?? datos?.message ?? '').toLowerCase();
+  return (
+    mensaje.includes('already been registered') ||
+    mensaje.includes('already registered') ||
+    mensaje.includes('already exists')
+  );
 }
 
 function exigir(config: ConfigService, clave: string): string {
