@@ -159,7 +159,30 @@ export class SoportesService {
     let orden = (ultimo._max.orden ?? 0) + 1;
 
     for (const archivo of archivos) {
-      const { contenido, mime, extension } = await optimizar(archivo.buffer, archivo.mimetype);
+      /*
+        Un archivo que se acepta por su tipo pero no se puede ABRIR.
+
+        El caso real es el HEIC del iPhone: está en `TIPOS_DE_ENTRADA` porque
+        es un formato de imagen legítimo, pero la librería que las procesa solo
+        lo entiende si se compiló con soporte para él —y casi nunca lo está,
+        porque va aparte por licencia—. Al reventar, lo que llegaba a la
+        pantalla era el 500 genérico: «Ocurrió un error inesperado», que no
+        dice ni qué archivo fue ni que el problema es el formato.
+
+        Es una limitación del servidor, no un fallo del sistema, así que se
+        contesta como lo que es: este archivo no se puede procesar, y se nombra.
+      */
+      const optimizado = await optimizar(archivo.buffer, archivo.mimetype).catch(
+        (causa: unknown) => {
+          throw new UnsupportedMediaTypeException(
+            `No se pudo procesar “${archivo.originalname}”: este servidor no sabe abrir ese formato. ` +
+              `Vuelve a intentarlo con un JPG, un PNG o un PDF. (${
+                causa instanceof Error ? causa.message : 'error al procesar la imagen'
+              })`,
+          );
+        },
+      );
+      const { contenido, mime, extension } = optimizado;
       const huella = huellaDe(contenido);
 
       // Reintentar la misma subida no duplica: el único de (movimiento,

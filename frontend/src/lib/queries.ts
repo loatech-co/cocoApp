@@ -10,6 +10,7 @@ import type {
 } from '@coco/types';
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { apiFetch, apiSubir } from './api-client';
+import { encogerSoportes } from './encoger-soporte';
 
 /**
  * Claves de caché.
@@ -58,7 +59,11 @@ export function useSubirSoportes(transactionId: number) {
       onProgreso?: (fraccion: number) => void;
     }): Promise<Soporte[]> => {
       const datos = new FormData();
-      for (const archivo of archivos) datos.append('archivos', archivo);
+      // Encogidas antes de viajar: una foto de teléfono son cuatro megas de
+      // los que el servidor se queda con 1100px de ancho. El porqué largo
+      // —incluido el HEIC del iPhone, que allá no se puede abrir— está en
+      // `lib/encoger-soporte.ts`.
+      for (const archivo of await encogerSoportes(archivos)) datos.append('archivos', archivo);
       return apiSubir<Soporte[]>(`/transactions/${transactionId}/soportes`, datos, onProgreso);
     },
     // Se escribe la respuesta en la caché en vez de invalidarla: el servidor
