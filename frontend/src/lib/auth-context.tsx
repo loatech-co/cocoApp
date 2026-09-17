@@ -1,5 +1,5 @@
 import type { PerfilPublico } from '@coco/types';
-import { createContext, use, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { createContext, use, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 
 import * as sesion from './session';
@@ -9,7 +9,36 @@ interface AuthState {
   /** `true` mientras se intenta restaurar la sesión desde la cookie de refresh.
    *  Sin esto, la app parpadearía mostrando el login a alguien ya autenticado. */
   cargando: boolean;
+  /**
+   * Si esta pantalla se dibuja como la de un administrador.
+   *
+   * Es el EFECTIVO, no el rol: un admin que encendió la vista de usuario lo
+   * tiene en `false`. Lo lee todo el que decide qué enseñar —el riel, la hoja
+   * de la cuenta, `RequireAdmin`— y por eso la vista funciona sin que ninguno
+   * de ellos sepa que existe.
+   */
   esAdmin: boolean;
+  /** El rol de verdad. Solo para lo que tiene que sobrevivir a la vista. */
+  esAdminDeVerdad: boolean;
+  viendoComoUsuario: boolean;
+  /**
+   * Enciende o apaga la vista de usuario.
+   *
+   * ── Qué es y qué NO es ──────────────────────────────────────────────────
+   * Es una forma de VER la aplicación como la ve quien no administra nada:
+   * sin el grupo de Administración en el riel, sin la insignia en Mi cuenta,
+   * con las pantallas de administración cerradas. Sirve para revisar lo que
+   * recibe alguien a quien se acaba de aprobar la cuenta.
+   *
+   * NO es un cambio de permisos. El token que viaja sigue siendo el de un
+   * administrador y la API le sigue contestando como a tal: lo que cambia es
+   * lo que esta pantalla ofrece, no lo que el servidor permite. Quien decide
+   * de verdad es el `RolesGuard`, como siempre.
+   *
+   * Tampoco es entrar como OTRA persona: no hay segunda sesión ni otro
+   * usuario. Es la misma cuenta, con sus mismos movimientos, sin el panel.
+   */
+  verComoUsuario: (valor: boolean) => void;
   entrar: (email: string, password: string) => Promise<void>;
   registrarse: (
     email: string,
@@ -37,6 +66,32 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const estado = useSyncExternalStore(sesion.suscribirse, sesion.estadoActual);
 
+  /*
+    ── La vista de usuario vive en memoria, y se olvida al recargar ──────────
+    Como los atajos, y por el mismo motivo: es estado de ESTA pestaña y de este
+    momento, no una preferencia. Guardarla tendría además un riesgo propio —un
+    administrador que la enciende, cierra y vuelve dentro de tres días se
+    encuentra la aplicación sin panel y sin recordar por qué—, y la salida de
+    ese lío sería justo la que no se le ocurre buscar.
+
+    Recargar la apaga. Es la red de seguridad de un modo que quita cosas de la
+    pantalla: nunca se puede quedar encendido de una forma de la que no se sepa
+    salir.
+  */
+  const [viendoComoUsuario, setViendoComoUsuario] = useState(false);
+  const esAdminDeVerdad = estado.usuario?.role === 'admin';
+
+  /*
+    Dejar de ser admin la apaga sola.
+
+    Pasa al cerrar sesión y volver a entrar con otra cuenta, y al quitarse el
+    rol a uno mismo. Sin esto quedaría encendida para alguien que ya no tiene
+    dónde apagarla: el interruptor solo se le enseña a un administrador.
+  */
+  useEffect(() => {
+    if (!esAdminDeVerdad) setViendoComoUsuario(false);
+  }, [esAdminDeVerdad]);
+
   useEffect(() => {
     // Un único intento al arrancar: si hay cookie de refresh viva, la sesión
     // vuelve sola; si no, `cargando` pasa a false y se muestra el login.
@@ -47,14 +102,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       usuario: estado.usuario,
       cargando: estado.cargando,
-      esAdmin: estado.usuario?.role === 'admin',
+      esAdmin: esAdminDeVerdad && !viendoComoUsuario,
+      esAdminDeVerdad,
+      viendoComoUsuario,
+      verComoUsuario: setViendoComoUsuario,
       entrar: sesion.entrar,
       registrarse: sesion.registrarse,
       salir: sesion.salir,
       salirDeTodosLosDispositivos: sesion.salirDeTodosLosDispositivos,
       cambiarContrasena: sesion.cambiarContrasena,
     }),
-    [estado],
+    [estado, esAdminDeVerdad, viendoComoUsuario],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

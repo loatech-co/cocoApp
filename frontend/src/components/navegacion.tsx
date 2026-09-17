@@ -1,8 +1,8 @@
 import {
+  Eye,
   LayoutDashboard,
   LogOut,
   ScrollText,
-  ScanLine,
   ShieldCheck,
   Tags,
   UserCog,
@@ -69,7 +69,26 @@ export const SECCIONES: readonly Seccion[] = [
   // Para quien no lleva cuentas, este enlace no existe. Ni oculto con CSS ni
   // deshabilitado: ausente.
   { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false, requiere: 'cuentas' },
-  { to: '/escanear', label: 'Escanear', Icono: ScanLine, exact: false },
+  /*
+    ── Centros de costos es de TODOS, no de administración ──────────────────
+    Estuvo bajo «Administración», con este argumento: se configura una vez y
+    casi no se toca, así que no es una sección del día a día.
+
+    El argumento se cayó cuando los centros de costos pasaron a ser de cada
+    cuenta. Antes parecían estructura compartida —algo que alguien deja puesto
+    para los demás—; ahora cada cuenta tiene la suya, nace con una plantilla y
+    lo primero que va a querer hacer es ajustarla: renombrar lo que no le
+    sirve, agregar sus conceptos. Esconderlo a quien no es admin dejaba a esa
+    persona sin ninguna forma de llegar a su propio árbol desde el riel.
+
+    Y nunca estuvo protegido de verdad: `/centros-de-costos` no pasa por
+    `RequireAdmin`, así que cualquiera podía abrirlo escribiendo la dirección.
+    Lo único que hacía el menú era no decir que existía.
+
+    Va el último de los tres porque sigue siendo lo que menos se visita: se
+    entra a mirar el resumen, no a ordenar la taxonomía.
+  */
+  { to: '/centros-de-costos', label: 'Centros de costos', Icono: Tags, exact: false },
 ];
 
 /**
@@ -78,12 +97,11 @@ export const SECCIONES: readonly Seccion[] = [
  * No se muestran ocultos con CSS ni "deshabilitados": si no eres admin, estos
  * enlaces no existen en el DOM. Aun así, quien decide de verdad es el
  * RolesGuard del backend — esto es presentación, no control de acceso.
+ *
+ * Quedan las dos que administran a OTRAS personas, que es lo que hace que un
+ * administrador lo sea. Lo que administra lo propio no pertenece aquí.
  */
 export const SECCIONES_DE_ADMIN: readonly Seccion[] = [
-  // Los centros de costos se configuran una vez y casi no se tocan: no es una
-  // sección del día a día como el dashboard o los movimientos, es de las de
-  // dejar la casa en orden. Por eso baja aquí.
-  { to: '/centros-de-costos', label: 'Centros de costos', Icono: Tags, exact: false },
   // 'Usuarios', no 'Cuentas': en esta misma barra 'Cuentas' ya significa
   // tarjetas y ahorros. Dos cosas distintas con el mismo nombre a diez píxeles
   // de distancia.
@@ -150,11 +168,25 @@ export function EnlaceDeSeccion({
           // lista de nueve se recorre con el pulgar.
           'movil:min-h-[48px]',
           plegada ? 'justify-center px-0' : 'px-3',
-          // ── Dónde estoy y qué estoy señalando no pueden pintarse igual ──
-          // Lo activo y el paso del cursor compartían fondo —`sidebar-hover`
-          // los dos— y se distinguían solo por el color de la letra: al pasar
-          // por encima de la sección en la que uno ya está no cambiaba nada, y
-          // al pasar por cualquier otra parecía que se había navegado.
+          // ── Solo lo ELEGIDO lleva fondo ─────────────────────────────────
+          // El paso del cursor no pinta ninguno. Llevaba `sidebar-hover`, que
+          // en oscuro es un verde #1e3b30, y en una columna de cuatro filas
+          // eso es un rectángulo verde saltando de una a otra con el ratón:
+          // pesa tanto como el sitio donde uno está y compite con él.
+          //
+          // Un fondo es para decir «aquí estás», que es un estado y dura. Un
+          // hover dura lo que el cursor tarda en pasar, y para eso basta lo
+          // más barato que hay: la letra y su icono se ACLARAN, de
+          // `sidebar-muted` a `sidebar-foreground`. No a blanco puro —#e8edeb,
+          // no #fff— porque el blanco a plena tinta sobre una columna oscura
+          // pesa más que el contenido que se ha venido a leer.
+          //
+          // El icono se aclara solo: va en `currentColor`.
+          //
+          // Antes los dos compartían fondo y se distinguían por el color de la
+          // letra, así que pasar por encima de la sección en la que uno ya
+          // está no cambiaba nada, y pasar por cualquier otra parecía que se
+          // había navegado.
           //
           // Lo activo lleva `--sidebar-active`, que es el color con el que
           // este tema dice "estás aquí".
@@ -177,7 +209,7 @@ export function EnlaceDeSeccion({
           // para eso basta el lavado.
           isActive
             ? 'bg-sidebar-active/15 font-semibold text-sidebar-active'
-            : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground',
+            : 'text-sidebar-muted hover:text-sidebar-foreground',
         )
       }
     >
@@ -197,7 +229,8 @@ export function EnlaceDeSeccion({
  * no tener el mismo correo.
  */
 export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
-  const { usuario, esAdmin, salir } = useAuth();
+  const { usuario, esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } =
+    useAuth();
   const navegar = useNavigate();
   const nombre = usuario?.display_name ?? usuario?.email ?? '?';
 
@@ -209,7 +242,10 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
       direccion="arriba"
       claseCaja="w-full"
       claseDisparador={cn(
-        'flex w-full min-w-0 items-center gap-2.5 rounded-lg py-2 text-left transition-colors hover:bg-sidebar-hover outline-none',
+        // Sin fondo al pasar por encima, como las secciones: es la misma
+        // columna, y un verde apareciendo solo aquí se leería como un control
+        // de otra familia.
+        'flex w-full min-w-0 items-center gap-2.5 rounded-lg py-2 text-left outline-none',
         'movil:min-h-[42px]',
         plegada ? 'justify-center px-0' : 'px-2',
       )}
@@ -275,6 +311,31 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
           )}
 
           <MenuSeparador />
+
+          {/*
+            ── Ver la aplicación como la ve quien no administra nada ────────
+            Se enseña con el rol DE VERDAD, no con el efectivo: encendida la
+            vista, `esAdmin` es falso, y con esa condición el interruptor
+            desaparecería justo cuando hace falta para apagarlo.
+
+            Va aquí abajo, con cerrar sesión y no con las páginas: no lleva a
+            ninguna parte, cambia cómo se ve todo lo demás.
+          */}
+          {esAdminDeVerdad && (
+            <MenuOpcion
+              Icono={viendoComoUsuario ? ShieldCheck : Eye}
+              onClick={() => {
+                cerrar();
+                verComoUsuario(!viendoComoUsuario);
+                // Encendiéndola desde una pantalla de administración, quedarse
+                // sería quedarse mirando un «no tienes acceso». Se sale al
+                // resumen, que es de donde parte quien no administra nada.
+                if (!viendoComoUsuario) navegar('/');
+              }}
+            >
+              {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}
+            </MenuOpcion>
+          )}
 
           <MenuOpcion Icono={LogOut} peligro onClick={() => void salir()}>
             Cerrar sesión

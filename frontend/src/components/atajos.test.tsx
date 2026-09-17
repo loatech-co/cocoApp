@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { LayoutDashboard, ScanLine, ShieldCheck, Tags, UserCog, Wallet } from 'lucide-react';
+import { LayoutDashboard, ScrollText, ShieldCheck, Tags, UserCog, Wallet } from 'lucide-react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -17,7 +17,7 @@ afterEach(() => {
 const BIBLIOTECA: PaginaDeAtajo[] = [
   { ruta: '/', etiqueta: 'Resumen', Icono: LayoutDashboard },
   { ruta: '/cuentas', etiqueta: 'Cuentas', Icono: Wallet },
-  { ruta: '/escanear', etiqueta: 'Escanear', Icono: ScanLine },
+  { ruta: '/administracion/bitacora', etiqueta: 'Bitácora', Icono: ScrollText },
   { ruta: '/centros-de-costos', etiqueta: 'Centros de costos', Icono: Tags },
   { ruta: '/administracion', etiqueta: 'Usuarios', Icono: ShieldCheck },
   { ruta: '/mi-cuenta', etiqueta: 'Mi cuenta', Icono: UserCog },
@@ -32,7 +32,7 @@ const BIBLIOTECA_LARGA: PaginaDeAtajo[] = Array.from({ length: 12 }, (_, i) => (
 
 function Superficie({
   abierto = true,
-  porDefecto = ['/', '/escanear'],
+  porDefecto = ['/', '/administracion/bitacora'],
   biblioteca = BIBLIOTECA,
   onIr = vi.fn(),
 }: {
@@ -62,7 +62,7 @@ describe('Los atajos', () => {
 
     const resumen = screen.getByText('Resumen').closest('a');
     expect(resumen?.getAttribute('href')).toBe('/');
-    expect(screen.getByText('Escanear').closest('a')).toBeTruthy();
+    expect(screen.getByText('Bitácora').closest('a')).toBeTruthy();
     // Lo que no es baldosa no se pinta.
     expect(screen.queryByText('Usuarios')).toBeNull();
   });
@@ -103,7 +103,7 @@ describe('Los atajos', () => {
     fireEvent.click(screen.getByLabelText('Quitar Resumen'));
 
     expect(screen.queryByText('Resumen')).toBeNull();
-    expect(screen.getByText('Escanear')).toBeTruthy();
+    expect(screen.getByText('Bitácora')).toBeTruthy();
   });
 
   it('la lista de páginas enseña solo lo que NO se tiene', () => {
@@ -113,7 +113,7 @@ describe('Los atajos', () => {
 
     // Una fila para una página que ya se tiene solo podría significar
     // "quitar", y quitar es para lo que está el menos.
-    expect(screen.queryByText('Escanear')).toBeNull();
+    expect(screen.queryByText('Bitácora')).toBeNull();
     expect(screen.getByText('Usuarios')).toBeTruthy();
     expect(screen.getByText('Centros de costos')).toBeTruthy();
   });

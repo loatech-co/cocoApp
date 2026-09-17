@@ -1,28 +1,39 @@
-import { Navigate, createBrowserRouter, RouterProvider, useParams } from 'react-router-dom';
+import { Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import { AppShell } from '@/app/app-shell';
 import { AccountsPage } from '@/features/accounts/accounts-page';
 import { BitacoraPage } from '@/features/admin/bitacora-page';
 import { UsuariosPage } from '@/features/admin/usuarios-page';
-import { LoginPage } from '@/features/auth/login-page';
 import { RegisterPage } from '@/features/auth/register-page';
 import { RequireAdmin, RequireAuth } from '@/features/auth/require-auth';
 import { CentrosPage } from '@/features/centros/centros-page';
 import { CuentaPage } from '@/features/cuenta/cuenta-page';
 import { DashboardPage } from '@/features/dashboard/dashboard-page';
-import { ImportarPage } from '@/features/imports/importar-page';
-import { RevisarPage } from '@/features/imports/revisar-page';
 import { TITULO_DE_PAGINA } from '@/components/cabecera-de-pagina';
 
 /**
  * Rutas en español, una por módulo del catálogo.
  *
  * Por ahora solo existen las de la Fase 1 más las de auth y administración.
- * Importar, Presupuestos, Fijos, Deudas, Metas y Reportes se añaden en su fase,
- * cada una como un `feature` propio bajo `src/features/`.
+ * Presupuestos, Fijos, Deudas, Metas y Reportes se añaden en su fase, cada una
+ * como un `feature` propio bajo `src/features/`.
+ *
+ * La de escanear extractos SE FUE, y con ella sus redirecciones: era una
+ * pantalla para cargar un CSV o un PDF de banco y revisar sus filas antes de
+ * guardarlas. Lo que sí se usa —leer UN soporte al registrar un movimiento—
+ * nunca pasó por ahí: vive en `features/transactions/leer-soporte.ts` y sigue
+ * intacto.
  */
 const router = createBrowserRouter([
-  { path: '/entrar', element: <LoginPage /> },
+  /*
+    La dirección vieja de entrar. Sigue viva y redirige: hay marcadores y
+    enlaces guardados apuntando ahí, y romperlos es gratis de evitar.
+
+    El login ya no vive en una ruta propia: lo dibuja `RequireAuth` en el sitio
+    donde se estaba pidiendo entrar, para que la barra de direcciones no se
+    quede en `/entrar` después de cerrar sesión.
+  */
+  { path: '/entrar', element: <Navigate to="/" replace /> },
   { path: '/registro', element: <RegisterPage /> },
   {
     path: '/',
@@ -39,13 +50,6 @@ const router = createBrowserRouter([
       // apuntando a /categorias, y romperlos por un cambio de nombre es gratis
       // de evitar.
       { path: 'categorias', element: <Navigate to="/centros-de-costos" replace /> },
-      { path: 'escanear', element: <ImportarPage /> },
-      { path: 'escanear/:id', element: <RevisarPage /> },
-      // La ruta vieja sigue viva y redirige: un enlace guardado o el historial
-      // del navegador no tienen por qué romperse porque la sección cambió de
-      // nombre.
-      { path: 'importar', element: <Navigate to="/escanear" replace /> },
-      { path: 'importar/:id', element: <RedirigirEscaneo /> },
       { path: 'mi-cuenta', element: <CuentaPage /> },
 
       // Administración. El RequireAdmin es comodidad de navegación; quien
@@ -86,13 +90,3 @@ export function AppRouter() {
   return <RouterProvider router={router} />;
 }
 
-/**
- * La ruta vieja de un escaneo concreto, con su identificador.
- *
- * Existe porque la sección cambió de nombre y un enlace guardado —o el botón
- * de atrás del navegador— no tiene por qué romperse por eso.
- */
-function RedirigirEscaneo() {
-  const { id } = useParams();
-  return <Navigate to={`/escanear/${id ?? ''}`} replace />;
-}

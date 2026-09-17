@@ -1,6 +1,6 @@
-import { KeyRound, LogOut, ScrollText, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { Eye, KeyRound, LogOut, ScrollText, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import type { ComponentType } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { Avatar } from '@/components/navegacion';
 import { FILA_DE_PANEL, PanelInferior } from '@/components/panel-inferior';
@@ -39,7 +39,9 @@ export function PanelDeLaCuenta({
   abierto: boolean;
   onCerrar: () => void;
 }) {
-  const { usuario, esAdmin, salir } = useAuth();
+  const { usuario, esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } =
+    useAuth();
+  const navegar = useNavigate();
   const nombre = usuario?.display_name ?? usuario?.email ?? '?';
 
   return (
@@ -72,9 +74,38 @@ export function PanelDeLaCuenta({
           </Fila>
         )}
 
-        {/* La raya, y no un hueco: salir no es la quinta cosa de una lista de
-            cinco, es la única que no lleva a ninguna página. */}
+        {/* La raya, y no un hueco: lo de abajo no lleva a ninguna página. */}
         <hr className="my-2 border-border" />
+
+        {/*
+          Ver la aplicación como la ve quien no administra nada.
+
+          Se enseña con el rol DE VERDAD y no con el efectivo: encendida la
+          vista, `esAdmin` es falso —para eso está— y con esa condición el
+          interruptor desaparecería justo cuando hace falta para apagarlo.
+        */}
+        {esAdminDeVerdad && (
+          <button
+            type="button"
+            onClick={() => {
+              onCerrar();
+              verComoUsuario(!viendoComoUsuario);
+              // Encendiéndola desde una pantalla de administración, quedarse
+              // sería quedarse mirando un «no tienes acceso».
+              if (!viendoComoUsuario) navegar('/');
+            }}
+            className={FILA_DE_PANEL}
+          >
+            {viendoComoUsuario ? (
+              <ShieldCheck className="size-4 shrink-0 opacity-70" aria-hidden="true" />
+            ) : (
+              <Eye className="size-4 shrink-0 opacity-70" aria-hidden="true" />
+            )}
+            <span className="min-w-0 flex-1 truncate">
+              {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}
+            </span>
+          </button>
+        )}
 
         <button
           type="button"

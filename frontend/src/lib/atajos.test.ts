@@ -23,9 +23,9 @@ afterEach(olvidarAtajos);
 
 describe('El almacén de atajos', () => {
   it('se siembra una sola vez', () => {
-    sembrarAtajos(['/', '/escanear']);
+    sembrarAtajos(['/', '/centros-de-costos']);
     sembrarAtajos(['/otra-cosa']);
-    expect(leerAtajos()).toEqual(['/', '/escanear']);
+    expect(leerAtajos()).toEqual(['/', '/centros-de-costos']);
   });
 
   it('lo que se añade se lee de vuelta', () => {

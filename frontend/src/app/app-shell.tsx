@@ -1,4 +1,4 @@
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Eye, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
@@ -10,7 +10,9 @@ import { EnlaceDeSeccion, MenuDeLaCuenta, useSecciones } from '@/components/nave
 import { PanelDeBusqueda } from '@/components/panel-de-busqueda';
 import { PanelDeLaCuenta } from '@/components/panel-de-la-cuenta';
 import { PanelInferior } from '@/components/panel-inferior';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PilaDeAvisos } from '@/components/ui/aviso';
+import { Button } from '@/components/ui/button';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
@@ -43,6 +45,49 @@ import type { Transaction } from '@coco/types';
  * la propia superficie, porque un bloqueo que dependa de una clase que ponga
  * un script se queda puesto el día que un cierre se olvide de quitarla.
  */
+/**
+ * El recordatorio de que se está mirando como un usuario normal.
+ *
+ * ── Por qué hace falta un cartel ────────────────────────────────────────────
+ * Porque el modo QUITA cosas de la pantalla —el grupo de Administración, la
+ * insignia de Mi cuenta, las dos páginas del panel— y lo que falta no se ve.
+ * Sin esto, un administrador que lo encendiera y volviera media hora después
+ * se encontraría la aplicación sin panel y ninguna pista de por qué: la
+ * conclusión natural es que algo se rompió, no que uno mismo lo apagó.
+ *
+ * Por eso lleva la salida DENTRO, y no solo en el menú del avatar: quien no
+ * recuerda haberlo encendido tampoco va a ir a buscar dónde se apaga.
+ *
+ * ── Y por qué no es rojo ────────────────────────────────────────────────────
+ * Porque no falló nada. Es un estado deliberado y reversible, que es
+ * exactamente lo que dice el tono de aviso del tema.
+ */
+function VistaDeUsuario() {
+  const { viendoComoUsuario, verComoUsuario } = useAuth();
+
+  if (!viendoComoUsuario) return null;
+
+  return (
+    <Alert variant="warning" className="mb-4 items-center">
+      <Eye aria-hidden="true" />
+      <AlertDescription className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <span>
+          Estás viendo Coco como la ve una cuenta sin administración. Tus datos son los mismos.
+        </span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => verComoUsuario(false)}
+        >
+          Volver a administrador
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 export function AppShell() {
   const esMovil = useEsMovil();
   const { usuario } = useAuth();
@@ -160,7 +205,7 @@ export function AppShell() {
                     derecho del icono caiga sobre el canto derecho de las
                     filas. El área de toque sigue midiendo 36.
                   */
-                  className="-mr-[9px] grid size-9 shrink-0 place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
+                  className="-mr-[9px] grid size-9 shrink-0 place-items-center rounded-lg text-sidebar-muted transition-colors hover:text-sidebar-foreground"
                 >
                   <PanelLeftClose className="size-[18px]" aria-hidden="true" />
                 </button>
@@ -174,7 +219,7 @@ export function AppShell() {
               onClick={alternarBarra}
               aria-label="Desplegar la barra lateral"
               title="Desplegar la barra lateral"
-              className="mb-2 grid h-9 w-full place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
+              className="mb-2 grid h-9 w-full place-items-center rounded-lg text-sidebar-muted transition-colors hover:text-sidebar-foreground"
             >
               <PanelLeftOpen className="size-[18px]" aria-hidden="true" />
             </button>
@@ -316,6 +361,7 @@ export function AppShell() {
             'movil:overflow-x-clip movil:pb-[var(--hueco-de-la-barra)]',
           )}
         >
+          <VistaDeUsuario />
           <Outlet />
         </main>
       </div>
