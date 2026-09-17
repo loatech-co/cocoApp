@@ -155,7 +155,7 @@ export function RegisterPage() {
 
             <p className="text-center text-sm text-muted-foreground">
               ¿Ya tienes cuenta?{' '}
-              <Link to="/entrar" className="text-primary underline-offset-4 hover:underline">
+              <Link to="/" className="text-primary underline-offset-4 hover:underline">
                 Iniciar sesión
               </Link>
             </p>
@@ -196,7 +196,7 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
         </Alert>
 
         <Link
-          to="/entrar"
+          to="/"
           className="mt-6 inline-block text-sm text-primary underline-offset-4 hover:underline"
         >
           {lista ? 'Iniciar sesión' : 'Volver a iniciar sesión'}

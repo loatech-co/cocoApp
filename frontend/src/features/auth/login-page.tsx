@@ -1,7 +1,7 @@
 import { Logo } from '@/components/logo';
 import { Loader2, LogIn } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -20,15 +20,23 @@ import { Campo } from '@/components/ui/campo';
  */
 export function LoginPage() {
   const { usuario, cargando, entrar } = useAuth();
-  const location = useLocation() as { state?: { from?: string } };
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
+  /*
+    Con sesión, aquí no hay nada que hacer.
+
+    En la práctica casi nunca se llega: `RequireAuth` deja de dibujar esta
+    página en el mismo render en que aparece la sesión. Se queda por el camino
+    que sí existe —la pestaña que tenía el login abierto mientras se entraba
+    desde otra—, y para que la página valga por sí sola si algún día vuelve a
+    tener ruta propia.
+  */
   if (!cargando && usuario) {
-    return <Navigate to={location.state?.from ?? '/'} replace />;
+    return <Navigate to="/" replace />;
   }
 
   function onSubmit(evento: FormEvent<HTMLFormElement>): void {

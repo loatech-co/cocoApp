@@ -5,6 +5,36 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
+import { LoginPage } from './login-page';
+
+/**
+ * Sin sesión: el login, y la barra de direcciones en el índice.
+ *
+ * ── Por qué ya no hay una ruta a la que ir ──────────────────────────────────
+ * La había —`/entrar`— y el precio era que cerrar sesión dejaba esa dirección
+ * puesta. Quedaba una URL interna a la vista, en la pantalla que más gente
+ * distinta ve, diciendo por dónde se entra a una aplicación privada. Y no
+ * aporta nada: quien cierra sesión no eligió ir a ninguna parte.
+ *
+ * Ahora el login se DIBUJA en el sitio donde se estaba pidiendo entrar, y la
+ * dirección es siempre `/`. Una sola URL pública, la más corta, y nada que
+ * limpiar después de salir.
+ *
+ * ── Lo que se pierde, y se acepta ───────────────────────────────────────────
+ * Volver después de entrar a la página que se había pedido. Se llevaba en el
+ * estado de la navegación a `/entrar`, y sin esa navegación no hay dónde
+ * llevarlo: al dibujarse en el sitio, el login se desmonta en el mismo render
+ * en que aparece la sesión, así que nunca llega a navegar a ningún lado.
+ *
+ * A cambio, quien entra aterriza siempre en el resumen, que es de donde se
+ * parte para todo lo demás.
+ */
+function SinSesion({ enElIndice }: { enElIndice: boolean }) {
+  // En cualquier otra ruta se vuelve al índice primero: si no, la barra de
+  // direcciones se queda en una página que ya no se está viendo —el login
+  // encima de `/administracion`—, que es exactamente lo que se venía a quitar.
+  return enElIndice ? <LoginPage /> : <Navigate to="/" replace />;
+}
 
 /**
  * Guardia de rutas del cliente.
@@ -22,7 +52,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }
 
   if (!usuario) {
-    return <Navigate to="/entrar" replace state={{ from: location.pathname }} />;
+    return <SinSesion enElIndice={location.pathname === '/'} />;
   }
 
   return <>{children}</>;
@@ -44,7 +74,7 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   }
 
   if (!usuario) {
-    return <Navigate to="/entrar" replace state={{ from: location.pathname }} />;
+    return <SinSesion enElIndice={location.pathname === '/'} />;
   }
 
   if (!esAdmin) {
