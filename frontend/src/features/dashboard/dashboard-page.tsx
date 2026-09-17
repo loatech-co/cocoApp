@@ -101,8 +101,8 @@ export function DashboardPage() {
   const ruta =
     filtros.categoryIds.length === 1
       ? (() => {
-          const { centro, grupo, concepto } = rutaSeleccionada(arbol, filtros.categoryIds[0]);
-          return [centro, grupo, concepto].filter((n): n is Category => n !== undefined);
+          const { centro, categoria, concepto } = rutaSeleccionada(arbol, filtros.categoryIds[0]);
+          return [centro, categoria, concepto].filter((n): n is Category => n !== undefined);
         })()
       : [];
 
@@ -178,7 +178,7 @@ export function DashboardPage() {
 
       {dashboard.isPending && (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-24 rounded-lg" />
             ))}
@@ -202,10 +202,18 @@ export function DashboardPage() {
 
       {dashboard.data && (
         <>
-          {/* Cuatro indicadores: de a dos en una tableta y de a cuatro en una
-              pantalla ancha. En tres columnas, el cuarto se quedaba solo en
-              una fila para él. */}
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+          {/*
+            Cuatro indicadores: de a DOS desde el teléfono y de a cuatro en una
+            pantalla ancha. En tres columnas, el cuarto se quedaba solo en una
+            fila para él.
+
+            De a dos y no de a uno, que es lo que había debajo de 640: cuatro
+            tarjetas apiladas son cuatro pantallazos de desplazamiento antes de
+            llegar a la gráfica, y las cifras que hay que comparar —lo que hay
+            que tener contra lo que se lleva gastado— nunca se veían a la vez.
+            En dos columnas caben las cuatro en un golpe de vista.
+          */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
             {/*
               Va PRIMERO, antes de lo gastado, porque se lee antes: cuánto hay
               que tener y después cuánto se lleva gastado.
@@ -494,7 +502,10 @@ function Kpi({
         texto— o el que distingue entre cosas del mismo tipo. Ninguno de los
         dos era el caso.
       */}
-      <CardContent className={cn('p-4 sm:p-6', pronto && 'opacity-60')}>
+      {/* 12 de relleno en el teléfono y no 16: con dos tarjetas por fila, cada
+          una mide unos 170px, y 16 por lado le quitan a la cifra casi un
+          quinto del ancho que le queda. */}
+      <CardContent className={cn('p-3 sm:p-6', pronto && 'opacity-60')}>
         <div className="min-w-0">
           {/* Sin mayúsculas sostenidas ni interletraje abierto. Era el
               rótulo en versalitas del panel de control de siempre, y con la
@@ -517,7 +528,12 @@ function Kpi({
               // `sm:text-3xl` y no unos 28px a mano: 30 es el escalón que
               // sigue a 24 en la escala, y la diferencia con 28 no la nota
               // nadie —la de tener una medida fuera de la escala, sí—.
-              'tabular mt-1 truncate text-2xl font-semibold leading-tight sm:text-3xl ' +
+              //
+              // Y 20 en el teléfono, un escalón por debajo de los 24 que tenía.
+              // Desde que las tarjetas van de a dos, cada una mide media
+              // pantalla: «$1.234.567» a 24px no cabía y se cortaba, y un
+              // indicador con la cifra truncada no indica nada.
+              'tabular mt-1 truncate text-xl font-semibold leading-tight sm:text-3xl ' +
               (pronto
                 ? 'text-muted-foreground'
                 : acento === 'income'
@@ -555,7 +571,7 @@ function Kpi({
 /**
  * En qué se fue, al nivel que corresponda.
  *
- * Cada fila BAJA un nivel al tocarla: de centros a grupos, de grupos a
+ * Cada fila BAJA un nivel al tocarla: de centros a categorías, de categorías a
  * conceptos. Es la forma de responder "¿y dentro de esto, qué?" sin cambiar de
  * pantalla ni perder el rango de fechas.
  */
@@ -632,7 +648,7 @@ function Distribucion({
           </button>
         ) : (
           /* El NOMBRE de a quién pertenecen estas filas, no el nivel al que
-             están. "Por grupo" no dice de qué: los grupos de cuál centro. */
+             están. "Por categoría" no dice de qué: las categorías de cuál centro. */
           <p className="truncate text-xs text-muted-foreground">
             {padre?.name ?? `Por ${nivel}`}
           </p>

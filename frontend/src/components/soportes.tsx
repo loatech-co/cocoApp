@@ -340,7 +340,9 @@ export function PanelDeSubida({
       aria-label="Agregar soportes"
       // Por encima de la ficha, que está en z-50, igual que el pase.
       className={cn(
-        'fixed inset-0 z-[60] flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm',
+        'fixed inset-0 z-[60] flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',
+        // 24 hasta el canto de la pantalla, como todas las fichas del teléfono.
+        'p-6',
         'se-revela sm:items-center sm:p-4',
       )}
       // `onMouseDown` y no `onClick`: con clic, arrastrar desde dentro del
@@ -352,7 +354,7 @@ export function PanelDeSubida({
         className={cn(
           'flex w-full flex-col p-4 sm:max-w-xl sm:p-5',
           SUPERFICIE_FLOTANTE,
-          'emerge rounded-t-lg sm:rounded-lg',
+          'emerge rounded-lg',
         )}
       >
         <Soltar subiendo={subiendo} progreso={progreso} solo onArchivos={onArchivos} />

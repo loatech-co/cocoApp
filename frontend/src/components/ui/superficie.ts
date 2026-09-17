@@ -58,7 +58,7 @@ export const REALCE = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
 
 /**
  * El realce de una superficie GRANDE que responde al cursor: el hueco del
- * próximo grupo, la zona donde se sueltan los soportes, la de la importación.
+ * próximo categoría, la zona donde se sueltan los soportes, la de la importación.
  *
  * ── Un negro al 10 %, y no el acento ────────────────────────────────────────
  * Lo que responde se tiñe con el acento. Aquí no, y es la excepción con más

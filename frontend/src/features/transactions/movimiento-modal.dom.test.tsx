@@ -84,13 +84,13 @@ function abrirFicha(arbol: CategoryTree[]) {
 afterEach(cleanup);
 
 describe('La ficha de un movimiento que se edita', () => {
-  it('llega con su centro de costos, su grupo y su concepto puestos', async () => {
+  it('llega con su centro de costos, su categoría y su concepto puestos', async () => {
     abrirFicha(ARBOL);
 
     // La ficha abre en modo lectura: los campos se desbloquean al pedirlo.
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
 
-    for (const nombre of ['Centro de costos', 'Grupo', 'Concepto']) {
+    for (const nombre of ['Centro de costos', 'Categoría', 'Concepto']) {
       const disparador = screen.getByRole('button', { name: new RegExp(nombre) });
       expect(disparador, `el desplegable de ${nombre}`).toBeDefined();
     }
@@ -281,7 +281,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
       fuente: 'texto-embebido',
       lectura: {
         concepto: 'Celsia (Energía)',
-        grupo: null,
+        categoria: null,
         centro: null,
         valor: 214500,
         fecha: '2026-10-02',

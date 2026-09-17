@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, render } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, cleanup, render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -27,15 +28,26 @@ function alAncho(esMovil: boolean): void {
   })) as unknown as typeof window.matchMedia;
 }
 
+/**
+ * La ficha del (+) consulta las categorías nada más abrirse, así que el
+ * armazón necesita un cliente. Sin red: lo que se comprueba es que la ficha
+ * ESTÁ, no lo que trae dentro.
+ */
 function pintar() {
+  const cliente = new QueryClient({
+    defaultOptions: { queries: { retry: false, queryFn: async () => ({ data: [] }) } },
+  });
+
   return render(
-    <MemoryRouter initialEntries={['/']}>
-      <Routes>
-        <Route path="/" element={<AppShell />}>
-          <Route index element={<p>la página</p>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={cliente}>
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<AppShell />}>
+            <Route index element={<p>la página</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -65,23 +77,38 @@ describe('El armazón por debajo del corte', () => {
     expect(cuerpo.className).toContain('movil:overflow-x-clip');
   });
 
-  it('el menú y los atajos están montados desde el principio, cerrados', () => {
+  it('las tres hojas están montadas desde el principio, cerradas', () => {
     pintar();
 
-    const secciones = document.querySelector('[data-superficie="secciones"]');
-    const panel = document.querySelector('[data-superficie="panel"]');
-
-    expect(secciones?.getAttribute('data-abierta')).toBe('no');
-    expect(panel?.getAttribute('data-abierta')).toBe('no');
+    // Lo que se desliza no se puede reconstruir en cada render: aparecería en
+    // vez de llegar. Atajos, buscar y la cuenta.
+    const hojas = document.querySelectorAll('[data-superficie="panel"]');
+    expect(hojas.length).toBeGreaterThanOrEqual(3);
+    for (const hoja of hojas) {
+      expect(hoja.getAttribute('data-abierta')).toBe('no');
+    }
   });
 
-  it('el botón del menú vive en el techo, que es el borde por el que entra', () => {
+  it('el techo lleva la marca y nada más: no hay hamburguesa', () => {
     const { container } = pintar();
     const techo = container.querySelector('[data-armazon="techo"]')!;
-    expect(techo.querySelector('[aria-label="Abrir el menú"]')).toBeTruthy();
-    // Y no en la barra: cuando el panel se abre, la barra se retira.
-    const barra = document.querySelector('[data-armazon="barra"]')!;
-    expect(barra.querySelector('[aria-label="Abrir el menú"]')).toBeNull();
+
+    // El menú a pantalla completa era la cuarta forma de llegar a las mismas
+    // páginas. Lo del día a día está en la barra, cualquier página en los
+    // atajos y lo de administrar en la hoja del avatar.
+    expect(techo.querySelector('[aria-label="Abrir el menú"]')).toBeNull();
+    expect(techo.querySelector('button')).toBeNull();
+    expect(techo.querySelector('svg')).toBeTruthy();
+  });
+
+  it('el (+) de la barra abre la ficha de un movimiento nuevo', () => {
+    pintar();
+
+    expect(document.querySelector('[aria-label="Nuevo movimiento"]')).toBeNull();
+    act(() => {
+      (document.querySelector('[aria-label="Registrar un gasto"]') as HTMLElement).click();
+    });
+    expect(document.querySelector('[aria-label="Nuevo movimiento"]')).toBeTruthy();
   });
 });
 
@@ -94,7 +121,7 @@ describe('El armazón por encima del corte', () => {
     expect(container.querySelector('aside')).toBeTruthy();
     expect(container.querySelector('[data-armazon="techo"]')).toBeNull();
     expect(document.querySelector('[data-armazon="barra"]')).toBeNull();
-    // Una barra por documento: en el escritorio, ninguna.
-    expect(document.querySelector('[data-superficie="secciones"]')).toBeNull();
+    // Y ninguna hoja: en el escritorio el riel lleva lo que ellas llevan.
+    expect(document.querySelector('[data-superficie="panel"]')).toBeNull();
   });
 });

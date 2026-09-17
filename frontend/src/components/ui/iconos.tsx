@@ -86,7 +86,7 @@ import {
 import { cn } from '@/lib/utils';
 
 /**
- * Los iconos con los que se marca un grupo.
+ * Los iconos con los que se marca una categoría.
  *
  * ── Por qué una tabla y no `lucide[nombre]` ─────────────────────────────────
  * Porque resolver el nombre contra el paquete entero obliga a importarlo
@@ -100,10 +100,10 @@ import { cn } from '@/lib/utils';
  * columna y un icono que se ve o no según quién lo creó.
  *
  * ── Por qué la tabla es más larga que la lista que se ofrece ────────────────
- * Se OFRECEN cincuenta, los que tienen sentido para un grupo de gasto. Pero el
+ * Se OFRECEN cincuenta, los que tienen sentido para una categoría de gasto. Pero el
  * diccionario inicial siembra sesenta y seis nombres distintos, y muchos no
  * están entre esos cincuenta: si la tabla solo tuviera los elegibles, todos
- * esos grupos se quedarían sin su icono el día que alguien abriera esta
+ * esas categorías se quedarían sin su icono el día que alguien abriera esta
  * pantalla. La tabla cubre la unión; el selector, solo lo elegible.
  */
 const POR_NOMBRE: Record<string, LucideIcon> = {
@@ -190,8 +190,8 @@ const POR_NOMBRE: Record<string, LucideIcon> = {
   'zap': Zap,
 };
 
-/** Lo que se ofrece al crear o editar un grupo. */
-export const ICONOS_DE_GRUPO: readonly { nombre: string; etiqueta: string }[] = [
+/** Lo que se ofrece al crear o editar una categoría. */
+export const ICONOS_DE_CATEGORIA: readonly { nombre: string; etiqueta: string }[] = [
   { nombre: 'house', etiqueta: 'Vivienda' },
   { nombre: 'zap', etiqueta: 'Energía' },
   { nombre: 'droplet', etiqueta: 'Agua' },
@@ -249,7 +249,7 @@ export const ICONOS_DE_GRUPO: readonly { nombre: string; etiqueta: string }[] = 
  *
  * Con un nombre que no está en la tabla —uno sembrado hace tiempo, uno escrito
  * a mano en la base— no se pinta NADA en vez de pintar un interrogante: un
- * icono equivocado dice algo falso del grupo, y ninguno no dice nada, que es
+ * icono equivocado dice algo falso dla categoría, y ninguno no dice nada, que es
  * exactamente lo que se sabe.
  */
 export function IconoDeCategoria({

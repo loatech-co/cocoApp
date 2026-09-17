@@ -39,7 +39,7 @@ export class DashboardQueryDto {
   @IsDateString({}, { message: 'La fecha hasta debe tener formato YYYY-MM-DD.' })
   to?: string;
 
-  /** Centro de costos, grupo o concepto. Incluye toda su rama. */
+  /** Centro de costos, categoría o concepto. Incluye toda su rama. */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -109,7 +109,7 @@ export interface DashboardPayload {
   range: { income: string; expense: string; net: string; count: number };
   /**
    * Desglose un nivel POR DEBAJO de lo que se está mirando: sin filtro, por
-   * centro de costos; dentro de un centro, por sus grupos; dentro de un grupo,
+   * centro de costos; dentro de un centro, por sus categorías; dentro de una categoría,
    * por sus conceptos. Es lo que permite ir bajando sin cambiar de pantalla.
    */
   by_category: GastoPorCategoriaPayload[];
@@ -122,7 +122,7 @@ export interface DashboardPayload {
    * arriba —fijos contra variables— ES la respuesta.
    */
   expense_by_center: GastoPorCategoriaPayload[];
-  breakdown_level: 'centro de costos' | 'grupo' | 'concepto';
+  breakdown_level: 'centro de costos' | 'categoría' | 'concepto';
   /**
    * De quién son las filas del desglose.
    *
@@ -207,7 +207,7 @@ export class DashboardService {
     const datosDe = new Map(categorias.map((c) => [c.id.toString(), c]));
 
     // Filtrar por categorías trae TODA su rama: los movimientos cuelgan del
-    // concepto, nunca del centro ni del grupo.
+    // concepto, nunca del centro ni dla categoría.
     const pedidas = [
       ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
       ...idsDeCategorias(query.category_ids),
@@ -215,7 +215,7 @@ export class DashboardService {
     const rama = pedidas.length > 0 ? ramasDe(planas, pedidas) : null;
 
     // La búsqueda también entra por la clasificación: "servicios públicos" trae
-    // todo lo que cuelga de ese grupo aunque ninguna fila lo diga en su texto.
+    // todo lo que cuelga de esa categoría aunque ninguna fila lo diga en su texto.
     const porNombre = query.q
       ? (() => {
           const aguja = query.q.toLowerCase();
@@ -227,7 +227,7 @@ export class DashboardService {
       : [];
 
     // El desglose baja un nivel respecto de lo que se mira: sin filtro se
-    // agrupa por centro; dentro de un centro, por grupo; dentro de un grupo,
+    // agrupa por centro; dentro de un centro, por categoría; dentro de una categoría,
     // por concepto. Dentro de un concepto ya no hay a dónde bajar.
     //
     // Con VARIAS categorías marcadas no hay un "dentro de" único: dos centros
@@ -333,12 +333,12 @@ export class DashboardService {
 
         Antes se frenaba cuando el nivel de abajo no tenía más filas que el de
         arriba, y eso dejaba clavado justo el caso más común: un solo centro de
-        costos con un solo grupo se quedaba enseñando el centro, que es la fila
+        costos con un solo categoría se quedaba enseñando el centro, que es la fila
         que no dice nada. "Costos fijos, 100 %" ya se sabía antes de mirar.
 
         El único motivo para no bajar es que abajo no haya ningún nombre: si
         todo lo de este centro está clasificado en el centro mismo y no en
-        ninguno de sus grupos, bajar cambiaría un nombre de verdad por un
+        ninguno de sus categorías, bajar cambiaría un nombre de verdad por un
         "Sin clasificar" que informa menos.
       */
       const hayNombresAbajo = [...masAbajo.values()].some((f) => f.id !== null);
@@ -379,7 +379,7 @@ export class DashboardService {
 
       Se recalcula el nivel 1 en vez de reutilizar `acumulado` porque ese ya
       pudo haber bajado: cuando solo un centro tiene gasto, sus filas son
-      grupos, y ahí ya no hay con qué responder esta pregunta.
+      categorías, y ahí ya no hay con qué responder esta pregunta.
     */
     const porCentro = aFilas(agrupar(1));
 
@@ -577,7 +577,7 @@ export class DashboardService {
       },
       by_category: porCategoria,
       expense_by_center: porCentro,
-      breakdown_level: (['centro de costos', 'grupo', 'concepto'] as const)[nivelMostrado - 1],
+      breakdown_level: (['centro de costos', 'categoría', 'concepto'] as const)[nivelMostrado - 1],
       breakdown_parent:
         padre !== null && datosDelPadre ? { id: padre, name: datosDelPadre.name } : null,
       required_budget: serializar(toMoney(presupuesto)),
@@ -587,7 +587,7 @@ export class DashboardService {
   }
 }
 
-/** En qué nivel está una categoría: 1 centro, 2 grupo, 3 concepto. */
+/** En qué nivel está una categoría: 1 centro, 2 categoría, 3 concepto. */
 function profundidadDeCategoria(
   porId: ReadonlyMap<string, CategoriaPlana>,
   id: bigint,

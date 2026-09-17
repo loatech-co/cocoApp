@@ -1021,9 +1021,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    EL ARMAZÓN DEL TELÉFONO
 
-   Aquí está lo que NINGÚN componente puede decir por su cuenta: quién se mueve
-   cuando otro se abre. La barra de abajo no sabe que existe un panel de
-   secciones, y el panel no tiene por qué saber que hay una barra — pero el
+   Aquí está lo que NINGÚN componente puede decir por su cuenta: qué le pasa a
+   la página cuando se abre algo encima. Una hoja no sabe que detrás hay un
+   documento que se desplaza, y el documento no sabe que hay una hoja — pero el
    armazón sí sabe las dos cosas, porque las dos son suyas.
 
    Va fuera de `@layer`, así que gana a cualquier utilidad de Tailwind sin
@@ -1062,48 +1062,24 @@
     --bajo-la-barra: calc(60px + env(safe-area-inset-bottom, 0px) + 12px);
   }
 
-  /* El ancho del panel de secciones. 80 de la ventana: la franja de página que
-     queda al lado es lo que dice que esto es un panel SOBRE la página y no otra
-     pantalla, y es un sitio donde tocar para salir. */
-  :root {
-    --ancho-secciones: 80vw;
-  }
-
   /* ── La coreografía ──────────────────────────────────────────────────────
-     Las tres reglas se derivan con `:has()` del estado de la PROPIA superficie.
-     Nunca de una clase que mantenga un script: un cierre que se olvide de
-     quitarla deja la página bloqueada sin nada abierto, y eso no se puede
-     depurar mirando lo que hay en pantalla.
+     Se deriva con `:has()` del estado de la PROPIA superficie. Nunca de una
+     clase que mantenga un script: un cierre que se olvide de quitarla deja la
+     página bloqueada sin nada abierto, y eso no se puede depurar mirando lo
+     que hay en pantalla.
 
-     Por qué se bloquea el desplazamiento: una superficie a pantalla completa
-     deja la página DETRÁS, así que un gesto que falle su lista desplazaba la
-     página, y al cerrar la superficie uno aparecía en un sitio que no eligió.
-     La lista de la superficie sigue desplazándose. */
-  html:has([data-superficie='secciones'][data-abierta='si']) {
+     Por qué se bloquea el desplazamiento: una hoja abierta deja la página
+     DETRÁS, así que un gesto que falle su lista desplazaba la página, y al
+     cerrarla uno aparecía en un sitio que no eligió. La lista de la hoja
+     sigue desplazándose: lo que se bloquea es el documento.
+
+     Aquí vivía además la retirada de la barra y del techo, y se fue con el
+     menú de hamburguesa: era para un panel a PANTALLA COMPLETA, que tapaba las
+     dos. Una hoja ocupa la parte de abajo y deja el techo a la vista, y la
+     barra se queda detrás de su velo, que es donde tiene que estar. */
+  html:has([data-superficie='panel'][data-abierta='si']) {
     overflow: hidden;
   }
-
-  /* La barra se retira por ABAJO, por donde vino. Las secciones son a dónde se
-     VA; la barra es lo que se hace con la página en la que se está, así que
-     debajo de un menú abierto ofrece las cinco cosas equivocadas. */
-  html:has([data-superficie='secciones'][data-abierta='si']) [data-armazon='barra'] {
-    transform: translateY(100%);
-  }
-
-  /* Y el techo por ARRIBA, que es el espejo. Cada uno por su borde: es la
-     única forma de que dos barras se muevan a la vez sin parecer que se
-     persiguen. Con el techo se va su propio botón de menú, y se acepta: la
-     vuelta es la equis del panel, el velo, Escape o un deslizamiento. */
-  html:has([data-superficie='secciones'][data-abierta='si']) [data-armazon='techo'] {
-    transform: translateY(-100%);
-  }
-}
-
-/* Misma duración y misma curva que el panel, para que todo junto se lea como
-   un solo gesto: el armazón se aparta y lo que queda es el panel. */
-[data-armazon='barra'],
-[data-armazon='techo'] {
-  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── El alto de un panel se anima ──────────────────────────────────────────
@@ -1169,11 +1145,3 @@
   }
 }
 
-/* Una tableta en vertical lo topa: 80vw son de 560 a 819 puntos de navegación
-   para nueve filas, y una lista no necesita ser más ancha que su fila más
-   larga. */
-@media (orientation: portrait) and (min-width: 700px) and (max-width: 1024px) {
-  :root {
-    --ancho-secciones: min(80vw, 400px);
-  }
-}

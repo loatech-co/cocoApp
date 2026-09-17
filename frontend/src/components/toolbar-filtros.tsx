@@ -1,8 +1,10 @@
 import { ArrowDownUp, Filter, Plus, Search, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
 
+import { useEsMovil } from '@/app/movil';
 import { FiltroClasificacion } from '@/components/filtro-clasificacion';
 import { Menu, MenuOpcion, MenuTitulo } from '@/components/menu';
+import { PanelInferior } from '@/components/panel-inferior';
 import { SelectorDeFecha } from '@/components/selector-de-fecha';
 import { Etiqueta } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -82,6 +84,7 @@ export function ToolbarFiltros({
   acciones?: ReactNode;
 }) {
   const categorias = useCategories();
+  const esMovil = useEsMovil();
 
   // La búsqueda se escribe local y se manda con retraso: sin esto cada tecla
   // dispararía una consulta y la lista parpadearía mientras se escribe.
@@ -115,9 +118,72 @@ export function ToolbarFiltros({
       ayuda={subtitulo ?? resumen}
       alineado="abajo"
       acciones={
-      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+      /*
+        ── La fila entera, en el teléfono ──────────────────────────────────
+        `w-full` y sin envolver: los tres controles que quedan —buscar,
+        filtrar y el rango— caben en una línea, y el rango se queda con el
+        hueco que sobra porque su etiqueta es un dato y no una palabra fija.
+
+        Envolviendo, un cuarto control tiraba al rango a un segundo renglón él
+        solo, alineado a la derecha y con media fila vacía a su izquierda.
+      */
+      <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
         {/* ── Búsqueda ─────────────────────────────────────────────────── */}
-        {buscando ? (
+        {esMovil ? (
+          /*
+            En el teléfono el campo no se despliega EN la fila: la levanta una
+            hoja, igual que el filtro y el rango. Un campo que aparece en medio
+            de una fila de iconos empuja a los otros tres fuera de la pantalla,
+            y el teclado del sistema sube justo encima de la lista que se está
+            recortando.
+          */
+          <>
+            <Button
+              type="button"
+              variant="herramienta"
+              size="sm-icon"
+              aria-label="Buscar"
+              aria-pressed={buscando || (filtros.q ?? '') !== ''}
+              aria-expanded={buscando}
+              onClick={() => setBuscando(true)}
+            >
+              <Search className="size-4" aria-hidden="true" />
+            </Button>
+
+            <PanelInferior
+              abierto={buscando}
+              titulo="Buscar"
+              cabeza={
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    ref={campo}
+                    type="search"
+                    autoFocus
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="Buscar: celsia, colegio, sura…"
+                    aria-label="Buscar por palabra clave"
+                    className="pl-9"
+                  />
+                </div>
+              }
+              onCerrar={() => setBuscando(false)}
+            >
+              {/* Qué hace esto, y no lo que hace la lupa de la barra de abajo.
+                  Las dos se ven igual y contestan preguntas distintas: aquella
+                  BUSCA un movimiento en toda la aplicación; esta RECORTA lo que
+                  se está mirando, y lo que escriba se queda puesto al cerrar. */}
+              <p className="px-3 py-2 text-sm text-muted-foreground">
+                Recorta lo que estás viendo. Lo escrito se queda puesto hasta que
+                lo borres.
+              </p>
+            </PanelInferior>
+          </>
+        ) : buscando ? (
           <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -201,7 +267,13 @@ export function ToolbarFiltros({
           />
         </Menu>
 
-        <SelectorDeFecha rango atajos filtros={filtros} aplicar={aplicar} />
+        <SelectorDeFecha
+          rango
+          atajos
+          filtros={filtros}
+          aplicar={aplicar}
+          claseCaja="movil:min-w-0 movil:flex-1"
+        />
 
         {hayFiltrosActivos && (
           <Button
@@ -216,7 +288,14 @@ export function ToolbarFiltros({
           </Button>
         )}
 
-        {onNuevo && (
+        {/*
+          ── Y en el teléfono NO está ────────────────────────────────────────
+          Registrar un movimiento vive en el (+) del centro de la barra de
+          abajo, que está siempre a la vista y siempre en el mismo sitio, sea
+          cual sea la pantalla. Aquí arriba era el mismo botón repetido, y en
+          una fila de cuatro controles era el que menos cabía.
+        */}
+        {onNuevo && !esMovil && (
           /* Por el mismo camino que los demás menús de esta barra: el alto y
              el radio se los pone `size="sm"` dentro del botón, que es donde
              viven. Escritos aquí, este botón medía distinto que el selector

@@ -49,8 +49,23 @@ export interface Seccion {
  * más — insertar una sección condicional por posición se rompe en silencio en
  * cuanto alguien reordena.
  */
+/**
+ * El inicio, con nombre propio.
+ *
+ * La barra de abajo del teléfono lo nombra por separado —es su primer hueco, y
+ * los otros cuatro no son secciones sino cosas que se hacen—, así que la
+ * sección tiene que poder citarse sin entrar por el índice de un arreglo, que
+ * se rompe en silencio en cuanto alguien reordena la lista.
+ */
+export const DASHBOARD: Seccion = {
+  to: '/',
+  label: 'Dashboard',
+  Icono: LayoutDashboard,
+  exact: true,
+};
+
 export const SECCIONES: readonly Seccion[] = [
-  { to: '/', label: 'Dashboard', Icono: LayoutDashboard, exact: true },
+  DASHBOARD,
   // Para quien no lleva cuentas, este enlace no existe. Ni oculto con CSS ni
   // deshabilitado: ausente.
   { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false, requiere: 'cuentas' },

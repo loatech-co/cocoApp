@@ -281,12 +281,12 @@ export interface Category {
    * ── Estático ────────────────────────────────────────────────────────────
    * Lo que cuelga de un centro de costos estático no se reclasifica: ni desde
    * la tabla de movimientos ni desde el modal de un movimiento. Para la
-   * estructura que no se improvisa —el alquiler no cambia de grupo un
+   * estructura que no se improvisa —el alquiler no cambia de categoría un
    * martes—, y para que un clic distraído en una tabla larga no mueva plata
    * de sitio sin que nadie lo note.
    *
    * La salida es hacer el centro dinámico en Centros de costos: un acto
-   * deliberado, en otra pantalla. Solo se lee del CENTRO; un grupo o un
+   * deliberado, en otra pantalla. Solo se lee del CENTRO; una categoría o un
    * concepto heredan lo que diga el suyo.
    */
   estatico: boolean;
@@ -297,7 +297,7 @@ export interface Category {
    * factura. Se buscan en el texto que se saca del recibo —el embebido del PDF
    * o el del reconocimiento— y también en el nombre del archivo.
    *
-   * Solo significan algo en un CONCEPTO: un centro de costos y un grupo son
+   * Solo significan algo en un CONCEPTO: un centro de costos y una categoría son
    * sumas, y no aparecen en ninguna factura.
    *
    * Se guardan tal como se escribieron; quitar tildes y bajar a minúsculas es
@@ -385,8 +385,15 @@ export interface PagoPendiente {
   expected_amount: DecimalString | null;
 }
 
-/** Los tres niveles del modelo, de arriba abajo. */
-export const NIVELES_DE_CATEGORIA = ['centro de costos', 'grupo', 'concepto'] as const;
+/**
+ * Los tres niveles del modelo, de arriba abajo.
+ *
+ * El de en medio se llamó «grupo» y ahora se llama CATEGORÍA, que es como lo
+ * nombra quien usa la aplicación. Aquí está el único sitio donde se escriben:
+ * lo que se enseña en pantalla sale de esta lista, no de una palabra repetida
+ * por veinte archivos.
+ */
+export const NIVELES_DE_CATEGORIA = ['centro de costos', 'categoría', 'concepto'] as const;
 export type NivelDeCategoria = (typeof NIVELES_DE_CATEGORIA)[number];
 
 export interface Dashboard {

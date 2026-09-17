@@ -17,7 +17,7 @@ export const COLUMNAS = [
   'Periodo',
   'Fecha de pago',
   'Centro de costos',
-  'Grupo',
+  'Categoría',
   'Valor',
 ];
 
@@ -92,7 +92,7 @@ export function TablaDeMovimientos({
           <Th>Periodo</Th>
           <Th orden={orden?.('date', 'desc')}>Fecha de pago</Th>
           <Th>Centro de costos</Th>
-          <Th>Grupo</Th>
+          <Th>Categoría</Th>
           <Th alineado="derecha" orden={orden?.('amount', 'desc')}>
             Valor
           </Th>
@@ -120,11 +120,11 @@ function Fila({
   onAbrir: () => void;
 }) {
   const actualizar = useActualizarMovimiento();
-  const { centro, grupo } = rutaSeleccionada(arbol, movimiento.category_id ?? undefined);
+  const { centro, categoria } = rutaSeleccionada(arbol, movimiento.category_id ?? undefined);
 
   // Cambiar el selector guarda EXACTAMENTE lo elegido, sin adivinar el resto.
   // La tentación es "conservar el concepto si existe con el mismo nombre en el
-  // grupo nuevo", pero eso mueve plata a un sitio que nadie pidió y nadie ve.
+  // categoría nuevo", pero eso mueve plata a un sitio que nadie pidió y nadie ve.
   const reclasificar = (id: number | undefined): void => {
     actualizar.mutate({ id: movimiento.id, cambios: { category_id: id ?? null } });
   };
@@ -137,7 +137,7 @@ function Fila({
     Un centro ESTÁTICO no se reclasifica desde aquí.
 
     La estructura de los costos fijos no se improvisa —el alquiler no cambia
-    de grupo un martes—, y en una tabla de cien filas con un desplegable en
+    de categoría un martes—, y en una tabla de cien filas con un desplegable en
     cada una, un clic distraído mueve plata de sitio sin que nadie lo note.
 
     Tampoco desde el modal del movimiento: estático es estático. Si de verdad
@@ -212,8 +212,8 @@ function Fila({
       <Td className="w-48">
         <span onClick={(e) => e.stopPropagation()}>
           <SelectorEnFila
-            aria="Grupo"
-            valor={grupo?.id}
+            aria="Categoría"
+            valor={categoria?.id}
             opciones={centro?.children ?? []}
             deshabilitado={estatico || !centro}
             motivo={motivo}

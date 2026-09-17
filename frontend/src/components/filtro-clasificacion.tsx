@@ -7,7 +7,7 @@ import type { Category } from '@coco/types';
 import { REALCE } from '@/components/ui/superficie';
 
 /**
- * El filtro por centros de costos, grupos y conceptos.
+ * El filtro por centros de costos, categorías y conceptos.
  *
  * ── Por qué casillas y no una lista de una sola elección ────────────────────
  * Porque la pregunta habitual no es "¿cuánto me cuesta Casa?" sino "¿cuánto me
@@ -16,7 +16,7 @@ import { REALCE } from '@/components/ui/superficie';
  *
  * ── Por qué marcar y bajar de nivel son dos gestos distintos ────────────────
  * Antes eran el mismo: elegir un centro lo filtraba y además mostraba sus
- * grupos. Con casillas eso deja de funcionar —marcar tres centros movería la
+ * categorías. Con casillas eso deja de funcionar —marcar tres centros movería la
  * lista tres veces— así que la casilla marca y la flecha baja. Cada gesto hace
  * una cosa y solo una.
  *

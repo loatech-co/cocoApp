@@ -147,7 +147,7 @@ Casos ambiguos, **no aplicados**, con la propuesta al lado.
 
 ### Lo que sí se dice, y no se toca
 
-Conceptos ya asentados en el producto: **movimiento**, **concepto**, **grupo**, **centro de
+Conceptos ya asentados en el producto: **movimiento**, **concepto**, **categoría**, **centro de
 costos**, **soporte**, **periodo**, **saldo**, **importación**, **bitácora**.
 
 **Dashboard** es el nombre de la primera pantalla, por decisión del producto (antes se

@@ -46,8 +46,17 @@ const TOPE = 10;
  *   Y NO rompe la regla que esta prueba defiende, que es que dos contenedores
  *   VECINOS no tengan esquinas distintas: el pozo no es vecino de ninguna
  *   tarjeta, es el fondo sobre el que se apoyan todas.
+ *
+ * · `components/panel-inferior.tsx` — las dos esquinas de ARRIBA de una hoja
+ *   que sube desde el borde de abajo. Lleva `rounded-t-[16px]`.
+ *
+ *   Mismo motivo que el pozo y misma forma de no romper la regla. La esquina
+ *   mide el ancho entero de la pantalla, así que 10px en ella casi no se ven,
+ *   y lo que tiene que contar —que esto es una hoja que subió y que la página
+ *   sigue debajo— depende de que se vea. Y no tiene vecinos: está encima de
+ *   todo lo demás.
  */
-const PERMITIDOS = new Set<string>(['app/app-shell.tsx']);
+const PERMITIDOS = new Set<string>(['app/app-shell.tsx', 'components/panel-inferior.tsx']);
 
 describe('Ningún contenedor se pasa del radio estándar', () => {
   const archivos = fuentes(join(import.meta.dirname, '..', '..'));

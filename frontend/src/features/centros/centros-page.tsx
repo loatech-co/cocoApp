@@ -34,7 +34,7 @@ import { REALCE_DE_SUPERFICIE } from '@/components/ui/superficie';
  *
  * Es la pantalla donde se define la FORMA de los reportes, así que explica el
  * modelo en vez de dar por sentado que se entiende. Alguien que abre esto por
- * primera vez tiene que salir sabiendo qué es un grupo y por qué existe.
+ * primera vez tiene que salir sabiendo qué es una categoría y por qué existe.
  */
 export function CentrosPage() {
   const categorias = useCategories();
@@ -145,7 +145,7 @@ function Explicacion({ onCerrar }: { onCerrar: () => void }) {
           />
           <Nivel
             numero={2}
-            nombre="Grupo"
+            nombre="Categoría"
             explicacion="Un tipo de gasto dentro de ese bloque."
             ejemplo="Servicios públicos"
           />
@@ -197,14 +197,14 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
   const [confirmando, setConfirmando] = useState(false);
   const [editando, setEditando] = useState(false);
   const actualizar = useActualizarCategoria();
-  const grupos = centro.children ?? [];
-  const conceptos = grupos.reduce((n, g) => n + (g.children?.length ?? 0), 0);
+  const categorias = centro.children ?? [];
+  const conceptos = categorias.reduce((n, g) => n + (g.children?.length ?? 0), 0);
 
-  /* El hueco para el siguiente grupo. Se declara aquí porque va en dos sitios
-     —dentro de las columnas cuando hay grupos, suelto cuando no— y son el
+  /* El hueco para el siguiente categoría. Se declara aquí porque va en dos sitios
+     —dentro de las columnas cuando hay categorías, suelto cuando no— y son el
      mismo botón con los mismos textos: escrito dos veces, cambiar uno y
      olvidar el otro es cuestión de tiempo. */
-  const hueco = <Agregar padreId={centro.id} solo={grupos.length === 0} />;
+  const hueco = <Agregar padreId={centro.id} solo={categorias.length === 0} />;
 
   return (
     <Card>
@@ -257,7 +257,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
                 )}
               </span>
               <span className="block text-xs text-muted-foreground">
-                {grupos.length} grupo(s) · {conceptos} concepto(s)
+                {categorias.length} categoría(s) · {conceptos} concepto(s)
               </span>
             </span>
           </button>
@@ -274,7 +274,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
               <>
                 {/* Renombrar. No existía por ningún camino: un centro con el
                     nombre mal escrito había que borrarlo entero —con sus
-                    grupos y sus conceptos— y volver a armarlo. */}
+                    categorías y sus conceptos— y volver a armarlo. */}
                 <MenuOpcion
                   Icono={Pencil}
                   onClick={() => {
@@ -317,6 +317,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
 
         <ConfirmarBorrado
           categoria={centro}
+          nivel="centro de costos"
           arbol={arbol}
           abierta={confirmando}
           onCerrar={() => setConfirmando(false)}
@@ -333,14 +334,14 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
           <div className="border-t border-border p-3 sm:p-4">
             {/*
               ── Mampostería, no rejilla ─────────────────────────────────────
-              Los grupos eran filas apiladas, y una fila de ancho completo con
+              Las categorías eran filas apiladas, y una fila de ancho completo con
               cuatro chips dentro deja tres cuartas partes de su renglón en
-              blanco: en un centro con seis grupos había que recorrer media
+              blanco: en un centro con seis categorías había que recorrer media
               pantalla de vacío para leerlos. En columnas se ven todos de un
               vistazo, que es lo que se viene a hacer a esta pantalla.
 
               Pero una REJILLA alinea por FILAS, y de ahí no se sale bien: o
-              estira todas las tarjetas al alto de la más alta —y un grupo con
+              estira todas las tarjetas al alto de la más alta —y una categoría con
               doce conceptos infla a los otros cuatro de su fila—, o cada una
               mide lo suyo y cada fila termina en un escalón distinto. Lo que
               había era la tercera salida: alto fijo y desplazar los conceptos
@@ -358,7 +359,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
               línea de JavaScript, en todos.
 
               Lo que cambia con ellas es el ORDEN: se lee hacia abajo por
-              columnas, no de izquierda a derecha. Para un listado de grupos
+              columnas, no de izquierda a derecha. Para un listado de categorías
               —donde se busca un nombre, no el sitio n-ésimo— es el recorrido
               de una lista, repetido al lado.
 
@@ -375,9 +376,9 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
               caben antes de que la fila deje de leerse.
 
               Y el ancho de una tarjeta es el de su columna, así que no depende
-              de cuántas haya: dos grupos se ven del mismo tamaño que doce.
+              de cuántas haya: dos categorías se ven del mismo tamaño que doce.
             */}
-            {grupos.length > 0 && (
+            {categorias.length > 0 && (
               /* Sin margen negativo que compense el `mb-3` de la última
                  tarjeta de cada columna.
 
@@ -390,18 +391,18 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
                  `-mb-3` acierta con unos datos y se come doce píxeles del
                  relleno de la tarjeta con otros.
 
-                 Con el hueco de «Agregar grupo» cerrando el bloque, abajo del
+                 Con el hueco de «Agregar categoría» cerrando el bloque, abajo del
                  todo no hay ningún margen que compensar: el relleno de la
                  tarjeta es el que dice que sea, siempre. */
               <div className="columns-1 gap-3 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5">
-                {grupos.map((grupo) => (
-                  <Grupo key={grupo.id} grupo={grupo} arbol={arbol} />
+                {categorias.map((categoria) => (
+                  <Categoría key={categoria.id} categoria={categoria} arbol={arbol} />
                 ))}
               </div>
             )}
 
             {/*
-              El hueco del siguiente grupo va FUERA de las columnas, a todo el
+              El hueco de la siguiente categoría va FUERA de las columnas, a todo el
               ancho y debajo de todo.
 
               Dentro era una pieza más de la mampostería, y ahí no funciona: la
@@ -439,12 +440,12 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
  */
 const BALDOSA = 'mb-3 break-inside-avoid';
 
-function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
+function Categoría({ categoria, arbol }: { categoria: Category; arbol: Category[] }) {
   const [editando, setEditando] = useState<Category | null>(null);
   const [renombrando, setRenombrando] = useState(false);
   const [creando, setCreando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
-  const conceptos = grupo.children ?? [];
+  const conceptos = categoria.children ?? [];
 
   return (
     /* `pt` más corto que el resto del relleno: arriba de la tarjeta manda el
@@ -456,20 +457,20 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
         {/*
           El icono a la IZQUIERDA del nombre, no encima ni dentro de un pastel.
 
-          Es lo que hace que una rejilla de doce grupos se recorra mirando en
+          Es lo que hace que una rejilla de doce categorías se recorra mirando en
           vez de leyendo: la forma se reconoce antes que la palabra. A la
           izquierda porque es por donde empieza a leerse la fila, y del mismo
           tamaño que el texto —no un adorno grande— porque acompaña al nombre,
           no lo sustituye.
 
-          Un grupo sin icono no deja hueco reservado: `IconoDeCategoria`
+          Una categoría sin icono no deja hueco reservado: `IconoDeCategoria`
           devuelve nada y el nombre arranca donde arrancaba antes. Un hueco
           vacío alineado con los que sí tienen icono se ve como un icono que
           no cargó.
         */}
         <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-          <IconoDeCategoria nombre={grupo.icon} className="size-4 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 truncate">{grupo.name}</span>
+          <IconoDeCategoria nombre={categoria.icon} className="size-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 truncate">{categoria.name}</span>
         </h3>
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
             pulsarse —en un teléfono hay que acertarle a 16px— y no se ve como
@@ -489,7 +490,7 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
           muerto de todos modos.
         */}
         <Menu
-          etiqueta={`Acciones de ${grupo.name}`}
+          etiqueta={`Acciones de ${categoria.name}`}
           Icono={EllipsisVertical}
           soloIcono
           variante="ghost"
@@ -497,7 +498,7 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
         >
           {(cerrar) => (
             <>
-              {/* Lo PRIMERO del menú: es lo que más se hace con un grupo.
+              {/* Lo PRIMERO del menú: es lo que más se hace con una categoría.
                   Eliminar va al final y en rojo, porque es lo que menos. */}
               <MenuOpcion
                 Icono={Plus}
@@ -509,7 +510,7 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
                 Agregar concepto
               </MenuOpcion>
 
-              {/* Renombrar un grupo no existía por ningún camino, igual que en
+              {/* Renombrar una categoría no existía por ningún camino, igual que en
                   el centro: la única salida era borrarlo con sus conceptos
                   dentro y volver a escribirlos. */}
               <MenuOpcion
@@ -582,15 +583,16 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
       )}
 
       <ConfirmarBorrado
-        categoria={grupo}
+        categoria={categoria}
+        nivel="categoría"
         arbol={arbol}
         abierta={confirmando}
         onCerrar={() => setConfirmando(false)}
       />
 
       <CategoriaModal
-        nivel="grupo"
-        categoria={renombrando ? grupo : null}
+        nivel="categoria"
+        categoria={renombrando ? categoria : null}
         abierta={renombrando}
         onCerrar={() => setRenombrando(false)}
       />
@@ -600,16 +602,16 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
         concepto={editando}
         onCerrar={() => setEditando(null)}
       />
-      <ConceptoModal abierta={creando} grupoId={grupo.id} onCerrar={() => setCreando(false)} />
+      <ConceptoModal abierta={creando} categoriaId={categoria.id} onCerrar={() => setCreando(false)} />
     </Bloque>
   );
 }
 
 /**
- * El hueco del siguiente grupo: una baldosa más de la rejilla.
+ * El hueco de la siguiente categoría: una baldosa más de la rejilla.
  *
  * ── Por qué un cuadro punteado y no un enlace ───────────────────────────────
- * Porque ocupa una celda en la misma rejilla que los grupos y con su misma
+ * Porque ocupa una celda en la misma rejilla que las categorías y con su misma
  * forma: se lee como el sitio del próximo, no como una acción en otra parte de
  * la tarjeta. Y el borde punteado es lo que en todas partes significa «aquí
  * cabe algo que todavía no está» —es el mismo lenguaje que el hueco de un
@@ -621,19 +623,19 @@ function Grupo({ grupo, arbol }: { grupo: Category; arbol: Category[] }) {
  * se viene a leer.
  */
 /**
- * El hueco del siguiente grupo.
+ * El hueco de la siguiente categoría.
  *
  * ── Por qué un cuadro punteado y no un enlace ───────────────────────────────
  * Porque el borde punteado es lo que en todas partes significa «aquí cabe algo
  * que todavía no está» —el mismo lenguaje que el hueco de un soporte y el de
- * un atajo—, y eso se lee como el sitio del próximo grupo, no como una acción
+ * un atajo—, y eso se lee como el sitio de la próxima categoría, no como una acción
  * suelta en otra parte de la tarjeta.
  *
  * ── Por qué abre la ficha y ya no un campo suelto ───────────────────────────
  * Tenía su propio formulario en línea: un campo para el nombre y dos botones.
- * Así, crear un grupo y editarlo eran dos formularios distintos para la misma
+ * Así, crear una categoría y editarlo eran dos formularios distintos para la misma
  * cosa, y el de crear no pedía el icono —que es la mitad de lo que hace a un
- * grupo reconocible en la rejilla—. El resultado es que todo grupo nacía sin
+ * categoría reconocible en la rejilla—. El resultado es que todo categoría nacía sin
  * icono y había que abrir la ficha justo después para ponérselo.
  *
  * Con la misma ficha en los dos casos, lo que se pide al crear es exactamente
@@ -644,9 +646,9 @@ function Agregar({
   padreId,
   solo = false,
 }: {
-  /** De qué centro cuelga el grupo que se va a crear. */
+  /** De qué centro cuelga la categoría que se va a crear. */
   padreId: number;
-  /** Sin ningún grupo todavía: el hueco es lo único que hay en el centro. */
+  /** Sin ningún categoría todavía: el hueco es lo único que hay en el centro. */
   solo?: boolean;
 }) {
   const [abierta, setAbierta] = useState(false);
@@ -659,7 +661,7 @@ function Agregar({
         className={cn(
           'flex w-full items-center justify-center gap-2 rounded-lg p-4',
           /*
-          Sin ningún grupo, el hueco no es una baldosa más: es lo ÚNICO que
+          Sin ninguna categoría, el hueco no es una baldosa más: es lo ÚNICO que
           hay, y una baldosa de 17rem sola en la esquina de un centro vacío
           se lee como un botón que alguien dejó ahí. A ancho completo y alto
           —`min-h-64`, 256px— se lee como lo que es: el sitio donde va a
@@ -669,7 +671,7 @@ function Agregar({
           cumple; una medida a mano por seis píxeles es una medida que
           mañana nadie sabe de dónde salió.
 
-          Con grupos encima es una BARRA: el icono y el texto en una fila y
+          Con categorías encima es una BARRA: el icono y el texto en una fila y
           el alto que le dé su relleno. Apilado y con alto mínimo, a todo el
           ancho de la pantalla, sería un rectángulo punteado más grande que
           cualquiera de las tarjetas que lo acompañan, y lo que hay que mirar
@@ -698,7 +700,7 @@ function Agregar({
         )}
       >
         {/*
-        El mismo texto haya grupos o no.
+        El mismo texto haya categorías o no.
 
         Cuando no había ninguno, la baldosa añadía debajo un «El nivel de en
         medio: …» que la otra no llevaba. Es el mismo botón y hace lo mismo
@@ -707,11 +709,11 @@ function Agregar({
         mismo. Lo que cambia es su tamaño, que ya dice bastante.
       */}
         <Plus className="size-5 shrink-0" aria-hidden="true" />
-        Agregar grupo
+        Agregar categoría
       </button>
 
       <CategoriaModal
-        nivel="grupo"
+        nivel="categoria"
         padreId={padreId}
         abierta={abierta}
         onCerrar={() => setAbierta(false)}

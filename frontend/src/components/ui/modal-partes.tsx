@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils';
  *
  * ── El alto mínimo: 400px ───────────────────────────────────────────────────
  * Sin él, una ficha mide lo que mida su formulario, y eso hace que la misma
- * ventana sea tres ventanas: «Nuevo grupo» salía de 260px, «Nuevo concepto»
+ * ventana sea tres ventanas: «Nuevo categoría» salía de 260px, «Nuevo concepto»
  * de 420 y la del movimiento de 700. Abrir dos seguidas era ver el panel
  * crecer y encogerse en el mismo sitio de la pantalla, y en la corta los
  * botones quedaban a media altura, donde no los busca nadie.
@@ -43,7 +43,7 @@ import { cn } from '@/lib/utils';
  * el `max-h` de 92dvh y la ficha se saldría por abajo, con sus botones fuera.
  * Con `min()` el mínimo nunca puede pasarse del máximo.
 
- * Fueron 600 y bajaron a 400: con 600, una ficha de dos campos —un grupo, una
+ * Fueron 600 y bajaron a 400: con 600, una ficha de dos campos —una categoría, una
  * confirmación con un selector— se abría con un palmo de vacío debajo de sus
  * botones. El mínimo está para que abrir dos fichas seguidas no sea ver el
  * panel crecer y encogerse, no para estirar las cortas.

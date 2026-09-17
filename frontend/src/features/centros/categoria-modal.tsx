@@ -12,7 +12,7 @@ import { BLOQUE } from '@/components/ui/bloque';
 import { cn } from '@/lib/utils';
 import { PieDeModal } from '@/components/ui/modal-partes';
 import type { Category } from '@coco/types';
-import { ICONOS_DE_GRUPO, IconoDeCategoria } from '@/components/ui/iconos';
+import { ICONOS_DE_CATEGORIA, IconoDeCategoria } from '@/components/ui/iconos';
 import { REALCE } from '@/components/ui/superficie';
 
 /** Sin tildes ni mayúsculas: «Educación» se encuentra escribiendo «educacion». */
@@ -39,7 +39,7 @@ function normal(texto: string): string {
  * «graduation cap».
  *
  * ── Por qué se puede quitar ─────────────────────────────────────────────────
- * Porque un grupo sin icono es un caso legítimo —los hay que no se parecen a
+ * Porque una categoría sin icono es un caso legítimo —los hay que no se parecen a
  * ningún dibujo— y sin una forma de volver atrás, el primer icono que alguien
  * pulse por curiosidad se queda ahí para siempre.
  */
@@ -54,8 +54,8 @@ function SelectorDeIcono({
 
   const filtrados = useMemo(() => {
     const q = normal(busca);
-    if (q === '') return ICONOS_DE_GRUPO;
-    return ICONOS_DE_GRUPO.filter((i) => normal(i.etiqueta).includes(q));
+    if (q === '') return ICONOS_DE_CATEGORIA;
+    return ICONOS_DE_CATEGORIA.filter((i) => normal(i.etiqueta).includes(q));
   }, [busca]);
 
   return (
@@ -128,9 +128,9 @@ function SelectorDeIcono({
  * una aprende un campo nuevo y la otra no, y entonces hay cosas que solo se
  * pueden poner al crear.
  *
- * Y editar hacía falta: los centros y los grupos no se podían renombrar desde
+ * Y editar hacía falta: los centros y las categorías no se podían renombrar desde
  * ningún sitio. Un nombre mal escrito obligaba a borrar el centro entero —con
- * sus grupos y sus conceptos— y volver a armarlo.
+ * sus categorías y sus conceptos— y volver a armarlo.
  */
 export function CategoriaModal({
   abierta,
@@ -143,12 +143,12 @@ export function CategoriaModal({
   /**
    * Qué se está tocando. Cambia el título, la ayuda y si aparece el
    * interruptor: lo estático se lee del CENTRO, que es el nivel de arriba, y
-   * un grupo hereda lo que diga el suyo.
+   * una categoría hereda lo que diga el suyo.
    */
-  nivel: 'centro' | 'grupo';
+  nivel: 'centro' | 'categoria';
   /** Con una categoría, se edita. Sin ella, se crea. */
   categoria?: Category | null;
-  /** Al crear un grupo, de qué centro cuelga. */
+  /** Al crear una categoría, de qué centro cuelga. */
   padreId?: number;
   onCerrar: () => void;
 }) {
@@ -203,7 +203,11 @@ export function CategoriaModal({
   return (
     <Modal
       abierta={abierta}
-      titulo={`${editando ? 'Editar' : 'Nuevo'} ${esCentro ? 'centro de costos' : 'grupo'}`}
+      titulo={
+        esCentro
+          ? `${editando ? 'Editar' : 'Nuevo'} centro de costos`
+          : `${editando ? 'Editar' : 'Nueva'} categoría`
+      }
       ayuda={
         esCentro
           ? 'El nivel más general: Costos fijos, Variables, Negocio.'
@@ -224,7 +228,7 @@ export function CategoriaModal({
         </Campo>
 
         {/*
-          El selector de icono, solo en los grupos.
+          El selector de icono, solo en las categorías.
 
           No está en los centros porque ahí no se ve: la fila de un centro ya
           lleva su flecha de desplegar a la izquierda del nombre, y un segundo
@@ -254,7 +258,7 @@ export function CategoriaModal({
           vive en el código, no en el formulario.
         */}
         {/* Solo en los centros: lo estático se lee del nivel de arriba, y un
-            grupo hereda lo que diga el suyo. Ofrecerlo en un grupo sería un
+            categoría hereda lo que diga el suyo. Ofrecerlo en una categoría sería un
             interruptor que no hace nada. */}
         {esCentro && (
           <label className={cn(BLOQUE, 'flex cursor-pointer items-center justify-between gap-4')}>

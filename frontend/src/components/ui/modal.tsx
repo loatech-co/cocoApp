@@ -89,7 +89,20 @@ export function Modal({
       // hace nada.
       data-modal=""
       className={cn(
-        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm',
+        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',
+        /*
+          ── 24 hasta el borde de la pantalla, en el teléfono ──────────────
+          La ficha no va a sangre. Pegada a los tres cantos, se lee como otra
+          PANTALLA: se come el ancho entero, la esquina de abajo desaparece y
+          lo único que dice que la aplicación sigue detrás es una franja de
+          velo arriba. Separada, vuelve a leerse como lo que es —algo que está
+          ENCIMA— y el velo se ve por los cuatro lados.
+
+          Es distancia de la ficha al canto de la pantalla, no relleno de la
+          ficha: lo de dentro sigue en 16, que es lo que `Modal` y
+          `CabeceraDeModal` ya fijan.
+        */
+        'p-6',
         'se-revela sm:items-center sm:p-4',
       )}
     >
@@ -100,7 +113,10 @@ export function Modal({
           'emerge',
           // Pegado abajo se redondea solo arriba: las esquinas de abajo caen
           // fuera de la pantalla y curvarlas deja dos muescas del fondo.
-          'rounded-t-lg sm:rounded-lg',
+          // Las cuatro esquinas, ya no solo las de arriba: separada del borde
+          // de abajo, las de abajo también se ven, y dos cantos rectos debajo
+          // de dos curvos es una caja a medio dibujar.
+          'rounded-lg',
           ancho,
         )}
       >

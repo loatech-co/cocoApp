@@ -78,7 +78,9 @@ export function Confirmacion({
       aria-label={titulo}
       onMouseDown={(e) => e.target === e.currentTarget && onCancelar()}
       className={cn(
-        'fixed inset-0 z-[60] flex items-center justify-center bg-[var(--velo)] p-4 backdrop-blur-sm',
+        'fixed inset-0 z-[60] flex items-center justify-center bg-[var(--velo)] backdrop-blur-sm',
+        // 24 hasta el canto en el teléfono, los mismos que el resto de fichas.
+        'p-6 sm:p-4',
         'se-revela',
       )}
     >

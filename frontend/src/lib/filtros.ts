@@ -121,7 +121,7 @@ export interface Filtros {
   from: string;
   to: string;
   /**
-   * Centros de costos, grupos o conceptos marcados. Cada uno incluye su rama.
+   * Centros de costos, categorías o conceptos marcados. Cada uno incluye su rama.
    *
    * Es una LISTA porque el panel son casillas: la pregunta "¿cuánto me cuestan
    * Casa y Transporte juntos?" no se puede hacer con un solo id.

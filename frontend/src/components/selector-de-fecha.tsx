@@ -62,6 +62,14 @@ interface Rango extends Comun {
   aplicar: (cambios: Partial<Filtros>) => void;
   /** La columna de periodos hechos: «Este mes», «Últimos 90 días»… */
   atajos?: boolean;
+  /**
+   * Cómo se reparte el ancho quien lo coloca.
+   *
+   * Es el ÚNICO control de la barra de filtros cuya etiqueta es un dato —el
+   * rango elegido, entero— así que es el que tiene que quedarse con el hueco
+   * que sobra cuando los demás ya midieron lo suyo.
+   */
+  claseCaja?: string;
 }
 
 export function SelectorDeFecha(props: Dia | Rango) {
@@ -237,7 +245,7 @@ function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false
  * curso" y "del 1 al 15 de septiembre" producen el mismo recorte. Separarlos
  * obligaría a buscar en qué sitio está el que uno necesita.
  */
-function DeRango({ filtros, aplicar, atajos = false }: Rango) {
+function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
   const activo = PRESETS.find((p) => p.valor === filtros.preset);
   const etiqueta =
     filtros.preset === 'todo'
@@ -289,7 +297,7 @@ function DeRango({ filtros, aplicar, atajos = false }: Rango) {
       variante="herramienta"
       // La etiqueta es el rango entero y tiene que poder encogerse: es el
       // único ancho a medida de toda la barra.
-      claseCaja="max-w-full"
+      claseCaja={cn('max-w-full', claseCaja)}
     >
       {(cerrar) => (
         <PanelDeRango filtros={filtros} aplicar={aplicar} atajos={atajos} cerrar={cerrar} />

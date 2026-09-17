@@ -365,7 +365,7 @@ export class TransactionsService {
    * Todos los ids de la rama que cuelga de una categoría, ella incluida.
    *
    * Filtrar por "Costos fijos" tiene que traer TODO lo que hay debajo: sus
-   * grupos y los conceptos de cada grupo. Comparar `categoryId` contra un solo
+   * categorías y los conceptos de cada una. Comparar `categoryId` contra un solo
    * id devolvería cero movimientos, porque ninguno se cuelga de un centro de
    * costos directamente — se cuelgan del concepto, que es la hoja.
    */
@@ -382,7 +382,7 @@ export class TransactionsService {
    * Las categorías cuyo NOMBRE contiene el texto, con toda su rama.
    *
    * Con la rama, no solo las que coinciden: los movimientos cuelgan del
-   * concepto, así que buscar el nombre de un grupo sin expandirlo no
+   * concepto, así que buscar el nombre de una categoría sin expandirla no
    * devolvería ni una fila.
    */
   private async ramaPorNombre(userId: bigint, texto: string): Promise<bigint[]> {
@@ -437,7 +437,7 @@ export class TransactionsService {
 
     if (query.q) {
       // La búsqueda también entra por la CLASIFICACIÓN: escribir "servicios
-      // públicos" tiene que traer todo lo que cuelga de ese grupo, aunque
+      // públicos" tiene que traer todo lo que cuelga de esa categoría, aunque
       // ninguna fila lo diga en su descripción. Quien busca piensa en el
       // nombre con el que ordenó su plata, no en cómo vino escrito el cargo.
       const porClasificacion = await this.ramaPorNombre(userId, query.q);

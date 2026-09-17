@@ -24,7 +24,7 @@ import { Select } from '@/components/ui/select';
  * Crear o renombrar un concepto, y decir si se paga cada cierto tiempo.
  *
  * ── Por qué solo los conceptos ──────────────────────────────────────────────
- * Un centro de costos y un grupo no se pagan: son sumas. Lo que tiene un
+ * Un centro de costos y una categoría no se pagan: son sumas. Lo que tiene un
  * importe, una fecha y una periodicidad es el concepto —el alquiler, la
  * energía—, y es el único nivel donde la recurrencia significa algo.
  *
@@ -36,13 +36,13 @@ import { Select } from '@/components/ui/select';
 export function ConceptoModal({
   abierta,
   concepto,
-  grupoId,
+  categoriaId,
   onCerrar,
 }: {
   abierta: boolean;
-  /** Sin concepto, el formulario crea dentro de `grupoId`. Con él, edita. */
+  /** Sin concepto, el formulario crea dentro de `categoríaId`. Con él, edita. */
   concepto?: Category | null;
-  grupoId?: number;
+  categoriaId?: number;
   onCerrar: () => void;
 }) {
   const crear = useCrearCategoria();
@@ -63,8 +63,8 @@ export function ConceptoModal({
   const [confirmando, setConfirmando] = useState(false);
   /** Lo que se busca en un soporte para reconocer este concepto. */
   const [palabrasClave, setPalabrasClave] = useState<string[]>([]);
-  /** El grupo al que pertenece. Vacío mientras no se esté editando. */
-  const [grupo, setGrupo] = useState('');
+  /** La categoría al que pertenece. Vacío mientras no se esté editando. */
+  const [categoria, setCategoría] = useState('');
 
   // Se recarga en cada apertura: sin esto, abrir el segundo concepto mostraría
   // los datos del primero.
@@ -77,7 +77,7 @@ export function ConceptoModal({
       diaDePago: concepto?.dia_de_pago ?? 1,
       mesDePago: concepto?.mes_de_pago ?? new Date().getMonth() + 1,
     });
-    setGrupo(concepto?.parent_id != null ? String(concepto.parent_id) : '');
+    setCategoría(concepto?.parent_id != null ? String(concepto.parent_id) : '');
     setPalabrasClave(concepto?.palabras_clave ?? []);
     setError(null);
   }, [abierta, concepto]);
@@ -101,8 +101,8 @@ export function ConceptoModal({
     escriben distinto dos veces la misma cosa.
   */
   /*
-    ── Los grupos del MISMO centro, y solo esos ────────────────────────────
-    Mover un concepto de grupo es corregir dónde está dentro de su centro:
+    ── Las categorías del MISMO centro, y solo esos ────────────────────────────
+    Mover un concepto de categoría es corregir dónde está dentro de su centro:
     «Claro Móvil» estaba en Vivienda y va en Servicios públicos. Mover de
     CENTRO es otra cosa —cambia de qué bolsa sale la plata— y es la clase de
     decisión que no se toma de pasada en un desplegable mientras se corrige un
@@ -114,9 +114,9 @@ export function ConceptoModal({
     propio, la pregunta no existe.
   */
   const hermanos = (categorias.data ?? []).flatMap((centro) => {
-    const grupos = centro.children ?? [];
-    return grupos.some((g) => Number(g.id) === Number(concepto?.parent_id))
-      ? grupos.map((g) => ({ valor: String(g.id), etiqueta: g.name }))
+    const categorias = centro.children ?? [];
+    return categorias.some((g) => Number(g.id) === Number(concepto?.parent_id))
+      ? categorias.map((g) => ({ valor: String(g.id), etiqueta: g.name }))
       : [];
   });
 
@@ -162,13 +162,13 @@ export function ConceptoModal({
             // Solo si de verdad cambió: un `parent_id` en cada guardado
             // dispara la comprobación de ciclos y de profundidad del árbol
             // para nada.
-            ...(grupo !== '' && Number(grupo) !== Number(concepto.parent_id)
-              ? { parent_id: Number(grupo) }
+            ...(categoria !== '' && Number(categoria) !== Number(concepto.parent_id)
+              ? { parent_id: Number(categoria) }
               : {}),
           },
         });
       }
-      else await crear.mutateAsync({ ...campos, kind: 'expense', parent_id: grupoId });
+      else await crear.mutateAsync({ ...campos, kind: 'expense', parent_id: categoriaId });
       onCerrar();
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : 'No se pudo guardar.');
@@ -211,21 +211,21 @@ export function ConceptoModal({
             />
           </Campo>
 
-          {/* Solo al editar: al crear, el grupo es aquel cuyo botón se pulsó
+          {/* Solo al editar: al crear, la categoría es aquella cuyo botón se pulsó
               para abrir esto, así que preguntarlo otra vez es preguntar por
               algo que se acaba de decir. */}
           {concepto && hermanos.length > 1 && (
             <Campo
-              etiqueta="Grupo"
-              id="concepto-grupo"
-              ayuda="Solo los grupos de su mismo centro de costos."
+              etiqueta="Categoría"
+              id="concepto-categoria"
+              ayuda="Solo las categorías de su mismo centro de costos."
             >
               <Select
-                id="concepto-grupo"
-                etiqueta="Grupo"
-                valor={grupo}
+                id="concepto-categoria"
+                etiqueta="Categoría"
+                valor={categoria}
                 opciones={hermanos}
-                onCambiar={setGrupo}
+                onCambiar={setCategoría}
               />
             </Campo>
           )}
@@ -306,6 +306,7 @@ export function ConceptoModal({
       {concepto && (
         <ConfirmarBorrado
           categoria={concepto}
+          nivel="concepto"
           arbol={categorias.data ?? []}
           abierta={confirmando}
           onCerrar={() => setConfirmando(false)}
@@ -320,7 +321,7 @@ export function ConceptoModal({
 /** Los conceptos del árbol: las hojas, que es donde cuelgan los movimientos. */
 function conceptosDe(arbol: Category[]): Category[] {
   return arbol.flatMap((centro) =>
-    (centro.children ?? []).flatMap((grupo) => grupo.children ?? []),
+    (centro.children ?? []).flatMap((categoria) => categoria.children ?? []),
   );
 }
 

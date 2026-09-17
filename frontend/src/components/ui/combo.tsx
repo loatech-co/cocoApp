@@ -90,7 +90,7 @@ export function Combo({
     ficha de un movimiento de un centro estático —donde los tres desplegables
     salen bloqueados a propósito, porque esa clasificación no se toca desde
     aquí— eso significaba abrir un movimiento bien clasificado y leer «Elige
-    una opción» en centro, grupo y concepto. El formulario decía que no estaba
+    una opción» en centro, categoría y concepto. El formulario decía que no estaba
     clasificado, que es exactamente lo contrario de lo que pasaba.
 
     Bloqueado quiere decir «esto no se cambia desde aquí», nunca «esto está

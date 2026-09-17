@@ -96,12 +96,12 @@ export function porQueNoEntra(
 /** Los conceptos del árbol: las hojas, que es donde cuelgan los movimientos. */
 function conceptosDe(arbol: readonly Category[]): {
   concepto: Category;
-  grupo: Category;
+  categoria: Category;
   centro: Category;
 }[] {
   return arbol.flatMap((centro) =>
-    (centro.children ?? []).flatMap((grupo) =>
-      (grupo.children ?? []).map((concepto) => ({ concepto, grupo, centro })),
+    (centro.children ?? []).flatMap((categoria) =>
+      (categoria.children ?? []).map((concepto) => ({ concepto, categoria, centro })),
     ),
   );
 }
@@ -137,9 +137,9 @@ export function conceptoQueYaLaUsa(
  */
 export function firmasDelArbol(arbol: readonly Category[]): Firma[] {
   return firmasDeConceptos(
-    conceptosDe(arbol).map(({ concepto, grupo, centro }) => ({
+    conceptosDe(arbol).map(({ concepto, categoria, centro }) => ({
       concepto: concepto.name,
-      grupo: grupo.name,
+      categoria: categoria.name,
       centro: centro.name,
       palabras: concepto.palabras_clave ?? [],
     })),

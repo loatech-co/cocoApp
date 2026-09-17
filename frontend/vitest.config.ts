@@ -13,4 +13,10 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  test: {
+    // Lo que jsdom no trae. Se carga en TODOS los archivos, también en los que
+    // corren sin DOM: el propio archivo comprueba si hay ventana antes de
+    // tocar nada, que es más barato que mantener aquí una lista de cuáles sí.
+    setupFiles: ['./src/pruebas/entorno.ts'],
+  },
 });

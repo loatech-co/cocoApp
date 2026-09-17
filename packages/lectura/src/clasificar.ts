@@ -33,7 +33,7 @@ export interface SeñalesDeLectura {
 
 export interface Lectura {
   concepto: string | null;
-  grupo: string | null;
+  categoria: string | null;
   centro: string | null;
   valor: number | null;
   fecha: string | null;
@@ -151,7 +151,7 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
     const { valor, fecha, confianzaDelValor } = datos(entrada, undefined);
     return {
       concepto: null,
-      grupo: null,
+      categoria: null,
       centro: null,
       valor,
       fecha,
@@ -207,7 +207,7 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
 
   return {
     concepto: ganadora.firma.concepto,
-    grupo: ganadora.firma.grupo,
+    categoria: ganadora.firma.categoria,
     centro: ganadora.firma.centro,
     valor,
     fecha,

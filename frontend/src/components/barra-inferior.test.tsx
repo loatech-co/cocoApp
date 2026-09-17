@@ -1,65 +1,93 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from '@testing-library/react';
-import { LayoutDashboard, ScanLine, Wallet } from 'lucide-react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { BarraInferior } from './barra-inferior';
-import type { Seccion } from './navegacion';
 
 afterEach(cleanup);
 
-const RESUMEN: Seccion = { to: '/', label: 'Resumen', Icono: LayoutDashboard, exact: true };
-const CUENTAS: Seccion = { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false };
-const ESCANEAR: Seccion = { to: '/escanear', label: 'Escanear', Icono: ScanLine, exact: false };
+function pintar(extra: Partial<Parameters<typeof BarraInferior>[0]> = {}) {
+  const manos = {
+    onBuscar: vi.fn(),
+    onNuevoGasto: vi.fn(),
+    onAtajos: vi.fn(),
+    onCuenta: vi.fn(),
+  };
 
-function pintar(izquierda: Seccion[], derecha: Seccion[]) {
-  return render(
+  const vista = render(
     <MemoryRouter>
-      <BarraInferior izquierda={izquierda} derecha={derecha} nombre="Gerardo" onAtajos={vi.fn()} />
+      <BarraInferior
+        nombre="Gerardo"
+        busquedaAbierta={false}
+        atajosAbiertos={false}
+        cuentaAbierta={false}
+        {...manos}
+        {...extra}
+      />
     </MemoryRouter>,
   );
+
+  return { ...vista, ...manos };
 }
 
 describe('La barra de abajo', () => {
   it('nunca pasa de cinco huecos', () => {
-    const { container } = pintar([RESUMEN, CUENTAS], [ESCANEAR]);
-    // Cuatro enlaces —tres secciones y la cuenta— más el botón del centro.
-    expect(container.querySelectorAll('a')).toHaveLength(4);
-    expect(container.querySelectorAll('button')).toHaveLength(1);
+    const { container } = pintar();
+
+    // Uno solo lleva a una página. Los otros cuatro levantan algo encima de
+    // la que ya está debajo, así que son botones.
+    expect(container.querySelectorAll('a')).toHaveLength(1);
+    expect(container.querySelectorAll('button')).toHaveLength(4);
   });
 
   it('cada hueco lleva su nombre, y ninguno lo escribe debajo', () => {
-    pintar([RESUMEN, CUENTAS], [ESCANEAR]);
+    pintar();
 
-    for (const nombre of ['Resumen', 'Cuentas', 'Escanear', 'Mi cuenta', 'Atajos']) {
+    for (const nombre of ['Dashboard', 'Buscar', 'Registrar un gasto', 'Atajos', 'Mi cuenta']) {
       expect(screen.getByLabelText(nombre)).toBeTruthy();
     }
 
     // Cinco palabras de 12px bajo cinco dibujos son una segunda fila de texto
     // compitiendo con la página.
-    expect(screen.queryByText('Resumen')).toBeNull();
-    expect(screen.queryByText('Escanear')).toBeNull();
+    expect(screen.queryByText('Dashboard')).toBeNull();
+    expect(screen.queryByText('Atajos')).toBeNull();
   });
 
-  it('se aparta sola cuando se abre el menú: el armazón la reconoce', () => {
-    const { container } = pintar([RESUMEN], [ESCANEAR]);
-    // La regla de `:has()` de index.css apunta a esto. Sin la marca, la barra
-    // se queda debajo de un panel a pantalla completa.
+  it('el armazón la reconoce', () => {
+    const { container } = pintar();
+    // La regla de `:has()` de index.css apunta a esto.
     expect(container.querySelector('[data-armazon="barra"]')).toBeTruthy();
   });
 
-  it('el botón del centro no es un destino', () => {
-    const alPulsar = vi.fn();
-    render(
-      <MemoryRouter>
-        <BarraInferior izquierda={[RESUMEN]} derecha={[ESCANEAR]} nombre="G" onAtajos={alPulsar} />
-      </MemoryRouter>,
-    );
+  it('el (+) registra un gasto sin pasar por ningún menú', () => {
+    const { onNuevoGasto } = pintar();
 
-    const boton = screen.getByLabelText('Atajos');
+    const boton = screen.getByLabelText('Registrar un gasto');
     expect(boton.tagName).toBe('BUTTON');
     boton.click();
-    expect(alPulsar).toHaveBeenCalled();
+
+    // Una sola llamada, no un menú que abrir: el ingreso todavía no existe, y
+    // elegir entre una opción no es elegir.
+    expect(onNuevoGasto).toHaveBeenCalledTimes(1);
+  });
+
+  it('buscar, atajos y la cuenta levantan una hoja: no navegan', () => {
+    const { onBuscar, onAtajos, onCuenta } = pintar();
+
+    screen.getByLabelText('Buscar').click();
+    screen.getByLabelText('Atajos').click();
+    screen.getByLabelText('Mi cuenta').click();
+
+    expect(onBuscar).toHaveBeenCalled();
+    expect(onAtajos).toHaveBeenCalled();
+    expect(onCuenta).toHaveBeenCalled();
+  });
+
+  it('el hueco de lo que está abierto se anuncia desplegado', () => {
+    pintar({ atajosAbiertos: true });
+
+    expect(screen.getByLabelText('Atajos').getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByLabelText('Buscar').getAttribute('aria-expanded')).toBe('false');
   });
 });

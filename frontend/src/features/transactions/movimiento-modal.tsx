@@ -86,7 +86,7 @@ const LECTURA_MINIMA_MS = 4000;
  * modos.
  *
  * ── La cascada de tres niveles ──────────────────────────────────────────────
- * Centro de costos → grupo → concepto. Se guarda el CONCEPTO, que es la hoja:
+ * Centro de costos → categoría → concepto. Se guarda el CONCEPTO, que es la hoja:
  * los dos de arriba existen para sumar, no para clasificar. Elegir uno de
  * arriba y dejarlo ahí sería un movimiento que no aparece en ningún desglose
  * por concepto.
@@ -282,7 +282,7 @@ export function MovimientoModal({
   if (!abierta) return null;
 
   const arbol = categorias.data ?? [];
-  const { centro, grupo, concepto } = rutaSeleccionada(arbol, categoryId);
+  const { centro, categoria, concepto } = rutaSeleccionada(arbol, categoryId);
 
   /**
    * Se vino a confirmar un pago pendiente, no a registrar un gasto cualquiera.
@@ -396,7 +396,7 @@ export function MovimientoModal({
   }
 
   /**
-   * Crea un grupo o un concepto dentro de lo que ya está elegido, y lo elige.
+   * Crea una categoría o un concepto dentro de lo que ya está elegido, y lo elige.
    *
    * ── Por qué aquí y no en Centros de costos ──────────────────────────────
    * Porque el momento en que uno descubre que algo no existe es exactamente
@@ -511,7 +511,20 @@ export function MovimientoModal({
       // pintaba nada —`carbon` no era un color de ninguna paleta de este
       // proyecto—, así que el modal flotaba sobre la página sin velo detrás.
       className={cn(
-        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] p-0 backdrop-blur-sm',
+        'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',
+        /*
+          ── 24 hasta el borde de la pantalla, en el teléfono ──────────────
+          La ficha no va a sangre. Pegada a los tres cantos, se lee como otra
+          PANTALLA: se come el ancho entero, la esquina de abajo desaparece y
+          lo único que dice que la aplicación sigue detrás es una franja de
+          velo arriba. Separada, vuelve a leerse como lo que es —algo que está
+          ENCIMA— y el velo se ve por los cuatro lados.
+
+          Es distancia de la ficha al canto de la pantalla, no relleno de la
+          ficha: lo de dentro sigue en 16, que es lo que `Modal` y
+          `CabeceraDeModal` ya fijan.
+        */
+        'p-6',
         'se-revela sm:items-center sm:p-4',
       )}
       // `onMouseDown` sobre el velo, y no `onClick` en cualquier sitio.
@@ -538,7 +551,10 @@ export function MovimientoModal({
           // las fichas. Esta pedía 1024 por su columna del soporte, y una
           // ficha de 1024 deja de leerse como algo que está encima de la
           // aplicación: se lee como otra pantalla.
-          'rounded-t-lg sm:rounded-lg',
+          // Las cuatro esquinas, ya no solo las de arriba: separada del borde
+          // de abajo, las de abajo también se ven, y dos cantos rectos debajo
+          // de dos curvos es una caja a medio dibujar.
+          'rounded-lg',
           /*
             ── La ÚNICA ficha que puede ser más baja ────────────────────────
             El alto mínimo de `PANEL_DE_MODAL` existe para que dos fichas
@@ -617,7 +633,7 @@ export function MovimientoModal({
                 regla: es que la regla nunca hablaba de esto.
 
                 Lo que un centro estático protege es su ESTRUCTURA —qué
-                conceptos existen y en qué grupo viven—, y por eso no se
+                conceptos existen y en qué categoría viven—, y por eso no se
                 reclasifica desde aquí. Un movimiento no es estructura: es el
                 registro de que tal mes salió tal plata de un concepto.
                 Borrarlo borra el registro y deja el concepto donde estaba,
@@ -741,7 +757,7 @@ export function MovimientoModal({
                 {editandoCampos ? (
                   <>
                     {/*
-                  El orden es el de la pregunta: de qué centro, de qué grupo,
+                  El orden es el de la pregunta: de qué centro, de qué categoría,
                   qué concepto. Y después cuánto y cuándo, que son los dos
                   datos que se copian del papel.
 
@@ -788,11 +804,11 @@ export function MovimientoModal({
                         />
                       </Campo>
 
-                      <Campo etiqueta="Grupo" id="mov-grupo">
+                      <Campo etiqueta="Categoría" id="mov-categoria">
                         <Combo
-                          id="mov-grupo"
-                          etiqueta="Grupo"
-                          valor={grupo ? String(grupo.id) : ''}
+                          id="mov-categoria"
+                          etiqueta="Categoría"
+                          valor={categoria ? String(categoria.id) : ''}
                           opciones={(centro?.children ?? []).map((g) => ({
                             valor: String(g.id),
                             etiqueta: g.name,
@@ -810,15 +826,15 @@ export function MovimientoModal({
                           id="mov-concepto"
                           etiqueta="Concepto"
                           valor={concepto ? String(concepto.id) : ''}
-                          opciones={(grupo?.children ?? []).map((c) => ({
+                          opciones={(categoria?.children ?? []).map((c) => ({
                             valor: String(c.id),
                             etiqueta: c.name,
                           }))}
-                          deshabilitado={estatico || !grupo}
-                          vacio={grupo ? 'Sin elegir' : 'Elige antes un grupo'}
+                          deshabilitado={estatico || !categoria}
+                          vacio={categoria ? 'Sin elegir' : 'Elige antes una categoría'}
                           creando={crearCategoria.isPending}
-                          onCambiar={(v) => setCategoryId(v === '' ? grupo?.id : Number(v))}
-                          onCrear={(nombre) => void crearDentro(nombre, grupo?.id)}
+                          onCambiar={(v) => setCategoryId(v === '' ? categoria?.id : Number(v))}
+                          onCrear={(nombre) => void crearDentro(nombre, categoria?.id)}
                         />
                       </Campo>
 
@@ -933,7 +949,7 @@ export function MovimientoModal({
                       valor={amount}
                       fecha={date}
                       periodo={movimiento?.period}
-                      ruta={[centro?.name, grupo?.name, concepto?.name].filter(Boolean) as string[]}
+                      ruta={[centro?.name, categoria?.name, concepto?.name].filter(Boolean) as string[]}
                     />
 
                     {/* Las notas, con lo que dicen los datos y no debajo de
@@ -1027,7 +1043,7 @@ export function MovimientoModal({
               miedo a llevarse «Aseo» por delante.
             */}
             Estás a punto de borrar el registro de un movimiento. No se elimina el concepto “
-            {concepto?.name ?? grupo?.name ?? 'al que pertenece'}”. Esta acción no se puede
+            {concepto?.name ?? categoria?.name ?? 'al que pertenece'}”. Esta acción no se puede
             deshacer. ¿Estás seguro de que quieres continuar?
           </Confirmacion>
         </div>
@@ -1244,8 +1260,8 @@ function conceptoLlamado(arbol: Category[], nombre: string): Category | undefine
   const buscado = normalizar(nombre);
 
   for (const centro of arbol) {
-    for (const grupo of centro.children ?? []) {
-      for (const concepto of grupo.children ?? []) {
+    for (const categoria of centro.children ?? []) {
+      for (const concepto of categoria.children ?? []) {
         if (normalizar(concepto.name) === buscado) return concepto;
       }
     }

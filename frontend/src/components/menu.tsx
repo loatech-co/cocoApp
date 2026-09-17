@@ -1,6 +1,8 @@
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
 
+import { useEsMovil } from '@/app/movil';
+import { PanelInferior } from '@/components/panel-inferior';
 import { Button } from '@/components/ui/button';
 import { REALCE, SUPERFICIE_FLOTANTE, SURGE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
@@ -19,6 +21,26 @@ const ARIA = { menu: 'menu', panel: 'dialog', lista: 'listbox' } as const;
  * en otra no.
  *
  * Lo que cambia entre ellos es el contenido, y eso es lo que se pasa.
+ *
+ * ── Y en el teléfono no se despliega: SUBE ──────────────────────────────────
+ * Por debajo del corte, un `menu` y un `panel` se abren como una hoja desde el
+ * borde de abajo en vez de colgar del botón. Son tres cosas a la vez:
+ *
+ *   1. un desplegable colgado de un kebab que vive en la esquina de una fila
+ *      se abre donde no hay sitio —contra el borde derecho, contra el pie de
+ *      la pantalla— y acaba recortado o pegado al canto;
+ *   2. las opciones caen lejos del pulgar, arriba de la pantalla, cuando el
+ *      dedo está abajo;
+ *   3. un calendario o un árbol de conceptos no caben en el ancho de un
+ *      desplegable, así que había que angostarlos hasta que dejaran de
+ *      poderse usar.
+ *
+ * La hoja resuelve las tres sin que la llamada tenga que saber nada: el mismo
+ * `<Menu>` se dibuja de las dos formas.
+ *
+ * `lista` NO entra. Un campo que elige un valor —un desplegable de un
+ * formulario— tiene que quedarse pegado a su campo: separarlo del sitio donde
+ * se va a escribir el valor es perder de vista qué se está contestando.
  */
 export function Menu({
   etiqueta,
@@ -121,6 +143,10 @@ export function Menu({
   disparador?: (props: { abierto: boolean }) => ReactNode;
   children: ReactNode | ((cerrar: () => void) => ReactNode);
 }) {
+  const esMovil = useEsMovil();
+  /** Se abre como hoja desde abajo en vez de colgar del botón. */
+  const enHoja = esMovil && tipo !== 'lista';
+
   const [abierto, setAbierto] = useState(false);
   const caja = useRef<HTMLDivElement>(null);
   const [anclaje, setAnclaje] = useState<{
@@ -145,8 +171,15 @@ export function Menu({
     }
   }
 
+  /*
+    Cerrar al tocar fuera y con Escape — pero solo cuando el panel cuelga del
+    botón. La hoja trae sus cuatro salidas propias —el tirador, el velo,
+    Escape y deslizar hacia abajo—, y además vive PORTADA contra el `body`:
+    para esta caja, cualquier toque dentro de la hoja es un toque «fuera», así
+    que elegir una opción la habría cerrado antes de que el clic llegara.
+  */
   useEffect(() => {
-    if (!abierto) return;
+    if (!abierto || enHoja) return;
 
     const fuera = (e: MouseEvent): void => {
       if (caja.current && !caja.current.contains(e.target as Node)) setAbierto(false);
@@ -161,7 +194,7 @@ export function Menu({
       document.removeEventListener('mousedown', fuera);
       document.removeEventListener('keydown', escape);
     };
-  }, [abierto]);
+  }, [abierto, enHoja]);
 
   return (
     <div ref={caja} className={cn('relative', claseCaja)}>
@@ -170,7 +203,7 @@ export function Menu({
           type="button"
           id={idDisparador}
           onClick={() => {
-            if (flotante) medir();
+            if (flotante && !enHoja) medir();
             setAbierto((v) => !v);
           }}
           aria-expanded={abierto}
@@ -185,7 +218,7 @@ export function Menu({
           variant={variante}
           size={soloIcono ? 'sm-icon' : 'sm'}
           onClick={() => {
-            if (flotante) medir();
+            if (flotante && !enHoja) medir();
             setAbierto((v) => !v);
           }}
           aria-expanded={abierto}
@@ -205,7 +238,7 @@ export function Menu({
                 // haya. A plena tinta, esa columna de puntos pesa más que los
                 // nombres, que es lo que se viene a leer. Va aquí y no en cada
                 // llamada para que los dos kebabs —el del centro y el del
-                // grupo— no puedan separarse.
+                // categoría— no puedan separarse.
                 variante === 'ghost' && soloIcono && 'opacity-70',
               )}
               aria-hidden={true}
@@ -224,7 +257,24 @@ export function Menu({
         </Button>
       )}
 
-      {abierto && (
+      {/* La hoja se monta SIEMPRE, abierta o cerrada: lo que se desliza no se
+          puede reconstruir en cada render, o aparece en vez de llegar. Y solo
+          por debajo del corte, para que en el escritorio no cueste nada. */}
+      {enHoja && (
+        <PanelInferior
+          abierto={abierto}
+          titulo={etiqueta}
+          // Por encima de una ficha: un calendario o un kebab se abren DESDE
+          // dentro de un modal, y en la capa de fábrica se dibujarían detrás
+          // del que los pidió.
+          capa="z-[70]"
+          onCerrar={() => setAbierto(false)}
+        >
+          {typeof children === 'function' ? children(() => setAbierto(false)) : children}
+        </PanelInferior>
+      )}
+
+      {abierto && !enHoja && (
         <div
           role={ROL[tipo]}
           aria-label={etiqueta}

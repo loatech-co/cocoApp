@@ -291,7 +291,7 @@ export class CategoriesService {
   private exigirProfundidadValida(profundidad: number): void {
     if (profundidad > PROFUNDIDAD_MAXIMA) {
       throw new UnprocessableEntityException(
-        `El árbol admite hasta ${PROFUNDIDAD_MAXIMA} niveles: centro de costos, grupo y concepto. ` +
+        `El árbol admite hasta ${PROFUNDIDAD_MAXIMA} niveles: centro de costos, categoría y concepto. ` +
           'Anidar más vuelve los reportes ilegibles.',
       );
     }
@@ -333,16 +333,16 @@ export class CategoriesService {
     const origen = await this.exigirCategoria(userId, origenId);
     const destino = await this.exigirCategoria(userId, destinoId);
 
-    // Solo entre conceptos. Fundir un grupo en otro movería sus hijos sin que
+    // Solo entre conceptos. Fundir una categoría en otro movería sus hijos sin que
     // nadie lo haya pedido, y un centro de costos ni siquiera tiene
     // movimientos propios que mover.
     if (origen.parentId === null || destino.parentId === null) {
       throw new UnprocessableEntityException(
-        'Solo se pueden unificar conceptos, no centros de costos ni grupos.',
+        'Solo se pueden unificar conceptos, no centros de costos ni categorías.',
       );
     }
 
-    // Un concepto con cosas dentro no es un concepto: es un grupo mal puesto,
+    // Un concepto con cosas dentro no es un concepto: es una categoría mal puesto,
     // y fundirlo movería sus hijos sin que nadie lo haya pedido.
     const todas = await this.repo.listar(userId, { incluirArchivadas: true });
     const conHijos = todas.filter((c) => c.parentId === origenId).length;

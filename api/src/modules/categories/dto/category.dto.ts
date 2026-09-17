@@ -91,7 +91,7 @@ export class CreateCategoryDto {
 
   /**
    * Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica desde
-   * ninguna pantalla de movimientos. Solo se lee del centro; en un grupo o un
+   * ninguna pantalla de movimientos. Solo se lee del centro; en una categoría o un
    * concepto es inerte.
    */
   @IsOptional()
@@ -120,7 +120,7 @@ export class CreateCategoryDto {
   /**
    * ── Palabras clave ──────────────────────────────────────────────────────
    * Lo que se busca en el texto de un soporte para reconocer este concepto.
-   * Solo significan algo en un concepto: un centro de costos y un grupo no
+   * Solo significan algo en un concepto: un centro de costos y una categoría no
    * aparecen en ninguna factura.
    */
   @IsOptional()
@@ -182,7 +182,7 @@ export class UpdateCategoryDto {
 
   /**
    * Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica desde
-   * ninguna pantalla de movimientos. Solo se lee del centro; en un grupo o un
+   * ninguna pantalla de movimientos. Solo se lee del centro; en una categoría o un
    * concepto es inerte.
    */
   @IsOptional()

@@ -18,7 +18,7 @@
 export interface Firma {
   /** El concepto exacto, tal como existe en el árbol de categorías. */
   concepto: string;
-  grupo: string;
+  categoria: string;
   centro: string;
   /** Razones sociales y nombres comerciales tal como salen en el texto. */
   alias: string[];
@@ -92,7 +92,7 @@ export const FIRMAS: Firma[] = [
   // ── Servicios públicos ──────────────────────────────────────────────────
   {
     concepto: 'Aquaoccidente (Agua)',
-    grupo: 'Servicios públicos',
+    categoria: 'Servicios públicos',
     centro: 'Costos fijos',
     alias: ['aquaoccidente', 'acueducto', 'acuaoccidente'],
     prefijosDeNombre: ['ao'],
@@ -101,7 +101,7 @@ export const FIRMAS: Firma[] = [
   },
   {
     concepto: 'Gases de Occidente (Gas)',
-    grupo: 'Servicios públicos',
+    categoria: 'Servicios públicos',
     centro: 'Costos fijos',
     alias: ['gases de occidente', 'gasoccidente', 'gases del occidente'],
     prefijosDeNombre: ['go', 'gdo'],
@@ -110,7 +110,7 @@ export const FIRMAS: Firma[] = [
   },
   {
     concepto: 'Celsia (Energia)',
-    grupo: 'Servicios públicos',
+    categoria: 'Servicios públicos',
     centro: 'Costos fijos',
     // "celcia" con c: es como lo escribe el OCR cuando el logo está impreso
     // en un tipo estrecho.
@@ -122,7 +122,7 @@ export const FIRMAS: Firma[] = [
   },
   {
     concepto: 'Claro Hogar',
-    grupo: 'Servicios públicos',
+    categoria: 'Servicios públicos',
     centro: 'Costos fijos',
     alias: ['claro', 'comcel'],
     // Sin esto, los dos Claro coinciden con todo recibo de Claro.
@@ -132,7 +132,7 @@ export const FIRMAS: Firma[] = [
   },
   {
     concepto: 'Claro Movil',
-    grupo: 'Servicios públicos',
+    categoria: 'Servicios públicos',
     centro: 'Costos fijos',
     alias: ['claro', 'comcel'],
     tokensDeNombre: ['movil', 'móvil', 'celular', 'personal', 'corporativo', 'tuti'],
@@ -141,7 +141,7 @@ export const FIRMAS: Firma[] = [
   },
   {
     concepto: 'Movistar',
-    grupo: 'Servicios públicos',
+    categoria: 'Servicios públicos',
     centro: 'Costos fijos',
     alias: ['movistar', 'telefonica', 'telefónica', 'colombia telecomunicaciones'],
     tokensDeNombre: ['movistar'],
@@ -151,7 +151,7 @@ export const FIRMAS: Firma[] = [
   // ── Seguridad social ────────────────────────────────────────────────────
   {
     concepto: 'PILA / Seguridad Social',
-    grupo: 'Seguridad social',
+    categoria: 'Seguridad social',
     centro: 'Costos fijos',
     alias: [
       'planilla',
@@ -174,7 +174,7 @@ export const FIRMAS: Firma[] = [
   // ── Salud y vida ────────────────────────────────────────────────────────
   {
     concepto: 'Sura',
-    grupo: 'Salud y vida',
+    categoria: 'Salud y vida',
     centro: 'Costos fijos',
     alias: ['sura', 'suramericana'],
     prioridad: 1,
@@ -182,7 +182,7 @@ export const FIRMAS: Firma[] = [
   },
   {
     concepto: 'AXA Medicina Prepagada',
-    grupo: 'Salud y vida',
+    categoria: 'Salud y vida',
     centro: 'Costos fijos',
     alias: ['axa', 'colpatria medicina', 'medicina prepagada'],
     tokensDeNombre: ['medicina', 'prepagada', 'seguros de vida', 'hyc', 'h&c'],
@@ -192,14 +192,14 @@ export const FIRMAS: Firma[] = [
   },
   {
     concepto: 'Allianz (Seguro)',
-    grupo: 'Salud y vida',
+    categoria: 'Salud y vida',
     centro: 'Costos fijos',
     alias: ['allianz'],
     rango: { min: 50_000, max: 3_000_000 },
   },
   {
     concepto: 'Seguros Bolivar',
-    grupo: 'Salud y vida',
+    categoria: 'Salud y vida',
     centro: 'Costos fijos',
     alias: ['seguros bolivar', 'seguros bolívar', 'bolivar'],
     rango: { min: 50_000, max: 3_000_000 },
@@ -208,7 +208,7 @@ export const FIRMAS: Firma[] = [
   // ── Vehículos ───────────────────────────────────────────────────────────
   {
     concepto: 'AXA Seguro Duster',
-    grupo: 'Vehículos',
+    categoria: 'Vehículos',
     centro: 'Costos fijos',
     alias: ['axa'],
     tokensDeNombre: ['duster'],
@@ -219,7 +219,7 @@ export const FIRMAS: Firma[] = [
   },
   {
     concepto: 'SOAT',
-    grupo: 'Vehículos',
+    categoria: 'Vehículos',
     centro: 'Costos fijos',
     alias: ['soat', 'seguro obligatorio'],
     tokensDeNombre: ['soat'],
@@ -230,7 +230,7 @@ export const FIRMAS: Firma[] = [
   // ── Educación ───────────────────────────────────────────────────────────
   {
     concepto: 'Colegio Rafael Pombo',
-    grupo: 'Educación',
+    categoria: 'Educación',
     centro: 'Costos fijos',
     alias: ['rafael pombo', 'colegio rafael'],
     prefijosDeNombre: ['rp'],
@@ -239,7 +239,7 @@ export const FIRMAS: Firma[] = [
   },
   {
     concepto: 'Colegio Tuti',
-    grupo: 'Educación',
+    categoria: 'Educación',
     centro: 'Costos fijos',
     alias: ['colegio tuti'],
     tokensDeNombre: ['colegio tuti'],
@@ -261,7 +261,7 @@ export const PRIORIDAD_DE_LO_ESCRITO = 100;
 /** Un concepto del árbol de alguien, con lo que se busca para reconocerlo. */
 export interface ConceptoConPalabras {
   concepto: string;
-  grupo: string;
+  categoria: string;
   centro: string;
   /** Tal como se escribieron. Se normalizan al comparar. */
   palabras: readonly string[];
@@ -291,7 +291,7 @@ export function firmasDeConceptos(conceptos: readonly ConceptoConPalabras[]): Fi
     .filter((concepto) => concepto.palabras.length > 0)
     .map((concepto) => ({
       concepto: concepto.concepto,
-      grupo: concepto.grupo,
+      categoria: concepto.categoria,
       centro: concepto.centro,
       alias: [...concepto.palabras],
       tokensDeNombre: [...concepto.palabras],

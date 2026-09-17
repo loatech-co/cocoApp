@@ -20,7 +20,7 @@ import type { Category, Transaction } from '@coco/types';
  * ── Y el concepto NO se va con el movimiento ────────────────────────────────
  * Borrar un movimiento borra el registro y nada más: el concepto sigue vivo,
  * porque es estructura y no dato. Es la razón por la que ni los conceptos ni
- * los grupos ni los centros se pueden tocar desde aquí —solo desde Centros de
+ * las categorías ni los centros se pueden tocar desde aquí —solo desde Centros de
  * costos—: desde la tabla de movimientos se anota y se corrige lo que pasó,
  * no se rehace el mapa con el que se ordena.
  */
@@ -30,24 +30,24 @@ import type { Category, Transaction } from '@coco/types';
  *
  * Los filtros y los movimientos guardan UN id —el más específico que se
  * eligió—, no los tres. Guardar los tres obligaría a mantenerlos coherentes
- * entre sí en cada cambio, y bastaría un descuido para tener un grupo que no
+ * entre sí en cada cambio, y bastaría un descuido para tener una categoría que no
  * pertenece al centro seleccionado. Con uno solo, el resto se deduce y no
  * puede contradecirse.
  */
 export function rutaSeleccionada(
   arbol: Category[],
   categoryId?: number,
-): { centro?: Category; grupo?: Category; concepto?: Category } {
+): { centro?: Category; categoria?: Category; concepto?: Category } {
   if (categoryId === undefined) return {};
 
   for (const centro of arbol) {
     if (centro.id === categoryId) return { centro };
 
-    for (const grupo of centro.children ?? []) {
-      if (grupo.id === categoryId) return { centro, grupo };
+    for (const categoria of centro.children ?? []) {
+      if (categoria.id === categoryId) return { centro, categoria };
 
-      for (const concepto of grupo.children ?? []) {
-        if (concepto.id === categoryId) return { centro, grupo, concepto };
+      for (const concepto of categoria.children ?? []) {
+        if (concepto.id === categoryId) return { centro, categoria, concepto };
       }
     }
   }
@@ -58,8 +58,8 @@ export function rutaSeleccionada(
 /**
  * El nombre de un movimiento.
  *
- * El del concepto al que pertenece. Si solo está clasificado hasta el grupo,
- * el del grupo: es lo más específico que se sabe de él.
+ * El del concepto al que pertenece. Si solo está clasificado hasta la categoría,
+ * el dla categoría: es lo más específico que se sabe de él.
  *
  * ── Los dos respaldos, y por qué existen ────────────────────────────────────
  * `description` y `merchant` son lo que DECÍA EL PAPEL, no el nombre del
@@ -79,11 +79,11 @@ export function nombreDelMovimiento(
   movimiento: Pick<Transaction, 'description' | 'merchant' | 'category_id'>,
   arbol: Category[],
 ): string {
-  const { grupo, concepto } = rutaSeleccionada(arbol, movimiento.category_id ?? undefined);
+  const { categoria, concepto } = rutaSeleccionada(arbol, movimiento.category_id ?? undefined);
 
   return (
     concepto?.name ??
-    grupo?.name ??
+    categoria?.name ??
     movimiento.description ??
     movimiento.merchant ??
     'Sin concepto'

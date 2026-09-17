@@ -1,7 +1,8 @@
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, Plus, Search } from 'lucide-react';
+import type { ComponentType } from 'react';
 import { NavLink } from 'react-router-dom';
 
-import { Avatar, type Seccion } from '@/components/navegacion';
+import { Avatar, DASHBOARD } from '@/components/navegacion';
 import { cn } from '@/lib/utils';
 
 /**
@@ -12,31 +13,50 @@ import { cn } from '@/lib/utils';
  * de pestañas a cinco, los dos por lo mismo: el sexto deja todos los blancos
  * demasiado estrechos. A 375 de ancho, cinco huecos son 75×60.
  *
- * Aquí son cuatro o cinco según si se llevan cuentas, y el botón del centro
- * queda centrado igual: los dos grupos son mitades iguales y el centro es un
- * hueco fijo entre ellas, así que no depende de cuántos enlaces caigan a cada
- * lado.
+ * ── Uno solo es un destino; los otros cuatro son cosas que se HACEN ─────────
+ *
+ *   Inicio    la única sección de la barra
+ *   Buscar    abre una hoja con el campo y los resultados dentro
+ *   (+)       registra un gasto, sin pasar por ningún menú
+ *   Atajos    las páginas que cada quien se arma
+ *   Avatar    su hoja: el perfil, los ajustes y la salida
+ *
+ * Eran cuatro secciones y un botón, y estaba al revés de como se usa un
+ * teléfono: lo que se hace veinte veces por semana —anotar un gasto, buscar
+ * uno— quedaba a dos toques, y lo que se visita una vez al mes tenía su hueco
+ * fijo. Las secciones que salieron de aquí siguen a un toque desde los atajos,
+ * que es exactamente para lo que están.
+ *
+ * ── Por qué el (+) NO abre un menú ──────────────────────────────────────────
+ * Porque solo hay una respuesta. El menú de «Nuevo movimiento» ofrece gasto e
+ * ingreso, y el ingreso está apagado —«Pronto»—: en el teléfono eso es un
+ * toque de más para elegir la única opción viva. En la pantalla ancha el menú
+ * se queda, porque ahí el segundo toque no cuesta un gesto sino un clic, y el
+ * día que el ingreso exista el menú ya está escrito.
  *
  * ── Solo iconos ─────────────────────────────────────────────────────────────
  * Cinco palabras de 12px bajo cinco dibujos son una segunda fila de texto
  * compitiendo con la página, y aplanarían la única jerarquía que la barra
  * tiene. Cada hueco lleva su nombre accesible.
- *
- * ── Lo que NO está aquí ─────────────────────────────────────────────────────
- * El menú. Su botón está arriba, en el techo, que es el borde por el que entra
- * el panel; y cuando el panel se abre, esta barra se retira. Las secciones son
- * a dónde se VA; esto es lo que se hace con la página en la que se está.
  */
 export function BarraInferior({
-  izquierda,
-  derecha,
   nombre,
+  busquedaAbierta,
+  onBuscar,
+  onNuevoGasto,
+  atajosAbiertos,
   onAtajos,
+  cuentaAbierta,
+  onCuenta,
 }: {
-  izquierda: readonly Seccion[];
-  derecha: readonly Seccion[];
   nombre: string;
+  busquedaAbierta: boolean;
+  onBuscar: () => void;
+  onNuevoGasto: () => void;
+  atajosAbiertos: boolean;
   onAtajos: () => void;
+  cuentaAbierta: boolean;
+  onCuenta: () => void;
 }) {
   return (
     <nav
@@ -57,18 +77,22 @@ export function BarraInferior({
       )}
     >
       <div className="flex flex-1">
-        {izquierda.map((seccion) => (
-          <Hueco key={seccion.to} seccion={seccion} />
-        ))}
+        <HuecoDeSeccion seccion={DASHBOARD} />
+        <HuecoDeBoton
+          Icono={Search}
+          etiqueta="Buscar"
+          encendido={busquedaAbierta}
+          onClick={onBuscar}
+        />
       </div>
 
       {/* Ancho fijo: es lo que mantiene el botón en el centro exacto cuando
-          los grupos no tienen el mismo número de enlaces. */}
+          los grupos no tienen el mismo número de huecos. */}
       <div className="flex w-[72px] shrink-0 items-start justify-center">
         <button
           type="button"
-          onClick={onAtajos}
-          aria-label="Atajos"
+          onClick={onNuevoGasto}
+          aria-label="Registrar un gasto"
           className={cn(
             // Redondo, no baldosa con esquinas: una baldosa se leería como una
             // más de las que abre, y el único control de la barra que no es un
@@ -77,16 +101,9 @@ export function BarraInferior({
             // 16 por encima de la raya, y quedan 20 de barra por debajo.
             '-mt-4',
             // ── El color de la marca, no el acento ───────────────────────
-            // Era `--accent`, que en claro es un verde AGUA muy pálido
-            // (#e0ebe9) sobre una barra de #f1efe8: el control más importante
-            // del teléfono quedaba pálido sobre pálido y había que buscarlo.
             // El acento es la superficie de lo que RESPONDE al cursor, no la
             // de lo que llama; para llamar está el color de la marca, que es
             // además el que ya lleva el avatar cuando está encendido.
-            //
-            // El comentario de antes decía «lima con tinta, nunca blanco»:
-            // desde el cambio de tema no hay lima, y la tinta correcta la
-            // declara el propio par de tokens.
             'bg-sidebar-active text-sidebar-active-foreground shadow-[var(--sombra-flotante)]',
             // Pulsado se asienta DENTRO de la barra: el dedo ya lo está
             // tapando, así que la respuesta tiene que verse alrededor del dedo
@@ -94,59 +111,124 @@ export function BarraInferior({
             'transition-transform duration-[120ms] active:translate-y-[2px]',
           )}
         >
-          <LayoutGrid className="size-6" aria-hidden="true" />
+          <Plus className="size-6" strokeWidth={2.25} aria-hidden="true" />
         </button>
       </div>
 
       <div className="flex flex-1">
-        {derecha.map((seccion) => (
-          <Hueco key={seccion.to} seccion={seccion} />
-        ))}
-        <NavLink
-          to="/mi-cuenta"
-          className={({ isActive }) =>
-            cn(
-              'flex h-[60px] min-w-0 flex-1 items-center justify-center transition-colors duration-[120ms]',
-              isActive && 'text-sidebar-active',
-            )
-          }
+        <HuecoDeBoton
+          Icono={LayoutGrid}
+          etiqueta="Atajos"
+          encendido={atajosAbiertos}
+          onClick={onAtajos}
+        />
+
+        <button
+          type="button"
+          onClick={onCuenta}
           aria-label="Mi cuenta"
+          aria-expanded={cuentaAbierta}
+          className="flex h-[60px] min-w-0 flex-1 items-center justify-center"
         >
-          {({ isActive }) => (
-            // Apagado va de la superficie tenue de la barra y encendido del
-            // color de la marca con su tinta. Nunca al revés: cuando el avatar
-            // llevaba el color de la barra, el círculo desaparecía y quedaban
-            // unas iniciales sueltas que se leían como el hueco activo.
-            <Avatar
-              nombre={nombre}
-              className={cn(
-                'size-8',
-                isActive
-                  ? 'bg-sidebar-active text-sidebar-active-foreground'
-                  : 'bg-sidebar-hover text-sidebar-foreground',
-              )}
-            />
-          )}
-        </NavLink>
+          {/* Apagado va de la superficie tenue de la barra y encendido del
+              color de la marca con su tinta. Nunca al revés: cuando el avatar
+              llevaba el color de la barra, el círculo desaparecía y quedaban
+              unas iniciales sueltas que se leían como el hueco activo. */}
+          <Avatar
+            nombre={nombre}
+            className={cn(
+              'size-8',
+              cuentaAbierta
+                ? 'bg-sidebar-active text-sidebar-active-foreground'
+                : 'bg-sidebar-hover text-sidebar-foreground',
+            )}
+          />
+        </button>
       </div>
     </nav>
   );
 }
 
-function Hueco({ seccion: { to, label, Icono, exact } }: { seccion: Seccion }) {
+/** Lo que comparten los cinco huecos: la medida y el reparto del ancho. */
+const HUECO =
+  'flex h-[60px] min-w-0 flex-1 items-center justify-center transition-colors duration-[120ms]';
+
+function HuecoDeSeccion({
+  seccion: { to, label, Icono, exact },
+}: {
+  seccion: {
+    to: string;
+    label: string;
+    Icono: ComponentType<{
+      className?: string;
+      'aria-hidden'?: boolean;
+      fill?: string;
+      fillOpacity?: number;
+      strokeWidth?: number;
+    }>;
+    exact: boolean;
+  };
+}) {
   return (
     <NavLink
       to={to}
       end={exact}
       aria-label={label}
       className={({ isActive }) =>
-        cn(
-          'flex h-[60px] min-w-0 flex-1 items-center justify-center transition-colors duration-[120ms]',
-          isActive ? 'text-sidebar-active' : 'text-sidebar-muted',
-        )
+        cn(HUECO, isActive ? 'text-sidebar-active' : 'text-sidebar-muted')
       }
     >
-      <Icono className="size-6" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden={true} />
+      <Icono
+        className="size-6"
+        fill="currentColor"
+        fillOpacity={0.18}
+        strokeWidth={1.75}
+        aria-hidden={true}
+      />
     </NavLink>
+  );
+}
+
+/**
+ * Un hueco que no lleva a ninguna parte: abre algo sobre la página.
+ *
+ * Se dibuja EXACTAMENTE igual que uno que sí lleva —el mismo alto, el mismo
+ * reparto del ancho, el mismo par de colores—, y es a propósito: quien mira la
+ * barra no tiene por qué saber cuál de los cinco cambia de pantalla y cuál
+ * levanta una hoja. Lo que los distingue es lo que pasa al tocarlos.
+ */
+function HuecoDeBoton({
+  Icono,
+  etiqueta,
+  encendido,
+  onClick,
+}: {
+  Icono: ComponentType<{
+    className?: string;
+    'aria-hidden'?: boolean;
+    fill?: string;
+    fillOpacity?: number;
+    strokeWidth?: number;
+  }>;
+  etiqueta: string;
+  encendido: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={etiqueta}
+      aria-expanded={encendido}
+      className={cn(HUECO, encendido ? 'text-sidebar-active' : 'text-sidebar-muted')}
+    >
+      <Icono
+        className="size-6"
+        fill="currentColor"
+        fillOpacity={0.18}
+        strokeWidth={1.75}
+        aria-hidden={true}
+      />
+    </button>
   );
 }

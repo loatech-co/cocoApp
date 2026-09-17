@@ -46,6 +46,8 @@ const NACEN_ENFOCADOS: Record<string, string> = {
     'La paleta de páginas: se abre para escribir el nombre de una, y no tiene ningún otro control.',
   'components/toolbar-filtros.tsx':
     'La caja de búsqueda aparece al pulsar la lupa. Es el mismo gesto.',
+  'components/panel-de-busqueda.tsx':
+    'La hoja de buscar del teléfono: se levanta al tocar la lupa de la barra de abajo, y el campo es lo único que tiene.',
   'components/ui/combo.tsx':
     'El filtro de un desplegable con muchas opciones: si hay que pulsarlo antes de escribir, nadie descubre que se podía filtrar.',
 };
@@ -136,7 +138,7 @@ describe('La señal de foco se escribe con :focus-visible', () => {
   it('y la regla base de la hoja los exime del contorno', () => {
     // Sin esto no habría hecho falta quitar ni un anillo: el contorno de dos
     // píxeles de `:focus-visible` lo dibuja la capa base sobre CUALQUIER cosa
-    // que reciba el foco, y es el que se veía en el botón de agregar grupo.
+    // que reciba el foco, y es el que se veía en el botón de agregar categoría.
     expect(css).toMatch(/button:focus-visible\s*\{\s*outline:\s*none/);
   });
 });

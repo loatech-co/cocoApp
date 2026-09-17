@@ -50,7 +50,7 @@ export class CategoriesRepository {
    * Estaba declarado como `CategoryUpdateInput`, que sí las admite, así que
    * TypeScript daba por bueno un `parent: { connect: … }` que Prisma rechaza
    * en tiempo de ejecución con «Unknown argument `parent`». El resultado era
-   * un 500 al cambiar de grupo un concepto, y nunca lo vio nadie porque el
+   * un 500 al cambiar de categoría un concepto, y nunca lo vio nadie porque el
    * tipo mentía.
    *
    * `Unchecked` es la variante que expone las claves ajenas como lo que son
@@ -100,7 +100,7 @@ export class CategoriesRepository {
    *
    * ── Por qué el subárbol y no la fila ────────────────────────────────────
    * Porque `parent_id` está declarado `ON DELETE SET NULL`: borrando solo el
-   * grupo, sus conceptos se quedaban con el padre en nulo y ASCENDÍAN a
+   * categoría, sus conceptos se quedaban con el padre en nulo y ASCENDÍAN a
    * centros de costos. Un borrado que crea tres centros nuevos no es lo que
    * nadie pidió.
    *

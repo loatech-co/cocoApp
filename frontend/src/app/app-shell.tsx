@@ -1,4 +1,4 @@
-import { Menu as IconoDeMenu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
@@ -7,11 +7,14 @@ import { useSuperficieDeAtajos } from '@/components/atajos';
 import { BarraInferior } from '@/components/barra-inferior';
 import { Logo, LogoCompacto } from '@/components/logo';
 import { EnlaceDeSeccion, MenuDeLaCuenta, useSecciones } from '@/components/navegacion';
-import { PanelDeSecciones } from '@/components/panel-de-secciones';
+import { PanelDeBusqueda } from '@/components/panel-de-busqueda';
+import { PanelDeLaCuenta } from '@/components/panel-de-la-cuenta';
 import { PanelInferior } from '@/components/panel-inferior';
 import { PilaDeAvisos } from '@/components/ui/aviso';
+import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
+import type { Transaction } from '@coco/types';
 
 /**
  * El armazón.
@@ -19,12 +22,19 @@ import { cn } from '@/lib/utils';
  * ── Qué cambia en el corte ──────────────────────────────────────────────────
  * Cuatro cosas, y solo cuatro:
  *
- *   1. la navegación SE SALE del flujo — no hay ancho que darle, así que pasa
- *      a ser un panel a pantalla completa y la columna de contenido se queda
- *      la ventana entera;
- *   2. aparece un techo, y se queda pegado arriba al desplazar;
+ *   1. el riel DESAPARECE — no hay ancho que darle, y lo que hacía se reparte
+ *      entre la barra de abajo, los atajos y la hoja de la cuenta;
+ *   2. aparece un techo con la marca, y se queda pegado arriba al desplazar;
  *   3. el cuerpo se reserva al pie el hueco de la barra;
- *   4. aparece la barra de abajo.
+ *   4. aparece la barra de abajo, con sus tres hojas y la ficha del (+).
+ *
+ * ── Por qué ya no hay menú de hamburguesa ───────────────────────────────────
+ * Porque era un tercer sitio donde vivía la misma lista. El riel la tiene en
+ * el escritorio; en el teléfono la barra de abajo lleva lo del día a día, los
+ * atajos llevan CUALQUIER página —y se arman a mano, que es mejor que un orden
+ * que decidimos nosotros— y la hoja del avatar lleva lo de administrar. Un
+ * panel a pantalla completa con las nueve secciones era la cuarta forma de
+ * llegar a las mismas páginas, y la que menos se usaba.
  *
  * ── Lo que el armazón NO hace ───────────────────────────────────────────────
  * Dar estilo a sus hijos. El panel, el techo y la barra son componentes con
@@ -50,15 +60,27 @@ export function AppShell() {
     () => localStorage.getItem('sidenav-plegada') === 'si',
   );
 
-  const [menuAbierto, setMenuAbierto] = useState(false);
   const [atajosAbiertos, setAtajosAbiertos] = useState(false);
+  const [busquedaAbierta, setBusquedaAbierta] = useState(false);
+  const [cuentaAbierta, setCuentaAbierta] = useState(false);
 
-  // Cambiar de página cierra lo que esté tapándola. Un panel que sobrevive a
-  // su propio enlace deja a la persona mirando el menú de una pantalla que ya
-  // no está debajo.
+  /**
+   * La ficha que el armazón tiene abierta.
+   *
+   * `undefined` es cerrada, `null` es una nueva y un movimiento es ese. Es la
+   * misma convención que usa el resumen, y a propósito: abrir un gasto desde
+   * el (+) de la barra o desde un resultado de la búsqueda no puede ser otra
+   * ficha ni otro formulario que abrirlo desde la tabla.
+   */
+  const [ficha, setFicha] = useState<Transaction | null | undefined>(undefined);
+
+  // Cambiar de página cierra lo que esté tapándola. Una hoja que sobrevive a
+  // su propio enlace deja a la persona mirando los atajos de una pantalla que
+  // ya no está debajo.
   useEffect(() => {
-    setMenuAbierto(false);
     setAtajosAbiertos(false);
+    setBusquedaAbierta(false);
+    setCuentaAbierta(false);
   }, [ubicacion.pathname]);
 
   function alternarBarra(): void {
@@ -76,10 +98,6 @@ export function AppShell() {
     porDefecto: diaADia.map((s) => s.to),
     onIr: () => setAtajosAbiertos(false),
   });
-
-  // El botón del centro queda centrado aunque los grupos no empaten: el hueco
-  // del medio tiene ancho fijo y los dos lados son mitades iguales.
-  const corte = Math.ceil(diaADia.length / 2);
 
   return (
     // La página entera es EL MATERIAL —el mismo color de la tarjeta y del
@@ -207,18 +225,13 @@ export function AppShell() {
       {esMovil && (
         <header
           data-armazon="techo"
-          className="sticky top-0 z-20 flex h-16 items-center justify-between gap-2 bg-sidebar px-4 shadow-[var(--sombra-pegada)]"
+          // La marca SOLA, y centrada. Antes compartía la fila con el botón del
+          // menú, que ya no existe: con un único elemento, dejarlo pegado a la
+          // izquierda deja media franja vacía a su derecha y el techo se lee
+          // como una fila a la que le falta algo. Centrado es una portada.
+          className="sticky top-0 z-20 flex h-16 items-center justify-center bg-sidebar px-4 shadow-[var(--sombra-pegada)]"
         >
           <Logo className="h-7 w-auto text-sidebar-active" />
-          <button
-            type="button"
-            onClick={() => setMenuAbierto(true)}
-            aria-label="Abrir el menú"
-            aria-expanded={menuAbierto}
-            className="grid size-11 place-items-center rounded-lg text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
-          >
-            <IconoDeMenu className="size-6" aria-hidden="true" />
-          </button>
         </header>
       )}
 
@@ -310,21 +323,21 @@ export function AppShell() {
       {esMovil && (
         <>
           <BarraInferior
-            izquierda={diaADia.slice(0, corte)}
-            derecha={diaADia.slice(corte)}
             nombre={usuario?.display_name ?? usuario?.email ?? '?'}
+            busquedaAbierta={busquedaAbierta}
+            onBuscar={() => setBusquedaAbierta(true)}
+            // Directo al gasto, sin menú de por medio: es la única opción viva
+            // de las dos que ofrece el menú de la pantalla ancha.
+            onNuevoGasto={() => setFicha(null)}
+            atajosAbiertos={atajosAbiertos}
             onAtajos={() => setAtajosAbiertos(true)}
+            cuentaAbierta={cuentaAbierta}
+            onCuenta={() => setCuentaAbierta(true)}
           />
 
-          <PanelDeSecciones
-            abierta={menuAbierto}
-            diaADia={diaADia}
-            administracion={administracion}
-            onCerrar={() => setMenuAbierto(false)}
-          />
-
-          {/* Montado siempre, abierto o cerrado: lo que se desliza no se puede
-              reconstruir en cada render, o aparece en vez de llegar. */}
+          {/* Las tres hojas van montadas siempre, abiertas o cerradas: lo que
+              se desliza no se puede reconstruir en cada render, o aparece en
+              vez de llegar. */}
           <PanelInferior
             abierto={atajosAbiertos}
             titulo="Atajos"
@@ -333,6 +346,32 @@ export function AppShell() {
           >
             {cuerpo}
           </PanelInferior>
+
+          <PanelDeBusqueda
+            abierto={busquedaAbierta}
+            onCerrar={() => setBusquedaAbierta(false)}
+            // Encontrado el movimiento, la búsqueda se acabó: la hoja se cierra
+            // y en su sitio se abre la ficha. Dejarla debajo obligaría a
+            // cerrarla después, y con la ficha encima ya no se ve.
+            onElegir={(movimiento) => {
+              setBusquedaAbierta(false);
+              setFicha(movimiento);
+            }}
+          />
+
+          <PanelDeLaCuenta abierto={cuentaAbierta} onCerrar={() => setCuentaAbierta(false)} />
+
+          {/* Esta sí se monta al abrirse. No se desliza —entra con la animación
+              de su propio velo, que corre por existir—, y montada siempre
+              tendría sus consultas en pie en todas las pantallas del teléfono. */}
+          {ficha !== undefined && (
+            <MovimientoModal
+              abierta
+              movimiento={ficha}
+              tipoPorDefecto="expense"
+              onCerrar={() => setFicha(undefined)}
+            />
+          )}
         </>
       )}
 

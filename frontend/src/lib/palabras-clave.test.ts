@@ -33,10 +33,10 @@ function concepto(id: number, name: string, palabras: string[] = []): Category {
   } as Category;
 }
 
-/** Centro → grupo → concepto, que es la forma que tiene el árbol de verdad. */
+/** Centro → categoría → concepto, que es la forma que tiene el árbol de verdad. */
 function arbolCon(...conceptos: Category[]): Category[] {
-  const grupo = { ...concepto(20, 'Servicios públicos'), children: conceptos };
-  return [{ ...concepto(10, 'Costos fijos'), children: [grupo] }];
+  const categoria = { ...concepto(20, 'Servicios públicos'), children: conceptos };
+  return [{ ...concepto(10, 'Costos fijos'), children: [categoria] }];
 }
 
 describe('Lo que se escribe, antes de guardarse', () => {

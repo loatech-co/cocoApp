@@ -1,5 +1,6 @@
 import { LogOut, ShieldCheck } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,24 @@ import { Campo } from '@/components/ui/campo';
  */
 export function CuentaPage() {
   const { usuario, esAdmin, salirDeTodosLosDispositivos } = useAuth();
+  const { hash } = useLocation();
+
+  /*
+    ── Las anclas ────────────────────────────────────────────────────────────
+    La hoja de la cuenta del teléfono ofrece «Ajustes» y «Seguridad» como dos
+    entradas distintas, y las dos llevan aquí: son dos TROZOS de esta página,
+    no dos pantallas. Partirla en tres dejaría tres pantallas de una tarjeta.
+
+    Y hace falta llevar la vista al sitio a mano porque el enrutador no lo
+    hace: cambia la ruta sin tocar el desplazamiento, así que «Seguridad»
+    dejaba a la persona arriba del todo mirando los ajustes.
+  */
+  useEffect(() => {
+    if (!hash) return;
+    document
+      .getElementById(hash.slice(1))
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [hash]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,25 +51,35 @@ export function CuentaPage() {
         </Badge>
       )}
 
-      <Ajustes />
+      {/* El margen de desplazamiento es el alto del techo del teléfono más un
+          poco: sin él, la sección a la que se acaba de llegar queda justo
+          DEBAJO de la franja de la marca, que está pegada arriba. */}
+      <section id="ajustes" className="scroll-mt-20">
+        <Ajustes />
+      </section>
 
-      <CambiarContrasena />
+      {/* Las dos cosas que hace alguien que sospecha que su cuenta está
+          comprometida, juntas y con un nombre: cambiar la contraseña y echar
+          a todo el mundo. Separadas no había a dónde apuntar desde fuera. */}
+      <section id="seguridad" className="flex scroll-mt-20 flex-col gap-6">
+        <CambiarContrasena />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cerrar sesión en todos los dispositivos</CardTitle>
-          <CardDescription>
-            Invalida al instante todas las sesiones abiertas, incluida esta. Úsalo si crees que
-            alguien más tiene acceso a tu cuenta.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" onClick={() => void salirDeTodosLosDispositivos()}>
-            <LogOut aria-hidden="true" />
-            Cerrar todo
-          </Button>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Cerrar sesión en todos los dispositivos</CardTitle>
+            <CardDescription>
+              Invalida al instante todas las sesiones abiertas, incluida esta. Úsalo si crees que
+              alguien más tiene acceso a tu cuenta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={() => void salirDeTodosLosDispositivos()}>
+              <LogOut aria-hidden="true" />
+              Cerrar todo
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }

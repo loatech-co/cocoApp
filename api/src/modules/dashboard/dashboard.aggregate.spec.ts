@@ -152,7 +152,7 @@ describe('Jerarquía de tres niveles', () => {
     expect(ancestroEnNivel(arbol, BigInt(3), 1)).toBe(BigInt(1));
   });
 
-  it('sube de un concepto a su grupo', () => {
+  it('sube de un concepto a su categoría', () => {
     expect(ancestroEnNivel(arbol, BigInt(3), 2)).toBe(BigInt(2));
   });
 

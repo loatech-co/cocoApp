@@ -108,11 +108,11 @@ export interface CategoriaPlana {
  *
  * Los movimientos se cuelgan del CONCEPTO, que es el nivel 3. Para responder
  * "¿cuánto se fue en servicios públicos?" hay que subir del concepto a su
- * grupo; para "¿cuánto en costos fijos?", hasta el centro. Sin esto, un
+ * categoría; para "¿cuánto en costos fijos?", hasta el centro. Sin esto, un
  * desglose por centro saldría vacío: ningún movimiento apunta a un centro.
  *
  * Devuelve `null` si la categoría no llega a ese nivel —un concepto colgado
- * directamente de la raíz no tiene grupo— y quien llame decide qué hacer.
+ * directamente de la raíz no tiene categoría— y quien llame decide qué hacer.
  */
 export function ancestroEnNivel(
   categorias: ReadonlyMap<string, CategoriaPlana>,

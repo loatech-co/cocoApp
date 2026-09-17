@@ -7,6 +7,22 @@ import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
 /**
+ * Una fila de un panel: un icono, un nombre y lo que venga detrás.
+ *
+ * ── Por qué es una clase y no un componente ─────────────────────────────────
+ * Porque unas son `<button>` —agregar un atajo, cerrar la sesión— y otras son
+ * `<Link>` —ir a una sección, abrir un movimiento—, y lo que comparten es el
+ * ASPECTO. Es el mismo recurso que `BLOQUE` y `SUPERFICIE_FLOTANTE`: un solo
+ * sitio donde cambia, sin obligar a que todas sean el mismo elemento.
+ *
+ * 48 de alto, que es la medida de una fila que se toca con el pulgar, y todo
+ * el ancho del panel: así el icono de la derecha —un más, un galón— puede ser
+ * pequeño, porque el blanco no es él sino la fila entera.
+ */
+export const FILA_DE_PANEL =
+  'flex min-h-[48px] w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors hover:bg-muted';
+
+/**
  * Un panel que sube desde el borde de abajo.
  *
  * ── Por qué se monta una vez y se RELLENA ───────────────────────────────────
@@ -34,6 +50,7 @@ export function PanelInferior({
   abierto,
   titulo,
   cabeza,
+  capa = 'z-40',
   onCerrar,
   children,
 }: {
@@ -41,6 +58,17 @@ export function PanelInferior({
   /** Su nombre accesible. Lo que se ve lo decide `cabeza`. */
   titulo: string;
   cabeza?: ReactNode;
+  /**
+   * En qué capa se dibuja.
+   *
+   * De fábrica va en `z-40`: por encima del armazón —la barra está en 15 y el
+   * techo en 20— y por debajo de una ficha, que vive en 50.
+   *
+   * Lo sube quien SALE DE algo que ya está arriba: el desplegable de un menú
+   * se abre desde dentro de una ficha, así que un panel en 40 se dibujaría
+   * detrás de la ficha que lo pidió.
+   */
+  capa?: string;
   onCerrar: () => void;
   children: ReactNode;
 }) {
@@ -93,7 +121,8 @@ export function PanelInferior({
       // acaba de nacer no tiene opacidad anterior desde la que viajar.
       onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
       className={cn(
-        'fixed inset-0 z-40 bg-[var(--velo)] transition-opacity duration-200 ease-[ease]',
+        'fixed inset-0 bg-[var(--velo)] transition-opacity duration-200 ease-[ease]',
+        capa,
         abierto ? 'opacity-100' : 'pointer-events-none opacity-0',
       )}
     >
@@ -112,9 +141,22 @@ export function PanelInferior({
         style={{ height: alto ?? undefined }}
         className={cn(
           'fixed inset-x-0 bottom-0 flex max-h-[88dvh] flex-col overflow-hidden outline-none',
-          // Solo arriba: las esquinas de abajo caen fuera de la pantalla y
-          // curvarlas deja dos muescas del fondo.
-          'rounded-t-lg',
+          /*
+            Solo arriba: las esquinas de abajo caen fuera de la pantalla y
+            curvarlas deja dos muescas del fondo.
+
+            ── Y 16px, por encima del radio estándar ─────────────────────────
+            Es la segunda excepción de la app, junto al pozo, y por el mismo
+            motivo: esta esquina mide el ANCHO ENTERO de la pantalla, y en un
+            canto tan largo 10px casi no se ven. Lo que la curva tiene que
+            contar —que esto es una hoja que SUBIÓ y que la página sigue
+            debajo— depende de que se vea.
+
+            Y no rompe la regla, que habla de contenedores VECINOS: el panel
+            no tiene vecinos, está encima de todo. Está registrada con su
+            motivo en `components/ui/radio.test.ts`.
+          */
+          'rounded-t-[16px]',
           SUPERFICIE_FLOTANTE,
           // La misma duración y la misma curva para el viaje y para el alto:
           // crece y encoge con el mismo gesto con el que llegó.
@@ -133,20 +175,33 @@ export function PanelInferior({
               con buscador es más alta porque su CONTENIDO es más alto, que es
               la única razón por la que debería pasarse del suelo.
 
-              Un recuadro, 16 alrededor; 12 hasta el cuerpo. Una cabeza se lee
-              por sus BORDES, no por sus partes. */}
-          <div className="min-h-[78px] shrink-0 px-4 pb-3">
+              Un recuadro, 24 a los lados; 12 hasta el cuerpo. Una cabeza se
+              lee por sus BORDES, no por sus partes.
+
+              24 y no 16: con 16, el título y el primer renglón del cuerpo
+              quedaban casi a ras del canto de la pantalla —la hoja ocupa el
+              ancho entero, así que su relleno es lo ÚNICO que separa lo
+              escrito del borde del teléfono— y el texto se leía comido. */}
+          <div className="min-h-[78px] shrink-0 px-6 pb-3">
             <Tirador />
             {cabeza ?? <h2 className="font-display text-lg font-semibold">{titulo}</h2>}
           </div>
 
           {/* El borde seguro va en el RELLENO DEL CUERPO y no en el panel: un
               panel con relleno deja una franja de color muerta debajo del
-              desplazamiento en vez de dejar que el contenido pase por debajo. */}
+              desplazamiento en vez de dejar que el contenido pase por debajo.
+
+              24 a los lados, los mismos de la cabeza: dos sangrados distintos
+              se ven como un escalón en el canto izquierdo de la hoja.
+
+              Y 30 abajo, más que los lados a propósito: ahí no hay canto de
+              pantalla sino el borde de abajo del teléfono, donde vive el gesto
+              de volver al inicio. La última fila necesita más aire que las
+              otras para no quedar debajo de él. */}
           <div
             key={visitas.current}
             data-cuerpo
-            className="min-h-0 flex-1 touch-pan-y overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] [overflow-y:auto]"
+            className="min-h-0 flex-1 touch-pan-y overscroll-contain px-6 pb-[calc(30px+env(safe-area-inset-bottom,0px))] [overflow-y:auto]"
           >
             {children}
           </div>

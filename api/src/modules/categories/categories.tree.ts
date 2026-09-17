@@ -14,13 +14,13 @@ export interface NodoDeCategoria {
 /**
  * Profundidad máxima: TRES niveles, que es la forma del modelo.
  *
- *   Centro de costos  →  Grupo  →  Concepto
+ *   Centro de costos  →  Categoría  →  Concepto
  *   Costos fijos          Servicios públicos   Celsia (Energía)
  *
  * El movimiento se cuelga del CONCEPTO, que es la hoja. Los dos niveles de
  * arriba no se usan para clasificar: existen para sumar. "¿Cuánto se fue en
  * servicios públicos?" es la suma de sus conceptos, y "¿cuánto en costos
- * fijos?" la de sus grupos.
+ * fijos?" la de sus categorías.
  *
  * No más de tres: un cuarto nivel obliga a decidir en qué rama va cada cosa
  * antes de poder registrarla, y esa fricción es la que hace que la gente deje
@@ -29,7 +29,7 @@ export interface NodoDeCategoria {
 export const PROFUNDIDAD_MAXIMA = 3;
 
 /** Los tres niveles, por su nombre de dominio. `profundidadDe` devuelve 1, 2 o 3. */
-export const NIVELES = ['centro de costos', 'grupo', 'concepto'] as const;
+export const NIVELES = ['centro de costos', 'categoría', 'concepto'] as const;
 
 /** El nombre del nivel que ocupa una profundidad dada. */
 export function nombreDelNivel(profundidad: number): string {
@@ -46,7 +46,7 @@ function indexar<T extends NodoDeCategoria>(categorias: readonly T[]): Map<strin
  * ¿Poner `nuevoPadreId` como padre de `id` crearía un ciclo?
  *
  * Sube por la cadena de ancestros del padre propuesto: si en el camino aparece
- * la propia categoría, el árbol se mordería la cola y quedaría un grupo de
+ * la propia categoría, el árbol se mordería la cola y quedaría un corro de
  * filas inalcanzables desde la raíz. También cuenta el caso trivial de ser su
  * propio padre.
  *
@@ -199,7 +199,7 @@ export function anidar<T extends NodoDeCategoria>(categorias: readonly T[]): Con
  *
  * ── Por qué una lista y no un id ────────────────────────────────────────────
  * Porque el panel de filtros son casillas: se pueden marcar varios centros a
- * la vez, o dos grupos de centros distintos. Con un solo id habría que elegir
+ * la vez, o dos categorías de centros distintos. Con un solo id habría que elegir
  * entre "Casa" y "Transporte" cuando la pregunta real suele ser "¿cuánto me
  * cuestan los dos juntos?".
  *
@@ -226,7 +226,7 @@ export function idsDeCategorias(crudo?: string | number): bigint[] {
 /**
  * Cada id con toda su rama por debajo, sin repetidos.
  *
- * Los movimientos cuelgan del CONCEPTO, nunca del centro ni del grupo, así que
+ * Los movimientos cuelgan del CONCEPTO, nunca del centro ni dla categoría, así que
  * filtrar por un centro sin expandir su rama devuelve cero filas — que es
  * exactamente lo que pasaba antes de esto.
  */

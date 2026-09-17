@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { mostrarAviso } from '@/components/ui/aviso';
+import { FILA_DE_PANEL } from '@/components/panel-inferior';
 import { MAXIMO_DE_ATAJOS, anadirAtajo, moverAtajo, quitarAtajo, useAtajos } from '@/lib/atajos';
 import { cn } from '@/lib/utils';
 import { REALCE } from '@/components/ui/superficie';
@@ -215,11 +216,13 @@ export function useSuperficieDeAtajos({
         {disponibles.map(({ ruta, etiqueta, Icono }) => (
           <li key={ruta}>
             {/* La fila ENTERA es el control: 48 de alto y todo el ancho del
-                panel. Por eso el más de la derecha puede ser pequeño. */}
+                panel. Por eso el más de la derecha puede ser pequeño. Es la
+                misma que usan la hoja de la cuenta y la de buscar, así que la
+                clase vive en un solo sitio. */}
             <button
               type="button"
               onClick={() => anadir(ruta)}
-              className="flex min-h-[48px] w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors hover:bg-muted"
+              className={FILA_DE_PANEL}
             >
               <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />
               <span className="min-w-0 flex-1 truncate">{etiqueta}</span>

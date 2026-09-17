@@ -70,14 +70,21 @@ La escala crece en orden: `sm` 6, `md` 8, `lg` 10, `xl` 14. El `2xl` y el
 `3xl` de Tailwind no leen el tema —valen 16 y 24 fijos— y por eso están
 prohibidos.
 
-**La única excepción es el pozo** —la esquina donde se abre el contenido
-dentro de la página, en `app/app-shell.tsx`—, que lleva 14px. Se pasa
-porque es el contenedor más grande que hay: 10px en un canto que mide toda
-la altura de la ventana casi no se ve, y lo que esa esquina cuenta depende
-de que se vea. No rompe la regla, que habla de contenedores VECINOS: el
-pozo no es vecino de ninguna tarjeta, es el fondo de todas. Está
-registrada con su motivo en `PERMITIDOS`, dentro de la misma prueba; toda
-excepción nueva se escribe ahí o no existe.
+**Las dos excepciones son los cantos que miden una pantalla entera.** El
+pozo —la esquina donde se abre el contenido dentro de la página, en
+`app/app-shell.tsx`— lleva 14px, y las dos esquinas de arriba de una hoja
+que sube desde el borde de abajo —`components/panel-inferior.tsx`— llevan
+16px.
+
+Se pasan por lo mismo: son los cantos más largos que hay, y 10px en un
+borde que mide toda la altura o todo el ancho de la ventana casi no se ven.
+Lo que esas esquinas cuentan —que el riel envuelve al contenido, que la
+hoja está ENCIMA y la página sigue debajo— depende de que se vean. Y
+ninguna rompe la regla, que habla de contenedores VECINOS: el pozo no es
+vecino de ninguna tarjeta, es el fondo de todas, y la hoja no tiene vecinos
+porque está sobre todo lo demás. Están registradas con su motivo en
+`PERMITIDOS`, dentro de la misma prueba; toda excepción nueva se escribe
+ahí o no existe.
 
 ## 4. Dos tamaños, y los mismos para todo
 
@@ -443,7 +450,7 @@ costos y en la tabla seguirían los cuarenta viejos diciendo «Aseo». Dos
 nombres para lo mismo y ninguna forma de saber cuál es el bueno.
 
 Está en `nombreDelMovimiento()` (`lib/movimientos.ts`), con sus dos
-respaldos: si solo está clasificado hasta el grupo, el nombre del grupo; y
+respaldos: si solo está clasificado hasta la categoría, su nombre; y
 si no tiene clasificación —un movimiento importado y aún sin clasificar—, lo
 que decía el papel (`description`, `merchant`). Ahí «PAGO PSE COMCEL» es
 mejor que «Sin concepto», porque es justo el dato con el que alguien va a
@@ -456,7 +463,7 @@ igual que su concepto, la papelera parece estar apuntando al concepto. Sin
 esa frase, nadie borra un gasto mal anotado por miedo a llevarse «Aseo» por
 delante.
 
-**Conceptos, grupos y centros solo se editan y se eliminan desde Centros de
+**Conceptos, categorías y centros solo se editan y se eliminan desde Centros de
 costos.** Desde la tabla de movimientos y desde la ficha de un movimiento se
 anota y se corrige lo que PASÓ; no se rehace el mapa con el que se ordena.
 Por eso el `Combo` de un concepto ofrece crear lo que falta pero nunca
@@ -479,7 +486,7 @@ Tres cosas que no pueden fallar en silencio, y que tienen prueba e2e:
 - Se cuenta el SUBÁRBOL, no la fila. Los movimientos de un centro de costos
   no están en el centro: están en los conceptos, tres niveles más abajo.
 - Se borra el subárbol entero. `parent_id` también es `ON DELETE SET NULL`,
-  así que borrar un grupo dejaba a sus conceptos con el padre en nulo y los
+  así que borrar una categoría dejaba a sus conceptos con el padre en nulo y los
   ascendía a centros de costos.
 
 El destino no se elige solo. El sistema no sabe si el alquiler mal
