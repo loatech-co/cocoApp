@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Category, CategoryKind, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { sembrarPlantilla } from './categories.plantilla';
 import type { NodoDeCategoria } from './categories.tree';
 import { unir } from './palabras-clave';
 
@@ -157,6 +158,18 @@ export class CategoriesRepository {
 
   async contarDelUsuario(userId: bigint): Promise<number> {
     return this.prisma.category.count({ where: { userId } });
+  }
+
+  /**
+   * Copia la plantilla de cuenta nueva. Devuelve cuántas filas creó.
+   *
+   * El repositorio es quien habla con Prisma, así que la siembra entra por
+   * aquí aunque el recorrido del árbol viva en `categories.plantilla.ts`: ese
+   * archivo es la ESTRUCTURA y el porqué de cada decisión, no el acceso a la
+   * base.
+   */
+  async sembrarPlantilla(userId: bigint): Promise<number> {
+    return sembrarPlantilla(this.prisma, userId);
   }
 
   async crearVarias(data: Prisma.CategoryUncheckedCreateInput[]): Promise<void> {

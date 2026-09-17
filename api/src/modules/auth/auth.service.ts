@@ -6,6 +6,7 @@ import { AuditService } from '../../common/audit/audit.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PasswordService } from './password.service';
 import { SupabaseAuthService } from './supabase-auth.service';
+import { sembrarPlantilla } from '../categories/categories.plantilla';
 
 export interface ContextoDePeticion {
   ip?: string;
@@ -117,6 +118,33 @@ export class AuthService {
         sessionsValidFrom: alSegundo(new Date()),
       },
     });
+
+    /*
+      ── La cuenta nace con su estructura ──────────────────────────────────
+      Los centros de costos son de cada cuenta y no se comparten, así que una
+      cuenta recién creada no tiene NINGUNO: al entrar, Centros de costos
+      estaba vacío y la ficha de un movimiento no tenía dónde clasificar nada.
+      Se copia la plantilla —los dos primeros niveles, congelados— y desde ese
+      momento el árbol es suyo.
+
+      Se hace aquí y no al aprobar porque la fila ya existe aquí, y porque una
+      cuenta rechazada se lleva sus categorías por delante con el borrado en
+      cascada: no queda nada suelto.
+
+      ── Y si falla, la cuenta se crea igual ───────────────────────────────
+      Sembrar es una comodidad; registrarse es la operación. Reventar aquí
+      dejaría a la persona con su usuario ya creado en Supabase —así que
+      reintentar no serviría de nada, el correo «ya existe»— y sin perfil, que
+      es el único estado del que no se sale solo. El árbol se puede rellenar
+      después desde `POST /categories/seed`.
+    */
+    try {
+      await sembrarPlantilla(this.prisma, usuario.id);
+    } catch (error) {
+      this.logger.error(
+        `No se pudo sembrar la plantilla de la cuenta ${usuario.id}: ${(error as Error).message}`,
+      );
+    }
 
     await this.audit.registrar({
       userId: usuario.id,

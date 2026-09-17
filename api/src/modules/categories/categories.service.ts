@@ -7,7 +7,6 @@ import {
 import type { Category, CategoryKind, Periodicidad } from '@prisma/client';
 
 import { CategoriesRepository } from './categories.repository';
-import { DICCIONARIO_INICIAL } from './categories.seed';
 import {
   anidar,
   descendientesDe,
@@ -250,42 +249,14 @@ export class CategoriesService {
     const existentes = await this.repo.contarDelUsuario(userId);
     if (existentes > 0) {
       throw new ConflictException(
-        'Ya tienes categorías. El diccionario inicial solo se siembra en una cuenta vacía.',
+        'Ya tienes centros de costos. La plantilla solo se siembra en una cuenta vacía.',
       );
     }
 
-    let creadas = 0;
-
-    for (const [indice, padre] of DICCIONARIO_INICIAL.entries()) {
-      const raiz = await this.repo.crear(userId, {
-        userId,
-        name: padre.name,
-        kind: padre.kind,
-        color: padre.color,
-        icon: padre.icon,
-        sortOrder: indice * 100,
-      });
-      creadas += 1;
-
-      if (padre.children.length > 0) {
-        await this.repo.crearVarias(
-          padre.children.map((hijo, posicion) => ({
-            userId,
-            name: hijo.name,
-            kind: padre.kind,
-            parentId: raiz.id,
-            // Las hijas heredan el color del padre: en una gráfica se leen como
-            // una misma familia, y el icono es lo que las distingue.
-            color: padre.color,
-            icon: hijo.icon,
-            sortOrder: indice * 100 + posicion + 1,
-          })),
-        );
-        creadas += padre.children.length;
-      }
-    }
-
-    return { creadas };
+    // La MISMA plantilla que se copia al crear la cuenta. Dos listas se
+    // separan en cuanto alguien toque una: la cuenta nueva nacería con una
+    // estructura y la que se quedó vacía se rellenaría con otra.
+    return { creadas: await this.repo.sembrarPlantilla(userId) };
   }
 
   private exigirProfundidadValida(profundidad: number): void {
