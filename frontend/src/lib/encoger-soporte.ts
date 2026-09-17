@@ -37,12 +37,28 @@ const ANCHO_MAXIMO = 1600;
 const CALIDAD = 0.85;
 
 /**
- * Por debajo de esto no se toca.
+ * Por debajo de esto, y si además CABE, no se toca.
  *
- * Una captura de pantalla de 200 KB ya está bien: recodificarla solo le quita
+ * Una imagen pequeña y estrecha ya está bien: recodificarla solo le quita
  * nitidez al texto, que es justo lo que se viene a leer de un recibo.
+ *
+ * Las dos condiciones, y no solo el peso. Una captura de pantalla pesa 300 KB
+ * y mide 2560 de ancho: pasaba el filtro por liviana y llegaba entera al
+ * servidor, donde lo caro no es el peso sino DECODIFICARLA. Con los hilos
+ * contados de un plan compartido, ese decodificado es el que reventaba con
+ * «Error creating thread», y por eso fallaba pegar una captura y no fallaba
+ * subir una foto —que pesa más, y por pesar más sí se encogía aquí—.
  */
 const DESDE = 900 * 1024;
+
+/**
+ * Lo que se espera a que el navegador abra la imagen antes de rendirse.
+ *
+ * Generoso: es un archivo que ya está en memoria, así que abrirlo es
+ * instantáneo salvo que algo vaya mal. Está para que «algo va mal» acabe en un
+ * archivo subido sin encoger y no en una pantalla colgada.
+ */
+const ESPERA_MAXIMA = 5000;
 
 /** Un PDF no se toca: tiene páginas, y aplanarlo perdería todas menos una. */
 function esImagen(archivo: File): boolean {
@@ -78,8 +94,28 @@ async function decodificar(
   try {
     const imagen = await new Promise<HTMLImageElement | null>((resolver) => {
       const el = new Image();
-      el.onload = () => resolver(el);
-      el.onerror = () => resolver(null);
+      /*
+        ── Con reloj, y no solo con `onload`/`onerror` ──────────────────────
+        Una promesa que espera dos eventos se queda esperando para siempre si
+        no llega ninguno, y entonces la subida entera se cuelga: sin error, sin
+        aviso, con el botón girando.
+
+        Pasa de verdad —un `blob:` que el navegador decide no cargar, un
+        formato que ni abre ni rechaza— y pasaba poco porque solo llegaban aquí
+        los archivos de más de 900 KB. Desde que se abre TODA imagen para saber
+        cuánto mide, este camino lo pisa cualquier soporte.
+
+        Rendirse es gratis: se manda el original, que es lo que se hace con
+        cualquier otro fallo de aquí.
+      */
+      const reloj = setTimeout(() => resolver(null), ESPERA_MAXIMA);
+      const acabar = (resultado: HTMLImageElement | null): void => {
+        clearTimeout(reloj);
+        resolver(resultado);
+      };
+
+      el.onload = () => acabar(el);
+      el.onerror = () => acabar(null);
       el.src = url;
     });
 
@@ -97,16 +133,25 @@ async function decodificar(
  */
 export async function encogerSoporte(archivo: File): Promise<File> {
   if (!esImagen(archivo)) return archivo;
-  // Un JPG o un PNG pequeños ya están bien; un HEIC se convierte SIEMPRE, mida
-  // lo que mida, porque el problema de ese no es el peso sino el formato.
+  // Un HEIC se convierte SIEMPRE, mida lo que mida: su problema no es el peso
+  // sino el formato, que el servidor no sabe abrir.
   const esHeic = /hei[cf]/i.test(archivo.type) || /\.hei[cf]$/i.test(archivo.name);
-  if (!esHeic && archivo.size < DESDE) return archivo;
 
   try {
+    /*
+      Se abre SIEMPRE, incluso una imagen liviana.
+
+      Es el único modo de saber cuánto MIDE, que es lo que decide el trabajo
+      del servidor, y aquí abrirla es barato: la decodifica el navegador, una
+      sola vez, con la imagen que el usuario acaba de elegir delante.
+    */
     const abierta = await decodificar(archivo);
     if (!abierta || abierta.ancho === 0 || abierta.alto === 0) return archivo;
 
-    const escala = Math.min(1, ANCHO_MAXIMO / Math.max(abierta.ancho, abierta.alto));
+    const lado = Math.max(abierta.ancho, abierta.alto);
+    if (!esHeic && lado <= ANCHO_MAXIMO && archivo.size < DESDE) return archivo;
+
+    const escala = Math.min(1, ANCHO_MAXIMO / lado);
     const lienzo = document.createElement('canvas');
     lienzo.width = Math.round(abierta.ancho * escala);
     lienzo.height = Math.round(abierta.alto * escala);
@@ -120,9 +165,18 @@ export async function encogerSoporte(archivo: File): Promise<File> {
     );
     if (!trozo) return archivo;
 
-    // Si la conversión no gana nada —y con un HEIC pequeño puede pasar—, se
-    // manda lo convertido igual: lo que importa de un HEIC es el formato.
-    if (!esHeic && trozo.size >= archivo.size) return archivo;
+    /*
+      Si no se ganó nada, se manda el original — pero «nada» son las DOS cosas.
+
+      Antes bastaba con que el JPG pesara más para descartarlo, y eso devolvía
+      al servidor la imagen grande de 2560px aunque la convertida midiera 1600:
+      justo la que no queremos que le llegue. Solo se descarta cuando además no
+      se encogió de tamaño, que es cuando de verdad no aporta.
+
+      Con un HEIC se manda lo convertido igual, pese lo que pese: lo que
+      importa de ese es el formato.
+    */
+    if (!esHeic && escala === 1 && trozo.size >= archivo.size) return archivo;
 
     return new File([trozo], comoJpg(archivo.name), {
       type: 'image/jpeg',

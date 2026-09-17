@@ -33,6 +33,19 @@ vi.mock('@/lib/api-client', async () => {
 
 vi.mock('./leer-soporte', () => ({ leerSoporte: vi.fn() }));
 
+/*
+  El encogido, de paso.
+
+  El de verdad abre la imagen con el navegador para saber cuánto mide, y jsdom
+  no dibuja: se quedaría esperando hasta agotar su reloj de cinco segundos.
+  Aquí se prueba qué pasa cuando la SUBIDA falla, no cómo se prepara el archivo
+  —eso tiene sus propias pruebas en `lib/encoger-soporte.dom.test.ts`—.
+*/
+vi.mock('@/lib/encoger-soporte', () => ({
+  encogerSoportes: (archivos: File[]) => Promise.resolve(archivos),
+  encogerSoporte: (archivo: File) => Promise.resolve(archivo),
+}));
+
 const ARBOL = [
   {
     id: 1,

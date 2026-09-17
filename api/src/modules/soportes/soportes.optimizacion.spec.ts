@@ -1,4 +1,4 @@
-import { esFaltaDeRecursos } from './soportes.optimizacion';
+import { comoLlego, esFaltaDeRecursos } from './soportes.optimizacion';
 
 /**
  * Qué se le contesta a quien sube un soporte que no se pudo tratar.
@@ -50,5 +50,35 @@ describe('Falta de recursos contra formato que no se entiende', () => {
     expect(esFaltaDeRecursos('Resource temporarily unavailable')).toBe(true);
     expect(esFaltaDeRecursos(undefined)).toBe(false);
     expect(esFaltaDeRecursos(null)).toBe(false);
+  });
+});
+
+/**
+ * Lo que se guarda cuando tratar la imagen no se pudo por falta de recursos.
+ *
+ * Tratar es una mejora, no un requisito: el recibo se ve igual sin ella.
+ * Perder el soporte porque al servidor le faltaban hilos ese segundo sería
+ * cambiar una mejora por un fallo.
+ */
+describe('Guardar el archivo tal como llegó', () => {
+  it('acepta lo que el visor sabe abrir, con su extensión de verdad', () => {
+    const bytes = Buffer.from([1, 2, 3]);
+
+    // La extensión dice la verdad: un PNG guardado como `.jpg` es un archivo
+    // que miente sobre sí mismo.
+    expect(comoLlego(bytes, 'image/png')).toEqual({
+      contenido: bytes,
+      mime: 'image/png',
+      extension: 'png',
+    });
+    expect(comoLlego(bytes, 'image/jpeg')?.extension).toBe('jpg');
+    expect(comoLlego(bytes, 'application/pdf')?.extension).toBe('pdf');
+  });
+
+  it('se niega con lo que después no se podría mirar', () => {
+    // Un HEIC sin tratar es un archivo que el visor no abre: ahí el problema
+    // es el formato, y guardarlo igual solo aplaza el fallo.
+    expect(comoLlego(Buffer.alloc(0), 'image/heic')).toBeNull();
+    expect(comoLlego(Buffer.alloc(0), 'image/webp')).toBeNull();
   });
 });

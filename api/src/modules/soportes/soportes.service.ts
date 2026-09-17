@@ -15,6 +15,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { almacenListo, claveNueva, guardar, huellaDe, abrir, existe } from './soportes.almacen';
 import {
   nombreDeSoporte,
+  comoLlego,
   esFaltaDeRecursos,
   optimizar,
   TAMANO_MAXIMO,
@@ -221,6 +222,32 @@ export class SoportesService implements OnModuleInit {
           const detalle = causa instanceof Error ? causa.message : 'error al procesar la imagen';
 
           if (esFaltaDeRecursos(causa)) {
+            /*
+              Se guarda lo que llegó, sin tratar.
+
+              Tratar la imagen es una MEJORA —gris, 1100px, un tercio del
+              peso—, no un requisito: el recibo se ve igual sin ella. Tirar el
+              soporte porque al servidor le faltaban hilos en ese segundo es
+              cambiar una mejora por un fallo.
+
+              Y el fallo era REAL y frecuente: en un plan compartido la cuota
+              de procesos va y viene, así que pegar una captura funcionaba o no
+              según lo que estuviera haciendo el vecino. Pedirle a alguien que
+              «espere unos segundos y vuelva a intentarlo» con el recibo
+              delante es pedirle que haga de reintento manual.
+
+              Solo para lo que el visor sabe abrir. Un HEIC sin tratar sería un
+              archivo que después no se puede mirar: ahí el problema es el
+              formato, y ceder no arregla nada.
+            */
+            const sinTratar = comoLlego(archivo.buffer, archivo.mimetype);
+            if (sinTratar) {
+              this.logger.warn(
+                `Sin recursos para tratar “${archivo.originalname}”: se guarda tal cual. (${detalle})`,
+              );
+              return sinTratar;
+            }
+
             throw new ServiceUnavailableException(
               `No se pudo procesar “${archivo.originalname}”: al servidor se le acabaron los ` +
                 `recursos para tratar la imagen. No es el archivo. Espera unos segundos y ` +

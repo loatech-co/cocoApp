@@ -99,11 +99,33 @@ describe('Encoger un soporte antes de subirlo', () => {
     expect(salida.name).toBe('IMG_4821.jpg');
   });
 
-  it('una captura pequeña no se toca: recodificarla solo le quita nitidez', async () => {
-    fingirNavegador();
-    const original = archivo('captura.png', 'image/png', 200);
+  it('una imagen pequeña Y estrecha no se toca: recodificarla le quita nitidez', async () => {
+    // Las dos condiciones. Poco peso por sí solo no basta: ver la prueba de
+    // abajo, que es el caso que se nos coló hasta el servidor.
+    fingirNavegador({ ancho: 900, alto: 700 });
+    const original = archivo('recorte.png', 'image/png', 200);
 
     expect(await encogerSoporte(original)).toBe(original);
+  });
+
+  it('una captura LIVIANA pero enorme sí se encoge', async () => {
+    /*
+      El caso real: pegar una captura de pantalla.
+
+      Pesa 300 KB —por debajo del umbral— y mide 2560 de ancho. Con el filtro
+      de solo peso, viajaba entera y el servidor tenía que decodificar esos
+      2560px; con los hilos contados de un plan compartido, ahí es donde
+      reventaba con «glib: Error creating thread».
+
+      Por eso fallaba PEGAR y no fallaba subir una foto: la foto pesa más, y
+      por pesar más sí se encogía aquí.
+    */
+    const { lienzo } = fingirNavegador({ ancho: 2560, alto: 1440, salida: 150 * 1024 });
+
+    const salida = await encogerSoporte(archivo('captura.png', 'image/png', 300));
+
+    expect(salida.type).toBe('image/jpeg');
+    expect(lienzo()).toEqual({ width: 1600, height: 900 });
   });
 
   it('un PDF no se toca: tiene páginas, y aplanarlo perdería todas menos una', async () => {

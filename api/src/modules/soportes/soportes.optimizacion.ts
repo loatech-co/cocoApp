@@ -88,7 +88,7 @@ export interface SoporteOptimizado {
   contenido: Buffer;
   mime: string;
   /** Sin punto: `pdf` o `jpg`. */
-  extension: 'pdf' | 'jpg';
+  extension: 'pdf' | 'jpg' | 'png';
 }
 
 /**
@@ -231,6 +231,35 @@ function correr(binario: string, argumentos: string[]): Promise<void> {
       codigo === 0 ? resolver() : rechazar(new Error(`${binario} salió con ${codigo}: ${error}`)),
     );
   });
+}
+
+/**
+ * Lo que llegó, sin tratar, si es algo que la aplicación sabe enseñar.
+ *
+ * ── Para cuándo es ─────────────────────────────────────────────────────────
+ * Para cuando tratar la imagen falla por falta de recursos. Tratarla es una
+ * MEJORA —gris, 1100px, un tercio del peso—, no un requisito: el recibo se ve
+ * igual sin ella. Perder el soporte porque al servidor le faltaban hilos en
+ * ese segundo es cambiar una mejora por un fallo, que es exactamente lo que
+ * hacía: «no se pudo procesar», y el archivo a la basura.
+ *
+ * Es el mismo trato que ya se da en el navegador, donde encoger antes de subir
+ * también cede el paso al original si no se puede.
+ *
+ * ── Por qué solo estos tres ────────────────────────────────────────────────
+ * Porque son los que el visor de la aplicación sabe abrir. Guardar un HEIC sin
+ * tratar sería guardar un archivo que después no se puede mirar: ahí el
+ * problema es el formato y ceder no arregla nada.
+ */
+export function comoLlego(contenido: Buffer, mime: string): SoporteOptimizado | null {
+  // La extensión dice la VERDAD de lo que se guarda. Un PNG con nombre `.jpg`
+  // es un archivo que miente sobre sí mismo, y el día que alguien lea el
+  // almacén por fuera de la aplicación —un respaldo, un script— se encuentra
+  // con que la mitad de los `.jpg` no lo son.
+  if (mime === 'application/pdf') return { contenido, mime, extension: 'pdf' };
+  if (mime === 'image/jpeg') return { contenido, mime, extension: 'jpg' };
+  if (mime === 'image/png') return { contenido, mime, extension: 'png' };
+  return null;
 }
 
 /**
