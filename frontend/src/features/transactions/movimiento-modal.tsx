@@ -39,6 +39,7 @@ import { Progreso } from '@/components/ui/progreso';
 import { REALCE, SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiClientError, apiSubir } from '@/lib/api-client';
+import { encogerSoportes } from '@/lib/encoger-soporte';
 import { diaLargo, mesLargo } from '@/lib/fechas';
 import {
   useActualizarMovimiento,
@@ -474,7 +475,11 @@ export function MovimientoModal({
       if (id !== undefined && pendientes.length > 0) {
         setSubiendo(true);
         const datos = new FormData();
-        for (const archivo of pendientes) datos.append('archivos', archivo);
+        // Ver `lib/encoger-soporte.ts`: lo que sube es un JPG liviano, no la
+        // foto de doce megapíxeles que da un teléfono.
+        for (const archivo of await encogerSoportes(pendientes)) {
+          datos.append('archivos', archivo);
+        }
         await apiSubir(`/transactions/${id}/soportes`, datos);
       }
 
@@ -998,7 +1003,7 @@ export function MovimientoModal({
 
           <Confirmacion
             abierta={confirmandoBorrado}
-            titulo="¿Eliminar este movimiento?"
+            titulo="Eliminar movimiento"
             peligrosa
             etiquetaConfirmar="Eliminar"
             ocupada={eliminar.isPending}
@@ -1014,14 +1019,16 @@ export function MovimientoModal({
             }
           >
             {/*
-            Se dice lo que NO se borra, y no es un detalle: el nombre de este
-            movimiento es el de su concepto, así que la papelera parece estar
-            apuntando al concepto. No lo está. Sin esta frase, nadie borra un
-            gasto mal anotado por miedo a llevarse «Aseo» por delante.
-          */}
-            Se borra el registro de este mes y no se puede deshacer; sus soportes se van con él. El
-            concepto “{concepto?.name ?? grupo?.name ?? 'al que pertenece'}” no se toca: sigue en
-            Centros de costos, que es el único sitio donde se edita o se elimina.
+              Los tres golpes: qué está a punto de pasar, que no se deshace, y
+              la pregunta. Lo que se salta del patrón es la frase del medio, y
+              no es un detalle: el nombre de este movimiento ES el de su
+              concepto, así que la papelera parece estar apuntando al concepto.
+              No lo está. Sin esa frase, nadie borra un gasto mal anotado por
+              miedo a llevarse «Aseo» por delante.
+            */}
+            Estás a punto de borrar el registro de un movimiento. No se elimina el concepto “
+            {concepto?.name ?? grupo?.name ?? 'al que pertenece'}”. Esta acción no se puede
+            deshacer. ¿Estás seguro de que quieres continuar?
           </Confirmacion>
         </div>
       </div>

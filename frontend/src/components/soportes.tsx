@@ -33,6 +33,21 @@ import type { Soporte } from '@coco/types';
 import { REALCE_DE_SUPERFICIE, SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 
 /**
+ * El texto de la confirmación de borrar un soporte, escrito una vez.
+ *
+ * Se pregunta desde dos sitios —la galería de un movimiento y el pase a
+ * pantalla completa— y estaba escrito en los dos. Es la misma pregunta sobre
+ * la misma cosa: escrita dos veces, el día que cambie una cambia una.
+ *
+ * Dice que el movimiento no se elimina por lo mismo que la del movimiento dice
+ * que el concepto no se toca: lo que se está borrando se ve DENTRO de lo otro,
+ * así que la papelera parece apuntar al contenedor.
+ */
+const BORRAR_UN_SOPORTE =
+  'Estás a punto de borrar un soporte. El movimiento no se elimina. Esta acción no se ' +
+  'puede deshacer. ¿Estás seguro de que quieres continuar?';
+
+/**
  * Los soportes de un movimiento: el recibo que prueba que ese pago existió.
  *
  * ── Por qué miniaturas y no pestañas ────────────────────────────────────────
@@ -233,7 +248,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
           misma acción, hecha desde otro sitio. */}
       <Confirmacion
         abierta={borrando !== null}
-        titulo="¿Eliminar este soporte?"
+        titulo="Eliminar soporte"
         peligrosa
         etiquetaConfirmar="Eliminar"
         ocupada={eliminar.isPending}
@@ -249,7 +264,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
           });
         }}
       >
-        Se borra y no se puede deshacer. El movimiento se queda como está.
+        {BORRAR_UN_SOPORTE}
       </Confirmacion>
 
       {añadiendo && (
@@ -892,7 +907,7 @@ function Pase({
           manda el que va después, así que el diálogo queda encima. */}
       <Confirmacion
         abierta={confirmando}
-        titulo="¿Eliminar este soporte?"
+        titulo="Eliminar soporte"
         peligrosa
         etiquetaConfirmar="Eliminar"
         ocupada={eliminar.isPending}
@@ -908,7 +923,7 @@ function Pase({
           })
         }
       >
-        Se borra y no se puede deshacer. El movimiento se queda como está.
+        {BORRAR_UN_SOPORTE}
       </Confirmacion>
     </div>
   );

@@ -15,6 +15,15 @@ import { PieDeModal } from '@/components/ui/modal-partes';
  * Aquí lo que hace falta es decir QUÉ va a pasar —que archivar no es borrar,
  * que los movimientos conservan su clasificación—, y eso no cabe en una línea.
  *
+ * ── El título AFIRMA y el cuerpo pregunta ───────────────────────────────────
+ * «Eliminar movimiento», no «¿Eliminar este movimiento?». La pregunta va al
+ * final del cuerpo, después de decir qué pasa y que no se deshace, y con las
+ * dos cosas preguntando el diálogo interrogaba dos veces y respondía una.
+ *
+ * El cuerpo lleva tres golpes, en este orden: qué está a punto de pasar, que
+ * no se puede deshacer, y la pregunta. El orden importa: la pregunta no
+ * significa nada antes de saber qué se contesta.
+ *
  * ── Por qué el botón peligroso no es el que tiene el foco ───────────────────
  * Porque quien llega con Enter puesto no quiso confirmar nada: venía de pulsar
  * otra cosa. El foco arranca en Cancelar.
@@ -75,7 +84,12 @@ export function Confirmacion({
     >
       <div
         className={cn(
-          'w-full max-w-md rounded-lg p-4',
+          // 24 de relleno, no 16. Es la única superficie de la app que se abre
+          // ENCIMA de otra ficha —y con su propio velo—, así que no tiene nada
+          // alrededor con lo que alinearse: lo que la enmarca es su aire. Con
+          // 16 el texto quedaba a un dedo del canto y la caja parecía un aviso
+          // flotante crecido, no un diálogo.
+          'w-full max-w-md rounded-lg p-6',
           SUPERFICIE_FLOTANTE,
           'emerge',
         )}

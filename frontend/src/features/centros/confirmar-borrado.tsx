@@ -71,7 +71,7 @@ export function ConfirmarBorrado({
   return (
     <Confirmacion
       abierta={abierta}
-      titulo={`¿Eliminar “${categoria.name}”?`}
+      titulo={`Eliminar “${categoria.name}”`}
       peligrosa
       etiquetaConfirmar="Eliminar"
       ocupada={eliminar.isPending || usos.isPending}
@@ -99,9 +99,15 @@ export function ConfirmarBorrado({
       }}
     >
       <div className="flex flex-col gap-3">
-        <p>
-          {subcategorias(usos.data?.subcategorias ?? 0)} No se puede deshacer.
-        </p>
+        {/*
+          Los dos primeros golpes del patrón, y no el tercero.
+
+          «¿Estás seguro de que quieres continuar?» sobra aquí: cuando hay
+          movimientos dentro, entre la pregunta y el botón aparece un selector
+          que hay que rellenar, y una pregunta que todavía no se puede
+          contestar es ruido. Lo que pregunta en esta ficha es el selector.
+        */}
+        <p>{loQueSeBorra(categoria.name, usos.data?.subcategorias ?? 0)}</p>
 
         {usos.isPending && <p>Contando qué hay dentro…</p>}
 
@@ -139,10 +145,16 @@ export function ConfirmarBorrado({
 }
 
 /** La primera frase: qué estructura se va con esto. */
-function subcategorias(cuantas: number): string {
-  if (cuantas === 0) return 'Se elimina esta categoría.';
-  if (cuantas === 1) return 'Se elimina esta categoría y la que tiene dentro.';
-  return `Se elimina esta categoría y las ${cuantas} que tiene dentro.`;
+function loQueSeBorra(nombre: string, cuantas: number): string {
+  const cierre = ' Esta acción no se puede deshacer.';
+  const que =
+    cuantas === 0
+      ? ''
+      : cuantas === 1
+        ? ' y la que tiene dentro'
+        : ` y las ${cuantas} que tiene dentro`;
+
+  return `Estás a punto de borrar la categoría “${nombre}”${que}.${cierre}`;
 }
 
 /**
