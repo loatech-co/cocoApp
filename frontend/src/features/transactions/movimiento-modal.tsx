@@ -189,6 +189,13 @@ export function MovimientoModal({
   */
   const [pendientes, setPendientes] = useState<File[]>([]);
   const [subiendo, setSubiendo] = useState(false);
+  /**
+   * El movimiento que se acaba de crear, cuando su soporte se quedó sin subir.
+   *
+   * Es lo que impide que reintentar cree un segundo movimiento por la misma
+   * plata. Ver el porqué largo en `onSubmit`.
+   */
+  const [registrado, setRegistrado] = useState<number | null>(null);
   /*
     Sube cada vez que se cancela una edición.
 
@@ -244,6 +251,7 @@ export function MovimientoModal({
     setSinLeer(null);
     setPendientes([]);
     setProgresoDeLectura(null);
+    setRegistrado(null);
     // El foco solo cuando hay algo que escribir: puesto en un campo de solo
     // lectura, el cursor parpadea en un sitio donde no se puede escribir.
   }, [abierta, movimiento, pago, tipoPorDefecto, descartes]);
@@ -433,13 +441,33 @@ export function MovimientoModal({
       category_id: categoryId ?? null,
     };
 
-    try {
-      let id = movimiento?.id;
+    /*
+      ── Guardar son DOS peticiones, y la segunda puede fallar sola ──────────
+      Primero se crea el movimiento y después se suben sus soportes, porque un
+      soporte cuelga de un movimiento y hasta que no existe no hay de qué
+      colgarlo.
 
-      if (movimiento) await actualizar.mutateAsync({ id: movimiento.id, cambios: cuerpo });
+      Si la segunda falla —el archivo pesa demasiado para el servidor, se cayó
+      la conexión a mitad de una foto de cuatro megas— el movimiento YA ESTÁ
+      REGISTRADO. Antes eso no se decía y no se recordaba: la ficha se quedaba
+      abierta con un error, y pulsar «Registrar» otra vez creaba un SEGUNDO
+      movimiento por la misma plata. Reintentar es lo primero que hace
+      cualquiera, así que la forma de perder los datos era la forma natural de
+      usarlo.
+
+      Ahora el id del que se acaba de crear se recuerda: el reintento ACTUALIZA
+      ese movimiento —para que un cambio hecho mientras tanto no se pierda— y
+      vuelve a intentar solo el soporte.
+    */
+    const existente = movimiento?.id ?? registrado;
+    let id = existente ?? undefined;
+
+    try {
+      if (existente != null) await actualizar.mutateAsync({ id: existente, cambios: cuerpo });
       else {
         const creado = await crear.mutateAsync(cuerpo as never);
         id = (creado as { id: number }).id;
+        setRegistrado(id);
       }
 
       // Los soportes, ya con un movimiento del que colgar.
@@ -452,7 +480,19 @@ export function MovimientoModal({
 
       onCerrar();
     } catch (e) {
-      setError(e instanceof ApiClientError ? e.message : 'No se pudo guardar.');
+      const dijo = e instanceof ApiClientError ? e.message : 'No se pudo guardar.';
+      /*
+        Se distingue QUÉ falló, porque lo que hay que hacer es distinto.
+
+        Con el movimiento ya creado, lo que falló es el soporte y la plata está
+        registrada: quien lea «No se pudo guardar» va a volver a intentarlo
+        creyendo que no se guardó nada. Se dice que sí, y que puede cerrar.
+      */
+      setError(
+        id !== undefined && !movimiento
+          ? `${dijo} El movimiento quedó registrado; lo que falló fue el soporte. Puedes reintentar o cerrar: no se va a duplicar.`
+          : dijo,
+      );
     } finally {
       setSubiendo(false);
     }
