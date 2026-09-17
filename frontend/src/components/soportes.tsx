@@ -104,20 +104,27 @@ export function Soportes({ transactionId }: { transactionId: number }) {
   /** El `blob:` de cada soporte, por id. Se descargan una vez y se comparten. */
   const [urls, setUrls] = useState<Record<string, string>>({});
   /**
-   * Los que NO van a llegar: el servidor dice que no tiene el binario, o la
-   * descarga falló.
+   * Los que no se están viendo, y POR QUÉ. Dos motivos, y no son el mismo.
    *
-   * Hace falta distinguirlos de los que todavía están en camino porque se
-   * dibujaban igual —un girador— y el de un soporte perdido giraba para
-   * siempre. «Está tardando» y «no está» piden cosas distintas: esperar, o ir
-   * a buscar por qué falta.
+   * ── `ausente` ─────────────────────────────────────────────────────────────
+   * El servidor miró el disco y el archivo no está. Es definitivo: reintentar
+   * no lo va a traer. Pasa porque la base y el almacén son dos sitios
+   * distintos —las fichas viven en Postgres, el mismo para todos los entornos,
+   * y los archivos en disco, que no lo es—, así que un soporte importado en
+   * una máquina y no sincronizado a la otra sale en la lista y no está.
    *
-   * Pasa de verdad: la base y el almacén son dos sitios distintos. Las fichas
-   * viven en Postgres, que es el MISMO para local y para el servidor, y los
-   * archivos están en disco, que no lo es. Un soporte importado en una máquina
-   * y no sincronizado a la otra existe en la lista y no existe en el disco.
+   * ── `sin-cargar` ──────────────────────────────────────────────────────────
+   * La descarga falló y no sabemos más: un 500 del servidor, la sesión
+   * caducada, la red que se cortó a mitad. El archivo puede estar
+   * perfectamente. Es pasajero, así que lleva un reintento.
+   *
+   * Estaban juntos y contestaban lo mismo —«no está en el servidor»— a un
+   * soporte que sí estaba. Es el mismo error que el 415 que se comía los
+   * agotamientos de recursos: dar por definitivo lo que solo era un fallo.
    */
-  const [perdidos, setPerdidos] = useState<ReadonlySet<string>>(() => new Set());
+  const [fallos, setFallos] = useState<Readonly<Record<string, FalloDeSoporte>>>({});
+  /** Sube al reintentar, y con eso vuelve a correr el efecto de las descargas. */
+  const [intento, setIntento] = useState(0);
   const [enGrande, setEnGrande] = useState<number | null>(null);
   /**
    * Cuál se está viendo arriba.
@@ -137,9 +144,13 @@ export function Soportes({ transactionId }: { transactionId: number }) {
     const corte = new AbortController();
     const creados: string[] = [];
 
-    // Los que el servidor ya dijo que no tiene se dan por perdidos sin pedir
-    // nada: pedirlos sería una petición que se sabe que va a devolver 404.
-    setPerdidos(new Set(lista.filter((s) => !s.disponible).map((s) => String(s.id))));
+    // Los que el servidor ya dijo que no tiene no se piden: sería una petición
+    // que se sabe que va a devolver 404.
+    setFallos(
+      Object.fromEntries(
+        lista.filter((s) => !s.disponible).map((s) => [String(s.id), 'ausente' as const]),
+      ),
+    );
 
     for (const s of lista) {
       if (!s.disponible) continue;
@@ -152,10 +163,14 @@ export function Soportes({ transactionId }: { transactionId: number }) {
           setUrls((previo) => ({ ...previo, [String(s.id)]: url }));
         })
         .catch(() => {
-          // Se cayó la descarga. No se reintenta —si el archivo no está, no va
-          // a estar en el segundo intento— pero se DICE, que es lo que faltaba.
+          // Se cayó la descarga, y eso NO dice que el archivo no esté: puede
+          // ser un 500, la sesión caducada o la red. Se marca como lo que es
+          // —no se pudo cargar— y se ofrece reintentar.
+          //
+          // El corte no cuenta: abortamos nosotros al desmontar o al cambiar
+          // de movimiento, y eso no es un fallo de nada.
           if (corte.signal.aborted) return;
-          setPerdidos((previo) => new Set(previo).add(String(s.id)));
+          setFallos((previo) => ({ ...previo, [String(s.id)]: 'sin-cargar' }));
         });
     }
 
@@ -165,12 +180,12 @@ export function Soportes({ transactionId }: { transactionId: number }) {
       // esto, abrir veinte movimientos deja ciento sesenta archivos cargados.
       for (const url of creados) URL.revokeObjectURL(url);
       setUrls({});
-      setPerdidos(new Set());
+      setFallos({});
     };
     // `lista.length` y no `lista`: la consulta devuelve un array nuevo en cada
     // render y con él las descargas empezarían otra vez sin parar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactionId, lista.length]);
+  }, [transactionId, lista.length, intento]);
 
   if (soportes.isPending) {
     return (
@@ -196,7 +211,8 @@ export function Soportes({ transactionId }: { transactionId: number }) {
           // justo el parpadeo que esto viene a quitar.
           key={String(enseñado.id)}
           url={urlDelEnseñado}
-          perdido={perdidos.has(String(enseñado.id))}
+          fallo={fallos[String(enseñado.id)]}
+          onReintentar={() => setIntento((n) => n + 1)}
           esImagen={enseñado.mime_type.startsWith('image/')}
           // Aquí SÍ hay pase a pantalla completa —el soporte ya existe en el
           // servidor, con su descarga y su zoom—, así que la previsualización
@@ -305,7 +321,8 @@ export function Soportes({ transactionId }: { transactionId: number }) {
           transactionId={transactionId}
           lista={lista}
           urls={urls}
-          perdidos={perdidos}
+          fallos={fallos}
+          onReintentar={() => setIntento((n) => n + 1)}
           indice={Math.min(enGrande, lista.length - 1)}
           onIr={setEnGrande}
           onCerrar={() => setEnGrande(null)}
@@ -730,7 +747,8 @@ function Pase({
   transactionId,
   lista,
   urls,
-  perdidos,
+  fallos,
+  onReintentar,
   indice,
   onIr,
   onCerrar,
@@ -738,8 +756,9 @@ function Pase({
   transactionId: number;
   lista: Soporte[];
   urls: Record<string, string>;
-  /** Los que no van a llegar. Ver `Soportes`. */
-  perdidos: ReadonlySet<string>;
+  /** Por qué no se ve cada uno, si es que no se ve. Ver `Soportes`. */
+  fallos: Readonly<Record<string, FalloDeSoporte>>;
+  onReintentar: () => void;
   indice: number;
   onIr: (i: number) => void;
   onCerrar: () => void;
@@ -748,7 +767,7 @@ function Pase({
   const [confirmando, setConfirmando] = useState(false);
   const soporte = lista[indice];
   const url = urls[String(soporte.id)];
-  const perdido = perdidos.has(String(soporte.id));
+  const fallo = fallos[String(soporte.id)];
   const esImagen = soporte.mime_type.startsWith('image/');
 
   const [zoom, setZoom] = useState(NORMAL);
@@ -856,9 +875,9 @@ function Pase({
           reinventar el arrastre.
         */}
         <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-sala/25 p-3 sm:p-6">
-          {perdido ? (
+          {fallo ? (
             <div className="flex w-full items-center justify-center">
-              <NoEstaEnElServidor oscuro />
+              <SoporteQueNoSeVe fallo={fallo} onReintentar={onReintentar} oscuro />
             </div>
           ) : !url ? (
             <div className="flex w-full items-center justify-center">
@@ -1118,25 +1137,42 @@ function PaginaPdf({
  * lado corto el documento cabe justo, ese eje no se mueve —en vez de temblar
  * un píxel en cada arrastre—.
  */
+/** Por qué no se está viendo un soporte. Ver `fallos` en `Soportes`. */
+export type FalloDeSoporte = 'ausente' | 'sin-cargar';
+
 /**
- * El hueco de un soporte que no está.
+ * El hueco de un soporte que no se ve, diciendo por qué.
  *
- * ── Por qué no es un error rojo ─────────────────────────────────────────────
+ * ── Los dos motivos no se contestan igual ───────────────────────────────────
+ * `ausente` es definitivo: el servidor miró el disco y el archivo no está, así
+ * que reintentar no lo va a traer y lo útil es decir dónde mirar —la ficha
+ * está en la base, el archivo en el disco de cada servidor, y se sincronizan
+ * aparte—.
+ *
+ * `sin-cargar` no dice nada del archivo: la descarga se cayó y puede haber
+ * sido un 500, la sesión caducada o la red. Ahí sí se reintenta, y prometer
+ * que «no está» sería mentir sobre algo que probablemente está.
+ *
+ * Los dos iban por el mismo camino, y un soporte que existía recibía «no está
+ * en el servidor».
+ *
+ * ── Por qué no es rojo ──────────────────────────────────────────────────────
  * Porque no falló nada de lo que se acaba de hacer: el movimiento está bien y
- * su ficha también. Lo que falta es un archivo, y el rojo de esta app está
- * reservado a lo que salió mal y a lo que no se puede deshacer.
+ * su ficha también. El rojo de esta app está reservado a lo que salió mal y a
+ * lo que no se puede deshacer.
  *
- * ── Por qué dice DÓNDE mirar ────────────────────────────────────────────────
- * Porque el caso real tiene una causa concreta y no evidente: las fichas de
- * los soportes viven en la base —la misma para todos los entornos— y los
- * archivos viven en el disco de cada servidor. Un soporte que se importó en
- * una máquina y no se sincronizó a la otra sale en la lista y no está en el
- * disco. Sin decirlo, lo único que se ve es que «no carga».
- *
- * `oscuro` es para el pase a pantalla completa, cuyo fondo ya es oscuro: el
- * gris de la app desaparecería encima.
+ * `oscuro` es para el pase a pantalla completa, cuyo fondo ya lo es: el gris
+ * de la app desaparecería encima.
  */
-function NoEstaEnElServidor({ oscuro = false }: { oscuro?: boolean }) {
+function SoporteQueNoSeVe({
+  fallo,
+  onReintentar,
+  oscuro = false,
+}: {
+  fallo: FalloDeSoporte;
+  onReintentar?: () => void;
+  oscuro?: boolean;
+}) {
   return (
     <span
       className={cn(
@@ -1147,9 +1183,24 @@ function NoEstaEnElServidor({ oscuro = false }: { oscuro?: boolean }) {
     >
       <span className="flex max-w-xs flex-col items-center gap-2 text-sm">
         <FileWarning className="size-6 shrink-0" aria-hidden="true" />
-        <span>
-          Este soporte no está en el servidor. Su ficha sí: el archivo es lo que falta.
-        </span>
+        {fallo === 'ausente' ? (
+          <span>Este soporte no está en el servidor. Su ficha sí: el archivo es lo que falta.</span>
+        ) : (
+          <>
+            <span>No se pudo cargar este soporte. El archivo puede estar bien.</span>
+            {onReintentar && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-1"
+                onClick={onReintentar}
+              >
+                Reintentar
+              </Button>
+            )}
+          </>
+        )}
       </span>
     </span>
   );
@@ -1157,7 +1208,8 @@ function NoEstaEnElServidor({ oscuro = false }: { oscuro?: boolean }) {
 
 export function PreviaDeArchivo({
   url,
-  perdido = false,
+  fallo,
+  onReintentar,
   esImagen,
   onAbrir,
   acciones,
@@ -1177,14 +1229,15 @@ export function PreviaDeArchivo({
    */
   url?: string;
   /**
-   * El documento no va a llegar: el servidor no tiene el binario, o la
-   * descarga falló.
+   * El documento no se está viendo, y por qué.
    *
    * Sin esto se dibujaba el mismo girador que mientras se espera, y un soporte
-   * perdido giraba para siempre: quien mira no puede distinguir «está tardando»
-   * de «no está», que son dos cosas con respuestas distintas.
+   * que no iba a llegar giraba para siempre: quien mira no puede distinguir
+   * «está tardando» de «no está», que piden cosas distintas.
    */
-  perdido?: boolean;
+  fallo?: FalloDeSoporte;
+  /** Solo hace algo con `sin-cargar`: lo ausente no vuelve por reintentarlo. */
+  onReintentar?: () => void;
   esImagen: boolean;
   /**
    * Abre el pase a pantalla completa, si lo hay.
@@ -1389,8 +1442,8 @@ export function PreviaDeArchivo({
         </BotonOscuro>
       </div>
 
-      {perdido ? (
-        <NoEstaEnElServidor />
+      {fallo ? (
+        <SoporteQueNoSeVe fallo={fallo} onReintentar={onReintentar} />
       ) : !url ? (
         // El girador en el centro del marco, con el mismo gris que el resto de
         // lo que está esperando en esta app.
