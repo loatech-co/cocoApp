@@ -103,6 +103,21 @@ export function Soportes({ transactionId }: { transactionId: number }) {
 
   /** El `blob:` de cada soporte, por id. Se descargan una vez y se comparten. */
   const [urls, setUrls] = useState<Record<string, string>>({});
+  /**
+   * Los que NO van a llegar: el servidor dice que no tiene el binario, o la
+   * descarga falló.
+   *
+   * Hace falta distinguirlos de los que todavía están en camino porque se
+   * dibujaban igual —un girador— y el de un soporte perdido giraba para
+   * siempre. «Está tardando» y «no está» piden cosas distintas: esperar, o ir
+   * a buscar por qué falta.
+   *
+   * Pasa de verdad: la base y el almacén son dos sitios distintos. Las fichas
+   * viven en Postgres, que es el MISMO para local y para el servidor, y los
+   * archivos están en disco, que no lo es. Un soporte importado en una máquina
+   * y no sincronizado a la otra existe en la lista y no existe en el disco.
+   */
+  const [perdidos, setPerdidos] = useState<ReadonlySet<string>>(() => new Set());
   const [enGrande, setEnGrande] = useState<number | null>(null);
   /**
    * Cuál se está viendo arriba.
@@ -122,6 +137,10 @@ export function Soportes({ transactionId }: { transactionId: number }) {
     const corte = new AbortController();
     const creados: string[] = [];
 
+    // Los que el servidor ya dijo que no tiene se dan por perdidos sin pedir
+    // nada: pedirlos sería una petición que se sabe que va a devolver 404.
+    setPerdidos(new Set(lista.filter((s) => !s.disponible).map((s) => String(s.id))));
+
     for (const s of lista) {
       if (!s.disponible) continue;
 
@@ -133,7 +152,10 @@ export function Soportes({ transactionId }: { transactionId: number }) {
           setUrls((previo) => ({ ...previo, [String(s.id)]: url }));
         })
         .catch(() => {
-          /* La miniatura se queda en su marco vacío; el pase lo dirá. */
+          // Se cayó la descarga. No se reintenta —si el archivo no está, no va
+          // a estar en el segundo intento— pero se DICE, que es lo que faltaba.
+          if (corte.signal.aborted) return;
+          setPerdidos((previo) => new Set(previo).add(String(s.id)));
         });
     }
 
@@ -143,6 +165,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
       // esto, abrir veinte movimientos deja ciento sesenta archivos cargados.
       for (const url of creados) URL.revokeObjectURL(url);
       setUrls({});
+      setPerdidos(new Set());
     };
     // `lista.length` y no `lista`: la consulta devuelve un array nuevo en cada
     // render y con él las descargas empezarían otra vez sin parar.
@@ -173,6 +196,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
           // justo el parpadeo que esto viene a quitar.
           key={String(enseñado.id)}
           url={urlDelEnseñado}
+          perdido={perdidos.has(String(enseñado.id))}
           esImagen={enseñado.mime_type.startsWith('image/')}
           // Aquí SÍ hay pase a pantalla completa —el soporte ya existe en el
           // servidor, con su descarga y su zoom—, así que la previsualización
@@ -281,6 +305,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
           transactionId={transactionId}
           lista={lista}
           urls={urls}
+          perdidos={perdidos}
           indice={Math.min(enGrande, lista.length - 1)}
           onIr={setEnGrande}
           onCerrar={() => setEnGrande(null)}
@@ -705,6 +730,7 @@ function Pase({
   transactionId,
   lista,
   urls,
+  perdidos,
   indice,
   onIr,
   onCerrar,
@@ -712,6 +738,8 @@ function Pase({
   transactionId: number;
   lista: Soporte[];
   urls: Record<string, string>;
+  /** Los que no van a llegar. Ver `Soportes`. */
+  perdidos: ReadonlySet<string>;
   indice: number;
   onIr: (i: number) => void;
   onCerrar: () => void;
@@ -720,6 +748,7 @@ function Pase({
   const [confirmando, setConfirmando] = useState(false);
   const soporte = lista[indice];
   const url = urls[String(soporte.id)];
+  const perdido = perdidos.has(String(soporte.id));
   const esImagen = soporte.mime_type.startsWith('image/');
 
   const [zoom, setZoom] = useState(NORMAL);
@@ -827,7 +856,11 @@ function Pase({
           reinventar el arrastre.
         */}
         <div className="relative flex min-w-0 flex-1 justify-center overflow-auto rounded-lg bg-sala/25 p-3 sm:p-6">
-          {!url ? (
+          {perdido ? (
+            <div className="flex w-full items-center justify-center">
+              <NoEstaEnElServidor oscuro />
+            </div>
+          ) : !url ? (
             <div className="flex w-full items-center justify-center">
               <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
             </div>
@@ -1085,8 +1118,46 @@ function PaginaPdf({
  * lado corto el documento cabe justo, ese eje no se mueve —en vez de temblar
  * un píxel en cada arrastre—.
  */
+/**
+ * El hueco de un soporte que no está.
+ *
+ * ── Por qué no es un error rojo ─────────────────────────────────────────────
+ * Porque no falló nada de lo que se acaba de hacer: el movimiento está bien y
+ * su ficha también. Lo que falta es un archivo, y el rojo de esta app está
+ * reservado a lo que salió mal y a lo que no se puede deshacer.
+ *
+ * ── Por qué dice DÓNDE mirar ────────────────────────────────────────────────
+ * Porque el caso real tiene una causa concreta y no evidente: las fichas de
+ * los soportes viven en la base —la misma para todos los entornos— y los
+ * archivos viven en el disco de cada servidor. Un soporte que se importó en
+ * una máquina y no se sincronizó a la otra sale en la lista y no está en el
+ * disco. Sin decirlo, lo único que se ve es que «no carga».
+ *
+ * `oscuro` es para el pase a pantalla completa, cuyo fondo ya es oscuro: el
+ * gris de la app desaparecería encima.
+ */
+function NoEstaEnElServidor({ oscuro = false }: { oscuro?: boolean }) {
+  return (
+    <span
+      className={cn(
+        'grid size-full place-items-center px-6 text-center',
+        oscuro ? 'text-sala-tinta/70' : 'text-muted-foreground',
+      )}
+      role="status"
+    >
+      <span className="flex max-w-xs flex-col items-center gap-2 text-sm">
+        <FileWarning className="size-6 shrink-0" aria-hidden="true" />
+        <span>
+          Este soporte no está en el servidor. Su ficha sí: el archivo es lo que falta.
+        </span>
+      </span>
+    </span>
+  );
+}
+
 export function PreviaDeArchivo({
   url,
+  perdido = false,
   esImagen,
   onAbrir,
   acciones,
@@ -1105,6 +1176,15 @@ export function PreviaDeArchivo({
    * tener datos: lo que no puede cambiar de tamaño es la página.
    */
   url?: string;
+  /**
+   * El documento no va a llegar: el servidor no tiene el binario, o la
+   * descarga falló.
+   *
+   * Sin esto se dibujaba el mismo girador que mientras se espera, y un soporte
+   * perdido giraba para siempre: quien mira no puede distinguir «está tardando»
+   * de «no está», que son dos cosas con respuestas distintas.
+   */
+  perdido?: boolean;
   esImagen: boolean;
   /**
    * Abre el pase a pantalla completa, si lo hay.
@@ -1309,7 +1389,9 @@ export function PreviaDeArchivo({
         </BotonOscuro>
       </div>
 
-      {!url ? (
+      {perdido ? (
+        <NoEstaEnElServidor />
+      ) : !url ? (
         // El girador en el centro del marco, con el mismo gris que el resto de
         // lo que está esperando en esta app.
         <span
