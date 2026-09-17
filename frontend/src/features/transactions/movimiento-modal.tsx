@@ -443,32 +443,40 @@ export function MovimientoModal({
     };
 
     /*
-      ── Guardar son DOS peticiones, y la segunda puede fallar sola ──────────
+      ── Guardar son DOS peticiones, y o entran las dos o no entra ninguna ───
       Primero se crea el movimiento y después se suben sus soportes, porque un
       soporte cuelga de un movimiento y hasta que no existe no hay de qué
-      colgarlo.
+      colgarlo. Esa segunda petición puede fallar sola: el servidor se queda
+      sin recursos para tratar la imagen, se cae la conexión a mitad de una
+      foto, el archivo es un formato que allá no se puede abrir.
 
-      Si la segunda falla —el archivo pesa demasiado para el servidor, se cayó
-      la conexión a mitad de una foto de cuatro megas— el movimiento YA ESTÁ
-      REGISTRADO. Antes eso no se decía y no se recordaba: la ficha se quedaba
-      abierta con un error, y pulsar «Registrar» otra vez creaba un SEGUNDO
-      movimiento por la misma plata. Reintentar es lo primero que hace
-      cualquiera, así que la forma de perder los datos era la forma natural de
-      usarlo.
+      Cuando eso pasa en un movimiento que se acaba de crear, se DESHACE: se
+      borra lo que se acababa de registrar y se dice que no quedó nada. Un
+      gasto cuyo soporte no llegó es peor que ningún gasto —queda anotada plata
+      sin el papel que la explica, y nada en la pantalla recuerda que falta—,
+      así que la ficha vuelve al estado del que salió y se reintenta entera.
 
-      Ahora el id del que se acaba de crear se recuerda: el reintento ACTUALIZA
-      ese movimiento —para que un cambio hecho mientras tanto no se pierda— y
-      vuelve a intentar solo el soporte.
+      Antes se quedaba registrado y se avisaba. La razón era buena —pulsar
+      «Registrar» otra vez creaba un SEGUNDO movimiento por la misma plata—
+      pero la solución era peor que el problema: para no duplicar había que
+      dejar a medias. Deshaciendo no hay nada que duplicar, y el reintento es
+      el mismo camino de la primera vez.
+
+      ── Y si el deshacer TAMBIÉN falla ──────────────────────────────────────
+      Entonces sí quedó registrado, y hay que decirlo. Ahí se recuerda el id:
+      el siguiente intento ACTUALIZA ese movimiento en vez de crear otro.
     */
     const existente = movimiento?.id ?? registrado;
     let id = existente ?? undefined;
+    /** Lo creó ESTE intento. Es lo único que se puede deshacer sin preguntar. */
+    let recienCreado = false;
 
     try {
       if (existente != null) await actualizar.mutateAsync({ id: existente, cambios: cuerpo });
       else {
         const creado = await crear.mutateAsync(cuerpo as never);
         id = (creado as { id: number }).id;
-        setRegistrado(id);
+        recienCreado = true;
       }
 
       // Los soportes, ya con un movimiento del que colgar.
@@ -486,18 +494,25 @@ export function MovimientoModal({
       onCerrar();
     } catch (e) {
       const dijo = e instanceof ApiClientError ? e.message : 'No se pudo guardar.';
-      /*
-        Se distingue QUÉ falló, porque lo que hay que hacer es distinto.
 
-        Con el movimiento ya creado, lo que falló es el soporte y la plata está
-        registrada: quien lea «No se pudo guardar» va a volver a intentarlo
-        creyendo que no se guardó nada. Se dice que sí, y que puede cerrar.
-      */
-      setError(
-        id !== undefined && !movimiento
-          ? `${dijo} El movimiento quedó registrado; lo que falló fue el soporte. Puedes reintentar o cerrar: no se va a duplicar.`
-          : dijo,
-      );
+      // Editando, o reintentando sobre uno que ya estaba: aquí no hay nada que
+      // deshacer. Lo que había antes sigue estando, que es lo correcto.
+      if (!recienCreado || id === undefined) {
+        setError(dijo);
+        return;
+      }
+
+      try {
+        await eliminar.mutateAsync(id);
+        setRegistrado(null);
+        setError(`${dijo} No quedó registrado nada: un movimiento no se guarda sin el soporte que se le adjuntó. Vuelve a intentarlo.`);
+      } catch {
+        setRegistrado(id);
+        setError(
+          `${dijo} El movimiento quedó registrado, su soporte no, y tampoco se pudo deshacer. ` +
+            'Reintenta para adjuntarlo, o bórralo desde la tabla: no se va a duplicar.',
+        );
+      }
     } finally {
       setSubiendo(false);
     }

@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
   PayloadTooLargeException,
+  ServiceUnavailableException,
   UnsupportedMediaTypeException,
 } from '@nestjs/common';
 
@@ -12,6 +13,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { claveNueva, guardar, huellaDe, abrir, existe } from './soportes.almacen';
 import {
   nombreDeSoporte,
+  esFaltaDeRecursos,
   optimizar,
   TAMANO_MAXIMO,
   TIPOS_DE_ENTRADA,
@@ -160,25 +162,43 @@ export class SoportesService {
 
     for (const archivo of archivos) {
       /*
-        Un archivo que se acepta por su tipo pero no se puede ABRIR.
+        Tratar el archivo puede fallar por DOS motivos, y no se contestan igual.
 
+        ── No sé abrirlo ─────────────────────────────────────────────────────
         El caso real es el HEIC del iPhone: está en `TIPOS_DE_ENTRADA` porque
         es un formato de imagen legítimo, pero la librería que las procesa solo
         lo entiende si se compiló con soporte para él —y casi nunca lo está,
-        porque va aparte por licencia—. Al reventar, lo que llegaba a la
-        pantalla era el 500 genérico: «Ocurrió un error inesperado», que no
-        dice ni qué archivo fue ni que el problema es el formato.
+        porque va aparte por licencia—. Es definitivo: por más que se reintente
+        ese archivo no va a entrar, así que lo que hay que decir es con qué
+        volver.
 
-        Es una limitación del servidor, no un fallo del sistema, así que se
-        contesta como lo que es: este archivo no se puede procesar, y se nombra.
+        ── No PUEDO ahora mismo ──────────────────────────────────────────────
+        El servidor se quedó sin hilos o sin memoria para tratar la imagen. El
+        archivo está perfecto y reintentar es exactamente lo que hay que hacer.
+
+        Iban por el mismo camino, y el resultado era el peor de los dos: una
+        captura PNG recibía «este servidor no sabe abrir ese formato, vuelve a
+        intentarlo con un JPG o un PNG» —un consejo imposible de seguir, porque
+        ya era un PNG— y la causa real quedaba escondida en el paréntesis.
+
+        El código de estado también cambia, y no es un detalle: 415 dice «no
+        mandes esto», 503 dice «vuelve a mandarlo». Son instrucciones opuestas.
       */
       const optimizado = await optimizar(archivo.buffer, archivo.mimetype).catch(
         (causa: unknown) => {
+          const detalle = causa instanceof Error ? causa.message : 'error al procesar la imagen';
+
+          if (esFaltaDeRecursos(causa)) {
+            throw new ServiceUnavailableException(
+              `No se pudo procesar “${archivo.originalname}”: al servidor se le acabaron los ` +
+                `recursos para tratar la imagen. No es el archivo. Espera unos segundos y ` +
+                `vuelve a intentarlo. (${detalle})`,
+            );
+          }
+
           throw new UnsupportedMediaTypeException(
             `No se pudo procesar “${archivo.originalname}”: este servidor no sabe abrir ese formato. ` +
-              `Vuelve a intentarlo con un JPG, un PNG o un PDF. (${
-                causa instanceof Error ? causa.message : 'error al procesar la imagen'
-              })`,
+              `Vuelve a intentarlo con un JPG, un PNG o un PDF. (${detalle})`,
           );
         },
       );

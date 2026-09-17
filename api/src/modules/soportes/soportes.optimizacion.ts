@@ -30,6 +30,38 @@ import sharp from 'sharp';
  * los dos sitios a la vez, que es justo por lo que este módulo existe.
  */
 
+/*
+  ── libvips trabaja con UN hilo, y no es una optimización ────────────────────
+  Es lo que hace que funcione en el servidor donde esto vive.
+
+  `sharp` es un envoltorio de libvips, que de fábrica abre una piscina de hilos
+  del tamaño del número de núcleos que ve. En un hosting COMPARTIDO eso es una
+  trampa: la máquina declara dieciséis núcleos porque los tiene, pero la cuenta
+  tiene un cupo de procesos e hilos muy por debajo de eso y compartido con todo
+  lo demás que esté corriendo. libvips pide su piscina, `pthread_create`
+  devuelve EAGAIN y el error que sale por abajo es
+
+      glib: Error creating thread: Resource temporarily unavailable
+
+  que además es INTERMITENTE —depende de cuánto esté gastando el vecino en ese
+  segundo—, así que la misma captura falla una vez y entra a la siguiente. Es
+  el mismo cupo que ya nos había mordido en los despliegues.
+
+  Con la concurrencia en 1, libvips hace el trabajo en el hilo que ya tiene y
+  no pide ninguno. Se pierde velocidad en una imagen grande y no se pierde
+  nada más: aquí se trata UN recibo de 1100px de ancho, no un lote.
+
+  Se deja configurable porque en una máquina propia —un contenedor con sus
+  núcleos— subirlo sí compensa. El valor de fábrica es el que aguanta en el
+  sitio donde de verdad está desplegado.
+
+  `cache(false)` va por lo mismo: la caché de libvips reserva memoria y abre
+  descriptores para reutilizar operaciones entre llamadas, y aquí no hay nada
+  que reutilizar —cada soporte se trata una vez y no vuelve—.
+*/
+sharp.concurrency(Number(process.env.SHARP_CONCURRENCY) || 1);
+sharp.cache(false);
+
 /** Ancho máximo de una imagen. Un recibo más ancho no se lee mejor. */
 const ANCHO_MAXIMO = 1100;
 /** Calidad JPEG. Por debajo de 50 el valor empieza a costar de leer. */
@@ -195,6 +227,36 @@ function correr(binario: string, argumentos: string[]): Promise<void> {
       codigo === 0 ? resolver() : rechazar(new Error(`${binario} salió con ${codigo}: ${error}`)),
     );
   });
+}
+
+/**
+ * ¿Esto falló por falta de RECURSOS del servidor, y no por el archivo?
+ *
+ * ── Por qué hay que distinguirlo ────────────────────────────────────────────
+ * Porque las dos cosas se contestan al revés. Un formato que la librería no
+ * sabe abrir —el HEIC de un iPhone— es definitivo: por más que se reintente,
+ * ese archivo no va a entrar, y lo que hay que decir es «manda un JPG». Un
+ * hilo que no se pudo crear es pasajero: el archivo está perfecto y lo único
+ * que hay que hacer es esperar un momento.
+ *
+ * Estaban mezclados, y el resultado era el peor de los dos: una captura PNG
+ * recibía «este servidor no sabe abrir ese formato, vuelve a intentarlo con un
+ * JPG o un PNG» —es decir, un consejo imposible de seguir, porque ya era un
+ * PNG— y el problema real quedaba escondido en el paréntesis del final.
+ *
+ * ── Qué se mira ─────────────────────────────────────────────────────────────
+ * El texto, porque es lo único que hay: libvips y ghostscript no devuelven un
+ * código, devuelven la cadena que les dio el sistema operativo. Son los
+ * errores de agotamiento de toda la vida —no poder crear un hilo, no poder
+ * reservar memoria, no quedar descriptores— y sus nombres no los inventa
+ * ninguna librería: los pone `errno`.
+ */
+export function esFaltaDeRecursos(causa: unknown): boolean {
+  const mensaje = causa instanceof Error ? causa.message : String(causa);
+
+  return /resource temporarily unavailable|error creating thread|cannot allocate memory|out of memory|enomem|eagain|too many open files|emfile|enfile|cannot fork|resource deadlock/i.test(
+    mensaje,
+  );
 }
 
 /**
