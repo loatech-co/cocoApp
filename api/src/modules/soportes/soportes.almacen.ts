@@ -3,6 +3,8 @@ import { createReadStream, existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
 
+import { leerDelEntorno } from '../../common/entorno';
+
 /**
  * El almacén privado de los soportes.
  *
@@ -39,9 +41,27 @@ export const TIPOS_ACEPTADOS: Record<string, string> = {
  * de verdad no entran al repositorio ni por descuido.
  */
 export function carpetaDelAlmacen(): string {
-  const declarada = process.env.SOPORTES_DIR?.trim();
+  // `leerDelEntorno` y no `process.env` a secas: en el servidor la variable
+  // llega con las comillas dentro del valor, y una ruta que empieza por `"` no
+  // es absoluta, así que `resolve` la colgaba del directorio de trabajo. Ver
+  // `common/entorno.ts`.
+  const declarada = leerDelEntorno('SOPORTES_DIR');
   if (declarada) return resolve(declarada);
   return resolve(__dirname, '..', '..', '..', '.soportes');
+}
+
+/**
+ * ¿Está donde dice que está?
+ *
+ * Se comprueba al arrancar y se grita si no. El almacén mal apuntado no rompe
+ * nada visible: la API sigue en pie, la lista de soportes sigue llegando y lo
+ * único que cambia es que TODOS salen como no disponibles. Sin esta línea, eso
+ * se diagnostica mirando `/proc/<pid>/environ` del proceso en producción, que
+ * es donde acabamos la primera vez.
+ */
+export function almacenListo(): { carpeta: string; existe: boolean } {
+  const carpeta = carpetaDelAlmacen();
+  return { carpeta, existe: existsSync(carpeta) };
 }
 
 /**

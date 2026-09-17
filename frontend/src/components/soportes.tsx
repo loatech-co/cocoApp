@@ -239,6 +239,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
                   >
                     <ChevronRight className="size-4" aria-hidden="true" />
                   </BotonOscuro>
+                  <SeparadorDeMandos />
                 </>
               )}
 
@@ -993,6 +994,28 @@ function Pase({
  * guardar quita archivos de la memoria y la de uno guardado los borra del
  * servidor, pero los dos botones son el mismo objeto.
  */
+/**
+ * La raya entre dos grupos de mandos dentro de la misma pastilla.
+ *
+ * ── Qué separa ──────────────────────────────────────────────────────────────
+ * Moverse de lo que MODIFICA. Pasar al soporte siguiente no cambia nada;
+ * agregar y borrar sí, y borrar no se deshace. Seguidos sin nada en medio, las
+ * flechas y el más se leen como una sola regleta de cinco botones, y el que
+ * está justo después del contador —el más— se pulsa creyendo que es «el
+ * siguiente».
+ *
+ * ── Por qué una raya y no un hueco ──────────────────────────────────────────
+ * Un hueco dentro de una pastilla de 40px de alto tiene que ser grande para
+ * leerse como separación, y entonces la pastilla crece a lo ancho encima del
+ * papel. Un píxel dice lo mismo y no ocupa nada.
+ *
+ * Va al 25 % de la tinta: tiene que verse como una división, no como un sexto
+ * control.
+ */
+export function SeparadorDeMandos() {
+  return <span aria-hidden="true" className="mx-0.5 h-4 w-px shrink-0 bg-sala-tinta/25" />;
+}
+
 export function BotonOscuro({
   onClick,
   etiqueta,

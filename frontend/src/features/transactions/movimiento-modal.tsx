@@ -20,6 +20,7 @@ import {
   LienzoPdf,
   PanelDeSubida,
   PreviaDeArchivo,
+  SeparadorDeMandos,
   Soltar,
   Soportes,
 } from '@/components/soportes';
@@ -1782,6 +1783,7 @@ function SoportesPendientes({
                   >
                     <ChevronRight className="size-4" aria-hidden="true" />
                   </BotonOscuro>
+                  <SeparadorDeMandos />
                 </>
               )}
 

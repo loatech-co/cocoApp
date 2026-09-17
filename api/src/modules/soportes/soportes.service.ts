@@ -3,14 +3,16 @@ import type { Readable } from 'node:stream';
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
   PayloadTooLargeException,
   ServiceUnavailableException,
   UnsupportedMediaTypeException,
 } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { claveNueva, guardar, huellaDe, abrir, existe } from './soportes.almacen';
+import { almacenListo, claveNueva, guardar, huellaDe, abrir, existe } from './soportes.almacen';
 import {
   nombreDeSoporte,
   esFaltaDeRecursos,
@@ -39,8 +41,38 @@ export interface SoporteView {
 }
 
 @Injectable()
-export class SoportesService {
+export class SoportesService implements OnModuleInit {
+  private readonly logger = new Logger(SoportesService.name);
+
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Decir al arrancar si el almacén está donde dice estar.
+   *
+   * Un almacén mal apuntado no rompe nada VISIBLE: la API sigue en pie, la
+   * lista de soportes sigue llegando y lo único que cambia es que todos salen
+   * como no disponibles. Eso en pantalla se lee como «no cargan las imágenes»,
+   * que es lo más lejos que se puede estar de la causa.
+   *
+   * Pasó: `SOPORTES_DIR` llegaba con las comillas dentro del valor, así que la
+   * ruta dejaba de ser absoluta y se resolvía contra el directorio de trabajo.
+   * Diagnosticarlo costó leer `/proc/<pid>/environ` del proceso en producción.
+   * Esta línea lo habría dicho en el primer reinicio.
+   */
+  onModuleInit(): void {
+    const { carpeta, existe: hay } = almacenListo();
+
+    if (hay) {
+      this.logger.log(`Almacén de soportes: ${carpeta}`);
+      return;
+    }
+
+    this.logger.error(
+      `El almacén de soportes NO existe: ${carpeta}. ` +
+        'Todos los soportes van a salir como no disponibles. ' +
+        'Revisa SOPORTES_DIR —ojo con las comillas— o crea la carpeta.',
+    );
+  }
 
   /**
    * Los soportes de un movimiento.

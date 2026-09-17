@@ -6,6 +6,8 @@ import { join } from 'node:path';
 
 import sharp from 'sharp';
 
+import { leerDelEntorno } from '../../common/entorno';
+
 /**
  * El tratamiento de un soporte antes de guardarlo.
  *
@@ -98,7 +100,9 @@ export interface SoporteOptimizado {
  * código.
  */
 function binarioDeGhostscript(): string {
-  return process.env.GHOSTSCRIPT_BIN?.trim() || 'gs';
+  // Con comillas dentro del valor —que es como llega en el servidor— `spawn`
+  // busca un ejecutable llamado `"/usr/bin/gs"` y ningún PDF se optimiza.
+  return leerDelEntorno('GHOSTSCRIPT_BIN') ?? 'gs';
 }
 
 /**
