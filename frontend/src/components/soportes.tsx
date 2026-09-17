@@ -1307,6 +1307,28 @@ export function PreviaDeArchivo({
           src={url}
           alt=""
           draggable={false}
+          /*
+            `max-w-none`, y no es cosmético: es lo que deformaba la imagen.
+
+            El preflight de Tailwind declara `img, video { max-width: 100%;
+            height: auto }` para que ninguna imagen suelta se salga de su
+            columna. Aquí eso es justo lo contrario de lo que hace falta: el
+            encuadre calcula un ancho y un alto que YA guardan la proporción
+            —la escala es la misma para los dos ejes— y los pinta en el
+            `style`. El `max-width` del preflight le gana al ancho en línea
+            —un máximo siempre gana— pero no toca el alto, así que la imagen
+            se quedaba con el ancho del marco y el alto entero: estirada.
+
+            Se veía en cuanto el documento era más ancho que el marco, que es
+            SIEMPRE con el encuadre que llena la caja, y se veía peor cuanto
+            más estrecho el marco —en un teléfono, brutal— y peor todavía con
+            el zoom, que multiplica el ancho y no el tope.
+
+            No le pasaba al PDF porque lo pinta un `<canvas>`, y esa regla del
+            preflight es solo para `img` y `video`. De ahí que pareciera que
+            fallaba con «algunas imágenes».
+          */
+          className="max-w-none"
           onLoad={(e) =>
             setNatural({
               ancho: e.currentTarget.naturalWidth,
