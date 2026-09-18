@@ -75,11 +75,14 @@ interface PagoPendientePayload {
    */
   expected_amount: string | null;
   /**
-   * Si su centro de costos es ESTÁTICO. Es lo que separa lo fijo de lo
-   * variable sin depender de cómo se llame el centro: un nombre se cambia
-   * desde la pantalla de al lado y la lista dejaría de filtrar sin decirlo.
+   * El centro de costos del que cuelga, que es por lo que se filtra la lista.
+   *
+   * Va el `id` además del nombre: el nombre es lo que se lee y el id es lo que
+   * se compara. Renombrar un centro desde la pantalla de al lado no tiene por
+   * qué desmarcar nada.
    */
-  estatico: boolean;
+  centro_id: bigint;
+  centro: string;
 }
 
 interface GastoPorCategoriaPayload {
@@ -222,7 +225,6 @@ export class DashboardService {
         icon: true,
         parentId: true,
         recurrente: true,
-        estatico: true,
         periodicidad: true,
         diaDePago: true,
         mesDePago: true,
@@ -586,9 +588,8 @@ export class DashboardService {
           periodicidad: concepto.periodicidad!,
           due_date: vencimiento(mesEnCurso, concepto.diaDePago),
           expected_amount: esperado === null ? null : serializar(toMoney(esperado)),
-          // `estatico` se lee SOLO del centro, que es el nivel de arriba: una
-          // categoría y un concepto heredan lo que diga el suyo.
-          estatico: datosDe.get(raiz)?.estatico ?? false,
+          centro_id: BigInt(raiz),
+          centro: datosDe.get(raiz)?.name ?? '',
         });
       }
 

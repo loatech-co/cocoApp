@@ -407,11 +407,13 @@ export interface PagoPendiente {
    */
   expected_amount: DecimalString | null;
   /**
-   * Si su centro de costos es ESTÁTICO —lo que en esta app son los costos
-   * fijos—. Sirve para separarlos de los variables sin mirar el nombre del
-   * centro, que se puede cambiar desde la pantalla de al lado.
+   * El centro de costos del que cuelga: por él se filtra la lista.
+   *
+   * El `id` además del nombre porque el nombre es lo que se lee y el id lo que
+   * se compara: renombrar un centro no debería desmarcar nada.
    */
-  estatico: boolean;
+  centro_id: Id;
+  centro: string;
 }
 
 /**

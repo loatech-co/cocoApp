@@ -1,8 +1,10 @@
-import { Filter, FilterX } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Menu, MenuTitulo } from '@/components/menu';
 import { Card, CardContent } from '@/components/ui/card';
+import { Casilla } from '@/components/ui/casilla';
+import { REALCE } from '@/components/ui/superficie';
 import { diaCorto } from '@/lib/fechas';
 import { cn, formatCOP } from '@/lib/utils';
 import type { PagoPendiente } from '@coco/types';
@@ -42,33 +44,39 @@ export function PagosPendientes({
   const ahora = hoy();
 
   /*
-    ── Los variables se pueden apagar ────────────────────────────────────────
+    ── Se puede mirar un centro de costos a la vez ───────────────────────────
     Una suscripción se cobra sola y cuesta lo mismo todos los meses: no hay
     nada que decidir con ella, y diez de esas empujan fuera de la vista lo que
     sí hay que mirar —el recibo de la luz que llegó con recargo, el seguro que
     vence el martes—.
 
-    Se apagan, no se quitan: el día que uno quiera comprobar que se cobraron,
-    están a un toque. Y el interruptor NO se recuerda entre visitas, a
-    propósito: es una forma de mirar esta lista ahora, no una preferencia, y un
-    filtro guardado que esconde plata es de los que se olvidan puestos.
+    Se apagan por CENTRO y con casillas, no con un interruptor de dos estados:
+    los centros son los que hay, no siempre dos, y una casilla por cada uno
+    dice cuáles existen además de dejar elegir. Es el mismo filtro que la barra
+    de arriba, en pequeño.
+
+    No se recuerda entre visitas, a propósito: es una forma de mirar esta lista
+    ahora, no una preferencia, y un filtro guardado que esconde plata es de los
+    que se olvidan puestos.
   */
-  const [sinVariables, setSinVariables] = useState(false);
+  const [ocultos, setOcultos] = useState<ReadonlySet<string>>(() => new Set());
 
   /*
-    ── Si el dato no viene, el botón no existe ───────────────────────────────
-    `estatico` lo manda el servidor, y un servidor más viejo que esta pantalla
-    no lo manda: entonces `p.estatico` es `undefined` para TODOS, que es falsy,
-    y filtrar «los que son fijos» no deja ni uno. El botón parecía roto —lo
-    ocultaba todo— cuando lo que pasaba es que no tenía con qué decidir.
-
-    Es la asimetría normal de un despliegue: la pantalla y la API no llegan a
-    la vez. Sin dato no hay separación posible, así que no se ofrece: mejor un
-    botón que no está que uno que vacía la lista.
+    ── Si el dato no viene, el filtro no existe ──────────────────────────────
+    El centro lo manda el servidor, y un servidor más viejo que esta pantalla
+    no lo manda. Filtrar sin él dejaría la lista vacía y el botón parecería
+    roto, que es justo lo que pasó: es la asimetría normal de un despliegue,
+    donde la pantalla y la API no llegan a la vez.
   */
-  const faltaElDato = pagos.some((p) => (p as Partial<PagoPendiente>).estatico === undefined);
-  const hayVariables = !faltaElDato && pagos.some((p) => !p.estatico);
-  const visibles = sinVariables && hayVariables ? pagos.filter((p) => p.estatico) : pagos;
+  const faltaElDato = pagos.some((p) => (p as Partial<PagoPendiente>).centro_id === undefined);
+
+  // Los centros que de verdad tienen algo pendiente, en el orden en que
+  // aparecen: una casilla para un centro sin nada que mostrar no filtra nada.
+  const centros = faltaElDato
+    ? []
+    : [...new Map(pagos.map((p) => [String(p.centro_id), p.centro])).entries()];
+
+  const visibles = pagos.filter((p) => faltaElDato || !ocultos.has(String(p.centro_id)));
 
   // El total es el de lo que SE VE. Con la suma de todo bajo una lista
   // recortada, la cifra contradice lo que hay debajo y no hay forma de saber
@@ -96,32 +104,60 @@ export function PagosPendientes({
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-display text-lg font-semibold">Pagos pendientes</h2>
 
-          {/* Solo si hay algo que esconder: un interruptor que no cambia nada
-              se pulsa una vez, no pasa nada, y se deja de creer en él.
+          {/*
+            Solo con más de un centro: una casilla única no separa nada, y un
+            control que no cambia nada se pulsa una vez y se deja de creer en
+            él.
 
-              El mismo botón que el de la dona y los de la barra de filtros
-              —variante `herramienta`, tamaño `sm-icon`—: hace lo mismo que
-              ellos, recortar lo que se está viendo, y tiene que verse igual. */}
-          {hayVariables && (
-            <Button
-              type="button"
-              variant="herramienta"
-              size="sm-icon"
-              aria-pressed={sinVariables}
-              aria-label={
-                sinVariables ? 'Mostrar los costos variables' : 'Ocultar los costos variables'
-              }
-              title={
-                sinVariables ? 'Mostrar los costos variables' : 'Ocultar los costos variables'
-              }
-              onClick={() => setSinVariables((v) => !v)}
+            El mismo desplegable que el filtro de la barra de arriba —`Menu`
+            con casillas dentro— porque hace lo mismo: recortar lo que se está
+            viendo. Se enciende cuando hay algo apagado, que es la señal que ya
+            usan los demás filtros de la app.
+          */}
+          {centros.length > 1 && (
+            <Menu
+              etiqueta="Filtrar por centro de costos"
+              Icono={Filter}
+              soloIcono
+              activo={ocultos.size > 0}
+              tipo="panel"
+              ancho="w-56"
+              alineado="derecha"
             >
-              {sinVariables ? (
-                <FilterX className="size-4" aria-hidden="true" />
-              ) : (
-                <Filter className="size-4" aria-hidden="true" />
-              )}
-            </Button>
+              <div className="flex flex-col">
+                <MenuTitulo>Centros de costos</MenuTitulo>
+                {centros.map(([id, nombre]) => {
+                  const marcado = !ocultos.has(id);
+                  return (
+                    <label
+                      key={id}
+                      className={cn(
+                        'flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm',
+                        REALCE,
+                        marcado && 'font-medium',
+                      )}
+                    >
+                      <Casilla
+                        checked={marcado}
+                        onChange={() =>
+                          setOcultos((antes) => {
+                            const siguiente = new Set(antes);
+                            // Desmarcar el último dejaría la tarjeta vacía sin
+                            // decir por qué. Se permite —y la lista lo explica—
+                            // porque negarlo obligaría a adivinar cuál de las
+                            // casillas está trabada y por qué.
+                            if (marcado) siguiente.add(id);
+                            else siguiente.delete(id);
+                            return siguiente;
+                          })
+                        }
+                      />
+                      <span className="min-w-0 flex-1 truncate">{nombre}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </Menu>
           )}
         </div>
 
@@ -246,7 +282,7 @@ export function PagosPendientes({
               contrario de lo que pasa. */}
           {visibles.length === 0 && (
             <li className="py-6 text-center text-sm text-muted-foreground">
-              Todo lo que queda es de costos variables.
+              Lo que queda es de los centros que están apagados.
             </li>
           )}
         </ul>
