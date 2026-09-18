@@ -406,6 +406,12 @@ export interface PagoPendiente {
    * los tres anteriores. `null` si nunca se ha pagado.
    */
   expected_amount: DecimalString | null;
+  /**
+   * Si su centro de costos es ESTÁTICO —lo que en esta app son los costos
+   * fijos—. Sirve para separarlos de los variables sin mirar el nombre del
+   * centro, que se puede cambiar desde la pantalla de al lado.
+   */
+  estatico: boolean;
 }
 
 /**

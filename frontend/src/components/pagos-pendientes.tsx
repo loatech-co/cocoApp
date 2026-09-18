@@ -1,3 +1,7 @@
+import { Filter, FilterX } from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { diaCorto } from '@/lib/fechas';
 import { cn, formatCOP } from '@/lib/utils';
@@ -36,7 +40,27 @@ export function PagosPendientes({
   className?: string;
 }) {
   const ahora = hoy();
-  const total = pagos.reduce((s, p) => s + Number(p.expected_amount ?? 0), 0);
+
+  /*
+    ── Los variables se pueden apagar ────────────────────────────────────────
+    Una suscripción se cobra sola y cuesta lo mismo todos los meses: no hay
+    nada que decidir con ella, y diez de esas empujan fuera de la vista lo que
+    sí hay que mirar —el recibo de la luz que llegó con recargo, el seguro que
+    vence el martes—.
+
+    Se apagan, no se quitan: el día que uno quiera comprobar que se cobraron,
+    están a un toque. Y el interruptor NO se recuerda entre visitas, a
+    propósito: es una forma de mirar esta lista ahora, no una preferencia, y un
+    filtro guardado que esconde plata es de los que se olvidan puestos.
+  */
+  const [sinVariables, setSinVariables] = useState(false);
+  const hayVariables = pagos.some((p) => !p.estatico);
+  const visibles = sinVariables ? pagos.filter((p) => p.estatico) : pagos;
+
+  // El total es el de lo que SE VE. Con la suma de todo bajo una lista
+  // recortada, la cifra contradice lo que hay debajo y no hay forma de saber
+  // cuál de las dos miente.
+  const total = visibles.reduce((s, p) => s + Number(p.expected_amount ?? 0), 0);
 
   /*
     Sin pendientes no hay tarjeta.
@@ -56,9 +80,41 @@ export function PagosPendientes({
   return (
     <Card className={cn('h-full', className)}>
       <CardContent className="flex h-full flex-col p-4 sm:p-6">
-        <h2 className="font-display text-lg font-semibold">Pagos pendientes</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-display text-lg font-semibold">Pagos pendientes</h2>
+
+          {/* Solo si hay algo que esconder: un interruptor que no cambia nada
+              se pulsa una vez, no pasa nada, y se deja de creer en él.
+
+              El mismo botón que el de la dona y los de la barra de filtros
+              —variante `herramienta`, tamaño `sm-icon`—: hace lo mismo que
+              ellos, recortar lo que se está viendo, y tiene que verse igual. */}
+          {hayVariables && (
+            <Button
+              type="button"
+              variant="herramienta"
+              size="sm-icon"
+              aria-pressed={sinVariables}
+              aria-label={
+                sinVariables ? 'Mostrar los costos variables' : 'Ocultar los costos variables'
+              }
+              title={
+                sinVariables ? 'Mostrar los costos variables' : 'Ocultar los costos variables'
+              }
+              onClick={() => setSinVariables((v) => !v)}
+            >
+              {sinVariables ? (
+                <FilterX className="size-4" aria-hidden="true" />
+              ) : (
+                <Filter className="size-4" aria-hidden="true" />
+              )}
+            </Button>
+          )}
+        </div>
+
         <p className="truncate text-xs text-muted-foreground">
           {total > 0 ? `Unos ${formatCOP(total)} este mes` : 'Este mes'}
+          {sinVariables && ' · solo fijos'}
         </p>
 
         {/* Se desplaza en vez de crecer: la tarjeta comparte fila con la
@@ -71,7 +127,7 @@ export function PagosPendientes({
              barra, encima del relleno y fuera de las filas— y su contenido
              termina justo en el borde interior de la tarjeta. */}
         <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-3">
-          {pagos.map((pago) => {
+          {visibles.map((pago) => {
               const vencido = pago.due_date < ahora;
 
               return (
@@ -169,6 +225,15 @@ export function PagosPendientes({
                 </li>
               );
           })}
+          {/* Apagados TODOS, la lista queda vacía y la tarjeta se quedaría sin
+              nada que enseñar salvo el botón para volver. Se dice, porque un
+              hueco en blanco se lee como «no hay nada pendiente», que es lo
+              contrario de lo que pasa. */}
+          {visibles.length === 0 && (
+            <li className="py-6 text-center text-sm text-muted-foreground">
+              Todo lo que queda es de costos variables.
+            </li>
+          )}
         </ul>
       </CardContent>
     </Card>

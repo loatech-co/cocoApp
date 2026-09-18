@@ -74,6 +74,12 @@ interface PagoPendientePayload {
    * los tres anteriores. `null` si nunca se ha pagado.
    */
   expected_amount: string | null;
+  /**
+   * Si su centro de costos es ESTÁTICO. Es lo que separa lo fijo de lo
+   * variable sin depender de cómo se llame el centro: un nombre se cambia
+   * desde la pantalla de al lado y la lista dejaría de filtrar sin decirlo.
+   */
+  estatico: boolean;
 }
 
 interface GastoPorCategoriaPayload {
@@ -216,6 +222,7 @@ export class DashboardService {
         icon: true,
         parentId: true,
         recurrente: true,
+        estatico: true,
         periodicidad: true,
         diaDePago: true,
         mesDePago: true,
@@ -559,12 +566,16 @@ export class DashboardService {
         presupuesto = presupuesto.plus(esperado ?? CERO);
 
         // El camino completo: "Alquiler" solo no dice de qué centro cuelga.
+        // Y de paso queda a la vista la RAÍZ, que es el centro de costos: de
+        // ella sale si esto es fijo o variable.
         const camino: string[] = [];
         let actual = porId.get(clave);
+        let raiz = clave;
         while (actual?.parentId) {
           const padre = datosDe.get(actual.parentId.toString());
           if (!padre) break;
           camino.unshift(padre.name);
+          raiz = actual.parentId.toString();
           actual = porId.get(actual.parentId.toString());
         }
 
@@ -575,6 +586,9 @@ export class DashboardService {
           periodicidad: concepto.periodicidad!,
           due_date: vencimiento(mesEnCurso, concepto.diaDePago),
           expected_amount: esperado === null ? null : serializar(toMoney(esperado)),
+          // `estatico` se lee SOLO del centro, que es el nivel de arriba: una
+          // categoría y un concepto heredan lo que diga el suyo.
+          estatico: datosDe.get(raiz)?.estatico ?? false,
         });
       }
 
