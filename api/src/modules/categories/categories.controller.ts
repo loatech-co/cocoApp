@@ -25,48 +25,41 @@ import {
 } from './dto/category.dto';
 
 /** Forma pública: `parent_id` en snake_case, como el resto del contrato. */
-interface CategoryPayload {
-  id: bigint;
-  name: string;
+/**
+ * Lo que sale por la API: la vista del servicio, con el padre en snake_case.
+ *
+ * ── Se DERIVA de `CategoryView`, no se vuelve a escribir ────────────────────
+ * Era una copia a mano, campo por campo, y con ella una función que también
+ * los nombraba uno a uno. Dos listas paralelas que nada obligaba a coincidir:
+ * un campo nuevo en el modelo llegaba al servicio, se guardaba en la base, y
+ * se caía aquí sin ruido. La API devolvía 200, el formulario lo releía vacío y
+ * al siguiente guardado lo borraba.
+ *
+ * Pasó con `presupuesto` y `pago_automatico`, los dos a la vez, y el comentario
+ * que había aquí ya avisaba de que iba a pasar. Un aviso no es una defensa.
+ *
+ * El filtro de verdad sigue existiendo y está donde debe: `presentar()`, en el
+ * servicio, que elige a mano qué columnas del modelo se publican. Esto de aquí
+ * no era una segunda puerta, era una copia de la primera.
+ */
+type CategoryPayload = Omit<CategoryView, 'parentId'> & {
   parent_id: bigint | null;
-  kind: CategoryView['kind'];
-  color: string | null;
-  icon: string | null;
-  sort_order: number;
-  is_archived: boolean;
-  recurrente: boolean;
-  estatico: boolean;
-  periodicidad: CategoryView['periodicidad'];
-  dia_de_pago: number | null;
-  mes_de_pago: number | null;
-  palabras_clave: string[];
   children?: CategoryPayload[];
-}
+};
 
-function aPayload(categoria: CategoryView | ConHijos<CategoryView>): CategoryPayload {
-  const payload: CategoryPayload = {
-    id: categoria.id,
-    name: categoria.name,
-    parent_id: categoria.parentId,
-    kind: categoria.kind,
-    color: categoria.color,
-    icon: categoria.icon,
-    sort_order: categoria.sort_order,
-    is_archived: categoria.is_archived,
-    // Esta función DESCARTA lo que no esté nombrado aquí. Es su gracia —la
-    // forma pública no cambia porque cambie una columna— y también su trampa:
-    // un campo nuevo en el modelo llega hasta aquí y desaparece sin ruido, con
-    // la API devolviendo 200 y la pantalla mostrando que no se guardó nada.
-    recurrente: categoria.recurrente,
-    estatico: categoria.estatico,
-    periodicidad: categoria.periodicidad,
-    dia_de_pago: categoria.dia_de_pago,
-    mes_de_pago: categoria.mes_de_pago,
-    palabras_clave: categoria.palabras_clave,
-  };
+/**
+ * La vista del servicio, tal cual, con dos únicos cambios.
+ *
+ * `parentId` pasa a `parent_id`, que es el nombre con el que sale todo lo
+ * demás; y los hijos se recorren para que a ellos les pase lo mismo. Nada más
+ * se nombra: lo que el servicio publique, sale.
+ */
+export function aPayload(categoria: CategoryView | ConHijos<CategoryView>): CategoryPayload {
+  const { parentId, children, ...resto } = categoria as ConHijos<CategoryView>;
+  const payload: CategoryPayload = { ...resto, parent_id: parentId };
 
-  if ('children' in categoria) {
-    payload.children = categoria.children.map(aPayload);
+  if (children !== undefined) {
+    payload.children = children.map(aPayload);
   }
 
   return payload;
