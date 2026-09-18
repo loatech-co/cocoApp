@@ -54,8 +54,21 @@ export function PagosPendientes({
     filtro guardado que esconde plata es de los que se olvidan puestos.
   */
   const [sinVariables, setSinVariables] = useState(false);
-  const hayVariables = pagos.some((p) => !p.estatico);
-  const visibles = sinVariables ? pagos.filter((p) => p.estatico) : pagos;
+
+  /*
+    ── Si el dato no viene, el botón no existe ───────────────────────────────
+    `estatico` lo manda el servidor, y un servidor más viejo que esta pantalla
+    no lo manda: entonces `p.estatico` es `undefined` para TODOS, que es falsy,
+    y filtrar «los que son fijos» no deja ni uno. El botón parecía roto —lo
+    ocultaba todo— cuando lo que pasaba es que no tenía con qué decidir.
+
+    Es la asimetría normal de un despliegue: la pantalla y la API no llegan a
+    la vez. Sin dato no hay separación posible, así que no se ofrece: mejor un
+    botón que no está que uno que vacía la lista.
+  */
+  const faltaElDato = pagos.some((p) => (p as Partial<PagoPendiente>).estatico === undefined);
+  const hayVariables = !faltaElDato && pagos.some((p) => !p.estatico);
+  const visibles = sinVariables && hayVariables ? pagos.filter((p) => p.estatico) : pagos;
 
   // El total es el de lo que SE VE. Con la suma de todo bajo una lista
   // recortada, la cifra contradice lo que hay debajo y no hay forma de saber
@@ -112,9 +125,11 @@ export function PagosPendientes({
           )}
         </div>
 
+        {/* El mismo rótulo siempre; lo único que cambia es la cifra, que es la
+            de lo que se ve. Añadirle un «solo fijos» al filtrar movía el texto
+            debajo del título cada vez que se pulsaba el botón. */}
         <p className="truncate text-xs text-muted-foreground">
           {total > 0 ? `Unos ${formatCOP(total)} este mes` : 'Este mes'}
-          {sinVariables && ' · solo fijos'}
         </p>
 
         {/* Se desplaza en vez de crecer: la tarjeta comparte fila con la
