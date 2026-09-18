@@ -31,10 +31,10 @@ import { Card } from '@/components/ui/card';
 import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
 import { BLOQUE, Bloque } from '@/components/ui/bloque';
 import { Campo } from '@/components/ui/campo';
+import { CampoDeDinero } from '@/components/ui/campo-de-dinero';
 import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeFecha } from '@/components/selector-de-fecha';
-import { Input } from '@/components/ui/input';
 import { CabeceraDeModal, PANEL_DE_MODAL, PieDeModal } from '@/components/ui/modal-partes';
 import { Progreso } from '@/components/ui/progreso';
 import { REALCE, SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
@@ -49,7 +49,7 @@ import {
   useCrearMovimiento,
   useEliminarMovimiento,
 } from '@/lib/queries';
-import { agruparMiles, cn, formatCOP, soloCifras } from '@/lib/utils';
+import { cn, formatCOP } from '@/lib/utils';
 import { Camara } from './camara';
 import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
 import { normalizar, type Lectura } from '@coco/lectura';
@@ -856,55 +856,12 @@ export function MovimientoModal({
 
                       <div className="grid gap-3 sm:grid-cols-2">
                         <Campo etiqueta="Valor" id="mov-valor">
-                          <Input
+                          {/* Agrupa los miles al escribir y conserva el cursor.
+                              El porqué largo está en el componente. */}
+                          <CampoDeDinero
                             id="mov-valor"
-                            // `inputMode` numérico abre el teclado de números en el
-                            // teléfono; `type=number` traería flechitas y rechazaría
-                            // la coma decimal que se usa en Colombia.
-                            inputMode="decimal"
-                            /*
-                              ── Los miles se agrupan mientras se escribe ────
-                              «453132» no se lee: hay que contar los dígitos de
-                              tres en tres con el dedo para saber si son
-                              cuatrocientos mil o cuatro millones. Es el dato
-                              más importante de la ficha y el único que no se
-                              podía leer de un vistazo.
-
-                              Se GUARDA sin puntos y se ENSEÑA con ellos: el
-                              valor que viaja a la API es el que se teclea, no
-                              lo que se ve.
-                            */
-                            icono={SignoDePesos}
-                            value={agruparMiles(amount)}
-                            onChange={(e) => {
-                              const limpio = soloCifras(e.target.value);
-                              const campo = e.target;
-                              // Cuántos dígitos hay ANTES del cursor: es lo
-                              // único que no cambia al reagrupar. Sin esto, el
-                              // cursor salta al final en cuanto aparece un
-                              // punto nuevo y corregir una cifra a la mitad se
-                              // vuelve imposible.
-                              const antes = (
-                                campo.value.slice(0, campo.selectionStart ?? 0).match(/[\d,]/g) ??
-                                []
-                              ).length;
-
-                              setAmount(limpio);
-
-                              requestAnimationFrame(() => {
-                                const pintado = agruparMiles(limpio);
-                                let cifras = 0;
-                                let sitio = pintado.length;
-                                for (let i = 0; i < pintado.length; i += 1) {
-                                  if (/[\d,]/.test(pintado[i])) cifras += 1;
-                                  if (cifras === antes) {
-                                    sitio = i + 1;
-                                    break;
-                                  }
-                                }
-                                campo.setSelectionRange(sitio, sitio);
-                              });
-                            }}
+                            valor={amount}
+                            onCambiar={setAmount}
                             placeholder="0"
                             required
                           />
@@ -1510,27 +1467,6 @@ function Via({
  * teléfono dos columnas de 170px no son dos columnas.
  */
 const REJILLA_DE_LA_FICHA = 'grid gap-5 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:grid-cols-2';
-
-/**
- * El signo de pesos del campo del valor.
- *
- * Va siempre, aunque el campo esté vacío: un campo de dinero sin signo es un
- * campo de número, y el número de al lado —el día del mes en la recurrencia—
- * se escribe igual. El signo dice de qué se está hablando antes de leer nada.
- *
- * Es el `icono` del campo, así que no forma parte del valor: lo que se teclea
- * y lo que se guarda no lo llevan.
- */
-function SignoDePesos({ className }: { className?: string }) {
-  return (
-    <span
-      className={cn(className, 'grid place-items-center text-sm font-medium')}
-      aria-hidden="true"
-    >
-      $
-    </span>
-  );
-}
 
 /**
  * El aviso de que hay datos leídos por la máquina.

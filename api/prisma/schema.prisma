@@ -145,9 +145,9 @@ enum ImportSource {
 // la autenticación es propia, no delegada.
 
 model User {
-  id           BigInt     @id @default(autoincrement())
-  uuid         String     @unique(map: "uq_users_uuid") @default(uuid()) @db.Char(36)
-  email        String     @unique(map: "uq_users_email") @db.VarChar(255)
+  id          BigInt     @id @default(autoincrement())
+  uuid        String     @unique(map: "uq_users_uuid") @default(uuid()) @db.Char(36)
+  email       String     @unique(map: "uq_users_email") @db.VarChar(255)
   /// Enlace a `auth.users` de Supabase, que es donde viven las credenciales.
   /// Aquí no hay ni contraseña ni hash: esta tabla es el PERFIL de la persona
   /// —rol, estado, quién la aprobó—, no su credencial.
@@ -155,10 +155,10 @@ model User {
   /// Es opcional solo por la transición: una fila sin `auth_id` es anterior a
   /// la migración a Supabase Auth y no puede iniciar sesión hasta que se le
   /// cree la cuenta correspondiente.
-  authId String? @unique(map: "uq_users_auth_id") @map("auth_id") @db.Uuid
-  displayName  String?    @map("display_name") @db.VarChar(255)
-  role         UserRole   @default(user)
-  status       UserStatus @default(pending)
+  authId      String?    @unique(map: "uq_users_auth_id") @map("auth_id") @db.Uuid
+  displayName String?    @map("display_name") @db.VarChar(255)
+  role        UserRole   @default(user)
+  status      UserStatus @default(pending)
 
   /// Revocación inmediata de sesiones. Todo access token emitido ANTES de esta
   /// marca se rechaza, sin salir a la red: el guard ya lee esta fila en cada
@@ -355,6 +355,25 @@ model Category {
   /// según dónde empiece. Sin este dato, "cada tres meses" no dice cuáles.
   mesDePago    Int?          @map("mes_de_pago") @db.SmallInt
 
+  /// ── Presupuesto ───────────────────────────────────────────────────────
+  /// Lo que se espera que cueste este concepto cada vez que toca. Puesto,
+  /// manda: la previsión del mes es este número y no el promedio de lo que
+  /// costó antes.
+  ///
+  /// Existe porque hay gastos cuyo valor se SABE y no se estima —un alquiler
+  /// con contrato, una mensualidad de colegio, una cuota fija— y promediar
+  /// los tres meses anteriores les daba una cifra peor que el dato: la
+  /// arrastraba hacia arriba el mes que se pagó con recargo, o hacia abajo
+  /// el que se pagó a medias.
+  ///
+  /// Vacío se sigue promediando, que es lo correcto para lo que de verdad
+  /// varía: la luz, el mercado, la gasolina.
+  ///
+  /// Solo significa algo en un CONCEPTO recurrente. Un centro de costos y una
+  /// categoría son sumas de lo que cuelga de ellos, y un concepto que no
+  /// vuelve no tiene un "cada vez".
+  presupuesto Decimal? @db.Decimal(15, 2)
+
   /// ── Estático ──────────────────────────────────────────────────────────
   /// Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica: ni desde
   /// la tabla de movimientos ni desde el modal de un movimiento. Es para la
@@ -365,7 +384,7 @@ model Category {
   ///
   /// Solo se lee del CENTRO, que es el nivel de arriba: un grupo o un concepto
   /// heredan lo que diga el suyo.
-  estatico     Boolean       @default(false)
+  estatico Boolean @default(false)
 
   /// ── Palabras clave ────────────────────────────────────────────────────
   /// Lo que hay que encontrar en un soporte para saber que es de este

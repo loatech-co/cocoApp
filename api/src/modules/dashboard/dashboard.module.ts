@@ -9,7 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AccountsService, type AccountView } from '../accounts/accounts.service';
 import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
-import { estimadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
+import { esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
 import {
   ancestroEnNivel,
   calcularFlujo,
@@ -199,6 +199,7 @@ export class DashboardService {
         periodicidad: true,
         diaDePago: true,
         mesDePago: true,
+        presupuesto: true,
       },
     });
 
@@ -527,7 +528,14 @@ export class DashboardService {
         // La MISMA cifra que se enseña en la lista de pendientes: si el
         // presupuesto se estimara de otra forma, las dos tarjetas de la misma
         // pantalla dirían cosas distintas de la misma plata.
-        const esperado = estimadoDelMes(historiaDe.get(clave) ?? new Map(), mesEnCurso.slice(0, 7));
+        //
+        // Y el presupuesto del concepto, cuando lo tiene, gana al promedio.
+        // Ver `esperadoDelMes`.
+        const esperado = esperadoDelMes(
+          concepto.presupuesto === null ? null : toMoney(concepto.presupuesto),
+          historiaDe.get(clave) ?? new Map(),
+          mesEnCurso.slice(0, 7),
+        );
         presupuesto = presupuesto.plus(esperado ?? CERO);
 
         // El camino completo: "Alquiler" solo no dice de qué centro cuelga.

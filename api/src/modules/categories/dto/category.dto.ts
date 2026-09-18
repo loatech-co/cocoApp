@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
@@ -118,6 +119,27 @@ export class CreateCategoryDto {
   mes_de_pago?: number | null;
 
   /**
+   * ── Presupuesto ─────────────────────────────────────────────────────────
+   * Lo que se espera que cueste cada vez que toca. Puesto, MANDA: la previsión
+   * del mes es este número y no el promedio de lo que costó antes.
+   *
+   * Es para los gastos cuyo valor se sabe —un alquiler con contrato, una
+   * mensualidad— donde promediar da una cifra peor que el dato. Vacío se sigue
+   * promediando, que es lo correcto para lo que varía de verdad.
+   *
+   * Cero es un valor, no un hueco: dice «esto ahora no cuesta». Para quitarlo
+   * se manda `null`.
+   *
+   * Solo significa algo en un concepto recurrente.
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'El presupuesto admite hasta dos decimales.' })
+  @Min(0, { message: 'El presupuesto no puede ser negativo.' })
+  @Max(9_999_999_999_999, { message: 'Ese presupuesto es demasiado grande.' })
+  presupuesto?: number | null;
+
+  /**
    * ── Palabras clave ──────────────────────────────────────────────────────
    * Lo que se busca en el texto de un soporte para reconocer este concepto.
    * Solo significan algo en un concepto: un centro de costos y una categoría no
@@ -207,6 +229,14 @@ export class UpdateCategoryDto {
   @Min(1, { message: 'El mes va del 1 al 12.' })
   @Max(12, { message: 'El mes va del 1 al 12.' })
   mes_de_pago?: number | null;
+
+  /** Ver `CreateCategoryDto`. `null` lo quita; cero es un valor. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'El presupuesto admite hasta dos decimales.' })
+  @Min(0, { message: 'El presupuesto no puede ser negativo.' })
+  @Max(9_999_999_999_999, { message: 'Ese presupuesto es demasiado grande.' })
+  presupuesto?: number | null;
 
   /** Ver `CreateCategoryDto`. Una lista vacía las borra todas. */
   @IsOptional()

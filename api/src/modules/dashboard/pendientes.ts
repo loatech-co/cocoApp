@@ -111,3 +111,34 @@ export function estimadoDelMes(
   const ultimo = [...porMes.keys()].filter((m) => m < mes).sort().pop();
   return ultimo === undefined ? null : (porMes.get(ultimo) ?? null);
 }
+
+/**
+ * Cuánto se espera que cueste, mirando primero lo que se DIJO.
+ *
+ * ── El presupuesto del concepto manda ───────────────────────────────────────
+ * Hay gastos cuyo valor se sabe y no se estima: un alquiler con contrato, una
+ * mensualidad de colegio, una cuota fija. Para esos, promediar los tres meses
+ * anteriores da una cifra peor que el dato —la arrastra hacia arriba el mes
+ * que se pagó con recargo, o hacia abajo el que se pagó a medias— y encima
+ * cambia sola de un mes a otro sin que nadie haya tocado nada.
+ *
+ * Puesto, se usa tal cual, todos los meses. Es la definición de tenerlo: si se
+ * mezclara con el promedio, ya no sería el presupuesto sino una influencia.
+ *
+ * ── Vacío se sigue promediando ──────────────────────────────────────────────
+ * Que es lo correcto para lo que de verdad varía: la luz, el mercado, la
+ * gasolina. Ahí el mejor dato disponible es lo que costó últimamente.
+ *
+ * ── Y un presupuesto de CERO es un presupuesto ──────────────────────────────
+ * No un hueco. Alguien que escribe 0 está diciendo «esto este año no cuesta»,
+ * y caer al promedio le devolvería justo la cifra que quiso quitar. Por eso se
+ * mira contra `null` y no por si es falso.
+ */
+export function esperadoDelMes(
+  presupuesto: Money | null,
+  porMes: ReadonlyMap<string, Money>,
+  mes: string,
+  cuantos = 3,
+): Money | null {
+  return presupuesto ?? estimadoDelMes(porMes, mes, cuantos);
+}

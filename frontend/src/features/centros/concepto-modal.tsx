@@ -58,6 +58,7 @@ export function ConceptoModal({
     // El mes en curso: si alguien pasa a trimestral, lo más probable es que el
     // ciclo empiece ahora, no en enero.
     mesDePago: new Date().getMonth() + 1,
+    presupuesto: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
@@ -76,6 +77,11 @@ export function ConceptoModal({
       periodicidad: concepto?.periodicidad ?? 'mensual',
       diaDePago: concepto?.dia_de_pago ?? 1,
       mesDePago: concepto?.mes_de_pago ?? new Date().getMonth() + 1,
+      // Sin decimales: el campo escribe pesos enteros, que es como se escribe
+      // la plata aquí. Un «180000.00» que vuelve de la API se enseñaría con un
+      // «.00» que nadie tecleó y que el campo no deja borrar.
+      presupuesto:
+        concepto?.presupuesto != null ? String(Math.round(Number(concepto.presupuesto))) : '',
     });
     setCategoría(concepto?.parent_id != null ? String(concepto.parent_id) : '');
     setPalabrasClave(concepto?.palabras_clave ?? []);
@@ -149,6 +155,21 @@ export function ConceptoModal({
       mes_de_pago:
         recurrencia.recurrente && recurrencia.periodicidad !== 'mensual'
           ? recurrencia.mesDePago
+          : null,
+      /*
+        Vacío es `null`, no cero.
+
+        Son dos cosas distintas y la API las distingue: `null` es «no lo sé,
+        estímalo con el promedio» y cero es «esto ahora no cuesta». Mandar cero
+        por un campo en blanco haría desaparecer el concepto del presupuesto
+        del mes sin que nadie lo hubiera pedido.
+
+        Y si deja de ser recurrente se va con la recurrencia: un presupuesto
+        «cada vez» no significa nada donde no hay una próxima vez.
+      */
+      presupuesto:
+        recurrencia.recurrente && recurrencia.presupuesto.trim() !== ''
+          ? Number(recurrencia.presupuesto)
           : null,
       palabras_clave: palabrasClave,
     };

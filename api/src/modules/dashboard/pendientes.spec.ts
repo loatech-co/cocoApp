@@ -1,5 +1,12 @@
 import { toMoney } from '../../common/money/money';
-import { estimadoDelMes, mesAbsoluto, mesesAnteriores, tocaEnElMes, vencimiento } from './pendientes';
+import {
+  esperadoDelMes,
+  estimadoDelMes,
+  mesAbsoluto,
+  mesesAnteriores,
+  tocaEnElMes,
+  vencimiento,
+} from './pendientes';
 
 describe('Pagos pendientes', () => {
   describe('Si toca en el mes', () => {
@@ -124,5 +131,49 @@ describe('Pagos pendientes', () => {
       const porMes = historia({ '2026-10': '999999', '2025-09': '700000' });
       expect(estimadoDelMes(porMes, '2026-09')?.toFixed(2)).toBe('700000.00');
     });
+  });
+});
+
+/**
+ * El presupuesto del concepto, cuando lo tiene.
+ *
+ * Hay gastos cuyo valor se SABE —un alquiler con contrato, una mensualidad—
+ * y para esos el promedio de los tres meses anteriores es peor que el dato:
+ * lo arrastra el mes que se pagó con recargo y cambia solo de un mes a otro
+ * sin que nadie haya tocado nada.
+ */
+describe('Lo que se espera que cueste', () => {
+  const historia = new Map([
+    ['2026-08', toMoney('100000')],
+    ['2026-07', toMoney('140000')],
+    ['2026-06', toMoney('120000')],
+  ]);
+
+  it('con presupuesto, ese número y no el promedio', () => {
+    // El promedio de esos tres meses es 120.000; el presupuesto gana.
+    expect(esperadoDelMes(toMoney('180000'), historia, '2026-09')?.toString()).toBe('180000');
+  });
+
+  it('el mismo mes tras mes, aunque la historia cambie', () => {
+    // Es la definición de tenerlo: un presupuesto que se moviera con lo que
+    // costó antes no sería un presupuesto, sería una influencia.
+    const otra = new Map([['2026-08', toMoney('900000')]]);
+    expect(esperadoDelMes(toMoney('180000'), otra, '2026-09')?.toString()).toBe('180000');
+  });
+
+  it('sin presupuesto, el promedio de siempre', () => {
+    expect(esperadoDelMes(null, historia, '2026-09')?.toString()).toBe(
+      estimadoDelMes(historia, '2026-09')?.toString(),
+    );
+  });
+
+  it('un presupuesto de CERO es un presupuesto, no un hueco', () => {
+    // Quien escribe 0 está diciendo «esto este año no cuesta». Caer al
+    // promedio le devolvería justo la cifra que quiso quitar.
+    expect(esperadoDelMes(toMoney('0'), historia, '2026-09')?.toString()).toBe('0');
+  });
+
+  it('sin presupuesto y sin historia, no hay cifra que dar', () => {
+    expect(esperadoDelMes(null, new Map(), '2026-09')).toBeNull();
   });
 });

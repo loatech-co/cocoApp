@@ -7,6 +7,7 @@ import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { PERIODICIDADES, type Periodicidad } from '@coco/types';
 import { Campo } from '@/components/ui/campo';
+import { CampoDeDinero } from '@/components/ui/campo-de-dinero';
 
 const ETIQUETAS: Record<Periodicidad, string> = {
   mensual: 'Cada mes',
@@ -22,6 +23,11 @@ export interface Recurrencia {
   diaDePago: number;
   /** El mes del ciclo. Solo se usa —y se pregunta— si no es mensual. */
   mesDePago: number;
+  /**
+   * Lo que se espera que cueste cada vez. Solo cifras, sin puntos; vacío es
+   * «no lo sé, estímalo».
+   */
+  presupuesto: string;
 }
 
 const MESES = [
@@ -137,6 +143,32 @@ export function CamposDeRecurrencia({
             dia={valor.diaDePago}
             onCambiar={(diaDePago) => onCambiar({ ...valor, diaDePago })}
           />
+
+          {/*
+            ── Cuánto, debajo de cuándo ────────────────────────────────────
+            A todo el ancho y en su propio renglón, no como una columna más de
+            la rejilla de arriba. Ahí se contesta CUÁNDO vuelve —cada cuánto,
+            qué mes, qué día—, que son tres formas de la misma pregunta; esto
+            es otra, y en la misma fila se leería como un cuarto ajuste del
+            calendario.
+          */}
+          <Campo
+            etiqueta="Presupuesto"
+            id="presupuesto"
+            ayuda={
+              valor.presupuesto.trim() === ''
+                ? 'Vacío: se estima con el promedio de los meses anteriores.'
+                : 'Este valor se usa cada mes, en vez del promedio.'
+            }
+            className={valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3'}
+          >
+            <CampoDeDinero
+              id="presupuesto"
+              valor={valor.presupuesto}
+              onCambiar={(presupuesto) => onCambiar({ ...valor, presupuesto })}
+              placeholder="Opcional"
+            />
+          </Campo>
 
           <p
             className={cn(

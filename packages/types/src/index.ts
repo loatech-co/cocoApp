@@ -303,6 +303,20 @@ export interface Category {
    * Se guardan tal como se escribieron; quitar tildes y bajar a minúsculas es
    * cosa de la comparación.
    */
+  /**
+   * ── Presupuesto ─────────────────────────────────────────────────────────
+   * Lo que se espera que cueste este concepto cada vez que toca. Puesto,
+   * MANDA: la previsión del mes es este número y no el promedio de lo que
+   * costó antes.
+   *
+   * Para lo que se sabe y no se estima —un alquiler con contrato, una
+   * mensualidad—, donde promediar los tres meses anteriores da una cifra peor
+   * que el dato y encima cambia sola de un mes a otro. Vacío se sigue
+   * promediando, que es lo correcto para lo que varía de verdad.
+   *
+   * Solo significa algo en un CONCEPTO recurrente.
+   */
+  presupuesto: DecimalString | null;
   palabras_clave: string[];
   children?: Category[];
 }
