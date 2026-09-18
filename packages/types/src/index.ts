@@ -317,6 +317,15 @@ export interface Category {
    * Solo significa algo en un CONCEPTO recurrente.
    */
   presupuesto: DecimalString | null;
+  /**
+   * ── Pago automático ─────────────────────────────────────────────────────
+   * El concepto no espera a que nadie lo registre: al llegar su día de pago,
+   * el movimiento se crea solo y deja de estar pendiente. Solo desde el mes en
+   * que se enciende hacia adelante.
+   *
+   * Solo significa algo en un CONCEPTO recurrente.
+   */
+  pago_automatico: boolean;
   palabras_clave: string[];
   children?: Category[];
 }

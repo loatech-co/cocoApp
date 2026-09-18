@@ -28,6 +28,8 @@ export interface Recurrencia {
    * «no lo sé, estímalo».
    */
   presupuesto: string;
+  /** Si el movimiento se crea solo al llegar el día de pago. */
+  pagoAutomatico: boolean;
 }
 
 const MESES = [
@@ -169,6 +171,39 @@ export function CamposDeRecurrencia({
               placeholder="Opcional"
             />
           </Campo>
+
+          {/*
+            ── Que se cobre solo ───────────────────────────────────────────
+            Debajo del presupuesto y no arriba, porque depende de él para ser
+            una buena idea: sin presupuesto, el movimiento se crea con el
+            promedio de los meses anteriores, que es una estimación. Se permite
+            igual —hay gastos que varían y aun así se domicilian— y por eso el
+            movimiento que se crea lo DICE en sus notas.
+
+            Una fila entera con su explicación, como el interruptor de arriba,
+            y no un campo más de la rejilla: enciende un comportamiento, no
+            guarda un dato.
+          */}
+          <label
+            className={cn(
+              'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3',
+              valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
+            )}
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Pago automático</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {valor.presupuesto.trim() === ''
+                  ? 'El movimiento se registra solo el día de pago, con el promedio de los meses anteriores.'
+                  : 'El movimiento se registra solo el día de pago, por el presupuesto.'}
+              </span>
+            </span>
+
+            <Interruptor
+              checked={valor.pagoAutomatico}
+              onChange={(e) => onCambiar({ ...valor, pagoAutomatico: e.target.checked })}
+            />
+          </label>
 
           <p
             className={cn(

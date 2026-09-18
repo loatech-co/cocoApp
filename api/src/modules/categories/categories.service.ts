@@ -41,6 +41,8 @@ export interface CategoryView {
    * es dinero: un decimal en coma flotante pierde centavos.
    */
   presupuesto: string | null;
+  /** Si el movimiento se crea solo al llegar el día de pago. */
+  pago_automatico: boolean;
   /** Lo que se busca en un soporte para reconocer este concepto. */
   palabras_clave: string[];
 }
@@ -96,6 +98,7 @@ export class CategoriesService {
       diaDePago: dto.dia_de_pago ?? null,
       mesDePago: dto.mes_de_pago ?? null,
       presupuesto: dto.presupuesto ?? null,
+      pagoAutomatico: dto.pago_automatico ?? false,
       palabrasClave: dto.palabras_clave ?? [],
     });
 
@@ -138,6 +141,7 @@ export class CategoriesService {
       ...(dto.mes_de_pago !== undefined && { mesDePago: dto.mes_de_pago }),
       // `!== undefined` y no un truthy: `null` lo quita y CERO es un valor.
       ...(dto.presupuesto !== undefined && { presupuesto: dto.presupuesto }),
+      ...(dto.pago_automatico !== undefined && { pagoAutomatico: dto.pago_automatico }),
       ...(dto.palabras_clave !== undefined && { palabrasClave: dto.palabras_clave }),
     });
 
@@ -352,6 +356,7 @@ export class CategoriesService {
       dia_de_pago: categoria.diaDePago,
       mes_de_pago: categoria.mesDePago,
       presupuesto: categoria.presupuesto === null ? null : categoria.presupuesto.toString(),
+      pago_automatico: categoria.pagoAutomatico,
       palabras_clave: categoria.palabrasClave,
     };
   }

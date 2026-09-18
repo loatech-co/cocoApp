@@ -119,6 +119,21 @@ export class CreateCategoryDto {
   mes_de_pago?: number | null;
 
   /**
+   * ── Pago automático ─────────────────────────────────────────────────────
+   * El concepto no espera a que nadie lo registre: al llegar su día de pago,
+   * el movimiento se crea solo y deja de estar pendiente.
+   *
+   * Para lo que se cobra sin que uno haga nada —un débito, una suscripción—.
+   * Solo desde el mes en que se enciende hacia adelante: nunca rellena meses
+   * pasados.
+   *
+   * Solo significa algo en un concepto recurrente.
+   */
+  @IsOptional()
+  @IsBoolean()
+  pago_automatico?: boolean;
+
+  /**
    * ── Presupuesto ─────────────────────────────────────────────────────────
    * Lo que se espera que cueste cada vez que toca. Puesto, MANDA: la previsión
    * del mes es este número y no el promedio de lo que costó antes.
@@ -229,6 +244,11 @@ export class UpdateCategoryDto {
   @Min(1, { message: 'El mes va del 1 al 12.' })
   @Max(12, { message: 'El mes va del 1 al 12.' })
   mes_de_pago?: number | null;
+
+  /** Ver `CreateCategoryDto`. */
+  @IsOptional()
+  @IsBoolean()
+  pago_automatico?: boolean;
 
   /** Ver `CreateCategoryDto`. `null` lo quita; cero es un valor. */
   @IsOptional()

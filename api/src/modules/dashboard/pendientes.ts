@@ -142,3 +142,48 @@ export function esperadoDelMes(
 ): Money | null {
   return presupuesto ?? estimadoDelMes(porMes, mes, cuantos);
 }
+
+/**
+ * La huella de un cobro automático: un concepto, un mes, una vez.
+ *
+ * Va en `external_ref`, que tiene índice ÚNICO por usuario. El cobro se
+ * comprueba antes de insertar, pero dos peticiones simultáneas —dos pestañas
+ * abiertas— pueden pasar la comprobación a la vez y llegar las dos a insertar.
+ * Con la huella, la segunda choca contra la base en vez de duplicar un gasto.
+ */
+export function huellaDelCobro(categoryId: bigint, mes: string): string {
+  return `auto:${categoryId.toString()}:${mes.slice(0, 7)}`;
+}
+
+/**
+ * ¿Toca cobrar esto solo, hoy?
+ *
+ * ── Tres condiciones, y las tres tienen que darse ───────────────────────────
+ * 1. Que el concepto lo pida. Sin `pagoAutomatico` nada se cobra solo: quien
+ *    no lo enciende quiere seguir registrando a mano, y adelantarnos sería
+ *    escribirle movimientos que no pidió.
+ * 2. Que ya haya VENCIDO. Un débito del día 20 no ha salido el día 3, y
+ *    anotarlo antes es decir que la plata ya se fue cuando sigue ahí.
+ * 3. Que haya una cifra. Sin presupuesto y sin historia no hay número que
+ *    poner, y un cobro automático de cero sería una mentira escrita en la
+ *    contabilidad. Eso se queda pendiente, que es lo honesto: hay algo que
+ *    pagar y no sabemos cuánto.
+ *
+ * Lo que NO se comprueba aquí es si ya está pagado: eso lo sabe quien tiene
+ * los movimientos del mes delante, y es su trabajo no llamarnos dos veces.
+ */
+export function tocaCobrarAutomatico({
+  pagoAutomatico,
+  vencimientoISO,
+  hoyISO,
+  esperado,
+}: {
+  pagoAutomatico: boolean;
+  vencimientoISO: string;
+  hoyISO: string;
+  esperado: Money | null;
+}): boolean {
+  if (!pagoAutomatico) return false;
+  if (esperado === null) return false;
+  return vencimientoISO <= hoyISO;
+}

@@ -59,6 +59,7 @@ export function ConceptoModal({
     // ciclo empiece ahora, no en enero.
     mesDePago: new Date().getMonth() + 1,
     presupuesto: '',
+    pagoAutomatico: false,
   });
   const [error, setError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
@@ -82,6 +83,7 @@ export function ConceptoModal({
       // «.00» que nadie tecleó y que el campo no deja borrar.
       presupuesto:
         concepto?.presupuesto != null ? String(Math.round(Number(concepto.presupuesto))) : '',
+      pagoAutomatico: concepto?.pago_automatico ?? false,
     });
     setCategoría(concepto?.parent_id != null ? String(concepto.parent_id) : '');
     setPalabrasClave(concepto?.palabras_clave ?? []);
@@ -171,6 +173,9 @@ export function ConceptoModal({
         recurrencia.recurrente && recurrencia.presupuesto.trim() !== ''
           ? Number(recurrencia.presupuesto)
           : null,
+      // Se va con la recurrencia, como el presupuesto: cobrar solo «cada vez»
+      // no significa nada donde no hay una próxima vez.
+      pago_automatico: recurrencia.recurrente && recurrencia.pagoAutomatico,
       palabras_clave: palabrasClave,
     };
 

@@ -1,6 +1,8 @@
 import { toMoney } from '../../common/money/money';
 import {
   esperadoDelMes,
+  huellaDelCobro,
+  tocaCobrarAutomatico,
   estimadoDelMes,
   mesAbsoluto,
   mesesAnteriores,
@@ -175,5 +177,52 @@ describe('Lo que se espera que cueste', () => {
 
   it('sin presupuesto y sin historia, no hay cifra que dar', () => {
     expect(esperadoDelMes(null, new Map(), '2026-09')).toBeNull();
+  });
+});
+
+/**
+ * El cobro automático.
+ *
+ * Un concepto marcado así no espera a que nadie lo registre: cuando llega su
+ * día, el movimiento se crea solo. Lo que decide esta función es CUÁNDO, y
+ * equivocarse escribe plata que no salió.
+ */
+describe('Cobrar solo', () => {
+  const base = {
+    pagoAutomatico: true,
+    vencimientoISO: '2026-09-20',
+    hoyISO: '2026-09-25',
+    esperado: toMoney('180000'),
+  };
+
+  it('cobra cuando ya venció', () => {
+    expect(tocaCobrarAutomatico(base)).toBe(true);
+    // El mismo día cuenta: vence hoy, sale hoy.
+    expect(tocaCobrarAutomatico({ ...base, hoyISO: '2026-09-20' })).toBe(true);
+  });
+
+  it('NO se adelanta al vencimiento', () => {
+    // Un débito del día 20 no ha salido el día 3. Anotarlo antes es decir que
+    // la plata ya se fue cuando sigue ahí.
+    expect(tocaCobrarAutomatico({ ...base, hoyISO: '2026-09-03' })).toBe(false);
+  });
+
+  it('no toca nada si el concepto no lo pidió', () => {
+    // Quien no lo enciende quiere registrar a mano.
+    expect(tocaCobrarAutomatico({ ...base, pagoAutomatico: false })).toBe(false);
+  });
+
+  it('sin cifra no inventa una', () => {
+    // Sin presupuesto y sin historia no hay número que poner, y un cobro de
+    // cero sería una mentira escrita en la contabilidad. Se queda pendiente.
+    expect(tocaCobrarAutomatico({ ...base, esperado: null })).toBe(false);
+  });
+
+  it('la huella identifica un concepto y un mes, y nada más', () => {
+    expect(huellaDelCobro(100n, '2026-09')).toBe('auto:100:2026-09');
+    // Da igual cómo llegue el mes: lo que cuenta es el año y el mes.
+    expect(huellaDelCobro(100n, '2026-09-20')).toBe('auto:100:2026-09');
+    expect(huellaDelCobro(100n, '2026-10')).not.toBe(huellaDelCobro(100n, '2026-09'));
+    expect(huellaDelCobro(101n, '2026-09')).not.toBe(huellaDelCobro(100n, '2026-09'));
   });
 });

@@ -374,6 +374,22 @@ model Category {
   /// vuelve no tiene un "cada vez".
   presupuesto Decimal? @db.Decimal(15, 2)
 
+  /// ── Pago automático ───────────────────────────────────────────────────
+  /// El concepto no espera a que alguien lo registre: cuando llega su día de
+  /// pago, el movimiento se crea solo y deja de estar pendiente.
+  ///
+  /// Para lo que se cobra sin que uno haga nada —un débito automático, una
+  /// suscripción, una cuota domiciliada—. Sin esto había que ir a marcarlo
+  /// cada mes, que es trabajo de escribano para un dinero que ya salió.
+  ///
+  /// Solo desde el mes en que se enciende, hacia adelante: nunca rellena
+  /// meses pasados. Un mes viejo sin movimiento es un dato —no se pagó, o no
+  /// se registró— y fabricarlo hacia atrás cambiaría cifras que alguien ya
+  /// dio por buenas.
+  ///
+  /// Solo significa algo en un CONCEPTO recurrente.
+  pagoAutomatico Boolean @default(false) @map("pago_automatico")
+
   /// ── Estático ──────────────────────────────────────────────────────────
   /// Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica: ni desde
   /// la tabla de movimientos ni desde el modal de un movimiento. Es para la
@@ -511,12 +527,17 @@ model Transaction {
   importBatch    ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull, map: "fk_tx_import_batch")
   posiblesCopias ImportRow[]  @relation("PosibleDuplicado")
 
+  /// ÚNICO, no solo indexado. `external_ref` es la huella con la que dos
+  /// caminos evitan duplicar: el importador histórico y el pago automático,
+  /// que escribe `auto:<concepto>:<mes>`. Los dos comprueban antes de
+  /// insertar, y los dos pueden perder esa carrera contra otra petición
+  /// simultánea —dos pestañas abiertas bastan—. Aquí no se pierde.
+  @@unique([userId, externalRef], map: "uq_tx_user_external_ref")
   @@index([userId, importBatchId], map: "idx_tx_user_import_batch")
   @@index([userId, date], map: "idx_tx_user_date")
   @@index([userId, period], map: "idx_tx_user_period")
   @@index([userId, categoryId], map: "idx_tx_user_category")
   @@index([accountId, date], map: "idx_tx_account_date")
-  @@index([userId, externalRef], map: "idx_tx_user_external_ref")
   @@index([transferGroupId], map: "idx_tx_transfer_group")
   @@map("transactions")
 }
