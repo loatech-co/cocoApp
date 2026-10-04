@@ -164,7 +164,21 @@ si esta vez no se recupera, es lo primero que mirar.
 
 ## 4. Fases (se rellena al avanzar)
 
-### Fase 2 · registro rápido — HECHA EN LOCAL (rama `fase-2-registro-rapido`, commit `f430ebf`, desde `9616997`) · pendiente de integrar tras el paso 1
+### Fase 2 · registro rápido — INTEGRADA Y DESPLEGADA · 13:14–13:17
+
+Rama `fase-2-registro-rapido`, commit `bb438b1` (rebasado sobre el arreglo
+`5318c87`; antes `f430ebf`). Sin esquema. `git push origin
+fase-2-registro-rapido:Dev` a las 13:14:07, fast-forward de un commit.
+
+**Verificación del despliegue:** HEAD de `current` = `bb438b1` · `lsnode`
+reiniciado (1 min 21 s de vida) · registro `2026-10-04_18-14-12_deploy.log`:
+«✔ Generated Prisma Client», «✓ built in 9.77s», «Build completed in 38.0s»,
+«Application restarted in 11.4s», «Deployment completed in 1m 50s» ·
+`stderr.log` 0 líneas · *bundle* `index-DQ0c2hFh.js` → `index-DU3evriD.js` ·
+`health` 401 · `login` bogus 401 · **`POST /categorization/learn` → 401** (la
+ruta nueva existe y exige sesión; un 404 habría dicho que no se desplegó).
+
+#### Lo que se hizo en local
 
 **Ajustes del modo autónomo recibidos a las 12:1x y 12:2x:** las paradas
 internas de las fases quedan sin efecto; 2.3 se implementa con el borrador;
@@ -245,9 +259,58 @@ ALTER TABLE "transactions" ADD COLUMN "captured_at" TIMESTAMPTZ(3),
   ADD COLUMN "source" "TransactionSource" NOT NULL DEFAULT 'web';
 ```
 
-`20261004124024_fuente_texto_y_revision_en_movimientos`. La prueba de que el
-código de producción no se rompe con ella es la misma que en la fase 1 y se
-repetirá contra el cliente de `9616997`/`f430ebf` antes de aplicarla.
+`20261004124024_fuente_texto_y_revision_en_movimientos`.
+
+**Prueba de que el código en producción (`bb438b1`) no se rompe con ella**
+(13:19, misma técnica que en la fase 1: cliente Prisma generado del esquema
+de `bb438b1`, Prisma 6.19.3, contra la base local que ya tiene las columnas):
+
+```
+movimientos: 409
+findFirst sin select:           fila, 19 campos, trae_source = false, trae_porRevisar = false
+INSERT con el cliente viejo:    ok → la base puso source = 'web', por_revisar = false, raw_text = null, captured_at = null
+UPDATE con el cliente viejo:    ok
+deshecho en la transacción:     sí
+groupBy por periodo (el resumen): ok
+```
+
+El cliente viejo nombra columnas explícitas; las cuatro nuevas le son
+invisibles y los `DEFAULT` las rellenan. Es seguro aplicar la migración con
+`bb438b1` corriendo.
+
+**Migración APLICADA en producción · 13:19:56.** Compuerta programática
+(como en la fase 1): `migrate status` mostró **exactamente una** pendiente,
+la esperada, sin fallidas → `migrate deploy` → `cerrar-el-api-de-datos.sql`
+(0 tablas sin RLS, 0 políticas, 0 permisos abiertos). Verificado en
+`information_schema.columns`: `source USER-DEFINED NOT NULL DEFAULT
+'web'::"TransactionSource"`, `por_revisar boolean NOT NULL DEFAULT false`,
+`raw_text text NULL`, `captured_at timestamptz NULL`; en `_prisma_migrations`
+arriba del todo. HTTP con el código viejo aún corriendo: `health` 401, `login`
+bogus 401. Código empujado a `Dev` acto seguido (`ba1c9d2`, fase 3 + arreglo
+del `dist`).
+
+**Código desplegado y verificado · 13:21–13:25.** `git push origin
+fase-3-cerebro-en-la-api:Dev` (fast-forward de 2 commits: la fase y el
+arreglo del `dist`). HEAD de `current` = `ba1c9d2` · registro
+`2026-10-04_18-21-36_deploy.log`: el `postinstall` corrió «npm run build
+--workspace @coco/lectura» (`tsc -p tsconfig.build.json`), y el `build` lo
+volvió a compilar; «✔ Generated Prisma Client», «✓ built in 9.04s», «Build
+completed in 37.8s», «Application restarted in 3.1s», «**Deployment
+completed in 1m 44s**» · en `current` existen `packages/lectura/dist/index.js`
+y `api/dist/main.js` (el `require` del cerebro y el `start` funcionan) ·
+`stderr.log` 0 líneas · `health` 401 · `login` bogus 401 · **`POST
+/transactions/interpret` → 401 y `POST /transactions/capture` → 401** (los
+dos endpoints nuevos existen y exigen sesión). *Bundle* `index-DU3evriD.js` →
+`index-wM8NGkKQ.js`. Pendiente de aclarar: `ps` mostró dos `lsnode` con
+`etime 01:55:29`, que no cuadra con un reinicio de hace dos minutos; como los
+endpoints nuevos responden, el código que corre es el nuevo. Se mira `lstart`
+en la siguiente sesión.
+
+**Herramienta global nueva (no es dependencia del repo):** `xcodegen` por
+Homebrew, para la fase 5. Escribir un `project.pbxproj` a mano es frágil; una
+especificación `project.yml` versionada es reproducible y el `.xcodeproj`
+generado se versiona también para que abrir el proyecto en Xcode no requiera
+nada instalado.
 
 **Verificación final:** `@coco/types` y `@coco/lectura` typecheck OK; API
 typecheck y lint OK, **311 unitarias** (21 suites) y **172 e2e** (8 suites,
@@ -265,7 +328,36 @@ min marca, mismo origen no fusiona, `interpret` no escribe, la web sigue
 registrando y acepta las columnas nuevas — todo en e2e; `interpretar()` y
 `decidirDuplicado()` además en unitarias (14 + 12).
 
-### Fase 4 · API lista para iOS — HECHA EN LOCAL (rama `fase-4-api-lista-para-ios`, sobre `ba1c9d2`) · sin esquema · pendiente de integrar tras la fase 3
+### Fase 4 · API lista para iOS — INTEGRADA Y DESPLEGADA · 15:20–15:26 (rama `fase-4-api-lista-para-ios` = `879792e`, sobre `ba1c9d2`) · sin esquema
+
+**Integración.** `git push origin fase-4-api-lista-para-ios:Dev` a las 15:20:54,
+fast-forward de 1 commit (`ba1c9d2..879792e`). Sin migración: la fase no toca
+el esquema.
+
+**Despliegue verificado por SSH (15:26).** HEAD de `current` = `879792e feat: la
+API sirve a un cliente nativo sin tocar el camino de la web` · registro
+`2026-10-04_20-21-14_deploy.log`: `npm install` falló y se recuperó con
+`--legacy-peer-deps` (lo conocido) · «✔ Generated Prisma Client (v6.19.3)» ·
+«✓ built in 10.35s» · «Build completed in 40.6s» · «Application restarted in
+3.5s» · «**Deployment completed in 1m 48s**» · existen `api/dist/main.js` y
+`packages/lectura/dist/index.js` (20:22 UTC) · `stderr.log` 0 líneas · dos
+`lsnode` con `lstart` 20:23:16 y 20:23:19 UTC, es decir **reiniciados con el
+despliegue** —queda aclarado el `etime` raro de la fase 3: `etime` de `ps` no
+era fiable, `lstart` sí— · 30 hilos en la cuenta (lejos del tope).
+
+**Producción responde (sondas HTTP, 15:26).** `health` 401 · `POST /auth/login`
+con credenciales falsas → **401** por el camino web y **401** con
+`X-Coco-Cliente: nativo` (los dos llegan a GoTrue y vuelven sin 500) · `POST
+/auth/refresh` nativo con `{"refresh_token":"inventado"}` → 401 con el mensaje
+«La sesión expiró. Vuelve a entrar.», que **solo produce el código nuevo**: el
+controlador anterior no leía el cuerpo y habría contestado «No hay sesión que
+renovar.». No hubo que hacer vuelta atrás.
+
+**El vigilante del *bundle* no sirvió para esta fase, y es correcto:** la fase 4
+no cambia ningún archivo del frontend —solo tipos, que se borran al compilar—,
+así que el `index-wM8NGkKQ.js` es byte a byte el mismo y su hash no cambia. La
+evidencia de despliegue de una fase solo-API es el HEAD de `current`, el
+registro de hbuilds y una respuesta que el código viejo no podía dar.
 
 **Verificación final (criterio ampliado, F4-14):** `@coco/types` y
 `@coco/lectura` typecheck y build OK; API typecheck y lint OK, **315
