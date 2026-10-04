@@ -60,6 +60,7 @@ export function ConceptoModal({
     mesDePago: new Date().getMonth() + 1,
     presupuesto: '',
     pagoAutomatico: false,
+    variosPagos: false,
   });
   const [error, setError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
@@ -84,6 +85,7 @@ export function ConceptoModal({
       presupuesto:
         concepto?.presupuesto != null ? String(Math.round(Number(concepto.presupuesto))) : '',
       pagoAutomatico: concepto?.pago_automatico ?? false,
+      variosPagos: concepto?.varios_pagos ?? false,
     });
     setCategoría(concepto?.parent_id != null ? String(concepto.parent_id) : '');
     setPalabrasClave(concepto?.palabras_clave ?? []);
@@ -176,6 +178,20 @@ export function ConceptoModal({
       // Se va con la recurrencia, como el presupuesto: cobrar solo «cada vez»
       // no significa nada donde no hay una próxima vez.
       pago_automatico: recurrencia.recurrente && recurrencia.pagoAutomatico,
+      /*
+        Se va con la recurrencia por lo mismo, y además NUNCA junto al pago
+        automático.
+
+        El segundo filtro parece redundante —en la pantalla los dos
+        interruptores se excluyen— pero no lo es: la exclusión de allí depende
+        de un estado que esta función no controla, y basta con que alguien
+        reordene los campos para que se cuelen las dos marcas encendidas. La
+        API contestaría 422 y el concepto no se guardaría, lo cual está bien
+        como última defensa pero es un error que no tiene por qué llegar a
+        ocurrir.
+      */
+      varios_pagos:
+        recurrencia.recurrente && recurrencia.variosPagos && !recurrencia.pagoAutomatico,
       palabras_clave: palabrasClave,
     };
 

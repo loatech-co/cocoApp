@@ -10,7 +10,7 @@ import { AccountsModule } from '../accounts/accounts.module';
 import { AccountsService, type AccountView } from '../accounts/accounts.service';
 import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
 import { PagosAutomaticosService } from './pagos-automaticos';
-import { esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
+import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
 import {
   ancestroEnNivel,
   calcularFlujo,
@@ -83,6 +83,24 @@ interface PagoPendientePayload {
    */
   centro_id: bigint;
   centro: string;
+  /**
+   * Lo que YA se pagó de esto este mes, confirmado.
+   *
+   * Casi siempre «0»: un pendiente normal no tiene nada pagado, porque al
+   * primer movimiento desaparece de la lista. Deja de serlo en un concepto que
+   * se paga en varias veces, que es el caso para el que existe: ahí hay algo
+   * pagado y algo que falta A LA VEZ, y la pantalla tiene que poder decir
+   * «llevas 608.350 de 1.200.000».
+   */
+  paid_amount: string;
+  /**
+   * Si este se cubre a pedazos.
+   *
+   * No se deduce de `paid_amount > 0`: un concepto normal con un pago
+   * confirmado no está en esta lista, y uno marcado en su primera ida tiene
+   * cero pagado y sí lo está.
+   */
+  varios_pagos: boolean;
 }
 
 interface GastoPorCategoriaPayload {
@@ -229,6 +247,9 @@ export class DashboardService {
         diaDePago: true,
         mesDePago: true,
         presupuesto: true,
+        pagoAutomatico: true,
+        variosPagos: true,
+        isArchived: true,
       },
     });
 
@@ -470,7 +491,24 @@ export class DashboardService {
     // falta pagar?" es siempre sobre hoy, aunque uno esté revisando 2024.
     const mesEnCurso = `${new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 7)}-01`;
 
-    const recurrentes = categorias.filter((c) => c.recurrente && c.periodicidad !== null);
+    /*
+      Los ARCHIVADOS no entran aquí, y la palabra «aquí» es toda la regla.
+
+      Archivar un concepto es decir «esto ya no va a volver»: el gimnasio que
+      se dio de baja, el seguro del carro que se vendió. Seguir pidiéndolo cada
+      mes en pagos pendientes es pedir algo que nadie va a pagar nunca, y esa
+      fila no se puede quitar de la lista más que desarchivando el concepto
+      —que es lo contrario de lo que se quiso hacer—.
+
+      Pero solo sale de ESTA lista y del presupuesto del mes. Lo que ese
+      concepto costó los meses que estuvo vivo sigue contando en la dona, en
+      los totales y en la tendencia: archivarlo mira hacia adelante y no
+      reescribe lo que ya pasó. Por eso el filtro va en esta línea y no en la
+      consulta de arriba, que es de donde beben los históricos.
+    */
+    const recurrentes = categorias.filter(
+      (c) => c.recurrente && c.periodicidad !== null && !c.isArchived,
+    );
     const pendientes: PagoPendientePayload[] = [];
 
     /*
@@ -549,10 +587,6 @@ export class DashboardService {
 
         const clave = concepto.id.toString();
         const pagado = pagadoEsteMes.get(clave);
-        if (pagado !== undefined) {
-          presupuesto = presupuesto.plus(pagado);
-          continue;
-        }
 
         // La MISMA cifra que se enseña en la lista de pendientes: si el
         // presupuesto se estimara de otra forma, las dos tarjetas de la misma
@@ -565,7 +599,20 @@ export class DashboardService {
           historiaDe.get(clave) ?? new Map(),
           mesEnCurso.slice(0, 7),
         );
-        presupuesto = presupuesto.plus(esperado ?? CERO);
+
+        // Si sigue faltando y con cuánto entra en el presupuesto lo decide una
+        // sola función, porque las dos respuestas tienen que ser coherentes
+        // entre sí: un concepto que sale de la lista por estar cubierto no
+        // puede entrar al presupuesto por lo que se esperaba.
+        const estado = comoQuedaElPendiente({
+          variosPagos: concepto.variosPagos,
+          hayPago: pagado !== undefined,
+          pagado: pagado ?? CERO,
+          esperado,
+        });
+
+        presupuesto = presupuesto.plus(estado.alPresupuesto);
+        if (!estado.sigueFaltando) continue;
 
         // El camino completo: "Alquiler" solo no dice de qué centro cuelga.
         // Y de paso queda a la vista la RAÍZ, que es el centro de costos: de
@@ -590,6 +637,10 @@ export class DashboardService {
           expected_amount: esperado === null ? null : serializar(toMoney(esperado)),
           centro_id: BigInt(raiz),
           centro: datosDe.get(raiz)?.name ?? '',
+          // Siempre, también en los normales —donde es cero—, para que la
+          // pantalla no tenga que preguntarse si el campo viene.
+          paid_amount: serializar(pagado ?? CERO),
+          varios_pagos: concepto.variosPagos,
         });
       }
 

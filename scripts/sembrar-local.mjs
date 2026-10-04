@@ -101,6 +101,10 @@ const mercado = await asegurar(userId, alimentacion.fila.id, 'Mercado', {
   periodicidad: 'mensual',
   diaDePago: 1,
   presupuesto: '1200000',
+  // Marcado, que es lo que lo hace útil para probar: con las dos idas de
+  // abajo queda pagado en parte, que es el estado donde se ve si las cifras
+  // del mes cuadran.
+  variosPagos: true,
   icon: 'shopping-cart',
 });
 if (mercado.nuevo) hechos.push('concepto «Mercado» con presupuesto');

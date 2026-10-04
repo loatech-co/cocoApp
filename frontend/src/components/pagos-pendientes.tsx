@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Menu, MenuTitulo } from '@/components/menu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Casilla } from '@/components/ui/casilla';
+import { Progreso } from '@/components/ui/progreso';
 import { REALCE } from '@/components/ui/superficie';
 import { diaCorto } from '@/lib/fechas';
 import { cn, formatCOP } from '@/lib/utils';
@@ -181,6 +182,17 @@ export function PagosPendientes({
           {visibles.map((pago) => {
               const vencido = pago.due_date < ahora;
 
+              /*
+                Cuánto lleva cubierto, para los que se pagan en varias veces.
+
+                Es `null` cuando no hay un total al que llegar: sin esperado no
+                hay fracción que pintar, y una barra sin denominador es una
+                barra que miente. Esos se pintan como cualquier otro pendiente.
+              */
+              const total = Number(pago.expected_amount ?? 0);
+              const llevaPagado = Number(pago.paid_amount);
+              const avance = pago.varios_pagos && total > 0 ? llevaPagado / total : null;
+
               return (
                 <li
                   key={pago.category_id}
@@ -225,7 +237,10 @@ export function PagosPendientes({
                       // la cifra se apoyaban en su borde. Ahora ocupa el ancho
                       // de la columna —alineado con el título— y deja 12px de
                       // aire a cada lado por dentro.
-                      'flex w-full items-center justify-between gap-3 rounded-md px-3 py-2.5',
+                      // Columna y no fila: lo de siempre arriba, y debajo —solo
+                      // cuando lo hay— el progreso. Con un solo hijo se ve
+                      // exactamente igual que antes.
+                      'flex w-full flex-col gap-2 rounded-md px-3 py-2.5',
                       'text-left transition-colors',
                       /*
                         El realce va en el ACENTO COMO TINTA, no en la
@@ -248,30 +263,65 @@ export function PagosPendientes({
                         : 'cursor-default',
                     )}
                   >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">{pago.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {pago.path}
+                    <span className="flex w-full items-center justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">{pago.name}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {pago.path}
+                        </span>
+                      </span>
+
+                      <span className="shrink-0 text-right">
+                        {pago.expected_amount && (
+                          <span className="tabular block text-sm font-semibold">
+                            {formatCOP(pago.expected_amount)}
+                          </span>
+                        )}
+                        {/* Vencido en ámbar, no en rojo: se debe, no salió mal.
+                            El rojo está reservado a los errores. */}
+                        <span
+                          className={cn(
+                            'block text-xs',
+                            vencido ? 'font-medium text-warning' : 'text-muted-foreground',
+                          )}
+                        >
+                          {diaCorto(pago.due_date)}
+                        </span>
                       </span>
                     </span>
 
-                    <span className="shrink-0 text-right">
-                      {pago.expected_amount && (
-                        <span className="tabular block text-sm font-semibold">
-                          {formatCOP(pago.expected_amount)}
+                    {/*
+                      ── Lo que lleva cubierto ──────────────────────────────
+                      La cifra de la derecha es el TOTAL del mes, igual que en
+                      cualquier otro pendiente. Lo que esta línea añade es
+                      dónde va: sin ella, un concepto que se paga en varias
+                      veces se lee como uno que no se ha pagado nada, que es
+                      justo lo contrario de lo que pasa.
+
+                      Y dice «Registrar otro» y no «Confirmar pago» porque eso
+                      es lo que va a ocurrir al pulsar: la ficha se abre con el
+                      valor VACÍO y la fecha de hoy, para anotar esta ida y no
+                      para dar el mes por saldado.
+                    */}
+                    {avance !== null && (
+                      <span className="block w-full">
+                        <Progreso
+                          avance={avance}
+                          etiqueta={`${pago.name}: lleva ${formatCOP(pago.paid_amount)} de ${formatCOP(pago.expected_amount ?? '0')}`}
+                          className="h-1"
+                        />
+                        <span className="mt-1.5 flex items-baseline justify-between gap-2 text-xs">
+                          <span className="tabular min-w-0 truncate text-muted-foreground">
+                            Lleva {formatCOP(pago.paid_amount)}
+                          </span>
+                          {onElegir && (
+                            <span className="shrink-0 font-medium text-acento-tinta">
+                              Registrar otro
+                            </span>
+                          )}
                         </span>
-                      )}
-                      {/* Vencido en ámbar, no en rojo: se debe, no salió mal.
-                          El rojo está reservado a los errores. */}
-                      <span
-                        className={cn(
-                          'block text-xs',
-                          vencido ? 'font-medium text-warning' : 'text-muted-foreground',
-                        )}
-                      >
-                        {diaCorto(pago.due_date)}
                       </span>
-                    </span>
+                    )}
                   </button>
                 </li>
               );

@@ -37,7 +37,8 @@ const VISTA: CategoryView = {
   dia_de_pago: 12,
   mes_de_pago: null,
   presupuesto: '39800',
-  pago_automatico: true,
+  pago_automatico: false,
+  varios_pagos: true,
   palabras_clave: ['netflix'],
 };
 
@@ -62,7 +63,8 @@ describe('Lo que sale por la API de categorías', () => {
     // Los dos que se caían. Se comprueban por su nombre además del barrido de
     // arriba: si alguien cambiara el barrido, esto sigue en pie.
     expect(payload.presupuesto).toBe('39800');
-    expect(payload.pago_automatico).toBe(true);
+    expect(payload.pago_automatico).toBe(false);
+    expect(payload.varios_pagos).toBe(true);
   });
 
   it('a los hijos les pasa lo mismo, hasta el fondo', () => {
@@ -80,7 +82,8 @@ describe('Lo que sale por la API de categorías', () => {
     // tercer nivel es un campo que no existe para los conceptos — que son
     // justo los que llevan presupuesto y pago automático.
     expect(nieto.presupuesto).toBe('39800');
-    expect(nieto.pago_automatico).toBe(true);
+    expect(nieto.pago_automatico).toBe(false);
+    expect(nieto.varios_pagos).toBe(true);
     expect(nieto.parent_id).toBe(3n);
   });
 });

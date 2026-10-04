@@ -326,6 +326,21 @@ export interface Category {
    * Solo significa algo en un CONCEPTO recurrente.
    */
   pago_automatico: boolean;
+  /**
+   * ── Se paga en varias veces ─────────────────────────────────────────────
+   * El concepto no se salda con un pago: se va cubriendo. El mercado se hace
+   * en cuatro idas y ninguna de ellas termina el mes.
+   *
+   * Marcado, el concepto se queda en pagos pendientes mientras lo pagado sea
+   * MENOR que lo esperado, enseñando cuánto lleva; sale cuando lo alcanza.
+   *
+   * Es INCOMPATIBLE con `pago_automatico`, y no por una limitación técnica:
+   * uno dice «esto se cobra solo, entero, el día que vence» y el otro «esto se
+   * cubre a pedazos y no se sabe cuántos».
+   *
+   * Solo significa algo en un CONCEPTO recurrente.
+   */
+  varios_pagos: boolean;
   palabras_clave: string[];
   children?: Category[];
 }
@@ -414,6 +429,29 @@ export interface PagoPendiente {
    */
   centro_id: Id;
   centro: string;
+  /**
+   * Lo que YA se pagó de esto en el mes en curso, confirmado.
+   *
+   * Casi siempre es «0»: un pendiente normal no tiene nada pagado, porque al
+   * primer pago desaparece de la lista. Deja de serlo en un concepto marcado
+   * con `varios_pagos`, que es el caso para el que existe este campo: ahí hay
+   * algo pagado y algo que falta a la vez, y la lista tiene que poder decir
+   * «llevas 608.350 de 1.200.000».
+   *
+   * Se manda siempre, también en los normales, para que la pantalla no tenga
+   * que preguntarse si el campo viene. Un `null` que casi nunca llega es un
+   * `null` que nadie comprueba.
+   */
+  paid_amount: DecimalString;
+  /**
+   * Si este pendiente se cubre a pedazos.
+   *
+   * Lo decide la pantalla para pintar el progreso en vez de un importe suelto;
+   * no se deduce de `paid_amount > 0`, porque un concepto normal con un pago
+   * confirmado no está en esta lista y uno marcado en su primera ida tiene
+   * cero pagado y sí lo está.
+   */
+  varios_pagos: boolean;
 }
 
 /**

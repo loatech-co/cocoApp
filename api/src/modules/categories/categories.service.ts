@@ -15,6 +15,7 @@ import {
   PROFUNDIDAD_MAXIMA,
   type ConHijos,
 } from './categories.tree';
+import { porQueNoAdmiteVariosPagos } from './varios-pagos';
 import type { CreateCategoryDto, ReorderCategoriesDto, UpdateCategoryDto } from './dto/category.dto';
 
 export interface CategoryView {
@@ -43,6 +44,8 @@ export interface CategoryView {
   presupuesto: string | null;
   /** Si el movimiento se crea solo al llegar el día de pago. */
   pago_automatico: boolean;
+  /** Si el concepto se cubre a pedazos y no se salda con un solo pago. */
+  varios_pagos: boolean;
   /** Lo que se busca en un soporte para reconocer este concepto. */
   palabras_clave: string[];
 }
@@ -67,19 +70,28 @@ export class CategoriesService {
 
   async crear(userId: bigint, dto: CreateCategoryDto): Promise<CategoryView> {
     const parentId = dto.parent_id !== undefined ? BigInt(dto.parent_id) : null;
+    // Sin padre es un centro de costos, que es el primer nivel.
+    let profundidad = 1;
 
     if (parentId !== null) {
       const padre = await this.exigirCategoria(userId, parentId);
       const esqueleto = await this.repo.esqueletoDelArbol(userId);
 
       // Una categoría nueva no tiene hijos: su profundidad es la del padre + 1.
-      const profundidad = profundidadResultante(
+      profundidad = profundidadResultante(
         [...esqueleto, { id: BigInt(-1), parentId: padre.id }],
         BigInt(-1),
         padre.id,
       );
       this.exigirProfundidadValida(profundidad);
     }
+
+    this.exigirVariosPagosCoherente({
+      variosPagos: dto.varios_pagos ?? false,
+      pagoAutomatico: dto.pago_automatico ?? false,
+      recurrente: dto.recurrente ?? false,
+      profundidad,
+    });
 
     const categoria = await this.repo.crear(userId, {
       userId,
@@ -99,6 +111,7 @@ export class CategoriesService {
       mesDePago: dto.mes_de_pago ?? null,
       presupuesto: dto.presupuesto ?? null,
       pagoAutomatico: dto.pago_automatico ?? false,
+      variosPagos: dto.varios_pagos ?? false,
       palabrasClave: dto.palabras_clave ?? [],
     });
 
@@ -106,21 +119,57 @@ export class CategoriesService {
   }
 
   async actualizar(userId: bigint, id: bigint, dto: UpdateCategoryDto): Promise<CategoryView> {
-    await this.exigirCategoria(userId, id);
+    const actual = await this.exigirCategoria(userId, id);
+
+    /*
+      El árbol se pide UNA vez y se reparte, porque lo necesitan dos
+      comprobaciones distintas —mover de padre y la marca de varias veces— y
+      pedirlo dos veces en la misma petición es una consulta de regalo.
+
+      Perezoso, eso sí: la mayoría de las actualizaciones no tocan ni el padre
+      ni esa marca, y entonces no hace falta ninguna.
+    */
+    let esqueleto: Awaited<ReturnType<typeof this.repo.esqueletoDelArbol>> | null = null;
+    const arbol = async (): Promise<NonNullable<typeof esqueleto>> =>
+      (esqueleto ??= await this.repo.esqueletoDelArbol(userId));
 
     if (dto.parent_id !== undefined) {
       const nuevoPadre = dto.parent_id === null ? null : BigInt(dto.parent_id);
       if (nuevoPadre !== null) await this.exigirCategoria(userId, nuevoPadre);
 
-      const esqueleto = await this.repo.esqueletoDelArbol(userId);
-
-      if (generariaCiclo(esqueleto, id, nuevoPadre)) {
+      if (generariaCiclo(await arbol(), id, nuevoPadre)) {
         throw new UnprocessableEntityException(
           'Una categoría no puede colgar de sí misma ni de una de sus descendientes.',
         );
       }
 
-      this.exigirProfundidadValida(profundidadResultante(esqueleto, id, nuevoPadre));
+      this.exigirProfundidadValida(profundidadResultante(await arbol(), id, nuevoPadre));
+    }
+
+    /*
+      Lo que se comprueba es cómo queda la fila, no lo que trajo la petición.
+
+      Encender `pago_automatico` sobre un concepto que YA se paga en varias
+      veces no trae `varios_pagos` en el cuerpo, así que mirando solo el DTO
+      pasaría, y la fila quedaría con las dos marcas encendidas —que es
+      exactamente lo que no puede ocurrir—. Por eso cada campo se lee del DTO
+      si viene y de la fila que hay si no.
+    */
+    const variosPagosFinal = dto.varios_pagos ?? actual.variosPagos;
+    if (variosPagosFinal) {
+      const padreFinal =
+        dto.parent_id !== undefined
+          ? dto.parent_id === null
+            ? null
+            : BigInt(dto.parent_id)
+          : actual.parentId;
+
+      this.exigirVariosPagosCoherente({
+        variosPagos: true,
+        pagoAutomatico: dto.pago_automatico ?? actual.pagoAutomatico,
+        recurrente: dto.recurrente ?? actual.recurrente,
+        profundidad: profundidadResultante(await arbol(), id, padreFinal),
+      });
     }
 
     await this.repo.actualizar(userId, id, {
@@ -142,6 +191,7 @@ export class CategoriesService {
       // `!== undefined` y no un truthy: `null` lo quita y CERO es un valor.
       ...(dto.presupuesto !== undefined && { presupuesto: dto.presupuesto }),
       ...(dto.pago_automatico !== undefined && { pagoAutomatico: dto.pago_automatico }),
+      ...(dto.varios_pagos !== undefined && { variosPagos: dto.varios_pagos }),
       ...(dto.palabras_clave !== undefined && { palabrasClave: dto.palabras_clave }),
     });
 
@@ -272,6 +322,16 @@ export class CategoriesService {
     return { creadas: await this.repo.sembrarPlantilla(userId) };
   }
 
+  private exigirVariosPagosCoherente(estado: {
+    variosPagos: boolean;
+    pagoAutomatico: boolean;
+    recurrente: boolean;
+    profundidad: number;
+  }): void {
+    const motivo = porQueNoAdmiteVariosPagos(estado);
+    if (motivo !== null) throw new UnprocessableEntityException(motivo);
+  }
+
   private exigirProfundidadValida(profundidad: number): void {
     if (profundidad > PROFUNDIDAD_MAXIMA) {
       throw new UnprocessableEntityException(
@@ -357,6 +417,7 @@ export class CategoriesService {
       mes_de_pago: categoria.mesDePago,
       presupuesto: categoria.presupuesto === null ? null : categoria.presupuesto.toString(),
       pago_automatico: categoria.pagoAutomatico,
+      varios_pagos: categoria.variosPagos,
       palabras_clave: categoria.palabrasClave,
     };
   }

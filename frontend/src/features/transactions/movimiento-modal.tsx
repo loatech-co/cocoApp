@@ -226,14 +226,34 @@ export function MovimientoModal({
       por eso la cabecera lo dice con todas las letras en vez de dejar que
       parezca un dato.
     */
+    /*
+      ── Lo que se cubre a pedazos entra VACÍO, y con la fecha de hoy ────────
+      Un concepto normal se confirma: lo que se espera que cueste es lo que va
+      a costar, y traerlo escrito ahorra el paso. Uno que se paga en varias
+      veces no se confirma, se ABONA: lo que trae la cabeza de quien abre esta
+      ficha es lo que acaba de gastar en el supermercado, y el total del mes no
+      tiene nada que ver con eso.
+
+      Poner ahí 1.200.000 —el presupuesto entero— sería la peor sugerencia
+      posible: al primer «guardar» sin mirar, el mes queda cubierto de golpe y
+      el concepto sale de la lista como si ya estuviera resuelto.
+
+      Y la fecha es HOY y no el vencimiento, por lo mismo: la ida al mercado
+      fue hoy. El día 1 es cuándo empieza a contar el ciclo, no cuándo se gastó
+      esto.
+    */
+    const abonandoAUnConcepto = pago?.varios_pagos === true;
+
     setAmount(
       movimiento
         ? String(Number(movimiento.amount))
-        : pago?.expected_amount != null
+        : !abonandoAUnConcepto && pago?.expected_amount != null
           ? String(Number(pago.expected_amount))
           : '',
     );
-    setDate(movimiento?.date ?? pago?.due_date ?? hoyEnBogota());
+    setDate(
+      movimiento?.date ?? (abonandoAUnConcepto ? hoyEnBogota() : (pago?.due_date ?? hoyEnBogota())),
+    );
     setType(movimiento?.type ?? tipoPorDefecto);
     setCategoryId(movimiento?.category_id ?? pago?.category_id);
     setNotes(movimiento?.notes ?? '');
@@ -599,7 +619,14 @@ export function MovimientoModal({
         <CabeceraDeModal
           titulo={
             confirmandoUnPago
-              ? 'Confirmar pago'
+              ? // Lo que se va a hacer no es lo mismo, así que no se llama
+                // igual. «Confirmar pago» en un concepto que se cubre a
+                // pedazos promete cerrar el mes, y lo que se anota es una ida
+                // de cuatro: la lista ya ofreció «Registrar otro» y la ficha
+                // que se abre tiene que ser la que se pidió.
+                pago.varios_pagos
+                ? 'Registrar otro'
+                : 'Confirmar pago'
               : !editando
                 ? `Nuevo ${nombreDelTipo(type)}`
                 : editable
@@ -617,9 +644,11 @@ export function MovimientoModal({
           */
           ayuda={
             confirmandoUnPago
-              ? pago.expected_amount != null
-                ? `${pago.name}. El valor y la fecha son los esperados: adjunta el soporte y se corrigen con lo que diga el recibo.`
-                : `${pago.name}. Adjunta el soporte y se leen el valor y la fecha.`
+              ? pago.varios_pagos
+                ? `${pago.name}. Esto se paga en varias veces: anota lo de ESTA vez, no el total del mes.`
+                : pago.expected_amount != null
+                  ? `${pago.name}. El valor y la fecha son los esperados: adjunta el soporte y se corrigen con lo que diga el recibo.`
+                  : `${pago.name}. Adjunta el soporte y se leen el valor y la fecha.`
               : undefined
           }
           antes={

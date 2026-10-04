@@ -30,6 +30,14 @@ export interface Recurrencia {
   presupuesto: string;
   /** Si el movimiento se crea solo al llegar el día de pago. */
   pagoAutomatico: boolean;
+  /**
+   * Si el concepto se cubre a pedazos: el mercado en cuatro idas, la gasolina
+   * en seis tanqueadas. Se queda en pagos pendientes hasta que lo pagado
+   * alcanza lo esperado, en vez de salirse al primer movimiento.
+   *
+   * Incompatible con `pagoAutomatico`: ver el porqué junto al interruptor.
+   */
+  variosPagos: boolean;
 }
 
 const MESES = [
@@ -201,7 +209,46 @@ export function CamposDeRecurrencia({
 
             <Interruptor
               checked={valor.pagoAutomatico}
+              disabled={valor.variosPagos}
               onChange={(e) => onCambiar({ ...valor, pagoAutomatico: e.target.checked })}
+            />
+          </label>
+
+          {/*
+            ── Que se cubra a pedazos ──────────────────────────────────────
+            Debajo del pago automático porque son las dos caras de la misma
+            pregunta —«¿cómo se salda esto?»— y porque se excluyen: el de
+            arriba dice que se cobra solo, entero, el día que vence; este dice
+            que se cubre en varias idas y no se sabe cuántas.
+
+            Se EXCLUYEN en la pantalla, y no solo en el servidor. Dejar los dos
+            encendibles para que la API conteste 422 es hacer que la regla se
+            descubra fallando; apagar el otro al encender uno sería cambiarle
+            a alguien un ajuste que no tocó. Lo que queda es decirlo: el que no
+            se puede usar está apagado y explica por qué.
+          */}
+          <label
+            className={cn(
+              'flex items-center gap-3 rounded-lg border border-border bg-card p-3',
+              valor.pagoAutomatico ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+              valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
+            )}
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Se paga en varias veces</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {valor.pagoAutomatico
+                  ? 'No se puede junto al pago automático: ese registra el valor entero el día de pago.'
+                  : valor.presupuesto.trim() === ''
+                    ? 'Sigue en pagos pendientes hasta cubrir el promedio de los meses anteriores.'
+                    : 'Sigue en pagos pendientes, mostrando lo que lleva, hasta cubrir el presupuesto.'}
+              </span>
+            </span>
+
+            <Interruptor
+              checked={valor.variosPagos}
+              disabled={valor.pagoAutomatico}
+              onChange={(e) => onCambiar({ ...valor, variosPagos: e.target.checked })}
             />
           </label>
 

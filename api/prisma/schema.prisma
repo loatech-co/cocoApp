@@ -390,6 +390,33 @@ model Category {
   /// Solo significa algo en un CONCEPTO recurrente.
   pagoAutomatico Boolean @default(false) @map("pago_automatico")
 
+  /// ── Se paga en varias veces ───────────────────────────────────────────
+  /// El concepto no se salda con un pago: se va cubriendo. El mercado se
+  /// hace en cuatro idas, la gasolina en seis tanqueadas, y ninguna de esas
+  /// idas termina el mes.
+  ///
+  /// Sin esto, el primer movimiento sacaba el concepto de pagos pendientes,
+  /// y el resto del mes la lista decía que el mercado estaba resuelto con
+  /// 320.000 de un presupuesto de 1.200.000. La cifra que faltaba no estaba
+  /// mal en ningún sitio —la dona y los totales la tenían—, pero la única
+  /// pantalla que responde «¿qué me falta pagar?» contestaba que nada.
+  ///
+  /// Marcado, el concepto se queda en la lista mientras lo pagado sea MENOR
+  /// que lo esperado, enseñando cuánto lleva. Sale cuando lo alcanza o lo
+  /// pasa, que es cuando de verdad dejó de faltar.
+  ///
+  /// ── Es incompatible con el pago automático ────────────────────────────
+  /// Y no por una limitación técnica: las dos marcas dicen cosas contrarias
+  /// sobre el mismo concepto. El pago automático dice «esto se cobra solo,
+  /// entero, el día que vence»; este dice «esto se cubre a pedazos y no se
+  /// sabe cuántos». Encendidas a la vez, el cobro automático escribiría el
+  /// importe completo el día del vencimiento y el concepto saldría de la
+  /// lista sin que nadie hubiera ido al mercado.
+  ///
+  /// Solo significa algo en un CONCEPTO recurrente, y solo cuando hay una
+  /// cifra esperada: sin un total al que llegar, «lo que falta» no existe.
+  variosPagos Boolean @default(false) @map("varios_pagos")
+
   /// ── Estático ──────────────────────────────────────────────────────────
   /// Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica: ni desde
   /// la tabla de movimientos ni desde el modal de un movimiento. Es para la

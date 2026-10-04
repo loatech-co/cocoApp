@@ -134,6 +134,24 @@ export class CreateCategoryDto {
   pago_automatico?: boolean;
 
   /**
+   * ── Se paga en varias veces ─────────────────────────────────────────────
+   * El concepto no se salda con un pago: se va cubriendo. El mercado se hace
+   * en cuatro idas, la gasolina en seis tanqueadas, y ninguna de esas idas
+   * termina el mes.
+   *
+   * Marcado, el concepto se queda en pagos pendientes mientras lo pagado sea
+   * menor que lo esperado, enseñando cuánto lleva.
+   *
+   * Tres condiciones, y las comprueba el servicio y no esto: tiene que ser un
+   * CONCEPTO —el tercer nivel—, tiene que ser RECURRENTE, y no puede llevar
+   * también «pago automático». Las tres hablan de cómo queda la fila después
+   * de aplicar el cambio, y aquí solo se ve lo que trajo la petición.
+   */
+  @IsOptional()
+  @IsBoolean()
+  varios_pagos?: boolean;
+
+  /**
    * ── Presupuesto ─────────────────────────────────────────────────────────
    * Lo que se espera que cueste cada vez que toca. Puesto, MANDA: la previsión
    * del mes es este número y no el promedio de lo que costó antes.
@@ -249,6 +267,24 @@ export class UpdateCategoryDto {
   @IsOptional()
   @IsBoolean()
   pago_automatico?: boolean;
+
+  /**
+   * ── Se paga en varias veces ─────────────────────────────────────────────
+   * El concepto no se salda con un pago: se va cubriendo. El mercado se hace
+   * en cuatro idas, la gasolina en seis tanqueadas, y ninguna de esas idas
+   * termina el mes.
+   *
+   * Marcado, el concepto se queda en pagos pendientes mientras lo pagado sea
+   * menor que lo esperado, enseñando cuánto lleva.
+   *
+   * Tres condiciones, y las comprueba el servicio y no esto: tiene que ser un
+   * CONCEPTO —el tercer nivel—, tiene que ser RECURRENTE, y no puede llevar
+   * también «pago automático». Las tres hablan de cómo queda la fila después
+   * de aplicar el cambio, y aquí solo se ve lo que trajo la petición.
+   */
+  @IsOptional()
+  @IsBoolean()
+  varios_pagos?: boolean;
 
   /** Ver `CreateCategoryDto`. `null` lo quita; cero es un valor. */
   @IsOptional()

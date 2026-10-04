@@ -1,0 +1,66 @@
+import { NIVELES, PROFUNDIDAD_MAXIMA } from './categories.tree';
+
+/**
+ * Si un concepto puede llevar la marca de «se paga en varias veces».
+ *
+ * ── Por qué se comprueba el estado RESULTANTE y no el DTO ───────────────────
+ * Porque las dos reglas de abajo hablan de cómo queda la fila, no de lo que
+ * trajo la petición. Mirando solo el DTO, encender `pago_automatico` sobre un
+ * concepto que YA tiene `varios_pagos` pasaría sin más: en esa petición no
+ * viene `varios_pagos`, así que no habría nada que contrastar, y la fila
+ * quedaría con las dos marcas encendidas —que es justo lo que no puede pasar—.
+ *
+ * Quien llama mezcla primero lo que había con lo que viene, y pregunta por el
+ * resultado. Por eso esto es una función suelta y no un decorador del DTO:
+ * class-validator valida un objeto contra sí mismo, y aquí hacen falta dos.
+ *
+ * ── Y por qué devuelve el motivo en vez de un booleano ──────────────────────
+ * Porque son tres negativas distintas y cada una se arregla de otra forma. Un
+ * «no se puede» a secas deja a quien lo recibe adivinando cuál de las tres le
+ * tocó.
+ */
+export function porQueNoAdmiteVariosPagos({
+  variosPagos,
+  pagoAutomatico,
+  recurrente,
+  profundidad,
+}: {
+  variosPagos: boolean;
+  pagoAutomatico: boolean;
+  recurrente: boolean;
+  profundidad: number;
+}): string | null {
+  // Apagada no restringe nada: lo que no está marcado no tiene por qué cumplir
+  // las condiciones de estarlo. Si no, archivar un centro de costos viejo
+  // fallaría por una marca que nadie encendió.
+  if (!variosPagos) return null;
+
+  if (profundidad !== PROFUNDIDAD_MAXIMA) {
+    return (
+      `«Se paga en varias veces» es de un ${NIVELES[PROFUNDIDAD_MAXIMA - 1]}, y esto es ` +
+      `un ${NIVELES[Math.max(0, Math.min(profundidad, PROFUNDIDAD_MAXIMA) - 1)]}. ` +
+      `Un centro de costos y una categoría son sumas de lo que cuelga de ellos: ` +
+      `no se pagan, ni de una vez ni de varias.`
+    );
+  }
+
+  if (!recurrente) {
+    return (
+      '«Se paga en varias veces» solo significa algo en un concepto recurrente. ' +
+      'Sin algo que vuelva cada mes no hay un total al que llegar, y sin total ' +
+      'no existe «lo que falta».'
+    );
+  }
+
+  if (pagoAutomatico) {
+    return (
+      'Un concepto no puede tener «pago automático» y «se paga en varias veces» a la vez. ' +
+      'El primero dice que esto se cobra solo, entero, el día que vence; el segundo, que ' +
+      'se cubre a pedazos y no se sabe cuántos. Encendidos juntos, el cobro automático ' +
+      'escribiría el importe completo el día del vencimiento y el concepto saldría de la ' +
+      'lista sin que nadie hubiera ido al mercado.'
+    );
+  }
+
+  return null;
+}

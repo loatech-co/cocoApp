@@ -187,3 +187,63 @@ export function tocaCobrarAutomatico({
   if (esperado === null) return false;
   return vencimientoISO <= hoyISO;
 }
+
+/**
+ * Cómo queda un concepto recurrente en el mes en curso: si sigue faltando, y
+ * con cuánto entra en el presupuesto del mes.
+ *
+ * ── El fallo que arregla ────────────────────────────────────────────────────
+ * Hasta ahora bastaba UN movimiento confirmado para que el concepto saliera de
+ * la lista. Para casi todo está bien —el alquiler se paga una vez y ya está—,
+ * pero no para lo que se cubre a pedazos: la primera ida al mercado sacaba
+ * «Mercado» de pagos pendientes, y el resto del mes la única pantalla que
+ * responde «¿qué me falta pagar?» contestaba que nada, con 320.000 pagados de
+ * 1.200.000. La cifra no estaba mal en ningún sitio: estaba ausente justo
+ * donde se preguntaba por ella.
+ *
+ * ── Qué cambia, y qué NO ────────────────────────────────────────────────────
+ * Solo cambia para los conceptos MARCADOS, y solo cuando hay una cifra
+ * esperada mayor que cero. Sin un total al que llegar no existe «lo que
+ * falta»: un concepto marcado pero sin presupuesto ni historia se comporta
+ * como siempre, porque la alternativa sería dejarlo pendiente para siempre
+ * —nunca alcanzaría un total que no existe— y un pendiente que no se puede
+ * saldar es ruido permanente en la lista.
+ *
+ * ── Por qué el presupuesto toma el MAYOR de los dos ─────────────────────────
+ * La pregunta de esa tarjeta es «¿cuánta plata tengo que tener este mes?».
+ * Mientras se va cubriendo, la respuesta es lo esperado: lo pagado es un
+ * anticipo de eso, no algo que se sume aparte. Pero cuando lo pagado SUPERA lo
+ * esperado —el mercado salió más caro— la respuesta pasa a ser lo pagado, que
+ * ya es un hecho. Quedarse en lo esperado diría que el mes costó menos de lo
+ * que costó, y sumar los dos lo contaría dos veces.
+ */
+export function comoQuedaElPendiente({
+  variosPagos,
+  hayPago,
+  pagado,
+  esperado,
+}: {
+  variosPagos: boolean;
+  /**
+   * Si hay algún movimiento confirmado, aunque sume cero.
+   *
+   * Se pregunta por la EXISTENCIA y no por `pagado > 0` a propósito: es como
+   * se comportaba antes, y un movimiento de cero es alguien diciendo «esto
+   * este mes no costó», que es una respuesta y no un vacío.
+   */
+  hayPago: boolean;
+  pagado: Money;
+  esperado: Money | null;
+}): { sigueFaltando: boolean; alPresupuesto: Money } {
+  if (variosPagos && esperado !== null && esperado.gt(CERO)) {
+    return {
+      sigueFaltando: pagado.lt(esperado),
+      alPresupuesto: pagado.gt(esperado) ? pagado : esperado,
+    };
+  }
+
+  // Lo de siempre: al primer movimiento confirmado deja de faltar, y el mes
+  // cuenta lo que de verdad costó.
+  if (hayPago) return { sigueFaltando: false, alPresupuesto: pagado };
+  return { sigueFaltando: true, alPresupuesto: esperado ?? CERO };
+}

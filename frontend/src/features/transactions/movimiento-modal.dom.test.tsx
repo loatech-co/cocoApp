@@ -164,6 +164,23 @@ const PAGO: PagoPendiente = {
   expected_amount: '180000',
 } as unknown as PagoPendiente;
 
+/**
+ * El mismo concepto, pero de los que se cubren a pedazos.
+ *
+ * El vencimiento va lejos de hoy A PROPÓSITO: si los dos cayeran en el mismo
+ * día, la prueba de que la fecha es la de HOY pasaría igual estando mal.
+ */
+const PAGO_A_PEDAZOS: PagoPendiente = {
+  category_id: 100,
+  name: 'Celsia (Energía)',
+  path: 'Costos fijos · Servicios públicos',
+  periodicidad: 'mensual',
+  due_date: '2026-10-25',
+  expected_amount: '1200000',
+  paid_amount: '320450',
+  varios_pagos: true,
+} as unknown as PagoPendiente;
+
 function abrirConfirmacion(pago: PagoPendiente = PAGO) {
   const cliente = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
@@ -334,5 +351,68 @@ describe('El soporte adjuntado al confirmar un pago', () => {
     await vi.advanceTimersByTimeAsync(4000);
 
     expect(vi.mocked(leerSoporte)).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Abonar no es confirmar.
+ *
+ * Un concepto normal se CONFIRMA: lo que se espera que cueste es lo que va a
+ * costar, y traerlo escrito ahorra un paso. Uno que se paga en varias veces se
+ * ABONA, y entonces el valor esperado es la peor sugerencia posible: al primer
+ * «guardar» sin mirar, el mes queda cubierto de golpe y el concepto sale de la
+ * lista como si estuviera resuelto.
+ */
+describe('La ficha de un concepto que se paga en varias veces', () => {
+  /** Hoy en América/Bogotá, como lo escribe la aplicación. */
+  function hoy(): Date {
+    return new Date(Date.now() - 5 * 60 * 60 * 1000);
+  }
+
+  it('abre con el valor VACÍO, no con el total del mes', () => {
+    abrirConfirmacion(PAGO_A_PEDAZOS);
+
+    expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('');
+  });
+
+  it('y con la fecha de HOY, no con la del vencimiento', () => {
+    // La ida al mercado fue hoy. El día del vencimiento es cuándo empieza a
+    // contar el ciclo, no cuándo se gastó esto.
+    abrirConfirmacion(PAGO_A_PEDAZOS);
+
+    const fecha = screen.getByLabelText<HTMLInputElement>('Fecha').value;
+    expect(fecha).toContain(String(hoy().getUTCDate()));
+    expect(fecha).not.toContain('25');
+  });
+
+  it('se titula «Registrar otro», que es lo que ofrecía la lista', () => {
+    // Abrir «Registrar otro» y encontrarse «Confirmar pago» es prometer que
+    // esto cierra el mes.
+    abrirConfirmacion(PAGO_A_PEDAZOS);
+
+    expect(screen.getByRole('heading', { name: 'Registrar otro' })).toBeDefined();
+  });
+
+  it('avisa de que se anota lo de ESTA vez', () => {
+    // Sin decirlo, la caja vacía se lee como un campo que falta por llenar
+    // con el total, que es justo lo contrario.
+    abrirConfirmacion(PAGO_A_PEDAZOS);
+
+    expect(screen.getByText(/no el total del mes/i)).toBeDefined();
+  });
+
+  it('pero la clasificación sí viene puesta, como en cualquier pago', () => {
+    // Lo que cambia es el importe y la fecha; de qué concepto es, no.
+    abrirConfirmacion(PAGO_A_PEDAZOS);
+
+    expect(screen.getByText('Costos fijos')).toBeDefined();
+    expect(screen.getByText('Servicios públicos')).toBeDefined();
+  });
+
+  it('y uno normal sigue llegando con su valor esperado', () => {
+    // La prueba que impide «arreglarlo» para todos: el alquiler se confirma.
+    abrirConfirmacion(PAGO);
+
+    expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
   });
 });

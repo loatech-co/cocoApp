@@ -1,5 +1,6 @@
 import { toMoney } from '../../common/money/money';
 import {
+  comoQuedaElPendiente,
   esperadoDelMes,
   huellaDelCobro,
   tocaCobrarAutomatico,
@@ -224,5 +225,107 @@ describe('Cobrar solo', () => {
     expect(huellaDelCobro(100n, '2026-09-20')).toBe('auto:100:2026-09');
     expect(huellaDelCobro(100n, '2026-10')).not.toBe(huellaDelCobro(100n, '2026-09'));
     expect(huellaDelCobro(101n, '2026-09')).not.toBe(huellaDelCobro(100n, '2026-09'));
+  });
+});
+
+/**
+ * Un concepto que se paga en varias veces.
+ *
+ * El caso real: «Mercado», 1.200.000 al mes, que se hace en cuatro idas. Antes
+ * la primera ida lo sacaba de pagos pendientes y el resto del mes la lista
+ * decía que no faltaba nada.
+ */
+describe('Lo que se cubre a pedazos', () => {
+  const esperado = toMoney('1200000');
+  const marcado = (pagado: string) =>
+    comoQuedaElPendiente({
+      variosPagos: true,
+      hayPago: pagado !== '0',
+      pagado: toMoney(pagado),
+      esperado,
+    });
+
+  it('sigue faltando mientras lo pagado no alcance lo esperado', () => {
+    expect(marcado('0').sigueFaltando).toBe(true);
+    expect(marcado('320450').sigueFaltando).toBe(true);
+    expect(marcado('1199999.99').sigueFaltando).toBe(true);
+  });
+
+  it('deja de faltar al alcanzarlo, no al pasarlo', () => {
+    // Exactamente igual YA está cubierto: pedir un peso más seria pedir algo
+    // que nadie debe.
+    expect(marcado('1200000').sigueFaltando).toBe(false);
+    expect(marcado('1350000').sigueFaltando).toBe(false);
+  });
+
+  it('mientras se cubre, el mes cuenta lo ESPERADO y no lo pagado', () => {
+    // «¿Cuánta plata tengo que tener este mes?» se responde con el total, no
+    // con el anticipo. Contar lo pagado haría que el presupuesto del mes
+    // creciera con cada ida al mercado.
+    expect(marcado('0').alPresupuesto.toString()).toBe('1200000');
+    expect(marcado('320450').alPresupuesto.toString()).toBe('1200000');
+  });
+
+  it('y cuando se pasa, cuenta lo PAGADO, que ya es un hecho', () => {
+    expect(marcado('1350000').alPresupuesto.toString()).toBe('1350000');
+  });
+
+  it('sin una cifra a la que llegar se comporta como siempre', () => {
+    // Si no, sería un pendiente que no se puede saldar nunca: ruido
+    // permanente en la única lista que dice qué falta.
+    const sinCifra = comoQuedaElPendiente({
+      variosPagos: true,
+      hayPago: true,
+      pagado: toMoney('50000'),
+      esperado: null,
+    });
+    expect(sinCifra.sigueFaltando).toBe(false);
+    expect(sinCifra.alPresupuesto.toString()).toBe('50000');
+
+    const cero = comoQuedaElPendiente({
+      variosPagos: true,
+      hayPago: true,
+      pagado: toMoney('50000'),
+      esperado: toMoney('0'),
+    });
+    expect(cero.sigueFaltando).toBe(false);
+  });
+});
+
+describe('Un concepto normal no cambia de comportamiento', () => {
+  const normal = (hayPago: boolean, pagado: string, esperado: string | null) =>
+    comoQuedaElPendiente({
+      variosPagos: false,
+      hayPago,
+      pagado: toMoney(pagado),
+      esperado: esperado === null ? null : toMoney(esperado),
+    });
+
+  it('un solo movimiento confirmado lo saca de la lista, aunque sea menos', () => {
+    // Es la regla de siempre y no se toca: el alquiler pagado a medias lo
+    // resuelve quien lo pagó, no la lista.
+    const r = normal(true, '300000', '1200000');
+    expect(r.sigueFaltando).toBe(false);
+    expect(r.alPresupuesto.toString()).toBe('300000');
+  });
+
+  it('sin pago, falta, y el mes cuenta lo esperado', () => {
+    const r = normal(false, '0', '1200000');
+    expect(r.sigueFaltando).toBe(true);
+    expect(r.alPresupuesto.toString()).toBe('1200000');
+  });
+
+  it('un movimiento de CERO también lo saca', () => {
+    // Se pregunta si el movimiento EXISTE, no si suma. Un cero es alguien
+    // diciendo «esto este mes no costó», que es una respuesta.
+    const r = normal(true, '0', '1200000');
+    expect(r.sigueFaltando).toBe(false);
+    expect(r.alPresupuesto.toString()).toBe('0');
+  });
+
+  it('sin pago y sin cifra, falta y no aporta nada al presupuesto', () => {
+    const r = normal(false, '0', null);
+    expect(r.sigueFaltando).toBe(true);
+    expect(r.alPresupuesto.toString()).toBe('0');
   });
 });
