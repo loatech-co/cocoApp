@@ -406,6 +406,47 @@ señalado como pendiente queda cerrado.**
 | F4-13 | El arreglo del `dist` (quitar el `path` de `@coco/lectura` del tsconfig de la API) va como **commit propio en la línea de la fase 3** y la punta de esa rama se mueve encima | El fallo es de la fase 3 y su despliegue tiene que llevarlo; la fase 4 aún no tenía commits propios, así que no hubo que rebasar nada. Las ramas de trabajo se republican con `--force` (el servidor solo trae `Dev`) |
 | F4-14 | El criterio de terminado pasa a incluir **`npm run build` de API y frontend y la existencia de `api/dist/main.js`** | Dos fallos seguidos (el `vitest.config.ts` y el `dist/` desplazado) habrían pasado typecheck, lint y pruebas y roto producción. Es lo que hbuilds ejecuta, así que es lo que hay que ejecutar antes |
 
+### Fase 5 · app iOS híbrida — EN CURSO (rama `fase-5-app-ios`, sobre `879792e`)
+
+**Cómo se está diseñando (15:20–).** Con el alcance híbrido que fijó el dueño,
+el diseño salió de un panel: tres propuestas independientes —una que prioriza la
+cola sin conexión, otra la seguridad de la sesión única, otra la mantenibilidad
+del híbrido—, dos jueces (corrección técnica; fidelidad al plan) y una síntesis
+que fija módulos, interfaces Swift, el mecanismo de sesión y las pruebas. Las
+decisiones que salgan de ahí se anotan abajo cuando la síntesis termine.
+
+**Pico técnico, antes de decidir el mecanismo de sesión (15:36, contra el
+Supabase de DESARROLLO `cocoApp-dev`, nada de producción).** Dos de las tres
+propuestas lo pedían: ¿puede la API abrir una SEGUNDA sesión de Supabase para el
+`WKWebView` —su propia familia de *refresh*, para que la rotación de la app y la
+de la web nunca choquen— sin la contraseña y sin mandar correo? Resultado:
+
+| Paso | Respuesta |
+|---|---|
+| `POST /auth/v1/admin/generate_link {type:'magiclink', email}` con la clave de servicio | 200 · `hashed_token` viene **en la raíz** (no en `properties`) · no envía ningún correo |
+| `POST /auth/v1/verify {type:'magiclink', token_hash}` con la clave anónima | 200 · **sesión completa nueva**: `access_token`, `refresh_token`, `user.id`, `expires_in` 3600 |
+| El mismo `token_hash` otra vez | **403 `otp_expired`**: es de un solo uso |
+| `grant_type=refresh_token` con el *refresh* de esa familia | 200 y **rota** (token distinto) |
+| `POST /logout?scope=local` con su *access* | 204 |
+
+Efecto colateral observado: `generate_link` actualiza `recovery_sent_at` y
+`last_sign_in_at` del usuario en GoTrue. Inocuo para Coco (no lee esos campos).
+
+**`JWT_SECRET` existe en producción.** Está en `hbuilds/config/.env` con 66
+caracteres —muy probablemente 64 hex entre comillas dobles, que LiteSpeed
+entrega con las comillas dentro del valor—. Hoy **ningún código lo usa** (solo
+está en `.env.example`). Si la fase lo usa, se lee con `leerDelEntorno()`
+(quita las comillas) y nunca con `process.env` a secas. Y en `current` NO hay
+`api/.env`: la app lee las variables que inyecta LiteSpeed, así que toda
+variable nueva habría que pedírsela al dueño (parada obligatoria: credenciales
+que no tengo). Por eso lo conservador es **no necesitar ninguna variable
+nueva**.
+
+**El arnés de pruebas de iOS funciona en el simulador (15:29).** `xcodebuild
+-scheme Coco -destination 'platform=iOS Simulator,name=iPhone 17' test` →
+«Executed 1 test, with 0 failures» · «** TEST SUCCEEDED **» (Xcode 27.0,
+iOS 27.0, Swift 6.4; el proyecto declara iOS 17 como mínimo).
+
 #### Decisiones de la fase 3
 
 | # | Decisión | Motivo |
