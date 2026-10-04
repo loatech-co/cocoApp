@@ -103,14 +103,35 @@ cdd1c6c feat: un concepto se puede pagar en varias veces
 99f7a42 fix: el entorno de desarrollo apuntaba a la base de produccion
 ```
 
-### 1d. Verificación del despliegue — PENDIENTE
+### 1d. Verificación del despliegue — HECHA · 13:12
 
-Lo que se va a comprobar por SSH: servidor en `9616997`; proceso reiniciado
-(etime pequeño); registro de hbuilds con «Generated Prisma Client» y
-terminando en el resumen de `vite build`; `stderr.log` sin errores nuevos;
-el `bundle` servido cambia respecto a `index-Dj1yC7x0.js`; `health` 401 y
-`login` bogus 401; y con el cliente **nuevo** en el servidor, una lectura
-`select: { variosPagos: true }` que pruebe que código y esquema coinciden.
+Producción quedó en **`5318c87`** = `9616997` + el arreglo de una línea del
+build del frontend (ver incidentes 13:01). Evidencia, por SSH y HTTP:
+
+| Comprobación | Resultado |
+|---|---|
+| HEAD de `hbuilds/current/nodejs` | `5318c87 fix: el build de produccion del frontend se caia por vitest.config.ts` ✅ |
+| Proceso reiniciado | `lsnode` con 53 s de vida (antes, 4 días) ✅ |
+| Registro de hbuilds (`2026-10-04_18-09-37_deploy.log`) | `npm install` falló y se recuperó con `--legacy-peer-deps` (lo conocido) · «✔ Generated Prisma Client (v6.19.3)» · «✓ built in 7.18s» · «Build completed in 28.2s» · «Application restarted in 2.6s» · «**Deployment completed in 1m 29s**» ✅ |
+| `stderr.log` de la app | 0 líneas (registro nuevo de la versión nueva) ✅ |
+| Cliente Prisma desplegado | conoce `variosPagos` (63 menciones) ✅ |
+| Lectura en el servidor con el cliente **nuevo** contra la base real | `findFirst` trae `variosPagos`; 0 conceptos marcados (nadie lo ha encendido aún) ✅ |
+| HTTP | `health` 401 · `login` bogus 401 · *bundle* `index-Dj1yC7x0.js` → `index-DQ0c2hFh.js` ✅ |
+| Procesos al terminar | 6 (los del propio script); el `node` de prueba salió con `process.exit(0)`: **sin zombis** ✅ |
+
+Lo que no se pudo comprobar por HTTP: los endpoints autenticados de la fase 1
+(`/dashboard`, `/categories`). Lo cubre la lectura con el cliente nuevo en el
+servidor —misma consulta que hace el resumen— y la e2e local.
+
+**Hallazgo al arrancar la API en local tras la fase 3:** `api/dist/main.js`
+no existía. El `path` `@coco/lectura → ../packages/lectura/src` que añadí al
+tsconfig de la API hizo que `tsc` compilara fuentes **fuera de `rootDir`** y
+desplazara la salida a `dist/api/src/main.js`. **Habría roto el `start` de
+producción** (`node api/dist/main.js`) al desplegar la fase 3. Se quita el
+`path` —la API resuelve los tipos por el `dist/index.d.ts` del paquete, que el
+`postinstall` y el `build` garantizan— y jest e2e se mapea a la fuente como el
+unitario. Es exactamente lo que el despliegue por fases con verificación está
+para atrapar.
 
 Conocido de antemano, del registro del despliegue del 18-sep: el primer
 `npm install` falla por un desajuste de `esbuild` dentro de `tsx` y hbuilds
@@ -135,6 +156,9 @@ si esta vez no se recupera, es lo primero que mirar.
 |---|---|---|
 | 11:56 | Prueba del cliente viejo colgada 120 s: `/proc/<pid>/exe` de `lsnode` no es `node` | Detección de `node` por rutas de CloudLinux con `--version` validado y `timeout` en cada comando remoto |
 | 12:02 | SSH: «Connection closed by remote host» y luego «exec request failed on channel 0» — la **cuota de procesos** del hosting compartido, agotada por la sesión colgada (ya vista en esta misma sesión con el error de hilos de `glib`) | Se mató la tarea local colgada. Vigilante en segundo plano hasta que SSH vuelva. **No se despliega sin SSH**: no se podría verificar, y lanzar `npm install` + dos builds en un host al límite de procesos es pedir que falle. La prueba del cliente viejo se hizo mientras tanto por una vía equivalente y local (ver 1b) |
+| 12:56–12:59 | **Resuelto.** La sonda devolvió `ok` seguido de `bash: fork: Resource temporarily unavailable`: el `exec` conseguía su bash pero ese bash no podía crear ni un `ps`. Es el tope de `nproc` de LVE, que **cuenta hilos**: el `lsnode` de la app tiene **59**, así que la cuenta vive pegada al techo y un proceso de más la desborda | Con una sesión que no puede hacer `fork` solo sirven los *builtins* de bash. Se listó `/proc` con `for`/`read`/`echo` (sin `$(…)`, sin tuberías, sin binarios), se vio el zombi — `node /tmp/leer-viejo.cjs`, de la ronda cuya conexión se cortó, que siguió vivo colgado del pooler — y se mató con el `kill` interno. `fork` volvió al instante; quedan la app y la sesión. **Riesgo del hosting para el informe:** cualquier proceso extra en el servidor compite con los hilos de la app; SSH y los builds de hbuilds están siempre al borde. Mientras tanto se adelantaron en local las fases 2 y 3 enteras |
+| 13:00 | **Paso 1c ejecutado**: `git push origin paso-react-hooks:Dev` (fast-forward comprobado antes con `merge-base`); `Dev` local alineado | Vigilante HTTP del cambio de *bundle* para no gastar sesiones SSH durante el build; la verificación SSH del paso 1d, al terminar |
+| 13:01–13:02 | **El despliegue de `9616997` FALLÓ en hbuilds** y **producción quedó intacta**: `current` sigue en `ba3e636`, la app lleva 4 días viva, `health` 401. La instalación pasó (no es el `esbuild`); falló `tsc --noEmit -p tsconfig.build.json` del frontend, antes de `vite build` («Build failed after 1m 15s») | Causa **exacta**: `vitest.config.ts(3,30): Cannot find module 'vitest/config'`. En la fase 0 metí `vitest.config.ts` en el `include` del `tsconfig.json` para que el lint lo analizara con tipos; `tsconfig.build.json` lo hereda y solo excluía las pruebas, así que el build de producción pasó a comprobar la configuración de un *runner* que no se despliega, y en el servidor `vitest` no está al construir. **En local no se reprodujo** porque `vitest` sí está: el criterio de terminado corría `typecheck` (`tsconfig.json`) y nunca el `build`. **Corrección:** excluir `vitest.config.ts` en `tsconfig.build.json` (una línea, con su porqué), en un commit encima de `9616997` empujado a `Dev`; las ramas de las fases 2–4 rebasadas encima y republicadas. **Desde ahora el criterio de terminado incluye `npm run build` de los dos lados**, que es lo que corre hbuilds |
 
 ---
 
@@ -209,7 +233,88 @@ dependencias nuevas sin motivo; no escribir hasta el informe final.
   y `@coco/lectura` typecheck limpio. 23 archivos en el commit, incluido este
   registro.
 
-### Fase 3 · un solo cerebro en la API — EN CURSO (rama `fase-3-cerebro-en-la-api`, desde `f430ebf`)
+### Fase 3 · un solo cerebro en la API — HECHA EN LOCAL (rama `fase-3-cerebro-en-la-api`, commit `577a3c2`, desde `f430ebf`) · pendiente de integrar
+
+**Migración (solo local, aditiva):**
+
+```sql
+CREATE TYPE "TransactionSource" AS ENUM ('web', 'ios_manual', 'ios_photo', 'wallet', 'sms');
+ALTER TABLE "transactions" ADD COLUMN "captured_at" TIMESTAMPTZ(3),
+  ADD COLUMN "por_revisar" BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN "raw_text" TEXT,
+  ADD COLUMN "source" "TransactionSource" NOT NULL DEFAULT 'web';
+```
+
+`20261004124024_fuente_texto_y_revision_en_movimientos`. La prueba de que el
+código de producción no se rompe con ella es la misma que en la fase 1 y se
+repetirá contra el cliente de `9616997`/`f430ebf` antes de aplicarla.
+
+**Verificación final:** `@coco/types` y `@coco/lectura` typecheck OK; API
+typecheck y lint OK, **311 unitarias** (21 suites) y **172 e2e** (8 suites,
+1 saltada con motivo); frontend typecheck y lint OK, **360 pruebas** (43
+archivos). 30 archivos en el commit.
+
+**«Terminado cuando» de la fase:** un SMS bancario → gasto clasificado en
+una petición, y repetido no duplica: probado de punta a punta en
+`captura.e2e-spec.ts` contra la base local (`coco_test`) con el arnés real
+de la API. La migración **no** está en producción.
+
+**Cómo se verificó lo demás:** idempotencia (previa + carrera P2002),
+certeza alta/media/ninguna, Wallet→SMS fusiona a los 2 min, parcial a los 45
+min marca, mismo origen no fusiona, `interpret` no escribe, la web sigue
+registrando y acepta las columnas nuevas — todo en e2e; `interpretar()` y
+`decidirDuplicado()` además en unitarias (14 + 12).
+
+### Fase 4 · API lista para iOS — HECHA EN LOCAL (rama `fase-4-api-lista-para-ios`, sobre `ba1c9d2`) · sin esquema · pendiente de integrar tras la fase 3
+
+**Verificación final (criterio ampliado, F4-14):** `@coco/types` y
+`@coco/lectura` typecheck y build OK; API typecheck y lint OK, **315
+unitarias** (23 suites) y **182 e2e** (10 suites, 1 saltada), `npm run build`
+OK con `dist/main.js`; frontend typecheck y lint OK, **360 pruebas**, `npm run
+build` OK. Más la prueba manual contra Supabase real de desarrollo (arriba).
+
+**Lo que la fase pedía, y dónde está:** 4.1 en `auth.controller.ts`
+(cabecera `X-Coco-Cliente: nativo`, refresh por cuerpo, cookie intacta para la
+web) y en `@coco/types` (`SesionResponse.refresh_token?`,
+`CABECERA_CLIENTE_NATIVO`, `RefreshNativoRequest`); 4.2 proyecto
+`cocoApp-dev` creado y conectado al entorno local; 4.3 `CONTRATO_DE_SOPORTES`
+en `@coco/types` con `soportes.contrato.spec.ts` que lo mantiene sincronizado;
+4.4 `auth-nativo.e2e-spec.ts` (12 pruebas: login, refresh con rotación,
+logout, logout-all/revocación, mismo guard, web intacta) sobre el arnés e2e
+que ya existía — el plan lo creía la primera e2e del proyecto; era la décima
+suite.
+
+| # | Decisión | Motivo |
+|---|---|---|
+| F4-1 | El cliente nativo se identifica por **cabecera** `X-Coco-Cliente: nativo`, no por un campo del cuerpo | Es una propiedad del cliente, no de la petición: `refresh` y `logout` no llevan cuerpo en la web. Los mismos tres endpoints sirven a los dos sin que la web cambie en nada. El plan pedía proponer una de las dos |
+| F4-2 | Con la cabecera, el refresh token entra y sale por el **cuerpo** (`refresh_token`); sin ella, por la cookie, exactamente como hoy. **Nunca en la URL** | Una app no puede mantener una cookie `httpOnly; sameSite: strict`; una URL queda en registros de servidores, proxies e historiales |
+| F4-3 | Un cliente nativo **no mira la cookie** aunque venga, ni se le borra ninguna al fallar el refresh | Mezclar los dos mundos abriría una puerta rara; al nativo el 401 le dice que tire su token del llavero |
+| F4-4 | El doble `SupabaseAuthFalso` pasa a **rotar** el refresh token (invalida el usado) | Supabase real lo hace. Sin eso, el e2e no podría probar «rotación» y una prueba podría dar por buena una renovación que en producción fallaría al segundo uso |
+| F4-5 | Rotación, revocación por `sessions_valid_from` y throttles **no se tocan**: el e2e nativo los comprueba (rotación, logout, logout-all, mismo guard) y la web se re-comprueba en el mismo archivo | Son exactamente las cuatro cosas que 4.1 dice que deben seguir aplicando |
+| F4-6 | El contrato de soportes va en `@coco/types` (`CONTRATO_DE_SOPORTES`) con una **prueba en la API que lee las dos fuentes** y falla si se separan | El plan daba a elegir entre `packages/types` y un archivo de la API. En los tipos lo lee cualquier cliente; la prueba evita que sea una copia que envejece, que es el riesgo de documentar números |
+| F4-7 | `supabase projects create` **sin `--size`**: «Instance size cannot be specified for free plan organizations» | El plan gratuito no admite elegir tamaño; el primer intento lo pedía. Documentado como pide A.3 |
+| F4-8 | **Proyecto de desarrollo creado**: `cocoApp-dev`, ref `doovdfpvyaszkquvmhnm`, `us-east-1`, org Loatech, plan gratuito, `ACTIVE_HEALTHY`. Su JWKS publica una clave **ES256** (P-256), así que la verificación de tokens de la API funciona sin cambios. Claves (anon/service heredadas y publishable/secret nuevas) y contraseña de la base en `api/.env.supabase-dev` (600, ignorado) | 4.2 tal cual. Nada de esto va a git ni al informe en claro: el informe dice dónde está |
+| F4-9 | El entorno local apunta al proyecto de desarrollo con las **claves heredadas** (anon/service JWT), no con las `sb_*` nuevas | Paridad con producción: la API usa `apikey` + `Bearer` con esas; cambiar el formato de clave es otra decisión y no de esta fase |
+| F4-10 | `PERMITIR_AUTH_DESTRUCTIVA=si` en `api/.env` **local** | Es el día para el que existe la válvula (fase 0): con un Auth de desarrollo aparte, crear/borrar cuentas desde local ya no toca a nadie. Producción no la lleva |
+| F4-11 | El usuario local se crea en el Auth de desarrollo por el endpoint de administración con una **contraseña generada**, guardada solo en `api/.env.supabase-dev`; su `auth_id` en `coco_dev` se reapunta al uid nuevo | No conozco la contraseña real del usuario y no debo pedirla; la de desarrollo es suya en cuanto lea el informe. Desde aquí el login local no escribe nada en la autenticación de producción: **se cierra lo que la fase 0 dejó abierto** |
+| F4-12 | **Hallazgo del hosting:** el `npm install --legacy-peer-deps` de hbuilds instala 485 paquetes —exactamente los mismos que el 18-sep— y **no instala `vitest`** aunque está en el lockfile; `vite`, `tsc` y `nest` sí. Por eso el build de producción no puede depender de nada que solo exista para las pruebas | Va a riesgos del informe: la instalación del servidor no coincide con el lockfile y no sabemos qué más omite |
+
+**4.2 y 4.4 verificados en local, contra Supabase real de desarrollo (13:13):**
+la API local arranca sin errores apuntando a `cocoApp-dev`; `POST /auth/login`
+web → 200 con cookie `coco_refresh` y **sin** `refresh_token` en el cuerpo;
+`/auth/me` 200; `/auth/refresh` con la cookie 200; `/dashboard` 200 (el
+resumen, con la fase 1 incluida). Camino nativo: login → 200 con
+`refresh_token` en el cuerpo y **sin** cookie; refresh por cuerpo → token nuevo
+y distinto (rotación real de Supabase); logout por cuerpo → 204. **El entorno
+local ya no toca la autenticación de producción: lo que la fase 0 dejó
+señalado como pendiente queda cerrado.**
+
+| # | Decisión | Motivo |
+|---|---|---|
+| F4-13 | El arreglo del `dist` (quitar el `path` de `@coco/lectura` del tsconfig de la API) va como **commit propio en la línea de la fase 3** y la punta de esa rama se mueve encima | El fallo es de la fase 3 y su despliegue tiene que llevarlo; la fase 4 aún no tenía commits propios, así que no hubo que rebasar nada. Las ramas de trabajo se republican con `--force` (el servidor solo trae `Dev`) |
+| F4-14 | El criterio de terminado pasa a incluir **`npm run build` de API y frontend y la existencia de `api/dist/main.js`** | Dos fallos seguidos (el `vitest.config.ts` y el `dist/` desplazado) habrían pasado typecheck, lint y pruebas y roto producción. Es lo que hbuilds ejecuta, así que es lo que hay que ejecutar antes |
+
+#### Decisiones de la fase 3
 
 | # | Decisión | Motivo |
 |---|---|---|
@@ -247,6 +352,13 @@ criterio «pruebas pasan» de cada fase incluye desde ahora `test:e2e`.
 Importante para la fase 0: el arnés sustituye `SupabaseAuthService` entero por
 un doble en memoria, así que el candado de `llamar()` no interviene en e2e y
 las pruebas de registro siguen sin tocar la autenticación real.
+
+| # | Decisión | Motivo |
+|---|---|---|
+| F3-19 | Tres expectativas e2e **desfasadas** se actualizan a lo que ya hace producción: la plantilla siembra 9 nodos (no >40) y el nivel del desglose se llama `categoría` (no `grupo`) | Son cambios del 17-sep y del renombrado grupo→categoría, ambos ya desplegados antes del plan. La prueba describía la aplicación anterior; su intención se conserva |
+| F3-20 | La e2e «permite aceptar un duplicado señalado» queda en **`it.skip`** con el motivo escrito encima | Aceptar una fila duplicada choca con el índice único `(user_id, external_ref)` del 17-sep (lo necesitan los cobros automáticos) y devuelve 409. Resolver esa contradicción es una decisión de producto fuera de la fase 3 → **pendientes del informe**. Saltarla y no borrarla deja la pregunta a la vista |
+| F3-21 | Mi prueba de «la web manda `raw_text`» se **reescribe**: en modo manual adjuntar no lee el recibo, así que `raw_text` va `null`; se comprueba `source: 'web'`, el valor, y que `leerSoporte` no se llamó | Mi premisa era falsa y otra prueba («un movimiento que se registra a mano NO se relee encima») protege justo ese comportamiento. El camino de lectura queda cubierto por la e2e de la API (la columna entra) y por el cableado revisado de la ficha |
+| F3-22 | Nuevo `test/captura.e2e-spec.ts` (11 pruebas) que crea el árbol por Prisma y pega a los endpoints reales con el arnés existente | Es la prueba del «terminado cuando» de la fase: un SMS → gasto clasificado en una petición, y repetido no duplica. Contra `coco_test`, con `SupabaseAuthFalso`, sin tocar nada remoto |
 
 ### Fase 2 · borrador del diccionario del sistema (2.3) — implementado tal cual
 

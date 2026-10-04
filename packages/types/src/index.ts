@@ -126,6 +126,32 @@ export interface SesionResponse {
   /** Segundos de vida del access token. Corto (900) para acotar un robo. */
   expires_in: number;
   user: PerfilPublico;
+  /**
+   * SOLO para un cliente nativo (ver `CABECERA_CLIENTE_NATIVO`). La web nunca
+   * lo recibe aquí: su refresh viaja en una cookie httpOnly que ningún script
+   * puede leer. Una app no puede guardar esa cookie, así que lo recibe en el
+   * cuerpo y lo guarda ella en el llavero del sistema.
+   */
+  refresh_token?: string;
+}
+
+/**
+ * Cómo se identifica un cliente nativo ante `/auth/login`, `/auth/refresh` y
+ * `/auth/logout`.
+ *
+ * Por CABECERA y no por un campo del cuerpo: es una propiedad del cliente, no
+ * de la petición —`refresh` y `logout` no llevan cuerpo en la web—, y así los
+ * mismos tres endpoints sirven a los dos sin que la web cambie en nada. Con
+ * la cabecera, el refresh token entra y sale por el cuerpo
+ * (`RefreshNativoRequest`, `SesionResponse.refresh_token`); sin ella, por la
+ * cookie, como siempre.
+ */
+export const CABECERA_CLIENTE_NATIVO = 'x-coco-cliente';
+export const CLIENTE_NATIVO = 'nativo';
+
+/** Lo que un cliente nativo manda a `/auth/refresh` y `/auth/logout`. */
+export interface RefreshNativoRequest {
+  refresh_token: string;
 }
 
 export interface RegistroResponse {
@@ -350,6 +376,38 @@ export interface Tag {
   name: string;
   color: string | null;
 }
+
+// ─── Soportes: el contrato para cualquier cliente ─────────────────────────────
+
+/**
+ * Lo que tiene que cumplir quien suba un soporte a `POST /transactions/:id/soportes`.
+ *
+ * Es el mismo endpoint que usa la web; la app del teléfono lo usa tal cual.
+ * Los números salen del código de la API —`soportes.controller.ts` y
+ * `soportes.optimizacion.ts`— y una prueba allí falla si se separan.
+ *
+ * ── Tamaño recomendado ──────────────────────────────────────────────────────
+ * Es lo que hace la web antes de subir (`lib/encoger-soporte.ts`): el lado
+ * mayor a 1600 px y JPEG de calidad 0,85. Una foto de doce megapíxeles pesa
+ * 4 MB y no se lee mejor; a 1600 px pesa 300 KB y el OCR saca lo mismo. El
+ * servidor acepta hasta el límite, pero en un plan compartido cada megabyte
+ * que no viaja es un hilo que no se abre.
+ */
+export const CONTRATO_DE_SOPORTES = {
+  endpoint: 'POST /transactions/:id/soportes',
+  /** `multipart/form-data`, y este es el nombre del campo. Varios archivos, el mismo nombre. */
+  campo: 'archivos',
+  maximo_por_subida: 10,
+  /** Por archivo, en bytes. */
+  tamano_maximo_bytes: 26214400,
+  /** Lo único que se acepta. Un HEIC hay que convertirlo antes; un SVG nunca. */
+  tipos: ['application/pdf', 'image/jpeg', 'image/png'],
+  recomendado: {
+    lado_maximo_px: 1600,
+    formato: 'image/jpeg',
+    calidad: 0.85,
+  },
+} as const;
 
 // ─── Interpretar y capturar (la API como único cerebro) ─────────────────────
 

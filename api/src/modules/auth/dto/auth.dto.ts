@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { LONGITUD_MAXIMA, LONGITUD_MINIMA } from '../password.policy';
 
 /**
@@ -64,4 +64,15 @@ export class ChangePasswordDto {
   @MinLength(LONGITUD_MINIMA)
   @MaxLength(LONGITUD_MAXIMA)
   newPassword!: string;
+}
+
+/**
+ * Lo que trae el cuerpo de `/auth/refresh` y `/auth/logout` cuando el cliente
+ * es nativo. En la web el cuerpo va vacío y la credencial es la cookie.
+ */
+export class RefreshNativoDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(4096)
+  refresh_token?: string;
 }

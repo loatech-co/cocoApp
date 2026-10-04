@@ -22,7 +22,7 @@ import {
   type ParDeTokens,
   type PerfilPublico,
 } from './auth.service';
-import { ChangePasswordDto, LoginDto, RegisterDto } from './dto/auth.dto';
+import { ChangePasswordDto, LoginDto, RefreshNativoDto, RegisterDto } from './dto/auth.dto';
 
 /** El refresh token viaja SOLO en esta cookie; nunca en el cuerpo ni en la URL. */
 const COOKIE_REFRESH = 'coco_refresh';
@@ -32,6 +32,34 @@ interface RespuestaDeSesion {
   access_token: string;
   expires_in: number;
   user: PerfilPublico;
+  /** Solo para un cliente nativo. La web nunca lo recibe en el cuerpo. */
+  refresh_token?: string;
+}
+
+/**
+ * ── El cliente nativo ───────────────────────────────────────────────────────
+ * La web guarda el refresh token en una cookie `httpOnly; sameSite: strict`,
+ * que es lo correcto para un navegador: ningún script la lee. Una app del
+ * teléfono no puede mantener esa cookie, así que, si se identifica con esta
+ * cabecera, el refresh token entra y sale por el CUERPO y ella lo guarda en el
+ * llavero del sistema.
+ *
+ * Por cabecera y no por un campo del cuerpo porque es una propiedad del
+ * cliente y no de la petición —`refresh` y `logout` no llevan cuerpo en la
+ * web— y así los mismos tres endpoints sirven a los dos sin que la web cambie
+ * en nada. Lo que NO cambia para nadie: el token rota en cada renovación, la
+ * revocación por `sessions_valid_from` aplica igual, y los límites de
+ * intentos son los mismos.
+ *
+ * Nunca en la URL: una URL queda en registros de servidores, proxies e
+ * historiales.
+ */
+const CABECERA_CLIENTE = 'x-coco-cliente';
+const CLIENTE_NATIVO = 'nativo';
+
+function esClienteNativo(request: Request): boolean {
+  const valor = request.headers[CABECERA_CLIENTE];
+  return (Array.isArray(valor) ? valor[0] : valor) === CLIENTE_NATIVO;
 }
 
 @Controller('auth')
@@ -79,8 +107,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<RespuestaDeSesion> {
     const { tokens, perfil } = await this.auth.entrar(dto, contextoDe(request));
-    this.ponerCookie(response, tokens.refreshToken);
-    return respuestaDeSesion(tokens, perfil);
+    return this.entregarSesion(request, response, tokens, perfil);
   }
 
   /**
@@ -94,20 +121,22 @@ export class AuthController {
   async refrescar(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
+    @Body() cuerpo: RefreshNativoDto,
   ): Promise<RespuestaDeSesion> {
-    const refreshToken = leerCookie(request, COOKIE_REFRESH);
+    const refreshToken = this.refreshTokenDe(request, cuerpo);
     if (!refreshToken) {
       throw new UnauthorizedException('No hay sesión que renovar.');
     }
 
     try {
       const { tokens, perfil } = await this.auth.refrescar(refreshToken, contextoDe(request));
-      this.ponerCookie(response, tokens.refreshToken);
-      return respuestaDeSesion(tokens, perfil);
+      return this.entregarSesion(request, response, tokens, perfil);
     } catch (error) {
       // Si la sesión murió, la cookie sobra: dejarla haría que el cliente
-      // reintentara en bucle contra un token que ya no sirve.
-      this.borrarCookie(response);
+      // reintentara en bucle contra un token que ya no sirve. A un cliente
+      // nativo no se le borra nada: el token vive en su llavero, y el 401 le
+      // dice que lo tire.
+      if (!esClienteNativo(request)) this.borrarCookie(response);
       throw error;
     }
   }
@@ -125,9 +154,10 @@ export class AuthController {
   async salir(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
+    @Body() cuerpo: RefreshNativoDto,
   ): Promise<void> {
-    await this.auth.salir(leerCookie(request, COOKIE_REFRESH), contextoDe(request));
-    this.borrarCookie(response);
+    await this.auth.salir(this.refreshTokenDe(request, cuerpo), contextoDe(request));
+    if (!esClienteNativo(request)) this.borrarCookie(response);
   }
 
   /** Cierra la sesión en todos los dispositivos, con efecto inmediato. */
@@ -163,6 +193,33 @@ export class AuthController {
     // Cambiar la contraseña cierra todas las sesiones, incluida esta: si un
     // atacante tenía una abierta, muere aquí.
     this.borrarCookie(response);
+  }
+
+  // ── Web o nativo ───────────────────────────────────────────────────────────
+
+  /**
+   * De dónde sale el refresh token: del cuerpo si el cliente es nativo, de la
+   * cookie si no. Nunca de los dos a la vez: un cliente nativo que mandara
+   * también una cookie estaría mezclando dos mundos, y se le hace caso al
+   * suyo.
+   */
+  private refreshTokenDe(request: Request, cuerpo: RefreshNativoDto): string | undefined {
+    if (esClienteNativo(request)) return cuerpo.refresh_token?.trim() || undefined;
+    return leerCookie(request, COOKIE_REFRESH);
+  }
+
+  /** La sesión, por donde corresponda: cookie para la web, cuerpo para la app. */
+  private entregarSesion(
+    request: Request,
+    response: Response,
+    tokens: ParDeTokens,
+    perfil: PerfilPublico,
+  ): RespuestaDeSesion {
+    if (esClienteNativo(request)) {
+      return { ...respuestaDeSesion(tokens, perfil), refresh_token: tokens.refreshToken };
+    }
+    this.ponerCookie(response, tokens.refreshToken);
+    return respuestaDeSesion(tokens, perfil);
   }
 
   // ── Cookie ─────────────────────────────────────────────────────────────────

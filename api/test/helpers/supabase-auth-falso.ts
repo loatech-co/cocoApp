@@ -59,6 +59,10 @@ export class SupabaseAuthFalso {
     if (!authId) return Promise.resolve(null);
     const cuenta = this.cuentas.get(authId);
     if (!cuenta) return Promise.resolve(null);
+    // ROTACIÓN, como hace Supabase de verdad: el token que se acaba de usar
+    // muere y nace otro. Sin esto, una prueba podría dar por buena una
+    // renovación que en producción fallaría al segundo uso del mismo token.
+    this.refrescos.delete(refreshToken);
     return Promise.resolve(this.abrirSesion(authId, cuenta.email));
   }
 
