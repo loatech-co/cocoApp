@@ -72,7 +72,7 @@ beforeEach(() => {
     observe(): void {}
     unobserve(): void {}
     disconnect(): void {}
-  } as unknown as typeof ResizeObserver;
+  };
 });
 
 afterEach(cleanup);

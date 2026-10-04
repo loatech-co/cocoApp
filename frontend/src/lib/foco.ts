@@ -62,8 +62,8 @@ export function useFocoAtrapado(caja: RefObject<HTMLElement | null>, activo: boo
         return;
       }
 
-      const primero = lista[0]!;
-      const ultimo = lista[lista.length - 1]!;
+      const primero = lista[0];
+      const ultimo = lista[lista.length - 1];
       const actual = document.activeElement;
 
       if (e.shiftKey && (actual === primero || actual === el)) {

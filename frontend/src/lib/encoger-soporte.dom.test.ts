@@ -40,7 +40,7 @@ function fingirNavegador({
 
   vi.spyOn(document, 'createElement').mockImplementation((etiqueta: string) => {
     if (etiqueta !== 'canvas') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+       
       return Object.getPrototypeOf(document).createElement.call(document, etiqueta);
     }
     return {

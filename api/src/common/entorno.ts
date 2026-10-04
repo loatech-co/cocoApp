@@ -27,8 +27,11 @@
  * Solo se quitan las comillas EMPAREJADAS de los extremos. Una ruta que de
  * verdad lleve una comilla en medio se queda como está.
  */
-export function leerDelEntorno(nombre: string): string | undefined {
-  const crudo = process.env[nombre]?.trim();
+export function leerDelEntorno(
+  nombre: string,
+  entorno: NodeJS.ProcessEnv = process.env,
+): string | undefined {
+  const crudo = entorno[nombre]?.trim();
   if (!crudo) return undefined;
 
   const limpio = sinComillas(crudo);
@@ -42,4 +45,65 @@ export function sinComillas(valor: string): string {
     return valor.slice(1, -1).trim();
   }
   return valor;
+}
+
+/** Los únicos hosts que cuentan como «mi máquina». */
+const HOSTS_LOCALES = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0', 'host.docker.internal']);
+
+/** La válvula de escape, para cuando apuntar fuera es deliberado. */
+export const PERMISO_DE_BASE_REMOTA = 'PERMITIR_BASE_REMOTA';
+
+/** El host de una URL de conexión, o `null` si no se puede leer. */
+export function hostDeLaBase(url: string): string | null {
+  try {
+    return new URL(url).hostname || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Por qué esta API NO debería arrancar, o `null` si puede.
+ *
+ * ── El accidente que esto impide ────────────────────────────────────────────
+ * `api/.env` apuntaba al Postgres de producción. Cualquier `npm run dev`,
+ * cualquier script de prueba y cualquier experimento escribía en los datos de
+ * verdad sin que nada lo dijera. Ya costó un incidente: los recibos subidos en
+ * local creaban su ficha en la base compartida y dejaban el archivo en el
+ * disco del portátil, así que en producción salían como inexistentes.
+ *
+ * El error no fue de nadie en particular: era la configuración por defecto.
+ *
+ * ── Por qué una lista de hosts LOCALES y no «bloquear Supabase» ─────────────
+ * Porque la pregunta correcta no es «¿esto es producción?» sino «¿esto es mi
+ * máquina?». Nombrar a Supabase deja pasar cualquier otra base remota —una
+ * copia en un servidor, la de un compañero— que tampoco debería recibir
+ * escrituras de una sesión de desarrollo. Lo que se permite se enumera; lo
+ * demás se niega.
+ *
+ * ── Y por qué hay válvula de escape ─────────────────────────────────────────
+ * Porque esto defiende de un DESCUIDO, no de una decisión. Quien de verdad
+ * necesite apuntar fuera lo dice en voz alta con `PERMITIR_BASE_REMOTA=si`, y
+ * entonces es un acto deliberado que se ve en el entorno y en el registro, no
+ * un valor heredado que nadie revisó.
+ */
+export function porQueNoArrancar(entorno: NodeJS.ProcessEnv = process.env): string | null {
+  if ((entorno.NODE_ENV ?? '').trim() === 'production') return null;
+  if (leerDelEntorno(PERMISO_DE_BASE_REMOTA, entorno)?.toLowerCase() === 'si') return null;
+
+  const url = leerDelEntorno('DATABASE_URL', entorno);
+  if (!url) return null; // Sin URL falla más abajo, con su propio mensaje.
+
+  const host = hostDeLaBase(url);
+  if (host === null) return null; // Ilegible: que se queje quien la use.
+  if (HOSTS_LOCALES.has(host)) return null;
+
+  return (
+    `DATABASE_URL apunta a «${host}», que no es tu máquina, y NODE_ENV no es ` +
+    `«production».\n\n` +
+    `La API no arranca: una sesión de desarrollo no debe escribir en una base ` +
+    `remota. Apunta DATABASE_URL y DIRECT_URL al Postgres local —el mismo de ` +
+    `api/.env.migrate— o, si de verdad quieres salir fuera, dilo con ` +
+    `${PERMISO_DE_BASE_REMOTA}=si.`
+  );
 }

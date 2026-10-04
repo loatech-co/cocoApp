@@ -1,4 +1,4 @@
-import { leerDelEntorno, sinComillas } from './entorno';
+import { PERMISO_DE_BASE_REMOTA, leerDelEntorno, porQueNoArrancar, sinComillas } from './entorno';
 
 /**
  * Una variable de entorno con comillas dentro del valor.
@@ -54,5 +54,54 @@ describe('Leer del entorno', () => {
   it('recorta el espacio de los dos lados de las comillas', () => {
     process.env.PRUEBA = '  " /usr/bin/gs "  ';
     expect(leerDelEntorno('PRUEBA')).toBe('/usr/bin/gs');
+  });
+});
+
+/**
+ * Que una sesión de desarrollo no pueda escribir en una base remota.
+ *
+ * `api/.env` apuntaba al Postgres de producción, así que cualquier `npm run
+ * dev` escribía en los datos de verdad sin que nada lo dijera. El error no era
+ * de nadie: era el valor por defecto.
+ */
+describe('Negarse a arrancar contra una base que no es la mía', () => {
+  const local = { NODE_ENV: 'development', DATABASE_URL: 'postgresql://u:p@localhost:5432/coco_dev' };
+  const remota = {
+    NODE_ENV: 'development',
+    DATABASE_URL: 'postgresql://u:p@aws-0-us-east-1.pooler.supabase.com:5432/postgres',
+  };
+
+  it('deja pasar la base local', () => {
+    expect(porQueNoArrancar(local)).toBeNull();
+    expect(porQueNoArrancar({ ...local, DATABASE_URL: 'postgresql://u:p@127.0.0.1:5432/x' })).toBeNull();
+  });
+
+  it('frena cualquier host remoto, no solo Supabase', () => {
+    // La pregunta no es «¿esto es producción?» sino «¿esto es mi máquina?».
+    expect(porQueNoArrancar(remota)).toContain('no es tu máquina');
+    expect(
+      porQueNoArrancar({ ...local, DATABASE_URL: 'postgresql://u:p@db.ejemplo.com:5432/x' }),
+    ).toContain('no es tu máquina');
+  });
+
+  it('en producción no se mete', () => {
+    expect(porQueNoArrancar({ ...remota, NODE_ENV: 'production' })).toBeNull();
+  });
+
+  it('se puede salir fuera, pero diciéndolo en voz alta', () => {
+    expect(porQueNoArrancar({ ...remota, [PERMISO_DE_BASE_REMOTA]: 'si' })).toBeNull();
+    // Cualquier otra cosa no vale: el permiso es explícito o no es.
+    expect(porQueNoArrancar({ ...remota, [PERMISO_DE_BASE_REMOTA]: 'true' })).not.toBeNull();
+  });
+
+  it('el mensaje dice qué hacer, no solo que no', () => {
+    const dicho = porQueNoArrancar(remota) ?? '';
+    expect(dicho).toContain('api/.env.migrate');
+    expect(dicho).toContain(PERMISO_DE_BASE_REMOTA);
+  });
+
+  it('sin DATABASE_URL no es asunto suyo', () => {
+    // Falta la variable: que se queje quien la necesita, con su propio error.
+    expect(porQueNoArrancar({ NODE_ENV: 'development' })).toBeNull();
   });
 });

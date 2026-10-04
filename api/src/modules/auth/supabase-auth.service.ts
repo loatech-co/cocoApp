@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException, Logger, UnauthorizedException
 import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
+import { esCorreoRepetido } from './supabase-auth.errores';
+
 /**
  * Cliente de Supabase Auth (GoTrue).
  *
@@ -167,7 +169,7 @@ export class SupabaseAuthService {
 
     const id = respuesta.datos?.id;
     if (typeof id !== 'string') this.reventar(respuesta, 'crear el usuario');
-    return id as string;
+    return id;
   }
 
   async cambiarContrasena(authId: string, nueva: string): Promise<void> {
@@ -246,11 +248,11 @@ export class SupabaseAuthService {
     }
 
     return {
-      accessToken: accessToken as string,
-      refreshToken: refreshToken as string,
+      accessToken,
+      refreshToken,
       expiresIn: typeof d?.expires_in === 'number' ? d.expires_in : 3600,
-      authId: usuario!.id!,
-      email: usuario!.email ?? '',
+      authId: usuario.id,
+      email: usuario.email ?? '',
     };
   }
 
@@ -296,25 +298,6 @@ interface Respuesta {
  * Es una función suelta y exportada para poder probarla con las respuestas de
  * verdad, sin levantar el servicio ni tocar la red.
  */
-export function esCorreoRepetido(estado: number, datos: Record<string, unknown> | null): boolean {
-  if (estado === 409) return true;
-  if (estado !== 422 && estado !== 400) return false;
-
-  const codigo = String(datos?.error_code ?? datos?.code ?? '').toLowerCase();
-  if (codigo === 'email_exists' || codigo === 'user_already_exists') return true;
-
-  // Solo se consulta el texto cuando no vino código: con código, el código
-  // manda, y un `msg` que hable de otra cosa no puede contradecirlo.
-  if (codigo !== '' && codigo !== '422' && codigo !== '400') return false;
-
-  const mensaje = String(datos?.msg ?? datos?.message ?? '').toLowerCase();
-  return (
-    mensaje.includes('already been registered') ||
-    mensaje.includes('already registered') ||
-    mensaje.includes('already exists')
-  );
-}
-
 function exigir(config: ConfigService, clave: string): string {
   const valor = config.get<string>(clave)?.trim();
   if (!valor) {

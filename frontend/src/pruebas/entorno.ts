@@ -15,7 +15,7 @@
  * esto solo se pone si no hay nada puesto.
  */
 if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
-  window.matchMedia = ((consulta: string) => ({
+  window.matchMedia = (consulta: string) => ({
     matches: false,
     media: consulta,
     onchange: null,
@@ -24,5 +24,5 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
     addEventListener: () => {},
     removeEventListener: () => {},
     dispatchEvent: () => false,
-  })) as unknown as typeof window.matchMedia;
+  });
 }

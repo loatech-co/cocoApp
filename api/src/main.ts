@@ -8,6 +8,7 @@ import { config as cargarEnv } from 'dotenv';
 import { AppModule } from './app.module';
 import { configureApp, parseOrigins } from './bootstrap';
 import { installBigIntSerializer } from './common/serialization/bigint';
+import { porQueNoArrancar } from './common/entorno';
 
 /**
  * Arranque de la API.
@@ -121,6 +122,25 @@ function instalarRedDeSeguridad(): void {
 
 async function bootstrap(): Promise<void> {
   cargarConfiguracion();
+
+  /*
+    Antes de nada: ¿a qué base apunta esto?
+
+    Va AQUÍ, delante de `NestFactory.create`, porque lo que hay que impedir es
+    la conexión. Comprobarlo más tarde —en un módulo, en un guard— ya sería
+    tarde: Prisma se conecta al construirse, así que la sesión contra la base
+    remota ya existiría cuando saltara el aviso.
+
+    Y se sale con código 1, que es lo correcto para un arranque que no debía
+    ocurrir. El código 0 de más abajo es para otra cosa: un pánico de Prisma en
+    marcha, donde LiteSpeed tiene que respawnear sin penalización.
+  */
+  const impedimento = porQueNoArrancar();
+  if (impedimento !== null) {
+    new Logger('Bootstrap').error(impedimento);
+    process.exit(1);
+  }
+
   instalarRedDeSeguridad();
   installBigIntSerializer();
 

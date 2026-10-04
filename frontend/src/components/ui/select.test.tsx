@@ -11,7 +11,7 @@ import { Select } from './select';
  */
 beforeAll(() => {
   Element.prototype.getBoundingClientRect = function (): DOMRect {
-    return { width: 240, height: 40, top: 100, left: 32, right: 272, bottom: 140, x: 32, y: 100, toJSON: () => ({}) } as DOMRect;
+    return { width: 240, height: 40, top: 100, left: 32, right: 272, bottom: 140, x: 32, y: 100, toJSON: () => ({}) };
   };
 });
 

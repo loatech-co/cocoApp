@@ -27,7 +27,7 @@ function fuentes(dir: string, ext: string): string[] {
 
 const SRC = join(import.meta.dirname, '..');
 const archivos = fuentes(SRC, '.tsx');
-const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
+const relativa = (ruta: string): string => ruta.split('/src/')[1];
 
 /**
  * Quién puede nacer enfocado, y por qué.

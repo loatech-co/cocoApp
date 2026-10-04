@@ -15,7 +15,7 @@ afterEach(cleanup);
  */
 function gesto(el: Element, tramos: [x: number, y: number][]): void {
   const [primero, ...resto] = tramos;
-  el.dispatchEvent(new MouseEvent('pointerdown', { clientX: primero![0], clientY: primero![1], bubbles: true }));
+  el.dispatchEvent(new MouseEvent('pointerdown', { clientX: primero[0], clientY: primero[1], bubbles: true }));
   for (const [x, y] of resto) {
     el.dispatchEvent(new MouseEvent('pointermove', { clientX: x, clientY: y, bubbles: true }));
   }

@@ -119,7 +119,7 @@ async function ocr(
   });
 
   try {
-    const { data } = await worker.recognize(fuente as File);
+    const { data } = await worker.recognize(fuente);
     return data.text;
   } finally {
     await worker.terminate();
