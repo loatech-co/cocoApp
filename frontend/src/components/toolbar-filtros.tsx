@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import type { Filtros } from '@/lib/filtros';
 import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import type { TransactionType } from '@coco/types';
 import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { REALCE } from '@/components/ui/superficie';
@@ -96,12 +97,12 @@ export function ToolbarFiltros({
   const [buscando, setBuscando] = useState((filtros.q ?? '') !== '');
   const campo = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  useAlCambiar([filtros.q], () => {
     setBusqueda(filtros.q ?? '');
     // Si el filtro llega puesto desde la URL, el campo tiene que estar a la
     // vista: un recorte activo que no se ve no se puede quitar.
     if ((filtros.q ?? '') !== '') setBuscando(true);
-  }, [filtros.q]);
+  });
 
   useEffect(() => {
     const id = setTimeout(() => {

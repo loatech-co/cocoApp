@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { type RefObject, useEffect, useEffectEvent } from 'react';
 
 /**
  * El foco, mientras una superficie tapa la página.
@@ -85,17 +85,19 @@ export function useFocoAtrapado(caja: RefObject<HTMLElement | null>, activo: boo
 
 /** Escape cierra. Una de las cuatro salidas que tiene toda superficie. */
 export function useEscape(activo: boolean, onCerrar: () => void): void {
-  // En una caja que no cambia de identidad: `onCerrar` suele ser una función
-  // nueva en cada render, y sin esto el oyente se quita y se pone en cada uno.
-  const alCerrar = useRef(onCerrar);
-  alCerrar.current = onCerrar;
+  // Como evento de efecto: `onCerrar` suele ser una función nueva en cada
+  // render, y como dependencia haría que el oyente se quitara y se pusiera en
+  // cada uno. `useEffectEvent` da una función estable que llama siempre a la
+  // más reciente. Antes era una ref escrita durante el render, que es lo que
+  // la regla de los refs prohíbe.
+  const alCerrar = useEffectEvent(onCerrar);
 
   useEffect(() => {
     if (!activo) return;
     const alPulsar = (e: KeyboardEvent): void => {
       // La ficha de encima cierra primero: Escape lo entiende todo el mundo
       // como "quita lo último que abrí", no "quítalo todo".
-      if (e.key === 'Escape' && !document.querySelector('[data-modal]')) alCerrar.current();
+      if (e.key === 'Escape' && !document.querySelector('[data-modal]')) alCerrar();
     };
     document.addEventListener('keydown', alPulsar);
     return () => document.removeEventListener('keydown', alPulsar);

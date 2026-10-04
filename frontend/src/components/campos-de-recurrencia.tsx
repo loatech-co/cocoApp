@@ -1,10 +1,11 @@
 import { Repeat } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {useState} from 'react';
 
 import { Interruptor } from '@/components/ui/interruptor';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { PERIODICIDADES, type Periodicidad } from '@coco/types';
 import { Campo } from '@/components/ui/campo';
 import { CampoDeDinero } from '@/components/ui/campo-de-dinero';
@@ -303,7 +304,7 @@ function CampoDelDia({ dia, onCambiar }: { dia: number; onCambiar: (dia: number)
 
   // El día puede cambiar desde fuera —al abrir la ficha de otro concepto— y lo
   // que se ve tiene que seguirlo.
-  useEffect(() => setEscrito(String(dia)), [dia]);
+  useAlCambiar([dia], () => setEscrito(String(dia)));
 
   return (
     <Campo etiqueta="Día del mes" id="dia-de-pago">

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -317,8 +317,22 @@ describe('El soporte adjuntado al confirmar un pago', () => {
     const recibo = new File(['x'], 'celsia-octubre.png', { type: 'image/png' });
     fireEvent.change(campo, { target: { files: [recibo] } });
 
-    // El piso de la espera: la lectura se ve siempre igual, tarde lo que tarde.
-    await vi.advanceTimersByTimeAsync(4000);
+    /*
+      El piso de la espera: la lectura se ve siempre igual, tarde lo que tarde.
+
+      Y dentro de `act`, que no es adorno. El `setPaso('formulario')` que cierra
+      la lectura corre dentro de un temporizador FALSO, fuera de cualquier
+      evento de React; así que React lo programa por su `Scheduler`, que en
+      jsdom también usa `setTimeout`, y la prueba dependía de que los
+      temporizadores falsos recogieran esa tarea antes de la aserción. Lo
+      hacían si otra prueba del archivo había corrido antes y no si esta corría
+      sola: pasaba en el archivo completo y fallaba aislada, siempre. `act`
+      vacía el trabajo pendiente de React al terminar, y la prueba deja de
+      depender de quién corra antes.
+    */
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4000);
+    });
 
     expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('214.500');
@@ -348,7 +362,10 @@ describe('El soporte adjuntado al confirmar un pago', () => {
       target: { files: [new File(['x'], 'recibo.png', { type: 'image/png' })] },
     });
 
-    await vi.advanceTimersByTimeAsync(4000);
+    // En `act` por lo mismo que la prueba de arriba.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4000);
+    });
 
     expect(vi.mocked(leerSoporte)).not.toHaveBeenCalled();
   });

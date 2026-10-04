@@ -15,6 +15,7 @@ import { mostrarAviso } from '@/components/ui/aviso';
 import { FILA_DE_PANEL } from '@/components/panel-inferior';
 import { MAXIMO_DE_ATAJOS, anadirAtajo, moverAtajo, quitarAtajo, useAtajos } from '@/lib/atajos';
 import { cn } from '@/lib/utils';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { REALCE } from '@/components/ui/superficie';
 
 /**
@@ -89,13 +90,13 @@ export function useSuperficieDeAtajos({
 
   // Los tres estados son efímeros, como el almacén: una pantalla que se reabre
   // en mitad de una edición es una pantalla que se reabre mal.
-  useEffect(() => {
+  useAlCambiar([abierto], () => {
     if (!abierto) {
       setEstado('galeria');
       setBusqueda('');
       setArrastre(null);
     }
-  }, [abierto]);
+  });
 
   // Una ruta guardada cuya página ya no existe se cae aquí, al dibujar: quien
   // sabe qué páginas hay es quien pinta, no el almacén.

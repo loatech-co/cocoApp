@@ -14,14 +14,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from 'react';
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Confirmacion } from '@/components/ui/confirmacion';
@@ -29,6 +22,7 @@ import { ApiClientError, apiBlob } from '@/lib/api-client';
 import { cargarPdfjs } from '@/lib/pdf';
 import { useEliminarSoporte, useSoportes, useSubirSoportes } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import type { Soporte } from '@coco/types';
 import { REALCE_DE_SUPERFICIE, SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 
@@ -138,19 +132,30 @@ export function Soportes({ transactionId }: { transactionId: number }) {
    */
   const [activo, setActivo] = useState(0);
 
-  useEffect(() => {
-    if (lista.length === 0) return;
+  /*
+    Los que el servidor ya dijo que no tiene se marcan de entrada, sin
+    pedirlos: sería una petición que se sabe que va a devolver 404.
 
-    const corte = new AbortController();
-    const creados: string[] = [];
-
-    // Los que el servidor ya dijo que no tiene no se piden: sería una petición
-    // que se sabe que va a devolver 404.
+    Es estado DERIVADO de la lista, no un efecto, así que se ajusta en el
+    render y no dentro del efecto de las descargas. Y por eso la limpieza de
+    ese efecto ya no vacía `fallos`: con la misma firma, esto lo deja como toca
+    —vacío si no hay lista, o con los ausentes— ANTES de que el efecto anterior
+    se limpie. Si la limpieza lo vaciara después, se llevaría la siembra por
+    delante.
+  */
+  useAlCambiar([transactionId, lista.length, intento], () => {
     setFallos(
       Object.fromEntries(
         lista.filter((s) => !s.disponible).map((s) => [String(s.id), 'ausente' as const]),
       ),
     );
+  });
+
+  useEffect(() => {
+    if (lista.length === 0) return;
+
+    const corte = new AbortController();
+    const creados: string[] = [];
 
     for (const s of lista) {
       if (!s.disponible) continue;
@@ -180,7 +185,6 @@ export function Soportes({ transactionId }: { transactionId: number }) {
       // esto, abrir veinte movimientos deja ciento sesenta archivos cargados.
       for (const url of creados) URL.revokeObjectURL(url);
       setUrls({});
-      setFallos({});
     };
     // `lista.length` y no `lista`: la consulta devuelve un array nuevo en cada
     // render y con él las descargas empezarían otra vez sin parar.
@@ -671,10 +675,12 @@ export function LienzoPdf({
   const lienzo = useRef<HTMLCanvasElement>(null);
   const [fallo, setFallo] = useState(false);
 
-  // El aviso del tamaño va en una ref: en las dependencias del efecto haría
-  // que el PDF se volviera a dibujar en cada render del padre.
-  const onTamanoRef = useRef(onTamano);
-  onTamanoRef.current = onTamano;
+  // El aviso del tamaño como evento de efecto: en las dependencias haría que
+  // el PDF se volviera a dibujar en cada render del padre. `useEffectEvent`
+  // da una función estable que llama siempre a la versión más reciente sin
+  // ser dependencia. Antes era una ref escrita durante el render, que hace lo
+  // mismo a mano y es lo que la regla de los refs prohíbe.
+  const avisarTamano = useEffectEvent((ancho: number, alto: number) => onTamano?.(ancho, alto));
 
   useEffect(() => {
     let vivo = true;
@@ -699,7 +705,7 @@ export function LienzoPdf({
         await pagina.render({ canvas: lienzo.current, canvasContext: contexto, viewport: vista })
           .promise;
         await documento.cleanup();
-        if (vivo) onTamanoRef.current?.(vista.width, vista.height);
+        if (vivo) avisarTamano(vista.width, vista.height);
       } catch {
         if (vivo) setFallo(true);
       }
@@ -777,11 +783,11 @@ function Pase({
 
   // Cambiar de soporte reinicia el zoom y la página: seguir en la página 3 de
   // un recibo de una sola hoja deja el visor en blanco.
-  useEffect(() => {
+  useAlCambiar([indice], () => {
     setZoom(NORMAL);
     setPagina(1);
     setPaginas(1);
-  }, [indice]);
+  });
 
   const cambiarZoom = useCallback(
     (paso: number) => setZoom((z) => Math.min(ZOOMS.length - 1, Math.max(0, z + paso))),
@@ -1070,9 +1076,12 @@ function PaginaPdf({
   const [fallo, setFallo] = useState(false);
   const [pintando, setPintando] = useState(true);
 
+  // «Pintando» desde el primer render de cada cambio, no un fotograma después:
+  // es estado que se deriva de que cambió el documento, la página o la escala.
+  useAlCambiar([url, pagina, escala], () => setPintando(true));
+
   useEffect(() => {
     let vivo = true;
-    setPintando(true);
 
     void (async () => {
       try {
@@ -1334,13 +1343,15 @@ export function PreviaDeArchivo({
   // Empieza CENTRADO, y se recentra al cambiar el zoom: ampliar desde una
   // esquina deja mirando un margen en blanco en vez de lo que se estaba
   // leyendo.
-  useEffect(() => {
+  //
+  // Solo al cambiar el documento, la caja o el zoom: recentrar en cada
+  // arrastre pelearía con el dedo. Antes era un efecto con las dependencias
+  // recortadas a mano y una excepción al lint para que lo tolerara; con la
+  // firma explícita la excepción sobra.
+  useAlCambiar([natural, caja.ancho, caja.alto, zoom], () => {
     if (!natural || caja.ancho === 0) return;
     setPos(recortar(limite.x / 2, limite.y / 2));
-    // Solo al cambiar el documento, la caja o el zoom: recentrar en cada
-    // arrastre pelearía con el dedo.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [natural, caja.ancho, caja.alto, zoom]);
+  });
 
   const sePuedeMover = limite.x < 0 || limite.y < 0;
 

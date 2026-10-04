@@ -9,6 +9,7 @@ import { diaCorto } from '@/lib/fechas';
 import { nombreDelMovimiento } from '@/lib/movimientos';
 import { useCategories, useTransactions } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import type { Transaction } from '@coco/types';
 
 /** Cuántos resultados caben antes de que la lista deje de ser una respuesta. */
@@ -48,12 +49,12 @@ export function PanelDeBusqueda({
 
   // Cada apertura empieza en blanco. Reabrir con lo de la vez pasada enseñaría
   // los resultados de una pregunta que ya no se está haciendo.
-  useEffect(() => {
+  useAlCambiar([abierto], () => {
     if (!abierto) {
       setTexto('');
       setConsulta('');
     }
-  }, [abierto]);
+  });
 
   // Se escribe local y se consulta con retraso: sin esto cada tecla dispara
   // una petición y la lista parpadea mientras se escribe.

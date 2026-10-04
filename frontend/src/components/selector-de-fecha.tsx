@@ -1,5 +1,5 @@
-import { CalendarDays } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {  CalendarDays } from 'lucide-react';
+import {useState } from 'react';
 
 import { Calendario, mesDeISO, type MesVisible } from '@/components/calendario';
 import { Menu } from '@/components/menu';
@@ -10,6 +10,7 @@ import { encontrarFecha } from '@/lib/leer-fecha';
 import { PRESETS, rangoDe, type Filtros, type Preset } from '@/lib/filtros';
 import { useHistoria } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { REALCE } from '@/components/ui/superficie';
 
 /**
@@ -103,9 +104,9 @@ function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false
 
   // El campo sigue al valor cuando lo cambia otro: el calendario, o abrir la
   // ficha de otro movimiento sin desmontar esto.
-  useEffect(() => {
+  useAlCambiar([valor], () => {
     setEscrito(valor ? diaLargo(valor) : '');
-  }, [valor]);
+  });
 
   /*
     Lo escrito se confirma al salir del campo o con Enter, no en cada tecla:

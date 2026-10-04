@@ -1,5 +1,5 @@
-import { Eye, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {  Eye, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import {useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import { useEsMovil } from '@/app/movil';
@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import type { Transaction } from '@coco/types';
 
 /**
@@ -122,11 +123,11 @@ export function AppShell() {
   // Cambiar de página cierra lo que esté tapándola. Una hoja que sobrevive a
   // su propio enlace deja a la persona mirando los atajos de una pantalla que
   // ya no está debajo.
-  useEffect(() => {
+  useAlCambiar([ubicacion.pathname], () => {
     setAtajosAbiertos(false);
     setBusquedaAbierta(false);
     setCuentaAbierta(false);
-  }, [ubicacion.pathname]);
+  });
 
   function alternarBarra(): void {
     setPlegada((antes) => {

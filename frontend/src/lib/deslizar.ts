@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { type RefObject, useEffect, useEffectEvent } from 'react';
 
 /**
  * Deslizar para cerrar.
@@ -111,16 +111,20 @@ export function useDeslizarParaCerrar({
   onCerrar: () => void;
 }): void {
   /**
-   * El cierre, guardado en una caja que no cambia de identidad.
+   * El cierre, como evento de efecto.
    *
    * Si el efecto dependiera de `onCerrar` —que en la práctica es una función
    * nueva en cada render— se volvería a enganchar cada vez, y su limpieza
    * borraría el `transform` en línea A MITAD DE UN ARRASTRE: el panel se
    * quedaría plantado bajo el dedo en cuanto cualquier otra cosa de la
    * pantalla se redibujara.
+   *
+   * `useEffectEvent` es la pieza de React para esto: una función estable que
+   * llama siempre a la versión más reciente, sin entrar en las dependencias.
+   * Antes era una ref escrita durante el render, que hace lo mismo a mano y
+   * es lo que la regla de los refs prohíbe.
    */
-  const alCerrar = useRef(onCerrar);
-  alCerrar.current = onCerrar;
+  const alCerrar = useEffectEvent(onCerrar);
 
   useEffect(() => {
     const el = elemento.current;
@@ -201,7 +205,7 @@ export function useDeslizarParaCerrar({
         return;
       }
 
-      alCerrar.current();
+      alCerrar();
 
       /**
        * EL FOTOGRAMA SIGUIENTE, y ahí está todo el truco.

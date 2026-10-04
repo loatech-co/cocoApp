@@ -3,6 +3,7 @@ import { createContext, use, useEffect, useMemo, useState, useSyncExternalStore 
 import type { ReactNode } from 'react';
 
 import * as sesion from './session';
+import { useAlCambiar } from '@/lib/al-cambiar';
 
 interface AuthState {
   usuario: PerfilPublico | null;
@@ -88,9 +89,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     rol a uno mismo. Sin esto quedaría encendida para alguien que ya no tiene
     dónde apagarla: el interruptor solo se le enseña a un administrador.
   */
-  useEffect(() => {
+  useAlCambiar([esAdminDeVerdad], () => {
     if (!esAdminDeVerdad) setViendoComoUsuario(false);
-  }, [esAdminDeVerdad]);
+  });
 
   useEffect(() => {
     // Un único intento al arrancar: si hay cookie de refresh viva, la sesión

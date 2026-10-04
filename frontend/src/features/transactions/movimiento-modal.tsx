@@ -50,6 +50,7 @@ import {
   useEliminarMovimiento,
 } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { Camara } from './camara';
 import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
 import { normalizar, type Lectura } from '@coco/lectura';
@@ -211,7 +212,11 @@ export function MovimientoModal({
 
   // Cada vez que se abre se recarga desde el movimiento: sin esto, abrir para
   // editar el segundo movimiento mostraría los datos del primero.
-  useEffect(() => {
+  //
+  // Durante el render y no en un efecto —ver `useAlCambiar`—: así la ficha
+  // sale pintada ya con los datos buenos, sin un fotograma con los del
+  // movimiento anterior. Son quince estados; en dos tandas se notaba.
+  useAlCambiar([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
     if (!abierta) return;
     setDescription(movimiento?.description ?? '');
     /*
@@ -276,7 +281,7 @@ export function MovimientoModal({
     setRegistrado(null);
     // El foco solo cuando hay algo que escribir: puesto en un campo de solo
     // lectura, el cursor parpadea en un sitio donde no se puede escribir.
-  }, [abierta, movimiento, pago, tipoPorDefecto, descartes]);
+  });
 
   /*
     ── La recurrencia NO se edita aquí ─────────────────────────────────────
@@ -1552,6 +1557,21 @@ function Escaneando({
   useEffect(() => {
     if (!archivo) return;
     const creado = URL.createObjectURL(archivo);
+    /*
+      Un `blob:` es un recurso del navegador con ciclo de vida —se crea, se
+      usa, se suelta— y el sitio de un ciclo de vida es un efecto con su
+      limpieza. La regla pide no escribir estado dentro de un efecto, pero
+      aquí el estado es solo el asa del recurso: no hay forma de tener el
+      `blob:` sin crearlo, y crearlo en el render sería un efecto secundario
+      sin limpieza posible.
+
+      La alternativa que la regla sugiere —`useMemo` para crearlo y un efecto
+      solo para soltarlo— se rompe con `StrictMode`: React simula desmontar y
+      volver a montar, la limpieza suelta el `blob:` y el memo, que no se
+      repite, queda apuntando a uno que ya no existe. La imagen sale rota en
+      desarrollo. Esta es la forma correcta, y la excepción lo dice.
+    */
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- recurso con ciclo de vida, ver arriba
     setUrl(creado);
     return () => {
       URL.revokeObjectURL(creado);
@@ -1690,6 +1710,10 @@ function SoportesPendientes({
 
   useEffect(() => {
     const creados = archivos.map((a) => URL.createObjectURL(a));
+    // El mismo caso que el `blob:` de `Escaneando`, y por el mismo motivo:
+    // recurso del navegador con ciclo de vida, y `useMemo` se rompe con
+    // `StrictMode`. Ver la explicación larga allí.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- recurso con ciclo de vida
     setUrls(creados);
     // Cada blob vive en la memoria de la pestaña hasta que se le suelta.
     return () => {

@@ -1,5 +1,5 @@
-import { Loader2, Search } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import {  Loader2, Search } from 'lucide-react';
+import {useMemo, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { ApiClientError } from '@/lib/api-client';
 import { useActualizarCategoria, useCrearCategoria } from '@/lib/queries';
 import { BLOQUE } from '@/components/ui/bloque';
 import { cn } from '@/lib/utils';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { PieDeModal } from '@/components/ui/modal-partes';
 import type { Category } from '@coco/types';
 import { ICONOS_DE_CATEGORIA, IconoDeCategoria } from '@/components/ui/iconos';
@@ -165,13 +166,13 @@ export function CategoriaModal({
 
   // Se rellena en cada apertura con lo que toque: sin esto, lo que se canceló
   // la vez anterior reaparece escrito la siguiente.
-  useEffect(() => {
+  useAlCambiar([abierta, categoria], () => {
     if (!abierta) return;
     setNombre(categoria?.name ?? '');
     setEstatico(categoria?.estatico ?? false);
     setIcono(categoria?.icon ?? null);
     setError(null);
-  }, [abierta, categoria]);
+  });
 
   async function onSubmit(evento: FormEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();

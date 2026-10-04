@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Campo } from '@/components/ui/campo';
@@ -6,6 +6,7 @@ import { Confirmacion } from '@/components/ui/confirmacion';
 import { Select } from '@/components/ui/select';
 import { useEliminarCategoria, useUsosDeCategoria } from '@/lib/queries';
 import { ApiClientError } from '@/lib/api-client';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import type { Category, NivelDeCategoria } from '@coco/types';
 
 /**
@@ -73,12 +74,12 @@ export function ConfirmarBorrado({
 
   // Cada apertura empieza limpia: un destino elegido y cancelado la vez
   // anterior no tiene por qué reaparecer apuntando a otra categoría.
-  useEffect(() => {
+  useAlCambiar([abierta], () => {
     if (abierta) {
       setDestino('');
       setError(null);
     }
-  }, [abierta]);
+  });
 
   const movimientos = usos.data?.movimientos ?? 0;
   const hayQueReasignar = movimientos > 0;

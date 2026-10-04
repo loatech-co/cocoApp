@@ -1,5 +1,5 @@
 import { Loader2, Merge, Trash2 } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
 import { CamposDePalabrasClave } from '@/components/campos-de-palabras-clave';
 import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-recurrencia';
@@ -19,6 +19,7 @@ import { Bloque } from '@/components/ui/bloque';
 import { PieDeModal } from '@/components/ui/modal-partes';
 import { ConfirmarBorrado } from '@/features/centros/confirmar-borrado';
 import { Select } from '@/components/ui/select';
+import { useAlCambiar } from '@/lib/al-cambiar';
 
 /**
  * Crear o renombrar un concepto, y decir si se paga cada cierto tiempo.
@@ -71,7 +72,7 @@ export function ConceptoModal({
 
   // Se recarga en cada apertura: sin esto, abrir el segundo concepto mostraría
   // los datos del primero.
-  useEffect(() => {
+  useAlCambiar([abierta, concepto], () => {
     if (!abierta) return;
     setNombre(concepto?.name ?? '');
     setRecurrencia({
@@ -90,7 +91,7 @@ export function ConceptoModal({
     setCategoría(concepto?.parent_id != null ? String(concepto.parent_id) : '');
     setPalabrasClave(concepto?.palabras_clave ?? []);
     setError(null);
-  }, [abierta, concepto]);
+  });
 
   if (!abierta) return null;
 

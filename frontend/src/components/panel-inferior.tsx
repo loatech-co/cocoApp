@@ -81,10 +81,18 @@ export function PanelInferior({
   // EXISTIR, porque el cuerpo se reemplaza entero— y devuelve a su estado
   // inicial cualquier cosa que estuviera a medias. Una pantalla que se reabre
   // en mitad de una edición es una pantalla que se reabre mal.
-  const visitas = useRef(0);
-  const estabaAbierto = useRef(abierto);
-  if (abierto && !estabaAbierto.current) visitas.current += 1;
-  estabaAbierto.current = abierto;
+  //
+  // Es ESTADO y no una ref: se lee en el render —va en la `key`—, y una ref
+  // leída en el render es justo lo que la regla de los refs prohíbe, porque
+  // React no se entera de que cambió. El ajuste va en el propio render, que
+  // es lo que React documenta para «estado que depende del anterior»: cuenta
+  // solo la transición de cerrado a abierto, y no el montaje.
+  const [visitas, setVisitas] = useState(0);
+  const [estabaAbierto, setEstabaAbierto] = useState(abierto);
+  if (abierto !== estabaAbierto) {
+    setEstabaAbierto(abierto);
+    if (abierto) setVisitas((v) => v + 1);
+  }
 
   /**
    * El alto se MIDE.
@@ -199,7 +207,7 @@ export function PanelInferior({
               de volver al inicio. La última fila necesita más aire que las
               otras para no quedar debajo de él. */}
           <div
-            key={visitas.current}
+            key={visitas}
             data-cuerpo
             className="min-h-0 flex-1 touch-pan-y overscroll-contain px-6 pb-[calc(30px+env(safe-area-inset-bottom,0px))] [overflow-y:auto]"
           >
