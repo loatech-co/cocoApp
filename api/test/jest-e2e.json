@@ -16,5 +16,8 @@
   "testTimeout": 30000,
   "transformIgnorePatterns": [
     "/node_modules/(?!jose)"
-  ]
+  ],
+  "moduleNameMapper": {
+    "^@coco/lectura$": "<rootDir>/../../packages/lectura/src/index.ts"
+  }
 }
