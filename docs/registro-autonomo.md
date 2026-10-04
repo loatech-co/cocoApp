@@ -447,6 +447,19 @@ nueva**.
 «Executed 1 test, with 0 failures» · «** TEST SUCCEEDED **» (Xcode 27.0,
 iOS 27.0, Swift 6.4; el proyecto declara iOS 17 como mínimo).
 
+**15:40 · Llega `docs/plan-completo.md`.** El dueño entrega el plan completo
+(verificación de las fases 0–5, fase 6 de deuda técnica, fase 7 de estándares,
+con el anexo de las especificaciones originales). **Reemplaza a todo archivo de
+fase anterior y a cualquier instrucción que lo contradiga.** Desde este punto
+aplican sus reglas de ahorro de tokens también en lo que queda de la fase 5:
+lectura por rangos, salidas acotadas, pruebas dirigidas mientras se trabaja y la
+suite completa solo antes de cada PR, un agente por tarea. El panel de diseño
+de la fase 5 (tres propuestas, dos jueces, síntesis) termina como está y queda
+anotado para el diagnóstico de tokens como el tipo de operación que hay que
+medir. Orden después de la fase 5: diagnóstico de tokens → Parte 1
+(`docs/verificacion-fases-0-5.md`) → **parada** con el informe de la Parte 1 y
+la instalación en el iPhone → fase 6 → fase 7.
+
 #### Decisiones de la fase 3
 
 | # | Decisión | Motivo |
