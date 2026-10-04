@@ -88,7 +88,12 @@ describe('Los atajos', () => {
       fireEvent.pointerDown(baldosa);
       // El reloj corre fuera de React: sin `act` el cambio de estado no llega
       // al DOM y la prueba mira una pantalla vieja.
-      act(() => vi.advanceTimersByTime(600));
+      // Las llaves importan: sin ellas la flecha DEVUELVE lo que da
+      // `advanceTimersByTime`, `act` lo toma por un thenable y pasa a
+      // devolver una promesa que nadie espera.
+      act(() => {
+        vi.advanceTimersByTime(600);
+      });
 
       expect(screen.getByLabelText('Quitar Resumen')).toBeTruthy();
     } finally {

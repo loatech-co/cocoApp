@@ -1,4 +1,12 @@
-import { PERMISO_DE_BASE_REMOTA, leerDelEntorno, porQueNoArrancar, sinComillas } from './entorno';
+import {
+  PERMISO_DE_AUTH_DESTRUCTIVA,
+  PERMISO_DE_BASE_REMOTA,
+  esProduccion,
+  leerDelEntorno,
+  porQueNoArrancar,
+  porQueNoTocarCuentasReales,
+  sinComillas,
+} from './entorno';
 
 /**
  * Una variable de entorno con comillas dentro del valor.
@@ -103,5 +111,69 @@ describe('Negarse a arrancar contra una base que no es la mía', () => {
   it('sin DATABASE_URL no es asunto suyo', () => {
     // Falta la variable: que se queje quien la necesita, con su propio error.
     expect(porQueNoArrancar({ NODE_ENV: 'development' })).toBeNull();
+  });
+});
+
+/**
+ * `NODE_ENV` decide si la API arranca, así que se lee con el mismo cuidado que
+ * todo lo demás.
+ */
+describe('Saber si esto es producción', () => {
+  it('reconoce el valor limpio', () => {
+    expect(esProduccion({ NODE_ENV: 'production' })).toBe(true);
+    expect(esProduccion({ NODE_ENV: '  production  ' })).toBe(true);
+  });
+
+  it('y el entrecomillado, que es como llega la mitad del entorno del servidor', () => {
+    // De las ocho variables del despliegue, cuatro llegan con las comillas
+    // dentro del valor. Que NODE_ENV no sea una de ellas hoy es suerte.
+    expect(esProduccion({ NODE_ENV: '"production"' })).toBe(true);
+    expect(esProduccion({ NODE_ENV: "'production'" })).toBe(true);
+  });
+
+  it('no se deja confundir por otra cosa', () => {
+    expect(esProduccion({ NODE_ENV: 'development' })).toBe(false);
+    expect(esProduccion({ NODE_ENV: 'produccion' })).toBe(false);
+    expect(esProduccion({})).toBe(false);
+  });
+
+  it('y un NODE_ENV entrecomillado NO impide arrancar en producción', () => {
+    // La prueba que de verdad importa: esto es el despliegue cayéndose.
+    const servidor = {
+      NODE_ENV: '"production"',
+      DATABASE_URL: 'postgresql://u:p@aws-0-us-east-1.pooler.supabase.com:5432/postgres',
+    };
+    expect(porQueNoArrancar(servidor)).toBeNull();
+  });
+});
+
+/**
+ * El candado de las cuentas reales.
+ *
+ * La base ya está separada; la autenticación no, porque no hay un Supabase
+ * Auth de desarrollo. Entrar se tolera. Crear, borrar, cambiar la contraseña y
+ * cerrar todas las sesiones, no.
+ */
+describe('No tocar cuentas de verdad desde una sesión local', () => {
+  it('en producción no se mete', () => {
+    expect(porQueNoTocarCuentasReales({ NODE_ENV: 'production' })).toBeNull();
+  });
+
+  it('fuera de producción, se niega', () => {
+    expect(porQueNoTocarCuentasReales({ NODE_ENV: 'development' })).toContain('cuenta REAL');
+  });
+
+  it('y dice que entrar sí sigue funcionando', () => {
+    // Si no lo dijera, el mensaje se leería como «la autenticación está rota».
+    expect(porQueNoTocarCuentasReales({})).toContain('entrar sigue funcionando');
+  });
+
+  it('se puede levantar, diciéndolo en voz alta', () => {
+    expect(
+      porQueNoTocarCuentasReales({ NODE_ENV: 'development', [PERMISO_DE_AUTH_DESTRUCTIVA]: 'si' }),
+    ).toBeNull();
+    expect(
+      porQueNoTocarCuentasReales({ NODE_ENV: 'development', [PERMISO_DE_AUTH_DESTRUCTIVA]: 'true' }),
+    ).not.toBeNull();
   });
 });

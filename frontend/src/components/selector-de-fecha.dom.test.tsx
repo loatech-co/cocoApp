@@ -14,7 +14,7 @@ import { SelectorDeFecha } from './selector-de-fecha';
  */
 afterEach(cleanup);
 
-const campoDeFecha = () => screen.getByPlaceholderText(/septiembre/i) as HTMLInputElement;
+const campoDeFecha = () => screen.getByPlaceholderText<HTMLInputElement>(/septiembre/i);
 
 function escribir(texto: string, onElegir = vi.fn()) {
   render(<SelectorDeFecha valor="2026-04-04" onElegir={onElegir} />);

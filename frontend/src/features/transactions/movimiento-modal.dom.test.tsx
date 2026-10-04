@@ -84,7 +84,7 @@ function abrirFicha(arbol: CategoryTree[]) {
 afterEach(cleanup);
 
 describe('La ficha de un movimiento que se edita', () => {
-  it('llega con su centro de costos, su categoría y su concepto puestos', async () => {
+  it('llega con su centro de costos, su categoría y su concepto puestos', () => {
     abrirFicha(ARBOL);
 
     // La ficha abre en modo lectura: los campos se desbloquean al pedirlo.
@@ -191,8 +191,8 @@ describe('La ficha de confirmar un pago pendiente', () => {
     abrirConfirmacion();
 
     // Se enseña agrupado y se guarda sin puntos.
-    expect((screen.getByLabelText('Valor') as HTMLInputElement).value).toBe('180.000');
-    expect((screen.getByLabelText('Fecha') as HTMLInputElement).value).toMatch(/octubre/i);
+    expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
+    expect(screen.getByLabelText<HTMLInputElement>('Fecha').value).toMatch(/octubre/i);
   });
 
   it('llega con su clasificación puesta, sin preguntarla otra vez', () => {
@@ -223,7 +223,7 @@ describe('La ficha de confirmar un pago pendiente', () => {
   it('un concepto que nunca se ha pagado abre sin valor, y lo dice de otra forma', () => {
     abrirConfirmacion({ ...PAGO, expected_amount: null });
 
-    expect((screen.getByLabelText('Valor') as HTMLInputElement).value).toBe('');
+    expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('');
     expect(screen.getByText(/se leen el valor y la fecha/i)).toBeDefined();
   });
 
@@ -294,7 +294,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
 
     const { container } = abrirConfirmacion();
 
-    expect((screen.getByLabelText('Valor') as HTMLInputElement).value).toBe('180.000');
+    expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
 
     const campo = container.querySelector('input[type="file"]') as HTMLInputElement;
     const recibo = new File(['x'], 'celsia-octubre.png', { type: 'image/png' });
@@ -304,8 +304,8 @@ describe('El soporte adjuntado al confirmar un pago', () => {
     await vi.advanceTimersByTimeAsync(4000);
 
     expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();
-    expect((screen.getByLabelText('Valor') as HTMLInputElement).value).toBe('214.500');
-    expect((screen.getByLabelText('Fecha') as HTMLInputElement).value).toMatch(/2 de octubre/i);
+    expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('214.500');
+    expect(screen.getByLabelText<HTMLInputElement>('Fecha').value).toMatch(/2 de octubre/i);
   });
 
   it('un movimiento que se registra a mano NO se relee encima', async () => {

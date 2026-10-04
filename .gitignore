@@ -87,3 +87,9 @@ datos/
 api/.soportes/
 api/.soportes-test/
 soportes-origen/
+
+# La auditoría técnica no entra al repositorio. Es una foto fechada del estado
+# del sistema —con rutas, nombres de variables y conteos— que envejece sola:
+# versionada, dentro de un mes diría cosas que ya no son ciertas y nadie
+# sabría cuáles. Vive fuera, y se vuelve a generar cuando haga falta.
+AUDITORIA_RESPUESTAS.md

@@ -35,7 +35,7 @@ function alAncho(esMovil: boolean): void {
  */
 function pintar() {
   const cliente = new QueryClient({
-    defaultOptions: { queries: { retry: false, queryFn: async () => ({ data: [] }) } },
+    defaultOptions: { queries: { retry: false, queryFn: () => Promise.resolve({ data: [] }) } },
   });
 
   return render(

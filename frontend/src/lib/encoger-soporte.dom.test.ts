@@ -32,10 +32,14 @@ function fingirNavegador({
 
   vi.stubGlobal(
     'createImageBitmap',
-    vi.fn(async () => {
-      if (!decodifica) throw new Error('formato desconocido');
-      return { width: ancho, height: alto } as unknown as ImageBitmap;
-    }),
+    // Promesas explícitas en vez de `async`: lo que importa de este doble es
+    // que RECHACE cuando el formato no se entiende, y `async` lo conseguía de
+    // rebote. Dicho así se lee lo que hace.
+    vi.fn(() =>
+      decodifica
+        ? Promise.resolve({ width: ancho, height: alto } as unknown as ImageBitmap)
+        : Promise.reject(new Error('formato desconocido')),
+    ),
   );
 
   vi.spyOn(document, 'createElement').mockImplementation((etiqueta: string) => {

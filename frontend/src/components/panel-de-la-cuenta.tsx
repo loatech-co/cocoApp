@@ -92,7 +92,7 @@ export function PanelDeLaCuenta({
               verComoUsuario(!viendoComoUsuario);
               // Encendiéndola desde una pantalla de administración, quedarse
               // sería quedarse mirando un «no tienes acceso».
-              if (!viendoComoUsuario) navegar('/');
+              if (!viendoComoUsuario) void navegar('/');
             }}
             className={FILA_DE_PANEL}
           >

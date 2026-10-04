@@ -1,7 +1,14 @@
-import { Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
+import { porQueNoTocarCuentasReales } from '../../common/entorno';
 import { esCorreoRepetido } from './supabase-auth.errores';
 
 /**
@@ -204,6 +211,31 @@ export class SupabaseAuthService {
     ruta: string,
     opciones: { cuerpo?: unknown; clave: string; autorizacion?: string },
   ): Promise<Respuesta> {
+    /*
+      El candado de las cuentas reales va AQUÍ, y no en los cuatro métodos.
+
+      Las cuatro operaciones que alcanzan una cuenta de verdad —crear, borrar,
+      cambiar la contraseña, cerrar todas las sesiones— comparten una marca que
+      no es casual: todas pegan contra `/admin/` con la clave de servicio.
+      Comprobarlo en el punto por el que pasan todas significa que una quinta
+      escrita mañana nace protegida, sin que nadie tenga que acordarse.
+
+      Escrito cuatro veces sería la cuarta copia la que se olvidaría: es
+      exactamente lo que pasó con el bloqueo de los centros estáticos, que se
+      cayó al rediseñar la ficha porque vivía repetido en dos sitios.
+
+      Entrar, refrescar y cerrar LA sesión propia no pasan por aquí: usan la
+      clave anónima y rutas que no son de administración. Así la aplicación se
+      sigue pudiendo usar en local, que es el objetivo.
+    */
+    if (ruta.startsWith('/admin/')) {
+      const impedimento = porQueNoTocarCuentasReales();
+      if (impedimento !== null) {
+        this.logger.warn(`Operación de administración bloqueada: ${metodo} ${ruta}`);
+        throw new ForbiddenException(impedimento);
+      }
+    }
+
     const cabeceras: Record<string, string> = {
       apikey: opciones.clave,
       Authorization: `Bearer ${opciones.autorizacion ?? opciones.clave}`,

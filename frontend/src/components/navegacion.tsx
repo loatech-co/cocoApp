@@ -267,11 +267,18 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
     >
       {(cerrar) => (
         <>
+          {/*
+            `void` delante de cada `navegar` no es adorno: en react-router 7
+            `navigate` devuelve una promesa, y aquí se llama desde un `onClick`
+            que no puede esperarla. El `void` dice que es a propósito —navegar
+            es de ida sin vuelta— y es lo que distingue esto de la promesa que
+            alguien se olvidó de atender.
+          */}
           <MenuOpcion
             Icono={UserCog}
             onClick={() => {
               cerrar();
-              navegar('/mi-cuenta');
+              void navegar('/mi-cuenta');
             }}
           >
             Mi cuenta
@@ -281,7 +288,7 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
             Icono={Tags}
             onClick={() => {
               cerrar();
-              navegar('/centros-de-costos');
+              void navegar('/centros-de-costos');
             }}
           >
             Centros de costos
@@ -293,7 +300,7 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
                 Icono={ShieldCheck}
                 onClick={() => {
                   cerrar();
-                  navegar('/administracion');
+                  void navegar('/administracion');
                 }}
               >
                 Usuarios
@@ -302,7 +309,7 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
                 Icono={ScrollText}
                 onClick={() => {
                   cerrar();
-                  navegar('/administracion/bitacora');
+                  void navegar('/administracion/bitacora');
                 }}
               >
                 Bitácora
@@ -330,7 +337,7 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
                 // Encendiéndola desde una pantalla de administración, quedarse
                 // sería quedarse mirando un «no tienes acceso». Se sale al
                 // resumen, que es de donde parte quien no administra nada.
-                if (!viendoComoUsuario) navegar('/');
+                if (!viendoComoUsuario) void navegar('/');
               }}
             >
               {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}

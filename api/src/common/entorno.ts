@@ -47,6 +47,30 @@ export function sinComillas(valor: string): string {
   return valor;
 }
 
+/**
+ * ¿`NODE_ENV` dice «production»? Leído como se lee todo lo demás.
+ *
+ * ── Esto estuvo a punto de tumbar el sitio ──────────────────────────────────
+ * La comprobación de abajo compara `NODE_ENV` contra «production», y si falla
+ * la API NO ARRANCA. En el servidor, `NODE_ENV` llega desde el entorno que
+ * inyecta LiteSpeed, y ese entorno es irregular con las comillas: de las ocho
+ * variables del despliegue, cuatro llegan CON ellas y cuatro sin. La diferencia
+ * es cómo están escritas en el archivo de configuración —lo de comilla simple
+ * llega limpio, lo de comilla doble llega con la comilla dentro del valor—.
+ *
+ * Hoy `NODE_ENV='production'` lleva comilla simple y llega limpio. Pero eso es
+ * suerte, no diseño: quien reescriba esa línea con comillas dobles —lo más
+ * natural del mundo en un `.env`— haría que el valor llegara como
+ * `"production"`, la comparación fallaría, y la API se negaría a arrancar en
+ * producción creyendo que es una sesión de desarrollo.
+ *
+ * Una variable de la que depende el arranque no puede leerse de forma más
+ * frágil que `SOPORTES_DIR`.
+ */
+export function esProduccion(entorno: NodeJS.ProcessEnv = process.env): boolean {
+  return sinComillas((entorno.NODE_ENV ?? '').trim()) === 'production';
+}
+
 /** Los únicos hosts que cuentan como «mi máquina». */
 const HOSTS_LOCALES = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0', 'host.docker.internal']);
 
@@ -88,7 +112,7 @@ export function hostDeLaBase(url: string): string | null {
  * un valor heredado que nadie revisó.
  */
 export function porQueNoArrancar(entorno: NodeJS.ProcessEnv = process.env): string | null {
-  if ((entorno.NODE_ENV ?? '').trim() === 'production') return null;
+  if (esProduccion(entorno)) return null;
   if (leerDelEntorno(PERMISO_DE_BASE_REMOTA, entorno)?.toLowerCase() === 'si') return null;
 
   const url = leerDelEntorno('DATABASE_URL', entorno);
@@ -105,5 +129,49 @@ export function porQueNoArrancar(entorno: NodeJS.ProcessEnv = process.env): stri
     `remota. Apunta DATABASE_URL y DIRECT_URL al Postgres local —el mismo de ` +
     `api/.env.migrate— o, si de verdad quieres salir fuera, dilo con ` +
     `${PERMISO_DE_BASE_REMOTA}=si.`
+  );
+}
+
+/** La válvula de escape del candado de abajo. */
+export const PERMISO_DE_AUTH_DESTRUCTIVA = 'PERMITIR_AUTH_DESTRUCTIVA';
+
+/**
+ * Por qué esta sesión NO puede tocar cuentas de verdad, o `null` si puede.
+ *
+ * ── Lo que esto impide ──────────────────────────────────────────────────────
+ * La base de datos ya está separada, pero la AUTENTICACIÓN no: en desarrollo
+ * se sigue hablando con el Supabase Auth de producción, porque no hay otro.
+ * Entrar es tolerable —escribe una fila de sesión y poco más—, pero cuatro
+ * operaciones no lo son, porque alcanzan cuentas reales desde una sesión
+ * local:
+ *
+ *   · crear un usuario        → una cuenta de verdad, nacida de una prueba
+ *   · cambiar una contraseña  → deja fuera a quien la tenía
+ *   · eliminar un usuario     → no se deshace
+ *   · cerrar todas las sesiones → te saca del sitio publicado, en tu teléfono
+ *
+ * La última es la que delata al resto: probar «revocar sesiones» en local te
+ * cerraría la sesión en producción, y nada en la pantalla lo habría dicho.
+ *
+ * ── Por qué una válvula y no una prohibición ────────────────────────────────
+ * Porque el día que exista un proyecto de Supabase aparte para desarrollo,
+ * estas cuatro dejan de ser peligrosas y vuelven a hacer falta —no se puede
+ * probar el registro sin crear usuarios—. Ese día se enciende el permiso y ya;
+ * no hay que volver a tocar este archivo.
+ */
+export function porQueNoTocarCuentasReales(
+  entorno: NodeJS.ProcessEnv = process.env,
+): string | null {
+  if (esProduccion(entorno)) return null;
+  if (leerDelEntorno(PERMISO_DE_AUTH_DESTRUCTIVA, entorno)?.toLowerCase() === 'si') return null;
+
+  return (
+    `Esta operación cambia una cuenta REAL en Supabase Auth, y NODE_ENV no es ` +
+    `«production».\n\n` +
+    `En desarrollo no hay un Supabase Auth aparte: lo que se toque aquí se ` +
+    `toca en el proyecto del sitio publicado. Para entrar y probar la ` +
+    `aplicación no hace falta —entrar sigue funcionando—; para crear, borrar o ` +
+    `cambiarle la contraseña a alguien, sí. Si de verdad es lo que querés, ` +
+    `dilo con ${PERMISO_DE_AUTH_DESTRUCTIVA}=si.`
   );
 }

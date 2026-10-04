@@ -25,7 +25,7 @@ function Ficha({ onGuardar = vi.fn(), inicial = [] as string[] }) {
   );
 }
 
-const caja = () => screen.getByLabelText('Palabras clave') as HTMLInputElement;
+const caja = () => screen.getByLabelText<HTMLInputElement>('Palabras clave');
 
 function escribir(texto: string): void {
   fireEvent.change(caja(), { target: { value: texto } });

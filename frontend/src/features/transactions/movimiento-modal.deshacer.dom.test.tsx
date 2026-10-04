@@ -102,6 +102,16 @@ async function adjuntar(container: HTMLElement): Promise<void> {
   const archivo = new File([new Uint8Array(64)], 'captura.png', { type: 'image/png' });
   Object.defineProperty(campo, 'files', { value: [archivo], configurable: true });
 
+  /*
+    El `async` sin `await` dentro es a propósito, y no es intercambiable.
+
+    `act` mira si lo que le devuelven es un thenable: con la versión síncrona
+    vacía los efectos y vuelve; con la asíncrona vacía ADEMÁS la cola de
+    microtareas, que es donde se resuelven las promesas que disparó el evento.
+    Esta prueba depende de eso —el cambio de archivo lanza la lectura del
+    soporte, que es asíncrona— y con `act(() => …)` mira el DOM de antes.
+  */
+  // eslint-disable-next-line @typescript-eslint/require-await -- ver arriba
   await act(async () => {
     fireEvent.change(campo);
   });
@@ -111,6 +121,16 @@ async function registrar(): Promise<void> {
   const valor = document.getElementById('mov-valor') as HTMLInputElement;
   fireEvent.change(valor, { target: { value: '120000' } });
 
+  /*
+    El `async` sin `await` dentro es a propósito, y no es intercambiable.
+
+    `act` mira si lo que le devuelven es un thenable: con la versión síncrona
+    vacía los efectos y vuelve; con la asíncrona vacía ADEMÁS la cola de
+    microtareas, que es donde se resuelven las promesas que disparó el evento.
+    Esta prueba depende de eso —el cambio de archivo lanza la lectura del
+    soporte, que es asíncrona— y con `act(() => …)` mira el DOM de antes.
+  */
+  // eslint-disable-next-line @typescript-eslint/require-await -- ver arriba
   await act(async () => {
     fireEvent.submit(valor.closest('form')!);
   });
