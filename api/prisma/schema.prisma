@@ -62,6 +62,21 @@ enum TransactionType {
   transfer
 }
 
+/// De dónde entró un movimiento.
+///
+/// Hasta ahora todo entraba por la web y no hacía falta decirlo. Con la app
+/// del teléfono entran por cuatro caminos más, y saberlo no es curiosidad:
+/// decide si hay que buscar un duplicado —un pago con Apple Pay produce la
+/// transacción de Wallet Y el SMS del banco— y permite leer después qué camino
+/// acierta y cuál manda a revisar.
+enum TransactionSource {
+  web
+  ios_manual
+  ios_photo
+  wallet
+  sms
+}
+
 enum TransactionStatus {
   cleared
   pending
@@ -539,6 +554,23 @@ model Transaction {
   /// un lote entero sin borrar cuarenta movimientos a mano.
   importBatchId   BigInt?            @map("import_batch_id")
   status          TransactionStatus  @default(cleared)
+
+  /// ── Captura ────────────────────────────────────────────────────────────
+  /// `web` por defecto para todo lo que ya existe: es por donde entró.
+  source          TransactionSource  @default(web)
+  /// El texto del que salió el gasto —el OCR del recibo, el SMS del banco—.
+  /// Hasta ahora se descartaba, y con él se iba la única forma de saber por
+  /// qué se clasificó como se clasificó, y de reinterpretarlo cuando el motor
+  /// aprenda algo nuevo.
+  rawText         String?            @map("raw_text") @db.Text
+  /// Cuándo se capturó, con zona horaria. Distinto de `date` —el día del
+  /// gasto— y de `created_at` —cuándo llegó al servidor—: una captura en cola
+  /// sin conexión se crea horas después de capturarse.
+  capturedAt      DateTime?          @map("captured_at") @db.Timestamptz(3)
+  /// Lo que el sistema no pudo clasificar con certeza, o que podría ser un
+  /// duplicado. Nunca adivina: lo marca y lo deja para alguien.
+  porRevisar      Boolean            @default(false) @map("por_revisar")
+
   createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamp(3)
   updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamp(3)
 

@@ -1,4 +1,8 @@
-import { firmasDeConceptos, normalizar, type Firma } from '@coco/lectura';
+import {
+  firmasDelArbol as firmasDelArbolCompartido,
+  normalizar,
+  type Firma,
+} from '@coco/lectura';
 import type { Category } from '@coco/types';
 
 /**
@@ -136,12 +140,6 @@ export function conceptoQueYaLaUsa(
  * ver `PRIORIDAD_DE_LO_ESCRITO` en `packages/lectura/firmas.ts`.
  */
 export function firmasDelArbol(arbol: readonly Category[]): Firma[] {
-  return firmasDeConceptos(
-    conceptosDe(arbol).map(({ concepto, categoria, centro }) => ({
-      concepto: concepto.name,
-      categoria: categoria.name,
-      centro: centro.name,
-      palabras: concepto.palabras_clave ?? [],
-    })),
-  );
+  // El recorrido vive en el paquete desde la fase 3: la API lo necesita igual.
+  return firmasDelArbolCompartido(arbol);
 }

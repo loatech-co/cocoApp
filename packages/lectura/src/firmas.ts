@@ -308,3 +308,41 @@ export function normalizar(texto: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+/**
+ * Los conceptos de un árbol, con lo que hace falta para reconocerlos.
+ *
+ * Es el recorrido que hacía el frontend para sacar firmas de las palabras
+ * clave de la persona. Vive aquí porque la API necesita exactamente el mismo
+ * —el cerebro pasa al servidor y tiene que leer el mismo árbol igual—, y dos
+ * recorridos distintos es cómo una palabra clave vale en el navegador y no en
+ * la API.
+ *
+ * Toma la forma mínima de un nodo para no depender del tipo de nadie: el árbol
+ * del frontend y el que la API arma desde Prisma encajan los dos.
+ */
+export function conceptosConPalabrasDelArbol(
+  raices: readonly {
+    name: string;
+    palabras_clave?: readonly string[];
+    children?: readonly { name: string; palabras_clave?: readonly string[]; children?: readonly { name: string; palabras_clave?: readonly string[] }[] }[];
+  }[],
+): ConceptoConPalabras[] {
+  return raices.flatMap((centro) =>
+    (centro.children ?? []).flatMap((categoria) =>
+      (categoria.children ?? []).map((concepto) => ({
+        concepto: concepto.name,
+        categoria: categoria.name,
+        centro: centro.name,
+        palabras: concepto.palabras_clave ?? [],
+      })),
+    ),
+  );
+}
+
+/** Las firmas que salen de las palabras clave de un árbol. */
+export function firmasDelArbol(
+  raices: Parameters<typeof conceptosConPalabrasDelArbol>[0],
+): Firma[] {
+  return firmasDeConceptos(conceptosConPalabrasDelArbol(raices));
+}

@@ -59,7 +59,8 @@ export interface SeñalesDeLectura {
  */
 export interface ClasificacionEnElArbol {
   certeza: Exclude<Certeza, 'ninguna'>;
-  fuente: 'palabras-clave' | 'firma' | 'diccionario';
+  /** `historial` no lo produce el paquete: lo añade la API, que es quien lo tiene. */
+  fuente: 'historial' | 'palabras-clave' | 'firma' | 'diccionario';
   conceptoId?: number | string;
   categoriaId?: number | string;
   /** Con certeza media: entre qué se duda, para dejarlo a la vista. */

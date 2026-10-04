@@ -28,7 +28,8 @@
 
     "paths": {
       "@coco/types": ["../packages/types/src/index.ts"],
-      "@coco/types/*": ["../packages/types/src/*"]
+      "@coco/types/*": ["../packages/types/src/*"],
+      "@coco/lectura": ["../packages/lectura/src/index.ts"]
     }
   },
   "include": ["src/**/*", "test/**/*", "prisma/**/*"],

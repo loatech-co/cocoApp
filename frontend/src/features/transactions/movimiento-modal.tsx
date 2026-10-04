@@ -168,6 +168,8 @@ export function MovimientoModal({
   const [huboSugerencia, setHuboSugerencia] = useState(false);
   /** Lo que la lectura de un recibo dejó entre lo que dudar. */
   const [candidatosDelRecibo, setCandidatosDelRecibo] = useState<CandidatoDelRecibo[]>([]);
+  /** El texto del que salió la lectura, para guardarlo con el movimiento. */
+  const [textoLeido, setTextoLeido] = useState('');
   /**
    * La cascada de siempre, detrás de un enlace. Sigue existiendo para quien
    * quiera ir nivel a nivel, pero ya no es la puerta: la puerta es el buscador.
@@ -303,6 +305,7 @@ export function MovimientoModal({
     setHuboSugerencia(false);
     setCandidatosDelRecibo([]);
     setCascadaVisible(false);
+    setTextoLeido('');
     setNotes(movimiento?.notes ?? '');
     setError(null);
     setConfirmandoBorrado(false);
@@ -471,12 +474,13 @@ export function MovimientoModal({
     try {
       const { lectura: leida, texto } = await leerSoporte(archivo, {
         periodo: date.slice(0, 7),
-        // El árbol, por sus palabras clave: es lo que hace que un recibo que
-        // el catálogo no conoce se reconozca porque alguien escribió en su
-        // concepto lo que dice la factura.
-        arbol: categorias.data ?? [],
+        // El árbol y las palabras clave ya no viajan: los tiene el servidor,
+        // que es quien interpreta ahora.
         onProgreso: setProgresoDeLectura,
       });
+      // Se guarda con el movimiento: es la única forma de saber después por
+      // qué se clasificó como se clasificó, y de reinterpretarlo.
+      setTextoLeido(texto);
 
       /*
         ── Leer y no sacar nada NO es haber leído ──────────────────────────
@@ -523,7 +527,12 @@ export function MovimientoModal({
       */
       const enElArbol = leida.enElArbol;
       if (enElArbol) {
-        const origen: Origen = enElArbol.fuente === 'diccionario' ? 'diccionario' : 'palabras-clave';
+        const origen: Origen =
+          enElArbol.fuente === 'diccionario'
+            ? 'diccionario'
+            : enElArbol.fuente === 'historial'
+              ? 'historial'
+              : 'palabras-clave';
         setHuboSugerencia(true);
         if (enElArbol.certeza === 'alta' && enElArbol.conceptoId !== undefined) {
           proponer({ categoryId: Number(enElArbol.conceptoId), origen });
@@ -604,6 +613,10 @@ export function MovimientoModal({
       merchant: description.trim() || null,
       notes: notes.trim() || null,
       category_id: categoryId ?? null,
+      // De dónde entró, y el texto del que salió si hubo recibo: es lo que
+      // permite saber después por qué se clasificó así, y reinterpretarlo.
+      source: 'web' as const,
+      raw_text: textoLeido.trim() || null,
     };
 
     /*

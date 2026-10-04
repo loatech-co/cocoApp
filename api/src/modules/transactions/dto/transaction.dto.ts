@@ -1,10 +1,12 @@
-import { TransactionStatus, TransactionType } from '@prisma/client';
+import { TransactionSource, TransactionStatus, TransactionType } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEnum,
+  IsISO8601,
   IsInt,
   IsOptional,
   IsString,
@@ -93,6 +95,31 @@ export class CreateTransactionDto {
   @MaxLength(255)
   external_ref?: string;
 
+  /**
+   * ── Captura ──────────────────────────────────────────────────────────────
+   * De dónde entra. La web manda `web`; la app del teléfono, uno de los
+   * suyos. Decide si hay que buscar la otra cara de un mismo pago.
+   */
+  @IsOptional()
+  @IsEnum(TransactionSource)
+  source?: TransactionSource;
+
+  /** El texto del que salió: el OCR del recibo, el SMS del banco. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(20_000)
+  raw_text?: string | null;
+
+  /** Cuándo se capturó, ISO 8601 con zona. */
+  @IsOptional()
+  @IsISO8601()
+  captured_at?: string | null;
+
+  /** Si alguien tiene que mirarlo: clasificación insegura o posible duplicado. */
+  @IsOptional()
+  @IsBoolean()
+  por_revisar?: boolean;
+
   /** Nombres, no ids: la UI las crea al vuelo. */
   @IsOptional()
   @IsArray()
@@ -159,6 +186,31 @@ export class UpdateTransactionDto {
   @IsOptional()
   @IsEnum(TransactionStatus)
   status?: TransactionStatus;
+
+  /**
+   * ── Captura ──────────────────────────────────────────────────────────────
+   * De dónde entra. La web manda `web`; la app del teléfono, uno de los
+   * suyos. Decide si hay que buscar la otra cara de un mismo pago.
+   */
+  @IsOptional()
+  @IsEnum(TransactionSource)
+  source?: TransactionSource;
+
+  /** El texto del que salió: el OCR del recibo, el SMS del banco. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(20_000)
+  raw_text?: string | null;
+
+  /** Cuándo se capturó, ISO 8601 con zona. */
+  @IsOptional()
+  @IsISO8601()
+  captured_at?: string | null;
+
+  /** Si alguien tiene que mirarlo: clasificación insegura o posible duplicado. */
+  @IsOptional()
+  @IsBoolean()
+  por_revisar?: boolean;
 
   @IsOptional()
   @IsArray()

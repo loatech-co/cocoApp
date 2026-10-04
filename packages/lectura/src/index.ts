@@ -8,7 +8,9 @@ export {
   FIRMAS,
   PRIORIDAD_DE_LO_ESCRITO,
   RECAUDADORES,
+  conceptosConPalabrasDelArbol,
   firmasDeConceptos,
+  firmasDelArbol,
   normalizar,
 } from './firmas';
 export type { ConceptoConPalabras, Firma } from './firmas';

@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { keys, type CategoryTree } from '@/lib/queries';
+import { leerSoporte } from './leer-soporte';
 import { MovimientoModal } from './movimiento-modal';
 
 /*
@@ -200,5 +201,34 @@ describe('Cuando el soporte falla al registrar', () => {
     expect(llamadas().some(([ruta, metodo]) => ruta === '/transactions' && metodo === 'POST')).toBe(
       false,
     );
+  });
+});
+
+/**
+ * Lo que la web guarda ahora dice de dónde entró. El texto de un recibo solo
+ * viaja cuando hubo lectura; adjuntar a mano no lee —otra prueba lo protege—,
+ * así que aquí `raw_text` va vacío a propósito.
+ */
+describe('Lo que la web guarda', () => {
+  const creacion = () =>
+    apiFetch.mock.calls.find(
+      ([ruta, opciones]) => ruta === '/transactions' && (opciones as { method?: string })?.method === 'POST',
+    );
+
+  it('manda source «web»; sin lectura, raw_text va vacío', async () => {
+    responder({ alBorrar: () => Promise.resolve({ data: undefined }) });
+    apiSubir.mockResolvedValue({ data: [] });
+
+    const { container } = abrirFichaNueva();
+    await adjuntar(container);
+    await registrar();
+
+    expect(creacion(), 'se creó el movimiento').toBeDefined();
+    const cuerpo = (creacion()![1] as { body: Record<string, unknown> }).body;
+    expect(cuerpo.source).toBe('web');
+    expect(cuerpo.raw_text).toBeNull();
+    // Y lo de siempre sigue viajando igual.
+    expect(cuerpo.amount).toBe('120000');
+    expect(vi.mocked(leerSoporte)).not.toHaveBeenCalled();
   });
 });

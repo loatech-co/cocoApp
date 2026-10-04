@@ -140,7 +140,7 @@ si esta vez no se recupera, es lo primero que mirar.
 
 ## 4. Fases (se rellena al avanzar)
 
-### Fase 2 · registro rápido — EN CURSO (rama `fase-2-registro-rapido`, desde `9616997`)
+### Fase 2 · registro rápido — HECHA EN LOCAL (rama `fase-2-registro-rapido`, commit `f430ebf`, desde `9616997`) · pendiente de integrar tras el paso 1
 
 **Ajustes del modo autónomo recibidos a las 12:1x y 12:2x:** las paradas
 internas de las fases quedan sin efecto; 2.3 se implementa con el borrador;
@@ -183,6 +183,70 @@ dependencias nuevas sin motivo; no escribir hasta el informe final.
 | F2-27 | El buscador entra en `NACEN_ENFOCADOS` de `lib/foco.test.ts` con su motivo | Regla 18: la excepción es «un buscador que aparece porque se pidió buscar — el filtro de un Combo». Es el mismo caso, con las mismas palabras |
 | F2-28 | `conceptosRecientes` y la sugerencia del historial **toleran respuestas con otra forma** (no lista, sin `category_id`) | Lo destapó la prueba de «deshacer», cuyo mock contesta `{ id }` a cualquier ruta no prevista: la petición nueva de recientes recibía un objeto y `for…of` reventaba la ficha. Los recientes y las sugerencias son comodidades; no pueden tumbar el formulario |
 | F2-29 | El historial pide `/categorization/suggest` con **lo escrito en la descripción** (como antes del plan); la lectura de un recibo pone en la descripción el nombre del concepto leído (comportamiento previo, sin cambios) | El plan dice «cuando hay descripción o comercio»; `merchant` sigue a `description` en el cuerpo del movimiento, así que son lo mismo. Mandar el texto completo del OCR al servidor es cosa de la fase 3 (`/transactions/interpret`) |
+
+**Cómo se verificó el «terminado cuando» de la fase 2:**
+
+- *Interacciones para un gasto con clasificación completa.* Convención: se
+  cuenta desde el formulario abierto, una interacción por campo tocado o
+  botón pulsado; abrir un desplegable y elegir dentro son dos. Antes:
+  descripción, valor, centro (2), categoría (2), concepto (2), Registrar =
+  **9** (el plan decía siete contando solo elecciones). Ahora, sin sugerencia:
+  descripción, valor, abrir el buscador, elegir, Registrar = **5**. Con la
+  sugerencia acertando: descripción, valor, Registrar = **3**. Las dos metas
+  —cinco o menos, cuatro cuando acierta— se cumplen con margen.
+- *Un recibo de un comercio del diccionario propone el concepto correcto.*
+  Verificado en la capa donde ocurre, no con una foto en un navegador (no hay
+  Playwright en el repo y el OCR de `tesseract.js` necesita un navegador de
+  verdad): `clasificar-con-diccionario.test.ts` lee «KOBA COLOMBIA SAS Total
+  45.000» contra un árbol con «Mercado» y devuelve ese concepto con certeza
+  alta e id; con dos «Mercado» devuelve certeza media y los dos candidatos con
+  su ruta; con «UBER» y una categoría «Transporte» vacía, la categoría. La
+  ficha toma `enElArbol` y lo pasa por `proponer()`; ese cableado está cubierto
+  por las pruebas DOM de la ficha y del buscador (candidatos «Del recibo»).
+- Sin cambios de esquema. Nada desplegado aún: espera al cierre del paso 1.
+- Verificación final: frontend 359 pruebas (43 archivos), lint 0, typecheck
+  limpio; API 285 pruebas (19 suites), lint 0, typecheck limpio; `@coco/types`
+  y `@coco/lectura` typecheck limpio. 23 archivos en el commit, incluido este
+  registro.
+
+### Fase 3 · un solo cerebro en la API — EN CURSO (rama `fase-3-cerebro-en-la-api`, desde `f430ebf`)
+
+| # | Decisión | Motivo |
+|---|---|---|
+| F3-1 | La rama sale de `f430ebf` (punta de la fase 2) sin que `Dev` lo tenga aún | Mismo motivo que F2-1: SSH sigue caído por el zombi de `lsnode` y no se despliega sin poder verificar; esperar parado desperdicia horas de trabajo local que no dependen de producción. Las tres ramas quedan en línea recta y se integran en orden cuando SSH vuelva |
+| F3-2 | `@coco/lectura` se **compila a CommonJS** (`dist/`) y su `main`/`types` apuntan ahí; el frontend **no cambia** porque ya lo resolvía a la fuente por alias de Vite y `paths` | Es la única forma de que la API lo importe en tiempo de ejecución sin moverlo ni duplicarlo (3.1): `nest build` compila `api/src` y no puede compilar fuentes de otro paquete; Node resuelve `require('@coco/lectura')` por el `main`. El paquete no tiene sintaxis solo-ESM, así que CommonJS sirve para los dos lados |
+| F3-3 | El `postinstall` de la raíz compila `@coco/lectura` después de preparar Tesseract; `dist/` va al `.gitignore` | Para que `npm install` deje la API arrancable en local y en hbuilds sin un paso a mano. El `build` de la raíz lo vuelve a compilar (topológicamente antes que `api`), lo que es inocuo |
+| F3-4 | Jest de la API mapea `@coco/lectura` a la **fuente** (`moduleNameMapper`), y el `tsconfig` de la API añade el `path` | Las pruebas no dependen de que `dist/` exista, y el typecheck de la API ve los tipos sin compilar nada. En producción, `require` real → `dist` |
+| F3-5 | El recorrido «conceptos del árbol → firmas» se mueve al paquete (`conceptosConPalabrasDelArbol`, `firmasDelArbol`); el `firmasDelArbol` del frontend **delega** y conserva su nombre | La API necesita exactamente ese recorrido; dos recorridos distintos es cómo una palabra clave vale en el navegador y no en el servidor. El frontend sigue exportando lo mismo para no tocar a quienes lo importan |
+| F3-6 | Ventana de duplicado Wallet↔SMS: **10 minutos** (`VENTANA_DE_DUPLICADO_MS`); parecido parcial hasta 24 h el mismo día, o ±1 día dentro de los 10 minutos (medianoche) | El SMS de un banco colombiano llega entre segundos y un par de minutos; diez cubre un banco lento y una app en segundo plano. Más ancha juntaría dos cafés iguales con media hora de diferencia. El plan pedía proponer el valor |
+| F3-7 | Una sugerencia del **historial** vale como certeza **alta** desde el 80 % (`HISTORIAL_SEGURO`); por debajo, media | Con 80 entran la unanimidad (100) y las reglas que la persona creó (85), y quedan fuera las sembradas (60) y los historiales repartidos: justo lo que no debe guardarse sin que alguien lo mire |
+| F3-8 | `interpretar()` es **pura**: el servicio le trae el árbol (ids como cadenas) y la sugerencia del historial | Se prueba sin base, igual que `clasificar()`. Los ids viajan como cadenas dentro del motor y vuelven a `bigint` al escribir: sin perder precisión ni mezclar tipos con Prisma |
+| F3-9 | Los `source` se validan con el **enum de Prisma** (`@IsEnum(TransactionSource)`) y no con la constante de `@coco/types` | La API nunca importa valores de `@coco/types` (solo tipos, borrados al compilar); el enum generado existe en tiempo de ejecución y es la misma lista |
+| F3-10 | El árbol que la API usa para interpretar **excluye lo archivado** | Archivado es «esto ya no vuelve»; proponerlo sería clasificar un gasto de hoy en el gimnasio que se dio de baja. Es la misma lógica de la fase 1 para pendientes, aplicada a las propuestas |
+| F3-11 | Una captura **sin monto** se guarda con `0`, `por_revisar` y una nota «Capturado sin valor: hay que ponerlo»; **sin fecha legible**, con la fecha de la captura y `por_revisar` | La fase 5.4 dice que Wallet a veces agota su espera y manda la transacción sin valor, y que se capture igual. Perderla es peor que registrarla en cero para que alguien le ponga la cifra. Un gasto necesita fecha y la de la captura es la mejor aproximación |
+| F3-12 | `POST /transactions/capture` responde **siempre 200**, también al crear; `repetido` y `fusionado` dicen qué pasó | La respuesta es «esto es lo que hay con tu referencia». Un 201 solo a veces obligaría al cliente que reintenta a tratar dos códigos como el mismo resultado |
+| F3-13 | La condición de carrera de la idempotencia se resuelve **en la base**: un `P2002` del índice único `(user_id, external_ref)` se contesta como repetido | Dos reintentos cruzados pasan los dos la comprobación previa; la segunda inserción choca con el índice y se devuelve lo que ya quedó |
+| F3-14 | El historial se consulta con el **comercio** si viene y, si no, con el **texto entero** | Un SMS trae ruido de banco; `sugerirCategoria` lo nota en la confianza (dominancia), que es lo correcto. Recortar el texto a mano sería otra heurística que mantener |
+| F3-15 | En la web, `leer-soporte.ts` manda el texto a `/transactions/interpret` y **no conserva una clasificación local de respaldo** | 3.5: «un solo lugar donde cambian las reglas». Un respaldo local serían dos. Si el servidor falla, el archivo queda adjunto y se dice que se escriban los datos a mano |
+| F3-16 | `ClasificacionEnElArbol.fuente` del paquete admite `historial` | La respuesta del servidor la trae y la ficha la pasa por su rango; el paquete no la produce, lo dice el comentario |
+| F3-17 | La ficha guarda `source: 'web'` y `raw_text` (el texto del recibo leído) en cada movimiento | 3.5 lo pide tal cual. `raw_text` vacío va como `null` |
+| F3-18 | Los endpoints van en un **controlador propio** (`InterpretacionController`) bajo el mismo prefijo `/transactions`, en su módulo, que importa `TransactionsModule` para reutilizar `crear` y `obtener` | Dependen de la categorización y del árbol; metidos en el controlador de movimientos lo harían cargar con eso. Nest admite dos controladores con el mismo prefijo |
+
+**Hallazgo — la API ya tenía una suite e2e, y estaba rota desde septiembre.**
+`api/test/*.e2e-spec.ts` (supertest, `levantarApp()`, `SupabaseAuthFalso`,
+base `coco_test`) existe desde antes del plan; el plan de la fase 4 la creía
+inexistente («es la primera prueba e2e del proyecto»). `npm test` no la corre
+—va por `npm run test:e2e`— y **nadie la había corrido desde mediados de
+septiembre**: `coco_test` llevaba cinco migraciones de retraso
+(`palabras_clave`, `presupuesto_en_concepto`, `pago_automatico` del 16–17 de
+septiembre, más las dos de este plan), así que toda escritura fallaba con
+`PrismaClientKnownRequestError`. Se le aplicaron las cinco (base local de
+pruebas) y la suite pasa 158 de 162; los 4 que fallan se analizan abajo. El
+criterio «pruebas pasan» de cada fase incluye desde ahora `test:e2e`.
+
+Importante para la fase 0: el arnés sustituye `SupabaseAuthService` entero por
+un doble en memoria, así que el candado de `llamar()` no interviene en e2e y
+las pruebas de registro siguen sin tocar la autenticación real.
 
 ### Fase 2 · borrador del diccionario del sistema (2.3) — implementado tal cual
 

@@ -351,12 +351,64 @@ export interface Tag {
   color: string | null;
 }
 
+// ─── Interpretar y capturar (la API como único cerebro) ─────────────────────
+
+export type CertezaDeClasificacion = 'alta' | 'media' | 'ninguna';
+
+/**
+ * De dónde salió una clasificación propuesta, de mayor a menor rango. Una
+ * fuente inferior nunca reemplaza a una superior.
+ */
+export type FuenteDeClasificacion = 'historial' | 'palabras-clave' | 'firma' | 'diccionario';
+
+export interface ClasificacionPropuesta {
+  certeza: CertezaDeClasificacion;
+  fuente: FuenteDeClasificacion | null;
+  /** Solo con certeza alta. */
+  concepto_id: Id | null;
+  /** Con certeza alta (la del concepto) o media (la que se propone sola). */
+  categoria_id: Id | null;
+  /** Para enseñarlo: el nombre de lo propuesto, concepto o categoría. */
+  nombre: string | null;
+  /** Con certeza media: entre qué se duda. */
+  candidatos: { id: Id; nombre: string; ruta: string }[];
+  /** En una línea, por qué. */
+  motivo: string;
+}
+
+/** Lo que `POST /transactions/interpret` entiende de un texto o de unos datos. Sin efectos. */
+export interface Interpretacion {
+  amount: DecimalString | null;
+  date: DateOnlyString | null;
+  merchant: string | null;
+  description: string | null;
+  clasificacion: ClasificacionPropuesta;
+  /** Si lo que se guardara con esto necesitaría que alguien lo mirara. */
+  por_revisar: boolean;
+}
+
+/** Lo que devuelve `POST /transactions/capture`: el gasto ya creado, o el que ya estaba. */
+export interface Captura {
+  transaction: Transaction;
+  clasificacion: ClasificacionPropuesta;
+  /** Para una notificación: «Registrado: $45.000 · Alimentación». */
+  resumen: string;
+  /** El mismo `external_ref` ya existía: se devuelve lo que había, no se crea otro. */
+  repetido: boolean;
+  /** Era la otra cara de un pago ya capturado (Wallet ↔ SMS): se enriqueció el que había. */
+  fusionado: boolean;
+}
+
 export interface TransactionSplit {
   id: Id;
   category_id: Id | null;
   amount: DecimalString;
   note: string | null;
 }
+
+/** Por dónde puede entrar un movimiento. */
+export const TRANSACTION_SOURCES = ['web', 'ios_manual', 'ios_photo', 'wallet', 'sms'] as const;
+export type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
 export interface Transaction {
   id: Id;
@@ -379,6 +431,14 @@ export interface Transaction {
   transfer_direction: 'out' | 'in' | null;
   external_ref: string | null;
   status: TransactionStatus;
+  /** De dónde entró. `web` para todo lo anterior a la app del teléfono. */
+  source: TransactionSource;
+  /** El texto del que salió: el OCR del recibo, el SMS del banco. */
+  raw_text: string | null;
+  /** Cuándo se capturó, con zona. Distinto del día del gasto y de cuándo llegó. */
+  captured_at: DateTimeString | null;
+  /** El sistema no pudo clasificarlo con certeza, o podría estar duplicado. */
+  por_revisar: boolean;
   tags: string[];
   splits: TransactionSplit[];
   created_at: DateTimeString;

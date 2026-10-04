@@ -40,6 +40,10 @@ export interface TransactionView {
   transfer_direction: 'out' | 'in' | null;
   external_ref: string | null;
   status: Transaction['status'];
+  source: Transaction['source'];
+  raw_text: string | null;
+  captured_at: Date | null;
+  por_revisar: boolean;
   tags: string[];
   splits: SplitView[];
   created_at: Date;
@@ -183,6 +187,10 @@ export class TransactionsService {
           notes: dto.notes ?? null,
           externalRef: dto.external_ref ?? null,
           status: dto.status ?? 'cleared',
+          source: dto.source ?? 'web',
+          rawText: dto.raw_text ?? null,
+          capturedAt: dto.captured_at ? new Date(dto.captured_at) : null,
+          porRevisar: dto.por_revisar ?? false,
         },
       });
 
@@ -309,6 +317,12 @@ export class TransactionsService {
           ...(dto.merchant !== undefined && { merchant: dto.merchant }),
           ...(dto.notes !== undefined && { notes: dto.notes }),
           ...(dto.status !== undefined && { status: dto.status }),
+          ...(dto.source !== undefined && { source: dto.source }),
+          ...(dto.raw_text !== undefined && { rawText: dto.raw_text }),
+          ...(dto.captured_at !== undefined && {
+            capturedAt: dto.captured_at === null ? null : new Date(dto.captured_at),
+          }),
+          ...(dto.por_revisar !== undefined && { porRevisar: dto.por_revisar }),
         },
       });
 
@@ -520,6 +534,10 @@ export class TransactionsService {
       transfer_direction: fila.transferDir,
       external_ref: fila.externalRef,
       status: fila.status,
+      source: fila.source,
+      raw_text: fila.rawText,
+      captured_at: fila.capturedAt,
+      por_revisar: fila.porRevisar,
       tags: fila.tags.map((vinculo) => vinculo.tag.name),
       splits: fila.splits.map((split) => ({
         id: split.id,

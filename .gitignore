@@ -93,3 +93,8 @@ soportes-origen/
 # versionada, dentro de un mes diría cosas que ya no son ciertas y nadie
 # sabría cuáles. Vive fuera, y se vuelve a generar cuando haga falta.
 AUDITORIA_RESPUESTAS.md
+
+# `@coco/lectura` se compila a CommonJS para que la API lo importe en tiempo
+# de ejecución; el frontend lo lee de la fuente por alias. Lo compilado no se
+# versiona: lo produce el `postinstall` y el `build`.
+packages/lectura/dist/

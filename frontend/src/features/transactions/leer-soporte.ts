@@ -1,7 +1,7 @@
-import { clasificar, FIRMAS, type Lectura } from '@coco/lectura';
-import type { Category } from '@coco/types';
+import type { Lectura } from '@coco/lectura';
+import type { Interpretacion } from '@coco/types';
 
-import { firmasDelArbol } from '@/lib/palabras-clave';
+import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { cargarPdfjs } from '@/lib/pdf';
 
 /**
@@ -132,21 +132,22 @@ async function ocr(
 /**
  * Lee un archivo y dice de qué es.
  *
+ * ── El OCR aquí; la interpretación, en la API ───────────────────────────────
+ * Sacar el texto sigue siendo cosa del navegador —el documento no sale del
+ * equipo mientras se lee, y cada persona pone su CPU—. Pero lo que ese texto
+ * SIGNIFICA lo decide el servidor: `/transactions/interpret` tiene el árbol de
+ * la persona, su historial y el diccionario, y es el único sitio donde cambian
+ * las reglas. Antes se clasificaba aquí con una copia de esas reglas, y la app
+ * del teléfono habría necesitado otra.
+ *
  * `periodo` ayuda a elegir entre las varias fechas que trae un recibo —la de
  * expedición, la de vencimiento, la del próximo corte—: la buena es la que
  * cae en el mes del gasto.
- *
- * `arbol` trae las palabras clave que alguien escribió en sus conceptos. Van
- * DELANTE del catálogo y con más prioridad: el catálogo son las suposiciones
- * de quien escribió el código; esto es lo que dijo quien tiene el recibo
- * delante. Sin árbol se clasifica solo con el catálogo, que es lo que hacía
- * antes de que las palabras clave existieran.
  */
 export async function leerSoporte(
   archivo: File,
   opciones: {
     periodo?: string;
-    arbol?: readonly Category[];
     onProgreso?: (p: ProgresoDeLectura) => void;
   } = {},
 ): Promise<SoporteLeido> {
@@ -179,21 +180,62 @@ export async function leerSoporte(
     fuente = 'ocr';
   }
 
+  onProgreso?.({ avance: 0.9, etapa: 'Interpretando…' });
+
+  let interpretacion: Interpretacion;
+  try {
+    const respuesta = await apiFetch<Interpretacion>('/transactions/interpret', {
+      method: 'POST',
+      body: {
+        texto,
+        nombre_de_archivo: archivo.name.replace(/\.[a-z0-9]+$/i, ''),
+        periodo: opciones.periodo,
+      },
+    });
+    interpretacion = respuesta.data;
+  } catch (e) {
+    // El archivo ya está adjunto; lo que falló es entenderlo. Se dice así, y
+    // quien lo lee escribe los datos a mano en la misma ficha.
+    const detalle = e instanceof ApiClientError ? ` (${e.message})` : '';
+    throw new Error(
+      `No se pudo interpretar el soporte en el servidor${detalle}. Escribe los datos a mano; el archivo queda adjunto al movimiento.`,
+    );
+  }
+
   onProgreso?.({ avance: 1, etapa: 'Listo' });
 
+  return { texto, fuente, lectura: lecturaDesde(interpretacion, fuente) };
+}
+
+/**
+ * La respuesta del servidor, con la forma que la ficha ya entiende.
+ *
+ * `Lectura` es lo que la ficha consumía cuando se clasificaba aquí; mantener
+ * la forma deja la ficha igual y cambia solo de dónde viene la decisión. La
+ * confianza se traduce de la certeza: alta sin revisar es seguro; lo demás,
+ * por debajo del umbral, para que la ficha lo diga.
+ */
+function lecturaDesde(i: Interpretacion, fuente: 'texto-embebido' | 'ocr'): Lectura {
+  const c = i.clasificacion;
   return {
-    texto,
-    fuente,
-    lectura: clasificar({
-      texto,
-      fuente,
-      nombreDeArchivo: archivo.name.replace(/\.[a-z0-9]+$/i, ''),
-      periodo: opciones.periodo,
-      firmas: [...firmasDelArbol(opciones.arbol ?? []), ...FIRMAS],
-      // El árbol entero, además de sus firmas: con él la lectura devuelve ids
-      // y no solo nombres, y el diccionario del sistema puede buscar sus
-      // términos ahí dentro cuando ninguna firma reconoció al acreedor.
-      arbol: opciones.arbol,
-    }),
+    concepto: c.concepto_id !== null ? c.nombre : null,
+    categoria: c.concepto_id === null && c.categoria_id !== null ? c.nombre : null,
+    centro: null,
+    valor: i.amount === null ? null : Number(i.amount),
+    fecha: i.date,
+    confianza: !i.por_revisar ? (fuente === 'ocr' ? 0.85 : 0.95) : c.certeza === 'alta' ? 0.7 : c.certeza === 'media' ? 0.5 : 0.2,
+    señales: { texto: [], nombre: [], nit: [], recaudadoresIgnorados: [] },
+    motivo: c.motivo,
+    alternativas: c.candidatos.map((k) => ({ concepto: k.nombre, puntaje: 0 })),
+    enElArbol:
+      c.certeza === 'ninguna'
+        ? null
+        : {
+            certeza: c.certeza,
+            fuente: c.fuente ?? 'diccionario',
+            conceptoId: c.concepto_id ?? undefined,
+            categoriaId: c.categoria_id ?? undefined,
+            candidatos: c.candidatos.map((k) => ({ id: k.id, nombre: k.nombre, ruta: k.ruta })),
+          },
   };
 }

@@ -455,7 +455,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .set('Authorization', comoAna())
         .expect(201);
 
-      expect(primera.body.data.creadas).toBeGreaterThan(40);
+      // La plantilla es un SNAPSHOT de dos centros y siete categorías desde el
+      // 17 de septiembre de 2026 (ver `categories.plantilla.ts`): nueve filas.
+      // Antes sembraba un diccionario de cuarenta y pico conceptos.
+      expect(primera.body.data.creadas).toBe(9);
 
       await http.post('/api/v1/categories/seed').set('Authorization', comoAna()).expect(409);
     });
@@ -962,7 +965,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .get(`/api/v1/dashboard?from=2026-08-01&to=2026-08-31&category_id=${Number(centro.id)}`)
         .set('Authorization', comoAna())
         .expect(200);
-      expect(dentroDelCentro.body.data.breakdown_level).toBe('grupo');
+      expect(dentroDelCentro.body.data.breakdown_level).toBe('categoría');
       expect(dentroDelCentro.body.data.by_category[0].name).toBe('Vivienda');
 
       const dentroDelGrupo = await http
@@ -1005,7 +1008,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       // Se muestran los GRUPOS del único centro con gasto, y el nombre del
       // centro pasa a ser el subtítulo. Enseñar "Costos fijos, 100 %" no
       // responde nada: eso ya se sabía antes de mirar.
-      expect(r.body.data.breakdown_level).toBe('grupo');
+      expect(r.body.data.breakdown_level).toBe('categoría');
       expect(r.body.data.breakdown_parent.name).toBe('Costos fijos');
       expect(r.body.data.by_category.map((f: { name: string }) => f.name)).toEqual([
         'Vivienda',
