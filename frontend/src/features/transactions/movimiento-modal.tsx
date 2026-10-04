@@ -13,7 +13,7 @@ import {
   TriangleAlert,
   Upload,
 } from 'lucide-react';
-import { useEffect, useState, type ComponentType, type FormEvent, type ReactNode } from 'react';
+import { type ComponentType, type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import {
   BotonOscuro,
@@ -51,9 +51,15 @@ import {
 } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
 import { useAlCambiar } from '@/lib/al-cambiar';
+import { BuscadorDeConcepto, type CandidatoDelRecibo } from '@/components/buscador-de-concepto';
+import { useSugerenciaDeCategoria } from '@/features/categorization/use-sugerencia';
+import { apiFetch } from '@/lib/api-client';
+import { SIN_CLASIFICAR, aplicar, nombreDelOrigen, type Clasificacion, type Origen } from '@/lib/precedencia';
+import { useTransactions } from '@/lib/queries';
+import { conceptosRecientes } from '@/lib/recientes';
 import { Camara } from './camara';
 import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
-import { normalizar, type Lectura } from '@coco/lectura';
+import { buscarEnArbol, indexarArbol, normalizar, resolverTerminos, terminosPara, type Lectura } from '@coco/lectura';
 import type { Category, PagoPendiente, Transaction, TransactionType } from '@coco/types';
 
 /**
@@ -136,7 +142,37 @@ export function MovimientoModal({
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(hoyEnBogota());
   const [type, setType] = useState<TransactionType>('expense');
-  const [categoryId, setCategoryId] = useState<number | undefined>();
+  /*
+    ── La clasificación lleva escrito de dónde salió ───────────────────────
+    No es un id suelto: es un id y una fuente —a mano, el historial, las
+    palabras clave, el diccionario—. Toda propuesta pasa por `aplicar()`, que
+    es la única que sabe quién puede reemplazar a quién: lo elegido a mano no
+    lo toca nada automático, y una fuente inferior nunca pisa a una superior.
+    Ver `lib/precedencia.ts`.
+
+    Un solo objeto y actualizaciones funcionales, a propósito: las propuestas
+    llegan por caminos asíncronos —la lectura de un recibo, una petición— y
+    comparar contra un `categoryId` capturado en un render viejo es cómo una
+    sugerencia tardía pisa lo que la persona acaba de elegir.
+  */
+  const [clasificacion, setClasificacion] = useState<Clasificacion>(SIN_CLASIFICAR);
+  const categoryId = clasificacion.categoryId;
+  const proponer = (propuesta: { categoryId: number | undefined; origen: Origen }): void =>
+    setClasificacion((previa) => aplicar(previa, propuesta));
+  /**
+   * Si en esta apertura alguna fuente automática propuso algo. Es lo que
+   * decide si al guardar se aprende: solo cuando hubo una sugerencia que la
+   * persona aceptó o corrigió, nunca de un movimiento clasificado a mano sin
+   * que nadie hubiera dicho nada.
+   */
+  const [huboSugerencia, setHuboSugerencia] = useState(false);
+  /** Lo que la lectura de un recibo dejó entre lo que dudar. */
+  const [candidatosDelRecibo, setCandidatosDelRecibo] = useState<CandidatoDelRecibo[]>([]);
+  /**
+   * La cascada de siempre, detrás de un enlace. Sigue existiendo para quien
+   * quiera ir nivel a nivel, pero ya no es la puerta: la puerta es el buscador.
+   */
+  const [cascadaVisible, setCascadaVisible] = useState(false);
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
@@ -260,7 +296,13 @@ export function MovimientoModal({
       movimiento?.date ?? (abonandoAUnConcepto ? hoyEnBogota() : (pago?.due_date ?? hoyEnBogota())),
     );
     setType(movimiento?.type ?? tipoPorDefecto);
-    setCategoryId(movimiento?.category_id ?? pago?.category_id);
+    // Lo que llega puesto —el concepto de un movimiento que se edita, el de un
+    // pago pendiente que se confirma— es una elección: lo automático no lo toca.
+    const puesto = movimiento?.category_id ?? pago?.category_id;
+    setClasificacion(puesto === undefined ? SIN_CLASIFICAR : { categoryId: puesto, origen: 'manual' });
+    setHuboSugerencia(false);
+    setCandidatosDelRecibo([]);
+    setCascadaVisible(false);
     setNotes(movimiento?.notes ?? '');
     setError(null);
     setConfirmandoBorrado(false);
@@ -295,6 +337,77 @@ export function MovimientoModal({
     después en la tarjeta de pagos pendientes sin que nadie recuerde haberlo
     tocado.
   */
+
+  /*
+    ── Las fuentes automáticas ─────────────────────────────────────────────
+    Tres, y las tres pasan por `proponer`, que aplica la precedencia:
+
+    · El HISTORIAL, que vive en el servidor: `/categorization/suggest` con lo
+      que se está escribiendo (con espera entre teclas; ver el hook).
+    · Las PALABRAS CLAVE y los nombres de la persona: lo escrito se busca en su
+      árbol; si lleva a un solo concepto, se propone.
+    · El DICCIONARIO del sistema: si lo escrito nombra un comercio conocido,
+      sus términos se buscan en el árbol. A un concepto, se propone; a una
+      categoría o a varios conceptos, se propone la categoría y los candidatos
+      quedan a la vista en el buscador.
+
+    Solo con la ficha en el formulario y editable: proponer sobre una ficha de
+    solo lectura sería cambiarle la clasificación a un movimiento guardado.
+  */
+  const indiceDelArbol = useMemo(() => indexarArbol(categorias.data ?? []), [categorias.data]);
+  const proponiendo = abierta && paso === 'formulario' && editable;
+
+  const sugerenciaDelHistorial = useSugerenciaDeCategoria(proponiendo ? description : '');
+  useAlCambiar([sugerenciaDelHistorial?.category_id], () => {
+    // Solo con un id de verdad: una respuesta con otra forma no puede vaciar
+    // lo que otra fuente ya había puesto.
+    if (typeof sugerenciaDelHistorial?.category_id !== 'number') return;
+    setHuboSugerencia(true);
+    proponer({ categoryId: sugerenciaDelHistorial.category_id, origen: 'historial' });
+  });
+
+  const propuestaLocal = useMemo(() => {
+    const escrito = description.trim();
+    if (!proponiendo || escrito.length < 3) return null;
+
+    const conceptos = buscarEnArbol(indiceDelArbol, escrito).filter((e) => e.nivel === 'concepto');
+    if (conceptos.length === 1) {
+      return { categoryId: Number(conceptos[0].id), origen: 'palabras-clave' as const, candidatos: [] as CandidatoDelRecibo[] };
+    }
+
+    const terminos = terminosPara(escrito);
+    if (terminos.length === 0) return null;
+    const resuelto = resolverTerminos(indiceDelArbol, terminos);
+    if (resuelto.certeza === 'alta' && resuelto.concepto) {
+      return { categoryId: Number(resuelto.concepto.id), origen: 'diccionario' as const, candidatos: [] as CandidatoDelRecibo[] };
+    }
+    if (resuelto.certeza === 'media') {
+      return {
+        categoryId: resuelto.categoria ? Number(resuelto.categoria.id) : undefined,
+        origen: 'diccionario' as const,
+        candidatos: resuelto.candidatos.map((c) => ({ id: Number(c.id), nombre: c.nombre, ruta: c.ruta.join(' › ') })),
+      };
+    }
+    return null;
+  }, [indiceDelArbol, description, proponiendo]);
+
+  useAlCambiar(
+    [propuestaLocal?.categoryId, propuestaLocal?.origen, propuestaLocal?.candidatos.map((c) => c.id).join(',')],
+    () => {
+      if (!propuestaLocal) return;
+      setHuboSugerencia(true);
+      if (propuestaLocal.categoryId !== undefined) proponer(propuestaLocal);
+      if (propuestaLocal.candidatos.length > 0) setCandidatosDelRecibo(propuestaLocal.candidatos);
+    },
+  );
+
+  // Los conceptos usados últimamente, para el buscador en blanco. Solo al
+  // crear: editando, el concepto ya está puesto.
+  const movimientosRecientes = useTransactions({ per_page: 40 }, { enabled: abierta && !movimiento });
+  const recientes = useMemo(
+    () => conceptosRecientes(movimientosRecientes.data?.data ?? [], indiceDelArbol),
+    [movimientosRecientes.data, indiceDelArbol],
+  );
 
   useEffect(() => {
     if (!abierta) return;
@@ -395,13 +508,38 @@ export function MovimientoModal({
 
       if (leida.valor !== null) setAmount(String(leida.valor));
       if (leida.fecha) setDate(leida.fecha);
-      if (leida.concepto) {
-        setDescription(leida.concepto);
-        // Y si ese concepto ya existe en el árbol, se deja elegido: eso es lo
-        // que hace que el movimiento entre clasificado y no "sin clasificar
-        // pero con un nombre que se parece".
+      if (leida.concepto) setDescription(leida.concepto);
+
+      /*
+        Lo que el recibo dice de la clasificación, por su fuente y su certeza.
+
+        Con ids cuando los hay —`enElArbol`—: alta propone el concepto; media
+        propone la categoría, si la hay, y deja los candidatos a la vista en el
+        buscador para que la persona elija. Nunca se adivina entre varios.
+
+        Y pasa por `proponer`: las palabras clave de la persona y el catálogo
+        van con rango de palabras clave; el diccionario, con el suyo. Si ya
+        había algo elegido a mano, aquí no se toca nada.
+      */
+      const enElArbol = leida.enElArbol;
+      if (enElArbol) {
+        const origen: Origen = enElArbol.fuente === 'diccionario' ? 'diccionario' : 'palabras-clave';
+        setHuboSugerencia(true);
+        if (enElArbol.certeza === 'alta' && enElArbol.conceptoId !== undefined) {
+          proponer({ categoryId: Number(enElArbol.conceptoId), origen });
+        } else if (enElArbol.certeza === 'media') {
+          if (enElArbol.categoriaId !== undefined) proponer({ categoryId: Number(enElArbol.categoriaId), origen });
+          setCandidatosDelRecibo(
+            enElArbol.candidatos.map((c) => ({ id: Number(c.id), nombre: c.nombre, ruta: c.ruta })),
+          );
+        }
+      } else if (leida.concepto) {
+        // Sin ids —un árbol que no llegó—, por el nombre, como siempre.
         const suyo = conceptoLlamado(categorias.data ?? [], leida.concepto);
-        if (suyo) setCategoryId(suyo.id);
+        if (suyo) {
+          setHuboSugerencia(true);
+          proponer({ categoryId: suyo.id, origen: 'palabras-clave' });
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo leer ese archivo.');
@@ -446,7 +584,7 @@ export function MovimientoModal({
         kind: 'expense',
         parent_id: padreId,
       });
-      setCategoryId(nuevo.id);
+      proponer({ categoryId: nuevo.id, origen: 'manual' });
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : 'No se pudo crear.');
     }
@@ -515,6 +653,25 @@ export function MovimientoModal({
           datos.append('archivos', archivo);
         }
         await apiSubir(`/transactions/${id}/soportes`, datos);
+      }
+
+      /*
+        ── Aprender, solo si hubo sugerencia ─────────────────────────────────
+        Si alguna fuente automática propuso algo y el movimiento se guardó
+        clasificado, lo que quedó —aceptado o corregido— es una regla que vale
+        la pena recordar. Un movimiento clasificado a mano sin que nadie
+        hubiera sugerido nada no pasa por aquí: no hay nada que confirmar.
+
+        Sin esperar y sin fallar: aprender es de regalo, y una regla que no se
+        pudo guardar no puede convertir un gasto bien registrado en un error.
+        De descripciones vacías o genéricas el servidor no aprende; lo decide
+        él, que es quien tiene la lista.
+      */
+      if (huboSugerencia && cuerpo.category_id !== null && cuerpo.description) {
+        void apiFetch('/categorization/learn', {
+          method: 'POST',
+          body: { description: cuerpo.description, category_id: cuerpo.category_id },
+        }).catch(() => undefined);
       }
 
       onCerrar();
@@ -843,50 +1000,95 @@ export function MovimientoModal({
                     el movimiento sí se puede —eso es el registro, no la
                     estructura—; moverlo de concepto, no.
                   */}
-                      <Campo etiqueta="Centro de costos" id="mov-centro">
-                        <Combo
-                          id="mov-centro"
-                          etiqueta="Centro de costos"
-                          valor={centro ? String(centro.id) : ''}
-                          opciones={arbol.map((c) => ({ valor: String(c.id), etiqueta: c.name }))}
-                          deshabilitado={estatico}
-                          onCambiar={(v) => setCategoryId(v === '' ? undefined : Number(v))}
-                        />
-                      </Campo>
+                      {/*
+                        ── Un solo buscador para clasificar ──────────────────
+                        Se escribe «d1» y aparece «Mercado · Alimentación ›
+                        Costos variables»: un clic y los tres niveles quedan
+                        puestos. La cascada de centro, categoría y concepto
+                        sigue ahí, detrás del enlace de abajo, para quien
+                        quiera ir nivel a nivel; pero ya no es la puerta.
 
-                      <Campo etiqueta="Categoría" id="mov-categoria">
-                        <Combo
-                          id="mov-categoria"
-                          etiqueta="Categoría"
-                          valor={categoria ? String(categoria.id) : ''}
-                          opciones={(centro?.children ?? []).map((g) => ({
-                            valor: String(g.id),
-                            etiqueta: g.name,
-                          }))}
-                          deshabilitado={estatico || !centro}
-                          vacio={centro ? 'Sin elegir' : 'Elige antes un centro de costos'}
-                          creando={crearCategoria.isPending}
-                          onCambiar={(v) => setCategoryId(v === '' ? centro?.id : Number(v))}
-                          onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
-                        />
-                      </Campo>
+                        Lo que el buscador dice debajo —«sugerido por tu
+                        historial»— es la regla de no guardar nunca una
+                        clasificación sugerida sin que la persona la vea.
+                      */}
+                      <BuscadorDeConcepto
+                        id="mov-concepto"
+                        arbol={arbol}
+                        valor={categoryId}
+                        deshabilitado={estatico}
+                        onElegir={(id) => proponer({ categoryId: id, origen: 'manual' })}
+                        onCrearConcepto={(nombre, categoriaId) => void crearDentro(nombre, categoriaId)}
+                        creando={crearCategoria.isPending}
+                        recientes={recientes}
+                        candidatos={candidatosDelRecibo}
+                        ayuda={
+                          clasificacion.origen && clasificacion.origen !== 'manual' && categoryId !== undefined
+                            ? `${nombreDelOrigen(clasificacion.origen).replace(/^\w/, (c) => c.toUpperCase())}. Puedes cambiarlo.`
+                            : candidatosDelRecibo.length > 0 && clasificacion.origen !== 'manual'
+                              ? 'El recibo apunta a varios conceptos: elige uno en el buscador.'
+                              : undefined
+                        }
+                      />
 
-                      <Campo etiqueta="Concepto" id="mov-concepto">
-                        <Combo
-                          id="mov-concepto"
-                          etiqueta="Concepto"
-                          valor={concepto ? String(concepto.id) : ''}
-                          opciones={(categoria?.children ?? []).map((c) => ({
-                            valor: String(c.id),
-                            etiqueta: c.name,
-                          }))}
-                          deshabilitado={estatico || !categoria}
-                          vacio={categoria ? 'Sin elegir' : 'Elige antes una categoría'}
-                          creando={crearCategoria.isPending}
-                          onCambiar={(v) => setCategoryId(v === '' ? categoria?.id : Number(v))}
-                          onCrear={(nombre) => void crearDentro(nombre, categoria?.id)}
-                        />
-                      </Campo>
+                      {!estatico && (
+                        <button
+                          type="button"
+                          onClick={() => setCascadaVisible((v) => !v)}
+                          className="-mt-2 self-start text-xs text-muted-foreground underline-offset-2 hover:underline"
+                        >
+                          {cascadaVisible ? 'Ocultar centro y categoría' : 'Elegir por centro y categoría'}
+                        </button>
+                      )}
+
+                      {(cascadaVisible || estatico) && (
+                        <>
+                        <Campo etiqueta="Centro de costos" id="mov-centro">
+                          <Combo
+                            id="mov-centro"
+                            etiqueta="Centro de costos"
+                            valor={centro ? String(centro.id) : ''}
+                            opciones={arbol.map((c) => ({ valor: String(c.id), etiqueta: c.name }))}
+                            deshabilitado={estatico}
+                            onCambiar={(v) => proponer({ categoryId: v === '' ? undefined : Number(v), origen: 'manual' })}
+                          />
+                        </Campo>
+
+                        <Campo etiqueta="Categoría" id="mov-categoria">
+                          <Combo
+                            id="mov-categoria"
+                            etiqueta="Categoría"
+                            valor={categoria ? String(categoria.id) : ''}
+                            opciones={(centro?.children ?? []).map((g) => ({
+                              valor: String(g.id),
+                              etiqueta: g.name,
+                            }))}
+                            deshabilitado={estatico || !centro}
+                            vacio={centro ? 'Sin elegir' : 'Elige antes un centro de costos'}
+                            creando={crearCategoria.isPending}
+                            onCambiar={(v) => proponer({ categoryId: v === '' ? centro?.id : Number(v), origen: 'manual' })}
+                            onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
+                          />
+                        </Campo>
+
+                        <Campo etiqueta="Concepto" id="mov-concepto-cascada">
+                          <Combo
+                            id="mov-concepto-cascada"
+                            etiqueta="Concepto"
+                            valor={concepto ? String(concepto.id) : ''}
+                            opciones={(categoria?.children ?? []).map((c) => ({
+                              valor: String(c.id),
+                              etiqueta: c.name,
+                            }))}
+                            deshabilitado={estatico || !categoria}
+                            vacio={categoria ? 'Sin elegir' : 'Elige antes una categoría'}
+                            creando={crearCategoria.isPending}
+                            onCambiar={(v) => proponer({ categoryId: v === '' ? categoria?.id : Number(v), origen: 'manual' })}
+                            onCrear={(nombre) => void crearDentro(nombre, categoria?.id)}
+                          />
+                        </Campo>
+                        </>
+                      )}
 
                       <div className="grid gap-3 sm:grid-cols-2">
                         <Campo etiqueta="Valor" id="mov-valor">

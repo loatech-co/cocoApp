@@ -1,11 +1,22 @@
-import { Controller, Get, Global, Injectable, Module, Query } from '@nestjs/common';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  Body,
+  Controller,
+  Get,
+  Global,
+  Injectable,
+  Module,
+  Post,
+  Query,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
 import { normalizarDescripcion } from '../imports/fingerprint';
 import {
+  patronParaAprender,
   sugerirCategoria,
   type AntecedenteHistorico,
   type ReglaDeCategoria,
@@ -34,6 +45,17 @@ export class SuggestQueryDto {
   @IsString()
   @MaxLength(255)
   description?: string;
+}
+
+/** Lo que la ficha manda al guardar un movimiento con una sugerencia aceptada o corregida. */
+export class LearnBodyDto {
+  @IsString()
+  @MaxLength(255)
+  description!: string;
+
+  @IsInt()
+  @Min(1)
+  category_id!: number;
 }
 
 export interface SugerenciaView {
@@ -100,32 +122,39 @@ export class CategorizationService {
    * Es lo que hace que el sistema mejore con el uso sin pedirle nada a nadie:
    * la próxima importación acertará más porque esta se corrigió.
    */
-  async aprenderDe(userId: bigint, descripcion: string, categoryId: bigint): Promise<void> {
-    const patron = tokenMasLargo(descripcion);
-    if (!patron) return;
+  async aprenderDe(userId: bigint, descripcion: string, categoryId: bigint): Promise<boolean> {
+    const patron = patronParaAprender(descripcion, normalizarDescripcion);
+    if (!patron) return false;
 
     await this.prisma.categoryRule.upsert({
       where: { userId_pattern: { userId, pattern: patron } },
       create: { userId, pattern: patron, categoryId, priority: PRIORIDAD_APRENDIDA, hits: 1 },
       update: { categoryId, hits: { increment: 1 } },
     });
+    return true;
   }
-}
 
-/**
- * El token más largo de la descripción, como patrón de la regla aprendida.
- *
- * De "RAPPI*RESTAURANTE EL SITIO" sale "restaurante". No es perfecto —a veces
- * el token más largo no es el nombre del comercio—, pero la regla convive con
- * el aprendizaje por historial, que corrige por su cuenta, y una regla mala
- * pesa poco frente a un historial consistente.
- */
-function tokenMasLargo(descripcion: string): string | null {
-  const tokens = normalizarDescripcion(descripcion)
-    .split(' ')
-    .filter((token) => token.length >= 4 && !/^\d+$/.test(token));
+  /**
+   * Lo mismo, pero desde la ficha: comprueba antes que la categoría sea suya.
+   *
+   * `aprenderDe` confía en quien lo llama porque la importación ya validó sus
+   * filas. Desde la ficha llega un `category_id` escrito por el cliente, y sin
+   * esta comprobación alguien podría crear una regla que apunte a la categoría
+   * de otra cuenta —inútil para él, pero una fila que no debería existir—.
+   */
+  async aprenderDesdeLaFicha(
+    userId: bigint,
+    descripcion: string,
+    categoryId: bigint,
+  ): Promise<{ aprendido: boolean }> {
+    const suya = await this.prisma.category.findFirst({
+      where: { id: categoryId, userId },
+      select: { id: true },
+    });
+    if (!suya) throw new UnprocessableEntityException('Esa categoría no existe en tu cuenta.');
 
-  return tokens.sort((a, b) => b.length - a.length)[0] ?? null;
+    return { aprendido: await this.aprenderDe(userId, descripcion, categoryId) };
+  }
 }
 
 function aVista(sugerencia: Sugerencia | null): SugerenciaView | null {
@@ -161,6 +190,25 @@ export class CategorizationController {
       : null;
 
     return { data, meta: {} };
+  }
+
+  /**
+   * La ficha avisa de que una sugerencia se aceptó o se corrigió.
+   *
+   * Solo entonces: un movimiento clasificado a mano sin que hubiera sugerencia
+   * no pasa por aquí, y uno con descripción genérica no deja regla aunque pase.
+   * Devuelve si aprendió algo, para que quien lo llama no tenga que adivinar.
+   */
+  @Post('learn')
+  async aprender(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: LearnBodyDto,
+  ): Promise<{ aprendido: boolean }> {
+    return this.categorization.aprenderDesdeLaFicha(
+      user.id,
+      body.description,
+      BigInt(body.category_id),
+    );
   }
 }
 

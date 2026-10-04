@@ -231,8 +231,14 @@ export interface FiltrosDeMovimientos {
   sort?: string;
 }
 
-export function useTransactions(filtros: FiltrosDeMovimientos = {}) {
+export function useTransactions(
+  filtros: FiltrosDeMovimientos = {},
+  // `enabled` para quien monta la consulta antes de necesitarla: la ficha de
+  // un movimiento está siempre montada y solo quiere los recientes al abrirse.
+  opciones: { enabled?: boolean } = {},
+) {
   return useQuery({
+    enabled: opciones.enabled ?? true,
     queryKey: keys.transactions(filtros),
     queryFn: async (): Promise<ApiResponse<Transaction[], TransactionsMeta>> => {
       const params = new URLSearchParams();

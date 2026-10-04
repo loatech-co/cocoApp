@@ -156,3 +156,38 @@ export function tokensSignificativos(normalizada: string): Set<string> {
       .filter((token) => token.length >= 3 && !VACIAS.has(token) && !/^\d+$/.test(token)),
   );
 }
+
+/**
+ * Palabras que describen un pago sin decir de qué es.
+ *
+ * Aprender de ellas crea reglas que lo clasifican todo igual: una regla
+ * «pago → Mercado» convertiría en mercado cada «pago de» que llegue después.
+ * El plan lo dice tal cual: no se aprende de descripciones vacías ni genéricas.
+ */
+export const PALABRAS_GENERICAS: ReadonlySet<string> = new Set([
+  'pago', 'pagos', 'compra', 'compras', 'transferencia', 'transf', 'abono', 'abonos',
+  'retiro', 'consignacion', 'factura', 'facturas', 'recibo', 'recibos', 'varios',
+  'gasto', 'gastos', 'cuota', 'cuotas', 'mensualidad', 'servicio', 'servicios',
+  'movimiento', 'otros', 'otro', 'cargo', 'debito', 'credito', 'tarjeta',
+]);
+
+/**
+ * El token con el que se aprende de una descripción, o `null` si no da para
+ * aprender nada.
+ *
+ * El más largo, de cuatro letras o más, que no sea un número ni una palabra
+ * genérica. De «RAPPI*RESTAURANTE EL SITIO» sale «restaurante». No es
+ * perfecto —a veces el token más largo no es el nombre del comercio— pero la
+ * regla convive con el aprendizaje por historial, que corrige por su cuenta,
+ * y una regla mala pesa poco frente a un historial consistente.
+ */
+export function patronParaAprender(
+  descripcion: string | null | undefined,
+  normalizar: (texto: string) => string,
+): string | null {
+  const tokens = normalizar(descripcion ?? '')
+    .split(' ')
+    .filter((token) => token.length >= 4 && !/^\d+$/.test(token) && !PALABRAS_GENERICAS.has(token));
+
+  return tokens.sort((a, b) => b.length - a.length)[0] ?? null;
+}

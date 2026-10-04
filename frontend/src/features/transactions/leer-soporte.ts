@@ -190,6 +190,10 @@ export async function leerSoporte(
       nombreDeArchivo: archivo.name.replace(/\.[a-z0-9]+$/i, ''),
       periodo: opciones.periodo,
       firmas: [...firmasDelArbol(opciones.arbol ?? []), ...FIRMAS],
+      // El árbol entero, además de sus firmas: con él la lectura devuelve ids
+      // y no solo nombres, y el diccionario del sistema puede buscar sus
+      // términos ahí dentro cuando ninguna firma reconoció al acreedor.
+      arbol: opciones.arbol,
     }),
   };
 }

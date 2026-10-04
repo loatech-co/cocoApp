@@ -4,6 +4,7 @@ import {
   tokensSignificativos,
   type AntecedenteHistorico,
   type ReglaDeCategoria,
+  patronParaAprender,
 } from './categorization';
 
 const DOMICILIOS = 10n;
@@ -145,3 +146,38 @@ const REGLAS: ReglaDeCategoria[] = [
   { pattern: 'rappi', categoryId: DOMICILIOS, priority: 0, sembrada: true },
   { pattern: 'uber', categoryId: TRANSPORTE, priority: 0, sembrada: true },
 ];
+
+/**
+ * De qué se aprende y de qué no. «No aprendas de descripciones vacías o
+ * genéricas» es lo que impide que una regla «pago → Mercado» convierta en
+ * mercado cada «pago de» que llegue después.
+ */
+describe('El patrón con el que se aprende', () => {
+  const normal = (t: string) =>
+    t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+  it('es el token más largo que no sea número', () => {
+    expect(patronParaAprender('RAPPI*RESTAURANTE EL SITIO 2025', normal)).toBe('restaurante');
+  });
+
+  it('de una descripción vacía no sale nada', () => {
+    expect(patronParaAprender('', normal)).toBeNull();
+    expect(patronParaAprender(null, normal)).toBeNull();
+    expect(patronParaAprender('   ', normal)).toBeNull();
+  });
+
+  it('de una descripción genérica tampoco', () => {
+    expect(patronParaAprender('Pago', normal)).toBeNull();
+    expect(patronParaAprender('pago factura servicios', normal)).toBeNull();
+    expect(patronParaAprender('Transferencia 12345', normal)).toBeNull();
+  });
+
+  it('pero una palabra genérica no esconde a la que sí dice algo', () => {
+    expect(patronParaAprender('Pago Netflix', normal)).toBe('netflix');
+    expect(patronParaAprender('compra en Carulla', normal)).toBe('carulla');
+  });
+
+  it('y las de menos de cuatro letras no cuentan', () => {
+    expect(patronParaAprender('D1 ARA', normal)).toBeNull();
+  });
+});

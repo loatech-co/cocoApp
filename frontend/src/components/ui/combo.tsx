@@ -268,7 +268,14 @@ function ComboPanel({
   );
 }
 
-function Opcion({
+/**
+ * Una fila elegible de un desplegable con buscador.
+ *
+ * Exportada porque la usa también el buscador de conceptos: la misma fila, con
+ * el mismo realce y la misma palomita, para que elegir un concepto se vea igual
+ * en los dos sitios. Dos copias se separan.
+ */
+export function Opcion({
   elegida,
   onClick,
   children,

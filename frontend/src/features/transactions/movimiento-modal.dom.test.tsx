@@ -90,14 +90,19 @@ describe('La ficha de un movimiento que se edita', () => {
     // La ficha abre en modo lectura: los campos se desbloquean al pedirlo.
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
 
-    for (const nombre of ['Centro de costos', 'Categoría', 'Concepto']) {
+    // La puerta es el buscador: enseña el concepto con su camino entero.
+    expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain('Celsia (Energía)');
+    expect(screen.getByText(/Servicios públicos › Costos fijos/)).toBeDefined();
+
+    // Y la cascada sigue existiendo, detrás de su enlace, con los tres puestos.
+    fireEvent.click(screen.getByRole('button', { name: 'Elegir por centro y categoría' }));
+    for (const nombre of ['Centro de costos', 'Categoría']) {
       const disparador = screen.getByRole('button', { name: new RegExp(nombre) });
       expect(disparador, `el desplegable de ${nombre}`).toBeDefined();
     }
-
     expect(screen.getByText('Costos fijos')).toBeDefined();
     expect(screen.getByText('Servicios públicos')).toBeDefined();
-    expect(screen.getByText('Celsia (Energía)')).toBeDefined();
+    expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
   });
 
   it('los enseña aunque estén BLOQUEADOS por ser de un centro estático', () => {
@@ -114,9 +119,13 @@ describe('La ficha de un movimiento que se edita', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
 
+    // En un centro estático no hay nada que elegir pero sí que leer: el
+    // buscador y la cascada salen bloqueados y los dos dicen qué es.
     expect(screen.getByText('Costos fijos')).toBeDefined();
     expect(screen.getByText('Servicios públicos')).toBeDefined();
-    expect(screen.getByText('Celsia (Energía)')).toBeDefined();
+    expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: /Concepto/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Elegir por centro y categoría' })).toBeNull();
   });
 
   it('también cuando el árbol de categorías llega DESPUÉS de abrirse', async () => {
@@ -138,9 +147,8 @@ describe('La ficha de un movimiento que se edita', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
     cliente.setQueryData([...keys.categories, 'todas'], ARBOL);
 
-    expect(await screen.findByText('Costos fijos')).toBeDefined();
-    expect(screen.getByText('Servicios públicos')).toBeDefined();
-    expect(screen.getByText('Celsia (Energía)')).toBeDefined();
+    expect(await screen.findByText(/Servicios públicos › Costos fijos/)).toBeDefined();
+    expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
   });
 });
 
@@ -215,8 +223,7 @@ describe('La ficha de confirmar un pago pendiente', () => {
   it('llega con su clasificación puesta, sin preguntarla otra vez', () => {
     abrirConfirmacion();
 
-    expect(screen.getByText('Costos fijos')).toBeDefined();
-    expect(screen.getByText('Servicios públicos')).toBeDefined();
+    expect(screen.getByText(/Servicios públicos › Costos fijos/)).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
   });
 
@@ -422,8 +429,8 @@ describe('La ficha de un concepto que se paga en varias veces', () => {
     // Lo que cambia es el importe y la fecha; de qué concepto es, no.
     abrirConfirmacion(PAGO_A_PEDAZOS);
 
-    expect(screen.getByText('Costos fijos')).toBeDefined();
-    expect(screen.getByText('Servicios públicos')).toBeDefined();
+    expect(screen.getByText(/Servicios públicos › Costos fijos/)).toBeDefined();
+    expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
   });
 
   it('y uno normal sigue llegando con su valor esperado', () => {

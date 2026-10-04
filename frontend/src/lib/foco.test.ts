@@ -50,6 +50,8 @@ const NACEN_ENFOCADOS: Record<string, string> = {
     'La hoja de buscar del teléfono: se levanta al tocar la lupa de la barra de abajo, y el campo es lo único que tiene.',
   'components/ui/combo.tsx':
     'El filtro de un desplegable con muchas opciones: si hay que pulsarlo antes de escribir, nadie descubre que se podía filtrar.',
+  'components/buscador-de-concepto.tsx':
+    'El buscador de conceptos de la ficha: se abre para escribir, como el filtro de un Combo, y la caja es lo primero que hay dentro.',
 };
 
 /**

@@ -1,4 +1,13 @@
-import { FIRMAS, RECAUDADORES, normalizar, type Firma } from './firmas';
+import {
+  indexarArbol,
+  resolverTerminos,
+  rutaLegible,
+  type Certeza,
+  type EntradaDelIndice,
+  type NodoBuscable,
+} from './buscar';
+import { comerciosEn } from './diccionario';
+import { FIRMAS, PRIORIDAD_DE_LO_ESCRITO, RECAUDADORES, normalizar, type Firma } from './firmas';
 import { leerFecha } from './fecha';
 import { leerMonto } from './monto';
 
@@ -31,6 +40,32 @@ export interface SeñalesDeLectura {
   recaudadoresIgnorados: string[];
 }
 
+/**
+ * La clasificación llevada al árbol de la persona, por ids.
+ *
+ * Los nombres de `Lectura` son para leerlos; esto es para ELEGIR: un
+ * concepto se elige por id, y dos «Mercado» en categorías distintas tienen el
+ * mismo nombre y distinto id. Solo existe cuando se pasó el árbol.
+ *
+ * ── Las tres fuentes y su orden ─────────────────────────────────────────────
+ * `palabras-clave` son las de la persona —lo que escribió en un concepto para
+ * reconocerlo— y van primero; `firma` es el catálogo del sistema; y el
+ * `diccionario` solo habla cuando ninguna de las dos reconoció nada. Una
+ * fuente inferior nunca reemplaza a una superior.
+ *
+ * ── Y la certeza ────────────────────────────────────────────────────────────
+ * ALTA es un concepto; MEDIA es una categoría o varios conceptos entre los que
+ * no se elige; NINGUNA no se devuelve: entonces esto es `null`.
+ */
+export interface ClasificacionEnElArbol {
+  certeza: Exclude<Certeza, 'ninguna'>;
+  fuente: 'palabras-clave' | 'firma' | 'diccionario';
+  conceptoId?: number | string;
+  categoriaId?: number | string;
+  /** Con certeza media: entre qué se duda, para dejarlo a la vista. */
+  candidatos: { id: number | string; nombre: string; ruta: string }[];
+}
+
 export interface Lectura {
   concepto: string | null;
   categoria: string | null;
@@ -44,6 +79,8 @@ export interface Lectura {
   motivo: string;
   /** Los otros candidatos, por si la persona quiere corregir de un clic. */
   alternativas: { concepto: string; puntaje: number }[];
+  /** Por ids, cuando se pasó el árbol. `null` si no se pasó o no llevó a nada. */
+  enElArbol?: ClasificacionEnElArbol | null;
 }
 
 export interface EntradaDeLectura {
@@ -57,6 +94,11 @@ export interface EntradaDeLectura {
   periodo?: string;
   /** Las firmas a usar. Por defecto, el catálogo. */
   firmas?: Firma[];
+  /**
+   * El árbol de la persona. Con él, la lectura devuelve ids y no solo nombres,
+   * y el diccionario del sistema puede buscar sus términos ahí dentro.
+   */
+  arbol?: readonly NodoBuscable[];
 }
 
 /** Cuánto pesa cada señal. Suman hasta 100 y de ahí sale la confianza. */
@@ -71,6 +113,7 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
   const firmas = entrada.firmas ?? FIRMAS;
   const texto = normalizar(entrada.texto);
   const nombre = normalizar(entrada.nombreDeArchivo ?? '');
+  const indice = entrada.arbol ? indexarArbol(entrada.arbol) : null;
 
   const señales: SeñalesDeLectura = {
     texto: [],
@@ -149,6 +192,22 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
 
   if (!ganadora) {
     const { valor, fecha, confianzaDelValor } = datos(entrada, undefined);
+
+    /*
+      ── Última fuente: el diccionario del sistema ──────────────────────────
+      Ninguna firma reconoció al acreedor —ni las palabras clave de la persona
+      ni el catálogo—. Antes de rendirse se mira si el texto nombra un
+      comercio conocido del país, y a qué llaman eso en ESTE árbol: «KOBA
+      COLOMBIA» es D1, D1 es «mercado», y mercado es lo que esa persona tenga
+      que se llame así o lo tenga por palabra clave.
+
+      Solo con el árbol delante: sin él no hay dónde buscar los términos, y
+      devolver «mercado» como nombre sería inventar un concepto que quizá no
+      existe.
+    */
+    const delDiccionario = indice ? desdeElDiccionario(indice, entrada, señales, valor, fecha, confianzaDelValor) : null;
+    if (delDiccionario) return delDiccionario;
+
     return {
       concepto: null,
       categoria: null,
@@ -160,6 +219,7 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
       señales,
       motivo: 'No reconocí al acreedor en el texto ni en el nombre del archivo.',
       alternativas: [],
+      enElArbol: null,
     };
   }
 
@@ -217,6 +277,92 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
     alternativas: vivas
       .slice(1, 4)
       .map((v) => ({ concepto: v.firma.concepto, puntaje: v.puntos })),
+    enElArbol: indice ? enElArbolDesdeFirma(indice, ganadora.firma) : null,
+  };
+}
+
+/**
+ * Una firma ganadora, llevada a ids.
+ *
+ * La firma trae nombres —concepto, categoría, centro— porque así se escribe
+ * el catálogo y así salen de `firmasDeConceptos`. Se busca en el índice el
+ * concepto que se llame igual Y cuelgue de la misma categoría: dos «Mercado»
+ * en categorías distintas no son el mismo.
+ */
+function enElArbolDesdeFirma(indice: readonly EntradaDelIndice[], firma: Firma): ClasificacionEnElArbol {
+  const concepto = indice.find(
+    (e) =>
+      e.nivel === 'concepto' &&
+      normalizar(e.nombre) === normalizar(firma.concepto) &&
+      normalizar(e.ruta[0] ?? '') === normalizar(firma.categoria),
+  );
+  return {
+    certeza: 'alta',
+    fuente: firma.prioridad === PRIORIDAD_DE_LO_ESCRITO ? 'palabras-clave' : 'firma',
+    conceptoId: concepto?.id,
+    categoriaId: concepto?.categoriaId,
+    candidatos: [],
+  };
+}
+
+/**
+ * Lo que el diccionario del sistema dice de un texto, o `null` si nada.
+ *
+ * La confianza queda SIEMPRE por debajo del umbral de revisión, a propósito:
+ * el diccionario propone, no decide. Un comercio reconocido es una buena
+ * pista de dónde va la plata, pero no es una firma —no sabe nada de ESTA
+ * cuenta—, y lo que sale de aquí tiene que pasar por los ojos de alguien.
+ */
+function desdeElDiccionario(
+  indice: readonly EntradaDelIndice[],
+  entrada: EntradaDeLectura,
+  señales: SeñalesDeLectura,
+  valor: number | null,
+  fecha: string | null,
+  confianzaDelValor: number,
+): Lectura | null {
+  const hallados = comerciosEn(`${entrada.texto} ${entrada.nombreDeArchivo ?? ''}`);
+  if (hallados.length === 0) return null;
+
+  const terminos = [...new Set(hallados.flatMap((h) => h.grupo.terminos))];
+  const resuelto = resolverTerminos(indice, terminos);
+  if (resuelto.certeza === 'ninguna') return null;
+
+  const concepto = resuelto.concepto;
+  const categoria =
+    resuelto.categoria ??
+    (concepto
+      ? indice.find((e) => e.nivel === 'categoria' && String(e.id) === String(concepto.categoriaId))
+      : undefined);
+
+  const comercio = hallados[0].alias;
+  const motivo =
+    resuelto.certeza === 'alta'
+      ? `Reconocí «${comercio}» y en tu árbol eso lleva a un solo concepto.`
+      : resuelto.candidatos.length > 1
+        ? `Reconocí «${comercio}», pero en tu árbol lleva a ${resuelto.candidatos.length} sitios: elige tú.`
+        : `Reconocí «${comercio}» y en tu árbol lleva a una categoría, sin concepto.`;
+
+  return {
+    concepto: concepto?.nombre ?? null,
+    categoria: categoria?.nombre ?? null,
+    centro: concepto?.ruta[1] ?? categoria?.ruta[0] ?? null,
+    valor,
+    fecha,
+    confianza:
+      resuelto.certeza === 'alta'
+        ? Math.round(Math.min(0.75, 0.5 + confianzaDelValor * 0.25) * 100) / 100
+        : Math.round(Math.min(0.5, 0.3 + confianzaDelValor * 0.2) * 100) / 100,
+    señales,
+    motivo,
+    alternativas: resuelto.candidatos.map((c) => ({ concepto: c.nombre, puntaje: 0 })),
+    enElArbol: {
+      certeza: resuelto.certeza,
+      fuente: 'diccionario',
+      conceptoId: concepto?.id,
+      categoriaId: categoria?.id ?? concepto?.categoriaId,
+      candidatos: resuelto.candidatos.map((c) => ({ id: c.id, nombre: c.nombre, ruta: rutaLegible(c) })),
+    },
   };
 }
 
