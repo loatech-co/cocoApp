@@ -5,5 +5,11 @@
   //
   // Esto además evita tener que arrastrar vitest a las dependencias de
   // producción solo para que `tsc` encuentre sus tipos al compilar.
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "dist", "node_modules"]
+  //
+  // Y la configuración del propio runner tampoco: `vitest.config.ts` entró al
+  // `include` del tsconfig base para que el lint lo analizara con tipos, y
+  // desde ahí heredaba a este. En el servidor no hay `vitest` al construir, y
+  // el build de producción se caía por el archivo de un runner que no se
+  // despliega. Pasó el 4 de octubre de 2026.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "vitest.config.ts", "dist", "node_modules"]
 }
