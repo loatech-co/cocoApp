@@ -19,3 +19,6 @@ api/prisma/migraciones-mysql-archivadas/
 ios/
 
 .claude/worktrees/
+
+# Written by release-please on every release PR
+CHANGELOG.md

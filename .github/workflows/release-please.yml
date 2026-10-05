@@ -1,0 +1,43 @@
+# Versioning (phase 7.6, decision D21). On every push to the deploy branch,
+# release-please reads the Conventional Commits since the last release and
+# keeps one release PR open: version bump in package.json and CHANGELOG.md.
+# Merging that PR tags vX.Y.Z and publishes the GitHub release notes.
+#
+# It runs with a fine-grained PAT (RELEASE_PLEASE_TOKEN) and not GITHUB_TOKEN:
+# a PR opened with GITHUB_TOKEN does not trigger workflows, so ci.yml would
+# never run on the release PR and scripts/merge.sh could not integrate it.
+# Until the owner creates that secret the job is skipped with a warning.
+name: release-please
+
+on:
+  push:
+    branches: [Dev] # the deploy branch (D8)
+  workflow_dispatch:
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HAS_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN != '' }}
+    steps:
+      - name: Token missing
+        if: env.HAS_TOKEN != 'true'
+        run: >-
+          echo "::warning title=release-please skipped::RELEASE_PLEASE_TOKEN is
+          not set. See CONTRIBUTING.md, Versioning."
+
+      - uses: googleapis/release-please-action@v5
+        if: env.HAS_TOKEN == 'true'
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          target-branch: Dev
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
