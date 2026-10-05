@@ -654,3 +654,31 @@ gratuito de GitHub (`gh repo view`: private, rama por defecto `main`).
 | 6.1 | `fix/clean-install` | #2 | `tsx` vuelve a la línea 4.20 (usa `esbuild` 0.25, la de Vite): una sola `esbuild` en el árbol. Causa leída en el registro del servidor: `Expected "0.28.2" but got "0.25.12"`. Nuevo `scripts/verify-clean-install.sh` (clon limpio, `npm install` con `NODE_ENV=production` sin devDependencies, una sola `esbuild`, build) |
 
 **Incidente 5 oct ~09:55.** El push de `chore/phase-6-prep` a `Dev` lo negó el clasificador del modo auto de Claude Code («Production Deploy»), pese al mandato escrito. Parada no prevista: se informó al dueño, que salió del modo auto y aprobó el push en el panel.
+
+| Paso | Rama | PR | Estado |
+|---|---|---|---|
+| 6.1 | `fix/clean-install` | #2 | **Desplegado** `43461ff` · 1m 15s · **`npm install` al primer intento** (0 menciones de `--legacy-peer-deps` en el registro del servidor) · `stderr` 0 |
+| 6.2 | `test/intermediate-periodicities` | #3 | **Desplegado** `0e6faa8` · 1m 32s · instalación limpia · `stderr` 0. 21 pruebas nuevas en la API (años enteros, cruce de año, `mes_de_pago` nulo, meses cortos, febrero bisiesto) y 6 en la web (los meses que nombra «cuándo vuelve» son los mismos que la API). **Ninguna falló: no hubo que tocar la lógica** |
+| 6.3 | `feat/recurrence-checks` | #4 | Migración **aplicada en producción** antes del código (compuerta D1: única pendiente la esperada; `cerrar-el-api-de-datos.sql` 0/0/0). Violaciones contadas antes: **0 de 79** en producción, 0 de 30 en local. Las 6 restricciones confirmadas en `pg_constraint`. La API traduce 23514 a 422 con la regla en palabras (Prisma lo entrega como `PrismaClientUnknownRequestError`) |
+
+SQL de la 6.3, textual (`20261005151000_add_recurrence_checks`):
+
+```sql
+ALTER TABLE "categories"
+  ADD CONSTRAINT "ck_categories_recurring_has_periodicity"
+    CHECK (NOT "recurrente" OR "periodicidad" IS NOT NULL),
+  ADD CONSTRAINT "ck_categories_payment_month_not_monthly"
+    CHECK ("mes_de_pago" IS NULL OR ("periodicidad" IS NOT NULL AND "periodicidad" <> 'mensual')),
+  ADD CONSTRAINT "ck_categories_payment_day_range"
+    CHECK ("dia_de_pago" IS NULL OR "dia_de_pago" BETWEEN 1 AND 31),
+  ADD CONSTRAINT "ck_categories_payment_month_range"
+    CHECK ("mes_de_pago" IS NULL OR "mes_de_pago" BETWEEN 1 AND 12),
+  ADD CONSTRAINT "ck_categories_multi_payment_not_auto"
+    CHECK (NOT ("varios_pagos" AND "pago_automatico")),
+  ADD CONSTRAINT "ck_categories_multi_payment_recurring"
+    CHECK (NOT "varios_pagos" OR "recurrente");
+```
+
+Decisiones de esta tanda: **D6** — las migraciones nuevas se nombran ya en inglés (`YYYYMMDDHHMMSS_<verb>_<object>`) y las restricciones con el prefijo `ck_<tabla>_<regla>` de la fase 7, para no tener que renombrarlas después. **D7** — Prettier no se aplica todavía: el repo no tiene configuración y formatear lo nuevo con la de por defecto (comillas dobles) lo separaría del resto; llega con 7.5.
+
+Prueba frágil vista una vez: `auth.e2e-spec.ts › una cuenta pendiente no puede entrar…` falló con `socket hang up` en una corrida completa; 3/3 limpias aislada y la suite entera limpia después. Va a pendientes.
