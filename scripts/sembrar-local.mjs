@@ -18,7 +18,7 @@
 // Siembra escribe. Apuntado a una base remota por un `.env` heredado, metería
 // categorías inventadas en los datos de alguien. La comprobación es la misma
 // que la del arranque de la API, y por el mismo motivo.
-import { PrismaClient } from '@prisma/client';
+import { createPrisma } from './db/prisma-client.mjs';
 
 const HOSTS_LOCALES = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0']);
 
@@ -39,7 +39,7 @@ if (!HOSTS_LOCALES.has(host)) {
   process.exit(1);
 }
 
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 
 /** Busca por nombre dentro de un padre, y lo crea si no está. */
 async function asegurar(userId, parentId, name, datos = {}) {

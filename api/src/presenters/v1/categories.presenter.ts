@@ -1,4 +1,4 @@
-import type { CategoryKind } from '@prisma/client';
+import type { CategoryKind } from '../../generated/prisma/client';
 
 import { PERIODICITY, spanish, type Spanish } from '../../common/vocabulary';
 import type {

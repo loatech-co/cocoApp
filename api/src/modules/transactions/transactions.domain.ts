@@ -1,4 +1,4 @@
-import type { TransactionSource, TransactionStatus, TransactionType } from '@prisma/client';
+import type { TransactionSource, TransactionStatus, TransactionType } from '../../generated/prisma/client';
 
 import type { TransaccionCompleta } from './transactions.repository';
 import { serializar, toMoney } from '../../common/money/money';

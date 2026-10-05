@@ -1,4 +1,10 @@
-import type { Account, Category, Prisma, PrismaClient, Transaction } from '@prisma/client';
+import type {
+  Account,
+  Category,
+  Prisma,
+  PrismaClient,
+  Transaction,
+} from '../../src/generated/prisma/client';
 
 /**
  * Test data factories. Each one writes a valid row with neutral defaults, so a

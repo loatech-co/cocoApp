@@ -17,7 +17,7 @@
 // La DATABASE_URL la inyecta `dotenv -e` en el entorno del proceso. Este
 // archivo nunca la abre, nunca la imprime y nunca la pasa por la línea de
 // comandos, donde quedaría visible en `ps` para cualquier proceso del equipo.
-import { PrismaClient } from '@prisma/client';
+import { createPrisma } from './db/prisma-client.mjs';
 import { readFileSync } from 'node:fs';
 
 const args = process.argv.slice(2);
@@ -56,7 +56,7 @@ if (destructiva && !forzar) {
 // SELECT/SHOW/DESCRIBE devuelven filas; el resto devuelve cuántas tocó.
 const devuelveFilas = /^\s*(SELECT|SHOW|DESCRIBE|DESC|EXPLAIN|WITH)\b/i.test(sql);
 
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 
 // BigInt no sobrevive a JSON.stringify y Decimal se imprimiría como objeto.
 // Ambos aparecen constantemente aquí: los COUNT() son BigInt y todos los

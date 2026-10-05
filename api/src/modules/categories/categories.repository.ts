@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { Category, CategoryKind, Prisma } from '@prisma/client';
 
 import { PLANTILLA_DE_CUENTA_NUEVA, type NodoDePlantilla } from './categories.plantilla';
 import { unir } from './palabras-clave';
 import type { NodoDeCategoria } from '../../common/categories/categories.tree';
+import type { Category, CategoryKind, Prisma } from '../../generated/prisma/client';
 import { Database, type UserTx } from '../../prisma/database';
 
 @Injectable()

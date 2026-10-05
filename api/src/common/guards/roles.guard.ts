@@ -7,8 +7,9 @@ import {
   type ExecutionContext,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { UserRole } from '@prisma/client';
 import type { Request } from 'express';
+
+import type { UserRole } from '../../generated/prisma/client';
 
 const ROLES_KEY = 'roles';
 

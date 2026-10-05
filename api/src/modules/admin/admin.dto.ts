@@ -1,6 +1,7 @@
-import type { UserRole, UserStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+
+import type { UserRole, UserStatus } from '../../generated/prisma/client';
 
 export class ListUsersQueryDto {
   @IsOptional()

@@ -1,4 +1,4 @@
-import type { Periodicidad, Prisma } from '@prisma/client';
+import type { Periodicidad, Prisma } from '../../generated/prisma/client';
 
 /** A category the person picked by hand, with what decides if it can classify. */
 export interface ChosenCategory {

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
 
 import { flagOfPreferenceKey, type FlagName } from '@coco/flags';
 
@@ -12,6 +11,7 @@ import {
 } from './preferences';
 import type { UpdatePreferencesDto } from './preferences.dto';
 import { PreferencesRepository } from './preferences.repository';
+import type { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class PreferencesService {

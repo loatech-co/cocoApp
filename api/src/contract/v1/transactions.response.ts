@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TransactionSource, TransactionStatus, TransactionType } from '@prisma/client';
+import { TransactionSource, TransactionStatus, TransactionType } from '../../generated/prisma/client';
 
 export class SplitResponse {
   id!: number;

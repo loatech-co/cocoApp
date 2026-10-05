@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../generated/prisma/client';
 
 import type { AccountResponse } from './accounts.response';
 import type { AuditEntryResponse, AuditUserResponse } from './admin.response';

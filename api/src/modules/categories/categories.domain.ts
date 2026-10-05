@@ -1,4 +1,4 @@
-import type { Category as CategoryRow, CategoryKind } from '@prisma/client';
+import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
 
 import type { ConHijos } from '../../common/categories/categories.tree';
 import { english, PERIODICITY, type English } from '../../common/vocabulary';

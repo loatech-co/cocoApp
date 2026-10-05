@@ -1,4 +1,3 @@
-import { AccountType } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -14,6 +13,7 @@ import {
 } from 'class-validator';
 
 import { IsMoney } from '../../../common/validation/is-money.decorator';
+import { AccountType } from '../../../generated/prisma/client';
 
 /**
  * Ningún DTO expone `userId`: el ValidationPipe corre con

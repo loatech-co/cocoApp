@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CategoryKind, Periodicidad } from '@prisma/client';
+import { CategoryKind, Periodicidad } from '../../generated/prisma/client';
 
 /** What every category carries, whatever its level (cost center, category, concept). */
 class CategoryFields {

@@ -1,11 +1,10 @@
+import { CERO, toMoney, type Money } from './money';
 import type {
   AccountType,
   TransactionStatus,
   TransactionType,
   TransferDirection,
-} from '@prisma/client';
-
-import { CERO, toMoney, type Money } from './money';
+} from '../../generated/prisma/client';
 
 /** Lo mínimo que hace falta de un movimiento para calcular un saldo. */
 export interface MovimientoDeSaldo {

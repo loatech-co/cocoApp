@@ -6,10 +6,10 @@ import {
   type ArgumentsHost,
   type ExceptionFilter,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import type { Request, Response } from 'express';
 
 import { checkViolationMessage } from './check-constraints';
+import { Prisma } from '../../generated/prisma/client';
 import { DomainError, type DomainErrorKind, type ErrorDetail } from '../errors/domain-error';
 import { PROBLEMS, problemType, type ProblemCode } from '../errors/problem-codes';
 

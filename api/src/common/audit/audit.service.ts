@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
 
 import { AuditRepository, type AuditEntryWithUser } from './audit.repository';
+import type { Prisma } from '../../generated/prisma/client';
 
 /** Acciones auditadas. Tipadas para que no se cuelen cadenas sueltas. */
 type AccionAuditada =

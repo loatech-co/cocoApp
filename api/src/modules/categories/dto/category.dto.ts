@@ -1,4 +1,3 @@
-import { CategoryKind, Periodicidad } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -17,6 +16,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { CategoryKind, Periodicidad } from '../../../generated/prisma/client';
 import { unir } from '../palabras-clave';
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;

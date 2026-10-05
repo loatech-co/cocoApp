@@ -14,13 +14,12 @@
       // playwright plugin through it.
       "playwright": { "config": ["e2e/playwright.config.ts"] },
       // Scripts run from the repo root and use the workspaces' hoisted
-      // Prisma client on purpose: they operate on the same database as the
-      // app, with the same version. (`pg` is a root devDependency since the
-      // journeys, which open their own test database with it.)
-      // `tsx` lost its last consumer (scripts/soportes/piloto.mts) in step
-      // 7.12; it stays pinned until 7.9 says whether its Lighthouse script
-      // needs it, because removing it changes the lockfile's esbuild tree.
-      "ignoreDependencies": ["@prisma/client", "tsx"],
+      // dependencies (the Prisma adapter, the Prisma client) on purpose: they
+      // operate on the same database as the app, with the same versions. (`pg`
+      // is a root devDependency since the journeys, which open their own test
+      // database with it.) `tsx` runs the .mjs scripts that import the
+      // generated Prisma 7 client (ADR 0020).
+      "ignoreDependencies": ["@prisma/adapter-pg", "@prisma/client", "tsx"],
     },
     "api": {
       // src/openapi/generate.ts: `npm run openapi` runs it from dist/.

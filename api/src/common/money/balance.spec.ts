@@ -1,7 +1,6 @@
-import type { AccountType } from '@prisma/client';
-
 import { calcularCupoDisponible, calcularSaldo, type MovimientoDeSaldo } from './balance';
 import { serializar, toMoney } from './money';
+import type { AccountType } from '../../generated/prisma/client';
 
 /** Atajos para que las tablas de casos se lean como el enunciado del PRD. */
 const ingreso = (monto: string, status: 'cleared' | 'pending' = 'cleared'): MovimientoDeSaldo => ({

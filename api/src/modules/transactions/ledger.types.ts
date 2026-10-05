@@ -1,4 +1,4 @@
-import type { Prisma, TransactionSource, TransactionType } from '@prisma/client';
+import type { Prisma, TransactionSource, TransactionType } from '../../generated/prisma/client';
 
 import type { SplitToWrite } from './transactions.repository';
 import type { Money } from '../../common/money/money';

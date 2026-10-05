@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import type { User, UserRole, UserStatus } from '@prisma/client';
 
 import { UsersRepository } from './users.repository';
+import type { User, UserRole, UserStatus } from '../../generated/prisma/client';
 
 /**
  * The user accounts, for the modules that manage them (admin). The `users`

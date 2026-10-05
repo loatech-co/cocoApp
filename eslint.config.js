@@ -200,6 +200,8 @@ export default defineConfig(
     'frontend/public/**',
     'api/prisma/migrations/**',
     'api/prisma/migraciones-mysql-archivadas/**',
+    // Prisma 7 client, written by `prisma generate` (ADR 0020).
+    'api/src/generated/**',
     'ios/**',
     // The API client Orval writes from api/openapi.v2.json (D11): not ours to
     // style, and CI fails if it differs from a fresh generation.
@@ -284,6 +286,7 @@ export default defineConfig(
       // Storybook reads its config and each story file's meta the same way.
       'frontend/.storybook/*.{ts,tsx}',
       'frontend/src/**/*.stories.tsx',
+      'api/prisma.config.ts',
     ],
     rules: { 'import-x/no-default-export': 'off' },
   },

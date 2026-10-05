@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Account as AccountRow } from '@prisma/client';
+import type { Account as AccountRow } from '../../generated/prisma/client';
 
 import { AccountsRepository } from './accounts.repository';
 import type { CreateAccountDto, UpdateAccountDto } from './dto/account.dto';

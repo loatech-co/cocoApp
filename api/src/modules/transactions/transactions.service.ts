@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { TransactionType } from '@prisma/client';
+import type { TransactionType } from '../../generated/prisma/client';
 import { randomUUID } from 'node:crypto';
 
 import type {

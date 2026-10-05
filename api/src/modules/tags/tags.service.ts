@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Tag as TagRow } from '@prisma/client';
+import type { Tag as TagRow } from '../../generated/prisma/client';
 
 import type { UpsertTagDto } from './tags.dto';
 import { TagsRepository } from './tags.repository';

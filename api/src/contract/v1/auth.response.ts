@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole, UserStatus } from '@prisma/client';
+import { UserRole, UserStatus } from '../../generated/prisma/client';
 
 import { FLAG_NAMES, type FlagName } from '@coco/flags';
 

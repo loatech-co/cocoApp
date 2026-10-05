@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, UserRole } from '@prisma/client';
+import type { Prisma, UserRole } from '../../generated/prisma/client';
 
 import type { ListUsersQueryDto } from './admin.dto';
 import { AuditService } from '../../common/audit/audit.service';

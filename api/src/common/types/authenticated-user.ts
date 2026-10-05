@@ -1,4 +1,4 @@
-import type { UserRole } from '@prisma/client';
+import type { UserRole } from '../../generated/prisma/client';
 
 /**
  * Usuario resuelto por el JwtAuthGuard a partir del access token verificado.

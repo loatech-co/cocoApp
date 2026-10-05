@@ -1,4 +1,3 @@
-import { TransactionSource, TransactionStatus, TransactionType } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -18,6 +17,11 @@ import {
 } from 'class-validator';
 
 import { IsMoney, IsPositiveMoney } from '../../../common/validation/is-money.decorator';
+import {
+  TransactionSource,
+  TransactionStatus,
+  TransactionType,
+} from '../../../generated/prisma/client';
 
 export class SplitDto {
   @IsOptional()

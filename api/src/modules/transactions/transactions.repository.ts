@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, type TransactionType } from '@prisma/client';
 
 import type { ListTransactionsQueryDto } from './dto/transaction.dto';
 import { parseOrden } from './transactions.sort';
 import { idsDeCategorias, ramasDe } from '../../common/categories/categories.tree';
 import { DuplicateError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
+import { Prisma, type TransactionType } from '../../generated/prisma/client';
 import { Database, type UserTx } from '../../prisma/database';
 
 /** Lo que Prisma devuelve cuando se incluyen splits y etiquetas. */

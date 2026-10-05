@@ -14,7 +14,21 @@ set -euo pipefail
 cd "$(dirname "$0")/../api"
 
 echo "▸ Estado actual en Supabase…"
-npx dotenv -e .env.supabase -- npx prisma migrate status || true
+# La compuerta la decide el código de salida de `migrate status`, no quien lee:
+# 0 es «al día» y aquí no hay nada que hacer. Distinto de 0 es o bien que hay
+# pendientes —lo único que justifica seguir— o bien cualquier otra cosa (sin
+# conexión, una migración fallida a medias), y entonces no se aplica nada.
+# La URL sale de `prisma.config.ts` (DIRECT_URL), que lee lo que inyecta dotenv.
+if ESTADO=$(npx dotenv -e .env.supabase -- npx prisma migrate status 2>&1); then
+  echo "$ESTADO"
+  echo "No hay migraciones pendientes. No se tocó nada."
+  exit 0
+fi
+echo "$ESTADO"
+if ! grep -q 'have not yet been applied' <<<"$ESTADO"; then
+  echo "migrate status falló sin listar pendientes. No se aplica nada." >&2
+  exit 1
+fi
 
 echo ""
 read -r -p "¿Aplicar las migraciones pendientes a PRODUCCIÓN? (escribí 'si') " RESPUESTA
