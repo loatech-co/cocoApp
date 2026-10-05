@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useDeslizarParaCerrar } from '@/shared/lib/deslizar';
@@ -21,6 +21,26 @@ import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
  */
 export const FILA_DE_PANEL =
   'flex min-h-[48px] w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors hover:bg-muted';
+
+interface PanelInferiorProps {
+  abierto: boolean;
+  /** Su nombre accesible. Lo que se ve lo decide `cabeza`. */
+  titulo: string;
+  cabeza?: ReactNode;
+  /**
+   * En qué capa se dibuja.
+   *
+   * De fábrica va en `z-40`: por encima del armazón —la barra está en 15 y el
+   * techo en 20— y por debajo de una ficha, que vive en 50.
+   *
+   * Lo sube quien SALE DE algo que ya está arriba: el desplegable de un menú
+   * se abre desde dentro de una ficha, así que un panel en 40 se dibujaría
+   * detrás de la ficha que lo pidió.
+   */
+  capa?: string;
+  onCerrar: () => void;
+  children: ReactNode;
+}
 
 /**
  * Un panel que sube desde el borde de abajo.
@@ -53,69 +73,10 @@ export function PanelInferior({
   capa = 'z-40',
   onCerrar,
   children,
-}: {
-  abierto: boolean;
-  /** Su nombre accesible. Lo que se ve lo decide `cabeza`. */
-  titulo: string;
-  cabeza?: ReactNode;
-  /**
-   * En qué capa se dibuja.
-   *
-   * De fábrica va en `z-40`: por encima del armazón —la barra está en 15 y el
-   * techo en 20— y por debajo de una ficha, que vive en 50.
-   *
-   * Lo sube quien SALE DE algo que ya está arriba: el desplegable de un menú
-   * se abre desde dentro de una ficha, así que un panel en 40 se dibujaría
-   * detrás de la ficha que lo pidió.
-   */
-  capa?: string;
-  onCerrar: () => void;
-  children: ReactNode;
-}) {
+}: PanelInferiorProps) {
   const panel = useRef<HTMLDivElement>(null);
-  const columna = useRef<HTMLDivElement>(null);
-  const [alto, setAlto] = useState<number | null>(null);
-
-  // Cada apertura es una visita nueva. La llave remonta el contenido, y eso
-  // hace dos cosas de una: dispara la animación de entrada —que corre por
-  // EXISTIR, porque el cuerpo se reemplaza entero— y devuelve a su estado
-  // inicial cualquier cosa que estuviera a medias. Una pantalla que se reabre
-  // en mitad de una edición es una pantalla que se reabre mal.
-  //
-  // Es ESTADO y no una ref: se lee en el render —va en la `key`—, y una ref
-  // leída en el render es justo lo que la regla de los refs prohíbe, porque
-  // React no se entera de que cambió. El ajuste va en el propio render, que
-  // es lo que React documenta para «estado que depende del anterior»: cuenta
-  // solo la transición de cerrado a abierto, y no el montaje.
-  const [visitas, setVisitas] = useState(0);
-  const [estabaAbierto, setEstabaAbierto] = useState(abierto);
-  if (abierto !== estabaAbierto) {
-    setEstabaAbierto(abierto);
-    if (abierto) setVisitas((v) => v + 1);
-  }
-
-  /**
-   * El alto se MIDE.
-   *
-   * El panel mide lo que mide su contenido —seis baldosas son dos filas; la
-   * lista de páginas es el alto entero—, y pasar de uno a otro era un salto
-   * mientras entrar y salir eran suaves.
-   *
-   * Y se mide en vez de dejarlo en `auto` porque una transición necesita dos
-   * valores definidos: de `auto` a `auto` el valor declarado no cambia, así
-   * que no hay nada que animar por mucho que el contenido mida otra cosa.
-   * `interpolate-size` resuelve ir DE una palabra clave A un número, que es
-   * otro problema. Con la medida, el alto es siempre un número.
-   */
-  useLayoutEffect(() => {
-    const el = columna.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-
-    const observador = new ResizeObserver(() => setAlto(el.offsetHeight));
-    observador.observe(el);
-    setAlto(el.offsetHeight);
-    return () => observador.disconnect();
-  }, []);
+  const [columna, alto] = useMeasuredHeight();
+  const visitas = useVisitCount(abierto);
 
   useEscape(abierto, onCerrar);
   useFocoAtrapado(panel, abierto);
@@ -147,72 +108,12 @@ export function PanelInferior({
         inert={!abierto}
         tabIndex={-1}
         style={{ height: alto ?? undefined }}
-        className={cn(
-          'fixed inset-x-0 bottom-0 flex max-h-[88dvh] flex-col overflow-hidden outline-none',
-          /*
-            Solo arriba: las esquinas de abajo caen fuera de la pantalla y
-            curvarlas deja dos muescas del fondo.
-
-            ── Y 16px, por encima del radio estándar ─────────────────────────
-            Es la segunda excepción de la app, junto al pozo, y por el mismo
-            motivo: esta esquina mide el ANCHO ENTERO de la pantalla, y en un
-            canto tan largo 10px casi no se ven. Lo que la curva tiene que
-            contar —que esto es una hoja que SUBIÓ y que la página sigue
-            debajo— depende de que se vea.
-
-            Y no rompe la regla, que habla de contenedores VECINOS: el panel
-            no tiene vecinos, está encima de todo. Está registrada con su
-            motivo en `components/ui/radio.test.ts`.
-          */
-          'rounded-t-[16px]',
-          SUPERFICIE_FLOTANTE,
-          // La misma duración y la misma curva para el viaje y para el alto:
-          // crece y encoge con el mismo gesto con el que llegó.
-          'transition-[transform,height] duration-[220ms] ease-[cubic-bezier(.4,0,.2,1)]',
-          abierto ? 'translate-y-0' : 'translate-y-full',
-          // El panel entero es del gesto; el cuerpo se queda con el suyo para
-          // poder desplazarse, y no se lo pasa a la página de detrás.
-          'touch-none',
-        )}
+        className={sheetClass(abierto)}
       >
         <div ref={columna} className="flex max-h-[88dvh] flex-col">
-          {/* ── La cabeza ──────────────────────────────────────────────────
-              Con suelo de 78px. Una cabeza con una sola línea de título es
-              tan baja que dos paneles de la misma familia abrían a alturas
-              distintas, y lo que el ojo lee como cambiado es la cabeza. Una
-              con buscador es más alta porque su CONTENIDO es más alto, que es
-              la única razón por la que debería pasarse del suelo.
-
-              Un recuadro, 24 a los lados; 12 hasta el cuerpo. Una cabeza se
-              lee por sus BORDES, no por sus partes.
-
-              24 y no 16: con 16, el título y el primer renglón del cuerpo
-              quedaban casi a ras del canto de la pantalla —la hoja ocupa el
-              ancho entero, así que su relleno es lo ÚNICO que separa lo
-              escrito del borde del teléfono— y el texto se leía comido. */}
-          <div className="min-h-[78px] shrink-0 px-6 pb-3">
-            <Tirador />
-            {cabeza ?? <h2 className="font-display text-lg font-semibold">{titulo}</h2>}
-          </div>
-
-          {/* El borde seguro va en el RELLENO DEL CUERPO y no en el panel: un
-              panel con relleno deja una franja de color muerta debajo del
-              desplazamiento en vez de dejar que el contenido pase por debajo.
-
-              24 a los lados, los mismos de la cabeza: dos sangrados distintos
-              se ven como un escalón en el canto izquierdo de la hoja.
-
-              Y 30 abajo, más que los lados a propósito: ahí no hay canto de
-              pantalla sino el borde de abajo del teléfono, donde vive el gesto
-              de volver al inicio. La última fila necesita más aire que las
-              otras para no quedar debajo de él. */}
-          <div
-            key={visitas}
-            data-cuerpo
-            className="min-h-0 flex-1 touch-pan-y overscroll-contain px-6 pb-[calc(30px+env(safe-area-inset-bottom,0px))] [overflow-y:auto]"
-          >
+          <SheetContent titulo={titulo} cabeza={cabeza} visitas={visitas}>
             {children}
-          </div>
+          </SheetContent>
         </div>
       </div>
     </div>,
@@ -236,5 +137,135 @@ function Tirador() {
     <div className="flex h-8 w-full items-center justify-center" aria-hidden="true">
       <span className="h-[5px] w-[72px] rounded-full bg-muted-foreground/40" />
     </div>
+  );
+}
+
+/**
+ * El alto se MIDE.
+ *
+ * El panel mide lo que mide su contenido —seis baldosas son dos filas; la
+ * lista de páginas es el alto entero—, y pasar de uno a otro era un salto
+ * mientras entrar y salir eran suaves.
+ *
+ * Y se mide en vez de dejarlo en `auto` porque una transición necesita dos
+ * valores definidos: de `auto` a `auto` el valor declarado no cambia, así
+ * que no hay nada que animar por mucho que el contenido mida otra cosa.
+ * `interpolate-size` resuelve ir DE una palabra clave A un número, que es
+ * otro problema. Con la medida, el alto es siempre un número.
+ */
+function useMeasuredHeight(): [RefObject<HTMLDivElement | null>, number | null] {
+  const columna = useRef<HTMLDivElement>(null);
+  const [alto, setAlto] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const el = columna.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+
+    const observador = new ResizeObserver(() => setAlto(el.offsetHeight));
+    observador.observe(el);
+    setAlto(el.offsetHeight);
+    return () => observador.disconnect();
+  }, []);
+  return [columna, alto];
+}
+
+function useVisitCount(abierto: boolean): number {
+  // Cada apertura es una visita nueva. La llave remonta el contenido, y eso
+  // hace dos cosas de una: dispara la animación de entrada —que corre por
+  // EXISTIR, porque el cuerpo se reemplaza entero— y devuelve a su estado
+  // inicial cualquier cosa que estuviera a medias. Una pantalla que se reabre
+  // en mitad de una edición es una pantalla que se reabre mal.
+  //
+  // Es ESTADO y no una ref: se lee en el render —va en la `key`—, y una ref
+  // leída en el render es justo lo que la regla de los refs prohíbe, porque
+  // React no se entera de que cambió. El ajuste va en el propio render, que
+  // es lo que React documenta para «estado que depende del anterior»: cuenta
+  // solo la transición de cerrado a abierto, y no el montaje.
+  const [visitas, setVisitas] = useState(0);
+  const [estabaAbierto, setEstabaAbierto] = useState(abierto);
+  if (abierto !== estabaAbierto) {
+    setEstabaAbierto(abierto);
+    if (abierto) setVisitas((v) => v + 1);
+  }
+  return visitas;
+}
+
+/** La hoja: dónde está, su canto y cómo viaja. */
+function sheetClass(abierto: boolean): string {
+  return cn(
+    'fixed inset-x-0 bottom-0 flex max-h-[88dvh] flex-col overflow-hidden outline-none',
+    /*
+      Solo arriba: las esquinas de abajo caen fuera de la pantalla y
+      curvarlas deja dos muescas del fondo.
+
+      ── Y 16px, por encima del radio estándar ─────────────────────────
+      Es la segunda excepción de la app, junto al pozo, y por el mismo
+      motivo: esta esquina mide el ANCHO ENTERO de la pantalla, y en un
+      canto tan largo 10px casi no se ven. Lo que la curva tiene que
+      contar —que esto es una hoja que SUBIÓ y que la página sigue
+      debajo— depende de que se vea.
+
+      Y no rompe la regla, que habla de contenedores VECINOS: el panel
+      no tiene vecinos, está encima de todo. Está registrada con su
+      motivo en `components/ui/radio.test.ts`.
+    */
+    'rounded-t-[16px]',
+    SUPERFICIE_FLOTANTE,
+    // La misma duración y la misma curva para el viaje y para el alto:
+    // crece y encoge con el mismo gesto con el que llegó.
+    'transition-[transform,height] duration-[220ms] ease-[cubic-bezier(.4,0,.2,1)]',
+    abierto ? 'translate-y-0' : 'translate-y-full',
+    // El panel entero es del gesto; el cuerpo se queda con el suyo para
+    // poder desplazarse, y no se lo pasa a la página de detrás.
+    'touch-none',
+  );
+}
+
+function SheetContent({
+  titulo,
+  cabeza,
+  visitas,
+  children,
+}: Pick<PanelInferiorProps, 'titulo' | 'cabeza' | 'children'> & { visitas: number }) {
+  return (
+    <>
+      {/* ── La cabeza ──────────────────────────────────────────────────
+          Con suelo de 78px. Una cabeza con una sola línea de título es
+          tan baja que dos paneles de la misma familia abrían a alturas
+          distintas, y lo que el ojo lee como cambiado es la cabeza. Una
+          con buscador es más alta porque su CONTENIDO es más alto, que es
+          la única razón por la que debería pasarse del suelo.
+
+          Un recuadro, 24 a los lados; 12 hasta el cuerpo. Una cabeza se
+          lee por sus BORDES, no por sus partes.
+
+          24 y no 16: con 16, el título y el primer renglón del cuerpo
+          quedaban casi a ras del canto de la pantalla —la hoja ocupa el
+          ancho entero, así que su relleno es lo ÚNICO que separa lo
+          escrito del borde del teléfono— y el texto se leía comido. */}
+      <div className="min-h-[78px] shrink-0 px-6 pb-3">
+        <Tirador />
+        {cabeza ?? <h2 className="font-display text-lg font-semibold">{titulo}</h2>}
+      </div>
+
+      {/* El borde seguro va en el RELLENO DEL CUERPO y no en el panel: un
+          panel con relleno deja una franja de color muerta debajo del
+          desplazamiento en vez de dejar que el contenido pase por debajo.
+
+          24 a los lados, los mismos de la cabeza: dos sangrados distintos
+          se ven como un escalón en el canto izquierdo de la hoja.
+
+          Y 30 abajo, más que los lados a propósito: ahí no hay canto de
+          pantalla sino el borde de abajo del teléfono, donde vive el gesto
+          de volver al inicio. La última fila necesita más aire que las
+          otras para no quedar debajo de él. */}
+      <div
+        key={visitas}
+        data-cuerpo
+        className="min-h-0 flex-1 touch-pan-y overscroll-contain px-6 pb-[calc(30px+env(safe-area-inset-bottom,0px))] [overflow-y:auto]"
+      >
+        {children}
+      </div>
+    </>
   );
 }
