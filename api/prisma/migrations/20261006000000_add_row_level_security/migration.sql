@@ -37,7 +37,17 @@ END $$;
 GRANT USAGE ON SCHEMA public TO coco_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO coco_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO coco_app;
-REVOKE ALL ON TABLE public._prisma_migrations FROM coco_app;
+-- Conditional because the shadow database `migrate diff --from-migrations`
+-- builds (scripts/nueva-migracion.sh) has no `_prisma_migrations`: Prisma
+-- replays the files there without recording them. In any real database
+-- `migrate deploy` creates that table before the first migration, so the
+-- REVOKE always runs there and the privileges are the same.
+DO $$
+BEGIN
+  IF to_regclass('public._prisma_migrations') IS NOT NULL THEN
+    REVOKE ALL ON TABLE public._prisma_migrations FROM coco_app;
+  END IF;
+END $$;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO coco_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO coco_app;
 
@@ -163,11 +173,16 @@ CREATE POLICY audit_log_admin_read ON public.audit_log FOR SELECT TO coco_app
 -- In its own schema, which the Supabase data API does not publish, with
 -- EXECUTE taken from PUBLIC and given only to coco_app, and a fixed
 -- search_path so a caller cannot redirect `categories` to a table of its own.
+--
+-- `IF NOT EXISTS` and `OR REPLACE` for the same shadow database: Prisma resets
+-- it by emptying `public` only, so from the second `migrate diff` on, the
+-- schema and the function are still there. In a real database neither exists
+-- yet and both behave as a plain CREATE.
 CREATE SCHEMA IF NOT EXISTS app_private;
 REVOKE ALL ON SCHEMA app_private FROM PUBLIC;
 GRANT USAGE ON SCHEMA app_private TO coco_app;
 
-CREATE FUNCTION app_private.auto_paid_owner_ids()
+CREATE OR REPLACE FUNCTION app_private.auto_paid_owner_ids()
   RETURNS SETOF bigint
   LANGUAGE sql
   STABLE
