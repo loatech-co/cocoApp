@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 import { AuthProvider } from '@/shared/api/auth-context';
+import { FlagsProvider } from '@/shared/api/flags';
 
 /**
  * TanStack Query gestiona el ESTADO SERVIDOR. Como en Coco todo se deriva de
@@ -24,7 +25,9 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <FlagsProvider>{children}</FlagsProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
