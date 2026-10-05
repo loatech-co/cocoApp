@@ -13,6 +13,7 @@
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build --quiet"
   },
@@ -41,6 +42,7 @@
     "@storybook/addon-themes": "^10.6.1",
     "@storybook/react-vite": "^10.6.1",
     "@testing-library/react": "^16.3.2",
+    "@vitest/coverage-v8": "^4.1.11",
     "jsdom": "^29.1.1",
     "storybook": "^10.6.1",
     "storybook-addon-pseudo-states": "^10.6.1",

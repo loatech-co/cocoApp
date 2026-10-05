@@ -18,5 +18,19 @@ export default defineConfig({
     // corren sin DOM: el propio archivo comprueba si hay ventana antes de
     // tocar nada, que es más barato que mantener aquí una lista de cuáles sí.
     setupFiles: ['./src/pruebas/entorno.ts'],
+    // Plan 7.7: 70 % of lines and branches in `frontend/src`. The thresholds
+    // only go up: a PR that lowers them needs a written reason in its ADR.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.stories.tsx',
+        'src/pruebas/**',
+        'src/**/*.d.ts',
+      ],
+      reporter: ['text-summary', 'json-summary'],
+      thresholds: { lines: 0, branches: 0 },
+    },
   },
 });
