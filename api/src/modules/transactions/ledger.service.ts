@@ -56,9 +56,9 @@ export class LedgerService {
   monthlyHistory(
     userId: bigint,
     categoryIds: readonly bigint[],
-    before: Date,
+    range: { before: Date; since: Date },
   ): Promise<MonthlyHistory> {
-    return this.repository.monthlyHistory(userId, categoryIds, before);
+    return this.repository.monthlyHistory(userId, categoryIds, range);
   }
 
   clearedInMonth(

@@ -6,6 +6,7 @@ import {
   tocaCobrarAutomatico,
   tocaEnElMes,
   vencimiento,
+  ventanaDeLaHistoria,
 } from './pendientes';
 import { toMoney } from '../../common/money/money';
 import { CategoryLookupService, type AutoPaidConcept } from '../categories/category-lookup.service';
@@ -88,7 +89,7 @@ export class PagosAutomaticosService {
     const historiaDe = await this.ledger.monthlyHistory(
       userId,
       porCobrar.map((c) => c.id),
-      new Date(mesEnCurso),
+      ventanaDeLaHistoria(mesEnCurso),
     );
 
     let creados = 0;

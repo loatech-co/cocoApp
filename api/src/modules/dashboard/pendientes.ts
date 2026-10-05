@@ -117,6 +117,20 @@ export function estimadoDelMes(
 }
 
 /**
+ * Qué parte de la historia lee `estimadoDelMes` para estimar `mesEnCurso`
+ * (`YYYY-MM-01`): desde el primer día del más viejo de sus `cuantos` meses
+ * anteriores hasta el mes en curso, sin incluirlo. Lo que cae más atrás solo
+ * importa como último mes con pago, y eso lo resuelve el repositorio.
+ */
+export function ventanaDeLaHistoria(
+  mesEnCurso: string,
+  cuantos = 3,
+): { before: Date; since: Date } {
+  const masViejo = mesesAnteriores(mesEnCurso.slice(0, 7), cuantos).at(-1) ?? mesEnCurso;
+  return { before: new Date(mesEnCurso), since: new Date(`${masViejo.slice(0, 7)}-01`) };
+}
+
+/**
  * Cuánto se espera que cueste, mirando primero lo que se DIJO.
  *
  * ── El presupuesto del concepto manda ───────────────────────────────────────

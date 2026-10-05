@@ -14,6 +14,7 @@ import {
   type Arbol,
 } from './dashboard.summary';
 import type { DashboardPayload, PagoPendientePayload } from './dashboard.types';
+import { ventanaDeLaHistoria } from './pendientes';
 import { idsDeCategorias, ramasDe } from '../../common/categories/categories.tree';
 import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
 import { AccountsService } from '../accounts/accounts.service';
@@ -109,7 +110,11 @@ export class DashboardService {
     // La historia de los recurrentes, mes a mes: de aquí sale lo que se
     // espera que cueste cada uno. Solo lo ANTERIOR a este mes; lo de este
     // mes es un hecho, no una previsión.
-    const historiaDe = await this.ledger.monthlyHistory(userId, ids, new Date(mesEnCurso));
+    const historiaDe = await this.ledger.monthlyHistory(
+      userId,
+      ids,
+      ventanaDeLaHistoria(mesEnCurso),
+    );
     /*
       Lo ya pagado ESTE mes, y CONFIRMADO.
 
