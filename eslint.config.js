@@ -35,6 +35,7 @@ import tseslint from 'typescript-eslint';
 export default defineConfig(
   globalIgnores([
     '**/dist/**',
+    '**/storybook-static/**',
     '.claude/worktrees/**',
     '**/coverage/**',
     '**/node_modules/**',
@@ -114,7 +115,14 @@ export default defineConfig(
   },
   {
     // Tools that load their config through a default export.
-    files: ['eslint.config.js', '*.config.{js,ts,mjs}', 'frontend/*.config.ts'],
+    files: [
+      'eslint.config.js',
+      '*.config.{js,ts,mjs}',
+      'frontend/*.config.ts',
+      // Storybook reads its config and each story file's meta the same way.
+      'frontend/.storybook/*.{ts,tsx}',
+      'frontend/src/**/*.stories.tsx',
+    ],
     rules: { 'import-x/no-default-export': 'off' },
   },
 

@@ -10,8 +10,11 @@
  *
  * @type {import('dependency-cruiser').IConfiguration}
  */
-/** Tests may import what they test from any level. */
-const WEB_TEST = '\\.test\\.tsx?$';
+/**
+ * Tests and Storybook stories may import what they show from any level: a
+ * card's story puts a button in it to look like the app.
+ */
+const WEB_TEST = '\\.(test|stories)\\.tsx?$';
 
 module.exports = {
   forbidden: [

@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build --quiet"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.1",
@@ -36,8 +38,11 @@
     "vite": "^6.0.5"
   },
   "devDependencies": {
+    "@storybook/addon-themes": "^10.6.1",
+    "@storybook/react-vite": "^10.6.1",
     "@testing-library/react": "^16.3.2",
     "jsdom": "^29.1.1",
+    "storybook": "^10.6.1",
     "vitest": "^4.1.10"
   }
 }

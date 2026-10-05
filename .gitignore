@@ -32,6 +32,7 @@ node_modules/
 # Build
 dist/
 build/
+storybook-static/
 .vite/
 *.tsbuildinfo
 
