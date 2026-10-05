@@ -1,6 +1,6 @@
 # The gate every change passes before it reaches the deploy branch (phase 7.6).
 #
-# Mirrors what "done" means in this repo: typecheck, lint, unit tests, API e2e
+# Mirrors what "done" means in this repo: typecheck, lint, format, knip, unit tests, API e2e
 # against a real Postgres, both production builds, and an install exactly like
 # the server's (NODE_ENV=production, no devDependencies). scripts/merge.sh
 # refuses to integrate a branch unless this is green.
@@ -75,6 +75,12 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Format
+        run: npx prettier --check .
+
+      - name: Unused code and dependencies (knip)
+        run: npm run knip
 
       - name: Dependency audit (high/critical, production deps)
         run: node scripts/ci/audit.mjs
