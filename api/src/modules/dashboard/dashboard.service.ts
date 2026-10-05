@@ -3,11 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { calcularFlujo, type MovimientoAgregable } from './dashboard.aggregate';
 import type { DashboardQueryDto } from './dashboard.dto';
 import {
-  DashboardRepository,
-  type SummaryCategory,
-  type SummaryMovement,
-} from './dashboard.repository';
-import {
   aISO,
   arbolDe,
   desglose,
@@ -22,11 +17,14 @@ import type { DashboardPayload, PagoPendientePayload } from './dashboard.types';
 import { idsDeCategorias, ramasDe } from '../../common/categories/categories.tree';
 import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
 import { AccountsService } from '../accounts/accounts.service';
+import { CategoryLookupService, type SummaryCategory } from '../categories/category-lookup.service';
+import { LedgerService, type SummaryMovement } from '../transactions/ledger.service';
 
 @Injectable()
 export class DashboardService {
   constructor(
-    private readonly repository: DashboardRepository,
+    private readonly categories: CategoryLookupService,
+    private readonly ledger: LedgerService,
     private readonly accounts: AccountsService,
   ) {}
 
@@ -36,7 +34,7 @@ export class DashboardService {
     // A GET only reads. Auto-paid concepts are charged by AutoChargeTask, once
     // a day and at start-up (phase 6.7), not on the way in here.
 
-    const categorias = await this.repository.findCategories(userId);
+    const categorias = await this.categories.findForSummary(userId);
     const arbol = arbolDe(categorias);
     const planas = [...arbol.porId.values()];
 
@@ -49,7 +47,7 @@ export class DashboardService {
 
     const [cuentas, movimientos] = await Promise.all([
       this.accounts.listar(userId, false),
-      this.repository.findMovements(userId, {
+      this.ledger.findForSummary(userId, {
         from: inicio,
         to: fin,
         branch: pedidas.length > 0 ? ramasDe(planas, pedidas) : null,
@@ -111,7 +109,7 @@ export class DashboardService {
     // La historia de los recurrentes, mes a mes: de aquí sale lo que se
     // espera que cueste cada uno. Solo lo ANTERIOR a este mes; lo de este
     // mes es un hecho, no una previsión.
-    const historiaDe = await this.repository.monthlyHistory(userId, ids, new Date(mesEnCurso));
+    const historiaDe = await this.ledger.monthlyHistory(userId, ids, new Date(mesEnCurso));
     /*
       Lo ya pagado ESTE mes, y CONFIRMADO.
 
@@ -124,7 +122,7 @@ export class DashboardService {
       Un pago pendiente es exactamente eso: algo que está en el presupuesto y
       NO tiene todavía un movimiento confirmado que lo respalde.
     */
-    const pagadoEsteMes = await this.repository.clearedInMonth(userId, ids, new Date(mesEnCurso));
+    const pagadoEsteMes = await this.ledger.clearedInMonth(userId, ids, new Date(mesEnCurso));
 
     return pendientesDelMes(recurrentes, { historiaDe, pagadoEsteMes }, mesEnCurso, arbol);
   }

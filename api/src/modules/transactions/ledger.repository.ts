@@ -1,86 +1,77 @@
 import { Injectable } from '@nestjs/common';
-import type { Periodicidad, Prisma, TransactionType } from '@prisma/client';
 
+import type {
+  AutoCharge,
+  DuplicateCandidateRow,
+  DuplicateCriteria,
+  EnrichChanges,
+  MonthlyHistory,
+  SummaryFilter,
+  SummaryMovement,
+} from './ledger.types';
 import { CERO, toMoney, type Money } from '../../common/money/money';
 import { PrismaService } from '../../prisma/prisma.service';
 
-/** A category as the summary reads it: tree position and recurrence. */
-export interface SummaryCategory {
-  id: bigint;
-  name: string;
-  color: string | null;
-  icon: string | null;
-  parentId: bigint | null;
-  recurrente: boolean;
-  periodicidad: Periodicidad | null;
-  diaDePago: number | null;
-  mesDePago: number | null;
-  presupuesto: Prisma.Decimal | null;
-  pagoAutomatico: boolean;
-  variosPagos: boolean;
-  isArchived: boolean;
-}
-
-/** A movement of the range, with its splits, as the summary aggregates it. */
-export interface SummaryMovement {
-  date: Date;
-  period: Date;
-  type: TransactionType;
-  amount: Prisma.Decimal;
-  categoryId: bigint | null;
-  splits: { categoryId: bigint | null; amount: Prisma.Decimal }[];
-}
-
-/** An auto-paid concept, with what decides when and how much to charge. */
-export interface AutoPaidConcept {
-  id: bigint;
-  name: string;
-  periodicidad: Periodicidad | null;
-  diaDePago: number | null;
-  mesDePago: number | null;
-  presupuesto: Prisma.Decimal | null;
-}
-
-/** Concept id → month (`YYYY-MM`) → what it cost that month. */
-export type MonthlyHistory = Map<string, Map<string, Money>>;
-
-/** The summary filters, already resolved to category ids. */
-export interface SummaryFilter {
-  from: Date;
-  to: Date;
-  /** Only these categories (a requested branch), or every one when null. */
-  branch: bigint[] | null;
-  q: string | undefined;
-  /** Categories whose NAME matches `q`, with their branch. */
-  byName: bigint[];
-}
-
+/** The reads and writes other modules need from the transactions table. */
 @Injectable()
-export class DashboardRepository {
+export class LedgerRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findCategories(userId: bigint): Promise<SummaryCategory[]> {
-    return this.prisma.category.findMany({
-      where: { userId },
+  async findIdByExternalRef(userId: bigint, externalRef: string): Promise<bigint | null> {
+    const fila = await this.prisma.transaction.findFirst({
+      where: { userId, externalRef },
+      select: { id: true },
+    });
+    return fila?.id ?? null;
+  }
+
+  async enrich(id: bigint, changes: EnrichChanges): Promise<void> {
+    await this.prisma.transaction.update({ where: { id }, data: changes });
+  }
+
+  /** Sin hora de captura, por la de creación. A lo sumo veinte. */
+  findDuplicateCandidates(criteria: DuplicateCriteria): Promise<DuplicateCandidateRow[]> {
+    const { userId, source, amount, days, window } = criteria;
+    return this.prisma.transaction.findMany({
+      where: {
+        userId,
+        amount,
+        source: { not: source },
+        date: { gte: days.from, lte: days.to },
+        OR: [
+          { capturedAt: { gte: window.from, lte: window.to } },
+          { capturedAt: null, createdAt: { gte: window.from, lte: window.to } },
+        ],
+      },
       select: {
         id: true,
-        name: true,
-        color: true,
-        icon: true,
-        parentId: true,
-        recurrente: true,
-        periodicidad: true,
-        diaDePago: true,
-        mesDePago: true,
-        presupuesto: true,
-        pagoAutomatico: true,
-        variosPagos: true,
-        isArchived: true,
+        source: true,
+        date: true,
+        amount: true,
+        capturedAt: true,
+        createdAt: true,
+        rawText: true,
+        merchant: true,
+        description: true,
       },
+      take: 20,
     });
   }
 
-  findMovements(userId: bigint, filter: SummaryFilter): Promise<SummaryMovement[]> {
+  /** The most recent categorized movements with a description, newest first. */
+  findCategorizedHistory(
+    userId: bigint,
+    take: number,
+  ): Promise<{ description: string | null; categoryId: bigint | null }[]> {
+    return this.prisma.transaction.findMany({
+      where: { userId, categoryId: { not: null }, description: { not: null } },
+      select: { description: true, categoryId: true },
+      orderBy: { date: 'desc' },
+      take,
+    });
+  }
+
+  findForSummary(userId: bigint, filter: SummaryFilter): Promise<SummaryMovement[]> {
     const { from, to, branch, q, byName } = filter;
     return this.prisma.transaction.findMany({
       where: {
@@ -164,30 +155,6 @@ export class DashboardRepository {
     return pagado;
   }
 
-  findAutoPaidConcepts(userId: bigint): Promise<AutoPaidConcept[]> {
-    return this.prisma.category.findMany({
-      where: { userId, recurrente: true, pagoAutomatico: true, isArchived: false },
-      select: {
-        id: true,
-        name: true,
-        periodicidad: true,
-        diaDePago: true,
-        mesDePago: true,
-        presupuesto: true,
-      },
-    });
-  }
-
-  /** Users with at least one live auto-paid concept. */
-  async ownersOfAutoPaidConcepts(): Promise<bigint[]> {
-    const owners = await this.prisma.category.findMany({
-      where: { recurrente: true, pagoAutomatico: true, isArchived: false },
-      select: { userId: true },
-      distinct: ['userId'],
-    });
-    return owners.map((owner) => owner.userId);
-  }
-
   /** Which of these concepts already have a movement in that period, in ANY status. */
   async categoriesWithMovementIn(
     userId: bigint,
@@ -205,9 +172,11 @@ export class DashboardRepository {
    * Writes an automatic charge. `false` when its unique `external_ref` was
    * already taken: two runs racing for the same charge, the first one won.
    */
-  async createAutoCharge(data: Prisma.TransactionUncheckedCreateInput): Promise<boolean> {
+  async createAutoCharge(charge: AutoCharge): Promise<boolean> {
     try {
-      await this.prisma.transaction.create({ data });
+      await this.prisma.transaction.create({
+        data: { ...charge, type: 'expense', status: 'cleared' },
+      });
       return true;
     } catch (error) {
       if ((error as { code?: string }).code === 'P2002') return false;

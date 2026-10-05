@@ -12,7 +12,6 @@ import {
   type CapturaNueva,
 } from './duplicados';
 import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
-import { InterpretacionRepository } from './interpretacion.repository';
 import {
   interpretar,
   resumenDe,
@@ -31,7 +30,9 @@ import {
 import { anidar } from '../../common/categories/categories.tree';
 import { DuplicateError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { toMoney } from '../../common/money/money';
+import { CategoryLookupService } from '../categories/category-lookup.service';
 import { CategorizationService } from '../categorization/categorization.service';
+import { LedgerService } from '../transactions/ledger.service';
 import { TransactionsService } from '../transactions/transactions.service';
 
 /**
@@ -50,7 +51,8 @@ import { TransactionsService } from '../transactions/transactions.service';
 @Injectable()
 export class InterpretacionService {
   constructor(
-    private readonly repository: InterpretacionRepository,
+    private readonly ledger: LedgerService,
+    private readonly categories: CategoryLookupService,
     private readonly categorization: CategorizationService,
     private readonly transactions: TransactionsService,
   ) {}
@@ -67,7 +69,7 @@ export class InterpretacionService {
       devuelve lo que hay y no se interpreta ni se crea nada: la respuesta es
       la misma que recibió —o no llegó a recibir— la primera vez.
     */
-    const repetida = await this.repository.findIdByExternalRef(userId, dto.external_ref);
+    const repetida = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
     if (repetida !== null) return this.yaEstaba(userId, repetida, dto, true, false);
 
     /*
@@ -138,7 +140,7 @@ export class InterpretacionService {
     if (veredicto.tipo === 'exacto') {
       const cambios = enriquecer(veredicto.con, nueva);
       if (Object.keys(cambios).length > 0) {
-        await this.repository.enrichTransaction(veredicto.con.id, cambios);
+        await this.ledger.enrich(veredicto.con.id, cambios);
       }
       const fusionada = await this.yaEstaba(
         userId,
@@ -191,7 +193,7 @@ export class InterpretacionService {
         estado desde el principio.
       */
       if (!(error instanceof DuplicateError)) throw error;
-      const existente = await this.repository.findIdByExternalRef(userId, dto.external_ref);
+      const existente = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
       // Parity with the former findFirstOrThrow: a vanished row is a 404.
       if (existente === null) throw new NotFoundError('El recurso no existe.');
       return this.yaEstaba(userId, existente, dto, true, false, interpretado.clasificacion);
@@ -276,7 +278,7 @@ export class InterpretacionService {
     userId: bigint,
     id: bigint,
   ): Promise<ClasificacionInterpretada> {
-    const fila = await this.repository.findChosenCategory(userId, id);
+    const fila = await this.categories.findChosen(userId, id);
     // La misma respuesta para «no existe» y «no es tuya»: decir cuál de las
     // dos es revelaría ids ajenos.
     if (!fila) throw new ValidationError('La categoría indicada no existe o no es tuya.');
@@ -303,7 +305,7 @@ export class InterpretacionService {
    * un gasto de hoy en el gimnasio que se dio de baja.
    */
   private async arbolDe(userId: bigint): Promise<NodoBuscable[]> {
-    const filas = await this.repository.findActiveCategories(userId);
+    const filas = await this.categories.findSearchable(userId);
     const aNodo = (f: {
       id: bigint;
       name: string;
@@ -328,7 +330,7 @@ export class InterpretacionService {
     const dia = new Date(fecha);
     const desde = new Date(dia.getTime() - 24 * 60 * 60_000);
     const hasta = new Date(dia.getTime() + 24 * 60 * 60_000);
-    const filas = await this.repository.findDuplicateCandidates({
+    const filas = await this.ledger.findDuplicateCandidates({
       userId,
       source,
       amount: toMoney(monto),

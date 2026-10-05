@@ -10,6 +10,8 @@ import {
 import { CategorizationRepository } from './categorization.repository';
 import { normalizarDescripcion } from './description';
 import { ValidationError } from '../../common/errors/domain-error';
+import { CategoryLookupService } from '../categories/category-lookup.service';
+import { LedgerService } from '../transactions/ledger.service';
 
 /**
  * Cuántos movimientos ya categorizados se leen para aprender.
@@ -36,7 +38,11 @@ export interface SugerenciaView {
 
 @Injectable()
 export class CategorizationService {
-  constructor(private readonly repository: CategorizationRepository) {}
+  constructor(
+    private readonly repository: CategorizationRepository,
+    private readonly ledger: LedgerService,
+    private readonly categories: CategoryLookupService,
+  ) {}
 
   /**
    * Sugiere categoría para una descripción suelta (la captura rápida).
@@ -72,7 +78,7 @@ export class CategorizationService {
     reglas: ReglaDeCategoria[];
   }> {
     const [movimientos, reglas] = await Promise.all([
-      this.repository.findCategorizedHistory(userId, ANTECEDENTES_A_LEER),
+      this.ledger.findCategorizedHistory(userId, ANTECEDENTES_A_LEER),
       this.repository.findRules(userId),
     ]);
 
@@ -118,7 +124,7 @@ export class CategorizationService {
     descripcion: string,
     categoryId: bigint,
   ): Promise<{ aprendido: boolean }> {
-    if (!(await this.repository.isOwnCategory(userId, categoryId)))
+    if (!(await this.categories.isOwn(userId, categoryId)))
       throw new ValidationError('Esa categoría no existe en tu cuenta.');
 
     return { aprendido: await this.aprenderDe(userId, descripcion, categoryId) };

@@ -10,7 +10,6 @@ import {
   granularidadPara,
   type CategoriaPlana,
 } from './dashboard.aggregate';
-import type { MonthlyHistory, SummaryCategory, SummaryMovement } from './dashboard.repository';
 import type {
   GastoPorCategoriaPayload,
   PagoPendientePayload,
@@ -19,6 +18,8 @@ import type {
 import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
 import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
 import type { AccountView } from '../accounts/accounts.service';
+import type { SummaryCategory } from '../categories/category-lookup.service';
+import type { MonthlyHistory, SummaryMovement } from '../transactions/ledger.service';
 
 /** One row of a breakdown level, before it gets a name. */
 interface FilaAgrupada {

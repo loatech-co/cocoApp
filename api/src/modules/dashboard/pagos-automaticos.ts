@@ -1,11 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
-  DashboardRepository,
-  type AutoPaidConcept,
-  type MonthlyHistory,
-} from './dashboard.repository';
-import {
   esperadoDelMes,
   huellaDelCobro,
   tocaCobrarAutomatico,
@@ -13,6 +8,8 @@ import {
   vencimiento,
 } from './pendientes';
 import { toMoney } from '../../common/money/money';
+import { CategoryLookupService, type AutoPaidConcept } from '../categories/category-lookup.service';
+import { LedgerService, type MonthlyHistory } from '../transactions/ledger.service';
 
 /**
  * Los conceptos que se cobran solos.
@@ -42,7 +39,10 @@ import { toMoney } from '../../common/money/money';
 export class PagosAutomaticosService {
   private readonly logger = new Logger(PagosAutomaticosService.name);
 
-  constructor(private readonly repository: DashboardRepository) {}
+  constructor(
+    private readonly categories: CategoryLookupService,
+    private readonly ledger: LedgerService,
+  ) {}
 
   /**
    * Cobra lo que toque y devuelve cuántos movimientos creó.
@@ -52,7 +52,7 @@ export class PagosAutomaticosService {
    * de esto.
    */
   async cobrarLoQueToque(userId: bigint, mesEnCurso: string, hoy: string): Promise<number> {
-    const conceptos = await this.repository.findAutoPaidConcepts(userId);
+    const conceptos = await this.categories.findAutoPaid(userId);
 
     // Quien no use la función no paga ni una consulta más. Es el caso de casi
     // todo el mundo casi siempre, y este método corre en CADA resumen.
@@ -74,7 +74,7 @@ export class PagosAutomaticosService {
       hay: cobrar encima dejaría el mismo gasto dos veces, uno de ellos
       inventado por nosotros.
     */
-    const registrado = await this.repository.categoriesWithMovementIn(
+    const registrado = await this.ledger.categoriesWithMovementIn(
       userId,
       ids,
       new Date(mesEnCurso),
@@ -85,7 +85,7 @@ export class PagosAutomaticosService {
 
     // La historia, solo de los que quedan y solo de ANTES de este mes: de ahí
     // sale la cifra cuando el concepto no tiene presupuesto puesto.
-    const historiaDe = await this.repository.monthlyHistory(
+    const historiaDe = await this.ledger.monthlyHistory(
       userId,
       porCobrar.map((c) => c.id),
       new Date(mesEnCurso),
@@ -129,14 +129,12 @@ export class PagosAutomaticosService {
       return false;
 
     try {
-      return await this.repository.createAutoCharge({
+      return await this.ledger.createAutoCharge({
         userId,
         categoryId: concepto.id,
         date: new Date(vence),
         period: new Date(mesEnCurso),
         amount: esperado.toFixed(2),
-        type: 'expense',
-        status: 'cleared',
         // El nombre del concepto, como cualquier movimiento suyo: el de la
         // ficha sale de la clasificación, no de esto, pero la tabla y las
         // búsquedas leen `description`.

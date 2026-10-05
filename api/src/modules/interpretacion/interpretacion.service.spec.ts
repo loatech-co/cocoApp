@@ -1,8 +1,9 @@
-import type { InterpretacionRepository } from './interpretacion.repository';
 import { InterpretacionService } from './interpretacion.service';
 import * as motor from './interpretar';
 import { ValidationError } from '../../common/errors/domain-error';
+import type { CategoryLookupService } from '../categories/category-lookup.service';
 import type { CategorizationService } from '../categorization/categorization.service';
+import type { LedgerService } from '../transactions/ledger.service';
 import type { TransactionsService } from '../transactions/transactions.service';
 
 /**
@@ -43,25 +44,27 @@ describe('InterpretacionService con una clasificación elegida', () => {
     crear = jest.fn((_userId: bigint, dto: Record<string, unknown>) =>
       Promise.resolve({ ...dto, id: 99n }),
     );
-    const repository = {
-      // Sin repetidas ni candidatas a duplicado: aquí se prueba la clasificación.
+    // Sin repetidas ni candidatas a duplicado: aquí se prueba la clasificación.
+    const ledger = {
       findIdByExternalRef: jest.fn().mockResolvedValue(null),
       findDuplicateCandidates: jest.fn().mockResolvedValue([]),
-      findChosenCategory: jest.fn((userId: bigint, id: bigint) =>
+    } as unknown as LedgerService;
+    const categories = {
+      findChosen: jest.fn((userId: bigint, id: bigint) =>
         Promise.resolve(userId === USUARIO ? (filas.get(id) ?? null) : null),
       ),
-      findActiveCategories: jest.fn().mockResolvedValue([
+      findSearchable: jest.fn().mockResolvedValue([
         { id: 10n, parentId: null, name: 'Costos variables', palabrasClave: [] },
         { id: 20n, parentId: 10n, name: 'Alimentación', palabrasClave: [] },
         { id: 21n, parentId: 10n, name: 'Transporte', palabrasClave: [] },
         { id: 30n, parentId: 20n, name: 'Mercado', palabrasClave: ['koba'] },
       ]),
-    } as unknown as InterpretacionRepository;
+    } as unknown as CategoryLookupService;
     const categorization = {
       sugerirPara: jest.fn().mockResolvedValue(null),
     } as unknown as CategorizationService;
     const transactions = { crear } as unknown as TransactionsService;
-    servicio = new InterpretacionService(repository, categorization, transactions);
+    servicio = new InterpretacionService(ledger, categories, categorization, transactions);
     interpretar = jest.spyOn(motor, 'interpretar');
   });
 

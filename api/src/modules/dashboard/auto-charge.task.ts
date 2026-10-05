@@ -5,8 +5,8 @@ import {
   type OnModuleDestroy,
 } from '@nestjs/common';
 
-import { DashboardRepository } from './dashboard.repository';
 import { PagosAutomaticosService } from './pagos-automaticos';
+import { CategoryLookupService } from '../categories/category-lookup.service';
 
 /** Bogotá is UTC−5 all year (no daylight saving). */
 const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000;
@@ -65,7 +65,7 @@ export class AutoChargeTask implements OnApplicationBootstrap, OnModuleDestroy {
   private running = false;
 
   constructor(
-    private readonly repository: DashboardRepository,
+    private readonly categories: CategoryLookupService,
     private readonly autoPayments: PagosAutomaticosService,
   ) {}
 
@@ -90,7 +90,7 @@ export class AutoChargeTask implements OnApplicationBootstrap, OnModuleDestroy {
     try {
       const today = todayInBogota(now);
       const currentMonth = `${today.slice(0, 7)}-01`;
-      const owners = await this.repository.ownersOfAutoPaidConcepts();
+      const owners = await this.categories.ownersOfAutoPaid();
 
       let created = 0;
       for (const userId of owners) {
