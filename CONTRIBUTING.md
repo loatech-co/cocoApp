@@ -754,3 +754,40 @@ a **fine-grained personal access token** stored as the repository secret
 expiry date and a reminder to rotate it. The repository owner creates it (it
 cannot be created from a workflow). Until it exists the job is skipped with a
 warning instead of failing.
+
+## Performance budgets
+
+Step 7.9. The numbers, how each is checked, and whether it blocks.
+
+| Budget                                         | Limit  | Checked by                                          | Blocks a PR |
+| ---------------------------------------------- | ------ | --------------------------------------------------- | ----------- |
+| Initial web bundle (entry JS + CSS + HTML, gz) | 200 kB | `npx size-limit` (`.size-limit.cjs`), CI job verify | **Yes**     |
+| API p95, every measured endpoint, local        | 50 ms  | `node scripts/perf/api-bench.mjs`                   | No          |
+| Lighthouse performance, mobile, median of 5    | 90     | `node scripts/perf/lighthouse.mjs`, workflow `perf` | No          |
+
+- **Bundle.** Measured over exactly what `frontend/dist/index.html` loads
+  before the first paint. A screen that is not the first paint goes in
+  `app/router.tsx` with `lazy` (ADR 0018); a heavy library used after a click
+  (`tesseract.js`, `pdfjs-dist`) is `import()`ed where it is used.
+- **API.** The plan's ceiling is 300 ms; the baseline was ten times better, so
+  the budget is the 50 ms floor proposed in the audit. Measure on a quiet
+  machine: under load the numbers inflate. To compare a change with the code
+  before it, build the old API elsewhere and point `COCO_BENCH_API_DIST` at
+  it, alternating runs.
+- **Lighthouse** is not a gate (D27): a score on a shared runner moves several
+  points between runs. Run it by hand before merging anything that touches
+  the first paint, or dispatch the `perf` workflow.
+
+Both scripts boot the API in-process against a throwaway local database
+(`coco_bench*`, refused otherwise) with a Supabase stub; nothing leaves the
+machine and nothing is printed but timings:
+
+```bash
+bash scripts/perf/bench-db.sh create --long   # coco_dev copy + 20 years (or: synthetic)
+npm run build --workspace api && npm run build --workspace frontend
+node scripts/perf/api-bench.mjs
+node scripts/perf/lighthouse.mjs              # installs lighthouse on first run
+bash scripts/perf/bench-db.sh drop
+```
+
+An optimization goes in with its ADR and its numbers before and after.
