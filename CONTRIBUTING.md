@@ -613,3 +613,46 @@ tense, in English: `it('rejects a concept that is both auto-paid and multi-payme
 
 **Why.** Read in a row, the titles are the specification of the unit, and a
 failure reads as the sentence that stopped being true.
+
+## API contract (OpenAPI)
+
+**Rule.** The API describes itself: `@nestjs/swagger@11` builds the OpenAPI
+document from the controllers and DTOs, and the result is committed as
+`api/openapi.json`. A change to a route, a DTO or a response shape regenerates
+it in the same PR:
+
+```sh
+npm run openapi --workspace api
+```
+
+The script builds the API and opens it in Nest's preview mode —no provider is
+instantiated, so it needs no database and no secrets— and writes the file. CI
+runs it again and fails if the result differs from the committed one, and keeps
+it as the `openapi` artifact. Swagger UI is served at `/api/docs` outside
+production only.
+
+**How a route is described.**
+
+- Inputs come from the DTOs: the Swagger CLI plugin (`api/nest-cli.json`)
+  reads their types, their `class-validator` rules and their comments. A DTO
+  rarely needs a decorator.
+- Responses are classes in `api/src/contract/v1/*.response.ts`, in the wire
+  format (a bigint goes out as a number). `shapes.spec.ts` makes it a compile
+  error if one stops matching the view its service returns.
+- Each controller says, with the decorators in
+  `contract/v1/openapi.decorators.ts`: `@ApiAuthenticated()` or `@ApiPublic()`;
+  `@ApiData(Model, { isArray, meta, status })` for the `{ data, meta }`
+  envelope; `@ApiNoContent()` for a 204; and `@ApiErrors(…)` for the statuses
+  it answers with `{ error: { code, message, details } }`.
+
+**Why.** One source of truth: the clients generate their types from this file
+(Orval in fetch mode, D11), so a document that drifts from the code is a client
+that compiles against an API that does not exist. `api/test/openapi.e2e-spec.ts`
+fails if Express registers a route the file does not describe (or the other way
+round), if a route documented as authenticated answers without a token, or if a
+route without a token is not on its list of public ones.
+
+**Versions.** v1 is documented exactly as it is —snake_case and Spanish field
+names included—: documenting is not changing. A breaking change (English,
+camelCase, the D9 pagination) is a new version under `/api/v2`, next to v1,
+never an edit of v1 (`docs/standards/decisions.md`, "Final decisions").

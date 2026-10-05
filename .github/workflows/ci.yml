@@ -122,6 +122,21 @@ jobs:
       # it. It needs no network and no data: stories never fetch.
       - name: Component catalogue (Storybook)
         run: npm run build-storybook --workspace frontend
+      # The contract (step 7.4): api/openapi.json is regenerated from the code
+      # (no database, no secrets) and must match the committed one, so a PR
+      # that changes the contract carries its document. The regenerated file
+      # is kept as an artifact, also when the comparison fails.
+      - name: OpenAPI document matches the code
+        run: |
+          npm run openapi --workspace api
+          git diff --exit-code -- api/openapi.json
+
+      - name: OpenAPI artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi
+          path: api/openapi.json
 
   clean-install:
     # What hbuilds runs on every deploy: a fresh install with NODE_ENV=production
