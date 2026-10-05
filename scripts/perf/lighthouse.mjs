@@ -72,7 +72,9 @@ const chromePath = process.env.CHROME_PATH ?? Launcher.getInstallations()[0];
 if (!chromePath) throw new Error('lighthouse: no Chrome found; set CHROME_PATH');
 
 const api = await startBenchApi();
-const { preview } = await import('vite');
+// The frontend's own Vite, the one that built `frontend/dist`.
+const fromFrontend = createRequire(join(repo, 'frontend', 'package.json'));
+const { preview } = await import(pathToFileURL(fromFrontend.resolve('vite')).href);
 const server = await preview({
   root: join(repo, 'frontend'),
   logLevel: 'silent',
