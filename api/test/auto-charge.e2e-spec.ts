@@ -1,5 +1,6 @@
 import request from 'supertest';
 
+import { makeConcept } from './factories';
 import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
 import { AutoChargeTask } from '../src/modules/dashboard/auto-charge.task';
 
@@ -35,15 +36,11 @@ describe('Auto-charge task (e2e)', () => {
   });
 
   async function autoPaidConcept(userId: bigint, name: string): Promise<bigint> {
-    const center = await env.prisma.category.create({ data: { userId, name: `${name} centro` } });
-    const group = await env.prisma.category.create({
-      data: { userId, name: `${name} grupo`, parentId: center.id },
-    });
-    const concept = await env.prisma.category.create({
-      data: {
-        userId,
+    const { concept } = await makeConcept(env.prisma, userId, {
+      center: { name: `${name} centro` },
+      category: { name: `${name} grupo` },
+      concept: {
         name,
-        parentId: group.id,
         recurrente: true,
         periodicidad: 'mensual',
         diaDePago: 1,
