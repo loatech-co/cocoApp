@@ -383,10 +383,10 @@ release, and the pre-commit hook covers the routine.
 
 ```swift
 // Correct
-guard let url = URL(string: "coco://capturar/\(destino)") else {
-    preconditionFailure("URL de captura inválida para el destino «\(destino)»")
+guard let url = URL(string: "coco://capturar/\(destination)") else {
+    preconditionFailure("URL de captura inválida para el destino «\(destination)»")
 }
 
 // Incorrect — SwiftLint fails on force_unwrapping
-let url = URL(string: "coco://capturar/\(destino)")!
+let url = URL(string: "coco://capturar/\(destination)")!
 ```
