@@ -1,0 +1,111 @@
+# Verificación de las fases 0 a 5
+
+**Fecha:** 5 de octubre de 2026 (rama `fase-5-app-ios`, HEAD `b1b288e`; `origin/Dev` = `879792e`).
+
+**Método.** Cada punto de la Parte 1 del plan se contrasta con el repositorio, la base local (`coco_dev`), la base de producción (solo lectura: `prisma migrate status` con `api/.env.supabase`) y sondas HTTP a `https://dev-cocoapp.viteri.me`.
+Las pruebas citadas se corrieron una a una (`jest`/`vitest` sobre el archivo) y el lint una vez por workspace; el registro autónomo se usa como pista y se cita solo para lo que ocurrió en el servidor (SSH), que no se repitió desde aquí.
+Estados: **Cumple** · **Parcial** · **No cumple**. Lo que no es Cumple va a «Brechas encontradas» al final.
+
+## Fase 0: base segura
+
+| Punto | Estado | Evidencia |
+|---|---|---|
+| `api/.env` apunta al Postgres local; producción solo en archivos explícitos | Cumple | `api/.env` → `DATABASE_URL=postgresql://…@localhost:5432/coco_dev`; `api/.env.supabase` → `aws-0-us-east-1.pooler.supabase.com`; `git ls-files \| grep .env` solo lista `api/.env.example`, `api/.env.migrate.example`, `frontend/.env.example`, `frontend/.env.production`; `.gitignore:12-15` |
+| La API se niega a arrancar fuera de producción si la base no es local; `PERMITIR_BASE_REMOTA` documentada y fuera de lo versionado | Cumple | `api/src/common/entorno.ts:75` (`HOSTS_LOCALES`), `:114-127` (`porQueNoArrancar`), `api/src/main.ts:138`; `git grep PERMITIR_BASE_REMOTA` → solo `api/.env.example:20` (nombre vacío) y `entorno.ts:78,110`; `entorno.spec.ts:82-111` (6 pruebas, pasan) |
+| `SOPORTES_DIR` local apunta a una carpeta local | Cumple | `api/.env` → `SOPORTES_DIR=".../cocoApp/api/.soportes"`; la carpeta existe (`ls -d api/.soportes`) |
+| Login local sin escribir en producción; las 4 operaciones destructivas se niegan fuera de producción | Cumple | `entorno.ts:136,162-175` (`porQueNoTocarCuentasReales`), `api/src/modules/auth/supabase-auth.service.ts:232` (candado en `llamar()`, commit `479ab2c`); `entorno.spec.ts:158-171`; `api/.env` → `SUPABASE_URL=https://doovdfpvyaszkquvmhnm…` (proyecto de desarrollo, fase 4) |
+| Siembra idempotente: usuario, plantilla, recurrentes y «Mercado» con presupuesto | Cumple | `scripts/sembrar-local.mjs:45-57` (`asegurar`: `findFirst` → `update` de faltantes, nunca duplica), `:78-111`; `coco_dev`: `users=1, categories=30, Mercado=1, presupuesto=1200000.00` |
+| `frontend/eslint.config.js` existe; `npm run lint` corre en los 4 workspaces con 0 errores | Parcial | `frontend/eslint.config.js` existe (136 líneas); `cd api && npm run lint` → 0 errores; `cd frontend && npm run lint` → 0 errores; raíz `npm run lint` → EXIT 0. **Pero** `packages/types` y `packages/lectura` no tienen script `lint` (solo `typecheck`): `npm run lint` ahí falla con «missing script» y la raíz los salta por `--if-present` |
+| Los 8 errores de lint de `supabase-auth.service.ts` corregidos | Cumple | `api` lint 0 errores (incluye el archivo); commit `99f7a42` (`supabase-auth.service.ts` −31 líneas, `supabase-auth.errores.ts` nuevo con 7 pruebas) |
+| `api/.env.example` lista todas las obligatorias, solo nombres y descripción | Cumple | `api/.env.example` (líneas 15-72): 20 variables con `NOMBRE=` vacío y comentario; cubre las 14 que usa `api/.env` real |
+| Producción corre con `NODE_ENV=production`; rama de despliegue documentada | Cumple | Commit `479ab2c` (cuerpo): inspección del proceso vivo, `NODE_ENV='production'` llega limpio; `entorno.ts:51-71` (`sinComillas`), `entorno.spec.ts:140`; rama: `docs/registro-autonomo.md:21-22` (`+refs/heads/Dev`). No se volvió a verificar por SSH en esta pasada (ver método) |
+
+## Fase 1: conceptos que se pagan en varias veces
+
+| Punto | Estado | Evidencia |
+|---|---|---|
+| Columna `categories.varios_pagos`, migración en producción antes del código, campo en `packages/types` | Cumple | `api/prisma/migrations/20261004110905_varios_pagos_en_conceptos/migration.sql` (`ADD COLUMN "varios_pagos" BOOLEAN NOT NULL DEFAULT false`); producción: `prisma migrate status` (`.env.supabase`) → «15 migrations found… Database schema is up to date!»; orden: migración 11:53 (`registro:30-37`) y push a `Dev` 13:00 (`registro:157`, reflog `origin/Dev@{4}`); `packages/types/src/index.ts:407,645`; `coco_dev`: `varios_pagos boolean default false NOT NULL` |
+| DTO: solo conceptos nivel 3 recurrentes; con `pago_automatico` → 422 | Cumple | `api/src/modules/categories/varios-pagos.ts:36-60`; `categories.service.ts:141` (`UnprocessableEntityException`), `:158-170` (se evalúa la fila resultante, no solo el DTO); `varios-pagos.spec.ts:10-45` (6 pruebas, pasan) |
+| Pendientes: sigue mientras `cleared` < esperado; incluye lo pagado; sale al alcanzar; sin esperado > 0 como antes; sin marca nada cambió | Cumple | `api/src/modules/dashboard/pendientes.ts:238-240` (`sigueFaltando: pagado.lt(esperado)` solo si `variosPagos && esperado > 0`); `dashboard.module.ts:564-580` (suma de `cleared` del mes), `:642-643` (`paid_amount`, `varios_pagos` en la respuesta); `pendientes.spec.ts:238-326` (9 pruebas, pasan) |
+| Archivados fuera de pendientes y dentro de los históricos | Parcial | Código: `dashboard.module.ts:509-511` (`!c.isArchived` solo en `recurrentes` para pendientes; comentario `:495-507` explica que la consulta de arriba alimenta los históricos). **Sin prueba**: `grep archiv api/src/modules/dashboard/*.spec.ts` → 0 resultados |
+| Indicador «Presupuesto necesario»: mayor entre pagado y esperado solo con la marca | Cumple | `pendientes.ts:238-240`; `pendientes.spec.ts:261` («mientras se cubre, el mes cuenta lo ESPERADO»), `:269` («cuando se pasa, cuenta lo PAGADO»), `:295-326` (sin marca, sin cambios) |
+| Interfaz: interruptor solo en recurrentes, bloqueo cruzado con explicación; tarjeta con avance y «Registrar otro» (concepto y fecha precargados, valor vacío) | Cumple | `frontend/src/components/campos-de-recurrencia.tsx:212-251` (`disabled={valor.variosPagos}` / `disabled={valor.pagoAutomatico}`, texto explicativo `:241`); `pagos-pendientes.tsx:193-194,310-319`; `movimiento-modal.dom.test.tsx:390` («ficha de un concepto que se paga en varias veces»); `campos-de-recurrencia.dom.test.tsx:44-97` y `pagos-pendientes.dom.test.tsx:72-97` → 15 pruebas pasan |
+| Pruebas de la especificación (pendientes, indicador, DTO, frontend) existen y pasan | Parcial | `jest varios-pagos.spec pendientes.spec dashboard.aggregate.spec entorno.spec` → 86/86; `vitest pagos-pendientes campos-de-recurrencia` → 15/15. Falta la de «concepto archivado: no en pendientes, sí en históricos» (1.6) |
+| Verificado en producción con el código viejo y con el nuevo | Parcial | `registro:52-91` (1b: cliente Prisma de `ba3e636` contra base con la columna; sustitución D2 `registro:147`) y `:106-124` (1d: cliente nuevo en el servidor, `findFirst` trae `variosPagos`). Los endpoints autenticados (`/dashboard`, `/categories`) no se probaron por HTTP en producción (`registro:126-128`) |
+
+## Paso intermedio: react-hooks
+
+| Punto | Estado | Evidencia |
+|---|---|---|
+| 26 errores de `set-state-in-effect` y `refs` en 0, sin desactivar ni rebajar reglas | Cumple | `frontend` lint → 0 errores con `--max-warnings 0`; `frontend/eslint.config.js:109,119` (`reactHooks.configs.recommended.rules`, sin overrides de esas reglas); commit `9616997` («48 → 26 → 0») |
+| Únicas excepciones: las dos de `blob:`, con motivo escrito | Cumple | `grep -c "eslint-disable.*react-hooks/(set-state-in-effect\|refs)" frontend/src` → 2: `movimiento-modal.tsx:1789` y `:1931`, ambas «recurso con ciclo de vida» (la de `soportes.tsx:191` es `exhaustive-deps`, otra regla, anterior) |
+| Sin cambio visible salvo el fotograma intermedio, documentado | Cumple | `frontend/src/lib/al-cambiar.ts:18-25` (explica el fotograma que desaparece); cuerpo de `9616997` («Lo unico que cambia es que desaparece el fotograma intermedio») |
+| El hook compartido tiene pruebas; la prueba frágil pasa aislada | Cumple | `frontend/src/lib/al-cambiar.dom.test.tsx` (5 `it`, pasan); `vitest run movimiento-modal.dom.test.tsx -t "reemplaza el valor y la fecha"` → 1 passed (aislada) |
+
+## Fase 2: registro rápido
+
+| Punto | Estado | Evidencia |
+|---|---|---|
+| Un solo buscador: nombres, categorías, `palabras_clave`, sin tildes/mayúsculas, con ruta | Cumple | `packages/lectura/src/buscar.ts` (`indexarArbol`, `buscarEnArbol`); `frontend/src/components/buscador-de-concepto.tsx`; `buscar-en-arbol.test.ts:74-119` y `buscador-de-concepto.dom.test.tsx:69-91` (nombre, «d1» → Mercado, ruta) — pasan |
+| Concepto completa categoría y centro con `rutaSeleccionada()`; categoría completa centro y deja concepto vacío | Cumple | `movimiento-modal.tsx:27,427` (`rutaSeleccionada(arbol, categoryId)`); `buscador-de-concepto.dom.test.tsx:102,110` |
+| Buscador vacío → hasta 5 recientes | Cumple | `frontend/src/lib/recientes.ts:14` (`maximo = 5`); `movimiento-modal.tsx:410-411,1036`; `recientes.test.ts:18-35`, `buscador-de-concepto.dom.test.tsx:160` |
+| «Crear concepto» pide solo la categoría | Cumple | `buscador-de-concepto.dom.test.tsx:136` («ofrece crear el concepto con lo escrito y pide SOLO la categoría») |
+| Cascada como opción secundaria; centros `estatico` conservados | Cumple | `movimiento-modal.tsx:1047` («Elegir por centro y categoría»), `:1057` (`cascadaVisible \|\| estatico`), `:1032` (`deshabilitado={estatico}`); `movimiento-modal.dom.test.tsx:108` |
+| Sin búsqueda en servidor ni `unaccent`/`pg_trgm` | Cumple | `grep -rn "unaccent\|pg_trgm" api/prisma` → 0; sin endpoint de búsqueda nuevo (`categorization.module.ts` solo `suggest`/`learn`) |
+| Ficha llama a `/categorization/suggest` con espera entre teclas; sugerencia marcada y editable | Cumple | `frontend/src/features/categorization/use-sugerencia.ts:14,17,33` (`ESPERA_MS = 400`, mínimo 3 caracteres, `setTimeout`); `movimiento-modal.tsx:364-370` (`origen: 'historial'`), `:1039-1041` (texto «…Puedes cambiarlo.») |
+| Precedencia manual > historial > palabras clave > diccionario, probada | Cumple | `movimiento-modal.tsx:160` (`proponer`), `:369,378,385,530-550,596,1033`; `frontend/src/lib/precedencia.test.ts:15-46` (6 pruebas, pasan) |
+| Aprender al guardar en `category_rules`; descripción vacía no crea; nada guardado sin verse | Parcial | Código: `movimiento-modal.tsx:684` (`POST /categorization/learn` al guardar), `categorization.module.ts:125-156,202-207` (`upsert` reutilizado), `categorization.ts:167-190` (`PALABRAS_GENERICAS`, `patronParaAprender`); `categorization.spec.ts:155-163` («de una descripción vacía no sale nada»). **Sin prueba** de `aprenderDesdeLaFicha`/`POST /learn` (aceptar o corregir crea/actualiza la regla): `grep -rn "aprenderDesdeLaFicha\|learn" api/src api/test --include=*spec.ts` → 0; tampoco en el frontend |
+| Diccionario en `packages/lectura`, términos genéricos, tres certezas, incluido en el informe | Cumple | `packages/lectura/src/diccionario.ts:40` (`DICCIONARIO`), `:161` (`TUBERIAS`), `:186,225`; certezas en `buscar.ts` (`resolverTerminos`) → `buscar-en-arbol.test.ts:129-135`, `clasificar-con-diccionario.test.ts:47-105` (alta/media/ninguna); `diccionario.test.ts` (14 pruebas); el diccionario completo en `registro:528-589` |
+| Medido: cinco interacciones o menos; cuatro cuando acierta | Parcial | Solo una cuenta por convención en `registro:200-207` (5 sin sugerencia, 3 con ella). No hay prueba ni nota en el código que lo mida (`grep -rn interacciones frontend/src` → solo el comentario de `buscador-de-concepto.tsx:22`) |
+
+## Fase 3: un solo cerebro en la API
+
+| Punto | Estado | Evidencia |
+|---|---|---|
+| La API importa `packages/lectura` tal cual; sin copia; paquete puro | Cumple | `api/src/modules/interpretacion/interpretar.ts:9` e `interpretacion.service.ts:3` (`from '@coco/lectura'`); `api/tsconfig.json:29-32` sin `path` a lectura (arreglo `ba1c9d2`); `packages/lectura/package.json` sin `dependencies`; `grep "window\|document\.\|tesseract\|navigator" packages/lectura/src` → 0; `tesseract.js` solo en `frontend/package.json:35` |
+| Columnas en `transactions` (`source` enum, `raw_text`, `captured_at`, `por_revisar`); migración aditiva antes del código; contrato actualizado | Cumple | `migrations/20261004124024_fuente_texto_y_revision_en_movimientos/migration.sql` (`CREATE TYPE … ENUM ('web','ios_manual','ios_photo','wallet','sms')`, 4 `ADD COLUMN`, `DEFAULT 'web'`/`false`); producción: `migrate status` → 15 aplicadas, al día; orden: migración 13:19:56 vs push 13:21 (`registro:277-295`); `packages/types/src/index.ts:542,566-572`; `coco_dev` confirma tipos y defaults |
+| Idempotencia por `external_ref`: repetido → 200 con el ya creado | Cumple | `interpretacion.service.ts:82` (búsqueda previa), `:177-182` (carrera `P2002` → devuelve el existente); `captura.e2e-spec.ts:76` («repetido… no crea un segundo gasto, y contesta lo mismo») |
+| `POST /transactions/interpret` no escribe; devuelve monto, fecha, comercio, clasificación con certeza y revisión | Cumple | `interpretacion.module.ts:15,20-26`; `interpretar.ts`; `captura.e2e-spec.ts:160` («devuelve lo entendido y NO escribe nada»), `:172,177`; `interpretar.spec.ts:33-107` |
+| `POST /transactions/capture` en una petición; devuelve gasto, clasificación y resumen; alta clasifica, media/ninguna marcan `por_revisar` | Cumple | `interpretacion.module.ts:37-43`; `packages/types/src/index.ts:483-491` (`por_revisar`, `resumen`); `captura.e2e-spec.ts:59,86,98,225`; `interpretar.spec.ts:107` (resumen) |
+| Duplicados Wallet+SMS: fusiona dentro de la ventana; parcial → `por_revisar`; mismo origen no fusiona; nunca borra | Cumple | `duplicados.ts:26,28` (`VENTANA_DE_DUPLICADO_MS` 10 min, `VENTANA_PARCIAL_MS` 24 h), `:62-77`; `duplicados.spec.ts:34,84` (12 pruebas); `captura.e2e-spec.ts:115,136,150` |
+| La web usa `/interpret`, manda `source = web` y `raw_text`; sigue registrando igual | Cumple | `frontend/src/features/transactions/leer-soporte.ts:187` (`apiFetch('/transactions/interpret')`); `movimiento-modal.tsx:618-619` (`source: 'web'`, `raw_text`); `captura.e2e-spec.ts:281` («acepta las columnas nuevas y sigue funcionando igual sin ellas») |
+| Pruebas de idempotencia, certeza, duplicados e `interpret` sin escritura existen y pasan | Cumple | `jest src/modules/interpretacion src/modules/categorization` → 59/59; `jest -c test/jest-e2e.json test/captura.e2e-spec.ts --runInBand` → 20/20 |
+
+## Fase 4: API lista para iOS
+
+| Punto | Estado | Evidencia |
+|---|---|---|
+| `login`/`refresh` aceptan indicación de cliente nativo; refresh token por cuerpo y rota; la web sin cambios | Cumple | `api/src/modules/auth/auth.controller.ts:41-43,207,211-219,243-255` (cabecera `X-Coco-Cliente: nativo`, cuerpo vs cookie); `packages/types` `CABECERA_CLIENTE_NATIVO`; `auth-nativo.e2e-spec.ts:46,56,77,94` (12 `it`, pasan); producción: `POST /auth/refresh` nativo con token inventado → «La sesión expiró. Vuelve a entrar.» (solo el código nuevo), web sin cookie → «No hay sesión que renovar.» |
+| `logout` con token en el cuerpo; revocación por `sessions_valid_from` para ambos; throttles se mantienen | Cumple | `auth.controller.ts:152,207` (`logout` lee el cuerpo si es nativo); `auth-nativo.e2e-spec.ts:134,142,156`; throttles `auth.controller.ts:84,101,118` intactos (`git diff ba1c9d2 879792e -- auth.controller.ts \| grep Throttle` → sin cambios) |
+| Verificado en local y contra producción que la web sigue entrando con la cookie | Parcial | Local: `auth-nativo.e2e-spec.ts:56` (cookie httpOnly, sin `refresh_token` en el cuerpo) y `registro:393-401` (login web real contra `cocoApp-dev` → cookie `coco_refresh`). Producción: solo sondas con credenciales falsas (`POST /auth/login` → 401 hoy y en `registro:345-351`); no hay evidencia de un login real con cookie en producción tras `879792e` |
+| Proyecto Supabase de desarrollo creado con la CLI y conectado; error documentado si no | Cumple | `api/.env.supabase-dev` (600, ignorado, 10 líneas); `api/.env` → `SUPABASE_URL=https://doovdfpvyaszkquvmhnm…`; `registro:387-390` (F4-7 error exacto `--size`, F4-8 ref y región, F4-10/11) |
+| Contrato de soportes documentado (tipos, límite, tamaño recomendado) | Cumple | `packages/types/src/index.ts:434-446` (`CONTRATO_DE_SOPORTES`: endpoint, campo, 10 por subida, 26214400 bytes, pdf/jpeg/png, 1600 px, JPEG 0.85); `api/src/modules/soportes/soportes.contrato.spec.ts` → 4/4 (sincroniza con el controlador) |
+| Primera e2e: login, refresh con rotación, logout y revocación nativos contra base local; estructura lista | Cumple | `api/test/auth-nativo.e2e-spec.ts` (12 `it`) sobre `api/test/helpers`, `jest-e2e.json`, `.env.test` → `coco_test`; `--runInBand` → 11/11 pasan. Nota: no era la primera e2e (ya había 9 suites en `api/test/`) |
+
+## Fase 5: app iOS híbrida
+
+Pendiente (la verifica el usuario).
+
+## Cumplimiento del modo autónomo
+
+| Punto | Estado | Evidencia |
+|---|---|---|
+| `docs/registro-autonomo.md` existe y registra cada decisión fuera del plan con motivo | Cumple | 589 líneas; tablas de decisiones D1-D3 (`:143-151`), F2-1…F2-29 (`:188-234`), F4-1…F4-14 (`:379-407`), incidentes (`:153-163`) |
+| Migraciones aditivas, aplicadas antes del código, con verificación entre ambas | Cumple | Dos migraciones, solo `ADD COLUMN`/`CREATE TYPE` con `DEFAULT` (archivos SQL citados arriba); `registro:30-91` (fase 1: 11:53 → verificación 1b → push 13:00) y `:277-295` (fase 3: 13:19:56 → `information_schema` + HTTP → push 13:21); producción `migrate status` → 15/15 |
+| Integraciones fast-forward/squash sin reescribir historia; ningún force-push salvo vuelta atrás documentada | Parcial | `git log --merges ba3e636..origin/Dev` → 0; `git reflog show origin/Dev` → 5 «update by push» lineales (`9616997`→`5318c87`→`bb438b1`→`ba1c9d2`→`879792e`). **Pero** hubo `--force` sobre las ramas de trabajo (`fase-2/3/4`) al rebasarlas tras `5318c87` y `ba1c9d2` (`registro:162`, F4-13 `:406`); no fue una vuelta atrás |
+| Cada despliegue con verificación por SSH y contra el sitio | Cumple | `registro:106-124` (paso 1), `:171-178` (fase 2), `:288-301` (fase 3), `:337-351` (fase 4): HEAD de `current`, log de hbuilds, `stderr.log`, sondas HTTP; hoy `interpret`/`capture`/`learn` → 401 en producción (existen y exigen sesión) |
+| Sin dependencias sin motivo; sin refactors fuera de alcance | Cumple | `git diff ba3e636 HEAD -- package.json api/package.json frontend/package.json packages/*/package.json` → solo devDeps de lint del frontend (`@eslint/js`, `eslint-config-prettier`, `eslint-plugin-react-hooks`, `typescript-eslint`; motivo en `99f7a42`) y `build` de `@coco/lectura` (fase 3); `xcodegen` global con motivo en `registro:304-309` |
+
+## Brechas encontradas
+
+| # | Fase | Punto | Qué falta | Dónde se cerraría |
+|---|---|---|---|---|
+| 1 | 0 | Lint en los cuatro workspaces | `packages/types` y `packages/lectura` no tienen script `lint`; la raíz los salta con `--if-present` | `packages/types/package.json`, `packages/lectura/package.json` (script `lint`) y un `eslint.config.js` por paquete o compartido |
+| 2 | 1 | Archivados fuera de pendientes / pruebas de 1.6 | No existe la prueba «concepto archivado: no en pendientes, sí en históricos»; el filtro `!c.isArchived` solo está cubierto por lectura del código | `api/src/modules/dashboard/pendientes.spec.ts` o una e2e en `api/test/` sobre `/dashboard` |
+| 3 | 1 | Verificado en producción con código viejo y nuevo | Los endpoints autenticados (`/dashboard`, `/categories`) nunca se llamaron por HTTP en producción; se aceptó la sustitución D2 (cliente Prisma en el servidor) | Aceptar D2 en el registro como motivo, o una sonda autenticada con una sesión del usuario (no del agente) |
+| 4 | 2 | Aprendizaje al guardar | Sin prueba de `POST /categorization/learn` / `aprenderDesdeLaFicha` (aceptar o corregir crea o actualiza la regla; categoría de otra cuenta rechazada) | `api/src/modules/categorization/categorization.spec.ts` o `api/test/` (e2e); opcionalmente `movimiento-modal.dom.test.tsx` (la ficha llama a `learn` al guardar) |
+| 5 | 2 | Medido: cinco interacciones o menos | Solo hay una cuenta a mano en el registro; nada en el repo mide o fija ese número | Una prueba DOM en `frontend/src/features/transactions/movimiento-modal.dom.test.tsx` que registre un gasto contando eventos (≤5 y ≤4 con sugerencia), o una nota aceptada en el registro |
+| 6 | 4 | Login web con cookie contra producción | Solo sondas con credenciales falsas (401); no hay evidencia de un login real que devuelva `Set-Cookie: coco_refresh` sin `refresh_token` en el cuerpo tras `879792e` | Verificación manual del usuario (navegador o `curl` con sus credenciales) anotada en `docs/registro-autonomo.md` |
+| 7 | Autónomo | Ningún force-push salvo vuelta atrás | Hubo `--force` sobre ramas de trabajo al rebasarlas (documentado en F4-13 e incidente 13:01), que no es una vuelta atrás; `Dev` sí es lineal | Anotar en `docs/registro-autonomo.md` §2 el motivo aceptado (ramas no desplegables) o adoptar la regla de no rebasar ramas ya publicadas |
+
+Observaciones que no son brecha: las e2e comparten `coco_test` y solo pasan con `--runInBand` (es lo que hace `npm run test:e2e`, `api/package.json:18`); corridas en paralelo con `jest` a secas fallan 3 por interferencia. `auth-nativo.e2e-spec.ts` no fue «la primera e2e del proyecto» (ya había 9 suites), pero el punto se cumple en lo que pide.
