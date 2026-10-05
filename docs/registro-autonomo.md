@@ -627,3 +627,26 @@ Beat, iFood, Domicilios.com (cerraron en Colombia); «metro» como transporte
 (choca con el supermercado Metro); «mio» (tres letras, demasiado común);
 Colsubsidio como *salud* (es también mercado y droguería; se deja solo en
 mercado, que es su uso dominante en recibos).
+
+## 5. Modo autónomo hasta el final — fases 6 y 7 (arranque 5 oct 2026, 09:40)
+
+Mandato del dueño tras validar la Parte 1: terminar las fases 6 y 7 sin
+intervención; paradas internas de la fase 7 (7.1 y 7.10) reemplazadas por
+salvaguardas (respaldo probado por restauración, copia local de soportes con
+huella, verificación fila a fila y un despliegue completo antes de borrar,
+rutas viejas solo con cero usos en siete días). Código NUEVO en inglés desde
+ya; nada existente se renombra hasta la fase 7. Decisiones de la validación:
+F5-5 se queda (categoría de profundidad 2 con certeza media); la pantalla
+«Cómo empezar» se retira (el (+) va directo al formulario, archivo y foto
+pasan a ser acciones del formulario; meta cinco interacciones contándolo
+todo); el e2e saltado del importador se retira con `imports` (6.6); la copia
+de soportes se hace con UNA conexión (rsync/tar); 6.1 arregla el lockfile y
+añade a la verificación local una instalación limpia y un build con
+`NODE_ENV=production`; el `DEVELOPMENT_TEAM` de iOS sale de un archivo local
+ignorado por git.
+
+Un paso por rama, PR a `Dev` y despliegue. Repositorio privado en plan
+gratuito de GitHub (`gh repo view`: private, rama por defecto `main`).
+
+| Paso | Rama | PR | Estado |
+|---|---|---|---|
