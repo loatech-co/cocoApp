@@ -1,0 +1,152 @@
+import { useRangeDraft, type Borrador } from '@/features/transactions/hooks/use-range-draft';
+import { PRESETS, type Filtros, type Preset } from '@/features/transactions/model/filtros';
+import { diaLargo, rangoLargo } from '@/shared/lib/fechas';
+import { cn } from '@/shared/lib/utils';
+import { Button } from '@/shared/ui/atoms/button';
+import { REALCE } from '@/shared/ui/foundations/superficie';
+import { Calendario } from '@/shared/ui/molecules/calendario';
+
+/**
+ * Lo que hay dentro del panel: los atajos, el mes y el pie.
+ *
+ * ── Por qué es su propio componente ─────────────────────────────────────────
+ * Porque se MONTA al abrir y se va al cerrar, y de ahí salen dos cosas. El
+ * borrador nace fresco en cada apertura —si se canceló la vez anterior, lo que
+ * quedó a medias no tiene por qué reaparecer— sin necesidad de rehacerlo a
+ * mano. Y la consulta de la historia, que hace falta para saber dónde empieza
+ * "Todo", solo se pide cuando alguien abre el panel: viviendo en el componente
+ * de fuera se pedía en cada pantalla que tuviera un campo de fecha.
+ *
+ * ── Por qué hay que confirmar con Aplicar ───────────────────────────────────
+ * Elegir un rango a mano son DOS clics, y entre el primero y el segundo el
+ * rango está a medias. Si cada clic recargara, la pantalla se refrescaría con
+ * un recorte que nadie pidió —el día suelto del primer clic— y el segundo
+ * llegaría tarde. El borrador vive aquí dentro hasta que se confirma.
+ */
+export function PanelDeRango({
+  filtros,
+  aplicar,
+  atajos,
+  cerrar,
+}: {
+  filtros: Filtros;
+  aplicar: (cambios: Partial<Filtros>) => void;
+  atajos: boolean;
+  cerrar: () => void;
+}) {
+  const draft = useRangeDraft(filtros);
+  const { borrador, ancla, setSobrevolado, vista, setVista, pintado, pinta } = draft;
+  const { elegirPreset, elegirDia } = draft;
+
+  function confirmar(): void {
+    if (borrador.preset === 'personalizado') {
+      aplicar({ preset: 'personalizado', from: borrador.from, to: borrador.to });
+    } else {
+      aplicar({ preset: borrador.preset });
+    }
+    cerrar();
+  }
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row">
+        {/* ── Atajos ────────────────────────────────────────────────────────
+            En pantalla ancha son una columna; en un teléfono se vuelven fichas
+            que fluyen, porque una columna lateral dejaría el calendario en la
+            mitad del ancho y sin sitio para los días. */}
+        {atajos && <RangePresets borrador={borrador} onElegir={elegirPreset} />}
+
+        <Calendario
+          className="flex-1 p-3"
+          desde={pinta ? pintado.from : undefined}
+          hasta={pinta ? pintado.to : undefined}
+          vista={vista}
+          onVista={setVista}
+          onDia={elegirDia}
+          onSobrevolar={(iso) => ancla && setSobrevolado(iso ?? ancla)}
+        />
+      </div>
+
+      <RangeFooter
+        borrador={borrador}
+        ancla={ancla}
+        primero={draft.primero}
+        onCancelar={cerrar}
+        onAplicar={confirmar}
+      />
+    </div>
+  );
+}
+
+function RangeFooter({
+  borrador,
+  ancla,
+  primero,
+  onCancelar,
+  onAplicar,
+}: {
+  borrador: Borrador;
+  ancla: string | null;
+  /** El primer día con movimientos, para decir desde cuándo es «todo». */
+  primero: string | undefined;
+  onCancelar: () => void;
+  onAplicar: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3">
+      <span className="text-xs text-muted-foreground">
+        {ancla !== null
+          ? 'Elige la fecha final'
+          : borrador.preset === 'todo'
+            ? primero
+              ? `Desde ${diaLargo(primero)}`
+              : 'Todo el histórico'
+            : rangoLargo(borrador.from, borrador.to)}
+      </span>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancelar}>
+          Cancelar
+        </Button>
+        <Button type="button" size="sm" onClick={onAplicar} disabled={ancla !== null}>
+          Aplicar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function RangePresets({
+  borrador,
+  onElegir,
+}: {
+  borrador: Borrador;
+  onElegir: (preset: Preset) => void;
+}) {
+  return (
+    <ul
+      className={cn(
+        'flex flex-wrap gap-1 border-b border-border p-2',
+        'sm:w-44 sm:shrink-0 sm:flex-col sm:flex-nowrap sm:border-b-0 sm:border-r',
+      )}
+    >
+      {PRESETS.filter((p) => p.valor !== 'personalizado').map((p) => (
+        <li key={p.valor} className="sm:w-full">
+          <button
+            type="button"
+            onClick={() => onElegir(p.valor)}
+            aria-pressed={borrador.preset === p.valor}
+            title={p.ayuda}
+            className={cn(
+              'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
+              borrador.preset === p.valor
+                ? 'bg-primary/15 font-medium text-primary'
+                : cn('text-muted-foreground', REALCE),
+            )}
+          >
+            {p.etiqueta}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
