@@ -345,6 +345,50 @@ import { useTransactions } from '@/features/transactions/api/transactions'; // i
 import { MovimientoModal } from '@/features/transactions/components/movimiento-modal'; // in features/centros/
 ```
 
+### Rigid pieces, flexible composition
+
+**Outside `shared/ui`, a screen composes components: no raw `<button>`,
+`<input>`, `<textarea>`, `<select>`, `<dialog>` or `<table>`, and no arbitrary
+Tailwind colour, radius or measure (`bg-[#…]`, `rounded-[…]`, `w-[…]`,
+`text-[13px]`).**
+
+Why: a control drawn in a screen is a copy, and copies drift. Before this rule
+there were two switches (4px apart, different knob in dark mode), two
+breadcrumbs, two search headers and three error alerts with their list of
+details, each written by hand. A class from the call is how four button
+heights ended up in one toolbar.
+
+**The flexibility lives in the component, never in the call.** A new need is a
+variant of the component, the way `size` works on `Button` or `ancho` on
+`Menu`, not a `className` added where it is used. The call may place a piece
+(a margin, a grid cell); it does not dress it.
+
+**Something new goes in this order:** combine what exists → add a variant to
+the component → create a component at the lowest level its imports allow,
+with its story in the catalogue.
+
+**An exception is registered with its reason in one place, or it does not
+exist.** For these two rules that place is `DESIGN_EXCEPTIONS` in
+`eslint.config.js`; the lint also fails on an entry nobody uses any more. The
+touch floor (`movil:min-h-[42px]`) keeps its own registry in
+`shared/ui/piso-tactil.test.ts`, and a radius over 10px in
+`shared/ui/radio.test.ts`.
+
+A `var(--token)` is not arbitrary (it reads the theme), and a step of the
+scale is not either: `min-h-55` is 220px, `size-4.5` is 18px. A value the theme
+does not have is added to `index.css` with its reason (`leading-portada`,
+`pb-seguro`).
+
+```tsx
+// Correct — the piece decides how it looks; the screen picks a variant
+<TextButton tono="primario" onClick={limpiar}>Limpiar</TextButton>
+<Menu ancho="sm" … />
+
+// Incorrect — a control drawn in the screen, and a measure from the call
+<button className="rounded-sm font-medium text-primary hover:underline">Limpiar</button>
+<Menu ancho="w-[min(22rem,calc(100vw-2rem))]" … />
+```
+
 ## Errors
 
 Services, repositories, tasks and controllers throw a `DomainError`
