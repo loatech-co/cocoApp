@@ -1,4 +1,3 @@
-import type { PerfilPublico, UserStatus } from '@coco/types';
 import {
   Check,
   Clock,
@@ -11,25 +10,27 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Bloque } from '@/components/ui/bloque';
 import { Button } from '@/components/ui/button';
+import { Campo } from '@/components/ui/campo';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PoliticaDeContrasena, cumpleLaPolitica } from '@/features/auth/politica-de-contrasena';
 import { ApiClientError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
-import { PoliticaDeContrasena, cumpleLaPolitica } from '@/features/auth/politica-de-contrasena';
+import type { PerfilPublico, UserStatus } from '@coco/types';
+
 import {
   useAccionSobreUsuario,
   useCambiarRol,
   useRestablecerContrasena,
   useUsuarios,
 } from './admin-queries';
-import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
-import { Bloque } from '@/components/ui/bloque';
-import { Campo } from '@/components/ui/campo';
 
 const FILTROS: { valor: UserStatus | undefined; etiqueta: string }[] = [
   { valor: 'pending', etiqueta: 'Pendientes' },
@@ -82,7 +83,7 @@ export function UsuariosPage() {
         </Alert>
       )}
 
-      {consulta.data && consulta.data.data.length === 0 && (
+      {consulta.data?.data.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             {filtro === 'pending'

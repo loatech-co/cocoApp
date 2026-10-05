@@ -5,8 +5,8 @@ import {
   type OnModuleDestroy,
 } from '@nestjs/common';
 
-import { PrismaService } from '../../prisma/prisma.service';
 import { PagosAutomaticosService } from './pagos-automaticos';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Bogotá is UTC−5 all year (no daylight saving). */
 const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000;

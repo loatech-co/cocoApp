@@ -11,9 +11,6 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
-import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import {
   CreateTransactionDto,
   CreateTransferDto,
@@ -21,6 +18,9 @@ import {
   UpdateTransactionDto,
 } from './dto/transaction.dto';
 import { TransactionsService, type TransactionView } from './transactions.service';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 
 /** M1 — Movimientos. El núcleo: todo lo demás se deriva de aquí. */
 @Controller('transactions')

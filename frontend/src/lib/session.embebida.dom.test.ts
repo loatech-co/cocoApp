@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SESION_DE_LA_APP, fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
+
 import {
   cambiarContrasena,
   descartarSesion,
@@ -12,7 +14,6 @@ import {
   sesionCerrada,
   tokenActual,
 } from './session';
-import { SESION_DE_LA_APP, fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
 
 /**
  * La sesión DENTRO de la app del teléfono.

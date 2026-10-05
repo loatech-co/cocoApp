@@ -7,8 +7,8 @@ import {
   type NodoBuscable,
 } from './buscar';
 import { comerciosEn } from './diccionario';
-import { FIRMAS, PRIORIDAD_DE_LO_ESCRITO, RECAUDADORES, normalizar, type Firma } from './firmas';
 import { leerFecha } from './fecha';
+import { FIRMAS, PRIORIDAD_DE_LO_ESCRITO, RECAUDADORES, normalizar, type Firma } from './firmas';
 import { leerMonto } from './monto';
 
 /**

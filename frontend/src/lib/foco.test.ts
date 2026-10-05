@@ -1,6 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -101,7 +100,7 @@ describe('Nada nace enfocado', () => {
 
   it('solo los buscadores mueven el foco a mano', () => {
     const culpables = archivos
-      .filter((ruta) => /\.focus\(\)/.test(readFileSync(ruta, 'utf8')))
+      .filter((ruta) => readFileSync(ruta, 'utf8').includes('.focus()'))
       .map(relativa)
       .filter((ruta) => !(ruta in NACEN_ENFOCADOS));
 

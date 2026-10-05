@@ -9,14 +9,14 @@ import {
 } from 'react';
 import { Link } from 'react-router-dom';
 
+import { FILA_DE_PANEL } from '@/components/panel-inferior';
+import { mostrarAviso } from '@/components/ui/aviso';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { mostrarAviso } from '@/components/ui/aviso';
-import { FILA_DE_PANEL } from '@/components/panel-inferior';
+import { REALCE } from '@/components/ui/superficie';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { MAXIMO_DE_ATAJOS, anadirAtajo, moverAtajo, quitarAtajo, useAtajos } from '@/lib/atajos';
 import { cn } from '@/lib/utils';
-import { useAlCambiar } from '@/lib/al-cambiar';
-import { REALCE } from '@/components/ui/superficie';
 
 /**
  * Los atajos.
@@ -140,7 +140,8 @@ export function useSuperficieDeAtajos({
   function alBajar(e: PointerEventoDeReact<HTMLElement>, indice: number): void {
     if (estado !== 'arreglando') return;
     e.preventDefault();
-    e.currentTarget.setPointerCapture?.(e.pointerId);
+    // jsdom no lo trae, aunque el tipo diga que todo elemento lo tiene.
+    if ('setPointerCapture' in e.currentTarget) e.currentTarget.setPointerCapture(e.pointerId);
     setArrastre({ indice, x: e.clientX, y: e.clientY, dx: 0, dy: 0 });
   }
 

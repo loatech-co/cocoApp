@@ -1,10 +1,10 @@
 import { UnprocessableEntityException } from '@nestjs/common';
 
+import { InterpretacionService } from './interpretacion.service';
+import * as motor from './interpretar';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { CategorizationService } from '../categorization/categorization.module';
 import type { TransactionsService } from '../transactions/transactions.service';
-import { InterpretacionService } from './interpretacion.service';
-import * as motor from './interpretar';
 
 /**
  * Lo que la persona eligió a mano manda sobre lo que el motor proponga, y un

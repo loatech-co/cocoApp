@@ -1,5 +1,6 @@
-import { USER_AGENT_APP, type SesionParaLaWeb } from '@coco/types';
 import { vi } from 'vitest';
+
+import { USER_AGENT_APP, type SesionParaLaWeb } from '@coco/types';
 
 /**
  * Finge que la web corre dentro de la app del teléfono.

@@ -2,9 +2,9 @@ import { Check, ChevronDown, Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Menu } from '@/components/menu';
-import { cn } from '@/lib/utils';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/components/ui/campo';
 import { REALCE } from '@/components/ui/superficie';
+import { cn } from '@/lib/utils';
 
 /**
  * Un desplegable en el que se escribe.

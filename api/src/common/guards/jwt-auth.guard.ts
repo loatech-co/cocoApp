@@ -8,8 +8,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
-import { PrismaService } from '../../prisma/prisma.service';
 import { SupabaseAuthService } from '../../modules/auth/supabase-auth.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 /**

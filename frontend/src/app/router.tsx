@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import { AppShell } from '@/app/app-shell';
+import { TITULO_DE_PAGINA } from '@/components/cabecera-de-pagina';
 import { AccountsPage } from '@/features/accounts/accounts-page';
 import { BitacoraPage } from '@/features/admin/bitacora-page';
 import { UsuariosPage } from '@/features/admin/usuarios-page';
@@ -9,7 +10,6 @@ import { RequireAdmin, RequireAuth } from '@/features/auth/require-auth';
 import { CentrosPage } from '@/features/centros/centros-page';
 import { CuentaPage } from '@/features/cuenta/cuenta-page';
 import { DashboardPage } from '@/features/dashboard/dashboard-page';
-import { TITULO_DE_PAGINA } from '@/components/cabecera-de-pagina';
 
 /**
  * Rutas en español, una por módulo del catálogo.

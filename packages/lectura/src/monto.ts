@@ -162,7 +162,7 @@ export function leerMonto(
       // pelado de seis cifras puede ser un monto o un número de factura; uno
       // escrito `1.526.000` ya eligió ser dinero.
       if (/[.,]\d{3}/.test(bruto)) puntaje += 5;
-      if (/\$/.test(bruto)) puntaje += 4;
+      if (bruto.includes('$')) puntaje += 4;
       // Nadie paga 43 pesos, y un recibo de casa no llega a mil millones.
       if (valor < 1000) puntaje -= 6;
       if (valor > 50_000_000) puntaje -= 10;

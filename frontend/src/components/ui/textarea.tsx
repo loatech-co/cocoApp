@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 
-import { cn } from '@/lib/utils';
 import { FOCO_DEL_CAMPO, useDentroDeUnCampo } from '@/components/ui/campo';
+import { cn } from '@/lib/utils';
 
 /**
  * Un campo de varias líneas.

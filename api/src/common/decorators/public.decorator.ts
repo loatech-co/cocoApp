@@ -9,4 +9,4 @@ export const IS_PUBLIC_KEY = 'isPublic';
  * olvido. Abrir una ruta exige escribirlo explícitamente, que es justo lo que
  * se quiere revisar en un PR.
  */
-export const Public = (): CustomDecorator<string> => SetMetadata(IS_PUBLIC_KEY, true);
+export const Public = (): CustomDecorator => SetMetadata(IS_PUBLIC_KEY, true);

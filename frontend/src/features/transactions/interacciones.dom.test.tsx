@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { keys, type CategoryTree } from '@/lib/queries';
+
 import { MovimientoModal } from './movimiento-modal';
 
 /*

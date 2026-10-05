@@ -1,9 +1,10 @@
-import type { PerfilPublico } from '@coco/types';
 import { createContext, use, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 
-import * as sesion from './session';
 import { useAlCambiar } from '@/lib/al-cambiar';
+import type { PerfilPublico } from '@coco/types';
+
+import * as sesion from './session';
 
 interface AuthState {
   usuario: PerfilPublico | null;

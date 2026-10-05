@@ -1,12 +1,8 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma, type TransactionSource } from '@prisma/client';
+
 import type { NodoBuscable } from '@coco/lectura';
 
-import { toMoney } from '../../common/money/money';
-import { PrismaService } from '../../prisma/prisma.service';
-import { anidar } from '../categories/categories.tree';
-import { CategorizationService } from '../categorization/categorization.module';
-import { TransactionsService, type TransactionView } from '../transactions/transactions.service';
 import {
   ORIGENES_QUE_SE_DUPLICAN,
   VENTANA_PARCIAL_MS,
@@ -14,13 +10,18 @@ import {
   enriquecer,
   type CapturaConocida,
 } from './duplicados';
+import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
 import {
   interpretar,
   resumenDe,
   type ClasificacionInterpretada,
   type Interpretado,
 } from './interpretar';
-import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
+import { toMoney } from '../../common/money/money';
+import { PrismaService } from '../../prisma/prisma.service';
+import { anidar } from '../categories/categories.tree';
+import { CategorizationService } from '../categorization/categorization.module';
+import { TransactionsService, type TransactionView } from '../transactions/transactions.service';
 
 /** La clasificación propuesta, con los ids como los entiende el resto de la API. */
 export interface ClasificacionView {

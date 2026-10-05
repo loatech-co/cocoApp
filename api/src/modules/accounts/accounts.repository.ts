@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import type { Account, Prisma } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
+
 import type { MovimientoDeSaldo } from '../../common/money/balance';
 import { toMoney } from '../../common/money/money';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class AccountsRepository {

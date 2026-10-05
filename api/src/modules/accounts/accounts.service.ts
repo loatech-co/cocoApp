@@ -6,10 +6,10 @@ import {
 } from '@nestjs/common';
 import type { Account } from '@prisma/client';
 
-import { calcularCupoDisponible, calcularSaldo } from '../../common/money/balance';
-import { serializar, toMoney } from '../../common/money/money';
 import { AccountsRepository } from './accounts.repository';
 import type { CreateAccountDto, UpdateAccountDto } from './dto/account.dto';
+import { calcularCupoDisponible, calcularSaldo } from '../../common/money/balance';
+import { serializar, toMoney } from '../../common/money/money';
 
 /** Forma con la que una cuenta sale por la API. Montos como string decimal. */
 export interface AccountView {
@@ -126,11 +126,12 @@ export class AccountsService {
   ): void {
     if (tipo === 'credit') return;
 
-    const camposDeCredito = [
+    // `unknown`: con @IsOptional el JSON puede traer un null que el tipo no dice.
+    const camposDeCredito: readonly (readonly [string, unknown])[] = [
       ['credit_limit', dto.credit_limit],
       ['cutoff_day', dto.cutoff_day],
       ['payment_day', dto.payment_day],
-    ] as const;
+    ];
 
     const invasores = camposDeCredito
       .filter(([, valor]) => valor !== undefined && valor !== null)

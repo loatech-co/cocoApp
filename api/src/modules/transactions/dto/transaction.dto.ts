@@ -16,6 +16,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+
 import { IsMoney, IsPositiveMoney } from '../../../common/validation/is-money.decorator';
 
 export class SplitDto {

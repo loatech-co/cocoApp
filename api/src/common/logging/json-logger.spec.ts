@@ -1,9 +1,8 @@
+import type { Request, Response } from 'express';
+import { EventEmitter } from 'node:events';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-
-import type { Request, Response } from 'express';
-import { EventEmitter } from 'node:events';
 
 import { defaultLogDirectory, JsonLogger, parseLogLevel } from './json-logger';
 import { currentRequestId, requestContext } from './request-context';

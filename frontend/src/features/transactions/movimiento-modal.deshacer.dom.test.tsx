@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { keys, type CategoryTree } from '@/lib/queries';
+
 import { leerSoporte } from './leer-soporte';
 import { MovimientoModal } from './movimiento-modal';
 
@@ -128,7 +129,7 @@ function abrirFichaNueva() {
 
 /** Adjunta un archivo por el campo de verdad, que va escondido. */
 async function adjuntar(container: HTMLElement): Promise<void> {
-  const campo = container.querySelector('input[type="file"]') as HTMLInputElement;
+  const campo = container.querySelector('input[type="file"]')!;
   expect(campo).not.toBeNull();
 
   const archivo = new File([new Uint8Array(64)], 'captura.png', { type: 'image/png' });
@@ -250,7 +251,8 @@ describe('Lo que la web guarda', () => {
   const creacion = () =>
     apiFetch.mock.calls.find(
       ([ruta, opciones]) =>
-        ruta === '/transactions' && (opciones as { method?: string })?.method === 'POST',
+        ruta === '/transactions' &&
+        (opciones as { method?: string } | undefined)?.method === 'POST',
     );
 
   it('manda source «web»; sin texto leído, raw_text va vacío', async () => {

@@ -255,7 +255,7 @@ export async function salir(): Promise<void> {
   }
 
   try {
-    await llamarAuth<void>('/logout');
+    await llamarAuth<unknown>('/logout');
   } finally {
     // Aunque el servidor falle, localmente la sesión se cierra: dejar al
     // usuario "dentro" tras pulsar Salir sería lo peor de los dos mundos.

@@ -1,15 +1,16 @@
-import { Logo } from '@/components/logo';
 import { Loader2, UserPlus } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 
+import { Logo } from '@/components/logo';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Campo } from '@/components/ui/campo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/lib/auth-context';
+
 import { PoliticaDeContrasena, cumpleLaPolitica } from './politica-de-contrasena';
-import { Campo } from '@/components/ui/campo';
 
 /**
  * Solicitar acceso.
@@ -33,7 +34,7 @@ export function RegisterPage() {
     return <Navigate to="/" replace />;
   }
 
-  function onSubmit(evento: FormEvent<HTMLFormElement>): void {
+  function onSubmit(evento: SubmitEvent<HTMLFormElement>): void {
     evento.preventDefault();
     setError(null);
     setProblemas([]);

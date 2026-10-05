@@ -64,6 +64,7 @@ export function Paginador({
 
         {numerosVisibles(pagina, paginas).map((n, i) =>
           n === null ? (
+            // eslint-disable-next-line @eslint-react/no-array-index-key -- un salto «…» no tiene más identidad que su posición
             <li key={`salto-${i}`}>
               <span className="grid h-9 w-9 place-items-center text-sm text-muted-foreground">
                 …

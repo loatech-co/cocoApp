@@ -1,8 +1,8 @@
-import request from 'supertest';
 import sharp from 'sharp';
+import request from 'supertest';
 
-import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/soportes/receipt-store';
 import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/soportes/receipt-store';
 
 /**
  * Phase 6.9: a receipt's FILE goes with its row.

@@ -113,8 +113,7 @@ export function descendientesDe(categorias: readonly NodoDeCategoria[], id: bigi
   const pendientes = [...(hijosPorPadre.get(clave(id)) ?? [])];
   const visitados = new Set<string>();
 
-  while (pendientes.length > 0) {
-    const actual = pendientes.pop()!;
+  for (let actual = pendientes.pop(); actual !== undefined; actual = pendientes.pop()) {
     const k = clave(actual);
     if (visitados.has(k)) continue;
     visitados.add(k);
@@ -175,7 +174,8 @@ export function anidar<T extends NodoDeCategoria>(categorias: readonly T[]): Con
   const raices: ConHijos<T>[] = [];
 
   for (const categoria of categorias) {
-    const nodo = nodos.get(clave(categoria.id))!;
+    const nodo = nodos.get(clave(categoria.id));
+    if (nodo === undefined) continue; // `nodos` sale de esta misma lista: siempre está
     const padre = categoria.parentId !== null ? nodos.get(clave(categoria.parentId)) : undefined;
 
     if (padre) {
@@ -201,7 +201,7 @@ export function anidar<T extends NodoDeCategoria>(categorias: readonly T[]): Con
  * una URL pegada no debería impedirle a alguien ver sus movimientos, y el
  * filtro más amplio —sin filtro— nunca esconde datos.
  */
-export function idsDeCategorias(crudo?: string | number): bigint[] {
+export function idsDeCategorias(crudo?: string | number | null): bigint[] {
   if (crudo === undefined || crudo === null || crudo === '') return [];
 
   const partes = String(crudo).split(',');

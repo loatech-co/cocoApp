@@ -1,9 +1,8 @@
-import { join } from 'node:path';
-
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { join } from 'node:path';
 
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -18,9 +17,9 @@ import { HealthModule } from './modules/health/health.module';
 import { InterpretacionModule } from './modules/interpretacion/interpretacion.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { SoportesModule } from './modules/soportes/soportes.module';
+import { SpaModule } from './modules/spa/spa.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
-import { SpaModule } from './modules/spa/spa.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({

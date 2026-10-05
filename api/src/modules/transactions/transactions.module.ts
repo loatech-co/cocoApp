@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { SoportesModule } from '../soportes/soportes.module';
-import { TagsModule } from '../tags/tags.module';
+
 import { TransactionsController } from './transactions.controller';
 import { TransactionsService } from './transactions.service';
+import { SoportesModule } from '../soportes/soportes.module';
+import { TagsModule } from '../tags/tags.module';
 
 @Module({
   imports: [TagsModule, SoportesModule],

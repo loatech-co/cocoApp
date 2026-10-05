@@ -2,11 +2,11 @@ import { Flag, SearchX } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { EstadoVacio } from '@/components/estado-vacio';
-import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
 import { Tabla, TablaEsqueleto, Td, Th, Tr } from '@/components/tabla';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import { ConTooltip } from '@/components/ui/tooltip';
-import { Card, CardContent } from '@/components/ui/card';
+import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
 import { useActualizarMovimiento } from '@/lib/queries';
 import { cn, formatMoney } from '@/lib/utils';
 import type { Category, Transaction } from '@coco/types';
@@ -251,7 +251,10 @@ const mesDe = (iso: string): string => iso.slice(0, 7);
  * unos segundos la API vieja —que no manda `period`— y el frontend nuevo, y un
  * campo ausente no puede dejar la pantalla en blanco.
  */
-const periodo = (m: Transaction): string => mesDe(m.period ?? m.date);
+// `period` opcional en el tipo de entrada: es lo que dice la nota de arriba.
+const periodo = (
+  m: Pick<Transaction, 'date'> & { period?: Transaction['period'] | undefined },
+): string => mesDe(m.period ?? m.date);
 
 /** El gasto pertenece a un mes y se pagó en otro. */
 const desfasado = (m: Transaction): boolean => periodo(m) !== mesDe(m.date);

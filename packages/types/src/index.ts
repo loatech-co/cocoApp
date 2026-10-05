@@ -177,7 +177,9 @@ export const USER_AGENT_APP = 'CocoiOS/';
 export type SesionParaLaWeb = Omit<SesionResponse, 'refresh_token'>;
 
 /** La web → la app, con respuesta (`WKScriptMessageHandlerWithReply`). */
-export type MensajeAlPuente = { tipo: 'pedirSesion' };
+export interface MensajeAlPuente {
+  tipo: 'pedirSesion';
+}
 
 /**
  * La web → la app, sin respuesta.
@@ -188,9 +190,9 @@ export type MensajeAlPuente = { tipo: 'pedirSesion' };
  * sin llamar a nada. `sinSesion`: la web arrancó sin sesión y espera que la
  * app se la empuje. `abrirCaptura`: abrir el formulario rápido nativo.
  */
-export type EventoAlPuente = {
+export interface EventoAlPuente {
   tipo: 'salir' | 'sesionCerrada' | 'sinSesion' | 'abrirCaptura';
-};
+}
 
 export interface RegistroResponse {
   pending_approval: boolean;

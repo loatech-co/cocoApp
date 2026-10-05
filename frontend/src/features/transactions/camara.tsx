@@ -40,9 +40,15 @@ export function Camara({
 
   useEffect(() => {
     let vivo = true;
+    // Se lee con una función: el análisis de tipos no ve que la limpieza lo
+    // apaga mientras se espera, y daría cada comprobación por inútil.
+    const sigueVivo = (): boolean => vivo;
 
     void (async () => {
-      if (!navigator.mediaDevices?.getUserMedia) {
+      // Fuera de un contexto seguro (http) `mediaDevices` no existe, aunque el
+      // tipo de la biblioteca diga que siempre está. El `as` ensancha el tipo.
+      const dispositivos = navigator.mediaDevices as Partial<MediaDevices> | undefined;
+      if (!dispositivos?.getUserMedia) {
         setEstado('sin-camara');
         return;
       }
@@ -53,7 +59,7 @@ export function Camara({
           audio: false,
         });
 
-        if (!vivo) {
+        if (!sigueVivo()) {
           for (const p of flujo.getTracks()) p.stop();
           return;
         }
@@ -62,7 +68,7 @@ export function Camara({
         if (video.current) video.current.srcObject = flujo;
         setEstado('lista');
       } catch (e) {
-        if (!vivo) return;
+        if (!sigueVivo()) return;
         // `NotFoundError` es que no hay cámara; el resto, que no dieron permiso.
         setEstado((e as Error).name === 'NotFoundError' ? 'sin-camara' : 'sin-permiso');
       }

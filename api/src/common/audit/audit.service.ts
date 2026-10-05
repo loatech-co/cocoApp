@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+
 import { PrismaService } from '../../prisma/prisma.service';
 
 /** Acciones auditadas. Tipadas para que no se cuelen cadenas sueltas. */

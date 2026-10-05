@@ -2,9 +2,9 @@ import { Check, ChevronDown } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 
 import { Menu } from '@/components/menu';
-import { cn } from '@/lib/utils';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/components/ui/campo';
 import { REALCE } from '@/components/ui/superficie';
+import { cn } from '@/lib/utils';
 
 export interface OpcionDeSelect {
   valor: string;
@@ -111,6 +111,7 @@ export function Select({
       {derecha.map((accion, i) => (
         // El índice como clave: son uno o dos botones fijos que el campo
         // declara al construirse, no una lista que se reordene.
+        // eslint-disable-next-line @eslint-react/no-array-index-key -- lista fija y posicional, sin id propio
         <span key={i} className="shrink-0">
           {accion}
         </span>

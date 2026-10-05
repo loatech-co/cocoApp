@@ -1,15 +1,14 @@
-import { join } from 'node:path';
-
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { config as cargarEnv } from 'dotenv';
+import { join } from 'node:path';
 
 import { AppModule } from './app.module';
 import { configureApp, parseOrigins } from './bootstrap';
-import { installBigIntSerializer } from './common/serialization/bigint';
 import { porQueNoArrancar } from './common/entorno';
 import { defaultLogDirectory, JsonLogger, parseLogLevel } from './common/logging/json-logger';
+import { installBigIntSerializer } from './common/serialization/bigint';
 
 /**
  * Arranque de la API.

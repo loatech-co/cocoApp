@@ -5,13 +5,13 @@ import { Calendario, mesDeISO, type MesVisible } from '@/components/calendario';
 import { Menu } from '@/components/menu';
 import { Button } from '@/components/ui/button';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/components/ui/campo';
+import { REALCE } from '@/components/ui/superficie';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { diaLargo, rangoLargo } from '@/lib/fechas';
-import { encontrarFecha } from '@/lib/leer-fecha';
 import { PRESETS, rangoDe, type Filtros, type Preset } from '@/lib/filtros';
+import { encontrarFecha } from '@/lib/leer-fecha';
 import { useHistoria } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-import { useAlCambiar } from '@/lib/al-cambiar';
-import { REALCE } from '@/components/ui/superficie';
 
 /**
  * EL selector de fechas. Uno solo, con o sin rango y con o sin atajos.

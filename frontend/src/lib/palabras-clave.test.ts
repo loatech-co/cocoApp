@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { clasificar, FIRMAS } from '@coco/lectura';
-import type { Category } from '@coco/types';
-
 import {
   conceptoQueYaLaUsa,
   firmasDelArbol,
@@ -12,6 +9,8 @@ import {
   porQueNoEntra,
   yaEsta,
 } from '@/lib/palabras-clave';
+import { clasificar, FIRMAS } from '@coco/lectura';
+import type { Category } from '@coco/types';
 
 /** Un concepto de mentira, con lo mínimo que mira el código de aquí. */
 function concepto(id: number, name: string, palabras: string[] = []): Category {

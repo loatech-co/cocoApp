@@ -13,21 +13,21 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { Menu, MenuOpcion } from '@/components/menu';
-import { CategoriaModal } from '@/features/centros/categoria-modal';
-import { ConfirmarBorrado } from '@/features/centros/confirmar-borrado';
-import { ConceptoModal } from '@/features/centros/concepto-modal';
-import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/badge';
+import { Bloque } from '@/components/ui/bloque';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { IconoDeCategoria } from '@/components/ui/iconos';
 import { Skeleton } from '@/components/ui/skeleton';
+import { REALCE_DE_SUPERFICIE } from '@/components/ui/superficie';
+import { CategoriaModal } from '@/features/centros/categoria-modal';
+import { ConceptoModal } from '@/features/centros/concepto-modal';
+import { ConfirmarBorrado } from '@/features/centros/confirmar-borrado';
 import { useActualizarCategoria, useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
-import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
-import { Bloque } from '@/components/ui/bloque';
-import { IconoDeCategoria } from '@/components/ui/iconos';
-import { REALCE_DE_SUPERFICIE } from '@/components/ui/superficie';
 
 /**
  * Centros de costos.
@@ -293,7 +293,7 @@ function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
                   onClick={() => {
                     cerrar();
                     actualizar.mutate({
-                      id: Number(centro.id),
+                      id: centro.id,
                       cambios: { estatico: !centro.estatico },
                     });
                   }}

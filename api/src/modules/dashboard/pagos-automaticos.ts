@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { CERO, toMoney, type Money } from '../../common/money/money';
-import { PrismaService } from '../../prisma/prisma.service';
 import {
   esperadoDelMes,
   huellaDelCobro,
@@ -9,6 +7,8 @@ import {
   tocaEnElMes,
   vencimiento,
 } from './pendientes';
+import { CERO, toMoney, type Money } from '../../common/money/money';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /**
  * Los conceptos que se cobran solos.
@@ -121,6 +121,9 @@ export class PagosAutomaticosService {
       );
 
       if (
+        // `tocaCobrarAutomatico` ya responde que no sin monto esperado; se
+        // comprueba aquí también para que `esperado` llegue sin nulo.
+        esperado === null ||
         !tocaCobrarAutomatico({
           pagoAutomatico: true,
           vencimientoISO: vence,
@@ -137,7 +140,7 @@ export class PagosAutomaticosService {
             categoryId: concepto.id,
             date: new Date(vence),
             period: new Date(mesEnCurso),
-            amount: esperado!.toFixed(2),
+            amount: esperado.toFixed(2),
             type: 'expense',
             status: 'cleared',
             // El nombre del concepto, como cualquier movimiento suyo: el de la

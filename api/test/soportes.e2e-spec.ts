@@ -1,11 +1,10 @@
 import { rmSync } from 'node:fs';
-
-import request from 'supertest';
 import sharp from 'sharp';
+import request from 'supertest';
 
+import { levantarApp, type EntornoDePruebas } from './helpers/app';
 import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/soportes/receipt-store';
 import { claveNueva, carpetaDelAlmacen, huellaDe } from '../src/modules/soportes/soportes.almacen';
-import { levantarApp, type EntornoDePruebas } from './helpers/app';
 
 /**
  * Soportes — el recibo de un movimiento.

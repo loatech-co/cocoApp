@@ -4,6 +4,7 @@ import {
   type ValidationArguments,
   type ValidationOptions,
 } from 'class-validator';
+
 import { motivoDeRechazo } from '../money/money';
 
 /**

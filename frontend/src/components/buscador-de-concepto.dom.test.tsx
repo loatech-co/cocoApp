@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import type { NodoBuscable } from '@coco/lectura';
 
 import { BuscadorDeConcepto } from './buscador-de-concepto';
@@ -164,7 +165,7 @@ describe('Con el buscador en blanco', () => {
     pintar({ recientes: [201, 100, 200, 201] });
     abrir();
     expect(screen.getByText('Recientes')).toBeDefined();
-    const nombres = screen.getAllByRole('option').map((o) => o.textContent ?? '');
+    const nombres = screen.getAllByRole('option').map((o) => o.textContent);
     expect(nombres[0]).toContain('Supermercado');
     expect(nombres[1]).toContain('Celsia');
     expect(nombres[2]).toContain('Mercado');

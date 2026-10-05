@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { SoportesController } from './soportes.controller';
 import { createReceiptStore, RECEIPT_STORE } from './receipt-store';
+import { SoportesController } from './soportes.controller';
 import { SoportesService } from './soportes.service';
 
 /** Los recibos de los movimientos. El binario vive fuera de la base y fuera

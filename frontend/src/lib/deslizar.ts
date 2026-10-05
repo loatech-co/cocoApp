@@ -142,12 +142,14 @@ export function useDeslizarParaCerrar({
     }
 
     function alBajar(e: PointerEvent): void {
-      if (e.button != null && e.button > 0) return;
+      if (e.button > 0) return;
 
-      const objetivo = e.target as Element | null;
+      // El destino puede no ser un elemento —el documento, un nodo de texto—, y
+      // esos no tienen `closest`.
+      const objetivo = e.target;
       // Una región que se maneja el puntero ella misma —una rejilla mientras
       // se reordena— se queda con el gesto entero.
-      if (objetivo?.closest?.('[data-sin-deslizar]')) return;
+      if (objetivo instanceof Element && objetivo.closest('[data-sin-deslizar]')) return;
 
       inicio = { x: e.clientX, y: e.clientY };
       reconocido = false;
@@ -177,7 +179,8 @@ export function useDeslizarParaCerrar({
         }
 
         reconocido = true;
-        el.setPointerCapture?.(e.pointerId);
+        // jsdom no lo trae, aunque el tipo diga que todo elemento lo tiene.
+        if ('setPointerCapture' in el) el.setPointerCapture(e.pointerId);
         // En línea y no en una clase: con su propia curva encima, el panel
         // llega tarde a donde ya está el dedo.
         el.style.transition = 'none';

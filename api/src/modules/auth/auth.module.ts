@@ -1,10 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 
-import { AuditService } from '../../common/audit/audit.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
 import { SupabaseAuthService } from './supabase-auth.service';
+import { AuditService } from '../../common/audit/audit.service';
 
 /**
  * Global porque el JwtAuthGuard —que es global— necesita SupabaseAuthService

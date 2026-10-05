@@ -13,8 +13,10 @@ import {
   TriangleAlert,
   Upload,
 } from 'lucide-react';
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type SubmitEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
 
+import { BuscadorDeConcepto, type CandidatoDelRecibo } from '@/components/buscador-de-concepto';
+import { SelectorDeFecha } from '@/components/selector-de-fecha';
 import {
   BotonOscuro,
   LienzoPdf,
@@ -24,35 +26,24 @@ import {
   Soltar,
   Soportes,
 } from '@/components/soportes';
-import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ChipIcono } from '@/components/ui/chip-icono';
 import { Bloque } from '@/components/ui/bloque';
+import { Button } from '@/components/ui/button';
 import { Campo } from '@/components/ui/campo';
 import { CampoDeDinero } from '@/components/ui/campo-de-dinero';
+import { Card } from '@/components/ui/card';
+import { ChipIcono } from '@/components/ui/chip-icono';
 import { Combo } from '@/components/ui/combo';
 import { Confirmacion } from '@/components/ui/confirmacion';
-import { SelectorDeFecha } from '@/components/selector-de-fecha';
 import { CabeceraDeModal, PANEL_DE_MODAL, PieDeModal } from '@/components/ui/modal-partes';
 import { Progreso } from '@/components/ui/progreso';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { Textarea } from '@/components/ui/textarea';
-import { ApiClientError, apiSubir } from '@/lib/api-client';
+import { useSugerenciaDeCategoria } from '@/features/categorization/use-sugerencia';
+import { useAlCambiar } from '@/lib/al-cambiar';
+import { ApiClientError, apiSubir, apiFetch } from '@/lib/api-client';
 import { encogerSoportes } from '@/lib/encoger-soporte';
 import { diaLargo, mesLargo } from '@/lib/fechas';
-import {
-  useActualizarMovimiento,
-  useCategories,
-  useCrearCategoria,
-  useCrearMovimiento,
-  useEliminarMovimiento,
-} from '@/lib/queries';
-import { cn, DEFAULT_CURRENCY, formatMoney } from '@/lib/utils';
-import { useAlCambiar } from '@/lib/al-cambiar';
-import { BuscadorDeConcepto, type CandidatoDelRecibo } from '@/components/buscador-de-concepto';
-import { useSugerenciaDeCategoria } from '@/features/categorization/use-sugerencia';
-import { apiFetch } from '@/lib/api-client';
+import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
 import {
   SIN_CLASIFICAR,
   aplicar,
@@ -60,10 +51,16 @@ import {
   type Clasificacion,
   type Origen,
 } from '@/lib/precedencia';
-import { useTransactions } from '@/lib/queries';
+import {
+  useActualizarMovimiento,
+  useCategories,
+  useCrearCategoria,
+  useCrearMovimiento,
+  useEliminarMovimiento,
+  useTransactions,
+} from '@/lib/queries';
 import { conceptosRecientes } from '@/lib/recientes';
-import { Camara } from './camara';
-import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
+import { cn, DEFAULT_CURRENCY, formatMoney } from '@/lib/utils';
 import {
   buscarEnArbol,
   indexarArbol,
@@ -73,6 +70,9 @@ import {
   type Lectura,
 } from '@coco/lectura';
 import type { Category, PagoPendiente, Transaction, TransactionType } from '@coco/types';
+
+import { Camara } from './camara';
+import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
 
 /**
  * Lo que dura como mínimo el paso de lectura de un soporte.
@@ -152,7 +152,7 @@ export function MovimientoModal({
 
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(hoyEnBogota());
+  const [date, setDate] = useState(hoyEnBogota);
   const [type, setType] = useState<TransactionType>('expense');
   /*
     ── La clasificación lleva escrito de dónde salió ───────────────────────
@@ -622,7 +622,7 @@ export function MovimientoModal({
     }
   }
 
-  async function onSubmit(evento: FormEvent<HTMLFormElement>): Promise<void> {
+  async function onSubmit(evento: SubmitEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
     setError(null);
 
@@ -1236,7 +1236,10 @@ export function MovimientoModal({
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      if (!editando) return onCerrar();
+                      if (!editando) {
+                        onCerrar();
+                        return;
+                      }
                       setDescartes((n) => n + 1);
                       setEditable(false);
                     }}
@@ -1342,7 +1345,7 @@ function VistaDeLectura({
   // agosto se pagó en septiembre, sí —es lo que descuadra los totales de quien
   // no lo nota—.
   const mesDelPago = fecha.slice(0, 7);
-  const desfasado = Boolean(periodo) && periodo!.slice(0, 7) !== mesDelPago;
+  const desfasado = periodo !== undefined && periodo !== '' && periodo.slice(0, 7) !== mesDelPago;
 
   return (
     <div className="flex flex-col gap-5">
@@ -1423,7 +1426,7 @@ function VistaDeLectura({
 
           {desfasado && (
             <p className="text-xs font-medium text-warning">
-              Pertenece a {mesLargo(periodo!.slice(0, 7))}
+              Pertenece a {mesLargo(periodo.slice(0, 7))}
             </p>
           )}
         </div>

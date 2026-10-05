@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, use, type ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -23,7 +23,7 @@ const DentroDeUnCampo = createContext(false);
 
 /** `true` si este control vive dentro de un `Campo`. */
 export function useDentroDeUnCampo(): boolean {
-  return useContext(DentroDeUnCampo);
+  return use(DentroDeUnCampo);
 }
 
 /**

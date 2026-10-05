@@ -1,20 +1,20 @@
-import type { Account } from '@coco/types';
 import { Archive, CreditCard, Loader2, Plus, Wallet } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { Saldo } from '@/components/monto';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Campo } from '@/components/ui/campo';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Select } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
 import { useAccounts, useArchivarCuenta, useCrearCuenta } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
-import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
-import { Campo } from '@/components/ui/campo';
+import type { Account } from '@coco/types';
 
 const TIPOS: { valor: Account['type']; etiqueta: string }[] = [
   { valor: 'cash', etiqueta: 'Efectivo' },
@@ -159,7 +159,7 @@ function FormularioDeCuenta({ onListo }: { onListo: () => void }) {
 
   const esTarjeta = type === 'credit';
 
-  async function onSubmit(evento: FormEvent<HTMLFormElement>): Promise<void> {
+  async function onSubmit(evento: SubmitEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
     setError(null);
 

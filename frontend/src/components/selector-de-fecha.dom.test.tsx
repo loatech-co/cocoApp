@@ -64,7 +64,7 @@ describe('El campo de fecha que se escribe', () => {
 
   it('Enter confirma sin enviar el formulario', () => {
     const onElegir = vi.fn();
-    const onSubmit = vi.fn((e: React.FormEvent) => e.preventDefault());
+    const onSubmit = vi.fn((e: React.SubmitEvent) => e.preventDefault());
 
     render(
       <form onSubmit={onSubmit}>

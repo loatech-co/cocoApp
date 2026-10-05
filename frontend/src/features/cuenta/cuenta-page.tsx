@@ -1,20 +1,21 @@
 import { LogOut, ShieldCheck } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type SubmitEvent } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useEnLaApp } from '@/app/movil';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { SECCIONES_DE_ADMIN } from '@/components/navegacion';
 import { FilaDeEnlace } from '@/components/panel-de-la-cuenta';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Campo } from '@/components/ui/campo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/lib/auth-context';
 import { PoliticaDeContrasena, cumpleLaPolitica } from '@/features/auth/politica-de-contrasena';
+import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/lib/auth-context';
+
 import { Ajustes } from './ajustes';
-import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
-import { Campo } from '@/components/ui/campo';
 
 /**
  * Mi cuenta: cambiar contraseña y cerrar sesión en todas partes.
@@ -139,7 +140,7 @@ function CambiarContrasena() {
   const [enviando, setEnviando] = useState(false);
   const [hecho, setHecho] = useState(false);
 
-  function onSubmit(evento: FormEvent<HTMLFormElement>): void {
+  function onSubmit(evento: SubmitEvent<HTMLFormElement>): void {
     evento.preventDefault();
     setError(null);
     setProblemas([]);

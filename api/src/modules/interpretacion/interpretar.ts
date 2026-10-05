@@ -139,10 +139,11 @@ function clasificarCon(
   leido: { concepto: string | null; categoria: string | null; motivo: string },
 ): ClasificacionInterpretada {
   // 1. El historial, si tiene algo que decir.
-  if (contexto.historial) {
-    const entrada = indice.find((e) => String(e.id) === contexto.historial!.categoryId);
+  const { historial } = contexto;
+  if (historial) {
+    const entrada = indice.find((e) => String(e.id) === historial.categoryId);
     if (entrada && entrada.nivel !== 'centro') {
-      const alta = contexto.historial.confidence >= HISTORIAL_SEGURO;
+      const alta = historial.confidence >= HISTORIAL_SEGURO;
       return {
         certeza: alta ? 'alta' : 'media',
         fuente: 'historial',
@@ -154,8 +155,8 @@ function clasificarCon(
           ? []
           : [{ id: String(entrada.id), nombre: entrada.nombre, ruta: rutaLegible(entrada) }],
         motivo: alta
-          ? `Tu historial lo clasifica así (${contexto.historial.confidence}% de las veces).`
-          : `Tu historial apunta aquí, pero no siempre (${contexto.historial.confidence}%): mejor míralo.`,
+          ? `Tu historial lo clasifica así (${historial.confidence}% de las veces).`
+          : `Tu historial apunta aquí, pero no siempre (${historial.confidence}%): mejor míralo.`,
       };
     }
   }
@@ -203,7 +204,7 @@ function clasificarCon(
 /** Un monto estructurado, como cadena decimal, o `null` si no sirve. */
 function montoDe(monto: string | number | null | undefined): string | null {
   if (monto === null || monto === undefined || monto === '') return null;
-  const n = typeof monto === 'number' ? monto : Number(String(monto).replace(',', '.'));
+  const n = typeof monto === 'number' ? monto : Number(monto.replace(',', '.'));
   if (!Number.isFinite(n) || n <= 0) return null;
   return String(n);
 }

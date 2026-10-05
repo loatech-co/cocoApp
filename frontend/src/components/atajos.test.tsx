@@ -4,9 +4,10 @@ import { LayoutDashboard, ScrollText, ShieldCheck, Tags, UserCog, Wallet } from 
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { olvidarAtajos } from '@/lib/atajos';
+
 import { useSuperficieDeAtajos, type PaginaDeAtajo } from './atajos';
 import { PilaDeAvisos, olvidarAvisos } from './ui/aviso';
-import { olvidarAtajos } from '@/lib/atajos';
 
 afterEach(() => {
   cleanup();

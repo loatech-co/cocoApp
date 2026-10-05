@@ -15,12 +15,12 @@ import {
   PROFUNDIDAD_MAXIMA,
   type ConHijos,
 } from './categories.tree';
-import { porQueNoAdmiteVariosPagos } from './varios-pagos';
 import type {
   CreateCategoryDto,
   ReorderCategoriesDto,
   UpdateCategoryDto,
 } from './dto/category.dto';
+import { porQueNoAdmiteVariosPagos } from './varios-pagos';
 
 export interface CategoryView {
   id: bigint;

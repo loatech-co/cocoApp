@@ -1,7 +1,7 @@
 import type { ComponentProps, ComponentType, ReactNode } from 'react';
 
-import { cn } from '@/lib/utils';
 import { FOCO_DEL_CAMPO, HUECO_DE_LA_ETIQUETA, useDentroDeUnCampo } from '@/components/ui/campo';
+import { cn } from '@/lib/utils';
 
 /**
  * Un campo de texto.
@@ -130,6 +130,7 @@ export function Input({
           {derecha.map((accion, i) => (
             // El índice como clave: esta lista no se reordena ni se filtra,
             // son uno o dos botones fijos que el campo declara al construirse.
+            // eslint-disable-next-line @eslint-react/no-array-index-key -- lista fija y posicional, sin id propio
             <span key={i}>{accion}</span>
           ))}
         </span>

@@ -239,7 +239,7 @@ export function comoQuedaElPendiente({
   pagado: Money;
   esperado: Money | null;
 }): { sigueFaltando: boolean; alPresupuesto: Money } {
-  if (variosPagos && esperado !== null && esperado.gt(CERO)) {
+  if (variosPagos && esperado?.gt(CERO)) {
     return {
       sigueFaltando: pagado.lt(esperado),
       alPresupuesto: pagado.gt(esperado) ? pagado : esperado,

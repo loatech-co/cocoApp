@@ -1,6 +1,7 @@
-import type { TransactionType } from '@coco/types';
 import { ArrowRightLeft, Minus, Plus } from 'lucide-react';
+
 import { cn, DEFAULT_CURRENCY, formatCOP, formatMoney } from '@/lib/utils';
+import type { TransactionType } from '@coco/types';
 
 interface MontoProps {
   amount: string;

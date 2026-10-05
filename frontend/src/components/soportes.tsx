@@ -26,13 +26,13 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Confirmacion } from '@/components/ui/confirmacion';
+import { REALCE_DE_SUPERFICIE, SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { ApiClientError, apiBlob } from '@/lib/api-client';
 import { cargarPdfjs } from '@/lib/pdf';
 import { useEliminarSoporte, useSoportes, useSubirSoportes } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-import { useAlCambiar } from '@/lib/al-cambiar';
 import type { Soporte } from '@coco/types';
-import { REALCE_DE_SUPERFICIE, SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 
 /**
  * El texto de la confirmación de borrar un soporte, escrito una vez.
@@ -308,7 +308,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
         onCancelar={() => setBorrando(null)}
         onConfirmar={() => {
           if (!borrando) return;
-          eliminar.mutate(Number(borrando.id), {
+          eliminar.mutate(borrando.id, {
             onSuccess: () => {
               setBorrando(null);
               // Si se va el último de la fila, se enseña el anterior.
@@ -692,6 +692,9 @@ export function LienzoPdf({
 
   useEffect(() => {
     let vivo = true;
+    // Se lee con una función: el análisis de tipos no ve que la limpieza lo
+    // apaga mientras se espera, y daría cada comprobación por inútil.
+    const sigueVivo = (): boolean => vivo;
 
     void (async () => {
       try {
@@ -699,7 +702,7 @@ export function LienzoPdf({
         const documento = await pdfjs.getDocument({ url }).promise;
         const pagina = await documento.getPage(1);
 
-        if (!vivo || !lienzo.current) return;
+        if (!sigueVivo() || !lienzo.current) return;
 
         const base = pagina.getViewport({ scale: 1 });
         const vista = pagina.getViewport({ scale: ancho / base.width });
@@ -713,9 +716,9 @@ export function LienzoPdf({
         await pagina.render({ canvas: lienzo.current, canvasContext: contexto, viewport: vista })
           .promise;
         await documento.cleanup();
-        if (vivo) avisarTamano(vista.width, vista.height);
+        if (sigueVivo()) avisarTamano(vista.width, vista.height);
       } catch {
-        if (vivo) setFallo(true);
+        if (sigueVivo()) setFallo(true);
       }
     })();
 
@@ -985,7 +988,7 @@ function Pase({
         ocupada={eliminar.isPending}
         onCancelar={() => setConfirmando(false)}
         onConfirmar={() =>
-          eliminar.mutate(Number(soporte.id), {
+          eliminar.mutate(soporte.id, {
             onSuccess: () => {
               setConfirmando(false);
               // Era el único: no queda nada que enseñar.
@@ -1093,16 +1096,19 @@ function PaginaPdf({
 
   useEffect(() => {
     let vivo = true;
+    // Se lee con una función: el análisis de tipos no ve que la limpieza lo
+    // apaga mientras se espera, y daría cada comprobación por inútil.
+    const sigueVivo = (): boolean => vivo;
 
     void (async () => {
       try {
         const pdfjs = await cargarPdfjs();
         const documento = await pdfjs.getDocument({ url }).promise;
-        if (!vivo) return;
+        if (!sigueVivo()) return;
 
         onPaginas(documento.numPages);
         const hoja = await documento.getPage(Math.min(pagina, documento.numPages));
-        if (!vivo || !lienzo.current) return;
+        if (!sigueVivo() || !lienzo.current) return;
 
         // Al DOBLE de píxeles de los que se enseñan: es lo que lo deja nítido
         // en una pantalla retina.
@@ -1118,9 +1124,9 @@ function PaginaPdf({
         await hoja.render({ canvas: lienzo.current, canvasContext: contexto, viewport: vista })
           .promise;
         await documento.cleanup();
-        if (vivo) setPintando(false);
+        if (sigueVivo()) setPintando(false);
       } catch {
-        if (vivo) {
+        if (sigueVivo()) {
           setFallo(true);
           setPintando(false);
         }
@@ -1441,7 +1447,7 @@ export function PreviaDeArchivo({
           mandos del zoom: son dos cosas distintas —una amplía dentro del
           marco, la otra saca el documento del marco— y juntas se pulsarían la
           una por la otra. */}
-      {(onAbrir || acciones) && (
+      {(onAbrir !== undefined || Boolean(acciones)) && (
         <div
           data-mandos=""
           className="absolute right-2 top-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"

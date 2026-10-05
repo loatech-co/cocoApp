@@ -177,7 +177,8 @@ export function registrarPuente(acciones: {
   ir: (ruta: string) => void;
   abrirBusqueda: () => void;
 }): () => void {
-  if (!enLaApp()) return () => {};
+  // Fuera de la app no hay nada que quitar.
+  if (!enLaApp()) return () => undefined;
 
   window.__coco = {
     ir: acciones.ir,

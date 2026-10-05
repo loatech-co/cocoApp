@@ -1,13 +1,14 @@
-import type { AuditAction, AuditEntry } from '@coco/types';
-import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { AuditAction, AuditEntry } from '@coco/types';
+
 import { useBitacora } from './admin-queries';
 
 /** Cada acción auditada, en español y sin jerga. */
@@ -71,7 +72,7 @@ export function BitacoraPage() {
         </Alert>
       )}
 
-      {consulta.data && consulta.data.data.length === 0 && (
+      {consulta.data?.data.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Todavía no hay eventos registrados.
@@ -125,7 +126,8 @@ function Evento({ evento }: { evento: AuditEntry }) {
         <CardContent className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
           <div className="min-w-0">
             <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
-              {ETIQUETAS[evento.action] ?? evento.action}
+              {/* Una API más nueva puede traer una acción que esta lista aún no conoce. */}
+              {Object.hasOwn(ETIQUETAS, evento.action) ? ETIQUETAS[evento.action] : evento.action}
               {preocupante && (
                 <Badge variant="warning" className="font-normal">
                   Revisar

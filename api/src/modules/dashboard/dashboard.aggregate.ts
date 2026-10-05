@@ -1,4 +1,5 @@
 import type { TransactionType } from '@prisma/client';
+
 import { CERO, toMoney, type Money } from '../../common/money/money';
 
 export interface MovimientoAgregable {

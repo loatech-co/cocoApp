@@ -11,10 +11,6 @@ import {
 } from '@nestjs/common';
 import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { PrismaService } from '../../prisma/prisma.service';
-import { normalizarDescripcion } from './description';
 import {
   patronParaAprender,
   sugerirCategoria,
@@ -22,6 +18,10 @@ import {
   type ReglaDeCategoria,
   type Sugerencia,
 } from './categorization';
+import { normalizarDescripcion } from './description';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /**
  * Cuántos movimientos ya categorizados se leen para aprender.
@@ -104,11 +104,13 @@ export class CategorizationService {
     ]);
 
     return {
-      historial: movimientos.map((movimiento) => ({
-        description: movimiento.description,
-        // El filtro garantiza que no es null; TypeScript no puede saberlo.
-        categoryId: movimiento.categoryId as bigint,
-      })),
+      // El filtro de la consulta garantiza que no hay nulos; `flatMap` se lo
+      // demuestra a TypeScript sin quitar nada.
+      historial: movimientos.flatMap((movimiento) =>
+        movimiento.categoryId === null
+          ? []
+          : [{ description: movimiento.description, categoryId: movimiento.categoryId }],
+      ),
       reglas: reglas.map((regla) => ({
         ...regla,
         sembrada: regla.priority === PRIORIDAD_SEMBRADA,

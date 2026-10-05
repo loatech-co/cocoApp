@@ -2,23 +2,23 @@ import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
 import { Dona } from '@/components/dona';
-import { PagosPendientes } from '@/components/pagos-pendientes';
 import { Paginador } from '@/components/paginador';
-import { TablaDeMovimientos } from '@/components/tabla-de-movimientos';
+import { PagosPendientes } from '@/components/pagos-pendientes';
 import { TablaPie, Td } from '@/components/tabla';
-import { MovimientoModal } from '@/features/transactions/movimiento-modal';
+import { TablaDeMovimientos } from '@/components/tabla-de-movimientos';
 import { Tendencia, TendenciaEsqueleto } from '@/components/tendencia';
 import { ToolbarFiltros, type Orden } from '@/components/toolbar-filtros';
-import { rutaSeleccionada } from '@/lib/movimientos';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { Etiqueta } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { ApiClientError } from '@/lib/api-client';
-import { rangoLargo } from '@/lib/fechas';
 import { useAuth } from '@/lib/auth-context';
+import { rangoLargo } from '@/lib/fechas';
 import { aParametros, llegaHastaHoy, useFiltros } from '@/lib/filtros';
+import { rutaSeleccionada } from '@/lib/movimientos';
 import { useCategories, useDashboard, useTransactions } from '@/lib/queries';
 import { cn, formatCOP } from '@/lib/utils';
 import type {
@@ -407,11 +407,11 @@ export function DashboardPage() {
           <div className="flex min-w-0 flex-col gap-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-display text-lg font-semibold">Movimientos</h2>
-              {(movimientos.data?.meta?.total ?? 0) > 0 && (
+              {movimientos.data !== undefined && movimientos.data.meta.total > 0 && (
                 <p className="text-sm text-muted-foreground" aria-live="polite">
                   {(pagina - 1) * POR_PAGINA + 1} a{' '}
-                  {Math.min(pagina * POR_PAGINA, movimientos.data!.meta.total)} de{' '}
-                  {movimientos.data!.meta.total}
+                  {Math.min(pagina * POR_PAGINA, movimientos.data.meta.total)} de{' '}
+                  {movimientos.data.meta.total}
                 </p>
               )}
             </div>
@@ -435,7 +435,7 @@ export function DashboardPage() {
                       <Td />
                       <Td />
                       <Td alineado="derecha" className="tabular font-semibold text-expense">
-                        {formatCOP(movimientos.data.meta.sum_expense ?? '0')}
+                        {formatCOP(movimientos.data.meta.sum_expense)}
                       </Td>
                     </tr>
                   </TablaPie>
@@ -445,7 +445,7 @@ export function DashboardPage() {
 
             <Paginador
               pagina={pagina}
-              total={movimientos.data?.meta?.total ?? 0}
+              total={movimientos.data?.meta.total ?? 0}
               porPagina={POR_PAGINA}
               onCambiar={setPagina}
             />

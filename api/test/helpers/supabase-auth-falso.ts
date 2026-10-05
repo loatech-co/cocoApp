@@ -1,6 +1,5 @@
-import { randomUUID } from 'node:crypto';
-
 import { UnauthorizedException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 
 import type { SesionDeSupabase } from '../../src/modules/auth/supabase-auth.service';
 
@@ -50,7 +49,7 @@ export class SupabaseAuthFalso {
 
   entrar(email: string, password: string): Promise<SesionDeSupabase | null> {
     const entrada = [...this.cuentas.entries()].find(([, c]) => c.email === email);
-    if (!entrada || entrada[1].password !== password) return Promise.resolve(null);
+    if (entrada?.[1].password !== password) return Promise.resolve(null);
     return Promise.resolve(this.abrirSesion(entrada[0], email));
   }
 

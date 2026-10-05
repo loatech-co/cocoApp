@@ -1,5 +1,5 @@
-import { PROFUNDIDAD_MAXIMA } from './categories.tree';
 import { PLANTILLA_DE_CUENTA_NUEVA, type NodoDePlantilla } from './categories.plantilla';
+import { PROFUNDIDAD_MAXIMA } from './categories.tree';
 
 /**
  * La plantilla con la que nace una cuenta.

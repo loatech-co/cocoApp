@@ -4,9 +4,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Campo } from '@/components/ui/campo';
 import { Confirmacion } from '@/components/ui/confirmacion';
 import { Select } from '@/components/ui/select';
-import { useEliminarCategoria, useUsosDeCategoria } from '@/lib/queries';
-import { ApiClientError } from '@/lib/api-client';
 import { useAlCambiar } from '@/lib/al-cambiar';
+import { ApiClientError } from '@/lib/api-client';
+import { useEliminarCategoria, useUsosDeCategoria } from '@/lib/queries';
 import type { Category, NivelDeCategoria } from '@coco/types';
 
 /**
@@ -67,7 +67,7 @@ export function ConfirmarBorrado({
   const eliminar = useEliminarCategoria();
   // Solo se pregunta cuando el diálogo está abierto: es una consulta por
   // categoría, y el árbol tiene cuarenta.
-  const usos = useUsosDeCategoria(abierta ? Number(categoria.id) : undefined);
+  const usos = useUsosDeCategoria(abierta ? categoria.id : undefined);
 
   const [destino, setDestino] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +100,7 @@ export function ConfirmarBorrado({
         setError(null);
         eliminar.mutate(
           {
-            id: Number(categoria.id),
+            id: categoria.id,
             reasignarA: destino === '' ? undefined : Number(destino),
           },
           {
@@ -141,7 +141,7 @@ export function ConfirmarBorrado({
                 etiqueta="Destino de los movimientos"
                 vacio="Elige un destino"
                 valor={destino}
-                opciones={destinosPosibles(arbol, Number(categoria.id))}
+                opciones={destinosPosibles(arbol, categoria.id)}
                 onCambiar={setDestino}
               />
             </Campo>
@@ -208,11 +208,7 @@ function loQueSeBorra(nivel: NivelDeCategoria, nombre: string, cuantas: number):
   }[nivel];
 
   const dentro =
-    cuantas === 0 || uno === null || varios === null
-      ? ''
-      : cuantas === 1
-        ? ` y ${uno}`
-        : ` y ${varios(cuantas)}`;
+    cuantas === 0 || uno === null ? '' : cuantas === 1 ? ` y ${uno}` : ` y ${varios(cuantas)}`;
 
   return `Estás a punto de borrar ${esto} “${nombre}”${dentro}. Esta acción no se puede deshacer.`;
 }
@@ -239,15 +235,15 @@ export function destinosPosibles(
   const salida: { valor: string; etiqueta: string }[] = [];
 
   for (const centro of arbol) {
-    if (Number(centro.id) === excluidoId) continue;
+    if (centro.id === excluidoId) continue;
     salida.push({ valor: String(centro.id), etiqueta: centro.name });
 
     for (const categoria of centro.children ?? []) {
-      if (Number(categoria.id) === excluidoId) continue;
+      if (categoria.id === excluidoId) continue;
       salida.push({ valor: String(categoria.id), etiqueta: `${centro.name} › ${categoria.name}` });
 
       for (const concepto of categoria.children ?? []) {
-        if (Number(concepto.id) === excluidoId) continue;
+        if (concepto.id === excluidoId) continue;
         salida.push({
           valor: String(concepto.id),
           etiqueta: `${centro.name} › ${categoria.name} › ${concepto.name}`,

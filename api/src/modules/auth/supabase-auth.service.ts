@@ -8,8 +8,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-import { porQueNoTocarCuentasReales } from '../../common/entorno';
 import { esCorreoRepetido } from './supabase-auth.errores';
+import { porQueNoTocarCuentasReales } from '../../common/entorno';
 
 /**
  * Cliente de Supabase Auth (GoTrue).
@@ -261,7 +261,7 @@ export class SupabaseAuthService {
     }
 
     const texto = await respuesta.text();
-    let datos: Record<string, unknown> | null = null;
+    let datos: Record<string, unknown> | null;
     try {
       datos = texto ? (JSON.parse(texto) as Record<string, unknown>) : null;
     } catch {
@@ -291,9 +291,10 @@ export class SupabaseAuthService {
   }
 
   private reventar(respuesta: Respuesta, quehacer: string): never {
-    const detalle =
-      (respuesta.datos?.msg as string) ?? (respuesta.datos?.message as string) ?? 'sin detalle';
-    this.logger.error(`Supabase Auth falló al ${quehacer}: ${respuesta.estado} ${detalle}`);
+    const detalle = respuesta.datos?.msg ?? respuesta.datos?.message ?? 'sin detalle';
+    this.logger.error(
+      `Supabase Auth falló al ${quehacer}: ${respuesta.estado} ${typeof detalle === 'string' ? detalle : JSON.stringify(detalle)}`,
+    );
     throw new InternalServerErrorException(`No se pudo ${quehacer}.`);
   }
 }

@@ -4,10 +4,11 @@ import { act, cleanup, render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AppShell } from './app-shell';
-import { CONSULTA_MOVIL } from './movil';
 import { olvidarAtajos } from '@/lib/atajos';
 import { fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
+
+import { AppShell } from './app-shell';
+import { CONSULTA_MOVIL } from './movil';
 
 vi.mock('@/lib/auth-context', () => ({
   useAuth: () => ({
@@ -111,7 +112,7 @@ describe('El armazón por debajo del corte', () => {
 
     expect(document.querySelector('[aria-label="Nuevo movimiento"]')).toBeNull();
     act(() => {
-      (document.querySelector('[aria-label="Registrar un gasto"]') as HTMLElement).click();
+      document.querySelector<HTMLElement>('[aria-label="Registrar un gasto"]')!.click();
     });
     expect(document.querySelector('[aria-label="Nuevo movimiento"]')).toBeTruthy();
   });

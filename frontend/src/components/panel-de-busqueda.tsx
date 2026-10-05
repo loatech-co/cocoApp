@@ -5,11 +5,11 @@ import { Monto } from '@/components/monto';
 import { FILA_DE_PANEL, PanelInferior } from '@/components/panel-inferior';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { diaCorto } from '@/lib/fechas';
 import { nombreDelMovimiento } from '@/lib/movimientos';
 import { useCategories, useTransactions } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-import { useAlCambiar } from '@/lib/al-cambiar';
 import type { Transaction } from '@coco/types';
 
 /** Cuántos resultados caben antes de que la lista deje de ser una respuesta. */
@@ -134,7 +134,7 @@ function Resultados({
     );
   }
 
-  const total = movimientos.data?.meta?.total ?? filas.length;
+  const total = movimientos.data?.meta.total ?? filas.length;
 
   return (
     <div className="flex flex-col">

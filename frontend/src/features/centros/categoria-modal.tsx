@@ -1,20 +1,20 @@
 import { Loader2, Search } from 'lucide-react';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState, type SubmitEvent } from 'react';
 
+import { BLOQUE } from '@/components/ui/bloque';
 import { Button } from '@/components/ui/button';
+import { Campo } from '@/components/ui/campo';
+import { ICONOS_DE_CATEGORIA, IconoDeCategoria } from '@/components/ui/iconos';
 import { Input } from '@/components/ui/input';
 import { Interruptor } from '@/components/ui/interruptor';
-import { Campo } from '@/components/ui/campo';
 import { Modal } from '@/components/ui/modal';
+import { PieDeModal } from '@/components/ui/modal-partes';
+import { REALCE } from '@/components/ui/superficie';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { ApiClientError } from '@/lib/api-client';
 import { useActualizarCategoria, useCrearCategoria } from '@/lib/queries';
-import { BLOQUE } from '@/components/ui/bloque';
 import { cn } from '@/lib/utils';
-import { useAlCambiar } from '@/lib/al-cambiar';
-import { PieDeModal } from '@/components/ui/modal-partes';
 import type { Category } from '@coco/types';
-import { ICONOS_DE_CATEGORIA, IconoDeCategoria } from '@/components/ui/iconos';
-import { REALCE } from '@/components/ui/superficie';
 
 /** Sin tildes ni mayúsculas: «Educación» se encuentra escribiendo «educacion». */
 function normal(texto: string): string {
@@ -174,14 +174,14 @@ export function CategoriaModal({
     setError(null);
   });
 
-  async function onSubmit(evento: FormEvent<HTMLFormElement>): Promise<void> {
+  async function onSubmit(evento: SubmitEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
     setError(null);
 
     try {
       if (editando) {
         await actualizar.mutateAsync({
-          id: Number(categoria.id),
+          id: categoria.id,
           cambios: esCentro
             ? { name: nombre.trim(), estatico }
             : { name: nombre.trim(), icon: icono },

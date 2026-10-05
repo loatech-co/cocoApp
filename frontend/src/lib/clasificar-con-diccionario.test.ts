@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { clasificar, firmasDeConceptos, type NodoBuscable } from '@coco/lectura';
 
 /**

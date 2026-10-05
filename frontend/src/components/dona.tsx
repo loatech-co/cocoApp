@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
-import { cn, formatCOP } from '@/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
+import { cn, formatCOP } from '@/lib/utils';
 
 /**
  * Los colores de las porciones. Viven en `index.css` porque cambian con el
@@ -268,7 +268,9 @@ export function Dona({
                   disabled={!puedeBajar}
                   title={seg.nombre}
                   onPointerEnter={() => setActiva(i)}
-                  onClick={() => puedeBajar && onElegir(seg.id as number)}
+                  onClick={() => {
+                    if (seg.id !== null && onElegir !== undefined) onElegir(seg.id);
+                  }}
                   className={cn(
                     'flex w-full min-w-0 items-center gap-2 rounded-md text-left transition-opacity',
                     puedeBajar ? 'cursor-pointer' : 'cursor-default',
@@ -345,7 +347,9 @@ export function Dona({
 
           const comun = {
             onPointerEnter: () => setActiva(i),
-            onClick: () => puedeBajar && onElegir(seg.id as number),
+            onClick: () => {
+              if (seg.id !== null && onElegir !== undefined) onElegir(seg.id);
+            },
             className: cn('transition-colors', puedeBajar && 'cursor-pointer'),
           };
 

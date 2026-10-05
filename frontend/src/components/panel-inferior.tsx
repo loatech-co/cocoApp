@@ -1,9 +1,9 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
+import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { useDeslizarParaCerrar } from '@/lib/deslizar';
 import { useEscape, useFocoAtrapado } from '@/lib/foco';
-import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 
 /**

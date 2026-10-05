@@ -1,4 +1,5 @@
 import request from 'supertest';
+
 import { levantarApp, type EntornoDePruebas } from './helpers/app';
 
 /**
@@ -217,8 +218,8 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         ]),
       );
 
-      expect(saldos['Ahorros']).toBe('700000.00');
-      expect(saldos['Efectivo']).toBe('300000.00');
+      expect(saldos.Ahorros).toBe('700000.00');
+      expect(saldos.Efectivo).toBe('300000.00');
     });
 
     it('rechaza una transferencia a la misma cuenta', async () => {
@@ -402,7 +403,8 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .set('Authorization', comoAna())
         .expect(200);
       expect(
-        arbol.body.data.find((c: { id: number }) => Number(c.id) === Number(centro.id)).estatico,
+        arbol.body.data.find((c: { id: number | string }) => Number(c.id) === Number(centro.id))
+          .estatico,
       ).toBe(true);
 
       const suelto = await http

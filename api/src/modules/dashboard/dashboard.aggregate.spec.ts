@@ -1,4 +1,3 @@
-import { serializar, toMoney } from '../../common/money/money';
 import {
   ancestroEnNivel,
   calcularFlujo,
@@ -8,6 +7,7 @@ import {
   granularidadPara,
   type MovimientoAgregable,
 } from './dashboard.aggregate';
+import { serializar, toMoney } from '../../common/money/money';
 
 const mov = (
   type: MovimientoAgregable['type'],

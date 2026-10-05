@@ -2,9 +2,9 @@ import { Loader2 } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { PieDeModal } from '@/components/ui/modal-partes';
 import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
-import { PieDeModal } from '@/components/ui/modal-partes';
 
 /**
  * Pedir confirmación antes de algo que no se deshace solo.

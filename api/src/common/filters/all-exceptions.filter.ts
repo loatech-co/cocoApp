@@ -25,6 +25,9 @@ interface ErrorDetail {
  *     el mapa de la aplicación.
  *   · Al log del servidor: el detalle completo, para poder depurar.
  */
+
+/** 500 as a plain number: `status` is a number, not the enum. */
+const FIRST_SERVER_ERROR: number = HttpStatus.INTERNAL_SERVER_ERROR;
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger('Exceptions');
@@ -51,7 +54,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Path only: the query string carries search terms and other personal data.
     const line = `${request.method} ${request.url.split('?')[0]} → ${status} [${code}] ${who}`;
 
-    if (status >= Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
+    if (status >= FIRST_SERVER_ERROR) {
       this.logger.error(line, exception instanceof Error ? exception.stack : String(exception));
     } else {
       this.logger.warn(line);
@@ -117,7 +120,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     details: ErrorDetail[];
   } {
     const status = exception.getStatus();
-    const payload = exception.getResponse();
+    // `unknown`: el tipo dice `string | object`, pero una excepción construida
+    // a mano puede traer cualquier cosa, null incluido.
+    const payload: unknown = exception.getResponse();
     const details: ErrorDetail[] = [];
     let message = exception.message;
 

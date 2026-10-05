@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import type { Category, CategoryKind, Prisma } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
+
 import { sembrarPlantilla } from './categories.plantilla';
 import type { NodoDeCategoria } from './categories.tree';
 import { unir } from './palabras-clave';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class CategoriesRepository {

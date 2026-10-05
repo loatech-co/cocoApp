@@ -1,7 +1,7 @@
-import type { AuditEntry, PaginationMeta, PerfilPublico, UserRole, UserStatus } from '@coco/types';
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/api-client';
+import type { AuditEntry, PaginationMeta, PerfilPublico, UserRole, UserStatus } from '@coco/types';
 
 /**
  * Consultas del panel de administración.
@@ -87,7 +87,7 @@ export function useRestablecerContrasena() {
 
   return useMutation({
     mutationFn: async ({ id, newPassword }: { id: number; newPassword: string }) => {
-      await apiFetch<void>(`/admin/users/${id}/reset-password`, {
+      await apiFetch<unknown>(`/admin/users/${id}/reset-password`, {
         method: 'POST',
         body: { newPassword },
       });

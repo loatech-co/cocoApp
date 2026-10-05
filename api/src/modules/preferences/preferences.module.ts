@@ -2,10 +2,10 @@ import { Body, Controller, Get, Global, Injectable, Module, Patch } from '@nestj
 import type { Prisma } from '@prisma/client';
 import { IsBoolean, IsOptional } from 'class-validator';
 
+import { CUENTAS_HABILITADAS, combinarConDefectos, type Preferencias } from './preferences';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CUENTAS_HABILITADAS, combinarConDefectos, type Preferencias } from './preferences';
 
 /**
  * Un campo por preferencia, no un objeto libre.

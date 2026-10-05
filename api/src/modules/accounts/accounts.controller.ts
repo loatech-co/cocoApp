@@ -11,11 +11,11 @@ import {
   Query,
 } from '@nestjs/common';
 
+import { AccountsService, type AccountView } from './accounts.service';
+import { CreateAccountDto, ListAccountsQueryDto, UpdateAccountDto } from './dto/account.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { AccountsService, type AccountView } from './accounts.service';
-import { CreateAccountDto, ListAccountsQueryDto, UpdateAccountDto } from './dto/account.dto';
 
 /**
  * M3 — Cuentas / medios de pago.

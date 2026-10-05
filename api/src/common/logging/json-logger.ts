@@ -1,3 +1,4 @@
+import type { LoggerService, LogLevel } from '@nestjs/common';
 import {
   closeSync,
   existsSync,
@@ -10,8 +11,6 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-
-import type { LoggerService, LogLevel } from '@nestjs/common';
 
 import { currentRequestId } from './request-context';
 
@@ -79,7 +78,7 @@ export class JsonLogger implements LoggerService {
 
     if (options.directory && this.file) {
       mkdirSync(options.directory, { recursive: true, mode: 0o700 });
-      this.fd = this.open();
+      this.fd = this.open(this.file);
     }
   }
 
@@ -150,10 +149,12 @@ export class JsonLogger implements LoggerService {
       : process.stdout
     ).write(line);
 
-    if (this.fd !== null) {
-      this.followRotation();
+    // `fd` only exists when `file` does; both are checked so the helpers get
+    // them as plain values.
+    if (this.fd !== null && this.file !== null) {
+      this.followRotation(this.file, this.fd);
       writeSync(this.fd, line);
-      this.rotateIfFull();
+      this.rotateIfFull(this.file);
     }
   }
 
@@ -164,38 +165,37 @@ export class JsonLogger implements LoggerService {
    * if not; and after writing, the size that decides rotation is the file's,
    * not what this process wrote.
    */
-  private followRotation(): void {
+  private followRotation(file: string, fd: number): void {
     try {
-      const onDisk = existsSync(this.file!) ? statSync(this.file!) : null;
-      if (!onDisk || onDisk.ino !== fstatSync(this.fd!).ino) {
-        closeSync(this.fd!);
-        this.fd = this.open();
+      const onDisk = existsSync(file) ? statSync(file) : null;
+      if (onDisk?.ino !== fstatSync(fd).ino) {
+        closeSync(fd);
+        this.fd = this.open(file);
       }
     } catch {
       // Logging must never take the app down; the line still reaches stdout.
     }
   }
 
-  private rotateIfFull(): void {
+  private rotateIfFull(file: string): void {
     try {
-      if (statSync(this.file!).size >= this.maxBytes) this.rotate();
+      if (statSync(file).size >= this.maxBytes) this.rotate(file);
     } catch {
       // Same: a failed rotation leaves the file growing, never a crash.
     }
   }
 
-  private open(): number {
-    return openSync(this.file!, 'a', 0o600);
+  private open(file: string): number {
+    return openSync(file, 'a', 0o600);
   }
 
   /** `api.log` → `api.log.1` → … → `api.log.<keep>`, the oldest dropped. */
-  private rotate(): void {
-    const file = this.file!;
+  private rotate(file: string): void {
     if (this.fd !== null) closeSync(this.fd);
     for (let index = this.keep - 1; index >= 1; index -= 1) {
       if (existsSync(`${file}.${index}`)) renameSync(`${file}.${index}`, `${file}.${index + 1}`);
     }
     if (existsSync(file)) renameSync(file, `${file}.1`);
-    this.fd = this.open();
+    this.fd = this.open(file);
   }
 }

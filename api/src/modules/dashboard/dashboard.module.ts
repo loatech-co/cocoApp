@@ -2,16 +2,7 @@ import { Controller, Get, Injectable, Module, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
 import { IsDateString, IsInt, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { CERO, serializar, toMoney } from '../../common/money/money';
-import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { PrismaService } from '../../prisma/prisma.service';
-import { AccountsModule } from '../accounts/accounts.module';
-import { AccountsService, type AccountView } from '../accounts/accounts.service';
-import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
 import { AutoChargeTask } from './auto-charge.task';
-import { PagosAutomaticosService } from './pagos-automaticos';
-import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
 import {
   ancestroEnNivel,
   calcularFlujo,
@@ -21,6 +12,15 @@ import {
   type CategoriaPlana,
   type MovimientoAgregable,
 } from './dashboard.aggregate';
+import { PagosAutomaticosService } from './pagos-automaticos';
+import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CERO, serializar, toMoney } from '../../common/money/money';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { PrismaService } from '../../prisma/prisma.service';
+import { AccountsModule } from '../accounts/accounts.module';
+import { AccountsService, type AccountView } from '../accounts/accounts.service';
+import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
 
 /**
  * Los mismos filtros que la lista de movimientos, a propósito.
@@ -496,7 +496,11 @@ export class DashboardService {
       consulta de arriba, que es de donde beben los históricos.
     */
     const recurrentes = categorias.filter(
-      (c) => c.recurrente && c.periodicidad !== null && !c.isArchived,
+      (
+        c,
+      ): c is (typeof categorias)[number] & {
+        periodicidad: NonNullable<(typeof c)['periodicidad']>;
+      } => c.recurrente && c.periodicidad !== null && !c.isArchived,
     );
     const pendientes: PagoPendientePayload[] = [];
 
@@ -572,7 +576,7 @@ export class DashboardService {
       for (const concepto of recurrentes) {
         // Primero si toca este mes: un trimestral que no cae aquí no cuenta
         // para el presupuesto ni aparece como pendiente.
-        if (!tocaEnElMes(concepto.periodicidad!, concepto.mesDePago, mesEnCurso)) continue;
+        if (!tocaEnElMes(concepto.periodicidad, concepto.mesDePago, mesEnCurso)) continue;
 
         const clave = concepto.id.toString();
         const pagado = pagadoEsteMes.get(clave);
@@ -621,7 +625,7 @@ export class DashboardService {
           category_id: concepto.id,
           name: concepto.name,
           path: camino.join(' · '),
-          periodicidad: concepto.periodicidad!,
+          periodicidad: concepto.periodicidad,
           due_date: vencimiento(mesEnCurso, concepto.diaDePago),
           expected_amount: esperado === null ? null : serializar(toMoney(esperado)),
           centro_id: BigInt(raiz),

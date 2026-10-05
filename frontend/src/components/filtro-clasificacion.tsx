@@ -2,9 +2,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import { Casilla } from '@/components/ui/casilla';
+import { REALCE } from '@/components/ui/superficie';
 import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
-import { REALCE } from '@/components/ui/superficie';
 
 /**
  * El filtro por centros de costos, categorías y conceptos.

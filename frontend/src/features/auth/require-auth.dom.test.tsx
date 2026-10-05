@@ -3,8 +3,9 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { RequireAdmin, RequireAuth } from './require-auth';
 import { fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
+
+import { RequireAdmin, RequireAuth } from './require-auth';
 
 const auth = { usuario: null as unknown, cargando: false, esAdmin: false };
 

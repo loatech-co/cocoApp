@@ -47,9 +47,7 @@ export function useAlCambiar(firma: readonly unknown[], reaccionar: () => void):
   const [anterior, setAnterior] = useState<readonly unknown[] | null>(null);
 
   const cambio =
-    anterior === null ||
-    anterior.length !== firma.length ||
-    anterior.some((valor, i) => !Object.is(valor, firma[i]));
+    anterior?.length !== firma.length || anterior.some((valor, i) => !Object.is(valor, firma[i]));
 
   if (cambio) {
     setAnterior(firma);

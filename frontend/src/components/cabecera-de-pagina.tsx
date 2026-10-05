@@ -88,7 +88,7 @@ export function CabeceraDePagina({
           <h1 className={TITULO_DE_PAGINA}>{titulo}</h1>
           {junto}
         </div>
-        {ayuda && <p className="mt-1 text-sm text-muted-foreground">{ayuda}</p>}
+        {Boolean(ayuda) && <p className="mt-1 text-sm text-muted-foreground">{ayuda}</p>}
       </div>
 
       {acciones}

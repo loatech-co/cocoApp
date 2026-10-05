@@ -5,11 +5,11 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 import type { ThrottlerStorageRecord } from '@nestjs/throttler/dist/throttler-storage-record.interface';
 import type { User, UserRole, UserStatus } from '@prisma/client';
 
+import { SupabaseAuthFalso } from './supabase-auth-falso';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
 import { installBigIntSerializer } from '../../src/common/serialization/bigint';
 import { SupabaseAuthService } from '../../src/modules/auth/supabase-auth.service';
-import { SupabaseAuthFalso } from './supabase-auth-falso';
 import { PrismaService } from '../../src/prisma/prisma.service';
 
 /**

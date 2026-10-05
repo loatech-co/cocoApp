@@ -12,6 +12,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+
 import { IsMoney } from '../../../common/validation/is-money.decorator';
 
 /**

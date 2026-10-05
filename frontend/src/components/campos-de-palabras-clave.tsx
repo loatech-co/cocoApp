@@ -1,8 +1,8 @@
 import { Plus, ScanText } from 'lucide-react';
 import { useState, type KeyboardEvent } from 'react';
 
-import { Campo } from '@/components/ui/campo';
 import { Chip } from '@/components/ui/badge';
+import { Campo } from '@/components/ui/campo';
 import { Input } from '@/components/ui/input';
 import { conceptoQueYaLaUsa, limpiar, partir, porQueNoEntra } from '@/lib/palabras-clave';
 import { cn } from '@/lib/utils';

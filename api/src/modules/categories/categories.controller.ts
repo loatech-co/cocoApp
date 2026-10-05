@@ -11,9 +11,6 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
-import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { CategoriesService, type CategoryView } from './categories.service';
 import type { ConHijos } from './categories.tree';
 import {
@@ -23,6 +20,9 @@ import {
   ReorderCategoriesDto,
   UpdateCategoryDto,
 } from './dto/category.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 
 /** Forma pública: `parent_id` en snake_case, como el resto del contrato. */
 /**
@@ -55,7 +55,9 @@ type CategoryPayload = Omit<CategoryView, 'parentId'> & {
  * se nombra: lo que el servicio publique, sale.
  */
 export function aPayload(categoria: CategoryView | ConHijos<CategoryView>): CategoryPayload {
-  const { parentId, children, ...resto } = categoria as ConHijos<CategoryView>;
+  // Un nodo suelto no trae `children`; uno del árbol, sí.
+  const nodo: CategoryView & { children?: ConHijos<CategoryView>[] } = categoria;
+  const { parentId, children, ...resto } = nodo;
   const payload: CategoryPayload = { ...resto, parent_id: parentId };
 
   if (children !== undefined) {

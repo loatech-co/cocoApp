@@ -1,4 +1,3 @@
-import { toMoney } from '../../common/money/money';
 import {
   comoQuedaElPendiente,
   esperadoDelMes,
@@ -10,6 +9,7 @@ import {
   tocaEnElMes,
   vencimiento,
 } from './pendientes';
+import { toMoney } from '../../common/money/money';
 
 describe('Pagos pendientes', () => {
   describe('Si toca en el mes', () => {

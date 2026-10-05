@@ -122,7 +122,7 @@ export function conceptoQueYaLaUsa(
   return conceptosDe(arbol).find(
     ({ concepto }) =>
       concepto.id !== exceptoId &&
-      (concepto.palabras_clave ?? []).some((suya) => comoSeCompara(suya) === buscada),
+      concepto.palabras_clave.some((suya) => comoSeCompara(suya) === buscada),
   )?.concepto;
 }
 

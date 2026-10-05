@@ -5,9 +5,10 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { keys, type CategoryTree } from '@/lib/queries';
-import { MovimientoModal } from './movimiento-modal';
-import { leerSoporte } from './leer-soporte';
 import type { PagoPendiente, Transaction } from '@coco/types';
+
+import { leerSoporte } from './leer-soporte';
+import { MovimientoModal } from './movimiento-modal';
 
 /*
   El lector de soportes, de mentira.
@@ -334,7 +335,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
 
-    const campo = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const campo = container.querySelector('input[type="file"]')!;
     const recibo = new File(['x'], 'celsia-octubre.png', { type: 'image/png' });
     fireEvent.change(campo, { target: { files: [recibo] } });
 
@@ -369,7 +370,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
 
     const { container } = abrirNuevo();
 
-    const campo = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const campo = container.querySelector('input[type="file"]')!;
     fireEvent.change(campo, {
       target: { files: [new File(['x'], 'recibo.png', { type: 'image/png' })] },
     });
@@ -417,7 +418,7 @@ describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cargar archivo' }));
 
     const panel = screen.getByRole('dialog', { name: 'Agregar soportes' });
-    const campo = panel.querySelector('input[type="file"]') as HTMLInputElement;
+    const campo = panel.querySelector('input[type="file"]')!;
     fireEvent.change(campo, {
       target: { files: [new File(['x'], 'celsia-octubre.png', { type: 'image/png' })] },
     });

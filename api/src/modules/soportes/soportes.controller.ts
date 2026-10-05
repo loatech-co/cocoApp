@@ -14,11 +14,11 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 
+import { TAMANO_MAXIMO } from './soportes.optimizacion';
+import { SoportesService, type ArchivoSubido, type SoporteView } from './soportes.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { TAMANO_MAXIMO } from './soportes.optimizacion';
-import { SoportesService, type ArchivoSubido, type SoporteView } from './soportes.service';
 
 /** Cuántos archivos se aceptan de una vez. Ocho es el récord del lote. */
 const MAXIMO_POR_SUBIDA = 10;
@@ -69,7 +69,8 @@ export class SoportesController {
   subir(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-    @UploadedFiles() archivos: ArchivoSubido[],
+    // Sin archivos en la petición, multer no deja ni el arreglo vacío.
+    @UploadedFiles() archivos: ArchivoSubido[] | undefined,
   ): Promise<SoporteView[]> {
     return this.soportes.subir(user.id, id, archivos ?? []);
   }

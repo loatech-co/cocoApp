@@ -268,7 +268,7 @@ describe('User isolation (e2e)', () => {
         .set('Authorization', asBruno)
         .expect(200);
       expectNoLeak(list.body);
-      expect(list.body.data.map((t: { id: string }) => String(t.id))).not.toContain(id);
+      expect(list.body.data.map((t: { id: string | number }) => String(t.id))).not.toContain(id);
 
       // Ana's movement is from 2020; Bruno's history must not reach back there.
       const history = await http

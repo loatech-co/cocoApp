@@ -25,8 +25,8 @@ import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
 import { aPerfilPublico, type PerfilPublico } from '../auth/auth.service';
-import { PasswordService } from '../auth/password.service';
 import { AuthService } from '../auth/auth.service';
+import { PasswordService } from '../auth/password.service';
 import { SupabaseAuthService } from '../auth/supabase-auth.service';
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
@@ -370,7 +370,8 @@ export class AdminController {
   }
 
   @Get('audit-log')
-  bitacora(@Query() query: { page?: number; per_page?: number }) {
+  // Llegan como texto de la URL: de ahí el `Number`.
+  bitacora(@Query() query: { page?: string; per_page?: string }) {
     return this.admin.bitacora({
       page: query.page ? Number(query.page) : undefined,
       per_page: query.per_page ? Number(query.per_page) : undefined,

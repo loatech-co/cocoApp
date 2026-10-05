@@ -2,10 +2,10 @@ import { ForbiddenException, Injectable, Logger, UnauthorizedException } from '@
 import { ConfigService } from '@nestjs/config';
 import type { User } from '@prisma/client';
 
-import { AuditService } from '../../common/audit/audit.service';
-import { PrismaService } from '../../prisma/prisma.service';
 import { PasswordService } from './password.service';
 import { SupabaseAuthService } from './supabase-auth.service';
+import { AuditService } from '../../common/audit/audit.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { sembrarPlantilla } from '../categories/categories.plantilla';
 
 export interface ContextoDePeticion {

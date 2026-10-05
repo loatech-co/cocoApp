@@ -1,8 +1,7 @@
-import type { Lectura } from '@coco/lectura';
-import type { Interpretacion } from '@coco/types';
-
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { cargarPdfjs } from '@/lib/pdf';
+import type { Lectura } from '@coco/lectura';
+import type { Interpretacion } from '@coco/types';
 
 /**
  * Leer un recibo: sacarle el texto y, con él, de qué es.
@@ -61,8 +60,9 @@ async function textoDelPdf(archivo: File, paginas = 2): Promise<string> {
       // Las seis posiciones están siempre: los valores por defecto no se usan.
       const [, , , , x = 0, y = 0] = item.transform as number[];
       const renglon = Math.round(y);
-      if (!filas.has(renglon)) filas.set(renglon, []);
-      filas.get(renglon)!.push({ x, s: item.str });
+      const fila = filas.get(renglon);
+      if (fila) fila.push({ x, s: item.str });
+      else filas.set(renglon, [{ x, s: item.str }]);
     }
 
     for (const [, partes] of [...filas.entries()].sort((a, b) => b[0] - a[0])) {
@@ -152,7 +152,7 @@ export async function leerSoporte(
   const { onProgreso } = opciones;
   const esPdf = archivo.type === 'application/pdf' || /\.pdf$/i.test(archivo.name);
 
-  let texto = '';
+  let texto: string;
   let fuente: 'texto-embebido' | 'ocr' = 'texto-embebido';
 
   if (esPdf) {
@@ -197,6 +197,7 @@ export async function leerSoporte(
     const detalle = e instanceof ApiClientError ? ` (${e.message})` : '';
     throw new Error(
       `No se pudo interpretar el soporte en el servidor${detalle}. Escribe los datos a mano; el archivo queda adjunto al movimiento.`,
+      { cause: e },
     );
   }
 

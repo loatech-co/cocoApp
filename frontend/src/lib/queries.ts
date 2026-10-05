@@ -1,3 +1,5 @@
+import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+
 import type {
   Account,
   ApiResponse,
@@ -8,7 +10,7 @@ import type {
   Tag,
   Transaction,
 } from '@coco/types';
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+
 import { apiFetch, apiSubir } from './api-client';
 import { encogerSoportes } from './encoger-soporte';
 
@@ -78,7 +80,7 @@ export function useEliminarSoporte(transactionId: number) {
 
   return useMutation({
     mutationFn: async (soporteId: number) => {
-      await apiFetch<void>(`/transactions/${transactionId}/soportes/${soporteId}`, {
+      await apiFetch<unknown>(`/transactions/${transactionId}/soportes/${soporteId}`, {
         method: 'DELETE',
       });
     },
@@ -307,7 +309,7 @@ export function useEliminarMovimiento() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      await apiFetch<void>(`/transactions/${id}`, { method: 'DELETE' });
+      await apiFetch<unknown>(`/transactions/${id}`, { method: 'DELETE' });
     },
     onSuccess: invalidarDerivados,
   });

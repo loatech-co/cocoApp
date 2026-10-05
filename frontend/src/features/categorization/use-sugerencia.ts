@@ -1,8 +1,8 @@
-import type { SugerenciaDeCategoria } from '@coco/types';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import type { SugerenciaDeCategoria } from '@coco/types';
 
 /**
  * Espera antes de consultar, en milisegundos.

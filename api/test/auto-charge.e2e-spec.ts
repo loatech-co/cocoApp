@@ -1,7 +1,7 @@
 import request from 'supertest';
 
-import { AutoChargeTask } from '../src/modules/dashboard/auto-charge.task';
 import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { AutoChargeTask } from '../src/modules/dashboard/auto-charge.task';
 
 /**
  * Phase 6.7: auto-paid concepts are charged by an in-process task, not by

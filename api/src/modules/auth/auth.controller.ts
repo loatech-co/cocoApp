@@ -13,9 +13,6 @@ import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { Public } from '../../common/decorators/public.decorator';
-import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import {
   AuthService,
   type ContextoDePeticion,
@@ -23,6 +20,9 @@ import {
   type PerfilPublico,
 } from './auth.service';
 import { ChangePasswordDto, LoginDto, RefreshNativoDto, RegisterDto } from './dto/auth.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 
 /** El refresh token viaja SOLO en esta cookie; nunca en el cuerpo ni en la URL. */
 const COOKIE_REFRESH = 'coco_refresh';

@@ -1,5 +1,3 @@
-import type { Readable } from 'node:stream';
-
 import {
   Inject,
   BadRequestException,
@@ -11,8 +9,8 @@ import {
   ServiceUnavailableException,
   UnsupportedMediaTypeException,
 } from '@nestjs/common';
+import type { Readable } from 'node:stream';
 
-import { PrismaService } from '../../prisma/prisma.service';
 import { RECEIPT_STORE, type ReceiptStore } from './receipt-store';
 import { claveNueva, huellaDe } from './soportes.almacen';
 import {
@@ -23,6 +21,7 @@ import {
   TAMANO_MAXIMO,
   TIPOS_DE_ENTRADA,
 } from './soportes.optimizacion';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /** Un archivo tal como llega del formulario. */
 export interface ArchivoSubido {
@@ -66,9 +65,10 @@ export class SoportesService implements OnModuleInit {
    * Esta línea lo habría dicho en el primer reinicio.
    */
   async onModuleInit(): Promise<void> {
-    const { ok, detail } = await this.store
-      .check()
-      .catch((error: Error) => ({ ok: false, detail: error.message }));
+    const { ok, detail } = await this.store.check().catch((error: unknown) => ({
+      ok: false,
+      detail: error instanceof Error ? error.message : String(error),
+    }));
 
     if (ok) {
       this.logger.log(`Almacén de soportes: ${this.store.describe()} — ${detail}`);

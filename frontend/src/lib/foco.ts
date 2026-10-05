@@ -36,7 +36,7 @@ export function useFocoAtrapado(caja: RefObject<HTMLElement | null>, activo: boo
     // De dónde se vino, para devolverlo al cerrar. Cerrar un panel y dejar el
     // foco al principio de la página obliga a recorrerla entera para volver al
     // botón que se acaba de pulsar.
-    const volverA = document.activeElement as HTMLElement | null;
+    const volverA = document.activeElement;
 
     /*
       El foco entra en la CAJA, no en su primer control.
@@ -49,7 +49,7 @@ export function useFocoAtrapado(caja: RefObject<HTMLElement | null>, activo: boo
       del tabulador, así que el primer Tab lleva al primer control de dentro y
       desde ahí ya se anda.
     */
-    el.focus?.();
+    el.focus();
 
     function alPulsar(e: KeyboardEvent): void {
       if (e.key !== 'Tab' || !el) return;
@@ -79,7 +79,8 @@ export function useFocoAtrapado(caja: RefObject<HTMLElement | null>, activo: boo
     document.addEventListener('keydown', alPulsar);
     return () => {
       document.removeEventListener('keydown', alPulsar);
-      volverA?.focus?.();
+      // `activeElement` es un elemento cualquiera: solo HTML y SVG saben enfocarse.
+      if (volverA instanceof HTMLElement || volverA instanceof SVGElement) volverA.focus();
     };
   }, [caja, activo]);
 }

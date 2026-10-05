@@ -1,7 +1,6 @@
+import type { NextFunction, Request, Response } from 'express';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
-
-import type { NextFunction, Request, Response } from 'express';
 
 interface RequestContext {
   requestId: string;

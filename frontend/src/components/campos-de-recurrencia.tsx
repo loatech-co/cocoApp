@@ -1,14 +1,14 @@
 import { Repeat } from 'lucide-react';
 import { useState } from 'react';
 
-import { Interruptor } from '@/components/ui/interruptor';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import { useAlCambiar } from '@/lib/al-cambiar';
-import { PERIODICIDADES, type Periodicidad } from '@coco/types';
 import { Campo } from '@/components/ui/campo';
 import { CampoDeDinero } from '@/components/ui/campo-de-dinero';
+import { Input } from '@/components/ui/input';
+import { Interruptor } from '@/components/ui/interruptor';
+import { Select } from '@/components/ui/select';
+import { useAlCambiar } from '@/lib/al-cambiar';
+import { cn } from '@/lib/utils';
+import { PERIODICIDADES, type Periodicidad } from '@coco/types';
 
 const ETIQUETAS: Record<Periodicidad, string> = {
   mensual: 'Cada mes',

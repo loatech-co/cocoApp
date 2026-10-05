@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+
 import { LONGITUD_MAXIMA, LONGITUD_MINIMA } from '../password.policy';
 
 /**

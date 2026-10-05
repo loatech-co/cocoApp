@@ -3,8 +3,9 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CuentaPage } from './cuenta-page';
 import { fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
+
+import { CuentaPage } from './cuenta-page';
 
 const auth = {
   usuario: { email: 'g@coco.app', display_name: 'Gerardo' },

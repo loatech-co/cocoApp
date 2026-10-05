@@ -73,6 +73,7 @@ export function useEsMovil(): boolean {
  * antes de cargar nada, y no hay forma de entrar o salir de la app sin
  * recargar el documento.
  */
+// eslint-disable-next-line @eslint-react/no-unnecessary-use-prefix -- rename belongs to step 7.2
 export function useEnLaApp(): boolean {
   return enLaApp();
 }

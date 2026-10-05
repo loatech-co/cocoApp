@@ -2,6 +2,7 @@ import { ArrowDownUp, Filter, Plus, Search, TrendingDown, TrendingUp, X } from '
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
 
 import { useEsMovil } from '@/app/movil';
+import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
 import { FiltroClasificacion } from '@/components/filtro-clasificacion';
 import { Menu, MenuOpcion, MenuTitulo } from '@/components/menu';
 import { PanelInferior } from '@/components/panel-inferior';
@@ -10,13 +11,12 @@ import { Etiqueta } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
 import { Input } from '@/components/ui/input';
+import { REALCE } from '@/components/ui/superficie';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import type { Filtros } from '@/lib/filtros';
 import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-import { useAlCambiar } from '@/lib/al-cambiar';
 import type { TransactionType } from '@coco/types';
-import { CabeceraDePagina } from '@/components/cabecera-de-pagina';
-import { REALCE } from '@/components/ui/superficie';
 
 /** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
 export const ORDENES = [

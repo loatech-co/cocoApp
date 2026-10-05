@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { USER_AGENT_APP } from '@coco/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { PuenteError, enLaApp, pedirSesion, registrarPuente } from './puente-nativo';
 import { SESION_DE_LA_APP, fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
+import { USER_AGENT_APP } from '@coco/types';
+
+import { PuenteError, enLaApp, pedirSesion, registrarPuente } from './puente-nativo';
 
 afterEach(() => {
   salirDeLaApp();

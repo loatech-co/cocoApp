@@ -1,12 +1,17 @@
 import { Loader2, Merge, Trash2 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 
 import { CamposDePalabrasClave } from '@/components/campos-de-palabras-clave';
 import { CamposDeRecurrencia, type Recurrencia } from '@/components/campos-de-recurrencia';
+import { Bloque } from '@/components/ui/bloque';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Campo } from '@/components/ui/campo';
+import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
+import { PieDeModal } from '@/components/ui/modal-partes';
+import { Select } from '@/components/ui/select';
+import { ConfirmarBorrado } from '@/features/centros/confirmar-borrado';
+import { useAlCambiar } from '@/lib/al-cambiar';
 import { ApiClientError } from '@/lib/api-client';
 import {
   useActualizarCategoria,
@@ -15,11 +20,6 @@ import {
   useUnificarCategoria,
 } from '@/lib/queries';
 import type { Category } from '@coco/types';
-import { Bloque } from '@/components/ui/bloque';
-import { PieDeModal } from '@/components/ui/modal-partes';
-import { ConfirmarBorrado } from '@/features/centros/confirmar-borrado';
-import { Select } from '@/components/ui/select';
-import { useAlCambiar } from '@/lib/al-cambiar';
 
 /**
  * Crear o renombrar un concepto, y decir si se paga cada cierto tiempo.
@@ -52,7 +52,7 @@ export function ConceptoModal({
   const categorias = useCategories();
 
   const [nombre, setNombre] = useState('');
-  const [recurrencia, setRecurrencia] = useState<Recurrencia>({
+  const [recurrencia, setRecurrencia] = useState<Recurrencia>(() => ({
     recurrente: false,
     periodicidad: 'mensual',
     diaDePago: 1,
@@ -62,7 +62,7 @@ export function ConceptoModal({
     presupuesto: '',
     pagoAutomatico: false,
     variosPagos: false,
-  });
+  }));
   const [error, setError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   /** Lo que se busca en un soporte para reconocer este concepto. */
@@ -126,7 +126,7 @@ export function ConceptoModal({
   */
   const hermanos = (categorias.data ?? []).flatMap((centro) => {
     const categorias = centro.children ?? [];
-    return categorias.some((g) => Number(g.id) === Number(concepto?.parent_id))
+    return categorias.some((g) => g.id === Number(concepto?.parent_id))
       ? categorias.map((g) => ({ valor: String(g.id), etiqueta: g.name }))
       : [];
   });
@@ -147,7 +147,7 @@ export function ConceptoModal({
     }
   }
 
-  async function onSubmit(evento: FormEvent<HTMLFormElement>): Promise<void> {
+  async function onSubmit(evento: SubmitEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
     setError(null);
 

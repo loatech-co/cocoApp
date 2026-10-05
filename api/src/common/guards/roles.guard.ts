@@ -13,8 +13,7 @@ import type { Request } from 'express';
 export const ROLES_KEY = 'roles';
 
 /** Restringe una ruta a ciertos roles. Sin él, cualquier usuario autenticado pasa. */
-export const Roles = (...roles: UserRole[]): CustomDecorator<string> =>
-  SetMetadata(ROLES_KEY, roles);
+export const Roles = (...roles: UserRole[]): CustomDecorator => SetMetadata(ROLES_KEY, roles);
 
 /**
  * Autorización por rol.

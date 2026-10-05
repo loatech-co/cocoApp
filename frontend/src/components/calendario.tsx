@@ -2,9 +2,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { REALCE } from '@/components/ui/superficie';
 import { diaLargo, MESES_LARGOS } from '@/lib/fechas';
 import { cn } from '@/lib/utils';
-import { REALCE } from '@/components/ui/superficie';
 
 /**
  * La semana empieza en LUNES, no en domingo: es como se lee un calendario en
@@ -175,7 +175,10 @@ export function Calendario({
             continua, y un hueco la partiría en cuadritos sueltos. */}
         <div className="grid grid-cols-7" onMouseLeave={() => onSobrevolar?.(null)}>
           {celdas.map((iso, i) => {
-            if (iso === null) return <span key={`hueco-${i}`} className="aspect-square" />;
+            if (iso === null) {
+              // eslint-disable-next-line @eslint-react/no-array-index-key -- los huecos de la rejilla solo tienen su posición
+              return <span key={`hueco-${i}`} className="aspect-square" />;
+            }
 
             const dentro =
               desde !== undefined && hasta !== undefined && iso >= desde && iso <= hasta;
