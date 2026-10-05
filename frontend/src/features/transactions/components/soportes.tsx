@@ -67,8 +67,19 @@ export function Soportes({ transactionId }: { transactionId: number }) {
   const { lista } = g.archivos;
 
   if (g.archivos.cargando) {
+    /*
+      ── El alto ya reservado ──────────────────────────────────────────────
+      Mientras se piden, la columna ocupa lo mismo que lo que va a llegar:
+      el cuadro donde se sueltan mide 246 en el teléfono (su `min-h-36`, su
+      relleno, el rótulo y el botón de pegar) y la previsualización, de 220
+      para arriba. `min-h-62` son 248. Con un renglón suelto, la ficha —que en
+      el teléfono cuelga del borde de abajo— crecía 230px al llegar la
+      respuesta y todo lo de dentro saltaba hacia arriba: Lighthouse lo medía
+      como un desplazamiento de 0,199. Si el cuadro cambia de alto, esto
+      también.
+    */
     return (
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+      <p className="flex min-h-62 flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
         Buscando soportes…
       </p>
