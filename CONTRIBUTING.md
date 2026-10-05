@@ -342,3 +342,51 @@ types, its pure helpers, its controller), never into `utils-2.ts`.
 - The web and the packages list the files that were over the limits when the
   rules arrived, in `eslint.config.js`, as temporary exceptions for the
   frontend step. A file is never added to those lists.
+
+## iOS
+
+The app in `ios/` follows its own toolchain; `ios/README.md` has the folder
+map. Local: `bash ios/scripts/lint.sh` and `xcodebuild test` (see the README).
+CI: the `ios` workflow, **manual only** (`workflow_dispatch`): a macOS minute
+counts as ten against the free plan's quota, so it runs before every app
+release, and the pre-commit hook covers the routine.
+
+- **Format: `swift-format`**, the Swift project's official formatter that
+  ships with Xcode 16+, configured by `ios/.swift-format` (4 spaces, 120
+  columns). It runs in `--strict` lint mode, so any difference fails.
+- **Rules: SwiftLint, strict** (`strict: true`: every warning is an error),
+  configured by `ios/.swiftlint.yml` and **pinned** (`swiftlint_version`):
+  SwiftLint is still 0.x and a new release can add rules that break CI with
+  no code change, so it is upgraded on purpose, in its own PR.
+  `trailing_comma` and `opening_brace` are off because they are swift-format's
+  job; tests (`ios/CocoTests/.swiftlint.yml`) only relax line length (one-line
+  JSON fixtures) and type and file length (a test class is a list of cases).
+  An inline `swiftlint:disable:next` names the rule and says why above it.
+- **The hook** (`6_lint-ios` in `lefthook.yml`) runs on commits that touch
+  `ios/**/*.swift`. Without Xcode, or with another SwiftLint version, it warns
+  and lets the commit through: someone working only on the web must not be
+  blocked, and the workflow is the gate.
+- **Structure by feature**: `Coco/Features/<Feature>` holds everything for one
+  thing a person does; `Coco/Core` is infrastructure (networking, storage,
+  Keychain, background tasks, domain contracts); `Coco/Shared` is common UI
+  and formatting. `CocoTests` mirrors the same tree.
+- **English for files and types**; text the person sees stays in Spanish.
+  Never renamed, because something outside the code stores the name: App
+  Intent types, their `@Parameter`s and titles (Shortcuts automations),
+  widget and control `kind`s, background task identifiers, the bundle id, and
+  JSON keys (API and on-disk). Properties are camelCase and the key is written
+  in `CodingKeys`; `StoredFormatCompatibilityTests` pins every key.
+- **`async/await`** across the network layer, **typed errors per domain**
+  (`APIError`, `SessionError`, `QueueError`, `KeychainError`,
+  `ParameterError`) and **no force-unwrap or `try!` outside tests**
+  (`force_unwrapping`, `force_try`).
+
+```swift
+// Correct
+guard let url = URL(string: "coco://capturar/\(destino)") else {
+    preconditionFailure("URL de captura inválida para el destino «\(destino)»")
+}
+
+// Incorrect — SwiftLint fails on force_unwrapping
+let url = URL(string: "coco://capturar/\(destino)")!
+```
