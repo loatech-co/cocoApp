@@ -9,6 +9,30 @@ import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
 import { Select } from '@/shared/ui/organisms/select';
 import type { Category, NivelDeCategoria } from '@coco/types';
 
+interface ConfirmarBorradoProps {
+  categoria: Category;
+  /**
+   * En cuál de los tres niveles está lo que se va a borrar.
+   *
+   * Se pasa y no se deduce porque una `Category` no dice a qué profundidad
+   * vive: para saberlo habría que recorrer el árbol entero buscándola, y quien
+   * abre este diálogo ya lo sabe —lo abrió desde la fila de un centro, de una
+   * categoría o de un concepto—.
+   *
+   * De aquí sale TODO el texto: cómo se llama lo que se borra y cómo se llama
+   * lo que cuelga de ello. Con una sola frase para los tres, borrar un centro
+   * de costos decía «estás a punto de borrar la categoría “Vivienda”», que es
+   * nombrar mal justo en la pantalla donde más caro sale equivocarse.
+   */
+  nivel: NivelDeCategoria;
+  /** El árbol entero: de ahí salen los destinos posibles. */
+  arbol: Category[];
+  abierta: boolean;
+  onCerrar: () => void;
+  /** Se llama después de borrar. Por ejemplo, para cerrar la ficha de encima. */
+  onEliminada?: (() => void) | undefined;
+}
+
 /**
  * Confirmar el borrado de un centro de costos, una categoría o un concepto.
  *
@@ -41,47 +65,9 @@ export function ConfirmarBorrado({
   abierta,
   onCerrar,
   onEliminada,
-}: {
-  categoria: Category;
-  /**
-   * En cuál de los tres niveles está lo que se va a borrar.
-   *
-   * Se pasa y no se deduce porque una `Category` no dice a qué profundidad
-   * vive: para saberlo habría que recorrer el árbol entero buscándola, y quien
-   * abre este diálogo ya lo sabe —lo abrió desde la fila de un centro, de una
-   * categoría o de un concepto—.
-   *
-   * De aquí sale TODO el texto: cómo se llama lo que se borra y cómo se llama
-   * lo que cuelga de ello. Con una sola frase para los tres, borrar un centro
-   * de costos decía «estás a punto de borrar la categoría “Vivienda”», que es
-   * nombrar mal justo en la pantalla donde más caro sale equivocarse.
-   */
-  nivel: NivelDeCategoria;
-  /** El árbol entero: de ahí salen los destinos posibles. */
-  arbol: Category[];
-  abierta: boolean;
-  onCerrar: () => void;
-  /** Se llama después de borrar. Por ejemplo, para cerrar la ficha de encima. */
-  onEliminada?: () => void;
-}) {
-  const eliminar = useEliminarCategoria();
-  // Solo se pregunta cuando el diálogo está abierto: es una consulta por
-  // categoría, y el árbol tiene cuarenta.
-  const usos = useUsosDeCategoria(abierta ? categoria.id : undefined);
-
-  const [destino, setDestino] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  // Cada apertura empieza limpia: un destino elegido y cancelado la vez
-  // anterior no tiene por qué reaparecer apuntando a otra categoría.
-  useAlCambiar([abierta], () => {
-    if (abierta) {
-      setDestino('');
-      setError(null);
-    }
-  });
-
-  const movimientos = usos.data?.movimientos ?? 0;
+}: ConfirmarBorradoProps) {
+  const borrado = useDeleteCategory({ categoria, abierta, onCerrar, onEliminada });
+  const { usos, destino, error, movimientos } = borrado;
   const hayQueReasignar = movimientos > 0;
 
   return (
@@ -90,29 +76,13 @@ export function ConfirmarBorrado({
       titulo={`Eliminar “${categoria.name}”`}
       peligrosa
       etiquetaConfirmar="Eliminar"
-      ocupada={eliminar.isPending || usos.isPending}
+      ocupada={borrado.ocupada}
       // Con movimientos dentro no se puede confirmar hasta decir a dónde van.
       // Apagado y no «falla al pulsar»: enterarse después de pulsar «Eliminar»
       // en un diálogo que avisa de que no se puede deshacer es lo peor.
       confirmarDeshabilitado={hayQueReasignar && destino === ''}
       onCancelar={onCerrar}
-      onConfirmar={() => {
-        setError(null);
-        eliminar.mutate(
-          {
-            id: categoria.id,
-            reasignarA: destino === '' ? undefined : Number(destino),
-          },
-          {
-            onSuccess: () => {
-              onCerrar();
-              onEliminada?.();
-            },
-            onError: (e) =>
-              setError(e instanceof ApiClientError ? e.message : 'No se pudo eliminar.'),
-          },
-        );
-      }}
+      onConfirmar={borrado.confirmar}
     >
       <div className="flex flex-col gap-3">
         {/* Qué se va, y la pregunta. Los tres golpes del patrón: qué pasa, que
@@ -122,30 +92,12 @@ export function ConfirmarBorrado({
         {usos.isPending && <p>Contando qué hay dentro…</p>}
 
         {hayQueReasignar && (
-          <>
-            <Alert variant="warning">
-              <AlertDescription>
-                {/* «A donde elijas» y no «a la categoría que elijas»: el
-                    destino puede ser un centro de costos, una categoría o un
-                    concepto —los tres niveles están en la lista—, así que
-                    nombrar solo uno prometería menos de lo que se ofrece. */}
-                {movimientos === 1
-                  ? 'Hay 1 movimiento aquí dentro. No se borra: pasa a donde elijas.'
-                  : `Hay ${movimientos} movimientos aquí dentro. No se borran: pasan a donde elijas.`}
-              </AlertDescription>
-            </Alert>
-
-            <Campo etiqueta="Destino de los movimientos" id="destino-del-borrado">
-              <Select
-                id="destino-del-borrado"
-                etiqueta="Destino de los movimientos"
-                vacio="Elige un destino"
-                valor={destino}
-                opciones={destinosPosibles(arbol, categoria.id)}
-                onCambiar={setDestino}
-              />
-            </Campo>
-          </>
+          <ReassignTarget
+            movimientos={movimientos}
+            destino={destino}
+            onCambiar={borrado.setDestino}
+            opciones={destinosPosibles(arbol, categoria.id)}
+          />
         )}
 
         {/*
@@ -166,6 +118,97 @@ export function ConfirmarBorrado({
         )}
       </div>
     </Confirmacion>
+  );
+}
+
+/** Lo que se borra, a dónde van sus movimientos y cómo se confirma. */
+function useDeleteCategory({
+  categoria,
+  abierta,
+  onCerrar,
+  onEliminada,
+}: Pick<ConfirmarBorradoProps, 'categoria' | 'abierta' | 'onCerrar' | 'onEliminada'>) {
+  const eliminar = useEliminarCategoria();
+  // Solo se pregunta cuando el diálogo está abierto: es una consulta por
+  // categoría, y el árbol tiene cuarenta.
+  const usos = useUsosDeCategoria(abierta ? categoria.id : undefined);
+
+  const [destino, setDestino] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  // Cada apertura empieza limpia: un destino elegido y cancelado la vez
+  // anterior no tiene por qué reaparecer apuntando a otra categoría.
+  useAlCambiar([abierta], () => {
+    if (abierta) {
+      setDestino('');
+      setError(null);
+    }
+  });
+
+  function confirmar(): void {
+    setError(null);
+    eliminar.mutate(
+      {
+        id: categoria.id,
+        reasignarA: destino === '' ? undefined : Number(destino),
+      },
+      {
+        onSuccess: () => {
+          onCerrar();
+          onEliminada?.();
+        },
+        onError: (e) => setError(e instanceof ApiClientError ? e.message : 'No se pudo eliminar.'),
+      },
+    );
+  }
+
+  return {
+    usos,
+    movimientos: usos.data?.movimientos ?? 0,
+    ocupada: eliminar.isPending || usos.isPending,
+    destino,
+    setDestino,
+    error,
+    confirmar,
+  };
+}
+
+function ReassignTarget({
+  movimientos,
+  destino,
+  onCambiar,
+  opciones,
+}: {
+  movimientos: number;
+  destino: string;
+  onCambiar: (destino: string) => void;
+  opciones: { valor: string; etiqueta: string }[];
+}) {
+  return (
+    <>
+      <Alert variant="warning">
+        <AlertDescription>
+          {/* «A donde elijas» y no «a la categoría que elijas»: el
+              destino puede ser un centro de costos, una categoría o un
+              concepto —los tres niveles están en la lista—, así que
+              nombrar solo uno prometería menos de lo que se ofrece. */}
+          {movimientos === 1
+            ? 'Hay 1 movimiento aquí dentro. No se borra: pasa a donde elijas.'
+            : `Hay ${movimientos} movimientos aquí dentro. No se borran: pasan a donde elijas.`}
+        </AlertDescription>
+      </Alert>
+
+      <Campo etiqueta="Destino de los movimientos" id="destino-del-borrado">
+        <Select
+          id="destino-del-borrado"
+          etiqueta="Destino de los movimientos"
+          vacio="Elige un destino"
+          valor={destino}
+          opciones={opciones}
+          onCambiar={onCambiar}
+        />
+      </Campo>
+    </>
   );
 }
 
