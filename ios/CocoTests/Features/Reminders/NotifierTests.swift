@@ -43,10 +43,10 @@ final class NotifierTests: XCTestCase {
     }
 
     func testTextoDeCaptura() {
-        XCTAssertEqual(SystemNotifier.textoDeCaptura(result()).titulo, "Gasto registrado")
+        XCTAssertEqual(SystemNotifier.textoDeCaptura(result()).title, "Gasto registrado")
         XCTAssertEqual(SystemNotifier.textoDeCaptura(result()).body, "Registrado: $45.000 · Mercado")
-        XCTAssertEqual(SystemNotifier.textoDeCaptura(result(duplicate: true)).titulo, "Ya estaba registrado")
-        XCTAssertEqual(SystemNotifier.textoDeCaptura(result(merged: true)).titulo, "Era el mismo pago")
+        XCTAssertEqual(SystemNotifier.textoDeCaptura(result(duplicate: true)).title, "Ya estaba registrado")
+        XCTAssertEqual(SystemNotifier.textoDeCaptura(result(merged: true)).title, "Era el mismo pago")
         XCTAssertEqual(
             SystemNotifier.textoDeCaptura(result(needsReview: true)).body,
             "Registrado: $45.000 · Mercado · por revisar")
@@ -55,7 +55,7 @@ final class NotifierTests: XCTestCase {
     func testProgramarVencimientoUnaSolaPeticionConIdFijo() async throws {
         let centro = FakeNotificationCenter()
         let now = Date(timeIntervalSince1970: 1_790_000_000)
-        let n = SystemNotifier(centro: centro, reloj: { now })
+        let n = SystemNotifier(centro: centro, clock: { now })
         await n.scheduleExpiry(
             now.addingTimeInterval(5 * 86_400), text: "Vuelve a instalarla desde Xcode con el cable.")
         await n.scheduleExpiry(
@@ -69,7 +69,7 @@ final class NotifierTests: XCTestCase {
     func testYaVencidoNoProgramaNada() async {
         let centro = FakeNotificationCenter()
         let now = Date()
-        let n = SystemNotifier(centro: centro, reloj: { now })
+        let n = SystemNotifier(centro: centro, clock: { now })
         await n.scheduleExpiry(now.addingTimeInterval(-60), text: "x")
         let pending = await centro.pending()
         XCTAssertTrue(pending.isEmpty)

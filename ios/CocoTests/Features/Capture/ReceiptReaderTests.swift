@@ -3,39 +3,39 @@ import XCTest
 @testable import Coco
 
 final class ReceiptReaderTests: XCTestCase {
-    func testFiltraLosPreferidosContraLosSoportados() {
+    func testFiltersThePreferredAgainstTheSupported() {
         XCTAssertEqual(
-            ReceiptReader.idiomasDisponibles(["es-CO", "es-ES", "en-US"], soportados: ["es-ES", "en-US"]),
+            ReceiptReader.availableLanguages(["es-CO", "es-ES", "en-US"], supported: ["es-ES", "en-US"]),
             ["es-ES", "en-US"])
         XCTAssertEqual(
-            ReceiptReader.idiomasDisponibles(["es-CO", "es-ES", "en-US"], soportados: ["en-US", "es-CO", "fr-FR"]),
+            ReceiptReader.availableLanguages(["es-CO", "es-ES", "en-US"], supported: ["en-US", "es-CO", "fr-FR"]),
             ["es-CO", "en-US"])
     }
 
-    func testSinNingunoSoportadoCaeAIngles() {
-        XCTAssertEqual(ReceiptReader.idiomasDisponibles(["es-CO", "es-ES"], soportados: []), ["en-US"])
+    func testWithNoneSupportedFallsBackToEnglish() {
+        XCTAssertEqual(ReceiptReader.availableLanguages(["es-CO", "es-ES"], supported: []), ["en-US"])
     }
 
-    func testLasLineasSalenDeArribaAbajo() {
-        let text = ReceiptReader.ordenar([
+    func testLinesComeOutTopToBottom() {
+        let text = ReceiptReader.orderedText([
             (text: "TOTAL 45.000", y: 0.2), (text: "D1", y: 0.9), (text: "Leche", y: 0.5),
         ])
         XCTAssertEqual(text, "D1\nLeche\nTOTAL 45.000")
     }
 
     /// El doble que usa el formulario en pruebas: responde lo que se le diga.
-    func testElDobleCumpleElProtocolo() async throws {
-        let lector = FakeReceiptReader(text: "D1\nTOTAL 45.000")
-        let imagen = try XCTUnwrap(TestImage.cuadrada(10).cgImage)
-        let text = try await lector.text(de: imagen)
+    func testTheDoubleConformsToTheProtocol() async throws {
+        let reader = FakeReceiptReader(text: "D1\nTOTAL 45.000")
+        let image = try XCTUnwrap(TestImage.square(10).cgImage)
+        let text = try await reader.text(from: image)
         XCTAssertEqual(text, "D1\nTOTAL 45.000")
-        XCTAssertEqual(lector.lecturas, 1)
+        XCTAssertEqual(reader.reads, 1)
     }
 }
 
 final class FakeReceiptReader: ReceiptTextReader, @unchecked Sendable {
     private let lock = NSLock()
-    private(set) var lecturas = 0
+    private(set) var reads = 0
     var text: String
     var error: Error?
 
@@ -44,22 +44,22 @@ final class FakeReceiptReader: ReceiptTextReader, @unchecked Sendable {
         self.error = error
     }
 
-    func text(de imagen: CGImage) async throws -> String {
-        lock.withLock { lecturas += 1 }
+    func text(from image: CGImage) async throws -> String {
+        lock.withLock { reads += 1 }
         if let error { throw error }
         return text
     }
 }
 
 enum TestImage {
-    static func cuadrada(_ lado: CGFloat) -> UIImage { imagen(ancho: lado, alto: lado) }
+    static func square(_ side: CGFloat) -> UIImage { image(width: side, height: side) }
 
-    static func imagen(ancho: CGFloat, alto: CGFloat) -> UIImage {
-        let formato = UIGraphicsImageRendererFormat()
-        formato.scale = 1
-        return UIGraphicsImageRenderer(size: CGSize(width: ancho, height: alto), format: formato).image { ctx in
+    static func image(width: CGFloat, height: CGFloat) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format).image { ctx in
             UIColor.white.setFill()
-            ctx.fill(CGRect(x: 0, y: 0, width: ancho, height: alto))
+            ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
         }
     }
 }

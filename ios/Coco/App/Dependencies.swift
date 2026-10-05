@@ -15,11 +15,11 @@ final class Dependencies {
     let api: APIClient
     let session: Session
     let queue: CaptureQueue
-    let capturador: QueuedCapturer
+    let capturer: QueuedCapturer
     let tree: TreeSynchronizer
     let puente: WebBridge
     let notifier: Notifier
-    let conectividad: Connectivity
+    let connectivity: Connectivity
     let enrutador: Router
     let defaults: UserDefaults
 
@@ -40,10 +40,10 @@ final class Dependencies {
         almacenDeCola: QueueStore? = nil,
         almacenDelArbol: TreeStore? = nil,
         notifier: Notifier = SystemNotifier(),
-        conectividad: Connectivity? = nil,
+        connectivity: Connectivity? = nil,
         defaults: UserDefaults = .standard,
         registrarIntents: @escaping IntentRegistration = {
-            IntentDependencies.register(capturador: $0, navigation: $1)
+            IntentDependencies.register(capturer: $0, navigation: $1)
         },
         registrarTareas: @escaping TaskRegistration = {
             BackgroundJobs.register(session: $0, queue: $1, tree: $2, notifier: $3)
@@ -51,7 +51,7 @@ final class Dependencies {
     ) {
         self.configuration = configuration
         self.defaults = defaults
-        self.conectividad = conectividad ?? Connectivity()
+        self.connectivity = connectivity ?? Connectivity()
         let api = APIClient(configuration: configuration, transport: transport)
         self.api = api
         let session = NativeSession(api: api, llavero: llavero)
@@ -65,16 +65,16 @@ final class Dependencies {
         self.notifier = contador
 
         let queue = CaptureQueue(
-            almacen: almacenDeCola ?? Self.almacenDeColaPorDefecto(),
-            enviador: APICaptureSender(api: api, session: session),
+            store: almacenDeCola ?? Self.almacenDeColaPorDefecto(),
+            sender: APICaptureSender(api: api, session: session),
             session: session,
             notifier: contador
         )
         self.queue = queue
-        let capturador = QueuedCapturer(queue: queue, notifier: contador)
-        self.capturador = capturador
+        let capturer = QueuedCapturer(queue: queue, notifier: contador)
+        self.capturer = capturer
         let tree = TreeSynchronizer(
-            api: api, session: session, almacen: almacenDelArbol ?? Self.almacenDelArbolPorDefecto())
+            api: api, session: session, store: almacenDelArbol ?? Self.almacenDelArbolPorDefecto())
         self.tree = tree
         puente = WebBridge(session: session, configuration: configuration, navigation: enrutador)
 
@@ -82,7 +82,7 @@ final class Dependencies {
 
         // Antes de que iOS pueda lanzar un intent o una tarea de fondo: en el
         // init de la App, no después.
-        registrarIntents(capturador, enrutador)
+        registrarIntents(capturer, enrutador)
         intentsRegistrados = true
         registrarTareas(session, queue, tree, contador)
         tareasRegistradas = true
@@ -95,7 +95,7 @@ final class Dependencies {
         guard !arrancada else { return }
         arrancada = true
         AppLog.app.info("Arranca contra \(self.configuration.base.absoluteString, privacy: .public)")
-        conectividad.start()
+        connectivity.start()
         observar()
         puente.cargarInicio()
         await session.restore()
@@ -122,10 +122,10 @@ final class Dependencies {
     /// Un formulario nuevo con el árbol que haya en el teléfono.
     func nuevoModeloDelFormulario() async -> FormModel {
         FormModel(
-            indice: await tree.indice(), api: api, session: session, capturador: capturador, conectividad: conectividad)
+            index: await tree.index(), api: api, session: session, capturer: capturer, connectivity: connectivity)
     }
 
-    var perfil: PublicProfile? {
+    var profile: PublicProfile? {
         switch estadoDeSesion {
         case .active(let p): p
         case .offline(let last): last
@@ -133,7 +133,7 @@ final class Dependencies {
         }
     }
 
-    var esAdmin: Bool { perfil?.role == "admin" }
+    var esAdmin: Bool { profile?.role == "admin" }
 
     var haySesion: Bool {
         switch estadoDeSesion {
@@ -155,7 +155,7 @@ final class Dependencies {
             })
         observadores.append(
             Task { [weak self] in
-                guard let changes = self?.conectividad.changes else { return }
+                guard let changes = self?.connectivity.changes else { return }
                 for await hay in changes where hay {
                     guard let self else { return }
                     _ = await self.queue.process()
@@ -171,7 +171,7 @@ final class Dependencies {
             // Con documento cargado, la web recibe la sesión sin recargar; sin
             // él, la pedirá ella por el puente al arrancar.
             if puente.hayDocumento { await puente.empujarSesion() }
-            await queue.sesionVolvio()
+            await queue.sessionReturned()
             Task { _ = await self.queue.process() }
             Task { await self.tree.refreshIfNeeded() }
             await pedirPermisoDeAvisosLaPrimeraVez()

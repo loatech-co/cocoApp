@@ -27,7 +27,7 @@ final class APIClientTests: XCTestCase {
         ])
         let nodos: [TreeNode] = try await cliente(t).send(RequestBuilder.categories(), token: "tok")
         XCTAssertEqual(nodos.map(\.name), ["Hogar"])
-        XCTAssertEqual(t.recibidas.first?.url?.absoluteString, "https://api.coco.invalid/api/v1/categories")
+        XCTAssertEqual(t.received.first?.url?.absoluteString, "https://api.coco.invalid/api/v1/categories")
     }
 
     func test401() async {
@@ -54,11 +54,11 @@ final class APIClientTests: XCTestCase {
     }
 
     func testSinRedYTiempoAgotado() async {
-        let noNetwork = await error(FakeTransport([.falla(URLError(.notConnectedToInternet))]))
+        let noNetwork = await error(FakeTransport([.failure(URLError(.notConnectedToInternet))]))
         XCTAssertEqual(noNetwork, .noNetwork(.notConnectedToInternet))
         XCTAssertEqual(noNetwork?.isNetworkError, true)
         XCTAssertEqual(noNetwork?.isRetryable, true)
-        let tiempo = await error(FakeTransport([.falla(URLError(.timedOut))]))
+        let tiempo = await error(FakeTransport([.failure(URLError(.timedOut))]))
         XCTAssertEqual(tiempo, .timedOut)
     }
 
@@ -72,8 +72,8 @@ final class APIClientTests: XCTestCase {
     func test204NoDecodifica() async throws {
         let t = FakeTransport([.http(204, "")])
         try await cliente(t).sendWithoutBody(RequestBuilder.logout(refreshToken: "r1"), token: nil)
-        XCTAssertEqual(t.recibidas.count, 1)
-        XCTAssertNil(t.recibidas.first?.value(forHTTPHeaderField: "Authorization"))
+        XCTAssertEqual(t.received.count, 1)
+        XCTAssertNil(t.received.first?.value(forHTTPHeaderField: "Authorization"))
     }
 
     func testSubirUsaMultipartYBearer() async throws {
@@ -88,7 +88,7 @@ final class APIClientTests: XCTestCase {
         let soportes: [Attachment] = try await cliente(t).upload(
             parts: [part], to: "/transactions/42/soportes", token: "tok")
         XCTAssertEqual(soportes.first?.id, 5)
-        let r = try XCTUnwrap(t.recibidas.first)
+        let r = try XCTUnwrap(t.received.first)
         XCTAssertTrue(r.value(forHTTPHeaderField: "Content-Type")?.hasPrefix("multipart/form-data; boundary=") ?? false)
         XCTAssertEqual(r.value(forHTTPHeaderField: "Authorization"), "Bearer tok")
     }

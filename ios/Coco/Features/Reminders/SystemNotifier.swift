@@ -33,28 +33,28 @@ struct SystemNotifier: Notifier {
     static let destinoDeCaptura = "coco://capturas"
 
     let centro: NotificationCenterClient
-    let reloj: @Sendable () -> Date
+    let clock: @Sendable () -> Date
 
     init(
         centro: NotificationCenterClient = UNUserNotificationCenter.current(),
-        reloj: @Sendable @escaping () -> Date = { Date() }
+        clock: @Sendable @escaping () -> Date = { Date() }
     ) {
         self.centro = centro
-        self.reloj = reloj
+        self.clock = clock
     }
 
     /// Puro: lo que se lee de reojo. El resumen lo escribe la API.
-    static func textoDeCaptura(_ r: SavedResult) -> (titulo: String, body: String) {
-        let titulo: String
+    static func textoDeCaptura(_ r: SavedResult) -> (title: String, body: String) {
+        let title: String
         if r.duplicate {
-            titulo = "Ya estaba registrado"
+            title = "Ya estaba registrado"
         } else if r.merged {
-            titulo = "Era el mismo pago"
+            title = "Era el mismo pago"
         } else {
-            titulo = "Gasto registrado"
+            title = "Gasto registrado"
         }
         let body = r.needsReview ? "\(r.summary) · por revisar" : r.summary
-        return (titulo, body)
+        return (title, body)
     }
 
     func requestPermission() async -> Bool {
@@ -68,13 +68,13 @@ struct SystemNotifier: Notifier {
     func captureSaved(_ r: SavedResult, source: CaptureSource) async {
         let text = Self.textoDeCaptura(r)
         await mostrar(
-            id: "captura-\(r.transactionId)", titulo: text.titulo, body: text.body,
+            id: "captura-\(r.transactionId)", title: text.title, body: text.body,
             categoria: Self.categoriaDeCaptura)
     }
 
     func captureFailed(reason: String) async {
         await mostrar(
-            id: "captura-fallida-\(UUID().uuidString)", titulo: "No se pudo registrar", body: reason,
+            id: "captura-fallida-\(UUID().uuidString)", title: "No se pudo registrar", body: reason,
             categoria: Self.categoriaDeCaptura)
     }
 
@@ -82,16 +82,16 @@ struct SystemNotifier: Notifier {
         guard count > 0 else { return }
         let body = count == 1 ? "Se envió 1 captura pendiente" : "Se enviaron \(count) capturas pendientes"
         await mostrar(
-            id: "cola-enviada", titulo: "Capturas enviadas", body: body, categoria: Self.categoriaDeCaptura)
+            id: "cola-enviada", title: "Capturas enviadas", body: body, categoria: Self.categoriaDeCaptura)
     }
 
     /// Un solo aviso con id fijo: programarlo dos veces lo reemplaza.
     func scheduleExpiry(_ expiresAt: Date, text: String) async {
         centro.quitarPendientes(ids: [Self.idDeVencimiento])
-        let now = reloj()
+        let now = clock()
         guard let momento = ExpiryReminder.momentoDelAviso(expiresAt: expiresAt, now: now) else { return }
         let contenido = UNMutableNotificationContent()
-        contenido.title = ExpiryReminder.text(expiresAt: expiresAt, now: momento).titulo
+        contenido.title = ExpiryReminder.text(expiresAt: expiresAt, now: momento).title
         contenido.body = text
         contenido.sound = .default
         let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: momento)
@@ -104,9 +104,9 @@ struct SystemNotifier: Notifier {
         try? await centro.setBadge(max(0, n))
     }
 
-    private func mostrar(id: String, titulo: String, body: String, categoria: String) async {
+    private func mostrar(id: String, title: String, body: String, categoria: String) async {
         let contenido = UNMutableNotificationContent()
-        contenido.title = titulo
+        contenido.title = title
         contenido.body = body
         contenido.sound = .default
         contenido.categoryIdentifier = categoria

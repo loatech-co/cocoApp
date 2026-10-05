@@ -26,13 +26,13 @@ final class StoredFormatCompatibilityTests: XCTestCase {
         text: "t", merchant: "c", amount: "1", date: "2026-01-02", period: "2026-01", fileName: "f.jpg",
         categoryId: 3, note: "n")
 
-    private func pendiente(_ fase: PendingCapture.Phase) -> PendingCapture {
+    private func pending(_ phase: PendingCapture.Phase) -> PendingCapture {
         PendingCapture(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID(),
-            creadaEn: Date(timeIntervalSinceReferenceDate: 0), source: .iosPhoto, body: Self.body,
-            fotoRelativa: "Fotos/x.jpg", fase: fase, intentos: 2,
-            proximoIntento: Date(timeIntervalSinceReferenceDate: 50),
-            ultimoError: "e", resultadoDeTexto: Self.result)
+            createdAt: Date(timeIntervalSinceReferenceDate: 0), source: .iosPhoto, body: Self.body,
+            photoPath: "Fotos/x.jpg", phase: phase, attempts: 2,
+            nextAttempt: Date(timeIntervalSinceReferenceDate: 50),
+            lastError: "e", textResult: Self.result)
     }
 
     func testLaCapturaPendienteConservaSusClavesEnCadaFase() throws {
@@ -40,21 +40,21 @@ final class StoredFormatCompatibilityTests: XCTestCase {
             #"{"creadaEn":0,"cuerpo":{"category_id":3,"comercio":"c","fecha":"2026-01-02","monto":"1","nombre_de_archivo":"f.jpg","nota":"n","periodo":"2026-01","texto":"t"},"fase":FASE,"fotoRelativa":"Fotos/x.jpg","id":"00000000-0000-0000-0000-000000000001","intentos":2,"origen":"ios_photo","proximoIntento":50,"resultadoDeTexto":{"fusionado":true,"porRevisar":true,"repetido":false,"resumen":"r","terminadaEn":100,"transactionId":9},"ultimoError":"e"}"#
         let result =
             #"{"fusionado":true,"porRevisar":true,"repetido":false,"resumen":"r","terminadaEn":100,"transactionId":9}"#
-        let fases: [(PendingCapture.Phase, String)] = [
-            (.porEnviar, #"{"porEnviar":{}}"#),
-            (.porSubirFoto(transactionId: 4), #"{"porSubirFoto":{"transactionId":4}}"#),
-            (.esperandoSesion, #"{"esperandoSesion":{}}"#),
-            (.hecha(Self.result), #"{"hecha":{"_0":RES}}"#.replacingOccurrences(of: "RES", with: result)),
+        let phases: [(PendingCapture.Phase, String)] = [
+            (.toSend, #"{"porEnviar":{}}"#),
+            (.photoToUpload(transactionId: 4), #"{"porSubirFoto":{"transactionId":4}}"#),
+            (.awaitingSession, #"{"esperandoSesion":{}}"#),
+            (.done(Self.result), #"{"hecha":{"_0":RES}}"#.replacingOccurrences(of: "RES", with: result)),
             (.failed(reason: "m"), #"{"fallida":{"motivo":"m"}}"#),
         ]
-        for (fase, key) in fases {
-            try idaYVuelta(pendiente(fase), base.replacingOccurrences(of: "FASE", with: key))
+        for (phase, key) in phases {
+            try idaYVuelta(pending(phase), base.replacingOccurrences(of: "FASE", with: key))
         }
     }
 
     func testElArbolGuardadoConservaSusClaves() throws {
         let tree = SavedTree(
-            raices: [
+            roots: [
                 TreeNode(
                     id: 1, name: "A", parentId: nil, keywords: ["k"], isArchived: true, isStatic: true,
                     children: [TreeNode(id: 2, name: "B", parentId: 1)])
@@ -73,15 +73,15 @@ final class StoredFormatCompatibilityTests: XCTestCase {
         XCTAssertEqual(CaptureSource.iosPhoto.rawValue, "ios_photo")
         XCTAssertEqual(TreeLevel.centro.rawValue, "centro")
         XCTAssertEqual(TreeLevel.categoria.rawValue, "categoria")
-        XCTAssertEqual(TreeLevel.concepto.rawValue, "concepto")
+        XCTAssertEqual(TreeLevel.concept.rawValue, "concepto")
         XCTAssertEqual(KeychainKey.refreshToken.rawValue, "refresh_token")
     }
 
     func testElPerfilConservaSusClaves() throws {
-        let perfil = PublicProfile(
+        let profile = PublicProfile(
             id: 7, email: "x@coco.invalid", displayName: "X", role: "owner", status: "active", createdAt: "2026")
         try idaYVuelta(
-            perfil,
+            profile,
             #"{"created_at":"2026","display_name":"X","email":"x@coco.invalid","id":7,"role":"owner","status":"active"}"#
         )
     }

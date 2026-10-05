@@ -10,12 +10,12 @@ final actor NativeSession: Session {
         var expiraEn: Date
         /// El `user` tal como llegó: la web lo recibe sin reescribir una clave.
         var userJSON: Data
-        var perfil: PublicProfile
+        var profile: PublicProfile
     }
 
     private let api: APIClient
     private let llavero: KeychainStore
-    private let reloj: @Sendable () -> Date
+    private let clock: @Sendable () -> Date
     /// Mayor que los 60 s de la web: lo que la web recibe por el puente no
     /// debe disparar nunca su propio bucle de renovación.
     private let margen: TimeInterval
@@ -30,12 +30,12 @@ final actor NativeSession: Session {
     private nonisolated let continuation: AsyncStream<SessionState>.Continuation
 
     init(
-        api: APIClient, llavero: KeychainStore, reloj: @Sendable @escaping () -> Date = Date.init,
+        api: APIClient, llavero: KeychainStore, clock: @Sendable @escaping () -> Date = Date.init,
         margen: TimeInterval = 120
     ) {
         self.api = api
         self.llavero = llavero
-        self.reloj = reloj
+        self.clock = clock
         self.margen = margen
         let (stream, cont) = AsyncStream.makeStream(of: SessionState.self)
         changes = stream
@@ -50,7 +50,7 @@ final actor NativeSession: Session {
     /// sesión. Un fallo de red deja el Keychain intacto y pasa a sin conexión.
     func restore() async {
         guard let refresh = try? llavero.read(.refreshToken), !refresh.isEmpty else {
-            publicar(.signedOut)
+            publish(.signedOut)
             return
         }
         // Los errores ya dejaron el estado que toca (sinSesion o sinConexion).
@@ -63,7 +63,7 @@ final actor NativeSession: Session {
         let (response, userJSON) = try Self.leerSesion(data)
         guard let refresh = response.refreshToken else { throw APIError.unreadableResponse }
         try llavero.write(refresh, at: .refreshToken)
-        publicar(tokens: Self.tokens(de: response, userJSON: userJSON, now: reloj()))
+        publish(tokens: Self.tokens(de: response, userJSON: userJSON, now: clock()))
         return response.user
     }
 
@@ -82,7 +82,7 @@ final actor NativeSession: Session {
     func webSession() async throws -> WebSession {
         let access = try await validAccessToken()
         guard let tokens, tokens.access == access else { throw SessionError.signedOut }
-        let restantes = Int(tokens.expiraEn.timeIntervalSince(reloj()).rounded(.down))
+        let restantes = Int(tokens.expiraEn.timeIntervalSince(clock()).rounded(.down))
         return WebSession(accessToken: access, expiresIn: restantes, userJSON: tokens.userJSON)
     }
 
@@ -107,8 +107,8 @@ final actor NativeSession: Session {
     // MARK: Renovación
 
     private func renovarCompartida() async throws -> TokenPair {
-        if let enVuelo = renovacionEnVuelo {
-            return try await enVuelo.value
+        if let inFlight = renovacionEnVuelo {
+            return try await inFlight.value
         }
         let task = Task { try await self.refresh(conReintentoDeRed: true) }
         renovacionEnVuelo = task
@@ -126,9 +126,9 @@ final actor NativeSession: Session {
             cerrarLocalmente()
             throw SessionError.signedOut
         }
-        var intentos = conReintentoDeRed ? 2 : 1
+        var attempts = conReintentoDeRed ? 2 : 1
         while true {
-            intentos -= 1
+            attempts -= 1
             do {
                 let data = try await api.sendRaw(
                     RequestBuilder.refresh(refreshToken: refresh), token: nil)
@@ -138,39 +138,39 @@ final actor NativeSession: Session {
                 if let nuevo = response.refreshToken {
                     try llavero.write(nuevo, at: .refreshToken)
                 }
-                let tokens = Self.tokens(de: response, userJSON: userJSON, now: reloj())
-                publicar(tokens: tokens)
+                let tokens = Self.tokens(de: response, userJSON: userJSON, now: clock())
+                publish(tokens: tokens)
                 return tokens
             } catch APIError.unauthenticated {
                 cerrarLocalmente()
                 throw SessionError.signedOut
-            } catch let error as APIError where error.isNetworkError && intentos > 0 {
+            } catch let error as APIError where error.isNetworkError && attempts > 0 {
                 continue
             } catch {
                 // Red (ya reintentada), servidor caído o respuesta rara: nada
                 // de eso dice que la sesión murió. Se conserva el Keychain.
-                publicar(.offline(last: tokens?.perfil))
+                publish(.offline(last: tokens?.profile))
                 throw SessionError.offline
             }
         }
     }
 
     private func vigente(_ t: TokenPair) -> Bool {
-        t.expiraEn.timeIntervalSince(reloj()) >= margen
+        t.expiraEn.timeIntervalSince(clock()) >= margen
     }
 
-    private func publicar(tokens nuevos: TokenPair) {
+    private func publish(tokens nuevos: TokenPair) {
         tokens = nuevos
-        publicar(.active(nuevos.perfil))
+        publish(.active(nuevos.profile))
     }
 
     private func cerrarLocalmente() {
         try? llavero.delete(.refreshToken)
         tokens = nil
-        publicar(.signedOut)
+        publish(.signedOut)
     }
 
-    private func publicar(_ state: SessionState) {
+    private func publish(_ state: SessionState) {
         guard state != estadoActual else { return }
         estadoActual = state
         continuation.yield(state)
@@ -181,7 +181,7 @@ final actor NativeSession: Session {
     private static func tokens(de r: SessionResponse, userJSON: Data, now: Date) -> TokenPair {
         TokenPair(
             access: r.accessToken, expiraEn: now.addingTimeInterval(TimeInterval(r.expiresIn)), userJSON: userJSON,
-            perfil: r.user)
+            profile: r.user)
     }
 
     /// Decodifica el sobre y, aparte, recorta el `user` crudo del cuerpo. Si

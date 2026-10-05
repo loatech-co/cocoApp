@@ -3,56 +3,56 @@ import SwiftUI
 /// Una pantalla: monto, concepto, nota y foto. Guardar encola y cierra sin
 /// esperar a la red; lo que pase después lo cuenta la cola por aviso.
 struct QuickFormView: View {
-    @Bindable var modelo: FormModel
-    let abrirCamaraAlEntrar: Bool
-    let alCerrar: () -> Void
+    @Bindable var model: FormModel
+    let opensCameraOnAppear: Bool
+    let onClose: () -> Void
 
-    @State private var camaraAbierta = false
-    @State private var buscadorAbierto = false
+    @State private var isCameraOpen = false
+    @State private var isSearchOpen = false
 
-    init(modelo: FormModel, abrirCamaraAlEntrar: Bool, alCerrar: @escaping () -> Void) {
-        self.modelo = modelo
-        self.abrirCamaraAlEntrar = abrirCamaraAlEntrar
-        self.alCerrar = alCerrar
+    init(model: FormModel, opensCameraOnAppear: Bool, onClose: @escaping () -> Void) {
+        self.model = model
+        self.opensCameraOnAppear = opensCameraOnAppear
+        self.onClose = onClose
     }
 
     private var date: Binding<Date> {
-        Binding(get: { modelo.date }, set: { modelo.cambiarFecha($0) })
+        Binding(get: { model.date }, set: { model.changeDate($0) })
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    AmountField(text: $modelo.amount)
+                    AmountField(text: $model.amount)
                 } header: {
                     Text("Monto").textCase(nil)
                 }
 
                 Section {
-                    filaDeConcepto
+                    conceptRow
                 } header: {
                     Text("Concepto").textCase(nil)
                 }
 
                 Section {
                     DatePicker("Fecha", selection: date, displayedComponents: .date)
-                    if let merchant = modelo.merchant, !merchant.isEmpty {
+                    if let merchant = model.merchant, !merchant.isEmpty {
                         LabeledContent("Comercio", value: merchant)
                     }
-                    TextField("Nota (opcional)", text: $modelo.note, axis: .vertical)
+                    TextField("Nota (opcional)", text: $model.note, axis: .vertical)
                         .lineLimit(1...3)
                 } header: {
                     Text("Detalles").textCase(nil)
                 }
 
                 Section {
-                    seccionDeFoto
+                    photoSection
                 } header: {
                     Text("Recibo").textCase(nil)
                 }
 
-                if let error = modelo.error {
+                if let error = model.error {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.red)
@@ -63,53 +63,53 @@ struct QuickFormView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { alCerrar() }
+                    Button("Cancelar") { onClose() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Guardar") {
                         // Encola y cierra: la cola avisa cuando se envíe.
-                        Task { await modelo.confirmar() }
-                        alCerrar()
+                        Task { await model.confirm() }
+                        onClose()
                     }
-                    .disabled(!modelo.puedeConfirmar || modelo.leyendo)
+                    .disabled(!model.canConfirm || model.isReading)
                 }
             }
-            .sheet(isPresented: $buscadorAbierto) {
-                ConceptSearchView(modelo: modelo)
+            .sheet(isPresented: $isSearchOpen) {
+                ConceptSearchView(model: model)
             }
-            .fullScreenCover(isPresented: $camaraAbierta) {
+            .fullScreenCover(isPresented: $isCameraOpen) {
                 CameraPicker(
-                    alCapturar: { imagen in
-                        camaraAbierta = false
-                        Task { await modelo.leerFoto(imagen) }
+                    onCapture: { image in
+                        isCameraOpen = false
+                        Task { await model.readPhoto(image) }
                     },
-                    alCancelar: { camaraAbierta = false }
+                    onCancel: { isCameraOpen = false }
                 )
                 .ignoresSafeArea()
             }
-            .onChange(of: modelo.abrirBuscador) { _, abrir in
-                if abrir {
-                    modelo.abrirBuscador = false
-                    buscadorAbierto = true
+            .onChange(of: model.showsSearch) { _, open in
+                if open {
+                    model.showsSearch = false
+                    isSearchOpen = true
                 }
             }
             .task {
-                if abrirCamaraAlEntrar { camaraAbierta = true }
+                if opensCameraOnAppear { isCameraOpen = true }
             }
         }
     }
 
     @ViewBuilder
-    private var filaDeConcepto: some View {
+    private var conceptRow: some View {
         Button {
-            buscadorAbierto = true
+            isSearchOpen = true
         } label: {
             HStack {
-                if let concepto = modelo.concepto {
+                if let concept = model.concept {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
-                            Text(concepto.name)
-                            if modelo.conceptoSugerido {
+                            Text(concept.name)
+                            if model.isConceptSuggested {
                                 Text("sugerido")
                                     .font(.caption)
                                     .padding(.horizontal, 6)
@@ -117,7 +117,7 @@ struct QuickFormView: View {
                                     .background(.tint.opacity(0.15), in: Capsule())
                             }
                         }
-                        Text(concepto.rutaLegible)
+                        Text(concept.rutaLegible)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -131,38 +131,38 @@ struct QuickFormView: View {
             }
         }
         .tint(.primary)
-        if modelo.concepto != nil {
-            Button("Quitar concepto", role: .destructive) { modelo.quitarConcepto() }
+        if model.concept != nil {
+            Button("Quitar concepto", role: .destructive) { model.clearConcept() }
         }
     }
 
     @ViewBuilder
-    private var seccionDeFoto: some View {
-        if let photo = modelo.photo {
+    private var photoSection: some View {
+        if let photo = model.photo {
             Image(uiImage: photo)
                 .resizable()
                 .scaledToFit()
                 .frame(maxHeight: 220)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
-        if modelo.leyendo {
+        if model.isReading {
             HStack(spacing: 8) {
                 ProgressView()
                 Text("Leyendo el recibo…").foregroundStyle(.secondary)
             }
-        } else if modelo.noNetwork {
+        } else if model.noNetwork {
             Label("Sin conexión: escribe los datos; la foto se adjuntará igual", systemImage: "wifi.slash")
                 .foregroundStyle(.secondary)
         }
         Button {
-            camaraAbierta = true
+            isCameraOpen = true
         } label: {
             Label(
-                modelo.photo == nil ? (CameraPicker.hayCamara ? "Tomar foto" : "Elegir foto") : "Cambiar foto",
+                model.photo == nil ? (CameraPicker.hayCamara ? "Tomar foto" : "Elegir foto") : "Cambiar foto",
                 systemImage: "camera")
         }
-        if modelo.photo != nil {
-            Button("Quitar foto", role: .destructive) { modelo.quitarFoto() }
+        if model.photo != nil {
+            Button("Quitar foto", role: .destructive) { model.removePhoto() }
         }
     }
 }

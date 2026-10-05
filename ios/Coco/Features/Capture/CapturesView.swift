@@ -8,7 +8,7 @@ struct CapturesView: View {
     private let navigation: any Navigation
 
     @State private var captures: [PendingCapture] = []
-    @State private var cargado = false
+    @State private var loaded = false
 
     init(queue: CaptureQueue, navigation: any Navigation) {
         self.queue = queue
@@ -17,19 +17,19 @@ struct CapturesView: View {
 
     private var pending: [PendingCapture] {
         captures.filter {
-            if case .porEnviar = $0.fase { return true }
-            if case .porSubirFoto = $0.fase { return true }
+            if case .toSend = $0.phase { return true }
+            if case .photoToUpload = $0.phase { return true }
             return false
         }
     }
-    private var esperandoSesion: [PendingCapture] { captures.filter { $0.fase == .esperandoSesion } }
-    private var fallidas: [PendingCapture] {
-        captures.filter { if case .failed = $0.fase { return true } else { return false } }
+    private var awaitingSession: [PendingCapture] { captures.filter { $0.phase == .awaitingSession } }
+    private var failedCaptures: [PendingCapture] {
+        captures.filter { if case .failed = $0.phase { return true } else { return false } }
     }
-    private var hechas: [PendingCapture] {
-        let limite = Date.now.addingTimeInterval(-30 * 86_400)
+    private var doneCaptures: [PendingCapture] {
+        let limit = Date.now.addingTimeInterval(-30 * 86_400)
         return captures.filter {
-            if case .hecha(let r) = $0.fase { return r.finishedAt >= limite }
+            if case .done(let r) = $0.phase { return r.finishedAt >= limit }
             return false
         }
     }
@@ -37,7 +37,7 @@ struct CapturesView: View {
     var body: some View {
         NavigationStack {
             List {
-                if !cargado {
+                if !loaded {
                     ProgressView()
                 } else if captures.isEmpty {
                     ContentUnavailableView(
@@ -46,10 +46,10 @@ struct CapturesView: View {
                         description: Text("Lo que anotes desde el teléfono aparece aquí, con red o sin ella.")
                     )
                 }
-                seccion("Pendientes de envío · \(pending.count)", pending)
-                seccion("Esperando sesión", esperandoSesion)
-                seccion("Con error", fallidas)
-                seccion("Enviadas en los últimos 30 días", hechas)
+                section("Pendientes de envío · \(pending.count)", pending)
+                section("Esperando sesión", awaitingSession)
+                section("Con error", failedCaptures)
+                section("Enviadas en los últimos 30 días", doneCaptures)
                 Section {
                     Button {
                         navigation.go(.welcome)
@@ -69,32 +69,32 @@ struct CapturesView: View {
                 }
             }
             .task {
-                await queue.purgar()
+                await queue.purge()
                 captures = await queue.all()
-                cargado = true
-                for await lista in queue.changes {
-                    captures = lista
+                loaded = true
+                for await list in queue.changes {
+                    captures = list
                 }
             }
         }
     }
 
     @ViewBuilder
-    private func seccion(_ titulo: String, _ elementos: [PendingCapture]) -> some View {
-        if !elementos.isEmpty {
+    private func section(_ title: String, _ items: [PendingCapture]) -> some View {
+        if !items.isEmpty {
             Section {
-                ForEach(elementos) { capture in
+                ForEach(items) { capture in
                     CaptureRow(capture: capture)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            if !capture.estaHecha {
+                            if !capture.isDone {
                                 Button("Descartar", role: .destructive) {
                                     Task { try? await queue.discard(id: capture.id) }
                                 }
                             }
-                            if capture.sePuedeReintentar {
+                            if capture.canRetry {
                                 Button("Reintentar") {
                                     Task {
-                                        await queue.reintentarAhora(id: capture.id)
+                                        await queue.retryNow(id: capture.id)
                                         _ = await queue.process(budget: .seconds(25))
                                     }
                                 }
@@ -103,7 +103,7 @@ struct CapturesView: View {
                         }
                 }
             } header: {
-                Text(titulo).textCase(nil)
+                Text(title).textCase(nil)
             }
         }
     }
@@ -115,7 +115,7 @@ private struct CaptureRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack {
-                Text(titulo).lineLimit(1)
+                Text(title).lineLimit(1)
                 Spacer()
                 if let amount = capture.body.amount {
                     Text(PesoFormat.format(amount)).monospacedDigit()
@@ -123,40 +123,40 @@ private struct CaptureRow: View {
             }
             Text(state)
                 .font(.footnote)
-                .foregroundStyle(capture.esFallida ? .red : .secondary)
-            if let error = capture.ultimoError, !capture.estaHecha {
+                .foregroundStyle(capture.isFailed ? .red : .secondary)
+            if let error = capture.lastError, !capture.isDone {
                 Text(error).font(.caption).foregroundStyle(.secondary).lineLimit(2)
             }
         }
         .padding(.vertical, 2)
     }
 
-    private var titulo: String {
-        if case .hecha(let r) = capture.fase, !r.summary.isEmpty { return r.summary }
+    private var title: String {
+        if case .done(let r) = capture.phase, !r.summary.isEmpty { return r.summary }
         if let merchant = capture.body.merchant, !merchant.isEmpty { return merchant }
         if let text = capture.body.text?.split(separator: "\n").first { return String(text) }
         return "Captura"
     }
 
     private var state: String {
-        let date = capture.body.date ?? BogotaDate.day(capture.creadaEn)
-        switch capture.fase {
-        case .porEnviar: return "\(date) · se enviará cuando haya red"
-        case .porSubirFoto: return "\(date) · registrada, subiendo la foto"
-        case .esperandoSesion: return "\(date) · inicia sesión para enviarla"
+        let date = capture.body.date ?? BogotaDate.day(capture.createdAt)
+        switch capture.phase {
+        case .toSend: return "\(date) · se enviará cuando haya red"
+        case .photoToUpload: return "\(date) · registrada, subiendo la foto"
+        case .awaitingSession: return "\(date) · inicia sesión para enviarla"
         case .failed(let reason): return "\(date) · \(reason)"
-        case .hecha(let r): return r.needsReview ? "\(date) · por revisar" : date
+        case .done(let r): return r.needsReview ? "\(date) · por revisar" : date
         }
     }
 }
 
 extension PendingCapture {
-    fileprivate var estaHecha: Bool { if case .hecha = fase { return true } else { return false } }
-    fileprivate var esFallida: Bool { if case .failed = fase { return true } else { return false } }
-    fileprivate var sePuedeReintentar: Bool {
-        switch fase {
-        case .porEnviar, .esperandoSesion, .failed: true
-        case .porSubirFoto, .hecha: false
+    fileprivate var isDone: Bool { if case .done = phase { return true } else { return false } }
+    fileprivate var isFailed: Bool { if case .failed = phase { return true } else { return false } }
+    fileprivate var canRetry: Bool {
+        switch phase {
+        case .toSend, .awaitingSession, .failed: true
+        case .photoToUpload, .done: false
         }
     }
 }

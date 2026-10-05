@@ -11,7 +11,7 @@ import UserNotifications
 @main
 struct CocoApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegado
-    @Environment(\.scenePhase) private var fase
+    @Environment(\.scenePhase) private var phase
 
     private let d: Dependencies
 
@@ -30,7 +30,7 @@ struct CocoApp: App {
                     d.enrutador.abrir(url: url)
                 }
         }
-        .onChange(of: fase) { _, nueva in
+        .onChange(of: phase) { _, nueva in
             switch nueva {
             case .active:
                 d.volvioAPrimerPlano()

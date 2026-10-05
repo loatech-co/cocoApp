@@ -8,19 +8,19 @@ struct APICaptureSender: CaptureSender {
     let session: Session
 
     func capture(_ r: CaptureRequest) async throws -> CaptureResponse {
-        let token = try await tokenVigente()
+        let token = try await validToken()
         return try await api.send(RequestBuilder.capture(r), token: token)
     }
 
     func uploadPhoto(_ jpeg: Data, name: String, to transactionId: Int) async throws -> [Attachment] {
-        let token = try await tokenVigente()
+        let token = try await validToken()
         let part = MultipartPart(
             fieldName: RequestBuilder.attachmentsField, fileName: name, mime: "image/jpeg",
             data: jpeg)
         return try await api.upload(parts: [part], to: "/transactions/\(transactionId)/soportes", token: token)
     }
 
-    private func tokenVigente() async throws -> String {
+    private func validToken() async throws -> String {
         do {
             return try await session.validAccessToken()
         } catch SessionError.signedOut {

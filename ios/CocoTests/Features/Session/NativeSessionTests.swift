@@ -12,7 +12,7 @@ final class NativeSessionTests: XCTestCase {
         return
             #"{"data":{"access_token":"\#(access)","expires_in":\#(expiresIn),"user":\#(userJSON)\#(refreshParte)},"meta":{}}"#
     }
-    private static let perfil = PublicProfile(
+    private static let profile = PublicProfile(
         id: 7, email: "ana@coco.co", displayName: nil, role: "owner", status: "active",
         createdAt: "2026-01-01T00:00:00Z")
 
@@ -24,7 +24,7 @@ final class NativeSessionTests: XCTestCase {
             get { lock.withLock { _ahora } }
             set { lock.withLock { _ahora = newValue } }
         }
-        func avanzar(_ s: TimeInterval) { now = now.addingTimeInterval(s) }
+        func advance(_ s: TimeInterval) { now = now.addingTimeInterval(s) }
     }
 
     /// Apuntes en orden de lo que pasó: «red» cuando el transporte responde,
@@ -33,7 +33,7 @@ final class NativeSessionTests: XCTestCase {
         private let lock = NSLock()
         private var _lineas: [String] = []
         var lineas: [String] { lock.withLock { _lineas } }
-        func anotar(_ l: String) { lock.withLock { _lineas.append(l) } }
+        func record(_ l: String) { lock.withLock { _lineas.append(l) } }
     }
 
     private final class RecordingTransport: Transport, @unchecked Sendable {
@@ -47,7 +47,7 @@ final class NativeSessionTests: XCTestCase {
             // Un respiro para que las llamadas concurrentes lleguen mientras
             // esta sigue en vuelo.
             try await Task.sleep(for: .milliseconds(30))
-            bitacora.anotar("red")
+            bitacora.record("red")
             return try await interno.data(for: request)
         }
     }
@@ -61,7 +61,7 @@ final class NativeSessionTests: XCTestCase {
         }
         func read(_ key: KeychainKey) throws -> String? { try interno.read(key) }
         func write(_ value: String, at key: KeychainKey) throws {
-            bitacora.anotar("llavero:\(value)")
+            bitacora.record("llavero:\(value)")
             try interno.write(value, at: key)
         }
         func delete(_ key: KeychainKey) throws { try interno.delete(key) }
@@ -70,23 +70,23 @@ final class NativeSessionTests: XCTestCase {
     private struct Harness {
         let transport: FakeTransport
         let llavero: InMemoryKeychain
-        let reloj: TestClock
+        let clock: TestClock
         let bitacora: AppLog
         let session: NativeSession
     }
 
-    private func arnes(refresh: String? = "r0", respuestas: [FakeTransport.Reply] = []) -> Harness {
-        let transport = FakeTransport(respuestas)
+    private func arnes(refresh: String? = "r0", replies: [FakeTransport.Reply] = []) -> Harness {
+        let transport = FakeTransport(replies)
         let bitacora = AppLog()
         let llavero = InMemoryKeychain(values: refresh.map { [.refreshToken: $0] } ?? [:])
-        let reloj = TestClock()
+        let clock = TestClock()
         let base = URL(string: "https://api.coco.invalid") ?? URL(fileURLWithPath: "/")
         let api = APIClient(
             configuration: APIConfiguration(base: base),
             transport: RecordingTransport(transport, bitacora: bitacora), version: "0.1.0")
         let session = NativeSession(
-            api: api, llavero: RecordingKeychain(llavero, bitacora: bitacora), reloj: { reloj.now })
-        return Harness(transport: transport, llavero: llavero, reloj: reloj, bitacora: bitacora, session: session)
+            api: api, llavero: RecordingKeychain(llavero, bitacora: bitacora), clock: { clock.now })
+        return Harness(transport: transport, llavero: llavero, clock: clock, bitacora: bitacora, session: session)
     }
 
     private func body(_ r: URLRequest) -> String {
@@ -94,13 +94,13 @@ final class NativeSessionTests: XCTestCase {
     }
 
     private func rutas(_ t: FakeTransport) -> [String] {
-        t.recibidas.compactMap { $0.url?.path() }
+        t.received.compactMap { $0.url?.path() }
     }
 
     // MARK: Single-flight y orden
 
     func testDiezLlamadasConcurrentesConElTokenVencidoHacenUnSoloRefresh() async throws {
-        let a = arnes(respuestas: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
+        let a = arnes(replies: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
         let tokens = try await withThrowingTaskGroup(of: String.self) { grupo in
             for _ in 0..<10 { grupo.addTask { try await a.session.validAccessToken() } }
             var vistos: [String] = []
@@ -112,7 +112,7 @@ final class NativeSessionTests: XCTestCase {
     }
 
     func testElRefreshNuevoSeEscribeEnElLlaveroAntesDePublicarElAccess() async throws {
-        let a = arnes(respuestas: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
+        let a = arnes(replies: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
         let access = try await a.session.validAccessToken()
         XCTAssertEqual(access, "a1")
         // Al devolver, el llavero ya tiene el nuevo, y lo tuvo justo después
@@ -121,13 +121,13 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertEqual(a.llavero.values[.refreshToken], "r1")
         XCTAssertEqual(a.bitacora.lineas, ["red", "llavero:r1"])
         let state = await a.session.state
-        XCTAssertEqual(state, .active(Self.perfil))
+        XCTAssertEqual(state, .active(Self.profile))
     }
 
     func testElRefreshVaEnElCuerpoConCabeceraNativa() async throws {
-        let a = arnes(respuestas: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
+        let a = arnes(replies: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
         _ = try await a.session.validAccessToken()
-        let r = try XCTUnwrap(a.transport.recibidas.first)
+        let r = try XCTUnwrap(a.transport.received.first)
         XCTAssertEqual(r.value(forHTTPHeaderField: "X-Coco-Cliente"), "nativo")
         XCTAssertEqual(body(r), #"{"refresh_token":"r0"}"#)
         XCTAssertNil(r.value(forHTTPHeaderField: "Authorization"))
@@ -136,7 +136,7 @@ final class NativeSessionTests: XCTestCase {
     // MARK: Qué borra el llavero y qué no
 
     func testUn401EnElRefreshBorraElLlaveroYDejaSinSesion() async {
-        let a = arnes(respuestas: [.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"La sesión expiró."}}"#)])
+        let a = arnes(replies: [.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"La sesión expiró."}}"#)])
         do {
             _ = try await a.session.validAccessToken()
             XCTFail("tenía que fallar")
@@ -149,7 +149,7 @@ final class NativeSessionTests: XCTestCase {
     }
 
     func testUnTimedOutReintentaUnaVezConElMismoRefreshYSiFallaConservaElLlavero() async {
-        let a = arnes(respuestas: [.falla(URLError(.timedOut)), .falla(URLError(.networkConnectionLost))])
+        let a = arnes(replies: [.failure(URLError(.timedOut)), .failure(URLError(.networkConnectionLost))])
         do {
             _ = try await a.session.validAccessToken()
             XCTFail("tenía que fallar")
@@ -157,32 +157,32 @@ final class NativeSessionTests: XCTestCase {
             XCTAssertEqual(error as? SessionError, .offline)
         }
         XCTAssertEqual(rutas(a.transport), ["/api/v1/auth/refresh", "/api/v1/auth/refresh"])
-        XCTAssertEqual(a.transport.recibidas.map(body), [#"{"refresh_token":"r0"}"#, #"{"refresh_token":"r0"}"#])
+        XCTAssertEqual(a.transport.received.map(body), [#"{"refresh_token":"r0"}"#, #"{"refresh_token":"r0"}"#])
         XCTAssertEqual(a.llavero.values[.refreshToken], "r0", "un fallo de red nunca borra el Keychain")
         let state = await a.session.state
         XCTAssertEqual(state, .offline(last: nil))
     }
 
     func testSiElReintentoResponde200LaSesionSigue() async throws {
-        let a = arnes(respuestas: [
-            .falla(URLError(.notConnectedToInternet)), .http(200, Self.sesionJSON(access: "a1", refresh: "r1")),
+        let a = arnes(replies: [
+            .failure(URLError(.notConnectedToInternet)), .http(200, Self.sesionJSON(access: "a1", refresh: "r1")),
         ])
         let access = try await a.session.validAccessToken()
         XCTAssertEqual(access, "a1")
-        XCTAssertEqual(a.transport.recibidas.count, 2)
+        XCTAssertEqual(a.transport.received.count, 2)
         XCTAssertEqual(a.llavero.values[.refreshToken], "r1")
     }
 
     func testSinConexionConservaElUltimoPerfil() async throws {
-        let a = arnes(respuestas: [
+        let a = arnes(replies: [
             .http(200, Self.sesionJSON(access: "a1", refresh: "r1", expiresIn: 300)),
-            .falla(URLError(.timedOut)), .falla(URLError(.timedOut)),
+            .failure(URLError(.timedOut)), .failure(URLError(.timedOut)),
         ])
         _ = try await a.session.validAccessToken()
-        a.reloj.avanzar(250)  // quedan 50 s: hay que renovar
+        a.clock.advance(250)  // quedan 50 s: hay que renovar
         _ = try? await a.session.validAccessToken()
         let state = await a.session.state
-        XCTAssertEqual(state, .offline(last: Self.perfil))
+        XCTAssertEqual(state, .offline(last: Self.profile))
         XCTAssertEqual(a.llavero.values[.refreshToken], "r1")
     }
 
@@ -191,41 +191,41 @@ final class NativeSessionTests: XCTestCase {
         await a.session.restore()
         let state = await a.session.state
         XCTAssertEqual(state, .signedOut)
-        XCTAssertTrue(a.transport.recibidas.isEmpty)
+        XCTAssertTrue(a.transport.received.isEmpty)
     }
 
     func testRestaurarConRefreshRenueva() async {
-        let a = arnes(respuestas: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
+        let a = arnes(replies: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
         await a.session.restore()
         let state = await a.session.state
-        XCTAssertEqual(state, .active(Self.perfil))
+        XCTAssertEqual(state, .active(Self.profile))
         XCTAssertEqual(a.llavero.values[.refreshToken], "r1")
     }
 
     // MARK: Login
 
     func testEntrarMandaCabeceraNativaYGuardaElRefresh() async throws {
-        let a = arnes(refresh: nil, respuestas: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
-        let perfil = try await a.session.signIn(email: "ana@coco.co", password: "secreta")
-        XCTAssertEqual(perfil, Self.perfil)
-        let r = try XCTUnwrap(a.transport.recibidas.first)
+        let a = arnes(refresh: nil, replies: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
+        let profile = try await a.session.signIn(email: "ana@coco.co", password: "secreta")
+        XCTAssertEqual(profile, Self.profile)
+        let r = try XCTUnwrap(a.transport.received.first)
         XCTAssertEqual(r.url?.path(), "/api/v1/auth/login")
         XCTAssertEqual(r.value(forHTTPHeaderField: "X-Coco-Cliente"), "nativo")
         XCTAssertEqual(body(r), #"{"email":"ana@coco.co","password":"secreta"}"#)
         XCTAssertEqual(a.llavero.values[.refreshToken], "r1")
         XCTAssertEqual(a.llavero.writes.map(\.1), ["r1"])
         let state = await a.session.state
-        XCTAssertEqual(state, .active(Self.perfil))
+        XCTAssertEqual(state, .active(Self.profile))
         // Y el access ya sirve sin tocar la red otra vez.
         let access = try await a.session.validAccessToken()
         XCTAssertEqual(access, "a1")
-        XCTAssertEqual(a.transport.recibidas.count, 1)
+        XCTAssertEqual(a.transport.received.count, 1)
     }
 
     func testEntrarConCredencialesMalasNoTocaElLlavero() async {
         let a = arnes(
             refresh: nil,
-            respuestas: [.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"Credenciales inválidas."}}"#)])
+            replies: [.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"Credenciales inválidas."}}"#)])
         do {
             _ = try await a.session.signIn(email: "ana@coco.co", password: "mal")
             XCTFail("tenía que fallar")
@@ -236,12 +236,12 @@ final class NativeSessionTests: XCTestCase {
     }
 
     func testLasPeticionesQueNoSonDeAuthNoLlevanLaCabeceraNativa() async throws {
-        let a = arnes(respuestas: [.http(200, #"{"data":[],"meta":{}}"#)])
+        let a = arnes(replies: [.http(200, #"{"data":[],"meta":{}}"#)])
         let base = URL(string: "https://api.coco.invalid") ?? URL(fileURLWithPath: "/")
         let api = APIClient(
             configuration: APIConfiguration(base: base), transport: a.transport, version: "0.1.0")
         let _: [TreeNode] = try await api.send(RequestBuilder.categories(), token: "a1")
-        let r = try XCTUnwrap(a.transport.recibidas.first)
+        let r = try XCTUnwrap(a.transport.received.first)
         XCTAssertNil(r.value(forHTTPHeaderField: "X-Coco-Cliente"))
         XCTAssertEqual(r.value(forHTTPHeaderField: "Authorization"), "Bearer a1")
     }
@@ -249,9 +249,9 @@ final class NativeSessionTests: XCTestCase {
     // MARK: Para la web
 
     func testSesionParaLaWebNoLlevaRefreshYElUserEsByteAByteElQueLlego() async throws {
-        let a = arnes(respuestas: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1", expiresIn: 3600))])
+        let a = arnes(replies: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1", expiresIn: 3600))])
         _ = try await a.session.validAccessToken()
-        a.reloj.avanzar(1000)
+        a.clock.advance(1000)
         let s = try await a.session.webSession()
         XCTAssertEqual(s.accessToken, "a1")
         XCTAssertEqual(s.expiresIn, 2600)
@@ -261,30 +261,30 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertNil(dic["refresh_token"])
         XCTAssertEqual(Set(dic.keys), ["access_token", "expires_in", "user"])
         XCTAssertEqual((dic["user"] as? [String: Any])?["created_at"] as? String, "2026-01-01T00:00:00Z")
-        XCTAssertEqual(a.transport.recibidas.count, 1)
+        XCTAssertEqual(a.transport.received.count, 1)
     }
 
     // MARK: Margen
 
     func testConCienSegundosRestantesRenuevaYConCientoTreintaNo() async throws {
-        let a = arnes(respuestas: [
+        let a = arnes(replies: [
             .http(200, Self.sesionJSON(access: "a1", refresh: "r1", expiresIn: 3600)),
             .http(200, Self.sesionJSON(access: "a2", refresh: "r2", expiresIn: 3600)),
         ])
         _ = try await a.session.validAccessToken()
-        a.reloj.avanzar(3470)  // quedan 130
+        a.clock.advance(3470)  // quedan 130
         let sigue = try await a.session.validAccessToken()
         XCTAssertEqual(sigue, "a1")
-        XCTAssertEqual(a.transport.recibidas.count, 1)
-        a.reloj.avanzar(30)  // quedan 100
+        XCTAssertEqual(a.transport.received.count, 1)
+        a.clock.advance(30)  // quedan 100
         let nuevo = try await a.session.validAccessToken()
         XCTAssertEqual(nuevo, "a2")
-        XCTAssertEqual(a.transport.recibidas.count, 2)
-        XCTAssertEqual(body(a.transport.recibidas[1]), #"{"refresh_token":"r1"}"#)
+        XCTAssertEqual(a.transport.received.count, 2)
+        XCTAssertEqual(body(a.transport.received[1]), #"{"refresh_token":"r1"}"#)
     }
 
     func testRenovarAhoraRenuevaAunqueElTokenParezcaVigente() async throws {
-        let a = arnes(respuestas: [
+        let a = arnes(replies: [
             .http(200, Self.sesionJSON(access: "a1", refresh: "r1")),
             .http(200, Self.sesionJSON(access: "a2", refresh: "r2")),
         ])
@@ -292,15 +292,15 @@ final class NativeSessionTests: XCTestCase {
         try await a.session.refreshNow()
         let access = try await a.session.validAccessToken()
         XCTAssertEqual(access, "a2")
-        XCTAssertEqual(a.transport.recibidas.count, 2)
+        XCTAssertEqual(a.transport.received.count, 2)
     }
 
     // MARK: Salir
 
     func testSalirLlamaALogoutConElRefreshYBorraElLlaveroAunqueLaRedFalle() async {
-        let a = arnes(respuestas: [.falla(URLError(.notConnectedToInternet))])
+        let a = arnes(replies: [.failure(URLError(.notConnectedToInternet))])
         await a.session.signOut()
-        let r = a.transport.recibidas.first
+        let r = a.transport.received.first
         XCTAssertEqual(r?.url?.path(), "/api/v1/auth/logout")
         XCTAssertEqual(r?.value(forHTTPHeaderField: "X-Coco-Cliente"), "nativo")
         XCTAssertEqual(r.map(body), #"{"refresh_token":"r0"}"#)
@@ -312,14 +312,14 @@ final class NativeSessionTests: XCTestCase {
     func testDescartarNoLlamaANadaYBorraElLlavero() async {
         let a = arnes()
         await a.session.discard()
-        XCTAssertTrue(a.transport.recibidas.isEmpty)
+        XCTAssertTrue(a.transport.received.isEmpty)
         XCTAssertNil(a.llavero.values[.refreshToken])
         let state = await a.session.state
         XCTAssertEqual(state, .signedOut)
     }
 
     func testLosCambiosDeEstadoSePublican() async throws {
-        let a = arnes(respuestas: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
+        let a = arnes(replies: [.http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
         let recogida = Task { () -> [SessionState] in
             var vistos: [SessionState] = []
             for await e in a.session.changes {
@@ -331,7 +331,7 @@ final class NativeSessionTests: XCTestCase {
         await a.session.restore()
         await a.session.discard()
         let vistos = await recogida.value
-        XCTAssertEqual(vistos, [.active(Self.perfil), .signedOut])
+        XCTAssertEqual(vistos, [.active(Self.profile), .signedOut])
     }
 
     // MARK: El recorte del JSON

@@ -5,8 +5,8 @@ import UIKit
 /// La cámara si la hay; si no —el simulador—, el selector de fotos del
 /// sistema, para que la prueba de humo pueda adjuntar un recibo igual.
 struct CameraPicker: UIViewControllerRepresentable {
-    let alCapturar: (UIImage) -> Void
-    let alCancelar: () -> Void
+    let onCapture: (UIImage) -> Void
+    let onCancel: () -> Void
 
     static var hayCamara: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
@@ -28,7 +28,7 @@ struct CameraPicker: UIViewControllerRepresentable {
         return selector
     }
 
-    func updateUIViewController(_ controlador: UIViewController, context: Context) {}
+    func updateUIViewController(_ controller: UIViewController, context: Context) {}
 
     func makeCoordinator() -> PickerCoordinator { PickerCoordinator(self) }
 
@@ -45,27 +45,27 @@ struct CameraPicker: UIViewControllerRepresentable {
             _ picker: UIImagePickerController,
             didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
         ) {
-            if let imagen = info[.originalImage] as? UIImage {
-                padre.alCapturar(imagen)
+            if let image = info[.originalImage] as? UIImage {
+                padre.onCapture(image)
             } else {
-                padre.alCancelar()
+                padre.onCancel()
             }
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            padre.alCancelar()
+            padre.onCancel()
         }
 
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-            guard let proveedor = results.first?.itemProvider, proveedor.canLoadObject(ofClass: UIImage.self) else {
-                padre.alCancelar()
+            guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else {
+                padre.onCancel()
                 return
             }
-            let alCapturar = padre.alCapturar
-            let alCancelar = padre.alCancelar
-            proveedor.loadObject(ofClass: UIImage.self) { object, _ in
+            let onCapture = padre.onCapture
+            let onCancel = padre.onCancel
+            provider.loadObject(ofClass: UIImage.self) { object, _ in
                 DispatchQueue.main.async {
-                    if let imagen = object as? UIImage { alCapturar(imagen) } else { alCancelar() }
+                    if let image = object as? UIImage { onCapture(image) } else { onCancel() }
                 }
             }
         }

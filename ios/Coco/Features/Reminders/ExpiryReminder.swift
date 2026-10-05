@@ -16,7 +16,7 @@ enum ExpiryReminder {
         return alasNueve > now ? alasNueve : enUnMinuto
     }
 
-    static func text(expiresAt: Date, now: Date) -> (titulo: String, body: String) {
+    static func text(expiresAt: Date, now: Date) -> (title: String, body: String) {
         let dias = diasRestantes(expiresAt: expiresAt, now: now)
         let cuando: String
         switch dias {

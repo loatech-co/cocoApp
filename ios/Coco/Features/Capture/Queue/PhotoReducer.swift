@@ -6,21 +6,21 @@ import UIKit
 /// 1600 px pesa 300 KB. Si los bytes no son una imagen se devuelven tal cual:
 /// la cola no decide qué es un soporte, solo lo achica.
 enum PhotoReducer {
-    static let ladoMaximo: CGFloat = 1600
-    static let calidad: CGFloat = 0.85
+    static let maxSide: CGFloat = 1600
+    static let quality: CGFloat = 0.85
 
-    static func jpeg(_ data: Data, ladoMaximo: CGFloat = PhotoReducer.ladoMaximo) -> Data {
-        guard let imagen = UIImage(data: data) else { return data }
-        let ancho = imagen.size.width * imagen.scale
-        let alto = imagen.size.height * imagen.scale
-        let mayor = max(ancho, alto)
-        let factor = mayor > ladoMaximo ? ladoMaximo / mayor : 1
-        let destination = CGSize(width: (ancho * factor).rounded(.down), height: (alto * factor).rounded(.down))
-        let formato = UIGraphicsImageRendererFormat()
-        formato.scale = 1
-        let dibujada = UIGraphicsImageRenderer(size: destination, format: formato).image { _ in
-            imagen.draw(in: CGRect(origin: .zero, size: destination))
+    static func jpeg(_ data: Data, maxSide: CGFloat = PhotoReducer.maxSide) -> Data {
+        guard let image = UIImage(data: data) else { return data }
+        let width = image.size.width * image.scale
+        let height = image.size.height * image.scale
+        let mayor = max(width, height)
+        let factor = mayor > maxSide ? maxSide / mayor : 1
+        let destination = CGSize(width: (width * factor).rounded(.down), height: (height * factor).rounded(.down))
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let rendered = UIGraphicsImageRenderer(size: destination, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: destination))
         }
-        return dibujada.jpegData(compressionQuality: calidad) ?? data
+        return rendered.jpegData(compressionQuality: quality) ?? data
     }
 }

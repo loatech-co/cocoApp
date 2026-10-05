@@ -3,11 +3,11 @@ import Foundation
 /// Los últimos conceptos elegidos, para que el buscador vacío ya ofrezca algo:
 /// la mayoría de los gastos de una persona caen en cinco o seis conceptos.
 enum RecentConcepts {
-    static let tope = 5
+    static let limit = 5
 
     /// Puro: el nuevo va primero, sin repetirse, y la lista se corta al tope.
-    static func agregar(_ id: Int, to lista: [Int], tope: Int = RecentConcepts.tope) -> [Int] {
-        Array(([id] + lista.filter { $0 != id }).prefix(tope))
+    static func adding(_ id: Int, to list: [Int], limit: Int = RecentConcepts.limit) -> [Int] {
+        Array(([id] + list.filter { $0 != id }).prefix(limit))
     }
 }
 
@@ -25,7 +25,7 @@ struct RecentsStore {
         defaults.array(forKey: Self.key) as? [Int] ?? []
     }
 
-    func anotar(_ id: Int) {
-        defaults.set(RecentConcepts.agregar(id, to: read()), forKey: Self.key)
+    func record(_ id: Int) {
+        defaults.set(RecentConcepts.adding(id, to: read()), forKey: Self.key)
     }
 }

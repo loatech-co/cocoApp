@@ -11,18 +11,18 @@ struct MoreView: View {
         NavigationStack {
             List {
                 Section {
-                    fila("Centros de costos", icono: "folder") { d.enrutador.go(.web(path: "/centros-de-costos")) }
-                    fila("Mi cuenta", icono: "person") { d.enrutador.go(.web(path: "/mi-cuenta")) }
+                    row("Centros de costos", icono: "folder") { d.enrutador.go(.web(path: "/centros-de-costos")) }
+                    row("Mi cuenta", icono: "person") { d.enrutador.go(.web(path: "/mi-cuenta")) }
                     if d.esAdmin {
-                        fila("Administración", icono: "person.2") { d.enrutador.go(.web(path: "/administracion")) }
+                        row("Administración", icono: "person.2") { d.enrutador.go(.web(path: "/administracion")) }
                     }
                 } footer: {
-                    if let email = d.perfil?.email { Text(email) }
+                    if let email = d.profile?.email { Text(email) }
                 }
 
                 Section {
-                    fila("Bienvenida y automatizaciones", icono: "wand.and.stars") { d.enrutador.go(.welcome) }
-                    fila("Ajustes", icono: "gearshape") { d.enrutador.go(.settings) }
+                    row("Bienvenida y automatizaciones", icono: "wand.and.stars") { d.enrutador.go(.welcome) }
+                    row("Ajustes", icono: "gearshape") { d.enrutador.go(.settings) }
                 }
 
                 Section {
@@ -42,10 +42,10 @@ struct MoreView: View {
         }
     }
 
-    private func fila(_ titulo: String, icono: String, accion: @escaping () -> Void) -> some View {
+    private func row(_ title: String, icono: String, accion: @escaping () -> Void) -> some View {
         Button(action: accion) {
             HStack {
-                Label(titulo, systemImage: icono)
+                Label(title, systemImage: icono)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))

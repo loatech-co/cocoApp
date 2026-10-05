@@ -7,15 +7,15 @@ import Foundation
 final class FakeTransport: Transport, @unchecked Sendable {
     enum Reply {
         case http(Int, String)
-        case falla(Error)
+        case failure(Error)
     }
 
     private let lock = NSLock()
     private var queue: [Reply]
-    private(set) var recibidas: [URLRequest] = []
+    private(set) var received: [URLRequest] = []
 
-    init(_ respuestas: [Reply] = []) {
-        queue = respuestas
+    init(_ replies: [Reply] = []) {
+        queue = replies
     }
 
     func responder(_ r: Reply) {
@@ -24,16 +24,16 @@ final class FakeTransport: Transport, @unchecked Sendable {
         queue.append(r)
     }
 
-    private func siguiente(for request: URLRequest) -> Reply {
+    private func nextReply(for request: URLRequest) -> Reply {
         lock.withLock {
-            recibidas.append(request)
+            received.append(request)
             return queue.isEmpty ? Reply.http(500, "") : queue.removeFirst()
         }
     }
 
     func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
-        switch siguiente(for: request) {
-        case .falla(let error):
+        switch nextReply(for: request) {
+        case .failure(let error):
             throw error
         case .http(let status, let body):
             let url = request.url ?? URL(fileURLWithPath: "/")

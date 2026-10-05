@@ -96,10 +96,10 @@ final class WebBridgeTests: XCTestCase {
 
     @MainActor
     private func puente(session: SessionDouble, navigation: NavigationDouble = NavigationDouble()) -> WebBridge {
-        let reloj = JumpingClock()
+        let clock = JumpingClock()
         return WebBridge(
             session: session, configuration: APIConfiguration(base: base), navigation: navigation, version: "0.1.0",
-            reloj: { reloj.read() }, abrirExterno: { _ in })
+            clock: { clock.read() }, abrirExterno: { _ in })
     }
 
     @MainActor
@@ -149,11 +149,11 @@ final class WebBridgeTests: XCTestCase {
         let navigation = NavigationDouble()
         let p = puente(session: session, navigation: navigation)
         await p.recibir(.abrirCaptura)
-        XCTAssertEqual(navigation.destinos, [.quickForm(withCamera: false)])
+        XCTAssertEqual(navigation.destinations, [.quickForm(withCamera: false)])
         await p.recibir(.sesionCerrada)
-        XCTAssertEqual(session.descartes, 1)
+        XCTAssertEqual(session.discards, 1)
         await p.recibir(.signOut)
-        XCTAssertEqual(session.salidas, 1)
+        XCTAssertEqual(session.signOuts, 1)
     }
 
     @MainActor
@@ -168,7 +168,7 @@ final class WebBridgeTests: XCTestCase {
 
     @MainActor
     func testSinConexionLaEntregaQuedaPendiente() async {
-        let session = SessionDouble(state: .offline(last: SessionDouble.perfil))
+        let session = SessionDouble(state: .offline(last: SessionDouble.profile))
         let p = puente(session: session)
         await p.empujarSesion()
         XCTAssertTrue(p.entregaPendiente)

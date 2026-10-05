@@ -37,7 +37,7 @@ struct RootView: View {
     }
 
     private var inicio: some View {
-        WebContainer(puente: d.puente, conectividad: d.conectividad, pending: d.pending) {
+        WebContainer(puente: d.puente, connectivity: d.connectivity, pending: d.pending) {
             d.enrutador.go(.quickForm(withCamera: false))
         }
     }
@@ -88,13 +88,13 @@ struct RootView: View {
 private struct RecordExpenseView: View {
     let d: Dependencies
 
-    @State private var modelo: FormModel?
+    @State private var model: FormModel?
     @State private var cerrados = 0
 
     var body: some View {
         Group {
-            if let modelo {
-                QuickFormView(modelo: modelo, abrirCamaraAlEntrar: d.enrutador.formulario.withCamera) {
+            if let model {
+                QuickFormView(model: model, opensCameraOnAppear: d.enrutador.formulario.withCamera) {
                     // Guardar ya encoló; cerrar es volver a Inicio con un
                     // formulario limpio para la próxima.
                     cerrados += 1
@@ -106,7 +106,7 @@ private struct RecordExpenseView: View {
             }
         }
         .task(id: identidad) {
-            modelo = await d.nuevoModeloDelFormulario()
+            model = await d.nuevoModeloDelFormulario()
         }
     }
 

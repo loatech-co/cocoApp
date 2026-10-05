@@ -3,23 +3,23 @@ import XCTest
 @testable import Coco
 
 final class RecentConceptsTests: XCTestCase {
-    func testElNuevoVaPrimeroSinRepetirse() {
-        XCTAssertEqual(RecentConcepts.agregar(3, to: [1, 2, 3]), [3, 1, 2])
-        XCTAssertEqual(RecentConcepts.agregar(9, to: [1, 2]), [9, 1, 2])
+    func testTheNewOneGoesFirstWithoutRepeating() {
+        XCTAssertEqual(RecentConcepts.adding(3, to: [1, 2, 3]), [3, 1, 2])
+        XCTAssertEqual(RecentConcepts.adding(9, to: [1, 2]), [9, 1, 2])
     }
 
-    func testSeCortaAlTope() {
-        XCTAssertEqual(RecentConcepts.agregar(6, to: [1, 2, 3, 4, 5]), [6, 1, 2, 3, 4])
-        XCTAssertEqual(RecentConcepts.agregar(6, to: [1, 2, 3, 4, 5], tope: 2), [6, 1])
+    func testIsCutAtTheLimit() {
+        XCTAssertEqual(RecentConcepts.adding(6, to: [1, 2, 3, 4, 5]), [6, 1, 2, 3, 4])
+        XCTAssertEqual(RecentConcepts.adding(6, to: [1, 2, 3, 4, 5], limit: 2), [6, 1])
     }
 
-    func testElAlmacenGuardaYLeeEnOrden() throws {
+    func testTheStoreSavesAndReadsInOrder() throws {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "recientes-\(UUID().uuidString)"))
-        let almacen = RecentsStore(defaults: defaults)
-        XCTAssertEqual(almacen.read(), [])
-        almacen.anotar(1)
-        almacen.anotar(2)
-        almacen.anotar(1)
-        XCTAssertEqual(almacen.read(), [1, 2])
+        let store = RecentsStore(defaults: defaults)
+        XCTAssertEqual(store.read(), [])
+        store.record(1)
+        store.record(2)
+        store.record(1)
+        XCTAssertEqual(store.read(), [1, 2])
     }
 }

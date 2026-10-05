@@ -14,8 +14,8 @@ struct AmountField: View {
                 .accessibilityLabel("Monto")
         }
         if !text.isEmpty {
-            if let normalizado = AmountParser.normalize(text) {
-                Text(PesoFormat.format(normalizado))
+            if let normalized = AmountParser.normalize(text) {
+                Text(PesoFormat.format(normalized))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {

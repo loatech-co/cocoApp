@@ -8,99 +8,99 @@ import UIKit
 @Observable @MainActor
 final class FormModel {
     /// Se puede reemplazar cuando el árbol termina de descargarse.
-    var indice: TreeIndex?
+    var index: TreeIndex?
     private let api: APIClient
     private let session: Session
-    private let capturador: Capturer
-    private let conectividad: Connectivity
-    private let lector: any ReceiptTextReader
-    private let recientes: RecentsStore
-    private let reloj: @Sendable () -> Date
+    private let capturer: Capturer
+    private let connectivity: Connectivity
+    private let reader: any ReceiptTextReader
+    private let recents: RecentsStore
+    private let clock: @Sendable () -> Date
 
     var amount: String = ""
-    var concepto: IndexEntry?
+    var concept: IndexEntry?
     var note: String = ""
     var date: Date
     /// La persona tocó la fecha: la interpretación ya no la cambia.
-    private(set) var fechaEditada = false
+    private(set) var isDateEdited = false
     var merchant: String?
 
     var photo: UIImage?
-    var fotoJPEG: Data?
-    var textoLeido: String?
-    var propuesta: Interpretation?
+    var photoJPEG: Data?
+    var readText: String?
+    var proposal: Interpretation?
     /// El concepto lo puso la interpretación, no la persona.
-    private(set) var conceptoSugerido = false
+    private(set) var isConceptSuggested = false
     /// Con certeza media: lo que la API propone, arriba del buscador.
     private(set) var candidates: [IndexEntry] = []
     /// Pide a la vista abrir el buscador (la vista lo vuelve a false).
-    var abrirBuscador = false
+    var showsSearch = false
 
     var query: String = ""
-    var resultados: [IndexEntry] = []
+    var results: [IndexEntry] = []
 
-    var leyendo = false
+    var isReading = false
     var error: String?
     var noNetwork = false
 
     init(
-        indice: TreeIndex?,
+        index: TreeIndex?,
         api: APIClient,
         session: Session,
-        capturador: Capturer,
-        conectividad: Connectivity,
-        lector: any ReceiptTextReader = ReceiptReader(),
-        recientes: RecentsStore = .init(),
-        reloj: @Sendable @escaping () -> Date = { Date() }
+        capturer: Capturer,
+        connectivity: Connectivity,
+        reader: any ReceiptTextReader = ReceiptReader(),
+        recents: RecentsStore = .init(),
+        clock: @Sendable @escaping () -> Date = { Date() }
     ) {
-        self.indice = indice
+        self.index = index
         self.api = api
         self.session = session
-        self.capturador = capturador
-        self.conectividad = conectividad
-        self.lector = lector
-        self.recientes = recientes
-        self.reloj = reloj
-        self.date = reloj()
-        self.resultados = conceptosRecientes()
+        self.capturer = capturer
+        self.connectivity = connectivity
+        self.reader = reader
+        self.recents = recents
+        self.clock = clock
+        self.date = clock()
+        self.results = recentConcepts()
     }
 
     // MARK: Lectura
 
-    var montoNormalizado: String? { AmountParser.normalize(amount) }
+    var normalizedAmount: String? { AmountParser.normalize(amount) }
 
     /// Monto válido y algo que clasifique: un concepto elegido o el texto del
     /// recibo, que la API sabe interpretar.
-    var puedeConfirmar: Bool {
-        montoNormalizado != nil && (concepto != nil || !(textoLeido ?? "").isEmpty)
+    var canConfirm: Bool {
+        normalizedAmount != nil && (concept != nil || !(readText ?? "").isEmpty)
     }
 
-    var conceptosRecientesVisibles: [IndexEntry] { conceptosRecientes() }
+    var visibleRecentConcepts: [IndexEntry] { recentConcepts() }
 
     // MARK: Concepto
 
     func search(_ query: String) {
         self.query = query
-        let limpia = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        resultados = limpia.isEmpty ? conceptosRecientes() : (indice?.search(limpia) ?? [])
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        results = trimmed.isEmpty ? recentConcepts() : (index?.search(trimmed) ?? [])
     }
 
-    func elegir(_ entrada: IndexEntry) {
-        concepto = entrada
-        conceptoSugerido = false
+    func choose(_ entry: IndexEntry) {
+        concept = entry
+        isConceptSuggested = false
         candidates = []
         query = ""
-        resultados = conceptosRecientes()
+        results = recentConcepts()
     }
 
-    func quitarConcepto() {
-        concepto = nil
-        conceptoSugerido = false
+    func clearConcept() {
+        concept = nil
+        isConceptSuggested = false
     }
 
-    func cambiarFecha(_ nueva: Date) {
-        date = nueva
-        fechaEditada = true
+    func changeDate(_ newDate: Date) {
+        date = newDate
+        isDateEdited = true
     }
 
     // MARK: Foto
@@ -108,39 +108,39 @@ final class FormModel {
     /// Encoger → Vision → `/interpret` → rellenar lo vacío. El OCR corre
     /// siempre (es local y el texto viaja con la captura); la interpretación
     /// solo con red, y sin red se avisa y la persona escribe.
-    func leerFoto(_ imagen: UIImage) async {
-        photo = imagen
-        fotoJPEG = PhotoShrinker.jpeg(imagen)
+    func readPhoto(_ image: UIImage) async {
+        photo = image
+        photoJPEG = PhotoShrinker.jpeg(image)
         error = nil
         noNetwork = false
-        leyendo = true
-        defer { leyendo = false }
+        isReading = true
+        defer { isReading = false }
 
-        guard let cg = imagen.cgImage ?? fotoJPEG.flatMap({ UIImage(data: $0)?.cgImage }) else {
+        guard let cg = image.cgImage ?? photoJPEG.flatMap({ UIImage(data: $0)?.cgImage }) else {
             error = "No se pudo leer la foto. Escribe los datos; la foto se adjuntará igual."
             return
         }
         let text: String
         do {
-            text = try await lector.text(de: cg)
+            text = try await reader.text(from: cg)
         } catch {
             self.error = "No se pudo leer el texto del recibo. Escribe los datos; la foto se adjuntará igual."
             return
         }
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        textoLeido = cleaned.isEmpty ? nil : cleaned
+        readText = cleaned.isEmpty ? nil : cleaned
 
-        guard conectividad.isOnline else {
+        guard connectivity.isOnline else {
             noNetwork = true
             return
         }
-        guard let textoLeido else { return }
+        guard let readText else { return }
         do {
             let token = try await session.validAccessToken()
-            let body = CaptureBody(text: textoLeido, period: BogotaDate.month(reloj()))
-            let interpretacion: Interpretation = try await api.send(
+            let body = CaptureBody(text: readText, period: BogotaDate.month(clock()))
+            let interpretation: Interpretation = try await api.send(
                 RequestBuilder.interpret(body), token: token)
-            aplicar(interpretacion)
+            apply(interpretation)
         } catch SessionError.signedOut {
             error = "Inicia sesión para que Coco interprete el recibo."
         } catch {
@@ -154,105 +154,105 @@ final class FormModel {
         }
     }
 
-    func quitarFoto() {
+    func removePhoto() {
         photo = nil
-        fotoJPEG = nil
-        textoLeido = nil
-        propuesta = nil
+        photoJPEG = nil
+        readText = nil
+        proposal = nil
         noNetwork = false
-        if conceptoSugerido { quitarConcepto() }
+        if isConceptSuggested { clearConcept() }
     }
 
     /// Rellena lo vacío con lo interpretado; puro en `FormPrefill`.
-    func aplicar(_ interpretacion: Interpretation) {
-        propuesta = interpretacion
-        let antes = FormFields(
+    func apply(_ interpretation: Interpretation) {
+        proposal = interpretation
+        let before = FormFields(
             amount: amount,
-            date: fechaEditada ? BogotaDate.day(date) : nil,
+            date: isDateEdited ? BogotaDate.day(date) : nil,
             merchant: merchant,
-            conceptoId: concepto?.id
+            conceptId: concept?.id
         )
-        let r = FormPrefill.aplicar(interpretacion, to: antes)
-        amount = r.campos.amount
-        merchant = r.campos.merchant
-        if !fechaEditada, let day = r.campos.date, let instant = Self.instant(deDia: day) {
+        let r = FormPrefill.apply(interpretation, to: before)
+        amount = r.fields.amount
+        merchant = r.fields.merchant
+        if !isDateEdited, let day = r.fields.date, let instant = Self.instant(fromDay: day) {
             date = instant
         }
-        if r.conceptoSugerido, let id = r.campos.conceptoId, let entrada = indice?.entrada(id: id) {
-            concepto = entrada
-            conceptoSugerido = true
+        if r.isConceptSuggested, let id = r.fields.conceptId, let entry = index?.entry(id: id) {
+            concept = entry
+            isConceptSuggested = true
         }
-        candidates = r.candidates.compactMap { indice?.entrada(id: $0.id) }
-        if concepto == nil, !candidates.isEmpty { abrirBuscador = true }
+        candidates = r.candidates.compactMap { index?.entry(id: $0.id) }
+        if concept == nil, !candidates.isEmpty { showsSearch = true }
     }
 
     // MARK: Confirmar
 
     /// Puro: lo que viaja a la API, con el monto normalizado y la fecha en
     /// Bogotá, que es donde se gasta la plata.
-    func body() -> CaptureBody {
+    func captureBody() -> CaptureBody {
         CaptureBody(
-            text: textoLeido,
-            merchant: Self.limpiar(merchant),
-            amount: montoNormalizado,
+            text: readText,
+            merchant: Self.reset(merchant),
+            amount: normalizedAmount,
             date: BogotaDate.day(date),
             period: BogotaDate.month(date),
-            fileName: fotoJPEG == nil ? nil : "recibo-\(BogotaDate.day(date)).jpg",
-            categoryId: concepto?.id,
-            note: Self.limpiar(note)
+            fileName: photoJPEG == nil ? nil : "recibo-\(BogotaDate.day(date)).jpg",
+            categoryId: concept?.id,
+            note: Self.reset(note)
         )
     }
 
     /// Toma la foto del estado, limpia el formulario y encola. La captura ya
     /// está a salvo en disco en cuanto `capturar` arranca; lo que devuelve es
     /// solo qué pasó dentro del presupuesto, y la vista no tiene que esperarlo.
-    func confirmar() async -> CaptureResult {
-        let body = body()
-        let photo = fotoJPEG
+    func confirm() async -> CaptureResult {
+        let body = captureBody()
+        let photo = photoJPEG
         let source: CaptureSource = photo == nil ? .iosManual : .iosPhoto
-        if let id = concepto?.id { recientes.anotar(id) }
-        limpiar()
-        let result = await capturador.capture(body, source: source, photo: photo, budget: .seconds(25))
+        if let id = concept?.id { recents.record(id) }
+        reset()
+        let result = await capturer.capture(body, source: source, photo: photo, budget: .seconds(25))
         if case .failed(let reason) = result { error = reason }
         return result
     }
 
-    func limpiar() {
+    func reset() {
         amount = ""
-        concepto = nil
+        concept = nil
         note = ""
-        date = reloj()
-        fechaEditada = false
+        date = clock()
+        isDateEdited = false
         merchant = nil
         photo = nil
-        fotoJPEG = nil
-        textoLeido = nil
-        propuesta = nil
-        conceptoSugerido = false
+        photoJPEG = nil
+        readText = nil
+        proposal = nil
+        isConceptSuggested = false
         candidates = []
-        abrirBuscador = false
+        showsSearch = false
         query = ""
-        resultados = conceptosRecientes()
+        results = recentConcepts()
         error = nil
         noNetwork = false
-        leyendo = false
+        isReading = false
     }
 
     // MARK: Ayudas
 
-    private func conceptosRecientes() -> [IndexEntry] {
-        guard let indice else { return [] }
-        return recientes.read().compactMap { indice.entrada(id: $0) }
+    private func recentConcepts() -> [IndexEntry] {
+        guard let index else { return [] }
+        return recents.read().compactMap { index.entry(id: $0) }
     }
 
-    private static func limpiar(_ s: String?) -> String? {
+    private static func reset(_ s: String?) -> String? {
         let cleaned = (s ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return cleaned.isEmpty ? nil : cleaned
     }
 
     /// «2026-10-04» → el mediodía de ese día en Bogotá, para que ninguna zona
     /// horaria lo mueva de día al volver a formatearlo.
-    static func instant(deDia day: String) -> Date? {
+    static func instant(fromDay day: String) -> Date? {
         let parts = day.split(separator: "-").compactMap { Int($0) }
         guard parts.count == 3 else { return nil }
         var cal = Calendar(identifier: .gregorian)

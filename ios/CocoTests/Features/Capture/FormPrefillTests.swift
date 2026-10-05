@@ -3,47 +3,47 @@ import XCTest
 @testable import Coco
 
 final class FormPrefillTests: XCTestCase {
-    private func interpretacion(
+    private func interpretation(
         amount: String? = "45000", date: String? = "2026-10-03", merchant: String? = "D1", confidence: String = "alta",
-        conceptoId: Int? = 100, candidates: [ProposedClassification.Candidate] = []
+        conceptId: Int? = 100, candidates: [ProposedClassification.Candidate] = []
     ) -> Interpretation {
         Interpretation(
             amount: amount, date: date, merchant: merchant, description: nil,
             classification: ProposedClassification(
-                confidence: confidence, source: nil, conceptId: conceptoId, categoryId: 10, name: "Colegio",
+                confidence: confidence, source: nil, conceptId: conceptId, categoryId: 10, name: "Colegio",
                 candidates: candidates, reason: ""),
             needsReview: false
         )
     }
 
-    func testRellenaLoVacioYMarcaElConceptoComoSugerido() {
-        let r = FormPrefill.aplicar(interpretacion(), to: FormFields())
+    func testFillsTheBlanksAndMarksTheConceptAsSuggested() {
+        let r = FormPrefill.apply(interpretation(), to: FormFields())
         XCTAssertEqual(
-            r.campos, FormFields(amount: "45.000", date: "2026-10-03", merchant: "D1", conceptoId: 100))
-        XCTAssertTrue(r.conceptoSugerido)
+            r.fields, FormFields(amount: "45.000", date: "2026-10-03", merchant: "D1", conceptId: 100))
+        XCTAssertTrue(r.isConceptSuggested)
         XCTAssertTrue(r.candidates.isEmpty)
     }
 
-    func testNoPisaLoQueLaPersonaYaEscribio() {
-        let antes = FormFields(amount: "12.500", date: "2026-10-01", merchant: "Éxito", conceptoId: 7)
-        let r = FormPrefill.aplicar(interpretacion(), to: antes)
-        XCTAssertEqual(r.campos, antes)
-        XCTAssertFalse(r.conceptoSugerido)
+    func testDoesNotOverwriteWhatThePersonAlreadyTyped() {
+        let before = FormFields(amount: "12.500", date: "2026-10-01", merchant: "Éxito", conceptId: 7)
+        let r = FormPrefill.apply(interpretation(), to: before)
+        XCTAssertEqual(r.fields, before)
+        XCTAssertFalse(r.isConceptSuggested)
     }
 
-    func testConCertezaMediaNoEligeYDevuelveLosCandidatos() {
+    func testMediumConfidenceDoesNotChooseAndReturnsTheCandidates() {
         let candidates = [
             ProposedClassification.Candidate(id: 100, name: "Colegio", path: "Costos fijos › Educación › Colegio")
         ]
-        let r = FormPrefill.aplicar(
-            interpretacion(confidence: "media", conceptoId: nil, candidates: candidates), to: FormFields())
-        XCTAssertNil(r.campos.conceptoId)
-        XCTAssertFalse(r.conceptoSugerido)
+        let r = FormPrefill.apply(
+            interpretation(confidence: "media", conceptId: nil, candidates: candidates), to: FormFields())
+        XCTAssertNil(r.fields.conceptId)
+        XCTAssertFalse(r.isConceptSuggested)
         XCTAssertEqual(r.candidates, candidates)
     }
 
-    func testUnMontoIlegibleNoEntra() {
-        let r = FormPrefill.aplicar(interpretacion(amount: "abc"), to: FormFields())
-        XCTAssertEqual(r.campos.amount, "")
+    func testAnUnreadableAmountDoesNotGoIn() {
+        let r = FormPrefill.apply(interpretation(amount: "abc"), to: FormFields())
+        XCTAssertEqual(r.fields.amount, "")
     }
 }
