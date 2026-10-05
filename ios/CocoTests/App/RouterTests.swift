@@ -7,21 +7,21 @@ final class RouterTests: XCTestCase {
     private func url(_ s: String) throws -> URL { try XCTUnwrap(URL(string: s)) }
 
     func testDestinoDeLasURLsDeLaApp() throws {
-        XCTAssertEqual(Router.destination(de: try url("coco://capturar/manual")), .quickForm(withCamera: false))
-        XCTAssertEqual(Router.destination(de: try url("coco://capturar")), .quickForm(withCamera: false))
-        XCTAssertEqual(Router.destination(de: try url("coco://capturar/foto")), .quickForm(withCamera: true))
-        XCTAssertEqual(Router.destination(de: try url("COCO://Capturar/FOTO")), .quickForm(withCamera: true))
-        XCTAssertEqual(Router.destination(de: try url("coco://capturas")), .captures)
+        XCTAssertEqual(Router.destination(from: try url("coco://capturar/manual")), .quickForm(withCamera: false))
+        XCTAssertEqual(Router.destination(from: try url("coco://capturar")), .quickForm(withCamera: false))
+        XCTAssertEqual(Router.destination(from: try url("coco://capturar/foto")), .quickForm(withCamera: true))
+        XCTAssertEqual(Router.destination(from: try url("COCO://Capturar/FOTO")), .quickForm(withCamera: true))
+        XCTAssertEqual(Router.destination(from: try url("coco://capturas")), .captures)
         XCTAssertEqual(
-            Router.destination(de: try url(SystemNotifier.destinoDeCaptura)), .captures,
+            Router.destination(from: try url(SystemNotifier.captureDestination)), .captures,
             "el aviso de una captura lleva a la lista")
     }
 
     func testURLsDesconocidasNoSonDestino() throws {
-        XCTAssertNil(Router.destination(de: try url("coco://otra")))
-        XCTAssertNil(Router.destination(de: try url("coco://capturar/video")))
-        XCTAssertNil(Router.destination(de: try url("coco://capturas/1")))
-        XCTAssertNil(Router.destination(de: try url("https://dev-cocoapp.viteri.me/capturar/manual")))
+        XCTAssertNil(Router.destination(from: try url("coco://otra")))
+        XCTAssertNil(Router.destination(from: try url("coco://capturar/video")))
+        XCTAssertNil(Router.destination(from: try url("coco://capturas/1")))
+        XCTAssertNil(Router.destination(from: try url("https://dev-cocoapp.viteri.me/capturar/manual")))
         let e = Router()
         XCTAssertFalse(e.abrir(url: try url("coco://otra")))
         XCTAssertEqual(e.pestana, .inicio)

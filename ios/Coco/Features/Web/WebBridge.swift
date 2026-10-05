@@ -158,7 +158,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         case .signedOut, .loading:
             return
         }
-        guard let s = try? await session.webSession(), let json = try? Self.json(de: s) else { return }
+        guard let s = try? await session.webSession(), let json = try? Self.json(from: s) else { return }
         entregaPendiente = false
         ultimaEntrega = now
         entregasSeguidas += 1
@@ -359,7 +359,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         return now.timeIntervalSince(last) >= ventanaDeEntrega
     }
 
-    nonisolated static func json(de session: WebSession) throws -> String {
+    nonisolated static func json(from session: WebSession) throws -> String {
         let data = try JSONSerialization.data(
             withJSONObject: session.asDictionary(), options: [.withoutEscapingSlashes])
         guard let text = String(data: data, encoding: .utf8) else { throw SessionError.signedOut }

@@ -4,35 +4,35 @@ import Foundation
 enum ExpiryReminder {
     /// La víspera a las 09:00 locales; si faltan menos de 24 h, en un minuto;
     /// si ya venció, nil (eso se dice con un cartel, no con un aviso).
-    static func momentoDelAviso(expiresAt: Date, now: Date, calendar: Calendar = .current) -> Date? {
+    static func reminderDate(expiresAt: Date, now: Date, calendar: Calendar = .current) -> Date? {
         guard expiresAt > now else { return nil }
-        let enUnMinuto = now.addingTimeInterval(60)
-        guard expiresAt.timeIntervalSince(now) >= 24 * 3600 else { return enUnMinuto }
-        guard let vispera = calendar.date(byAdding: .day, value: -1, to: expiresAt),
-            let alasNueve = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: vispera)
-        else { return enUnMinuto }
+        let inOneMinute = now.addingTimeInterval(60)
+        guard expiresAt.timeIntervalSince(now) >= 24 * 3600 else { return inOneMinute }
+        guard let dayBefore = calendar.date(byAdding: .day, value: -1, to: expiresAt),
+            let atNine = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: dayBefore)
+        else { return inOneMinute }
         // La víspera a las 09:00 puede haber pasado ya (vence mañana de
         // madrugada): entonces no se espera.
-        return alasNueve > now ? alasNueve : enUnMinuto
+        return atNine > now ? atNine : inOneMinute
     }
 
     static func text(expiresAt: Date, now: Date) -> (title: String, body: String) {
-        let dias = diasRestantes(expiresAt: expiresAt, now: now)
-        let cuando: String
-        switch dias {
-        case ..<0: cuando = "ya caducó"
-        case 0: cuando = "caduca hoy"
-        case 1: cuando = "caduca mañana"
-        default: cuando = "caduca en \(dias) días"
+        let days = daysLeft(expiresAt: expiresAt, now: now)
+        let when: String
+        switch days {
+        case ..<0: when = "ya caducó"
+        case 0: when = "caduca hoy"
+        case 1: when = "caduca mañana"
+        default: when = "caduca en \(days) días"
         }
-        return ("Tu instalación de Coco \(cuando)", "Vuelve a instalarla desde Xcode con el cable.")
+        return ("Tu instalación de Coco \(when)", "Vuelve a instalarla desde Xcode con el cable.")
     }
 
     /// Días de calendario entre hoy y el día del vencimiento: a las 23:50 con
     /// vencimiento a las 00:30 queda 1, no 0.
-    static func diasRestantes(expiresAt: Date, now: Date, calendar: Calendar = .current) -> Int {
-        let inicio = calendar.startOfDay(for: now)
-        let fin = calendar.startOfDay(for: expiresAt)
-        return calendar.dateComponents([.day], from: inicio, to: fin).day ?? 0
+    static func daysLeft(expiresAt: Date, now: Date, calendar: Calendar = .current) -> Int {
+        let start = calendar.startOfDay(for: now)
+        let end = calendar.startOfDay(for: expiresAt)
+        return calendar.dateComponents([.day], from: start, to: end).day ?? 0
     }
 }

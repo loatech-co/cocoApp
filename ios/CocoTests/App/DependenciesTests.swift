@@ -17,7 +17,7 @@ final class DependenciesTests: XCTestCase {
     }
 
     private func construir(
-        transport: FakeTransport = FakeTransport(), llavero: InMemoryKeychain = InMemoryKeychain(),
+        transport: FakeTransport = FakeTransport(), keychain: InMemoryKeychain = InMemoryKeychain(),
         notifier: NotifierDouble = NotifierDouble()
     ) throws -> (Dependencies, Registry) {
         let registry = Registry()
@@ -26,7 +26,7 @@ final class DependenciesTests: XCTestCase {
         let d = Dependencies(
             configuration: APIConfiguration(base: base),
             transport: transport,
-            llavero: llavero,
+            keychain: keychain,
             almacenDeCola: DiskQueueStore(root: root),
             almacenDelArbol: DiskTreeStore(file: root.appending(path: "arbol.json")),
             notifier: notifier,
@@ -114,18 +114,18 @@ final class DependenciesTests: XCTestCase {
 
 final class SignInViewTests: XCTestCase {
     func testMensajesDeErrorDicenQueHacer() {
-        XCTAssertEqual(SignInView.message(de: APIError.unauthenticated), "Correo o contraseña incorrectos.")
+        XCTAssertEqual(SignInView.message(from: APIError.unauthenticated), "Correo o contraseña incorrectos.")
         XCTAssertEqual(
-            SignInView.message(de: URLError(.notConnectedToInternet)),
+            SignInView.message(from: URLError(.notConnectedToInternet)),
             "Sin conexión. Revisa la red e inténtalo otra vez.")
         XCTAssertEqual(
-            SignInView.message(de: APIError.timedOut), "La API no respondió a tiempo. Inténtalo otra vez.")
+            SignInView.message(from: APIError.timedOut), "La API no respondió a tiempo. Inténtalo otra vez.")
         XCTAssertEqual(
-            SignInView.message(de: APIError.rejected(status: 400, code: "x", message: "El correo no es válido.")),
+            SignInView.message(from: APIError.rejected(status: 400, code: "x", message: "El correo no es válido.")),
             "El correo no es válido.")
         XCTAssertEqual(
-            SignInView.message(de: APIError.server(status: 429)), "Demasiados intentos. Espera un minuto.")
-        XCTAssertTrue(SignInView.message(de: APIError.unreadableResponse).contains("Ajustes"))
+            SignInView.message(from: APIError.server(status: 429)), "Demasiados intentos. Espera un minuto.")
+        XCTAssertTrue(SignInView.message(from: APIError.unreadableResponse).contains("Ajustes"))
     }
 }
 

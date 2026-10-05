@@ -27,7 +27,7 @@ struct RootView: View {
                 .tag(AppTab.mas)
         }
         .fullScreenCover(isPresented: signedOut) {
-            SignInView(session: d.session, alAjustes: { d.enrutador.go(.settings) })
+            SignInView(session: d.session, onSettings: { d.enrutador.go(.settings) })
                 .sheet(item: $enrutador.hoja, content: hoja)
         }
         .sheet(item: $enrutador.hoja, content: hoja)

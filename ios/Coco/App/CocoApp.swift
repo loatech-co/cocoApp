@@ -63,7 +63,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        guard let url = URL(string: SystemNotifier.destinoDeCaptura) else { return }
+        guard let url = URL(string: SystemNotifier.captureDestination) else { return }
         await MainActor.run {
             _ = Dependencies.compartidas.enrutador.abrir(url: url)
         }

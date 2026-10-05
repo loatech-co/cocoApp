@@ -6,11 +6,11 @@ import Foundation
 enum ProvisioningProfileReader {
     /// El .mobileprovision es un CMS con un plist XML dentro: se recorta de
     /// `<?xml` a `</plist>` sin tocar la firma.
-    static func fechaDeVencimiento(at data: Data) -> Date? {
-        guard let inicio = data.range(of: Data("<?xml".utf8)),
-            let fin = data.range(of: Data("</plist>".utf8), in: inicio.lowerBound..<data.endIndex)
+    static func expirationDate(in data: Data) -> Date? {
+        guard let start = data.range(of: Data("<?xml".utf8)),
+            let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex)
         else { return nil }
-        let plist = data[inicio.lowerBound..<fin.upperBound]
+        let plist = data[start.lowerBound..<end.upperBound]
         guard let object = try? PropertyListSerialization.propertyList(from: plist, format: nil),
             let dict = object as? [String: Any]
         else { return nil }
@@ -18,10 +18,10 @@ enum ProvisioningProfileReader {
     }
 
     /// En el simulador no hay perfil: nil, sin error.
-    static func delBundle(_ bundle: Bundle = .main) -> Date? {
+    static func fromBundle(_ bundle: Bundle = .main) -> Date? {
         guard let url = bundle.url(forResource: "embedded", withExtension: "mobileprovision"),
             let data = try? Data(contentsOf: url)
         else { return nil }
-        return fechaDeVencimiento(at: data)
+        return expirationDate(in: data)
     }
 }

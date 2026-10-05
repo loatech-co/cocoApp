@@ -5,30 +5,30 @@ import XCTest
 
 final class FakeNotificationCenter: NotificationCenterClient, @unchecked Sendable {
     private let lock = NSLock()
-    private var peticiones: [UNNotificationRequest] = []
-    var autorizado = true
+    private var requests: [UNNotificationRequest] = []
+    var isAuthorized = true
     var insignia: Int?
 
-    func pedirAutorizacion() async throws -> Bool { autorizado }
+    func askAuthorization() async throws -> Bool { isAuthorized }
     func register(categories: Set<UNNotificationCategory>) {}
-    func anadir(_ request: UNNotificationRequest) async throws {
+    func addRequest(_ request: UNNotificationRequest) async throws {
         save(request)
     }
     /// Como el centro real: el mismo id reemplaza.
     private func save(_ request: UNNotificationRequest) {
         lock.withLock {
-            peticiones.removeAll { $0.identifier == request.identifier }
-            peticiones.append(request)
+            requests.removeAll { $0.identifier == request.identifier }
+            requests.append(request)
         }
     }
-    func quitarPendientes(ids: [String]) {
-        lock.withLock { peticiones.removeAll { ids.contains($0.identifier) } }
+    func removePending(ids: [String]) {
+        lock.withLock { requests.removeAll { ids.contains($0.identifier) } }
     }
     func pending() async -> [UNNotificationRequest] {
-        guardadas()
+        saved()
     }
-    private func guardadas() -> [UNNotificationRequest] {
-        lock.withLock { peticiones }
+    private func saved() -> [UNNotificationRequest] {
+        lock.withLock { requests }
     }
     func setBadge(_ n: Int) async throws { insignia = n }
 }
@@ -42,17 +42,17 @@ final class NotifierTests: XCTestCase {
             needsReview: needsReview, finishedAt: .now)
     }
 
-    func testTextoDeCaptura() {
-        XCTAssertEqual(SystemNotifier.textoDeCaptura(result()).title, "Gasto registrado")
-        XCTAssertEqual(SystemNotifier.textoDeCaptura(result()).body, "Registrado: $45.000 · Mercado")
-        XCTAssertEqual(SystemNotifier.textoDeCaptura(result(duplicate: true)).title, "Ya estaba registrado")
-        XCTAssertEqual(SystemNotifier.textoDeCaptura(result(merged: true)).title, "Era el mismo pago")
+    func testCaptureText() {
+        XCTAssertEqual(SystemNotifier.captureText(result()).title, "Gasto registrado")
+        XCTAssertEqual(SystemNotifier.captureText(result()).body, "Registrado: $45.000 · Mercado")
+        XCTAssertEqual(SystemNotifier.captureText(result(duplicate: true)).title, "Ya estaba registrado")
+        XCTAssertEqual(SystemNotifier.captureText(result(merged: true)).title, "Era el mismo pago")
         XCTAssertEqual(
-            SystemNotifier.textoDeCaptura(result(needsReview: true)).body,
+            SystemNotifier.captureText(result(needsReview: true)).body,
             "Registrado: $45.000 · Mercado · por revisar")
     }
 
-    func testProgramarVencimientoUnaSolaPeticionConIdFijo() async throws {
+    func testScheduleExpiryKeepsASingleRequestWithAFixedId() async throws {
         let center = FakeNotificationCenter()
         let now = Date(timeIntervalSince1970: 1_790_000_000)
         let n = SystemNotifier(center: center, clock: { now })
@@ -62,11 +62,11 @@ final class NotifierTests: XCTestCase {
             now.addingTimeInterval(3 * 86_400), text: "Vuelve a instalarla desde Xcode con el cable.")
         let pending = await center.pending()
         XCTAssertEqual(pending.count, 1)
-        XCTAssertEqual(pending.first?.identifier, SystemNotifier.idDeVencimiento)
+        XCTAssertEqual(pending.first?.identifier, SystemNotifier.expiryId)
         XCTAssertTrue(pending.first?.trigger is UNCalendarNotificationTrigger)
     }
 
-    func testYaVencidoNoProgramaNada() async {
+    func testAlreadyExpiredSchedulesNothing() async {
         let center = FakeNotificationCenter()
         let now = Date()
         let n = SystemNotifier(center: center, clock: { now })
@@ -75,7 +75,7 @@ final class NotifierTests: XCTestCase {
         XCTAssertTrue(pending.isEmpty)
     }
 
-    func testCapturaRegistradaLlevaDestinoYColaEnviadaCuenta() async {
+    func testCaptureSavedCarriesDestinationAndQueueSentCounts() async {
         let center = FakeNotificationCenter()
         let n = SystemNotifier(center: center)
         await n.captureSaved(result(), source: .sms)

@@ -73,7 +73,7 @@ final class Router: Navigation {
     /// Devuelve `false` si la URL no es de la app.
     @discardableResult
     func abrir(url: URL) -> Bool {
-        guard let destination = Self.destination(de: url) else {
+        guard let destination = Self.destination(from: url) else {
             AppLog.navigation.warning("URL desconocida \(url.absoluteString, privacy: .public)")
             return false
         }
@@ -82,7 +82,7 @@ final class Router: Navigation {
     }
 
     /// Pura: qué destino nombra una URL `coco://`.
-    nonisolated static func destination(de url: URL) -> Destination? {
+    nonisolated static func destination(from url: URL) -> Destination? {
         guard url.scheme?.lowercased() == "coco" else { return nil }
         let host = url.host()?.lowercased() ?? ""
         let camino = url.path().split(separator: "/").map { $0.lowercased() }
