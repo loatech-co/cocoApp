@@ -44,15 +44,17 @@ Code trabaja en **modo autónomo**: no pide intervención salvo en sus paradas o
 
 ## Añadidos del dueño (5 oct 2026)
 
-| Bloque | Qué                                                                                                                                | Dónde aplica                                                          |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| A      | Lectura de documentos en iOS. **PARADA antes de tocar `packages/lectura`**: el dueño elige entre las opciones que se le presenten. | Antes del primer paso que toque `packages/lectura` (7.2 / 7.4 / 7.13) |
-| B      | ADR de monolito modular; un módulo solo habla con otro a través de su servicio público.                                            | 7.4                                                                   |
-| C      | Ciclo de vida de los documentos: cuáles se crean, cuáles se destilan en ADR o runbook y cuándo se borran.                          | 7.12 y 7.14                                                           |
-| D      | Limpieza inmediata: en la carpeta del proyecto solo vive el proyecto. La data real y los respaldos salen a `$COCO_DATA_DIR`.       | Ya, antes de seguir                                                   |
-| E      | Formato de las reglas: la regla arriba, el porqué debajo.                                                                          | `CLAUDE.md`, `CONTRIBUTING.md`, ADR                                   |
-| F      | Modo de trabajo: director + un ejecutor por paso (`/paso <id>`), traspasos cortos en `.claude/traspasos/`.                         | Todos los pasos desde ahora                                           |
-| G      | Línea de estado de Claude Code con el tamaño del contexto, para ver cuándo se salta el modelo de F.                                | Configuración local, ya                                               |
+| Bloque | Qué                                                                                                                                                                                                                                                                            | Dónde aplica                                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| A      | Lectura de documentos en iOS. **No es parada.** En la fase 7 `packages/lectura` solo se ordena (renombre, estructura, pruebas) sin cambiar dónde ni cómo se interpreta un documento. Cómo comparte iOS esa lógica queda como **decisión pendiente** para cuando se retome iOS. | 7.2 / 7.4 (orden); decisión pendiente para iOS |
+| B      | ADR de monolito modular; un módulo solo habla con otro a través de su servicio público.                                                                                                                                                                                        | 7.4                                            |
+| C      | Ciclo de vida de los documentos: cuáles se crean, cuáles se destilan en ADR o runbook y cuándo se borran.                                                                                                                                                                      | 7.12 y 7.14                                    |
+| D      | Limpieza inmediata: en la carpeta del proyecto solo vive el proyecto. La data real y los respaldos salen a `$COCO_DATA_DIR`. **No es parada:** ningún respaldo se borra en la fase 7; la política de retención va al runbook como propuesta.                                   | Ya, antes de seguir                            |
+| E      | Formato de las reglas: la regla arriba, el porqué debajo.                                                                                                                                                                                                                      | `CLAUDE.md`, `CONTRIBUTING.md`, ADR            |
+| F      | Modo de trabajo: director + un ejecutor por paso (`/paso <id>`), traspasos cortos en `.claude/traspasos/`.                                                                                                                                                                     | Todos los pasos desde ahora                    |
+| G      | Línea de estado de Claude Code con el tamaño del contexto, para ver cuándo se salta el modelo de F.                                                                                                                                                                            | Configuración local, ya                        |
+
+**La fase 7 va sin paradas, por mandato del dueño (5 oct 2026).** No hay parada en el bloque A ni en el D, ni al final de la fase: todo se reporta en el registro. Las paradas de 7.1 y 7.10 ya estaban reemplazadas por salvaguardas (registro §5).
 
 ---
 
