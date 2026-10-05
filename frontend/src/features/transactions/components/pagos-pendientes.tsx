@@ -4,6 +4,7 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 import { diaCorto } from '@/shared/lib/fechas';
 import { cn, formatCOP } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
+import { CardRow } from '@/shared/ui/atoms/card-row';
 import { Casilla } from '@/shared/ui/atoms/casilla';
 import { Progreso } from '@/shared/ui/atoms/progreso';
 import { REALCE } from '@/shared/ui/foundations/superficie';
@@ -245,48 +246,7 @@ function PendingRow({
         '[&:has(+li:hover)]:border-b-transparent',
       )}
     >
-      <button
-        type="button"
-        disabled={!onElegir}
-        onClick={() => onElegir?.(pago)}
-        className={cn(
-          // El resaltado es un FONDO, no una bajada de opacidad.
-          // Atenuar el texto al pasar por encima es exactamente lo
-          // que hace un control apagado, así que la fila que sí se
-          // puede pulsar parecía la que no.
-          //
-          // Y ese fondo no se sale de la tarjeta: antes sobresalía
-          // 8px por la izquierda y quedaba a ras por la derecha, de
-          // modo que el recuadro casi tocaba el canto y el nombre y
-          // la cifra se apoyaban en su borde. Ahora ocupa el ancho
-          // de la columna —alineado con el título— y deja 12px de
-          // aire a cada lado por dentro.
-          // Columna y no fila: lo de siempre arriba, y debajo —solo
-          // cuando lo hay— el progreso. Con un solo hijo se ve
-          // exactamente igual que antes.
-          'flex w-full flex-col gap-2 rounded-md px-3 py-2.5',
-          'text-left transition-colors',
-          /*
-              El realce va en el ACENTO COMO TINTA, no en la
-              superficie de acento.
-
-              `accent` es un verde apagado: sobre la tarjeta de
-              pendientes, que ya es una superficie tenue, la fila
-              señalada se distinguía apenas de sus vecinas. Aquí hace
-              falta que se vea cuál se va a registrar, porque pulsarla
-              abre una ficha con plata dentro.
-
-              `--acento-tinta` es el mismo acento pero a plena
-              intensidad —lima en oscuro, verde oscuro en claro—, así
-              que al 10 % tiñe el fondo sin llegar a pintarlo y a
-              plena tinta destaca el nombre. Es un token, así que
-              sigue al tema: no hay ningún lima escrito a mano.
-            */
-          onElegir
-            ? 'cursor-pointer hover:bg-acento-tinta/10 hover:text-acento-tinta'
-            : 'cursor-default',
-        )}
-      >
+      <CardRow onClick={onElegir ? () => onElegir(pago) : undefined}>
         <PendingSummary pago={pago} vencido={vencido} />
 
         {/*
@@ -303,7 +263,7 @@ function PendingRow({
             para dar el mes por saldado.
           */}
         <PendingProgress pago={pago} avance={avance} conAccion={onElegir !== undefined} />
-      </button>
+      </CardRow>
     </li>
   );
 }

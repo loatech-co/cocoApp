@@ -1,8 +1,9 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 import { cn } from '@/shared/lib/utils';
 import { Casilla } from '@/shared/ui/atoms/casilla';
+import { BackCrumb, DrillButton } from '@/shared/ui/atoms/level-nav';
+import { TextButton } from '@/shared/ui/atoms/text-button';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 import type { Category } from '@coco/types';
 
@@ -95,13 +96,9 @@ function FilterFooter({ marcados, onLimpiar }: { marcados: number[]; onLimpiar: 
           : `${marcados.length} ${marcados.length === 1 ? 'marcado' : 'marcados'}`}
       </span>
       {marcados.length > 0 && (
-        <button
-          type="button"
-          onClick={onLimpiar}
-          className="rounded-sm font-medium text-primary hover:underline"
-        >
+        <TextButton tono="primario" onClick={onLimpiar}>
           Limpiar
-        </button>
+        </TextButton>
       )}
     </div>
   );
@@ -144,20 +141,7 @@ function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: Filt
         )}
       </label>
 
-      {hijos.length > 0 && (
-        <button
-          type="button"
-          onClick={onEntrar}
-          aria-label={`Ver lo que hay dentro de ${nodo.name}`}
-          title={`Ver lo que hay dentro de ${nodo.name}`}
-          className={cn(
-            'grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors',
-            REALCE,
-          )}
-        >
-          <ChevronRight className="size-4" aria-hidden="true" />
-        </button>
-      )}
+      {hijos.length > 0 && <DrillButton nombre={nodo.name} onEntrar={onEntrar} />}
     </li>
   );
 }
@@ -167,14 +151,7 @@ function FilterPath({ camino, onVolver }: { camino: Category[]; onVolver: () => 
   return (
     <div className="flex min-h-9 items-center gap-1 px-3 py-1.5">
       {camino.length > 0 ? (
-        <button
-          type="button"
-          onClick={onVolver}
-          className="flex min-w-0 items-center gap-1 rounded-md text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ChevronLeft className="size-3.5 shrink-0" aria-hidden="true" />
-          <span className="truncate">{camino.map((n) => n.name).join(' · ')}</span>
-        </button>
+        <BackCrumb ruta={camino.map((n) => n.name)} fuerte onVolver={onVolver} />
       ) : (
         <span className="text-xs font-semibold text-muted-foreground">Centros de costos</span>
       )}

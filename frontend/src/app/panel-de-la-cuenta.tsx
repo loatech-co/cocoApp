@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/shared/api/auth-context';
 import { cn } from '@/shared/lib/utils';
-import { FILA_DE_PANEL, PanelInferior } from '@/shared/ui/atoms/panel-inferior';
+import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
+import { FILA_DE_PANEL, PanelRow } from '@/shared/ui/atoms/panel-row';
 import { FilaDeEnlace } from '@/shared/ui/molecules/link-row';
 
 import { Avatar } from './navegacion';
@@ -84,14 +85,10 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
         */}
         {esAdminDeVerdad && <ViewAsUserRow onCerrar={onCerrar} />}
 
-        <button
-          type="button"
-          onClick={() => void salir()}
-          className={cn(FILA_DE_PANEL, 'font-medium text-destructive hover:bg-destructive/10')}
-        >
+        <PanelRow tono="peligro" onClick={() => void salir()}>
           <LogOut className="size-4 shrink-0" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate">Cerrar sesión</span>
-        </button>
+        </PanelRow>
       </div>
     </PanelInferior>
   );
@@ -131,8 +128,7 @@ function ViewAsUserRow({ onCerrar }: { onCerrar: () => void }) {
   const { viendoComoUsuario, verComoUsuario } = useAuth();
   const navegar = useNavigate();
   return (
-    <button
-      type="button"
+    <PanelRow
       onClick={() => {
         onCerrar();
         verComoUsuario(!viendoComoUsuario);
@@ -140,7 +136,6 @@ function ViewAsUserRow({ onCerrar }: { onCerrar: () => void }) {
         // sería quedarse mirando un «no tienes acceso».
         if (!viendoComoUsuario) void navegar('/');
       }}
-      className={FILA_DE_PANEL}
     >
       {viendoComoUsuario ? (
         <ShieldCheck className="size-4 shrink-0 opacity-70" aria-hidden="true" />
@@ -150,6 +145,6 @@ function ViewAsUserRow({ onCerrar }: { onCerrar: () => void }) {
       <span className="min-w-0 flex-1 truncate">
         {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}
       </span>
-    </button>
+    </PanelRow>
   );
 }

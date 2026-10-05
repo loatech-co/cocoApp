@@ -6,22 +6,6 @@ import { useEscape, useFocoAtrapado } from '@/shared/lib/foco';
 import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 
-/**
- * Una fila de un panel: un icono, un nombre y lo que venga detrás.
- *
- * ── Por qué es una clase y no un componente ─────────────────────────────────
- * Porque unas son `<button>` —agregar un atajo, cerrar la sesión— y otras son
- * `<Link>` —ir a una sección, abrir un movimiento—, y lo que comparten es el
- * ASPECTO. Es el mismo recurso que `BLOQUE` y `SUPERFICIE_FLOTANTE`: un solo
- * sitio donde cambia, sin obligar a que todas sean el mismo elemento.
- *
- * 48 de alto, que es la medida de una fila que se toca con el pulgar, y todo
- * el ancho del panel: así el icono de la derecha —un más, un galón— puede ser
- * pequeño, porque el blanco no es él sino la fila entera.
- */
-export const FILA_DE_PANEL =
-  'flex min-h-[48px] w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors hover:bg-muted';
-
 interface PanelInferiorProps {
   abierto: boolean;
   /** Su nombre accesible. Lo que se ve lo decide `cabeza`. */

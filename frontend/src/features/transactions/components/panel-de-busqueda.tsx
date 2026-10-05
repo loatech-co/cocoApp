@@ -6,10 +6,10 @@ import { nombreDelMovimiento } from '@/features/transactions/model/movimientos';
 import { useCategories } from '@/shared/api/categories';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { diaCorto } from '@/shared/lib/fechas';
-import { cn } from '@/shared/lib/utils';
 import { Input } from '@/shared/ui/atoms/input';
 import { Monto } from '@/shared/ui/atoms/monto';
-import { FILA_DE_PANEL, PanelInferior } from '@/shared/ui/atoms/panel-inferior';
+import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
+import { PanelRow } from '@/shared/ui/atoms/panel-row';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 import type { Category, Transaction } from '@coco/types';
 
@@ -131,11 +131,7 @@ function ResultRow({
   onElegir: (movimiento: Transaction) => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={() => onElegir(movimiento)}
-      className={cn(FILA_DE_PANEL, 'gap-3')}
-    >
+    <PanelRow onClick={() => onElegir(movimiento)}>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{nombreDelMovimiento(movimiento, arbol)}</span>
         <span className="block truncate text-xs text-muted-foreground">
@@ -148,7 +144,7 @@ function ResultRow({
         type={movimiento.type}
         className="shrink-0 text-sm"
       />
-    </button>
+    </PanelRow>
   );
 }
 

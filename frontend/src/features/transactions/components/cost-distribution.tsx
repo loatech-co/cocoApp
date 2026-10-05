@@ -1,9 +1,10 @@
-import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/shared/ui/atoms/button';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Dona } from '@/shared/ui/atoms/dona';
+import { BackCrumb } from '@/shared/ui/atoms/level-nav';
 
 interface PropsDeDistribucion {
   filas: { category_id: number | null; name: string; total: string; count: number }[];
@@ -57,14 +58,9 @@ export function Distribucion({
             entrar en un centro de costos era un viaje de ida: la única salida
             era limpiar el filtro entero desde la barra de arriba. */}
         {ruta.length > 0 ? (
-          <button
-            type="button"
-            onClick={onSubir}
-            className="flex min-w-0 items-center gap-1 self-start rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ChevronLeft className="size-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{ruta.map((n) => n.name).join(' · ')}</span>
-          </button>
+          <div className="flex min-w-0 self-start">
+            <BackCrumb ruta={ruta.map((n) => n.name)} onVolver={onSubir} />
+          </div>
         ) : (
           /* El NOMBRE de a quién pertenecen estas filas, no el nivel al que
              están. "Por categoría" no dice de qué: las categorías de cuál centro. */

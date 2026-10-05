@@ -1,12 +1,4 @@
-import {
-  ChevronDown,
-  ChevronRight,
-  EllipsisVertical,
-  Lock,
-  LockOpen,
-  Pencil,
-  Trash2,
-} from 'lucide-react';
+import { EllipsisVertical, Lock, LockOpen, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { useActualizarCategoria } from '@/features/centros/api/categories';
@@ -17,6 +9,7 @@ import { trasCerrar } from '@/features/centros/components/close-then';
 import { ConfirmarBorrado } from '@/features/centros/components/confirmar-borrado';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
+import { CollapsibleHeader } from '@/shared/ui/atoms/collapsible-header';
 import { Menu, MenuOpcion } from '@/shared/ui/molecules/menu';
 import type { Category } from '@coco/types';
 
@@ -90,21 +83,7 @@ function Desplegar({
   const conceptos = categorias.reduce((n, g) => n + (g.children?.length ?? 0), 0);
 
   return (
-    <button
-      type="button"
-      onClick={onAlternar}
-      aria-expanded={abierto}
-      /* `p-3 sm:p-4` y no `p-4 sm:p-6`. Veinticuatro píxeles por encima
-         de un título de 18 son más aire que letra, y la fila de un centro
-         es una CABECERA —lo que se viene a leer está debajo—, no el
-         contenido de la tarjeta. */
-      className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left sm:p-4"
-    >
-      {abierto ? (
-        <ChevronDown className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-      ) : (
-        <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-      )}
+    <CollapsibleHeader abierta={abierto} onAlternar={onAlternar}>
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-2">
           {/* `text-lg` y no `text-xl`: el nombre de un centro es el
@@ -122,7 +101,7 @@ function Desplegar({
           {categorias.length} categoría(s) · {conceptos} concepto(s)
         </span>
       </span>
-    </button>
+    </CollapsibleHeader>
   );
 }
 

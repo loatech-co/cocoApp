@@ -1,3 +1,4 @@
+import { Loader2 } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 import { cn } from '@/shared/lib/utils';
@@ -13,14 +14,25 @@ import { cn } from '@/shared/lib/utils';
  *
  * El `<input>` sigue debajo, invisible: el teclado, el foco y los lectores de
  * pantalla funcionan igual que con cualquier casilla.
+ *
+ * `cargando` es para el que guarda al cambiar (los ajustes de Mi cuenta): la
+ * perilla gira mientras el servidor responde y el interruptor no se puede
+ * volver a pulsar. Ajustes dibujaba el suyo, cuatro píxeles más ancho y con
+ * otra perilla en oscuro; dos copias que ya se habían separado.
  */
-export function Interruptor({ className, ...props }: ComponentProps<'input'>) {
+export function Interruptor({
+  className,
+  cargando = false,
+  disabled,
+  ...props
+}: ComponentProps<'input'> & { cargando?: boolean }) {
   return (
     <span className="relative inline-flex shrink-0">
       <input
         type="checkbox"
         role="switch"
         className="peer absolute inset-0 z-10 cursor-pointer opacity-0"
+        disabled={disabled ?? cargando}
         {...props}
       />
       <span
@@ -44,7 +56,9 @@ export function Interruptor({ className, ...props }: ComponentProps<'input'>) {
           className,
         )}
       >
-        <span className="size-5 rounded-full bg-card shadow-sm transition-transform" />
+        <span className="grid size-5 place-items-center rounded-full bg-card shadow-sm transition-transform">
+          {cargando && <Loader2 className="size-3 animate-spin" aria-hidden="true" />}
+        </span>
       </span>
     </span>
   );

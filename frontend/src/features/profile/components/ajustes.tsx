@@ -1,10 +1,10 @@
-import { Loader2, Wallet } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 
 import { useActualizarPreferencias, usePreferencias } from '@/features/profile/api/preferences';
 import { ApiClientError } from '@/shared/api/api-client';
-import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
+import { Interruptor } from '@/shared/ui/atoms/interruptor';
 
 /**
  * Ajustes de la aplicación.
@@ -34,7 +34,7 @@ export function Ajustes() {
           </Alert>
         )}
 
-        <Interruptor
+        <SettingRow
           icono={<Wallet className="size-5" aria-hidden="true" />}
           titulo="Llevar cuentas"
           descripcion="Tarjetas, ahorros y efectivo, cada uno con su saldo. Si lo apagas, registras gastos sin tener que decir de dónde salió el dinero."
@@ -54,7 +54,7 @@ export function Ajustes() {
   );
 }
 
-function Interruptor({
+function SettingRow({
   icono,
   titulo,
   descripcion,
@@ -78,33 +78,13 @@ function Interruptor({
         <p className="mt-0.5 text-sm text-muted-foreground">{descripcion}</p>
       </div>
 
-      {/*
-        `role="switch"` y `aria-checked` en lugar de un div con onClick: un
-        lector de pantalla anuncia "interruptor, activado" y el teclado lo
-        alcanza y lo acciona con espacio, sin nada añadido.
-      */}
-      <button
-        type="button"
-        role="switch"
-        aria-checked={activo}
+      <Interruptor
+        checked={activo}
         aria-label={titulo}
-        disabled={cargando}
-        onClick={() => onCambiar(!activo)}
-        className={cn(
-          'relative mt-1 h-6 w-11 shrink-0 rounded-full transition-colors',
-          'disabled:opacity-50',
-          activo ? 'bg-primary' : 'bg-input',
-        )}
-      >
-        <span
-          className={cn(
-            'absolute top-0.5 flex size-5 items-center justify-center rounded-full bg-background transition-transform',
-            activo ? 'translate-x-[22px]' : 'translate-x-0.5',
-          )}
-        >
-          {cargando && <Loader2 className="size-3 animate-spin" aria-hidden="true" />}
-        </span>
-      </button>
+        cargando={cargando}
+        onChange={(e) => onCambiar(e.target.checked)}
+        className="mt-1"
+      />
     </div>
   );
 }

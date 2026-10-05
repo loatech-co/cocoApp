@@ -2,6 +2,7 @@ import type { MovementSheetState } from '@/features/transactions/hooks/use-movem
 import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
 import { nombreDelOrigen } from '@/features/transactions/model/precedencia';
 import { Campo } from '@/shared/ui/atoms/campo';
+import { TextButton } from '@/shared/ui/atoms/text-button';
 import { Combo } from '@/shared/ui/organisms/combo';
 import type { Category } from '@coco/types';
 
@@ -71,13 +72,11 @@ export function MovementClassification({
       />
 
       {!estatico && (
-        <button
-          type="button"
-          onClick={() => ficha.setCascadaVisible((v) => !v)}
-          className="-mt-2 self-start text-xs text-muted-foreground underline-offset-2 hover:underline"
-        >
-          {ficha.cascadaVisible ? 'Ocultar centro y categoría' : 'Elegir por centro y categoría'}
-        </button>
+        <div className="-mt-2 flex self-start">
+          <TextButton tono="tenue" onClick={() => ficha.setCascadaVisible((v) => !v)}>
+            {ficha.cascadaVisible ? 'Ocultar centro y categoría' : 'Elegir por centro y categoría'}
+          </TextButton>
+        </div>
       )}
 
       {(ficha.cascadaVisible || estatico) && (

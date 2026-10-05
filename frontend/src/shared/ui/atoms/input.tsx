@@ -151,3 +151,36 @@ function inputClass(
     enCampo && HUECO_DE_LA_ETIQUETA,
   );
 }
+
+/**
+ * Una de las `acciones` de un campo: un icono de 28 que se pulsa, dentro de
+ * la caja y a la derecha. Lo que la acción hace lo dice `etiqueta`, que es su
+ * nombre accesible y su pista.
+ */
+export function FieldAction({
+  Icono,
+  etiqueta,
+  pista,
+  ...props
+}: Omit<ComponentProps<'button'>, 'className' | 'children' | 'type'> & {
+  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  etiqueta: string;
+  /** La pista al pasar por encima, si es más corta que `etiqueta`. */
+  pista?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={etiqueta}
+      title={pista ?? etiqueta}
+      className={cn(
+        'flex size-7 items-center justify-center rounded-md text-muted-foreground',
+        'transition-colors hover:bg-muted hover:text-foreground',
+        'disabled:pointer-events-none disabled:opacity-40',
+      )}
+      {...props}
+    >
+      <Icono className="size-4" aria-hidden={true} />
+    </button>
+  );
+}

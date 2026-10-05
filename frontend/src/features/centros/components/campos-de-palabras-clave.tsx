@@ -10,7 +10,7 @@ import {
 import { cn } from '@/shared/lib/utils';
 import { Chip } from '@/shared/ui/atoms/badge';
 import { Campo } from '@/shared/ui/atoms/campo';
-import { Input } from '@/shared/ui/atoms/input';
+import { FieldAction, Input } from '@/shared/ui/atoms/input';
 import type { Category } from '@coco/types';
 
 interface KeywordFieldsProps {
@@ -206,22 +206,15 @@ function useKeywordInput(valor: string[], onCambiar: (siguiente: string[]) => vo
 
 function AddKeywordButton({ escrita, onClick }: { escrita: string; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      // Enter ya lo hace, pero en un teléfono el teclado no siempre
-      // enseña un Enter y este es el único sitio donde se ve que la
-      // caja no guarda una frase sino una lista.
+    // Enter ya lo hace, pero en un teléfono el teclado no siempre enseña un
+    // Enter y este es el único sitio donde se ve que la caja no guarda una
+    // frase sino una lista.
+    <FieldAction
+      Icono={Plus}
+      etiqueta="Agregar la palabra clave"
+      pista="Agregar"
       onClick={onClick}
       disabled={limpiar(escrita) === ''}
-      aria-label="Agregar la palabra clave"
-      title="Agregar"
-      className={cn(
-        'flex size-7 items-center justify-center rounded-md text-muted-foreground',
-        'transition-colors hover:bg-muted hover:text-foreground',
-        'disabled:pointer-events-none disabled:opacity-40',
-      )}
-    >
-      <Plus className="size-4" aria-hidden="true" />
-    </button>
+    />
   );
 }

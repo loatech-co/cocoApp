@@ -3,7 +3,7 @@ import { PRESETS, type Filtros, type Preset } from '@/features/transactions/mode
 import { diaLargo, rangoLargo } from '@/shared/lib/fechas';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { ToggleOption } from '@/shared/ui/atoms/toggle-option';
 import { Calendario } from '@/shared/ui/molecules/calendario';
 
 /**
@@ -131,20 +131,13 @@ function RangePresets({
     >
       {PRESETS.filter((p) => p.valor !== 'personalizado').map((p) => (
         <li key={p.valor} className="sm:w-full">
-          <button
-            type="button"
+          <ToggleOption
+            encendida={borrador.preset === p.valor}
             onClick={() => onElegir(p.valor)}
-            aria-pressed={borrador.preset === p.valor}
             title={p.ayuda}
-            className={cn(
-              'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
-              borrador.preset === p.valor
-                ? 'bg-primary/15 font-medium text-primary'
-                : cn('text-muted-foreground', REALCE),
-            )}
           >
             {p.etiqueta}
-          </button>
+          </ToggleOption>
         </li>
       ))}
     </ul>

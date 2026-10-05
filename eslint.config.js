@@ -32,6 +32,113 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+// ── Design: use what shared/ui already has (step 7.4-web-c) ─────────────────
+/*
+ * Rigid in the pieces, flexible in the composition. Outside `shared/ui` a
+ * screen composes components: it does not draw its own controls nor invent
+ * measures. Two rules, both for `frontend/src` outside `shared/ui`:
+ *
+ * - `coco/no-raw-elements`: the HTML elements that already have a component.
+ * - `coco/no-arbitrary-values`: Tailwind arbitrary values that are a colour
+ *   (`bg-[#…]`), a radius (`rounded-[…]`) or a measure (`w-[…]`,
+ *   `text-[13px]`). A `var(--token)` is not arbitrary: it reads the theme.
+ *
+ * A new need goes, in this order: combine what exists → add a variant to the
+ * component → create a component at the lowest level, with its story. Never a
+ * class from the call. CONTRIBUTING.md («Rigid pieces») has the why.
+ */
+const RAW_ELEMENTS = {
+  button: 'Button, or the shared/ui atom that draws that kind of control',
+  input: 'Input, Casilla, Interruptor or SelectorDeArchivo (shared/ui/atoms)',
+  textarea: 'Textarea (shared/ui/atoms/textarea)',
+  select: 'Select (shared/ui/organisms/select)',
+  dialog: 'Modal or Confirmacion (shared/ui/organisms)',
+  table: 'Tabla (shared/ui/molecules/tabla)',
+};
+
+/** `utility-[value]`, with any variant prefix (`movil:`, `hover:`) before it. */
+const ARBITRARY = /(?<![\w[-])(?:[\w-]+:)*-?([a-z]+(?:-[a-z]+)*)-\[([^\]\s'"`]+)\]/g;
+const RADIUS = /^rounded(?:-[a-z]{1,2})?$/;
+const COLOUR = /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch|color-mix)\(/i;
+const MEASURE =
+  /^(?:w|h|size|min-w|min-h|max-w|max-h|basis|[pm][xytrbl]?|gap(?:-[xy])?|inset(?:-[xy])?|top|left|right|bottom|text|leading|tracking|translate-[xy]|space-[xy]|border(?:-[xytrbl])?|indent)$/;
+
+/**
+ * THE list of exceptions to the two rules above: a use that is not here does
+ * not exist. Each entry names the file (from `frontend/src/`), the exact use
+ * (the element, or the class as written) and why it cannot be a component or
+ * a theme value. An entry is a decision, not a convenience.
+ */
+const DESIGN_EXCEPTIONS = [
+  {
+    file: 'features/transactions/components/selector-de-fecha.tsx',
+    use: 'input',
+    why: 'type="hidden": carries the chosen day to a native <form>. Nothing is drawn, so there is no component to use.',
+  },
+];
+
+function isAllowed(filename, use) {
+  const relative = filename.split('/frontend/src/')[1];
+  return DESIGN_EXCEPTIONS.some((e) => e.file === relative && e.use === use);
+}
+
+function arbitraryUses(text) {
+  const found = [];
+  for (const [token, utility, value] of text.matchAll(ARBITRARY)) {
+    if (value.startsWith('var(')) continue;
+    // The touch floor (`movil:min-h-[42px]`) has its own registry with its
+    // reasons: `shared/ui/piso-tactil.test.ts`, which also rejects any floor
+    // under 42. One place per rule, not two.
+    if (token.startsWith('movil:min-')) continue;
+    if (RADIUS.test(utility)) found.push({ token, kind: 'radius' });
+    else if (COLOUR.test(value)) found.push({ token, kind: 'colour' });
+    else if (MEASURE.test(utility) && /\d/.test(value)) found.push({ token, kind: 'measure' });
+  }
+  return found;
+}
+
+const cocoDesign = {
+  rules: {
+    'no-raw-elements': {
+      meta: { type: 'problem', schema: [] },
+      create(context) {
+        return {
+          JSXOpeningElement(node) {
+            const name = node.name.type === 'JSXIdentifier' ? node.name.name : '';
+            if (!(name in RAW_ELEMENTS) || isAllowed(context.filename, name)) return;
+            context.report({
+              node,
+              message: `<${name}> outside shared/ui: use ${RAW_ELEMENTS[name]}. A new need is a variant of the component (exceptions: DESIGN_EXCEPTIONS in eslint.config.js).`,
+            });
+          },
+        };
+      },
+    },
+    'no-arbitrary-values': {
+      meta: { type: 'problem', schema: [] },
+      create(context) {
+        function check(node, text) {
+          for (const { token, kind } of arbitraryUses(text)) {
+            if (isAllowed(context.filename, token)) continue;
+            context.report({
+              node,
+              message: `Arbitrary ${kind} \`${token}\` outside shared/ui: use the theme scale or a variant of the component (exceptions: DESIGN_EXCEPTIONS in eslint.config.js).`,
+            });
+          }
+        }
+        return {
+          Literal(node) {
+            if (typeof node.value === 'string') check(node, node.value);
+          },
+          TemplateElement(node) {
+            check(node, node.value.raw);
+          },
+        };
+      },
+    },
+  },
+};
+
 export default defineConfig(
   globalIgnores([
     '**/dist/**',
@@ -186,6 +293,21 @@ export default defineConfig(
       '@eslint-react/use-memo': 'off',
       // Setter names are naming, which is step 7.2 (see above).
       '@eslint-react/use-state': ['warn', { enforceSetterName: false }],
+    },
+  },
+  {
+    // See «Design» at the top. Tests render raw elements on purpose (a form
+    // with a native submit to drive a component), so they are out.
+    files: ['frontend/src/**/*.{ts,tsx}'],
+    ignores: [
+      'frontend/src/shared/ui/**',
+      'frontend/src/**/*.test.{ts,tsx}',
+      'frontend/src/pruebas/**',
+    ],
+    plugins: { coco: cocoDesign },
+    rules: {
+      'coco/no-raw-elements': 'error',
+      'coco/no-arbitrary-values': 'error',
     },
   },
   {

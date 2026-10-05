@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Plus, Search } from 'lucide-react';
+import { Check, ChevronDown, CornerDownLeft, Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
@@ -230,19 +230,32 @@ function ComboPanel({ campo, busqueda, valor, vacio, creando, cerrar }: ComboPan
         onElegir={onElegir}
       />
 
-      {puedeCrear && <CreateOption nombre={busca.trim()} creando={creando} onCrear={onCrear} />}
+      {puedeCrear && (
+        <CreateOption creando={creando} onCrear={onCrear}>
+          Crear “{busca.trim()}”
+        </CreateOption>
+      )}
     </div>
   );
 }
 
-function CreateOption({
-  nombre,
+/**
+ * La fila de «crear lo que falta», al pie de una lista con buscador.
+ *
+ * Exportada porque el buscador de conceptos ofrece lo mismo: dos copias se
+ * separan. `conIntro` añade la pista de que Intro la elige, cuando es lo único
+ * que se puede elegir.
+ */
+export function CreateOption({
   creando,
+  conIntro = false,
   onCrear,
+  children,
 }: {
-  nombre: string;
   creando: boolean;
+  conIntro?: boolean;
   onCrear: () => void;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -257,7 +270,10 @@ function CreateOption({
       )}
     >
       <Plus className="size-4 shrink-0" aria-hidden="true" />
-      <span className="min-w-0 truncate">Crear “{nombre}”</span>
+      <span className="min-w-0 truncate">{children}</span>
+      {conIntro && (
+        <CornerDownLeft className="ml-auto size-3.5 shrink-0 opacity-50" aria-hidden="true" />
+      )}
     </button>
   );
 }

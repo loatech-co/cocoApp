@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react';
 
-import { FILA_DE_PANEL } from '@/shared/ui/atoms/panel-inferior';
+import { PanelRow } from '@/shared/ui/atoms/panel-row';
 
 import type { PaginaDeAtajo } from './shortcut-types';
 
@@ -22,11 +22,11 @@ export function ShortcutPicker({
               panel. Por eso el más de la derecha puede ser pequeño. Es la
               misma que usan la hoja de la cuenta y la de buscar, así que la
               clase vive en un solo sitio. */}
-          <button type="button" onClick={() => onAnadir(ruta)} className={FILA_DE_PANEL}>
+          <PanelRow onClick={() => onAnadir(ruta)}>
             <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />
             <span className="min-w-0 flex-1 truncate">{etiqueta}</span>
             <Plus className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-          </button>
+          </PanelRow>
         </li>
       ))}
 

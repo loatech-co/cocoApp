@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import { Link } from 'react-router-dom';
 
-import { FILA_DE_PANEL } from '@/shared/ui/atoms/panel-inferior';
+import { FILA_DE_PANEL } from '@/shared/ui/atoms/panel-row';
 
 /**
  * Una fila que lleva a una página: icono y nombre.

@@ -1,10 +1,8 @@
-import { CornerDownLeft, Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
-import { cn } from '@/shared/lib/utils';
-import { REALCE } from '@/shared/ui/foundations/superficie';
-import { Opcion } from '@/shared/ui/organisms/combo';
+import { TextButton } from '@/shared/ui/atoms/text-button';
+import { CreateOption, Opcion } from '@/shared/ui/organisms/combo';
 import { rutaLegible, type EntradaDelIndice } from '@coco/lectura';
 
 /** El paso de elegir en qué categoría va el concepto que se va a crear. */
@@ -23,13 +21,9 @@ export function CategoriaParaNuevo({
     <>
       <div className="flex items-center justify-between gap-2 px-3 pt-2 text-xs text-muted-foreground">
         <span className="min-w-0 truncate">¿En qué categoría va «{nombreNuevo}»?</span>
-        <button
-          type="button"
-          onClick={onVolver}
-          className={cn('shrink-0 rounded-md px-1.5 py-0.5', REALCE)}
-        >
+        <TextButton tono="realce" onClick={onVolver}>
           Volver
-        </button>
+        </TextButton>
       </div>
       <ul className="max-h-64 overflow-y-auto p-1" role="listbox" aria-label="Categorías">
         {categorias.map((c) => (
@@ -165,23 +159,9 @@ function CrearConcepto({
   onPedirCategoria: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onPedirCategoria}
-      disabled={creando}
-      className={cn(
-        'flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm',
-        'font-medium transition-colors',
-        REALCE,
-        'disabled:opacity-60',
-      )}
-    >
-      <Plus className="size-4 shrink-0" aria-hidden="true" />
-      <span className="min-w-0 truncate">Crear concepto «{busca.trim()}»</span>
-      {sinResultados && (
-        <CornerDownLeft className="ml-auto size-3.5 shrink-0 opacity-50" aria-hidden="true" />
-      )}
-    </button>
+    <CreateOption creando={creando} conIntro={sinResultados} onCrear={onPedirCategoria}>
+      Crear concepto «{busca.trim()}»
+    </CreateOption>
   );
 }
 
