@@ -109,21 +109,24 @@ $SSH_CMD "$SERVIDOR" "touch ~/$REMOTO/tmp/restart.txt"
 
 echo "▸ Comprobando…"
 sleep 12
-# No basta con que responda: /api/v1/health devuelve 401 ANTES de tocar la base,
-# asi que un 401 no dice nada sobre la conexion. Se usa el login, que sí
-# consulta la tabla de usuarios: si la base no responde, devuelve 500.
+# Se sondea la v2, nunca la v1: cada petición a /api/v1 deja una línea
+# `v1_used` en el log, y un sondeo contado como cliente impediría llegar a los
+# siete días sin usos que exige contraer la v1 (paso 7.10).
+# /api/v2/health dice que el proceso vive; /api/v2/ready, que además la base
+# responde (200) o no (503). Los dos son públicos: no hace falta ningún login.
+VIVO=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+  "https://${DOMINIO}/api/v2/health" || echo 000)
+echo "   /api/v2/health → ${VIVO}  (200 = el proceso responde)"
 CODIGO=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
-  -X POST "https://${DOMINIO}/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"comprobacion@despliegue.invalido","password":"NoExiste1!"}' || echo 000)
-echo "   login de prueba → ${CODIGO}  (401 = la base respondió)"
+  "https://${DOMINIO}/api/v2/ready" || echo 000)
+echo "   /api/v2/ready  → ${CODIGO}  (200 = la base respondió)"
 
-if [ "$CODIGO" = "401" ]; then
+if [ "$VIVO" = "200" ] && [ "$CODIGO" = "200" ]; then
   echo ""
   echo "Listo. La API corre contra Supabase."
 else
   echo ""
-  echo "⚠️  Respuesta inesperada (${CODIGO}). Para volver atrás:" >&2
+  echo "⚠️  Respuesta inesperada (health ${VIVO}, ready ${CODIGO}). Para volver atrás:" >&2
   echo "   ssh -i $LLAVE -p $PUERTO $SERVIDOR 'cd ~/$CONFIG && cp .env.antes-del-corte .env && touch ~/domains/${DOMINIO}/restart.txt'" >&2
   echo "   …y restaurá api/dist, api/prisma y node_modules/.prisma desde ~/respaldos-cocoapp/$FECHA" >&2
   exit 1
