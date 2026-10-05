@@ -7,39 +7,39 @@ final class RouterTests: XCTestCase {
     private func url(_ s: String) throws -> URL { try XCTUnwrap(URL(string: s)) }
 
     func testDestinationOfTheAppURLs() throws {
-        XCTAssertEqual(Router.destination(from: try url("coco://capturar/manual")), .quickForm(withCamera: false))
-        XCTAssertEqual(Router.destination(from: try url("coco://capturar")), .quickForm(withCamera: false))
-        XCTAssertEqual(Router.destination(from: try url("coco://capturar/foto")), .quickForm(withCamera: true))
-        XCTAssertEqual(Router.destination(from: try url("COCO://Capturar/FOTO")), .quickForm(withCamera: true))
-        XCTAssertEqual(Router.destination(from: try url("coco://capturas")), .captures)
+        XCTAssertEqual(Router.destination(from: try url("coco://capture/manual")), .quickForm(withCamera: false))
+        XCTAssertEqual(Router.destination(from: try url("coco://capture")), .quickForm(withCamera: false))
+        XCTAssertEqual(Router.destination(from: try url("coco://capture/photo")), .quickForm(withCamera: true))
+        XCTAssertEqual(Router.destination(from: try url("COCO://Capture/PHOTO")), .quickForm(withCamera: true))
+        XCTAssertEqual(Router.destination(from: try url("coco://captures")), .captures)
         XCTAssertEqual(
             Router.destination(from: try url(SystemNotifier.captureDestination)), .captures,
             "el aviso de una captura lleva a la lista")
     }
 
     func testUnknownURLsAreNotDestinations() throws {
-        XCTAssertNil(Router.destination(from: try url("coco://otra")))
-        XCTAssertNil(Router.destination(from: try url("coco://capturar/video")))
-        XCTAssertNil(Router.destination(from: try url("coco://capturas/1")))
-        XCTAssertNil(Router.destination(from: try url("https://dev-cocoapp.viteri.me/capturar/manual")))
+        XCTAssertNil(Router.destination(from: try url("coco://other")))
+        XCTAssertNil(Router.destination(from: try url("coco://capture/video")))
+        XCTAssertNil(Router.destination(from: try url("coco://captures/1")))
+        XCTAssertNil(Router.destination(from: try url("https://dev-cocoapp.viteri.me/capture/manual")))
         let e = Router()
-        XCTAssertFalse(e.open(url: try url("coco://otra")))
+        XCTAssertFalse(e.open(url: try url("coco://other")))
         XCTAssertEqual(e.tab, .home)
     }
 
     func testOpenChangesTheTabAndRenewsTheForm() throws {
         let e = Router()
         let before = e.formRequest.generation
-        XCTAssertTrue(e.open(url: try url("coco://capturar/foto")))
+        XCTAssertTrue(e.open(url: try url("coco://capture/photo")))
         XCTAssertEqual(e.tab, .register)
         XCTAssertTrue(e.formRequest.withCamera)
         XCTAssertEqual(e.formRequest.generation, before + 1)
 
-        XCTAssertTrue(e.open(url: try url("coco://capturar/manual")))
+        XCTAssertTrue(e.open(url: try url("coco://capture/manual")))
         XCTAssertFalse(e.formRequest.withCamera)
         XCTAssertEqual(e.formRequest.generation, before + 2, "cada petición es un formulario nuevo")
 
-        XCTAssertTrue(e.open(url: try url("coco://capturas")))
+        XCTAssertTrue(e.open(url: try url("coco://captures")))
         XCTAssertEqual(e.tab, .captures)
     }
 

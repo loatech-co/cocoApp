@@ -26,7 +26,7 @@ skip() {
 
 if xcrun --find swift-format >/dev/null 2>&1; then
   xcrun swift-format lint --strict --recursive --parallel \
-    --configuration .swift-format Coco CocoAccesos CocoTests
+    --configuration .swift-format Coco CocoWidgets CocoTests
 else
   skip "swift-format not found (it ships with Xcode 16 or later)"
 fi

@@ -11,7 +11,7 @@ strict: true
 
 included:
   - Coco
-  - CocoAccesos
+  - CocoWidgets
   - CocoTests
 excluded:
   - Coco.xcodeproj

@@ -838,47 +838,47 @@
     },
     {
       "key": "widget.capture.title",
-      "source": "ios/CocoAccesos/CaptureControl.swift:14",
+      "source": "ios/CocoWidgets/CaptureControl.swift:14",
       "value": "Registrar gasto"
     },
     {
       "key": "widget.capture.title",
-      "source": "ios/CocoAccesos/CaptureControl.swift:17",
+      "source": "ios/CocoWidgets/CaptureControl.swift:17",
       "value": "Registrar gasto"
     },
     {
       "key": "widget.capture.description",
-      "source": "ios/CocoAccesos/CaptureControl.swift:18",
+      "source": "ios/CocoWidgets/CaptureControl.swift:18",
       "value": "Abre Coco en el formulario rápido."
     },
     {
       "key": "widget.capture.title",
-      "source": "ios/CocoAccesos/CaptureWidget.swift:16",
+      "source": "ios/CocoWidgets/CaptureWidget.swift:16",
       "value": "Registrar gasto"
     },
     {
       "key": "widget.capture.description",
-      "source": "ios/CocoAccesos/CaptureWidget.swift:17",
+      "source": "ios/CocoWidgets/CaptureWidget.swift:17",
       "value": "Abre Coco en el formulario rápido."
     },
     {
       "key": "widget.capture.register",
-      "source": "ios/CocoAccesos/CaptureWidget.swift:55",
+      "source": "ios/CocoWidgets/CaptureWidget.swift:55",
       "value": "Registrar"
     },
     {
       "key": "widget.capture.photo",
-      "source": "ios/CocoAccesos/CaptureWidget.swift:58",
+      "source": "ios/CocoWidgets/CaptureWidget.swift:58",
       "value": "Foto"
     },
     {
       "key": "widget.capture.title",
-      "source": "ios/CocoAccesos/CaptureWidget.swift:68",
+      "source": "ios/CocoWidgets/CaptureWidget.swift:68",
       "value": "Registrar gasto"
     },
     {
       "key": "widget.capture.title",
-      "source": "ios/CocoAccesos/CaptureWidget.swift:73",
+      "source": "ios/CocoWidgets/CaptureWidget.swift:73",
       "value": "Registrar gasto"
     }
   ]

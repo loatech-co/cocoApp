@@ -17,7 +17,7 @@ final class BackgroundJobsTests: XCTestCase {
     func testSchedulesWithTheInfoPlistIdentifiers() {
         let permitted = BackgroundJobs.permittedIdentifiers()
         XCTAssertEqual(
-            Set(permitted), ["co.loatech.coco.renovar", "co.loatech.coco.cola"], "el Info.plist de la app los declara")
+            Set(permitted), ["co.loatech.coco.refresh", "co.loatech.coco.queue"], "el Info.plist de la app los declara")
         let requests = BackgroundJobs.requests()
         XCTAssertEqual(Set(requests.map(\.identifier)), Set(permitted))
         XCTAssertTrue(requests.contains { $0 is BGAppRefreshTaskRequest && $0.identifier == BackgroundJobs.refresh })
@@ -75,7 +75,7 @@ final class BackgroundJobsTests: XCTestCase {
         let base = try XCTUnwrap(URL(string: "https://api.coco.invalid"))
         let api = APIClient(configuration: APIConfiguration(base: base), transport: transport, version: "0.1.0")
         let tree = TreeSynchronizer(
-            api: api, session: session, store: DiskTreeStore(file: root.appending(path: "arbol.json")))
+            api: api, session: session, store: DiskTreeStore(file: root.appending(path: "tree.json")))
 
         await BackgroundJobs.runRefresh(session: session, tree: tree)
 

@@ -60,16 +60,8 @@ struct SavedResult: Codable, Equatable, Sendable {
     let merged: Bool
     let needsReview: Bool
     let finishedAt: Date
-
-    /// Se guarda en disco dentro de la cola: las claves no cambian.
-    enum CodingKeys: String, CodingKey {
-        case transactionId
-        case summary = "resumen"
-        case duplicate = "repetido"
-        case merged = "fusionado"
-        case needsReview = "porRevisar"
-        case finishedAt = "terminadaEn"
-    }
+    // Se guarda en disco dentro de la cola con las claves sintetizadas (los
+    // nombres de las propiedades). Las fija `StoredFormatTests`.
 }
 
 enum CaptureResult: Equatable, Sendable {

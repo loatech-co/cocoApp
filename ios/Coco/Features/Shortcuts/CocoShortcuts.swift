@@ -3,10 +3,10 @@ import Foundation
 
 /// Los tres intents publicados como App Shortcuts: aparecen en la app Atajos
 /// sin configurar nada y el botón de acción de iOS 17 puede lanzarlos.
-struct AtajosDeCoco: AppShortcutsProvider {
+struct CocoShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
-            intent: RegistrarGastoManualIntent(),
+            intent: RecordManualExpenseIntent(),
             phrases: [
                 "Registrar gasto en \(.applicationName)",
                 "Anotar gasto en \(.applicationName)",
@@ -15,13 +15,13 @@ struct AtajosDeCoco: AppShortcutsProvider {
             systemImageName: "plus.circle"
         )
         AppShortcut(
-            intent: RegistrarGastoDeWalletIntent(),
+            intent: RecordWalletExpenseIntent(),
             phrases: ["Registrar gasto de Wallet en \(.applicationName)"],
             shortTitle: "Gasto de Wallet",
             systemImageName: "creditcard"
         )
         AppShortcut(
-            intent: RegistrarGastoDeSMSIntent(),
+            intent: RecordSMSExpenseIntent(),
             phrases: ["Registrar gasto de SMS en \(.applicationName)"],
             shortTitle: "Gasto de SMS",
             systemImageName: "message"

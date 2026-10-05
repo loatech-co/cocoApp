@@ -6,11 +6,11 @@ import WidgetKit
 /// app en el formulario rápido.
 @available(iOS 18.0, *)
 struct CaptureControl: ControlWidget {
-    static let kind = "co.loatech.coco.control.captura"
+    static let kind = "co.loatech.coco.control.capture"
 
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: Self.kind) {
-            ControlWidgetButton(action: AbrirCapturaIntent(destino: "manual")) {
+            ControlWidgetButton(action: OpenCaptureIntent(destination: "manual")) {
                 Label(L10n.Widget.captureTitle, systemImage: "plus.circle.fill")
             }
         }

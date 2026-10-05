@@ -1,15 +1,18 @@
 import Foundation
 
-/// El árbol en `Application Support/arbol.json`. Es lo que permite buscar un
+/// El árbol en `Application Support/tree.json`. Es lo que permite buscar un
 /// concepto sin red: lo guardado vale hasta que se pueda bajar otro.
 struct DiskTreeStore: TreeStore {
     let file: URL
 
-    /// `Application Support/arbol.json` del contenedor de la app.
+    /// Dentro de `Application Support`. Fija su nombre `StoredFormatTests`.
+    static let fileName = "tree.json"
+
+    /// `Application Support/tree.json` del contenedor de la app.
     static func atDefaultLocation(fileManager: FileManager = .default) throws -> DiskTreeStore {
         let supportDirectory = try fileManager.url(
             for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        return DiskTreeStore(file: supportDirectory.appending(path: "arbol.json"))
+        return DiskTreeStore(file: supportDirectory.appending(path: Self.fileName))
     }
 
     func load() throws -> SavedTree? {

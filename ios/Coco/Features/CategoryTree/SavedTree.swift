@@ -5,10 +5,7 @@ import Foundation
 struct SavedTree: Codable, Equatable, Sendable {
     let roots: [TreeNode]
     let downloadedAt: Date
-
-    /// Se guarda en disco: las claves no cambian aunque cambie el nombre.
-    enum CodingKeys: String, CodingKey {
-        case roots = "raices"
-        case downloadedAt = "descargadoEn"
-    }
+    // En disco con las claves sintetizadas; cada nodo lleva las de la API
+    // (`TreeNode` es el mismo tipo que llega de `/categories`). Las fija
+    // `StoredFormatTests`.
 }

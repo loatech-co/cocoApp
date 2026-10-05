@@ -4,8 +4,8 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>co.loatech.coco.renovar</string>
-		<string>co.loatech.coco.cola</string>
+		<string>co.loatech.coco.refresh</string>
+		<string>co.loatech.coco.queue</string>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>

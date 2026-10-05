@@ -13,7 +13,7 @@ struct MoreView: View {
                 Section {
                     row(L10n.More.costCenters, icon: "folder") { d.router.go(.web(path: "/centros-de-costos")) }
                     row(L10n.More.account, icon: "person") { d.router.go(.web(path: "/mi-cuenta")) }
-                    if d.esAdmin {
+                    if d.isAdmin {
                         row(L10n.More.admin, icon: "person.2") { d.router.go(.web(path: "/administracion")) }
                     }
                 } footer: {

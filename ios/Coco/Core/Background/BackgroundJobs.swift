@@ -8,9 +8,9 @@ import Foundation
 /// pierde; solo tarda más en enviarse.
 enum BackgroundJobs {
     /// BGAppRefreshTask.
-    static let refresh = "co.loatech.coco.renovar"
+    static let refresh = "co.loatech.coco.refresh"
     /// BGProcessingTask, con red.
-    static let queue = "co.loatech.coco.cola"
+    static let queue = "co.loatech.coco.queue"
 
     /// Lo que declara `BGTaskSchedulerPermittedIdentifiers` en el Info.plist:
     /// si una tarea se programa con un identificador que no está ahí, iOS

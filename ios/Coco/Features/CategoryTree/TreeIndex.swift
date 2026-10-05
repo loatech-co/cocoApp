@@ -5,10 +5,10 @@ import Foundation
 /// teléfono que en la web, o la misma plata acaba en sitios distintos según
 /// por dónde se capture.
 
-enum TreeLevel: String, Codable, Sendable {
-    case center = "centro"
-    case category = "categoria"
-    case concept = "concepto"
+enum TreeLevel: Sendable {
+    case center
+    case category
+    case concept
 }
 
 /// Un nodo del árbol, aplanado y listo para comparar.

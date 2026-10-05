@@ -9,7 +9,7 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
     let createdAt: Date
     let source: CaptureSource
     var body: CaptureBody
-    /// "Fotos/<id>.jpg", relativa a la raíz del almacén.
+    /// "Photos/<id>.jpg", relativa a la raíz del almacén.
     var photoPath: String?
     var phase: Phase
     var attempts: Int
@@ -27,20 +27,10 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
         case failed(reason: String)
     }
 
-    /// La captura vive en disco: las claves no cambian aunque cambie el nombre
-    /// de la propiedad (lo vigila `StoredFormatCompatibilityTests`).
-    enum CodingKeys: String, CodingKey {
-        case id
-        case createdAt = "creadaEn"
-        case source = "origen"
-        case body = "cuerpo"
-        case photoPath = "fotoRelativa"
-        case phase = "fase"
-        case attempts = "intentos"
-        case nextAttempt = "proximoIntento"
-        case lastError = "ultimoError"
-        case textResult = "resultadoDeTexto"
-    }
+    // La captura vive en disco con las claves sintetizadas (los nombres de las
+    // propiedades); `body` lleva dentro las claves de la API, porque es el
+    // mismo `CaptureBody` que viaja a `/transactions/interpret`. Lo vigila
+    // `StoredFormatTests`.
 
     init(
         id: UUID = UUID(), createdAt: Date = .now, source: CaptureSource, body: CaptureBody,
@@ -76,21 +66,5 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
             capturedAt: createdAt.formatted(.iso8601),
             body: body
         )
-    }
-}
-
-/// Las fases viven en disco con sus nombres de siempre. Fuera del tipo para no
-/// anidar tres niveles (SwiftLint `nesting`).
-extension PendingCapture.Phase {
-    enum CodingKeys: String, CodingKey {
-        case toSend = "porEnviar"
-        case photoToUpload = "porSubirFoto"
-        case awaitingSession = "esperandoSesion"
-        case done = "hecha"
-        case failed = "fallida"
-    }
-
-    enum FailedCodingKeys: String, CodingKey {
-        case reason = "motivo"
     }
 }

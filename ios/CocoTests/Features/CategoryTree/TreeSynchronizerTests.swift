@@ -23,8 +23,8 @@ final class TreeSynchronizerTests: XCTestCase {
     private var file: URL = URL(fileURLWithPath: "/")
 
     override func setUpWithError() throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "coco-arbol-\(UUID().uuidString)")
-        file = folder.appending(path: "arbol.json")
+        let folder = FileManager.default.temporaryDirectory.appending(path: "coco-tree-\(UUID().uuidString)")
+        file = folder.appending(path: "tree.json")
     }
 
     override func tearDownWithError() throws {

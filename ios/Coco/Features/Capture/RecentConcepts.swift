@@ -14,7 +14,7 @@ enum RecentConcepts {
 /// Dónde se guardan: UserDefaults. No es dato de negocio —se puede perder sin
 /// que pase nada— y así no entra en la cola ni en el llavero.
 struct RecentsStore {
-    static let key = "co.loatech.coco.conceptosRecientes"
+    static let key = "co.loatech.coco.recentConcepts"
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {

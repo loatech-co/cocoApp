@@ -47,7 +47,7 @@ targets:
       - path: Coco
     dependencies:
       # La extensión de accesos rápidos (M13) va dentro del .app.
-      - target: CocoAccesos
+      - target: CocoWidgets
         embed: true
     info:
       path: Coco/Resources/Info.plist
@@ -63,7 +63,7 @@ targets:
             CFBundleURLSchemes: [coco]
         # Renovar el token tibio y vaciar la cola cuando iOS lo concede.
         UIBackgroundModes: [fetch, processing]
-        BGTaskSchedulerPermittedIdentifiers: [co.loatech.coco.renovar, co.loatech.coco.cola]
+        BGTaskSchedulerPermittedIdentifiers: [co.loatech.coco.refresh, co.loatech.coco.queue]
         # Para poder abrir la app Atajos desde Bienvenida.
         LSApplicationQueriesSchemes: [shortcuts]
         NSCameraUsageDescription: Para fotografiar un recibo y leerlo.
@@ -92,14 +92,14 @@ targets:
   # Si Xcode se niega a firmar la extensión con el equipo personal, se quita
   # este target y la dependencia de arriba: el botón de acción sigue
   # funcionando por los App Shortcuts de la app.
-  CocoAccesos:
+  CocoWidgets:
     type: app-extension
     platform: iOS
     deploymentTarget: "17.0"
     sources:
-      - path: CocoAccesos
+      - path: CocoWidgets
     info:
-      path: CocoAccesos/Info.plist
+      path: CocoWidgets/Info.plist
       properties:
         CFBundleDisplayName: Accesos de Coco
         CFBundleShortVersionString: $(MARKETING_VERSION)
@@ -108,7 +108,7 @@ targets:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco.accesos
+        PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco.widgets
         TARGETED_DEVICE_FAMILY: "1"
         # Su propio catálogo con el mismo color de marca que la app: la
         # extensión no ve los recursos del .app.
@@ -125,7 +125,7 @@ targets:
       - path: Coco
         type: folder
         buildPhase: resources
-      - path: CocoAccesos
+      - path: CocoWidgets
         type: folder
         buildPhase: resources
     dependencies:
