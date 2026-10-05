@@ -202,13 +202,10 @@ export default defineConfig(
   },
   {
     // TEMPORARY: the files that were over 300 lines when the limit arrived
-    // (step 7.4). Step 7.4-web-b splits them and deletes this list; a file
-    // never gets added to it.
-    files: [
-      'frontend/src/features/transactions/components/movimiento-modal.dom.test.tsx',
-      'packages/lectura/src/diccionario.ts',
-      'packages/types/src/index.ts',
-    ],
+    // (step 7.4). The frontend ones were split in 7.4-web-b and 7.4-web-b2;
+    // these two are packages, outside the web steps. A file never gets added
+    // to it.
+    files: ['packages/lectura/src/diccionario.ts', 'packages/types/src/index.ts'],
     rules: { 'max-lines': 'off' },
   },
   {
