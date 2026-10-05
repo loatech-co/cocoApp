@@ -150,7 +150,7 @@ function CabezaDeAtajos({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex min-h-[42px] items-center gap-2">
+      <div className="flex min-h-10.5 items-center gap-2">
         {estado === 'eligiendo' && (
           <Button
             type="button"

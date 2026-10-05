@@ -722,6 +722,12 @@
    lo contrario de lo que se quiere decir—.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* El borde seguro del teléfono —la barra del sistema, la muesca de abajo—
+   como relleno. Lo que va pegado al pie lo reserva para no quedar debajo. */
+@utility pb-seguro {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 @utility barre {
   animation: barrer 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

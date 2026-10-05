@@ -1,4 +1,3 @@
-import { Minus, Plus } from 'lucide-react';
 import {
   useEffect,
   useRef,
@@ -8,8 +7,8 @@ import {
 import { Link } from 'react-router-dom';
 
 import { quitarAtajo } from '@/shared/lib/atajos';
-import { cn } from '@/shared/lib/utils';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { AddSurface } from '@/shared/ui/atoms/add-surface';
+import { MovableTile, TileRemove, tileClass } from '@/shared/ui/atoms/tile';
 
 import type { Estado, PaginaDeAtajo } from './shortcut-types';
 import type { useShortcutDrag } from './use-shortcut-drag';
@@ -61,14 +60,11 @@ export function ShortcutGrid({
       ))}
 
       {(estado === 'arreglando' || baldosas.length === 0) && (
-        <button
-          type="button"
-          onClick={() => setEstado('eligiendo')}
-          className="col-span-3 flex min-h-[42px] items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
-        >
-          <Plus className="size-4" aria-hidden="true" />
-          Agregar atajo
-        </button>
+        <div className="col-span-3">
+          <AddSurface forma="fila" onClick={() => setEstado('eligiendo')}>
+            Agregar atajo
+          </AddSurface>
+        </div>
       )}
     </div>
   );
@@ -95,17 +91,6 @@ function useLongPress(onMantener: () => void) {
   useEffect(() => dejarDeContar, []);
 
   return { empezar, dejarDeContar, mantuvo };
-}
-
-function claseDeBaldosa(arreglando: boolean, arrastrada: boolean): string {
-  return cn(
-    'relative flex aspect-square flex-col items-center justify-center gap-2 rounded-lg bg-muted p-2 text-center text-foreground transition-colors',
-    REALCE,
-    // La baldosa que va en el dedo no tiembla: la animación pisaría el
-    // desplazamiento en línea y se quedaría quieta bajo el dedo.
-    arreglando && !arrastrada && 'animate-[baldosa-tiembla_.4s_ease-in-out_infinite]',
-    arrastrada && 'z-10 scale-105 shadow-[var(--sombra-flotante)]',
-  );
 }
 
 interface PropsDeBaldosa {
@@ -138,7 +123,7 @@ function Baldosa(props: PropsDeBaldosa) {
   const estilo = desplazamiento
     ? { transform: `translate(${desplazamiento.dx}px, ${desplazamiento.dy}px)` }
     : undefined;
-  const caja = claseDeBaldosa(arreglando, arrastrada);
+  const caja = tileClass(arreglando, arrastrada);
 
   const contenido = (
     <>
@@ -150,18 +135,16 @@ function Baldosa(props: PropsDeBaldosa) {
   return (
     <div className="relative" data-baldosa>
       {arreglando ? (
-        <button
-          type="button"
-          className={cn(caja, 'w-full touch-none')}
-          style={estilo}
-          onPointerDown={empezarAContar}
-          onPointerMove={props.onMover}
-          onPointerUp={props.onSoltar}
-          onPointerCancel={props.onSoltar}
-          aria-label={`Mover ${etiqueta}`}
+        <MovableTile
+          arrastrada={arrastrada}
+          etiqueta={etiqueta}
+          estilo={estilo}
+          onBajar={empezarAContar}
+          onMover={props.onMover}
+          onSoltar={props.onSoltar}
         >
           {contenido}
-        </button>
+        </MovableTile>
       ) : (
         <EnlaceDeBaldosa
           ruta={ruta}
@@ -173,7 +156,7 @@ function Baldosa(props: PropsDeBaldosa) {
         </EnlaceDeBaldosa>
       )}
 
-      {arreglando && <QuitarBaldosa etiqueta={etiqueta} onQuitar={onQuitar} />}
+      {arreglando && <TileRemove etiqueta={etiqueta} onQuitar={onQuitar} />}
     </div>
   );
 }
@@ -216,32 +199,5 @@ function EnlaceDeBaldosa({
     >
       {children}
     </Link>
-  );
-}
-
-/**
- * El menos.
- *
- * 24, por debajo del suelo táctil de 42, y es una excepción CONCEDIDA,
- * no descubierta: se llega a él dentro de un modo al que se entra
- * manteniendo pulsada una baldosa, y uno más grande se pulsaría sin
- * querer justo al arrastrar, que es lo otro que se hace aquí.
- */
-function QuitarBaldosa({
-  etiqueta,
-  onQuitar,
-}: {
-  etiqueta: string;
-  onQuitar: () => void;
-}): ReactNode {
-  return (
-    <button
-      type="button"
-      onClick={onQuitar}
-      aria-label={`Quitar ${etiqueta}`}
-      className="absolute -left-1 -top-1 grid size-6 place-items-center rounded-full bg-foreground text-background shadow-[var(--sombra-pegada)]"
-    >
-      <Minus className="size-3.5" strokeWidth={3} aria-hidden="true" />
-    </button>
   );
 }

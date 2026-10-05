@@ -46,7 +46,7 @@ const CONTROLES: [ruta: string, que: string][] = [
  */
 const EXCEPCIONES: [ruta: string, clase: string, razon: string][] = [
   [
-    'app/shortcut-grid.tsx',
+    'shared/ui/atoms/tile.tsx',
     'size-6',
     'el menos de una baldosa mide 24: se llega a él dentro de un modo al que se entra manteniendo pulsada la baldosa, y uno mayor se pulsaría al arrastrar',
   ],

@@ -1,9 +1,8 @@
-import { LayoutGrid, Plus, Search } from 'lucide-react';
-import type { ComponentType } from 'react';
-import { NavLink } from 'react-router-dom';
+import { LayoutGrid, Search } from 'lucide-react';
 
 import { DASHBOARD } from '@/shared/lib/sections';
 import { cn } from '@/shared/lib/utils';
+import { BarFab, BarIcon, BarSlotButton, BarSlotLink } from '@/shared/ui/atoms/bar-slot';
 
 import { Avatar } from './navegacion';
 
@@ -73,7 +72,7 @@ export function BarraInferior({
         // puede ganarle a un hermano del techo. Las dos barras no se solapan
         // nunca —una está arriba y otra al pie—, así que no se pierde nada.
         'z-[15]',
-        'bg-sidebar pb-[env(safe-area-inset-bottom,0px)]',
+        'bg-sidebar pb-seguro',
         // El relleno de abajo, y no más alto: la fila de la barra mide 60
         // exactos y el borde seguro del teléfono es hueco muerto por debajo,
         // que es justo lo que ese hueco es.
@@ -81,116 +80,31 @@ export function BarraInferior({
       )}
     >
       <div className="flex flex-1">
-        <HuecoDeSeccion seccion={DASHBOARD} />
-        <HuecoDeBoton
-          Icono={Search}
-          etiqueta="Buscar"
-          encendido={busquedaAbierta}
-          onClick={onBuscar}
+        <BarSlotLink
+          to={DASHBOARD.to}
+          exact={DASHBOARD.exact}
+          etiqueta={DASHBOARD.label}
+          Icono={DASHBOARD.Icono}
         />
+        <BarSlotButton etiqueta="Buscar" encendido={busquedaAbierta} onClick={onBuscar}>
+          <BarIcon Icono={Search} />
+        </BarSlotButton>
       </div>
 
       {/* Ancho fijo: es lo que mantiene el botón en el centro exacto cuando
           los grupos no tienen el mismo número de huecos. */}
-      <div className="flex w-[72px] shrink-0 items-start justify-center">
-        <NewExpenseButton onClick={onNuevoGasto} />
+      <div className="flex w-18 shrink-0 items-start justify-center">
+        <BarFab etiqueta="Registrar un gasto" onClick={onNuevoGasto} />
       </div>
 
       <div className="flex flex-1">
-        <HuecoDeBoton
-          Icono={LayoutGrid}
-          etiqueta="Atajos"
-          encendido={atajosAbiertos}
-          onClick={onAtajos}
-        />
+        <BarSlotButton etiqueta="Atajos" encendido={atajosAbiertos} onClick={onAtajos}>
+          <BarIcon Icono={LayoutGrid} />
+        </BarSlotButton>
 
         <AccountSlot nombre={nombre} abierta={cuentaAbierta} onClick={onCuenta} />
       </div>
     </nav>
-  );
-}
-
-/** Lo que comparten los cinco huecos: la medida y el reparto del ancho. */
-const HUECO =
-  'flex h-[60px] min-w-0 flex-1 items-center justify-center transition-colors duration-[120ms]';
-
-function HuecoDeSeccion({
-  seccion: { to, label, Icono, exact },
-}: {
-  seccion: {
-    to: string;
-    label: string;
-    Icono: ComponentType<{
-      className?: string;
-      'aria-hidden'?: boolean;
-      fill?: string;
-      fillOpacity?: number;
-      strokeWidth?: number;
-    }>;
-    exact: boolean;
-  };
-}) {
-  return (
-    <NavLink
-      to={to}
-      end={exact}
-      aria-label={label}
-      className={({ isActive }) =>
-        cn(HUECO, isActive ? 'text-sidebar-active' : 'text-sidebar-muted')
-      }
-    >
-      <Icono
-        className="size-6"
-        fill="currentColor"
-        fillOpacity={0.18}
-        strokeWidth={1.75}
-        aria-hidden={true}
-      />
-    </NavLink>
-  );
-}
-
-/**
- * Un hueco que no lleva a ninguna parte: abre algo sobre la página.
- *
- * Se dibuja EXACTAMENTE igual que uno que sí lleva —el mismo alto, el mismo
- * reparto del ancho, el mismo par de colores—, y es a propósito: quien mira la
- * barra no tiene por qué saber cuál de los cinco cambia de pantalla y cuál
- * levanta una hoja. Lo que los distingue es lo que pasa al tocarlos.
- */
-function HuecoDeBoton({
-  Icono,
-  etiqueta,
-  encendido,
-  onClick,
-}: {
-  Icono: ComponentType<{
-    className?: string;
-    'aria-hidden'?: boolean;
-    fill?: string;
-    fillOpacity?: number;
-    strokeWidth?: number;
-  }>;
-  etiqueta: string;
-  encendido: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={etiqueta}
-      aria-expanded={encendido}
-      className={cn(HUECO, encendido ? 'text-sidebar-active' : 'text-sidebar-muted')}
-    >
-      <Icono
-        className="size-6"
-        fill="currentColor"
-        fillOpacity={0.18}
-        strokeWidth={1.75}
-        aria-hidden={true}
-      />
-    </button>
   );
 }
 
@@ -204,13 +118,7 @@ function AccountSlot({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Mi cuenta"
-      aria-expanded={abierta}
-      className="flex h-[60px] min-w-0 flex-1 items-center justify-center"
-    >
+    <BarSlotButton etiqueta="Mi cuenta" encendido={abierta} onClick={onClick}>
       {/* Apagado va de la superficie tenue de la barra y encendido del
           color de la marca con su tinta. Nunca al revés: cuando el avatar
           llevaba el color de la barra, el círculo desaparecía y quedaban
@@ -224,35 +132,6 @@ function AccountSlot({
             : 'bg-sidebar-hover text-sidebar-foreground',
         )}
       />
-    </button>
-  );
-}
-
-function NewExpenseButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Registrar un gasto"
-      className={cn(
-        // Redondo, no baldosa con esquinas: una baldosa se leería como una
-        // más de las que abre, y el único control de la barra que no es un
-        // destino no debería parecer uno de ellos.
-        'grid size-14 place-items-center rounded-full',
-        // 16 por encima de la raya, y quedan 20 de barra por debajo.
-        '-mt-4',
-        // ── El color de la marca, no el acento ───────────────────────
-        // El acento es la superficie de lo que RESPONDE al cursor, no la
-        // de lo que llama; para llamar está el color de la marca, que es
-        // además el que ya lleva el avatar cuando está encendido.
-        'bg-sidebar-active text-sidebar-active-foreground shadow-[var(--sombra-flotante)]',
-        // Pulsado se asienta DENTRO de la barra: el dedo ya lo está
-        // tapando, así que la respuesta tiene que verse alrededor del dedo
-        // y no debajo.
-        'transition-transform duration-[120ms] active:translate-y-[2px]',
-      )}
-    >
-      <Plus className="size-6" strokeWidth={2.25} aria-hidden="true" />
-    </button>
+    </BarSlotButton>
   );
 }

@@ -133,7 +133,7 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
   return (
     <Menu
       etiqueta="Tu cuenta"
-      ancho="w-60"
+      ancho="md"
       alineado="izquierda"
       direccion="arriba"
       claseCaja="w-full"
