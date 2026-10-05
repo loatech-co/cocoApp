@@ -6,7 +6,7 @@ import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/f
 import { REALCE } from '@/shared/ui/foundations/superficie';
 import { Menu } from '@/shared/ui/molecules/menu';
 
-export interface OpcionDeSelect {
+interface OpcionDeSelect {
   valor: string;
   etiqueta: string;
 }

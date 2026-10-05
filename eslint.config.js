@@ -210,7 +210,8 @@ export default defineConfig(
   },
   {
     // TEMPORARY: the files with a function over 50 lines when the limit
-    // arrived (step 7.4). Same rule as the list above.
+    // arrived (step 7.4). The frontend ones were split in 7.4-web-b3; this one
+    // is a package, outside the web steps. Same rule as the list above.
     files: ['packages/lectura/src/clasificar.ts'],
     rules: { 'max-lines-per-function': 'off' },
   },

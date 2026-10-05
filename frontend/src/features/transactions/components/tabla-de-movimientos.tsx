@@ -14,7 +14,7 @@ import type { Category, Transaction } from '@coco/types';
 /** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
 const COLUMNAS = ['Concepto', 'Periodo', 'Fecha de pago', 'Centro de costos', 'Categoría', 'Valor'];
 
-export interface OrdenDeColumna {
+interface OrdenDeColumna {
   activo: 'asc' | 'desc' | null;
   onCambiar: () => void;
 }

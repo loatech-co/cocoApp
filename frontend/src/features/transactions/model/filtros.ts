@@ -199,7 +199,7 @@ export function aParametros(filtros: Filtros): {
 }
 
 /** Los parámetros de la URL después de aplicar unos cambios a los filtros. */
-export function writeFilters(
+function writeFilters(
   params: URLSearchParams,
   cambios: Partial<Filtros>,
   porDefecto: Preset,

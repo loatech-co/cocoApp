@@ -31,7 +31,7 @@ import { Menu } from '@/shared/ui/molecules/menu';
  * contiene cuando el modal tiene desplazamiento.
  */
 
-export interface OpcionDeCombo {
+interface OpcionDeCombo {
   valor: string;
   etiqueta: string;
 }
