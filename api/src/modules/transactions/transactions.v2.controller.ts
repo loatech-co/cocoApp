@@ -29,9 +29,15 @@ import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { ApiAuthenticated, ApiErrors, ApiNoContent } from '../../contract/v1/openapi.decorators';
 import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
-import type { Page } from '../../contract/v2/pagination';
 import { toV2, type ToV2 } from '../../contract/v2/to-v2';
-import { Transaction, TransactionHistory, Transfer } from '../../contract/v2/transactions.response';
+import {
+  Transaction,
+  TransactionHistory,
+  TransactionPageMeta,
+  Transfer,
+} from '../../contract/v2/transactions.response';
+
+type ListView = Awaited<ReturnType<TransactionsService['listar']>>;
 
 /** v2 of the transactions: the same service, translated at the edge. */
 @ApiAuthenticated()
@@ -40,12 +46,12 @@ export class TransactionsV2Controller {
   constructor(private readonly transactions: TransactionsService) {}
 
   @Get()
-  @ApiDataV2(Transaction, { isPage: true })
+  @ApiDataV2(Transaction, { isPage: true, pageMeta: TransactionPageMeta })
   @ApiErrors(400)
   async list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTransactionsQuery,
-  ): Promise<Page<ToV2<TransactionView>>> {
+  ): Promise<ToV2<ListView>> {
     return toV2(await this.transactions.listar(user.id, listTransactions(query)));
   }
 

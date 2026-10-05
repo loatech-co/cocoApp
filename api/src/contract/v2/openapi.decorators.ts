@@ -8,6 +8,8 @@ interface DataOptions {
   status?: number;
   /** `data` is one page of `model`, and `meta` says which (D9). */
   isPage?: boolean;
+  /** A page whose `meta` carries more than the page (it extends `PageMetaV2`). */
+  pageMeta?: Type<PageMetaV2>;
   /** `data` may be `null`. */
   nullable?: boolean;
   description?: string;
@@ -27,12 +29,13 @@ export function ApiDataV2(model: Type<unknown>, options: DataOptions = {}): Meth
     : options.nullable
       ? { allOf: [item], nullable: true }
       : item;
+  const pageMeta = options.pageMeta ?? PageMetaV2;
   const meta = options.isPage
-    ? { $ref: getSchemaPath(PageMetaV2) }
+    ? { $ref: getSchemaPath(pageMeta) }
     : { type: 'object', properties: {}, maxProperties: 0 };
 
   return applyDecorators(
-    ApiExtraModels(model, ...(options.isPage ? [PageMetaV2] : [])),
+    ApiExtraModels(model, ...(options.isPage ? [pageMeta] : [])),
     ApiResponse({
       status: options.status ?? HttpStatus.OK,
       description: options.description ?? 'Success.',

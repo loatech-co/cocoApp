@@ -123,21 +123,24 @@ jobs:
       - name: Component catalogue (Storybook)
         run: npm run build-storybook --workspace frontend
 
-      # The contract (step 7.4): api/openapi.json is regenerated from the code
-      # (no database, no secrets) and must match the committed one, so a PR
-      # that changes the contract carries its document. The regenerated file
-      # is kept as an artifact, also when the comparison fails.
-      - name: OpenAPI document matches the code
+      # The contracts (step 7.4): one document per version, api/openapi.v1.json
+      # and api/openapi.v2.json, regenerated from the code (no database, no
+      # secrets); each must match the committed one, so a PR that changes a
+      # contract carries its document. The regenerated files are kept as an
+      # artifact, also when the comparison fails.
+      - name: OpenAPI documents match the code
         run: |
           npm run openapi --workspace api
-          git diff --exit-code -- api/openapi.json
+          git diff --exit-code -- api/openapi.v1.json api/openapi.v2.json
 
       - name: OpenAPI artifact
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: openapi
-          path: api/openapi.json
+          path: |
+            api/openapi.v1.json
+            api/openapi.v2.json
 
   clean-install:
     # What hbuilds runs on every deploy: a fresh install with NODE_ENV=production

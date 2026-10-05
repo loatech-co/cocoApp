@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { PageMetaV2 } from './envelope.response';
+
 export const TRANSACTION_TYPES = ['expense', 'income', 'transfer'] as const;
 export const TRANSACTION_STATUSES = ['cleared', 'pending'] as const;
 export const TRANSACTION_SOURCES = ['web', 'ios_manual', 'ios_photo', 'wallet', 'sms'] as const;
@@ -56,4 +58,12 @@ export class Transfer {
   transferGroupId!: string;
   /** The two legs: out of one account, into the other. */
   legs!: Transaction[];
+}
+
+/** `meta` of the transactions list: the page, and the totals of EVERY page. */
+export class TransactionPageMeta extends PageMetaV2 {
+  /** Sum of the expenses across every page that matches the filters. */
+  sumExpense!: string;
+  /** Sum of the incomes across every page that matches the filters. */
+  sumIncome!: string;
 }

@@ -3389,7 +3389,7 @@
                       }
                     },
                     "meta": {
-                      "$ref": "#/components/schemas/PageMetaV2"
+                      "$ref": "#/components/schemas/TransactionPageMeta"
                     }
                   }
                 }
@@ -6271,6 +6271,32 @@
           "splits",
           "createdAt"
         ]
+      },
+      "TransactionPageMeta": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "description": "1-based page number."
+          },
+          "perPage": {
+            "type": "number",
+            "description": "Items per page, 1–200."
+          },
+          "total": {
+            "type": "number",
+            "description": "Items across every page."
+          },
+          "sumExpense": {
+            "type": "string",
+            "description": "Sum of the expenses across every page that matches the filters."
+          },
+          "sumIncome": {
+            "type": "string",
+            "description": "Sum of the incomes across every page that matches the filters."
+          }
+        },
+        "required": ["page", "perPage", "total", "sumExpense", "sumIncome"]
       },
       "TransactionHistory": {
         "type": "object",

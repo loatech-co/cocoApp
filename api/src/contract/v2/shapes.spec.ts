@@ -12,7 +12,12 @@ import type { Dashboard } from './dashboard.response';
 import type { Capture, Interpretation } from './interpretation.response';
 import type { Liveness, Preferences, Readiness, Receipt, Tag } from './misc.response';
 import type { ToV2 } from './to-v2';
-import type { Transaction, TransactionHistory, Transfer } from './transactions.response';
+import type {
+  Transaction,
+  TransactionHistory,
+  TransactionPageMeta,
+  Transfer,
+} from './transactions.response';
 import type { ConHijos } from '../../common/categories/categories.tree';
 import type { AccountView } from '../../modules/accounts/accounts.service';
 import type { AdminService } from '../../modules/admin/admin.service';
@@ -61,6 +66,7 @@ type MergeView = Awaited<ReturnType<CategoriesService['unificar']>>;
 type UsageView = Awaited<ReturnType<CategoriesService['usosDe']>>;
 type SeedView = Awaited<ReturnType<CategoriesService['sembrarDiccionario']>>;
 type HistoryView = Awaited<ReturnType<TransactionsService['historia']>>;
+type ListMetaView = Awaited<ReturnType<TransactionsService['listar']>>['meta'];
 
 const CHECKS = {
   account: true satisfies Same<Account, V2<AccountView>>,
@@ -92,6 +98,7 @@ const CHECKS = {
   tag: true satisfies Same<Tag, V2<TagView>>,
   transaction: true satisfies Same<Transaction, V2<TransactionView>>,
   history: true satisfies Same<TransactionHistory, V2<HistoryView>>,
+  transactionPageMeta: true satisfies Same<TransactionPageMeta, V2<ListMetaView>>,
   transfer: true satisfies Same<
     Transfer,
     V2<{ transfer_group_id: string; legs: TransactionView[] }>

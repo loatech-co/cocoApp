@@ -616,43 +616,83 @@ failure reads as the sentence that stopped being true.
 
 ## API contract (OpenAPI)
 
-**Rule.** The API describes itself: `@nestjs/swagger@11` builds the OpenAPI
-document from the controllers and DTOs, and the result is committed as
-`api/openapi.json`. A change to a route, a DTO or a response shape regenerates
-it in the same PR:
+**Rule.** The API describes itself: `@nestjs/swagger@11` builds one OpenAPI
+document per contract version from the controllers and DTOs, and the results
+are committed as `api/openapi.v1.json` and `api/openapi.v2.json`. A change to a
+route, a DTO or a response shape regenerates them in the same PR:
 
 ```sh
 npm run openapi --workspace api
 ```
 
 The script builds the API and opens it in Nest's preview mode —no provider is
-instantiated, so it needs no database and no secrets— and writes the file. CI
-runs it again and fails if the result differs from the committed one, and keeps
-it as the `openapi` artifact. Swagger UI is served at `/api/docs` outside
-production only.
+instantiated, so it needs no database and no secrets— and writes both files.
+CI runs it again and fails if either differs from the committed one, and keeps
+them as the `openapi` artifact. Swagger UI is served at `/api/docs/v1` and
+`/api/docs/v2` outside production only.
 
 **How a route is described.**
 
 - Inputs come from the DTOs: the Swagger CLI plugin (`api/nest-cli.json`)
   reads their types, their `class-validator` rules and their comments. A DTO
-  rarely needs a decorator.
-- Responses are classes in `api/src/contract/v1/*.response.ts`, in the wire
-  format (a bigint goes out as a number). `shapes.spec.ts` makes it a compile
-  error if one stops matching the view its service returns.
-- Each controller says, with the decorators in
-  `contract/v1/openapi.decorators.ts`: `@ApiAuthenticated()` or `@ApiPublic()`;
-  `@ApiData(Model, { isArray, meta, status })` for the `{ data, meta }`
-  envelope; `@ApiNoContent()` for a 204; and `@ApiErrors(…)` for the statuses
-  it answers with `{ error: { code, message, details } }`.
+  rarely needs a decorator. It only reads files named `*.dto.ts` and
+  `*.response.ts`, so an input class lives in one of those, never inside a
+  controller.
+- Responses are classes in `api/src/contract/v<n>/*.response.ts`, in the wire
+  format (a bigint goes out as a number). Each version's `shapes.spec.ts` makes
+  it a compile error if one stops matching the view its service returns.
+- Each controller says, with the decorators in `contract/v1/openapi.decorators.ts`
+  and `contract/v2/openapi.decorators.ts`: `@ApiAuthenticated()` or
+  `@ApiPublic()`; `@ApiData(…)` (v1) or `@ApiDataV2(Model, { isPage, status })`
+  (v2) for the `{ data, meta }` envelope; `@ApiNoContent()` for a 204; and
+  `@ApiErrors(…)` for the statuses it answers with
+  `{ error: { code, message, details } }`.
 
-**Why.** One source of truth: the clients generate their types from this file
+**Why.** One source of truth: the clients generate their types from these files
 (Orval in fetch mode, D11), so a document that drifts from the code is a client
 that compiles against an API that does not exist. `api/test/openapi.e2e-spec.ts`
-fails if Express registers a route the file does not describe (or the other way
-round), if a route documented as authenticated answers without a token, or if a
-route without a token is not on its list of public ones.
+fails if Express registers a route no file describes (or the other way round),
+if a document holds a route of another version, if a v1 route has no v2
+successor, if a route documented as authenticated answers without a token, or if
+a route without a token is not on its list of public ones.
 
-**Versions.** v1 is documented exactly as it is —snake_case and Spanish field
-names included—: documenting is not changing. A breaking change (English,
-camelCase, the D9 pagination) is a new version under `/api/v2`, next to v1,
-never an edit of v1 (`docs/standards/decisions.md`, "Final decisions").
+## API versions
+
+**Rule.** A breaking change to the contract is a new version next to the old
+one, never an edit of it (7.2, 7.10). Today there are two:
+
+- **v2** (`/api/v2`) is the contract the clients use: English and camelCase on
+  the wire, English literals (`high`, `quarterly`, `cost_center`), and every
+  list a page, `{ data, meta: { page, perPage, total } }` with `?page=` and
+  `?perPage=` (50 by default, 200 at most; D9). Messages meant for the user stay
+  in Spanish.
+- **v1** (`/api/v1`) answers exactly as it did, and is deprecated: every response
+  carries `Deprecation: @1791158400` (RFC 9745, 2026-10-05) and
+  `Link: <the same route in v2>; rel="successor-version"`, and every request
+  leaves one log line, `{"context":"deprecation","msg":"v1_used","route":…}`,
+  with the route template (ids as `:id`, no query string). It is removed once
+  those lines show seven days with zero uses (7.10); the health probes count, so
+  point monitors and deploy checks at `/api/v2/health` and `/api/v2/ready`.
+
+**How v2 is written.** v2 changes no behaviour, so it has no logic of its own.
+Each module has a `*.v2.controller.ts` (`@Controller({ path, version: '2' })`)
+that calls the same service as v1 and translates at the edge:
+
+- out: `toV2(view)` (`contract/v2/to-v2.ts`) renames the fields and literals
+  with one table that follows `docs/standards/rename-map.json`; a field the
+  table does not name is only re-cased. `ToV2<T>` is the same translation in
+  the type system, so the response classes are checked against it.
+- in: the v2 DTOs live in `dto/v2/`, and a typed mapper builds the v1 DTO the
+  service takes, through `defined<V1Draft<V1Dto>>({ … })`: an absent field stays
+  absent (never `undefined`) and a misspelt v1 name does not compile.
+- a list the service returns whole is cut with `paginate(items, query)`
+  (`contract/v2/pagination.ts`); one the service already pages in SQL keeps its
+  own meta, translated.
+
+**Why.** Two copies of the same logic drift: one learns a rule and the other
+does not. With the translation at the edge and the equivalence tested
+(`api/test/api-v2.e2e-spec.ts` compares each v2 read with `toV2` of its v1
+twin, on the same data), the only thing v2 can get wrong is a name, and that is
+what the type checks catch. Isolation between users is checked per version:
+`user-isolation.e2e-spec.ts` (v1) and `user-isolation.v2.e2e-spec.ts` (v2) each
+attack every route of their prefix, and a route under any other prefix fails.
