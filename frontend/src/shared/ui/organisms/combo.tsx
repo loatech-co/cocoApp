@@ -1,5 +1,5 @@
 import { Check, ChevronDown, Plus, Search } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
@@ -36,17 +36,7 @@ export interface OpcionDeCombo {
   etiqueta: string;
 }
 
-export function Combo({
-  etiqueta,
-  valor,
-  opciones,
-  onCambiar,
-  onCrear,
-  vacio = 'Sin elegir',
-  deshabilitado = false,
-  creando = false,
-  id,
-}: {
+interface ComboProps {
   /** Nombre accesible. No se pinta: la etiqueta visible va fuera. */
   etiqueta: string;
   /** El valor elegido. `''` es ninguno. */
@@ -60,26 +50,24 @@ export function Combo({
   /** Mientras se crea, para no dejar pulsar dos veces. */
   creando?: boolean;
   id?: string;
-}) {
-  const [busca, setBusca] = useState('');
+}
+
+export function Combo({
+  etiqueta,
+  valor,
+  opciones,
+  onCambiar,
+  onCrear,
+  vacio = 'Sin elegir',
+  deshabilitado = false,
+  creando = false,
+  id,
+}: ComboProps) {
+  const busqueda = useComboSearch(opciones, onCambiar, onCrear);
   const campo = useRef<HTMLInputElement>(null);
   const enCampo = useDentroDeUnCampo();
 
   const elegida = opciones.find((o) => o.valor === valor);
-
-  const filtradas = useMemo(() => {
-    const q = normal(busca);
-    if (q === '') return opciones;
-    return opciones.filter((o) => normal(o.etiqueta).includes(q));
-  }, [opciones, busca]);
-
-  // Ofrecer crear solo cuando lo escrito no existe ya. Con un nombre que
-  // coincide, "crear" produciría dos conceptos idénticos —y a partir de ahí
-  // la misma plata sumando por separado en los dos—.
-  const puedeCrear =
-    onCrear !== undefined &&
-    busca.trim() !== '' &&
-    !opciones.some((o) => normal(o.etiqueta) === normal(busca));
 
   /*
     Lo que se ve en el campo, abierto o cerrado, se pueda tocar o no.
@@ -98,43 +86,12 @@ export function Combo({
     contenido.
   */
   const dentro = (abierto: boolean) => (
-    <>
-      {/*
-        El relleno de arriba va en el TEXTO y no en el botón: con el botón
-        relleno, la flecha quedaría ocho píxeles baja porque `items-center` la
-        centraría en la caja de contenido en vez de en el campo.
-      */}
-      <span
-        data-lleno={elegida ? 'si' : 'no'}
-        data-vacio={elegida ? undefined : ''}
-        className={cn(
-          'min-w-0 flex-1 truncate text-left',
-          !elegida && 'text-muted-foreground',
-          enCampo && 'pt-4',
-        )}
-      >
-        {elegida?.etiqueta ?? vacio}
-      </span>
-      <ChevronDown
-        className={cn('size-4 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
-        aria-hidden="true"
-      />
-    </>
+    <ComboTriggerContent elegida={elegida} vacio={vacio} enCampo={enCampo} abierto={abierto} />
   );
 
-  if (deshabilitado) {
-    // Bloqueado no puede ser un botón que abre nada: se pinta igual pero sin
-    // desplegable detrás, para que el foco no caiga en una trampa.
-    return (
-      <span
-        id={id}
-        aria-disabled="true"
-        className={cn(disparadorDeCampo(), 'cursor-not-allowed opacity-50')}
-      >
-        {dentro(false)}
-      </span>
-    );
-  }
+  // Bloqueado no puede ser un botón que abre nada: se pinta igual pero sin
+  // desplegable detrás, para que el foco no caiga en una trampa.
+  if (deshabilitado) return <DisabledCombo id={id}>{dentro(false)}</DisabledCombo>;
 
   return (
     <Menu
@@ -154,58 +111,94 @@ export function Combo({
       {(cerrar) => (
         <ComboPanel
           campo={campo}
-          busca={busca}
-          setBusca={setBusca}
-          filtradas={filtradas}
+          busqueda={busqueda}
           valor={valor}
           vacio={vacio}
-          puedeCrear={puedeCrear}
           creando={creando}
-          onElegir={(v) => {
-            onCambiar(v);
-            setBusca('');
-            cerrar();
-          }}
-          onCrear={() => {
-            onCrear?.(busca.trim());
-            setBusca('');
-            cerrar();
-          }}
+          cerrar={cerrar}
         />
       )}
     </Menu>
   );
 }
 
-function ComboPanel({
-  campo,
-  busca,
-  setBusca,
-  filtradas,
-  valor,
-  vacio,
-  puedeCrear,
-  creando,
-  onElegir,
-  onCrear,
-}: {
-  campo: React.RefObject<HTMLInputElement | null>;
+interface ComboSearch {
   busca: string;
   setBusca: (v: string) => void;
   filtradas: OpcionDeCombo[];
+  puedeCrear: boolean;
+  /** Elige una opción y vacía el buscador. */
+  elegir: (valor: string) => void;
+  /** Crea lo escrito y vacía el buscador. */
+  crear: () => void;
+}
+
+/** Lo escrito en el buscador, lo que deja ver y lo que se puede crear con ello. */
+function useComboSearch(
+  opciones: OpcionDeCombo[],
+  onCambiar: (valor: string) => void,
+  onCrear: ((nombre: string) => void) | undefined,
+): ComboSearch {
+  const [busca, setBusca] = useState('');
+
+  const filtradas = useMemo(() => {
+    const q = normal(busca);
+    if (q === '') return opciones;
+    return opciones.filter((o) => normal(o.etiqueta).includes(q));
+  }, [opciones, busca]);
+
+  // Ofrecer crear solo cuando lo escrito no existe ya. Con un nombre que
+  // coincide, "crear" produciría dos conceptos idénticos —y a partir de ahí
+  // la misma plata sumando por separado en los dos—.
+  const puedeCrear =
+    onCrear !== undefined &&
+    busca.trim() !== '' &&
+    !opciones.some((o) => normal(o.etiqueta) === normal(busca));
+
+  return {
+    busca,
+    setBusca,
+    filtradas,
+    puedeCrear,
+    elegir: (v) => {
+      onCambiar(v);
+      setBusca('');
+    },
+    crear: () => {
+      onCrear?.(busca.trim());
+      setBusca('');
+    },
+  };
+}
+
+interface ComboPanelProps {
+  campo: React.RefObject<HTMLInputElement | null>;
+  busqueda: ComboSearch;
   valor: string;
   vacio: string;
-  puedeCrear: boolean;
   creando: boolean;
-  onElegir: (valor: string) => void;
-  onCrear: () => void;
-}) {
+  cerrar: () => void;
+}
+
+function ComboPanel({ campo, busqueda, valor, vacio, creando, cerrar }: ComboPanelProps) {
+  const { busca, setBusca, filtradas, puedeCrear } = busqueda;
+
   // El foco al abrir: si hay que pulsar el campo antes de escribir, el gesto
   // son dos clics y nadie llega a descubrir que se podía filtrar.
   useEffect(() => {
     const t = setTimeout(() => campo.current?.focus(), 10);
     return () => clearTimeout(t);
   }, [campo]);
+
+  function onElegir(v: string): void {
+    busqueda.elegir(v);
+    cerrar();
+  }
+
+  function onCrear(): void {
+    busqueda.crear();
+    cerrar();
+  }
 
   return (
     <div className="flex flex-col">
@@ -229,43 +222,43 @@ function ComboPanel({
         />
       </div>
 
-      <ul className="max-h-64 overflow-y-auto p-1">
-        <li>
-          <Opcion elegida={valor === ''} onClick={() => onElegir('')}>
-            <span className="text-muted-foreground">{vacio}</span>
-          </Opcion>
-        </li>
+      <ComboOptions
+        filtradas={filtradas}
+        valor={valor}
+        vacio={vacio}
+        puedeCrear={puedeCrear}
+        onElegir={onElegir}
+      />
 
-        {filtradas.map((o) => (
-          <li key={o.valor}>
-            <Opcion elegida={o.valor === valor} onClick={() => onElegir(o.valor)}>
-              {o.etiqueta}
-            </Opcion>
-          </li>
-        ))}
-
-        {filtradas.length === 0 && !puedeCrear && (
-          <li className="px-2.5 py-2 text-sm text-muted-foreground">Nada coincide.</li>
-        )}
-      </ul>
-
-      {puedeCrear && (
-        <button
-          type="button"
-          onClick={onCrear}
-          disabled={creando}
-          className={cn(
-            'flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm',
-            'font-medium transition-colors',
-            REALCE,
-            'disabled:opacity-60',
-          )}
-        >
-          <Plus className="size-4 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 truncate">Crear “{busca.trim()}”</span>
-        </button>
-      )}
+      {puedeCrear && <CreateOption nombre={busca.trim()} creando={creando} onCrear={onCrear} />}
     </div>
+  );
+}
+
+function CreateOption({
+  nombre,
+  creando,
+  onCrear,
+}: {
+  nombre: string;
+  creando: boolean;
+  onCrear: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onCrear}
+      disabled={creando}
+      className={cn(
+        'flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm',
+        'font-medium transition-colors',
+        REALCE,
+        'disabled:opacity-60',
+      )}
+    >
+      <Plus className="size-4 shrink-0" aria-hidden="true" />
+      <span className="min-w-0 truncate">Crear “{nombre}”</span>
+    </button>
   );
 }
 
@@ -306,4 +299,86 @@ export function Opcion({
 /** Sin tildes ni mayúsculas: "Educación" se encuentra escribiendo "educacion". */
 function normal(texto: string): string {
   return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+function ComboOptions({
+  filtradas,
+  valor,
+  vacio,
+  puedeCrear,
+  onElegir,
+}: Pick<ComboSearch, 'filtradas' | 'puedeCrear'> & {
+  valor: string;
+  vacio: string;
+  onElegir: (valor: string) => void;
+}) {
+  return (
+    <ul className="max-h-64 overflow-y-auto p-1">
+      <li>
+        <Opcion elegida={valor === ''} onClick={() => onElegir('')}>
+          <span className="text-muted-foreground">{vacio}</span>
+        </Opcion>
+      </li>
+
+      {filtradas.map((o) => (
+        <li key={o.valor}>
+          <Opcion elegida={o.valor === valor} onClick={() => onElegir(o.valor)}>
+            {o.etiqueta}
+          </Opcion>
+        </li>
+      ))}
+
+      {filtradas.length === 0 && !puedeCrear && (
+        <li className="px-2.5 py-2 text-sm text-muted-foreground">Nada coincide.</li>
+      )}
+    </ul>
+  );
+}
+
+function ComboTriggerContent({
+  elegida,
+  vacio,
+  enCampo,
+  abierto,
+}: {
+  elegida: OpcionDeCombo | undefined;
+  vacio: string;
+  enCampo: boolean;
+  abierto: boolean;
+}) {
+  return (
+    <>
+      {/*
+        El relleno de arriba va en el TEXTO y no en el botón: con el botón
+        relleno, la flecha quedaría ocho píxeles baja porque `items-center` la
+        centraría en la caja de contenido en vez de en el campo.
+      */}
+      <span
+        data-lleno={elegida ? 'si' : 'no'}
+        data-vacio={elegida ? undefined : ''}
+        className={cn(
+          'min-w-0 flex-1 truncate text-left',
+          !elegida && 'text-muted-foreground',
+          enCampo && 'pt-4',
+        )}
+      >
+        {elegida?.etiqueta ?? vacio}
+      </span>
+      <ChevronDown
+        className={cn('size-4 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
+        aria-hidden="true"
+      />
+    </>
+  );
+}
+function DisabledCombo({ id, children }: { id: string | undefined; children: ReactNode }) {
+  return (
+    <span
+      id={id}
+      aria-disabled="true"
+      className={cn(disparadorDeCampo(), 'cursor-not-allowed opacity-50')}
+    >
+      {children}
+    </span>
+  );
 }
