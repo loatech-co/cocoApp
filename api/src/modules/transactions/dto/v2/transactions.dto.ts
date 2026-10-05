@@ -27,9 +27,6 @@ type TransactionType = (typeof TRANSACTION_TYPES)[number];
 type TransactionStatus = (typeof TRANSACTION_STATUSES)[number];
 type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
-/** Columns a list may be sorted by; `-column` sorts descending. */
-export const SORTABLE = ['date', 'amount', 'createdAt', 'merchant'] as const;
-
 export class SplitInput {
   @IsOptional()
   @Type(() => Number)

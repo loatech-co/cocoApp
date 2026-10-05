@@ -156,13 +156,6 @@ export function toV1Value<F extends keyof ValueNames>(
   return found[0] as keyof ValueNames[F];
 }
 
-/** The v2 words of a field with translated values, for `@IsIn` and the document. */
-export function v2Values<F extends keyof ValueNames>(
-  field: F,
-): ValueNames[F][keyof ValueNames[F]][] {
-  return Object.values(VALUE_NAMES[field]) as ValueNames[F][keyof ValueNames[F]][];
-}
-
 /**
  * A v1 DTO under construction: every field may still be `undefined`. Passed
  * to `defined` as its type argument, it turns on the excess-property check,
