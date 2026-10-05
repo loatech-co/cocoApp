@@ -205,7 +205,6 @@ export default defineConfig(
     // (step 7.4). Step 7.4-web-b splits them and deletes this list; a file
     // never gets added to it.
     files: [
-      'frontend/src/features/transactions/pages/dashboard-page.tsx',
       'frontend/src/features/transactions/components/movimiento-modal.dom.test.tsx',
       'packages/lectura/src/diccionario.ts',
       'packages/types/src/index.ts',
@@ -250,7 +249,6 @@ export default defineConfig(
       'frontend/src/features/centros/components/concepto-modal.tsx',
       'frontend/src/features/centros/components/confirmar-borrado.tsx',
       'frontend/src/features/profile/pages/cuenta-page.tsx',
-      'frontend/src/features/transactions/pages/dashboard-page.tsx',
       'frontend/src/features/transactions/components/camara.tsx',
       'frontend/src/features/transactions/api/leer-soporte.ts',
       'frontend/src/shared/lib/deslizar.ts',
