@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ApiHeader } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 
@@ -14,6 +15,18 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthenticationError } from '../../common/errors/domain-error';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import {
+  ProfileResponse,
+  RegisterResponse,
+  SessionResponse,
+} from '../../contract/v1/auth.response';
+import {
+  ApiAuthenticated,
+  ApiData,
+  ApiErrors,
+  ApiNoContent,
+  ApiPublic,
+} from '../../contract/v1/openapi.decorators';
 
 /** El refresh token viaja SOLO en esta cookie; nunca en el cuerpo ni en la URL. */
 const COOKIE_REFRESH = 'coco_refresh';
@@ -48,11 +61,22 @@ export interface RespuestaDeSesion {
 const CABECERA_CLIENTE = 'x-coco-cliente';
 const CLIENTE_NATIVO = 'nativo';
 
+/** How the OpenAPI document tells a native client which header to send. */
+const NATIVE_CLIENT_HEADER = {
+  name: CABECERA_CLIENTE,
+  required: false,
+  enum: [CLIENTE_NATIVO],
+  description:
+    'Native clients send `nativo`: the refresh token then travels in the body ' +
+    '(`refresh_token`) instead of the httpOnly `coco_refresh` cookie the web uses.',
+};
+
 function esClienteNativo(request: Request): boolean {
   const valor = request.headers[CABECERA_CLIENTE];
   return (Array.isArray(valor) ? valor[0] : valor) === CLIENTE_NATIVO;
 }
 
+@ApiPublic()
 @Controller('auth')
 export class AuthController {
   private readonly enProduccion: boolean;
@@ -74,6 +98,8 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
+  @ApiData(RegisterResponse, { status: 201 })
+  @ApiErrors(400, 409, 422)
   async registrar(
     @Body() dto: RegisterDto,
     @Req() request: Request,
@@ -92,6 +118,9 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiHeader(NATIVE_CLIENT_HEADER)
+  @ApiData(SessionResponse)
+  @ApiErrors(400, 401, 403)
   async entrar(
     @Body() dto: LoginDto,
     @Req() request: Request,
@@ -109,6 +138,9 @@ export class AuthController {
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiHeader(NATIVE_CLIENT_HEADER)
+  @ApiData(SessionResponse)
+  @ApiErrors(400, 401, 403)
   async refrescar(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
@@ -142,6 +174,9 @@ export class AuthController {
   @Public()
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiHeader(NATIVE_CLIENT_HEADER)
+  @ApiNoContent()
+  @ApiErrors(400)
   async salir(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
@@ -154,6 +189,8 @@ export class AuthController {
   /** Cierra la sesión en todos los dispositivos, con efecto inmediato. */
   @Post('logout-all')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiAuthenticated()
+  @ApiNoContent()
   async salirDeTodo(
     @CurrentUser() user: AuthenticatedUser,
     @Req() request: Request,
@@ -164,12 +201,17 @@ export class AuthController {
   }
 
   @Get('me')
+  @ApiAuthenticated()
+  @ApiData(ProfileResponse)
   perfil(@CurrentUser() user: AuthenticatedUser): Promise<PerfilPublico> {
     return this.auth.perfilDe(user.id);
   }
 
   @Post('change-password')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiAuthenticated()
+  @ApiNoContent()
+  @ApiErrors(400, 422)
   async cambiarContrasena(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ChangePasswordDto,

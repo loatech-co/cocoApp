@@ -12,6 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiProduces } from '@nestjs/swagger';
 import type { Response } from 'express';
 
 import { TAMANO_MAXIMO } from './soportes.optimizacion';
@@ -19,6 +20,13 @@ import { SoportesService, type ArchivoSubido, type SoporteView } from './soporte
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import {
+  ApiAuthenticated,
+  ApiData,
+  ApiErrors,
+  ApiNoContent,
+} from '../../contract/v1/openapi.decorators';
+import { SoporteResponse } from '../../contract/v1/soportes.response';
 
 /** Cuántos archivos se aceptan de una vez. Ocho es el récord del lote. */
 const MAXIMO_POR_SUBIDA = 10;
@@ -35,11 +43,14 @@ const MAXIMO_POR_SUBIDA = 10;
  * repetirlo: una anotación que se puede olvidar es una anotación que un día se
  * olvida.
  */
+@ApiAuthenticated()
 @Controller('transactions')
 export class SoportesController {
   constructor(private readonly soportes: SoportesService) {}
 
   @Get(':id/soportes')
+  @ApiData(SoporteResponse, { isArray: true })
+  @ApiErrors(400, 404)
   listar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
@@ -66,6 +77,26 @@ export class SoportesController {
       limits: { fileSize: TAMANO_MAXIMO, files: MAXIMO_POR_SUBIDA },
     }),
   )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['archivos'],
+      properties: {
+        archivos: {
+          type: 'array',
+          maxItems: MAXIMO_POR_SUBIDA,
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+    },
+  })
+  @ApiData(SoporteResponse, {
+    status: 201,
+    isArray: true,
+    description: 'Every receipt of the transaction after the upload.',
+  })
+  @ApiErrors(400, 404, 413, 415, 503)
   subir(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
@@ -77,6 +108,8 @@ export class SoportesController {
 
   @Delete(':id/soportes/:soporteId')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContent()
+  @ApiErrors(400, 404, 503)
   eliminar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
@@ -86,6 +119,12 @@ export class SoportesController {
   }
 
   @Get(':id/soportes/:soporteId')
+  @ApiProduces('application/pdf', 'image/jpeg', 'image/png')
+  @ApiOkResponse({
+    description: 'The file itself, not wrapped in `{ data, meta }`.',
+    schema: { type: 'string', format: 'binary' },
+  })
+  @ApiErrors(400, 404, 503)
   async descargar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,

@@ -23,6 +23,18 @@ import type { ConHijos } from '../../common/categories/categories.tree';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import {
+  CategoryMergeResponse,
+  CategoryResponse,
+  CategorySeedResponse,
+  CategoryUsageResponse,
+} from '../../contract/v1/categories.response';
+import {
+  ApiAuthenticated,
+  ApiData,
+  ApiErrors,
+  ApiNoContent,
+} from '../../contract/v1/openapi.decorators';
 
 /** Forma pública: `parent_id` en snake_case, como el resto del contrato. */
 /**
@@ -68,11 +80,18 @@ export function aPayload(categoria: CategoryView | ConHijos<CategoryView>): Cate
 }
 
 /** M2 — Categorías. */
+@ApiAuthenticated()
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categories: CategoriesService) {}
 
   @Get()
+  @ApiData(CategoryResponse, {
+    isArray: true,
+    meta: 'total',
+    description: 'The tree: cost centers with their `children`. `meta.total` counts every node.',
+  })
+  @ApiErrors(400)
   async listar(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListCategoriesQueryDto,
@@ -86,6 +105,8 @@ export class CategoriesController {
   }
 
   @Get(':id')
+  @ApiData(CategoryResponse)
+  @ApiErrors(400, 404)
   async obtener(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
@@ -94,6 +115,8 @@ export class CategoriesController {
   }
 
   @Post()
+  @ApiData(CategoryResponse, { status: 201 })
+  @ApiErrors(400, 404, 409, 422)
   async crear(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateCategoryDto,
@@ -103,12 +126,15 @@ export class CategoriesController {
 
   /** Siembra el diccionario sugerido. Opcional: el usuario decide si lo quiere. */
   @Post('seed')
+  @ApiData(CategorySeedResponse, { status: 201 })
   sembrar(@CurrentUser() user: AuthenticatedUser): Promise<{ creadas: number }> {
     return this.categories.sembrarDiccionario(user.id);
   }
 
   @Post('reorder')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContent()
+  @ApiErrors(400, 404)
   reordenar(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ReorderCategoriesDto,
@@ -124,6 +150,8 @@ export class CategoriesController {
    * puede confundirse con ninguna otra.
    */
   @Post(':id/unificar')
+  @ApiData(CategoryMergeResponse, { status: 201 })
+  @ApiErrors(400, 404, 409, 422)
   unificar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
@@ -133,6 +161,8 @@ export class CategoriesController {
   }
 
   @Patch(':id')
+  @ApiData(CategoryResponse)
+  @ApiErrors(400, 404, 409, 422)
   async actualizar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
@@ -154,6 +184,8 @@ export class CategoriesController {
    * «Eliminar»—.
    */
   @Get(':id/usos')
+  @ApiData(CategoryUsageResponse)
+  @ApiErrors(400, 404)
   async usos(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
@@ -180,6 +212,8 @@ export class CategoriesController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContent()
+  @ApiErrors(400, 404, 409, 422)
   async eliminar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,

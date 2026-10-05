@@ -12,7 +12,12 @@ export class AuditEntryResponse {
   entity!: string;
   entity_id!: number | null;
   user!: AuditUserResponse | null;
-  @ApiProperty({ description: 'What changed, as it was recorded: any JSON value.', nullable: true })
+  @ApiProperty({
+    description: 'What changed, as it was recorded (usually an object of fields).',
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+  })
   changes!: Prisma.JsonValue;
   ip!: string | null;
   created_at!: Date;

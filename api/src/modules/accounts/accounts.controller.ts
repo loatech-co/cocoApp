@@ -16,6 +16,13 @@ import { CreateAccountDto, ListAccountsQueryDto, UpdateAccountDto } from './dto/
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { AccountResponse } from '../../contract/v1/accounts.response';
+import {
+  ApiAuthenticated,
+  ApiData,
+  ApiErrors,
+  ApiNoContent,
+} from '../../contract/v1/openapi.decorators';
 
 /**
  * M3 — Cuentas / medios de pago.
@@ -23,11 +30,14 @@ import type { AuthenticatedUser } from '../../common/types/authenticated-user';
  * El controlador no tiene lógica de negocio: recibe, saca el userId del token
  * y delega. El envelope `{ data, meta }` lo pone el TransformInterceptor global.
  */
+@ApiAuthenticated()
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly accounts: AccountsService) {}
 
   @Get()
+  @ApiData(AccountResponse, { isArray: true, meta: 'total' })
+  @ApiErrors(400)
   async listar(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListAccountsQueryDto,
@@ -37,6 +47,8 @@ export class AccountsController {
   }
 
   @Get(':id')
+  @ApiData(AccountResponse)
+  @ApiErrors(400, 404)
   obtener(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
@@ -45,6 +57,8 @@ export class AccountsController {
   }
 
   @Post()
+  @ApiData(AccountResponse, { status: 201 })
+  @ApiErrors(400, 409, 422)
   crear(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateAccountDto,
@@ -53,6 +67,8 @@ export class AccountsController {
   }
 
   @Patch(':id')
+  @ApiData(AccountResponse)
+  @ApiErrors(400, 404, 409, 422)
   actualizar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
@@ -63,6 +79,8 @@ export class AccountsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContent()
+  @ApiErrors(400, 404, 409)
   eliminar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,

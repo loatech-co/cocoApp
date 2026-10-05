@@ -4,7 +4,10 @@ import { LearnBodyDto, SuggestQueryDto } from './categorization.dto';
 import { CategorizationService, type SugerenciaView } from './categorization.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { LearnResponse, SuggestionResponse } from '../../contract/v1/categorization.response';
+import { ApiAuthenticated, ApiData, ApiErrors } from '../../contract/v1/openapi.decorators';
 
+@ApiAuthenticated()
 @Controller('categorization')
 export class CategorizationController {
   constructor(private readonly categorization: CategorizationService) {}
@@ -16,6 +19,11 @@ export class CategorizationController {
    * simplemente no muestra nada — sugerir mal es peor que no sugerir.
    */
   @Get('suggest')
+  @ApiData(SuggestionResponse, {
+    nullable: true,
+    description: '`data` is `null` when nothing is confident enough.',
+  })
+  @ApiErrors(400)
   async sugerir(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: SuggestQueryDto,
@@ -37,6 +45,8 @@ export class CategorizationController {
    * Devuelve si aprendió algo, para que quien lo llama no tenga que adivinar.
    */
   @Post('learn')
+  @ApiData(LearnResponse, { status: 201 })
+  @ApiErrors(400, 404, 422)
   async aprender(
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: LearnBodyDto,
