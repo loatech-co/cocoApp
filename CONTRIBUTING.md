@@ -948,12 +948,20 @@ release, and the pre-commit hook covers the routine.
   thing a person does; `Coco/Core` is infrastructure (networking, storage,
   Keychain, background tasks, domain contracts); `Coco/Shared` is common UI
   and formatting. `CocoTests` mirrors the same tree.
-- **English for files and types**; text the person sees stays in Spanish.
-  Never renamed, because something outside the code stores the name: App
-  Intent types, their `@Parameter`s and titles (Shortcuts automations),
-  widget and control `kind`s, background task identifiers, the bundle id, and
-  JSON keys (API and on-disk). Properties are camelCase and the key is written
-  in `CodingKeys`; `StoredFormatCompatibilityTests` pins every key.
+- **Every identifier in English**, with no compatibility exceptions (ADR
+  0002): files, types, members, App Intents and their `@Parameter`s, the
+  `CocoWidgets` target and its `kind`s, background task identifiers,
+  UserDefaults and Keychain keys, folders and on-disk JSON keys. Text the
+  person sees stays in Spanish, including Shortcuts and Siri phrases and
+  titles.
+- **What stays in Spanish without being user text** is a contract with
+  something outside `ios/`: the `v1` API JSON keys (in `CodingKeys`; they move
+  to English with `/api/v2`, pinned by `APIKeysTests`) and the names of the
+  web bridge messages, which the frontend defines.
+- **On-disk formats** use synthesized keys (the property names);
+  `StoredFormatTests` pins them along with folders, UserDefaults and Keychain
+  keys and task identifiers. Renaming a stored property is a migration, not a
+  refactor.
 - **`async/await`** across the network layer, **typed errors per domain**
   (`APIError`, `SessionError`, `QueueError`, `KeychainError`,
   `ParameterError`) and **no force-unwrap or `try!` outside tests**
@@ -961,10 +969,10 @@ release, and the pre-commit hook covers the routine.
 
 ```swift
 // Correct
-guard let url = URL(string: "coco://capturar/\(destination)") else {
+guard let url = URL(string: "coco://capture/\(destination)") else {
     preconditionFailure("URL de captura inválida para el destino «\(destination)»")
 }
 
 // Incorrect — SwiftLint fails on force_unwrapping
-let url = URL(string: "coco://capturar/\(destination)")!
+let url = URL(string: "coco://capture/\(destination)")!
 ```
