@@ -650,3 +650,7 @@ gratuito de GitHub (`gh repo view`: private, rama por defecto `main`).
 
 | Paso | Rama | PR | Estado |
 |---|---|---|---|
+| prep | `chore/phase-6-prep` | #1 | **Desplegado** `eb674b4` · 1m 38s · `stderr` 0 · bundle `index-DCbWDdDI` → `index-DiMVseHA`. El Team ID ya no estaba en el `.xcodeproj` (lo había borrado la regeneración): se tomó del único equipo personal de Xcode, `N9X655JSPY`, que coincide con el certificado del Keychain; `xcodegen generate` lo conserva en los tres targets. iOS 190 ✓ / 2 saltadas |
+| 6.1 | `fix/clean-install` | #2 | `tsx` vuelve a la línea 4.20 (usa `esbuild` 0.25, la de Vite): una sola `esbuild` en el árbol. Causa leída en el registro del servidor: `Expected "0.28.2" but got "0.25.12"`. Nuevo `scripts/verify-clean-install.sh` (clon limpio, `npm install` con `NODE_ENV=production` sin devDependencies, una sola `esbuild`, build) |
+
+**Incidente 5 oct ~09:55.** El push de `chore/phase-6-prep` a `Dev` lo negó el clasificador del modo auto de Claude Code («Production Deploy»), pese al mandato escrito. Parada no prevista: se informó al dueño, que salió del modo auto y aprobó el push en el panel.
