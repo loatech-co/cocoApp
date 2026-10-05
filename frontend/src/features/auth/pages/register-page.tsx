@@ -3,7 +3,7 @@ import { useState, type SubmitEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 
 import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
-import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
+import { Alert, AlertDescription, AlertTitle, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
@@ -188,20 +188,7 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
 
 function RegisterErrors({ error, problemas }: { error: string | null; problemas: string[] }) {
   if (!error) return null;
-  return (
-    <Alert variant="destructive">
-      <AlertDescription>
-        {error}
-        {problemas.length > 0 && (
-          <ul className="mt-2 list-disc space-y-0.5 pl-4">
-            {problemas.map((problema) => (
-              <li key={problema}>{problema}</li>
-            ))}
-          </ul>
-        )}
-      </AlertDescription>
-    </Alert>
-  );
+  return <ErrorAlert mensaje={error} detalles={problemas} />;
 }
 
 /** Los campos de la solicitud, sus errores y el envío. */

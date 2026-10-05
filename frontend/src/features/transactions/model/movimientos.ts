@@ -1,4 +1,5 @@
-import type { Category, Transaction } from '@coco/types';
+import type { SentidoDelDinero } from '@/shared/ui/atoms/monto';
+import type { Category, Transaction, TransactionType } from '@coco/types';
 
 /**
  * Lo que un movimiento ES, y de dónde saca su nombre.
@@ -88,4 +89,11 @@ export function nombreDelMovimiento(
     movimiento.merchant ??
     'Sin concepto'
   );
+}
+
+/** Hacia dónde va la plata de un movimiento, en el idioma de `Monto`. */
+export function sentidoDelMovimiento(type: TransactionType): SentidoDelDinero {
+  if (type === 'income') return 'entra';
+  if (type === 'transfer') return 'mueve';
+  return 'sale';
 }

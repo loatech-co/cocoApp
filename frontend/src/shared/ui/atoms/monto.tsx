@@ -1,13 +1,22 @@
 import { ArrowRightLeft, Minus, Plus } from 'lucide-react';
 
 import { cn, DEFAULT_CURRENCY, formatCOP, formatMoney } from '@/shared/lib/utils';
-import type { TransactionType } from '@coco/types';
+
+/**
+ * Hacia dónde va la plata: entra, sale o solo se mueve entre cuentas.
+ *
+ * Es lo único que `Monto` necesita saber, y no es un tipo del dominio: quien
+ * tiene un movimiento traduce su `type` con `sentidoDelMovimiento`
+ * (`features/transactions/model/movimientos.ts`). Así `shared/ui` no conoce
+ * qué es un movimiento.
+ */
+export type SentidoDelDinero = 'entra' | 'sale' | 'mueve';
 
 interface MontoProps {
   amount: string;
   /** ISO 4217 code of the movement; aggregates leave it out. */
   currency?: string;
-  type?: TransactionType;
+  sentido?: SentidoDelDinero;
   className?: string;
   /** Oculta el icono cuando el contexto ya deja clarísimo el signo. */
   soloTexto?: boolean;
@@ -27,20 +36,20 @@ interface MontoProps {
 export function Monto({
   amount,
   currency = DEFAULT_CURRENCY,
-  type = 'expense',
+  sentido = 'sale',
   className,
   soloTexto = false,
 }: MontoProps) {
   const estilos = {
-    income: { color: 'text-income', signo: '+', Icono: Plus, etiqueta: 'Ingreso' },
-    expense: { color: 'text-expense', signo: '−', Icono: Minus, etiqueta: 'Gasto' },
-    transfer: {
+    entra: { color: 'text-income', signo: '+', Icono: Plus, etiqueta: 'Ingreso' },
+    sale: { color: 'text-expense', signo: '−', Icono: Minus, etiqueta: 'Gasto' },
+    mueve: {
       color: 'text-muted-foreground',
       signo: '',
       Icono: ArrowRightLeft,
       etiqueta: 'Transferencia',
     },
-  }[type];
+  }[sentido];
 
   const { Icono } = estilos;
 

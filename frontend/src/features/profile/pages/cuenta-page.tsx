@@ -6,7 +6,7 @@ import { Ajustes } from '@/features/profile/components/ajustes';
 import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
 import { useEnLaApp } from '@/shared/lib/movil';
 import { SECCIONES_DE_ADMIN } from '@/shared/lib/sections';
-import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
+import { Alert, AlertDescription, AlertTitle, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
@@ -140,18 +140,9 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
 
 function PasswordErrors({ error, problemas }: { error: string; problemas: string[] }) {
   return (
-    <Alert variant="destructive" className="mb-4">
-      <AlertDescription>
-        {error}
-        {problemas.length > 0 && (
-          <ul className="mt-2 list-disc space-y-0.5 pl-4">
-            {problemas.map((problema) => (
-              <li key={problema}>{problema}</li>
-            ))}
-          </ul>
-        )}
-      </AlertDescription>
-    </Alert>
+    <div className="mb-4">
+      <ErrorAlert mensaje={error} detalles={problemas} />
+    </div>
   );
 }
 

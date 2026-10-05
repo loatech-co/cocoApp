@@ -17,7 +17,7 @@ import {
 } from '@/features/admin/api/admin-queries';
 import { ApiClientError } from '@/shared/api/api-client';
 import { cn } from '@/shared/lib/utils';
-import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
+import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
 import { Bloque } from '@/shared/ui/atoms/bloque';
 import { Button } from '@/shared/ui/atoms/button';
@@ -189,18 +189,9 @@ function RolBadge({ esAdmin }: { esAdmin: boolean }) {
 
 function ResetError({ error }: { error: ApiClientError }) {
   return (
-    <Alert variant="destructive" className="mt-3">
-      <AlertDescription>
-        {error.message}
-        {error.details.length > 0 && (
-          <ul className="mt-2 list-disc space-y-0.5 pl-4">
-            {error.details.map((detalle) => (
-              <li key={detalle.message}>{detalle.message}</li>
-            ))}
-          </ul>
-        )}
-      </AlertDescription>
-    </Alert>
+    <div className="mt-3">
+      <ErrorAlert mensaje={error.message} detalles={error.details.map((d) => d.message)} />
+    </div>
   );
 }
 

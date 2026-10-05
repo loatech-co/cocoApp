@@ -2,7 +2,10 @@ import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { useTransactions } from '@/features/transactions/api/transactions';
-import { nombreDelMovimiento } from '@/features/transactions/model/movimientos';
+import {
+  nombreDelMovimiento,
+  sentidoDelMovimiento,
+} from '@/features/transactions/model/movimientos';
 import { useCategories } from '@/shared/api/categories';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { diaCorto } from '@/shared/lib/fechas';
@@ -141,7 +144,7 @@ function ResultRow({
       <Monto
         amount={movimiento.amount}
         currency={movimiento.currency}
-        type={movimiento.type}
+        sentido={sentidoDelMovimiento(movimiento.type)}
         className="shrink-0 text-sm"
       />
     </PanelRow>

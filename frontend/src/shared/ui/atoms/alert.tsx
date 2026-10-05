@@ -96,3 +96,28 @@ export function AlertTitle({ className, ...props }: ComponentProps<'h5'>) {
 export function AlertDescription({ className, ...props }: ComponentProps<'div'>) {
   return <div className={cn('col-start-2 [&_p]:leading-relaxed', className)} {...props} />;
 }
+
+/**
+ * Lo que falló y, debajo, cada cosa que lo explica: «La contraseña no cumple
+ * la política» y la lista de lo que le falta.
+ *
+ * Estaba escrito tres veces —el registro, el cambio de contraseña y el
+ * restablecimiento desde administración— y una copia ya había empezado a
+ * leer los detalles de otro sitio. Sin detalles es un aviso de error normal.
+ */
+export function ErrorAlert({ mensaje, detalles = [] }: { mensaje: string; detalles?: string[] }) {
+  return (
+    <Alert variant="destructive">
+      <AlertDescription>
+        {mensaje}
+        {detalles.length > 0 && (
+          <ul className="mt-2 list-disc space-y-0.5 pl-4">
+            {detalles.map((detalle) => (
+              <li key={detalle}>{detalle}</li>
+            ))}
+          </ul>
+        )}
+      </AlertDescription>
+    </Alert>
+  );
+}
