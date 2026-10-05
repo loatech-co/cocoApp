@@ -28,6 +28,13 @@ struct ClienteAPI: Sendable {
         _ = try await ejecutar(p, token: token)
     }
 
+    /// El cuerpo tal cual llegó, sin decodificar. Lo usa la sesión, que
+    /// necesita el `user` byte a byte para entregárselo a la web sin
+    /// reescribir ni una clave.
+    func enviarCrudo(_ p: Peticion, token: String?) async throws -> Data {
+        try await ejecutar(p, token: token).0
+    }
+
     func subir<T: Decodable>(partes: [ParteMultipart], a ruta: String, token: String) async throws -> T {
         let frontera = "coco-\(UUID().uuidString)"
         return try await enviar(ConstructorDePeticiones.multipart(ruta: ruta, partes: partes, frontera: frontera), token: token)
