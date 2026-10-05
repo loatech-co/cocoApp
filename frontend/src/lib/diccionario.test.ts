@@ -100,7 +100,10 @@ describe('El diccionario en sí', () => {
     const vistos = new Map<string, string>();
     for (const g of DICCIONARIO) {
       for (const alias of g.comercios) {
-        expect(vistos.get(alias), `«${alias}» está en ${vistos.get(alias)} y en ${g.grupo}`).toBeUndefined();
+        expect(
+          vistos.get(alias),
+          `«${alias}» está en ${vistos.get(alias)} y en ${g.grupo}`,
+        ).toBeUndefined();
         vistos.set(alias, g.grupo);
       }
     }

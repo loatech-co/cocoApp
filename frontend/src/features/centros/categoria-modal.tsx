@@ -1,5 +1,5 @@
-import {  Loader2, Search } from 'lucide-react';
-import {useMemo, useState, type FormEvent } from 'react';
+import { Loader2, Search } from 'lucide-react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -190,9 +190,7 @@ export function CategoriaModal({
         await crear.mutateAsync({
           name: nombre.trim(),
           kind: 'expense',
-          ...(esCentro
-            ? { estatico }
-            : { parent_id: padreId, ...(icono ? { icon: icono } : {}) }),
+          ...(esCentro ? { estatico } : { parent_id: padreId, ...(icono ? { icon: icono } : {}) }),
         });
       }
       onCerrar();
@@ -266,8 +264,7 @@ export function CategoriaModal({
             <span className="min-w-0">
               <span className="block text-sm font-medium">Estático</span>
               <span className="mt-0.5 block text-xs text-muted-foreground">
-                La clasificación de sus movimientos solo se modifica desde Centros de
-                costos.
+                La clasificación de sus movimientos solo se modifica desde Centros de costos.
               </span>
             </span>
             <Interruptor checked={estatico} onChange={(e) => setEstatico(e.target.checked)} />

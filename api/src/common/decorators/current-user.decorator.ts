@@ -1,4 +1,8 @@
-import { createParamDecorator, InternalServerErrorException, type ExecutionContext } from '@nestjs/common';
+import {
+  createParamDecorator,
+  InternalServerErrorException,
+  type ExecutionContext,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import type { AuthenticatedUser } from '../types/authenticated-user';
 

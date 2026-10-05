@@ -153,7 +153,12 @@ function Resultados({
               {diaCorto(movimiento.date)}
             </span>
           </span>
-          <Monto amount={movimiento.amount} currency={movimiento.currency} type={movimiento.type} className="shrink-0 text-sm" />
+          <Monto
+            amount={movimiento.amount}
+            currency={movimiento.currency}
+            type={movimiento.type}
+            className="shrink-0 text-sm"
+          />
         </button>
       ))}
 

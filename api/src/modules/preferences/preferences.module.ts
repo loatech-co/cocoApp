@@ -5,11 +5,7 @@ import { IsBoolean, IsOptional } from 'class-validator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  CUENTAS_HABILITADAS,
-  combinarConDefectos,
-  type Preferencias,
-} from './preferences';
+import { CUENTAS_HABILITADAS, combinarConDefectos, type Preferencias } from './preferences';
 
 /**
  * Un campo por preferencia, no un objeto libre.

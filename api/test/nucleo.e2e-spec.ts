@@ -341,10 +341,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     it('pedir una cuenta ajena por id responde 404, no 403: no confirma que exista', async () => {
       const cuenta = await crearCuenta(comoAna());
 
-      await http
-        .get(`/api/v1/accounts/${cuenta.id}`)
-        .set('Authorization', comoBeto())
-        .expect(404);
+      await http.get(`/api/v1/accounts/${cuenta.id}`).set('Authorization', comoBeto()).expect(404);
     });
 
     it('Beto no puede editar una cuenta de Ana', async () => {

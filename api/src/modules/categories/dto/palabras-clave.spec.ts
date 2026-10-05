@@ -15,7 +15,9 @@ import { unir } from '../palabras-clave';
  * no es la única que llama a esta API. Lo que aquí se comprueba es lo que pasa
  * cuando llega lo que la pantalla no habría mandado.
  */
-async function comoLlega(palabras: unknown): Promise<{ dto: UpdateCategoryDto; errores: string[] }> {
+async function comoLlega(
+  palabras: unknown,
+): Promise<{ dto: UpdateCategoryDto; errores: string[] }> {
   const dto = plainToInstance(UpdateCategoryDto, { palabras_clave: palabras });
   const errores = await validate(dto);
   return { dto, errores: errores.flatMap((e) => Object.values(e.constraints ?? {})) };

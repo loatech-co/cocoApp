@@ -67,7 +67,9 @@ const legible = (v) =>
 try {
   if (devuelveFilas) {
     const filas = await prisma.$queryRawUnsafe(sql);
-    const limpias = filas.map((f) => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, legible(v)])));
+    const limpias = filas.map((f) =>
+      Object.fromEntries(Object.entries(f).map(([k, v]) => [k, legible(v)])),
+    );
     if (json) console.log(JSON.stringify(limpias, null, 2));
     else if (limpias.length === 0) console.log('(sin filas)');
     else console.table(limpias);

@@ -18,7 +18,10 @@ describe('El candado de las operaciones de administración', () => {
 
   it('la comprobación está dentro de `llamar`', () => {
     const cuerpoDeLlamar = fuente.slice(fuente.indexOf('private async llamar('));
-    const hastaElSiguienteMetodo = cuerpoDeLlamar.slice(0, cuerpoDeLlamar.indexOf('\n  private aSesion'));
+    const hastaElSiguienteMetodo = cuerpoDeLlamar.slice(
+      0,
+      cuerpoDeLlamar.indexOf('\n  private aSesion'),
+    );
 
     expect(hastaElSiguienteMetodo).toContain("ruta.startsWith('/admin/')");
     expect(hastaElSiguienteMetodo).toContain('porQueNoTocarCuentasReales');
@@ -27,7 +30,9 @@ describe('El candado de las operaciones de administración', () => {
   it('y se comprueba ANTES de llamar a la red', () => {
     // Si el `fetch` fuera primero, el candado solo serviría para ocultar la
     // respuesta de una operación que ya ocurrió.
-    expect(fuente.indexOf('porQueNoTocarCuentasReales')).toBeLessThan(fuente.indexOf('await fetch('));
+    expect(fuente.indexOf('porQueNoTocarCuentasReales')).toBeLessThan(
+      fuente.indexOf('await fetch('),
+    );
   });
 
   it('no hay ningún `fetch` fuera de `llamar`', () => {

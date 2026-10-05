@@ -34,7 +34,9 @@ describe('Reconocer un correo ya registrado', () => {
   });
 
   it('cae al texto solo cuando no vino código', () => {
-    expect(esCorreoRepetido(422, { msg: 'A user with this email address has already been registered' })).toBe(true);
+    expect(
+      esCorreoRepetido(422, { msg: 'A user with this email address has already been registered' }),
+    ).toBe(true);
     expect(esCorreoRepetido(422, { message: 'Email already exists' })).toBe(true);
     expect(esCorreoRepetido(422, { msg: 'Password is too weak' })).toBe(false);
   });

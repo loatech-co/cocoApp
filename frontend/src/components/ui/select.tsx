@@ -204,9 +204,7 @@ function Opcion({
           'movil:min-h-[42px]',
           // Quieta en `muted`, señalada en `accent`: con el mismo color para
           // las dos, pasar por encima de la opción ya elegida no cambia nada.
-          elegida
-            ? cn('bg-muted font-medium', REALCE)
-            : REALCE,
+          elegida ? cn('bg-muted font-medium', REALCE) : REALCE,
         )}
       >
         <span className="min-w-0 flex-1 truncate">{children}</span>

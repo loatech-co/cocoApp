@@ -30,11 +30,19 @@ const { casados, ambiguos, huerfanos, sinSoporte } = emparejar(archivos, filas);
 const conSoporte = casados.reduce((n, c) => n + c.archivos.length, 0);
 
 console.log(`\n  CSV        ${filas.length} movimientos`);
-console.log(`  Carpeta    ${archivos.length} archivos${ilegibles.length ? ` (+${ilegibles.length} ilegibles)` : ''}`);
+console.log(
+  `  Carpeta    ${archivos.length} archivos${ilegibles.length ? ` (+${ilegibles.length} ilegibles)` : ''}`,
+);
 console.log('  ─────────────────────────────────────────────────────────');
-console.log(`  Casados    ${String(casados.length).padStart(4)} movimientos · ${conSoporte} archivos`);
-console.log(`  Ambiguos   ${String(ambiguos.length).padStart(4)} grupos · ${ambiguos.reduce((n, a) => n + a.archivos.length, 0)} archivos`);
-console.log(`  Sin match  ${String(huerfanos.length).padStart(4)} grupos · ${huerfanos.reduce((n, h) => n + h.archivos.length, 0)} archivos`);
+console.log(
+  `  Casados    ${String(casados.length).padStart(4)} movimientos · ${conSoporte} archivos`,
+);
+console.log(
+  `  Ambiguos   ${String(ambiguos.length).padStart(4)} grupos · ${ambiguos.reduce((n, a) => n + a.archivos.length, 0)} archivos`,
+);
+console.log(
+  `  Sin match  ${String(huerfanos.length).padStart(4)} grupos · ${huerfanos.reduce((n, h) => n + h.archivos.length, 0)} archivos`,
+);
 console.log(`  Sin soporte ${String(sinSoporte.length).padStart(3)} movimientos del CSV\n`);
 
 const varios = casados.filter((c) => c.archivos.length > 1);
@@ -50,9 +58,13 @@ if (varios.length > 0) {
 if (ambiguos.length > 0) {
   console.log('  ── AMBIGUOS ─ se dejan sin tocar, para mirar a mano ──────');
   for (const a of ambiguos) {
-    console.log(`\n    ${a.archivos.length} archivo(s): ${a.archivos.map((x) => x.nombre).join(', ')}`);
+    console.log(
+      `\n    ${a.archivos.length} archivo(s): ${a.archivos.map((x) => x.nombre).join(', ')}`,
+    );
     for (const c of a.candidatas) {
-      console.log(`      candidata: ${c.periodo} · ${c.fecha} · ${c.concepto} · $${c.valor.toLocaleString('es-CO')} · ${c.grupo}`);
+      console.log(
+        `      candidata: ${c.periodo} · ${c.fecha} · ${c.concepto} · $${c.valor.toLocaleString('es-CO')} · ${c.grupo}`,
+      );
     }
   }
   console.log();
@@ -62,7 +74,9 @@ if (huerfanos.length > 0) {
   console.log('  ── SIN MATCH ─ archivos sin movimiento en el CSV ─────────');
   for (const h of huerfanos.slice(0, todo ? huerfanos.length : 20)) {
     const [periodo, concepto, fecha] = h.clave.split('|');
-    console.log(`    ${periodo} · ${concepto} · ${fecha} → ${h.archivos.map((x) => x.nombre).join(', ')}`);
+    console.log(
+      `    ${periodo} · ${concepto} · ${fecha} → ${h.archivos.map((x) => x.nombre).join(', ')}`,
+    );
   }
   if (!todo && huerfanos.length > 20) console.log(`    … y ${huerfanos.length - 20} más (--todo)`);
   console.log();
@@ -77,7 +91,9 @@ if (ilegibles.length > 0) {
 if (todo && sinSoporte.length > 0) {
   console.log('  ── MOVIMIENTOS SIN NINGÚN SOPORTE ────────────────────────');
   for (const f of sinSoporte) {
-    console.log(`    ${f.periodo} · ${f.fecha} · ${f.concepto} · $${f.valor.toLocaleString('es-CO')}`);
+    console.log(
+      `    ${f.periodo} · ${f.fecha} · ${f.concepto} · $${f.valor.toLocaleString('es-CO')}`,
+    );
   }
   console.log();
 }

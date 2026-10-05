@@ -27,8 +27,16 @@ function formattersFor(currency: string): MoneyFormatters {
   if (!formatters) {
     const options = { style: 'currency', currency } as const;
     formatters = {
-      whole: new Intl.NumberFormat('es-CO', { ...options, minimumFractionDigits: 0, maximumFractionDigits: 0 }),
-      withCents: new Intl.NumberFormat('es-CO', { ...options, minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      whole: new Intl.NumberFormat('es-CO', {
+        ...options,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }),
+      withCents: new Intl.NumberFormat('es-CO', {
+        ...options,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
     };
     formattersByCurrency.set(currency, formatters);
   }

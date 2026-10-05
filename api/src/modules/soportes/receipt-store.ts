@@ -59,7 +59,9 @@ export class DiskReceiptStore implements ReceiptStore {
     const { carpeta, existe: present } = almacenListo();
     return Promise.resolve({
       ok: present,
-      detail: present ? carpeta : `${carpeta} does not exist — check SOPORTES_DIR (mind the quotes)`,
+      detail: present
+        ? carpeta
+        : `${carpeta} does not exist — check SOPORTES_DIR (mind the quotes)`,
     });
   }
 
@@ -110,7 +112,8 @@ export class SupabaseReceiptStore implements ReceiptStore {
 
   async check(): Promise<{ ok: boolean; detail: string }> {
     const response = await this.request('GET', `/bucket/${this.bucket}`);
-    if (!response.ok) return { ok: false, detail: `bucket "${this.bucket}": HTTP ${response.status}` };
+    if (!response.ok)
+      return { ok: false, detail: `bucket "${this.bucket}": HTTP ${response.status}` };
     const bucket = (await response.json()) as { public?: boolean };
     return bucket.public
       ? { ok: false, detail: `bucket "${this.bucket}" is PUBLIC; receipts must be private` }
@@ -140,9 +143,14 @@ export class SupabaseReceiptStore implements ReceiptStore {
 
   async remove(keys: string[]): Promise<void> {
     if (keys.length === 0) return;
-    const response = await this.request('DELETE', `/object/${this.bucket}`, JSON.stringify({ prefixes: keys }), {
-      'content-type': 'application/json',
-    });
+    const response = await this.request(
+      'DELETE',
+      `/object/${this.bucket}`,
+      JSON.stringify({ prefixes: keys }),
+      {
+        'content-type': 'application/json',
+      },
+    );
     if (!response.ok) throw new Error(`Storage could not delete: HTTP ${response.status}`);
   }
 

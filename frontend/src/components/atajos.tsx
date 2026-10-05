@@ -104,8 +104,7 @@ export function useSuperficieDeAtajos({
     .map((ruta) => biblioteca.find((p) => p.ruta === ruta))
     .filter((p): p is PaginaDeAtajo => p !== undefined);
 
-  const normal = (t: string): string =>
-    t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const normal = (t: string): string => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
   // Solo lo que NO es ya una baldosa: una fila para una página que ya se tiene
   // solo podría significar "quitar", y quitar es para lo que está el menos.
@@ -180,7 +179,12 @@ export function useSuperficieDeAtajos({
         </h2>
 
         {estado === 'galeria' ? (
-          <Button type="button" variant="herramienta" size="sm" onClick={() => setEstado('arreglando')}>
+          <Button
+            type="button"
+            variant="herramienta"
+            size="sm"
+            onClick={() => setEstado('arreglando')}
+          >
             Editar
           </Button>
         ) : (
@@ -220,11 +224,7 @@ export function useSuperficieDeAtajos({
                 panel. Por eso el más de la derecha puede ser pequeño. Es la
                 misma que usan la hoja de la cuenta y la de buscar, así que la
                 clase vive en un solo sitio. */}
-            <button
-              type="button"
-              onClick={() => anadir(ruta)}
-              className={FILA_DE_PANEL}
-            >
+            <button type="button" onClick={() => anadir(ruta)} className={FILA_DE_PANEL}>
               <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />
               <span className="min-w-0 flex-1 truncate">{etiqueta}</span>
               <Plus className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />

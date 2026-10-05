@@ -319,7 +319,7 @@
   --dona-4-tinta: #06231a;
   --dona-5: #8ecdb0;
   --dona-5-tinta: #06231a;
-  
+
   /* ── Los pasteles de los chips ────────────────────────────────────────────
      Se nombran por su PAPEL —gasto, ingreso— y no por su color.
 
@@ -354,16 +354,12 @@
      −1px de expansión, 1px hacia abajo. La flotante los escala, porque un
      panel que se levanta necesita más que una tarjeta apoyada. */
   --sombra-flotante:
-    0 1px 4px -1px rgba(15, 31, 29, 0.06),
-    0 8px 20px -6px rgba(15, 31, 29, 0.12),
+    0 1px 4px -1px rgba(15, 31, 29, 0.06), 0 8px 20px -6px rgba(15, 31, 29, 0.12),
     0 24px 48px -20px rgba(15, 31, 29, 0.18);
 
-  --sombra-pegada:
-    0 1px 4px -1px rgba(15, 31, 29, 0.06),
-    0 1px 2px -1px rgba(15, 31, 29, 0.06);
+  --sombra-pegada: 0 1px 4px -1px rgba(15, 31, 29, 0.06), 0 1px 2px -1px rgba(15, 31, 29, 0.06);
   --sombra-pegada-arriba:
-    0 -1px 4px -1px rgba(15, 31, 29, 0.06),
-    0 -1px 2px -1px rgba(15, 31, 29, 0.06);
+    0 -1px 4px -1px rgba(15, 31, 29, 0.06), 0 -1px 2px -1px rgba(15, 31, 29, 0.06);
 
   /*
     El velo: negro al 30 %, y el MISMO para todo lo que se abre encima.
@@ -504,7 +500,7 @@
   --dona-4-tinta: #06120f;
   --dona-5: #2a8f66;
   --dona-5-tinta: #eafaf1;
-  
+
   --chip-gasto: #242c12;
   --chip-gasto-tinta: #d3f24b;
   --chip-ingreso: #0e2a24;
@@ -530,16 +526,11 @@
   /* Negra y profunda: sobre un fondo casi negro, la sombra del tema claro no
      separa nada del fondo. */
   --sombra-flotante:
-    0 2px 8px rgba(0, 0, 0, 0.4),
-    0 14px 32px -8px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.4), 0 14px 32px -8px rgba(0, 0, 0, 0.55),
     0 40px 72px -24px rgba(0, 0, 0, 0.7);
 
-  --sombra-pegada:
-    0 1px 3px rgba(0, 0, 0, 0.3),
-    0 1px 2px -1px rgba(0, 0, 0, 0.3);
-  --sombra-pegada-arriba:
-    0 -1px 3px rgba(0, 0, 0, 0.3),
-    0 -1px 2px -1px rgba(0, 0, 0, 0.3);
+  --sombra-pegada: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --sombra-pegada-arriba: 0 -1px 3px rgba(0, 0, 0, 0.3), 0 -1px 2px -1px rgba(0, 0, 0, 0.3);
 
   --velo: rgba(0, 0, 0, 0.3);
 }
@@ -1158,4 +1149,3 @@
     animation-duration: 0.01ms;
   }
 }
-

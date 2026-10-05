@@ -15,12 +15,7 @@ interface Envelope<T> {
 
 /** Marca de que el handler ya armó su propio `meta` (paginación, totales…). */
 function hasEnvelope(value: unknown): value is Envelope<unknown> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'data' in value &&
-    'meta' in value
-  );
+  return typeof value === 'object' && value !== null && 'data' in value && 'meta' in value;
 }
 
 /**

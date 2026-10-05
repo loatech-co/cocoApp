@@ -22,7 +22,10 @@ interface Requisito {
 }
 
 const REQUISITOS: Requisito[] = [
-  { etiqueta: `Al menos ${LONGITUD_MINIMA} caracteres`, cumple: (p) => p.length >= LONGITUD_MINIMA },
+  {
+    etiqueta: `Al menos ${LONGITUD_MINIMA} caracteres`,
+    cumple: (p) => p.length >= LONGITUD_MINIMA,
+  },
   { etiqueta: 'Una letra minúscula', cumple: (p) => /[a-z]/.test(p) },
   { etiqueta: 'Una letra mayúscula', cumple: (p) => /[A-Z]/.test(p) },
   { etiqueta: 'Un número', cumple: (p) => /[0-9]/.test(p) },

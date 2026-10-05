@@ -52,9 +52,7 @@ export function FiltroClasificacion({
 
   /** Marcado por debajo: el padre lo dice sin afirmar que lo está él. */
   const tieneMarcadoDentro = (nodo: Category): boolean =>
-    (nodo.children ?? []).some(
-      (hijo) => marcados.includes(hijo.id) || tieneMarcadoDentro(hijo),
-    );
+    (nodo.children ?? []).some((hijo) => marcados.includes(hijo.id) || tieneMarcadoDentro(hijo));
 
   return (
     <div className="flex flex-col">

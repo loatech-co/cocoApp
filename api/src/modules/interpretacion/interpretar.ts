@@ -109,7 +109,8 @@ export function interpretar(entrada: EntradaParaInterpretar, contexto: Contexto)
   // Lo estructurado manda sobre lo leído: si quien captura ya sabe el monto,
   // no hay nada que adivinar en el texto.
   const monto = montoDe(entrada.monto) ?? (lectura.valor === null ? null : String(lectura.valor));
-  const fecha = fechaValida(entrada.fecha, contexto.hoy) ?? fechaValida(lectura.fecha, contexto.hoy);
+  const fecha =
+    fechaValida(entrada.fecha, contexto.hoy) ?? fechaValida(lectura.fecha, contexto.hoy);
 
   const clasificacion = clasificarCon(contexto, indice, lectura.enElArbol ?? null, {
     concepto: lectura.concepto,
@@ -146,9 +147,12 @@ function clasificarCon(
         certeza: alta ? 'alta' : 'media',
         fuente: 'historial',
         conceptoId: entrada.nivel === 'concepto' ? String(entrada.id) : null,
-        categoriaId: entrada.nivel === 'concepto' ? String(entrada.categoriaId) : String(entrada.id),
+        categoriaId:
+          entrada.nivel === 'concepto' ? String(entrada.categoriaId) : String(entrada.id),
         nombre: entrada.nombre,
-        candidatos: alta ? [] : [{ id: String(entrada.id), nombre: entrada.nombre, ruta: rutaLegible(entrada) }],
+        candidatos: alta
+          ? []
+          : [{ id: String(entrada.id), nombre: entrada.nombre, ruta: rutaLegible(entrada) }],
         motivo: alta
           ? `Tu historial lo clasifica así (${contexto.historial.confidence}% de las veces).`
           : `Tu historial apunta aquí, pero no siempre (${contexto.historial.confidence}%): mejor míralo.`,
@@ -158,19 +162,29 @@ function clasificarCon(
 
   // 2 y 3. Lo que la lectura reconoció, por palabras clave, firma o diccionario.
   if (enElArbol) {
-    const concepto = enElArbol.conceptoId !== undefined
-      ? indice.find((e) => String(e.id) === String(enElArbol.conceptoId))
-      : undefined;
-    const categoria = enElArbol.categoriaId !== undefined
-      ? indice.find((e) => String(e.id) === String(enElArbol.categoriaId))
-      : undefined;
+    const concepto =
+      enElArbol.conceptoId !== undefined
+        ? indice.find((e) => String(e.id) === String(enElArbol.conceptoId))
+        : undefined;
+    const categoria =
+      enElArbol.categoriaId !== undefined
+        ? indice.find((e) => String(e.id) === String(enElArbol.categoriaId))
+        : undefined;
     return {
       certeza: enElArbol.certeza,
       fuente: enElArbol.fuente,
       conceptoId: concepto ? String(concepto.id) : null,
-      categoriaId: categoria ? String(categoria.id) : concepto ? String(concepto.categoriaId) : null,
+      categoriaId: categoria
+        ? String(categoria.id)
+        : concepto
+          ? String(concepto.categoriaId)
+          : null,
       nombre: concepto?.nombre ?? categoria?.nombre ?? leido.concepto ?? leido.categoria,
-      candidatos: enElArbol.candidatos.map((c) => ({ id: String(c.id), nombre: c.nombre, ruta: c.ruta })),
+      candidatos: enElArbol.candidatos.map((c) => ({
+        id: String(c.id),
+        nombre: c.nombre,
+        ruta: c.ruta,
+      })),
       motivo: leido.motivo,
     };
   }

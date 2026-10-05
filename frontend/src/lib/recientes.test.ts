@@ -8,7 +8,14 @@ const indice = indexarArbol([
     id: 1,
     name: 'Centro',
     children: [
-      { id: 10, name: 'Cat A', children: [{ id: 100, name: 'Uno' }, { id: 101, name: 'Dos' }] },
+      {
+        id: 10,
+        name: 'Cat A',
+        children: [
+          { id: 100, name: 'Uno' },
+          { id: 101, name: 'Dos' },
+        ],
+      },
       { id: 11, name: 'Cat B', children: [{ id: 110, name: 'Tres' }] },
     ],
   },
@@ -24,7 +31,12 @@ describe('Los conceptos recientes', () => {
   it('ignora lo sin clasificar y lo que no es un concepto', () => {
     // 10 es una categoría: un movimiento clasificado solo hasta ahí no cuenta
     // como «lo que suelo usar».
-    const movimientos = [{ category_id: null }, { category_id: 10 }, { category_id: 110 }, { category_id: 999 }];
+    const movimientos = [
+      { category_id: null },
+      { category_id: 10 },
+      { category_id: 110 },
+      { category_id: 999 },
+    ];
     expect(conceptosRecientes(movimientos, indice)).toEqual([110]);
   });
 

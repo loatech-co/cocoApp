@@ -62,7 +62,9 @@ function pintar(props: Partial<Parameters<typeof BuscadorDeConcepto>[0]> = {}) {
 
 const abrir = () => fireEvent.click(screen.getByRole('button', { name: /Concepto/ }));
 const escribir = (texto: string) =>
-  fireEvent.change(screen.getByLabelText('Buscar concepto o categoría'), { target: { value: texto } });
+  fireEvent.change(screen.getByLabelText('Buscar concepto o categoría'), {
+    target: { value: texto },
+  });
 const opcion = (nombre: RegExp) => screen.getByRole('option', { name: nombre });
 
 describe('Buscar', () => {

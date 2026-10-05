@@ -25,7 +25,9 @@ describe('Receipt files follow their rows (e2e)', () => {
     env = await levantarApp();
     http = request(env.app.getHttpServer());
     store = env.app.get(RECEIPT_STORE);
-    image = await sharp({ create: { width: 64, height: 64, channels: 3, background: '#ffffff' } }).png().toBuffer();
+    image = await sharp({ create: { width: 64, height: 64, channels: 3, background: '#ffffff' } })
+      .png()
+      .toBuffer();
   });
 
   afterAll(async () => {
@@ -60,15 +62,24 @@ describe('Receipt files follow their rows (e2e)', () => {
     const { id, key, soporteId } = await movementWithReceipt();
 
     expect(await store.exists(key)).toBe(true);
-    const list = await http.get(`/api/v1/transactions/${id}/soportes`).set('Authorization', asAna).expect(200);
+    const list = await http
+      .get(`/api/v1/transactions/${id}/soportes`)
+      .set('Authorization', asAna)
+      .expect(200);
     expect(list.body.data[0].disponible).toBe(true);
-    await http.get(`/api/v1/transactions/${id}/soportes/${soporteId}`).set('Authorization', asAna).expect(200);
+    await http
+      .get(`/api/v1/transactions/${id}/soportes/${soporteId}`)
+      .set('Authorization', asAna)
+      .expect(200);
   });
 
   it('deleting a receipt deletes its file', async () => {
     const { id, key, soporteId } = await movementWithReceipt();
 
-    await http.delete(`/api/v1/transactions/${id}/soportes/${soporteId}`).set('Authorization', asAna).expect(204);
+    await http
+      .delete(`/api/v1/transactions/${id}/soportes/${soporteId}`)
+      .set('Authorization', asAna)
+      .expect(204);
 
     expect(await store.exists(key)).toBe(false);
   });
@@ -86,7 +97,10 @@ describe('Receipt files follow their rows (e2e)', () => {
     const { id, key } = await movementWithReceipt();
     const bruno = await env.crearUsuario({ displayName: 'Bruno' });
 
-    await http.delete(`/api/v1/transactions/${id}`).set('Authorization', env.como(bruno)).expect(404);
+    await http
+      .delete(`/api/v1/transactions/${id}`)
+      .set('Authorization', env.como(bruno))
+      .expect(404);
 
     expect(await store.exists(key)).toBe(true);
   });

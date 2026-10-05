@@ -1,6 +1,6 @@
 import type { PerfilPublico, UserStatus } from '@coco/types';
 import {
-    Check,
+  Check,
   Clock,
   KeyRound,
   Loader2,
@@ -20,10 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ApiClientError } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
-import {
-  PoliticaDeContrasena,
-  cumpleLaPolitica,
-} from '@/features/auth/politica-de-contrasena';
+import { PoliticaDeContrasena, cumpleLaPolitica } from '@/features/auth/politica-de-contrasena';
 import {
   useAccionSobreUsuario,
   useCambiarRol,
@@ -149,7 +146,11 @@ function FilaDeUsuario({ usuario, soyYo }: { usuario: PerfilPublico; soyYo: bool
               disabled={ocupado}
               onClick={() => accion.mutate({ id: usuario.id, accion: 'approve' })}
             >
-              {ocupado ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Check aria-hidden="true" />}
+              {ocupado ? (
+                <Loader2 className="animate-spin" aria-hidden="true" />
+              ) : (
+                <Check aria-hidden="true" />
+              )}
               Aprobar
             </Button>
           )}
@@ -326,7 +327,10 @@ function EstadoBadge({ status }: { status: UserStatus }) {
 
 function RolBadge({ esAdmin }: { esAdmin: boolean }) {
   return (
-    <Badge variant={esAdmin ? 'info' : 'outline'} className={cn(!esAdmin && 'text-muted-foreground')}>
+    <Badge
+      variant={esAdmin ? 'info' : 'outline'}
+      className={cn(!esAdmin && 'text-muted-foreground')}
+    >
       {esAdmin ? <ShieldCheck aria-hidden="true" /> : <UserIcon aria-hidden="true" />}
       {esAdmin ? 'Administrador' : 'Usuario'}
     </Badge>

@@ -52,7 +52,10 @@ describe('Recurrence CHECK constraints (e2e)', () => {
     ['ck_categories_payment_day_range', `"dia_de_pago" = 32`],
     ['ck_categories_payment_month_range', `"periodicidad" = 'anual', "mes_de_pago" = 13`],
     ['ck_categories_multi_payment_not_auto', `"varios_pagos" = true, "pago_automatico" = true`],
-    ['ck_categories_multi_payment_recurring', `"recurrente" = false, "periodicidad" = NULL, "varios_pagos" = true`],
+    [
+      'ck_categories_multi_payment_recurring',
+      `"recurrente" = false, "periodicidad" = NULL, "varios_pagos" = true`,
+    ],
   ])('%s rejects a direct write', async (constraint, assignment) => {
     const id = await validConcept();
 
@@ -71,7 +74,10 @@ describe('Recurrence CHECK constraints (e2e)', () => {
     ];
 
     for (const assignment of coherent) {
-      await env.prisma.$executeRawUnsafe(`UPDATE "categories" SET ${assignment} WHERE "id" = $1`, id);
+      await env.prisma.$executeRawUnsafe(
+        `UPDATE "categories" SET ${assignment} WHERE "id" = $1`,
+        id,
+      );
     }
   });
 

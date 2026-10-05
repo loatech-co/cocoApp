@@ -189,7 +189,11 @@ export function cuboDe(fecha: Date, granularidad: 'dia' | 'mes'): string {
 export function cubosDelRango(desde: Date, hasta: Date, granularidad: 'dia' | 'mes'): string[] {
   const cubos: string[] = [];
   const cursor = new Date(
-    Date.UTC(desde.getUTCFullYear(), desde.getUTCMonth(), granularidad === 'dia' ? desde.getUTCDate() : 1),
+    Date.UTC(
+      desde.getUTCFullYear(),
+      desde.getUTCMonth(),
+      granularidad === 'dia' ? desde.getUTCDate() : 1,
+    ),
   );
 
   while (cursor <= hasta) {

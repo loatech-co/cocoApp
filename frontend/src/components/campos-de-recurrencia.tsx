@@ -1,5 +1,5 @@
 import { Repeat } from 'lucide-react';
-import {useState} from 'react';
+import { useState } from 'react';
 
 import { Interruptor } from '@/components/ui/interruptor';
 import { Input } from '@/components/ui/input';
@@ -42,8 +42,18 @@ export interface Recurrencia {
 }
 
 const MESES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 /**
@@ -259,7 +269,8 @@ export function CamposDeRecurrencia({
               valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
             )}
           >
-            {cuandoVuelve(valor.periodicidad, valor.diaDePago, valor.mesDePago)} {avisoDeMesCorto(valor.diaDePago)}
+            {cuandoVuelve(valor.periodicidad, valor.diaDePago, valor.mesDePago)}{' '}
+            {avisoDeMesCorto(valor.diaDePago)}
           </p>
         </div>
       )}

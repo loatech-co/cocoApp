@@ -14,7 +14,15 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { type CSSProperties, type ReactNode, useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Confirmacion } from '@/components/ui/confirmacion';

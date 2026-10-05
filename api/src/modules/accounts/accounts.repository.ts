@@ -33,11 +33,7 @@ export class AccountsRepository {
    * es de otro usuario el count queda en 0 y podemos responder 404 sin haberla
    * tocado ni confirmado que existe.
    */
-  async actualizar(
-    userId: bigint,
-    id: bigint,
-    data: Prisma.AccountUpdateInput,
-  ): Promise<number> {
+  async actualizar(userId: bigint, id: bigint, data: Prisma.AccountUpdateInput): Promise<number> {
     const { count } = await this.prisma.account.updateMany({ where: { id, userId }, data });
     return count;
   }
@@ -60,10 +56,7 @@ export class AccountsRepository {
    * signo después da exactamente el mismo resultado que recorrer cada fila, y
    * evita traerse años de historial a memoria solo para listar cuentas.
    */
-  async agregadosDeSaldo(
-    userId: bigint,
-    hasta?: Date,
-  ): Promise<Map<string, MovimientoDeSaldo[]>> {
+  async agregadosDeSaldo(userId: bigint, hasta?: Date): Promise<Map<string, MovimientoDeSaldo[]>> {
     const grupos = await this.prisma.transaction.groupBy({
       by: ['accountId', 'type', 'transferDir', 'status'],
       where: {

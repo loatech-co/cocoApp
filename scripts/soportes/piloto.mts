@@ -100,7 +100,12 @@ const { casados } = emparejar(archivos, filas);
 const casos = [];
 for (const grupo of casados) {
   for (const archivo of grupo.archivos) {
-    casos.push({ archivo, verdad: grupo.fila, hermanos: grupo.archivos.length, clave: grupo.clave });
+    casos.push({
+      archivo,
+      verdad: grupo.fila,
+      hermanos: grupo.archivos.length,
+      clave: grupo.clave,
+    });
   }
 }
 
@@ -118,7 +123,15 @@ console.log(`\n▸ Piloto sobre ${aProbar.length} soportes con verdad conocida\n
   corpus son escaneos donde todavía no hay nada que leer. Son dos problemas
   distintos —uno de reglas, otro de OCR— y solo separados se sabe cuál atacar.
 */
-const vacio = () => ({ total: 0, concepto: 0, grupo: 0, valor: 0, fecha: 0, aRevisar: 0, segurosYMal: 0 });
+const vacio = () => ({
+  total: 0,
+  concepto: 0,
+  grupo: 0,
+  valor: 0,
+  fecha: 0,
+  aRevisar: 0,
+  segurosYMal: 0,
+});
 const conTexto = vacio();
 const sinTexto = vacio();
 const fallos = [];
@@ -220,7 +233,9 @@ function informe(titulo, c) {
   if (c.total === 0) return;
   const pc = (n) => `${((n / c.total) * 100).toFixed(1)}%`.padStart(7);
   const fila = (etiqueta, n) =>
-    console.log(`    ${etiqueta.padEnd(24)}${String(n).padStart(4)} / ${String(c.total).padEnd(4)} ${pc(n)}`);
+    console.log(
+      `    ${etiqueta.padEnd(24)}${String(n).padStart(4)} / ${String(c.total).padEnd(4)} ${pc(n)}`,
+    );
 
   console.log(`\n  ${titulo}  (${c.total} soportes)`);
   console.log('  ' + '─'.repeat(52));
@@ -244,7 +259,9 @@ console.log(
 );
 
 const totalSeguroYMal = conTexto.segurosYMal + sinTexto.segurosYMal;
-console.log(`\n  De ${aProbar.length} soportes, ${totalSeguroYMal} con el ACREEDOR mal creyéndose seguros.`);
+console.log(
+  `\n  De ${aProbar.length} soportes, ${totalSeguroYMal} con el ACREEDOR mal creyéndose seguros.`,
+);
 
 if (verFallos && valoresMal.length > 0) {
   console.log(`\n  ── ${valoresMal.length} movimientos legibles con el valor mal ──────\n`);
@@ -269,7 +286,9 @@ if (verFallos && fallos.length > 0) {
     if (!f.fechaOk) {
       console.log(`     fecha:    dijo ${f.lectura.fecha ?? '—'} · era ${f.verdad.fecha}`);
     }
-    console.log(`     confianza ${f.lectura.confianza}${f.hayTexto ? '' : ' · SIN TEXTO'} — ${f.lectura.motivo}`);
+    console.log(
+      `     confianza ${f.lectura.confianza}${f.hayTexto ? '' : ' · SIN TEXTO'} — ${f.lectura.motivo}`,
+    );
     console.log();
   }
   if (fallos.length > 40) console.log(`  … y ${fallos.length - 40} más\n`);

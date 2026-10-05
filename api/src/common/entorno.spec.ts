@@ -43,7 +43,7 @@ describe('Leer del entorno', () => {
     // lleve una comilla en medio se queda como está.
     expect(sinComillas('/ruta/con"comilla/dentro')).toBe('/ruta/con"comilla/dentro');
     expect(sinComillas('"sin cerrar')).toBe('"sin cerrar');
-    expect(sinComillas("\"mezcladas'")).toBe("\"mezcladas'");
+    expect(sinComillas('"mezcladas\'')).toBe('"mezcladas\'');
   });
 
   it('un valor vacío es como no tenerlo', () => {
@@ -73,7 +73,10 @@ describe('Leer del entorno', () => {
  * de nadie: era el valor por defecto.
  */
 describe('Negarse a arrancar contra una base que no es la mía', () => {
-  const local = { NODE_ENV: 'development', DATABASE_URL: 'postgresql://u:p@localhost:5432/coco_dev' };
+  const local = {
+    NODE_ENV: 'development',
+    DATABASE_URL: 'postgresql://u:p@localhost:5432/coco_dev',
+  };
   const remota = {
     NODE_ENV: 'development',
     DATABASE_URL: 'postgresql://u:p@aws-0-us-east-1.pooler.supabase.com:5432/postgres',
@@ -81,7 +84,9 @@ describe('Negarse a arrancar contra una base que no es la mía', () => {
 
   it('deja pasar la base local', () => {
     expect(porQueNoArrancar(local)).toBeNull();
-    expect(porQueNoArrancar({ ...local, DATABASE_URL: 'postgresql://u:p@127.0.0.1:5432/x' })).toBeNull();
+    expect(
+      porQueNoArrancar({ ...local, DATABASE_URL: 'postgresql://u:p@127.0.0.1:5432/x' }),
+    ).toBeNull();
   });
 
   it('frena cualquier host remoto, no solo Supabase', () => {
@@ -173,7 +178,10 @@ describe('No tocar cuentas de verdad desde una sesión local', () => {
       porQueNoTocarCuentasReales({ NODE_ENV: 'development', [PERMISO_DE_AUTH_DESTRUCTIVA]: 'si' }),
     ).toBeNull();
     expect(
-      porQueNoTocarCuentasReales({ NODE_ENV: 'development', [PERMISO_DE_AUTH_DESTRUCTIVA]: 'true' }),
+      porQueNoTocarCuentasReales({
+        NODE_ENV: 'development',
+        [PERMISO_DE_AUTH_DESTRUCTIVA]: 'true',
+      }),
     ).not.toBeNull();
   });
 });

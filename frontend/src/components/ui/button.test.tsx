@@ -119,8 +119,6 @@ describe('El botón mide lo mismo con cualquier variante', () => {
     expect(alturas(getByText('Cancelar').className)).toEqual(
       alturas(getByText('Aplicar').className),
     );
-    expect(radios(getByText('Cancelar').className)).toEqual(
-      radios(getByText('Aplicar').className),
-    );
+    expect(radios(getByText('Cancelar').className)).toEqual(radios(getByText('Aplicar').className));
   });
 });

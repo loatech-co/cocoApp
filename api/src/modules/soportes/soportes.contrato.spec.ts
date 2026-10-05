@@ -13,7 +13,10 @@ describe('El contrato de soportes', () => {
   const controlador = readFileSync(join(__dirname, 'soportes.controller.ts'), 'utf8');
   const optimizacion = readFileSync(join(__dirname, 'soportes.optimizacion.ts'), 'utf8');
   const almacen = readFileSync(join(__dirname, 'soportes.almacen.ts'), 'utf8');
-  const encoger = readFileSync(join(__dirname, '../../../../frontend/src/lib/encoger-soporte.ts'), 'utf8');
+  const encoger = readFileSync(
+    join(__dirname, '../../../../frontend/src/lib/encoger-soporte.ts'),
+    'utf8',
+  );
 
   const contrato = tipos.slice(tipos.indexOf('export const CONTRATO_DE_SOPORTES'));
   const numero = (fuente: string, patron: RegExp): number => {
@@ -26,21 +29,33 @@ describe('El contrato de soportes', () => {
   it('el campo y el máximo por subida son los del controlador', () => {
     expect(controlador).toContain("FilesInterceptor('archivos', MAXIMO_POR_SUBIDA");
     expect(contrato).toContain("campo: 'archivos'");
-    expect(numero(contrato, /maximo_por_subida:\s*(\d+)/)).toBe(numero(controlador, /MAXIMO_POR_SUBIDA = ([^;]+);/));
+    expect(numero(contrato, /maximo_por_subida:\s*(\d+)/)).toBe(
+      numero(controlador, /MAXIMO_POR_SUBIDA = ([^;]+);/),
+    );
   });
 
   it('el tamaño máximo es el que aplica la API', () => {
-    expect(numero(contrato, /tamano_maximo_bytes:\s*(\d+)/)).toBe(numero(optimizacion, /export const TAMANO_MAXIMO = ([^;]+);/));
+    expect(numero(contrato, /tamano_maximo_bytes:\s*(\d+)/)).toBe(
+      numero(optimizacion, /export const TAMANO_MAXIMO = ([^;]+);/),
+    );
   });
 
   it('los tipos son exactamente los que el almacén acepta', () => {
-    const delAlmacen = [...almacen.matchAll(/'(application\/pdf|image\/[a-z]+)'/g)].map((m) => m[1]);
-    const delContrato = [...contrato.matchAll(/'(application\/pdf|image\/[a-z]+)'/g)].map((m) => m[1]);
+    const delAlmacen = [...almacen.matchAll(/'(application\/pdf|image\/[a-z]+)'/g)].map(
+      (m) => m[1],
+    );
+    const delContrato = [...contrato.matchAll(/'(application\/pdf|image\/[a-z]+)'/g)].map(
+      (m) => m[1],
+    );
     expect(new Set(delContrato)).toEqual(new Set(delAlmacen));
   });
 
   it('lo recomendado es lo que hace la web antes de subir', () => {
-    expect(numero(contrato, /lado_maximo_px:\s*(\d+)/)).toBe(numero(encoger, /const ANCHO_MAXIMO = ([^;]+);/));
-    expect(numero(contrato, /calidad:\s*([\d.]+)/)).toBe(numero(encoger, /const CALIDAD = ([^;]+);/));
+    expect(numero(contrato, /lado_maximo_px:\s*(\d+)/)).toBe(
+      numero(encoger, /const ANCHO_MAXIMO = ([^;]+);/),
+    );
+    expect(numero(contrato, /calidad:\s*([\d.]+)/)).toBe(
+      numero(encoger, /const CALIDAD = ([^;]+);/),
+    );
   });
 });

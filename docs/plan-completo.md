@@ -15,10 +15,12 @@ El documento tiene tres partes, en el orden en que se ejecutan:
 El consumo de tokens de las fases anteriores fue muy alto, incluso con el modelo y la configuración actuales. Antes de la verificación, Code hace un diagnóstico y aplica las correcciones, porque el objetivo es **terminar todo el plan sin quedarse sin presupuesto y sin perder ni una pizca de calidad**.
 
 **Diagnóstico (primero, y en el informe):**
+
 - Mide el consumo con las herramientas de costo y contexto que tengas disponibles en Claude Code, y revisa el registro de la sesión para identificar **qué operaciones concretas consumen más**: lecturas de archivos grandes completos (por ejemplo, el modal de ~1.800 líneas o los documentos de auditoría), relectura de los mismos archivos en varios agentes, salidas largas de herramientas (pruebas, builds, `git diff` de archivos grandes, instalación de dependencias), agentes paralelos que cargan cada uno el contexto entero, el volumen de lo que Engram sincroniza en cada turno, y el tamaño de las instrucciones y skills que se cargan al inicio.
 - Entrega una tabla corta: operación, consumo estimado, causa, corrección aplicada.
 
 **Reglas de ahorro que se aplican desde ahora** (ninguna reduce la verificación, las pruebas ni la calidad; solo eliminan lectura y salida redundantes):
+
 - Antes de leer un archivo, buscar (`grep`, `rg`) y leer solo el rango necesario. Un archivo grande completo se lee una sola vez por tarea, y lo que se necesite de él se anota en una nota corta en vez de releerlo.
 - Salidas de herramientas acotadas: reporteros de pruebas en modo silencioso con resumen final, `tail` sobre logs y builds, `git diff --stat` antes de cualquier diff completo, y nunca volcar `node_modules`, `dist`, archivos generados ni lockfiles.
 - Las pruebas se ejecutan de forma dirigida mientras se trabaja (solo las afectadas) y **la suite completa una vez antes de cada pull request**. Eso no es menos verificación: es la misma verificación sin repetirla veinte veces.
@@ -235,6 +237,7 @@ Además de lo habitual del modo autónomo, incluye: el estado de cada punto de l
 ### 7.1 Investigación y auditoría
 
 **Parte A: investigación propia.** Antes de auditar, investiga a fondo, con fuentes actuales y verificables, para cada área de 7.2 a 7.13:
+
 - Qué recomiendan hoy la documentación oficial de cada herramienta del stack (NestJS, Prisma, React, Vite, TanStack Query, Tailwind, Supabase, Swift) y las guías de referencia más adoptadas en la industria.
 - Qué alternativas existen a cada decisión por defecto de esta fase, con su madurez (versión estable, mantenimiento activo, adopción) y su costo.
 - Qué hacen proyectos de referencia bien considerados con un stack parecido (monorepo TypeScript con API Nest, SPA React y app iOS).
@@ -242,6 +245,7 @@ Además de lo habitual del modo autónomo, incluye: el estado de cada punto de l
 Criterios para decidir, en este orden: (1) escalabilidad: que el diseño aguante más usuarios, más datos y más pantallas sin rehacerse; (2) mantenibilidad: que un cambio toque un solo lugar y que un desarrollador nuevo entienda el repo en un día; (3) alineación con las prácticas más adoptadas, no con las más nuevas; (4) costo cero y compatibilidad con Hostinger, Supabase y el certificado gratuito de iOS; (5) riesgo de la migración desde lo que existe.
 
 Reglas de la investigación:
+
 - Toda afirmación lleva fuente con fecha. Nada de "se suele hacer" sin evidencia.
 - Una alternativa reemplaza a la decisión por defecto solo si gana con claridad en los criterios 1 a 3 **y** no pierde en 4 y 5. En empate, se mantiene la decisión por defecto: cambiar por cambiar es deuda.
 - Ninguna herramienta en beta, sin versión estable o sin mantenimiento en los últimos seis meses.
@@ -256,6 +260,7 @@ Reglas de la investigación:
 ### 7.2 Nomenclatura
 
 **Archivos y carpetas**
+
 - `kebab-case` para todo archivo y carpeta: `expense-form.tsx`, `transactions.service.ts`.
 - Sufijo por rol en la API, estilo Nest: `.controller.ts`, `.service.ts`, `.repository.ts`, `.dto.ts`, `.module.ts`, `.guard.ts`, `.spec.ts`.
 - Pruebas junto a lo que prueban: `expense-form.test.tsx` al lado de `expense-form.tsx`; e2e en `api/test/e2e/*.e2e.ts`.
@@ -263,6 +268,7 @@ Reglas de la investigación:
 - Sin barrels (`index.ts`) salvo el punto de entrada de cada paquete en `packages/`.
 
 **Identificadores**
+
 - `camelCase` variables y funciones; `PascalCase` tipos, clases, componentes; `UPPER_SNAKE_CASE` constantes de módulo.
 - Booleanos con prefijo: `isLoading`, `hasBudget`, `canEdit`.
 - Manejadores: `onSubmit` para props, `handleSubmit` para implementaciones.
@@ -271,6 +277,7 @@ Reglas de la investigación:
 - Hooks `useX`; stores `useXStore`.
 
 **Base de datos**
+
 - Tablas en plural `snake_case`; columnas `snake_case`; PK `id`; FKs `<singular>_id`.
 - Toda tabla con `created_at` y `updated_at` (`timestamptz NOT NULL`).
 - Nombres de restricciones e índices: `pk_<table>`, `fk_<table>_<column>`, `uq_<table>_<cols>`, `ck_<table>_<rule>`, `idx_<table>_<cols>`.
@@ -278,6 +285,7 @@ Reglas de la investigación:
 - Migraciones nombradas `YYYYMMDDHHMMSS_<verb>_<object>` en inglés.
 
 **API**
+
 - Rutas: sustantivos en plural, `kebab-case`, sin verbos: `/transactions`, `/cost-centers`. Acciones que no son CRUD como sub-recurso: `/transactions/{id}/receipts`.
 - Prefijo `/api/v1` se mantiene. Cambios que rompen el contrato → `/api/v2`, nunca cambio en caliente.
 - Campos JSON en `camelCase` en la API; el mapeo a `snake_case` lo hace Prisma con `@map`.
@@ -297,6 +305,7 @@ Reglas de la investigación:
 ### 7.4 Arquitectura
 
 **API (NestJS)**
+
 - Un módulo por recurso: `transactions/`, `categories/`, `receipts/`… Dentro: `controller`, `service`, `repository`, `dto/`, `entities` o `types`, pruebas.
 - **Solo los repositorios hablan con Prisma.** Los servicios no importan `PrismaService`. Los controladores no contienen lógica: validan, delegan, responden.
 - Lo compartido vive en `common/` y nunca importa de `modules/`.
@@ -305,12 +314,14 @@ Reglas de la investigación:
 - Respuestas de listas siempre paginadas con cursor: `{ data, meta: { nextCursor, total? } }`.
 
 **Frontend (React)**
+
 - `src/app/` (arranque, rutas, proveedores) → `src/features/<feature>/` (`components/`, `hooks/`, `api/`, `model/`) → `src/shared/` (`ui/`, `lib/`, `api/`). Las features **no se importan entre sí**; lo común sube a `shared`.
 - Estado del servidor solo con React Query; estado local con `useState` o un store por feature. Nada de estado global para datos del servidor.
 - Componentes de presentación sin acceso a datos; los hooks de la feature encapsulan React Query.
 - Límite de **300 líneas por archivo** y **50 por función**, salvo excepciones documentadas en el propio archivo. El modal de movimiento se divide.
 
 **Contrato compartido**
+
 - `packages/types` a mano desaparece. La API expone OpenAPI con `@nestjs/swagger`; el frontend genera sus tipos con `openapi-typescript` y consume la API con `openapi-fetch`, en el `build`. Una sola fuente de verdad: el código de la API. Se evaluó Orval (genera hooks de React Query y mocks MSW); se descarta por ahora para que los hooks sigan siendo explícitos dentro de cada feature. ADR.
 - **Prisma 7.** El repo está en Prisma 6 con `@prisma/adapter-pg`, que ya es el modelo de Prisma 7. Se actualiza: `prisma.config.ts` en la raíz (obligatorio para migraciones), `import 'dotenv/config'` porque Prisma 7 ya no carga `.env` solo, generador `prisma-client` con `output` explícito, y los scripts de migración se adaptan a los flags nuevos de `migrate diff` (`--from-config-datasource`). ADR con la guía oficial de actualización.
 - `packages/lectura` pasa a `packages/receipt-parser`, puro, sin dependencias de Node ni de navegador.
@@ -336,6 +347,7 @@ Reglas de la investigación:
 ### 7.6 Git y entrega continua
 
 **Modelo de ramas: trunk-based.**
+
 - `main` es la única rama permanente y la que Hostinger despliega. `Dev` se retira cuando `main` esté configurada.
 - Ramas cortas desde `main`: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`. Viven días, no semanas.
 - Integración por pull request con **squash merge** e historia lineal. Code abre y mergea sus propios PR cuando el CI está en verde.
@@ -345,11 +357,13 @@ Reglas de la investigación:
 - Plantilla de PR con lista de verificación (pruebas, docs, ADR si aplica, migración aditiva) y plantillas de issue. `CODEOWNERS` solo cuando el plan lo haga efectivo.
 
 **CI en GitHub Actions**
+
 - `ci.yml` en cada PR y en `main`: `npm ci` con caché, typecheck, lint, formato, `knip`, `dependency-cruiser`, pruebas unitarias con cobertura, **e2e de la API contra un Postgres de servicio**, build de la API y del frontend, y los presupuestos de 7.9. Todo obligatorio para mergear.
 - `security.yml`: `gitleaks` (secretos), `npm audit` con fallo en severidad alta o crítica, y `Dependabot` semanal agrupado por tipo.
 - iOS en CI: `swiftlint`, `swift-format lint` y `xcodebuild test` en simulador, en runner macOS. **Cuota:** el plan gratuito da 2.000 minutos al mes en repos privados y cada minuto de runner macOS consume 10 minutos de cuota, así que este workflow corre solo por `workflow_dispatch` y antes de cada versión de la app; las verificaciones rutinarias de Swift van en `pre-commit`.
 
 **Despliegue**
+
 - Hostinger despliega desde `main`. El cambio de rama se hace en el mismo paso que protege `main`, sin dejar producción sin despliegue posible. Si exige el panel de Hostinger y no tienes acceso, es parada obligatoria.
 - Migraciones: siguen siendo un paso explícito y previo al despliegue de código (regla general 3). El runbook (7.12) documenta el procedimiento exacto, incluida la vuelta atrás.
 
@@ -437,6 +451,7 @@ Las convenciones no sirven si dependen de que alguien se acuerde. Tres capas, en
 **Capa 1: la máquina lo impide.** Cada regla de 7.2 a 7.13 tiene su verificación en `pre-commit` o en CI, y el PR no se puede mergear si falla. Es la única capa que garantiza algo. Una regla que no se puede verificar por máquina se marca como tal en `CONTRIBUTING.md`, y son la excepción.
 
 **Capa 2: Claude Code lo lee en cada sesión.** `CLAUDE.md` en la raíz, que Claude Code carga automáticamente al iniciar cualquier sesión en el proyecto. Menos de 200 líneas, con esta estructura:
+
 1. Qué es el proyecto y cómo está organizado (diez líneas).
 2. Comandos: instalar, correr, typecheck, lint, pruebas, e2e, generar el cliente de la API.
 3. Convenciones en una línea cada una, con enlace a la sección de `CONTRIBUTING.md` que la detalla.
@@ -642,7 +657,7 @@ El sistema propone la clasificación siempre que pueda. Cuando no puede, el usua
   2. El historial del propio usuario (el sugeridor).
   3. Las palabras clave del usuario.
   4. El diccionario del sistema (2.3).
-  Una fuente inferior nunca reemplaza a una superior. Si unificar esto con el clasificador de recibos (`packages/lectura`) implica decisiones no evidentes, explícamelas en el reporte.
+     Una fuente inferior nunca reemplaza a una superior. Si unificar esto con el clasificador de recibos (`packages/lectura`) implica decisiones no evidentes, explícamelas en el reporte.
 - Al guardar, si el usuario aceptó o corrigió una sugerencia, registra o actualiza la regla en `category_rules`, reutilizando el `upsert` que ya existe en `categorization.module.ts`. No aprendas de descripciones vacías o genéricas.
 - Nunca guardes una clasificación sugerida sin que el usuario la vea en la ficha.
 
@@ -678,6 +693,7 @@ Ejemplo: el texto de un recibo contiene "D1". El diccionario traduce "D1" a los 
 #### Pruebas
 
 **Buscador:**
+
 - Encuentra por nombre y por palabra clave, sin importar tildes ni mayúsculas.
 - Muestra la ruta de cada resultado.
 - Completar desde un concepto llena categoría y centro.
@@ -685,13 +701,16 @@ Ejemplo: el texto de un recibo contiene "D1". El diccionario traduce "D1" a los 
 - "Crear concepto" pide solo la categoría.
 
 **Precedencia:**
+
 - Una fuente inferior nunca reemplaza a una superior ni a la elección manual.
 
 **Aprendizaje:**
+
 - Aceptar o corregir una sugerencia crea o actualiza la regla.
 - Una descripción vacía no crea reglas.
 
 **Diccionario:**
+
 - Términos que llevan a un concepto: certeza alta.
 - Términos que llevan a una categoría o a varios conceptos: certeza media.
 - Términos que no llevan a nada: sin propuesta.

@@ -51,7 +51,10 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
   };
 
   const aprender = (auth: string, description: string, category_id: number) =>
-    http.post('/api/v1/categorization/learn').set('Authorization', auth).send({ description, category_id });
+    http
+      .post('/api/v1/categorization/learn')
+      .set('Authorization', auth)
+      .send({ description, category_id });
 
   /** Las reglas de un usuario, leídas de la base: lo que de verdad quedó. */
   const reglasDe = (usuario: UsuarioDePrueba) =>

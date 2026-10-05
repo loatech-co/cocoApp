@@ -34,8 +34,18 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const MESES = {
-  enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
-  julio: 7, agosto: 8, septiembre: 9, octubre: 10, noviembre: 11, diciembre: 12,
+  enero: 1,
+  febrero: 2,
+  marzo: 3,
+  abril: 4,
+  mayo: 5,
+  junio: 6,
+  julio: 7,
+  agosto: 8,
+  septiembre: 9,
+  octubre: 10,
+  noviembre: 11,
+  diciembre: 12,
 };
 
 const EXTENSIONES = new Set(['pdf', 'jpg', 'jpeg', 'png']);
@@ -85,7 +95,9 @@ function partir(linea) {
 
 /** El CSV, fila a fila, con la huella de cada movimiento ya calculada. */
 export function leerCsv(ruta) {
-  const lineas = readFileSync(ruta, 'utf8').split('\n').filter((l) => l.trim());
+  const lineas = readFileSync(ruta, 'utf8')
+    .split('\n')
+    .filter((l) => l.trim());
   const cabecera = partir(lineas[0]);
   const col = (nombre) => cabecera.indexOf(nombre);
 
@@ -100,33 +112,41 @@ export function leerCsv(ruta) {
   };
 
   if (Object.values(i).some((n) => n < 0)) {
-    throw new Error('Al CSV le faltan columnas. Se esperan: Anio, Mes, Fecha_Pago, Centro_de_costos, Grupo, Concepto, Valor_COP.');
+    throw new Error(
+      'Al CSV le faltan columnas. Se esperan: Anio, Mes, Fecha_Pago, Centro_de_costos, Grupo, Concepto, Valor_COP.',
+    );
   }
 
-  return lineas.slice(1).map(partir).map((f) => {
-    const mes = MESES[f[i.mes]?.toLowerCase()];
-    const periodo = mes ? `${f[i.anio]}-${String(mes).padStart(2, '0')}` : null;
-    const valor = Number.parseInt(f[i.valor], 10);
+  return lineas
+    .slice(1)
+    .map(partir)
+    .map((f) => {
+      const mes = MESES[f[i.mes]?.toLowerCase()];
+      const periodo = mes ? `${f[i.anio]}-${String(mes).padStart(2, '0')}` : null;
+      const valor = Number.parseInt(f[i.valor], 10);
 
-    return {
-      periodo,
-      fecha: f[i.fecha],
-      centro: f[i.centro],
-      grupo: f[i.grupo],
-      concepto: f[i.concepto],
-      valor,
-      // La MISMA huella que escribió `cargar-historico.mjs`. Si alguna vez
-      // cambia allá, este emparejamiento deja de encontrar nada —que es mejor
-      // que encontrar lo que no es—.
-      huella: createHash('sha256')
-        .update([f[i.fecha], valor, f[i.centro], f[i.grupo], f[i.concepto], periodo ?? ''].join('|'))
-        .digest('hex')
-        .slice(0, 40),
-    };
-  });
+      return {
+        periodo,
+        fecha: f[i.fecha],
+        centro: f[i.centro],
+        grupo: f[i.grupo],
+        concepto: f[i.concepto],
+        valor,
+        // La MISMA huella que escribió `cargar-historico.mjs`. Si alguna vez
+        // cambia allá, este emparejamiento deja de encontrar nada —que es mejor
+        // que encontrar lo que no es—.
+        huella: createHash('sha256')
+          .update(
+            [f[i.fecha], valor, f[i.centro], f[i.grupo], f[i.concepto], periodo ?? ''].join('|'),
+          )
+          .digest('hex')
+          .slice(0, 40),
+      };
+    });
 }
 
-const NOMBRE = /^(?<concepto>.+) - (?<fecha>\d{4}-\d{2}-\d{2})(?: - (?<i>\d+) de (?<n>\d+))?\.(?<ext>[A-Za-z]+)$/;
+const NOMBRE =
+  /^(?<concepto>.+) - (?<fecha>\d{4}-\d{2}-\d{2})(?: - (?<i>\d+) de (?<n>\d+))?\.(?<ext>[A-Za-z]+)$/;
 
 /**
  * Los archivos del árbol de soportes, ya leídos.
@@ -149,7 +169,10 @@ export function leerArchivos(raiz) {
 
       const mes = carpetaMes.match(/^(\d{2})-/)?.[1];
       if (!mes) {
-        ilegibles.push({ ruta: join(anio, carpetaMes), motivo: 'la carpeta del mes no empieza por "MM-"' });
+        ilegibles.push({
+          ruta: join(anio, carpetaMes),
+          motivo: 'la carpeta del mes no empieza por "MM-"',
+        });
         continue;
       }
 
@@ -161,7 +184,10 @@ export function leerArchivos(raiz) {
         const ext = m?.groups.ext.toLowerCase();
 
         if (!m || !EXTENSIONES.has(ext)) {
-          ilegibles.push({ ruta: join(anio, carpetaMes, nombre), motivo: 'el nombre no dice concepto y fecha' });
+          ilegibles.push({
+            ruta: join(anio, carpetaMes, nombre),
+            motivo: 'el nombre no dice concepto y fecha',
+          });
           continue;
         }
 

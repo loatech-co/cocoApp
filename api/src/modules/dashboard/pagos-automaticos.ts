@@ -120,7 +120,14 @@ export class PagosAutomaticosService {
         mesEnCurso.slice(0, 7),
       );
 
-      if (!tocaCobrarAutomatico({ pagoAutomatico: true, vencimientoISO: vence, hoyISO: hoy, esperado }))
+      if (
+        !tocaCobrarAutomatico({
+          pagoAutomatico: true,
+          vencimientoISO: vence,
+          hoyISO: hoy,
+          esperado,
+        })
+      )
         continue;
 
       try {

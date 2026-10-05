@@ -219,7 +219,6 @@ export class DashboardService {
     // A GET only reads. Auto-paid concepts are charged by AutoChargeTask, once
     // a day and at start-up (phase 6.7), not on the way in here.
 
-
     const categorias = await this.prisma.category.findMany({
       where: { userId },
       select: {
@@ -271,8 +270,7 @@ export class DashboardService {
     // distintos no comparten nivel inferior. Se baja un nivel solo cuando lo
     // marcado es una sola cosa; si no, se desglosa por centro, que es la
     // pregunta que sigue teniendo respuesta.
-    const nivelFiltrado =
-      pedidas.length === 1 ? profundidadDeCategoria(porId, pedidas[0]) : 0;
+    const nivelFiltrado = pedidas.length === 1 ? profundidadDeCategoria(porId, pedidas[0]) : 0;
     const nivelDesglose = Math.min(nivelFiltrado + 1, 3);
 
     const [cuentas, movimientos] = await Promise.all([
@@ -359,11 +357,7 @@ export class DashboardService {
     // se sabe; si no, lo dirá la fila única por la que se vaya bajando.
     let padre: bigint | null = pedidas.length === 1 ? pedidas[0] : null;
 
-    while (
-      nivelMostrado < 3 &&
-      acumulado.size === 1 &&
-      [...acumulado.values()][0].id !== null
-    ) {
+    while (nivelMostrado < 3 && acumulado.size === 1 && [...acumulado.values()][0].id !== null) {
       const masAbajo = agrupar(nivelMostrado + 1);
       /*
         Se baja aunque abajo también haya UNA sola fila.
@@ -388,9 +382,7 @@ export class DashboardService {
     const datosDelPadre = padre === null ? undefined : datosDe.get(padre.toString());
 
     /** Un nivel agrupado, listo para salir: con nombre, de mayor a menor. */
-    const aFilas = (
-      agrupado: ReturnType<typeof agrupar>,
-    ): GastoPorCategoriaPayload[] =>
+    const aFilas = (agrupado: ReturnType<typeof agrupar>): GastoPorCategoriaPayload[] =>
       [...agrupado.values()]
         .map((fila) => {
           const datos = fila.id === null ? undefined : datosDe.get(fila.id.toString());
@@ -668,10 +660,7 @@ export class DashboardService {
 }
 
 /** En qué nivel está una categoría: 1 centro, 2 categoría, 3 concepto. */
-function profundidadDeCategoria(
-  porId: ReadonlyMap<string, CategoriaPlana>,
-  id: bigint,
-): number {
+function profundidadDeCategoria(porId: ReadonlyMap<string, CategoriaPlana>, id: bigint): number {
   let nivel = 0;
   let actual: bigint | null = id;
   const visitados = new Set<string>();

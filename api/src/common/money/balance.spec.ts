@@ -45,7 +45,9 @@ const saldoDe = (
 
 describe('Saldo derivado — cuentas de activo', () => {
   it('S1 · sin saldo inicial: +500.000 ingreso, −120.000 gasto → 380.000', () => {
-    expect(saldoDe('debit', '0.00', [ingreso('500000'), gasto('120000')]).cleared).toBe('380000.00');
+    expect(saldoDe('debit', '0.00', [ingreso('500000'), gasto('120000')]).cleared).toBe(
+      '380000.00',
+    );
   });
 
   it('S2 · con saldo inicial: 1.000.000 −250.000 −250.000 +100.000 → 600.000', () => {
@@ -71,9 +73,9 @@ describe('Saldo derivado — cuentas de activo', () => {
   });
 
   it('caso del PRD: opening 500.000, +1.000.000, −300.000 → 1.200.000', () => {
-    expect(
-      saldoDe('debit', '500000.00', [ingreso('1000000'), gasto('300000')]).cleared,
-    ).toBe('1200000.00');
+    expect(saldoDe('debit', '500000.00', [ingreso('1000000'), gasto('300000')]).cleared).toBe(
+      '1200000.00',
+    );
   });
 
   it('mantiene la exactitud al centavo con montos de muchos dígitos', () => {
@@ -110,9 +112,9 @@ describe('Saldo derivado — tarjetas de crédito (pasivo)', () => {
   });
 
   it('una transferencia que entra a la tarjeta es un pago: reduce la deuda', () => {
-    expect(
-      saldoDe('credit', '1000000.00', [transferenciaEntra('400000')]).cleared,
-    ).toBe('600000.00');
+    expect(saldoDe('credit', '1000000.00', [transferenciaEntra('400000')]).cleared).toBe(
+      '600000.00',
+    );
   });
 
   it('un ingreso a la tarjeta (una devolución) también reduce la deuda', () => {

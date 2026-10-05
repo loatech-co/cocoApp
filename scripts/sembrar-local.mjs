@@ -93,7 +93,9 @@ for (const [padre, hijos] of [
 // promedio. Un alquiler vale lo mismo todos los meses, así que promediarlo
 // acierta por accidente; el mercado se paga en varias idas de valor distinto,
 // y ahí el promedio de los tres meses anteriores no dice nada útil.
-const alimentacion = await asegurar(userId, variables.fila.id, 'Alimentación', { icon: 'utensils' });
+const alimentacion = await asegurar(userId, variables.fila.id, 'Alimentación', {
+  icon: 'utensils',
+});
 if (alimentacion.nuevo) hechos.push('categoría «Alimentación»');
 
 const mercado = await asegurar(userId, alimentacion.fila.id, 'Mercado', {
@@ -152,8 +154,11 @@ const conteo = {
   movimientos: await prisma.transaction.count(),
 };
 
-console.log(hechos.length ? `Sembrado:\n  · ${hechos.join('\n  · ')}` : 'Ya estaba todo. Nada que hacer.');
+console.log(
+  hechos.length ? `Sembrado:\n  · ${hechos.join('\n  · ')}` : 'Ya estaba todo. Nada que hacer.',
+);
 console.log(`\nLa base local queda así:`);
-for (const [que, cuantos] of Object.entries(conteo)) console.log(`  ${String(cuantos).padStart(5)}  ${que}`);
+for (const [que, cuantos] of Object.entries(conteo))
+  console.log(`  ${String(cuantos).padStart(5)}  ${que}`);
 
 await prisma.$disconnect();

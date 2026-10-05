@@ -15,7 +15,11 @@ function monthsOf(year: number): string[] {
 }
 
 /** The month numbers (1–12) of `year` in which the concept is due. */
-function dueMonths(periodicity: Periodicidad, referenceMonth: number | null, year: number): number[] {
+function dueMonths(
+  periodicity: Periodicidad,
+  referenceMonth: number | null,
+  year: number,
+): number[] {
   return monthsOf(year)
     .filter((month) => tocaEnElMes(periodicity, referenceMonth, month))
     .map((month) => Number(month.slice(5, 7)));

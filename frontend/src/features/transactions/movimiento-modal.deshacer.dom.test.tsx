@@ -16,9 +16,8 @@ import { MovimientoModal } from './movimiento-modal';
   mismo nombre no coincidiría, y la prueba pasaría por el camino equivocado
   sin que se notara.
 */
-const { ApiClientError } = await vi.importActual<typeof import('@/lib/api-client')>(
-  '@/lib/api-client',
-);
+const { ApiClientError } =
+  await vi.importActual<typeof import('@/lib/api-client')>('@/lib/api-client');
 
 const apiFetch = vi.fn();
 const apiSubir = vi.fn();
@@ -250,7 +249,8 @@ describe('Cuando el soporte falla al registrar', () => {
 describe('Lo que la web guarda', () => {
   const creacion = () =>
     apiFetch.mock.calls.find(
-      ([ruta, opciones]) => ruta === '/transactions' && (opciones as { method?: string })?.method === 'POST',
+      ([ruta, opciones]) =>
+        ruta === '/transactions' && (opciones as { method?: string })?.method === 'POST',
     );
 
   it('manda source «web»; sin texto leído, raw_text va vacío', async () => {

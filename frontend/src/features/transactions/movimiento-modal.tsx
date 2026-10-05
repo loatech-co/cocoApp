@@ -53,12 +53,25 @@ import { useAlCambiar } from '@/lib/al-cambiar';
 import { BuscadorDeConcepto, type CandidatoDelRecibo } from '@/components/buscador-de-concepto';
 import { useSugerenciaDeCategoria } from '@/features/categorization/use-sugerencia';
 import { apiFetch } from '@/lib/api-client';
-import { SIN_CLASIFICAR, aplicar, nombreDelOrigen, type Clasificacion, type Origen } from '@/lib/precedencia';
+import {
+  SIN_CLASIFICAR,
+  aplicar,
+  nombreDelOrigen,
+  type Clasificacion,
+  type Origen,
+} from '@/lib/precedencia';
 import { useTransactions } from '@/lib/queries';
 import { conceptosRecientes } from '@/lib/recientes';
 import { Camara } from './camara';
 import { leerSoporte, type ProgresoDeLectura } from './leer-soporte';
-import { buscarEnArbol, indexarArbol, normalizar, resolverTerminos, terminosPara, type Lectura } from '@coco/lectura';
+import {
+  buscarEnArbol,
+  indexarArbol,
+  normalizar,
+  resolverTerminos,
+  terminosPara,
+  type Lectura,
+} from '@coco/lectura';
 import type { Category, PagoPendiente, Transaction, TransactionType } from '@coco/types';
 
 /**
@@ -294,7 +307,9 @@ export function MovimientoModal({
     // Lo que llega puesto —el concepto de un movimiento que se edita, el de un
     // pago pendiente que se confirma— es una elección: lo automático no lo toca.
     const puesto = movimiento?.category_id ?? pago?.category_id;
-    setClasificacion(puesto === undefined ? SIN_CLASIFICAR : { categoryId: puesto, origen: 'manual' });
+    setClasificacion(
+      puesto === undefined ? SIN_CLASIFICAR : { categoryId: puesto, origen: 'manual' },
+    );
     setHuboSugerencia(false);
     setCandidatosDelRecibo([]);
     setCascadaVisible(false);
@@ -362,27 +377,43 @@ export function MovimientoModal({
 
     const conceptos = buscarEnArbol(indiceDelArbol, escrito).filter((e) => e.nivel === 'concepto');
     if (conceptos.length === 1) {
-      return { categoryId: Number(conceptos[0].id), origen: 'palabras-clave' as const, candidatos: [] as CandidatoDelRecibo[] };
+      return {
+        categoryId: Number(conceptos[0].id),
+        origen: 'palabras-clave' as const,
+        candidatos: [] as CandidatoDelRecibo[],
+      };
     }
 
     const terminos = terminosPara(escrito);
     if (terminos.length === 0) return null;
     const resuelto = resolverTerminos(indiceDelArbol, terminos);
     if (resuelto.certeza === 'alta' && resuelto.concepto) {
-      return { categoryId: Number(resuelto.concepto.id), origen: 'diccionario' as const, candidatos: [] as CandidatoDelRecibo[] };
+      return {
+        categoryId: Number(resuelto.concepto.id),
+        origen: 'diccionario' as const,
+        candidatos: [] as CandidatoDelRecibo[],
+      };
     }
     if (resuelto.certeza === 'media') {
       return {
         categoryId: resuelto.categoria ? Number(resuelto.categoria.id) : undefined,
         origen: 'diccionario' as const,
-        candidatos: resuelto.candidatos.map((c) => ({ id: Number(c.id), nombre: c.nombre, ruta: c.ruta.join(' › ') })),
+        candidatos: resuelto.candidatos.map((c) => ({
+          id: Number(c.id),
+          nombre: c.nombre,
+          ruta: c.ruta.join(' › '),
+        })),
       };
     }
     return null;
   }, [indiceDelArbol, description, proponiendo]);
 
   useAlCambiar(
-    [propuestaLocal?.categoryId, propuestaLocal?.origen, propuestaLocal?.candidatos.map((c) => c.id).join(',')],
+    [
+      propuestaLocal?.categoryId,
+      propuestaLocal?.origen,
+      propuestaLocal?.candidatos.map((c) => c.id).join(','),
+    ],
     () => {
       if (!propuestaLocal) return;
       setHuboSugerencia(true);
@@ -393,7 +424,10 @@ export function MovimientoModal({
 
   // Los conceptos usados últimamente, para el buscador en blanco. Solo al
   // crear: editando, el concepto ya está puesto.
-  const movimientosRecientes = useTransactions({ per_page: 40 }, { enabled: abierta && !movimiento });
+  const movimientosRecientes = useTransactions(
+    { per_page: 40 },
+    { enabled: abierta && !movimiento },
+  );
   const recientes = useMemo(
     () => conceptosRecientes(movimientosRecientes.data?.data ?? [], indiceDelArbol),
     [movimientosRecientes.data, indiceDelArbol],
@@ -524,7 +558,8 @@ export function MovimientoModal({
         if (enElArbol.certeza === 'alta' && enElArbol.conceptoId !== undefined) {
           proponer({ categoryId: Number(enElArbol.conceptoId), origen });
         } else if (enElArbol.certeza === 'media') {
-          if (enElArbol.categoriaId !== undefined) proponer({ categoryId: Number(enElArbol.categoriaId), origen });
+          if (enElArbol.categoriaId !== undefined)
+            proponer({ categoryId: Number(enElArbol.categoriaId), origen });
           setCandidatosDelRecibo(
             enElArbol.candidatos.map((c) => ({ id: Number(c.id), nombre: c.nombre, ruta: c.ruta })),
           );
@@ -688,7 +723,9 @@ export function MovimientoModal({
       try {
         await eliminar.mutateAsync(id);
         setRegistrado(null);
-        setError(`${dijo} No quedó registrado nada: un movimiento no se guarda sin el soporte que se le adjuntó. Vuelve a intentarlo.`);
+        setError(
+          `${dijo} No quedó registrado nada: un movimiento no se guarda sin el soporte que se le adjuntó. Vuelve a intentarlo.`,
+        );
       } catch {
         setRegistrado(id);
         setError(
@@ -997,12 +1034,16 @@ export function MovimientoModal({
                         valor={categoryId}
                         deshabilitado={estatico}
                         onElegir={(id) => proponer({ categoryId: id, origen: 'manual' })}
-                        onCrearConcepto={(nombre, categoriaId) => void crearDentro(nombre, categoriaId)}
+                        onCrearConcepto={(nombre, categoriaId) =>
+                          void crearDentro(nombre, categoriaId)
+                        }
                         creando={crearCategoria.isPending}
                         recientes={recientes}
                         candidatos={candidatosDelRecibo}
                         ayuda={
-                          clasificacion.origen && clasificacion.origen !== 'manual' && categoryId !== undefined
+                          clasificacion.origen &&
+                          clasificacion.origen !== 'manual' &&
+                          categoryId !== undefined
                             ? `${nombreDelOrigen(clasificacion.origen).replace(/^\w/, (c) => c.toUpperCase())}. Puedes cambiarlo.`
                             : candidatosDelRecibo.length > 0 && clasificacion.origen !== 'manual'
                               ? 'El recibo apunta a varios conceptos: elige uno en el buscador.'
@@ -1016,56 +1057,76 @@ export function MovimientoModal({
                           onClick={() => setCascadaVisible((v) => !v)}
                           className="-mt-2 self-start text-xs text-muted-foreground underline-offset-2 hover:underline"
                         >
-                          {cascadaVisible ? 'Ocultar centro y categoría' : 'Elegir por centro y categoría'}
+                          {cascadaVisible
+                            ? 'Ocultar centro y categoría'
+                            : 'Elegir por centro y categoría'}
                         </button>
                       )}
 
                       {(cascadaVisible || estatico) && (
                         <>
-                        <Campo etiqueta="Centro de costos" id="mov-centro">
-                          <Combo
-                            id="mov-centro"
-                            etiqueta="Centro de costos"
-                            valor={centro ? String(centro.id) : ''}
-                            opciones={arbol.map((c) => ({ valor: String(c.id), etiqueta: c.name }))}
-                            deshabilitado={estatico}
-                            onCambiar={(v) => proponer({ categoryId: v === '' ? undefined : Number(v), origen: 'manual' })}
-                          />
-                        </Campo>
+                          <Campo etiqueta="Centro de costos" id="mov-centro">
+                            <Combo
+                              id="mov-centro"
+                              etiqueta="Centro de costos"
+                              valor={centro ? String(centro.id) : ''}
+                              opciones={arbol.map((c) => ({
+                                valor: String(c.id),
+                                etiqueta: c.name,
+                              }))}
+                              deshabilitado={estatico}
+                              onCambiar={(v) =>
+                                proponer({
+                                  categoryId: v === '' ? undefined : Number(v),
+                                  origen: 'manual',
+                                })
+                              }
+                            />
+                          </Campo>
 
-                        <Campo etiqueta="Categoría" id="mov-categoria">
-                          <Combo
-                            id="mov-categoria"
-                            etiqueta="Categoría"
-                            valor={categoria ? String(categoria.id) : ''}
-                            opciones={(centro?.children ?? []).map((g) => ({
-                              valor: String(g.id),
-                              etiqueta: g.name,
-                            }))}
-                            deshabilitado={estatico || !centro}
-                            vacio={centro ? 'Sin elegir' : 'Elige antes un centro de costos'}
-                            creando={crearCategoria.isPending}
-                            onCambiar={(v) => proponer({ categoryId: v === '' ? centro?.id : Number(v), origen: 'manual' })}
-                            onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
-                          />
-                        </Campo>
+                          <Campo etiqueta="Categoría" id="mov-categoria">
+                            <Combo
+                              id="mov-categoria"
+                              etiqueta="Categoría"
+                              valor={categoria ? String(categoria.id) : ''}
+                              opciones={(centro?.children ?? []).map((g) => ({
+                                valor: String(g.id),
+                                etiqueta: g.name,
+                              }))}
+                              deshabilitado={estatico || !centro}
+                              vacio={centro ? 'Sin elegir' : 'Elige antes un centro de costos'}
+                              creando={crearCategoria.isPending}
+                              onCambiar={(v) =>
+                                proponer({
+                                  categoryId: v === '' ? centro?.id : Number(v),
+                                  origen: 'manual',
+                                })
+                              }
+                              onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
+                            />
+                          </Campo>
 
-                        <Campo etiqueta="Concepto" id="mov-concepto-cascada">
-                          <Combo
-                            id="mov-concepto-cascada"
-                            etiqueta="Concepto"
-                            valor={concepto ? String(concepto.id) : ''}
-                            opciones={(categoria?.children ?? []).map((c) => ({
-                              valor: String(c.id),
-                              etiqueta: c.name,
-                            }))}
-                            deshabilitado={estatico || !categoria}
-                            vacio={categoria ? 'Sin elegir' : 'Elige antes una categoría'}
-                            creando={crearCategoria.isPending}
-                            onCambiar={(v) => proponer({ categoryId: v === '' ? categoria?.id : Number(v), origen: 'manual' })}
-                            onCrear={(nombre) => void crearDentro(nombre, categoria?.id)}
-                          />
-                        </Campo>
+                          <Campo etiqueta="Concepto" id="mov-concepto-cascada">
+                            <Combo
+                              id="mov-concepto-cascada"
+                              etiqueta="Concepto"
+                              valor={concepto ? String(concepto.id) : ''}
+                              opciones={(categoria?.children ?? []).map((c) => ({
+                                valor: String(c.id),
+                                etiqueta: c.name,
+                              }))}
+                              deshabilitado={estatico || !categoria}
+                              vacio={categoria ? 'Sin elegir' : 'Elige antes una categoría'}
+                              creando={crearCategoria.isPending}
+                              onCambiar={(v) =>
+                                proponer({
+                                  categoryId: v === '' ? categoria?.id : Number(v),
+                                  origen: 'manual',
+                                })
+                              }
+                              onCrear={(nombre) => void crearDentro(nombre, categoria?.id)}
+                            />
+                          </Campo>
                         </>
                       )}
 
@@ -1138,7 +1199,9 @@ export function MovimientoModal({
                       currency={movimiento?.currency ?? DEFAULT_CURRENCY}
                       fecha={date}
                       periodo={movimiento?.period}
-                      ruta={[centro?.name, categoria?.name, concepto?.name].filter(Boolean) as string[]}
+                      ruta={
+                        [centro?.name, categoria?.name, concepto?.name].filter(Boolean) as string[]
+                      }
                     />
 
                     {/* Las notas, con lo que dicen los datos y no debajo de

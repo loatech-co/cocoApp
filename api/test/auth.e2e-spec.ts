@@ -75,9 +75,7 @@ describe('Auth propia (e2e)', () => {
       const respuesta = await registrar({ password: 'abcdefghijkl' }).expect(422);
 
       expect(respuesta.body.error.code).toBe('unprocessable');
-      const mensajes = respuesta.body.error.details.map(
-        (d: { message: string }) => d.message,
-      );
+      const mensajes = respuesta.body.error.details.map((d: { message: string }) => d.message);
       expect(mensajes).toEqual(
         expect.arrayContaining([
           'Debe incluir al menos una letra mayúscula.',
@@ -88,9 +86,7 @@ describe('Auth propia (e2e)', () => {
     });
 
     it('rechaza una contraseña derivada del correo', async () => {
-      await registrar({ email: 'mariana@pruebas.coco', password: 'Mariana-2026!' }).expect(
-        422,
-      );
+      await registrar({ email: 'mariana@pruebas.coco', password: 'Mariana-2026!' }).expect(422);
     });
 
     it('no crea nada si la contraseña no pasa la política', async () => {
@@ -204,10 +200,7 @@ describe('Auth propia (e2e)', () => {
       const respuesta = await entrar(usuario.email, 'Zz9$Otra-Cosa-Aqui!').expect(401);
       expect(respuesta.body.error.message).not.toMatch(/pendiente|suspendida/i);
     });
-
   });
-
-
 
   // ── Rotación y detección de reuso ──────────────────────────────────────────
 
@@ -226,9 +219,7 @@ describe('Auth propia (e2e)', () => {
       await http.post('/api/v1/auth/refresh').expect(401);
     });
 
-
     // ── El control más importante de todo el módulo ──
-
 
     it('el refresh de una cuenta suspendida no sirve', async () => {
       const usuario = await entorno.crearUsuario();
@@ -241,8 +232,6 @@ describe('Auth propia (e2e)', () => {
 
       await http.post('/api/v1/auth/refresh').set('Cookie', cookieDe(login)).expect(401);
     });
-
-
   });
 
   // ── Revocación inmediata ───────────────────────────────────────────────────
@@ -254,10 +243,7 @@ describe('Auth propia (e2e)', () => {
 
       await http.get('/api/v1/auth/me').set('Authorization', cabecera).expect(200);
 
-      await http
-        .post('/api/v1/auth/logout-all')
-        .set('Authorization', cabecera)
-        .expect(204);
+      await http.post('/api/v1/auth/logout-all').set('Authorization', cabecera).expect(204);
 
       // El token sigue siendo criptográficamente válido y sin expirar. Lo que
       // lo mata es `sessionsValidFrom`, que el guard compara en cada petición.
@@ -347,9 +333,7 @@ describe('Auth propia (e2e)', () => {
       ['get', '/api/v1/admin/audit-log'],
     ])('un usuario normal recibe 403 en %s %s', async (metodo, ruta) => {
       const usuario = await entorno.crearUsuario({ role: 'user' });
-      await http[metodo as 'get'](ruta)
-        .set('Authorization', entorno.como(usuario))
-        .expect(403);
+      await http[metodo as 'get'](ruta).set('Authorization', entorno.como(usuario)).expect(403);
     });
 
     it('sin autenticar responde 401, no 403: primero se autentica, después se autoriza', async () => {

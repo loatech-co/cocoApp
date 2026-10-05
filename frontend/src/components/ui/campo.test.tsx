@@ -100,7 +100,13 @@ describe('El campo con etiqueta flotante', () => {
     const opciones = [{ valor: '1', etiqueta: 'Arriendo' }];
 
     const vacio = render(
-      <Select etiqueta="Concepto" valor="" vacio="Sin elegir" opciones={opciones} onCambiar={() => {}} />,
+      <Select
+        etiqueta="Concepto"
+        valor=""
+        vacio="Sin elegir"
+        opciones={opciones}
+        onCambiar={() => {}}
+      />,
     );
     expect(vacio.container.querySelector('[data-lleno]')?.getAttribute('data-lleno')).toBe('no');
     // Con `data-vacio` puesto, el CSS lo esconde mientras la etiqueta ocupa su

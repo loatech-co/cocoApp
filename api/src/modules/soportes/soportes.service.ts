@@ -66,7 +66,9 @@ export class SoportesService implements OnModuleInit {
    * Esta línea lo habría dicho en el primer reinicio.
    */
   async onModuleInit(): Promise<void> {
-    const { ok, detail } = await this.store.check().catch((error: Error) => ({ ok: false, detail: error.message }));
+    const { ok, detail } = await this.store
+      .check()
+      .catch((error: Error) => ({ ok: false, detail: error.message }));
 
     if (ok) {
       this.logger.log(`Almacén de soportes: ${this.store.describe()} — ${detail}`);
@@ -78,7 +80,6 @@ export class SoportesService implements OnModuleInit {
         'Todos los soportes van a salir como no disponibles.',
     );
   }
-
 
   /**
    * Los soportes de un movimiento.
@@ -96,7 +97,9 @@ export class SoportesService implements OnModuleInit {
     });
 
     // One check per receipt, in parallel: a movement has a handful at most.
-    const disponibles = await Promise.all(filas.map((s) => this.store.exists(s.storageKey).catch(() => false)));
+    const disponibles = await Promise.all(
+      filas.map((s) => this.store.exists(s.storageKey).catch(() => false)),
+    );
 
     return filas.map((s, indice) => ({
       id: s.id,
@@ -325,7 +328,10 @@ export class SoportesService implements OnModuleInit {
   }
 
   /** Storage keys of the receipts of these movements; read BEFORE deleting them (the rows cascade). */
-  async keysOf(userId: bigint, where: { transactionId?: bigint; transferGroupId?: string }): Promise<string[]> {
+  async keysOf(
+    userId: bigint,
+    where: { transactionId?: bigint; transferGroupId?: string },
+  ): Promise<string[]> {
     const rows = await this.prisma.soporte.findMany({
       where: {
         userId,
@@ -353,7 +359,9 @@ export class SoportesService implements OnModuleInit {
     try {
       await this.store.remove(keys);
     } catch (error) {
-      this.logger.error(`Could not delete ${keys.length} receipt file(s): ${(error as Error).message} — keys: ${keys.join(', ')}`);
+      this.logger.error(
+        `Could not delete ${keys.length} receipt file(s): ${(error as Error).message} — keys: ${keys.join(', ')}`,
+      );
     }
   }
 }

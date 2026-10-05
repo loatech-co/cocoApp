@@ -64,7 +64,8 @@ export function Th({
   orden?: { activo: 'asc' | 'desc' | null; onCambiar: () => void };
   className?: string;
 }) {
-  const Flecha = orden?.activo === 'asc' ? ChevronUp : orden?.activo === 'desc' ? ChevronDown : ChevronsUpDown;
+  const Flecha =
+    orden?.activo === 'asc' ? ChevronUp : orden?.activo === 'desc' ? ChevronDown : ChevronsUpDown;
 
   const contenido = orden ? (
     <button
@@ -77,7 +78,10 @@ export function Th({
       )}
     >
       {children}
-      <Flecha className={cn('size-3.5 shrink-0', !orden.activo && 'opacity-40')} aria-hidden="true" />
+      <Flecha
+        className={cn('size-3.5 shrink-0', !orden.activo && 'opacity-40')}
+        aria-hidden="true"
+      />
     </button>
   ) : (
     children
@@ -86,7 +90,9 @@ export function Th({
   return (
     <th
       scope="col"
-      aria-sort={orden?.activo === 'asc' ? 'ascending' : orden?.activo === 'desc' ? 'descending' : undefined}
+      aria-sort={
+        orden?.activo === 'asc' ? 'ascending' : orden?.activo === 'desc' ? 'descending' : undefined
+      }
       className={cn(
         'whitespace-nowrap border-b border-border px-4 py-3 text-xs font-semibold text-muted-foreground',
         alineado === 'derecha' ? 'text-right' : 'text-left',

@@ -123,7 +123,13 @@ export default tseslint.config(
     // Igual que en la API: una prueba manipula formas dinámicas —respuestas
     // fingidas, `expect` sobre cuerpos sin tipar— y exigirle tipos estrictos
     // produce ruido, no seguridad.
-    files: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/**/*.dom.test.ts', 'src/**/*.dom.test.tsx', 'src/pruebas/**'],
+    files: [
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx',
+      'src/**/*.dom.test.ts',
+      'src/**/*.dom.test.tsx',
+      'src/pruebas/**',
+    ],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',

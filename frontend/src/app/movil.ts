@@ -29,8 +29,7 @@ import { enLaApp } from '@/lib/puente-nativo';
  * proyecto. Esta de aquí y la de allá son las dos únicas; la prueba comprueba
  * que digan lo mismo, carácter por carácter.
  */
-export const CONSULTA_MOVIL =
-  '(max-width: 767px), (orientation: portrait) and (max-width: 1024px)';
+export const CONSULTA_MOVIL = '(max-width: 767px), (orientation: portrait) and (max-width: 1024px)';
 
 export const CONSULTA_ESCRITORIO =
   '(min-width: 1025px), (orientation: landscape) and (min-width: 768px)';

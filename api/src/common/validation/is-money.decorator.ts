@@ -1,5 +1,9 @@
 import { Prisma } from '@prisma/client';
-import { registerDecorator, type ValidationArguments, type ValidationOptions } from 'class-validator';
+import {
+  registerDecorator,
+  type ValidationArguments,
+  type ValidationOptions,
+} from 'class-validator';
 import { motivoDeRechazo } from '../money/money';
 
 /**

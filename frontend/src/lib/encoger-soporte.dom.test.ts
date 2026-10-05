@@ -44,7 +44,6 @@ function fingirNavegador({
 
   vi.spyOn(document, 'createElement').mockImplementation((etiqueta: string) => {
     if (etiqueta !== 'canvas') {
-       
       return Object.getPrototypeOf(document).createElement.call(document, etiqueta);
     }
     return {
@@ -143,12 +142,15 @@ describe('Encoger un soporte antes de subirlo', () => {
     // Encoger es una mejora, no un requisito: convertirlo en un paso que puede
     // impedir la subida sería cambiar un fallo por otro.
     fingirNavegador({ decodifica: false });
-    vi.stubGlobal('Image', class {
-      onerror: (() => void) | null = null;
-      set src(_: string) {
-        setTimeout(() => this.onerror?.(), 0);
-      }
-    });
+    vi.stubGlobal(
+      'Image',
+      class {
+        onerror: (() => void) | null = null;
+        set src(_: string) {
+          setTimeout(() => this.onerror?.(), 0);
+        }
+      },
+    );
 
     const original = archivo('raro.jxl', 'image/jxl', 4096);
     expect(await encogerSoporte(original)).toBe(original);

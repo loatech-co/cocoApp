@@ -1,4 +1,9 @@
-import { VENTANA_DE_DUPLICADO_MS, decidirDuplicado, enriquecer, type CapturaConocida } from './duplicados';
+import {
+  VENTANA_DE_DUPLICADO_MS,
+  decidirDuplicado,
+  enriquecer,
+  type CapturaConocida,
+} from './duplicados';
 
 /**
  * Wallet y SMS: la misma plata, dos veces. Lo que no puede fallar: que se
@@ -49,8 +54,15 @@ describe('Wallet seguido de SMS', () => {
   it('otra fecha pero a minutos de distancia —medianoche—: parcial', () => {
     // Pago a las 23:58 del 3, SMS a las 00:02 del 4. Es el mismo pago, pero
     // la fecha no coincide: se guarda y se marca, no se adivina.
-    const anoche = { ...wallet, date: '2026-10-03', capturedAt: new Date('2026-10-03T23:58:00-05:00'), createdAt: new Date('2026-10-03T23:58:00-05:00') };
-    const v = decidirDuplicado(sms(0, { capturedAt: new Date('2026-10-04T00:02:00-05:00') }), [anoche]);
+    const anoche = {
+      ...wallet,
+      date: '2026-10-03',
+      capturedAt: new Date('2026-10-03T23:58:00-05:00'),
+      createdAt: new Date('2026-10-03T23:58:00-05:00'),
+    };
+    const v = decidirDuplicado(sms(0, { capturedAt: new Date('2026-10-04T00:02:00-05:00') }), [
+      anoche,
+    ]);
     expect(v.tipo).toBe('parcial');
   });
 
@@ -69,7 +81,12 @@ describe('Wallet seguido de SMS', () => {
   });
 
   it('entre varias candidatas gana la más cercana en el tiempo', () => {
-    const lejana: CapturaConocida = { ...wallet, id: 9n, capturedAt: masTarde(-8 * 60_000), createdAt: masTarde(-8 * 60_000) };
+    const lejana: CapturaConocida = {
+      ...wallet,
+      id: 9n,
+      capturedAt: masTarde(-8 * 60_000),
+      createdAt: masTarde(-8 * 60_000),
+    };
     const v = decidirDuplicado(sms(30_000), [lejana, wallet]);
     expect(v.tipo).toBe('exacto');
     if (v.tipo === 'exacto') expect(v.con.id).toBe(1n);
@@ -93,8 +110,20 @@ describe('Enriquecer la que ya estaba', () => {
   });
 
   it('un SMS primero y Wallet después: Wallet aporta el comercio', () => {
-    const primeroElSms: CapturaConocida = { ...wallet, source: 'sms', merchant: null, description: null, rawText: 'SMS' };
-    const cambios = enriquecer(primeroElSms, { ...sms(0), source: 'wallet', merchant: 'Exito Poblado', description: 'Exito Poblado', rawText: null });
+    const primeroElSms: CapturaConocida = {
+      ...wallet,
+      source: 'sms',
+      merchant: null,
+      description: null,
+      rawText: 'SMS',
+    };
+    const cambios = enriquecer(primeroElSms, {
+      ...sms(0),
+      source: 'wallet',
+      merchant: 'Exito Poblado',
+      description: 'Exito Poblado',
+      rawText: null,
+    });
     expect(cambios).toEqual({ merchant: 'Exito Poblado', description: 'Exito Poblado' });
   });
 });

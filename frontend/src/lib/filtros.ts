@@ -130,8 +130,6 @@ export interface Filtros {
   q?: string;
 }
 
-
-
 /**
  * Lee y escribe los filtros en la URL.
  *
@@ -206,12 +204,13 @@ export function useFiltros(porDefecto: Preset = 'mes-actual'): {
     [params, setParams, porDefecto],
   );
 
-  const limpiar = useCallback(() => setParams(new URLSearchParams(), { replace: true }), [setParams]);
+  const limpiar = useCallback(
+    () => setParams(new URLSearchParams(), { replace: true }),
+    [setParams],
+  );
 
   const hayFiltrosActivos =
-    filtros.preset !== porDefecto ||
-    filtros.categoryIds.length > 0 ||
-    (filtros.q ?? '') !== '';
+    filtros.preset !== porDefecto || filtros.categoryIds.length > 0 || (filtros.q ?? '') !== '';
 
   return { filtros, aplicar, limpiar, hayFiltrosActivos };
 }

@@ -304,7 +304,8 @@ export class TransactionsService {
 
     // Si llegan splits nuevos, se revalida el cuadre contra el monto resultante.
     const splits = dto.splits !== undefined ? this.prepararSplits(amount, dto.splits) : null;
-    const tagIds = dto.tags !== undefined ? await this.tags.resolverNombres(userId, dto.tags) : null;
+    const tagIds =
+      dto.tags !== undefined ? await this.tags.resolverNombres(userId, dto.tags) : null;
 
     const actualizada = await this.prisma.$transaction(async (tx) => {
       await tx.transaction.update({
@@ -370,7 +371,9 @@ export class TransactionsService {
     // The receipt rows cascade with the movement; their files do not. Their
     // keys are read first and the files go after the rows (phase 6.9).
     if (movimiento.transferGroupId) {
-      const keys = await this.soportes.keysOf(userId, { transferGroupId: movimiento.transferGroupId });
+      const keys = await this.soportes.keysOf(userId, {
+        transferGroupId: movimiento.transferGroupId,
+      });
       await this.prisma.transaction.deleteMany({
         where: { userId, transferGroupId: movimiento.transferGroupId },
       });
@@ -420,7 +423,6 @@ export class TransactionsService {
 
     return coinciden.length === 0 ? [] : ramasDe(todas, coinciden);
   }
-
 
   private async construirFiltro(
     userId: bigint,

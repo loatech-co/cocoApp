@@ -36,21 +36,21 @@ vi.mock('./leer-soporte', () => ({
  */
 const arbolCon = (estatico: boolean): CategoryTree[] =>
   [
-  {
-    id: 1,
-    name: 'Costos fijos',
-    kind: 'expense',
-    estatico,
-    children: [
-      {
-        id: 10,
-        name: 'Servicios públicos',
-        kind: 'expense',
-        children: [{ id: 100, name: 'Celsia (Energía)', kind: 'expense', children: [] }],
-      },
-    ],
-  },
-] as unknown as CategoryTree[];
+    {
+      id: 1,
+      name: 'Costos fijos',
+      kind: 'expense',
+      estatico,
+      children: [
+        {
+          id: 10,
+          name: 'Servicios públicos',
+          kind: 'expense',
+          children: [{ id: 100, name: 'Celsia (Energía)', kind: 'expense', children: [] }],
+        },
+      ],
+    },
+  ] as unknown as CategoryTree[];
 
 const ARBOL = arbolCon(false);
 
@@ -91,7 +91,9 @@ describe('La ficha de un movimiento que se edita', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
 
     // La puerta es el buscador: enseña el concepto con su camino entero.
-    expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain('Celsia (Energía)');
+    expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain(
+      'Celsia (Energía)',
+    );
     expect(screen.getByText(/Servicios públicos › Costos fijos/)).toBeDefined();
 
     // Y la cascada sigue existiendo, detrás de su enlace, con los tres puestos.

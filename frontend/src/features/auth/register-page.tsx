@@ -137,8 +137,8 @@ export function RegisterPage() {
                 <div id="requisitos-password">
                   <PoliticaDeContrasena password={password} />
                   <p className="mt-2 text-xs text-muted-foreground">
-                    No puede contener tu nombre ni tu correo, ni aparecer en filtraciones
-                    públicas conocidas.
+                    No puede contener tu nombre ni tu correo, ni aparecer en filtraciones públicas
+                    conocidas.
                   </p>
                 </div>
               </div>

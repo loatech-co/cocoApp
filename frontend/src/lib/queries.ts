@@ -82,8 +82,7 @@ export function useEliminarSoporte(transactionId: number) {
         method: 'DELETE',
       });
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: keys.soportes(transactionId) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.soportes(transactionId) }),
   });
 }
 
@@ -246,9 +245,7 @@ export function useTransactions(
         if (valor !== undefined && valor !== '') params.set(clave, String(valor));
       }
       const query = params.toString();
-      return apiFetch<Transaction[], TransactionsMeta>(
-        `/transactions${query ? `?${query}` : ''}`,
-      );
+      return apiFetch<Transaction[], TransactionsMeta>(`/transactions${query ? `?${query}` : ''}`);
     },
   });
 }
@@ -401,10 +398,10 @@ export function useUnificarCategoria() {
   return useMutation({
     mutationFn: async ({ origenId, destinoId }: { origenId: number; destinoId: number }) =>
       (
-        await apiFetch<{ movidos: number; destino: Category }>(
-          `/categories/${origenId}/unificar`,
-          { method: 'POST', body: { destino_id: destinoId } },
-        )
+        await apiFetch<{ movidos: number; destino: Category }>(`/categories/${origenId}/unificar`, {
+          method: 'POST',
+          body: { destino_id: destinoId },
+        })
       ).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });

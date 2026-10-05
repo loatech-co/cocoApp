@@ -106,10 +106,7 @@ async function primeraPaginaComoImagen(archivo: File): Promise<Blob | null> {
 }
 
 /** OCR. Se carga a demanda: son varios megas que casi nunca hacen falta. */
-async function ocr(
-  fuente: Blob,
-  onProgreso?: (p: ProgresoDeLectura) => void,
-): Promise<string> {
+async function ocr(fuente: Blob, onProgreso?: (p: ProgresoDeLectura) => void): Promise<string> {
   const { createWorker } = await import('tesseract.js');
   onProgreso?.({ avance: 0.3, etapa: 'Preparando el reconocimiento…' });
 
@@ -223,7 +220,15 @@ function lecturaDesde(i: Interpretacion, fuente: 'texto-embebido' | 'ocr'): Lect
     centro: null,
     valor: i.amount === null ? null : Number(i.amount),
     fecha: i.date,
-    confianza: !i.por_revisar ? (fuente === 'ocr' ? 0.85 : 0.95) : c.certeza === 'alta' ? 0.7 : c.certeza === 'media' ? 0.5 : 0.2,
+    confianza: !i.por_revisar
+      ? fuente === 'ocr'
+        ? 0.85
+        : 0.95
+      : c.certeza === 'alta'
+        ? 0.7
+        : c.certeza === 'media'
+          ? 0.5
+          : 0.2,
     señales: { texto: [], nombre: [], nit: [], recaudadoresIgnorados: [] },
     motivo: c.motivo,
     alternativas: c.candidatos.map((k) => ({ concepto: k.nombre, puntaje: 0 })),

@@ -62,8 +62,8 @@ export function AccountsPage() {
           <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
             <Wallet className="size-8 text-primary" aria-hidden="true" />
             <p className="max-w-sm text-sm text-muted-foreground">
-              Aún no tienes cuentas. Crea la primera —efectivo, tu tarjeta débito o una de crédito— para
-              empezar a registrar movimientos.
+              Aún no tienes cuentas. Crea la primera —efectivo, tu tarjeta débito o una de crédito—
+              para empezar a registrar movimientos.
             </p>
             <Button onClick={() => setFormularioAbierto(true)}>Crear cuenta</Button>
           </CardContent>
@@ -119,9 +119,7 @@ function TarjetaDeCuenta({ cuenta }: { cuenta: Account }) {
             variant="ghost"
             size="sm"
             aria-label={cuenta.is_archived ? 'Desarchivar' : 'Archivar'}
-            onClick={() =>
-              archivar.mutate({ id: cuenta.id, archivar: !cuenta.is_archived })
-            }
+            onClick={() => archivar.mutate({ id: cuenta.id, archivar: !cuenta.is_archived })}
           >
             <Archive aria-hidden="true" />
           </Button>

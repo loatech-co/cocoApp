@@ -16,7 +16,11 @@ import {
   type ConHijos,
 } from './categories.tree';
 import { porQueNoAdmiteVariosPagos } from './varios-pagos';
-import type { CreateCategoryDto, ReorderCategoriesDto, UpdateCategoryDto } from './dto/category.dto';
+import type {
+  CreateCategoryDto,
+  ReorderCategoriesDto,
+  UpdateCategoryDto,
+} from './dto/category.dto';
 
 export interface CategoryView {
   id: bigint;

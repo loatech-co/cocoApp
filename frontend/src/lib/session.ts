@@ -226,9 +226,7 @@ export async function renovar(): Promise<boolean> {
     try {
       // Dentro de la MISMA promesa compartida: dos `renovar()` a la vez son
       // un solo mensaje a la app, igual que fuera son una sola petición.
-      guardarSesion(
-        enLaApp() ? await pedirSesion() : await llamarAuth<SesionResponse>('/refresh'),
-      );
+      guardarSesion(enLaApp() ? await pedirSesion() : await llamarAuth<SesionResponse>('/refresh'));
       return true;
     } catch {
       limpiarSesion();

@@ -154,7 +154,13 @@ const REGLAS: ReglaDeCategoria[] = [
  */
 describe('El patrón con el que se aprende', () => {
   const normal = (t: string) =>
-    t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    t
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
   it('es el token más largo que no sea número', () => {
     expect(patronParaAprender('RAPPI*RESTAURANTE EL SITIO 2025', normal)).toBe('restaurante');

@@ -23,10 +23,7 @@ describe('Ordenamiento por lista blanca', () => {
   });
 
   it('ignora un intento de inyección en vez de pasarlo al motor', () => {
-    expect(parseOrden('date; DROP TABLE transactions')).toEqual([
-      { date: 'desc' },
-      { id: 'desc' },
-    ]);
+    expect(parseOrden('date; DROP TABLE transactions')).toEqual([{ date: 'desc' }, { id: 'desc' }]);
   });
 
   it('siempre desempata por id para que la paginación sea estable', () => {

@@ -43,7 +43,13 @@ describe('Transaction currency (e2e)', () => {
 
   it('the list returns the currency of each row', async () => {
     await env.prisma.transaction.create({
-      data: { userId: ana.id, date: new Date('2026-10-02'), period: new Date('2026-10-01'), amount: '10', currency: 'USD' },
+      data: {
+        userId: ana.id,
+        date: new Date('2026-10-02'),
+        period: new Date('2026-10-01'),
+        amount: '10',
+        currency: 'USD',
+      },
     });
 
     const list = await http.get('/api/v1/transactions').set('Authorization', asAna).expect(200);

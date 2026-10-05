@@ -79,10 +79,7 @@ export function generariaCiclo(
 }
 
 /** Cuántos niveles hay desde la raíz hasta esta categoría (la raíz es 1). */
-export function profundidadDe(
-  categorias: readonly NodoDeCategoria[],
-  id: bigint | null,
-): number {
+export function profundidadDe(categorias: readonly NodoDeCategoria[], id: bigint | null): number {
   if (id === null) return 0;
 
   const porId = indexar(categorias);
@@ -104,10 +101,7 @@ export function profundidadDe(
 }
 
 /** Los descendientes de una categoría, en cualquier nivel. */
-export function descendientesDe(
-  categorias: readonly NodoDeCategoria[],
-  id: bigint,
-): bigint[] {
+export function descendientesDe(categorias: readonly NodoDeCategoria[], id: bigint): bigint[] {
   const hijosPorPadre = new Map<string, bigint[]>();
   for (const categoria of categorias) {
     if (categoria.parentId === null) continue;
@@ -230,10 +224,7 @@ export function idsDeCategorias(crudo?: string | number): bigint[] {
  * filtrar por un centro sin expandir su rama devuelve cero filas — que es
  * exactamente lo que pasaba antes de esto.
  */
-export function ramasDe(
-  categorias: readonly NodoDeCategoria[],
-  ids: readonly bigint[],
-): bigint[] {
+export function ramasDe(categorias: readonly NodoDeCategoria[], ids: readonly bigint[]): bigint[] {
   const rama = new Set<string>();
 
   for (const id of ids) {

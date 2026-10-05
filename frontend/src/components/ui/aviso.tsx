@@ -230,9 +230,7 @@ export function PilaDeAvisos() {
                   color.halo,
                 )}
               >
-                <span
-                  className={cn('grid size-7 place-items-center rounded-full', color.pastilla)}
-                >
+                <span className={cn('grid size-7 place-items-center rounded-full', color.pastilla)}>
                   <Glifo className="size-4" />
                 </span>
               </span>

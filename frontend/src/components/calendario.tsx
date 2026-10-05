@@ -76,8 +76,8 @@ export function Calendario({
   onSobrevolar?: (iso: string | null) => void;
   className?: string;
 }) {
-  const [propio, setPropio] = useState<MesVisible>(
-    () => mesDeISO(desde ?? hasta ?? aISO(new Date())),
+  const [propio, setPropio] = useState<MesVisible>(() =>
+    mesDeISO(desde ?? hasta ?? aISO(new Date())),
   );
   const actual = vista ?? propio;
   const cambiarVista = onVista ?? setPropio;
@@ -173,14 +173,12 @@ export function Calendario({
 
         {/* Sin separación entre celdas: la banda del rango tiene que ser
             continua, y un hueco la partiría en cuadritos sueltos. */}
-        <div
-          className="grid grid-cols-7"
-          onMouseLeave={() => onSobrevolar?.(null)}
-        >
+        <div className="grid grid-cols-7" onMouseLeave={() => onSobrevolar?.(null)}>
           {celdas.map((iso, i) => {
             if (iso === null) return <span key={`hueco-${i}`} className="aspect-square" />;
 
-            const dentro = desde !== undefined && hasta !== undefined && iso >= desde && iso <= hasta;
+            const dentro =
+              desde !== undefined && hasta !== undefined && iso >= desde && iso <= hasta;
             const esInicio = iso === desde;
             const esFin = iso === hasta;
             const extremo = esInicio || esFin;

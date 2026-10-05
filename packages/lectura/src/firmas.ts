@@ -301,12 +301,7 @@ export function firmasDeConceptos(conceptos: readonly ConceptoConPalabras[]): Fi
 
 /** Sin tildes, en minúscula y con los espacios normalizados. */
 export function normalizar(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -325,7 +320,11 @@ export function conceptosConPalabrasDelArbol(
   raices: readonly {
     name: string;
     palabras_clave?: readonly string[];
-    children?: readonly { name: string; palabras_clave?: readonly string[]; children?: readonly { name: string; palabras_clave?: readonly string[] }[] }[];
+    children?: readonly {
+      name: string;
+      palabras_clave?: readonly string[];
+      children?: readonly { name: string; palabras_clave?: readonly string[] }[];
+    }[];
   }[],
 ): ConceptoConPalabras[] {
   return raices.flatMap((centro) =>

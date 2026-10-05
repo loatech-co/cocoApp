@@ -1,24 +1,24 @@
 # Coco — reglas de la interfaz
 
-| | Regla |
-|---|---|
-| 1 | [Ningún control del sistema operativo](#1-ningún-control-del-sistema-operativo) |
-| 2 | [El tamaño de un botón lo decide el botón](#2-el-tamaño-de-un-botón-lo-decide-el-botón) |
-| 3 | [El radio estándar es 10px](#3-el-radio-estándar-es-10px) |
-| 4 | [Dos tamaños, y los mismos para todo](#4-dos-tamaños-y-los-mismos-para-todo) |
-| 5 | [El color vive en `index.css`, y se nombra por su papel](#5-el-color-vive-en-indexcss-y-se-nombra-por-su-papel) |
-| 6 | [Tres superficies: el material, el pozo y lo elegido](#6-tres-superficies-el-material-el-pozo-y-lo-elegido) |
-| 7 | [Nada de mayúsculas sostenidas](#7-nada-de-mayúsculas-sostenidas) |
-| 8 | [`accent` es lo que responde; `muted` es lo que está quieto](#8-accent-es-lo-que-responde-muted-es-lo-que-está-quieto) |
-| 9 | [Lo que flota se dibuja en un solo sitio](#9-lo-que-flota-se-dibuja-en-un-solo-sitio) |
-| 10 | [La cabecera de una pantalla](#10-la-cabecera-de-una-pantalla) |
-| 11 | [La cabecera y el pie de una ficha](#11-la-cabecera-y-el-pie-de-una-ficha) |
-| 12 | [El nombre de un campo va DENTRO, y flota](#12-el-nombre-de-un-campo-va-dentro-y-flota) |
-| 13 | [Un aviso flotante dice su severidad de tres maneras](#13-un-aviso-flotante-dice-su-severidad-de-tres-maneras) |
-| 14 | [Un movimiento es un REGISTRO; el concepto es estructura](#14-un-movimiento-es-un-registro-el-concepto-es-estructura) |
-| 15 | [El rojo es solo para errores](#15-el-rojo-es-solo-para-errores) |
-| 16 | [Componentes, no copias](#16-componentes-no-copias) |
-| 17 | [El foco se pinta cuando se pide](#17-el-foco-se-pinta-cuando-se-pide) |
+|     | Regla                                                                                                                  |
+| --- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1   | [Ningún control del sistema operativo](#1-ningún-control-del-sistema-operativo)                                        |
+| 2   | [El tamaño de un botón lo decide el botón](#2-el-tamaño-de-un-botón-lo-decide-el-botón)                                |
+| 3   | [El radio estándar es 10px](#3-el-radio-estándar-es-10px)                                                              |
+| 4   | [Dos tamaños, y los mismos para todo](#4-dos-tamaños-y-los-mismos-para-todo)                                           |
+| 5   | [El color vive en `index.css`, y se nombra por su papel](#5-el-color-vive-en-indexcss-y-se-nombra-por-su-papel)        |
+| 6   | [Tres superficies: el material, el pozo y lo elegido](#6-tres-superficies-el-material-el-pozo-y-lo-elegido)            |
+| 7   | [Nada de mayúsculas sostenidas](#7-nada-de-mayúsculas-sostenidas)                                                      |
+| 8   | [`accent` es lo que responde; `muted` es lo que está quieto](#8-accent-es-lo-que-responde-muted-es-lo-que-está-quieto) |
+| 9   | [Lo que flota se dibuja en un solo sitio](#9-lo-que-flota-se-dibuja-en-un-solo-sitio)                                  |
+| 10  | [La cabecera de una pantalla](#10-la-cabecera-de-una-pantalla)                                                         |
+| 11  | [La cabecera y el pie de una ficha](#11-la-cabecera-y-el-pie-de-una-ficha)                                             |
+| 12  | [El nombre de un campo va DENTRO, y flota](#12-el-nombre-de-un-campo-va-dentro-y-flota)                                |
+| 13  | [Un aviso flotante dice su severidad de tres maneras](#13-un-aviso-flotante-dice-su-severidad-de-tres-maneras)         |
+| 14  | [Un movimiento es un REGISTRO; el concepto es estructura](#14-un-movimiento-es-un-registro-el-concepto-es-estructura)  |
+| 15  | [El rojo es solo para errores](#15-el-rojo-es-solo-para-errores)                                                       |
+| 16  | [Componentes, no copias](#16-componentes-no-copias)                                                                    |
+| 17  | [El foco se pinta cuando se pide](#17-el-foco-se-pinta-cuando-se-pide)                                                 |
 
 ## 1. Ningún control del sistema operativo
 
@@ -36,11 +36,11 @@ Windows.
 `components/menu.tsx`, que es el que sabe abrir, cerrar al tocar fuera,
 cerrar con Escape y colocarse. Encima de él:
 
-| En vez de | Va |
-|---|---|
-| `<select>` | `components/ui/select.tsx` |
+| En vez de             | Va                                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| `<select>`            | `components/ui/select.tsx`                                                           |
 | `<input type="date">` | `components/selector-de-dia.tsx` (un día) o `components/selector-de-rango.tsx` (dos) |
-| cualquier menú | `components/menu.tsx` |
+| cualquier menú        | `components/menu.tsx`                                                                |
 
 El calendario de los dos selectores de fecha es el mismo:
 `components/calendario.tsx`. Un extremo pinta un día, dos pintan un rango.
@@ -122,11 +122,11 @@ panel de administración de hace diez años.
 
 Ahora son tres, y cada uno tiene un trabajo:
 
-| Superficie | Tokens | Qué es |
-|---|---|---|
+| Superficie  | Tokens                                            | Qué es                                                          |
+| ----------- | ------------------------------------------------- | --------------------------------------------------------------- |
 | El material | `card`, `popover`, `sidebar` —el **mismo** valor— | De lo que están hechos el riel, las tarjetas y los desplegables |
-| El pozo | `background` | El hueco donde se apoyan. Va por DEBAJO del material |
-| Lo elegido | `muted` | Un bloque dentro de una tarjeta, la opción ya seleccionada |
+| El pozo     | `background`                                      | El hueco donde se apoyan. Va por DEBAJO del material            |
+| Lo elegido  | `muted`                                           | Un bloque dentro de una tarjeta, la opción ya seleccionada      |
 
 **La tarjeta no lleva borde.** Lo que la separa del fondo es el escalón: es
 material apoyado en el pozo. Vale igual para la tabla y para cualquier
@@ -210,12 +210,12 @@ otra, así que la aplicación parece tres aplicaciones.
 
 **Qué fija el componente, y no se pisa desde la llamada:**
 
-| Pieza | Valor | Por qué |
-|---|---|---|
-| Título | `text-2xl sm:text-3xl`, familia de titulares, sin interletraje | Con 30px fijos, "Importar movimientos" ocupa dos renglones en un teléfono |
-| Ayuda | `text-sm text-muted-foreground`, una línea | Es qué es esta pantalla, no un párrafo |
-| Raya | `border-b border-border pb-4`, siempre | La llevaban dos de las ocho; el título ganaba y perdía una línea según por dónde se entrara |
-| Acción | **`size="sm"`** | Ver abajo |
+| Pieza  | Valor                                                          | Por qué                                                                                     |
+| ------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Título | `text-2xl sm:text-3xl`, familia de titulares, sin interletraje | Con 30px fijos, "Importar movimientos" ocupa dos renglones en un teléfono                   |
+| Ayuda  | `text-sm text-muted-foreground`, una línea                     | Es qué es esta pantalla, no un párrafo                                                      |
+| Raya   | `border-b border-border pb-4`, siempre                         | La llevaban dos de las ocho; el título ganaba y perdía una línea según por dónde se entrara |
+| Acción | **`size="sm"`**                                                | Ver abajo                                                                                   |
 
 **La acción va en `sm`, los 36px.** No es una preferencia. En la barra de
 filtros la acción principal convive con la búsqueda, el orden, el filtro y
@@ -260,12 +260,12 @@ copiaba.
 
 ### La cabecera
 
-| Pieza | Dónde va |
-|---|---|
-| `antes` | Delante del título: el pastel de color de un movimiento |
-| `titulo` | `text-lg`, familia de titulares. **Nunca en mayúsculas sostenidas** |
-| `ayuda` | Debajo, `text-sm text-muted-foreground`. Una frase |
-| `acciones` | Botones de icono `sm-icon` a la izquierda de la equis |
+| Pieza      | Dónde va                                                            |
+| ---------- | ------------------------------------------------------------------- |
+| `antes`    | Delante del título: el pastel de color de un movimiento             |
+| `titulo`   | `text-lg`, familia de titulares. **Nunca en mayúsculas sostenidas** |
+| `ayuda`    | Debajo, `text-sm text-muted-foreground`. Una frase                  |
+| `acciones` | Botones de icono `sm-icon` a la izquierda de la equis               |
 
 La equis la pone el componente y va **junto a las demás acciones**, no en
 la esquina opuesta: eliminar, editar y cerrar son las tres cosas que se
@@ -386,9 +386,9 @@ envía sin él.
 
 ### Los iconos de un campo
 
-| Sitio | Qué es | Cuántos |
-|---|---|---|
-| Izquierda (`icono`) | **Informativo.** De qué es el campo. No se pulsa | Uno |
+| Sitio                | Qué es                                            | Cuántos   |
+| -------------------- | ------------------------------------------------- | --------- |
+| Izquierda (`icono`)  | **Informativo.** De qué es el campo. No se pulsa  | Uno       |
 | Derecha (`acciones`) | **Activas.** Borrar lo escrito, ver la contraseña | Hasta dos |
 
 `acciones` es una lista y no un `ReactNode` suelto porque el campo necesita
@@ -482,7 +482,7 @@ era una prohibición, era un dato.
 Tres cosas que no pueden fallar en silencio, y que tienen prueba e2e:
 
 - Los movimientos acaban donde se dijo. `category_id` es `ON DELETE SET
-  NULL`, así que un borrado sin reasignar los deja sin clasificar sin avisar.
+NULL`, así que un borrado sin reasignar los deja sin clasificar sin avisar.
 - Se cuenta el SUBÁRBOL, no la fila. Los movimientos de un centro de costos
   no están en el centro: están en los conceptos, tres niveles más abajo.
 - Se borra el subárbol entero. `parent_id` también es `ON DELETE SET NULL`,
@@ -576,10 +576,10 @@ el otro lado de la ficha.
 **Lo que la regla NO dice es dónde está el cursor.** Son dos cosas, y se
 escriben distinto. Es justo lo que se había perdido en la etiqueta flotante:
 
-| Qué | Selector | Por qué |
-|---|---|---|
-| **Subir** la etiqueta | `:focus-within` | Es estructural: si no sube, lo que se escribe se pisa con el nombre del campo |
-| **Teñirla** | `:focus-visible` | Eso ya es la señal |
+| Qué                   | Selector         | Por qué                                                                       |
+| --------------------- | ---------------- | ----------------------------------------------------------------------------- |
+| **Subir** la etiqueta | `:focus-within`  | Es estructural: si no sube, lo que se escribe se pisa con el nombre del campo |
+| **Teñirla**           | `:focus-visible` | Eso ya es la señal                                                            |
 
 Con las dos en `:focus-within` se contradecían en el caso más corriente de
 todos: al pulsar un desplegable con el ratón, un `<button>` no coincide con

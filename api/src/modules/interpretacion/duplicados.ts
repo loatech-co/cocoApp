@@ -59,16 +59,24 @@ export type Veredicto =
   | { tipo: 'parcial'; con: CapturaConocida }
   | { tipo: 'ninguno' };
 
-export function decidirDuplicado(nueva: CapturaNueva, candidatas: readonly CapturaConocida[]): Veredicto {
+export function decidirDuplicado(
+  nueva: CapturaNueva,
+  candidatas: readonly CapturaConocida[],
+): Veredicto {
   if (!ORIGENES_QUE_SE_DUPLICAN.has(nueva.source)) return { tipo: 'ninguno' };
 
   const comparables = candidatas
     .filter((c) => c.source !== nueva.source)
     .filter((c) => mismoMonto(c.amount, nueva.amount))
-    .map((c) => ({ c, distancia: Math.abs((c.capturedAt ?? c.createdAt).getTime() - nueva.capturedAt.getTime()) }))
+    .map((c) => ({
+      c,
+      distancia: Math.abs((c.capturedAt ?? c.createdAt).getTime() - nueva.capturedAt.getTime()),
+    }))
     .sort((a, b) => a.distancia - b.distancia);
 
-  const exacto = comparables.find(({ c, distancia }) => c.date === nueva.date && distancia <= VENTANA_DE_DUPLICADO_MS);
+  const exacto = comparables.find(
+    ({ c, distancia }) => c.date === nueva.date && distancia <= VENTANA_DE_DUPLICADO_MS,
+  );
   if (exacto) return { tipo: 'exacto', con: exacto.c };
 
   const parcial = comparables.find(
@@ -85,7 +93,10 @@ export function decidirDuplicado(nueva: CapturaNueva, candidatas: readonly Captu
  * Lo que la captura nueva le aporta a la que ya estaba: solo lo que falte.
  * Nunca se pisa lo que había, que fue lo primero que se supo.
  */
-export function enriquecer(existente: CapturaConocida, nueva: CapturaNueva): Partial<Pick<CapturaConocida, 'rawText' | 'merchant' | 'description'>> {
+export function enriquecer(
+  existente: CapturaConocida,
+  nueva: CapturaNueva,
+): Partial<Pick<CapturaConocida, 'rawText' | 'merchant' | 'description'>> {
   const cambios: Partial<Pick<CapturaConocida, 'rawText' | 'merchant' | 'description'>> = {};
   if (!existente.rawText && nueva.rawText) cambios.rawText = nueva.rawText;
   if (!existente.merchant && nueva.merchant) cambios.merchant = nueva.merchant;

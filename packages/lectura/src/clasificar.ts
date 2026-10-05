@@ -184,10 +184,7 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
 
   // Prioridad ANTES que puntaje: es lo que pone la planilla por encima de Sura
   // cuando el recibo dice las dos cosas.
-  vivas.sort(
-    (a, b) =>
-      (b.firma.prioridad ?? 0) - (a.firma.prioridad ?? 0) || b.puntos - a.puntos,
-  );
+  vivas.sort((a, b) => (b.firma.prioridad ?? 0) - (a.firma.prioridad ?? 0) || b.puntos - a.puntos);
 
   const ganadora = vivas[0];
 
@@ -206,7 +203,9 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
       devolver «mercado» como nombre sería inventar un concepto que quizá no
       existe.
     */
-    const delDiccionario = indice ? desdeElDiccionario(indice, entrada, señales, valor, fecha, confianzaDelValor) : null;
+    const delDiccionario = indice
+      ? desdeElDiccionario(indice, entrada, señales, valor, fecha, confianzaDelValor)
+      : null;
     if (delDiccionario) return delDiccionario;
 
     return {
@@ -275,9 +274,7 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
     confianza: Math.round(confianza * 100) / 100,
     señales,
     motivo: motivoDe(ganadora.firma, señales, entrada.fuente),
-    alternativas: vivas
-      .slice(1, 4)
-      .map((v) => ({ concepto: v.firma.concepto, puntaje: v.puntos })),
+    alternativas: vivas.slice(1, 4).map((v) => ({ concepto: v.firma.concepto, puntaje: v.puntos })),
     enElArbol: indice ? enElArbolDesdeFirma(indice, ganadora.firma) : null,
   };
 }
@@ -290,7 +287,10 @@ export function clasificar(entrada: EntradaDeLectura): Lectura {
  * concepto que se llame igual Y cuelgue de la misma categoría: dos «Mercado»
  * en categorías distintas no son el mismo.
  */
-function enElArbolDesdeFirma(indice: readonly EntradaDelIndice[], firma: Firma): ClasificacionEnElArbol {
+function enElArbolDesdeFirma(
+  indice: readonly EntradaDelIndice[],
+  firma: Firma,
+): ClasificacionEnElArbol {
   const concepto = indice.find(
     (e) =>
       e.nivel === 'concepto' &&
@@ -362,7 +362,11 @@ function desdeElDiccionario(
       fuente: 'diccionario',
       conceptoId: concepto?.id,
       categoriaId: categoria?.id ?? concepto?.categoriaId,
-      candidatos: resuelto.candidatos.map((c) => ({ id: c.id, nombre: c.nombre, ruta: rutaLegible(c) })),
+      candidatos: resuelto.candidatos.map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        ruta: rutaLegible(c),
+      })),
     },
   };
 }
@@ -414,8 +418,6 @@ export const UMBRAL_DE_REVISION = 0.8;
 
 export function necesitaRevision(lectura: Lectura): boolean {
   return (
-    lectura.confianza < UMBRAL_DE_REVISION ||
-    lectura.concepto === null ||
-    lectura.valor === null
+    lectura.confianza < UMBRAL_DE_REVISION || lectura.concepto === null || lectura.valor === null
   );
 }

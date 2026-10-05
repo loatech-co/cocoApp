@@ -293,9 +293,7 @@ export function Opcion({
       className={cn(
         'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
         'movil:min-h-[42px]',
-        elegida
-          ? cn('bg-muted font-medium', REALCE)
-          : REALCE,
+        elegida ? cn('bg-muted font-medium', REALCE) : REALCE,
       )}
     >
       <span className="min-w-0 flex-1 truncate">{children}</span>
@@ -306,9 +304,5 @@ export function Opcion({
 
 /** Sin tildes ni mayúsculas: "Educación" se encuentra escribiendo "educacion". */
 function normal(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim();
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }

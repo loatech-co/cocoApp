@@ -26,10 +26,14 @@ describe('Las etiquetas del eje, por día', () => {
 
   it('en febrero el último es 28, y 29 en bisiesto', () => {
     expect(
-      etiquetasDelEje(dias('2025-02-01', '2025-02-28'), 'dia').map((e) => e.texto).at(-1),
+      etiquetasDelEje(dias('2025-02-01', '2025-02-28'), 'dia')
+        .map((e) => e.texto)
+        .at(-1),
     ).toBe('28');
     expect(
-      etiquetasDelEje(dias('2024-02-01', '2024-02-29'), 'dia').map((e) => e.texto).at(-1),
+      etiquetasDelEje(dias('2024-02-01', '2024-02-29'), 'dia')
+        .map((e) => e.texto)
+        .at(-1),
     ).toBe('29');
   });
 
@@ -57,8 +61,18 @@ describe('Las etiquetas del eje, por mes', () => {
     }));
     const textos = etiquetasDelEje(meses, 'mes').map((e) => e.texto);
     expect(textos).toEqual([
-      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
     ]);
   });
 
@@ -105,8 +119,7 @@ function bezier(p0: number, p1: number, p2: number, p3: number, t: number): numb
 }
 
 /** Los números de un `d`, en orden. */
-const numeros = (d: string): number[] =>
-  (d.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+const numeros = (d: string): number[] => (d.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
 
 describe('La curva de la tendencia', () => {
   const enPuntos = (ys: number[]): { x: number; y: number }[] =>

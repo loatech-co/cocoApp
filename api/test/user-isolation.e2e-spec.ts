@@ -83,7 +83,9 @@ describe('User isolation (e2e)', () => {
       data: { userId: bruno.id, name: 'Servicios B', parentId: center.id },
     });
     brunoConceptId = (
-      await env.prisma.category.create({ data: { userId: bruno.id, name: 'Luz B', parentId: group.id } })
+      await env.prisma.category.create({
+        data: { userId: bruno.id, name: 'Luz B', parentId: group.id },
+      })
     ).id;
     brunoTransactionId = (
       await env.prisma.transaction.create({
@@ -101,17 +103,23 @@ describe('User isolation (e2e)', () => {
   /** Snapshot of every row Ana owns, to prove nothing of hers changed. */
   async function anaSnapshot(): Promise<string> {
     const where = { userId: ana.id };
-    const [accounts, categories, transactions, tags, soportes, rules, preferences] = await Promise.all([
-      env.prisma.account.findMany({ where, orderBy: { id: 'asc' } }),
-      env.prisma.category.findMany({ where, orderBy: { id: 'asc' } }),
-      env.prisma.transaction.findMany({ where, orderBy: { id: 'asc' }, include: { tags: true, splits: true } }),
-      env.prisma.tag.findMany({ where, orderBy: { id: 'asc' } }),
-      env.prisma.soporte.findMany({ where, orderBy: { id: 'asc' } }),
-      env.prisma.categoryRule.findMany({ where, orderBy: { id: 'asc' } }),
-      env.prisma.userPreference.findMany({ where, orderBy: { id: 'asc' } }),
-    ]);
-    return JSON.stringify({ accounts, categories, transactions, tags, soportes, rules, preferences }, (_k, v: unknown) =>
-      typeof v === 'bigint' ? v.toString() : v,
+    const [accounts, categories, transactions, tags, soportes, rules, preferences] =
+      await Promise.all([
+        env.prisma.account.findMany({ where, orderBy: { id: 'asc' } }),
+        env.prisma.category.findMany({ where, orderBy: { id: 'asc' } }),
+        env.prisma.transaction.findMany({
+          where,
+          orderBy: { id: 'asc' },
+          include: { tags: true, splits: true },
+        }),
+        env.prisma.tag.findMany({ where, orderBy: { id: 'asc' } }),
+        env.prisma.soporte.findMany({ where, orderBy: { id: 'asc' } }),
+        env.prisma.categoryRule.findMany({ where, orderBy: { id: 'asc' } }),
+        env.prisma.userPreference.findMany({ where, orderBy: { id: 'asc' } }),
+      ]);
+    return JSON.stringify(
+      { accounts, categories, transactions, tags, soportes, rules, preferences },
+      (_k, v: unknown) => (typeof v === 'bigint' ? v.toString() : v),
     );
   }
 
@@ -141,9 +149,15 @@ describe('User isolation (e2e)', () => {
 
     await untouched(async () => {
       const id = String(a.accountId);
-      expectNoLeak((await http.get('/api/v1/accounts').set('Authorization', asBruno).expect(200)).body);
+      expectNoLeak(
+        (await http.get('/api/v1/accounts').set('Authorization', asBruno).expect(200)).body,
+      );
       await http.get(`/api/v1/accounts/${id}`).set('Authorization', asBruno).expect(404);
-      await http.patch(`/api/v1/accounts/${id}`).set('Authorization', asBruno).send({ name: 'x' }).expect(404);
+      await http
+        .patch(`/api/v1/accounts/${id}`)
+        .set('Authorization', asBruno)
+        .send({ name: 'x' })
+        .expect(404);
       await http.delete(`/api/v1/accounts/${id}`).set('Authorization', asBruno).expect(404);
 
       const created = await http
@@ -174,10 +188,19 @@ describe('User isolation (e2e)', () => {
 
     await untouched(async () => {
       const concept = String(a.conceptId);
-      expectNoLeak((await http.get('/api/v1/categories').set('Authorization', asBruno).expect(200)).body);
+      expectNoLeak(
+        (await http.get('/api/v1/categories').set('Authorization', asBruno).expect(200)).body,
+      );
       await http.get(`/api/v1/categories/${concept}`).set('Authorization', asBruno).expect(404);
-      await http.get(`/api/v1/categories/${concept}/usos`).set('Authorization', asBruno).expect(404);
-      await http.patch(`/api/v1/categories/${concept}`).set('Authorization', asBruno).send({ name: 'x' }).expect(404);
+      await http
+        .get(`/api/v1/categories/${concept}/usos`)
+        .set('Authorization', asBruno)
+        .expect(404);
+      await http
+        .patch(`/api/v1/categories/${concept}`)
+        .set('Authorization', asBruno)
+        .send({ name: 'x' })
+        .expect(404);
       await http.delete(`/api/v1/categories/${concept}`).set('Authorization', asBruno).expect(404);
 
       // Ana's concept as the thing to merge, and as the destination of Bruno's.
@@ -216,7 +239,11 @@ describe('User isolation (e2e)', () => {
       expect([201, 409]).toContain(seed.status);
     });
 
-    expect(await env.prisma.transaction.count({ where: { id: brunoTransactionId, categoryId: brunoConceptId } })).toBe(1);
+    expect(
+      await env.prisma.transaction.count({
+        where: { id: brunoTransactionId, categoryId: brunoConceptId },
+      }),
+    ).toBe(1);
   });
 
   // ── Transactions ───────────────────────────────────────────────────────────
@@ -236,19 +263,32 @@ describe('User isolation (e2e)', () => {
 
     await untouched(async () => {
       const id = String(a.transactionId);
-      const list = await http.get('/api/v1/transactions?per_page=100').set('Authorization', asBruno).expect(200);
+      const list = await http
+        .get('/api/v1/transactions?per_page=100')
+        .set('Authorization', asBruno)
+        .expect(200);
       expectNoLeak(list.body);
       expect(list.body.data.map((t: { id: string }) => String(t.id))).not.toContain(id);
 
       // Ana's movement is from 2020; Bruno's history must not reach back there.
-      const history = await http.get('/api/v1/transactions/historia').set('Authorization', asBruno).expect(200);
+      const history = await http
+        .get('/api/v1/transactions/historia')
+        .set('Authorization', asBruno)
+        .expect(200);
       expect(JSON.stringify(history.body)).not.toContain('2020-');
 
       await http.get(`/api/v1/transactions/${id}`).set('Authorization', asBruno).expect(404);
-      await http.patch(`/api/v1/transactions/${id}`).set('Authorization', asBruno).send({ amount: '1' }).expect(404);
+      await http
+        .patch(`/api/v1/transactions/${id}`)
+        .set('Authorization', asBruno)
+        .send({ amount: '1' })
+        .expect(404);
       await http.delete(`/api/v1/transactions/${id}`).set('Authorization', asBruno).expect(404);
 
-      for (const body of [{ category_id: Number(a.conceptId) }, { account_id: Number(a.accountId) }]) {
+      for (const body of [
+        { category_id: Number(a.conceptId) },
+        { account_id: Number(a.accountId) },
+      ]) {
         const created = await http
           .post('/api/v1/transactions')
           .set('Authorization', asBruno)
@@ -264,7 +304,12 @@ describe('User isolation (e2e)', () => {
       const transfer = await http
         .post('/api/v1/transactions/transfer')
         .set('Authorization', asBruno)
-        .send({ from_account_id: Number(a.accountId), to_account_id: Number(a.accountId), date: '2026-09-11', amount: '5' });
+        .send({
+          from_account_id: Number(a.accountId),
+          to_account_id: Number(a.accountId),
+          date: '2026-09-11',
+          amount: '5',
+        });
       expect([404, 422]).toContain(transfer.status);
 
       // Idempotency is per user: Ana's external_ref must give Bruno his own row, never hers.
@@ -298,11 +343,19 @@ describe('User isolation (e2e)', () => {
       const tx = String(a.transactionId);
       const soporte = String(a.soporteId);
       // The list is scoped by user: for her movement Bruno gets an empty list, which confirms nothing.
-      const list = await http.get(`/api/v1/transactions/${tx}/soportes`).set('Authorization', asBruno);
+      const list = await http
+        .get(`/api/v1/transactions/${tx}/soportes`)
+        .set('Authorization', asBruno);
       expect([200, 404]).toContain(list.status);
       if (list.status === 200) expect(list.body.data).toEqual([]);
-      await http.get(`/api/v1/transactions/${tx}/soportes/${soporte}`).set('Authorization', asBruno).expect(404);
-      await http.delete(`/api/v1/transactions/${tx}/soportes/${soporte}`).set('Authorization', asBruno).expect(404);
+      await http
+        .get(`/api/v1/transactions/${tx}/soportes/${soporte}`)
+        .set('Authorization', asBruno)
+        .expect(404);
+      await http
+        .delete(`/api/v1/transactions/${tx}/soportes/${soporte}`)
+        .set('Authorization', asBruno)
+        .expect(404);
       await http
         .post(`/api/v1/transactions/${tx}/soportes`)
         .set('Authorization', asBruno)
@@ -311,25 +364,43 @@ describe('User isolation (e2e)', () => {
 
       // His own movement, her receipt id.
       const mine = String(brunoTransactionId);
-      await http.get(`/api/v1/transactions/${mine}/soportes/${soporte}`).set('Authorization', asBruno).expect(404);
-      await http.delete(`/api/v1/transactions/${mine}/soportes/${soporte}`).set('Authorization', asBruno).expect(404);
+      await http
+        .get(`/api/v1/transactions/${mine}/soportes/${soporte}`)
+        .set('Authorization', asBruno)
+        .expect(404);
+      await http
+        .delete(`/api/v1/transactions/${mine}/soportes/${soporte}`)
+        .set('Authorization', asBruno)
+        .expect(404);
     });
   });
 
   // ── Tags ───────────────────────────────────────────────────────────────────
 
   it('tags: Bruno never lists Ana’s tags and cannot change or delete them', async () => {
-    for (const route of ['GET /api/v1/tags', 'POST /api/v1/tags', 'PATCH /api/v1/tags/:id', 'DELETE /api/v1/tags/:id']) {
+    for (const route of [
+      'GET /api/v1/tags',
+      'POST /api/v1/tags',
+      'PATCH /api/v1/tags/:id',
+      'DELETE /api/v1/tags/:id',
+    ]) {
       cover(route);
     }
 
     await untouched(async () => {
       const id = String(a.tagId);
       expectNoLeak((await http.get('/api/v1/tags').set('Authorization', asBruno).expect(200)).body);
-      await http.patch(`/api/v1/tags/${id}`).set('Authorization', asBruno).send({ name: 'x' }).expect(404);
+      await http
+        .patch(`/api/v1/tags/${id}`)
+        .set('Authorization', asBruno)
+        .send({ name: 'x' })
+        .expect(404);
       await http.delete(`/api/v1/tags/${id}`).set('Authorization', asBruno).expect(404);
       // Same name as Ana's: Bruno gets his own tag, not hers.
-      const created = await http.post('/api/v1/tags').set('Authorization', asBruno).send({ name: `${MARK}-tag` });
+      const created = await http
+        .post('/api/v1/tags')
+        .set('Authorization', asBruno)
+        .send({ name: `${MARK}-tag` });
       expect([200, 201]).toContain(created.status);
       expect(String(created.body.data.id)).not.toBe(id);
     });
@@ -377,7 +448,12 @@ describe('User isolation (e2e)', () => {
       const captureWithHerConcept = await http
         .post('/api/v1/transactions/capture')
         .set('Authorization', asBruno)
-        .send({ source: 'ios_manual', external_ref: 'bruno-1', monto: '9000', category_id: anaConcept });
+        .send({
+          source: 'ios_manual',
+          external_ref: 'bruno-1',
+          monto: '9000',
+          category_id: anaConcept,
+        });
       expect([404, 422]).toContain(captureWithHerConcept.status);
 
       // Idempotency is per user: her external_ref must not return her movement.
@@ -389,8 +465,12 @@ describe('User isolation (e2e)', () => {
       expect(JSON.stringify(captureWithHerRef.body)).not.toContain(`"${String(a.transactionId)}"`);
     });
 
-    expect(await env.prisma.categoryRule.count({ where: { userId: bruno.id, categoryId: a.conceptId } })).toBe(0);
-    expect(await env.prisma.transaction.count({ where: { userId: bruno.id, categoryId: a.conceptId } })).toBe(0);
+    expect(
+      await env.prisma.categoryRule.count({ where: { userId: bruno.id, categoryId: a.conceptId } }),
+    ).toBe(0);
+    expect(
+      await env.prisma.transaction.count({ where: { userId: bruno.id, categoryId: a.conceptId } }),
+    ).toBe(0);
   });
 
   // ── Dashboard, preferences, the session ────────────────────────────────────
@@ -415,7 +495,11 @@ describe('User isolation (e2e)', () => {
     await untouched(async () => {
       const mine = await http.get('/api/v1/preferences').set('Authorization', asBruno).expect(200);
       expect(mine.body.data.cuentas_habilitadas).toBe(false);
-      await http.patch('/api/v1/preferences').set('Authorization', asBruno).send({ cuentas_habilitadas: false }).expect(200);
+      await http
+        .patch('/api/v1/preferences')
+        .set('Authorization', asBruno)
+        .send({ cuentas_habilitadas: false })
+        .expect(200);
     });
   });
 
@@ -426,7 +510,10 @@ describe('User isolation (e2e)', () => {
     const me = await http.get('/api/v1/auth/me').set('Authorization', asBruno).expect(200);
     expect(JSON.stringify(me.body)).not.toContain(ana.email);
 
-    await http.post('/api/v1/auth/logout-all').set('Authorization', asBruno).expect((r) => expect(r.status).toBeLessThan(300));
+    await http
+      .post('/api/v1/auth/logout-all')
+      .set('Authorization', asBruno)
+      .expect((r) => expect(r.status).toBeLessThan(300));
     await http.get('/api/v1/auth/me').set('Authorization', env.como(ana)).expect(200);
   });
 
@@ -441,7 +528,9 @@ describe('User isolation (e2e)', () => {
       ['get', '/api/v1/admin/audit-log'],
     ];
     for (const [, path] of routes) {
-      cover(`${routes.find(([, p]) => p === path)![0].toUpperCase()} ${path.replace(String(ana.id), ':id')}`);
+      cover(
+        `${routes.find(([, p]) => p === path)![0].toUpperCase()} ${path.replace(String(ana.id), ':id')}`,
+      );
     }
 
     await untouched(async () => {
@@ -453,13 +542,17 @@ describe('User isolation (e2e)', () => {
         expect(response.status).toBe(403);
       }
     });
-    expect((await env.prisma.user.findUniqueOrThrow({ where: { id: bruno.id } })).role).toBe('user');
+    expect((await env.prisma.user.findUniqueOrThrow({ where: { id: bruno.id } })).role).toBe(
+      'user',
+    );
   });
 
   // ── The guard: no route escapes this suite ─────────────────────────────────
 
   it('every registered route is covered here or exempt with a reason', () => {
-    const registered = registeredRoutes(env.app).filter((r) => !r.includes('*') && r.includes('/api/'));
+    const registered = registeredRoutes(env.app).filter(
+      (r) => !r.includes('*') && r.includes('/api/'),
+    );
     const missing = registered.filter((r) => !COVERED.has(r) && !(r in EXEMPT));
     const stale = [...Object.keys(EXEMPT), ...COVERED].filter((r) => !registered.includes(r));
 
@@ -472,9 +565,13 @@ describe('User isolation (e2e)', () => {
 /** Ana owns one of every user-scoped row, each carrying `MARK`. */
 async function seedAna(env: EntornoDePruebas, userId: bigint): Promise<AnaData> {
   const p = env.prisma;
-  const account = await p.account.create({ data: { userId, name: `${MARK} cuenta`, type: 'cash' } });
+  const account = await p.account.create({
+    data: { userId, name: `${MARK} cuenta`, type: 'cash' },
+  });
   const center = await p.category.create({ data: { userId, name: `${MARK} centro` } });
-  const group = await p.category.create({ data: { userId, name: `${MARK} grupo`, parentId: center.id } });
+  const group = await p.category.create({
+    data: { userId, name: `${MARK} grupo`, parentId: center.id },
+  });
   const concept = await p.category.create({
     data: {
       userId,
@@ -517,9 +614,16 @@ async function seedAna(env: EntornoDePruebas, userId: bigint): Promise<AnaData> 
     },
   });
   const rule = await p.categoryRule.create({
-    data: { userId, pattern: `${MARK.toLowerCase()} supermercado`, categoryId: concept.id, priority: 10 },
+    data: {
+      userId,
+      pattern: `${MARK.toLowerCase()} supermercado`,
+      categoryId: concept.id,
+      priority: 10,
+    },
   });
-  await p.userPreference.create({ data: { userId, prefKey: 'cuentas_habilitadas', prefValue: true } });
+  await p.userPreference.create({
+    data: { userId, prefKey: 'cuentas_habilitadas', prefValue: true },
+  });
 
   return {
     accountId: account.id,
@@ -543,7 +647,9 @@ function registeredRoutes(app: INestApplication): string[] {
   const stack = (express.router ?? express._router)?.stack ?? [];
   return stack.flatMap((layer) =>
     layer.route
-      ? Object.keys(layer.route.methods).map((method) => `${method.toUpperCase()} ${layer.route!.path}`)
+      ? Object.keys(layer.route.methods).map(
+          (method) => `${method.toUpperCase()} ${layer.route!.path}`,
+        )
       : [],
   );
 }

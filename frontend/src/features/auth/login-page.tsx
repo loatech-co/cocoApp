@@ -56,7 +56,7 @@ export function LoginPage() {
           pantalla lo encuentra sin atravesar antes la decoración. */}
       <section className="flex min-h-dvh items-center justify-center bg-background px-5 py-10 lg:min-h-0">
         <div className="w-full max-w-sm">
-        {/*
+          {/*
           El logotipo va en LIMA, sobre una placa bosque.
 
           Lima directamente sobre el fondo claro da 1.14:1 de contraste: no es
@@ -67,10 +67,10 @@ export function LoginPage() {
           Dentro de la placa da 10.1:1, el mismo par que en la barra lateral, y
           la marca queda idéntica en las dos pantallas.
         */}
-        {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
+          {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
             (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
             BLOQUE con ancho automático, y centrar texto no lo movería. */}
-        {/*
+          {/*
           El encabezado de nivel 1 de esta pantalla.
 
           No se pinta porque lo que se ve ya es el logotipo, pero tiene que
@@ -79,70 +79,70 @@ export function LoginPage() {
           encabezado en encabezado y aquí no encontraba ninguno del que
           colgaran los demás. El logotipo es un SVG y no puede hacer ese papel.
         */}
-        <h1 className="sr-only">Coco — iniciar sesión</h1>
+          <h1 className="sr-only">Coco — iniciar sesión</h1>
 
-        <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
+          <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>¡Hola de nuevo!</CardTitle>
-            <CardDescription>Accede con tu correo y contraseña.</CardDescription>
-          </CardHeader>
+          <Card>
+            <CardHeader>
+              <CardTitle>¡Hola de nuevo!</CardTitle>
+              <CardDescription>Accede con tu correo y contraseña.</CardDescription>
+            </CardHeader>
 
-          <CardContent className="flex flex-col gap-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            <CardContent className="flex flex-col gap-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <form onSubmit={onSubmit} className="flex flex-col gap-4">
-              <Campo etiqueta="Correo" id="email">
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(evento) => setEmail(evento.target.value)}
-                  aria-invalid={error !== null}
-                />
-              </Campo>
+              <form onSubmit={onSubmit} className="flex flex-col gap-4">
+                <Campo etiqueta="Correo" id="email">
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(evento) => setEmail(evento.target.value)}
+                    aria-invalid={error !== null}
+                  />
+                </Campo>
 
-              <Campo etiqueta="Contraseña" id="password">
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(evento) => setPassword(evento.target.value)}
-                  aria-invalid={error !== null}
-                />
-              </Campo>
+                <Campo etiqueta="Contraseña" id="password">
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(evento) => setPassword(evento.target.value)}
+                    aria-invalid={error !== null}
+                  />
+                </Campo>
 
-              <Button type="submit" className="w-full" disabled={enviando}>
-                {enviando ? (
-                  <Loader2 className="animate-spin" aria-hidden="true" />
-                ) : (
-                  <LogIn aria-hidden="true" />
-                )}
-                {enviando ? 'Un momento…' : 'Iniciar sesión'}
-              </Button>
-            </form>
+                <Button type="submit" className="w-full" disabled={enviando}>
+                  {enviando ? (
+                    <Loader2 className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <LogIn aria-hidden="true" />
+                  )}
+                  {enviando ? 'Un momento…' : 'Iniciar sesión'}
+                </Button>
+              </form>
 
-            <p className="text-center text-sm text-muted-foreground">
-              ¿No tienes cuenta?{' '}
-              <Link to="/registro" className="text-primary underline-offset-4 hover:underline">
-                Solicitar acceso
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+              <p className="text-center text-sm text-muted-foreground">
+                ¿No tienes cuenta?{' '}
+                <Link to="/registro" className="text-primary underline-offset-4 hover:underline">
+                  Solicitar acceso
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          ¿Olvidaste tu contraseña? Pídele al administrador que la restablezca.
-        </p>
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            ¿Olvidaste tu contraseña? Pídele al administrador que la restablezca.
+          </p>
         </div>
       </section>
 

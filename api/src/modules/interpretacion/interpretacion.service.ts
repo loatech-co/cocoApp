@@ -14,7 +14,12 @@ import {
   enriquecer,
   type CapturaConocida,
 } from './duplicados';
-import { interpretar, resumenDe, type ClasificacionInterpretada, type Interpretado } from './interpretar';
+import {
+  interpretar,
+  resumenDe,
+  type ClasificacionInterpretada,
+  type Interpretado,
+} from './interpretar';
 import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
 
 /** La clasificación propuesta, con los ids como los entiende el resto de la API. */
@@ -91,7 +96,10 @@ export class InterpretacionService {
       para clasificar, y se guarda tal cual. Se resuelve ANTES de interpretar
       para que un id malo responda 422 sin gastar una lectura del árbol.
     */
-    const elegida = dto.category_id === undefined ? null : await this.clasificacionElegida(userId, BigInt(dto.category_id));
+    const elegida =
+      dto.category_id === undefined
+        ? null
+        : await this.clasificacionElegida(userId, BigInt(dto.category_id));
     const interpretado = await this.leer(userId, dto, elegida);
     const capturadaEn = dto.captured_at ? new Date(dto.captured_at) : new Date();
 
@@ -112,7 +120,13 @@ export class InterpretacionService {
       se crea, pero marcada.
     */
     if (ORIGENES_QUE_SE_DUPLICAN.has(dto.source)) {
-      const candidatas = await this.candidatasADuplicado(userId, dto.source, monto, fecha, capturadaEn);
+      const candidatas = await this.candidatasADuplicado(
+        userId,
+        dto.source,
+        monto,
+        fecha,
+        capturadaEn,
+      );
       const veredicto = decidirDuplicado(
         {
           source: dto.source,
@@ -139,7 +153,14 @@ export class InterpretacionService {
         if (Object.keys(cambios).length > 0) {
           await this.prisma.transaction.update({ where: { id: veredicto.con.id }, data: cambios });
         }
-        return this.yaEstaba(userId, veredicto.con.id, dto, false, true, interpretado.clasificacion);
+        return this.yaEstaba(
+          userId,
+          veredicto.con.id,
+          dto,
+          false,
+          true,
+          interpretado.clasificacion,
+        );
       }
       if (veredicto.tipo === 'parcial') porRevisar = true;
     }
@@ -259,16 +280,28 @@ export class InterpretacionService {
    * clasifica nada —los movimientos viven tres niveles más abajo— y lo
    * archivado ya no vuelve, así que ninguno de los dos se acepta.
    */
-  private async clasificacionElegida(userId: bigint, id: bigint): Promise<ClasificacionInterpretada> {
+  private async clasificacionElegida(
+    userId: bigint,
+    id: bigint,
+  ): Promise<ClasificacionInterpretada> {
     const fila = await this.prisma.category.findFirst({
       where: { id, userId },
-      select: { id: true, name: true, isArchived: true, parent: { select: { id: true, parentId: true } } },
+      select: {
+        id: true,
+        name: true,
+        isArchived: true,
+        parent: { select: { id: true, parentId: true } },
+      },
     });
     // La misma respuesta para «no existe» y «no es tuya»: decir cuál de las
     // dos es revelaría ids ajenos.
-    if (!fila) throw new UnprocessableEntityException('La categoría indicada no existe o no es tuya.');
+    if (!fila)
+      throw new UnprocessableEntityException('La categoría indicada no existe o no es tuya.');
     if (fila.isArchived) throw new UnprocessableEntityException('Ese concepto está archivado.');
-    if (!fila.parent) throw new UnprocessableEntityException('Un centro de costos no clasifica nada: elige un concepto.');
+    if (!fila.parent)
+      throw new UnprocessableEntityException(
+        'Un centro de costos no clasifica nada: elige un concepto.',
+      );
 
     const esConcepto = fila.parent.parentId !== null;
     return {
@@ -294,7 +327,12 @@ export class InterpretacionService {
       select: { id: true, parentId: true, name: true, palabrasClave: true },
       orderBy: { sortOrder: 'asc' },
     });
-    const aNodo = (f: { id: bigint; name: string; palabrasClave: string[]; children: unknown[] }): NodoBuscable => ({
+    const aNodo = (f: {
+      id: bigint;
+      name: string;
+      palabrasClave: string[];
+      children: unknown[];
+    }): NodoBuscable => ({
       id: f.id.toString(),
       name: f.name,
       palabras_clave: f.palabrasClave,
@@ -320,11 +358,32 @@ export class InterpretacionService {
         source: { not: source },
         date: { gte: desde, lte: hasta },
         OR: [
-          { capturedAt: { gte: new Date(capturadaEn.getTime() - VENTANA_PARCIAL_MS), lte: new Date(capturadaEn.getTime() + VENTANA_PARCIAL_MS) } },
-          { capturedAt: null, createdAt: { gte: new Date(capturadaEn.getTime() - VENTANA_PARCIAL_MS), lte: new Date(capturadaEn.getTime() + VENTANA_PARCIAL_MS) } },
+          {
+            capturedAt: {
+              gte: new Date(capturadaEn.getTime() - VENTANA_PARCIAL_MS),
+              lte: new Date(capturadaEn.getTime() + VENTANA_PARCIAL_MS),
+            },
+          },
+          {
+            capturedAt: null,
+            createdAt: {
+              gte: new Date(capturadaEn.getTime() - VENTANA_PARCIAL_MS),
+              lte: new Date(capturadaEn.getTime() + VENTANA_PARCIAL_MS),
+            },
+          },
         ],
       },
-      select: { id: true, source: true, date: true, amount: true, capturedAt: true, createdAt: true, rawText: true, merchant: true, description: true },
+      select: {
+        id: true,
+        source: true,
+        date: true,
+        amount: true,
+        capturedAt: true,
+        createdAt: true,
+        rawText: true,
+        merchant: true,
+        description: true,
+      },
       take: 20,
     });
     return filas.map((f) => ({
@@ -349,8 +408,7 @@ export class InterpretacionService {
     clasificacion?: ClasificacionInterpretada,
   ): Promise<CapturaView> {
     const transaction = await this.transactions.obtener(userId, id);
-    const vista: ClasificacionInterpretada =
-      clasificacion ??
+    const vista: ClasificacionInterpretada = clasificacion ??
       // De una repetida no se vuelve a interpretar: lo que importa es lo que
       // quedó guardado, que es lo que se le dice.
       {
@@ -382,16 +440,22 @@ export class InterpretacionService {
  * se pierde ninguna de las dos cosas.
  */
 function notasDe(nota: string | undefined, monto: string | null): string | undefined {
-  const partes = [nota?.trim() || null, monto === null ? 'Capturado sin valor: hay que ponerlo.' : null].filter(
-    (p): p is string => p !== null,
-  );
+  const partes = [
+    nota?.trim() || null,
+    monto === null ? 'Capturado sin valor: hay que ponerlo.' : null,
+  ].filter((p): p is string => p !== null);
   return partes.length === 0 ? undefined : partes.join('\n');
 }
 
 function idParaGuardar(c: ClasificacionInterpretada): number | undefined {
   // Alta: el concepto. Media: la categoría, si la hay —queda marcado para
   // revisar, pero ya está en el sitio correcto a medias—. Ninguna: nada.
-  const id = c.certeza === 'alta' ? (c.conceptoId ?? c.categoriaId) : c.certeza === 'media' ? c.categoriaId : null;
+  const id =
+    c.certeza === 'alta'
+      ? (c.conceptoId ?? c.categoriaId)
+      : c.certeza === 'media'
+        ? c.categoriaId
+        : null;
   return id === null ? undefined : Number(id);
 }
 

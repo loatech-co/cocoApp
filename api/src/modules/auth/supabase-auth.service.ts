@@ -59,7 +59,9 @@ export class SupabaseAuthService {
    * dos unidades daría por válido cualquier token emitido en los últimos 54
    * años, que es exactamente el fallo que uno no detecta en pruebas.
    */
-  async verificarAccessToken(token: string): Promise<{ authId: string; email: string; iatMs: number }> {
+  async verificarAccessToken(
+    token: string,
+  ): Promise<{ authId: string; email: string; iatMs: number }> {
     try {
       const { payload } = await jwtVerify(token, this.jwks, {
         issuer: this.emisor,

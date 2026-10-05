@@ -44,7 +44,10 @@ const DELATORES: { patron: RegExp; puntos: number }[] = [
   { patron: /\bcus\b/i, puntos: -15 },
   { patron: /autorizaci[oó]n/i, puntos: -15 },
   { patron: /n[uú]mero\s+de\s+(factura|recibo|referencia|operaci[oó]n)/i, puntos: -15 },
-  { patron: /\b(factura|recibo|referencia|radicado|planilla)\s*(no|n°|nro|#)?\s*:?\s*$/i, puntos: -8 },
+  {
+    patron: /\b(factura|recibo|referencia|radicado|planilla)\s*(no|n°|nro|#)?\s*:?\s*$/i,
+    puntos: -8,
+  },
   { patron: /c[oó]digo/i, puntos: -10 },
   { patron: /cuenta|contrato|suscriptor|medidor|poliza|póliza/i, puntos: -8 },
   { patron: /tel[eé]fono|celular|whatsapp/i, puntos: -10 },
@@ -53,7 +56,8 @@ const DELATORES: { patron: RegExp; puntos: number }[] = [
 ];
 
 /** Un número tal como puede aparecer escrito: con miles, decimales o peso. */
-const CANDIDATO = /\$?\s?\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?|\$\s?\d+(?:[.,]\d{1,2})?|\b\d{4,9}\b/g;
+const CANDIDATO =
+  /\$?\s?\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?|\$\s?\d+(?:[.,]\d{1,2})?|\b\d{4,9}\b/g;
 
 /**
  * Una IPv4 de verdad: los cuatro grupos de 0 a 255.

@@ -108,7 +108,10 @@ export function estimadoDelMes(
     return ventana.reduce<Money>((total, v) => total.plus(v), CERO).dividedBy(ventana.length);
   }
 
-  const ultimo = [...porMes.keys()].filter((m) => m < mes).sort().pop();
+  const ultimo = [...porMes.keys()]
+    .filter((m) => m < mes)
+    .sort()
+    .pop();
   return ultimo === undefined ? null : (porMes.get(ultimo) ?? null);
 }
 

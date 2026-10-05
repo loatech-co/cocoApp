@@ -1,4 +1,9 @@
-import { Injectable, Logger, type OnApplicationBootstrap, type OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  type OnApplicationBootstrap,
+  type OnModuleDestroy,
+} from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { PagosAutomaticosService } from './pagos-automaticos';
@@ -17,7 +22,13 @@ export function todayInBogota(now: Date): string {
 /** Milliseconds from `now` until the next 00:05 in Bogotá. */
 export function msUntilNextDailyRun(now: Date): number {
   const bogota = new Date(now.getTime() - BOGOTA_OFFSET_MS);
-  const next = Date.UTC(bogota.getUTCFullYear(), bogota.getUTCMonth(), bogota.getUTCDate(), 0, DAILY_RUN_MINUTE);
+  const next = Date.UTC(
+    bogota.getUTCFullYear(),
+    bogota.getUTCMonth(),
+    bogota.getUTCDate(),
+    0,
+    DAILY_RUN_MINUTE,
+  );
   const nextRun = next > bogota.getTime() ? next : next + DAY_MS;
   return nextRun - bogota.getTime();
 }
@@ -92,11 +103,15 @@ export class AutoChargeTask implements OnApplicationBootstrap, OnModuleDestroy {
         try {
           created += await this.autoPayments.cobrarLoQueToque(userId, currentMonth, today);
         } catch (error) {
-          this.logger.error(`Auto-charge failed for user ${String(userId)}: ${(error as Error).message}`);
+          this.logger.error(
+            `Auto-charge failed for user ${String(userId)}: ${(error as Error).message}`,
+          );
         }
       }
 
-      this.logger.log(`Auto-charge run for ${today}: ${owners.length} user(s), ${created} movement(s) created`);
+      this.logger.log(
+        `Auto-charge run for ${today}: ${owners.length} user(s), ${created} movement(s) created`,
+      );
       return created;
     } finally {
       this.running = false;

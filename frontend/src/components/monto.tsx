@@ -44,7 +44,9 @@ export function Monto({
   const { Icono } = estilos;
 
   return (
-    <span className={cn('tabular inline-flex items-center gap-1 font-medium', estilos.color, className)}>
+    <span
+      className={cn('tabular inline-flex items-center gap-1 font-medium', estilos.color, className)}
+    >
       {!soloTexto && <Icono className="size-3.5 shrink-0" aria-hidden="true" />}
       <span className="sr-only">{estilos.etiqueta}: </span>
       <span>

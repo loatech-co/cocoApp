@@ -119,7 +119,7 @@ export function ToolbarFiltros({
       ayuda={subtitulo ?? resumen}
       alineado="abajo"
       acciones={
-      /*
+        /*
         ── La fila entera, en el teléfono ──────────────────────────────────
         `w-full` y sin envolver: los tres controles que quedan —buscar,
         filtrar y el rango— caben en una línea, y el rango se queda con el
@@ -128,216 +128,215 @@ export function ToolbarFiltros({
         Envolviendo, un cuarto control tiraba al rango a un segundo renglón él
         solo, alineado a la derecha y con media fila vacía a su izquierda.
       */
-      <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
-        {/* ── Búsqueda ─────────────────────────────────────────────────── */}
-        {esMovil ? (
-          /*
+        <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
+          {/* ── Búsqueda ─────────────────────────────────────────────────── */}
+          {esMovil ? (
+            /*
             En el teléfono el campo no se despliega EN la fila: la levanta una
             hoja, igual que el filtro y el rango. Un campo que aparece en medio
             de una fila de iconos empuja a los otros tres fuera de la pantalla,
             y el teclado del sistema sube justo encima de la lista que se está
             recortando.
           */
-          <>
+            <>
+              <Button
+                type="button"
+                variant="herramienta"
+                size="sm-icon"
+                aria-label="Buscar"
+                aria-pressed={buscando || (filtros.q ?? '') !== ''}
+                aria-expanded={buscando}
+                onClick={() => setBuscando(true)}
+              >
+                <Search className="size-4" aria-hidden="true" />
+              </Button>
+
+              <PanelInferior
+                abierto={buscando}
+                titulo="Buscar"
+                cabeza={
+                  <div className="relative">
+                    <Search
+                      className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <Input
+                      ref={campo}
+                      type="search"
+                      autoFocus
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                      placeholder="Buscar: celsia, colegio, sura…"
+                      aria-label="Buscar por palabra clave"
+                      className="pl-9"
+                    />
+                  </div>
+                }
+                onCerrar={() => setBuscando(false)}
+              >
+                {/* Qué hace esto, y no lo que hace la lupa de la barra de abajo.
+                  Las dos se ven igual y contestan preguntas distintas: aquella
+                  BUSCA un movimiento en toda la aplicación; esta RECORTA lo que
+                  se está mirando, y lo que escriba se queda puesto al cerrar. */}
+                <p className="px-3 py-2 text-sm text-muted-foreground">
+                  Recorta lo que estás viendo. Lo escrito se queda puesto hasta que lo borres.
+                </p>
+              </PanelInferior>
+            </>
+          ) : buscando ? (
+            <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Input
+                ref={campo}
+                type="search"
+                autoFocus
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                onBlur={() => busqueda === '' && setBuscando(false)}
+                placeholder="Buscar: celsia, colegio, sura…"
+                aria-label="Buscar por palabra clave"
+                className="h-9 rounded-lg pl-9"
+              />
+            </div>
+          ) : (
             <Button
               type="button"
               variant="herramienta"
               size="sm-icon"
               aria-label="Buscar"
-              aria-pressed={buscando || (filtros.q ?? '') !== ''}
-              aria-expanded={buscando}
-              onClick={() => setBuscando(true)}
+              title="Buscar"
+              onClick={() => {
+                setBuscando(true);
+                // El foco no se hereda de un elemento que acaba de nacer.
+                setTimeout(() => campo.current?.focus(), 0);
+              }}
             >
               <Search className="size-4" aria-hidden="true" />
             </Button>
+          )}
 
-            <PanelInferior
-              abierto={buscando}
-              titulo="Buscar"
-              cabeza={
-                <div className="relative">
-                  <Search
-                    className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <Input
-                    ref={campo}
-                    type="search"
-                    autoFocus
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    placeholder="Buscar: celsia, colegio, sura…"
-                    aria-label="Buscar por palabra clave"
-                    className="pl-9"
-                  />
-                </div>
-              }
-              onCerrar={() => setBuscando(false)}
+          {/* ── Orden ────────────────────────────────────────────────────── */}
+          {orden && (
+            <Menu
+              etiqueta="Ordenar"
+              Icono={ArrowDownUp}
+              soloIcono
+              activo={orden.valor !== '-date'}
+              ancho="w-56"
             >
-              {/* Qué hace esto, y no lo que hace la lupa de la barra de abajo.
-                  Las dos se ven igual y contestan preguntas distintas: aquella
-                  BUSCA un movimiento en toda la aplicación; esta RECORTA lo que
-                  se está mirando, y lo que escriba se queda puesto al cerrar. */}
-              <p className="px-3 py-2 text-sm text-muted-foreground">
-                Recorta lo que estás viendo. Lo escrito se queda puesto hasta que
-                lo borres.
-              </p>
-            </PanelInferior>
-          </>
-        ) : buscando ? (
-          <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              ref={campo}
-              type="search"
-              autoFocus
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              onBlur={() => busqueda === '' && setBuscando(false)}
-              placeholder="Buscar: celsia, colegio, sura…"
-              aria-label="Buscar por palabra clave"
-              className="h-9 rounded-lg pl-9"
-            />
-          </div>
-        ) : (
-          <Button
-            type="button"
-            variant="herramienta"
-            size="sm-icon"
-            aria-label="Buscar"
-            title="Buscar"
-            onClick={() => {
-              setBuscando(true);
-              // El foco no se hereda de un elemento que acaba de nacer.
-              setTimeout(() => campo.current?.focus(), 0);
-            }}
-          >
-            <Search className="size-4" aria-hidden="true" />
-          </Button>
-        )}
+              {(cerrar) => (
+                <>
+                  <MenuTitulo>Ordenar por</MenuTitulo>
+                  {ORDENES.map((o) => (
+                    <MenuOpcion
+                      key={o.valor}
+                      elegida={orden.valor === o.valor}
+                      onClick={() => {
+                        orden.onCambiar(o.valor);
+                        cerrar();
+                      }}
+                    >
+                      {o.etiqueta}
+                    </MenuOpcion>
+                  ))}
+                </>
+              )}
+            </Menu>
+          )}
 
-        {/* ── Orden ────────────────────────────────────────────────────── */}
-        {orden && (
+          {/* ── Clasificación ────────────────────────────────────────────── */}
           <Menu
-            etiqueta="Ordenar"
-            Icono={ArrowDownUp}
+            etiqueta="Filtrar por clasificación"
+            Icono={Filter}
             soloIcono
-            activo={orden.valor !== '-date'}
-            ancho="w-56"
+            activo={filtros.categoryIds.length > 0}
+            ancho="w-72"
+            tipo="panel"
+            // Este panel trae cabecera, lista y pie separados por líneas que
+            // cruzan de lado a lado: con el acolchado del menú quedarían
+            // cortadas 4px antes de cada borde.
+            sinRelleno
           >
-            {(cerrar) => (
-              <>
-                <MenuTitulo>Ordenar por</MenuTitulo>
-                {ORDENES.map((o) => (
-                  <MenuOpcion
-                    key={o.valor}
-                    elegida={orden.valor === o.valor}
-                    onClick={() => {
-                      orden.onCambiar(o.valor);
-                      cerrar();
-                    }}
-                  >
-                    {o.etiqueta}
-                  </MenuOpcion>
-                ))}
-              </>
-            )}
+            <FiltroClasificacion
+              arbol={arbol}
+              marcados={filtros.categoryIds}
+              onCambiar={(ids) => aplicar({ categoryIds: ids })}
+            />
           </Menu>
-        )}
 
-        {/* ── Clasificación ────────────────────────────────────────────── */}
-        <Menu
-          etiqueta="Filtrar por clasificación"
-          Icono={Filter}
-          soloIcono
-          activo={filtros.categoryIds.length > 0}
-          ancho="w-72"
-          tipo="panel"
-          // Este panel trae cabecera, lista y pie separados por líneas que
-          // cruzan de lado a lado: con el acolchado del menú quedarían
-          // cortadas 4px antes de cada borde.
-          sinRelleno
-        >
-          <FiltroClasificacion
-            arbol={arbol}
-            marcados={filtros.categoryIds}
-            onCambiar={(ids) => aplicar({ categoryIds: ids })}
+          <SelectorDeFecha
+            rango
+            atajos
+            filtros={filtros}
+            aplicar={aplicar}
+            claseCaja="movil:min-w-0 movil:flex-1"
           />
-        </Menu>
 
-        <SelectorDeFecha
-          rango
-          atajos
-          filtros={filtros}
-          aplicar={aplicar}
-          claseCaja="movil:min-w-0 movil:flex-1"
-        />
+          {hayFiltrosActivos && (
+            <Button
+              type="button"
+              variant="herramienta"
+              size="sm-icon"
+              aria-label="Limpiar filtros"
+              title="Limpiar filtros"
+              onClick={limpiar}
+            >
+              <X className="size-4" aria-hidden="true" />
+            </Button>
+          )}
 
-        {hayFiltrosActivos && (
-          <Button
-            type="button"
-            variant="herramienta"
-            size="sm-icon"
-            aria-label="Limpiar filtros"
-            title="Limpiar filtros"
-            onClick={limpiar}
-          >
-            <X className="size-4" aria-hidden="true" />
-          </Button>
-        )}
-
-        {/*
+          {/*
           ── Y en el teléfono NO está ────────────────────────────────────────
           Registrar un movimiento vive en el (+) del centro de la barra de
           abajo, que está siempre a la vista y siempre en el mismo sitio, sea
           cual sea la pantalla. Aquí arriba era el mismo botón repetido, y en
           una fila de cuatro controles era el que menos cabía.
         */}
-        {onNuevo && !esMovil && (
-          /* Por el mismo camino que los demás menús de esta barra: el alto y
+          {onNuevo && !esMovil && (
+            /* Por el mismo camino que los demás menús de esta barra: el alto y
              el radio se los pone `size="sm"` dentro del botón, que es donde
              viven. Escritos aquí, este botón medía distinto que el selector
              de fechas que tiene al lado y la fila se veía descuadrada. */
-          <Menu
-            etiqueta="Nuevo movimiento"
-            tipo="menu"
-            alineado="derecha"
-            variante="default"
-            Icono={Plus}
-          >
-            {(cerrar) => (
-              <div className="flex flex-col">
-                <Captura
-                  Icono={TrendingDown}
-                  color="gasto"
-                  titulo="Gasto"
-                  ayuda="Dinero que sale"
-                  onClick={() => {
-                    cerrar();
-                    onNuevo('expense');
-                  }}
-                />
-                {/* Apagada, no escondida: los ingresos existen en el modelo
+            <Menu
+              etiqueta="Nuevo movimiento"
+              tipo="menu"
+              alineado="derecha"
+              variante="default"
+              Icono={Plus}
+            >
+              {(cerrar) => (
+                <div className="flex flex-col">
+                  <Captura
+                    Icono={TrendingDown}
+                    color="gasto"
+                    titulo="Gasto"
+                    ayuda="Dinero que sale"
+                    onClick={() => {
+                      cerrar();
+                      onNuevo('expense');
+                    }}
+                  />
+                  {/* Apagada, no escondida: los ingresos existen en el modelo
                     —el resumen ya los suma— y quitar la opción haría creer que
                     la aplicación no sabe registrarlos. Apagada dice que sabrá. */}
-                <Captura
-                  Icono={TrendingUp}
-                  color="ingreso"
-                  titulo="Ingreso"
-                  ayuda="Dinero que entra"
-                  nota="Pronto"
-                  deshabilitada
-                />
-              </div>
-            )}
-          </Menu>
-        )}
+                  <Captura
+                    Icono={TrendingUp}
+                    color="ingreso"
+                    titulo="Ingreso"
+                    ayuda="Dinero que entra"
+                    nota="Pronto"
+                    deshabilitada
+                  />
+                </div>
+              )}
+            </Menu>
+          )}
 
-        {acciones}
-      </div>
+          {acciones}
+        </div>
       }
     />
   );
@@ -385,9 +384,7 @@ function Captura({
       onClick={onClick}
       className={cn(
         'flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left transition-colors',
-        deshabilitada
-          ? 'cursor-not-allowed opacity-50'
-          : REALCE,
+        deshabilitada ? 'cursor-not-allowed opacity-50' : REALCE,
       )}
     >
       <ChipIcono Icono={Icono} color={color} tamano="sm" />

@@ -229,8 +229,7 @@ export function EnlaceDeSeccion({
  * no tener el mismo correo.
  */
 export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
-  const { usuario, esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } =
-    useAuth();
+  const { usuario, esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } = useAuth();
   const navegar = useNavigate();
   const nombre = usuario?.display_name ?? usuario?.email ?? '?';
 

@@ -32,7 +32,11 @@ if (existing.ok) {
   const current = await existing.json();
   console.log(`bucket "${bucket}" already exists at ${host}: public=${current.public}`);
   if (current.public) {
-    const fixed = await fetch(`${url}/storage/v1/bucket/${bucket}`, { method: 'PUT', headers, body: JSON.stringify(settings) });
+    const fixed = await fetch(`${url}/storage/v1/bucket/${bucket}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(settings),
+    });
     console.log(`made private: HTTP ${fixed.status}`);
     if (!fixed.ok) process.exit(1);
   }
@@ -44,5 +48,7 @@ const created = await fetch(`${url}/storage/v1/bucket`, {
   headers,
   body: JSON.stringify({ id: bucket, name: bucket, ...settings }),
 });
-console.log(`create bucket "${bucket}" at ${host}: HTTP ${created.status} ${created.ok ? '' : await created.text()}`);
+console.log(
+  `create bucket "${bucket}" at ${host}: HTTP ${created.status} ${created.ok ? '' : await created.text()}`,
+);
 process.exit(created.ok ? 0 : 1);

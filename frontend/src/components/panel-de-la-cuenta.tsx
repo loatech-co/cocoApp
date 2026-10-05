@@ -32,20 +32,18 @@ import { cn } from '@/lib/utils';
  * Usuarios y Bitácora son de administración: quien no lo es no las tiene ni
  * apagadas ni escondidas con CSS. Ausentes, como en el riel.
  */
-export function PanelDeLaCuenta({
-  abierto,
-  onCerrar,
-}: {
-  abierto: boolean;
-  onCerrar: () => void;
-}) {
-  const { usuario, esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } =
-    useAuth();
+export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
+  const { usuario, esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } = useAuth();
   const navegar = useNavigate();
   const nombre = usuario?.display_name ?? usuario?.email ?? '?';
 
   return (
-    <PanelInferior abierto={abierto} titulo="Mi cuenta" cabeza={<Perfil nombre={nombre} />} onCerrar={onCerrar}>
+    <PanelInferior
+      abierto={abierto}
+      titulo="Mi cuenta"
+      cabeza={<Perfil nombre={nombre} />}
+      onCerrar={onCerrar}
+    >
       <div className="flex flex-col">
         {/*
           Ajustes y Seguridad son dos TROZOS de Mi cuenta, no dos pantallas.

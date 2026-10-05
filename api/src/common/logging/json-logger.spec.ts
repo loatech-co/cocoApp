@@ -42,7 +42,12 @@ describe('JsonLogger', () => {
 
     const [info, error] = lines();
     expect(info).toMatchObject({ level: 'log', context: 'Bootstrap', msg: 'API escuchando' });
-    expect(error).toMatchObject({ level: 'error', context: 'Exceptions', msg: 'boom', stack: 'Error: boom\n    at x' });
+    expect(error).toMatchObject({
+      level: 'error',
+      context: 'Exceptions',
+      msg: 'boom',
+      stack: 'Error: boom\n    at x',
+    });
     expect(typeof info.time).toBe('string');
     expect(err).toHaveBeenCalledTimes(1);
   });
@@ -54,7 +59,10 @@ describe('JsonLogger', () => {
       originalUrl: '/api/v1/transactions?search=privado',
       header: () => undefined,
     }) as unknown as Request;
-    const res = Object.assign(new EventEmitter(), { statusCode: 200, setHeader: jest.fn() }) as unknown as Response;
+    const res = Object.assign(new EventEmitter(), {
+      statusCode: 200,
+      setHeader: jest.fn(),
+    }) as unknown as Response;
     let seen: string | undefined;
 
     requestContext((entry) => logger.entry(entry))(req, res, () => {
@@ -67,7 +75,13 @@ describe('JsonLogger', () => {
     const [inside, access] = lines();
     expect(seen).toBeDefined();
     expect(inside.requestId).toBe(seen);
-    expect(access).toMatchObject({ requestId: seen, context: 'http', method: 'GET', path: '/api/v1/transactions', status: 200 });
+    expect(access).toMatchObject({
+      requestId: seen,
+      context: 'http',
+      method: 'GET',
+      path: '/api/v1/transactions',
+      status: 200,
+    });
     // The query string —search terms, personal data— never reaches the log.
     expect(JSON.stringify(access)).not.toContain('privado');
   });

@@ -48,7 +48,8 @@ export function CampoDeDinero({
       onChange={(e) => {
         const limpio = soloCifras(e.target.value);
         const campo = e.target;
-        const antes = (campo.value.slice(0, campo.selectionStart ?? 0).match(/[\d,]/g) ?? []).length;
+        const antes = (campo.value.slice(0, campo.selectionStart ?? 0).match(/[\d,]/g) ?? [])
+          .length;
 
         onCambiar(limpio);
 
@@ -84,7 +85,10 @@ export function CampoDeDinero({
  */
 export function SignoDePesos({ className }: { className?: string }) {
   return (
-    <span className={cn(className, 'grid place-items-center text-sm font-medium')} aria-hidden="true">
+    <span
+      className={cn(className, 'grid place-items-center text-sm font-medium')}
+      aria-hidden="true"
+    >
       $
     </span>
   );

@@ -45,9 +45,7 @@ export function CuentaPage() {
   */
   useEffect(() => {
     if (!hash) return;
-    document
-      .getElementById(hash.slice(1))
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [hash]);
 
   return (
@@ -172,8 +170,8 @@ function CambiarContrasena() {
       <CardHeader>
         <CardTitle>Cambiar contraseña</CardTitle>
         <CardDescription>
-          Pedimos la actual a propósito: sin ella, cualquiera que robara tu sesión podría
-          quedarse con la cuenta. Al cambiarla se cierran todas tus sesiones.
+          Pedimos la actual a propósito: sin ella, cualquiera que robara tu sesión podría quedarse
+          con la cuenta. Al cambiarla se cierran todas tus sesiones.
         </CardDescription>
       </CardHeader>
 

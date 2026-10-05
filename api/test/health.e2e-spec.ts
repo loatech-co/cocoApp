@@ -25,9 +25,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public health 
   });
 
   it('sin header Authorization responde 401 con el envelope canónico', async () => {
-    const response = await request(entorno.app.getHttpServer())
-      .get('/api/v1/auth/me')
-      .expect(401);
+    const response = await request(entorno.app.getHttpServer()).get('/api/v1/auth/me').expect(401);
 
     expect(response.body).toEqual({
       error: { code: 'unauthenticated', message: expect.any(String), details: [] },

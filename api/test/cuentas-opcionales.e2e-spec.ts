@@ -175,10 +175,7 @@ describe('Cuentas opcionales (e2e)', () => {
       await gasto({ account_id: cuenta.body.data.id, amount: '100000.00' }).expect(201);
       await gasto({ amount: '999999.00' }).expect(201); // sin cuenta
 
-      const cuentas = await http
-        .get('/api/v1/accounts')
-        .set('Authorization', comoAna)
-        .expect(200);
+      const cuentas = await http.get('/api/v1/accounts').set('Authorization', comoAna).expect(200);
 
       // 500000 − 100000, sin rastro de los 999999.
       expect(cuentas.body.data[0].balance).toBe('400000.00');
@@ -211,10 +208,7 @@ describe('Cuentas opcionales (e2e)', () => {
         .send({ account_id: cuenta.body.data.id })
         .expect(200);
 
-      const cuentas = await http
-        .get('/api/v1/accounts')
-        .set('Authorization', comoAna)
-        .expect(200);
+      const cuentas = await http.get('/api/v1/accounts').set('Authorization', comoAna).expect(200);
       expect(cuentas.body.data[0].balance).toBe('400000.00');
     });
 

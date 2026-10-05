@@ -31,7 +31,9 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
   });
 
   const cookiesDe = (r: request.Response): string[] =>
-    ((r.headers['set-cookie'] as unknown as string[] | undefined) ?? []).filter((c) => c.startsWith('coco_refresh='));
+    ((r.headers['set-cookie'] as unknown as string[] | undefined) ?? []).filter((c) =>
+      c.startsWith('coco_refresh='),
+    );
 
   async function entrarNativo() {
     const usuario = await entorno.crearUsuario();
@@ -55,7 +57,9 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
 
     it('la web sigue igual: cookie httpOnly y NADA de refresh en el cuerpo', async () => {
       const usuario = await entorno.crearUsuario();
-      const r = await http.post('/api/v1/auth/login').send({ email: usuario.email, password: PASSWORD_VALIDA });
+      const r = await http
+        .post('/api/v1/auth/login')
+        .send({ email: usuario.email, password: PASSWORD_VALIDA });
 
       expect(r.status).toBe(200);
       expect(r.body.data.refresh_token).toBeUndefined();
@@ -67,7 +71,10 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
 
     it('con contraseña incorrecta, el nativo recibe lo mismo que la web: 401 sin pistas', async () => {
       const usuario = await entorno.crearUsuario();
-      const r = await http.post('/api/v1/auth/login').set(NATIVO).send({ email: usuario.email, password: 'otra' });
+      const r = await http
+        .post('/api/v1/auth/login')
+        .set(NATIVO)
+        .send({ email: usuario.email, password: 'otra' });
       expect(r.status).toBe(401);
       expect(r.body.data).toBeUndefined();
     });
@@ -78,7 +85,10 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       const { r: login } = await entrarNativo();
       const anterior = login.body.data.refresh_token as string;
 
-      const r = await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: anterior });
+      const r = await http
+        .post('/api/v1/auth/refresh')
+        .set(NATIVO)
+        .send({ refresh_token: anterior });
 
       expect(r.status).toBe(200);
       expect(typeof r.body.data.access_token).toBe('string');
@@ -86,9 +96,17 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       expect(cookiesDe(r)).toEqual([]);
 
       // El token usado murió: es lo que impide que uno robado sirva dos veces.
-      await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: anterior }).expect(401);
+      await http
+        .post('/api/v1/auth/refresh')
+        .set(NATIVO)
+        .send({ refresh_token: anterior })
+        .expect(401);
       // Y el nuevo sirve.
-      await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: r.body.data.refresh_token }).expect(200);
+      await http
+        .post('/api/v1/auth/refresh')
+        .set(NATIVO)
+        .send({ refresh_token: r.body.data.refresh_token })
+        .expect(200);
     });
 
     it('reusar el refresh ANTERIOR tras rotar es 401, y el que nació de él sigue vivo', async () => {
@@ -101,30 +119,51 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       */
       const { r: login } = await entrarNativo();
       const anterior = login.body.data.refresh_token as string;
-      const rotado = await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: anterior }).expect(200);
+      const rotado = await http
+        .post('/api/v1/auth/refresh')
+        .set(NATIVO)
+        .send({ refresh_token: anterior })
+        .expect(200);
       const nuevo = rotado.body.data.refresh_token as string;
 
-      const reuso = await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: anterior });
+      const reuso = await http
+        .post('/api/v1/auth/refresh')
+        .set(NATIVO)
+        .send({ refresh_token: anterior });
       expect(reuso.status).toBe(401);
       expect(reuso.body.data).toBeUndefined();
       expect(reuso.headers['set-cookie']).toBeUndefined();
 
-      await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: nuevo }).expect(200);
+      await http
+        .post('/api/v1/auth/refresh')
+        .set(NATIVO)
+        .send({ refresh_token: nuevo })
+        .expect(200);
     });
 
     it('sin token en el cuerpo, 401 —y no mira la cookie aunque viniera—', async () => {
       const usuario = await entorno.crearUsuario();
-      const web = await http.post('/api/v1/auth/login').send({ email: usuario.email, password: PASSWORD_VALIDA });
+      const web = await http
+        .post('/api/v1/auth/login')
+        .send({ email: usuario.email, password: PASSWORD_VALIDA });
       const cookie = cookiesDe(web)[0].split(';')[0];
 
       // Un cliente que dice ser nativo se juzga por su mundo: el cuerpo.
-      await http.post('/api/v1/auth/refresh').set(NATIVO).set('Cookie', cookie).send({}).expect(401);
+      await http
+        .post('/api/v1/auth/refresh')
+        .set(NATIVO)
+        .set('Cookie', cookie)
+        .send({})
+        .expect(401);
       // Mientras que la web, con esa misma cookie, renueva.
       await http.post('/api/v1/auth/refresh').set('Cookie', cookie).expect(200);
     });
 
     it('un refresh nativo con token inválido es 401 y no toca cookies', async () => {
-      const r = await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: 'refresco-inventado' });
+      const r = await http
+        .post('/api/v1/auth/refresh')
+        .set(NATIVO)
+        .send({ refresh_token: 'refresco-inventado' });
       expect(r.status).toBe(401);
       expect(r.headers['set-cookie']).toBeUndefined();
     });
@@ -135,8 +174,16 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       const { r: login } = await entrarNativo();
       const refresh = login.body.data.refresh_token as string;
 
-      await http.post('/api/v1/auth/logout').set(NATIVO).send({ refresh_token: refresh }).expect(204);
-      await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: refresh }).expect(401);
+      await http
+        .post('/api/v1/auth/logout')
+        .set(NATIVO)
+        .send({ refresh_token: refresh })
+        .expect(204);
+      await http
+        .post('/api/v1/auth/refresh')
+        .set(NATIVO)
+        .send({ refresh_token: refresh })
+        .expect(401);
     });
 
     it('logout-all desde el nativo revoca los access token ya emitidos, al instante', async () => {
@@ -147,7 +194,11 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       // La revocación tarda un segundo en poder distinguirse del token emitido
       // en el mismo segundo: ver el comentario del guard.
       await new Promise((sigue) => setTimeout(sigue, 1100));
-      await http.post('/api/v1/auth/logout-all').set('Authorization', cabecera).set(NATIVO).expect(204);
+      await http
+        .post('/api/v1/auth/logout-all')
+        .set('Authorization', cabecera)
+        .set(NATIVO)
+        .expect(204);
       await http.get('/api/v1/auth/me').set('Authorization', cabecera).expect(401);
     });
   });
@@ -155,13 +206,18 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
   describe('Lo que no cambia para nadie', () => {
     it('el access token nativo entra por el mismo guard que el de la web', async () => {
       const { r } = await entrarNativo();
-      const me = await http.get('/api/v1/auth/me').set('Authorization', `Bearer ${r.body.data.access_token as string}`);
+      const me = await http
+        .get('/api/v1/auth/me')
+        .set('Authorization', `Bearer ${r.body.data.access_token as string}`);
       expect(me.status).toBe(200);
       expect(me.body.data.email).toBe(r.body.data.user.email);
     });
 
     it('un correo inexistente con cabecera nativa tampoco se distingue', async () => {
-      const r = await http.post('/api/v1/auth/login').set(NATIVO).send({ email: correoDePrueba(), password: PASSWORD_VALIDA });
+      const r = await http
+        .post('/api/v1/auth/login')
+        .set(NATIVO)
+        .send({ email: correoDePrueba(), password: PASSWORD_VALIDA });
       expect(r.status).toBe(401);
     });
   });

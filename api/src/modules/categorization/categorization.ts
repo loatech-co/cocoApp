@@ -73,10 +73,7 @@ export function sugerirCategoria(
  * categoría por cuántos antecedentes comparten tokens significativos, y gana
  * la que domine con claridad.
  */
-function desdeHistorial(
-  normalizada: string,
-  historial: AntecedenteHistorico[],
-): Sugerencia | null {
+function desdeHistorial(normalizada: string, historial: AntecedenteHistorico[]): Sugerencia | null {
   if (historial.length === 0) return null;
 
   const tokens = tokensSignificativos(normalizada);
@@ -145,8 +142,24 @@ function desdeReglas(normalizada: string, reglas: ReglaDeCategoria[]): Sugerenci
  * en medio catálogo y solo introducen ruido en la comparación.
  */
 const VACIAS = new Set([
-  'de', 'la', 'el', 'los', 'las', 'del', 'y', 'en', 'sa', 'sas', 'ltda',
-  'col', 'colombia', 'bogota', 'medellin', 'cali', 'sucursal', 'tienda',
+  'de',
+  'la',
+  'el',
+  'los',
+  'las',
+  'del',
+  'y',
+  'en',
+  'sa',
+  'sas',
+  'ltda',
+  'col',
+  'colombia',
+  'bogota',
+  'medellin',
+  'cali',
+  'sucursal',
+  'tienda',
 ]);
 
 export function tokensSignificativos(normalizada: string): Set<string> {
@@ -165,10 +178,35 @@ export function tokensSignificativos(normalizada: string): Set<string> {
  * El plan lo dice tal cual: no se aprende de descripciones vacías ni genéricas.
  */
 export const PALABRAS_GENERICAS: ReadonlySet<string> = new Set([
-  'pago', 'pagos', 'compra', 'compras', 'transferencia', 'transf', 'abono', 'abonos',
-  'retiro', 'consignacion', 'factura', 'facturas', 'recibo', 'recibos', 'varios',
-  'gasto', 'gastos', 'cuota', 'cuotas', 'mensualidad', 'servicio', 'servicios',
-  'movimiento', 'otros', 'otro', 'cargo', 'debito', 'credito', 'tarjeta',
+  'pago',
+  'pagos',
+  'compra',
+  'compras',
+  'transferencia',
+  'transf',
+  'abono',
+  'abonos',
+  'retiro',
+  'consignacion',
+  'factura',
+  'facturas',
+  'recibo',
+  'recibos',
+  'varios',
+  'gasto',
+  'gastos',
+  'cuota',
+  'cuotas',
+  'mensualidad',
+  'servicio',
+  'servicios',
+  'movimiento',
+  'otros',
+  'otro',
+  'cargo',
+  'debito',
+  'credito',
+  'tarjeta',
 ]);
 
 /**

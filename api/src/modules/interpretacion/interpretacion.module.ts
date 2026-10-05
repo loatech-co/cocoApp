@@ -4,7 +4,11 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
-import { InterpretacionService, type CapturaView, type InterpretacionView } from './interpretacion.service';
+import {
+  InterpretacionService,
+  type CapturaView,
+  type InterpretacionView,
+} from './interpretacion.service';
 
 /**
  * Las dos puertas del cerebro, bajo `/transactions` como el resto de lo que

@@ -36,7 +36,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     this.logger.log('Desconectado de la base de datos');
   }
 
-
   /**
    * Ping para el healthcheck: confirma que el proceso puede hablar con la base.
    * Distingue "la API está viva" de "la API está viva Y ve la base".
@@ -46,7 +45,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       await this.$queryRaw`SELECT 1`;
       return true;
     } catch (error) {
-      this.logger.error('La base de datos no responde', error instanceof Error ? error.stack : String(error));
+      this.logger.error(
+        'La base de datos no responde',
+        error instanceof Error ? error.stack : String(error),
+      );
       return false;
     }
   }

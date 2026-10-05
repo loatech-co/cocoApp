@@ -1,8 +1,4 @@
-import {
-  firmasDelArbol as firmasDelArbolCompartido,
-  normalizar,
-  type Firma,
-} from '@coco/lectura';
+import { firmasDelArbol as firmasDelArbolCompartido, normalizar, type Firma } from '@coco/lectura';
 import type { Category } from '@coco/types';
 
 /**
@@ -75,10 +71,7 @@ export function partir(escrito: string): string[] {
 }
 
 /** Por qué una palabra no entra. `null` si entra. */
-export function porQueNoEntra(
-  palabra: string,
-  yaPuestas: readonly string[],
-): string | null {
+export function porQueNoEntra(palabra: string, yaPuestas: readonly string[]): string | null {
   const limpia = limpiar(palabra);
 
   if (limpia.length < LARGO_MINIMO) {

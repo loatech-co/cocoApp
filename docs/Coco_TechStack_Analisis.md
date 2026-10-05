@@ -2,7 +2,7 @@
 
 ### Producto · Almacenamiento · Mantenibilidad · Escalabilidad
 
-**Fecha:** 6 de agosto de 2026 · **Autor:** Andres (Vettx) · **Para:** decisión de arquitectura de *Coco App*
+**Fecha:** 6 de agosto de 2026 · **Autor:** Andres (Vettx) · **Para:** decisión de arquitectura de _Coco App_
 
 ---
 
@@ -15,9 +15,9 @@ La conclusión del análisis es que **el stack ya definido es el correcto** para
 - **ORM:** Prisma.
 - **Base de datos:** MariaDB en Hostinger (etapa 1) → base gestionada (etapa 2).
 - **Auth:** Firebase Authentication.
-- **Procesamiento de documentos (OCR):** en el cliente (Tesseract.js / pdf.js), detrás de una interfaz *intercambiable*.
+- **Procesamiento de documentos (OCR):** en el cliente (Tesseract.js / pdf.js), detrás de una interfaz _intercambiable_.
 
-La tesis que sostiene todo el análisis es **"portable-first"**: elegir tecnologías estándar y desacopladas que **corran gratis hoy en Hostinger** y que, el día que Coco valga la pena venderse, se **muevan a infra escalable sin reescribir** — solo relocalizando piezas. La decisión más importante no es *qué* tecnología, sino *no quedar amarrado* a ninguna.
+La tesis que sostiene todo el análisis es **"portable-first"**: elegir tecnologías estándar y desacopladas que **corran gratis hoy en Hostinger** y que, el día que Coco valga la pena venderse, se **muevan a infra escalable sin reescribir** — solo relocalizando piezas. La decisión más importante no es _qué_ tecnología, sino _no quedar amarrado_ a ninguna.
 
 Sobre las dos preguntas que dispararon este análisis: **sí, Hostinger corre MariaDB (no MySQL), y sí, es una opción perfectamente buena** — de hecho es la correcta para la etapa 1. Y **sí, la arquitectura aguanta 50 usuarios en Hostinger con holgura**, principalmente porque el trabajo pesado (OCR) ocurre en el navegador y casi no toca el servidor.
 
@@ -31,26 +31,26 @@ Coco App es una aplicación de finanzas personales que registra movimientos, gas
 
 1. **Carga de servidor intrínsecamente baja.** El uso típico son lecturas (dashboard, listados) y escrituras esporádicas (registrar un movimiento, confirmar una importación). Lo único costoso —el OCR y el parsing— corre en el dispositivo del usuario, **no** en el servidor. Esto cambia radicalmente el dimensionamiento: el backend es una API JSON liviana, no un procesador de imágenes.
 2. **Datos sensibles pero pequeños.** Son datos financieros (máxima confidencialidad) pero de bajo volumen: montos, fechas, categorías, texto. Nada de blobs pesados en el servidor (las imágenes viven en el navegador).
-3. **Multiusuario latente.** Nace para un dueño, pero con el modelo de datos scopeado por `user_id` desde el día uno; volverse multiusuario es *quitar una suposición*, no rediseñar.
+3. **Multiusuario latente.** Nace para un dueño, pero con el modelo de datos scopeado por `user_id` desde el día uno; volverse multiusuario es _quitar una suposición_, no rediseñar.
 
 ### 2.2 Las dos etapas (lo que el usuario definió)
 
 - **Etapa 1 — Personal + piloto (hoy):** uso propio, con capacidad de **soportar al menos ~50 usuarios**, sobre **Hostinger** (Business/Cloud ya pagado) y **sin costo adicional**.
 - **Etapa 2 — Producto vendible (condicional):** si Coco funciona y se decide comercializar, se **migra a infraestructura profesional** (base gestionada, hosting de aplicaciones escalable, observabilidad, CI/CD).
 
-Esto es liberador para el diseño: **no hay que construir hoy para millones**. Hay que construir para 50 usuarios a costo cero, pero con decisiones que *no cierren* el camino a la etapa 2.
+Esto es liberador para el diseño: **no hay que construir hoy para millones**. Hay que construir para 50 usuarios a costo cero, pero con decisiones que _no cierren_ el camino a la etapa 2.
 
 ### 2.3 Ejes de evaluación
 
 Cada capa del stack se evalúa contra cinco ejes:
 
-| Eje | Pregunta que responde |
-|---|---|
-| **Adecuación al producto** | ¿Resuelve bien lo que Coco necesita? |
-| **Almacenamiento / dónde viven los datos** | ¿Es apropiado y seguro para datos financieros, gratis en Hostinger? |
-| **Mantenibilidad** | ¿Puede el dueño mantenerlo solo, con bajo esfuerzo y baja carga cognitiva? |
-| **Escalabilidad / portabilidad** | ¿Aguanta 50 usuarios hoy y se migra sin reescritura mañana? |
-| **Costo** | ¿Respeta el "cero costo recurrente" en la etapa 1? |
+| Eje                                        | Pregunta que responde                                                      |
+| ------------------------------------------ | -------------------------------------------------------------------------- |
+| **Adecuación al producto**                 | ¿Resuelve bien lo que Coco necesita?                                       |
+| **Almacenamiento / dónde viven los datos** | ¿Es apropiado y seguro para datos financieros, gratis en Hostinger?        |
+| **Mantenibilidad**                         | ¿Puede el dueño mantenerlo solo, con bajo esfuerzo y baja carga cognitiva? |
+| **Escalabilidad / portabilidad**           | ¿Aguanta 50 usuarios hoy y se migra sin reescritura mañana?                |
+| **Costo**                                  | ¿Respeta el "cero costo recurrente" en la etapa 1?                         |
 
 ---
 
@@ -95,7 +95,7 @@ Un proceso NestJS despacha peticiones JSON simples (consultas Prisma indexadas y
 
 Business aguanta 50 usuarios cómodo. Los límites aparecen **más allá** de la etapa 1, no en ella:
 
-- La **CPU burstable** tiene una cuota horaria no publicada; si el uso se volviera sostenido y pesado, Hostinger *throttlea*. Para tráfico liviano de API no es un problema; para cientos de usuarios activos sí sería una señal de migrar.
+- La **CPU burstable** tiene una cuota horaria no publicada; si el uso se volviera sostenido y pesado, Hostinger _throttlea_. Para tráfico liviano de API no es un problema; para cientos de usuarios activos sí sería una señal de migrar.
 - **Un solo proceso, sin autoescalado**: si el proceso cae, hay downtime hasta el reinicio. Aceptable para uso personal; inaceptable para un producto con clientes pagando.
 - **Respaldos manuales** (cron + `mysqldump`): suficiente para etapa 1, insuficiente para SLA de producto.
 
@@ -127,7 +127,7 @@ Cada capa se juzga por su adecuación, mantenibilidad, escalabilidad/portabilida
 
 **Mantenibilidad (fuerte).** Es **el mismo stack que Vettx**, donde ya tienes experticia y skills. Eso baja la carga cognitiva a casi cero: mantienes Coco con los mismos patrones que ya usas a diario. Su estructura opinada también significa que un tercero (o el "tú" del futuro) navega el código sin perderse.
 
-**Escalabilidad / portabilidad.** NestJS es Node.js estándar; corre igual en Hostinger, en un VPS, en Render/Railway/Fly, o en un contenedor. No hay amarre. Y su modularidad es justamente lo que paga dividendos cuando Coco pase de script personal a producto con equipo: es una arquitectura que *ya* está lista para crecer.
+**Escalabilidad / portabilidad.** NestJS es Node.js estándar; corre igual en Hostinger, en un VPS, en Render/Railway/Fly, o en un contenedor. No hay amarre. Y su modularidad es justamente lo que paga dividendos cuando Coco pase de script personal a producto con equipo: es una arquitectura que _ya_ está lista para crecer.
 
 **Alternativa considerada:** Fastify/Express serían más livianos para un uso puramente personal, pero dado que Coco "podría venderse", la estructura de NestJS es una inversión que se amortiza en la etapa 2 y que además ya dominas. **Veredicto: NestJS.**
 
@@ -139,7 +139,7 @@ Cada capa se juzga por su adecuación, mantenibilidad, escalabilidad/portabilida
 
 **Adecuación + mantenibilidad.** Modelar el esquema, evolucionarlo con migraciones y consultarlo con tipos seguros reduce drásticamente los bugs de datos, que en finanzas son los más caros. Es, además, el ORM que ya usas en Vettx.
 
-**Matiz técnico (documentado):** en desarrollo se usa `prisma migrate dev` contra una **MariaDB local** (necesita una *shadow database* que el hosting compartido no permite crear); a Hostinger solo se **aplican** migraciones con `prisma migrate deploy`, que no requiere shadow database. Esto define el flujo de trabajo de base de datos (ver sección 6).
+**Matiz técnico (documentado):** en desarrollo se usa `prisma migrate dev` contra una **MariaDB local** (necesita una _shadow database_ que el hosting compartido no permite crear); a Hostinger solo se **aplican** migraciones con `prisma migrate deploy`, que no requiere shadow database. Esto define el flujo de trabajo de base de datos (ver sección 6).
 
 **Veredicto: Prisma**, sin reservas. Es la pieza que hace barata la etapa 2.
 
@@ -165,7 +165,7 @@ Cada capa se juzga por su adecuación, mantenibilidad, escalabilidad/portabilida
 
 **Adecuación + costo.** Correr Tesseract.js (imágenes) y pdf.js (PDF) en el navegador cumple tres objetivos de una vez: **privacidad** (los extractos nunca salen del equipo), **costo cero** (no se paga OCR en la nube ni CPU de servidor) y **escalabilidad implícita** (cada usuario aporta su propia CPU). Para Coco es una elección de diseño excelente.
 
-**El ajuste importante (mantenibilidad/escalabilidad):** aunque hoy el OCR es 100% cliente, conviene implementarlo **detrás de una interfaz intercambiable** (un contrato `OcrProvider` que hoy resuelve `TesseractProvider` en el navegador). ¿Por qué? Porque en la etapa 2, un producto vendible quizá quiera ofrecer OCR de servidor de mayor calidad o consistencia (por ejemplo, un microservicio propio con Tesseract/PaddleOCR en un VPS, o un OCR de pago como *tier* premium). Si el pipeline de importación llama a una interfaz y no directamente a Tesseract, **añadir esa opción es enchufar una implementación nueva, no reescribir el módulo**. Esta es la única recomendación de diseño *nueva* que sale de este análisis.
+**El ajuste importante (mantenibilidad/escalabilidad):** aunque hoy el OCR es 100% cliente, conviene implementarlo **detrás de una interfaz intercambiable** (un contrato `OcrProvider` que hoy resuelve `TesseractProvider` en el navegador). ¿Por qué? Porque en la etapa 2, un producto vendible quizá quiera ofrecer OCR de servidor de mayor calidad o consistencia (por ejemplo, un microservicio propio con Tesseract/PaddleOCR en un VPS, o un OCR de pago como _tier_ premium). Si el pipeline de importación llama a una interfaz y no directamente a Tesseract, **añadir esa opción es enchufar una implementación nueva, no reescribir el módulo**. Esta es la única recomendación de diseño _nueva_ que sale de este análisis.
 
 **Veredicto: OCR en el cliente, tras una interfaz `OcrProvider`.**
 
@@ -192,18 +192,18 @@ Aquí está la prueba de que la arquitectura "portable-first" cumple su promesa.
 
 ### 7.1 Fotografía por fases
 
-| Pieza | Etapa 1 (personal, ≤50 usuarios) | Etapa 2 (producto) | ¿Qué cambia en el código? |
-|---|---|---|---|
-| Frontend SPA | Carpeta del subdominio en Hostinger | CDN (Cloudflare Pages / Netlify / Vercel) | Nada (solo dónde se sube) |
-| API NestJS | Node.js Web App de Hostinger | VPS / Render / Railway / Fly, con réplicas | Nada (variables de entorno) |
-| Base de datos | MariaDB de Hostinger | MySQL/Postgres gestionado (réplicas, backups) | `DATABASE_URL` + migración de datos |
-| Auth | Firebase (free tier) | Firebase (plan pago) o Auth0/Cognito | Nada o cambio de proveedor de token |
-| OCR | Cliente (Tesseract.js) | Cliente + opción de servidor (microservicio) | Se enchufa un `OcrProvider` nuevo |
-| Trabajos pesados | Cron ligero | Cola (BullMQ + Redis) si hace falta | Se añade, no se reescribe |
+| Pieza            | Etapa 1 (personal, ≤50 usuarios)    | Etapa 2 (producto)                            | ¿Qué cambia en el código?           |
+| ---------------- | ----------------------------------- | --------------------------------------------- | ----------------------------------- |
+| Frontend SPA     | Carpeta del subdominio en Hostinger | CDN (Cloudflare Pages / Netlify / Vercel)     | Nada (solo dónde se sube)           |
+| API NestJS       | Node.js Web App de Hostinger        | VPS / Render / Railway / Fly, con réplicas    | Nada (variables de entorno)         |
+| Base de datos    | MariaDB de Hostinger                | MySQL/Postgres gestionado (réplicas, backups) | `DATABASE_URL` + migración de datos |
+| Auth             | Firebase (free tier)                | Firebase (plan pago) o Auth0/Cognito          | Nada o cambio de proveedor de token |
+| OCR              | Cliente (Tesseract.js)              | Cliente + opción de servidor (microservicio)  | Se enchufa un `OcrProvider` nuevo   |
+| Trabajos pesados | Cron ligero                         | Cola (BullMQ + Redis) si hace falta           | Se añade, no se reescribe           |
 
 ### 7.2 Multi-tenancy: ya está resuelto
 
-El obstáculo más común al convertir una app personal en SaaS es que "todo asume un solo usuario". Coco **no** tiene ese problema: el modelo de datos scopea **cada fila por `user_id`** desde el inicio, y la API deriva ese `user_id` del token verificado (nunca del cliente). Pasar a multiusuario es **poblar más usuarios**, no rediseñar. Si el producto necesitara *organizaciones/equipos* (varias personas compartiendo finanzas), se añade una capa de `tenant_id`/roles sobre la base existente — evolución incremental, no reconstrucción.
+El obstáculo más común al convertir una app personal en SaaS es que "todo asume un solo usuario". Coco **no** tiene ese problema: el modelo de datos scopea **cada fila por `user_id`** desde el inicio, y la API deriva ese `user_id` del token verificado (nunca del cliente). Pasar a multiusuario es **poblar más usuarios**, no rediseñar. Si el producto necesitara _organizaciones/equipos_ (varias personas compartiendo finanzas), se añade una capa de `tenant_id`/roles sobre la base existente — evolución incremental, no reconstrucción.
 
 ### 7.3 Disparadores de migración (cuándo mover cada pieza)
 
@@ -220,14 +220,14 @@ No se migra por gusto, sino por señal:
 
 Para que el análisis sea honesto, estos son los límites reales de la elección de etapa 1 (ninguno bloquea los 50 usuarios; todos son señales de la etapa 2):
 
-| Riesgo / techo | Impacto | Mitigación |
-|---|---|---|
-| CPU burstable con cuota horaria no publicada | Throttling si el uso se vuelve pesado y sostenido | Carga liviana (OCR en cliente) lo evita; migrar si aparece |
-| RAM 1,5 GB (Business), un solo proceso | Sin autoescalado; caída = downtime hasta reinicio | Cloud Startup (3 GB, CPU dedicada) da margen; migrar en etapa 2 |
-| `max_user_connections` de MariaDB compartida | Cuello si hay muchas conexiones concurrentes | `connection_limit` bajo en Prisma; base gestionada en etapa 2 |
-| Respaldos manuales (cron + mysqldump) | Riesgo de pérdida de datos si falla el cron | Verificar restauración periódicamente; backups gestionados en etapa 2 |
-| Quirks del Node.js Web App (arranque, PATH de Node en SSH) | Fricción operativa ocasional | Documentado en el PRD (cap. 25) |
-| Límites del free tier de Firebase | Aparecen solo a gran escala | Amplios para etapa 1; plan pago en etapa 2 |
+| Riesgo / techo                                             | Impacto                                           | Mitigación                                                            |
+| ---------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------- |
+| CPU burstable con cuota horaria no publicada               | Throttling si el uso se vuelve pesado y sostenido | Carga liviana (OCR en cliente) lo evita; migrar si aparece            |
+| RAM 1,5 GB (Business), un solo proceso                     | Sin autoescalado; caída = downtime hasta reinicio | Cloud Startup (3 GB, CPU dedicada) da margen; migrar en etapa 2       |
+| `max_user_connections` de MariaDB compartida               | Cuello si hay muchas conexiones concurrentes      | `connection_limit` bajo en Prisma; base gestionada en etapa 2         |
+| Respaldos manuales (cron + mysqldump)                      | Riesgo de pérdida de datos si falla el cron       | Verificar restauración periódicamente; backups gestionados en etapa 2 |
+| Quirks del Node.js Web App (arranque, PATH de Node en SSH) | Fricción operativa ocasional                      | Documentado en el PRD (cap. 25)                                       |
+| Límites del free tier de Firebase                          | Aparecen solo a gran escala                       | Amplios para etapa 1; plan pago en etapa 2                            |
 
 La lectura correcta de esta tabla: **el costo cero de Hostinger es la decisión correcta para la etapa 1, y sus límites son exactamente las señales que indicarán cuándo pasar a la etapa 2** — no defectos que haya que arreglar hoy.
 
@@ -250,15 +250,15 @@ Para que la promesa "portable-first" se cumpla, el código de la etapa 1 debe re
 
 ## 10. Tabla-resumen de decisiones
 
-| Capa | Decisión (etapa 1) | Por qué | Movimiento en etapa 2 |
-|---|---|---|---|
-| Frontend | React 19 + Vite + TS (SPA) | Estándar, mantenible, talento abundante, portable | Servir desde CDN gratuito |
-| Backend | Node.js + NestJS + TS | Estructura para 10 módulos, = stack Vettx, portable | Réplicas en VPS/PaaS |
-| ORM | Prisma | Type-safe, migraciones, **abstrae el motor** | Cambiar `DATABASE_URL` |
-| Base de datos | **MariaDB** (Hostinger) | Gratis, madura, compatible con Prisma vía `mysql` | Gestionada (MySQL/Postgres) |
-| Auth | Firebase Auth | Seguridad delegada, escala a millones, free tier | Plan pago o migrar proveedor |
-| OCR | Cliente (Tesseract.js/pdf.js) tras `OcrProvider` | Privacidad + costo cero + escala con el cliente | Añadir opción de servidor |
-| Despliegue | Node.js Web App + estático (Hostinger) | Cero costo, ya pagado | Lift-and-shift a infra pro |
+| Capa          | Decisión (etapa 1)                               | Por qué                                             | Movimiento en etapa 2        |
+| ------------- | ------------------------------------------------ | --------------------------------------------------- | ---------------------------- |
+| Frontend      | React 19 + Vite + TS (SPA)                       | Estándar, mantenible, talento abundante, portable   | Servir desde CDN gratuito    |
+| Backend       | Node.js + NestJS + TS                            | Estructura para 10 módulos, = stack Vettx, portable | Réplicas en VPS/PaaS         |
+| ORM           | Prisma                                           | Type-safe, migraciones, **abstrae el motor**        | Cambiar `DATABASE_URL`       |
+| Base de datos | **MariaDB** (Hostinger)                          | Gratis, madura, compatible con Prisma vía `mysql`   | Gestionada (MySQL/Postgres)  |
+| Auth          | Firebase Auth                                    | Seguridad delegada, escala a millones, free tier    | Plan pago o migrar proveedor |
+| OCR           | Cliente (Tesseract.js/pdf.js) tras `OcrProvider` | Privacidad + costo cero + escala con el cliente     | Añadir opción de servidor    |
+| Despliegue    | Node.js Web App + estático (Hostinger)           | Cero costo, ya pagado                               | Lift-and-shift a infra pro   |
 
 ---
 

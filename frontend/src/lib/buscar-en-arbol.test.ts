@@ -94,9 +94,7 @@ describe('Buscar', () => {
       {
         id: 3,
         name: 'Centro',
-        children: [
-          { id: 30, name: 'Transporte', children: [{ id: 300, name: 'Transporte' }] },
-        ],
+        children: [{ id: 30, name: 'Transporte', children: [{ id: 300, name: 'Transporte' }] }],
       },
     ]);
     expect(buscarEnArbol(conConcepto, 'transporte').map((e) => e.nivel)).toEqual([

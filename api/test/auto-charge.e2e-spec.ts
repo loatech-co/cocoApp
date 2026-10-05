@@ -36,7 +36,9 @@ describe('Auto-charge task (e2e)', () => {
 
   async function autoPaidConcept(userId: bigint, name: string): Promise<bigint> {
     const center = await env.prisma.category.create({ data: { userId, name: `${name} centro` } });
-    const group = await env.prisma.category.create({ data: { userId, name: `${name} grupo`, parentId: center.id } });
+    const group = await env.prisma.category.create({
+      data: { userId, name: `${name} grupo`, parentId: center.id },
+    });
     const concept = await env.prisma.category.create({
       data: {
         userId,
@@ -61,8 +63,12 @@ describe('Auto-charge task (e2e)', () => {
 
     expect(first).toBe(2);
     expect(second).toBe(0);
-    expect(await env.prisma.transaction.count({ where: { userId: ana.id, categoryId: anaConcept } })).toBe(1);
-    expect(await env.prisma.transaction.count({ where: { userId: bruno.id, categoryId: brunoConcept } })).toBe(1);
+    expect(
+      await env.prisma.transaction.count({ where: { userId: ana.id, categoryId: anaConcept } }),
+    ).toBe(1);
+    expect(
+      await env.prisma.transaction.count({ where: { userId: bruno.id, categoryId: brunoConcept } }),
+    ).toBe(1);
   });
 
   it('two runs at the same time still charge once', async () => {

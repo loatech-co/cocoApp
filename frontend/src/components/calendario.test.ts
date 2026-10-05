@@ -46,9 +46,7 @@ describe('El rango escrito', () => {
   });
 
   it('repite el mes cuando cambia, pero el año solo una vez', () => {
-    expect(rangoLargo('2026-08-20', '2026-09-10')).toBe(
-      '20 de agosto — 10 de septiembre de 2026',
-    );
+    expect(rangoLargo('2026-08-20', '2026-09-10')).toBe('20 de agosto — 10 de septiembre de 2026');
   });
 
   it('escribe los dos años cuando el rango cruza de uno a otro', () => {

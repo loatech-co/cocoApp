@@ -45,9 +45,7 @@ describe('Preferencias del usuario', () => {
     });
 
     it('lo guardado gana al valor por defecto', () => {
-      const resultado = combinarConDefectos([
-        { prefKey: CUENTAS_HABILITADAS, prefValue: true },
-      ]);
+      const resultado = combinarConDefectos([{ prefKey: CUENTAS_HABILITADAS, prefValue: true }]);
       expect(resultado[CUENTAS_HABILITADAS]).toBe(true);
     });
 

@@ -135,8 +135,9 @@ export function Tendencia({
           <strong className="tabular font-semibold text-foreground">{formatCOP(promedio)}</strong>
         </span>
         <span>
-          Pico <strong className="tabular font-semibold text-foreground">{formatCOP(maximo)}</strong>{' '}
-          en {etiquetaDeCubo(pico.bucket)}
+          Pico{' '}
+          <strong className="tabular font-semibold text-foreground">{formatCOP(maximo)}</strong> en{' '}
+          {etiquetaDeCubo(pico.bucket)}
         </span>
       </div>
 
@@ -294,7 +295,6 @@ export function Tendencia({
           </span>
         ))}
       </div>
-
     </div>
   );
 }
@@ -458,10 +458,7 @@ function area(serie: number[], techo: number, total: number): string {
   return `${linea(serie, techo, total)} L ${equis(total - 1, total).toFixed(2)} ${base} L ${equis(0, total).toFixed(2)} ${base} Z`;
 }
 
-const MESES = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-];
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 /**
  * La fecha de un punto, entera: `6 de septiembre de 2026` o `Septiembre de

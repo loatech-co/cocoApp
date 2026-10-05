@@ -17,9 +17,20 @@ describe('InterpretacionService con una clasificación elegida', () => {
 
   // Costos variables (10) › Alimentación (20) › Mercado (30); Transporte (21)
   // es categoría sin conceptos; Gimnasio (31) está archivado.
-  const filas = new Map<bigint, { id: bigint; name: string; isArchived: boolean; parent: { id: bigint; parentId: bigint | null } | null }>([
+  const filas = new Map<
+    bigint,
+    {
+      id: bigint;
+      name: string;
+      isArchived: boolean;
+      parent: { id: bigint; parentId: bigint | null } | null;
+    }
+  >([
     [10n, { id: 10n, name: 'Costos variables', isArchived: false, parent: null }],
-    [20n, { id: 20n, name: 'Alimentación', isArchived: false, parent: { id: 10n, parentId: null } }],
+    [
+      20n,
+      { id: 20n, name: 'Alimentación', isArchived: false, parent: { id: 10n, parentId: null } },
+    ],
     [21n, { id: 21n, name: 'Transporte', isArchived: false, parent: { id: 10n, parentId: null } }],
     [30n, { id: 30n, name: 'Mercado', isArchived: false, parent: { id: 20n, parentId: 10n } }],
     [31n, { id: 31n, name: 'Gimnasio', isArchived: true, parent: { id: 20n, parentId: 10n } }],
@@ -30,10 +41,15 @@ describe('InterpretacionService con una clasificación elegida', () => {
   let interpretar: jest.SpyInstance;
 
   beforeEach(() => {
-    crear = jest.fn((_userId: bigint, dto: Record<string, unknown>) => Promise.resolve({ ...dto, id: 99n }));
+    crear = jest.fn((_userId: bigint, dto: Record<string, unknown>) =>
+      Promise.resolve({ ...dto, id: 99n }),
+    );
     const prisma = {
       // Sin repetidas ni candidatas a duplicado: aquí se prueba la clasificación.
-      transaction: { findFirst: jest.fn().mockResolvedValue(null), findMany: jest.fn().mockResolvedValue([]) },
+      transaction: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
       category: {
         findFirst: jest.fn(({ where }: { where: { id: bigint; userId: bigint } }) =>
           Promise.resolve(where.userId === USUARIO ? (filas.get(where.id) ?? null) : null),
@@ -46,7 +62,9 @@ describe('InterpretacionService con una clasificación elegida', () => {
         ]),
       },
     } as unknown as PrismaService;
-    const categorization = { sugerirPara: jest.fn().mockResolvedValue(null) } as unknown as CategorizationService;
+    const categorization = {
+      sugerirPara: jest.fn().mockResolvedValue(null),
+    } as unknown as CategorizationService;
     const transactions = { crear } as unknown as TransactionsService;
     servicio = new InterpretacionService(prisma, categorization, transactions);
     interpretar = jest.spyOn(motor, 'interpretar');
@@ -60,33 +78,60 @@ describe('InterpretacionService con una clasificación elegida', () => {
   it('un concepto elegido se guarda con certeza alta, sin fuente y sin revisar', async () => {
     const r = await capturar({ monto: '45000', category_id: '30' });
 
-    expect(r.clasificacion).toMatchObject({ certeza: 'alta', fuente: null, nombre: 'Mercado', motivo: 'Lo eligió la persona.' });
+    expect(r.clasificacion).toMatchObject({
+      certeza: 'alta',
+      fuente: null,
+      nombre: 'Mercado',
+      motivo: 'Lo eligió la persona.',
+    });
     expect(r.clasificacion.concepto_id).toBe(30n);
     expect(r.clasificacion.categoria_id).toBe(20n);
-    expect(crear).toHaveBeenCalledWith(USUARIO, expect.objectContaining({ category_id: 30, por_revisar: false }));
+    expect(crear).toHaveBeenCalledWith(
+      USUARIO,
+      expect.objectContaining({ category_id: 30, por_revisar: false }),
+    );
   });
 
   it('una categoría elegida (profundidad 2) queda con certeza media y por revisar', async () => {
     const r = await capturar({ monto: '18500', category_id: '21' });
 
-    expect(r.clasificacion).toMatchObject({ certeza: 'media', concepto_id: null, categoria_id: 21n, nombre: 'Transporte' });
-    expect(crear).toHaveBeenCalledWith(USUARIO, expect.objectContaining({ category_id: 21, por_revisar: true }));
+    expect(r.clasificacion).toMatchObject({
+      certeza: 'media',
+      concepto_id: null,
+      categoria_id: 21n,
+      nombre: 'Transporte',
+    });
+    expect(crear).toHaveBeenCalledWith(
+      USUARIO,
+      expect.objectContaining({ category_id: 21, por_revisar: true }),
+    );
   });
 
   it('un centro de costos no clasifica nada: 422', async () => {
-    await expect(capturar({ monto: '1000', category_id: '10' })).rejects.toBeInstanceOf(UnprocessableEntityException);
+    await expect(capturar({ monto: '1000', category_id: '10' })).rejects.toBeInstanceOf(
+      UnprocessableEntityException,
+    );
     expect(crear).not.toHaveBeenCalled();
   });
 
   it('un concepto archivado, 422', async () => {
-    await expect(capturar({ monto: '1000', category_id: '31' })).rejects.toBeInstanceOf(UnprocessableEntityException);
+    await expect(capturar({ monto: '1000', category_id: '31' })).rejects.toBeInstanceOf(
+      UnprocessableEntityException,
+    );
   });
 
   it('un id ajeno o inexistente, 422', async () => {
-    await expect(capturar({ monto: '1000', category_id: '404' })).rejects.toBeInstanceOf(UnprocessableEntityException);
-    await expect(servicio.capturar(2n, { source: 'ios_manual', external_ref: 'ref-2', monto: '1000', category_id: '30' } as never)).rejects.toBeInstanceOf(
+    await expect(capturar({ monto: '1000', category_id: '404' })).rejects.toBeInstanceOf(
       UnprocessableEntityException,
     );
+    await expect(
+      servicio.capturar(2n, {
+        source: 'ios_manual',
+        external_ref: 'ref-2',
+        monto: '1000',
+        category_id: '30',
+      } as never),
+    ).rejects.toBeInstanceOf(UnprocessableEntityException);
   });
 
   it('sin texto ni comercio, con concepto y monto, construye el resultado sin llamar a interpretar()', async () => {
@@ -94,7 +139,15 @@ describe('InterpretacionService con una clasificación elegida', () => {
     const r = await capturar({ monto: '45000,00', fecha: '2026-10-03', category_id: '30' });
 
     expect(interpretar).not.toHaveBeenCalled();
-    expect(crear).toHaveBeenCalledWith(USUARIO, expect.objectContaining({ amount: '45000.00', date: '2026-10-03', merchant: undefined, description: undefined }));
+    expect(crear).toHaveBeenCalledWith(
+      USUARIO,
+      expect.objectContaining({
+        amount: '45000.00',
+        date: '2026-10-03',
+        merchant: undefined,
+        description: undefined,
+      }),
+    );
     expect(r.resumen).toBe('Registrado: $45.000 · Mercado');
   });
 
@@ -104,17 +157,31 @@ describe('InterpretacionService con una clasificación elegida', () => {
   });
 
   it('con texto, lo elegido manda sobre lo que el motor propone', async () => {
-    const r = await capturar({ texto: 'compra por $45.000 en KOBA COLOMBIA el 03/10/2026', source: 'sms', category_id: '21' });
+    const r = await capturar({
+      texto: 'compra por $45.000 en KOBA COLOMBIA el 03/10/2026',
+      source: 'sms',
+      category_id: '21',
+    });
 
     expect(interpretar).toHaveBeenCalledTimes(1);
-    expect(r.clasificacion).toMatchObject({ certeza: 'media', categoria_id: 21n, motivo: 'Lo eligió la persona.' });
+    expect(r.clasificacion).toMatchObject({
+      certeza: 'media',
+      categoria_id: 21n,
+      motivo: 'Lo eligió la persona.',
+    });
     // Y lo leído del texto se conserva.
-    expect(crear).toHaveBeenCalledWith(USUARIO, expect.objectContaining({ amount: '45000', date: '2026-10-03', category_id: 21 }));
+    expect(crear).toHaveBeenCalledWith(
+      USUARIO,
+      expect.objectContaining({ amount: '45000', date: '2026-10-03', category_id: 21 }),
+    );
   });
 
   it('la nota va a notes, y sin monto se le añade el aviso', async () => {
     await capturar({ monto: '1000', category_id: '30', nota: 'Para la semana' });
-    expect(crear).toHaveBeenLastCalledWith(USUARIO, expect.objectContaining({ notes: 'Para la semana' }));
+    expect(crear).toHaveBeenLastCalledWith(
+      USUARIO,
+      expect.objectContaining({ notes: 'Para la semana' }),
+    );
 
     await capturar({ comercio: 'Exito', category_id: '30', nota: 'Sin ticket' });
     expect(crear).toHaveBeenLastCalledWith(
@@ -123,6 +190,9 @@ describe('InterpretacionService con una clasificación elegida', () => {
     );
 
     await capturar({ comercio: 'Exito', category_id: '30' });
-    expect(crear).toHaveBeenLastCalledWith(USUARIO, expect.objectContaining({ notes: 'Capturado sin valor: hay que ponerlo.' }));
+    expect(crear).toHaveBeenLastCalledWith(
+      USUARIO,
+      expect.objectContaining({ notes: 'Capturado sin valor: hay que ponerlo.' }),
+    );
   });
 });

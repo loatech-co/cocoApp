@@ -226,7 +226,9 @@ export function DashboardPage() {
             */}
             <Kpi
               etiqueta="Presupuesto necesario"
-              valor={formatCOP(alDia ? dashboard.data.required_budget : dashboard.data.range.expense)}
+              valor={formatCOP(
+                alDia ? dashboard.data.required_budget : dashboard.data.range.expense,
+              )}
               detalle={alDia ? 'Costos fijos de este mes' : 'Lo que costó el periodo'}
             />
             <Kpi
@@ -649,9 +651,7 @@ function Distribucion({
         ) : (
           /* El NOMBRE de a quién pertenecen estas filas, no el nivel al que
              están. "Por categoría" no dice de qué: las categorías de cuál centro. */
-          <p className="truncate text-xs text-muted-foreground">
-            {padre?.name ?? `Por ${nivel}`}
-          </p>
+          <p className="truncate text-xs text-muted-foreground">{padre?.name ?? `Por ${nivel}`}</p>
         )}
 
         {/* `flex-1` para que la dona tenga contra qué medir: la tarjeta ya
@@ -671,5 +671,3 @@ function Distribucion({
     </Card>
   );
 }
-
-

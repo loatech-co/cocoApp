@@ -50,7 +50,10 @@ const objectUrl = (storageKey) =>
   `${url}/storage/v1/object/${bucket}/${storageKey.split('/').map(encodeURIComponent).join('/')}`;
 
 async function download(storageKey) {
-  const response = await fetch(objectUrl(storageKey), { headers: auth, signal: AbortSignal.timeout(60_000) });
+  const response = await fetch(objectUrl(storageKey), {
+    headers: auth,
+    signal: AbortSignal.timeout(60_000),
+  });
   return response.ok ? Buffer.from(await response.arrayBuffer()) : null;
 }
 
@@ -66,15 +69,26 @@ async function upload(storageKey, content, mimeType) {
 
 async function listFiles(dir) {
   const entries = await readdir(dir, { recursive: true, withFileTypes: true });
-  return entries.filter((entry) => entry.isFile()).map((entry) => relative(dir, join(entry.parentPath, entry.name)));
+  return entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => relative(dir, join(entry.parentPath, entry.name)));
 }
 
 const client = new pg.Client({ connectionString: databaseUrl });
 await client.connect();
-const { rows } = await client.query('SELECT id, storage_key, huella, mime_type FROM soportes ORDER BY id');
+const { rows } = await client.query(
+  'SELECT id, storage_key, huella, mime_type FROM soportes ORDER BY id',
+);
 await client.end();
 
-const tally = { rows: rows.length, uploaded: 0, alreadyThere: 0, missingLocal: [], badLocalHash: [], failed: [] };
+const tally = {
+  rows: rows.length,
+  uploaded: 0,
+  alreadyThere: 0,
+  missingLocal: [],
+  badLocalHash: [],
+  failed: [],
+};
 
 /** Handles one row; never throws, records the outcome in `tally`. */
 async function copyOne(row) {
@@ -100,7 +114,8 @@ async function copyOne(row) {
       remote = await download(row.storage_key);
       tally.uploaded += 1;
     }
-    if (!remote || sha256(remote) !== row.huella) tally.failed.push(`${row.storage_key}: hash differs in the bucket`);
+    if (!remote || sha256(remote) !== row.huella)
+      tally.failed.push(`${row.storage_key}: hash differs in the bucket`);
   } catch (error) {
     tally.failed.push(`${row.storage_key}: ${error.message}`);
   }
@@ -109,7 +124,8 @@ async function copyOne(row) {
 // Four at a time: fast enough for a few hundred files, gentle on the API.
 for (let index = 0; index < rows.length; index += 4) {
   await Promise.all(rows.slice(index, index + 4).map(copyOne));
-  if ((index / 4) % 25 === 0) process.stdout.write(`  ${Math.min(index + 4, rows.length)}/${rows.length}\r`);
+  if ((index / 4) % 25 === 0)
+    process.stdout.write(`  ${Math.min(index + 4, rows.length)}/${rows.length}\r`);
 }
 
 const referenced = new Set(rows.map((row) => row.storage_key));
@@ -118,13 +134,22 @@ const orphans = localFiles.filter((file) => !referenced.has(file));
 
 console.log(`\nproject ${new URL(url).host} · bucket "${bucket}"${dryRun ? ' · DRY RUN' : ''}`);
 console.log(`rows ${tally.rows} · local files ${localFiles.length}`);
-console.log(`uploaded ${tally.uploaded} · already in bucket ${tally.alreadyThere} · verified ${tally.uploaded + tally.alreadyThere - tally.failed.length}`);
-console.log(`missing locally ${tally.missingLocal.length} · local hash mismatch ${tally.badLocalHash.length} · failed ${tally.failed.length}`);
+console.log(
+  `uploaded ${tally.uploaded} · already in bucket ${tally.alreadyThere} · verified ${tally.uploaded + tally.alreadyThere - tally.failed.length}`,
+);
+console.log(
+  `missing locally ${tally.missingLocal.length} · local hash mismatch ${tally.badLocalHash.length} · failed ${tally.failed.length}`,
+);
 console.log(`orphans on disk (no row; NOT deleted): ${orphans.length}`);
-for (const line of [...tally.missingLocal.map((k) => `missing: ${k}`), ...tally.badLocalHash.map((k) => `bad hash: ${k}`), ...tally.failed]) {
+for (const line of [
+  ...tally.missingLocal.map((k) => `missing: ${k}`),
+  ...tally.badLocalHash.map((k) => `bad hash: ${k}`),
+  ...tally.failed,
+]) {
   console.log(`  ${line}`);
 }
-if (orphans.length > 0) console.log(`  orphans: ${orphans.slice(0, 20).join(', ')}${orphans.length > 20 ? ' …' : ''}`);
+if (orphans.length > 0)
+  console.log(`  orphans: ${orphans.slice(0, 20).join(', ')}${orphans.length > 20 ? ' …' : ''}`);
 
 const ok =
   tally.missingLocal.length === 0 &&

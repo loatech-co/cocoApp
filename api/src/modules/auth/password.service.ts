@@ -29,12 +29,8 @@ export class PasswordService {
 
   constructor(config: ConfigService) {
     // Se puede apagar para entornos sin salida a internet (CI, pruebas).
-    this.verificarFiltradas =
-      config.get<string>('CHECK_BREACHED_PASSWORDS', 'true') !== 'false';
+    this.verificarFiltradas = config.get<string>('CHECK_BREACHED_PASSWORDS', 'true') !== 'false';
   }
-
-
-
 
   /**
    * Valida una contraseña candidata contra las tres capas: composición,
@@ -51,9 +47,7 @@ export class PasswordService {
     }
 
     if (valida && problemas.length === 0 && (await this.apareceEnFiltraciones(password))) {
-      problemas.push(
-        'Esta contraseña aparece en filtraciones públicas conocidas. Elige otra.',
-      );
+      problemas.push('Esta contraseña aparece en filtraciones públicas conocidas. Elige otra.');
     }
 
     if (problemas.length > 0) {

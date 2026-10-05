@@ -17,7 +17,12 @@ import { cn } from '@/lib/utils';
 export function Interruptor({ className, ...props }: ComponentProps<'input'>) {
   return (
     <span className="relative inline-flex shrink-0">
-      <input type="checkbox" role="switch" className="peer absolute inset-0 z-10 cursor-pointer opacity-0" {...props} />
+      <input
+        type="checkbox"
+        role="switch"
+        className="peer absolute inset-0 z-10 cursor-pointer opacity-0"
+        {...props}
+      />
       <span
         aria-hidden="true"
         className={cn(

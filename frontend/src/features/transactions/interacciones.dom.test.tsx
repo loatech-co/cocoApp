@@ -40,9 +40,9 @@ vi.mock('./leer-soporte', () => ({ leerSoporte: vi.fn() }));
   escribe —el campo libre se cambió por el buscador—: es la forma de poner una
   sugerencia encima del formulario sin pasar por un recibo.
 */
-const sugerencia = vi.fn<() => { category_id: number; confidence: number; reason: 'historial' } | null>(
-  () => null,
-);
+const sugerencia = vi.fn<
+  () => { category_id: number; confidence: number; reason: 'historial' } | null
+>(() => null);
 vi.mock('@/features/categorization/use-sugerencia', () => ({
   useSugerenciaDeCategoria: () => sugerencia(),
 }));
@@ -59,7 +59,13 @@ const ARBOL = [
         name: 'Servicios públicos',
         kind: 'expense',
         children: [
-          { id: 100, name: 'Celsia (Energía)', kind: 'expense', palabras_clave: ['celsia'], children: [] },
+          {
+            id: 100,
+            name: 'Celsia (Energía)',
+            kind: 'expense',
+            palabras_clave: ['celsia'],
+            children: [],
+          },
           { id: 101, name: 'Acueducto', kind: 'expense', children: [] },
         ],
       },
@@ -81,7 +87,8 @@ beforeEach(() => {
   // La red contesta por ruta: la ficha pide el árbol y los recientes nada más
   // abrirse, y una respuesta única le daría un `{ id }` donde espera listas.
   apiFetch.mockImplementation((ruta: string, opciones?: { method?: string }) => {
-    if (opciones?.method === 'POST' && ruta === '/transactions') return Promise.resolve({ data: { id: 42 } });
+    if (opciones?.method === 'POST' && ruta === '/transactions')
+      return Promise.resolve({ data: { id: 42 } });
     if (ruta.startsWith('/categories')) return Promise.resolve({ data: ARBOL });
     if (ruta.startsWith('/transactions')) return Promise.resolve({ data: [], meta: {} });
     return Promise.resolve({ data: null, meta: {} });
@@ -109,7 +116,9 @@ function abrirFichaNueva(): void {
 }
 
 const escribirElMonto = () =>
-  gesto(() => fireEvent.change(document.getElementById('mov-valor')!, { target: { value: '120000' } }));
+  gesto(() =>
+    fireEvent.change(document.getElementById('mov-valor')!, { target: { value: '120000' } }),
+  );
 
 async function guardar(): Promise<void> {
   // El `async` sin `await` es a propósito: `act` asíncrono vacía además la
@@ -123,9 +132,8 @@ async function guardar(): Promise<void> {
 
 /** Lo que se mandó a crear, para comprobar que fue CON clasificación. */
 const cuerpoCreado = () =>
-  apiFetch.mock.calls.find(([ruta, o]) => ruta === '/transactions' && o?.method === 'POST')?.[1]?.body as
-    | { category_id: number | null; amount: unknown }
-    | undefined;
+  apiFetch.mock.calls.find(([ruta, o]) => ruta === '/transactions' && o?.method === 'POST')?.[1]
+    ?.body as { category_id: number | null; amount: unknown } | undefined;
 
 const seAprendio = () => apiFetch.mock.calls.some(([ruta]) => ruta === '/categorization/learn');
 
@@ -142,7 +150,9 @@ describe('Registrar un gasto con clasificación completa', () => {
     // gesto, escribir es otro, elegir el resultado es el tercero.
     gesto(() => fireEvent.click(screen.getByRole('button', { name: /Concepto/ }))); // 2
     gesto(() =>
-      fireEvent.change(screen.getByLabelText('Buscar concepto o categoría'), { target: { value: 'celsia' } }),
+      fireEvent.change(screen.getByLabelText('Buscar concepto o categoría'), {
+        target: { value: 'celsia' },
+      }),
     ); // 3
     gesto(() => fireEvent.click(screen.getByRole('option', { name: /^Celsia/ }))); // 4
 
@@ -170,7 +180,9 @@ describe('Registrar un gasto con clasificación completa', () => {
     // La sugerencia ya está puesta y dice de dónde salió. Mirarla no es un
     // gesto: la regla de no guardar nunca una clasificación sin que la
     // persona la VEA se cumple con tenerla delante, no con un clic más.
-    expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain('Celsia (Energía)');
+    expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain(
+      'Celsia (Energía)',
+    );
     expect(screen.getByText(/Sugerido por tu historial/)).toBeDefined();
 
     await guardar(); // 2

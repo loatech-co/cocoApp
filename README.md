@@ -18,17 +18,17 @@ infraestructura profesional sin reescribir la lógica de negocio.
 
 ## Stack
 
-| Capa | Tecnología |
-|---|---|
-| Frontend | React 19 + Vite 6 + TypeScript (SPA estática) |
-| Estilos | Tailwind CSS 4 + componentes shadcn · iconos **solo** lucide |
-| Estado | TanStack Query 5 (servidor) + Zustand 5 (UI efímera) |
-| Backend | Node.js 20/22 + NestJS 11 + TypeScript `strict` |
-| ORM | Prisma 6 (`schema.prisma` = espejo canónico del modelo) |
-| Base de datos | **PostgreSQL 17** en Supabase (`us-east-1`) |
-| Identidad | **Supabase Auth** (GoTrue), con la aprobación y los roles en esta app |
-| OCR | pdf.js (texto exacto) + Tesseract.js (imágenes), **en el cliente**, tras `OcrProvider` |
-| Pruebas | Jest + Supertest (API) · Vitest (frontend) |
+| Capa          | Tecnología                                                                             |
+| ------------- | -------------------------------------------------------------------------------------- |
+| Frontend      | React 19 + Vite 6 + TypeScript (SPA estática)                                          |
+| Estilos       | Tailwind CSS 4 + componentes shadcn · iconos **solo** lucide                           |
+| Estado        | TanStack Query 5 (servidor) + Zustand 5 (UI efímera)                                   |
+| Backend       | Node.js 20/22 + NestJS 11 + TypeScript `strict`                                        |
+| ORM           | Prisma 6 (`schema.prisma` = espejo canónico del modelo)                                |
+| Base de datos | **PostgreSQL 17** en Supabase (`us-east-1`)                                            |
+| Identidad     | **Supabase Auth** (GoTrue), con la aprobación y los roles en esta app                  |
+| OCR           | pdf.js (texto exacto) + Tesseract.js (imágenes), **en el cliente**, tras `OcrProvider` |
+| Pruebas       | Jest + Supertest (API) · Vitest (frontend)                                             |
 
 ---
 
@@ -115,7 +115,7 @@ npm run dev:web                              # http://localhost:5173
 
 Entra a `http://localhost:5173/registro` y regístrate con el correo de
 `BOOTSTRAP_ADMIN_EMAIL`. Esa cuenta nace **admin** y **activa**; el resto nacen
-**pendientes** y las apruebas tú desde *Administración → Cuentas*.
+**pendientes** y las apruebas tú desde _Administración → Cuentas_.
 
 Se hace así, y no "el primer registro gana", porque si la app estuviera desplegada
 antes de que el dueño se registre, cualquiera se llevaría el panel.
@@ -124,20 +124,20 @@ antes de que el dueño se registre, cualquiera se llevaría el panel.
 
 ## Comandos
 
-| Comando | Qué hace |
-|---|---|
-| `npm run dev:api` / `npm run dev:web` | Levanta API o frontend en modo desarrollo |
-| `npm run build` | Compila ambos workspaces |
-| `npm test` | Pruebas unitarias |
-| `npm run test:e2e --workspace api` | Integración con Supertest contra `coco_test` |
-| `scripts/nueva-migracion.sh <nombre>` | Crea y aplica una migración **en local** |
-| `scripts/desplegar-migraciones.sh` | Lleva las migraciones pendientes a Supabase |
-| `npm run sql -- "SELECT ..."` | SQL contra la base local |
-| `npm run sql:supabase -- "SELECT ..."` | SQL contra producción |
-| `npm run deploy:api` / `npm run deploy:web` | Despliega API o SPA |
-| `npm run respaldar` | Respalda producción y verifica que se puede restaurar |
-| `npm run prisma:studio --workspace api` | Explorador visual de la base |
-| `npm run prepare:ocr` | Deja los recursos de Tesseract en `frontend/public/` |
+| Comando                                     | Qué hace                                              |
+| ------------------------------------------- | ----------------------------------------------------- |
+| `npm run dev:api` / `npm run dev:web`       | Levanta API o frontend en modo desarrollo             |
+| `npm run build`                             | Compila ambos workspaces                              |
+| `npm test`                                  | Pruebas unitarias                                     |
+| `npm run test:e2e --workspace api`          | Integración con Supertest contra `coco_test`          |
+| `scripts/nueva-migracion.sh <nombre>`       | Crea y aplica una migración **en local**              |
+| `scripts/desplegar-migraciones.sh`          | Lleva las migraciones pendientes a Supabase           |
+| `npm run sql -- "SELECT ..."`               | SQL contra la base local                              |
+| `npm run sql:supabase -- "SELECT ..."`      | SQL contra producción                                 |
+| `npm run deploy:api` / `npm run deploy:web` | Despliega API o SPA                                   |
+| `npm run respaldar`                         | Respalda producción y verifica que se puede restaurar |
+| `npm run prisma:studio --workspace api`     | Explorador visual de la base                          |
+| `npm run prepare:ocr`                       | Deja los recursos de Tesseract en `frontend/public/`  |
 
 ---
 
@@ -194,16 +194,16 @@ PDF/imagen → OcrProvider → parser  ──filas──▶  huella + posible re
 **Los pasos no se pueden saltar.** Un OCR se equivoca, y un movimiento
 equivocado que entra sin mirar contamina saldos e informes durante meses.
 
-| Pieza | Decisión | Por qué |
-|---|---|---|
-| PDF con texto | `pdf.js` lee las letras exactas | Rasterizar un texto perfecto para volver a adivinarlo sería absurdo |
-| Imagen | `Tesseract.js` en un Web Worker | Cada usuario aporta su CPU; el backend no procesa imágenes |
-| Recursos de Tesseract | Servidos desde nuestro origen | Por defecto los trae de un CDN en tiempo de ejecución: sería ejecutar un WASM de terceros que nunca pasó por el lockfile |
-| Montos | `45.900` son cuarenta y cinco mil novecientos | `parseFloat` daría 45.9 y el extracto entero quedaría mil veces mal |
-| Columna de saldo | Se deduce del documento, no de cada línea | Confundir el saldo corriente con el monto produce cifras absurdas que se ven plausibles |
-| Referencias y fechas | Se tapan antes de buscar montos | `REF 000123456` generaba un movimiento de $456 salido de la nada |
-| Repetidos | Se **señalan**, no se descartan | Dos cafés de $5.000 el mismo día en el mismo sitio son dos movimientos reales |
-| Confirmar | Idempotente por el estado del lote | Un reintento por red intermitente no puede duplicar cuarenta movimientos |
+| Pieza                 | Decisión                                      | Por qué                                                                                                                  |
+| --------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| PDF con texto         | `pdf.js` lee las letras exactas               | Rasterizar un texto perfecto para volver a adivinarlo sería absurdo                                                      |
+| Imagen                | `Tesseract.js` en un Web Worker               | Cada usuario aporta su CPU; el backend no procesa imágenes                                                               |
+| Recursos de Tesseract | Servidos desde nuestro origen                 | Por defecto los trae de un CDN en tiempo de ejecución: sería ejecutar un WASM de terceros que nunca pasó por el lockfile |
+| Montos                | `45.900` son cuarenta y cinco mil novecientos | `parseFloat` daría 45.9 y el extracto entero quedaría mil veces mal                                                      |
+| Columna de saldo      | Se deduce del documento, no de cada línea     | Confundir el saldo corriente con el monto produce cifras absurdas que se ven plausibles                                  |
+| Referencias y fechas  | Se tapan antes de buscar montos               | `REF 000123456` generaba un movimiento de $456 salido de la nada                                                         |
+| Repetidos             | Se **señalan**, no se descartan               | Dos cafés de $5.000 el mismo día en el mismo sitio son dos movimientos reales                                            |
+| Confirmar             | Idempotente por el estado del lote            | Un reintento por red intermitente no puede duplicar cuarenta movimientos                                                 |
 
 ### Categorización automática (T1)
 
@@ -212,7 +212,7 @@ En orden de fuerza:
 
 1. **Tu historial.** Si ya clasificaste "rappi" como Domicilios ocho veces, esa
    es la respuesta. Es mejor que cualquier lista, porque refleja cómo organizas
-   *tus* finanzas.
+   _tus_ finanzas.
 2. **Reglas que creaste**, reforzadas cada vez que aceptas una sugerencia.
 3. **Reglas sembradas**, solo para que la primera importación no llegue vacía.
 
@@ -247,11 +247,11 @@ timestamp ocupa 8 bytes sea cual sea su precisión declarada.
 
 Tres bases, tres formas de llegar:
 
-| Base | Para qué | Cómo consultarla |
-|---|---|---|
-| `coco_dev` (Postgres local) | Desarrollo | `npm run sql -- "SELECT ..."` |
-| Supabase (`us-east-1`) | Producción | `npm run sql:supabase -- "SELECT ..."` |
-| `coco_test` (Postgres local) | Pruebas e2e | la maneja Jest |
+| Base                         | Para qué    | Cómo consultarla                       |
+| ---------------------------- | ----------- | -------------------------------------- |
+| `coco_dev` (Postgres local)  | Desarrollo  | `npm run sql -- "SELECT ..."`          |
+| Supabase (`us-east-1`)       | Producción  | `npm run sql:supabase -- "SELECT ..."` |
+| `coco_test` (Postgres local) | Pruebas e2e | la maneja Jest                         |
 
 `sql:supabase` va por la Management API, no por conexión directa: se autentica
 con el token y no necesita la contraseña de Postgres.
@@ -311,8 +311,8 @@ MariaDB y ganaba siempre. Por eso `main.ts` carga su `.env` con `override: true`
 y por ruta absoluta: **el archivo del despliegue es la fuente de verdad, no
 hPanel**.
 
-El síntoma engañaba: Prisma fallaba con `P1012` — *"the URL must start with
-postgresql://"* — que se lee como una URL mal escrita.
+El síntoma engañaba: Prisma fallaba con `P1012` — _"the URL must start with
+postgresql://"_ — que se lee como una URL mal escrita.
 
 Y en parte lo estaba: **la variable llega con las comillas dentro del valor**.
 LiteSpeed inyecta lo que hPanel guardó, sin interpretarlas, así que el proceso
@@ -382,15 +382,15 @@ cliente de Prisma y el `.env` de ese momento.
 Las credenciales las guarda y verifica **Supabase Auth**. Esta app conserva lo
 que Supabase no modela y que es del producto:
 
-| Pieza | Quién la tiene | Por qué |
-|---|---|---|
-| Contraseñas, su hash y su verificación | Supabase | No hay motivo para reimplementarlo |
-| Emisión y rotación de tokens | Supabase | ES256, 15 min de vida, refresh rotatorio |
-| **Aprobación por un admin** | Esta app | Toda cuenta nace `pending`. Supabase daría por buena cualquier cuenta con el correo confirmado |
-| **Roles y estado** | Esta app | El guard los lee de la base en CADA petición, no del token |
-| **Revocación inmediata** | Esta app | `users.sessions_valid_from` |
-| **Bitácora** | Esta app | Cada entrada, salida y fallo, con IP y agente |
-| **Política de contraseñas** | Esta app | Comprueba filtraciones conocidas y que no derive del nombre o el correo |
+| Pieza                                  | Quién la tiene | Por qué                                                                                        |
+| -------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------- |
+| Contraseñas, su hash y su verificación | Supabase       | No hay motivo para reimplementarlo                                                             |
+| Emisión y rotación de tokens           | Supabase       | ES256, 15 min de vida, refresh rotatorio                                                       |
+| **Aprobación por un admin**            | Esta app       | Toda cuenta nace `pending`. Supabase daría por buena cualquier cuenta con el correo confirmado |
+| **Roles y estado**                     | Esta app       | El guard los lee de la base en CADA petición, no del token                                     |
+| **Revocación inmediata**               | Esta app       | `users.sessions_valid_from`                                                                    |
+| **Bitácora**                           | Esta app       | Cada entrada, salida y fallo, con IP y agente                                                  |
+| **Política de contraseñas**            | Esta app       | Comprueba filtraciones conocidas y que no derive del nombre o el correo                        |
 
 ### El navegador no habla con Supabase
 

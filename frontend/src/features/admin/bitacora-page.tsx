@@ -133,9 +133,7 @@ function Evento({ evento }: { evento: AuditEntry }) {
               )}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {evento.user
-                ? (evento.user.name ?? evento.user.email)
-                : 'Cuenta desconocida'}
+              {evento.user ? (evento.user.name ?? evento.user.email) : 'Cuenta desconocida'}
               {evento.ip && ` · ${evento.ip}`}
             </p>
           </div>

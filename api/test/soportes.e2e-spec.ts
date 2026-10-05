@@ -324,7 +324,9 @@ describe('Soportes (e2e)', () => {
       expect(soporte.orden).toBe(1);
 
       // Y el archivo guardado es gris y de 1100 de ancho, no la imagen original.
-      const guardado = await entorno.prisma.soporte.findFirst({ where: { transactionId: BigInt(id) } });
+      const guardado = await entorno.prisma.soporte.findFirst({
+        where: { transactionId: BigInt(id) },
+      });
       const flujo = await entorno.app.get<ReceiptStore>(RECEIPT_STORE).open(guardado!.storageKey);
       const bytes = Buffer.concat(await flujo!.toArray());
       const meta = await sharp(bytes).metadata();
@@ -345,7 +347,14 @@ describe('Soportes (e2e)', () => {
       const id = Number(movimiento.body.data.id);
 
       const hoja = (tono: number) =>
-        sharp({ create: { width: 800, height: 1000, channels: 3, background: { r: tono, g: tono, b: tono } } })
+        sharp({
+          create: {
+            width: 800,
+            height: 1000,
+            channels: 3,
+            background: { r: tono, g: tono, b: tono },
+          },
+        })
           .png()
           .toBuffer();
 

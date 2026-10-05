@@ -1,5 +1,5 @@
-import {  CalendarDays } from 'lucide-react';
-import {useState } from 'react';
+import { CalendarDays } from 'lucide-react';
+import { useState } from 'react';
 
 import { Calendario, mesDeISO, type MesVisible } from '@/components/calendario';
 import { Menu } from '@/components/menu';

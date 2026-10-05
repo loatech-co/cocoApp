@@ -47,7 +47,9 @@ const csv = bandera('--csv') ?? 'datos/Gastos_Consolidado.csv';
 const almacen = resolve(bandera('--almacen') ?? 'api/.soportes');
 
 if (!raiz) {
-  console.error('Uso: node scripts/soportes/importar.mjs "<carpeta>" --correo <correo> [--ensayo] [--limite N]');
+  console.error(
+    'Uso: node scripts/soportes/importar.mjs "<carpeta>" --correo <correo> [--ensayo] [--limite N]',
+  );
   process.exit(1);
 }
 
@@ -75,7 +77,9 @@ try {
 
   console.log(`\n▸ ${usuario.email}`);
   console.log(`  almacén: ${almacen}${ensayo ? '  (ENSAYO: no se escribe)' : ''}`);
-  console.log(`  ${casados.length} movimientos casados · ${ambiguos.length} ambiguos · ${huerfanos.length} sin match · ${ilegibles.length} ilegibles\n`);
+  console.log(
+    `  ${casados.length} movimientos casados · ${ambiguos.length} ambiguos · ${huerfanos.length} sin match · ${ilegibles.length} ilegibles\n`,
+  );
 
   // Lo ambiguo y lo huérfano NO se tocan. Están en el reporte para mirarlos a
   // mano, y meterlos "por si acaso" es justo lo que convierte un archivo mal

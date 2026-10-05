@@ -154,7 +154,11 @@ function Fila({
       <Td fija divisor={false} atencion={sinClasificar}>
         <span className="flex items-center gap-2">
           {sinClasificar && (
-            <Flag className="size-3.5 shrink-0 text-warning" fill="currentColor" aria-label="Sin clasificar" />
+            <Flag
+              className="size-3.5 shrink-0 text-warning"
+              fill="currentColor"
+              aria-label="Sin clasificar"
+            />
           )}
           {/* El nombre SALE del concepto: un movimiento es un registro y lo
               toma de donde pertenece. Pintaba `description`, que dejó de
@@ -236,10 +240,7 @@ function Fila({
   );
 }
 
-const MESES = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-];
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 const mesDe = (iso: string): string => iso.slice(0, 7);
 

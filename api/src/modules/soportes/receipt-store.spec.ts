@@ -17,7 +17,9 @@ describe('receipt store', () => {
   });
 
   it('talks to the private bucket with the service key, keeping the key’s slash', async () => {
-    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 200 }));
     const store = new SupabaseReceiptStore('https://x.supabase.co/', 'service-key', 'soportes');
 
     await store.exists('12/abc.png');
@@ -29,7 +31,9 @@ describe('receipt store', () => {
   });
 
   it('refuses a PUBLIC bucket at start-up', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(new Response(JSON.stringify({ public: true }), { status: 200 }));
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ public: true }), { status: 200 }));
     const store = new SupabaseReceiptStore('https://x.supabase.co', 'k', 'soportes');
 
     expect((await store.check()).ok).toBe(false);

@@ -1,4 +1,13 @@
-import { closeSync, existsSync, fstatSync, mkdirSync, openSync, renameSync, statSync, writeSync } from 'node:fs';
+import {
+  closeSync,
+  existsSync,
+  fstatSync,
+  mkdirSync,
+  openSync,
+  renameSync,
+  statSync,
+  writeSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -106,11 +115,21 @@ export class JsonLogger implements LoggerService {
   private write(level: LogLevel, message: unknown, rest: unknown[]): void {
     const strings = rest.filter((value): value is string => typeof value === 'string');
     const context = strings.length > 0 ? strings[strings.length - 1] : undefined;
-    const stack = level === 'error' || level === 'fatal' ? (strings.length > 1 ? strings[0] : undefined) : undefined;
+    const stack =
+      level === 'error' || level === 'fatal'
+        ? strings.length > 1
+          ? strings[0]
+          : undefined
+        : undefined;
 
     this.emit(level, {
       context,
-      msg: message instanceof Error ? message.message : typeof message === 'string' ? message : JSON.stringify(message),
+      msg:
+        message instanceof Error
+          ? message.message
+          : typeof message === 'string'
+            ? message
+            : JSON.stringify(message),
       stack: message instanceof Error ? message.stack : stack,
     });
   }
@@ -119,9 +138,17 @@ export class JsonLogger implements LoggerService {
     if (LEVELS.indexOf(level) < this.minLevel) return;
 
     const line =
-      JSON.stringify({ time: new Date().toISOString(), level, requestId: currentRequestId(), ...fields }) + '\n';
+      JSON.stringify({
+        time: new Date().toISOString(),
+        level,
+        requestId: currentRequestId(),
+        ...fields,
+      }) + '\n';
 
-    (level === 'error' || level === 'fatal' || level === 'warn' ? process.stderr : process.stdout).write(line);
+    (level === 'error' || level === 'fatal' || level === 'warn'
+      ? process.stderr
+      : process.stdout
+    ).write(line);
 
     if (this.fd !== null) {
       this.followRotation();

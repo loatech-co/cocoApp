@@ -4,12 +4,7 @@ import { useState, type KeyboardEvent } from 'react';
 import { Campo } from '@/components/ui/campo';
 import { Chip } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  conceptoQueYaLaUsa,
-  limpiar,
-  partir,
-  porQueNoEntra,
-} from '@/lib/palabras-clave';
+import { conceptoQueYaLaUsa, limpiar, partir, porQueNoEntra } from '@/lib/palabras-clave';
 import { cn } from '@/lib/utils';
 import type { Category } from '@coco/types';
 

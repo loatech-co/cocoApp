@@ -1,7 +1,5 @@
 {
   "permissions": {
-    "additionalDirectories": [
-      "/Users/gerardoviteri/Documents/VS Code/Personal"
-    ]
+    "additionalDirectories": ["/Users/gerardoviteri/Documents/VS Code/Personal"]
   }
 }

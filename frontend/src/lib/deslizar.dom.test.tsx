@@ -15,7 +15,9 @@ afterEach(cleanup);
  */
 function gesto(el: Element, tramos: [x: number, y: number][]): void {
   const [primero, ...resto] = tramos;
-  el.dispatchEvent(new MouseEvent('pointerdown', { clientX: primero[0], clientY: primero[1], bubbles: true }));
+  el.dispatchEvent(
+    new MouseEvent('pointerdown', { clientX: primero[0], clientY: primero[1], bubbles: true }),
+  );
   for (const [x, y] of resto) {
     el.dispatchEvent(new MouseEvent('pointermove', { clientX: x, clientY: y, bubbles: true }));
   }
@@ -28,7 +30,9 @@ function Panel({ onCerrar }: { onCerrar: () => void }) {
   return (
     <div ref={caja} data-testid="panel">
       <div data-testid="dentro">contenido</div>
-      <div data-sin-deslizar data-testid="suyo">una rejilla que se arregla</div>
+      <div data-sin-deslizar data-testid="suyo">
+        una rejilla que se arregla
+      </div>
     </div>
   );
 }
@@ -39,7 +43,11 @@ describe('Deslizar para cerrar', () => {
     const { getByTestId } = render(<Panel onCerrar={cerrar} />);
     const panel = getByTestId('panel');
 
-    gesto(getByTestId('dentro'), [[100, 100], [100, 140], [100, 100 + UMBRAL_DE_CIERRE - 1]]);
+    gesto(getByTestId('dentro'), [
+      [100, 100],
+      [100, 140],
+      [100, 100 + UMBRAL_DE_CIERRE - 1],
+    ]);
 
     expect(cerrar).not.toHaveBeenCalled();
     expect(panel.style.transform).toBe('');
@@ -49,7 +57,11 @@ describe('Deslizar para cerrar', () => {
     const cerrar = vi.fn();
     const { getByTestId } = render(<Panel onCerrar={cerrar} />);
 
-    gesto(getByTestId('dentro'), [[100, 100], [100, 160], [100, 100 + UMBRAL_DE_CIERRE + 1]]);
+    gesto(getByTestId('dentro'), [
+      [100, 100],
+      [100, 160],
+      [100, 100 + UMBRAL_DE_CIERRE + 1],
+    ]);
 
     expect(cerrar).toHaveBeenCalledTimes(1);
   });
@@ -59,7 +71,11 @@ describe('Deslizar para cerrar', () => {
     const { getByTestId } = render(<Panel onCerrar={cerrar} />);
     const panel = getByTestId('panel');
 
-    gesto(getByTestId('dentro'), [[100, 100], [100, 160], [100, 400]]);
+    gesto(getByTestId('dentro'), [
+      [100, 100],
+      [100, 160],
+      [100, 400],
+    ]);
 
     // Soltarlo ANTES devolvería el panel a su sitio durante un fotograma y lo
     // sacaría desde allí: se lee como un rebote.
@@ -74,8 +90,12 @@ describe('Deslizar para cerrar', () => {
     const panel = getByTestId('panel');
     const dentro = getByTestId('dentro');
 
-    dentro.dispatchEvent(new MouseEvent('pointerdown', { clientX: 100, clientY: 100, bubbles: true }));
-    dentro.dispatchEvent(new MouseEvent('pointermove', { clientX: 100, clientY: 160, bubbles: true }));
+    dentro.dispatchEvent(
+      new MouseEvent('pointerdown', { clientX: 100, clientY: 100, bubbles: true }),
+    );
+    dentro.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: 100, clientY: 160, bubbles: true }),
+    );
     expect(panel.style.transform).toContain('translateY');
 
     // Otra función de cierre, como la que trae cualquier render del anfitrión.
@@ -83,7 +103,9 @@ describe('Deslizar para cerrar', () => {
     // bajo el dedo.
     rerender(<Panel onCerrar={() => {}} />);
 
-    dentro.dispatchEvent(new MouseEvent('pointermove', { clientX: 100, clientY: 200, bubbles: true }));
+    dentro.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: 100, clientY: 200, bubbles: true }),
+    );
     expect(panel.style.transform).toBe('translateY(100px)');
   });
 
@@ -92,7 +114,11 @@ describe('Deslizar para cerrar', () => {
     const { getByTestId } = render(<Panel onCerrar={cerrar} />);
     const panel = getByTestId('panel');
 
-    gesto(getByTestId('dentro'), [[100, 400], [100, 200], [100, 100]]);
+    gesto(getByTestId('dentro'), [
+      [100, 400],
+      [100, 200],
+      [100, 100],
+    ]);
 
     expect(cerrar).not.toHaveBeenCalled();
     expect(panel.style.transform).toBe('');
@@ -102,7 +128,11 @@ describe('Deslizar para cerrar', () => {
     const cerrar = vi.fn();
     const { getByTestId } = render(<Panel onCerrar={cerrar} />);
 
-    gesto(getByTestId('dentro'), [[100, 100], [200, 120], [400, 140]]);
+    gesto(getByTestId('dentro'), [
+      [100, 100],
+      [200, 120],
+      [400, 140],
+    ]);
 
     expect(cerrar).not.toHaveBeenCalled();
   });
@@ -111,7 +141,11 @@ describe('Deslizar para cerrar', () => {
     const cerrar = vi.fn();
     const { getByTestId } = render(<Panel onCerrar={cerrar} />);
 
-    gesto(getByTestId('suyo'), [[100, 100], [100, 200], [100, 400]]);
+    gesto(getByTestId('suyo'), [
+      [100, 100],
+      [100, 200],
+      [100, 400],
+    ]);
 
     expect(cerrar).not.toHaveBeenCalled();
   });

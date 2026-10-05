@@ -38,24 +38,44 @@ describe('Interpretar un texto', () => {
     );
     expect(r.monto).toBe('45000');
     expect(r.fecha).toBe('2026-10-03');
-    expect(r.clasificacion).toMatchObject({ certeza: 'alta', fuente: 'diccionario', conceptoId: '200', categoriaId: '20', nombre: 'Mercado' });
+    expect(r.clasificacion).toMatchObject({
+      certeza: 'alta',
+      fuente: 'diccionario',
+      conceptoId: '200',
+      categoriaId: '20',
+      nombre: 'Mercado',
+    });
     expect(r.porRevisar).toBe(false);
   });
 
   it('las palabras clave de la persona le ganan al diccionario', () => {
     const r = interpretar({ texto: 'RAPPI*PEDIDO 32.000' }, contexto());
-    expect(r.clasificacion).toMatchObject({ fuente: 'palabras-clave', certeza: 'alta', conceptoId: '201' });
+    expect(r.clasificacion).toMatchObject({
+      fuente: 'palabras-clave',
+      certeza: 'alta',
+      conceptoId: '201',
+    });
   });
 
   it('y el historial le gana a todo lo demás', () => {
     // El texto dice KOBA (mercado), pero el historial dice que esto va a
     // Restaurantes el 100% de las veces: manda el historial.
-    const r = interpretar({ texto: 'KOBA COLOMBIA 45.000' }, contexto({ categoryId: '201', confidence: 100 }));
-    expect(r.clasificacion).toMatchObject({ fuente: 'historial', certeza: 'alta', conceptoId: '201' });
+    const r = interpretar(
+      { texto: 'KOBA COLOMBIA 45.000' },
+      contexto({ categoryId: '201', confidence: 100 }),
+    );
+    expect(r.clasificacion).toMatchObject({
+      fuente: 'historial',
+      certeza: 'alta',
+      conceptoId: '201',
+    });
   });
 
   it('un historial repartido es certeza MEDIA: propone, pero a revisar', () => {
-    const r = interpretar({ texto: 'KOBA COLOMBIA 45.000' }, contexto({ categoryId: '201', confidence: HISTORIAL_SEGURO - 1 }));
+    const r = interpretar(
+      { texto: 'KOBA COLOMBIA 45.000' },
+      contexto({ categoryId: '201', confidence: HISTORIAL_SEGURO - 1 }),
+    );
     expect(r.clasificacion.certeza).toBe('media');
     expect(r.clasificacion.fuente).toBe('historial');
     expect(r.porRevisar).toBe(true);
@@ -63,7 +83,13 @@ describe('Interpretar un texto', () => {
 
   it('un comercio que lleva a una categoría sin conceptos: MEDIA con la categoría', () => {
     const r = interpretar({ texto: 'UBER *TRIP 18.500' }, contexto());
-    expect(r.clasificacion).toMatchObject({ certeza: 'media', fuente: 'diccionario', conceptoId: null, categoriaId: '21', nombre: 'Transporte' });
+    expect(r.clasificacion).toMatchObject({
+      certeza: 'media',
+      fuente: 'diccionario',
+      conceptoId: null,
+      categoriaId: '21',
+      nombre: 'Transporte',
+    });
     expect(r.porRevisar).toBe(true);
   });
 
@@ -84,7 +110,10 @@ describe('Interpretar un texto', () => {
 
 describe('Interpretar datos estructurados (Wallet)', () => {
   it('lo estructurado manda: el monto y la fecha vienen dados, el comercio clasifica', () => {
-    const r = interpretar({ comercio: 'Exito Poblado', monto: 120000, fecha: '2026-10-02' }, contexto());
+    const r = interpretar(
+      { comercio: 'Exito Poblado', monto: 120000, fecha: '2026-10-02' },
+      contexto(),
+    );
     expect(r.monto).toBe('120000');
     expect(r.fecha).toBe('2026-10-02');
     expect(r.comercio).toBe('Exito Poblado');
@@ -99,25 +128,43 @@ describe('Interpretar datos estructurados (Wallet)', () => {
   });
 
   it('una fecha futura o rota no se acepta', () => {
-    expect(interpretar({ comercio: 'Exito', monto: 1, fecha: '2027-01-01' }, contexto()).fecha).toBeNull();
-    expect(interpretar({ comercio: 'Exito', monto: 1, fecha: 'ayer' }, contexto()).fecha).toBeNull();
+    expect(
+      interpretar({ comercio: 'Exito', monto: 1, fecha: '2027-01-01' }, contexto()).fecha,
+    ).toBeNull();
+    expect(
+      interpretar({ comercio: 'Exito', monto: 1, fecha: 'ayer' }, contexto()).fecha,
+    ).toBeNull();
   });
 });
 
 describe('El resumen para la notificación', () => {
-  const alta = { certeza: 'alta' as const, fuente: 'diccionario' as const, conceptoId: '200', categoriaId: '20', nombre: 'Mercado', candidatos: [], motivo: '' };
+  const alta = {
+    certeza: 'alta' as const,
+    fuente: 'diccionario' as const,
+    conceptoId: '200',
+    categoriaId: '20',
+    nombre: 'Mercado',
+    candidatos: [],
+    motivo: '',
+  };
 
   it('tres palabras: qué, cuánto, dónde', () => {
     expect(resumenDe('45000', alta)).toBe('Registrado: $45.000 · Mercado');
   });
 
   it('con certeza media lo dice', () => {
-    expect(resumenDe('18500', { ...alta, certeza: 'media', nombre: 'Transporte' })).toBe('Registrado: $18.500 · Transporte (por revisar)');
+    expect(resumenDe('18500', { ...alta, certeza: 'media', nombre: 'Transporte' })).toBe(
+      'Registrado: $18.500 · Transporte (por revisar)',
+    );
   });
 
   it('sin clasificación, pendiente', () => {
-    expect(resumenDe('80000', { ...alta, certeza: 'ninguna', nombre: null })).toBe('Registrado: $80.000 · Pendiente de clasificar');
-    expect(resumenDe(null, { ...alta, certeza: 'ninguna', nombre: null })).toBe('Pendiente de clasificar');
+    expect(resumenDe('80000', { ...alta, certeza: 'ninguna', nombre: null })).toBe(
+      'Registrado: $80.000 · Pendiente de clasificar',
+    );
+    expect(resumenDe(null, { ...alta, certeza: 'ninguna', nombre: null })).toBe(
+      'Pendiente de clasificar',
+    );
   });
 
   it('la plata se escribe como aquí', () => {

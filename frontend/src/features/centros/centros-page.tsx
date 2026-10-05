@@ -469,7 +469,10 @@ function Categoría({ categoria, arbol }: { categoria: Category; arbol: Category
           no cargó.
         */}
         <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-          <IconoDeCategoria nombre={categoria.icon} className="size-4 shrink-0 text-muted-foreground" />
+          <IconoDeCategoria
+            nombre={categoria.icon}
+            className="size-4 shrink-0 text-muted-foreground"
+          />
           <span className="min-w-0 truncate">{categoria.name}</span>
         </h3>
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
@@ -602,7 +605,11 @@ function Categoría({ categoria, arbol }: { categoria: Category; arbol: Category
         concepto={editando}
         onCerrar={() => setEditando(null)}
       />
-      <ConceptoModal abierta={creando} categoriaId={categoria.id} onCerrar={() => setCreando(false)} />
+      <ConceptoModal
+        abierta={creando}
+        categoriaId={categoria.id}
+        onCerrar={() => setCreando(false)}
+      />
     </Bloque>
   );
 }

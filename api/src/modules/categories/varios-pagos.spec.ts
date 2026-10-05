@@ -14,7 +14,9 @@ describe('Quién puede pagarse en varias veces', () => {
   it('un centro de costos o una categoría, no', () => {
     // Son sumas de lo que cuelga de ellos: no se pagan, ni de una vez ni de
     // varias.
-    expect(porQueNoAdmiteVariosPagos({ ...concepto, profundidad: 1 })).toContain('centro de costos');
+    expect(porQueNoAdmiteVariosPagos({ ...concepto, profundidad: 1 })).toContain(
+      'centro de costos',
+    );
     expect(porQueNoAdmiteVariosPagos({ ...concepto, profundidad: 2 })).toContain('categoría');
   });
 

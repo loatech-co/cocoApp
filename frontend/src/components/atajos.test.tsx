@@ -178,9 +178,7 @@ describe('Los atajos', () => {
     // dos, y con solo el titular la prueba seguiría en verde aunque el
     // detalle —que es el que dice cuántos caben y qué hacer— desapareciera.
     expect(screen.getAllByText('No caben más atajos')).toHaveLength(1);
-    expect(
-      screen.getAllByText('El máximo son 9. Quita uno para agregar otro.'),
-    ).toHaveLength(1);
+    expect(screen.getAllByText('El máximo son 9. Quita uno para agregar otro.')).toHaveLength(1);
     // Y no entró ninguno.
     expect(screen.getByText('Página 9')).toBeTruthy();
     expect(screen.getByText('Página 10')).toBeTruthy();

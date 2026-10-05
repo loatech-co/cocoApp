@@ -28,8 +28,18 @@ import { readFileSync } from 'node:fs';
 import { PrismaClient } from '@prisma/client';
 
 const MESES = {
-  enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
-  julio: 7, agosto: 8, septiembre: 9, octubre: 10, noviembre: 11, diciembre: 12,
+  enero: 1,
+  febrero: 2,
+  marzo: 3,
+  abril: 4,
+  mayo: 5,
+  junio: 6,
+  julio: 7,
+  agosto: 8,
+  septiembre: 9,
+  octubre: 10,
+  noviembre: 11,
+  diciembre: 12,
 };
 
 const args = process.argv.slice(2);
@@ -63,10 +73,13 @@ function partir(linea) {
   for (let i = 0; i < linea.length; i += 1) {
     const c = linea[i];
     if (c === '"') {
-      if (enComillas && linea[i + 1] === '"') { actual += '"'; i += 1; }
-      else enComillas = !enComillas;
+      if (enComillas && linea[i + 1] === '"') {
+        actual += '"';
+        i += 1;
+      } else enComillas = !enComillas;
     } else if (c === ',' && !enComillas) {
-      campos.push(actual); actual = '';
+      campos.push(actual);
+      actual = '';
     } else {
       actual += c;
     }
@@ -85,7 +98,9 @@ try {
   if (!usuario) throw new Error(`No encontré al usuario ${correo ?? '(el primero)'}.`);
   console.log(`▸ Cargando para ${usuario.email}`);
 
-  const lineas = readFileSync(archivo, 'utf8').split('\n').filter((l) => l.trim());
+  const lineas = readFileSync(archivo, 'utf8')
+    .split('\n')
+    .filter((l) => l.trim());
   const cabecera = partir(lineas[0]);
   const col = (nombre) => cabecera.indexOf(nombre);
 
@@ -123,7 +138,13 @@ try {
 
     if (!fila && !ensayo) {
       fila = await prisma.category.create({
-        data: { userId: usuario.id, name: nombre, parentId: padreId, kind: 'expense', sortOrder: orden },
+        data: {
+          userId: usuario.id,
+          name: nombre,
+          parentId: padreId,
+          kind: 'expense',
+          sortOrder: orden,
+        },
       });
       console.log(`  + ${padreId === null ? 'centro' : 'nivel'}: ${nombre}`);
     }
@@ -132,7 +153,9 @@ try {
     return fila;
   }
 
-  const ordenados = [...new Set(filas.map((f) => `${f[iCentro]}|${f[iGrupo]}|${f[iConcepto]}`))].sort();
+  const ordenados = [
+    ...new Set(filas.map((f) => `${f[iCentro]}|${f[iGrupo]}|${f[iConcepto]}`)),
+  ].sort();
 
   console.log('▸ Árbol…');
   for (const [i, ruta] of ordenados.entries()) {
@@ -174,7 +197,9 @@ try {
       .digest('hex')
       .slice(0, 40);
 
-    if (await prisma.transaction.findFirst({ where: { userId: usuario.id, externalRef: huella } })) {
+    if (
+      await prisma.transaction.findFirst({ where: { userId: usuario.id, externalRef: huella } })
+    ) {
       repetidos += 1;
       continue;
     }

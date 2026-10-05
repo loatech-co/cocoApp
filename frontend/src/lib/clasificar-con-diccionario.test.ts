@@ -34,14 +34,20 @@ const ARBOL: NodoBuscable[] = [
 
 /** Las firmas que salen de las palabras clave de ESTE árbol. */
 const firmasPropias = firmasDeConceptos([
-  { concepto: 'Restaurantes', categoria: 'Alimentación', centro: 'Costos variables', palabras: ['rappi'] },
+  {
+    concepto: 'Restaurantes',
+    categoria: 'Alimentación',
+    centro: 'Costos variables',
+    palabras: ['rappi'],
+  },
 ]);
 
 const leer = (texto: string, arbol: NodoBuscable[] = ARBOL) =>
   clasificar({ texto, fuente: 'texto-embebido', firmas: firmasPropias, arbol });
 
 /** Sin árbol de verdad: la propiedad ni siquiera se pasa. */
-const leerSinArbol = (texto: string) => clasificar({ texto, fuente: 'texto-embebido', firmas: firmasPropias });
+const leerSinArbol = (texto: string) =>
+  clasificar({ texto, fuente: 'texto-embebido', firmas: firmasPropias });
 
 describe('El diccionario como última fuente de la lectura', () => {
   it('reconoce un comercio y lo lleva al concepto de la persona: certeza media aquí, porque hay dos «Mercado»', () => {
@@ -61,10 +67,19 @@ describe('El diccionario como última fuente de la lectura', () => {
 
   it('con un solo destino, certeza alta y el id del concepto', () => {
     const unSoloMercado: NodoBuscable[] = [
-      { id: 2, name: 'Costos variables', children: [{ id: 20, name: 'Alimentación', children: [{ id: 200, name: 'Mercado' }] }] },
+      {
+        id: 2,
+        name: 'Costos variables',
+        children: [{ id: 20, name: 'Alimentación', children: [{ id: 200, name: 'Mercado' }] }],
+      },
     ];
     const l = leer('Compra en ARA cra 5', unSoloMercado);
-    expect(l.enElArbol).toMatchObject({ fuente: 'diccionario', certeza: 'alta', conceptoId: 200, categoriaId: 20 });
+    expect(l.enElArbol).toMatchObject({
+      fuente: 'diccionario',
+      certeza: 'alta',
+      conceptoId: 200,
+      categoriaId: 20,
+    });
     expect(l.concepto).toBe('Mercado');
     expect(l.categoria).toBe('Alimentación');
     expect(l.centro).toBe('Costos variables');
@@ -72,7 +87,11 @@ describe('El diccionario como última fuente de la lectura', () => {
 
   it('nunca pasa del umbral de revisión: propone, no decide', () => {
     const unSoloMercado: NodoBuscable[] = [
-      { id: 2, name: 'Costos variables', children: [{ id: 20, name: 'Alimentación', children: [{ id: 200, name: 'Mercado' }] }] },
+      {
+        id: 2,
+        name: 'Costos variables',
+        children: [{ id: 20, name: 'Alimentación', children: [{ id: 200, name: 'Mercado' }] }],
+      },
     ];
     const l = leer('EXITO Total a pagar 120.000', unSoloMercado);
     expect(l.enElArbol?.certeza).toBe('alta');

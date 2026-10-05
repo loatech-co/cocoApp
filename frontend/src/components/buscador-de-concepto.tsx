@@ -116,14 +116,18 @@ export function BuscadorDeConcepto({
 
   const categorias = useMemo(() => indice.filter((e) => e.nivel === 'categoria'), [indice]);
   const categoriasFiltradas = useMemo(
-    () => (busca.trim() === '' ? categorias : buscarEnArbol(indice, busca, { niveles: ['categoria'], limite: 30 })),
+    () =>
+      busca.trim() === ''
+        ? categorias
+        : buscarEnArbol(indice, busca, { niveles: ['categoria'], limite: 30 }),
     [indice, categorias, busca],
   );
 
   // Crear solo cuando lo escrito no existe ya: con un nombre que coincide,
   // «crear» produciría dos conceptos idénticos sumando por separado.
   const puedeCrear =
-    busca.trim() !== '' && !resultados.some((r) => r.nivel === 'concepto' && r.nombreNormalizado === normal(busca));
+    busca.trim() !== '' &&
+    !resultados.some((r) => r.nivel === 'concepto' && r.nombreNormalizado === normal(busca));
 
   const limpiar = (): void => {
     setBusca('');
@@ -143,11 +147,17 @@ export function BuscadorDeConcepto({
       <span
         data-lleno={elegida ? 'si' : 'no'}
         data-vacio={elegida ? undefined : ''}
-        className={cn('flex min-w-0 flex-1 items-baseline gap-2 text-left', !elegida && 'text-muted-foreground', enCampo && 'pt-4')}
+        className={cn(
+          'flex min-w-0 flex-1 items-baseline gap-2 text-left',
+          !elegida && 'text-muted-foreground',
+          enCampo && 'pt-4',
+        )}
       >
         <span className="truncate">{elegida?.nombre ?? 'Buscar concepto o categoría'}</span>
         {elegida && elegida.ruta.length > 0 && (
-          <span className="hidden truncate text-xs text-muted-foreground sm:inline">{rutaLegible(elegida)}</span>
+          <span className="hidden truncate text-xs text-muted-foreground sm:inline">
+            {rutaLegible(elegida)}
+          </span>
         )}
       </span>
       <ChevronDown
@@ -160,7 +170,11 @@ export function BuscadorDeConcepto({
   return (
     <Campo etiqueta="Concepto" id={id} ayuda={ayuda}>
       {deshabilitado ? (
-        <span id={id} aria-disabled="true" className={cn(disparadorDeCampo(), 'cursor-not-allowed opacity-50')}>
+        <span
+          id={id}
+          aria-disabled="true"
+          className={cn(disparadorDeCampo(), 'cursor-not-allowed opacity-50')}
+        >
           {dentro(false)}
         </span>
       ) : (
@@ -290,7 +304,9 @@ function Panel({
             if (resultados.length === 1) onElegir(resultados[0]);
             else if (resultados.length === 0 && puedeCrear) onPedirCategoria();
           }}
-          placeholder={eligiendoCategoria ? 'Filtrar categorías…' : 'Buscar por nombre o palabra clave…'}
+          placeholder={
+            eligiendoCategoria ? 'Filtrar categorías…' : 'Buscar por nombre o palabra clave…'
+          }
           aria-label={eligiendoCategoria ? 'Filtrar categorías' : 'Buscar concepto o categoría'}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
@@ -299,10 +315,12 @@ function Panel({
       {eligiendoCategoria ? (
         <>
           <div className="flex items-center justify-between gap-2 px-3 pt-2 text-xs text-muted-foreground">
-            <span className="min-w-0 truncate">
-              ¿En qué categoría va «{nombreNuevo}»?
-            </span>
-            <button type="button" onClick={onVolver} className={cn('shrink-0 rounded-md px-1.5 py-0.5', REALCE)}>
+            <span className="min-w-0 truncate">¿En qué categoría va «{nombreNuevo}»?</span>
+            <button
+              type="button"
+              onClick={onVolver}
+              className={cn('shrink-0 rounded-md px-1.5 py-0.5', REALCE)}
+            >
               Volver
             </button>
           </div>
@@ -315,7 +333,9 @@ function Panel({
               </li>
             ))}
             {categorias.length === 0 && (
-              <li className="px-2.5 py-2 text-sm text-muted-foreground">Ninguna categoría coincide.</li>
+              <li className="px-2.5 py-2 text-sm text-muted-foreground">
+                Ninguna categoría coincide.
+              </li>
             )}
           </ul>
         </>
@@ -335,7 +355,10 @@ function Panel({
                 <Titulo>Del recibo</Titulo>
                 {candidatos.map((c) => (
                   <li key={c.id}>
-                    <Opcion elegida={elegida !== undefined && String(elegida.id) === String(c.id)} onClick={() => onElegirCandidato(c)}>
+                    <Opcion
+                      elegida={elegida !== undefined && String(elegida.id) === String(c.id)}
+                      onClick={() => onElegirCandidato(c)}
+                    >
                       <span className="flex min-w-0 items-baseline gap-2">
                         <span className="truncate">{c.nombre}</span>
                         <span className="truncate text-xs text-muted-foreground">{c.ruta}</span>
@@ -392,7 +415,10 @@ function Panel({
               <Plus className="size-4 shrink-0" aria-hidden="true" />
               <span className="min-w-0 truncate">Crear concepto «{busca.trim()}»</span>
               {resultados.length === 0 && (
-                <CornerDownLeft className="ml-auto size-3.5 shrink-0 opacity-50" aria-hidden="true" />
+                <CornerDownLeft
+                  className="ml-auto size-3.5 shrink-0 opacity-50"
+                  aria-hidden="true"
+                />
               )}
             </button>
           )}

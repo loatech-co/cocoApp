@@ -12,7 +12,8 @@ describe('checkViolationMessage', () => {
   });
 
   it('reads the name without escaped quotes too', () => {
-    const raw = 'new row for relation "categories" violates check constraint "ck_categories_payment_day_range"';
+    const raw =
+      'new row for relation "categories" violates check constraint "ck_categories_payment_day_range"';
 
     expect(checkViolationMessage(raw)).toBe('El día de pago va del 1 al 31.');
   });
@@ -24,6 +25,8 @@ describe('checkViolationMessage', () => {
   });
 
   it('is null for anything that is not a CHECK violation', () => {
-    expect(checkViolationMessage('duplicate key value violates unique constraint "uq_x"')).toBeNull();
+    expect(
+      checkViolationMessage('duplicate key value violates unique constraint "uq_x"'),
+    ).toBeNull();
   });
 });

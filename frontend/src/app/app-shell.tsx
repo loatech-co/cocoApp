@@ -1,4 +1,4 @@
-import {  Eye, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Eye, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
@@ -142,9 +142,7 @@ export function AppShell() {
    * preferencia de ESTA pantalla, de este momento. Pegarle un enlace a alguien
    * no debería plegarle la barra, y cambiarla no tiene por qué viajar a la red.
    */
-  const [plegada, setPlegada] = useState(
-    () => localStorage.getItem('sidenav-plegada') === 'si',
-  );
+  const [plegada, setPlegada] = useState(() => localStorage.getItem('sidenav-plegada') === 'si');
 
   const [atajosAbiertos, setAtajosAbiertos] = useState(false);
   const [busquedaAbierta, setBusquedaAbierta] = useState(false);
@@ -273,7 +271,13 @@ export function AppShell() {
           <nav className="flex flex-1 flex-col gap-1" aria-label="Secciones">
             {diaADia.map(({ to, label, Icono, exact }) => (
               <EnlaceDeSeccion key={to} to={to} exact={exact} plegada={plegada} titulo={label}>
-                <Icono className="size-[18px] shrink-0" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden={true} />
+                <Icono
+                  className="size-[18px] shrink-0"
+                  fill="currentColor"
+                  fillOpacity={0.18}
+                  strokeWidth={1.75}
+                  aria-hidden={true}
+                />
                 {!plegada && label}
               </EnlaceDeSeccion>
             ))}
@@ -291,7 +295,13 @@ export function AppShell() {
                 )}
                 {administracion.map(({ to, label, Icono, exact }) => (
                   <EnlaceDeSeccion key={to} to={to} exact={exact} plegada={plegada} titulo={label}>
-                    <Icono className="size-[18px] shrink-0" fill="currentColor" fillOpacity={0.18} strokeWidth={1.75} aria-hidden={true} />
+                    <Icono
+                      className="size-[18px] shrink-0"
+                      fill="currentColor"
+                      fillOpacity={0.18}
+                      strokeWidth={1.75}
+                      aria-hidden={true}
+                    />
                     {!plegada && label}
                   </EnlaceDeSeccion>
                 ))}

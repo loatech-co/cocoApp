@@ -171,9 +171,7 @@ describe('Filtro por varias categorías', () => {
   it('une las ramas de varios sin repetir', () => {
     const rama = ramasDe(arbol, [BigInt(1), BigInt(2), BigInt(10)]);
     expect(new Set(rama).size).toBe(rama.length);
-    expect(rama.sort()).toEqual(
-      [BigInt(1), BigInt(2), BigInt(3), BigInt(10), BigInt(11)].sort(),
-    );
+    expect(rama.sort()).toEqual([BigInt(1), BigInt(2), BigInt(3), BigInt(10), BigInt(11)].sort());
   });
 
   it('sin ids, ninguna rama', () => {

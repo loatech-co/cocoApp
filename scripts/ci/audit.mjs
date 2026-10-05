@@ -13,7 +13,10 @@ const ACCEPTED = {
 
 let report;
 try {
-  report = execFileSync('npm', ['audit', '--omit=dev', '--json'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  report = execFileSync('npm', ['audit', '--omit=dev', '--json'], {
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
 } catch (error) {
   // npm audit exits non-zero when it finds anything; the JSON is still on stdout.
   report = error.stdout;
@@ -27,12 +30,17 @@ for (const [name, vulnerability] of Object.entries(vulnerabilities)) {
   // A package flagged only through another package inherits that package's verdict.
   if (advisories.length === 0) continue;
   for (const advisory of advisories) {
-    if (!ACCEPTED[advisory.url]) blocking.push(`${name} (${advisory.severity}): ${advisory.title} ${advisory.url}`);
+    if (!ACCEPTED[advisory.url])
+      blocking.push(`${name} (${advisory.severity}): ${advisory.title} ${advisory.url}`);
   }
 }
 
 if (blocking.length > 0) {
-  console.error(`npm audit: ${blocking.length} high/critical advisory(ies) not accepted:\n  ${blocking.join('\n  ')}`);
+  console.error(
+    `npm audit: ${blocking.length} high/critical advisory(ies) not accepted:\n  ${blocking.join('\n  ')}`,
+  );
   process.exit(1);
 }
-console.log(`npm audit: no unaccepted high/critical advisories (${Object.keys(ACCEPTED).length} accepted with reason)`);
+console.log(
+  `npm audit: no unaccepted high/critical advisories (${Object.keys(ACCEPTED).length} accepted with reason)`,
+);

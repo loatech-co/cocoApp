@@ -258,34 +258,34 @@ export function Dona({
           montándose sobre la tabla de movimientos. */}
       {mostrarLista && (
         <ul className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto">
-        {trazos.map((seg, i) => {
-          const puedeBajar = seg.id !== null && onElegir !== undefined;
+          {trazos.map((seg, i) => {
+            const puedeBajar = seg.id !== null && onElegir !== undefined;
 
-          return (
-            <li key={seg.id ?? seg.nombre}>
-              <button
-                type="button"
-                disabled={!puedeBajar}
-                title={seg.nombre}
-                onPointerEnter={() => setActiva(i)}
-                onClick={() => puedeBajar && onElegir(seg.id as number)}
-                className={cn(
-                  'flex w-full min-w-0 items-center gap-2 rounded-md text-left transition-opacity',
-                  puedeBajar ? 'cursor-pointer' : 'cursor-default',
-                  activa !== null && activa !== i && 'opacity-40',
-                )}
-              >
-                <span
-                  aria-hidden="true"
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: seg.color }}
-                />
-                <span className="min-w-0 flex-1 truncate text-sm">{seg.nombre}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+            return (
+              <li key={seg.id ?? seg.nombre}>
+                <button
+                  type="button"
+                  disabled={!puedeBajar}
+                  title={seg.nombre}
+                  onPointerEnter={() => setActiva(i)}
+                  onClick={() => puedeBajar && onElegir(seg.id as number)}
+                  className={cn(
+                    'flex w-full min-w-0 items-center gap-2 rounded-md text-left transition-opacity',
+                    puedeBajar ? 'cursor-pointer' : 'cursor-default',
+                    activa !== null && activa !== i && 'opacity-40',
+                  )}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: seg.color }}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm">{seg.nombre}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       <svg
@@ -363,7 +363,12 @@ export function Dona({
               {...comun}
             />
           ) : (
-            <path key={seg.id ?? seg.nombre} d={sectorDeLaDona(seg.desde, seg.hasta)} fill={color} {...comun} />
+            <path
+              key={seg.id ?? seg.nombre}
+              d={sectorDeLaDona(seg.desde, seg.hasta)}
+              fill={color}
+              {...comun}
+            />
           );
         })}
       </svg>

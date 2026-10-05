@@ -1,13 +1,5 @@
 import { Prisma } from '@prisma/client';
-import {
-  CERO,
-  esPositivo,
-  motivoDeRechazo,
-  serializar,
-  sonIguales,
-  sumar,
-  toMoney,
-} from './money';
+import { CERO, esPositivo, motivoDeRechazo, serializar, sonIguales, sumar, toMoney } from './money';
 
 describe('Money — aritmética exacta', () => {
   it('no arrastra el error de coma flotante que sí tiene `number`', () => {

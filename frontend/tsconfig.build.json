@@ -15,5 +15,12 @@
   // Y `src/pruebas/` entera: son los ayudantes que comparten las pruebas, y
   // uno de ellos importa `vitest`. Volvió a pasar el 5 de octubre de 2026 con
   // `app-falsa.ts`; una carpeta excluida no se olvida como un sufijo.
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/pruebas", "vitest.config.ts", "dist", "node_modules"]
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/pruebas",
+    "vitest.config.ts",
+    "dist",
+    "node_modules"
+  ]
 }

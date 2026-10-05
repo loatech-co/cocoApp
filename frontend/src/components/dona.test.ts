@@ -137,8 +137,7 @@ describe('El sector de la dona', () => {
     // torcido: es exactamente el defecto que tenía el dibujo con guiones.
     // El lienzo mide (68 + 13) * 2 + 4 = 166, así que el centro cae en 83.
     const CENTRO = 83;
-    const angulo = ([x, y]: [number, number]): number =>
-      Math.atan2(y - CENTRO, x - CENTRO);
+    const angulo = ([x, y]: [number, number]): number => Math.atan2(y - CENTRO, x - CENTRO);
 
     for (const [desde, hasta] of [
       [0, 0.25],
