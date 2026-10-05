@@ -12,7 +12,7 @@ enum SessionState: Equatable, Sendable {
     case sinConexion(ultima: PublicProfile?)
 }
 
-/// Lo que el puente entrega a la web: `WebSession` de @coco/types, con el
+/// Lo que el puente entrega a la web: `SesionParaLaWeb` de @coco/types, con el
 /// perfil como JSON crudo para no reescribir ni una clave.
 struct WebSession: Sendable {
     let accessToken: String

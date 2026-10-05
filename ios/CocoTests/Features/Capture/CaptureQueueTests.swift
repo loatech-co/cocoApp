@@ -55,12 +55,12 @@ final class CaptureQueueTests: XCTestCase {
     func testEncolarPersisteYOtraColaSobreElMismoDirectorioLaVe() async throws {
         let id = UUID()
         let c = try await cola().encolar(cuerpo, origen: .wallet, foto: foto, id: id)
-        XCTAssertEqual(c.request.external_ref, id.uuidString)
+        XCTAssertEqual(c.request.externalRef, id.uuidString)
 
         let otra = cola()
         let todas = await otra.todas()
         XCTAssertEqual(todas.map(\.id), [id])
-        XCTAssertEqual(todas.first?.request.external_ref, id.uuidString)
+        XCTAssertEqual(todas.first?.request.externalRef, id.uuidString)
         XCTAssertEqual(todas.first?.fotoRelativa, "Fotos/\(id.uuidString).jpg")
         XCTAssertEqual(try almacen.foto(en: "Fotos/\(id.uuidString).jpg"), foto)
     }
@@ -268,7 +268,7 @@ final class CaptureQueueTests: XCTestCase {
         try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: primera, capturadaEn: base)
         try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: segunda, capturadaEn: base.addingTimeInterval(10))
         await c.procesar()
-        XCTAssertEqual(enviador.requests.map(\.external_ref), [primera, segunda, tercera].map(\.uuidString))
+        XCTAssertEqual(enviador.requests.map(\.externalRef), [primera, segunda, tercera].map(\.uuidString))
     }
 
     func testSeparacionDe300msEntreEnvios() async throws {

@@ -103,8 +103,8 @@ final class DependenciesTests: XCTestCase {
 
     func testEsAdminSoloConElRol() throws {
         let perfil = PublicProfile(
-            id: 1, email: "a@coco.test", display_name: nil, role: "admin", status: "active",
-            created_at: "2026-01-01T00:00:00Z")
+            id: 1, email: "a@coco.test", displayName: nil, role: "admin", status: "active",
+            createdAt: "2026-01-01T00:00:00Z")
         XCTAssertEqual(perfil.role, "admin")
         let (d, _) = try construir()
         XCTAssertFalse(d.esAdmin)

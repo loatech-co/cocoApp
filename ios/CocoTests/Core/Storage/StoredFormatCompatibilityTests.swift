@@ -23,8 +23,8 @@ final class StoredFormatCompatibilityTests: XCTestCase {
         terminadaEn: Date(timeIntervalSinceReferenceDate: 100))
 
     private static let cuerpo = CaptureBody(
-        texto: "t", comercio: "c", monto: "1", fecha: "2026-01-02", periodo: "2026-01", nombre_de_archivo: "f.jpg",
-        category_id: 3, nota: "n")
+        texto: "t", comercio: "c", monto: "1", fecha: "2026-01-02", periodo: "2026-01", fileName: "f.jpg",
+        categoryId: 3, nota: "n")
 
     private func pendiente(_ fase: PendingCapture.Phase) -> PendingCapture {
         PendingCapture(
@@ -55,8 +55,8 @@ final class StoredFormatCompatibilityTests: XCTestCase {
         let arbol = SavedTree(
             raices: [
                 TreeNode(
-                    id: 1, name: "A", parent_id: nil, palabras_clave: ["k"], is_archived: true, estatico: true,
-                    children: [TreeNode(id: 2, name: "B", parent_id: 1)])
+                    id: 1, name: "A", parentId: nil, keywords: ["k"], isArchived: true, estatico: true,
+                    children: [TreeNode(id: 2, name: "B", parentId: 1)])
             ],
             descargadoEn: Date(timeIntervalSinceReferenceDate: 7))
         try idaYVuelta(
@@ -78,7 +78,7 @@ final class StoredFormatCompatibilityTests: XCTestCase {
 
     func testElPerfilConservaSusClaves() throws {
         let perfil = PublicProfile(
-            id: 7, email: "x@coco.invalid", display_name: "X", role: "owner", status: "active", created_at: "2026")
+            id: 7, email: "x@coco.invalid", displayName: "X", role: "owner", status: "active", createdAt: "2026")
         try idaYVuelta(
             perfil,
             #"{"created_at":"2026","display_name":"X","email":"x@coco.invalid","id":7,"role":"owner","status":"active"}"#
@@ -87,19 +87,19 @@ final class StoredFormatCompatibilityTests: XCTestCase {
 
     func testLasRespuestasDeLaAPIConservanSusClaves() throws {
         let clasificacion = ProposedClassification(
-            certeza: "alta", fuente: "f", concepto_id: 1, categoria_id: 2, nombre: "n",
+            certeza: "alta", fuente: "f", conceptId: 1, categoryId: 2, nombre: "n",
             candidatos: [.init(id: 3, nombre: "c", ruta: "r")], motivo: "m")
         let claseJSON =
             #"{"candidatos":[{"id":3,"nombre":"c","ruta":"r"}],"categoria_id":2,"certeza":"alta","concepto_id":1,"fuente":"f","motivo":"m","nombre":"n"}"#
         try idaYVuelta(clasificacion, claseJSON)
         try idaYVuelta(
             Interpretation(
-                amount: "1", date: "d", merchant: "m", description: "x", clasificacion: clasificacion, por_revisar: true),
+                amount: "1", date: "d", merchant: "m", description: "x", clasificacion: clasificacion, needsReview: true),
             #"{"amount":"1","clasificacion":CL,"date":"d","description":"x","merchant":"m","por_revisar":true}"#
                 .replacingOccurrences(of: "CL", with: claseJSON))
         let transaccion = TransactionSummary(
-            id: 1, date: "d", amount: "2", category_id: 3, description: "x", merchant: "m", source: "sms",
-            por_revisar: false)
+            id: 1, date: "d", amount: "2", categoryId: 3, description: "x", merchant: "m", source: "sms",
+            needsReview: false)
         let transJSON =
             #"{"amount":"2","category_id":3,"date":"d","description":"x","id":1,"merchant":"m","por_revisar":false,"source":"sms"}"#
         try idaYVuelta(transaccion, transJSON)
@@ -108,16 +108,16 @@ final class StoredFormatCompatibilityTests: XCTestCase {
             #"{"clasificacion":CL,"fusionado":false,"repetido":true,"resumen":"r","transaction":TR}"#
                 .replacingOccurrences(of: "CL", with: claseJSON).replacingOccurrences(of: "TR", with: transJSON))
         try idaYVuelta(
-            Attachment(id: 1, orden: 2, nombre_archivo: "a", mime_type: "image/jpeg", tamano: 3, disponible: true),
+            Attachment(id: 1, orden: 2, fileName: "a", mimeType: "image/jpeg", tamano: 3, disponible: true),
             #"{"disponible":true,"id":1,"mime_type":"image/jpeg","nombre_archivo":"a","orden":2,"tamano":3}"#)
         let sesion = try JSONDecoder().decode(
             SessionResponse.self,
             from: Data(
                 #"{"access_token":"a","expires_in":5,"refresh_token":"r","user":{"created_at":"c","display_name":null,"email":"e","id":1,"role":"owner","status":"active"}}"#
                     .utf8))
-        XCTAssertEqual(sesion.access_token, "a")
-        XCTAssertEqual(sesion.expires_in, 5)
-        XCTAssertEqual(sesion.refresh_token, "r")
-        XCTAssertEqual(sesion.user.created_at, "c")
+        XCTAssertEqual(sesion.accessToken, "a")
+        XCTAssertEqual(sesion.expiresIn, 5)
+        XCTAssertEqual(sesion.refreshToken, "r")
+        XCTAssertEqual(sesion.user.createdAt, "c")
     }
 }

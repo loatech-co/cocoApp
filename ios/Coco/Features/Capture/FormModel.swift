@@ -197,8 +197,8 @@ final class FormModel {
             monto: montoNormalizado,
             fecha: BogotaDate.dia(fecha),
             periodo: BogotaDate.mes(fecha),
-            nombre_de_archivo: fotoJPEG == nil ? nil : "recibo-\(BogotaDate.dia(fecha)).jpg",
-            category_id: concepto?.id,
+            fileName: fotoJPEG == nil ? nil : "recibo-\(BogotaDate.dia(fecha)).jpg",
+            categoryId: concepto?.id,
             nota: Self.limpiar(nota)
         )
     }

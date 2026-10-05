@@ -143,7 +143,7 @@ final actor CaptureQueue {
                     resumen: respuesta.resumen,
                     repetido: respuesta.repetido,
                     fusionado: respuesta.fusionado,
-                    porRevisar: respuesta.transaction.por_revisar,
+                    porRevisar: respuesta.transaction.needsReview,
                     terminadaEn: reloj()
                 )
                 captura.ultimoError = nil

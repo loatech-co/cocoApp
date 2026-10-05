@@ -42,8 +42,8 @@ final class TreeSynchronizerTests: XCTestCase {
         let viejo = SavedTree(
             raices: [
                 TreeNode(
-                    id: 2, name: "Viejo", parent_id: nil,
-                    children: [TreeNode(id: 20, name: "Guardado", parent_id: 2)])
+                    id: 2, name: "Viejo", parentId: nil,
+                    children: [TreeNode(id: 20, name: "Guardado", parentId: 2)])
             ],
             descargadoEn: Self.ahora.addingTimeInterval(-descargadoHace)
         )

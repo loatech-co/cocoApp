@@ -9,22 +9,22 @@ final class FormModelTests: XCTestCase {
 
     private nonisolated static let arbol = [
         TreeNode(
-            id: 1, name: "Costos fijos", parent_id: nil, estatico: true,
+            id: 1, name: "Costos fijos", parentId: nil, estatico: true,
             children: [
                 TreeNode(
-                    id: 10, name: "Educación", parent_id: 1,
+                    id: 10, name: "Educación", parentId: 1,
                     children: [
-                        TreeNode(id: 100, name: "Colegio", parent_id: 10, palabras_clave: ["tuti"]),
-                        TreeNode(id: 101, name: "Universidad", parent_id: 10),
+                        TreeNode(id: 100, name: "Colegio", parentId: 10, keywords: ["tuti"]),
+                        TreeNode(id: 101, name: "Universidad", parentId: 10),
                     ])
             ]),
         TreeNode(
-            id: 2, name: "Hogar", parent_id: nil,
+            id: 2, name: "Hogar", parentId: nil,
             children: [
                 TreeNode(
-                    id: 20, name: "Alimentación", parent_id: 2,
+                    id: 20, name: "Alimentación", parentId: 2,
                     children: [
-                        TreeNode(id: 200, name: "Mercado", parent_id: 20, palabras_clave: ["d1", "exito"])
+                        TreeNode(id: 200, name: "Mercado", parentId: 20, keywords: ["d1", "exito"])
                     ])
             ]),
     ]
@@ -67,11 +67,11 @@ final class FormModelTests: XCTestCase {
         m.nota = "  del sábado  "
         let c = m.cuerpo()
         XCTAssertEqual(c.monto, "45000")
-        XCTAssertEqual(c.category_id, 200)
+        XCTAssertEqual(c.categoryId, 200)
         XCTAssertEqual(c.fecha, "2026-10-04")
         XCTAssertEqual(c.periodo, "2026-10")
         XCTAssertEqual(c.nota, "del sábado")
-        XCTAssertNil(c.nombre_de_archivo)
+        XCTAssertNil(c.fileName)
         XCTAssertTrue(c.esEnviable)
     }
 
@@ -104,7 +104,7 @@ final class FormModelTests: XCTestCase {
 
         XCTAssertEqual(capturador.recibidas.map(\.origen), [.iosManual, .iosFoto])
         XCTAssertEqual(capturador.recibidas.map(\.cuerpo.monto), ["45000", "1200"])
-        XCTAssertEqual(capturador.recibidas.last?.cuerpo.nombre_de_archivo, "recibo-2026-10-04.jpg")
+        XCTAssertEqual(capturador.recibidas.last?.cuerpo.fileName, "recibo-2026-10-04.jpg")
     }
 
     func testConfirmarDevuelveLoQueDigaElCapturadorYLimpia() async throws {

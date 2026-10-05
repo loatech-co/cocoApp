@@ -41,7 +41,7 @@ final class RequestBuilderTests: XCTestCase {
 
     func testLasDemasLlevanBearerYNoLaCabeceraNativa() throws {
         let r = CaptureRequest(
-            source: .sms, external_ref: "E1", captured_at: "2026-10-03T20:00:00Z",
+            source: .sms, externalRef: "E1", capturedAt: "2026-10-03T20:00:00Z",
             cuerpo: CaptureBody(texto: "PAGO"))
         let capturar = armar(RequestBuilder.capturar(r), token: "tok")
         XCTAssertEqual(capturar.url?.path(), "/api/v1/transactions/capture")

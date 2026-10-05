@@ -10,9 +10,9 @@ final class FormPrefillTests: XCTestCase {
         Interpretation(
             amount: amount, date: date, merchant: merchant, description: nil,
             clasificacion: ProposedClassification(
-                certeza: certeza, fuente: nil, concepto_id: conceptoId, categoria_id: 10, nombre: "Colegio",
+                certeza: certeza, fuente: nil, conceptId: conceptoId, categoryId: 10, nombre: "Colegio",
                 candidatos: candidatos, motivo: ""),
-            por_revisar: false
+            needsReview: false
         )
     }
 
