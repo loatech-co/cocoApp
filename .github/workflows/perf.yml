@@ -1,0 +1,69 @@
+# Performance measurements on demand (step 7.9, D27).
+#
+# Not a merge gate: a Lighthouse score on a shared runner moves several points
+# from one run to the next, and a gate that fails at random gets ignored. The
+# bundle budget, which is deterministic, IS a gate (size-limit, in ci.yml).
+# This runs the two scripts against synthetic data and leaves their tables in
+# the job summary. Run it from the Actions tab, on any branch.
+name: perf
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Lighthouse runs per page (the median is reported)
+        default: '5'
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: coco_migrate
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U coco_migrate"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      # Never a real secret: the job talks only to the throwaway Postgres above.
+      PGHOST: localhost
+      PGUSER: coco_migrate
+      PGPASSWORD: ci-only-password
+      COCO_BENCH_DATABASE_URL: postgresql://coco_migrate:ci-only-password@localhost:5432/coco_bench
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Builds
+        run: |
+          npm run build --workspace api
+          NODE_ENV=production npm run build --workspace frontend
+
+      - name: Synthetic benchmark database
+        run: bash scripts/perf/bench-db.sh synthetic
+
+      - name: API latency
+        run: node scripts/perf/api-bench.mjs >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Lighthouse (mobile)
+        env:
+          RUNS: ${{ inputs.runs }}
+        run: node scripts/perf/lighthouse.mjs --runs "$RUNS" >> "$GITHUB_STEP_SUMMARY"

@@ -5,8 +5,9 @@
  * access token and one fixed refresh token. Nothing leaves the machine.
  *
  * It refuses to start unless the database is local and named `coco_bench*`
- * (see bench-db.sh). The built SPA in `frontend/dist`, when there is one, is
- * served by the API itself (SpaModule), as in production.
+ * (see bench-db.sh). It does not serve the SPA: SpaModule picks its loader
+ * from the HTTP adapter, which a testing module does not have yet when it is
+ * compiled, so lighthouse.mjs puts `vite preview` in front instead.
  *
  * Needs `npm run build --workspace api` first: it loads `api/dist`, or the
  * build in `COCO_BENCH_API_DIST`.
@@ -48,7 +49,6 @@ export async function startBenchApi({ port = 0 } = {}) {
     CORS_ORIGINS: 'http://localhost:5173',
     SOPORTES_DIR: mkdtempSync(join(tmpdir(), 'coco-bench-soportes-')),
     SOPORTES_STORAGE: 'disk',
-    SPA_DIST_PATH: join(repo, 'frontend', 'dist'),
   });
 
   const api = join(repo, 'api');

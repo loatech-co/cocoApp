@@ -3,6 +3,7 @@
 #
 #   bash scripts/perf/bench-db.sh create          # copy of coco_dev
 #   bash scripts/perf/bench-db.sh create --long   # plus 20 years of history
+#   bash scripts/perf/bench-db.sh synthetic       # invented data, no coco_dev needed
 #   bash scripts/perf/bench-db.sh drop
 #
 # Local only. It never touches coco_test (the e2e suites of other runs empty
@@ -41,11 +42,21 @@ case "${1:-}" in
     psql -h "$HOST" -d "$TARGET" -Atc "ANALYZE" >/dev/null
     psql -h "$HOST" -d "$TARGET" -Atc "SELECT 'transactions: ' || count(*) FROM transactions"
     ;;
+  synthetic)
+    # Empty database, the real migrations, then synthetic.sql. What CI uses.
+    dropdb -h "$HOST" --if-exists "$TARGET"
+    createdb -h "$HOST" "$TARGET"
+    URL="${COCO_BENCH_DATABASE_URL:-postgresql://$(whoami)@localhost:5432/$TARGET}"
+    (cd "$HERE/../../api" && DATABASE_URL="$URL" DIRECT_URL="$URL" npx prisma migrate deploy >/dev/null)
+    psql -h "$HOST" -q -v ON_ERROR_STOP=1 -d "$TARGET" -f "$HERE/synthetic.sql" >/dev/null
+    psql -h "$HOST" -d "$TARGET" -Atc "ANALYZE" >/dev/null
+    psql -h "$HOST" -d "$TARGET" -Atc "SELECT 'transactions: ' || count(*) FROM transactions"
+    ;;
   drop)
     dropdb -h "$HOST" --if-exists "$TARGET"
     ;;
   *)
-    echo "usage: bench-db.sh create [--long] | drop" >&2
+    echo "usage: bench-db.sh create [--long] | synthetic | drop" >&2
     exit 1
     ;;
 esac
