@@ -13,6 +13,16 @@ import { Campo } from '@/shared/ui/atoms/campo';
 import { Input } from '@/shared/ui/atoms/input';
 import type { Category } from '@coco/types';
 
+interface KeywordFieldsProps {
+  valor: string[];
+  onCambiar: (siguiente: string[]) => void;
+  /** Para avisar si otra palabra ya está puesta en otro concepto. */
+  arbol?: readonly Category[];
+  /** El concepto que se está editando, para no avisar de sí mismo. */
+  conceptoId?: Category['id'] | undefined;
+  className?: string;
+}
+
 /**
  * Las palabras que hacen que un recibo se reconozca solo.
  *
@@ -43,15 +53,93 @@ export function CamposDePalabrasClave({
   arbol,
   conceptoId,
   className,
+}: KeywordFieldsProps) {
+  const { escrita, setEscrita, aviso, setAviso, añadir, alTeclear, quitar } = useKeywordInput(
+    valor,
+    onCambiar,
+  );
+
+  const enOtroConcepto = valor
+    .map((palabra) => ({ palabra, otro: conceptoQueYaLaUsa(arbol ?? [], palabra, conceptoId) }))
+    .find((par) => par.otro !== undefined);
+
+  return (
+    <div className={cn('flex flex-col gap-2', className)}>
+      <Campo
+        etiqueta="Palabras clave"
+        id="concepto-palabras-clave"
+        ayuda="Lo que dice el recibo y no cambia de un mes a otro: el acreedor, su NIT. Pulsa Enter para agregar cada una."
+      >
+        <Input
+          id="concepto-palabras-clave"
+          value={escrita}
+          onChange={(e) => {
+            setEscrita(e.target.value);
+            if (aviso) setAviso(null);
+          }}
+          onKeyDown={alTeclear}
+          // Lo tecleado y no confirmado entra igual al salir del campo: si no,
+          // escribir la palabra y pulsar «Guardar» la pierde en silencio, y
+          // nadie relee una lista para comprobar que está lo que acaba de
+          // escribir.
+          onBlur={añadir}
+          placeholder="Aquaoccidente, 805027653…"
+          icono={ScanText}
+          acciones={[<AddKeywordButton key="añadir" escrita={escrita} onClick={añadir} />]}
+        />
+      </Campo>
+
+      {valor.length > 0 && <KeywordChips valor={valor} onQuitar={quitar} />}
+
+      {/*
+        Los dos avisos, en gris y no en rojo.
+
+        Ninguno es un error: uno dice que una palabra no entró y por qué, y el
+        otro que ya está puesta en otro concepto —que se puede hacer, y a veces
+        es lo que se quiere—. El rojo es para lo que salió mal.
+      */}
+      {aviso && <p className="text-xs leading-relaxed text-muted-foreground">{aviso}</p>}
+
+      {!aviso && enOtroConcepto?.otro && (
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          “{enOtroConcepto.palabra}” también está en{' '}
+          <strong className="font-medium text-foreground">{enOtroConcepto.otro.name}</strong>. Un
+          recibo que la diga puede caer en cualquiera de los dos.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function KeywordChips({
+  valor,
+  onQuitar,
 }: {
   valor: string[];
-  onCambiar: (siguiente: string[]) => void;
-  /** Para avisar si otra palabra ya está puesta en otro concepto. */
-  arbol?: readonly Category[];
-  /** El concepto que se está editando, para no avisar de sí mismo. */
-  conceptoId?: Category['id'] | undefined;
-  className?: string;
+  onQuitar: (palabra: string) => void;
 }) {
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {valor.map((palabra) => (
+        <li key={palabra}>
+          {/* El nombre no abre nada: solo se quita. Por eso va sin
+              `onClick`, y el chip lo pinta como texto en vez de como un
+              botón que no haría nada. */}
+          <Chip
+            onQuitar={() => onQuitar(palabra)}
+            etiquetaDeQuitar={`Quitar ${palabra}`}
+            className="max-w-full"
+          >
+            {palabra}
+          </Chip>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Lo que se está escribiendo, el aviso de lo que no entró y los gestos que añaden y quitan. */
+function useKeywordInput(valor: string[], onCambiar: (siguiente: string[]) => void) {
   const [escrita, setEscrita] = useState('');
   const [aviso, setAviso] = useState<string | null>(null);
 
@@ -108,93 +196,32 @@ export function CamposDePalabrasClave({
     }
   }
 
-  const enOtroConcepto = valor
-    .map((palabra) => ({ palabra, otro: conceptoQueYaLaUsa(arbol ?? [], palabra, conceptoId) }))
-    .find((par) => par.otro !== undefined);
+  function quitar(palabra: string): void {
+    onCambiar(valor.filter((suya) => suya !== palabra));
+    setAviso(null);
+  }
 
+  return { escrita, setEscrita, aviso, setAviso, añadir, alTeclear, quitar };
+}
+
+function AddKeywordButton({ escrita, onClick }: { escrita: string; onClick: () => void }) {
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
-      <Campo
-        etiqueta="Palabras clave"
-        id="concepto-palabras-clave"
-        ayuda="Lo que dice el recibo y no cambia de un mes a otro: el acreedor, su NIT. Pulsa Enter para agregar cada una."
-      >
-        <Input
-          id="concepto-palabras-clave"
-          value={escrita}
-          onChange={(e) => {
-            setEscrita(e.target.value);
-            if (aviso) setAviso(null);
-          }}
-          onKeyDown={alTeclear}
-          // Lo tecleado y no confirmado entra igual al salir del campo: si no,
-          // escribir la palabra y pulsar «Guardar» la pierde en silencio, y
-          // nadie relee una lista para comprobar que está lo que acaba de
-          // escribir.
-          onBlur={añadir}
-          placeholder="Aquaoccidente, 805027653…"
-          icono={ScanText}
-          acciones={[
-            <button
-              key="añadir"
-              type="button"
-              // Enter ya lo hace, pero en un teléfono el teclado no siempre
-              // enseña un Enter y este es el único sitio donde se ve que la
-              // caja no guarda una frase sino una lista.
-              onClick={añadir}
-              disabled={limpiar(escrita) === ''}
-              aria-label="Agregar la palabra clave"
-              title="Agregar"
-              className={cn(
-                'flex size-7 items-center justify-center rounded-md text-muted-foreground',
-                'transition-colors hover:bg-muted hover:text-foreground',
-                'disabled:pointer-events-none disabled:opacity-40',
-              )}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-            </button>,
-          ]}
-        />
-      </Campo>
-
-      {valor.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5">
-          {valor.map((palabra) => (
-            <li key={palabra}>
-              {/* El nombre no abre nada: solo se quita. Por eso va sin
-                  `onClick`, y el chip lo pinta como texto en vez de como un
-                  botón que no haría nada. */}
-              <Chip
-                onQuitar={() => {
-                  onCambiar(valor.filter((suya) => suya !== palabra));
-                  setAviso(null);
-                }}
-                etiquetaDeQuitar={`Quitar ${palabra}`}
-                className="max-w-full"
-              >
-                {palabra}
-              </Chip>
-            </li>
-          ))}
-        </ul>
+    <button
+      type="button"
+      // Enter ya lo hace, pero en un teléfono el teclado no siempre
+      // enseña un Enter y este es el único sitio donde se ve que la
+      // caja no guarda una frase sino una lista.
+      onClick={onClick}
+      disabled={limpiar(escrita) === ''}
+      aria-label="Agregar la palabra clave"
+      title="Agregar"
+      className={cn(
+        'flex size-7 items-center justify-center rounded-md text-muted-foreground',
+        'transition-colors hover:bg-muted hover:text-foreground',
+        'disabled:pointer-events-none disabled:opacity-40',
       )}
-
-      {/*
-        Los dos avisos, en gris y no en rojo.
-
-        Ninguno es un error: uno dice que una palabra no entró y por qué, y el
-        otro que ya está puesta en otro concepto —que se puede hacer, y a veces
-        es lo que se quiere—. El rojo es para lo que salió mal.
-      */}
-      {aviso && <p className="text-xs leading-relaxed text-muted-foreground">{aviso}</p>}
-
-      {!aviso && enOtroConcepto?.otro && (
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          “{enOtroConcepto.palabra}” también está en{' '}
-          <strong className="font-medium text-foreground">{enOtroConcepto.otro.name}</strong>. Un
-          recibo que la diga puede caer en cualquiera de los dos.
-        </p>
-      )}
-    </div>
+    >
+      <Plus className="size-4" aria-hidden="true" />
+    </button>
   );
 }

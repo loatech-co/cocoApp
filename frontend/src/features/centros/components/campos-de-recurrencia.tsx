@@ -125,155 +125,7 @@ export function CamposDeRecurrencia({
         ¿tres meses contados desde cuándo? Por eso, en cuanto deja de ser
         mensual, aparece el mes del ciclo.
       */}
-      {valor.recurrente && (
-        <div
-          className={cn(
-            'grid gap-3 rounded-b-lg border-t border-border bg-muted/40 p-3',
-            // Tantas columnas como campos haya: con dos columnas fijas, el
-            // tercer campo se quedaba solo en un renglón a media anchura, y la
-            // fila parecía cortada por la mitad.
-            valor.periodicidad === 'mensual' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
-          )}
-        >
-          <Campo etiqueta="Cada cuánto" id="periodicidad">
-            <Select
-              id="periodicidad"
-              etiqueta="Periodicidad"
-              valor={valor.periodicidad}
-              opciones={PERIODICIDADES.map((p) => ({ valor: p, etiqueta: ETIQUETAS[p] }))}
-              onCambiar={(v) => onCambiar({ ...valor, periodicidad: v as Periodicidad })}
-            />
-          </Campo>
-
-          {valor.periodicidad !== 'mensual' && (
-            <Campo
-              etiqueta={valor.periodicidad === 'anual' ? 'Mes' : 'Mes del ciclo'}
-              id="mes-de-pago"
-            >
-              <Select
-                id="mes-de-pago"
-                etiqueta="Mes"
-                valor={String(valor.mesDePago)}
-                opciones={MESES.map((m, i) => ({ valor: String(i + 1), etiqueta: m }))}
-                onCambiar={(v) => onCambiar({ ...valor, mesDePago: Number(v) })}
-              />
-            </Campo>
-          )}
-
-          <CampoDelDia
-            dia={valor.diaDePago}
-            onCambiar={(diaDePago) => onCambiar({ ...valor, diaDePago })}
-          />
-
-          {/*
-            ── Cuánto, debajo de cuándo ────────────────────────────────────
-            A todo el ancho y en su propio renglón, no como una columna más de
-            la rejilla de arriba. Ahí se contesta CUÁNDO vuelve —cada cuánto,
-            qué mes, qué día—, que son tres formas de la misma pregunta; esto
-            es otra, y en la misma fila se leería como un cuarto ajuste del
-            calendario.
-          */}
-          <Campo
-            etiqueta="Presupuesto"
-            id="presupuesto"
-            ayuda={
-              valor.presupuesto.trim() === ''
-                ? 'Vacío: se estima con el promedio de los meses anteriores.'
-                : 'Este valor se usa cada mes, en vez del promedio.'
-            }
-            className={valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3'}
-          >
-            <CampoDeDinero
-              id="presupuesto"
-              valor={valor.presupuesto}
-              onCambiar={(presupuesto) => onCambiar({ ...valor, presupuesto })}
-              placeholder="Opcional"
-            />
-          </Campo>
-
-          {/*
-            ── Que se cobre solo ───────────────────────────────────────────
-            Debajo del presupuesto y no arriba, porque depende de él para ser
-            una buena idea: sin presupuesto, el movimiento se crea con el
-            promedio de los meses anteriores, que es una estimación. Se permite
-            igual —hay gastos que varían y aun así se domicilian— y por eso el
-            movimiento que se crea lo DICE en sus notas.
-
-            Una fila entera con su explicación, como el interruptor de arriba,
-            y no un campo más de la rejilla: enciende un comportamiento, no
-            guarda un dato.
-          */}
-          <label
-            className={cn(
-              'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3',
-              valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
-            )}
-          >
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">Pago automático</span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">
-                {valor.presupuesto.trim() === ''
-                  ? 'El movimiento se registra solo el día de pago, con el promedio de los meses anteriores.'
-                  : 'El movimiento se registra solo el día de pago, por el presupuesto.'}
-              </span>
-            </span>
-
-            <Interruptor
-              checked={valor.pagoAutomatico}
-              disabled={valor.variosPagos}
-              onChange={(e) => onCambiar({ ...valor, pagoAutomatico: e.target.checked })}
-            />
-          </label>
-
-          {/*
-            ── Que se cubra a pedazos ──────────────────────────────────────
-            Debajo del pago automático porque son las dos caras de la misma
-            pregunta —«¿cómo se salda esto?»— y porque se excluyen: el de
-            arriba dice que se cobra solo, entero, el día que vence; este dice
-            que se cubre en varias idas y no se sabe cuántas.
-
-            Se EXCLUYEN en la pantalla, y no solo en el servidor. Dejar los dos
-            encendibles para que la API conteste 422 es hacer que la regla se
-            descubra fallando; apagar el otro al encender uno sería cambiarle
-            a alguien un ajuste que no tocó. Lo que queda es decirlo: el que no
-            se puede usar está apagado y explica por qué.
-          */}
-          <label
-            className={cn(
-              'flex items-center gap-3 rounded-lg border border-border bg-card p-3',
-              valor.pagoAutomatico ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
-              valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
-            )}
-          >
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">Se paga en varias veces</span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">
-                {valor.pagoAutomatico
-                  ? 'No se puede junto al pago automático: ese registra el valor entero el día de pago.'
-                  : valor.presupuesto.trim() === ''
-                    ? 'Sigue en pagos pendientes hasta cubrir el promedio de los meses anteriores.'
-                    : 'Sigue en pagos pendientes, mostrando lo que lleva, hasta cubrir el presupuesto.'}
-              </span>
-            </span>
-
-            <Interruptor
-              checked={valor.variosPagos}
-              disabled={valor.pagoAutomatico}
-              onChange={(e) => onCambiar({ ...valor, variosPagos: e.target.checked })}
-            />
-          </label>
-
-          <p
-            className={cn(
-              'text-xs text-muted-foreground',
-              valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
-            )}
-          >
-            {cuandoVuelve(valor.periodicidad, valor.diaDePago, valor.mesDePago)}{' '}
-            {avisoDeMesCorto(valor.diaDePago)}
-          </p>
-        </div>
-      )}
+      {valor.recurrente && <RecurrenceDetails valor={valor} onCambiar={onCambiar} />}
     </div>
   );
 }
@@ -391,4 +243,184 @@ export function avisoDeMesCorto(dia: number): string {
 
   const deTreinta = dia === 31 ? ' y el 30 en abril, junio, septiembre y noviembre' : '';
   return `En febrero será el 28 —29 en bisiestos—${deTreinta}.`;
+}
+
+function InstallmentsSwitch({ valor, onCambiar }: RecurrenceFieldProps) {
+  return (
+    <label
+      className={cn(
+        'flex items-center gap-3 rounded-lg border border-border bg-card p-3',
+        valor.pagoAutomatico ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+        valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
+      )}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium">Se paga en varias veces</span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">
+          {valor.pagoAutomatico
+            ? 'No se puede junto al pago automático: ese registra el valor entero el día de pago.'
+            : valor.presupuesto.trim() === ''
+              ? 'Sigue en pagos pendientes hasta cubrir el promedio de los meses anteriores.'
+              : 'Sigue en pagos pendientes, mostrando lo que lleva, hasta cubrir el presupuesto.'}
+        </span>
+      </span>
+
+      <Interruptor
+        checked={valor.variosPagos}
+        disabled={valor.pagoAutomatico}
+        onChange={(e) => onCambiar({ ...valor, variosPagos: e.target.checked })}
+      />
+    </label>
+  );
+}
+
+function AutoPaySwitch({ valor, onCambiar }: RecurrenceFieldProps) {
+  return (
+    <label
+      className={cn(
+        'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3',
+        valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
+      )}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium">Pago automático</span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">
+          {valor.presupuesto.trim() === ''
+            ? 'El movimiento se registra solo el día de pago, con el promedio de los meses anteriores.'
+            : 'El movimiento se registra solo el día de pago, por el presupuesto.'}
+        </span>
+      </span>
+
+      <Interruptor
+        checked={valor.pagoAutomatico}
+        disabled={valor.variosPagos}
+        onChange={(e) => onCambiar({ ...valor, pagoAutomatico: e.target.checked })}
+      />
+    </label>
+  );
+}
+
+function BudgetField({ valor, onCambiar }: RecurrenceFieldProps) {
+  return (
+    <Campo
+      etiqueta="Presupuesto"
+      id="presupuesto"
+      ayuda={
+        valor.presupuesto.trim() === ''
+          ? 'Vacío: se estima con el promedio de los meses anteriores.'
+          : 'Este valor se usa cada mes, en vez del promedio.'
+      }
+      className={valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3'}
+    >
+      <CampoDeDinero
+        id="presupuesto"
+        valor={valor.presupuesto}
+        onCambiar={(presupuesto) => onCambiar({ ...valor, presupuesto })}
+        placeholder="Opcional"
+      />
+    </Campo>
+  );
+}
+
+/** Lo que aparece debajo del interruptor cuando el pago es recurrente. */
+function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
+  return (
+    <div
+      className={cn(
+        'grid gap-3 rounded-b-lg border-t border-border bg-muted/40 p-3',
+        // Tantas columnas como campos haya: con dos columnas fijas, el
+        // tercer campo se quedaba solo en un renglón a media anchura, y la
+        // fila parecía cortada por la mitad.
+        valor.periodicidad === 'mensual' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
+      )}
+    >
+      <Campo etiqueta="Cada cuánto" id="periodicidad">
+        <Select
+          id="periodicidad"
+          etiqueta="Periodicidad"
+          valor={valor.periodicidad}
+          opciones={PERIODICIDADES.map((p) => ({ valor: p, etiqueta: ETIQUETAS[p] }))}
+          onCambiar={(v) => onCambiar({ ...valor, periodicidad: v as Periodicidad })}
+        />
+      </Campo>
+
+      {valor.periodicidad !== 'mensual' && (
+        <Campo etiqueta={valor.periodicidad === 'anual' ? 'Mes' : 'Mes del ciclo'} id="mes-de-pago">
+          <Select
+            id="mes-de-pago"
+            etiqueta="Mes"
+            valor={String(valor.mesDePago)}
+            opciones={MESES.map((m, i) => ({ valor: String(i + 1), etiqueta: m }))}
+            onCambiar={(v) => onCambiar({ ...valor, mesDePago: Number(v) })}
+          />
+        </Campo>
+      )}
+
+      <CampoDelDia
+        dia={valor.diaDePago}
+        onCambiar={(diaDePago) => onCambiar({ ...valor, diaDePago })}
+      />
+
+      {/*
+        ── Cuánto, debajo de cuándo ────────────────────────────────────
+        A todo el ancho y en su propio renglón, no como una columna más de
+        la rejilla de arriba. Ahí se contesta CUÁNDO vuelve —cada cuánto,
+        qué mes, qué día—, que son tres formas de la misma pregunta; esto
+        es otra, y en la misma fila se leería como un cuarto ajuste del
+        calendario.
+      */}
+      <BudgetField valor={valor} onCambiar={onCambiar} />
+
+      {/*
+        ── Que se cobre solo ───────────────────────────────────────────
+        Debajo del presupuesto y no arriba, porque depende de él para ser
+        una buena idea: sin presupuesto, el movimiento se crea con el
+        promedio de los meses anteriores, que es una estimación. Se permite
+        igual —hay gastos que varían y aun así se domicilian— y por eso el
+        movimiento que se crea lo DICE en sus notas.
+
+        Una fila entera con su explicación, como el interruptor de arriba,
+        y no un campo más de la rejilla: enciende un comportamiento, no
+        guarda un dato.
+      */}
+      <AutoPaySwitch valor={valor} onCambiar={onCambiar} />
+
+      {/*
+        ── Que se cubra a pedazos ──────────────────────────────────────
+        Debajo del pago automático porque son las dos caras de la misma
+        pregunta —«¿cómo se salda esto?»— y porque se excluyen: el de
+        arriba dice que se cobra solo, entero, el día que vence; este dice
+        que se cubre en varias idas y no se sabe cuántas.
+
+        Se EXCLUYEN en la pantalla, y no solo en el servidor. Dejar los dos
+        encendibles para que la API conteste 422 es hacer que la regla se
+        descubra fallando; apagar el otro al encender uno sería cambiarle
+        a alguien un ajuste que no tocó. Lo que queda es decirlo: el que no
+        se puede usar está apagado y explica por qué.
+      */}
+      <InstallmentsSwitch valor={valor} onCambiar={onCambiar} />
+
+      <WhenItReturns valor={valor} />
+    </div>
+  );
+}
+
+interface RecurrenceFieldProps {
+  valor: Recurrencia;
+  onCambiar: (siguiente: Recurrencia) => void;
+}
+
+/** Cuándo vuelve, dicho con palabras. */
+function WhenItReturns({ valor }: { valor: Recurrencia }) {
+  return (
+    <p
+      className={cn(
+        'text-xs text-muted-foreground',
+        valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
+      )}
+    >
+      {cuandoVuelve(valor.periodicidad, valor.diaDePago, valor.mesDePago)}{' '}
+      {avisoDeMesCorto(valor.diaDePago)}
+    </p>
+  );
 }
