@@ -1,0 +1,104 @@
+# The gate every change passes before it reaches the deploy branch (phase 7.6).
+#
+# Mirrors what "done" means in this repo: typecheck, lint, unit tests, API e2e
+# against a real Postgres, both production builds, and an install exactly like
+# the server's (NODE_ENV=production, no devDependencies). scripts/merge.sh
+# refuses to integrate a branch unless this is green.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [Dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: coco_migrate
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: coco_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U coco_migrate"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      # Never a real secret: CI talks only to the throwaway Postgres above.
+      TEST_DATABASE_URL: postgresql://coco_migrate:ci-only-password@localhost:5432/coco_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Test environment (api/.env.test)
+        run: |
+          {
+            echo 'NODE_ENV=test'
+            echo "DATABASE_URL=$TEST_DATABASE_URL"
+            echo "DIRECT_URL=$TEST_DATABASE_URL"
+            echo 'CORS_ORIGINS=http://localhost:5173'
+            echo 'LOG_LEVEL=silent'
+            echo 'JWT_SECRET=ci-only-jwt-secret-at-least-32-characters-long'
+            echo 'CHECK_BREACHED_PASSWORDS=false'
+            echo 'BOOTSTRAP_ADMIN_EMAIL=admin-e2e@pruebas.coco'
+            echo 'SOPORTES_DIR=.soportes-test'
+          } > api/.env.test
+
+      - name: Prisma client and test database
+        run: |
+          npm run prisma:generate --workspace api
+          npm run db:test:push --workspace api
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Dependency audit (high/critical, production deps)
+        run: node scripts/ci/audit.mjs
+
+      - name: Unit tests
+        run: npm test
+
+      - name: API e2e
+        run: npm run test:e2e --workspace api
+
+      - name: Production builds
+        run: |
+          npm run build --workspace api
+          NODE_ENV=production npm run build --workspace frontend
+
+  clean-install:
+    # What hbuilds runs on every deploy: a fresh install with NODE_ENV=production
+    # (no devDependencies) and the build. Three deploys failed on exactly this.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Clean install and production build
+        run: bash scripts/verify-clean-install.sh

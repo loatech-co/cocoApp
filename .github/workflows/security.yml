@@ -1,0 +1,40 @@
+# Secrets in the history and known-vulnerable dependencies (phase 7.6).
+# Weekly, on every PR, and on demand.
+name: security
+
+on:
+  pull_request:
+  schedule:
+    - cron: '0 11 * * 1' # Mondays 06:00 Bogotá
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    # The gitleaks CLI and not its GitHub Action: the action needs a paid
+    # license for organization-owned repositories; the CLI is MIT and free.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan the whole history
+        env:
+          GITLEAKS_VERSION: 8.28.0
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          ./gitleaks git --redact --no-banner --exit-code 1 .
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: High/critical advisories in production dependencies
+        run: node scripts/ci/audit.mjs
