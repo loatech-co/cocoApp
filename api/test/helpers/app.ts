@@ -134,6 +134,13 @@ export async function levantarApp(
   // prueba verificaría una app distinta a la que se despliega.
   configureApp(app, app.get(ConfigService));
   await app.init();
+  // Listen ONCE, for the whole suite. Handed a server that is not listening,
+  // supertest opens it on a random port for each request and closes it after.
+  // Node's global agent keeps sockets alive, so when the OS hands back a port
+  // it already used, the next request goes out on a pooled socket the old
+  // server closed: `socket hang up`. That was the flaky
+  // `auth.e2e-spec.ts › una cuenta pendiente no puede entrar…`.
+  await app.listen(0, '127.0.0.1');
 
   const prisma = app.get(PrismaService);
 
