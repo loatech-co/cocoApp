@@ -165,7 +165,7 @@ function suscribir(oyente: () => void): () => void {
   return () => oyentes.delete(oyente);
 }
 
-export function useAvisos(): Aviso[] {
+function useAvisos(): Aviso[] {
   return useSyncExternalStore(
     suscribir,
     () => avisos,

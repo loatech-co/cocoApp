@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
  * Repetidos en dos sitios, un día alguien cambia uno y la misma cosa pasa a
  * tener dos colores según por dónde se entre.
  */
-export const CHIPS = {
+const CHIPS = {
   gasto: { fondo: 'var(--chip-gasto)', tinta: 'var(--chip-gasto-tinta)' },
   ingreso: { fondo: 'var(--chip-ingreso)', tinta: 'var(--chip-ingreso-tinta)' },
   presupuesto: { fondo: 'var(--chip-presupuesto)', tinta: 'var(--chip-presupuesto-tinta)' },

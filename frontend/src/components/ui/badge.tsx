@@ -47,8 +47,6 @@ const etiquetaVariants = cva(
   },
 );
 
-export type TonoDeEtiqueta = NonNullable<VariantProps<typeof etiquetaVariants>['tono']>;
-
 /** Un rótulo que describe algo. No se pulsa. */
 export function Etiqueta({
   className,

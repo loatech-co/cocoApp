@@ -24,7 +24,7 @@ import { CategorizationService } from '../categorization/categorization.module';
 import { TransactionsService, type TransactionView } from '../transactions/transactions.service';
 
 /** La clasificación propuesta, con los ids como los entiende el resto de la API. */
-export interface ClasificacionView {
+interface ClasificacionView {
   certeza: ClasificacionInterpretada['certeza'];
   fuente: ClasificacionInterpretada['fuente'];
   concepto_id: bigint | null;

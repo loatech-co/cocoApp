@@ -149,7 +149,7 @@ export function diasDelRango(desde: Date, hasta: Date): number {
 }
 
 /** Cuántos meses de calendario toca el rango, ambos extremos incluidos. */
-export function mesesDelRango(desde: Date, hasta: Date): number {
+function mesesDelRango(desde: Date, hasta: Date): number {
   return (
     (hasta.getUTCFullYear() - desde.getUTCFullYear()) * 12 +
     (hasta.getUTCMonth() - desde.getUTCMonth()) +

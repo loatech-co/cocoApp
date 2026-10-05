@@ -31,7 +31,7 @@ import { SupabaseAuthService } from '../auth/supabase-auth.service';
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
-export class ListUsersQueryDto {
+class ListUsersQueryDto {
   @IsOptional()
   @IsEnum(['pending', 'active', 'suspended'])
   status?: UserStatus;
@@ -50,12 +50,12 @@ export class ListUsersQueryDto {
   per_page?: number;
 }
 
-export class ChangeRoleDto {
+class ChangeRoleDto {
   @IsEnum(['admin', 'user'])
   role!: UserRole;
 }
 
-export class ResetPasswordDto {
+class ResetPasswordDto {
   @IsString()
   @MaxLength(128)
   newPassword!: string;
@@ -64,7 +64,7 @@ export class ResetPasswordDto {
 // ── Servicio ─────────────────────────────────────────────────────────────────
 
 @Injectable()
-export class AdminService {
+class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auth: AuthService,
@@ -318,7 +318,7 @@ interface Contexto {
 @Controller('admin')
 @UseGuards(RolesGuard)
 @Roles('admin')
-export class AdminController {
+class AdminController {
   constructor(private readonly admin: AdminService) {}
 
   @Get('users')

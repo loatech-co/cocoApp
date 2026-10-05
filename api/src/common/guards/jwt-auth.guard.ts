@@ -106,7 +106,7 @@ export class JwtAuthGuard implements CanActivate {
   }
 }
 
-export function extraerBearer(header: string | undefined): string | null {
+function extraerBearer(header: string | undefined): string | null {
   if (!header) return null;
   const [esquema, valor] = header.split(' ');
   return esquema === 'Bearer' && valor ? valor : null;

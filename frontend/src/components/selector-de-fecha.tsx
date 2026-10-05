@@ -463,5 +463,3 @@ function PanelDeRango({
     </div>
   );
 }
-
-export type { Preset };

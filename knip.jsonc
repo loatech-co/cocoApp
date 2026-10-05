@@ -1,0 +1,35 @@
+{
+  // knip: unused files, exports and dependencies fail CI (CONTRIBUTING.md,
+  // "No dead code"). Every exception below says why it is one.
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  "workspaces": {
+    ".": {
+      // Operational scripts, run by hand (`npm run sql`, `npx tsx …`).
+      "entry": ["scripts/**/*.{mjs,mts}"],
+      "project": ["scripts/**/*.{mjs,mts}"],
+      // Scripts run from the repo root and use the workspaces' hoisted
+      // dependencies (Prisma client, pg, pdf.js) on purpose: they operate on
+      // the same database and files as the app, with the same versions.
+      // `tsx` runs scripts/soportes/piloto.mts (`npx tsx …`), which knip
+      // cannot see because the command lives in the script's own header.
+      "ignoreDependencies": ["@prisma/client", "pg", "pdfjs-dist", "tsx"],
+    },
+    "api": {
+      "entry": ["src/main.ts", "test/**/*.e2e-spec.ts"],
+      "project": ["src/**/*.ts", "test/**/*.ts"],
+      // The driver under @prisma/adapter-pg, declared directly so production
+      // installs pin it (it replaced Prisma's Rust engine, see b496c5a).
+      "ignoreDependencies": ["pg", "@types/pg"],
+    },
+    "frontend": {
+      "project": ["src/**/*.{ts,tsx}"],
+    },
+    "packages/types": {
+      "project": ["src/**/*.ts"],
+    },
+    "packages/lectura": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+    },
+  },
+}

@@ -58,7 +58,7 @@ export type TonoDeAviso = NonNullable<VariantProps<typeof alertVariants>['varian
  * que usar los mismos cuatro iconos: un error que en línea es un círculo y
  * flotando es un triángulo son dos errores distintos para quien mira.
  */
-export const ICONOS_DE_TONO: Record<TonoDeAviso, ComponentType<{ className?: string }> | null> = {
+const ICONOS_DE_TONO: Record<TonoDeAviso, ComponentType<{ className?: string }> | null> = {
   default: null,
   destructive: CircleAlert,
   warning: TriangleAlert,

@@ -11,7 +11,7 @@ import type { AuditEntry, PaginationMeta, PerfilPublico, UserRole, UserStatus } 
  * paquete de cualquiera.
  */
 
-export const adminKeys = {
+const adminKeys = {
   usuarios: (status?: UserStatus) => ['admin', 'users', status ?? 'todos'] as const,
   bitacora: (page: number) => ['admin', 'audit-log', page] as const,
 };

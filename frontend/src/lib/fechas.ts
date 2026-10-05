@@ -16,7 +16,7 @@
  * el nombre completo las haría chocar unas con otras.
  */
 
-export const MESES_CORTOS = [
+const MESES_CORTOS = [
   'ene',
   'feb',
   'mar',
@@ -70,12 +70,6 @@ export function diaCorto(iso: string): string {
 export function mesLargo(iso: string): string {
   const { anio, mes } = partes(iso);
   return `${conMayuscula(MESES_LARGOS[mes - 1] ?? String(mes))} de ${anio}`;
-}
-
-/** `2026-09-01` → `sep 2026`. */
-export function mesCorto(iso: string): string {
-  const { anio, mes } = partes(iso);
-  return `${MESES_CORTOS[mes - 1] ?? mes} ${anio}`;
 }
 
 /**

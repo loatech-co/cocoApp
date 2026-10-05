@@ -26,7 +26,7 @@ export interface SaldoDerivado {
 /** Las cuentas de crédito son PASIVO: el saldo representa deuda, no dinero. */
 const TIPOS_DE_PASIVO: ReadonlySet<AccountType> = new Set<AccountType>(['credit']);
 
-export function esCuentaDePasivo(tipo: AccountType): boolean {
+function esCuentaDePasivo(tipo: AccountType): boolean {
   return TIPOS_DE_PASIVO.has(tipo);
 }
 

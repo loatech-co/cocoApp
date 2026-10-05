@@ -481,7 +481,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
  * nombre completo las haría chocar; en la tarjeta hay UNA, y "sep 26" obliga a
  * descifrar una abreviatura y a adivinar si el 26 es el día o el año.
  */
-export function fechaLarga(bucket: string): string {
+function fechaLarga(bucket: string): string {
   return bucket.length > 7 ? diaLargo(bucket) : mesLargo(bucket);
 }
 
@@ -572,7 +572,7 @@ export function etiquetasDelEje(
  * hace que las etiquetas se pisen y no distingue un punto de otro. Solo aporta
  * cuando el rango cruza de año.
  */
-export function etiquetaDeCubo(bucket: string, mismoAnio = false): string {
+function etiquetaDeCubo(bucket: string, mismoAnio = false): string {
   const [anio = '', mes = '', dia] = bucket.split('-');
   const nombre = MESES[Number(mes) - 1] ?? mes;
   if (dia) return `${Number(dia)} ${nombre}`;

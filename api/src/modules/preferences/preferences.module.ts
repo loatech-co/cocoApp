@@ -14,14 +14,14 @@ import { PrismaService } from '../../prisma/prisma.service';
  * de plano cualquier clave que no esté declarada — no hace falta validarlo a
  * mano en el servicio.
  */
-export class UpdatePreferencesDto {
+class UpdatePreferencesDto {
   @IsOptional()
   @IsBoolean()
   cuentas_habilitadas?: boolean;
 }
 
 @Injectable()
-export class PreferencesService {
+class PreferencesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async leer(userId: bigint): Promise<Preferencias> {
@@ -70,7 +70,7 @@ export class PreferencesService {
 }
 
 @Controller('preferences')
-export class PreferencesController {
+class PreferencesController {
   constructor(private readonly preferences: PreferencesService) {}
 
   @Get()

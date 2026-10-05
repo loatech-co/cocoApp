@@ -78,7 +78,7 @@ const HOSTS_LOCALES = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0', 'host
 export const PERMISO_DE_BASE_REMOTA = 'PERMITIR_BASE_REMOTA';
 
 /** El host de una URL de conexión, o `null` si no se puede leer. */
-export function hostDeLaBase(url: string): string | null {
+function hostDeLaBase(url: string): string | null {
   try {
     return new URL(url).hostname || null;
   } catch {

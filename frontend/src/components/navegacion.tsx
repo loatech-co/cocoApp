@@ -110,7 +110,7 @@ export const SECCIONES_DE_ADMIN: readonly Seccion[] = [
 ];
 
 /** Mi cuenta no es una sección del riel, pero sí una página que existe. */
-export const MI_CUENTA: Seccion = {
+const MI_CUENTA: Seccion = {
   to: '/mi-cuenta',
   label: 'Mi cuenta',
   Icono: UserCog,

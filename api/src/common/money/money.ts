@@ -13,7 +13,7 @@ import { Prisma } from '@prisma/client';
 export type Money = Prisma.Decimal;
 
 /** Escala del esquema: DECIMAL(15,2). */
-export const ESCALA = 2;
+const ESCALA = 2;
 
 export const CERO: Money = new Prisma.Decimal(0);
 
@@ -38,10 +38,6 @@ export function sonIguales(a: Money, b: Money): boolean {
 
 export function esPositivo(value: Money): boolean {
   return value.greaterThan(CERO);
-}
-
-export function esNegativo(value: Money): boolean {
-  return value.lessThan(CERO);
 }
 
 /**

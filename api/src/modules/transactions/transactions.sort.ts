@@ -15,7 +15,7 @@ const CAMPOS_PERMITIDOS = {
   merchant: 'merchant',
 } as const satisfies Record<string, keyof Prisma.TransactionOrderByWithRelationInput>;
 
-export type CampoOrdenable = keyof typeof CAMPOS_PERMITIDOS;
+type CampoOrdenable = keyof typeof CAMPOS_PERMITIDOS;
 
 /** Orden por defecto: lo más reciente primero, que es como se lee un extracto. */
 const ORDEN_POR_DEFECTO: Prisma.TransactionOrderByWithRelationInput[] = [
@@ -55,7 +55,7 @@ export interface Paginacion {
   take: number;
 }
 
-export const PER_PAGE_POR_DEFECTO = 50;
+const PER_PAGE_POR_DEFECTO = 50;
 export const PER_PAGE_MAXIMO = 200;
 
 export function parsePaginacion(page?: number, perPage?: number): Paginacion {

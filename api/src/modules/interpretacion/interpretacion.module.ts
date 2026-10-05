@@ -17,7 +17,7 @@ import { TransactionsModule } from '../transactions/transactions.module';
  * haría que el de movimientos cargara con la categorización.
  */
 @Controller('transactions')
-export class InterpretacionController {
+class InterpretacionController {
   constructor(private readonly interpretacion: InterpretacionService) {}
 
   /** Sin efectos: interpreta y devuelve, para rellenar una ficha. */

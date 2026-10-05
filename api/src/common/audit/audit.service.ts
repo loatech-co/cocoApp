@@ -4,7 +4,7 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /** Acciones auditadas. Tipadas para que no se cuelen cadenas sueltas. */
-export type AccionAuditada =
+type AccionAuditada =
   | 'auth.register'
   | 'auth.login'
   | 'auth.login_failed'

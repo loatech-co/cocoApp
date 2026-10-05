@@ -7,7 +7,6 @@ import type {
   Dashboard,
   Soporte,
   TransactionsMeta,
-  Tag,
   Transaction,
 } from '@coco/types';
 
@@ -167,18 +166,6 @@ export function useCategories(kind?: Category['kind']): UseQueryResult<CategoryT
   });
 }
 
-export function useSembrarDiccionario() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      const respuesta = await apiFetch<{ creadas: number }>('/categories/seed', { method: 'POST' });
-      return respuesta.data;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.categories }),
-  });
-}
-
 export function useCrearCategoria() {
   const queryClient = useQueryClient();
 
@@ -209,13 +196,6 @@ export function useCrearCategoria() {
 }
 
 // ── Etiquetas ────────────────────────────────────────────────────────────────
-
-export function useTags(): UseQueryResult<Tag[]> {
-  return useQuery({
-    queryKey: keys.tags,
-    queryFn: async () => (await apiFetch<Tag[]>('/tags')).data,
-  });
-}
 
 // ── Movimientos ──────────────────────────────────────────────────────────────
 
@@ -310,27 +290,6 @@ export function useEliminarMovimiento() {
   return useMutation({
     mutationFn: async (id: number) => {
       await apiFetch<unknown>(`/transactions/${id}`, { method: 'DELETE' });
-    },
-    onSuccess: invalidarDerivados,
-  });
-}
-
-export function useCrearTransferencia() {
-  const invalidarDerivados = useInvalidarDerivados();
-
-  return useMutation({
-    mutationFn: async (transferencia: {
-      from_account_id: number;
-      to_account_id: number;
-      date: string;
-      amount: string;
-      description?: string;
-    }) => {
-      const respuesta = await apiFetch<{ transfer_group_id: string; legs: Transaction[] }>(
-        '/transactions/transfer',
-        { method: 'POST', body: transferencia },
-      );
-      return respuesta.data;
     },
     onSuccess: invalidarDerivados,
   });

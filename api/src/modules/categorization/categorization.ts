@@ -177,7 +177,7 @@ export function tokensSignificativos(normalizada: string): Set<string> {
  * «pago → Mercado» convertiría en mercado cada «pago de» que llegue después.
  * El plan lo dice tal cual: no se aprende de descripciones vacías ni genéricas.
  */
-export const PALABRAS_GENERICAS: ReadonlySet<string> = new Set([
+const PALABRAS_GENERICAS: ReadonlySet<string> = new Set([
   'pago',
   'pagos',
   'compra',

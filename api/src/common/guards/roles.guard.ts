@@ -10,7 +10,7 @@ import { Reflector } from '@nestjs/core';
 import type { UserRole } from '@prisma/client';
 import type { Request } from 'express';
 
-export const ROLES_KEY = 'roles';
+const ROLES_KEY = 'roles';
 
 /** Restringe una ruta a ciertos roles. Sin él, cualquier usuario autenticado pasa. */
 export const Roles = (...roles: UserRole[]): CustomDecorator => SetMetadata(ROLES_KEY, roles);

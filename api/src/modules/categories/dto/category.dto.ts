@@ -30,7 +30,7 @@ const HEX = /^#[0-9A-Fa-f]{6}$/;
  * llenar la columna.
  */
 export const MAXIMO_DE_PALABRAS = 30;
-export const LARGO_DE_UNA_PALABRA = 60;
+const LARGO_DE_UNA_PALABRA = 60;
 
 /**
  * Limpia la lista antes de validarla: recorta, tira las vacías y quita las
@@ -44,7 +44,7 @@ export const LARGO_DE_UNA_PALABRA = 60;
  * Lo que no sea una lista de textos se devuelve intacto: rechazarlo es trabajo
  * de `@IsArray` y `@IsString`, que dan un mensaje que se entiende.
  */
-export function limpiarPalabras({ value }: { value: unknown }): unknown {
+function limpiarPalabras({ value }: { value: unknown }): unknown {
   if (!Array.isArray(value)) return value;
   if (value.some((palabra) => typeof palabra !== 'string')) return value;
 

@@ -228,7 +228,7 @@ function loQueSeBorra(nivel: NivelDeCategoria, nombre: string, cuantas: number):
  * mejor que no poder borrar: siguen clasificados, y el concepto se les asigna
  * después desde la tabla.
  */
-export function destinosPosibles(
+function destinosPosibles(
   arbol: Category[],
   excluidoId: number,
 ): { valor: string; etiqueta: string }[] {

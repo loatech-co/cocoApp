@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import type { TransactionType } from '@coco/types';
 
 /** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
-export const ORDENES = [
+const ORDENES = [
   { valor: '-date', etiqueta: 'Más recientes' },
   { valor: 'date', etiqueta: 'Más antiguos' },
   { valor: '-amount', etiqueta: 'Mayor valor' },

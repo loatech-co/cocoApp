@@ -40,7 +40,7 @@ import { recibirSesion, sesionCerrada } from './session';
  */
 
 /** Lo que la app puede llamar desde Swift (`evaluateJavaScript`). */
-export interface PuenteWeb {
+interface PuenteWeb {
   /** Navega sin recargar: `react-router` cambia la ruta por dentro. */
   ir(ruta: string): void;
   /** Abre la hoja de búsqueda. La pestaña nativa «Buscar» llama aquí. */

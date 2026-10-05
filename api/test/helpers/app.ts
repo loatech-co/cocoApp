@@ -40,7 +40,7 @@ export interface EntornoDePruebas {
   cerrar: () => Promise<void>;
 }
 
-export interface DatosDeUsuario {
+interface DatosDeUsuario {
   email?: string;
   password?: string;
   displayName?: string;

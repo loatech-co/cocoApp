@@ -26,7 +26,7 @@ export interface Preferencias {
  */
 const POR_DEFECTO: Preferencias = { cuentas_habilitadas: false };
 
-export const preferenciasKey = ['preferences'] as const;
+const preferenciasKey = ['preferences'] as const;
 
 export function usePreferencias(): UseQueryResult<Preferencias> {
   return useQuery({

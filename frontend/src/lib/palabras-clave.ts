@@ -35,10 +35,10 @@ export const LARGO_MINIMO = 3;
 
 /** Lo que admite la API. Se repite aquí para no dejar escribir lo que se va a rechazar. */
 export const MAXIMO_DE_PALABRAS = 30;
-export const LARGO_MAXIMO = 60;
+const LARGO_MAXIMO = 60;
 
 /** Sin tildes, en minúscula y con los espacios apretados. Para comparar, no para guardar. */
-export function comoSeCompara(palabra: string): string {
+function comoSeCompara(palabra: string): string {
   return normalizar(palabra);
 }
 

@@ -107,35 +107,3 @@ export function formatMoney(amount: string | number, currency: string = DEFAULT_
 export function formatCOP(amount: string | number): string {
   return formatMoney(amount, DEFAULT_CURRENCY);
 }
-
-/**
- * Pesos en corto: `$93,3 M`, `$1,2 k`.
- *
- * Para sitios donde la cifra exacta no cabe ni hace falta —el centro de una
- * dona de 120 píxeles—. `$ 93.260.516` ahí dentro se sale o hay que encogerlo
- * hasta que no se lea.
- */
-export function formatCOPCorto(amount: string | number): string {
-  const value = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
-  if (!Number.isFinite(value)) return '—';
-
-  const unidades: { desde: number; sufijo: string }[] = [
-    { desde: 1_000_000_000, sufijo: ' MM' },
-    { desde: 1_000_000, sufijo: ' M' },
-    { desde: 1_000, sufijo: ' k' },
-  ];
-
-  for (const { desde, sufijo } of unidades) {
-    if (Math.abs(value) >= desde) {
-      const corto = value / desde;
-      // Un decimal solo mientras aporte: "93,3 M" sí, "93,0 M" no.
-      const texto = corto.toLocaleString('es-CO', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: Math.abs(corto) < 100 ? 1 : 0,
-      });
-      return `$${texto}${sufijo}`;
-    }
-  }
-
-  return formatCOP(value);
-}

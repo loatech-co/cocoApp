@@ -30,7 +30,7 @@ import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
  * movimientos, no todos. Dos juegos de filtros distintos garantizarían que las
  * cifras de una pantalla no expliquen las de la otra.
  */
-export class DashboardQueryDto {
+class DashboardQueryDto {
   /** Inicio del rango, inclusive. Por defecto, el 1 del mes en curso. */
   @IsOptional()
   @IsDateString({}, { message: 'La fecha desde debe tener formato YYYY-MM-DD.' })
@@ -113,7 +113,7 @@ interface GastoPorCategoriaPayload {
   count: number;
 }
 
-export interface PuntoDeTendencia {
+interface PuntoDeTendencia {
   /** `2025-03-14` o `2025-03`, según la granularidad. */
   bucket: string;
   expense: string;
@@ -123,7 +123,7 @@ export interface PuntoDeTendencia {
   count: number;
 }
 
-export interface DashboardPayload {
+interface DashboardPayload {
   period: { from: string; to: string; granularity: 'dia' | 'mes' };
   accounts: AccountView[];
   totals: {
@@ -207,7 +207,7 @@ function rangoPorDefecto(from?: string, to?: string): { inicio: Date; fin: Date 
 const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
 
 @Injectable()
-export class DashboardService {
+class DashboardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounts: AccountsService,
@@ -695,7 +695,7 @@ function profundidadDeCategoria(porId: ReadonlyMap<string, CategoriaPlana>, id: 
 
 /** M5 — Dashboard. Todo derivado; ninguna cifra se almacena. */
 @Controller('dashboard')
-export class DashboardController {
+class DashboardController {
   constructor(private readonly dashboard: DashboardService) {}
 
   @Get()

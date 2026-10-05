@@ -37,10 +37,10 @@ const ANTECEDENTES_A_LEER = 400;
  * la persona crea o confirma. La diferencia no es decorativa: decide quién gana
  * cuando dos reglas coinciden, y con qué confianza se muestra la sugerencia.
  */
-export const PRIORIDAD_SEMBRADA = 0;
-export const PRIORIDAD_APRENDIDA = 10;
+const PRIORIDAD_SEMBRADA = 0;
+const PRIORIDAD_APRENDIDA = 10;
 
-export class SuggestQueryDto {
+class SuggestQueryDto {
   @IsOptional()
   @IsString()
   @MaxLength(255)
@@ -48,7 +48,7 @@ export class SuggestQueryDto {
 }
 
 /** Lo que la ficha manda al guardar un movimiento con una sugerencia aceptada o corregida. */
-export class LearnBodyDto {
+class LearnBodyDto {
   @IsString()
   @MaxLength(255)
   description!: string;
@@ -170,7 +170,7 @@ function aVista(sugerencia: Sugerencia | null): SugerenciaView | null {
 }
 
 @Controller('categorization')
-export class CategorizationController {
+class CategorizationController {
   constructor(private readonly categorization: CategorizationService) {}
 
   /**

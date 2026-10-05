@@ -370,7 +370,7 @@ export class AuthService {
 }
 
 /** Minúsculas y sin espacios: `Gerardo@X.com ` y `gerardo@x.com` son la misma cuenta. */
-export function normalizarCorreo(email: string): string {
+function normalizarCorreo(email: string): string {
   return email.trim().toLowerCase();
 }
 

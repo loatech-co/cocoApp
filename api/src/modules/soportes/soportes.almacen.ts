@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream, existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve, sep } from 'node:path';
+import { dirname, resolve, sep } from 'node:path';
 
 import { leerDelEntorno } from '../../common/entorno';
 
@@ -25,7 +25,12 @@ import { leerDelEntorno } from '../../common/entorno';
  * único que queda entre eso y el sistema de archivos.
  */
 
-/** Lo único que se acepta. Un SVG, por ejemplo, es un documento ejecutable. */
+/**
+ * Lo único que se acepta. Un SVG, por ejemplo, es un documento ejecutable.
+ *
+ * @public — nada lo importa: `soportes.contrato.spec.ts` lo lee como texto
+ * para comprobar que el contrato publica estos mismos tipos (excepción de knip).
+ */
 export const TIPOS_ACEPTADOS: Record<string, string> = {
   pdf: 'application/pdf',
   jpg: 'image/jpeg',
@@ -113,11 +118,4 @@ export function abrir(storageKey: string): ReturnType<typeof createReadStream> |
   const destino = rutaDe(storageKey);
   if (destino === null || !existsSync(destino)) return null;
   return createReadStream(destino);
-}
-
-/** La ruta de una clave, para los scripts que escriben directo en el almacén. */
-export function rutaAbsoluta(storageKey: string): string {
-  const destino = rutaDe(storageKey);
-  if (destino === null) throw new Error(`Clave de almacenamiento inválida: ${storageKey}`);
-  return join(destino);
 }

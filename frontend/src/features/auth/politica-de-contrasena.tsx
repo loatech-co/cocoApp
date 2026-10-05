@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
  * Si la política cambia en el backend, este archivo cambia en el MISMO commit.
  */
 
-export const LONGITUD_MINIMA = 12;
+const LONGITUD_MINIMA = 12;
 
 interface Requisito {
   etiqueta: string;

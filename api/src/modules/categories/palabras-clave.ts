@@ -18,12 +18,12 @@
  */
 
 /** Sin tildes, en minúscula y con los espacios apretados. Para comparar. */
-export function comoSeCompara(palabra: string): string {
+function comoSeCompara(palabra: string): string {
   return palabra.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
 /** Recorta y aprieta los espacios, conservando tildes y mayúsculas. */
-export function limpiar(palabra: string): string {
+function limpiar(palabra: string): string {
   return palabra.replace(/\s+/g, ' ').trim();
 }
 

@@ -50,7 +50,7 @@ export function createReceiptStore(env: NodeJS.ProcessEnv = process.env): Receip
   return new SupabaseReceiptStore(url, key, leerDelEntorno('SOPORTES_BUCKET') ?? 'soportes');
 }
 
-export class DiskReceiptStore implements ReceiptStore {
+class DiskReceiptStore implements ReceiptStore {
   describe(): string {
     return `disk ${almacenListo().carpeta}`;
   }

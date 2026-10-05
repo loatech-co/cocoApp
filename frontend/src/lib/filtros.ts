@@ -47,7 +47,7 @@ function hoyEnBogota(): Date {
 const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
 
 /** Hoy en Bogotá, en `YYYY-MM-DD`. */
-export function hoyISO(): string {
+function hoyISO(): string {
   return aISO(hoyEnBogota());
 }
 

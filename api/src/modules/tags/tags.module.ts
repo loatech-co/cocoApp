@@ -129,7 +129,7 @@ function presentar(tag: Tag): TagView {
 
 /** M2 — Etiquetas transversales. */
 @Controller('tags')
-export class TagsController {
+class TagsController {
   constructor(private readonly tags: TagsService) {}
 
   @Get()

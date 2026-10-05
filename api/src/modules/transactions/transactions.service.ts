@@ -17,7 +17,7 @@ import type {
 } from './dto/transaction.dto';
 import { parseOrden, parsePaginacion } from './transactions.sort';
 
-export interface SplitView {
+interface SplitView {
   id: bigint;
   category_id: bigint | null;
   amount: string;

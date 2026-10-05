@@ -83,7 +83,7 @@ export function CampoDeDinero({
  * Es el `icono` del campo, así que no forma parte del valor: lo que se teclea
  * y lo que se guarda no lo llevan.
  */
-export function SignoDePesos({ className }: { className?: string }) {
+function SignoDePesos({ className }: { className?: string }) {
   return (
     <span
       className={cn(className, 'grid place-items-center text-sm font-medium')}
