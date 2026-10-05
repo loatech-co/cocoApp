@@ -122,6 +122,7 @@ jobs:
       # it. It needs no network and no data: stories never fetch.
       - name: Component catalogue (Storybook)
         run: npm run build-storybook --workspace frontend
+
       # The contract (step 7.4): api/openapi.json is regenerated from the code
       # (no database, no secrets) and must match the committed one, so a PR
       # that changes the contract carries its document. The regenerated file
