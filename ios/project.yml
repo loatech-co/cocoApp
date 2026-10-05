@@ -1,0 +1,97 @@
+# Especificación del proyecto de Xcode. El .xcodeproj se GENERA de aquí:
+#
+#   brew install xcodegen && xcodegen generate
+#
+# y se versiona también, para que abrir el proyecto no exija nada instalado.
+# Si se edita el .xcodeproj a mano, el siguiente `xcodegen generate` lo pisa:
+# lo que se quiera conservar va aquí.
+name: Coco
+options:
+  bundleIdPrefix: co.loatech
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+settings:
+  base:
+    # Xcode 27 trae Swift 6.4; el modo de lenguaje 5.10 evita que la
+    # concurrencia estricta frene la fase. Se sube cuando todo esté acotado.
+    SWIFT_VERSION: "5.10"
+    # El equipo lo pone cada quien en Xcode (Signing & Capabilities) al instalar
+    # en su teléfono con su cuenta gratuita. Vacío a propósito.
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  Coco:
+    type: application
+    platform: iOS
+    sources:
+      - path: Coco
+    # La extensión de WidgetKit (M13) se embebe aquí cuando exista:
+    # dependencies:
+    #   - target: CocoAccesos
+    #     embed: true
+    info:
+      path: Coco/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Coco
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # Esquema propio: los avisos, el widget y el control abren la app por aquí.
+        CFBundleURLTypes:
+          - CFBundleURLName: co.loatech.coco
+            CFBundleURLSchemes: [coco]
+        # Renovar el token tibio y vaciar la cola cuando iOS lo concede.
+        UIBackgroundModes: [fetch, processing]
+        BGTaskSchedulerPermittedIdentifiers: [co.loatech.coco.renovar, co.loatech.coco.cola]
+        # Para poder abrir la app Atajos desde Bienvenida.
+        LSApplicationQueriesSchemes: [shortcuts]
+        NSCameraUsageDescription: Para fotografiar un recibo y leerlo.
+        NSPhotoLibraryUsageDescription: Para adjuntar la foto de un recibo cuando no hay cámara.
+        NSFaceIDUsageDescription: Para proteger tu sesión.
+        # Solo red local sin TLS (la API en localhost desde el simulador); el
+        # resto sigue exigiendo HTTPS.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        ITSAppUsesNonExemptEncryption: false
+        # La API a la que habla la app. Se puede cambiar en Ajustes dentro de la app.
+        CocoAPIBaseURL: https://dev-cocoapp.viteri.me
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco
+        TARGETED_DEVICE_FAMILY: "1"
+        ENABLE_PREVIEWS: YES
+  # CocoAccesos (app-extension, com.apple.widgetkit-extension, bundle
+  # co.loatech.coco.accesos, fuentes en CocoAccesos/) lo añade M13. Hasta
+  # entonces no se declara: un target sin fuentes rompe el build.
+  CocoTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: CocoTests
+    dependencies:
+      - target: Coco
+    info:
+      path: CocoTests/Info.plist
+      properties:
+        # Una base distinta a la de la app, para probar que se lee del bundle
+        # que se pide y no del de la app.
+        CocoAPIBaseURL: https://pruebas.coco.invalid
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco.tests
+schemes:
+  Coco:
+    build:
+      targets:
+        Coco: all
+        CocoTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [CocoTests]

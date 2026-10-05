@@ -1,0 +1,9 @@
+# Basura de Xcode: estado por persona y productos de compilación.
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.xcresult
+# Los Info.plist los genera xcodegen desde project.yml.
+Coco/Resources/Info.plist
+CocoTests/Info.plist
