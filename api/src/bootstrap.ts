@@ -5,6 +5,9 @@ import helmet from 'helmet';
 
 import { requestContext } from './common/logging/request-context';
 
+/** Every API route lives under this prefix; a breaking change opens `api/v2` next to it. */
+export const API_PREFIX = 'api/v1';
+
 /**
  * Configuración transversal de la aplicación: prefijo, cabeceras de seguridad,
  * CORS y validación.
@@ -22,7 +25,7 @@ export function configureApp(
   // First middleware: every later line of the request carries its id (6.8).
   app.use(requestContext(accessLog));
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix(API_PREFIX);
 
   // El refresh token viaja en una cookie httpOnly; sin esto no se puede leer.
   app.use(cookieParser());

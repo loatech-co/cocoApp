@@ -42,7 +42,7 @@ import type { AuthenticatedUser } from '../../common/types/authenticated-user';
  * servicio, que elige a mano qué columnas del modelo se publican. Esto de aquí
  * no era una segunda puerta, era una copia de la primera.
  */
-type CategoryPayload = Omit<CategoryView, 'parentId'> & {
+export type CategoryPayload = Omit<CategoryView, 'parentId'> & {
   parent_id: bigint | null;
   children?: CategoryPayload[];
 };

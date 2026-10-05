@@ -19,7 +19,7 @@ import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 const COOKIE_REFRESH = 'coco_refresh';
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-interface RespuestaDeSesion {
+export interface RespuestaDeSesion {
   access_token: string;
   expires_in: number;
   user: PerfilPublico;
