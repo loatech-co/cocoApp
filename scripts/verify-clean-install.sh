@@ -14,7 +14,7 @@ set -euo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
 commit="$(git -C "$repo_root" rev-parse --short HEAD)"
-work_dir="$(mktemp -d -t coco-clean-install)"
+work_dir="$(mktemp -d "${TMPDIR:-/tmp}/coco-clean-install.XXXXXX")"
 trap 'rm -rf "$work_dir"' EXIT
 
 if [ -n "$(git -C "$repo_root" status --porcelain --untracked-files=no)" ]; then
