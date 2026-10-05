@@ -364,14 +364,14 @@ export function entre1y31(escrito: string): number {
  */
 export function cuandoVuelve(periodicidad: Periodicidad, dia: number, mes: number): string {
   if (periodicidad === 'mensual') return `Todos los meses el día ${dia}.`;
-  if (periodicidad === 'anual') return `Cada ${dia} de ${MESES[mes - 1].toLowerCase()}.`;
+  if (periodicidad === 'anual') return `Cada ${dia} de ${(MESES[mes - 1] ?? '').toLowerCase()}.`;
 
   const cada = { bimestral: 2, trimestral: 3, semestral: 6 }[periodicidad];
 
   // Los meses concretos, no "cada tres meses": es lo que hay que poder
   // comprobar de un vistazo antes de guardar.
   const meses: string[] = [];
-  for (let m = (mes - 1) % cada; m < 12; m += cada) meses.push(MESES[m].toLowerCase());
+  for (let m = (mes - 1) % cada; m < 12; m += cada) meses.push((MESES[m] ?? '').toLowerCase());
 
   return `El día ${dia} de ${meses.join(', ')}.`;
 }

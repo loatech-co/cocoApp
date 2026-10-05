@@ -80,7 +80,7 @@ export function BuscadorDeConcepto({
   /** Lo que la lectura de un recibo dejó entre lo que dudar. */
   candidatos?: readonly CandidatoDelRecibo[];
   /** Debajo del campo: «sugerido por tu historial», un error… */
-  ayuda?: string;
+  ayuda?: string | undefined;
 }) {
   const indice = useMemo(() => indexarArbol(arbol), [arbol]);
   const elegida = useMemo(
@@ -296,7 +296,8 @@ function Panel({
             if (e.key !== 'Enter') return;
             e.preventDefault();
             if (eligiendoCategoria) {
-              if (categorias.length === 1) onCrearEn(categorias[0]);
+              const [unica] = categorias;
+              if (categorias.length === 1 && unica !== undefined) onCrearEn(unica);
               return;
             }
             // Enter elige lo único que queda, que es lo que uno espera después

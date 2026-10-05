@@ -43,7 +43,7 @@ describe('El desplegable de un Select', () => {
       <Select etiqueta="Periodicidad" valor="mensual" opciones={OPCIONES} onCambiar={() => {}} />,
     );
 
-    fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.click(screen.getAllByRole('button')[0]!);
 
     const panel = screen.getByRole('listbox');
     expect(panel.style.width).toBe('240px');
@@ -56,7 +56,7 @@ describe('El desplegable de un Select', () => {
       <Select etiqueta="Periodicidad" valor="mensual" opciones={OPCIONES} onCambiar={() => {}} />,
     );
 
-    fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.click(screen.getAllByRole('button')[0]!);
 
     const panel = screen.getByRole('listbox');
     expect(panel.className).toContain('fixed');
@@ -70,7 +70,7 @@ describe('El desplegable de un Select', () => {
       <Select etiqueta="Periodicidad" valor="anual" opciones={OPCIONES} onCambiar={() => {}} />,
     );
 
-    fireEvent.click(screen.getAllByRole('button')[0]);
+    fireEvent.click(screen.getAllByRole('button')[0]!);
 
     const elegida = screen.getByRole('option', { name: /Cada año/ });
     expect(elegida.getAttribute('aria-selected')).toBe('true');

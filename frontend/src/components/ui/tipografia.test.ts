@@ -19,7 +19,7 @@ function fuentes(dir: string): string[] {
 }
 
 const archivos = fuentes(join(import.meta.dirname, '..', '..'));
-const relativa = (ruta: string): string => ruta.split('/src/')[1];
+const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
 
 describe('La tipografía sale de la escala y no grita', () => {
   it('encuentra los archivos del proyecto', () => {

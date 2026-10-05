@@ -50,7 +50,7 @@ describe('Auth propia (e2e)', () => {
     const cookies = respuesta.headers['set-cookie'] as unknown as string[] | undefined;
     const cookie = cookies?.find((c) => c.startsWith('coco_refresh='));
     if (!cookie) throw new Error('La respuesta no trajo cookie de refresh.');
-    return cookie.split(';')[0];
+    return cookie.split(';')[0]!;
   };
 
   // ── Registro ───────────────────────────────────────────────────────────────
@@ -491,7 +491,7 @@ describe('Auth propia (e2e)', () => {
         where: { action: 'auth.login' },
       });
       expect(eventos).toHaveLength(1);
-      expect(eventos[0].userId).toBe(usuario.id);
+      expect(eventos[0]!.userId).toBe(usuario.id);
     });
 
     it('registra el intento contra un correo inexistente con user_id nulo', async () => {
@@ -504,12 +504,12 @@ describe('Auth propia (e2e)', () => {
         where: { action: 'auth.login_failed' },
       });
       expect(eventos).toHaveLength(1);
-      expect(eventos[0].userId).toBeNull();
+      expect(eventos[0]!.userId).toBeNull();
       // Ya no se distingue "el correo no existe" de "la contraseña es
       // incorrecta": la verificación ocurre dentro de Supabase, que responde
       // igual en ambos casos. De cara afuera eso es lo deseable; lo que se
       // pierde es el detalle en la bitácora.
-      expect(eventos[0].changesJson).toEqual({ motivo: 'credenciales_incorrectas' });
+      expect(eventos[0]!.changesJson).toEqual({ motivo: 'credenciales_incorrectas' });
     });
 
     it('la bitácora nunca guarda la contraseña ni el token', async () => {

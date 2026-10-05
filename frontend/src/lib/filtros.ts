@@ -127,7 +127,7 @@ export interface Filtros {
    * Casa y Transporte juntos?" no se puede hacer con un solo id.
    */
   categoryIds: number[];
-  q?: string;
+  q?: string | undefined;
 }
 
 /**

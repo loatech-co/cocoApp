@@ -17,8 +17,8 @@ describe('Los arcos de la dona', () => {
     const arcos = arcosDeLaDona([porcion('a', 75), porcion('b', 25)], 100);
 
     expect(arcos.map((a) => a.porcentaje)).toEqual([75, 25]);
-    expect(arcos[0].fraccion).toBeCloseTo(0.75);
-    expect(arcos[1].fraccion).toBeCloseTo(0.25);
+    expect(arcos[0]!.fraccion).toBeCloseTo(0.75);
+    expect(arcos[1]!.fraccion).toBeCloseTo(0.25);
   });
 
   it('ordena de mayor a menor, venga como venga', () => {
@@ -32,9 +32,9 @@ describe('Los arcos de la dona', () => {
     // encima— caiga donde dicen los datos y no medio grado más allá.
     const arcos = arcosDeLaDona([porcion('a', 50), porcion('b', 30), porcion('c', 20)], 100);
 
-    expect(arcos[0].desde).toBeCloseTo(0);
-    expect(arcos[1].desde).toBeCloseTo(0.5);
-    expect(arcos[2].desde).toBeCloseTo(0.8);
+    expect(arcos[0]!.desde).toBeCloseTo(0);
+    expect(arcos[1]!.desde).toBeCloseTo(0.5);
+    expect(arcos[2]!.desde).toBeCloseTo(0.8);
   });
 
   it('todas las capas terminan donde terminan los datos', () => {
@@ -84,7 +84,7 @@ describe('Los arcos de la dona', () => {
     const arcos = arcosDeLaDona([porcion('a', 3), porcion('b', 1)], 0);
 
     expect(arcos.map((a) => a.porcentaje)).toEqual([75, 25]);
-    expect(arcos[0].hasta).toBeCloseTo(1);
+    expect(arcos[0]!.hasta).toBeCloseTo(1);
   });
 
   it('sin porciones no revienta', () => {
@@ -110,10 +110,10 @@ describe('El sector de la dona', () => {
     const n = d.match(/-?\d+\.?\d*/g)?.map(Number) ?? [];
     // `M x y`, `A r r 0 f f x y`, `L x y`, `A r r 0 f f x y`
     return [
-      [n[0], n[1]],
-      [n[7], n[8]],
-      [n[9], n[10]],
-      [n[16], n[17]],
+      [n[0]!, n[1]!],
+      [n[7]!, n[8]!],
+      [n[9]!, n[10]!],
+      [n[16]!, n[17]!],
     ];
   };
 
@@ -123,12 +123,12 @@ describe('El sector de la dona', () => {
     const CENTRO = 83;
 
     // Arranca arriba: misma x que el centro, y por encima.
-    expect(arranqueFuera[0]).toBeCloseTo(CENTRO);
-    expect(arranqueFuera[1]).toBeLessThan(CENTRO);
+    expect(arranqueFuera![0]).toBeCloseTo(CENTRO);
+    expect(arranqueFuera![1]).toBeLessThan(CENTRO);
 
     // Un cuarto de vuelta después está a la derecha, a la altura del centro.
-    expect(finFuera[0]).toBeGreaterThan(CENTRO);
-    expect(finFuera[1]).toBeCloseTo(CENTRO);
+    expect(finFuera![0]).toBeGreaterThan(CENTRO);
+    expect(finFuera![1]).toBeCloseTo(CENTRO);
   });
 
   it('los dos cortes son radiales: sus extremos comparten ángulo', () => {
@@ -144,7 +144,7 @@ describe('El sector de la dona', () => {
       [0.13, 0.9],
       [0.5, 0.75],
     ]) {
-      const [a, b, c, d] = puntos(sectorDeLaDona(desde, hasta));
+      const [a, b, c, d] = puntos(sectorDeLaDona(desde!, hasta!));
 
       // `a` y `d` son el corte de arranque; `b` y `c` el del final.
       //
@@ -152,8 +152,8 @@ describe('El sector de la dona', () => {
       // radio de 55, una milésima de unidad son unas dos cienmilésimas de
       // radián, que es una milésima de grado. Pedir más sería medir el
       // redondeo del texto, no la geometría.
-      expect(angulo(a)).toBeCloseTo(angulo(d), 4);
-      expect(angulo(b)).toBeCloseTo(angulo(c), 4);
+      expect(angulo(a!)).toBeCloseTo(angulo(d!), 4);
+      expect(angulo(b!)).toBeCloseTo(angulo(c!), 4);
     }
   });
 

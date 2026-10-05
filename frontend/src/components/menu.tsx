@@ -126,7 +126,7 @@ export function Menu({
    * queda sin asociar y quien navega con lector de pantalla oye «botón» y
    * nada más.
    */
-  idDisparador?: string;
+  idDisparador?: string | undefined;
   /**
    * Flotando, deja que el panel mida lo SUYO en vez de lo que mide el botón.
    *

@@ -146,7 +146,7 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       const web = await http
         .post('/api/v1/auth/login')
         .send({ email: usuario.email, password: PASSWORD_VALIDA });
-      const cookie = cookiesDe(web)[0].split(';')[0];
+      const cookie = cookiesDe(web)[0]!.split(';')[0]!;
 
       // Un cliente que dice ser nativo se juzga por su mundo: el cuerpo.
       await http

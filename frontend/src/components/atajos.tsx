@@ -129,7 +129,9 @@ export function useSuperficieDeAtajos({
     if (!celdas) return null;
 
     for (let i = 0; i < celdas.length; i += 1) {
-      const r = celdas[i].getBoundingClientRect();
+      const celda = celdas[i];
+      if (celda === undefined) continue;
+      const r = celda.getBoundingClientRect();
       if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return i;
     }
     return null;

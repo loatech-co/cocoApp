@@ -11,7 +11,7 @@ export class CategoriesRepository {
 
   async listar(
     userId: bigint,
-    filtros: { kind?: CategoryKind; incluirArchivadas?: boolean } = {},
+    filtros: { kind?: CategoryKind | undefined; incluirArchivadas?: boolean } = {},
   ): Promise<Category[]> {
     return this.prisma.category.findMany({
       where: {

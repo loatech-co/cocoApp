@@ -19,7 +19,7 @@ export function IsMoney(options?: ValidationOptions) {
       name: 'isMoney',
       target: object.constructor,
       propertyName,
-      options,
+      ...(options !== undefined && { options }),
       validator: {
         validate(value: unknown): boolean {
           if (typeof value !== 'string' && typeof value !== 'number') return false;
@@ -59,7 +59,7 @@ export function IsPositiveMoney(options?: ValidationOptions) {
       name: 'isPositiveMoney',
       target: object.constructor,
       propertyName,
-      options,
+      ...(options !== undefined && { options }),
       validator: {
         validate(value: unknown): boolean {
           if (typeof value !== 'string' && typeof value !== 'number') return false;

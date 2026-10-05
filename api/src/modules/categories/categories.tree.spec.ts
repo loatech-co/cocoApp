@@ -103,8 +103,8 @@ describe('Anidar', () => {
     expect(raices).toHaveLength(2);
     const hogar = raices.find((raiz) => raiz.id === BigInt(1))!;
     expect(hogar.children).toHaveLength(1);
-    expect(hogar.children[0].id).toBe(BigInt(2));
-    expect(hogar.children[0].children[0].id).toBe(BigInt(3));
+    expect(hogar.children[0]!.id).toBe(BigInt(2));
+    expect(hogar.children[0]!.children[0]!.id).toBe(BigInt(3));
   });
 
   it('un huérfano (por filtro de kind) sube a la raíz en vez de perderse', () => {
@@ -112,7 +112,7 @@ describe('Anidar', () => {
     const raices = anidar([n(3, 2)]);
 
     expect(raices).toHaveLength(1);
-    expect(raices[0].id).toBe(BigInt(3));
+    expect(raices[0]!.id).toBe(BigInt(3));
   });
 
   it('una lista vacía da un árbol vacío', () => {

@@ -24,9 +24,9 @@ export interface EventoAuditado {
   entity: string;
   entityId?: bigint | null;
   action: AccionAuditada;
-  changes?: Prisma.InputJsonValue;
-  ip?: string | null;
-  userAgent?: string | null;
+  changes?: Prisma.InputJsonValue | undefined;
+  ip?: string | null | undefined;
+  userAgent?: string | null | undefined;
 }
 
 @Injectable()
@@ -54,7 +54,7 @@ export class AuditService {
           entity: evento.entity,
           entityId: evento.entityId ?? null,
           action: evento.action,
-          changesJson: evento.changes,
+          ...(evento.changes !== undefined && { changesJson: evento.changes }),
           ip: evento.ip ?? null,
           userAgent: evento.userAgent?.slice(0, 255) ?? null,
         },

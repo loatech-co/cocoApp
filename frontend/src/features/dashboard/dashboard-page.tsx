@@ -397,7 +397,8 @@ export function DashboardPage() {
                 }}
                 onSubir={() => {
                   setPagina(1);
-                  aplicar({ categoryIds: ruta.length > 1 ? [ruta[ruta.length - 2].id] : [] });
+                  const anterior = ruta[ruta.length - 2];
+                  aplicar({ categoryIds: anterior ? [anterior.id] : [] });
                 }}
               />
             </div>

@@ -18,7 +18,7 @@ const PALETA = [
   'var(--dona-3)',
   'var(--dona-4)',
   'var(--dona-5)',
-];
+] as const;
 /*
   ── El lienzo es CUADRADO y ajustado al aro ─────────────────────────────────
   Los nombres viven fuera del SVG, en su propia lista, así que el dibujo no
@@ -140,7 +140,7 @@ export function sectorDeLaDona(desde: number, hasta: number): string {
 export function arcosDeLaDona(porciones: PorcionDeDona[], total: number): ArcoDeLaDona[] {
   const segmentos = [...porciones]
     .sort((a, b) => b.valor - a.valor)
-    .map((p, i) => ({ ...p, color: PALETA[i % PALETA.length] }));
+    .map((p, i) => ({ ...p, color: PALETA[i % PALETA.length] ?? PALETA[0] }));
 
   const suma = segmentos.reduce((s, p) => s + p.valor, 0);
   const base = total > 0 ? total : suma || 1;
@@ -202,7 +202,7 @@ export function Dona({
   total: number;
   /** Con la lista oculta, el aro se centra pero NO cambia de tamaño. */
   mostrarLista?: boolean;
-  onElegir?: (id: number) => void;
+  onElegir?: ((id: number) => void) | undefined;
   className?: string;
 }) {
   const caja = useRef<HTMLDivElement>(null);

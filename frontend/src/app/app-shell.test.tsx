@@ -157,10 +157,10 @@ describe('El armazón embebido en la app', () => {
     const hojas = document.querySelectorAll('[data-superficie="panel"]');
     // Solo una: la búsqueda. Atajos y cuenta no están.
     expect(hojas.length).toBe(1);
-    expect(hojas[0].getAttribute('data-abierta')).toBe('no');
+    expect(hojas[0]!.getAttribute('data-abierta')).toBe('no');
 
     act(() => window.__coco!.abrirBusqueda());
-    expect(hojas[0].getAttribute('data-abierta')).toBe('si');
+    expect(hojas[0]!.getAttribute('data-abierta')).toBe('si');
   });
 
   it('window.__coco.ir() cambia la página sin recargar', () => {

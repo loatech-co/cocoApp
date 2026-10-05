@@ -38,7 +38,7 @@ export class PasswordService {
    */
   async exigirQueSeaFuerte(
     password: string,
-    datos: { email?: string; displayName?: string } = {},
+    datos: { email?: string | undefined; displayName?: string | undefined } = {},
   ): Promise<void> {
     const { valida, problemas } = evaluarPolitica(password);
 

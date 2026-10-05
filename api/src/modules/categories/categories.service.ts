@@ -61,7 +61,7 @@ export class CategoriesService {
   /** Devuelve el árbol anidado, no la lista plana: es como lo consume la UI. */
   async listarArbol(
     userId: bigint,
-    filtros: { kind?: CategoryKind; incluirArchivadas?: boolean },
+    filtros: { kind?: CategoryKind | undefined; incluirArchivadas?: boolean },
   ): Promise<{ arbol: ConHijos<CategoryView>[]; total: number }> {
     const categorias = await this.repo.listar(userId, filtros);
     const vistas = categorias.map((categoria) => this.presentar(categoria));

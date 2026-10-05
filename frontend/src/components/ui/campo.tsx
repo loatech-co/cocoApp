@@ -130,7 +130,7 @@ export function Campo({
   /** El mismo `id` que lleva el control: es lo que los ata. */
   id: string;
   /** Una línea debajo, para lo que el nombre no alcanza a decir. */
-  ayuda?: string;
+  ayuda?: string | undefined;
   className?: string;
   children: ReactNode;
 }) {

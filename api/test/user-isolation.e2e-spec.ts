@@ -535,8 +535,9 @@ describe('User isolation (e2e)', () => {
 
     await untouched(async () => {
       for (const [method, path] of routes) {
-        const response = await (http as unknown as Record<string, (p: string) => request.Test>)
-          [method](path)
+        const response = await (http as unknown as Record<string, (p: string) => request.Test>)[
+          method
+        ]!(path)
           .set('Authorization', asBruno)
           .send({ role: 'admin' });
         expect(response.status).toBe(403);

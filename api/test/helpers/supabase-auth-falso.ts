@@ -37,7 +37,7 @@ export class SupabaseAuthFalso {
       return Promise.reject(new UnauthorizedException('Token inválido o expirado.'));
     }
 
-    const [, authId, iat] = partes;
+    const [, authId = '', iat] = partes; // ya se comprobó que son tres partes
     const cuenta = this.cuentas.get(authId);
     if (!cuenta) return Promise.reject(new UnauthorizedException('Token inválido o expirado.'));
 

@@ -61,7 +61,7 @@ export function Th({
    * leyendo. Con seis columnas que caben casi enteras, es una raya de más.
    */
   divisor?: boolean;
-  orden?: { activo: 'asc' | 'desc' | null; onCambiar: () => void };
+  orden?: { activo: 'asc' | 'desc' | null; onCambiar: () => void } | undefined;
   className?: string;
 }) {
   const Flecha =

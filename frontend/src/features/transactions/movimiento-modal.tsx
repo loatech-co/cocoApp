@@ -120,7 +120,7 @@ export function MovimientoModal({
 }: {
   abierta: boolean;
   /** Sin movimiento, el formulario crea. Con movimiento, edita ese. */
-  movimiento?: Transaction | null;
+  movimiento?: Transaction | null | undefined;
   /**
    * El pago pendiente que se viene a confirmar, desde la tarjeta del resumen.
    *
@@ -376,9 +376,10 @@ export function MovimientoModal({
     if (!proponiendo || escrito.length < 3) return null;
 
     const conceptos = buscarEnArbol(indiceDelArbol, escrito).filter((e) => e.nivel === 'concepto');
-    if (conceptos.length === 1) {
+    const [unico] = conceptos;
+    if (conceptos.length === 1 && unico !== undefined) {
       return {
-        categoryId: Number(conceptos[0].id),
+        categoryId: Number(unico.id),
         origen: 'palabras-clave' as const,
         candidatos: [] as CandidatoDelRecibo[],
       };
@@ -1333,7 +1334,7 @@ function VistaDeLectura({
   currency: string;
   fecha: string;
   /** `YYYY-MM-DD` del día 1 del mes al que PERTENECE el gasto. */
-  periodo?: string;
+  periodo?: string | undefined;
   ruta: string[];
 }) {
   // El periodo solo se nombra cuando NO es el mes del pago. Repetir

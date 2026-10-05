@@ -70,12 +70,13 @@ export function fechasDe(texto: string): string[] {
     if (valida(a, m, d)) encontradas.push(aIso(a, m, d));
   };
 
-  for (const [, a, m, d] of texto.matchAll(ISO)) anotar(+a, +m, +d);
-  for (const [, d, m, a] of texto.matchAll(DIA_MES_ANIO)) {
+  // Los grupos de los tres patrones son obligatorios: los `= ''` nunca se usan.
+  for (const [, a = '', m = '', d = ''] of texto.matchAll(ISO)) anotar(+a, +m, +d);
+  for (const [, d = '', m = '', a = ''] of texto.matchAll(DIA_MES_ANIO)) {
     // Dos cifras de año: 22 es 2022, no 1922. Estos recibos no son de antes.
     anotar(a.length === 2 ? 2000 + +a : +a, +m, +d);
   }
-  for (const [, d, mes, a] of texto.matchAll(CON_MES_EN_PALABRA)) {
+  for (const [, d = '', mes = '', a = ''] of texto.matchAll(CON_MES_EN_PALABRA)) {
     const m = MESES[mes.toLowerCase().slice(0, 4)] ?? MESES[mes.toLowerCase().slice(0, 3)];
     if (m) anotar(+a, m, +d);
   }
@@ -98,10 +99,12 @@ export function leerFecha(texto: string, periodo?: string): FechaCandidata | nul
     const delPeriodo = todas.filter((f) => f.startsWith(periodo));
     // La primera del mes: en un recibo, la de expedición va antes que la de
     // vencimiento, y la que se pagó se parece más a la primera.
-    if (delPeriodo.length > 0) return { iso: delPeriodo[0], enElPeriodo: true };
+    const [primeraDelPeriodo] = delPeriodo;
+    if (primeraDelPeriodo !== undefined) return { iso: primeraDelPeriodo, enElPeriodo: true };
   }
 
-  if (todas.length > 0) return { iso: todas[0], enElPeriodo: false };
+  const [primera] = todas;
+  if (primera !== undefined) return { iso: primera, enElPeriodo: false };
   if (periodo) return { iso: `${periodo}-15`, enElPeriodo: false };
   return null;
 }

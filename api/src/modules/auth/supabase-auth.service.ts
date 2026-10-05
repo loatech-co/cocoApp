@@ -249,7 +249,7 @@ export class SupabaseAuthService {
       respuesta = await fetch(`${this.emisor}${ruta}`, {
         method: metodo,
         headers: cabeceras,
-        body: opciones.cuerpo === undefined ? undefined : JSON.stringify(opciones.cuerpo),
+        ...(opciones.cuerpo !== undefined && { body: JSON.stringify(opciones.cuerpo) }),
         signal: AbortSignal.timeout(15_000),
       });
     } catch (error) {

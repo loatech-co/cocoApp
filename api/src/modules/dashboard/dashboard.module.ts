@@ -270,7 +270,9 @@ export class DashboardService {
     // distintos no comparten nivel inferior. Se baja un nivel solo cuando lo
     // marcado es una sola cosa; si no, se desglosa por centro, que es la
     // pregunta que sigue teniendo respuesta.
-    const nivelFiltrado = pedidas.length === 1 ? profundidadDeCategoria(porId, pedidas[0]) : 0;
+    const unicaPedida = pedidas.length === 1 ? pedidas[0] : undefined;
+    const nivelFiltrado =
+      unicaPedida === undefined ? 0 : profundidadDeCategoria(porId, unicaPedida);
     const nivelDesglose = Math.min(nivelFiltrado + 1, 3);
 
     const [cuentas, movimientos] = await Promise.all([
@@ -355,9 +357,16 @@ export class DashboardService {
     let acumulado = agrupar(nivelMostrado);
     // De quién son las filas que se acaban mostrando. Con un filtro puesto ya
     // se sabe; si no, lo dirá la fila única por la que se vaya bajando.
-    let padre: bigint | null = pedidas.length === 1 ? pedidas[0] : null;
+    let padre: bigint | null = unicaPedida ?? null;
 
-    while (nivelMostrado < 3 && acumulado.size === 1 && [...acumulado.values()][0].id !== null) {
+    const filaUnicaDe = (filas: typeof acumulado) =>
+      filas.size === 1 ? [...filas.values()][0] : undefined;
+
+    for (
+      let unica = filaUnicaDe(acumulado);
+      nivelMostrado < 3 && unica !== undefined && unica.id !== null;
+      unica = filaUnicaDe(acumulado)
+    ) {
       const masAbajo = agrupar(nivelMostrado + 1);
       /*
         Se baja aunque abajo también haya UNA sola fila.
@@ -374,7 +383,7 @@ export class DashboardService {
       */
       const hayNombresAbajo = [...masAbajo.values()].some((f) => f.id !== null);
       if (!hayNombresAbajo) break;
-      padre = [...acumulado.values()][0].id;
+      padre = unica.id;
       nivelMostrado += 1;
       acumulado = masAbajo;
     }
@@ -445,6 +454,8 @@ export class DashboardService {
         // marzo. Se arrima al extremo más cercano en vez de descartarse — si
         // se descartara, la línea sumaría menos que el total de arriba y las
         // dos cifras de la misma pantalla se contradirían.
+        // Sin eje no hay extremo al que arrimarlo; abajo tampoco habría cubo.
+        if (primerCubo === undefined || ultimoCubo === undefined) continue;
         cubo = cuboDe(cuando, granularidad) < primerCubo ? primerCubo : ultimoCubo;
       }
 
@@ -649,7 +660,9 @@ export class DashboardService {
       },
       by_category: porCategoria,
       expense_by_center: porCentro,
-      breakdown_level: (['centro de costos', 'categoría', 'concepto'] as const)[nivelMostrado - 1],
+      // `nivelMostrado` va de 1 a 3: el respaldo nunca se usa.
+      breakdown_level:
+        (['centro de costos', 'categoría', 'concepto'] as const)[nivelMostrado - 1] ?? 'concepto',
       breakdown_parent:
         padre !== null && datosDelPadre ? { id: padre, name: datosDelPadre.name } : null,
       required_budget: serializar(toMoney(presupuesto)),

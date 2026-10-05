@@ -27,7 +27,7 @@ function fuentes(dir: string): string[] {
 
 const raiz = join(import.meta.dirname, '..');
 const archivos = fuentes(raiz).filter((r) => !r.endsWith('cabecera-de-pagina.tsx'));
-const relativa = (ruta: string): string => ruta.split('/src/')[1];
+const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
 
 /**
  * El contenido de `acciones={…}`, contando llaves.

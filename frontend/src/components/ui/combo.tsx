@@ -220,7 +220,8 @@ function ComboPanel({
             // de escribir tres letras y ver una sola fila.
             if (e.key !== 'Enter') return;
             e.preventDefault();
-            if (filtradas.length === 1) onElegir(filtradas[0].valor);
+            const [unica] = filtradas;
+            if (filtradas.length === 1 && unica !== undefined) onElegir(unica.valor);
             else if (puedeCrear) onCrear();
           }}
           placeholder="Buscar…"

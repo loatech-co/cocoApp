@@ -107,7 +107,8 @@ export class SoportesService implements OnModuleInit {
       nombre_archivo: s.nombreArchivo,
       mime_type: s.mimeType,
       tamano: s.tamano,
-      disponible: disponibles[indice],
+      // Promise.all devuelve uno por fila: el respaldo nunca se usa.
+      disponible: disponibles[indice] ?? false,
     }));
   }
 

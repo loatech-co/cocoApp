@@ -210,7 +210,12 @@ export function ConceptoModal({
               : {}),
           },
         });
-      } else await crear.mutateAsync({ ...campos, kind: 'expense', parent_id: categoriaId });
+      } else
+        await crear.mutateAsync({
+          ...campos,
+          kind: 'expense',
+          ...(categoriaId === undefined ? {} : { parent_id: categoriaId }),
+        });
       onCerrar();
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : 'No se pudo guardar.');

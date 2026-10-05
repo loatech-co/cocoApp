@@ -61,8 +61,8 @@ export interface ClasificacionEnElArbol {
   certeza: Exclude<Certeza, 'ninguna'>;
   /** `historial` no lo produce el paquete: lo añade la API, que es quien lo tiene. */
   fuente: 'historial' | 'palabras-clave' | 'firma' | 'diccionario';
-  conceptoId?: number | string;
-  categoriaId?: number | string;
+  conceptoId?: number | string | undefined;
+  categoriaId?: number | string | undefined;
   /** Con certeza media: entre qué se duda, para dejarlo a la vista. */
   candidatos: { id: number | string; nombre: string; ruta: string }[];
 }
@@ -90,9 +90,9 @@ export interface EntradaDeLectura {
   /** Cómo se obtuvo. El embebido es exacto; el OCR confunde letras. */
   fuente: 'texto-embebido' | 'ocr';
   /** El nombre del archivo y, si existe, el de su carpeta. */
-  nombreDeArchivo?: string;
+  nombreDeArchivo?: string | undefined;
   /** El mes al que pertenece el gasto, `YYYY-MM`. Ayuda a elegir la fecha. */
-  periodo?: string;
+  periodo?: string | undefined;
   /** Las firmas a usar. Por defecto, el catálogo. */
   firmas?: Firma[];
   /**
@@ -323,7 +323,8 @@ function desdeElDiccionario(
   confianzaDelValor: number,
 ): Lectura | null {
   const hallados = comerciosEn(`${entrada.texto} ${entrada.nombreDeArchivo ?? ''}`);
-  if (hallados.length === 0) return null;
+  const [primerHallado] = hallados;
+  if (primerHallado === undefined) return null;
 
   const terminos = [...new Set(hallados.flatMap((h) => h.grupo.terminos))];
   const resuelto = resolverTerminos(indice, terminos);
@@ -336,7 +337,7 @@ function desdeElDiccionario(
       ? indice.find((e) => e.nivel === 'categoria' && String(e.id) === String(concepto.categoriaId))
       : undefined);
 
-  const comercio = hallados[0].alias;
+  const comercio = primerHallado.alias;
   const motivo =
     resuelto.certeza === 'alta'
       ? `Reconocí «${comercio}» y en tu árbol eso lleva a un solo concepto.`

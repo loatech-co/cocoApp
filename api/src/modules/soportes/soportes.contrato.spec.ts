@@ -23,7 +23,7 @@ describe('El contrato de soportes', () => {
     const m = patron.exec(fuente);
     if (!m) throw new Error(`No encontré ${String(patron)}`);
     // Aritmética de constantes del propio repo (`25 * 1024 * 1024`), no entrada externa.
-    return Number(eval(m[1].replace(/_/g, '')));
+    return Number(eval(m[1]!.replace(/_/g, '')));
   };
 
   it('el campo y el máximo por subida son los del controlador', () => {

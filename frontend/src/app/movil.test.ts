@@ -32,7 +32,7 @@ function evalua(consulta: string, ancho: number, alto: number): boolean {
           return valor === 'portrait' ? alto >= ancho : ancho > alto;
         }
 
-        const px = Number(valor.replace('px', ''));
+        const px = Number(valor!.replace('px', ''));
         if (rasgo === 'max-width') return ancho <= px;
         if (rasgo === 'min-width') return ancho >= px;
         throw new Error(`No sé evaluar: ${condicion}`);

@@ -71,10 +71,10 @@ describe('Gasto por categoría', () => {
     ]);
 
     expect(resultado).toHaveLength(2);
-    expect(resultado[0].category_id).toBe(BigInt(2));
-    expect(serializar(resultado[0].total)).toBe('500000.00');
-    expect(serializar(resultado[1].total)).toBe('150000.00');
-    expect(resultado[1].count).toBe(2);
+    expect(resultado[0]!.category_id).toBe(BigInt(2));
+    expect(serializar(resultado[0]!.total)).toBe('500000.00');
+    expect(serializar(resultado[1]!.total)).toBe('150000.00');
+    expect(resultado[1]!.count).toBe(2);
   });
 
   it('cuando hay splits, reparte por ellos y no por la categoría de cabecera', () => {
@@ -102,8 +102,8 @@ describe('Gasto por categoría', () => {
     ]);
 
     expect(resultado).toHaveLength(1);
-    expect(resultado[0].category_id).toBeNull();
-    expect(serializar(resultado[0].total)).toBe('100000.00');
+    expect(resultado[0]!.category_id).toBeNull();
+    expect(serializar(resultado[0]!.total)).toBe('100000.00');
   });
 
   it('ignora ingresos y transferencias', () => {
@@ -114,7 +114,7 @@ describe('Gasto por categoría', () => {
     ]);
 
     expect(resultado).toHaveLength(1);
-    expect(serializar(resultado[0].total)).toBe('100000.00');
+    expect(serializar(resultado[0]!.total)).toBe('100000.00');
   });
 
   it('el total por categoría cuadra con el gasto total del flujo', () => {

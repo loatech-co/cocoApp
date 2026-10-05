@@ -43,7 +43,7 @@ export interface EntradaDelIndice {
    */
   ruta: readonly string[];
   centroId: number | string;
-  categoriaId?: number | string;
+  categoriaId?: number | string | undefined;
   palabrasClave: readonly string[];
   /** Normalizados una vez, al indexar, y no en cada tecla. */
   nombreNormalizado: string;
@@ -159,12 +159,12 @@ export type Certeza = 'alta' | 'media' | 'ninguna';
 export interface Resolucion {
   certeza: Certeza;
   /** Solo con certeza alta: el único concepto al que llevan los términos. */
-  concepto?: EntradaDelIndice;
+  concepto?: EntradaDelIndice | undefined;
   /**
    * Con certeza media: la categoría que se propone, si los términos llevan a
    * una sola. Varios conceptos de categorías distintas no proponen ninguna.
    */
-  categoria?: EntradaDelIndice;
+  categoria?: EntradaDelIndice | undefined;
   /** Con certeza media: entre qué se está dudando, para dejarlo a la vista. */
   candidatos: EntradaDelIndice[];
 }

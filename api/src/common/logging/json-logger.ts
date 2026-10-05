@@ -44,7 +44,7 @@ const LEVELS: LogLevel[] = ['verbose', 'debug', 'log', 'warn', 'error', 'fatal']
 
 export interface JsonLoggerOptions {
   /** Directory for `api.log`; undefined logs to stdout only. */
-  directory?: string;
+  directory?: string | undefined;
   /** Rotate when the file passes this size. */
   maxBytes?: number;
   /** Rotated files kept: `api.log.1` … `api.log.N`. */

@@ -13,7 +13,8 @@ const MESES_ENTRE_PAGOS: Record<Periodicidad, number> = {
 
 /** `2026-09-01` → 24320. Meses absolutos, para restar sin pelear con años. */
 export function mesAbsoluto(iso: string): number {
-  const [anio, mes] = iso.split('-').map(Number);
+  // `= NaN` es lo que daría una parte ausente: el mismo resultado que antes.
+  const [anio = NaN, mes = NaN] = iso.split('-').map(Number);
   return anio * 12 + (mes - 1);
 }
 
@@ -58,7 +59,7 @@ export function tocaEnElMes(
  * mes siguiente, que es peor que redondear.
  */
 export function vencimiento(mes: string, diaDePago: number | null): string {
-  const [anio, numeroDeMes] = mes.split('-').map(Number);
+  const [anio = NaN, numeroDeMes = NaN] = mes.split('-').map(Number);
   const ultimoDia = new Date(Date.UTC(anio, numeroDeMes, 0)).getUTCDate();
   const dia = Math.min(diaDePago ?? ultimoDia, ultimoDia);
 
@@ -67,7 +68,7 @@ export function vencimiento(mes: string, diaDePago: number | null): string {
 
 /** Los `cuantos` meses anteriores a `mes`, del más reciente al más viejo. */
 export function mesesAnteriores(mes: string, cuantos = 3): string[] {
-  const [anio, m] = mes.split('-').map(Number);
+  const [anio = NaN, m = NaN] = mes.split('-').map(Number);
   return Array.from({ length: cuantos }, (_, i) =>
     new Date(Date.UTC(anio, m - 1 - (i + 1), 1)).toISOString().slice(0, 7),
   );

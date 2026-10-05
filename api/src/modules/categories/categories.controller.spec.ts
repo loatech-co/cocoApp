@@ -76,14 +76,14 @@ describe('Lo que sale por la API de categorías', () => {
 
     const payload = aPayload(conNietos) as Record<string, unknown>;
     const hijo = (payload.children as Record<string, unknown>[])[0];
-    const nieto = (hijo.children as Record<string, unknown>[])[0];
+    const nieto = (hijo!.children as Record<string, unknown>[])[0];
 
     // El árbol entero se sirve de una vez, así que un campo que se caiga en el
     // tercer nivel es un campo que no existe para los conceptos — que son
     // justo los que llevan presupuesto y pago automático.
-    expect(nieto.presupuesto).toBe('39800');
-    expect(nieto.pago_automatico).toBe(false);
-    expect(nieto.varios_pagos).toBe(true);
-    expect(nieto.parent_id).toBe(3n);
+    expect(nieto!.presupuesto).toBe('39800');
+    expect(nieto!.pago_automatico).toBe(false);
+    expect(nieto!.varios_pagos).toBe(true);
+    expect(nieto!.parent_id).toBe(3n);
   });
 });

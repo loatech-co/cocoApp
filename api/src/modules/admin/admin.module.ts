@@ -244,7 +244,7 @@ export class AdminService {
     });
   }
 
-  async bitacora(filtros: { page?: number; per_page?: number }) {
+  async bitacora(filtros: { page?: number | undefined; per_page?: number | undefined }) {
     const page = filtros.page ?? 1;
     const perPage = filtros.per_page ?? 50;
 

@@ -27,7 +27,7 @@ function fuentes(dir: string): string[] {
 
 const archivos = fuentes(join(import.meta.dirname, '..', '..'));
 
-const relativa = (ruta: string): string => ruta.split('/src/')[1];
+const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
 
 /**
  * Quién puede escribir la sombra sin pasar por la superficie, y por qué.

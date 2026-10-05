@@ -58,7 +58,7 @@ export function CampoDeDinero({
           let cifras = 0;
           let sitio = pintado.length;
           for (let i = 0; i < pintado.length; i += 1) {
-            if (/[\d,]/.test(pintado[i])) cifras += 1;
+            if (/[\d,]/.test(pintado.charAt(i))) cifras += 1;
             if (cifras === antes) {
               sitio = i + 1;
               break;

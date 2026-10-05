@@ -9,8 +9,8 @@ import { SupabaseAuthService } from './supabase-auth.service';
 import { sembrarPlantilla } from '../categories/categories.plantilla';
 
 export interface ContextoDePeticion {
-  ip?: string;
-  userAgent?: string;
+  ip?: string | undefined;
+  userAgent?: string | undefined;
 }
 
 export interface PerfilPublico {

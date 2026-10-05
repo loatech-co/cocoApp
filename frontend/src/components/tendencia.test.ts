@@ -108,7 +108,7 @@ describe('Las etiquetas del eje, por mes', () => {
     }));
     const etiquetas = etiquetasDelEje(meses, 'mes');
     expect(etiquetas.length).toBeLessThanOrEqual(12);
-    expect(etiquetas[0].texto).toBe('Ene 2023');
+    expect(etiquetas[0]!.texto).toBe('Ene 2023');
   });
 });
 
@@ -146,8 +146,8 @@ describe('La curva de la tendencia', () => {
 
     for (let tramo = 0; tramo < ys.length - 1; tramo += 1) {
       const base = 2 + tramo * 6;
-      const y0 = tramo === 0 ? n[1] : n[base - 1];
-      const [c1y, c2y, y1] = [n[base + 1], n[base + 3], n[base + 5]];
+      const y0 = tramo === 0 ? n[1]! : n[base - 1]!;
+      const [c1y, c2y, y1] = [n[base + 1]!, n[base + 3]!, n[base + 5]!];
 
       const minimo = Math.min(y0, y1);
       const maximo = Math.max(y0, y1);

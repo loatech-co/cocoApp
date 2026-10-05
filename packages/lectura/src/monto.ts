@@ -102,7 +102,8 @@ export function aNumero(texto: string): number | null {
     decimales = limpio.slice(corte + 1);
   } else if (puntos === 1 || comas === 1) {
     const separador = puntos === 1 ? '.' : ',';
-    const [izquierda, derecha] = limpio.split(separador);
+    // Hay exactamente un separador, así que siempre salen dos partes.
+    const [izquierda = '', derecha = ''] = limpio.split(separador);
     if (derecha.length === 3) entero = izquierda + derecha;
     else {
       entero = izquierda;
@@ -123,7 +124,7 @@ export function aNumero(texto: string): number | null {
  */
 export function leerMonto(
   texto: string,
-  opciones: { esPlanilla?: boolean; rango?: { min: number; max: number } } = {},
+  opciones: { esPlanilla?: boolean; rango?: { min: number; max: number } | undefined } = {},
 ): MontoCandidato | null {
   const candidatos: MontoCandidato[] = [];
 
@@ -183,5 +184,5 @@ export function leerMonto(
   // Puntaje primero; el tamaño solo desempata. Al revés, un número de factura
   // de nueve cifras le gana a un total de seis.
   candidatos.sort((a, b) => b.puntaje - a.puntaje || b.valor - a.valor);
-  return candidatos[0];
+  return candidatos[0] ?? null;
 }

@@ -36,5 +36,6 @@ const CHECK_VIOLATION = /violates check constraint \\?"([a-z0-9_]+)\\?"/;
 export function checkViolationMessage(errorMessage: string): string | null {
   const match = CHECK_VIOLATION.exec(errorMessage);
   if (!match) return null;
-  return MESSAGES[match[1]] ?? GENERIC_MESSAGE;
+  const [, nombre = ''] = match; // el grupo es obligatorio en el patrón
+  return MESSAGES[nombre] ?? GENERIC_MESSAGE;
 }

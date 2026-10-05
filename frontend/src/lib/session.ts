@@ -164,7 +164,7 @@ async function llamarAuth<T>(
     method: opciones.method ?? 'POST',
     credentials: 'include',
     headers: opciones.body === undefined ? {} : { 'Content-Type': 'application/json' },
-    body: opciones.body === undefined ? undefined : JSON.stringify(opciones.body),
+    ...(opciones.body === undefined ? {} : { body: JSON.stringify(opciones.body) }),
   });
 
   if (respuesta.status === 204) return undefined as T;

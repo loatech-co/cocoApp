@@ -277,12 +277,12 @@ function SelectorEnFila({
   onElegir,
 }: {
   aria: string;
-  valor?: number;
+  valor?: number | undefined;
   opciones: Category[];
   deshabilitado?: boolean;
   /** Por qué está bloqueado. Un control apagado sin explicación se lee como
       un error de la aplicación. */
-  motivo?: string;
+  motivo?: string | undefined;
   onElegir: (id: number | undefined) => void;
 }) {
   const selector = (

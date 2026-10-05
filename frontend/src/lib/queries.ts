@@ -440,7 +440,7 @@ export function useEliminarCategoria() {
      * pertenece a «Vivienda» o a «Oficina», y elegir por su cuenta significa
      * mover plata a un sitio que nadie pidió.
      */
-    mutationFn: async ({ id, reasignarA }: { id: number; reasignarA?: number }) => {
+    mutationFn: async ({ id, reasignarA }: { id: number; reasignarA?: number | undefined }) => {
       const destino = reasignarA === undefined ? '' : `?reasignar_a=${reasignarA}`;
       await apiFetch(`/categories/${id}${destino}`, { method: 'DELETE' });
     },

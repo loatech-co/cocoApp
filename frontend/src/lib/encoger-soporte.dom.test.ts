@@ -170,8 +170,8 @@ describe('Encoger un soporte antes de subirlo', () => {
       archivo('b.pdf', 'application/pdf', 4096),
     ]);
 
-    expect(salidas[0].type).toBe('image/jpeg');
-    expect(salidas[0].size).toBeLessThan(4096 * 1024);
-    expect(salidas[1].type).toBe('application/pdf');
+    expect(salidas[0]!.type).toBe('image/jpeg');
+    expect(salidas[0]!.size).toBeLessThan(4096 * 1024);
+    expect(salidas[1]!.type).toBe('application/pdf');
   });
 });

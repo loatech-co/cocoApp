@@ -70,21 +70,21 @@ export class CreateTransactionDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  category_id?: number;
+  category_id?: number | undefined;
 
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  description?: string;
+  description?: string | undefined;
 
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  merchant?: string;
+  merchant?: string | undefined;
 
   @IsOptional()
   @IsString()
-  notes?: string;
+  notes?: string | undefined;
 
   @IsOptional()
   @IsEnum(TransactionStatus)
@@ -93,7 +93,7 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  external_ref?: string;
+  external_ref?: string | undefined;
 
   /**
    * ── Captura ──────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ export class CreateTransactionDto {
    */
   @IsOptional()
   @IsEnum(TransactionSource)
-  source?: TransactionSource;
+  source?: TransactionSource | undefined;
 
   /** El texto del que salió: el OCR del recibo, el SMS del banco. */
   @IsOptional()

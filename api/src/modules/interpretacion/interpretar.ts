@@ -39,15 +39,15 @@ export type Fuente = 'historial' | 'palabras-clave' | 'firma' | 'diccionario';
 
 export interface EntradaParaInterpretar {
   /** Texto libre: el OCR de un recibo, el SMS del banco. */
-  texto?: string | null;
+  texto?: string | null | undefined;
   /** O datos ya estructurados, como los entrega el disparador de Wallet. */
-  comercio?: string | null;
-  monto?: string | number | null;
+  comercio?: string | null | undefined;
+  monto?: string | number | null | undefined;
   /** `YYYY-MM-DD`. */
-  fecha?: string | null;
-  nombreDeArchivo?: string | null;
+  fecha?: string | null | undefined;
+  nombreDeArchivo?: string | null | undefined;
   /** El mes al que pertenece, `YYYY-MM`. Ayuda a elegir la fecha. */
-  periodo?: string | null;
+  periodo?: string | null | undefined;
 }
 
 export interface Contexto {

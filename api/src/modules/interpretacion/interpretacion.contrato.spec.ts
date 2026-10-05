@@ -27,7 +27,7 @@ describe('El contrato de captura', () => {
 
   /** Los nombres de propiedad: la palabra al inicio de una línea seguida de `?:`, `!:` o `:`. */
   const clavesDe = (cuerpo: string): Set<string> =>
-    new Set([...cuerpo.matchAll(/^\s+([a-z_]+)[?!]?:/gm)].map((m) => m[1]));
+    new Set([...cuerpo.matchAll(/^\s+([a-z_]+)[?!]?:/gm)].map((m) => m[1]!));
 
   it('CaptureBodyDto y CapturaRequest tienen exactamente las mismas claves', () => {
     const delDto = new Set([

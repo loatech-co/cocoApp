@@ -48,7 +48,7 @@ describe('JsonLogger', () => {
       msg: 'boom',
       stack: 'Error: boom\n    at x',
     });
-    expect(typeof info.time).toBe('string');
+    expect(typeof info!.time).toBe('string');
     expect(err).toHaveBeenCalledTimes(1);
   });
 
@@ -74,7 +74,7 @@ describe('JsonLogger', () => {
 
     const [inside, access] = lines();
     expect(seen).toBeDefined();
-    expect(inside.requestId).toBe(seen);
+    expect(inside!.requestId).toBe(seen);
     expect(access).toMatchObject({
       requestId: seen,
       context: 'http',

@@ -56,7 +56,7 @@ import { cn } from '@/lib/utils';
 interface Aviso {
   id: number;
   titulo: string;
-  detalle?: string;
+  detalle?: string | undefined;
   tono: TonoDeAviso;
 }
 

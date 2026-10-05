@@ -24,7 +24,7 @@ describe('receipt store', () => {
 
     await store.exists('12/abc.png');
 
-    const [url, init] = fetchMock.mock.calls[0];
+    const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe('https://x.supabase.co/storage/v1/object/soportes/12/abc.png');
     expect(init?.method).toBe('HEAD');
     expect((init?.headers as Record<string, string>).authorization).toBe('Bearer service-key');

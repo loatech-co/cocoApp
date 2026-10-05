@@ -65,7 +65,7 @@ export function Select({
   vacio?: string;
   /** Los mismos dos de toda la app: `sm` mide 36 y `md` mide 44. */
   tamano?: 'sm' | 'md';
-  deshabilitado?: boolean;
+  deshabilitado?: boolean | undefined;
   /** A la izquierda, informativo: de qué es este campo. */
   icono?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   /** A la derecha, activas. Una o dos, antes de la flecha. */

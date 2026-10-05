@@ -39,8 +39,8 @@ describe('El campo con etiqueta flotante', () => {
     const caja = container.querySelector('.campo');
     expect(caja).not.toBeNull();
     expect(caja?.children).toHaveLength(2);
-    expect(caja?.children[0].tagName).toBe('INPUT');
-    expect(caja?.children[1].tagName).toBe('LABEL');
+    expect(caja?.children[0]!.tagName).toBe('INPUT');
+    expect(caja?.children[1]!.tagName).toBe('LABEL');
   });
 
   it('ata la etiqueta al control', () => {
@@ -225,7 +225,7 @@ describe('Ningún formulario vuelve a poner el nombre encima del campo', () => {
     const culpables: string[] = [];
 
     for (const ruta of archivos) {
-      const relativa = ruta.split('/src/')[1];
+      const relativa = ruta.split('/src/')[1]!;
       if (relativa.startsWith('components/ui/')) continue;
 
       for (const uso of readFileSync(ruta, 'utf8').matchAll(/<Label\b[^>]*>/g)) {

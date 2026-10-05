@@ -67,8 +67,8 @@ export function Calendario({
   onSobrevolar,
   className,
 }: {
-  desde?: string;
-  hasta?: string;
+  desde?: string | undefined;
+  hasta?: string | undefined;
   /** El mes que se muestra. Sin esto, el propio calendario lo lleva. */
   vista?: MesVisible;
   onVista?: (mes: MesVisible) => void;

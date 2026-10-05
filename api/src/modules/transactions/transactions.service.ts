@@ -500,7 +500,7 @@ export class TransactionsService {
 
     return splits.map((split, indice) => ({
       categoryId: split.category_id !== undefined ? BigInt(split.category_id) : null,
-      amount: montos[indice],
+      amount: montos[indice] ?? toMoney(split.amount), // mismo valor: montos[i] es este
       note: split.note ?? null,
     }));
   }

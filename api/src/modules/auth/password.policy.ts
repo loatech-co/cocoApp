@@ -68,7 +68,7 @@ export function evaluarPolitica(password: string): ResultadoDePolitica {
  */
 export function derivaDeDatosPersonales(
   password: string,
-  datos: { email?: string; displayName?: string },
+  datos: { email?: string | undefined; displayName?: string | undefined },
 ): boolean {
   const normalizado = password.toLowerCase();
 

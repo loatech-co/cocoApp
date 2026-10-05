@@ -781,9 +781,6 @@ function Pase({
   const eliminar = useEliminarSoporte(transactionId);
   const [confirmando, setConfirmando] = useState(false);
   const soporte = lista[indice];
-  const url = urls[String(soporte.id)];
-  const fallo = fallos[String(soporte.id)];
-  const esImagen = soporte.mime_type.startsWith('image/');
 
   const [zoom, setZoom] = useState(NORMAL);
   const [pagina, setPagina] = useState(1);
@@ -816,7 +813,13 @@ function Pase({
     return () => document.removeEventListener('keydown', alPulsar);
   }, [indice, lista.length, onIr, onCerrar, cambiarZoom]);
 
-  const escala = ZOOMS[zoom];
+  // `zoom` siempre está dentro de `ZOOMS`: lo recortan `cambiarZoom` y `NORMAL`.
+  const escala = ZOOMS[zoom] ?? 1;
+
+  if (soporte === undefined) return null;
+  const url = urls[String(soporte.id)];
+  const fallo = fallos[String(soporte.id)];
+  const esImagen = soporte.mime_type.startsWith('image/');
 
   return (
     <div
@@ -1210,7 +1213,7 @@ function SoporteQueNoSeVe({
   oscuro = false,
 }: {
   fallo: FalloDeSoporte;
-  onReintentar?: () => void;
+  onReintentar?: (() => void) | undefined;
   oscuro?: boolean;
 }) {
   return (
@@ -1267,7 +1270,7 @@ export function PreviaDeArchivo({
    * Es la misma razón por la que una tabla enseña sus filas en gris antes de
    * tener datos: lo que no puede cambiar de tamaño es la página.
    */
-  url?: string;
+  url?: string | undefined;
   /**
    * El documento no se está viendo, y por qué.
    *
@@ -1275,9 +1278,9 @@ export function PreviaDeArchivo({
    * que no iba a llegar giraba para siempre: quien mira no puede distinguir
    * «está tardando» de «no está», que piden cosas distintas.
    */
-  fallo?: FalloDeSoporte;
+  fallo?: FalloDeSoporte | undefined;
   /** Solo hace algo con `sin-cargar`: lo ausente no vuelve por reintentarlo. */
-  onReintentar?: () => void;
+  onReintentar?: (() => void) | undefined;
   esImagen: boolean;
   /**
    * Abre el pase a pantalla completa, si lo hay.
@@ -1336,7 +1339,9 @@ export function PreviaDeArchivo({
   */
   const cubrir =
     natural && caja.ancho > 0 ? Math.max(caja.ancho / natural.ancho, caja.alto / natural.alto) : 1;
-  const escala = cubrir * PASOS_DE_LA_PREVIA[zoom];
+  // `zoom` nunca sale de `PASOS_DE_LA_PREVIA`: los botones lo recortan.
+  const paso = PASOS_DE_LA_PREVIA[zoom] ?? 1;
+  const escala = cubrir * paso;
   const ancho = natural ? natural.ancho * escala : 0;
   const alto = natural ? natural.alto * escala : 0;
 
@@ -1473,7 +1478,7 @@ export function PreviaDeArchivo({
           title="Volver al tamaño normal"
           className="tabular min-w-[3rem] text-center text-2xs font-medium text-sala-tinta"
         >
-          {Math.round(PASOS_DE_LA_PREVIA[zoom] * 100)} %
+          {Math.round(paso * 100)} %
         </button>
         <BotonOscuro
           etiqueta="Acercar"

@@ -34,7 +34,7 @@ interface RequestOptions {
   body?: unknown;
   /** Para el commit de importación (Fase 2), que debe ser idempotente. */
   idempotencyKey?: string;
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
 }
 
 /**
@@ -220,7 +220,7 @@ function enviar(path: string, options: RequestOptions): Promise<Response> {
   return fetch(`${BASE_URL}${path}`, {
     method,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-    signal,
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    ...(signal === undefined ? {} : { signal }),
   });
 }

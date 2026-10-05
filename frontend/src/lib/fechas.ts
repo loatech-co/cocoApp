@@ -47,7 +47,8 @@ export const MESES_LARGOS = [
 ];
 
 const partes = (iso: string): { anio: string; mes: number; dia: number } => {
-  const [anio, mes, dia] = iso.split('-');
+  // `split` siempre devuelve al menos un trozo: el año nunca falta.
+  const [anio = '', mes, dia] = iso.split('-');
   return { anio, mes: Number(mes), dia: Number(dia) };
 };
 

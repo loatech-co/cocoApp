@@ -102,7 +102,7 @@ describe('Soportes (e2e)', () => {
 
       await http.get(`/api/v1/transactions/${transactionId}/soportes`).expect(401);
       await http
-        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0].id}`)
+        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
         .expect(401);
     });
 
@@ -127,7 +127,7 @@ describe('Soportes (e2e)', () => {
       expect(lista.body.data).toEqual([]);
 
       await http
-        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0].id}`)
+        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
         .set('Authorization', beto)
         .expect(404);
     });
@@ -140,7 +140,7 @@ describe('Soportes (e2e)', () => {
       const deBeto = await conSoportes(beto, betoId, [pdf('el-de-beto')]);
 
       await http
-        .get(`/api/v1/transactions/${deBeto.transactionId}/soportes/${deAna.soportes[0].id}`)
+        .get(`/api/v1/transactions/${deBeto.transactionId}/soportes/${deAna.soportes[0]!.id}`)
         .set('Authorization', beto)
         .expect(404);
     });
@@ -178,7 +178,7 @@ describe('Soportes (e2e)', () => {
         .expect(401);
 
       await http
-        .delete(`/api/v1/transactions/${transactionId}/soportes/${soportes[0].id}`)
+        .delete(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
         .expect(401);
     });
 
@@ -186,7 +186,7 @@ describe('Soportes (e2e)', () => {
       const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
 
       await http
-        .delete(`/api/v1/transactions/${transactionId}/soportes/${soportes[0].id}`)
+        .delete(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
         .set('Authorization', beto)
         .expect(404);
 
@@ -200,12 +200,12 @@ describe('Soportes (e2e)', () => {
       // pero si algún día una llega torcida, el resolver es lo único que queda
       // entre eso y el sistema de archivos.
       await entorno.prisma.soporte.update({
-        where: { id: soportes[0].id },
+        where: { id: soportes[0]!.id },
         data: { storageKey: '../../../../../../etc/passwd' },
       });
 
       await http
-        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0].id}`)
+        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
         .set('Authorization', ana)
         .expect(404);
     });
@@ -239,7 +239,7 @@ describe('Soportes (e2e)', () => {
       const { transactionId, soportes } = await conSoportes(ana, anaId, [uno]);
 
       const r = await http
-        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0].id}`)
+        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
         .set('Authorization', ana)
         .expect(200);
 
@@ -271,7 +271,7 @@ describe('Soportes (e2e)', () => {
 
       // Un almacén a medio sincronizar: la fila existe, el binario todavía no.
       await entorno.prisma.soporte.update({
-        where: { id: soportes[0].id },
+        where: { id: soportes[0]!.id },
         data: { storageKey: `${anaId}/no-existe.pdf` },
       });
 

@@ -103,7 +103,7 @@ describe('Nadie le cambia el tamaño a un botón desde fuera', () => {
         const etiqueta = codigo.slice(apertura.index, finDeLaEtiqueta(codigo, apertura.index) + 1);
         const className = /className=(?:"([^"]*)"|\{cn\(([\s\S]*?)\)\})/.exec(etiqueta);
         if (!className) continue;
-        salida.push({ ruta: ruta.split('/src/')[1], clases: className[1] ?? className[2] ?? '' });
+        salida.push({ ruta: ruta.split('/src/')[1]!, clases: className[1] ?? className[2] ?? '' });
       }
     }
 

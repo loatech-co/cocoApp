@@ -405,8 +405,10 @@ export function comerciosEn(texto: string): ComercioHallado[] {
 
     // Se consume lo hallado para que un alias más corto no vuelva a dar con
     // él. Se deja un espacio para que los límites de palabra sigan valiendo.
-    const inicio = m.index + m[1].length;
-    trabajo = `${trabajo.slice(0, inicio)} ${' '.repeat(m[2].length - 1)}${trabajo.slice(inicio + m[2].length)}`;
+    // Los dos grupos son obligatorios en el patrón: siempre vienen.
+    const [, previo = '', hallado = ''] = m;
+    const inicio = m.index + previo.length;
+    trabajo = `${trabajo.slice(0, inicio)} ${' '.repeat(hallado.length - 1)}${trabajo.slice(inicio + hallado.length)}`;
 
     if (!gruposVistos.has(grupo.grupo)) {
       gruposVistos.add(grupo.grupo);

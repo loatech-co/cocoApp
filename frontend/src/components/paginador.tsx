@@ -149,13 +149,15 @@ export function numerosVisibles(pagina: number, paginas: number, hueco = 1): (nu
   const orden = [...cerca].sort((a, b) => a - b);
   const salida: (number | null)[] = [];
 
-  for (let i = 0; i < orden.length; i += 1) {
+  let anterior: number | undefined;
+  for (const actual of orden) {
     // Un salto de UN número no se dibuja con puntos: "1 … 3" ocupa lo mismo
     // que "1 2 3" y esconde una página por nada.
-    if (i > 0 && orden[i] - orden[i - 1] > 1) {
-      salida.push(orden[i] - orden[i - 1] === 2 ? orden[i] - 1 : null);
+    if (anterior !== undefined && actual - anterior > 1) {
+      salida.push(actual - anterior === 2 ? actual - 1 : null);
     }
-    salida.push(orden[i]);
+    salida.push(actual);
+    anterior = actual;
   }
 
   return salida;

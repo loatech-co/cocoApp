@@ -168,7 +168,7 @@ export class SupabaseReceiptStore implements ReceiptStore {
     return fetch(`${this.base}${path}`, {
       method,
       // A Buffer is a Uint8Array; fetch's types want the plain view.
-      body: typeof body === 'string' || body === undefined ? body : new Uint8Array(body),
+      ...(body !== undefined && { body: typeof body === 'string' ? body : new Uint8Array(body) }),
       headers: { authorization: `Bearer ${this.serviceKey}`, apikey: this.serviceKey, ...headers },
       signal: AbortSignal.timeout(30_000),
     });

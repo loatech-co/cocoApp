@@ -44,7 +44,7 @@ export function CamposDePalabrasClave({
   /** Para avisar si otra palabra ya está puesta en otro concepto. */
   arbol?: readonly Category[];
   /** El concepto que se está editando, para no avisar de sí mismo. */
-  conceptoId?: Category['id'];
+  conceptoId?: Category['id'] | undefined;
   className?: string;
 }) {
   const [escrita, setEscrita] = useState('');

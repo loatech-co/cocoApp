@@ -52,7 +52,10 @@ export function Tendencia({
   // mismo que "no hay nada que mostrar".
   const vacia = puntos.every((p) => Number(p.expense) === 0 && Number(p.income) === 0);
 
-  if (puntos.length === 0 || vacia) {
+  const primero = puntos[0];
+  const ultimo = puntos[puntos.length - 1];
+
+  if (primero === undefined || ultimo === undefined || vacia) {
     return (
       <EstadoVacio
         className="h-full"
@@ -71,7 +74,8 @@ export function Tendencia({
   const total = gastos.reduce((s, v) => s + v, 0);
   const promedio = total / puntos.length;
   const maximo = Math.max(...gastos);
-  const pico = puntos[gastos.indexOf(maximo)];
+  // `maximo` sale de `gastos`, así que siempre se encuentra: el respaldo no se usa.
+  const pico = puntos[gastos.indexOf(maximo)] ?? primero;
 
   const etiquetas = etiquetasDelEje(puntos, granularidad);
 
@@ -175,7 +179,7 @@ export function Tendencia({
           preserveAspectRatio="none"
           className="h-full w-full"
           role="img"
-          aria-label={`Gasto por ${granularidad === 'dia' ? 'día' : 'mes'}, de ${etiquetaDeCubo(puntos[0].bucket)} a ${etiquetaDeCubo(puntos[puntos.length - 1].bucket)}. Promedio ${formatCOP(promedio)}, pico ${formatCOP(maximo)}.`}
+          aria-label={`Gasto por ${granularidad === 'dia' ? 'día' : 'mes'}, de ${etiquetaDeCubo(primero.bucket)} a ${etiquetaDeCubo(ultimo.bucket)}. Promedio ${formatCOP(promedio)}, pico ${formatCOP(maximo)}.`}
         >
           <defs>
             <linearGradient id="tendencia-relleno" x1="0" y1="0" x2="0" y2="1">
@@ -389,53 +393,62 @@ function ye(valor: number, techo: number): number {
  * no baja de cero, la curva tampoco.
  */
 export function curva(puntos: { x: number; y: number }[]): string {
-  if (puntos.length === 0) return '';
-  if (puntos.length === 1) return `M ${puntos[0].x} ${puntos[0].y}`;
+  const [primero] = puntos;
+  if (primero === undefined) return '';
+  if (puntos.length === 1) return `M ${primero.x} ${primero.y}`;
 
   const n = puntos.length;
+  // Todos los índices de abajo van de 0 a n - 1: los respaldos no se usan nunca.
+  const punto = (i: number): { x: number; y: number } => puntos[i] ?? primero;
+  const valor = (lista: readonly number[], i: number): number => lista[i] ?? 0;
 
   // Pendiente de cada tramo.
   const deltas: number[] = [];
   for (let i = 0; i < n - 1; i += 1) {
-    const dx = puntos[i + 1].x - puntos[i].x;
-    deltas.push(dx === 0 ? 0 : (puntos[i + 1].y - puntos[i].y) / dx);
+    const dx = punto(i + 1).x - punto(i).x;
+    deltas.push(dx === 0 ? 0 : (punto(i + 1).y - punto(i).y) / dx);
   }
 
   // Tangente en cada punto: el promedio de las pendientes que llegan a él.
-  const tangentes: number[] = [deltas[0]];
-  for (let i = 1; i < n - 1; i += 1) tangentes.push((deltas[i - 1] + deltas[i]) / 2);
-  tangentes.push(deltas[n - 2]);
+  const tangentes: number[] = [valor(deltas, 0)];
+  for (let i = 1; i < n - 1; i += 1) {
+    tangentes.push((valor(deltas, i - 1) + valor(deltas, i)) / 2);
+  }
+  tangentes.push(valor(deltas, n - 2));
 
   // Y aquí está lo que impide el sobrepaso. Donde el tramo es plano, la curva
   // llega y sale plana; donde no, las tangentes se recortan al círculo de
   // radio 3, que es la condición de Fritsch–Carlson.
   for (let i = 0; i < n - 1; i += 1) {
-    if (deltas[i] === 0) {
+    const delta = valor(deltas, i);
+    if (delta === 0) {
       tangentes[i] = 0;
       tangentes[i + 1] = 0;
       continue;
     }
 
-    const a = tangentes[i] / deltas[i];
-    const b = tangentes[i + 1] / deltas[i];
+    const a = valor(tangentes, i) / delta;
+    const b = valor(tangentes, i + 1) / delta;
     const s = a * a + b * b;
 
     if (s > 9) {
       const factor = 3 / Math.sqrt(s);
-      tangentes[i] = factor * a * deltas[i];
-      tangentes[i + 1] = factor * b * deltas[i];
+      tangentes[i] = factor * a * delta;
+      tangentes[i + 1] = factor * b * delta;
     }
   }
 
-  let d = `M ${puntos[0].x.toFixed(2)} ${puntos[0].y.toFixed(2)}`;
+  let d = `M ${primero.x.toFixed(2)} ${primero.y.toFixed(2)}`;
   for (let i = 0; i < n - 1; i += 1) {
-    const h = (puntos[i + 1].x - puntos[i].x) / 3;
-    const c1 = { x: puntos[i].x + h, y: puntos[i].y + tangentes[i] * h };
-    const c2 = { x: puntos[i + 1].x - h, y: puntos[i + 1].y - tangentes[i + 1] * h };
+    const desde = punto(i);
+    const hasta = punto(i + 1);
+    const h = (hasta.x - desde.x) / 3;
+    const c1 = { x: desde.x + h, y: desde.y + valor(tangentes, i) * h };
+    const c2 = { x: hasta.x - h, y: hasta.y - valor(tangentes, i + 1) * h };
     d +=
       ` C ${c1.x.toFixed(2)} ${c1.y.toFixed(2)},` +
       ` ${c2.x.toFixed(2)} ${c2.y.toFixed(2)},` +
-      ` ${puntos[i + 1].x.toFixed(2)} ${puntos[i + 1].y.toFixed(2)}`;
+      ` ${hasta.x.toFixed(2)} ${hasta.y.toFixed(2)}`;
   }
 
   return d;
@@ -519,7 +532,7 @@ export function etiquetasDelEje(
       .map((p, indice) => ({ indice, bucket: p.bucket }))
       .filter(({ indice }) => indice % cada === 0)
       .map(({ indice, bucket }) => {
-        const [anio, mes] = bucket.split('-');
+        const [anio, mes = ''] = bucket.split('-');
         const nombre = MESES[Number(mes) - 1] ?? mes;
         const conMayuscula = nombre.charAt(0).toUpperCase() + nombre.slice(1);
         // El año ENTERO, no sus dos últimas cifras. "Abr 23" obliga a
@@ -533,7 +546,8 @@ export function etiquetasDelEje(
   let mesEscrito = '';
 
   puntos.forEach((p, indice) => {
-    const [anio, mes, dia] = p.bucket.split('-').map(Number);
+    // Un cubo diario trae siempre sus tres partes: los respaldos no se usan.
+    const [anio = NaN, mes = NaN, dia = NaN] = p.bucket.split('-').map(Number);
     const esUltimo = dia === ultimoDia(anio, mes);
     // 5, 10, 15, 20 y 25. El 30 queda fuera: o cierra el mes —y entra por la
     // otra condición— o está a un día del 31, que sí lo cierra.
@@ -559,7 +573,7 @@ export function etiquetasDelEje(
  * cuando el rango cruza de año.
  */
 export function etiquetaDeCubo(bucket: string, mismoAnio = false): string {
-  const [anio, mes, dia] = bucket.split('-');
+  const [anio = '', mes = '', dia] = bucket.split('-');
   const nombre = MESES[Number(mes) - 1] ?? mes;
   if (dia) return `${Number(dia)} ${nombre}`;
   return mismoAnio ? nombre : `${nombre} ${anio.slice(2)}`;

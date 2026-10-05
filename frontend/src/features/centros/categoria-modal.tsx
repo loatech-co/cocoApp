@@ -190,7 +190,12 @@ export function CategoriaModal({
         await crear.mutateAsync({
           name: nombre.trim(),
           kind: 'expense',
-          ...(esCentro ? { estatico } : { parent_id: padreId, ...(icono ? { icon: icono } : {}) }),
+          ...(esCentro
+            ? { estatico }
+            : {
+                ...(padreId === undefined ? {} : { parent_id: padreId }),
+                ...(icono ? { icon: icono } : {}),
+              }),
         });
       }
       onCerrar();

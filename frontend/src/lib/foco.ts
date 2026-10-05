@@ -57,13 +57,14 @@ export function useFocoAtrapado(caja: RefObject<HTMLElement | null>, activo: boo
       if (document.querySelector('[data-modal]')) return;
 
       const lista = enfocables(el);
-      if (lista.length === 0) {
+      const primero = lista[0];
+      const ultimo = lista[lista.length - 1];
+      // Vacía: no hay a dónde ir.
+      if (primero === undefined || ultimo === undefined) {
         e.preventDefault();
         return;
       }
 
-      const primero = lista[0];
-      const ultimo = lista[lista.length - 1];
       const actual = document.activeElement;
 
       if (e.shiftKey && (actual === primero || actual === el)) {

@@ -36,13 +36,13 @@ describe('Reconocer comercios en un texto', () => {
   it('lo hallado se consume: «claro hogar» no vuelve a contar como «claro»', () => {
     const hallados = comerciosEn('CLARO HOGAR FACTURA');
     expect(hallados).toHaveLength(1);
-    expect(hallados[0].alias).toBe('claro hogar');
+    expect(hallados[0]!.alias).toBe('claro hogar');
   });
 
   it('las tuberías se quitan antes: «MERCADO PAGO*D1» es D1, no «mercado»', () => {
     // Sin esto, cualquier compra pagada por Mercado Pago sería mercado.
     expect(grupos('Compra en MERCADO PAGO*D1 por $45.000')).toEqual(['mercado']);
-    expect(comerciosEn('Compra en MERCADO PAGO*D1')[0].alias).toBe('d1');
+    expect(comerciosEn('Compra en MERCADO PAGO*D1')[0]!.alias).toBe('d1');
     expect(grupos('Pago PAYU*NETFLIX')).toEqual(['suscripciones digitales']);
   });
 

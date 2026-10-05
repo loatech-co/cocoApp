@@ -58,7 +58,8 @@ async function textoDelPdf(archivo: File, paginas = 2): Promise<string> {
       if (!('str' in item) || item.str.trim() === '') continue;
       // `transform` llega sin tipar desde pdfjs. Es la matriz de 6 números de
       // PDF: las dos últimas posiciones son el desplazamiento, x y luego y.
-      const [, , , , x, y] = item.transform as number[];
+      // Las seis posiciones están siempre: los valores por defecto no se usan.
+      const [, , , , x = 0, y = 0] = item.transform as number[];
       const renglon = Math.round(y);
       if (!filas.has(renglon)) filas.set(renglon, []);
       filas.get(renglon)!.push({ x, s: item.str });

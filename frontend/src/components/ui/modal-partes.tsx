@@ -84,7 +84,7 @@ export function CabeceraDeModal({
 }: {
   titulo: ReactNode;
   /** Qué es esta ficha, en una frase. */
-  ayuda?: string;
+  ayuda?: string | undefined;
   /** Va delante del título: el pastel de color de un movimiento. */
   antes?: ReactNode;
   /** Botones de icono a la izquierda de la equis. Eliminar, editar. */

@@ -69,7 +69,7 @@ describe('Ningún contenedor se pasa del radio estándar', () => {
     const culpables: string[] = [];
 
     for (const ruta of archivos) {
-      const relativa = ruta.split('/src/')[1];
+      const relativa = ruta.split('/src/')[1]!;
       if (PERMITIDOS.has(relativa)) continue;
 
       const codigo = readFileSync(ruta, 'utf8');
