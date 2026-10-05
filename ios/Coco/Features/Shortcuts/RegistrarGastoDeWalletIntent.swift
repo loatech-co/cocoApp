@@ -21,17 +21,17 @@ struct RegistrarGastoDeWalletIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let result = await Self.run(
-            merchant: comercio, amount: monto, tarjeta: tarjeta, name: nombre, capturer: capturer)
-        return .result(dialog: ActionParameters.dialogo(result))
+            merchant: comercio, amount: monto, card: tarjeta, name: nombre, capturer: capturer)
+        return .result(dialog: ActionParameters.dialog(result))
     }
 
     /// Separado de `perform()` para probarlo con un capturer falso.
     static func run(
-        merchant: String?, amount: String?, tarjeta: String?, name: String?, capturer: any Capturer,
+        merchant: String?, amount: String?, card: String?, name: String?, capturer: any Capturer,
         now: Date = .now
     ) async -> CaptureResult {
-        let body = ActionParameters.cuerpoDeWallet(
-            merchant: merchant, amount: amount, tarjeta: tarjeta, name: name, now: now)
+        let body = ActionParameters.walletBody(
+            merchant: merchant, amount: amount, card: card, name: name, now: now)
         return await capturer.capture(body, source: .wallet, photo: nil, budget: budget)
     }
 }

@@ -51,7 +51,7 @@ final class DependenciesTests: XCTestCase {
 
         let intents = try XCTUnwrap(registry.intents)
         XCTAssertTrue((intents.0 as AnyObject) is QueuedCapturer || intents.0 is QueuedCapturer)
-        XCTAssertTrue(intents.1 === d.enrutador, "los intents navegan por el mismo enrutador que la interfaz")
+        XCTAssertTrue(intents.1 === d.router, "los intents navegan por el mismo enrutador que la interfaz")
 
         let tareas = try XCTUnwrap(registry.tareas)
         XCTAssertTrue(tareas.session === d.session)
@@ -131,27 +131,27 @@ final class SignInViewTests: XCTestCase {
 
 final class SettingsViewTests: XCTestCase {
     func testValidaLaURLDeLaAPI() throws {
-        XCTAssertEqual(SettingsView.validar("http://localhost:3000/").url, URL(string: "http://localhost:3000"))
+        XCTAssertEqual(SettingsView.validate("http://localhost:3000/").url, URL(string: "http://localhost:3000"))
         XCTAssertEqual(
-            SettingsView.validar("  https://dev-cocoapp.viteri.me ").url, URL(string: "https://dev-cocoapp.viteri.me"))
-        XCTAssertNil(SettingsView.validar("").reason, "vacía no es un error, solo no se puede guardar")
-        XCTAssertNil(SettingsView.validar("").url)
-        XCTAssertNotNil(SettingsView.validar("localhost").reason)
-        XCTAssertNotNil(SettingsView.validar("ftp://x.y").reason)
-        XCTAssertNotNil(SettingsView.validar("https://x.y/api/v1").reason, "la app añade /api/v1")
+            SettingsView.validate("  https://dev-cocoapp.viteri.me ").url, URL(string: "https://dev-cocoapp.viteri.me"))
+        XCTAssertNil(SettingsView.validate("").reason, "vacía no es un error, solo no se puede guardar")
+        XCTAssertNil(SettingsView.validate("").url)
+        XCTAssertNotNil(SettingsView.validate("localhost").reason)
+        XCTAssertNotNil(SettingsView.validate("ftp://x.y").reason)
+        XCTAssertNotNil(SettingsView.validate("https://x.y/api/v1").reason, "la app añade /api/v1")
     }
 
     func testTextoDeVencimiento() throws {
         let now = try XCTUnwrap(Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 5, hour: 12)))
-        XCTAssertEqual(SettingsView.textoDeVencimiento(nil), "No disponible (simulador o sin perfil)")
+        XCTAssertEqual(SettingsView.expiryText(nil), "No disponible (simulador o sin perfil)")
         XCTAssertTrue(
-            SettingsView.textoDeVencimiento(now.addingTimeInterval(5 * 86_400), now: now).contains(
+            SettingsView.expiryText(now.addingTimeInterval(5 * 86_400), now: now).contains(
                 "quedan 5 días")
         )
         XCTAssertTrue(
-            SettingsView.textoDeVencimiento(now.addingTimeInterval(86_400), now: now).hasPrefix("Mañana"))
+            SettingsView.expiryText(now.addingTimeInterval(86_400), now: now).hasPrefix("Mañana"))
         XCTAssertTrue(
-            SettingsView.textoDeVencimiento(now.addingTimeInterval(-86_400), now: now).hasPrefix("Caducó"))
+            SettingsView.expiryText(now.addingTimeInterval(-86_400), now: now).hasPrefix("Caducó"))
     }
 }
 

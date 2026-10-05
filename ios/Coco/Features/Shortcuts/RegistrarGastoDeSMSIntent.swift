@@ -15,14 +15,14 @@ struct RegistrarGastoDeSMSIntent: AppIntent {
     @Dependency(key: DependencyKeys.capturer) var capturer: any Capturer
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let result = try await Self.run(text: texto, remitente: remitente, capturer: capturer)
-        return .result(dialog: ActionParameters.dialogo(result))
+        let result = try await Self.run(text: texto, sender: remitente, capturer: capturer)
+        return .result(dialog: ActionParameters.dialog(result))
     }
 
-    static func run(text: String, remitente: String?, capturer: any Capturer, now: Date = .now) async throws
+    static func run(text: String, sender: String?, capturer: any Capturer, now: Date = .now) async throws
         -> CaptureResult
     {
-        let body = try ActionParameters.cuerpoDeSMS(text: text, remitente: remitente, now: now)
+        let body = try ActionParameters.smsBody(text: text, sender: sender, now: now)
         return await capturer.capture(body, source: .sms, photo: nil, budget: budget)
     }
 }

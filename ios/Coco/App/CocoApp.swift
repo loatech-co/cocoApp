@@ -27,7 +27,7 @@ struct CocoApp: App {
             RootView(d: d)
                 .onOpenURL { url in
                     AppLog.navigation.info("onOpenURL \(url.absoluteString, privacy: .public)")
-                    d.enrutador.abrir(url: url)
+                    d.router.abrir(url: url)
                 }
         }
         .onChange(of: phase) { _, nueva in
@@ -65,7 +65,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         guard let url = URL(string: SystemNotifier.captureDestination) else { return }
         await MainActor.run {
-            _ = Dependencies.compartidas.enrutador.abrir(url: url)
+            _ = Dependencies.compartidas.router.abrir(url: url)
         }
     }
 }
