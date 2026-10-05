@@ -49,7 +49,7 @@ import tseslint from 'typescript-eslint';
  */
 const RAW_ELEMENTS = {
   button: 'Button, or the shared/ui atom that draws that kind of control',
-  input: 'Input, Casilla, Interruptor or SelectorDeArchivo (shared/ui/atoms)',
+  input: 'Input, SearchBox, Casilla, Interruptor or FilePicker (shared/ui/atoms)',
   textarea: 'Textarea (shared/ui/atoms/textarea)',
   select: 'Select (shared/ui/organisms/select)',
   dialog: 'Modal or Confirmacion (shared/ui/organisms)',
@@ -77,9 +77,23 @@ const DESIGN_EXCEPTIONS = [
   },
 ];
 
-function isAllowed(filename, use) {
+function exceptionsOf(filename) {
   const relative = filename.split('/frontend/src/')[1];
-  return DESIGN_EXCEPTIONS.some((e) => e.file === relative && e.use === use);
+  return DESIGN_EXCEPTIONS.filter((e) => e.file === relative);
+}
+
+/**
+ * An exception nobody uses any more is reported too: it would let the next
+ * raw element or arbitrary class into that file in silence.
+ */
+function reportStale(context, exceptions, used) {
+  for (const e of exceptions) {
+    if (used.has(e.use)) continue;
+    context.report({
+      loc: { line: 1, column: 0 },
+      message: `DESIGN_EXCEPTIONS lists \`${e.use}\` for this file and it is no longer used: remove the entry.`,
+    });
+  }
 }
 
 function arbitraryUses(text) {
@@ -102,10 +116,19 @@ const cocoDesign = {
     'no-raw-elements': {
       meta: { type: 'problem', schema: [] },
       create(context) {
+        const exceptions = exceptionsOf(context.filename).filter((e) => e.use in RAW_ELEMENTS);
+        const used = new Set();
         return {
+          'Program:exit'() {
+            reportStale(context, exceptions, used);
+          },
           JSXOpeningElement(node) {
             const name = node.name.type === 'JSXIdentifier' ? node.name.name : '';
-            if (!(name in RAW_ELEMENTS) || isAllowed(context.filename, name)) return;
+            if (!(name in RAW_ELEMENTS)) return;
+            if (exceptions.some((e) => e.use === name)) {
+              used.add(name);
+              return;
+            }
             context.report({
               node,
               message: `<${name}> outside shared/ui: use ${RAW_ELEMENTS[name]}. A new need is a variant of the component (exceptions: DESIGN_EXCEPTIONS in eslint.config.js).`,
@@ -117,9 +140,14 @@ const cocoDesign = {
     'no-arbitrary-values': {
       meta: { type: 'problem', schema: [] },
       create(context) {
+        const exceptions = exceptionsOf(context.filename).filter((e) => !(e.use in RAW_ELEMENTS));
+        const used = new Set();
         function check(node, text) {
           for (const { token, kind } of arbitraryUses(text)) {
-            if (isAllowed(context.filename, token)) continue;
+            if (exceptions.some((e) => e.use === token)) {
+              used.add(token);
+              continue;
+            }
             context.report({
               node,
               message: `Arbitrary ${kind} \`${token}\` outside shared/ui: use the theme scale or a variant of the component (exceptions: DESIGN_EXCEPTIONS in eslint.config.js).`,
@@ -127,6 +155,9 @@ const cocoDesign = {
           }
         }
         return {
+          'Program:exit'() {
+            reportStale(context, exceptions, used);
+          },
           Literal(node) {
             if (typeof node.value === 'string') check(node, node.value);
           },
