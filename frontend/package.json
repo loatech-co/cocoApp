@@ -18,6 +18,9 @@
     "build-storybook": "storybook build --quiet"
   },
   "dependencies": {
+    "@openfeature/core": "^1.12.0",
+    "@openfeature/react-sdk": "^1.4.1",
+    "@openfeature/web-sdk": "^1.10.0",
     "@radix-ui/react-slot": "^1.1.1",
     "@tailwindcss/vite": "^4.0.0",
     "@tanstack/react-query": "^5.62.0",
