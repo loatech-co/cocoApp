@@ -10,7 +10,9 @@ import type { StorybookConfig } from '@storybook/react-vite';
  */
 const config: StorybookConfig = {
   stories: ['../src/shared/ui/**/*.stories.tsx'],
-  addons: ['@storybook/addon-themes'],
+  // `pseudo-states` paints :hover and :focus-visible without a mouse or a
+  // keyboard, so a story can show the focus ring (rule 18) standing still.
+  addons: ['@storybook/addon-themes', 'storybook-addon-pseudo-states'],
   framework: { name: '@storybook/react-vite', options: {} },
   core: { disableTelemetry: true },
 };
