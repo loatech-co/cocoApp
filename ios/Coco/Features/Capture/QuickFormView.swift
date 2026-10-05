@@ -26,30 +26,30 @@ struct QuickFormView: View {
                 Section {
                     AmountField(text: $model.amount)
                 } header: {
-                    Text("Monto").textCase(nil)
+                    Text(L10n.Capture.formAmount).textCase(nil)
                 }
 
                 Section {
                     conceptRow
                 } header: {
-                    Text("Concepto").textCase(nil)
+                    Text(L10n.Capture.formConcept).textCase(nil)
                 }
 
                 Section {
-                    DatePicker("Fecha", selection: date, displayedComponents: .date)
+                    DatePicker(L10n.Capture.formDate, selection: date, displayedComponents: .date)
                     if let merchant = model.merchant, !merchant.isEmpty {
-                        LabeledContent("Comercio", value: merchant)
+                        LabeledContent(L10n.Capture.formMerchant, value: merchant)
                     }
-                    TextField("Nota (opcional)", text: $model.note, axis: .vertical)
+                    TextField(L10n.Capture.formNote, text: $model.note, axis: .vertical)
                         .lineLimit(1...3)
                 } header: {
-                    Text("Detalles").textCase(nil)
+                    Text(L10n.Capture.formDetails).textCase(nil)
                 }
 
                 Section {
                     photoSection
                 } header: {
-                    Text("Recibo").textCase(nil)
+                    Text(L10n.Capture.formReceipt).textCase(nil)
                 }
 
                 if let error = model.error {
@@ -59,14 +59,14 @@ struct QuickFormView: View {
                     }
                 }
             }
-            .navigationTitle("Nuevo gasto")
+            .navigationTitle(L10n.Capture.formTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { onClose() }
+                    Button(L10n.Common.cancel) { onClose() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
+                    Button(L10n.Capture.formSave) {
                         // Encola y cierra: la cola avisa cuando se envíe.
                         Task { await model.confirm() }
                         onClose()
@@ -122,7 +122,7 @@ struct QuickFormView: View {
                             .foregroundStyle(.secondary)
                     }
                 } else {
-                    Text("Elegir concepto").foregroundStyle(.secondary)
+                    Text(L10n.Capture.formChooseConcept).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
@@ -132,7 +132,7 @@ struct QuickFormView: View {
         }
         .tint(.primary)
         if model.concept != nil {
-            Button("Quitar concepto", role: .destructive) { model.clearConcept() }
+            Button(L10n.Capture.formRemoveConcept, role: .destructive) { model.clearConcept() }
         }
     }
 
@@ -148,21 +148,23 @@ struct QuickFormView: View {
         if model.isReading {
             HStack(spacing: 8) {
                 ProgressView()
-                Text("Leyendo el recibo…").foregroundStyle(.secondary)
+                Text(L10n.Capture.receiptReading).foregroundStyle(.secondary)
             }
         } else if model.noNetwork {
-            Label("Sin conexión: escribe los datos; la foto se adjuntará igual", systemImage: "wifi.slash")
+            Label(L10n.Capture.receiptOffline, systemImage: "wifi.slash")
                 .foregroundStyle(.secondary)
         }
         Button {
             isCameraOpen = true
         } label: {
             Label(
-                model.photo == nil ? (CameraPicker.hayCamara ? "Tomar foto" : "Elegir foto") : "Cambiar foto",
+                model.photo == nil
+                    ? (CameraPicker.hayCamara ? L10n.Capture.photoTake : L10n.Capture.photoChoose)
+                    : L10n.Capture.photoChange,
                 systemImage: "camera")
         }
         if model.photo != nil {
-            Button("Quitar foto", role: .destructive) { model.removePhoto() }
+            Button(L10n.Capture.photoRemove, role: .destructive) { model.removePhoto() }
         }
     }
 }

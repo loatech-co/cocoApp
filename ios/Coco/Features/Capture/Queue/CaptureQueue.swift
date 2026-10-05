@@ -212,7 +212,7 @@ final actor CaptureQueue {
         case .unauthenticated:
             // Sin crecer la espera: no es culpa de la red, es de la sesión.
             capture.phase = .awaitingSession
-            capture.lastError = "La sesión expiró. Vuelve a entrar."
+            capture.lastError = L10n.Queue.errorSessionExpired
             output = .retry
         case .rejected(_, _, let message):
             capture.phase = .failed(reason: message)
@@ -220,7 +220,7 @@ final actor CaptureQueue {
             await notifier.captureFailed(reason: message)
             output = .failed
         case .unreadableResponse:
-            let reason = "La API contestó algo que no se entiende."
+            let reason = L10n.Queue.errorUnreadableResponse
             capture.phase = .failed(reason: reason)
             capture.lastError = reason
             await notifier.captureFailed(reason: reason)
@@ -243,10 +243,10 @@ final actor CaptureQueue {
 
     private static func describe(_ e: APIError) -> String {
         switch e {
-        case .noNetwork: "Sin conexión"
-        case .timedOut: "La API tardó demasiado"
-        case .server(let status): "La API no pudo ahora (\(status))"
-        default: "Error"
+        case .noNetwork: L10n.Queue.errorNoNetwork
+        case .timedOut: L10n.Queue.errorTimedOut
+        case .server(let status): L10n.Queue.errorServer(status)
+        default: L10n.Queue.errorGeneric
         }
     }
 

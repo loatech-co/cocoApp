@@ -12,16 +12,16 @@ struct OfflineView: View {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 40))
                 .foregroundStyle(.secondary)
-            Text("Sin conexión")
+            Text(L10n.Common.offline)
                 .font(.title2.weight(.semibold))
             Text(text)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             HStack(spacing: 12) {
-                Button("Reintentar", action: retry)
+                Button(L10n.Common.retry, action: retry)
                     .buttonStyle(.bordered)
-                Button("Capturar", action: capture)
+                Button(L10n.Offline.capture, action: capture)
                     .buttonStyle(.borderedProminent)
             }
         }
@@ -31,8 +31,8 @@ struct OfflineView: View {
     }
 
     private var text: String {
-        var t = "Lo que captures se guarda en el teléfono y se envía solo al volver la red."
-        if pending == 1 { t += " 1 pendiente." } else if pending > 1 { t += " \(pending) pendientes." }
+        var t = L10n.Offline.message
+        if pending == 1 { t += L10n.Offline.pendingOne } else if pending > 1 { t += L10n.Offline.pendingMany(pending) }
         return t
     }
 }

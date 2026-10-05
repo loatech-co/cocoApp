@@ -15,11 +15,11 @@ struct QueuedCapturer: Capturer {
         do {
             try await queue.enqueue(body, source: source, photo: photo, id: id)
         } catch QueueError.photosFull {
-            let reason = "No hay espacio para más fotos pendientes. Captura sin foto o espera a que se envíen."
+            let reason = L10n.Queue.errorNoPhotoSpace
             await notifier.captureFailed(reason: reason)
             return .failed(reason: reason)
         } catch {
-            let reason = "No se pudo guardar la captura en el teléfono."
+            let reason = L10n.Queue.errorNotSaved
             await notifier.captureFailed(reason: reason)
             return .failed(reason: reason)
         }

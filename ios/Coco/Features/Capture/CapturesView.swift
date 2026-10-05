@@ -41,30 +41,30 @@ struct CapturesView: View {
                     ProgressView()
                 } else if captures.isEmpty {
                     ContentUnavailableView(
-                        "Nada capturado todavía",
+                        L10n.Captures.emptyTitle,
                         systemImage: "tray",
-                        description: Text("Lo que anotes desde el teléfono aparece aquí, con red o sin ella.")
+                        description: Text(L10n.Captures.emptyDescription)
                     )
                 }
-                section("Pendientes de envío · \(pending.count)", pending)
-                section("Esperando sesión", awaitingSession)
-                section("Con error", failedCaptures)
-                section("Enviadas en los últimos 30 días", doneCaptures)
+                section(L10n.Captures.sectionPending(pending.count), pending)
+                section(L10n.Captures.sectionAwaitingSession, awaitingSession)
+                section(L10n.Captures.sectionFailed, failedCaptures)
+                section(L10n.Captures.sectionSent, doneCaptures)
                 Section {
                     Button {
                         navigation.go(.welcome)
                     } label: {
-                        Label("Automatizaciones", systemImage: "wand.and.stars")
+                        Label(L10n.Captures.automations, systemImage: "wand.and.stars")
                     }
                 }
             }
-            .navigationTitle("Capturas")
+            .navigationTitle(L10n.Captures.title)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         navigation.go(.quickForm(withCamera: false))
                     } label: {
-                        Label("Nueva captura", systemImage: "plus")
+                        Label(L10n.Captures.new, systemImage: "plus")
                     }
                 }
             }
@@ -87,12 +87,12 @@ struct CapturesView: View {
                     CaptureRow(capture: capture)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             if !capture.isDone {
-                                Button("Descartar", role: .destructive) {
+                                Button(L10n.Captures.rowDiscard, role: .destructive) {
                                     Task { try? await queue.discard(id: capture.id) }
                                 }
                             }
                             if capture.canRetry {
-                                Button("Reintentar") {
+                                Button(L10n.Common.retry) {
                                     Task {
                                         await queue.retryNow(id: capture.id)
                                         _ = await queue.process(budget: .seconds(25))
@@ -135,17 +135,17 @@ private struct CaptureRow: View {
         if case .done(let r) = capture.phase, !r.summary.isEmpty { return r.summary }
         if let merchant = capture.body.merchant, !merchant.isEmpty { return merchant }
         if let text = capture.body.text?.split(separator: "\n").first { return String(text) }
-        return "Captura"
+        return L10n.Captures.rowFallbackTitle
     }
 
     private var state: String {
         let date = capture.body.date ?? BogotaDate.day(capture.createdAt)
         switch capture.phase {
-        case .toSend: return "\(date) · se enviará cuando haya red"
-        case .photoToUpload: return "\(date) · registrada, subiendo la foto"
-        case .awaitingSession: return "\(date) · inicia sesión para enviarla"
-        case .failed(let reason): return "\(date) · \(reason)"
-        case .done(let r): return r.needsReview ? "\(date) · por revisar" : date
+        case .toSend: return L10n.Captures.rowToSend(date)
+        case .photoToUpload: return L10n.Captures.rowPhotoToUpload(date)
+        case .awaitingSession: return L10n.Captures.rowAwaitingSession(date)
+        case .failed(let reason): return L10n.Captures.rowFailed(date, reason: reason)
+        case .done(let r): return r.needsReview ? L10n.Captures.rowNeedsReview(date) : date
         }
     }
 }

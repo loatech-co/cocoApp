@@ -40,9 +40,9 @@ struct WebContainer: View {
 
     private var sessionStuck: some View {
         VStack(spacing: 12) {
-            Text("No se pudo abrir la sesión web")
+            Text(L10n.Web.errorSessionNotOpened)
                 .font(.headline)
-            Button("Reintentar", action: bridge.reload)
+            Button(L10n.Common.retry, action: bridge.reload)
                 .buttonStyle(.borderedProminent)
         }
         .padding(24)
@@ -51,7 +51,7 @@ struct WebContainer: View {
     }
 
     private var offlineBanner: some View {
-        Text("Sin conexión")
+        Text(L10n.Common.offline)
             .font(.caption.weight(.medium))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)

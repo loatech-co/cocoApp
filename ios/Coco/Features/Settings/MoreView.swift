@@ -11,33 +11,33 @@ struct MoreView: View {
         NavigationStack {
             List {
                 Section {
-                    row("Centros de costos", icon: "folder") { d.router.go(.web(path: "/centros-de-costos")) }
-                    row("Mi cuenta", icon: "person") { d.router.go(.web(path: "/mi-cuenta")) }
+                    row(L10n.More.costCenters, icon: "folder") { d.router.go(.web(path: "/centros-de-costos")) }
+                    row(L10n.More.account, icon: "person") { d.router.go(.web(path: "/mi-cuenta")) }
                     if d.esAdmin {
-                        row("Administración", icon: "person.2") { d.router.go(.web(path: "/administracion")) }
+                        row(L10n.More.admin, icon: "person.2") { d.router.go(.web(path: "/administracion")) }
                     }
                 } footer: {
                     if let email = d.profile?.email { Text(email) }
                 }
 
                 Section {
-                    row("Bienvenida y automatizaciones", icon: "wand.and.stars") { d.router.go(.welcome) }
-                    row("Ajustes", icon: "gearshape") { d.router.go(.settings) }
+                    row(L10n.More.welcome, icon: "wand.and.stars") { d.router.go(.welcome) }
+                    row(L10n.Common.settings, icon: "gearshape") { d.router.go(.settings) }
                 }
 
                 Section {
-                    Button("Cerrar sesión", role: .destructive) { confirmSignOut = true }
+                    Button(L10n.More.signOutButton, role: .destructive) { confirmSignOut = true }
                 }
             }
-            .navigationTitle("Más")
+            .navigationTitle(L10n.More.title)
             .confirmationDialog(
-                "¿Cerrar sesión en este teléfono?", isPresented: $confirmSignOut, titleVisibility: .visible
+                L10n.More.signOutConfirmTitle, isPresented: $confirmSignOut, titleVisibility: .visible
             ) {
-                Button("Cerrar sesión", role: .destructive) {
+                Button(L10n.More.signOutConfirm, role: .destructive) {
                     Task { await d.signOut() }
                 }
             } message: {
-                Text("Lo que esté pendiente de enviar se queda guardado y sale al volver a entrar.")
+                Text(L10n.More.signOutConfirmMessage)
             }
         }
     }

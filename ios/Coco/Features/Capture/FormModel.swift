@@ -117,14 +117,14 @@ final class FormModel {
         defer { isReading = false }
 
         guard let cg = image.cgImage ?? photoJPEG.flatMap({ UIImage(data: $0)?.cgImage }) else {
-            error = "No se pudo leer la foto. Escribe los datos; la foto se adjuntará igual."
+            error = L10n.Capture.receiptPhotoUnreadable
             return
         }
         let text: String
         do {
             text = try await reader.text(from: cg)
         } catch {
-            self.error = "No se pudo leer el texto del recibo. Escribe los datos; la foto se adjuntará igual."
+            self.error = L10n.Capture.receiptTextUnreadable
             return
         }
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -142,14 +142,14 @@ final class FormModel {
                 RequestBuilder.interpret(body), token: token)
             apply(interpretation)
         } catch SessionError.signedOut {
-            error = "Inicia sesión para que Coco interprete el recibo."
+            error = L10n.Capture.receiptSignInToInterpret
         } catch {
             if case SessionError.offline = error {
                 noNetwork = true
             } else if APIError.from(error).isNetworkError {
                 noNetwork = true
             } else {
-                self.error = "No se pudo interpretar el recibo. Revisa los datos antes de guardar."
+                self.error = L10n.Capture.receiptNotInterpreted
             }
         }
     }

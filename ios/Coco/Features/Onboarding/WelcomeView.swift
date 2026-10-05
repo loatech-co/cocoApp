@@ -22,25 +22,22 @@ struct WelcomeView: View {
             List {
                 Section {
                     Text(
-                        """
-                        Coco registra lo que pagas sin que tengas que abrirla: Atajos le pasa cada pago de Wallet y \
-                        cada mensaje del banco.
-                        """
+                        L10n.Onboarding.welcomeIntro
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 }
-                section("Pagos con Wallet", steps: AutomationSteps.transaction)
-                section("Mensajes del banco", steps: AutomationSteps.message)
-                section("Accesos rápidos", steps: AutomationSteps.accessPoints)
+                section(L10n.Onboarding.welcomeWalletSection, steps: AutomationSteps.transaction)
+                section(L10n.Onboarding.welcomeMessageSection, steps: AutomationSteps.message)
+                section(L10n.Onboarding.welcomeAccessSection, steps: AutomationSteps.accessPoints)
                 Section {
-                    Button("Abrir Atajos") { ShortcutsLauncher.open() }
+                    Button(L10n.Onboarding.welcomeOpenShortcuts) { ShortcutsLauncher.open() }
                 }
             }
-            .navigationTitle("Bienvenida")
+            .navigationTitle(L10n.Onboarding.welcomeTitle)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Listo") {
+                    Button(L10n.Common.done) {
                         defaults.set(true, forKey: Self.key)
                         onFinish()
                     }

@@ -12,6 +12,8 @@ options:
     iOS: "17.0"
   xcodeVersion: "16.0"
   generateEmptyDirectories: true
+  # Los textos están en español (Localizable.xcstrings): es la lengua base.
+  developmentLanguage: es
 # La firma (equipo, estilo, identidad, perfil) NO va en `settings`: lo que
 # está aquí acaba escrito en el .xcodeproj y pisa cualquier xcconfig. Va en
 # Signing.xcconfig, que incluye de forma opcional un Local.xcconfig ignorado
@@ -32,6 +34,11 @@ settings:
     # desde la línea de órdenes para el humo contra la API local:
     #   xcodebuild ... COCO_API_BASE_URL=http://localhost:3000
     COCO_API_BASE_URL: https://dev-cocoapp.viteri.me
+    # Los catálogos (Localizable.xcstrings) se escriben a mano, con claves en
+    # inglés. Sin esto, Xcode les añade solo cada literal que encuentra —un
+    # `Text("$")`, los títulos de los intents— y el catálogo deja de ser la
+    # lista de lo que pide `L10n`.
+    SWIFT_EMIT_LOC_STRINGS: NO
 targets:
   Coco:
     type: application
@@ -112,6 +119,15 @@ targets:
     platform: iOS
     sources:
       - path: CocoTests
+      # VisibleTextTests lee el código de la app y de la extensión. El
+      # simulador no puede leerlo donde está (Documentos está protegido), así
+      # que va copiado dentro del paquete de pruebas como carpeta.
+      - path: Coco
+        type: folder
+        buildPhase: resources
+      - path: CocoAccesos
+        type: folder
+        buildPhase: resources
     dependencies:
       - target: Coco
     info:

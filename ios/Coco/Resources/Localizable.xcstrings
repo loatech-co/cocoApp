@@ -1,0 +1,1755 @@
+{
+  "sourceLanguage" : "es",
+  "strings" : {
+    "capture.amount.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monto"
+          }
+        }
+      }
+    },
+    "capture.amount.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "45.000"
+          }
+        }
+      }
+    },
+    "capture.amount.unreadable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se entiende el monto"
+          }
+        }
+      }
+    },
+    "capture.concept.recent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recientes"
+          }
+        }
+      }
+    },
+    "capture.concept.results" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resultados"
+          }
+        }
+      }
+    },
+    "capture.concept.searchPrompt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre o palabra clave"
+          }
+        }
+      }
+    },
+    "capture.concept.suggested" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Propuestos por el recibo"
+          }
+        }
+      }
+    },
+    "capture.concept.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concepto"
+          }
+        }
+      }
+    },
+    "capture.concept.treeMissing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los conceptos aún no se han descargado. Guarda igual: la captura queda por clasificar."
+          }
+        }
+      }
+    },
+    "capture.form.amount" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monto"
+          }
+        }
+      }
+    },
+    "capture.form.chooseConcept" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir concepto"
+          }
+        }
+      }
+    },
+    "capture.form.concept" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concepto"
+          }
+        }
+      }
+    },
+    "capture.form.date" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fecha"
+          }
+        }
+      }
+    },
+    "capture.form.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalles"
+          }
+        }
+      }
+    },
+    "capture.form.merchant" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comercio"
+          }
+        }
+      }
+    },
+    "capture.form.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota (opcional)"
+          }
+        }
+      }
+    },
+    "capture.form.receipt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recibo"
+          }
+        }
+      }
+    },
+    "capture.form.removeConcept" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar concepto"
+          }
+        }
+      }
+    },
+    "capture.form.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar"
+          }
+        }
+      }
+    },
+    "capture.form.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo gasto"
+          }
+        }
+      }
+    },
+    "capture.photo.change" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar foto"
+          }
+        }
+      }
+    },
+    "capture.photo.choose" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir foto"
+          }
+        }
+      }
+    },
+    "capture.photo.remove" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar foto"
+          }
+        }
+      }
+    },
+    "capture.photo.take" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tomar foto"
+          }
+        }
+      }
+    },
+    "capture.receipt.notInterpreted" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo interpretar el recibo. Revisa los datos antes de guardar."
+          }
+        }
+      }
+    },
+    "capture.receipt.offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin conexión: escribe los datos; la foto se adjuntará igual"
+          }
+        }
+      }
+    },
+    "capture.receipt.photoUnreadable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer la foto. Escribe los datos; la foto se adjuntará igual."
+          }
+        }
+      }
+    },
+    "capture.receipt.reading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leyendo el recibo…"
+          }
+        }
+      }
+    },
+    "capture.receipt.signInToInterpret" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia sesión para que Coco interprete el recibo."
+          }
+        }
+      }
+    },
+    "capture.receipt.textUnreadable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer el texto del recibo. Escribe los datos; la foto se adjuntará igual."
+          }
+        }
+      }
+    },
+    "captures.automations" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatizaciones"
+          }
+        }
+      }
+    },
+    "captures.empty.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que anotes desde el teléfono aparece aquí, con red o sin ella."
+          }
+        }
+      }
+    },
+    "captures.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada capturado todavía"
+          }
+        }
+      }
+    },
+    "captures.new" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva captura"
+          }
+        }
+      }
+    },
+    "captures.row.awaitingSession" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · inicia sesión para enviarla"
+          }
+        }
+      }
+    },
+    "captures.row.discard" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar"
+          }
+        }
+      }
+    },
+    "captures.row.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "captures.row.fallbackTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captura"
+          }
+        }
+      }
+    },
+    "captures.row.needsReview" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · por revisar"
+          }
+        }
+      }
+    },
+    "captures.row.photoToUpload" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · registrada, subiendo la foto"
+          }
+        }
+      }
+    },
+    "captures.row.toSend" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · se enviará cuando haya red"
+          }
+        }
+      }
+    },
+    "captures.section.awaitingSession" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esperando sesión"
+          }
+        }
+      }
+    },
+    "captures.section.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Con error"
+          }
+        }
+      }
+    },
+    "captures.section.pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendientes de envío · %@"
+          }
+        }
+      }
+    },
+    "captures.section.sent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviadas en los últimos 30 días"
+          }
+        }
+      }
+    },
+    "captures.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas"
+          }
+        }
+      }
+    },
+    "common.cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        }
+      }
+    },
+    "common.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
+          }
+        }
+      }
+    },
+    "common.offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin conexión"
+          }
+        }
+      }
+    },
+    "common.retry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar"
+          }
+        }
+      }
+    },
+    "common.settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
+          }
+        }
+      }
+    },
+    "more.account" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi cuenta"
+          }
+        }
+      }
+    },
+    "more.admin" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Administración"
+          }
+        }
+      }
+    },
+    "more.costCenters" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centros de costos"
+          }
+        }
+      }
+    },
+    "more.signOut.button" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar sesión"
+          }
+        }
+      }
+    },
+    "more.signOut.confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar sesión"
+          }
+        }
+      }
+    },
+    "more.signOut.confirmMessage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que esté pendiente de enviar se queda guardado y sale al volver a entrar."
+          }
+        }
+      }
+    },
+    "more.signOut.confirmTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Cerrar sesión en este teléfono?"
+          }
+        }
+      }
+    },
+    "more.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más"
+          }
+        }
+      }
+    },
+    "more.welcome" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bienvenida y automatizaciones"
+          }
+        }
+      }
+    },
+    "notifications.action.open" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir"
+          }
+        }
+      }
+    },
+    "notifications.capture.duplicate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya estaba registrado"
+          }
+        }
+      }
+    },
+    "notifications.capture.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo registrar"
+          }
+        }
+      }
+    },
+    "notifications.capture.merged" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Era el mismo pago"
+          }
+        }
+      }
+    },
+    "notifications.capture.needsReview" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · por revisar"
+          }
+        }
+      }
+    },
+    "notifications.capture.saved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gasto registrado"
+          }
+        }
+      }
+    },
+    "notifications.queue.sentMany" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se enviaron %@ capturas pendientes"
+          }
+        }
+      }
+    },
+    "notifications.queue.sentOne" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se envió 1 captura pendiente"
+          }
+        }
+      }
+    },
+    "notifications.queue.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas enviadas"
+          }
+        }
+      }
+    },
+    "offline.capture" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturar"
+          }
+        }
+      }
+    },
+    "offline.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que captures se guarda en el teléfono y se envía solo al volver la red."
+          }
+        }
+      }
+    },
+    "offline.pendingMany" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " %@ pendientes."
+          }
+        }
+      }
+    },
+    "offline.pendingOne" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " 1 pendiente."
+          }
+        }
+      }
+    },
+    "onboarding.access.actionButton.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes → Botón de acción → Atajo → «Registrar gasto en Coco»."
+          }
+        }
+      }
+    },
+    "onboarding.access.actionButton.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Botón de acción (iOS 17)"
+          }
+        }
+      }
+    },
+    "onboarding.access.controlCenter.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade el control «Registrar gasto» de Coco."
+          }
+        }
+      }
+    },
+    "onboarding.access.controlCenter.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centro de control y pantalla bloqueada (iOS 18)"
+          }
+        }
+      }
+    },
+    "onboarding.access.widget.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén pulsada la pantalla de inicio → añadir widget → Coco."
+          }
+        }
+      }
+    },
+    "onboarding.access.widget.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widget"
+          }
+        }
+      }
+    },
+    "onboarding.message.step1.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pestaña Automatización → Nueva automatización → Mensaje."
+          }
+        }
+      }
+    },
+    "onboarding.message.step1.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crea otra automatización"
+          }
+        }
+      }
+    },
+    "onboarding.message.step2.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«Remitente contiene» los números o nombres con los que te escribe el banco."
+          }
+        }
+      }
+    },
+    "onboarding.message.step2.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtra por remitente"
+          }
+        }
+      }
+    },
+    "onboarding.message.step4.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conecta Texto ← Contenido del mensaje y Remitente ← Remitente."
+          }
+        }
+      }
+    },
+    "onboarding.message.step4.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade la acción «Registrar gasto de SMS»"
+          }
+        }
+      }
+    },
+    "onboarding.runAlone.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa «Ejecutar de inmediato» y desactiva «Notificar al ejecutar»."
+          }
+        }
+      }
+    },
+    "onboarding.runAlone.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Que corra sola"
+          }
+        }
+      }
+    },
+    "onboarding.wallet.step1.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pestaña Automatización → Nueva automatización → Transacción."
+          }
+        }
+      }
+    },
+    "onboarding.wallet.step1.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre Atajos y crea una automatización"
+          }
+        }
+      }
+    },
+    "onboarding.wallet.step2.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marca las tarjetas con las que pagas y deja «Cualquier comercio»."
+          }
+        }
+      }
+    },
+    "onboarding.wallet.step2.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige tus tarjetas de Wallet"
+          }
+        }
+      }
+    },
+    "onboarding.wallet.step4.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conecta Comercio ← Comercio, Monto ← Monto, Tarjeta ← Tarjeta o pase, Nombre ← Nombre."
+          }
+        }
+      }
+    },
+    "onboarding.wallet.step4.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade la acción «Registrar gasto de Wallet»"
+          }
+        }
+      }
+    },
+    "onboarding.welcome.accessSection" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accesos rápidos"
+          }
+        }
+      }
+    },
+    "onboarding.welcome.intro" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coco registra lo que pagas sin que tengas que abrirla: Atajos le pasa cada pago de Wallet y cada mensaje del banco."
+          }
+        }
+      }
+    },
+    "onboarding.welcome.messageSection" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mensajes del banco"
+          }
+        }
+      }
+    },
+    "onboarding.welcome.openShortcuts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Atajos"
+          }
+        }
+      }
+    },
+    "onboarding.welcome.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bienvenida"
+          }
+        }
+      }
+    },
+    "onboarding.welcome.walletSection" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pagos con Wallet"
+          }
+        }
+      }
+    },
+    "queue.error.generic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error"
+          }
+        }
+      }
+    },
+    "queue.error.noNetwork" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin conexión"
+          }
+        }
+      }
+    },
+    "queue.error.noPhotoSpace" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay espacio para más fotos pendientes. Captura sin foto o espera a que se envíen."
+          }
+        }
+      }
+    },
+    "queue.error.notSaved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar la captura en el teléfono."
+          }
+        }
+      }
+    },
+    "queue.error.server" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La API no pudo ahora (%@)"
+          }
+        }
+      }
+    },
+    "queue.error.sessionExpired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sesión expiró. Vuelve a entrar."
+          }
+        }
+      }
+    },
+    "queue.error.timedOut" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La API tardó demasiado"
+          }
+        }
+      }
+    },
+    "queue.error.unreadableResponse" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La API contestó algo que no se entiende."
+          }
+        }
+      }
+    },
+    "reminders.expiry.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuelve a instalarla desde Xcode con el cable."
+          }
+        }
+      }
+    },
+    "reminders.expiry.expired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ya caducó"
+          }
+        }
+      }
+    },
+    "reminders.expiry.inDays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "caduca en %@ días"
+          }
+        }
+      }
+    },
+    "reminders.expiry.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu instalación de Coco %@"
+          }
+        }
+      }
+    },
+    "reminders.expiry.today" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "caduca hoy"
+          }
+        }
+      }
+    },
+    "reminders.expiry.tomorrow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "caduca mañana"
+          }
+        }
+      }
+    },
+    "session.error.badCredentials" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correo o contraseña incorrectos."
+          }
+        }
+      }
+    },
+    "session.error.noNetwork" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin conexión. Revisa la red e inténtalo otra vez."
+          }
+        }
+      }
+    },
+    "session.error.rejected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La API rechazó la petición."
+          }
+        }
+      }
+    },
+    "session.error.server" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La API falló (%@). Inténtalo en un momento."
+          }
+        }
+      }
+    },
+    "session.error.timedOut" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La API no respondió a tiempo. Inténtalo otra vez."
+          }
+        }
+      }
+    },
+    "session.error.tooManyAttempts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demasiados intentos. Espera un minuto."
+          }
+        }
+      }
+    },
+    "session.error.unreadableResponse" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La API respondió algo que la app no entiende. Revisa la URL de la API en Ajustes."
+          }
+        }
+      }
+    },
+    "session.signIn.email" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correo"
+          }
+        }
+      }
+    },
+    "session.signIn.footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La misma cuenta que en la web."
+          }
+        }
+      }
+    },
+    "session.signIn.password" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contraseña"
+          }
+        }
+      }
+    },
+    "session.signIn.submit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrar"
+          }
+        }
+      }
+    },
+    "session.signIn.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrar en Coco"
+          }
+        }
+      }
+    },
+    "settings.apiUrl.error.incomplete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe una URL completa, como https://cocoapp.ejemplo."
+          }
+        }
+      }
+    },
+    "settings.apiUrl.error.path" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo el servidor, sin ruta: la app añade /api/v1."
+          }
+        }
+      }
+    },
+    "settings.apiUrl.error.scheme" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo http o https."
+          }
+        }
+      }
+    },
+    "settings.apiUrl.footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiarla cierra la sesión de este teléfono; la nueva URL se usa al volver a abrir la app."
+          }
+        }
+      }
+    },
+    "settings.apiUrl.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "https://…"
+          }
+        }
+      }
+    },
+    "settings.apiUrl.reset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer la del bundle"
+          }
+        }
+      }
+    },
+    "settings.apiUrl.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar y cerrar sesión"
+          }
+        }
+      }
+    },
+    "settings.apiUrl.saved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardada. Cierra la app del todo y vuelve a abrirla para usar la nueva URL."
+          }
+        }
+      }
+    },
+    "settings.apiUrl.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL de la API"
+          }
+        }
+      }
+    },
+    "settings.expiry.expired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caducó el %@"
+          }
+        }
+      }
+    },
+    "settings.expiry.inDays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · quedan %2$@ días"
+          }
+        }
+      }
+    },
+    "settings.expiry.today" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoy (%@)"
+          }
+        }
+      }
+    },
+    "settings.expiry.tomorrow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mañana (%@)"
+          }
+        }
+      }
+    },
+    "settings.expiry.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible (simulador o sin perfil)"
+          }
+        }
+      }
+    },
+    "settings.install.api" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API"
+          }
+        }
+      }
+    },
+    "settings.install.expiry" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La firma caduca"
+          }
+        }
+      }
+    },
+    "settings.install.pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendientes de envío"
+          }
+        }
+      }
+    },
+    "settings.install.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta instalación"
+          }
+        }
+      }
+    },
+    "settings.install.version" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión"
+          }
+        }
+      }
+    },
+    "settings.notifications.denied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin permiso de avisos. Actívalo en Ajustes de iOS → Coco."
+          }
+        }
+      }
+    },
+    "settings.notifications.sent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviada. Aparece arriba aunque la app esté abierta."
+          }
+        }
+      }
+    },
+    "settings.notifications.test" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probar notificación"
+          }
+        }
+      }
+    },
+    "settings.notifications.testBody" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba: si ves esto, los avisos funcionan."
+          }
+        }
+      }
+    },
+    "settings.notifications.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avisos"
+          }
+        }
+      }
+    },
+    "settings.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
+          }
+        }
+      }
+    },
+    "shortcuts.dialog.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo registrar: %@"
+          }
+        }
+      }
+    },
+    "shortcuts.dialog.needsReview" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · por revisar"
+          }
+        }
+      }
+    },
+    "shortcuts.dialog.queued" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado en el teléfono; se enviará cuando haya red."
+          }
+        }
+      }
+    },
+    "shortcuts.dialog.queuedMany" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ pendientes."
+          }
+        }
+      }
+    },
+    "tabs.captures" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas"
+          }
+        }
+      }
+    },
+    "tabs.home" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicio"
+          }
+        }
+      }
+    },
+    "tabs.more" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más"
+          }
+        }
+      }
+    },
+    "tabs.register" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrar"
+          }
+        }
+      }
+    },
+    "web.error.sessionNotOpened" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo abrir la sesión web"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

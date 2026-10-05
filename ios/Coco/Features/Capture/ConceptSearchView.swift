@@ -20,21 +20,21 @@ struct ConceptSearchView: View {
         NavigationStack {
             List {
                 if model.index == nil {
-                    Text("Los conceptos aún no se han descargado. Guarda igual: la captura queda por clasificar.")
+                    Text(L10n.Capture.conceptTreeMissing)
                         .foregroundStyle(.secondary)
                 }
                 if isQueryEmpty, !model.candidates.isEmpty {
                     Section {
                         ForEach(model.candidates, content: row)
                     } header: {
-                        Text("Propuestos por el recibo").textCase(nil)
+                        Text(L10n.Capture.conceptSuggested).textCase(nil)
                     }
                 }
                 if !model.results.isEmpty {
                     Section {
                         ForEach(model.results, content: row)
                     } header: {
-                        Text(isQueryEmpty ? "Recientes" : "Resultados").textCase(nil)
+                        Text(isQueryEmpty ? L10n.Capture.conceptRecent : L10n.Capture.conceptResults).textCase(nil)
                     }
                 } else if !isQueryEmpty {
                     ContentUnavailableView.search(text: model.query)
@@ -42,15 +42,15 @@ struct ConceptSearchView: View {
             }
             .searchable(
                 text: $model.query, placement: .navigationBarDrawer(displayMode: .always),
-                prompt: "Nombre o palabra clave"
+                prompt: L10n.Capture.conceptSearchPrompt
             )
             .onChange(of: model.query) { _, newQuery in model.search(newQuery) }
             .task { model.search(model.query) }
-            .navigationTitle("Concepto")
+            .navigationTitle(L10n.Capture.conceptTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button(L10n.Common.cancel) { dismiss() }
                 }
             }
         }

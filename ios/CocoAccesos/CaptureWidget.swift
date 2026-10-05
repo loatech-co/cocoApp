@@ -13,8 +13,8 @@ struct CaptureWidget: Widget {
         StaticConfiguration(kind: Self.kind, provider: FixedProvider()) { _ in
             CaptureWidgetView()
         }
-        .configurationDisplayName("Registrar gasto")
-        .description("Abre Coco en el formulario rápido.")
+        .configurationDisplayName(L10n.Widget.captureTitle)
+        .description(L10n.Widget.captureDescription)
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
     }
 }
@@ -52,10 +52,10 @@ struct CaptureWidgetView: View {
         case .systemMedium:
             HStack(spacing: 12) {
                 Link(destination: manual) {
-                    WidgetActionButton(title: "Registrar", symbol: "plus.circle.fill")
+                    WidgetActionButton(title: L10n.Widget.captureRegister, symbol: "plus.circle.fill")
                 }
                 Link(destination: photo) {
-                    WidgetActionButton(title: "Foto", symbol: "camera.fill")
+                    WidgetActionButton(title: L10n.Widget.capturePhoto, symbol: "camera.fill")
                 }
             }
             .containerBackground(.fill.tertiary, for: .widget)
@@ -65,12 +65,12 @@ struct CaptureWidgetView: View {
                 .widgetURL(manual)
                 .containerBackground(.clear, for: .widget)
         case .accessoryRectangular:
-            Label("Registrar gasto", systemImage: "plus.circle.fill")
+            Label(L10n.Widget.captureTitle, systemImage: "plus.circle.fill")
                 .font(.headline)
                 .widgetURL(manual)
                 .containerBackground(.clear, for: .widget)
         default:
-            WidgetActionButton(title: "Registrar gasto", symbol: "plus.circle.fill")
+            WidgetActionButton(title: L10n.Widget.captureTitle, symbol: "plus.circle.fill")
                 .widgetURL(manual)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
