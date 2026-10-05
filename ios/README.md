@@ -49,13 +49,15 @@ Las reglas completas están en `CONTRIBUTING.md`, sección «iOS». En corto:
   de fondo, las claves de UserDefaults y Keychain, las carpetas y las claves
   de lo que se guarda en disco (ADR 0002). **Lo que ve la persona, en
   español**, incluidas las frases y los títulos de Atajos y Siri.
+- **La app habla solo con la `/api/v2`.** Sus claves JSON están en los
+  `CodingKeys` y, para lo que se manda, en `CaptureRequest` e
+  `InterpretRequest`. `APIKeysTests` falla si una cambia. `CaptureBody` es
+  de la app: se guarda en la cola con sus claves y se traduce al enviar.
 - **Lo único en español que no es texto de usuario** es contrato con algo de
-  fuera y no se toca desde aquí:
-  - las claves JSON de la API `v1` (`texto`, `monto`, `clasificacion`…), en
-    `CodingKeys`; pasan a inglés con la `/api/v2`. `APIKeysTests` falla si
-    una cambia. `CaptureBody` va igual a la API y dentro de la cola;
-  - los nombres de los mensajes del puente con la web, que define el
-    frontend.
+  fuera y no se toca desde aquí: los nombres de los mensajes del puente con la
+  web y las claves del perfil que el puente le entrega
+  (`WebSession.webProfileKeys`), que define el frontend mientras siga en la
+  `v1`.
 - **Lo guardado en disco** usa las claves sintetizadas (los nombres de las
   propiedades). `StoredFormatTests` las fija, junto con las carpetas, las
   claves de UserDefaults y Keychain y las tareas de fondo: renombrar una
@@ -253,8 +255,9 @@ vencimiento, el enrutador (URLs `coco://` y destinos), la composición
 insignia de la cola) y los textos de entrar y Ajustes.
 `StoredFormatTests` fija las claves de la cola y del árbol, y `APIKeysTests`
 las de los contratos de la API. `ContractsTests` lee `packages/types/src/index.ts`
-y falla si `Brand.userAgentApp` se separa de `USER_AGENT_APP` (en el
-simulador se salta: no puede leer el archivo).
+y `api/openapi.v2.json`, y falla si `Brand.userAgentApp` se separa de
+`USER_AGENT_APP` o la cabecera nativa o el campo de los soportes se separan
+de la v2 (en el simulador se salta: no puede leer el archivo).
 
 El workflow `ios` (GitHub Actions, macOS) corre el lint y las pruebas. Es
 manual —Actions → ios → Run workflow— porque un minuto de macOS cuenta por

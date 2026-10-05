@@ -954,10 +954,15 @@ release, and the pre-commit hook covers the routine.
   UserDefaults and Keychain keys, folders and on-disk JSON keys. Text the
   person sees stays in Spanish, including Shortcuts and Siri phrases and
   titles.
+- **The app talks only to `/api/v2`**: its JSON keys live in `CodingKeys`
+  (and in `CaptureRequest`/`InterpretRequest` for what the app sends),
+  pinned by `APIKeysTests`. Never encode an on-disk type straight into a
+  request body: translate at the edge, so a contract change is not a queue
+  migration.
 - **What stays in Spanish without being user text** is a contract with
-  something outside `ios/`: the `v1` API JSON keys (in `CodingKeys`; they move
-  to English with `/api/v2`, pinned by `APIKeysTests`) and the names of the
-  web bridge messages, which the frontend defines.
+  something outside `ios/`: the names of the web bridge messages and the
+  profile keys the bridge hands over (`WebSession.webProfileKeys`), which the
+  frontend defines while it is still on `v1`.
 - **On-disk formats** use synthesized keys (the property names);
   `StoredFormatTests` pins them along with folders, UserDefaults and Keychain
   keys and task identifiers. Renaming a stored property is a migration, not a
