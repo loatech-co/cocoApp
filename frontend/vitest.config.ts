@@ -31,11 +31,13 @@ export default defineConfig({
       ],
       reporter: ['text-summary', 'json-summary'],
       // Measured when the gate was set (step 7.7-web-b): 55.36 % lines and
-      // 49.63 % branches overall; 98.25 / 96.11 in `shared/ui`. The gap to the
-      // plan's 70 % is in `features/` (see CONTRIBUTING, "Frontend coverage").
+      // 49.63 % branches overall; 98.25 / 96.11 in `shared/ui`. Raised in step
+      // 7.7-web-c, with every `features/*/model` covered: 60.82 / 57.64. The
+      // gap to the plan's 70 % is in the components and hooks of `features/`
+      // (see CONTRIBUTING, "Frontend coverage").
       thresholds: {
-        lines: 55,
-        branches: 49,
+        lines: 60,
+        branches: 57,
         'src/shared/ui/**': { lines: 98, branches: 96 },
       },
     },
