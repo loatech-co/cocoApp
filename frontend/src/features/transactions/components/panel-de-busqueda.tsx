@@ -11,7 +11,7 @@ import { Input } from '@/shared/ui/atoms/input';
 import { Monto } from '@/shared/ui/atoms/monto';
 import { FILA_DE_PANEL, PanelInferior } from '@/shared/ui/atoms/panel-inferior';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
-import type { Transaction } from '@coco/types';
+import type { Category, Transaction } from '@coco/types';
 
 /** Cuántos resultados caben antes de que la lista deje de ser una respuesta. */
 const CUANTOS = 20;
@@ -45,46 +45,13 @@ export function PanelDeBusqueda({
   onCerrar: () => void;
   onElegir: (movimiento: Transaction) => void;
 }) {
-  const [texto, setTexto] = useState('');
-  const [consulta, setConsulta] = useState('');
-
-  // Cada apertura empieza en blanco. Reabrir con lo de la vez pasada enseñaría
-  // los resultados de una pregunta que ya no se está haciendo.
-  useAlCambiar([abierto], () => {
-    if (!abierto) {
-      setTexto('');
-      setConsulta('');
-    }
-  });
-
-  // Se escribe local y se consulta con retraso: sin esto cada tecla dispara
-  // una petición y la lista parpadea mientras se escribe.
-  useEffect(() => {
-    const id = setTimeout(() => setConsulta(texto.trim()), 300);
-    return () => clearTimeout(id);
-  }, [texto]);
+  const { texto, setTexto, consulta } = useDebouncedSearch(abierto);
 
   return (
     <PanelInferior
       abierto={abierto}
       titulo="Buscar"
-      cabeza={
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            type="search"
-            autoFocus
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Buscar: celsia, colegio, sura…"
-            aria-label="Buscar un movimiento"
-            className="pl-9"
-          />
-        </div>
-      }
+      cabeza={<SearchHead texto={texto} onCambiar={setTexto} />}
       onCerrar={onCerrar}
     >
       {/*
@@ -140,27 +107,7 @@ function Resultados({
   return (
     <div className="flex flex-col">
       {filas.map((movimiento) => (
-        <button
-          key={movimiento.id}
-          type="button"
-          onClick={() => onElegir(movimiento)}
-          className={cn(FILA_DE_PANEL, 'gap-3')}
-        >
-          <span className="min-w-0 flex-1">
-            <span className="block truncate font-medium">
-              {nombreDelMovimiento(movimiento, arbol)}
-            </span>
-            <span className="block truncate text-xs text-muted-foreground">
-              {diaCorto(movimiento.date)}
-            </span>
-          </span>
-          <Monto
-            amount={movimiento.amount}
-            currency={movimiento.currency}
-            type={movimiento.type}
-            className="shrink-0 text-sm"
-          />
-        </button>
+        <ResultRow key={movimiento.id} movimiento={movimiento} arbol={arbol} onElegir={onElegir} />
       ))}
 
       {/* Cuántos hay de los que caben. Sin esto, veinte resultados de
@@ -172,4 +119,79 @@ function Resultados({
       )}
     </div>
   );
+}
+
+function ResultRow({
+  movimiento,
+  arbol,
+  onElegir,
+}: {
+  movimiento: Transaction;
+  arbol: Category[];
+  onElegir: (movimiento: Transaction) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onElegir(movimiento)}
+      className={cn(FILA_DE_PANEL, 'gap-3')}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-medium">{nombreDelMovimiento(movimiento, arbol)}</span>
+        <span className="block truncate text-xs text-muted-foreground">
+          {diaCorto(movimiento.date)}
+        </span>
+      </span>
+      <Monto
+        amount={movimiento.amount}
+        currency={movimiento.currency}
+        type={movimiento.type}
+        className="shrink-0 text-sm"
+      />
+    </button>
+  );
+}
+
+function SearchHead({ texto, onCambiar }: { texto: string; onCambiar: (texto: string) => void }) {
+  return (
+    <div className="relative">
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden="true"
+      />
+      <Input
+        type="search"
+        autoFocus
+        value={texto}
+        onChange={(e) => onCambiar(e.target.value)}
+        placeholder="Buscar: celsia, colegio, sura…"
+        aria-label="Buscar un movimiento"
+        className="pl-9"
+      />
+    </div>
+  );
+}
+
+/** Lo que se escribe, y la consulta que sale de ello con un poco de retraso. */
+function useDebouncedSearch(abierto: boolean) {
+  const [texto, setTexto] = useState('');
+  const [consulta, setConsulta] = useState('');
+
+  // Cada apertura empieza en blanco. Reabrir con lo de la vez pasada enseñaría
+  // los resultados de una pregunta que ya no se está haciendo.
+  useAlCambiar([abierto], () => {
+    if (!abierto) {
+      setTexto('');
+      setConsulta('');
+    }
+  });
+
+  // Se escribe local y se consulta con retraso: sin esto cada tecla dispara
+  // una petición y la lista parpadea mientras se escribe.
+  useEffect(() => {
+    const id = setTimeout(() => setConsulta(texto.trim()), 300);
+    return () => clearTimeout(id);
+  }, [texto]);
+
+  return { texto, setTexto, consulta };
 }
