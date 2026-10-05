@@ -23,8 +23,7 @@ import { FilaDeEnlace } from '@/shared/ui/molecules/link-row';
  * está comprometida, sin depender de nadie.
  */
 export function CuentaPage() {
-  const { usuario, esAdmin, salir, salirDeTodosLosDispositivos } = useAuth();
-  const { hash } = useLocation();
+  const { usuario, esAdmin } = useAuth();
   /*
     Dentro de la app del teléfono esta página es la pestaña «Más», y hace lo
     que fuera hace la hoja del avatar —que allí no se monta—: llevar a la
@@ -33,20 +32,7 @@ export function CuentaPage() {
   */
   const embebida = useEnLaApp();
 
-  /*
-    ── Las anclas ────────────────────────────────────────────────────────────
-    La hoja de la cuenta del teléfono ofrece «Ajustes» y «Seguridad» como dos
-    entradas distintas, y las dos llevan aquí: son dos TROZOS de esta página,
-    no dos pantallas. Partirla en tres dejaría tres pantallas de una tarjeta.
-
-    Y hace falta llevar la vista al sitio a mano porque el enrutador no lo
-    hace: cambia la ruta sin tocar el desplazamiento, así que «Seguridad»
-    dejaba a la persona arriba del todo mirando los ajustes.
-  */
-  useEffect(() => {
-    if (!hash) return;
-    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [hash]);
+  useScrollToHash();
 
   return (
     <div className="flex flex-col gap-6">
@@ -66,25 +52,7 @@ export function CuentaPage() {
         <Ajustes />
       </section>
 
-      {embebida && esAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Administración</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Las mismas secciones, en el mismo orden, que el riel y la hoja
-                del avatar: una segunda lista se separaría de esta la primera
-                vez que se añada una pantalla. */}
-            <nav aria-label="Administración" className="-mx-3 flex flex-col">
-              {SECCIONES_DE_ADMIN.map((seccion) => (
-                <FilaDeEnlace key={seccion.to} Icono={seccion.Icono} a={seccion.to}>
-                  {seccion.label}
-                </FilaDeEnlace>
-              ))}
-            </nav>
-          </CardContent>
-        </Card>
-      )}
+      {embebida && esAdmin && <AdminLinks />}
 
       {/* Las dos cosas que hace alguien que sospecha que su cuenta está
           comprometida, juntas y con un nombre: cambiar la contraseña y echar
@@ -92,44 +60,103 @@ export function CuentaPage() {
       <section id="seguridad" className="flex scroll-mt-20 flex-col gap-6">
         <CambiarContrasena />
 
-        {embebida && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Cerrar sesión</CardTitle>
-              <CardDescription>
-                Solo en este dispositivo. La app olvida tu sesión y vuelve a pedirte entrar.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" size="sm" onClick={() => void salir()}>
-                <LogOut aria-hidden="true" />
-                Cerrar sesión
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Cerrar sesión en todos los dispositivos</CardTitle>
-            <CardDescription>
-              Invalida al instante todas las sesiones abiertas, incluida esta. Úsalo si crees que
-              alguien más tiene acceso a tu cuenta.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" onClick={() => void salirDeTodosLosDispositivos()}>
-              <LogOut aria-hidden="true" />
-              Cerrar todo
-            </Button>
-          </CardContent>
-        </Card>
+        <SessionCards embebida={embebida} />
       </section>
     </div>
   );
 }
 
 function CambiarContrasena() {
+  const form = usePasswordChange();
+
+  if (form.hecho) {
+    return (
+      <Alert variant="info">
+        <AlertTitle>Contraseña cambiada</AlertTitle>
+        <AlertDescription>
+          Se cerraron todas tus sesiones, incluida esta. Vuelve a entrar con la contraseña nueva.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Cambiar contraseña</CardTitle>
+        <CardDescription>
+          Pedimos la actual a propósito: sin ella, cualquiera que robara tu sesión podría quedarse
+          con la cuenta. Al cambiarla se cierran todas tus sesiones.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        {form.error && <PasswordErrors error={form.error} problemas={form.problemas} />}
+
+        <PasswordForm form={form} />
+      </CardContent>
+    </Card>
+  );
+}
+
+function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) {
+  const { actual, setActual, nueva, setNueva, enviando, onSubmit } = form;
+  return (
+    <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-4">
+      <Campo etiqueta="Contraseña actual" id="actual">
+        <Input
+          id="actual"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={actual}
+          onChange={(evento) => setActual(evento.target.value)}
+        />
+      </Campo>
+
+      <div className="flex flex-col gap-2">
+        <Campo etiqueta="Contraseña nueva" id="nueva">
+          <Input
+            id="nueva"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={nueva}
+            onChange={(evento) => setNueva(evento.target.value)}
+            aria-describedby="requisitos-nueva"
+          />
+        </Campo>
+        <div id="requisitos-nueva">
+          <PoliticaDeContrasena password={nueva} />
+        </div>
+      </div>
+
+      <Button type="submit" disabled={enviando || !cumpleLaPolitica(nueva) || !actual}>
+        Cambiar contraseña
+      </Button>
+    </form>
+  );
+}
+
+function PasswordErrors({ error, problemas }: { error: string; problemas: string[] }) {
+  return (
+    <Alert variant="destructive" className="mb-4">
+      <AlertDescription>
+        {error}
+        {problemas.length > 0 && (
+          <ul className="mt-2 list-disc space-y-0.5 pl-4">
+            {problemas.map((problema) => (
+              <li key={problema}>{problema}</li>
+            ))}
+          </ul>
+        )}
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+/** Las dos contraseñas, sus errores y el envío del cambio. */
+function usePasswordChange() {
   const { cambiarContrasena } = useAuth();
 
   const [actual, setActual] = useState('');
@@ -154,77 +181,86 @@ function CambiarContrasena() {
       .finally(() => setEnviando(false));
   }
 
-  if (hecho) {
-    return (
-      <Alert variant="info">
-        <AlertTitle>Contraseña cambiada</AlertTitle>
-        <AlertDescription>
-          Se cerraron todas tus sesiones, incluida esta. Vuelve a entrar con la contraseña nueva.
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  return { actual, setActual, nueva, setNueva, error, problemas, enviando, hecho, onSubmit };
+}
 
+/** Cerrar sesión: aquí, dentro de la app, y en todos los dispositivos. */
+function SessionCards({ embebida }: { embebida: boolean }) {
+  const { salir, salirDeTodosLosDispositivos } = useAuth();
+  return (
+    <>
+      {embebida && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Cerrar sesión</CardTitle>
+            <CardDescription>
+              Solo en este dispositivo. La app olvida tu sesión y vuelve a pedirte entrar.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" size="sm" onClick={() => void salir()}>
+              <LogOut aria-hidden="true" />
+              Cerrar sesión
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Cerrar sesión en todos los dispositivos</CardTitle>
+          <CardDescription>
+            Invalida al instante todas las sesiones abiertas, incluida esta. Úsalo si crees que
+            alguien más tiene acceso a tu cuenta.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" onClick={() => void salirDeTodosLosDispositivos()}>
+            <LogOut aria-hidden="true" />
+            Cerrar todo
+          </Button>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function AdminLinks() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cambiar contraseña</CardTitle>
-        <CardDescription>
-          Pedimos la actual a propósito: sin ella, cualquiera que robara tu sesión podría quedarse
-          con la cuenta. Al cambiarla se cierran todas tus sesiones.
-        </CardDescription>
+        <CardTitle>Administración</CardTitle>
       </CardHeader>
-
       <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>
-              {error}
-              {problemas.length > 0 && (
-                <ul className="mt-2 list-disc space-y-0.5 pl-4">
-                  {problemas.map((problema) => (
-                    <li key={problema}>{problema}</li>
-                  ))}
-                </ul>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-4">
-          <Campo etiqueta="Contraseña actual" id="actual">
-            <Input
-              id="actual"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={actual}
-              onChange={(evento) => setActual(evento.target.value)}
-            />
-          </Campo>
-
-          <div className="flex flex-col gap-2">
-            <Campo etiqueta="Contraseña nueva" id="nueva">
-              <Input
-                id="nueva"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={nueva}
-                onChange={(evento) => setNueva(evento.target.value)}
-                aria-describedby="requisitos-nueva"
-              />
-            </Campo>
-            <div id="requisitos-nueva">
-              <PoliticaDeContrasena password={nueva} />
-            </div>
-          </div>
-
-          <Button type="submit" disabled={enviando || !cumpleLaPolitica(nueva) || !actual}>
-            Cambiar contraseña
-          </Button>
-        </form>
+        {/* Las mismas secciones, en el mismo orden, que el riel y la hoja
+            del avatar: una segunda lista se separaría de esta la primera
+            vez que se añada una pantalla. */}
+        <nav aria-label="Administración" className="-mx-3 flex flex-col">
+          {SECCIONES_DE_ADMIN.map((seccion) => (
+            <FilaDeEnlace key={seccion.to} Icono={seccion.Icono} a={seccion.to}>
+              {seccion.label}
+            </FilaDeEnlace>
+          ))}
+        </nav>
       </CardContent>
     </Card>
   );
+}
+
+function useScrollToHash(): void {
+  const { hash } = useLocation();
+  /*
+    ── Las anclas ────────────────────────────────────────────────────────────
+    La hoja de la cuenta del teléfono ofrece «Ajustes» y «Seguridad» como dos
+    entradas distintas, y las dos llevan aquí: son dos TROZOS de esta página,
+    no dos pantallas. Partirla en tres dejaría tres pantallas de una tarjeta.
+
+    Y hace falta llevar la vista al sitio a mano porque el enrutador no lo
+    hace: cambia la ruta sin tocar el desplazamiento, así que «Seguridad»
+    dejaba a la persona arriba del todo mirando los ajustes.
+  */
+  useEffect(() => {
+    if (!hash) return;
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [hash]);
 }
