@@ -24,10 +24,12 @@ cd "$(dirname "$0")/.."
 # La URL de sesión (5432), no la de transacción (6543): pg_dump necesita una
 # sesión estable y el pooler en modo transacción se la corta a la mitad.
 ORIGEN=$(grep '^DIRECT_URL=' api/.env.supabase | sed 's/^DIRECT_URL=//; s/^"//; s/"$//; s/^'"'"'//; s/'"'"'$//')
-DESTINO=$(grep '^DATABASE_URL=' api/.env | sed 's/^DATABASE_URL=//; s/^"//; s/"$//; s/^'"'"'//; s/'"'"'$//')
+# Como el DUEÑO (DIRECT_URL): desde el paso 7.11-b la API entra como
+# `coco_app`, que no puede vaciar tablas ni ver las filas de todos.
+DESTINO=$(grep '^DIRECT_URL=' api/.env | sed 's/^DIRECT_URL=//; s/^"//; s/"$//; s/^'"'"'//; s/'"'"'$//')
 
 [ -n "$ORIGEN" ] || { echo "No encontré DIRECT_URL en api/.env.supabase" >&2; exit 1; }
-[ -n "$DESTINO" ] || { echo "No encontré DATABASE_URL en api/.env" >&2; exit 1; }
+[ -n "$DESTINO" ] || { echo "No encontré DIRECT_URL en api/.env" >&2; exit 1; }
 
 case "$DESTINO" in
   *localhost*|*127.0.0.1*) ;;
