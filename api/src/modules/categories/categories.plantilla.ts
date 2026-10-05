@@ -1,5 +1,3 @@
-import type { PrismaService } from '../../prisma/prisma.service';
-
 /**
  * Con qué estructura nace una cuenta.
  *
@@ -60,60 +58,3 @@ export const PLANTILLA_DE_CUENTA_NUEVA: readonly NodoDePlantilla[] = [
     children: [{ name: 'Licencias', icon: 'credit-card' }],
   },
 ];
-
-/**
- * Copia la plantilla en una cuenta. Devuelve cuántas filas creó.
- *
- * ── Por qué es una función suelta y no un método del servicio ───────────────
- * Porque la llaman dos sitios que no se conocen entre sí: el registro, para
- * que una cuenta nazca con su estructura, y `POST /categories/seed`, para
- * rellenar una que se quedó vacía. Como método de `CategoriesService` habría
- * que inyectar ese servicio en el de autenticación, y `CategoriesModule` ya
- * depende del de autenticación por el guard: sería un ciclo entre módulos por
- * una función de veinte líneas.
- *
- * ── Por qué nivel por nivel y no un `createMany` ────────────────────────────
- * Porque un hijo necesita el `id` de su padre, y `createMany` no devuelve los
- * ids que acaba de asignar. El árbol son nueve filas: el ahorro de una sola
- * consulta no paga tener que resolver eso a mano.
- */
-export async function sembrarPlantilla(prisma: PrismaService, userId: bigint): Promise<number> {
-  return copiar(prisma, userId, PLANTILLA_DE_CUENTA_NUEVA, null);
-}
-
-async function copiar(
-  prisma: PrismaService,
-  userId: bigint,
-  nodos: readonly NodoDePlantilla[],
-  parentId: bigint | null,
-): Promise<number> {
-  let creadas = 0;
-
-  for (const [posicion, nodo] of nodos.entries()) {
-    const fila = await prisma.category.create({
-      data: {
-        userId,
-        name: nodo.name,
-        // Todo lo de la plantilla es gasto. Los ingresos no se clasifican
-        // todavía en esta app —la opción está apagada y rotulada «Pronto»—,
-        // así que sembrar un árbol de ingresos sería sembrar algo que no se
-        // puede usar.
-        kind: 'expense',
-        parentId,
-        icon: nodo.icon ?? null,
-        estatico: nodo.estatico ?? false,
-        // Explícito y correlativo, no el 0 de fábrica: con todo en cero el
-        // orden lo acaba decidiendo el id, que es el orden de inserción por
-        // casualidad y no por decisión.
-        sortOrder: posicion,
-      },
-    });
-    creadas += 1;
-
-    if (nodo.children?.length) {
-      creadas += await copiar(prisma, userId, nodo.children, fila.id);
-    }
-  }
-
-  return creadas;
-}

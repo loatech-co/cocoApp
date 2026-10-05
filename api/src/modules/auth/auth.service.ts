@@ -4,10 +4,10 @@ import type { User } from '@prisma/client';
 
 import { PasswordService } from './password.service';
 import { SupabaseAuthService } from './supabase-auth.service';
+import { UsersRepository } from './users.repository';
 import { AuditService } from '../../common/audit/audit.service';
 import { AuthenticationError, ForbiddenError } from '../../common/errors/domain-error';
-import { PrismaService } from '../../prisma/prisma.service';
-import { sembrarPlantilla } from '../categories/categories.plantilla';
+import { CategoriesRepository } from '../categories/categories.repository';
 
 export interface ContextoDePeticion {
   ip?: string | undefined;
@@ -58,7 +58,8 @@ export class AuthService {
   private readonly correoDelAdminInicial: string | null;
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly users: UsersRepository,
+    private readonly categories: CategoriesRepository,
     private readonly supabase: SupabaseAuthService,
     private readonly passwords: PasswordService,
     private readonly audit: AuditService,
@@ -104,20 +105,18 @@ export class AuthService {
 
     const esAdminInicial = this.correoDelAdminInicial === email;
 
-    const usuario = await this.prisma.user.create({
-      data: {
-        authId,
-        email,
-        displayName,
-        role: esAdminInicial ? 'admin' : 'user',
-        status: esAdminInicial ? 'active' : 'pending',
-        approvedAt: esAdminInicial ? new Date() : null,
-        // Explícito, no por DEFAULT del motor. El guard compara este valor
-        // contra el `iat` del token que emite Supabase; si uno lo pusiera el
-        // reloj de Postgres y el otro el de Supabase, un desfase de
-        // milisegundos entre relojes invalidaría sesiones legítimas.
-        sessionsValidFrom: alSegundo(new Date()),
-      },
+    const usuario = await this.users.create({
+      authId,
+      email,
+      displayName,
+      role: esAdminInicial ? 'admin' : 'user',
+      status: esAdminInicial ? 'active' : 'pending',
+      approvedAt: esAdminInicial ? new Date() : null,
+      // Explícito, no por DEFAULT del motor. El guard compara este valor
+      // contra el `iat` del token que emite Supabase; si uno lo pusiera el
+      // reloj de Postgres y el otro el de Supabase, un desfase de
+      // milisegundos entre relojes invalidaría sesiones legítimas.
+      sessionsValidFrom: alSegundo(new Date()),
     });
 
     /*
@@ -140,7 +139,7 @@ export class AuthService {
       después desde `POST /categories/seed`.
     */
     try {
-      await sembrarPlantilla(this.prisma, usuario.id);
+      await this.categories.sembrarPlantilla(usuario.id);
     } catch (error) {
       this.logger.error(
         `No se pudo sembrar la plantilla de la cuenta ${usuario.id}: ${(error as Error).message}`,
@@ -188,7 +187,7 @@ export class AuthService {
       throw new AuthenticationError('Correo o contraseña incorrectos.');
     }
 
-    const usuario = await this.prisma.user.findUnique({ where: { authId: sesion.authId } });
+    const usuario = await this.users.findByAuthId(sesion.authId);
 
     if (!usuario) {
       // La cuenta existe en Supabase pero no tiene perfil aquí. Pasa si se creó
@@ -212,9 +211,9 @@ export class AuthService {
     const marca =
       usuario.sessionsValidFrom > inicioDeSesion ? inicioDeSesion : usuario.sessionsValidFrom;
 
-    const actualizado = await this.prisma.user.update({
-      where: { id: usuario.id },
-      data: { lastLoginAt: new Date(), sessionsValidFrom: marca },
+    const actualizado = await this.users.update(usuario.id, {
+      lastLoginAt: new Date(),
+      sessionsValidFrom: marca,
     });
 
     await this.audit.registrar({
@@ -238,7 +237,7 @@ export class AuthService {
     const sesion = await this.supabase.refrescar(refreshToken);
     if (!sesion) throw new AuthenticationError('La sesión expiró. Vuelve a entrar.');
 
-    const usuario = await this.prisma.user.findUnique({ where: { authId: sesion.authId } });
+    const usuario = await this.users.findByAuthId(sesion.authId);
     if (!usuario) throw new AuthenticationError('La sesión ya no es válida.');
 
     // El estado se revisa también al refrescar: si suspenden una cuenta, no
@@ -264,7 +263,7 @@ export class AuthService {
     await this.supabase.cerrarSesion(refreshToken);
 
     if (!sesion) return;
-    const usuario = await this.prisma.user.findUnique({ where: { authId: sesion.authId } });
+    const usuario = await this.users.findByAuthId(sesion.authId);
     if (!usuario) return;
 
     await this.audit.registrar({
@@ -304,7 +303,7 @@ export class AuthService {
     datos: { actual: string; nueva: string },
     contexto: ContextoDePeticion,
   ): Promise<void> {
-    const usuario = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const usuario = await this.users.findByIdOrThrow(userId);
     if (!usuario.authId) {
       throw new ForbiddenError('Esta cuenta no tiene credenciales gestionadas.');
     }
@@ -332,7 +331,7 @@ export class AuthService {
   }
 
   async perfilDe(userId: bigint): Promise<PerfilPublico> {
-    return aPerfilPublico(await this.prisma.user.findUniqueOrThrow({ where: { id: userId } }));
+    return aPerfilPublico(await this.users.findByIdOrThrow(userId));
   }
 
   // ── Interno ────────────────────────────────────────────────────────────────
@@ -348,9 +347,8 @@ export class AuthService {
    * primera deja vivo el access token actual hasta que expire.
    */
   async revocarTodasLasSesiones(userId: bigint): Promise<void> {
-    const usuario = await this.prisma.user.update({
-      where: { id: userId },
-      data: { sessionsValidFrom: alSegundoSiguiente(new Date()) },
+    const usuario = await this.users.update(userId, {
+      sessionsValidFrom: alSegundoSiguiente(new Date()),
     });
 
     if (usuario.authId) {

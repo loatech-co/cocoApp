@@ -8,9 +8,9 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
-import { SupabaseAuthService } from '../../modules/auth/supabase-auth.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { SupabaseAuthService } from './supabase-auth.service';
+import { UsersRepository } from './users.repository';
+import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 
 /**
  * Barrera de autenticación de toda la API.
@@ -35,7 +35,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly supabase: SupabaseAuthService,
-    private readonly prisma: PrismaService,
+    private readonly users: UsersRepository,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -54,16 +54,7 @@ export class JwtAuthGuard implements CanActivate {
 
     const { authId, iatMs } = await this.supabase.verificarAccessToken(token);
 
-    const usuario = await this.prisma.user.findUnique({
-      where: { authId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        status: true,
-        sessionsValidFrom: true,
-      },
-    });
+    const usuario = await this.users.findSessionUser(authId);
 
     if (!usuario) {
       // Token válido de Supabase, pero sin perfil en la aplicación. Pasa si la

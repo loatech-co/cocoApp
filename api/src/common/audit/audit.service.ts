@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 
-import { PrismaService } from '../../prisma/prisma.service';
+import { AuditRepository } from './audit.repository';
 
 /** Acciones auditadas. Tipadas para que no se cuelen cadenas sueltas. */
 type AccionAuditada =
@@ -34,7 +34,7 @@ export interface EventoAuditado {
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: AuditRepository) {}
 
   /**
    * Registra un evento.
@@ -49,16 +49,14 @@ export class AuditService {
    */
   async registrar(evento: EventoAuditado): Promise<void> {
     try {
-      await this.prisma.auditLog.create({
-        data: {
-          userId: evento.userId ?? null,
-          entity: evento.entity,
-          entityId: evento.entityId ?? null,
-          action: evento.action,
-          ...(evento.changes !== undefined && { changesJson: evento.changes }),
-          ip: evento.ip ?? null,
-          userAgent: evento.userAgent?.slice(0, 255) ?? null,
-        },
+      await this.repository.create({
+        userId: evento.userId ?? null,
+        entity: evento.entity,
+        entityId: evento.entityId ?? null,
+        action: evento.action,
+        ...(evento.changes !== undefined && { changesJson: evento.changes }),
+        ip: evento.ip ?? null,
+        userAgent: evento.userAgent?.slice(0, 255) ?? null,
       });
     } catch (error) {
       this.logger.error(

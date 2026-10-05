@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Category, CategoryKind, Prisma } from '@prisma/client';
 
-import { sembrarPlantilla } from './categories.plantilla';
+import { PLANTILLA_DE_CUENTA_NUEVA, type NodoDePlantilla } from './categories.plantilla';
 import type { NodoDeCategoria } from './categories.tree';
 import { unir } from './palabras-clave';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -164,13 +164,56 @@ export class CategoriesRepository {
   /**
    * Copia la plantilla de cuenta nueva. Devuelve cuántas filas creó.
    *
-   * El repositorio es quien habla con Prisma, así que la siembra entra por
-   * aquí aunque el recorrido del árbol viva en `categories.plantilla.ts`: ese
-   * archivo es la ESTRUCTURA y el porqué de cada decisión, no el acceso a la
-   * base.
+   * La llaman dos sitios que no se conocen entre sí: el registro, para que una
+   * cuenta nazca con su estructura, y `POST /categories/seed`, para rellenar
+   * una que se quedó vacía. Por eso vive en el repositorio y no en
+   * `CategoriesService`: el registro solo necesita escribir filas, no las
+   * reglas del servicio. `categories.plantilla.ts` es la ESTRUCTURA y el
+   * porqué de cada decisión; esto es el acceso a la base.
+   *
+   * ── Por qué nivel por nivel y no un `createMany` ────────────────────────────
+   * Porque un hijo necesita el `id` de su padre, y `createMany` no devuelve los
+   * ids que acaba de asignar. El árbol son nueve filas: el ahorro de una sola
+   * consulta no paga tener que resolver eso a mano.
    */
   async sembrarPlantilla(userId: bigint): Promise<number> {
-    return sembrarPlantilla(this.prisma, userId);
+    return this.copyTemplate(userId, PLANTILLA_DE_CUENTA_NUEVA, null);
+  }
+
+  private async copyTemplate(
+    userId: bigint,
+    nodos: readonly NodoDePlantilla[],
+    parentId: bigint | null,
+  ): Promise<number> {
+    let creadas = 0;
+
+    for (const [posicion, nodo] of nodos.entries()) {
+      const fila = await this.prisma.category.create({
+        data: {
+          userId,
+          name: nodo.name,
+          // Todo lo de la plantilla es gasto. Los ingresos no se clasifican
+          // todavía en esta app —la opción está apagada y rotulada «Pronto»—,
+          // así que sembrar un árbol de ingresos sería sembrar algo que no se
+          // puede usar.
+          kind: 'expense',
+          parentId,
+          icon: nodo.icon ?? null,
+          estatico: nodo.estatico ?? false,
+          // Explícito y correlativo, no el 0 de fábrica: con todo en cero el
+          // orden lo acaba decidiendo el id, que es el orden de inserción por
+          // casualidad y no por decisión.
+          sortOrder: posicion,
+        },
+      });
+      creadas += 1;
+
+      if (nodo.children?.length) {
+        creadas += await this.copyTemplate(userId, nodo.children, fila.id);
+      }
+    }
+
+    return creadas;
   }
 
   async crearVarias(data: Prisma.CategoryUncheckedCreateInput[]): Promise<void> {
