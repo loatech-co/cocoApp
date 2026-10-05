@@ -19,6 +19,7 @@ import { readFileSync } from 'node:fs';
 
 import { clasificar, necesitaRevision } from '@coco/lectura';
 
+import { DEFAULT_CSV } from '../data-dir.mjs';
 import { emparejar, leerArchivos, leerCsv } from './emparejar.mjs';
 
 const args = process.argv.slice(2);
@@ -29,7 +30,7 @@ const bandera = (n) => {
 };
 const muestra = bandera('--muestra') ? Number(bandera('--muestra')) : Infinity;
 const verFallos = args.includes('--fallos');
-const csv = bandera('--csv') ?? 'datos/Gastos_Consolidado.csv';
+const csv = bandera('--csv') ?? DEFAULT_CSV;
 
 if (!raiz) {
   console.error('Uso: npx tsx scripts/soportes/piloto.mts "<carpeta>" [--muestra N] [--fallos]');

@@ -37,8 +37,6 @@ export default defineConfig(
     'api/prisma/migrations/**',
     'api/prisma/migraciones-mysql-archivadas/**',
     'ios/**',
-    'respaldos/**',
-    'datos/**',
     // Operational one-off scripts: plain .mjs outside every tsconfig. Out of
     // the lint scope of the workspaces.
     'scripts/**',

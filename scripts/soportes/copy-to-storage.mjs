@@ -14,7 +14,7 @@
 // reported, never deleted.
 //
 // Usage:
-//   npx dotenv -e api/.env.supabase -- node scripts/soportes/copy-to-storage.mjs --from respaldos/soportes-… [--dry-run]
+//   npx dotenv -e api/.env.supabase -- node scripts/soportes/copy-to-storage.mjs --from "$COCO_DATA_DIR/respaldos/soportes-…" [--dry-run]
 //
 // Exit code 0 only when every row ends verified in the bucket (or, with
 // --dry-run, verified locally).

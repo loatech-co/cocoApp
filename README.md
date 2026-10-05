@@ -267,7 +267,7 @@ nuevo.
 ## Respaldos
 
 ```bash
-npm run respaldar          # a ./respaldos
+npm run respaldar          # a $COCO_DATA_DIR/respaldos
 npm run respaldar -- /ruta # a donde quieras
 ```
 
@@ -282,7 +282,10 @@ extensiones internas de Supabase y el archivo solo sirve para restaurar en otro
 Supabase — justo lo que no querés de un respaldo. Las tablas de la aplicación
 viven todas en `public`.
 
-`respaldos/` está en `.gitignore`: son datos financieros reales.
+Los respaldos y la data histórica viven FUERA del repositorio, en
+`$COCO_DATA_DIR` (por defecto `~/Documents/VS Code/Personal/coco-datos/`, con
+`datos/` y `respaldos/` dentro): son datos financieros reales, y dentro de la
+carpeta del proyecto solo vive el proyecto.
 
 ---
 
@@ -370,8 +373,8 @@ se ejecutó; un 500 o un 503, que no.
 ### Volver atrás
 
 Ya no hay vuelta atrás a MariaDB: esa base se vació tras confirmar que Postgres
-funcionaba. Su último volcado quedó en `respaldos/mariadb-final.sql`, fuera del
-repositorio.
+funcionaba. Su último volcado quedó en
+`$COCO_DATA_DIR/respaldos/mariadb-final.sql`, fuera del repositorio.
 
 Lo que sí se puede revertir es el CÓDIGO: cada despliegue deja un respaldo con
 fecha en `~/respaldos-cocoapp/` del servidor, con `api/dist`, `api/prisma`, el

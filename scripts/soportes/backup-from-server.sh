@@ -11,7 +11,9 @@
 #   - Read-only on the server.
 #
 # Usage: bash scripts/soportes/backup-from-server.sh [destination]
-#   default destination: respaldos/soportes-YYYYMMDD-HHMMSS
+#   default destination: $COCO_DATA_DIR/respaldos/soportes-YYYYMMDD-HHMMSS
+#   COCO_DATA_DIR defaults to ~/Documents/VS Code/Personal/coco-datos: real
+#   receipts live OUTSIDE the repository (see scripts/data-dir.mjs).
 set -euo pipefail
 
 PORT=65002
@@ -21,7 +23,8 @@ REMOTE="soportes-cocoapp"
 SSH_CMD="ssh -i ${KEY} -p ${PORT} -o BatchMode=yes -o ConnectTimeout=15"
 
 cd "$(dirname "$0")/../.."
-DEST="${1:-respaldos/soportes-$(date +%Y%m%d-%H%M%S)}"
+COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Documents/VS Code/Personal/coco-datos}"
+DEST="${1:-$COCO_DATA_DIR/respaldos/soportes-$(date +%Y%m%d-%H%M%S)}"
 mkdir -p "$DEST"
 chmod 700 "$DEST"
 

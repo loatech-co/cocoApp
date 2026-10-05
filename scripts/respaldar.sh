@@ -21,7 +21,13 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-DESTINO="${1:-respaldos}"
+# ── Dónde queda ──────────────────────────────────────────────────────────────
+# FUERA del repositorio: en $COCO_DATA_DIR/respaldos (por defecto
+# ~/Documents/VS Code/Personal/coco-datos/respaldos). Lleva datos financieros
+# reales, y dentro de la carpeta del proyecto solo vive el proyecto. El primer
+# argumento sigue mandando sobre todo lo demás.
+COCO_DATA_DIR="${COCO_DATA_DIR:-$HOME/Documents/VS Code/Personal/coco-datos}"
+DESTINO="${1:-$COCO_DATA_DIR/respaldos}"
 mkdir -p "$DESTINO"
 FECHA=$(date +%Y%m%d-%H%M%S)
 ARCHIVO_SQL="$DESTINO/coco-$FECHA.sql"

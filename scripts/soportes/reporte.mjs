@@ -7,6 +7,7 @@
 //
 // Sin `--todo` resume; con `--todo` lista una por una las filas de cada montón,
 // que es lo que hace falta para revisar a mano lo ambiguo.
+import { DEFAULT_CSV } from '../data-dir.mjs';
 import { emparejar, leerArchivos, leerCsv } from './emparejar.mjs';
 
 const args = process.argv.slice(2);
@@ -16,7 +17,7 @@ const todo = args.includes('--todo');
 // primer argumento —la carpeta—: sin este guardia, omitir `--csv` hacía que el
 // script intentara leer el directorio como si fuera el CSV.
 const iCsv = args.indexOf('--csv');
-const csv = iCsv >= 0 ? args[iCsv + 1] : 'datos/Gastos_Consolidado.csv';
+const csv = iCsv >= 0 ? args[iCsv + 1] : DEFAULT_CSV;
 
 if (!raiz) {
   console.error('Uso: node scripts/soportes/reporte.mjs "<carpeta>" [--csv <archivo>] [--todo]');

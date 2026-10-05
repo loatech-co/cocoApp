@@ -8,7 +8,7 @@
 //   --ensayo         no escribe nada: dice qué haría
 //   --limite N       solo los primeros N movimientos (el lote de prueba)
 //   --almacen RUTA   dónde dejar los binarios (por defecto api/.soportes)
-//   --csv RUTA       el CSV canónico (por defecto datos/Gastos_Consolidado.csv)
+//   --csv RUTA       el CSV canónico (por defecto $COCO_DATA_DIR/datos/Gastos_Consolidado.csv)
 //
 // ── Idempotente y reanudable ────────────────────────────────────────────────
 // La huella de cada soporte es el sha256 de SU CONTENIDO, y la base tiene un
@@ -31,6 +31,7 @@ import { dirname, resolve } from 'node:path';
 
 import { PrismaClient } from '@prisma/client';
 
+import { DEFAULT_CSV } from '../data-dir.mjs';
 import { emparejar, leerArchivos, leerCsv, TIPOS } from './emparejar.mjs';
 
 const args = process.argv.slice(2);
@@ -43,7 +44,7 @@ const bandera = (nombre) => {
 
 const correo = bandera('--correo') ?? process.env.BOOTSTRAP_ADMIN_EMAIL;
 const limite = bandera('--limite') ? Number(bandera('--limite')) : Infinity;
-const csv = bandera('--csv') ?? 'datos/Gastos_Consolidado.csv';
+const csv = bandera('--csv') ?? DEFAULT_CSV;
 const almacen = resolve(bandera('--almacen') ?? 'api/.soportes');
 
 if (!raiz) {

@@ -73,26 +73,17 @@ Thumbs.db
 # Son artefactos reproducibles, no fuente.
 frontend/public/tesseract/
 
-# Respaldos de la base: nunca al repositorio. Llevan datos financieros reales.
-respaldos/
-
 # Las imágenes fuente SÍ se versionan: son el original del que sale lo que se
 # publica, y perderlas obligaría a recomprimir desde un WebP ya comprimido.
 
-# Data financiera real. No entra al repositorio, pero SÍ vive en disco para
-# poder recargarla sin volver a pedirla.
-datos/
+# La data financiera real y los respaldos de la base NO viven aquí: están en
+# $COCO_DATA_DIR, fuera del repositorio (ver scripts/data-dir.mjs). Dentro de
+# la carpeta del proyecto solo vive el proyecto.
 
 # Soportes: recibos reales. Ni al repositorio ni por descuido.
 api/.soportes/
 api/.soportes-test/
 soportes-origen/
-
-# La auditoría técnica no entra al repositorio. Es una foto fechada del estado
-# del sistema —con rutas, nombres de variables y conteos— que envejece sola:
-# versionada, dentro de un mes diría cosas que ya no son ciertas y nadie
-# sabría cuáles. Vive fuera, y se vuelve a generar cuando haga falta.
-AUDITORIA_RESPUESTAS.md
 
 # `@coco/lectura` se compila a CommonJS para que la API lo importe en tiempo
 # de ejecución; el frontend lo lee de la fuente por alias. Lo compilado no se
