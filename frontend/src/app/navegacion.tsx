@@ -130,10 +130,6 @@ export function EnlaceDeSeccion({
  * no tener el mismo correo.
  */
 export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
-  const { usuario, esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } = useAuth();
-  const navegar = useNavigate();
-  const nombre = usuario?.display_name ?? usuario?.email ?? '?';
-
   return (
     <Menu
       etiqueta="Tu cuenta"
@@ -149,107 +145,99 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
         'movil:min-h-[42px]',
         plegada ? 'justify-center px-0' : 'px-2',
       )}
-      disparador={() => (
-        <>
-          <Avatar nombre={nombre} />
-          {!plegada && (
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-sidebar-foreground">
-                {usuario?.display_name ?? '—'}
-              </span>
-              {usuario?.email && (
-                <span className="block truncate text-2xs text-sidebar-muted">{usuario.email}</span>
-              )}
-            </span>
-          )}
-        </>
-      )}
+      disparador={() => <AccountTrigger plegada={plegada} />}
     >
-      {(cerrar) => (
+      {(cerrar) => <AccountOptions cerrar={cerrar} />}
+    </Menu>
+  );
+}
+
+function AccountTrigger({ plegada }: { plegada: boolean }) {
+  const { usuario } = useAuth();
+  const nombre = usuario?.display_name ?? usuario?.email ?? '?';
+  return (
+    <>
+      <Avatar nombre={nombre} />
+      {!plegada && (
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium text-sidebar-foreground">
+            {usuario?.display_name ?? '—'}
+          </span>
+          {usuario?.email && (
+            <span className="block truncate text-2xs text-sidebar-muted">{usuario.email}</span>
+          )}
+        </span>
+      )}
+    </>
+  );
+}
+
+function AccountOptions({ cerrar }: { cerrar: () => void }) {
+  const { esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } = useAuth();
+  const navegar = useNavigate();
+
+  // `void` delante de `navegar` no es adorno: en react-router 7 `navigate`
+  // devuelve una promesa, y aquí se llama desde un `onClick` que no puede
+  // esperarla. El `void` dice que es a propósito —navegar es de ida sin
+  // vuelta— y es lo que distingue esto de la promesa que alguien se olvidó de
+  // atender.
+  function ir(ruta: string): void {
+    cerrar();
+    void navegar(ruta);
+  }
+
+  return (
+    <>
+      <MenuOpcion Icono={UserCog} onClick={() => ir('/mi-cuenta')}>
+        Mi cuenta
+      </MenuOpcion>
+
+      <MenuOpcion Icono={Tags} onClick={() => ir('/centros-de-costos')}>
+        Centros de costos
+      </MenuOpcion>
+
+      {esAdmin && (
         <>
-          {/*
-            `void` delante de cada `navegar` no es adorno: en react-router 7
-            `navigate` devuelve una promesa, y aquí se llama desde un `onClick`
-            que no puede esperarla. El `void` dice que es a propósito —navegar
-            es de ida sin vuelta— y es lo que distingue esto de la promesa que
-            alguien se olvidó de atender.
-          */}
-          <MenuOpcion
-            Icono={UserCog}
-            onClick={() => {
-              cerrar();
-              void navegar('/mi-cuenta');
-            }}
-          >
-            Mi cuenta
+          <MenuOpcion Icono={ShieldCheck} onClick={() => ir('/administracion')}>
+            Usuarios
           </MenuOpcion>
-
-          <MenuOpcion
-            Icono={Tags}
-            onClick={() => {
-              cerrar();
-              void navegar('/centros-de-costos');
-            }}
-          >
-            Centros de costos
-          </MenuOpcion>
-
-          {esAdmin && (
-            <>
-              <MenuOpcion
-                Icono={ShieldCheck}
-                onClick={() => {
-                  cerrar();
-                  void navegar('/administracion');
-                }}
-              >
-                Usuarios
-              </MenuOpcion>
-              <MenuOpcion
-                Icono={ScrollText}
-                onClick={() => {
-                  cerrar();
-                  void navegar('/administracion/bitacora');
-                }}
-              >
-                Bitácora
-              </MenuOpcion>
-            </>
-          )}
-
-          <MenuSeparador />
-
-          {/*
-            ── Ver la aplicación como la ve quien no administra nada ────────
-            Se enseña con el rol DE VERDAD, no con el efectivo: encendida la
-            vista, `esAdmin` es falso, y con esa condición el interruptor
-            desaparecería justo cuando hace falta para apagarlo.
-
-            Va aquí abajo, con cerrar sesión y no con las páginas: no lleva a
-            ninguna parte, cambia cómo se ve todo lo demás.
-          */}
-          {esAdminDeVerdad && (
-            <MenuOpcion
-              Icono={viendoComoUsuario ? ShieldCheck : Eye}
-              onClick={() => {
-                cerrar();
-                verComoUsuario(!viendoComoUsuario);
-                // Encendiéndola desde una pantalla de administración, quedarse
-                // sería quedarse mirando un «no tienes acceso». Se sale al
-                // resumen, que es de donde parte quien no administra nada.
-                if (!viendoComoUsuario) void navegar('/');
-              }}
-            >
-              {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}
-            </MenuOpcion>
-          )}
-
-          <MenuOpcion Icono={LogOut} peligro onClick={() => void salir()}>
-            Cerrar sesión
+          <MenuOpcion Icono={ScrollText} onClick={() => ir('/administracion/bitacora')}>
+            Bitácora
           </MenuOpcion>
         </>
       )}
-    </Menu>
+
+      <MenuSeparador />
+
+      {/*
+        ── Ver la aplicación como la ve quien no administra nada ────────
+        Se enseña con el rol DE VERDAD, no con el efectivo: encendida la
+        vista, `esAdmin` es falso, y con esa condición el interruptor
+        desaparecería justo cuando hace falta para apagarlo.
+
+        Va aquí abajo, con cerrar sesión y no con las páginas: no lleva a
+        ninguna parte, cambia cómo se ve todo lo demás.
+      */}
+      {esAdminDeVerdad && (
+        <MenuOpcion
+          Icono={viendoComoUsuario ? ShieldCheck : Eye}
+          onClick={() => {
+            cerrar();
+            verComoUsuario(!viendoComoUsuario);
+            // Encendiéndola desde una pantalla de administración, quedarse
+            // sería quedarse mirando un «no tienes acceso». Se sale al
+            // resumen, que es de donde parte quien no administra nada.
+            if (!viendoComoUsuario) void navegar('/');
+          }}
+        >
+          {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}
+        </MenuOpcion>
+      )}
+
+      <MenuOpcion Icono={LogOut} peligro onClick={() => void salir()}>
+        Cerrar sesión
+      </MenuOpcion>
+    </>
   );
 }
 

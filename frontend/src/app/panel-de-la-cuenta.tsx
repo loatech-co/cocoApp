@@ -34,8 +34,7 @@ import { Avatar } from './navegacion';
  * apagadas ni escondidas con CSS. Ausentes, como en el riel.
  */
 export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
-  const { usuario, esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } = useAuth();
-  const navegar = useNavigate();
+  const { usuario, esAdmin, esAdminDeVerdad, salir } = useAuth();
   const nombre = usuario?.display_name ?? usuario?.email ?? '?';
 
   return (
@@ -83,28 +82,7 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
           vista, `esAdmin` es falso —para eso está— y con esa condición el
           interruptor desaparecería justo cuando hace falta para apagarlo.
         */}
-        {esAdminDeVerdad && (
-          <button
-            type="button"
-            onClick={() => {
-              onCerrar();
-              verComoUsuario(!viendoComoUsuario);
-              // Encendiéndola desde una pantalla de administración, quedarse
-              // sería quedarse mirando un «no tienes acceso».
-              if (!viendoComoUsuario) void navegar('/');
-            }}
-            className={FILA_DE_PANEL}
-          >
-            {viendoComoUsuario ? (
-              <ShieldCheck className="size-4 shrink-0 opacity-70" aria-hidden="true" />
-            ) : (
-              <Eye className="size-4 shrink-0 opacity-70" aria-hidden="true" />
-            )}
-            <span className="min-w-0 flex-1 truncate">
-              {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}
-            </span>
-          </button>
-        )}
+        {esAdminDeVerdad && <ViewAsUserRow onCerrar={onCerrar} />}
 
         <button
           type="button"
@@ -145,5 +123,33 @@ function Perfil({ nombre }: { nombre: string }) {
         )}
       </span>
     </Link>
+  );
+}
+
+/** El interruptor de la vista de usuario, en forma de fila. */
+function ViewAsUserRow({ onCerrar }: { onCerrar: () => void }) {
+  const { viendoComoUsuario, verComoUsuario } = useAuth();
+  const navegar = useNavigate();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onCerrar();
+        verComoUsuario(!viendoComoUsuario);
+        // Encendiéndola desde una pantalla de administración, quedarse
+        // sería quedarse mirando un «no tienes acceso».
+        if (!viendoComoUsuario) void navegar('/');
+      }}
+      className={FILA_DE_PANEL}
+    >
+      {viendoComoUsuario ? (
+        <ShieldCheck className="size-4 shrink-0 opacity-70" aria-hidden="true" />
+      ) : (
+        <Eye className="size-4 shrink-0 opacity-70" aria-hidden="true" />
+      )}
+      <span className="min-w-0 flex-1 truncate">
+        {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}
+      </span>
+    </button>
   );
 }

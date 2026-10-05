@@ -1,25 +1,23 @@
-import { Eye, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Eye } from 'lucide-react';
+import { useEffect } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 
 import { MovimientoModal } from '@/features/transactions/components/movimiento-modal';
 import { PanelDeBusqueda } from '@/features/transactions/components/panel-de-busqueda';
 import { useAuth } from '@/shared/api/auth-context';
 import { registrarPuente } from '@/shared/api/native-bridge';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { useEnLaApp, useEsMovil } from '@/shared/lib/movil';
 import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
-import { Logo, LogoCompacto } from '@/shared/ui/atoms/logo';
+import { Logo } from '@/shared/ui/atoms/logo';
 import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
 import { PilaDeAvisos } from '@/shared/ui/molecules/aviso';
-import type { Transaction } from '@coco/types';
 
-import { useSuperficieDeAtajos } from './atajos';
 import { BarraInferior } from './barra-inferior';
-import { EnlaceDeSeccion, MenuDeLaCuenta, useSecciones } from './navegacion';
 import { PanelDeLaCuenta } from './panel-de-la-cuenta';
+import { SideRail } from './side-rail';
+import { type ShellState, useShellState } from './use-shell-state';
 
 /**
  * El armazón.
@@ -132,61 +130,7 @@ export function AppShell() {
    * porque la pestaña nativa «Buscar» abre la de aquí.
    */
   const embebida = useEnLaApp();
-  const { usuario } = useAuth();
-  const { diaADia, administracion, biblioteca } = useSecciones();
-  const ubicacion = useLocation();
-
-  /**
-   * La barra plegada.
-   *
-   * Se recuerda en `localStorage` y no en la URL ni en el servidor: es una
-   * preferencia de ESTA pantalla, de este momento. Pegarle un enlace a alguien
-   * no debería plegarle la barra, y cambiarla no tiene por qué viajar a la red.
-   */
-  const [plegada, setPlegada] = useState(() => localStorage.getItem('sidenav-plegada') === 'si');
-
-  const [atajosAbiertos, setAtajosAbiertos] = useState(false);
-  const [busquedaAbierta, setBusquedaAbierta] = useState(false);
-  const [cuentaAbierta, setCuentaAbierta] = useState(false);
-
-  /**
-   * La ficha que el armazón tiene abierta.
-   *
-   * `undefined` es cerrada, `null` es una nueva y un movimiento es ese. Es la
-   * misma convención que usa el resumen, y a propósito: abrir un gasto desde
-   * el (+) de la barra o desde un resultado de la búsqueda no puede ser otra
-   * ficha ni otro formulario que abrirlo desde la tabla.
-   */
-  const [ficha, setFicha] = useState<Transaction | null | undefined>(undefined);
-
-  // Cambiar de página cierra lo que esté tapándola. Una hoja que sobrevive a
-  // su propio enlace deja a la persona mirando los atajos de una pantalla que
-  // ya no está debajo.
-  useAlCambiar([ubicacion.pathname], () => {
-    setAtajosAbiertos(false);
-    setBusquedaAbierta(false);
-    setCuentaAbierta(false);
-  });
-
-  // Estable entre renders: es lo que el puente publica, y un `useEffect` que
-  // dependa de ella no tiene por qué volver a registrarse en cada pintado.
-  const [abrirBusqueda] = useState(() => () => setBusquedaAbierta(true));
-
-  function alternarBarra(): void {
-    setPlegada((antes) => {
-      localStorage.setItem('sidenav-plegada', antes ? 'no' : 'si');
-      return !antes;
-    });
-  }
-
-  const { cabeza, cuerpo } = useSuperficieDeAtajos({
-    abierto: atajosAbiertos,
-    biblioteca: biblioteca.map(({ to, label, Icono }) => ({ ruta: to, etiqueta: label, Icono })),
-    // Lo de fábrica es lo del día a día. Lo de administración se configura una
-    // vez y casi no se toca: está en el menú, y se añade desde ahí quien lo use.
-    porDefecto: diaADia.map((s) => s.to),
-    onIr: () => setAtajosAbiertos(false),
-  });
+  const shell = useShellState();
 
   return (
     // La página entera es EL MATERIAL —el mismo color de la tarjeta y del
@@ -194,147 +138,18 @@ export function AppShell() {
     // está explicado en el `<main>` de más abajo.
     <div className="flex min-h-dvh flex-col bg-sidebar">
       {/* ── Riel — escritorio ────────────────────────────────────────────────
-          14rem. Eran 13, y se quedaba estrecho: "Centros de costos" llegaba
-          casi a tocar el borde del pozo, y el riel se leía como una columna
-          apretada al lado del contenido en vez de como el marco que lo
-          envuelve. El riel no lleva fondo propio —es la página— y lo que lo
-          delimita es el canto del pozo.
-
           Se MONTA o no se monta, no se esconde con CSS: un riel escondido
           sigue siendo nueve enlaces en el orden de tabulación de un teléfono,
           y sus nombres siguen estando dos veces en la página. */}
       {!esMovil && !embebida && (
-        <aside
-          className={cn(
-            'fixed inset-y-0 left-0 flex flex-col p-3 transition-[width]',
-            plegada ? 'w-16' : 'w-56',
-          )}
-        >
-          <div
-            className={cn(
-              'mb-8 flex items-center pt-3',
-              // Plegada, la marca se centra porque no hay nada más en la fila;
-              // desplegada va a la izquierda y el botón de plegar al otro
-              // extremo, que es donde uno lo busca.
-              // Y la fila no lleva relleno por la DERECHA: el botón de plegar
-              // se alinea solo, con su propio margen negativo. Ver abajo.
-              plegada ? 'justify-center px-0' : 'justify-between pl-2 pr-0',
-            )}
-          >
-            {plegada ? (
-              <LogoCompacto className="size-7 text-sidebar-active" />
-            ) : (
-              <>
-                {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo
-                    dejaría demasiado bajo para leerse. Va en `sidebar-active`,
-                    que es el color con el que cada tema dice "aquí": verde
-                    británico sobre el riel claro, lima sobre el oscuro. */}
-                <Logo className="h-7 w-auto text-sidebar-active" />
-                <button
-                  type="button"
-                  onClick={alternarBarra}
-                  aria-label="Plegar la barra lateral"
-                  title="Plegar la barra lateral"
-                  /*
-                    Lo que se alinea es el ICONO, no su área de toque.
-
-                    El botón mide 36 y el icono 18, así que lleva 9 de aire a
-                    cada lado. Con el botón a ras del riel, el icono quedaba
-                    9px por dentro del canto de las filas de navegación —que
-                    ocupan todo el ancho del riel— y se leía como si estuviera
-                    descolgado hacia la izquierda.
-
-                    El margen negativo es exactamente ese aire: saca el área
-                    de toque 9px, que es lo que hace falta para que el canto
-                    derecho del icono caiga sobre el canto derecho de las
-                    filas. El área de toque sigue midiendo 36.
-                  */
-                  className="-mr-[9px] grid size-9 shrink-0 place-items-center rounded-lg text-sidebar-muted transition-colors hover:text-sidebar-foreground"
-                >
-                  <PanelLeftClose className="size-[18px]" aria-hidden="true" />
-                </button>
-              </>
-            )}
-          </div>
-
-          {plegada && (
-            <button
-              type="button"
-              onClick={alternarBarra}
-              aria-label="Desplegar la barra lateral"
-              title="Desplegar la barra lateral"
-              className="mb-2 grid h-9 w-full place-items-center rounded-lg text-sidebar-muted transition-colors hover:text-sidebar-foreground"
-            >
-              <PanelLeftOpen className="size-[18px]" aria-hidden="true" />
-            </button>
-          )}
-
-          <nav className="flex flex-1 flex-col gap-1" aria-label="Secciones">
-            {diaADia.map(({ to, label, Icono, exact }) => (
-              <EnlaceDeSeccion key={to} to={to} exact={exact} plegada={plegada} titulo={label}>
-                <Icono
-                  className="size-[18px] shrink-0"
-                  fill="currentColor"
-                  fillOpacity={0.18}
-                  strokeWidth={1.75}
-                  aria-hidden={true}
-                />
-                {!plegada && label}
-              </EnlaceDeSeccion>
-            ))}
-
-            {administracion.length > 0 && (
-              <>
-                {/* Plegada, el rótulo no cabe: se queda la raya, que es lo que
-                    de verdad hace falta —decir que lo de abajo es otra cosa—. */}
-                {plegada ? (
-                  <hr className="my-3 border-sidebar-border" />
-                ) : (
-                  <p className="mt-6 mb-1 px-3 text-xs font-semibold text-sidebar-muted">
-                    Administración
-                  </p>
-                )}
-                {administracion.map(({ to, label, Icono, exact }) => (
-                  <EnlaceDeSeccion key={to} to={to} exact={exact} plegada={plegada} titulo={label}>
-                    <Icono
-                      className="size-[18px] shrink-0"
-                      fill="currentColor"
-                      fillOpacity={0.18}
-                      strokeWidth={1.75}
-                      aria-hidden={true}
-                    />
-                    {!plegada && label}
-                  </EnlaceDeSeccion>
-                ))}
-              </>
-            )}
-          </nav>
-
-          {/* Al pie, no en una cabecera aparte: una franja del ancho entero de
-              la pantalla solo para decir con qué cuenta se está dentro es mucha
-              franja. Aquí abajo ocupa un sitio que ya estaba vacío. */}
-          <div className="mt-4 border-t border-sidebar-border pt-3">
-            <MenuDeLaCuenta plegada={plegada} />
-          </div>
-        </aside>
+        <SideRail plegada={shell.plegada} onAlternar={shell.alternarBarra} />
       )}
 
       {/* ── Techo — teléfono ─────────────────────────────────────────────────
           Pegado arriba, que es el momento en el que hace falta que se entienda
           qué capa va encima: por eso la sombra va en el elemento PEGADO y no
           en uno cualquiera. */}
-      {esMovil && !embebida && (
-        <header
-          data-armazon="techo"
-          // La marca SOLA, y centrada. Antes compartía la fila con el botón del
-          // menú, que ya no existe: con un único elemento, dejarlo pegado a la
-          // izquierda deja media franja vacía a su derecha y el techo se lee
-          // como una fila a la que le falta algo. Centrado es una portada.
-          className="sticky top-0 z-20 flex h-16 items-center justify-center bg-sidebar px-4 shadow-[var(--sombra-pegada)]"
-        >
-          <Logo className="h-7 w-auto text-sidebar-active" />
-        </header>
-      )}
+      {esMovil && !embebida && <PhoneTop />}
 
       {/* ── EL HUECO DONDE SE ABRE EL POZO ──────────────────────────────────
           En escritorio esta caja mide EXACTAMENTE la ventana y no se
@@ -358,7 +173,7 @@ export function AppShell() {
           'escritorio:h-dvh escritorio:py-5 escritorio:pr-5',
           // Sin riel —una tableta dentro de la app— el hueco de la izquierda
           // es el mismo que el de los otros tres lados.
-          embebida ? 'escritorio:pl-5' : plegada ? 'escritorio:pl-16' : 'escritorio:pl-56',
+          embebida ? 'escritorio:pl-5' : shell.plegada ? 'escritorio:pl-16' : 'escritorio:pl-56',
         )}
       >
         <main
@@ -424,70 +239,99 @@ export function AppShell() {
         </main>
       </div>
 
-      {esMovil && !embebida && (
-        <>
-          <BarraInferior
-            nombre={usuario?.display_name ?? usuario?.email ?? '?'}
-            busquedaAbierta={busquedaAbierta}
-            onBuscar={() => setBusquedaAbierta(true)}
-            // Directo al gasto, sin menú de por medio: es la única opción viva
-            // de las dos que ofrece el menú de la pantalla ancha.
-            onNuevoGasto={() => setFicha(null)}
-            atajosAbiertos={atajosAbiertos}
-            onAtajos={() => setAtajosAbiertos(true)}
-            cuentaAbierta={cuentaAbierta}
-            onCuenta={() => setCuentaAbierta(true)}
-          />
-
-          {/* Las tres hojas van montadas siempre, abiertas o cerradas: lo que
-              se desliza no se puede reconstruir en cada render, o aparece en
-              vez de llegar. */}
-          <PanelInferior
-            abierto={atajosAbiertos}
-            titulo="Atajos"
-            cabeza={cabeza}
-            onCerrar={() => setAtajosAbiertos(false)}
-          >
-            {cuerpo}
-          </PanelInferior>
-
-          <PanelDeLaCuenta abierto={cuentaAbierta} onCerrar={() => setCuentaAbierta(false)} />
-        </>
-      )}
+      {esMovil && !embebida && <PhoneSheets shell={shell} />}
 
       {/* La búsqueda y la ficha, en el teléfono Y dentro de la app: allí las
           abre la barra nativa a través de `PuenteDeNavegacion`. */}
-      {(esMovil || embebida) && (
-        <>
-          <PanelDeBusqueda
-            abierto={busquedaAbierta}
-            onCerrar={() => setBusquedaAbierta(false)}
-            // Encontrado el movimiento, la búsqueda se acabó: la hoja se cierra
-            // y en su sitio se abre la ficha. Dejarla debajo obligaría a
-            // cerrarla después, y con la ficha encima ya no se ve.
-            onElegir={(movimiento) => {
-              setBusquedaAbierta(false);
-              setFicha(movimiento);
-            }}
-          />
+      {(esMovil || embebida) && <SearchAndSheet shell={shell} />}
 
-          {/* Esta sí se monta al abrirse. No se desliza —entra con la animación
-              de su propio velo, que corre por existir—, y montada siempre
-              tendría sus consultas en pie en todas las pantallas del teléfono. */}
-          {ficha !== undefined && (
-            <MovimientoModal
-              abierta
-              movimiento={ficha}
-              tipoPorDefecto="expense"
-              onCerrar={() => setFicha(undefined)}
-            />
-          )}
-        </>
-      )}
-
-      {embebida && <PuenteDeNavegacion abrirBusqueda={abrirBusqueda} />}
+      {embebida && <PuenteDeNavegacion abrirBusqueda={shell.abrirBusqueda} />}
 
       <PilaDeAvisos />
     </div>
+  );
+}
+
+/** La barra de abajo y sus dos hojas: solo en el teléfono, fuera de la app. */
+function PhoneSheets({ shell }: { shell: ShellState }) {
+  const { usuario } = useAuth();
+  return (
+    <>
+      <BarraInferior
+        nombre={usuario?.display_name ?? usuario?.email ?? '?'}
+        busquedaAbierta={shell.busquedaAbierta}
+        onBuscar={() => shell.setBusquedaAbierta(true)}
+        // Directo al gasto, sin menú de por medio: es la única opción viva
+        // de las dos que ofrece el menú de la pantalla ancha.
+        onNuevoGasto={() => shell.setFicha(null)}
+        atajosAbiertos={shell.atajosAbiertos}
+        onAtajos={() => shell.setAtajosAbiertos(true)}
+        cuentaAbierta={shell.cuentaAbierta}
+        onCuenta={() => shell.setCuentaAbierta(true)}
+      />
+
+      {/* Las tres hojas van montadas siempre, abiertas o cerradas: lo que
+          se desliza no se puede reconstruir en cada render, o aparece en
+          vez de llegar. */}
+      <PanelInferior
+        abierto={shell.atajosAbiertos}
+        titulo="Atajos"
+        cabeza={shell.cabeza}
+        onCerrar={() => shell.setAtajosAbiertos(false)}
+      >
+        {shell.cuerpo}
+      </PanelInferior>
+
+      <PanelDeLaCuenta
+        abierto={shell.cuentaAbierta}
+        onCerrar={() => shell.setCuentaAbierta(false)}
+      />
+    </>
+  );
+}
+
+/** La búsqueda y la ficha del movimiento que el armazón abre. */
+function SearchAndSheet({ shell }: { shell: ShellState }) {
+  return (
+    <>
+      <PanelDeBusqueda
+        abierto={shell.busquedaAbierta}
+        onCerrar={() => shell.setBusquedaAbierta(false)}
+        // Encontrado el movimiento, la búsqueda se acabó: la hoja se cierra
+        // y en su sitio se abre la ficha. Dejarla debajo obligaría a
+        // cerrarla después, y con la ficha encima ya no se ve.
+        onElegir={(movimiento) => {
+          shell.setBusquedaAbierta(false);
+          shell.setFicha(movimiento);
+        }}
+      />
+
+      {/* Esta sí se monta al abrirse. No se desliza —entra con la animación
+          de su propio velo, que corre por existir—, y montada siempre
+          tendría sus consultas en pie en todas las pantallas del teléfono. */}
+      {shell.ficha !== undefined && (
+        <MovimientoModal
+          abierta
+          movimiento={shell.ficha}
+          tipoPorDefecto="expense"
+          onCerrar={() => shell.setFicha(undefined)}
+        />
+      )}
+    </>
+  );
+}
+
+function PhoneTop() {
+  return (
+    <header
+      data-armazon="techo"
+      // La marca SOLA, y centrada. Antes compartía la fila con el botón del
+      // menú, que ya no existe: con un único elemento, dejarlo pegado a la
+      // izquierda deja media franja vacía a su derecha y el techo se lee
+      // como una fila a la que le falta algo. Centrado es una portada.
+      className="sticky top-0 z-20 flex h-16 items-center justify-center bg-sidebar px-4 shadow-[var(--sombra-pegada)]"
+    >
+      <Logo className="h-7 w-auto text-sidebar-active" />
+    </header>
   );
 }

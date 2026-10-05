@@ -7,6 +7,17 @@ import { cn } from '@/shared/lib/utils';
 
 import { Avatar } from './navegacion';
 
+interface BottomBarProps {
+  nombre: string;
+  busquedaAbierta: boolean;
+  onBuscar: () => void;
+  onNuevoGasto: () => void;
+  atajosAbiertos: boolean;
+  onAtajos: () => void;
+  cuentaAbierta: boolean;
+  onCuenta: () => void;
+}
+
 /**
  * La barra de abajo. La forma de llegar a lo del día a día con una mano.
  *
@@ -50,16 +61,7 @@ export function BarraInferior({
   onAtajos,
   cuentaAbierta,
   onCuenta,
-}: {
-  nombre: string;
-  busquedaAbierta: boolean;
-  onBuscar: () => void;
-  onNuevoGasto: () => void;
-  atajosAbiertos: boolean;
-  onAtajos: () => void;
-  cuentaAbierta: boolean;
-  onCuenta: () => void;
-}) {
+}: BottomBarProps) {
   return (
     <nav
       data-armazon="barra"
@@ -91,30 +93,7 @@ export function BarraInferior({
       {/* Ancho fijo: es lo que mantiene el botón en el centro exacto cuando
           los grupos no tienen el mismo número de huecos. */}
       <div className="flex w-[72px] shrink-0 items-start justify-center">
-        <button
-          type="button"
-          onClick={onNuevoGasto}
-          aria-label="Registrar un gasto"
-          className={cn(
-            // Redondo, no baldosa con esquinas: una baldosa se leería como una
-            // más de las que abre, y el único control de la barra que no es un
-            // destino no debería parecer uno de ellos.
-            'grid size-14 place-items-center rounded-full',
-            // 16 por encima de la raya, y quedan 20 de barra por debajo.
-            '-mt-4',
-            // ── El color de la marca, no el acento ───────────────────────
-            // El acento es la superficie de lo que RESPONDE al cursor, no la
-            // de lo que llama; para llamar está el color de la marca, que es
-            // además el que ya lleva el avatar cuando está encendido.
-            'bg-sidebar-active text-sidebar-active-foreground shadow-[var(--sombra-flotante)]',
-            // Pulsado se asienta DENTRO de la barra: el dedo ya lo está
-            // tapando, así que la respuesta tiene que verse alrededor del dedo
-            // y no debajo.
-            'transition-transform duration-[120ms] active:translate-y-[2px]',
-          )}
-        >
-          <Plus className="size-6" strokeWidth={2.25} aria-hidden="true" />
-        </button>
+        <NewExpenseButton onClick={onNuevoGasto} />
       </div>
 
       <div className="flex flex-1">
@@ -125,27 +104,7 @@ export function BarraInferior({
           onClick={onAtajos}
         />
 
-        <button
-          type="button"
-          onClick={onCuenta}
-          aria-label="Mi cuenta"
-          aria-expanded={cuentaAbierta}
-          className="flex h-[60px] min-w-0 flex-1 items-center justify-center"
-        >
-          {/* Apagado va de la superficie tenue de la barra y encendido del
-              color de la marca con su tinta. Nunca al revés: cuando el avatar
-              llevaba el color de la barra, el círculo desaparecía y quedaban
-              unas iniciales sueltas que se leían como el hueco activo. */}
-          <Avatar
-            nombre={nombre}
-            className={cn(
-              'size-8',
-              cuentaAbierta
-                ? 'bg-sidebar-active text-sidebar-active-foreground'
-                : 'bg-sidebar-hover text-sidebar-foreground',
-            )}
-          />
-        </button>
+        <AccountSlot nombre={nombre} abierta={cuentaAbierta} onClick={onCuenta} />
       </div>
     </nav>
   );
@@ -231,6 +190,69 @@ function HuecoDeBoton({
         strokeWidth={1.75}
         aria-hidden={true}
       />
+    </button>
+  );
+}
+
+function AccountSlot({
+  nombre,
+  abierta,
+  onClick,
+}: {
+  nombre: string;
+  abierta: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Mi cuenta"
+      aria-expanded={abierta}
+      className="flex h-[60px] min-w-0 flex-1 items-center justify-center"
+    >
+      {/* Apagado va de la superficie tenue de la barra y encendido del
+          color de la marca con su tinta. Nunca al revés: cuando el avatar
+          llevaba el color de la barra, el círculo desaparecía y quedaban
+          unas iniciales sueltas que se leían como el hueco activo. */}
+      <Avatar
+        nombre={nombre}
+        className={cn(
+          'size-8',
+          abierta
+            ? 'bg-sidebar-active text-sidebar-active-foreground'
+            : 'bg-sidebar-hover text-sidebar-foreground',
+        )}
+      />
+    </button>
+  );
+}
+
+function NewExpenseButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Registrar un gasto"
+      className={cn(
+        // Redondo, no baldosa con esquinas: una baldosa se leería como una
+        // más de las que abre, y el único control de la barra que no es un
+        // destino no debería parecer uno de ellos.
+        'grid size-14 place-items-center rounded-full',
+        // 16 por encima de la raya, y quedan 20 de barra por debajo.
+        '-mt-4',
+        // ── El color de la marca, no el acento ───────────────────────
+        // El acento es la superficie de lo que RESPONDE al cursor, no la
+        // de lo que llama; para llamar está el color de la marca, que es
+        // además el que ya lleva el avatar cuando está encendido.
+        'bg-sidebar-active text-sidebar-active-foreground shadow-[var(--sombra-flotante)]',
+        // Pulsado se asienta DENTRO de la barra: el dedo ya lo está
+        // tapando, así que la respuesta tiene que verse alrededor del dedo
+        // y no debajo.
+        'transition-transform duration-[120ms] active:translate-y-[2px]',
+      )}
+    >
+      <Plus className="size-6" strokeWidth={2.25} aria-hidden="true" />
     </button>
   );
 }
