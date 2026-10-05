@@ -37,9 +37,12 @@
     "verify:clean-install": "bash scripts/verify-clean-install.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "knip": "knip"
+    "knip": "knip",
+    "prepare": "[ -n \"$CI\" ] || [ \"$NODE_ENV\" = production ] || lefthook install || true"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
     "@eslint-react/eslint-plugin": "^5.24.4",
     "@eslint/js": "^10.0.1",
     "dotenv-cli": "^8.0.0",
@@ -50,6 +53,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "knip": "^6.39.0",
+    "lefthook": "^2.1.17",
+    "lint-staged": "^17.6.0",
     "prettier": "^3.9.9",
     "tsx": "~4.20.6",
     "typescript-eslint": "^8.71.1"
