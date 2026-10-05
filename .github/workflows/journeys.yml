@@ -54,6 +54,11 @@ jobs:
       - name: Chromium
         run: npx playwright install --with-deps chromium
 
+      # The API compresses an uploaded PDF with Ghostscript, as on the server;
+      # without it the receipt journey gets a 415.
+      - name: Ghostscript
+        run: sudo apt-get install -y --no-install-recommends ghostscript
+
       - name: Build the API and the web
         run: npm run e2e:build
 
