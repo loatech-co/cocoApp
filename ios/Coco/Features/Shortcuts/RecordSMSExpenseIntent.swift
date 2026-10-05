@@ -3,19 +3,19 @@ import Foundation
 
 /// Lo lanza la automatización «Mensaje» de Atajos con el SMS del banco. En
 /// segundo plano, como el de Wallet. Un texto vacío falla aquí y no se encola.
-struct RegistrarGastoDeSMSIntent: AppIntent {
+struct RecordSMSExpenseIntent: AppIntent {
     static let title: LocalizedStringResource = "Registrar gasto de SMS"
     static let description = IntentDescription("Registra en Coco el gasto que anuncia un SMS del banco.")
     static let openAppWhenRun = false
     static let budget: Duration = .seconds(10)
 
-    @Parameter(title: "Texto") var texto: String
-    @Parameter(title: "Remitente") var remitente: String?
+    @Parameter(title: "Texto") var text: String
+    @Parameter(title: "Remitente") var sender: String?
 
     @Dependency(key: DependencyKeys.capturer) var capturer: any Capturer
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let result = try await Self.run(text: texto, sender: remitente, capturer: capturer)
+        let result = try await Self.run(text: text, sender: sender, capturer: capturer)
         return .result(dialog: ActionParameters.dialog(result))
     }
 

@@ -6,8 +6,8 @@ import Foundation
 /// (`any Capturer`, `any Navigation`); si no coincide, el intent revienta
 /// en ejecución con «dependency not found».
 enum DependencyKeys {
-    static let capturer = "co.loatech.coco.capturador"
-    static let navigation = "co.loatech.coco.navegacion"
+    static let capturer = "co.loatech.coco.capturer"
+    static let navigation = "co.loatech.coco.navigation"
 }
 
 enum IntentDependencies {

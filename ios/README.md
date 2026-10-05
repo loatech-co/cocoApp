@@ -34,7 +34,7 @@ persona hace. Lo que usan varias features sin ser de ninguna va a `Core/`
 | `Coco/Core/Domain` | El cuerpo de una captura, los montos y los protocolos que cruzan features |
 | `Coco/Core/Logging` | `AppLog` (`os.Logger`) |
 | `Coco/Shared` | Fecha de Bogotá, pesos, la marca y la pantalla sin conexión |
-| `CocoAccesos` | Extensión de WidgetKit: control (iOS 18) y widget (iOS 17) |
+| `CocoWidgets` | Extensión de WidgetKit: control (iOS 18) y widget (iOS 17) |
 | `CocoTests` | Pruebas XCTest, con la misma estructura que `Coco/`; los dobles en `Support/` |
 
 ## Convenciones
@@ -44,21 +44,24 @@ Las reglas completas están en `CONTRIBUTING.md`, sección «iOS». En corto:
 - **Formato:** `swift-format` (viene con Xcode) con `.swift-format`. **Reglas:**
   SwiftLint estricto con `.swiftlint.yml`, versión fijada. Los dos corren con
   `bash scripts/lint.sh`, en el `pre-commit` y en el workflow `ios`.
-- **Nombres en inglés** para archivos y tipos. Los miembros todavía en español
-  se pasan feature a feature (pendiente). **Lo que ve la persona, en español.**
-- **Lo que NO se renombra nunca**, porque es contrato con algo de fuera:
-  - los tipos de los App Intents (`RegistrarGastoManualIntent`,
-    `RegistrarGastoDeWalletIntent`, `RegistrarGastoDeSMSIntent`,
-    `AbrirCapturaIntent`), el `AppShortcutsProvider` (`AtajosDeCoco`), sus
-    `@Parameter` y sus títulos: las automatizaciones de Atajos de cada
-    persona los guardan por nombre y se romperían en silencio;
-  - los `kind` del widget y del control, los identificadores de las tareas
-    de fondo y el bundle id;
-  - las claves JSON de la API y las de lo guardado en disco. Las propiedades
-    van en camelCase y la clave se escribe en `CodingKeys`;
-    `StoredFormatCompatibilityTests` falla si una cambia.
+- **Todo identificador en inglés**: archivos, tipos, miembros, los App
+  Intents y sus `@Parameter`, el target `CocoWidgets`, los `kind`, las tareas
+  de fondo, las claves de UserDefaults y Keychain, las carpetas y las claves
+  de lo que se guarda en disco (ADR 0002). **Lo que ve la persona, en
+  español**, incluidas las frases y los títulos de Atajos y Siri.
+- **Lo único en español que no es texto de usuario** es contrato con algo de
+  fuera y no se toca desde aquí:
+  - las claves JSON de la API `v1` (`texto`, `monto`, `clasificacion`…), en
+    `CodingKeys`; pasan a inglés con la `/api/v2`. `APIKeysTests` falla si
+    una cambia. `CaptureBody` va igual a la API y dentro de la cola;
+  - los nombres de los mensajes del puente con la web, que define el
+    frontend.
+- **Lo guardado en disco** usa las claves sintetizadas (los nombres de las
+  propiedades). `StoredFormatTests` las fija, junto con las carpetas, las
+  claves de UserDefaults y Keychain y las tareas de fondo: renombrar una
+  propiedad guardada es una migración, no un refactor.
 - **Textos en el catálogo.** Lo que ve la persona vive en
-  `Coco/Resources/Localizable.xcstrings` (y en el de `CocoAccesos/`, que no
+  `Coco/Resources/Localizable.xcstrings` (y en el de `CocoWidgets/`, que no
   ve los recursos del .app), con clave en inglés (`capture.form.amount`) y
   valor en español, y se pide con `L10n` (`L10n.Capture.formAmount`). Un
   texto nuevo se añade al catálogo, a `L10n` y a
@@ -138,7 +141,7 @@ en git).
    ```
 
 3. Bitácora de la app (subsistema `co.loatech.coco`, categorías `app`,
-   `navegacion`, `sesion`). En zsh `log` es un builtin: usar la ruta entera.
+   `navigation`, `session`). En zsh `log` es un builtin: usar la ruta entera.
 
    ```sh
    /usr/bin/log stream --info --predicate 'subsystem == "co.loatech.coco"' --style compact
@@ -148,8 +151,8 @@ en git).
    web sin techo ni barra; Registrar guarda con la API apagada y Capturas
    enseña «1 pendiente»; Más → Centros de costos abre la ruta en el mismo
    webview; Más → Cerrar sesión vuelve a la ficha de entrar.
-5. Deep links: `xcrun simctl openurl booted coco://capturar/manual` (o
-   `coco://capturar/foto`, `coco://capturas`). iOS pregunta «¿Abrir en Coco?»
+5. Deep links: `xcrun simctl openurl booted coco://capture/manual` (o
+   `coco://capture/photo`, `coco://captures`). iOS pregunta «¿Abrir en Coco?»
    la primera vez que una URL `coco://` llega desde fuera de la app: hay que
    tocar «Abrir». En la bitácora aparece `onOpenURL coco://…` y `ir
    formularioRapido(...)`.
@@ -168,7 +171,7 @@ dispositivo. macOS no trae `timeout`: para acotar la API en el tiempo sirve
 2. `cp Local.xcconfig.example Local.xcconfig` y poner ahí tu Team ID (lo ves
    en Xcode → Settings → Accounts → tu equipo). Si Xcode ya estaba abierto,
    regenerar con `xcodegen generate` o cerrar y abrir el proyecto. Los tres
-   targets (Coco, CocoAccesos, CocoTests) lo heredan; no hace falta tocar
+   targets (Coco, CocoWidgets, CocoTests) lo heredan; no hace falta tocar
    Signing & Capabilities. `Local.xcconfig` está en `.gitignore`: el equipo
    no se versiona ni vive en `project.yml`, y por eso `xcodegen generate`
    no lo borra. (Elegir el equipo a mano en Xcode también funciona, pero se
@@ -186,7 +189,10 @@ avisa con una notificación un día antes y enseña los días que quedan en
 Ajustes. Renovar es conectar el cable y pulsar Run otra vez: la cola, el
 Keychain y los ajustes sobreviven porque el bundle id no cambia.
 
-Límites: 10 App IDs por semana (esta app gasta 3), 3 apps instaladas a la vez
+Límites: 10 App IDs por semana (esta app gasta 3: `co.loatech.coco`,
+`co.loatech.coco.widgets` y `co.loatech.coco.tests`; la extensión se llamó
+`co.loatech.coco.accesos` hasta el paso 7.13d, y el cambio gasta uno más la
+primera vez que se firma), 3 apps instaladas a la vez
 por cuenta gratuita. Sin APNs ni App Groups: no se usan.
 
 ## Las dos automatizaciones de Atajos
@@ -245,8 +251,8 @@ esa prueba desaparece de las rutas que conoce), el puente, el perfil y su
 vencimiento, el enrutador (URLs `coco://` y destinos), la composición
 (`Dependencies` con dobles: registra intents y tareas de fondo, sigue la
 insignia de la cola) y los textos de entrar y Ajustes.
-`StoredFormatCompatibilityTests` fija las claves JSON de la cola, del árbol y
-de los contratos de la API. `ContractsTests` lee `packages/types/src/index.ts`
+`StoredFormatTests` fija las claves de la cola y del árbol, y `APIKeysTests`
+las de los contratos de la API. `ContractsTests` lee `packages/types/src/index.ts`
 y falla si `Brand.userAgentApp` se separa de `USER_AGENT_APP` (en el
 simulador se salta: no puede leer el archivo).
 
@@ -266,6 +272,6 @@ control del Centro de control y el botón de acción.
 - El simulador no tiene cámara: se usa la fototeca.
 - `BGTaskScheduler` no tiene horario garantizado. Para forzarlo en depuración,
   con la app parada en el depurador:
-  `e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"co.loatech.coco.cola"]`.
+  `e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"co.loatech.coco.queue"]`.
 - Si el bundle id ya estuviera tomado por otra cuenta, cambiar `bundleIdPrefix`
   en `project.yml`.

@@ -7,7 +7,7 @@ import WidgetKit
 /// leer la cola, así que no enseña el contador de pendientes; ese número vive
 /// dentro de la app y en la insignia del icono.
 struct CaptureWidget: Widget {
-    static let kind = "co.loatech.coco.widget.captura"
+    static let kind = "co.loatech.coco.widget.capture"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: Self.kind, provider: FixedProvider()) { _ in

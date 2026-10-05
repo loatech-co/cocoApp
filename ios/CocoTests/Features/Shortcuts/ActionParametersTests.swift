@@ -68,7 +68,7 @@ final class ActionParametersTests: XCTestCase {
     func testTheEmptySMSIntentEnqueuesNothing() async {
         let capturer = CapturerDouble()
         do {
-            _ = try await RegistrarGastoDeSMSIntent.run(text: " ", sender: nil, capturer: capturer)
+            _ = try await RecordSMSExpenseIntent.run(text: " ", sender: nil, capturer: capturer)
             XCTFail("debería lanzar")
         } catch {}
         XCTAssertTrue(capturer.received.isEmpty)
@@ -77,7 +77,7 @@ final class ActionParametersTests: XCTestCase {
     func testTheWalletIntentEnqueuesWithWalletSource() async {
         let capturer = CapturerDouble()
         capturer.response = .queued(pending: 1)
-        let r = await RegistrarGastoDeWalletIntent.run(
+        let r = await RecordWalletExpenseIntent.run(
             merchant: "D1", amount: "$45.000", card: "Visa", name: nil, capturer: capturer, now: bogotaNight
         )
         XCTAssertEqual(r, .queued(pending: 1))

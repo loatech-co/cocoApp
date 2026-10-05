@@ -61,8 +61,8 @@ final class CaptureQueueTests: XCTestCase {
         let all = await other.all()
         XCTAssertEqual(all.map(\.id), [id])
         XCTAssertEqual(all.first?.request.externalRef, id.uuidString)
-        XCTAssertEqual(all.first?.photoPath, "Fotos/\(id.uuidString).jpg")
-        XCTAssertEqual(try store.photo(at: "Fotos/\(id.uuidString).jpg"), photo)
+        XCTAssertEqual(all.first?.photoPath, "Photos/\(id.uuidString).jpg")
+        XCTAssertEqual(try store.photo(at: "Photos/\(id.uuidString).jpg"), photo)
     }
 
     func testAFailedWriteLeavesThePreviousJSONIntact() throws {

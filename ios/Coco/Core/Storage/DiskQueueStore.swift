@@ -8,8 +8,8 @@ enum QueueError: Error, Equatable {
     case notEditable(UUID)
 }
 
-/// Un JSON por captura en `Application Support/Cola/<uuid>.json` y la foto en
-/// `Cola/Fotos/<uuid>.jpg`. Escritura atómica: una captura o está entera en
+/// Un JSON por captura en `Application Support/Queue/<uuid>.json` y la foto en
+/// `Queue/Photos/<uuid>.jpg`. Escritura atómica: una captura o está entera en
 /// disco o no está; nunca a medias.
 struct DiskQueueStore: QueueStore {
     let root: URL
@@ -18,17 +18,22 @@ struct DiskQueueStore: QueueStore {
     /// teléfono bloqueado— y nunca a medias.
     private static let options: Data.WritingOptions = [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
 
+    /// Dentro de `Application Support`. Fija su nombre `StoredFormatTests`.
+    static let folderName = "Queue"
+    /// Dentro de la carpeta de la cola.
+    static let photosFolderName = "Photos"
+
     init(root: URL) {
         self.root = root
     }
 
-    /// `Application Support/Cola`, creada y excluida de la copia de iCloud: lo
+    /// `Application Support/Queue`, creada y excluida de la copia de iCloud: lo
     /// que hay aquí se envía en minutos y restaurarlo en otro teléfono
     /// duplicaría gastos.
     static func defaultRoot(fileManager: FileManager = .default) throws -> URL {
         let supportDirectory = try fileManager.url(
             for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        var root = supportDirectory.appending(path: "Cola", directoryHint: .isDirectory)
+        var root = supportDirectory.appending(path: folderName, directoryHint: .isDirectory)
         try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
@@ -36,7 +41,7 @@ struct DiskQueueStore: QueueStore {
         return root
     }
 
-    private var photos: URL { root.appending(path: "Fotos", directoryHint: .isDirectory) }
+    private var photos: URL { root.appending(path: Self.photosFolderName, directoryHint: .isDirectory) }
 
     private func file(_ id: UUID) -> URL {
         root.appending(path: "\(id.uuidString).json")
@@ -100,7 +105,7 @@ struct DiskQueueStore: QueueStore {
 
     func savePhoto(_ jpeg: Data, id: UUID) throws -> String {
         try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
-        let relativePath = "Fotos/\(id.uuidString).jpg"
+        let relativePath = "\(Self.photosFolderName)/\(id.uuidString).jpg"
         try jpeg.write(to: root.appending(path: relativePath), options: Self.options)
         return relativePath
     }

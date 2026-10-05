@@ -28,7 +28,7 @@ final class DependenciesTests: XCTestCase {
             transport: transport,
             keychain: keychain,
             queueStore: DiskQueueStore(root: root),
-            treeStore: DiskTreeStore(file: root.appending(path: "arbol.json")),
+            treeStore: DiskTreeStore(file: root.appending(path: "tree.json")),
             notifier: notifier,
             defaults: defaults,
             registerIntents: { capturer, navigation in registry.intents = (capturer, navigation) },
@@ -108,7 +108,7 @@ final class DependenciesTests: XCTestCase {
             createdAt: "2026-01-01T00:00:00Z")
         XCTAssertEqual(profile.role, "admin")
         let (d, _) = try build()
-        XCTAssertFalse(d.esAdmin)
+        XCTAssertFalse(d.isAdmin)
     }
 }
 

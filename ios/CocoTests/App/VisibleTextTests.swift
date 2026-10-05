@@ -21,17 +21,17 @@ final class VisibleTextTests: XCTestCase {
     }
 
     private static let intentContract =
-        "App Intent: el título, la descripción y los parámetros son contrato con las automatizaciones del usuario"
+        "App Intent: título, descripción y parámetros son lo que se ve en Atajos y Siri, escrito en el intent"
 
     private static let exceptions: [Exception] = [
-        // Contrato con Atajos (ver el traspaso 7.13c): no se tocan.
+        // Texto de usuario de Atajos y Siri: va literal en el intent (ADR 0002).
         .init(
-            file: "Coco/Features/Shortcuts/AtajosDeCoco.swift", text: nil,
-            reason: "Frases de los App Shortcuts: contrato con las automatizaciones del usuario"),
-        .init(file: "Coco/Features/Shortcuts/RegistrarGastoDeSMSIntent.swift", text: nil, reason: intentContract),
-        .init(file: "Coco/Features/Shortcuts/RegistrarGastoDeWalletIntent.swift", text: nil, reason: intentContract),
-        .init(file: "Coco/Features/Shortcuts/RegistrarGastoManualIntent.swift", text: nil, reason: intentContract),
-        .init(file: "CocoAccesos/AbrirCapturaIntent.swift", text: nil, reason: intentContract),
+            file: "Coco/Features/Shortcuts/CocoShortcuts.swift", text: nil,
+            reason: "Frases y títulos de los App Shortcuts: lo que se dice a Siri y se ve en Atajos"),
+        .init(file: "Coco/Features/Shortcuts/RecordSMSExpenseIntent.swift", text: nil, reason: intentContract),
+        .init(file: "Coco/Features/Shortcuts/RecordWalletExpenseIntent.swift", text: nil, reason: intentContract),
+        .init(file: "Coco/Features/Shortcuts/RecordManualExpenseIntent.swift", text: nil, reason: intentContract),
+        .init(file: "CocoWidgets/OpenCaptureIntent.swift", text: nil, reason: intentContract),
         // No los ve el usuario.
         .init(
             file: "Coco/App/Dependencies.swift", text: "sin sesión",
@@ -41,8 +41,8 @@ final class VisibleTextTests: XCTestCase {
             reason: "Nombre del estado de la sesión para el registro"),
         .init(file: "Coco/Core/Networking/APIRequest.swift", text: "Accept", reason: "Cabecera HTTP"),
         .init(file: "Coco/Core/Networking/APIRequest.swift", text: "Authorization", reason: "Cabecera HTTP"),
-        .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Cola", reason: "Carpeta en disco"),
-        .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Fotos", reason: "Carpeta en disco"),
+        .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Queue", reason: "Carpeta en disco"),
+        .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Photos", reason: "Carpeta en disco"),
         .init(
             file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Fecha ilegible: %@",
             reason: "Descripción de un error de decodificación, para depurar"),
@@ -66,7 +66,7 @@ final class VisibleTextTests: XCTestCase {
         var violations: [String] = []
         var used = Set<Int>()
         var scanned = 0
-        for folder in ["Coco", "CocoAccesos"] {
+        for folder in ["Coco", "CocoWidgets"] {
             let root = ios.appending(path: folder)
             let enumerator = try XCTUnwrap(FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil))
             for case let url as URL in enumerator where url.pathExtension == "swift" {
@@ -104,7 +104,7 @@ final class VisibleTextTests: XCTestCase {
             Text("Guardar")
             Button("Nuevo gasto") {}
             log.info("Arranca contra \\(url)")
-            let path = "Fotos/\\(id).jpg"
+            let path = "Photos/\\(id).jpg"
             // Text("comentado")
             """
         let found = SwiftLiterals.scan(source).filter {

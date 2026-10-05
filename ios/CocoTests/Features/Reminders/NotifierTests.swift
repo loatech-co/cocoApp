@@ -83,7 +83,7 @@ final class NotifierTests: XCTestCase {
         await n.queueSent(count: 0)
         let pending = await center.pending()
         XCTAssertEqual(pending.count, 2)
-        XCTAssertEqual(pending.first?.content.userInfo["destino"] as? String, "coco://capturas")
+        XCTAssertEqual(pending.first?.content.userInfo["destination"] as? String, "coco://captures")
         XCTAssertEqual(pending.last?.content.body, "Se enviaron 3 capturas pendientes")
         await n.setBadge(2)
         XCTAssertEqual(center.badge, 2)

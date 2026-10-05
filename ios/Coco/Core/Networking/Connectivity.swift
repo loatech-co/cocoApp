@@ -27,7 +27,7 @@ final class Connectivity {
             let online = path.status == .satisfied
             Task { @MainActor in self?.update(online) }
         }
-        monitor.start(queue: DispatchQueue(label: "co.loatech.coco.red"))
+        monitor.start(queue: DispatchQueue(label: "co.loatech.coco.network"))
     }
 
     func stop() {

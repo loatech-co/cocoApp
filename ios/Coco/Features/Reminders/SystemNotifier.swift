@@ -26,11 +26,11 @@ extension UNUserNotificationCenter: NotificationCenterClient {
 /// Avisos locales. Solo locales: el equipo personal no permite APNs y no hace
 /// falta, todo lo que hay que contar pasa en el propio teléfono.
 struct SystemNotifier: Notifier {
-    static let expiryId = "firma-vence"
-    static let captureCategory = "captura"
-    static let openAction = "abrir"
+    static let expiryId = "signature-expiry"
+    static let captureCategory = "capture"
+    static let openAction = "open"
     /// A dónde lleva el aviso de una captura; lo lee el enrutador.
-    static let captureDestination = "coco://capturas"
+    static let captureDestination = "coco://captures"
 
     let center: NotificationCenterClient
     let clock: @Sendable () -> Date
@@ -69,13 +69,13 @@ struct SystemNotifier: Notifier {
     func captureSaved(_ r: SavedResult, source: CaptureSource) async {
         let text = Self.captureText(r)
         await show(
-            id: "captura-\(r.transactionId)", title: text.title, body: text.body,
+            id: "capture-\(r.transactionId)", title: text.title, body: text.body,
             category: Self.captureCategory)
     }
 
     func captureFailed(reason: String) async {
         await show(
-            id: "captura-fallida-\(UUID().uuidString)", title: L10n.Notifications.captureFailed, body: reason,
+            id: "capture-failed-\(UUID().uuidString)", title: L10n.Notifications.captureFailed, body: reason,
             category: Self.captureCategory)
     }
 
@@ -83,7 +83,7 @@ struct SystemNotifier: Notifier {
         guard count > 0 else { return }
         let body = count == 1 ? L10n.Notifications.queueSentOne : L10n.Notifications.queueSentMany(count)
         await show(
-            id: "cola-enviada", title: L10n.Notifications.queueTitle, body: body, category: Self.captureCategory)
+            id: "queue-sent", title: L10n.Notifications.queueTitle, body: body, category: Self.captureCategory)
     }
 
     /// Un solo aviso con id fijo: programarlo dos veces lo reemplaza.
@@ -111,7 +111,7 @@ struct SystemNotifier: Notifier {
         content.body = body
         content.sound = .default
         content.categoryIdentifier = category
-        content.userInfo = ["destino": Self.captureDestination]
+        content.userInfo = ["destination": Self.captureDestination]
         try? await center.addRequest(UNNotificationRequest(identifier: id, content: content, trigger: nil))
     }
 }

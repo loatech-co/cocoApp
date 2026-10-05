@@ -5,7 +5,7 @@ import WidgetKit
 /// existe, el control (iOS 18). El botón de acción de iOS 17 no pasa por aquí:
 /// lo cubre el App Shortcut «Registrar gasto en Coco» de la app.
 @main
-struct CocoAccesos: WidgetBundle {
+struct CocoWidgets: WidgetBundle {
     var body: some Widget {
         CaptureWidget()
         if #available(iOS 18.0, *) {

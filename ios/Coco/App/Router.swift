@@ -17,8 +17,8 @@ enum Sheet: Identifiable, Equatable {
 
     var id: String {
         switch self {
-        case .welcome: "bienvenida"
-        case .settings: "ajustes"
+        case .welcome: "welcome"
+        case .settings: "settings"
         }
     }
 }
@@ -69,7 +69,7 @@ final class Router: Navigation {
         }
     }
 
-    /// `coco://capturar/manual`, `coco://capturar/foto`, `coco://capturas`.
+    /// `coco://capture/manual`, `coco://capture/photo`, `coco://captures`.
     /// Devuelve `false` si la URL no es de la app.
     @discardableResult
     func open(url: URL) -> Bool {
@@ -88,11 +88,11 @@ final class Router: Navigation {
         let segments = url.path().split(separator: "/").map { $0.lowercased() }
         guard segments.count <= 1 else { return nil }
         switch (host, segments.first) {
-        case ("capturar", nil), ("capturar", "manual"?):
+        case ("capture", nil), ("capture", "manual"?):
             return .quickForm(withCamera: false)
-        case ("capturar", "foto"?):
+        case ("capture", "photo"?):
             return .quickForm(withCamera: true)
-        case ("capturas", nil):
+        case ("captures", nil):
             return .captures
         default:
             return nil

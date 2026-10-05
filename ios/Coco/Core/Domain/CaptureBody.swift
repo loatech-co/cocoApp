@@ -12,8 +12,9 @@ struct CaptureBody: Codable, Equatable, Sendable {
     var categoryId: Int?
     var note: String?
 
-    /// Se escribe en disco dentro de cada captura de la cola: las claves no
-    /// pueden cambiar sin una migración.
+    /// Claves del contrato `v1` con la API: así viaja a `/transactions/interpret`
+    /// y así se guarda dentro de cada captura de la cola. Pasan a inglés con la
+    /// `/api/v2`, no antes.
     enum CodingKeys: String, CodingKey {
         case text = "texto"
         case merchant = "comercio"

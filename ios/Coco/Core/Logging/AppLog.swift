@@ -5,6 +5,6 @@ import os
 enum AppLog {
     static let subsystem = "co.loatech.coco"
     static let app = Logger(subsystem: subsystem, category: "app")
-    static let navigation = Logger(subsystem: subsystem, category: "navegacion")
-    static let session = Logger(subsystem: subsystem, category: "sesion")
+    static let navigation = Logger(subsystem: subsystem, category: "navigation")
+    static let session = Logger(subsystem: subsystem, category: "session")
 }

@@ -30,11 +30,11 @@ final class LocalizationTests: XCTestCase {
 
     private func extensionBundle() throws -> Bundle {
         let plugIns = try XCTUnwrap(Bundle.main.builtInPlugInsURL)
-        return try XCTUnwrap(Bundle(url: plugIns.appending(path: "CocoAccesos.appex")))
+        return try XCTUnwrap(Bundle(url: plugIns.appending(path: "CocoWidgets.appex")))
     }
 
     private static func isExtension(_ entry: Entry) -> Bool {
-        entry.source.hasPrefix("ios/CocoAccesos/")
+        entry.source.hasPrefix("ios/CocoWidgets/")
     }
 
     func testEveryTextKeepsItsValue() throws {

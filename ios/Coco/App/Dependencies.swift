@@ -133,7 +133,7 @@ final class Dependencies {
         }
     }
 
-    var esAdmin: Bool { profile?.role == "admin" }
+    var isAdmin: Bool { profile?.role == "admin" }
 
     var hasSession: Bool {
         switch sessionState {
@@ -185,7 +185,7 @@ final class Dependencies {
         }
     }
 
-    private static let permissionAskedKey = "permiso-de-avisos-pedido"
+    static let permissionAskedKey = "notification-permission-requested"
 
     private func requestNotificationPermissionOnce() async {
         guard !defaults.bool(forKey: Self.permissionAskedKey) else { return }
@@ -215,7 +215,7 @@ final class Dependencies {
 
     private static func defaultTreeStore() -> TreeStore {
         (try? DiskTreeStore.atDefaultLocation())
-            ?? DiskTreeStore(file: FileManager.default.temporaryDirectory.appending(path: "arbol.json"))
+            ?? DiskTreeStore(file: FileManager.default.temporaryDirectory.appending(path: "tree.json"))
     }
 
     private static func name(from state: SessionState) -> String {

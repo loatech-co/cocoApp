@@ -3,7 +3,7 @@ import Foundation
 // Espejo de packages/types/src/index.ts. Las propiedades van en camelCase y
 // cada clave de la API se escribe en su `CodingKeys`, a la vista: una
 // diferencia con la API se ve ahí, no en un `keyDecodingStrategy` que la
-// esconda. `StoredFormatCompatibilityTests` falla si una clave cambia.
+// esconda. `APIKeysTests` falla si una clave cambia.
 
 /// Lo único que la API cuenta de un usuario (`PerfilPublico` de @coco/types).
 struct PublicProfile: Codable, Equatable, Sendable {

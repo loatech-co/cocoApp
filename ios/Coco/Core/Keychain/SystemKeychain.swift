@@ -14,7 +14,9 @@ enum KeychainError: Error, Equatable {
 struct SystemKeychain: KeychainStore {
     let service: String
 
-    init(service: String = "co.loatech.coco") {
+    static let defaultService = "co.loatech.coco"
+
+    init(service: String = defaultService) {
         self.service = service
     }
 

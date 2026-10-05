@@ -2,7 +2,7 @@
 // y pon tu Team ID. Lo ves en Xcode → Settings → Accounts → tu equipo, en la
 // columna de la derecha, o en Signing & Capabilities tras elegirlo.
 //
-// Los tres targets (Coco, CocoAccesos, CocoTests) lo heredan del proyecto.
+// Los tres targets (Coco, CocoWidgets, CocoTests) lo heredan del proyecto.
 // Después de cambiarlo no hace falta regenerar: Xcode lee el xcconfig en
 // cada build. Sí hace falta regenerar (`xcodegen generate`) si se tocó
 // project.yml.
