@@ -61,3 +61,28 @@ describe('ConTooltip', () => {
     expect(screen.queryByRole('tooltip')).toBeNull();
   });
 });
+
+/**
+ * The hint is ANNOUNCED, not only shown: the anchor names it with
+ * `aria-describedby`, and the reference holds before it appears, which is
+ * exactly when a screen reader reaches the anchor.
+ */
+describe('ConTooltip and the screen reader', () => {
+  it('points the anchor at the hint before showing it', () => {
+    const anchor = renderTooltip();
+    const id = anchor.getAttribute('aria-describedby');
+
+    expect(id).toBeTruthy();
+    const hint = document.getElementById(id!);
+    expect(hint?.getAttribute('role')).toBe('tooltip');
+    expect(hint?.textContent).toBe('Pagado con tarjeta');
+  });
+
+  it('is described by the visible hint once focused', () => {
+    const anchor = renderTooltip();
+
+    fireEvent.focus(anchor);
+
+    expect(screen.getByRole('tooltip').id).toBe(anchor.getAttribute('aria-describedby'));
+  });
+});

@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Alert, AlertDescription, AlertTitle } from './alert';
+import { Alert, AlertDescription, AlertTitle, ErrorAlert } from './alert';
 
 afterEach(cleanup);
 
@@ -46,5 +46,29 @@ describe('Alert', () => {
     const status = screen.getByRole('status');
     expect(status.className).toContain('text-warning');
     expect(status.className).not.toContain('destructive');
+  });
+});
+
+describe('ErrorAlert', () => {
+  it('says what failed and lists what explains it', () => {
+    render(
+      <ErrorAlert
+        mensaje="La contraseña no cumple."
+        detalles={['Doce caracteres.', 'Un número.']}
+      />,
+    );
+
+    const aviso = screen.getByRole('alert');
+    expect(aviso.textContent).toContain('La contraseña no cumple.');
+    expect(Array.from(aviso.querySelectorAll('li'), (li) => li.textContent)).toEqual([
+      'Doce caracteres.',
+      'Un número.',
+    ]);
+  });
+
+  it('is a plain error without details', () => {
+    render(<ErrorAlert mensaje="Algo falló." />);
+
+    expect(screen.getByRole('alert').querySelector('ul')).toBeNull();
   });
 });

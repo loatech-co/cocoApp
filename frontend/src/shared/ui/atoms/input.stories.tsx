@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Eye, Mail, Search, X } from 'lucide-react';
+import { Eye, Mail, Plus, Search, X } from 'lucide-react';
 
 import { Button } from './button';
-import { Input } from './input';
+import { FieldAction, Input } from './input';
 
 const meta = {
   title: 'Atoms/Input',
@@ -60,3 +60,18 @@ export const Invalid: Story = { args: { 'aria-invalid': true, defaultValue: 'Mer
 
 /** Rule 18: one pixel of ring colour, only with `:focus-visible`. */
 export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: ['input'] } } };
+
+/** An action inside the field, on the right: `FieldAction`. */
+export const WithFieldAction: Story = {
+  args: {
+    placeholder: 'Escribe y pulsa agregar',
+    acciones: [
+      <FieldAction
+        key="agregar"
+        Icono={Plus}
+        etiqueta="Agregar la palabra clave"
+        pista="Agregar"
+      />,
+    ],
+  },
+};

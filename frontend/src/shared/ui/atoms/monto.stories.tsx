@@ -6,8 +6,8 @@ import { Monto, Saldo } from './monto';
 const meta = {
   title: 'Atoms/Monto',
   component: Monto,
-  args: { amount: '123456', type: 'expense', soloTexto: false },
-  argTypes: { type: { control: 'inline-radio', options: ['income', 'expense', 'transfer'] } },
+  args: { amount: '123456', sentido: 'sale', soloTexto: false },
+  argTypes: { sentido: { control: 'inline-radio', options: ['entra', 'sale', 'mueve'] } },
 } satisfies Meta<typeof Monto>;
 
 export default meta;
@@ -19,9 +19,9 @@ export const Playground: Story = {};
 export const Types: Story = {
   render: () => (
     <div className="flex flex-col gap-2">
-      <Monto amount="123456" type="income" />
-      <Monto amount="123456" type="expense" />
-      <Monto amount="123456" type="transfer" />
+      <Monto amount="123456" sentido="entra" />
+      <Monto amount="123456" sentido="sale" />
+      <Monto amount="123456" sentido="mueve" />
     </div>
   ),
 };

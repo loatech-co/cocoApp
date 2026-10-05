@@ -28,3 +28,6 @@ export const FocusVisible: Story = {
   args: { defaultChecked: true },
   parameters: { pseudo: { focusVisible: ['input'] } },
 };
+
+/** Saving on change: the knob spins and the switch cannot be pressed again. */
+export const Loading: Story = { args: { defaultChecked: true, cargando: true } };

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { Alert, AlertDescription, AlertTitle } from './alert';
+import { Alert, AlertDescription, AlertTitle, ErrorAlert } from './alert';
 
 const TONES = ['default', 'destructive', 'warning', 'success', 'info'] as const;
 
@@ -42,5 +42,15 @@ export const WithoutTitle: Story = {
     <Alert {...args}>
       <AlertDescription>Solo el detalle, sin titular.</AlertDescription>
     </Alert>
+  ),
+};
+
+/** What failed and, under it, each thing that explains it. */
+export const ErrorWithDetails: Story = {
+  render: () => (
+    <ErrorAlert
+      mensaje="La contraseña no cumple la política."
+      detalles={['Al menos 12 caracteres.', 'Al menos un número.']}
+    />
   ),
 };

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Pencil, ShoppingCart, Trash2 } from 'lucide-react';
 
-import { CabeceraDeModal, PANEL_DE_MODAL, PieDeModal } from './modal-partes';
+import { CabeceraDeModal, CuerpoDeModal, PANEL_DE_MODAL, PieDeModal } from './modal-partes';
 import { Button } from '../atoms/button';
 import { ChipIcono } from '../atoms/chip-icono';
 
@@ -53,5 +53,21 @@ export const Footer: Story = {
       <Button variant="outline">Cancelar</Button>
       <Button>Registrar</Button>
     </PieDeModal>
+  ),
+};
+
+/** Header, scrolling body and footer, inside the 720px panel. */
+export const WithBody: Story = {
+  render: () => (
+    <div className={`${PANEL_DE_MODAL} rounded-lg bg-popover`}>
+      <CabeceraDeModal titulo="Nuevo concepto" onCerrar={() => undefined} />
+      <CuerpoDeModal>
+        <p className="text-sm text-muted-foreground">El formulario va aquí.</p>
+        <PieDeModal>
+          <Button variant="outline">Cancelar</Button>
+          <Button>Guardar</Button>
+        </PieDeModal>
+      </CuerpoDeModal>
+    </div>
   ),
 };

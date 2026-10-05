@@ -22,14 +22,14 @@ describe('Monto', () => {
   });
 
   it('reads an income with a plus sign', () => {
-    const { container } = render(<Monto amount={AMOUNT} type="income" />);
+    const { container } = render(<Monto amount={AMOUNT} sentido="entra" />);
 
     expect(container.textContent).toBe(`Ingreso: +${formatMoney(AMOUNT, 'COP')}`);
     expect(container.firstElementChild!.className).toContain('text-income');
   });
 
   it('reads a transfer without a sign, in the muted colour', () => {
-    const { container } = render(<Monto amount={AMOUNT} type="transfer" currency="USD" />);
+    const { container } = render(<Monto amount={AMOUNT} sentido="mueve" currency="USD" />);
 
     expect(container.textContent).toBe(`Transferencia: ${formatMoney(AMOUNT, 'USD')}`);
     expect(container.firstElementChild!.className).toContain('text-muted-foreground');

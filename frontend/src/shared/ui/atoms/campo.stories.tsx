@@ -29,9 +29,16 @@ export const Filled: Story = {
   ),
 };
 
-/** The label floats up and takes the ring colour only with `:focus-visible`. */
+/**
+ * The label floats up and takes the ring colour only with `:focus-visible`.
+ *
+ * `focus` too: the placeholder comes back with `:focus` (`input.tsx`), and a
+ * real browser never has `:focus-visible` without `:focus`. Simulating only
+ * the first left the placeholder transparent under the raised label, which
+ * read as a bug of the component; in a browser it shows in both themes.
+ */
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: ['input'], focusWithin: ['.campo'] } },
+  parameters: { pseudo: { focus: ['input'], focusVisible: ['input'], focusWithin: ['.campo'] } },
 };
 
 export const WithHelp: Story = {

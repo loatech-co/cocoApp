@@ -6,9 +6,9 @@ import { Monto } from '../atoms/monto';
 
 /** Made-up rows: the catalogue never shows real data. */
 const ROWS = [
-  { id: 1, name: 'Mercado', centre: 'Hogar', amount: '85000', type: 'expense' as const },
-  { id: 2, name: 'Arriendo', centre: 'Costos fijos', amount: '900000', type: 'expense' as const },
-  { id: 3, name: 'Salario', centre: 'Ingresos', amount: '3000000', type: 'income' as const },
+  { id: 1, name: 'Mercado', centre: 'Hogar', amount: '85000', sentido: 'sale' as const },
+  { id: 2, name: 'Arriendo', centre: 'Costos fijos', amount: '900000', sentido: 'sale' as const },
+  { id: 3, name: 'Salario', centre: 'Ingresos', amount: '3000000', sentido: 'entra' as const },
 ];
 
 function Demo() {
@@ -33,7 +33,7 @@ function Demo() {
             <Td fija>{row.name}</Td>
             <Td>{row.centre}</Td>
             <Td alineado="derecha">
-              <Monto amount={row.amount} type={row.type} />
+              <Monto amount={row.amount} sentido={row.sentido} />
             </Td>
           </Tr>
         ))}

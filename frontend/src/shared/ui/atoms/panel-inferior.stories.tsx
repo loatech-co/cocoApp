@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 
 import { Button } from './button';
-import { FILA_DE_PANEL, PanelInferior } from './panel-inferior';
+import { PanelInferior } from './panel-inferior';
+import { PanelRow } from './panel-row';
 
 function Sheet({ startOpen }: { startOpen: boolean }) {
   const [open, setOpen] = useState(startOpen);
@@ -13,14 +14,9 @@ function Sheet({ startOpen }: { startOpen: boolean }) {
       </Button>
       <PanelInferior abierto={open} titulo="Opciones" onCerrar={() => setOpen(false)}>
         {['Editar', 'Duplicar', 'Eliminar'].map((option) => (
-          <button
-            key={option}
-            type="button"
-            className={FILA_DE_PANEL}
-            onClick={() => setOpen(false)}
-          >
+          <PanelRow key={option} onClick={() => setOpen(false)}>
             {option}
-          </button>
+          </PanelRow>
         ))}
       </PanelInferior>
     </>

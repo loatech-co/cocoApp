@@ -41,4 +41,18 @@ describe('Interruptor', () => {
     expect(track).toContain('peer-focus-visible:ring-2');
     expect(track).not.toMatch(/peer-focus:/);
   });
+
+  it('spins and cannot be pressed again while it saves', () => {
+    render(<Interruptor aria-label="Ajuste" cargando defaultChecked />);
+
+    const interruptor = screen.getByRole('switch', { name: 'Ajuste' });
+    expect(interruptor).toHaveProperty('disabled', true);
+    expect(interruptor.parentElement!.querySelector('.animate-spin')).not.toBeNull();
+  });
+
+  it('lets an explicit disabled win over the saving state', () => {
+    render(<Interruptor aria-label="Ajuste" cargando disabled={false} />);
+
+    expect(screen.getByRole('switch', { name: 'Ajuste' })).toHaveProperty('disabled', false);
+  });
 });
