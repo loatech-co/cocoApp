@@ -29,15 +29,15 @@ final class RouterTests: XCTestCase {
 
     func testAbrirCambiaLaPestanaYRenuevaElFormulario() throws {
         let e = Router()
-        let antes = e.formulario.generacion
+        let before = e.formulario.generacion
         XCTAssertTrue(e.abrir(url: try url("coco://capturar/foto")))
         XCTAssertEqual(e.pestana, .register)
         XCTAssertTrue(e.formulario.withCamera)
-        XCTAssertEqual(e.formulario.generacion, antes + 1)
+        XCTAssertEqual(e.formulario.generacion, before + 1)
 
         XCTAssertTrue(e.abrir(url: try url("coco://capturar/manual")))
         XCTAssertFalse(e.formulario.withCamera)
-        XCTAssertEqual(e.formulario.generacion, antes + 2, "cada petición es un formulario nuevo")
+        XCTAssertEqual(e.formulario.generacion, before + 2, "cada petición es un formulario nuevo")
 
         XCTAssertTrue(e.abrir(url: try url("coco://capturas")))
         XCTAssertEqual(e.pestana, .captures)

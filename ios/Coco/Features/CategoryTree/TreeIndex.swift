@@ -6,7 +6,9 @@ import Foundation
 /// por dónde se capture.
 
 enum TreeLevel: String, Codable, Sendable {
-    case centro, categoria, concepto
+    case centro = "centro"
+    case categoria = "categoria"
+    case concept = "concepto"
 }
 
 /// Un nodo del árbol, aplanado y listo para comparar.
@@ -32,14 +34,14 @@ struct TreeIndex: Sendable {
     let entradas: [IndexEntry]
 
     /// Aplana los tres niveles. Lo archivado no entra, ni lo que cuelga de ello.
-    init(raices: [TreeNode]) {
+    init(roots: [TreeNode]) {
         var entradas: [IndexEntry] = []
-        for centro in raices where !centro.isArchived {
-            entradas.append(Self.entrada(centro, nivel: .centro, centro: centro))
+        for centro in roots where !centro.isArchived {
+            entradas.append(Self.entry(centro, nivel: .centro, centro: centro))
             for categoria in centro.children ?? [] where !categoria.isArchived {
-                entradas.append(Self.entrada(categoria, nivel: .categoria, centro: centro))
-                for concepto in categoria.children ?? [] where !concepto.isArchived {
-                    entradas.append(Self.entrada(concepto, nivel: .concepto, centro: centro, categoria: categoria))
+                entradas.append(Self.entry(categoria, nivel: .categoria, centro: centro))
+                for concept in categoria.children ?? [] where !concept.isArchived {
+                    entradas.append(Self.entry(concept, nivel: .concept, centro: centro, categoria: categoria))
                 }
             }
         }
@@ -48,7 +50,7 @@ struct TreeIndex: Sendable {
 
     /// `categoria` solo para un concepto: es de donde cuelga. El camino va del
     /// más cercano al más lejano, y un centro no cuelga de nada.
-    private static func entrada(
+    private static func entry(
         _ nodo: TreeNode, nivel: TreeLevel, centro: TreeNode, categoria: TreeNode? = nil
     ) -> IndexEntry {
         let path = nivel == .centro ? [] : [categoria?.name, centro.name].compactMap { $0 }
@@ -68,7 +70,7 @@ struct TreeIndex: Sendable {
     /// Vacío devuelve vacío: lo que se enseña con el buscador en blanco lo
     /// decide quien llama. Los centros no salen por defecto: elegir uno no
     /// clasifica nada.
-    func search(_ query: String, niveles: Set<TreeLevel> = [.concepto, .categoria], limite: Int = 20)
+    func search(_ query: String, niveles: Set<TreeLevel> = [.concept, .categoria], limit: Int = 20)
         -> [IndexEntry]
     {
         let tokens = Self.normalize(query).split(separator: " ").map(String.init)
@@ -89,11 +91,11 @@ struct TreeIndex: Sendable {
                 if order != .orderedSame { return order == .orderedAscending }
                 return a.0.id < b.0.id
             }
-            .prefix(limite)
+            .prefix(limit)
             .map { $0.0 }
     }
 
-    func entrada(id: Int) -> IndexEntry? {
+    func entry(id: Int) -> IndexEntry? {
         entradas.first { $0.id == id }
     }
 
@@ -139,7 +141,7 @@ struct TreeIndex: Sendable {
 extension TreeLevel {
     fileprivate var peso: Int {
         switch self {
-        case .concepto: 2
+        case .concept: 2
         case .categoria: 1
         case .centro: 0
         }

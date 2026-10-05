@@ -57,9 +57,9 @@ final class ExpiryReminderTests: XCTestCase {
 
     func testTextosEnEspanolSinMayusculasSostenidas() throws {
         let t = ExpiryReminder.text(expiresAt: try date(2026, 10, 6, 12), now: try date(2026, 10, 5, 12))
-        XCTAssertEqual(t.titulo, "Tu instalación de Coco caduca mañana")
+        XCTAssertEqual(t.title, "Tu instalación de Coco caduca mañana")
         XCTAssertEqual(t.body, "Vuelve a instalarla desde Xcode con el cable.")
-        for text in [t.titulo, t.body] {
+        for text in [t.title, t.body] {
             XCTAssertNotEqual(text, text.uppercased())
         }
     }

@@ -9,7 +9,7 @@ final class DependenciesTests: XCTestCase {
     private var root: URL = URL(fileURLWithPath: "/")
 
     override func setUpWithError() throws {
-        root = try TemporaryDirectory.directorio()
+        root = try TemporaryDirectory.directory()
     }
 
     override func tearDownWithError() throws {
@@ -31,7 +31,7 @@ final class DependenciesTests: XCTestCase {
             almacenDelArbol: DiskTreeStore(file: root.appending(path: "arbol.json")),
             notifier: notifier,
             defaults: defaults,
-            registrarIntents: { capturador, navigation in registry.intents = (capturador, navigation) },
+            registrarIntents: { capturer, navigation in registry.intents = (capturer, navigation) },
             registrarTareas: { session, queue, tree, notifier in
                 registry.tareas = .init(session: session, queue: queue, tree: tree, notifier: notifier)
             }
@@ -81,9 +81,9 @@ final class DependenciesTests: XCTestCase {
         }
         XCTAssertEqual(d.estadoDeSesion, .signedOut)
         XCTAssertFalse(d.haySesion)
-        XCTAssertNil(d.perfil)
+        XCTAssertNil(d.profile)
         XCTAssertEqual(
-            transport.recibidas.filter { $0.url?.path.hasPrefix("/api/v1") == true }, [],
+            transport.received.filter { $0.url?.path.hasPrefix("/api/v1") == true }, [],
             "sin refresh no hay nada que renovar")
         await d.arrancar()
         XCTAssertTrue(d.arrancada, "arrancar dos veces no vuelve a hacer nada")
@@ -93,20 +93,20 @@ final class DependenciesTests: XCTestCase {
         let notifier = NotifierDouble()
         let (d, _) = try construir(notifier: notifier)
         XCTAssertEqual(d.pending, 0)
-        try await d.queue.encolar(
+        try await d.queue.enqueue(
             CaptureBody(merchant: "D1", amount: "1000", date: "2026-10-05"), source: .iosManual, photo: nil)
         for _ in 0..<50 where d.pending == 0 {
             try await Task.sleep(for: .milliseconds(20))
         }
         XCTAssertEqual(d.pending, 1)
-        XCTAssertEqual(notifier.insignias.last, 1, "el notificador real también recibe la cuenta")
+        XCTAssertEqual(notifier.badges.last, 1, "el notificador real también recibe la cuenta")
     }
 
     func testEsAdminSoloConElRol() throws {
-        let perfil = PublicProfile(
+        let profile = PublicProfile(
             id: 1, email: "a@coco.test", displayName: nil, role: "admin", status: "active",
             createdAt: "2026-01-01T00:00:00Z")
-        XCTAssertEqual(perfil.role, "admin")
+        XCTAssertEqual(profile.role, "admin")
         let (d, _) = try construir()
         XCTAssertFalse(d.esAdmin)
     }

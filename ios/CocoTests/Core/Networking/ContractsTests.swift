@@ -65,9 +65,9 @@ final class ContractsTests: XCTestCase {
             {"data":[{"id":1,"name":"Hogar","parent_id":null,"kind":"expense","is_archived":false,"estatico":false,
               "children":[{"id":2,"name":"Aseo","parent_id":1,"palabras_clave":["jabón"],"is_archived":false,"estatico":false,"children":null}]}]}
             """
-        let raices = try decodificar([TreeNode].self, json)
-        XCTAssertEqual(raices.first?.keywords, [])
-        XCTAssertEqual(raices.first?.children?.first?.keywords, ["jabón"])
+        let roots = try decodificar([TreeNode].self, json)
+        XCTAssertEqual(roots.first?.keywords, [])
+        XCTAssertEqual(roots.first?.children?.first?.keywords, ["jabón"])
     }
 
     func testErrorDeLaAPI() throws {

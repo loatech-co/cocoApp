@@ -48,9 +48,9 @@ struct SystemKeychain: KeychainStore {
         let updated = SecItemUpdate(base(key) as CFDictionary, changes as CFDictionary)
         if updated == errSecSuccess { return }
         guard updated == errSecItemNotFound else { throw KeychainError.system(updated) }
-        var nuevo = base(key)
-        nuevo.merge(changes) { _, recent in recent }
-        let added = SecItemAdd(nuevo as CFDictionary, nil)
+        var newItem = base(key)
+        newItem.merge(changes) { _, recent in recent }
+        let added = SecItemAdd(newItem as CFDictionary, nil)
         guard added == errSecSuccess else { throw KeychainError.system(added) }
     }
 

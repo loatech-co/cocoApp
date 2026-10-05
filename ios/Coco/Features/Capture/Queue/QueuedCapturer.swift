@@ -13,7 +13,7 @@ struct QueuedCapturer: Capturer {
     {
         let id = UUID()
         do {
-            try await queue.encolar(body, source: source, photo: photo, id: id)
+            try await queue.enqueue(body, source: source, photo: photo, id: id)
         } catch QueueError.photosFull {
             let reason = "No hay espacio para más fotos pendientes. Captura sin foto o espera a que se envíen."
             await notifier.captureFailed(reason: reason)
@@ -24,8 +24,8 @@ struct QueuedCapturer: Capturer {
             return .failed(reason: reason)
         }
         await queue.process(budget: budget)
-        switch await queue.capture(id: id)?.fase {
-        case .hecha(let r): return .sent(r)
+        switch await queue.capture(id: id)?.phase {
+        case .done(let r): return .sent(r)
         case .failed(let reason): return .failed(reason: reason)
         default: return .queued(pending: await queue.pending())
         }

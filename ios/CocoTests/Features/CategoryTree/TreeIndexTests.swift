@@ -37,23 +37,23 @@ final class TreeIndexTests: XCTestCase {
             ]),
     ]
 
-    private let indice = TreeIndex(raices: tree)
+    private let index = TreeIndex(roots: tree)
 
     // MARK: Indexar
 
     func testAplanaLosTresNivelesConSuCamino() throws {
-        let mercado = try XCTUnwrap(indice.entrada(id: 200))
-        XCTAssertEqual(mercado.nivel, .concepto)
+        let mercado = try XCTUnwrap(index.entry(id: 200))
+        XCTAssertEqual(mercado.nivel, .concept)
         XCTAssertEqual(mercado.path, ["Alimentación", "Costos variables"])
         XCTAssertEqual(mercado.categoriaId, 20)
         XCTAssertEqual(mercado.centroId, 2)
         XCTAssertEqual(mercado.rutaLegible, "Alimentación › Costos variables")
         XCTAssertFalse(mercado.isStatic)
-        XCTAssertEqual(indice.entradas.count, 11)
+        XCTAssertEqual(index.entradas.count, 11)
     }
 
     func testUnaCategoriaSoloLlevaSuCentroEnElCamino() throws {
-        let alimentacion = try XCTUnwrap(indice.entrada(id: 20))
+        let alimentacion = try XCTUnwrap(index.entry(id: 20))
         XCTAssertEqual(alimentacion.nivel, .categoria)
         XCTAssertEqual(alimentacion.path, ["Costos variables"])
         XCTAssertNil(alimentacion.categoriaId)
@@ -63,14 +63,14 @@ final class TreeIndexTests: XCTestCase {
     func testElegirUnConceptoCompletaCategoriaYCentroYDiceSiEsEstatico() throws {
         // Elegir «Celsia» tiene que dejar listos categoría y centro sin otra
         // búsqueda, y avisar de que el centro es estático.
-        let celsia = try XCTUnwrap(indice.entrada(id: 100))
+        let celsia = try XCTUnwrap(index.entry(id: 100))
         XCTAssertEqual(celsia.categoriaId, 10)
         XCTAssertEqual(celsia.centroId, 1)
         XCTAssertTrue(celsia.isStatic)
     }
 
     func testExcluyeLoArchivadoYLoQueCuelgaDeEllo() {
-        let conArchivados = TreeIndex(raices: [
+        let conArchivados = TreeIndex(roots: [
             TreeNode(
                 id: 1, name: "Centro", parentId: nil,
                 children: [
@@ -93,23 +93,23 @@ final class TreeIndexTests: XCTestCase {
     // MARK: Buscar
 
     func testEncuentraPorNombreSinTildesNiMayusculas() {
-        XCTAssertEqual(indice.search("educacion").map(\.name), ["Educación"])
-        XCTAssertEqual(indice.search("CELSIA").map(\.id), [100])
+        XCTAssertEqual(index.search("educacion").map(\.name), ["Educación"])
+        XCTAssertEqual(index.search("CELSIA").map(\.id), [100])
     }
 
     func testEncuentraPorPalabraClave() {
         // Es la razón de que exista: lo que dice el recibo no es el nombre del
         // concepto, es lo que alguien escribió como palabra clave.
-        XCTAssertEqual(indice.search("d1").map(\.id), [200])
-        XCTAssertEqual(indice.search("koba").map(\.id), [200])
+        XCTAssertEqual(index.search("d1").map(\.id), [200])
+        XCTAssertEqual(index.search("koba").map(\.id), [200])
     }
 
     func testElNombreExactoGanaAlQueEmpiezaYEseAlQueContiene() {
-        XCTAssertEqual(indice.search("mercado").map(\.name), ["Mercado", "Supermercado"])
+        XCTAssertEqual(index.search("mercado").map(\.name), ["Mercado", "Supermercado"])
     }
 
     func testAIgualParecidoElConceptoAntesQueLaCategoria() {
-        let conConcepto = TreeIndex(raices: [
+        let conConcepto = TreeIndex(roots: [
             TreeNode(
                 id: 3, name: "Centro", parentId: nil,
                 children: [
@@ -120,26 +120,26 @@ final class TreeIndexTests: XCTestCase {
                         ])
                 ])
         ])
-        XCTAssertEqual(conConcepto.search("transporte").map(\.nivel), [.concepto, .categoria])
+        XCTAssertEqual(conConcepto.search("transporte").map(\.nivel), [.concept, .categoria])
     }
 
     func testConVariasPalabrasTodasTienenQueEncontrarse() {
-        XCTAssertEqual(indice.search("mercado d1").map(\.id), [200])
-        XCTAssertEqual(indice.search("mercado zzz"), [])
+        XCTAssertEqual(index.search("mercado d1").map(\.id), [200])
+        XCTAssertEqual(index.search("mercado zzz"), [])
     }
 
     func testVacioDevuelveVacio() {
-        XCTAssertEqual(indice.search(""), [])
-        XCTAssertEqual(indice.search("   "), [])
+        XCTAssertEqual(index.search(""), [])
+        XCTAssertEqual(index.search("   "), [])
     }
 
     func testNoDevuelveCentrosPorDefecto() {
-        XCTAssertEqual(indice.search("costos"), [])
-        XCTAssertEqual(indice.search("costos", niveles: [.centro]).map(\.name), ["Costos fijos", "Costos variables"])
+        XCTAssertEqual(index.search("costos"), [])
+        XCTAssertEqual(index.search("costos", niveles: [.centro]).map(\.name), ["Costos fijos", "Costos variables"])
     }
 
     func testRespetaElLimite() {
-        XCTAssertEqual(indice.search("a", limite: 2).count, 2)
+        XCTAssertEqual(index.search("a", limit: 2).count, 2)
     }
 
     // MARK: Normalizar

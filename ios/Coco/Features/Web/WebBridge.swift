@@ -5,7 +5,7 @@ import WebKit
 
 enum LoadState: Equatable {
     case loading
-    case lista
+    case list
     case failure(URLError.Code)
     /// La web pidió sesión otra vez después de dos entregas seguidas: algo
     /// del lado web no la acepta y sondear no lo arregla.
@@ -54,7 +54,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     private let session: Session
     private let configuration: APIConfiguration
     private let navigation: any Navigation
-    private let reloj: @Sendable () -> Date
+    private let clock: @Sendable () -> Date
     private let abrirExterno: (URL) -> Void
 
     private var ultimaEntrega: Date?
@@ -65,13 +65,13 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         configuration: APIConfiguration,
         navigation: any Navigation,
         version: String = Brand.version,
-        reloj: @Sendable @escaping () -> Date = Date.init,
+        clock: @Sendable @escaping () -> Date = Date.init,
         abrirExterno: @escaping (URL) -> Void = { UIApplication.shared.open($0) }
     ) {
         self.session = session
         self.configuration = configuration
         self.navigation = navigation
-        self.reloj = reloj
+        self.clock = clock
         self.abrirExterno = abrirExterno
 
         let conf = WKWebViewConfiguration()
@@ -136,15 +136,15 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     }
 
     private func load(path: String) {
-        let limpia = path.hasPrefix("/") ? String(path.dropFirst()) : path
-        webView.load(URLRequest(url: configuration.base.appending(path: limpia)))
+        let trimmed = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        webView.load(URLRequest(url: configuration.base.appending(path: trimmed)))
     }
 
     // MARK: Sesión hacia la web
 
     /// `window.__coco.recibirSesion({...})` como mucho una vez cada 30 s.
     func empujarSesion() async {
-        let now = reloj()
+        let now = clock()
         guard Self.debeEntregar(last: ultimaEntrega, now: now, entregasSeguidas: entregasSeguidas) else {
             if entregasSeguidas >= Self.entregasMaximasSeguidas { estadoDeCarga = .sesionWebAtascada }
             return
@@ -263,7 +263,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
         hayDocumento = true
-        estadoDeCarga = .lista
+        estadoDeCarga = .list
         // Documento nuevo: la cuenta de entregas seguidas vuelve a cero.
         entregasSeguidas = 0
     }

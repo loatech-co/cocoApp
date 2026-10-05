@@ -5,47 +5,47 @@ import SwiftUI
 /// arriba. Cada fila muestra la ruta para distinguir «Mercado» de «Mercado
 /// de la oficina».
 struct ConceptSearchView: View {
-    @Bindable var modelo: FormModel
+    @Bindable var model: FormModel
     @Environment(\.dismiss) private var dismiss
 
-    init(modelo: FormModel) {
-        self.modelo = modelo
+    init(model: FormModel) {
+        self.model = model
     }
 
-    private var consultaVacia: Bool {
-        modelo.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    private var isQueryEmpty: Bool {
+        model.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
         NavigationStack {
             List {
-                if modelo.indice == nil {
+                if model.index == nil {
                     Text("Los conceptos aún no se han descargado. Guarda igual: la captura queda por clasificar.")
                         .foregroundStyle(.secondary)
                 }
-                if consultaVacia, !modelo.candidates.isEmpty {
+                if isQueryEmpty, !model.candidates.isEmpty {
                     Section {
-                        ForEach(modelo.candidates, content: fila)
+                        ForEach(model.candidates, content: row)
                     } header: {
                         Text("Propuestos por el recibo").textCase(nil)
                     }
                 }
-                if !modelo.resultados.isEmpty {
+                if !model.results.isEmpty {
                     Section {
-                        ForEach(modelo.resultados, content: fila)
+                        ForEach(model.results, content: row)
                     } header: {
-                        Text(consultaVacia ? "Recientes" : "Resultados").textCase(nil)
+                        Text(isQueryEmpty ? "Recientes" : "Resultados").textCase(nil)
                     }
-                } else if !consultaVacia {
-                    ContentUnavailableView.search(text: modelo.query)
+                } else if !isQueryEmpty {
+                    ContentUnavailableView.search(text: model.query)
                 }
             }
             .searchable(
-                text: $modelo.query, placement: .navigationBarDrawer(displayMode: .always),
+                text: $model.query, placement: .navigationBarDrawer(displayMode: .always),
                 prompt: "Nombre o palabra clave"
             )
-            .onChange(of: modelo.query) { _, nueva in modelo.search(nueva) }
-            .task { modelo.search(modelo.query) }
+            .onChange(of: model.query) { _, newQuery in model.search(newQuery) }
+            .task { model.search(model.query) }
             .navigationTitle("Concepto")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -56,14 +56,14 @@ struct ConceptSearchView: View {
         }
     }
 
-    private func fila(_ entrada: IndexEntry) -> some View {
+    private func row(_ entry: IndexEntry) -> some View {
         Button {
-            modelo.elegir(entrada)
+            model.choose(entry)
             dismiss()
         } label: {
             VStack(alignment: .leading, spacing: 2) {
-                Text(entrada.name)
-                Text(entrada.rutaLegible)
+                Text(entry.name)
+                Text(entry.rutaLegible)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

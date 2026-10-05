@@ -7,23 +7,23 @@ import UIKit
 /// EXIF: dibujar la imagen la deja en `.up`, así que el OCR y la API reciben
 /// el recibo derecho aunque el teléfono estuviera girado.
 enum PhotoShrinker {
-    static func jpeg(_ imagen: UIImage, ladoMaximo: CGFloat = 1600, calidad: CGFloat = 0.85) -> Data? {
+    static func jpeg(_ image: UIImage, maxSide: CGFloat = 1600, quality: CGFloat = 0.85) -> Data? {
         // `size` ya viene en puntos y orientada; `scale` la pasa a píxeles.
-        let destination = tamanoDestino(
-            ancho: imagen.size.width * imagen.scale, alto: imagen.size.height * imagen.scale, ladoMaximo: ladoMaximo)
+        let destination = targetSize(
+            width: image.size.width * image.scale, height: image.size.height * image.scale, maxSide: maxSide)
         guard destination.width >= 1, destination.height >= 1 else { return nil }
-        let formato = UIGraphicsImageRendererFormat()
-        formato.scale = 1
-        let dibujada = UIGraphicsImageRenderer(size: destination, format: formato).image { _ in
-            imagen.draw(in: CGRect(origin: .zero, size: destination))
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let rendered = UIGraphicsImageRenderer(size: destination, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: destination))
         }
-        return dibujada.jpegData(compressionQuality: calidad)
+        return rendered.jpegData(compressionQuality: quality)
     }
 
     /// Puro: encoge proporcionalmente y nunca agranda.
-    static func tamanoDestino(ancho: CGFloat, alto: CGFloat, ladoMaximo: CGFloat) -> CGSize {
-        let mayor = max(ancho, alto)
-        let factor = mayor > ladoMaximo ? ladoMaximo / mayor : 1
-        return CGSize(width: (ancho * factor).rounded(.down), height: (alto * factor).rounded(.down))
+    static func targetSize(width: CGFloat, height: CGFloat, maxSide: CGFloat) -> CGSize {
+        let mayor = max(width, height)
+        let factor = mayor > maxSide ? maxSide / mayor : 1
+        return CGSize(width: (width * factor).rounded(.down), height: (height * factor).rounded(.down))
     }
 }

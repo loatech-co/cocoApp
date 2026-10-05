@@ -38,13 +38,13 @@ final class ActionParametersTests: XCTestCase {
     }
 
     func testMontosEnVariosFormatos() {
-        for (entrada, output) in [
+        for (entry, output) in [
             ("$45.000", "45000"), ("45000", "45000"), ("45.000,50", "45000.50"), ("COP 1.200.000", "1200000"),
         ] {
             XCTAssertEqual(
                 ActionParameters.cuerpoDeWallet(
-                    merchant: "x", amount: entrada, tarjeta: nil, name: nil, now: nocheDeBogota
-                ).amount, output, entrada)
+                    merchant: "x", amount: entry, tarjeta: nil, name: nil, now: nocheDeBogota
+                ).amount, output, entry)
         }
     }
 
@@ -66,23 +66,23 @@ final class ActionParametersTests: XCTestCase {
     }
 
     func testElIntentDeSMSVacioNoEncolaNada() async {
-        let capturador = CapturerDouble()
+        let capturer = CapturerDouble()
         do {
-            _ = try await RegistrarGastoDeSMSIntent.run(text: " ", remitente: nil, capturador: capturador)
+            _ = try await RegistrarGastoDeSMSIntent.run(text: " ", remitente: nil, capturer: capturer)
             XCTFail("debería lanzar")
         } catch {}
-        XCTAssertTrue(capturador.recibidas.isEmpty)
+        XCTAssertTrue(capturer.received.isEmpty)
     }
 
     func testElIntentDeWalletEncolaConOrigenWallet() async {
-        let capturador = CapturerDouble()
-        capturador.response = .queued(pending: 1)
+        let capturer = CapturerDouble()
+        capturer.response = .queued(pending: 1)
         let r = await RegistrarGastoDeWalletIntent.run(
-            merchant: "D1", amount: "$45.000", tarjeta: "Visa", name: nil, capturador: capturador, now: nocheDeBogota
+            merchant: "D1", amount: "$45.000", tarjeta: "Visa", name: nil, capturer: capturer, now: nocheDeBogota
         )
         XCTAssertEqual(r, .queued(pending: 1))
-        XCTAssertEqual(capturador.recibidas.first?.source, .wallet)
-        XCTAssertEqual(capturador.recibidas.first?.body.amount, "45000")
+        XCTAssertEqual(capturer.received.first?.source, .wallet)
+        XCTAssertEqual(capturer.received.first?.body.amount, "45000")
     }
 
     func testDialogos() {

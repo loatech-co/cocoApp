@@ -5,7 +5,7 @@ import UIKit
 /// pruebas los leen sin montar nada.
 struct AutomationStep: Identifiable, Equatable {
     let id: Int
-    let titulo: String
+    let title: String
     let detalle: String
     /// Nombre de SF Symbols.
     let simbolo: String
@@ -16,16 +16,16 @@ enum AutomationSteps {
     /// Wallet → «Registrar gasto de Wallet».
     static let transaccion: [AutomationStep] = [
         .init(
-            id: 1, titulo: "Abre Atajos y crea una automatización",
+            id: 1, title: "Abre Atajos y crea una automatización",
             detalle: "Pestaña Automatización → Nueva automatización → Transacción.", simbolo: "plus.circle"),
         .init(
-            id: 2, titulo: "Elige tus tarjetas de Wallet",
+            id: 2, title: "Elige tus tarjetas de Wallet",
             detalle: "Marca las tarjetas con las que pagas y deja «Cualquier comercio».", simbolo: "creditcard"),
         .init(
-            id: 3, titulo: "Que corra sola",
+            id: 3, title: "Que corra sola",
             detalle: "Activa «Ejecutar de inmediato» y desactiva «Notificar al ejecutar».", simbolo: "bolt"),
         .init(
-            id: 4, titulo: "Añade la acción «Registrar gasto de Wallet»",
+            id: 4, title: "Añade la acción «Registrar gasto de Wallet»",
             detalle: "Conecta Comercio ← Comercio, Monto ← Monto, Tarjeta ← Tarjeta o pase, Nombre ← Nombre.",
             simbolo: "arrow.right.circle"),
     ]
@@ -33,29 +33,29 @@ enum AutomationSteps {
     /// Mensajes del banco → «Registrar gasto de SMS».
     static let message: [AutomationStep] = [
         .init(
-            id: 1, titulo: "Crea otra automatización",
+            id: 1, title: "Crea otra automatización",
             detalle: "Pestaña Automatización → Nueva automatización → Mensaje.", simbolo: "plus.circle"),
         .init(
-            id: 2, titulo: "Filtra por remitente",
+            id: 2, title: "Filtra por remitente",
             detalle: "«Remitente contiene» los números o nombres con los que te escribe el banco.", simbolo: "message"),
         .init(
-            id: 3, titulo: "Que corra sola",
+            id: 3, title: "Que corra sola",
             detalle: "Activa «Ejecutar de inmediato» y desactiva «Notificar al ejecutar».", simbolo: "bolt"),
         .init(
-            id: 4, titulo: "Añade la acción «Registrar gasto de SMS»",
+            id: 4, title: "Añade la acción «Registrar gasto de SMS»",
             detalle: "Conecta Texto ← Contenido del mensaje y Remitente ← Remitente.", simbolo: "arrow.right.circle"),
     ]
 
     /// Botón de acción, Centro de control y widget.
     static let accesos: [AutomationStep] = [
         .init(
-            id: 1, titulo: "Botón de acción (iOS 17)",
+            id: 1, title: "Botón de acción (iOS 17)",
             detalle: "Ajustes → Botón de acción → Atajo → «Registrar gasto en Coco».", simbolo: "button.horizontal"),
         .init(
-            id: 2, titulo: "Centro de control y pantalla bloqueada (iOS 18)",
+            id: 2, title: "Centro de control y pantalla bloqueada (iOS 18)",
             detalle: "Añade el control «Registrar gasto» de Coco.", simbolo: "switch.2"),
         .init(
-            id: 3, titulo: "Widget", detalle: "Mantén pulsada la pantalla de inicio → añadir widget → Coco.",
+            id: 3, title: "Widget", detalle: "Mantén pulsada la pantalla de inicio → añadir widget → Coco.",
             simbolo: "square.grid.2x2"),
     ]
 }

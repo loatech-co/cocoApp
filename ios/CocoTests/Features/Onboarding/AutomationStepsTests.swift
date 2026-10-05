@@ -18,8 +18,8 @@ final class AutomationStepsTests: XCTestCase {
     func testNingunTituloEnMayusculasSostenidas() {
         for (_, pasos) in groups {
             for paso in pasos {
-                XCTAssertNotEqual(paso.titulo, paso.titulo.uppercased(), paso.titulo)
-                XCTAssertFalse(paso.titulo.isEmpty)
+                XCTAssertNotEqual(paso.title, paso.title.uppercased(), paso.title)
+                XCTAssertFalse(paso.title.isEmpty)
                 XCTAssertFalse(paso.detalle.isEmpty)
                 XCTAssertFalse(paso.simbolo.isEmpty)
             }
@@ -27,11 +27,11 @@ final class AutomationStepsTests: XCTestCase {
     }
 
     func testWalletNombraLosCuatroCamposYSMSLosDos() {
-        let wallet = AutomationSteps.transaccion.map { $0.titulo + " " + $0.detalle }.joined(separator: " ")
+        let wallet = AutomationSteps.transaccion.map { $0.title + " " + $0.detalle }.joined(separator: " ")
         for campo in ["Comercio", "Monto", "Tarjeta", "Nombre"] {
             XCTAssertTrue(wallet.contains(campo), campo)
         }
-        let sms = AutomationSteps.message.map { $0.titulo + " " + $0.detalle }.joined(separator: " ")
+        let sms = AutomationSteps.message.map { $0.title + " " + $0.detalle }.joined(separator: " ")
         for campo in ["Texto", "Remitente"] {
             XCTAssertTrue(sms.contains(campo), campo)
         }

@@ -12,17 +12,17 @@ struct RegistrarGastoDeSMSIntent: AppIntent {
     @Parameter(title: "Texto") var texto: String
     @Parameter(title: "Remitente") var remitente: String?
 
-    @Dependency(key: DependencyKeys.capturador) var capturador: any Capturer
+    @Dependency(key: DependencyKeys.capturer) var capturer: any Capturer
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let result = try await Self.run(text: texto, remitente: remitente, capturador: capturador)
+        let result = try await Self.run(text: texto, remitente: remitente, capturer: capturer)
         return .result(dialog: ActionParameters.dialogo(result))
     }
 
-    static func run(text: String, remitente: String?, capturador: any Capturer, now: Date = .now) async throws
+    static func run(text: String, remitente: String?, capturer: any Capturer, now: Date = .now) async throws
         -> CaptureResult
     {
         let body = try ActionParameters.cuerpoDeSMS(text: text, remitente: remitente, now: now)
-        return await capturador.capture(body, source: .sms, photo: nil, budget: budget)
+        return await capturer.capture(body, source: .sms, photo: nil, budget: budget)
     }
 }

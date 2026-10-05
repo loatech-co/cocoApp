@@ -30,9 +30,9 @@ struct WelcomeView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 }
-                seccion("Pagos con Wallet", pasos: AutomationSteps.transaccion)
-                seccion("Mensajes del banco", pasos: AutomationSteps.message)
-                seccion("Accesos rápidos", pasos: AutomationSteps.accesos)
+                section("Pagos con Wallet", pasos: AutomationSteps.transaccion)
+                section("Mensajes del banco", pasos: AutomationSteps.message)
+                section("Accesos rápidos", pasos: AutomationSteps.accesos)
                 Section {
                     Button("Abrir Atajos") { ShortcutsLauncher.abrir() }
                 }
@@ -49,12 +49,12 @@ struct WelcomeView: View {
         }
     }
 
-    private func seccion(_ titulo: String, pasos: [AutomationStep]) -> some View {
-        Section(titulo) {
+    private func section(_ title: String, pasos: [AutomationStep]) -> some View {
+        Section(title) {
             ForEach(pasos) { paso in
                 Label {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(paso.titulo).font(.body)
+                        Text(paso.title).font(.body)
                         Text(paso.detalle).font(.subheadline).foregroundStyle(.secondary)
                     }
                 } icon: {

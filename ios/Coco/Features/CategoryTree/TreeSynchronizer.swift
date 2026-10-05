@@ -6,8 +6,8 @@ import Foundation
 final actor TreeSynchronizer {
     private let api: APIClient
     private let session: Session
-    private let almacen: TreeStore
-    private let reloj: @Sendable () -> Date
+    private let store: TreeStore
+    private let clock: @Sendable () -> Date
 
     private var guardado: SavedTree?
     private var indiceEnMemoria: TreeIndex?
@@ -16,15 +16,15 @@ final actor TreeSynchronizer {
     /// espera al primero.
     private var refrescoEnVuelo: Task<Void, Error>?
 
-    init(api: APIClient, session: Session, almacen: TreeStore, reloj: @Sendable @escaping () -> Date = Date.init) {
+    init(api: APIClient, session: Session, store: TreeStore, clock: @Sendable @escaping () -> Date = Date.init) {
         self.api = api
         self.session = session
-        self.almacen = almacen
-        self.reloj = reloj
+        self.store = store
+        self.clock = clock
     }
 
     /// Lo guardado, sin tocar la red. `nil` si nunca se bajó nada.
-    func indice() async -> TreeIndex? {
+    func index() async -> TreeIndex? {
         cargarDelDiscoSiHaceFalta()
         return indiceEnMemoria
     }
@@ -34,17 +34,17 @@ final actor TreeSynchronizer {
     func refreshIfNeeded(maxEdad: Duration = .seconds(3600)) async {
         cargarDelDiscoSiHaceFalta()
         if let guardado {
-            let edad = reloj().timeIntervalSince(guardado.descargadoEn)
-            let tope = TimeInterval(maxEdad.components.seconds) + TimeInterval(maxEdad.components.attoseconds) / 1e18
-            if edad >= 0, edad < tope { return }
+            let age = clock().timeIntervalSince(guardado.descargadoEn)
+            let limit = TimeInterval(maxEdad.components.seconds) + TimeInterval(maxEdad.components.attoseconds) / 1e18
+            if age >= 0, age < limit { return }
         }
         try? await refrescarAhora()
     }
 
     /// `GET /categories` ahora mismo, se tenga lo que se tenga guardado.
     func refrescarAhora() async throws {
-        if let enVuelo = refrescoEnVuelo {
-            return try await enVuelo.value
+        if let inFlight = refrescoEnVuelo {
+            return try await inFlight.value
         }
         let task = Task { try await self.descargar() }
         refrescoEnVuelo = task
@@ -54,13 +54,13 @@ final actor TreeSynchronizer {
 
     private func descargar() async throws {
         let token = try await session.validAccessToken()
-        let raices: [TreeNode] = try await api.send(RequestBuilder.categories(), token: token)
-        let nuevo = SavedTree(raices: raices, descargadoEn: reloj())
+        let roots: [TreeNode] = try await api.send(RequestBuilder.categories(), token: token)
+        let nuevo = SavedTree(roots: roots, descargadoEn: clock())
         // Si el disco falla el índice sirve igual en esta ejecución; la
         // siguiente vuelve a bajarlo.
-        try? almacen.save(nuevo)
+        try? store.save(nuevo)
         guardado = nuevo
-        indiceEnMemoria = TreeIndex(raices: raices)
+        indiceEnMemoria = TreeIndex(roots: roots)
         cargadoDelDisco = true
     }
 
@@ -68,8 +68,8 @@ final actor TreeSynchronizer {
         guard !cargadoDelDisco else { return }
         cargadoDelDisco = true
         // Un archivo corrupto cuenta como que no hay nada: se vuelve a bajar.
-        guard let leido = try? almacen.load() else { return }
+        guard let leido = try? store.load() else { return }
         guardado = leido
-        indiceEnMemoria = TreeIndex(raices: leido.raices)
+        indiceEnMemoria = TreeIndex(roots: leido.roots)
     }
 }

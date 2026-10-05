@@ -7,7 +7,7 @@ final class BackgroundJobsTests: XCTestCase {
     private var root: URL = URL(fileURLWithPath: "/")
 
     override func setUpWithError() throws {
-        root = try TemporaryDirectory.directorio()
+        root = try TemporaryDirectory.directory()
     }
 
     override func tearDownWithError() throws {
@@ -36,32 +36,32 @@ final class BackgroundJobsTests: XCTestCase {
     }
 
     func testEjecutarColaEnviaLoPendienteYLaColaAvisaUnaVez() async throws {
-        let almacen = DiskQueueStore(root: root)
+        let store = DiskQueueStore(root: root)
         let notifier = NotifierDouble()
         let queue = CaptureQueue(
-            almacen: almacen, enviador: SenderDouble(), session: SessionDouble(), notifier: notifier,
-            separacion: .zero, encogerFoto: { $0 })
+            store: store, sender: SenderDouble(), session: SessionDouble(), notifier: notifier,
+            spacing: .zero, shrinkPhoto: { $0 })
         // Dos capturas que ya fallaron una vez: lo que se encuentra en fondo.
         for i in 1...2 {
-            try almacen.save(
+            try store.save(
                 PendingCapture(
                     source: .iosManual, body: CaptureBody(merchant: "D\(i)", amount: "1000", date: "2026-10-05"),
-                    intentos: 1))
+                    attempts: 1))
         }
         let sent = await BackgroundJobs.runQueue(queue: queue, notifier: notifier, budget: .seconds(5))
         XCTAssertEqual(sent, 2)
-        XCTAssertEqual(notifier.colasEnviadas, [2])
-        XCTAssertEqual(notifier.insignias.last, 0)
+        XCTAssertEqual(notifier.queueSentCounts, [2])
+        XCTAssertEqual(notifier.badges.last, 0)
     }
 
     func testEjecutarColaSinNadaNoAvisa() async {
         let notifier = NotifierDouble()
         let queue = CaptureQueue(
-            almacen: DiskQueueStore(root: root), enviador: SenderDouble(), session: SessionDouble(),
-            notifier: notifier, separacion: .zero, encogerFoto: { $0 })
+            store: DiskQueueStore(root: root), sender: SenderDouble(), session: SessionDouble(),
+            notifier: notifier, spacing: .zero, shrinkPhoto: { $0 })
         let sent = await BackgroundJobs.runQueue(queue: queue, notifier: notifier, budget: .seconds(5))
         XCTAssertEqual(sent, 0)
-        XCTAssertEqual(notifier.colasEnviadas, [])
+        XCTAssertEqual(notifier.queueSentCounts, [])
     }
 
     func testEjecutarRenovacionPideTokenYRefrescaElArbol() async throws {
@@ -75,13 +75,13 @@ final class BackgroundJobsTests: XCTestCase {
         let base = try XCTUnwrap(URL(string: "https://api.coco.invalid"))
         let api = APIClient(configuration: APIConfiguration(base: base), transport: transport, version: "0.1.0")
         let tree = TreeSynchronizer(
-            api: api, session: session, almacen: DiskTreeStore(file: root.appending(path: "arbol.json")))
+            api: api, session: session, store: DiskTreeStore(file: root.appending(path: "arbol.json")))
 
         await BackgroundJobs.runRefresh(session: session, tree: tree)
 
-        XCTAssertGreaterThanOrEqual(session.lecturasDeToken, 1)
-        XCTAssertEqual(transport.recibidas.map { $0.url?.path }, ["/api/v1/categories"])
-        let indice = await tree.indice()
-        XCTAssertEqual(indice?.entradas.map(\.name), ["Hogar"])
+        XCTAssertGreaterThanOrEqual(session.tokenReads, 1)
+        XCTAssertEqual(transport.received.map { $0.url?.path }, ["/api/v1/categories"])
+        let index = await tree.index()
+        XCTAssertEqual(index?.entradas.map(\.name), ["Hogar"])
     }
 }

@@ -29,43 +29,43 @@ final class FormModelTests: XCTestCase {
             ]),
     ]
 
-    private nonisolated static let interpretacionJSON =
+    private nonisolated static let interpretationJSON =
         #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"clasificacion":{"certeza":"alta","fuente":"regla","concepto_id":200,"categoria_id":20,"nombre":"Mercado","candidatos":[],"motivo":"palabra clave"},"por_revisar":false}}"#
 
     private var transport = FakeTransport()
-    private var capturador = CapturerDouble()
-    private var conectividad = Connectivity()
-    private var lector = FakeReceiptReader(text: "D1\nTOTAL 45.000")
+    private var capturer = CapturerDouble()
+    private var connectivity = Connectivity()
+    private var reader = FakeReceiptReader(text: "D1\nTOTAL 45.000")
 
     override func setUp() {
         transport = FakeTransport()
-        capturador = CapturerDouble()
-        conectividad = Connectivity()
-        lector = FakeReceiptReader(text: "D1\nTOTAL 45.000")
+        capturer = CapturerDouble()
+        connectivity = Connectivity()
+        reader = FakeReceiptReader(text: "D1\nTOTAL 45.000")
     }
 
-    private func modelo(indice: TreeIndex? = TreeIndex(raices: tree)) throws -> FormModel {
+    private func model(index: TreeIndex? = TreeIndex(roots: tree)) throws -> FormModel {
         let base = try XCTUnwrap(URL(string: "https://api.coco.invalid"))
         let api = APIClient(configuration: APIConfiguration(base: base), transport: transport, version: "0.1.0")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "formulario-\(UUID().uuidString)"))
         return FormModel(
-            indice: indice, api: api, session: SessionDouble(), capturador: capturador, conectividad: conectividad,
-            lector: lector, recientes: RecentsStore(defaults: defaults), reloj: { Self.now }
+            index: index, api: api, session: SessionDouble(), capturer: capturer, connectivity: connectivity,
+            reader: reader, recents: RecentsStore(defaults: defaults), clock: { Self.now }
         )
     }
 
-    private func entrada(_ id: Int) throws -> IndexEntry {
-        try XCTUnwrap(TreeIndex(raices: Self.tree).entrada(id: id))
+    private func entry(_ id: Int) throws -> IndexEntry {
+        try XCTUnwrap(TreeIndex(roots: Self.tree).entry(id: id))
     }
 
     // MARK: cuerpo()
 
-    func testElCuerpoNormalizaElMontoYPoneLaFechaEnBogota() throws {
-        let m = try modelo()
+    func testTheBodyNormalizesTheAmountAndPutsTheDateInBogota() throws {
+        let m = try model()
         m.amount = "45.000"
-        m.elegir(try entrada(200))
+        m.choose(try entry(200))
         m.note = "  del sábado  "
-        let c = m.body()
+        let c = m.captureBody()
         XCTAssertEqual(c.amount, "45000")
         XCTAssertEqual(c.categoryId, 200)
         XCTAssertEqual(c.date, "2026-10-04")
@@ -75,154 +75,154 @@ final class FormModelTests: XCTestCase {
         XCTAssertTrue(c.isSendable)
     }
 
-    func testPuedeConfirmarExigeMontoYConceptoOTexto() throws {
-        let m = try modelo()
-        XCTAssertFalse(m.puedeConfirmar)
+    func testCanConfirmRequiresAmountAndConceptOrText() throws {
+        let m = try model()
+        XCTAssertFalse(m.canConfirm)
         m.amount = "45.000"
-        XCTAssertFalse(m.puedeConfirmar)
-        m.elegir(try entrada(100))
-        XCTAssertTrue(m.puedeConfirmar)
-        m.quitarConcepto()
-        m.textoLeido = "TOTAL 45.000"
-        XCTAssertTrue(m.puedeConfirmar)
+        XCTAssertFalse(m.canConfirm)
+        m.choose(try entry(100))
+        XCTAssertTrue(m.canConfirm)
+        m.clearConcept()
+        m.readText = "TOTAL 45.000"
+        XCTAssertTrue(m.canConfirm)
         m.amount = "abc"
-        XCTAssertFalse(m.puedeConfirmar)
+        XCTAssertFalse(m.canConfirm)
     }
 
     // MARK: confirmar()
 
-    func testConfirmarSinFotoEsManualYConFotoEsFoto() async throws {
-        let m = try modelo()
+    func testConfirmWithoutPhotoIsManualAndWithPhotoIsPhoto() async throws {
+        let m = try model()
         m.amount = "45.000"
-        m.elegir(try entrada(100))
-        _ = await m.confirmar()
+        m.choose(try entry(100))
+        _ = await m.confirm()
 
         m.amount = "1.200"
-        m.elegir(try entrada(100))
-        m.fotoJPEG = Data([0xFF, 0xD8, 0x00])
-        _ = await m.confirmar()
+        m.choose(try entry(100))
+        m.photoJPEG = Data([0xFF, 0xD8, 0x00])
+        _ = await m.confirm()
 
-        XCTAssertEqual(capturador.recibidas.map(\.source), [.iosManual, .iosPhoto])
-        XCTAssertEqual(capturador.recibidas.map(\.body.amount), ["45000", "1200"])
-        XCTAssertEqual(capturador.recibidas.last?.body.fileName, "recibo-2026-10-04.jpg")
+        XCTAssertEqual(capturer.received.map(\.source), [.iosManual, .iosPhoto])
+        XCTAssertEqual(capturer.received.map(\.body.amount), ["45000", "1200"])
+        XCTAssertEqual(capturer.received.last?.body.fileName, "recibo-2026-10-04.jpg")
     }
 
-    func testConfirmarDevuelveLoQueDigaElCapturadorYLimpia() async throws {
-        let m = try modelo()
-        capturador.response = .queued(pending: 3)
+    func testConfirmReturnsWhatTheCapturerSaysAndResets() async throws {
+        let m = try model()
+        capturer.response = .queued(pending: 3)
         m.amount = "45.000"
-        m.elegir(try entrada(200))
+        m.choose(try entry(200))
         m.note = "x"
-        m.cambiarFecha(Self.now.addingTimeInterval(-86_400))
-        let r = await m.confirmar()
+        m.changeDate(Self.now.addingTimeInterval(-86_400))
+        let r = await m.confirm()
         XCTAssertEqual(r, .queued(pending: 3))
         XCTAssertEqual(m.amount, "")
-        XCTAssertNil(m.concepto)
+        XCTAssertNil(m.concept)
         XCTAssertEqual(m.note, "")
         XCTAssertEqual(m.date, Self.now)
-        XCTAssertNil(m.fotoJPEG)
+        XCTAssertNil(m.photoJPEG)
         XCTAssertNil(m.error)
     }
 
-    func testConfirmarAnotaElConceptoEntreLosRecientes() async throws {
-        let m = try modelo()
+    func testConfirmRecordsTheConceptAmongRecents() async throws {
+        let m = try model()
         m.search("")
-        XCTAssertEqual(m.resultados, [])
+        XCTAssertEqual(m.results, [])
         m.amount = "10.000"
-        m.elegir(try entrada(100))
-        _ = await m.confirmar()
+        m.choose(try entry(100))
+        _ = await m.confirm()
         m.amount = "10.000"
-        m.elegir(try entrada(200))
-        _ = await m.confirmar()
+        m.choose(try entry(200))
+        _ = await m.confirm()
         m.search("")
-        XCTAssertEqual(m.resultados.map(\.id), [200, 100])
+        XCTAssertEqual(m.results.map(\.id), [200, 100])
         m.search("d1")
-        XCTAssertEqual(m.resultados.map(\.id), [200])
+        XCTAssertEqual(m.results.map(\.id), [200])
     }
 
     // MARK: leerFoto()
 
-    func testLeerFotoRellenaLoVacioConLaInterpretacion() async throws {
-        transport.responder(.http(200, Self.interpretacionJSON))
-        let m = try modelo()
-        await m.leerFoto(TestImage.cuadrada(10))
+    func testReadPhotoFillsTheBlanksWithTheInterpretation() async throws {
+        transport.responder(.http(200, Self.interpretationJSON))
+        let m = try model()
+        await m.readPhoto(TestImage.square(10))
 
-        XCTAssertEqual(lector.lecturas, 1)
-        XCTAssertEqual(m.textoLeido, "D1\nTOTAL 45.000")
+        XCTAssertEqual(reader.reads, 1)
+        XCTAssertEqual(m.readText, "D1\nTOTAL 45.000")
         XCTAssertEqual(m.amount, "45.000")
         XCTAssertEqual(m.merchant, "D1")
         XCTAssertEqual(BogotaDate.day(m.date), "2026-10-03")
-        XCTAssertEqual(m.concepto?.id, 200)
-        XCTAssertTrue(m.conceptoSugerido)
-        XCTAssertNotNil(m.fotoJPEG)
-        XCTAssertFalse(m.leyendo)
+        XCTAssertEqual(m.concept?.id, 200)
+        XCTAssertTrue(m.isConceptSuggested)
+        XCTAssertNotNil(m.photoJPEG)
+        XCTAssertFalse(m.isReading)
         XCTAssertFalse(m.noNetwork)
-        XCTAssertEqual(transport.recibidas.map { $0.url?.path }, ["/api/v1/transactions/interpret"])
-        XCTAssertTrue(m.puedeConfirmar)
+        XCTAssertEqual(transport.received.map { $0.url?.path }, ["/api/v1/transactions/interpret"])
+        XCTAssertTrue(m.canConfirm)
     }
 
-    func testLeerFotoNoPisaElMontoNiElConceptoYaPuestos() async throws {
-        transport.responder(.http(200, Self.interpretacionJSON))
-        let m = try modelo()
+    func testReadPhotoDoesNotOverwriteAmountOrConceptAlreadySet() async throws {
+        transport.responder(.http(200, Self.interpretationJSON))
+        let m = try model()
         m.amount = "12.500"
-        m.elegir(try entrada(100))
-        m.cambiarFecha(Self.now)
-        await m.leerFoto(TestImage.cuadrada(10))
+        m.choose(try entry(100))
+        m.changeDate(Self.now)
+        await m.readPhoto(TestImage.square(10))
         XCTAssertEqual(m.amount, "12.500")
-        XCTAssertEqual(m.concepto?.id, 100)
-        XCTAssertFalse(m.conceptoSugerido)
+        XCTAssertEqual(m.concept?.id, 100)
+        XCTAssertFalse(m.isConceptSuggested)
         XCTAssertEqual(m.date, Self.now)
         XCTAssertEqual(m.merchant, "D1", "lo vacío sí se rellena")
     }
 
-    func testSinRedNoLlamaAInterpretYLoMarca() async throws {
-        let m = try modelo()
-        conectividad.update(false)
-        await m.leerFoto(TestImage.cuadrada(10))
+    func testWithoutNetworkDoesNotCallInterpretAndFlagsIt() async throws {
+        let m = try model()
+        connectivity.update(false)
+        await m.readPhoto(TestImage.square(10))
         XCTAssertTrue(m.noNetwork)
-        XCTAssertTrue(transport.recibidas.isEmpty)
-        XCTAssertEqual(m.textoLeido, "D1\nTOTAL 45.000", "el OCR es local y el texto viaja igual")
+        XCTAssertTrue(transport.received.isEmpty)
+        XCTAssertEqual(m.readText, "D1\nTOTAL 45.000", "el OCR es local y el texto viaja igual")
         XCTAssertEqual(m.amount, "")
-        XCTAssertNotNil(m.fotoJPEG)
+        XCTAssertNotNil(m.photoJPEG)
     }
 
-    func testUnErrorDeRedAlInterpretarTambienMarcaSinRed() async throws {
-        transport.responder(.falla(URLError(.notConnectedToInternet)))
-        let m = try modelo()
-        await m.leerFoto(TestImage.cuadrada(10))
+    func testANetworkErrorWhileInterpretingAlsoFlagsNoNetwork() async throws {
+        transport.responder(.failure(URLError(.notConnectedToInternet)))
+        let m = try model()
+        await m.readPhoto(TestImage.square(10))
         XCTAssertTrue(m.noNetwork)
         XCTAssertNil(m.error)
     }
 
-    func testSiElLectorFallaSeAvisaYLaFotoSeQueda() async throws {
+    func testIfTheReaderFailsItWarnsAndThePhotoStays() async throws {
         struct ReaderFailure: Error {}
-        lector.error = ReaderFailure()
-        let m = try modelo()
-        await m.leerFoto(TestImage.cuadrada(10))
+        reader.error = ReaderFailure()
+        let m = try model()
+        await m.readPhoto(TestImage.square(10))
         XCTAssertNotNil(m.error)
-        XCTAssertNotNil(m.fotoJPEG)
-        XCTAssertNil(m.textoLeido)
-        XCTAssertTrue(transport.recibidas.isEmpty)
+        XCTAssertNotNil(m.photoJPEG)
+        XCTAssertNil(m.readText)
+        XCTAssertTrue(transport.received.isEmpty)
     }
 
-    func testConCertezaMediaAbreElBuscadorConLosCandidatos() async throws {
+    func testMediumConfidenceOpensSearchWithTheCandidates() async throws {
         let json =
             #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"clasificacion":{"certeza":"media","fuente":null,"concepto_id":null,"categoria_id":null,"nombre":null,"candidatos":[{"id":200,"nombre":"Mercado","ruta":"Hogar › Alimentación › Mercado"},{"id":100,"nombre":"Colegio","ruta":"Costos fijos › Educación › Colegio"}],"motivo":""},"por_revisar":true}}"#
         transport.responder(.http(200, json))
-        let m = try modelo()
-        await m.leerFoto(TestImage.cuadrada(10))
-        XCTAssertNil(m.concepto)
+        let m = try model()
+        await m.readPhoto(TestImage.square(10))
+        XCTAssertNil(m.concept)
         XCTAssertEqual(m.candidates.map(\.id), [200, 100])
-        XCTAssertTrue(m.abrirBuscador)
+        XCTAssertTrue(m.showsSearch)
     }
 
-    func testBuscarMuestraLaRutaYSinIndiceNoRevienta() throws {
-        let m = try modelo()
+    func testSearchShowsThePathAndWithoutIndexDoesNotCrash() throws {
+        let m = try model()
         m.search("tuti")
         XCTAssertEqual(
-            m.resultados.map(\.rutaLegible), ["Educación › Costos fijos"], "ancestros, del más cercano al más lejano")
-        let sinIndice = try modelo(indice: nil)
-        sinIndice.search("tuti")
-        XCTAssertEqual(sinIndice.resultados, [])
+            m.results.map(\.rutaLegible), ["Educación › Costos fijos"], "ancestros, del más cercano al más lejano")
+        let withoutIndex = try model(index: nil)
+        withoutIndex.search("tuti")
+        XCTAssertEqual(withoutIndex.results, [])
     }
 }
