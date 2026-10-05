@@ -30,7 +30,7 @@ docs/               architecture, ADRs, runbook, standards
 
 ## Requirements
 
-- Node.js ≥ 20 and npm.
+- Node.js ≥ 22.12 and npm (Prisma 7, ADR 0020).
 - PostgreSQL 17 locally: `brew install postgresql@17 && brew services start postgresql@17`.
 - For iOS: Xcode 16+, XcodeGen, an Apple ID (free personal team is enough).
 - `gh` (GitHub CLI) to open PRs and integrate.

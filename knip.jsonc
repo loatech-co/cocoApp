@@ -27,7 +27,10 @@
       "project": ["src/**/*.ts", "test/**/*.ts"],
       // The driver under @prisma/adapter-pg, declared directly so production
       // installs pin it (it replaced Prisma's Rust engine, see b496c5a).
-      "ignoreDependencies": ["pg", "@types/pg"],
+      // @prisma/client is the runtime of the generated client in
+      // src/generated/prisma, which is gitignored and so invisible to knip
+      // (ADR 0020).
+      "ignoreDependencies": ["pg", "@types/pg", "@prisma/client"],
     },
     "frontend": {
       "project": ["src/**/*.{ts,tsx}"],
