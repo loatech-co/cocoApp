@@ -150,47 +150,61 @@ export async function leerSoporte(
   } = {},
 ): Promise<SoporteLeido> {
   const { onProgreso } = opciones;
-  const esPdf = archivo.type === 'application/pdf' || /\.pdf$/i.test(archivo.name);
-
-  let texto: string;
-  let fuente: 'texto-embebido' | 'ocr' = 'texto-embebido';
-
-  if (esPdf) {
-    onProgreso?.({ avance: 0.1, etapa: 'Abriendo el documento…' });
-    try {
-      texto = await textoDelPdf(archivo);
-    } catch {
-      texto = '';
-    }
-
-    if (texto.replace(/\s/g, '').length < MINIMO_DE_TEXTO) {
-      // Un escaneo: el PDF es una foto con forma de documento.
-      onProgreso?.({ avance: 0.2, etapa: 'Es un escaneo: se reconoce el texto…' });
-      const imagen = await primeraPaginaComoImagen(archivo);
-      if (imagen) {
-        texto = await ocr(imagen, onProgreso);
-        fuente = 'ocr';
-      }
-    }
-  } else {
-    onProgreso?.({ avance: 0.2, etapa: 'Reconociendo la imagen…' });
-    texto = await ocr(archivo, onProgreso);
-    fuente = 'ocr';
-  }
+  const { texto, fuente } = await extractText(archivo, onProgreso);
 
   onProgreso?.({ avance: 0.9, etapa: 'Interpretando…' });
+  const interpretacion = await interpretText(texto, archivo, opciones.periodo);
+  onProgreso?.({ avance: 1, etapa: 'Listo' });
 
-  let interpretacion: Interpretacion;
+  return { texto, fuente, lectura: lecturaDesde(interpretacion, fuente) };
+}
+
+/** El texto del archivo: el que trae dentro un PDF, o el que reconoce el OCR. */
+async function extractText(
+  archivo: File,
+  onProgreso: ((p: ProgresoDeLectura) => void) | undefined,
+): Promise<{ texto: string; fuente: 'texto-embebido' | 'ocr' }> {
+  const esPdf = archivo.type === 'application/pdf' || /\.pdf$/i.test(archivo.name);
+
+  if (!esPdf) {
+    onProgreso?.({ avance: 0.2, etapa: 'Reconociendo la imagen…' });
+    return { texto: await ocr(archivo, onProgreso), fuente: 'ocr' };
+  }
+
+  onProgreso?.({ avance: 0.1, etapa: 'Abriendo el documento…' });
+  let texto: string;
+  try {
+    texto = await textoDelPdf(archivo);
+  } catch {
+    texto = '';
+  }
+
+  if (texto.replace(/\s/g, '').length < MINIMO_DE_TEXTO) {
+    // Un escaneo: el PDF es una foto con forma de documento.
+    onProgreso?.({ avance: 0.2, etapa: 'Es un escaneo: se reconoce el texto…' });
+    const imagen = await primeraPaginaComoImagen(archivo);
+    if (imagen) return { texto: await ocr(imagen, onProgreso), fuente: 'ocr' };
+  }
+
+  return { texto, fuente: 'texto-embebido' };
+}
+
+/** Lo que el servidor entiende del texto. */
+async function interpretText(
+  texto: string,
+  archivo: File,
+  periodo: string | undefined,
+): Promise<Interpretacion> {
   try {
     const respuesta = await apiFetch<Interpretacion>('/transactions/interpret', {
       method: 'POST',
       body: {
         texto,
         nombre_de_archivo: archivo.name.replace(/\.[a-z0-9]+$/i, ''),
-        periodo: opciones.periodo,
+        periodo,
       },
     });
-    interpretacion = respuesta.data;
+    return respuesta.data;
   } catch (e) {
     // El archivo ya está adjunto; lo que falló es entenderlo. Se dice así, y
     // quien lo lee escribe los datos a mano en la misma ficha.
@@ -200,10 +214,6 @@ export async function leerSoporte(
       { cause: e },
     );
   }
-
-  onProgreso?.({ avance: 1, etapa: 'Listo' });
-
-  return { texto, fuente, lectura: lecturaDesde(interpretacion, fuente) };
 }
 
 /**

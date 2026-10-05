@@ -165,39 +165,7 @@ export function useFiltros(porDefecto: Preset = 'mes-actual'): {
 
   const aplicar = useCallback(
     (cambios: Partial<Filtros>) => {
-      const siguiente = new URLSearchParams(params);
-
-      if (cambios.preset !== undefined) {
-        if (cambios.preset === porDefecto) siguiente.delete('rango');
-        else siguiente.set('rango', cambios.preset);
-
-        // Cambiar de preset descarta las fechas escritas a mano: dejarlas haría
-        // que el rango mostrado no fuera el del botón encendido.
-        if (cambios.preset !== 'personalizado') {
-          siguiente.delete('desde');
-          siguiente.delete('hasta');
-        }
-      }
-
-      // Escribir una fecha a mano implica pasar a personalizado, o el rango se
-      // recalcularía desde el preset y el cambio se perdería al instante.
-      if (cambios.from !== undefined) {
-        siguiente.set('desde', cambios.from);
-        siguiente.set('rango', 'personalizado');
-      }
-      if (cambios.to !== undefined) {
-        siguiente.set('hasta', cambios.to);
-        siguiente.set('rango', 'personalizado');
-      }
-
-      if (cambios.categoryIds !== undefined) {
-        if (cambios.categoryIds.length === 0) siguiente.delete('categorias');
-        else siguiente.set('categorias', cambios.categoryIds.join(','));
-      }
-      if (cambios.q !== undefined) {
-        if (cambios.q.trim() === '') siguiente.delete('busca');
-        else siguiente.set('busca', cambios.q);
-      }
+      const siguiente = writeFilters(params, cambios, porDefecto);
 
       setParams(siguiente, { replace: true });
     },
@@ -228,4 +196,47 @@ export function aParametros(filtros: Filtros): {
     ...(filtros.categoryIds.length > 0 && { category_ids: filtros.categoryIds.join(',') }),
     ...(filtros.q && { q: filtros.q }),
   };
+}
+
+/** Los parámetros de la URL después de aplicar unos cambios a los filtros. */
+export function writeFilters(
+  params: URLSearchParams,
+  cambios: Partial<Filtros>,
+  porDefecto: Preset,
+): URLSearchParams {
+  const siguiente = new URLSearchParams(params);
+
+  if (cambios.preset !== undefined) {
+    if (cambios.preset === porDefecto) siguiente.delete('rango');
+    else siguiente.set('rango', cambios.preset);
+
+    // Cambiar de preset descarta las fechas escritas a mano: dejarlas haría
+    // que el rango mostrado no fuera el del botón encendido.
+    if (cambios.preset !== 'personalizado') {
+      siguiente.delete('desde');
+      siguiente.delete('hasta');
+    }
+  }
+
+  // Escribir una fecha a mano implica pasar a personalizado, o el rango se
+  // recalcularía desde el preset y el cambio se perdería al instante.
+  if (cambios.from !== undefined) {
+    siguiente.set('desde', cambios.from);
+    siguiente.set('rango', 'personalizado');
+  }
+  if (cambios.to !== undefined) {
+    siguiente.set('hasta', cambios.to);
+    siguiente.set('rango', 'personalizado');
+  }
+
+  if (cambios.categoryIds !== undefined) {
+    if (cambios.categoryIds.length === 0) siguiente.delete('categorias');
+    else siguiente.set('categorias', cambios.categoryIds.join(','));
+  }
+  if (cambios.q !== undefined) {
+    if (cambios.q.trim() === '') siguiente.delete('busca');
+    else siguiente.set('busca', cambios.q);
+  }
+
+  return siguiente;
 }
