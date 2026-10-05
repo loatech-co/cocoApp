@@ -13,7 +13,11 @@
  * - `@eslint-react` instead of `eslint-plugin-react` (D6/D15: the latter does
  *   not support ESLint 10), plus `react-hooks` with its full recommended set.
  * - `import-x`: import order and no default exports (except where a framework
- *   needs one). Cycles are dependency-cruiser's job (later step).
+ *   needs one). Cycles and layering are dependency-cruiser's job
+ *   (`.dependency-cruiser.cjs`, step 7.4).
+ * - Size limits (step 7.4): 300 lines per file, 50 per function, blank lines
+ *   and comments not counted. The API complies; the web and the packages
+ *   list their current offenders below until the frontend step splits them.
  * - `eslint-config-prettier` last: Prettier formats, ESLint has no opinion.
  *
  * Every rule written here has its section in CONTRIBUTING.md.
@@ -127,6 +131,23 @@ export default defineConfig(
     files: ['api/test/**/*.ts', 'api/src/**/*.spec.ts'],
     languageOptions: { globals: globals.jest },
   },
+  {
+    // Services, controllers, repositories and tasks speak the domain: they
+    // throw a DomainError (common/errors), and the exceptions filter is the
+    // only place that turns it into HTTP. Guards, pipes and param decorators
+    // are the HTTP adapter and keep Nest's exceptions.
+    files: ['api/src/**/*.{service,controller,repository,task}.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'NewExpression[callee.name=/Exception$/]',
+          message:
+            'Throw a DomainError from common/errors/domain-error.ts; the exceptions filter maps it to HTTP.',
+        },
+      ],
+    },
+  },
 
   // ── frontend: browser + React ─────────────────────────────────────────────
   {
@@ -162,6 +183,94 @@ export default defineConfig(
     // Vite and Vitest configs run in Node.
     files: ['frontend/*.config.ts'],
     languageOptions: { globals: globals.node },
+  },
+
+  // ── Size limits (step 7.4) ────────────────────────────────────────────────
+  {
+    files: ['api/src/**/*.ts', 'frontend/src/**/*.{ts,tsx}', 'packages/*/src/**/*.ts'],
+    rules: {
+      'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['error', { max: 50, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
+    // A test file is a list of `describe`/`it` callbacks: the callback IS the
+    // function, and cutting it to 50 lines only scatters one scenario. Tests
+    // still have the 300-line file limit.
+    files: ['api/src/**/*.spec.ts', 'frontend/src/**/*.test.{ts,tsx}', 'frontend/src/pruebas/**'],
+    rules: { 'max-lines-per-function': 'off' },
+  },
+  {
+    // TEMPORARY: the files that were over 300 lines when the limit arrived
+    // (step 7.4). The frontend step splits them and deletes this list; a file
+    // never gets added to it.
+    files: [
+      'frontend/src/components/atajos.tsx',
+      'frontend/src/components/buscador-de-concepto.tsx',
+      'frontend/src/components/soportes.tsx',
+      'frontend/src/components/tendencia.tsx',
+      'frontend/src/features/centros/centros-page.tsx',
+      'frontend/src/features/dashboard/dashboard-page.tsx',
+      'frontend/src/features/transactions/movimiento-modal.dom.test.tsx',
+      'frontend/src/features/transactions/movimiento-modal.tsx',
+      'frontend/src/lib/queries.ts',
+      'packages/lectura/src/diccionario.ts',
+      'packages/types/src/index.ts',
+    ],
+    rules: { 'max-lines': 'off' },
+  },
+  {
+    // TEMPORARY: the files with a function over 50 lines when the limit
+    // arrived (step 7.4). Same rule as the list above.
+    files: [
+      'frontend/src/app/app-shell.tsx',
+      'frontend/src/components/atajos.tsx',
+      'frontend/src/components/barra-inferior.tsx',
+      'frontend/src/components/buscador-de-concepto.tsx',
+      'frontend/src/components/calendario.tsx',
+      'frontend/src/components/campos-de-palabras-clave.tsx',
+      'frontend/src/components/campos-de-recurrencia.tsx',
+      'frontend/src/components/dona.tsx',
+      'frontend/src/components/filtro-clasificacion.tsx',
+      'frontend/src/components/menu.tsx',
+      'frontend/src/components/navegacion.tsx',
+      'frontend/src/components/paginador.tsx',
+      'frontend/src/components/pagos-pendientes.tsx',
+      'frontend/src/components/panel-de-busqueda.tsx',
+      'frontend/src/components/panel-de-la-cuenta.tsx',
+      'frontend/src/components/panel-inferior.tsx',
+      'frontend/src/components/selector-de-fecha.tsx',
+      'frontend/src/components/soportes.tsx',
+      'frontend/src/components/tabla-de-movimientos.tsx',
+      'frontend/src/components/tabla.tsx',
+      'frontend/src/components/tendencia.tsx',
+      'frontend/src/components/toolbar-filtros.tsx',
+      'frontend/src/components/ui/aviso.tsx',
+      'frontend/src/components/ui/badge.tsx',
+      'frontend/src/components/ui/combo.tsx',
+      'frontend/src/components/ui/confirmacion.tsx',
+      'frontend/src/components/ui/input.tsx',
+      'frontend/src/components/ui/modal.tsx',
+      'frontend/src/components/ui/select.tsx',
+      'frontend/src/features/accounts/accounts-page.tsx',
+      'frontend/src/features/admin/bitacora-page.tsx',
+      'frontend/src/features/admin/usuarios-page.tsx',
+      'frontend/src/features/auth/login-page.tsx',
+      'frontend/src/features/auth/register-page.tsx',
+      'frontend/src/features/centros/categoria-modal.tsx',
+      'frontend/src/features/centros/centros-page.tsx',
+      'frontend/src/features/centros/concepto-modal.tsx',
+      'frontend/src/features/centros/confirmar-borrado.tsx',
+      'frontend/src/features/cuenta/cuenta-page.tsx',
+      'frontend/src/features/dashboard/dashboard-page.tsx',
+      'frontend/src/features/transactions/camara.tsx',
+      'frontend/src/features/transactions/leer-soporte.ts',
+      'frontend/src/features/transactions/movimiento-modal.tsx',
+      'frontend/src/lib/deslizar.ts',
+      'frontend/src/lib/filtros.ts',
+      'packages/lectura/src/clasificar.ts',
+    ],
+    rules: { 'max-lines-per-function': 'off' },
   },
 
   // ── Tests, every workspace ────────────────────────────────────────────────
