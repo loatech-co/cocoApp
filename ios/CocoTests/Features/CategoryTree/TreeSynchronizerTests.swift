@@ -17,7 +17,7 @@ final class TreeSynchronizerTests: XCTestCase {
     }
 
     private static let now = Date(timeIntervalSince1970: 1_800_000_000)
-    private static let categoriasJSON =
+    private static let categoriesJSON =
         #"{"data":[{"id":1,"name":"Costos fijos","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":true,"children":[{"id":10,"name":"Educación","parent_id":1,"palabras_clave":[],"is_archived":false,"estatico":false,"children":[{"id":100,"name":"Colegio","parent_id":10,"palabras_clave":["tuti"],"is_archived":false,"estatico":false,"children":null}]}]}],"meta":{}}"#
 
     private var file: URL = URL(fileURLWithPath: "/")
@@ -31,58 +31,58 @@ final class TreeSynchronizerTests: XCTestCase {
         try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
     }
 
-    private func sincronizador(_ transport: FakeTransport, now: Date = now) -> TreeSynchronizer {
+    private func synchronizer(_ transport: FakeTransport, now: Date = now) -> TreeSynchronizer {
         let base = URL(string: "https://api.coco.invalid") ?? URL(fileURLWithPath: "/")
         let api = APIClient(configuration: APIConfiguration(base: base), transport: transport, version: "0.1.0")
         return TreeSynchronizer(
             api: api, session: FixedSession(), store: DiskTreeStore(file: file), clock: { now })
     }
 
-    private func save(descargadoHace: TimeInterval) throws {
-        let viejo = SavedTree(
+    private func save(downloadedAgo: TimeInterval) throws {
+        let old = SavedTree(
             roots: [
                 TreeNode(
                     id: 2, name: "Viejo", parentId: nil,
                     children: [TreeNode(id: 20, name: "Guardado", parentId: 2)])
             ],
-            descargadoEn: Self.now.addingTimeInterval(-descargadoHace)
+            downloadedAt: Self.now.addingTimeInterval(-downloadedAgo)
         )
-        try DiskTreeStore(file: file).save(viejo)
+        try DiskTreeStore(file: file).save(old)
     }
 
-    func testSinArchivoYSinRedElIndiceEsNil() async {
+    func testWithoutFileAndWithoutNetworkTheIndexIsNil() async {
         let transport = FakeTransport([.failure(URLError(.notConnectedToInternet))])
-        let s = sincronizador(transport)
+        let s = synchronizer(transport)
         await s.refreshIfNeeded()
         let index = await s.index()
         XCTAssertNil(index)
         XCTAssertEqual(transport.received.count, 1)
     }
 
-    func testConArchivoViejoYRedCaidaDevuelveLoGuardado() async throws {
-        try save(descargadoHace: 7200)
+    func testWithOldFileAndNetworkDownReturnsTheSaved() async throws {
+        try save(downloadedAgo: 7200)
         let transport = FakeTransport([.failure(URLError(.timedOut))])
-        let s = sincronizador(transport)
+        let s = synchronizer(transport)
         await s.refreshIfNeeded()
         let index = await s.index()
         XCTAssertEqual(index?.search("guardado").map(\.id), [20])
         XCTAssertEqual(transport.received.count, 1, "lo intentó, falló, y se quedó con lo guardado")
     }
 
-    func testConArchivoDeHaceDiezMinutosNoLlamaALaAPI() async throws {
-        try save(descargadoHace: 600)
+    func testWithTenMinuteOldFileDoesNotCallTheAPI() async throws {
+        try save(downloadedAgo: 600)
         let transport = FakeTransport()
-        let s = sincronizador(transport)
+        let s = synchronizer(transport)
         await s.refreshIfNeeded()
         XCTAssertTrue(transport.received.isEmpty)
         let index = await s.index()
-        XCTAssertEqual(index?.entradas.map(\.id), [2, 20])
+        XCTAssertEqual(index?.entries.map(\.id), [2, 20])
     }
 
-    func testConArchivoDeHaceDosHorasSiLlama() async throws {
-        try save(descargadoHace: 7200)
-        let transport = FakeTransport([.http(200, Self.categoriasJSON)])
-        let s = sincronizador(transport)
+    func testWithTwoHourOldFileCallsTheAPI() async throws {
+        try save(downloadedAgo: 7200)
+        let transport = FakeTransport([.http(200, Self.categoriesJSON)])
+        let s = synchronizer(transport)
         await s.refreshIfNeeded()
         XCTAssertEqual(transport.received.first?.url?.path(), "/api/v1/categories")
         XCTAssertEqual(transport.received.first?.value(forHTTPHeaderField: "Authorization"), "Bearer a1")
@@ -91,36 +91,36 @@ final class TreeSynchronizerTests: XCTestCase {
         XCTAssertEqual(index?.search("tuti").map(\.id), [100])
     }
 
-    func testTrasRefrescarElArchivoSeReescribeConFechaNueva() async throws {
-        try save(descargadoHace: 7200)
-        let transport = FakeTransport([.http(200, Self.categoriasJSON)])
-        let s = sincronizador(transport)
-        try await s.refrescarAhora()
-        let leido = try XCTUnwrap(DiskTreeStore(file: file).load())
-        XCTAssertEqual(leido.descargadoEn.timeIntervalSince1970, Self.now.timeIntervalSince1970, accuracy: 1)
-        XCTAssertEqual(leido.roots.map(\.id), [1])
-        XCTAssertEqual(leido.roots.first?.isStatic, true)
+    func testAfterRefreshingTheFileIsRewrittenWithANewDate() async throws {
+        try save(downloadedAgo: 7200)
+        let transport = FakeTransport([.http(200, Self.categoriesJSON)])
+        let s = synchronizer(transport)
+        try await s.refreshNow()
+        let loaded = try XCTUnwrap(DiskTreeStore(file: file).load())
+        XCTAssertEqual(loaded.downloadedAt.timeIntervalSince1970, Self.now.timeIntervalSince1970, accuracy: 1)
+        XCTAssertEqual(loaded.roots.map(\.id), [1])
+        XCTAssertEqual(loaded.roots.first?.isStatic, true)
     }
 
-    func testRefrescarAhoraSinRedLanzaYConservaLoGuardado() async throws {
-        try save(descargadoHace: 60)
+    func testRefreshNowWithoutNetworkThrowsAndKeepsTheSaved() async throws {
+        try save(downloadedAgo: 60)
         let transport = FakeTransport([.failure(URLError(.notConnectedToInternet))])
-        let s = sincronizador(transport)
+        let s = synchronizer(transport)
         do {
-            try await s.refrescarAhora()
+            try await s.refreshNow()
             XCTFail("tenía que fallar")
         } catch {
             XCTAssertEqual(error as? APIError, .noNetwork(.notConnectedToInternet))
         }
         let index = await s.index()
-        XCTAssertEqual(index?.entradas.map(\.id), [2, 20])
+        XCTAssertEqual(index?.entries.map(\.id), [2, 20])
     }
 
-    func testElAlmacenEnDiscoVaYVuelve() throws {
+    func testTheDiskStoreRoundTrips() throws {
         XCTAssertNil(try DiskTreeStore(file: file).load())
-        try save(descargadoHace: 0)
-        let leido = try XCTUnwrap(DiskTreeStore(file: file).load())
-        XCTAssertEqual(leido.roots.first?.children?.first?.name, "Guardado")
-        XCTAssertEqual(leido.descargadoEn.timeIntervalSince1970, Self.now.timeIntervalSince1970, accuracy: 1)
+        try save(downloadedAgo: 0)
+        let loaded = try XCTUnwrap(DiskTreeStore(file: file).load())
+        XCTAssertEqual(loaded.roots.first?.children?.first?.name, "Guardado")
+        XCTAssertEqual(loaded.downloadedAt.timeIntervalSince1970, Self.now.timeIntervalSince1970, accuracy: 1)
     }
 }

@@ -220,7 +220,7 @@ final class FormModelTests: XCTestCase {
         let m = try model()
         m.search("tuti")
         XCTAssertEqual(
-            m.results.map(\.rutaLegible), ["Educación › Costos fijos"], "ancestros, del más cercano al más lejano")
+            m.results.map(\.readablePath), ["Educación › Costos fijos"], "ancestros, del más cercano al más lejano")
         let withoutIndex = try model(index: nil)
         withoutIndex.search("tuti")
         XCTAssertEqual(withoutIndex.results, [])

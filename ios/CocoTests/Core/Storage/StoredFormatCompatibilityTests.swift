@@ -59,7 +59,7 @@ final class StoredFormatCompatibilityTests: XCTestCase {
                     id: 1, name: "A", parentId: nil, keywords: ["k"], isArchived: true, isStatic: true,
                     children: [TreeNode(id: 2, name: "B", parentId: 1)])
             ],
-            descargadoEn: Date(timeIntervalSinceReferenceDate: 7))
+            downloadedAt: Date(timeIntervalSinceReferenceDate: 7))
         try idaYVuelta(
             tree,
             #"{"descargadoEn":7,"raices":[{"children":[{"estatico":false,"id":2,"is_archived":false,"name":"B","palabras_clave":[],"parent_id":1}],"estatico":true,"id":1,"is_archived":true,"name":"A","palabras_clave":["k"]}]}"#
@@ -71,8 +71,8 @@ final class StoredFormatCompatibilityTests: XCTestCase {
         XCTAssertEqual(CaptureSource.sms.rawValue, "sms")
         XCTAssertEqual(CaptureSource.iosManual.rawValue, "ios_manual")
         XCTAssertEqual(CaptureSource.iosPhoto.rawValue, "ios_photo")
-        XCTAssertEqual(TreeLevel.centro.rawValue, "centro")
-        XCTAssertEqual(TreeLevel.categoria.rawValue, "categoria")
+        XCTAssertEqual(TreeLevel.center.rawValue, "centro")
+        XCTAssertEqual(TreeLevel.category.rawValue, "categoria")
         XCTAssertEqual(TreeLevel.concept.rawValue, "concepto")
         XCTAssertEqual(KeychainKey.refreshToken.rawValue, "refresh_token")
     }

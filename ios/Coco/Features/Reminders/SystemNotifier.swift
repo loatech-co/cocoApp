@@ -32,14 +32,14 @@ struct SystemNotifier: Notifier {
     /// A dónde lleva el aviso de una captura; lo lee el enrutador.
     static let destinoDeCaptura = "coco://capturas"
 
-    let centro: NotificationCenterClient
+    let center: NotificationCenterClient
     let clock: @Sendable () -> Date
 
     init(
-        centro: NotificationCenterClient = UNUserNotificationCenter.current(),
+        center: NotificationCenterClient = UNUserNotificationCenter.current(),
         clock: @Sendable @escaping () -> Date = { Date() }
     ) {
-        self.centro = centro
+        self.center = center
         self.clock = clock
     }
 
@@ -59,35 +59,35 @@ struct SystemNotifier: Notifier {
 
     func requestPermission() async -> Bool {
         let abrir = UNNotificationAction(identifier: Self.accionAbrir, title: "Abrir", options: [.foreground])
-        centro.register(categories: [
+        center.register(categories: [
             UNNotificationCategory(identifier: Self.categoriaDeCaptura, actions: [abrir], intentIdentifiers: [])
         ])
-        return (try? await centro.pedirAutorizacion()) ?? false
+        return (try? await center.pedirAutorizacion()) ?? false
     }
 
     func captureSaved(_ r: SavedResult, source: CaptureSource) async {
         let text = Self.textoDeCaptura(r)
         await mostrar(
             id: "captura-\(r.transactionId)", title: text.title, body: text.body,
-            categoria: Self.categoriaDeCaptura)
+            category: Self.categoriaDeCaptura)
     }
 
     func captureFailed(reason: String) async {
         await mostrar(
             id: "captura-fallida-\(UUID().uuidString)", title: "No se pudo registrar", body: reason,
-            categoria: Self.categoriaDeCaptura)
+            category: Self.categoriaDeCaptura)
     }
 
     func queueSent(count: Int) async {
         guard count > 0 else { return }
         let body = count == 1 ? "Se envió 1 captura pendiente" : "Se enviaron \(count) capturas pendientes"
         await mostrar(
-            id: "cola-enviada", title: "Capturas enviadas", body: body, categoria: Self.categoriaDeCaptura)
+            id: "cola-enviada", title: "Capturas enviadas", body: body, category: Self.categoriaDeCaptura)
     }
 
     /// Un solo aviso con id fijo: programarlo dos veces lo reemplaza.
     func scheduleExpiry(_ expiresAt: Date, text: String) async {
-        centro.quitarPendientes(ids: [Self.idDeVencimiento])
+        center.quitarPendientes(ids: [Self.idDeVencimiento])
         let now = clock()
         guard let momento = ExpiryReminder.momentoDelAviso(expiresAt: expiresAt, now: now) else { return }
         let contenido = UNMutableNotificationContent()
@@ -96,21 +96,21 @@ struct SystemNotifier: Notifier {
         contenido.sound = .default
         let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: momento)
         let disparador = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
-        try? await centro.anadir(
+        try? await center.anadir(
             UNNotificationRequest(identifier: Self.idDeVencimiento, content: contenido, trigger: disparador))
     }
 
     func setBadge(_ n: Int) async {
-        try? await centro.setBadge(max(0, n))
+        try? await center.setBadge(max(0, n))
     }
 
-    private func mostrar(id: String, title: String, body: String, categoria: String) async {
+    private func mostrar(id: String, title: String, body: String, category: String) async {
         let contenido = UNMutableNotificationContent()
         contenido.title = title
         contenido.body = body
         contenido.sound = .default
-        contenido.categoryIdentifier = categoria
+        contenido.categoryIdentifier = category
         contenido.userInfo = ["destino": Self.destinoDeCaptura]
-        try? await centro.anadir(UNNotificationRequest(identifier: id, content: contenido, trigger: nil))
+        try? await center.anadir(UNNotificationRequest(identifier: id, content: contenido, trigger: nil))
     }
 }

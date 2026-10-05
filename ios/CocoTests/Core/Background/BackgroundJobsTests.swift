@@ -82,6 +82,6 @@ final class BackgroundJobsTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(session.tokenReads, 1)
         XCTAssertEqual(transport.received.map { $0.url?.path }, ["/api/v1/categories"])
         let index = await tree.index()
-        XCTAssertEqual(index?.entradas.map(\.name), ["Hogar"])
+        XCTAssertEqual(index?.entries.map(\.name), ["Hogar"])
     }
 }

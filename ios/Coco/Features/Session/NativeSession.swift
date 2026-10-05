@@ -294,17 +294,17 @@ enum JSONSlicer {
     /// Índice de la llave que cierra el objeto abierto en `desde`.
     private static func finDeObjeto(_ bytes: [UInt8], from: Int) -> Int? {
         var i = from
-        var nivel = 0
+        var level = 0
         while i < bytes.count {
             switch bytes[i] {
             case UInt8(ascii: "\""):
                 guard let fin = finDeCadena(bytes, from: i) else { return nil }
                 i = fin
             case UInt8(ascii: "{"), UInt8(ascii: "["):
-                nivel += 1
+                level += 1
             case UInt8(ascii: "}"), UInt8(ascii: "]"):
-                nivel -= 1
-                if nivel == 0 { return i }
+                level -= 1
+                if level == 0 { return i }
             default:
                 break
             }
