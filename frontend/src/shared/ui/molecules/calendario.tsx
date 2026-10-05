@@ -45,6 +45,17 @@ export const mesDeISO = (iso: string): MesVisible => ({
   mes: Number(iso.slice(5, 7)) - 1,
 });
 
+interface CalendarioProps {
+  desde?: string | undefined;
+  hasta?: string | undefined;
+  /** El mes que se muestra. Sin esto, el propio calendario lo lleva. */
+  vista?: MesVisible;
+  onVista?: (mes: MesVisible) => void;
+  onDia: (iso: string) => void;
+  onSobrevolar?: (iso: string | null) => void;
+  className?: string;
+}
+
 /**
  * La rejilla de un mes.
  *
@@ -66,16 +77,7 @@ export function Calendario({
   onDia,
   onSobrevolar,
   className,
-}: {
-  desde?: string | undefined;
-  hasta?: string | undefined;
-  /** El mes que se muestra. Sin esto, el propio calendario lo lleva. */
-  vista?: MesVisible;
-  onVista?: (mes: MesVisible) => void;
-  onDia: (iso: string) => void;
-  onSobrevolar?: (iso: string | null) => void;
-  className?: string;
-}) {
+}: CalendarioProps) {
   const [propio, setPropio] = useState<MesVisible>(() =>
     mesDeISO(desde ?? hasta ?? aISO(new Date())),
   );
@@ -121,125 +123,190 @@ export function Calendario({
         ningún relleno.
       */}
       <div className="mx-auto w-[294px] max-w-full">
-        <div className="mb-2 flex items-center justify-between">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm-icon"
-            onClick={() => moverMes(-1)}
-            aria-label="Mes anterior"
-          >
-            <ChevronLeft className="size-4" aria-hidden="true" />
-          </Button>
-          {/*
-            La mayúscula va SOLO en el mes.
+        <MonthHeader actual={actual} moverMes={moverMes} />
 
-            Estaba `capitalize` en toda la frase, y eso pone en mayúscula la
-            primera letra de CADA palabra: «septiembre de 2026» salía
-            «Septiembre De 2026». El «de» es una preposición, no una palabra que
-            se titule.
+        <WeekdayRow />
 
-            Y no vale `first-letter:uppercase` en el conjunto: `::first-letter`
-            solo se aplica a contenedores de bloque, y esto es un `span` en
-            línea, así que la regla no engancharía y el mes saldría en
-            minúscula. Envolver la palabra que sí se titula es explícito y no
-            depende de ninguna excepción del selector.
-          */}
-          <span aria-live="polite" className="font-display text-sm font-semibold">
-            <span className="capitalize">{MESES_LARGOS[actual.mes]}</span> de {actual.anio}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm-icon"
-            onClick={() => moverMes(1)}
-            aria-label="Mes siguiente"
-          >
-            <ChevronRight className="size-4" aria-hidden="true" />
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-7">
-          {DIAS.map((d) => (
-            <span
-              key={d}
-              aria-hidden="true"
-              className="grid h-8 select-none place-items-center text-xs font-medium text-muted-foreground"
-            >
-              {d}
-            </span>
-          ))}
-        </div>
-
-        {/* Sin separación entre celdas: la banda del rango tiene que ser
-            continua, y un hueco la partiría en cuadritos sueltos. */}
-        <div className="grid grid-cols-7" onMouseLeave={() => onSobrevolar?.(null)}>
-          {celdas.map((iso, i) => {
-            if (iso === null) {
-              // eslint-disable-next-line @eslint-react/no-array-index-key -- los huecos de la rejilla solo tienen su posición
-              return <span key={`hueco-${i}`} className="aspect-square" />;
-            }
-
-            const dentro =
-              desde !== undefined && hasta !== undefined && iso >= desde && iso <= hasta;
-            const esInicio = iso === desde;
-            const esFin = iso === hasta;
-            const extremo = esInicio || esFin;
-
-            return (
-              <div
-                key={iso}
-                className={cn(
-                  // CUADRADA, no de alto fijo: la celda mide lo que mida su
-                  // columna, y el círculo de dentro mide lo que mida la celda.
-                  // Con 36px fijos, en un panel estrecho el círculo se salía por
-                  // los lados de su casilla.
-                  'aspect-square',
-                  // La banda del rango es `--accent`, el token del tema para lo
-                  // que está señalado. Llevaba además un `dark:bg-white/12`
-                  // encima: un blanco inventado que no sale de ningún token y
-                  // que en oscuro pintaba la banda de gris en vez de teal.
-                  dentro && !extremo && 'bg-accent',
-                  dentro && extremo && desde !== hasta && 'bg-accent',
-                  // Las puntas se redondean también al principio y al final de
-                  // cada fila, o la banda quedaría cortada a ras contra el borde.
-                  (esInicio || i % 7 === 0) && 'rounded-l-full',
-                  (esFin || i % 7 === 6) && 'rounded-r-full',
-                )}
-              >
-                <button
-                  type="button"
-                  onClick={() => onDia(iso)}
-                  onMouseEnter={() => onSobrevolar?.(iso)}
-                  aria-label={diaLargo(iso)}
-                  aria-pressed={extremo}
-                  className={cn(
-                    'size-full select-none rounded-full text-sm transition-colors',
-                    extremo
-                      ? 'bg-primary font-semibold text-primary-foreground hover:bg-primary/90'
-                      : dentro
-                        ? cn('text-foreground', REALCE)
-                        : cn('text-muted-foreground', REALCE),
-                    // Hoy lleva anillo, no relleno: el relleno es de lo elegido y
-                    // competirían por significar lo mismo.
-                    //
-                    // El anillo va en el acento como TINTA y no en `--input`.
-                    // `--input` es el borde de un campo, calculado para verse
-                    // contra un relleno blanco, no para distinguir una casilla de
-                    // 40px entre otras cuarenta: el círculo de hoy estaba puesto
-                    // y no se encontraba.
-                    iso === hoy &&
-                      !extremo &&
-                      'font-semibold text-foreground ring-1 ring-inset ring-acento-tinta/50',
-                  )}
-                >
-                  {Number(iso.slice(8))}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+        <MonthDays
+          celdas={celdas}
+          desde={desde}
+          hasta={hasta}
+          hoy={hoy}
+          onDia={onDia}
+          onSobrevolar={onSobrevolar}
+        />
       </div>
+    </div>
+  );
+}
+
+interface DayCellProps {
+  iso: string;
+  /** Su posición en la rejilla: decide dónde se curva la banda. */
+  i: number;
+  desde: string | undefined;
+  hasta: string | undefined;
+  hoy: string;
+  onDia: (iso: string) => void;
+  onSobrevolar: ((iso: string | null) => void) | undefined;
+}
+
+/** Un día del mes: su banda de rango, su círculo y su número. */
+function DayCell({ iso, i, desde, hasta, hoy, onDia, onSobrevolar }: DayCellProps) {
+  const dentro = desde !== undefined && hasta !== undefined && iso >= desde && iso <= hasta;
+  const esInicio = iso === desde;
+  const esFin = iso === hasta;
+  const extremo = esInicio || esFin;
+
+  return (
+    <div
+      className={cn(
+        // CUADRADA, no de alto fijo: la celda mide lo que mida su
+        // columna, y el círculo de dentro mide lo que mida la celda.
+        // Con 36px fijos, en un panel estrecho el círculo se salía por
+        // los lados de su casilla.
+        'aspect-square',
+        // La banda del rango es `--accent`, el token del tema para lo
+        // que está señalado. Llevaba además un `dark:bg-white/12`
+        // encima: un blanco inventado que no sale de ningún token y
+        // que en oscuro pintaba la banda de gris en vez de teal.
+        dentro && !extremo && 'bg-accent',
+        dentro && extremo && desde !== hasta && 'bg-accent',
+        // Las puntas se redondean también al principio y al final de
+        // cada fila, o la banda quedaría cortada a ras contra el borde.
+        (esInicio || i % 7 === 0) && 'rounded-l-full',
+        (esFin || i % 7 === 6) && 'rounded-r-full',
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onDia(iso)}
+        onMouseEnter={() => onSobrevolar?.(iso)}
+        aria-label={diaLargo(iso)}
+        aria-pressed={extremo}
+        className={cn(
+          'size-full select-none rounded-full text-sm transition-colors',
+          extremo
+            ? 'bg-primary font-semibold text-primary-foreground hover:bg-primary/90'
+            : dentro
+              ? cn('text-foreground', REALCE)
+              : cn('text-muted-foreground', REALCE),
+          // Hoy lleva anillo, no relleno: el relleno es de lo elegido y
+          // competirían por significar lo mismo.
+          //
+          // El anillo va en el acento como TINTA y no en `--input`.
+          // `--input` es el borde de un campo, calculado para verse
+          // contra un relleno blanco, no para distinguir una casilla de
+          // 40px entre otras cuarenta: el círculo de hoy estaba puesto
+          // y no se encontraba.
+          iso === hoy &&
+            !extremo &&
+            'font-semibold text-foreground ring-1 ring-inset ring-acento-tinta/50',
+        )}
+      >
+        {Number(iso.slice(8))}
+      </button>
+    </div>
+  );
+}
+
+/** El mes a la vista, con las dos flechas que lo mueven. */
+function MonthHeader({
+  actual,
+  moverMes,
+}: {
+  actual: MesVisible;
+  moverMes: (pasos: number) => void;
+}) {
+  return (
+    <div className="mb-2 flex items-center justify-between">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm-icon"
+        onClick={() => moverMes(-1)}
+        aria-label="Mes anterior"
+      >
+        <ChevronLeft className="size-4" aria-hidden="true" />
+      </Button>
+      {/*
+        La mayúscula va SOLO en el mes.
+
+        Estaba `capitalize` en toda la frase, y eso pone en mayúscula la
+        primera letra de CADA palabra: «septiembre de 2026» salía
+        «Septiembre De 2026». El «de» es una preposición, no una palabra que
+        se titule.
+
+        Y no vale `first-letter:uppercase` en el conjunto: `::first-letter`
+        solo se aplica a contenedores de bloque, y esto es un `span` en
+        línea, así que la regla no engancharía y el mes saldría en
+        minúscula. Envolver la palabra que sí se titula es explícito y no
+        depende de ninguna excepción del selector.
+      */}
+      <span aria-live="polite" className="font-display text-sm font-semibold">
+        <span className="capitalize">{MESES_LARGOS[actual.mes]}</span> de {actual.anio}
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm-icon"
+        onClick={() => moverMes(1)}
+        aria-label="Mes siguiente"
+      >
+        <ChevronRight className="size-4" aria-hidden="true" />
+      </Button>
+    </div>
+  );
+}
+
+/** Los días del mes, con los huecos de delante y de detrás. */
+function MonthDays({
+  celdas,
+  desde,
+  hasta,
+  hoy,
+  onDia,
+  onSobrevolar,
+}: Omit<DayCellProps, 'iso' | 'i'> & { celdas: (string | null)[] }) {
+  // Sin separación entre celdas: la banda del rango tiene que ser continua, y
+  // un hueco la partiría en cuadritos sueltos.
+  return (
+    <div className="grid grid-cols-7" onMouseLeave={() => onSobrevolar?.(null)}>
+      {celdas.map((iso, i) => {
+        if (iso === null) {
+          // eslint-disable-next-line @eslint-react/no-array-index-key -- los huecos de la rejilla solo tienen su posición
+          return <span key={`hueco-${i}`} className="aspect-square" />;
+        }
+
+        return (
+          <DayCell
+            key={iso}
+            iso={iso}
+            i={i}
+            desde={desde}
+            hasta={hasta}
+            hoy={hoy}
+            onDia={onDia}
+            onSobrevolar={onSobrevolar}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function WeekdayRow() {
+  return (
+    <div className="grid grid-cols-7">
+      {DIAS.map((d) => (
+        <span
+          key={d}
+          aria-hidden="true"
+          className="grid h-8 select-none place-items-center text-xs font-medium text-muted-foreground"
+        >
+          {d}
+        </span>
+      ))}
     </div>
   );
 }
