@@ -25,7 +25,7 @@
     "sembrar:local": "dotenv -e api/.env.migrate -- node scripts/sembrar-local.mjs",
     "sql": "dotenv -e api/.env.migrate -- node scripts/sql.mjs",
     "sql:supabase": "dotenv -e api/.env.migrate -- bash scripts/sql-supabase.sh",
-    "postinstall": "node scripts/preparar-tesseract.mjs && npm run build --workspace @coco/lectura",
+    "postinstall": "node scripts/preparar-tesseract.mjs && npm run build --workspace @coco/lectura --workspace @coco/flags",
     "start": "node api/dist/main.js",
     "deploy:web": "bash scripts/desplegar-frontend.sh",
     "deploy:api": "bash scripts/desplegar-api.sh",

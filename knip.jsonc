@@ -39,5 +39,9 @@
       "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"],
     },
+    "packages/flags": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+    },
   },
 }

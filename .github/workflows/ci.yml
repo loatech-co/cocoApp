@@ -95,6 +95,9 @@ jobs:
           --from ${{ github.event.pull_request.base.sha }}
           --to ${{ github.event.pull_request.head.sha }}
 
+      - name: Feature flag expiry (warns past removeBy, fails 30 days later)
+        run: node scripts/ci/flags-expiry.mjs
+
       - name: Dependency audit (high/critical, production deps)
         run: node scripts/ci/audit.mjs
 
