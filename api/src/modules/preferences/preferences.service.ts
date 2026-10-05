@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 
+import { flagOfPreferenceKey, type FlagName } from '@coco/flags';
+
 import { CUENTAS_HABILITADAS, combinarConDefectos, type Preferencias } from './preferences';
 import type { UpdatePreferencesDto } from './preferences.dto';
 import { PreferencesRepository } from './preferences.repository';
@@ -35,5 +37,20 @@ export class PreferencesService {
    */
   async llevaCuentas(userId: bigint): Promise<boolean> {
     return (await this.leer(userId))[CUENTAS_HABILITADAS];
+  }
+
+  /**
+   * This user's own feature flag values: rows `feature:<name>` holding a
+   * boolean (step 7.8). The flags module reads them through here because this
+   * module owns `user_preferences`. They are not part of `Preferencias` and the
+   * DTO does not accept them: a person cannot turn a flag on for themselves.
+   */
+  async featureOverrides(userId: bigint): Promise<ReadonlyMap<FlagName, boolean>> {
+    const overrides = new Map<FlagName, boolean>();
+    for (const row of await this.repository.findByUser(userId)) {
+      const name = flagOfPreferenceKey(row.prefKey);
+      if (name !== null && typeof row.prefValue === 'boolean') overrides.set(name, row.prefValue);
+    }
+    return overrides;
   }
 }

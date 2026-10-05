@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { FLAG_NAMES, type FlagName } from '@coco/flags';
+
 export const USER_ROLES = ['admin', 'user'] as const;
 export const USER_STATUSES = ['pending', 'active', 'suspended'] as const;
 
@@ -12,6 +14,12 @@ export class Profile {
   @ApiProperty({ enum: USER_STATUSES })
   status!: (typeof USER_STATUSES)[number];
   createdAt!: Date;
+}
+
+/** `GET /auth/me`: the profile and the feature flags on for this user. */
+export class Me extends Profile {
+  @ApiProperty({ enum: FLAG_NAMES, isArray: true })
+  features!: FlagName[];
 }
 
 export class Session {

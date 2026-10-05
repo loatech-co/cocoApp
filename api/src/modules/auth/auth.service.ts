@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { User } from '@prisma/client';
 
+import type { FlagName } from '@coco/flags';
+
 import { PasswordService } from './password.service';
 import { SupabaseAuthService } from './supabase-auth.service';
 import { UsersRepository } from './users.repository';
@@ -22,6 +24,9 @@ export interface PerfilPublico {
   status: User['status'];
   created_at: Date;
 }
+
+/** What `/auth/me` answers: the profile plus the flags on for this user (step 7.8). */
+export type PerfilConFlags = PerfilPublico & { features: FlagName[] };
 
 /** Lo que el controlador necesita para responder y poner la cookie. */
 export interface ParDeTokens {

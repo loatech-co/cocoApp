@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 
 import type { AccountResponse } from './accounts.response';
 import type { AuditEntryResponse, AuditUserResponse } from './admin.response';
-import type { ProfileResponse, SessionResponse } from './auth.response';
+import type { MeResponse, ProfileResponse, SessionResponse } from './auth.response';
 import type { CategoryMergeResponse, CategoryResponse } from './categories.response';
 import type { SuggestionResponse } from './categorization.response';
 import type { DashboardResponse } from './dashboard.response';
@@ -15,7 +15,7 @@ import type { TransactionResponse, TransferResponse } from './transactions.respo
 import type { AccountView } from '../../modules/accounts/accounts.service';
 import type { AdminService } from '../../modules/admin/admin.service';
 import type { RespuestaDeSesion } from '../../modules/auth/auth.controller';
-import type { PerfilPublico } from '../../modules/auth/auth.service';
+import type { PerfilConFlags, PerfilPublico } from '../../modules/auth/auth.service';
 import type { CategoryPayload } from '../../modules/categories/categories.controller';
 import type { CategoriesService } from '../../modules/categories/categories.service';
 import type { SugerenciaView } from '../../modules/categorization/categorization.service';
@@ -67,6 +67,7 @@ const CHECKS = {
   auditUser: true satisfies Same<AuditUserResponse | null, AuditEntry['user']>,
   auditChanges: true satisfies Same<Prisma.JsonValue, AuditEntry['changes']>,
   profile: true satisfies Same<ProfileResponse, Wire<PerfilPublico>>,
+  me: true satisfies Same<MeResponse, Wire<PerfilConFlags>>,
   session: true satisfies Same<SessionResponse, Wire<RespuestaDeSesion>>,
   category: true satisfies Same<CategoryResponse, Wire<CategoryPayload>>,
   categoryMerge: true satisfies Same<CategoryMergeResponse, Wire<MergeResult>>,

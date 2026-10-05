@@ -9,6 +9,7 @@ import {
   AuthService,
   type ContextoDePeticion,
   type ParDeTokens,
+  type PerfilConFlags,
   type PerfilPublico,
 } from './auth.service';
 import { ChangePasswordDto, LoginDto, RegisterDto } from './dto/auth.dto';
@@ -23,9 +24,10 @@ import {
   ApiNoContent,
   ApiPublic,
 } from '../../contract/v1/openapi.decorators';
-import { Profile, Registration, Session } from '../../contract/v2/auth.response';
+import { Me, Registration, Session } from '../../contract/v2/auth.response';
 import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
 import { toV2, type ToV2 } from '../../contract/v2/to-v2';
+import { FlagsService } from '../flags/flags.service';
 
 const REFRESH_COOKIE = 'coco_refresh';
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -83,6 +85,7 @@ export class AuthV2Controller {
 
   constructor(
     private readonly auth: AuthService,
+    private readonly flags: FlagsService,
     config: ConfigService,
   ) {
     this.inProduction = config.get<string>('NODE_ENV') === 'production';
@@ -178,9 +181,13 @@ export class AuthV2Controller {
 
   @Get('me')
   @ApiAuthenticated()
-  @ApiDataV2(Profile)
-  async me(@CurrentUser() user: AuthenticatedUser): Promise<ToV2<PerfilPublico>> {
-    return toV2(await this.auth.perfilDe(user.id));
+  @ApiDataV2(Me)
+  async me(@CurrentUser() user: AuthenticatedUser): Promise<ToV2<PerfilConFlags>> {
+    const [profile, features] = await Promise.all([
+      this.auth.perfilDe(user.id),
+      this.flags.activeFor(user.id),
+    ]);
+    return toV2({ ...profile, features });
   }
 
   @Post('change-password')

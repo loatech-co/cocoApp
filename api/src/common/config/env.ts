@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { parseFeatures } from '@coco/flags';
+
 import { leerDelEntorno } from '../entorno';
 
 /**
@@ -40,6 +42,21 @@ function urlWith(protocols: readonly string[]): z.ZodString {
   );
 }
 
+/**
+ * `FEATURES=flag_a,flag_b`: flags on for every user (step 7.8). Every name
+ * must be in the registry (`packages/flags`): a typo would otherwise leave a
+ * flag silently off, and a removed flag still listed means a stale config.
+ */
+const FEATURES = z.string().superRefine((value, context) => {
+  const { unknown } = parseFeatures(value);
+  if (unknown.length > 0) {
+    context.addIssue({
+      code: 'custom',
+      message: `names flags that are not in packages/flags: ${unknown.join(', ')}`,
+    });
+  }
+});
+
 const POSTGRES_URL = urlWith(['postgresql:', 'postgres:']);
 const HTTP_URL = urlWith(['https:', 'http:']);
 
@@ -70,6 +87,7 @@ const envSchema = z.object({
   SOPORTES_BUCKET: optionalText,
   AUTO_CHARGE: optionalText,
   SPA_DIST_PATH: optionalText,
+  FEATURES: FEATURES.optional(),
 });
 
 type CleanEnv = Partial<Record<keyof typeof envSchema.shape, string>>;

@@ -8,6 +8,7 @@ import {
   AuthService,
   type ContextoDePeticion,
   type ParDeTokens,
+  type PerfilConFlags,
   type PerfilPublico,
 } from './auth.service';
 import { ChangePasswordDto, LoginDto, RefreshNativoDto, RegisterDto } from './dto/auth.dto';
@@ -15,11 +16,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthenticationError } from '../../common/errors/domain-error';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import {
-  ProfileResponse,
-  RegisterResponse,
-  SessionResponse,
-} from '../../contract/v1/auth.response';
+import { MeResponse, RegisterResponse, SessionResponse } from '../../contract/v1/auth.response';
 import {
   ApiAuthenticated,
   ApiData,
@@ -27,6 +24,7 @@ import {
   ApiNoContent,
   ApiPublic,
 } from '../../contract/v1/openapi.decorators';
+import { FlagsService } from '../flags/flags.service';
 
 /** El refresh token viaja SOLO en esta cookie; nunca en el cuerpo ni en la URL. */
 const COOKIE_REFRESH = 'coco_refresh';
@@ -83,6 +81,7 @@ export class AuthController {
 
   constructor(
     private readonly auth: AuthService,
+    private readonly flags: FlagsService,
     config: ConfigService,
   ) {
     this.enProduccion = config.get<string>('NODE_ENV') === 'production';
@@ -200,11 +199,16 @@ export class AuthController {
     this.borrarCookie(response);
   }
 
+  /** `features`: the flags on for this user (step 7.8), read by the web and iOS. */
   @Get('me')
   @ApiAuthenticated()
-  @ApiData(ProfileResponse)
-  perfil(@CurrentUser() user: AuthenticatedUser): Promise<PerfilPublico> {
-    return this.auth.perfilDe(user.id);
+  @ApiData(MeResponse)
+  async perfil(@CurrentUser() user: AuthenticatedUser): Promise<PerfilConFlags> {
+    const [perfil, features] = await Promise.all([
+      this.auth.perfilDe(user.id),
+      this.flags.activeFor(user.id),
+    ]);
+    return { ...perfil, features };
   }
 
   @Post('change-password')

@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole, UserStatus } from '@prisma/client';
 
+import { FLAG_NAMES, type FlagName } from '@coco/flags';
+
 export class ProfileResponse {
   id!: number;
   email!: string;
@@ -10,6 +12,12 @@ export class ProfileResponse {
   @ApiProperty({ enum: UserStatus })
   status!: UserStatus;
   created_at!: Date;
+}
+
+/** `GET /auth/me`: the profile and the feature flags on for this user. */
+export class MeResponse extends ProfileResponse {
+  @ApiProperty({ enum: FLAG_NAMES, isArray: true })
+  features!: FlagName[];
 }
 
 export class SessionResponse {

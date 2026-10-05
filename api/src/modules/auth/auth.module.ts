@@ -10,6 +10,7 @@ import { UsersService } from './users.service';
 import { AuditRepository } from '../../common/audit/audit.repository';
 import { AuditService } from '../../common/audit/audit.service';
 import { CategoriesModule } from '../categories/categories.module';
+import { FlagsModule } from '../flags/flags.module';
 
 /**
  * Global porque el JwtAuthGuard —que es global— necesita SupabaseAuthService
@@ -21,8 +22,9 @@ import { CategoriesModule } from '../categories/categories.module';
  */
 @Global()
 @Module({
-  // The registration seeds the new account's categories (CategoriesService).
-  imports: [CategoriesModule],
+  // The registration seeds the new account's categories (CategoriesService);
+  // /auth/me lists the user's active feature flags (FlagsService).
+  imports: [CategoriesModule, FlagsModule],
   controllers: [AuthController, AuthV2Controller],
   providers: [
     AuthService,

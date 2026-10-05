@@ -1,5 +1,5 @@
 import type { Account } from './accounts.response';
-import type { AuditEntry, AuditUser, Profile, Registration, Session } from './auth.response';
+import type { AuditEntry, AuditUser, Me, Profile, Registration, Session } from './auth.response';
 import type {
   Category,
   CategoryMerge,
@@ -22,7 +22,7 @@ import type { ConHijos } from '../../common/categories/categories.tree';
 import type { AccountView } from '../../modules/accounts/accounts.service';
 import type { AdminService } from '../../modules/admin/admin.service';
 import type { RespuestaDeSesion } from '../../modules/auth/auth.controller';
-import type { PerfilPublico } from '../../modules/auth/auth.service';
+import type { PerfilConFlags, PerfilPublico } from '../../modules/auth/auth.service';
 import type { CategoriesService, CategoryView } from '../../modules/categories/categories.service';
 import type { SugerenciaView } from '../../modules/categorization/categorization.service';
 import type { DashboardPayload } from '../../modules/dashboard/dashboard.types';
@@ -76,6 +76,7 @@ const CHECKS = {
   >,
   auditUser: true satisfies Same<AuditUser | null, V2<AuditEntryView['user']>>,
   profile: true satisfies Same<Profile, V2<PerfilPublico>>,
+  me: true satisfies Same<Me, V2<PerfilConFlags>>,
   session: true satisfies Same<Session, V2<RespuestaDeSesion>>,
   registration: true satisfies Same<
     Registration,
