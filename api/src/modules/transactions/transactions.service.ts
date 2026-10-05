@@ -243,6 +243,7 @@ export class TransactionsService {
       dto.tags !== undefined ? await this.tags.resolverNombres(userId, dto.tags) : null;
 
     const actualizada = await this.repository.updateWithDetails(
+      userId,
       id,
       cambiosDe(dto, accountId, amount),
       splits,
@@ -359,7 +360,7 @@ function cambiosDe(
   dto: UpdateTransactionDto,
   accountId: bigint | null,
   amount: Money,
-): Parameters<TransactionsRepository['updateWithDetails']>[1] {
+): Parameters<TransactionsRepository['updateWithDetails']>[2] {
   return {
     ...(dto.account_id !== undefined && { accountId }),
     ...(dto.date !== undefined && { date: new Date(dto.date) }),

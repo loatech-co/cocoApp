@@ -176,7 +176,7 @@ export class SoportesService implements OnModuleInit {
       movimiento.description ?? movimiento.merchant ?? movimiento.category?.name ?? 'Soporte';
     const fecha = movimiento.date.toISOString().slice(0, 10);
 
-    let orden = ((await this.repository.maxOrder(transactionId)) ?? 0) + 1;
+    let orden = ((await this.repository.maxOrder(userId, transactionId)) ?? 0) + 1;
 
     for (const archivo of archivos) {
       const { contenido, mime, extension } = await this.optimizeOrFail(archivo);
@@ -185,7 +185,7 @@ export class SoportesService implements OnModuleInit {
       // Reintentar la misma subida no duplica: el único de (movimiento,
       // huella) lo impediría en la base, pero fallar con un 500 no es una
       // respuesta; se salta y ya.
-      if (await this.repository.existsWithHash(transactionId, huella)) continue;
+      if (await this.repository.existsWithHash(userId, transactionId, huella)) continue;
 
       const storageKey = claveNueva(userId, extension);
       // El archivo primero y la ficha después: si se corta en medio queda un

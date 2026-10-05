@@ -33,7 +33,7 @@ export class TagsService {
 
     if (existente) {
       if (!color) return presentar(existente);
-      return presentar(await this.repository.updateColor(existente.id, color));
+      return presentar(await this.repository.updateColor(userId, existente.id, color));
     }
 
     const creada = await this.repository.createUnlessTaken(userId, nombre, color ?? null);

@@ -177,11 +177,15 @@ export class AdminService {
   }
 
   /** The query arrives as URL text: de ahí el `Number`. */
-  async bitacora(query: { page?: string; per_page?: string }) {
+  async bitacora(adminId: bigint, query: { page?: string; per_page?: string }) {
     const page = query.page ? Number(query.page) : 1;
     const perPage = query.per_page ? Number(query.per_page) : 50;
 
-    const { entries: eventos, total } = await this.audit.page((page - 1) * perPage, perPage);
+    const { entries: eventos, total } = await this.audit.page(
+      adminId,
+      (page - 1) * perPage,
+      perPage,
+    );
 
     return {
       data: eventos.map((evento) => ({

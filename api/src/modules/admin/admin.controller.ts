@@ -79,7 +79,10 @@ export class AdminController {
   }
 
   @Get('audit-log')
-  bitacora(@Query() query: { page?: string; per_page?: string }) {
-    return this.admin.bitacora(query);
+  bitacora(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: { page?: string; per_page?: string },
+  ) {
+    return this.admin.bitacora(user.id, query);
   }
 }

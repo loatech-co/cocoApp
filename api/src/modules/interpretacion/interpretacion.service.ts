@@ -140,7 +140,7 @@ export class InterpretacionService {
     if (veredicto.tipo === 'exacto') {
       const cambios = enriquecer(veredicto.con, nueva);
       if (Object.keys(cambios).length > 0) {
-        await this.ledger.enrich(veredicto.con.id, cambios);
+        await this.ledger.enrich(userId, veredicto.con.id, cambios);
       }
       const fusionada = await this.yaEstaba(
         userId,

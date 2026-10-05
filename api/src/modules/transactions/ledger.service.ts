@@ -34,8 +34,8 @@ export class LedgerService {
     return this.repository.findIdByExternalRef(userId, externalRef);
   }
 
-  enrich(id: bigint, changes: EnrichChanges): Promise<void> {
-    return this.repository.enrich(id, changes);
+  enrich(userId: bigint, id: bigint, changes: EnrichChanges): Promise<void> {
+    return this.repository.enrich(userId, id, changes);
   }
 
   findDuplicateCandidates(criteria: DuplicateCriteria): Promise<DuplicateCandidateRow[]> {
