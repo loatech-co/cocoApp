@@ -10,7 +10,9 @@ import {
   optimizar,
   TAMANO_MAXIMO,
   TIPOS_DE_ENTRADA,
+  type SoporteOptimizado,
 } from './soportes.optimizacion';
+import { SoportesRepository } from './soportes.repository';
 import {
   BadRequestError,
   NotFoundError,
@@ -18,7 +20,6 @@ import {
   ServiceUnavailableError,
   UnsupportedMediaTypeError,
 } from '../../common/errors/domain-error';
-import { PrismaService } from '../../prisma/prisma.service';
 
 /** Un archivo tal como llega del formulario. */
 export interface ArchivoSubido {
@@ -44,7 +45,7 @@ export class SoportesService implements OnModuleInit {
   private readonly logger = new Logger(SoportesService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: SoportesRepository,
     @Inject(RECEIPT_STORE) private readonly store: ReceiptStore,
   ) {}
 
@@ -88,10 +89,7 @@ export class SoportesService implements OnModuleInit {
    * donde la comprobación pueda saltarse.
    */
   async listar(userId: bigint, transactionId: bigint): Promise<SoporteView[]> {
-    const filas = await this.prisma.soporte.findMany({
-      where: { userId, transactionId },
-      orderBy: [{ orden: 'asc' }, { id: 'asc' }],
-    });
+    const filas = await this.repository.findByTransaction(userId, transactionId);
 
     // One check per receipt, in parallel: a movement has a handful at most.
     const disponibles = await Promise.all(
@@ -127,9 +125,7 @@ export class SoportesService implements OnModuleInit {
     transactionId: bigint,
     soporteId: bigint,
   ): Promise<{ flujo: Readable; nombre: string; mime: string; tamano: number }> {
-    const soporte = await this.prisma.soporte.findFirst({
-      where: { id: soporteId, transactionId, userId },
-    });
+    const soporte = await this.repository.findOne(userId, transactionId, soporteId);
 
     if (!soporte) throw new NotFoundError('El soporte no existe.');
 
@@ -169,26 +165,10 @@ export class SoportesService implements OnModuleInit {
     transactionId: bigint,
     archivos: ArchivoSubido[],
   ): Promise<SoporteView[]> {
-    const movimiento = await this.prisma.transaction.findFirst({
-      where: { id: transactionId, userId },
-      include: { category: { select: { name: true } } },
-    });
+    const movimiento = await this.repository.findMovementForUpload(userId, transactionId);
 
     if (!movimiento) throw new NotFoundError('El movimiento no existe.');
-    if (archivos.length === 0) throw new BadRequestError('No llegó ningún archivo.');
-
-    for (const archivo of archivos) {
-      if (!TIPOS_DE_ENTRADA.has(archivo.mimetype)) {
-        throw new UnsupportedMediaTypeError(
-          `“${archivo.originalname}” no es un PDF ni una imagen.`,
-        );
-      }
-      if (archivo.size > TAMANO_MAXIMO) {
-        throw new PayloadTooLargeError(
-          `“${archivo.originalname}” pesa más de ${Math.round(TAMANO_MAXIMO / 1024 / 1024)} MB.`,
-        );
-      }
-    }
+    validateUploads(archivos);
 
     // El nombre sale del MOVIMIENTO, no del archivo: `IMG_4821.HEIC` no dice
     // de qué pago es, y así lo subido queda igual que lo importado.
@@ -196,90 +176,16 @@ export class SoportesService implements OnModuleInit {
       movimiento.description ?? movimiento.merchant ?? movimiento.category?.name ?? 'Soporte';
     const fecha = movimiento.date.toISOString().slice(0, 10);
 
-    const ultimo = await this.prisma.soporte.aggregate({
-      where: { transactionId },
-      _max: { orden: true },
-    });
-    let orden = (ultimo._max.orden ?? 0) + 1;
+    let orden = ((await this.repository.maxOrder(transactionId)) ?? 0) + 1;
 
     for (const archivo of archivos) {
-      /*
-        Tratar el archivo puede fallar por DOS motivos, y no se contestan igual.
-
-        ── No sé abrirlo ─────────────────────────────────────────────────────
-        El caso real es el HEIC del iPhone: está en `TIPOS_DE_ENTRADA` porque
-        es un formato de imagen legítimo, pero la librería que las procesa solo
-        lo entiende si se compiló con soporte para él —y casi nunca lo está,
-        porque va aparte por licencia—. Es definitivo: por más que se reintente
-        ese archivo no va a entrar, así que lo que hay que decir es con qué
-        volver.
-
-        ── No PUEDO ahora mismo ──────────────────────────────────────────────
-        El servidor se quedó sin hilos o sin memoria para tratar la imagen. El
-        archivo está perfecto y reintentar es exactamente lo que hay que hacer.
-
-        Iban por el mismo camino, y el resultado era el peor de los dos: una
-        captura PNG recibía «este servidor no sabe abrir ese formato, vuelve a
-        intentarlo con un JPG o un PNG» —un consejo imposible de seguir, porque
-        ya era un PNG— y la causa real quedaba escondida en el paréntesis.
-
-        El código de estado también cambia, y no es un detalle: 415 dice «no
-        mandes esto», 503 dice «vuelve a mandarlo». Son instrucciones opuestas.
-      */
-      const optimizado = await optimizar(archivo.buffer, archivo.mimetype).catch(
-        (causa: unknown) => {
-          const detalle = causa instanceof Error ? causa.message : 'error al procesar la imagen';
-
-          if (esFaltaDeRecursos(causa)) {
-            /*
-              Se guarda lo que llegó, sin tratar.
-
-              Tratar la imagen es una MEJORA —gris, 1100px, un tercio del
-              peso—, no un requisito: el recibo se ve igual sin ella. Tirar el
-              soporte porque al servidor le faltaban hilos en ese segundo es
-              cambiar una mejora por un fallo.
-
-              Y el fallo era REAL y frecuente: en un plan compartido la cuota
-              de procesos va y viene, así que pegar una captura funcionaba o no
-              según lo que estuviera haciendo el vecino. Pedirle a alguien que
-              «espere unos segundos y vuelva a intentarlo» con el recibo
-              delante es pedirle que haga de reintento manual.
-
-              Solo para lo que el visor sabe abrir. Un HEIC sin tratar sería un
-              archivo que después no se puede mirar: ahí el problema es el
-              formato, y ceder no arregla nada.
-            */
-            const sinTratar = comoLlego(archivo.buffer, archivo.mimetype);
-            if (sinTratar) {
-              this.logger.warn(
-                `Sin recursos para tratar “${archivo.originalname}”: se guarda tal cual. (${detalle})`,
-              );
-              return sinTratar;
-            }
-
-            throw new ServiceUnavailableError(
-              `No se pudo procesar “${archivo.originalname}”: al servidor se le acabaron los ` +
-                `recursos para tratar la imagen. No es el archivo. Espera unos segundos y ` +
-                `vuelve a intentarlo. (${detalle})`,
-            );
-          }
-
-          throw new UnsupportedMediaTypeError(
-            `No se pudo procesar “${archivo.originalname}”: este servidor no sabe abrir ese formato. ` +
-              `Vuelve a intentarlo con un JPG, un PNG o un PDF. (${detalle})`,
-          );
-        },
-      );
-      const { contenido, mime, extension } = optimizado;
+      const { contenido, mime, extension } = await this.optimizeOrFail(archivo);
       const huella = huellaDe(contenido);
 
       // Reintentar la misma subida no duplica: el único de (movimiento,
       // huella) lo impediría en la base, pero fallar con un 500 no es una
       // respuesta; se salta y ya.
-      const repetido = await this.prisma.soporte.findFirst({
-        where: { transactionId, huella },
-      });
-      if (repetido) continue;
+      if (await this.repository.existsWithHash(transactionId, huella)) continue;
 
       const storageKey = claveNueva(userId, extension);
       // El archivo primero y la ficha después: si se corta en medio queda un
@@ -287,23 +193,89 @@ export class SoportesService implements OnModuleInit {
       // soporte que la aplicación promete y no puede enseñar.
       await this.store.save(storageKey, contenido, mime);
 
-      await this.prisma.soporte.create({
-        data: {
-          userId,
-          transactionId,
-          orden,
-          nombreArchivo: nombreDeSoporte(concepto, fecha, extension),
-          mimeType: mime,
-          storageKey,
-          tamano: contenido.length,
-          huella,
-        },
+      await this.repository.create({
+        userId,
+        transactionId,
+        orden,
+        nombreArchivo: nombreDeSoporte(concepto, fecha, extension),
+        mimeType: mime,
+        storageKey,
+        tamano: contenido.length,
+        huella,
       });
 
       orden += 1;
     }
 
     return this.listar(userId, transactionId);
+  }
+
+  /*
+    Tratar el archivo puede fallar por DOS motivos, y no se contestan igual.
+
+    ── No sé abrirlo ─────────────────────────────────────────────────────
+    El caso real es el HEIC del iPhone: está en `TIPOS_DE_ENTRADA` porque
+    es un formato de imagen legítimo, pero la librería que las procesa solo
+    lo entiende si se compiló con soporte para él —y casi nunca lo está,
+    porque va aparte por licencia—. Es definitivo: por más que se reintente
+    ese archivo no va a entrar, así que lo que hay que decir es con qué
+    volver.
+
+    ── No PUEDO ahora mismo ──────────────────────────────────────────────
+    El servidor se quedó sin hilos o sin memoria para tratar la imagen. El
+    archivo está perfecto y reintentar es exactamente lo que hay que hacer.
+
+    Iban por el mismo camino, y el resultado era el peor de los dos: una
+    captura PNG recibía «este servidor no sabe abrir ese formato, vuelve a
+    intentarlo con un JPG o un PNG» —un consejo imposible de seguir, porque
+    ya era un PNG— y la causa real quedaba escondida en el paréntesis.
+
+    El código de estado también cambia, y no es un detalle: 415 dice «no
+    mandes esto», 503 dice «vuelve a mandarlo». Son instrucciones opuestas.
+  */
+  private async optimizeOrFail(archivo: ArchivoSubido): Promise<SoporteOptimizado> {
+    return optimizar(archivo.buffer, archivo.mimetype).catch((causa: unknown) => {
+      const detalle = causa instanceof Error ? causa.message : 'error al procesar la imagen';
+
+      if (esFaltaDeRecursos(causa)) {
+        /*
+          Se guarda lo que llegó, sin tratar.
+
+          Tratar la imagen es una MEJORA —gris, 1100px, un tercio del
+          peso—, no un requisito: el recibo se ve igual sin ella. Tirar el
+          soporte porque al servidor le faltaban hilos en ese segundo es
+          cambiar una mejora por un fallo.
+
+          Y el fallo era REAL y frecuente: en un plan compartido la cuota
+          de procesos va y viene, así que pegar una captura funcionaba o no
+          según lo que estuviera haciendo el vecino. Pedirle a alguien que
+          «espere unos segundos y vuelva a intentarlo» con el recibo
+          delante es pedirle que haga de reintento manual.
+
+          Solo para lo que el visor sabe abrir. Un HEIC sin tratar sería un
+          archivo que después no se puede mirar: ahí el problema es el
+          formato, y ceder no arregla nada.
+        */
+        const sinTratar = comoLlego(archivo.buffer, archivo.mimetype);
+        if (sinTratar) {
+          this.logger.warn(
+            `Sin recursos para tratar “${archivo.originalname}”: se guarda tal cual. (${detalle})`,
+          );
+          return sinTratar;
+        }
+
+        throw new ServiceUnavailableError(
+          `No se pudo procesar “${archivo.originalname}”: al servidor se le acabaron los ` +
+            `recursos para tratar la imagen. No es el archivo. Espera unos segundos y ` +
+            `vuelve a intentarlo. (${detalle})`,
+        );
+      }
+
+      throw new UnsupportedMediaTypeError(
+        `No se pudo procesar “${archivo.originalname}”: este servidor no sabe abrir ese formato. ` +
+          `Vuelve a intentarlo con un JPG, un PNG o un PDF. (${detalle})`,
+      );
+    });
   }
 
   /**
@@ -315,13 +287,10 @@ export class SoportesService implements OnModuleInit {
    * ve. La basura se recoge aparte, si alguna vez hace falta.
    */
   async eliminar(userId: bigint, transactionId: bigint, soporteId: bigint): Promise<void> {
-    const soporte = await this.prisma.soporte.findFirst({
-      where: { id: soporteId, transactionId, userId },
-      select: { storageKey: true },
-    });
+    const soporte = await this.repository.findOne(userId, transactionId, soporteId);
     if (!soporte) throw new NotFoundError('El soporte no existe.');
 
-    await this.prisma.soporte.deleteMany({ where: { id: soporteId, transactionId, userId } });
+    await this.repository.delete(userId, transactionId, soporteId);
     await this.removeFiles([soporte.storageKey]);
   }
 
@@ -330,18 +299,7 @@ export class SoportesService implements OnModuleInit {
     userId: bigint,
     where: { transactionId?: bigint; transferGroupId?: string },
   ): Promise<string[]> {
-    const rows = await this.prisma.soporte.findMany({
-      where: {
-        userId,
-        transaction: {
-          userId,
-          ...(where.transactionId !== undefined && { id: where.transactionId }),
-          ...(where.transferGroupId !== undefined && { transferGroupId: where.transferGroupId }),
-        },
-      },
-      select: { storageKey: true },
-    });
-    return rows.map((row) => row.storageKey);
+    return this.repository.storageKeysOf(userId, where);
   }
 
   /**
@@ -359,6 +317,22 @@ export class SoportesService implements OnModuleInit {
     } catch (error) {
       this.logger.error(
         `Could not delete ${keys.length} receipt file(s): ${(error as Error).message} — keys: ${keys.join(', ')}`,
+      );
+    }
+  }
+}
+
+/** Type and size of every file, before a single byte is processed. */
+function validateUploads(archivos: readonly ArchivoSubido[]): void {
+  if (archivos.length === 0) throw new BadRequestError('No llegó ningún archivo.');
+
+  for (const archivo of archivos) {
+    if (!TIPOS_DE_ENTRADA.has(archivo.mimetype)) {
+      throw new UnsupportedMediaTypeError(`“${archivo.originalname}” no es un PDF ni una imagen.`);
+    }
+    if (archivo.size > TAMANO_MAXIMO) {
+      throw new PayloadTooLargeError(
+        `“${archivo.originalname}” pesa más de ${Math.round(TAMANO_MAXIMO / 1024 / 1024)} MB.`,
       );
     }
   }
