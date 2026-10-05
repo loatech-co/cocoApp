@@ -59,4 +59,23 @@ export class CaptureBodyDto extends InterpretBodyDto {
   @IsOptional()
   @IsISO8601()
   captured_at?: string;
+
+  /**
+   * El concepto —o la categoría— que la persona eligió en el formulario rápido
+   * del teléfono. Lo elegido MANDA sobre lo que proponga el motor; con esto y
+   * el monto no hace falta texto ni comercio.
+   *
+   * Va aquí y no en `POST /transactions` porque la cola del teléfono necesita
+   * UN solo endpoint idempotente —siempre 200, `repetido`, `resumen`— para
+   * todos sus elementos. Mandar lo manual por el otro camino obligaría a leer
+   * el 409 del índice único como éxito y partiría la cola en dos.
+   */
+  @IsOptional()
+  @Matches(/^\d+$/)
+  category_id?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  nota?: string;
 }

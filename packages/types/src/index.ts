@@ -154,6 +154,44 @@ export interface RefreshNativoRequest {
   refresh_token: string;
 }
 
+// ─── La web EMBEBIDA en la app del teléfono ──────────────────────────────────
+
+/**
+ * La marca que la app pone en el `User-Agent` del `WKWebView`
+ * (`applicationNameForUserAgent`), seguida de su versión: `CocoiOS/0.1.0`.
+ * El frontend la busca para saber que corre dentro de la app; sola no basta
+ * —un UA se finge—, así que exige además el puente (`MensajeAlPuente`).
+ */
+export const USER_AGENT_APP = 'CocoiOS/';
+
+/**
+ * Lo que la web embebida recibe de la app en vez de llamar a `/auth/refresh`.
+ *
+ * ── Por qué no lleva `refresh_token` ────────────────────────────────────────
+ * Hay UNA sola familia de refresh por dispositivo y su única dueña es la app
+ * (en el llavero). Supabase rota el token en cada uso y detecta reusos: dos
+ * rotadores sobre la misma familia la matarían. La web pide un access token
+ * por el puente, lo guarda en memoria como hoy en el navegador, y nunca ve
+ * una credencial de larga vida. Nada viaja por la URL ni por cookies.
+ */
+export type SesionParaLaWeb = Omit<SesionResponse, 'refresh_token'>;
+
+/** La web → la app, con respuesta (`WKScriptMessageHandlerWithReply`). */
+export type MensajeAlPuente = { tipo: 'pedirSesion' };
+
+/**
+ * La web → la app, sin respuesta.
+ *
+ * `salir`: la persona cerró sesión en la web; la app cierra la real con su
+ * refresh. `sesionCerrada`: la web la cerró del lado del servidor (cambio de
+ * contraseña, cerrar en todos los dispositivos); la app descarta el llavero
+ * sin llamar a nada. `sinSesion`: la web arrancó sin sesión y espera que la
+ * app se la empuje. `abrirCaptura`: abrir el formulario rápido nativo.
+ */
+export type EventoAlPuente = {
+  tipo: 'salir' | 'sesionCerrada' | 'sinSesion' | 'abrirCaptura';
+};
+
 export interface RegistroResponse {
   pending_approval: boolean;
   message: string;
@@ -455,6 +493,41 @@ export interface Captura {
   repetido: boolean;
   /** Era la otra cara de un pago ya capturado (Wallet ↔ SMS): se enriqueció el que había. */
   fusionado: boolean;
+}
+
+/**
+ * Lo que se le da a `POST /transactions/interpret`: texto libre (OCR, SMS) o
+ * datos ya separados (lo que entrega el disparador de Wallet). Al menos uno.
+ */
+export interface InterpretacionRequest {
+  texto?: string;
+  comercio?: string;
+  /** Pesos, con hasta dos decimales, como cadena. */
+  monto?: string;
+  /** `YYYY-MM-DD`. */
+  fecha?: string;
+  nombre_de_archivo?: string;
+  /** `YYYY-MM`. */
+  periodo?: string;
+}
+
+/**
+ * Lo que se le da a `POST /transactions/capture`. Espejo de `CaptureBodyDto`
+ * en la API; `interpretacion.contrato.spec.ts` falla si se separan.
+ *
+ * `category_id` y `nota` son lo que trae el formulario rápido del teléfono:
+ * la persona ya eligió el concepto, y lo elegido manda sobre lo propuesto.
+ * Con `category_id` y `monto` no hace falta texto ni comercio.
+ */
+export interface CapturaRequest extends InterpretacionRequest {
+  source: TransactionSource;
+  /** La llave de la idempotencia: un UUID generado al capturar. */
+  external_ref: string;
+  /** ISO 8601 con zona. Sin él, ahora. */
+  captured_at?: string;
+  /** El concepto (o la categoría) elegido a mano. Como cadena numérica. */
+  category_id?: string;
+  nota?: string;
 }
 
 export interface TransactionSplit {

@@ -182,6 +182,101 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     });
   });
 
+  describe('Lo que la persona eligió en el teléfono', () => {
+    const transporteId = async () =>
+      (await entorno.prisma.category.findFirstOrThrow({ where: { userId: usuario.id, name: 'Transporte' } })).id;
+
+    it('el concepto elegido MANDA sobre lo que propone el motor', async () => {
+      // El diccionario llevaría el SMS de Koba a Mercado; la persona dijo otra cosa.
+      const transporte = await transporteId();
+      const taxi = await entorno.prisma.category.create({
+        data: { userId: usuario.id, name: 'Taxi', kind: 'expense', parentId: transporte },
+      });
+      const r = await capturar({ texto: SMS, source: 'sms', external_ref: 'e-1', category_id: String(taxi.id) });
+
+      expect(r.status).toBe(200);
+      expect(r.body.data.transaction.category_id).toBe(Number(taxi.id));
+      expect(r.body.data.transaction.por_revisar).toBe(false);
+      expect(r.body.data.clasificacion).toMatchObject({ certeza: 'alta', fuente: null, nombre: 'Taxi', motivo: 'Lo eligió la persona.' });
+      // Lo leído del texto se conserva.
+      expect(r.body.data.transaction.amount).toBe('45000.00');
+      expect(r.body.data.transaction.date).toBe('2026-10-03');
+    });
+
+    it('una captura ios_manual sin texto ni comercio, con monto y concepto, se crea', async () => {
+      const r = await capturar({ source: 'ios_manual', external_ref: 'e-2', monto: '12000', fecha: '2026-10-03', category_id: String(mercadoId) });
+
+      expect(r.status).toBe(200);
+      expect(r.body.data.transaction.category_id).toBe(Number(mercadoId));
+      expect(r.body.data.transaction.amount).toBe('12000.00');
+      expect(r.body.data.transaction.date).toBe('2026-10-03');
+      expect(r.body.data.transaction.merchant).toBeNull();
+      expect(r.body.data.transaction.por_revisar).toBe(false);
+      expect(r.body.data.resumen).toBe('Registrado: $12.000 · Mercado');
+      expect(await cuantas()).toBe(1);
+    });
+
+    it('sin texto, sin comercio y sin concepto sigue siendo 422', async () => {
+      const r = await capturar({ source: 'ios_manual', external_ref: 'e-3', monto: '12000' });
+      expect(r.status).toBe(422);
+      expect(await cuantas()).toBe(0);
+    });
+
+    it('una categoría (profundidad 2) se guarda con certeza media y por revisar', async () => {
+      const transporte = await transporteId();
+      const r = await capturar({ source: 'ios_manual', external_ref: 'e-4', monto: '18500', category_id: String(transporte) });
+
+      expect(r.status).toBe(200);
+      expect(r.body.data.transaction.category_id).toBe(Number(transporte));
+      expect(r.body.data.transaction.por_revisar).toBe(true);
+      expect(r.body.data.clasificacion).toMatchObject({ certeza: 'media', concepto_id: null, categoria_id: Number(transporte) });
+      expect(r.body.data.resumen).toContain('(por revisar)');
+    });
+
+    it('un centro de costos no clasifica nada: 422', async () => {
+      const centro = await entorno.prisma.category.findFirstOrThrow({ where: { userId: usuario.id, name: 'Costos variables' } });
+      const r = await capturar({ source: 'ios_manual', external_ref: 'e-5', monto: '1000', category_id: String(centro.id) });
+      expect(r.status).toBe(422);
+      expect(await cuantas()).toBe(0);
+    });
+
+    it('un concepto archivado, o de otra persona, es 422', async () => {
+      await entorno.prisma.category.update({ where: { id: mercadoId }, data: { isArchived: true } });
+      const archivado = await capturar({ source: 'ios_manual', external_ref: 'e-6', monto: '1000', category_id: String(mercadoId) });
+      expect(archivado.status).toBe(422);
+
+      const otra = await entorno.crearUsuario();
+      const centroAjeno = await entorno.prisma.category.create({ data: { userId: otra.id, name: 'Ajeno', kind: 'expense' } });
+      const categoriaAjena = await entorno.prisma.category.create({ data: { userId: otra.id, name: 'Cat', kind: 'expense', parentId: centroAjeno.id } });
+      const conceptoAjeno = await entorno.prisma.category.create({ data: { userId: otra.id, name: 'Con', kind: 'expense', parentId: categoriaAjena.id } });
+      const ajeno = await capturar({ source: 'ios_manual', external_ref: 'e-7', monto: '1000', category_id: String(conceptoAjeno.id) });
+      expect(ajeno.status).toBe(422);
+      expect(await cuantas()).toBe(0);
+    });
+
+    it('la nota se guarda en notes, y sin monto se le añade el aviso', async () => {
+      const conMonto = await capturar({ source: 'ios_manual', external_ref: 'e-8', monto: '1000', category_id: String(mercadoId), nota: 'Para la semana' });
+      expect(conMonto.status).toBe(200);
+      expect(conMonto.body.data.transaction.notes).toBe('Para la semana');
+
+      const sinMonto = await capturar({ source: 'wallet', external_ref: 'e-9', comercio: 'Exito Poblado', category_id: String(mercadoId), nota: 'Sin ticket' });
+      expect(sinMonto.status).toBe(200);
+      expect(sinMonto.body.data.transaction.notes).toBe('Sin ticket\nCapturado sin valor: hay que ponerlo.');
+    });
+
+    it('Wallet con fecha en Bogotá: el día es el que manda la app, no el UTC de captured_at', async () => {
+      const r = await capturar({ source: 'wallet', external_ref: 'e-10', comercio: 'Exito Poblado', monto: '5000', fecha: '2026-10-03', captured_at: '2026-10-04T04:30:00Z' });
+      expect(r.status).toBe(200);
+      expect(r.body.data.transaction.date).toBe('2026-10-03');
+    });
+
+    it('un id de categoría que no es numérico, 400', async () => {
+      const r = await capturar({ source: 'ios_manual', external_ref: 'e-11', monto: '1000', category_id: 'abc' });
+      expect(r.status).toBe(400);
+    });
+
+  });
+
   describe('El movimiento que crea la web', () => {
     it('acepta las columnas nuevas y sigue funcionando igual sin ellas', async () => {
       const sinNada = await http

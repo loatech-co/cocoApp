@@ -91,6 +91,27 @@ describe('Fase 4 — Cliente nativo (e2e)', () => {
       await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: r.body.data.refresh_token }).expect(200);
     });
 
+    it('reusar el refresh ANTERIOR tras rotar es 401, y el que nació de él sigue vivo', async () => {
+      /*
+        Por esto la app tiene que renovar con UN solo vuelo a la vez: si dos
+        peticiones renuevan en paralelo con el mismo token, la segunda llega
+        con uno que ya murió y recibe 401 aunque la sesión esté bien. Supabase
+        de verdad va más lejos —detecta el reuso y mata la familia entera—; el
+        doble solo rota, así que aquí se prueba el 401 y que el nuevo sirve.
+      */
+      const { r: login } = await entrarNativo();
+      const anterior = login.body.data.refresh_token as string;
+      const rotado = await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: anterior }).expect(200);
+      const nuevo = rotado.body.data.refresh_token as string;
+
+      const reuso = await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: anterior });
+      expect(reuso.status).toBe(401);
+      expect(reuso.body.data).toBeUndefined();
+      expect(reuso.headers['set-cookie']).toBeUndefined();
+
+      await http.post('/api/v1/auth/refresh').set(NATIVO).send({ refresh_token: nuevo }).expect(200);
+    });
+
     it('sin token en el cuerpo, 401 —y no mira la cookie aunque viniera—', async () => {
       const usuario = await entorno.crearUsuario();
       const web = await http.post('/api/v1/auth/login').send({ email: usuario.email, password: PASSWORD_VALIDA });

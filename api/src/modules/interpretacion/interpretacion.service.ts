@@ -84,7 +84,15 @@ export class InterpretacionService {
     });
     if (repetida) return this.yaEstaba(userId, repetida.id, dto, true, false);
 
-    const interpretado = await this.leer(userId, dto);
+    /*
+      ── Lo elegido manda ────────────────────────────────────────────────────
+      Si la persona ya eligió el concepto en el formulario rápido, el motor no
+      tiene nada que proponer: se comprueba que lo elegido sea suyo y sirva
+      para clasificar, y se guarda tal cual. Se resuelve ANTES de interpretar
+      para que un id malo responda 422 sin gastar una lectura del árbol.
+    */
+    const elegida = dto.category_id === undefined ? null : await this.clasificacionElegida(userId, BigInt(dto.category_id));
+    const interpretado = await this.leer(userId, dto, elegida);
     const capturadaEn = dto.captured_at ? new Date(dto.captured_at) : new Date();
 
     // Sin fecha legible, la del momento de la captura: un gasto necesita un
@@ -144,7 +152,7 @@ export class InterpretacionService {
         category_id: idParaGuardar(interpretado.clasificacion),
         description: interpretado.descripcion ?? undefined,
         merchant: interpretado.comercio ?? undefined,
-        notes: interpretado.monto === null ? 'Capturado sin valor: hay que ponerlo.' : undefined,
+        notes: notasDe(dto.nota, interpretado.monto),
         external_ref: dto.external_ref,
         source: dto.source,
         raw_text: dto.texto ?? null,
@@ -179,8 +187,30 @@ export class InterpretacionService {
 
   // ── Plomería ───────────────────────────────────────────────────────────────
 
-  private async leer(userId: bigint, dto: InterpretBodyDto): Promise<Interpretado> {
+  private async leer(
+    userId: bigint,
+    dto: InterpretBodyDto,
+    elegida: ClasificacionInterpretada | null = null,
+  ): Promise<Interpretado> {
+    const monto = dto.monto?.replace(',', '.');
     if (!dto.texto?.trim() && !dto.comercio?.trim()) {
+      /*
+        Un gasto anotado a mano en el teléfono —concepto y monto, nada más— no
+        tiene nada que interpretar: no hay texto del que sacar un comercio ni
+        una fecha, y la clasificación ya está decidida. Se arma el resultado
+        directo sin pasar por `interpretar()`, que seguiría buscando en vacío.
+        Sin monto o sin elección, sí falta algo que leer.
+      */
+      if (elegida && monto !== undefined) {
+        return {
+          monto,
+          fecha: dto.fecha ?? null,
+          comercio: null,
+          descripcion: null,
+          clasificacion: elegida,
+          porRevisar: elegida.certeza !== 'alta',
+        };
+      }
       throw new UnprocessableEntityException('Hace falta un texto o, al menos, el comercio.');
     }
 
@@ -192,11 +222,11 @@ export class InterpretacionService {
       this.categorization.sugerirPara(userId, dto.comercio?.trim() || dto.texto?.trim() || ''),
     ]);
 
-    return interpretar(
+    const leido = interpretar(
       {
         texto: dto.texto,
         comercio: dto.comercio,
-        monto: dto.monto?.replace(',', '.'),
+        monto,
         fecha: dto.fecha,
         nombreDeArchivo: dto.nombre_de_archivo,
         periodo: dto.periodo,
@@ -209,6 +239,47 @@ export class InterpretacionService {
         hoy: hoyEnBogota(),
       },
     );
+    if (!elegida) return leido;
+
+    // Lo que el motor entendió del texto —monto, fecha, comercio— se queda;
+    // lo que propuso como clasificación, no: la persona ya lo decidió. Y lo
+    // que marca para revisar es solo la elección a medias (una categoría sin
+    // concepto), no la duda del motor, que aquí no cuenta.
+    return { ...leido, clasificacion: elegida, porRevisar: elegida.certeza !== 'alta' };
+  }
+
+  /**
+   * La clasificación que la persona eligió a mano, con la misma forma que la
+   * que propone el motor para que el resto del camino no distinga.
+   *
+   * Un concepto (profundidad 3) es certeza alta: queda clasificado del todo.
+   * Una categoría (profundidad 2) es media y por revisar: está en el sitio
+   * correcto a medias, igual que cuando el motor solo llega hasta ahí y que
+   * en el buscador de la web, que ofrece las dos. Un centro de costos no
+   * clasifica nada —los movimientos viven tres niveles más abajo— y lo
+   * archivado ya no vuelve, así que ninguno de los dos se acepta.
+   */
+  private async clasificacionElegida(userId: bigint, id: bigint): Promise<ClasificacionInterpretada> {
+    const fila = await this.prisma.category.findFirst({
+      where: { id, userId },
+      select: { id: true, name: true, isArchived: true, parent: { select: { id: true, parentId: true } } },
+    });
+    // La misma respuesta para «no existe» y «no es tuya»: decir cuál de las
+    // dos es revelaría ids ajenos.
+    if (!fila) throw new UnprocessableEntityException('La categoría indicada no existe o no es tuya.');
+    if (fila.isArchived) throw new UnprocessableEntityException('Ese concepto está archivado.');
+    if (!fila.parent) throw new UnprocessableEntityException('Un centro de costos no clasifica nada: elige un concepto.');
+
+    const esConcepto = fila.parent.parentId !== null;
+    return {
+      certeza: esConcepto ? 'alta' : 'media',
+      fuente: null,
+      conceptoId: esConcepto ? fila.id.toString() : null,
+      categoriaId: esConcepto ? fila.parent.id.toString() : fila.id.toString(),
+      nombre: fila.name,
+      candidatos: [],
+      motivo: 'Lo eligió la persona.',
+    };
   }
 
   /**
@@ -301,6 +372,20 @@ export class InterpretacionService {
       fusionado,
     };
   }
+}
+
+/**
+ * Lo que la persona escribió, y debajo el aviso de que falta el monto.
+ *
+ * Wallet a veces agota su espera y manda la transacción sin valor; el aviso
+ * es lo que hace que alguien le ponga la cifra. Con una nota de por medio no
+ * se pierde ninguna de las dos cosas.
+ */
+function notasDe(nota: string | undefined, monto: string | null): string | undefined {
+  const partes = [nota?.trim() || null, monto === null ? 'Capturado sin valor: hay que ponerlo.' : null].filter(
+    (p): p is string => p !== null,
+  );
+  return partes.length === 0 ? undefined : partes.join('\n');
 }
 
 function idParaGuardar(c: ClasificacionInterpretada): number | undefined {
