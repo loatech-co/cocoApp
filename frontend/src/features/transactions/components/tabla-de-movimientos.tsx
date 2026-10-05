@@ -19,6 +19,9 @@ export interface OrdenDeColumna {
   onCambiar: () => void;
 }
 
+/** Cómo pide la tabla el orden de una columna: por qué campo, y en qué sentido empieza. */
+type ColumnOrder = (campo: string, primero: 'asc' | 'desc') => OrdenDeColumna;
+
 /**
  * La tabla de movimientos.
  *
@@ -47,7 +50,7 @@ export function TablaDeMovimientos({
   cargando?: boolean;
   onAbrir: (movimiento: Transaction) => void;
   /** Sin esto las cabeceras no ordenan: en un resumen no tendría sentido. */
-  orden?: (campo: string, primero: 'asc' | 'desc') => OrdenDeColumna;
+  orden?: ColumnOrder;
   pie?: ReactNode;
   vacio?: ReactNode;
   filasDelEsqueleto?: number;
@@ -74,23 +77,7 @@ export function TablaDeMovimientos({
 
   return (
     <Tabla>
-      <thead>
-        <tr>
-          <Th fija divisor={false} orden={orden?.('merchant', 'asc')}>
-            Concepto
-          </Th>
-          {/* El periodo antes que el pago: es el eje con el que se mira la app
-              —el mes AL QUE PERTENECE el gasto— y la fecha de pago es el dato
-              de apoyo que explica por qué a veces no coinciden. */}
-          <Th>Periodo</Th>
-          <Th orden={orden?.('date', 'desc')}>Fecha de pago</Th>
-          <Th>Centro de costos</Th>
-          <Th>Categoría</Th>
-          <Th alineado="derecha" orden={orden?.('amount', 'desc')}>
-            Valor
-          </Th>
-        </tr>
-      </thead>
+      <MovementsHead orden={orden} />
 
       <tbody>
         {movimientos.map((m) => (
@@ -103,15 +90,13 @@ export function TablaDeMovimientos({
   );
 }
 
-function Fila({
-  movimiento,
-  arbol,
-  onAbrir,
-}: {
+interface FilaProps {
   movimiento: Transaction;
   arbol: Category[];
   onAbrir: () => void;
-}) {
+}
+
+function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
   const actualizar = useActualizarMovimiento();
   const { centro, categoria } = rutaSeleccionada(arbol, movimiento.category_id ?? undefined);
 
@@ -144,48 +129,9 @@ function Fila({
 
   return (
     <Tr onClick={onAbrir} atencion={sinClasificar} atenuada={actualizar.isPending}>
-      <Td fija divisor={false} atencion={sinClasificar}>
-        <span className="flex items-center gap-2">
-          {sinClasificar && (
-            <Flag
-              className="size-3.5 shrink-0 text-warning"
-              fill="currentColor"
-              aria-label="Sin clasificar"
-            />
-          )}
-          {/* El nombre SALE del concepto: un movimiento es un registro y lo
-              toma de donde pertenece. Pintaba `description`, que dejó de
-              rellenarse cuando la ficha cambió su campo libre de «Concepto»
-              por un selector de conceptos —así que todo lo registrado a mano
-              decía «Sin concepto» aunque tuviera su concepto elegido—. */}
-          <span className="block max-w-[14rem] truncate font-medium">
-            {nombreDelMovimiento(movimiento, arbol)}
-          </span>
-        </span>
-      </Td>
+      <NameCell movimiento={movimiento} arbol={arbol} sinClasificar={sinClasificar} />
 
-      <Td className="whitespace-nowrap text-muted-foreground">
-        {/*
-          En ámbar cuando el mes al que PERTENECE el gasto no es aquel en que
-          salió la plata: la factura de julio pagada el 4 de agosto. Es el caso
-          que descuadra los totales de quien no lo nota —julio parece barato y
-          agosto caro— así que se marca, con punto y con explicación.
-        */}
-        {desfasado(movimiento) ? (
-          <ConTooltip
-            texto={`Pertenece a ${mesBonito(periodo(movimiento))}, pero se pagó el ${diaBonito(movimiento.date)}`}
-            className="items-center gap-1.5 font-medium text-warning"
-          >
-            {/* El punto hace notar la marca: el color solo se pierde en una
-                columna de texto gris, y quien no lo nota no sabe que hay algo
-                que preguntar. */}
-            <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />
-            {mesBonito(periodo(movimiento))}
-          </ConTooltip>
-        ) : (
-          mesBonito(periodo(movimiento))
-        )}
-      </Td>
+      <PeriodCell movimiento={movimiento} />
 
       <Td className="tabular whitespace-nowrap text-muted-foreground">
         {diaBonito(movimiento.date)}
@@ -219,16 +165,7 @@ function Fila({
         </span>
       </Td>
 
-      <Td
-        alineado="derecha"
-        className={cn(
-          'tabular whitespace-nowrap font-semibold',
-          movimiento.type === 'income' ? 'text-income' : 'text-expense',
-        )}
-      >
-        {movimiento.type === 'income' ? '+' : '−'}
-        {formatMoney(movimiento.amount, movimiento.currency)}
-      </Td>
+      <AmountCell movimiento={movimiento} />
     </Tr>
   );
 }
@@ -299,5 +236,101 @@ function SelectorEnFila({
     <ConTooltip texto={motivo} className="w-full">
       {selector}
     </ConTooltip>
+  );
+}
+
+function AmountCell({ movimiento }: { movimiento: Transaction }) {
+  return (
+    <Td
+      alineado="derecha"
+      className={cn(
+        'tabular whitespace-nowrap font-semibold',
+        movimiento.type === 'income' ? 'text-income' : 'text-expense',
+      )}
+    >
+      {movimiento.type === 'income' ? '+' : '−'}
+      {formatMoney(movimiento.amount, movimiento.currency)}
+    </Td>
+  );
+}
+
+function PeriodCell({ movimiento }: { movimiento: Transaction }) {
+  return (
+    <Td className="whitespace-nowrap text-muted-foreground">
+      {/*
+        En ámbar cuando el mes al que PERTENECE el gasto no es aquel en que
+        salió la plata: la factura de julio pagada el 4 de agosto. Es el caso
+        que descuadra los totales de quien no lo nota —julio parece barato y
+        agosto caro— así que se marca, con punto y con explicación.
+      */}
+      {desfasado(movimiento) ? (
+        <ConTooltip
+          texto={`Pertenece a ${mesBonito(periodo(movimiento))}, pero se pagó el ${diaBonito(movimiento.date)}`}
+          className="items-center gap-1.5 font-medium text-warning"
+        >
+          {/* El punto hace notar la marca: el color solo se pierde en una
+              columna de texto gris, y quien no lo nota no sabe que hay algo
+              que preguntar. */}
+          <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />
+          {mesBonito(periodo(movimiento))}
+        </ConTooltip>
+      ) : (
+        mesBonito(periodo(movimiento))
+      )}
+    </Td>
+  );
+}
+
+function NameCell({
+  movimiento,
+  arbol,
+  sinClasificar,
+}: {
+  movimiento: Transaction;
+  arbol: Category[];
+  sinClasificar: boolean;
+}) {
+  return (
+    <Td fija divisor={false} atencion={sinClasificar}>
+      <span className="flex items-center gap-2">
+        {sinClasificar && (
+          <Flag
+            className="size-3.5 shrink-0 text-warning"
+            fill="currentColor"
+            aria-label="Sin clasificar"
+          />
+        )}
+        {/* El nombre SALE del concepto: un movimiento es un registro y lo
+            toma de donde pertenece. Pintaba `description`, que dejó de
+            rellenarse cuando la ficha cambió su campo libre de «Concepto»
+            por un selector de conceptos —así que todo lo registrado a mano
+            decía «Sin concepto» aunque tuviera su concepto elegido—. */}
+        <span className="block max-w-[14rem] truncate font-medium">
+          {nombreDelMovimiento(movimiento, arbol)}
+        </span>
+      </span>
+    </Td>
+  );
+}
+
+function MovementsHead({ orden }: { orden: ColumnOrder | undefined }) {
+  return (
+    <thead>
+      <tr>
+        <Th fija divisor={false} orden={orden?.('merchant', 'asc')}>
+          Concepto
+        </Th>
+        {/* El periodo antes que el pago: es el eje con el que se mira la app
+            —el mes AL QUE PERTENECE el gasto— y la fecha de pago es el dato
+            de apoyo que explica por qué a veces no coinciden. */}
+        <Th>Periodo</Th>
+        <Th orden={orden?.('date', 'desc')}>Fecha de pago</Th>
+        <Th>Centro de costos</Th>
+        <Th>Categoría</Th>
+        <Th alineado="derecha" orden={orden?.('amount', 'desc')}>
+          Valor
+        </Th>
+      </tr>
+    </thead>
   );
 }
