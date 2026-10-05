@@ -1,6 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Module, Post } from '@nestjs/common';
 
 import { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
+import { InterpretacionRepository } from './interpretacion.repository';
 import {
   InterpretacionService,
   type CapturaView,
@@ -51,7 +52,7 @@ class InterpretacionController {
 @Module({
   imports: [TransactionsModule],
   controllers: [InterpretacionController],
-  providers: [InterpretacionService],
+  providers: [InterpretacionService, InterpretacionRepository],
   exports: [InterpretacionService],
 })
 export class InterpretacionModule {}

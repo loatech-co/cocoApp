@@ -19,11 +19,18 @@ const DOMAIN_ERROR_STATUS: Readonly<Record<DomainErrorKind, number>> = {
   forbidden: HttpStatus.FORBIDDEN,
   not_found: HttpStatus.NOT_FOUND,
   conflict: HttpStatus.CONFLICT,
+  duplicate: HttpStatus.CONFLICT,
   payload_too_large: HttpStatus.PAYLOAD_TOO_LARGE,
   unsupported_media_type: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
   validation: HttpStatus.UNPROCESSABLE_ENTITY,
   internal: HttpStatus.INTERNAL_SERVER_ERROR,
   unavailable: HttpStatus.SERVICE_UNAVAILABLE,
+};
+
+/** Kinds whose `code` is not the generic one of their status. */
+const DOMAIN_ERROR_CODE: Readonly<Partial<Record<DomainErrorKind, string>>> = {
+  // The same code an unhandled P2002 gets below.
+  duplicate: 'duplicate',
 };
 
 /**
@@ -141,7 +148,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const status = DOMAIN_ERROR_STATUS[exception.kind];
     return {
       status,
-      code: AllExceptionsFilter.STATUS_CODES[status] ?? 'error',
+      code:
+        DOMAIN_ERROR_CODE[exception.kind] ?? AllExceptionsFilter.STATUS_CODES[status] ?? 'error',
       message: exception.message,
       details: [...exception.details],
     };

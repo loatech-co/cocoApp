@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, type TransactionSource } from '@prisma/client';
+import type { TransactionSource } from '@prisma/client';
 
 import type { NodoBuscable } from '@coco/lectura';
 
@@ -9,18 +9,19 @@ import {
   decidirDuplicado,
   enriquecer,
   type CapturaConocida,
+  type CapturaNueva,
 } from './duplicados';
 import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
+import { InterpretacionRepository } from './interpretacion.repository';
 import {
   interpretar,
   resumenDe,
   type ClasificacionInterpretada,
   type Interpretado,
 } from './interpretar';
-import { ValidationError } from '../../common/errors/domain-error';
+import { anidar } from '../../common/categories/categories.tree';
+import { DuplicateError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { toMoney } from '../../common/money/money';
-import { PrismaService } from '../../prisma/prisma.service';
-import { anidar } from '../categories/categories.tree';
 import { CategorizationService } from '../categorization/categorization.service';
 import { TransactionsService, type TransactionView } from '../transactions/transactions.service';
 
@@ -68,7 +69,7 @@ export interface CapturaView {
 @Injectable()
 export class InterpretacionService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: InterpretacionRepository,
     private readonly categorization: CategorizationService,
     private readonly transactions: TransactionsService,
   ) {}
@@ -85,11 +86,8 @@ export class InterpretacionService {
       devuelve lo que hay y no se interpreta ni se crea nada: la respuesta es
       la misma que recibió —o no llegó a recibir— la primera vez.
     */
-    const repetida = await this.prisma.transaction.findFirst({
-      where: { userId, externalRef: dto.external_ref },
-      select: { id: true },
-    });
-    if (repetida) return this.yaEstaba(userId, repetida.id, dto, true, false);
+    const repetida = await this.repository.findIdByExternalRef(userId, dto.external_ref);
+    if (repetida !== null) return this.yaEstaba(userId, repetida, dto, true, false);
 
     /*
       ── Lo elegido manda ────────────────────────────────────────────────────
@@ -105,72 +103,86 @@ export class InterpretacionService {
     const interpretado = await this.leer(userId, dto, elegida);
     const capturadaEn = dto.captured_at ? new Date(dto.captured_at) : new Date();
 
-    // Sin fecha legible, la del momento de la captura: un gasto necesita un
-    // día, y el de la captura es la mejor aproximación. Queda marcado.
-    const fecha = interpretado.fecha ?? capturadaEn.toISOString().slice(0, 10);
-    // Sin monto, cero y marcado: Wallet a veces agota su espera y manda la
-    // transacción sin valor. Perderla sería peor que registrarla en cero para
-    // que alguien le ponga la cifra.
-    const monto = interpretado.monto ?? '0';
-    let porRevisar = interpretado.porRevisar;
+    const nueva: CapturaNueva = {
+      source: dto.source,
+      // Sin fecha legible, la del momento de la captura: un gasto necesita un
+      // día, y el de la captura es la mejor aproximación. Queda marcado.
+      date: interpretado.fecha ?? capturadaEn.toISOString().slice(0, 10),
+      // Sin monto, cero y marcado: Wallet a veces agota su espera y manda la
+      // transacción sin valor. Perderla sería peor que registrarla en cero
+      // para que alguien le ponga la cifra.
+      amount: interpretado.monto ?? '0',
+      capturedAt: capturadaEn,
+      rawText: dto.texto ?? null,
+      merchant: interpretado.comercio,
+      description: interpretado.descripcion,
+    };
 
-    /*
-      ── La otra cara del mismo pago ─────────────────────────────────────────
-      Solo desde Wallet o SMS. Se traen las candidatas de la base —misma
-      persona, mismo monto, otro origen, cerca en fecha y en tiempo— y decide
-      la función pura. Exacto: se enriquece la que había y se devuelve. Parcial:
-      se crea, pero marcada.
-    */
-    if (ORIGENES_QUE_SE_DUPLICAN.has(dto.source)) {
-      const candidatas = await this.candidatasADuplicado(
-        userId,
-        dto.source,
-        monto,
-        fecha,
-        capturadaEn,
-      );
-      const veredicto = decidirDuplicado(
-        {
-          source: dto.source,
-          date: fecha,
-          amount: monto,
-          capturedAt: capturadaEn,
-          rawText: dto.texto ?? null,
-          merchant: interpretado.comercio,
-          description: interpretado.descripcion,
-        },
-        candidatas,
-      );
+    const gemela = await this.otraCaraDelMismoPago(userId, dto, nueva, interpretado);
+    if (gemela.fusionada) return gemela.fusionada;
 
-      if (veredicto.tipo === 'exacto') {
-        const cambios = enriquecer(veredicto.con, {
-          source: dto.source,
-          date: fecha,
-          amount: monto,
-          capturedAt: capturadaEn,
-          rawText: dto.texto ?? null,
-          merchant: interpretado.comercio,
-          description: interpretado.descripcion,
-        });
-        if (Object.keys(cambios).length > 0) {
-          await this.prisma.transaction.update({ where: { id: veredicto.con.id }, data: cambios });
-        }
-        return this.yaEstaba(
-          userId,
-          veredicto.con.id,
-          dto,
-          false,
-          true,
-          interpretado.clasificacion,
-        );
+    return this.registrar(
+      userId,
+      dto,
+      nueva,
+      interpretado,
+      interpretado.porRevisar || gemela.parcial,
+    );
+  }
+
+  /*
+    ── La otra cara del mismo pago ─────────────────────────────────────────
+    Solo desde Wallet o SMS. Se traen las candidatas de la base —misma
+    persona, mismo monto, otro origen, cerca en fecha y en tiempo— y decide
+    la función pura. Exacto: se enriquece la que había y se devuelve. Parcial:
+    se crea, pero marcada.
+  */
+  private async otraCaraDelMismoPago(
+    userId: bigint,
+    dto: CaptureBodyDto,
+    nueva: CapturaNueva,
+    interpretado: Interpretado,
+  ): Promise<{ fusionada: CapturaView | null; parcial: boolean }> {
+    if (!ORIGENES_QUE_SE_DUPLICAN.has(dto.source)) return { fusionada: null, parcial: false };
+
+    const candidatas = await this.candidatasADuplicado(
+      userId,
+      dto.source,
+      nueva.amount,
+      nueva.date,
+      nueva.capturedAt,
+    );
+    const veredicto = decidirDuplicado(nueva, candidatas);
+
+    if (veredicto.tipo === 'exacto') {
+      const cambios = enriquecer(veredicto.con, nueva);
+      if (Object.keys(cambios).length > 0) {
+        await this.repository.enrichTransaction(veredicto.con.id, cambios);
       }
-      if (veredicto.tipo === 'parcial') porRevisar = true;
+      const fusionada = await this.yaEstaba(
+        userId,
+        veredicto.con.id,
+        dto,
+        false,
+        true,
+        interpretado.clasificacion,
+      );
+      return { fusionada, parcial: false };
     }
+    return { fusionada: null, parcial: veredicto.tipo === 'parcial' };
+  }
 
+  private async registrar(
+    userId: bigint,
+    dto: CaptureBodyDto,
+    nueva: CapturaNueva,
+    interpretado: Interpretado,
+    porRevisar: boolean,
+  ): Promise<CapturaView> {
     try {
       const creada = await this.transactions.crear(userId, {
-        date: fecha,
-        amount: monto,
+        date: nueva.date,
+        amount: nueva.amount,
         type: 'expense',
         category_id: idParaGuardar(interpretado.clasificacion),
         description: interpretado.descripcion ?? undefined,
@@ -179,7 +191,7 @@ export class InterpretacionService {
         external_ref: dto.external_ref,
         source: dto.source,
         raw_text: dto.texto ?? null,
-        captured_at: capturadaEn.toISOString(),
+        captured_at: nueva.capturedAt.toISOString(),
         por_revisar: porRevisar,
       });
       return {
@@ -197,14 +209,11 @@ export class InterpretacionService {
         haciendo su trabajo en la base, y se contesta igual que si hubiera
         estado desde el principio.
       */
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        const existente = await this.prisma.transaction.findFirstOrThrow({
-          where: { userId, externalRef: dto.external_ref },
-          select: { id: true },
-        });
-        return this.yaEstaba(userId, existente.id, dto, true, false, interpretado.clasificacion);
-      }
-      throw error;
+      if (!(error instanceof DuplicateError)) throw error;
+      const existente = await this.repository.findIdByExternalRef(userId, dto.external_ref);
+      // Parity with the former findFirstOrThrow: a vanished row is a 404.
+      if (existente === null) throw new NotFoundError('El recurso no existe.');
+      return this.yaEstaba(userId, existente, dto, true, false, interpretado.clasificacion);
     }
   }
 
@@ -286,15 +295,7 @@ export class InterpretacionService {
     userId: bigint,
     id: bigint,
   ): Promise<ClasificacionInterpretada> {
-    const fila = await this.prisma.category.findFirst({
-      where: { id, userId },
-      select: {
-        id: true,
-        name: true,
-        isArchived: true,
-        parent: { select: { id: true, parentId: true } },
-      },
-    });
+    const fila = await this.repository.findChosenCategory(userId, id);
     // La misma respuesta para «no existe» y «no es tuya»: decir cuál de las
     // dos es revelaría ids ajenos.
     if (!fila) throw new ValidationError('La categoría indicada no existe o no es tuya.');
@@ -321,11 +322,7 @@ export class InterpretacionService {
    * un gasto de hoy en el gimnasio que se dio de baja.
    */
   private async arbolDe(userId: bigint): Promise<NodoBuscable[]> {
-    const filas = await this.prisma.category.findMany({
-      where: { userId, isArchived: false },
-      select: { id: true, parentId: true, name: true, palabrasClave: true },
-      orderBy: { sortOrder: 'asc' },
-    });
+    const filas = await this.repository.findActiveCategories(userId);
     const aNodo = (f: {
       id: bigint;
       name: string;
@@ -350,40 +347,15 @@ export class InterpretacionService {
     const dia = new Date(fecha);
     const desde = new Date(dia.getTime() - 24 * 60 * 60_000);
     const hasta = new Date(dia.getTime() + 24 * 60 * 60_000);
-    const filas = await this.prisma.transaction.findMany({
-      where: {
-        userId,
-        amount: toMoney(monto),
-        source: { not: source },
-        date: { gte: desde, lte: hasta },
-        OR: [
-          {
-            capturedAt: {
-              gte: new Date(capturadaEn.getTime() - VENTANA_PARCIAL_MS),
-              lte: new Date(capturadaEn.getTime() + VENTANA_PARCIAL_MS),
-            },
-          },
-          {
-            capturedAt: null,
-            createdAt: {
-              gte: new Date(capturadaEn.getTime() - VENTANA_PARCIAL_MS),
-              lte: new Date(capturadaEn.getTime() + VENTANA_PARCIAL_MS),
-            },
-          },
-        ],
+    const filas = await this.repository.findDuplicateCandidates({
+      userId,
+      source,
+      amount: toMoney(monto),
+      days: { from: desde, to: hasta },
+      window: {
+        from: new Date(capturadaEn.getTime() - VENTANA_PARCIAL_MS),
+        to: new Date(capturadaEn.getTime() + VENTANA_PARCIAL_MS),
       },
-      select: {
-        id: true,
-        source: true,
-        date: true,
-        amount: true,
-        capturedAt: true,
-        createdAt: true,
-        rawText: true,
-        merchant: true,
-        description: true,
-      },
-      take: 20,
     });
     return filas.map((f) => ({
       id: f.id,

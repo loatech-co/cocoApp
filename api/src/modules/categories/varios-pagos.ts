@@ -1,4 +1,4 @@
-import { NIVELES, PROFUNDIDAD_MAXIMA } from './categories.tree';
+import { NIVELES, PROFUNDIDAD_MAXIMA } from '../../common/categories/categories.tree';
 
 /**
  * Si un concepto puede llevar la marca de «se paga en varias veces».

@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 
 import { CategoriesService, type CategoryView } from './categories.service';
-import type { ConHijos } from './categories.tree';
 import {
   CreateCategoryDto,
   UnificarCategoriaDto,
@@ -20,6 +19,7 @@ import {
   ReorderCategoriesDto,
   UpdateCategoryDto,
 } from './dto/category.dto';
+import type { ConHijos } from '../../common/categories/categories.tree';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';

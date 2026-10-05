@@ -1,7 +1,7 @@
+import type { InterpretacionRepository } from './interpretacion.repository';
 import { InterpretacionService } from './interpretacion.service';
 import * as motor from './interpretar';
 import { ValidationError } from '../../common/errors/domain-error';
-import type { PrismaService } from '../../prisma/prisma.service';
 import type { CategorizationService } from '../categorization/categorization.service';
 import type { TransactionsService } from '../transactions/transactions.service';
 
@@ -43,29 +43,25 @@ describe('InterpretacionService con una clasificación elegida', () => {
     crear = jest.fn((_userId: bigint, dto: Record<string, unknown>) =>
       Promise.resolve({ ...dto, id: 99n }),
     );
-    const prisma = {
+    const repository = {
       // Sin repetidas ni candidatas a duplicado: aquí se prueba la clasificación.
-      transaction: {
-        findFirst: jest.fn().mockResolvedValue(null),
-        findMany: jest.fn().mockResolvedValue([]),
-      },
-      category: {
-        findFirst: jest.fn(({ where }: { where: { id: bigint; userId: bigint } }) =>
-          Promise.resolve(where.userId === USUARIO ? (filas.get(where.id) ?? null) : null),
-        ),
-        findMany: jest.fn().mockResolvedValue([
-          { id: 10n, parentId: null, name: 'Costos variables', palabrasClave: [] },
-          { id: 20n, parentId: 10n, name: 'Alimentación', palabrasClave: [] },
-          { id: 21n, parentId: 10n, name: 'Transporte', palabrasClave: [] },
-          { id: 30n, parentId: 20n, name: 'Mercado', palabrasClave: ['koba'] },
-        ]),
-      },
-    } as unknown as PrismaService;
+      findIdByExternalRef: jest.fn().mockResolvedValue(null),
+      findDuplicateCandidates: jest.fn().mockResolvedValue([]),
+      findChosenCategory: jest.fn((userId: bigint, id: bigint) =>
+        Promise.resolve(userId === USUARIO ? (filas.get(id) ?? null) : null),
+      ),
+      findActiveCategories: jest.fn().mockResolvedValue([
+        { id: 10n, parentId: null, name: 'Costos variables', palabrasClave: [] },
+        { id: 20n, parentId: 10n, name: 'Alimentación', palabrasClave: [] },
+        { id: 21n, parentId: 10n, name: 'Transporte', palabrasClave: [] },
+        { id: 30n, parentId: 20n, name: 'Mercado', palabrasClave: ['koba'] },
+      ]),
+    } as unknown as InterpretacionRepository;
     const categorization = {
       sugerirPara: jest.fn().mockResolvedValue(null),
     } as unknown as CategorizationService;
     const transactions = { crear } as unknown as TransactionsService;
-    servicio = new InterpretacionService(prisma, categorization, transactions);
+    servicio = new InterpretacionService(repository, categorization, transactions);
     interpretar = jest.spyOn(motor, 'interpretar');
   });
 

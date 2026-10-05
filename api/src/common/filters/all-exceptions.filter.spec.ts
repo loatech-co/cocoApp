@@ -19,6 +19,7 @@ import {
   AuthenticationError,
   BadRequestError,
   ConflictError,
+  DuplicateError,
   ForbiddenError,
   InternalError,
   NotFoundError,
@@ -84,6 +85,15 @@ describe('AllExceptionsFilter with domain errors', () => {
     expect(send(error)).toEqual({
       status,
       body: { error: { code, message: error.message, details: [] } },
+    });
+  });
+
+  it('answers a DuplicateError exactly like an unhandled unique violation', () => {
+    expect(send(new DuplicateError())).toEqual({
+      status: 409,
+      body: {
+        error: { code: 'duplicate', message: 'Ya existe un registro con esos datos.', details: [] },
+      },
     });
   });
 

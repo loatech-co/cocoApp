@@ -26,6 +26,7 @@ export type DomainErrorKind =
   | 'forbidden'
   | 'not_found'
   | 'conflict'
+  | 'duplicate'
   | 'payload_too_large'
   | 'unsupported_media_type'
   | 'validation'
@@ -68,6 +69,20 @@ export class NotFoundError extends DomainError {
 /** The request clashes with the current state of the data (409). */
 export class ConflictError extends DomainError {
   readonly kind = 'conflict';
+}
+
+/**
+ * A unique key already holds this value (409, code `duplicate`). Thrown by a
+ * repository when the database rejects an insert on a unique index, so that a
+ * caller can treat "it is already there" as an answer and not as a failure.
+ * Its message is the one an unhandled unique violation already had.
+ */
+export class DuplicateError extends DomainError {
+  readonly kind = 'duplicate';
+
+  constructor(message = 'Ya existe un registro con esos datos.') {
+    super(message);
+  }
 }
 
 /** An uploaded file is bigger than allowed (413). */

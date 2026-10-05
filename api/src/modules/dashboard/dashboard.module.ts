@@ -14,13 +14,13 @@ import {
 } from './dashboard.aggregate';
 import { PagosAutomaticosService } from './pagos-automaticos';
 import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
+import { idsDeCategorias, ramasDe } from '../../common/categories/categories.tree';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CERO, serializar, toMoney } from '../../common/money/money';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AccountsService, type AccountView } from '../accounts/accounts.service';
-import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
 
 /**
  * Los mismos filtros que la lista de movimientos, a propósito.

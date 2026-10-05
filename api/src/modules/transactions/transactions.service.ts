@@ -1,13 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, type Transaction, type TransactionType } from '@prisma/client';
+import type { Transaction, TransactionType } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
-import { serializar, toMoney, type Money } from '../../common/money/money';
-import { verificarCuadreDeSplits } from '../../common/money/splits';
-import { PrismaService } from '../../prisma/prisma.service';
-import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
-import { SoportesService } from '../soportes/soportes.service';
-import { TagsService } from '../tags/tags.service';
 import type {
   CreateTransactionDto,
   CreateTransferDto,
@@ -15,8 +9,17 @@ import type {
   SplitDto,
   UpdateTransactionDto,
 } from './dto/transaction.dto';
-import { parseOrden, parsePaginacion } from './transactions.sort';
+import {
+  TransactionsRepository,
+  type SplitToWrite,
+  type TransaccionCompleta,
+} from './transactions.repository';
+import { parsePaginacion } from './transactions.sort';
 import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
+import { serializar, toMoney, type Money } from '../../common/money/money';
+import { verificarCuadreDeSplits } from '../../common/money/splits';
+import { SoportesService } from '../soportes/soportes.service';
+import { TagsService } from '../tags/tags.service';
 
 interface SplitView {
   id: bigint;
@@ -53,16 +56,6 @@ export interface TransactionView {
   created_at: Date;
 }
 
-/** Lo que Prisma devuelve cuando se incluyen splits y etiquetas. */
-type TransaccionCompleta = Prisma.TransactionGetPayload<{
-  include: { splits: true; tags: { include: { tag: true } } };
-}>;
-
-const INCLUIR_TODO = {
-  splits: true,
-  tags: { include: { tag: true } },
-} as const;
-
 /**
  * El primer día del mes de una fecha.
  *
@@ -77,7 +70,7 @@ function mesDe(fecha: Date): Date {
 @Injectable()
 export class TransactionsService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: TransactionsRepository,
     private readonly tags: TagsService,
     private readonly soportes: SoportesService,
   ) {}
@@ -97,30 +90,16 @@ export class TransactionsService {
       sum_income: string;
     };
   }> {
-    const where = await this.construirFiltro(userId, query);
     const { page, perPage, skip, take } = parsePaginacion(query.page, query.per_page);
-
-    // Las sumas las hace la BASE, sobre el filtro entero. Traerlas sumando en
-    // memoria obligaría a descargar todas las filas del filtro —no las
-    // cincuenta de la página— solo para pintar un pie de tabla.
-    const [filas, total, sumas] = await Promise.all([
-      this.prisma.transaction.findMany({
-        where,
-        include: INCLUIR_TODO,
-        orderBy: parseOrden(query.sort),
-        skip,
-        take,
-      }),
-      this.prisma.transaction.count({ where }),
-      this.prisma.transaction.groupBy({
-        by: ['type'],
-        where,
-        _sum: { amount: true },
-      }),
-    ]);
-
-    const sumaDe = (tipo: TransactionType): string =>
-      serializar(toMoney(sumas.find((s) => s.type === tipo)?._sum.amount ?? 0));
+    const {
+      rows: filas,
+      total,
+      sumOf,
+    } = await this.repository.findPage(userId, query, {
+      skip,
+      take,
+    });
+    const sumaDe = (tipo: TransactionType): string => serializar(sumOf(tipo));
 
     return {
       data: filas.map((fila) => this.presentar(fila)),
@@ -145,15 +124,9 @@ export class TransactionsService {
    * Por PERIODO y no por fecha de pago: es el eje con el que se mira la app.
    */
   async historia(userId: bigint): Promise<{ first: string | null; last: string | null }> {
-    const extremos = await this.prisma.transaction.aggregate({
-      where: { userId },
-      _min: { period: true },
-      _max: { period: true },
-    });
-
+    const { first, last } = await this.repository.periodRange(userId);
     const iso = (fecha: Date | null): string | null => fecha?.toISOString().slice(0, 10) ?? null;
-
-    return { first: iso(extremos._min.period), last: iso(extremos._max.period) };
+    return { first: iso(first), last: iso(last) };
   }
 
   async obtener(userId: bigint, id: bigint): Promise<TransactionView> {
@@ -175,52 +148,28 @@ export class TransactionsService {
     const splits = this.prepararSplits(amount, dto.splits);
     const tagIds = dto.tags?.length ? await this.tags.resolverNombres(userId, dto.tags) : [];
 
-    // Todo dentro de una sola transacción: si los splits no cuadran o algo
-    // falla a medio camino, no queda un movimiento huérfano sin su desglose.
-    const creada = await this.prisma.$transaction(async (tx) => {
-      const movimiento = await tx.transaction.create({
-        data: {
-          userId,
-          accountId,
-          date: new Date(dto.date),
-          period: dto.period ? new Date(dto.period) : mesDe(new Date(dto.date)),
-          amount,
-          type: tipo,
-          categoryId,
-          description: dto.description ?? null,
-          merchant: dto.merchant ?? null,
-          notes: dto.notes ?? null,
-          externalRef: dto.external_ref ?? null,
-          status: dto.status ?? 'cleared',
-          source: dto.source ?? 'web',
-          rawText: dto.raw_text ?? null,
-          capturedAt: dto.captured_at ? new Date(dto.captured_at) : null,
-          porRevisar: dto.por_revisar ?? false,
-        },
-      });
-
-      if (splits.length > 0) {
-        await tx.transactionSplit.createMany({
-          data: splits.map((split) => ({
-            transactionId: movimiento.id,
-            categoryId: split.categoryId,
-            amount: split.amount,
-            note: split.note,
-          })),
-        });
-      }
-
-      if (tagIds.length > 0) {
-        await tx.transactionTag.createMany({
-          data: tagIds.map((tagId) => ({ transactionId: movimiento.id, tagId })),
-        });
-      }
-
-      return tx.transaction.findUniqueOrThrow({
-        where: { id: movimiento.id },
-        include: INCLUIR_TODO,
-      });
-    });
+    const creada = await this.repository.createWithDetails(
+      {
+        userId,
+        accountId,
+        date: new Date(dto.date),
+        period: dto.period ? new Date(dto.period) : mesDe(new Date(dto.date)),
+        amount,
+        type: tipo,
+        categoryId,
+        description: dto.description ?? null,
+        merchant: dto.merchant ?? null,
+        notes: dto.notes ?? null,
+        externalRef: dto.external_ref ?? null,
+        status: dto.status ?? 'cleared',
+        source: dto.source ?? 'web',
+        rawText: dto.raw_text ?? null,
+        capturedAt: dto.captured_at ? new Date(dto.captured_at) : null,
+        porRevisar: dto.por_revisar ?? false,
+      },
+      splits,
+      tagIds,
+    );
 
     return this.presentar(creada);
   }
@@ -265,20 +214,7 @@ export class TransactionsService {
       status: 'cleared' as const,
     };
 
-    const patas = await this.prisma.$transaction(async (tx) => {
-      await tx.transaction.create({
-        data: { ...base, accountId: origen, transferDir: 'out' },
-      });
-      await tx.transaction.create({
-        data: { ...base, accountId: destino, transferDir: 'in' },
-      });
-
-      return tx.transaction.findMany({
-        where: { userId, transferGroupId: grupo },
-        include: INCLUIR_TODO,
-        orderBy: { transferDir: 'asc' },
-      });
-    });
+    const patas = await this.repository.createTransfer(base, origen, destino);
 
     return { transfer_group_id: grupo, legs: patas.map((pata) => this.presentar(pata)) };
   }
@@ -306,55 +242,12 @@ export class TransactionsService {
     const tagIds =
       dto.tags !== undefined ? await this.tags.resolverNombres(userId, dto.tags) : null;
 
-    const actualizada = await this.prisma.$transaction(async (tx) => {
-      await tx.transaction.update({
-        where: { id },
-        data: {
-          ...(dto.account_id !== undefined && { accountId }),
-          ...(dto.date !== undefined && { date: new Date(dto.date) }),
-          ...(dto.amount !== undefined && { amount }),
-          ...(dto.type !== undefined && { type: dto.type }),
-          ...(dto.category_id !== undefined && {
-            categoryId: dto.category_id === null ? null : BigInt(dto.category_id),
-          }),
-          ...(dto.description !== undefined && { description: dto.description }),
-          ...(dto.merchant !== undefined && { merchant: dto.merchant }),
-          ...(dto.notes !== undefined && { notes: dto.notes }),
-          ...(dto.status !== undefined && { status: dto.status }),
-          ...(dto.source !== undefined && { source: dto.source }),
-          ...(dto.raw_text !== undefined && { rawText: dto.raw_text }),
-          ...(dto.captured_at !== undefined && {
-            capturedAt: dto.captured_at === null ? null : new Date(dto.captured_at),
-          }),
-          ...(dto.por_revisar !== undefined && { porRevisar: dto.por_revisar }),
-        },
-      });
-
-      if (splits !== null) {
-        await tx.transactionSplit.deleteMany({ where: { transactionId: id } });
-        if (splits.length > 0) {
-          await tx.transactionSplit.createMany({
-            data: splits.map((split) => ({
-              transactionId: id,
-              categoryId: split.categoryId,
-              amount: split.amount,
-              note: split.note,
-            })),
-          });
-        }
-      }
-
-      if (tagIds !== null) {
-        await tx.transactionTag.deleteMany({ where: { transactionId: id } });
-        if (tagIds.length > 0) {
-          await tx.transactionTag.createMany({
-            data: tagIds.map((tagId) => ({ transactionId: id, tagId })),
-          });
-        }
-      }
-
-      return tx.transaction.findUniqueOrThrow({ where: { id }, include: INCLUIR_TODO });
-    });
+    const actualizada = await this.repository.updateWithDetails(
+      id,
+      cambiosDe(dto, accountId, amount),
+      splits,
+      tagIds,
+    );
 
     return this.presentar(actualizada);
   }
@@ -373,119 +266,23 @@ export class TransactionsService {
       const keys = await this.soportes.keysOf(userId, {
         transferGroupId: movimiento.transferGroupId,
       });
-      await this.prisma.transaction.deleteMany({
-        where: { userId, transferGroupId: movimiento.transferGroupId },
-      });
+      await this.repository.deleteTransferGroup(userId, movimiento.transferGroupId);
       await this.soportes.removeFiles(keys);
       return;
     }
 
     const keys = await this.soportes.keysOf(userId, { transactionId: id });
-    await this.prisma.transaction.deleteMany({ where: { id, userId } });
+    await this.repository.deleteOne(userId, id);
     await this.soportes.removeFiles(keys);
   }
 
   // ── Apoyo ──────────────────────────────────────────────────────────────────
 
-  /**
-   * Todos los ids de la rama que cuelga de una categoría, ella incluida.
-   *
-   * Filtrar por "Costos fijos" tiene que traer TODO lo que hay debajo: sus
-   * categorías y los conceptos de cada una. Comparar `categoryId` contra un solo
-   * id devolvería cero movimientos, porque ninguno se cuelga de un centro de
-   * costos directamente — se cuelgan del concepto, que es la hoja.
-   */
-  /** Varias categorías con sus ramas, de una sola lectura del árbol. */
-  private async ramasDe(userId: bigint, ids: readonly bigint[]): Promise<bigint[]> {
-    const todas = await this.prisma.category.findMany({
-      where: { userId },
-      select: { id: true, parentId: true },
-    });
-    return ramasDe(todas, ids);
-  }
-
-  /**
-   * Las categorías cuyo NOMBRE contiene el texto, con toda su rama.
-   *
-   * Con la rama, no solo las que coinciden: los movimientos cuelgan del
-   * concepto, así que buscar el nombre de una categoría sin expandirla no
-   * devolvería ni una fila.
-   */
-  private async ramaPorNombre(userId: bigint, texto: string): Promise<bigint[]> {
-    const todas = await this.prisma.category.findMany({
-      where: { userId },
-      select: { id: true, parentId: true, name: true },
-    });
-
-    const aguja = texto.toLowerCase();
-    const coinciden = todas.filter((c) => c.name.toLowerCase().includes(aguja)).map((c) => c.id);
-
-    return coinciden.length === 0 ? [] : ramasDe(todas, coinciden);
-  }
-
-  private async construirFiltro(
-    userId: bigint,
-    query: ListTransactionsQueryDto,
-  ): Promise<Prisma.TransactionWhereInput> {
-    const where: Prisma.TransactionWhereInput = { userId };
-
-    if (query.from || query.to) {
-      // Por PERÍODO: el rango que la persona elige arriba se refiere al mes al
-      // que pertenece el gasto, no al día en que salió la plata. Si filtrara
-      // por `date`, marzo aparecería vacío cuando sus facturas se pagaron en
-      // abril — que es exactamente lo que pasaba.
-      where.period = {
-        ...(query.from && { gte: new Date(query.from) }),
-        ...(query.to && { lte: new Date(query.to) }),
-      };
-    }
-
-    if (query.account_id !== undefined) where.accountId = BigInt(query.account_id);
-
-    const pedidas = [
-      ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
-      ...idsDeCategorias(query.category_ids),
-    ];
-    if (pedidas.length > 0) {
-      where.categoryId = { in: await this.ramasDe(userId, pedidas) };
-    }
-    if (query.type) where.type = query.type;
-    if (query.status) where.status = query.status;
-    if (query.tag_id !== undefined) where.tags = { some: { tagId: BigInt(query.tag_id) } };
-
-    if (query.min_amount || query.max_amount) {
-      where.amount = {
-        ...(query.min_amount && { gte: toMoney(query.min_amount) }),
-        ...(query.max_amount && { lte: toMoney(query.max_amount) }),
-      };
-    }
-
-    if (query.q) {
-      // La búsqueda también entra por la CLASIFICACIÓN: escribir "servicios
-      // públicos" tiene que traer todo lo que cuelga de esa categoría, aunque
-      // ninguna fila lo diga en su descripción. Quien busca piensa en el
-      // nombre con el que ordenó su plata, no en cómo vino escrito el cargo.
-      const porClasificacion = await this.ramaPorNombre(userId, query.q);
-
-      // `mode: 'insensitive'` NO es opcional. Postgres compara distinguiendo
-      // mayúsculas —MariaDB no lo hacía—, así que buscar "celsia" no
-      // encontraría "Celsia (Energia)". Quien busca escribe en minúscula.
-      where.OR = [
-        { description: { contains: query.q, mode: 'insensitive' } },
-        { merchant: { contains: query.q, mode: 'insensitive' } },
-        { notes: { contains: query.q, mode: 'insensitive' } },
-        ...(porClasificacion.length > 0 ? [{ categoryId: { in: porClasificacion } }] : []),
-      ];
-    }
-
-    return where;
-  }
-
   /** Valida el cuadre y normaliza los splits. Lanza 422 si no cuadran. */
   private prepararSplits(
     amountCabecera: Money,
     splits: readonly SplitDto[] | undefined,
-  ): { categoryId: bigint | null; amount: Money; note: string | null }[] {
+  ): SplitToWrite[] {
     if (!splits || splits.length === 0) return [];
 
     const montos = splits.map((split) => toMoney(split.amount));
@@ -505,25 +302,20 @@ export class TransactionsService {
   }
 
   private async exigirMovimiento(userId: bigint, id: bigint): Promise<TransaccionCompleta> {
-    const movimiento = await this.prisma.transaction.findFirst({
-      where: { id, userId },
-      include: INCLUIR_TODO,
-    });
+    const movimiento = await this.repository.findOwned(userId, id);
     if (!movimiento) throw new NotFoundError('El movimiento no existe.');
     return movimiento;
   }
 
   /** Sin esta verificación se podría asociar un movimiento a la cuenta de otro. */
   private async exigirCuentaPropia(userId: bigint, accountId: bigint): Promise<void> {
-    const existe = await this.prisma.account.count({ where: { id: accountId, userId } });
-    if (existe === 0) {
+    if (!(await this.repository.accountBelongsTo(userId, accountId))) {
       throw new ValidationError('La cuenta indicada no existe o no es tuya.');
     }
   }
 
   private async exigirCategoriaPropia(userId: bigint, categoryId: bigint): Promise<void> {
-    const existe = await this.prisma.category.count({ where: { id: categoryId, userId } });
-    if (existe === 0) {
+    if (!(await this.repository.categoryBelongsTo(userId, categoryId))) {
       throw new ValidationError('La categoría indicada no existe o no es tuya.');
     }
   }
@@ -560,4 +352,31 @@ export class TransactionsService {
       created_at: fila.createdAt,
     };
   }
+}
+
+/** The columns a PATCH changes: only what the DTO brought. */
+function cambiosDe(
+  dto: UpdateTransactionDto,
+  accountId: bigint | null,
+  amount: Money,
+): Parameters<TransactionsRepository['updateWithDetails']>[1] {
+  return {
+    ...(dto.account_id !== undefined && { accountId }),
+    ...(dto.date !== undefined && { date: new Date(dto.date) }),
+    ...(dto.amount !== undefined && { amount }),
+    ...(dto.type !== undefined && { type: dto.type }),
+    ...(dto.category_id !== undefined && {
+      categoryId: dto.category_id === null ? null : BigInt(dto.category_id),
+    }),
+    ...(dto.description !== undefined && { description: dto.description }),
+    ...(dto.merchant !== undefined && { merchant: dto.merchant }),
+    ...(dto.notes !== undefined && { notes: dto.notes }),
+    ...(dto.status !== undefined && { status: dto.status }),
+    ...(dto.source !== undefined && { source: dto.source }),
+    ...(dto.raw_text !== undefined && { rawText: dto.raw_text }),
+    ...(dto.captured_at !== undefined && {
+      capturedAt: dto.captured_at === null ? null : new Date(dto.captured_at),
+    }),
+    ...(dto.por_revisar !== undefined && { porRevisar: dto.por_revisar }),
+  };
 }
