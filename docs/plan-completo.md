@@ -1,6 +1,6 @@
 # Plan de trabajo completo: app de gastos (web + API + iOS)
 
-Fecha de esta versión: 2026-10-04. Basado en `AUDITORIA_RESPUESTAS.md`.
+Fecha de esta versión: 2026-10-04, con los añadidos del dueño del 5 de octubre. Basado en la auditoría técnica del repositorio de esa fecha; lo que sigue vigente de ella quedó escrito en este plan y en `docs/standards/audit.md`.
 
 ## Cómo usar este documento
 
@@ -41,6 +41,18 @@ Code trabaja en **modo autónomo**: no pide intervención salvo en sus paradas o
 3. Migraciones solo aditivas, salvo el procedimiento de expandir y contraer de la fase 7. Orden siempre: migración, verificación, merge, push, verificación del despliegue. Nunca código antes que esquema.
 4. Terminado significa: typecheck, lint y pruebas pasan en todos los workspaces.
 5. Nada fuera de lo que piden las fases. Lo que convenga mejorar y no esté en el plan va a pendientes del informe, no al código. Ninguna dependencia nueva ni decisión fuera del plan sin anotarla con su motivo en el registro (`docs/registro-autonomo.md`).
+
+## Añadidos del dueño (5 oct 2026)
+
+| Bloque | Qué                                                                                                                                | Dónde aplica                        |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| A      | Lectura de documentos en iOS. **PARADA antes de tocar `packages/lectura`**: el dueño elige entre las opciones que se le presenten. | 7.13                                |
+| B      | ADR de monolito modular; un módulo solo habla con otro a través de su servicio público.                                            | 7.4                                 |
+| C      | Ciclo de vida de los documentos: cuáles se crean, cuáles se destilan en ADR o runbook y cuándo se borran.                          | 7.12 y 7.14                         |
+| D      | Limpieza inmediata: en la carpeta del proyecto solo vive el proyecto. La data real y los respaldos salen a `$COCO_DATA_DIR`.       | Ya, antes de seguir                 |
+| E      | Formato de las reglas: la regla arriba, el porqué debajo.                                                                          | `CLAUDE.md`, `CONTRIBUTING.md`, ADR |
+| F      | Modo de trabajo: director + un ejecutor por paso (`/paso <id>`), traspasos cortos en `.claude/traspasos/`.                         | Todos los pasos desde ahora         |
+| G      | Línea de estado de Claude Code con el tamaño del contexto, para ver cuándo se salta el modelo de F.                                | Configuración local, ya             |
 
 ---
 

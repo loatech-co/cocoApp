@@ -1,5 +1,16 @@
 # Coco — reglas de la interfaz
 
+## Modo de trabajo
+
+- La sesión principal **dirige**: coordina, lanza y valida. No edita código ni lee archivos grandes.
+- Cada paso del plan lo hace un **ejecutor** nuevo (`/paso <id>` → agente `ejecutor-de-paso`), que lee solo su sección del plan y el traspaso anterior.
+- El ejecutor devuelve un informe de menos de 10 líneas y deja un traspaso de menos de 30 en `.claude/traspasos/<paso>.md`. Un paso demasiado grande se parte en subpasos, un ejecutor cada uno.
+- Al cerrar, el ejecutor destila lo que valga de sus documentos de trabajo en un ADR o en el runbook, y los borra.
+- Memoria: plan + traspasos = dónde va el trabajo; `MEMORY.md` = cómo trabaja el dueño; Engram = decisiones e incidentes de largo plazo. Los traspasos se borran al cerrar la fase, después de destilarlos.
+- Más de 100k de contexto en la sesión principal = alguien se está saltando este modelo.
+
+**Por qué.** La sesión del 4–5 de octubre gastó el 97 % de sus tokens releyendo un contexto de ~455k en cada turno, durante 1.784 turnos. El trabajo cabe en contextos pequeños; lo que no cabe es arrastrarlo todo.
+
 |     | Regla                                                                                                                  |
 | --- | ---------------------------------------------------------------------------------------------------------------------- |
 | 1   | [Ningún control del sistema operativo](#1-ningún-control-del-sistema-operativo)                                        |
