@@ -205,7 +205,6 @@ export default defineConfig(
     // (step 7.4). Step 7.4-web-b splits them and deletes this list; a file
     // never gets added to it.
     files: [
-      'frontend/src/features/transactions/components/tendencia.tsx',
       'frontend/src/features/centros/pages/centros-page.tsx',
       'frontend/src/features/transactions/pages/dashboard-page.tsx',
       'frontend/src/features/transactions/components/movimiento-modal.dom.test.tsx',
@@ -235,7 +234,6 @@ export default defineConfig(
       'frontend/src/features/transactions/components/selector-de-fecha.tsx',
       'frontend/src/features/transactions/components/tabla-de-movimientos.tsx',
       'frontend/src/shared/ui/molecules/tabla.tsx',
-      'frontend/src/features/transactions/components/tendencia.tsx',
       'frontend/src/features/transactions/components/toolbar-filtros.tsx',
       'frontend/src/shared/ui/molecules/aviso.tsx',
       'frontend/src/shared/ui/atoms/badge.tsx',

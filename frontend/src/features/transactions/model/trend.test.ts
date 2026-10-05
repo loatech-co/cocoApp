@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { curva, etiquetasDelEje } from './tendencia';
+import { curva, etiquetasDelEje } from './trend';
 
 const dias = (desde: string, hasta: string): { bucket: string }[] => {
   const puntos: { bucket: string }[] = [];
