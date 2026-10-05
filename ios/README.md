@@ -57,6 +57,16 @@ Las reglas completas están en `CONTRIBUTING.md`, sección «iOS». En corto:
   - las claves JSON de la API y las de lo guardado en disco. Las propiedades
     van en camelCase y la clave se escribe en `CodingKeys`;
     `StoredFormatCompatibilityTests` falla si una cambia.
+- **Textos en el catálogo.** Lo que ve la persona vive en
+  `Coco/Resources/Localizable.xcstrings` (y en el de `CocoAccesos/`, que no
+  ve los recursos del .app), con clave en inglés (`capture.form.amount`) y
+  valor en español, y se pide con `L10n` (`L10n.Capture.formAmount`). Un
+  texto nuevo se añade al catálogo, a `L10n` y a
+  `CocoTests/Support/localization-baseline.json`. `VisibleTextTests` falla si
+  una vista escribe un texto suelto; sus excepciones —los títulos y
+  parámetros de los App Intents, cabeceras HTTP, mensajes del registro— van
+  en una lista, cada una con su motivo. Xcode no extrae textos solo
+  (`SWIFT_EMIT_LOC_STRINGS: NO`): el catálogo se escribe a mano.
 - **Red con `async/await`**, sin callbacks. Errores tipados por dominio
   (`APIError`, `SessionError`, `QueueError`, `KeychainError`,
   `ParameterError`).
