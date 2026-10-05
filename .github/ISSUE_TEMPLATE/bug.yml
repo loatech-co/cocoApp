@@ -1,0 +1,44 @@
+name: Bug
+description: Something that worked, or should work, does not.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        No secrets, personal data or amounts here: describe the movement or the
+        screen, not the money.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [web, api, ios, lectura, flags, ci]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Movimientos
+        2. Filter by a date range
+        3. Save a movement
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Error message, screenshot or log line (scrub personal data).
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The release tag (vX.Y.Z) or commit where it shows up.
