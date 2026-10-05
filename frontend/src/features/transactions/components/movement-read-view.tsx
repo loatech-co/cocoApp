@@ -1,0 +1,149 @@
+import { ArrowUpRight } from 'lucide-react';
+
+import { diaLargo, mesLargo } from '@/shared/lib/fechas';
+import { cn, formatMoney } from '@/shared/lib/utils';
+import { Card } from '@/shared/ui/atoms/card';
+import { Seccion } from '@/shared/ui/molecules/section';
+import type { TransactionType } from '@coco/types';
+
+interface ReadViewProps {
+  tipo: TransactionType;
+  nombre: string;
+  valor: string;
+  /** ISO 4217 code of the movement being read. */
+  currency: string;
+  fecha: string;
+  /** `YYYY-MM-DD` del día 1 del mes al que PERTENECE el gasto. */
+  periodo?: string | undefined;
+  ruta: string[];
+}
+
+/**
+ * La columna de los datos cuando solo se está mirando: el movimiento y, si
+ * las hay, sus notas.
+ *
+ * Las notas van con lo que dicen los datos y no debajo de los soportes: el
+ * recibo es la prueba de lo que pasó y la nota es el comentario de alguien
+ * sobre eso, así que va del lado en el que se cuenta lo que pasó.
+ */
+export function MovementReadColumn({ notes, ...lectura }: ReadViewProps & { notes: string }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <VistaDeLectura {...lectura} />
+
+      {notes.trim() !== '' && (
+        <Seccion titulo="Notas">
+          {/* `whitespace-pre-line`: las notas se escriben con saltos de línea
+              y aplanarlas convierte una lista en un párrafo. */}
+          <p className="whitespace-pre-line text-sm">{notes}</p>
+        </Seccion>
+      )}
+    </div>
+  );
+}
+
+/**
+ * El movimiento cuando solo se está mirando.
+ *
+ * ── Por qué no son los mismos campos, apagados ──────────────────────────────
+ * Porque un campo apagado sigue siendo un campo: tiene su marco, su etiqueta
+ * encima y su altura de control, y ocupa el sitio de una caja donde se podría
+ * escribir aunque no se pueda. Ocho de esos, uno debajo de otro, son un
+ * formulario que no deja rellenarse —que se lee como una avería— cuando lo
+ * que uno viene a hacer es LEER un dato: cuánto fue, cuándo, de qué.
+ *
+ * ── De dónde sale la jerarquía ──────────────────────────────────────────────
+ * De que no todo pese igual. La cifra manda: va grande, en su color. Debajo,
+ * sus dos datos inseparables —de qué es y cuándo se pagó— en la misma caja,
+ * porque se leen juntos.
+ *
+ * ── Partido en dos: arriba CUÁNTO, abajo de qué ─────────────────────────────
+ * Juntos, la cifra tenía cuatro líneas pegadas debajo y el bloque se leía como
+ * un párrafo que empieza con un número grande. La línea los separa en dos
+ * registros: el dato que se viene a ver, y el contexto que lo explica.
+ *
+ * Y es una TARJETA de verdad: `Card` es la superficie que la aplicación ya usa
+ * para "esto es una cosa", y aquí dice lo mismo: el movimiento es un objeto, y
+ * lo de abajo son sus anexos.
+ */
+function VistaDeLectura({ tipo, nombre, valor, currency, fecha, periodo, ruta }: ReadViewProps) {
+  return (
+    <div className="flex flex-col gap-5">
+      <Card className="overflow-hidden">
+        <div className="px-4 py-5">
+          {/*
+            SIN `tabular`: aquí no hay columna, hay un número solo y grande, y
+            el ancho fijo de las cifras tabulares separa los dígitos como si
+            alguien le hubiera metido interletraje.
+
+            Una flecha, no un signo. El menos delante de una cifra es una
+            convención de TABLA; aquí la ficha entera es un gasto, y lo dice el
+            título. La flecha dice lo mismo mejor: sube y sale, baja y entra.
+
+            36px y los mismos en todas las pantallas: es el dato principal, no
+            el único.
+          */}
+          <p className="flex items-center gap-2 font-display text-4xl font-bold leading-none text-acento-tinta">
+            <ArrowUpRight
+              className={cn('size-8 shrink-0 sm:size-10', tipo === 'income' && 'rotate-180')}
+              strokeWidth={2.75}
+              aria-hidden="true"
+            />
+            {formatMoney(valor || '0', currency)}
+          </p>
+        </div>
+
+        <ReadDetails nombre={nombre} fecha={fecha} periodo={periodo} ruta={ruta} />
+      </Card>
+
+      {ruta.length === 0 && (
+        <p className="text-sm text-muted-foreground">Este movimiento está sin clasificar.</p>
+      )}
+    </div>
+  );
+}
+
+/** De qué es y cuándo se pagó, debajo de la cifra. */
+function ReadDetails({
+  nombre,
+  fecha,
+  periodo,
+  ruta,
+}: Pick<ReadViewProps, 'nombre' | 'fecha' | 'periodo' | 'ruta'>) {
+  // El periodo solo se nombra cuando NO es el mes del pago. Repetir
+  // "septiembre" dos veces seguidas no informa; decirlo cuando la factura de
+  // agosto se pagó en septiembre, sí —es lo que descuadra los totales de quien
+  // no lo nota—.
+  const mesDelPago = fecha.slice(0, 7);
+  const desfasado = periodo !== undefined && periodo !== '' && periodo.slice(0, 7) !== mesDelPago;
+
+  return (
+    <div className="flex flex-col gap-1 border-t border-border px-4 py-3">
+      <p className="truncate text-base font-medium">{nombre || 'Sin concepto'}</p>
+
+      {/* El camino, sin etiqueta y sin fichas. Con fichas parecían pestañas
+          —algo que se pulsa y cambia lo de abajo— y aquí no se pulsa nada: es
+          dónde vive este movimiento, que se lee como una ruta. */}
+      {ruta.length > 0 && (
+        <p className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+          {ruta.map((nombre, i) => (
+            <span key={nombre} className="flex items-center gap-1.5">
+              {i > 0 && <span aria-hidden="true">›</span>}
+              <span className={cn(i === ruta.length - 1 && 'font-medium text-foreground')}>
+                {nombre}
+              </span>
+            </span>
+          ))}
+        </p>
+      )}
+
+      <p className="mt-1 text-xs text-muted-foreground">Pagado el {diaLargo(fecha)}</p>
+
+      {desfasado && (
+        <p className="text-xs font-medium text-warning">
+          Pertenece a {mesLargo(periodo.slice(0, 7))}
+        </p>
+      )}
+    </div>
+  );
+}

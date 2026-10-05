@@ -1,6 +1,7 @@
 import { ChevronDown, CornerDownLeft, Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
 import { cn } from '@/shared/lib/utils';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
@@ -48,12 +49,6 @@ import {
  * La fila elegible es la misma `Opcion` de `Combo`, para que elegir se vea
  * igual en los dos sitios.
  */
-export interface CandidatoDelRecibo {
-  id: number;
-  nombre: string;
-  ruta: string;
-}
-
 export function BuscadorDeConcepto({
   id,
   arbol,

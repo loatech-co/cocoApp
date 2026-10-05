@@ -1,0 +1,90 @@
+import { useMemo } from 'react';
+
+import { useTransactions } from '@/features/transactions/api/transactions';
+import { useSugerenciaDeCategoria } from '@/features/transactions/hooks/use-sugerencia';
+import { proposalFromText } from '@/features/transactions/model/movement-form';
+import { conceptosRecientes } from '@/features/transactions/model/recientes';
+import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { indexarArbol } from '@coco/lectura';
+import type { Category, Transaction } from '@coco/types';
+
+import type { MovementSheetState } from './use-movement-form';
+
+/**
+ * Las fuentes automáticas de la clasificación, y los conceptos recientes.
+ *
+ * ── Las fuentes ─────────────────────────────────────────────────────────────
+ * Tres, y las tres pasan por `proponer`, que aplica la precedencia:
+ *
+ * · El HISTORIAL, que vive en el servidor: `/categorization/suggest` con lo
+ *   que se está escribiendo (con espera entre teclas; ver el hook).
+ * · Las PALABRAS CLAVE y los nombres de la persona: lo escrito se busca en su
+ *   árbol; si lleva a un solo concepto, se propone.
+ * · El DICCIONARIO del sistema: si lo escrito nombra un comercio conocido, sus
+ *   términos se buscan en el árbol. Ver `proposalFromText`.
+ *
+ * Solo con la ficha en el formulario y editable: proponer sobre una ficha de
+ * solo lectura sería cambiarle la clasificación a un movimiento guardado.
+ *
+ * ── La recurrencia NO se edita aquí ─────────────────────────────────────────
+ * Es del CONCEPTO, no del movimiento, y su sitio es Centros de costos. Editable
+ * desde la ficha, un formulario que uno abre para corregir una cifra podía
+ * cambiar cada cuánto vuelve un pago, y eso reaparece semanas después en la
+ * tarjeta de pagos pendientes sin que nadie recuerde haberlo tocado.
+ */
+export function useClassificationProposals(
+  ficha: MovementSheetState,
+  {
+    abierta,
+    movimiento,
+    arbol,
+  }: {
+    abierta: boolean;
+    movimiento: Transaction | null | undefined;
+    arbol: Category[] | undefined;
+  },
+) {
+  const indiceDelArbol = useMemo(() => indexarArbol(arbol ?? []), [arbol]);
+  const proponiendo = abierta && ficha.paso === 'formulario' && ficha.editable;
+
+  const sugerenciaDelHistorial = useSugerenciaDeCategoria(proponiendo ? ficha.description : '');
+  useAlCambiar([sugerenciaDelHistorial?.category_id], () => {
+    // Solo con un id de verdad: una respuesta con otra forma no puede vaciar
+    // lo que otra fuente ya había puesto.
+    if (typeof sugerenciaDelHistorial?.category_id !== 'number') return;
+    ficha.setHuboSugerencia(true);
+    ficha.proponer({ categoryId: sugerenciaDelHistorial.category_id, origen: 'historial' });
+  });
+
+  const propuestaLocal = useMemo(() => {
+    const escrito = ficha.description.trim();
+    if (!proponiendo || escrito.length < 3) return null;
+    return proposalFromText(indiceDelArbol, escrito);
+  }, [indiceDelArbol, ficha.description, proponiendo]);
+
+  useAlCambiar(
+    [
+      propuestaLocal?.categoryId,
+      propuestaLocal?.origen,
+      propuestaLocal && (propuestaLocal.candidatos ?? []).map((c) => c.id).join(','),
+    ],
+    () => {
+      if (!propuestaLocal) return;
+      ficha.setHuboSugerencia(true);
+      const { categoryId, origen, candidatos } = propuestaLocal;
+      if (categoryId !== undefined) ficha.proponer({ categoryId, origen });
+      if (candidatos) ficha.setCandidatosDelRecibo(candidatos);
+    },
+  );
+
+  // Los conceptos usados últimamente, para el buscador en blanco. Solo al
+  // crear: editando, el concepto ya está puesto.
+  const movimientosRecientes = useTransactions(
+    { per_page: 40 },
+    { enabled: abierta && !movimiento },
+  );
+  return useMemo(
+    () => conceptosRecientes(movimientosRecientes.data?.data ?? [], indiceDelArbol),
+    [movimientosRecientes.data, indiceDelArbol],
+  );
+}

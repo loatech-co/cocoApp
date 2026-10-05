@@ -29,3 +29,60 @@ export function cargarPdfjs(): Promise<Pdfjs> {
 
   return cargando;
 }
+
+/** What a page drawing ended with: the drawn size in pixels. */
+export interface PdfPageDrawing {
+  width: number;
+  height: number;
+}
+
+/**
+ * Draws one page of a PDF on a canvas.
+ *
+ * The first-page thumbnail and the page of the full-screen viewer drew it
+ * line by line the same way. Returns `null` when it stopped halfway —the
+ * caller went away (`isAlive`), the canvas is gone or it has no 2D context—
+ * so the caller never reports a drawing that did not happen. Errors are
+ * thrown: each caller decides what a broken PDF looks like.
+ */
+export async function drawPdfPage({
+  url,
+  page,
+  scale,
+  canvas,
+  isAlive,
+  onPages,
+}: {
+  url: string;
+  page: number;
+  /** The scale to draw at, given the page's natural width. */
+  scale: (pageWidth: number) => number;
+  canvas: () => HTMLCanvasElement | null;
+  isAlive: () => boolean;
+  /** Called with the page count as soon as the document opens. */
+  onPages?: (pages: number) => void;
+}): Promise<PdfPageDrawing | null> {
+  const pdfjs = await cargarPdfjs();
+  const document = await pdfjs.getDocument({ url }).promise;
+  if (onPages) {
+    if (!isAlive()) return null;
+    onPages(document.numPages);
+  }
+
+  const sheet = await document.getPage(Math.min(page, document.numPages));
+  const target = canvas();
+  if (!isAlive() || !target) return null;
+
+  const base = sheet.getViewport({ scale: 1 });
+  const view = sheet.getViewport({ scale: scale(base.width) });
+
+  const context = target.getContext('2d');
+  if (!context) return null;
+
+  target.width = view.width;
+  target.height = view.height;
+
+  await sheet.render({ canvas: target, canvasContext: context, viewport: view }).promise;
+  await document.cleanup();
+  return { width: view.width, height: view.height };
+}
