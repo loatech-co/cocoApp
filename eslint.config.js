@@ -372,7 +372,7 @@ export default defineConfig(
     // (step 7.4). The frontend ones were split in 7.4-web-b and 7.4-web-b2;
     // these two are packages, outside the web steps. A file never gets added
     // to it.
-    files: ['packages/lectura/src/diccionario.ts', 'packages/types/src/index.ts'],
+    files: ['packages/lectura/src/diccionario.ts'],
     rules: { 'max-lines': 'off' },
   },
   {

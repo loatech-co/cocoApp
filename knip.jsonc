@@ -36,9 +36,6 @@
         "entry": [".storybook/preview.tsx", "src/**/*.stories.tsx"],
       },
     },
-    "packages/types": {
-      "project": ["src/**/*.ts"],
-    },
     "packages/lectura": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"],

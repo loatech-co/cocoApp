@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build --quiet"
+    "build-storybook": "storybook build --quiet",
+    "generate:api": "orval --config orval.config.ts && prettier --write --log-level warn src/shared/api/generated"
   },
   "dependencies": {
     "@openfeature/core": "^1.12.0",
@@ -47,6 +48,7 @@
     "@testing-library/react": "^16.3.2",
     "@vitest/coverage-v8": "^4.1.11",
     "jsdom": "^29.1.1",
+    "orval": "^8.40.0",
     "storybook": "^10.6.1",
     "storybook-addon-pseudo-states": "^10.6.1",
     "vitest": "^4.1.10"

@@ -26,7 +26,6 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@coco/types": ["../packages/types/src/index.ts"],
       "@coco/lectura": ["../packages/lectura/src/index.ts"],
       "@coco/flags": ["../packages/flags/src/index.ts"]
     },

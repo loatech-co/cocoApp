@@ -1,8 +1,12 @@
-import type { ApiError, ApiResponse } from '@coco/types';
-
 import { descartarSesion, renovar, tokenActual, tokenPorExpirar } from './session';
+import type { ErrorDetailResponse, ErrorResponse } from './generated/model';
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1';
+/**
+ * Dónde está la API. Vacío —lo normal— es el mismo origen que la página: las
+ * rutas del cliente generado ya traen su `/api/v2`. En local apunta al
+ * servidor de desarrollo (`frontend/.env.example`).
+ */
+export const API_ORIGIN = (import.meta.env.VITE_API_ORIGIN as string | undefined) ?? '';
 
 /**
  * Error de API ya normalizado. Trae el `code` estable que el backend garantiza,
@@ -13,7 +17,7 @@ export class ApiClientError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly details: ApiError['error']['details'] = [],
+    readonly details: ErrorDetailResponse[] = [],
   ) {
     super(message);
     this.name = 'ApiClientError';
@@ -29,16 +33,10 @@ export class ApiClientError extends Error {
   }
 }
 
-interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  body?: unknown;
-  /** Para el commit de importación (Fase 2), que debe ser idempotente. */
-  idempotencyKey?: string;
-  signal?: AbortSignal | undefined;
-}
-
 /**
- * Única puerta de red hacia la API.
+ * Única puerta de red hacia la API, y el `mutator` del cliente generado
+ * (`orval.config.ts`): cada función de `generated/` llama aquí con la URL ya
+ * armada —`/api/v2/...`— y las opciones de `fetch`.
  *
  * Ningún componente hace `fetch` por su cuenta: si lo hiciera, tarde o temprano
  * se le olvidaría adjuntar el token o manejar el envelope de error, y esos bugs
@@ -50,45 +48,20 @@ interface RequestOptions {
  *   2. Si aun así vuelve un 401, se intenta renovar UNA vez y se reintenta.
  *      Una sola vez: si el segundo intento también falla, la sesión murió de
  *      verdad y reintentar en bucle solo escondería el problema.
+ *
+ * Devuelve el cuerpo tal cual —el envelope `{ data, meta }`—, un `Blob` si la
+ * respuesta no es JSON (un soporte), o nada si es un 204.
  */
-export async function apiFetch<TData, TMeta = Record<string, unknown>>(
-  path: string,
-  options: RequestOptions = {},
-): Promise<ApiResponse<TData, TMeta>> {
-  if (tokenPorExpirar()) {
-    await renovar();
-  }
+export async function apiRequest<T>(url: string, init: RequestInit = {}): Promise<T> {
+  const respuesta = await conSesion(url, init);
 
-  let respuesta = await enviar(path, options);
+  if (respuesta.status === 204) return undefined as T;
 
-  if (respuesta.status === 401) {
-    const renovada = await renovar();
-    if (!renovada) {
-      descartarSesion();
-      throw new ApiClientError(401, 'unauthenticated', 'Tu sesión expiró. Vuelve a entrar.');
-    }
-    respuesta = await enviar(path, options);
-  }
+  if (!respuesta.ok) throw await errorDe(respuesta, 'No se pudo completar la operación.');
 
-  if (respuesta.status === 204) {
-    return { data: undefined as TData, meta: {} as TMeta };
-  }
-
-  const payload: unknown = await respuesta.json().catch(() => null);
-
-  if (!respuesta.ok) {
-    const error = (payload as ApiError | null)?.error;
-    if (respuesta.status === 401) descartarSesion();
-
-    throw new ApiClientError(
-      respuesta.status,
-      error?.code ?? 'unknown_error',
-      error?.message ?? 'No se pudo completar la operación.',
-      error?.details ?? [],
-    );
-  }
-
-  return payload as ApiResponse<TData, TMeta>;
+  const tipo = respuesta.headers.get('Content-Type') ?? '';
+  if (!tipo.includes('json')) return (await respuesta.blob()) as T;
+  return (await respuesta.json()) as T;
 }
 
 /**
@@ -107,35 +80,11 @@ export async function apiFetch<TData, TMeta = Record<string, unknown>>(
  * Quien llama se encarga de `URL.revokeObjectURL` cuando termina, o el blob se
  * queda en memoria hasta que se recargue la página.
  */
-export async function apiBlob(path: string, signal?: AbortSignal): Promise<Blob> {
-  if (tokenPorExpirar()) {
-    await renovar();
-  }
+export async function apiBlob(url: string, signal?: AbortSignal): Promise<Blob> {
+  const respuesta = await conSesion(url, signal === undefined ? {} : { signal });
 
-  let respuesta = await enviar(path, { signal });
-
-  if (respuesta.status === 401) {
-    const renovada = await renovar();
-    if (!renovada) {
-      descartarSesion();
-      throw new ApiClientError(401, 'unauthenticated', 'Tu sesión expiró. Vuelve a entrar.');
-    }
-    respuesta = await enviar(path, { signal });
-  }
-
-  if (!respuesta.ok) {
-    // El cuerpo de un error SÍ es JSON aunque la ruta devuelva binarios.
-    const payload: unknown = await respuesta.json().catch(() => null);
-    const error = (payload as ApiError | null)?.error;
-    if (respuesta.status === 401) descartarSesion();
-
-    throw new ApiClientError(
-      respuesta.status,
-      error?.code ?? 'unknown_error',
-      error?.message ?? 'No se pudo abrir el archivo.',
-      error?.details ?? [],
-    );
-  }
+  // El cuerpo de un error SÍ es JSON aunque la ruta devuelva binarios.
+  if (!respuesta.ok) throw await errorDe(respuesta, 'No se pudo abrir el archivo.');
 
   return respuesta.blob();
 }
@@ -143,30 +92,27 @@ export async function apiBlob(path: string, signal?: AbortSignal): Promise<Blob>
 /**
  * Sube archivos: `multipart/form-data` con el token de la sesión.
  *
- * ── Por qué no pasa por `apiFetch` ──────────────────────────────────────────
- * Porque `apiFetch` serializa el cuerpo a JSON y le pone su cabecera. Un
- * `FormData` hay que entregárselo al navegador TAL CUAL: es él quien inventa
- * la frontera entre las partes y la escribe en el `Content-Type`. Poner esa
+ * ── Por qué no pasa por `apiRequest` ────────────────────────────────────────
+ * Por el progreso. `fetch` todavía no sabe informar del progreso de una
+ * SUBIDA —lo que trae es para la descarga— y aquí hace falta: una foto de
+ * móvil tarda lo suyo, y una barra quieta es indistinguible de una aplicación
+ * colgada. Así que XMLHttpRequest, y es la única vez en toda la aplicación.
+ *
+ * El `FormData` se entrega al navegador TAL CUAL: es él quien inventa la
+ * frontera entre las partes y la escribe en el `Content-Type`. Poner esa
  * cabecera a mano —aunque sea la correcta— rompe la petición, porque la
  * frontera que se declara no es la que el cuerpo lleva dentro.
  */
 export async function apiSubir<TData>(
-  path: string,
+  url: string,
   datos: FormData,
   onProgreso?: (fraccion: number) => void,
 ): Promise<TData> {
   if (tokenPorExpirar()) await renovar();
 
-  /*
-    XMLHttpRequest y no `fetch`, y es la única vez en toda la aplicación.
-
-    `fetch` todavía no sabe informar del progreso de una SUBIDA —lo que trae es
-    para la descarga— y aquí hace falta: una foto de móvil tarda lo suyo, y una
-    barra quieta es indistinguible de una aplicación colgada.
-  */
   return new Promise<TData>((resolver, rechazar) => {
     const peticion = new XMLHttpRequest();
-    peticion.open('POST', `${BASE_URL}${path}`);
+    peticion.open('POST', `${API_ORIGIN}${url}`);
 
     const token = tokenActual();
     if (token) peticion.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -185,20 +131,12 @@ export async function apiSubir<TData>(
       })();
 
       if (peticion.status >= 200 && peticion.status < 300) {
-        resolver((cuerpo as ApiResponse<TData>).data);
+        resolver((cuerpo as { data: TData }).data);
         return;
       }
 
       if (peticion.status === 401) descartarSesion();
-      const error = (cuerpo as ApiError | null)?.error;
-      rechazar(
-        new ApiClientError(
-          peticion.status,
-          error?.code ?? 'unknown_error',
-          error?.message ?? 'No se pudo subir el archivo.',
-          error?.details ?? [],
-        ),
-      );
+      rechazar(errorDelCuerpo(peticion.status, cuerpo, 'No se pudo subir el archivo.'));
     };
 
     peticion.onerror = () =>
@@ -208,19 +146,44 @@ export async function apiSubir<TData>(
   });
 }
 
-function enviar(path: string, options: RequestOptions): Promise<Response> {
-  const { method = 'GET', body, idempotencyKey, signal } = options;
+/** Sale a la red con el token, renovándolo antes si hace falta y una vez tras un 401. */
+async function conSesion(url: string, init: RequestInit): Promise<Response> {
+  if (tokenPorExpirar()) await renovar();
+
+  let respuesta = await enviar(url, init);
+
+  if (respuesta.status === 401) {
+    const renovada = await renovar();
+    if (!renovada) {
+      descartarSesion();
+      throw new ApiClientError(401, 'unauthenticated', 'Tu sesión expiró. Vuelve a entrar.');
+    }
+    respuesta = await enviar(url, init);
+  }
+
+  return respuesta;
+}
+
+async function errorDe(respuesta: Response, porDefecto: string): Promise<ApiClientError> {
+  const cuerpo: unknown = await respuesta.json().catch(() => null);
+  if (respuesta.status === 401) descartarSesion();
+  return errorDelCuerpo(respuesta.status, cuerpo, porDefecto);
+}
+
+function errorDelCuerpo(status: number, cuerpo: unknown, porDefecto: string): ApiClientError {
+  const error = (cuerpo as ErrorResponse | null)?.error;
+  return new ApiClientError(
+    status,
+    error?.code ?? 'unknown_error',
+    error?.message ?? porDefecto,
+    error?.details ?? [],
+  );
+}
+
+function enviar(url: string, init: RequestInit): Promise<Response> {
+  const headers = new Headers(init.headers);
   const token = tokenActual();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const headers: Record<string, string> = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
-  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
-
-  return fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    ...(signal === undefined ? {} : { signal }),
-  });
+  return fetch(`${API_ORIGIN}${url}`, { ...init, headers });
 }

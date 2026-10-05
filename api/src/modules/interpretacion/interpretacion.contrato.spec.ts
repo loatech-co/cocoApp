@@ -2,19 +2,19 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * `CapturaRequest`, en `@coco/types`, es el espejo de `CaptureBodyDto`. Tienen
+ * `CapturaRequest`, en `frontend/src/shared/lib/native-contract.ts`, es el espejo de `CaptureBodyDto`. Tienen
  * que tener las MISMAS claves: el ValidationPipe lleva `forbidNonWhitelisted`,
  * así que un campo que el teléfono mande y el DTO no declare es un 400 —y la
  * cola lo marcaría como fallido para siempre—; y uno que el DTO acepte y el
  * contrato no publique es un campo que ningún cliente llega a usar.
  *
  * Se comprueba leyendo el código fuente de los dos lados, como hace
- * `soportes.contrato.spec.ts`: la API no importa valores de `@coco/types` en
+ * `soportes.contrato.spec.ts`: la API no importa valores de `frontend/src/shared/lib/native-contract.ts` en
  * tiempo de ejecución —son tipos— y un DTO con decoradores no se puede
  * recorrer por reflexión sin instanciarlo con datos.
  */
 describe('El contrato de captura', () => {
-  const tipos = readFileSync(join(__dirname, '../../../../packages/types/src/index.ts'), 'utf8');
+  const tipos = readFileSync(join(__dirname, '../../../../frontend/src/shared/lib/native-contract.ts'), 'utf8');
   const dto = readFileSync(join(__dirname, 'interpretacion.dto.ts'), 'utf8');
 
   /** El cuerpo entre llaves de la primera declaración que empiece así. */

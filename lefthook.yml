@@ -29,10 +29,7 @@ pre-commit:
     3_typecheck-web:
       glob: '{frontend/**/*.{ts,tsx},packages/**/*.ts}'
       run: npm run typecheck --workspace frontend
-    4_typecheck-types:
-      glob: 'packages/types/**/*.ts'
-      run: npm run typecheck --workspace @coco/types
-    5_typecheck-lectura:
+    4_typecheck-lectura:
       glob: 'packages/lectura/**/*.ts'
       run: npm run typecheck --workspace @coco/lectura
 

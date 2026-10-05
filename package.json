@@ -36,7 +36,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "knip": "knip",
-    "depcruise": "depcruise api/src frontend/src packages/types/src packages/lectura/src packages/flags/src --config .dependency-cruiser.cjs && node scripts/ci/table-ownership.mjs",
+    "depcruise": "depcruise api/src frontend/src packages/lectura/src packages/flags/src --config .dependency-cruiser.cjs && node scripts/ci/table-ownership.mjs",
     "prepare": "[ -n \"$CI\" ] || [ \"$NODE_ENV\" = production ] || lefthook install || true"
   },
   "devDependencies": {

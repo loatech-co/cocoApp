@@ -2,14 +2,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * El contrato de soportes que publica `@coco/types` tiene que decir lo mismo
+ * El contrato de soportes que publica `frontend/src/shared/lib/native-contract.ts` tiene que decir lo mismo
  * que hace la API. Se comprueba leyendo el código fuente de los dos lados: la
- * API no importa valores de `@coco/types` en tiempo de ejecución —son tipos—,
+ * API no importa valores de `frontend/src/shared/lib/native-contract.ts` en tiempo de ejecución —son tipos—,
  * así que esta es la única forma de que un cambio de límite aquí no deje al
  * cliente del teléfono con un contrato viejo.
  */
 describe('El contrato de soportes', () => {
-  const tipos = readFileSync(join(__dirname, '../../../../packages/types/src/index.ts'), 'utf8');
+  const tipos = readFileSync(join(__dirname, '../../../../frontend/src/shared/lib/native-contract.ts'), 'utf8');
   const controlador = readFileSync(join(__dirname, 'soportes.controller.ts'), 'utf8');
   const optimizacion = readFileSync(join(__dirname, 'soportes.optimizacion.ts'), 'utf8');
   const almacen = readFileSync(join(__dirname, 'soportes.almacen.ts'), 'utf8');
