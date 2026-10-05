@@ -21,7 +21,7 @@ import { ValidationError } from '../../common/errors/domain-error';
 import { toMoney } from '../../common/money/money';
 import { PrismaService } from '../../prisma/prisma.service';
 import { anidar } from '../categories/categories.tree';
-import { CategorizationService } from '../categorization/categorization.module';
+import { CategorizationService } from '../categorization/categorization.service';
 import { TransactionsService, type TransactionView } from '../transactions/transactions.service';
 
 /** La clasificación propuesta, con los ids como los entiende el resto de la API. */

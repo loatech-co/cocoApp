@@ -2,7 +2,7 @@ import { InterpretacionService } from './interpretacion.service';
 import * as motor from './interpretar';
 import { ValidationError } from '../../common/errors/domain-error';
 import type { PrismaService } from '../../prisma/prisma.service';
-import type { CategorizationService } from '../categorization/categorization.module';
+import type { CategorizationService } from '../categorization/categorization.service';
 import type { TransactionsService } from '../transactions/transactions.service';
 
 /**
