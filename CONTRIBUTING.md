@@ -487,7 +487,7 @@ frontend`), and the CI `verify` job fails under the thresholds in
 
 | Scope                    | Lines | Branches |
 | ------------------------ | ----- | -------- |
-| `frontend/src`           | 55 %  | 49 %     |
+| `frontend/src`           | 60 %  | 57 %     |
 | `frontend/src/shared/ui` | 98 %  | 96 %     |
 
 The plan's target for `frontend/src` is **70 %** of lines and branches. The
