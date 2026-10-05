@@ -53,3 +53,8 @@ export function movementRow(page: Page, concept: string, amount: string): Locato
 export function signOutButton(page: Page): Locator {
   return page.getByRole(onPhone() ? 'button' : 'menuitem', { name: 'Cerrar sesión' });
 }
+
+/** The "Acciones de …" menu of a centre or category: a sheet on the phone, a menu on the desktop. */
+export function actionsMenu(page: Page, of: string): Locator {
+  return page.getByRole(onPhone() ? 'dialog' : 'menu', { name: `Acciones de ${of}` });
+}
