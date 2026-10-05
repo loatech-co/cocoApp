@@ -4,13 +4,13 @@ import { act, cleanup, render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { olvidarAtajos } from '@/lib/atajos';
 import { fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
+import { olvidarAtajos } from '@/shared/lib/atajos';
+import { CONSULTA_MOVIL } from '@/shared/lib/movil';
 
 import { AppShell } from './app-shell';
-import { CONSULTA_MOVIL } from './movil';
 
-vi.mock('@/lib/auth-context', () => ({
+vi.mock('@/shared/api/auth-context', () => ({
   useAuth: () => ({
     usuario: { display_name: 'Gerardo', email: 'g@coco.app' },
     esAdmin: false,
@@ -18,7 +18,7 @@ vi.mock('@/lib/auth-context', () => ({
   }),
 }));
 
-vi.mock('@/lib/preferences', () => ({ useLlevaCuentas: () => true }));
+vi.mock('@/features/profile/api/preferences', () => ({ useLlevaCuentas: () => true }));
 
 /** jsdom no evalúa consultas de medios: se le dice la respuesta. */
 function alAncho(esMovil: boolean): void {

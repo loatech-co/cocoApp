@@ -1,0 +1,62 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { apiFetch, apiSubir } from '@/shared/api/api-client';
+import { keys } from '@/shared/api/query-keys';
+import { encogerSoportes } from '@/shared/lib/encoger-soporte';
+import type { Soporte } from '@coco/types';
+
+/**
+ * Los soportes de un movimiento: la FICHA de cada recibo, no el recibo.
+ *
+ * El binario se pide aparte y solo cuando alguien lo mira (`apiBlob`): traer
+ * ocho PDFs de doscientos kilos cada vez que se abre un movimiento sería pagar
+ * por adelantado por lo que casi nadie va a abrir.
+ */
+export function useSoportes(transactionId: number | undefined) {
+  return useQuery({
+    queryKey: keys.soportes(transactionId ?? 0),
+    enabled: transactionId !== undefined,
+    queryFn: async (): Promise<Soporte[]> =>
+      (await apiFetch<Soporte[]>(`/transactions/${transactionId}/soportes`)).data,
+  });
+}
+
+/** Sube soportes a un movimiento y devuelve la lista ya actualizada. */
+export function useSubirSoportes(transactionId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      archivos,
+      onProgreso,
+    }: {
+      archivos: File[];
+      onProgreso?: (fraccion: number) => void;
+    }): Promise<Soporte[]> => {
+      const datos = new FormData();
+      // Encogidas antes de viajar: una foto de teléfono son cuatro megas de
+      // los que el servidor se queda con 1100px de ancho. El porqué largo
+      // —incluido el HEIC del iPhone, que allá no se puede abrir— está en
+      // `lib/encoger-soporte.ts`.
+      for (const archivo of await encogerSoportes(archivos)) datos.append('archivos', archivo);
+      return apiSubir<Soporte[]>(`/transactions/${transactionId}/soportes`, datos, onProgreso);
+    },
+    // Se escribe la respuesta en la caché en vez de invalidarla: el servidor
+    // acaba de devolver la lista entera y volver a pedirla es un viaje para
+    // traer lo que ya está en la mano.
+    onSuccess: (lista) => queryClient.setQueryData(keys.soportes(transactionId), lista),
+  });
+}
+
+export function useEliminarSoporte(transactionId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (soporteId: number) => {
+      await apiFetch<unknown>(`/transactions/${transactionId}/soportes/${soporteId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.soportes(transactionId) }),
+  });
+}

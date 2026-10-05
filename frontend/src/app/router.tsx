@@ -1,15 +1,16 @@
 import { Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import { AppShell } from '@/app/app-shell';
-import { TITULO_DE_PAGINA } from '@/components/cabecera-de-pagina';
-import { AccountsPage } from '@/features/accounts/accounts-page';
-import { BitacoraPage } from '@/features/admin/bitacora-page';
-import { UsuariosPage } from '@/features/admin/usuarios-page';
-import { RegisterPage } from '@/features/auth/register-page';
-import { RequireAdmin, RequireAuth } from '@/features/auth/require-auth';
-import { CentrosPage } from '@/features/centros/centros-page';
-import { CuentaPage } from '@/features/cuenta/cuenta-page';
-import { DashboardPage } from '@/features/dashboard/dashboard-page';
+import { BitacoraPage } from '@/features/admin/pages/bitacora-page';
+import { UsuariosPage } from '@/features/admin/pages/usuarios-page';
+import { RequireAdmin, RequireAuth } from '@/features/auth/components/require-auth';
+import { RegisterPage } from '@/features/auth/pages/register-page';
+import { AccountsPage } from '@/features/bank-accounts/pages/accounts-page';
+import { CentrosPage } from '@/features/centros/pages/centros-page';
+import { CuentaPage } from '@/features/profile/pages/cuenta-page';
+import { DashboardPage } from '@/features/transactions/pages/dashboard-page';
+import { TITULO_DE_PAGINA } from '@/shared/ui/atoms/cabecera-de-pagina';
+
+import { AppShell } from './app-shell';
 
 /**
  * Rutas en español, una por módulo del catálogo.

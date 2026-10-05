@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import { Providers } from '@/app/providers';
 import { AppRouter } from '@/app/router';
-import { enLaApp } from '@/lib/puente-nativo';
+import { enLaApp } from '@/shared/lib/puente-nativo';
 import './index.css';
 
 // Tema inicial: se respeta la preferencia del sistema. Más adelante (T5) el

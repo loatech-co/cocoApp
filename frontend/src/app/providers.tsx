@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
-import { AuthProvider } from '@/lib/auth-context';
+import { AuthProvider } from '@/shared/api/auth-context';
 
 /**
  * TanStack Query gestiona el ESTADO SERVIDOR. Como en Coco todo se deriva de

@@ -2,23 +2,24 @@ import { Eye, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { useEnLaApp, useEsMovil } from '@/app/movil';
-import { useSuperficieDeAtajos } from '@/components/atajos';
-import { BarraInferior } from '@/components/barra-inferior';
-import { Logo, LogoCompacto } from '@/components/logo';
-import { EnlaceDeSeccion, MenuDeLaCuenta, useSecciones } from '@/components/navegacion';
-import { PanelDeBusqueda } from '@/components/panel-de-busqueda';
-import { PanelDeLaCuenta } from '@/components/panel-de-la-cuenta';
-import { PanelInferior } from '@/components/panel-inferior';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PilaDeAvisos } from '@/components/ui/aviso';
-import { Button } from '@/components/ui/button';
-import { MovimientoModal } from '@/features/transactions/movimiento-modal';
-import { useAlCambiar } from '@/lib/al-cambiar';
-import { useAuth } from '@/lib/auth-context';
-import { registrarPuente } from '@/lib/puente-nativo';
-import { cn } from '@/lib/utils';
+import { MovimientoModal } from '@/features/transactions/components/movimiento-modal';
+import { PanelDeBusqueda } from '@/features/transactions/components/panel-de-busqueda';
+import { useAuth } from '@/shared/api/auth-context';
+import { registrarPuente } from '@/shared/api/native-bridge';
+import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { useEnLaApp, useEsMovil } from '@/shared/lib/movil';
+import { cn } from '@/shared/lib/utils';
+import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
+import { Button } from '@/shared/ui/atoms/button';
+import { Logo, LogoCompacto } from '@/shared/ui/atoms/logo';
+import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
+import { PilaDeAvisos } from '@/shared/ui/molecules/aviso';
 import type { Transaction } from '@coco/types';
+
+import { useSuperficieDeAtajos } from './atajos';
+import { BarraInferior } from './barra-inferior';
+import { EnlaceDeSeccion, MenuDeLaCuenta, useSecciones } from './navegacion';
+import { PanelDeLaCuenta } from './panel-de-la-cuenta';
 
 /**
  * El armazón.
