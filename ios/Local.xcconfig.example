@@ -1,0 +1,14 @@
+// Copia este archivo como Local.xcconfig (está en .gitignore: no se versiona)
+// y pon tu Team ID. Lo ves en Xcode → Settings → Accounts → tu equipo, en la
+// columna de la derecha, o en Signing & Capabilities tras elegirlo.
+//
+// Los tres targets (Coco, CocoAccesos, CocoTests) lo heredan del proyecto.
+// Después de cambiarlo no hace falta regenerar: Xcode lee el xcconfig en
+// cada build. Sí hace falta regenerar (`xcodegen generate`) si se tocó
+// project.yml.
+DEVELOPMENT_TEAM = ABCDE12345
+
+// Solo si se firma a mano (perfil propio en vez de la cuenta gratuita):
+// CODE_SIGN_STYLE = Manual
+// CODE_SIGN_IDENTITY = Apple Development
+// PROVISIONING_PROFILE_SPECIFIER = Nombre del perfil

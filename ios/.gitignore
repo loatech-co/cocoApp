@@ -6,3 +6,5 @@ build/
 *.xcresult
 # Los Info.plist los genera xcodegen desde project.yml, pero SE VERSIONAN:
 # abrir el .xcodeproj no debe exigir tener xcodegen instalado.
+# La firma de cada quien (Team ID, perfil). Se copia de Local.xcconfig.example.
+Local.xcconfig

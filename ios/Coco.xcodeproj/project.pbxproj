@@ -225,6 +225,7 @@
 		C8BF6EDC9C01E1A6D7981DB6 /* Conectividad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conectividad.swift; sourceTree = "<group>"; };
 		CD91843A2BD9892229292326 /* ColaDeCapturas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColaDeCapturas.swift; sourceTree = "<group>"; };
 		D0A39ABB36ECEEF42E7E2A2E /* ReintentoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReintentoTests.swift; sourceTree = "<group>"; };
+		D58A78C4BAC8FB1DDC57D623 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		D808F73C2A3BD88B49276AFB /* AvisoDeVencimientoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvisoDeVencimientoTests.swift; sourceTree = "<group>"; };
 		DB42958BA3737E4586C3A6E7 /* SesionNativaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SesionNativaTests.swift; sourceTree = "<group>"; };
 		DB5F2602CD172362BCE614AA /* LectorDeReciboTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LectorDeReciboTests.swift; sourceTree = "<group>"; };
@@ -291,6 +292,7 @@
 				8D723F0B6727D5944C49D11D /* Coco */,
 				144B09F4BC82C35F0A475A09 /* CocoAccesos */,
 				8BECFDAD0CE5B9C46922B46C /* CocoTests */,
+				EBFE689410DE4DBF51234516 /* ios */,
 				450CE771A0D8CF43D825C8F1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -477,6 +479,15 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		EBFE689410DE4DBF51234516 /* ios */ = {
+			isa = PBXGroup;
+			children = (
+				D58A78C4BAC8FB1DDC57D623 /* Signing.xcconfig */,
+			);
+			name = ios;
+			path = .;
+			sourceTree = "<group>";
+		};
 		FDFACD8F205D2EF348536347 /* Sesion */ = {
 			isa = PBXGroup;
 			children = (
@@ -556,15 +567,12 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					8CF9A98BC12B06C8627E4E12 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					B588E7156C73FE1C437FB70B = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					D9403B14E6899A8C8965733D = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -760,6 +768,7 @@
 		};
 		19460309EB469192D39A7B6C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D58A78C4BAC8FB1DDC57D623 /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -792,11 +801,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COCO_API_BASE_URL = "https://dev-cocoapp.viteri.me";
-				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -828,6 +835,7 @@
 		};
 		48A300B256CF60E59D07B90A /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D58A78C4BAC8FB1DDC57D623 /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -860,11 +868,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COCO_API_BASE_URL = "https://dev-cocoapp.viteri.me";
-				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;

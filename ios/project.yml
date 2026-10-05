@@ -12,15 +12,20 @@ options:
     iOS: "17.0"
   xcodeVersion: "16.0"
   generateEmptyDirectories: true
+# La firma (equipo, estilo, identidad, perfil) NO va en `settings`: lo que
+# está aquí acaba escrito en el .xcodeproj y pisa cualquier xcconfig. Va en
+# Signing.xcconfig, que incluye de forma opcional un Local.xcconfig ignorado
+# por git con el Team ID de cada quien (ver Local.xcconfig.example). Así
+# regenerar no borra la firma, y sin ese archivo el simulador sigue
+# compilando.
+configFiles:
+  Debug: Signing.xcconfig
+  Release: Signing.xcconfig
 settings:
   base:
     # Xcode 27 trae Swift 6.4; el modo de lenguaje 5.10 evita que la
     # concurrencia estricta frene la fase. Se sube cuando todo esté acotado.
     SWIFT_VERSION: "5.10"
-    # El equipo lo pone cada quien en Xcode (Signing & Capabilities) al instalar
-    # en su teléfono con su cuenta gratuita. Vacío a propósito.
-    DEVELOPMENT_TEAM: ""
-    CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     # La API a la que habla la app; el Info.plist la lee de aquí. Se pisa

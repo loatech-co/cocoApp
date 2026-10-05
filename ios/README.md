@@ -119,9 +119,14 @@ dispositivo. macOS no trae `timeout`: para acotar la API en el tiempo sirve
 
 1. Xcode → Settings → Accounts → añadir el Apple ID (aparece como «Personal
    Team»).
-2. En Signing & Capabilities de los TRES targets (Coco, CocoAccesos,
-   CocoTests) elegir ese equipo. `DEVELOPMENT_TEAM` está vacío en
-   `project.yml` a propósito y no se versiona.
+2. `cp Local.xcconfig.example Local.xcconfig` y poner ahí tu Team ID (lo ves
+   en Xcode → Settings → Accounts → tu equipo). Si Xcode ya estaba abierto,
+   regenerar con `xcodegen generate` o cerrar y abrir el proyecto. Los tres
+   targets (Coco, CocoAccesos, CocoTests) lo heredan; no hace falta tocar
+   Signing & Capabilities. `Local.xcconfig` está en `.gitignore`: el equipo
+   no se versiona ni vive en `project.yml`, y por eso `xcodegen generate`
+   no lo borra. (Elegir el equipo a mano en Xcode también funciona, pero se
+   pierde con el siguiente `xcodegen generate`.)
 3. Conectar el iPhone con cable, confiar en el Mac, elegirlo como destino,
    Run.
 4. En el iPhone: Ajustes → General → VPN y gestión de dispositivos → confiar
