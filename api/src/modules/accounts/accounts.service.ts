@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import type { Account } from '@prisma/client';
 
 import { AccountsRepository } from './accounts.repository';
 import type { CreateAccountDto, UpdateAccountDto } from './dto/account.dto';
 import { BadRequestError, ConflictError, NotFoundError } from '../../common/errors/domain-error';
 import { calcularCupoDisponible, calcularSaldo } from '../../common/money/balance';
 import { serializar, toMoney } from '../../common/money/money';
+import type { Account } from '../../generated/prisma/client';
 
 /** Forma con la que una cuenta sale por la API. Montos como string decimal. */
 export interface AccountView {

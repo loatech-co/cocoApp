@@ -24,11 +24,11 @@
  */
 import js from '@eslint/js';
 import eslintReact from '@eslint-react/eslint-plugin';
+import { defineConfig, globalIgnores } from 'eslint/config';
 import prettier from 'eslint-config-prettier/flat';
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 import { importX } from 'eslint-plugin-import-x';
 import reactHooks from 'eslint-plugin-react-hooks';
-import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -41,6 +41,8 @@ export default defineConfig(
     'frontend/public/**',
     'api/prisma/migrations/**',
     'api/prisma/migraciones-mysql-archivadas/**',
+    // Prisma 7 client, written by `prisma generate` (ADR 0020).
+    'api/src/generated/**',
     'ios/**',
     // Operational one-off scripts: plain .mjs outside every tsconfig. Out of
     // the lint scope of the workspaces.
@@ -114,7 +116,12 @@ export default defineConfig(
   },
   {
     // Tools that load their config through a default export.
-    files: ['eslint.config.js', '*.config.{js,ts,mjs}', 'frontend/*.config.ts'],
+    files: [
+      'eslint.config.js',
+      '*.config.{js,ts,mjs}',
+      'frontend/*.config.ts',
+      'api/prisma.config.ts',
+    ],
     rules: { 'import-x/no-default-export': 'off' },
   },
 

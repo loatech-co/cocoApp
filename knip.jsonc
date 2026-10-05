@@ -8,11 +8,11 @@
       "entry": ["scripts/**/*.{mjs,mts}"],
       "project": ["scripts/**/*.{mjs,mts}"],
       // Scripts run from the repo root and use the workspaces' hoisted
-      // dependencies (Prisma client, pg, pdf.js) on purpose: they operate on
+      // dependencies (the Prisma adapter, pg, pdf.js) on purpose: they operate on
       // the same database and files as the app, with the same versions.
       // `tsx` runs scripts/soportes/piloto.mts (`npx tsx …`), which knip
       // cannot see because the command lives in the script's own header.
-      "ignoreDependencies": ["@prisma/client", "pg", "pdfjs-dist", "tsx"],
+      "ignoreDependencies": ["@prisma/adapter-pg", "pg", "pdfjs-dist", "tsx"],
     },
     "api": {
       "entry": ["src/main.ts", "test/**/*.e2e-spec.ts"],

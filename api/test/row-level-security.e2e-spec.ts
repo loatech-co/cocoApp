@@ -1,7 +1,6 @@
-import type { PrismaClient } from '@prisma/client';
-
 import { makeAccount, makeConcept, makeTransaction } from './factories';
 import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import type { PrismaClient } from '../src/generated/prisma/client';
 import { AutoChargeTask } from '../src/modules/dashboard/auto-charge.task';
 import { Database, type UserTx } from '../src/prisma/database';
 import { PrismaService } from '../src/prisma/prisma.service';

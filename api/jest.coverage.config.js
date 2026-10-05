@@ -31,7 +31,8 @@ module.exports = {
       transformIgnorePatterns: ['/node_modules/(?!jose)'],
     },
   ],
-  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.spec.ts', '!src/main.ts'],
+  // `src/generated` is the Prisma 7 client, written by `prisma generate`.
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.spec.ts', '!src/main.ts', '!src/generated/**'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text-summary', 'json-summary'],
   coverageThreshold: {

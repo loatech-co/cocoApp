@@ -1,5 +1,3 @@
-import { Prisma } from '@prisma/client';
-
 import {
   arbolDe,
   desglose,
@@ -8,6 +6,7 @@ import {
   tendencia,
 } from './dashboard.summary';
 import { serializar } from '../../common/money/money';
+import { Prisma } from '../../generated/prisma/client';
 import type { SummaryCategory } from '../categories/category-lookup.service';
 import type { SummaryMovement } from '../transactions/ledger.service';
 

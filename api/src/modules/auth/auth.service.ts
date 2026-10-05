@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { User } from '@prisma/client';
 
 import { PasswordService } from './password.service';
 import { SupabaseAuthService } from './supabase-auth.service';
 import { UsersRepository } from './users.repository';
 import { AuditService } from '../../common/audit/audit.service';
 import { AuthenticationError, ForbiddenError } from '../../common/errors/domain-error';
+import type { User } from '../../generated/prisma/client';
 import { CategoriesService } from '../categories/categories.service';
 
 export interface ContextoDePeticion {

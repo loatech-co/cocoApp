@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
+
+import { PrismaClient } from '../generated/prisma/client';
 
 /**
  * Único punto de acceso a la base de datos.

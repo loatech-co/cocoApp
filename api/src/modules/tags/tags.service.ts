@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { Tag } from '@prisma/client';
 
 import type { UpsertTagDto } from './tags.dto';
 import { TagsRepository } from './tags.repository';
 import { NotFoundError } from '../../common/errors/domain-error';
+import type { Tag } from '../../generated/prisma/client';
 
 export interface TagView {
   id: bigint;

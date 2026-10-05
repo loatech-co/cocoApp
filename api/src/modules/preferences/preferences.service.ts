@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
 
 import { CUENTAS_HABILITADAS, combinarConDefectos, type Preferencias } from './preferences';
 import type { UpdatePreferencesDto } from './preferences.dto';
 import { PreferencesRepository } from './preferences.repository';
+import type { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
 export class PreferencesService {

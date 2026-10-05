@@ -1,6 +1,7 @@
-import { TransactionSource } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsISO8601, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+
+import { TransactionSource } from '../../generated/prisma/client';
 
 /**
  * Lo que se le da a interpretar: texto libre, o datos ya estructurados.

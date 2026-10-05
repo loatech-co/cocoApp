@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { UserRole } from '@prisma/client';
 
 import type { ListUsersQueryDto } from './admin.dto';
 import { AuditService } from '../../common/audit/audit.service';
 import { BadRequestError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
+import type { UserRole } from '../../generated/prisma/client';
 import { aPerfilPublico, AuthService, type PerfilPublico } from '../auth/auth.service';
 import { PasswordService } from '../auth/password.service';
 import { SupabaseAuthService } from '../auth/supabase-auth.service';

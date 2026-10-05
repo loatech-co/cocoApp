@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, User, UserStatus } from '@prisma/client';
 
+import type { Prisma, User, UserStatus } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /** What the auth guard reads on every request: identity, role and status. */

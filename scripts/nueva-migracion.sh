@@ -32,14 +32,20 @@ fi
 
 cd "$(dirname "$0")/../api"
 
-SHADOW=$(grep '^SHADOW_DATABASE_URL=' .env.migrate | cut -d'=' -f2- | tr -d '"')
 SQL=$(mktemp)
 trap 'rm -f "$SQL"' EXIT
 
+# Prisma 7: la base desechable ya no va por flag (`--shadow-database-url`):
+# `prisma.config.ts` la toma de SHADOW_DATABASE_URL, que trae .env.migrate.
+# Y `--to-schema-datamodel` pasó a llamarse `--to-schema`.
+grep -q '^SHADOW_DATABASE_URL=' .env.migrate || {
+  echo "Falta SHADOW_DATABASE_URL en api/.env.migrate (ver .env.migrate.example)." >&2
+  exit 1
+}
+
 npx dotenv -e .env.migrate -- npx prisma migrate diff \
   --from-migrations ./prisma/migrations \
-  --to-schema-datamodel ./prisma/schema.prisma \
-  --shadow-database-url "$SHADOW" \
+  --to-schema ./prisma/schema.prisma \
   --script > "$SQL"
 
 if ! grep -qE '^(CREATE|ALTER|DROP|INSERT|UPDATE)' "$SQL"; then

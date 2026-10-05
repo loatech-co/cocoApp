@@ -25,7 +25,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { PrismaClient } from '@prisma/client';
+import { createPrisma } from './db/prisma-client.mjs';
 
 const MESES = {
   enero: 1,
@@ -88,7 +88,7 @@ function partir(linea) {
   return campos.map((c) => c.trim());
 }
 
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 
 try {
   const usuario = await prisma.user.findFirst({

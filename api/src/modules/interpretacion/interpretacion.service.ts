@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { TransactionSource } from '@prisma/client';
 
 import type { NodoBuscable } from '@coco/lectura';
 
@@ -30,6 +29,7 @@ import {
 import { anidar } from '../../common/categories/categories.tree';
 import { DuplicateError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { toMoney } from '../../common/money/money';
+import type { TransactionSource } from '../../generated/prisma/client';
 import { CategoryLookupService } from '../categories/category-lookup.service';
 import { CategorizationService } from '../categorization/categorization.service';
 import { LedgerService } from '../transactions/ledger.service';

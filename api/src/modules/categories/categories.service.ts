@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { Category, CategoryKind, Periodicidad } from '@prisma/client';
 
 import { CategoriesRepository } from './categories.repository';
 import type {
@@ -17,6 +16,7 @@ import {
   type ConHijos,
 } from '../../common/categories/categories.tree';
 import { ConflictError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
+import type { Category, CategoryKind, Periodicidad } from '../../generated/prisma/client';
 
 export interface CategoryView {
   id: bigint;

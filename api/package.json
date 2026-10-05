@@ -23,6 +23,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "db:test:push": "dotenv -e .env.test -- prisma migrate deploy",
     "prebuild": "prisma generate",
+    "postinstall": "prisma generate",
     "migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
@@ -34,7 +35,7 @@
     "@nestjs/serve-static": "^5.0.5",
     "@nestjs/throttler": "^6.4.0",
     "@prisma/adapter-pg": "^7.10.0",
-    "@prisma/client": "^6.0.0",
+    "@prisma/client": "^7.10.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.0",
@@ -45,7 +46,7 @@
     "helmet": "^8.0.0",
     "jose": "^6.2.12",
     "pg": "^8.23.0",
-    "prisma": "^6.0.0",
+    "prisma": "^7.10.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "sharp": "^0.35.4",

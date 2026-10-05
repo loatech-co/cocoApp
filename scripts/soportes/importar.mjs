@@ -3,7 +3,7 @@
 // Mete los soportes escaneados en el almacén privado y los ata a su movimiento.
 //
 // Uso:
-//   node scripts/soportes/importar.mjs "<carpeta>" --correo hello@viteri.me [opciones]
+//   npx tsx scripts/soportes/importar.mjs "<carpeta>" --correo hello@viteri.me [opciones]
 //
 //   --ensayo         no escribe nada: dice qué haría
 //   --limite N       solo los primeros N movimientos (el lote de prueba)
@@ -29,7 +29,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
-import { PrismaClient } from '@prisma/client';
+import { createPrisma } from '../db/prisma-client.mjs';
 
 import { DEFAULT_CSV } from '../data-dir.mjs';
 import { emparejar, leerArchivos, leerCsv, TIPOS } from './emparejar.mjs';
@@ -49,7 +49,7 @@ const almacen = resolve(bandera('--almacen') ?? 'api/.soportes');
 
 if (!raiz) {
   console.error(
-    'Uso: node scripts/soportes/importar.mjs "<carpeta>" --correo <correo> [--ensayo] [--limite N]',
+    'Uso: npx tsx scripts/soportes/importar.mjs "<carpeta>" --correo <correo> [--ensayo] [--limite N]',
   );
   process.exit(1);
 }
@@ -63,7 +63,7 @@ if (!raiz) {
 const claveNueva = (userId, ext) => `${userId}/${randomUUID()}.${ext.toLowerCase()}`;
 const huellaDe = (contenido) => createHash('sha256').update(contenido).digest('hex');
 
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 
 try {
   const usuario = await prisma.user.findFirst({

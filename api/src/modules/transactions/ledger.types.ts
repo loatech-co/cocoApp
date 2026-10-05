@@ -1,6 +1,5 @@
-import type { Prisma, TransactionSource, TransactionType } from '@prisma/client';
-
 import type { Money } from '../../common/money/money';
+import type { Prisma, TransactionSource, TransactionType } from '../../generated/prisma/client';
 
 /** A movement that might be the other side of the same payment. */
 export interface DuplicateCandidateRow {

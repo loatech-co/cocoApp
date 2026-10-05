@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { PrismaService } from './prisma.service';
+import type { Prisma } from '../generated/prisma/client';
 
 /** The client a unit of work gets: every query on it runs as that user. */
 export type UserTx = Prisma.TransactionClient;

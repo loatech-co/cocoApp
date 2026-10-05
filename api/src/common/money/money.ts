@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 
 /**
  * Todo monto del sistema. Es `Prisma.Decimal` (decimal.js por dentro), nunca

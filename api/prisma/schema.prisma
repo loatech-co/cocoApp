@@ -21,22 +21,25 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
-  provider        = "prisma-client-js"
-  // `driverAdapters` hace que Prisma hable con Postgres a través de un cliente
-  // de JavaScript (`pg`) en vez de su propio motor en Rust.
+  // Prisma 7: el generador `prisma-client` escribe el cliente en TypeScript
+  // dentro de `src/generated/prisma` (no en node_modules), así que `nest build`
+  // lo compila con el resto y viaja dentro de `dist/`. `cjs` porque la API de
+  // Nest es CommonJS (ADR 0020).
   //
-  // No es una optimización: el motor Rust entraba en pánico con
+  // Sin motor en Rust: Prisma habla con Postgres por el adaptador `pg`. No es
+  // una optimización: el motor Rust entraba en pánico con
   // "PANIC: timer has gone away" cada vez que la plataforma suspendía el
   // proceso por inactividad, se llevaba el proceso por delante y dejaba el
   // sitio en 503 hasta un reinicio. Sin motor Rust no hay hilo de
   // temporizadores que se pueda morir.
-  previewFeatures = ["driverAdapters"]
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
+// Las URLs viven en `api/prisma.config.ts` desde Prisma 7.
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 // ── Enums (espejo de las columnas ENUM) ──────────────────────────────────────

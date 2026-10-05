@@ -1,6 +1,5 @@
-import type { Periodicidad } from '@prisma/client';
-
 import { CERO, type Money } from '../../common/money/money';
+import type { Periodicidad } from '../../generated/prisma/client';
 
 /** Cada cuántos meses vuelve cada periodicidad. */
 const MESES_ENTRE_PAGOS: Record<Periodicidad, number> = {

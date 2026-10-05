@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { Transaction, TransactionType } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
 import type {
@@ -18,6 +17,7 @@ import { parsePaginacion } from './transactions.sort';
 import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { serializar, toMoney, type Money } from '../../common/money/money';
 import { verificarCuadreDeSplits } from '../../common/money/splits';
+import type { Transaction, TransactionType } from '../../generated/prisma/client';
 import { SoportesService } from '../soportes/soportes.service';
 import { TagsService } from '../tags/tags.service';
 

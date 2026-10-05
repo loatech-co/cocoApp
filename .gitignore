@@ -36,7 +36,8 @@ build/
 *.tsbuildinfo
 
 # Prisma: las migraciones SÍ se versionan; el cliente generado no
-node_modules/.prisma/
+# (Prisma 7 lo escribe en api/src/generated; `prisma generate` lo rehace)
+api/src/generated/
 api/prisma/*.db
 api/prisma/*.db-journal
 

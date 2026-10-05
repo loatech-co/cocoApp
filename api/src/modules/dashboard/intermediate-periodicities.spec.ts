@@ -1,6 +1,5 @@
-import type { Periodicidad } from '@prisma/client';
-
 import { tocaEnElMes, vencimiento } from './pendientes';
+import type { Periodicidad } from '../../generated/prisma/client';
 
 /*
   Phase 6.2: bimestral, trimestral and semestral had never been used in

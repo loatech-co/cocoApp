@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, Soporte } from '@prisma/client';
 
+import type { Prisma, Soporte } from '../../generated/prisma/client';
 import { Database } from '../../prisma/database';
 
 /** What an upload needs to know about the movement it attaches to. */
