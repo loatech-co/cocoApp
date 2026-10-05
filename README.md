@@ -365,10 +365,26 @@ Para levantarlo a mano: `touch <approot>/tmp/restart.txt`.
 
 ### Comprobar un despliegue
 
-`/api/v1/health` responde **401 antes de tocar la base**, así que no prueba nada
-sobre la conexión. Para saber si la base responde hay que usar el login, que sí
-consulta `users`: un 401 con mensaje de credenciales significa que la consulta
-se ejecutó; un 500 o un 503, que no.
+Dos sondeos públicos, los dos en la **v2**: `/api/v2/health` dice que el
+proceso responde y `/api/v2/ready`, que además la base contesta (200) o no
+(503). Es lo que comprueba `scripts/desplegar-api.sh` al terminar.
+
+Ningún sondeo, monitor ni comprobación apunta a la v1: cada petición a
+`/api/v1` deja una línea `v1_used` en el log, y un sondeo contado como cliente
+impediría llegar a los siete días sin usos que hacen falta para contraerla.
+
+### Usos de la v1
+
+`node scripts/ops/v1-usage.mjs` cuenta las líneas `v1_used` de
+`~/domains/dev-cocoapp.viteri.me/logs/coco-api/api.log` y sus rotados, por día y
+por ruta, y dice cuántos días lleva la v1 sin usos y desde cuándo hay log (la
+rotación guarda unos 30 MB: si no cubre siete días, lo avisa). Es la evidencia
+para contraer la v1.
+
+Abre **una sola** conexión ssh de solo lectura (`BatchMode`, con tope de
+tiempo) y allá corre un único `awk`, por el tope de procesos de la cuenta. Con
+`--file api.log …` lee archivos locales; con `--json` da la salida para
+máquinas.
 
 ### Volver atrás
 
