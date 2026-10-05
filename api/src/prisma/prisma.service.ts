@@ -13,7 +13,9 @@ import { PrismaClient } from '@prisma/client';
  * mantiene bajo (5–10): se sale por el pooler de Supabase, y abrir más
  * conexiones de las que el plan permite las hace fallar sin aviso.
  *
- * Ningún service ni controller instancia PrismaClient por su cuenta.
+ * Ningún service ni controller instancia PrismaClient por su cuenta, y desde
+ * el paso 7.4 tampoco lo inyectan: solo los repositorios (`*.repository.ts`)
+ * hablan con la base.
  */
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -34,22 +36,5 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
     this.logger.log('Desconectado de la base de datos');
-  }
-
-  /**
-   * Ping para el healthcheck: confirma que el proceso puede hablar con la base.
-   * Distingue "la API está viva" de "la API está viva Y ve la base".
-   */
-  async isDatabaseReachable(): Promise<boolean> {
-    try {
-      await this.$queryRaw`SELECT 1`;
-      return true;
-    } catch (error) {
-      this.logger.error(
-        'La base de datos no responde',
-        error instanceof Error ? error.stack : String(error),
-      );
-      return false;
-    }
   }
 }

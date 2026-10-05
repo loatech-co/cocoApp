@@ -1,13 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 
+import { HealthService, type HealthPayload } from './health.service';
 import { Public } from '../../common/decorators/public.decorator';
-import { ServiceUnavailableError } from '../../common/errors/domain-error';
-import { PrismaService } from '../../prisma/prisma.service';
-
-interface HealthPayload {
-  status: 'ok';
-  db: 'ok';
-}
 
 /**
  * Public health check: the process answers and reaches the database.
@@ -23,16 +17,11 @@ interface HealthPayload {
  */
 @Controller('health')
 export class HealthController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly health: HealthService) {}
 
   @Public()
   @Get()
-  async check(): Promise<HealthPayload> {
-    const reachable = await this.prisma.isDatabaseReachable();
-    if (!reachable) {
-      throw new ServiceUnavailableError('La base de datos no responde.');
-    }
-
-    return { status: 'ok', db: 'ok' };
+  check(): Promise<HealthPayload> {
+    return this.health.check();
   }
 }
