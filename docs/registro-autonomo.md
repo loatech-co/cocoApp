@@ -460,6 +460,25 @@ medir. Orden después de la fase 5: diagnóstico de tokens → Parte 1
 (`docs/verificacion-fases-0-5.md`) → **parada** con el informe de la Parte 1 y
 la instalación en el iPhone → fase 6 → fase 7.
 
+**Diseño cerrado (panel terminado antes de medianoche; retomado 5 oct).** Las tres
+propuestas, los dos veredictos y la síntesis quedaron guardados aparte; lo que
+manda está en esta tabla. Ganó «la cola primero» en los dos jueces, con injertos
+de las otras dos. **Costo del panel para el diagnóstico de tokens:** 6 agentes
+(3 propuestas ≈ 820–950 KB de transcripción cada una, 2 jueces, 1 síntesis),
+cada uno releyendo el mismo repo. Es el tipo de operación que el plan manda
+medir y no repetir.
+
+| # | Decisión | Motivo |
+|---|---|---|
+| F5-1 | **Sesión única por PUENTE, no por cookie ni por pase:** la web embebida no tiene refresh token; cuando necesita sesión llama a `window.webkit.messageHandlers.cocoSesion.postMessage({tipo:'pedirSesion'})` (`WKScriptMessageHandlerWithReply`) y la app contesta `{access_token, expires_in, user}` desde su actor de sesión (único rotador, *single-flight*). Nada en la URL, ninguna cookie, ningún endpoint ni variable nueva | Supabase rota el refresh y detecta reusos: dos rotadores sobre una familia la matan. El «pase» (generate_link+verify, pico de 15:36) funciona pero crea una SEGUNDA familia (dos logouts, huérfana sin red), exige un endpoint público nuevo y `JWT_SECRET` (que llega con comillas) y pasa por el candado `/admin/`. El plan pide UNA sesión sobre la API de la fase 4: el puente lo cumple con cero cambios en auth y preserva lo que httpOnly protege (en el webview no existe ninguna credencial de larga vida) |
+| F5-2 | La web detecta que corre en la app por DOS señales: `User-Agent` con `USER_AGENT_APP` (`CocoiOS/`, en `@coco/types`) **y** la existencia del puente | Un UA se finge; el puente no. Embebida no monta techo, barra inferior, atajos ni hoja de la cuenta (la navegación es nativa); sí la búsqueda y la ficha. Se redefine el token `--hueco-de-la-barra` bajo `html[data-embebido='si']` en vez de una variante de Tailwind (los jueces: una `@custom-variant` compite a igual especificidad con `movil:`) |
+| F5-3 | Si la web pierde la sesión, la app la empuja (`window.__coco.recibirSesion`) con cerrojo de una entrega por 30 s; un fallo de red del puente **nunca** borra el llavero; solo `cambiarContrasena` y `salirDeTodosLosDispositivos` avisan `sesionCerrada` | Fallo grave que señalaron los jueces en una propuesta: `limpiarSesion()` avisando a la app tiraba el llavero por un corte de red |
+| F5-4 | Margen de renovación asimétrico: la web renueva a 60 s de expirar (como hoy), la app a 120 s | Con los dos a 60 s la web recibía un token con ≈60 s y entraba en el bucle de 5 s de `programarRenovacion()` |
+| F5-5 | **Único cambio en la API:** `CaptureBodyDto` gana `category_id?` y `nota?` (opcionales, sin esquema); con `category_id` + `monto` no hace falta texto; lo elegido manda sobre lo propuesto; concepto → certeza alta, categoría → media + `por_revisar`, centro/ajeno/archivado → 422 | La cola del teléfono necesita UN solo endpoint idempotente (200, `repetido`, `resumen`) para todo; `POST /transactions` obligaría a tratar el 409 como éxito y partiría la cola. **La API se despliega ANTES que la app**: `forbidNonWhitelisted` daría 400 a una app nueva contra una API vieja. Pendiente de confirmar con el dueño: aceptar categoría (profundidad 2) igual que el buscador web, o solo conceptos |
+| F5-6 | Tres targets: `Coco` (app), `CocoAccesos` (WidgetKit: `ControlWidget` iOS 18 + widget iOS 17; solo abre la app por `coco://`), `CocoTests`. Sin entitlements (sin App Groups, Push ni Keychain Sharing) | Equipo personal gratuito: 10 App IDs/semana (se usan 3), sin APNs; si Xcode no firmara la extensión, se quita el target y queda el botón de acción por App Shortcut |
+| F5-7 | Cola *offline-first*: toda captura se persiste en disco con `external_ref` UUID antes de tocar la red; reintentos con espera creciente; 429 es reintentable; una foto se sube como soporte después del texto y la misma subida repetida no duplica (huella por transacción) | Es el principio ordenador de la propuesta ganadora |
+| F5-8 | Sin dependencias externas (SPM/Pods) | El plan lo pide; nada de lo necesario lo exige |
+
 #### Decisiones de la fase 3
 
 | # | Decisión | Motivo |
