@@ -44,7 +44,7 @@ enum FormPrefill {
             let c = i.clasificacion
             switch c.certeza {
             case "alta":
-                if let id = c.concepto_id ?? c.categoria_id {
+                if let id = c.conceptId ?? c.categoryId {
                     salida.conceptoId = id
                     sugerido = true
                 }

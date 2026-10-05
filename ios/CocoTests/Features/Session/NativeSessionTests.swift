@@ -13,8 +13,8 @@ final class NativeSessionTests: XCTestCase {
             #"{"data":{"access_token":"\#(access)","expires_in":\#(expiresIn),"user":\#(userJSON)\#(refreshParte)},"meta":{}}"#
     }
     private static let perfil = PublicProfile(
-        id: 7, email: "ana@coco.co", display_name: nil, role: "owner", status: "active",
-        created_at: "2026-01-01T00:00:00Z")
+        id: 7, email: "ana@coco.co", displayName: nil, role: "owner", status: "active",
+        createdAt: "2026-01-01T00:00:00Z")
 
     /// Un reloj que las pruebas mueven a mano.
     private final class TestClock: @unchecked Sendable {

@@ -57,8 +57,8 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
     var request: CaptureRequest {
         CaptureRequest(
             source: origen,
-            external_ref: id.uuidString,
-            captured_at: creadaEn.formatted(.iso8601),
+            externalRef: id.uuidString,
+            capturedAt: creadaEn.formatted(.iso8601),
             cuerpo: cuerpo
         )
     }

@@ -15,12 +15,12 @@ final class ContractsTests: XCTestCase {
              "meta":{}}
             """
         let s = try decodificar(SessionResponse.self, json)
-        XCTAssertEqual(s.access_token, "eyJ.abc")
-        XCTAssertEqual(s.expires_in, 3600)
-        XCTAssertEqual(s.refresh_token, "r1")
+        XCTAssertEqual(s.accessToken, "eyJ.abc")
+        XCTAssertEqual(s.expiresIn, 3600)
+        XCTAssertEqual(s.refreshToken, "r1")
         XCTAssertEqual(s.user.id, 1)
-        XCTAssertNil(s.user.display_name)
-        XCTAssertEqual(s.user.created_at, "2026-01-01T00:00:00.000Z")
+        XCTAssertNil(s.user.displayName)
+        XCTAssertEqual(s.user.createdAt, "2026-01-01T00:00:00.000Z")
     }
 
     func testLoginWebNoTraeRefreshYNoRompe() throws {
@@ -28,7 +28,7 @@ final class ContractsTests: XCTestCase {
             {"data":{"access_token":"a","expires_in":900,
               "user":{"id":1,"email":"g@x.co","display_name":"G","role":"owner","status":"active","created_at":"2026-01-01T00:00:00.000Z"}}}
             """
-        XCTAssertNil(try decodificar(SessionResponse.self, json).refresh_token)
+        XCTAssertNil(try decodificar(SessionResponse.self, json).refreshToken)
     }
 
     func testCaptura() throws {
@@ -42,7 +42,7 @@ final class ContractsTests: XCTestCase {
         let c = try decodificar(CaptureResponse.self, json)
         XCTAssertEqual(c.transaction.id, 42)
         XCTAssertEqual(c.transaction.source, "ios_manual")
-        XCTAssertEqual(c.clasificacion.concepto_id, 7)
+        XCTAssertEqual(c.clasificacion.conceptId, 7)
         XCTAssertEqual(c.resumen, "Registrado: $45.000 · Mercado")
     }
 
@@ -57,7 +57,7 @@ final class ContractsTests: XCTestCase {
         XCTAssertEqual(i.amount, "12000")
         XCTAssertNil(i.date)
         XCTAssertEqual(i.clasificacion.candidatos.first?.ruta, "Transporte › Taxi")
-        XCTAssertTrue(i.por_revisar)
+        XCTAssertTrue(i.needsReview)
     }
 
     func testArbolConHijosYClaveOpcionalAusente() throws {
@@ -66,8 +66,8 @@ final class ContractsTests: XCTestCase {
               "children":[{"id":2,"name":"Aseo","parent_id":1,"palabras_clave":["jabón"],"is_archived":false,"estatico":false,"children":null}]}]}
             """
         let raices = try decodificar([TreeNode].self, json)
-        XCTAssertEqual(raices.first?.palabras_clave, [])
-        XCTAssertEqual(raices.first?.children?.first?.palabras_clave, ["jabón"])
+        XCTAssertEqual(raices.first?.keywords, [])
+        XCTAssertEqual(raices.first?.children?.first?.keywords, ["jabón"])
     }
 
     func testErrorDeLaAPI() throws {
@@ -79,8 +79,8 @@ final class ContractsTests: XCTestCase {
 
     func testCapturaRequestSeAplanaYCategoryIdVaComoCadena() throws {
         let r = CaptureRequest(
-            source: .iosManual, external_ref: "E1", captured_at: "2026-10-03T20:00:00Z",
-            cuerpo: CaptureBody(monto: "45000", category_id: 7, nota: "ok"))
+            source: .iosManual, externalRef: "E1", capturedAt: "2026-10-03T20:00:00Z",
+            cuerpo: CaptureBody(monto: "45000", categoryId: 7, nota: "ok"))
         let datos = try JSONEncoder().encode(r)
         let objeto = try XCTUnwrap(JSONSerialization.jsonObject(with: datos) as? [String: Any])
         XCTAssertEqual(objeto["source"] as? String, "ios_manual")
@@ -96,7 +96,7 @@ final class ContractsTests: XCTestCase {
         XCTAssertFalse(CaptureBody(monto: "1").esEnviable)
         XCTAssertTrue(CaptureBody(texto: "PAGO").esEnviable)
         XCTAssertTrue(CaptureBody(comercio: "Koba").esEnviable)
-        XCTAssertTrue(CaptureBody(monto: "1", category_id: 2).esEnviable)
+        XCTAssertTrue(CaptureBody(monto: "1", categoryId: 2).esEnviable)
     }
 
     /// Lee packages/types/src/index.ts y falla si la marca se separa.

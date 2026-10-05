@@ -60,7 +60,7 @@ final actor NativeSession: Session {
         let datos = try await api.enviarCrudo(
             RequestBuilder.login(correo: correo, contrasena: contrasena), token: nil)
         let (respuesta, userJSON) = try Self.leerSesion(datos)
-        guard let refresh = respuesta.refresh_token else { throw APIError.respuestaIlegible }
+        guard let refresh = respuesta.refreshToken else { throw APIError.respuestaIlegible }
         try llavero.escribir(refresh, en: .refreshToken)
         publicar(tokens: Self.tokens(de: respuesta, userJSON: userJSON, ahora: reloj()))
         return respuesta.user
@@ -134,7 +134,7 @@ final actor NativeSession: Session {
                 let (respuesta, userJSON) = try Self.leerSesion(datos)
                 // Si por lo que sea no vino refresh, el anterior sigue siendo
                 // el último conocido: no se pisa con nada.
-                if let nuevo = respuesta.refresh_token {
+                if let nuevo = respuesta.refreshToken {
                     try llavero.escribir(nuevo, en: .refreshToken)
                 }
                 let tokens = Self.tokens(de: respuesta, userJSON: userJSON, ahora: reloj())
@@ -179,7 +179,7 @@ final actor NativeSession: Session {
 
     private static func tokens(de r: SessionResponse, userJSON: Data, ahora: Date) -> TokenPair {
         TokenPair(
-            access: r.access_token, expiraEn: ahora.addingTimeInterval(TimeInterval(r.expires_in)), userJSON: userJSON,
+            access: r.accessToken, expiraEn: ahora.addingTimeInterval(TimeInterval(r.expiresIn)), userJSON: userJSON,
             perfil: r.user)
     }
 

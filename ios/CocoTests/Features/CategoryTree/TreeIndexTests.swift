@@ -7,33 +7,33 @@ import XCTest
 final class TreeIndexTests: XCTestCase {
     private static let arbol: [TreeNode] = [
         TreeNode(
-            id: 1, name: "Costos fijos", parent_id: nil, estatico: true,
+            id: 1, name: "Costos fijos", parentId: nil, estatico: true,
             children: [
                 TreeNode(
-                    id: 10, name: "Servicios públicos", parent_id: 1,
+                    id: 10, name: "Servicios públicos", parentId: 1,
                     children: [
                         TreeNode(
-                            id: 100, name: "Celsia (Energía)", parent_id: 10, palabras_clave: ["celsia", "epsa"]),
+                            id: 100, name: "Celsia (Energía)", parentId: 10, keywords: ["celsia", "epsa"]),
                         TreeNode(
-                            id: 101, name: "Aquaoccidente (Agua)", parent_id: 10, palabras_clave: ["acueducto"]),
+                            id: 101, name: "Aquaoccidente (Agua)", parentId: 10, keywords: ["acueducto"]),
                     ]),
                 TreeNode(
-                    id: 11, name: "Educación", parent_id: 1,
+                    id: 11, name: "Educación", parentId: 1,
                     children: [
-                        TreeNode(id: 110, name: "Colegio Tuti", parent_id: 11)
+                        TreeNode(id: 110, name: "Colegio Tuti", parentId: 11)
                     ]),
             ]),
         TreeNode(
-            id: 2, name: "Costos variables", parent_id: nil,
+            id: 2, name: "Costos variables", parentId: nil,
             children: [
                 TreeNode(
-                    id: 20, name: "Alimentación", parent_id: 2,
+                    id: 20, name: "Alimentación", parentId: 2,
                     children: [
                         TreeNode(
-                            id: 200, name: "Mercado", parent_id: 20, palabras_clave: ["D1", "Koba Colombia", "Ara"]),
-                        TreeNode(id: 201, name: "Supermercado", parent_id: 20),
+                            id: 200, name: "Mercado", parentId: 20, keywords: ["D1", "Koba Colombia", "Ara"]),
+                        TreeNode(id: 201, name: "Supermercado", parentId: 20),
                     ]),
-                TreeNode(id: 21, name: "Transporte", parent_id: 2, children: []),
+                TreeNode(id: 21, name: "Transporte", parentId: 2, children: []),
             ]),
     ]
 
@@ -72,18 +72,18 @@ final class TreeIndexTests: XCTestCase {
     func testExcluyeLoArchivadoYLoQueCuelgaDeEllo() {
         let conArchivados = TreeIndex(raices: [
             TreeNode(
-                id: 1, name: "Centro", parent_id: nil,
+                id: 1, name: "Centro", parentId: nil,
                 children: [
                     TreeNode(
-                        id: 10, name: "Viva", parent_id: 1,
+                        id: 10, name: "Viva", parentId: 1,
                         children: [
-                            TreeNode(id: 100, name: "Archivado", parent_id: 10, is_archived: true),
-                            TreeNode(id: 101, name: "Vivo", parent_id: 10),
+                            TreeNode(id: 100, name: "Archivado", parentId: 10, isArchived: true),
+                            TreeNode(id: 101, name: "Vivo", parentId: 10),
                         ]),
                     TreeNode(
-                        id: 11, name: "Archivada", parent_id: 1, is_archived: true,
+                        id: 11, name: "Archivada", parentId: 1, isArchived: true,
                         children: [
-                            TreeNode(id: 110, name: "Huérfano", parent_id: 11)
+                            TreeNode(id: 110, name: "Huérfano", parentId: 11)
                         ]),
                 ])
         ])
@@ -111,12 +111,12 @@ final class TreeIndexTests: XCTestCase {
     func testAIgualParecidoElConceptoAntesQueLaCategoria() {
         let conConcepto = TreeIndex(raices: [
             TreeNode(
-                id: 3, name: "Centro", parent_id: nil,
+                id: 3, name: "Centro", parentId: nil,
                 children: [
                     TreeNode(
-                        id: 30, name: "Transporte", parent_id: 3,
+                        id: 30, name: "Transporte", parentId: 3,
                         children: [
-                            TreeNode(id: 300, name: "Transporte", parent_id: 30)
+                            TreeNode(id: 300, name: "Transporte", parentId: 30)
                         ])
                 ])
         ])

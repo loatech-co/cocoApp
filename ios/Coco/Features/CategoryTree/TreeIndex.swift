@@ -34,16 +34,16 @@ struct TreeIndex: Sendable {
     /// Aplana los tres niveles. Lo archivado no entra, ni lo que cuelga de ello.
     init(raices: [TreeNode]) {
         var entradas: [IndexEntry] = []
-        for centro in raices where !centro.is_archived {
+        for centro in raices where !centro.isArchived {
             entradas.append(
                 Self.entrada(
                     centro, nivel: .centro, ruta: [], centroId: centro.id, categoriaId: nil, estatico: centro.estatico))
-            for categoria in centro.children ?? [] where !categoria.is_archived {
+            for categoria in centro.children ?? [] where !categoria.isArchived {
                 entradas.append(
                     Self.entrada(
                         categoria, nivel: .categoria, ruta: [centro.name], centroId: centro.id, categoriaId: nil,
                         estatico: centro.estatico))
-                for concepto in categoria.children ?? [] where !concepto.is_archived {
+                for concepto in categoria.children ?? [] where !concepto.isArchived {
                     entradas.append(
                         Self.entrada(
                             concepto, nivel: .concepto, ruta: [categoria.name, centro.name], centroId: centro.id,
@@ -66,7 +66,7 @@ struct TreeIndex: Sendable {
             categoriaId: categoriaId,
             estatico: estatico,
             nombreNormalizado: normalizar(nodo.name),
-            palabrasNormalizadas: nodo.palabras_clave.map(normalizar)
+            palabrasNormalizadas: nodo.keywords.map(normalizar)
         )
     }
 

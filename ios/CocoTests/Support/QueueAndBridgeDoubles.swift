@@ -20,8 +20,8 @@ final class SessionDouble: Session, @unchecked Sendable {
     let cambios: AsyncStream<SessionState>
 
     static let perfil = PublicProfile(
-        id: 7, email: "ana@coco.test", display_name: "Ana", role: "user", status: "active",
-        created_at: "2026-01-01T00:00:00Z")
+        id: 7, email: "ana@coco.test", displayName: "Ana", role: "user", status: "active",
+        createdAt: "2026-01-01T00:00:00Z")
 
     init(estado: SessionState = .activa(SessionDouble.perfil), token: String? = "token-1") {
         _estado = estado
@@ -116,22 +116,22 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
     func responderCaptura(_ r: Reply) { cerrojo.withLock { capturas.append(r) } }
     func responderFoto(_ r: Reply) { cerrojo.withLock { fotos.append(r) } }
 
-    var refsUnicos: Set<String> { cerrojo.withLock { Set(requests.map(\.external_ref)) } }
+    var refsUnicos: Set<String> { cerrojo.withLock { Set(requests.map(\.externalRef)) } }
 
     func capturar(_ r: CaptureRequest) async throws -> CaptureResponse {
         let (respuesta, repetido): (Reply, Bool) = cerrojo.withLock {
-            let visto = requests.contains { $0.external_ref == r.external_ref }
+            let visto = requests.contains { $0.externalRef == r.externalRef }
             requests.append(r)
             instantes.append(.now)
             return (capturas.isEmpty ? .ok : capturas.removeFirst(), visto && repetidoSiYaSeVio)
         }
         if case .falla(let e) = respuesta { throw e }
         let t = TransactionSummary(
-            id: transactionId, date: r.cuerpo.fecha ?? "2026-10-05", amount: r.cuerpo.monto ?? "0", category_id: nil,
+            id: transactionId, date: r.cuerpo.fecha ?? "2026-10-05", amount: r.cuerpo.monto ?? "0", categoryId: nil,
             description: r.cuerpo.texto, merchant: r.cuerpo.comercio, source: r.source.rawValue,
-            por_revisar: r.cuerpo.monto == nil)
+            needsReview: r.cuerpo.monto == nil)
         let c = ProposedClassification(
-            certeza: "ninguna", fuente: nil, concepto_id: nil, categoria_id: nil, nombre: nil, candidatos: [],
+            certeza: "ninguna", fuente: nil, conceptId: nil, categoryId: nil, nombre: nil, candidatos: [],
             motivo: "")
         return CaptureResponse(
             transaction: t, clasificacion: c,
@@ -147,7 +147,7 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
         if case .falla(let e) = respuesta { throw e }
         return [
             Attachment(
-                id: 1, orden: 1, nombre_archivo: nombre, mime_type: "image/jpeg", tamano: jpeg.count, disponible: true)
+                id: 1, orden: 1, fileName: nombre, mimeType: "image/jpeg", tamano: jpeg.count, disponible: true)
         ]
     }
 }
