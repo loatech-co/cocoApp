@@ -11,28 +11,64 @@ settings— se pierde. Nunca se edita el proyecto a mano.
 
 ## Qué hay en cada carpeta
 
+Por feature: cada carpeta de `Features/` tiene todo lo de una cosa que la
+persona hace. Lo que usan varias features sin ser de ninguna va a `Core/`
+(infraestructura) o a `Shared/` (piezas comunes de la interfaz y formatos).
+
 | Carpeta | Qué es |
 |---|---|
-| `Coco/Dominio` | Contratos (espejo de `@coco/types`, claves en snake_case) y los protocolos que cruzan módulos |
-| `Coco/Red` | `ClienteAPI`, el constructor de peticiones, errores tipados y `Conectividad` |
-| `Coco/Sesion` | La sesión nativa: el refresh en el Keychain, el access en memoria, single-flight |
-| `Coco/Cola` | Capturas pendientes en disco, reintentos, envío en dos fases |
-| `Coco/Arbol` | El árbol de categorías guardado en el teléfono y su buscador |
-| `Coco/Intents` | Las acciones de Atajos (App Intents) y el `AppShortcutsProvider` |
-| `Coco/Captura` | Formulario rápido, cámara, lectura del recibo, lista de capturas |
-| `Coco/Web` | El `WKWebView` único y el puente `cocoSesion` |
-| `Coco/App` | Composición, navegación híbrida, login, Más, Ajustes |
-| `Coco/Avisos` | Notificaciones locales y el aviso de que la firma caduca |
-| `Coco/SegundoPlano` | `BGTaskScheduler`: renovar el token y vaciar la cola |
-| `Coco/Bienvenida` | La guía para crear las dos automatizaciones de Atajos |
+| `Coco/App` | Arranque, composición (`Dependencies`), navegación híbrida (`Router`, `RootView`) |
+| `Coco/Features/Capture` | Formulario rápido, cámara, lectura del recibo (Vision), lista de capturas |
+| `Coco/Features/Capture/Queue` | Capturas pendientes en disco, reintentos, envío en dos fases |
+| `Coco/Features/Session` | La sesión nativa (refresh en el Keychain, access en memoria, single-flight) y entrar |
+| `Coco/Features/Web` | El `WKWebView` único y el puente `cocoSesion` |
+| `Coco/Features/CategoryTree` | El árbol de categorías guardado en el teléfono y su buscador |
+| `Coco/Features/Shortcuts` | Las acciones de Atajos (App Intents) y el `AppShortcutsProvider` |
+| `Coco/Features/Reminders` | Notificaciones locales y el aviso de que la firma caduca |
+| `Coco/Features/Onboarding` | La guía para crear las dos automatizaciones de Atajos |
+| `Coco/Features/Settings` | Más y Ajustes |
+| `Coco/Core/Networking` | `APIClient`, peticiones, errores tipados, contratos (espejo de `@coco/types`) y `Connectivity` |
+| `Coco/Core/Storage` | Lo que se guarda en disco: la cola y el árbol |
+| `Coco/Core/Keychain` | El Keychain del sistema y su doble en memoria |
+| `Coco/Core/Background` | `BGTaskScheduler`: renovar el token y vaciar la cola |
+| `Coco/Core/Domain` | El cuerpo de una captura, los montos y los protocolos que cruzan features |
+| `Coco/Core/Logging` | `AppLog` (`os.Logger`) |
+| `Coco/Shared` | Fecha de Bogotá, pesos, la marca y la pantalla sin conexión |
 | `CocoAccesos` | Extensión de WidgetKit: control (iOS 18) y widget (iOS 17) |
-| `CocoTests` | Pruebas XCTest de todo lo anterior |
+| `CocoTests` | Pruebas XCTest, con la misma estructura que `Coco/`; los dobles en `Support/` |
+
+## Convenciones
+
+Las reglas completas están en `CONTRIBUTING.md`, sección «iOS». En corto:
+
+- **Formato:** `swift-format` (viene con Xcode) con `.swift-format`. **Reglas:**
+  SwiftLint estricto con `.swiftlint.yml`, versión fijada. Los dos corren con
+  `bash scripts/lint.sh`, en el `pre-commit` y en el workflow `ios`.
+- **Nombres en inglés** para archivos y tipos. Los miembros todavía en español
+  se pasan feature a feature (pendiente). **Lo que ve la persona, en español.**
+- **Lo que NO se renombra nunca**, porque es contrato con algo de fuera:
+  - los tipos de los App Intents (`RegistrarGastoManualIntent`,
+    `RegistrarGastoDeWalletIntent`, `RegistrarGastoDeSMSIntent`,
+    `AbrirCapturaIntent`), el `AppShortcutsProvider` (`AtajosDeCoco`), sus
+    `@Parameter` y sus títulos: las automatizaciones de Atajos de cada
+    persona los guardan por nombre y se romperían en silencio;
+  - los `kind` del widget y del control, los identificadores de las tareas
+    de fondo y el bundle id;
+  - las claves JSON de la API y las de lo guardado en disco. Las propiedades
+    van en camelCase y la clave se escribe en `CodingKeys`;
+    `StoredFormatCompatibilityTests` falla si una cambia.
+- **Red con `async/await`**, sin callbacks. Errores tipados por dominio
+  (`APIError`, `SessionError`, `QueueError`, `KeychainError`,
+  `ParameterError`).
+- **Sin `!`** (force-unwrap) ni `try!` fuera de las pruebas: SwiftLint lo
+  impide.
 
 ## Requisitos
 
 - macOS con Xcode 16 o superior. Probado con Xcode 27.0 / iOS 27 / Swift 6.4
   en modo de lenguaje 5.10 (`SWIFT_VERSION` en `project.yml`).
-- `brew install xcodegen`.
+- `brew install xcodegen swiftlint` (SwiftLint en la versión de
+  `swiftlint_version` en `.swiftlint.yml`; con otra, el hook avisa y la salta).
 - Node, para correr la API local.
 
 ## Correr en el simulador
@@ -186,15 +222,27 @@ cd ios && xcodegen generate
 xcodebuild -scheme Coco -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
 
+Y antes de subir, el lint (lo mismo que el hook y el workflow):
+
+```sh
+bash ios/scripts/lint.sh
+```
+
 `CocoTests` cubre la cola, la sesión, el reintento, los montos
-(`LectorDeMonto`), las fechas (`FechaDeBogota`), los parámetros de las
-acciones, la paridad del buscador con `frontend/src/lib/buscar-en-arbol.test.ts`,
-el puente, el perfil y su vencimiento, el enrutador (URLs `coco://` y
-destinos), la composición (`Dependencias` con dobles: registra intents y
-tareas de fondo, sigue la insignia de la cola) y los textos de entrar y
-Ajustes. `ContratosTests` lee
-`packages/types/src/index.ts` y falla si `Marca.userAgentApp` se separa de
-`USER_AGENT_APP`.
+(`AmountParser`), las fechas (`BogotaDate`), los parámetros de las acciones,
+la paridad del buscador con `buscar-en-arbol.test.ts` de la web (y falla si
+esa prueba desaparece de las rutas que conoce), el puente, el perfil y su
+vencimiento, el enrutador (URLs `coco://` y destinos), la composición
+(`Dependencies` con dobles: registra intents y tareas de fondo, sigue la
+insignia de la cola) y los textos de entrar y Ajustes.
+`StoredFormatCompatibilityTests` fija las claves JSON de la cola, del árbol y
+de los contratos de la API. `ContractsTests` lee `packages/types/src/index.ts`
+y falla si `Brand.userAgentApp` se separa de `USER_AGENT_APP` (en el
+simulador se salta: no puede leer el archivo).
+
+El workflow `ios` (GitHub Actions, macOS) corre el lint y las pruebas. Es
+manual —Actions → ios → Run workflow— porque un minuto de macOS cuenta por
+diez de la cuota: se lanza antes de cada versión de la app.
 
 A mano en el simulador (humo): entrar, capturar a mano, capturar con una foto
 de la fototeca, ver la cola sin red y verla vaciarse al volver la red, abrir la
