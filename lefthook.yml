@@ -27,4 +27,6 @@ pre-commit:
 commit-msg:
   commands:
     commitlint:
-      run: npx commitlint --edit {1}
+      # Quoted: in a git worktree {1} is an absolute path, and this repo lives
+      # under "VS Code" — unquoted, the space splits it into two arguments.
+      run: npx commitlint --edit "{1}"
