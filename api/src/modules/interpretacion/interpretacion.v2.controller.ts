@@ -1,0 +1,74 @@
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+
+import { CaptureInput, InterpretInput } from './dto/v2/interpretation.dto';
+import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
+import { InterpretacionService } from './interpretacion.service';
+import type { CapturaView, InterpretacionView } from './interpretation.view';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { ApiAuthenticated, ApiErrors } from '../../contract/v1/openapi.decorators';
+import { Capture, Interpretation } from '../../contract/v2/interpretation.response';
+import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+import { defined, toV2, type ToV2, type V1Draft } from '../../contract/v2/to-v2';
+
+/** The fields both routes read, in their v1 names. */
+function textFields(input: InterpretInput): V1Draft<InterpretBodyDto> {
+  return {
+    texto: input.text,
+    comercio: input.merchant,
+    monto: input.amount,
+    fecha: input.date,
+    nombre_de_archivo: input.fileName,
+    periodo: input.period,
+  };
+}
+
+function interpretBody(input: InterpretInput): InterpretBodyDto {
+  return defined(textFields(input));
+}
+
+function captureBody(input: CaptureInput): CaptureBodyDto {
+  return {
+    ...defined<V1Draft<CaptureBodyDto>>({
+      ...textFields(input),
+      captured_at: input.capturedAt,
+      category_id: input.categoryId,
+      nota: input.note,
+    }),
+    source: input.source,
+    external_ref: input.externalRef,
+  };
+}
+
+/**
+ * v2 of reading a text and of the phone's capture: the same service,
+ * translated at the edge. The capture keeps its idempotency: the same
+ * `externalRef` twice is one transaction.
+ */
+@ApiAuthenticated()
+@Controller({ path: 'transactions', version: '2' })
+export class InterpretacionV2Controller {
+  constructor(private readonly interpretacion: InterpretacionService) {}
+
+  @Post('interpret')
+  @HttpCode(HttpStatus.OK)
+  @ApiDataV2(Interpretation)
+  @ApiErrors(400, 422)
+  async interpret(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() input: InterpretInput,
+  ): Promise<ToV2<InterpretacionView>> {
+    return toV2(await this.interpretacion.interpretar(user.id, interpretBody(input)));
+  }
+
+  @Post('capture')
+  @HttpCode(HttpStatus.OK)
+  @ApiDataV2(Capture)
+  @ApiErrors(400, 404, 409, 422)
+  async capture(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() input: CaptureInput,
+  ): Promise<ToV2<CapturaView>> {
+    return toV2(await this.interpretacion.capturar(user.id, captureBody(input)));
+  }
+}

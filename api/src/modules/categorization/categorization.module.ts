@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { CategorizationController } from './categorization.controller';
 import { CategorizationRepository } from './categorization.repository';
 import { CategorizationService } from './categorization.service';
+import { CategorizationV2Controller } from './categorization.v2.controller';
 import { CategoriesModule } from '../categories/categories.module';
 import { TransactionsModule } from '../transactions/transactions.module';
 
@@ -13,7 +14,7 @@ import { TransactionsModule } from '../transactions/transactions.module';
 @Global()
 @Module({
   imports: [TransactionsModule, CategoriesModule],
-  controllers: [CategorizationController],
+  controllers: [CategorizationController, CategorizationV2Controller],
   providers: [CategorizationService, CategorizationRepository],
   exports: [CategorizationService],
 })

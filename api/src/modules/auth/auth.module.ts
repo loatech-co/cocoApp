@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { AuthV2Controller } from './auth.v2.controller';
 import { PasswordService } from './password.service';
 import { SupabaseAuthService } from './supabase-auth.service';
 import { UsersRepository } from './users.repository';
@@ -22,7 +23,7 @@ import { CategoriesModule } from '../categories/categories.module';
 @Module({
   // The registration seeds the new account's categories (CategoriesService).
   imports: [CategoriesModule],
-  controllers: [AuthController],
+  controllers: [AuthController, AuthV2Controller],
   providers: [
     AuthService,
     SupabaseAuthService,

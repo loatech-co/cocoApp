@@ -5770,8 +5770,8 @@
         "type": "object",
         "properties": {
           "role": {
-            "type": "string",
-            "enum": ["user", "admin"]
+            "enum": ["user", "admin"],
+            "type": "string"
           }
         },
         "required": ["role"]
