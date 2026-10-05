@@ -20,41 +20,15 @@ import { PoliticaDeContrasena, cumpleLaPolitica } from '@/shared/ui/atoms/politi
  */
 export function RegisterPage() {
   const { usuario, cargando, registrarse } = useAuth();
-
-  const [nombre, setNombre] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [problemas, setProblemas] = useState<string[]>([]);
-  const [enviando, setEnviando] = useState(false);
-  const [enviado, setEnviado] = useState<'pendiente' | 'lista' | null>(null);
+  const form = useRegisterForm(registrarse);
 
   if (!cargando && usuario) {
     return <Navigate to="/" replace />;
   }
 
-  function onSubmit(evento: SubmitEvent<HTMLFormElement>): void {
-    evento.preventDefault();
-    setError(null);
-    setProblemas([]);
-    setEnviando(true);
-
-    void registrarse(email, password, nombre)
-      .then((respuesta) => setEnviado(respuesta.pending_approval ? 'pendiente' : 'lista'))
-      .catch((causa: unknown) => {
-        setError(mensajeDeErrorDeAuth(causa));
-        // La API dice exactamente qué le falta a la contraseña; ocultarlo
-        // obligaría a adivinar y empujaría a elegir lo más flojo que pase.
-        setProblemas(detallesDeError(causa));
-      })
-      .finally(() => setEnviando(false));
+  if (form.enviado) {
+    return <SolicitudRecibida estado={form.enviado} />;
   }
-
-  if (enviado) {
-    return <SolicitudRecibida estado={enviado} />;
-  }
-
-  const politicaOk = cumpleLaPolitica(password);
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-background px-4 py-10">
@@ -84,74 +58,9 @@ export function RegisterPage() {
           </CardHeader>
 
           <CardContent className="flex flex-col gap-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {error}
-                  {problemas.length > 0 && (
-                    <ul className="mt-2 list-disc space-y-0.5 pl-4">
-                      {problemas.map((problema) => (
-                        <li key={problema}>{problema}</li>
-                      ))}
-                    </ul>
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
+            <RegisterErrors error={form.error} problemas={form.problemas} />
 
-            <form onSubmit={onSubmit} className="flex flex-col gap-4">
-              <Campo etiqueta="Nombre" id="nombre">
-                <Input
-                  id="nombre"
-                  autoComplete="name"
-                  required
-                  minLength={2}
-                  value={nombre}
-                  onChange={(evento) => setNombre(evento.target.value)}
-                />
-              </Campo>
-
-              <Campo etiqueta="Correo" id="email">
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(evento) => setEmail(evento.target.value)}
-                />
-              </Campo>
-
-              <div className="flex flex-col gap-2">
-                <Campo etiqueta="Contraseña" id="password">
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    value={password}
-                    onChange={(evento) => setPassword(evento.target.value)}
-                    aria-describedby="requisitos-password"
-                  />
-                </Campo>
-                <div id="requisitos-password">
-                  <PoliticaDeContrasena password={password} />
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    No puede contener tu nombre ni tu correo, ni aparecer en filtraciones públicas
-                    conocidas.
-                  </p>
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full" disabled={enviando || !politicaOk}>
-                {enviando ? (
-                  <Loader2 className="animate-spin" aria-hidden="true" />
-                ) : (
-                  <UserPlus aria-hidden="true" />
-                )}
-                {enviando ? 'Un momento…' : 'Solicitar acceso'}
-              </Button>
-            </form>
+            <RegisterForm form={form} />
 
             <p className="text-center text-sm text-muted-foreground">
               ¿Ya tienes cuenta?{' '}
@@ -204,4 +113,135 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
       </div>
     </main>
   );
+}
+
+function PasswordField({
+  password,
+  onCambiar,
+}: {
+  password: string;
+  onCambiar: (password: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Campo etiqueta="Contraseña" id="password">
+        <Input
+          id="password"
+          type="password"
+          autoComplete="new-password"
+          required
+          value={password}
+          onChange={(evento) => onCambiar(evento.target.value)}
+          aria-describedby="requisitos-password"
+        />
+      </Campo>
+      <div id="requisitos-password">
+        <PoliticaDeContrasena password={password} />
+        <p className="mt-2 text-xs text-muted-foreground">
+          No puede contener tu nombre ni tu correo, ni aparecer en filtraciones públicas conocidas.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
+  const { nombre, setNombre, email, setEmail, password, setPassword, enviando, onSubmit } = form;
+  const politicaOk = cumpleLaPolitica(password);
+  return (
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <Campo etiqueta="Nombre" id="nombre">
+        <Input
+          id="nombre"
+          autoComplete="name"
+          required
+          minLength={2}
+          value={nombre}
+          onChange={(evento) => setNombre(evento.target.value)}
+        />
+      </Campo>
+
+      <Campo etiqueta="Correo" id="email">
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(evento) => setEmail(evento.target.value)}
+        />
+      </Campo>
+
+      <PasswordField password={password} onCambiar={setPassword} />
+
+      <Button type="submit" className="w-full" disabled={enviando || !politicaOk}>
+        {enviando ? (
+          <Loader2 className="animate-spin" aria-hidden="true" />
+        ) : (
+          <UserPlus aria-hidden="true" />
+        )}
+        {enviando ? 'Un momento…' : 'Solicitar acceso'}
+      </Button>
+    </form>
+  );
+}
+
+function RegisterErrors({ error, problemas }: { error: string | null; problemas: string[] }) {
+  if (!error) return null;
+  return (
+    <Alert variant="destructive">
+      <AlertDescription>
+        {error}
+        {problemas.length > 0 && (
+          <ul className="mt-2 list-disc space-y-0.5 pl-4">
+            {problemas.map((problema) => (
+              <li key={problema}>{problema}</li>
+            ))}
+          </ul>
+        )}
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+/** Los campos de la solicitud, sus errores y el envío. */
+function useRegisterForm(registrarse: ReturnType<typeof useAuth>['registrarse']) {
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [problemas, setProblemas] = useState<string[]>([]);
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState<'pendiente' | 'lista' | null>(null);
+
+  function onSubmit(evento: SubmitEvent<HTMLFormElement>): void {
+    evento.preventDefault();
+    setError(null);
+    setProblemas([]);
+    setEnviando(true);
+
+    void registrarse(email, password, nombre)
+      .then((respuesta) => setEnviado(respuesta.pending_approval ? 'pendiente' : 'lista'))
+      .catch((causa: unknown) => {
+        setError(mensajeDeErrorDeAuth(causa));
+        // La API dice exactamente qué le falta a la contraseña; ocultarlo
+        // obligaría a adivinar y empujaría a elegir lo más flojo que pase.
+        setProblemas(detallesDeError(causa));
+      })
+      .finally(() => setEnviando(false));
+  }
+
+  return {
+    nombre,
+    setNombre,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    error,
+    problemas,
+    enviando,
+    enviado,
+    onSubmit,
+  };
 }
