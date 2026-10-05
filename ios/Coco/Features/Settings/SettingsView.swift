@@ -6,38 +6,38 @@ struct SettingsView: View {
     let d: Dependencies
 
     @Environment(\.dismiss) private var dismiss
-    @State private var urlTexto: String
-    @State private var resultadoDelAviso: String?
-    @State private var guardada = false
+    @State private var urlText: String
+    @State private var testNotificationResult: String?
+    @State private var saved = false
 
     init(d: Dependencies) {
         self.d = d
-        _urlTexto = State(initialValue: d.configuration.base.absoluteString)
+        _urlText = State(initialValue: d.configuration.base.absoluteString)
     }
 
-    private var validacion: Validation { Self.validar(urlTexto) }
-    private var cambio: Bool { validacion.url != nil && validacion.url != d.configuration.base }
+    private var validation: Validation { Self.validate(urlText) }
+    private var hasChanged: Bool { validation.url != nil && validation.url != d.configuration.base }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("https://…", text: $urlTexto)
+                    TextField("https://…", text: $urlText)
                         .keyboardType(.URL)
                         .textContentType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    if let reason = validacion.reason {
+                    if let reason = validation.reason {
                         Text(reason).font(.footnote).foregroundStyle(.red)
                     }
                     Button("Guardar y cerrar sesión", action: save)
-                        .disabled(!cambio)
+                        .disabled(!hasChanged)
                     Button("Restablecer la del bundle", action: reset)
                 } header: {
                     Text("URL de la API").textCase(nil)
                 } footer: {
                     Text(
-                        guardada
+                        saved
                             ? "Guardada. Cierra la app del todo y vuelve a abrirla para usar la nueva URL."
                             : """
                             Cambiarla cierra la sesión de este teléfono; la nueva URL se usa al volver a abrir \
@@ -49,7 +49,7 @@ struct SettingsView: View {
                 Section {
                     LabeledContent("Versión", value: "\(Brand.version) (\(Self.build))")
                     LabeledContent(
-                        "La firma caduca", value: Self.textoDeVencimiento(ProvisioningProfileReader.fromBundle()))
+                        "La firma caduca", value: Self.expiryText(ProvisioningProfileReader.fromBundle()))
                     LabeledContent("Pendientes de envío", value: "\(d.pending)")
                     LabeledContent("API", value: d.configuration.base.absoluteString)
                 } header: {
@@ -57,9 +57,9 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Button("Probar notificación") { Task { await probarAviso() } }
-                    if let resultadoDelAviso {
-                        Text(resultadoDelAviso).font(.footnote).foregroundStyle(.secondary)
+                    Button("Probar notificación") { Task { await sendTestNotification() } }
+                    if let testNotificationResult {
+                        Text(testNotificationResult).font(.footnote).foregroundStyle(.secondary)
                     }
                 } header: {
                     Text("Avisos").textCase(nil)
@@ -77,30 +77,30 @@ struct SettingsView: View {
     // MARK: Acciones
 
     private func save() {
-        guard let url = validacion.url else { return }
+        guard let url = validation.url else { return }
         APIConfiguration.save(base: url, defaults: d.defaults)
-        guardada = true
+        saved = true
         AppLog.app.info("URL de la API cambiada a \(url.absoluteString, privacy: .public)")
         Task { await d.signOut() }
     }
 
     private func reset() {
         APIConfiguration.reset(defaults: d.defaults)
-        urlTexto = APIConfiguration.current(defaults: d.defaults).base.absoluteString
-        guardada = urlTexto != d.configuration.base.absoluteString
-        if guardada { Task { await d.signOut() } }
+        urlText = APIConfiguration.current(defaults: d.defaults).base.absoluteString
+        saved = urlText != d.configuration.base.absoluteString
+        if saved { Task { await d.signOut() } }
     }
 
-    private func probarAviso() async {
+    private func sendTestNotification() async {
         guard await d.notifier.requestPermission() else {
-            resultadoDelAviso = "Sin permiso de avisos. Actívalo en Ajustes de iOS → Coco."
+            testNotificationResult = "Sin permiso de avisos. Actívalo en Ajustes de iOS → Coco."
             return
         }
-        let prueba = SavedResult(
+        let sample = SavedResult(
             transactionId: 0, summary: "Prueba: si ves esto, los avisos funcionan.", duplicate: false, merged: false,
             needsReview: false, finishedAt: .now)
-        await d.notifier.captureSaved(prueba, source: .iosManual)
-        resultadoDelAviso = "Enviada. Aparece arriba aunque la app esté abierta."
+        await d.notifier.captureSaved(sample, source: .iosManual)
+        testNotificationResult = "Enviada. Aparece arriba aunque la app esté abierta."
     }
 
     // MARK: Puros
@@ -112,15 +112,15 @@ struct SettingsView: View {
 
     /// `http(s)://host[:puerto]`, sin ruta ni consulta: la base a la que la
     /// app añade `/api/v1`.
-    static func validar(_ text: String) -> Validation {
+    static func validate(_ text: String) -> Validation {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return Validation(url: nil, reason: nil) }
-        guard let url = URL(string: cleaned), let esquema = url.scheme?.lowercased(), let host = url.host(),
+        guard let url = URL(string: cleaned), let scheme = url.scheme?.lowercased(), let host = url.host(),
             !host.isEmpty
         else {
             return Validation(url: nil, reason: "Escribe una URL completa, como https://cocoapp.ejemplo.")
         }
-        guard esquema == "http" || esquema == "https" else {
+        guard scheme == "http" || scheme == "https" else {
             return Validation(url: nil, reason: "Solo http o https.")
         }
         let path = url.path()
@@ -130,7 +130,7 @@ struct SettingsView: View {
         return Validation(url: APIConfiguration(base: url).base, reason: nil)
     }
 
-    static func textoDeVencimiento(_ expiresAt: Date?, now: Date = .now) -> String {
+    static func expiryText(_ expiresAt: Date?, now: Date = .now) -> String {
         guard let expiresAt else { return "No disponible (simulador o sin perfil)" }
         let days = ExpiryReminder.daysLeft(expiresAt: expiresAt, now: now)
         let date = expiresAt.formatted(date: .abbreviated, time: .omitted)

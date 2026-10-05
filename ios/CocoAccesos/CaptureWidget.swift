@@ -52,10 +52,10 @@ struct CaptureWidgetView: View {
         case .systemMedium:
             HStack(spacing: 12) {
                 Link(destination: manual) {
-                    WidgetActionButton(title: "Registrar", simbolo: "plus.circle.fill")
+                    WidgetActionButton(title: "Registrar", symbol: "plus.circle.fill")
                 }
                 Link(destination: photo) {
-                    WidgetActionButton(title: "Foto", simbolo: "camera.fill")
+                    WidgetActionButton(title: "Foto", symbol: "camera.fill")
                 }
             }
             .containerBackground(.fill.tertiary, for: .widget)
@@ -70,7 +70,7 @@ struct CaptureWidgetView: View {
                 .widgetURL(manual)
                 .containerBackground(.clear, for: .widget)
         default:
-            WidgetActionButton(title: "Registrar gasto", simbolo: "plus.circle.fill")
+            WidgetActionButton(title: "Registrar gasto", symbol: "plus.circle.fill")
                 .widgetURL(manual)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
@@ -80,11 +80,11 @@ struct CaptureWidgetView: View {
 /// Un icono grande y su rótulo, para la pantalla de inicio.
 private struct WidgetActionButton: View {
     let title: String
-    let simbolo: String
+    let symbol: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: simbolo)
+            Image(systemName: symbol)
                 .font(.system(size: 32))
                 .foregroundStyle(.tint)
             Spacer(minLength: 0)

@@ -10,7 +10,7 @@ struct RootView: View {
     }
 
     var body: some View {
-        @Bindable var enrutador = d.enrutador
+        @Bindable var router = d.router
         TabView(selection: pestana) {
             inicio
                 .tabItem { Label("Inicio", systemImage: "house") }
@@ -18,7 +18,7 @@ struct RootView: View {
             RecordExpenseView(d: d)
                 .tabItem { Label("Registrar", systemImage: "plus.circle") }
                 .tag(AppTab.register)
-            CapturesView(queue: d.queue, navigation: d.enrutador)
+            CapturesView(queue: d.queue, navigation: d.router)
                 .tabItem { Label("Capturas", systemImage: "tray") }
                 .badge(d.pending)
                 .tag(AppTab.captures)
@@ -27,18 +27,18 @@ struct RootView: View {
                 .tag(AppTab.mas)
         }
         .fullScreenCover(isPresented: signedOut) {
-            SignInView(session: d.session, onSettings: { d.enrutador.go(.settings) })
-                .sheet(item: $enrutador.hoja, content: hoja)
+            SignInView(session: d.session, onSettings: { d.router.go(.settings) })
+                .sheet(item: $router.hoja, content: hoja)
         }
-        .sheet(item: $enrutador.hoja, content: hoja)
-        .onChange(of: enrutador.rutaWebPendiente, initial: true) { _, _ in consumirPendientes() }
-        .onChange(of: enrutador.busquedaPendiente) { _, _ in consumirPendientes() }
+        .sheet(item: $router.hoja, content: hoja)
+        .onChange(of: router.rutaWebPendiente, initial: true) { _, _ in consumirPendientes() }
+        .onChange(of: router.busquedaPendiente) { _, _ in consumirPendientes() }
         .task { await d.arrancar() }
     }
 
     private var inicio: some View {
         WebContainer(puente: d.puente, connectivity: d.connectivity, pending: d.pending) {
-            d.enrutador.go(.quickForm(withCamera: false))
+            d.router.go(.quickForm(withCamera: false))
         }
     }
 
@@ -46,7 +46,7 @@ struct RootView: View {
     private func hoja(_ hoja: Sheet) -> some View {
         switch hoja {
         case .welcome:
-            WelcomeView(alTerminar: { d.enrutador.hoja = nil })
+            WelcomeView(onFinish: { d.router.hoja = nil })
         case .settings:
             SettingsView(d: d)
         }
@@ -55,10 +55,10 @@ struct RootView: View {
     /// Tocar otra vez Inicio vuelve a `/`.
     private var pestana: Binding<AppTab> {
         Binding(
-            get: { d.enrutador.pestana },
+            get: { d.router.pestana },
             set: { nueva in
-                if nueva == .inicio, d.enrutador.pestana == .inicio { d.puente.go(to: "/") }
-                d.enrutador.pestana = nueva
+                if nueva == .inicio, d.router.pestana == .inicio { d.puente.go(to: "/") }
+                d.router.pestana = nueva
             }
         )
     }
@@ -72,12 +72,12 @@ struct RootView: View {
 
     /// Lo que el enrutador dejó para la web, en cuanto la pestaña Inicio manda.
     private func consumirPendientes() {
-        if let path = d.enrutador.rutaWebPendiente {
-            d.enrutador.rutaWebPendiente = nil
+        if let path = d.router.rutaWebPendiente {
+            d.router.rutaWebPendiente = nil
             d.puente.go(to: path)
         }
-        if d.enrutador.busquedaPendiente {
-            d.enrutador.busquedaPendiente = false
+        if d.router.busquedaPendiente {
+            d.router.busquedaPendiente = false
             d.puente.abrirBusqueda()
         }
     }
@@ -94,11 +94,11 @@ private struct RecordExpenseView: View {
     var body: some View {
         Group {
             if let model {
-                QuickFormView(model: model, opensCameraOnAppear: d.enrutador.formulario.withCamera) {
+                QuickFormView(model: model, opensCameraOnAppear: d.router.formulario.withCamera) {
                     // Guardar ya encoló; cerrar es volver a Inicio con un
                     // formulario limpio para la próxima.
                     cerrados += 1
-                    d.enrutador.pestana = .inicio
+                    d.router.pestana = .inicio
                 }
                 .id(identidad)
             } else {
@@ -110,5 +110,5 @@ private struct RecordExpenseView: View {
         }
     }
 
-    private var identidad: String { "\(d.enrutador.formulario.generacion)-\(cerrados)" }
+    private var identidad: String { "\(d.router.formulario.generacion)-\(cerrados)" }
 }

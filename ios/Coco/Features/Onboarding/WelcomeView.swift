@@ -5,11 +5,11 @@ import SwiftUI
 struct WelcomeView: View {
     static let key = "bienvenida-vista"
 
-    let alTerminar: () -> Void
+    let onFinish: () -> Void
     let defaults: UserDefaults
 
-    init(alTerminar: @escaping () -> Void, defaults: UserDefaults = .standard) {
-        self.alTerminar = alTerminar
+    init(onFinish: @escaping () -> Void, defaults: UserDefaults = .standard) {
+        self.onFinish = onFinish
         self.defaults = defaults
     }
 
@@ -30,11 +30,11 @@ struct WelcomeView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 }
-                section("Pagos con Wallet", pasos: AutomationSteps.transaccion)
-                section("Mensajes del banco", pasos: AutomationSteps.message)
-                section("Accesos rápidos", pasos: AutomationSteps.accesos)
+                section("Pagos con Wallet", steps: AutomationSteps.transaction)
+                section("Mensajes del banco", steps: AutomationSteps.message)
+                section("Accesos rápidos", steps: AutomationSteps.accessPoints)
                 Section {
-                    Button("Abrir Atajos") { ShortcutsLauncher.abrir() }
+                    Button("Abrir Atajos") { ShortcutsLauncher.open() }
                 }
             }
             .navigationTitle("Bienvenida")
@@ -42,23 +42,23 @@ struct WelcomeView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Listo") {
                         defaults.set(true, forKey: Self.key)
-                        alTerminar()
+                        onFinish()
                     }
                 }
             }
         }
     }
 
-    private func section(_ title: String, pasos: [AutomationStep]) -> some View {
+    private func section(_ title: String, steps: [AutomationStep]) -> some View {
         Section(title) {
-            ForEach(pasos) { paso in
+            ForEach(steps) { step in
                 Label {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(paso.title).font(.body)
-                        Text(paso.detalle).font(.subheadline).foregroundStyle(.secondary)
+                        Text(step.title).font(.body)
+                        Text(step.detail).font(.subheadline).foregroundStyle(.secondary)
                     }
                 } icon: {
-                    Image(systemName: paso.simbolo)
+                    Image(systemName: step.symbol)
                 }
             }
         }
@@ -66,5 +66,5 @@ struct WelcomeView: View {
 }
 
 #Preview {
-    WelcomeView(alTerminar: {})
+    WelcomeView(onFinish: {})
 }

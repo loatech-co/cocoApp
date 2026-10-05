@@ -4,53 +4,53 @@ import XCTest
 
 final class AutomationStepsTests: XCTestCase {
     private let groups: [(String, [AutomationStep])] = [
-        ("transaccion", AutomationSteps.transaccion),
+        ("transaccion", AutomationSteps.transaction),
         ("mensaje", AutomationSteps.message),
-        ("accesos", AutomationSteps.accesos),
+        ("accesos", AutomationSteps.accessPoints),
     ]
 
-    func testIdsUnicosYConsecutivos() {
-        for (name, pasos) in groups {
-            XCTAssertEqual(pasos.map(\.id), Array(1...pasos.count), name)
+    func testIdsAreUniqueAndConsecutive() {
+        for (name, steps) in groups {
+            XCTAssertEqual(steps.map(\.id), Array(1...steps.count), name)
         }
     }
 
-    func testNingunTituloEnMayusculasSostenidas() {
-        for (_, pasos) in groups {
-            for paso in pasos {
-                XCTAssertNotEqual(paso.title, paso.title.uppercased(), paso.title)
-                XCTAssertFalse(paso.title.isEmpty)
-                XCTAssertFalse(paso.detalle.isEmpty)
-                XCTAssertFalse(paso.simbolo.isEmpty)
+    func testNoTitleInAllCaps() {
+        for (_, steps) in groups {
+            for step in steps {
+                XCTAssertNotEqual(step.title, step.title.uppercased(), step.title)
+                XCTAssertFalse(step.title.isEmpty)
+                XCTAssertFalse(step.detail.isEmpty)
+                XCTAssertFalse(step.symbol.isEmpty)
             }
         }
     }
 
-    func testWalletNombraLosCuatroCamposYSMSLosDos() {
-        let wallet = AutomationSteps.transaccion.map { $0.title + " " + $0.detalle }.joined(separator: " ")
+    func testWalletNamesTheFourFieldsAndSMSTheTwo() {
+        let wallet = AutomationSteps.transaction.map { $0.title + " " + $0.detail }.joined(separator: " ")
         for campo in ["Comercio", "Monto", "Tarjeta", "Nombre"] {
             XCTAssertTrue(wallet.contains(campo), campo)
         }
-        let sms = AutomationSteps.message.map { $0.title + " " + $0.detalle }.joined(separator: " ")
+        let sms = AutomationSteps.message.map { $0.title + " " + $0.detail }.joined(separator: " ")
         for campo in ["Texto", "Remitente"] {
             XCTAssertTrue(sms.contains(campo), campo)
         }
     }
 
-    func testAmbasMencionanEjecutarDeInmediato() {
-        for pasos in [AutomationSteps.transaccion, AutomationSteps.message] {
-            XCTAssertTrue(pasos.contains { $0.detalle.contains("Ejecutar de inmediato") })
+    func testBothMentionRunImmediately() {
+        for steps in [AutomationSteps.transaction, AutomationSteps.message] {
+            XCTAssertTrue(steps.contains { $0.detail.contains("Ejecutar de inmediato") })
         }
     }
 
     @MainActor
-    func testAbrirAtajosUsaElEsquemaShortcuts() {
-        var abierta: URL?
-        ShortcutsLauncher.abrir(con: { abierta = $0 })
-        XCTAssertEqual(abierta?.scheme, "shortcuts")
+    func testOpenShortcutsUsesTheShortcutsScheme() {
+        var opened: URL?
+        ShortcutsLauncher.open(with: { opened = $0 })
+        XCTAssertEqual(opened?.scheme, "shortcuts")
     }
 
-    func testLaClaveDeBienvenida() {
+    func testTheWelcomeKey() {
         let defaults = UserDefaults(suiteName: "co.loatech.coco.pruebas.bienvenida") ?? .standard
         defaults.removeObject(forKey: WelcomeView.key)
         XCTAssertFalse(WelcomeView.yaVista(defaults: defaults))

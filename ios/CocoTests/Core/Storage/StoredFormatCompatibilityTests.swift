@@ -100,15 +100,15 @@ final class StoredFormatCompatibilityTests: XCTestCase {
             ),
             #"{"amount":"1","clasificacion":CL,"date":"d","description":"x","merchant":"m","por_revisar":true}"#
                 .replacingOccurrences(of: "CL", with: claseJSON))
-        let transaccion = TransactionSummary(
+        let transaction = TransactionSummary(
             id: 1, date: "d", amount: "2", categoryId: 3, description: "x", merchant: "m", source: "sms",
             needsReview: false)
         let transJSON =
             #"{"amount":"2","category_id":3,"date":"d","description":"x","id":1,"merchant":"m","por_revisar":false,"source":"sms"}"#
-        try idaYVuelta(transaccion, transJSON)
+        try idaYVuelta(transaction, transJSON)
         try idaYVuelta(
             CaptureResponse(
-                transaction: transaccion, classification: classification, summary: "r", duplicate: true, merged: false),
+                transaction: transaction, classification: classification, summary: "r", duplicate: true, merged: false),
             #"{"clasificacion":CL,"fusionado":false,"repetido":true,"resumen":"r","transaction":TR}"#
                 .replacingOccurrences(of: "CL", with: claseJSON).replacingOccurrences(of: "TR", with: transJSON))
         try idaYVuelta(

@@ -318,12 +318,12 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
             return false
         }
         guard protocolo.lowercased() == esquemaBase, host.lowercased() == hostBase else { return false }
-        return puertoEfectivo(puerto, esquema: protocolo) == puertoEfectivo(base.port ?? 0, esquema: esquemaBase)
+        return puertoEfectivo(puerto, scheme: protocolo) == puertoEfectivo(base.port ?? 0, scheme: esquemaBase)
     }
 
-    nonisolated private static func puertoEfectivo(_ puerto: Int, esquema: String) -> Int {
+    nonisolated private static func puertoEfectivo(_ puerto: Int, scheme: String) -> Int {
         if puerto > 0 { return puerto }
-        return esquema.lowercased() == "https" ? 443 : 80
+        return scheme.lowercased() == "https" ? 443 : 80
     }
 
     /// `window.__coco.go(path)` si existe; devuelve `true` si navegó.
@@ -344,11 +344,11 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     /// Solo el host de la API (y `about:blank`, que WebKit usa por dentro).
     nonisolated static func esNavegacionPermitida(_ url: URL, base: URL) -> Bool {
-        guard let esquema = url.scheme?.lowercased() else { return false }
-        if esquema == "about" { return true }
-        guard esquema == "http" || esquema == "https", let host = url.host() else { return false }
+        guard let scheme = url.scheme?.lowercased() else { return false }
+        if scheme == "about" { return true }
+        guard scheme == "http" || scheme == "https", let host = url.host() else { return false }
         return origenPermitido(
-            protocolo: esquema, host: host, puerto: url.port ?? 0, base: base, esFramePrincipal: true)
+            protocolo: scheme, host: host, puerto: url.port ?? 0, base: base, esFramePrincipal: true)
     }
 
     /// Una entrega cada 30 s y nunca más de dos seguidas sin que cambie el

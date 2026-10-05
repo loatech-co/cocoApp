@@ -5,33 +5,33 @@ import SwiftUI
 struct MoreView: View {
     let d: Dependencies
 
-    @State private var confirmarSalida = false
+    @State private var confirmSignOut = false
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    row("Centros de costos", icono: "folder") { d.enrutador.go(.web(path: "/centros-de-costos")) }
-                    row("Mi cuenta", icono: "person") { d.enrutador.go(.web(path: "/mi-cuenta")) }
+                    row("Centros de costos", icon: "folder") { d.router.go(.web(path: "/centros-de-costos")) }
+                    row("Mi cuenta", icon: "person") { d.router.go(.web(path: "/mi-cuenta")) }
                     if d.esAdmin {
-                        row("Administración", icono: "person.2") { d.enrutador.go(.web(path: "/administracion")) }
+                        row("Administración", icon: "person.2") { d.router.go(.web(path: "/administracion")) }
                     }
                 } footer: {
                     if let email = d.profile?.email { Text(email) }
                 }
 
                 Section {
-                    row("Bienvenida y automatizaciones", icono: "wand.and.stars") { d.enrutador.go(.welcome) }
-                    row("Ajustes", icono: "gearshape") { d.enrutador.go(.settings) }
+                    row("Bienvenida y automatizaciones", icon: "wand.and.stars") { d.router.go(.welcome) }
+                    row("Ajustes", icon: "gearshape") { d.router.go(.settings) }
                 }
 
                 Section {
-                    Button("Cerrar sesión", role: .destructive) { confirmarSalida = true }
+                    Button("Cerrar sesión", role: .destructive) { confirmSignOut = true }
                 }
             }
             .navigationTitle("Más")
             .confirmationDialog(
-                "¿Cerrar sesión en este teléfono?", isPresented: $confirmarSalida, titleVisibility: .visible
+                "¿Cerrar sesión en este teléfono?", isPresented: $confirmSignOut, titleVisibility: .visible
             ) {
                 Button("Cerrar sesión", role: .destructive) {
                     Task { await d.signOut() }
@@ -42,10 +42,10 @@ struct MoreView: View {
         }
     }
 
-    private func row(_ title: String, icono: String, accion: @escaping () -> Void) -> some View {
-        Button(action: accion) {
+    private func row(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             HStack {
-                Label(title, systemImage: icono)
+                Label(title, systemImage: icon)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))

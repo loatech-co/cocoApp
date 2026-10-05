@@ -20,7 +20,7 @@ final class Dependencies {
     let puente: WebBridge
     let notifier: Notifier
     let connectivity: Connectivity
-    let enrutador: Router
+    let router: Router
     let defaults: UserDefaults
 
     /// Espejo del estado del actor de sesión, para que las vistas lo observen.
@@ -56,8 +56,8 @@ final class Dependencies {
         self.api = api
         let session = NativeSession(api: api, keychain: keychain)
         self.session = session
-        let enrutador = Router()
-        self.enrutador = enrutador
+        let router = Router()
+        self.router = router
 
         // La cola cuenta sus pendientes cada vez que cambia y se lo dice al
         // notificador (insignia del icono); se intercepta ahí para la pestaña.
@@ -76,13 +76,13 @@ final class Dependencies {
         let tree = TreeSynchronizer(
             api: api, session: session, store: almacenDelArbol ?? Self.almacenDelArbolPorDefecto())
         self.tree = tree
-        puente = WebBridge(session: session, configuration: configuration, navigation: enrutador)
+        puente = WebBridge(session: session, configuration: configuration, navigation: router)
 
         contador.alContar = { [weak self] n in self?.pending = n }
 
         // Antes de que iOS pueda lanzar un intent o una tarea de fondo: en el
         // init de la App, no después.
-        registrarIntents(capturer, enrutador)
+        registrarIntents(capturer, router)
         intentsRegistrados = true
         registrarTareas(session, queue, tree, contador)
         tareasRegistradas = true
@@ -175,8 +175,8 @@ final class Dependencies {
             Task { _ = await self.queue.process() }
             Task { await self.tree.refreshIfNeeded() }
             await pedirPermisoDeAvisosLaPrimeraVez()
-            if !WelcomeView.yaVista(defaults: defaults), enrutador.hoja == nil {
-                enrutador.go(.welcome)
+            if !WelcomeView.yaVista(defaults: defaults), router.hoja == nil {
+                router.go(.welcome)
             }
         case .signedOut:
             if puente.hayDocumento { puente.avisarSesionCerrada() }
