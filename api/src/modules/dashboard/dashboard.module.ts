@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AccountsService, type AccountView } from '../accounts/accounts.service';
 import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
+import { AutoChargeTask } from './auto-charge.task';
 import { PagosAutomaticosService } from './pagos-automaticos';
 import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
 import {
@@ -210,29 +211,14 @@ export class DashboardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounts: AccountsService,
-    private readonly automaticos: PagosAutomaticosService,
   ) {}
 
   async resumen(userId: bigint, query: DashboardQueryDto): Promise<DashboardPayload> {
     const { inicio, fin } = rangoPorDefecto(query.from, query.to);
 
-    /*
-      ── Antes de leer nada: cobrar lo que se cobra solo ───────────────────
-      Los conceptos con pago automático crean su movimiento al llegar su día,
-      y esto es lo que lo dispara: no hay planificador en esta aplicación, y
-      el momento en que eso importa es justo este —alguien abriendo su mes—.
+    // A GET only reads. Auto-paid concepts are charged by AutoChargeTask, once
+    // a day and at start-up (phase 6.7), not on the way in here.
 
-      Va PRIMERO a propósito. Si corriera después, o a mitad, el resumen
-      tendría que adivinar qué acaba de escribirse para no contarlo dos veces
-      ni dejarlo fuera. Cobrando antes, todo lo que sigue lee la base ya
-      completa y no se entera de nada: lo recién cobrado se cuenta igual que
-      si lo hubiera registrado una persona, porque a estas alturas ya lo es.
-
-      Quien no use la función no paga nada por esto: se va en la primera
-      consulta al no encontrar ningún concepto marcado.
-    */
-    const hoy = new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    await this.automaticos.cobrarLoQueToque(userId, `${hoy.slice(0, 7)}-01`, hoy);
 
     const categorias = await this.prisma.category.findMany({
       where: { userId },
@@ -718,6 +704,6 @@ export class DashboardController {
 @Module({
   imports: [AccountsModule],
   controllers: [DashboardController],
-  providers: [DashboardService, PagosAutomaticosService],
+  providers: [DashboardService, PagosAutomaticosService, AutoChargeTask],
 })
 export class DashboardModule {}

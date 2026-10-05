@@ -20,17 +20,11 @@ import {
  * haga nada —un débito, una suscripción, una cuota domiciliada—, donde ir a
  * marcarlo cada mes es trabajo de escribano para un dinero que ya salió.
  *
- * ── Por qué corre al pedir el resumen y no en un reloj ──────────────────────
- * Porque no hay reloj. Esta aplicación es un proceso que atiende peticiones en
- * un plan compartido; no hay planificador, y meterlo traería su propio
- * cementerio de trabajos a medias que nadie mira.
- *
- * Lo que sí hay es un momento en el que esto importa: cuando alguien abre el
- * resumen y espera ver su mes. Se cobra ANTES de leer nada, así que lo que el
- * resumen cuenta después incluye lo recién cobrado sin tener que adivinarlo.
- *
- * La consecuencia se acepta: si nadie abre la aplicación en todo el mes, nada
- * se cobra. Tampoco había nadie mirando.
+ * ── When it runs ────────────────────────────────────────────────────────────
+ * From AutoChargeTask (`auto-charge.task.ts`): once a day at 00:05 Bogotá and
+ * at every start-up. Until phase 6.7 it ran at the top of GET /dashboard,
+ * which made a read write movements and charged nothing for whoever did not
+ * open the app that month.
  *
  * ── Y por qué solo el mes EN CURSO ──────────────────────────────────────────
  * Nunca rellena meses pasados. Un mes viejo sin movimiento es un dato —no se
