@@ -1,8 +1,21 @@
-import { useEffect, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
+import { useEscapeToClose } from '@/shared/lib/escape';
 import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 import { CabeceraDeModal, PANEL_DE_MODAL } from '@/shared/ui/molecules/modal-partes';
+
+interface ModalProps {
+  abierta: boolean;
+  titulo: string;
+  /** La línea bajo el título: qué es esto, en una frase. */
+  ayuda?: string;
+  /** Botones de icono a la izquierda de la equis. Por ejemplo, eliminar. */
+  acciones?: ReactNode;
+  ancho?: string;
+  onCerrar: () => void;
+  children: ReactNode;
+}
 
 /**
  * El armazón de una ficha: el velo, el panel y su cabecera.
@@ -50,27 +63,8 @@ export function Modal({
   ancho = 'sm:max-w-xl',
   onCerrar,
   children,
-}: {
-  abierta: boolean;
-  titulo: string;
-  /** La línea bajo el título: qué es esto, en una frase. */
-  ayuda?: string;
-  /** Botones de icono a la izquierda de la equis. Por ejemplo, eliminar. */
-  acciones?: ReactNode;
-  ancho?: string;
-  onCerrar: () => void;
-  children: ReactNode;
-}) {
-  // Escape cierra. Un panel que solo se cierra con su propio botón obliga a
-  // apuntar con el ratón para deshacer lo que se abrió sin querer.
-  useEffect(() => {
-    if (!abierta) return;
-    const alPulsar = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onCerrar();
-    };
-    document.addEventListener('keydown', alPulsar);
-    return () => document.removeEventListener('keydown', alPulsar);
-  }, [abierta, onCerrar]);
+}: ModalProps) {
+  useEscapeToClose(abierta, onCerrar);
 
   if (!abierta) return null;
 

@@ -64,25 +64,10 @@ export function Th({
   orden?: { activo: 'asc' | 'desc' | null; onCambiar: () => void } | undefined;
   className?: string;
 }) {
-  const Flecha =
-    orden?.activo === 'asc' ? ChevronUp : orden?.activo === 'desc' ? ChevronDown : ChevronsUpDown;
-
   const contenido = orden ? (
-    <button
-      type="button"
-      onClick={orden.onCambiar}
-      className={cn(
-        'inline-flex items-center gap-1 rounded-sm transition-colors hover:text-foreground',
-        alineado === 'derecha' && 'flex-row-reverse',
-        orden.activo && 'text-foreground',
-      )}
-    >
+    <SortButton orden={orden} alineado={alineado}>
       {children}
-      <Flecha
-        className={cn('size-3.5 shrink-0', !orden.activo && 'opacity-40')}
-        aria-hidden="true"
-      />
-    </button>
+    </SortButton>
   ) : (
     children
   );
@@ -237,5 +222,36 @@ export function TablaEsqueleto({
         ))}
       </tbody>
     </Tabla>
+  );
+}
+/** El botón que ordena una columna, con su flecha siempre visible. */
+function SortButton({
+  orden,
+  alineado,
+  children,
+}: {
+  orden: { activo: 'asc' | 'desc' | null; onCambiar: () => void };
+  alineado: 'izquierda' | 'derecha';
+  children: ReactNode;
+}) {
+  const Flecha =
+    orden.activo === 'asc' ? ChevronUp : orden.activo === 'desc' ? ChevronDown : ChevronsUpDown;
+
+  return (
+    <button
+      type="button"
+      onClick={orden.onCambiar}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-sm transition-colors hover:text-foreground',
+        alineado === 'derecha' && 'flex-row-reverse',
+        orden.activo && 'text-foreground',
+      )}
+    >
+      {children}
+      <Flecha
+        className={cn('size-3.5 shrink-0', !orden.activo && 'opacity-40')}
+        aria-hidden="true"
+      />
+    </button>
   );
 }

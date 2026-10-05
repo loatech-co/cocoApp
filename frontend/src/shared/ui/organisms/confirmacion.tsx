@@ -1,11 +1,34 @@
 import { Loader2 } from 'lucide-react';
-import { useEffect, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
+import { useEscapeToClose } from '@/shared/lib/escape';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
 
+interface ConfirmationProps {
+  abierta: boolean;
+  titulo: string;
+  /** Qué va a pasar. Concreto: nombres, cantidades, consecuencias. */
+  children: ReactNode;
+  etiquetaConfirmar?: string;
+  /** Pinta la acción en rojo. Solo para lo que destruye algo. */
+  peligrosa?: boolean;
+  ocupada?: boolean;
+  /**
+   * Apaga el botón de confirmar porque falta un dato.
+   *
+   * Distinto de `ocupada`, que dice «ya se pulsó, espera». Esto dice «todavía
+   * no se puede». Lo usa el borrado de una categoría con movimientos dentro:
+   * hasta que se diga a dónde pasan no hay nada que confirmar, y enterarse
+   * después de pulsar «Eliminar» en un diálogo que avisa de que no se puede
+   * deshacer es lo peor que puede pasar ahí.
+   */
+  confirmarDeshabilitado?: boolean;
+  onConfirmar: () => void;
+  onCancelar: () => void;
+}
 /**
  * Pedir confirmación antes de algo que no se deshace solo.
  *
@@ -38,36 +61,8 @@ export function Confirmacion({
   confirmarDeshabilitado = false,
   onConfirmar,
   onCancelar,
-}: {
-  abierta: boolean;
-  titulo: string;
-  /** Qué va a pasar. Concreto: nombres, cantidades, consecuencias. */
-  children: ReactNode;
-  etiquetaConfirmar?: string;
-  /** Pinta la acción en rojo. Solo para lo que destruye algo. */
-  peligrosa?: boolean;
-  ocupada?: boolean;
-  /**
-   * Apaga el botón de confirmar porque falta un dato.
-   *
-   * Distinto de `ocupada`, que dice «ya se pulsó, espera». Esto dice «todavía
-   * no se puede». Lo usa el borrado de una categoría con movimientos dentro:
-   * hasta que se diga a dónde pasan no hay nada que confirmar, y enterarse
-   * después de pulsar «Eliminar» en un diálogo que avisa de que no se puede
-   * deshacer es lo peor que puede pasar ahí.
-   */
-  confirmarDeshabilitado?: boolean;
-  onConfirmar: () => void;
-  onCancelar: () => void;
-}) {
-  useEffect(() => {
-    if (!abierta) return;
-    const alPulsar = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onCancelar();
-    };
-    document.addEventListener('keydown', alPulsar);
-    return () => document.removeEventListener('keydown', alPulsar);
-  }, [abierta, onCancelar]);
+}: ConfirmationProps) {
+  useEscapeToClose(abierta, onCancelar);
 
   if (!abierta) return null;
 
@@ -99,34 +94,54 @@ export function Confirmacion({
         <h2 className="font-display text-lg font-semibold leading-tight">{titulo}</h2>
         <div className="mt-2 text-sm leading-relaxed text-muted-foreground">{children}</div>
 
-        <PieDeModal className="mt-6">
-          {/*
-            `outline` y no `ghost`. Un botón sin contorno al lado de uno
-            relleno no se lee como un botón: se lee como el texto de al lado
-            del botón, y la salida de un diálogo que pregunta antes de borrar
-            algo es exactamente lo que no puede costar encontrar.
-          */}
-          {/*
-            Y sin `autoFocus`. Lo llevaba para que la salida fuera lo primero
-            que encontrara el teclado, y el precio era que toda confirmación se
-            abría con un botón encendido que nadie había elegido. La regla del
-            foco vale también aquí: se pinta cuando se pide. La salida sigue
-            estando a un Escape y a un tabulador.
-          */}
-          <Button type="button" variant="outline" onClick={onCancelar}>
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            variant={peligrosa ? 'destructive' : 'default'}
-            disabled={ocupada || confirmarDeshabilitado}
-            onClick={onConfirmar}
-          >
-            {ocupada && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            {etiquetaConfirmar}
-          </Button>
-        </PieDeModal>
+        <ConfirmationFooter
+          etiquetaConfirmar={etiquetaConfirmar}
+          peligrosa={peligrosa}
+          ocupada={ocupada}
+          confirmarDeshabilitado={confirmarDeshabilitado}
+          onConfirmar={onConfirmar}
+          onCancelar={onCancelar}
+        />
       </div>
     </div>
+  );
+}
+
+function ConfirmationFooter({
+  etiquetaConfirmar,
+  peligrosa,
+  ocupada,
+  confirmarDeshabilitado,
+  onConfirmar,
+  onCancelar,
+}: Required<Omit<ConfirmationProps, 'abierta' | 'titulo' | 'children'>>) {
+  return (
+    <PieDeModal className="mt-6">
+      {/*
+        `outline` y no `ghost`. Un botón sin contorno al lado de uno
+        relleno no se lee como un botón: se lee como el texto de al lado
+        del botón, y la salida de un diálogo que pregunta antes de borrar
+        algo es exactamente lo que no puede costar encontrar.
+      */}
+      {/*
+        Y sin `autoFocus`. Lo llevaba para que la salida fuera lo primero
+        que encontrara el teclado, y el precio era que toda confirmación se
+        abría con un botón encendido que nadie había elegido. La regla del
+        foco vale también aquí: se pinta cuando se pide. La salida sigue
+        estando a un Escape y a un tabulador.
+      */}
+      <Button type="button" variant="outline" onClick={onCancelar}>
+        Cancelar
+      </Button>
+      <Button
+        type="button"
+        variant={peligrosa ? 'destructive' : 'default'}
+        disabled={ocupada || confirmarDeshabilitado}
+        onClick={onConfirmar}
+      >
+        {ocupada && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+        {etiquetaConfirmar}
+      </Button>
+    </PieDeModal>
   );
 }

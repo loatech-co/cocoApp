@@ -62,27 +62,7 @@ export function Paginador({
           </Celda>
         </li>
 
-        {numerosVisibles(pagina, paginas).map((n, i) =>
-          n === null ? (
-            // eslint-disable-next-line @eslint-react/no-array-index-key -- un salto «…» no tiene más identidad que su posición
-            <li key={`salto-${i}`}>
-              <span className="grid h-9 w-9 place-items-center text-sm text-muted-foreground">
-                …
-              </span>
-            </li>
-          ) : (
-            <li key={n}>
-              <Celda
-                actual={n === pagina}
-                onClick={() => onCambiar(n)}
-                aria-label={`Página ${n}`}
-                aria-current={n === pagina ? 'page' : undefined}
-              >
-                <span className="tabular w-4 text-center">{n}</span>
-              </Celda>
-            </li>
-          ),
-        )}
+        <PageNumbers pagina={pagina} paginas={paginas} onCambiar={onCambiar} />
 
         <li>
           <Celda
@@ -162,4 +142,39 @@ export function numerosVisibles(pagina: number, paginas: number, hueco = 1): (nu
   }
 
   return salida;
+}
+
+/** Los números de página, con sus saltos. */
+function PageNumbers({
+  pagina,
+  paginas,
+  onCambiar,
+}: {
+  pagina: number;
+  paginas: number;
+  onCambiar: (pagina: number) => void;
+}) {
+  return (
+    <>
+      {numerosVisibles(pagina, paginas).map((n, i) =>
+        n === null ? (
+          // eslint-disable-next-line @eslint-react/no-array-index-key -- un salto «…» no tiene más identidad que su posición
+          <li key={`salto-${i}`}>
+            <span className="grid h-9 w-9 place-items-center text-sm text-muted-foreground">…</span>
+          </li>
+        ) : (
+          <li key={n}>
+            <Celda
+              actual={n === pagina}
+              onClick={() => onCambiar(n)}
+              aria-label={`Página ${n}`}
+              aria-current={n === pagina ? 'page' : undefined}
+            >
+              <span className="tabular w-4 text-center">{n}</span>
+            </Celda>
+          </li>
+        ),
+      )}
+    </>
+  );
 }

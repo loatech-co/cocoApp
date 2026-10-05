@@ -68,46 +68,7 @@ export function Input({
         arriba desde el principio, tapando un campo vacío.
       */
       placeholder={placeholder ?? ' '}
-      className={cn(
-        'flex w-full rounded-lg border border-input bg-card px-3',
-        tamano === 'sm' ? 'h-9 text-sm' : 'h-11 text-base',
-        // El suelo táctil, aunque en `md` sobre: 44 ya pasa de 42. Se declara
-        // igual porque `piso-tactil.test.ts` pide que quien dibuja un control
-        // lo diga, y el día que alguien baje este alto el suelo sigue puesto.
-        'movil:min-h-[42px]',
-        /*
-          Dentro de un campo, el marcador SOLO se ve con el foco: en reposo su
-          sitio lo ocupa la etiqueta, y los dos a la vez son dos textos grises
-          pisándose —que es exactamente lo que pasaba—.
-
-          Va aquí y no en la hoja de estilos porque una utilidad le gana a la
-          capa `components`, y esta clase es justo la que ganaba.
-        */
-        enCampo
-          ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
-          : 'placeholder:text-muted-foreground',
-        // Al pasar por encima se tiñe el BORDE, igual que el `Select` y el
-        // `Combo` que lleva al lado. Sin esto, en una misma fila un control
-        // respondía al ratón y el de al lado no, y parecía que uno estaba
-        // apagado.
-        'transition-colors hover:border-ring/40',
-        // El porqué del grosor y de `:focus-visible`, en `campo.tsx`.
-        FOCO_DEL_CAMPO,
-        'disabled:cursor-not-allowed disabled:opacity-50',
-        'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive',
-        // 16px por debajo del corte y 14 por encima, y el corte es el de la
-        // app —no el `md:` de Tailwind, que mide solo el ancho—: una tableta
-        // en vertical es táctil aunque mida 800, y Safari amplía la página
-        // entera al enfocar un campo de menos de 16px.
-        tamano === 'md' && 'escritorio:text-sm',
-        // Sitio para los iconos. A la izquierda: 12 de margen, 16 de icono y 8
-        // de aire. A la derecha, lo mismo por cada botón de 28.
-        Icono && 'pl-9',
-        derecha.length === 1 && 'pr-11',
-        derecha.length >= 2 && 'pr-19',
-        enCampo && HUECO_DE_LA_ETIQUETA,
-        className,
-      )}
+      className={cn(inputClass(tamano, enCampo, Boolean(Icono), derecha.length), className)}
       {...props}
     />
   );
@@ -140,5 +101,53 @@ export function Input({
         </span>
       )}
     </span>
+  );
+}
+
+/** Las clases del `<input>`: su tamaño, su foco y el sitio de sus iconos. */
+function inputClass(
+  tamano: 'sm' | 'md',
+  enCampo: boolean,
+  conIcono: boolean,
+  acciones: number,
+): string {
+  return cn(
+    'flex w-full rounded-lg border border-input bg-card px-3',
+    tamano === 'sm' ? 'h-9 text-sm' : 'h-11 text-base',
+    // El suelo táctil, aunque en `md` sobre: 44 ya pasa de 42. Se declara
+    // igual porque `piso-tactil.test.ts` pide que quien dibuja un control
+    // lo diga, y el día que alguien baje este alto el suelo sigue puesto.
+    'movil:min-h-[42px]',
+    /*
+      Dentro de un campo, el marcador SOLO se ve con el foco: en reposo su
+      sitio lo ocupa la etiqueta, y los dos a la vez son dos textos grises
+      pisándose —que es exactamente lo que pasaba—.
+
+      Va aquí y no en la hoja de estilos porque una utilidad le gana a la
+      capa `components`, y esta clase es justo la que ganaba.
+    */
+    enCampo
+      ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
+      : 'placeholder:text-muted-foreground',
+    // Al pasar por encima se tiñe el BORDE, igual que el `Select` y el
+    // `Combo` que lleva al lado. Sin esto, en una misma fila un control
+    // respondía al ratón y el de al lado no, y parecía que uno estaba
+    // apagado.
+    'transition-colors hover:border-ring/40',
+    // El porqué del grosor y de `:focus-visible`, en `campo.tsx`.
+    FOCO_DEL_CAMPO,
+    'disabled:cursor-not-allowed disabled:opacity-50',
+    'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive',
+    // 16px por debajo del corte y 14 por encima, y el corte es el de la
+    // app —no el `md:` de Tailwind, que mide solo el ancho—: una tableta
+    // en vertical es táctil aunque mida 800, y Safari amplía la página
+    // entera al enfocar un campo de menos de 16px.
+    tamano === 'md' && 'escritorio:text-sm',
+    // Sitio para los iconos. A la izquierda: 12 de margen, 16 de icono y 8
+    // de aire. A la derecha, lo mismo por cada botón de 28.
+    conIcono && 'pl-9',
+    acciones === 1 && 'pr-11',
+    acciones >= 2 && 'pr-19',
+    enCampo && HUECO_DE_LA_ETIQUETA,
   );
 }

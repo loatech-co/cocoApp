@@ -193,61 +193,64 @@ export function PilaDeAvisos() {
       role="status"
       aria-live="polite"
     >
-      {avisos.map((aviso) => {
-        const Glifo = GLIFOS[aviso.tono];
-        const color = COLORES[aviso.tono];
-
-        return (
-          <div
-            key={aviso.id}
-            className={cn(
-              'pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-lg p-4',
-              SUPERFICIE_FLOTANTE,
-              SURGE,
-              'movil:max-w-none escritorio:w-[26rem]',
-            )}
-          >
-            {/*
-              El resplandor, en su propia capa detrás del contenido.
-
-              En la misma capa que la tarjeta habría que elegir entre el color
-              del popover y el degradado, porque los dos son `background`;
-              aquí el popover se queda de fondo y el degradado se apoya
-              encima, con el texto por delante.
-            */}
-            {color.resplandor && (
-              <span
-                aria-hidden="true"
-                className={cn('pointer-events-none absolute inset-0', color.resplandor)}
-              />
-            )}
-
-            {Glifo && (
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'relative grid size-10 shrink-0 place-items-center rounded-full',
-                  color.halo,
-                )}
-              >
-                <span className={cn('grid size-7 place-items-center rounded-full', color.pastilla)}>
-                  <Glifo className="size-4" />
-                </span>
-              </span>
-            )}
-
-            <span className="relative min-w-0">
-              <span className="block text-sm font-semibold leading-tight">{aviso.titulo}</span>
-              {aviso.detalle && (
-                <span className="mt-1 block text-sm leading-snug text-muted-foreground">
-                  {aviso.detalle}
-                </span>
-              )}
-            </span>
-          </div>
-        );
-      })}
+      {avisos.map((aviso) => (
+        <Toast key={aviso.id} aviso={aviso} />
+      ))}
     </div>,
     document.body,
+  );
+}
+
+function Toast({ aviso }: { aviso: Aviso }) {
+  const Glifo = GLIFOS[aviso.tono];
+  const color = COLORES[aviso.tono];
+
+  return (
+    <div
+      className={cn(
+        'pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-lg p-4',
+        SUPERFICIE_FLOTANTE,
+        SURGE,
+        'movil:max-w-none escritorio:w-[26rem]',
+      )}
+    >
+      {/*
+        El resplandor, en su propia capa detrás del contenido.
+
+        En la misma capa que la tarjeta habría que elegir entre el color
+        del popover y el degradado, porque los dos son `background`;
+        aquí el popover se queda de fondo y el degradado se apoya
+        encima, con el texto por delante.
+      */}
+      {color.resplandor && (
+        <span
+          aria-hidden="true"
+          className={cn('pointer-events-none absolute inset-0', color.resplandor)}
+        />
+      )}
+
+      {Glifo && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            'relative grid size-10 shrink-0 place-items-center rounded-full',
+            color.halo,
+          )}
+        >
+          <span className={cn('grid size-7 place-items-center rounded-full', color.pastilla)}>
+            <Glifo className="size-4" />
+          </span>
+        </span>
+      )}
+
+      <span className="relative min-w-0">
+        <span className="block text-sm font-semibold leading-tight">{aviso.titulo}</span>
+        {aviso.detalle && (
+          <span className="mt-1 block text-sm leading-snug text-muted-foreground">
+            {aviso.detalle}
+          </span>
+        )}
+      </span>
+    </div>
   );
 }
