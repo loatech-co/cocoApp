@@ -21,10 +21,7 @@ import { Logo } from '@/shared/ui/atoms/logo';
 export function LoginPage() {
   const { usuario, cargando, entrar } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const form = useLoginForm(entrar);
 
   /*
     Con sesión, aquí no hay nada que hacer.
@@ -37,16 +34,6 @@ export function LoginPage() {
   */
   if (!cargando && usuario) {
     return <Navigate to="/" replace />;
-  }
-
-  function onSubmit(evento: SubmitEvent<HTMLFormElement>): void {
-    evento.preventDefault();
-    setError(null);
-    setEnviando(true);
-
-    void entrar(email, password)
-      .catch((causa: unknown) => setError(mensajeDeErrorDeAuth(causa)))
-      .finally(() => setEnviando(false));
   }
 
   return (
@@ -83,62 +70,7 @@ export function LoginPage() {
 
           <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>¡Hola de nuevo!</CardTitle>
-              <CardDescription>Accede con tu correo y contraseña.</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-col gap-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <form onSubmit={onSubmit} className="flex flex-col gap-4">
-                <Campo etiqueta="Correo" id="email">
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(evento) => setEmail(evento.target.value)}
-                    aria-invalid={error !== null}
-                  />
-                </Campo>
-
-                <Campo etiqueta="Contraseña" id="password">
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(evento) => setPassword(evento.target.value)}
-                    aria-invalid={error !== null}
-                  />
-                </Campo>
-
-                <Button type="submit" className="w-full" disabled={enviando}>
-                  {enviando ? (
-                    <Loader2 className="animate-spin" aria-hidden="true" />
-                  ) : (
-                    <LogIn aria-hidden="true" />
-                  )}
-                  {enviando ? 'Un momento…' : 'Iniciar sesión'}
-                </Button>
-              </form>
-
-              <p className="text-center text-sm text-muted-foreground">
-                ¿No tienes cuenta?{' '}
-                <Link to="/registro" className="text-primary underline-offset-4 hover:underline">
-                  Solicitar acceso
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
+          <LoginCard form={form} />
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
             ¿Olvidaste tu contraseña? Pídele al administrador que la restablezca.
@@ -146,51 +78,60 @@ export function LoginPage() {
         </div>
       </section>
 
-      {/*
-        La mitad de marca. En móvil DESAPARECE, no se apila: un teléfono no
-        tiene alto que gastar en decoración antes del formulario, y empujar el
-        campo de correo bajo el pliegue es la forma más rápida de que alguien
-        abandone.
+      <LoginBrand />
+    </main>
+  );
+}
 
-        El padding va en el CONTENEDOR y el redondeo en la imagen: así la
-        imagen respira contra el borde de la pantalla en vez de sangrar, que es
-        lo que pediste.
-      */}
+/** La mitad de la marca, en pantalla ancha. */
+function LoginBrand() {
+  return (
+    <>
+      {/*
+      La mitad de marca. En móvil DESAPARECE, no se apila: un teléfono no
+      tiene alto que gastar en decoración antes del formulario, y empujar el
+      campo de correo bajo el pliegue es la forma más rápida de que alguien
+      abandone.
+
+      El padding va en el CONTENEDOR y el redondeo en la imagen: así la
+      imagen respira contra el borde de la pantalla en vez de sangrar, que es
+      lo que pediste.
+    */}
       <section className="hidden bg-background p-6 lg:block">
         {/*
-          El padding va en el CONTENEDOR y el redondeo en la imagen: así respira
-          contra el borde de la pantalla en vez de sangrar.
+        El padding va en el CONTENEDOR y el redondeo en la imagen: así respira
+        contra el borde de la pantalla en vez de sangrar.
 
-          Por CSS y no con <img>: si la imagen no carga —red lenta, navegador
-          sin WebP— queda el verde de fondo y la pantalla sigue siendo usable.
-          Un <img> roto dejaría el icono de imagen partida.
+        Por CSS y no con <img>: si la imagen no carga —red lenta, navegador
+        sin WebP— queda el verde de fondo y la pantalla sigue siendo usable.
+        Un <img> roto dejaría el icono de imagen partida.
 
-          WebP sin respaldo JPG a propósito: lo soportan todos los navegadores
-          desde 2020. El original vive en frontend/assets-fuente/, con cómo
-          regenerarlo.
-        */}
+        WebP sin respaldo JPG a propósito: lo soportan todos los navegadores
+        desde 2020. El original vive en frontend/assets-fuente/, con cómo
+        regenerarlo.
+      */}
         <div
           className="relative size-full overflow-hidden rounded-lg bg-primary bg-cover bg-center"
           style={{ backgroundImage: 'url(/fondo-login.webp)' }}
         >
           {/*
-            Degradado en verde británico desde abajo.
+          Degradado en verde británico desde abajo.
 
-            No es decoración: la imagen tiene zonas de lima muy claro, y un
-            texto blanco encima de una de esas franjas desaparece. El degradado
-            garantiza que la parte baja —donde va el texto— sea siempre oscura,
-            se recorte la imagen por donde se recorte.
+          No es decoración: la imagen tiene zonas de lima muy claro, y un
+          texto blanco encima de una de esas franjas desaparece. El degradado
+          garantiza que la parte baja —donde va el texto— sea siempre oscura,
+          se recorte la imagen por donde se recorte.
 
-            Sube hasta el 55% y no hasta arriba para no apagar la imagen entera:
-            arriba queda limpia.
-          */}
+          Sube hasta el 55% y no hasta arriba para no apagar la imagen entera:
+          arriba queda limpia.
+        */}
           <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-primary via-primary/70 to-transparent" />
 
           {/* `text-primary-foreground` y no blanco. El degradado de debajo es
-              `--primary`, y en oscuro ese primario es el teal CLARO del tema:
-              blanco encima daba 1.9:1 y la frase desaparecía. La tinta del
-              primario es, por definición, la que se lee sobre él —blanca en
-              claro, casi negra en oscuro— sin que haya que elegir. */}
+            `--primary`, y en oscuro ese primario es el teal CLARO del tema:
+            blanco encima daba 1.9:1 y la frase desaparecía. La tinta del
+            primario es, por definición, la que se lee sobre él —blanca en
+            claro, casi negra en oscuro— sin que haya que elegir. */}
           <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-[1.08] tracking-tight text-primary-foreground xl:p-14 xl:text-6xl">
             Tus finanzas,
             <br />
@@ -198,6 +139,93 @@ export function LoginPage() {
           </p>
         </div>
       </section>
-    </main>
+    </>
+  );
+}
+
+function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
+  const { email, setEmail, password, setPassword, error, enviando, onSubmit } = form;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>¡Hola de nuevo!</CardTitle>
+        <CardDescription>Accede con tu correo y contraseña.</CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <Campo etiqueta="Correo" id="email">
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(evento) => setEmail(evento.target.value)}
+              aria-invalid={error !== null}
+            />
+          </Campo>
+
+          <Campo etiqueta="Contraseña" id="password">
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(evento) => setPassword(evento.target.value)}
+              aria-invalid={error !== null}
+            />
+          </Campo>
+
+          <LoginSubmit enviando={enviando} />
+        </form>
+
+        <p className="text-center text-sm text-muted-foreground">
+          ¿No tienes cuenta?{' '}
+          <Link to="/registro" className="text-primary underline-offset-4 hover:underline">
+            Solicitar acceso
+          </Link>
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** El correo, la contraseña y el envío del formulario de entrada. */
+function useLoginForm(entrar: ReturnType<typeof useAuth>['entrar']) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  function onSubmit(evento: SubmitEvent<HTMLFormElement>): void {
+    evento.preventDefault();
+    setError(null);
+    setEnviando(true);
+
+    void entrar(email, password)
+      .catch((causa: unknown) => setError(mensajeDeErrorDeAuth(causa)))
+      .finally(() => setEnviando(false));
+  }
+
+  return { email, setEmail, password, setPassword, error, enviando, onSubmit };
+}
+
+function LoginSubmit({ enviando }: { enviando: boolean }) {
+  return (
+    <Button type="submit" className="w-full" disabled={enviando}>
+      {enviando ? (
+        <Loader2 className="animate-spin" aria-hidden="true" />
+      ) : (
+        <LogIn aria-hidden="true" />
+      )}
+      {enviando ? 'Un momento…' : 'Iniciar sesión'}
+    </Button>
   );
 }
