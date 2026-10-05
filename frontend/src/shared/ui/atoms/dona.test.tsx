@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest';
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { arcosDeLaDona, sectorDeLaDona } from './dona';
+import { arcosDeLaDona, Dona, sectorDeLaDona } from './dona';
+
+afterEach(cleanup);
 
 /**
  * La geometría de la dona, con números.
@@ -167,5 +171,93 @@ describe('El sector de la dona', () => {
   it('una porción de cero no dibuja nada', () => {
     expect(sectorDeLaDona(0.4, 0.4)).toBe('');
     expect(sectorDeLaDona(0.4, 0.2)).toBe('');
+  });
+});
+
+describe('Dona', () => {
+  // Neutral sample values: the tests look at names, order and shares.
+  /** What the ring draws for each slice, in list order; the background ring is left out. */
+  const shapes = (container: HTMLElement): Element[] =>
+    Array.from(container.querySelectorAll('svg > *')).slice(1);
+
+  const SLICES = [
+    { id: 1, nombre: 'Vivienda', valor: 3 },
+    { id: 2, nombre: 'Aseo', valor: 1 },
+    { id: null, nombre: 'Sin clasificar', valor: 0 },
+  ];
+
+  it('is an image with a name, and lists its slices largest first', () => {
+    render(<Dona porciones={SLICES} total={4} />);
+
+    expect(screen.getByRole('img', { name: 'Distribución del gasto' })).toBeTruthy();
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'Vivienda',
+      'Aseo',
+      'Sin clasificar',
+    ]);
+  });
+
+  it('draws nothing for an empty slice', () => {
+    const { container } = render(<Dona porciones={SLICES} total={4} />);
+
+    expect(shapes(container)).toHaveLength(2);
+  });
+
+  it('draws a full ring when one slice is the whole total', () => {
+    const { container } = render(
+      <Dona porciones={[{ id: 1, nombre: 'Vivienda', valor: 1 }]} total={1} />,
+    );
+
+    // The background ring plus the slice.
+    expect(container.querySelectorAll('svg circle')).toHaveLength(2);
+  });
+
+  it('drills down into a slice from the list and from the ring', () => {
+    const onElegir = vi.fn();
+    const { container } = render(<Dona porciones={SLICES} total={4} onElegir={onElegir} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Aseo' }));
+    fireEvent.click(shapes(container)[0]!);
+
+    expect(onElegir.mock.calls).toEqual([[2], [1]]);
+  });
+
+  it('cannot drill into a slice without an id, or when nobody listens', () => {
+    const { rerender } = render(<Dona porciones={SLICES} total={4} onElegir={vi.fn()} />);
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Sin clasificar' }).disabled).toBe(
+      true,
+    );
+
+    rerender(<Dona porciones={SLICES} total={4} />);
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Vivienda' }).disabled).toBe(true);
+  });
+
+  it('shows the share of the slice under the pointer, and dims the others', () => {
+    const { container } = render(<Dona porciones={SLICES} total={4} />);
+
+    fireEvent.pointerMove(container.firstElementChild!, { clientX: 10, clientY: 10 });
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'Vivienda' }));
+
+    expect(screen.getByText('75% del total')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Aseo' }).className).toContain('opacity-40');
+    const aseo = shapes(container)[1]!;
+    expect(aseo.getAttribute('fill') ?? aseo.getAttribute('stroke')).toContain('color-mix');
+  });
+
+  it('hides the hint when the pointer leaves', () => {
+    const { container } = render(<Dona porciones={SLICES} total={4} />);
+
+    fireEvent.pointerEnter(shapes(container)[0]!);
+    expect(screen.getByText('75% del total')).toBeTruthy();
+
+    fireEvent.pointerLeave(container.firstElementChild!);
+    expect(screen.queryByText('75% del total')).toBeNull();
+  });
+
+  it('can leave the list out and keep only the ring', () => {
+    render(<Dona porciones={SLICES} total={4} mostrarLista={false} />);
+
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByRole('img').getAttribute('class')).toContain('mx-auto');
   });
 });
