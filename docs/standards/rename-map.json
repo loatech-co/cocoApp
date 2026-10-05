@@ -968,46 +968,52 @@
   "routes": [
     {
       "from": "GET /api/v1/transactions/historia",
-      "to": "GET /api/v1/transactions/history",
+      "to": "GET /api/v2/transactions/history",
       "breaking": true,
-      "consumers": ["web"]
+      "consumers": ["web"],
+      "note": "lives under /api/v2 (7.4); v1 keeps the old path until 7.10 contracts it"
     },
     {
       "from": "GET /api/v1/transactions/:id/soportes",
-      "to": "GET /api/v1/transactions/:id/receipts",
+      "to": "GET /api/v2/transactions/:id/receipts",
       "breaking": true,
-      "consumers": ["web"]
+      "consumers": ["web"],
+      "note": "lives under /api/v2 (7.4); v1 keeps the old path until 7.10 contracts it"
     },
     {
       "from": "POST /api/v1/transactions/:id/soportes",
-      "to": "POST /api/v1/transactions/:id/receipts",
+      "to": "POST /api/v2/transactions/:id/receipts",
       "breaking": true,
-      "consumers": ["web", "ios"]
+      "consumers": ["web", "ios"],
+      "note": "lives under /api/v2 (7.4); v1 keeps the old path until 7.10 contracts it"
     },
     {
       "from": "GET /api/v1/transactions/:id/soportes/:soporteId",
-      "to": "GET /api/v1/transactions/:id/receipts/:receiptId",
+      "to": "GET /api/v2/transactions/:id/receipts/:receiptId",
       "breaking": true,
-      "consumers": ["web"]
+      "consumers": ["web"],
+      "note": "lives under /api/v2 (7.4); v1 keeps the old path until 7.10 contracts it"
     },
     {
       "from": "DELETE /api/v1/transactions/:id/soportes/:soporteId",
-      "to": "DELETE /api/v1/transactions/:id/receipts/:receiptId",
+      "to": "DELETE /api/v2/transactions/:id/receipts/:receiptId",
       "breaking": true,
-      "consumers": ["web"]
+      "consumers": ["web"],
+      "note": "lives under /api/v2 (7.4); v1 keeps the old path until 7.10 contracts it"
     },
     {
       "from": "GET /api/v1/categories/:id/usos",
-      "to": "GET /api/v1/categories/:id/usage",
+      "to": "GET /api/v2/categories/:id/usage",
       "breaking": true,
-      "consumers": ["web"]
+      "consumers": ["web"],
+      "note": "lives under /api/v2 (7.4); v1 keeps the old path until 7.10 contracts it"
     },
     {
       "from": "POST /api/v1/categories/:id/unificar",
-      "to": "POST /api/v1/categories/:id/merge",
+      "to": "POST /api/v2/categories/:id/merge",
       "breaking": true,
       "consumers": ["web"],
-      "note": "action sub-resource; documented exception to \"no verbs\""
+      "note": "action sub-resource; documented exception to \"no verbs\"; lives under /api/v2 (7.4); v1 keeps the old path until 7.10 contracts it"
     },
     {
       "from": "multipart field \"archivos\"",
@@ -1579,6 +1585,55 @@
       "breaking": true,
       "consumers": ["web"],
       "note": "casing only (7.2: camelCase JSON)"
+    },
+    {
+      "from": "movidos",
+      "to": "moved",
+      "breaking": true,
+      "consumers": ["web"],
+      "note": "added in the v2 contract step (7.4), following the map's pattern"
+    },
+    {
+      "from": "destino",
+      "to": "target",
+      "breaking": true,
+      "consumers": ["web"],
+      "note": "added in the v2 contract step (7.4), following the map's pattern"
+    },
+    {
+      "from": "movimientos",
+      "to": "transactions",
+      "breaking": true,
+      "consumers": ["web"],
+      "note": "added in the v2 contract step (7.4), following the map's pattern"
+    },
+    {
+      "from": "subcategorias",
+      "to": "subcategories",
+      "breaking": true,
+      "consumers": ["web"],
+      "note": "added in the v2 contract step (7.4), following the map's pattern"
+    },
+    {
+      "from": "creadas",
+      "to": "created",
+      "breaking": true,
+      "consumers": ["web"],
+      "note": "added in the v2 contract step (7.4), following the map's pattern"
+    },
+    {
+      "from": "aprendido",
+      "to": "learned",
+      "breaking": true,
+      "consumers": ["web"],
+      "note": "added in the v2 contract step (7.4), following the map's pattern"
+    },
+    {
+      "from": "reasignar_a",
+      "to": "reassignTo",
+      "breaking": true,
+      "consumers": ["web"],
+      "note": "added in the v2 contract step (7.4), following the map's pattern"
     }
   ],
   "jsonValues": [
