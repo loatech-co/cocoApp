@@ -451,3 +451,74 @@ gap is in `features/` (transactions and centros above all), which gets its
 tests once its components are split into reviewable units. **Thresholds only
 go up**: a PR that adds coverage raises them to the new floor; lowering one
 needs an ADR with the reason.
+
+## Security and operations
+
+### Secrets
+
+**Rule.** A secret lives only in an environment variable validated by
+`api/src/common/config/env.ts`. `api/.env.example` lists exactly the variables
+of that schema, without values; what only the scripts read goes in
+`api/.env.migrate.example`. `gitleaks` scans what is staged on every commit
+(lefthook `pre-commit`) and the whole history in CI (`security.yml`).
+
+**Why.** A secret in the code or in a commit is a secret to rotate: removing
+it later does not remove it from the history. The pre-commit scan stops it
+before it exists, the only moment it costs nothing; CI is the gate for anyone
+without gitleaks installed (the hook warns and lets the commit through,
+because gitleaks is a Go binary, not an npm package — `brew install
+gitleaks`). `env.spec.ts` fails if `.env.example` gains, loses or fills in a
+variable, so the template cannot drift from what the API reads.
+
+### Headers, CORS and rate limits
+
+**Rule.** `configureApp` (`api/src/bootstrap.ts`) sets them, and the e2e
+suite builds the app with that same function:
+
+- `helmet`: HSTS for two years with `includeSubDomains` and `preload`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `nosniff`, and a
+  content security policy where every permit has its reason in a comment.
+- CORS: an exact list of origins in `CORS_ORIGINS`, never a wildcard, with
+  credentials. Any other origin gets no `Access-Control-Allow-Origin`.
+- Rate limits: 120 requests a minute per client by default; `register` 5,
+  `login` 10 and `refresh` 30, each with its own `@Throttle`.
+
+Tests: `api/test/security-headers.e2e-spec.ts` (headers, one allowed and one
+rejected origin) and `api/test/rate-limit.e2e-spec.ts` (login, register,
+refresh). A change to any of these values changes its test in the same PR.
+
+**Why.** The refresh token travels in a cookie, so CORS with credentials and
+a wildcard would hand the session to any site. Login and register spend a
+19 MiB argon2 hash and a call to Supabase per attempt: without a cap, a few
+requests a second exhaust the server. The limiter is off in the rest of the
+suite; without its own test it could be switched off for good and nobody
+would notice.
+
+### Logs
+
+**Rule.** No personal data and no amounts in a log line: no emails, names,
+amounts, descriptions, receipt text, tokens or query strings. Log ids
+(internal user id, request id, record ids) and outcomes. The access line and
+the exceptions filter write the path without its query string.
+`api/src/common/logging/no-personal-data.spec.ts` gives both a request that
+carries an email, an amount and a description in its query and its body, and
+fails if any of them reaches a line.
+
+**Why.** Logs are copied, rotated, shared to debug and kept longer than the
+data, outside the database's access rules. The query string is where search
+terms travel. An id is enough to find the record again with the right
+permissions; a log never needs the value itself.
+
+### Probes
+
+**Rule.** Two public routes, neither authenticated nor revealing anything:
+
+- `GET /api/v1/health` — the process is alive. Never touches the database.
+- `GET /api/v1/ready` — the process can serve: the database answers
+  `SELECT 1`; `503` otherwise.
+
+Both are exempt in `user-isolation.e2e-spec.ts`, with their reason.
+
+**Why.** An unreachable database and a dead process are different failures
+with different fixes: restarting the API does not bring the database back.
+With one route for both, a database outage looked like a crashed API.
