@@ -1126,6 +1126,76 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(r.body.data.pending).toHaveLength(1);
       expect(r.body.data.pending[0].name).toBe('Agua');
     });
+
+    it('un concepto ARCHIVADO sale de los pendientes pero sigue contando en los históricos', async () => {
+      /*
+        Archivar mira hacia adelante: el gimnasio que se dio de baja no se
+        vuelve a pedir cada mes. Pero no reescribe lo que ya pasó: lo que
+        costó mientras estuvo vivo sigue en el total gastado y en la dona.
+
+        Las dos mitades se miran en UNA sola respuesta —el rango abarca el mes
+        pasado y el actual— porque los pendientes salen siempre del mes en
+        curso, mientras que los totales salen del rango pedido. Si el filtro
+        de archivados se moviera a la consulta de la que beben los dos, esta
+        prueba lo diría: el total perdería los 90.000.
+      */
+      const hoy = new Date(Date.now() - 5 * 60 * 60 * 1000);
+      const mes = hoy.toISOString().slice(0, 7);
+      const mesPasado = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth() - 1, 10))
+        .toISOString()
+        .slice(0, 7);
+
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
+      // El agua no se toca: es el testigo de que la lista sigue viva.
+      await crearCategoria(comoAna(), {
+        name: 'Agua',
+        parent_id: Number(centro.id),
+        recurrente: true,
+        periodicidad: 'mensual',
+        dia_de_pago: 10,
+      });
+      const gimnasio = await crearCategoria(comoAna(), {
+        name: 'Gimnasio',
+        parent_id: Number(centro.id),
+        recurrente: true,
+        periodicidad: 'mensual',
+        dia_de_pago: 5,
+      });
+
+      // El gimnasio se pagó el mes pasado; este mes ninguno de los dos.
+      await http
+        .post('/api/v1/transactions')
+        .set('Authorization', comoAna())
+        .send({
+          date: `${mesPasado}-05`,
+          amount: '90000',
+          type: 'expense',
+          category_id: Number(gimnasio.id),
+        })
+        .expect(201);
+
+      // Y después se da de baja: se archiva, no se borra.
+      await http
+        .patch(`/api/v1/categories/${gimnasio.id}`)
+        .set('Authorization', comoAna())
+        .send({ is_archived: true })
+        .expect(200);
+
+      const r = await http
+        .get(`/api/v1/dashboard?from=${mesPasado}-01&to=${mes}-28`)
+        .set('Authorization', comoAna())
+        .expect(200);
+
+      // Sin pagar este mes los dos, pero solo el agua se pide: el gimnasio
+      // archivado ya no es algo que falte pagar, ni entra en el presupuesto.
+      expect(r.body.data.pending.map((p: { name: string }) => p.name)).toEqual(['Agua']);
+      expect(r.body.data.required_budget).toBe('0.00');
+
+      // Lo que costó mientras estuvo vivo sigue ahí: en el total y en la dona.
+      expect(r.body.data.range.expense).toBe('90000.00');
+      const porCategoria = r.body.data.by_category as { category_id: unknown; total: string }[];
+      expect(porCategoria.map((fila) => Number(fila.total)).reduce((a, b) => a + b, 0)).toBe(90000);
+    });
   });
 
   // ── Paginación ─────────────────────────────────────────────────────────────
