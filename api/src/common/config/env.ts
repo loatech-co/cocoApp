@@ -104,7 +104,8 @@ function requiredByContext(env: CleanEnv): [string, string][] {
   return problems;
 }
 
-const KEYS = Object.keys(envSchema.shape) as (keyof typeof envSchema.shape)[];
+/** Every variable the API reads. `api/.env.example` lists exactly these (env.spec.ts). */
+export const ENV_VARIABLES = Object.keys(envSchema.shape) as (keyof typeof envSchema.shape)[];
 
 /**
  * Why the API must NOT start with this environment, or `null` if it can.
@@ -114,7 +115,7 @@ const KEYS = Object.keys(envSchema.shape) as (keyof typeof envSchema.shape)[];
  */
 export function whyTheEnvironmentIsInvalid(source: NodeJS.ProcessEnv = process.env): string | null {
   const cleaned: CleanEnv = Object.fromEntries(
-    KEYS.map((key) => [key, leerDelEntorno(key, source)]),
+    ENV_VARIABLES.map((key) => [key, leerDelEntorno(key, source)]),
   );
   const result = envSchema.safeParse(cleaned);
 
