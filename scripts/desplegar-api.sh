@@ -14,9 +14,9 @@
 # verificado y la CPU. El plan compartido tiene cuota de CPU y compilar
 # TypeScript allá es pedirle que nos throttlee.
 #
-# El cliente de Prisma SÍ se genera en el servidor, y es la excepción a propósito:
-# su motor es un binario nativo (libquery_engine-debian-openssl-1.1.x) que no
-# sirve compilado desde macOS.
+# Desde Prisma 7 (ADR 0020) el cliente tampoco se genera allá: no hay motor
+# nativo, el cliente es TypeScript en api/src/generated/prisma y `nest build`
+# lo compila dentro de api/dist. Viaja con el resto del build.
 set -euo pipefail
 
 SERVIDOR="u523998927@5.183.10.14"
@@ -48,7 +48,6 @@ $SSH_CMD "$SERVIDOR" "
   mkdir -p \"\$R\"
   cp -r ~/$REMOTO/api/dist \"\$R/api-dist\"
   cp -r ~/$REMOTO/api/prisma \"\$R/api-prisma\"
-  cp -r ~/$REMOTO/node_modules/.prisma \"\$R/prisma-client\"
   cp ~/$CONFIG/.env \"\$R/env\"
   echo \"   respaldo: \$R\"
 "
@@ -56,6 +55,7 @@ $SSH_CMD "$SERVIDOR" "
 echo "▸ Subiendo el código…"
 rsync -az --delete -e "$SSH_CMD" api/dist/   "$SERVIDOR:$REMOTO/api/dist/"
 rsync -az --delete -e "$SSH_CMD" api/prisma/ "$SERVIDOR:$REMOTO/api/prisma/"
+rsync -az          -e "$SSH_CMD" api/prisma.config.ts "$SERVIDOR:$REMOTO/api/prisma.config.ts"
 rsync -az --delete -e "$SSH_CMD" packages/   "$SERVIDOR:$REMOTO/packages/"
 rsync -az          -e "$SSH_CMD" package.json     "$SERVIDOR:$REMOTO/package.json"
 rsync -az          -e "$SSH_CMD" api/package.json "$SERVIDOR:$REMOTO/api/package.json"
@@ -67,22 +67,9 @@ echo "▸ Instalando dependencias nuevas…"
 # acaba de subir y no toca lo que ya está.
 $SSH_CMD "$SERVIDOR" "
   set -e
-  export PATH=/opt/alt/alt-nodejs20/root/usr/bin:\$PATH
+  export PATH=/opt/alt/alt-nodejs22/root/usr/bin:\$PATH
   cd ~/$REMOTO
   npm install --no-audit --no-fund 2>&1 | tail -1
-"
-
-echo "▸ Regenerando el cliente de Prisma para Postgres…"
-$SSH_CMD "$SERVIDOR" "
-  set -e
-  export PATH=/opt/alt/alt-nodejs20/root/usr/bin:\$PATH
-  cd ~/$REMOTO/api
-  # Se invoca por node en vez de npx: en el plan compartido el enlace de
-  # node_modules/.bin/prisma no tiene permiso de ejecucion y npx falla con
-  # "Permission denied". Sin el pipe, ademas, 'set -e' sí detecta el fallo:
-  # canalizando la salida a tail, el codigo de salida era el del tail y el
-  # error pasaba inadvertido mientras el despliegue seguia adelante.
-  node ../node_modules/prisma/build/index.js generate
 "
 
 echo "▸ Apuntando la base a Supabase…"
@@ -125,6 +112,6 @@ else
   echo ""
   echo "⚠️  Respuesta inesperada (${CODIGO}). Para volver atrás:" >&2
   echo "   ssh -i $LLAVE -p $PUERTO $SERVIDOR 'cd ~/$CONFIG && cp .env.antes-del-corte .env && touch ~/domains/${DOMINIO}/restart.txt'" >&2
-  echo "   …y restaurá api/dist, api/prisma y node_modules/.prisma desde ~/respaldos-cocoapp/$FECHA" >&2
+  echo "   …y restaurá api/dist y api/prisma desde ~/respaldos-cocoapp/$FECHA" >&2
   exit 1
 fi
