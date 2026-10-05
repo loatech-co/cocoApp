@@ -101,8 +101,8 @@ final class ContractsTests: XCTestCase {
 
     /// Lee packages/types/src/index.ts y falla si la marca se separa.
     func testMarcaCoincideConCocoTypes() throws {
-        let raiz = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent()
+        // ios/CocoTests/Core/Networking/<este archivo> → la raíz del repo.
+        let raiz = (0..<5).reduce(URL(fileURLWithPath: #filePath)) { url, _ in url.deletingLastPathComponent() }
         let ruta = raiz.appending(path: "packages/types/src/index.ts")
         guard let fuente = try? String(contentsOf: ruta, encoding: .utf8) else {
             throw XCTSkip("No está el repo al lado: \(ruta.path)")

@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Coco
 
-/// Paridad con `frontend/src/lib/buscar-en-arbol.test.ts`: mismo fixture,
-/// mismos resultados. Si una prueba cambia allí, cambia aquí.
+/// Paridad con `buscar-en-arbol.test.ts` de la web (ver `parityPaths`): mismo
+/// fixture, mismos resultados. Si una prueba cambia allí, cambia aquí.
 final class TreeIndexTests: XCTestCase {
     private static let arbol: [TreeNode] = [
         TreeNode(
@@ -150,5 +150,26 @@ final class TreeIndexTests: XCTestCase {
         XCTAssertEqual(
             TreeIndex.normalizar("ÑANDÚ"), "nandu",
             "NFD descompone la eñe y la tilde se va, igual que en firmas.ts")
+    }
+
+    /// Dónde ha vivido la prueba de la web. La 7.4 la movió de `lib/` a la
+    /// feature de movimientos; se aceptan las dos mientras convivan ramas.
+    static let parityPaths = [
+        "frontend/src/features/transactions/model/buscar-en-arbol.test.ts",
+        "frontend/src/lib/buscar-en-arbol.test.ts",
+    ]
+
+    /// Si la prueba de la web se mueve o se renombra, esta paridad se quedaría
+    /// apuntando a la nada sin que nadie lo notara.
+    func testTheWebParityTestStillExists() throws {
+        let raiz = URL(fileURLWithPath: #filePath)
+        let repo = (0..<5).reduce(raiz) { url, _ in url.deletingLastPathComponent() }
+        guard FileManager.default.fileExists(atPath: repo.appending(path: "frontend").path) else {
+            throw XCTSkip("No está el repo al lado: \(repo.path)")
+        }
+        let encontrada = Self.parityPaths.contains {
+            FileManager.default.fileExists(atPath: repo.appending(path: $0).path)
+        }
+        XCTAssertTrue(encontrada, "La prueba de paridad de la web no está en \(Self.parityPaths)")
     }
 }
