@@ -7,7 +7,7 @@ import { verificarCuadreDeSplits } from '../../common/money/splits';
 import { PrismaService } from '../../prisma/prisma.service';
 import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
 import { SoportesService } from '../soportes/soportes.service';
-import { TagsService } from '../tags/tags.module';
+import { TagsService } from '../tags/tags.service';
 import type {
   CreateTransactionDto,
   CreateTransferDto,
