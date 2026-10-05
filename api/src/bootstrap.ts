@@ -3,6 +3,8 @@ import type { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
+import { requestContext } from './common/logging/request-context';
+
 /**
  * Configuración transversal de la aplicación: prefijo, cabeceras de seguridad,
  * CORS y validación.
@@ -12,7 +14,14 @@ import helmet from 'helmet';
  * estarían verificando algo que no es lo que corre en producción. Al
  * compartir esta función, lo que se prueba es exactamente lo que se despliega.
  */
-export function configureApp(app: INestApplication, config: ConfigService): void {
+export function configureApp(
+  app: INestApplication,
+  config: ConfigService,
+  accessLog: (entry: Record<string, unknown>) => void = () => undefined,
+): void {
+  // First middleware: every later line of the request carries its id (6.8).
+  app.use(requestContext(accessLog));
+
   app.setGlobalPrefix('api/v1');
 
   // El refresh token viaja en una cookie httpOnly; sin esto no se puede leer.

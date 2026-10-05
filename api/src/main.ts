@@ -9,6 +9,7 @@ import { AppModule } from './app.module';
 import { configureApp, parseOrigins } from './bootstrap';
 import { installBigIntSerializer } from './common/serialization/bigint';
 import { porQueNoArrancar } from './common/entorno';
+import { defaultLogDirectory, JsonLogger, parseLogLevel } from './common/logging/json-logger';
 
 /**
  * Arranque de la API.
@@ -141,14 +142,22 @@ async function bootstrap(): Promise<void> {
     process.exit(1);
   }
 
+  // JSON lines with the request id, to stdout and to a rotated file outside
+  // the release folder (phase 6.8). Installed before anything else logs.
+  const jsonLogger = new JsonLogger({
+    directory: defaultLogDirectory(process.env),
+    minLevel: parseLogLevel(process.env.LOG_LEVEL),
+  });
+  Logger.overrideLogger(jsonLogger);
+
   instalarRedDeSeguridad();
   installBigIntSerializer();
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { logger: jsonLogger });
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
-  configureApp(app, config);
+  configureApp(app, config, (entry) => jsonLogger.entry(entry));
 
   // Cierra Prisma limpiamente cuando el hosting recicla el proceso.
   app.enableShutdownHooks();

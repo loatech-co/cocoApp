@@ -1,33 +1,37 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+
+import { Public } from '../../common/decorators/public.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 
 interface HealthPayload {
   status: 'ok';
   db: 'ok';
-  user_id: number;
 }
 
 /**
- * Healthcheck AUTENTICADO.
+ * Public health check: the process answers and reaches the database.
  *
- * No lleva @Public() a propósito: su trabajo no es solo decir "el proceso está
- * vivo", sino probar la cadena completa —el cliente presenta un access token,
- * el guard lo verifica, resuelve el user_id contra `users` y la API alcanza
- * MariaDB—. Es el criterio de aceptación de la Fase 0.
+ * It used to require a token, to prove the whole chain —token, guard, user,
+ * database— in one call. That made it useless to anything that checks a
+ * service from outside (an uptime monitor, the deploy verification, an
+ * operator with curl), which has no user to sign in as. Phase 6.8 made it
+ * public; the authenticated chain is still exercised end to end by every
+ * protected route, and its e2e moved to `/auth/me`.
+ *
+ * It reveals nothing: no user, no version, no host — only up or down.
  */
 @Controller('health')
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
+  @Public()
   @Get()
-  async check(@CurrentUser() user: AuthenticatedUser): Promise<HealthPayload> {
+  async check(): Promise<HealthPayload> {
     const reachable = await this.prisma.isDatabaseReachable();
     if (!reachable) {
       throw new ServiceUnavailableException('La base de datos no responde.');
     }
 
-    return { status: 'ok', db: 'ok', user_id: Number(user.id) };
+    return { status: 'ok', db: 'ok' };
   }
 }

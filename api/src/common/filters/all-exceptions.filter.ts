@@ -48,7 +48,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // El log lleva user_id interno y ruta, nunca montos ni descripciones.
     const who = request.user ? `user=${request.user.id}` : 'anon';
-    const line = `${request.method} ${request.url} → ${status} [${code}] ${who}`;
+    // Path only: the query string carries search terms and other personal data.
+    const line = `${request.method} ${request.url.split('?')[0]} → ${status} [${code}] ${who}`;
 
     if (status >= Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
       this.logger.error(line, exception instanceof Error ? exception.stack : String(exception));

@@ -9,7 +9,7 @@ import { levantarApp, type EntornoDePruebas } from './helpers/app';
  * firmados por el mismo TokenService que usa el login, y el guard global los
  * verifica y consulta la base igual que en producción.
  */
-describe('Fase 0 — GET /api/v1/health (e2e)', () => {
+describe('Fase 0 — the auth guard on a protected route, and the public health check (e2e)', () => {
   let entorno: EntornoDePruebas;
 
   beforeAll(async () => {
@@ -26,7 +26,7 @@ describe('Fase 0 — GET /api/v1/health (e2e)', () => {
 
   it('sin header Authorization responde 401 con el envelope canónico', async () => {
     const response = await request(entorno.app.getHttpServer())
-      .get('/api/v1/health')
+      .get('/api/v1/auth/me')
       .expect(401);
 
     expect(response.body).toEqual({
@@ -38,7 +38,7 @@ describe('Fase 0 — GET /api/v1/health (e2e)', () => {
 
   it('con un token que no es un JWT responde 401', async () => {
     await request(entorno.app.getHttpServer())
-      .get('/api/v1/health')
+      .get('/api/v1/auth/me')
       .set('Authorization', 'Bearer esto-no-es-un-token')
       .expect(401);
   });
@@ -56,7 +56,7 @@ describe('Fase 0 — GET /api/v1/health (e2e)', () => {
     const token = entorno.supabase.emitirToken(huerfano);
 
     await request(entorno.app.getHttpServer())
-      .get('/api/v1/health')
+      .get('/api/v1/auth/me')
       .set('Authorization', `Bearer ${token}`)
       .expect(401);
   });
@@ -76,7 +76,7 @@ describe('Fase 0 — GET /api/v1/health (e2e)', () => {
     });
 
     await request(entorno.app.getHttpServer())
-      .get('/api/v1/health')
+      .get('/api/v1/auth/me')
       .set('Authorization', `Bearer ${viejo}`)
       .expect(401);
   });
@@ -89,32 +89,36 @@ describe('Fase 0 — GET /api/v1/health (e2e)', () => {
     await entorno.prisma.user.delete({ where: { id: usuario.id } });
 
     await request(entorno.app.getHttpServer())
-      .get('/api/v1/health')
+      .get('/api/v1/auth/me')
       .set('Authorization', cabecera)
       .expect(401);
   });
 
-  it('con un token válido responde 200, alcanza MariaDB y devuelve el user_id', async () => {
+  it('con un token válido, la ruta protegida responde 200 con ESE usuario', async () => {
     const usuario = await entorno.crearUsuario();
 
     const response = await request(entorno.app.getHttpServer())
-      .get('/api/v1/health')
+      .get('/api/v1/auth/me')
       .set('Authorization', entorno.como(usuario))
       .expect(200);
 
-    expect(response.body).toEqual({
-      data: { status: 'ok', db: 'ok', user_id: Number(usuario.id) },
-      meta: {},
-    });
+    expect(JSON.stringify(response.body)).toContain(usuario.email);
+  });
+
+  it('health is public: 200 without a token, reaches the database, says nothing else', async () => {
+    const response = await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
+
+    expect(response.body).toEqual({ data: { status: 'ok', db: 'ok' }, meta: {} });
+  });
+
+  it('every response carries an X-Request-Id', async () => {
+    const response = await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
+
+    expect(response.headers['x-request-id']).toMatch(/^[A-Za-z0-9._-]{8,64}$/);
   });
 
   it('emite las cabeceras de seguridad de helmet', async () => {
-    const usuario = await entorno.crearUsuario();
-
-    const response = await request(entorno.app.getHttpServer())
-      .get('/api/v1/health')
-      .set('Authorization', entorno.como(usuario))
-      .expect(200);
+    const response = await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
 
     expect(response.headers['x-content-type-options']).toBe('nosniff');
     expect(response.headers['x-frame-options']).toBe('DENY');
