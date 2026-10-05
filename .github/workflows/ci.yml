@@ -101,6 +101,10 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # Fails under the thresholds in frontend/vitest.config.ts. They only go up.
+      - name: Frontend coverage
+        run: npm run test:coverage --workspace frontend
+
       - name: API e2e
         run: npm run test:e2e --workspace api
 

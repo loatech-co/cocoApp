@@ -424,3 +424,30 @@ side.
   production build (`frontend/tsconfig.build.json`).
 - A component that still has no story is marked in the inventory of
   `.claude/rules/web.md`.
+
+## Frontend tests and coverage
+
+Component tests use Testing Library and check what a person or a screen
+reader gets, not how it is built: role, accessible name, `aria-*` states,
+clicks, keys (Escape, Enter), clicking outside. Every component in
+`frontend/src/shared/ui` has one, next to it (`menu.tsx` → `menu.test.tsx`).
+New tests are named in English: `describe` with the unit, `it` with the
+behaviour in the present tense (`it('closes with Escape')`). The design-rule
+tests that read the source (button size, radius, surfaces, field, focus,
+page header) are part of the standard: they are extended, never duplicated
+or switched off.
+
+Coverage runs with `@vitest/coverage-v8` (`npm run test:coverage --workspace
+frontend`), and the CI `verify` job fails under the thresholds in
+`frontend/vitest.config.ts`:
+
+| Scope                    | Lines | Branches |
+| ------------------------ | ----- | -------- |
+| `frontend/src`           | 55 %  | 49 %     |
+| `frontend/src/shared/ui` | 98 %  | 96 %     |
+
+The plan's target for `frontend/src` is **70 %** of lines and branches. The
+gap is in `features/` (transactions and centros above all), which gets its
+tests once its components are split into reviewable units. **Thresholds only
+go up**: a PR that adds coverage raises them to the new floor; lowering one
+needs an ADR with the reason.

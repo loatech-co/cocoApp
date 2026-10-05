@@ -30,7 +30,14 @@ export default defineConfig({
         'src/**/*.d.ts',
       ],
       reporter: ['text-summary', 'json-summary'],
-      thresholds: { lines: 0, branches: 0 },
+      // Measured when the gate was set (step 7.7-web-b): 55.36 % lines and
+      // 49.63 % branches overall; 98.25 / 96.11 in `shared/ui`. The gap to the
+      // plan's 70 % is in `features/` (see CONTRIBUTING, "Frontend coverage").
+      thresholds: {
+        lines: 55,
+        branches: 49,
+        'src/shared/ui/**': { lines: 98, branches: 96 },
+      },
     },
   },
 });
