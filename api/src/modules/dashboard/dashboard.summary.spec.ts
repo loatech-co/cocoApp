@@ -8,8 +8,8 @@ import {
   tendencia,
 } from './dashboard.summary';
 import { serializar } from '../../common/money/money';
-import type { SummaryCategory } from '../categories/category-lookup.types';
-import type { SummaryMovement } from '../transactions/ledger.types';
+import type { SummaryCategory } from '../categories/category-lookup.service';
+import type { SummaryMovement } from '../transactions/ledger.service';
 
 function makeCategory(overrides: Partial<SummaryCategory> & { id: bigint }): SummaryCategory {
   return {
