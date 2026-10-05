@@ -5,8 +5,8 @@ import {
   type OnModuleDestroy,
 } from '@nestjs/common';
 
+import { DashboardRepository } from './dashboard.repository';
 import { PagosAutomaticosService } from './pagos-automaticos';
-import { PrismaService } from '../../prisma/prisma.service';
 
 /** Bogotá is UTC−5 all year (no daylight saving). */
 const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000;
@@ -65,7 +65,7 @@ export class AutoChargeTask implements OnApplicationBootstrap, OnModuleDestroy {
   private running = false;
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly repository: DashboardRepository,
     private readonly autoPayments: PagosAutomaticosService,
   ) {}
 
@@ -90,14 +90,10 @@ export class AutoChargeTask implements OnApplicationBootstrap, OnModuleDestroy {
     try {
       const today = todayInBogota(now);
       const currentMonth = `${today.slice(0, 7)}-01`;
-      const owners = await this.prisma.category.findMany({
-        where: { recurrente: true, pagoAutomatico: true, isArchived: false },
-        select: { userId: true },
-        distinct: ['userId'],
-      });
+      const owners = await this.repository.ownersOfAutoPaidConcepts();
 
       let created = 0;
-      for (const { userId } of owners) {
+      for (const userId of owners) {
         // One user's failure must not stop the others; the service already
         // logs per concept, this catches anything above that.
         try {

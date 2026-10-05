@@ -1,14 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
+  DashboardRepository,
+  type AutoPaidConcept,
+  type MonthlyHistory,
+} from './dashboard.repository';
+import {
   esperadoDelMes,
   huellaDelCobro,
   tocaCobrarAutomatico,
   tocaEnElMes,
   vencimiento,
 } from './pendientes';
-import { CERO, toMoney, type Money } from '../../common/money/money';
-import { PrismaService } from '../../prisma/prisma.service';
+import { toMoney } from '../../common/money/money';
 
 /**
  * Los conceptos que se cobran solos.
@@ -38,7 +42,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class PagosAutomaticosService {
   private readonly logger = new Logger(PagosAutomaticosService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: DashboardRepository) {}
 
   /**
    * Cobra lo que toque y devuelve cuántos movimientos creó.
@@ -48,17 +52,7 @@ export class PagosAutomaticosService {
    * de esto.
    */
   async cobrarLoQueToque(userId: bigint, mesEnCurso: string, hoy: string): Promise<number> {
-    const conceptos = await this.prisma.category.findMany({
-      where: { userId, recurrente: true, pagoAutomatico: true, isArchived: false },
-      select: {
-        id: true,
-        name: true,
-        periodicidad: true,
-        diaDePago: true,
-        mesDePago: true,
-        presupuesto: true,
-      },
-    });
+    const conceptos = await this.repository.findAutoPaidConcepts(userId);
 
     // Quien no use la función no paga ni una consulta más. Es el caso de casi
     // todo el mundo casi siempre, y este método corre en CADA resumen.
@@ -80,109 +74,103 @@ export class PagosAutomaticosService {
       hay: cobrar encima dejaría el mismo gasto dos veces, uno de ellos
       inventado por nosotros.
     */
-    const yaHay = await this.prisma.transaction.findMany({
-      where: { userId, categoryId: { in: ids }, period: new Date(mesEnCurso) },
-      select: { categoryId: true },
-    });
-    const registrado = new Set(yaHay.map((t) => t.categoryId?.toString()));
+    const registrado = await this.repository.categoriesWithMovementIn(
+      userId,
+      ids,
+      new Date(mesEnCurso),
+    );
 
     const porCobrar = delMes.filter((c) => !registrado.has(c.id.toString()));
     if (porCobrar.length === 0) return 0;
 
     // La historia, solo de los que quedan y solo de ANTES de este mes: de ahí
     // sale la cifra cuando el concepto no tiene presupuesto puesto.
-    const historia = await this.prisma.transaction.findMany({
-      where: {
-        userId,
-        categoryId: { in: porCobrar.map((c) => c.id) },
-        period: { lt: new Date(mesEnCurso) },
-      },
-      select: { categoryId: true, amount: true, period: true },
-    });
-
-    const historiaDe = new Map<string, Map<string, Money>>();
-    for (const t of historia) {
-      const clave = t.categoryId?.toString();
-      if (clave === undefined) continue;
-      const mes = t.period.toISOString().slice(0, 7);
-      const meses = historiaDe.get(clave) ?? new Map<string, Money>();
-      meses.set(mes, (meses.get(mes) ?? CERO).plus(toMoney(t.amount)));
-      historiaDe.set(clave, meses);
-    }
+    const historiaDe = await this.repository.monthlyHistory(
+      userId,
+      porCobrar.map((c) => c.id),
+      new Date(mesEnCurso),
+    );
 
     let creados = 0;
 
     for (const concepto of porCobrar) {
-      const vence = vencimiento(mesEnCurso, concepto.diaDePago);
-      const esperado = esperadoDelMes(
-        concepto.presupuesto === null ? null : toMoney(concepto.presupuesto),
-        historiaDe.get(concepto.id.toString()) ?? new Map(),
-        mesEnCurso.slice(0, 7),
-      );
-
-      if (
-        // `tocaCobrarAutomatico` ya responde que no sin monto esperado; se
-        // comprueba aquí también para que `esperado` llegue sin nulo.
-        esperado === null ||
-        !tocaCobrarAutomatico({
-          pagoAutomatico: true,
-          vencimientoISO: vence,
-          hoyISO: hoy,
-          esperado,
-        })
-      )
-        continue;
-
-      try {
-        await this.prisma.transaction.create({
-          data: {
-            userId,
-            categoryId: concepto.id,
-            date: new Date(vence),
-            period: new Date(mesEnCurso),
-            amount: esperado.toFixed(2),
-            type: 'expense',
-            status: 'cleared',
-            // El nombre del concepto, como cualquier movimiento suyo: el de la
-            // ficha sale de la clasificación, no de esto, pero la tabla y las
-            // búsquedas leen `description`.
-            description: concepto.name,
-            /*
-              Se dice que lo puso la aplicación, y con qué cifra.
-
-              El valor puede ser un ESTIMADO —el promedio de los meses
-              anteriores, cuando el concepto no tiene presupuesto— y eso no
-              puede quedar indistinguible de una cifra que alguien leyó en un
-              recibo. Quien abra el movimiento tiene que poder corregirlo
-              sabiendo que hace falta.
-            */
-            notes:
-              concepto.presupuesto === null
-                ? 'Cobrado automáticamente. El valor es un estimado del promedio de los meses anteriores: corrígelo cuando tengas el recibo.'
-                : 'Cobrado automáticamente, por el presupuesto del concepto.',
-            externalRef: huellaDelCobro(concepto.id, mesEnCurso),
-          },
-        });
-        creados += 1;
-      } catch (error) {
-        /*
-          El choque contra la huella única no es un fallo: es dos peticiones
-          simultáneas queriendo cobrar lo mismo, y la base impidiendo que se
-          duplique. Gana la primera y la segunda sigue su camino.
-
-          Cualquier otro error se registra y tampoco tumba el resumen: quedarse
-          sin dashboard porque un cobro automático falló sería cambiar una
-          comodidad por una pantalla en blanco.
-        */
-        const codigo = (error as { code?: string }).code;
-        if (codigo !== 'P2002') {
-          this.logger.error(
-            `No se pudo cobrar “${concepto.name}” (${concepto.id}): ${(error as Error).message}`,
-          );
-        }
-      }
+      if (await this.cobrar(userId, concepto, historiaDe, mesEnCurso, hoy)) creados += 1;
     }
 
     return creados;
+  }
+
+  /** Charges one concept if its day came. `true` when it wrote the movement. */
+  private async cobrar(
+    userId: bigint,
+    concepto: AutoPaidConcept,
+    historiaDe: MonthlyHistory,
+    mesEnCurso: string,
+    hoy: string,
+  ): Promise<boolean> {
+    const vence = vencimiento(mesEnCurso, concepto.diaDePago);
+    const esperado = esperadoDelMes(
+      concepto.presupuesto === null ? null : toMoney(concepto.presupuesto),
+      historiaDe.get(concepto.id.toString()) ?? new Map(),
+      mesEnCurso.slice(0, 7),
+    );
+
+    if (
+      // `tocaCobrarAutomatico` ya responde que no sin monto esperado; se
+      // comprueba aquí también para que `esperado` llegue sin nulo.
+      esperado === null ||
+      !tocaCobrarAutomatico({
+        pagoAutomatico: true,
+        vencimientoISO: vence,
+        hoyISO: hoy,
+        esperado,
+      })
+    )
+      return false;
+
+    try {
+      return await this.repository.createAutoCharge({
+        userId,
+        categoryId: concepto.id,
+        date: new Date(vence),
+        period: new Date(mesEnCurso),
+        amount: esperado.toFixed(2),
+        type: 'expense',
+        status: 'cleared',
+        // El nombre del concepto, como cualquier movimiento suyo: el de la
+        // ficha sale de la clasificación, no de esto, pero la tabla y las
+        // búsquedas leen `description`.
+        description: concepto.name,
+        /*
+          Se dice que lo puso la aplicación, y con qué cifra.
+
+          El valor puede ser un ESTIMADO —el promedio de los meses
+          anteriores, cuando el concepto no tiene presupuesto— y eso no
+          puede quedar indistinguible de una cifra que alguien leyó en un
+          recibo. Quien abra el movimiento tiene que poder corregirlo
+          sabiendo que hace falta.
+        */
+        notes:
+          concepto.presupuesto === null
+            ? 'Cobrado automáticamente. El valor es un estimado del promedio de los meses anteriores: corrígelo cuando tengas el recibo.'
+            : 'Cobrado automáticamente, por el presupuesto del concepto.',
+        externalRef: huellaDelCobro(concepto.id, mesEnCurso),
+      });
+    } catch (error) {
+      /*
+        El choque contra la huella única no llega aquí: es dos peticiones
+        simultáneas queriendo cobrar lo mismo, y la base impidiendo que se
+        duplique. `createAutoCharge` lo devuelve como `false`: gana la primera
+        y la segunda sigue su camino.
+
+        Cualquier otro error se registra y tampoco tumba el resumen: quedarse
+        sin dashboard porque un cobro automático falló sería cambiar una
+        comodidad por una pantalla en blanco.
+      */
+      this.logger.error(
+        `No se pudo cobrar “${concepto.name}” (${concepto.id}): ${(error as Error).message}`,
+      );
+      return false;
+    }
   }
 }
