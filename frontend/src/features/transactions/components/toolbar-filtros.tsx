@@ -1,66 +1,21 @@
-import { ArrowDownUp, Filter, Plus, Search, TrendingDown, TrendingUp, X } from 'lucide-react';
-import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
+import { Search, X } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import type { Filtros } from '@/features/transactions/model/filtros';
+import type { Orden } from '@/features/transactions/model/sort-orders';
 import { useCategories } from '@/shared/api/categories';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { useEsMovil } from '@/shared/lib/movil';
-import { cn } from '@/shared/lib/utils';
-import { Etiqueta } from '@/shared/ui/atoms/badge';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
-import { ChipIcono, type ColorDeChip } from '@/shared/ui/atoms/chip-icono';
 import { Input } from '@/shared/ui/atoms/input';
 import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
-import { REALCE } from '@/shared/ui/foundations/superficie';
-import { Menu, MenuOpcion, MenuTitulo } from '@/shared/ui/molecules/menu';
 import type { TransactionType } from '@coco/types';
 
-import { FiltroClasificacion } from './filtro-clasificacion';
 import { SelectorDeFecha } from './selector-de-fecha';
+import { ClassificationMenu, NewMovementMenu, SortMenu } from './toolbar-menus';
 
-/** Los órdenes que la API acepta. Lo que no esté aquí, no existe. */
-const ORDENES = [
-  { valor: '-date', etiqueta: 'Más recientes' },
-  { valor: 'date', etiqueta: 'Más antiguos' },
-  { valor: '-amount', etiqueta: 'Mayor valor' },
-  { valor: 'amount', etiqueta: 'Menor valor' },
-  { valor: 'merchant', etiqueta: 'Concepto A–Z' },
-] as const;
-
-export type Orden = (typeof ORDENES)[number]['valor'];
-
-/**
- * La cabecera con los filtros que comparten el Resumen y los Movimientos.
- *
- * ── Por qué el título vive aquí dentro ──────────────────────────────────────
- * Porque el título y el recorte son la misma frase: "Movimientos · 377 de
- * 2022 a 2026". Separarlos en dos bloques deja el qué arriba y el cuánto
- * abajo, y obliga a mirar dos sitios para saber qué se está viendo.
- *
- * ── Por qué los controles son iconos y no una fila de campos ────────────────
- * Porque casi siempre están vacíos. Una fila de selectores siempre visibles
- * ocupa el ancho entero para decir "todos, todos, todos"; plegados detrás de
- * un icono, el espacio se lo queda el contenido, y el icono se enciende cuando
- * hay algo puesto.
- *
- * ── Por qué es el MISMO componente en las dos pantallas ─────────────────────
- * Porque son dos vistas del mismo recorte. Si el resumen filtrara distinto que
- * la lista, las cifras de arriba no explicarían las filas de abajo y habría
- * que desconfiar de ambas.
- */
-export function ToolbarFiltros({
-  titulo,
-  subtitulo,
-  resumen,
-  filtros,
-  aplicar,
-  limpiar,
-  hayFiltrosActivos,
-  orden,
-  onNuevo,
-  acciones,
-}: {
+interface ToolbarFiltrosProps {
   titulo: string;
   /** Lo que se está viendo, en una línea. Ej: "377 movimientos". */
   subtitulo?: string;
@@ -84,35 +39,33 @@ export function ToolbarFiltros({
    */
   onNuevo?: (tipo: TransactionType) => void;
   acciones?: ReactNode;
-}) {
+}
+
+/**
+ * La cabecera con los filtros que comparten el Resumen y los Movimientos.
+ *
+ * ── Por qué el título vive aquí dentro ──────────────────────────────────────
+ * Porque el título y el recorte son la misma frase: "Movimientos · 377 de
+ * 2022 a 2026". Separarlos en dos bloques deja el qué arriba y el cuánto
+ * abajo, y obliga a mirar dos sitios para saber qué se está viendo.
+ *
+ * ── Por qué los controles son iconos y no una fila de campos ────────────────
+ * Porque casi siempre están vacíos. Una fila de selectores siempre visibles
+ * ocupa el ancho entero para decir "todos, todos, todos"; plegados detrás de
+ * un icono, el espacio se lo queda el contenido, y el icono se enciende cuando
+ * hay algo puesto.
+ *
+ * ── Por qué es el MISMO componente en las dos pantallas ─────────────────────
+ * Porque son dos vistas del mismo recorte. Si el resumen filtrara distinto que
+ * la lista, las cifras de arriba no explicarían las filas de abajo y habría
+ * que desconfiar de ambas.
+ */
+export function ToolbarFiltros(props: ToolbarFiltrosProps) {
+  const { titulo, subtitulo, resumen, filtros, aplicar, limpiar, hayFiltrosActivos } = props;
+  const { orden, onNuevo, acciones } = props;
   const categorias = useCategories();
   const esMovil = useEsMovil();
-
-  // La búsqueda se escribe local y se manda con retraso: sin esto cada tecla
-  // dispararía una consulta y la lista parpadearía mientras se escribe.
-  const [busqueda, setBusqueda] = useState(filtros.q ?? '');
-
-  // El campo empieza plegado y se abre al pulsar la lupa. Se queda abierto
-  // mientras haya algo escrito: plegarlo escondería el filtro que está
-  // recortando la pantalla, y no habría forma de saber por qué faltan filas.
-  const [buscando, setBuscando] = useState((filtros.q ?? '') !== '');
-  const campo = useRef<HTMLInputElement>(null);
-
-  useAlCambiar([filtros.q], () => {
-    setBusqueda(filtros.q ?? '');
-    // Si el filtro llega puesto desde la URL, el campo tiene que estar a la
-    // vista: un recorte activo que no se ve no se puede quitar.
-    if ((filtros.q ?? '') !== '') setBuscando(true);
-  });
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if ((filtros.q ?? '') !== busqueda) aplicar({ q: busqueda });
-    }, 300);
-    return () => clearTimeout(id);
-  }, [busqueda, filtros.q, aplicar]);
-
-  const arbol = categorias.data ?? [];
+  const busqueda = useToolbarSearch(filtros, aplicar);
 
   return (
     <CabeceraDePagina
@@ -132,141 +85,16 @@ export function ToolbarFiltros({
         <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
           {/* ── Búsqueda ─────────────────────────────────────────────────── */}
           {esMovil ? (
-            /*
-            En el teléfono el campo no se despliega EN la fila: la levanta una
-            hoja, igual que el filtro y el rango. Un campo que aparece en medio
-            de una fila de iconos empuja a los otros tres fuera de la pantalla,
-            y el teclado del sistema sube justo encima de la lista que se está
-            recortando.
-          */
-            <>
-              <Button
-                type="button"
-                variant="herramienta"
-                size="sm-icon"
-                aria-label="Buscar"
-                aria-pressed={buscando || (filtros.q ?? '') !== ''}
-                aria-expanded={buscando}
-                onClick={() => setBuscando(true)}
-              >
-                <Search className="size-4" aria-hidden="true" />
-              </Button>
-
-              <PanelInferior
-                abierto={buscando}
-                titulo="Buscar"
-                cabeza={
-                  <div className="relative">
-                    <Search
-                      className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                      aria-hidden="true"
-                    />
-                    <Input
-                      ref={campo}
-                      type="search"
-                      autoFocus
-                      value={busqueda}
-                      onChange={(e) => setBusqueda(e.target.value)}
-                      placeholder="Buscar: celsia, colegio, sura…"
-                      aria-label="Buscar por palabra clave"
-                      className="pl-9"
-                    />
-                  </div>
-                }
-                onCerrar={() => setBuscando(false)}
-              >
-                {/* Qué hace esto, y no lo que hace la lupa de la barra de abajo.
-                  Las dos se ven igual y contestan preguntas distintas: aquella
-                  BUSCA un movimiento en toda la aplicación; esta RECORTA lo que
-                  se está mirando, y lo que escriba se queda puesto al cerrar. */}
-                <p className="px-3 py-2 text-sm text-muted-foreground">
-                  Recorta lo que estás viendo. Lo escrito se queda puesto hasta que lo borres.
-                </p>
-              </PanelInferior>
-            </>
-          ) : buscando ? (
-            <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Input
-                ref={campo}
-                type="search"
-                autoFocus
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                onBlur={() => busqueda === '' && setBuscando(false)}
-                placeholder="Buscar: celsia, colegio, sura…"
-                aria-label="Buscar por palabra clave"
-                className="h-9 rounded-lg pl-9"
-              />
-            </div>
+            <PhoneSearch busqueda={busqueda} filtrando={(filtros.q ?? '') !== ''} />
           ) : (
-            <Button
-              type="button"
-              variant="herramienta"
-              size="sm-icon"
-              aria-label="Buscar"
-              title="Buscar"
-              onClick={() => {
-                setBuscando(true);
-                // El foco no se hereda de un elemento que acaba de nacer.
-                setTimeout(() => campo.current?.focus(), 0);
-              }}
-            >
-              <Search className="size-4" aria-hidden="true" />
-            </Button>
+            <DesktopSearch busqueda={busqueda} />
           )}
 
           {/* ── Orden ────────────────────────────────────────────────────── */}
-          {orden && (
-            <Menu
-              etiqueta="Ordenar"
-              Icono={ArrowDownUp}
-              soloIcono
-              activo={orden.valor !== '-date'}
-              ancho="w-56"
-            >
-              {(cerrar) => (
-                <>
-                  <MenuTitulo>Ordenar por</MenuTitulo>
-                  {ORDENES.map((o) => (
-                    <MenuOpcion
-                      key={o.valor}
-                      elegida={orden.valor === o.valor}
-                      onClick={() => {
-                        orden.onCambiar(o.valor);
-                        cerrar();
-                      }}
-                    >
-                      {o.etiqueta}
-                    </MenuOpcion>
-                  ))}
-                </>
-              )}
-            </Menu>
-          )}
+          {orden && <SortMenu orden={orden} />}
 
           {/* ── Clasificación ────────────────────────────────────────────── */}
-          <Menu
-            etiqueta="Filtrar por clasificación"
-            Icono={Filter}
-            soloIcono
-            activo={filtros.categoryIds.length > 0}
-            ancho="w-72"
-            tipo="panel"
-            // Este panel trae cabecera, lista y pie separados por líneas que
-            // cruzan de lado a lado: con el acolchado del menú quedarían
-            // cortadas 4px antes de cada borde.
-            sinRelleno
-          >
-            <FiltroClasificacion
-              arbol={arbol}
-              marcados={filtros.categoryIds}
-              onCambiar={(ids) => aplicar({ categoryIds: ids })}
-            />
-          </Menu>
+          <ClassificationMenu arbol={categorias.data ?? []} filtros={filtros} aplicar={aplicar} />
 
           <SelectorDeFecha
             rango
@@ -276,18 +104,7 @@ export function ToolbarFiltros({
             claseCaja="movil:min-w-0 movil:flex-1"
           />
 
-          {hayFiltrosActivos && (
-            <Button
-              type="button"
-              variant="herramienta"
-              size="sm-icon"
-              aria-label="Limpiar filtros"
-              title="Limpiar filtros"
-              onClick={limpiar}
-            >
-              <X className="size-4" aria-hidden="true" />
-            </Button>
-          )}
+          {hayFiltrosActivos && <ClearFiltersButton onClick={limpiar} />}
 
           {/*
           ── Y en el teléfono NO está ────────────────────────────────────────
@@ -296,45 +113,7 @@ export function ToolbarFiltros({
           cual sea la pantalla. Aquí arriba era el mismo botón repetido, y en
           una fila de cuatro controles era el que menos cabía.
         */}
-          {onNuevo && !esMovil && (
-            /* Por el mismo camino que los demás menús de esta barra: el alto y
-             el radio se los pone `size="sm"` dentro del botón, que es donde
-             viven. Escritos aquí, este botón medía distinto que el selector
-             de fechas que tiene al lado y la fila se veía descuadrada. */
-            <Menu
-              etiqueta="Nuevo movimiento"
-              tipo="menu"
-              alineado="derecha"
-              variante="default"
-              Icono={Plus}
-            >
-              {(cerrar) => (
-                <div className="flex flex-col">
-                  <Captura
-                    Icono={TrendingDown}
-                    color="gasto"
-                    titulo="Gasto"
-                    ayuda="Dinero que sale"
-                    onClick={() => {
-                      cerrar();
-                      onNuevo('expense');
-                    }}
-                  />
-                  {/* Apagada, no escondida: los ingresos existen en el modelo
-                    —el resumen ya los suma— y quitar la opción haría creer que
-                    la aplicación no sabe registrarlos. Apagada dice que sabrá. */}
-                  <Captura
-                    Icono={TrendingUp}
-                    color="ingreso"
-                    titulo="Ingreso"
-                    ayuda="Dinero que entra"
-                    nota="Pronto"
-                    deshabilitada
-                  />
-                </div>
-              )}
-            </Menu>
-          )}
+          {onNuevo && !esMovil && <NewMovementMenu onNuevo={onNuevo} />}
 
           {acciones}
         </div>
@@ -343,67 +122,148 @@ export function ToolbarFiltros({
   );
 }
 
-/**
- * Una de las dos formas de empezar un movimiento.
- *
- * ── Por qué no son dos filas de texto ───────────────────────────────────────
- * Porque esta es la interacción que se repite todos los días, y en ella la
- * primera decisión —gasto o ingreso— no es un ajuste: es de qué se va a
- * hablar. Dos renglones iguales obligan a leer para distinguirlos; con el
- * pastel del color que ya significa eso en el resumen —violeta para lo que
- * sale, verde para lo que entra— la elección se hace mirando, que es lo que
- * uno quiere hacer veinte veces por semana.
- *
- * La segunda línea existe por lo mismo. "Gasto" e "Ingreso" se confunden al
- * leer rápido —empiezan distinto pero se parecen en la forma— y "plata que
- * sale" contra "plata que entra" no se confunden nunca.
- */
-function Captura({
-  Icono,
-  color,
-  titulo,
-  ayuda,
-  nota,
-  deshabilitada = false,
-  onClick,
-}: {
-  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  color: ColorDeChip;
-  titulo: string;
-  ayuda: string;
-  /** Por qué no se puede todavía, en una palabra. */
-  nota?: string;
-  deshabilitada?: boolean;
-  onClick?: () => void;
-}) {
+/** Lo escrito en la búsqueda, si el campo está abierto, y el campo mismo. */
+function useToolbarSearch(filtros: Filtros, aplicar: (cambios: Partial<Filtros>) => void) {
+  // La búsqueda se escribe local y se manda con retraso: sin esto cada tecla
+  // dispararía una consulta y la lista parpadearía mientras se escribe.
+  const [texto, setTexto] = useState(filtros.q ?? '');
+
+  // El campo empieza plegado y se abre al pulsar la lupa. Se queda abierto
+  // mientras haya algo escrito: plegarlo escondería el filtro que está
+  // recortando la pantalla, y no habría forma de saber por qué faltan filas.
+  const [buscando, setBuscando] = useState((filtros.q ?? '') !== '');
+  const campo = useRef<HTMLInputElement>(null);
+
+  useAlCambiar([filtros.q], () => {
+    setTexto(filtros.q ?? '');
+    // Si el filtro llega puesto desde la URL, el campo tiene que estar a la
+    // vista: un recorte activo que no se ve no se puede quitar.
+    if ((filtros.q ?? '') !== '') setBuscando(true);
+  });
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if ((filtros.q ?? '') !== texto) aplicar({ q: texto });
+    }, 300);
+    return () => clearTimeout(id);
+  }, [texto, filtros.q, aplicar]);
+
+  return { texto, setTexto, buscando, setBuscando, campo };
+}
+
+type ToolbarSearch = ReturnType<typeof useToolbarSearch>;
+
+/*
+  En el teléfono el campo no se despliega EN la fila: la levanta una hoja,
+  igual que el filtro y el rango. Un campo que aparece en medio de una fila de
+  iconos empuja a los otros tres fuera de la pantalla, y el teclado del sistema
+  sube justo encima de la lista que se está recortando.
+*/
+function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtrando: boolean }) {
+  const { texto, setTexto, buscando, setBuscando, campo } = busqueda;
   return (
-    <button
+    <>
+      <Button
+        type="button"
+        variant="herramienta"
+        size="sm-icon"
+        aria-label="Buscar"
+        aria-pressed={buscando || filtrando}
+        aria-expanded={buscando}
+        onClick={() => setBuscando(true)}
+      >
+        <Search className="size-4" aria-hidden="true" />
+      </Button>
+
+      <PanelInferior
+        abierto={buscando}
+        titulo="Buscar"
+        cabeza={
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              ref={campo}
+              type="search"
+              autoFocus
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Buscar: celsia, colegio, sura…"
+              aria-label="Buscar por palabra clave"
+              className="pl-9"
+            />
+          </div>
+        }
+        onCerrar={() => setBuscando(false)}
+      >
+        {/* Qué hace esto, y no lo que hace la lupa de la barra de abajo.
+          Las dos se ven igual y contestan preguntas distintas: aquella
+          BUSCA un movimiento en toda la aplicación; esta RECORTA lo que
+          se está mirando, y lo que escriba se queda puesto al cerrar. */}
+        <p className="px-3 py-2 text-sm text-muted-foreground">
+          Recorta lo que estás viendo. Lo escrito se queda puesto hasta que lo borres.
+        </p>
+      </PanelInferior>
+    </>
+  );
+}
+
+function DesktopSearch({ busqueda }: { busqueda: ToolbarSearch }) {
+  const { texto, setTexto, buscando, setBuscando, campo } = busqueda;
+
+  if (!buscando) {
+    return (
+      <Button
+        type="button"
+        variant="herramienta"
+        size="sm-icon"
+        aria-label="Buscar"
+        title="Buscar"
+        onClick={() => {
+          setBuscando(true);
+          // El foco no se hereda de un elemento que acaba de nacer.
+          setTimeout(() => campo.current?.focus(), 0);
+        }}
+      >
+        <Search className="size-4" aria-hidden="true" />
+      </Button>
+    );
+  }
+
+  return (
+    <div className="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden="true"
+      />
+      <Input
+        ref={campo}
+        type="search"
+        autoFocus
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        onBlur={() => texto === '' && setBuscando(false)}
+        placeholder="Buscar: celsia, colegio, sura…"
+        aria-label="Buscar por palabra clave"
+        className="h-9 rounded-lg pl-9"
+      />
+    </div>
+  );
+}
+
+function ClearFiltersButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
       type="button"
-      role="menuitem"
-      disabled={deshabilitada}
-      aria-disabled={deshabilitada}
+      variant="herramienta"
+      size="sm-icon"
+      aria-label="Limpiar filtros"
+      title="Limpiar filtros"
       onClick={onClick}
-      className={cn(
-        'flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left transition-colors',
-        deshabilitada ? 'cursor-not-allowed opacity-50' : REALCE,
-      )}
     >
-      <ChipIcono Icono={Icono} color={color} tamano="sm" />
-
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold">{titulo}</span>
-        <span className="block truncate text-xs text-muted-foreground">{ayuda}</span>
-      </span>
-
-      {/* La misma etiqueta que en el resto de la app. Era un `<span>` con su
-          propio redondeo, su propio relleno y un tamaño de letra a mano —11px,
-          que no está en la escala—: tres decisiones repetidas para decir lo
-          que `Etiqueta` ya dice. */}
-      {nota && (
-        <Etiqueta tono="neutro" className="shrink-0 text-muted-foreground">
-          {nota}
-        </Etiqueta>
-      )}
-    </button>
+      <X className="size-4" aria-hidden="true" />
+    </Button>
   );
 }

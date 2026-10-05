@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { useDashboard, useTransactions } from '@/features/transactions/api/transactions';
-import type { Orden } from '@/features/transactions/components/toolbar-filtros';
 import { aParametros, llegaHastaHoy, useFiltros } from '@/features/transactions/model/filtros';
 import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
+import type { Orden } from '@/features/transactions/model/sort-orders';
 import { useCategories } from '@/shared/api/categories';
 import type { Category, PagoPendiente, Transaction, TransactionType } from '@coco/types';
 
