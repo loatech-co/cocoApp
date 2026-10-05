@@ -79,3 +79,19 @@ describe('Cuándo vuelve el pago', () => {
     expect(cuandoVuelve('bimestral', 5, 1).split(',').length).toBe(6);
   });
 });
+
+describe('Intermediate periodicities: the months the form names', () => {
+  // These must be the same months the API treats as due
+  // (api/src/modules/dashboard/intermediate-periodicities.spec.ts). A reference
+  // month late in the year still lists the cycle from January.
+  it.each([
+    ['bimestral', 12, 'El día 31 de febrero, abril, junio, agosto, octubre, diciembre.'],
+    ['bimestral', 11, 'El día 31 de enero, marzo, mayo, julio, septiembre, noviembre.'],
+    ['trimestral', 12, 'El día 31 de marzo, junio, septiembre, diciembre.'],
+    ['trimestral', 2, 'El día 31 de febrero, mayo, agosto, noviembre.'],
+    ['semestral', 8, 'El día 31 de febrero, agosto.'],
+    ['semestral', 12, 'El día 31 de junio, diciembre.'],
+  ] as const)('%s with reference month %i', (periodicity, month, expected) => {
+    expect(cuandoVuelve(periodicity, 31, month)).toBe(expected);
+  });
+});
