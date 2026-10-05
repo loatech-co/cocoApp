@@ -25,12 +25,19 @@ import {
  * como lo que NO.
  */
 
-function fetchQueContesta(status: number) {
+/** What `/api/v2/auth/refresh` answers: the v2 session, camelCase. */
+const SESION_V2 = {
+  accessToken: 'token-de-la-red',
+  expiresIn: 900,
+  user: { ...SESION_DE_LA_APP.user, displayName: 'Gerardo', createdAt: '2026-01-01T00:00:00.000Z' },
+};
+
+function fetchQueContesta(status: number, cuerpo: unknown = { data: SESION_V2 }) {
   return vi.fn(() =>
     Promise.resolve({
       status,
       ok: status < 400,
-      json: () => Promise.resolve({ data: SESION_DE_LA_APP }),
+      json: () => Promise.resolve(cuerpo),
     } as unknown as Response),
   );
 }
@@ -156,7 +163,29 @@ describe('Sin puente', () => {
     await expect(renovar()).resolves.toBe(true);
 
     expect(rutasLlamadas(red)).toEqual(['/auth/refresh']);
+    expect(String((red.mock.calls[0] as unknown[])[0])).toMatch(/\/api\/v2\/auth\/refresh$/);
     expect((red.mock.calls[0] as unknown[])[1]).toMatchObject({ credentials: 'include' });
+    expect(tokenActual()).toBe('token-de-la-red');
+    expect(estadoActual().usuario?.displayName).toBe('Gerardo');
+  });
+
+  /*
+    The v2 refresh cookie lives in `Path=/api/v2/auth`, so the v1 cookie every
+    browser has today never reaches it: after the deploy each person signs in
+    once. That first refresh is a 401, and it has to end in the sign-in screen
+    and nothing else —no thrown error, no toast, no session half kept.
+  */
+  it('sin la cookie de la v2, renovar() deja la sesión vacía sin lanzar', async () => {
+    const red = fetchQueContesta(401, {
+      error: { code: 'unauthenticated', message: 'Sesión no válida.', details: [] },
+    });
+    vi.stubGlobal('fetch', red);
+    salirDeLaApp();
+
+    await expect(renovar()).resolves.toBe(false);
+
+    expect(tokenActual()).toBeNull();
+    expect(estadoActual()).toEqual({ usuario: null, cargando: false });
   });
 
   it('salir() llama a /auth/logout', async () => {

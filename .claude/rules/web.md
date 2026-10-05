@@ -45,6 +45,36 @@ Fechas, formato de dinero, foco, gestos, el puente con la app. Si algo de
 `lib/` necesita la sesión, es de `shared/api` (por eso `registrarPuente` vive
 en `shared/api/native-bridge.ts` y no en `shared/lib/puente-nativo.ts`).
 
+## El contrato con la API: `shared/api/generated`
+
+**La web habla con `/api/v2` por un cliente que genera Orval, y no lo toca
+nadie a mano.**
+
+`frontend/src/shared/api/generated/` sale de `api/openapi.v2.json` con
+`npm run generate:api --workspace frontend`: funciones `fetch` tipadas y los
+tipos del esquema (D11). Va versionado porque hbuilds construye sin
+devDependencies, y el CI lo regenera y falla si no coincide. Los hooks de
+React Query NO se generan: cada feature escribe los suyos en su `api/`
+llamando a esas funciones (`useAccounts` → `accountsList`).
+
+- Toda petición pasa por `apiRequest` (`shared/api/api-client.ts`, el
+  `mutator` de Orval). Solo se lo saltan las llamadas de sesión
+  (`session.ts`: renovar es en lo que se apoya la puerta) y la subida de
+  soportes (`apiSubir`: necesita el progreso).
+- Toda lista de la v2 viene paginada: lo que necesita el conjunto entero usa
+  `allPages` (`shared/api/pages.ts`).
+- Lo que habla otro dialecto se traduce en el borde, una vez: la sesión que da
+  el puente sigue en v1 (`desdeElPuente`, en `session.ts`); `@coco/lectura` lee
+  `palabras_clave` (`shared/lib/arbol-buscable.ts`); el nivel y la
+  granularidad del resumen pasan a las palabras que ve la persona
+  (`dashboard-charts.tsx`).
+- Lo que no está en el documento —el puente, la marca del User-Agent de la
+  app, el contrato v1 que aún habla el teléfono— vive en
+  `shared/lib/native-contract.ts`. Dos pruebas de la API y `ContratosTests`
+  de iOS lo leen por su ruta. Reemplazó a `packages/types`, que ya no existe.
+- `shared/ui` no importa ni el cliente generado ni el contrato nativo, ni
+  siquiera sus tipos (`web-ui-knows-no-contract`).
+
 ## La interfaz: `shared/ui`
 
 **`shared/ui` dibuja lo que le dan: ni React Query, ni `api-client`, ni sesión.**

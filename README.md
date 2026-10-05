@@ -23,7 +23,6 @@ decisions behind them: [`docs/architecture.md`](docs/architecture.md).
 api/                NestJS 11 + Prisma; prisma/schema.prisma and migrations/
 frontend/           React 19 + Vite + TypeScript SPA
 packages/lectura/   reading and classification engine (compiled on install)
-packages/types/     types shared by web and API
 ios/                SwiftUI app (XcodeGen project)
 scripts/            merge, migrations, backups, local data
 docs/               architecture, ADRs, runbook, standards

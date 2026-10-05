@@ -130,7 +130,7 @@ export default function Resumen() { … }
 
 ## TypeScript strictness
 
-Every workspace (`api`, `frontend`, `packages/types`, `packages/lectura`)
+Every workspace (`api`, `frontend`, `packages/lectura`)
 compiles with `strict`, `noUncheckedIndexedAccess`,
 `exactOptionalPropertyTypes` and `noImplicitOverride`. No explicit `any`, no
 `@ts-ignore`; `@ts-expect-error` only with a written reason after it.
@@ -344,6 +344,55 @@ import { Card } from '@/shared/ui/atoms/card';
 import { useTransactions } from '@/features/transactions/api/transactions'; // in shared/ui/
 import { MovimientoModal } from '@/features/transactions/components/movimiento-modal'; // in features/centros/
 ```
+
+### API client
+
+The web talks to `/api/v2` through a client Orval generates from
+`api/openapi.v2.json` (D11): typed `fetch` functions and the schema types, in
+`frontend/src/shared/api/generated/`. Hooks are NOT generated: each feature
+writes its React Query hooks in its `api/`, calling those functions.
+
+```ts
+// Correct — the feature's hook calls the generated function
+import { accountsList } from '@/shared/api/generated/accounts-v2/accounts-v2';
+import type { Account } from '@/shared/api/generated/model';
+queryFn: () => allPages((page) => accountsList(page));
+
+// Incorrect — a hand-written path and a hand-written type for the response
+apiFetch<{ display_name: string }[]>('/accounts');
+```
+
+- **The generated folder is committed and never edited.** Why: Hostinger's
+  hbuilds builds without devDependencies, so it cannot run Orval; and making
+  Orval a production dependency would ship its whole tree to the server for a
+  file that only changes with the contract. Regenerate with
+  `npm run generate:api --workspace frontend` in the same PR that changes
+  `api/openapi.v2.json`; CI regenerates it and fails on any difference.
+- **Every request goes through `apiRequest`** (`shared/api/api-client.ts`, the
+  Orval `mutator`): token, renew-before-expiry, one retry after a 401, and the
+  `{ error }` envelope as an `ApiClientError`. Only two things skip it, on
+  purpose: the auth calls in `session.ts` (renewing is what the door is built
+  on) and the upload in `apiSubir` (it needs upload progress).
+- **Every v2 list is paginated.** A screen that needs the whole set —the
+  category tree, the accounts— uses `allPages` (`shared/api/pages.ts`); a
+  table passes its own `page` and `perPage` (at most 200).
+- **Contracts that speak another dialect are translated at the edge, once.**
+  The iOS bridge still delivers a v1 session (`session.ts`,
+  `desdeElPuente`); `@coco/lectura` still reads `palabras_clave`
+  (`shared/lib/arbol-buscable.ts`); the dashboard's `breakdownLevel` and
+  `granularity` become the Spanish words the screen shows
+  (`dashboard-charts.tsx`). Nothing inside a feature knows.
+- **What is not in the OpenAPI document** —the bridge, the app's User-Agent
+  mark, the v1 contract the iPhone app still speaks— lives in
+  `shared/lib/native-contract.ts`. Two API specs and the iOS `ContratosTests`
+  read that file by path, so its literals are load-bearing. It replaced
+  `packages/types`, which no longer exists.
+- `shared/ui` imports neither the generated client nor the native contract,
+  not even types (`web-ui-knows-no-contract`): a component gets a sign or a
+  label, not an API object.
+- The API origin is `VITE_API_ORIGIN` (empty = same origin, which production
+  needs for the `SameSite=Strict` refresh cookie); the paths already carry
+  `/api/v2`.
 
 ### Rigid pieces, flexible composition
 
