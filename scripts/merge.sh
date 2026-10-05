@@ -35,13 +35,13 @@ if [ "$(git rev-parse "origin/$BRANCH")" != "$(git rev-parse "$BRANCH")" ]; then
   exit 1
 fi
 
-echo "▸ Waiting for the checks of PR #$PR…"
+echo "▸ Waiting for the checks of PR #${PR}…"
 if ! gh pr checks "$PR" --watch --fail-fast --interval 20; then
-  echo "Refusing: a check failed on PR #$PR." >&2
+  echo "Refusing: a check failed on PR #${PR}." >&2
   exit 1
 fi
 if [ "$(gh pr checks "$PR" --json state -q 'length')" = "0" ]; then
-  echo "Refusing: PR #$PR has no checks at all." >&2
+  echo "Refusing: PR #${PR} has no checks at all." >&2
   exit 1
 fi
 
@@ -56,4 +56,4 @@ else
   git branch -f "$DEPLOY_BRANCH" "$BRANCH" 2>/dev/null || true
 fi
 
-echo "✓ PR #$PR integrated into $DEPLOY_BRANCH."
+echo "✓ PR #${PR} integrated into $DEPLOY_BRANCH."
