@@ -698,3 +698,27 @@ Prueba frágil vista una vez: `auth.e2e-spec.ts › una cuenta pendiente no pued
 **Supervivencia de los logs a un despliegue — verificada.** Tras desplegar `77b2c5b` (solo documentación), `api.log` conserva su primera línea (`17:16:41 Starting Nest application...`) y creció a 554 líneas con los arranques de los dos despliegues.
 
 | 6.9 | `feat/receipts-to-storage` | #10 | Orden seguido: (1) **respaldo de la base** con el script existente `respaldar.sh` → `respaldos/coco-20261005-121603.sql`, restaurado en una base desechable (14 tablas, 4 usuarios); (2) **respaldo de los archivos** con el nuevo `backup-from-server.sh` (UNA conexión rsync, solo lectura) → `respaldos/soportes-20261005-121629/`: **468 archivos, 32 MB**, servidor = local; (3) bucket `soportes` **privado** creado en desarrollo y en producción con `create-bucket.mjs` (solo jpeg/png/pdf, 25 MB); (4) e2e de punta a punta contra el bucket de **desarrollo** (32/32) y en disco; (5) **copia a producción** con `copy-to-storage.mjs`: **463 filas, 463 subidas, 463 verificadas por sha256 contra `soportes.huella`**, 0 faltantes, 0 huellas distintas, 0 fallos; ruta pública y autenticada sin clave → 400; (6) despliegue del código. **Huérfanos en el disco hoy: 5** (archivos sin fila; documentados, no borrados): `2/13fe39f5….jpg`, `2/1cb85624….pdf`, `2/4b9a4e07….pdf`, `2/5c673cd8….pdf`, `2/be28612a….pdf`. El disco del servidor (`~/soportes-cocoapp`) queda intacto como respaldo hasta la fase 7; el adaptador de disco no borra nada en producción. El `SUPABASE_URL` del servidor es el mismo proyecto que el de la copia (huellas iguales) |
+| 6.9 | — | #10 | **Desplegado** `aadd78e` · 1m 15s · `stderr` 0 · arranque: «Almacén de soportes: supabase bucket "soportes" … (private)» en cada proceso. Ventana entre la copia y el despliegue cerrada: rsync incremental + copia de nuevo → 0 recibos nuevos, **463/463 verificados**; 0 líneas de error en `api.log` |
+
+### Informe de la fase 6 — deuda técnica (5 oct 2026)
+
+| Punto de la deuda original | Estado | Evidencia / motivo |
+|---|---|---|
+| 6.1 `npm install` del servidor falla al primer intento | **Resuelto** | Una sola `esbuild` (tsx 4.20). Cinco despliegues seguidos sin `--legacy-peer-deps`. `scripts/verify-clean-install.sh` reproduce la instalación del servidor |
+| 6.2 Periodicidades intermedias sin pruebas | **Resuelto** | 21 pruebas en la API y 6 en la web; ninguna falló, la lógica estaba bien |
+| 6.3 Coherencia de la recurrencia en la base | **Resuelto** | 6 CHECK con nombre; 0/79 violaciones antes; 422 con la regla en palabras |
+| 6.4 Moneda | **Resuelto** | `transactions.currency` (558 filas COP); formateo por fila |
+| 6.5 Aislamiento entre usuarios | **Resuelto** | 50 rutas atacadas por un segundo usuario, guardia de rutas nuevas; **0 huecos**; mutación de control detectada |
+| 6.6 Módulo `imports` | **Resuelto** (borrado de tablas → fase 7) | 7 endpoints fuera (401 → 404); tablas conservadas (0 filas en producción) |
+| 6.7 Cobro automático dentro de un GET | **Resuelto** | Tarea diaria + al arrancar; idempotente con varios procesos |
+| 6.8 Logs y operación | **Resuelto** | JSON con `requestId` fuera de la versión, rotados; sobreviven a un despliegue (verificado); `/health` público |
+| 6.8 Servicio externo de errores | **Propuesto, no implementado** | Exige crear una cuenta (p. ej. Sentry, plan gratuito de 5k eventos/mes). Mientras tanto: `grep '"level":"error"' ~/domains/dev-cocoapp.viteri.me/logs/coco-api/api.log` |
+| 6.9 Soportes en el disco del hosting | **Resuelto** (borrado del disco → fase 7) | Bucket privado; 463/463 verificados por sha256; huérfanos de disco: 5 |
+
+**Pendientes que deja la fase (no estaban en el plan):**
+- LiteSpeed arranca **varios procesos** de la API (vistos 3). Todo lo escrito en esta fase lo tolera (idempotencia por `external_ref`, logs que siguen la rotación ajena), pero cualquier estado en memoria por proceso —el `single-flight` de algo, un caché— habría que pensarlo así.
+- Borrar un **usuario** (operación de administración, en cascada) deja sus archivos en el bucket: el borrado de archivos cubre soporte, movimiento y transferencia. Propuesta: una limpieza programada que compare el bucket con `soportes.storage_key`.
+- El bucket de **desarrollo** acumula los archivos de las e2e corridas contra él (bytes de prueba).
+- Prueba frágil vista una vez: `auth.e2e-spec.ts` (`socket hang up`).
+
+**Consumo de tokens de la fase:** sesión limpia desde el arranque; lecturas por rango y `grep` antes de abrir archivos; salidas filtradas (`tail`, resúmenes de prueba); pruebas dirigidas mientras se trabajaba y la suite completa (más build e instalación limpia) una vez por paso antes de integrar; un solo subagente intentado (la 6.5), que se cortó por el límite de sesión antes de escribir nada y se hizo en la conversación principal.
