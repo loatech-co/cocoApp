@@ -3,7 +3,7 @@ import Foundation
 
 /// Las URLs con las que los accesos abren la app. La app las resuelve en
 /// `onOpenURL` (si no hay sesión, primero entrar y después el destino).
-enum URLDeCaptura {
+enum CaptureURL {
     /// El formulario rápido.
     static let manual = url(destino: "manual")
     /// El formulario con la cámara ya levantada.
@@ -39,6 +39,6 @@ struct AbrirCapturaIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult & OpensIntent {
-        .result(opensIntent: OpenURLIntent(URLDeCaptura.url(destino: destino)))
+        .result(opensIntent: OpenURLIntent(CaptureURL.url(destino: destino)))
     }
 }
