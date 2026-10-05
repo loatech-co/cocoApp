@@ -29,6 +29,6 @@ export const FewPages: Story = { render: () => <Controlled total={60} /> };
 export const SinglePage: Story = { args: { total: 10 } };
 
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: true } },
+  parameters: { pseudo: { focusVisible: ['button'] } },
   render: () => <Controlled total={200} from={3} />,
 };

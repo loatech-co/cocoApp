@@ -53,4 +53,4 @@ export const IconOnly: Story = { args: { Icono: Ellipsis, soloIcono: true } };
 
 export const Ghost: Story = { args: { variante: 'ghost' } };
 
-export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: true } } };
+export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: ['button'] } } };

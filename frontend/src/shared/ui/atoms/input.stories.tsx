@@ -59,4 +59,4 @@ export const Disabled: Story = { args: { disabled: true, defaultValue: 'No se pu
 export const Invalid: Story = { args: { 'aria-invalid': true, defaultValue: 'Mercado' } };
 
 /** Rule 18: one pixel of ring colour, only with `:focus-visible`. */
-export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: true } } };
+export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: ['input'] } } };

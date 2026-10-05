@@ -34,4 +34,4 @@ export const List: Story = {
   ),
 };
 
-export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: true } } };
+export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: ['a'] } } };

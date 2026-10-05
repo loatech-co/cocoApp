@@ -26,5 +26,5 @@ export const Disabled: Story = {
 
 export const FocusVisible: Story = {
   args: { defaultChecked: true },
-  parameters: { pseudo: { focusVisible: true } },
+  parameters: { pseudo: { focusVisible: ['input'] } },
 };

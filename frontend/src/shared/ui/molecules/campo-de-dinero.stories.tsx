@@ -34,6 +34,6 @@ export const Disabled: Story = {
 };
 
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: true, focusWithin: true } },
+  parameters: { pseudo: { focusVisible: ['input'], focusWithin: ['.campo'] } },
   render: () => <Controlled start="1250000" />,
 };

@@ -44,6 +44,6 @@ export const DateRange: Story = { render: () => <Range /> };
 export const Empty: Story = { args: { vista: { anio: 2026, mes: 9 } } };
 
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: true } },
+  parameters: { pseudo: { focusVisible: ['button'] } },
   render: () => <OneDay />,
 };

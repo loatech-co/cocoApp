@@ -26,4 +26,4 @@ export const Disabled: Story = { args: { disabled: true } };
 
 export const Invalid: Story = { args: { 'aria-invalid': true } };
 
-export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: true } } };
+export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: ['textarea'] } } };

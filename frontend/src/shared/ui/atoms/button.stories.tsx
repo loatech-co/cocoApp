@@ -74,12 +74,12 @@ export const Disabled: Story = {
 };
 
 export const Hover: Story = {
-  parameters: { pseudo: { hover: true } },
+  parameters: { pseudo: { hover: ['button'] } },
   render: renderVariants,
 };
 
 /** Rule 18: a button draws no focus ring, not even with the keyboard. */
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: true } },
+  parameters: { pseudo: { focusVisible: ['button'] } },
   render: renderVariants,
 };

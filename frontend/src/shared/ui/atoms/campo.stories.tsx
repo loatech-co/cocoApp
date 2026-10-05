@@ -31,7 +31,7 @@ export const Filled: Story = {
 
 /** The label floats up and takes the ring colour only with `:focus-visible`. */
 export const FocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: true, focusWithin: true } },
+  parameters: { pseudo: { focusVisible: ['input'], focusWithin: ['.campo'] } },
 };
 
 export const WithHelp: Story = {

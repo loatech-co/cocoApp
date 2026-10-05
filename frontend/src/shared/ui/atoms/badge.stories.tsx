@@ -56,7 +56,7 @@ function ToggleChips() {
 export const Chips: Story = { render: () => <ToggleChips /> };
 
 export const ChipsFocusVisible: Story = {
-  parameters: { pseudo: { focusVisible: true } },
+  parameters: { pseudo: { focusVisible: ['button'] } },
   render: () => <ToggleChips />,
 };
 
