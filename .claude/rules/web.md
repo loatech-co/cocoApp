@@ -159,6 +159,7 @@ Se actualiza en el mismo PR que crea o cambia un componente.
 | `atoms/search-box.tsx`             | átomo      | La caja de filtrar una lista a la vista (`SearchBox`): `cabecera` o `caja`                        |
 | `atoms/skeleton.tsx`               | átomo      | Hueco de carga                                                                                    |
 | `atoms/text-button.tsx`            | átomo      | Acción que se lee como texto (`TextButton`): `primario`, `tenue` o `realce`                       |
+| `atoms/text-link.tsx`              | átomo      | Enlace dentro de una frase, subrayado en reposo (`TextLink`)                                      |
 | `atoms/textarea.tsx`               | átomo      | Campo de texto de varias líneas                                                                   |
 | `atoms/tile.tsx`                   | átomo      | Baldosa de la rejilla de atajos: `tileClass`, `MovableTile` y `TileRemove`                        |
 | `atoms/toggle-option.tsx`          | átomo      | Opción de una lista corta que se enciende (`ToggleOption`): los atajos de rango                   |

@@ -1,6 +1,6 @@
 import { Loader2, LogIn } from 'lucide-react';
 import { useState, type SubmitEvent } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 import { mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
@@ -9,6 +9,7 @@ import { Campo } from '@/shared/ui/atoms/campo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
 import { Input } from '@/shared/ui/atoms/input';
 import { Logo } from '@/shared/ui/atoms/logo';
+import { TextLink } from '@/shared/ui/atoms/text-link';
 
 /**
  * Entrar.
@@ -188,10 +189,7 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          ¿No tienes cuenta?{' '}
-          <Link to="/registro" className="text-primary underline-offset-4 hover:underline">
-            Solicitar acceso
-          </Link>
+          ¿No tienes cuenta? <TextLink to="/registro">Solicitar acceso</TextLink>
         </p>
       </CardContent>
     </Card>

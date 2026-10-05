@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { Input } from '@/shared/ui/atoms/input';
 import { Logo } from '@/shared/ui/atoms/logo';
 import { PoliticaDeContrasena, cumpleLaPolitica } from '@/shared/ui/atoms/politica-de-contrasena';
+import { TextLink } from '@/shared/ui/atoms/text-link';
 
 /**
  * Solicitar acceso.
@@ -63,10 +64,7 @@ export function RegisterPage() {
             <RegisterForm form={form} />
 
             <p className="text-center text-sm text-muted-foreground">
-              ¿Ya tienes cuenta?{' '}
-              <Link to="/" className="text-primary underline-offset-4 hover:underline">
-                Iniciar sesión
-              </Link>
+              ¿Ya tienes cuenta? <TextLink to="/">Iniciar sesión</TextLink>
             </p>
           </CardContent>
         </Card>
