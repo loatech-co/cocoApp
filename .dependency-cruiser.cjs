@@ -10,18 +10,16 @@
  *
  * @type {import('dependency-cruiser').IConfiguration}
  */
+/** Tests may import what they test from any level. */
+const WEB_TEST = '\\.test\\.tsx?$';
+
 module.exports = {
   forbidden: [
     {
       name: 'no-circular',
       severity: 'error',
       comment: 'A cycle means two files cannot be understood, tested or moved apart.',
-      from: {
-        // TEMPORARY (step 7.4): the one cycle that existed when the rule arrived,
-        // between the web's session and the native bridge. The frontend step
-        // breaks it and deletes this line.
-        pathNot: '^frontend/src/lib/(puente-nativo|session)\\.ts$',
-      },
+      from: {},
       to: { circular: true },
     },
     {
@@ -64,38 +62,78 @@ module.exports = {
         pathNot: ['^api/src/modules/$1/', '\\.(service|module)\\.ts$'],
       },
     },
+    // ── Web (step 7.4-web-a). Each rule has its line in CONTRIBUTING.md
+    // ("Web architecture") and the reasoning in .claude/rules/web.md.
     {
       name: 'web-features-do-not-import-each-other',
       severity: 'error',
-      comment: 'What two features share moves up to shared code (D10).',
-      from: {
-        path: '^frontend/src/features/([^/]+)/',
-        pathNot: knownFeatureImporters(),
-      },
+      comment: 'What two features share moves up to shared/ (D10).',
+      from: { path: '^frontend/src/features/([^/]+)/' },
       to: { path: '^frontend/src/features/', pathNot: '^frontend/src/features/$1/' },
     },
     {
-      name: 'web-features-known-violations',
+      name: 'web-nothing-imports-app',
       severity: 'error',
       comment:
-        'TEMPORARY (step 7.4): the four cross-feature imports that existed when the rule ' +
-        'arrived. Each file may keep ITS import and nothing else. The frontend step moves ' +
-        'these to shared code and deletes this rule and knownFeatureImporters.',
-      from: {
-        path: '^frontend/src/features/([^/]+)/(usuarios-page|cuenta-page|dashboard-page|movimiento-modal)\\.tsx$',
-      },
-      to: {
-        path: '^frontend/src/features/',
-        pathNot: [
-          '^frontend/src/features/$1/',
-          // admin/usuarios-page and cuenta/cuenta-page → the password policy
-          '^frontend/src/features/auth/politica-de-contrasena\\.tsx$',
-          // dashboard/dashboard-page → the movement modal
-          '^frontend/src/features/transactions/movimiento-modal\\.tsx$',
-          // transactions/movimiento-modal → the category suggestion hook
-          '^frontend/src/features/categorization/use-sugerencia\\.ts$',
-        ],
-      },
+        'app/ is the top: it boots, routes and composes features and shared. Nothing ' +
+        'below imports it back.',
+      from: { path: '^frontend/src/(features|shared)/' },
+      to: { path: '^frontend/src/app/' },
+    },
+    {
+      name: 'web-shared-does-not-import-features',
+      severity: 'error',
+      comment: 'shared/ is used by every feature; it cannot depend on one.',
+      from: { path: '^frontend/src/shared/' },
+      to: { path: '^frontend/src/features/' },
+    },
+    {
+      name: 'web-shared-lib-is-the-floor',
+      severity: 'error',
+      comment:
+        'shared/lib is plain infrastructure (dates, formatting, focus, the native bridge): ' +
+        'it draws nothing and fetches nothing.',
+      from: { path: '^frontend/src/shared/lib/', pathNot: WEB_TEST },
+      to: { path: '^frontend/src/shared/(ui|api)/' },
+    },
+    {
+      name: 'web-ui-has-no-data',
+      severity: 'error',
+      comment:
+        'shared/ui draws what it is given. No React Query, no api client, no session: ' +
+        'data lives in a hook of the feature that uses the component.',
+      from: { path: '^frontend/src/shared/ui/' },
+      to: { path: ['^frontend/src/shared/api/', '(^|/)node_modules/@tanstack/'] },
+    },
+    {
+      name: 'web-ui-atoms-use-no-component',
+      severity: 'error',
+      comment: 'An atom uses no other component of shared/ui (foundations are not components).',
+      from: { path: '^frontend/src/shared/ui/atoms/', pathNot: WEB_TEST },
+      to: { path: '^frontend/src/shared/ui/(atoms|molecules|organisms|templates)/' },
+    },
+    {
+      name: 'web-ui-molecules-use-only-atoms',
+      severity: 'error',
+      comment: 'A molecule is built from atoms only.',
+      from: { path: '^frontend/src/shared/ui/molecules/', pathNot: WEB_TEST },
+      to: { path: '^frontend/src/shared/ui/(molecules|organisms|templates)/' },
+    },
+    {
+      name: 'web-ui-organisms-use-molecules-and-atoms',
+      severity: 'error',
+      comment: 'An organism is built from molecules and atoms, never from another organism.',
+      from: { path: '^frontend/src/shared/ui/organisms/', pathNot: WEB_TEST },
+      to: { path: '^frontend/src/shared/ui/(organisms|templates)/' },
+    },
+    {
+      name: 'web-ui-templates-use-lower-levels',
+      severity: 'error',
+      comment:
+        'A template lays out organisms, molecules and atoms, never another template ' +
+        '(and, like all of shared/ui, without data).',
+      from: { path: '^frontend/src/shared/ui/templates/', pathNot: WEB_TEST },
+      to: { path: '^frontend/src/shared/ui/templates/' },
     },
   ],
   options: {
@@ -109,13 +147,3 @@ module.exports = {
     },
   },
 };
-
-/** The four files with a known cross-feature import (see the rule above). */
-function knownFeatureImporters() {
-  return [
-    '^frontend/src/features/admin/usuarios-page\\.tsx$',
-    '^frontend/src/features/cuenta/cuenta-page\\.tsx$',
-    '^frontend/src/features/dashboard/dashboard-page\\.tsx$',
-    '^frontend/src/features/transactions/movimiento-modal\\.tsx$',
-  ];
-}
