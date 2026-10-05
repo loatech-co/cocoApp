@@ -20,6 +20,10 @@ architecture, tests…).
 | [No dead code](#no-dead-code)                   | knip                              | `npm run knip`      | `npm run knip`           |
 | [Git hooks](#git-hooks)                         | lefthook + lint-staged            | on every commit     | (the same checks above)  |
 | [Commit messages](#commit-messages)             | commitlint                        | on every commit     | `commitlint` on the PR   |
+| [Architecture](#architecture)                   | dependency-cruiser + table check  | `npm run depcruise` | `npm run depcruise`      |
+| [Errors](#errors)                               | ESLint `no-restricted-syntax`     | `npm run lint`      | `npm run lint`           |
+| [Environment](#environment)                     | zod, at boot                      | `npm test`          | `npm test`               |
+| [Size limits](#size-limits)                     | ESLint `max-lines*`               | `npm run lint`      | `npm run lint`           |
 
 ## Setup
 
@@ -93,7 +97,7 @@ Not here, on purpose: `jsx-a11y` (no release supports ESLint 10; accessibility
 is checked with axe in the Playwright journeys, step 7.7); naming and file-name
 rules — `@typescript-eslint/naming-convention`, `eslint-plugin-check-file` and
 `@eslint-react`'s naming rules — which arrive with the renames of step 7.2;
-import cycles (dependency-cruiser, a later step).
+import cycles (dependency-cruiser, see [Architecture](#architecture)).
 
 **Never disable a rule globally.** A per-line disable needs the rule name and a
 reason on the same line, and should be rare:
@@ -220,3 +224,121 @@ Arreglos varios                 # no type, not English
 fix(frontend): …                # unknown scope — it is `web`
 feat(api): Added the endpoint.  # past tense, capital, final period
 ```
+
+## Architecture
+
+Coco is a modular monolith ([ADR 0001](docs/adr/0001-modular-monolith.md)).
+`npm run depcruise` checks the rules below with dependency-cruiser
+(`.dependency-cruiser.cjs`) and `scripts/ci/table-ownership.mjs`; CI runs it
+after knip.
+
+**Layers in the API.** One folder per resource in `api/src/modules/`:
+`*.controller.ts` → `*.service.ts` → `*.repository.ts`, plus `*.dto.ts` and
+`*.module.ts`. Nothing but Nest wiring lives in `*.module.ts`.
+
+- **Controllers have no logic**: validate (DTO), delegate to one service
+  call, respond.
+- **Only repositories talk to Prisma.** Only `*.repository.ts` injects
+  `PrismaService`. A service or controller may `import type` Prisma's
+  generated types (to name the row a repository returns) but never use the
+  client at runtime — no queries, no `Prisma.PrismaClientKnownRequestError`.
+  A repository that expects a constraint error turns it into a value or a
+  domain error (`createUnlessTaken` → `null`, `createWithDetails` →
+  `DuplicateError`).
+- **Transactions**: a unit of work is ONE repository method that runs
+  `prisma.$transaction` itself (`TransactionsRepository.createWithDetails`,
+  `updateWithDetails`, `createTransfer`). Services never open a transaction
+  and never pass a transaction client around.
+- **`common/` never imports `modules/`.** It is shared by every module, so it
+  cannot depend on one. Pure helpers several modules use live there
+  (`common/categories/categories.tree.ts`).
+- **No cycles**, anywhere in the repo.
+
+**A module uses another module only through that module's public service —
+never its repository, never its tables.**
+
+Why: a module's service is its contract; its repository and tables are how it
+keeps that contract today. When `admin` updated users with its own query and
+`auth` later added a rule on status changes, the rule would have been skipped
+by every write `auth` did not see. Going through the owner keeps each rule in
+one place, keeps each table changeable by one module, and is what would let a
+module leave the monolith one day (ADR 0001). In practice:
+
+- import another module's `*.service.ts` (and its `*.module.ts`, to wire it),
+  nothing else — dependency-cruiser `api-modules-talk-through-services`;
+- query only the tables your module owns — `scripts/ci/table-ownership.mjs`
+  maps each Prisma model to its owner. What other modules need from a table is
+  a method on the owner's service (`CategoryLookupService`, `LedgerService`,
+  `UsersService`, `AuditService`).
+- The accesses left when the rule arrived are listed in that script's `KNOWN`
+  with their reason (module cycles, single-transaction units of work). That
+  list only shrinks.
+
+```ts
+// Correct — dashboard reads movements through the owner of the table
+constructor(private readonly ledger: LedgerService) {}
+const movimientos = await this.ledger.findForSummary(userId, filter);
+
+// Incorrect — another module's repository, or its table directly
+constructor(private readonly transactions: TransactionsRepository) {}
+await this.prisma.transaction.findMany({ where: { userId } }); // in dashboard/
+```
+
+**Web.** `frontend/src/features/<feature>/` do not import each other; what two
+features share moves to shared code (D10). The four imports that existed when
+the rule arrived, and one cycle in `lib/`, are listed as temporary exceptions
+in `.dependency-cruiser.cjs`; the frontend step removes them.
+
+## Errors
+
+Services, repositories, tasks and controllers throw a `DomainError`
+(`api/src/common/errors/domain-error.ts`): `NotFoundError`, `ConflictError`,
+`ValidationError` (422), `DuplicateError`, `BadRequestError`,
+`AuthenticationError`, `ForbiddenError`, `PayloadTooLargeError`,
+`UnsupportedMediaTypeError`, `InternalError`, `ServiceUnavailableError`.
+`AllExceptionsFilter` is the only place that maps them to HTTP, and the wire
+format is a contract: `{ error: { code, message, details } }`, with the
+status, `code` and Spanish message each error had before (its spec compares
+every domain error with the Nest exception it replaced). Add a subclass only
+for a status no existing one covers.
+
+Guards, pipes and param decorators are the HTTP adapter and keep Nest's
+exceptions. ESLint fails on `new XxxException(…)` in `*.service.ts`,
+`*.controller.ts`, `*.repository.ts` and `*.task.ts`.
+
+```ts
+// Correct
+if (!tag) throw new NotFoundError('La etiqueta no existe.');
+
+// Incorrect — HTTP leaking into the domain
+if (!tag) throw new NotFoundException('La etiqueta no existe.');
+```
+
+## Environment
+
+Every variable the API reads is declared once, with its type and whether it
+is required, in `api/src/common/config/env.ts` (zod). `main.ts` validates the
+environment before anything else and refuses to start with one message that
+lists every missing or invalid variable; then the "no remote database outside
+production" guard runs. Values go through `leerDelEntorno` first, so quotes
+LiteSpeed leaves inside a value and empty strings behave as everywhere else.
+
+A new variable goes into the schema (and `api/.env.example`) in the same PR
+that reads it. Required-ness mirrors what the code needs: Supabase Auth's URL
+and keys outside `NODE_ENV=test`, the Storage key when receipts go to
+Supabase. The spec (`env.spec.ts`) keeps the CI test env, the local env and
+the server's quoted env valid.
+
+## Size limits
+
+At most **300 lines per file** and **50 per function**, blank lines and
+comments not counted (`max-lines`, `max-lines-per-function`). A long function
+splits into named steps; a long file splits by responsibility (a module's
+types, its pure helpers, its controller), never into `utils-2.ts`.
+
+- The API has no exceptions.
+- Test callbacks (`describe`/`it`) are exempt from the function limit — the
+  callback is the scenario — but test files keep the file limit.
+- The web and the packages list the files that were over the limits when the
+  rules arrived, in `eslint.config.js`, as temporary exceptions for the
+  frontend step. A file is never added to those lists.
