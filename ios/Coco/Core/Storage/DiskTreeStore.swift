@@ -5,10 +5,6 @@ import Foundation
 struct DiskTreeStore: TreeStore {
     let archivo: URL
 
-    init(archivo: URL) {
-        self.archivo = archivo
-    }
-
     /// `Application Support/arbol.json` del contenedor de la app.
     static func porDefecto(gestor: FileManager = .default) throws -> DiskTreeStore {
         let soporte = try gestor.url(

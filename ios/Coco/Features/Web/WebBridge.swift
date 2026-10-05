@@ -257,22 +257,22 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         }
     }
 
-    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation?) {
         estadoDeCarga = .cargando
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
         hayDocumento = true
         estadoDeCarga = .lista
         // Documento nuevo: la cuenta de entregas seguidas vuelve a cero.
         entregasSeguidas = 0
     }
 
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
         fallo((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
     }
 
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
         fallo((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
     }
 

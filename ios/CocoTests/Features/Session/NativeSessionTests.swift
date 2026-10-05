@@ -90,7 +90,7 @@ final class NativeSessionTests: XCTestCase {
     }
 
     private func cuerpo(_ r: URLRequest) -> String {
-        String(decoding: r.httpBody ?? Data(), as: UTF8.self)
+        String(bytes: r.httpBody ?? Data(), encoding: .utf8) ?? ""
     }
 
     private func rutas(_ t: FakeTransport) -> [String] {
@@ -340,6 +340,6 @@ final class NativeSessionTests: XCTestCase {
         let json =
             #"{"meta":{"user":{"no":"este"}},"data":{"nota":"} {","user":{"a":"{\"x\":1}","b":[1,{"c":2}]},"otro":{}}}"#
         let crudo = JSONSlicer.objeto(clave: "user", dentroDe: "data", en: Data(json.utf8))
-        XCTAssertEqual(crudo.map { String(decoding: $0, as: UTF8.self) }, #"{"a":"{\"x\":1}","b":[1,{"c":2}]}"#)
+        XCTAssertEqual(crudo.flatMap { String(bytes: $0, encoding: .utf8) }, #"{"a":"{\"x\":1}","b":[1,{"c":2}]}"#)
     }
 }

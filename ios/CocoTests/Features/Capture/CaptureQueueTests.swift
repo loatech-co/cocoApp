@@ -122,18 +122,18 @@ final class CaptureQueueTests: XCTestCase {
     }
 
     func testSiElAlmacenMuereTrasLaFase1SeReenviaElMismoRefYLaFotoSubeUnaVez() async throws {
-        let frágil = FailingStore(real: almacen)
-        let c = cola(almacen: frágil)
+        let fragile = FailingStore(real: almacen)
+        let c = cola(almacen: fragile)
         let id = UUID()
         try await c.encolar(cuerpo, origen: .iosFoto, foto: foto, id: id)
-        frágil.fallarGuardado = true
+        fragile.fallarGuardado = true
         enviador.responderFoto(.falla(APIError.sinRed(.notConnectedToInternet)))
         await c.procesar()
         // La fase 1 llegó pero no se pudo anotar: sigue .porEnviar en disco.
         guard case .porEnviar? = await c.captura(id: id)?.fase else { return XCTFail("debería seguir porEnviar") }
 
-        frágil.fallarGuardado = false
-        let segunda = cola(almacen: frágil)
+        fragile.fallarGuardado = false
+        let segunda = cola(almacen: fragile)
         let resumen = await segunda.procesar()
         XCTAssertEqual(resumen.enviadas, 1)
         XCTAssertEqual(enviador.requests.count, 2)
@@ -296,7 +296,7 @@ final class CaptureQueueTests: XCTestCase {
         XCTAssertEqual(try almacen.bytesDeFotos(), 0)
         let captura = await c.captura(id: id)
         XCTAssertNil(captura?.fotoRelativa)
-        guard case .hecha(let r)? = captura?.fase else { return XCTFail() }
+        guard case .hecha(let r)? = captura?.fase else { return XCTFail("la captura no quedó hecha") }
         XCTAssertEqual(r.resumen, "Gasto de 45000 en D1")
     }
 
@@ -314,7 +314,7 @@ final class CaptureQueueTests: XCTestCase {
         await c.procesar()
         XCTAssertEqual(enviador.requests.count, 1, "la fase 1 no se repite")
         XCTAssertEqual(enviador.subidas.count, 2)
-        guard case .hecha? = await c.captura(id: id)?.fase else { return XCTFail() }
+        guard case .hecha? = await c.captura(id: id)?.fase else { return XCTFail("la captura no quedó hecha") }
     }
 
     func testConElTopeDeFotosLlenoEncolarConFotoLanzaYSinFotoEntra() async throws {

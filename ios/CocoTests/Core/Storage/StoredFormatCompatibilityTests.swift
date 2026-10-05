@@ -30,7 +30,8 @@ final class StoredFormatCompatibilityTests: XCTestCase {
         PendingCapture(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID(),
             creadaEn: Date(timeIntervalSinceReferenceDate: 0), origen: .iosFoto, cuerpo: Self.cuerpo,
-            fotoRelativa: "Fotos/x.jpg", fase: fase, intentos: 2, proximoIntento: Date(timeIntervalSinceReferenceDate: 50),
+            fotoRelativa: "Fotos/x.jpg", fase: fase, intentos: 2,
+            proximoIntento: Date(timeIntervalSinceReferenceDate: 50),
             ultimoError: "e", resultadoDeTexto: Self.resultado)
     }
 
@@ -94,7 +95,8 @@ final class StoredFormatCompatibilityTests: XCTestCase {
         try idaYVuelta(clasificacion, claseJSON)
         try idaYVuelta(
             Interpretation(
-                amount: "1", date: "d", merchant: "m", description: "x", clasificacion: clasificacion, needsReview: true),
+                amount: "1", date: "d", merchant: "m", description: "x", clasificacion: clasificacion, needsReview: true
+            ),
             #"{"amount":"1","clasificacion":CL,"date":"d","description":"x","merchant":"m","por_revisar":true}"#
                 .replacingOccurrences(of: "CL", with: claseJSON))
         let transaccion = TransactionSummary(
@@ -104,7 +106,8 @@ final class StoredFormatCompatibilityTests: XCTestCase {
             #"{"amount":"2","category_id":3,"date":"d","description":"x","id":1,"merchant":"m","por_revisar":false,"source":"sms"}"#
         try idaYVuelta(transaccion, transJSON)
         try idaYVuelta(
-            CaptureResponse(transaction: transaccion, clasificacion: clasificacion, resumen: "r", repetido: true, fusionado: false),
+            CaptureResponse(
+                transaction: transaccion, clasificacion: clasificacion, resumen: "r", repetido: true, fusionado: false),
             #"{"clasificacion":CL,"fusionado":false,"repetido":true,"resumen":"r","transaction":TR}"#
                 .replacingOccurrences(of: "CL", with: claseJSON).replacingOccurrences(of: "TR", with: transJSON))
         try idaYVuelta(

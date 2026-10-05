@@ -103,7 +103,12 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
     private var capturas: [Reply]
     private var fotos: [Reply]
     private(set) var requests: [CaptureRequest] = []
-    private(set) var subidas: [(jpeg: Data, nombre: String, transactionId: Int)] = []
+    struct Upload: Equatable {
+        let jpeg: Data
+        let nombre: String
+        let transactionId: Int
+    }
+    private(set) var subidas: [Upload] = []
     private(set) var instantes: [ContinuousClock.Instant] = []
     var transactionId = 100
     var repetidoSiYaSeVio = true
@@ -141,7 +146,7 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
 
     func subirFoto(_ jpeg: Data, nombre: String, a transactionId: Int) async throws -> [Attachment] {
         let respuesta: Reply = cerrojo.withLock {
-            subidas.append((jpeg, nombre, transactionId))
+            subidas.append(Upload(jpeg: jpeg, nombre: nombre, transactionId: transactionId))
             return fotos.isEmpty ? .ok : fotos.removeFirst()
         }
         if case .falla(let e) = respuesta { throw e }

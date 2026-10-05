@@ -5,9 +5,9 @@ import Foundation
 /// el campo nunca está vacío —arranca en hoy—, pero hoy no es una decisión.
 struct FormFields: Equatable, Sendable {
     var monto: String = ""
-    var fecha: String? = nil
-    var comercio: String? = nil
-    var conceptoId: Int? = nil
+    var fecha: String?
+    var comercio: String?
+    var conceptoId: Int?
 }
 
 /// Cómo una `Interpretation` de la API entra en el formulario: rellena lo

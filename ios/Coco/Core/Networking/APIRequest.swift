@@ -85,9 +85,8 @@ enum RequestBuilder {
         var cuerpo = Data()
         for parte in partes {
             cuerpo.append("--\(frontera)\r\n")
-            cuerpo.append(
-                "Content-Disposition: form-data; name=\"\(parte.nombreDelCampo)\"; filename=\"\(parte.nombreDeArchivo)\"\r\n"
-            )
+            cuerpo.append("Content-Disposition: form-data; name=\"\(parte.nombreDelCampo)\"; ")
+            cuerpo.append("filename=\"\(parte.nombreDeArchivo)\"\r\n")
             cuerpo.append("Content-Type: \(parte.mime)\r\n\r\n")
             cuerpo.append(parte.datos)
             cuerpo.append("\r\n")

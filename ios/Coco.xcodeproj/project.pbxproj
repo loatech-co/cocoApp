@@ -45,6 +45,7 @@
 		5044526D44CA1519A93F5B8F /* TreeIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E66AFAA1C9EE7274E83CD3D /* TreeIndexTests.swift */; };
 		5066E95654B8B9A89C36F843 /* ProvisioningProfileReaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEFA1C21AE7912DB07C6E679 /* ProvisioningProfileReaderTests.swift */; };
 		5CB1DEBE0436AFFCF30B19FB /* ActionParametersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264BC8DABB35A978568CC557 /* ActionParametersTests.swift */; };
+		5D7D728F1F8B75E906A05432 /* .swiftlint.yml in Resources */ = {isa = PBXBuildFile; fileRef = F0ACD17846C706817941AA82 /* .swiftlint.yml */; };
 		605BD01D4941A57283248287 /* CocoAccesos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0713526A7C4E28F50CC06FD0 /* CocoAccesos.swift */; };
 		6A07309BD694D0A5271B3C39 /* BogotaDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E78E225288920CDE52F16428 /* BogotaDate.swift */; };
 		6C35731237EBC141CE6F8F10 /* StoredFormatCompatibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8033E1456ADCF385689C179B /* StoredFormatCompatibilityTests.swift */; };
@@ -242,6 +243,7 @@
 		EBCFE6E25CAB5299893B8D91 /* RecentConceptsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentConceptsTests.swift; sourceTree = "<group>"; };
 		EE34F1C20582837A22FE67FB /* OfflineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineView.swift; sourceTree = "<group>"; };
 		EEFA1C21AE7912DB07C6E679 /* ProvisioningProfileReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProvisioningProfileReaderTests.swift; sourceTree = "<group>"; };
+		F0ACD17846C706817941AA82 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .swiftlint.yml; sourceTree = "<group>"; };
 		FEE6BC15F79C0454FD2820FD /* CapturesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -517,6 +519,7 @@
 		8BECFDAD0CE5B9C46922B46C /* CocoTests */ = {
 			isa = PBXGroup;
 			children = (
+				F0ACD17846C706817941AA82 /* .swiftlint.yml */,
 				38F156B4797596158DB71D3B /* Info.plist */,
 				5E0B31AEA99CA0FD3B1821C6 /* App */,
 				43E75854F048F8757B981401 /* Core */,
@@ -693,6 +696,7 @@
 			buildConfigurationList = 4EF1F111FB2E0F2B390D928F /* Build configuration list for PBXNativeTarget "CocoTests" */;
 			buildPhases = (
 				C2A224BB7D7C183981AFC0B8 /* Sources */,
+				973F0212950A226621D9B6C9 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -791,6 +795,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				82B7B6443C47AEC9DCCA1262 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		973F0212950A226621D9B6C9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5D7D728F1F8B75E906A05432 /* .swiftlint.yml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

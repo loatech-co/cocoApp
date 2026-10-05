@@ -58,8 +58,9 @@ final class ActionParametersTests: XCTestCase {
     }
 
     func testSMSVacioLanza() {
-        XCTAssertThrowsError(try ActionParameters.cuerpoDeSMS(texto: "   \n", remitente: nil, ahora: nocheDeBogota)) {
-            e in
+        XCTAssertThrowsError(
+            try ActionParameters.cuerpoDeSMS(texto: "   \n", remitente: nil, ahora: nocheDeBogota)
+        ) { e in
             XCTAssertEqual(e as? ParameterError, .textoVacio)
         }
     }

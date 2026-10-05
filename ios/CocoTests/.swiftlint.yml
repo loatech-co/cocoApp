@@ -1,0 +1,15 @@
+# Las pruebas heredan ../.swiftlint.yml. Solo se relaja lo que en una prueba
+# es datos y no código:
+# - line_length: los JSON de ejemplo van en una línea, tal como los devuelve
+#   la API. swift-format ya parte el código a 120; lo único que queda largo
+#   son esas cadenas.
+# - type_body_length y file_length: una clase de pruebas es una lista de
+#   casos; partirla por tamaño separa casos que se leen juntos.
+disabled_rules:
+  - line_length
+type_body_length:
+  warning: 450
+  error: 500
+file_length:
+  warning: 500
+  error: 600

@@ -32,7 +32,8 @@ final class DependenciesTests: XCTestCase {
             notificador: notificador,
             defaults: defaults,
             registrarIntents: { capturador, navegacion in registro.intents = (capturador, navegacion) },
-            registrarTareas: { sesion, cola, arbol, notificador in registro.tareas = (sesion, cola, arbol, notificador)
+            registrarTareas: { sesion, cola, arbol, notificador in
+                registro.tareas = .init(sesion: sesion, cola: cola, arbol: arbol, notificador: notificador)
             }
         )
         return (d, registro)
@@ -40,7 +41,7 @@ final class DependenciesTests: XCTestCase {
 
     final class Registry {
         var intents: (any Capturer, any Navigation)?
-        var tareas: (Session, CaptureQueue, TreeSynchronizer, Notifier)?
+        var tareas: RegisteredTasks?
     }
 
     func testRegistraIntentsYTareasConLasMismasPiezasQueUsaLaApp() throws {
@@ -53,9 +54,9 @@ final class DependenciesTests: XCTestCase {
         XCTAssertTrue(intents.1 === d.enrutador, "los intents navegan por el mismo enrutador que la interfaz")
 
         let tareas = try XCTUnwrap(registro.tareas)
-        XCTAssertTrue(tareas.0 === d.sesion)
-        XCTAssertTrue(tareas.1 === d.cola)
-        XCTAssertTrue(tareas.2 === d.arbol)
+        XCTAssertTrue(tareas.sesion === d.sesion)
+        XCTAssertTrue(tareas.cola === d.cola)
+        XCTAssertTrue(tareas.arbol === d.arbol)
     }
 
     func testElPuenteYLaWebApuntanALaMismaAPI() throws {
@@ -144,11 +145,20 @@ final class SettingsViewTests: XCTestCase {
         let ahora = try XCTUnwrap(Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 5, hour: 12)))
         XCTAssertEqual(SettingsView.textoDeVencimiento(nil), "No disponible (simulador o sin perfil)")
         XCTAssertTrue(
-            SettingsView.textoDeVencimiento(ahora.addingTimeInterval(5 * 86_400), ahora: ahora).contains("quedan 5 días")
+            SettingsView.textoDeVencimiento(ahora.addingTimeInterval(5 * 86_400), ahora: ahora).contains(
+                "quedan 5 días")
         )
         XCTAssertTrue(
             SettingsView.textoDeVencimiento(ahora.addingTimeInterval(86_400), ahora: ahora).hasPrefix("Mañana"))
         XCTAssertTrue(
             SettingsView.textoDeVencimiento(ahora.addingTimeInterval(-86_400), ahora: ahora).hasPrefix("Caducó"))
     }
+}
+
+/// Las piezas que la app entrega al registrar las tareas de fondo.
+struct RegisteredTasks {
+    let sesion: Session
+    let cola: CaptureQueue
+    let arbol: TreeSynchronizer
+    let notificador: Notifier
 }

@@ -16,8 +16,20 @@ enum AmountParser {
         let separadores = limpio.filter { $0 == "." || $0 == "," }
         guard grupos.allSatisfy({ !$0.isEmpty }) else { return nil }
 
+        guard let partes = partir(grupos, separadores: separadores) else { return nil }
+        let (entero, decimal) = partes
+        guard entero.allSatisfy(\.isNumber), !entero.isEmpty else { return nil }
+        let sinCeros = String(entero.drop(while: { $0 == "0" }))
+        let base = sinCeros.isEmpty ? "0" : sinCeros
+        if let decimal { return "\(base).\(decimal)" }
+        return base
+    }
+
+    /// Separa la parte entera de la decimal según cuántos separadores hay y
+    /// cuáles. nil si la forma no es la de un monto.
+    private static func partir(_ grupos: [String], separadores: String) -> (entero: String, decimal: String?)? {
         var entero = ""
-        var decimal: String? = nil
+        var decimal: String?
 
         switch separadores.count {
         case 0:
@@ -54,10 +66,6 @@ enum AmountParser {
             }
         }
 
-        guard entero.allSatisfy(\.isNumber), !entero.isEmpty else { return nil }
-        let sinCeros = String(entero.drop(while: { $0 == "0" }))
-        let base = sinCeros.isEmpty ? "0" : sinCeros
-        if let decimal { return "\(base).\(decimal)" }
-        return base
+        return (entero, decimal)
     }
 }
