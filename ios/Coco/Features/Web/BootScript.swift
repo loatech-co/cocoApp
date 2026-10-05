@@ -5,7 +5,7 @@ import Foundation
 /// fingir ni cambiar la plataforma.
 enum BootScript {
     static func source(version: String) -> String {
-        let versionJSON = WebBridge.cadenaJSON(version)
+        let versionJSON = WebBridge.jsonString(version)
         return "window.__COCO_APP__ = Object.freeze({ plataforma: 'ios', version: \(versionJSON) });"
     }
 }

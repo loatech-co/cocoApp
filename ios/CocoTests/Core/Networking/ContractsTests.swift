@@ -4,7 +4,7 @@ import XCTest
 
 /// Fixtures con la forma exacta de la API (claves snake_case).
 final class ContractsTests: XCTestCase {
-    private func decodificar<T: Decodable>(_ tipo: T.Type, _ json: String) throws -> T {
+    private func decodificar<T: Decodable>(_ kind: T.Type, _ json: String) throws -> T {
         try JSONDecoder().decode(Envelope<T>.self, from: Data(json.utf8)).data
     }
 

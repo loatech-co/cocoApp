@@ -64,9 +64,9 @@ final class DependenciesTests: XCTestCase {
         XCTAssertEqual(d.configuration.base.absoluteString, "https://api.coco.invalid")
         XCTAssertEqual(d.api.configuration, d.configuration)
         XCTAssertTrue(
-            WebBridge.origenPermitido(
-                protocolo: "https", host: "api.coco.invalid", puerto: 0, base: d.configuration.base,
-                esFramePrincipal: true))
+            WebBridge.isOriginAllowed(
+                originProtocol: "https", host: "api.coco.invalid", port: 0, base: d.configuration.base,
+                isMainFrame: true))
     }
 
     func testArrancarSinRefreshQuedaSinSesionYNoTocaLaRed() async throws {
