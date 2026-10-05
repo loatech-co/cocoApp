@@ -9,104 +9,27 @@
  *   node scripts/perf/api-bench.mjs --runs 500 --only dashboard
  *   bash scripts/perf/bench-db.sh drop
  *
- * The API boots in-process from `api/dist` the way the e2e helper does it:
- * Nest testing module, `configureApp`, the throttler store that never blocks,
- * and Supabase Auth replaced by a stub that accepts one fixed token. Nothing
- * leaves the machine. It refuses to start unless the database is local and its
- * name starts with `coco_bench`, and it prints timings only: no amounts, no
- * names, no rows.
+ * Exits with 1 when an endpoint's p95 is over the budget (`--budget-ms`,
+ * 50 ms by default: see CONTRIBUTING.md, "Performance budgets"). It prints
+ * timings only: no amounts, no names, no rows.
  */
-import { createRequire } from 'node:module';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir, userInfo } from 'node:os';
-import { join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { parseArgs } from 'node:util';
+
+import { startBenchApi } from './bench-api.mjs';
 
 const { values: args } = parseArgs({
   options: {
     runs: { type: 'string', default: '200' },
     warmup: { type: 'string', default: '20' },
     only: { type: 'string' },
+    'budget-ms': { type: 'string', default: '50' },
     json: { type: 'boolean', default: false },
   },
 });
 
-const DB_URL =
-  process.env.COCO_BENCH_DATABASE_URL ??
-  `postgresql://${userInfo().username}@localhost:5432/coco_bench`;
-
-const parsed = new URL(DB_URL);
-const dbName = parsed.pathname.replace(/^\//, '');
-if (!['localhost', '127.0.0.1'].includes(parsed.hostname) || !dbName.startsWith('coco_bench')) {
-  console.error(`api-bench: only a local coco_bench* database, not ${parsed.hostname}/${dbName}`);
-  process.exit(1);
-}
-
-// Before anything from the API is loaded: Prisma and ConfigModule both read
-// process.env first and neither overwrites what is already there.
-Object.assign(process.env, {
-  NODE_ENV: 'test',
-  DATABASE_URL: DB_URL,
-  DIRECT_URL: DB_URL,
-  LOG_LEVEL: 'silent',
-  JWT_SECRET: 'bench-only-secret-never-used-anywhere-else',
-  CHECK_BREACHED_PASSWORDS: 'false',
-  CORS_ORIGINS: 'http://localhost:5173',
-  SOPORTES_DIR: mkdtempSync(join(tmpdir(), 'coco-bench-soportes-')),
-  SOPORTES_STORAGE: 'disk',
-});
-
-const api = resolve(import.meta.dirname, '../../api');
-const req = createRequire(join(api, 'package.json'));
-const fromDist = (path) => req(join(api, 'dist', path));
-
-const { Test } = req('@nestjs/testing');
-const { ConfigService } = req('@nestjs/config');
-const { ThrottlerStorage } = req('@nestjs/throttler');
-const { AppModule } = fromDist('app.module.js');
-const { configureApp } = fromDist('bootstrap.js');
-const { installBigIntSerializer } = fromDist('common/serialization/bigint.js');
-const { SupabaseAuthService } = fromDist('modules/auth/supabase-auth.service.js');
-const { PrismaService } = fromDist('prisma/prisma.service.js');
-
-const TOKEN = 'bench.token';
-let benchAuthId = '';
-
-installBigIntSerializer();
-const builder = Test.createTestingModule({ imports: [AppModule] });
-builder.overrideProvider(SupabaseAuthService).useValue({
-  verificarAccessToken: (token) =>
-    token === TOKEN
-      ? Promise.resolve({ authId: benchAuthId, email: 'bench@local', iatMs: Date.now() })
-      : Promise.reject(new Error('bench: unknown token')),
-});
-builder.overrideProvider(ThrottlerStorage).useValue({
-  increment: () =>
-    Promise.resolve({ totalHits: 0, timeToExpire: 60, isBlocked: false, timeToBlockExpire: 0 }),
-});
-
-const app = (await builder.compile()).createNestApplication({ logger: false });
-configureApp(app, app.get(ConfigService));
-await app.init();
-await app.listen(0, '127.0.0.1');
-const base = `http://127.0.0.1:${app.getHttpServer().address().port}/api/v1`;
-
-const prisma = app.get(PrismaService);
-const [{ current_database: connected }] =
-  await prisma.$queryRaw`SELECT current_database()::text AS current_database`;
-if (!connected.startsWith('coco_bench')) throw new Error(`connected to ${connected}`);
-
-// The user with the most movements: that is the realistic one.
-const [top] = await prisma.transaction.groupBy({
-  by: ['userId'],
-  _count: { _all: true },
-  orderBy: { _count: { userId: 'desc' } },
-  take: 1,
-});
-const user = await prisma.user.findUniqueOrThrow({ where: { id: top.userId } });
-benchAuthId = user.authId;
-const rows = top._count._all;
+const api = await startBenchApi();
+const budget = Number(args['budget-ms']);
 
 let sequence = 0;
 const sms = () => {
@@ -146,15 +69,16 @@ const ENDPOINTS = [
 ].filter((e) => !args.only || e.name.includes(args.only));
 
 async function call(endpoint) {
+  const authorization = `Bearer ${api.accessToken}`;
   const init = endpoint.body
     ? {
         method: 'POST',
-        headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json' },
+        headers: { authorization, 'content-type': 'application/json' },
         body: JSON.stringify(endpoint.body()),
       }
-    : { headers: { authorization: `Bearer ${TOKEN}` } };
+    : { headers: { authorization } };
   const started = performance.now();
-  const response = await fetch(base + endpoint.path, init);
+  const response = await fetch(api.base + endpoint.path, init);
   await response.arrayBuffer();
   const elapsed = performance.now() - started;
   if (!response.ok) throw new Error(`${endpoint.name}: HTTP ${response.status}`);
@@ -165,35 +89,42 @@ const percentile = (sorted, p) =>
   sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)];
 
 const results = [];
-for (const endpoint of ENDPOINTS) {
-  for (let i = 0; i < Number(args.warmup); i += 1) await call(endpoint);
-  const times = [];
-  for (let i = 0; i < Number(args.runs); i += 1) times.push(await call(endpoint));
-  times.sort((a, b) => a - b);
-  results.push({
-    endpoint: endpoint.name,
-    p50: percentile(times, 50),
-    p95: percentile(times, 95),
-    p99: percentile(times, 99),
-    mean: times.reduce((a, b) => a + b, 0) / times.length,
+try {
+  for (const endpoint of ENDPOINTS) {
+    for (let i = 0; i < Number(args.warmup); i += 1) await call(endpoint);
+    const times = [];
+    for (let i = 0; i < Number(args.runs); i += 1) times.push(await call(endpoint));
+    times.sort((a, b) => a - b);
+    results.push({
+      endpoint: endpoint.name,
+      p50: percentile(times, 50),
+      p95: percentile(times, 95),
+      p99: percentile(times, 99),
+      mean: times.reduce((a, b) => a + b, 0) / times.length,
+    });
+  }
+} finally {
+  // The captures wrote rows: take them back out so the next run starts equal.
+  await api.prisma.transaction.deleteMany({
+    where: { userId: api.userId, externalRef: { startsWith: 'bench-' } },
   });
+  await api.close();
 }
 
-// The captures wrote rows: take them back out so the next run starts equal.
-await prisma.transaction.deleteMany({
-  where: { userId: user.id, externalRef: { startsWith: `bench-` } },
-});
-
-await app.close();
+const over = results.filter((r) => r.p95 > budget);
 
 if (args.json) {
-  console.log(JSON.stringify({ database: connected, rows, runs: Number(args.runs), results }));
+  console.log(
+    JSON.stringify({ database: api.database, rows: api.rows, runs: Number(args.runs), results }),
+  );
 } else {
   const ms = (v) => v.toFixed(1);
-  console.log(`database ${connected}, ${rows} transactions, ${args.runs} runs per endpoint\n`);
-  console.log('| Endpoint | p50 | p95 | p99 | mean |');
+  console.log(`database ${api.database}, ${api.rows} transactions, ${args.runs} runs each\n`);
+  console.log('| Endpoint (ms) | p50 | p95 | p99 | mean |');
   console.log('| --- | --- | --- | --- | --- |');
   for (const r of results) {
     console.log(`| ${r.endpoint} | ${ms(r.p50)} | ${ms(r.p95)} | ${ms(r.p99)} | ${ms(r.mean)} |`);
   }
+  console.log(`\nbudget: p95 <= ${budget} ms — ${over.length === 0 ? 'ok' : 'OVER'}`);
 }
+process.exit(over.length === 0 ? 0 : 1);

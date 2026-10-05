@@ -120,6 +120,11 @@ jobs:
           npm run build --workspace api
           NODE_ENV=production npm run build --workspace frontend
 
+      # Step 7.9 (D26): the initial bundle must stay under its budget. Reads
+      # the production build above; the budget lives in .size-limit.cjs.
+      - name: Bundle budget (size-limit)
+        run: npx size-limit
+
       # The component catalogue (CONTRIBUTING, "Component catalogue"). Built
       # so a story that stops compiling fails here and not when someone opens
       # it. It needs no network and no data: stories never fetch.
