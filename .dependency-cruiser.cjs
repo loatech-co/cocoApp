@@ -43,7 +43,8 @@ module.exports = {
         'A service or controller may name Prisma types (import type) but not use the ' +
         'client at runtime: no queries, no Prisma error classes.',
       from: { path: '^api/src/.+\\.(service|controller)\\.ts$', pathNot: '^api/src/prisma/' },
-      to: { path: '@prisma/client', dependencyTypesNot: ['type-only'] },
+      // The generated Prisma 7 client (ADR 0020), or its runtime package.
+      to: { path: '^api/src/generated/prisma/|@prisma/client', dependencyTypesNot: ['type-only'] },
     },
     {
       name: 'api-common-does-not-import-modules',
@@ -99,7 +100,8 @@ module.exports = {
     },
   ],
   options: {
-    doNotFollow: { path: 'node_modules' },
+    // The generated Prisma client is a node, not a tree: its own cycles are not ours.
+    doNotFollow: { path: ['node_modules', '^api/src/generated/'] },
     exclude: { path: '(^|/)(dist|coverage)/' },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.depcruise.json' },

@@ -10,16 +10,17 @@
       // Scripts run from the repo root and use the workspaces' hoisted
       // dependencies (the Prisma adapter, pg, pdf.js) on purpose: they operate on
       // the same database and files as the app, with the same versions.
-      // `tsx` runs scripts/soportes/piloto.mts (`npx tsx …`), which knip
-      // cannot see because the command lives in the script's own header.
-      "ignoreDependencies": ["@prisma/adapter-pg", "pg", "pdfjs-dist", "tsx"],
+      "ignoreDependencies": ["@prisma/adapter-pg", "pg", "pdfjs-dist"],
     },
     "api": {
       "entry": ["src/main.ts", "test/**/*.e2e-spec.ts"],
       "project": ["src/**/*.ts", "test/**/*.ts"],
       // The driver under @prisma/adapter-pg, declared directly so production
       // installs pin it (it replaced Prisma's Rust engine, see b496c5a).
-      "ignoreDependencies": ["pg", "@types/pg"],
+      // @prisma/client is the runtime of the generated client in
+      // src/generated/prisma, which is gitignored and so invisible to knip
+      // (ADR 0020).
+      "ignoreDependencies": ["pg", "@types/pg", "@prisma/client"],
     },
     "frontend": {
       "project": ["src/**/*.{ts,tsx}"],

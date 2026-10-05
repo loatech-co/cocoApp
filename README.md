@@ -24,7 +24,7 @@ infraestructura profesional sin reescribir la lógica de negocio.
 | Estilos       | Tailwind CSS 4 + componentes shadcn · iconos **solo** lucide                           |
 | Estado        | TanStack Query 5 (servidor) + Zustand 5 (UI efímera)                                   |
 | Backend       | Node.js 20/22 + NestJS 11 + TypeScript `strict`                                        |
-| ORM           | Prisma 6 (`schema.prisma` = espejo canónico del modelo)                                |
+| ORM           | Prisma 7 (`schema.prisma` = espejo canónico del modelo)                                |
 | Base de datos | **PostgreSQL 17** en Supabase (`us-east-1`)                                            |
 | Identidad     | **Supabase Auth** (GoTrue), con la aprobación y los roles en esta app                  |
 | OCR           | pdf.js (texto exacto) + Tesseract.js (imágenes), **en el cliente**, tras `OcrProvider` |
