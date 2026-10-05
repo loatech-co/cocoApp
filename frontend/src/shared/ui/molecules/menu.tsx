@@ -25,7 +25,8 @@ interface MenuProps {
    * las opciones quedan fuera.
    */
   direccion?: 'abajo' | 'arriba';
-  ancho?: string;
+  /** Cuánto mide el panel cuando no copia el de su disparador. Ver `ANCHOS`. */
+  ancho?: keyof typeof ANCHOS;
   /**
    * `menu` es una lista de acciones; `panel` es un formulario dentro de un
    * desplegable; `lista` es un campo que elige un valor entre varios.
@@ -184,6 +185,30 @@ export function Menu(props: MenuProps) {
   );
 }
 
+/**
+ * Los anchos de un panel. Eran una clase libre en cada llamada, y así llegó a
+ * haber un `w-[min(…)]` escrito a mano en una pantalla. Uno nuevo se añade aquí.
+ *
+ * | Ancho        | Para                                                     |
+ * | ------------ | -------------------------------------------------------- |
+ * | `sm`         | Una lista corta de acciones: ordenar, pagos pendientes   |
+ * | `md`         | El menú de la cuenta en el riel                          |
+ * | `base`       | El de fábrica                                            |
+ * | `lg`         | Un árbol con casillas: el filtro de clasificación        |
+ * | `campo`      | Un desplegable de formulario: su campo, y nunca menos de 12rem |
+ * | `contenido`  | Lo que mida lo de dentro: el calendario de un día        |
+ * | `calendario` | El de un rango: en el teléfono, el calendario y su relleno sin salirse; arriba del corte, su contenido |
+ */
+const ANCHOS = {
+  sm: 'w-56',
+  md: 'w-60',
+  base: 'w-64',
+  lg: 'w-72',
+  campo: 'w-[max(12rem,100%)]',
+  contenido: 'w-auto',
+  calendario: 'w-[min(22rem,calc(100vw-2rem))] sm:w-auto',
+} as const;
+
 type Defaulted =
   | 'soloIcono'
   | 'activo'
@@ -209,7 +234,7 @@ function withDefaults(p: MenuProps): MenuConfig {
     activo: p.activo ?? false,
     alineado: p.alineado ?? 'derecha',
     direccion: p.direccion ?? 'abajo',
-    ancho: p.ancho ?? 'w-64',
+    ancho: p.ancho ?? 'base',
     tipo: p.tipo ?? 'menu',
     flotante: p.flotante ?? false,
     variante: p.variante ?? 'herramienta',
@@ -318,7 +343,7 @@ function panelClass({ flotante, anchoPropio, direccion, alineado, ancho, sinRell
     // Flotando, el ancho lo da el disparador —la clase mediría contra
     // la ventana, que no es la caja de nadie— salvo que se pida lo
     // contrario.
-    (!flotante || anchoPropio) && ancho,
+    (!flotante || anchoPropio) && ANCHOS[ancho],
     'max-w-[calc(100vw-2rem)]',
     !flotante && (alineado === 'derecha' ? 'right-0' : 'left-0'),
   );

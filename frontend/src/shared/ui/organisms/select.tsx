@@ -92,7 +92,7 @@ export function Select(props: SelectProps) {
       // Los selectores viven en formularios, y un formulario largo se
       // desplaza: sin esto, el panel lo recorta la caja que lo contiene.
       flotante
-      ancho="w-[max(12rem,100%)]"
+      ancho="campo"
       idDisparador={id}
       claseCaja={cn('w-full min-w-0', className)}
       claseDisparador={disparadorDeCampo(pequeno)}

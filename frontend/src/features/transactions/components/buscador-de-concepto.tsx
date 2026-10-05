@@ -1,10 +1,11 @@
-import { ChevronDown, Search } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useEffect, useRef, type RefObject } from 'react';
 
 import { useConceptSearch } from '@/features/transactions/hooks/use-concept-search';
 import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
 import { cn } from '@/shared/lib/utils';
 import { Campo } from '@/shared/ui/atoms/campo';
+import { SearchBox } from '@/shared/ui/atoms/search-box';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
 import { Menu } from '@/shared/ui/molecules/menu';
 import { rutaLegible, type EntradaDelIndice, type NodoBuscable } from '@coco/lectura';
@@ -274,31 +275,28 @@ function CajaDeBusqueda(props: PropsDelPanel) {
   const eligiendoCategoria = props.modo === 'categoria-para-nuevo';
 
   return (
-    <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-      <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <input
-        ref={campo}
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key !== 'Enter') return;
-          e.preventDefault();
-          if (eligiendoCategoria) {
-            const [unica] = categorias;
-            if (categorias.length === 1 && unica !== undefined) props.onCrearEn(unica);
-            return;
-          }
-          // Enter elige lo único que queda, que es lo que uno espera después
-          // de escribir tres letras y ver una sola fila. Sin filas, pasa a crear.
-          if (resultados.length === 1) props.onElegir(resultados[0]);
-          else if (resultados.length === 0 && puedeCrear) props.onPedirCategoria();
-        }}
-        placeholder={
-          eligiendoCategoria ? 'Filtrar categorías…' : 'Buscar por nombre o palabra clave…'
+    <SearchBox
+      forma="cabecera"
+      ref={campo}
+      value={busca}
+      onChange={(e) => setBusca(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (eligiendoCategoria) {
+          const [unica] = categorias;
+          if (categorias.length === 1 && unica !== undefined) props.onCrearEn(unica);
+          return;
         }
-        aria-label={eligiendoCategoria ? 'Filtrar categorías' : 'Buscar concepto o categoría'}
-        className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-      />
-    </div>
+        // Enter elige lo único que queda, que es lo que uno espera después
+        // de escribir tres letras y ver una sola fila. Sin filas, pasa a crear.
+        if (resultados.length === 1) props.onElegir(resultados[0]);
+        else if (resultados.length === 0 && puedeCrear) props.onPedirCategoria();
+      }}
+      placeholder={
+        eligiendoCategoria ? 'Filtrar categorías…' : 'Buscar por nombre o palabra clave…'
+      }
+      aria-label={eligiendoCategoria ? 'Filtrar categorías' : 'Buscar concepto o categoría'}
+    />
   );
 }

@@ -190,7 +190,7 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
         sin dejarlas envolver. Por eso debajo del corte manda una medida, que
         es la del calendario más su relleno.
       */
-      ancho="w-[min(22rem,calc(100vw-2rem))] sm:w-auto"
+      ancho="calendario"
       /*
         El disparador NO se escribe aquí: es el que `Menu` pone de serie
         —icono, etiqueta que se trunca y flecha que gira al abrir— con la
@@ -236,7 +236,7 @@ function DayCalendar({ valor, onElegir }: { valor: string; onElegir: (iso: strin
       // El calendario trae su propio relleno: con el del menú encima queda
       // el doble por los cuatro lados.
       sinRelleno
-      ancho="w-auto"
+      ancho="contenido"
       claseCaja="shrink-0"
     >
       {(cerrar) => (

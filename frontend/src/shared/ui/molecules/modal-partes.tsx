@@ -174,3 +174,22 @@ export function PieDeModal({ className, ...props }: ComponentProps<'div'>) {
     />
   );
 }
+
+/**
+ * El cuerpo de una ficha: lo que se desplaza entre la cabecera y el borde.
+ *
+ * `min-h-0` deja que se encoja dentro de la columna del panel (sin él mide lo
+ * que mida su contenido y se lleva por delante el alto máximo). Es una
+ * COLUMNA porque el panel tiene alto mínimo: así `PieDeModal` puede irse al
+ * fondo. Y el relleno de abajo reserva el borde seguro del teléfono: pegada al
+ * pie, la última fila caía debajo de la barra del sistema.
+ *
+ * Lo usan los dos armazones, `Modal` y la ficha del movimiento.
+ */
+export function CuerpoDeModal({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+      {children}
+    </div>
+  );
+}

@@ -284,7 +284,7 @@ function CenterFilter({
       soloIcono
       activo={ocultos.size > 0}
       tipo="panel"
-      ancho="w-56"
+      ancho="sm"
       alineado="derecha"
     >
       <div className="flex flex-col">

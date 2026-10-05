@@ -7,7 +7,7 @@ import {
 import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
 import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
-import { PANEL_DE_MODAL } from '@/shared/ui/molecules/modal-partes';
+import { CuerpoDeModal, PANEL_DE_MODAL } from '@/shared/ui/molecules/modal-partes';
 import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
 import type { PagoPendiente, Transaction, TransactionType } from '@coco/types';
 
@@ -90,7 +90,7 @@ export function MovimientoModal(props: MovementModalProps) {
           máximo del panel. Y es a su vez una columna porque el panel tiene
           alto mínimo: con eso el formulario puede estirarse y llevarse sus
           botones al fondo en vez de dejarlos a media altura. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+      <CuerpoDeModal>
         <MovementSteps hoja={hoja} movimiento={movimiento} onCerrar={onCerrar} />
 
         <ConfirmMovementDeletion
@@ -108,7 +108,7 @@ export function MovimientoModal(props: MovementModalProps) {
             })
           }
         />
-      </div>
+      </CuerpoDeModal>
     </SheetOverlay>
   );
 }

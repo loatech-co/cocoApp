@@ -1,7 +1,8 @@
-import { Check, ChevronDown, CornerDownLeft, Plus, Search } from 'lucide-react';
+import { Check, ChevronDown, CornerDownLeft, Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
+import { SearchBox } from '@/shared/ui/atoms/search-box';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 import { Menu } from '@/shared/ui/molecules/menu';
@@ -202,25 +203,22 @@ function ComboPanel({ campo, busqueda, valor, vacio, creando, cerrar }: ComboPan
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-        <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <input
-          ref={campo}
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          onKeyDown={(e) => {
-            // Enter elige lo único que queda, que es lo que uno espera después
-            // de escribir tres letras y ver una sola fila.
-            if (e.key !== 'Enter') return;
-            e.preventDefault();
-            const [unica] = filtradas;
-            if (filtradas.length === 1 && unica !== undefined) onElegir(unica.valor);
-            else if (puedeCrear) onCrear();
-          }}
-          placeholder="Buscar…"
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-        />
-      </div>
+      <SearchBox
+        forma="cabecera"
+        ref={campo}
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+        onKeyDown={(e) => {
+          // Enter elige lo único que queda, que es lo que uno espera después
+          // de escribir tres letras y ver una sola fila.
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          const [unica] = filtradas;
+          if (filtradas.length === 1 && unica !== undefined) onElegir(unica.valor);
+          else if (puedeCrear) onCrear();
+        }}
+        placeholder="Buscar…"
+      />
 
       <ComboOptions
         filtradas={filtradas}

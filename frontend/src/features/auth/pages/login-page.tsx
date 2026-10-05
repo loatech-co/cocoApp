@@ -125,14 +125,14 @@ function LoginBrand() {
           Sube hasta el 55% y no hasta arriba para no apagar la imagen entera:
           arriba queda limpia.
         */}
-          <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-primary via-primary/70 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-11/20 bg-gradient-to-t from-primary via-primary/70 to-transparent" />
 
           {/* `text-primary-foreground` y no blanco. El degradado de debajo es
             `--primary`, y en oscuro ese primario es el teal CLARO del tema:
             blanco encima daba 1.9:1 y la frase desaparecía. La tinta del
             primario es, por definición, la que se lee sobre él —blanca en
             claro, casi negra en oscuro— sin que haya que elegir. */}
-          <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-[1.08] tracking-tight text-primary-foreground xl:p-14 xl:text-6xl">
+          <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-portada tracking-tight text-primary-foreground xl:p-14 xl:text-6xl">
             Tus finanzas,
             <br />
             claras.

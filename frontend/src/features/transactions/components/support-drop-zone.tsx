@@ -1,10 +1,11 @@
 import { ClipboardPaste, FileText, ImagePlus, Loader2, Upload } from 'lucide-react';
-import { type DragEvent, type RefObject, useRef, useState } from 'react';
+import { type DragEvent, useRef, useState } from 'react';
 
 import { usePasteScreenshot } from '@/features/transactions/hooks/use-paste-screenshot';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
-import { REALCE_DE_SUPERFICIE } from '@/shared/ui/foundations/superficie';
+import { DropSurface } from '@/shared/ui/atoms/drop-surface';
+import { FilePicker } from '@/shared/ui/atoms/file-picker';
 
 /** Soltar archivos encima: se marca mientras pasan por encima y se entregan al soltar. */
 function useFileDrop(subiendo: boolean, onArchivos: (archivos: File[]) => void) {
@@ -78,32 +79,13 @@ export function Soltar({ subiendo, progreso, solo, alPulsar, onArchivos }: DropZ
 
   return (
     <div className={cn(solo && 'flex w-full self-stretch')} {...soltando.handlers}>
-      <div
-        className={cn(
-          'relative flex flex-col items-center justify-center gap-1.5 rounded-lg',
-          'border-2 border-dashed transition-colors',
-          solo ? 'min-h-36 flex-1 px-4 py-8' : 'size-[104px]',
-          subiendo
-            ? 'cursor-wait border-border text-muted-foreground'
-            : soltando.encima
-              ? 'border-acento-tinta bg-accent text-accent-foreground'
-              : cn('border-border text-muted-foreground', REALCE_DE_SUPERFICIE),
-        )}
+      <DropSurface
+        forma={solo ? 'completa' : 'cuadro'}
+        encima={soltando.encima}
+        ocupada={subiendo}
+        etiqueta="Agregar soportes"
+        onPulsar={alPulsar ?? (() => campo.current?.click())}
       >
-        {/* El botón que cubre la caja. Va PRIMERO y sin contenido: lo que se
-            lee encima son los rótulos de abajo, que no interceptan el ratón
-            para que el clic llegue hasta aquí caiga donde caiga. */}
-        <button
-          type="button"
-          onClick={alPulsar ?? (() => campo.current?.click())}
-          disabled={subiendo}
-          aria-label="Agregar soportes"
-          // Sin anillo propio: el foco de un botón lo pinta `index.css` para
-          // todos a la vez, y escribirlo aquí es la excepción que la prueba de
-          // `lib/foco.test.ts` no deja pasar.
-          className="absolute inset-0 rounded-lg"
-        />
-
         <DropZoneLabel subiendo={subiendo} progreso={progreso} solo={solo} />
 
         {/* La tercera forma de dar un archivo, dentro del cuadro y con las
@@ -114,9 +96,14 @@ export function Soltar({ subiendo, progreso, solo, alPulsar, onArchivos }: DropZ
         {solo && !subiendo && (
           <PasteScreenshot onPegar={() => void pegar()} problema={problemaAlPegar} />
         )}
-      </div>
+      </DropSurface>
 
-      <HiddenFileInput ref={campo} onArchivos={onArchivos} />
+      <FilePicker
+        ref={campo}
+        multiple
+        accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
+        onArchivos={onArchivos}
+      />
     </div>
   );
 }
@@ -187,30 +174,5 @@ function DropZoneLabel({
         </>
       )}
     </div>
-  );
-}
-
-/** El campo de verdad, escondido: el nativo no se puede peinar y el `<button>` que cubre la caja sí. */
-function HiddenFileInput({
-  ref,
-  onArchivos,
-}: {
-  ref: RefObject<HTMLInputElement | null>;
-  onArchivos: (archivos: File[]) => void;
-}) {
-  return (
-    <input
-      ref={ref}
-      type="file"
-      multiple
-      accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
-      className="hidden"
-      onChange={(e) => {
-        onArchivos(Array.from(e.target.files ?? []));
-        // Se vacía para que subir DOS VECES el mismo archivo dispare el
-        // evento la segunda: sin esto, el valor no cambia y no pasa nada.
-        e.target.value = '';
-      }}
-    />
   );
 }

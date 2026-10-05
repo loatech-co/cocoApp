@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Download, Minus, Plus, Trash2, X } from 'luc
 import { useCallback, useState } from 'react';
 
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import { BotonOscuro } from '@/shared/ui/molecules/overlay-control';
+import { BotonOscuro, LecturaDeMandos } from '@/shared/ui/molecules/overlay-control';
 import type { Soporte } from '@coco/types';
 
 /** Los saltos del zoom. Fijos y pocos: un control continuo pide precisión que
@@ -153,13 +153,9 @@ function ZoomControls({ zoom, escala, onZoom }: ZoomProps) {
       </BotonOscuro>
       {/* El porcentaje se pulsa para volver al tamaño normal: es donde todo el
           mundo intenta pulsar cuando se ha perdido ampliando. */}
-      <button
-        type="button"
-        onClick={() => onZoom(null)}
-        className="tabular min-w-[3.5rem] text-center text-xs font-medium text-sala-tinta"
-      >
+      <LecturaDeMandos ancho="zoom" onClick={() => onZoom(null)}>
         {Math.round(escala * 100)} %
-      </button>
+      </LecturaDeMandos>
       <BotonOscuro
         onClick={() => onZoom(1)}
         deshabilitado={zoom === ZOOMS.length - 1}
@@ -181,9 +177,9 @@ function PageControls({ pagina, paginas, onPagina }: PageProps) {
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
       </BotonOscuro>
-      <span className="tabular min-w-[4.5rem] text-center text-xs font-medium text-sala-tinta">
+      <LecturaDeMandos ancho="paginas">
         Pág. {pagina} / {paginas}
-      </span>
+      </LecturaDeMandos>
       <BotonOscuro
         onClick={() => onPagina((p) => p + 1)}
         deshabilitado={pagina === paginas}

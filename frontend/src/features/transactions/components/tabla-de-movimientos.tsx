@@ -305,7 +305,7 @@ function NameCell({
             rellenarse cuando la ficha cambió su campo libre de «Concepto»
             por un selector de conceptos —así que todo lo registrado a mano
             decía «Sin concepto» aunque tuviera su concepto elegido—. */}
-        <span className="block max-w-[14rem] truncate font-medium">
+        <span className="block max-w-56 truncate font-medium">
           {nombreDelMovimiento(movimiento, arbol)}
         </span>
       </span>

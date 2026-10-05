@@ -25,7 +25,7 @@ export function SortMenu({
       Icono={ArrowDownUp}
       soloIcono
       activo={orden.valor !== '-date'}
-      ancho="w-56"
+      ancho="sm"
     >
       {(cerrar) => (
         <>
@@ -63,7 +63,7 @@ export function ClassificationMenu({
       Icono={Filter}
       soloIcono
       activo={filtros.categoryIds.length > 0}
-      ancho="w-72"
+      ancho="lg"
       tipo="panel"
       // Este panel trae cabecera, lista y pie separados por líneas que
       // cruzan de lado a lado: con el acolchado del menú quedarían

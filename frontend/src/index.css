@@ -83,6 +83,13 @@
      debajo de 11 no se baja: deja de leerse. */
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: calc(1 / 0.6875);
+
+  /* El interlineado de la frase grande de la portada (48–60px, dos
+     renglones). `leading-none` junta tanto los renglones que las ascendentes
+     de «claras» tocan las descendentes de arriba; `leading-tight` (1.25) los
+     separa como si fueran dos frases. Vivía como `leading-[1.08]` en la
+     pantalla, que es una medida que mañana nadie sabe de dónde salió. */
+  --leading-portada: 1.08;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

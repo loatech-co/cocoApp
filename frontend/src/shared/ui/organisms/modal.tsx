@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 import { useEscapeToClose } from '@/shared/lib/escape';
 import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
-import { CabeceraDeModal, PANEL_DE_MODAL } from '@/shared/ui/molecules/modal-partes';
+import { CabeceraDeModal, CuerpoDeModal, PANEL_DE_MODAL } from '@/shared/ui/molecules/modal-partes';
 
 interface ModalProps {
   abierta: boolean;
@@ -130,9 +130,7 @@ export function Modal({
           para llevarse sus botones al fondo. En una caja de bloque no habría
           sitio que repartir y el pie se quedaría a media altura.
         */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-          {children}
-        </div>
+        <CuerpoDeModal>{children}</CuerpoDeModal>
       </div>
     </div>
   );

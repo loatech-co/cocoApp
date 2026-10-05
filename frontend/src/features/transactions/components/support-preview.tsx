@@ -5,7 +5,7 @@ import type { FalloDeSoporte } from '@/features/transactions/model/supports';
 import { usePanZoom } from '@/shared/lib/pan-zoom';
 import { cn } from '@/shared/lib/utils';
 import { LienzoPdf } from '@/shared/ui/atoms/pdf-canvas';
-import { BotonOscuro } from '@/shared/ui/molecules/overlay-control';
+import { BotonOscuro, LecturaDeMandos } from '@/shared/ui/molecules/overlay-control';
 
 import { SoporteQueNoSeVe } from './support-unavailable';
 
@@ -107,11 +107,11 @@ export function PreviaDeArchivo({
           mide con un `ResizeObserver` y la escala sale de ahí— así que crecer
           no le cuesta nada.
 
-          El suelo de 220 es para el caso en que no haya alto que repartir:
+          El suelo de 220 (`min-h-55`) es para el caso en que no haya alto que repartir:
           una previsualización de cuarenta píxeles no enseña nada y el
           `ResizeObserver` se quedaría midiendo una franja.
         */
-        'relative min-h-[220px] flex-1 touch-none select-none overflow-hidden rounded-lg bg-card ring-1 ring-border',
+        'relative min-h-55 flex-1 touch-none select-none overflow-hidden rounded-lg bg-card ring-1 ring-border',
         vista.sePuedeMover && (vista.arrastrando ? 'cursor-grabbing' : 'cursor-grab'),
       )}
       {...vista.handlers}
@@ -172,14 +172,13 @@ function PreviewZoom({
       >
         <Minus className="size-4" aria-hidden="true" />
       </BotonOscuro>
-      <button
-        type="button"
+      <LecturaDeMandos
+        ancho="previa"
+        titulo="Volver al tamaño normal"
         onClick={() => onZoom(() => 0)}
-        title="Volver al tamaño normal"
-        className="tabular min-w-[3rem] text-center text-2xs font-medium text-sala-tinta"
       >
         {Math.round(paso * 100)} %
-      </button>
+      </LecturaDeMandos>
       <BotonOscuro
         etiqueta="Acercar"
         deshabilitado={zoom === PASOS_DE_LA_PREVIA.length - 1}
