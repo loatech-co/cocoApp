@@ -1,6 +1,7 @@
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
+import { type ComponentType, type ReactNode } from 'react';
 
+import { panelStyle, useMenuState, type Anclaje } from '@/shared/lib/menu-anchor';
 import { useEsMovil } from '@/shared/lib/movil';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
@@ -10,57 +11,7 @@ import { REALCE, SUPERFICIE_FLOTANTE, SURGE } from '@/shared/ui/foundations/supe
 const ROL = { menu: 'menu', panel: 'dialog', lista: 'listbox' } as const;
 const ARIA = { menu: 'menu', panel: 'dialog', lista: 'listbox' } as const;
 
-/**
- * Un desplegable.
- *
- * ── Por qué es un componente y no tres ──────────────────────────────────────
- * El filtro, el orden y el menú de la cuenta son la misma mecánica: un botón
- * que abre un panel, que se cierra al tocar fuera y con Escape. Escrita tres
- * veces, esa mecánica se arregla una vez y sigue rota en las otras dos — que
- * es exactamente como quedan los menús que se cierran solos en una pantalla y
- * en otra no.
- *
- * Lo que cambia entre ellos es el contenido, y eso es lo que se pasa.
- *
- * ── Y en el teléfono no se despliega: SUBE ──────────────────────────────────
- * Por debajo del corte, un `menu` y un `panel` se abren como una hoja desde el
- * borde de abajo en vez de colgar del botón. Son tres cosas a la vez:
- *
- *   1. un desplegable colgado de un kebab que vive en la esquina de una fila
- *      se abre donde no hay sitio —contra el borde derecho, contra el pie de
- *      la pantalla— y acaba recortado o pegado al canto;
- *   2. las opciones caen lejos del pulgar, arriba de la pantalla, cuando el
- *      dedo está abajo;
- *   3. un calendario o un árbol de conceptos no caben en el ancho de un
- *      desplegable, así que había que angostarlos hasta que dejaran de
- *      poderse usar.
- *
- * La hoja resuelve las tres sin que la llamada tenga que saber nada: el mismo
- * `<Menu>` se dibuja de las dos formas.
- *
- * `lista` NO entra. Un campo que elige un valor —un desplegable de un
- * formulario— tiene que quedarse pegado a su campo: separarlo del sitio donde
- * se va a escribir el valor es perder de vista qué se está contestando.
- */
-export function Menu({
-  etiqueta,
-  Icono,
-  soloIcono = false,
-  activo = false,
-  alineado = 'derecha',
-  direccion = 'abajo',
-  ancho = 'w-64',
-  tipo = 'menu',
-  claseCaja,
-  claseDisparador,
-  flotante = false,
-  variante = 'herramienta',
-  sinRelleno = false,
-  idDisparador,
-  anchoPropio = false,
-  disparador,
-  children,
-}: {
+interface MenuProps {
   /** Lo que dice el botón. Si `soloIcono`, pasa a ser su nombre accesible. */
   etiqueta: string;
   Icono?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
@@ -142,119 +93,69 @@ export function Menu({
   /** Reemplaza el botón por completo (el avatar, por ejemplo). */
   disparador?: (props: { abierto: boolean }) => ReactNode;
   children: ReactNode | ((cerrar: () => void) => ReactNode);
-}) {
-  const esMovil = useEsMovil();
+}
+
+/**
+ * Un desplegable.
+ *
+ * ── Por qué es un componente y no tres ──────────────────────────────────────
+ * El filtro, el orden y el menú de la cuenta son la misma mecánica: un botón
+ * que abre un panel, que se cierra al tocar fuera y con Escape. Escrita tres
+ * veces, esa mecánica se arregla una vez y sigue rota en las otras dos — que
+ * es exactamente como quedan los menús que se cierran solos en una pantalla y
+ * en otra no.
+ *
+ * Lo que cambia entre ellos es el contenido, y eso es lo que se pasa.
+ *
+ * ── Y en el teléfono no se despliega: SUBE ──────────────────────────────────
+ * Por debajo del corte, un `menu` y un `panel` se abren como una hoja desde el
+ * borde de abajo en vez de colgar del botón. Son tres cosas a la vez:
+ *
+ *   1. un desplegable colgado de un kebab que vive en la esquina de una fila
+ *      se abre donde no hay sitio —contra el borde derecho, contra el pie de
+ *      la pantalla— y acaba recortado o pegado al canto;
+ *   2. las opciones caen lejos del pulgar, arriba de la pantalla, cuando el
+ *      dedo está abajo;
+ *   3. un calendario o un árbol de conceptos no caben en el ancho de un
+ *      desplegable, así que había que angostarlos hasta que dejaran de
+ *      poderse usar.
+ *
+ * La hoja resuelve las tres sin que la llamada tenga que saber nada: el mismo
+ * `<Menu>` se dibuja de las dos formas.
+ *
+ * `lista` NO entra. Un campo que elige un valor —un desplegable de un
+ * formulario— tiene que quedarse pegado a su campo: separarlo del sitio donde
+ * se va a escribir el valor es perder de vista qué se está contestando.
+ */
+export function Menu(props: MenuProps) {
+  const m = withDefaults(props);
+  const { etiqueta, tipo, flotante, disparador, children } = m;
   /** Se abre como hoja desde abajo en vez de colgar del botón. */
-  const enHoja = esMovil && tipo !== 'lista';
+  const enHoja = useEsMovil() && tipo !== 'lista';
+  const { abierto, setAbierto, caja, anclaje, medir } = useMenuState(enHoja);
+  const cerrar = (): void => setAbierto(false);
+  const contenido = typeof children === 'function' ? children(cerrar) : children;
 
-  const [abierto, setAbierto] = useState(false);
-  const caja = useRef<HTMLDivElement>(null);
-  const [anclaje, setAnclaje] = useState<{
-    top: number;
-    left: number;
-    /** Lo que queda desde el canto derecho del disparador hasta la ventana. */
-    derecha: number;
-    ancho: number;
-  } | null>(null);
-
-  // Se mide al abrir: la posición de la caja en la ventana es lo único que
-  // hace falta para colocar un panel que ya no depende de ella.
-  function medir(): void {
-    const r = caja.current?.getBoundingClientRect();
-    if (r) {
-      setAnclaje({
-        top: r.bottom,
-        left: r.left,
-        derecha: window.innerWidth - r.right,
-        ancho: r.width,
-      });
-    }
+  function alternar(): void {
+    if (flotante && !enHoja) medir();
+    setAbierto((v) => !v);
   }
 
-  /*
-    Cerrar al tocar fuera y con Escape — pero solo cuando el panel cuelga del
-    botón. La hoja trae sus cuatro salidas propias —el tirador, el velo,
-    Escape y deslizar hacia abajo—, y además vive PORTADA contra el `body`:
-    para esta caja, cualquier toque dentro de la hoja es un toque «fuera», así
-    que elegir una opción la habría cerrado antes de que el clic llegara.
-  */
-  useEffect(() => {
-    if (!abierto || enHoja) return;
-
-    const fuera = (e: MouseEvent): void => {
-      if (caja.current && !caja.current.contains(e.target as Node)) setAbierto(false);
-    };
-    const escape = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setAbierto(false);
-    };
-
-    document.addEventListener('mousedown', fuera);
-    document.addEventListener('keydown', escape);
-    return () => {
-      document.removeEventListener('mousedown', fuera);
-      document.removeEventListener('keydown', escape);
-    };
-  }, [abierto, enHoja]);
-
   return (
-    <div ref={caja} className={cn('relative', claseCaja)}>
+    <div ref={caja} className={cn('relative', m.claseCaja)}>
       {disparador ? (
         <button
           type="button"
-          id={idDisparador}
-          onClick={() => {
-            if (flotante && !enHoja) medir();
-            setAbierto((v) => !v);
-          }}
+          id={m.idDisparador}
+          onClick={alternar}
           aria-expanded={abierto}
           aria-haspopup={ARIA[tipo]}
-          className={claseDisparador ?? 'flex items-center rounded-full outline-none'}
+          className={m.claseDisparador ?? 'flex items-center rounded-full outline-none'}
         >
           {disparador({ abierto })}
         </button>
       ) : (
-        <Button
-          type="button"
-          variant={variante}
-          size={soloIcono ? 'sm-icon' : 'sm'}
-          onClick={() => {
-            if (flotante && !enHoja) medir();
-            setAbierto((v) => !v);
-          }}
-          aria-expanded={abierto}
-          aria-haspopup={ARIA[tipo]}
-          // Encendido cuando hay algo elegido aquí dentro, o mientras está
-          // abierto: el propio estilo lo resuelve la variante.
-          aria-pressed={activo || abierto}
-          aria-label={soloIcono ? etiqueta : undefined}
-          title={soloIcono ? etiqueta : undefined}
-        >
-          {Icono && (
-            <Icono
-              className={cn(
-                'size-4 shrink-0',
-                // El kebab, más tenue. Es un control SECUNDARIO: vive en la
-                // esquina de cada fila y se repite tantas veces como filas
-                // haya. A plena tinta, esa columna de puntos pesa más que los
-                // nombres, que es lo que se viene a leer. Va aquí y no en cada
-                // llamada para que los dos kebabs —el del centro y el del
-                // categoría— no puedan separarse.
-                variante === 'ghost' && soloIcono && 'opacity-70',
-              )}
-              aria-hidden={true}
-            />
-          )}
-          {!soloIcono && <span className="truncate">{etiqueta}</span>}
-          {!soloIcono && (
-            <ChevronDown
-              className={cn(
-                'size-3.5 shrink-0 opacity-60 transition-transform',
-                abierto && 'rotate-180',
-              )}
-              aria-hidden={true}
-            />
-          )}
-        </Button>
+        <MenuButton m={m} abierto={abierto} onClick={alternar} />
       )}
 
       {/* La hoja se monta SIEMPRE, abierta o cerrada: lo que se desliza no se
@@ -268,88 +169,160 @@ export function Menu({
           // dentro de un modal, y en la capa de fábrica se dibujarían detrás
           // del que los pidió.
           capa="z-[70]"
-          onCerrar={() => setAbierto(false)}
+          onCerrar={cerrar}
         >
-          {typeof children === 'function' ? children(() => setAbierto(false)) : children}
+          {contenido}
         </PanelInferior>
       )}
 
       {abierto && !enHoja && (
-        <div
-          role={ROL[tipo]}
-          aria-label={etiqueta}
-          style={
-            flotante && anclaje
-              ? anchoPropio
-                ? /*
-                     Se ancla por el canto que dice `alineado`, y no siempre
-                     por la izquierda.
-
-                     Anclando siempre a la izquierda, un panel ancho colgado de
-                     un control que vive al final de una barra —el rango de
-                     fechas— crece hacia fuera de la pantalla: o se sale, o el
-                     recorte lo deja de la mitad de ancho. Por la derecha crece
-                     hacia dentro, que es donde hay sitio.
-
-                     El tope es siempre lo que queda hasta el borde opuesto:
-                     lo que se sale de la ventana no se puede pulsar.
-                   */
-                  alineado === 'derecha'
-                  ? {
-                      top: `${anclaje.top + 8}px`,
-                      right: `${anclaje.derecha}px`,
-                      maxWidth: `calc(100vw - ${anclaje.derecha}px - 1rem)`,
-                    }
-                  : {
-                      top: `${anclaje.top + 8}px`,
-                      left: `${anclaje.left}px`,
-                      maxWidth: `calc(100vw - ${anclaje.left}px - 1rem)`,
-                    }
-                : // El MISMO ancho que el campo, no un mínimo: un panel más
-                  // ancho que su disparador se lee como otro elemento, y uno
-                  // más angosto corta las opciones que el campo sí muestra
-                  // enteras.
-                  {
-                    top: `${anclaje.top + 8}px`,
-                    left: `${anclaje.left}px`,
-                    width: `${anclaje.ancho}px`,
-                  }
-              : undefined
-          }
-          className={cn(
-            'z-50 overflow-hidden rounded-lg',
-            sinRelleno ? 'p-0' : 'p-1',
-            SUPERFICIE_FLOTANTE,
-            SURGE,
-            // De dónde SALE. Un panel que crece desde su propio centro no viene
-            // de ningún sitio; creciendo desde la esquina que toca el botón,
-            // se lee como que lo despliega el botón.
-            flotante
-              ? 'origin-top'
-              : direccion === 'arriba'
-                ? alineado === 'derecha'
-                  ? 'origin-bottom-right'
-                  : 'origin-bottom-left'
-                : alineado === 'derecha'
-                  ? 'origin-top-right'
-                  : 'origin-top-left',
-            flotante ? 'fixed' : 'absolute',
-            !flotante && (direccion === 'arriba' ? 'bottom-full mb-2' : 'top-full mt-2'),
-            // Flotando, el ancho lo da el disparador —la clase mediría contra
-            // la ventana, que no es la caja de nadie— salvo que se pida lo
-            // contrario.
-            (!flotante || anchoPropio) && ancho,
-            'max-w-[calc(100vw-2rem)]',
-            !flotante && (alineado === 'derecha' ? 'right-0' : 'left-0'),
-          )}
-        >
-          {typeof children === 'function' ? children(() => setAbierto(false)) : children}
-        </div>
+        <MenuDropdown m={m} anclaje={anclaje}>
+          {contenido}
+        </MenuDropdown>
       )}
     </div>
   );
 }
 
+type Defaulted =
+  | 'soloIcono'
+  | 'activo'
+  | 'alineado'
+  | 'direccion'
+  | 'ancho'
+  | 'tipo'
+  | 'flotante'
+  | 'variante'
+  | 'sinRelleno'
+  | 'anchoPropio';
+
+/** Las propiedades de un menú con sus valores de fábrica ya puestos. */
+type MenuConfig = Omit<MenuProps, Defaulted> & Required<Pick<MenuProps, Defaulted>>;
+
+// Con `??` y no con un `...` de valores de fábrica: una llamada que pasa un
+// `undefined` explícito tiene que recibir el de fábrica, como con el valor
+// por defecto de una desestructuración.
+function withDefaults(p: MenuProps): MenuConfig {
+  return {
+    ...p,
+    soloIcono: p.soloIcono ?? false,
+    activo: p.activo ?? false,
+    alineado: p.alineado ?? 'derecha',
+    direccion: p.direccion ?? 'abajo',
+    ancho: p.ancho ?? 'w-64',
+    tipo: p.tipo ?? 'menu',
+    flotante: p.flotante ?? false,
+    variante: p.variante ?? 'herramienta',
+    sinRelleno: p.sinRelleno ?? false,
+    anchoPropio: p.anchoPropio ?? false,
+  };
+}
+
+/** El botón de un menú sin disparador propio: icono, nombre y flecha. */
+function MenuButton({
+  m,
+  abierto,
+  onClick,
+}: {
+  m: MenuConfig;
+  abierto: boolean;
+  onClick: () => void;
+}) {
+  const { etiqueta, Icono, soloIcono, activo, variante } = m;
+  return (
+    <Button
+      type="button"
+      variant={variante}
+      size={soloIcono ? 'sm-icon' : 'sm'}
+      onClick={onClick}
+      aria-expanded={abierto}
+      aria-haspopup={ARIA[m.tipo]}
+      // Encendido cuando hay algo elegido aquí dentro, o mientras está
+      // abierto: el propio estilo lo resuelve la variante.
+      aria-pressed={activo || abierto}
+      aria-label={soloIcono ? etiqueta : undefined}
+      title={soloIcono ? etiqueta : undefined}
+    >
+      {Icono && (
+        <Icono
+          className={cn(
+            'size-4 shrink-0',
+            // El kebab, más tenue. Es un control SECUNDARIO: vive en la
+            // esquina de cada fila y se repite tantas veces como filas
+            // haya. A plena tinta, esa columna de puntos pesa más que los
+            // nombres, que es lo que se viene a leer. Va aquí y no en cada
+            // llamada para que los dos kebabs —el del centro y el del
+            // categoría— no puedan separarse.
+            variante === 'ghost' && soloIcono && 'opacity-70',
+          )}
+          aria-hidden={true}
+        />
+      )}
+      {!soloIcono && <span className="truncate">{etiqueta}</span>}
+      {!soloIcono && (
+        <ChevronDown
+          className={cn(
+            'size-3.5 shrink-0 opacity-60 transition-transform',
+            abierto && 'rotate-180',
+          )}
+          aria-hidden={true}
+        />
+      )}
+    </Button>
+  );
+}
+
+/** El panel que cuelga del botón, en el escritorio. */
+function MenuDropdown({
+  m,
+  anclaje,
+  children,
+}: {
+  m: MenuConfig;
+  anclaje: Anclaje | null;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      role={ROL[m.tipo]}
+      aria-label={m.etiqueta}
+      style={m.flotante && anclaje ? panelStyle(anclaje, m.anchoPropio, m.alineado) : undefined}
+      className={panelClass(m)}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** El panel que cuelga del botón: su superficie, su origen y su ancho. */
+function panelClass({ flotante, anchoPropio, direccion, alineado, ancho, sinRelleno }: MenuConfig) {
+  return cn(
+    'z-50 overflow-hidden rounded-lg',
+    sinRelleno ? 'p-0' : 'p-1',
+    SUPERFICIE_FLOTANTE,
+    SURGE,
+    // De dónde SALE. Un panel que crece desde su propio centro no viene
+    // de ningún sitio; creciendo desde la esquina que toca el botón,
+    // se lee como que lo despliega el botón.
+    flotante
+      ? 'origin-top'
+      : direccion === 'arriba'
+        ? alineado === 'derecha'
+          ? 'origin-bottom-right'
+          : 'origin-bottom-left'
+        : alineado === 'derecha'
+          ? 'origin-top-right'
+          : 'origin-top-left',
+    flotante ? 'fixed' : 'absolute',
+    !flotante && (direccion === 'arriba' ? 'bottom-full mb-2' : 'top-full mt-2'),
+    // Flotando, el ancho lo da el disparador —la clase mediría contra
+    // la ventana, que no es la caja de nadie— salvo que se pida lo
+    // contrario.
+    (!flotante || anchoPropio) && ancho,
+    'max-w-[calc(100vw-2rem)]',
+    !flotante && (alineado === 'derecha' ? 'right-0' : 'left-0'),
+  );
+}
 /** El rótulo de un bloque del menú: "Ordenar por", "Filtrar por"… */
 export function MenuTitulo({ children }: { children: ReactNode }) {
   return (
