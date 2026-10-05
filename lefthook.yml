@@ -8,6 +8,18 @@ glob_matcher: doublestar
 pre-commit:
   piped: true # stop at the first failure
   commands:
+    0_gitleaks:
+      # Secrets in what is about to be committed (step 7.11). CI scans the
+      # whole history (security.yml); this stops the leak before it exists,
+      # which is the only moment it costs nothing — once pushed, the secret
+      # has to be rotated. gitleaks is a Go binary, not an npm package: if it
+      # is missing, warn and let the commit through instead of blocking it.
+      run: |
+        if command -v gitleaks >/dev/null 2>&1; then
+          gitleaks git --pre-commit --staged --redact --no-banner --exit-code 1 .
+        else
+          echo "aviso: gitleaks no está instalado (brew install gitleaks); el commit sigue sin revisar secretos y CI lo revisará." >&2
+        fi
     1_lint-staged:
       # eslint --fix + prettier --write on the staged files (lint-staged.config.js)
       run: npx lint-staged
