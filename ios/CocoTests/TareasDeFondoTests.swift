@@ -1,5 +1,6 @@
 import BackgroundTasks
 import XCTest
+
 @testable import Coco
 
 final class TareasDeFondoTests: XCTestCase {
@@ -15,7 +16,8 @@ final class TareasDeFondoTests: XCTestCase {
 
     func testProgramaConLosIdentificadoresDelInfoPlist() {
         let permitidos = TareasDeFondo.identificadoresPermitidos()
-        XCTAssertEqual(Set(permitidos), ["co.loatech.coco.renovar", "co.loatech.coco.cola"], "el Info.plist de la app los declara")
+        XCTAssertEqual(
+            Set(permitidos), ["co.loatech.coco.renovar", "co.loatech.coco.cola"], "el Info.plist de la app los declara")
         let solicitudes = TareasDeFondo.solicitudes()
         XCTAssertEqual(Set(solicitudes.map(\.identifier)), Set(permitidos))
         XCTAssertTrue(solicitudes.contains { $0 is BGAppRefreshTaskRequest && $0.identifier == TareasDeFondo.renovar })
@@ -36,10 +38,15 @@ final class TareasDeFondoTests: XCTestCase {
     func testEjecutarColaEnviaLoPendienteYLaColaAvisaUnaVez() async throws {
         let almacen = AlmacenDeColaEnDisco(raiz: raiz)
         let notificador = NotificadorDoble()
-        let cola = ColaDeCapturas(almacen: almacen, enviador: EnviadorDoble(), sesion: SesionDoble(), notificador: notificador, separacion: .zero, encogerFoto: { $0 })
+        let cola = ColaDeCapturas(
+            almacen: almacen, enviador: EnviadorDoble(), sesion: SesionDoble(), notificador: notificador,
+            separacion: .zero, encogerFoto: { $0 })
         // Dos capturas que ya fallaron una vez: lo que se encuentra en fondo.
         for i in 1...2 {
-            try almacen.guardar(CapturaPendiente(origen: .iosManual, cuerpo: CuerpoDeCaptura(comercio: "D\(i)", monto: "1000", fecha: "2026-10-05"), intentos: 1))
+            try almacen.guardar(
+                CapturaPendiente(
+                    origen: .iosManual, cuerpo: CuerpoDeCaptura(comercio: "D\(i)", monto: "1000", fecha: "2026-10-05"),
+                    intentos: 1))
         }
         let enviadas = await TareasDeFondo.ejecutarCola(cola: cola, notificador: notificador, presupuesto: .seconds(5))
         XCTAssertEqual(enviadas, 2)
@@ -49,7 +56,9 @@ final class TareasDeFondoTests: XCTestCase {
 
     func testEjecutarColaSinNadaNoAvisa() async {
         let notificador = NotificadorDoble()
-        let cola = ColaDeCapturas(almacen: AlmacenDeColaEnDisco(raiz: raiz), enviador: EnviadorDoble(), sesion: SesionDoble(), notificador: notificador, separacion: .zero, encogerFoto: { $0 })
+        let cola = ColaDeCapturas(
+            almacen: AlmacenDeColaEnDisco(raiz: raiz), enviador: EnviadorDoble(), sesion: SesionDoble(),
+            notificador: notificador, separacion: .zero, encogerFoto: { $0 })
         let enviadas = await TareasDeFondo.ejecutarCola(cola: cola, notificador: notificador, presupuesto: .seconds(5))
         XCTAssertEqual(enviadas, 0)
         XCTAssertEqual(notificador.colasEnviadas, [])
@@ -57,10 +66,16 @@ final class TareasDeFondoTests: XCTestCase {
 
     func testEjecutarRenovacionPideTokenYRefrescaElArbol() async throws {
         let sesion = SesionDoble()
-        let transporte = TransporteFalso([.http(200, #"{"data":[{"id":1,"name":"Hogar","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":false,"children":null}],"meta":{}}"#)])
+        let transporte = TransporteFalso([
+            .http(
+                200,
+                #"{"data":[{"id":1,"name":"Hogar","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":false,"children":null}],"meta":{}}"#
+            )
+        ])
         let base = try XCTUnwrap(URL(string: "https://api.coco.invalid"))
         let api = ClienteAPI(configuracion: ConfiguracionDeLaAPI(base: base), transporte: transporte, version: "0.1.0")
-        let arbol = SincronizadorDelArbol(api: api, sesion: sesion, almacen: AlmacenDelArbolEnDisco(archivo: raiz.appending(path: "arbol.json")))
+        let arbol = SincronizadorDelArbol(
+            api: api, sesion: sesion, almacen: AlmacenDelArbolEnDisco(archivo: raiz.appending(path: "arbol.json")))
 
         await TareasDeFondo.ejecutarRenovacion(sesion: sesion, arbol: arbol)
 

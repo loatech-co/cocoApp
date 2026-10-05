@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class AvisoDeVencimientoTests: XCTestCase {
@@ -15,30 +16,43 @@ final class AvisoDeVencimientoTests: XCTestCase {
     func testVenceEnCincoDiasAvisaLaVisperaALasNueve() throws {
         let ahora = try fecha(2026, 10, 5, 12)
         let vence = try fecha(2026, 10, 10, 15, 30)
-        XCTAssertEqual(AvisoDeVencimiento.momentoDelAviso(vence: vence, ahora: ahora, calendario: cal), try fecha(2026, 10, 9, 9))
+        XCTAssertEqual(
+            AvisoDeVencimiento.momentoDelAviso(vence: vence, ahora: ahora, calendario: cal), try fecha(2026, 10, 9, 9))
     }
 
     func testVenceEnDiezHorasAvisaEnUnMinuto() throws {
         let ahora = try fecha(2026, 10, 5, 12)
         let vence = ahora.addingTimeInterval(10 * 3600)
-        XCTAssertEqual(AvisoDeVencimiento.momentoDelAviso(vence: vence, ahora: ahora, calendario: cal), ahora.addingTimeInterval(60))
+        XCTAssertEqual(
+            AvisoDeVencimiento.momentoDelAviso(vence: vence, ahora: ahora, calendario: cal),
+            ahora.addingTimeInterval(60))
     }
 
     func testVisperaYaPasadaAvisaEnUnMinuto() throws {
         // Vence mañana a las 02:00; la víspera a las 09:00 ya quedó atrás.
         let ahora = try fecha(2026, 10, 5, 20)
         let vence = try fecha(2026, 10, 6, 2)
-        XCTAssertEqual(AvisoDeVencimiento.momentoDelAviso(vence: vence, ahora: ahora, calendario: cal), ahora.addingTimeInterval(60))
+        XCTAssertEqual(
+            AvisoDeVencimiento.momentoDelAviso(vence: vence, ahora: ahora, calendario: cal),
+            ahora.addingTimeInterval(60))
     }
 
     func testYaVencidoNil() throws {
-        XCTAssertNil(AvisoDeVencimiento.momentoDelAviso(vence: try fecha(2026, 10, 1), ahora: try fecha(2026, 10, 5), calendario: cal))
+        XCTAssertNil(
+            AvisoDeVencimiento.momentoDelAviso(
+                vence: try fecha(2026, 10, 1), ahora: try fecha(2026, 10, 5), calendario: cal))
     }
 
     func testDiasRestantesEnElBordeDeMedianoche() throws {
-        XCTAssertEqual(AvisoDeVencimiento.diasRestantes(vence: try fecha(2026, 10, 6, 0, 30), ahora: try fecha(2026, 10, 5, 23, 50), calendario: cal), 1)
-        XCTAssertEqual(AvisoDeVencimiento.diasRestantes(vence: try fecha(2026, 10, 5, 23, 59), ahora: try fecha(2026, 10, 5, 0, 1), calendario: cal), 0)
-        XCTAssertEqual(AvisoDeVencimiento.diasRestantes(vence: try fecha(2026, 10, 12), ahora: try fecha(2026, 10, 5, 23), calendario: cal), 7)
+        XCTAssertEqual(
+            AvisoDeVencimiento.diasRestantes(
+                vence: try fecha(2026, 10, 6, 0, 30), ahora: try fecha(2026, 10, 5, 23, 50), calendario: cal), 1)
+        XCTAssertEqual(
+            AvisoDeVencimiento.diasRestantes(
+                vence: try fecha(2026, 10, 5, 23, 59), ahora: try fecha(2026, 10, 5, 0, 1), calendario: cal), 0)
+        XCTAssertEqual(
+            AvisoDeVencimiento.diasRestantes(
+                vence: try fecha(2026, 10, 12), ahora: try fecha(2026, 10, 5, 23), calendario: cal), 7)
     }
 
     func testTextosEnEspanolSinMayusculasSostenidas() throws {

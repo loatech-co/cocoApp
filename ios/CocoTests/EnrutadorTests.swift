@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 @MainActor
@@ -11,7 +12,9 @@ final class EnrutadorTests: XCTestCase {
         XCTAssertEqual(Enrutador.destino(de: try url("coco://capturar/foto")), .formularioRapido(conCamara: true))
         XCTAssertEqual(Enrutador.destino(de: try url("COCO://Capturar/FOTO")), .formularioRapido(conCamara: true))
         XCTAssertEqual(Enrutador.destino(de: try url("coco://capturas")), .capturas)
-        XCTAssertEqual(Enrutador.destino(de: try url(NotificadorDelSistema.destinoDeCaptura)), .capturas, "el aviso de una captura lleva a la lista")
+        XCTAssertEqual(
+            Enrutador.destino(de: try url(NotificadorDelSistema.destinoDeCaptura)), .capturas,
+            "el aviso de una captura lleva a la lista")
     }
 
     func testURLsDesconocidasNoSonDestino() throws {

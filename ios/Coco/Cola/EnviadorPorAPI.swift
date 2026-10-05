@@ -19,7 +19,9 @@ struct EnviadorPorAPI: EnviadorDeCapturas {
 
     func subirFoto(_ jpeg: Data, nombre: String, a transactionId: Int) async throws -> [Soporte] {
         let token = try await tokenVigente()
-        let parte = ParteMultipart(nombreDelCampo: ConstructorDePeticiones.campoDeSoportes, nombreDeArchivo: nombre, mime: "image/jpeg", datos: jpeg)
+        let parte = ParteMultipart(
+            nombreDelCampo: ConstructorDePeticiones.campoDeSoportes, nombreDeArchivo: nombre, mime: "image/jpeg",
+            datos: jpeg)
         return try await api.subir(partes: [parte], a: "/transactions/\(transactionId)/soportes", token: token)
     }
 

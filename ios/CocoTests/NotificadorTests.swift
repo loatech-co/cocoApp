@@ -1,5 +1,6 @@
-import XCTest
 import UserNotifications
+import XCTest
+
 @testable import Coco
 
 final class CentroFalso: CentroDeNotificaciones, @unchecked Sendable {
@@ -33,8 +34,12 @@ final class CentroFalso: CentroDeNotificaciones, @unchecked Sendable {
 }
 
 final class NotificadorTests: XCTestCase {
-    private func resultado(repetido: Bool = false, fusionado: Bool = false, porRevisar: Bool = false) -> ResultadoGuardado {
-        ResultadoGuardado(transactionId: 42, resumen: "Registrado: $45.000 · Mercado", repetido: repetido, fusionado: fusionado, porRevisar: porRevisar, terminadaEn: .now)
+    private func resultado(repetido: Bool = false, fusionado: Bool = false, porRevisar: Bool = false)
+        -> ResultadoGuardado
+    {
+        ResultadoGuardado(
+            transactionId: 42, resumen: "Registrado: $45.000 · Mercado", repetido: repetido, fusionado: fusionado,
+            porRevisar: porRevisar, terminadaEn: .now)
     }
 
     func testTextoDeCaptura() {
@@ -42,15 +47,19 @@ final class NotificadorTests: XCTestCase {
         XCTAssertEqual(NotificadorDelSistema.textoDeCaptura(resultado()).cuerpo, "Registrado: $45.000 · Mercado")
         XCTAssertEqual(NotificadorDelSistema.textoDeCaptura(resultado(repetido: true)).titulo, "Ya estaba registrado")
         XCTAssertEqual(NotificadorDelSistema.textoDeCaptura(resultado(fusionado: true)).titulo, "Era el mismo pago")
-        XCTAssertEqual(NotificadorDelSistema.textoDeCaptura(resultado(porRevisar: true)).cuerpo, "Registrado: $45.000 · Mercado · por revisar")
+        XCTAssertEqual(
+            NotificadorDelSistema.textoDeCaptura(resultado(porRevisar: true)).cuerpo,
+            "Registrado: $45.000 · Mercado · por revisar")
     }
 
     func testProgramarVencimientoUnaSolaPeticionConIdFijo() async throws {
         let centro = CentroFalso()
         let ahora = Date(timeIntervalSince1970: 1_790_000_000)
         let n = NotificadorDelSistema(centro: centro, reloj: { ahora })
-        await n.programarVencimiento(ahora.addingTimeInterval(5 * 86_400), texto: "Vuelve a instalarla desde Xcode con el cable.")
-        await n.programarVencimiento(ahora.addingTimeInterval(3 * 86_400), texto: "Vuelve a instalarla desde Xcode con el cable.")
+        await n.programarVencimiento(
+            ahora.addingTimeInterval(5 * 86_400), texto: "Vuelve a instalarla desde Xcode con el cable.")
+        await n.programarVencimiento(
+            ahora.addingTimeInterval(3 * 86_400), texto: "Vuelve a instalarla desde Xcode con el cable.")
         let pendientes = await centro.pendientes()
         XCTAssertEqual(pendientes.count, 1)
         XCTAssertEqual(pendientes.first?.identifier, NotificadorDelSistema.idDeVencimiento)

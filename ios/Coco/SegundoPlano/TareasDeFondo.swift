@@ -35,7 +35,10 @@ enum TareasDeFondo {
 
     /// Antes de que termine `didFinishLaunching`; después iOS ya no deja.
     @MainActor
-    static func registrar(sesion: Sesion, cola: ColaDeCapturas, arbol: SincronizadorDelArbol, notificador: Notificador, scheduler: BGTaskScheduler = .shared) {
+    static func registrar(
+        sesion: Sesion, cola: ColaDeCapturas, arbol: SincronizadorDelArbol, notificador: Notificador,
+        scheduler: BGTaskScheduler = .shared
+    ) {
         registro.valor = true
         scheduler.register(forTaskWithIdentifier: renovar, using: nil) { tarea in
             correr(tarea, scheduler: scheduler) {
@@ -88,7 +91,9 @@ enum TareasDeFondo {
         return resumen.enviadas
     }
 
-    private static func correr(_ tarea: BGTask, scheduler: BGTaskScheduler, _ trabajo: @escaping @Sendable () async -> Void) {
+    private static func correr(
+        _ tarea: BGTask, scheduler: BGTaskScheduler, _ trabajo: @escaping @Sendable () async -> Void
+    ) {
         let ejecucion = Task {
             await trabajo()
             tarea.setTaskCompleted(success: !Task.isCancelled)

@@ -12,7 +12,10 @@ struct CuerpoDeCaptura: Codable, Equatable, Sendable {
     var category_id: Int?
     var nota: String?
 
-    init(texto: String? = nil, comercio: String? = nil, monto: String? = nil, fecha: String? = nil, periodo: String? = nil, nombre_de_archivo: String? = nil, category_id: Int? = nil, nota: String? = nil) {
+    init(
+        texto: String? = nil, comercio: String? = nil, monto: String? = nil, fecha: String? = nil,
+        periodo: String? = nil, nombre_de_archivo: String? = nil, category_id: Int? = nil, nota: String? = nil
+    ) {
         self.texto = texto
         self.comercio = comercio
         self.monto = monto

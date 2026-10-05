@@ -35,7 +35,9 @@ enum EventoDeLaWeb: Equatable {
 /// la web. Nunca mete una credencial en la URL ni en una cookie: la sesión
 /// viaja por `replyHandler`, dentro del proceso, cuando la web la pide.
 @Observable @MainActor
-final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate {
+final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessageHandler, WKNavigationDelegate,
+    WKUIDelegate
+{
     static let handlerDeSesion = "cocoSesion"
     static let handlerDeEventos = "cocoEventos"
     static let ventanaDeEntrega: TimeInterval = 30
@@ -80,7 +82,9 @@ final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         // cookie de refresh, porque la web embebida nunca pasa por ese camino.
         conf.websiteDataStore = .default()
         conf.allowsInlineMediaPlayback = true
-        let script = WKUserScript(source: ScriptDeArranque.fuente(version: version), injectionTime: .atDocumentStart, forMainFrameOnly: true, in: .page)
+        let script = WKUserScript(
+            source: ScriptDeArranque.fuente(version: version), injectionTime: .atDocumentStart, forMainFrameOnly: true,
+            in: .page)
         conf.userContentController.addUserScript(script)
         webView = WKWebView(frame: .zero, configuration: conf)
         super.init()
@@ -170,19 +174,29 @@ final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     // MARK: Handlers
 
     /// `cocoSesion`: responde solo al frame principal del origen de la API.
-    func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage, replyHandler: @escaping @MainActor (Any?, String?) -> Void) {
+    func userContentController(
+        _ c: WKUserContentController, didReceive m: WKScriptMessage,
+        replyHandler: @escaping @MainActor (Any?, String?) -> Void
+    ) {
         let esPrincipal = m.frameInfo.isMainFrame
         let origen = m.frameInfo.securityOrigin
         Task {
-            let (valor, error) = await self.responderPedidoDeSesion(esFramePrincipal: esPrincipal, protocolo: origen.protocol, host: origen.host, puerto: origen.port)
+            let (valor, error) = await self.responderPedidoDeSesion(
+                esFramePrincipal: esPrincipal, protocolo: origen.protocol, host: origen.host, puerto: origen.port)
             replyHandler(valor, error)
         }
     }
 
     /// La parte del handler que se puede probar: `WKScriptMessage` no se deja
     /// construir fuera de WebKit.
-    func responderPedidoDeSesion(esFramePrincipal: Bool, protocolo: String, host: String, puerto: Int) async -> (Any?, String?) {
-        guard Self.origenPermitido(protocolo: protocolo, host: host, puerto: puerto, base: configuracion.base, esFramePrincipal: esFramePrincipal) else {
+    func responderPedidoDeSesion(esFramePrincipal: Bool, protocolo: String, host: String, puerto: Int) async -> (
+        Any?, String?
+    ) {
+        guard
+            Self.origenPermitido(
+                protocolo: protocolo, host: host, puerto: puerto, base: configuracion.base,
+                esFramePrincipal: esFramePrincipal)
+        else {
             return (nil, "origen-no-permitido")
         }
         do {
@@ -199,8 +213,12 @@ final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     /// `cocoEventos`: lo que la web cuenta sin esperar respuesta.
     func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage) {
         let origen = m.frameInfo.securityOrigin
-        guard Self.origenPermitido(protocolo: origen.protocol, host: origen.host, puerto: origen.port, base: configuracion.base, esFramePrincipal: m.frameInfo.isMainFrame),
-              let evento = EventoDeLaWeb(mensaje: m.body) else { return }
+        guard
+            Self.origenPermitido(
+                protocolo: origen.protocol, host: origen.host, puerto: origen.port, base: configuracion.base,
+                esFramePrincipal: m.frameInfo.isMainFrame),
+            let evento = EventoDeLaWeb(mensaje: m.body)
+        else { return }
         Task { await self.recibir(evento) }
     }
 
@@ -223,8 +241,14 @@ final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     // MARK: WKNavigationDelegate
 
-    func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
-        guard let url = action.request.url else { decisionHandler(.cancel); return }
+    func webView(
+        _ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
+        decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void
+    ) {
+        guard let url = action.request.url else {
+            decisionHandler(.cancel)
+            return
+        }
         if Self.esNavegacionPermitida(url, base: configuracion.base) {
             decisionHandler(.allow)
         } else {
@@ -268,7 +292,10 @@ final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     // MARK: WKUIDelegate
 
     /// `window.open` y `target="_blank"`: nunca un segundo webview; a Safari.
-    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+    func webView(
+        _ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction,
+        windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
         if let url = action.request.url { abrirExterno(url) }
         return nil
     }
@@ -276,14 +303,20 @@ final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     // MARK: Puros
 
     nonisolated static func origenPermitido(_ origen: WKSecurityOrigin, base: URL, esFramePrincipal: Bool) -> Bool {
-        origenPermitido(protocolo: origen.protocol, host: origen.host, puerto: origen.port, base: base, esFramePrincipal: esFramePrincipal)
+        origenPermitido(
+            protocolo: origen.protocol, host: origen.host, puerto: origen.port, base: base,
+            esFramePrincipal: esFramePrincipal)
     }
 
     /// Protocolo, host y puerto iguales a los de la API, y solo el frame
     /// principal. `puerto` 0 es «el de siempre» del protocolo.
-    nonisolated static func origenPermitido(protocolo: String, host: String, puerto: Int, base: URL, esFramePrincipal: Bool) -> Bool {
+    nonisolated static func origenPermitido(
+        protocolo: String, host: String, puerto: Int, base: URL, esFramePrincipal: Bool
+    ) -> Bool {
         guard esFramePrincipal else { return false }
-        guard let esquemaBase = base.scheme?.lowercased(), let hostBase = base.host()?.lowercased() else { return false }
+        guard let esquemaBase = base.scheme?.lowercased(), let hostBase = base.host()?.lowercased() else {
+            return false
+        }
         guard protocolo.lowercased() == esquemaBase, host.lowercased() == hostBase else { return false }
         return puertoEfectivo(puerto, esquema: protocolo) == puertoEfectivo(base.port ?? 0, esquema: esquemaBase)
     }
@@ -301,8 +334,11 @@ final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     /// Una cadena como literal de JavaScript: por JSON, que ya escapa comillas,
     /// barras y saltos de línea.
     nonisolated static func cadenaJSON(_ texto: String) -> String {
-        guard let datos = try? JSONSerialization.data(withJSONObject: texto, options: [.fragmentsAllowed, .withoutEscapingSlashes]),
-              let cadena = String(data: datos, encoding: .utf8) else { return "\"\"" }
+        guard
+            let datos = try? JSONSerialization.data(
+                withJSONObject: texto, options: [.fragmentsAllowed, .withoutEscapingSlashes]),
+            let cadena = String(data: datos, encoding: .utf8)
+        else { return "\"\"" }
         return cadena
     }
 
@@ -311,7 +347,8 @@ final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         guard let esquema = url.scheme?.lowercased() else { return false }
         if esquema == "about" { return true }
         guard esquema == "http" || esquema == "https", let host = url.host() else { return false }
-        return origenPermitido(protocolo: esquema, host: host, puerto: url.port ?? 0, base: base, esFramePrincipal: true)
+        return origenPermitido(
+            protocolo: esquema, host: host, puerto: url.port ?? 0, base: base, esFramePrincipal: true)
     }
 
     /// Una entrega cada 30 s y nunca más de dos seguidas sin que cambie el
@@ -323,7 +360,8 @@ final class PuenteWeb: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     }
 
     nonisolated static func json(de sesion: SesionParaLaWeb) throws -> String {
-        let datos = try JSONSerialization.data(withJSONObject: sesion.comoDiccionario(), options: [.withoutEscapingSlashes])
+        let datos = try JSONSerialization.data(
+            withJSONObject: sesion.comoDiccionario(), options: [.withoutEscapingSlashes])
         guard let texto = String(data: datos, encoding: .utf8) else { throw ErrorDeSesion.sinSesion }
         return texto
     }

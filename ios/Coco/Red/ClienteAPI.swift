@@ -37,11 +37,13 @@ struct ClienteAPI: Sendable {
 
     func subir<T: Decodable>(partes: [ParteMultipart], a ruta: String, token: String) async throws -> T {
         let frontera = "coco-\(UUID().uuidString)"
-        return try await enviar(ConstructorDePeticiones.multipart(ruta: ruta, partes: partes, frontera: frontera), token: token)
+        return try await enviar(
+            ConstructorDePeticiones.multipart(ruta: ruta, partes: partes, frontera: frontera), token: token)
     }
 
     private func ejecutar(_ p: Peticion, token: String?) async throws -> (Data, HTTPURLResponse) {
-        let request = ConstructorDePeticiones.urlRequest(p, base: configuracion.apiV1, token: token, userAgent: userAgent)
+        let request = ConstructorDePeticiones.urlRequest(
+            p, base: configuracion.apiV1, token: token, userAgent: userAgent)
         let datos: Data
         let respuesta: HTTPURLResponse
         do {
@@ -60,7 +62,8 @@ struct ClienteAPI: Sendable {
             guard let error = try? JSONDecoder().decode(ErrorDeLaAPI.self, from: datos) else {
                 throw ErrorDeAPI.respuestaIlegible
             }
-            throw ErrorDeAPI.rechazada(status: respuesta.statusCode, code: error.error.code, mensaje: error.error.message)
+            throw ErrorDeAPI.rechazada(
+                status: respuesta.statusCode, code: error.error.code, mensaje: error.error.message)
         }
     }
 }

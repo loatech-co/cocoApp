@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class ColaDeCapturasTests: XCTestCase {
@@ -29,7 +30,9 @@ final class ColaDeCapturasTests: XCTestCase {
         try? FileManager.default.removeItem(at: raiz)
     }
 
-    private func cola(almacen: AlmacenDeCola? = nil, separacion: Duration = .zero, topeDeFotos: Int = 200 * 1024 * 1024) -> ColaDeCapturas {
+    private func cola(almacen: AlmacenDeCola? = nil, separacion: Duration = .zero, topeDeFotos: Int = 200 * 1024 * 1024)
+        -> ColaDeCapturas
+    {
         let reloj = ahora
         return ColaDeCapturas(
             almacen: almacen ?? self.almacen,
@@ -70,12 +73,17 @@ final class ColaDeCapturasTests: XCTestCase {
         let enDisco = try almacen.todas()
         XCTAssertEqual(enDisco.map(\.id), [id])
         // Sin permiso de escritura el reemplazo falla a mitad de camino.
-        try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: raiz.path(percentEncoded: false))
-        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: raiz.path(percentEncoded: false)) }
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o500], ofItemAtPath: raiz.path(percentEncoded: false))
+        defer {
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o700], ofItemAtPath: raiz.path(percentEncoded: false))
+        }
         var cambiada = original
         cambiada.intentos = 9
         XCTAssertThrowsError(try almacen.guardar(cambiada))
-        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: raiz.path(percentEncoded: false))
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o700], ofItemAtPath: raiz.path(percentEncoded: false))
         XCTAssertEqual(try almacen.todas(), enDisco)
     }
 
@@ -190,7 +198,9 @@ final class ColaDeCapturasTests: XCTestCase {
         for status in [429, 503, 408] {
             enviador.responderCaptura(.falla(ErrorDeAPI.servidor(status: status)))
             await c.procesar()
-            guard case .porEnviar? = await c.captura(id: id)?.fase else { return XCTFail("\(status) debería seguir porEnviar") }
+            guard case .porEnviar? = await c.captura(id: id)?.fase else {
+                return XCTFail("\(status) debería seguir porEnviar")
+            }
             ahora.avanzar(4000)
         }
         XCTAssertEqual(notificador.fallos, [])
@@ -233,7 +243,8 @@ final class ColaDeCapturasTests: XCTestCase {
         let c = cola()
         let id = UUID()
         try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: id)
-        enviador.responderCaptura(.falla(ErrorDeAPI.rechazada(status: 422, code: "VALIDATION", mensaje: "Falta el texto")))
+        enviador.responderCaptura(
+            .falla(ErrorDeAPI.rechazada(status: 422, code: "VALIDATION", mensaje: "Falta el texto")))
         let resumen = await c.procesar()
         XCTAssertEqual(resumen.fallidas, 1)
         let fase422 = await c.captura(id: id)?.fase
@@ -250,7 +261,9 @@ final class ColaDeCapturasTests: XCTestCase {
     func testFIFOPorCreadaEn() async throws {
         let c = cola()
         let base = ahora.leer()
-        let tercera = UUID(), primera = UUID(), segunda = UUID()
+        let tercera = UUID()
+        let primera = UUID()
+        let segunda = UUID()
         try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: tercera, capturadaEn: base.addingTimeInterval(30))
         try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: primera, capturadaEn: base)
         try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: segunda, capturadaEn: base.addingTimeInterval(10))
@@ -322,7 +335,9 @@ final class ColaDeCapturasTests: XCTestCase {
 
     func testPurgaLasHechasDeMasDe30Dias() async throws {
         let c = cola()
-        let vieja = UUID(), reciente = UUID(), pendiente = UUID()
+        let vieja = UUID()
+        let reciente = UUID()
+        let pendiente = UUID()
         try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: vieja)
         await c.procesar()
         ahora.avanzar(31 * 86_400)
@@ -378,7 +393,8 @@ final class ColaDeCapturasTests: XCTestCase {
 
     func testEditarSoloFallidasOPorEnviarYDescartarBorraLaFoto() async throws {
         let c = cola()
-        let hecha = UUID(), conFoto = UUID()
+        let hecha = UUID()
+        let conFoto = UUID()
         try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: hecha)
         await c.procesar()
         do {

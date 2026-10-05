@@ -42,8 +42,12 @@ final class Dependencias {
         notificador: Notificador = NotificadorDelSistema(),
         conectividad: Conectividad? = nil,
         defaults: UserDefaults = .standard,
-        registrarIntents: @escaping RegistroDeIntents = { DependenciasDeIntents.registrar(capturador: $0, navegacion: $1) },
-        registrarTareas: @escaping RegistroDeTareas = { TareasDeFondo.registrar(sesion: $0, cola: $1, arbol: $2, notificador: $3) }
+        registrarIntents: @escaping RegistroDeIntents = {
+            DependenciasDeIntents.registrar(capturador: $0, navegacion: $1)
+        },
+        registrarTareas: @escaping RegistroDeTareas = {
+            TareasDeFondo.registrar(sesion: $0, cola: $1, arbol: $2, notificador: $3)
+        }
     ) {
         self.configuracion = configuracion
         self.defaults = defaults
@@ -69,7 +73,8 @@ final class Dependencias {
         self.cola = cola
         let capturador = CapturadorConCola(cola: cola, notificador: contador)
         self.capturador = capturador
-        let arbol = SincronizadorDelArbol(api: api, sesion: sesion, almacen: almacenDelArbol ?? Self.almacenDelArbolPorDefecto())
+        let arbol = SincronizadorDelArbol(
+            api: api, sesion: sesion, almacen: almacenDelArbol ?? Self.almacenDelArbolPorDefecto())
         self.arbol = arbol
         puente = PuenteWeb(sesion: sesion, configuracion: configuracion, navegacion: enrutador)
 
@@ -116,7 +121,8 @@ final class Dependencias {
 
     /// Un formulario nuevo con el árbol que haya en el teléfono.
     func nuevoModeloDelFormulario() async -> ModeloDelFormulario {
-        ModeloDelFormulario(indice: await arbol.indice(), api: api, sesion: sesion, capturador: capturador, conectividad: conectividad)
+        ModeloDelFormulario(
+            indice: await arbol.indice(), api: api, sesion: sesion, capturador: capturador, conectividad: conectividad)
     }
 
     var perfil: PerfilPublico? {
@@ -139,20 +145,22 @@ final class Dependencias {
     // MARK: Observadores
 
     private func observar() {
-        observadores.append(Task { [weak self] in
-            guard let cambios = self?.sesion.cambios else { return }
-            for await estado in cambios {
-                guard let self else { return }
-                await self.sesionCambio(estado)
-            }
-        })
-        observadores.append(Task { [weak self] in
-            guard let cambios = self?.conectividad.cambios else { return }
-            for await hay in cambios where hay {
-                guard let self else { return }
-                _ = await self.cola.procesar()
-            }
-        })
+        observadores.append(
+            Task { [weak self] in
+                guard let cambios = self?.sesion.cambios else { return }
+                for await estado in cambios {
+                    guard let self else { return }
+                    await self.sesionCambio(estado)
+                }
+            })
+        observadores.append(
+            Task { [weak self] in
+                guard let cambios = self?.conectividad.cambios else { return }
+                for await hay in cambios where hay {
+                    guard let self else { return }
+                    _ = await self.cola.procesar()
+                }
+            })
     }
 
     private func sesionCambio(_ estado: EstadoDeSesion) async {
@@ -190,7 +198,8 @@ final class Dependencias {
     private func programarVencimiento() async {
         guard let vence = LectorDePerfil.delBundle() else { return }
         let momento = AvisoDeVencimiento.momentoDelAviso(vence: vence, ahora: .now) ?? .now
-        await notificador.programarVencimiento(vence, texto: AvisoDeVencimiento.texto(vence: vence, ahora: momento).cuerpo)
+        await notificador.programarVencimiento(
+            vence, texto: AvisoDeVencimiento.texto(vence: vence, ahora: momento).cuerpo)
     }
 
     // MARK: Por defecto
@@ -198,12 +207,15 @@ final class Dependencias {
     /// Si el disco de la app no se deja crear, la cola va al temporal: peor
     /// que lo normal, pero mejor que arrancar sin cola.
     private static func almacenDeColaPorDefecto() -> AlmacenDeCola {
-        let raiz = (try? AlmacenDeColaEnDisco.raizPorDefecto()) ?? FileManager.default.temporaryDirectory.appending(path: "cola", directoryHint: .isDirectory)
+        let raiz =
+            (try? AlmacenDeColaEnDisco.raizPorDefecto())
+            ?? FileManager.default.temporaryDirectory.appending(path: "cola", directoryHint: .isDirectory)
         return AlmacenDeColaEnDisco(raiz: raiz)
     }
 
     private static func almacenDelArbolPorDefecto() -> AlmacenDelArbol {
-        (try? AlmacenDelArbolEnDisco.porDefecto()) ?? AlmacenDelArbolEnDisco(archivo: FileManager.default.temporaryDirectory.appending(path: "arbol.json"))
+        (try? AlmacenDelArbolEnDisco.porDefecto())
+            ?? AlmacenDelArbolEnDisco(archivo: FileManager.default.temporaryDirectory.appending(path: "arbol.json"))
     }
 
     private static func nombre(de estado: EstadoDeSesion) -> String {
@@ -233,10 +245,14 @@ final class ContadorDePendientes: Notificador, @unchecked Sendable {
     }
 
     func pedirPermiso() async -> Bool { await real.pedirPermiso() }
-    func capturaRegistrada(_ r: ResultadoGuardado, origen: OrigenDeCaptura) async { await real.capturaRegistrada(r, origen: origen) }
+    func capturaRegistrada(_ r: ResultadoGuardado, origen: OrigenDeCaptura) async {
+        await real.capturaRegistrada(r, origen: origen)
+    }
     func capturaFallida(motivo: String) async { await real.capturaFallida(motivo: motivo) }
     func colaEnviada(cuantas: Int) async { await real.colaEnviada(cuantas: cuantas) }
-    func programarVencimiento(_ vence: Date, texto: String) async { await real.programarVencimiento(vence, texto: texto) }
+    func programarVencimiento(_ vence: Date, texto: String) async {
+        await real.programarVencimiento(vence, texto: texto)
+    }
     func ponerInsignia(_ n: Int) async {
         if let alContar { await alContar(n) }
         await real.ponerInsignia(n)

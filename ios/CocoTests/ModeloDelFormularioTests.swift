@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 @MainActor
@@ -7,20 +8,29 @@ final class ModeloDelFormularioTests: XCTestCase {
     private nonisolated static let ahora = Date(timeIntervalSince1970: 1_791_169_200)
 
     private nonisolated static let arbol = [
-        NodoDelArbol(id: 1, name: "Costos fijos", parent_id: nil, estatico: true, children: [
-            NodoDelArbol(id: 10, name: "Educación", parent_id: 1, children: [
-                NodoDelArbol(id: 100, name: "Colegio", parent_id: 10, palabras_clave: ["tuti"]),
-                NodoDelArbol(id: 101, name: "Universidad", parent_id: 10),
+        NodoDelArbol(
+            id: 1, name: "Costos fijos", parent_id: nil, estatico: true,
+            children: [
+                NodoDelArbol(
+                    id: 10, name: "Educación", parent_id: 1,
+                    children: [
+                        NodoDelArbol(id: 100, name: "Colegio", parent_id: 10, palabras_clave: ["tuti"]),
+                        NodoDelArbol(id: 101, name: "Universidad", parent_id: 10),
+                    ])
             ]),
-        ]),
-        NodoDelArbol(id: 2, name: "Hogar", parent_id: nil, children: [
-            NodoDelArbol(id: 20, name: "Alimentación", parent_id: 2, children: [
-                NodoDelArbol(id: 200, name: "Mercado", parent_id: 20, palabras_clave: ["d1", "exito"]),
+        NodoDelArbol(
+            id: 2, name: "Hogar", parent_id: nil,
+            children: [
+                NodoDelArbol(
+                    id: 20, name: "Alimentación", parent_id: 2,
+                    children: [
+                        NodoDelArbol(id: 200, name: "Mercado", parent_id: 20, palabras_clave: ["d1", "exito"])
+                    ])
             ]),
-        ]),
     ]
 
-    private nonisolated static let interpretacionJSON = #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"clasificacion":{"certeza":"alta","fuente":"regla","concepto_id":200,"categoria_id":20,"nombre":"Mercado","candidatos":[],"motivo":"palabra clave"},"por_revisar":false}}"#
+    private nonisolated static let interpretacionJSON =
+        #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"clasificacion":{"certeza":"alta","fuente":"regla","concepto_id":200,"categoria_id":20,"nombre":"Mercado","candidatos":[],"motivo":"palabra clave"},"por_revisar":false}}"#
 
     private var transporte = TransporteFalso()
     private var capturador = CapturadorDoble()
@@ -196,7 +206,8 @@ final class ModeloDelFormularioTests: XCTestCase {
     }
 
     func testConCertezaMediaAbreElBuscadorConLosCandidatos() async throws {
-        let json = #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"clasificacion":{"certeza":"media","fuente":null,"concepto_id":null,"categoria_id":null,"nombre":null,"candidatos":[{"id":200,"nombre":"Mercado","ruta":"Hogar › Alimentación › Mercado"},{"id":100,"nombre":"Colegio","ruta":"Costos fijos › Educación › Colegio"}],"motivo":""},"por_revisar":true}}"#
+        let json =
+            #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"clasificacion":{"certeza":"media","fuente":null,"concepto_id":null,"categoria_id":null,"nombre":null,"candidatos":[{"id":200,"nombre":"Mercado","ruta":"Hogar › Alimentación › Mercado"},{"id":100,"nombre":"Colegio","ruta":"Costos fijos › Educación › Colegio"}],"motivo":""},"por_revisar":true}}"#
         transporte.responder(.http(200, json))
         let m = try modelo()
         await m.leerFoto(ImagenDePrueba.cuadrada(10))
@@ -208,7 +219,8 @@ final class ModeloDelFormularioTests: XCTestCase {
     func testBuscarMuestraLaRutaYSinIndiceNoRevienta() throws {
         let m = try modelo()
         m.buscar("tuti")
-        XCTAssertEqual(m.resultados.map(\.rutaLegible), ["Educación › Costos fijos"], "ancestros, del más cercano al más lejano")
+        XCTAssertEqual(
+            m.resultados.map(\.rutaLegible), ["Educación › Costos fijos"], "ancestros, del más cercano al más lejano")
         let sinIndice = try modelo(indice: nil)
         sinIndice.buscar("tuti")
         XCTAssertEqual(sinIndice.resultados, [])

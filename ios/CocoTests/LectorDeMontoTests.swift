@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class LectorDeMontoTests: XCTestCase {
@@ -28,7 +29,8 @@ final class LectorDeMontoTests: XCTestCase {
         let regex = try NSRegularExpression(pattern: "^\\d+([.,]\\d{1,2})?$")
         for texto in ["$45.000", "45.000,50", "COP 1.200.000", "45,5", "1,200.50", "$ 0"] {
             let salida = try XCTUnwrap(LectorDeMonto.normalizar(texto))
-            XCTAssertEqual(regex.numberOfMatches(in: salida, range: NSRange(salida.startIndex..., in: salida)), 1, salida)
+            XCTAssertEqual(
+                regex.numberOfMatches(in: salida, range: NSRange(salida.startIndex..., in: salida)), 1, salida)
         }
     }
 }

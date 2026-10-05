@@ -1,26 +1,40 @@
 import XCTest
+
 @testable import Coco
 
 /// Paridad con `frontend/src/lib/buscar-en-arbol.test.ts`: mismo fixture,
 /// mismos resultados. Si una prueba cambia allí, cambia aquí.
 final class IndiceDelArbolTests: XCTestCase {
     private static let arbol: [NodoDelArbol] = [
-        NodoDelArbol(id: 1, name: "Costos fijos", parent_id: nil, estatico: true, children: [
-            NodoDelArbol(id: 10, name: "Servicios públicos", parent_id: 1, children: [
-                NodoDelArbol(id: 100, name: "Celsia (Energía)", parent_id: 10, palabras_clave: ["celsia", "epsa"]),
-                NodoDelArbol(id: 101, name: "Aquaoccidente (Agua)", parent_id: 10, palabras_clave: ["acueducto"]),
+        NodoDelArbol(
+            id: 1, name: "Costos fijos", parent_id: nil, estatico: true,
+            children: [
+                NodoDelArbol(
+                    id: 10, name: "Servicios públicos", parent_id: 1,
+                    children: [
+                        NodoDelArbol(
+                            id: 100, name: "Celsia (Energía)", parent_id: 10, palabras_clave: ["celsia", "epsa"]),
+                        NodoDelArbol(
+                            id: 101, name: "Aquaoccidente (Agua)", parent_id: 10, palabras_clave: ["acueducto"]),
+                    ]),
+                NodoDelArbol(
+                    id: 11, name: "Educación", parent_id: 1,
+                    children: [
+                        NodoDelArbol(id: 110, name: "Colegio Tuti", parent_id: 11)
+                    ]),
             ]),
-            NodoDelArbol(id: 11, name: "Educación", parent_id: 1, children: [
-                NodoDelArbol(id: 110, name: "Colegio Tuti", parent_id: 11),
+        NodoDelArbol(
+            id: 2, name: "Costos variables", parent_id: nil,
+            children: [
+                NodoDelArbol(
+                    id: 20, name: "Alimentación", parent_id: 2,
+                    children: [
+                        NodoDelArbol(
+                            id: 200, name: "Mercado", parent_id: 20, palabras_clave: ["D1", "Koba Colombia", "Ara"]),
+                        NodoDelArbol(id: 201, name: "Supermercado", parent_id: 20),
+                    ]),
+                NodoDelArbol(id: 21, name: "Transporte", parent_id: 2, children: []),
             ]),
-        ]),
-        NodoDelArbol(id: 2, name: "Costos variables", parent_id: nil, children: [
-            NodoDelArbol(id: 20, name: "Alimentación", parent_id: 2, children: [
-                NodoDelArbol(id: 200, name: "Mercado", parent_id: 20, palabras_clave: ["D1", "Koba Colombia", "Ara"]),
-                NodoDelArbol(id: 201, name: "Supermercado", parent_id: 20),
-            ]),
-            NodoDelArbol(id: 21, name: "Transporte", parent_id: 2, children: []),
-        ]),
     ]
 
     private let indice = IndiceDelArbol(raices: arbol)
@@ -57,15 +71,21 @@ final class IndiceDelArbolTests: XCTestCase {
 
     func testExcluyeLoArchivadoYLoQueCuelgaDeEllo() {
         let conArchivados = IndiceDelArbol(raices: [
-            NodoDelArbol(id: 1, name: "Centro", parent_id: nil, children: [
-                NodoDelArbol(id: 10, name: "Viva", parent_id: 1, children: [
-                    NodoDelArbol(id: 100, name: "Archivado", parent_id: 10, is_archived: true),
-                    NodoDelArbol(id: 101, name: "Vivo", parent_id: 10),
-                ]),
-                NodoDelArbol(id: 11, name: "Archivada", parent_id: 1, is_archived: true, children: [
-                    NodoDelArbol(id: 110, name: "Huérfano", parent_id: 11),
-                ]),
-            ]),
+            NodoDelArbol(
+                id: 1, name: "Centro", parent_id: nil,
+                children: [
+                    NodoDelArbol(
+                        id: 10, name: "Viva", parent_id: 1,
+                        children: [
+                            NodoDelArbol(id: 100, name: "Archivado", parent_id: 10, is_archived: true),
+                            NodoDelArbol(id: 101, name: "Vivo", parent_id: 10),
+                        ]),
+                    NodoDelArbol(
+                        id: 11, name: "Archivada", parent_id: 1, is_archived: true,
+                        children: [
+                            NodoDelArbol(id: 110, name: "Huérfano", parent_id: 11)
+                        ]),
+                ])
         ])
         XCTAssertEqual(conArchivados.entradas.map(\.id), [1, 10, 101])
     }
@@ -90,11 +110,15 @@ final class IndiceDelArbolTests: XCTestCase {
 
     func testAIgualParecidoElConceptoAntesQueLaCategoria() {
         let conConcepto = IndiceDelArbol(raices: [
-            NodoDelArbol(id: 3, name: "Centro", parent_id: nil, children: [
-                NodoDelArbol(id: 30, name: "Transporte", parent_id: 3, children: [
-                    NodoDelArbol(id: 300, name: "Transporte", parent_id: 30),
-                ]),
-            ]),
+            NodoDelArbol(
+                id: 3, name: "Centro", parent_id: nil,
+                children: [
+                    NodoDelArbol(
+                        id: 30, name: "Transporte", parent_id: 3,
+                        children: [
+                            NodoDelArbol(id: 300, name: "Transporte", parent_id: 30)
+                        ])
+                ])
         ])
         XCTAssertEqual(conConcepto.buscar("transporte").map(\.nivel), [.concepto, .categoria])
     }
@@ -123,6 +147,8 @@ final class IndiceDelArbolTests: XCTestCase {
     func testNormalizarEsLaDeFirmas() {
         XCTAssertEqual(IndiceDelArbol.normalizar("Alimentación  Básica"), "alimentacion basica")
         XCTAssertEqual(IndiceDelArbol.normalizar("  Celsia (Energía) \n"), "celsia (energia)")
-        XCTAssertEqual(IndiceDelArbol.normalizar("ÑANDÚ"), "nandu", "NFD descompone la eñe y la tilde se va, igual que en firmas.ts")
+        XCTAssertEqual(
+            IndiceDelArbol.normalizar("ÑANDÚ"), "nandu",
+            "NFD descompone la eñe y la tilde se va, igual que en firmas.ts")
     }
 }

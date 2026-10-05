@@ -8,11 +8,11 @@ enum LectorDePerfil {
     /// `<?xml` a `</plist>` sin tocar la firma.
     static func fechaDeVencimiento(en datos: Data) -> Date? {
         guard let inicio = datos.range(of: Data("<?xml".utf8)),
-              let fin = datos.range(of: Data("</plist>".utf8), in: inicio.lowerBound..<datos.endIndex)
+            let fin = datos.range(of: Data("</plist>".utf8), in: inicio.lowerBound..<datos.endIndex)
         else { return nil }
         let plist = datos[inicio.lowerBound..<fin.upperBound]
         guard let objeto = try? PropertyListSerialization.propertyList(from: plist, format: nil),
-              let dict = objeto as? [String: Any]
+            let dict = objeto as? [String: Any]
         else { return nil }
         return dict["ExpirationDate"] as? Date
     }
@@ -20,7 +20,7 @@ enum LectorDePerfil {
     /// En el simulador no hay perfil: nil, sin error.
     static func delBundle(_ bundle: Bundle = .main) -> Date? {
         guard let url = bundle.url(forResource: "embedded", withExtension: "mobileprovision"),
-              let datos = try? Data(contentsOf: url)
+            let datos = try? Data(contentsOf: url)
         else { return nil }
         return fechaDeVencimiento(en: datos)
     }

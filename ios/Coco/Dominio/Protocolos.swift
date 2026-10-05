@@ -69,7 +69,8 @@ enum ResultadoDeCaptura: Equatable, Sendable {
 }
 
 protocol Capturador: Sendable {
-    func capturar(_ cuerpo: CuerpoDeCaptura, origen: OrigenDeCaptura, foto: Data?, presupuesto: Duration) async -> ResultadoDeCaptura
+    func capturar(_ cuerpo: CuerpoDeCaptura, origen: OrigenDeCaptura, foto: Data?, presupuesto: Duration) async
+        -> ResultadoDeCaptura
 }
 
 protocol AlmacenDeCola: Sendable {

@@ -138,7 +138,8 @@ final class ModeloDelFormulario {
         do {
             let token = try await sesion.accessTokenVigente()
             let cuerpo = CuerpoDeCaptura(texto: textoLeido, periodo: FechaDeBogota.mes(reloj()))
-            let interpretacion: Interpretacion = try await api.enviar(ConstructorDePeticiones.interpretar(cuerpo), token: token)
+            let interpretacion: Interpretacion = try await api.enviar(
+                ConstructorDePeticiones.interpretar(cuerpo), token: token)
             aplicar(interpretacion)
         } catch ErrorDeSesion.sinSesion {
             error = "Inicia sesión para que Coco interprete el recibo."

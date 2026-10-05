@@ -21,9 +21,11 @@ struct BienvenidaView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Coco registra lo que pagas sin que tengas que abrirla: Atajos le pasa cada pago de Wallet y cada mensaje del banco.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Text(
+                        "Coco registra lo que pagas sin que tengas que abrirla: Atajos le pasa cada pago de Wallet y cada mensaje del banco."
+                    )
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                 }
                 seccion("Pagos con Wallet", pasos: PasosDeAutomatizacion.transaccion)
                 seccion("Mensajes del banco", pasos: PasosDeAutomatizacion.mensaje)

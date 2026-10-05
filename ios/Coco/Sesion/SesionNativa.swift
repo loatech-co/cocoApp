@@ -29,7 +29,9 @@ final actor SesionNativa: Sesion {
     nonisolated let cambios: AsyncStream<EstadoDeSesion>
     private nonisolated let continuacion: AsyncStream<EstadoDeSesion>.Continuation
 
-    init(api: ClienteAPI, llavero: Llavero, reloj: @Sendable @escaping () -> Date = Date.init, margen: TimeInterval = 120) {
+    init(
+        api: ClienteAPI, llavero: Llavero, reloj: @Sendable @escaping () -> Date = Date.init, margen: TimeInterval = 120
+    ) {
         self.api = api
         self.llavero = llavero
         self.reloj = reloj
@@ -55,7 +57,8 @@ final actor SesionNativa: Sesion {
     }
 
     func entrar(correo: String, contrasena: String) async throws -> PerfilPublico {
-        let datos = try await api.enviarCrudo(ConstructorDePeticiones.login(correo: correo, contrasena: contrasena), token: nil)
+        let datos = try await api.enviarCrudo(
+            ConstructorDePeticiones.login(correo: correo, contrasena: contrasena), token: nil)
         let (respuesta, userJSON) = try Self.leerSesion(datos)
         guard let refresh = respuesta.refresh_token else { throw ErrorDeAPI.respuestaIlegible }
         try llavero.escribir(refresh, en: .refreshToken)
@@ -126,7 +129,8 @@ final actor SesionNativa: Sesion {
         while true {
             intentos -= 1
             do {
-                let datos = try await api.enviarCrudo(ConstructorDePeticiones.refresh(refreshToken: refresh), token: nil)
+                let datos = try await api.enviarCrudo(
+                    ConstructorDePeticiones.refresh(refreshToken: refresh), token: nil)
                 let (respuesta, userJSON) = try Self.leerSesion(datos)
                 // Si por lo que sea no vino refresh, el anterior sigue siendo
                 // el último conocido: no se pisa con nada.
@@ -174,7 +178,9 @@ final actor SesionNativa: Sesion {
     // MARK: Lectura de la respuesta
 
     private static func tokens(de r: SesionRespuesta, userJSON: Data, ahora: Date) -> Tokens {
-        Tokens(access: r.access_token, expiraEn: ahora.addingTimeInterval(TimeInterval(r.expires_in)), userJSON: userJSON, perfil: r.user)
+        Tokens(
+            access: r.access_token, expiraEn: ahora.addingTimeInterval(TimeInterval(r.expires_in)), userJSON: userJSON,
+            perfil: r.user)
     }
 
     /// Decodifica el sobre y, aparte, recorta el `user` crudo del cuerpo. Si
@@ -191,9 +197,9 @@ final actor SesionNativa: Sesion {
             return (respuesta, crudo)
         }
         guard let sobre = try? JSONSerialization.jsonObject(with: datos) as? [String: Any],
-              let data = sobre["data"] as? [String: Any],
-              let user = data["user"],
-              let userJSON = try? JSONSerialization.data(withJSONObject: user)
+            let data = sobre["data"] as? [String: Any],
+            let user = data["user"],
+            let userJSON = try? JSONSerialization.data(withJSONObject: user)
         else { throw ErrorDeAPI.respuestaIlegible }
         return (respuesta, userJSON)
     }
@@ -210,7 +216,8 @@ enum RecorteDeJSON {
         var esperandoValor = false
         var dentroDelPadre = false
         var profundidadDelPadre = 0
-        let objetivo = Array(clave.utf8), nombreDelPadre = Array(padre.utf8)
+        let objetivo = Array(clave.utf8)
+        let nombreDelPadre = Array(padre.utf8)
 
         while i < bytes.count {
             let b = bytes[i]
@@ -269,7 +276,10 @@ enum RecorteDeJSON {
     private static func finDeCadena(_ bytes: [UInt8], desde: Int) -> Int? {
         var i = desde + 1
         while i < bytes.count {
-            if bytes[i] == UInt8(ascii: "\\") { i += 2; continue }
+            if bytes[i] == UInt8(ascii: "\\") {
+                i += 2
+                continue
+            }
             if bytes[i] == UInt8(ascii: "\"") { return i }
             i += 1
         }

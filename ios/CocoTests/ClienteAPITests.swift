@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class ClienteAPITests: XCTestCase {
@@ -9,7 +10,8 @@ final class ClienteAPITests: XCTestCase {
 
     private func error(_ transporte: TransporteFalso) async -> ErrorDeAPI? {
         do {
-            let _: [NodoDelArbol] = try await cliente(transporte).enviar(ConstructorDePeticiones.categorias(), token: "tok")
+            let _: [NodoDelArbol] = try await cliente(transporte).enviar(
+                ConstructorDePeticiones.categorias(), token: "tok")
             return nil
         } catch {
             return error as? ErrorDeAPI
@@ -17,20 +19,27 @@ final class ClienteAPITests: XCTestCase {
     }
 
     func test200ConDataDecodifica() async throws {
-        let t = TransporteFalso([.http(200, #"{"data":[{"id":1,"name":"Hogar","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":false,"children":null}],"meta":{}}"#)])
+        let t = TransporteFalso([
+            .http(
+                200,
+                #"{"data":[{"id":1,"name":"Hogar","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":false,"children":null}],"meta":{}}"#
+            )
+        ])
         let nodos: [NodoDelArbol] = try await cliente(t).enviar(ConstructorDePeticiones.categorias(), token: "tok")
         XCTAssertEqual(nodos.map(\.name), ["Hogar"])
         XCTAssertEqual(t.recibidas.first?.url?.absoluteString, "https://api.coco.invalid/api/v1/categories")
     }
 
     func test401() async {
-        let e = await error(TransporteFalso([.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"La sesión expiró."}}"#)]))
+        let e = await error(
+            TransporteFalso([.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"La sesión expiró."}}"#)]))
         XCTAssertEqual(e, .noAutenticado)
         XCTAssertEqual(e?.esReintentable, false)
     }
 
     func test422ConCodigoYMensaje() async {
-        let e = await error(TransporteFalso([.http(422, #"{"error":{"code":"VALIDACION","message":"Falta el monto","details":[]}}"#)]))
+        let e = await error(
+            TransporteFalso([.http(422, #"{"error":{"code":"VALIDACION","message":"Falta el monto","details":[]}}"#)]))
         XCTAssertEqual(e, .rechazada(status: 422, code: "VALIDACION", mensaje: "Falta el monto"))
         XCTAssertEqual(e?.esReintentable, false)
     }
@@ -68,9 +77,16 @@ final class ClienteAPITests: XCTestCase {
     }
 
     func testSubirUsaMultipartYBearer() async throws {
-        let t = TransporteFalso([.http(201, #"{"data":[{"id":5,"orden":1,"nombre_archivo":"a.jpg","mime_type":"image/jpeg","tamano":3,"disponible":true}]}"#)])
-        let parte = ParteMultipart(nombreDelCampo: "archivos", nombreDeArchivo: "a.jpg", mime: "image/jpeg", datos: Data([1, 2, 3]))
-        let soportes: [Soporte] = try await cliente(t).subir(partes: [parte], a: "/transactions/42/soportes", token: "tok")
+        let t = TransporteFalso([
+            .http(
+                201,
+                #"{"data":[{"id":5,"orden":1,"nombre_archivo":"a.jpg","mime_type":"image/jpeg","tamano":3,"disponible":true}]}"#
+            )
+        ])
+        let parte = ParteMultipart(
+            nombreDelCampo: "archivos", nombreDeArchivo: "a.jpg", mime: "image/jpeg", datos: Data([1, 2, 3]))
+        let soportes: [Soporte] = try await cliente(t).subir(
+            partes: [parte], a: "/transactions/42/soportes", token: "tok")
         XCTAssertEqual(soportes.first?.id, 5)
         let r = try XCTUnwrap(t.recibidas.first)
         XCTAssertTrue(r.value(forHTTPHeaderField: "Content-Type")?.hasPrefix("multipart/form-data; boundary=") ?? false)

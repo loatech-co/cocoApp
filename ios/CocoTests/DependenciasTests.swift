@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 /// La composición se construye sin red ni disco de la app y deja registrado
@@ -15,7 +16,10 @@ final class DependenciasTests: XCTestCase {
         try? FileManager.default.removeItem(at: raiz)
     }
 
-    private func construir(transporte: TransporteFalso = TransporteFalso(), llavero: LlaveroEnMemoria = LlaveroEnMemoria(), notificador: NotificadorDoble = NotificadorDoble()) throws -> (Dependencias, Registro) {
+    private func construir(
+        transporte: TransporteFalso = TransporteFalso(), llavero: LlaveroEnMemoria = LlaveroEnMemoria(),
+        notificador: NotificadorDoble = NotificadorDoble()
+    ) throws -> (Dependencias, Registro) {
         let registro = Registro()
         let base = try XCTUnwrap(URL(string: "https://api.coco.invalid"))
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "pruebas-\(UUID().uuidString)"))
@@ -28,7 +32,8 @@ final class DependenciasTests: XCTestCase {
             notificador: notificador,
             defaults: defaults,
             registrarIntents: { capturador, navegacion in registro.intents = (capturador, navegacion) },
-            registrarTareas: { sesion, cola, arbol, notificador in registro.tareas = (sesion, cola, arbol, notificador) }
+            registrarTareas: { sesion, cola, arbol, notificador in registro.tareas = (sesion, cola, arbol, notificador)
+            }
         )
         return (d, registro)
     }
@@ -57,7 +62,10 @@ final class DependenciasTests: XCTestCase {
         let (d, _) = try construir()
         XCTAssertEqual(d.configuracion.base.absoluteString, "https://api.coco.invalid")
         XCTAssertEqual(d.api.configuracion, d.configuracion)
-        XCTAssertTrue(PuenteWeb.origenPermitido(protocolo: "https", host: "api.coco.invalid", puerto: 0, base: d.configuracion.base, esFramePrincipal: true))
+        XCTAssertTrue(
+            PuenteWeb.origenPermitido(
+                protocolo: "https", host: "api.coco.invalid", puerto: 0, base: d.configuracion.base,
+                esFramePrincipal: true))
     }
 
     func testArrancarSinRefreshQuedaSinSesionYNoTocaLaRed() async throws {
@@ -73,7 +81,9 @@ final class DependenciasTests: XCTestCase {
         XCTAssertEqual(d.estadoDeSesion, .sinSesion)
         XCTAssertFalse(d.haySesion)
         XCTAssertNil(d.perfil)
-        XCTAssertEqual(transporte.recibidas.filter { $0.url?.path.hasPrefix("/api/v1") == true }, [], "sin refresh no hay nada que renovar")
+        XCTAssertEqual(
+            transporte.recibidas.filter { $0.url?.path.hasPrefix("/api/v1") == true }, [],
+            "sin refresh no hay nada que renovar")
         await d.arrancar()
         XCTAssertTrue(d.arrancada, "arrancar dos veces no vuelve a hacer nada")
     }
@@ -82,7 +92,8 @@ final class DependenciasTests: XCTestCase {
         let notificador = NotificadorDoble()
         let (d, _) = try construir(notificador: notificador)
         XCTAssertEqual(d.pendientes, 0)
-        try await d.cola.encolar(CuerpoDeCaptura(comercio: "D1", monto: "1000", fecha: "2026-10-05"), origen: .iosManual, foto: nil)
+        try await d.cola.encolar(
+            CuerpoDeCaptura(comercio: "D1", monto: "1000", fecha: "2026-10-05"), origen: .iosManual, foto: nil)
         for _ in 0..<50 where d.pendientes == 0 {
             try await Task.sleep(for: .milliseconds(20))
         }
@@ -91,7 +102,9 @@ final class DependenciasTests: XCTestCase {
     }
 
     func testEsAdminSoloConElRol() throws {
-        let perfil = PerfilPublico(id: 1, email: "a@coco.test", display_name: nil, role: "admin", status: "active", created_at: "2026-01-01T00:00:00Z")
+        let perfil = PerfilPublico(
+            id: 1, email: "a@coco.test", display_name: nil, role: "admin", status: "active",
+            created_at: "2026-01-01T00:00:00Z")
         XCTAssertEqual(perfil.role, "admin")
         let (d, _) = try construir()
         XCTAssertFalse(d.esAdmin)
@@ -101,10 +114,16 @@ final class DependenciasTests: XCTestCase {
 final class EntrarViewTests: XCTestCase {
     func testMensajesDeErrorDicenQueHacer() {
         XCTAssertEqual(EntrarView.mensaje(de: ErrorDeAPI.noAutenticado), "Correo o contraseña incorrectos.")
-        XCTAssertEqual(EntrarView.mensaje(de: URLError(.notConnectedToInternet)), "Sin conexión. Revisa la red e inténtalo otra vez.")
-        XCTAssertEqual(EntrarView.mensaje(de: ErrorDeAPI.tiempoAgotado), "La API no respondió a tiempo. Inténtalo otra vez.")
-        XCTAssertEqual(EntrarView.mensaje(de: ErrorDeAPI.rechazada(status: 400, code: "x", mensaje: "El correo no es válido.")), "El correo no es válido.")
-        XCTAssertEqual(EntrarView.mensaje(de: ErrorDeAPI.servidor(status: 429)), "Demasiados intentos. Espera un minuto.")
+        XCTAssertEqual(
+            EntrarView.mensaje(de: URLError(.notConnectedToInternet)),
+            "Sin conexión. Revisa la red e inténtalo otra vez.")
+        XCTAssertEqual(
+            EntrarView.mensaje(de: ErrorDeAPI.tiempoAgotado), "La API no respondió a tiempo. Inténtalo otra vez.")
+        XCTAssertEqual(
+            EntrarView.mensaje(de: ErrorDeAPI.rechazada(status: 400, code: "x", mensaje: "El correo no es válido.")),
+            "El correo no es válido.")
+        XCTAssertEqual(
+            EntrarView.mensaje(de: ErrorDeAPI.servidor(status: 429)), "Demasiados intentos. Espera un minuto.")
         XCTAssertTrue(EntrarView.mensaje(de: ErrorDeAPI.respuestaIlegible).contains("Ajustes"))
     }
 }
@@ -112,7 +131,8 @@ final class EntrarViewTests: XCTestCase {
 final class AjustesViewTests: XCTestCase {
     func testValidaLaURLDeLaAPI() throws {
         XCTAssertEqual(AjustesView.validar("http://localhost:3000/").url, URL(string: "http://localhost:3000"))
-        XCTAssertEqual(AjustesView.validar("  https://dev-cocoapp.viteri.me ").url, URL(string: "https://dev-cocoapp.viteri.me"))
+        XCTAssertEqual(
+            AjustesView.validar("  https://dev-cocoapp.viteri.me ").url, URL(string: "https://dev-cocoapp.viteri.me"))
         XCTAssertNil(AjustesView.validar("").motivo, "vacía no es un error, solo no se puede guardar")
         XCTAssertNil(AjustesView.validar("").url)
         XCTAssertNotNil(AjustesView.validar("localhost").motivo)
@@ -123,8 +143,12 @@ final class AjustesViewTests: XCTestCase {
     func testTextoDeVencimiento() throws {
         let ahora = try XCTUnwrap(Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 5, hour: 12)))
         XCTAssertEqual(AjustesView.textoDeVencimiento(nil), "No disponible (simulador o sin perfil)")
-        XCTAssertTrue(AjustesView.textoDeVencimiento(ahora.addingTimeInterval(5 * 86_400), ahora: ahora).contains("quedan 5 días"))
-        XCTAssertTrue(AjustesView.textoDeVencimiento(ahora.addingTimeInterval(86_400), ahora: ahora).hasPrefix("Mañana"))
-        XCTAssertTrue(AjustesView.textoDeVencimiento(ahora.addingTimeInterval(-86_400), ahora: ahora).hasPrefix("Caducó"))
+        XCTAssertTrue(
+            AjustesView.textoDeVencimiento(ahora.addingTimeInterval(5 * 86_400), ahora: ahora).contains("quedan 5 días")
+        )
+        XCTAssertTrue(
+            AjustesView.textoDeVencimiento(ahora.addingTimeInterval(86_400), ahora: ahora).hasPrefix("Mañana"))
+        XCTAssertTrue(
+            AjustesView.textoDeVencimiento(ahora.addingTimeInterval(-86_400), ahora: ahora).hasPrefix("Caducó"))
     }
 }

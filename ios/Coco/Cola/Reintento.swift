@@ -20,8 +20,8 @@ struct Reintento: Sendable {
     }
 }
 
-private extension Duration {
-    static func * (d: Duration, f: Double) -> Duration {
+extension Duration {
+    fileprivate static func * (d: Duration, f: Double) -> Duration {
         let segundos = Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18
         return .seconds(segundos * f)
     }

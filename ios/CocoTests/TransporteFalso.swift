@@ -1,4 +1,5 @@
 import Foundation
+
 @testable import Coco
 
 /// Un transporte programable: responde lo que se le diga y recuerda lo que
@@ -18,7 +19,8 @@ final class TransporteFalso: Transporte, @unchecked Sendable {
     }
 
     func responder(_ r: Respuesta) {
-        cerrojo.lock(); defer { cerrojo.unlock() }
+        cerrojo.lock()
+        defer { cerrojo.unlock() }
         cola.append(r)
     }
 
@@ -35,7 +37,8 @@ final class TransporteFalso: Transporte, @unchecked Sendable {
             throw error
         case .http(let status, let cuerpo):
             let url = peticion.url ?? URL(fileURLWithPath: "/")
-            let respuesta = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])
+            let respuesta = HTTPURLResponse(
+                url: url, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])
             guard let respuesta else { throw ErrorDeAPI.respuestaIlegible }
             return (Data(cuerpo.utf8), respuesta)
         }

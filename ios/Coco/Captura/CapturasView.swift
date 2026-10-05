@@ -150,10 +150,10 @@ private struct FilaDeCaptura: View {
     }
 }
 
-private extension CapturaPendiente {
-    var estaHecha: Bool { if case .hecha = fase { return true } else { return false } }
-    var esFallida: Bool { if case .fallida = fase { return true } else { return false } }
-    var sePuedeReintentar: Bool {
+extension CapturaPendiente {
+    fileprivate var estaHecha: Bool { if case .hecha = fase { return true } else { return false } }
+    fileprivate var esFallida: Bool { if case .fallida = fase { return true } else { return false } }
+    fileprivate var sePuedeReintentar: Bool {
         switch fase {
         case .porEnviar, .esperandoSesion, .fallida: true
         case .porSubirFoto, .hecha: false

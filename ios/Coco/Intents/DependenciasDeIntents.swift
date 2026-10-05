@@ -1,5 +1,5 @@
-import Foundation
 import AppIntents
+import Foundation
 
 /// Las claves con que la app registra lo que los intents necesitan. El tipo
 /// registrado tiene que ser EXACTAMENTE el existencial que pide `@Dependency`

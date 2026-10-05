@@ -35,7 +35,10 @@ struct NotificadorDelSistema: Notificador {
     let centro: CentroDeNotificaciones
     let reloj: @Sendable () -> Date
 
-    init(centro: CentroDeNotificaciones = UNUserNotificationCenter.current(), reloj: @Sendable @escaping () -> Date = { Date() }) {
+    init(
+        centro: CentroDeNotificaciones = UNUserNotificationCenter.current(),
+        reloj: @Sendable @escaping () -> Date = { Date() }
+    ) {
         self.centro = centro
         self.reloj = reloj
     }
@@ -56,23 +59,30 @@ struct NotificadorDelSistema: Notificador {
 
     func pedirPermiso() async -> Bool {
         let abrir = UNNotificationAction(identifier: Self.accionAbrir, title: "Abrir", options: [.foreground])
-        centro.registrar(categorias: [UNNotificationCategory(identifier: Self.categoriaDeCaptura, actions: [abrir], intentIdentifiers: [])])
+        centro.registrar(categorias: [
+            UNNotificationCategory(identifier: Self.categoriaDeCaptura, actions: [abrir], intentIdentifiers: [])
+        ])
         return (try? await centro.pedirAutorizacion()) ?? false
     }
 
     func capturaRegistrada(_ r: ResultadoGuardado, origen: OrigenDeCaptura) async {
         let texto = Self.textoDeCaptura(r)
-        await mostrar(id: "captura-\(r.transactionId)", titulo: texto.titulo, cuerpo: texto.cuerpo, categoria: Self.categoriaDeCaptura)
+        await mostrar(
+            id: "captura-\(r.transactionId)", titulo: texto.titulo, cuerpo: texto.cuerpo,
+            categoria: Self.categoriaDeCaptura)
     }
 
     func capturaFallida(motivo: String) async {
-        await mostrar(id: "captura-fallida-\(UUID().uuidString)", titulo: "No se pudo registrar", cuerpo: motivo, categoria: Self.categoriaDeCaptura)
+        await mostrar(
+            id: "captura-fallida-\(UUID().uuidString)", titulo: "No se pudo registrar", cuerpo: motivo,
+            categoria: Self.categoriaDeCaptura)
     }
 
     func colaEnviada(cuantas: Int) async {
         guard cuantas > 0 else { return }
         let cuerpo = cuantas == 1 ? "Se envió 1 captura pendiente" : "Se enviaron \(cuantas) capturas pendientes"
-        await mostrar(id: "cola-enviada", titulo: "Capturas enviadas", cuerpo: cuerpo, categoria: Self.categoriaDeCaptura)
+        await mostrar(
+            id: "cola-enviada", titulo: "Capturas enviadas", cuerpo: cuerpo, categoria: Self.categoriaDeCaptura)
     }
 
     /// Un solo aviso con id fijo: programarlo dos veces lo reemplaza.
@@ -86,7 +96,8 @@ struct NotificadorDelSistema: Notificador {
         contenido.sound = .default
         let partes = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: momento)
         let disparador = UNCalendarNotificationTrigger(dateMatching: partes, repeats: false)
-        try? await centro.anadir(UNNotificationRequest(identifier: Self.idDeVencimiento, content: contenido, trigger: disparador))
+        try? await centro.anadir(
+            UNNotificationRequest(identifier: Self.idDeVencimiento, content: contenido, trigger: disparador))
     }
 
     func ponerInsignia(_ n: Int) async {

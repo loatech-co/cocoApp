@@ -30,7 +30,9 @@ struct MasView: View {
                 }
             }
             .navigationTitle("Más")
-            .confirmationDialog("¿Cerrar sesión en este teléfono?", isPresented: $confirmarSalida, titleVisibility: .visible) {
+            .confirmationDialog(
+                "¿Cerrar sesión en este teléfono?", isPresented: $confirmarSalida, titleVisibility: .visible
+            ) {
                 Button("Cerrar sesión", role: .destructive) {
                     Task { await d.salir() }
                 }

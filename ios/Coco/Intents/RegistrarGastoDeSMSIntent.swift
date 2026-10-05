@@ -1,5 +1,5 @@
-import Foundation
 import AppIntents
+import Foundation
 
 /// Lo lanza la automatización «Mensaje» de Atajos con el SMS del banco. En
 /// segundo plano, como el de Wallet. Un texto vacío falla aquí y no se encola.
@@ -19,7 +19,9 @@ struct RegistrarGastoDeSMSIntent: AppIntent {
         return .result(dialog: ParametrosDeAccion.dialogo(resultado))
     }
 
-    static func ejecutar(texto: String, remitente: String?, capturador: any Capturador, ahora: Date = .now) async throws -> ResultadoDeCaptura {
+    static func ejecutar(texto: String, remitente: String?, capturador: any Capturador, ahora: Date = .now) async throws
+        -> ResultadoDeCaptura
+    {
         let cuerpo = try ParametrosDeAccion.cuerpoDeSMS(texto: texto, remitente: remitente, ahora: ahora)
         return await capturador.capturar(cuerpo, origen: .sms, foto: nil, presupuesto: presupuesto)
     }

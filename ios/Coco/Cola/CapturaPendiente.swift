@@ -27,7 +27,11 @@ struct CapturaPendiente: Codable, Identifiable, Equatable, Sendable {
         case fallida(motivo: String)
     }
 
-    init(id: UUID = UUID(), creadaEn: Date = .now, origen: OrigenDeCaptura, cuerpo: CuerpoDeCaptura, fotoRelativa: String? = nil, fase: Fase = .porEnviar, intentos: Int = 0, proximoIntento: Date = .distantPast, ultimoError: String? = nil, resultadoDeTexto: ResultadoGuardado? = nil) {
+    init(
+        id: UUID = UUID(), creadaEn: Date = .now, origen: OrigenDeCaptura, cuerpo: CuerpoDeCaptura,
+        fotoRelativa: String? = nil, fase: Fase = .porEnviar, intentos: Int = 0, proximoIntento: Date = .distantPast,
+        ultimoError: String? = nil, resultadoDeTexto: ResultadoGuardado? = nil
+    ) {
         self.id = id
         self.creadaEn = creadaEn
         self.origen = origen

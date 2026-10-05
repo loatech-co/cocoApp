@@ -30,9 +30,10 @@ struct LectorDeRecibo: LectorDeTextoDeRecibo, Sendable {
             peticion.recognitionLanguages = idiomas
             try VNImageRequestHandler(cgImage: imagen, options: [:]).perform([peticion])
             let observaciones = peticion.results ?? []
-            return Self.ordenar(observaciones.compactMap { o in
-                o.topCandidates(1).first.map { (texto: $0.string, y: o.boundingBox.midY) }
-            })
+            return Self.ordenar(
+                observaciones.compactMap { o in
+                    o.topCandidates(1).first.map { (texto: $0.string, y: o.boundingBox.midY) }
+                })
         }.value
     }
 

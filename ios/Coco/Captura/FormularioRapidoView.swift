@@ -157,7 +157,9 @@ struct FormularioRapidoView: View {
         Button {
             camaraAbierta = true
         } label: {
-            Label(modelo.foto == nil ? (TomaDeFoto.hayCamara ? "Tomar foto" : "Elegir foto") : "Cambiar foto", systemImage: "camera")
+            Label(
+                modelo.foto == nil ? (TomaDeFoto.hayCamara ? "Tomar foto" : "Elegir foto") : "Cambiar foto",
+                systemImage: "camera")
         }
         if modelo.foto != nil {
             Button("Quitar foto", role: .destructive) { modelo.quitarFoto() }

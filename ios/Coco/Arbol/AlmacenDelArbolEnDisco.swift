@@ -11,7 +11,8 @@ struct AlmacenDelArbolEnDisco: AlmacenDelArbol {
 
     /// `Application Support/arbol.json` del contenedor de la app.
     static func porDefecto(gestor: FileManager = .default) throws -> AlmacenDelArbolEnDisco {
-        let soporte = try gestor.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let soporte = try gestor.url(
+            for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         return AlmacenDelArbolEnDisco(archivo: soporte.appending(path: "arbol.json"))
     }
 

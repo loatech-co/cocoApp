@@ -40,7 +40,10 @@ struct BuscadorDeConceptoView: View {
                     ContentUnavailableView.search(text: modelo.consulta)
                 }
             }
-            .searchable(text: $modelo.consulta, placement: .navigationBarDrawer(displayMode: .always), prompt: "Nombre o palabra clave")
+            .searchable(
+                text: $modelo.consulta, placement: .navigationBarDrawer(displayMode: .always),
+                prompt: "Nombre o palabra clave"
+            )
             .onChange(of: modelo.consulta) { _, nueva in modelo.buscar(nueva) }
             .task { modelo.buscar(modelo.consulta) }
             .navigationTitle("Concepto")

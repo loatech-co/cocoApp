@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class CapturadorConColaTests: XCTestCase {
@@ -17,7 +18,9 @@ final class CapturadorConColaTests: XCTestCase {
     }
 
     private func capturador() -> CapturadorConCola {
-        let cola = ColaDeCapturas(almacen: AlmacenDeColaEnDisco(raiz: raiz), enviador: enviador, sesion: SesionDoble(), notificador: notificador, separacion: .zero, encogerFoto: { $0 })
+        let cola = ColaDeCapturas(
+            almacen: AlmacenDeColaEnDisco(raiz: raiz), enviador: enviador, sesion: SesionDoble(),
+            notificador: notificador, separacion: .zero, encogerFoto: { $0 })
         return CapturadorConCola(cola: cola, notificador: notificador)
     }
 
@@ -41,7 +44,8 @@ final class CapturadorConColaTests: XCTestCase {
     }
 
     func testUn422DevuelveFallidaYNotificaElFallo() async {
-        enviador.responderCaptura(.falla(ErrorDeAPI.rechazada(status: 422, code: "VALIDATION", mensaje: "Falta el texto")))
+        enviador.responderCaptura(
+            .falla(ErrorDeAPI.rechazada(status: 422, code: "VALIDATION", mensaje: "Falta el texto")))
         let r = await capturador().capturar(cuerpo, origen: .wallet, foto: nil, presupuesto: .seconds(10))
         XCTAssertEqual(r, .fallida(motivo: "Falta el texto"))
         XCTAssertEqual(notificador.fallos, ["Falta el texto"])

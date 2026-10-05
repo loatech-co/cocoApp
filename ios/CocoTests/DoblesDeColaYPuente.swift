@@ -1,4 +1,5 @@
 import Foundation
+
 @testable import Coco
 
 // Dobles de los protocolos de Dominio para la cola, los intents y el puente.
@@ -18,7 +19,9 @@ final class SesionDoble: Sesion, @unchecked Sendable {
     var errorAlRenovar: Error?
     let cambios: AsyncStream<EstadoDeSesion>
 
-    static let perfil = PerfilPublico(id: 7, email: "ana@coco.test", display_name: "Ana", role: "user", status: "active", created_at: "2026-01-01T00:00:00Z")
+    static let perfil = PerfilPublico(
+        id: 7, email: "ana@coco.test", display_name: "Ana", role: "user", status: "active",
+        created_at: "2026-01-01T00:00:00Z")
 
     init(estado: EstadoDeSesion = .activa(SesionDoble.perfil), token: String? = "token-1") {
         _estado = estado
@@ -57,8 +60,18 @@ final class SesionDoble: Sesion, @unchecked Sendable {
         }
     }
 
-    func salir() async { cerrojo.withLock { salidas += 1; _estado = .sinSesion } }
-    func descartar() async { cerrojo.withLock { descartes += 1; _estado = .sinSesion } }
+    func salir() async {
+        cerrojo.withLock {
+            salidas += 1
+            _estado = .sinSesion
+        }
+    }
+    func descartar() async {
+        cerrojo.withLock {
+            descartes += 1
+            _estado = .sinSesion
+        }
+    }
 }
 
 final class NotificadorDoble: Notificador, @unchecked Sendable {
@@ -69,7 +82,9 @@ final class NotificadorDoble: Notificador, @unchecked Sendable {
     private(set) var insignias: [Int] = []
 
     func pedirPermiso() async -> Bool { true }
-    func capturaRegistrada(_ r: ResultadoGuardado, origen: OrigenDeCaptura) async { cerrojo.withLock { registradas.append(r) } }
+    func capturaRegistrada(_ r: ResultadoGuardado, origen: OrigenDeCaptura) async {
+        cerrojo.withLock { registradas.append(r) }
+    }
     func capturaFallida(motivo: String) async { cerrojo.withLock { fallos.append(motivo) } }
     func colaEnviada(cuantas: Int) async { cerrojo.withLock { colasEnviadas.append(cuantas) } }
     func programarVencimiento(_ vence: Date, texto: String) async {}
@@ -111,9 +126,17 @@ final class EnviadorDoble: EnviadorDeCapturas, @unchecked Sendable {
             return (capturas.isEmpty ? .ok : capturas.removeFirst(), visto && repetidoSiYaSeVio)
         }
         if case .falla(let e) = respuesta { throw e }
-        let t = TransaccionResumida(id: transactionId, date: r.cuerpo.fecha ?? "2026-10-05", amount: r.cuerpo.monto ?? "0", category_id: nil, description: r.cuerpo.texto, merchant: r.cuerpo.comercio, source: r.source.rawValue, por_revisar: r.cuerpo.monto == nil)
-        let c = ClasificacionPropuesta(certeza: "ninguna", fuente: nil, concepto_id: nil, categoria_id: nil, nombre: nil, candidatos: [], motivo: "")
-        return Captura(transaction: t, clasificacion: c, resumen: "Gasto de \(r.cuerpo.monto ?? "0") en \(r.cuerpo.comercio ?? "?")", repetido: repetido, fusionado: false)
+        let t = TransaccionResumida(
+            id: transactionId, date: r.cuerpo.fecha ?? "2026-10-05", amount: r.cuerpo.monto ?? "0", category_id: nil,
+            description: r.cuerpo.texto, merchant: r.cuerpo.comercio, source: r.source.rawValue,
+            por_revisar: r.cuerpo.monto == nil)
+        let c = ClasificacionPropuesta(
+            certeza: "ninguna", fuente: nil, concepto_id: nil, categoria_id: nil, nombre: nil, candidatos: [],
+            motivo: "")
+        return Captura(
+            transaction: t, clasificacion: c,
+            resumen: "Gasto de \(r.cuerpo.monto ?? "0") en \(r.cuerpo.comercio ?? "?")", repetido: repetido,
+            fusionado: false)
     }
 
     func subirFoto(_ jpeg: Data, nombre: String, a transactionId: Int) async throws -> [Soporte] {
@@ -122,7 +145,10 @@ final class EnviadorDoble: EnviadorDeCapturas, @unchecked Sendable {
             return fotos.isEmpty ? .ok : fotos.removeFirst()
         }
         if case .falla(let e) = respuesta { throw e }
-        return [Soporte(id: 1, orden: 1, nombre_archivo: nombre, mime_type: "image/jpeg", tamano: jpeg.count, disponible: true)]
+        return [
+            Soporte(
+                id: 1, orden: 1, nombre_archivo: nombre, mime_type: "image/jpeg", tamano: jpeg.count, disponible: true)
+        ]
     }
 }
 
@@ -131,7 +157,9 @@ final class CapturadorDoble: Capturador, @unchecked Sendable {
     private(set) var recibidas: [(cuerpo: CuerpoDeCaptura, origen: OrigenDeCaptura)] = []
     var respuesta: ResultadoDeCaptura = .enCola(pendientes: 1)
 
-    func capturar(_ cuerpo: CuerpoDeCaptura, origen: OrigenDeCaptura, foto: Data?, presupuesto: Duration) async -> ResultadoDeCaptura {
+    func capturar(_ cuerpo: CuerpoDeCaptura, origen: OrigenDeCaptura, foto: Data?, presupuesto: Duration) async
+        -> ResultadoDeCaptura
+    {
         cerrojo.withLock { recibidas.append((cuerpo, origen)) }
         return respuesta
     }
@@ -165,7 +193,8 @@ final class AlmacenQueFalla: AlmacenDeCola, @unchecked Sendable {
 
 enum Temporal {
     static func directorio() throws -> URL {
-        let url = FileManager.default.temporaryDirectory.appending(path: "cola-\(UUID().uuidString)", directoryHint: .isDirectory)
+        let url = FileManager.default.temporaryDirectory.appending(
+            path: "cola-\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
     }

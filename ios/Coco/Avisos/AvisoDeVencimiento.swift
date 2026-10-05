@@ -9,7 +9,7 @@ enum AvisoDeVencimiento {
         let enUnMinuto = ahora.addingTimeInterval(60)
         guard vence.timeIntervalSince(ahora) >= 24 * 3600 else { return enUnMinuto }
         guard let vispera = calendario.date(byAdding: .day, value: -1, to: vence),
-              let alasNueve = calendario.date(bySettingHour: 9, minute: 0, second: 0, of: vispera)
+            let alasNueve = calendario.date(bySettingHour: 9, minute: 0, second: 0, of: vispera)
         else { return enUnMinuto }
         // La víspera a las 09:00 puede haber pasado ya (vence mañana de
         // madrugada): entonces no se espera.

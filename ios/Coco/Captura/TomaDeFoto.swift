@@ -32,14 +32,19 @@ struct TomaDeFoto: UIViewControllerRepresentable {
 
     func makeCoordinator() -> Coordinador { Coordinador(self) }
 
-    final class Coordinador: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
+    final class Coordinador: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate,
+        PHPickerViewControllerDelegate
+    {
         private let padre: TomaDeFoto
 
         init(_ padre: TomaDeFoto) {
             self.padre = padre
         }
 
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
             if let imagen = info[.originalImage] as? UIImage {
                 padre.alCapturar(imagen)
             } else {

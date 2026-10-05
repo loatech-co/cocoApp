@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class EncogedorDeFotoTests: XCTestCase {
@@ -18,7 +19,9 @@ final class EncogedorDeFotoTests: XCTestCase {
     }
 
     func testElTamanoDestinoEsProporcional() {
-        XCTAssertEqual(EncogedorDeFoto.tamanoDestino(ancho: 3000, alto: 4000, ladoMaximo: 1600), CGSize(width: 1200, height: 1600))
-        XCTAssertEqual(EncogedorDeFoto.tamanoDestino(ancho: 100, alto: 50, ladoMaximo: 1600), CGSize(width: 100, height: 50))
+        XCTAssertEqual(
+            EncogedorDeFoto.tamanoDestino(ancho: 3000, alto: 4000, ladoMaximo: 1600), CGSize(width: 1200, height: 1600))
+        XCTAssertEqual(
+            EncogedorDeFoto.tamanoDestino(ancho: 100, alto: 50, ladoMaximo: 1600), CGSize(width: 100, height: 50))
     }
 }

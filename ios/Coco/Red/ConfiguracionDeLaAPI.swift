@@ -24,7 +24,9 @@ struct ConfiguracionDeLaAPI: Sendable, Equatable {
         if let texto = defaults.string(forKey: claveDeDefaults), let url = URL(string: texto), url.host() != nil {
             return ConfiguracionDeLaAPI(base: url)
         }
-        if let texto = bundle.object(forInfoDictionaryKey: claveDelPlist) as? String, let url = URL(string: texto), url.host() != nil {
+        if let texto = bundle.object(forInfoDictionaryKey: claveDelPlist) as? String, let url = URL(string: texto),
+            url.host() != nil
+        {
             return ConfiguracionDeLaAPI(base: url)
         }
         return ConfiguracionDeLaAPI(base: URL(string: "https://dev-cocoapp.viteri.me") ?? URL(fileURLWithPath: "/"))

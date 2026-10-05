@@ -60,7 +60,9 @@ final actor ColaDeCapturas {
     /// Idempotente por `id`: encolar dos veces la misma deja una. Persiste
     /// antes de devolver; si el disco falla, lanza y el que llama lo sabe.
     @discardableResult
-    func encolar(_ cuerpo: CuerpoDeCaptura, origen: OrigenDeCaptura, foto: Data?, id: UUID = UUID(), capturadaEn: Date = .now) async throws -> CapturaPendiente {
+    func encolar(
+        _ cuerpo: CuerpoDeCaptura, origen: OrigenDeCaptura, foto: Data?, id: UUID = UUID(), capturadaEn: Date = .now
+    ) async throws -> CapturaPendiente {
         if let existente = try almacen.todas().first(where: { $0.id == id }) { return existente }
         var captura = CapturaPendiente(id: id, creadaEn: capturadaEn, origen: origen, cuerpo: cuerpo)
         if let foto {
@@ -124,7 +126,10 @@ final actor ColaDeCapturas {
         return resumen
     }
 
-    private enum Salida { case hecha(ResultadoGuardado), fallida, reintentar, sinRed }
+    private enum Salida {
+        case hecha(ResultadoGuardado)
+        case fallida, reintentar, sinRed
+    }
 
     /// Fase 1 (texto) y fase 2 (foto) sobre una captura. Cada transición se
     /// escribe en disco antes de seguir, así un reinicio a mitad no duplica.
@@ -154,13 +159,19 @@ final actor ColaDeCapturas {
             }
         }
         if case .porSubirFoto(let transactionId) = captura.fase {
-            let resultado = captura.resultadoDeTexto ?? ResultadoGuardado(transactionId: transactionId, resumen: "", repetido: false, fusionado: false, porRevisar: false, terminadaEn: reloj())
+            let resultado =
+                captura.resultadoDeTexto
+                ?? ResultadoGuardado(
+                    transactionId: transactionId, resumen: "", repetido: false, fusionado: false, porRevisar: false,
+                    terminadaEn: reloj())
             guard let ruta = captura.fotoRelativa, let jpeg = try? almacen.foto(en: ruta) else {
                 // Sin archivo no hay nada que subir: el texto ya está registrado.
                 return await terminar(&captura, con: resultado)
             }
             do {
-                _ = try await conRenovacionSiHaceFalta { try await self.enviador.subirFoto(jpeg, nombre: "\(captura.id.uuidString).jpg", a: transactionId) }
+                _ = try await conRenovacionSiHaceFalta {
+                    try await self.enviador.subirFoto(jpeg, nombre: "\(captura.id.uuidString).jpg", a: transactionId)
+                }
                 return await terminar(&captura, con: resultado)
             } catch {
                 return await fallo(&captura, error: error)
@@ -216,7 +227,8 @@ final actor ColaDeCapturas {
             salida = .fallida
         case .sinRed, .tiempoAgotado, .servidor:
             captura.intentos += 1
-            captura.proximoIntento = reloj().addingTimeInterval(Self.segundos(reintento.espera(intento: captura.intentos - 1)))
+            captura.proximoIntento = reloj().addingTimeInterval(
+                Self.segundos(reintento.espera(intento: captura.intentos - 1)))
             captura.ultimoError = Self.describir(api)
             salida = api.esDeRed ? .sinRed : .reintentar
         }
@@ -249,7 +261,8 @@ final actor ColaDeCapturas {
     /// Lo que toca enviar ahora, en el orden en que se capturó.
     private func listas(en ahora: Date) -> [CapturaPendiente] {
         let todas = (try? almacen.todas()) ?? []
-        return todas
+        return
+            todas
             .filter { c in
                 switch c.fase {
                 case .porEnviar, .porSubirFoto: c.proximoIntento <= ahora

@@ -36,9 +36,11 @@ struct AjustesView: View {
                 } header: {
                     Text("URL de la API").textCase(nil)
                 } footer: {
-                    Text(guardada
-                         ? "Guardada. Cierra la app del todo y vuelve a abrirla para usar la nueva URL."
-                         : "Cambiarla cierra la sesión de este teléfono; la nueva URL se usa al volver a abrir la app.")
+                    Text(
+                        guardada
+                            ? "Guardada. Cierra la app del todo y vuelve a abrirla para usar la nueva URL."
+                            : "Cambiarla cierra la sesión de este teléfono; la nueva URL se usa al volver a abrir la app."
+                    )
                 }
 
                 Section {
@@ -90,7 +92,9 @@ struct AjustesView: View {
             resultadoDelAviso = "Sin permiso de avisos. Actívalo en Ajustes de iOS → Coco."
             return
         }
-        let prueba = ResultadoGuardado(transactionId: 0, resumen: "Prueba: si ves esto, los avisos funcionan.", repetido: false, fusionado: false, porRevisar: false, terminadaEn: .now)
+        let prueba = ResultadoGuardado(
+            transactionId: 0, resumen: "Prueba: si ves esto, los avisos funcionan.", repetido: false, fusionado: false,
+            porRevisar: false, terminadaEn: .now)
         await d.notificador.capturaRegistrada(prueba, origen: .iosManual)
         resultadoDelAviso = "Enviada. Aparece arriba aunque la app esté abierta."
     }
@@ -107,7 +111,9 @@ struct AjustesView: View {
     static func validar(_ texto: String) -> Validacion {
         let limpio = texto.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !limpio.isEmpty else { return Validacion(url: nil, motivo: nil) }
-        guard let url = URL(string: limpio), let esquema = url.scheme?.lowercased(), let host = url.host(), !host.isEmpty else {
+        guard let url = URL(string: limpio), let esquema = url.scheme?.lowercased(), let host = url.host(),
+            !host.isEmpty
+        else {
             return Validacion(url: nil, motivo: "Escribe una URL completa, como https://cocoapp.ejemplo.")
         }
         guard esquema == "http" || esquema == "https" else {

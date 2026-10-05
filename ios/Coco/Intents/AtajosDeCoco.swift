@@ -1,5 +1,5 @@
-import Foundation
 import AppIntents
+import Foundation
 
 /// Los tres intents publicados como App Shortcuts: aparecen en la app Atajos
 /// sin configurar nada y el botón de acción de iOS 17 puede lanzarlos.

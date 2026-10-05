@@ -12,7 +12,9 @@ enum Marca {
     }
 
     /// `CocoiOS/0.1.0 (iOS 17.0)`: lo que va en `User-Agent` de cada petición.
-    static func userAgent(version: String = Marca.version, sistema: String = ProcessInfo.processInfo.operatingSystemVersionString) -> String {
+    static func userAgent(
+        version: String = Marca.version, sistema: String = ProcessInfo.processInfo.operatingSystemVersionString
+    ) -> String {
         "\(userAgentApp)\(version) (iOS \(sistema))"
     }
 }

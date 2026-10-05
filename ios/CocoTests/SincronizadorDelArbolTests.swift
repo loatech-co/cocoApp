@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class SincronizadorDelArbolTests: XCTestCase {
@@ -16,7 +17,8 @@ final class SincronizadorDelArbolTests: XCTestCase {
     }
 
     private static let ahora = Date(timeIntervalSince1970: 1_800_000_000)
-    private static let categoriasJSON = #"{"data":[{"id":1,"name":"Costos fijos","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":true,"children":[{"id":10,"name":"Educación","parent_id":1,"palabras_clave":[],"is_archived":false,"estatico":false,"children":[{"id":100,"name":"Colegio","parent_id":10,"palabras_clave":["tuti"],"is_archived":false,"estatico":false,"children":null}]}]}],"meta":{}}"#
+    private static let categoriasJSON =
+        #"{"data":[{"id":1,"name":"Costos fijos","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":true,"children":[{"id":10,"name":"Educación","parent_id":1,"palabras_clave":[],"is_archived":false,"estatico":false,"children":[{"id":100,"name":"Colegio","parent_id":10,"palabras_clave":["tuti"],"is_archived":false,"estatico":false,"children":null}]}]}],"meta":{}}"#
 
     private var archivo: URL = URL(fileURLWithPath: "/")
 
@@ -32,12 +34,17 @@ final class SincronizadorDelArbolTests: XCTestCase {
     private func sincronizador(_ transporte: TransporteFalso, ahora: Date = ahora) -> SincronizadorDelArbol {
         let base = URL(string: "https://api.coco.invalid") ?? URL(fileURLWithPath: "/")
         let api = ClienteAPI(configuracion: ConfiguracionDeLaAPI(base: base), transporte: transporte, version: "0.1.0")
-        return SincronizadorDelArbol(api: api, sesion: SesionFija(), almacen: AlmacenDelArbolEnDisco(archivo: archivo), reloj: { ahora })
+        return SincronizadorDelArbol(
+            api: api, sesion: SesionFija(), almacen: AlmacenDelArbolEnDisco(archivo: archivo), reloj: { ahora })
     }
 
     private func guardar(descargadoHace: TimeInterval) throws {
         let viejo = ArbolGuardado(
-            raices: [NodoDelArbol(id: 2, name: "Viejo", parent_id: nil, children: [NodoDelArbol(id: 20, name: "Guardado", parent_id: 2)])],
+            raices: [
+                NodoDelArbol(
+                    id: 2, name: "Viejo", parent_id: nil,
+                    children: [NodoDelArbol(id: 20, name: "Guardado", parent_id: 2)])
+            ],
             descargadoEn: Self.ahora.addingTimeInterval(-descargadoHace)
         )
         try AlmacenDelArbolEnDisco(archivo: archivo).guardar(viejo)

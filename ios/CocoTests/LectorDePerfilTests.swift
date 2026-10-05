@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class LectorDePerfilTests: XCTestCase {
@@ -11,13 +12,13 @@ final class LectorDePerfilTests: XCTestCase {
 
     func testSacaLaFechaDeUnPerfilSintetico() throws {
         let plist = """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0"><dict>
-          <key>Name</key><string>iOS Team Provisioning Profile: co.loatech.coco</string>
-          <key>ExpirationDate</key><date>2026-10-12T15:30:00Z</date>
-        </dict></plist>
-        """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0"><dict>
+              <key>Name</key><string>iOS Team Provisioning Profile: co.loatech.coco</string>
+              <key>ExpirationDate</key><date>2026-10-12T15:30:00Z</date>
+            </dict></plist>
+            """
         let fecha = try XCTUnwrap(LectorDePerfil.fechaDeVencimiento(en: perfil(con: plist)))
         XCTAssertEqual(fecha, ISO8601DateFormatter().date(from: "2026-10-12T15:30:00Z"))
     }
@@ -34,7 +35,7 @@ final class LectorDePerfilTests: XCTestCase {
 
     func testEnElSimuladorNoHayPerfilYNoFalla() {
         #if targetEnvironment(simulator)
-        XCTAssertNil(LectorDePerfil.delBundle(.main))
+            XCTAssertNil(LectorDePerfil.delBundle(.main))
         #endif
     }
 }

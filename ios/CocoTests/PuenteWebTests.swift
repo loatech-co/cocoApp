@@ -1,5 +1,6 @@
-import XCTest
 import WebKit
+import XCTest
+
 @testable import Coco
 
 final class PuenteWebTests: XCTestCase {
@@ -9,18 +10,37 @@ final class PuenteWebTests: XCTestCase {
     // MARK: Origen permitido
 
     func testAceptaElOrigenExactoConPuertoImplicito() {
-        XCTAssertTrue(PuenteWeb.origenPermitido(protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0, base: base, esFramePrincipal: true))
-        XCTAssertTrue(PuenteWeb.origenPermitido(protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 443, base: base, esFramePrincipal: true))
-        XCTAssertTrue(PuenteWeb.origenPermitido(protocolo: "http", host: "localhost", puerto: 3000, base: local, esFramePrincipal: true))
-        XCTAssertTrue(PuenteWeb.origenPermitido(protocolo: "http", host: "localhost", puerto: 0, base: URL(string: "http://localhost:80")!, esFramePrincipal: true))
+        XCTAssertTrue(
+            PuenteWeb.origenPermitido(
+                protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0, base: base, esFramePrincipal: true))
+        XCTAssertTrue(
+            PuenteWeb.origenPermitido(
+                protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 443, base: base, esFramePrincipal: true))
+        XCTAssertTrue(
+            PuenteWeb.origenPermitido(
+                protocolo: "http", host: "localhost", puerto: 3000, base: local, esFramePrincipal: true))
+        XCTAssertTrue(
+            PuenteWeb.origenPermitido(
+                protocolo: "http", host: "localhost", puerto: 0, base: URL(string: "http://localhost:80")!,
+                esFramePrincipal: true))
     }
 
     func testRechazaOtroHostEsquemaPuertoYFramesSecundarios() {
-        XCTAssertFalse(PuenteWeb.origenPermitido(protocolo: "https", host: "evil.example", puerto: 0, base: base, esFramePrincipal: true))
-        XCTAssertFalse(PuenteWeb.origenPermitido(protocolo: "http", host: "dev-cocoapp.viteri.me", puerto: 0, base: base, esFramePrincipal: true))
-        XCTAssertFalse(PuenteWeb.origenPermitido(protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 8443, base: base, esFramePrincipal: true))
-        XCTAssertFalse(PuenteWeb.origenPermitido(protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0, base: base, esFramePrincipal: false))
-        XCTAssertFalse(PuenteWeb.origenPermitido(protocolo: "http", host: "localhost", puerto: 3001, base: local, esFramePrincipal: true))
+        XCTAssertFalse(
+            PuenteWeb.origenPermitido(
+                protocolo: "https", host: "evil.example", puerto: 0, base: base, esFramePrincipal: true))
+        XCTAssertFalse(
+            PuenteWeb.origenPermitido(
+                protocolo: "http", host: "dev-cocoapp.viteri.me", puerto: 0, base: base, esFramePrincipal: true))
+        XCTAssertFalse(
+            PuenteWeb.origenPermitido(
+                protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 8443, base: base, esFramePrincipal: true))
+        XCTAssertFalse(
+            PuenteWeb.origenPermitido(
+                protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0, base: base, esFramePrincipal: false))
+        XCTAssertFalse(
+            PuenteWeb.origenPermitido(
+                protocolo: "http", host: "localhost", puerto: 3001, base: local, esFramePrincipal: true))
     }
 
     // MARK: Puros
@@ -37,7 +57,8 @@ final class PuenteWebTests: XCTestCase {
     }
 
     func testEsNavegacionPermitida() {
-        XCTAssertTrue(PuenteWeb.esNavegacionPermitida(URL(string: "https://dev-cocoapp.viteri.me/mi-cuenta?x=1")!, base: base))
+        XCTAssertTrue(
+            PuenteWeb.esNavegacionPermitida(URL(string: "https://dev-cocoapp.viteri.me/mi-cuenta?x=1")!, base: base))
         XCTAssertTrue(PuenteWeb.esNavegacionPermitida(URL(string: "about:blank")!, base: base))
         XCTAssertFalse(PuenteWeb.esNavegacionPermitida(URL(string: "https://otro.example/")!, base: base))
         XCTAssertFalse(PuenteWeb.esNavegacionPermitida(URL(string: "mailto:ana@coco.test")!, base: base))
@@ -67,19 +88,25 @@ final class PuenteWebTests: XCTestCase {
     /// ventana de la anterior.
     final class RelojQueSalta: @unchecked Sendable {
         private var t = Date(timeIntervalSince1970: 1_800_000_000)
-        func leer() -> Date { t = t.addingTimeInterval(31); return t }
+        func leer() -> Date {
+            t = t.addingTimeInterval(31)
+            return t
+        }
     }
 
     @MainActor
     private func puente(sesion: SesionDoble, navegacion: NavegacionDoble = NavegacionDoble()) -> PuenteWeb {
         let reloj = RelojQueSalta()
-        return PuenteWeb(sesion: sesion, configuracion: ConfiguracionDeLaAPI(base: base), navegacion: navegacion, version: "0.1.0", reloj: { reloj.leer() }, abrirExterno: { _ in })
+        return PuenteWeb(
+            sesion: sesion, configuracion: ConfiguracionDeLaAPI(base: base), navegacion: navegacion, version: "0.1.0",
+            reloj: { reloj.leer() }, abrirExterno: { _ in })
     }
 
     @MainActor
     func testSinSesionRespondeErrorYNoEntregaNada() async {
         let p = puente(sesion: SesionDoble(estado: .sinSesion, token: nil))
-        let (valor, error) = await p.responderPedidoDeSesion(esFramePrincipal: true, protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0)
+        let (valor, error) = await p.responderPedidoDeSesion(
+            esFramePrincipal: true, protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0)
         XCTAssertNil(valor)
         XCTAssertEqual(error, "sin-sesion")
     }
@@ -87,7 +114,8 @@ final class PuenteWebTests: XCTestCase {
     @MainActor
     func testOrigenAjenoRespondeErrorAunqueHayaSesion() async {
         let p = puente(sesion: SesionDoble())
-        let (valor, error) = await p.responderPedidoDeSesion(esFramePrincipal: false, protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0)
+        let (valor, error) = await p.responderPedidoDeSesion(
+            esFramePrincipal: false, protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0)
         XCTAssertNil(valor)
         XCTAssertEqual(error, "origen-no-permitido")
     }
@@ -95,7 +123,8 @@ final class PuenteWebTests: XCTestCase {
     @MainActor
     func testConSesionActivaRespondeLasTresClavesYNuncaElRefresh() async throws {
         let p = puente(sesion: SesionDoble())
-        let (valor, error) = await p.responderPedidoDeSesion(esFramePrincipal: true, protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 443)
+        let (valor, error) = await p.responderPedidoDeSesion(
+            esFramePrincipal: true, protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 443)
         XCTAssertNil(error)
         let dic = try XCTUnwrap(valor as? [String: Any])
         XCTAssertEqual(Set(dic.keys), ["access_token", "expires_in", "user"])

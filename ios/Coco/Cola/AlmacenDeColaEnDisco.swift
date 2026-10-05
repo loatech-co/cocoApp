@@ -26,7 +26,8 @@ struct AlmacenDeColaEnDisco: AlmacenDeCola {
     /// que hay aquí se envía en minutos y restaurarlo en otro teléfono
     /// duplicaría gastos.
     static func raizPorDefecto(fileManager: FileManager = .default) throws -> URL {
-        let soporte = try fileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        let soporte = try fileManager.url(
+            for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         var raiz = soporte.appending(path: "Cola", directoryHint: .isDirectory)
         try fileManager.createDirectory(at: raiz, withIntermediateDirectories: true)
         var valores = URLResourceValues()
@@ -64,7 +65,8 @@ struct AlmacenDeColaEnDisco: AlmacenDeCola {
         d.dateDecodingStrategy = .custom { decoder in
             let texto = try decoder.singleValueContainer().decode(String.self)
             guard let fecha = formato.date(from: texto) ?? ISO8601DateFormatter().date(from: texto) else {
-                throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Fecha ilegible: \(texto)"))
+                throw DecodingError.dataCorrupted(
+                    .init(codingPath: decoder.codingPath, debugDescription: "Fecha ilegible: \(texto)"))
             }
             return fecha
         }
@@ -81,7 +83,8 @@ struct AlmacenDeColaEnDisco: AlmacenDeCola {
     func todas() throws -> [CapturaPendiente] {
         guard FileManager.default.fileExists(atPath: raiz.path(percentEncoded: false)) else { return [] }
         let urls = try FileManager.default.contentsOfDirectory(at: raiz, includingPropertiesForKeys: nil)
-        return urls
+        return
+            urls
             .filter { $0.pathExtension == "json" }
             .compactMap { url in
                 guard let datos = try? Data(contentsOf: url) else { return nil }

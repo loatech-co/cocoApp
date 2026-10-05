@@ -35,18 +35,28 @@ struct IndiceDelArbol: Sendable {
     init(raices: [NodoDelArbol]) {
         var entradas: [EntradaDelIndice] = []
         for centro in raices where !centro.is_archived {
-            entradas.append(Self.entrada(centro, nivel: .centro, ruta: [], centroId: centro.id, categoriaId: nil, estatico: centro.estatico))
+            entradas.append(
+                Self.entrada(
+                    centro, nivel: .centro, ruta: [], centroId: centro.id, categoriaId: nil, estatico: centro.estatico))
             for categoria in centro.children ?? [] where !categoria.is_archived {
-                entradas.append(Self.entrada(categoria, nivel: .categoria, ruta: [centro.name], centroId: centro.id, categoriaId: nil, estatico: centro.estatico))
+                entradas.append(
+                    Self.entrada(
+                        categoria, nivel: .categoria, ruta: [centro.name], centroId: centro.id, categoriaId: nil,
+                        estatico: centro.estatico))
                 for concepto in categoria.children ?? [] where !concepto.is_archived {
-                    entradas.append(Self.entrada(concepto, nivel: .concepto, ruta: [categoria.name, centro.name], centroId: centro.id, categoriaId: categoria.id, estatico: centro.estatico))
+                    entradas.append(
+                        Self.entrada(
+                            concepto, nivel: .concepto, ruta: [categoria.name, centro.name], centroId: centro.id,
+                            categoriaId: categoria.id, estatico: centro.estatico))
                 }
             }
         }
         self.entradas = entradas
     }
 
-    private static func entrada(_ nodo: NodoDelArbol, nivel: NivelDelArbol, ruta: [String], centroId: Int, categoriaId: Int?, estatico: Bool) -> EntradaDelIndice {
+    private static func entrada(
+        _ nodo: NodoDelArbol, nivel: NivelDelArbol, ruta: [String], centroId: Int, categoriaId: Int?, estatico: Bool
+    ) -> EntradaDelIndice {
         EntradaDelIndice(
             id: nodo.id,
             nivel: nivel,
@@ -63,12 +73,15 @@ struct IndiceDelArbol: Sendable {
     /// Vacío devuelve vacío: lo que se enseña con el buscador en blanco lo
     /// decide quien llama. Los centros no salen por defecto: elegir uno no
     /// clasifica nada.
-    func buscar(_ consulta: String, niveles: Set<NivelDelArbol> = [.concepto, .categoria], limite: Int = 20) -> [EntradaDelIndice] {
+    func buscar(_ consulta: String, niveles: Set<NivelDelArbol> = [.concepto, .categoria], limite: Int = 20)
+        -> [EntradaDelIndice]
+    {
         let tokens = Self.normalizar(consulta).split(separator: " ").map(String.init)
         if tokens.isEmpty { return [] }
         let locale = Locale(identifier: "es")
 
-        return entradas
+        return
+            entradas
             .filter { niveles.contains($0.nivel) }
             .map { ($0, Self.puntuar($0, tokens: tokens)) }
             .filter { $0.1 > 0 }
@@ -97,11 +110,17 @@ struct IndiceDelArbol: Sendable {
         var total = 0
         for token in tokens {
             let mejor: Int
-            if e.nombreNormalizado == token { mejor = 4 }
-            else if e.nombreNormalizado.hasPrefix(token) { mejor = 3 }
-            else if e.nombreNormalizado.contains(token) { mejor = 2 }
-            else if e.palabrasNormalizadas.contains(where: { $0 == token || $0.contains(token) }) { mejor = 1 }
-            else { return 0 }
+            if e.nombreNormalizado == token {
+                mejor = 4
+            } else if e.nombreNormalizado.hasPrefix(token) {
+                mejor = 3
+            } else if e.nombreNormalizado.contains(token) {
+                mejor = 2
+            } else if e.palabrasNormalizadas.contains(where: { $0 == token || $0.contains(token) }) {
+                mejor = 1
+            } else {
+                return 0
+            }
             total += mejor
         }
         return total
@@ -110,18 +129,20 @@ struct IndiceDelArbol: Sendable {
     /// La de `firmas.ts`: NFD, sin diacríticos, minúsculas, espacios
     /// colapsados y recortado.
     static func normalizar(_ s: String) -> String {
-        let sinTildes = String(String.UnicodeScalarView(
-            s.decomposedStringWithCanonicalMapping.unicodeScalars.filter { !(0x0300...0x036F).contains($0.value) }
-        ))
-        return sinTildes
+        let sinTildes = String(
+            String.UnicodeScalarView(
+                s.decomposedStringWithCanonicalMapping.unicodeScalars.filter { !(0x0300...0x036F).contains($0.value) }
+            ))
+        return
+            sinTildes
             .lowercased()
             .split(whereSeparator: { $0.isWhitespace || $0.isNewline })
             .joined(separator: " ")
     }
 }
 
-private extension NivelDelArbol {
-    var peso: Int {
+extension NivelDelArbol {
+    fileprivate var peso: Int {
         switch self {
         case .concepto: 2
         case .categoria: 1

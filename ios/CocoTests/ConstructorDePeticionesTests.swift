@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class ConstructorDePeticionesTests: XCTestCase {
@@ -39,7 +40,9 @@ final class ConstructorDePeticionesTests: XCTestCase {
     }
 
     func testLasDemasLlevanBearerYNoLaCabeceraNativa() throws {
-        let r = CapturaRequest(source: .sms, external_ref: "E1", captured_at: "2026-10-03T20:00:00Z", cuerpo: CuerpoDeCaptura(texto: "PAGO"))
+        let r = CapturaRequest(
+            source: .sms, external_ref: "E1", captured_at: "2026-10-03T20:00:00Z",
+            cuerpo: CuerpoDeCaptura(texto: "PAGO"))
         let capturar = armar(ConstructorDePeticiones.capturar(r), token: "tok")
         XCTAssertEqual(capturar.url?.path(), "/api/v1/transactions/capture")
         XCTAssertEqual(capturar.value(forHTTPHeaderField: "Authorization"), "Bearer tok")
@@ -71,8 +74,10 @@ final class ConstructorDePeticionesTests: XCTestCase {
 
     func testMultipart() throws {
         let nombre = "\(UUID().uuidString).jpg"
-        let parte = ParteMultipart(nombreDelCampo: "archivos", nombreDeArchivo: nombre, mime: "image/jpeg", datos: Data([0xFF, 0xD8, 0xFF]))
-        let p = ConstructorDePeticiones.multipart(ruta: "/transactions/42/soportes", partes: [parte], frontera: "FRONTERA")
+        let parte = ParteMultipart(
+            nombreDelCampo: "archivos", nombreDeArchivo: nombre, mime: "image/jpeg", datos: Data([0xFF, 0xD8, 0xFF]))
+        let p = ConstructorDePeticiones.multipart(
+            ruta: "/transactions/42/soportes", partes: [parte], frontera: "FRONTERA")
         let r = armar(p, token: "tok")
         XCTAssertEqual(r.value(forHTTPHeaderField: "Content-Type"), "multipart/form-data; boundary=FRONTERA")
         XCTAssertEqual(p.tiempoMaximo, .seconds(60))

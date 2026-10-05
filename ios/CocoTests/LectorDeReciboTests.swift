@@ -1,10 +1,15 @@
 import XCTest
+
 @testable import Coco
 
 final class LectorDeReciboTests: XCTestCase {
     func testFiltraLosPreferidosContraLosSoportados() {
-        XCTAssertEqual(LectorDeRecibo.idiomasDisponibles(["es-CO", "es-ES", "en-US"], soportados: ["es-ES", "en-US"]), ["es-ES", "en-US"])
-        XCTAssertEqual(LectorDeRecibo.idiomasDisponibles(["es-CO", "es-ES", "en-US"], soportados: ["en-US", "es-CO", "fr-FR"]), ["es-CO", "en-US"])
+        XCTAssertEqual(
+            LectorDeRecibo.idiomasDisponibles(["es-CO", "es-ES", "en-US"], soportados: ["es-ES", "en-US"]),
+            ["es-ES", "en-US"])
+        XCTAssertEqual(
+            LectorDeRecibo.idiomasDisponibles(["es-CO", "es-ES", "en-US"], soportados: ["en-US", "es-CO", "fr-FR"]),
+            ["es-CO", "en-US"])
     }
 
     func testSinNingunoSoportadoCaeAIngles() {
@@ -12,7 +17,9 @@ final class LectorDeReciboTests: XCTestCase {
     }
 
     func testLasLineasSalenDeArribaAbajo() {
-        let texto = LectorDeRecibo.ordenar([(texto: "TOTAL 45.000", y: 0.2), (texto: "D1", y: 0.9), (texto: "Leche", y: 0.5)])
+        let texto = LectorDeRecibo.ordenar([
+            (texto: "TOTAL 45.000", y: 0.2), (texto: "D1", y: 0.9), (texto: "Leche", y: 0.5),
+        ])
         XCTAssertEqual(texto, "D1\nLeche\nTOTAL 45.000")
     }
 

@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import Coco
 
 final class ConfiguracionDeLaAPITests: XCTestCase {
@@ -31,7 +32,9 @@ final class ConfiguracionDeLaAPITests: XCTestCase {
         XCTAssertEqual(local.apiV1.absoluteString, "http://localhost:3000/api/v1")
 
         ConfiguracionDeLaAPI.restablecer(defaults: defaults)
-        XCTAssertEqual(ConfiguracionDeLaAPI.actual(bundle: bundle, defaults: defaults).base.absoluteString, "https://pruebas.coco.invalid")
+        XCTAssertEqual(
+            ConfiguracionDeLaAPI.actual(bundle: bundle, defaults: defaults).base.absoluteString,
+            "https://pruebas.coco.invalid")
     }
 
     func testApiV1SinDobleBarra() throws {

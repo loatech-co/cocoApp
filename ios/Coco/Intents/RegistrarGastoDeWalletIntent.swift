@@ -1,5 +1,5 @@
-import Foundation
 import AppIntents
+import Foundation
 
 /// Lo lanza la automatización «Transacción» de Atajos tras un pago con Apple
 /// Pay. Corre en segundo plano: la captura queda en disco antes de nada y se
@@ -20,13 +20,18 @@ struct RegistrarGastoDeWalletIntent: AppIntent {
     @Dependency(key: ClavesDeDependencias.capturador) var capturador: any Capturador
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let resultado = await Self.ejecutar(comercio: comercio, monto: monto, tarjeta: tarjeta, nombre: nombre, capturador: capturador)
+        let resultado = await Self.ejecutar(
+            comercio: comercio, monto: monto, tarjeta: tarjeta, nombre: nombre, capturador: capturador)
         return .result(dialog: ParametrosDeAccion.dialogo(resultado))
     }
 
     /// Separado de `perform()` para probarlo con un capturador falso.
-    static func ejecutar(comercio: String?, monto: String?, tarjeta: String?, nombre: String?, capturador: any Capturador, ahora: Date = .now) async -> ResultadoDeCaptura {
-        let cuerpo = ParametrosDeAccion.cuerpoDeWallet(comercio: comercio, monto: monto, tarjeta: tarjeta, nombre: nombre, ahora: ahora)
+    static func ejecutar(
+        comercio: String?, monto: String?, tarjeta: String?, nombre: String?, capturador: any Capturador,
+        ahora: Date = .now
+    ) async -> ResultadoDeCaptura {
+        let cuerpo = ParametrosDeAccion.cuerpoDeWallet(
+            comercio: comercio, monto: monto, tarjeta: tarjeta, nombre: nombre, ahora: ahora)
         return await capturador.capturar(cuerpo, origen: .wallet, foto: nil, presupuesto: presupuesto)
     }
 }

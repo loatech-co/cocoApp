@@ -51,15 +51,21 @@ enum ConstructorDePeticiones {
     }
 
     static func login(correo: String, contrasena: String) -> Peticion {
-        Peticion(metodo: "POST", ruta: "/auth/login", cuerpoJSON: json(["email": correo, "password": contrasena]), clienteNativo: true)
+        Peticion(
+            metodo: "POST", ruta: "/auth/login", cuerpoJSON: json(["email": correo, "password": contrasena]),
+            clienteNativo: true)
     }
 
     static func refresh(refreshToken: String) -> Peticion {
-        Peticion(metodo: "POST", ruta: "/auth/refresh", cuerpoJSON: json(["refresh_token": refreshToken]), clienteNativo: true)
+        Peticion(
+            metodo: "POST", ruta: "/auth/refresh", cuerpoJSON: json(["refresh_token": refreshToken]),
+            clienteNativo: true)
     }
 
     static func logout(refreshToken: String) -> Peticion {
-        Peticion(metodo: "POST", ruta: "/auth/logout", cuerpoJSON: json(["refresh_token": refreshToken]), clienteNativo: true)
+        Peticion(
+            metodo: "POST", ruta: "/auth/logout", cuerpoJSON: json(["refresh_token": refreshToken]), clienteNativo: true
+        )
     }
 
     static func capturar(_ r: CapturaRequest) -> Peticion {
@@ -79,7 +85,9 @@ enum ConstructorDePeticiones {
         var cuerpo = Data()
         for parte in partes {
             cuerpo.append("--\(frontera)\r\n")
-            cuerpo.append("Content-Disposition: form-data; name=\"\(parte.nombreDelCampo)\"; filename=\"\(parte.nombreDeArchivo)\"\r\n")
+            cuerpo.append(
+                "Content-Disposition: form-data; name=\"\(parte.nombreDelCampo)\"; filename=\"\(parte.nombreDeArchivo)\"\r\n"
+            )
             cuerpo.append("Content-Type: \(parte.mime)\r\n\r\n")
             cuerpo.append(parte.datos)
             cuerpo.append("\r\n")
@@ -105,8 +113,8 @@ enum ConstructorDePeticiones {
     }
 }
 
-private extension Data {
-    mutating func append(_ texto: String) {
+extension Data {
+    fileprivate mutating func append(_ texto: String) {
         append(Data(texto.utf8))
     }
 }

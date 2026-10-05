@@ -92,7 +92,10 @@ struct NodoDelArbol: Codable, Equatable, Sendable {
 
     // `palabras_clave` puede faltar en respuestas viejas: se toma vacío en vez
     // de tumbar el árbol entero.
-    init(id: Int, name: String, parent_id: Int?, palabras_clave: [String] = [], is_archived: Bool = false, estatico: Bool = false, children: [NodoDelArbol]? = nil) {
+    init(
+        id: Int, name: String, parent_id: Int?, palabras_clave: [String] = [], is_archived: Bool = false,
+        estatico: Bool = false, children: [NodoDelArbol]? = nil
+    ) {
         self.id = id
         self.name = name
         self.parent_id = parent_id

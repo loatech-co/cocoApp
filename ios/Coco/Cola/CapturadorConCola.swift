@@ -13,7 +13,9 @@ struct CapturadorConCola: Capturador {
         self.notificador = notificador
     }
 
-    func capturar(_ cuerpo: CuerpoDeCaptura, origen: OrigenDeCaptura, foto: Data?, presupuesto: Duration) async -> ResultadoDeCaptura {
+    func capturar(_ cuerpo: CuerpoDeCaptura, origen: OrigenDeCaptura, foto: Data?, presupuesto: Duration) async
+        -> ResultadoDeCaptura
+    {
         let id = UUID()
         do {
             try await cola.encolar(cuerpo, origen: origen, foto: foto, id: id)

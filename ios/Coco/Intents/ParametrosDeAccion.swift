@@ -1,5 +1,5 @@
-import Foundation
 import AppIntents
+import Foundation
 
 enum ErrorDeParametros: Error, Equatable {
     case textoVacio
@@ -13,7 +13,9 @@ enum ParametrosDeAccion {
     /// Wallet: el comercio manda; si falta, el «nombre» de la transacción. El
     /// texto nunca queda vacío —«Wallet · <tarjeta> · <nombre>»— porque la
     /// API devuelve 422 ante una captura sin texto ni comercio.
-    static func cuerpoDeWallet(comercio: String?, monto: String?, tarjeta: String?, nombre: String?, ahora: Date) -> CuerpoDeCaptura {
+    static func cuerpoDeWallet(comercio: String?, monto: String?, tarjeta: String?, nombre: String?, ahora: Date)
+        -> CuerpoDeCaptura
+    {
         let comercioLimpio = limpiar(comercio)
         let nombreLimpio = limpiar(nombre)
         let partes = ["Wallet", limpiar(tarjeta), nombreLimpio].compactMap { $0 }

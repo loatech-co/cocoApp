@@ -1,15 +1,20 @@
 import XCTest
+
 @testable import Coco
 
 final class SesionNativaTests: XCTestCase {
     // El `user` tal cual lo manda la API, con claves en un orden que no es el
     // alfabético: si la sesión lo reescribiera, se notaría.
-    private static let userJSON = #"{"id":7,"email":"ana@coco.co","display_name":null,"role":"owner","status":"active","created_at":"2026-01-01T00:00:00Z"}"#
+    private static let userJSON =
+        #"{"id":7,"email":"ana@coco.co","display_name":null,"role":"owner","status":"active","created_at":"2026-01-01T00:00:00Z"}"#
     private static func sesionJSON(access: String, refresh: String?, expiresIn: Int = 3600) -> String {
         let refreshParte = refresh.map { #","refresh_token":"\#($0)""# } ?? ""
-        return #"{"data":{"access_token":"\#(access)","expires_in":\#(expiresIn),"user":\#(userJSON)\#(refreshParte)},"meta":{}}"#
+        return
+            #"{"data":{"access_token":"\#(access)","expires_in":\#(expiresIn),"user":\#(userJSON)\#(refreshParte)},"meta":{}}"#
     }
-    private static let perfil = PerfilPublico(id: 7, email: "ana@coco.co", display_name: nil, role: "owner", status: "active", created_at: "2026-01-01T00:00:00Z")
+    private static let perfil = PerfilPublico(
+        id: 7, email: "ana@coco.co", display_name: nil, role: "owner", status: "active",
+        created_at: "2026-01-01T00:00:00Z")
 
     /// Un reloj que las pruebas mueven a mano.
     private final class Reloj: @unchecked Sendable {
@@ -34,7 +39,10 @@ final class SesionNativaTests: XCTestCase {
     private final class TransporteAnotado: Transporte, @unchecked Sendable {
         let interno: TransporteFalso
         let bitacora: Bitacora
-        init(_ interno: TransporteFalso, bitacora: Bitacora) { self.interno = interno; self.bitacora = bitacora }
+        init(_ interno: TransporteFalso, bitacora: Bitacora) {
+            self.interno = interno
+            self.bitacora = bitacora
+        }
         func datos(para peticion: URLRequest) async throws -> (Data, HTTPURLResponse) {
             // Un respiro para que las llamadas concurrentes lleguen mientras
             // esta sigue en vuelo.
@@ -47,7 +55,10 @@ final class SesionNativaTests: XCTestCase {
     private final class LlaveroAnotado: Llavero, @unchecked Sendable {
         let interno: LlaveroEnMemoria
         let bitacora: Bitacora
-        init(_ interno: LlaveroEnMemoria, bitacora: Bitacora) { self.interno = interno; self.bitacora = bitacora }
+        init(_ interno: LlaveroEnMemoria, bitacora: Bitacora) {
+            self.interno = interno
+            self.bitacora = bitacora
+        }
         func leer(_ clave: ClaveDelLlavero) throws -> String? { try interno.leer(clave) }
         func escribir(_ valor: String, en clave: ClaveDelLlavero) throws {
             bitacora.anotar("llavero:\(valor)")
@@ -70,8 +81,11 @@ final class SesionNativaTests: XCTestCase {
         let llavero = LlaveroEnMemoria(valores: refresh.map { [.refreshToken: $0] } ?? [:])
         let reloj = Reloj()
         let base = URL(string: "https://api.coco.invalid") ?? URL(fileURLWithPath: "/")
-        let api = ClienteAPI(configuracion: ConfiguracionDeLaAPI(base: base), transporte: TransporteAnotado(transporte, bitacora: bitacora), version: "0.1.0")
-        let sesion = SesionNativa(api: api, llavero: LlaveroAnotado(llavero, bitacora: bitacora), reloj: { reloj.ahora })
+        let api = ClienteAPI(
+            configuracion: ConfiguracionDeLaAPI(base: base),
+            transporte: TransporteAnotado(transporte, bitacora: bitacora), version: "0.1.0")
+        let sesion = SesionNativa(
+            api: api, llavero: LlaveroAnotado(llavero, bitacora: bitacora), reloj: { reloj.ahora })
         return Arnes(transporte: transporte, llavero: llavero, reloj: reloj, bitacora: bitacora, sesion: sesion)
     }
 
@@ -150,7 +164,9 @@ final class SesionNativaTests: XCTestCase {
     }
 
     func testSiElReintentoResponde200LaSesionSigue() async throws {
-        let a = arnes(respuestas: [.falla(URLError(.notConnectedToInternet)), .http(200, Self.sesionJSON(access: "a1", refresh: "r1"))])
+        let a = arnes(respuestas: [
+            .falla(URLError(.notConnectedToInternet)), .http(200, Self.sesionJSON(access: "a1", refresh: "r1")),
+        ])
         let access = try await a.sesion.accessTokenVigente()
         XCTAssertEqual(access, "a1")
         XCTAssertEqual(a.transporte.recibidas.count, 2)
@@ -163,7 +179,7 @@ final class SesionNativaTests: XCTestCase {
             .falla(URLError(.timedOut)), .falla(URLError(.timedOut)),
         ])
         _ = try await a.sesion.accessTokenVigente()
-        a.reloj.avanzar(250) // quedan 50 s: hay que renovar
+        a.reloj.avanzar(250)  // quedan 50 s: hay que renovar
         _ = try? await a.sesion.accessTokenVigente()
         let estado = await a.sesion.estado
         XCTAssertEqual(estado, .sinConexion(ultima: Self.perfil))
@@ -207,7 +223,9 @@ final class SesionNativaTests: XCTestCase {
     }
 
     func testEntrarConCredencialesMalasNoTocaElLlavero() async {
-        let a = arnes(refresh: nil, respuestas: [.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"Credenciales inválidas."}}"#)])
+        let a = arnes(
+            refresh: nil,
+            respuestas: [.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"Credenciales inválidas."}}"#)])
         do {
             _ = try await a.sesion.entrar(correo: "ana@coco.co", contrasena: "mal")
             XCTFail("tenía que fallar")
@@ -220,7 +238,8 @@ final class SesionNativaTests: XCTestCase {
     func testLasPeticionesQueNoSonDeAuthNoLlevanLaCabeceraNativa() async throws {
         let a = arnes(respuestas: [.http(200, #"{"data":[],"meta":{}}"#)])
         let base = URL(string: "https://api.coco.invalid") ?? URL(fileURLWithPath: "/")
-        let api = ClienteAPI(configuracion: ConfiguracionDeLaAPI(base: base), transporte: a.transporte, version: "0.1.0")
+        let api = ClienteAPI(
+            configuracion: ConfiguracionDeLaAPI(base: base), transporte: a.transporte, version: "0.1.0")
         let _: [NodoDelArbol] = try await api.enviar(ConstructorDePeticiones.categorias(), token: "a1")
         let r = try XCTUnwrap(a.transporte.recibidas.first)
         XCTAssertNil(r.value(forHTTPHeaderField: "X-Coco-Cliente"))
@@ -253,11 +272,11 @@ final class SesionNativaTests: XCTestCase {
             .http(200, Self.sesionJSON(access: "a2", refresh: "r2", expiresIn: 3600)),
         ])
         _ = try await a.sesion.accessTokenVigente()
-        a.reloj.avanzar(3470) // quedan 130
+        a.reloj.avanzar(3470)  // quedan 130
         let sigue = try await a.sesion.accessTokenVigente()
         XCTAssertEqual(sigue, "a1")
         XCTAssertEqual(a.transporte.recibidas.count, 1)
-        a.reloj.avanzar(30) // quedan 100
+        a.reloj.avanzar(30)  // quedan 100
         let nuevo = try await a.sesion.accessTokenVigente()
         XCTAssertEqual(nuevo, "a2")
         XCTAssertEqual(a.transporte.recibidas.count, 2)
@@ -318,7 +337,8 @@ final class SesionNativaTests: XCTestCase {
     // MARK: El recorte del JSON
 
     func testRecorteDeJSONRespetaCadenasConLlaves() {
-        let json = #"{"meta":{"user":{"no":"este"}},"data":{"nota":"} {","user":{"a":"{\"x\":1}","b":[1,{"c":2}]},"otro":{}}}"#
+        let json =
+            #"{"meta":{"user":{"no":"este"}},"data":{"nota":"} {","user":{"a":"{\"x\":1}","b":[1,{"c":2}]},"otro":{}}}"#
         let crudo = RecorteDeJSON.objeto(clave: "user", dentroDe: "data", en: Data(json.utf8))
         XCTAssertEqual(crudo.map { String(decoding: $0, as: UTF8.self) }, #"{"a":"{\"x\":1}","b":[1,{"c":2}]}"#)
     }

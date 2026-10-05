@@ -9,7 +9,8 @@ import UIKit
 enum EncogedorDeFoto {
     static func jpeg(_ imagen: UIImage, ladoMaximo: CGFloat = 1600, calidad: CGFloat = 0.85) -> Data? {
         // `size` ya viene en puntos y orientada; `scale` la pasa a píxeles.
-        let destino = tamanoDestino(ancho: imagen.size.width * imagen.scale, alto: imagen.size.height * imagen.scale, ladoMaximo: ladoMaximo)
+        let destino = tamanoDestino(
+            ancho: imagen.size.width * imagen.scale, alto: imagen.size.height * imagen.scale, ladoMaximo: ladoMaximo)
         guard destino.width >= 1, destino.height >= 1 else { return nil }
         let formato = UIGraphicsImageRendererFormat()
         formato.scale = 1

@@ -99,7 +99,8 @@ struct EntrarView: View {
         case .rechazada(_, _, let mensaje):
             return mensaje.isEmpty ? "La API rechazó la petición." : mensaje
         case .servidor(let status):
-            return status == 429 ? "Demasiados intentos. Espera un minuto." : "La API falló (\(status)). Inténtalo en un momento."
+            return status == 429
+                ? "Demasiados intentos. Espera un minuto." : "La API falló (\(status)). Inténtalo en un momento."
         case .respuestaIlegible:
             return "La API respondió algo que la app no entiende. Revisa la URL de la API en Ajustes."
         }
