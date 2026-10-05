@@ -10,7 +10,7 @@ import UserNotifications
 /// `WKWebView`, con la misma sesión. Cada pantalla existe una sola vez.
 @main
 struct CocoApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegado
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var phase
 
     private let d: Dependencies
@@ -18,7 +18,7 @@ struct CocoApp: App {
     init() {
         // Compone todo —y registra intents y tareas de fondo— antes de que
         // termine el arranque, que es cuando iOS lo exige.
-        d = Dependencies.compartidas
+        d = Dependencies.shared
         AppLog.app.info("Coco \(Brand.version, privacy: .public) arrancando")
     }
 
@@ -27,13 +27,13 @@ struct CocoApp: App {
             RootView(d: d)
                 .onOpenURL { url in
                     AppLog.navigation.info("onOpenURL \(url.absoluteString, privacy: .public)")
-                    d.router.abrir(url: url)
+                    d.router.open(url: url)
                 }
         }
-        .onChange(of: phase) { _, nueva in
-            switch nueva {
+        .onChange(of: phase) { _, newPhase in
+            switch newPhase {
             case .active:
-                d.volvioAPrimerPlano()
+                d.returnedToForeground()
             case .background:
                 BackgroundJobs.schedule()
             case .inactive:
@@ -65,7 +65,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         guard let url = URL(string: SystemNotifier.captureDestination) else { return }
         await MainActor.run {
-            _ = Dependencies.compartidas.router.abrir(url: url)
+            _ = Dependencies.shared.router.open(url: url)
         }
     }
 }

@@ -22,8 +22,8 @@ enum PhotoShrinker {
 
     /// Puro: encoge proporcionalmente y nunca agranda.
     static func targetSize(width: CGFloat, height: CGFloat, maxSide: CGFloat) -> CGSize {
-        let mayor = max(width, height)
-        let factor = mayor > maxSide ? maxSide / mayor : 1
+        let longSide = max(width, height)
+        let factor = longSide > maxSide ? maxSide / longSide : 1
         return CGSize(width: (width * factor).rounded(.down), height: (height * factor).rounded(.down))
     }
 }

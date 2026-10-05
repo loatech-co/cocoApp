@@ -13,9 +13,9 @@ final class StoredFormatCompatibilityTests: XCTestCase {
         return try XCTUnwrap(String(data: jsonEncoder.encode(value), encoding: .utf8))
     }
 
-    private func idaYVuelta<T: Codable & Equatable>(_ value: T, _ esperado: String, line: UInt = #line) throws {
-        XCTAssertEqual(try json(value), esperado, line: line)
-        XCTAssertEqual(try JSONDecoder().decode(T.self, from: Data(esperado.utf8)), value, line: line)
+    private func roundTrip<T: Codable & Equatable>(_ value: T, _ expected: String, line: UInt = #line) throws {
+        XCTAssertEqual(try json(value), expected, line: line)
+        XCTAssertEqual(try JSONDecoder().decode(T.self, from: Data(expected.utf8)), value, line: line)
     }
 
     private static let result = SavedResult(
@@ -35,7 +35,7 @@ final class StoredFormatCompatibilityTests: XCTestCase {
             lastError: "e", textResult: Self.result)
     }
 
-    func testLaCapturaPendienteConservaSusClavesEnCadaFase() throws {
+    func testThePendingCaptureKeepsItsKeysInEveryPhase() throws {
         let base =
             #"{"creadaEn":0,"cuerpo":{"category_id":3,"comercio":"c","fecha":"2026-01-02","monto":"1","nombre_de_archivo":"f.jpg","nota":"n","periodo":"2026-01","texto":"t"},"fase":FASE,"fotoRelativa":"Fotos/x.jpg","id":"00000000-0000-0000-0000-000000000001","intentos":2,"origen":"ios_photo","proximoIntento":50,"resultadoDeTexto":{"fusionado":true,"porRevisar":true,"repetido":false,"resumen":"r","terminadaEn":100,"transactionId":9},"ultimoError":"e"}"#
         let result =
@@ -48,11 +48,11 @@ final class StoredFormatCompatibilityTests: XCTestCase {
             (.failed(reason: "m"), #"{"fallida":{"motivo":"m"}}"#),
         ]
         for (phase, key) in phases {
-            try idaYVuelta(pending(phase), base.replacingOccurrences(of: "FASE", with: key))
+            try roundTrip(pending(phase), base.replacingOccurrences(of: "FASE", with: key))
         }
     }
 
-    func testElArbolGuardadoConservaSusClaves() throws {
+    func testTheSavedTreeKeepsItsKeys() throws {
         let tree = SavedTree(
             roots: [
                 TreeNode(
@@ -60,13 +60,13 @@ final class StoredFormatCompatibilityTests: XCTestCase {
                     children: [TreeNode(id: 2, name: "B", parentId: 1)])
             ],
             downloadedAt: Date(timeIntervalSinceReferenceDate: 7))
-        try idaYVuelta(
+        try roundTrip(
             tree,
             #"{"descargadoEn":7,"raices":[{"children":[{"estatico":false,"id":2,"is_archived":false,"name":"B","palabras_clave":[],"parent_id":1}],"estatico":true,"id":1,"is_archived":true,"name":"A","palabras_clave":["k"]}]}"#
         )
     }
 
-    func testLosValoresQueSalenDeLaAppNoCambian() throws {
+    func testTheValuesTheAppSendsDoNotChange() throws {
         XCTAssertEqual(CaptureSource.wallet.rawValue, "wallet")
         XCTAssertEqual(CaptureSource.sms.rawValue, "sms")
         XCTAssertEqual(CaptureSource.iosManual.rawValue, "ios_manual")
@@ -77,41 +77,42 @@ final class StoredFormatCompatibilityTests: XCTestCase {
         XCTAssertEqual(KeychainKey.refreshToken.rawValue, "refresh_token")
     }
 
-    func testElPerfilConservaSusClaves() throws {
+    func testTheProfileKeepsItsKeys() throws {
         let profile = PublicProfile(
             id: 7, email: "x@coco.invalid", displayName: "X", role: "owner", status: "active", createdAt: "2026")
-        try idaYVuelta(
+        try roundTrip(
             profile,
             #"{"created_at":"2026","display_name":"X","email":"x@coco.invalid","id":7,"role":"owner","status":"active"}"#
         )
     }
 
-    func testLasRespuestasDeLaAPIConservanSusClaves() throws {
+    func testTheAPIResponsesKeepTheirKeys() throws {
         let classification = ProposedClassification(
             confidence: "alta", source: "f", conceptId: 1, categoryId: 2, name: "n",
             candidates: [.init(id: 3, name: "c", path: "r")], reason: "m")
-        let claseJSON =
+        let classificationJSON =
             #"{"candidatos":[{"id":3,"nombre":"c","ruta":"r"}],"categoria_id":2,"certeza":"alta","concepto_id":1,"fuente":"f","motivo":"m","nombre":"n"}"#
-        try idaYVuelta(classification, claseJSON)
-        try idaYVuelta(
+        try roundTrip(classification, classificationJSON)
+        try roundTrip(
             Interpretation(
                 amount: "1", date: "d", merchant: "m", description: "x", classification: classification,
                 needsReview: true
             ),
             #"{"amount":"1","clasificacion":CL,"date":"d","description":"x","merchant":"m","por_revisar":true}"#
-                .replacingOccurrences(of: "CL", with: claseJSON))
+                .replacingOccurrences(of: "CL", with: classificationJSON))
         let transaction = TransactionSummary(
             id: 1, date: "d", amount: "2", categoryId: 3, description: "x", merchant: "m", source: "sms",
             needsReview: false)
-        let transJSON =
+        let transactionJSON =
             #"{"amount":"2","category_id":3,"date":"d","description":"x","id":1,"merchant":"m","por_revisar":false,"source":"sms"}"#
-        try idaYVuelta(transaction, transJSON)
-        try idaYVuelta(
+        try roundTrip(transaction, transactionJSON)
+        try roundTrip(
             CaptureResponse(
                 transaction: transaction, classification: classification, summary: "r", duplicate: true, merged: false),
             #"{"clasificacion":CL,"fusionado":false,"repetido":true,"resumen":"r","transaction":TR}"#
-                .replacingOccurrences(of: "CL", with: claseJSON).replacingOccurrences(of: "TR", with: transJSON))
-        try idaYVuelta(
+                .replacingOccurrences(of: "CL", with: classificationJSON).replacingOccurrences(
+                    of: "TR", with: transactionJSON))
+        try roundTrip(
             Attachment(id: 1, order: 2, fileName: "a", mimeType: "image/jpeg", size: 3, available: true),
             #"{"disponible":true,"id":1,"mime_type":"image/jpeg","nombre_archivo":"a","orden":2,"tamano":3}"#)
         let session = try JSONDecoder().decode(

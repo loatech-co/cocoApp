@@ -28,12 +28,12 @@ final class AutomationStepsTests: XCTestCase {
 
     func testWalletNamesTheFourFieldsAndSMSTheTwo() {
         let wallet = AutomationSteps.transaction.map { $0.title + " " + $0.detail }.joined(separator: " ")
-        for campo in ["Comercio", "Monto", "Tarjeta", "Nombre"] {
-            XCTAssertTrue(wallet.contains(campo), campo)
+        for field in ["Comercio", "Monto", "Tarjeta", "Nombre"] {
+            XCTAssertTrue(wallet.contains(field), field)
         }
         let sms = AutomationSteps.message.map { $0.title + " " + $0.detail }.joined(separator: " ")
-        for campo in ["Texto", "Remitente"] {
-            XCTAssertTrue(sms.contains(campo), campo)
+        for field in ["Texto", "Remitente"] {
+            XCTAssertTrue(sms.contains(field), field)
         }
     }
 
@@ -53,8 +53,8 @@ final class AutomationStepsTests: XCTestCase {
     func testTheWelcomeKey() {
         let defaults = UserDefaults(suiteName: "co.loatech.coco.pruebas.bienvenida") ?? .standard
         defaults.removeObject(forKey: WelcomeView.key)
-        XCTAssertFalse(WelcomeView.yaVista(defaults: defaults))
+        XCTAssertFalse(WelcomeView.wasSeen(defaults: defaults))
         defaults.set(true, forKey: WelcomeView.key)
-        XCTAssertTrue(WelcomeView.yaVista(defaults: defaults))
+        XCTAssertTrue(WelcomeView.wasSeen(defaults: defaults))
     }
 }

@@ -17,14 +17,14 @@ final class APIConfigurationTests: XCTestCase {
         super.tearDown()
     }
 
-    func testLeeElPlistDelBundleQueSeLePide() {
+    func testReadsThePlistOfTheGivenBundle() {
         let bundle = Bundle(for: APIConfigurationTests.self)
         let c = APIConfiguration.current(bundle: bundle, defaults: defaults)
         XCTAssertEqual(c.base.absoluteString, "https://pruebas.coco.invalid")
         XCTAssertEqual(c.apiV1.absoluteString, "https://pruebas.coco.invalid/api/v1")
     }
 
-    func testElOverrideMandaYRestablecerVuelveAlPlist() throws {
+    func testTheOverrideWinsAndResetGoesBackToThePlist() throws {
         let bundle = Bundle(for: APIConfigurationTests.self)
         APIConfiguration.save(base: try XCTUnwrap(URL(string: "http://localhost:3000/")), defaults: defaults)
         let local = APIConfiguration.current(bundle: bundle, defaults: defaults)
@@ -37,12 +37,12 @@ final class APIConfigurationTests: XCTestCase {
             "https://pruebas.coco.invalid")
     }
 
-    func testApiV1SinDobleBarra() throws {
+    func testApiV1WithoutDoubleSlash() throws {
         let c = APIConfiguration(base: try XCTUnwrap(URL(string: "https://x.invalid///")))
         XCTAssertEqual(c.apiV1.absoluteString, "https://x.invalid/api/v1")
     }
 
-    func testUnOverrideRotoSeIgnora() {
+    func testABrokenOverrideIsIgnored() {
         defaults.set("no es una url", forKey: APIConfiguration.defaultsKey)
         let c = APIConfiguration.current(bundle: Bundle(for: APIConfigurationTests.self), defaults: defaults)
         XCTAssertEqual(c.base.absoluteString, "https://pruebas.coco.invalid")

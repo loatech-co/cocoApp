@@ -3,14 +3,14 @@ import XCTest
 @testable import Coco
 
 final class APIClientTests: XCTestCase {
-    private func cliente(_ transport: FakeTransport) -> APIClient {
+    private func client(_ transport: FakeTransport) -> APIClient {
         let base = URL(string: "https://api.coco.invalid") ?? URL(fileURLWithPath: "/")
         return APIClient(configuration: APIConfiguration(base: base), transport: transport, version: "0.1.0")
     }
 
     private func error(_ transport: FakeTransport) async -> APIError? {
         do {
-            let _: [TreeNode] = try await cliente(transport).send(
+            let _: [TreeNode] = try await client(transport).send(
                 RequestBuilder.categories(), token: "tok")
             return nil
         } catch {
@@ -18,15 +18,15 @@ final class APIClientTests: XCTestCase {
         }
     }
 
-    func test200ConDataDecodifica() async throws {
+    func test200WithDataDecodes() async throws {
         let t = FakeTransport([
             .http(
                 200,
                 #"{"data":[{"id":1,"name":"Hogar","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":false,"children":null}],"meta":{}}"#
             )
         ])
-        let nodos: [TreeNode] = try await cliente(t).send(RequestBuilder.categories(), token: "tok")
-        XCTAssertEqual(nodos.map(\.name), ["Hogar"])
+        let nodes: [TreeNode] = try await client(t).send(RequestBuilder.categories(), token: "tok")
+        XCTAssertEqual(nodes.map(\.name), ["Hogar"])
         XCTAssertEqual(t.received.first?.url?.absoluteString, "https://api.coco.invalid/api/v1/categories")
     }
 
@@ -37,14 +37,14 @@ final class APIClientTests: XCTestCase {
         XCTAssertEqual(e?.isRetryable, false)
     }
 
-    func test422ConCodigoYMensaje() async {
+    func test422WithCodeAndMessage() async {
         let e = await error(
             FakeTransport([.http(422, #"{"error":{"code":"VALIDACION","message":"Falta el monto","details":[]}}"#)]))
         XCTAssertEqual(e, .rejected(status: 422, code: "VALIDACION", message: "Falta el monto"))
         XCTAssertEqual(e?.isRetryable, false)
     }
 
-    func testServidorReintentable() async {
+    func testServerIsRetryable() async {
         for status in [500, 429, 408] {
             let e = await error(FakeTransport([.http(status, "")]))
             XCTAssertEqual(e, .server(status: status))
@@ -53,30 +53,30 @@ final class APIClientTests: XCTestCase {
         }
     }
 
-    func testSinRedYTiempoAgotado() async {
+    func testNoNetworkAndTimeout() async {
         let noNetwork = await error(FakeTransport([.failure(URLError(.notConnectedToInternet))]))
         XCTAssertEqual(noNetwork, .noNetwork(.notConnectedToInternet))
         XCTAssertEqual(noNetwork?.isNetworkError, true)
         XCTAssertEqual(noNetwork?.isRetryable, true)
-        let tiempo = await error(FakeTransport([.failure(URLError(.timedOut))]))
-        XCTAssertEqual(tiempo, .timedOut)
+        let timeout = await error(FakeTransport([.failure(URLError(.timedOut))]))
+        XCTAssertEqual(timeout, .timedOut)
     }
 
-    func testCuerpoIlegible() async {
+    func testUnreadableBody() async {
         let html = await error(FakeTransport([.http(200, "<html>")]))
         XCTAssertEqual(html, .unreadableResponse)
-        let otraForma = await error(FakeTransport([.http(200, #"{"data":{"no":"es un árbol"}}"#)]))
-        XCTAssertEqual(otraForma, .unreadableResponse)
+        let otherShape = await error(FakeTransport([.http(200, #"{"data":{"no":"es un árbol"}}"#)]))
+        XCTAssertEqual(otherShape, .unreadableResponse)
     }
 
-    func test204NoDecodifica() async throws {
+    func test204DoesNotDecode() async throws {
         let t = FakeTransport([.http(204, "")])
-        try await cliente(t).sendWithoutBody(RequestBuilder.logout(refreshToken: "r1"), token: nil)
+        try await client(t).sendWithoutBody(RequestBuilder.logout(refreshToken: "r1"), token: nil)
         XCTAssertEqual(t.received.count, 1)
         XCTAssertNil(t.received.first?.value(forHTTPHeaderField: "Authorization"))
     }
 
-    func testSubirUsaMultipartYBearer() async throws {
+    func testUploadUsesMultipartAndBearer() async throws {
         let t = FakeTransport([
             .http(
                 201,
@@ -85,9 +85,9 @@ final class APIClientTests: XCTestCase {
         ])
         let part = MultipartPart(
             fieldName: "archivos", fileName: "a.jpg", mime: "image/jpeg", data: Data([1, 2, 3]))
-        let soportes: [Attachment] = try await cliente(t).upload(
+        let attachments: [Attachment] = try await client(t).upload(
             parts: [part], to: "/transactions/42/soportes", token: "tok")
-        XCTAssertEqual(soportes.first?.id, 5)
+        XCTAssertEqual(attachments.first?.id, 5)
         let r = try XCTUnwrap(t.received.first)
         XCTAssertTrue(r.value(forHTTPHeaderField: "Content-Type")?.hasPrefix("multipart/form-data; boundary=") ?? false)
         XCTAssertEqual(r.value(forHTTPHeaderField: "Authorization"), "Bearer tok")

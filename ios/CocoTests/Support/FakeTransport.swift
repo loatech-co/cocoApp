@@ -18,7 +18,7 @@ final class FakeTransport: Transport, @unchecked Sendable {
         queue = replies
     }
 
-    func responder(_ r: Reply) {
+    func reply(_ r: Reply) {
         lock.lock()
         defer { lock.unlock() }
         queue.append(r)

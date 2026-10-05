@@ -14,11 +14,11 @@ struct CameraPicker: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIViewController {
         if Self.hayCamara {
-            let camara = UIImagePickerController()
-            camara.sourceType = .camera
-            camara.cameraCaptureMode = .photo
-            camara.delegate = context.coordinator
-            return camara
+            let picker = UIImagePickerController()
+            picker.sourceType = .camera
+            picker.cameraCaptureMode = .photo
+            picker.delegate = context.coordinator
+            return picker
         }
         var configuration = PHPickerConfiguration()
         configuration.filter = .images

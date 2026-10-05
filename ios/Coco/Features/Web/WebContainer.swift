@@ -27,8 +27,8 @@ struct WebContainer: View {
                 offlineBanner
             }
         }
-        .onChange(of: connectivity.isOnline) { _, hay in
-            guard hay else { return }
+        .onChange(of: connectivity.isOnline) { _, online in
+            guard online else { return }
             Task { await bridge.connectivityReturned() }
         }
     }

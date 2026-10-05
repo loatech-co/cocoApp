@@ -7,7 +7,7 @@ final class FakeNotificationCenter: NotificationCenterClient, @unchecked Sendabl
     private let lock = NSLock()
     private var requests: [UNNotificationRequest] = []
     var isAuthorized = true
-    var insignia: Int?
+    var badge: Int?
 
     func askAuthorization() async throws -> Bool { isAuthorized }
     func register(categories: Set<UNNotificationCategory>) {}
@@ -30,7 +30,7 @@ final class FakeNotificationCenter: NotificationCenterClient, @unchecked Sendabl
     private func saved() -> [UNNotificationRequest] {
         lock.withLock { requests }
     }
-    func setBadge(_ n: Int) async throws { insignia = n }
+    func setBadge(_ n: Int) async throws { badge = n }
 }
 
 final class NotifierTests: XCTestCase {
@@ -86,6 +86,6 @@ final class NotifierTests: XCTestCase {
         XCTAssertEqual(pending.first?.content.userInfo["destino"] as? String, "coco://capturas")
         XCTAssertEqual(pending.last?.content.body, "Se enviaron 3 capturas pendientes")
         await n.setBadge(2)
-        XCTAssertEqual(center.insignia, 2)
+        XCTAssertEqual(center.badge, 2)
     }
 }

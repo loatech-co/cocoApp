@@ -6,7 +6,7 @@ import XCTest
 final class RouterTests: XCTestCase {
     private func url(_ s: String) throws -> URL { try XCTUnwrap(URL(string: s)) }
 
-    func testDestinoDeLasURLsDeLaApp() throws {
+    func testDestinationOfTheAppURLs() throws {
         XCTAssertEqual(Router.destination(from: try url("coco://capturar/manual")), .quickForm(withCamera: false))
         XCTAssertEqual(Router.destination(from: try url("coco://capturar")), .quickForm(withCamera: false))
         XCTAssertEqual(Router.destination(from: try url("coco://capturar/foto")), .quickForm(withCamera: true))
@@ -17,64 +17,64 @@ final class RouterTests: XCTestCase {
             "el aviso de una captura lleva a la lista")
     }
 
-    func testURLsDesconocidasNoSonDestino() throws {
+    func testUnknownURLsAreNotDestinations() throws {
         XCTAssertNil(Router.destination(from: try url("coco://otra")))
         XCTAssertNil(Router.destination(from: try url("coco://capturar/video")))
         XCTAssertNil(Router.destination(from: try url("coco://capturas/1")))
         XCTAssertNil(Router.destination(from: try url("https://dev-cocoapp.viteri.me/capturar/manual")))
         let e = Router()
-        XCTAssertFalse(e.abrir(url: try url("coco://otra")))
-        XCTAssertEqual(e.pestana, .inicio)
+        XCTAssertFalse(e.open(url: try url("coco://otra")))
+        XCTAssertEqual(e.tab, .home)
     }
 
-    func testAbrirCambiaLaPestanaYRenuevaElFormulario() throws {
+    func testOpenChangesTheTabAndRenewsTheForm() throws {
         let e = Router()
-        let before = e.formulario.generacion
-        XCTAssertTrue(e.abrir(url: try url("coco://capturar/foto")))
-        XCTAssertEqual(e.pestana, .register)
-        XCTAssertTrue(e.formulario.withCamera)
-        XCTAssertEqual(e.formulario.generacion, before + 1)
+        let before = e.formRequest.generation
+        XCTAssertTrue(e.open(url: try url("coco://capturar/foto")))
+        XCTAssertEqual(e.tab, .register)
+        XCTAssertTrue(e.formRequest.withCamera)
+        XCTAssertEqual(e.formRequest.generation, before + 1)
 
-        XCTAssertTrue(e.abrir(url: try url("coco://capturar/manual")))
-        XCTAssertFalse(e.formulario.withCamera)
-        XCTAssertEqual(e.formulario.generacion, before + 2, "cada petición es un formulario nuevo")
+        XCTAssertTrue(e.open(url: try url("coco://capturar/manual")))
+        XCTAssertFalse(e.formRequest.withCamera)
+        XCTAssertEqual(e.formRequest.generation, before + 2, "cada petición es un formulario nuevo")
 
-        XCTAssertTrue(e.abrir(url: try url("coco://capturas")))
-        XCTAssertEqual(e.pestana, .captures)
+        XCTAssertTrue(e.open(url: try url("coco://capturas")))
+        XCTAssertEqual(e.tab, .captures)
     }
 
-    func testIrAWebDejaLaRutaPendienteEnInicio() {
+    func testGoToWebLeavesThePathPendingOnHome() {
         let e = Router()
-        e.pestana = .mas
+        e.tab = .more
         e.go(.web(path: "/centros-de-costos"))
-        XCTAssertEqual(e.pestana, .inicio)
-        XCTAssertEqual(e.rutaWebPendiente, "/centros-de-costos")
+        XCTAssertEqual(e.tab, .home)
+        XCTAssertEqual(e.pendingWebPath, "/centros-de-costos")
     }
 
-    func testBuscarVaAInicioConLaBusquedaPendiente() {
+    func testSearchGoesHomeWithTheSearchPending() {
         let e = Router()
-        e.pestana = .captures
+        e.tab = .captures
         e.go(.search)
-        XCTAssertEqual(e.pestana, .inicio)
-        XCTAssertTrue(e.busquedaPendiente)
+        XCTAssertEqual(e.tab, .home)
+        XCTAssertTrue(e.searchPending)
     }
 
-    func testLasHojasNoCambianDePestanaYUnDestinoLasCierra() {
+    func testSheetsDoNotChangeTabAndADestinationClosesThem() {
         let e = Router()
-        e.pestana = .mas
+        e.tab = .more
         e.go(.settings)
-        XCTAssertEqual(e.hoja, .settings)
-        XCTAssertEqual(e.pestana, .mas)
+        XCTAssertEqual(e.sheet, .settings)
+        XCTAssertEqual(e.tab, .more)
         e.go(.welcome)
-        XCTAssertEqual(e.hoja, .welcome)
+        XCTAssertEqual(e.sheet, .welcome)
         e.go(.captures)
-        XCTAssertNil(e.hoja, "un destino de pestaña baja la hoja que hubiera")
-        XCTAssertEqual(e.pestana, .captures)
+        XCTAssertNil(e.sheet, "un destino de pestaña baja la hoja que hubiera")
+        XCTAssertEqual(e.tab, .captures)
     }
 
-    func testEsLaNavegacionQueUsanLosIntents() {
+    func testItIsTheNavigationTheIntentsUse() {
         let e: any Navigation = Router()
         e.go(.quickForm(withCamera: false))
-        XCTAssertEqual((e as? Router)?.pestana, .register)
+        XCTAssertEqual((e as? Router)?.tab, .register)
     }
 }
