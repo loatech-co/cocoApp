@@ -238,17 +238,25 @@ after knip.
 
 - **Controllers have no logic**: validate (DTO), delegate to one service
   call, respond.
-- **Only repositories talk to Prisma.** Only `*.repository.ts` injects
-  `PrismaService`. A service or controller may `import type` Prisma's
+- **Only repositories talk to Prisma, and through `Database.forUser`.** A
+  repository injects `Database` (`api/src/prisma/database.ts`) and runs every
+  query on the client `forUser(userId, tx => …)` hands it; `PrismaService`
+  itself is injected only by the exceptions listed, with their reason, in
+  `database.rule.spec.ts`. A service or controller may `import type` Prisma's
   generated types (to name the row a repository returns) but never use the
   client at runtime — no queries, no `Prisma.PrismaClientKnownRequestError`.
   A repository that expects a constraint error turns it into a value or a
   domain error (`createUnlessTaken` → `null`, `createWithDetails` →
   `DuplicateError`).
-- **Transactions**: a unit of work is ONE repository method that runs
-  `prisma.$transaction` itself (`TransactionsRepository.createWithDetails`,
-  `updateWithDetails`, `createTransfer`). Services never open a transaction
-  and never pass a transaction client around.
+- **Transactions**: a unit of work is ONE repository method whose whole body
+  runs in one `forUser` (`TransactionsRepository.createWithDetails`,
+  `updateWithDetails`, `createTransfer`). Services never pass a transaction
+  client around. The one thing a service may do is wrap several repository
+  calls in `db.forUser(userId, () => …)` so they share one transaction
+  instead of opening one each (`DashboardService.resumen`); nested calls for
+  the same user reuse it. Inside such a wrapper a constraint error aborts the
+  whole transaction, so a repository that catches one (`createUnlessTaken`)
+  must not be called there.
 - **`common/` never imports `modules/`.** It is shared by every module, so it
   cannot depend on one. Pure helpers several modules use live there
   (`common/categories/categories.tree.ts`).
@@ -400,6 +408,24 @@ data, outside the database's access rules. The query string is where search
 terms travel. An id is enough to find the record again with the right
 permissions; a log never needs the value itself.
 
+### Row-level security
+
+**Rule.** The API connects as `coco_app`: no `BYPASSRLS`, not the owner of
+any table. Every table with a user's rows has a policy keyed on
+`app.current_user_id`, which `Database.forUser` sets transaction-local as the
+first statement of each unit of work. A new table ships with its policy in
+the same migration (`row-level-security.e2e-spec.ts` fails on a public table
+without one). Local, CI and the e2e suites run as `coco_app` too; fixtures
+and cleanup use the owner's client (`levantarApp().prisma`).
+
+**Why.** The `user_id` filter in each repository is the first lock, and
+`user-isolation.e2e-spec.ts` checks it route by route. The policy is the
+second: a query that forgets the filter still sees only the rows of the user
+its unit runs as, and one outside any unit sees none. Transaction-local
+because the API goes through the pooler in transaction mode, where two loose
+statements can land on different connections. ADR 0019 has the design, the
+one query that crosses users and the measured cost.
+
 ### Probes
 
 **Rule.** Two public routes, neither authenticated nor revealing anything:
@@ -478,6 +504,9 @@ pool sent the next request down a socket the old server had closed.
 `DATABASE_URL` and `DIRECT_URL` in its `api/.env.test` at its own database,
 whose name ends in `_test` (the guard in `api/test/helpers/app.ts` refuses
 anything else), and runs `npm run db:test:push --workspace api` once.
+`DATABASE_URL` connects as `coco_app` and `DIRECT_URL` as the owner
+(`coco_migrate`); `scripts/db/create-app-role.sh` with
+`MIGRATION_ROLE=coco_migrate` sets both roles up once per machine.
 
 **Why.** `limpiar()` empties every table, so two runs against the same
 database break each other. The failures look like flaky tests (rows vanishing
