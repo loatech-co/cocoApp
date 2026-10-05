@@ -15,7 +15,8 @@
       "ignoreDependencies": ["@prisma/client", "pg", "pdfjs-dist", "tsx"],
     },
     "api": {
-      "entry": ["src/main.ts", "test/**/*.e2e-spec.ts"],
+      // src/openapi/generate.ts: `npm run openapi` runs it from dist/.
+      "entry": ["src/main.ts", "src/openapi/generate.ts", "test/**/*.e2e-spec.ts"],
       "project": ["src/**/*.ts", "test/**/*.ts"],
       // The driver under @prisma/adapter-pg, declared directly so production
       // installs pin it (it replaced Prisma's Rust engine, see b496c5a).
