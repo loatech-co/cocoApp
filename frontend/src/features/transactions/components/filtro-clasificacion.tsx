@@ -56,20 +56,7 @@ export function FiltroClasificacion({
 
   return (
     <div className="flex flex-col">
-      <div className="flex min-h-9 items-center gap-1 px-3 py-1.5">
-        {camino.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => setCamino(camino.slice(0, -1))}
-            className="flex min-w-0 items-center gap-1 rounded-md text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ChevronLeft className="size-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">{camino.map((n) => n.name).join(' · ')}</span>
-          </button>
-        ) : (
-          <span className="text-xs font-semibold text-muted-foreground">Centros de costos</span>
-        )}
-      </div>
+      <FilterPath camino={camino} onVolver={() => setCamino(camino.slice(0, -1))} />
 
       {/* Alto limitado: un centro con cuarenta conceptos haría un menú más
           largo que la pantalla y sin forma de llegar al pie. */}
@@ -78,70 +65,119 @@ export function FiltroClasificacion({
           <li className="px-3 py-2 text-sm text-muted-foreground">Nada que desglosar aquí.</li>
         ) : (
           lista.map((nodo) => {
-            const hijos = nodo.children ?? [];
             const marcado = marcados.includes(nodo.id);
 
             return (
-              <li key={nodo.id} className="flex items-stretch">
-                <label
-                  className={cn(
-                    'flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 py-2 pl-3 pr-2 text-sm transition-colors',
-                    // La FILA es el control: el recuadro de 16 es una segunda
-                    // forma, más pequeña, de dar a un blanco que ya es todo el
-                    // ancho del desplegable. Por eso la fila tiene suelo y el
-                    // recuadro no.
-                    'movil:min-h-[42px]',
-                    REALCE,
-                    marcado && 'font-medium',
-                  )}
-                >
-                  <Casilla checked={marcado} onChange={() => alternar(nodo.id)} />
-                  <span className="min-w-0 flex-1 truncate">{nodo.name}</span>
-                  {!marcado && tieneMarcadoDentro(nodo) && (
-                    <span
-                      aria-hidden="true"
-                      title="Hay algo marcado dentro"
-                      className="size-1.5 shrink-0 rounded-full bg-primary"
-                    />
-                  )}
-                </label>
-
-                {hijos.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setCamino([...camino, nodo])}
-                    aria-label={`Ver lo que hay dentro de ${nodo.name}`}
-                    title={`Ver lo que hay dentro de ${nodo.name}`}
-                    className={cn(
-                      'grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors',
-                      REALCE,
-                    )}
-                  >
-                    <ChevronRight className="size-4" aria-hidden="true" />
-                  </button>
-                )}
-              </li>
+              <FilterRow
+                key={nodo.id}
+                nodo={nodo}
+                marcado={marcado}
+                conMarcaDentro={!marcado && tieneMarcadoDentro(nodo)}
+                onAlternar={() => alternar(nodo.id)}
+                onEntrar={() => setCamino([...camino, nodo])}
+              />
             );
           })
         )}
       </ul>
 
-      <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
-        <span className="text-muted-foreground">
-          {marcados.length === 0
-            ? 'Sin filtrar'
-            : `${marcados.length} ${marcados.length === 1 ? 'marcado' : 'marcados'}`}
-        </span>
-        {marcados.length > 0 && (
-          <button
-            type="button"
-            onClick={() => onCambiar([])}
-            className="rounded-sm font-medium text-primary hover:underline"
-          >
-            Limpiar
-          </button>
+      <FilterFooter marcados={marcados} onLimpiar={() => onCambiar([])} />
+    </div>
+  );
+}
+
+function FilterFooter({ marcados, onLimpiar }: { marcados: number[]; onLimpiar: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+      <span className="text-muted-foreground">
+        {marcados.length === 0
+          ? 'Sin filtrar'
+          : `${marcados.length} ${marcados.length === 1 ? 'marcado' : 'marcados'}`}
+      </span>
+      {marcados.length > 0 && (
+        <button
+          type="button"
+          onClick={onLimpiar}
+          className="rounded-sm font-medium text-primary hover:underline"
+        >
+          Limpiar
+        </button>
+      )}
+    </div>
+  );
+}
+
+interface FilterRowProps {
+  nodo: Category;
+  marcado: boolean;
+  /** Hay algo marcado más abajo: lo dice un punto. */
+  conMarcaDentro: boolean;
+  onAlternar: () => void;
+  onEntrar: () => void;
+}
+
+/** Una fila: la casilla con su nombre, y la flecha para bajar un nivel. */
+function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: FilterRowProps) {
+  const hijos = nodo.children ?? [];
+  return (
+    <li className="flex items-stretch">
+      <label
+        className={cn(
+          'flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 py-2 pl-3 pr-2 text-sm transition-colors',
+          // La FILA es el control: el recuadro de 16 es una segunda
+          // forma, más pequeña, de dar a un blanco que ya es todo el
+          // ancho del desplegable. Por eso la fila tiene suelo y el
+          // recuadro no.
+          'movil:min-h-[42px]',
+          REALCE,
+          marcado && 'font-medium',
         )}
-      </div>
+      >
+        <Casilla checked={marcado} onChange={onAlternar} />
+        <span className="min-w-0 flex-1 truncate">{nodo.name}</span>
+        {conMarcaDentro && (
+          <span
+            aria-hidden="true"
+            title="Hay algo marcado dentro"
+            className="size-1.5 shrink-0 rounded-full bg-primary"
+          />
+        )}
+      </label>
+
+      {hijos.length > 0 && (
+        <button
+          type="button"
+          onClick={onEntrar}
+          aria-label={`Ver lo que hay dentro de ${nodo.name}`}
+          title={`Ver lo que hay dentro de ${nodo.name}`}
+          className={cn(
+            'grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors',
+            REALCE,
+          )}
+        >
+          <ChevronRight className="size-4" aria-hidden="true" />
+        </button>
+      )}
+    </li>
+  );
+}
+
+/** Dónde se está: los niveles recorridos, y la vuelta al de arriba. */
+function FilterPath({ camino, onVolver }: { camino: Category[]; onVolver: () => void }) {
+  return (
+    <div className="flex min-h-9 items-center gap-1 px-3 py-1.5">
+      {camino.length > 0 ? (
+        <button
+          type="button"
+          onClick={onVolver}
+          className="flex min-w-0 items-center gap-1 rounded-md text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ChevronLeft className="size-3.5 shrink-0" aria-hidden="true" />
+          <span className="truncate">{camino.map((n) => n.name).join(' · ')}</span>
+        </button>
+      ) : (
+        <span className="text-xs font-semibold text-muted-foreground">Centros de costos</span>
+      )}
     </div>
   );
 }
