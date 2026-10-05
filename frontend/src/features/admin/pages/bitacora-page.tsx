@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { useBitacora } from '@/features/admin/api/admin-queries';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
@@ -87,29 +87,7 @@ export function BitacoraPage() {
             ))}
           </ul>
 
-          <nav className="flex items-center justify-between" aria-label="Paginación">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pagina <= 1}
-              onClick={() => setPagina((p) => p - 1)}
-            >
-              <ChevronLeft aria-hidden="true" />
-              Anterior
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Página {pagina} de {ultimaPagina}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pagina >= ultimaPagina}
-              onClick={() => setPagina((p) => p + 1)}
-            >
-              Siguiente
-              <ChevronRight aria-hidden="true" />
-            </Button>
-          </nav>
+          <LogPager pagina={pagina} ultimaPagina={ultimaPagina} setPagina={setPagina} />
         </>
       )}
     </div>
@@ -147,5 +125,41 @@ function Evento({ evento }: { evento: AuditEntry }) {
         </CardContent>
       </Card>
     </li>
+  );
+}
+
+function LogPager({
+  pagina,
+  ultimaPagina,
+  setPagina,
+}: {
+  pagina: number;
+  ultimaPagina: number;
+  setPagina: Dispatch<SetStateAction<number>>;
+}) {
+  return (
+    <nav className="flex items-center justify-between" aria-label="Paginación">
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={pagina <= 1}
+        onClick={() => setPagina((p) => p - 1)}
+      >
+        <ChevronLeft aria-hidden="true" />
+        Anterior
+      </Button>
+      <span className="text-sm text-muted-foreground">
+        Página {pagina} de {ultimaPagina}
+      </span>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={pagina >= ultimaPagina}
+        onClick={() => setPagina((p) => p + 1)}
+      >
+        Siguiente
+        <ChevronRight aria-hidden="true" />
+      </Button>
+    </nav>
   );
 }
