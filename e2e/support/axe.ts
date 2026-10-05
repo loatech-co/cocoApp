@@ -5,10 +5,11 @@ import { expect, type Page } from '@playwright/test';
  * Accessibility check of the rendered page (D16): axe on the DOM the journey
  * is looking at, failing on `serious` or `critical` violations.
  *
- * The violations that exist today are NOT hidden by switching rules off. They
- * are listed here, ONE list, each with its reason, the way `PERMITIDOS` works
- * in the design-rule tests: an exception that is not written here does not
- * exist, and fixing one means deleting its line.
+ * A violation is NOT hidden by switching rules off. If one ever has to be
+ * tolerated, it is listed here, ONE list, each with its reason, the way
+ * `PERMITIDOS` works in the design-rule tests: an exception that is not
+ * written here does not exist, and fixing one means deleting its line. The
+ * list is empty since step 7.7-a11y fixed the ones the journeys had found.
  */
 
 interface Exception {
@@ -22,44 +23,7 @@ interface Exception {
   reason: string;
 }
 
-const EXCEPCIONES: readonly Exception[] = [
-  {
-    rule: 'color-contrast',
-    match: '.opacity-60',
-    reason:
-      'The summary card of a feature that is not there yet (Ingresos, «Pronto») is dimmed ' +
-      'with opacity-60: 2.56:1. Dim it with the muted tokens instead of opacity.',
-  },
-  {
-    rule: 'color-contrast',
-    match: 'Pronto</span>',
-    reason:
-      'The «Pronto» tag is muted-foreground on the muted surface: 2.33:1. The tag needs ' +
-      'a foreground declared for that surface (CLAUDE.md rule 5).',
-  },
-  ...['aria-required-children', 'aria-required-parent', 'listitem'].map((rule) => ({
-    rule,
-    inside: '[role="listbox"][aria-label="Concepto"]',
-    reason:
-      'The concept finder: its popup is a listbox that holds a search box, buttons and ' +
-      'another listbox, and every option sits inside an <li>. It needs the combobox ' +
-      'pattern: the popup as a group, options as direct children of their list.',
-  })),
-  {
-    rule: 'target-size',
-    match: 'Elegir por centro y categoría',
-    reason:
-      'The text link under the concept field is 16px tall, under the 24px minimum, and ' +
-      'sits next to the concept field. It needs a taller hit area.',
-  },
-  {
-    rule: 'link-in-text-block',
-    match: 'href="/registro"',
-    reason:
-      '«Solicitar acceso» on the sign-in screen is told apart from its sentence only by ' +
-      'colour (1.95:1) until hovered. It needs its underline at rest.',
-  },
-];
+const EXCEPCIONES: readonly Exception[] = [];
 
 const BLOCKING = new Set(['serious', 'critical']);
 
