@@ -29,10 +29,10 @@ targets:
     platform: iOS
     sources:
       - path: Coco
-    # La extensión de WidgetKit (M13) se embebe aquí cuando exista:
-    # dependencies:
-    #   - target: CocoAccesos
-    #     embed: true
+    dependencies:
+      # La extensión de accesos rápidos (M13) va dentro del .app.
+      - target: CocoAccesos
+        embed: true
     info:
       path: Coco/Resources/Info.plist
       properties:
@@ -65,9 +65,38 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco
         TARGETED_DEVICE_FAMILY: "1"
         ENABLE_PREVIEWS: YES
-  # CocoAccesos (app-extension, com.apple.widgetkit-extension, bundle
-  # co.loatech.coco.accesos, fuentes en CocoAccesos/) lo añade M13. Hasta
-  # entonces no se declara: un target sin fuentes rompe el build.
+  # Accesos rápidos (M13): el control del Centro de control / pantalla
+  # bloqueada / botón de acción (iOS 18) y el widget de inicio + accesorios de
+  # pantalla bloqueada (iOS 17). Solo abren la app por coco://, así que no
+  # lleva entitlements (nada de App Groups: el equipo personal gratuito no los
+  # garantiza). Consume el segundo App ID de los 10 por semana del equipo
+  # personal.
+  #
+  # Si Xcode se niega a firmar la extensión con el equipo personal, se quita
+  # este target y la dependencia de arriba: el botón de acción sigue
+  # funcionando por los App Shortcuts de la app.
+  CocoAccesos:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: CocoAccesos
+    info:
+      path: CocoAccesos/Info.plist
+      properties:
+        CFBundleDisplayName: Accesos de Coco
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco.accesos
+        TARGETED_DEVICE_FAMILY: "1"
+        # Su propio catálogo con el mismo color de marca que la app: la
+        # extensión no ve los recursos del .app.
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SKIP_INSTALL: YES
   CocoTests:
     type: bundle.unit-test
     platform: iOS
