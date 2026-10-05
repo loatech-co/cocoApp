@@ -13,7 +13,7 @@ import {
   TriangleAlert,
   Upload,
 } from 'lucide-react';
-import { type ComponentType, type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import {
   BotonOscuro,
@@ -25,11 +25,10 @@ import {
   Soportes,
 } from '@/components/soportes';
 import { nombreDelMovimiento, rutaSeleccionada } from '@/lib/movimientos';
-import { Etiqueta } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ChipIcono, type ColorDeChip } from '@/components/ui/chip-icono';
-import { BLOQUE, Bloque } from '@/components/ui/bloque';
+import { ChipIcono } from '@/components/ui/chip-icono';
+import { Bloque } from '@/components/ui/bloque';
 import { Campo } from '@/components/ui/campo';
 import { CampoDeDinero } from '@/components/ui/campo-de-dinero';
 import { Combo } from '@/components/ui/combo';
@@ -37,7 +36,7 @@ import { Confirmacion } from '@/components/ui/confirmacion';
 import { SelectorDeFecha } from '@/components/selector-de-fecha';
 import { CabeceraDeModal, PANEL_DE_MODAL, PieDeModal } from '@/components/ui/modal-partes';
 import { Progreso } from '@/components/ui/progreso';
-import { REALCE, SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
+import { SUPERFICIE_FLOTANTE } from '@/components/ui/superficie';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiClientError, apiSubir } from '@/lib/api-client';
 import { encogerSoportes } from '@/lib/encoger-soporte';
@@ -192,24 +191,18 @@ export function MovimientoModal({
   const [editable, setEditable] = useState(false);
 
   /*
-    ── Crear un movimiento empieza por decidir CÓMO ────────────────────────
-    Con un recibo en la mano, teclear el valor y la fecha es copiar a mano lo
-    que está escrito en el papel. Sin recibo, esperar a tener uno para
-    registrar un gasto es perder el gasto.
+    ── The form is the first thing you see ──────────────────────────────────
+    A new movement used to open on a chooser —"Registrar manualmente",
+    "Subir un archivo", "Tomar una foto"— before the form. It cost one click
+    on every new movement to answer a question most people answered the same
+    way, and it hid the form behind a screen that had nothing to fill in.
 
-    Son dos caminos de verdad distintos —uno empieza por el documento, el otro
-    por los datos— y preguntarlo de entrada cuesta un clic y ahorra el
-    formulario entero en el caso más común.
+    Now the form opens directly. Uploading a file and taking a photo are two
+    actions inside the document column (`SoportesPendientes`); the camera and
+    the reading step still take over the sheet while they last, and come back
+    to the form when they finish.
   */
-  const [paso, setPaso] = useState<'elegir' | 'camara' | 'leyendo' | 'formulario'>('formulario');
-  /**
-   * El panel de subir, abierto SOBRE la ficha.
-   *
-   * Es el mismo que abre la baldosa de la galería de un movimiento ya
-   * guardado: subir un archivo se hace igual venga de donde venga, y no es
-   * una etapa del formulario sino algo que se hace en medio y se cierra.
-   */
-  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  const [paso, setPaso] = useState<'camara' | 'leyendo' | 'formulario'>('formulario');
   const [progresoDeLectura, setProgresoDeLectura] = useState<ProgresoDeLectura | null>(null);
   const [lectura, setLectura] = useState<Lectura | null>(null);
   /**
@@ -310,15 +303,9 @@ export function MovimientoModal({
     setError(null);
     setConfirmandoBorrado(false);
     setEditable(!movimiento);
-    /*
-      Confirmar un pago se salta el «cómo empezar».
-
-      Esa pantalla existe para decidir si se parte del papel o de los datos, y
-      aquí esa pregunta ya no está abierta: el concepto se sabe, el valor y la
-      fecha están puestos, y lo único que falta es el soporte —que se adjunta
-      en la columna de al lado, sin cambiar de pantalla—.
-    */
-    setPaso(movimiento || pago ? 'formulario' : 'elegir');
+    // Always the form: a sheet left on the camera or mid-reading would reopen
+    // there for the next movement.
+    setPaso('formulario');
     setLectura(null);
     setSinLeer(null);
     setPendientes([]);
@@ -766,23 +753,6 @@ export function MovimientoModal({
           // de abajo, las de abajo también se ven, y dos cantos rectos debajo
           // de dos curvos es una caja a medio dibujar.
           'rounded-lg',
-          /*
-            ── La ÚNICA ficha que puede ser más baja ────────────────────────
-            El alto mínimo de `PANEL_DE_MODAL` existe para que dos fichas
-            seguidas no hagan crecer y encoger el mismo panel en el mismo sitio
-            de la pantalla. Aquí no aplica: «cómo empezar» no es una ficha más,
-            es el paso previo a todas —tres opciones y nada más—, y no se abre
-            después de otra sino ANTES. No hay con qué compararla.
-
-            Y el mínimo le hacía daño: con tres tarjetas de dos renglones, 600
-            de alto son cuatrocientos de nada debajo. Es exactamente el hueco
-            que llevamos media tarde intentando llenar con adornos.
-
-            `min-h-0` gana al `min-h-[min(600px,92dvh)]` de la clase compartida
-            porque va después y las dos son la misma propiedad; el `max-h` de
-            92dvh sigue en pie, que es el que importa cuando sí hay contenido.
-          */
-          paso === 'elegir' && 'min-h-0',
         )}
       >
         {/* La misma cabecera que las demás fichas, con el pastel de color en
@@ -902,16 +872,8 @@ export function MovimientoModal({
             alto mínimo: con eso el formulario puede estirarse y llevarse sus
             botones al fondo en vez de dejarlos a media altura. */}
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-          {paso === 'elegir' && (
-            <ComoEmpezar
-              onSubir={() => setSubiendoArchivo(true)}
-              onCamara={() => setPaso('camara')}
-              onAMano={() => setPaso('formulario')}
-            />
-          )}
-
           {paso === 'camara' && (
-            <Camara onTomar={(a) => void escanear(a)} onCerrar={() => setPaso('elegir')} />
+            <Camara onTomar={(a) => void escanear(a)} onCerrar={() => setPaso('formulario')} />
           )}
 
           {paso === 'leyendo' && (
@@ -940,27 +902,30 @@ export function MovimientoModal({
                     <SoportesPendientes
                       archivos={pendientes}
                       /*
-                        Confirmando un pago, el PRIMER soporte se lee.
+                        The FIRST document of a new movement is read.
 
-                        Es la mitad que faltaba: la ficha se abre con el valor
-                        y la fecha esperados, y el recibo es lo que los
-                        convierte en los de verdad. Adjuntarlo y que no pasara
-                        nada dejaba al soporte de adorno y obligaba a copiar a
-                        mano lo que la app sabe leer.
+                        Whether it came from the drop zone, the paste button,
+                        "Cargar archivo" or the camera: the sheet opens on the
+                        form and the receipt is what turns the expected (or
+                        empty) value and date into the real ones. Attaching it
+                        and having nothing happen left the document as
+                        decoration and forced typing what the app can read.
 
-                        Solo el primero, y solo si no hay ninguno: los demás
-                        quedan adjuntos sin leer, porque lo que rellena el
-                        formulario es UN documento. Es la misma regla que ya
-                        seguía el panel de subir.
+                        Only the first, and only when there is none yet: the
+                        rest stay attached unread, because what fills the form
+                        is ONE document. It is the same rule the upload panel
+                        already followed.
 
-                        Y solo confirmando un pago. Quien eligió «Registrar
-                        manualmente» eligió teclearlo: releerle encima lo que
-                        acaba de escribir sería deshacerle el trabajo.
+                        This used to apply only when confirming a payment,
+                        because choosing "Registrar manualmente" on the old
+                        chooser meant "I will type it". That choice no longer
+                        exists, so there is no signal to honour: what was read
+                        shows up as a notice to verify, not as a saved fact.
                       */
                       onAñadir={(nuevos) => {
                         const [primero, ...resto] = nuevos;
 
-                        if (confirmandoUnPago && pendientes.length === 0 && primero) {
+                        if (pendientes.length === 0 && primero) {
                           void escanear(primero).then(() => {
                             if (resto.length > 0) setPendientes((p) => [...p, ...resto]);
                           });
@@ -970,6 +935,7 @@ export function MovimientoModal({
                         setPendientes((p) => [...p, ...nuevos]);
                       }}
                       onQuitar={(i) => setPendientes((p) => p.filter((_, n) => n !== i))}
+                      onTakePhoto={() => setPaso('camara')}
                     />
                   )}
                 </div>
@@ -1219,24 +1185,6 @@ export function MovimientoModal({
                 </PieDeModal>
               )}
             </form>
-          )}
-
-          {subiendoArchivo && (
-            <PanelDeSubida
-              subiendo={false}
-              progreso={0}
-              onArchivos={(archivos) => {
-                const [primero, ...resto] = archivos;
-                if (!primero) return;
-                setSubiendoArchivo(false);
-                // El primero se lee; los demás quedan adjuntos sin leer, porque lo
-                // que rellena el formulario es UN documento.
-                void escanear(primero).then(() => {
-                  if (resto.length > 0) setPendientes((p) => [...p, ...resto]);
-                });
-              }}
-              onCerrar={() => setSubiendoArchivo(false)}
-            />
           )}
 
           <Confirmacion
@@ -1492,211 +1440,6 @@ function conceptoLlamado(arbol: Category[], nombre: string): Category | undefine
 }
 
 /**
- * Las dos formas de empezar un movimiento.
- *
- * ── Por qué se pregunta en vez de deducirlo ─────────────────────────────────
- * Porque son dos actos distintos, no dos caminos al mismo sitio. Con el
- * soporte a mano, teclear el valor y la fecha es copiar lo que ya está escrito
- * en el papel —y equivocarse en un dígito—. Sin soporte, esperar a tener uno
- * para registrar el gasto es perder el gasto.
- *
- * ── Por qué la fila entera es el disparador ─────────────────────────────────
- * Porque la fila ES la opción. Con el clic solo en un botón pequeño al final,
- * el resto —el icono, el título, la explicación— se ve pulsable y no lo es, y
- * cada intento fallido enseña a desconfiar del resto de la pantalla.
- *
- * La vía de escanear es la excepción: lleva dos acciones distintas dentro, y
- * una fila no puede hacer dos cosas.
- */
-function ComoEmpezar({
-  onSubir,
-  onCamara,
-  onAMano,
-}: {
-  /**
-   * Lleva a la pantalla de subir, no abre el buscador de archivos.
-   *
-   * Abriéndolo desde aquí, la única forma de dar un archivo era buscarlo en el
-   * disco: ni arrastrarlo ni pegar una captura, que es de donde sale la mitad
-   * de los soportes. La pantalla de al lado tiene las tres.
-   */
-  onSubir: () => void;
-  onCamara: () => void;
-  onAMano: () => void;
-}) {
-  return (
-    /*
-      ── TRES opciones, una al lado de la otra ─────────────────────────────
-      Eran dos filas apiladas, y la primera contenía dos botones dentro: una
-      caja que no se podía pulsar con dos pastillas pequeñas debajo de su
-      explicación, y debajo una fila que sí se pulsaba entera. Tres cosas que
-      se pueden hacer, presentadas de dos maneras distintas y en dos niveles
-      —la jerarquía decía que la cámara y el archivo eran subopciones de algo,
-      cuando en realidad son hermanas de registrar a mano—.
-
-      Ahora son tres columnas iguales y los tres son el mismo objeto: una
-      baldosa que se pulsa entera. Se comparan de un vistazo, que es lo que se
-      viene a hacer aquí, y el blanco de cada una es toda la baldosa.
-
-      En un teléfono se apilan: tres columnas en 375px dejan cada título
-      partido en tres renglones.
-    */
-    /*
-      ── Ni estiradas ni pegadas arriba: centradas ───────────────────────────
-      Estuvieron ocupando el alto entero de la ficha, con `flex-1` y
-      `auto-rows-fr`. Era un error de planteamiento y costó cuatro intentos de
-      adorno descubrirlo: esto es un CHOOSER —tres opciones, se elige una y
-      desaparecen— y una opción no tiene nada que hacer con quinientos píxeles
-      de alto. Lo que había debajo del texto no era espacio, era un hueco, y
-      todo lo que se le metió dentro se leyó como relleno.
-
-      Miden ahora lo que miden sus dos renglones, y `my-auto` las pone en
-      mitad de la ficha en vez de dejarlas colgando del título. La ficha tiene
-      alto mínimo y aquí no hay nada más: el sitio que sobra es de la ficha, no
-      de las tarjetas.
-    */
-    <div className="grid my-auto gap-3 sm:grid-cols-3">
-      {/* Apagada, no escondida: es la regla de esta app para lo que va a
-          llegar. Quitarla haría creer que la aplicación no sabe leer una foto
-          —y sabe: es el mismo motor que lee un archivo subido—. */}
-      <Via
-        Icono={Camera}
-        color="gasto"
-        titulo="Tomar una foto"
-        ayuda="Se leen el valor, la fecha y el concepto."
-        nota="Pronto"
-        deshabilitada
-        onClick={onCamara}
-      />
-
-      <Via
-        Icono={Upload}
-        color="gasto"
-        titulo="Subir un archivo"
-        ayuda="Un PDF o una imagen del soporte."
-        onClick={onSubir}
-      />
-
-      <Via
-        Icono={Pencil}
-        color="presupuesto"
-        titulo="Registrar manualmente"
-        ayuda="Sin soporte, o cuando ya sabes cómo clasificarlo."
-        onClick={onAMano}
-      />
-    </div>
-  );
-}
-
-/**
- * Una de las tres vías.
- *
- * ── Por qué es una baldosa y no una fila ────────────────────────────────────
- * Porque las tres se comparan entre sí, y lo que se compara se pone al lado,
- * no debajo: en columna hay que leer las tres explicaciones en orden para
- * saber cuál es la que se quiere. Una al lado de otra se ven de un vistazo.
- *
- * ── Y siempre se pulsa ENTERA ───────────────────────────────────────────────
- * Antes había dos formas —con `onClick` la fila era un botón; sin él, una caja
- * que contenía botones más pequeños—, y eso hacía que la cámara y el archivo
- * parecieran subopciones de «escanear» cuando en realidad son hermanas de
- * registrar a mano. Con una sola forma, el blanco de cada opción es toda su
- * baldosa, que es lo que se acierta con el dedo.
- *
- * El contenido va en COLUMNA: el pastel arriba y el texto debajo. De lado, en
- * un tercio del ancho del modal, el texto se queda con setenta píxeles y el
- * título se parte.
- */
-/**
- * Las dos manchas de color de un cartel: mismo tamaño, esquinas opuestas.
- *
- * La medida va aquí y no en cada una porque lo que las hace funcionar es que
- * sean IGUALES —dos discos de tamaños parecidos pero distintos se leen como un
- * descuido, no como una composición— y escrita dos veces es cuestión de tiempo
- * que alguien cambie una y se olvide de la otra. Lo único que cambia entre las
- * dos es de qué esquina entran.
- *
- * Y se hunden MÁS en el teléfono que en pantalla grande —80px contra 64—
- * aunque ahí el disco sea más pequeño. Apilada, la tarjeta mide un tercio de
- * la ficha: un disco de 208 hundido solo 64 se le comería el centro, que es
- * donde va el glifo.
- */
-function Via({
-  Icono,
-  color,
-  titulo,
-  ayuda,
-  nota,
-  deshabilitada = false,
-  onClick,
-}: {
-  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  color: ColorDeChip;
-  titulo: string;
-  ayuda: string;
-  /** Dos palabras en una etiqueta: por qué no se puede todavía. */
-  nota?: string;
-  deshabilitada?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={deshabilitada}
-      aria-disabled={deshabilitada}
-      // Al pasar por encima se tiñe el borde y se llena con `accent`, que es
-      // la superficie de lo que responde en toda la app. Antes era `muted`, y
-      // dentro de un modal `muted` y `popover` se llevan un escalón de nada en
-      // oscuro: había que marcar además el borde en `primary` —a plena tinta,
-      // más fuerte que la fila entera— para que se notara algo.
-      className={cn(
-        BLOQUE,
-        // `h-full` para que las tres midan lo que la más alta de la fila: con
-        // una ayuda de dos renglones y otra de uno, tres tarjetas de altos
-        // distintos en una fila se leen como un descuadre.
-        //
-        // `items-start` para que el pastel mida lo suyo: sin él, un hijo de una
-        // columna flexible se estira a todo el ancho y el círculo sale óvalo.
-        'flex h-full w-full flex-col items-start gap-3 p-4 text-left',
-        'transition-colors',
-        // Apagada no responde: ni tiñe el borde ni se realza, o prometería
-        // que al pulsarla pasa algo.
-        deshabilitada ? 'cursor-not-allowed opacity-50' : cn('hover:border-ring/40', REALCE),
-      )}
-    >
-      <ChipIcono Icono={Icono} color={color} tamano="sm" />
-
-      <span className="min-w-0">
-        <span className="flex items-center gap-2">
-          <span className="min-w-0 truncate text-sm font-semibold">{titulo}</span>
-          {/* La misma etiqueta que en el resto de la app, no un rótulo a mano. */}
-          {nota && (
-            <Etiqueta tono="neutro" className="shrink-0 text-muted-foreground">
-              {nota}
-            </Etiqueta>
-          )}
-        </span>
-        {/*
-          ── `min-h-8`: dos renglones reservados ─────────────────────────────
-          El texto va pegado al pie de la tarjeta, así que lo que queda fijo es
-          el BORDE DE ABAJO del bloque y no su principio: una ayuda de dos
-          renglones empuja su título dieciséis píxeles hacia arriba y el de al
-          lado, con una ayuda de uno, se queda donde estaba. Tres títulos a dos
-          alturas distintas en una fila de tres tarjetas iguales se lee como un
-          descuadre, aunque cada tarjeta por separado esté bien.
-
-          Reservando el alto de dos renglones —`text-xs` mide uno por cada
-          rem—, todas las ayudas ocupan lo mismo aunque una llene solo la
-          mitad, y los tres títulos caen en la misma línea.
-        */}
-        <span className="mt-0.5 block min-h-8 text-xs text-muted-foreground">{ayuda}</span>
-      </span>
-    </button>
-  );
-}
-
-/**
  * LA rejilla de una ficha de movimiento: el papel y lo que dice.
  *
  * ── Por qué una clase y no dos rejillas escritas ────────────────────────────
@@ -1912,10 +1655,13 @@ function SoportesPendientes({
   archivos,
   onAñadir,
   onQuitar,
+  onTakePhoto,
 }: {
   archivos: File[];
   onAñadir: (archivos: File[]) => void;
   onQuitar: (indice: number) => void;
+  /** Hands the sheet over to the camera; what it captures comes back through `onAñadir`'s owner. */
+  onTakePhoto: () => void;
 }) {
   const [activo, setActivo] = useState(0);
   const [urls, setUrls] = useState<string[]>([]);
@@ -2013,9 +1759,34 @@ function SoportesPendientes({
       )}
 
       {vacio && (
-        <div className="flex min-h-0 flex-1">
-          <Soltar subiendo={false} progreso={0} solo onArchivos={onAñadir} />
-        </div>
+        <>
+          <div className="flex min-h-0 flex-1">
+            <Soltar subiendo={false} progreso={0} solo onArchivos={onAñadir} />
+          </div>
+
+          {/*
+            ── The two ways in that used to be the chooser ───────────────────
+            "Cargar archivo" opens the same upload panel the chooser opened
+            —drag, pick or paste, over the sheet— and "Tomar foto" hands the
+            sheet to the camera. Both end in `escanear` through the owner's
+            `onAñadir`, so what a file or a photo does to the form is exactly
+            what it did from the chooser; only where it starts changed.
+
+            Same size for both and `outline` for both: neither is the primary
+            action of this sheet —that is "Registrar", at the foot— and a
+            filled button here would compete with it.
+          */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Button type="button" variant="outline" size="sm" onClick={() => setAñadiendo(true)}>
+              <Upload aria-hidden="true" />
+              Cargar archivo
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={onTakePhoto}>
+              <Camera aria-hidden="true" />
+              Tomar foto
+            </Button>
+          </div>
+        </>
       )}
 
       {añadiendo && (

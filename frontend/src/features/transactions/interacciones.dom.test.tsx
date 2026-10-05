@@ -18,10 +18,9 @@ import { MovimientoModal } from './movimiento-modal';
   pierde uno, también, para que se anote.
 
   Lo que NO cuenta como interacción: leer. Ver que la sugerencia ya está
-  puesta no es un gesto. Y lo que SÍ cuenta aunque no esté en la lista de la
-  fase: la pantalla de «cómo empezar» con la que abre una ficha nueva. Es un
-  clic de verdad y la cuenta se da por los dos lados, desde la ficha abierta y
-  desde el formulario.
+  puesta no es un gesto. Y se cuenta TODO desde que la ficha se abre: la ficha
+  nueva abre ya en el formulario —la pantalla de «cómo empezar» que había
+  delante se retiró—, así que el primer gesto es escribir el monto.
 */
 
 const apiFetch = vi.fn();
@@ -109,9 +108,6 @@ function abrirFichaNueva(): void {
   );
 }
 
-/** Gesto 1 de toda ficha nueva: salir del «cómo empezar» hacia el formulario. */
-const registrarManualmente = () => gesto(() => fireEvent.click(screen.getByText('Registrar manualmente')));
-
 const escribirElMonto = () =>
   gesto(() => fireEvent.change(document.getElementById('mov-valor')!, { target: { value: '120000' } }));
 
@@ -134,40 +130,42 @@ const cuerpoCreado = () =>
 const seAprendio = () => apiFetch.mock.calls.some(([ruta]) => ruta === '/categorization/learn');
 
 describe('Registrar un gasto con clasificación completa', () => {
-  it('a mano, por el buscador: seis gestos desde la ficha abierta, cinco desde el formulario', async () => {
+  it('a mano, por el buscador: cinco gestos desde que se abre la ficha', async () => {
     abrirFichaNueva();
 
-    registrarManualmente(); // 1
-    escribirElMonto(); // 2
+    // La ficha abre en el formulario: no hay nada que pulsar antes de escribir.
+    expect(screen.queryByText('Registrar manualmente')).toBeNull();
+
+    escribirElMonto(); // 1
 
     // El buscador es un botón que abre la caja de búsqueda: abrirlo es un
     // gesto, escribir es otro, elegir el resultado es el tercero.
-    gesto(() => fireEvent.click(screen.getByRole('button', { name: /Concepto/ }))); // 3
+    gesto(() => fireEvent.click(screen.getByRole('button', { name: /Concepto/ }))); // 2
     gesto(() =>
       fireEvent.change(screen.getByLabelText('Buscar concepto o categoría'), { target: { value: 'celsia' } }),
-    ); // 4
-    gesto(() => fireEvent.click(screen.getByRole('option', { name: /^Celsia/ }))); // 5
+    ); // 3
+    gesto(() => fireEvent.click(screen.getByRole('option', { name: /^Celsia/ }))); // 4
 
-    await guardar(); // 6
+    await guardar(); // 5
 
     expect(cuerpoCreado()).toMatchObject({ category_id: 100 });
     // Nadie sugirió nada: clasificar a mano no es confirmar una sugerencia.
     expect(seAprendio()).toBe(false);
 
     /*
-      El número real. La fase pedía ≤ 5 contando monto, búsqueda, elección y
-      guardado —y esos son exactamente cinco—; el sexto es la pantalla de
-      «cómo empezar», que la ficha nueva pone delante del formulario.
+      El número real, contándolo TODO desde que se abre la ficha: monto,
+      abrir el buscador, escribir, elegir y guardar. Son exactamente los
+      cinco que pide la meta (≤ 5); el sexto que había era la pantalla de
+      «cómo empezar», y ya no está.
     */
-    expect(interacciones).toBe(6);
+    expect(interacciones).toBe(5);
   });
 
-  it('con una sugerencia que acierta: tres gestos desde la ficha abierta, dos desde el formulario', async () => {
+  it('con una sugerencia que acierta: dos gestos desde que se abre la ficha', async () => {
     sugerencia.mockReturnValue({ category_id: 100, confidence: 0.9, reason: 'historial' });
     abrirFichaNueva();
 
-    registrarManualmente(); // 1
-    escribirElMonto(); // 2
+    escribirElMonto(); // 1
 
     // La sugerencia ya está puesta y dice de dónde salió. Mirarla no es un
     // gesto: la regla de no guardar nunca una clasificación sin que la
@@ -175,7 +173,7 @@ describe('Registrar un gasto con clasificación completa', () => {
     expect(screen.getByRole('button', { name: /Concepto/ }).textContent).toContain('Celsia (Energía)');
     expect(screen.getByText(/Sugerido por tu historial/)).toBeDefined();
 
-    await guardar(); // 3
+    await guardar(); // 2
 
     expect(cuerpoCreado()).toMatchObject({ category_id: 100 });
 
@@ -188,9 +186,10 @@ describe('Registrar un gasto con clasificación completa', () => {
     expect(seAprendio()).toBe(false);
 
     /*
-      El número real, por debajo del ≤ 4 de la fase: monto y guardado desde
-      el formulario, más el «cómo empezar».
+      El número real, por debajo del ≤ 4 de la meta: monto y guardado, y
+      nada más. Sin el «cómo empezar» delante, la sugerencia que acierta deja
+      la ficha en dos gestos.
     */
-    expect(interacciones).toBe(3);
+    expect(interacciones).toBe(2);
   });
 });

@@ -227,11 +227,10 @@ describe('La ficha de confirmar un pago pendiente', () => {
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
   });
 
-  it('se salta el «cómo empezar»: abre directamente en el formulario', () => {
-    // Esa pantalla pregunta si se parte del papel o de los datos, y aquí esa
-    // pregunta ya está contestada.
+  it('abre directamente en el formulario, sin ninguna pantalla delante', () => {
     abrirConfirmacion();
 
+    expect(screen.getByLabelText('Valor')).toBeDefined();
     expect(screen.queryByText('Registrar manualmente')).toBeNull();
     expect(screen.queryByText('Subir un archivo')).toBeNull();
   });
@@ -251,24 +250,51 @@ describe('La ficha de confirmar un pago pendiente', () => {
     expect(screen.getByText(/se leen el valor y la fecha/i)).toBeDefined();
   });
 
-  it('sin pago pendiente, un movimiento nuevo sigue empezando por el «cómo empezar»', () => {
-    const cliente = new QueryClient({
-      defaultOptions: { queries: { retry: false, gcTime: 0 } },
-    });
-    cliente.setQueryData([...keys.categories, 'todas'], ARBOL);
+  it('sin pago pendiente, un movimiento nuevo también abre en el formulario', () => {
+    // La pantalla de «cómo empezar» que había delante se retiró: costaba un
+    // clic en cada movimiento nuevo para una pregunta que casi siempre se
+    // contestaba igual. Sus dos otras vías viven ahora dentro del formulario.
+    abrirNuevo();
 
-    render(
-      <QueryClientProvider client={cliente}>
-        <MemoryRouter>
-          <MovimientoModal abierta movimiento={null} onCerrar={() => {}} />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
-
-    expect(screen.getByText('Registrar manualmente')).toBeDefined();
     expect(screen.getByRole('heading', { name: /Nuevo/ })).toBeDefined();
+    expect(screen.getByLabelText('Valor')).toBeDefined();
+    expect(screen.queryByText('Registrar manualmente')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Cargar archivo' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Tomar foto' })).toBeDefined();
   });
 });
+
+function abrirNuevo() {
+  const cliente = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
+  cliente.setQueryData([...keys.categories, 'todas'], ARBOL);
+
+  return render(
+    <QueryClientProvider client={cliente}>
+      <MemoryRouter>
+        <MovimientoModal abierta movimiento={null} onCerrar={() => {}} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
+/** Lo que el lector de mentira devuelve por un recibo de Celsia. */
+const LECTURA_DE_CELSIA: Awaited<ReturnType<typeof leerSoporte>> = {
+  texto: 'CELSIA S.A. E.S.P. Total a pagar 214.500',
+  fuente: 'texto-embebido',
+  lectura: {
+    concepto: 'Celsia (Energía)',
+    categoria: null,
+    centro: null,
+    valor: 214500,
+    fecha: '2026-10-02',
+    confianza: 0.9,
+    señales: { texto: [], nombre: [], nit: [], recaudadoresIgnorados: [] },
+    motivo: '',
+    alternativas: [],
+  },
+};
 
 /**
  * Y el soporte CORRIGE lo que estaba puesto.
@@ -300,21 +326,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
   });
 
   it('reemplaza el valor y la fecha esperados por los que dice el recibo', async () => {
-    vi.mocked(leerSoporte).mockResolvedValue({
-      texto: 'CELSIA S.A. E.S.P. Total a pagar 214.500',
-      fuente: 'texto-embebido',
-      lectura: {
-        concepto: 'Celsia (Energía)',
-        categoria: null,
-        centro: null,
-        valor: 214500,
-        fecha: '2026-10-02',
-        confianza: 0.9,
-        señales: { texto: [], nombre: [], nit: [], recaudadoresIgnorados: [] },
-        motivo: '',
-        alternativas: [],
-      },
-    });
+    vi.mocked(leerSoporte).mockResolvedValue(LECTURA_DE_CELSIA);
 
     const { container } = abrirConfirmacion();
 
@@ -346,23 +358,14 @@ describe('El soporte adjuntado al confirmar un pago', () => {
     expect(screen.getByLabelText<HTMLInputElement>('Fecha').value).toMatch(/2 de octubre/i);
   });
 
-  it('un movimiento que se registra a mano NO se relee encima', async () => {
-    // Quien eligió «Registrar manualmente» eligió teclearlo: releerle encima lo
-    // que acaba de escribir sería deshacerle el trabajo.
-    const cliente = new QueryClient({
-      defaultOptions: { queries: { retry: false, gcTime: 0 } },
-    });
-    cliente.setQueryData([...keys.categories, 'todas'], ARBOL);
+  it('en un movimiento nuevo, el primer soporte también se lee', async () => {
+    // Antes solo se leía confirmando un pago: quien pulsaba «Registrar
+    // manualmente» en el «cómo empezar» había dicho que iba a teclearlo. Esa
+    // pantalla ya no existe, así que no hay elección que respetar: lo leído
+    // entra como propuesta a verificar, igual que al confirmar un pago.
+    vi.mocked(leerSoporte).mockResolvedValue(LECTURA_DE_CELSIA);
 
-    const { container } = render(
-      <QueryClientProvider client={cliente}>
-        <MemoryRouter>
-          <MovimientoModal abierta movimiento={null} onCerrar={() => {}} />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
-
-    fireEvent.click(screen.getByText('Registrar manualmente'));
+    const { container } = abrirNuevo();
 
     const campo = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(campo, {
@@ -374,7 +377,78 @@ describe('El soporte adjuntado al confirmar un pago', () => {
       await vi.advanceTimersByTimeAsync(4000);
     });
 
-    expect(vi.mocked(leerSoporte)).not.toHaveBeenCalled();
+    expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();
+    expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('214.500');
+  });
+});
+
+/**
+ * Las dos vías que vivían en el «cómo empezar», ahora dentro del formulario.
+ *
+ * Lo que hace un archivo o una foto con la ficha es EXACTAMENTE lo de antes
+ * —se lee, rellena los campos y queda como previsualización—; lo único que
+ * cambió es desde dónde se dispara.
+ */
+describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    URL.createObjectURL = vi.fn(() => 'blob:prueba');
+    URL.revokeObjectURL = vi.fn();
+    globalThis.ResizeObserver = class {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    };
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.mocked(leerSoporte).mockReset();
+  });
+
+  it('«Cargar archivo» abre el panel de subir, y lo que se da ahí se lee y rellena el formulario', async () => {
+    vi.mocked(leerSoporte).mockResolvedValue(LECTURA_DE_CELSIA);
+    abrirNuevo();
+
+    expect(screen.queryByRole('dialog', { name: 'Agregar soportes' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cargar archivo' }));
+
+    const panel = screen.getByRole('dialog', { name: 'Agregar soportes' });
+    const campo = panel.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(campo, {
+      target: { files: [new File(['x'], 'celsia-octubre.png', { type: 'image/png' })] },
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4000);
+    });
+
+    expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();
+    expect(vi.mocked(leerSoporte).mock.calls[0]?.[0]?.name).toBe('celsia-octubre.png');
+    // El panel se cerró, el formulario quedó relleno y el archivo queda como
+    // previsualización en la columna del documento.
+    expect(screen.queryByRole('dialog', { name: 'Agregar soportes' })).toBeNull();
+    expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('214.500');
+    expect(screen.getByLabelText<HTMLInputElement>('Fecha').value).toMatch(/2 de octubre/i);
+    expect(screen.getByRole('button', { name: 'Quitar este soporte' })).toBeDefined();
+  });
+
+  it('«Tomar foto» pasa a la cámara, y cancelar vuelve al formulario', () => {
+    abrirNuevo();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tomar foto' }));
+
+    // jsdom no tiene cámara: la vista lo dice y «Capturar» queda apagado. Lo
+    // que se comprueba es que la ficha ESTÁ en la cámara, no que capture.
+    expect(screen.getByText(/No se detectó ninguna cámara/)).toBeDefined();
+    expect(screen.getByRole('button', { name: /Capturar/ })).toBeDefined();
+    expect(screen.queryByLabelText('Valor')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Cancelar/ }));
+
+    expect(screen.getByLabelText('Valor')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Tomar foto' })).toBeDefined();
   });
 });
 

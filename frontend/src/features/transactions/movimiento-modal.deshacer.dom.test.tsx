@@ -64,9 +64,39 @@ const ARBOL = [
   },
 ] as unknown as CategoryTree[];
 
+/*
+  Lo que el lector de mentira devuelve: un archivo que se abrió y en el que no
+  se reconoció nada.
+
+  El primer soporte de un movimiento nuevo se LEE —desde que la ficha abre en
+  el formulario no hay un «Registrar manualmente» que diga lo contrario—, y
+  aquí lo que se prueba es qué pasa cuando la SUBIDA falla, no la lectura.
+  Un lector que no saca nada deja el formulario como estaba.
+*/
+const LECTURA_VACIA: Awaited<ReturnType<typeof leerSoporte>> = {
+  texto: '',
+  fuente: 'texto-embebido',
+  lectura: {
+    concepto: null,
+    categoria: null,
+    centro: null,
+    valor: null,
+    fecha: null,
+    confianza: 0,
+    señales: { texto: [], nombre: [], nit: [], recaudadoresIgnorados: [] },
+    motivo: '',
+    alternativas: [],
+  },
+};
+
 beforeEach(() => {
   apiFetch.mockReset();
   apiSubir.mockReset();
+  // La lectura espera un piso de cuatro segundos aunque ya haya terminado;
+  // con el reloj falso se le pasa por encima en `adjuntar`.
+  vi.useFakeTimers();
+  vi.mocked(leerSoporte).mockReset();
+  vi.mocked(leerSoporte).mockResolvedValue(LECTURA_VACIA);
   URL.createObjectURL = vi.fn(() => 'blob:prueba');
   URL.revokeObjectURL = vi.fn();
   globalThis.ResizeObserver = class {
@@ -76,7 +106,10 @@ beforeEach(() => {
   };
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 function abrirFichaNueva() {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -90,8 +123,7 @@ function abrirFichaNueva() {
     </QueryClientProvider>,
   );
 
-  // La ficha nueva abre por el «cómo empezar»; el formulario está detrás.
-  fireEvent.click(screen.getByText('Registrar manualmente'));
+  // La ficha nueva abre ya en el formulario.
   return vista;
 }
 
@@ -115,6 +147,12 @@ async function adjuntar(container: HTMLElement): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/require-await -- ver arriba
   await act(async () => {
     fireEvent.change(campo);
+  });
+
+  // El piso de la espera de la lectura: hasta que pasa, la ficha enseña el
+  // documento leyéndose y no el formulario.
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(4000);
   });
 }
 
@@ -215,7 +253,7 @@ describe('Lo que la web guarda', () => {
       ([ruta, opciones]) => ruta === '/transactions' && (opciones as { method?: string })?.method === 'POST',
     );
 
-  it('manda source «web»; sin lectura, raw_text va vacío', async () => {
+  it('manda source «web»; sin texto leído, raw_text va vacío', async () => {
     responder({ alBorrar: () => Promise.resolve({ data: undefined }) });
     apiSubir.mockResolvedValue({ data: [] });
 
@@ -229,6 +267,8 @@ describe('Lo que la web guarda', () => {
     expect(cuerpo.raw_text).toBeNull();
     // Y lo de siempre sigue viajando igual.
     expect(cuerpo.amount).toBe('120000');
-    expect(vi.mocked(leerSoporte)).not.toHaveBeenCalled();
+    // El soporte sí se leyó —es el primero de un movimiento nuevo—, pero no
+    // sacó texto, y un texto vacío no viaja como cadena vacía: viaja como nulo.
+    expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();
   });
 });
