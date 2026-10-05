@@ -398,3 +398,29 @@ types, its pure helpers, its controller), never into `utils-2.ts`.
 - The web and the packages list the files that were over the limits when the
   rules arrived, in `eslint.config.js`, as temporary exceptions for the
   frontend step. A file is never added to those lists.
+
+## Component catalogue
+
+**Every new `shared/ui` component arrives with its story in the same PR.**
+
+Why: the catalogue is where the owner reviews the design of a component, and
+a component without a story is reviewed only through the screen that happens
+to use it, in the one state that screen shows. The story is the only place
+where its sizes, disabled, error, visible focus and both themes sit side by
+side.
+
+- Storybook lives in `frontend/.storybook/`; run it with
+  `npm run storybook --workspace frontend`.
+- The story sits next to its component (`button.tsx` → `button.stories.tsx`)
+  and its title is the component's level: `Atoms/`, `Molecules/`,
+  `Organisms/` or `Templates/`.
+- A story shows every variant and state the component has. Visible focus uses
+  the `pseudo` parameter aimed at the element that takes the focus
+  (`pseudo: { focusVisible: ['input'] }`), never at the whole story.
+- Stories never fetch: no React Query, no api client, no session, and made-up
+  data only. The catalogue builds offline in CI
+  (`npm run build-storybook --workspace frontend`).
+- Storybook is a devDependency: stories and its config are excluded from the
+  production build (`frontend/tsconfig.build.json`).
+- A component that still has no story is marked in the inventory of
+  `.claude/rules/web.md`.

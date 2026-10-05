@@ -109,6 +109,12 @@ jobs:
           npm run build --workspace api
           NODE_ENV=production npm run build --workspace frontend
 
+      # The component catalogue (CONTRIBUTING, "Component catalogue"). Built
+      # so a story that stops compiling fails here and not when someone opens
+      # it. It needs no network and no data: stories never fetch.
+      - name: Component catalogue (Storybook)
+        run: npm run build-storybook --workspace frontend
+
   clean-install:
     # What hbuilds runs on every deploy: a fresh install with NODE_ENV=production
     # (no devDependencies) and the build. Three deploys failed on exactly this.

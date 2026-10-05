@@ -23,6 +23,12 @@
     },
     "frontend": {
       "project": ["src/**/*.{ts,tsx}"],
+      // The component catalogue: its config and every story are entry points,
+      // so a component used only by its story is not reported as dead code.
+      "storybook": {
+        "config": [".storybook/main.ts"],
+        "entry": [".storybook/preview.tsx", "src/**/*.stories.tsx"],
+      },
     },
     "packages/types": {
       "project": ["src/**/*.ts"],
