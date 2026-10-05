@@ -44,6 +44,26 @@ describe('Feature flags in /auth/me (e2e)', () => {
     );
   });
 
+  it('v2 lists the same flags as features, next to its camelCase profile', async () => {
+    const ana = await entorno.crearUsuario();
+    await entorno.prisma.userPreference.create({
+      data: { userId: ana.id, prefKey: 'feature:flags_canary', prefValue: false },
+    });
+    const bruno = await entorno.crearUsuario();
+
+    const asAna = await http.get('/api/v2/auth/me').set('Authorization', entorno.como(ana));
+    const asBruno = await http
+      .get('/api/v2/auth/me')
+      .set('Authorization', entorno.como(bruno))
+      .expect(200);
+
+    expect(asAna.body.data.features).toEqual([]);
+    expect(asBruno.body.data.features).toEqual(['flags_canary']);
+    expect(asBruno.body.data).toEqual(
+      expect.objectContaining({ displayName: expect.any(String), createdAt: expect.any(String) }),
+    );
+  });
+
   it("a user's own feature:<name> = false keeps that user out", async () => {
     const ana = await entorno.crearUsuario();
     const bruno = await entorno.crearUsuario();

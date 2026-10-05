@@ -417,7 +417,7 @@
                   "required": ["data", "meta"],
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/Profile"
+                      "$ref": "#/components/schemas/Me"
                     },
                     "meta": {
                       "type": "object",
@@ -5386,6 +5386,41 @@
             "maxLength": 4096
           }
         }
+      },
+      "Me": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": ["admin", "user"],
+            "type": "string"
+          },
+          "status": {
+            "enum": ["pending", "active", "suspended"],
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["flags_canary"]
+            }
+          },
+          "id": {
+            "type": "number"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["role", "status", "features", "id", "email", "displayName", "createdAt"]
       },
       "CategoryNode": {
         "type": "object",

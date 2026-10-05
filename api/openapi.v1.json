@@ -411,6 +411,7 @@
     },
     "/api/v1/auth/me": {
       "get": {
+        "description": "`features`: the flags on for this user (step 7.8), read by the web and iOS.",
         "operationId": "AuthController_perfil",
         "parameters": [],
         "responses": {
@@ -423,7 +424,7 @@
                   "required": ["data", "meta"],
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/ProfileResponse"
+                      "$ref": "#/components/schemas/MeResponse"
                     },
                     "meta": {
                       "type": "object",
@@ -471,6 +472,7 @@
             "bearer": []
           }
         ],
+        "summary": "",
         "tags": ["Auth"]
       }
     },
@@ -5273,6 +5275,41 @@
             "maxLength": 4096
           }
         }
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": ["admin", "user"],
+            "type": "string"
+          },
+          "status": {
+            "enum": ["pending", "active", "suspended"],
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["flags_canary"]
+            }
+          },
+          "id": {
+            "type": "number"
+          },
+          "email": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["role", "status", "features", "id", "email", "display_name", "created_at"]
       },
       "ChangePasswordDto": {
         "type": "object",
