@@ -3,40 +3,45 @@ import Foundation
 /// Lo que la persona (o Atajos) aporta a una captura: `CapturaRequest` de @coco/types menos
 /// `source`, `external_ref` y `captured_at`, que los pone la cola.
 struct CaptureBody: Codable, Equatable, Sendable {
-    var texto: String?
-    var comercio: String?
-    var monto: String?
-    var fecha: String?
-    var periodo: String?
+    var text: String?
+    var merchant: String?
+    var amount: String?
+    var date: String?
+    var period: String?
     var fileName: String?
     var categoryId: Int?
-    var nota: String?
+    var note: String?
 
     /// Se escribe en disco dentro de cada captura de la cola: las claves no
     /// pueden cambiar sin una migración.
     enum CodingKeys: String, CodingKey {
-        case texto, comercio, monto, fecha, periodo, nota
+        case text = "texto"
+        case merchant = "comercio"
+        case amount = "monto"
+        case date = "fecha"
+        case period = "periodo"
+        case note = "nota"
         case fileName = "nombre_de_archivo"
         case categoryId = "category_id"
     }
 
     init(
-        texto: String? = nil, comercio: String? = nil, monto: String? = nil, fecha: String? = nil,
-        periodo: String? = nil, fileName: String? = nil, categoryId: Int? = nil, nota: String? = nil
+        text: String? = nil, merchant: String? = nil, amount: String? = nil, date: String? = nil,
+        period: String? = nil, fileName: String? = nil, categoryId: Int? = nil, note: String? = nil
     ) {
-        self.texto = texto
-        self.comercio = comercio
-        self.monto = monto
-        self.fecha = fecha
-        self.periodo = periodo
+        self.text = text
+        self.merchant = merchant
+        self.amount = amount
+        self.date = date
+        self.period = period
         self.fileName = fileName
         self.categoryId = categoryId
-        self.nota = nota
+        self.note = note
     }
 
     /// La API acepta texto, comercio, o un concepto elegido con su monto.
-    var esEnviable: Bool {
-        (texto?.isEmpty == false) || (comercio?.isEmpty == false) || (categoryId != nil && monto != nil)
+    var isSendable: Bool {
+        (text?.isEmpty == false) || (merchant?.isEmpty == false) || (categoryId != nil && amount != nil)
     }
 }
 
@@ -46,13 +51,18 @@ struct CaptureRequest: Encodable, Equatable, Sendable {
     let source: CaptureSource
     let externalRef: String
     let capturedAt: String
-    let cuerpo: CaptureBody
+    let body: CaptureBody
 
     private enum FlatKey: String, CodingKey {
         case source
         case externalRef = "external_ref"
         case capturedAt = "captured_at"
-        case texto, comercio, monto, fecha, periodo, nota
+        case text = "texto"
+        case merchant = "comercio"
+        case amount = "monto"
+        case date = "fecha"
+        case period = "periodo"
+        case note = "nota"
         case fileName = "nombre_de_archivo"
         case categoryId = "category_id"
     }
@@ -62,14 +72,14 @@ struct CaptureRequest: Encodable, Equatable, Sendable {
         try c.encode(source, forKey: .source)
         try c.encode(externalRef, forKey: .externalRef)
         try c.encode(capturedAt, forKey: .capturedAt)
-        try c.encodeIfPresent(cuerpo.texto, forKey: .texto)
-        try c.encodeIfPresent(cuerpo.comercio, forKey: .comercio)
-        try c.encodeIfPresent(cuerpo.monto, forKey: .monto)
-        try c.encodeIfPresent(cuerpo.fecha, forKey: .fecha)
-        try c.encodeIfPresent(cuerpo.periodo, forKey: .periodo)
-        try c.encodeIfPresent(cuerpo.fileName, forKey: .fileName)
+        try c.encodeIfPresent(body.text, forKey: .text)
+        try c.encodeIfPresent(body.merchant, forKey: .merchant)
+        try c.encodeIfPresent(body.amount, forKey: .amount)
+        try c.encodeIfPresent(body.date, forKey: .date)
+        try c.encodeIfPresent(body.period, forKey: .period)
+        try c.encodeIfPresent(body.fileName, forKey: .fileName)
         // El DTO lo pide como cadena numérica (`category_id?: string`).
-        try c.encodeIfPresent(cuerpo.categoryId.map(String.init), forKey: .categoryId)
-        try c.encodeIfPresent(cuerpo.nota, forKey: .nota)
+        try c.encodeIfPresent(body.categoryId.map(String.init), forKey: .categoryId)
+        try c.encodeIfPresent(body.note, forKey: .note)
     }
 }

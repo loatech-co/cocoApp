@@ -3,279 +3,279 @@ import XCTest
 @testable import Coco
 
 final class CaptureQueueTests: XCTestCase {
-    private var raiz: URL = URL(fileURLWithPath: "/")
-    private var almacen: DiskQueueStore = .init(raiz: URL(fileURLWithPath: "/"))
+    private var root: URL = URL(fileURLWithPath: "/")
+    private var almacen: DiskQueueStore = .init(root: URL(fileURLWithPath: "/"))
     private var enviador = SenderDouble()
-    private var sesion = SessionDouble()
-    private var notificador = NotifierDouble()
+    private var session = SessionDouble()
+    private var notifier = NotifierDouble()
     /// Reloj fijo que las pruebas mueven a mano.
-    private let ahora = ControlledNow()
+    private let now = ControlledNow()
 
     final class ControlledNow: @unchecked Sendable {
-        private let cerrojo = NSLock()
-        private var valor = Date(timeIntervalSince1970: 1_800_000_000)
-        func leer() -> Date { cerrojo.withLock { valor } }
-        func avanzar(_ s: TimeInterval) { cerrojo.withLock { valor = valor.addingTimeInterval(s) } }
+        private let lock = NSLock()
+        private var value = Date(timeIntervalSince1970: 1_800_000_000)
+        func read() -> Date { lock.withLock { value } }
+        func avanzar(_ s: TimeInterval) { lock.withLock { value = value.addingTimeInterval(s) } }
     }
 
     override func setUpWithError() throws {
-        raiz = try TemporaryDirectory.directorio()
-        almacen = DiskQueueStore(raiz: raiz)
+        root = try TemporaryDirectory.directorio()
+        almacen = DiskQueueStore(root: root)
         enviador = SenderDouble()
-        sesion = SessionDouble()
-        notificador = NotifierDouble()
+        session = SessionDouble()
+        notifier = NotifierDouble()
     }
 
     override func tearDownWithError() throws {
-        try? FileManager.default.removeItem(at: raiz)
+        try? FileManager.default.removeItem(at: root)
     }
 
-    private func cola(almacen: QueueStore? = nil, separacion: Duration = .zero, topeDeFotos: Int = 200 * 1024 * 1024)
+    private func queue(almacen: QueueStore? = nil, separacion: Duration = .zero, topeDeFotos: Int = 200 * 1024 * 1024)
         -> CaptureQueue
     {
-        let reloj = ahora
+        let reloj = now
         return CaptureQueue(
             almacen: almacen ?? self.almacen,
             enviador: enviador,
-            sesion: sesion,
-            notificador: notificador,
+            session: session,
+            notifier: notifier,
             reintento: Retry(jitter: 0),
-            reloj: { reloj.leer() },
+            reloj: { reloj.read() },
             separacion: separacion,
             topeDeFotosBytes: topeDeFotos,
             encogerFoto: { $0 }
         )
     }
 
-    private let cuerpo = CaptureBody(comercio: "D1", monto: "45000", fecha: "2026-10-05")
-    private let foto = Data(repeating: 0xAB, count: 1024)
+    private let body = CaptureBody(merchant: "D1", amount: "45000", date: "2026-10-05")
+    private let photo = Data(repeating: 0xAB, count: 1024)
 
     // MARK: Persistencia
 
     func testEncolarPersisteYOtraColaSobreElMismoDirectorioLaVe() async throws {
         let id = UUID()
-        let c = try await cola().encolar(cuerpo, origen: .wallet, foto: foto, id: id)
+        let c = try await queue().encolar(body, source: .wallet, photo: photo, id: id)
         XCTAssertEqual(c.request.externalRef, id.uuidString)
 
-        let otra = cola()
-        let todas = await otra.todas()
-        XCTAssertEqual(todas.map(\.id), [id])
-        XCTAssertEqual(todas.first?.request.externalRef, id.uuidString)
-        XCTAssertEqual(todas.first?.fotoRelativa, "Fotos/\(id.uuidString).jpg")
-        XCTAssertEqual(try almacen.foto(en: "Fotos/\(id.uuidString).jpg"), foto)
+        let otra = queue()
+        let all = await otra.all()
+        XCTAssertEqual(all.map(\.id), [id])
+        XCTAssertEqual(all.first?.request.externalRef, id.uuidString)
+        XCTAssertEqual(all.first?.fotoRelativa, "Fotos/\(id.uuidString).jpg")
+        XCTAssertEqual(try almacen.photo(at: "Fotos/\(id.uuidString).jpg"), photo)
     }
 
     func testUnaEscrituraQueFallaDejaElJSONAnteriorIntegro() throws {
         let id = UUID()
-        let original = PendingCapture(id: id, origen: .sms, cuerpo: cuerpo)
-        try almacen.guardar(original)
+        let original = PendingCapture(id: id, source: .sms, body: body)
+        try almacen.save(original)
         // Lo que había en disco antes del intento (el Date vuelve con milisegundos).
-        let enDisco = try almacen.todas()
+        let enDisco = try almacen.all()
         XCTAssertEqual(enDisco.map(\.id), [id])
         // Sin permiso de escritura el reemplazo falla a mitad de camino.
         try FileManager.default.setAttributes(
-            [.posixPermissions: 0o500], ofItemAtPath: raiz.path(percentEncoded: false))
+            [.posixPermissions: 0o500], ofItemAtPath: root.path(percentEncoded: false))
         defer {
             try? FileManager.default.setAttributes(
-                [.posixPermissions: 0o700], ofItemAtPath: raiz.path(percentEncoded: false))
+                [.posixPermissions: 0o700], ofItemAtPath: root.path(percentEncoded: false))
         }
         var cambiada = original
         cambiada.intentos = 9
-        XCTAssertThrowsError(try almacen.guardar(cambiada))
+        XCTAssertThrowsError(try almacen.save(cambiada))
         try FileManager.default.setAttributes(
-            [.posixPermissions: 0o700], ofItemAtPath: raiz.path(percentEncoded: false))
-        XCTAssertEqual(try almacen.todas(), enDisco)
+            [.posixPermissions: 0o700], ofItemAtPath: root.path(percentEncoded: false))
+        XCTAssertEqual(try almacen.all(), enDisco)
     }
 
     // MARK: Idempotencia
 
     func testEncolarDosVecesElMismoIdDejaUna() async throws {
         let id = UUID()
-        let c = cola()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: id)
-        try await c.encolar(CaptureBody(texto: "otra"), origen: .sms, foto: nil, id: id)
-        let todas = await c.todas()
-        XCTAssertEqual(todas.count, 1)
-        XCTAssertEqual(todas.first?.cuerpo, cuerpo)
+        let c = queue()
+        try await c.encolar(body, source: .wallet, photo: nil, id: id)
+        try await c.encolar(CaptureBody(text: "otra"), source: .sms, photo: nil, id: id)
+        let all = await c.all()
+        XCTAssertEqual(all.count, 1)
+        XCTAssertEqual(all.first?.body, body)
     }
 
     func testProcesarDosVecesMandaUnPostPorCaptura() async throws {
-        let c = cola()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil)
-        try await c.encolar(cuerpo, origen: .sms, foto: nil)
-        await c.procesar()
-        await c.procesar()
+        let c = queue()
+        try await c.encolar(body, source: .wallet, photo: nil)
+        try await c.encolar(body, source: .sms, photo: nil)
+        await c.process()
+        await c.process()
         XCTAssertEqual(enviador.requests.count, 2)
         XCTAssertEqual(enviador.refsUnicos.count, 2)
     }
 
     func testRepetidoCuentaComoHecha() async throws {
-        let c = cola()
+        let c = queue()
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: id)
+        try await c.encolar(body, source: .wallet, photo: nil, id: id)
         // El doble contesta repetido:true cuando ya vio el external_ref.
-        _ = try await enviador.capturar(PendingCapture(id: id, origen: .wallet, cuerpo: cuerpo).request)
-        let resumen = await c.procesar()
-        XCTAssertEqual(resumen.enviadas, 1)
-        guard case .hecha(let r)? = await c.captura(id: id)?.fase else { return XCTFail("no quedó hecha") }
-        XCTAssertTrue(r.repetido)
+        _ = try await enviador.capture(PendingCapture(id: id, source: .wallet, body: body).request)
+        let summary = await c.process()
+        XCTAssertEqual(summary.sent, 1)
+        guard case .hecha(let r)? = await c.capture(id: id)?.fase else { return XCTFail("no quedó hecha") }
+        XCTAssertTrue(r.duplicate)
     }
 
     func testSiElAlmacenMuereTrasLaFase1SeReenviaElMismoRefYLaFotoSubeUnaVez() async throws {
         let fragile = FailingStore(real: almacen)
-        let c = cola(almacen: fragile)
+        let c = queue(almacen: fragile)
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .iosFoto, foto: foto, id: id)
+        try await c.encolar(body, source: .iosPhoto, photo: photo, id: id)
         fragile.fallarGuardado = true
-        enviador.responderFoto(.falla(APIError.sinRed(.notConnectedToInternet)))
-        await c.procesar()
+        enviador.responderFoto(.falla(APIError.noNetwork(.notConnectedToInternet)))
+        await c.process()
         // La fase 1 llegó pero no se pudo anotar: sigue .porEnviar en disco.
-        guard case .porEnviar? = await c.captura(id: id)?.fase else { return XCTFail("debería seguir porEnviar") }
+        guard case .porEnviar? = await c.capture(id: id)?.fase else { return XCTFail("debería seguir porEnviar") }
 
         fragile.fallarGuardado = false
-        let segunda = cola(almacen: fragile)
-        let resumen = await segunda.procesar()
-        XCTAssertEqual(resumen.enviadas, 1)
+        let segunda = queue(almacen: fragile)
+        let summary = await segunda.process()
+        XCTAssertEqual(summary.sent, 1)
         XCTAssertEqual(enviador.requests.count, 2)
         XCTAssertEqual(enviador.refsUnicos.count, 1)
         XCTAssertEqual(enviador.subidas.filter { $0.transactionId == 100 }.count, 2)
-        XCTAssertEqual(Set(enviador.subidas.map(\.nombre)).count, 1)
-        XCTAssertEqual(try almacen.bytesDeFotos(), 0)
+        XCTAssertEqual(Set(enviador.subidas.map(\.name)).count, 1)
+        XCTAssertEqual(try almacen.photoBytes(), 0)
     }
 
     // MARK: Reintentos
 
     func testDosFallosDeRedCrecenLaEsperaYNadaSeEnviaAntesDeTiempo() async throws {
-        let c = cola()
+        let c = queue()
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: id)
+        try await c.encolar(body, source: .wallet, photo: nil, id: id)
 
-        enviador.responderCaptura(.falla(APIError.sinRed(.notConnectedToInternet)))
-        await c.procesar()
-        var captura = await c.captura(id: id)
-        XCTAssertEqual(captura?.intentos, 1)
-        XCTAssertEqual(captura?.proximoIntento, ahora.leer().addingTimeInterval(5))
+        enviador.responderCaptura(.falla(APIError.noNetwork(.notConnectedToInternet)))
+        await c.process()
+        var capture = await c.capture(id: id)
+        XCTAssertEqual(capture?.intentos, 1)
+        XCTAssertEqual(capture?.proximoIntento, now.read().addingTimeInterval(5))
 
         // Antes de tiempo no se toca la red.
-        ahora.avanzar(4)
-        await c.procesar()
+        now.avanzar(4)
+        await c.process()
         XCTAssertEqual(enviador.requests.count, 1)
 
-        ahora.avanzar(1)
-        enviador.responderCaptura(.falla(APIError.tiempoAgotado))
-        await c.procesar()
-        captura = await c.captura(id: id)
-        XCTAssertEqual(captura?.intentos, 2)
-        XCTAssertEqual(captura?.proximoIntento, ahora.leer().addingTimeInterval(10))
+        now.avanzar(1)
+        enviador.responderCaptura(.falla(APIError.timedOut))
+        await c.process()
+        capture = await c.capture(id: id)
+        XCTAssertEqual(capture?.intentos, 2)
+        XCTAssertEqual(capture?.proximoIntento, now.read().addingTimeInterval(10))
 
-        ahora.avanzar(10)
-        enviador.responderCaptura(.falla(APIError.servidor(status: 503)))
-        await c.procesar()
-        captura = await c.captura(id: id)
-        XCTAssertEqual(captura?.intentos, 3)
-        XCTAssertEqual(captura?.proximoIntento, ahora.leer().addingTimeInterval(20))
+        now.avanzar(10)
+        enviador.responderCaptura(.falla(APIError.server(status: 503)))
+        await c.process()
+        capture = await c.capture(id: id)
+        XCTAssertEqual(capture?.intentos, 3)
+        XCTAssertEqual(capture?.proximoIntento, now.read().addingTimeInterval(20))
         XCTAssertEqual(enviador.requests.count, 3)
     }
 
     func testTopeDeLaEsperaEsUnaHora() async throws {
-        let c = cola()
+        let c = queue()
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: id)
+        try await c.encolar(body, source: .wallet, photo: nil, id: id)
         for _ in 0..<12 {
-            enviador.responderCaptura(.falla(APIError.servidor(status: 500)))
-            await c.procesar()
-            ahora.avanzar(4000)
+            enviador.responderCaptura(.falla(APIError.server(status: 500)))
+            await c.process()
+            now.avanzar(4000)
         }
-        let captura = await c.captura(id: id)
-        XCTAssertEqual(captura?.intentos, 12)
-        XCTAssertEqual(captura?.proximoIntento, ahora.leer().addingTimeInterval(3600 - 4000))
+        let capture = await c.capture(id: id)
+        XCTAssertEqual(capture?.intentos, 12)
+        XCTAssertEqual(capture?.proximoIntento, now.read().addingTimeInterval(3600 - 4000))
     }
 
     func testLos429Y5xxY408SonReintentables() async throws {
-        let c = cola()
+        let c = queue()
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: id)
+        try await c.encolar(body, source: .wallet, photo: nil, id: id)
         for status in [429, 503, 408] {
-            enviador.responderCaptura(.falla(APIError.servidor(status: status)))
-            await c.procesar()
-            guard case .porEnviar? = await c.captura(id: id)?.fase else {
+            enviador.responderCaptura(.falla(APIError.server(status: status)))
+            await c.process()
+            guard case .porEnviar? = await c.capture(id: id)?.fase else {
                 return XCTFail("\(status) debería seguir porEnviar")
             }
-            ahora.avanzar(4000)
+            now.avanzar(4000)
         }
-        XCTAssertEqual(notificador.fallos, [])
+        XCTAssertEqual(notifier.fallos, [])
     }
 
     func testUn401RenuevaUnaVezYReintentaDeInmediato() async throws {
-        let c = cola()
+        let c = queue()
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: id)
-        enviador.responderCaptura(.falla(APIError.noAutenticado))
-        let resumen = await c.procesar()
-        XCTAssertEqual(sesion.renovaciones, 1)
+        try await c.encolar(body, source: .wallet, photo: nil, id: id)
+        enviador.responderCaptura(.falla(APIError.unauthenticated))
+        let summary = await c.process()
+        XCTAssertEqual(session.renovaciones, 1)
         XCTAssertEqual(enviador.requests.count, 2)
-        XCTAssertEqual(resumen.enviadas, 1)
+        XCTAssertEqual(summary.sent, 1)
     }
 
     func testSiSigue401EsperaSesionSinCrecerLaEsperaYSesionVolvioLaDevuelve() async throws {
-        let c = cola()
+        let c = queue()
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: id)
-        enviador.responderCaptura(.falla(APIError.noAutenticado))
-        enviador.responderCaptura(.falla(APIError.noAutenticado))
-        await c.procesar()
-        var captura = await c.captura(id: id)
-        XCTAssertEqual(captura?.fase, .esperandoSesion)
-        XCTAssertEqual(captura?.intentos, 0)
-        XCTAssertEqual(sesion.renovaciones, 1)
+        try await c.encolar(body, source: .wallet, photo: nil, id: id)
+        enviador.responderCaptura(.falla(APIError.unauthenticated))
+        enviador.responderCaptura(.falla(APIError.unauthenticated))
+        await c.process()
+        var capture = await c.capture(id: id)
+        XCTAssertEqual(capture?.fase, .esperandoSesion)
+        XCTAssertEqual(capture?.intentos, 0)
+        XCTAssertEqual(session.renovaciones, 1)
 
-        await c.procesar()
+        await c.process()
         XCTAssertEqual(enviador.requests.count, 2, "esperando sesión no se reenvía")
 
         await c.sesionVolvio()
-        captura = await c.captura(id: id)
-        XCTAssertEqual(captura?.fase, .porEnviar)
-        let resumen = await c.procesar()
-        XCTAssertEqual(resumen.enviadas, 1)
+        capture = await c.capture(id: id)
+        XCTAssertEqual(capture?.fase, .porEnviar)
+        let summary = await c.process()
+        XCTAssertEqual(summary.sent, 1)
     }
 
     func testUn422QuedaFallidaConMensajeYSinMasIntentos() async throws {
-        let c = cola()
+        let c = queue()
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: id)
+        try await c.encolar(body, source: .wallet, photo: nil, id: id)
         enviador.responderCaptura(
-            .falla(APIError.rechazada(status: 422, code: "VALIDATION", mensaje: "Falta el texto")))
-        let resumen = await c.procesar()
-        XCTAssertEqual(resumen.fallidas, 1)
-        let fase422 = await c.captura(id: id)?.fase
-        XCTAssertEqual(fase422, .fallida(motivo: "Falta el texto"))
-        XCTAssertEqual(notificador.fallos, ["Falta el texto"])
-        await c.procesar()
+            .falla(APIError.rejected(status: 422, code: "VALIDATION", message: "Falta el texto")))
+        let summary = await c.process()
+        XCTAssertEqual(summary.fallidas, 1)
+        let fase422 = await c.capture(id: id)?.fase
+        XCTAssertEqual(fase422, .failed(reason: "Falta el texto"))
+        XCTAssertEqual(notifier.fallos, ["Falta el texto"])
+        await c.process()
         XCTAssertEqual(enviador.requests.count, 1)
         // Sigue en disco: nada se pierde.
-        XCTAssertEqual(try almacen.todas().count, 1)
+        XCTAssertEqual(try almacen.all().count, 1)
     }
 
     // MARK: Orden y ritmo
 
     func testFIFOPorCreadaEn() async throws {
-        let c = cola()
-        let base = ahora.leer()
+        let c = queue()
+        let base = now.read()
         let tercera = UUID()
         let primera = UUID()
         let segunda = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: tercera, capturadaEn: base.addingTimeInterval(30))
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: primera, capturadaEn: base)
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: segunda, capturadaEn: base.addingTimeInterval(10))
-        await c.procesar()
+        try await c.encolar(body, source: .wallet, photo: nil, id: tercera, capturadaEn: base.addingTimeInterval(30))
+        try await c.encolar(body, source: .wallet, photo: nil, id: primera, capturadaEn: base)
+        try await c.encolar(body, source: .wallet, photo: nil, id: segunda, capturadaEn: base.addingTimeInterval(10))
+        await c.process()
         XCTAssertEqual(enviador.requests.map(\.externalRef), [primera, segunda, tercera].map(\.uuidString))
     }
 
     func testSeparacionDe300msEntreEnvios() async throws {
-        let c = cola(separacion: .milliseconds(300))
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil)
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil)
-        await c.procesar()
+        let c = queue(separacion: .milliseconds(300))
+        try await c.encolar(body, source: .wallet, photo: nil)
+        try await c.encolar(body, source: .wallet, photo: nil)
+        await c.process()
         let instantes = enviador.instantes
         XCTAssertEqual(instantes.count, 2)
         XCTAssertGreaterThanOrEqual(instantes[1] - instantes[0], .milliseconds(290))
@@ -284,132 +284,132 @@ final class CaptureQueueTests: XCTestCase {
     // MARK: Dos fases
 
     func testTrasSubirLaFotoSeBorraDelDisco() async throws {
-        let c = cola()
+        let c = queue()
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .iosFoto, foto: foto, id: id)
-        XCTAssertEqual(try almacen.bytesDeFotos(), foto.count)
-        let resumen = await c.procesar()
-        XCTAssertEqual(resumen.enviadas, 1)
+        try await c.encolar(body, source: .iosPhoto, photo: photo, id: id)
+        XCTAssertEqual(try almacen.photoBytes(), photo.count)
+        let summary = await c.process()
+        XCTAssertEqual(summary.sent, 1)
         XCTAssertEqual(enviador.subidas.count, 1)
-        XCTAssertEqual(enviador.subidas.first?.jpeg, foto)
+        XCTAssertEqual(enviador.subidas.first?.jpeg, photo)
         XCTAssertEqual(enviador.subidas.first?.transactionId, 100)
-        XCTAssertEqual(try almacen.bytesDeFotos(), 0)
-        let captura = await c.captura(id: id)
-        XCTAssertNil(captura?.fotoRelativa)
-        guard case .hecha(let r)? = captura?.fase else { return XCTFail("la captura no quedó hecha") }
-        XCTAssertEqual(r.resumen, "Gasto de 45000 en D1")
+        XCTAssertEqual(try almacen.photoBytes(), 0)
+        let capture = await c.capture(id: id)
+        XCTAssertNil(capture?.fotoRelativa)
+        guard case .hecha(let r)? = capture?.fase else { return XCTFail("la captura no quedó hecha") }
+        XCTAssertEqual(r.summary, "Gasto de 45000 en D1")
     }
 
     func testSiSoportesFallaQuedaPorSubirFotoYElSiguienteIntentoSoloSube() async throws {
-        let c = cola()
+        let c = queue()
         let id = UUID()
-        try await c.encolar(cuerpo, origen: .iosFoto, foto: foto, id: id)
-        enviador.responderFoto(.falla(APIError.servidor(status: 503)))
-        await c.procesar()
-        let faseTrasFallo = await c.captura(id: id)?.fase
+        try await c.encolar(body, source: .iosPhoto, photo: photo, id: id)
+        enviador.responderFoto(.falla(APIError.server(status: 503)))
+        await c.process()
+        let faseTrasFallo = await c.capture(id: id)?.fase
         XCTAssertEqual(faseTrasFallo, .porSubirFoto(transactionId: 100))
-        XCTAssertEqual(try almacen.bytesDeFotos(), foto.count)
+        XCTAssertEqual(try almacen.photoBytes(), photo.count)
 
-        ahora.avanzar(10)
-        await c.procesar()
+        now.avanzar(10)
+        await c.process()
         XCTAssertEqual(enviador.requests.count, 1, "la fase 1 no se repite")
         XCTAssertEqual(enviador.subidas.count, 2)
-        guard case .hecha? = await c.captura(id: id)?.fase else { return XCTFail("la captura no quedó hecha") }
+        guard case .hecha? = await c.capture(id: id)?.fase else { return XCTFail("la captura no quedó hecha") }
     }
 
     func testConElTopeDeFotosLlenoEncolarConFotoLanzaYSinFotoEntra() async throws {
-        let c = cola(topeDeFotos: foto.count + 10)
-        try await c.encolar(cuerpo, origen: .iosFoto, foto: foto)
+        let c = queue(topeDeFotos: photo.count + 10)
+        try await c.encolar(body, source: .iosPhoto, photo: photo)
         do {
-            try await c.encolar(cuerpo, origen: .iosFoto, foto: foto)
+            try await c.encolar(body, source: .iosPhoto, photo: photo)
             XCTFail("debería lanzar")
         } catch let e as QueueError {
-            XCTAssertEqual(e, .fotosLlenas)
+            XCTAssertEqual(e, .photosFull)
         }
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil)
-        let cuantas = await c.todas().count
-        XCTAssertEqual(cuantas, 2)
+        try await c.encolar(body, source: .wallet, photo: nil)
+        let count = await c.all().count
+        XCTAssertEqual(count, 2)
     }
 
     // MARK: Limpieza y estado
 
     func testPurgaLasHechasDeMasDe30Dias() async throws {
-        let c = cola()
+        let c = queue()
         let vieja = UUID()
-        let reciente = UUID()
+        let recent = UUID()
         let pendiente = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: vieja)
-        await c.procesar()
-        ahora.avanzar(31 * 86_400)
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: reciente)
-        await c.procesar()
-        enviador.responderCaptura(.falla(APIError.sinRed(.notConnectedToInternet)))
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: pendiente)
-        await c.procesar()
+        try await c.encolar(body, source: .wallet, photo: nil, id: vieja)
+        await c.process()
+        now.avanzar(31 * 86_400)
+        try await c.encolar(body, source: .wallet, photo: nil, id: recent)
+        await c.process()
+        enviador.responderCaptura(.falla(APIError.noNetwork(.notConnectedToInternet)))
+        try await c.encolar(body, source: .wallet, photo: nil, id: pendiente)
+        await c.process()
         await c.purgar()
-        let quedan = Set(await c.todas().map(\.id))
-        XCTAssertEqual(quedan, [reciente, pendiente])
+        let quedan = Set(await c.all().map(\.id))
+        XCTAssertEqual(quedan, [recent, pendiente])
     }
 
     func testCambiosPublicaLaColaTrasCadaTransicionYLaInsigniaLlevaLosPendientes() async throws {
-        let c = cola()
+        let c = queue()
         var pendientesVistos: [Int] = []
         let lector = Task {
-            for await lista in c.cambios {
+            for await lista in c.changes {
                 pendientesVistos.append(lista.filter(\.estaPendiente).count)
                 if pendientesVistos.count == 2 { break }
             }
         }
-        enviador.responderCaptura(.falla(APIError.sinRed(.notConnectedToInternet)))
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil)
-        await c.procesar()
+        enviador.responderCaptura(.falla(APIError.noNetwork(.notConnectedToInternet)))
+        try await c.encolar(body, source: .wallet, photo: nil)
+        await c.process()
         // La publicación va por un buffer de uno; se da tiempo al lector.
         try await Task.sleep(for: .milliseconds(50))
-        await c.procesar()
+        await c.process()
         await lector.value
         XCTAssertEqual(pendientesVistos.first, 1)
-        XCTAssertEqual(notificador.insignias.first, 1)
-        let pendientesAntes = await c.pendientes()
+        XCTAssertEqual(notifier.insignias.first, 1)
+        let pendientesAntes = await c.pending()
         XCTAssertEqual(pendientesAntes, 1)
 
-        ahora.avanzar(10)
-        await c.procesar()
-        XCTAssertEqual(notificador.insignias.last, 0)
-        let pendientesDespues = await c.pendientes()
+        now.avanzar(10)
+        await c.process()
+        XCTAssertEqual(notifier.insignias.last, 0)
+        let pendientesDespues = await c.pending()
         XCTAssertEqual(pendientesDespues, 0)
     }
 
     func testAvisaCuandoSeEnvianCapturasQueEstabanEnCola() async throws {
-        let c = cola()
-        enviador.responderCaptura(.falla(APIError.sinRed(.notConnectedToInternet)))
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil)
-        await c.procesar()
-        XCTAssertEqual(notificador.colasEnviadas, [])
-        ahora.avanzar(10)
-        await c.procesar()
-        XCTAssertEqual(notificador.colasEnviadas, [1])
-        XCTAssertEqual(notificador.registradas.count, 1)
+        let c = queue()
+        enviador.responderCaptura(.falla(APIError.noNetwork(.notConnectedToInternet)))
+        try await c.encolar(body, source: .wallet, photo: nil)
+        await c.process()
+        XCTAssertEqual(notifier.colasEnviadas, [])
+        now.avanzar(10)
+        await c.process()
+        XCTAssertEqual(notifier.colasEnviadas, [1])
+        XCTAssertEqual(notifier.isRegistered.count, 1)
     }
 
     func testEditarSoloFallidasOPorEnviarYDescartarBorraLaFoto() async throws {
-        let c = cola()
+        let c = queue()
         let hecha = UUID()
         let conFoto = UUID()
-        try await c.encolar(cuerpo, origen: .wallet, foto: nil, id: hecha)
-        await c.procesar()
+        try await c.encolar(body, source: .wallet, photo: nil, id: hecha)
+        await c.process()
         do {
-            try await c.editar(id: hecha, cuerpo: CaptureBody(texto: "x"))
+            try await c.editar(id: hecha, body: CaptureBody(text: "x"))
             XCTFail("una hecha no se edita")
         } catch let e as QueueError {
-            XCTAssertEqual(e, .noEditable(hecha))
+            XCTAssertEqual(e, .notEditable(hecha))
         }
-        try await c.encolar(cuerpo, origen: .iosFoto, foto: foto, id: conFoto)
-        try await c.editar(id: conFoto, cuerpo: CaptureBody(texto: "editada"))
-        let textoEditado = await c.captura(id: conFoto)?.cuerpo.texto
+        try await c.encolar(body, source: .iosPhoto, photo: photo, id: conFoto)
+        try await c.editar(id: conFoto, body: CaptureBody(text: "editada"))
+        let textoEditado = await c.capture(id: conFoto)?.body.text
         XCTAssertEqual(textoEditado, "editada")
-        try await c.descartar(id: conFoto)
-        let descartada = await c.captura(id: conFoto)
+        try await c.discard(id: conFoto)
+        let descartada = await c.capture(id: conFoto)
         XCTAssertNil(descartada)
-        XCTAssertEqual(try almacen.bytesDeFotos(), 0)
+        XCTAssertEqual(try almacen.photoBytes(), 0)
     }
 }

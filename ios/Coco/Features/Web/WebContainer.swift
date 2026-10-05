@@ -5,13 +5,13 @@ import SwiftUI
 struct WebContainer: View {
     let puente: WebBridge
     let conectividad: Connectivity
-    let pendientes: Int
+    let pending: Int
     let alCapturar: () -> Void
 
-    init(puente: WebBridge, conectividad: Connectivity, pendientes: Int, alCapturar: @escaping () -> Void) {
+    init(puente: WebBridge, conectividad: Connectivity, pending: Int, alCapturar: @escaping () -> Void) {
         self.puente = puente
         self.conectividad = conectividad
-        self.pendientes = pendientes
+        self.pending = pending
         self.alCapturar = alCapturar
     }
 
@@ -20,22 +20,22 @@ struct WebContainer: View {
             WebViewRepresentable(puente: puente)
                 .ignoresSafeArea()
             if sinDocumentoNiRed {
-                OfflineView(pendientes: pendientes, reintentar: puente.recargar, capturar: alCapturar)
+                OfflineView(pending: pending, retry: puente.recargar, capture: alCapturar)
             } else if puente.estadoDeCarga == .sesionWebAtascada {
                 sesionAtascada
-            } else if !conectividad.hayRed {
+            } else if !conectividad.isOnline {
                 franjaSinRed
             }
         }
-        .onChange(of: conectividad.hayRed) { _, hay in
+        .onChange(of: conectividad.isOnline) { _, hay in
             guard hay else { return }
             Task { await puente.conectividadVolvio() }
         }
     }
 
     private var sinDocumentoNiRed: Bool {
-        if case .fallo = puente.estadoDeCarga, !puente.hayDocumento { return true }
-        return !conectividad.hayRed && !puente.hayDocumento
+        if case .failure = puente.estadoDeCarga, !puente.hayDocumento { return true }
+        return !conectividad.isOnline && !puente.hayDocumento
     }
 
     private var sesionAtascada: some View {

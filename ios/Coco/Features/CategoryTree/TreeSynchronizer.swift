@@ -5,7 +5,7 @@ import Foundation
 /// captura enviada) es cosa de la app; aquí solo se decide si hace falta.
 final actor TreeSynchronizer {
     private let api: APIClient
-    private let sesion: Session
+    private let session: Session
     private let almacen: TreeStore
     private let reloj: @Sendable () -> Date
 
@@ -16,9 +16,9 @@ final actor TreeSynchronizer {
     /// espera al primero.
     private var refrescoEnVuelo: Task<Void, Error>?
 
-    init(api: APIClient, sesion: Session, almacen: TreeStore, reloj: @Sendable @escaping () -> Date = Date.init) {
+    init(api: APIClient, session: Session, almacen: TreeStore, reloj: @Sendable @escaping () -> Date = Date.init) {
         self.api = api
-        self.sesion = sesion
+        self.session = session
         self.almacen = almacen
         self.reloj = reloj
     }
@@ -31,7 +31,7 @@ final actor TreeSynchronizer {
 
     /// Baja el árbol si lo guardado tiene más de `maxEdad` o no hay nada. Los
     /// errores —de red, de sesión— se tragan: sin red se usa lo guardado.
-    func refrescarSiHaceFalta(maxEdad: Duration = .seconds(3600)) async {
+    func refreshIfNeeded(maxEdad: Duration = .seconds(3600)) async {
         cargarDelDiscoSiHaceFalta()
         if let guardado {
             let edad = reloj().timeIntervalSince(guardado.descargadoEn)
@@ -46,19 +46,19 @@ final actor TreeSynchronizer {
         if let enVuelo = refrescoEnVuelo {
             return try await enVuelo.value
         }
-        let tarea = Task { try await self.descargar() }
-        refrescoEnVuelo = tarea
+        let task = Task { try await self.descargar() }
+        refrescoEnVuelo = task
         defer { refrescoEnVuelo = nil }
-        try await tarea.value
+        try await task.value
     }
 
     private func descargar() async throws {
-        let token = try await sesion.accessTokenVigente()
-        let raices: [TreeNode] = try await api.enviar(RequestBuilder.categorias(), token: token)
+        let token = try await session.validAccessToken()
+        let raices: [TreeNode] = try await api.send(RequestBuilder.categories(), token: token)
         let nuevo = SavedTree(raices: raices, descargadoEn: reloj())
         // Si el disco falla el índice sirve igual en esta ejecución; la
         // siguiente vuelve a bajarlo.
-        try? almacen.guardar(nuevo)
+        try? almacen.save(nuevo)
         guardado = nuevo
         indiceEnMemoria = TreeIndex(raices: raices)
         cargadoDelDisco = true
@@ -68,7 +68,7 @@ final actor TreeSynchronizer {
         guard !cargadoDelDisco else { return }
         cargadoDelDisco = true
         // Un archivo corrupto cuenta como que no hay nada: se vuelve a bajar.
-        guard let leido = try? almacen.cargar() else { return }
+        guard let leido = try? almacen.load() else { return }
         guardado = leido
         indiceEnMemoria = TreeIndex(raices: leido.raices)
     }

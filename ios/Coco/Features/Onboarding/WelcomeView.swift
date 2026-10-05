@@ -3,7 +3,7 @@ import SwiftUI
 /// La guía para crear las dos automatizaciones y los accesos. Se marca como
 /// vista en UserDefaults y se puede reabrir desde Más y desde Capturas.
 struct WelcomeView: View {
-    static let clave = "bienvenida-vista"
+    static let key = "bienvenida-vista"
 
     let alTerminar: () -> Void
     let defaults: UserDefaults
@@ -14,7 +14,7 @@ struct WelcomeView: View {
     }
 
     static func yaVista(defaults: UserDefaults = .standard) -> Bool {
-        defaults.bool(forKey: clave)
+        defaults.bool(forKey: key)
     }
 
     var body: some View {
@@ -31,7 +31,7 @@ struct WelcomeView: View {
                     .foregroundStyle(.secondary)
                 }
                 seccion("Pagos con Wallet", pasos: AutomationSteps.transaccion)
-                seccion("Mensajes del banco", pasos: AutomationSteps.mensaje)
+                seccion("Mensajes del banco", pasos: AutomationSteps.message)
                 seccion("Accesos rápidos", pasos: AutomationSteps.accesos)
                 Section {
                     Button("Abrir Atajos") { ShortcutsLauncher.abrir() }
@@ -41,7 +41,7 @@ struct WelcomeView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Listo") {
-                        defaults.set(true, forKey: Self.clave)
+                        defaults.set(true, forKey: Self.key)
                         alTerminar()
                     }
                 }

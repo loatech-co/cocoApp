@@ -31,7 +31,7 @@ enum AutomationSteps {
     ]
 
     /// Mensajes del banco → «Registrar gasto de SMS».
-    static let mensaje: [AutomationStep] = [
+    static let message: [AutomationStep] = [
         .init(
             id: 1, titulo: "Crea otra automatización",
             detalle: "Pestaña Automatización → Nueva automatización → Mensaje.", simbolo: "plus.circle"),

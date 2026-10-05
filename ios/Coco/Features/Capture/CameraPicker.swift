@@ -20,10 +20,10 @@ struct CameraPicker: UIViewControllerRepresentable {
             camara.delegate = context.coordinator
             return camara
         }
-        var configuracion = PHPickerConfiguration()
-        configuracion.filter = .images
-        configuracion.selectionLimit = 1
-        let selector = PHPickerViewController(configuration: configuracion)
+        var configuration = PHPickerConfiguration()
+        configuration.filter = .images
+        configuration.selectionLimit = 1
+        let selector = PHPickerViewController(configuration: configuration)
         selector.delegate = context.coordinator
         return selector
     }
@@ -63,9 +63,9 @@ struct CameraPicker: UIViewControllerRepresentable {
             }
             let alCapturar = padre.alCapturar
             let alCancelar = padre.alCancelar
-            proveedor.loadObject(ofClass: UIImage.self) { objeto, _ in
+            proveedor.loadObject(ofClass: UIImage.self) { object, _ in
                 DispatchQueue.main.async {
-                    if let imagen = objeto as? UIImage { alCapturar(imagen) } else { alCancelar() }
+                    if let imagen = object as? UIImage { alCapturar(imagen) } else { alCancelar() }
                 }
             }
         }

@@ -3,52 +3,52 @@ import XCTest
 @testable import Coco
 
 final class QueuedCapturerTests: XCTestCase {
-    private var raiz: URL = URL(fileURLWithPath: "/")
+    private var root: URL = URL(fileURLWithPath: "/")
     private var enviador = SenderDouble()
-    private var notificador = NotifierDouble()
+    private var notifier = NotifierDouble()
 
     override func setUpWithError() throws {
-        raiz = try TemporaryDirectory.directorio()
+        root = try TemporaryDirectory.directorio()
         enviador = SenderDouble()
-        notificador = NotifierDouble()
+        notifier = NotifierDouble()
     }
 
     override func tearDownWithError() throws {
-        try? FileManager.default.removeItem(at: raiz)
+        try? FileManager.default.removeItem(at: root)
     }
 
     private func capturador() -> QueuedCapturer {
-        let cola = CaptureQueue(
-            almacen: DiskQueueStore(raiz: raiz), enviador: enviador, sesion: SessionDouble(),
-            notificador: notificador, separacion: .zero, encogerFoto: { $0 })
-        return QueuedCapturer(cola: cola, notificador: notificador)
+        let queue = CaptureQueue(
+            almacen: DiskQueueStore(root: root), enviador: enviador, session: SessionDouble(),
+            notifier: notifier, separacion: .zero, encogerFoto: { $0 })
+        return QueuedCapturer(queue: queue, notifier: notifier)
     }
 
-    private let cuerpo = CaptureBody(comercio: "D1", monto: "45000")
+    private let body = CaptureBody(merchant: "D1", amount: "45000")
 
     func testEnvioDentroDelPresupuestoDevuelveEnviadaYNotificaElResumen() async {
-        let r = await capturador().capturar(cuerpo, origen: .wallet, foto: nil, presupuesto: .seconds(10))
-        guard case .enviada(let g) = r else { return XCTFail("\(r)") }
-        XCTAssertEqual(g.resumen, "Gasto de 45000 en D1")
-        XCTAssertEqual(notificador.registradas.map(\.resumen), ["Gasto de 45000 en D1"])
-        XCTAssertEqual(notificador.fallos, [])
+        let r = await capturador().capture(body, source: .wallet, photo: nil, budget: .seconds(10))
+        guard case .sent(let g) = r else { return XCTFail("\(r)") }
+        XCTAssertEqual(g.summary, "Gasto de 45000 en D1")
+        XCTAssertEqual(notifier.isRegistered.map(\.summary), ["Gasto de 45000 en D1"])
+        XCTAssertEqual(notifier.fallos, [])
     }
 
     func testSinRedQuedaEnColaSinNotificarResultado() async {
-        enviador.responderCaptura(.falla(APIError.sinRed(.notConnectedToInternet)))
-        let r = await capturador().capturar(cuerpo, origen: .sms, foto: nil, presupuesto: .seconds(10))
-        XCTAssertEqual(r, .enCola(pendientes: 1))
-        XCTAssertEqual(notificador.registradas, [])
-        XCTAssertEqual(notificador.fallos, [])
-        XCTAssertEqual(try DiskQueueStore(raiz: raiz).todas().count, 1)
+        enviador.responderCaptura(.falla(APIError.noNetwork(.notConnectedToInternet)))
+        let r = await capturador().capture(body, source: .sms, photo: nil, budget: .seconds(10))
+        XCTAssertEqual(r, .queued(pending: 1))
+        XCTAssertEqual(notifier.isRegistered, [])
+        XCTAssertEqual(notifier.fallos, [])
+        XCTAssertEqual(try DiskQueueStore(root: root).all().count, 1)
     }
 
     func testUn422DevuelveFallidaYNotificaElFallo() async {
         enviador.responderCaptura(
-            .falla(APIError.rechazada(status: 422, code: "VALIDATION", mensaje: "Falta el texto")))
-        let r = await capturador().capturar(cuerpo, origen: .wallet, foto: nil, presupuesto: .seconds(10))
-        XCTAssertEqual(r, .fallida(motivo: "Falta el texto"))
-        XCTAssertEqual(notificador.fallos, ["Falta el texto"])
+            .falla(APIError.rejected(status: 422, code: "VALIDATION", message: "Falta el texto")))
+        let r = await capturador().capture(body, source: .wallet, photo: nil, budget: .seconds(10))
+        XCTAssertEqual(r, .failed(reason: "Falta el texto"))
+        XCTAssertEqual(notifier.fallos, ["Falta el texto"])
     }
 
     func testElReductorDejaLaFotoEnMenosDe1600px() throws {

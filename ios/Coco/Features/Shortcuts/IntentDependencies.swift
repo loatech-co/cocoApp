@@ -7,14 +7,14 @@ import Foundation
 /// en ejecución con «dependency not found».
 enum DependencyKeys {
     static let capturador = "co.loatech.coco.capturador"
-    static let navegacion = "co.loatech.coco.navegacion"
+    static let navigation = "co.loatech.coco.navegacion"
 }
 
 enum IntentDependencies {
     /// Lo llama M9 al componer la app, antes de que iOS pueda lanzar un intent.
     @MainActor
-    static func registrar(capturador: any Capturer, navegacion: any Navigation) {
+    static func register(capturador: any Capturer, navigation: any Navigation) {
         AppDependencyManager.shared.add(key: DependencyKeys.capturador, dependency: capturador)
-        AppDependencyManager.shared.add(key: DependencyKeys.navegacion, dependency: navegacion)
+        AppDependencyManager.shared.add(key: DependencyKeys.navigation, dependency: navigation)
     }
 }

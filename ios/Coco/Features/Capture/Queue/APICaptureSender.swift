@@ -5,28 +5,28 @@ import Foundation
 /// decida con una sola familia de errores.
 struct APICaptureSender: CaptureSender {
     let api: APIClient
-    let sesion: Session
+    let session: Session
 
-    func capturar(_ r: CaptureRequest) async throws -> CaptureResponse {
+    func capture(_ r: CaptureRequest) async throws -> CaptureResponse {
         let token = try await tokenVigente()
-        return try await api.enviar(RequestBuilder.capturar(r), token: token)
+        return try await api.send(RequestBuilder.capture(r), token: token)
     }
 
-    func subirFoto(_ jpeg: Data, nombre: String, a transactionId: Int) async throws -> [Attachment] {
+    func uploadPhoto(_ jpeg: Data, name: String, to transactionId: Int) async throws -> [Attachment] {
         let token = try await tokenVigente()
-        let parte = MultipartPart(
-            nombreDelCampo: RequestBuilder.campoDeSoportes, nombreDeArchivo: nombre, mime: "image/jpeg",
-            datos: jpeg)
-        return try await api.subir(partes: [parte], a: "/transactions/\(transactionId)/soportes", token: token)
+        let part = MultipartPart(
+            fieldName: RequestBuilder.attachmentsField, fileName: name, mime: "image/jpeg",
+            data: jpeg)
+        return try await api.upload(parts: [part], to: "/transactions/\(transactionId)/soportes", token: token)
     }
 
     private func tokenVigente() async throws -> String {
         do {
-            return try await sesion.accessTokenVigente()
-        } catch SessionError.sinSesion {
-            throw APIError.noAutenticado
-        } catch SessionError.sinConexion {
-            throw APIError.sinRed(.notConnectedToInternet)
+            return try await session.validAccessToken()
+        } catch SessionError.signedOut {
+            throw APIError.unauthenticated
+        } catch SessionError.offline {
+            throw APIError.noNetwork(.notConnectedToInternet)
         }
     }
 }

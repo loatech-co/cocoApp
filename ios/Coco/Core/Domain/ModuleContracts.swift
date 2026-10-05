@@ -6,10 +6,10 @@ import Foundation
 // MARK: Sesión
 
 enum SessionState: Equatable, Sendable {
-    case cargando
-    case sinSesion
-    case activa(PublicProfile)
-    case sinConexion(ultima: PublicProfile?)
+    case loading
+    case signedOut
+    case active(PublicProfile)
+    case offline(last: PublicProfile?)
 }
 
 /// Lo que el puente entrega a la web: `SesionParaLaWeb` de @coco/types, con el
@@ -19,106 +19,116 @@ struct WebSession: Sendable {
     let expiresIn: Int
     let userJSON: Data
 
-    func comoDiccionario() throws -> [String: Any] {
+    func asDictionary() throws -> [String: Any] {
         let user = try JSONSerialization.jsonObject(with: userJSON)
         return ["access_token": accessToken, "expires_in": expiresIn, "user": user]
     }
 }
 
 enum SessionError: Error, Equatable {
-    case sinSesion
-    case sinConexion
-    case origenNoPermitido
+    case signedOut
+    case offline
+    case originNotAllowed
 }
 
 protocol Session: AnyObject, Sendable {
-    var estado: SessionState { get async }
-    var cambios: AsyncStream<SessionState> { get }
-    func restaurar() async
-    func entrar(correo: String, contrasena: String) async throws -> PublicProfile
+    var state: SessionState { get async }
+    var changes: AsyncStream<SessionState> { get }
+    func restore() async
+    func signIn(email: String, password: String) async throws -> PublicProfile
     /// Renueva si quedan <120 s; una sola renovación en vuelo (single-flight).
-    func accessTokenVigente() async throws -> String
+    func validAccessToken() async throws -> String
     /// Tras un 401 inesperado.
-    func renovarAhora() async throws
-    func sesionParaLaWeb() async throws -> WebSession
-    func salir() async
-    func descartar() async
+    func refreshNow() async throws
+    func webSession() async throws -> WebSession
+    func signOut() async
+    func discard() async
 }
 
 // MARK: Red
 
 protocol Transport: Sendable {
-    func datos(para peticion: URLRequest) async throws -> (Data, HTTPURLResponse)
+    func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse)
 }
 
 // MARK: Capturas
 
 struct SavedResult: Codable, Equatable, Sendable {
     let transactionId: Int
-    let resumen: String
-    let repetido: Bool
-    let fusionado: Bool
-    let porRevisar: Bool
-    let terminadaEn: Date
+    let summary: String
+    let duplicate: Bool
+    let merged: Bool
+    let needsReview: Bool
+    let finishedAt: Date
+
+    /// Se guarda en disco dentro de la cola: las claves no cambian.
+    enum CodingKeys: String, CodingKey {
+        case transactionId
+        case summary = "resumen"
+        case duplicate = "repetido"
+        case merged = "fusionado"
+        case needsReview = "porRevisar"
+        case finishedAt = "terminadaEn"
+    }
 }
 
 enum CaptureResult: Equatable, Sendable {
-    case enviada(SavedResult)
-    case enCola(pendientes: Int)
-    case fallida(motivo: String)
+    case sent(SavedResult)
+    case queued(pending: Int)
+    case failed(reason: String)
 }
 
 protocol Capturer: Sendable {
-    func capturar(_ cuerpo: CaptureBody, origen: CaptureSource, foto: Data?, presupuesto: Duration) async
+    func capture(_ body: CaptureBody, source: CaptureSource, photo: Data?, budget: Duration) async
         -> CaptureResult
 }
 
 protocol QueueStore: Sendable {
-    func guardar(_ captura: PendingCapture) throws
-    func todas() throws -> [PendingCapture]
-    func borrar(id: UUID) throws
-    func guardarFoto(_ jpeg: Data, id: UUID) throws -> String
-    func foto(en ruta: String) throws -> Data
-    func borrarFoto(en ruta: String) throws
-    func bytesDeFotos() throws -> Int
+    func save(_ capture: PendingCapture) throws
+    func all() throws -> [PendingCapture]
+    func delete(id: UUID) throws
+    func savePhoto(_ jpeg: Data, id: UUID) throws -> String
+    func photo(at path: String) throws -> Data
+    func deletePhoto(at path: String) throws
+    func photoBytes() throws -> Int
 }
 
 protocol CaptureSender: Sendable {
     /// POST /transactions/capture
-    func capturar(_ r: CaptureRequest) async throws -> CaptureResponse
+    func capture(_ r: CaptureRequest) async throws -> CaptureResponse
     /// POST /transactions/:id/soportes
-    func subirFoto(_ jpeg: Data, nombre: String, a transactionId: Int) async throws -> [Attachment]
+    func uploadPhoto(_ jpeg: Data, name: String, to transactionId: Int) async throws -> [Attachment]
 }
 
 // MARK: Avisos
 
 protocol Notifier: Sendable {
-    func pedirPermiso() async -> Bool
-    func capturaRegistrada(_ r: SavedResult, origen: CaptureSource) async
-    func capturaFallida(motivo: String) async
-    func colaEnviada(cuantas: Int) async
-    func programarVencimiento(_ vence: Date, texto: String) async
-    func ponerInsignia(_ n: Int) async
+    func requestPermission() async -> Bool
+    func captureSaved(_ r: SavedResult, source: CaptureSource) async
+    func captureFailed(reason: String) async
+    func queueSent(count: Int) async
+    func scheduleExpiry(_ expiresAt: Date, text: String) async
+    func setBadge(_ n: Int) async
 }
 
 // MARK: Navegación
 
 enum Destination: Equatable, Sendable {
-    case formularioRapido(conCamara: Bool)
-    case capturas
-    case web(ruta: String)
-    case buscar
-    case bienvenida
-    case ajustes
+    case quickForm(withCamera: Bool)
+    case captures
+    case web(path: String)
+    case search
+    case welcome
+    case settings
 }
 
 protocol Navigation: AnyObject, Sendable {
-    @MainActor func ir(_ destino: Destination)
+    @MainActor func go(_ destination: Destination)
 }
 
 // MARK: Árbol
 
 protocol TreeStore: Sendable {
-    func cargar() throws -> SavedTree?
-    func guardar(_ a: SavedTree) throws
+    func load() throws -> SavedTree?
+    func save(_ tree: SavedTree) throws
 }

@@ -3,22 +3,22 @@ import Foundation
 /// El transporte real. Sesión efímera: sin caché ni cookies en disco, porque
 /// la única credencial de larga vida vive en el Keychain y no aquí.
 struct URLSessionTransport: Transport {
-    let sesion: URLSession
+    let session: URLSession
 
-    init(sesion: URLSession = URLSessionTransport.sesionPorDefecto()) {
-        self.sesion = sesion
+    init(session: URLSession = URLSessionTransport.defaultSession()) {
+        self.session = session
     }
 
-    static func sesionPorDefecto() -> URLSession {
+    static func defaultSession() -> URLSession {
         let c = URLSessionConfiguration.ephemeral
         // La espera por red la gobierna la cola con sus reintentos, no URLSession.
         c.waitsForConnectivity = false
         return URLSession(configuration: c)
     }
 
-    func datos(para peticion: URLRequest) async throws -> (Data, HTTPURLResponse) {
-        let (datos, respuesta) = try await sesion.data(for: peticion)
-        guard let http = respuesta as? HTTPURLResponse else { throw APIError.respuestaIlegible }
-        return (datos, http)
+    func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw APIError.unreadableResponse }
+        return (data, http)
     }
 }

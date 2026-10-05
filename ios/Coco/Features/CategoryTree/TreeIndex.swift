@@ -13,19 +13,19 @@ enum TreeLevel: String, Codable, Sendable {
 struct IndexEntry: Identifiable, Hashable, Sendable {
     let id: Int
     let nivel: TreeLevel
-    let nombre: String
+    let name: String
     /// De dónde cuelga, del más cercano al más lejano: concepto →
     /// `[categoría, centro]`; categoría → `[centro]`; centro → `[]`.
-    let ruta: [String]
+    let path: [String]
     let centroId: Int
     let categoriaId: Int?
     /// El del centro: en uno estático no se reclasifica desde el formulario.
-    let estatico: Bool
+    let isStatic: Bool
     /// Normalizados una vez, al indexar, y no en cada tecla.
     let nombreNormalizado: String
     let palabrasNormalizadas: [String]
 
-    var rutaLegible: String { ruta.joined(separator: " › ") }
+    var rutaLegible: String { path.joined(separator: " › ") }
 }
 
 struct TreeIndex: Sendable {
@@ -51,27 +51,27 @@ struct TreeIndex: Sendable {
     private static func entrada(
         _ nodo: TreeNode, nivel: TreeLevel, centro: TreeNode, categoria: TreeNode? = nil
     ) -> IndexEntry {
-        let ruta = nivel == .centro ? [] : [categoria?.name, centro.name].compactMap { $0 }
+        let path = nivel == .centro ? [] : [categoria?.name, centro.name].compactMap { $0 }
         return IndexEntry(
             id: nodo.id,
             nivel: nivel,
-            nombre: nodo.name,
-            ruta: ruta,
+            name: nodo.name,
+            path: path,
             centroId: centro.id,
             categoriaId: categoria?.id,
-            estatico: centro.estatico,
-            nombreNormalizado: normalizar(nodo.name),
-            palabrasNormalizadas: nodo.keywords.map(normalizar)
+            isStatic: centro.isStatic,
+            nombreNormalizado: normalize(nodo.name),
+            palabrasNormalizadas: nodo.keywords.map(normalize)
         )
     }
 
     /// Vacío devuelve vacío: lo que se enseña con el buscador en blanco lo
     /// decide quien llama. Los centros no salen por defecto: elegir uno no
     /// clasifica nada.
-    func buscar(_ consulta: String, niveles: Set<TreeLevel> = [.concepto, .categoria], limite: Int = 20)
+    func search(_ query: String, niveles: Set<TreeLevel> = [.concepto, .categoria], limite: Int = 20)
         -> [IndexEntry]
     {
-        let tokens = Self.normalizar(consulta).split(separator: " ").map(String.init)
+        let tokens = Self.normalize(query).split(separator: " ").map(String.init)
         if tokens.isEmpty { return [] }
         let locale = Locale(identifier: "es")
 
@@ -85,8 +85,8 @@ struct TreeIndex: Sendable {
                 // A igual parecido, el concepto antes que la categoría: es lo
                 // que clasifica del todo.
                 if a.0.nivel.peso != b.0.nivel.peso { return a.0.nivel.peso > b.0.nivel.peso }
-                let orden = a.0.nombre.compare(b.0.nombre, locale: locale)
-                if orden != .orderedSame { return orden == .orderedAscending }
+                let order = a.0.name.compare(b.0.name, locale: locale)
+                if order != .orderedSame { return order == .orderedAscending }
                 return a.0.id < b.0.id
             }
             .prefix(limite)
@@ -123,7 +123,7 @@ struct TreeIndex: Sendable {
 
     /// La de `firmas.ts`: NFD, sin diacríticos, minúsculas, espacios
     /// colapsados y recortado.
-    static func normalizar(_ s: String) -> String {
+    static func normalize(_ s: String) -> String {
         let sinTildes = String(
             String.UnicodeScalarView(
                 s.decomposedStringWithCanonicalMapping.unicodeScalars.filter { !(0x0300...0x036F).contains($0.value) }

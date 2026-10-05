@@ -4,9 +4,9 @@ import UIKit
 import WebKit
 
 enum LoadState: Equatable {
-    case cargando
+    case loading
     case lista
-    case fallo(URLError.Code)
+    case failure(URLError.Code)
     /// La web pidió sesión otra vez después de dos entregas seguidas: algo
     /// del lado web no la acepta y sondear no lo arregla.
     case sesionWebAtascada
@@ -14,17 +14,17 @@ enum LoadState: Equatable {
 
 /// Lo que la web cuenta por `cocoEventos`, sin respuesta.
 enum WebEvent: Equatable {
-    case salir
+    case signOut
     case sesionCerrada
-    case sinSesion
+    case signedOut
     case abrirCaptura
 
-    init?(mensaje: Any) {
-        guard let dic = mensaje as? [String: Any], let tipo = dic["tipo"] as? String else { return nil }
+    init?(message: Any) {
+        guard let dic = message as? [String: Any], let tipo = dic["tipo"] as? String else { return nil }
         switch tipo {
-        case "salir": self = .salir
+        case "salir": self = .signOut
         case "sesionCerrada": self = .sesionCerrada
-        case "sinSesion": self = .sinSesion
+        case "sinSesion": self = .signedOut
         case "abrirCaptura": self = .abrirCaptura
         default: return nil
         }
@@ -44,16 +44,16 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     static let entregasMaximasSeguidas = 2
 
     let webView: WKWebView
-    private(set) var estadoDeCarga: LoadState = .cargando
+    private(set) var estadoDeCarga: LoadState = .loading
     /// Hubo al menos una carga completa: con documento, un fallo de red se
     /// enseña como franja y no como pantalla entera.
     private(set) var hayDocumento = false
     /// La web pidió sesión mientras no había red: se entrega al volver.
     private(set) var entregaPendiente = false
 
-    private let sesion: Session
-    private let configuracion: APIConfiguration
-    private let navegacion: any Navigation
+    private let session: Session
+    private let configuration: APIConfiguration
+    private let navigation: any Navigation
     private let reloj: @Sendable () -> Date
     private let abrirExterno: (URL) -> Void
 
@@ -61,16 +61,16 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     private var entregasSeguidas = 0
 
     init(
-        sesion: Session,
-        configuracion: APIConfiguration,
-        navegacion: any Navigation,
+        session: Session,
+        configuration: APIConfiguration,
+        navigation: any Navigation,
         version: String = Brand.version,
         reloj: @Sendable @escaping () -> Date = Date.init,
         abrirExterno: @escaping (URL) -> Void = { UIApplication.shared.open($0) }
     ) {
-        self.sesion = sesion
-        self.configuracion = configuracion
-        self.navegacion = navegacion
+        self.session = session
+        self.configuration = configuration
+        self.navigation = navigation
         self.reloj = reloj
         self.abrirExterno = abrirExterno
 
@@ -83,7 +83,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         conf.websiteDataStore = .default()
         conf.allowsInlineMediaPlayback = true
         let script = WKUserScript(
-            source: BootScript.fuente(version: version), injectionTime: .atDocumentStart, forMainFrameOnly: true,
+            source: BootScript.source(version: version), injectionTime: .atDocumentStart, forMainFrameOnly: true,
             in: .page)
         conf.userContentController.addUserScript(script)
         webView = WKWebView(frame: .zero, configuration: conf)
@@ -105,16 +105,16 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     /// `GET <base>/`: URL limpia, la SPA sirve `index.html`.
     func cargarInicio() {
-        estadoDeCarga = .cargando
-        webView.load(URLRequest(url: configuracion.base.appending(path: "/")))
+        estadoDeCarga = .loading
+        webView.load(URLRequest(url: configuration.base.appending(path: "/")))
     }
 
     /// Sin recargar si la web ya montó `window.__coco`; si no, carga la ruta.
-    func ir(a ruta: String) {
-        let js = Self.javascriptParaIr(ruta)
-        webView.evaluateJavaScript(js) { [weak self] resultado, _ in
+    func go(to path: String) {
+        let js = Self.javascriptParaIr(path)
+        webView.evaluateJavaScript(js) { [weak self] result, _ in
             guard let self else { return }
-            if (resultado as? Bool) != true { self.cargar(ruta: ruta) }
+            if (result as? Bool) != true { self.load(path: path) }
         }
     }
 
@@ -124,43 +124,43 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     func recargar() {
         entregasSeguidas = 0
-        estadoDeCarga = .cargando
+        estadoDeCarga = .loading
         if webView.url == nil { cargarInicio() } else { webView.reload() }
     }
 
     /// Al volver la red: recarga lo que no cargó y entrega la sesión que quedó
     /// pendiente.
     func conectividadVolvio() async {
-        if case .fallo = estadoDeCarga { recargar() }
+        if case .failure = estadoDeCarga { recargar() }
         if entregaPendiente { await empujarSesion() }
     }
 
-    private func cargar(ruta: String) {
-        let limpia = ruta.hasPrefix("/") ? String(ruta.dropFirst()) : ruta
-        webView.load(URLRequest(url: configuracion.base.appending(path: limpia)))
+    private func load(path: String) {
+        let limpia = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        webView.load(URLRequest(url: configuration.base.appending(path: limpia)))
     }
 
     // MARK: Sesión hacia la web
 
     /// `window.__coco.recibirSesion({...})` como mucho una vez cada 30 s.
     func empujarSesion() async {
-        let ahora = reloj()
-        guard Self.debeEntregar(ultima: ultimaEntrega, ahora: ahora, entregasSeguidas: entregasSeguidas) else {
+        let now = reloj()
+        guard Self.debeEntregar(last: ultimaEntrega, now: now, entregasSeguidas: entregasSeguidas) else {
             if entregasSeguidas >= Self.entregasMaximasSeguidas { estadoDeCarga = .sesionWebAtascada }
             return
         }
-        switch await sesion.estado {
-        case .activa:
+        switch await session.state {
+        case .active:
             break
-        case .sinConexion:
+        case .offline:
             entregaPendiente = true
             return
-        case .sinSesion, .cargando:
+        case .signedOut, .loading:
             return
         }
-        guard let s = try? await sesion.sesionParaLaWeb(), let json = try? Self.json(de: s) else { return }
+        guard let s = try? await session.webSession(), let json = try? Self.json(de: s) else { return }
         entregaPendiente = false
-        ultimaEntrega = ahora
+        ultimaEntrega = now
         entregasSeguidas += 1
         webView.evaluateJavaScript("window.__coco?.recibirSesion?.(\(json)); true;") { _, _ in }
     }
@@ -179,11 +179,11 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         replyHandler: @escaping @MainActor (Any?, String?) -> Void
     ) {
         let esPrincipal = m.frameInfo.isMainFrame
-        let origen = m.frameInfo.securityOrigin
+        let source = m.frameInfo.securityOrigin
         Task {
-            let (valor, error) = await self.responderPedidoDeSesion(
-                esFramePrincipal: esPrincipal, protocolo: origen.protocol, host: origen.host, puerto: origen.port)
-            replyHandler(valor, error)
+            let (value, error) = await self.responderPedidoDeSesion(
+                esFramePrincipal: esPrincipal, protocolo: source.protocol, host: source.host, puerto: source.port)
+            replyHandler(value, error)
         }
     }
 
@@ -194,15 +194,15 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     ) {
         guard
             Self.origenPermitido(
-                protocolo: protocolo, host: host, puerto: puerto, base: configuracion.base,
+                protocolo: protocolo, host: host, puerto: puerto, base: configuration.base,
                 esFramePrincipal: esFramePrincipal)
         else {
             return (nil, "origen-no-permitido")
         }
         do {
-            let s = try await sesion.sesionParaLaWeb()
-            return (try s.comoDiccionario(), nil)
-        } catch SessionError.sinConexion {
+            let s = try await session.webSession()
+            return (try s.asDictionary(), nil)
+        } catch SessionError.offline {
             entregaPendiente = true
             return (nil, "sin-conexion")
         } catch {
@@ -212,30 +212,30 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     /// `cocoEventos`: lo que la web cuenta sin esperar respuesta.
     func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage) {
-        let origen = m.frameInfo.securityOrigin
+        let source = m.frameInfo.securityOrigin
         guard
             Self.origenPermitido(
-                protocolo: origen.protocol, host: origen.host, puerto: origen.port, base: configuracion.base,
+                protocolo: source.protocol, host: source.host, puerto: source.port, base: configuration.base,
                 esFramePrincipal: m.frameInfo.isMainFrame),
-            let evento = WebEvent(mensaje: m.body)
+            let evento = WebEvent(message: m.body)
         else { return }
         Task { await self.recibir(evento) }
     }
 
     func recibir(_ evento: WebEvent) async {
         switch evento {
-        case .salir:
+        case .signOut:
             // La web limpia su memoria sin llamar a /auth/logout; el logout
             // real, con el refresh, lo hace la app.
-            await sesion.salir()
+            await session.signOut()
         case .sesionCerrada:
             // El servidor ya mató la familia (cambio de contraseña, salir de
             // todos los dispositivos): solo queda olvidar lo local.
-            await sesion.descartar()
-        case .sinSesion:
+            await session.discard()
+        case .signedOut:
             await empujarSesion()
         case .abrirCaptura:
-            navegacion.ir(.formularioRapido(conCamara: false))
+            navigation.go(.quickForm(withCamera: false))
         }
     }
 
@@ -249,7 +249,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
             decisionHandler(.cancel)
             return
         }
-        if Self.esNavegacionPermitida(url, base: configuracion.base) {
+        if Self.esNavegacionPermitida(url, base: configuration.base) {
             decisionHandler(.allow)
         } else {
             abrirExterno(url)
@@ -258,7 +258,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation?) {
-        estadoDeCarga = .cargando
+        estadoDeCarga = .loading
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
@@ -269,18 +269,18 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
-        fallo((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
+        failure((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
-        fallo((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
+        failure((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
     }
 
-    private func fallo(_ codigo: URLError.Code) {
+    private func failure(_ codigo: URLError.Code) {
         // Cancelada es lo que WebKit dice cuando se pide otra carga encima:
         // no es un fallo de red.
         guard codigo != .cancelled else { return }
-        estadoDeCarga = .fallo(codigo)
+        estadoDeCarga = .failure(codigo)
     }
 
     /// WebKit mató el proceso de contenido (memoria): la SPA vuelve a arrancar
@@ -302,9 +302,9 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     // MARK: Puros
 
-    nonisolated static func origenPermitido(_ origen: WKSecurityOrigin, base: URL, esFramePrincipal: Bool) -> Bool {
+    nonisolated static func origenPermitido(_ source: WKSecurityOrigin, base: URL, esFramePrincipal: Bool) -> Bool {
         origenPermitido(
-            protocolo: origen.protocol, host: origen.host, puerto: origen.port, base: base,
+            protocolo: source.protocol, host: source.host, puerto: source.port, base: base,
             esFramePrincipal: esFramePrincipal)
     }
 
@@ -326,18 +326,18 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         return esquema.lowercased() == "https" ? 443 : 80
     }
 
-    /// `window.__coco.ir(ruta)` si existe; devuelve `true` si navegó.
-    nonisolated static func javascriptParaIr(_ ruta: String) -> String {
-        "(typeof window.__coco?.ir === 'function') ? (window.__coco.ir(\(cadenaJSON(ruta))), true) : false;"
+    /// `window.__coco.go(path)` si existe; devuelve `true` si navegó.
+    nonisolated static func javascriptParaIr(_ path: String) -> String {
+        "(typeof window.__coco?.ir === 'function') ? (window.__coco.ir(\(cadenaJSON(path))), true) : false;"
     }
 
     /// Una cadena como literal de JavaScript: por JSON, que ya escapa comillas,
     /// barras y saltos de línea.
-    nonisolated static func cadenaJSON(_ texto: String) -> String {
+    nonisolated static func cadenaJSON(_ text: String) -> String {
         guard
-            let datos = try? JSONSerialization.data(
-                withJSONObject: texto, options: [.fragmentsAllowed, .withoutEscapingSlashes]),
-            let cadena = String(data: datos, encoding: .utf8)
+            let data = try? JSONSerialization.data(
+                withJSONObject: text, options: [.fragmentsAllowed, .withoutEscapingSlashes]),
+            let cadena = String(data: data, encoding: .utf8)
         else { return "\"\"" }
         return cadena
     }
@@ -353,16 +353,16 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     /// Una entrega cada 30 s y nunca más de dos seguidas sin que cambie el
     /// documento.
-    nonisolated static func debeEntregar(ultima: Date?, ahora: Date, entregasSeguidas: Int) -> Bool {
+    nonisolated static func debeEntregar(last: Date?, now: Date, entregasSeguidas: Int) -> Bool {
         guard entregasSeguidas < entregasMaximasSeguidas else { return false }
-        guard let ultima else { return true }
-        return ahora.timeIntervalSince(ultima) >= ventanaDeEntrega
+        guard let last else { return true }
+        return now.timeIntervalSince(last) >= ventanaDeEntrega
     }
 
-    nonisolated static func json(de sesion: WebSession) throws -> String {
-        let datos = try JSONSerialization.data(
-            withJSONObject: sesion.comoDiccionario(), options: [.withoutEscapingSlashes])
-        guard let texto = String(data: datos, encoding: .utf8) else { throw SessionError.sinSesion }
-        return texto
+    nonisolated static func json(de session: WebSession) throws -> String {
+        let data = try JSONSerialization.data(
+            withJSONObject: session.asDictionary(), options: [.withoutEscapingSlashes])
+        guard let text = String(data: data, encoding: .utf8) else { throw SessionError.signedOut }
+        return text
     }
 }

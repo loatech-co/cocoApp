@@ -9,50 +9,50 @@ enum KeychainKey: String, Sendable {
 /// Dónde vive el refresh. El de verdad es el Keychain (`SystemKeychain`);
 /// las pruebas usan `InMemoryKeychain` para mirar qué se escribió y cuándo.
 protocol KeychainStore: Sendable {
-    func leer(_ clave: KeychainKey) throws -> String?
+    func read(_ key: KeychainKey) throws -> String?
     /// En el sistema: `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`,
     /// servicio `co.loatech.coco`.
-    func escribir(_ valor: String, en clave: KeychainKey) throws
-    func borrar(_ clave: KeychainKey) throws
+    func write(_ value: String, at key: KeychainKey) throws
+    func delete(_ key: KeychainKey) throws
 }
 
 /// Para las pruebas. Recuerda cada escritura en orden: así una prueba puede
 /// comprobar que el refresh nuevo se guardó ANTES de publicar el access.
 final class InMemoryKeychain: KeychainStore, @unchecked Sendable {
-    private let cerrojo = NSLock()
-    private var _valores: [KeychainKey: String]
-    private var _escrituras: [(KeychainKey, String)] = []
+    private let lock = NSLock()
+    private var _values: [KeychainKey: String]
+    private var _writes: [(KeychainKey, String)] = []
     /// Si se pone, toda operación falla con él: simula un Keychain roto.
-    var fallo: Error?
+    var failure: Error?
 
-    init(valores: [KeychainKey: String] = [:]) {
-        _valores = valores
+    init(values: [KeychainKey: String] = [:]) {
+        _values = values
     }
 
-    var valores: [KeychainKey: String] {
-        get { cerrojo.withLock { _valores } }
-        set { cerrojo.withLock { _valores = newValue } }
+    var values: [KeychainKey: String] {
+        get { lock.withLock { _values } }
+        set { lock.withLock { _values = newValue } }
     }
 
-    var escrituras: [(KeychainKey, String)] {
-        cerrojo.withLock { _escrituras }
+    var writes: [(KeychainKey, String)] {
+        lock.withLock { _writes }
     }
 
-    func leer(_ clave: KeychainKey) throws -> String? {
-        if let fallo { throw fallo }
-        return cerrojo.withLock { _valores[clave] }
+    func read(_ key: KeychainKey) throws -> String? {
+        if let failure { throw failure }
+        return lock.withLock { _values[key] }
     }
 
-    func escribir(_ valor: String, en clave: KeychainKey) throws {
-        if let fallo { throw fallo }
-        cerrojo.withLock {
-            _valores[clave] = valor
-            _escrituras.append((clave, valor))
+    func write(_ value: String, at key: KeychainKey) throws {
+        if let failure { throw failure }
+        lock.withLock {
+            _values[key] = value
+            _writes.append((key, value))
         }
     }
 
-    func borrar(_ clave: KeychainKey) throws {
-        if let fallo { throw fallo }
-        cerrojo.withLock { _ = _valores.removeValue(forKey: clave) }
+    func delete(_ key: KeychainKey) throws {
+        if let failure { throw failure }
+        lock.withLock { _ = _values.removeValue(forKey: key) }
     }
 }

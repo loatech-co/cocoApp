@@ -45,7 +45,7 @@ struct CaptureWidgetView: View {
     @Environment(\.widgetFamily) private var familia
 
     private let manual = CaptureURL.manual
-    private let foto = CaptureURL.foto
+    private let photo = CaptureURL.photo
 
     var body: some View {
         switch familia {
@@ -54,7 +54,7 @@ struct CaptureWidgetView: View {
                 Link(destination: manual) {
                     WidgetActionButton(titulo: "Registrar", simbolo: "plus.circle.fill")
                 }
-                Link(destination: foto) {
+                Link(destination: photo) {
                     WidgetActionButton(titulo: "Foto", simbolo: "camera.fill")
                 }
             }

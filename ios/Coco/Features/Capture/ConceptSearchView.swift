@@ -13,7 +13,7 @@ struct ConceptSearchView: View {
     }
 
     private var consultaVacia: Bool {
-        modelo.consulta.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        modelo.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
@@ -23,9 +23,9 @@ struct ConceptSearchView: View {
                     Text("Los conceptos aún no se han descargado. Guarda igual: la captura queda por clasificar.")
                         .foregroundStyle(.secondary)
                 }
-                if consultaVacia, !modelo.candidatos.isEmpty {
+                if consultaVacia, !modelo.candidates.isEmpty {
                     Section {
-                        ForEach(modelo.candidatos, content: fila)
+                        ForEach(modelo.candidates, content: fila)
                     } header: {
                         Text("Propuestos por el recibo").textCase(nil)
                     }
@@ -37,15 +37,15 @@ struct ConceptSearchView: View {
                         Text(consultaVacia ? "Recientes" : "Resultados").textCase(nil)
                     }
                 } else if !consultaVacia {
-                    ContentUnavailableView.search(text: modelo.consulta)
+                    ContentUnavailableView.search(text: modelo.query)
                 }
             }
             .searchable(
-                text: $modelo.consulta, placement: .navigationBarDrawer(displayMode: .always),
+                text: $modelo.query, placement: .navigationBarDrawer(displayMode: .always),
                 prompt: "Nombre o palabra clave"
             )
-            .onChange(of: modelo.consulta) { _, nueva in modelo.buscar(nueva) }
-            .task { modelo.buscar(modelo.consulta) }
+            .onChange(of: modelo.query) { _, nueva in modelo.search(nueva) }
+            .task { modelo.search(modelo.query) }
             .navigationTitle("Concepto")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -62,7 +62,7 @@ struct ConceptSearchView: View {
             dismiss()
         } label: {
             VStack(alignment: .leading, spacing: 2) {
-                Text(entrada.nombre)
+                Text(entrada.name)
                 Text(entrada.rutaLegible)
                     .font(.footnote)
                     .foregroundStyle(.secondary)

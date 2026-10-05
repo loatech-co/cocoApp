@@ -5,9 +5,9 @@ import XCTest
 /// Paridad con `buscar-en-arbol.test.ts` de la web (ver `parityPaths`): mismo
 /// fixture, mismos resultados. Si una prueba cambia allí, cambia aquí.
 final class TreeIndexTests: XCTestCase {
-    private static let arbol: [TreeNode] = [
+    private static let tree: [TreeNode] = [
         TreeNode(
-            id: 1, name: "Costos fijos", parentId: nil, estatico: true,
+            id: 1, name: "Costos fijos", parentId: nil, isStatic: true,
             children: [
                 TreeNode(
                     id: 10, name: "Servicios públicos", parentId: 1,
@@ -37,25 +37,25 @@ final class TreeIndexTests: XCTestCase {
             ]),
     ]
 
-    private let indice = TreeIndex(raices: arbol)
+    private let indice = TreeIndex(raices: tree)
 
     // MARK: Indexar
 
     func testAplanaLosTresNivelesConSuCamino() throws {
         let mercado = try XCTUnwrap(indice.entrada(id: 200))
         XCTAssertEqual(mercado.nivel, .concepto)
-        XCTAssertEqual(mercado.ruta, ["Alimentación", "Costos variables"])
+        XCTAssertEqual(mercado.path, ["Alimentación", "Costos variables"])
         XCTAssertEqual(mercado.categoriaId, 20)
         XCTAssertEqual(mercado.centroId, 2)
         XCTAssertEqual(mercado.rutaLegible, "Alimentación › Costos variables")
-        XCTAssertFalse(mercado.estatico)
+        XCTAssertFalse(mercado.isStatic)
         XCTAssertEqual(indice.entradas.count, 11)
     }
 
     func testUnaCategoriaSoloLlevaSuCentroEnElCamino() throws {
         let alimentacion = try XCTUnwrap(indice.entrada(id: 20))
         XCTAssertEqual(alimentacion.nivel, .categoria)
-        XCTAssertEqual(alimentacion.ruta, ["Costos variables"])
+        XCTAssertEqual(alimentacion.path, ["Costos variables"])
         XCTAssertNil(alimentacion.categoriaId)
         XCTAssertEqual(alimentacion.centroId, 2)
     }
@@ -66,7 +66,7 @@ final class TreeIndexTests: XCTestCase {
         let celsia = try XCTUnwrap(indice.entrada(id: 100))
         XCTAssertEqual(celsia.categoriaId, 10)
         XCTAssertEqual(celsia.centroId, 1)
-        XCTAssertTrue(celsia.estatico)
+        XCTAssertTrue(celsia.isStatic)
     }
 
     func testExcluyeLoArchivadoYLoQueCuelgaDeEllo() {
@@ -93,19 +93,19 @@ final class TreeIndexTests: XCTestCase {
     // MARK: Buscar
 
     func testEncuentraPorNombreSinTildesNiMayusculas() {
-        XCTAssertEqual(indice.buscar("educacion").map(\.nombre), ["Educación"])
-        XCTAssertEqual(indice.buscar("CELSIA").map(\.id), [100])
+        XCTAssertEqual(indice.search("educacion").map(\.name), ["Educación"])
+        XCTAssertEqual(indice.search("CELSIA").map(\.id), [100])
     }
 
     func testEncuentraPorPalabraClave() {
         // Es la razón de que exista: lo que dice el recibo no es el nombre del
         // concepto, es lo que alguien escribió como palabra clave.
-        XCTAssertEqual(indice.buscar("d1").map(\.id), [200])
-        XCTAssertEqual(indice.buscar("koba").map(\.id), [200])
+        XCTAssertEqual(indice.search("d1").map(\.id), [200])
+        XCTAssertEqual(indice.search("koba").map(\.id), [200])
     }
 
     func testElNombreExactoGanaAlQueEmpiezaYEseAlQueContiene() {
-        XCTAssertEqual(indice.buscar("mercado").map(\.nombre), ["Mercado", "Supermercado"])
+        XCTAssertEqual(indice.search("mercado").map(\.name), ["Mercado", "Supermercado"])
     }
 
     func testAIgualParecidoElConceptoAntesQueLaCategoria() {
@@ -120,35 +120,35 @@ final class TreeIndexTests: XCTestCase {
                         ])
                 ])
         ])
-        XCTAssertEqual(conConcepto.buscar("transporte").map(\.nivel), [.concepto, .categoria])
+        XCTAssertEqual(conConcepto.search("transporte").map(\.nivel), [.concepto, .categoria])
     }
 
     func testConVariasPalabrasTodasTienenQueEncontrarse() {
-        XCTAssertEqual(indice.buscar("mercado d1").map(\.id), [200])
-        XCTAssertEqual(indice.buscar("mercado zzz"), [])
+        XCTAssertEqual(indice.search("mercado d1").map(\.id), [200])
+        XCTAssertEqual(indice.search("mercado zzz"), [])
     }
 
     func testVacioDevuelveVacio() {
-        XCTAssertEqual(indice.buscar(""), [])
-        XCTAssertEqual(indice.buscar("   "), [])
+        XCTAssertEqual(indice.search(""), [])
+        XCTAssertEqual(indice.search("   "), [])
     }
 
     func testNoDevuelveCentrosPorDefecto() {
-        XCTAssertEqual(indice.buscar("costos"), [])
-        XCTAssertEqual(indice.buscar("costos", niveles: [.centro]).map(\.nombre), ["Costos fijos", "Costos variables"])
+        XCTAssertEqual(indice.search("costos"), [])
+        XCTAssertEqual(indice.search("costos", niveles: [.centro]).map(\.name), ["Costos fijos", "Costos variables"])
     }
 
     func testRespetaElLimite() {
-        XCTAssertEqual(indice.buscar("a", limite: 2).count, 2)
+        XCTAssertEqual(indice.search("a", limite: 2).count, 2)
     }
 
     // MARK: Normalizar
 
     func testNormalizarEsLaDeFirmas() {
-        XCTAssertEqual(TreeIndex.normalizar("Alimentación  Básica"), "alimentacion basica")
-        XCTAssertEqual(TreeIndex.normalizar("  Celsia (Energía) \n"), "celsia (energia)")
+        XCTAssertEqual(TreeIndex.normalize("Alimentación  Básica"), "alimentacion basica")
+        XCTAssertEqual(TreeIndex.normalize("  Celsia (Energía) \n"), "celsia (energia)")
         XCTAssertEqual(
-            TreeIndex.normalizar("ÑANDÚ"), "nandu",
+            TreeIndex.normalize("ÑANDÚ"), "nandu",
             "NFD descompone la eñe y la tilde se va, igual que en firmas.ts")
     }
 
@@ -162,8 +162,8 @@ final class TreeIndexTests: XCTestCase {
     /// Si la prueba de la web se mueve o se renombra, esta paridad se quedaría
     /// apuntando a la nada sin que nadie lo notara.
     func testTheWebParityTestStillExists() throws {
-        let raiz = URL(fileURLWithPath: #filePath)
-        let repo = (0..<5).reduce(raiz) { url, _ in url.deletingLastPathComponent() }
+        let root = URL(fileURLWithPath: #filePath)
+        let repo = (0..<5).reduce(root) { url, _ in url.deletingLastPathComponent() }
         guard FileManager.default.fileExists(atPath: repo.appending(path: "frontend").path) else {
             throw XCTSkip("No está el repo al lado: \(repo.path)")
         }
