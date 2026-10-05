@@ -32,6 +32,7 @@ const EXEMPT: Record<string, string> = {
   'POST /api/v1/auth/change-password':
     'acts on the token subject only (covered in auth.e2e-spec); a wrong password here would lock the test user out',
   'GET /api/v1/health': 'no user data',
+  'GET /api/v1/ready': 'public probe; runs SELECT 1 and reads no table, so no user data',
 };
 
 const PNG = Buffer.from(

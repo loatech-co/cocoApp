@@ -1,27 +1,35 @@
 import { Controller, Get } from '@nestjs/common';
 
-import { HealthService, type HealthPayload } from './health.service';
+import { HealthService, type LivenessPayload, type ReadinessPayload } from './health.service';
 import { Public } from '../../common/decorators/public.decorator';
 
 /**
- * Public health check: the process answers and reaches the database.
+ * Two public probes, for anything that checks the service from outside (an
+ * uptime monitor, the deploy verification, an operator with curl), which has
+ * no user to sign in as:
  *
- * It used to require a token, to prove the whole chain —token, guard, user,
- * database— in one call. That made it useless to anything that checks a
- * service from outside (an uptime monitor, the deploy verification, an
- * operator with curl), which has no user to sign in as. Phase 6.8 made it
- * public; the authenticated chain is still exercised end to end by every
- * protected route, and its e2e moved to `/auth/me`.
+ *   · `GET /health` — the process is alive. Never touches the database.
+ *   · `GET /ready`  — the process can serve: the database answers `SELECT 1`.
  *
- * It reveals nothing: no user, no version, no host — only up or down.
+ * Kept apart so a database outage reads as "not ready" and not as "the API is
+ * down": restarting the process does not fix an unreachable database.
+ *
+ * Neither reveals anything: no user, no version, no host — only up or down.
+ * The authenticated chain is exercised end to end by every protected route.
  */
-@Controller('health')
+@Controller()
 export class HealthController {
   constructor(private readonly health: HealthService) {}
 
   @Public()
-  @Get()
-  check(): Promise<HealthPayload> {
-    return this.health.check();
+  @Get('health')
+  live(): LivenessPayload {
+    return this.health.live();
+  }
+
+  @Public()
+  @Get('ready')
+  ready(): Promise<ReadinessPayload> {
+    return this.health.ready();
   }
 }
