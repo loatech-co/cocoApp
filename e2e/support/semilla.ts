@@ -23,7 +23,7 @@ async function data<T>(response: Awaited<ReturnType<APIRequestContext['get']>>):
 }
 
 /** The id of a category by its path, e.g. `['Costos fijos', 'Vivienda']`. */
-export async function categoryId(api: APIRequestContext, path: string[]): Promise<number> {
+async function categoryId(api: APIRequestContext, path: string[]): Promise<number> {
   let level = await data<Node[]>(await api.get('/api/v1/categories'));
   let found: Node | undefined;
   for (const name of path) {
@@ -61,7 +61,7 @@ export async function createConcept(
 }
 
 /** Today in Bogotá, as `YYYY-MM-DD`: the day the app opens on. */
-export function today(): string {
+function today(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
 }
 

@@ -17,8 +17,10 @@
     "dev": "npm run dev --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present && eslint e2e --max-warnings 0",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p e2e",
+    "e2e:build": "npm run build --workspace api && VITE_API_BASE_URL=/api/v1 npm run build --workspace frontend",
+    "e2e": "playwright test -c e2e",
     "dev:api": "npm run dev --workspace api",
     "dev:web": "npm run dev --workspace frontend",
     "prepare:ocr": "node scripts/preparar-tesseract.mjs",
@@ -62,6 +64,7 @@
     "prettier": "^3.9.9",
     "size-limit": "^14.1.0",
     "tsx": "~4.20.6",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.71.1"
   }
 }

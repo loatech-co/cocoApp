@@ -119,6 +119,7 @@ export default defineConfig(
       'eslint.config.js',
       '*.config.{js,ts,mjs}',
       'frontend/*.config.ts',
+      'e2e/*.config.ts',
       // Storybook reads its config and each story file's meta the same way.
       'frontend/.storybook/*.{ts,tsx}',
       'frontend/src/**/*.stories.tsx',

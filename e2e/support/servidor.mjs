@@ -29,7 +29,8 @@ import { startFakeGoTrue } from './gotrue-falso.mjs';
  * IP exceed 120 requests per minute. The limiter has its own API e2e test.
  */
 
-const require = createRequire(import.meta.url);
+/** Nest is loaded from the API's own dependencies: it is the API that runs. */
+const fromApi = createRequire(join(ROOT, 'api', 'package.json'));
 const API_DIST = join(ROOT, 'api', 'dist');
 const SPA_DIST = join(ROOT, 'frontend', 'dist');
 const RECEIPTS = join(tmpdir(), `coco-e2e-soportes-${API_PORT}`);
@@ -98,16 +99,14 @@ function pinEnvironment(gotrueUrl) {
 }
 
 async function startApi() {
-  /* eslint-disable @typescript-eslint/no-require-imports -- the API is CommonJS */
-  const { NestFactory } = require('@nestjs/core');
-  const { ConfigService } = require('@nestjs/config');
-  const { ThrottlerStorage } = require('@nestjs/throttler');
-  const { AppModule } = require(join(API_DIST, 'app.module.js'));
-  const { configureApp } = require(join(API_DIST, 'bootstrap.js'));
-  const { installBigIntSerializer } = require(join(API_DIST, 'common/serialization/bigint.js'));
-  const { whyTheEnvironmentIsInvalid } = require(join(API_DIST, 'common/config/env.js'));
-  const { porQueNoArrancar } = require(join(API_DIST, 'common/entorno.js'));
-  /* eslint-enable @typescript-eslint/no-require-imports */
+  const { NestFactory } = fromApi('@nestjs/core');
+  const { ConfigService } = fromApi('@nestjs/config');
+  const { ThrottlerStorage } = fromApi('@nestjs/throttler');
+  const { AppModule } = fromApi(join(API_DIST, 'app.module.js'));
+  const { configureApp } = fromApi(join(API_DIST, 'bootstrap.js'));
+  const { installBigIntSerializer } = fromApi(join(API_DIST, 'common/serialization/bigint.js'));
+  const { whyTheEnvironmentIsInvalid } = fromApi(join(API_DIST, 'common/config/env.js'));
+  const { porQueNoArrancar } = fromApi(join(API_DIST, 'common/entorno.js'));
 
   const problem = whyTheEnvironmentIsInvalid() ?? porQueNoArrancar();
   if (problem !== null) throw new Error(problem);

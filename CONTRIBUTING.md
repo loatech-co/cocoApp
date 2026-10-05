@@ -791,3 +791,39 @@ bash scripts/perf/bench-db.sh drop
 ```
 
 An optimization goes in with its ADR and its numbers before and after.
+
+## Journeys (Playwright)
+
+The critical paths of the web, end to end, in `e2e/recorridos/`: signing in
+and out, registering an expense by hand and with a receipt, the concept
+finder, editing and deleting a movement, pending payments (including a
+concept paid in several instalments) and cost centres. Each runs in Chromium
+twice: desktop and an iPhone viewport.
+
+```bash
+npm run e2e:build                # once, and after changing api/ or frontend/
+npx playwright install chromium  # once per machine
+npm run e2e                      # all of them; `-- --project movil` for one viewport
+```
+
+- **Its own environment, never a real one.** `e2e/support/servidor.mjs`
+  starts the compiled API, unchanged, serving the built SPA on one origin, as
+  production does. Its database is `coco_e2e_pw_test` on the local Postgres
+  (`E2E_DATABASE_URL` overrides it); the launcher refuses any database that
+  is not local or whose name does not end in `_test`, creates it, migrates it
+  and **empties it** on every start. Supabase Auth is a fake GoTrue on
+  127.0.0.1 (`e2e/support/gotrue-falso.mjs`) that signs real ES256 tokens.
+  The only thing switched off is the rate limiter's counter.
+- **Every test has its own user**, registered, approved by the admin and
+  seeded through the public API (`e2e/support/semilla.ts`), never through
+  SQL. No journey depends on another one or on the order.
+- **Accessibility rides on the journeys** (D16): `expectAccessible(page, …)`
+  runs axe on what is on screen and fails on `serious` or `critical`
+  violations. The ones that exist today are listed in `EXCEPCIONES`
+  (`e2e/support/axe.ts`), each with its reason; there is no other way to
+  tolerate one, and fixing one means deleting its line.
+- **Selectors are what a person sees**: roles and accessible names, never
+  classes or file structure. A journey that breaks because a label changed is
+  telling the truth.
+- CI runs them in the `journeys` workflow on every pull request; on failure
+  the HTML report and the traces are uploaded as an artifact.

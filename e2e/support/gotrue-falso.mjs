@@ -66,7 +66,7 @@ export async function startFakeGoTrue({ port }) {
       const grant = url.searchParams.get('grant_type');
       if (grant === 'password') {
         const found = [...accounts.entries()].find(([, a]) => a.email === body.email);
-        if (found?.[1].password !== body.password) {
+        if (!found || found[1].password !== body.password) {
           return [400, { error: 'invalid_grant', error_description: 'Invalid login credentials' }];
         }
         return [200, await session(found[0])];
@@ -123,13 +123,7 @@ export async function startFakeGoTrue({ port }) {
     req.on('data', (chunk) => (raw += String(chunk)));
     req.on('end', () => {
       const url = new URL(req.url ?? '/', issuer);
-      /** @type {Record<string, unknown>} */
-      let body = {};
-      try {
-        body = raw ? JSON.parse(raw) : {};
-      } catch {
-        body = {};
-      }
+      const body = parseBody(raw);
       route(req.method ?? 'GET', url, body).then(
         ([status, payload]) => {
           res.statusCode = status;
@@ -150,4 +144,16 @@ export async function startFakeGoTrue({ port }) {
     url: `http://127.0.0.1:${port}`,
     close: () => new Promise((resolve) => server.close(() => resolve(undefined))),
   };
+}
+
+/**
+ * @param {string} raw
+ * @returns {Record<string, unknown>}
+ */
+function parseBody(raw) {
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
 }

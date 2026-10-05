@@ -93,3 +93,6 @@ packages/lectura/dist/
 
 # Worktrees de los ejecutores (Claude Code): copias de trabajo, nunca parte del repo.
 .claude/worktrees/
+
+# Playwright journeys: traces, screenshots and the HTML report (e2e/)
+e2e/.salida/

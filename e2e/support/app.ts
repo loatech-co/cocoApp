@@ -5,7 +5,7 @@ import { test, type Locator, type Page } from '@playwright/test';
  * once. The journeys say WHAT they do; these say where the button is.
  */
 
-export function onPhone(): boolean {
+function onPhone(): boolean {
   return test.info().project.name === 'movil';
 }
 

@@ -55,7 +55,7 @@ async function register(email: string, displayName: string): Promise<void> {
   }
 }
 
-export interface Cuenta {
+interface Cuenta {
   email: string;
   displayName: string;
   /** The API, authenticated as this user. For seeding, never for asserting the UI. */
@@ -74,6 +74,7 @@ interface TestFixtures {
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
   admin: [
+    // eslint-disable-next-line no-empty-pattern -- Playwright reads a fixture's dependencies from this pattern; the admin has none.
     async ({}, use) => {
       await register(ADMIN_EMAIL, 'Administración');
       const admin = await login(ADMIN_EMAIL);

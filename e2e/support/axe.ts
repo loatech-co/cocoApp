@@ -22,7 +22,7 @@ interface Exception {
   reason: string;
 }
 
-export const EXCEPCIONES: readonly Exception[] = [
+const EXCEPCIONES: readonly Exception[] = [
   {
     rule: 'color-contrast',
     match: '.opacity-60',

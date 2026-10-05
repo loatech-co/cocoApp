@@ -5,15 +5,19 @@
   "workspaces": {
     ".": {
       // Operational scripts, run by hand (`npm run sql`, `npx tsx …`).
-      "entry": ["scripts/**/*.{mjs,mts}"],
-      "project": ["scripts/**/*.{mjs,mts}"],
+      "entry": ["scripts/**/*.{mjs,mts}", "e2e/support/servidor.mjs"],
+      "project": ["scripts/**/*.{mjs,mts}", "e2e/**/*.{ts,mjs}"],
+      // The Playwright journeys (e2e/): the config and specs are found by the
+      // playwright plugin through it.
+      "playwright": { "config": ["e2e/playwright.config.ts"] },
       // Scripts run from the repo root and use the workspaces' hoisted
-      // dependencies (Prisma client, pg) on purpose: they operate on the same
-      // database as the app, with the same versions.
+      // Prisma client on purpose: they operate on the same database as the
+      // app, with the same version. (`pg` is a root devDependency since the
+      // journeys, which open their own test database with it.)
       // `tsx` lost its last consumer (scripts/soportes/piloto.mts) in step
       // 7.12; it stays pinned until 7.9 says whether its Lighthouse script
       // needs it, because removing it changes the lockfile's esbuild tree.
-      "ignoreDependencies": ["@prisma/client", "pg", "tsx"],
+      "ignoreDependencies": ["@prisma/client", "tsx"],
     },
     "api": {
       // src/openapi/generate.ts: `npm run openapi` runs it from dist/.
