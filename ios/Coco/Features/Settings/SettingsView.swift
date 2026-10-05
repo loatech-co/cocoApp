@@ -39,13 +39,17 @@ struct SettingsView: View {
                     Text(
                         guardada
                             ? "Guardada. Cierra la app del todo y vuelve a abrirla para usar la nueva URL."
-                            : "Cambiarla cierra la sesión de este teléfono; la nueva URL se usa al volver a abrir la app."
+                            : """
+                            Cambiarla cierra la sesión de este teléfono; la nueva URL se usa al volver a abrir \
+                            la app.
+                            """
                     )
                 }
 
                 Section {
                     LabeledContent("Versión", value: "\(Brand.version) (\(Self.build))")
-                    LabeledContent("La firma caduca", value: Self.textoDeVencimiento(ProvisioningProfileReader.delBundle()))
+                    LabeledContent(
+                        "La firma caduca", value: Self.textoDeVencimiento(ProvisioningProfileReader.delBundle()))
                     LabeledContent("Pendientes de envío", value: "\(d.pendientes)")
                     LabeledContent("API", value: d.configuracion.base.absoluteString)
                 } header: {

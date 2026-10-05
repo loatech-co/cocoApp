@@ -1,0 +1,54 @@
+# SwiftLint — reglas del código Swift (CONTRIBUTING.md, «iOS»). El formato es
+# de swift-format (.swift-format); aquí van las reglas que no son formato.
+#
+# Versión fijada: SwiftLint sigue en 0.x y una versión nueva puede traer
+# reglas nuevas que rompan el CI sin que el código haya cambiado. Se sube a
+# propósito, en su propio PR.
+swiftlint_version: 0.65.1
+
+# Estricto: todo aviso es un error. No hay avisos que se puedan ignorar.
+strict: true
+
+included:
+  - Coco
+  - CocoAccesos
+  - CocoTests
+excluded:
+  - Coco.xcodeproj
+  - build
+  - DerivedData
+
+disabled_rules:
+  # De swift-format: añade la coma final en las colecciones de varias líneas
+  # y baja la llave a su propia línea tras una firma partida. Con estas dos
+  # activas, las herramientas se pisarían.
+  - trailing_comma
+  - opening_brace
+
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - fatal_error_message
+  - empty_count
+  - empty_string
+  - first_where
+  - last_where
+  - contains_over_filter_count
+  - contains_over_first_not_nil
+  - sorted_first_last
+  - toggle_bool
+  - discouraged_optional_boolean
+  - private_swiftui_state
+
+line_length:
+  warning: 120
+  ignores_urls: true
+
+# Una letra vale en un cierre corto (`c` para el contenedor de un `Codable`,
+# `a, b` al ordenar). Lo que sí se exige es camelCase: las claves snake_case
+# de la API van en `CodingKeys`, no en el nombre de la propiedad.
+identifier_name:
+  min_length: 1
+  max_length: 50
+type_name:
+  max_length: 50

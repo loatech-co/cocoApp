@@ -7,11 +7,6 @@ struct APICaptureSender: CaptureSender {
     let api: APIClient
     let sesion: Session
 
-    init(api: APIClient, sesion: Session) {
-        self.api = api
-        self.sesion = sesion
-    }
-
     func capturar(_ r: CaptureRequest) async throws -> CaptureResponse {
         let token = try await tokenVigente()
         return try await api.enviar(RequestBuilder.capturar(r), token: token)

@@ -35,36 +35,31 @@ struct TreeIndex: Sendable {
     init(raices: [TreeNode]) {
         var entradas: [IndexEntry] = []
         for centro in raices where !centro.isArchived {
-            entradas.append(
-                Self.entrada(
-                    centro, nivel: .centro, ruta: [], centroId: centro.id, categoriaId: nil, estatico: centro.estatico))
+            entradas.append(Self.entrada(centro, nivel: .centro, centro: centro))
             for categoria in centro.children ?? [] where !categoria.isArchived {
-                entradas.append(
-                    Self.entrada(
-                        categoria, nivel: .categoria, ruta: [centro.name], centroId: centro.id, categoriaId: nil,
-                        estatico: centro.estatico))
+                entradas.append(Self.entrada(categoria, nivel: .categoria, centro: centro))
                 for concepto in categoria.children ?? [] where !concepto.isArchived {
-                    entradas.append(
-                        Self.entrada(
-                            concepto, nivel: .concepto, ruta: [categoria.name, centro.name], centroId: centro.id,
-                            categoriaId: categoria.id, estatico: centro.estatico))
+                    entradas.append(Self.entrada(concepto, nivel: .concepto, centro: centro, categoria: categoria))
                 }
             }
         }
         self.entradas = entradas
     }
 
+    /// `categoria` solo para un concepto: es de donde cuelga. El camino va del
+    /// más cercano al más lejano, y un centro no cuelga de nada.
     private static func entrada(
-        _ nodo: TreeNode, nivel: TreeLevel, ruta: [String], centroId: Int, categoriaId: Int?, estatico: Bool
+        _ nodo: TreeNode, nivel: TreeLevel, centro: TreeNode, categoria: TreeNode? = nil
     ) -> IndexEntry {
-        IndexEntry(
+        let ruta = nivel == .centro ? [] : [categoria?.name, centro.name].compactMap { $0 }
+        return IndexEntry(
             id: nodo.id,
             nivel: nivel,
             nombre: nodo.name,
             ruta: ruta,
-            centroId: centroId,
-            categoriaId: categoriaId,
-            estatico: estatico,
+            centroId: centro.id,
+            categoriaId: categoria?.id,
+            estatico: centro.estatico,
             nombreNormalizado: normalizar(nodo.name),
             palabrasNormalizadas: nodo.keywords.map(normalizar)
         )

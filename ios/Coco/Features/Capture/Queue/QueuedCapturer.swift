@@ -8,11 +8,6 @@ struct QueuedCapturer: Capturer {
     let cola: CaptureQueue
     let notificador: Notifier
 
-    init(cola: CaptureQueue, notificador: Notifier) {
-        self.cola = cola
-        self.notificador = notificador
-    }
-
     func capturar(_ cuerpo: CaptureBody, origen: CaptureSource, foto: Data?, presupuesto: Duration) async
         -> CaptureResult
     {

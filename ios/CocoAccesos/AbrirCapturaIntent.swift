@@ -10,7 +10,12 @@ enum CaptureURL {
     static let foto = url(destino: "foto")
 
     static func url(destino: String) -> URL {
-        URL(string: "coco://capturar/\(destino)")!
+        // Los destinos son fijos y de letras: si esto falla es un error de
+        // programación, no algo que llegue de fuera.
+        guard let url = URL(string: "coco://capturar/\(destino)") else {
+            preconditionFailure("URL de captura inválida para el destino «\(destino)»")
+        }
+        return url
     }
 }
 

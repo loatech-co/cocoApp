@@ -271,8 +271,11 @@ final actor CaptureQueue {
             }
             .sorted { $0.creadaEn < $1.creadaEn }
     }
+}
 
-    // MARK: Acciones de la persona
+// MARK: Acciones de la persona
+
+extension CaptureQueue {
 
     func reintentarAhora(id: UUID) async {
         guard var captura = buscar(id) else { return }

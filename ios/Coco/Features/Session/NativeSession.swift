@@ -30,7 +30,8 @@ final actor NativeSession: Session {
     private nonisolated let continuacion: AsyncStream<SessionState>.Continuation
 
     init(
-        api: APIClient, llavero: KeychainStore, reloj: @Sendable @escaping () -> Date = Date.init, margen: TimeInterval = 120
+        api: APIClient, llavero: KeychainStore, reloj: @Sendable @escaping () -> Date = Date.init,
+        margen: TimeInterval = 120
     ) {
         self.api = api
         self.llavero = llavero
@@ -208,6 +209,10 @@ final actor NativeSession: Session {
 /// Recorta, byte a byte, el valor-objeto de una clave dentro de otro objeto
 /// de un JSON. No interpreta nada: solo cuenta llaves y respeta las cadenas.
 enum JSONSlicer {
+    // Un escáner de bytes: un caso por carácter estructural y un estado que
+    // cruza todos. Partirlo en funciones obliga a pasar ese estado de mano en
+    // mano y se lee peor que el bucle entero.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     static func objeto(clave: String, dentroDe padre: String, en datos: Data) -> Data? {
         let bytes = [UInt8](datos)
         var i = 0

@@ -22,7 +22,10 @@ struct WelcomeView: View {
             List {
                 Section {
                     Text(
-                        "Coco registra lo que pagas sin que tengas que abrirla: Atajos le pasa cada pago de Wallet y cada mensaje del banco."
+                        """
+                        Coco registra lo que pagas sin que tengas que abrirla: Atajos le pasa cada pago de Wallet y \
+                        cada mensaje del banco.
+                        """
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)

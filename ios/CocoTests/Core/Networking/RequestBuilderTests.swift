@@ -82,6 +82,9 @@ final class RequestBuilderTests: XCTestCase {
         XCTAssertEqual(r.value(forHTTPHeaderField: "Content-Type"), "multipart/form-data; boundary=FRONTERA")
         XCTAssertEqual(p.tiempoMaximo, .seconds(60))
         XCTAssertEqual(r.timeoutInterval, 60)
+        // El cuerpo lleva el JPEG en binario: se quiere la lectura tolerante, que
+        // cambia lo que no es UTF-8 por U+FFFD en vez de devolver nil.
+        // swiftlint:disable:next optional_data_string_conversion
         let texto = String(decoding: try XCTUnwrap(r.httpBody), as: UTF8.self)
         XCTAssertTrue(texto.contains("name=\"archivos\"; filename=\"\(nombre)\""))
         XCTAssertTrue(texto.contains("Content-Type: image/jpeg"))
