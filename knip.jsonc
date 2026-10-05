@@ -8,11 +8,12 @@
       "entry": ["scripts/**/*.{mjs,mts}"],
       "project": ["scripts/**/*.{mjs,mts}"],
       // Scripts run from the repo root and use the workspaces' hoisted
-      // dependencies (Prisma client, pg, pdf.js) on purpose: they operate on
-      // the same database and files as the app, with the same versions.
-      // `tsx` runs scripts/soportes/piloto.mts (`npx tsx …`), which knip
-      // cannot see because the command lives in the script's own header.
-      "ignoreDependencies": ["@prisma/client", "pg", "pdfjs-dist", "tsx"],
+      // dependencies (Prisma client, pg) on purpose: they operate on the same
+      // database as the app, with the same versions.
+      // `tsx` lost its last consumer (scripts/soportes/piloto.mts) in step
+      // 7.12; it stays pinned until 7.9 says whether its Lighthouse script
+      // needs it, because removing it changes the lockfile's esbuild tree.
+      "ignoreDependencies": ["@prisma/client", "pg", "tsx"],
     },
     "api": {
       // src/openapi/generate.ts: `npm run openapi` runs it from dist/.

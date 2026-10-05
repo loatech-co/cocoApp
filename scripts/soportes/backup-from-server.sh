@@ -4,7 +4,7 @@
 # taken before moving receipts to Supabase Storage (phase 6.9), and the source
 # the copy to the bucket reads from.
 #
-# The counterpart of sincronizar.sh, which goes the other way. Same rules:
+# Rules:
 #   - ONE ssh connection for the files (rsync), plus one to count them. The
 #     host has a tiny process cap and every extra session competes with the app.
 #   - No --delete, ever: this only adds to the local folder.
@@ -13,7 +13,7 @@
 # Usage: bash scripts/soportes/backup-from-server.sh [destination]
 #   default destination: $COCO_DATA_DIR/respaldos/soportes-YYYYMMDD-HHMMSS
 #   COCO_DATA_DIR defaults to ~/Documents/VS Code/Personal/coco-datos: real
-#   receipts live OUTSIDE the repository (see scripts/data-dir.mjs).
+#   receipts live OUTSIDE the repository (see docs/runbook.md).
 set -euo pipefail
 
 PORT=65002

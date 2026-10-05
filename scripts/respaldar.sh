@@ -75,9 +75,7 @@ else
   exit 1
 fi
 
-# Se conservan los 14 más recientes. Sin esto la carpeta crece sin límite y
-# nadie se entera hasta que el disco se llena.
-ls -1t "$DESTINO"/coco-*.sql 2>/dev/null | tail -n +15 | while read -r viejo; do
-  rm -f "$viejo"
-  echo "   (eliminado por antigüedad: $(basename "$viejo"))"
-done
+# No backup is deleted here. The retention policy is a proposal awaiting the
+# owner (docs/runbook.md, "Backups and restore"): it keeps monthly and
+# pre-migration backups that a "keep the newest 14" rule would throw away.
+echo "   ($(ls -1 "$DESTINO"/coco-*.sql 2>/dev/null | wc -l | tr -d ' ') backups in $DESTINO)"
