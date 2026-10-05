@@ -28,6 +28,10 @@ export default defineConfig({
         'src/**/*.stories.tsx',
         'src/pruebas/**',
         'src/**/*.d.ts',
+        // Written by Orval from the v2 contract (D11), not by us: measuring it
+        // would grade the generator, and every endpoint the web does not call
+        // yet would count as untested code.
+        'src/shared/api/generated/**',
       ],
       reporter: ['text-summary', 'json-summary'],
       // Measured when the gate was set (step 7.7-web-b): 55.36 % lines and
