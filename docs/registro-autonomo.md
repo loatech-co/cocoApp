@@ -162,6 +162,7 @@ si esta vez no se recupera, es lo primero que mirar.
 | 12:56–12:59 | **Resuelto.** La sonda devolvió `ok` seguido de `bash: fork: Resource temporarily unavailable`: el `exec` conseguía su bash pero ese bash no podía crear ni un `ps`. Es el tope de `nproc` de LVE, que **cuenta hilos**: el `lsnode` de la app tiene **59**, así que la cuenta vive pegada al techo y un proceso de más la desborda | Con una sesión que no puede hacer `fork` solo sirven los *builtins* de bash. Se listó `/proc` con `for`/`read`/`echo` (sin `$(…)`, sin tuberías, sin binarios), se vio el zombi — `node /tmp/leer-viejo.cjs`, de la ronda cuya conexión se cortó, que siguió vivo colgado del pooler — y se mató con el `kill` interno. `fork` volvió al instante; quedan la app y la sesión. **Riesgo del hosting para el informe:** cualquier proceso extra en el servidor compite con los hilos de la app; SSH y los builds de hbuilds están siempre al borde. Mientras tanto se adelantaron en local las fases 2 y 3 enteras |
 | 13:00 | **Paso 1c ejecutado**: `git push origin paso-react-hooks:Dev` (fast-forward comprobado antes con `merge-base`); `Dev` local alineado | Vigilante HTTP del cambio de *bundle* para no gastar sesiones SSH durante el build; la verificación SSH del paso 1d, al terminar |
 | 13:01–13:02 | **El despliegue de `9616997` FALLÓ en hbuilds** y **producción quedó intacta**: `current` sigue en `ba3e636`, la app lleva 4 días viva, `health` 401. La instalación pasó (no es el `esbuild`); falló `tsc --noEmit -p tsconfig.build.json` del frontend, antes de `vite build` («Build failed after 1m 15s») | Causa **exacta**: `vitest.config.ts(3,30): Cannot find module 'vitest/config'`. En la fase 0 metí `vitest.config.ts` en el `include` del `tsconfig.json` para que el lint lo analizara con tipos; `tsconfig.build.json` lo hereda y solo excluía las pruebas, así que el build de producción pasó a comprobar la configuración de un *runner* que no se despliega, y en el servidor `vitest` no está al construir. **En local no se reprodujo** porque `vitest` sí está: el criterio de terminado corría `typecheck` (`tsconfig.json`) y nunca el `build`. **Corrección:** excluir `vitest.config.ts` en `tsconfig.build.json` (una línea, con su porqué), en un commit encima de `9616997` empujado a `Dev`; las ramas de las fases 2–4 rebasadas encima y republicadas. **Desde ahora el criterio de terminado incluye `npm run build` de los dos lados**, que es lo que corre hbuilds |
+| 5 oct 08:48–09:00 | **Despliegue de la fase 5 fallido al primer intento**: `src/pruebas/app-falsa.ts` importa `vitest` y el servidor no lo instala; `current` no cambió | `18a9bb5` excluye `src/pruebas` del `tsconfig.build.json`; segundo despliegue completo en 2m 12s. Tercera vez que el build de producción se cae por algo que solo existe para las pruebas: la verificación en local ya corre `npm run build`, pero no reproduce la ausencia de `vitest` del servidor. Pendiente (fase 6.1): instalación limpia con el lockfile |
 
 ---
 
@@ -409,7 +410,43 @@ señalado como pendiente queda cerrado.**
 | F4-13 | El arreglo del `dist` (quitar el `path` de `@coco/lectura` del tsconfig de la API) va como **commit propio en la línea de la fase 3** y la punta de esa rama se mueve encima | El fallo es de la fase 3 y su despliegue tiene que llevarlo; la fase 4 aún no tenía commits propios, así que no hubo que rebasar nada. Las ramas de trabajo se republican con `--force` (el servidor solo trae `Dev`) |
 | F4-14 | El criterio de terminado pasa a incluir **`npm run build` de API y frontend y la existencia de `api/dist/main.js`** | Dos fallos seguidos (el `vitest.config.ts` y el `dist/` desplazado) habrían pasado typecheck, lint y pruebas y roto producción. Es lo que hbuilds ejecuta, así que es lo que hay que ejecutar antes |
 
-### Fase 5 · app iOS híbrida — EN CURSO (rama `fase-5-app-ios`, sobre `879792e`)
+### Fase 5 · app iOS híbrida — INTEGRADA Y DESPLEGADA · 5 oct 08:46–09:00 (rama `fase-5-app-ios` = `18a9bb5`, 17 commits sobre `879792e`) · sin esquema
+
+**Qué quedó.** API: `CaptureBodyDto` con `category_id` y `nota` (2d4a0ef).
+Web: modo embebido con sesión por puente (1fd2373). iOS, en `ios/`: cimientos
+(f97e6aa), extensión `CocoAccesos` (ee4b450), sesión y árbol (9d84616), cola,
+intents y puente (cf57b20), formulario, cámara y fondo (5661c4b), composición
+y humo (b85874c). Verificación final en local: lint 0 en los **cuatro**
+workspaces; API typecheck OK, **325 unitarias** (24 suites), **200 e2e** (10
+suites, 1 saltada), `npm run build` con `dist/main.js`; frontend typecheck OK,
+**400 pruebas** (48 archivos), build OK; iOS `xcodebuild test` en iPhone 17:
+**192 pruebas, 2 saltadas, 0 fallos**; humo en el simulador contra la API
+local (arranque, pantalla de entrar, `coco://capturar/manual` llega a iOS).
+
+**Integración.** `git push origin HEAD:Dev` 08:46:35, fast-forward de 16
+commits. **El primer despliegue FALLÓ en el build del frontend** (registro
+`2026-10-05_13-46-48_deploy.log`): `src/pruebas/app-falsa.ts(2,20): Cannot
+find module 'vitest'` —un ayudante de pruebas nuevo importaba `vitest`, que el
+servidor no instala—. Producción quedó intacta (`current` siguió en
+`879792e`). Arreglo `18a9bb5`: `src/pruebas` entera fuera de
+`tsconfig.build.json` (una carpeta excluida no se olvida como un sufijo); push
+08:56:26. Segundo despliegue: HEAD de `current` = `18a9bb5`, «✓ built in
+11.65s», «Build completed in 47.2s», «Application restarted in 3.1s»,
+«**Deployment completed in 2m 12s**», *bundle* `index-wM8NGkKQ.js` →
+`index-DCbWDdDI.js` (155 s tras el push), `stderr.log` 0 líneas, dos `lsnode`
+con `lstart` 13:59 UTC. Sondas: `health` 401, login web y nativo con
+credenciales falsas 401. **Orden de despliegue respetado: la API con
+`category_id` está en producción antes de que exista ninguna instalación de la
+app.**
+
+| # | Decisión | Motivo |
+|---|---|---|
+| F5-9 | TabView nativa de **cuatro** pestañas (Inicio · Registrar · Capturas · Más) en vez de la barra de cinco con (+) y Buscar del diseño; Buscar vive en Inicio por `window.__coco.abrirBusqueda()` | Menos código nativo que mantener y ningún destino se pierde; Registrar como pestaña recrea el formulario limpio en cada petición (deep link, intent, puente) |
+| F5-10 | Cambiar la URL de la API en Ajustes guarda, cierra sesión y pide reabrir la app; para desarrollo hay un *build setting* `COCO_API_BASE_URL` | `ClienteAPI`, `SesionNativa` y `PuenteWeb` toman la configuración inmutable en el `init`; recomponer en caliente obligaría a re-registrar los intents (comportamiento no documentado de `AppDependencyManager`) |
+| F5-11 | `AbrirCapturaIntent` de la extensión va `@available(iOS 18)`: `OpenURLIntent` es iOS 18+; el widget de iOS 17 abre por `widgetURL`/`Link` | El build fallaba en iOS 17; el control (iOS 18) es el único que lo usa |
+| F5-12 | El `.xcodeproj` se versiona regenerado por `xcodegen` en cada módulo | Abrir el proyecto no debe exigir xcodegen; `project.yml` es la fuente |
+| F5-13 | Hallazgo de la verificación: la ficha web solo llama a `/categorization/learn` cuando hay descripción (recibo leído); registrando a mano no hay texto del que aprender | Es coherente con «no aprendas de descripciones vacías o genéricas»; queda anotado por si el dueño quería aprender también del comercio escrito |
+
 
 **Cómo se está diseñando (15:20–).** Con el alcance híbrido que fijó el dueño,
 el diseño salió de un panel: tres propuestas independientes —una que prioriza la
