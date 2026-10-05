@@ -10,6 +10,8 @@ final class SesionDoble: Sesion, @unchecked Sendable {
     private var _estado: EstadoDeSesion
     private var _token: String?
     private(set) var renovaciones = 0
+    /// Cuántas veces se pidió un token vigente (lo que renueva en fondo).
+    private(set) var lecturasDeToken = 0
     private(set) var salidas = 0
     private(set) var descartes = 0
     /// Lo que devuelve `renovarAhora()`: nil es éxito.
@@ -32,6 +34,7 @@ final class SesionDoble: Sesion, @unchecked Sendable {
     func entrar(correo: String, contrasena: String) async throws -> PerfilPublico { Self.perfil }
 
     func accessTokenVigente() async throws -> String {
+        cerrojo.withLock { lecturasDeToken += 1 }
         guard let t = cerrojo.withLock({ _token }) else { throw ErrorDeSesion.sinSesion }
         return t
     }
