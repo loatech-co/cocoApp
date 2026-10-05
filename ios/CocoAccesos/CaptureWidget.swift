@@ -42,13 +42,13 @@ struct FixedProvider: TimelineProvider {
 /// Una vista por familia. Las de una sola acción usan `widgetURL`; la mediana
 /// lleva dos `Link`, porque un widget con dos zonas no puede usar `widgetURL`.
 struct CaptureWidgetView: View {
-    @Environment(\.widgetFamily) private var familia
+    @Environment(\.widgetFamily) private var family
 
     private let manual = CaptureURL.manual
     private let photo = CaptureURL.photo
 
     var body: some View {
-        switch familia {
+        switch family {
         case .systemMedium:
             HStack(spacing: 12) {
                 Link(destination: manual) {

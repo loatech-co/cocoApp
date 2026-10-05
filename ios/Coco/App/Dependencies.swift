@@ -6,7 +6,7 @@ import Observation
 /// `.standard` escondido. Las pruebas la construyen con dobles y sin red.
 @Observable @MainActor
 final class Dependencies {
-    static let compartidas = Dependencies()
+    static let shared = Dependencies()
 
     typealias IntentRegistration = @MainActor (any Capturer, any Navigation) -> Void
     typealias TaskRegistration = @MainActor (Session, CaptureQueue, TreeSynchronizer, Notifier) -> Void
@@ -24,28 +24,28 @@ final class Dependencies {
     let defaults: UserDefaults
 
     /// Espejo del estado del actor de sesión, para que las vistas lo observen.
-    private(set) var estadoDeSesion: SessionState = .loading
+    private(set) var sessionState: SessionState = .loading
     /// Capturas que aún no llegaron a la API: la insignia de la pestaña.
     private(set) var pending = 0
-    private(set) var arrancada = false
-    private(set) var intentsRegistrados = false
-    private(set) var tareasRegistradas = false
+    private(set) var started = false
+    private(set) var registeredIntents = false
+    private(set) var registeredTasks = false
 
-    private var observadores: [Task<Void, Never>] = []
+    private var observers: [Task<Void, Never>] = []
 
     init(
         configuration: APIConfiguration = .current(),
         transport: Transport = URLSessionTransport(),
         keychain: KeychainStore = SystemKeychain(),
-        almacenDeCola: QueueStore? = nil,
-        almacenDelArbol: TreeStore? = nil,
+        queueStore: QueueStore? = nil,
+        treeStore: TreeStore? = nil,
         notifier: Notifier = SystemNotifier(),
         connectivity: Connectivity? = nil,
         defaults: UserDefaults = .standard,
-        registrarIntents: @escaping IntentRegistration = {
+        registerIntents: @escaping IntentRegistration = {
             IntentDependencies.register(capturer: $0, navigation: $1)
         },
-        registrarTareas: @escaping TaskRegistration = {
+        registerTasks: @escaping TaskRegistration = {
             BackgroundJobs.register(session: $0, queue: $1, tree: $2, notifier: $3)
         }
     ) {
@@ -61,42 +61,42 @@ final class Dependencies {
 
         // La cola cuenta sus pendientes cada vez que cambia y se lo dice al
         // notificador (insignia del icono); se intercepta ahí para la pestaña.
-        let contador = PendingCounter(notifier: notifier)
-        self.notifier = contador
+        let counter = PendingCounter(notifier: notifier)
+        self.notifier = counter
 
         let queue = CaptureQueue(
-            store: almacenDeCola ?? Self.almacenDeColaPorDefecto(),
+            store: queueStore ?? Self.defaultQueueStore(),
             sender: APICaptureSender(api: api, session: session),
             session: session,
-            notifier: contador
+            notifier: counter
         )
         self.queue = queue
-        let capturer = QueuedCapturer(queue: queue, notifier: contador)
+        let capturer = QueuedCapturer(queue: queue, notifier: counter)
         self.capturer = capturer
         let tree = TreeSynchronizer(
-            api: api, session: session, store: almacenDelArbol ?? Self.almacenDelArbolPorDefecto())
+            api: api, session: session, store: treeStore ?? Self.defaultTreeStore())
         self.tree = tree
         bridge = WebBridge(session: session, configuration: configuration, navigation: router)
 
-        contador.alContar = { [weak self] n in self?.pending = n }
+        counter.onCount = { [weak self] n in self?.pending = n }
 
         // Antes de que iOS pueda lanzar un intent o una tarea de fondo: en el
         // init de la App, no después.
-        registrarIntents(capturer, router)
-        intentsRegistrados = true
-        registrarTareas(session, queue, tree, contador)
-        tareasRegistradas = true
+        registerIntents(capturer, router)
+        registeredIntents = true
+        registerTasks(session, queue, tree, counter)
+        registeredTasks = true
     }
 
     // MARK: Ciclo de vida
 
     /// Una vez, cuando aparece la raíz: red, observadores, web, sesión, cola.
-    func arrancar() async {
-        guard !arrancada else { return }
-        arrancada = true
+    func start() async {
+        guard !started else { return }
+        started = true
         AppLog.app.info("Arranca contra \(self.configuration.base.absoluteString, privacy: .public)")
         connectivity.start()
-        observar()
+        observe()
         bridge.loadHome()
         await session.restore()
         await scheduleExpiry()
@@ -105,8 +105,8 @@ final class Dependencies {
     }
 
     /// Al volver a primer plano: árbol si toca y cola.
-    func volvioAPrimerPlano() {
-        guard arrancada else { return }
+    func returnedToForeground() {
+        guard started else { return }
         Task {
             await self.tree.refreshIfNeeded()
             _ = await self.queue.process()
@@ -120,13 +120,13 @@ final class Dependencies {
     }
 
     /// Un formulario nuevo con el árbol que haya en el teléfono.
-    func nuevoModeloDelFormulario() async -> FormModel {
+    func newFormModel() async -> FormModel {
         FormModel(
             index: await tree.index(), api: api, session: session, capturer: capturer, connectivity: connectivity)
     }
 
     var profile: PublicProfile? {
-        switch estadoDeSesion {
+        switch sessionState {
         case .active(let p): p
         case .offline(let last): last
         case .loading, .signedOut: nil
@@ -135,8 +135,8 @@ final class Dependencies {
 
     var esAdmin: Bool { profile?.role == "admin" }
 
-    var haySesion: Bool {
-        switch estadoDeSesion {
+    var hasSession: Bool {
+        switch sessionState {
         case .active, .offline: true
         case .loading, .signedOut: false
         }
@@ -144,28 +144,28 @@ final class Dependencies {
 
     // MARK: Observadores
 
-    private func observar() {
-        observadores.append(
+    private func observe() {
+        observers.append(
             Task { [weak self] in
                 guard let changes = self?.session.changes else { return }
                 for await state in changes {
                     guard let self else { return }
-                    await self.sesionCambio(state)
+                    await self.sessionChanged(state)
                 }
             })
-        observadores.append(
+        observers.append(
             Task { [weak self] in
                 guard let changes = self?.connectivity.changes else { return }
-                for await hay in changes where hay {
+                for await online in changes where online {
                     guard let self else { return }
                     _ = await self.queue.process()
                 }
             })
     }
 
-    private func sesionCambio(_ state: SessionState) async {
+    private func sessionChanged(_ state: SessionState) async {
         AppLog.session.info("Sesión: \(Self.name(from: state), privacy: .public)")
-        estadoDeSesion = state
+        sessionState = state
         switch state {
         case .active:
             // Con documento cargado, la web recibe la sesión sin recargar; sin
@@ -174,8 +174,8 @@ final class Dependencies {
             await queue.sessionReturned()
             Task { _ = await self.queue.process() }
             Task { await self.tree.refreshIfNeeded() }
-            await pedirPermisoDeAvisosLaPrimeraVez()
-            if !WelcomeView.yaVista(defaults: defaults), router.hoja == nil {
+            await requestNotificationPermissionOnce()
+            if !WelcomeView.wasSeen(defaults: defaults), router.sheet == nil {
                 router.go(.welcome)
             }
         case .signedOut:
@@ -185,11 +185,11 @@ final class Dependencies {
         }
     }
 
-    private static let clavePermisoPedido = "permiso-de-avisos-pedido"
+    private static let permissionAskedKey = "permiso-de-avisos-pedido"
 
-    private func pedirPermisoDeAvisosLaPrimeraVez() async {
-        guard !defaults.bool(forKey: Self.clavePermisoPedido) else { return }
-        defaults.set(true, forKey: Self.clavePermisoPedido)
+    private func requestNotificationPermissionOnce() async {
+        guard !defaults.bool(forKey: Self.permissionAskedKey) else { return }
+        defaults.set(true, forKey: Self.permissionAskedKey)
         _ = await notifier.requestPermission()
     }
 
@@ -206,14 +206,14 @@ final class Dependencies {
 
     /// Si el disco de la app no se deja crear, la cola va al temporal: peor
     /// que lo normal, pero mejor que arrancar sin cola.
-    private static func almacenDeColaPorDefecto() -> QueueStore {
+    private static func defaultQueueStore() -> QueueStore {
         let root =
             (try? DiskQueueStore.defaultRoot())
             ?? FileManager.default.temporaryDirectory.appending(path: "cola", directoryHint: .isDirectory)
         return DiskQueueStore(root: root)
     }
 
-    private static func almacenDelArbolPorDefecto() -> TreeStore {
+    private static func defaultTreeStore() -> TreeStore {
         (try? DiskTreeStore.atDefaultLocation())
             ?? DiskTreeStore(file: FileManager.default.temporaryDirectory.appending(path: "arbol.json"))
     }
@@ -233,11 +233,11 @@ final class Dependencies {
 final class PendingCounter: Notifier, @unchecked Sendable {
     private let real: Notifier
     private let lock = NSLock()
-    private var _alContar: (@MainActor (Int) -> Void)?
+    private var _onCount: (@MainActor (Int) -> Void)?
 
-    var alContar: (@MainActor (Int) -> Void)? {
-        get { lock.withLock { _alContar } }
-        set { lock.withLock { _alContar = newValue } }
+    var onCount: (@MainActor (Int) -> Void)? {
+        get { lock.withLock { _onCount } }
+        set { lock.withLock { _onCount = newValue } }
     }
 
     init(notifier: Notifier) {
@@ -254,7 +254,7 @@ final class PendingCounter: Notifier, @unchecked Sendable {
         await real.scheduleExpiry(expiresAt, text: text)
     }
     func setBadge(_ n: Int) async {
-        if let alContar { await alContar(n) }
+        if let onCount { await onCount(n) }
         await real.setBadge(n)
     }
 }

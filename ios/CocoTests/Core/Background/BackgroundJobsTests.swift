@@ -14,19 +14,19 @@ final class BackgroundJobsTests: XCTestCase {
         try? FileManager.default.removeItem(at: root)
     }
 
-    func testProgramaConLosIdentificadoresDelInfoPlist() {
-        let permitidos = BackgroundJobs.permittedIdentifiers()
+    func testSchedulesWithTheInfoPlistIdentifiers() {
+        let permitted = BackgroundJobs.permittedIdentifiers()
         XCTAssertEqual(
-            Set(permitidos), ["co.loatech.coco.renovar", "co.loatech.coco.cola"], "el Info.plist de la app los declara")
+            Set(permitted), ["co.loatech.coco.renovar", "co.loatech.coco.cola"], "el Info.plist de la app los declara")
         let requests = BackgroundJobs.requests()
-        XCTAssertEqual(Set(requests.map(\.identifier)), Set(permitidos))
+        XCTAssertEqual(Set(requests.map(\.identifier)), Set(permitted))
         XCTAssertTrue(requests.contains { $0 is BGAppRefreshTaskRequest && $0.identifier == BackgroundJobs.refresh })
-        let procesado = requests.compactMap { $0 as? BGProcessingTaskRequest }.first
-        XCTAssertEqual(procesado?.identifier, BackgroundJobs.queue)
-        XCTAssertEqual(procesado?.requiresNetworkConnectivity, true)
+        let processingRequest = requests.compactMap { $0 as? BGProcessingTaskRequest }.first
+        XCTAssertEqual(processingRequest?.identifier, BackgroundJobs.queue)
+        XCTAssertEqual(processingRequest?.requiresNetworkConnectivity, true)
     }
 
-    func testProgramarSinRegistroNoTocaElScheduler() throws {
+    func testScheduleWithoutRegistrationDoesNotTouchTheScheduler() throws {
         // `submit` sin registro es una excepción de ObjC, no un `throws`:
         // programar tiene que saltárselo en vez de reventar. La app
         // anfitriona registra al arrancar (M9), así que dentro de ella la
@@ -35,7 +35,7 @@ final class BackgroundJobsTests: XCTestCase {
         BackgroundJobs.schedule()
     }
 
-    func testEjecutarColaEnviaLoPendienteYLaColaAvisaUnaVez() async throws {
+    func testRunQueueSendsThePendingAndTheQueueNotifiesOnce() async throws {
         let store = DiskQueueStore(root: root)
         let notifier = NotifierDouble()
         let queue = CaptureQueue(
@@ -54,7 +54,7 @@ final class BackgroundJobsTests: XCTestCase {
         XCTAssertEqual(notifier.badges.last, 0)
     }
 
-    func testEjecutarColaSinNadaNoAvisa() async {
+    func testRunQueueWithNothingDoesNotNotify() async {
         let notifier = NotifierDouble()
         let queue = CaptureQueue(
             store: DiskQueueStore(root: root), sender: SenderDouble(), session: SessionDouble(),
@@ -64,7 +64,7 @@ final class BackgroundJobsTests: XCTestCase {
         XCTAssertEqual(notifier.queueSentCounts, [])
     }
 
-    func testEjecutarRenovacionPideTokenYRefrescaElArbol() async throws {
+    func testRunRefreshAsksForATokenAndRefreshesTheTree() async throws {
         let session = SessionDouble()
         let transport = FakeTransport([
             .http(

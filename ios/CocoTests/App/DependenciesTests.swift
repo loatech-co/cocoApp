@@ -16,7 +16,7 @@ final class DependenciesTests: XCTestCase {
         try? FileManager.default.removeItem(at: root)
     }
 
-    private func construir(
+    private func build(
         transport: FakeTransport = FakeTransport(), keychain: InMemoryKeychain = InMemoryKeychain(),
         notifier: NotifierDouble = NotifierDouble()
     ) throws -> (Dependencies, Registry) {
@@ -27,13 +27,13 @@ final class DependenciesTests: XCTestCase {
             configuration: APIConfiguration(base: base),
             transport: transport,
             keychain: keychain,
-            almacenDeCola: DiskQueueStore(root: root),
-            almacenDelArbol: DiskTreeStore(file: root.appending(path: "arbol.json")),
+            queueStore: DiskQueueStore(root: root),
+            treeStore: DiskTreeStore(file: root.appending(path: "arbol.json")),
             notifier: notifier,
             defaults: defaults,
-            registrarIntents: { capturer, navigation in registry.intents = (capturer, navigation) },
-            registrarTareas: { session, queue, tree, notifier in
-                registry.tareas = .init(session: session, queue: queue, tree: tree, notifier: notifier)
+            registerIntents: { capturer, navigation in registry.intents = (capturer, navigation) },
+            registerTasks: { session, queue, tree, notifier in
+                registry.tasks = .init(session: session, queue: queue, tree: tree, notifier: notifier)
             }
         )
         return (d, registry)
@@ -41,26 +41,26 @@ final class DependenciesTests: XCTestCase {
 
     final class Registry {
         var intents: (any Capturer, any Navigation)?
-        var tareas: RegisteredTasks?
+        var tasks: RegisteredTasks?
     }
 
-    func testRegistraIntentsYTareasConLasMismasPiezasQueUsaLaApp() throws {
-        let (d, registry) = try construir()
-        XCTAssertTrue(d.intentsRegistrados)
-        XCTAssertTrue(d.tareasRegistradas)
+    func testRegistersIntentsAndTasksWithTheSamePiecesTheAppUses() throws {
+        let (d, registry) = try build()
+        XCTAssertTrue(d.registeredIntents)
+        XCTAssertTrue(d.registeredTasks)
 
         let intents = try XCTUnwrap(registry.intents)
         XCTAssertTrue((intents.0 as AnyObject) is QueuedCapturer || intents.0 is QueuedCapturer)
         XCTAssertTrue(intents.1 === d.router, "los intents navegan por el mismo enrutador que la interfaz")
 
-        let tareas = try XCTUnwrap(registry.tareas)
-        XCTAssertTrue(tareas.session === d.session)
-        XCTAssertTrue(tareas.queue === d.queue)
-        XCTAssertTrue(tareas.tree === d.tree)
+        let tasks = try XCTUnwrap(registry.tasks)
+        XCTAssertTrue(tasks.session === d.session)
+        XCTAssertTrue(tasks.queue === d.queue)
+        XCTAssertTrue(tasks.tree === d.tree)
     }
 
-    func testElPuenteYLaWebApuntanALaMismaAPI() throws {
-        let (d, _) = try construir()
+    func testTheBridgeAndTheWebPointToTheSameAPI() throws {
+        let (d, _) = try build()
         XCTAssertEqual(d.configuration.base.absoluteString, "https://api.coco.invalid")
         XCTAssertEqual(d.api.configuration, d.configuration)
         XCTAssertTrue(
@@ -69,29 +69,29 @@ final class DependenciesTests: XCTestCase {
                 isMainFrame: true))
     }
 
-    func testArrancarSinRefreshQuedaSinSesionYNoTocaLaRed() async throws {
+    func testStartWithoutRefreshStaysSignedOutAndDoesNotHitTheNetwork() async throws {
         let transport = FakeTransport()
-        let (d, _) = try construir(transport: transport)
-        XCTAssertEqual(d.estadoDeSesion, .loading)
-        await d.arrancar()
-        XCTAssertTrue(d.arrancada)
+        let (d, _) = try build(transport: transport)
+        XCTAssertEqual(d.sessionState, .loading)
+        await d.start()
+        XCTAssertTrue(d.started)
         // El estado llega por el flujo de cambios del actor.
-        for _ in 0..<50 where d.estadoDeSesion == .loading {
+        for _ in 0..<50 where d.sessionState == .loading {
             try await Task.sleep(for: .milliseconds(20))
         }
-        XCTAssertEqual(d.estadoDeSesion, .signedOut)
-        XCTAssertFalse(d.haySesion)
+        XCTAssertEqual(d.sessionState, .signedOut)
+        XCTAssertFalse(d.hasSession)
         XCTAssertNil(d.profile)
         XCTAssertEqual(
             transport.received.filter { $0.url?.path.hasPrefix("/api/v1") == true }, [],
             "sin refresh no hay nada que renovar")
-        await d.arrancar()
-        XCTAssertTrue(d.arrancada, "arrancar dos veces no vuelve a hacer nada")
+        await d.start()
+        XCTAssertTrue(d.started, "arrancar dos veces no vuelve a hacer nada")
     }
 
-    func testLaInsigniaDePendientesSigueALaCola() async throws {
+    func testThePendingBadgeFollowsTheQueue() async throws {
         let notifier = NotifierDouble()
-        let (d, _) = try construir(notifier: notifier)
+        let (d, _) = try build(notifier: notifier)
         XCTAssertEqual(d.pending, 0)
         try await d.queue.enqueue(
             CaptureBody(merchant: "D1", amount: "1000", date: "2026-10-05"), source: .iosManual, photo: nil)
@@ -102,18 +102,18 @@ final class DependenciesTests: XCTestCase {
         XCTAssertEqual(notifier.badges.last, 1, "el notificador real también recibe la cuenta")
     }
 
-    func testEsAdminSoloConElRol() throws {
+    func testIsAdminOnlyWithTheRole() throws {
         let profile = PublicProfile(
             id: 1, email: "a@coco.test", displayName: nil, role: "admin", status: "active",
             createdAt: "2026-01-01T00:00:00Z")
         XCTAssertEqual(profile.role, "admin")
-        let (d, _) = try construir()
+        let (d, _) = try build()
         XCTAssertFalse(d.esAdmin)
     }
 }
 
 final class SignInViewTests: XCTestCase {
-    func testMensajesDeErrorDicenQueHacer() {
+    func testErrorMessagesSayWhatToDo() {
         XCTAssertEqual(SignInView.message(from: APIError.unauthenticated), "Correo o contraseña incorrectos.")
         XCTAssertEqual(
             SignInView.message(from: URLError(.notConnectedToInternet)),
@@ -130,7 +130,7 @@ final class SignInViewTests: XCTestCase {
 }
 
 final class SettingsViewTests: XCTestCase {
-    func testValidaLaURLDeLaAPI() throws {
+    func testValidatesTheAPIURL() throws {
         XCTAssertEqual(SettingsView.validate("http://localhost:3000/").url, URL(string: "http://localhost:3000"))
         XCTAssertEqual(
             SettingsView.validate("  https://dev-cocoapp.viteri.me ").url, URL(string: "https://dev-cocoapp.viteri.me"))
@@ -141,7 +141,7 @@ final class SettingsViewTests: XCTestCase {
         XCTAssertNotNil(SettingsView.validate("https://x.y/api/v1").reason, "la app añade /api/v1")
     }
 
-    func testTextoDeVencimiento() throws {
+    func testExpiryText() throws {
         let now = try XCTUnwrap(Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 5, hour: 12)))
         XCTAssertEqual(SettingsView.expiryText(nil), "No disponible (simulador o sin perfil)")
         XCTAssertTrue(

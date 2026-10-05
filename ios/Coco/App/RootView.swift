@@ -11,10 +11,10 @@ struct RootView: View {
 
     var body: some View {
         @Bindable var router = d.router
-        TabView(selection: pestana) {
-            inicio
+        TabView(selection: tab) {
+            home
                 .tabItem { Label("Inicio", systemImage: "house") }
-                .tag(AppTab.inicio)
+                .tag(AppTab.home)
             RecordExpenseView(d: d)
                 .tabItem { Label("Registrar", systemImage: "plus.circle") }
                 .tag(AppTab.register)
@@ -24,60 +24,60 @@ struct RootView: View {
                 .tag(AppTab.captures)
             MoreView(d: d)
                 .tabItem { Label("Más", systemImage: "ellipsis") }
-                .tag(AppTab.mas)
+                .tag(AppTab.more)
         }
         .fullScreenCover(isPresented: signedOut) {
             SignInView(session: d.session, onSettings: { d.router.go(.settings) })
-                .sheet(item: $router.hoja, content: hoja)
+                .sheet(item: $router.sheet, content: sheetContent)
         }
-        .sheet(item: $router.hoja, content: hoja)
-        .onChange(of: router.rutaWebPendiente, initial: true) { _, _ in consumirPendientes() }
-        .onChange(of: router.busquedaPendiente) { _, _ in consumirPendientes() }
-        .task { await d.arrancar() }
+        .sheet(item: $router.sheet, content: sheetContent)
+        .onChange(of: router.pendingWebPath, initial: true) { _, _ in consumePending() }
+        .onChange(of: router.searchPending) { _, _ in consumePending() }
+        .task { await d.start() }
     }
 
-    private var inicio: some View {
+    private var home: some View {
         WebContainer(bridge: d.bridge, connectivity: d.connectivity, pending: d.pending) {
             d.router.go(.quickForm(withCamera: false))
         }
     }
 
     @ViewBuilder
-    private func hoja(_ hoja: Sheet) -> some View {
-        switch hoja {
+    private func sheetContent(_ sheet: Sheet) -> some View {
+        switch sheet {
         case .welcome:
-            WelcomeView(onFinish: { d.router.hoja = nil })
+            WelcomeView(onFinish: { d.router.sheet = nil })
         case .settings:
             SettingsView(d: d)
         }
     }
 
     /// Tocar otra vez Inicio vuelve a `/`.
-    private var pestana: Binding<AppTab> {
+    private var tab: Binding<AppTab> {
         Binding(
-            get: { d.router.pestana },
-            set: { nueva in
-                if nueva == .inicio, d.router.pestana == .inicio { d.bridge.go(to: "/") }
-                d.router.pestana = nueva
+            get: { d.router.tab },
+            set: { newTab in
+                if newTab == .home, d.router.tab == .home { d.bridge.go(to: "/") }
+                d.router.tab = newTab
             }
         )
     }
 
     private var signedOut: Binding<Bool> {
         Binding(
-            get: { if case .signedOut = d.estadoDeSesion { true } else { false } },
+            get: { if case .signedOut = d.sessionState { true } else { false } },
             set: { _ in }
         )
     }
 
     /// Lo que el enrutador dejó para la web, en cuanto la pestaña Inicio manda.
-    private func consumirPendientes() {
-        if let path = d.router.rutaWebPendiente {
-            d.router.rutaWebPendiente = nil
+    private func consumePending() {
+        if let path = d.router.pendingWebPath {
+            d.router.pendingWebPath = nil
             d.bridge.go(to: path)
         }
-        if d.router.busquedaPendiente {
-            d.router.busquedaPendiente = false
+        if d.router.searchPending {
+            d.router.searchPending = false
             d.bridge.openSearch()
         }
     }
@@ -89,26 +89,26 @@ private struct RecordExpenseView: View {
     let d: Dependencies
 
     @State private var model: FormModel?
-    @State private var cerrados = 0
+    @State private var closedCount = 0
 
     var body: some View {
         Group {
             if let model {
-                QuickFormView(model: model, opensCameraOnAppear: d.router.formulario.withCamera) {
+                QuickFormView(model: model, opensCameraOnAppear: d.router.formRequest.withCamera) {
                     // Guardar ya encoló; cerrar es volver a Inicio con un
                     // formulario limpio para la próxima.
-                    cerrados += 1
-                    d.router.pestana = .inicio
+                    closedCount += 1
+                    d.router.tab = .home
                 }
-                .id(identidad)
+                .id(identity)
             } else {
                 ProgressView()
             }
         }
-        .task(id: identidad) {
-            model = await d.nuevoModeloDelFormulario()
+        .task(id: identity) {
+            model = await d.newFormModel()
         }
     }
 
-    private var identidad: String { "\(d.router.formulario.generacion)-\(cerrados)" }
+    private var identity: String { "\(d.router.formRequest.generation)-\(closedCount)" }
 }

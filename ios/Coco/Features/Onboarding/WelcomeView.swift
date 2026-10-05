@@ -13,7 +13,7 @@ struct WelcomeView: View {
         self.defaults = defaults
     }
 
-    static func yaVista(defaults: UserDefaults = .standard) -> Bool {
+    static func wasSeen(defaults: UserDefaults = .standard) -> Bool {
         defaults.bool(forKey: key)
     }
 

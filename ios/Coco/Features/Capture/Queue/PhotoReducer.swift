@@ -13,8 +13,8 @@ enum PhotoReducer {
         guard let image = UIImage(data: data) else { return data }
         let width = image.size.width * image.scale
         let height = image.size.height * image.scale
-        let mayor = max(width, height)
-        let factor = mayor > maxSide ? maxSide / mayor : 1
+        let longSide = max(width, height)
+        let factor = longSide > maxSide ? maxSide / longSide : 1
         let destination = CGSize(width: (width * factor).rounded(.down), height: (height * factor).rounded(.down))
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1

@@ -7,7 +7,7 @@ final class BogotaDateTests: XCTestCase {
         try XCTUnwrap(ISO8601DateFormatter().date(from: iso))
     }
 
-    func testElDiaEsElDeBogotaNoElDeUTC() throws {
+    func testTheDayIsBogotasNotUTCs() throws {
         XCTAssertEqual(BogotaDate.day(try instant("2026-10-04T04:30:00Z")), "2026-10-03")
         XCTAssertEqual(BogotaDate.day(try instant("2026-10-04T05:00:00Z")), "2026-10-04")
     }
@@ -17,10 +17,10 @@ final class BogotaDateTests: XCTestCase {
         XCTAssertEqual(BogotaDate.month(try instant("2026-11-01T04:30:00Z")), "2026-10")
     }
 
-    func testNoDependeDeLaZonaDelCalendario() throws {
-        var tokio = Calendar(identifier: .gregorian)
-        tokio.timeZone = TimeZone(identifier: "Asia/Tokyo") ?? .current
-        XCTAssertEqual(BogotaDate.day(try instant("2026-10-04T04:30:00Z"), calendar: tokio), "2026-10-03")
+    func testDoesNotDependOnTheCalendarTimeZone() throws {
+        var tokyo = Calendar(identifier: .gregorian)
+        tokyo.timeZone = TimeZone(identifier: "Asia/Tokyo") ?? .current
+        XCTAssertEqual(BogotaDate.day(try instant("2026-10-04T04:30:00Z"), calendar: tokyo), "2026-10-03")
     }
 
     func testPesos() {

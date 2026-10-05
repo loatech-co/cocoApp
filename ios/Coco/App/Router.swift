@@ -4,10 +4,10 @@ import Observation
 /// Las cuatro pestañas de la barra nativa. Inicio es la web; las otras tres
 /// son pantallas nativas.
 enum AppTab: Hashable, CaseIterable {
-    case inicio
+    case home
     case register
     case captures
-    case mas
+    case more
 }
 
 /// Lo que sube como hoja encima de la pestaña activa.
@@ -32,47 +32,47 @@ final class Router: Navigation {
     /// Cada petición de abrir el formulario (deep link, intent, puente) es una
     /// generación nueva: la vista se recrea limpia y con la cámara si se pidió.
     struct FormRequest: Equatable, Sendable {
-        let generacion: Int
+        let generation: Int
         let withCamera: Bool
     }
 
-    var pestana: AppTab = .inicio
-    var hoja: Sheet?
+    var tab: AppTab = .home
+    var sheet: Sheet?
     /// Ruta que la pestaña Inicio tiene que abrir en la web en cuanto se vea.
-    var rutaWebPendiente: String?
+    var pendingWebPath: String?
     /// La web tiene que abrir su hoja de búsqueda en cuanto se vea.
-    var busquedaPendiente = false
-    private(set) var formulario = FormRequest(generacion: 0, withCamera: false)
+    var searchPending = false
+    private(set) var formRequest = FormRequest(generation: 0, withCamera: false)
 
     func go(_ destination: Destination) {
         AppLog.navigation.info("ir \(String(describing: destination), privacy: .public)")
         switch destination {
         case .quickForm(let withCamera):
-            formulario = FormRequest(generacion: formulario.generacion + 1, withCamera: withCamera)
-            hoja = nil
-            pestana = .register
+            formRequest = FormRequest(generation: formRequest.generation + 1, withCamera: withCamera)
+            sheet = nil
+            tab = .register
         case .captures:
-            hoja = nil
-            pestana = .captures
+            sheet = nil
+            tab = .captures
         case .web(let path):
-            hoja = nil
-            rutaWebPendiente = path
-            pestana = .inicio
+            sheet = nil
+            pendingWebPath = path
+            tab = .home
         case .search:
-            hoja = nil
-            busquedaPendiente = true
-            pestana = .inicio
+            sheet = nil
+            searchPending = true
+            tab = .home
         case .welcome:
-            hoja = .welcome
+            sheet = .welcome
         case .settings:
-            hoja = .settings
+            sheet = .settings
         }
     }
 
     /// `coco://capturar/manual`, `coco://capturar/foto`, `coco://capturas`.
     /// Devuelve `false` si la URL no es de la app.
     @discardableResult
-    func abrir(url: URL) -> Bool {
+    func open(url: URL) -> Bool {
         guard let destination = Self.destination(from: url) else {
             AppLog.navigation.warning("URL desconocida \(url.absoluteString, privacy: .public)")
             return false
@@ -85,9 +85,9 @@ final class Router: Navigation {
     nonisolated static func destination(from url: URL) -> Destination? {
         guard url.scheme?.lowercased() == "coco" else { return nil }
         let host = url.host()?.lowercased() ?? ""
-        let camino = url.path().split(separator: "/").map { $0.lowercased() }
-        guard camino.count <= 1 else { return nil }
-        switch (host, camino.first) {
+        let segments = url.path().split(separator: "/").map { $0.lowercased() }
+        guard segments.count <= 1 else { return nil }
+        switch (host, segments.first) {
         case ("capturar", nil), ("capturar", "manual"?):
             return .quickForm(withCamera: false)
         case ("capturar", "foto"?):

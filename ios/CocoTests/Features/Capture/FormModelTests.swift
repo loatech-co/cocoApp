@@ -143,7 +143,7 @@ final class FormModelTests: XCTestCase {
     // MARK: leerFoto()
 
     func testReadPhotoFillsTheBlanksWithTheInterpretation() async throws {
-        transport.responder(.http(200, Self.interpretationJSON))
+        transport.reply(.http(200, Self.interpretationJSON))
         let m = try model()
         await m.readPhoto(TestImage.square(10))
 
@@ -162,7 +162,7 @@ final class FormModelTests: XCTestCase {
     }
 
     func testReadPhotoDoesNotOverwriteAmountOrConceptAlreadySet() async throws {
-        transport.responder(.http(200, Self.interpretationJSON))
+        transport.reply(.http(200, Self.interpretationJSON))
         let m = try model()
         m.amount = "12.500"
         m.choose(try entry(100))
@@ -187,7 +187,7 @@ final class FormModelTests: XCTestCase {
     }
 
     func testANetworkErrorWhileInterpretingAlsoFlagsNoNetwork() async throws {
-        transport.responder(.failure(URLError(.notConnectedToInternet)))
+        transport.reply(.failure(URLError(.notConnectedToInternet)))
         let m = try model()
         await m.readPhoto(TestImage.square(10))
         XCTAssertTrue(m.noNetwork)
@@ -208,7 +208,7 @@ final class FormModelTests: XCTestCase {
     func testMediumConfidenceOpensSearchWithTheCandidates() async throws {
         let json =
             #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"clasificacion":{"certeza":"media","fuente":null,"concepto_id":null,"categoria_id":null,"nombre":null,"candidatos":[{"id":200,"nombre":"Mercado","ruta":"Hogar › Alimentación › Mercado"},{"id":100,"nombre":"Colegio","ruta":"Costos fijos › Educación › Colegio"}],"motivo":""},"por_revisar":true}}"#
-        transport.responder(.http(200, json))
+        transport.reply(.http(200, json))
         let m = try model()
         await m.readPhoto(TestImage.square(10))
         XCTAssertNil(m.concept)

@@ -125,10 +125,10 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
 
     func capture(_ r: CaptureRequest) async throws -> CaptureResponse {
         let (response, duplicate): (Reply, Bool) = lock.withLock {
-            let visto = requests.contains { $0.externalRef == r.externalRef }
+            let seen = requests.contains { $0.externalRef == r.externalRef }
             requests.append(r)
             instants.append(.now)
-            return (captures.isEmpty ? .ok : captures.removeFirst(), visto && duplicateIfSeen)
+            return (captures.isEmpty ? .ok : captures.removeFirst(), seen && duplicateIfSeen)
         }
         if case .failure(let e) = response { throw e }
         let t = TransactionSummary(

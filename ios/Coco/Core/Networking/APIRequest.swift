@@ -16,7 +16,7 @@ struct APIRequest: Sendable {
 }
 
 struct MultipartPart: Sendable {
-    /// "archivos" (`CONTRATO_DE_SOPORTES.campo`).
+    /// "archivos" (`CONTRATO_DE_SOPORTES.field`).
     let fieldName: String
     let fileName: String
     let mime: String
