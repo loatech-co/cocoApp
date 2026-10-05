@@ -22,7 +22,7 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("https://…", text: $urlText)
+                    TextField(L10n.Settings.apiUrlPlaceholder, text: $urlText)
                         .keyboardType(.URL)
                         .textContentType(.URL)
                         .textInputAutocapitalization(.never)
@@ -30,45 +30,42 @@ struct SettingsView: View {
                     if let reason = validation.reason {
                         Text(reason).font(.footnote).foregroundStyle(.red)
                     }
-                    Button("Guardar y cerrar sesión", action: save)
+                    Button(L10n.Settings.apiUrlSave, action: save)
                         .disabled(!hasChanged)
-                    Button("Restablecer la del bundle", action: reset)
+                    Button(L10n.Settings.apiUrlReset, action: reset)
                 } header: {
-                    Text("URL de la API").textCase(nil)
+                    Text(L10n.Settings.apiUrlTitle).textCase(nil)
                 } footer: {
                     Text(
                         saved
-                            ? "Guardada. Cierra la app del todo y vuelve a abrirla para usar la nueva URL."
-                            : """
-                            Cambiarla cierra la sesión de este teléfono; la nueva URL se usa al volver a abrir \
-                            la app.
-                            """
+                            ? L10n.Settings.apiUrlSaved
+                            : L10n.Settings.apiUrlFooter
                     )
                 }
 
                 Section {
-                    LabeledContent("Versión", value: "\(Brand.version) (\(Self.build))")
+                    LabeledContent(L10n.Settings.installVersion, value: "\(Brand.version) (\(Self.build))")
                     LabeledContent(
-                        "La firma caduca", value: Self.expiryText(ProvisioningProfileReader.fromBundle()))
-                    LabeledContent("Pendientes de envío", value: "\(d.pending)")
-                    LabeledContent("API", value: d.configuration.base.absoluteString)
+                        L10n.Settings.installExpiry, value: Self.expiryText(ProvisioningProfileReader.fromBundle()))
+                    LabeledContent(L10n.Settings.installPending, value: "\(d.pending)")
+                    LabeledContent(L10n.Settings.installApi, value: d.configuration.base.absoluteString)
                 } header: {
-                    Text("Esta instalación").textCase(nil)
+                    Text(L10n.Settings.installTitle).textCase(nil)
                 }
 
                 Section {
-                    Button("Probar notificación") { Task { await sendTestNotification() } }
+                    Button(L10n.Settings.notificationsTest) { Task { await sendTestNotification() } }
                     if let testNotificationResult {
                         Text(testNotificationResult).font(.footnote).foregroundStyle(.secondary)
                     }
                 } header: {
-                    Text("Avisos").textCase(nil)
+                    Text(L10n.Settings.notificationsTitle).textCase(nil)
                 }
             }
-            .navigationTitle("Ajustes")
+            .navigationTitle(L10n.Settings.title)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Listo") { dismiss() }
+                    Button(L10n.Common.done) { dismiss() }
                 }
             }
         }
@@ -93,14 +90,14 @@ struct SettingsView: View {
 
     private func sendTestNotification() async {
         guard await d.notifier.requestPermission() else {
-            testNotificationResult = "Sin permiso de avisos. Actívalo en Ajustes de iOS → Coco."
+            testNotificationResult = L10n.Settings.notificationsDenied
             return
         }
         let sample = SavedResult(
-            transactionId: 0, summary: "Prueba: si ves esto, los avisos funcionan.", duplicate: false, merged: false,
+            transactionId: 0, summary: L10n.Settings.notificationsTestBody, duplicate: false, merged: false,
             needsReview: false, finishedAt: .now)
         await d.notifier.captureSaved(sample, source: .iosManual)
-        testNotificationResult = "Enviada. Aparece arriba aunque la app esté abierta."
+        testNotificationResult = L10n.Settings.notificationsSent
     }
 
     // MARK: Puros
@@ -118,27 +115,27 @@ struct SettingsView: View {
         guard let url = URL(string: cleaned), let scheme = url.scheme?.lowercased(), let host = url.host(),
             !host.isEmpty
         else {
-            return Validation(url: nil, reason: "Escribe una URL completa, como https://cocoapp.ejemplo.")
+            return Validation(url: nil, reason: L10n.Settings.apiUrlErrorIncomplete)
         }
         guard scheme == "http" || scheme == "https" else {
-            return Validation(url: nil, reason: "Solo http o https.")
+            return Validation(url: nil, reason: L10n.Settings.apiUrlErrorScheme)
         }
         let path = url.path()
         guard path.isEmpty || path == "/", url.query() == nil, url.fragment() == nil else {
-            return Validation(url: nil, reason: "Solo el servidor, sin ruta: la app añade /api/v1.")
+            return Validation(url: nil, reason: L10n.Settings.apiUrlErrorPath)
         }
         return Validation(url: APIConfiguration(base: url).base, reason: nil)
     }
 
     static func expiryText(_ expiresAt: Date?, now: Date = .now) -> String {
-        guard let expiresAt else { return "No disponible (simulador o sin perfil)" }
+        guard let expiresAt else { return L10n.Settings.expiryUnavailable }
         let days = ExpiryReminder.daysLeft(expiresAt: expiresAt, now: now)
         let date = expiresAt.formatted(date: .abbreviated, time: .omitted)
         switch days {
-        case ..<0: return "Caducó el \(date)"
-        case 0: return "Hoy (\(date))"
-        case 1: return "Mañana (\(date))"
-        default: return "\(date) · quedan \(days) días"
+        case ..<0: return L10n.Settings.expiryExpired(date)
+        case 0: return L10n.Settings.expiryToday(date)
+        case 1: return L10n.Settings.expiryTomorrow(date)
+        default: return L10n.Settings.expiryInDays(date, days: days)
         }
     }
 

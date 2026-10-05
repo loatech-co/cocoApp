@@ -8,7 +8,7 @@ enum ParameterError: Error, Equatable {
 /// Lo que Atajos entrega, convertido a un `CaptureBody`. Puro: ni red ni
 /// cola, para probarlo con fechas y textos fijos.
 enum ActionParameters {
-    static let queuedText = "Guardado en el teléfono; se enviará cuando haya red."
+    static let queuedText = L10n.Shortcuts.dialogQueued
 
     /// Wallet: el comercio manda; si falta, el «nombre» de la transacción. El
     /// texto nunca queda vacío —«Wallet · <tarjeta> · <nombre>»— porque la
@@ -44,11 +44,11 @@ enum ActionParameters {
     static func dialogText(_ r: CaptureResult) -> String {
         switch r {
         case .sent(let g):
-            return g.needsReview ? "\(g.summary) · por revisar" : g.summary
+            return g.needsReview ? L10n.Shortcuts.dialogNeedsReview(g.summary) : g.summary
         case .queued(let pending):
-            return pending > 1 ? "\(queuedText) \(pending) pendientes." : queuedText
+            return pending > 1 ? L10n.Shortcuts.dialogQueuedMany(queuedText, pending: pending) : queuedText
         case .failed(let reason):
-            return "No se pudo registrar: \(reason)"
+            return L10n.Shortcuts.dialogFailed(reason)
         }
     }
 

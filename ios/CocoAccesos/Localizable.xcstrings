@@ -1,0 +1,50 @@
+{
+  "sourceLanguage" : "es",
+  "strings" : {
+    "widget.capture.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre Coco en el formulario rápido."
+          }
+        }
+      }
+    },
+    "widget.capture.photo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foto"
+          }
+        }
+      }
+    },
+    "widget.capture.register" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrar"
+          }
+        }
+      }
+    },
+    "widget.capture.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrar gasto"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

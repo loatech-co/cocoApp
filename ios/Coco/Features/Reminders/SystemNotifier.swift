@@ -47,18 +47,19 @@ struct SystemNotifier: Notifier {
     static func captureText(_ r: SavedResult) -> (title: String, body: String) {
         let title: String
         if r.duplicate {
-            title = "Ya estaba registrado"
+            title = L10n.Notifications.captureDuplicate
         } else if r.merged {
-            title = "Era el mismo pago"
+            title = L10n.Notifications.captureMerged
         } else {
-            title = "Gasto registrado"
+            title = L10n.Notifications.captureSaved
         }
-        let body = r.needsReview ? "\(r.summary) · por revisar" : r.summary
+        let body = r.needsReview ? L10n.Notifications.captureNeedsReview(r.summary) : r.summary
         return (title, body)
     }
 
     func requestPermission() async -> Bool {
-        let openButton = UNNotificationAction(identifier: Self.openAction, title: "Abrir", options: [.foreground])
+        let openButton = UNNotificationAction(
+            identifier: Self.openAction, title: L10n.Notifications.actionOpen, options: [.foreground])
         center.register(categories: [
             UNNotificationCategory(identifier: Self.captureCategory, actions: [openButton], intentIdentifiers: [])
         ])
@@ -74,15 +75,15 @@ struct SystemNotifier: Notifier {
 
     func captureFailed(reason: String) async {
         await show(
-            id: "captura-fallida-\(UUID().uuidString)", title: "No se pudo registrar", body: reason,
+            id: "captura-fallida-\(UUID().uuidString)", title: L10n.Notifications.captureFailed, body: reason,
             category: Self.captureCategory)
     }
 
     func queueSent(count: Int) async {
         guard count > 0 else { return }
-        let body = count == 1 ? "Se envió 1 captura pendiente" : "Se enviaron \(count) capturas pendientes"
+        let body = count == 1 ? L10n.Notifications.queueSentOne : L10n.Notifications.queueSentMany(count)
         await show(
-            id: "cola-enviada", title: "Capturas enviadas", body: body, category: Self.captureCategory)
+            id: "cola-enviada", title: L10n.Notifications.queueTitle, body: body, category: Self.captureCategory)
     }
 
     /// Un solo aviso con id fijo: programarlo dos veces lo reemplaza.

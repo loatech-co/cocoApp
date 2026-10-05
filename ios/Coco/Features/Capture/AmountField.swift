@@ -8,10 +8,10 @@ struct AmountField: View {
     var body: some View {
         HStack(spacing: 6) {
             Text("$").font(.title2).foregroundStyle(.secondary)
-            TextField("45.000", text: $text)
+            TextField(L10n.Capture.amountPlaceholder, text: $text)
                 .keyboardType(.decimalPad)
                 .font(.title2.monospacedDigit())
-                .accessibilityLabel("Monto")
+                .accessibilityLabel(L10n.Capture.amountLabel)
         }
         if !text.isEmpty {
             if let normalized = AmountParser.normalize(text) {
@@ -19,7 +19,7 @@ struct AmountField: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else {
-                Text("No se entiende el monto")
+                Text(L10n.Capture.amountUnreadable)
                     .font(.footnote)
                     .foregroundStyle(.red)
             }

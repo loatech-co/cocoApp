@@ -16,46 +16,46 @@ enum AutomationSteps {
     /// Wallet → «Registrar gasto de Wallet».
     static let transaction: [AutomationStep] = [
         .init(
-            id: 1, title: "Abre Atajos y crea una automatización",
-            detail: "Pestaña Automatización → Nueva automatización → Transacción.", symbol: "plus.circle"),
+            id: 1, title: L10n.Onboarding.walletStep1Title,
+            detail: L10n.Onboarding.walletStep1Detail, symbol: "plus.circle"),
         .init(
-            id: 2, title: "Elige tus tarjetas de Wallet",
-            detail: "Marca las tarjetas con las que pagas y deja «Cualquier comercio».", symbol: "creditcard"),
+            id: 2, title: L10n.Onboarding.walletStep2Title,
+            detail: L10n.Onboarding.walletStep2Detail, symbol: "creditcard"),
         .init(
-            id: 3, title: "Que corra sola",
-            detail: "Activa «Ejecutar de inmediato» y desactiva «Notificar al ejecutar».", symbol: "bolt"),
+            id: 3, title: L10n.Onboarding.runAloneTitle,
+            detail: L10n.Onboarding.runAloneDetail, symbol: "bolt"),
         .init(
-            id: 4, title: "Añade la acción «Registrar gasto de Wallet»",
-            detail: "Conecta Comercio ← Comercio, Monto ← Monto, Tarjeta ← Tarjeta o pase, Nombre ← Nombre.",
+            id: 4, title: L10n.Onboarding.walletStep4Title,
+            detail: L10n.Onboarding.walletStep4Detail,
             symbol: "arrow.right.circle"),
     ]
 
     /// Mensajes del banco → «Registrar gasto de SMS».
     static let message: [AutomationStep] = [
         .init(
-            id: 1, title: "Crea otra automatización",
-            detail: "Pestaña Automatización → Nueva automatización → Mensaje.", symbol: "plus.circle"),
+            id: 1, title: L10n.Onboarding.messageStep1Title,
+            detail: L10n.Onboarding.messageStep1Detail, symbol: "plus.circle"),
         .init(
-            id: 2, title: "Filtra por remitente",
-            detail: "«Remitente contiene» los números o nombres con los que te escribe el banco.", symbol: "message"),
+            id: 2, title: L10n.Onboarding.messageStep2Title,
+            detail: L10n.Onboarding.messageStep2Detail, symbol: "message"),
         .init(
-            id: 3, title: "Que corra sola",
-            detail: "Activa «Ejecutar de inmediato» y desactiva «Notificar al ejecutar».", symbol: "bolt"),
+            id: 3, title: L10n.Onboarding.runAloneTitle,
+            detail: L10n.Onboarding.runAloneDetail, symbol: "bolt"),
         .init(
-            id: 4, title: "Añade la acción «Registrar gasto de SMS»",
-            detail: "Conecta Texto ← Contenido del mensaje y Remitente ← Remitente.", symbol: "arrow.right.circle"),
+            id: 4, title: L10n.Onboarding.messageStep4Title,
+            detail: L10n.Onboarding.messageStep4Detail, symbol: "arrow.right.circle"),
     ]
 
     /// Botón de acción, Centro de control y widget.
     static let accessPoints: [AutomationStep] = [
         .init(
-            id: 1, title: "Botón de acción (iOS 17)",
-            detail: "Ajustes → Botón de acción → Atajo → «Registrar gasto en Coco».", symbol: "button.horizontal"),
+            id: 1, title: L10n.Onboarding.accessActionButtonTitle,
+            detail: L10n.Onboarding.accessActionButtonDetail, symbol: "button.horizontal"),
         .init(
-            id: 2, title: "Centro de control y pantalla bloqueada (iOS 18)",
-            detail: "Añade el control «Registrar gasto» de Coco.", symbol: "switch.2"),
+            id: 2, title: L10n.Onboarding.accessControlCenterTitle,
+            detail: L10n.Onboarding.accessControlCenterDetail, symbol: "switch.2"),
         .init(
-            id: 3, title: "Widget", detail: "Mantén pulsada la pantalla de inicio → añadir widget → Coco.",
+            id: 3, title: L10n.Onboarding.accessWidgetTitle, detail: L10n.Onboarding.accessWidgetDetail,
             symbol: "square.grid.2x2"),
     ]
 }

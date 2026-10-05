@@ -24,16 +24,16 @@ struct SignInView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Correo", text: $email)
+                    TextField(L10n.Session.signInEmail, text: $email)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    SecureField("Contraseña", text: $password)
+                    SecureField(L10n.Session.signInPassword, text: $password)
                         .textContentType(.password)
                         .onSubmit { if canSignIn { signIn() } }
                 } footer: {
-                    Text("La misma cuenta que en la web.")
+                    Text(L10n.Session.signInFooter)
                 }
 
                 if let error {
@@ -46,7 +46,7 @@ struct SignInView: View {
                 Section {
                     Button(action: signIn) {
                         HStack {
-                            Text("Entrar")
+                            Text(L10n.Session.signInSubmit)
                             if isSigningIn {
                                 Spacer()
                                 ProgressView()
@@ -56,11 +56,11 @@ struct SignInView: View {
                     .disabled(!canSignIn)
                 }
             }
-            .navigationTitle("Entrar en Coco")
+            .navigationTitle(L10n.Session.signInTitle)
             .toolbar {
                 if let onSettings {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Ajustes", systemImage: "gearshape", action: onSettings)
+                        Button(L10n.Common.settings, systemImage: "gearshape", action: onSettings)
                     }
                 }
             }
@@ -91,18 +91,18 @@ struct SignInView: View {
     static func message(from error: Error) -> String {
         switch APIError.from(error) {
         case .unauthenticated:
-            return "Correo o contraseña incorrectos."
+            return L10n.Session.errorBadCredentials
         case .noNetwork:
-            return "Sin conexión. Revisa la red e inténtalo otra vez."
+            return L10n.Session.errorNoNetwork
         case .timedOut:
-            return "La API no respondió a tiempo. Inténtalo otra vez."
+            return L10n.Session.errorTimedOut
         case .rejected(_, _, let message):
-            return message.isEmpty ? "La API rechazó la petición." : message
+            return message.isEmpty ? L10n.Session.errorRejected : message
         case .server(let status):
             return status == 429
-                ? "Demasiados intentos. Espera un minuto." : "La API falló (\(status)). Inténtalo en un momento."
+                ? L10n.Session.errorTooManyAttempts : L10n.Session.errorServer(status)
         case .unreadableResponse:
-            return "La API respondió algo que la app no entiende. Revisa la URL de la API en Ajustes."
+            return L10n.Session.errorUnreadableResponse
         }
     }
 }

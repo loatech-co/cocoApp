@@ -13,17 +13,17 @@ struct RootView: View {
         @Bindable var router = d.router
         TabView(selection: tab) {
             home
-                .tabItem { Label("Inicio", systemImage: "house") }
+                .tabItem { Label(L10n.Tabs.home, systemImage: "house") }
                 .tag(AppTab.home)
             RecordExpenseView(d: d)
-                .tabItem { Label("Registrar", systemImage: "plus.circle") }
+                .tabItem { Label(L10n.Tabs.register, systemImage: "plus.circle") }
                 .tag(AppTab.register)
             CapturesView(queue: d.queue, navigation: d.router)
-                .tabItem { Label("Capturas", systemImage: "tray") }
+                .tabItem { Label(L10n.Tabs.captures, systemImage: "tray") }
                 .badge(d.pending)
                 .tag(AppTab.captures)
             MoreView(d: d)
-                .tabItem { Label("Más", systemImage: "ellipsis") }
+                .tabItem { Label(L10n.Tabs.more, systemImage: "ellipsis") }
                 .tag(AppTab.more)
         }
         .fullScreenCover(isPresented: signedOut) {

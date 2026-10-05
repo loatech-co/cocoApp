@@ -20,12 +20,12 @@ enum ExpiryReminder {
         let days = daysLeft(expiresAt: expiresAt, now: now)
         let when: String
         switch days {
-        case ..<0: when = "ya caducó"
-        case 0: when = "caduca hoy"
-        case 1: when = "caduca mañana"
-        default: when = "caduca en \(days) días"
+        case ..<0: when = L10n.Reminders.expiryExpired
+        case 0: when = L10n.Reminders.expiryToday
+        case 1: when = L10n.Reminders.expiryTomorrow
+        default: when = L10n.Reminders.expiryInDays(days)
         }
-        return ("Tu instalación de Coco \(when)", "Vuelve a instalarla desde Xcode con el cable.")
+        return (L10n.Reminders.expiryTitle(when), L10n.Reminders.expiryBody)
     }
 
     /// Días de calendario entre hoy y el día del vencimiento: a las 23:50 con

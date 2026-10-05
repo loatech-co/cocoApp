@@ -11,10 +11,10 @@ struct CaptureControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: Self.kind) {
             ControlWidgetButton(action: AbrirCapturaIntent(destino: "manual")) {
-                Label("Registrar gasto", systemImage: "plus.circle.fill")
+                Label(L10n.Widget.captureTitle, systemImage: "plus.circle.fill")
             }
         }
-        .displayName("Registrar gasto")
-        .description("Abre Coco en el formulario rápido.")
+        .displayName(L10n.Widget.captureTitleResource)
+        .description(L10n.Widget.captureDescriptionResource)
     }
 }
