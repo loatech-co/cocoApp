@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 
-import { AuditRepository } from './audit.repository';
+import { AuditRepository, type AuditEntryWithUser } from './audit.repository';
 
 /** Acciones auditadas. Tipadas para que no se cuelen cadenas sueltas. */
 type AccionAuditada =
@@ -64,5 +64,17 @@ export class AuditService {
         error instanceof Error ? error.stack : String(error),
       );
     }
+  }
+
+  /** One page of the log, newest first, with its total. */
+  async page(
+    skip: number,
+    take: number,
+  ): Promise<{ entries: AuditEntryWithUser[]; total: number }> {
+    const [entries, total] = await Promise.all([
+      this.repository.findPage(skip, take),
+      this.repository.count(),
+    ]);
+    return { entries, total };
   }
 }

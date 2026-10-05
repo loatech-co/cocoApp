@@ -7,7 +7,7 @@ import { AccountsService } from './accounts.service';
 @Module({
   controllers: [AccountsController],
   providers: [AccountsService, AccountsRepository],
-  // Transactions necesita verificar que una cuenta pertenezca al usuario.
-  exports: [AccountsService, AccountsRepository],
+  // Other modules use accounts through its service only (CONTRIBUTING.md).
+  exports: [AccountsService],
 })
 export class AccountsModule {}

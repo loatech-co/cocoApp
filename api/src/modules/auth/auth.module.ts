@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
 import { SupabaseAuthService } from './supabase-auth.service';
 import { UsersRepository } from './users.repository';
+import { UsersService } from './users.service';
 import { AuditRepository } from '../../common/audit/audit.repository';
 import { AuditService } from '../../common/audit/audit.service';
 import { CategoriesModule } from '../categories/categories.module';
@@ -19,7 +20,7 @@ import { CategoriesModule } from '../categories/categories.module';
  */
 @Global()
 @Module({
-  // The registration seeds the new account's categories (CategoriesRepository).
+  // The registration seeds the new account's categories (CategoriesService).
   imports: [CategoriesModule],
   controllers: [AuthController],
   providers: [
@@ -29,13 +30,16 @@ import { CategoriesModule } from '../categories/categories.module';
     AuditService,
     AuditRepository,
     UsersRepository,
+    UsersService,
   ],
+  // UsersRepository is exported only for JwtAuthGuard, which AppModule
+  // registers as the global guard; modules use UsersService.
   exports: [
     AuthService,
     SupabaseAuthService,
     PasswordService,
     AuditService,
-    AuditRepository,
+    UsersService,
     UsersRepository,
   ],
 })

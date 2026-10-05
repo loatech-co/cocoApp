@@ -281,6 +281,15 @@ export class CategoriesService {
   }
 
   /**
+   * A new account's structure: the template, copied as is. The registration
+   * calls it right after creating the profile, so there is nothing to check.
+   * Returns how many rows it created.
+   */
+  seedNewAccount(userId: bigint): Promise<number> {
+    return this.repo.sembrarPlantilla(userId);
+  }
+
+  /**
    * Siembra el diccionario sugerido del Anexo A.
    *
    * Solo corre si el usuario no tiene categorías: no es una migración que se

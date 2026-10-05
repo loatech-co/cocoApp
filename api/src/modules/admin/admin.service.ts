@@ -2,13 +2,12 @@ import { Injectable } from '@nestjs/common';
 import type { UserRole } from '@prisma/client';
 
 import type { ListUsersQueryDto } from './admin.dto';
-import { AdminRepository } from './admin.repository';
-import { AuditRepository } from '../../common/audit/audit.repository';
 import { AuditService } from '../../common/audit/audit.service';
 import { BadRequestError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { aPerfilPublico, AuthService, type PerfilPublico } from '../auth/auth.service';
 import { PasswordService } from '../auth/password.service';
 import { SupabaseAuthService } from '../auth/supabase-auth.service';
+import { UsersService } from '../auth/users.service';
 
 interface Contexto {
   ip?: string | null;
@@ -18,8 +17,7 @@ interface Contexto {
 @Injectable()
 export class AdminService {
   constructor(
-    private readonly repository: AdminRepository,
-    private readonly auditLog: AuditRepository,
+    private readonly users: UsersService,
     private readonly auth: AuthService,
     private readonly supabase: SupabaseAuthService,
     private readonly passwords: PasswordService,
@@ -31,10 +29,11 @@ export class AdminService {
   ): Promise<{ data: PerfilPublico[]; meta: { page: number; per_page: number; total: number } }> {
     const page = filtros.page ?? 1;
     const perPage = filtros.per_page ?? 50;
-    const [usuarios, total] = await Promise.all([
-      this.repository.findUsers(filtros.status, (page - 1) * perPage, perPage),
-      this.repository.countUsers(filtros.status),
-    ]);
+    const { users: usuarios, total } = await this.users.page(
+      filtros.status,
+      (page - 1) * perPage,
+      perPage,
+    );
 
     return {
       data: usuarios.map(aPerfilPublico),
@@ -49,11 +48,7 @@ export class AdminService {
       throw new BadRequestError('Esa cuenta ya está activa.');
     }
 
-    const actualizado = await this.repository.updateUser(userId, {
-      status: 'active',
-      approvedAt: new Date(),
-      approvedById: adminId,
-    });
+    const actualizado = await this.users.approve(userId, adminId);
 
     await this.audit.registrar({
       userId: adminId,
@@ -77,7 +72,7 @@ export class AdminService {
     const usuario = await this.exigirUsuario(userId);
     await this.exigirQueQuedeAlgunAdmin(usuario.role, userId);
 
-    const actualizado = await this.repository.updateUser(userId, { status: 'suspended' });
+    const actualizado = await this.users.setStatus(userId, 'suspended');
     await this.auth.revocarTodasLasSesiones(userId);
 
     await this.audit.registrar({
@@ -95,7 +90,7 @@ export class AdminService {
   async reactivar(adminId: bigint, userId: bigint, contexto: Contexto): Promise<PerfilPublico> {
     const usuario = await this.exigirUsuario(userId);
 
-    const actualizado = await this.repository.updateUser(userId, { status: 'active' });
+    const actualizado = await this.users.setStatus(userId, 'active');
 
     await this.audit.registrar({
       userId: adminId,
@@ -122,7 +117,7 @@ export class AdminService {
       await this.exigirQueQuedeAlgunAdmin(usuario.role, userId);
     }
 
-    const actualizado = await this.repository.updateUser(userId, { role: rol });
+    const actualizado = await this.users.setRole(userId, rol);
 
     // El rol se lee de la base en cada petición, así que el cambio ya aplica.
     // Aun así se cierran las sesiones: un cambio de permisos merece que la
@@ -186,10 +181,7 @@ export class AdminService {
     const page = query.page ? Number(query.page) : 1;
     const perPage = query.per_page ? Number(query.per_page) : 50;
 
-    const [eventos, total] = await Promise.all([
-      this.auditLog.findPage((page - 1) * perPage, perPage),
-      this.auditLog.count(),
-    ]);
+    const { entries: eventos, total } = await this.audit.page((page - 1) * perPage, perPage);
 
     return {
       data: eventos.map((evento) => ({
@@ -207,7 +199,7 @@ export class AdminService {
   }
 
   private async exigirUsuario(userId: bigint) {
-    const usuario = await this.repository.findUser(userId);
+    const usuario = await this.users.findById(userId);
     if (!usuario) throw new NotFoundError('El usuario no existe.');
     return usuario;
   }
@@ -223,7 +215,7 @@ export class AdminService {
   private async exigirQueQuedeAlgunAdmin(rol: UserRole, userId: bigint): Promise<void> {
     if (rol !== 'admin') return;
 
-    const otrosAdmins = await this.repository.countOtherActiveAdmins(userId);
+    const otrosAdmins = await this.users.countOtherActiveAdmins(userId);
 
     if (otrosAdmins === 0) {
       throw new BadRequestError(

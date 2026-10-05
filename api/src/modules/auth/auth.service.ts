@@ -7,7 +7,7 @@ import { SupabaseAuthService } from './supabase-auth.service';
 import { UsersRepository } from './users.repository';
 import { AuditService } from '../../common/audit/audit.service';
 import { AuthenticationError, ForbiddenError } from '../../common/errors/domain-error';
-import { CategoriesRepository } from '../categories/categories.repository';
+import { CategoriesService } from '../categories/categories.service';
 
 export interface ContextoDePeticion {
   ip?: string | undefined;
@@ -59,7 +59,7 @@ export class AuthService {
 
   constructor(
     private readonly users: UsersRepository,
-    private readonly categories: CategoriesRepository,
+    private readonly categories: CategoriesService,
     private readonly supabase: SupabaseAuthService,
     private readonly passwords: PasswordService,
     private readonly audit: AuditService,
@@ -139,7 +139,7 @@ export class AuthService {
       después desde `POST /categories/seed`.
     */
     try {
-      await this.categories.sembrarPlantilla(usuario.id);
+      await this.categories.seedNewAccount(usuario.id);
     } catch (error) {
       this.logger.error(
         `No se pudo sembrar la plantilla de la cuenta ${usuario.id}: ${(error as Error).message}`,
