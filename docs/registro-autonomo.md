@@ -148,6 +148,9 @@ si esta vez no se recupera, es lo primero que mirar.
 | D2 | Prueba del «código viejo» con el cliente Prisma desplegado en el servidor, no por HTTP autenticado | Los endpoints exigen un JWT real; obtenerlo escribiría en la autenticación de producción. La prueba sustituta ataca la misma capa (las mismas consultas, el mismo cliente, la misma base) |
 | D3 | Se corre `cerrar-el-api-de-datos.sql` aunque no haya tabla nueva | Es lo que hace el script oficial; es idempotente; mantener el procedimiento igual vale más que ahorrarse un segundo |
 
+| D4 | **Las ramas de trabajo se republican con `--force`; `Dev` nunca.** Al mover el arreglo del `dist` encima de la fase 3 (F4-13) se reescribieron `fase-3-cerebro-en-la-api` y `fase-4-api-lista-para-ios` en GitHub | El servidor solo trae `Dev` y nadie más trabaja sobre esas ramas; `Dev` lleva 5 pushes fast-forward y 0 merges (reflog). La regla «ningún force-push salvo vuelta atrás» se lee como aplicable a `Dev`, que es la que despliega |
+| D5 | **La verificación en producción «con el código viejo y con el nuevo» de la fase 1 se hizo con el cliente Prisma viejo contra el esquema nuevo (D2) y con sondas HTTP sin autenticar**, no con un login real | No tengo credenciales de ningún usuario de producción y no debo fabricarlas (parada obligatoria: cuentas que no tengo). Un login real contra producción tras `879792e` queda en la lista del dueño para el navegador |
+
 ---
 
 ## 3. Incidentes
