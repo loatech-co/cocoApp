@@ -11,5 +11,9 @@
   // desde ahí heredaba a este. En el servidor no hay `vitest` al construir, y
   // el build de producción se caía por el archivo de un runner que no se
   // despliega. Pasó el 4 de octubre de 2026.
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "vitest.config.ts", "dist", "node_modules"]
+  //
+  // Y `src/pruebas/` entera: son los ayudantes que comparten las pruebas, y
+  // uno de ellos importa `vitest`. Volvió a pasar el 5 de octubre de 2026 con
+  // `app-falsa.ts`; una carpeta excluida no se olvida como un sufijo.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/pruebas", "vitest.config.ts", "dist", "node_modules"]
 }
