@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
+import { makeConcept, makeTransaction } from './factories';
 import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
 
 /**
@@ -79,25 +80,14 @@ describe('User isolation (e2e)', () => {
     asBruno = env.como(bruno);
     a = await seedAna(env, ana.id);
 
-    const center = await env.prisma.category.create({ data: { userId: bruno.id, name: 'Casa B' } });
-    const group = await env.prisma.category.create({
-      data: { userId: bruno.id, name: 'Servicios B', parentId: center.id },
+    const { concept } = await makeConcept(env.prisma, bruno.id, {
+      center: { name: 'Casa B' },
+      category: { name: 'Servicios B' },
+      concept: { name: 'Luz B' },
     });
-    brunoConceptId = (
-      await env.prisma.category.create({
-        data: { userId: bruno.id, name: 'Luz B', parentId: group.id },
-      })
-    ).id;
+    brunoConceptId = concept.id;
     brunoTransactionId = (
-      await env.prisma.transaction.create({
-        data: {
-          userId: bruno.id,
-          date: new Date('2026-09-10'),
-          period: new Date('2026-09-01'),
-          amount: '1000',
-          categoryId: brunoConceptId,
-        },
-      })
+      await makeTransaction(env.prisma, bruno.id, { categoryId: concept.id, date: '2026-09-10' })
     ).id;
   });
 
