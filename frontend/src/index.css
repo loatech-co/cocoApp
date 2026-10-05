@@ -1062,6 +1062,20 @@
     --bajo-la-barra: calc(60px + env(safe-area-inset-bottom, 0px) + 12px);
   }
 
+  /* ── Dentro de la app del teléfono ───────────────────────────────────────
+     La barra de abajo es la nativa y queda FUERA del webview, así que aquí
+     no hay nada que esquivar: el cuerpo no reserva hueco y un aviso vuelve a
+     salir cerca del borde. La marca la pone `main.tsx` al arrancar.
+
+     Se redefine la VARIABLE y no se añade una variante: una `@custom-variant`
+     competiría a igual especificidad con `movil:` y dependería del orden en
+     que Tailwind emita las dos. Un selector de atributo gana a `:root` por
+     especificidad, así que no depende de dónde esté escrito. */
+  html[data-embebido='si'] {
+    --hueco-de-la-barra: 0px;
+    --bajo-la-barra: 12px;
+  }
+
   /* ── La coreografía ──────────────────────────────────────────────────────
      Se deriva con `:has()` del estado de la PROPIA superficie. Nunca de una
      clase que mantenga un script: un cierre que se olvide de quitarla deja la

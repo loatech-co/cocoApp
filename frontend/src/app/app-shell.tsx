@@ -1,8 +1,8 @@
 import {  Eye, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import {useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { useEsMovil } from '@/app/movil';
+import { useEnLaApp, useEsMovil } from '@/app/movil';
 import { useSuperficieDeAtajos } from '@/components/atajos';
 import { BarraInferior } from '@/components/barra-inferior';
 import { Logo, LogoCompacto } from '@/components/logo';
@@ -15,6 +15,7 @@ import { PilaDeAvisos } from '@/components/ui/aviso';
 import { Button } from '@/components/ui/button';
 import { MovimientoModal } from '@/features/transactions/movimiento-modal';
 import { useAuth } from '@/lib/auth-context';
+import { registrarPuente } from '@/lib/puente-nativo';
 import { cn } from '@/lib/utils';
 import { useAlCambiar } from '@/lib/al-cambiar';
 import type { Transaction } from '@coco/types';
@@ -89,8 +90,47 @@ function VistaDeUsuario() {
   );
 }
 
+/**
+ * Lo que la app del teléfono puede pedirle a la web: ir a una ruta y abrir la
+ * búsqueda.
+ *
+ * ── Por qué es un componente hijo del armazón y no del enrutador ────────────
+ * Hay UNA sola llamada a `registrarPuente`, porque `window.__coco` es un solo
+ * objeto y dos registros se pisarían. Y las dos cosas que publica nacen en
+ * sitios distintos: `navigate` es del enrutador, y abrir la búsqueda es el
+ * estado del armazón. El armazón es el elemento de `/` y vive dentro del
+ * enrutador, así que desde aquí se llega a las dos; desde `router.tsx` no se
+ * llega al estado de la búsqueda sin sacarlo del armazón.
+ *
+ * Lo que se pierde es poder navegar ANTES de que haya sesión —el armazón no
+ * se monta sin ella—, y no hace falta: sin sesión no hay página que pintar,
+ * y la app, si no encuentra `__coco`, carga la ruta por URL, que es lo mismo.
+ *
+ * Fuera de la app no instala nada: `registrarPuente` lo pregunta.
+ */
+function PuenteDeNavegacion({ abrirBusqueda }: { abrirBusqueda: () => void }) {
+  const navigate = useNavigate();
+
+  useEffect(
+    () => registrarPuente({ ir: (ruta) => void navigate(ruta), abrirBusqueda }),
+    [navigate, abrirBusqueda],
+  );
+
+  return null;
+}
+
 export function AppShell() {
   const esMovil = useEsMovil();
+  /**
+   * Dentro de la app del teléfono.
+   *
+   * La barra nativa y la pestaña «Más» hacen lo que aquí hacen el techo, la
+   * barra de abajo, la hoja de atajos y la de la cuenta, así que NO se
+   * montan: no se esconden con CSS, que dejaría nueve enlaces en el orden de
+   * tabulación y una barra fija debajo de otra. La búsqueda y la ficha sí,
+   * porque la pestaña nativa «Buscar» abre la de aquí.
+   */
+  const embebida = useEnLaApp();
   const { usuario } = useAuth();
   const { diaADia, administracion, biblioteca } = useSecciones();
   const ubicacion = useLocation();
@@ -129,6 +169,10 @@ export function AppShell() {
     setCuentaAbierta(false);
   });
 
+  // Estable entre renders: es lo que el puente publica, y un `useEffect` que
+  // dependa de ella no tiene por qué volver a registrarse en cada pintado.
+  const [abrirBusqueda] = useState(() => () => setBusquedaAbierta(true));
+
   function alternarBarra(): void {
     setPlegada((antes) => {
       localStorage.setItem('sidenav-plegada', antes ? 'no' : 'si');
@@ -160,7 +204,7 @@ export function AppShell() {
           Se MONTA o no se monta, no se esconde con CSS: un riel escondido
           sigue siendo nueve enlaces en el orden de tabulación de un teléfono,
           y sus nombres siguen estando dos veces en la página. */}
-      {!esMovil && (
+      {!esMovil && !embebida && (
         <aside
           className={cn(
             'fixed inset-y-0 left-0 flex flex-col p-3 transition-[width]',
@@ -268,7 +312,7 @@ export function AppShell() {
           Pegado arriba, que es el momento en el que hace falta que se entienda
           qué capa va encima: por eso la sombra va en el elemento PEGADO y no
           en uno cualquiera. */}
-      {esMovil && (
+      {esMovil && !embebida && (
         <header
           data-armazon="techo"
           // La marca SOLA, y centrada. Antes compartía la fila con el botón del
@@ -301,7 +345,9 @@ export function AppShell() {
         className={cn(
           'flex flex-1 flex-col transition-[padding]',
           'escritorio:h-dvh escritorio:py-5 escritorio:pr-5',
-          plegada ? 'escritorio:pl-16' : 'escritorio:pl-56',
+          // Sin riel —una tableta dentro de la app— el hueco de la izquierda
+          // es el mismo que el de los otros tres lados.
+          embebida ? 'escritorio:pl-5' : plegada ? 'escritorio:pl-16' : 'escritorio:pl-56',
         )}
       >
         <main
@@ -367,7 +413,7 @@ export function AppShell() {
         </main>
       </div>
 
-      {esMovil && (
+      {esMovil && !embebida && (
         <>
           <BarraInferior
             nombre={usuario?.display_name ?? usuario?.email ?? '?'}
@@ -394,6 +440,14 @@ export function AppShell() {
             {cuerpo}
           </PanelInferior>
 
+          <PanelDeLaCuenta abierto={cuentaAbierta} onCerrar={() => setCuentaAbierta(false)} />
+        </>
+      )}
+
+      {/* La búsqueda y la ficha, en el teléfono Y dentro de la app: allí las
+          abre la barra nativa a través de `PuenteDeNavegacion`. */}
+      {(esMovil || embebida) && (
+        <>
           <PanelDeBusqueda
             abierto={busquedaAbierta}
             onCerrar={() => setBusquedaAbierta(false)}
@@ -405,8 +459,6 @@ export function AppShell() {
               setFicha(movimiento);
             }}
           />
-
-          <PanelDeLaCuenta abierto={cuentaAbierta} onCerrar={() => setCuentaAbierta(false)} />
 
           {/* Esta sí se monta al abrirse. No se desliza —entra con la animación
               de su propio velo, que corre por existir—, y montada siempre
@@ -421,6 +473,8 @@ export function AppShell() {
           )}
         </>
       )}
+
+      {embebida && <PuenteDeNavegacion abrirBusqueda={abrirBusqueda} />}
 
       <PilaDeAvisos />
     </div>

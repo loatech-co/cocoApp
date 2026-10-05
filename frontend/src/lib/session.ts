@@ -1,4 +1,6 @@
-import type { ApiError, PerfilPublico, SesionResponse } from '@coco/types';
+import type { ApiError, PerfilPublico, SesionParaLaWeb, SesionResponse } from '@coco/types';
+
+import { avisar as avisarALaApp, enLaApp, pedirSesion } from './puente-nativo';
 
 /**
  * Estado de sesión del cliente.
@@ -16,11 +18,27 @@ import type { ApiError, PerfilPublico, SesionResponse } from '@coco/types';
  *
  * El precio es un viaje de red extra al cargar la app. Es barato comparado con
  * la alternativa.
+ *
+ * ── Y dentro de la app del teléfono ─────────────────────────────────────────
+ * La web embebida no tiene refresh token: lo tiene la app, en el llavero, y
+ * es la única que lo rota. Aquí cambia UNA función —`renovar()`—, que en vez
+ * de llamar a `/auth/refresh` le pide el access token a la app por el puente
+ * (`puente-nativo.ts`). Todo lo demás —restaurar, el temporizador, el
+ * reintento tras un 401— ya pasa por `renovar()`, así que queda cubierto sin
+ * tocarlo. Las funciones que cierran sesión le cuentan a la app lo que pasó,
+ * porque la sesión real es la suya.
  */
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1';
 
-/** Margen antes de la expiración para renovar sin que se note. */
+/**
+ * Margen antes de la expiración para renovar sin que se note.
+ *
+ * La app del teléfono renueva con 120 s de margen, a propósito más que estos
+ * 60: así lo que la web recibe por el puente siempre tiene más de un minuto
+ * de vida y `programarRenovacion()` nunca cae en su espera mínima de 5 s
+ * pidiendo una y otra vez un token que la app aún no ha renovado.
+ */
 const MARGEN_DE_RENOVACION_MS = 60_000;
 
 export interface EstadoDeSesion {
@@ -89,7 +107,7 @@ export function tokenActual(): string | null {
   return accessToken;
 }
 
-function guardarSesion(sesion: SesionResponse): void {
+function guardarSesion(sesion: SesionParaLaWeb): void {
   accessToken = sesion.access_token;
   expiraEn = Date.now() + sesion.expires_in * 1000;
   usuario = sesion.user;
@@ -192,15 +210,25 @@ export async function registrarse(
 }
 
 /**
- * Canjea la cookie de refresh por un access token nuevo.
+ * Canjea la cookie de refresh por un access token nuevo. Dentro de la app, se
+ * lo pide a ella por el puente.
  *
  * Devuelve `false` —sin lanzar— cuando no hay sesión que restaurar, porque ese
  * es el caso normal de alguien que abre la app sin haber entrado.
+ *
+ * El `catch` NO avisa a la app. Un fallo del puente —red, tiempo— no dice
+ * nada sobre el llavero, y avisar «sesión cerrada» por un corte de red le
+ * haría borrar un refresh perfectamente válido. La web limpia su memoria y
+ * `RequireAuth` espera a que la app le empuje la sesión.
  */
 export async function renovar(): Promise<boolean> {
   renovacionEnVuelo ??= (async () => {
     try {
-      guardarSesion(await llamarAuth<SesionResponse>('/refresh'));
+      // Dentro de la MISMA promesa compartida: dos `renovar()` a la vez son
+      // un solo mensaje a la app, igual que fuera son una sola petición.
+      guardarSesion(
+        enLaApp() ? await pedirSesion() : await llamarAuth<SesionResponse>('/refresh'),
+      );
       return true;
     } catch {
       limpiarSesion();
@@ -219,6 +247,15 @@ export async function restaurar(): Promise<void> {
 }
 
 export async function salir(): Promise<void> {
+  // En la app, la sesión real es la suya: ella llama a `/auth/logout` con su
+  // refresh y borra el llavero. La web solo avisa y olvida su memoria; llamar
+  // además desde aquí sería un logout sin cookie que no cierra nada.
+  if (enLaApp()) {
+    avisarALaApp({ tipo: 'salir' });
+    limpiarSesion();
+    return;
+  }
+
   try {
     await llamarAuth<void>('/logout');
   } finally {
@@ -235,6 +272,9 @@ export async function salirDeTodosLosDispositivos(): Promise<void> {
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
   limpiarSesion();
+  // El servidor ya mató la familia entera, incluida la del llavero: la app
+  // solo tiene que descartarlo, sin llamar a nada.
+  if (enLaApp()) avisarALaApp({ tipo: 'sesionCerrada' });
   if (!respuesta.ok && respuesta.status !== 401) {
     throw new SesionError(respuesta.status, 'logout_all_failed', 'No se pudo cerrar todo.');
   }
@@ -268,9 +308,28 @@ export async function cambiarContrasena(
   // Cambiar la contraseña cierra TODAS las sesiones en el servidor, incluida
   // esta. Reflejarlo aquí evita que la app siga creyéndose autenticada.
   limpiarSesion();
+  if (enLaApp()) avisarALaApp({ tipo: 'sesionCerrada' });
 }
 
-/** Cierra la sesión localmente sin llamar al servidor. Para un 401 irrecuperable. */
+/**
+ * Cierra la sesión localmente sin llamar al servidor. Para un 401 irrecuperable.
+ *
+ * NO avisa a la app: un 401 en una llamada de la web puede ser un token que
+ * caducó mientras el teléfono dormía, y la app sigue teniendo un refresh
+ * bueno con el que empujar una sesión nueva.
+ */
 export function descartarSesion(): void {
+  limpiarSesion();
+}
+
+// ── Lo que la app llama hacia la web (`window.__coco`) ──────────────────────
+
+/** La app empuja una sesión: al arrancar sin ella, o tras el login nativo. */
+export function recibirSesion(sesion: SesionParaLaWeb): void {
+  guardarSesion(sesion);
+}
+
+/** La app cerró la sesión real (401 al renovar): la web olvida la suya. */
+export function sesionCerrada(): void {
   limpiarSesion();
 }

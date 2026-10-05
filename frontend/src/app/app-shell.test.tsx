@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppShell } from './app-shell';
 import { CONSULTA_MOVIL } from './movil';
 import { olvidarAtajos } from '@/lib/atajos';
+import { fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
 
 vi.mock('@/lib/auth-context', () => ({
   useAuth: () => ({
@@ -44,6 +45,7 @@ function pintar() {
         <Routes>
           <Route path="/" element={<AppShell />}>
             <Route index element={<p>la página</p>} />
+            <Route path="centros-de-costos" element={<p>los centros</p>} />
           </Route>
         </Routes>
       </MemoryRouter>
@@ -52,7 +54,10 @@ function pintar() {
 }
 
 beforeEach(olvidarAtajos);
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  salirDeLaApp();
+});
 
 describe('El armazón por debajo del corte', () => {
   beforeEach(() => alAncho(true));
@@ -123,5 +128,64 @@ describe('El armazón por encima del corte', () => {
     expect(document.querySelector('[data-armazon="barra"]')).toBeNull();
     // Y ninguna hoja: en el escritorio el riel lleva lo que ellas llevan.
     expect(document.querySelector('[data-superficie="panel"]')).toBeNull();
+  });
+});
+
+describe('El armazón embebido en la app', () => {
+  // La app corre en un teléfono casi siempre, pero el modo embebido no
+  // depende del ancho: en una tableta tampoco hay riel.
+  beforeEach(() => {
+    alAncho(true);
+    fingirLaApp();
+  });
+
+  it('no monta el techo, ni la barra, ni la hoja de atajos ni la de la cuenta', () => {
+    const { container } = pintar();
+
+    // La barra nativa y la pestaña «Más» hacen ese papel. No se esconden con
+    // CSS: una barra fija escondida sigue ocupando el orden de tabulación.
+    expect(container.querySelector('[data-armazon="techo"]')).toBeNull();
+    expect(document.querySelector('[data-armazon="barra"]')).toBeNull();
+    expect(document.querySelector('[aria-label="Registrar un gasto"]')).toBeNull();
+    expect(document.body.textContent).not.toContain('Atajos');
+    expect(container.querySelector('aside')).toBeNull();
+  });
+
+  it('sí monta la búsqueda, y window.__coco.abrirBusqueda() la abre', () => {
+    pintar();
+
+    const hojas = document.querySelectorAll('[data-superficie="panel"]');
+    // Solo una: la búsqueda. Atajos y cuenta no están.
+    expect(hojas.length).toBe(1);
+    expect(hojas[0].getAttribute('data-abierta')).toBe('no');
+
+    act(() => window.__coco!.abrirBusqueda());
+    expect(hojas[0].getAttribute('data-abierta')).toBe('si');
+  });
+
+  it('window.__coco.ir() cambia la página sin recargar', () => {
+    const { container } = pintar();
+    expect(container.textContent).toContain('la página');
+
+    act(() => window.__coco!.ir('/centros-de-costos'));
+
+    expect(container.textContent).toContain('los centros');
+    expect(container.textContent).not.toContain('la página');
+  });
+
+  it('en una tableta tampoco hay riel', () => {
+    alAncho(false);
+    const { container } = pintar();
+    expect(container.querySelector('aside')).toBeNull();
+    expect(window.__coco).toBeDefined();
+  });
+});
+
+describe('Fuera de la app no se instala el puente', () => {
+  beforeEach(() => alAncho(true));
+
+  it('window.__coco no existe', () => {
+    pintar();
+    expect(window.__coco).toBeUndefined();
   });
 });

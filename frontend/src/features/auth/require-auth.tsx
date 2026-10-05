@@ -1,10 +1,11 @@
 import { Loader2 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
+import { avisar, enLaApp } from '@/lib/puente-nativo';
 import { LoginPage } from './login-page';
 
 /**
@@ -30,10 +31,32 @@ import { LoginPage } from './login-page';
  * parte para todo lo demás.
  */
 function SinSesion({ enElIndice }: { enElIndice: boolean }) {
+  // Dentro de la app no existe el login web: la sesión la tiene la app y es
+  // ella quien la empuja. Nada de `LoginPage`, y nada de `Navigate`: la ruta
+  // se queda donde la app la puso, para que al llegar la sesión se pinte esa
+  // página y no el resumen.
+  if (enLaApp()) return <SesionDesdeLaApp />;
+
   // En cualquier otra ruta se vuelve al índice primero: si no, la barra de
   // direcciones se queda en una página que ya no se está viendo —el login
   // encima de `/administracion`—, que es exactamente lo que se venía a quitar.
   return enElIndice ? <LoginPage /> : <Navigate to="/" replace />;
+}
+
+/**
+ * La web embebida está sin sesión: se lo dice a la app y espera.
+ *
+ * Se avisa UNA vez por montaje, no en cada render: la app responde empujando
+ * una sesión si la tiene, y un aviso por render sería un sondeo. Lo que la
+ * app hace con el aviso es cosa suya —si no tiene sesión, muestra su propio
+ * login nativo por encima—; esta pantalla solo espera.
+ */
+function SesionDesdeLaApp() {
+  useEffect(() => {
+    avisar({ tipo: 'sinSesion' });
+  }, []);
+
+  return <Esperando texto="Abriendo tu sesión desde la app…" />;
 }
 
 /**
@@ -96,11 +119,11 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-function Esperando() {
+function Esperando({ texto = 'Verificando la sesión…' }: { texto?: string }) {
   return (
     <div className="flex min-h-dvh items-center justify-center" role="status" aria-live="polite">
       <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
-      <span className="sr-only">Verificando la sesión…</span>
+      <span className="sr-only">{texto}</span>
     </div>
   );
 }

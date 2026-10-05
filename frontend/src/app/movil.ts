@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
+import { enLaApp } from '@/lib/puente-nativo';
+
 /**
  * EL CORTE. Uno solo, y hace DOS preguntas.
  *
@@ -58,4 +60,20 @@ export function useEsMovil(): boolean {
     // servido ya tenía.
     () => false,
   );
+}
+
+/**
+ * Si la web corre DENTRO de la app del teléfono.
+ *
+ * Vive junto a `useEsMovil` porque responde a la misma clase de pregunta: qué
+ * se MONTA. Embebida, la barra de abajo, el techo y la hoja de la cuenta no
+ * se montan —la barra nativa y la pestaña «Más» hacen ese papel—.
+ *
+ * No es un `useSyncExternalStore`: la respuesta no cambia en toda la vida de
+ * la página. El `User-Agent` y el puente los pone la app al crear el webview,
+ * antes de cargar nada, y no hay forma de entrar o salir de la app sin
+ * recargar el documento.
+ */
+export function useEnLaApp(): boolean {
+  return enLaApp();
 }

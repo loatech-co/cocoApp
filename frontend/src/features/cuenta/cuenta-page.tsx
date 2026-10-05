@@ -2,6 +2,9 @@ import { LogOut, ShieldCheck } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { useEnLaApp } from '@/app/movil';
+import { SECCIONES_DE_ADMIN } from '@/components/navegacion';
+import { FilaDeEnlace } from '@/components/panel-de-la-cuenta';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,8 +23,15 @@ import { Campo } from '@/components/ui/campo';
  * está comprometida, sin depender de nadie.
  */
 export function CuentaPage() {
-  const { usuario, esAdmin, salirDeTodosLosDispositivos } = useAuth();
+  const { usuario, esAdmin, salir, salirDeTodosLosDispositivos } = useAuth();
   const { hash } = useLocation();
+  /*
+    Dentro de la app del teléfono esta página es la pestaña «Más», y hace lo
+    que fuera hace la hoja del avatar —que allí no se monta—: llevar a la
+    administración y cerrar sesión en ESTE dispositivo. Fuera de la app nada
+    de eso aparece, porque ya está en la hoja o en el menú del riel.
+  */
+  const embebida = useEnLaApp();
 
   /*
     ── Las anclas ────────────────────────────────────────────────────────────
@@ -58,11 +68,48 @@ export function CuentaPage() {
         <Ajustes />
       </section>
 
+      {embebida && esAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Administración</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Las mismas secciones, en el mismo orden, que el riel y la hoja
+                del avatar: una segunda lista se separaría de esta la primera
+                vez que se añada una pantalla. */}
+            <nav aria-label="Administración" className="-mx-3 flex flex-col">
+              {SECCIONES_DE_ADMIN.map((seccion) => (
+                <FilaDeEnlace key={seccion.to} Icono={seccion.Icono} a={seccion.to}>
+                  {seccion.label}
+                </FilaDeEnlace>
+              ))}
+            </nav>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Las dos cosas que hace alguien que sospecha que su cuenta está
           comprometida, juntas y con un nombre: cambiar la contraseña y echar
           a todo el mundo. Separadas no había a dónde apuntar desde fuera. */}
       <section id="seguridad" className="flex scroll-mt-20 flex-col gap-6">
         <CambiarContrasena />
+
+        {embebida && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Cerrar sesión</CardTitle>
+              <CardDescription>
+                Solo en este dispositivo. La app olvida tu sesión y vuelve a pedirte entrar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" size="sm" onClick={() => void salir()}>
+                <LogOut aria-hidden="true" />
+                Cerrar sesión
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

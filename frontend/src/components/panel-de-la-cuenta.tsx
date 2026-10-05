@@ -54,24 +54,24 @@ export function PanelDeLaCuenta({
           justificara el viaje. El ancla lleva al sitio exacto y la página sigue
           siendo una.
         */}
-        <Fila Icono={SlidersHorizontal} a="/mi-cuenta#ajustes" onIr={onCerrar}>
+        <FilaDeEnlace Icono={SlidersHorizontal} a="/mi-cuenta#ajustes" onIr={onCerrar}>
           Ajustes
-        </Fila>
+        </FilaDeEnlace>
 
         {esAdmin && (
-          <Fila Icono={ShieldCheck} a="/administracion" onIr={onCerrar}>
+          <FilaDeEnlace Icono={ShieldCheck} a="/administracion" onIr={onCerrar}>
             Usuarios
-          </Fila>
+          </FilaDeEnlace>
         )}
 
-        <Fila Icono={KeyRound} a="/mi-cuenta#seguridad" onIr={onCerrar}>
+        <FilaDeEnlace Icono={KeyRound} a="/mi-cuenta#seguridad" onIr={onCerrar}>
           Seguridad
-        </Fila>
+        </FilaDeEnlace>
 
         {esAdmin && (
-          <Fila Icono={ScrollText} a="/administracion/bitacora" onIr={onCerrar}>
+          <FilaDeEnlace Icono={ScrollText} a="/administracion/bitacora" onIr={onCerrar}>
             Bitácora
-          </Fila>
+          </FilaDeEnlace>
         )}
 
         {/* La raya, y no un hueco: lo de abajo no lleva a ninguna página. */}
@@ -149,7 +149,15 @@ function Perfil({ nombre }: { nombre: string }) {
   );
 }
 
-function Fila({
+/**
+ * Una fila que lleva a una página: icono y nombre.
+ *
+ * Exportada porque Mi cuenta, dentro de la app del teléfono, ofrece las
+ * secciones de administración con esta misma fila —esta hoja no se monta
+ * allí—. Un componente y no una copia: la primera copia aprendería a marcar
+ * algo que la otra no.
+ */
+export function FilaDeEnlace({
   Icono,
   a,
   onIr,
@@ -163,9 +171,10 @@ function Fila({
    * El armazón cierra lo que tapa la página cada vez que cambia la RUTA, y dos
    * de estas filas no la cambian: estando ya en Mi cuenta, ir a su ancla de
    * Seguridad deja la ruta igual y la hoja se habría quedado abierta encima
-   * del sitio al que acababa de llevar.
+   * del sitio al que acababa de llevar. Fuera de una hoja no hay nada que
+   * cerrar, y por eso es opcional.
    */
-  onIr: () => void;
+  onIr?: () => void;
   children: string;
 }) {
   return (

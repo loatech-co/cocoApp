@@ -36,6 +36,9 @@ const router = createBrowserRouter([
   { path: '/entrar', element: <Navigate to="/" replace /> },
   { path: '/registro', element: <RegisterPage /> },
   {
+    // Dentro de la app del teléfono, `window.__coco` —ir a una ruta, abrir la
+    // búsqueda— lo publica `PuenteDeNavegacion`, un hijo del armazón: es el
+    // único sitio que llega a la vez al enrutador y a la búsqueda.
     path: '/',
     element: (
       <RequireAuth>

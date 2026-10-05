@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { USER_AGENT_APP } from '@coco/types';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CONSULTA_ESCRITORIO, CONSULTA_MOVIL } from './movil';
+import { CONSULTA_ESCRITORIO, CONSULTA_MOVIL, useEnLaApp } from './movil';
 
 /**
  * Las dos consultas tienen que ser COMPLEMENTARIAS.
@@ -91,5 +92,29 @@ describe('La copia de CSS dice lo mismo', () => {
     // cambiar un sitio.
     const copias = css.split('(max-width: 767px)').length - 1;
     expect(copias).toBeLessThanOrEqual(2);
+  });
+});
+
+describe('Dentro de la app del teléfono', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  // No llama a ningún gancho de React por dentro, así que se puede preguntar
+  // fuera de un render: es lo que permite probarlo sin DOM.
+  it('sin ventana ni puente, no', () => {
+    expect(useEnLaApp()).toBe(false);
+  });
+
+  it('con la marca y el puente, sí', () => {
+    vi.stubGlobal('navigator', { userAgent: `Mozilla/5.0 ${USER_AGENT_APP}0.1.0` });
+    vi.stubGlobal('window', {
+      webkit: { messageHandlers: { cocoSesion: { postMessage: () => Promise.resolve() } } },
+    });
+    expect(useEnLaApp()).toBe(true);
+  });
+
+  it('con la marca pero sin puente, no', () => {
+    vi.stubGlobal('navigator', { userAgent: `Mozilla/5.0 ${USER_AGENT_APP}0.1.0` });
+    vi.stubGlobal('window', {});
+    expect(useEnLaApp()).toBe(false);
   });
 });
