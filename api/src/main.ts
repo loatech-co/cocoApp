@@ -6,6 +6,7 @@ import { join } from 'node:path';
 
 import { AppModule } from './app.module';
 import { configureApp, parseOrigins } from './bootstrap';
+import { whyTheEnvironmentIsInvalid } from './common/config/env';
 import { porQueNoArrancar } from './common/entorno';
 import { defaultLogDirectory, JsonLogger, parseLogLevel } from './common/logging/json-logger';
 import { installBigIntSerializer } from './common/serialization/bigint';
@@ -135,7 +136,9 @@ async function bootstrap(): Promise<void> {
     ocurrir. El código 0 de más abajo es para otra cosa: un pánico de Prisma en
     marcha, donde LiteSpeed tiene que respawnear sin penalización.
   */
-  const impedimento = porQueNoArrancar();
+  // The environment is checked first, whole (step 7.4): one message listing
+  // every missing or invalid variable instead of a crash at the first use.
+  const impedimento = whyTheEnvironmentIsInvalid() ?? porQueNoArrancar();
   if (impedimento !== null) {
     new Logger('Bootstrap').error(impedimento);
     process.exit(1);
