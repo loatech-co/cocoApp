@@ -1,4 +1,7 @@
-import { whyTheEnvironmentIsInvalid } from './env';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+import { ENV_VARIABLES, whyTheEnvironmentIsInvalid } from './env';
 
 /** What `.github/workflows/ci.yml` writes into `api/.env.test`. */
 const CI_TEST_ENV = {
@@ -122,5 +125,19 @@ describe('whyTheEnvironmentIsInvalid', () => {
         'SOPORTES_STORAGE',
       );
     });
+  });
+});
+
+describe('api/.env.example', () => {
+  const example = readFileSync(join(__dirname, '..', '..', '..', '.env.example'), 'utf8');
+
+  it('lists exactly the variables of the schema, no more and no fewer', () => {
+    const listed = [...example.matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map((match) => match[1]);
+
+    expect([...listed].sort()).toEqual([...ENV_VARIABLES].sort());
+  });
+
+  it('carries no values: it is a template, never a place for a secret', () => {
+    expect(example.match(/^[A-Z][A-Z0-9_]*=.+$/gm)).toBeNull();
   });
 });
