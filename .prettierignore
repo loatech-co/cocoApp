@@ -1,0 +1,23 @@
+# Prettier also reads .gitignore; this adds what is tracked but not ours to format.
+
+# Build output and dependencies
+dist/
+build/
+coverage/
+node_modules/
+
+# Lockfiles (written by npm)
+package-lock.json
+
+# Generated or vendored
+frontend/public/tesseract/
+api/supabase/.temp/
+api/prisma/migrations/
+api/prisma/migraciones-mysql-archivadas/
+
+# The iOS app has its own toolchain (swift-format, step 7.13)
+ios/
+
+# Local backups and data
+respaldos/
+datos/

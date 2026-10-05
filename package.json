@@ -33,9 +33,12 @@
     "soportes:reporte": "node scripts/soportes/reporte.mjs",
     "soportes:importar": "dotenv -e api/.env -- node scripts/soportes/importar.mjs",
     "soportes:sincronizar": "bash scripts/soportes/sincronizar.sh",
-    "verify:clean-install": "bash scripts/verify-clean-install.sh"
+    "verify:clean-install": "bash scripts/verify-clean-install.sh",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "prettier": "^3.9.9",
     "tsx": "~4.20.6"
   }
 }
