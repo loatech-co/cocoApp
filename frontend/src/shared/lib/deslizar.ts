@@ -130,97 +130,10 @@ export function useDeslizarParaCerrar({
     const el = elemento.current;
     if (!el || !activo) return;
 
-    let inicio: { x: number; y: number } | null = null;
-    let reconocido = false;
-    let avance = 0;
-
-    /** Devuelve el panel a lo que diga su CSS. */
-    function soltarElControl(): void {
-      if (!el) return;
-      el.style.transform = '';
-      el.style.transition = '';
-    }
-
-    function alBajar(e: PointerEvent): void {
-      if (e.button > 0) return;
-
-      // El destino puede no ser un elemento —el documento, un nodo de texto—, y
-      // esos no tienen `closest`.
-      const objetivo = e.target;
-      // Una región que se maneja el puntero ella misma —una rejilla mientras
-      // se reordena— se queda con el gesto entero.
-      if (objetivo instanceof Element && objetivo.closest('[data-sin-deslizar]')) return;
-
-      inicio = { x: e.clientX, y: e.clientY };
-      reconocido = false;
-      avance = 0;
-    }
-
-    function alMover(e: PointerEvent): void {
-      if (!inicio || !el) return;
-
-      const dx = e.clientX - inicio.x;
-      const dy = e.clientY - inicio.y;
-      avance = avanceDe(hacia, dx, dy);
-
-      if (!reconocido) {
-        const cruce = cruceDe(hacia, dx, dy);
-        if (Math.abs(avance) < RECONOCIMIENTO && cruce < RECONOCIMIENTO) return;
-
-        // Va para el otro lado, o va de lado: no es este gesto.
-        if (avance <= 0 || cruce > Math.abs(avance)) {
-          inicio = null;
-          return;
-        }
-
-        if (puedeDesplazarse(e.target as Element | null, el, hacia)) {
-          inicio = null;
-          return;
-        }
-
-        reconocido = true;
-        // jsdom no lo trae, aunque el tipo diga que todo elemento lo tiene.
-        if ('setPointerCapture' in el) el.setPointerCapture(e.pointerId);
-        // En línea y no en una clase: con su propia curva encima, el panel
-        // llega tarde a donde ya está el dedo.
-        el.style.transition = 'none';
-      }
-
-      // No se arrastra hacia el otro lado: el panel ya está en su sitio.
-      const recorrido = Math.max(0, avance);
-      el.style.transform =
-        EJE[hacia] === 'y'
-          ? `translateY(${hacia === 'abajo' ? recorrido : -recorrido}px)`
-          : `translateX(${hacia === 'derecha' ? recorrido : -recorrido}px)`;
-    }
-
-    function alSoltar(): void {
-      if (!inicio || !reconocido) {
-        inicio = null;
-        return;
-      }
-      inicio = null;
-      reconocido = false;
-
-      if (avance <= UMBRAL_DE_CIERRE) {
-        // Se queda: se suelta el control y su propia transición lo devuelve.
-        soltarElControl();
-        return;
-      }
-
-      alCerrar();
-
-      /**
-       * EL FOTOGRAMA SIGUIENTE, y ahí está todo el truco.
-       *
-       * Quitar el `transform` en línea ANTES de que el anfitrión cierre
-       * devuelve el panel a su posición abierta durante un fotograma y lo
-       * desliza desde allí: se lee como un rebote. Quitarlo un fotograma
-       * DESPUÉS es lo que convierte un arrastre y una transición en un solo
-       * movimiento continuo.
-       */
-      requestAnimationFrame(soltarElControl);
-    }
+    const gesto: Arrastre = { el, hacia, inicio: null, reconocido: false, avance: 0 };
+    const alBajar = (e: PointerEvent): void => empezar(gesto, e);
+    const alMover = (e: PointerEvent): void => mover(gesto, e);
+    const alSoltar = (): void => soltar(gesto, () => alCerrar());
 
     el.addEventListener('pointerdown', alBajar as EventListener);
     el.addEventListener('pointermove', alMover as EventListener);
@@ -232,7 +145,108 @@ export function useDeslizarParaCerrar({
       el.removeEventListener('pointermove', alMover as EventListener);
       el.removeEventListener('pointerup', alSoltar as EventListener);
       el.removeEventListener('pointercancel', alSoltar as EventListener);
-      soltarElControl();
+      soltarElControl(el);
     };
   }, [elemento, hacia, activo]);
+}
+
+/** Un arrastre en curso sobre un panel. */
+interface Arrastre {
+  el: HTMLElement;
+  hacia: Cierre;
+  inicio: { x: number; y: number } | null;
+  reconocido: boolean;
+  avance: number;
+}
+
+/** Devuelve el panel a lo que diga su CSS. */
+function soltarElControl(el: HTMLElement): void {
+  el.style.transform = '';
+  el.style.transition = '';
+}
+
+function empezar(gesto: Arrastre, e: PointerEvent): void {
+  if (e.button > 0) return;
+
+  // El destino puede no ser un elemento —el documento, un nodo de texto—, y
+  // esos no tienen `closest`.
+  const objetivo = e.target;
+  // Una región que se maneja el puntero ella misma —una rejilla mientras
+  // se reordena— se queda con el gesto entero.
+  if (objetivo instanceof Element && objetivo.closest('[data-sin-deslizar]')) return;
+
+  gesto.inicio = { x: e.clientX, y: e.clientY };
+  gesto.reconocido = false;
+  gesto.avance = 0;
+}
+
+function mover(gesto: Arrastre, e: PointerEvent): void {
+  const { el, hacia, inicio } = gesto;
+  if (!inicio) return;
+
+  const dx = e.clientX - inicio.x;
+  const dy = e.clientY - inicio.y;
+  gesto.avance = avanceDe(hacia, dx, dy);
+
+  if (!gesto.reconocido && !reconocer(gesto, e, cruceDe(hacia, dx, dy))) return;
+
+  // No se arrastra hacia el otro lado: el panel ya está en su sitio.
+  const recorrido = Math.max(0, gesto.avance);
+  el.style.transform =
+    EJE[hacia] === 'y'
+      ? `translateY(${hacia === 'abajo' ? recorrido : -recorrido}px)`
+      : `translateX(${hacia === 'derecha' ? recorrido : -recorrido}px)`;
+}
+
+/** Decide si lo que empezó es este gesto. Si no lo es, lo abandona. */
+function reconocer(gesto: Arrastre, e: PointerEvent, cruce: number): boolean {
+  const { el, hacia, avance } = gesto;
+  if (Math.abs(avance) < RECONOCIMIENTO && cruce < RECONOCIMIENTO) return false;
+
+  // Va para el otro lado, o va de lado: no es este gesto.
+  if (avance <= 0 || cruce > Math.abs(avance)) {
+    gesto.inicio = null;
+    return false;
+  }
+
+  if (puedeDesplazarse(e.target as Element | null, el, hacia)) {
+    gesto.inicio = null;
+    return false;
+  }
+
+  gesto.reconocido = true;
+  // jsdom no lo trae, aunque el tipo diga que todo elemento lo tiene.
+  if ('setPointerCapture' in el) el.setPointerCapture(e.pointerId);
+  // En línea y no en una clase: con su propia curva encima, el panel
+  // llega tarde a donde ya está el dedo.
+  el.style.transition = 'none';
+  return true;
+}
+
+function soltar(gesto: Arrastre, alCerrar: () => void): void {
+  if (!gesto.inicio || !gesto.reconocido) {
+    gesto.inicio = null;
+    return;
+  }
+  gesto.inicio = null;
+  gesto.reconocido = false;
+
+  if (gesto.avance <= UMBRAL_DE_CIERRE) {
+    // Se queda: se suelta el control y su propia transición lo devuelve.
+    soltarElControl(gesto.el);
+    return;
+  }
+
+  alCerrar();
+
+  /**
+   * EL FOTOGRAMA SIGUIENTE, y ahí está todo el truco.
+   *
+   * Quitar el `transform` en línea ANTES de que el anfitrión cierre
+   * devuelve el panel a su posición abierta durante un fotograma y lo
+   * desliza desde allí: se lee como un rebote. Quitarlo un fotograma
+   * DESPUÉS es lo que convierte un arrastre y una transición en un solo
+   * movimiento continuo.
+   */
+  requestAnimationFrame(() => soltarElControl(gesto.el));
 }
