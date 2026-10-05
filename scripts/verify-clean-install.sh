@@ -39,4 +39,9 @@ fi
 echo "==> build (NODE_ENV=production)"
 NODE_ENV=production npm run build --loglevel=error >/dev/null
 
+echo "==> the Prisma client ships inside the api build (ADR 0020)"
+for f in api/dist/main.js api/dist/generated/prisma/client.js; do
+  [ -f "$f" ] || { echo "FAIL: $f is missing from the production build" >&2; exit 1; }
+done
+
 echo "OK: clean install and production build pass for $commit"
