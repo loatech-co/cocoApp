@@ -18,12 +18,15 @@ describe('Limitador de tasa (e2e)', () => {
   let entorno: EntornoDePruebas;
   let http: ReturnType<typeof request>;
 
-  beforeAll(async () => {
+  // A fresh app, and with it a fresh limiter, for every test: the counters
+  // live in memory for a minute, so with one app per file the 429 of one test
+  // depended on the attempts another one had already spent.
+  beforeEach(async () => {
     entorno = await levantarApp({ conLimitador: true });
     http = request(entorno.app.getHttpServer());
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await entorno.cerrar();
   });
 
@@ -73,10 +76,13 @@ describe('Limitador de tasa (e2e)', () => {
   });
 
   it('el 429 sale con el envelope canónico de errores', async () => {
-    const respuesta = await http
-      .post('/api/v1/auth/register')
-      .send({ email: correoDePrueba(), password: PASSWORD_VALIDA, displayName: 'X' })
-      .expect(429);
+    const registrar = () =>
+      http
+        .post('/api/v1/auth/register')
+        .send({ email: correoDePrueba(), password: PASSWORD_VALIDA, displayName: 'Ráfaga' });
+    for (let intento = 0; intento < 5; intento += 1) await registrar().expect(201);
+
+    const respuesta = await registrar().expect(429);
 
     expect(respuesta.body).toEqual({
       error: { code: 'rate_limited', message: expect.any(String), details: [] },

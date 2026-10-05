@@ -131,8 +131,13 @@ describe('User isolation (e2e)', () => {
     expect(await anaSnapshot()).toBe(before);
   }
 
-  function cover(route: string): void {
-    COVERED.add(route);
+  /**
+   * Claims routes for the guard at the end. Called while the suite is being
+   * collected, not inside a test, so the guard does not depend on the other
+   * tests having run first (or at all: `-t` and `--randomize` both work).
+   */
+  function covers(routes: string[]): void {
+    for (const route of routes) COVERED.add(route);
   }
 
   function expectNoLeak(body: unknown): void {
@@ -141,13 +146,14 @@ describe('User isolation (e2e)', () => {
 
   // ── Accounts ───────────────────────────────────────────────────────────────
 
+  covers([
+    'GET /api/v1/accounts',
+    'GET /api/v1/accounts/:id',
+    'PATCH /api/v1/accounts/:id',
+    'DELETE /api/v1/accounts/:id',
+    'POST /api/v1/accounts',
+  ]);
   it('accounts: Bruno cannot read, change or delete Ana’s account, and never lists it', async () => {
-    cover('GET /api/v1/accounts');
-    cover('GET /api/v1/accounts/:id');
-    cover('PATCH /api/v1/accounts/:id');
-    cover('DELETE /api/v1/accounts/:id');
-    cover('POST /api/v1/accounts');
-
     await untouched(async () => {
       const id = String(a.accountId);
       expectNoLeak(
@@ -172,21 +178,18 @@ describe('User isolation (e2e)', () => {
 
   // ── Categories ─────────────────────────────────────────────────────────────
 
+  covers([
+    'GET /api/v1/categories',
+    'GET /api/v1/categories/:id',
+    'POST /api/v1/categories',
+    'POST /api/v1/categories/seed',
+    'POST /api/v1/categories/reorder',
+    'POST /api/v1/categories/:id/unificar',
+    'PATCH /api/v1/categories/:id',
+    'GET /api/v1/categories/:id/usos',
+    'DELETE /api/v1/categories/:id',
+  ]);
   it('categories: Bruno cannot read, change, delete, merge or hang anything from Ana’s tree', async () => {
-    for (const route of [
-      'GET /api/v1/categories',
-      'GET /api/v1/categories/:id',
-      'POST /api/v1/categories',
-      'POST /api/v1/categories/seed',
-      'POST /api/v1/categories/reorder',
-      'POST /api/v1/categories/:id/unificar',
-      'PATCH /api/v1/categories/:id',
-      'GET /api/v1/categories/:id/usos',
-      'DELETE /api/v1/categories/:id',
-    ]) {
-      cover(route);
-    }
-
     await untouched(async () => {
       const concept = String(a.conceptId);
       expectNoLeak(
@@ -249,19 +252,16 @@ describe('User isolation (e2e)', () => {
 
   // ── Transactions ───────────────────────────────────────────────────────────
 
+  covers([
+    'GET /api/v1/transactions',
+    'GET /api/v1/transactions/historia',
+    'POST /api/v1/transactions/transfer',
+    'GET /api/v1/transactions/:id',
+    'POST /api/v1/transactions',
+    'PATCH /api/v1/transactions/:id',
+    'DELETE /api/v1/transactions/:id',
+  ]);
   it('transactions: Bruno cannot read, change or delete Ana’s movement, nor use her accounts or concepts', async () => {
-    for (const route of [
-      'GET /api/v1/transactions',
-      'GET /api/v1/transactions/historia',
-      'POST /api/v1/transactions/transfer',
-      'GET /api/v1/transactions/:id',
-      'POST /api/v1/transactions',
-      'PATCH /api/v1/transactions/:id',
-      'DELETE /api/v1/transactions/:id',
-    ]) {
-      cover(route);
-    }
-
     await untouched(async () => {
       const id = String(a.transactionId);
       const list = await http
@@ -330,16 +330,13 @@ describe('User isolation (e2e)', () => {
 
   // ── Receipts (soportes) ────────────────────────────────────────────────────
 
+  covers([
+    'GET /api/v1/transactions/:id/soportes',
+    'POST /api/v1/transactions/:id/soportes',
+    'DELETE /api/v1/transactions/:id/soportes/:soporteId',
+    'GET /api/v1/transactions/:id/soportes/:soporteId',
+  ]);
   it('soportes: Bruno cannot list, upload to, download or delete Ana’s receipts', async () => {
-    for (const route of [
-      'GET /api/v1/transactions/:id/soportes',
-      'POST /api/v1/transactions/:id/soportes',
-      'DELETE /api/v1/transactions/:id/soportes/:soporteId',
-      'GET /api/v1/transactions/:id/soportes/:soporteId',
-    ]) {
-      cover(route);
-    }
-
     await untouched(async () => {
       const tx = String(a.transactionId);
       const soporte = String(a.soporteId);
@@ -378,16 +375,13 @@ describe('User isolation (e2e)', () => {
 
   // ── Tags ───────────────────────────────────────────────────────────────────
 
+  covers([
+    'GET /api/v1/tags',
+    'POST /api/v1/tags',
+    'PATCH /api/v1/tags/:id',
+    'DELETE /api/v1/tags/:id',
+  ]);
   it('tags: Bruno never lists Ana’s tags and cannot change or delete them', async () => {
-    for (const route of [
-      'GET /api/v1/tags',
-      'POST /api/v1/tags',
-      'PATCH /api/v1/tags/:id',
-      'DELETE /api/v1/tags/:id',
-    ]) {
-      cover(route);
-    }
-
     await untouched(async () => {
       const id = String(a.tagId);
       expectNoLeak((await http.get('/api/v1/tags').set('Authorization', asBruno).expect(200)).body);
@@ -409,16 +403,13 @@ describe('User isolation (e2e)', () => {
 
   // ── Classification, interpretation and capture ─────────────────────────────
 
+  covers([
+    'GET /api/v1/categorization/suggest',
+    'POST /api/v1/categorization/learn',
+    'POST /api/v1/transactions/interpret',
+    'POST /api/v1/transactions/capture',
+  ]);
   it('classification: Ana’s rules and keywords never classify Bruno’s text, and he cannot teach a rule into her tree', async () => {
-    for (const route of [
-      'GET /api/v1/categorization/suggest',
-      'POST /api/v1/categorization/learn',
-      'POST /api/v1/transactions/interpret',
-      'POST /api/v1/transactions/capture',
-    ]) {
-      cover(route);
-    }
-
     await untouched(async () => {
       const anaConcept = String(a.conceptId);
       // The text matches both Ana's learned rule and her concept's keyword.
@@ -476,9 +467,8 @@ describe('User isolation (e2e)', () => {
 
   // ── Dashboard, preferences, the session ────────────────────────────────────
 
+  covers(['GET /api/v1/dashboard']);
   it('dashboard: Bruno’s summary has none of Ana’s money, and computing it writes nothing of hers', async () => {
-    cover('GET /api/v1/dashboard');
-
     await untouched(async () => {
       for (const query of ['', '?from=2020-01-01&to=2026-12-31']) {
         const response = await http.get(`/api/v1/dashboard${query}`).set('Authorization', asBruno);
@@ -489,10 +479,8 @@ describe('User isolation (e2e)', () => {
     });
   });
 
+  covers(['GET /api/v1/preferences', 'PATCH /api/v1/preferences']);
   it('preferences: Bruno reads and writes only his own', async () => {
-    cover('GET /api/v1/preferences');
-    cover('PATCH /api/v1/preferences');
-
     await untouched(async () => {
       const mine = await http.get('/api/v1/preferences').set('Authorization', asBruno).expect(200);
       expect(mine.body.data.cuentas_habilitadas).toBe(false);
@@ -504,10 +492,8 @@ describe('User isolation (e2e)', () => {
     });
   });
 
+  covers(['GET /api/v1/auth/me', 'POST /api/v1/auth/logout-all']);
   it('session: /auth/me is Bruno, and closing all his sessions leaves Ana signed in', async () => {
-    cover('GET /api/v1/auth/me');
-    cover('POST /api/v1/auth/logout-all');
-
     const me = await http.get('/api/v1/auth/me').set('Authorization', asBruno).expect(200);
     expect(JSON.stringify(me.body)).not.toContain(ana.email);
 
@@ -518,21 +504,21 @@ describe('User isolation (e2e)', () => {
     await http.get('/api/v1/auth/me').set('Authorization', env.como(ana)).expect(200);
   });
 
+  const adminRoutes = [
+    'GET /api/v1/admin/users',
+    'POST /api/v1/admin/users/:id/approve',
+    'POST /api/v1/admin/users/:id/suspend',
+    'POST /api/v1/admin/users/:id/reactivate',
+    'POST /api/v1/admin/users/:id/role',
+    'POST /api/v1/admin/users/:id/reset-password',
+    'GET /api/v1/admin/audit-log',
+  ];
+  covers(adminRoutes);
   it('admin: a regular user reaches no admin route', async () => {
-    const routes: [string, string][] = [
-      ['get', '/api/v1/admin/users'],
-      ['post', `/api/v1/admin/users/${String(ana.id)}/approve`],
-      ['post', `/api/v1/admin/users/${String(ana.id)}/suspend`],
-      ['post', `/api/v1/admin/users/${String(ana.id)}/reactivate`],
-      ['post', `/api/v1/admin/users/${String(ana.id)}/role`],
-      ['post', `/api/v1/admin/users/${String(ana.id)}/reset-password`],
-      ['get', '/api/v1/admin/audit-log'],
-    ];
-    for (const [, path] of routes) {
-      cover(
-        `${routes.find(([, p]) => p === path)![0].toUpperCase()} ${path.replace(String(ana.id), ':id')}`,
-      );
-    }
+    const routes = adminRoutes.map((route): [string, string] => {
+      const [method, path] = route.split(' ') as [string, string];
+      return [method.toLowerCase(), path.replace(':id', String(ana.id))];
+    });
 
     await untouched(async () => {
       for (const [method, path] of routes) {
