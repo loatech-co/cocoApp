@@ -13,29 +13,29 @@ enum ActionParameters {
     /// Wallet: el comercio manda; si falta, el «nombre» de la transacción. El
     /// texto nunca queda vacío —«Wallet · <tarjeta> · <nombre>»— porque la
     /// API devuelve 422 ante una captura sin texto ni comercio.
-    static func cuerpoDeWallet(comercio: String?, monto: String?, tarjeta: String?, nombre: String?, ahora: Date)
+    static func cuerpoDeWallet(merchant: String?, amount: String?, tarjeta: String?, name: String?, now: Date)
         -> CaptureBody
     {
-        let comercioLimpio = limpiar(comercio)
-        let nombreLimpio = limpiar(nombre)
-        let partes = ["Wallet", limpiar(tarjeta), nombreLimpio].compactMap { $0 }
+        let comercioLimpio = limpiar(merchant)
+        let nombreLimpio = limpiar(name)
+        let parts = ["Wallet", limpiar(tarjeta), nombreLimpio].compactMap { $0 }
         return CaptureBody(
-            texto: partes.joined(separator: " · "),
-            comercio: comercioLimpio ?? nombreLimpio,
-            monto: AmountParser.normalizar(monto),
-            fecha: BogotaDate.dia(ahora)
+            text: parts.joined(separator: " · "),
+            merchant: comercioLimpio ?? nombreLimpio,
+            amount: AmountParser.normalize(amount),
+            date: BogotaDate.day(now)
         )
     }
 
     /// SMS: el texto va íntegro —es lo que la API sabe leer— y el remitente en
     /// la nota, para no contaminar la interpretación. Vacío no se encola.
-    static func cuerpoDeSMS(texto: String, remitente: String?, ahora: Date) throws -> CaptureBody {
-        let limpio = texto.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !limpio.isEmpty else { throw ParameterError.textoVacio }
+    static func cuerpoDeSMS(text: String, remitente: String?, now: Date) throws -> CaptureBody {
+        let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { throw ParameterError.textoVacio }
         return CaptureBody(
-            texto: limpio,
-            fecha: BogotaDate.dia(ahora),
-            nota: limpiar(remitente).map { "De: \($0)" }
+            text: cleaned,
+            date: BogotaDate.day(now),
+            note: limpiar(remitente).map { "De: \($0)" }
         )
     }
 
@@ -43,12 +43,12 @@ enum ActionParameters {
     /// quedó guardado.
     static func textoDeDialogo(_ r: CaptureResult) -> String {
         switch r {
-        case .enviada(let g):
-            return g.porRevisar ? "\(g.resumen) · por revisar" : g.resumen
-        case .enCola(let pendientes):
-            return pendientes > 1 ? "\(textoDeEnCola) \(pendientes) pendientes." : textoDeEnCola
-        case .fallida(let motivo):
-            return "No se pudo registrar: \(motivo)"
+        case .sent(let g):
+            return g.needsReview ? "\(g.summary) · por revisar" : g.summary
+        case .queued(let pending):
+            return pending > 1 ? "\(textoDeEnCola) \(pending) pendientes." : textoDeEnCola
+        case .failed(let reason):
+            return "No se pudo registrar: \(reason)"
         }
     }
 
@@ -56,8 +56,8 @@ enum ActionParameters {
         IntentDialog(stringLiteral: textoDeDialogo(r))
     }
 
-    private static func limpiar(_ texto: String?) -> String? {
-        guard let t = texto?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty else { return nil }
+    private static func limpiar(_ text: String?) -> String? {
+        guard let t = text?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty else { return nil }
         return t
     }
 }

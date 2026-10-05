@@ -17,37 +17,37 @@ final class ReceiptReaderTests: XCTestCase {
     }
 
     func testLasLineasSalenDeArribaAbajo() {
-        let texto = ReceiptReader.ordenar([
-            (texto: "TOTAL 45.000", y: 0.2), (texto: "D1", y: 0.9), (texto: "Leche", y: 0.5),
+        let text = ReceiptReader.ordenar([
+            (text: "TOTAL 45.000", y: 0.2), (text: "D1", y: 0.9), (text: "Leche", y: 0.5),
         ])
-        XCTAssertEqual(texto, "D1\nLeche\nTOTAL 45.000")
+        XCTAssertEqual(text, "D1\nLeche\nTOTAL 45.000")
     }
 
     /// El doble que usa el formulario en pruebas: responde lo que se le diga.
     func testElDobleCumpleElProtocolo() async throws {
-        let lector = FakeReceiptReader(texto: "D1\nTOTAL 45.000")
+        let lector = FakeReceiptReader(text: "D1\nTOTAL 45.000")
         let imagen = try XCTUnwrap(TestImage.cuadrada(10).cgImage)
-        let texto = try await lector.texto(de: imagen)
-        XCTAssertEqual(texto, "D1\nTOTAL 45.000")
+        let text = try await lector.text(de: imagen)
+        XCTAssertEqual(text, "D1\nTOTAL 45.000")
         XCTAssertEqual(lector.lecturas, 1)
     }
 }
 
 final class FakeReceiptReader: ReceiptTextReader, @unchecked Sendable {
-    private let cerrojo = NSLock()
+    private let lock = NSLock()
     private(set) var lecturas = 0
-    var texto: String
+    var text: String
     var error: Error?
 
-    init(texto: String, error: Error? = nil) {
-        self.texto = texto
+    init(text: String, error: Error? = nil) {
+        self.text = text
         self.error = error
     }
 
-    func texto(de imagen: CGImage) async throws -> String {
-        cerrojo.withLock { lecturas += 1 }
+    func text(de imagen: CGImage) async throws -> String {
+        lock.withLock { lecturas += 1 }
         if let error { throw error }
-        return texto
+        return text
     }
 }
 

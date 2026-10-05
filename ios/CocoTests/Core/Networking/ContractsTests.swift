@@ -42,8 +42,8 @@ final class ContractsTests: XCTestCase {
         let c = try decodificar(CaptureResponse.self, json)
         XCTAssertEqual(c.transaction.id, 42)
         XCTAssertEqual(c.transaction.source, "ios_manual")
-        XCTAssertEqual(c.clasificacion.conceptId, 7)
-        XCTAssertEqual(c.resumen, "Registrado: $45.000 · Mercado")
+        XCTAssertEqual(c.classification.conceptId, 7)
+        XCTAssertEqual(c.summary, "Registrado: $45.000 · Mercado")
     }
 
     func testInterpretacionConCandidatos() throws {
@@ -56,7 +56,7 @@ final class ContractsTests: XCTestCase {
         let i = try decodificar(Interpretation.self, json)
         XCTAssertEqual(i.amount, "12000")
         XCTAssertNil(i.date)
-        XCTAssertEqual(i.clasificacion.candidatos.first?.ruta, "Transporte › Taxi")
+        XCTAssertEqual(i.classification.candidates.first?.path, "Transporte › Taxi")
         XCTAssertTrue(i.needsReview)
     }
 
@@ -80,41 +80,41 @@ final class ContractsTests: XCTestCase {
     func testCapturaRequestSeAplanaYCategoryIdVaComoCadena() throws {
         let r = CaptureRequest(
             source: .iosManual, externalRef: "E1", capturedAt: "2026-10-03T20:00:00Z",
-            cuerpo: CaptureBody(monto: "45000", categoryId: 7, nota: "ok"))
-        let datos = try JSONEncoder().encode(r)
-        let objeto = try XCTUnwrap(JSONSerialization.jsonObject(with: datos) as? [String: Any])
-        XCTAssertEqual(objeto["source"] as? String, "ios_manual")
-        XCTAssertEqual(objeto["category_id"] as? String, "7")
-        XCTAssertEqual(objeto["monto"] as? String, "45000")
-        XCTAssertNil(objeto["cuerpo"])
-        XCTAssertNil(objeto["texto"])
-        XCTAssertEqual(Set(objeto.keys), ["source", "external_ref", "captured_at", "monto", "category_id", "nota"])
+            body: CaptureBody(amount: "45000", categoryId: 7, note: "ok"))
+        let data = try JSONEncoder().encode(r)
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(object["source"] as? String, "ios_manual")
+        XCTAssertEqual(object["category_id"] as? String, "7")
+        XCTAssertEqual(object["monto"] as? String, "45000")
+        XCTAssertNil(object["cuerpo"])
+        XCTAssertNil(object["texto"])
+        XCTAssertEqual(Set(object.keys), ["source", "external_ref", "captured_at", "monto", "category_id", "nota"])
     }
 
     func testEsEnviable() {
-        XCTAssertFalse(CaptureBody().esEnviable)
-        XCTAssertFalse(CaptureBody(monto: "1").esEnviable)
-        XCTAssertTrue(CaptureBody(texto: "PAGO").esEnviable)
-        XCTAssertTrue(CaptureBody(comercio: "Koba").esEnviable)
-        XCTAssertTrue(CaptureBody(monto: "1", categoryId: 2).esEnviable)
+        XCTAssertFalse(CaptureBody().isSendable)
+        XCTAssertFalse(CaptureBody(amount: "1").isSendable)
+        XCTAssertTrue(CaptureBody(text: "PAGO").isSendable)
+        XCTAssertTrue(CaptureBody(merchant: "Koba").isSendable)
+        XCTAssertTrue(CaptureBody(amount: "1", categoryId: 2).isSendable)
     }
 
     /// Lee packages/types/src/index.ts y falla si la marca se separa.
     func testMarcaCoincideConCocoTypes() throws {
         // ios/CocoTests/Core/Networking/<este archivo> → la raíz del repo.
-        let raiz = (0..<5).reduce(URL(fileURLWithPath: #filePath)) { url, _ in url.deletingLastPathComponent() }
-        let ruta = raiz.appending(path: "packages/types/src/index.ts")
-        guard let fuente = try? String(contentsOf: ruta, encoding: .utf8) else {
-            throw XCTSkip("No está el repo al lado: \(ruta.path)")
+        let root = (0..<5).reduce(URL(fileURLWithPath: #filePath)) { url, _ in url.deletingLastPathComponent() }
+        let path = root.appending(path: "packages/types/src/index.ts")
+        guard let source = try? String(contentsOf: path, encoding: .utf8) else {
+            throw XCTSkip("No está el repo al lado: \(path.path)")
         }
         let regex = try NSRegularExpression(pattern: "export const USER_AGENT_APP = '([^']+)'")
-        let coincidencia = try XCTUnwrap(regex.firstMatch(in: fuente, range: NSRange(fuente.startIndex..., in: fuente)))
-        let valor = try XCTUnwrap(Range(coincidencia.range(at: 1), in: fuente)).map { String(fuente[$0]) }
-        XCTAssertEqual(valor, Brand.userAgentApp)
+        let coincidencia = try XCTUnwrap(regex.firstMatch(in: source, range: NSRange(source.startIndex..., in: source)))
+        let value = try XCTUnwrap(Range(coincidencia.range(at: 1), in: source)).map { String(source[$0]) }
+        XCTAssertEqual(value, Brand.userAgentApp)
         XCTAssertTrue(
-            fuente.contains(
-                "export const CABECERA_CLIENTE_NATIVO = '\(RequestBuilder.cabeceraClienteNativo.lowercased())'"
+            source.contains(
+                "export const CABECERA_CLIENTE_NATIVO = '\(RequestBuilder.nativeClientHeader.lowercased())'"
             ))
-        XCTAssertTrue(fuente.contains("campo: '\(RequestBuilder.campoDeSoportes)'"))
+        XCTAssertTrue(source.contains("campo: '\(RequestBuilder.attachmentsField)'"))
     }
 }

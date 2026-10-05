@@ -7,7 +7,7 @@ import Foundation
 // pruebas de la sesión real.
 
 final class SessionDouble: Session, @unchecked Sendable {
-    private let cerrojo = NSLock()
+    private let lock = NSLock()
     private var _estado: SessionState
     private var _token: String?
     private(set) var renovaciones = 0
@@ -15,80 +15,80 @@ final class SessionDouble: Session, @unchecked Sendable {
     private(set) var lecturasDeToken = 0
     private(set) var salidas = 0
     private(set) var descartes = 0
-    /// Lo que devuelve `renovarAhora()`: nil es éxito.
+    /// Lo que devuelve `refreshNow()`: nil es éxito.
     var errorAlRenovar: Error?
-    let cambios: AsyncStream<SessionState>
+    let changes: AsyncStream<SessionState>
 
     static let perfil = PublicProfile(
         id: 7, email: "ana@coco.test", displayName: "Ana", role: "user", status: "active",
         createdAt: "2026-01-01T00:00:00Z")
 
-    init(estado: SessionState = .activa(SessionDouble.perfil), token: String? = "token-1") {
-        _estado = estado
+    init(state: SessionState = .active(SessionDouble.perfil), token: String? = "token-1") {
+        _estado = state
         _token = token
-        cambios = AsyncStream { _ in }
+        changes = AsyncStream { _ in }
     }
 
-    var estado: SessionState { get async { cerrojo.withLock { _estado } } }
+    var state: SessionState { get async { lock.withLock { _estado } } }
 
-    func poner(_ e: SessionState) { cerrojo.withLock { _estado = e } }
+    func poner(_ e: SessionState) { lock.withLock { _estado = e } }
 
-    func restaurar() async {}
-    func entrar(correo: String, contrasena: String) async throws -> PublicProfile { Self.perfil }
+    func restore() async {}
+    func signIn(email: String, password: String) async throws -> PublicProfile { Self.perfil }
 
-    func accessTokenVigente() async throws -> String {
-        cerrojo.withLock { lecturasDeToken += 1 }
-        guard let t = cerrojo.withLock({ _token }) else { throw SessionError.sinSesion }
+    func validAccessToken() async throws -> String {
+        lock.withLock { lecturasDeToken += 1 }
+        guard let t = lock.withLock({ _token }) else { throw SessionError.signedOut }
         return t
     }
 
-    func renovarAhora() async throws {
-        cerrojo.withLock { renovaciones += 1 }
+    func refreshNow() async throws {
+        lock.withLock { renovaciones += 1 }
         if let errorAlRenovar { throw errorAlRenovar }
-        cerrojo.withLock { _token = "token-\(renovaciones + 1)" }
+        lock.withLock { _token = "token-\(renovaciones + 1)" }
     }
 
-    func sesionParaLaWeb() async throws -> WebSession {
-        switch await estado {
-        case .activa(let perfil):
-            let token = try await accessTokenVigente()
+    func webSession() async throws -> WebSession {
+        switch await state {
+        case .active(let perfil):
+            let token = try await validAccessToken()
             return WebSession(accessToken: token, expiresIn: 3600, userJSON: try JSONEncoder().encode(perfil))
-        case .sinConexion:
-            throw SessionError.sinConexion
+        case .offline:
+            throw SessionError.offline
         default:
-            throw SessionError.sinSesion
+            throw SessionError.signedOut
         }
     }
 
-    func salir() async {
-        cerrojo.withLock {
+    func signOut() async {
+        lock.withLock {
             salidas += 1
-            _estado = .sinSesion
+            _estado = .signedOut
         }
     }
-    func descartar() async {
-        cerrojo.withLock {
+    func discard() async {
+        lock.withLock {
             descartes += 1
-            _estado = .sinSesion
+            _estado = .signedOut
         }
     }
 }
 
 final class NotifierDouble: Notifier, @unchecked Sendable {
-    private let cerrojo = NSLock()
-    private(set) var registradas: [SavedResult] = []
+    private let lock = NSLock()
+    private(set) var isRegistered: [SavedResult] = []
     private(set) var fallos: [String] = []
     private(set) var colasEnviadas: [Int] = []
     private(set) var insignias: [Int] = []
 
-    func pedirPermiso() async -> Bool { true }
-    func capturaRegistrada(_ r: SavedResult, origen: CaptureSource) async {
-        cerrojo.withLock { registradas.append(r) }
+    func requestPermission() async -> Bool { true }
+    func captureSaved(_ r: SavedResult, source: CaptureSource) async {
+        lock.withLock { isRegistered.append(r) }
     }
-    func capturaFallida(motivo: String) async { cerrojo.withLock { fallos.append(motivo) } }
-    func colaEnviada(cuantas: Int) async { cerrojo.withLock { colasEnviadas.append(cuantas) } }
-    func programarVencimiento(_ vence: Date, texto: String) async {}
-    func ponerInsignia(_ n: Int) async { cerrojo.withLock { insignias.append(n) } }
+    func captureFailed(reason: String) async { lock.withLock { fallos.append(reason) } }
+    func queueSent(count: Int) async { lock.withLock { colasEnviadas.append(count) } }
+    func scheduleExpiry(_ expiresAt: Date, text: String) async {}
+    func setBadge(_ n: Int) async { lock.withLock { insignias.append(n) } }
 }
 
 /// Un enviador programable: una lista de respuestas por llamada, en orden, y
@@ -99,13 +99,13 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
         case falla(Error)
     }
 
-    private let cerrojo = NSLock()
-    private var capturas: [Reply]
-    private var fotos: [Reply]
+    private let lock = NSLock()
+    private var captures: [Reply]
+    private var photos: [Reply]
     private(set) var requests: [CaptureRequest] = []
     struct Upload: Equatable {
         let jpeg: Data
-        let nombre: String
+        let name: String
         let transactionId: Int
     }
     private(set) var subidas: [Upload] = []
@@ -113,66 +113,66 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
     var transactionId = 100
     var repetidoSiYaSeVio = true
 
-    init(capturas: [Reply] = [], fotos: [Reply] = []) {
-        self.capturas = capturas
-        self.fotos = fotos
+    init(captures: [Reply] = [], photos: [Reply] = []) {
+        self.captures = captures
+        self.photos = photos
     }
 
-    func responderCaptura(_ r: Reply) { cerrojo.withLock { capturas.append(r) } }
-    func responderFoto(_ r: Reply) { cerrojo.withLock { fotos.append(r) } }
+    func responderCaptura(_ r: Reply) { lock.withLock { captures.append(r) } }
+    func responderFoto(_ r: Reply) { lock.withLock { photos.append(r) } }
 
-    var refsUnicos: Set<String> { cerrojo.withLock { Set(requests.map(\.externalRef)) } }
+    var refsUnicos: Set<String> { lock.withLock { Set(requests.map(\.externalRef)) } }
 
-    func capturar(_ r: CaptureRequest) async throws -> CaptureResponse {
-        let (respuesta, repetido): (Reply, Bool) = cerrojo.withLock {
+    func capture(_ r: CaptureRequest) async throws -> CaptureResponse {
+        let (response, duplicate): (Reply, Bool) = lock.withLock {
             let visto = requests.contains { $0.externalRef == r.externalRef }
             requests.append(r)
             instantes.append(.now)
-            return (capturas.isEmpty ? .ok : capturas.removeFirst(), visto && repetidoSiYaSeVio)
+            return (captures.isEmpty ? .ok : captures.removeFirst(), visto && repetidoSiYaSeVio)
         }
-        if case .falla(let e) = respuesta { throw e }
+        if case .falla(let e) = response { throw e }
         let t = TransactionSummary(
-            id: transactionId, date: r.cuerpo.fecha ?? "2026-10-05", amount: r.cuerpo.monto ?? "0", categoryId: nil,
-            description: r.cuerpo.texto, merchant: r.cuerpo.comercio, source: r.source.rawValue,
-            needsReview: r.cuerpo.monto == nil)
+            id: transactionId, date: r.body.date ?? "2026-10-05", amount: r.body.amount ?? "0", categoryId: nil,
+            description: r.body.text, merchant: r.body.merchant, source: r.source.rawValue,
+            needsReview: r.body.amount == nil)
         let c = ProposedClassification(
-            certeza: "ninguna", fuente: nil, conceptId: nil, categoryId: nil, nombre: nil, candidatos: [],
-            motivo: "")
+            confidence: "ninguna", source: nil, conceptId: nil, categoryId: nil, name: nil, candidates: [],
+            reason: "")
         return CaptureResponse(
-            transaction: t, clasificacion: c,
-            resumen: "Gasto de \(r.cuerpo.monto ?? "0") en \(r.cuerpo.comercio ?? "?")", repetido: repetido,
-            fusionado: false)
+            transaction: t, classification: c,
+            summary: "Gasto de \(r.body.amount ?? "0") en \(r.body.merchant ?? "?")", duplicate: duplicate,
+            merged: false)
     }
 
-    func subirFoto(_ jpeg: Data, nombre: String, a transactionId: Int) async throws -> [Attachment] {
-        let respuesta: Reply = cerrojo.withLock {
-            subidas.append(Upload(jpeg: jpeg, nombre: nombre, transactionId: transactionId))
-            return fotos.isEmpty ? .ok : fotos.removeFirst()
+    func uploadPhoto(_ jpeg: Data, name: String, to transactionId: Int) async throws -> [Attachment] {
+        let response: Reply = lock.withLock {
+            subidas.append(Upload(jpeg: jpeg, name: name, transactionId: transactionId))
+            return photos.isEmpty ? .ok : photos.removeFirst()
         }
-        if case .falla(let e) = respuesta { throw e }
+        if case .falla(let e) = response { throw e }
         return [
             Attachment(
-                id: 1, orden: 1, fileName: nombre, mimeType: "image/jpeg", tamano: jpeg.count, disponible: true)
+                id: 1, order: 1, fileName: name, mimeType: "image/jpeg", size: jpeg.count, available: true)
         ]
     }
 }
 
 final class CapturerDouble: Capturer, @unchecked Sendable {
-    private let cerrojo = NSLock()
-    private(set) var recibidas: [(cuerpo: CaptureBody, origen: CaptureSource)] = []
-    var respuesta: CaptureResult = .enCola(pendientes: 1)
+    private let lock = NSLock()
+    private(set) var recibidas: [(body: CaptureBody, source: CaptureSource)] = []
+    var response: CaptureResult = .queued(pending: 1)
 
-    func capturar(_ cuerpo: CaptureBody, origen: CaptureSource, foto: Data?, presupuesto: Duration) async
+    func capture(_ body: CaptureBody, source: CaptureSource, photo: Data?, budget: Duration) async
         -> CaptureResult
     {
-        cerrojo.withLock { recibidas.append((cuerpo, origen)) }
-        return respuesta
+        lock.withLock { recibidas.append((body, source)) }
+        return response
     }
 }
 
 final class NavigationDouble: Navigation, @unchecked Sendable {
     private(set) var destinos: [Destination] = []
-    @MainActor func ir(_ destino: Destination) { destinos.append(destino) }
+    @MainActor func go(_ destination: Destination) { destinos.append(destination) }
 }
 
 /// Un almacén que falla cuando se le pide: para simular el disco muriendo
@@ -184,16 +184,16 @@ final class FailingStore: QueueStore, @unchecked Sendable {
 
     struct DeadStoreError: Error {}
 
-    func guardar(_ captura: PendingCapture) throws {
+    func save(_ capture: PendingCapture) throws {
         if fallarGuardado { throw DeadStoreError() }
-        try real.guardar(captura)
+        try real.save(capture)
     }
-    func todas() throws -> [PendingCapture] { try real.todas() }
-    func borrar(id: UUID) throws { try real.borrar(id: id) }
-    func guardarFoto(_ jpeg: Data, id: UUID) throws -> String { try real.guardarFoto(jpeg, id: id) }
-    func foto(en ruta: String) throws -> Data { try real.foto(en: ruta) }
-    func borrarFoto(en ruta: String) throws { try real.borrarFoto(en: ruta) }
-    func bytesDeFotos() throws -> Int { try real.bytesDeFotos() }
+    func all() throws -> [PendingCapture] { try real.all() }
+    func delete(id: UUID) throws { try real.delete(id: id) }
+    func savePhoto(_ jpeg: Data, id: UUID) throws -> String { try real.savePhoto(jpeg, id: id) }
+    func photo(at path: String) throws -> Data { try real.photo(at: path) }
+    func deletePhoto(at path: String) throws { try real.deletePhoto(at: path) }
+    func photoBytes() throws -> Int { try real.photoBytes() }
 }
 
 enum TemporaryDirectory {

@@ -17,17 +17,17 @@ struct RootView: View {
                 .tag(AppTab.inicio)
             RecordExpenseView(d: d)
                 .tabItem { Label("Registrar", systemImage: "plus.circle") }
-                .tag(AppTab.registrar)
-            CapturesView(cola: d.cola, navegacion: d.enrutador)
+                .tag(AppTab.register)
+            CapturesView(queue: d.queue, navigation: d.enrutador)
                 .tabItem { Label("Capturas", systemImage: "tray") }
-                .badge(d.pendientes)
-                .tag(AppTab.capturas)
+                .badge(d.pending)
+                .tag(AppTab.captures)
             MoreView(d: d)
                 .tabItem { Label("Más", systemImage: "ellipsis") }
                 .tag(AppTab.mas)
         }
-        .fullScreenCover(isPresented: sinSesion) {
-            SignInView(sesion: d.sesion, alAjustes: { d.enrutador.ir(.ajustes) })
+        .fullScreenCover(isPresented: signedOut) {
+            SignInView(session: d.session, alAjustes: { d.enrutador.go(.settings) })
                 .sheet(item: $enrutador.hoja, content: hoja)
         }
         .sheet(item: $enrutador.hoja, content: hoja)
@@ -37,17 +37,17 @@ struct RootView: View {
     }
 
     private var inicio: some View {
-        WebContainer(puente: d.puente, conectividad: d.conectividad, pendientes: d.pendientes) {
-            d.enrutador.ir(.formularioRapido(conCamara: false))
+        WebContainer(puente: d.puente, conectividad: d.conectividad, pending: d.pending) {
+            d.enrutador.go(.quickForm(withCamera: false))
         }
     }
 
     @ViewBuilder
     private func hoja(_ hoja: Sheet) -> some View {
         switch hoja {
-        case .bienvenida:
+        case .welcome:
             WelcomeView(alTerminar: { d.enrutador.hoja = nil })
-        case .ajustes:
+        case .settings:
             SettingsView(d: d)
         }
     }
@@ -57,24 +57,24 @@ struct RootView: View {
         Binding(
             get: { d.enrutador.pestana },
             set: { nueva in
-                if nueva == .inicio, d.enrutador.pestana == .inicio { d.puente.ir(a: "/") }
+                if nueva == .inicio, d.enrutador.pestana == .inicio { d.puente.go(to: "/") }
                 d.enrutador.pestana = nueva
             }
         )
     }
 
-    private var sinSesion: Binding<Bool> {
+    private var signedOut: Binding<Bool> {
         Binding(
-            get: { if case .sinSesion = d.estadoDeSesion { true } else { false } },
+            get: { if case .signedOut = d.estadoDeSesion { true } else { false } },
             set: { _ in }
         )
     }
 
     /// Lo que el enrutador dejó para la web, en cuanto la pestaña Inicio manda.
     private func consumirPendientes() {
-        if let ruta = d.enrutador.rutaWebPendiente {
+        if let path = d.enrutador.rutaWebPendiente {
             d.enrutador.rutaWebPendiente = nil
-            d.puente.ir(a: ruta)
+            d.puente.go(to: path)
         }
         if d.enrutador.busquedaPendiente {
             d.enrutador.busquedaPendiente = false
@@ -94,7 +94,7 @@ private struct RecordExpenseView: View {
     var body: some View {
         Group {
             if let modelo {
-                QuickFormView(modelo: modelo, abrirCamaraAlEntrar: d.enrutador.formulario.conCamara) {
+                QuickFormView(modelo: modelo, abrirCamaraAlEntrar: d.enrutador.formulario.withCamera) {
                     // Guardar ya encoló; cerrar es volver a Inicio con un
                     // formulario limpio para la próxima.
                     cerrados += 1

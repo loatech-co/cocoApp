@@ -26,7 +26,7 @@ struct CocoApp: App {
         WindowGroup {
             RootView(d: d)
                 .onOpenURL { url in
-                    AppLog.navegacion.info("onOpenURL \(url.absoluteString, privacy: .public)")
+                    AppLog.navigation.info("onOpenURL \(url.absoluteString, privacy: .public)")
                     d.enrutador.abrir(url: url)
                 }
         }
@@ -35,7 +35,7 @@ struct CocoApp: App {
             case .active:
                 d.volvioAPrimerPlano()
             case .background:
-                BackgroundJobs.programar()
+                BackgroundJobs.schedule()
             case .inactive:
                 break
             @unknown default:

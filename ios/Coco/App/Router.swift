@@ -5,20 +5,20 @@ import Observation
 /// son pantallas nativas.
 enum AppTab: Hashable, CaseIterable {
     case inicio
-    case registrar
-    case capturas
+    case register
+    case captures
     case mas
 }
 
 /// Lo que sube como hoja encima de la pestaña activa.
 enum Sheet: Identifiable, Equatable {
-    case bienvenida
-    case ajustes
+    case welcome
+    case settings
 
     var id: String {
         switch self {
-        case .bienvenida: "bienvenida"
-        case .ajustes: "ajustes"
+        case .welcome: "bienvenida"
+        case .settings: "ajustes"
         }
     }
 }
@@ -33,7 +33,7 @@ final class Router: Navigation {
     /// generación nueva: la vista se recrea limpia y con la cámara si se pidió.
     struct FormRequest: Equatable, Sendable {
         let generacion: Int
-        let conCamara: Bool
+        let withCamera: Bool
     }
 
     var pestana: AppTab = .inicio
@@ -42,30 +42,30 @@ final class Router: Navigation {
     var rutaWebPendiente: String?
     /// La web tiene que abrir su hoja de búsqueda en cuanto se vea.
     var busquedaPendiente = false
-    private(set) var formulario = FormRequest(generacion: 0, conCamara: false)
+    private(set) var formulario = FormRequest(generacion: 0, withCamera: false)
 
-    func ir(_ destino: Destination) {
-        AppLog.navegacion.info("ir \(String(describing: destino), privacy: .public)")
-        switch destino {
-        case .formularioRapido(let conCamara):
-            formulario = FormRequest(generacion: formulario.generacion + 1, conCamara: conCamara)
+    func go(_ destination: Destination) {
+        AppLog.navigation.info("ir \(String(describing: destination), privacy: .public)")
+        switch destination {
+        case .quickForm(let withCamera):
+            formulario = FormRequest(generacion: formulario.generacion + 1, withCamera: withCamera)
             hoja = nil
-            pestana = .registrar
-        case .capturas:
+            pestana = .register
+        case .captures:
             hoja = nil
-            pestana = .capturas
-        case .web(let ruta):
+            pestana = .captures
+        case .web(let path):
             hoja = nil
-            rutaWebPendiente = ruta
+            rutaWebPendiente = path
             pestana = .inicio
-        case .buscar:
+        case .search:
             hoja = nil
             busquedaPendiente = true
             pestana = .inicio
-        case .bienvenida:
-            hoja = .bienvenida
-        case .ajustes:
-            hoja = .ajustes
+        case .welcome:
+            hoja = .welcome
+        case .settings:
+            hoja = .settings
         }
     }
 
@@ -73,27 +73,27 @@ final class Router: Navigation {
     /// Devuelve `false` si la URL no es de la app.
     @discardableResult
     func abrir(url: URL) -> Bool {
-        guard let destino = Self.destino(de: url) else {
-            AppLog.navegacion.warning("URL desconocida \(url.absoluteString, privacy: .public)")
+        guard let destination = Self.destination(de: url) else {
+            AppLog.navigation.warning("URL desconocida \(url.absoluteString, privacy: .public)")
             return false
         }
-        ir(destino)
+        go(destination)
         return true
     }
 
     /// Pura: qué destino nombra una URL `coco://`.
-    nonisolated static func destino(de url: URL) -> Destination? {
+    nonisolated static func destination(de url: URL) -> Destination? {
         guard url.scheme?.lowercased() == "coco" else { return nil }
         let host = url.host()?.lowercased() ?? ""
         let camino = url.path().split(separator: "/").map { $0.lowercased() }
         guard camino.count <= 1 else { return nil }
         switch (host, camino.first) {
         case ("capturar", nil), ("capturar", "manual"?):
-            return .formularioRapido(conCamara: false)
+            return .quickForm(withCamera: false)
         case ("capturar", "foto"?):
-            return .formularioRapido(conCamara: true)
+            return .quickForm(withCamera: true)
         case ("capturas", nil):
-            return .capturas
+            return .captures
         default:
             return nil
         }

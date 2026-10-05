@@ -12,11 +12,11 @@ struct SettingsView: View {
 
     init(d: Dependencies) {
         self.d = d
-        _urlTexto = State(initialValue: d.configuracion.base.absoluteString)
+        _urlTexto = State(initialValue: d.configuration.base.absoluteString)
     }
 
     private var validacion: Validation { Self.validar(urlTexto) }
-    private var cambio: Bool { validacion.url != nil && validacion.url != d.configuracion.base }
+    private var cambio: Bool { validacion.url != nil && validacion.url != d.configuration.base }
 
     var body: some View {
         NavigationStack {
@@ -27,12 +27,12 @@ struct SettingsView: View {
                         .textContentType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    if let motivo = validacion.motivo {
-                        Text(motivo).font(.footnote).foregroundStyle(.red)
+                    if let reason = validacion.reason {
+                        Text(reason).font(.footnote).foregroundStyle(.red)
                     }
-                    Button("Guardar y cerrar sesión", action: guardar)
+                    Button("Guardar y cerrar sesión", action: save)
                         .disabled(!cambio)
-                    Button("Restablecer la del bundle", action: restablecer)
+                    Button("Restablecer la del bundle", action: reset)
                 } header: {
                     Text("URL de la API").textCase(nil)
                 } footer: {
@@ -50,8 +50,8 @@ struct SettingsView: View {
                     LabeledContent("Versión", value: "\(Brand.version) (\(Self.build))")
                     LabeledContent(
                         "La firma caduca", value: Self.textoDeVencimiento(ProvisioningProfileReader.delBundle()))
-                    LabeledContent("Pendientes de envío", value: "\(d.pendientes)")
-                    LabeledContent("API", value: d.configuracion.base.absoluteString)
+                    LabeledContent("Pendientes de envío", value: "\(d.pending)")
+                    LabeledContent("API", value: d.configuration.base.absoluteString)
                 } header: {
                     Text("Esta instalación").textCase(nil)
                 }
@@ -76,30 +76,30 @@ struct SettingsView: View {
 
     // MARK: Acciones
 
-    private func guardar() {
+    private func save() {
         guard let url = validacion.url else { return }
-        APIConfiguration.guardar(base: url, defaults: d.defaults)
+        APIConfiguration.save(base: url, defaults: d.defaults)
         guardada = true
         AppLog.app.info("URL de la API cambiada a \(url.absoluteString, privacy: .public)")
-        Task { await d.salir() }
+        Task { await d.signOut() }
     }
 
-    private func restablecer() {
-        APIConfiguration.restablecer(defaults: d.defaults)
-        urlTexto = APIConfiguration.actual(defaults: d.defaults).base.absoluteString
-        guardada = urlTexto != d.configuracion.base.absoluteString
-        if guardada { Task { await d.salir() } }
+    private func reset() {
+        APIConfiguration.reset(defaults: d.defaults)
+        urlTexto = APIConfiguration.current(defaults: d.defaults).base.absoluteString
+        guardada = urlTexto != d.configuration.base.absoluteString
+        if guardada { Task { await d.signOut() } }
     }
 
     private func probarAviso() async {
-        guard await d.notificador.pedirPermiso() else {
+        guard await d.notifier.requestPermission() else {
             resultadoDelAviso = "Sin permiso de avisos. Actívalo en Ajustes de iOS → Coco."
             return
         }
         let prueba = SavedResult(
-            transactionId: 0, resumen: "Prueba: si ves esto, los avisos funcionan.", repetido: false, fusionado: false,
-            porRevisar: false, terminadaEn: .now)
-        await d.notificador.capturaRegistrada(prueba, origen: .iosManual)
+            transactionId: 0, summary: "Prueba: si ves esto, los avisos funcionan.", duplicate: false, merged: false,
+            needsReview: false, finishedAt: .now)
+        await d.notifier.captureSaved(prueba, source: .iosManual)
         resultadoDelAviso = "Enviada. Aparece arriba aunque la app esté abierta."
     }
 
@@ -107,38 +107,38 @@ struct SettingsView: View {
 
     struct Validation: Equatable {
         let url: URL?
-        let motivo: String?
+        let reason: String?
     }
 
     /// `http(s)://host[:puerto]`, sin ruta ni consulta: la base a la que la
     /// app añade `/api/v1`.
-    static func validar(_ texto: String) -> Validation {
-        let limpio = texto.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !limpio.isEmpty else { return Validation(url: nil, motivo: nil) }
-        guard let url = URL(string: limpio), let esquema = url.scheme?.lowercased(), let host = url.host(),
+    static func validar(_ text: String) -> Validation {
+        let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return Validation(url: nil, reason: nil) }
+        guard let url = URL(string: cleaned), let esquema = url.scheme?.lowercased(), let host = url.host(),
             !host.isEmpty
         else {
-            return Validation(url: nil, motivo: "Escribe una URL completa, como https://cocoapp.ejemplo.")
+            return Validation(url: nil, reason: "Escribe una URL completa, como https://cocoapp.ejemplo.")
         }
         guard esquema == "http" || esquema == "https" else {
-            return Validation(url: nil, motivo: "Solo http o https.")
+            return Validation(url: nil, reason: "Solo http o https.")
         }
-        let ruta = url.path()
-        guard ruta.isEmpty || ruta == "/", url.query() == nil, url.fragment() == nil else {
-            return Validation(url: nil, motivo: "Solo el servidor, sin ruta: la app añade /api/v1.")
+        let path = url.path()
+        guard path.isEmpty || path == "/", url.query() == nil, url.fragment() == nil else {
+            return Validation(url: nil, reason: "Solo el servidor, sin ruta: la app añade /api/v1.")
         }
-        return Validation(url: APIConfiguration(base: url).base, motivo: nil)
+        return Validation(url: APIConfiguration(base: url).base, reason: nil)
     }
 
-    static func textoDeVencimiento(_ vence: Date?, ahora: Date = .now) -> String {
-        guard let vence else { return "No disponible (simulador o sin perfil)" }
-        let dias = ExpiryReminder.diasRestantes(vence: vence, ahora: ahora)
-        let fecha = vence.formatted(date: .abbreviated, time: .omitted)
+    static func textoDeVencimiento(_ expiresAt: Date?, now: Date = .now) -> String {
+        guard let expiresAt else { return "No disponible (simulador o sin perfil)" }
+        let dias = ExpiryReminder.diasRestantes(expiresAt: expiresAt, now: now)
+        let date = expiresAt.formatted(date: .abbreviated, time: .omitted)
         switch dias {
-        case ..<0: return "Caducó el \(fecha)"
-        case 0: return "Hoy (\(fecha))"
-        case 1: return "Mañana (\(fecha))"
-        default: return "\(fecha) · quedan \(dias) días"
+        case ..<0: return "Caducó el \(date)"
+        case 0: return "Hoy (\(date))"
+        case 1: return "Mañana (\(date))"
+        default: return "\(date) · quedan \(dias) días"
         }
     }
 

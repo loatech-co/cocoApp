@@ -3,35 +3,35 @@ import SwiftUI
 /// El único login de la app. Habla con `/auth/login` como cliente nativo; la
 /// web embebida nunca enseña el suyo.
 struct SignInView: View {
-    private let sesion: Session
+    private let session: Session
     private let alAjustes: (() -> Void)?
 
-    @State private var correo = ""
-    @State private var contrasena = ""
+    @State private var email = ""
+    @State private var password = ""
     @State private var error: String?
     @State private var entrando = false
 
-    init(sesion: Session, alAjustes: (() -> Void)? = nil) {
-        self.sesion = sesion
+    init(session: Session, alAjustes: (() -> Void)? = nil) {
+        self.session = session
         self.alAjustes = alAjustes
     }
 
     private var puedeEntrar: Bool {
-        !entrando && correo.contains("@") && !contrasena.isEmpty
+        !entrando && email.contains("@") && !password.isEmpty
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Correo", text: $correo)
+                    TextField("Correo", text: $email)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    SecureField("Contraseña", text: $contrasena)
+                    SecureField("Contraseña", text: $password)
                         .textContentType(.password)
-                        .onSubmit { if puedeEntrar { entrar() } }
+                        .onSubmit { if puedeEntrar { signIn() } }
                 } footer: {
                     Text("La misma cuenta que en la web.")
                 }
@@ -44,7 +44,7 @@ struct SignInView: View {
                 }
 
                 Section {
-                    Button(action: entrar) {
+                    Button(action: signIn) {
                         HStack {
                             Text("Entrar")
                             if entrando {
@@ -68,40 +68,40 @@ struct SignInView: View {
         }
     }
 
-    private func entrar() {
+    private func signIn() {
         guard puedeEntrar else { return }
         entrando = true
         error = nil
-        let correo = correo.trimmingCharacters(in: .whitespacesAndNewlines)
-        let contrasena = contrasena
+        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let password = password
         Task {
             do {
-                _ = try await sesion.entrar(correo: correo, contrasena: contrasena)
-                AppLog.sesion.info("Entró \(correo, privacy: .private)")
+                _ = try await session.signIn(email: email, password: password)
+                AppLog.session.info("Entró \(email, privacy: .private)")
                 // RootView retira la cubierta al observar el cambio de estado.
             } catch {
-                self.error = Self.mensaje(de: error)
-                AppLog.sesion.error("Login falló: \(self.error ?? "", privacy: .public)")
+                self.error = Self.message(de: error)
+                AppLog.session.error("Login falló: \(self.error ?? "", privacy: .public)")
             }
             entrando = false
         }
     }
 
     /// Un texto que diga qué hacer, no un código.
-    static func mensaje(de error: Error) -> String {
-        switch APIError.desde(error) {
-        case .noAutenticado:
+    static func message(de error: Error) -> String {
+        switch APIError.from(error) {
+        case .unauthenticated:
             return "Correo o contraseña incorrectos."
-        case .sinRed:
+        case .noNetwork:
             return "Sin conexión. Revisa la red e inténtalo otra vez."
-        case .tiempoAgotado:
+        case .timedOut:
             return "La API no respondió a tiempo. Inténtalo otra vez."
-        case .rechazada(_, _, let mensaje):
-            return mensaje.isEmpty ? "La API rechazó la petición." : mensaje
-        case .servidor(let status):
+        case .rejected(_, _, let message):
+            return message.isEmpty ? "La API rechazó la petición." : message
+        case .server(let status):
             return status == 429
                 ? "Demasiados intentos. Espera un minuto." : "La API falló (\(status)). Inténtalo en un momento."
-        case .respuestaIlegible:
+        case .unreadableResponse:
             return "La API respondió algo que la app no entiende. Revisa la URL de la API en Ajustes."
         }
     }

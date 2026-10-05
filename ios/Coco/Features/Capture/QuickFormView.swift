@@ -16,15 +16,15 @@ struct QuickFormView: View {
         self.alCerrar = alCerrar
     }
 
-    private var fecha: Binding<Date> {
-        Binding(get: { modelo.fecha }, set: { modelo.cambiarFecha($0) })
+    private var date: Binding<Date> {
+        Binding(get: { modelo.date }, set: { modelo.cambiarFecha($0) })
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    AmountField(texto: $modelo.monto)
+                    AmountField(text: $modelo.amount)
                 } header: {
                     Text("Monto").textCase(nil)
                 }
@@ -36,11 +36,11 @@ struct QuickFormView: View {
                 }
 
                 Section {
-                    DatePicker("Fecha", selection: fecha, displayedComponents: .date)
-                    if let comercio = modelo.comercio, !comercio.isEmpty {
-                        LabeledContent("Comercio", value: comercio)
+                    DatePicker("Fecha", selection: date, displayedComponents: .date)
+                    if let merchant = modelo.merchant, !merchant.isEmpty {
+                        LabeledContent("Comercio", value: merchant)
                     }
-                    TextField("Nota (opcional)", text: $modelo.nota, axis: .vertical)
+                    TextField("Nota (opcional)", text: $modelo.note, axis: .vertical)
                         .lineLimit(1...3)
                 } header: {
                     Text("Detalles").textCase(nil)
@@ -108,7 +108,7 @@ struct QuickFormView: View {
                 if let concepto = modelo.concepto {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
-                            Text(concepto.nombre)
+                            Text(concepto.name)
                             if modelo.conceptoSugerido {
                                 Text("sugerido")
                                     .font(.caption)
@@ -138,8 +138,8 @@ struct QuickFormView: View {
 
     @ViewBuilder
     private var seccionDeFoto: some View {
-        if let foto = modelo.foto {
-            Image(uiImage: foto)
+        if let photo = modelo.photo {
+            Image(uiImage: photo)
                 .resizable()
                 .scaledToFit()
                 .frame(maxHeight: 220)
@@ -150,7 +150,7 @@ struct QuickFormView: View {
                 ProgressView()
                 Text("Leyendo el recibo…").foregroundStyle(.secondary)
             }
-        } else if modelo.sinRed {
+        } else if modelo.noNetwork {
             Label("Sin conexión: escribe los datos; la foto se adjuntará igual", systemImage: "wifi.slash")
                 .foregroundStyle(.secondary)
         }
@@ -158,10 +158,10 @@ struct QuickFormView: View {
             camaraAbierta = true
         } label: {
             Label(
-                modelo.foto == nil ? (CameraPicker.hayCamara ? "Tomar foto" : "Elegir foto") : "Cambiar foto",
+                modelo.photo == nil ? (CameraPicker.hayCamara ? "Tomar foto" : "Elegir foto") : "Cambiar foto",
                 systemImage: "camera")
         }
-        if modelo.foto != nil {
+        if modelo.photo != nil {
             Button("Quitar foto", role: .destructive) { modelo.quitarFoto() }
         }
     }

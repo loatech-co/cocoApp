@@ -7,8 +7,8 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
     let id: UUID
     /// Es también el `captured_at`.
     let creadaEn: Date
-    let origen: CaptureSource
-    var cuerpo: CaptureBody
+    let source: CaptureSource
+    var body: CaptureBody
     /// "Fotos/<id>.jpg", relativa a la raíz del almacén.
     var fotoRelativa: String?
     var fase: Phase
@@ -24,18 +24,33 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
         case porSubirFoto(transactionId: Int)
         case esperandoSesion
         case hecha(SavedResult)
-        case fallida(motivo: String)
+        case failed(reason: String)
+    }
+
+    /// La captura vive en disco: las claves no cambian aunque cambie el nombre
+    /// de la propiedad (lo vigila `StoredFormatCompatibilityTests`).
+    enum CodingKeys: String, CodingKey {
+        case id
+        case creadaEn = "creadaEn"
+        case source = "origen"
+        case body = "cuerpo"
+        case fotoRelativa = "fotoRelativa"
+        case fase = "fase"
+        case intentos = "intentos"
+        case proximoIntento = "proximoIntento"
+        case ultimoError = "ultimoError"
+        case resultadoDeTexto = "resultadoDeTexto"
     }
 
     init(
-        id: UUID = UUID(), creadaEn: Date = .now, origen: CaptureSource, cuerpo: CaptureBody,
+        id: UUID = UUID(), creadaEn: Date = .now, source: CaptureSource, body: CaptureBody,
         fotoRelativa: String? = nil, fase: Phase = .porEnviar, intentos: Int = 0, proximoIntento: Date = .distantPast,
         ultimoError: String? = nil, resultadoDeTexto: SavedResult? = nil
     ) {
         self.id = id
         self.creadaEn = creadaEn
-        self.origen = origen
-        self.cuerpo = cuerpo
+        self.source = source
+        self.body = body
         self.fotoRelativa = fotoRelativa
         self.fase = fase
         self.intentos = intentos
@@ -49,17 +64,33 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
     var estaPendiente: Bool {
         switch fase {
         case .porEnviar, .porSubirFoto, .esperandoSesion: true
-        case .hecha, .fallida: false
+        case .hecha, .failed: false
         }
     }
 
     /// Lo que se manda a la API; el `captured_at` lleva zona (ISO 8601).
     var request: CaptureRequest {
         CaptureRequest(
-            source: origen,
+            source: source,
             externalRef: id.uuidString,
             capturedAt: creadaEn.formatted(.iso8601),
-            cuerpo: cuerpo
+            body: body
         )
+    }
+}
+
+/// Las fases viven en disco con sus nombres de siempre. Fuera del tipo para no
+/// anidar tres niveles (SwiftLint `nesting`).
+extension PendingCapture.Phase {
+    enum CodingKeys: String, CodingKey {
+        case porEnviar = "porEnviar"
+        case porSubirFoto = "porSubirFoto"
+        case esperandoSesion = "esperandoSesion"
+        case hecha = "hecha"
+        case failed = "fallida"
+    }
+
+    enum FailedCodingKeys: String, CodingKey {
+        case reason = "motivo"
     }
 }

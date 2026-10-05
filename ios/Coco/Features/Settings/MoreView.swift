@@ -11,18 +11,18 @@ struct MoreView: View {
         NavigationStack {
             List {
                 Section {
-                    fila("Centros de costos", icono: "folder") { d.enrutador.ir(.web(ruta: "/centros-de-costos")) }
-                    fila("Mi cuenta", icono: "person") { d.enrutador.ir(.web(ruta: "/mi-cuenta")) }
+                    fila("Centros de costos", icono: "folder") { d.enrutador.go(.web(path: "/centros-de-costos")) }
+                    fila("Mi cuenta", icono: "person") { d.enrutador.go(.web(path: "/mi-cuenta")) }
                     if d.esAdmin {
-                        fila("Administración", icono: "person.2") { d.enrutador.ir(.web(ruta: "/administracion")) }
+                        fila("Administración", icono: "person.2") { d.enrutador.go(.web(path: "/administracion")) }
                     }
                 } footer: {
-                    if let correo = d.perfil?.email { Text(correo) }
+                    if let email = d.perfil?.email { Text(email) }
                 }
 
                 Section {
-                    fila("Bienvenida y automatizaciones", icono: "wand.and.stars") { d.enrutador.ir(.bienvenida) }
-                    fila("Ajustes", icono: "gearshape") { d.enrutador.ir(.ajustes) }
+                    fila("Bienvenida y automatizaciones", icono: "wand.and.stars") { d.enrutador.go(.welcome) }
+                    fila("Ajustes", icono: "gearshape") { d.enrutador.go(.settings) }
                 }
 
                 Section {
@@ -34,7 +34,7 @@ struct MoreView: View {
                 "¿Cerrar sesión en este teléfono?", isPresented: $confirmarSalida, titleVisibility: .visible
             ) {
                 Button("Cerrar sesión", role: .destructive) {
-                    Task { await d.salir() }
+                    Task { await d.signOut() }
                 }
             } message: {
                 Text("Lo que esté pendiente de enviar se queda guardado y sale al volver a entrar.")

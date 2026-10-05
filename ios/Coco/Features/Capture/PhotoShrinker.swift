@@ -9,13 +9,13 @@ import UIKit
 enum PhotoShrinker {
     static func jpeg(_ imagen: UIImage, ladoMaximo: CGFloat = 1600, calidad: CGFloat = 0.85) -> Data? {
         // `size` ya viene en puntos y orientada; `scale` la pasa a píxeles.
-        let destino = tamanoDestino(
+        let destination = tamanoDestino(
             ancho: imagen.size.width * imagen.scale, alto: imagen.size.height * imagen.scale, ladoMaximo: ladoMaximo)
-        guard destino.width >= 1, destino.height >= 1 else { return nil }
+        guard destination.width >= 1, destination.height >= 1 else { return nil }
         let formato = UIGraphicsImageRendererFormat()
         formato.scale = 1
-        let dibujada = UIGraphicsImageRenderer(size: destino, format: formato).image { _ in
-            imagen.draw(in: CGRect(origin: .zero, size: destino))
+        let dibujada = UIGraphicsImageRenderer(size: destination, format: formato).image { _ in
+            imagen.draw(in: CGRect(origin: .zero, size: destination))
         }
         return dibujada.jpegData(compressionQuality: calidad)
     }

@@ -3,36 +3,36 @@ import Foundation
 /// Todo lo que puede salir mal al hablar con la API, ya clasificado para que
 /// la cola decida sin mirar códigos HTTP.
 enum APIError: Error, Equatable {
-    case sinRed(URLError.Code)
-    case tiempoAgotado
+    case noNetwork(URLError.Code)
+    case timedOut
     /// 401.
-    case noAutenticado
+    case unauthenticated
     /// 4xx distinto de 401/408/429: la petición está mal y repetirla no ayuda.
-    case rechazada(status: Int, code: String, mensaje: String)
+    case rejected(status: Int, code: String, message: String)
     /// 5xx, 408 y 429: el servidor no pudo ahora; más tarde sí.
-    case servidor(status: Int)
-    case respuestaIlegible
+    case server(status: Int)
+    case unreadableResponse
 
-    var esReintentable: Bool {
+    var isRetryable: Bool {
         switch self {
-        case .sinRed, .tiempoAgotado, .servidor: true
-        case .noAutenticado, .rechazada, .respuestaIlegible: false
+        case .noNetwork, .timedOut, .server: true
+        case .unauthenticated, .rejected, .unreadableResponse: false
         }
     }
 
-    var esDeRed: Bool {
+    var isNetworkError: Bool {
         switch self {
-        case .sinRed, .tiempoAgotado: true
+        case .noNetwork, .timedOut: true
         default: false
         }
     }
 
     /// Un `URLError` del transporte, clasificado.
-    static func desde(_ error: Error) -> APIError {
+    static func from(_ error: Error) -> APIError {
         if let api = error as? APIError { return api }
         if let url = error as? URLError {
-            return url.code == .timedOut ? .tiempoAgotado : .sinRed(url.code)
+            return url.code == .timedOut ? .timedOut : .noNetwork(url.code)
         }
-        return .sinRed(.unknown)
+        return .noNetwork(.unknown)
     }
 }

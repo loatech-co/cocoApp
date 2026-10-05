@@ -19,18 +19,18 @@ final class ProvisioningProfileReaderTests: XCTestCase {
               <key>ExpirationDate</key><date>2026-10-12T15:30:00Z</date>
             </dict></plist>
             """
-        let fecha = try XCTUnwrap(ProvisioningProfileReader.fechaDeVencimiento(en: perfil(con: plist)))
-        XCTAssertEqual(fecha, ISO8601DateFormatter().date(from: "2026-10-12T15:30:00Z"))
+        let date = try XCTUnwrap(ProvisioningProfileReader.fechaDeVencimiento(at: perfil(con: plist)))
+        XCTAssertEqual(date, ISO8601DateFormatter().date(from: "2026-10-12T15:30:00Z"))
     }
 
     func testSinPlistNil() {
-        XCTAssertNil(ProvisioningProfileReader.fechaDeVencimiento(en: Data([0x30, 0x82, 0x00])))
-        XCTAssertNil(ProvisioningProfileReader.fechaDeVencimiento(en: Data()))
+        XCTAssertNil(ProvisioningProfileReader.fechaDeVencimiento(at: Data([0x30, 0x82, 0x00])))
+        XCTAssertNil(ProvisioningProfileReader.fechaDeVencimiento(at: Data()))
     }
 
     func testPlistSinExpirationDateNil() {
         let plist = #"<?xml version="1.0"?><plist version="1.0"><dict><key>Name</key><string>x</string></dict></plist>"#
-        XCTAssertNil(ProvisioningProfileReader.fechaDeVencimiento(en: perfil(con: plist)))
+        XCTAssertNil(ProvisioningProfileReader.fechaDeVencimiento(at: perfil(con: plist)))
     }
 
     func testEnElSimuladorNoHayPerfilYNoFalla() {

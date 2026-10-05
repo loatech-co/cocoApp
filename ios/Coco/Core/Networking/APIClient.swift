@@ -3,67 +3,67 @@ import Foundation
 /// La única puerta de red. Construye la petición, la manda por el transporte
 /// y traduce la respuesta a un tipo o a un `APIError`.
 struct APIClient: Sendable {
-    let configuracion: APIConfiguration
-    let transporte: Transport
+    let configuration: APIConfiguration
+    let transport: Transport
     let userAgent: String
 
-    init(configuracion: APIConfiguration, transporte: Transport, version: String = Brand.version) {
-        self.configuracion = configuracion
-        self.transporte = transporte
+    init(configuration: APIConfiguration, transport: Transport, version: String = Brand.version) {
+        self.configuration = configuration
+        self.transport = transport
         self.userAgent = Brand.userAgent(version: version)
     }
 
     /// Decodifica `Envelope<T>.data`.
-    func enviar<T: Decodable>(_ p: APIRequest, token: String?) async throws -> T {
-        let (datos, _) = try await ejecutar(p, token: token)
+    func send<T: Decodable>(_ p: APIRequest, token: String?) async throws -> T {
+        let (data, _) = try await run(p, token: token)
         do {
-            return try JSONDecoder().decode(Envelope<T>.self, from: datos).data
+            return try JSONDecoder().decode(Envelope<T>.self, from: data).data
         } catch {
-            throw APIError.respuestaIlegible
+            throw APIError.unreadableResponse
         }
     }
 
     /// Para un 204: no intenta leer nada.
-    func enviarSinCuerpo(_ p: APIRequest, token: String?) async throws {
-        _ = try await ejecutar(p, token: token)
+    func sendWithoutBody(_ p: APIRequest, token: String?) async throws {
+        _ = try await run(p, token: token)
     }
 
     /// El cuerpo tal cual llegó, sin decodificar. Lo usa la sesión, que
     /// necesita el `user` byte a byte para entregárselo a la web sin
     /// reescribir ni una clave.
-    func enviarCrudo(_ p: APIRequest, token: String?) async throws -> Data {
-        try await ejecutar(p, token: token).0
+    func sendRaw(_ p: APIRequest, token: String?) async throws -> Data {
+        try await run(p, token: token).0
     }
 
-    func subir<T: Decodable>(partes: [MultipartPart], a ruta: String, token: String) async throws -> T {
-        let frontera = "coco-\(UUID().uuidString)"
-        return try await enviar(
-            RequestBuilder.multipart(ruta: ruta, partes: partes, frontera: frontera), token: token)
+    func upload<T: Decodable>(parts: [MultipartPart], to path: String, token: String) async throws -> T {
+        let boundary = "coco-\(UUID().uuidString)"
+        return try await send(
+            RequestBuilder.multipart(path: path, parts: parts, boundary: boundary), token: token)
     }
 
-    private func ejecutar(_ p: APIRequest, token: String?) async throws -> (Data, HTTPURLResponse) {
+    private func run(_ p: APIRequest, token: String?) async throws -> (Data, HTTPURLResponse) {
         let request = RequestBuilder.urlRequest(
-            p, base: configuracion.apiV1, token: token, userAgent: userAgent)
-        let datos: Data
-        let respuesta: HTTPURLResponse
+            p, base: configuration.apiV1, token: token, userAgent: userAgent)
+        let data: Data
+        let response: HTTPURLResponse
         do {
-            (datos, respuesta) = try await transporte.datos(para: request)
+            (data, response) = try await transport.data(for: request)
         } catch {
-            throw APIError.desde(error)
+            throw APIError.from(error)
         }
-        switch respuesta.statusCode {
+        switch response.statusCode {
         case 200...299:
-            return (datos, respuesta)
+            return (data, response)
         case 401:
-            throw APIError.noAutenticado
+            throw APIError.unauthenticated
         case 408, 429, 500...599:
-            throw APIError.servidor(status: respuesta.statusCode)
+            throw APIError.server(status: response.statusCode)
         default:
-            guard let error = try? JSONDecoder().decode(APIErrorBody.self, from: datos) else {
-                throw APIError.respuestaIlegible
+            guard let error = try? JSONDecoder().decode(APIErrorBody.self, from: data) else {
+                throw APIError.unreadableResponse
             }
-            throw APIError.rechazada(
-                status: respuesta.statusCode, code: error.error.code, mensaje: error.error.message)
+            throw APIError.rejected(
+                status: response.statusCode, code: error.error.code, message: error.error.message)
         }
     }
 }

@@ -8,58 +8,58 @@ final class ActionParametersTests: XCTestCase {
 
     func testWalletConTodo() {
         let c = ActionParameters.cuerpoDeWallet(
-            comercio: "D1", monto: "$45.000", tarjeta: "Visa", nombre: "Compra", ahora: nocheDeBogota)
-        XCTAssertEqual(c.comercio, "D1")
-        XCTAssertEqual(c.monto, "45000")
-        XCTAssertEqual(c.fecha, "2026-10-03")
-        XCTAssertEqual(c.texto, "Wallet · Visa · Compra")
-        XCTAssertTrue(c.esEnviable)
+            merchant: "D1", amount: "$45.000", tarjeta: "Visa", name: "Compra", now: nocheDeBogota)
+        XCTAssertEqual(c.merchant, "D1")
+        XCTAssertEqual(c.amount, "45000")
+        XCTAssertEqual(c.date, "2026-10-03")
+        XCTAssertEqual(c.text, "Wallet · Visa · Compra")
+        XCTAssertTrue(c.isSendable)
     }
 
     func testWalletSinMontoSigueSiendoEnviable() {
         let c = ActionParameters.cuerpoDeWallet(
-            comercio: "D1", monto: nil, tarjeta: "Visa", nombre: nil, ahora: nocheDeBogota)
-        XCTAssertNil(c.monto)
-        XCTAssertTrue(c.esEnviable)
+            merchant: "D1", amount: nil, tarjeta: "Visa", name: nil, now: nocheDeBogota)
+        XCTAssertNil(c.amount)
+        XCTAssertTrue(c.isSendable)
     }
 
     func testWalletSinComercioTomaElNombre() {
         let c = ActionParameters.cuerpoDeWallet(
-            comercio: " ", monto: "45000", tarjeta: nil, nombre: "Rappi", ahora: nocheDeBogota)
-        XCTAssertEqual(c.comercio, "Rappi")
+            merchant: " ", amount: "45000", tarjeta: nil, name: "Rappi", now: nocheDeBogota)
+        XCTAssertEqual(c.merchant, "Rappi")
     }
 
     func testWalletSinComercioNiNombreNoDejaElTextoVacio() {
         let c = ActionParameters.cuerpoDeWallet(
-            comercio: nil, monto: nil, tarjeta: "Mastercard", nombre: nil, ahora: nocheDeBogota)
-        XCTAssertNil(c.comercio)
-        XCTAssertEqual(c.texto, "Wallet · Mastercard")
-        XCTAssertTrue(c.esEnviable)
+            merchant: nil, amount: nil, tarjeta: "Mastercard", name: nil, now: nocheDeBogota)
+        XCTAssertNil(c.merchant)
+        XCTAssertEqual(c.text, "Wallet · Mastercard")
+        XCTAssertTrue(c.isSendable)
     }
 
     func testMontosEnVariosFormatos() {
-        for (entrada, salida) in [
+        for (entrada, output) in [
             ("$45.000", "45000"), ("45000", "45000"), ("45.000,50", "45000.50"), ("COP 1.200.000", "1200000"),
         ] {
             XCTAssertEqual(
                 ActionParameters.cuerpoDeWallet(
-                    comercio: "x", monto: entrada, tarjeta: nil, nombre: nil, ahora: nocheDeBogota
-                ).monto, salida, entrada)
+                    merchant: "x", amount: entrada, tarjeta: nil, name: nil, now: nocheDeBogota
+                ).amount, output, entrada)
         }
     }
 
     func testSMSConTexto() throws {
         let c = try ActionParameters.cuerpoDeSMS(
-            texto: "Bancolombia: compra por $45.000 en D1", remitente: "891111", ahora: nocheDeBogota)
-        XCTAssertEqual(c.texto, "Bancolombia: compra por $45.000 en D1")
-        XCTAssertEqual(c.nota, "De: 891111")
-        XCTAssertEqual(c.fecha, "2026-10-03")
-        XCTAssertNil(c.comercio)
+            text: "Bancolombia: compra por $45.000 en D1", remitente: "891111", now: nocheDeBogota)
+        XCTAssertEqual(c.text, "Bancolombia: compra por $45.000 en D1")
+        XCTAssertEqual(c.note, "De: 891111")
+        XCTAssertEqual(c.date, "2026-10-03")
+        XCTAssertNil(c.merchant)
     }
 
     func testSMSVacioLanza() {
         XCTAssertThrowsError(
-            try ActionParameters.cuerpoDeSMS(texto: "   \n", remitente: nil, ahora: nocheDeBogota)
+            try ActionParameters.cuerpoDeSMS(text: "   \n", remitente: nil, now: nocheDeBogota)
         ) { e in
             XCTAssertEqual(e as? ParameterError, .textoVacio)
         }
@@ -68,7 +68,7 @@ final class ActionParametersTests: XCTestCase {
     func testElIntentDeSMSVacioNoEncolaNada() async {
         let capturador = CapturerDouble()
         do {
-            _ = try await RegistrarGastoDeSMSIntent.ejecutar(texto: " ", remitente: nil, capturador: capturador)
+            _ = try await RegistrarGastoDeSMSIntent.run(text: " ", remitente: nil, capturador: capturador)
             XCTFail("debería lanzar")
         } catch {}
         XCTAssertTrue(capturador.recibidas.isEmpty)
@@ -76,28 +76,28 @@ final class ActionParametersTests: XCTestCase {
 
     func testElIntentDeWalletEncolaConOrigenWallet() async {
         let capturador = CapturerDouble()
-        capturador.respuesta = .enCola(pendientes: 1)
-        let r = await RegistrarGastoDeWalletIntent.ejecutar(
-            comercio: "D1", monto: "$45.000", tarjeta: "Visa", nombre: nil, capturador: capturador, ahora: nocheDeBogota
+        capturador.response = .queued(pending: 1)
+        let r = await RegistrarGastoDeWalletIntent.run(
+            merchant: "D1", amount: "$45.000", tarjeta: "Visa", name: nil, capturador: capturador, now: nocheDeBogota
         )
-        XCTAssertEqual(r, .enCola(pendientes: 1))
-        XCTAssertEqual(capturador.recibidas.first?.origen, .wallet)
-        XCTAssertEqual(capturador.recibidas.first?.cuerpo.monto, "45000")
+        XCTAssertEqual(r, .queued(pending: 1))
+        XCTAssertEqual(capturador.recibidas.first?.source, .wallet)
+        XCTAssertEqual(capturador.recibidas.first?.body.amount, "45000")
     }
 
     func testDialogos() {
         XCTAssertEqual(
-            ActionParameters.textoDeDialogo(.enCola(pendientes: 1)),
+            ActionParameters.textoDeDialogo(.queued(pending: 1)),
             "Guardado en el teléfono; se enviará cuando haya red.")
         XCTAssertEqual(
-            ActionParameters.textoDeDialogo(.enCola(pendientes: 3)),
+            ActionParameters.textoDeDialogo(.queued(pending: 3)),
             "Guardado en el teléfono; se enviará cuando haya red. 3 pendientes.")
         let g = SavedResult(
-            transactionId: 1, resumen: "Gasto de $45.000 en D1", repetido: false, fusionado: false, porRevisar: false,
-            terminadaEn: .now)
-        XCTAssertEqual(ActionParameters.textoDeDialogo(.enviada(g)), "Gasto de $45.000 en D1")
+            transactionId: 1, summary: "Gasto de $45.000 en D1", duplicate: false, merged: false, needsReview: false,
+            finishedAt: .now)
+        XCTAssertEqual(ActionParameters.textoDeDialogo(.sent(g)), "Gasto de $45.000 en D1")
         XCTAssertEqual(
-            ActionParameters.textoDeDialogo(.fallida(motivo: "Falta el texto")),
+            ActionParameters.textoDeDialogo(.failed(reason: "Falta el texto")),
             "No se pudo registrar: Falta el texto")
     }
 }

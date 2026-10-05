@@ -4,9 +4,9 @@ import Foundation
 /// interpretación puede tocar. `fecha` en nil significa «no la ha cambiado»:
 /// el campo nunca está vacío —arranca en hoy—, pero hoy no es una decisión.
 struct FormFields: Equatable, Sendable {
-    var monto: String = ""
-    var fecha: String?
-    var comercio: String?
+    var amount: String = ""
+    var date: String?
+    var merchant: String?
     var conceptoId: Int?
 }
 
@@ -21,40 +21,40 @@ enum FormPrefill {
         var conceptoSugerido: Bool
         /// Con certeza media la API no se atreve: se abre el buscador con
         /// estos arriba y decide la persona.
-        var candidatos: [ProposedClassification.Candidate]
+        var candidates: [ProposedClassification.Candidate]
     }
 
-    static func aplicar(_ i: Interpretation, a campos: FormFields) -> Outcome {
-        var salida = campos
+    static func aplicar(_ i: Interpretation, to campos: FormFields) -> Outcome {
+        var output = campos
         var sugerido = false
-        var candidatos: [ProposedClassification.Candidate] = []
+        var candidates: [ProposedClassification.Candidate] = []
 
-        if vacio(campos.monto), let monto = i.amount, AmountParser.normalizar(monto) != nil {
+        if vacio(campos.amount), let amount = i.amount, AmountParser.normalize(amount) != nil {
             // Se enseña como se escribe en Colombia —«45.000»—, que es lo que
             // `AmountParser` vuelve a leer al confirmar.
-            salida.monto = String(PesoFormat.formatear(monto).dropFirst())
+            output.amount = String(PesoFormat.format(amount).dropFirst())
         }
-        if campos.fecha == nil, let fecha = i.date, !fecha.isEmpty {
-            salida.fecha = fecha
+        if campos.date == nil, let date = i.date, !date.isEmpty {
+            output.date = date
         }
-        if vacio(campos.comercio), let comercio = i.merchant, !vacio(comercio) {
-            salida.comercio = comercio
+        if vacio(campos.merchant), let merchant = i.merchant, !vacio(merchant) {
+            output.merchant = merchant
         }
         if campos.conceptoId == nil {
-            let c = i.clasificacion
-            switch c.certeza {
+            let c = i.classification
+            switch c.confidence {
             case "alta":
                 if let id = c.conceptId ?? c.categoryId {
-                    salida.conceptoId = id
+                    output.conceptoId = id
                     sugerido = true
                 }
             case "media":
-                candidatos = c.candidatos
+                candidates = c.candidates
             default:
                 break
             }
         }
-        return Outcome(campos: salida, conceptoSugerido: sugerido, candidatos: candidatos)
+        return Outcome(campos: output, conceptoSugerido: sugerido, candidates: candidates)
     }
 
     private static func vacio(_ s: String?) -> Bool {

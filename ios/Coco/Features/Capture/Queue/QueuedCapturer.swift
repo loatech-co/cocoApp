@@ -5,29 +5,29 @@ import Foundation
 /// las emite la cola al cambiar de fase; aquí solo se avisa lo que la cola no
 /// llega a ver: que ni siquiera se pudo guardar.
 struct QueuedCapturer: Capturer {
-    let cola: CaptureQueue
-    let notificador: Notifier
+    let queue: CaptureQueue
+    let notifier: Notifier
 
-    func capturar(_ cuerpo: CaptureBody, origen: CaptureSource, foto: Data?, presupuesto: Duration) async
+    func capture(_ body: CaptureBody, source: CaptureSource, photo: Data?, budget: Duration) async
         -> CaptureResult
     {
         let id = UUID()
         do {
-            try await cola.encolar(cuerpo, origen: origen, foto: foto, id: id)
-        } catch QueueError.fotosLlenas {
-            let motivo = "No hay espacio para más fotos pendientes. Captura sin foto o espera a que se envíen."
-            await notificador.capturaFallida(motivo: motivo)
-            return .fallida(motivo: motivo)
+            try await queue.encolar(body, source: source, photo: photo, id: id)
+        } catch QueueError.photosFull {
+            let reason = "No hay espacio para más fotos pendientes. Captura sin foto o espera a que se envíen."
+            await notifier.captureFailed(reason: reason)
+            return .failed(reason: reason)
         } catch {
-            let motivo = "No se pudo guardar la captura en el teléfono."
-            await notificador.capturaFallida(motivo: motivo)
-            return .fallida(motivo: motivo)
+            let reason = "No se pudo guardar la captura en el teléfono."
+            await notifier.captureFailed(reason: reason)
+            return .failed(reason: reason)
         }
-        await cola.procesar(presupuesto: presupuesto)
-        switch await cola.captura(id: id)?.fase {
-        case .hecha(let r): return .enviada(r)
-        case .fallida(let motivo): return .fallida(motivo: motivo)
-        default: return .enCola(pendientes: await cola.pendientes())
+        await queue.process(budget: budget)
+        switch await queue.capture(id: id)?.fase {
+        case .hecha(let r): return .sent(r)
+        case .failed(let reason): return .failed(reason: reason)
+        default: return .queued(pending: await queue.pending())
         }
     }
 }

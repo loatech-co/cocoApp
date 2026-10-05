@@ -2,8 +2,8 @@ import Foundation
 import Security
 
 enum KeychainError: Error, Equatable {
-    case sistema(OSStatus)
-    case valorIlegible
+    case system(OSStatus)
+    case unreadableValue
 }
 
 /// El Keychain de iOS. `kSecClassGenericPassword`, servicio `co.loatech.coco`,
@@ -12,61 +12,61 @@ enum KeychainError: Error, Equatable {
 /// arranque) y el token nunca viaja en una copia de seguridad ni a otro
 /// dispositivo.
 struct SystemKeychain: KeychainStore {
-    let servicio: String
+    let service: String
 
-    init(servicio: String = "co.loatech.coco") {
-        self.servicio = servicio
+    init(service: String = "co.loatech.coco") {
+        self.service = service
     }
 
-    func leer(_ clave: KeychainKey) throws -> String? {
-        var consulta = base(clave)
-        consulta[kSecReturnData as String] = true
-        consulta[kSecMatchLimit as String] = kSecMatchLimitOne
-        var resultado: CFTypeRef?
-        let estado = SecItemCopyMatching(consulta as CFDictionary, &resultado)
-        switch estado {
+    func read(_ key: KeychainKey) throws -> String? {
+        var query = base(key)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        let state = SecItemCopyMatching(query as CFDictionary, &result)
+        switch state {
         case errSecSuccess:
-            guard let datos = resultado as? Data, let texto = String(data: datos, encoding: .utf8) else {
-                throw KeychainError.valorIlegible
+            guard let data = result as? Data, let text = String(data: data, encoding: .utf8) else {
+                throw KeychainError.unreadableValue
             }
-            return texto
+            return text
         case errSecItemNotFound:
             return nil
         default:
-            throw KeychainError.sistema(estado)
+            throw KeychainError.system(state)
         }
     }
 
-    func escribir(_ valor: String, en clave: KeychainKey) throws {
-        let datos = Data(valor.utf8)
+    func write(_ value: String, at key: KeychainKey) throws {
+        let data = Data(value.utf8)
         // Primero actualizar: es el caso corriente (cada renovación rota el
         // refresh). Solo si no existe se añade.
-        let cambios: [String: Any] = [
-            kSecValueData as String: datos,
+        let changes: [String: Any] = [
+            kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
         ]
-        let actualizado = SecItemUpdate(base(clave) as CFDictionary, cambios as CFDictionary)
-        if actualizado == errSecSuccess { return }
-        guard actualizado == errSecItemNotFound else { throw KeychainError.sistema(actualizado) }
-        var nuevo = base(clave)
-        nuevo.merge(cambios) { _, reciente in reciente }
-        let anadido = SecItemAdd(nuevo as CFDictionary, nil)
-        guard anadido == errSecSuccess else { throw KeychainError.sistema(anadido) }
+        let updated = SecItemUpdate(base(key) as CFDictionary, changes as CFDictionary)
+        if updated == errSecSuccess { return }
+        guard updated == errSecItemNotFound else { throw KeychainError.system(updated) }
+        var nuevo = base(key)
+        nuevo.merge(changes) { _, recent in recent }
+        let added = SecItemAdd(nuevo as CFDictionary, nil)
+        guard added == errSecSuccess else { throw KeychainError.system(added) }
     }
 
-    func borrar(_ clave: KeychainKey) throws {
-        let estado = SecItemDelete(base(clave) as CFDictionary)
+    func delete(_ key: KeychainKey) throws {
+        let state = SecItemDelete(base(key) as CFDictionary)
         // Borrar lo que no está no es un error: es el estado que se quería.
-        guard estado == errSecSuccess || estado == errSecItemNotFound else {
-            throw KeychainError.sistema(estado)
+        guard state == errSecSuccess || state == errSecItemNotFound else {
+            throw KeychainError.system(state)
         }
     }
 
-    private func base(_ clave: KeychainKey) -> [String: Any] {
+    private func base(_ key: KeychainKey) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: servicio,
-            kSecAttrAccount as String: clave.rawValue,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key.rawValue,
         ]
     }
 }

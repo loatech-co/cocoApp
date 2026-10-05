@@ -5,15 +5,15 @@ import Foundation
 /// `onOpenURL` (si no hay sesión, primero entrar y después el destino).
 enum CaptureURL {
     /// El formulario rápido.
-    static let manual = url(destino: "manual")
+    static let manual = url(destination: "manual")
     /// El formulario con la cámara ya levantada.
-    static let foto = url(destino: "foto")
+    static let photo = url(destination: "foto")
 
-    static func url(destino: String) -> URL {
+    static func url(destination: String) -> URL {
         // Los destinos son fijos y de letras: si esto falla es un error de
         // programación, no algo que llegue de fuera.
-        guard let url = URL(string: "coco://capturar/\(destino)") else {
-            preconditionFailure("URL de captura inválida para el destino «\(destino)»")
+        guard let url = URL(string: "coco://capturar/\(destination)") else {
+            preconditionFailure("URL de captura inválida para el destino «\(destination)»")
         }
         return url
     }
@@ -44,6 +44,6 @@ struct AbrirCapturaIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult & OpensIntent {
-        .result(opensIntent: OpenURLIntent(CaptureURL.url(destino: destino)))
+        .result(opensIntent: OpenURLIntent(CaptureURL.url(destination: destino)))
     }
 }

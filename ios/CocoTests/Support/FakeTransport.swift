@@ -10,37 +10,37 @@ final class FakeTransport: Transport, @unchecked Sendable {
         case falla(Error)
     }
 
-    private let cerrojo = NSLock()
-    private var cola: [Reply]
+    private let lock = NSLock()
+    private var queue: [Reply]
     private(set) var recibidas: [URLRequest] = []
 
     init(_ respuestas: [Reply] = []) {
-        cola = respuestas
+        queue = respuestas
     }
 
     func responder(_ r: Reply) {
-        cerrojo.lock()
-        defer { cerrojo.unlock() }
-        cola.append(r)
+        lock.lock()
+        defer { lock.unlock() }
+        queue.append(r)
     }
 
-    private func siguiente(para peticion: URLRequest) -> Reply {
-        cerrojo.withLock {
-            recibidas.append(peticion)
-            return cola.isEmpty ? Reply.http(500, "") : cola.removeFirst()
+    private func siguiente(for request: URLRequest) -> Reply {
+        lock.withLock {
+            recibidas.append(request)
+            return queue.isEmpty ? Reply.http(500, "") : queue.removeFirst()
         }
     }
 
-    func datos(para peticion: URLRequest) async throws -> (Data, HTTPURLResponse) {
-        switch siguiente(para: peticion) {
+    func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        switch siguiente(for: request) {
         case .falla(let error):
             throw error
-        case .http(let status, let cuerpo):
-            let url = peticion.url ?? URL(fileURLWithPath: "/")
-            let respuesta = HTTPURLResponse(
+        case .http(let status, let body):
+            let url = request.url ?? URL(fileURLWithPath: "/")
+            let response = HTTPURLResponse(
                 url: url, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])
-            guard let respuesta else { throw APIError.respuestaIlegible }
-            return (Data(cuerpo.utf8), respuesta)
+            guard let response else { throw APIError.unreadableResponse }
+            return (Data(body.utf8), response)
         }
     }
 }

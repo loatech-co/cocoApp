@@ -8,10 +8,10 @@ struct RegistrarGastoManualIntent: AppIntent {
     static let description = IntentDescription("Abre Coco listo para anotar un gasto.")
     static let openAppWhenRun = true
 
-    @Dependency(key: DependencyKeys.navegacion) var navegacion: any Navigation
+    @Dependency(key: DependencyKeys.navigation) var navigation: any Navigation
 
     func perform() async throws -> some IntentResult {
-        await navegacion.ir(.formularioRapido(conCamara: false))
+        await navigation.go(.quickForm(withCamera: false))
         return .result()
     }
 }

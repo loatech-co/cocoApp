@@ -46,7 +46,7 @@ final class WebBridgeTests: XCTestCase {
     // MARK: Puros
 
     func testScriptDeArranqueDefineCocoAppConLaVersion() {
-        let js = BootScript.fuente(version: "0.1.0")
+        let js = BootScript.source(version: "0.1.0")
         XCTAssertEqual(js, "window.__COCO_APP__ = Object.freeze({ plataforma: 'ios', version: \"0.1.0\" });")
     }
 
@@ -67,19 +67,19 @@ final class WebBridgeTests: XCTestCase {
 
     func testDebeEntregar() {
         let t0 = Date(timeIntervalSince1970: 1_800_000_000)
-        XCTAssertTrue(WebBridge.debeEntregar(ultima: nil, ahora: t0, entregasSeguidas: 0))
-        XCTAssertFalse(WebBridge.debeEntregar(ultima: t0, ahora: t0.addingTimeInterval(10), entregasSeguidas: 1))
-        XCTAssertTrue(WebBridge.debeEntregar(ultima: t0, ahora: t0.addingTimeInterval(31), entregasSeguidas: 1))
-        XCTAssertFalse(WebBridge.debeEntregar(ultima: t0, ahora: t0.addingTimeInterval(500), entregasSeguidas: 2))
+        XCTAssertTrue(WebBridge.debeEntregar(last: nil, now: t0, entregasSeguidas: 0))
+        XCTAssertFalse(WebBridge.debeEntregar(last: t0, now: t0.addingTimeInterval(10), entregasSeguidas: 1))
+        XCTAssertTrue(WebBridge.debeEntregar(last: t0, now: t0.addingTimeInterval(31), entregasSeguidas: 1))
+        XCTAssertFalse(WebBridge.debeEntregar(last: t0, now: t0.addingTimeInterval(500), entregasSeguidas: 2))
     }
 
     func testEventoDeLaWeb() {
-        XCTAssertEqual(WebEvent(mensaje: ["tipo": "salir"]), .salir)
-        XCTAssertEqual(WebEvent(mensaje: ["tipo": "sesionCerrada"]), .sesionCerrada)
-        XCTAssertEqual(WebEvent(mensaje: ["tipo": "sinSesion"]), .sinSesion)
-        XCTAssertEqual(WebEvent(mensaje: ["tipo": "abrirCaptura"]), .abrirCaptura)
-        XCTAssertNil(WebEvent(mensaje: ["tipo": "borrarTodo"]))
-        XCTAssertNil(WebEvent(mensaje: "salir"))
+        XCTAssertEqual(WebEvent(message: ["tipo": "salir"]), .signOut)
+        XCTAssertEqual(WebEvent(message: ["tipo": "sesionCerrada"]), .sesionCerrada)
+        XCTAssertEqual(WebEvent(message: ["tipo": "sinSesion"]), .signedOut)
+        XCTAssertEqual(WebEvent(message: ["tipo": "abrirCaptura"]), .abrirCaptura)
+        XCTAssertNil(WebEvent(message: ["tipo": "borrarTodo"]))
+        XCTAssertNil(WebEvent(message: "salir"))
     }
 
     // MARK: Handler de sesión
@@ -88,45 +88,45 @@ final class WebBridgeTests: XCTestCase {
     /// ventana de la anterior.
     final class JumpingClock: @unchecked Sendable {
         private var t = Date(timeIntervalSince1970: 1_800_000_000)
-        func leer() -> Date {
+        func read() -> Date {
             t = t.addingTimeInterval(31)
             return t
         }
     }
 
     @MainActor
-    private func puente(sesion: SessionDouble, navegacion: NavigationDouble = NavigationDouble()) -> WebBridge {
+    private func puente(session: SessionDouble, navigation: NavigationDouble = NavigationDouble()) -> WebBridge {
         let reloj = JumpingClock()
         return WebBridge(
-            sesion: sesion, configuracion: APIConfiguration(base: base), navegacion: navegacion, version: "0.1.0",
-            reloj: { reloj.leer() }, abrirExterno: { _ in })
+            session: session, configuration: APIConfiguration(base: base), navigation: navigation, version: "0.1.0",
+            reloj: { reloj.read() }, abrirExterno: { _ in })
     }
 
     @MainActor
     func testSinSesionRespondeErrorYNoEntregaNada() async {
-        let p = puente(sesion: SessionDouble(estado: .sinSesion, token: nil))
-        let (valor, error) = await p.responderPedidoDeSesion(
+        let p = puente(session: SessionDouble(state: .signedOut, token: nil))
+        let (value, error) = await p.responderPedidoDeSesion(
             esFramePrincipal: true, protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0)
-        XCTAssertNil(valor)
+        XCTAssertNil(value)
         XCTAssertEqual(error, "sin-sesion")
     }
 
     @MainActor
     func testOrigenAjenoRespondeErrorAunqueHayaSesion() async {
-        let p = puente(sesion: SessionDouble())
-        let (valor, error) = await p.responderPedidoDeSesion(
+        let p = puente(session: SessionDouble())
+        let (value, error) = await p.responderPedidoDeSesion(
             esFramePrincipal: false, protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 0)
-        XCTAssertNil(valor)
+        XCTAssertNil(value)
         XCTAssertEqual(error, "origen-no-permitido")
     }
 
     @MainActor
     func testConSesionActivaRespondeLasTresClavesYNuncaElRefresh() async throws {
-        let p = puente(sesion: SessionDouble())
-        let (valor, error) = await p.responderPedidoDeSesion(
+        let p = puente(session: SessionDouble())
+        let (value, error) = await p.responderPedidoDeSesion(
             esFramePrincipal: true, protocolo: "https", host: "dev-cocoapp.viteri.me", puerto: 443)
         XCTAssertNil(error)
-        let dic = try XCTUnwrap(valor as? [String: Any])
+        let dic = try XCTUnwrap(value as? [String: Any])
         XCTAssertEqual(Set(dic.keys), ["access_token", "expires_in", "user"])
         XCTAssertEqual(dic["access_token"] as? String, "token-1")
         XCTAssertEqual(dic["expires_in"] as? Int, 3600)
@@ -138,29 +138,29 @@ final class WebBridgeTests: XCTestCase {
 
     @MainActor
     func testElWebViewLlevaElUserAgentDeLaApp() {
-        let p = puente(sesion: SessionDouble())
+        let p = puente(session: SessionDouble())
         XCTAssertEqual(p.webView.configuration.applicationNameForUserAgent, "CocoiOS/0.1.0")
         XCTAssertEqual(p.webView.configuration.userContentController.userScripts.first?.isForMainFrameOnly, true)
     }
 
     @MainActor
     func testLosEventosLleganASesionYNavegacion() async {
-        let sesion = SessionDouble()
-        let navegacion = NavigationDouble()
-        let p = puente(sesion: sesion, navegacion: navegacion)
+        let session = SessionDouble()
+        let navigation = NavigationDouble()
+        let p = puente(session: session, navigation: navigation)
         await p.recibir(.abrirCaptura)
-        XCTAssertEqual(navegacion.destinos, [.formularioRapido(conCamara: false)])
+        XCTAssertEqual(navigation.destinos, [.quickForm(withCamera: false)])
         await p.recibir(.sesionCerrada)
-        XCTAssertEqual(sesion.descartes, 1)
-        await p.recibir(.salir)
-        XCTAssertEqual(sesion.salidas, 1)
+        XCTAssertEqual(session.descartes, 1)
+        await p.recibir(.signOut)
+        XCTAssertEqual(session.salidas, 1)
     }
 
     @MainActor
     func testTresPedidosSeguidosDejanLaSesionWebAtascada() async {
-        let p = puente(sesion: SessionDouble())
+        let p = puente(session: SessionDouble())
         await p.empujarSesion()
-        XCTAssertEqual(p.estadoDeCarga, .cargando)
+        XCTAssertEqual(p.estadoDeCarga, .loading)
         await p.empujarSesion()
         await p.empujarSesion()
         XCTAssertEqual(p.estadoDeCarga, .sesionWebAtascada)
@@ -168,8 +168,8 @@ final class WebBridgeTests: XCTestCase {
 
     @MainActor
     func testSinConexionLaEntregaQuedaPendiente() async {
-        let sesion = SessionDouble(estado: .sinConexion(ultima: SessionDouble.perfil))
-        let p = puente(sesion: sesion)
+        let session = SessionDouble(state: .offline(last: SessionDouble.perfil))
+        let p = puente(session: session)
         await p.empujarSesion()
         XCTAssertTrue(p.entregaPendiente)
     }

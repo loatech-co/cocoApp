@@ -8,7 +8,7 @@ struct RegistrarGastoDeWalletIntent: AppIntent {
     static let title: LocalizedStringResource = "Registrar gasto de Wallet"
     static let description = IntentDescription("Registra en Coco un pago hecho con Apple Pay.")
     static let openAppWhenRun = false
-    static let presupuesto: Duration = .seconds(10)
+    static let budget: Duration = .seconds(10)
 
     // Siempre String: «Transacción» entrega la moneda formateada y la coerción
     // a número no está garantizada.
@@ -20,18 +20,18 @@ struct RegistrarGastoDeWalletIntent: AppIntent {
     @Dependency(key: DependencyKeys.capturador) var capturador: any Capturer
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let resultado = await Self.ejecutar(
-            comercio: comercio, monto: monto, tarjeta: tarjeta, nombre: nombre, capturador: capturador)
-        return .result(dialog: ActionParameters.dialogo(resultado))
+        let result = await Self.run(
+            merchant: comercio, amount: monto, tarjeta: tarjeta, name: nombre, capturador: capturador)
+        return .result(dialog: ActionParameters.dialogo(result))
     }
 
     /// Separado de `perform()` para probarlo con un capturador falso.
-    static func ejecutar(
-        comercio: String?, monto: String?, tarjeta: String?, nombre: String?, capturador: any Capturer,
-        ahora: Date = .now
+    static func run(
+        merchant: String?, amount: String?, tarjeta: String?, name: String?, capturador: any Capturer,
+        now: Date = .now
     ) async -> CaptureResult {
-        let cuerpo = ActionParameters.cuerpoDeWallet(
-            comercio: comercio, monto: monto, tarjeta: tarjeta, nombre: nombre, ahora: ahora)
-        return await capturador.capturar(cuerpo, origen: .wallet, foto: nil, presupuesto: presupuesto)
+        let body = ActionParameters.cuerpoDeWallet(
+            merchant: merchant, amount: amount, tarjeta: tarjeta, name: name, now: now)
+        return await capturador.capture(body, source: .wallet, photo: nil, budget: budget)
     }
 }

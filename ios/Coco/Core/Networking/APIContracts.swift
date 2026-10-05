@@ -38,24 +38,28 @@ struct SessionResponse: Decodable, Sendable {
 }
 
 struct ProposedClassification: Codable, Equatable, Sendable {
-    let certeza: String
-    let fuente: String?
+    let confidence: String
+    let source: String?
     let conceptId: Int?
     let categoryId: Int?
-    let nombre: String?
-    let candidatos: [Candidate]
-    let motivo: String
+    let name: String?
+    let candidates: [Candidate]
+    let reason: String
 
     enum CodingKeys: String, CodingKey {
-        case certeza, fuente, nombre, candidatos, motivo
+        case confidence = "certeza"
+        case source = "fuente"
+        case name = "nombre"
+        case candidates = "candidatos"
+        case reason = "motivo"
         case conceptId = "concepto_id"
         case categoryId = "categoria_id"
     }
 
     struct Candidate: Codable, Equatable, Sendable {
         let id: Int
-        let nombre: String
-        let ruta: String
+        let name: String
+        let path: String
     }
 }
 
@@ -65,11 +69,12 @@ struct Interpretation: Codable, Equatable, Sendable {
     let date: String?
     let merchant: String?
     let description: String?
-    let clasificacion: ProposedClassification
+    let classification: ProposedClassification
     let needsReview: Bool
 
     enum CodingKeys: String, CodingKey {
-        case amount, date, merchant, description, clasificacion
+        case amount, date, merchant, description
+        case classification = "clasificacion"
         case needsReview = "por_revisar"
     }
 }
@@ -95,23 +100,34 @@ struct TransactionSummary: Codable, Equatable, Sendable {
 /// Lo que devuelve `POST /transactions/capture` (`Captura` de @coco/types).
 struct CaptureResponse: Codable, Equatable, Sendable {
     let transaction: TransactionSummary
-    let clasificacion: ProposedClassification
-    let resumen: String
-    let repetido: Bool
-    let fusionado: Bool
+    let classification: ProposedClassification
+    let summary: String
+    let duplicate: Bool
+    let merged: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case transaction
+        case classification = "clasificacion"
+        case summary = "resumen"
+        case duplicate = "repetido"
+        case merged = "fusionado"
+    }
 }
 
 /// La ficha de un soporte, no el archivo (`Soporte` de @coco/types).
 struct Attachment: Codable, Equatable, Sendable {
     let id: Int
-    let orden: Int
+    let order: Int
     let fileName: String
     let mimeType: String
-    let tamano: Int
-    let disponible: Bool
+    let size: Int
+    let available: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id, orden, tamano, disponible
+        case id
+        case order = "orden"
+        case size = "tamano"
+        case available = "disponible"
         case fileName = "nombre_archivo"
         case mimeType = "mime_type"
     }
@@ -124,11 +140,12 @@ struct TreeNode: Codable, Equatable, Sendable {
     let parentId: Int?
     let keywords: [String]
     let isArchived: Bool
-    let estatico: Bool
+    let isStatic: Bool
     let children: [TreeNode]?
 
     enum CodingKeys: String, CodingKey {
-        case id, name, estatico, children
+        case id, name, children
+        case isStatic = "estatico"
         case parentId = "parent_id"
         case keywords = "palabras_clave"
         case isArchived = "is_archived"
@@ -138,14 +155,14 @@ struct TreeNode: Codable, Equatable, Sendable {
     // de tumbar el árbol entero.
     init(
         id: Int, name: String, parentId: Int?, keywords: [String] = [], isArchived: Bool = false,
-        estatico: Bool = false, children: [TreeNode]? = nil
+        isStatic: Bool = false, children: [TreeNode]? = nil
     ) {
         self.id = id
         self.name = name
         self.parentId = parentId
         self.keywords = keywords
         self.isArchived = isArchived
-        self.estatico = estatico
+        self.isStatic = isStatic
         self.children = children
     }
 
@@ -156,7 +173,7 @@ struct TreeNode: Codable, Equatable, Sendable {
         parentId = try c.decodeIfPresent(Int.self, forKey: .parentId)
         keywords = try c.decodeIfPresent([String].self, forKey: .keywords) ?? []
         isArchived = try c.decodeIfPresent(Bool.self, forKey: .isArchived) ?? false
-        estatico = try c.decodeIfPresent(Bool.self, forKey: .estatico) ?? false
+        isStatic = try c.decodeIfPresent(Bool.self, forKey: .isStatic) ?? false
         children = try c.decodeIfPresent([TreeNode].self, forKey: .children)
     }
 }
@@ -180,5 +197,14 @@ enum CaptureSource: String, Codable, Sendable {
     case wallet
     case sms
     case iosManual = "ios_manual"
-    case iosFoto = "ios_photo"
+    case iosPhoto = "ios_photo"
+}
+
+/// Fuera del tipo para no anidar tres niveles (SwiftLint `nesting`).
+extension ProposedClassification.Candidate {
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name = "nombre"
+        case path = "ruta"
+    }
 }

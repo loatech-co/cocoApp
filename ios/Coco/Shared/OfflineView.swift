@@ -3,9 +3,9 @@ import SwiftUI
 /// Lo que se ve cuando no hay red y la web no llegó a cargar. Lo importante
 /// es decir que capturar sigue funcionando.
 struct OfflineView: View {
-    let pendientes: Int
-    let reintentar: () -> Void
-    let capturar: () -> Void
+    let pending: Int
+    let retry: () -> Void
+    let capture: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -14,14 +14,14 @@ struct OfflineView: View {
                 .foregroundStyle(.secondary)
             Text("Sin conexión")
                 .font(.title2.weight(.semibold))
-            Text(texto)
+            Text(text)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             HStack(spacing: 12) {
-                Button("Reintentar", action: reintentar)
+                Button("Reintentar", action: retry)
                     .buttonStyle(.bordered)
-                Button("Capturar", action: capturar)
+                Button("Capturar", action: capture)
                     .buttonStyle(.borderedProminent)
             }
         }
@@ -30,13 +30,13 @@ struct OfflineView: View {
         .background(Color(.systemBackground))
     }
 
-    private var texto: String {
+    private var text: String {
         var t = "Lo que captures se guarda en el teléfono y se envía solo al volver la red."
-        if pendientes == 1 { t += " 1 pendiente." } else if pendientes > 1 { t += " \(pendientes) pendientes." }
+        if pending == 1 { t += " 1 pendiente." } else if pending > 1 { t += " \(pending) pendientes." }
         return t
     }
 }
 
 #Preview {
-    OfflineView(pendientes: 3, reintentar: {}, capturar: {})
+    OfflineView(pending: 3, retry: {}, capture: {})
 }

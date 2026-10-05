@@ -7,7 +7,7 @@ struct RegistrarGastoDeSMSIntent: AppIntent {
     static let title: LocalizedStringResource = "Registrar gasto de SMS"
     static let description = IntentDescription("Registra en Coco el gasto que anuncia un SMS del banco.")
     static let openAppWhenRun = false
-    static let presupuesto: Duration = .seconds(10)
+    static let budget: Duration = .seconds(10)
 
     @Parameter(title: "Texto") var texto: String
     @Parameter(title: "Remitente") var remitente: String?
@@ -15,14 +15,14 @@ struct RegistrarGastoDeSMSIntent: AppIntent {
     @Dependency(key: DependencyKeys.capturador) var capturador: any Capturer
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let resultado = try await Self.ejecutar(texto: texto, remitente: remitente, capturador: capturador)
-        return .result(dialog: ActionParameters.dialogo(resultado))
+        let result = try await Self.run(text: texto, remitente: remitente, capturador: capturador)
+        return .result(dialog: ActionParameters.dialogo(result))
     }
 
-    static func ejecutar(texto: String, remitente: String?, capturador: any Capturer, ahora: Date = .now) async throws
+    static func run(text: String, remitente: String?, capturador: any Capturer, now: Date = .now) async throws
         -> CaptureResult
     {
-        let cuerpo = try ActionParameters.cuerpoDeSMS(texto: texto, remitente: remitente, ahora: ahora)
-        return await capturador.capturar(cuerpo, origen: .sms, foto: nil, presupuesto: presupuesto)
+        let body = try ActionParameters.cuerpoDeSMS(text: text, remitente: remitente, now: now)
+        return await capturador.capture(body, source: .sms, photo: nil, budget: budget)
     }
 }

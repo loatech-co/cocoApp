@@ -4,20 +4,20 @@ import Foundation
 enum ExpiryReminder {
     /// La víspera a las 09:00 locales; si faltan menos de 24 h, en un minuto;
     /// si ya venció, nil (eso se dice con un cartel, no con un aviso).
-    static func momentoDelAviso(vence: Date, ahora: Date, calendario: Calendar = .current) -> Date? {
-        guard vence > ahora else { return nil }
-        let enUnMinuto = ahora.addingTimeInterval(60)
-        guard vence.timeIntervalSince(ahora) >= 24 * 3600 else { return enUnMinuto }
-        guard let vispera = calendario.date(byAdding: .day, value: -1, to: vence),
-            let alasNueve = calendario.date(bySettingHour: 9, minute: 0, second: 0, of: vispera)
+    static func momentoDelAviso(expiresAt: Date, now: Date, calendar: Calendar = .current) -> Date? {
+        guard expiresAt > now else { return nil }
+        let enUnMinuto = now.addingTimeInterval(60)
+        guard expiresAt.timeIntervalSince(now) >= 24 * 3600 else { return enUnMinuto }
+        guard let vispera = calendar.date(byAdding: .day, value: -1, to: expiresAt),
+            let alasNueve = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: vispera)
         else { return enUnMinuto }
         // La víspera a las 09:00 puede haber pasado ya (vence mañana de
         // madrugada): entonces no se espera.
-        return alasNueve > ahora ? alasNueve : enUnMinuto
+        return alasNueve > now ? alasNueve : enUnMinuto
     }
 
-    static func texto(vence: Date, ahora: Date) -> (titulo: String, cuerpo: String) {
-        let dias = diasRestantes(vence: vence, ahora: ahora)
+    static func text(expiresAt: Date, now: Date) -> (titulo: String, body: String) {
+        let dias = diasRestantes(expiresAt: expiresAt, now: now)
         let cuando: String
         switch dias {
         case ..<0: cuando = "ya caducó"
@@ -30,9 +30,9 @@ enum ExpiryReminder {
 
     /// Días de calendario entre hoy y el día del vencimiento: a las 23:50 con
     /// vencimiento a las 00:30 queda 1, no 0.
-    static func diasRestantes(vence: Date, ahora: Date, calendario: Calendar = .current) -> Int {
-        let inicio = calendario.startOfDay(for: ahora)
-        let fin = calendario.startOfDay(for: vence)
-        return calendario.dateComponents([.day], from: inicio, to: fin).day ?? 0
+    static func diasRestantes(expiresAt: Date, now: Date, calendar: Calendar = .current) -> Int {
+        let inicio = calendar.startOfDay(for: now)
+        let fin = calendar.startOfDay(for: expiresAt)
+        return calendar.dateComponents([.day], from: inicio, to: fin).day ?? 0
     }
 }

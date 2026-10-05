@@ -1,10 +1,10 @@
 import Foundation
 
-/// Lo que dejó una corrida de `procesar()`.
+/// Lo que dejó una corrida de `process()`.
 struct SendSummary: Equatable, Sendable {
-    var enviadas: Int = 0
+    var sent: Int = 0
     var fallidas: Int = 0
-    var pendientes: Int = 0
+    var pending: Int = 0
     var resultados: [SavedResult] = []
 }
 
@@ -14,8 +14,8 @@ struct SendSummary: Equatable, Sendable {
 final actor CaptureQueue {
     private let almacen: QueueStore
     private let enviador: CaptureSender
-    private let sesion: Session
-    private let notificador: Notifier
+    private let session: Session
+    private let notifier: Notifier
     private let reintento: Retry
     private let reloj: @Sendable () -> Date
     private let separacion: Duration
@@ -24,8 +24,8 @@ final actor CaptureQueue {
 
     /// Publica la cola entera tras cada transición; quien escucha saca de ahí
     /// el número de pendientes.
-    nonisolated let cambios: AsyncStream<[PendingCapture]>
-    private let continuacion: AsyncStream<[PendingCapture]>.Continuation
+    nonisolated let changes: AsyncStream<[PendingCapture]>
+    private let continuation: AsyncStream<[PendingCapture]>.Continuation
 
     private var enVuelo: Task<SendSummary, Never>?
     private var ultimoEnvio: ContinuousClock.Instant?
@@ -33,8 +33,8 @@ final actor CaptureQueue {
     init(
         almacen: QueueStore,
         enviador: CaptureSender,
-        sesion: Session,
-        notificador: Notifier,
+        session: Session,
+        notifier: Notifier,
         reintento: Retry = .init(),
         reloj: @Sendable @escaping () -> Date = Date.init,
         separacion: Duration = .milliseconds(300),
@@ -43,16 +43,16 @@ final actor CaptureQueue {
     ) {
         self.almacen = almacen
         self.enviador = enviador
-        self.sesion = sesion
-        self.notificador = notificador
+        self.session = session
+        self.notifier = notifier
         self.reintento = reintento
         self.reloj = reloj
         self.separacion = separacion
         self.topeDeFotosBytes = topeDeFotosBytes
         self.encogerFoto = encogerFoto
-        let (flujo, continuacion) = AsyncStream<[PendingCapture]>.makeStream(bufferingPolicy: .bufferingNewest(1))
-        self.cambios = flujo
-        self.continuacion = continuacion
+        let (stream, continuation) = AsyncStream<[PendingCapture]>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        self.changes = stream
+        self.continuation = continuation
     }
 
     // MARK: Entrada
@@ -61,20 +61,20 @@ final actor CaptureQueue {
     /// antes de devolver; si el disco falla, lanza y el que llama lo sabe.
     @discardableResult
     func encolar(
-        _ cuerpo: CaptureBody, origen: CaptureSource, foto: Data?, id: UUID = UUID(), capturadaEn: Date = .now
+        _ body: CaptureBody, source: CaptureSource, photo: Data?, id: UUID = UUID(), capturadaEn: Date = .now
     ) async throws -> PendingCapture {
-        if let existente = try almacen.todas().first(where: { $0.id == id }) { return existente }
-        var captura = PendingCapture(id: id, creadaEn: capturadaEn, origen: origen, cuerpo: cuerpo)
-        if let foto {
-            let jpeg = encogerFoto(foto)
+        if let existente = try almacen.all().first(where: { $0.id == id }) { return existente }
+        var capture = PendingCapture(id: id, creadaEn: capturadaEn, source: source, body: body)
+        if let photo {
+            let jpeg = encogerFoto(photo)
             // Con el tope lleno no se escribe: una foto que no cabe no puede
             // dejar sin sitio al JSON de la captura siguiente.
-            guard try almacen.bytesDeFotos() + jpeg.count <= topeDeFotosBytes else { throw QueueError.fotosLlenas }
-            captura.fotoRelativa = try almacen.guardarFoto(jpeg, id: id)
+            guard try almacen.photoBytes() + jpeg.count <= topeDeFotosBytes else { throw QueueError.photosFull }
+            capture.fotoRelativa = try almacen.savePhoto(jpeg, id: id)
         }
-        try almacen.guardar(captura)
+        try almacen.save(capture)
         await publicar()
-        return captura
+        return capture
     }
 
     // MARK: Envío
@@ -82,102 +82,102 @@ final actor CaptureQueue {
     /// Una sola corrida en vuelo: quien llega mientras otra corre espera su
     /// resultado. Respeta `proximoIntento` y para al agotar el presupuesto.
     @discardableResult
-    func procesar(presupuesto: Duration = .seconds(25)) async -> SendSummary {
+    func process(budget: Duration = .seconds(25)) async -> SendSummary {
         if let enVuelo { return await enVuelo.value }
-        let tarea = Task { await self.correr(presupuesto: presupuesto) }
-        enVuelo = tarea
-        let resumen = await tarea.value
+        let task = Task { await self.runTask(budget: budget) }
+        enVuelo = task
+        let summary = await task.value
         enVuelo = nil
-        return resumen
+        return summary
     }
 
-    private func correr(presupuesto: Duration) async -> SendSummary {
-        let limite = ContinuousClock.now + presupuesto
-        var resumen = SendSummary()
+    private func runTask(budget: Duration) async -> SendSummary {
+        let limite = ContinuousClock.now + budget
+        var summary = SendSummary()
         var enviadasQueEstabanEnCola = 0
         var yaIntentadas = Set<UUID>()
 
         while ContinuousClock.now < limite {
-            let ahora = reloj()
-            guard let captura = listas(en: ahora).first(where: { !yaIntentadas.contains($0.id) }) else { break }
-            yaIntentadas.insert(captura.id)
+            let now = reloj()
+            guard let capture = listas(at: now).first(where: { !yaIntentadas.contains($0.id) }) else { break }
+            yaIntentadas.insert(capture.id)
             await respetarSeparacion()
-            let estabaEnCola = captura.intentos > 0
-            let salida = await enviar(captura)
-            switch salida {
+            let estabaEnCola = capture.intentos > 0
+            let output = await send(capture)
+            switch output {
             case .hecha(let r):
-                resumen.enviadas += 1
-                resumen.resultados.append(r)
+                summary.sent += 1
+                summary.resultados.append(r)
                 if estabaEnCola { enviadasQueEstabanEnCola += 1 }
-            case .fallida:
-                resumen.fallidas += 1
-            case .reintentar:
+            case .failed:
+                summary.fallidas += 1
+            case .retry:
                 continue
-            case .sinRed:
+            case .noNetwork:
                 break
             }
             // Sin red no tiene sentido seguir con las demás: cada una
             // esperaría su propio timeout para decir lo mismo.
-            if case .sinRed = salida { break }
+            if case .noNetwork = output { break }
         }
 
-        resumen.pendientes = contarPendientes()
-        if enviadasQueEstabanEnCola > 0 { await notificador.colaEnviada(cuantas: enviadasQueEstabanEnCola) }
-        return resumen
+        summary.pending = contarPendientes()
+        if enviadasQueEstabanEnCola > 0 { await notifier.queueSent(count: enviadasQueEstabanEnCola) }
+        return summary
     }
 
     private enum SendOutcome {
         case hecha(SavedResult)
-        case fallida, reintentar, sinRed
+        case failed, retry, noNetwork
     }
 
     /// Fase 1 (texto) y fase 2 (foto) sobre una captura. Cada transición se
     /// escribe en disco antes de seguir, así un reinicio a mitad no duplica.
-    private func enviar(_ original: PendingCapture) async -> SendOutcome {
-        var captura = original
-        if case .porEnviar = captura.fase {
+    private func send(_ original: PendingCapture) async -> SendOutcome {
+        var capture = original
+        if case .porEnviar = capture.fase {
             do {
-                let respuesta = try await conRenovacionSiHaceFalta { try await self.enviador.capturar(captura.request) }
-                let resultado = SavedResult(
-                    transactionId: respuesta.transaction.id,
-                    resumen: respuesta.resumen,
-                    repetido: respuesta.repetido,
-                    fusionado: respuesta.fusionado,
-                    porRevisar: respuesta.transaction.needsReview,
-                    terminadaEn: reloj()
+                let response = try await conRenovacionSiHaceFalta { try await self.enviador.capture(capture.request) }
+                let result = SavedResult(
+                    transactionId: response.transaction.id,
+                    summary: response.summary,
+                    duplicate: response.duplicate,
+                    merged: response.merged,
+                    needsReview: response.transaction.needsReview,
+                    finishedAt: reloj()
                 )
-                captura.ultimoError = nil
-                if captura.fotoRelativa != nil {
-                    captura.fase = .porSubirFoto(transactionId: resultado.transactionId)
-                    captura.resultadoDeTexto = resultado
-                    try? almacen.guardar(captura)
+                capture.ultimoError = nil
+                if capture.fotoRelativa != nil {
+                    capture.fase = .porSubirFoto(transactionId: result.transactionId)
+                    capture.resultadoDeTexto = result
+                    try? almacen.save(capture)
                 } else {
-                    return await terminar(&captura, con: resultado)
+                    return await terminar(&capture, con: result)
                 }
             } catch {
-                return await fallo(&captura, error: error)
+                return await failure(&capture, error: error)
             }
         }
-        if case .porSubirFoto(let transactionId) = captura.fase {
-            let resultado =
-                captura.resultadoDeTexto
+        if case .porSubirFoto(let transactionId) = capture.fase {
+            let result =
+                capture.resultadoDeTexto
                 ?? SavedResult(
-                    transactionId: transactionId, resumen: "", repetido: false, fusionado: false, porRevisar: false,
-                    terminadaEn: reloj())
-            guard let ruta = captura.fotoRelativa, let jpeg = try? almacen.foto(en: ruta) else {
+                    transactionId: transactionId, summary: "", duplicate: false, merged: false, needsReview: false,
+                    finishedAt: reloj())
+            guard let path = capture.fotoRelativa, let jpeg = try? almacen.photo(at: path) else {
                 // Sin archivo no hay nada que subir: el texto ya está registrado.
-                return await terminar(&captura, con: resultado)
+                return await terminar(&capture, con: result)
             }
             do {
                 _ = try await conRenovacionSiHaceFalta {
-                    try await self.enviador.subirFoto(jpeg, nombre: "\(captura.id.uuidString).jpg", a: transactionId)
+                    try await self.enviador.uploadPhoto(jpeg, name: "\(capture.id.uuidString).jpg", to: transactionId)
                 }
-                return await terminar(&captura, con: resultado)
+                return await terminar(&capture, con: result)
             } catch {
-                return await fallo(&captura, error: error)
+                return await failure(&capture, error: error)
             }
         }
-        return .reintentar
+        return .retry
     }
 
     /// Un 401 pide UNA renovación y reintenta de inmediato; si sigue en 401,
@@ -185,56 +185,56 @@ final actor CaptureQueue {
     private func conRenovacionSiHaceFalta<T>(_ operacion: () async throws -> T) async throws -> T {
         do {
             return try await operacion()
-        } catch APIError.noAutenticado {
-            do { try await sesion.renovarAhora() } catch { throw APIError.noAutenticado }
+        } catch APIError.unauthenticated {
+            do { try await session.refreshNow() } catch { throw APIError.unauthenticated }
             return try await operacion()
         }
     }
 
-    private func terminar(_ captura: inout PendingCapture, con resultado: SavedResult) async -> SendOutcome {
-        if let ruta = captura.fotoRelativa {
-            try? almacen.borrarFoto(en: ruta)
-            captura.fotoRelativa = nil
+    private func terminar(_ capture: inout PendingCapture, con result: SavedResult) async -> SendOutcome {
+        if let path = capture.fotoRelativa {
+            try? almacen.deletePhoto(at: path)
+            capture.fotoRelativa = nil
         }
-        captura.fase = .hecha(resultado)
-        captura.resultadoDeTexto = nil
-        captura.ultimoError = nil
-        try? almacen.guardar(captura)
-        await notificador.capturaRegistrada(resultado, origen: captura.origen)
+        capture.fase = .hecha(result)
+        capture.resultadoDeTexto = nil
+        capture.ultimoError = nil
+        try? almacen.save(capture)
+        await notifier.captureSaved(result, source: capture.source)
         await publicar()
-        return .hecha(resultado)
+        return .hecha(result)
     }
 
-    private func fallo(_ captura: inout PendingCapture, error: Error) async -> SendOutcome {
-        let api = APIError.desde(error)
-        let salida: SendOutcome
+    private func failure(_ capture: inout PendingCapture, error: Error) async -> SendOutcome {
+        let api = APIError.from(error)
+        let output: SendOutcome
         switch api {
-        case .noAutenticado:
+        case .unauthenticated:
             // Sin crecer la espera: no es culpa de la red, es de la sesión.
-            captura.fase = .esperandoSesion
-            captura.ultimoError = "La sesión expiró. Vuelve a entrar."
-            salida = .reintentar
-        case .rechazada(_, _, let mensaje):
-            captura.fase = .fallida(motivo: mensaje)
-            captura.ultimoError = mensaje
-            await notificador.capturaFallida(motivo: mensaje)
-            salida = .fallida
-        case .respuestaIlegible:
-            let motivo = "La API contestó algo que no se entiende."
-            captura.fase = .fallida(motivo: motivo)
-            captura.ultimoError = motivo
-            await notificador.capturaFallida(motivo: motivo)
-            salida = .fallida
-        case .sinRed, .tiempoAgotado, .servidor:
-            captura.intentos += 1
-            captura.proximoIntento = reloj().addingTimeInterval(
-                Self.segundos(reintento.espera(intento: captura.intentos - 1)))
-            captura.ultimoError = Self.describir(api)
-            salida = api.esDeRed ? .sinRed : .reintentar
+            capture.fase = .esperandoSesion
+            capture.ultimoError = "La sesión expiró. Vuelve a entrar."
+            output = .retry
+        case .rejected(_, _, let message):
+            capture.fase = .failed(reason: message)
+            capture.ultimoError = message
+            await notifier.captureFailed(reason: message)
+            output = .failed
+        case .unreadableResponse:
+            let reason = "La API contestó algo que no se entiende."
+            capture.fase = .failed(reason: reason)
+            capture.ultimoError = reason
+            await notifier.captureFailed(reason: reason)
+            output = .failed
+        case .noNetwork, .timedOut, .server:
+            capture.intentos += 1
+            capture.proximoIntento = reloj().addingTimeInterval(
+                Self.segundos(reintento.espera(intento: capture.intentos - 1)))
+            capture.ultimoError = Self.describir(api)
+            output = api.isNetworkError ? .noNetwork : .retry
         }
-        try? almacen.guardar(captura)
+        try? almacen.save(capture)
         await publicar()
-        return salida
+        return output
     }
 
     private static func segundos(_ d: Duration) -> TimeInterval {
@@ -243,29 +243,29 @@ final actor CaptureQueue {
 
     private static func describir(_ e: APIError) -> String {
         switch e {
-        case .sinRed: "Sin conexión"
-        case .tiempoAgotado: "La API tardó demasiado"
-        case .servidor(let status): "La API no pudo ahora (\(status))"
+        case .noNetwork: "Sin conexión"
+        case .timedOut: "La API tardó demasiado"
+        case .server(let status): "La API no pudo ahora (\(status))"
         default: "Error"
         }
     }
 
     private func respetarSeparacion() async {
-        if let ultimo = ultimoEnvio {
-            let transcurrido = ContinuousClock.now - ultimo
+        if let last = ultimoEnvio {
+            let transcurrido = ContinuousClock.now - last
             if transcurrido < separacion { try? await Task.sleep(for: separacion - transcurrido) }
         }
         ultimoEnvio = .now
     }
 
     /// Lo que toca enviar ahora, en el orden en que se capturó.
-    private func listas(en ahora: Date) -> [PendingCapture] {
-        let todas = (try? almacen.todas()) ?? []
+    private func listas(at now: Date) -> [PendingCapture] {
+        let all = (try? almacen.all()) ?? []
         return
-            todas
+            all
             .filter { c in
                 switch c.fase {
-                case .porEnviar, .porSubirFoto: c.proximoIntento <= ahora
+                case .porEnviar, .porSubirFoto: c.proximoIntento <= now
                 default: false
                 }
             }
@@ -278,56 +278,56 @@ final actor CaptureQueue {
 extension CaptureQueue {
 
     func reintentarAhora(id: UUID) async {
-        guard var captura = buscar(id) else { return }
-        switch captura.fase {
-        case .fallida, .esperandoSesion: captura.fase = .porEnviar
+        guard var capture = search(id) else { return }
+        switch capture.fase {
+        case .failed, .esperandoSesion: capture.fase = .porEnviar
         case .porEnviar, .porSubirFoto: break
         case .hecha: return
         }
-        captura.proximoIntento = .distantPast
-        try? almacen.guardar(captura)
+        capture.proximoIntento = .distantPast
+        try? almacen.save(capture)
         await publicar()
     }
 
     /// Solo lo que aún no llegó a la API: editar algo ya registrado sería
     /// mentir sobre lo que se envió.
-    func editar(id: UUID, cuerpo: CaptureBody) async throws {
-        guard var captura = buscar(id) else { throw QueueError.noExiste(id) }
-        switch captura.fase {
-        case .fallida, .porEnviar: break
-        default: throw QueueError.noEditable(id)
+    func editar(id: UUID, body: CaptureBody) async throws {
+        guard var capture = search(id) else { throw QueueError.notFound(id) }
+        switch capture.fase {
+        case .failed, .porEnviar: break
+        default: throw QueueError.notEditable(id)
         }
-        captura.cuerpo = cuerpo
-        captura.fase = .porEnviar
-        captura.proximoIntento = .distantPast
-        captura.ultimoError = nil
-        try almacen.guardar(captura)
+        capture.body = body
+        capture.fase = .porEnviar
+        capture.proximoIntento = .distantPast
+        capture.ultimoError = nil
+        try almacen.save(capture)
         await publicar()
     }
 
-    func descartar(id: UUID) async throws {
-        guard let captura = buscar(id) else { return }
-        if let ruta = captura.fotoRelativa { try? almacen.borrarFoto(en: ruta) }
-        try almacen.borrar(id: id)
+    func discard(id: UUID) async throws {
+        guard let capture = search(id) else { return }
+        if let path = capture.fotoRelativa { try? almacen.deletePhoto(at: path) }
+        try almacen.delete(id: id)
         await publicar()
     }
 
     /// Tras un login: lo que esperaba sesión vuelve a la fila.
     func sesionVolvio() async {
-        for var captura in (try? almacen.todas()) ?? [] where captura.fase == .esperandoSesion {
-            captura.fase = .porEnviar
-            captura.proximoIntento = .distantPast
-            try? almacen.guardar(captura)
+        for var capture in (try? almacen.all()) ?? [] where capture.fase == .esperandoSesion {
+            capture.fase = .porEnviar
+            capture.proximoIntento = .distantPast
+            try? almacen.save(capture)
         }
         await publicar()
     }
 
     func purgar(hechasMasViejasQue edad: Duration = .seconds(30 * 86_400)) async {
-        let ahora = reloj()
+        let now = reloj()
         let segundos = TimeInterval(edad.components.seconds)
-        for captura in (try? almacen.todas()) ?? [] {
-            if case .hecha(let r) = captura.fase, ahora.timeIntervalSince(r.terminadaEn) > segundos {
-                try? almacen.borrar(id: captura.id)
+        for capture in (try? almacen.all()) ?? [] {
+            if case .hecha(let r) = capture.fase, now.timeIntervalSince(r.finishedAt) > segundos {
+                try? almacen.delete(id: capture.id)
             }
         }
         await publicar()
@@ -335,25 +335,25 @@ extension CaptureQueue {
 
     // MARK: Lectura
 
-    func pendientes() async -> Int { contarPendientes() }
+    func pending() async -> Int { contarPendientes() }
 
-    func todas() async -> [PendingCapture] {
-        ((try? almacen.todas()) ?? []).sorted { $0.creadaEn > $1.creadaEn }
+    func all() async -> [PendingCapture] {
+        ((try? almacen.all()) ?? []).sorted { $0.creadaEn > $1.creadaEn }
     }
 
-    func captura(id: UUID) async -> PendingCapture? { buscar(id) }
+    func capture(id: UUID) async -> PendingCapture? { search(id) }
 
-    private func buscar(_ id: UUID) -> PendingCapture? {
-        (try? almacen.todas())?.first { $0.id == id }
+    private func search(_ id: UUID) -> PendingCapture? {
+        (try? almacen.all())?.first { $0.id == id }
     }
 
     private func contarPendientes() -> Int {
-        ((try? almacen.todas()) ?? []).filter(\.estaPendiente).count
+        ((try? almacen.all()) ?? []).filter(\.estaPendiente).count
     }
 
     private func publicar() async {
-        let todas = ((try? almacen.todas()) ?? []).sorted { $0.creadaEn > $1.creadaEn }
-        continuacion.yield(todas)
-        await notificador.ponerInsignia(todas.filter(\.estaPendiente).count)
+        let all = ((try? almacen.all()) ?? []).sorted { $0.creadaEn > $1.creadaEn }
+        continuation.yield(all)
+        await notifier.setBadge(all.filter(\.estaPendiente).count)
     }
 }
