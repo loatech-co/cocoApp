@@ -569,6 +569,8 @@ describe('Auth propia (e2e)', () => {
         role: 'user',
         status: 'active',
         created_at: expect.any(String),
+        // Feature flags on for this user (step 7.8): none without FEATURES.
+        features: [],
       });
     });
   });
