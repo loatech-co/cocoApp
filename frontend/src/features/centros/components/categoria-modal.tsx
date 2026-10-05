@@ -1,10 +1,8 @@
 import { Loader2, Search } from 'lucide-react';
-import { useMemo, useState, type SubmitEvent } from 'react';
+import { useMemo, useState } from 'react';
 
-import { useActualizarCategoria } from '@/features/centros/api/categories';
-import { ApiClientError } from '@/shared/api/api-client';
-import { useCrearCategoria } from '@/shared/api/categories';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { useCategoryForm } from '@/features/centros/hooks/use-category-form';
+import { categoryModalTexts } from '@/features/centros/model/category-form';
 import { cn } from '@/shared/lib/utils';
 import { BLOQUE } from '@/shared/ui/atoms/bloque';
 import { Button } from '@/shared/ui/atoms/button';
@@ -76,43 +74,25 @@ function SelectorDeIcono({
           />
         </div>
 
-        <div className="grid max-h-44 grid-cols-6 gap-1 overflow-y-auto sm:grid-cols-8">
-          {filtrados.map(({ nombre, etiqueta }) => {
-            const elegido = valor === nombre;
-
-            return (
-              <button
-                key={nombre}
-                type="button"
-                // Pulsar el que ya está puesto lo quita: es el gesto que todo
-                // el mundo prueba para deshacer una elección, y sin él haría
-                // falta un botón de "ninguno" ocupando una plaza de la rejilla.
-                onClick={() => onElegir(elegido ? null : nombre)}
-                aria-pressed={elegido}
-                title={etiqueta}
-                aria-label={etiqueta}
-                className={cn(
-                  'grid aspect-square place-items-center rounded-md transition-colors',
-                  'movil:min-h-[42px]',
-                  elegido
-                    ? 'bg-primary text-primary-foreground'
-                    : cn('text-muted-foreground', REALCE),
-                )}
-              >
-                <IconoDeCategoria nombre={nombre} className="size-4" />
-              </button>
-            );
-          })}
-
-          {filtrados.length === 0 && (
-            <p className="col-span-full px-1 py-2 text-sm text-muted-foreground">
-              Ningún icono se llama así.
-            </p>
-          )}
-        </div>
+        <IconGrid filtrados={filtrados} valor={valor} onElegir={onElegir} />
       </div>
     </fieldset>
   );
+}
+
+interface CategoriaModalProps {
+  abierta: boolean;
+  /**
+   * Qué se está tocando. Cambia el título, la ayuda y si aparece el
+   * interruptor: lo estático se lee del CENTRO, que es el nivel de arriba, y
+   * una categoría hereda lo que diga el suyo.
+   */
+  nivel: 'centro' | 'categoria';
+  /** Con una categoría, se edita. Sin ella, se crea. */
+  categoria?: Category | null;
+  /** Al crear una categoría, de qué centro cuelga. */
+  padreId?: number;
+  onCerrar: () => void;
 }
 
 /**
@@ -140,87 +120,16 @@ export function CategoriaModal({
   categoria,
   padreId,
   onCerrar,
-}: {
-  abierta: boolean;
-  /**
-   * Qué se está tocando. Cambia el título, la ayuda y si aparece el
-   * interruptor: lo estático se lee del CENTRO, que es el nivel de arriba, y
-   * una categoría hereda lo que diga el suyo.
-   */
-  nivel: 'centro' | 'categoria';
-  /** Con una categoría, se edita. Sin ella, se crea. */
-  categoria?: Category | null;
-  /** Al crear una categoría, de qué centro cuelga. */
-  padreId?: number;
-  onCerrar: () => void;
-}) {
-  const crear = useCrearCategoria();
-  const actualizar = useActualizarCategoria();
-  const [nombre, setNombre] = useState('');
-  const [estatico, setEstatico] = useState(false);
-  const [icono, setIcono] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
+}: CategoriaModalProps) {
+  const form = useCategoryForm({ abierta, nivel, categoria, padreId, onCerrar });
+  const { nombre, setNombre, icono, setIcono, error, guardando } = form;
   const editando = categoria != null;
-  const guardando = crear.isPending || actualizar.isPending;
   const esCentro = nivel === 'centro';
-
-  // Se rellena en cada apertura con lo que toque: sin esto, lo que se canceló
-  // la vez anterior reaparece escrito la siguiente.
-  useAlCambiar([abierta, categoria], () => {
-    if (!abierta) return;
-    setNombre(categoria?.name ?? '');
-    setEstatico(categoria?.estatico ?? false);
-    setIcono(categoria?.icon ?? null);
-    setError(null);
-  });
-
-  async function onSubmit(evento: SubmitEvent<HTMLFormElement>): Promise<void> {
-    evento.preventDefault();
-    setError(null);
-
-    try {
-      if (editando) {
-        await actualizar.mutateAsync({
-          id: categoria.id,
-          cambios: esCentro
-            ? { name: nombre.trim(), estatico }
-            : { name: nombre.trim(), icon: icono },
-        });
-      } else {
-        await crear.mutateAsync({
-          name: nombre.trim(),
-          kind: 'expense',
-          ...(esCentro
-            ? { estatico }
-            : {
-                ...(padreId === undefined ? {} : { parent_id: padreId }),
-                ...(icono ? { icon: icono } : {}),
-              }),
-        });
-      }
-      onCerrar();
-    } catch (e) {
-      setError(e instanceof ApiClientError ? e.message : 'No se pudo guardar.');
-    }
-  }
+  const { titulo, ayuda } = categoryModalTexts(esCentro, editando);
 
   return (
-    <Modal
-      abierta={abierta}
-      titulo={
-        esCentro
-          ? `${editando ? 'Editar' : 'Nuevo'} centro de costos`
-          : `${editando ? 'Editar' : 'Nueva'} categoría`
-      }
-      ayuda={
-        esCentro
-          ? 'El nivel más general: Costos fijos, Variables, Negocio.'
-          : 'El nivel de en medio: Servicios públicos, Educación, Transporte.'
-      }
-      onCerrar={onCerrar}
-    >
-      <form onSubmit={(e) => void onSubmit(e)} className="flex flex-1 flex-col gap-4">
+    <Modal abierta={abierta} titulo={titulo} ayuda={ayuda} onCerrar={onCerrar}>
+      <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
         <Campo etiqueta="Nombre" id="categoria-nombre">
           <Input
             id="categoria-nombre"
@@ -265,17 +174,7 @@ export function CategoriaModal({
         {/* Solo en los centros: lo estático se lee del nivel de arriba, y un
             categoría hereda lo que diga el suyo. Ofrecerlo en una categoría sería un
             interruptor que no hace nada. */}
-        {esCentro && (
-          <label className={cn(BLOQUE, 'flex cursor-pointer items-center justify-between gap-4')}>
-            <span className="min-w-0">
-              <span className="block text-sm font-medium">Estático</span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">
-                La clasificación de sus movimientos solo se modifica desde Centros de costos.
-              </span>
-            </span>
-            <Interruptor checked={estatico} onChange={(e) => setEstatico(e.target.checked)} />
-          </label>
-        )}
+        {esCentro && <StaticSwitch estatico={form.estatico} onCambiar={form.setEstatico} />}
 
         {error && (
           <p role="alert" className="text-sm text-destructive">
@@ -283,16 +182,102 @@ export function CategoriaModal({
           </p>
         )}
 
-        <PieDeModal>
-          <Button type="button" variant="outline" onClick={onCerrar}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={guardando || nombre.trim() === ''}>
-            {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            {editando ? 'Guardar' : 'Crear'}
-          </Button>
-        </PieDeModal>
+        <CategoryFormFooter
+          editando={editando}
+          guardando={guardando}
+          deshabilitado={guardando || nombre.trim() === ''}
+          onCerrar={onCerrar}
+        />
       </form>
     </Modal>
+  );
+}
+
+function CategoryFormFooter({
+  editando,
+  guardando,
+  deshabilitado,
+  onCerrar,
+}: {
+  editando: boolean;
+  guardando: boolean;
+  deshabilitado: boolean;
+  onCerrar: () => void;
+}) {
+  return (
+    <PieDeModal>
+      <Button type="button" variant="outline" onClick={onCerrar}>
+        Cancelar
+      </Button>
+      <Button type="submit" disabled={deshabilitado}>
+        {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+        {editando ? 'Guardar' : 'Crear'}
+      </Button>
+    </PieDeModal>
+  );
+}
+
+function StaticSwitch({
+  estatico,
+  onCambiar,
+}: {
+  estatico: boolean;
+  onCambiar: (estatico: boolean) => void;
+}) {
+  return (
+    <label className={cn(BLOQUE, 'flex cursor-pointer items-center justify-between gap-4')}>
+      <span className="min-w-0">
+        <span className="block text-sm font-medium">Estático</span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">
+          La clasificación de sus movimientos solo se modifica desde Centros de costos.
+        </span>
+      </span>
+      <Interruptor checked={estatico} onChange={(e) => onCambiar(e.target.checked)} />
+    </label>
+  );
+}
+
+function IconGrid({
+  filtrados,
+  valor,
+  onElegir,
+}: {
+  filtrados: typeof ICONOS_DE_CATEGORIA;
+  valor: string | null;
+  onElegir: (icono: string | null) => void;
+}) {
+  return (
+    <div className="grid max-h-44 grid-cols-6 gap-1 overflow-y-auto sm:grid-cols-8">
+      {filtrados.map(({ nombre, etiqueta }) => {
+        const elegido = valor === nombre;
+
+        return (
+          <button
+            key={nombre}
+            type="button"
+            // Pulsar el que ya está puesto lo quita: es el gesto que todo
+            // el mundo prueba para deshacer una elección, y sin él haría
+            // falta un botón de "ninguno" ocupando una plaza de la rejilla.
+            onClick={() => onElegir(elegido ? null : nombre)}
+            aria-pressed={elegido}
+            title={etiqueta}
+            aria-label={etiqueta}
+            className={cn(
+              'grid aspect-square place-items-center rounded-md transition-colors',
+              'movil:min-h-[42px]',
+              elegido ? 'bg-primary text-primary-foreground' : cn('text-muted-foreground', REALCE),
+            )}
+          >
+            <IconoDeCategoria nombre={nombre} className="size-4" />
+          </button>
+        );
+      })}
+
+      {filtrados.length === 0 && (
+        <p className="col-span-full px-1 py-2 text-sm text-muted-foreground">
+          Ningún icono se llama así.
+        </p>
+      )}
+    </div>
   );
 }
