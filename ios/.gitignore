@@ -4,6 +4,5 @@ xcuserdata/
 DerivedData/
 build/
 *.xcresult
-# Los Info.plist los genera xcodegen desde project.yml.
-Coco/Resources/Info.plist
-CocoTests/Info.plist
+# Los Info.plist los genera xcodegen desde project.yml, pero SE VERSIONAN:
+# abrir el .xcodeproj no debe exigir tener xcodegen instalado.
