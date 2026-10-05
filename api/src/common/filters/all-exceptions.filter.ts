@@ -9,6 +9,8 @@ import {
 import { Prisma } from '@prisma/client';
 import type { Request, Response } from 'express';
 
+import { checkViolationMessage } from './check-constraints';
+
 interface ErrorDetail {
   field?: string;
   message: string;
@@ -65,6 +67,23 @@ export class AllExceptionsFilter implements ExceptionFilter {
   } {
     if (exception instanceof HttpException) {
       return this.fromHttpException(exception);
+    }
+
+    // A CHECK constraint is a business rule the request broke: 422, with the
+    // rule said in words. Prisma may surface it as known or unknown.
+    if (
+      exception instanceof Prisma.PrismaClientUnknownRequestError ||
+      exception instanceof Prisma.PrismaClientKnownRequestError
+    ) {
+      const message = checkViolationMessage(exception.message);
+      if (message !== null) {
+        return {
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          code: 'unprocessable',
+          message,
+          details: [],
+        };
+      }
     }
 
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
