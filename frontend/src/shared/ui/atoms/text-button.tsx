@@ -21,7 +21,13 @@ import { REALCE } from '@/shared/ui/foundations/superficie';
  */
 const TONOS = {
   primario: 'rounded-sm font-medium text-primary hover:underline',
-  tenue: 'text-xs text-muted-foreground underline-offset-2 hover:underline',
+  // 24px de alto aunque la letra mida 12: vive junto a un campo, y un blanco
+  // de 16 queda por debajo del mínimo táctil (WCAG 2.5.8). El texto se centra
+  // en esa caja, así que a la vista no crece.
+  tenue: cn(
+    'inline-flex min-h-6 items-center',
+    'text-xs text-muted-foreground underline-offset-2 hover:underline',
+  ),
   realce: cn('rounded-md px-1.5 py-0.5', REALCE),
 } as const;
 

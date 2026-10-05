@@ -72,7 +72,9 @@ export function MovementClassification({
       />
 
       {!estatico && (
-        <div className="-mt-2 flex self-start">
+        // -mt-3 y no -mt-2: el botón mide 24 y su letra 16, así que el texto
+        // queda donde estaba.
+        <div className="-mt-3 flex self-start">
           <TextButton tono="tenue" onClick={() => ficha.setCascadaVisible((v) => !v)}>
             {ficha.cascadaVisible ? 'Ocultar centro y categoría' : 'Elegir por centro y categoría'}
           </TextButton>
