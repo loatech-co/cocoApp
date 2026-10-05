@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 
 import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
 import { TextButton } from '@/shared/ui/atoms/text-button';
@@ -25,18 +25,17 @@ export function CategoriaParaNuevo({
           Volver
         </TextButton>
       </div>
-      <ul className="max-h-64 overflow-y-auto p-1" role="listbox" aria-label="Categorías">
-        {categorias.map((c) => (
-          <li key={String(c.id)}>
-            <Opcion elegida={false} onClick={() => onCrearEn(c)}>
+      {categorias.length === 0 ? (
+        <Vacio>Ninguna categoría coincide.</Vacio>
+      ) : (
+        <div className={LISTA} role="listbox" aria-label="Categorías">
+          {categorias.map((c) => (
+            <Opcion key={String(c.id)} elegida={false} onClick={() => onCrearEn(c)}>
               <Fila entrada={c} />
             </Opcion>
-          </li>
-        ))}
-        {categorias.length === 0 && (
-          <li className="px-2.5 py-2 text-sm text-muted-foreground">Ninguna categoría coincide.</li>
-        )}
-      </ul>
+          ))}
+        </div>
+      )}
     </>
   );
 }
@@ -61,30 +60,28 @@ export function ResultadosDelBuscador(props: PropsDeResultados) {
 
   return (
     <>
-      <ul className="max-h-64 overflow-y-auto p-1" role="listbox" aria-label="Resultados">
-        {elegida && (
-          <li>
+      {hayOpciones(props) ? (
+        <div className={LISTA} role="listbox" aria-label="Resultados">
+          {elegida && (
             <Opcion elegida={false} onClick={() => onElegir(undefined)}>
               <span className="text-muted-foreground">Quitar</span>
             </Opcion>
-          </li>
-        )}
+          )}
 
-        {!buscando && <SinBuscar {...props} />}
+          {!buscando && <SinBuscar {...props} />}
 
-        {buscando &&
-          resultados.map((r) => (
-            <li key={String(r.id)}>
-              <Opcion elegida={elegida?.id === r.id} onClick={() => onElegir(r)}>
+          {buscando &&
+            resultados.map((r) => (
+              <Opcion key={String(r.id)} elegida={elegida?.id === r.id} onClick={() => onElegir(r)}>
                 <Fila entrada={r} />
               </Opcion>
-            </li>
-          ))}
-
-        {buscando && resultados.length === 0 && !puedeCrear && (
-          <li className="px-2.5 py-2 text-sm text-muted-foreground">Nada coincide.</li>
-        )}
-      </ul>
+            ))}
+        </div>
+      ) : (
+        !(buscando && puedeCrear) && (
+          <Vacio>{buscando ? 'Nada coincide.' : 'Escribe para buscar.'}</Vacio>
+        )
+      )}
 
       {buscando && puedeCrear && (
         <CrearConcepto
@@ -109,39 +106,30 @@ function SinBuscar({
   return (
     <>
       {candidatos.length > 0 && (
-        <>
-          <Titulo>Del recibo</Titulo>
+        <Grupo titulo="Del recibo">
           {candidatos.map((c) => (
-            <li key={c.id}>
-              <Opcion
-                elegida={elegida !== undefined && String(elegida.id) === String(c.id)}
-                onClick={() => onElegirCandidato(c)}
-              >
-                <span className="flex min-w-0 items-baseline gap-2">
-                  <span className="truncate">{c.nombre}</span>
-                  <span className="truncate text-xs text-muted-foreground">{c.ruta}</span>
-                </span>
-              </Opcion>
-            </li>
+            <Opcion
+              key={c.id}
+              elegida={elegida !== undefined && String(elegida.id) === String(c.id)}
+              onClick={() => onElegirCandidato(c)}
+            >
+              <span className="flex min-w-0 items-baseline gap-2">
+                <span className="truncate">{c.nombre}</span>
+                <span className="truncate text-xs text-muted-foreground">{c.ruta}</span>
+              </span>
+            </Opcion>
           ))}
-        </>
+        </Grupo>
       )}
 
       {candidatos.length === 0 && recientes.length > 0 && (
-        <>
-          <Titulo>Recientes</Titulo>
+        <Grupo titulo="Recientes">
           {recientes.map((r) => (
-            <li key={String(r.id)}>
-              <Opcion elegida={elegida?.id === r.id} onClick={() => onElegir(r)}>
-                <Fila entrada={r} />
-              </Opcion>
-            </li>
+            <Opcion key={String(r.id)} elegida={elegida?.id === r.id} onClick={() => onElegir(r)}>
+              <Fila entrada={r} />
+            </Opcion>
           ))}
-        </>
-      )}
-
-      {candidatos.length === 0 && recientes.length === 0 && !elegida && (
-        <li className="px-2.5 py-2 text-sm text-muted-foreground">Escribe para buscar.</li>
+        </Grupo>
       )}
     </>
   );
@@ -180,6 +168,42 @@ function Fila({ entrada }: { entrada: EntradaDelIndice }) {
   );
 }
 
-function Titulo({ children }: { children: ReactNode }) {
-  return <li className="px-2.5 pb-1 pt-2 text-xs text-muted-foreground">{children}</li>;
+/*
+  ── La forma de la lista: opciones, y nada más ────────────────────────────────
+  Una `listbox` solo puede contener opciones o grupos de opciones. Eran un
+  `<ul>` con cada opción dentro de un `<li>` —un lector de pantalla encontraba
+  «elemento de lista» entre la lista y la opción—, y con los rótulos y el
+  «Nada coincide» como filas más. Ahora las opciones cuelgan directamente de
+  la lista, los rótulos dan nombre a un `group`, y lo vacío se dice FUERA de la
+  lista, que entonces no se pinta: una lista sin opciones no es una lista.
+*/
+const LISTA = 'max-h-64 overflow-y-auto p-1';
+
+/** Hay algo que ofrecer en la lista de resultados. */
+function hayOpciones({
+  busca,
+  resultados,
+  recientes,
+  candidatos,
+  elegida,
+}: PropsDeResultados): boolean {
+  if (elegida) return true;
+  if (busca.trim() !== '') return resultados.length > 0;
+  return candidatos.length > 0 || recientes.length > 0;
+}
+
+function Grupo({ titulo, children }: { titulo: string; children: ReactNode }) {
+  const id = useId();
+  return (
+    <div role="group" aria-labelledby={id}>
+      <div id={id} className="px-2.5 pb-1 pt-2 text-xs text-muted-foreground">
+        {titulo}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Vacio({ children }: { children: ReactNode }) {
+  return <p className="px-3.5 py-3 text-sm text-muted-foreground">{children}</p>;
 }

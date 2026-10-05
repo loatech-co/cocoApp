@@ -196,3 +196,58 @@ describe('En un centro estático', () => {
     expect(screen.queryByRole('button', { name: /Concepto/ })).toBeNull();
   });
 });
+
+/*
+  La estructura ARIA, que axe vigila en los recorridos: el panel es un
+  diálogo (lleva una caja de texto y botones, que una lista no puede
+  contener) y de cada lista cuelgan solo opciones, directas o en un grupo.
+*/
+describe('Estructura accesible', () => {
+  /** Lo que cuelga de una lista tiene que ser una opción o un grupo de opciones. */
+  function soloOpciones(lista: HTMLElement): void {
+    for (const hijo of Array.from(lista.children)) {
+      const rol = hijo.getAttribute('role');
+      expect(['option', 'group']).toContain(rol);
+      if (rol === 'group') {
+        expect(hijo.getAttribute('aria-labelledby')).toBeTruthy();
+        for (const o of Array.from(hijo.children).slice(1)) {
+          expect(o.getAttribute('role')).toBe('option');
+        }
+      }
+    }
+  }
+
+  it('el panel es un diálogo con la caja de búsqueda y una lista de opciones', () => {
+    pintar();
+    abrir();
+    const disparador = screen.getByRole('button', { name: /Concepto/ });
+    expect(disparador.getAttribute('aria-haspopup')).toBe('dialog');
+    const panel = screen.getByRole('dialog', { name: 'Concepto' });
+    expect(panel.querySelector('[role="listbox"] input')).toBeNull();
+
+    escribir('mercado');
+    soloOpciones(screen.getByRole('listbox', { name: 'Resultados' }));
+  });
+
+  it('los recientes van en un grupo con nombre', () => {
+    pintar({ recientes: [200] });
+    abrir();
+    soloOpciones(screen.getByRole('listbox', { name: 'Resultados' }));
+    expect(screen.getByRole('group', { name: 'Recientes' })).toBeDefined();
+  });
+
+  it('sin nada que ofrecer no hay lista: lo vacío se dice fuera de ella', () => {
+    pintar();
+    abrir();
+    escribir('zzz');
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('la lista de categorías para crear también lleva solo opciones', () => {
+    pintar({ onCrearConcepto: vi.fn() });
+    abrir();
+    escribir('Gimnasio');
+    fireEvent.click(screen.getByRole('button', { name: /Crear concepto «Gimnasio»/ }));
+    soloOpciones(screen.getByRole('listbox', { name: 'Categorías' }));
+  });
+});

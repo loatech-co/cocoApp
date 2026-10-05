@@ -8,8 +8,8 @@ import { Button } from '@/shared/ui/atoms/button';
 import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
 import { REALCE, SUPERFICIE_FLOTANTE, SURGE } from '@/shared/ui/foundations/superficie';
 
-const ROL = { menu: 'menu', panel: 'dialog', lista: 'listbox' } as const;
-const ARIA = { menu: 'menu', panel: 'dialog', lista: 'listbox' } as const;
+const ROL = { menu: 'menu', panel: 'dialog', lista: 'listbox', buscador: 'dialog' } as const;
+const ARIA = { menu: 'menu', panel: 'dialog', lista: 'listbox', buscador: 'dialog' } as const;
 
 interface MenuProps {
   /** Lo que dice el botón. Si `soloIcono`, pasa a ser su nombre accesible. */
@@ -32,8 +32,13 @@ interface MenuProps {
    * desplegable; `lista` es un campo que elige un valor entre varios.
    * Anunciar como menú algo que lleva selectores hace que un lector de
    * pantalla prometa "elige una opción" y entregue otra cosa.
+   *
+   * `buscador` es una `lista` con su caja de búsqueda: se queda pegado a su
+   * campo como ella, pero el panel es un diálogo y no una lista, porque una
+   * lista solo puede contener opciones y aquí dentro hay una caja de texto,
+   * botones y la lista de verdad. La lista la pone quien llena el panel.
    */
-  tipo?: 'menu' | 'panel' | 'lista';
+  tipo?: 'menu' | 'panel' | 'lista' | 'buscador';
   /** Clases de la caja que envuelve todo. Para estirarla a lo ancho. */
   claseCaja?: string;
   /** Clases del botón cuando se pasa un `disparador` propio. */
@@ -124,7 +129,7 @@ interface MenuProps {
  * La hoja resuelve las tres sin que la llamada tenga que saber nada: el mismo
  * `<Menu>` se dibuja de las dos formas.
  *
- * `lista` NO entra. Un campo que elige un valor —un desplegable de un
+ * `lista` y `buscador` NO entran. Un campo que elige un valor —un desplegable de un
  * formulario— tiene que quedarse pegado a su campo: separarlo del sitio donde
  * se va a escribir el valor es perder de vista qué se está contestando.
  */
@@ -132,7 +137,7 @@ export function Menu(props: MenuProps) {
   const m = withDefaults(props);
   const { etiqueta, tipo, flotante, disparador, children } = m;
   /** Se abre como hoja desde abajo en vez de colgar del botón. */
-  const enHoja = useEsMovil() && tipo !== 'lista';
+  const enHoja = useEsMovil() && tipo !== 'lista' && tipo !== 'buscador';
   const { abierto, setAbierto, caja, anclaje, medir } = useMenuState(enHoja);
   const cerrar = (): void => setAbierto(false);
   const contenido = typeof children === 'function' ? children(cerrar) : children;

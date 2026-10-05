@@ -95,7 +95,7 @@ export function BuscadorDeConcepto({
     <Campo etiqueta="Concepto" id={id} ayuda={ayuda}>
       <Menu
         etiqueta="Concepto"
-        tipo="lista"
+        tipo="buscador"
         alineado="izquierda"
         flotante
         sinRelleno
