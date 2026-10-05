@@ -1,0 +1,58 @@
+# The iOS gate (phase 7.6 / 7.13): swift-format, SwiftLint and the XCTest
+# suite on the simulator.
+#
+# Manual only. On the free plan a macOS minute counts as ten against the
+# monthly quota, so this runs on demand and before every app release; the
+# routine Swift checks run in the pre-commit hook (lefthook.yml).
+name: ios
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: ios
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen and the pinned SwiftLint
+        run: |
+          brew install xcodegen
+          version="$(sed -n 's/^swiftlint_version: *//p' .swiftlint.yml)"
+          curl -fsSL -o /tmp/swiftlint.zip \
+            "https://github.com/realm/SwiftLint/releases/download/${version}/portable_swiftlint.zip"
+          unzip -q /tmp/swiftlint.zip -d /tmp/swiftlint
+          sudo install /tmp/swiftlint/swiftlint /usr/local/bin/swiftlint
+          swiftlint version
+
+      - name: swift-format and SwiftLint
+        run: bash scripts/lint.sh
+
+      - name: The generated project matches project.yml
+        run: |
+          xcodegen generate
+          git diff --exit-code -- Coco.xcodeproj
+
+      - name: Tests on the simulator
+        run: |
+          device="$(xcrun simctl list devices available -j \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["name"] for r in sorted(d, reverse=True) if "iOS" in r for x in d[r] if x["name"].startswith("iPhone")))')"
+          echo "Simulator: $device"
+          xcodebuild test -scheme Coco -destination "platform=iOS Simulator,name=$device" \
+            CODE_SIGNING_ALLOWED=NO | tail -n 50
+          exit "${PIPESTATUS[0]}"
