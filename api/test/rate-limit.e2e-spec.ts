@@ -44,6 +44,19 @@ describe('Limitador de tasa (e2e)', () => {
     expect(estados[10]).toBe(429);
   });
 
+  it('corta la renovación de sesión al intento 31 en un minuto', async () => {
+    // Sin cookie ni token: cada intento llega al controlador y responde 401.
+    // Lo que se mide es que el tope de la ruta existe, no la renovación.
+    const estados: number[] = [];
+    for (let intento = 0; intento < 31; intento += 1) {
+      const respuesta = await http.post('/api/v1/auth/refresh').send({});
+      estados.push(respuesta.status);
+    }
+
+    expect(estados.slice(0, 30)).toEqual(Array(30).fill(401));
+    expect(estados[30]).toBe(429);
+  });
+
   it('corta el registro al sexto intento en un minuto', async () => {
     const estados: number[] = [];
     for (let intento = 0; intento < 6; intento += 1) {
