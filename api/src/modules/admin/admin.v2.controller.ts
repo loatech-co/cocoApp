@@ -109,9 +109,13 @@ export class AdminV2Controller {
   @Get('audit-log')
   @ApiDataV2(AuditEntry, { isPage: true })
   @ApiErrors(400)
-  async auditLog(@Query() query: PageQuery): Promise<AuditPage> {
+  async auditLog(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: PageQuery,
+  ): Promise<AuditPage> {
     return auditPageV2(
       await this.admin.bitacora(
+        user.id,
         defined({
           page: query.page === undefined ? undefined : String(query.page),
           per_page: query.perPage === undefined ? undefined : String(query.perPage),

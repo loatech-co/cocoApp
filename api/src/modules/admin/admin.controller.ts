@@ -106,7 +106,10 @@ export class AdminController {
   @ApiQuery({ name: 'page', required: false, type: Number, description: '1-based; 1 by default.' })
   @ApiQuery({ name: 'per_page', required: false, type: Number, description: '50 by default.' })
   @ApiData(AuditEntryResponse, { isArray: true, meta: 'page' })
-  async bitacora(@Query() query: { page?: string; per_page?: string }) {
-    return auditPageV1(await this.admin.bitacora(query));
+  async bitacora(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: { page?: string; per_page?: string },
+  ) {
+    return auditPageV1(await this.admin.bitacora(user.id, query));
   }
 }

@@ -1,17 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 
-import { PrismaService } from '../../prisma/prisma.service';
+import { Database } from '../../prisma/database';
 
 @Injectable()
 export class PreferencesRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly db: Database) {}
 
   findByUser(userId: bigint): Promise<{ prefKey: string; prefValue: Prisma.JsonValue }[]> {
-    return this.prisma.userPreference.findMany({
-      where: { userId },
-      select: { prefKey: true, prefValue: true },
-    });
+    return this.db.forUser(userId, (tx) =>
+      tx.userPreference.findMany({
+        where: { userId },
+        select: { prefKey: true, prefValue: true },
+      }),
+    );
   }
 
   /**
@@ -23,14 +25,14 @@ export class PreferencesRepository {
     userId: bigint,
     entries: readonly (readonly [string, Prisma.InputJsonValue])[],
   ): Promise<void> {
-    await this.prisma.$transaction(
-      entries.map(([prefKey, prefValue]) =>
-        this.prisma.userPreference.upsert({
+    await this.db.forUser(userId, async (tx) => {
+      for (const [prefKey, prefValue] of entries) {
+        await tx.userPreference.upsert({
           where: { userId_prefKey: { userId, prefKey } },
           create: { userId, prefKey, prefValue },
           update: { prefValue },
-        }),
-      ),
-    );
+        });
+      }
+    });
   }
 }

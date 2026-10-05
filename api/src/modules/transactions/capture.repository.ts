@@ -10,7 +10,7 @@ import type {
 } from './ledger.types';
 import { writeDetails } from './transactions.repository';
 import { DuplicateError } from '../../common/errors/domain-error';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Database } from '../../prisma/database';
 
 /**
  * The write of a Wallet or SMS capture: look for the other side of the same
@@ -18,7 +18,7 @@ import { PrismaService } from '../../prisma/prisma.service';
  */
 @Injectable()
 export class CaptureRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly db: Database) {}
 
   /**
    * ── Por qué el candado ────────────────────────────────────────────────────
@@ -35,7 +35,10 @@ export class CaptureRepository {
    * comparten todas las candidatas es el monto, y eso basta para cubrirla.
    *
    * Todo va por `tx`: una lectura por otra conexión, con el candado tomado,
-   * puede quedarse sin conexión libre en el pool y no volver nunca.
+   * puede quedarse sin conexión libre en el pool y no volver nunca. Y `tx` es
+   * la unidad de `forUser` (ADR 0019): el candado es su primera sentencia
+   * tras fijar el usuario, así que cubre la búsqueda y la escritura con la
+   * seguridad por filas activa. Otra transacción aparte lo dejaría fuera.
    *
    * A clash on the unique `external_ref` becomes a DuplicateError, as in
    * `createWithDetails`.
@@ -46,7 +49,7 @@ export class CaptureRepository {
     decide: (candidates: DuplicateCandidateRow[]) => TwinVerdict,
   ): Promise<CaptureOutcome> {
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      return await this.db.forUser(criteria.userId, async (tx) => {
         await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtextextended(${captureLockKey(criteria)}::text, 0))`;
 
         const verdict = decide(await tx.transaction.findMany(duplicateCandidatesQuery(criteria)));

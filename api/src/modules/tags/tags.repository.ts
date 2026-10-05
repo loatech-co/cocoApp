@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, type Tag } from '@prisma/client';
 
-import { PrismaService } from '../../prisma/prisma.service';
+import { Database } from '../../prisma/database';
 
 @Injectable()
 export class TagsRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly db: Database) {}
 
   findByUser(userId: bigint): Promise<Tag[]> {
-    return this.prisma.tag.findMany({ where: { userId }, orderBy: { name: 'asc' } });
+    return this.db.forUser(userId, (tx) =>
+      tx.tag.findMany({ where: { userId }, orderBy: { name: 'asc' } }),
+    );
   }
 
   /**
@@ -21,24 +23,24 @@ export class TagsRepository {
    * insensible. Quien escribió "Comida" la sigue viendo así.
    */
   findByName(userId: bigint, name: string): Promise<Tag | null> {
-    return this.prisma.tag.findFirst({
-      where: { userId, name: { equals: name, mode: 'insensitive' } },
-    });
+    return this.db.forUser(userId, (tx) =>
+      tx.tag.findFirst({ where: { userId, name: { equals: name, mode: 'insensitive' } } }),
+    );
   }
 
   /** Same lookup, for a row that must exist (it just won a race). */
   findByNameOrThrow(userId: bigint, name: string): Promise<Tag> {
-    return this.prisma.tag.findFirstOrThrow({
-      where: { userId, name: { equals: name, mode: 'insensitive' } },
-    });
+    return this.db.forUser(userId, (tx) =>
+      tx.tag.findFirstOrThrow({ where: { userId, name: { equals: name, mode: 'insensitive' } } }),
+    );
   }
 
   findOneOrThrow(userId: bigint, id: bigint): Promise<Tag> {
-    return this.prisma.tag.findFirstOrThrow({ where: { id, userId } });
+    return this.db.forUser(userId, (tx) => tx.tag.findFirstOrThrow({ where: { id, userId } }));
   }
 
-  updateColor(id: bigint, color: string): Promise<Tag> {
-    return this.prisma.tag.update({ where: { id }, data: { color } });
+  updateColor(userId: bigint, id: bigint, color: string): Promise<Tag> {
+    return this.db.forUser(userId, (tx) => tx.tag.update({ where: { id }, data: { color } }));
   }
 
   /**
@@ -47,7 +49,9 @@ export class TagsRepository {
    */
   async createUnlessTaken(userId: bigint, name: string, color: string | null): Promise<Tag | null> {
     try {
-      return await this.prisma.tag.create({ data: { userId, name, color } });
+      return await this.db.forUser(userId, (tx) =>
+        tx.tag.create({ data: { userId, name, color } }),
+      );
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         return null;
@@ -62,15 +66,19 @@ export class TagsRepository {
     id: bigint,
     data: { name: string; color?: string | undefined },
   ): Promise<number> {
-    const { count } = await this.prisma.tag.updateMany({
-      where: { id, userId },
-      data: { name: data.name, ...(data.color !== undefined && { color: data.color }) },
-    });
+    const { count } = await this.db.forUser(userId, (tx) =>
+      tx.tag.updateMany({
+        where: { id, userId },
+        data: { name: data.name, ...(data.color !== undefined && { color: data.color }) },
+      }),
+    );
     return count;
   }
 
   async delete(userId: bigint, id: bigint): Promise<number> {
-    const { count } = await this.prisma.tag.deleteMany({ where: { id, userId } });
+    const { count } = await this.db.forUser(userId, (tx) =>
+      tx.tag.deleteMany({ where: { id, userId } }),
+    );
     return count;
   }
 }

@@ -216,7 +216,14 @@ export class TransactionsService {
 
     const cambios = cambiosDe(dto, accountId, amount);
     const otra = await this.otraPata(userId, actual, dto, cambios);
-    const actualizada = await this.repository.updateWithDetails(id, cambios, splits, tagIds, otra);
+    const actualizada = await this.repository.updateWithDetails(
+      userId,
+      id,
+      cambios,
+      splits,
+      tagIds,
+      otra,
+    );
 
     return transactionFromRow(actualizada);
   }

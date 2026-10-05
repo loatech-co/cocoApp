@@ -67,14 +67,11 @@ export class AuditService {
   }
 
   /** One page of the log, newest first, with its total. */
-  async page(
+  page(
+    adminId: bigint,
     skip: number,
     take: number,
   ): Promise<{ entries: AuditEntryWithUser[]; total: number }> {
-    const [entries, total] = await Promise.all([
-      this.repository.findPage(skip, take),
-      this.repository.count(),
-    ]);
-    return { entries, total };
+    return this.repository.findPage(adminId, skip, take);
   }
 }

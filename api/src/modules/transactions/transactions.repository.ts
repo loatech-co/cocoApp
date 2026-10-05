@@ -6,7 +6,7 @@ import { parseOrden } from './transactions.sort';
 import { idsDeCategorias, ramasDe } from '../../common/categories/categories.tree';
 import { DuplicateError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Database, type UserTx } from '../../prisma/database';
 
 /** Lo que Prisma devuelve cuando se incluyen splits y etiquetas. */
 export type TransaccionCompleta = Prisma.TransactionGetPayload<{
@@ -37,12 +37,12 @@ export interface TransferPartner {
 
 /**
  * Every multi-row write here is ONE repository method that runs its whole
- * unit of work inside `prisma.$transaction`: a movement never exists without
+ * unit of work inside one `forUser` transaction: a movement never exists without
  * its splits and tags, and a transfer never has one leg without the other.
  */
 @Injectable()
 export class TransactionsRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly db: Database) {}
 
   /**
    * One page of the filtered list, its total, and the sums by type.
@@ -60,18 +60,20 @@ export class TransactionsRepository {
     total: number;
     sumOf: (type: TransactionType) => Money;
   }> {
-    const where = await this.buildWhere(userId, query);
-    const [rows, total, sums] = await Promise.all([
-      this.prisma.transaction.findMany({
-        where,
-        include: INCLUIR_TODO,
-        orderBy: parseOrden(query.sort),
-        skip: page.skip,
-        take: page.take,
-      }),
-      this.prisma.transaction.count({ where }),
-      this.prisma.transaction.groupBy({ by: ['type'], where, _sum: { amount: true } }),
-    ]);
+    const [rows, total, sums] = await this.db.forUser(userId, async (tx) => {
+      const where = await this.buildWhere(tx, userId, query);
+      return Promise.all([
+        tx.transaction.findMany({
+          where,
+          include: INCLUIR_TODO,
+          orderBy: parseOrden(query.sort),
+          skip: page.skip,
+          take: page.take,
+        }),
+        tx.transaction.count({ where }),
+        tx.transaction.groupBy({ by: ['type'], where, _sum: { amount: true } }),
+      ]);
+    });
 
     const sumOf = (type: TransactionType): Money =>
       toMoney(sums.find((s) => s.type === type)?._sum.amount ?? 0);
@@ -79,16 +81,20 @@ export class TransactionsRepository {
   }
 
   async periodRange(userId: bigint): Promise<{ first: Date | null; last: Date | null }> {
-    const extremos = await this.prisma.transaction.aggregate({
-      where: { userId },
-      _min: { period: true },
-      _max: { period: true },
-    });
+    const extremos = await this.db.forUser(userId, (tx) =>
+      tx.transaction.aggregate({
+        where: { userId },
+        _min: { period: true },
+        _max: { period: true },
+      }),
+    );
     return { first: extremos._min.period, last: extremos._max.period };
   }
 
   findOwned(userId: bigint, id: bigint): Promise<TransaccionCompleta | null> {
-    return this.prisma.transaction.findFirst({ where: { id, userId }, include: INCLUIR_TODO });
+    return this.db.forUser(userId, (tx) =>
+      tx.transaction.findFirst({ where: { id, userId }, include: INCLUIR_TODO }),
+    );
   }
 
   /**
@@ -99,12 +105,12 @@ export class TransactionsRepository {
    * retrying the same capture is told "it is already there".
    */
   async createWithDetails(
-    data: Prisma.TransactionUncheckedCreateInput,
+    data: Prisma.TransactionUncheckedCreateInput & { userId: bigint },
     splits: readonly SplitToWrite[],
     tagIds: readonly bigint[],
   ): Promise<TransaccionCompleta> {
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      return await this.db.forUser(data.userId, async (tx) => {
         const movimiento = await tx.transaction.create({ data });
         await writeDetails(tx, movimiento.id, splits, tagIds);
         return tx.transaction.findUniqueOrThrow({
@@ -129,7 +135,7 @@ export class TransactionsRepository {
     origen: bigint,
     destino: bigint,
   ): Promise<TransaccionCompleta[]> {
-    return this.prisma.$transaction(async (tx) => {
+    return this.db.forUser(base.userId, async (tx) => {
       await tx.transaction.create({ data: { ...base, accountId: origen, transferDir: 'out' } });
       await tx.transaction.create({ data: { ...base, accountId: destino, transferDir: 'in' } });
 
@@ -149,13 +155,14 @@ export class TransactionsRepository {
    * two legs never disagree on the amount or the date.
    */
   updateWithDetails(
+    userId: bigint,
     id: bigint,
     data: TransactionChanges,
     splits: readonly SplitToWrite[] | null,
     tagIds: readonly bigint[] | null,
     partner: TransferPartner | null = null,
   ): Promise<TransaccionCompleta> {
-    return this.prisma.$transaction(async (tx) => {
+    return this.db.forUser(userId, async (tx) => {
       await tx.transaction.update({ where: { id }, data });
       if (partner !== null && Object.keys(partner.changes).length > 0) {
         await tx.transaction.updateMany({
@@ -182,38 +189,51 @@ export class TransactionsRepository {
     transferGroupId: string,
     id: bigint,
   ): Promise<bigint | null> {
-    const otra = await this.prisma.transaction.findFirst({
-      where: { userId, transferGroupId, id: { not: id } },
-      select: { accountId: true },
-    });
+    const otra = await this.db.forUser(userId, (tx) =>
+      tx.transaction.findFirst({
+        where: { userId, transferGroupId, id: { not: id } },
+        select: { accountId: true },
+      }),
+    );
     return otra?.accountId ?? null;
   }
 
   async deleteTransferGroup(userId: bigint, transferGroupId: string): Promise<void> {
-    await this.prisma.transaction.deleteMany({ where: { userId, transferGroupId } });
+    await this.db.forUser(userId, (tx) =>
+      tx.transaction.deleteMany({ where: { userId, transferGroupId } }),
+    );
   }
 
   async deleteOne(userId: bigint, id: bigint): Promise<void> {
-    await this.prisma.transaction.deleteMany({ where: { id, userId } });
+    await this.db.forUser(userId, (tx) => tx.transaction.deleteMany({ where: { id, userId } }));
   }
 
   async accountBelongsTo(userId: bigint, accountId: bigint): Promise<boolean> {
-    return (await this.prisma.account.count({ where: { id: accountId, userId } })) > 0;
+    const count = await this.db.forUser(userId, (tx) =>
+      tx.account.count({ where: { id: accountId, userId } }),
+    );
+    return count > 0;
   }
 
   async categoryBelongsTo(userId: bigint, categoryId: bigint): Promise<boolean> {
-    return (await this.prisma.category.count({ where: { id: categoryId, userId } })) > 0;
+    const count = await this.db.forUser(userId, (tx) =>
+      tx.category.count({ where: { id: categoryId, userId } }),
+    );
+    return count > 0;
   }
 
   /** True only when EVERY id in `categoryIds` is one of the user's categories. Empty is true. */
   async categoriesBelongTo(userId: bigint, categoryIds: readonly bigint[]): Promise<boolean> {
     const unique = [...new Set(categoryIds)];
     if (unique.length === 0) return true;
-    const owned = await this.prisma.category.count({ where: { id: { in: unique }, userId } });
+    const owned = await this.db.forUser(userId, (tx) =>
+      tx.category.count({ where: { id: { in: unique }, userId } }),
+    );
     return owned === unique.length;
   }
 
   private async buildWhere(
+    tx: UserTx,
     userId: bigint,
     query: ListTransactionsQueryDto,
   ): Promise<Prisma.TransactionWhereInput> {
@@ -226,7 +246,7 @@ export class TransactionsRepository {
     // Filtrar por "Costos fijos" tiene que traer TODO lo que hay debajo: los
     // movimientos cuelgan del concepto, que es la hoja.
     if (pedidas.length > 0) {
-      where.categoryId = { in: ramasDe(await this.categoryNodes(userId), pedidas) };
+      where.categoryId = { in: ramasDe(await categoryNodes(tx, userId), pedidas) };
     }
 
     if (query.q) {
@@ -234,7 +254,7 @@ export class TransactionsRepository {
       // públicos" tiene que traer todo lo que cuelga de esa categoría, aunque
       // ninguna fila lo diga en su descripción. Quien busca piensa en el
       // nombre con el que ordenó su plata, no en cómo vino escrito el cargo.
-      const porClasificacion = await this.branchByName(userId, query.q);
+      const porClasificacion = await branchByName(tx, userId, query.q);
 
       // `mode: 'insensitive'` NO es opcional. Postgres compara distinguiendo
       // mayúsculas —MariaDB no lo hacía—, así que buscar "celsia" no
@@ -249,29 +269,30 @@ export class TransactionsRepository {
 
     return where;
   }
+}
 
-  private categoryNodes(
-    userId: bigint,
-  ): Promise<{ id: bigint; parentId: bigint | null; name: string }[]> {
-    return this.prisma.category.findMany({
-      where: { userId },
-      select: { id: true, parentId: true, name: true },
-    });
-  }
+function categoryNodes(
+  tx: UserTx,
+  userId: bigint,
+): Promise<{ id: bigint; parentId: bigint | null; name: string }[]> {
+  return tx.category.findMany({
+    where: { userId },
+    select: { id: true, parentId: true, name: true },
+  });
+}
 
-  /**
-   * Las categorías cuyo NOMBRE contiene el texto, con toda su rama.
-   *
-   * Con la rama, no solo las que coinciden: los movimientos cuelgan del
-   * concepto, así que buscar el nombre de una categoría sin expandirla no
-   * devolvería ni una fila.
-   */
-  private async branchByName(userId: bigint, texto: string): Promise<bigint[]> {
-    const todas = await this.categoryNodes(userId);
-    const aguja = texto.toLowerCase();
-    const coinciden = todas.filter((c) => c.name.toLowerCase().includes(aguja)).map((c) => c.id);
-    return coinciden.length === 0 ? [] : ramasDe(todas, coinciden);
-  }
+/**
+ * Las categorías cuyo NOMBRE contiene el texto, con toda su rama.
+ *
+ * Con la rama, no solo las que coinciden: los movimientos cuelgan del
+ * concepto, así que buscar el nombre de una categoría sin expandirla no
+ * devolvería ni una fila.
+ */
+async function branchByName(tx: UserTx, userId: bigint, texto: string): Promise<bigint[]> {
+  const todas = await categoryNodes(tx, userId);
+  const aguja = texto.toLowerCase();
+  const coinciden = todas.filter((c) => c.name.toLowerCase().includes(aguja)).map((c) => c.id);
+  return coinciden.length === 0 ? [] : ramasDe(todas, coinciden);
 }
 
 /** The filters that need no lookup: period, account, type, status, tag, amount. */

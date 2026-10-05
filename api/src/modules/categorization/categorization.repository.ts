@@ -1,16 +1,18 @@
 import { Injectable } from '@nestjs/common';
 
-import { PrismaService } from '../../prisma/prisma.service';
+import { Database } from '../../prisma/database';
 
 @Injectable()
 export class CategorizationRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly db: Database) {}
 
   findRules(userId: bigint): Promise<{ pattern: string; categoryId: bigint; priority: number }[]> {
-    return this.prisma.categoryRule.findMany({
-      where: { userId },
-      select: { pattern: true, categoryId: true, priority: true },
-    });
+    return this.db.forUser(userId, (tx) =>
+      tx.categoryRule.findMany({
+        where: { userId },
+        select: { pattern: true, categoryId: true, priority: true },
+      }),
+    );
   }
 
   /** Creates the rule, or points it at the category and counts one more hit. */
@@ -20,10 +22,12 @@ export class CategorizationRepository {
     categoryId: bigint,
     priority: number,
   ): Promise<void> {
-    await this.prisma.categoryRule.upsert({
-      where: { userId_pattern: { userId, pattern } },
-      create: { userId, pattern, categoryId, priority, hits: 1 },
-      update: { categoryId, hits: { increment: 1 } },
-    });
+    await this.db.forUser(userId, (tx) =>
+      tx.categoryRule.upsert({
+        where: { userId_pattern: { userId, pattern } },
+        create: { userId, pattern, categoryId, priority, hits: 1 },
+        update: { categoryId, hits: { increment: 1 } },
+      }),
+    );
   }
 }

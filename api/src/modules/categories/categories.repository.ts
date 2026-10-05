@@ -4,24 +4,26 @@ import type { Category, CategoryKind, Prisma } from '@prisma/client';
 import { PLANTILLA_DE_CUENTA_NUEVA, type NodoDePlantilla } from './categories.plantilla';
 import { unir } from './palabras-clave';
 import type { NodoDeCategoria } from '../../common/categories/categories.tree';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Database, type UserTx } from '../../prisma/database';
 
 @Injectable()
 export class CategoriesRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly db: Database) {}
 
   async listar(
     userId: bigint,
     filtros: { kind?: CategoryKind | undefined; incluirArchivadas?: boolean } = {},
   ): Promise<Category[]> {
-    return this.prisma.category.findMany({
-      where: {
-        userId,
-        ...(filtros.kind ? { kind: filtros.kind } : {}),
-        ...(filtros.incluirArchivadas ? {} : { isArchived: false }),
-      },
-      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
-    });
+    return this.db.forUser(userId, (tx) =>
+      tx.category.findMany({
+        where: {
+          userId,
+          ...(filtros.kind ? { kind: filtros.kind } : {}),
+          ...(filtros.incluirArchivadas ? {} : { isArchived: false }),
+        },
+        orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
+      }),
+    );
   }
 
   /**
@@ -29,18 +31,17 @@ export class CategoriesRepository {
    * el árbol completo con nombres y colores.
    */
   async esqueletoDelArbol(userId: bigint): Promise<NodoDeCategoria[]> {
-    return this.prisma.category.findMany({
-      where: { userId },
-      select: { id: true, parentId: true },
-    });
+    return this.db.forUser(userId, (tx) =>
+      tx.category.findMany({ where: { userId }, select: { id: true, parentId: true } }),
+    );
   }
 
   async buscarPorId(userId: bigint, id: bigint): Promise<Category | null> {
-    return this.prisma.category.findFirst({ where: { id, userId } });
+    return this.db.forUser(userId, (tx) => tx.category.findFirst({ where: { id, userId } }));
   }
 
   async crear(userId: bigint, data: Prisma.CategoryUncheckedCreateInput): Promise<Category> {
-    return this.prisma.category.create({ data: { ...data, userId } });
+    return this.db.forUser(userId, (tx) => tx.category.create({ data: { ...data, userId } }));
   }
 
   /**
@@ -63,16 +64,20 @@ export class CategoriesRepository {
     id: bigint,
     data: Prisma.CategoryUncheckedUpdateManyInput,
   ): Promise<number> {
-    const { count } = await this.prisma.category.updateMany({ where: { id, userId }, data });
+    const { count } = await this.db.forUser(userId, (tx) =>
+      tx.category.updateMany({ where: { id, userId }, data }),
+    );
     return count;
   }
 
   async archivarVarias(userId: bigint, ids: readonly bigint[]): Promise<number> {
     if (ids.length === 0) return 0;
-    const { count } = await this.prisma.category.updateMany({
-      where: { userId, id: { in: [...ids] } },
-      data: { isArchived: true },
-    });
+    const { count } = await this.db.forUser(userId, (tx) =>
+      tx.category.updateMany({
+        where: { userId, id: { in: [...ids] } },
+        data: { isArchived: true },
+      }),
+    );
     return count;
   }
 
@@ -88,12 +93,14 @@ export class CategoriesRepository {
     if (categoryIds.length === 0) return 0;
     const ids = [...categoryIds];
 
-    const [enMovimientos, enSplits] = await Promise.all([
-      this.prisma.transaction.count({ where: { userId, categoryId: { in: ids } } }),
-      this.prisma.transactionSplit.count({
-        where: { categoryId: { in: ids }, transaction: { userId } },
-      }),
-    ]);
+    const [enMovimientos, enSplits] = await this.db.forUser(userId, (tx) =>
+      Promise.all([
+        tx.transaction.count({ where: { userId, categoryId: { in: ids } } }),
+        tx.transactionSplit.count({
+          where: { categoryId: { in: ids }, transaction: { userId } },
+        }),
+      ]),
+    );
     return enMovimientos + enSplits;
   }
 
@@ -120,7 +127,7 @@ export class CategoriesRepository {
   ): Promise<{ eliminadas: number; reasignados: number }> {
     const lista = [...ids];
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.db.forUser(userId, async (tx) => {
       let reasignados = 0;
 
       if (reasignarA !== null) {
@@ -147,18 +154,18 @@ export class CategoriesRepository {
     userId: bigint,
     items: readonly { id: bigint; sortOrder: number }[],
   ): Promise<void> {
-    await this.prisma.$transaction(
-      items.map((item) =>
-        this.prisma.category.updateMany({
+    await this.db.forUser(userId, async (tx) => {
+      for (const item of items) {
+        await tx.category.updateMany({
           where: { id: item.id, userId },
           data: { sortOrder: item.sortOrder },
-        }),
-      ),
-    );
+        });
+      }
+    });
   }
 
   async contarDelUsuario(userId: bigint): Promise<number> {
-    return this.prisma.category.count({ where: { userId } });
+    return this.db.forUser(userId, (tx) => tx.category.count({ where: { userId } }));
   }
 
   /**
@@ -176,47 +183,9 @@ export class CategoriesRepository {
    * consulta no paga tener que resolver eso a mano.
    */
   async sembrarPlantilla(userId: bigint): Promise<number> {
-    return this.copyTemplate(userId, PLANTILLA_DE_CUENTA_NUEVA, null);
-  }
-
-  private async copyTemplate(
-    userId: bigint,
-    nodos: readonly NodoDePlantilla[],
-    parentId: bigint | null,
-  ): Promise<number> {
-    let creadas = 0;
-
-    for (const [posicion, nodo] of nodos.entries()) {
-      const fila = await this.prisma.category.create({
-        data: {
-          userId,
-          name: nodo.name,
-          // Todo lo de la plantilla es gasto. Los ingresos no se clasifican
-          // todavía en esta app —la opción está apagada y rotulada «Pronto»—,
-          // así que sembrar un árbol de ingresos sería sembrar algo que no se
-          // puede usar.
-          kind: 'expense',
-          parentId,
-          icon: nodo.icon ?? null,
-          estatico: nodo.estatico ?? false,
-          // Explícito y correlativo, no el 0 de fábrica: con todo en cero el
-          // orden lo acaba decidiendo el id, que es el orden de inserción por
-          // casualidad y no por decisión.
-          sortOrder: posicion,
-        },
-      });
-      creadas += 1;
-
-      if (nodo.children?.length) {
-        creadas += await this.copyTemplate(userId, nodo.children, fila.id);
-      }
-    }
-
-    return creadas;
-  }
-
-  async crearVarias(data: Prisma.CategoryUncheckedCreateInput[]): Promise<void> {
-    await this.prisma.category.createMany({ data });
+    return this.db.forUser(userId, (tx) =>
+      copyTemplate(tx, userId, PLANTILLA_DE_CUENTA_NUEVA, null),
+    );
   }
 
   /**
@@ -226,7 +195,7 @@ export class CategoriesRepository {
    * categoría ya borrada, y eso no se arregla mirando la pantalla.
    */
   async unificar(userId: bigint, origenId: bigint, destinoId: bigint): Promise<number> {
-    return this.prisma.$transaction(async (tx) => {
+    return this.db.forUser(userId, async (tx) => {
       const movidos = await tx.transaction.updateMany({
         where: { userId, categoryId: origenId },
         data: { categoryId: destinoId },
@@ -284,4 +253,41 @@ export class CategoriesRepository {
       return movidos.count;
     });
   }
+}
+
+async function copyTemplate(
+  tx: UserTx,
+  userId: bigint,
+  nodos: readonly NodoDePlantilla[],
+  parentId: bigint | null,
+): Promise<number> {
+  let creadas = 0;
+
+  for (const [posicion, nodo] of nodos.entries()) {
+    const fila = await tx.category.create({
+      data: {
+        userId,
+        name: nodo.name,
+        // Todo lo de la plantilla es gasto. Los ingresos no se clasifican
+        // todavía en esta app —la opción está apagada y rotulada «Pronto»—,
+        // así que sembrar un árbol de ingresos sería sembrar algo que no se
+        // puede usar.
+        kind: 'expense',
+        parentId,
+        icon: nodo.icon ?? null,
+        estatico: nodo.estatico ?? false,
+        // Explícito y correlativo, no el 0 de fábrica: con todo en cero el
+        // orden lo acaba decidiendo el id, que es el orden de inserción por
+        // casualidad y no por decisión.
+        sortOrder: posicion,
+      },
+    });
+    creadas += 1;
+
+    if (nodo.children?.length) {
+      creadas += await copyTemplate(tx, userId, nodo.children, fila.id);
+    }
+  }
+
+  return creadas;
 }
