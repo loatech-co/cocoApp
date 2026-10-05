@@ -32,5 +32,12 @@
 
     "types": ["vite/client", "node"]
   },
-  "include": ["src", ".storybook/*.ts", ".storybook/*.tsx", "vite.config.ts", "vitest.config.ts"]
+  "include": [
+    "src",
+    ".storybook/*.ts",
+    ".storybook/*.tsx",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "orval.config.ts"
+  ]
 }

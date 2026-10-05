@@ -187,13 +187,13 @@ export function useFiltros(porDefecto: Preset = 'mes-actual'): {
 export function aParametros(filtros: Filtros): {
   from: string;
   to: string;
-  category_ids?: string;
+  categoryIds?: string;
   q?: string;
 } {
   return {
     from: filtros.from,
     to: filtros.to,
-    ...(filtros.categoryIds.length > 0 && { category_ids: filtros.categoryIds.join(',') }),
+    ...(filtros.categoryIds.length > 0 && { categoryIds: filtros.categoryIds.join(',') }),
     ...(filtros.q && { q: filtros.q }),
   };
 }

@@ -154,14 +154,14 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
 
 function AccountTrigger({ plegada }: { plegada: boolean }) {
   const { usuario } = useAuth();
-  const nombre = usuario?.display_name ?? usuario?.email ?? '?';
+  const nombre = usuario?.displayName ?? usuario?.email ?? '?';
   return (
     <>
       <Avatar nombre={nombre} />
       {!plegada && (
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-sidebar-foreground">
-            {usuario?.display_name ?? '—'}
+            {usuario?.displayName ?? '—'}
           </span>
           {usuario?.email && (
             <span className="block truncate text-2xs text-sidebar-muted">{usuario.email}</span>

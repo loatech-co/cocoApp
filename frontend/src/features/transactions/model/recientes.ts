@@ -9,7 +9,7 @@ import type { EntradaDelIndice } from '@coco/lectura';
  * usar», es un movimiento que se quedó a medio clasificar.
  */
 export function conceptosRecientes(
-  movimientos: readonly { category_id: number | null }[] | undefined | null,
+  movimientos: readonly { categoryId: number | null }[] | undefined | null,
   indice: readonly EntradaDelIndice[],
   maximo = 5,
 ): number[] {
@@ -22,11 +22,11 @@ export function conceptosRecientes(
   const salida: number[] = [];
 
   for (const m of movimientos) {
-    if (m.category_id === null) continue;
-    if (!conceptos.has(String(m.category_id))) continue;
-    if (vistos.has(m.category_id)) continue;
-    vistos.add(m.category_id);
-    salida.push(m.category_id);
+    if (m.categoryId === null) continue;
+    if (!conceptos.has(String(m.categoryId))) continue;
+    if (vistos.has(m.categoryId)) continue;
+    vistos.add(m.categoryId);
+    salida.push(m.categoryId);
     if (salida.length >= maximo) break;
   }
 
@@ -35,9 +35,9 @@ export function conceptosRecientes(
 
 /**
  * `Array.isArray` a secas estrecha un `readonly T[]` a `any[]`, y con eso cada
- * `category_id` de abajo pasa a ser `any` para el lint. Un predicado propio
+ * `categoryId` de abajo pasa a ser `any` para el lint. Un predicado propio
  * conserva el tipo.
  */
-function esLista(x: unknown): x is readonly { category_id: number | null }[] {
+function esLista(x: unknown): x is readonly { categoryId: number | null }[] {
   return Array.isArray(x);
 }

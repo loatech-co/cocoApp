@@ -109,6 +109,18 @@ module.exports = {
       to: { path: ['^frontend/src/shared/api/', '(^|/)node_modules/@tanstack/'] },
     },
     {
+      name: 'web-ui-knows-no-contract',
+      severity: 'error',
+      comment:
+        'shared/ui does not know the API contract, not even its types: not the generated ' +
+        'client (shared/api/generated) nor the native one (shared/lib/native-contract). A ' +
+        'component that needs a sign or a label receives it; the feature translates (7.4-web-c).',
+      from: { path: '^frontend/src/shared/ui/' },
+      to: {
+        path: ['^frontend/src/shared/api/generated/', '^frontend/src/shared/lib/native-contract'],
+      },
+    },
+    {
       name: 'web-ui-atoms-use-no-component',
       severity: 'error',
       comment: 'An atom uses no other component of shared/ui (foundations are not components).',

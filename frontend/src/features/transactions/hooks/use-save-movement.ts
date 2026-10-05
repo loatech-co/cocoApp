@@ -5,10 +5,12 @@ import {
   useCrearMovimiento,
   useEliminarMovimiento,
 } from '@/features/transactions/api/transactions';
-import { ApiClientError, apiFetch, apiSubir } from '@/shared/api/api-client';
+import { ApiClientError, apiSubir } from '@/shared/api/api-client';
 import { useCrearCategoria } from '@/shared/api/categories';
+import { categorizationLearn } from '@/shared/api/generated/categorization-v2/categorization-v2';
+import { type Transaction } from '@/shared/api/generated/model';
+import { getSoportesUploadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
 import { encogerSoportes } from '@/shared/lib/encoger-soporte';
-import type { Transaction } from '@coco/types';
 
 import type { MovementSheetState } from './use-movement-form';
 
@@ -23,11 +25,11 @@ function movementPayload(ficha: MovementSheetState) {
     // categorización automática de futuras importaciones.
     merchant: ficha.description.trim() || null,
     notes: ficha.notes.trim() || null,
-    category_id: ficha.categoryId ?? null,
+    categoryId: ficha.categoryId ?? null,
     // De dónde entró, y el texto del que salió si hubo recibo: es lo que
     // permite saber después por qué se clasificó así, y reinterpretarlo.
     source: 'web' as const,
-    raw_text: ficha.textoLeido.trim() || null,
+    rawText: ficha.textoLeido.trim() || null,
   };
 }
 
@@ -37,9 +39,9 @@ async function uploadPending(id: number, pendientes: File[]): Promise<void> {
   // Ver `shared/lib/encoger-soporte.ts`: lo que sube es un JPG liviano, no la
   // foto de doce megapíxeles que da un teléfono.
   for (const archivo of await encogerSoportes(pendientes)) {
-    datos.append('archivos', archivo);
+    datos.append('files', archivo);
   }
-  await apiSubir(`/transactions/${id}/soportes`, datos);
+  await apiSubir(getSoportesUploadUrl(id), datos);
 }
 
 /**
@@ -55,10 +57,10 @@ async function uploadPending(id: number, pendientes: File[]): Promise<void> {
  * es quien tiene la lista.
  */
 function learnFromSuggestion(cuerpo: ReturnType<typeof movementPayload>): void {
-  if (cuerpo.category_id === null || !cuerpo.description) return;
-  void apiFetch('/categorization/learn', {
-    method: 'POST',
-    body: { description: cuerpo.description, category_id: cuerpo.category_id },
+  if (cuerpo.categoryId === null || !cuerpo.description) return;
+  void categorizationLearn({
+    description: cuerpo.description,
+    categoryId: cuerpo.categoryId,
   }).catch(() => undefined);
 }
 
@@ -88,7 +90,7 @@ export function useCreateInside(ficha: MovementSheetState) {
       const nuevo = await crearCategoria.mutateAsync({
         name: nombre.trim(),
         kind: 'expense',
-        parent_id: padreId,
+        parentId: padreId,
       });
       ficha.proponer({ categoryId: nuevo.id, origen: 'manual' });
     } catch (e) {

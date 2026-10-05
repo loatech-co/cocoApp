@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
+import { type CategoryTree } from '@/shared/api/categories';
 import { cn } from '@/shared/lib/utils';
 import { Casilla } from '@/shared/ui/atoms/casilla';
 import { BackCrumb, DrillButton } from '@/shared/ui/atoms/level-nav';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { REALCE } from '@/shared/ui/foundations/superficie';
-import type { Category } from '@coco/types';
 
 /**
  * El filtro por centros de costos, categorías y conceptos.
@@ -31,7 +31,7 @@ export function FiltroClasificacion({
   marcados,
   onCambiar,
 }: {
-  arbol: Category[];
+  arbol: CategoryTree[];
   marcados: number[];
   onCambiar: (ids: number[]) => void;
 }) {
@@ -42,7 +42,7 @@ export function FiltroClasificacion({
    * con el mismo filtro pueden estar mirando niveles distintos del panel, y
    * eso no cambia lo que ve ninguna de las dos en la pantalla de atrás.
    */
-  const [camino, setCamino] = useState<Category[]>([]);
+  const [camino, setCamino] = useState<CategoryTree[]>([]);
 
   const actual = camino[camino.length - 1];
   const lista = actual ? (actual.children ?? []) : arbol;
@@ -52,7 +52,7 @@ export function FiltroClasificacion({
   };
 
   /** Marcado por debajo: el padre lo dice sin afirmar que lo está él. */
-  const tieneMarcadoDentro = (nodo: Category): boolean =>
+  const tieneMarcadoDentro = (nodo: CategoryTree): boolean =>
     (nodo.children ?? []).some((hijo) => marcados.includes(hijo.id) || tieneMarcadoDentro(hijo));
 
   return (
@@ -105,7 +105,7 @@ function FilterFooter({ marcados, onLimpiar }: { marcados: number[]; onLimpiar: 
 }
 
 interface FilterRowProps {
-  nodo: Category;
+  nodo: CategoryTree;
   marcado: boolean;
   /** Hay algo marcado más abajo: lo dice un punto. */
   conMarcaDentro: boolean;
@@ -147,7 +147,7 @@ function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: Filt
 }
 
 /** Dónde se está: los niveles recorridos, y la vuelta al de arriba. */
-function FilterPath({ camino, onVolver }: { camino: Category[]; onVolver: () => void }) {
+function FilterPath({ camino, onVolver }: { camino: CategoryTree[]; onVolver: () => void }) {
   return (
     <div className="flex min-h-9 items-center gap-1 px-3 py-1.5">
       {camino.length > 0 ? (

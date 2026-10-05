@@ -1,6 +1,6 @@
 import { leerSoporte } from '@/features/transactions/api/leer-soporte';
 import { unreadNotice, proposalFromReading } from '@/features/transactions/model/movement-form';
-import type { Category } from '@coco/types';
+import { type Category } from '@/shared/api/generated/model';
 
 import type { MovementSheetState } from './use-movement-form';
 

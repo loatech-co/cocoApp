@@ -5,7 +5,12 @@ import { aParametros, llegaHastaHoy, useFiltros } from '@/features/transactions/
 import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
 import type { Orden } from '@/features/transactions/model/sort-orders';
 import { useCategories } from '@/shared/api/categories';
-import type { Category, PagoPendiente, Transaction, TransactionType } from '@coco/types';
+import {
+  type Category,
+  type PendingPayment,
+  type Transaction,
+  type TransactionType,
+} from '@/shared/api/generated/model';
 
 /**
  * Cuántas filas trae cada página de la tabla del resumen.
@@ -25,7 +30,7 @@ function useDashboardTable(filtros: ReturnType<typeof useFiltros>['filtros']) {
   const movimientos = useTransactions({
     ...aParametros(filtros),
     page: pagina,
-    per_page: POR_PAGINA,
+    perPage: POR_PAGINA,
     sort: orden,
   });
 
@@ -57,7 +62,7 @@ function useDashboardSheet() {
   // otra pantalla ni otro formulario.
   const [editando, setEditando] = useState<Transaction | null | undefined>(undefined);
   /** El pago pendiente que se está confirmando. Cambia la ficha entera. */
-  const [confirmando, setConfirmando] = useState<PagoPendiente | null>(null);
+  const [confirmando, setConfirmando] = useState<PendingPayment | null>(null);
   const [tipoNuevo, setTipoNuevo] = useState<TransactionType>('expense');
 
   return { editando, setEditando, confirmando, setConfirmando, tipoNuevo, setTipoNuevo };

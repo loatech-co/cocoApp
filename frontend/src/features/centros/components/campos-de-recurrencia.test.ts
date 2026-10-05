@@ -50,33 +50,33 @@ describe('El aviso de los meses cortos', () => {
 
 describe('Cuándo vuelve el pago', () => {
   it('lo mensual no necesita decir de qué mes', () => {
-    expect(cuandoVuelve('mensual', 15, 3)).toBe('Todos los meses el día 15.');
+    expect(cuandoVuelve('monthly', 15, 3)).toBe('Todos los meses el día 15.');
   });
 
   it('lo anual dice el día y el mes', () => {
-    expect(cuandoVuelve('anual', 20, 9)).toBe('Cada 20 de septiembre.');
+    expect(cuandoVuelve('annual', 20, 9)).toBe('Cada 20 de septiembre.');
   });
 
   it('lo trimestral NOMBRA los cuatro meses', () => {
     // "Cada tres meses" no dice cuáles, y cuáles es justo lo que hay que poder
     // comprobar antes de guardar.
-    expect(cuandoVuelve('trimestral', 15, 3)).toBe(
+    expect(cuandoVuelve('quarterly', 15, 3)).toBe(
       'El día 15 de marzo, junio, septiembre, diciembre.',
     );
   });
 
   it('dos trimestrales con meses distintos dan listas distintas', () => {
-    expect(cuandoVuelve('trimestral', 1, 1)).toContain('enero');
-    expect(cuandoVuelve('trimestral', 1, 2)).toContain('febrero');
-    expect(cuandoVuelve('trimestral', 1, 1)).not.toContain('febrero');
+    expect(cuandoVuelve('quarterly', 1, 1)).toContain('enero');
+    expect(cuandoVuelve('quarterly', 1, 2)).toContain('febrero');
+    expect(cuandoVuelve('quarterly', 1, 1)).not.toContain('febrero');
   });
 
   it('lo semestral nombra los dos', () => {
-    expect(cuandoVuelve('semestral', 10, 2)).toBe('El día 10 de febrero, agosto.');
+    expect(cuandoVuelve('semiannual', 10, 2)).toBe('El día 10 de febrero, agosto.');
   });
 
   it('lo bimestral nombra los seis', () => {
-    expect(cuandoVuelve('bimestral', 5, 1).split(',').length).toBe(6);
+    expect(cuandoVuelve('bimonthly', 5, 1).split(',').length).toBe(6);
   });
 });
 
@@ -85,12 +85,12 @@ describe('Intermediate periodicities: the months the form names', () => {
   // (api/src/modules/dashboard/intermediate-periodicities.spec.ts). A reference
   // month late in the year still lists the cycle from January.
   it.each([
-    ['bimestral', 12, 'El día 31 de febrero, abril, junio, agosto, octubre, diciembre.'],
-    ['bimestral', 11, 'El día 31 de enero, marzo, mayo, julio, septiembre, noviembre.'],
-    ['trimestral', 12, 'El día 31 de marzo, junio, septiembre, diciembre.'],
-    ['trimestral', 2, 'El día 31 de febrero, mayo, agosto, noviembre.'],
-    ['semestral', 8, 'El día 31 de febrero, agosto.'],
-    ['semestral', 12, 'El día 31 de junio, diciembre.'],
+    ['bimonthly', 12, 'El día 31 de febrero, abril, junio, agosto, octubre, diciembre.'],
+    ['bimonthly', 11, 'El día 31 de enero, marzo, mayo, julio, septiembre, noviembre.'],
+    ['quarterly', 12, 'El día 31 de marzo, junio, septiembre, diciembre.'],
+    ['quarterly', 2, 'El día 31 de febrero, mayo, agosto, noviembre.'],
+    ['semiannual', 8, 'El día 31 de febrero, agosto.'],
+    ['semiannual', 12, 'El día 31 de junio, diciembre.'],
   ] as const)('%s with reference month %i', (periodicity, month, expected) => {
     expect(cuandoVuelve(periodicity, 31, month)).toBe(expected);
   });

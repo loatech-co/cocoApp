@@ -5,12 +5,12 @@ import { CategoriaModal } from '@/features/centros/components/categoria-modal';
 import { trasCerrar } from '@/features/centros/components/close-then';
 import { ConceptoModal } from '@/features/centros/components/concepto-modal';
 import { ConfirmarBorrado } from '@/features/centros/components/confirmar-borrado';
+import { type CategoryTree } from '@/shared/api/categories';
 import { cn } from '@/shared/lib/utils';
 import { Chip } from '@/shared/ui/atoms/badge';
 import { Bloque } from '@/shared/ui/atoms/bloque';
 import { IconoDeCategoria } from '@/shared/ui/atoms/iconos';
 import { Menu, MenuOpcion } from '@/shared/ui/molecules/menu';
-import type { Category } from '@coco/types';
 
 /**
  * Lo que hace de una tarjeta una pieza de la mampostería.
@@ -29,8 +29,13 @@ import type { Category } from '@coco/types';
  */
 const BALDOSA = 'mb-3 break-inside-avoid';
 
-export function Categoría({ categoria, arbol }: { categoria: Category; arbol: Category[] }) {
-  const [editando, setEditando] = useState<Category | null>(null);
+interface PropsDeCategoria {
+  categoria: CategoryTree;
+  arbol: CategoryTree[];
+}
+
+export function Categoría({ categoria, arbol }: PropsDeCategoria) {
+  const [editando, setEditando] = useState<CategoryTree | null>(null);
   const [renombrando, setRenombrando] = useState(false);
   const [creando, setCreando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
@@ -125,7 +130,7 @@ export function Categoría({ categoria, arbol }: { categoria: Category; arbol: C
   vacío alineado con los que sí tienen icono se ve como un icono que
   no cargó.
 */
-function NombreDeCategoria({ categoria }: { categoria: Category }) {
+function NombreDeCategoria({ categoria }: { categoria: CategoryTree }) {
   return (
     <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
       <IconoDeCategoria nombre={categoria.icon} className="size-4 shrink-0 text-muted-foreground" />
@@ -180,8 +185,8 @@ function Conceptos({
   conceptos,
   onEditar,
 }: {
-  conceptos: Category[];
-  onEditar: (concepto: Category) => void;
+  conceptos: CategoryTree[];
+  onEditar: (concepto: CategoryTree) => void;
 }) {
   return (
     <ul className="mt-3 flex flex-wrap gap-1.5">
@@ -204,7 +209,7 @@ function Conceptos({
             title={`Editar ${concepto.name}`}
             className="max-w-full"
           >
-            {concepto.recurrente && (
+            {concepto.isRecurring && (
               <Repeat
                 className="size-3 shrink-0 opacity-70"
                 aria-label="Se paga cada cierto tiempo"

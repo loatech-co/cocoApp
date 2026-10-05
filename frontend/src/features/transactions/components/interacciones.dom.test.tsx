@@ -25,11 +25,21 @@ import { MovimientoModal } from './movimiento-modal';
   delante se retiró—, así que el primer gesto es escribir el monto.
 */
 
-const apiFetch = vi.fn();
+const red = vi.fn();
+/**
+ * The generated client calls `apiRequest(url, init)` with the full v2 path and
+ * a JSON string; the spy sees the route without `/api/v2` and the body as an
+ * object, which is what these tests read.
+ */
+const comoRuta = (url: string, init?: RequestInit) =>
+  red(url.replace(/^\/api\/v2/, ''), {
+    method: init?.method ?? 'GET',
+    ...(typeof init?.body === 'string' ? { body: JSON.parse(init.body) as unknown } : {}),
+  });
 vi.mock('@/shared/api/api-client', async () => {
   const real =
     await vi.importActual<typeof import('@/shared/api/api-client')>('@/shared/api/api-client');
-  return { ...real, apiFetch: (...args: unknown[]) => apiFetch(...args) };
+  return { ...real, apiRequest: (url: string, init?: RequestInit) => comoRuta(url, init) };
 });
 
 vi.mock('@/features/transactions/api/leer-soporte', () => ({ leerSoporte: vi.fn() }));
@@ -44,7 +54,7 @@ vi.mock('@/features/transactions/api/leer-soporte', () => ({ leerSoporte: vi.fn(
   sugerencia encima del formulario sin pasar por un recibo.
 */
 const sugerencia = vi.fn<
-  () => { category_id: number; confidence: number; reason: 'historial' } | null
+  () => { categoryId: number; confidence: number; reason: 'historial' } | null
 >(() => null);
 vi.mock('@/features/transactions/hooks/use-sugerencia', () => ({
   useSugerenciaDeCategoria: () => sugerencia(),
@@ -55,7 +65,7 @@ const ARBOL = [
     id: 1,
     name: 'Costos fijos',
     kind: 'expense',
-    estatico: false,
+    isStatic: false,
     children: [
       {
         id: 10,
@@ -66,7 +76,7 @@ const ARBOL = [
             id: 100,
             name: 'Celsia (Energía)',
             kind: 'expense',
-            palabras_clave: ['celsia'],
+            keywords: ['celsia'],
             children: [],
           },
           { id: 101, name: 'Acueducto', kind: 'expense', children: [] },
@@ -85,11 +95,11 @@ function gesto(accion: () => void): void {
 
 beforeEach(() => {
   interacciones = 0;
-  apiFetch.mockReset();
+  red.mockReset();
   sugerencia.mockReturnValue(null);
   // La red contesta por ruta: la ficha pide el árbol y los recientes nada más
   // abrirse, y una respuesta única le daría un `{ id }` donde espera listas.
-  apiFetch.mockImplementation((ruta: string, opciones?: { method?: string }) => {
+  red.mockImplementation((ruta: string, opciones?: { method?: string }) => {
     if (opciones?.method === 'POST' && ruta === '/transactions')
       return Promise.resolve({ data: { id: 42 } });
     if (ruta.startsWith('/categories')) return Promise.resolve({ data: ARBOL });
@@ -135,10 +145,10 @@ async function guardar(): Promise<void> {
 
 /** Lo que se mandó a crear, para comprobar que fue CON clasificación. */
 const cuerpoCreado = () =>
-  apiFetch.mock.calls.find(([ruta, o]) => ruta === '/transactions' && o?.method === 'POST')?.[1]
-    ?.body as { category_id: number | null; amount: unknown } | undefined;
+  red.mock.calls.find(([ruta, o]) => ruta === '/transactions' && o?.method === 'POST')?.[1]
+    ?.body as { categoryId: number | null; amount: unknown } | undefined;
 
-const seAprendio = () => apiFetch.mock.calls.some(([ruta]) => ruta === '/categorization/learn');
+const seAprendio = () => red.mock.calls.some(([ruta]) => ruta === '/categorization/learn');
 
 describe('Registrar un gasto con clasificación completa', () => {
   it('a mano, por el buscador: cinco gestos desde que se abre la ficha', async () => {
@@ -161,7 +171,7 @@ describe('Registrar un gasto con clasificación completa', () => {
 
     await guardar(); // 5
 
-    expect(cuerpoCreado()).toMatchObject({ category_id: 100 });
+    expect(cuerpoCreado()).toMatchObject({ categoryId: 100 });
     // Nadie sugirió nada: clasificar a mano no es confirmar una sugerencia.
     expect(seAprendio()).toBe(false);
 
@@ -175,7 +185,7 @@ describe('Registrar un gasto con clasificación completa', () => {
   });
 
   it('con una sugerencia que acierta: dos gestos desde que se abre la ficha', async () => {
-    sugerencia.mockReturnValue({ category_id: 100, confidence: 0.9, reason: 'historial' });
+    sugerencia.mockReturnValue({ categoryId: 100, confidence: 0.9, reason: 'historial' });
     abrirFichaNueva();
 
     escribirElMonto(); // 1
@@ -190,7 +200,7 @@ describe('Registrar un gasto con clasificación completa', () => {
 
     await guardar(); // 2
 
-    expect(cuerpoCreado()).toMatchObject({ category_id: 100 });
+    expect(cuerpoCreado()).toMatchObject({ categoryId: 100 });
 
     /*
       Hubo sugerencia, pero no hay de qué aprender: la ficha a mano no tiene

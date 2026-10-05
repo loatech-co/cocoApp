@@ -7,6 +7,7 @@ import {
   sentidoDelMovimiento,
 } from '@/features/transactions/model/movimientos';
 import { useCategories } from '@/shared/api/categories';
+import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { diaCorto } from '@/shared/lib/fechas';
 import { Input } from '@/shared/ui/atoms/input';
@@ -14,7 +15,6 @@ import { Monto } from '@/shared/ui/atoms/monto';
 import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
 import { PanelRow } from '@/shared/ui/atoms/panel-row';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
-import type { Category, Transaction } from '@coco/types';
 
 /** Cuántos resultados caben antes de que la lista deje de ser una respuesta. */
 const CUANTOS = 20;
@@ -81,7 +81,7 @@ function Resultados({
   consulta: string;
   onElegir: (movimiento: Transaction) => void;
 }) {
-  const movimientos = useTransactions({ q: consulta, per_page: CUANTOS, sort: '-date' });
+  const movimientos = useTransactions({ q: consulta, perPage: CUANTOS, sort: '-date' });
   const categorias = useCategories();
   const arbol = categorias.data ?? [];
 

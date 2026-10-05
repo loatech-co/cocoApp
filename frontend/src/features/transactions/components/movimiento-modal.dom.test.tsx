@@ -156,7 +156,7 @@ describe('La ficha de confirmar un pago pendiente', () => {
   });
 
   it('un concepto que nunca se ha pagado abre sin valor, y lo dice de otra forma', () => {
-    abrirConfirmacion({ ...PAGO, expected_amount: null });
+    abrirConfirmacion({ ...PAGO, expectedAmount: null });
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('');
     expect(screen.getByText(/se leen el valor y la fecha/i)).toBeDefined();

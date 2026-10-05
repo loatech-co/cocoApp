@@ -1,3 +1,9 @@
+import { type CategoryTree } from '@/shared/api/categories';
+import {
+  type PendingPayment,
+  type Transaction,
+  type TransactionType,
+} from '@/shared/api/generated/model';
 import {
   buscarEnArbol,
   normalizar,
@@ -6,7 +12,6 @@ import {
   type EntradaDelIndice,
   type Lectura,
 } from '@coco/lectura';
-import type { Category, PagoPendiente, Transaction, TransactionType } from '@coco/types';
 
 import type { Origen } from './precedencia';
 
@@ -70,18 +75,18 @@ export function mayuscula(texto: string): string {
  */
 export function initialAmountAndDate(
   movimiento: Transaction | null | undefined,
-  pago: PagoPendiente | null | undefined,
+  pago: PendingPayment | null | undefined,
 ): { amount: string; date: string } {
-  const abonandoAUnConcepto = pago?.varios_pagos === true;
+  const abonandoAUnConcepto = pago?.isMultiPayment === true;
 
   return {
     amount: movimiento
       ? String(Number(movimiento.amount))
-      : !abonandoAUnConcepto && pago?.expected_amount != null
-        ? String(Number(pago.expected_amount))
+      : !abonandoAUnConcepto && pago?.expectedAmount != null
+        ? String(Number(pago.expectedAmount))
         : '',
     date:
-      movimiento?.date ?? (abonandoAUnConcepto ? hoyEnBogota() : (pago?.due_date ?? hoyEnBogota())),
+      movimiento?.date ?? (abonandoAUnConcepto ? hoyEnBogota() : (pago?.dueDate ?? hoyEnBogota())),
   };
 }
 
@@ -93,7 +98,7 @@ export function initialAmountAndDate(
  * una persona. "Celsia (Energia)" y "Celsia (Energía)" son el mismo concepto y
  * no hay ninguna razón para que un acento los separe.
  */
-function conceptoLlamado(arbol: Category[], nombre: string): Category | undefined {
+function conceptoLlamado(arbol: CategoryTree[], nombre: string): CategoryTree | undefined {
   const buscado = normalizar(nombre);
 
   for (const centro of arbol) {
@@ -157,7 +162,7 @@ export function proposalFromText(
  * clave; el diccionario, con el suyo. Sin ids —un árbol que no llegó—, por el
  * nombre, como siempre. `null` si el recibo no dijo nada de esto.
  */
-export function proposalFromReading(leida: Lectura, arbol: Category[]): AutoProposal | null {
+export function proposalFromReading(leida: Lectura, arbol: CategoryTree[]): AutoProposal | null {
   const enElArbol = leida.enElArbol;
   if (!enElArbol) {
     const suyo = leida.concepto ? conceptoLlamado(arbol, leida.concepto) : undefined;

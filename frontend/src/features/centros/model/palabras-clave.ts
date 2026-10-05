@@ -1,5 +1,6 @@
+import { type CategoryTree } from '@/shared/api/categories';
+import { comoNodosBuscables } from '@/shared/lib/arbol-buscable';
 import { firmasDelArbol as firmasDelArbolCompartido, normalizar, type Firma } from '@coco/lectura';
-import type { Category } from '@coco/types';
 
 /**
  * Las palabras que alguien escribe en un concepto para que sus recibos se
@@ -91,10 +92,10 @@ export function porQueNoEntra(palabra: string, yaPuestas: readonly string[]): st
 }
 
 /** Los conceptos del árbol: las hojas, que es donde cuelgan los movimientos. */
-function conceptosDe(arbol: readonly Category[]): {
-  concepto: Category;
-  categoria: Category;
-  centro: Category;
+function conceptosDe(arbol: readonly CategoryTree[]): {
+  concepto: CategoryTree;
+  categoria: CategoryTree;
+  centro: CategoryTree;
 }[] {
   return arbol.flatMap((centro) =>
     (centro.children ?? []).flatMap((categoria) =>
@@ -113,16 +114,16 @@ function conceptosDe(arbol: readonly Category[]): {
  * el del concepto duplicado: se dice lo que hay y se deja decidir.
  */
 export function conceptoQueYaLaUsa(
-  arbol: readonly Category[],
+  arbol: readonly CategoryTree[],
   palabra: string,
-  exceptoId?: Category['id'],
-): Category | undefined {
+  exceptoId?: CategoryTree['id'],
+): CategoryTree | undefined {
   const buscada = comoSeCompara(palabra);
 
   return conceptosDe(arbol).find(
     ({ concepto }) =>
       concepto.id !== exceptoId &&
-      concepto.palabras_clave.some((suya) => comoSeCompara(suya) === buscada),
+      concepto.keywords.some((suya) => comoSeCompara(suya) === buscada),
   )?.concepto;
 }
 
@@ -132,7 +133,7 @@ export function conceptoQueYaLaUsa(
  * Van DELANTE del catálogo cuando se clasifica, y además con más prioridad:
  * ver `PRIORIDAD_DE_LO_ESCRITO` en `packages/lectura/firmas.ts`.
  */
-export function firmasDelArbol(arbol: readonly Category[]): Firma[] {
+export function firmasDelArbol(arbol: readonly CategoryTree[]): Firma[] {
   // El recorrido vive en el paquete desde la fase 3: la API lo necesita igual.
-  return firmasDelArbolCompartido(arbol);
+  return firmasDelArbolCompartido(comoNodosBuscables(arbol));
 }

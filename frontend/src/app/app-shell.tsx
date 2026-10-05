@@ -258,7 +258,7 @@ function PhoneSheets({ shell }: { shell: ShellState }) {
   return (
     <>
       <BarraInferior
-        nombre={usuario?.display_name ?? usuario?.email ?? '?'}
+        nombre={usuario?.displayName ?? usuario?.email ?? '?'}
         busquedaAbierta={shell.busquedaAbierta}
         onBuscar={() => shell.setBusquedaAbierta(true)}
         // Directo al gasto, sin menú de por medio: es la única opción viva

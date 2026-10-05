@@ -1,7 +1,8 @@
-import { ApiClientError, apiFetch } from '@/shared/api/api-client';
+import { ApiClientError } from '@/shared/api/api-client';
+import { interpretacionInterpret } from '@/shared/api/generated/interpretacion-v2/interpretacion-v2';
+import type { ClassificationSource, Interpretation } from '@/shared/api/generated/model';
 import { cargarPdfjs } from '@/shared/lib/pdf';
-import type { Lectura } from '@coco/lectura';
-import type { Interpretacion } from '@coco/types';
+import type { ClasificacionEnElArbol, Lectura } from '@coco/lectura';
 
 /**
  * Leer un recibo: sacarle el texto y, con él, de qué es.
@@ -194,15 +195,12 @@ async function interpretText(
   texto: string,
   archivo: File,
   periodo: string | undefined,
-): Promise<Interpretacion> {
+): Promise<Interpretation> {
   try {
-    const respuesta = await apiFetch<Interpretacion>('/transactions/interpret', {
-      method: 'POST',
-      body: {
-        texto,
-        nombre_de_archivo: archivo.name.replace(/\.[a-z0-9]+$/i, ''),
-        periodo,
-      },
+    const respuesta = await interpretacionInterpret({
+      text: texto,
+      fileName: archivo.name.replace(/\.[a-z0-9]+$/i, ''),
+      ...(periodo === undefined ? {} : { period: periodo }),
     });
     return respuesta.data;
   } catch (e) {
@@ -224,35 +222,46 @@ async function interpretText(
  * confianza se traduce de la certeza: alta sin revisar es seguro; lo demás,
  * por debajo del umbral, para que la ficha lo diga.
  */
-function lecturaDesde(i: Interpretacion, fuente: 'texto-embebido' | 'ocr'): Lectura {
-  const c = i.clasificacion;
+function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Lectura {
+  const c = i.classification;
   return {
-    concepto: c.concepto_id !== null ? c.nombre : null,
-    categoria: c.concepto_id === null && c.categoria_id !== null ? c.nombre : null,
+    concepto: c.conceptId !== null ? c.name : null,
+    categoria: c.conceptId === null && c.categoryId !== null ? c.name : null,
     centro: null,
     valor: i.amount === null ? null : Number(i.amount),
     fecha: i.date,
-    confianza: !i.por_revisar
+    confianza: !i.needsReview
       ? fuente === 'ocr'
         ? 0.85
         : 0.95
-      : c.certeza === 'alta'
+      : c.certainty === 'high'
         ? 0.7
-        : c.certeza === 'media'
+        : c.certainty === 'medium'
           ? 0.5
           : 0.2,
     señales: { texto: [], nombre: [], nit: [], recaudadoresIgnorados: [] },
-    motivo: c.motivo,
-    alternativas: c.candidatos.map((k) => ({ concepto: k.nombre, puntaje: 0 })),
+    motivo: c.reason,
+    alternativas: c.candidates.map((k) => ({ concepto: k.name, puntaje: 0 })),
     enElArbol:
-      c.certeza === 'ninguna'
+      c.certainty === 'none'
         ? null
         : {
-            certeza: c.certeza,
-            fuente: c.fuente ?? 'diccionario',
-            conceptoId: c.concepto_id ?? undefined,
-            categoriaId: c.categoria_id ?? undefined,
-            candidatos: c.candidatos.map((k) => ({ id: k.id, nombre: k.nombre, ruta: k.ruta })),
+            certeza: c.certainty === 'high' ? 'alta' : 'media',
+            fuente: FUENTE[c.source ?? 'dictionary'],
+            conceptoId: c.conceptId ?? undefined,
+            categoriaId: c.categoryId ?? undefined,
+            candidatos: c.candidates.map((k) => ({ id: k.id, nombre: k.name, ruta: k.path })),
           },
   };
 }
+
+/**
+ * The API speaks English (v2); `@coco/lectura`, which the sheet reads, still
+ * names its sources in Spanish. Translated here, at the edge.
+ */
+const FUENTE: Record<NonNullable<ClassificationSource>, ClasificacionEnElArbol['fuente']> = {
+  history: 'historial',
+  keywords: 'palabras-clave',
+  signature: 'firma',
+  dictionary: 'diccionario',
+};

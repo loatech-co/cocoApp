@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { PagoPendiente } from '@coco/types';
+import { type PendingPayment } from '@/shared/api/generated/model';
 
 import { PagosPendientes } from './pagos-pendientes';
 
@@ -19,32 +19,32 @@ afterEach(cleanup);
 
 const BASE = {
   path: 'Costos variables · Alimentación',
-  periodicidad: 'mensual',
-  due_date: '2999-12-01',
-  centro_id: 1,
-  centro: 'Costos variables',
+  periodicity: 'monthly',
+  dueDate: '2999-12-01',
+  costCenterId: 1,
+  costCenter: 'Costos variables',
 } as const;
 
 const MERCADO = {
   ...BASE,
-  category_id: 10,
+  categoryId: 10,
   name: 'Mercado',
-  expected_amount: '1200000',
-  paid_amount: '320450',
-  varios_pagos: true,
-} as unknown as PagoPendiente;
+  expectedAmount: '1200000',
+  paidAmount: '320450',
+  isMultiPayment: true,
+} as unknown as PendingPayment;
 
 const ALQUILER = {
   ...BASE,
-  category_id: 20,
+  categoryId: 20,
   name: 'Alquiler',
   path: 'Costos fijos · Vivienda',
-  expected_amount: '2400000',
-  paid_amount: '0',
-  varios_pagos: false,
-} as unknown as PagoPendiente;
+  expectedAmount: '2400000',
+  paidAmount: '0',
+  isMultiPayment: false,
+} as unknown as PendingPayment;
 
-function pintar(pagos: PagoPendiente[], onElegir = vi.fn()) {
+function pintar(pagos: PendingPayment[], onElegir = vi.fn()) {
   render(<PagosPendientes pagos={pagos} onElegir={onElegir} />);
   return onElegir;
 }
@@ -106,9 +106,9 @@ describe('Un pendiente normal no cambia', () => {
 
 describe('Sin un total al que llegar', () => {
   it('no se pinta barra, porque sería una fracción sin denominador', () => {
-    // Ya es un `PagoPendiente`: esparcirlo no cambia el tipo, así que no hay
+    // Ya es un `PendingPayment`: esparcirlo no cambia el tipo, así que no hay
     // nada que afirmar.
-    const sinTotal: PagoPendiente = { ...MERCADO, expected_amount: null, paid_amount: '50000' };
+    const sinTotal: PendingPayment = { ...MERCADO, expectedAmount: null, paidAmount: '50000' };
     pintar([sinTotal]);
 
     expect(screen.queryByRole('progressbar')).toBeNull();

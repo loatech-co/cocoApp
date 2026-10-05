@@ -9,9 +9,9 @@ import {
   linea,
   ye,
 } from '@/features/transactions/model/trend';
+import { type TrendPoint } from '@/shared/api/generated/model';
 import { cn, formatCOP } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
-import type { TrendPoint } from '@coco/types';
 
 /** Promedio y pico, encima de la gráfica. */
 export function TrendSummary({

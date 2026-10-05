@@ -16,7 +16,7 @@ afterEach(cleanup);
 
 const BASE: Recurrencia = {
   recurrente: true,
-  periodicidad: 'mensual',
+  periodicidad: 'monthly',
   diaDePago: 1,
   mesDePago: 1,
   presupuesto: '1200000',

@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-import { USER_AGENT_APP, type SesionParaLaWeb } from '@coco/types';
+import { USER_AGENT_APP, type SesionParaLaWeb } from '@/shared/lib/native-contract';
 
 /**
  * Finge que la web corre dentro de la app del teléfono.

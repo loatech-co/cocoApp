@@ -181,6 +181,9 @@ export default defineConfig(
     'api/prisma/migrations/**',
     'api/prisma/migraciones-mysql-archivadas/**',
     'ios/**',
+    // The API client Orval writes from api/openapi.v2.json (D11): not ours to
+    // style, and CI fails if it differs from a fresh generation.
+    'frontend/src/shared/api/generated/**',
     // Operational one-off scripts: plain .mjs outside every tsconfig. Out of
     // the lint scope of the workspaces.
     'scripts/**',

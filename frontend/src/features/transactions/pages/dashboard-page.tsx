@@ -17,8 +17,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
  * recita un documento de identidad. Si no hay nombre, el correo tampoco sirve
  * para saludar, así que el saludo se queda solo.
  */
-function nombreDePila(usuario: { display_name?: string | null } | null | undefined): string {
-  return (usuario?.display_name ?? '').trim().split(/\s+/)[0] ?? '';
+function nombreDePila(usuario: { displayName?: string | null } | null | undefined): string {
+  return (usuario?.displayName ?? '').trim().split(/\s+/)[0] ?? '';
 }
 
 /**

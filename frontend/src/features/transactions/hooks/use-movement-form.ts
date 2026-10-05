@@ -12,15 +12,19 @@ import {
   type Clasificacion,
   type Origen,
 } from '@/features/transactions/model/precedencia';
+import {
+  type PendingPayment,
+  type Transaction,
+  type TransactionType,
+} from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import type { Lectura } from '@coco/lectura';
-import type { PagoPendiente, Transaction, TransactionType } from '@coco/types';
 
 /** Con qué se abre la ficha. Cambiar cualquiera de estos la vuelve a llenar. */
 export interface SheetOpening {
   abierta: boolean;
   movimiento?: Transaction | null | undefined;
-  pago?: PagoPendiente | null | undefined;
+  pago?: PendingPayment | null | undefined;
   tipoPorDefecto: TransactionType;
 }
 
@@ -73,7 +77,7 @@ function useMovementFields(apertura: SheetOpening, descartes: number) {
     setType(movimiento?.type ?? tipoPorDefecto);
     // Lo que llega puesto —el concepto de un movimiento que se edita, el de un
     // pago pendiente que se confirma— es una elección: lo automático no lo toca.
-    const puesto = movimiento?.category_id ?? pago?.category_id;
+    const puesto = movimiento?.categoryId ?? pago?.categoryId;
     setClasificacion(
       puesto === undefined ? SIN_CLASIFICAR : { categoryId: puesto, origen: 'manual' },
     );

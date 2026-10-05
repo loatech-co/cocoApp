@@ -206,7 +206,7 @@ function useRegisterForm(registrarse: ReturnType<typeof useAuth>['registrarse'])
     setEnviando(true);
 
     void registrarse(email, password, nombre)
-      .then((respuesta) => setEnviado(respuesta.pending_approval ? 'pendiente' : 'lista'))
+      .then((respuesta) => setEnviado(respuesta.pendingApproval ? 'pendiente' : 'lista'))
       .catch((causa: unknown) => {
         setError(mensajeDeErrorDeAuth(causa));
         // La API dice exactamente qué le falta a la contraseña; ocultarlo

@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { type Transaction } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import type { Transaction } from '@coco/types';
 
 import { useSuperficieDeAtajos } from './atajos';
 import { useSecciones } from './navegacion';

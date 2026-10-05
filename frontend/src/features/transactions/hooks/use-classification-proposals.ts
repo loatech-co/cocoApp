@@ -4,9 +4,10 @@ import { useTransactions } from '@/features/transactions/api/transactions';
 import { useSugerenciaDeCategoria } from '@/features/transactions/hooks/use-sugerencia';
 import { proposalFromText } from '@/features/transactions/model/movement-form';
 import { conceptosRecientes } from '@/features/transactions/model/recientes';
+import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { comoNodosBuscables } from '@/shared/lib/arbol-buscable';
 import { indexarArbol } from '@coco/lectura';
-import type { Category, Transaction } from '@coco/types';
 
 import type { MovementSheetState } from './use-movement-form';
 
@@ -44,16 +45,16 @@ export function useClassificationProposals(
     arbol: Category[] | undefined;
   },
 ) {
-  const indiceDelArbol = useMemo(() => indexarArbol(arbol ?? []), [arbol]);
+  const indiceDelArbol = useMemo(() => indexarArbol(comoNodosBuscables(arbol ?? [])), [arbol]);
   const proponiendo = abierta && ficha.paso === 'formulario' && ficha.editable;
 
   const sugerenciaDelHistorial = useSugerenciaDeCategoria(proponiendo ? ficha.description : '');
-  useAlCambiar([sugerenciaDelHistorial?.category_id], () => {
+  useAlCambiar([sugerenciaDelHistorial?.categoryId], () => {
     // Solo con un id de verdad: una respuesta con otra forma no puede vaciar
     // lo que otra fuente ya había puesto.
-    if (typeof sugerenciaDelHistorial?.category_id !== 'number') return;
+    if (typeof sugerenciaDelHistorial?.categoryId !== 'number') return;
     ficha.setHuboSugerencia(true);
-    ficha.proponer({ categoryId: sugerenciaDelHistorial.category_id, origen: 'historial' });
+    ficha.proponer({ categoryId: sugerenciaDelHistorial.categoryId, origen: 'historial' });
   });
 
   const propuestaLocal = useMemo(() => {
@@ -80,7 +81,7 @@ export function useClassificationProposals(
   // Los conceptos usados últimamente, para el buscador en blanco. Solo al
   // crear: editando, el concepto ya está puesto.
   const movimientosRecientes = useTransactions(
-    { per_page: 40 },
+    { perPage: 40 },
     { enabled: abierta && !movimiento },
   );
   return useMemo(

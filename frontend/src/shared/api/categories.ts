@@ -1,22 +1,23 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
-import type { Category } from '@coco/types';
-
-import { apiFetch } from './api-client';
+import { categoriesCreate, categoriesList } from './generated/categories-v2/categories-v2';
+import type { Category, CreateCategoryInput } from './generated/model';
+import { allPages } from './pages';
 import { keys } from './query-keys';
 
 // ── Categorías ───────────────────────────────────────────────────────────────
 
+/**
+ * A node of the tree. The API sends `children` always (`CategoryNode`); it is
+ * optional here so that a node built on the client —a test, an optimistic
+ * insert— does not have to invent an empty list.
+ */
 export type CategoryTree = Category & { children?: CategoryTree[] };
 
 export function useCategories(kind?: Category['kind']): UseQueryResult<CategoryTree[]> {
   return useQuery({
     queryKey: [...keys.categories, kind ?? 'todas'],
-    queryFn: async () => {
-      const query = kind ? `?kind=${kind}` : '';
-      const respuesta = await apiFetch<CategoryTree[]>(`/categories${query}`);
-      return respuesta.data;
-    },
+    queryFn: () => allPages(async (page) => categoriesList({ ...page, ...(kind ? { kind } : {}) })),
   });
 }
 
@@ -24,27 +25,7 @@ export function useCrearCategoria() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (categoria: {
-      name: string;
-      kind: Category['kind'];
-      parent_id?: number;
-      color?: string;
-      icon?: string;
-      recurrente?: boolean;
-      /** Solo en un centro de costos: bloquea reclasificarlo desde la tabla. */
-      estatico?: boolean;
-      periodicidad?: Category['periodicidad'];
-      dia_de_pago?: number | null;
-      mes_de_pago?: number | null;
-      /** Solo en un concepto: lo que se busca en un soporte para reconocerlo. */
-      palabras_clave?: string[];
-    }) => {
-      const respuesta = await apiFetch<Category>('/categories', {
-        method: 'POST',
-        body: categoria,
-      });
-      return respuesta.data;
-    },
+    mutationFn: async (categoria: CreateCategoryInput) => (await categoriesCreate(categoria)).data,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.categories }),
   });
 }

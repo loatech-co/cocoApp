@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
-import { apiFetch } from '@/shared/api/api-client';
-import type { SugerenciaDeCategoria } from '@coco/types';
+import { categorizationSuggest } from '@/shared/api/generated/categorization-v2/categorization-v2';
+import type { Suggestion } from '@/shared/api/generated/model';
 
 /**
  * Espera antes de consultar, en milisegundos.
@@ -26,7 +26,7 @@ const MINIMO_DE_CARACTERES = 3;
  * Devuelve `null` cuando no hay nada seguro que decir, y la interfaz
  * sencillamente no muestra nada. Sugerir mal es peor que no sugerir.
  */
-export function useSugerenciaDeCategoria(descripcion: string): SugerenciaDeCategoria | null {
+export function useSugerenciaDeCategoria(descripcion: string): Suggestion | null {
   const [estabilizada, setEstabilizada] = useState('');
 
   useEffect(() => {
@@ -41,9 +41,7 @@ export function useSugerenciaDeCategoria(descripcion: string): SugerenciaDeCateg
     // repetir la misma consulta al borrar y volver a escribir.
     staleTime: 60_000,
     queryFn: async () => {
-      const respuesta = await apiFetch<SugerenciaDeCategoria | null>(
-        `/categorization/suggest?description=${encodeURIComponent(estabilizada)}`,
-      );
+      const respuesta = await categorizationSuggest({ description: estabilizada });
       return respuesta.data;
     },
   });

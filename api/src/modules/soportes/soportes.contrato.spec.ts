@@ -9,7 +9,10 @@ import { join } from 'node:path';
  * cliente del teléfono con un contrato viejo.
  */
 describe('El contrato de soportes', () => {
-  const tipos = readFileSync(join(__dirname, '../../../../frontend/src/shared/lib/native-contract.ts'), 'utf8');
+  const tipos = readFileSync(
+    join(__dirname, '../../../../frontend/src/shared/lib/native-contract.ts'),
+    'utf8',
+  );
   const controlador = readFileSync(join(__dirname, 'soportes.controller.ts'), 'utf8');
   const optimizacion = readFileSync(join(__dirname, 'soportes.optimizacion.ts'), 'utf8');
   const almacen = readFileSync(join(__dirname, 'soportes.almacen.ts'), 'utf8');

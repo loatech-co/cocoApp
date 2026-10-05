@@ -1,11 +1,7 @@
 import { useMemo, useState } from 'react';
 
-import {
-  buscarEnArbol,
-  indexarArbol,
-  type EntradaDelIndice,
-  type NodoBuscable,
-} from '@coco/lectura';
+import { comoNodosBuscables, type NodoDelArbol } from '@/shared/lib/arbol-buscable';
+import { buscarEnArbol, indexarArbol, type EntradaDelIndice } from '@coco/lectura';
 
 /** Qué se está haciendo dentro del panel: buscar, o elegir dónde va lo nuevo. */
 export type ModoDelBuscador = 'buscar' | 'categoria-para-nuevo';
@@ -21,12 +17,12 @@ function useConceptLists({
   recientes,
   busca,
 }: {
-  arbol: readonly NodoBuscable[];
+  arbol: readonly NodoDelArbol[];
   valor: number | undefined;
   recientes: readonly number[];
   busca: string;
 }) {
-  const indice = useMemo(() => indexarArbol(arbol), [arbol]);
+  const indice = useMemo(() => indexarArbol(comoNodosBuscables(arbol)), [arbol]);
   const elegida = useMemo(
     () => (valor === undefined ? undefined : indice.find((e) => String(e.id) === String(valor))),
     [indice, valor],
@@ -63,7 +59,7 @@ export function useConceptSearch({
   valor,
   recientes,
 }: {
-  arbol: readonly NodoBuscable[];
+  arbol: readonly NodoDelArbol[];
   valor: number | undefined;
   recientes: readonly number[];
 }) {

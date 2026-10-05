@@ -7,11 +7,11 @@ import {
   partir,
   porQueNoEntra,
 } from '@/features/centros/model/palabras-clave';
+import { type Category } from '@/shared/api/generated/model';
 import { cn } from '@/shared/lib/utils';
 import { Chip } from '@/shared/ui/atoms/badge';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { FieldAction, Input } from '@/shared/ui/atoms/input';
-import type { Category } from '@coco/types';
 
 interface KeywordFieldsProps {
   valor: string[];

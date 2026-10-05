@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { USER_AGENT_APP } from '@coco/types';
+import { USER_AGENT_APP } from '@/shared/lib/native-contract';
 
 import { CONSULTA_ESCRITORIO, CONSULTA_MOVIL, useEnLaApp } from './movil';
 

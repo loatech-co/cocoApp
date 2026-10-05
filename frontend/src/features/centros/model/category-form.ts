@@ -15,7 +15,9 @@ export interface CategoryFormValues {
 
 /** Los cambios al renombrar. */
 export function categoryChanges({ esCentro, nombre, estatico, icono }: CategoryFormValues) {
-  return esCentro ? { name: nombre.trim(), estatico } : { name: nombre.trim(), icon: icono };
+  return esCentro
+    ? { name: nombre.trim(), isStatic: estatico }
+    : { name: nombre.trim(), icon: icono };
 }
 
 /** Lo que se crea. Una categoría cuelga de su padre, si lo hay. */
@@ -27,9 +29,9 @@ export function newCategory(
     name: nombre.trim(),
     kind: 'expense' as const,
     ...(esCentro
-      ? { estatico }
+      ? { isStatic: estatico }
       : {
-          ...(padreId === undefined ? {} : { parent_id: padreId }),
+          ...(padreId === undefined ? {} : { parentId: padreId }),
           ...(icono ? { icon: icono } : {}),
         }),
   };

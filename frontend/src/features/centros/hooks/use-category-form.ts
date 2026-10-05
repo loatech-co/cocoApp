@@ -4,8 +4,8 @@ import { useActualizarCategoria } from '@/features/centros/api/categories';
 import { categoryChanges, newCategory } from '@/features/centros/model/category-form';
 import { ApiClientError } from '@/shared/api/api-client';
 import { useCrearCategoria } from '@/shared/api/categories';
+import { type Category } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import type { Category } from '@coco/types';
 
 interface CategoryFormOptions {
   abierta: boolean;
@@ -43,7 +43,7 @@ export function useCategoryForm({
   useAlCambiar([abierta, categoria], () => {
     if (!abierta) return;
     setNombre(categoria?.name ?? '');
-    setEstatico(categoria?.estatico ?? false);
+    setEstatico(categoria?.isStatic ?? false);
     setIcono(categoria?.icon ?? null);
     setError(null);
   });

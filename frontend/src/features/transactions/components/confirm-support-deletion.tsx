@@ -1,7 +1,7 @@
 import { useEliminarSoporte } from '@/features/transactions/api/soportes';
 import { BORRAR_UN_SOPORTE } from '@/features/transactions/model/supports';
+import { type Receipt } from '@/shared/api/generated/model';
 import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
-import type { Soporte } from '@coco/types';
 
 /**
  * La pregunta antes de borrar un soporte: es lo único de sus mandos que no se
@@ -18,7 +18,7 @@ export function ConfirmSupportDeletion({
   onBorrado,
 }: {
   transactionId: number;
-  soporte: Soporte | null;
+  soporte: Receipt | null;
   onCancelar: () => void;
   onBorrado: () => void;
 }) {

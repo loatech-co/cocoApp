@@ -5,10 +5,10 @@ import {
   POR_PAGINA,
   type useDashboardPage,
 } from '@/features/transactions/hooks/use-dashboard-page';
+import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { formatCOP } from '@/shared/lib/utils';
 import { Paginador } from '@/shared/ui/atoms/paginador';
 import { TablaPie, Td } from '@/shared/ui/molecules/tabla';
-import type { Category, Transaction } from '@coco/types';
 
 type Tabla = ReturnType<typeof useDashboardPage>['tabla'];
 
@@ -74,7 +74,7 @@ function pieDeLaTabla(datos: Tabla['movimientos']['data']): ReactNode {
         <Td />
         <Td />
         <Td alineado="derecha" className="tabular font-semibold text-expense">
-          {formatCOP(datos.meta.sum_expense)}
+          {formatCOP(datos.meta.sumExpense)}
         </Td>
       </tr>
     </TablaPie>

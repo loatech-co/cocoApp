@@ -1,5 +1,6 @@
+import { type CategoryTree } from '@/shared/api/categories';
+import { type Transaction, type TransactionType } from '@/shared/api/generated/model';
 import type { SentidoDelDinero } from '@/shared/ui/atoms/monto';
-import type { Category, Transaction, TransactionType } from '@coco/types';
 
 /**
  * Lo que un movimiento ES, y de dónde saca su nombre.
@@ -36,9 +37,9 @@ import type { Category, Transaction, TransactionType } from '@coco/types';
  * puede contradecirse.
  */
 export function rutaSeleccionada(
-  arbol: Category[],
+  arbol: CategoryTree[],
   categoryId?: number,
-): { centro?: Category; categoria?: Category; concepto?: Category } {
+): { centro?: CategoryTree; categoria?: CategoryTree; concepto?: CategoryTree } {
   if (categoryId === undefined) return {};
 
   for (const centro of arbol) {
@@ -77,10 +78,10 @@ export function rutaSeleccionada(
  * mano aunque tuviera su concepto elegido.
  */
 export function nombreDelMovimiento(
-  movimiento: Pick<Transaction, 'description' | 'merchant' | 'category_id'>,
-  arbol: Category[],
+  movimiento: Pick<Transaction, 'description' | 'merchant' | 'categoryId'>,
+  arbol: CategoryTree[],
 ): string {
-  const { categoria, concepto } = rutaSeleccionada(arbol, movimiento.category_id ?? undefined);
+  const { categoria, concepto } = rutaSeleccionada(arbol, movimiento.categoryId ?? undefined);
 
   return (
     concepto?.name ??

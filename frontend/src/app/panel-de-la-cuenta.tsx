@@ -36,7 +36,7 @@ import { Avatar } from './navegacion';
  */
 export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
   const { usuario, esAdmin, esAdminDeVerdad, salir } = useAuth();
-  const nombre = usuario?.display_name ?? usuario?.email ?? '?';
+  const nombre = usuario?.displayName ?? usuario?.email ?? '?';
 
   return (
     <PanelInferior
@@ -113,7 +113,7 @@ function Perfil({ nombre }: { nombre: string }) {
       <Avatar nombre={nombre} className="size-10" />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-display text-base font-semibold">
-          {usuario?.display_name ?? '—'}
+          {usuario?.displayName ?? '—'}
         </span>
         {usuario?.email && (
           <span className="block truncate text-xs text-muted-foreground">{usuario.email}</span>

@@ -1,32 +1,27 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
-import { apiFetch } from '@/shared/api/api-client';
+import {
+  accountsCreate,
+  accountsList,
+  accountsUpdate,
+} from '@/shared/api/generated/accounts-v2/accounts-v2';
+import type { Account, CreateAccountInput } from '@/shared/api/generated/model';
+import { allPages } from '@/shared/api/pages';
 import { keys, useInvalidarDerivados } from '@/shared/api/query-keys';
-import type { Account } from '@coco/types';
 
 // ── Cuentas ──────────────────────────────────────────────────────────────────
 
 export function useAccounts(incluirArchivadas = false): UseQueryResult<Account[]> {
   return useQuery({
     queryKey: [...keys.accounts, incluirArchivadas],
-    queryFn: async () => {
-      const query = incluirArchivadas ? '?include_archived=true' : '';
-      const respuesta = await apiFetch<Account[]>(`/accounts${query}`);
-      return respuesta.data;
-    },
+    queryFn: () =>
+      allPages(async (page) =>
+        accountsList({ ...page, ...(incluirArchivadas ? { includeArchived: true } : {}) }),
+      ),
   });
 }
 
-export interface NuevaCuenta {
-  name: string;
-  type: Account['type'];
-  institution?: string;
-  last4?: string;
-  credit_limit?: string;
-  cutoff_day?: number;
-  payment_day?: number;
-  opening_balance?: string;
-}
+export type NuevaCuenta = CreateAccountInput;
 
 export function useCrearCuenta() {
   const queryClient = useQueryClient();
@@ -34,8 +29,7 @@ export function useCrearCuenta() {
 
   return useMutation({
     mutationFn: async (cuenta: NuevaCuenta) => {
-      const respuesta = await apiFetch<Account>('/accounts', { method: 'POST', body: cuenta });
-      return respuesta.data;
+      return (await accountsCreate(cuenta)).data;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.accounts });
@@ -49,11 +43,7 @@ export function useArchivarCuenta() {
 
   return useMutation({
     mutationFn: async ({ id, archivar }: { id: number; archivar: boolean }) => {
-      const respuesta = await apiFetch<Account>(`/accounts/${id}`, {
-        method: 'PATCH',
-        body: { is_archived: archivar },
-      });
-      return respuesta.data;
+      return (await accountsUpdate(id, { isArchived: archivar })).data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.accounts }),
   });

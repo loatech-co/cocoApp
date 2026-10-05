@@ -3,12 +3,13 @@ import { useEffect, useRef, type RefObject } from 'react';
 
 import { useConceptSearch } from '@/features/transactions/hooks/use-concept-search';
 import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
+import type { NodoDelArbol } from '@/shared/lib/arbol-buscable';
 import { cn } from '@/shared/lib/utils';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
 import { Menu } from '@/shared/ui/molecules/menu';
-import { rutaLegible, type EntradaDelIndice, type NodoBuscable } from '@coco/lectura';
+import { rutaLegible, type EntradaDelIndice } from '@coco/lectura';
 
 import {
   CategoriaParaNuevo,
@@ -18,7 +19,7 @@ import {
 
 interface PropsDelBuscador {
   id: string;
-  arbol: readonly NodoBuscable[];
+  arbol: readonly NodoDelArbol[];
   /** El id elegido: un concepto o una categoría. */
   valor: number | undefined;
   onElegir: (id: number | undefined) => void;

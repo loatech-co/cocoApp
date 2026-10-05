@@ -1,6 +1,7 @@
 import { Filter } from 'lucide-react';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 
+import { type PendingPayment } from '@/shared/api/generated/model';
 import { diaCorto } from '@/shared/lib/fechas';
 import { cn, formatCOP } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
@@ -9,7 +10,6 @@ import { Casilla } from '@/shared/ui/atoms/casilla';
 import { Progreso } from '@/shared/ui/atoms/progreso';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 import { Menu, MenuTitulo } from '@/shared/ui/molecules/menu';
-import type { PagoPendiente } from '@coco/types';
 
 /** Hoy en America/Bogota, para saber qué ya venció. */
 function hoy(): string {
@@ -33,14 +33,14 @@ export function PagosPendientes({
   onElegir,
   className,
 }: {
-  pagos: PagoPendiente[];
+  pagos: PendingPayment[];
   /**
    * Confirmar el pago: abre la ficha de un movimiento nuevo con el concepto,
    * el valor esperado y la fecha de vencimiento ya puestos. Se le pasa el pago
    * ENTERO y no su concepto: los otros dos datos están aquí, y pedirlos otra
    * vez sería teclear mirando esta misma fila.
    */
-  onElegir?: (pago: PagoPendiente) => void;
+  onElegir?: (pago: PendingPayment) => void;
   className?: string;
 }) {
   const ahora = hoy();
@@ -120,7 +120,7 @@ export function PagosPendientes({
         <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-3">
           {visibles.map((pago) => {
             return (
-              <PendingRow key={pago.category_id} pago={pago} ahora={ahora} onElegir={onElegir} />
+              <PendingRow key={pago.categoryId} pago={pago} ahora={ahora} onElegir={onElegir} />
             );
           })}
           {/* Apagados TODOS, la lista queda vacía y la tarjeta se quedaría sin
@@ -144,7 +144,7 @@ function PendingProgress({
   avance,
   conAccion,
 }: {
-  pago: PagoPendiente;
+  pago: PendingPayment;
   avance: number | null;
   conAccion: boolean;
 }) {
@@ -153,12 +153,12 @@ function PendingProgress({
     <span className="block w-full">
       <Progreso
         avance={avance}
-        etiqueta={`${pago.name}: lleva ${formatCOP(pago.paid_amount)} de ${formatCOP(pago.expected_amount ?? '0')}`}
+        etiqueta={`${pago.name}: lleva ${formatCOP(pago.paidAmount)} de ${formatCOP(pago.expectedAmount ?? '0')}`}
         className="h-1"
       />
       <span className="mt-1.5 flex items-baseline justify-between gap-2 text-xs">
         <span className="tabular min-w-0 truncate text-muted-foreground">
-          Lleva {formatCOP(pago.paid_amount)}
+          Lleva {formatCOP(pago.paidAmount)}
         </span>
         {conAccion && (
           <span className="shrink-0 font-medium text-acento-tinta">Registrar otro</span>
@@ -168,7 +168,7 @@ function PendingProgress({
   );
 }
 
-function PendingSummary({ pago, vencido }: { pago: PagoPendiente; vencido: boolean }) {
+function PendingSummary({ pago, vencido }: { pago: PendingPayment; vencido: boolean }) {
   return (
     <span className="flex w-full items-center justify-between gap-3">
       <span className="min-w-0">
@@ -177,9 +177,9 @@ function PendingSummary({ pago, vencido }: { pago: PagoPendiente; vencido: boole
       </span>
 
       <span className="shrink-0 text-right">
-        {pago.expected_amount && (
+        {pago.expectedAmount && (
           <span className="tabular block text-sm font-semibold">
-            {formatCOP(pago.expected_amount)}
+            {formatCOP(pago.expectedAmount)}
           </span>
         )}
         {/* Vencido en ámbar, no en rojo: se debe, no salió mal.
@@ -190,7 +190,7 @@ function PendingSummary({ pago, vencido }: { pago: PagoPendiente; vencido: boole
             vencido ? 'font-medium text-warning' : 'text-muted-foreground',
           )}
         >
-          {diaCorto(pago.due_date)}
+          {diaCorto(pago.dueDate)}
         </span>
       </span>
     </span>
@@ -202,11 +202,11 @@ function PendingRow({
   ahora,
   onElegir,
 }: {
-  pago: PagoPendiente;
+  pago: PendingPayment;
   ahora: string;
-  onElegir: ((pago: PagoPendiente) => void) | undefined;
+  onElegir: ((pago: PendingPayment) => void) | undefined;
 }) {
-  const vencido = pago.due_date < ahora;
+  const vencido = pago.dueDate < ahora;
 
   /*
       Cuánto lleva cubierto, para los que se pagan en varias veces.
@@ -215,9 +215,9 @@ function PendingRow({
       hay fracción que pintar, y una barra sin denominador es una
       barra que miente. Esos se pintan como cualquier otro pendiente.
     */
-  const total = Number(pago.expected_amount ?? 0);
-  const llevaPagado = Number(pago.paid_amount);
-  const avance = pago.varios_pagos && total > 0 ? llevaPagado / total : null;
+  const total = Number(pago.expectedAmount ?? 0);
+  const llevaPagado = Number(pago.paidAmount);
+  const avance = pago.isMultiPayment && total > 0 ? llevaPagado / total : null;
 
   return (
     <li
@@ -330,7 +330,7 @@ function toggleCenter(
 }
 
 /** Lo que se ve: los centros que se pueden apagar, los pagos encendidos y su suma. */
-function pendingView(pagos: PagoPendiente[], ocultos: ReadonlySet<string>) {
+function pendingView(pagos: PendingPayment[], ocultos: ReadonlySet<string>) {
   /*
     ── Si el dato no viene, el filtro no existe ──────────────────────────────
     El centro lo manda el servidor, y un servidor más viejo que esta pantalla
@@ -338,20 +338,20 @@ function pendingView(pagos: PagoPendiente[], ocultos: ReadonlySet<string>) {
     roto, que es justo lo que pasó: es la asimetría normal de un despliegue,
     donde la pantalla y la API no llegan a la vez.
   */
-  const faltaElDato = pagos.some((p) => (p as Partial<PagoPendiente>).centro_id === undefined);
+  const faltaElDato = pagos.some((p) => (p as Partial<PendingPayment>).costCenterId === undefined);
 
   // Los centros que de verdad tienen algo pendiente, en el orden en que
   // aparecen: una casilla para un centro sin nada que mostrar no filtra nada.
   const centros = faltaElDato
     ? []
-    : [...new Map(pagos.map((p) => [String(p.centro_id), p.centro])).entries()];
+    : [...new Map(pagos.map((p) => [String(p.costCenterId), p.costCenter])).entries()];
 
-  const visibles = pagos.filter((p) => faltaElDato || !ocultos.has(String(p.centro_id)));
+  const visibles = pagos.filter((p) => faltaElDato || !ocultos.has(String(p.costCenterId)));
 
   // El total es el de lo que SE VE. Con la suma de todo bajo una lista
   // recortada, la cifra contradice lo que hay debajo y no hay forma de saber
   // cuál de las dos miente.
-  const total = visibles.reduce((s, p) => s + Number(p.expected_amount ?? 0), 0);
+  const total = visibles.reduce((s, p) => s + Number(p.expectedAmount ?? 0), 0);
 
   return { centros, visibles, total };
 }

@@ -2,8 +2,8 @@ import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import type { FalloDeSoporte } from '@/features/transactions/model/supports';
+import { type Receipt } from '@/shared/api/generated/model';
 import { ANCHO_HOJA, PaginaPdf } from '@/shared/ui/atoms/pdf-page';
-import type { Soporte } from '@coco/types';
 
 import { ConfirmSupportDeletion } from './confirm-support-deletion';
 import { SoporteQueNoSeVe } from './support-unavailable';
@@ -39,7 +39,7 @@ function useViewerKeys(
 
 interface ViewerProps {
   transactionId: number;
-  lista: Soporte[];
+  lista: Receipt[];
   urls: Record<string, string>;
   /** Por qué no se ve cada uno, si es que no se ve. Ver `FalloDeSoporte`. */
   fallos: Readonly<Record<string, FalloDeSoporte>>;
@@ -76,7 +76,7 @@ export function Pase(props: ViewerProps) {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={soporte.nombre_archivo}
+      aria-label={soporte.fileName}
       onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
       // Por encima del modal del movimiento, que está en z-50.
       className="fixed inset-0 z-[60] flex flex-col bg-sala/90 p-3 backdrop-blur-sm sm:p-6"
@@ -130,7 +130,7 @@ export function Pase(props: ViewerProps) {
  * el arrastre.
  */
 interface ViewerStageProps {
-  soporte: Soporte;
+  soporte: Receipt;
   url: string | undefined;
   fallo: FalloDeSoporte | undefined;
   onReintentar: () => void;
@@ -187,10 +187,10 @@ function ViewerSheet({
         <div className="flex w-full items-center justify-center">
           <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
         </div>
-      ) : soporte.mime_type.startsWith('image/') ? (
+      ) : soporte.mimeType.startsWith('image/') ? (
         <img
           src={url}
-          alt={soporte.nombre_archivo}
+          alt={soporte.fileName}
           // El MISMO ancho que una página de PDF: si una imagen midiera otra
           // cosa, el botón de ampliar haría dos cosas distintas según qué
           // soporte estuviera abierto.
@@ -213,7 +213,7 @@ function DeleteFromViewer({
   onCerrar,
   soporte,
   onTerminar,
-}: ViewerProps & { soporte: Soporte | null; onTerminar: () => void }) {
+}: ViewerProps & { soporte: Receipt | null; onTerminar: () => void }) {
   return (
     <ConfirmSupportDeletion
       transactionId={transactionId}

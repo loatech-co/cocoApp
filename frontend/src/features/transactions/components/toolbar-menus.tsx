@@ -2,9 +2,9 @@ import { ArrowDownUp, Filter, Plus, TrendingDown, TrendingUp } from 'lucide-reac
 
 import type { Filtros } from '@/features/transactions/model/filtros';
 import { ORDENES, type Orden } from '@/features/transactions/model/sort-orders';
+import { type Category, type TransactionType } from '@/shared/api/generated/model';
 import { Menu, MenuOpcion, MenuTitulo } from '@/shared/ui/molecules/menu';
 import { MenuOpcionDetallada } from '@/shared/ui/molecules/menu-rich-option';
-import type { Category, TransactionType } from '@coco/types';
 
 import { FiltroClasificacion } from './filtro-clasificacion';
 

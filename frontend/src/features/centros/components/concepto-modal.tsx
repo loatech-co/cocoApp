@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useConceptForm } from '@/features/centros/hooks/use-concept-form';
 import { findTwin, siblingCategories } from '@/features/centros/model/concept-form';
 import { useCategories } from '@/shared/api/categories';
+import { type Category } from '@/shared/api/generated/model';
 import { Bloque } from '@/shared/ui/atoms/bloque';
 import { Button } from '@/shared/ui/atoms/button';
 import { Campo } from '@/shared/ui/atoms/campo';
@@ -11,7 +12,6 @@ import { Input } from '@/shared/ui/atoms/input';
 import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
 import { Modal } from '@/shared/ui/organisms/modal';
 import { Select } from '@/shared/ui/organisms/select';
-import type { Category } from '@coco/types';
 
 import { CamposDePalabrasClave } from './campos-de-palabras-clave';
 import { CamposDeRecurrencia } from './campos-de-recurrencia';

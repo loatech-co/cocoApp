@@ -3,10 +3,10 @@ import type { ComponentProps, SubmitEvent } from 'react';
 
 import type { MovementSheetState } from '@/features/transactions/hooks/use-movement-form';
 import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/movimientos';
+import { type Transaction } from '@/shared/api/generated/model';
 import { DEFAULT_CURRENCY } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
-import type { Transaction } from '@coco/types';
 
 import { MovementFields } from './movement-fields';
 import { MovementReadColumn } from './movement-read-view';

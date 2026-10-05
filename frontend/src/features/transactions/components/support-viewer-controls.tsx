@@ -1,9 +1,9 @@
 import { ChevronLeft, ChevronRight, Download, Minus, Plus, Trash2, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
+import { type Receipt } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { BotonOscuro, LecturaDeMandos } from '@/shared/ui/molecules/overlay-control';
-import type { Soporte } from '@coco/types';
 
 /** Los saltos del zoom. Fijos y pocos: un control continuo pide precisión que
     nadie quiere darle a un recibo. */
@@ -45,7 +45,7 @@ export function ViewerHeader({
   onBorrar,
   onCerrar,
 }: {
-  soporte: Soporte;
+  soporte: Receipt;
   indice: number;
   total: number;
   url: string | undefined;
@@ -55,10 +55,10 @@ export function ViewerHeader({
   return (
     <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-sala-tinta">{soporte.nombre_archivo}</p>
+        <p className="truncate text-sm font-medium text-sala-tinta">{soporte.fileName}</p>
         <p className="tabular text-xs text-sala-tinta/60">
           {total > 1 && `${indice + 1} de ${total} · `}
-          {(soporte.tamano / 1024).toFixed(0)} KB
+          {(soporte.sizeBytes / 1024).toFixed(0)} KB
         </p>
       </div>
 
@@ -69,9 +69,9 @@ export function ViewerHeader({
         {url && (
           <a
             href={url}
-            download={soporte.nombre_archivo}
+            download={soporte.fileName}
             title="Descargar"
-            aria-label={`Descargar ${soporte.nombre_archivo}`}
+            aria-label={`Descargar ${soporte.fileName}`}
             className="flex size-9 items-center justify-center rounded-lg text-sala-tinta transition-colors hover:bg-sala-tinta/10"
           >
             <Download className="size-4" aria-hidden="true" />
@@ -104,7 +104,7 @@ export function ViewerArrow({
     <BotonOscuro
       onClick={onClick}
       deshabilitado={deshabilitado}
-      etiqueta={hacia === 'anterior' ? 'Soporte anterior' : 'Soporte siguiente'}
+      etiqueta={hacia === 'anterior' ? 'Receipt anterior' : 'Receipt siguiente'}
       className="self-center"
     >
       {hacia === 'anterior' ? (

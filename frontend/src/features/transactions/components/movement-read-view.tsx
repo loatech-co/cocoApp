@@ -1,10 +1,10 @@
 import { ArrowUpRight } from 'lucide-react';
 
+import { type TransactionType } from '@/shared/api/generated/model';
 import { diaLargo, mesLargo } from '@/shared/lib/fechas';
 import { cn, formatMoney } from '@/shared/lib/utils';
 import { Card } from '@/shared/ui/atoms/card';
 import { Seccion } from '@/shared/ui/molecules/section';
-import type { TransactionType } from '@coco/types';
 
 interface ReadViewProps {
   tipo: TransactionType;

@@ -12,7 +12,7 @@ import { AppShell } from './app-shell';
 
 vi.mock('@/shared/api/auth-context', () => ({
   useAuth: () => ({
-    usuario: { display_name: 'Gerardo', email: 'g@coco.app' },
+    usuario: { displayName: 'Gerardo', email: 'g@coco.app' },
     esAdmin: false,
     salir: vi.fn(),
   }),

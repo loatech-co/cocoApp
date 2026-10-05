@@ -18,6 +18,9 @@
   //
   // Y el catálogo de componentes: Storybook es devDependency, así que ni sus
   // historias ni su configuración pueden entrar al build de producción.
+  //
+  // Lo mismo Orval (`orval.config.ts`): el cliente que escribe está versionado
+  // y el servidor no lo regenera, así que Orval es devDependency.
   "exclude": [
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
@@ -25,6 +28,7 @@
     "src/pruebas",
     ".storybook",
     "vitest.config.ts",
+    "orval.config.ts",
     "dist",
     "node_modules"
   ]

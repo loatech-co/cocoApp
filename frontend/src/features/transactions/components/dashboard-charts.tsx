@@ -3,15 +3,20 @@ import type { ReactNode } from 'react';
 import { Distribucion } from '@/features/transactions/components/cost-distribution';
 import { PagosPendientes } from '@/features/transactions/components/pagos-pendientes';
 import { Tendencia } from '@/features/transactions/components/tendencia';
+import type {
+  Category,
+  Dashboard,
+  DashboardBreakdownLevel,
+  PendingPayment,
+} from '@/shared/api/generated/model';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
-import type { Category, Dashboard, PagoPendiente } from '@coco/types';
 
 interface PropsDeLaFila {
   datos: Dashboard;
   hayPendientes: boolean;
   ruta: Category[];
-  onElegirPago: (pago: PagoPendiente) => void;
+  onElegirPago: (pago: PendingPayment) => void;
   onBajar: (id: number) => void;
   onSubir: () => void;
 }
@@ -105,7 +110,10 @@ export function DashboardCharts({
       )}
     >
       <Comportamiento hayPendientes={hayPendientes}>
-        <Tendencia puntos={datos.trend} granularidad={datos.period.granularity} />
+        <Tendencia
+          puntos={datos.trend}
+          granularidad={datos.period.granularity === 'day' ? 'dia' : 'mes'}
+        />
       </Comportamiento>
 
       {hayPendientes && (
@@ -121,9 +129,9 @@ export function DashboardCharts({
 
       <div className="h-full min-h-0">
         <Distribucion
-          filas={datos.by_category}
-          nivel={datos.breakdown_level}
-          padre={datos.breakdown_parent}
+          filas={datos.byCategory}
+          nivel={NOMBRE_DEL_NIVEL[datos.breakdownLevel]}
+          padre={datos.breakdownParent}
           totalGastado={datos.range.expense}
           ruta={ruta}
           onBajar={onBajar}
@@ -171,3 +179,10 @@ function Comportamiento({
     </Card>
   );
 }
+
+/** The API names the level in English (v2); the screen says it in Spanish. */
+const NOMBRE_DEL_NIVEL: Record<DashboardBreakdownLevel, string> = {
+  cost_center: 'centro de costos',
+  category: 'categoría',
+  concept: 'concepto',
+};

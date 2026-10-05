@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { type CategoryTree } from '@/shared/api/categories';
 import { clasificar, FIRMAS } from '@coco/lectura';
-import type { Category } from '@coco/types';
 
 import {
   conceptoQueYaLaUsa,
@@ -14,27 +14,27 @@ import {
 } from './palabras-clave';
 
 /** Un concepto de mentira, con lo mínimo que mira el código de aquí. */
-function concepto(id: number, name: string, palabras: string[] = []): Category {
+function concepto(id: number, name: string, palabras: string[] = []): CategoryTree {
   return {
     id,
     name,
-    parent_id: null,
+    parentId: null,
     kind: 'expense',
     color: null,
     icon: null,
-    sort_order: 0,
-    is_archived: false,
-    recurrente: false,
-    periodicidad: null,
-    dia_de_pago: null,
-    mes_de_pago: null,
-    estatico: false,
-    palabras_clave: palabras,
-  } as Category;
+    sortOrder: 0,
+    isArchived: false,
+    isRecurring: false,
+    periodicity: null,
+    paymentDay: null,
+    paymentMonth: null,
+    isStatic: false,
+    keywords: palabras,
+  } as CategoryTree;
 }
 
 /** Centro → categoría → concepto, que es la forma que tiene el árbol de verdad. */
-function arbolCon(...conceptos: Category[]): Category[] {
+function arbolCon(...conceptos: CategoryTree[]): CategoryTree[] {
   const categoria = { ...concepto(20, 'Servicios públicos'), children: conceptos };
   return [{ ...concepto(10, 'Costos fijos'), children: [categoria] }];
 }
@@ -84,7 +84,7 @@ describe('Una palabra en dos conceptos se avisa, no se prohíbe', () => {
 
 describe('Las palabras clave clasifican un soporte', () => {
   /** Como lo arma `leerSoporte`: lo escrito delante, el catálogo detrás. */
-  const conElArbol = (arbol: Category[]) => [...firmasDelArbol(arbol), ...FIRMAS];
+  const conElArbol = (arbol: CategoryTree[]) => [...firmasDelArbol(arbol), ...FIRMAS];
 
   it('un concepto sin palabras no produce firma', () => {
     expect(firmasDelArbol(arbolCon(concepto(1, 'Energía')))).toEqual([]);

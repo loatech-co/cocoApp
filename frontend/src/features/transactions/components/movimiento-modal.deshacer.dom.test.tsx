@@ -21,15 +21,25 @@ import { MovimientoModal } from './movimiento-modal';
 const { ApiClientError } =
   await vi.importActual<typeof import('@/shared/api/api-client')>('@/shared/api/api-client');
 
-const apiFetch = vi.fn();
+const red = vi.fn();
 const apiSubir = vi.fn();
+/**
+ * The generated client calls `apiRequest(url, init)` with the full v2 path and
+ * a JSON string; the spy sees the route without `/api/v2` and the body as an
+ * object, which is what these tests read.
+ */
+const comoRuta = (url: string, init?: RequestInit) =>
+  red(url.replace(/^\/api\/v2/, ''), {
+    method: init?.method ?? 'GET',
+    ...(typeof init?.body === 'string' ? { body: JSON.parse(init.body) as unknown } : {}),
+  });
 
 vi.mock('@/shared/api/api-client', async () => {
   const real =
     await vi.importActual<typeof import('@/shared/api/api-client')>('@/shared/api/api-client');
   return {
     ...real,
-    apiFetch: (...args: unknown[]) => apiFetch(...args),
+    apiRequest: (url: string, init?: RequestInit) => comoRuta(url, init),
     apiSubir: (...args: unknown[]) => apiSubir(...args),
   };
 });
@@ -54,7 +64,7 @@ const ARBOL = [
     id: 1,
     name: 'Costos fijos',
     kind: 'expense',
-    estatico: false,
+    isStatic: false,
     children: [
       {
         id: 10,
@@ -92,7 +102,7 @@ const LECTURA_VACIA: Awaited<ReturnType<typeof leerSoporte>> = {
 };
 
 beforeEach(() => {
-  apiFetch.mockReset();
+  red.mockReset();
   apiSubir.mockReset();
   // La lectura espera un piso de cuatro segundos aunque ya haya terminado;
   // con el reloj falso se le pasa por encima en `adjuntar`.
@@ -177,7 +187,7 @@ async function registrar(): Promise<void> {
   });
 }
 
-const llamadas = () => apiFetch.mock.calls.map(([ruta, opciones]) => [ruta, opciones?.method]);
+const llamadas = () => red.mock.calls.map(([ruta, opciones]) => [ruta, opciones?.method]);
 
 /**
  * La red contesta por RUTA, no una cosa para todo.
@@ -187,7 +197,7 @@ const llamadas = () => apiFetch.mock.calls.map(([ruta, opciones]) => [ruta, opci
  * reventaba pintando los desplegables, antes de llegar a lo que se prueba.
  */
 function responder({ alBorrar }: { alBorrar: () => Promise<unknown> }): void {
-  apiFetch.mockImplementation((ruta: string, opciones?: { method?: string }) => {
+  red.mockImplementation((ruta: string, opciones?: { method?: string }) => {
     if (opciones?.method === 'DELETE') return alBorrar();
     if (ruta.startsWith('/categories')) return Promise.resolve({ data: ARBOL });
     return Promise.resolve({ data: { id: 42 } });
@@ -234,7 +244,7 @@ describe('Cuando el soporte falla al registrar', () => {
 
     // El reintento ACTUALIZA el 42 en vez de crear un segundo movimiento por
     // la misma plata: es el caso que obligaba a recordar el id.
-    apiFetch.mockClear();
+    red.mockClear();
     await registrar();
 
     expect(llamadas()).toContainEqual(['/transactions/42', 'PATCH']);
@@ -247,17 +257,17 @@ describe('Cuando el soporte falla al registrar', () => {
 /**
  * Lo que la web guarda ahora dice de dónde entró. El texto de un recibo solo
  * viaja cuando hubo lectura; adjuntar a mano no lee —otra prueba lo protege—,
- * así que aquí `raw_text` va vacío a propósito.
+ * así que aquí `rawText` va vacío a propósito.
  */
 describe('Lo que la web guarda', () => {
   const creacion = () =>
-    apiFetch.mock.calls.find(
+    red.mock.calls.find(
       ([ruta, opciones]) =>
         ruta === '/transactions' &&
         (opciones as { method?: string } | undefined)?.method === 'POST',
     );
 
-  it('manda source «web»; sin texto leído, raw_text va vacío', async () => {
+  it('manda source «web»; sin texto leído, rawText va vacío', async () => {
     responder({ alBorrar: () => Promise.resolve({ data: undefined }) });
     apiSubir.mockResolvedValue({ data: [] });
 
@@ -268,7 +278,7 @@ describe('Lo que la web guarda', () => {
     expect(creacion(), 'se creó el movimiento').toBeDefined();
     const cuerpo = (creacion()![1] as { body: Record<string, unknown> }).body;
     expect(cuerpo.source).toBe('web');
-    expect(cuerpo.raw_text).toBeNull();
+    expect(cuerpo.rawText).toBeNull();
     // Y lo de siempre sigue viajando igual.
     expect(cuerpo.amount).toBe('120000');
     // El soporte sí se leyó —es el primero de un movimiento nuevo—, pero no

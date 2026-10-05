@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SESION_DE_LA_APP, fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
 import { registrarPuente } from '@/shared/api/native-bridge';
-import { USER_AGENT_APP } from '@coco/types';
+import { USER_AGENT_APP } from '@/shared/lib/native-contract';
 
 import { PuenteError, enLaApp, pedirSesion } from './puente-nativo';
 

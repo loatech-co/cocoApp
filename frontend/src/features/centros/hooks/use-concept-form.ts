@@ -10,8 +10,8 @@ import {
 } from '@/features/centros/model/concept-form';
 import { ApiClientError } from '@/shared/api/api-client';
 import { useCrearCategoria } from '@/shared/api/categories';
+import { type Category } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import type { Category } from '@coco/types';
 
 interface ConceptFormOptions {
   abierta: boolean;
@@ -83,8 +83,8 @@ function useConceptFields(abierta: boolean, concepto: Category | null | undefine
     if (!abierta) return;
     setNombre(concepto?.name ?? '');
     setRecurrencia(initialRecurrence(concepto));
-    setCategoría(concepto?.parent_id != null ? String(concepto.parent_id) : '');
-    setPalabrasClave(concepto?.palabras_clave ?? []);
+    setCategoría(concepto?.parentId != null ? String(concepto.parentId) : '');
+    setPalabrasClave(concepto?.keywords ?? []);
     setError(null);
   });
 

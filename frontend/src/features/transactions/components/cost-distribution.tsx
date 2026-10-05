@@ -7,7 +7,7 @@ import { Dona } from '@/shared/ui/atoms/dona';
 import { BackCrumb } from '@/shared/ui/atoms/level-nav';
 
 interface PropsDeDistribucion {
-  filas: { category_id: number | null; name: string; total: string; count: number }[];
+  filas: { categoryId: number | null; name: string; total: string; count: number }[];
   nivel: string;
   /** De quién son las filas. `null` cuando son los centros de costos. */
   padre: { id: number; name: string } | null;
@@ -74,7 +74,7 @@ export function Distribucion({
           mostrarLista={verLista}
           total={total}
           porciones={filas.map((f) => ({
-            id: f.category_id,
+            id: f.categoryId,
             nombre: f.name,
             valor: Number.parseFloat(f.total) || 0,
           }))}

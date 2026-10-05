@@ -5,11 +5,15 @@ import {
   type MovementSheet,
 } from '@/features/transactions/hooks/use-movement-sheet';
 import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
+import {
+  type PendingPayment,
+  type Transaction,
+  type TransactionType,
+} from '@/shared/api/generated/model';
 import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 import { CuerpoDeModal, PANEL_DE_MODAL } from '@/shared/ui/molecules/modal-partes';
 import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
-import type { PagoPendiente, Transaction, TransactionType } from '@coco/types';
 
 import { Camara } from './camara';
 import { MovementHeader } from './movement-header';
@@ -36,7 +40,7 @@ interface MovementModalProps {
    * del soporte esperando. Lo que hay escrito es lo ESPERADO, y el soporte lo
    * corrige: ver `PendingSupportsColumn`.
    */
-  pago?: PagoPendiente | null;
+  pago?: PendingPayment | null;
   /** Con qué tipo abrir al CREAR. Lo elige el menú de "Nuevo movimiento". */
   tipoPorDefecto?: TransactionType;
   onCerrar: () => void;

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { useCategoryForm } from '@/features/centros/hooks/use-category-form';
 import { categoryModalTexts } from '@/features/centros/model/category-form';
+import { type Category } from '@/shared/api/generated/model';
 import { cn } from '@/shared/lib/utils';
 import { BLOQUE } from '@/shared/ui/atoms/bloque';
 import { Button } from '@/shared/ui/atoms/button';
@@ -14,7 +15,6 @@ import { SearchBox } from '@/shared/ui/atoms/search-box';
 import { IconGrid } from '@/shared/ui/molecules/icon-grid';
 import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
 import { Modal } from '@/shared/ui/organisms/modal';
-import type { Category } from '@coco/types';
 
 /** Sin tildes ni mayúsculas: «Educación» se encuentra escribiendo «educacion». */
 function normal(texto: string): string {

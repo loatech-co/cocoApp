@@ -1,6 +1,7 @@
 import { Repeat } from 'lucide-react';
 import { useState } from 'react';
 
+import { PERIODICIDADES, type Periodicidad } from '@/features/centros/model/periodicity';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { cn } from '@/shared/lib/utils';
 import { Campo } from '@/shared/ui/atoms/campo';
@@ -8,14 +9,13 @@ import { Input } from '@/shared/ui/atoms/input';
 import { Interruptor } from '@/shared/ui/atoms/interruptor';
 import { CampoDeDinero } from '@/shared/ui/molecules/campo-de-dinero';
 import { Select } from '@/shared/ui/organisms/select';
-import { PERIODICIDADES, type Periodicidad } from '@coco/types';
 
 const ETIQUETAS: Record<Periodicidad, string> = {
-  mensual: 'Cada mes',
-  bimestral: 'Cada dos meses',
-  trimestral: 'Cada tres meses',
-  semestral: 'Cada seis meses',
-  anual: 'Cada año',
+  monthly: 'Cada mes',
+  bimonthly: 'Cada dos meses',
+  quarterly: 'Cada tres meses',
+  semiannual: 'Cada seis meses',
+  annual: 'Cada año',
 };
 
 export interface Recurrencia {
@@ -215,10 +215,10 @@ export function entre1y31(escrito: string): number {
  * acuerdo.
  */
 export function cuandoVuelve(periodicidad: Periodicidad, dia: number, mes: number): string {
-  if (periodicidad === 'mensual') return `Todos los meses el día ${dia}.`;
-  if (periodicidad === 'anual') return `Cada ${dia} de ${(MESES[mes - 1] ?? '').toLowerCase()}.`;
+  if (periodicidad === 'monthly') return `Todos los meses el día ${dia}.`;
+  if (periodicidad === 'annual') return `Cada ${dia} de ${(MESES[mes - 1] ?? '').toLowerCase()}.`;
 
-  const cada = { bimestral: 2, trimestral: 3, semestral: 6 }[periodicidad];
+  const cada = { bimonthly: 2, quarterly: 3, semiannual: 6 }[periodicidad];
 
   // Los meses concretos, no "cada tres meses": es lo que hay que poder
   // comprobar de un vistazo antes de guardar.
@@ -251,7 +251,7 @@ function InstallmentsSwitch({ valor, onCambiar }: RecurrenceFieldProps) {
       className={cn(
         'flex items-center gap-3 rounded-lg border border-border bg-card p-3',
         valor.pagoAutomatico ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
-        valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
+        valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3',
       )}
     >
       <span className="min-w-0 flex-1">
@@ -279,7 +279,7 @@ function AutoPaySwitch({ valor, onCambiar }: RecurrenceFieldProps) {
     <label
       className={cn(
         'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3',
-        valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
+        valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3',
       )}
     >
       <span className="min-w-0 flex-1">
@@ -310,7 +310,7 @@ function BudgetField({ valor, onCambiar }: RecurrenceFieldProps) {
           ? 'Vacío: se estima con el promedio de los meses anteriores.'
           : 'Este valor se usa cada mes, en vez del promedio.'
       }
-      className={valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3'}
+      className={valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3'}
     >
       <CampoDeDinero
         id="presupuesto"
@@ -331,7 +331,7 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
         // Tantas columnas como campos haya: con dos columnas fijas, el
         // tercer campo se quedaba solo en un renglón a media anchura, y la
         // fila parecía cortada por la mitad.
-        valor.periodicidad === 'mensual' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
+        valor.periodicidad === 'monthly' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
       )}
     >
       <Campo etiqueta="Cada cuánto" id="periodicidad">
@@ -344,8 +344,11 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
         />
       </Campo>
 
-      {valor.periodicidad !== 'mensual' && (
-        <Campo etiqueta={valor.periodicidad === 'anual' ? 'Mes' : 'Mes del ciclo'} id="mes-de-pago">
+      {valor.periodicidad !== 'monthly' && (
+        <Campo
+          etiqueta={valor.periodicidad === 'annual' ? 'Mes' : 'Mes del ciclo'}
+          id="mes-de-pago"
+        >
           <Select
             id="mes-de-pago"
             etiqueta="Mes"
@@ -416,7 +419,7 @@ function WhenItReturns({ valor }: { valor: Recurrencia }) {
     <p
       className={cn(
         'text-xs text-muted-foreground',
-        valor.periodicidad === 'mensual' ? 'sm:col-span-2' : 'sm:col-span-3',
+        valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3',
       )}
     >
       {cuandoVuelve(valor.periodicidad, valor.diaDePago, valor.mesDePago)}{' '}

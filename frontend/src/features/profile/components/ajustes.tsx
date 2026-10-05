@@ -18,7 +18,7 @@ export function Ajustes() {
   const actualizar = useActualizarPreferencias();
 
   const error = actualizar.error instanceof ApiClientError ? actualizar.error.message : null;
-  const activo = preferencias.data?.cuentas_habilitadas ?? false;
+  const activo = preferencias.data?.accountsEnabled ?? false;
 
   return (
     <Card>
@@ -40,7 +40,7 @@ export function Ajustes() {
           descripcion="Tarjetas, ahorros y efectivo, cada uno con su saldo. Si lo apagas, registras gastos sin tener que decir de dónde salió el dinero."
           activo={activo}
           cargando={preferencias.isPending || actualizar.isPending}
-          onCambiar={(valor) => actualizar.mutate({ cuentas_habilitadas: valor })}
+          onCambiar={(valor) => actualizar.mutate({ accountsEnabled: valor })}
         />
 
         {activo && (

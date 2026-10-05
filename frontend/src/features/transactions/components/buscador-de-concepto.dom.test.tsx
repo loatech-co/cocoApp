@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { NodoBuscable } from '@coco/lectura';
+import type { NodoDelArbol } from '@/shared/lib/arbol-buscable';
 
 import { BuscadorDeConcepto } from './buscador-de-concepto';
 
@@ -16,7 +16,7 @@ import { BuscadorDeConcepto } from './buscador-de-concepto';
  */
 afterEach(cleanup);
 
-const ARBOL: NodoBuscable[] = [
+const ARBOL: NodoDelArbol[] = [
   {
     id: 1,
     name: 'Costos fijos',
@@ -24,7 +24,7 @@ const ARBOL: NodoBuscable[] = [
       {
         id: 10,
         name: 'Servicios públicos',
-        children: [{ id: 100, name: 'Celsia (Energía)', palabras_clave: ['celsia'] }],
+        children: [{ id: 100, name: 'Celsia (Energía)', keywords: ['celsia'] }],
       },
       { id: 11, name: 'Educación', children: [] },
     ],
@@ -37,7 +37,7 @@ const ARBOL: NodoBuscable[] = [
         id: 20,
         name: 'Alimentación',
         children: [
-          { id: 200, name: 'Mercado', palabras_clave: ['D1', 'Koba'] },
+          { id: 200, name: 'Mercado', keywords: ['D1', 'Koba'] },
           { id: 201, name: 'Supermercado' },
         ],
       },

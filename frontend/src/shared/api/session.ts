@@ -1,5 +1,26 @@
+import { type SesionParaLaWeb } from '@/shared/lib/native-contract';
 import { avisar as avisarALaApp, enLaApp, pedirSesion } from '@/shared/lib/puente-nativo';
-import type { ApiError, PerfilPublico, SesionParaLaWeb, SesionResponse } from '@coco/types';
+
+import type { ErrorResponse, Profile, Registration, Session } from './generated/model';
+import { API_ORIGIN } from './origin';
+
+/**
+ * The auth routes, written here and not taken from the generated client.
+ *
+ * Every generated function goes through `apiRequest`, which renews the session
+ * —that is, calls THIS file— before and after each request. Auth is what that
+ * door is built on, so it cannot go through it: login does not carry a token
+ * and refresh is what a 401 would retry. The types still come from the
+ * contract; only the paths are spelled out.
+ */
+const AUTH = {
+  login: '/api/v2/auth/login',
+  register: '/api/v2/auth/register',
+  refresh: '/api/v2/auth/refresh',
+  logout: '/api/v2/auth/logout',
+  logoutAll: '/api/v2/auth/logout-all',
+  changePassword: '/api/v2/auth/change-password',
+} as const;
 
 /**
  * Estado de sesión del cliente.
@@ -28,8 +49,6 @@ import type { ApiError, PerfilPublico, SesionParaLaWeb, SesionResponse } from '@
  * porque la sesión real es la suya.
  */
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1';
-
 /**
  * Margen antes de la expiración para renovar sin que se note.
  *
@@ -41,14 +60,14 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/
 const MARGEN_DE_RENOVACION_MS = 60_000;
 
 export interface EstadoDeSesion {
-  usuario: PerfilPublico | null;
+  usuario: Profile | null;
   /** `true` hasta que el primer intento de restaurar la sesión termina. */
   cargando: boolean;
 }
 
 let accessToken: string | null = null;
 let expiraEn = 0;
-let usuario: PerfilPublico | null = null;
+let usuario: Profile | null = null;
 let cargando = true;
 
 let temporizador: ReturnType<typeof setTimeout> | null = null;
@@ -106,9 +125,9 @@ export function tokenActual(): string | null {
   return accessToken;
 }
 
-function guardarSesion(sesion: SesionParaLaWeb): void {
-  accessToken = sesion.access_token;
-  expiraEn = Date.now() + sesion.expires_in * 1000;
+function guardarSesion(sesion: Session): void {
+  accessToken = sesion.accessToken;
+  expiraEn = Date.now() + sesion.expiresIn * 1000;
   usuario = sesion.user;
   cargando = false;
   programarRenovacion();
@@ -156,10 +175,10 @@ export function tokenPorExpirar(): boolean {
  * navegador envíe y acepte la cookie httpOnly de refresh.
  */
 async function llamarAuth<T>(
-  ruta: string,
+  url: string,
   opciones: { method?: string; body?: unknown } = {},
 ): Promise<T> {
-  const respuesta = await fetch(`${BASE_URL}/auth${ruta}`, {
+  const respuesta = await fetch(`${API_ORIGIN}${url}`, {
     method: opciones.method ?? 'POST',
     credentials: 'include',
     headers: opciones.body === undefined ? {} : { 'Content-Type': 'application/json' },
@@ -171,7 +190,7 @@ async function llamarAuth<T>(
   const cuerpo: unknown = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok) {
-    const error = (cuerpo as ApiError | null)?.error;
+    const error = (cuerpo as ErrorResponse | null)?.error;
     throw new SesionError(
       respuesta.status,
       error?.code ?? 'unknown_error',
@@ -189,7 +208,7 @@ export class SesionError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly details: ApiError['error']['details'] = [],
+    readonly details: ErrorResponse['error']['details'] = [],
   ) {
     super(message);
     this.name = 'SesionError';
@@ -197,15 +216,15 @@ export class SesionError extends Error {
 }
 
 export async function entrar(email: string, password: string): Promise<void> {
-  guardarSesion(await llamarAuth<SesionResponse>('/login', { body: { email, password } }));
+  guardarSesion(await llamarAuth<Session>(AUTH.login, { body: { email, password } }));
 }
 
 export async function registrarse(
   email: string,
   password: string,
   displayName: string,
-): Promise<{ pending_approval: boolean; message: string }> {
-  return llamarAuth('/register', { body: { email, password, displayName } });
+): Promise<Registration> {
+  return llamarAuth(AUTH.register, { body: { email, password, displayName } });
 }
 
 /**
@@ -225,7 +244,9 @@ export async function renovar(): Promise<boolean> {
     try {
       // Dentro de la MISMA promesa compartida: dos `renovar()` a la vez son
       // un solo mensaje a la app, igual que fuera son una sola petición.
-      guardarSesion(enLaApp() ? await pedirSesion() : await llamarAuth<SesionResponse>('/refresh'));
+      guardarSesion(
+        enLaApp() ? desdeElPuente(await pedirSesion()) : await llamarAuth<Session>(AUTH.refresh),
+      );
       return true;
     } catch {
       limpiarSesion();
@@ -254,7 +275,7 @@ export async function salir(): Promise<void> {
   }
 
   try {
-    await llamarAuth<unknown>('/logout');
+    await llamarAuth<unknown>(AUTH.logout);
   } finally {
     // Aunque el servidor falle, localmente la sesión se cierra: dejar al
     // usuario "dentro" tras pulsar Salir sería lo peor de los dos mundos.
@@ -263,7 +284,7 @@ export async function salir(): Promise<void> {
 }
 
 export async function salirDeTodosLosDispositivos(): Promise<void> {
-  const respuesta = await fetch(`${BASE_URL}/auth/logout-all`, {
+  const respuesta = await fetch(`${API_ORIGIN}${AUTH.logoutAll}`, {
     method: 'POST',
     credentials: 'include',
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
@@ -281,7 +302,7 @@ export async function cambiarContrasena(
   currentPassword: string,
   newPassword: string,
 ): Promise<void> {
-  const respuesta = await fetch(`${BASE_URL}/auth/change-password`, {
+  const respuesta = await fetch(`${API_ORIGIN}${AUTH.changePassword}`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -293,7 +314,7 @@ export async function cambiarContrasena(
 
   if (!respuesta.ok) {
     const cuerpo: unknown = await respuesta.json().catch(() => null);
-    const error = (cuerpo as ApiError | null)?.error;
+    const error = (cuerpo as ErrorResponse | null)?.error;
     throw new SesionError(
       respuesta.status,
       error?.code ?? 'unknown_error',
@@ -323,7 +344,21 @@ export function descartarSesion(): void {
 
 /** La app empuja una sesión: al arrancar sin ella, o tras el login nativo. */
 export function recibirSesion(sesion: SesionParaLaWeb): void {
-  guardarSesion(sesion);
+  guardarSesion(desdeElPuente(sesion));
+}
+
+/**
+ * The bridge still speaks v1 (snake_case): it changes when the app moves to
+ * v2, together with this function. Until then the web translates at the edge
+ * and nothing inside it knows.
+ */
+function desdeElPuente(sesion: SesionParaLaWeb): Session {
+  const { display_name, created_at, ...resto } = sesion.user;
+  return {
+    accessToken: sesion.access_token,
+    expiresIn: sesion.expires_in,
+    user: { ...resto, displayName: display_name, createdAt: created_at },
+  };
 }
 
 /** La app cerró la sesión real (401 al renovar): la web olvida la suya. */

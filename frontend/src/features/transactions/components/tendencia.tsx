@@ -2,10 +2,10 @@ import { ChartLine } from 'lucide-react';
 
 import { sitioDeLaTarjeta, useTrendPointer } from '@/features/transactions/hooks/use-trend-pointer';
 import { equis, etiquetaDeCubo, etiquetasDelEje } from '@/features/transactions/model/trend';
+import { type TrendPoint } from '@/shared/api/generated/model';
 import { cn, formatCOP } from '@/shared/lib/utils';
 import { EstadoVacio } from '@/shared/ui/atoms/estado-vacio';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
-import type { TrendPoint } from '@coco/types';
 
 import { Punto, TrendAxis, TrendCard, TrendLines, TrendSummary } from './trend-parts';
 

@@ -7,14 +7,14 @@ import { CategoriaModal } from '@/features/centros/components/categoria-modal';
 import { Categoría } from '@/features/centros/components/category-tile';
 import { trasCerrar } from '@/features/centros/components/close-then';
 import { ConfirmarBorrado } from '@/features/centros/components/confirmar-borrado';
+import { type CategoryTree } from '@/shared/api/categories';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { CollapsibleHeader } from '@/shared/ui/atoms/collapsible-header';
 import { Menu, MenuOpcion } from '@/shared/ui/molecules/menu';
-import type { Category } from '@coco/types';
 
 /** Un centro de costos: su fila de cabecera y, desplegadas, sus categorías. */
-export function Centro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
+export function Centro({ centro, arbol }: { centro: CategoryTree; arbol: CategoryTree[] }) {
   const [abierto, setAbierto] = useState(true);
   const [confirmando, setConfirmando] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -75,7 +75,7 @@ function Desplegar({
   abierto,
   onAlternar,
 }: {
-  centro: Category;
+  centro: CategoryTree;
   abierto: boolean;
   onAlternar: () => void;
 }) {
@@ -93,7 +93,7 @@ function Desplegar({
           {/* El candado y no la palabra "estático": es un estado del
               centro, y en una lista se reconoce antes por su forma que
               leyendo una etiqueta en cada fila. */}
-          {centro.estatico && (
+          {centro.isStatic && (
             <Lock className="size-4 shrink-0 text-muted-foreground" aria-label="Centro estático" />
           )}
         </span>
@@ -110,7 +110,7 @@ function MenuDelCentro({
   onEditar,
   onEliminar,
 }: {
-  centro: Category;
+  centro: CategoryTree;
   onEditar: () => void;
   onEliminar: () => void;
 }) {
@@ -136,12 +136,12 @@ function MenuDelCentro({
               ya existían nacieron antes de que esto existiera. Se queda
               aquí además de en la ficha porque es de un solo golpe. */}
           <MenuOpcion
-            Icono={centro.estatico ? LockOpen : Lock}
+            Icono={centro.isStatic ? LockOpen : Lock}
             onClick={trasCerrar(cerrar, () =>
-              actualizar.mutate({ id: centro.id, cambios: { estatico: !centro.estatico } }),
+              actualizar.mutate({ id: centro.id, cambios: { isStatic: !centro.isStatic } }),
             )}
           >
-            {centro.estatico ? 'Marcar como dinámico' : 'Marcar como estático'}
+            {centro.isStatic ? 'Marcar como dinámico' : 'Marcar como estático'}
           </MenuOpcion>
           <MenuOpcion Icono={Trash2} peligro onClick={trasCerrar(cerrar, onEliminar)}>
             Eliminar
@@ -152,7 +152,7 @@ function MenuDelCentro({
   );
 }
 
-function CuerpoDelCentro({ centro, arbol }: { centro: Category; arbol: Category[] }) {
+function CuerpoDelCentro({ centro, arbol }: { centro: CategoryTree; arbol: CategoryTree[] }) {
   const categorias = centro.children ?? [];
 
   /* El hueco para el siguiente categoría. Se declara aquí porque va en dos sitios

@@ -1,7 +1,21 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
-import { apiFetch } from '@/shared/api/api-client';
-import type { AuditEntry, PaginationMeta, PerfilPublico, UserRole, UserStatus } from '@coco/types';
+import {
+  adminApprove,
+  adminAuditLog,
+  adminChangeRole,
+  adminListUsers,
+  adminReactivate,
+  adminResetPassword,
+  adminSuspend,
+} from '@/shared/api/generated/admin-v2/admin-v2';
+import type {
+  AuditEntry,
+  PageMetaV2,
+  Profile,
+  ProfileRole,
+  ProfileStatus,
+} from '@/shared/api/generated/model';
 
 /**
  * Consultas del panel de administración.
@@ -12,30 +26,27 @@ import type { AuditEntry, PaginationMeta, PerfilPublico, UserRole, UserStatus } 
  */
 
 const adminKeys = {
-  usuarios: (status?: UserStatus) => ['admin', 'users', status ?? 'todos'] as const,
+  usuarios: (status?: ProfileStatus) => ['admin', 'users', status ?? 'todos'] as const,
   bitacora: (page: number) => ['admin', 'audit-log', page] as const,
 };
 
-export function useUsuarios(status?: UserStatus): UseQueryResult<{
-  data: PerfilPublico[];
-  meta: PaginationMeta;
+export function useUsuarios(status?: ProfileStatus): UseQueryResult<{
+  data: Profile[];
+  meta: PageMetaV2;
 }> {
   return useQuery({
     queryKey: adminKeys.usuarios(status),
-    queryFn: async () => {
-      const query = status ? `?status=${status}` : '';
-      return apiFetch<PerfilPublico[], PaginationMeta>(`/admin/users${query}`);
-    },
+    queryFn: () => adminListUsers(status ? { status } : {}),
   });
 }
 
 export function useBitacora(page = 1): UseQueryResult<{
   data: AuditEntry[];
-  meta: PaginationMeta;
+  meta: PageMetaV2;
 }> {
   return useQuery({
     queryKey: adminKeys.bitacora(page),
-    queryFn: async () => apiFetch<AuditEntry[], PaginationMeta>(`/admin/audit-log?page=${page}`),
+    queryFn: () => adminAuditLog({ page }),
   });
 }
 
@@ -58,10 +69,12 @@ export function useAccionSobreUsuario() {
 
   return useMutation({
     mutationFn: async ({ id, accion }: { id: number; accion: AccionSimple }) => {
-      const respuesta = await apiFetch<PerfilPublico>(`/admin/users/${id}/${accion}`, {
-        method: 'POST',
-      });
-      return respuesta.data;
+      const accionDe = {
+        approve: adminApprove,
+        suspend: adminSuspend,
+        reactivate: adminReactivate,
+      };
+      return (await accionDe[accion](id)).data;
     },
     onSuccess: invalidar,
   });
@@ -71,12 +84,8 @@ export function useCambiarRol() {
   const invalidar = useInvalidarAdmin();
 
   return useMutation({
-    mutationFn: async ({ id, role }: { id: number; role: UserRole }) => {
-      const respuesta = await apiFetch<PerfilPublico>(`/admin/users/${id}/role`, {
-        method: 'POST',
-        body: { role },
-      });
-      return respuesta.data;
+    mutationFn: async ({ id, role }: { id: number; role: ProfileRole }) => {
+      return (await adminChangeRole(id, { role })).data;
     },
     onSuccess: invalidar,
   });
@@ -87,10 +96,7 @@ export function useRestablecerContrasena() {
 
   return useMutation({
     mutationFn: async ({ id, newPassword }: { id: number; newPassword: string }) => {
-      await apiFetch<unknown>(`/admin/users/${id}/reset-password`, {
-        method: 'POST',
-        body: { newPassword },
-      });
+      await adminResetPassword(id, { newPassword });
     },
     onSuccess: invalidar,
   });

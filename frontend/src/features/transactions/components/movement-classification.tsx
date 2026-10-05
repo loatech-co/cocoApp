@@ -1,16 +1,16 @@
 import type { MovementSheetState } from '@/features/transactions/hooks/use-movement-form';
 import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
 import { nombreDelOrigen } from '@/features/transactions/model/precedencia';
+import { type CategoryTree } from '@/shared/api/categories';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { Combo } from '@/shared/ui/organisms/combo';
-import type { Category } from '@coco/types';
 
 import { BuscadorDeConcepto } from './buscador-de-concepto';
 
 interface ClassificationProps {
   ficha: MovementSheetState;
-  arbol: Category[];
+  arbol: CategoryTree[];
   /** El centro GUARDADO es estático: ni el buscador ni la cascada se mueven. */
   estatico: boolean;
   crearDentro: (nombre: string, padreId: number | undefined) => Promise<void>;
@@ -153,8 +153,8 @@ function CostCenterField({
   estatico,
   onElegir,
 }: {
-  centro: Category | undefined;
-  arbol: Category[];
+  centro: CategoryTree | undefined;
+  arbol: CategoryTree[];
   estatico: boolean;
   onElegir: (id?: number) => void;
 }) {

@@ -16,6 +16,7 @@ import {
   useRestablecerContrasena,
 } from '@/features/admin/api/admin-queries';
 import { ApiClientError } from '@/shared/api/api-client';
+import { type Profile, type ProfileStatus } from '@/shared/api/generated/model';
 import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
@@ -25,11 +26,10 @@ import { Campo } from '@/shared/ui/atoms/campo';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Input } from '@/shared/ui/atoms/input';
 import { PoliticaDeContrasena, cumpleLaPolitica } from '@/shared/ui/atoms/politica-de-contrasena';
-import type { PerfilPublico, UserStatus } from '@coco/types';
 
 /** La fila de una cuenta en Usuarios: quién es, en qué estado está y qué se le puede hacer. */
 
-export function FilaDeUsuario({ usuario, soyYo }: { usuario: PerfilPublico; soyYo: boolean }) {
+export function FilaDeUsuario({ usuario, soyYo }: { usuario: Profile; soyYo: boolean }) {
   const accion = useAccionSobreUsuario();
   const cambiarRol = useCambiarRol();
   const [restableciendo, setRestableciendo] = useState(false);
@@ -95,13 +95,7 @@ export function FilaDeUsuario({ usuario, soyYo }: { usuario: PerfilPublico; soyY
  * nueva se muestra una sola vez, aquí, para que puedas comunicarla por el
  * canal que quieras — no se guarda ni se envía a ninguna parte.
  */
-function RestablecerContrasena({
-  usuario,
-  onListo,
-}: {
-  usuario: PerfilPublico;
-  onListo: () => void;
-}) {
+function RestablecerContrasena({ usuario, onListo }: { usuario: Profile; onListo: () => void }) {
   const [password, setPassword] = useState('');
   const [hecho, setHecho] = useState(false);
   const restablecer = useRestablecerContrasena();
@@ -149,7 +143,7 @@ function RestablecerContrasena({
   );
 }
 
-function EstadoBadge({ status }: { status: UserStatus }) {
+function EstadoBadge({ status }: { status: ProfileStatus }) {
   // Icono además del color: el estado debe leerse sin distinguir colores.
   if (status === 'pending') {
     return (
@@ -195,11 +189,11 @@ function ResetError({ error }: { error: ApiClientError }) {
   );
 }
 
-function ResetDone({ usuario }: { usuario: PerfilPublico }) {
+function ResetDone({ usuario }: { usuario: Profile }) {
   return (
     <Alert variant="info">
       <AlertDescription>
-        Contraseña restablecida. Comunícasela a {usuario.display_name ?? usuario.email} por un canal
+        Contraseña restablecida. Comunícasela a {usuario.displayName ?? usuario.email} por un canal
         seguro. Sus sesiones abiertas se cerraron.
       </AlertDescription>
     </Alert>
@@ -207,7 +201,7 @@ function ResetDone({ usuario }: { usuario: PerfilPublico }) {
 }
 
 interface UserStatusActionsProps {
-  usuario: PerfilPublico;
+  usuario: Profile;
   soyYo: boolean;
   ocupado: boolean;
   onAccion: (accion: 'approve' | 'suspend' | 'reactivate') => void;
@@ -271,12 +265,12 @@ function UserStatusActions({
   );
 }
 
-function UserHeader({ usuario, soyYo }: { usuario: PerfilPublico; soyYo: boolean }) {
+function UserHeader({ usuario, soyYo }: { usuario: Profile; soyYo: boolean }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">
         <p className="flex items-center gap-2 font-medium">
-          <span className="truncate">{usuario.display_name ?? usuario.email}</span>
+          <span className="truncate">{usuario.displayName ?? usuario.email}</span>
           {soyYo && <span className="text-xs text-muted-foreground">(tú)</span>}
         </p>
         <p className="truncate text-sm text-muted-foreground">{usuario.email}</p>

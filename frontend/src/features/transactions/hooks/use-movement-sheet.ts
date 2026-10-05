@@ -53,7 +53,7 @@ export function useMovementSheet(apertura: SheetOpening & { onCerrar: () => void
     salir es lo que no.
   */
   const estatico =
-    rutaSeleccionada(arbol, movimiento?.category_id ?? undefined).centro?.estatico ?? false;
+    rutaSeleccionada(arbol, movimiento?.categoryId ?? undefined).centro?.isStatic ?? false;
 
   return {
     ficha,

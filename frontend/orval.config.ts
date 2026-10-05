@@ -21,7 +21,6 @@ export default defineConfig({
       schemas: 'src/shared/api/generated/model',
       client: 'fetch',
       clean: true,
-      prettier: true,
       override: {
         mutator: { path: 'src/shared/api/api-client.ts', name: 'apiRequest' },
         fetch: { includeHttpResponseReturnType: false },

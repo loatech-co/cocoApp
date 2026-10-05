@@ -14,7 +14,10 @@ import { join } from 'node:path';
  * recorrer por reflexión sin instanciarlo con datos.
  */
 describe('El contrato de captura', () => {
-  const tipos = readFileSync(join(__dirname, '../../../../frontend/src/shared/lib/native-contract.ts'), 'utf8');
+  const tipos = readFileSync(
+    join(__dirname, '../../../../frontend/src/shared/lib/native-contract.ts'),
+    'utf8',
+  );
   const dto = readFileSync(join(__dirname, 'interpretacion.dto.ts'), 'utf8');
 
   /** El cuerpo entre llaves de la primera declaración que empiece así. */

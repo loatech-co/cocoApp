@@ -2,19 +2,19 @@ import { useState } from 'react';
 
 import { useEliminarCategoria, useUsosDeCategoria } from '@/features/centros/api/categories';
 import { ApiClientError } from '@/shared/api/api-client';
+import { type CategoryTree } from '@/shared/api/categories';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
 import { Select } from '@/shared/ui/organisms/select';
-import type { Category, NivelDeCategoria } from '@coco/types';
 
 interface ConfirmarBorradoProps {
-  categoria: Category;
+  categoria: CategoryTree;
   /**
    * En cuál de los tres niveles está lo que se va a borrar.
    *
-   * Se pasa y no se deduce porque una `Category` no dice a qué profundidad
+   * Se pasa y no se deduce porque una `CategoryTree` no dice a qué profundidad
    * vive: para saberlo habría que recorrer el árbol entero buscándola, y quien
    * abre este diálogo ya lo sabe —lo abrió desde la fila de un centro, de una
    * categoría o de un concepto—.
@@ -26,7 +26,7 @@ interface ConfirmarBorradoProps {
    */
   nivel: NivelDeCategoria;
   /** El árbol entero: de ahí salen los destinos posibles. */
-  arbol: Category[];
+  arbol: CategoryTree[];
   abierta: boolean;
   onCerrar: () => void;
   /** Se llama después de borrar. Por ejemplo, para cerrar la ficha de encima. */
@@ -58,6 +58,9 @@ interface ConfirmarBorradoProps {
  * Hay que decirlo, porque «eliminar» junto a un número de movimientos se lee
  * como que se van los movimientos.
  */
+/** The three levels of the tree, as the person reads them. */
+type NivelDeCategoria = 'centro de costos' | 'categoría' | 'concepto';
+
 export function ConfirmarBorrado({
   categoria,
   nivel,
@@ -87,7 +90,7 @@ export function ConfirmarBorrado({
       <div className="flex flex-col gap-3">
         {/* Qué se va, y la pregunta. Los tres golpes del patrón: qué pasa, que
             no hay vuelta atrás, y si de verdad. */}
-        <p>{loQueSeBorra(nivel, categoria.name, usos.data?.subcategorias ?? 0)}</p>
+        <p>{loQueSeBorra(nivel, categoria.name, usos.data?.subcategories ?? 0)}</p>
 
         {usos.isPending && <p>Contando qué hay dentro…</p>}
 
@@ -164,7 +167,7 @@ function useDeleteCategory({
 
   return {
     usos,
-    movimientos: usos.data?.movimientos ?? 0,
+    movimientos: usos.data?.transactions ?? 0,
     ocupada: eliminar.isPending || usos.isPending,
     destino,
     setDestino,
@@ -272,7 +275,7 @@ function loQueSeBorra(nivel: NivelDeCategoria, nombre: string, cuantas: number):
  * después desde la tabla.
  */
 function destinosPosibles(
-  arbol: Category[],
+  arbol: CategoryTree[],
   excluidoId: number,
 ): { valor: string; etiqueta: string }[] {
   const salida: { valor: string; etiqueta: string }[] = [];

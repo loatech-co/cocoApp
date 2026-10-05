@@ -2,13 +2,35 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { useBitacora } from '@/features/admin/api/admin-queries';
+import type { AuditEntry } from '@/shared/api/generated/model';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
-import type { AuditAction, AuditEntry } from '@coco/types';
+
+/**
+ * Actions the audit log records. Mirror of `AccionAuditada` in the API: the
+ * v2 document types `action` as a plain string, so an action this list does
+ * not know yet is shown as it comes.
+ */
+type AuditAction =
+  | 'auth.register'
+  | 'auth.login'
+  | 'auth.login_failed'
+  | 'auth.logout'
+  | 'auth.logout_all'
+  | 'auth.token_reuse_detected'
+  | 'auth.password_changed'
+  | 'admin.user_approved'
+  | 'admin.user_rejected'
+  | 'admin.user_suspended'
+  | 'admin.user_reactivated'
+  | 'admin.password_reset'
+  | 'admin.role_changed';
+
+const esConocida = (accion: string): accion is AuditAction => Object.hasOwn(ETIQUETAS, accion);
 
 /** Cada acción auditada, en español y sin jerga. */
 const ETIQUETAS: Record<AuditAction, string> = {
@@ -47,7 +69,7 @@ export function BitacoraPage() {
   const consulta = useBitacora(pagina);
 
   const total = consulta.data?.meta.total ?? 0;
-  const porPagina = consulta.data?.meta.per_page ?? 50;
+  const porPagina = consulta.data?.meta.perPage ?? 50;
   const ultimaPagina = Math.max(Math.ceil(total / porPagina), 1);
 
   return (
@@ -95,7 +117,7 @@ export function BitacoraPage() {
 }
 
 function Evento({ evento }: { evento: AuditEntry }) {
-  const preocupante = PREOCUPANTES.has(evento.action);
+  const preocupante = esConocida(evento.action) && PREOCUPANTES.has(evento.action);
 
   return (
     <li>
@@ -104,7 +126,7 @@ function Evento({ evento }: { evento: AuditEntry }) {
           <div className="min-w-0">
             <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
               {/* Una API más nueva puede traer una acción que esta lista aún no conoce. */}
-              {Object.hasOwn(ETIQUETAS, evento.action) ? ETIQUETAS[evento.action] : evento.action}
+              {esConocida(evento.action) ? ETIQUETAS[evento.action] : evento.action}
               {preocupante && (
                 <Badge variant="warning" className="font-normal">
                   Revisar
@@ -117,10 +139,10 @@ function Evento({ evento }: { evento: AuditEntry }) {
             </p>
           </div>
           <time
-            dateTime={evento.created_at}
+            dateTime={evento.createdAt}
             className="shrink-0 text-xs tabular-nums text-muted-foreground"
           >
-            {formatoDeFecha.format(new Date(evento.created_at))}
+            {formatoDeFecha.format(new Date(evento.createdAt))}
           </time>
         </CardContent>
       </Card>

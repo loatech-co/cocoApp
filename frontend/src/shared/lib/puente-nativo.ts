@@ -3,7 +3,7 @@ import {
   type EventoAlPuente,
   type MensajeAlPuente,
   type SesionParaLaWeb,
-} from '@coco/types';
+} from '@/shared/lib/native-contract';
 
 /**
  * El puente con la app del teléfono.

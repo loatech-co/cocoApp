@@ -8,7 +8,7 @@ import { fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
 import { CuentaPage } from './cuenta-page';
 
 const auth = {
-  usuario: { email: 'g@coco.app', display_name: 'Gerardo' },
+  usuario: { email: 'g@coco.app', displayName: 'Gerardo' },
   esAdmin: false,
   salir: vi.fn(() => Promise.resolve()),
   salirDeTodosLosDispositivos: vi.fn(() => Promise.resolve()),

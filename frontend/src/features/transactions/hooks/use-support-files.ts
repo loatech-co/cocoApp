@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useSoportes, useSubirSoportes } from '@/features/transactions/api/soportes';
 import type { FalloDeSoporte } from '@/features/transactions/model/supports';
 import { ApiClientError, apiBlob } from '@/shared/api/api-client';
+import { getSoportesDownloadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 
 /**
@@ -43,7 +44,7 @@ export function useSupportFiles(transactionId: number) {
   useAlCambiar([transactionId, lista.length, intento], () => {
     setFallos(
       Object.fromEntries(
-        lista.filter((s) => !s.disponible).map((s) => [String(s.id), 'ausente' as const]),
+        lista.filter((s) => !s.isAvailable).map((s) => [String(s.id), 'ausente' as const]),
       ),
     );
   });
@@ -55,9 +56,9 @@ export function useSupportFiles(transactionId: number) {
     const creados: string[] = [];
 
     for (const s of lista) {
-      if (!s.disponible) continue;
+      if (!s.isAvailable) continue;
 
-      apiBlob(`/transactions/${transactionId}/soportes/${s.id}`, corte.signal)
+      apiBlob(getSoportesDownloadUrl(transactionId, s.id), corte.signal)
         .then((blob) => {
           if (corte.signal.aborted) return;
           const url = URL.createObjectURL(blob);

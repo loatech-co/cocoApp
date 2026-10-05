@@ -3,13 +3,14 @@ import type { ReactNode } from 'react';
 
 import { useActualizarMovimiento } from '@/features/transactions/api/transactions';
 import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/movimientos';
+import { type CategoryTree } from '@/shared/api/categories';
+import { type Transaction } from '@/shared/api/generated/model';
 import { cn, formatMoney } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { EstadoVacio } from '@/shared/ui/atoms/estado-vacio';
 import { ConTooltip } from '@/shared/ui/atoms/tooltip';
 import { Tabla, TablaEsqueleto, Td, Th, Tr } from '@/shared/ui/molecules/tabla';
 import { Select } from '@/shared/ui/organisms/select';
-import type { Category, Transaction } from '@coco/types';
 
 /** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
 const COLUMNAS = ['Concepto', 'Periodo', 'Fecha de pago', 'Centro de costos', 'Categoría', 'Valor'];
@@ -46,7 +47,7 @@ export function TablaDeMovimientos({
   filasDelEsqueleto = 8,
 }: {
   movimientos: Transaction[];
-  arbol: Category[];
+  arbol: CategoryTree[];
   cargando?: boolean;
   onAbrir: (movimiento: Transaction) => void;
   /** Sin esto las cabeceras no ordenan: en un resumen no tendría sentido. */
@@ -92,24 +93,24 @@ export function TablaDeMovimientos({
 
 interface FilaProps {
   movimiento: Transaction;
-  arbol: Category[];
+  arbol: CategoryTree[];
   onAbrir: () => void;
 }
 
 function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
   const actualizar = useActualizarMovimiento();
-  const { centro, categoria } = rutaSeleccionada(arbol, movimiento.category_id ?? undefined);
+  const { centro, categoria } = rutaSeleccionada(arbol, movimiento.categoryId ?? undefined);
 
   // Cambiar el selector guarda EXACTAMENTE lo elegido, sin adivinar el resto.
   // La tentación es "conservar el concepto si existe con el mismo nombre en el
   // categoría nuevo", pero eso mueve plata a un sitio que nadie pidió y nadie ve.
   const reclasificar = (id: number | undefined): void => {
-    actualizar.mutate({ id: movimiento.id, cambios: { category_id: id ?? null } });
+    actualizar.mutate({ id: movimiento.id, cambios: { categoryId: id ?? null } });
   };
 
   // Sin clasificar no es un error, es algo pendiente: la fila se marca para que
   // se vea de lejos cuál falta por ordenar después de una importación.
-  const sinClasificar = movimiento.category_id === null;
+  const sinClasificar = movimiento.categoryId === null;
 
   /*
     Un centro ESTÁTICO no se reclasifica desde aquí.
@@ -122,7 +123,7 @@ function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
     hay que mover algo, se hace dinámico el centro desde Centros de costos —un
     acto deliberado, en otra pantalla— y entonces se mueve.
   */
-  const estatico = centro?.estatico ?? false;
+  const estatico = centro?.isStatic ?? false;
   const motivo = estatico
     ? `“${centro?.name}” es un centro estático. La clasificación solo se modifica desde Centros de costos.`
     : undefined;
@@ -211,7 +212,7 @@ function SelectorEnFila({
 }: {
   aria: string;
   valor?: number | undefined;
-  opciones: Category[];
+  opciones: CategoryTree[];
   deshabilitado?: boolean;
   /** Por qué está bloqueado. Un control apagado sin explicación se lee como
       un error de la aplicación. */
@@ -287,7 +288,7 @@ function NameCell({
   sinClasificar,
 }: {
   movimiento: Transaction;
-  arbol: Category[];
+  arbol: CategoryTree[];
   sinClasificar: boolean;
 }) {
   return (

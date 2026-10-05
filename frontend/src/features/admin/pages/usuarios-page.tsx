@@ -3,14 +3,14 @@ import { useState } from 'react';
 import { useUsuarios } from '@/features/admin/api/admin-queries';
 import { FilaDeUsuario } from '@/features/admin/components/user-row';
 import { useAuth } from '@/shared/api/auth-context';
+import { type ProfileStatus } from '@/shared/api/generated/model';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
-import type { UserStatus } from '@coco/types';
 
-const FILTROS: { valor: UserStatus | undefined; etiqueta: string }[] = [
+const FILTROS: { valor: ProfileStatus | undefined; etiqueta: string }[] = [
   { valor: 'pending', etiqueta: 'Pendientes' },
   { valor: 'active', etiqueta: 'Activas' },
   { valor: 'suspended', etiqueta: 'Suspendidas' },
@@ -25,7 +25,7 @@ const FILTROS: { valor: UserStatus | undefined; etiqueta: string }[] = [
  */
 export function UsuariosPage() {
   const { usuario: yo } = useAuth();
-  const [filtro, setFiltro] = useState<UserStatus | undefined>('pending');
+  const [filtro, setFiltro] = useState<ProfileStatus | undefined>('pending');
   const consulta = useUsuarios(filtro);
 
   return (

@@ -24,7 +24,7 @@ const indice = indexarArbol([
 
 describe('Los conceptos recientes', () => {
   it('son los distintos, en orden de aparición, hasta el máximo', () => {
-    const movimientos = [100, 101, 100, 110, 101, 100].map((category_id) => ({ category_id }));
+    const movimientos = [100, 101, 100, 110, 101, 100].map((categoryId) => ({ categoryId }));
     expect(conceptosRecientes(movimientos, indice, 5)).toEqual([100, 101, 110]);
     expect(conceptosRecientes(movimientos, indice, 2)).toEqual([100, 101]);
   });
@@ -33,10 +33,10 @@ describe('Los conceptos recientes', () => {
     // 10 es una categoría: un movimiento clasificado solo hasta ahí no cuenta
     // como «lo que suelo usar».
     const movimientos = [
-      { category_id: null },
-      { category_id: 10 },
-      { category_id: 110 },
-      { category_id: 999 },
+      { categoryId: null },
+      { categoryId: 10 },
+      { categoryId: 110 },
+      { categoryId: 999 },
     ];
     expect(conceptosRecientes(movimientos, indice)).toEqual([110]);
   });

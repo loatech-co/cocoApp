@@ -7,8 +7,8 @@ import { vi } from 'vitest';
 import type { leerSoporte } from '@/features/transactions/api/leer-soporte';
 import { MovimientoModal } from '@/features/transactions/components/movimiento-modal';
 import { type CategoryTree } from '@/shared/api/categories';
+import { type PendingPayment, type Transaction } from '@/shared/api/generated/model';
 import { keys } from '@/shared/api/query-keys';
-import type { PagoPendiente, Transaction } from '@coco/types';
 
 /*
   Lo que comparten las pruebas de la ficha de un movimiento: el árbol, el
@@ -23,7 +23,7 @@ export const arbolCon = (estatico: boolean): CategoryTree[] =>
       id: 1,
       name: 'Costos fijos',
       kind: 'expense',
-      estatico,
+      isStatic: estatico,
       children: [
         {
           id: 10,
@@ -44,20 +44,20 @@ export const MOVIMIENTO: Transaction = {
   date: '2026-09-04',
   period: '2026-09-01',
   type: 'expense',
-  category_id: 100,
-  account_id: null,
+  categoryId: 100,
+  accountId: null,
   notes: null,
 } as unknown as Transaction;
 
 /** Un pago pendiente de Celsia, con su valor esperado y su vencimiento. */
-export const PAGO: PagoPendiente = {
-  category_id: 100,
+export const PAGO: PendingPayment = {
+  categoryId: 100,
   name: 'Celsia (Energía)',
   path: 'Costos fijos · Servicios públicos',
-  periodicidad: 'mensual',
-  due_date: '2026-10-05',
-  expected_amount: '180000',
-} as unknown as PagoPendiente;
+  periodicity: 'monthly',
+  dueDate: '2026-10-05',
+  expectedAmount: '180000',
+} as unknown as PendingPayment;
 
 /**
  * El mismo concepto, pero de los que se cubren a pedazos.
@@ -65,16 +65,16 @@ export const PAGO: PagoPendiente = {
  * El vencimiento va lejos de hoy A PROPÓSITO: si los dos cayeran en el mismo
  * día, la prueba de que la fecha es la de HOY pasaría igual estando mal.
  */
-export const PAGO_A_PEDAZOS: PagoPendiente = {
-  category_id: 100,
+export const PAGO_A_PEDAZOS: PendingPayment = {
+  categoryId: 100,
   name: 'Celsia (Energía)',
   path: 'Costos fijos · Servicios públicos',
-  periodicidad: 'mensual',
-  due_date: '2026-10-25',
-  expected_amount: '1200000',
-  paid_amount: '320450',
-  varios_pagos: true,
-} as unknown as PagoPendiente;
+  periodicity: 'monthly',
+  dueDate: '2026-10-25',
+  expectedAmount: '1200000',
+  paidAmount: '320450',
+  isMultiPayment: true,
+} as unknown as PendingPayment;
 
 /** Lo que el lector de mentira devuelve por un recibo de Celsia. */
 export const LECTURA_DE_CELSIA: Awaited<ReturnType<typeof leerSoporte>> = {
@@ -120,7 +120,7 @@ export function abrirFicha(arbol: CategoryTree[]) {
   return pintarFicha({ movimiento: MOVIMIENTO }, clienteDePrueba(arbol));
 }
 
-export function abrirConfirmacion(pago: PagoPendiente = PAGO) {
+export function abrirConfirmacion(pago: PendingPayment = PAGO) {
   return pintarFicha({ movimiento: null, pago });
 }
 

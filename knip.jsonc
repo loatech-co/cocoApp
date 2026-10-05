@@ -29,6 +29,9 @@
     },
     "frontend": {
       "project": ["src/**/*.{ts,tsx}"],
+      // The client Orval writes from the whole v2 document (D11): it exports
+      // every endpoint, used or not. What the web does not call yet is not dead code.
+      "ignore": ["src/shared/api/generated/**"],
       // The component catalogue: its config and every story are entry points,
       // so a component used only by its story is not reported as dead code.
       "storybook": {

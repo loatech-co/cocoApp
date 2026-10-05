@@ -2,8 +2,8 @@ import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { useSupportFiles, useSupportUpload } from '@/features/transactions/hooks/use-support-files';
+import { type Receipt } from '@/shared/api/generated/model';
 import { BotonOscuro } from '@/shared/ui/molecules/overlay-control';
-import type { Soporte } from '@coco/types';
 
 import { ConfirmSupportDeletion } from './confirm-support-deletion';
 import { Soltar } from './support-drop-zone';
@@ -23,7 +23,7 @@ function useSupportGallery(transactionId: number) {
    */
   const [añadiendo, setAñadiendo] = useState(false);
   /** El soporte que se va a borrar desde la columna, a la espera del sí. */
-  const [borrando, setBorrando] = useState<Soporte | null>(null);
+  const [borrando, setBorrando] = useState<Receipt | null>(null);
   const [enGrande, setEnGrande] = useState<number | null>(null);
   /**
    * Cuál se está viendo arriba.
@@ -54,7 +54,7 @@ type Gallery = ReturnType<typeof useSupportGallery>;
  * Los soportes de un movimiento: el recibo que prueba que ese pago existió.
  *
  * ── Por qué el documento en grande y no pestañas ────────────────────────────
- * Porque "Soporte 1 de 8" no dice nada. Ocho pestañas iguales obligan a
+ * Porque "Receipt 1 de 8" no dice nada. Ocho pestañas iguales obligan a
  * abrirlas una por una para encontrar la factura que uno busca, que es
  * exactamente el trabajo que uno venía a evitar. Una página dibujada se
  * reconoce de un vistazo: el recibo del agua no se parece al del colegio.
@@ -137,7 +137,7 @@ function GalleryPreview({ g }: { g: Gallery }) {
       url={urls[String(enseñado.id)]}
       fallo={fallos[String(enseñado.id)]}
       onReintentar={g.archivos.reintentar}
-      esImagen={enseñado.mime_type.startsWith('image/')}
+      esImagen={enseñado.mimeType.startsWith('image/')}
       // Aquí SÍ hay pase a pantalla completa —el soporte ya existe en el
       // servidor, con su descarga y su zoom—, así que la previsualización es
       // también la puerta.

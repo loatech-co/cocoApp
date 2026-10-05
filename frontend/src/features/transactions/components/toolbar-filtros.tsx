@@ -4,13 +4,13 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Filtros } from '@/features/transactions/model/filtros';
 import type { Orden } from '@/features/transactions/model/sort-orders';
 import { useCategories } from '@/shared/api/categories';
+import { type TransactionType } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { useEsMovil } from '@/shared/lib/movil';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
 import { Input } from '@/shared/ui/atoms/input';
 import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
-import type { TransactionType } from '@coco/types';
 
 import { SelectorDeFecha } from './selector-de-fecha';
 import { ClassificationMenu, NewMovementMenu, SortMenu } from './toolbar-menus';

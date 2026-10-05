@@ -139,7 +139,7 @@ describe('Con puente', () => {
 
     recibirSesion(SESION_DE_LA_APP);
     expect(tokenActual()).toBe('token-de-la-app');
-    expect(estadoActual().usuario?.display_name).toBe('Gerardo');
+    expect(estadoActual().usuario?.displayName).toBe('Gerardo');
 
     sesionCerrada();
     expect(tokenActual()).toBeNull();

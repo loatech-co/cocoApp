@@ -1,13 +1,13 @@
 import { createContext, use, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 
+import { type Profile } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import type { PerfilPublico } from '@coco/types';
 
 import * as sesion from './session';
 
 interface AuthState {
-  usuario: PerfilPublico | null;
+  usuario: Profile | null;
   /** `true` mientras se intenta restaurar la sesión desde la cookie de refresh.
    *  Sin esto, la app parpadearía mostrando el login a alguien ya autenticado. */
   cargando: boolean;
@@ -46,7 +46,7 @@ interface AuthState {
     email: string,
     password: string,
     nombre: string,
-  ) => Promise<{ pending_approval: boolean; message: string }>;
+  ) => Promise<{ pendingApproval: boolean; message: string }>;
   salir: () => Promise<void>;
   salirDeTodosLosDispositivos: () => Promise<void>;
   cambiarContrasena: (actual: string, nueva: string) => Promise<void>;

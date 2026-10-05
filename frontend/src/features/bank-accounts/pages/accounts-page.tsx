@@ -7,6 +7,7 @@ import {
   useCrearCuenta,
 } from '@/features/bank-accounts/api/accounts';
 import { ApiClientError } from '@/shared/api/api-client';
+import { type Account } from '@/shared/api/generated/model';
 import { cn, formatCOP } from '@/shared/lib/utils';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
@@ -18,7 +19,6 @@ import { Input } from '@/shared/ui/atoms/input';
 import { Saldo } from '@/shared/ui/atoms/monto';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 import { Select } from '@/shared/ui/organisms/select';
-import type { Account } from '@coco/types';
 
 const TIPOS: { valor: Account['type']; etiqueta: string }[] = [
   { valor: 'cash', etiqueta: 'Efectivo' },
@@ -36,8 +36,8 @@ export function AccountsPage() {
   const cuentas = useAccounts(true);
   const [formularioAbierto, setFormularioAbierto] = useState(false);
 
-  const activas = (cuentas.data ?? []).filter((cuenta) => !cuenta.is_archived);
-  const archivadas = (cuentas.data ?? []).filter((cuenta) => cuenta.is_archived);
+  const activas = (cuentas.data ?? []).filter((cuenta) => !cuenta.isArchived);
+  const archivadas = (cuentas.data ?? []).filter((cuenta) => cuenta.isArchived);
 
   return (
     <div className="flex flex-col gap-6">
@@ -83,7 +83,7 @@ function TarjetaDeCuenta({ cuenta }: { cuenta: Account }) {
   const esTarjeta = cuenta.type === 'credit';
 
   return (
-    <Card className={cn(cuenta.is_archived && 'opacity-60')}>
+    <Card className={cn(cuenta.isArchived && 'opacity-60')}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -104,8 +104,8 @@ function TarjetaDeCuenta({ cuenta }: { cuenta: Account }) {
           <Button
             variant="ghost"
             size="sm"
-            aria-label={cuenta.is_archived ? 'Desarchivar' : 'Archivar'}
-            onClick={() => archivar.mutate({ id: cuenta.id, archivar: !cuenta.is_archived })}
+            aria-label={cuenta.isArchived ? 'Desarchivar' : 'Archivar'}
+            onClick={() => archivar.mutate({ id: cuenta.id, archivar: !cuenta.isArchived })}
           >
             <Archive aria-hidden="true" />
           </Button>
@@ -116,17 +116,17 @@ function TarjetaDeCuenta({ cuenta }: { cuenta: Account }) {
           <Saldo amount={cuenta.balance} className="text-2xl" />
         </div>
 
-        {esTarjeta && cuenta.available_credit !== null && (
+        {esTarjeta && cuenta.availableCredit !== null && (
           <div className="mt-3">
-            <Badge variant={Number.parseFloat(cuenta.available_credit) < 0 ? 'warning' : 'info'}>
-              Cupo disponible: {formatCOP(cuenta.available_credit)}
+            <Badge variant={Number.parseFloat(cuenta.availableCredit) < 0 ? 'warning' : 'info'}>
+              Cupo disponible: {formatCOP(cuenta.availableCredit)}
             </Badge>
           </div>
         )}
 
-        {cuenta.balance !== cuenta.balance_projected && (
+        {cuenta.balance !== cuenta.balanceProjected && (
           <p className="mt-2 text-xs text-muted-foreground">
-            Con movimientos pendientes: {formatCOP(cuenta.balance_projected)}
+            Con movimientos pendientes: {formatCOP(cuenta.balanceProjected)}
           </p>
         )}
       </CardContent>
@@ -238,8 +238,8 @@ function useAccountForm(onListo: () => void) {
       await crear.mutateAsync({
         name,
         type,
-        opening_balance: openingBalance.replace(/[^\d.-]/g, '') || '0',
-        ...(esTarjeta && creditLimit ? { credit_limit: creditLimit.replace(/[^\d.]/g, '') } : {}),
+        openingBalance: openingBalance.replace(/[^\d.-]/g, '') || '0',
+        ...(esTarjeta && creditLimit ? { creditLimit: creditLimit.replace(/[^\d.]/g, '') } : {}),
       });
       onListo();
     } catch (causa) {

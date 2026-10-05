@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
-import { apiFetch } from '@/shared/api/api-client';
+import type { Preferences, UpdatePreferencesInput } from '@/shared/api/generated/model';
+import {
+  preferencesGet,
+  preferencesUpdate,
+} from '@/shared/api/generated/preferences-v2/preferences-v2';
 
 /**
  * Preferencias del usuario.
@@ -9,13 +13,7 @@ import { apiFetch } from '@/shared/api/api-client';
  * persona lleva cuentas. Apagada —lo normal— la navegación no muestra Cuentas,
  * la captura rápida no la pide, y los saldos simplemente no aparecen.
  */
-export interface Preferencias {
-  /**
-   * Llevar tarjetas, ahorros y efectivo. APAGADA por defecto: registrar un
-   * gasto no puede exigir haberse inventado antes una cuenta.
-   */
-  cuentas_habilitadas: boolean;
-}
+export type Preferencias = Preferences;
 
 /**
  * Lo que se asume mientras el servidor responde.
@@ -24,14 +22,14 @@ export interface Preferencias {
  * importa: si aquí se asumiera `true`, durante el primer parpadeo se vería un
  * menú de Cuentas que después desaparece.
  */
-const POR_DEFECTO: Preferencias = { cuentas_habilitadas: false };
+const POR_DEFECTO: Preferencias = { accountsEnabled: false };
 
 const preferenciasKey = ['preferences'] as const;
 
 export function usePreferencias(): UseQueryResult<Preferencias> {
   return useQuery({
     queryKey: preferenciasKey,
-    queryFn: async () => (await apiFetch<Preferencias>('/preferences')).data,
+    queryFn: async () => (await preferencesGet()).data,
     // Cambian poquísimo y las consulta media aplicación: no tiene sentido
     // volver a pedirlas en cada montaje.
     staleTime: 5 * 60_000,
@@ -45,15 +43,14 @@ export function usePreferencias(): UseQueryResult<Preferencias> {
  * ningún componente tiene que manejar un tercer estado solo para esto.
  */
 export function useLlevaCuentas(): boolean {
-  return usePreferencias().data?.cuentas_habilitadas ?? POR_DEFECTO.cuentas_habilitadas;
+  return usePreferencias().data?.accountsEnabled ?? POR_DEFECTO.accountsEnabled;
 }
 
 export function useActualizarPreferencias() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (cambios: Partial<Preferencias>) =>
-      (await apiFetch<Preferencias>('/preferences', { method: 'PATCH', body: cambios })).data,
+    mutationFn: async (cambios: UpdatePreferencesInput) => (await preferencesUpdate(cambios)).data,
     onSuccess: (preferencias) => {
       // Se escribe la respuesta directamente en la caché en vez de invalidar:
       // apagar el interruptor tiene que reordenar la navegación al instante,

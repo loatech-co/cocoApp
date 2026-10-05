@@ -1,12 +1,6 @@
-import { descartarSesion, renovar, tokenActual, tokenPorExpirar } from './session';
 import type { ErrorDetailResponse, ErrorResponse } from './generated/model';
-
-/**
- * Dónde está la API. Vacío —lo normal— es el mismo origen que la página: las
- * rutas del cliente generado ya traen su `/api/v2`. En local apunta al
- * servidor de desarrollo (`frontend/.env.example`).
- */
-export const API_ORIGIN = (import.meta.env.VITE_API_ORIGIN as string | undefined) ?? '';
+import { API_ORIGIN } from './origin';
+import { descartarSesion, renovar, tokenActual, tokenPorExpirar } from './session';
 
 /**
  * Error de API ya normalizado. Trae el `code` estable que el backend garantiza,

@@ -1,8 +1,8 @@
+import { type Dashboard, type CategorySpend } from '@/shared/api/generated/model';
 import { rangoLargo } from '@/shared/lib/fechas';
 import { formatCOP } from '@/shared/lib/utils';
 import { Etiqueta } from '@/shared/ui/atoms/badge';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
-import type { Dashboard, SpendingByCategory } from '@coco/types';
 
 /** Los cuatro indicadores del resumen. */
 export function DashboardKpis({ datos, alDia }: { datos: Dashboard; alDia: boolean }) {
@@ -31,7 +31,7 @@ export function DashboardKpis({ datos, alDia }: { datos: Dashboard; alDia: boole
       */}
       <Kpi
         etiqueta="Presupuesto necesario"
-        valor={formatCOP(alDia ? datos.required_budget : datos.range.expense)}
+        valor={formatCOP(alDia ? datos.requiredBudget : datos.range.expense)}
         detalle={alDia ? 'Costos fijos de este mes' : 'Lo que costó el periodo'}
       />
       <Kpi
@@ -40,7 +40,7 @@ export function DashboardKpis({ datos, alDia }: { datos: Dashboard; alDia: boole
         // Cuánto fue fijo y cuánto variable. Los nombres son los de los
         // centros de costos, así que si mañana se llaman de otra forma,
         // el indicador lo dice solo.
-        desglose={datos.expense_by_center}
+        desglose={datos.expenseByCostCenter}
         acento="expense"
       />
       {/* Apagada, no escondida: los ingresos existen en el modelo —el
@@ -71,7 +71,7 @@ function Kpi({
   valor: string;
   detalle?: string;
   /** En qué se reparte la cifra. Se escribe debajo, con su nombre y su monto. */
-  desglose?: SpendingByCategory[];
+  desglose?: CategorySpend[];
   acento?: 'income' | 'expense';
   /**
    * La cifra es real pero la sección todavía no está: se apaga y se rotula.
@@ -158,11 +158,11 @@ function claseDeCifra(pronto: boolean, acento: 'income' | 'expense' | undefined)
 /* Envuelve en vez de truncarse: un reparto a medias —"Costos fij…"—
    no dice menos, dice otra cosa. Cada parte se queda entera y se
    pasa a la línea de abajo si la tarjeta es angosta. */
-function Desglose({ partes }: { partes: SpendingByCategory[] }) {
+function Desglose({ partes }: { partes: CategorySpend[] }) {
   return (
     <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
       {partes.map((parte) => (
-        <span key={parte.category_id ?? parte.name} className="whitespace-nowrap">
+        <span key={parte.categoryId ?? parte.name} className="whitespace-nowrap">
           {parte.name}{' '}
           <strong className="tabular font-semibold text-foreground">
             {formatCOP(parte.total)}

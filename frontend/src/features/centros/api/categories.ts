@@ -1,15 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiFetch } from '@/shared/api/api-client';
+import {
+  categoriesMerge,
+  categoriesRemove,
+  categoriesUpdate,
+  categoriesUsage,
+} from '@/shared/api/generated/categories-v2/categories-v2';
+import type { UpdateCategoryInput } from '@/shared/api/generated/model';
+import type { Cambios } from '@/shared/api/pages';
 import { keys } from '@/shared/api/query-keys';
-import type { Category } from '@coco/types';
 
 export function useActualizarCategoria() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, cambios }: { id: number; cambios: Record<string, unknown> }) =>
-      (await apiFetch<Category>(`/categories/${id}`, { method: 'PATCH', body: cambios })).data,
+    mutationFn: async ({ id, cambios }: { id: number; cambios: Cambios<UpdateCategoryInput> }) =>
+      (await categoriesUpdate(id, cambios as UpdateCategoryInput)).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -29,12 +35,7 @@ export function useUnificarCategoria() {
 
   return useMutation({
     mutationFn: async ({ origenId, destinoId }: { origenId: number; destinoId: number }) =>
-      (
-        await apiFetch<{ movidos: number; destino: Category }>(`/categories/${origenId}/unificar`, {
-          method: 'POST',
-          body: { destino_id: destinoId },
-        })
-      ).data,
+      (await categoriesMerge(origenId, { targetId: destinoId })).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });
       void queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -54,9 +55,8 @@ export function useUsosDeCategoria(id: number | undefined) {
   return useQuery({
     queryKey: ['categories', 'usos', id] as const,
     enabled: id !== undefined,
-    queryFn: async () =>
-      (await apiFetch<{ movimientos: number; subcategorias: number }>(`/categories/${id}/usos`))
-        .data,
+    // `enabled` guarantees the id; the `?? 0` only satisfies the type.
+    queryFn: async () => (await categoriesUsage(id ?? 0)).data,
   });
 }
 
@@ -73,8 +73,7 @@ export function useEliminarCategoria() {
      * mover plata a un sitio que nadie pidió.
      */
     mutationFn: async ({ id, reasignarA }: { id: number; reasignarA?: number | undefined }) => {
-      const destino = reasignarA === undefined ? '' : `?reasignar_a=${reasignarA}`;
-      await apiFetch(`/categories/${id}${destino}`, { method: 'DELETE' });
+      await categoriesRemove(id, reasignarA === undefined ? {} : { reassignTo: reasignarA });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });
