@@ -205,8 +205,6 @@ export default defineConfig(
     // (step 7.4). Step 7.4-web-b splits them and deletes this list; a file
     // never gets added to it.
     files: [
-      'frontend/src/app/atajos.tsx',
-      'frontend/src/features/transactions/components/buscador-de-concepto.tsx',
       'frontend/src/features/transactions/components/tendencia.tsx',
       'frontend/src/features/centros/pages/centros-page.tsx',
       'frontend/src/features/transactions/pages/dashboard-page.tsx',
@@ -221,9 +219,7 @@ export default defineConfig(
     // arrived (step 7.4). Same rule as the list above.
     files: [
       'frontend/src/app/app-shell.tsx',
-      'frontend/src/app/atajos.tsx',
       'frontend/src/app/barra-inferior.tsx',
-      'frontend/src/features/transactions/components/buscador-de-concepto.tsx',
       'frontend/src/shared/ui/molecules/calendario.tsx',
       'frontend/src/features/centros/components/campos-de-palabras-clave.tsx',
       'frontend/src/features/centros/components/campos-de-recurrencia.tsx',

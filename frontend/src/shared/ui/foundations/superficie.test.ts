@@ -42,7 +42,7 @@ const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
  * página haciendo de fondo, y el motivo está escrito en su propio archivo.
  */
 const LEVANTAN = new Set([
-  'app/atajos.tsx',
+  'app/shortcut-grid.tsx',
   'app/barra-inferior.tsx',
   'shared/ui/atoms/tooltip.tsx',
 ]);
