@@ -4,11 +4,11 @@ import Foundation
 /// para saber si está viejo.
 struct SavedTree: Codable, Equatable, Sendable {
     let roots: [TreeNode]
-    let descargadoEn: Date
+    let downloadedAt: Date
 
     /// Se guarda en disco: las claves no cambian aunque cambie el nombre.
     enum CodingKeys: String, CodingKey {
         case roots = "raices"
-        case descargadoEn = "descargadoEn"
+        case downloadedAt = "descargadoEn"
     }
 }

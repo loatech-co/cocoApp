@@ -63,7 +63,7 @@ struct ConceptSearchView: View {
         } label: {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.name)
-                Text(entry.rutaLegible)
+                Text(entry.readablePath)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

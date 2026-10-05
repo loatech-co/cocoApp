@@ -53,39 +53,39 @@ final class NotifierTests: XCTestCase {
     }
 
     func testProgramarVencimientoUnaSolaPeticionConIdFijo() async throws {
-        let centro = FakeNotificationCenter()
+        let center = FakeNotificationCenter()
         let now = Date(timeIntervalSince1970: 1_790_000_000)
-        let n = SystemNotifier(centro: centro, clock: { now })
+        let n = SystemNotifier(center: center, clock: { now })
         await n.scheduleExpiry(
             now.addingTimeInterval(5 * 86_400), text: "Vuelve a instalarla desde Xcode con el cable.")
         await n.scheduleExpiry(
             now.addingTimeInterval(3 * 86_400), text: "Vuelve a instalarla desde Xcode con el cable.")
-        let pending = await centro.pending()
+        let pending = await center.pending()
         XCTAssertEqual(pending.count, 1)
         XCTAssertEqual(pending.first?.identifier, SystemNotifier.idDeVencimiento)
         XCTAssertTrue(pending.first?.trigger is UNCalendarNotificationTrigger)
     }
 
     func testYaVencidoNoProgramaNada() async {
-        let centro = FakeNotificationCenter()
+        let center = FakeNotificationCenter()
         let now = Date()
-        let n = SystemNotifier(centro: centro, clock: { now })
+        let n = SystemNotifier(center: center, clock: { now })
         await n.scheduleExpiry(now.addingTimeInterval(-60), text: "x")
-        let pending = await centro.pending()
+        let pending = await center.pending()
         XCTAssertTrue(pending.isEmpty)
     }
 
     func testCapturaRegistradaLlevaDestinoYColaEnviadaCuenta() async {
-        let centro = FakeNotificationCenter()
-        let n = SystemNotifier(centro: centro)
+        let center = FakeNotificationCenter()
+        let n = SystemNotifier(center: center)
         await n.captureSaved(result(), source: .sms)
         await n.queueSent(count: 3)
         await n.queueSent(count: 0)
-        let pending = await centro.pending()
+        let pending = await center.pending()
         XCTAssertEqual(pending.count, 2)
         XCTAssertEqual(pending.first?.content.userInfo["destino"] as? String, "coco://capturas")
         XCTAssertEqual(pending.last?.content.body, "Se enviaron 3 capturas pendientes")
         await n.setBadge(2)
-        XCTAssertEqual(centro.insignia, 2)
+        XCTAssertEqual(center.insignia, 2)
     }
 }

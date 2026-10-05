@@ -117,7 +117,7 @@ struct QuickFormView: View {
                                     .background(.tint.opacity(0.15), in: Capsule())
                             }
                         }
-                        Text(concept.rutaLegible)
+                        Text(concept.readablePath)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }

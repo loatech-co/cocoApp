@@ -41,36 +41,36 @@ final class TreeIndexTests: XCTestCase {
 
     // MARK: Indexar
 
-    func testAplanaLosTresNivelesConSuCamino() throws {
-        let mercado = try XCTUnwrap(index.entry(id: 200))
-        XCTAssertEqual(mercado.nivel, .concept)
-        XCTAssertEqual(mercado.path, ["Alimentación", "Costos variables"])
-        XCTAssertEqual(mercado.categoriaId, 20)
-        XCTAssertEqual(mercado.centroId, 2)
-        XCTAssertEqual(mercado.rutaLegible, "Alimentación › Costos variables")
-        XCTAssertFalse(mercado.isStatic)
-        XCTAssertEqual(index.entradas.count, 11)
+    func testFlattensTheThreeLevelsWithTheirPath() throws {
+        let market = try XCTUnwrap(index.entry(id: 200))
+        XCTAssertEqual(market.level, .concept)
+        XCTAssertEqual(market.path, ["Alimentación", "Costos variables"])
+        XCTAssertEqual(market.categoryId, 20)
+        XCTAssertEqual(market.centerId, 2)
+        XCTAssertEqual(market.readablePath, "Alimentación › Costos variables")
+        XCTAssertFalse(market.isStatic)
+        XCTAssertEqual(index.entries.count, 11)
     }
 
-    func testUnaCategoriaSoloLlevaSuCentroEnElCamino() throws {
-        let alimentacion = try XCTUnwrap(index.entry(id: 20))
-        XCTAssertEqual(alimentacion.nivel, .categoria)
-        XCTAssertEqual(alimentacion.path, ["Costos variables"])
-        XCTAssertNil(alimentacion.categoriaId)
-        XCTAssertEqual(alimentacion.centroId, 2)
+    func testACategoryOnlyCarriesItsCenterInThePath() throws {
+        let food = try XCTUnwrap(index.entry(id: 20))
+        XCTAssertEqual(food.level, .category)
+        XCTAssertEqual(food.path, ["Costos variables"])
+        XCTAssertNil(food.categoryId)
+        XCTAssertEqual(food.centerId, 2)
     }
 
-    func testElegirUnConceptoCompletaCategoriaYCentroYDiceSiEsEstatico() throws {
+    func testChoosingAConceptFillsCategoryAndCenterAndTellsIfStatic() throws {
         // Elegir «Celsia» tiene que dejar listos categoría y centro sin otra
         // búsqueda, y avisar de que el centro es estático.
         let celsia = try XCTUnwrap(index.entry(id: 100))
-        XCTAssertEqual(celsia.categoriaId, 10)
-        XCTAssertEqual(celsia.centroId, 1)
+        XCTAssertEqual(celsia.categoryId, 10)
+        XCTAssertEqual(celsia.centerId, 1)
         XCTAssertTrue(celsia.isStatic)
     }
 
-    func testExcluyeLoArchivadoYLoQueCuelgaDeEllo() {
-        let conArchivados = TreeIndex(roots: [
+    func testExcludesArchivedAndWhatHangsFromIt() {
+        let withArchived = TreeIndex(roots: [
             TreeNode(
                 id: 1, name: "Centro", parentId: nil,
                 children: [
@@ -87,29 +87,29 @@ final class TreeIndexTests: XCTestCase {
                         ]),
                 ])
         ])
-        XCTAssertEqual(conArchivados.entradas.map(\.id), [1, 10, 101])
+        XCTAssertEqual(withArchived.entries.map(\.id), [1, 10, 101])
     }
 
     // MARK: Buscar
 
-    func testEncuentraPorNombreSinTildesNiMayusculas() {
+    func testFindsByNameIgnoringAccentsAndCase() {
         XCTAssertEqual(index.search("educacion").map(\.name), ["Educación"])
         XCTAssertEqual(index.search("CELSIA").map(\.id), [100])
     }
 
-    func testEncuentraPorPalabraClave() {
+    func testFindsByKeyword() {
         // Es la razón de que exista: lo que dice el recibo no es el nombre del
         // concepto, es lo que alguien escribió como palabra clave.
         XCTAssertEqual(index.search("d1").map(\.id), [200])
         XCTAssertEqual(index.search("koba").map(\.id), [200])
     }
 
-    func testElNombreExactoGanaAlQueEmpiezaYEseAlQueContiene() {
+    func testExactNameBeatsPrefixAndPrefixBeatsContains() {
         XCTAssertEqual(index.search("mercado").map(\.name), ["Mercado", "Supermercado"])
     }
 
-    func testAIgualParecidoElConceptoAntesQueLaCategoria() {
-        let conConcepto = TreeIndex(roots: [
+    func testOnEqualMatchTheConceptComesBeforeTheCategory() {
+        let withConcept = TreeIndex(roots: [
             TreeNode(
                 id: 3, name: "Centro", parentId: nil,
                 children: [
@@ -120,31 +120,31 @@ final class TreeIndexTests: XCTestCase {
                         ])
                 ])
         ])
-        XCTAssertEqual(conConcepto.search("transporte").map(\.nivel), [.concept, .categoria])
+        XCTAssertEqual(withConcept.search("transporte").map(\.level), [.concept, .category])
     }
 
-    func testConVariasPalabrasTodasTienenQueEncontrarse() {
+    func testWithSeveralWordsAllMustMatch() {
         XCTAssertEqual(index.search("mercado d1").map(\.id), [200])
         XCTAssertEqual(index.search("mercado zzz"), [])
     }
 
-    func testVacioDevuelveVacio() {
+    func testEmptyReturnsEmpty() {
         XCTAssertEqual(index.search(""), [])
         XCTAssertEqual(index.search("   "), [])
     }
 
-    func testNoDevuelveCentrosPorDefecto() {
+    func testDoesNotReturnCentersByDefault() {
         XCTAssertEqual(index.search("costos"), [])
-        XCTAssertEqual(index.search("costos", niveles: [.centro]).map(\.name), ["Costos fijos", "Costos variables"])
+        XCTAssertEqual(index.search("costos", levels: [.center]).map(\.name), ["Costos fijos", "Costos variables"])
     }
 
-    func testRespetaElLimite() {
+    func testRespectsTheLimit() {
         XCTAssertEqual(index.search("a", limit: 2).count, 2)
     }
 
     // MARK: Normalizar
 
-    func testNormalizarEsLaDeFirmas() {
+    func testNormalizeMatchesSignatures() {
         XCTAssertEqual(TreeIndex.normalize("Alimentación  Básica"), "alimentacion basica")
         XCTAssertEqual(TreeIndex.normalize("  Celsia (Energía) \n"), "celsia (energia)")
         XCTAssertEqual(
@@ -167,9 +167,9 @@ final class TreeIndexTests: XCTestCase {
         guard FileManager.default.fileExists(atPath: repo.appending(path: "frontend").path) else {
             throw XCTSkip("No está el repo al lado: \(repo.path)")
         }
-        let encontrada = Self.parityPaths.contains {
+        let found = Self.parityPaths.contains {
             FileManager.default.fileExists(atPath: repo.appending(path: $0).path)
         }
-        XCTAssertTrue(encontrada, "La prueba de paridad de la web no está en \(Self.parityPaths)")
+        XCTAssertTrue(found, "La prueba de paridad de la web no está en \(Self.parityPaths)")
     }
 }
