@@ -20,6 +20,14 @@ describe('Etiqueta', () => {
     expect(screen.getByText('Pendiente').className).toContain('text-warning');
     expect(screen.getByText('Error').className).toContain('text-destructive');
   });
+
+  it('dims what is not there yet with the theme ink, never with opacity', () => {
+    render(<Etiqueta tono="apagado">Pronto</Etiqueta>);
+
+    const clase = screen.getByText('Pronto').className;
+    expect(clase).toContain('text-muted-foreground');
+    expect(clase).not.toContain('opacity');
+  });
 });
 
 describe('Badge', () => {

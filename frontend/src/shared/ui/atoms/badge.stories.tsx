@@ -3,7 +3,16 @@ import { useState } from 'react';
 
 import { Badge, Chip, Etiqueta } from './badge';
 
-const TONES = ['neutro', 'contorno', 'ingreso', 'gasto', 'pendiente', 'info', 'error'] as const;
+const TONES = [
+  'neutro',
+  'apagado',
+  'contorno',
+  'ingreso',
+  'gasto',
+  'pendiente',
+  'info',
+  'error',
+] as const;
 
 const meta = {
   title: 'Atoms/Badge',

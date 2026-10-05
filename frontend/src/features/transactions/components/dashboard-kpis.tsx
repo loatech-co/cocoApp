@@ -1,5 +1,5 @@
 import { rangoLargo } from '@/shared/lib/fechas';
-import { cn, formatCOP } from '@/shared/lib/utils';
+import { formatCOP } from '@/shared/lib/utils';
 import { Etiqueta } from '@/shared/ui/atoms/badge';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import type { Dashboard, SpendingByCategory } from '@coco/types';
@@ -100,7 +100,10 @@ function Kpi({
       {/* 12 de relleno en el teléfono y no 16: con dos tarjetas por fila, cada
           una mide unos 170px, y 16 por lado le quitan a la cifra casi un
           quinto del ancho que le queda. */}
-      <CardContent className={cn('p-3 sm:p-6', pronto && 'opacity-60')}>
+      {/* Apagada con la tinta del tema y no con opacidad: al 60 % el rótulo
+          y la etiqueta bajaban a 2,6:1 y 2,3:1. El rótulo, la cifra y la
+          etiqueta ya van en `muted-foreground`, que da más de 5:1. */}
+      <CardContent className="p-3 sm:p-6">
         <div className="min-w-0">
           {/* Sin mayúsculas sostenidas ni interletraje abierto. Era el
               rótulo en versalitas del panel de control de siempre, y con la
@@ -113,7 +116,7 @@ function Kpi({
                 mano: `Etiqueta` ya decide su redondeo, su relleno y su
                 tamaño de letra. */}
             {pronto && (
-              <Etiqueta tono="neutro" className="shrink-0 text-muted-foreground">
+              <Etiqueta tono="apagado" className="shrink-0">
                 Pronto
               </Etiqueta>
             )}

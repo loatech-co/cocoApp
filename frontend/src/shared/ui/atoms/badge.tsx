@@ -32,6 +32,10 @@ const etiquetaVariants = cva(
     variants: {
       tono: {
         neutro: 'border-transparent bg-muted text-foreground',
+        // Lo que todavía no está —«Pronto»—. Se apaga con la tinta apagada
+        // del tema y nunca con opacidad: `muted-foreground` sobre `muted` da
+        // 5:1 en los dos temas, y la misma etiqueta al 60 % daba 2,3:1.
+        apagado: 'border-transparent bg-muted text-muted-foreground',
         contorno: 'border-border text-foreground',
         // `income`, no `success`: valen lo mismo —en una app de dinero «se
         // guardó» y «entró plata» son la misma buena noticia— pero esta
