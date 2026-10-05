@@ -18,3 +18,4 @@ api/prisma/migraciones-mysql-archivadas/
 # The iOS app has its own toolchain (swift-format, step 7.13)
 ios/
 
+.claude/worktrees/

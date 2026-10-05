@@ -89,3 +89,6 @@ soportes-origen/
 # de ejecución; el frontend lo lee de la fuente por alias. Lo compilado no se
 # versiona: lo produce el `postinstall` y el `build`.
 packages/lectura/dist/
+
+# Worktrees de los ejecutores (Claude Code): copias de trabajo, nunca parte del repo.
+.claude/worktrees/
