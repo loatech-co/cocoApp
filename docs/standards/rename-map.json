@@ -1,0 +1,8324 @@
+{
+ "generated": "2026-10-05",
+ "note": "Proposed names against the 7.2 defaults. \"breaking\" = persisted or crosses a process boundary. Identifier/file names were machine-translated then hand-corrected; each rename step re-reviews its slice.",
+ "tables": [
+  {
+   "from": "soportes",
+   "to": "receipts",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)",
+    "scripts/receipts/*",
+    "scripts/respaldar.sh"
+   ]
+  },
+  {
+   "from": "audit_log",
+   "to": "audit_logs",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)",
+    "admin audit-log screen via API"
+   ]
+  },
+  {
+   "from": "import_batches",
+   "to": "(drop)",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma model only; endpoints already removed)"
+   ],
+   "note": "Contract step 7.10 drops it; do not rename"
+  },
+  {
+   "from": "import_rows",
+   "to": "(drop)",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma model only)"
+   ],
+   "note": "Contract step 7.10 drops it; do not rename"
+  }
+ ],
+ "columns": [
+  {
+   "from": "categories.recurrente",
+   "to": "categories.is_recurring",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "ck_categories_* CHECK constraints",
+    "scripts/cargar-historico.mjs",
+    "scripts/sembrar-local.mjs"
+   ]
+  },
+  {
+   "from": "categories.periodicidad",
+   "to": "categories.periodicity",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "ck_categories_* CHECK constraints",
+    "scripts/cargar-historico.mjs",
+    "scripts/sembrar-local.mjs"
+   ]
+  },
+  {
+   "from": "categories.dia_de_pago",
+   "to": "categories.payment_day",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "ck_categories_* CHECK constraints",
+    "scripts/cargar-historico.mjs",
+    "scripts/sembrar-local.mjs"
+   ]
+  },
+  {
+   "from": "categories.mes_de_pago",
+   "to": "categories.payment_month",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "ck_categories_* CHECK constraints",
+    "scripts/cargar-historico.mjs",
+    "scripts/sembrar-local.mjs"
+   ]
+  },
+  {
+   "from": "categories.estatico",
+   "to": "categories.is_static",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "ck_categories_* CHECK constraints",
+    "scripts/cargar-historico.mjs",
+    "scripts/sembrar-local.mjs"
+   ]
+  },
+  {
+   "from": "categories.palabras_clave",
+   "to": "categories.keywords",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "ck_categories_* CHECK constraints",
+    "scripts/cargar-historico.mjs",
+    "scripts/sembrar-local.mjs"
+   ]
+  },
+  {
+   "from": "categories.presupuesto",
+   "to": "categories.budget",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "ck_categories_* CHECK constraints",
+    "scripts/cargar-historico.mjs",
+    "scripts/sembrar-local.mjs"
+   ]
+  },
+  {
+   "from": "categories.pago_automatico",
+   "to": "categories.is_auto_paid",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "ck_categories_* CHECK constraints",
+    "scripts/cargar-historico.mjs",
+    "scripts/sembrar-local.mjs"
+   ]
+  },
+  {
+   "from": "categories.varios_pagos",
+   "to": "categories.is_multi_payment",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "ck_categories_* CHECK constraints",
+    "scripts/cargar-historico.mjs",
+    "scripts/sembrar-local.mjs"
+   ]
+  },
+  {
+   "from": "transactions.por_revisar",
+   "to": "transactions.needs_review",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ]
+  },
+  {
+   "from": "soportes.orden",
+   "to": "receipts.position",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ]
+  },
+  {
+   "from": "soportes.nombre_archivo",
+   "to": "receipts.file_name",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "scripts/receipts/*"
+   ]
+  },
+  {
+   "from": "soportes.tamano",
+   "to": "receipts.size_bytes",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "scripts/receipts/*"
+   ]
+  },
+  {
+   "from": "soportes.huella",
+   "to": "receipts.content_hash",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "scripts/receipts/*"
+   ],
+   "note": "SHA-256 of the file"
+  },
+  {
+   "from": "audit_log.changes_json",
+   "to": "audit_logs.changes",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "optional: drop the type suffix"
+  },
+  {
+   "from": "user_preferences.pref_key",
+   "to": "user_preferences.key",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "optional: redundant prefix"
+  },
+  {
+   "from": "user_preferences.pref_value",
+   "to": "user_preferences.value",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "optional: redundant prefix"
+  }
+ ],
+ "timestampAdditions": [
+  {
+   "from": "audit_log.(missing)",
+   "to": "audit_log.updated_at? (append-only: document exception)",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "categories.(missing)",
+   "to": "categories.updated_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "category_rules.(missing)",
+   "to": "category_rules.updated_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "soportes.(missing)",
+   "to": "soportes.updated_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "tags.(missing)",
+   "to": "tags.created_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "tags.(missing)",
+   "to": "tags.updated_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "transaction_splits.(missing)",
+   "to": "transaction_splits.created_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "transaction_splits.(missing)",
+   "to": "transaction_splits.updated_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "transaction_tags.(missing)",
+   "to": "transaction_tags.created_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "transaction_tags.(missing)",
+   "to": "transaction_tags.updated_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "user_preferences.(missing)",
+   "to": "user_preferences.created_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "user_preferences.(missing)",
+   "to": "user_preferences.updated_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  },
+  {
+   "from": "import_rows.(missing)",
+   "to": "import_rows.(dropped)",
+   "breaking": false,
+   "consumers": [],
+   "note": "additive column"
+  }
+ ],
+ "timestamptz": [
+  {
+   "from": "accounts.created_at timestamp(3)",
+   "to": "accounts.created_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "accounts.updated_at timestamp(3)",
+   "to": "accounts.updated_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "audit_log.created_at timestamp(3)",
+   "to": "audit_log.created_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "categories.created_at timestamp(3)",
+   "to": "categories.created_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "category_rules.created_at timestamp(3)",
+   "to": "category_rules.created_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "import_batches.* timestamp(3)",
+   "to": "import_batches.* timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "soportes.created_at timestamp(3)",
+   "to": "soportes.created_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "transactions.created_at timestamp(3)",
+   "to": "transactions.created_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "transactions.updated_at timestamp(3)",
+   "to": "transactions.updated_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "users.created_at timestamp(3)",
+   "to": "users.created_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "users.updated_at timestamp(3)",
+   "to": "users.updated_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "users.sessions_valid_from timestamp(3)",
+   "to": "users.sessions_valid_from timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "users.last_login_at timestamp(3)",
+   "to": "users.last_login_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  },
+  {
+   "from": "users.approved_at timestamp(3)",
+   "to": "users.approved_at timestamptz(3)",
+   "breaking": true,
+   "consumers": [
+    "api"
+   ],
+   "note": "type change: values are UTC today; ALTER ... USING col AT TIME ZONE 'UTC'"
+  }
+ ],
+ "enumTypes": [
+  {
+   "from": "Periodicidad",
+   "to": "periodicity",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma)",
+    "ck_categories_payment_month_not_monthly"
+   ]
+  },
+  {
+   "from": "AccountType",
+   "to": "account_type",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "type name only; values already English"
+  },
+  {
+   "from": "CategoryKind",
+   "to": "category_kind",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "type name only; values already English"
+  },
+  {
+   "from": "TransactionType",
+   "to": "transaction_type",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "type name only; values already English"
+  },
+  {
+   "from": "TransactionSource",
+   "to": "transaction_source",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "type name only; values already English"
+  },
+  {
+   "from": "TransactionStatus",
+   "to": "transaction_status",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "type name only; values already English"
+  },
+  {
+   "from": "TransferDirection",
+   "to": "transfer_direction",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "type name only; values already English"
+  },
+  {
+   "from": "UserRole",
+   "to": "user_role",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "type name only; values already English"
+  },
+  {
+   "from": "UserStatus",
+   "to": "user_status",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "type name only; values already English"
+  },
+  {
+   "from": "ImportStatus",
+   "to": "import_status",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "dropped with imports tables in 7.10"
+  },
+  {
+   "from": "ImportRowStatus",
+   "to": "import_row_status",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "dropped with imports tables in 7.10"
+  },
+  {
+   "from": "ImportSource",
+   "to": "import_source",
+   "breaking": true,
+   "consumers": [
+    "api (Prisma @@map)"
+   ],
+   "note": "dropped with imports tables in 7.10"
+  }
+ ],
+ "enumValues": [
+  {
+   "from": "Periodicidad.mensual",
+   "to": "periodicity.monthly",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "web (PERIODICIDADES, recurrence fields, pending payments)",
+    "ios (none found)",
+    "ck_categories_payment_month_not_monthly",
+    "JSON field periodicity"
+   ]
+  },
+  {
+   "from": "Periodicidad.bimestral",
+   "to": "periodicity.bimonthly",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "web (PERIODICIDADES, recurrence fields, pending payments)",
+    "ios (none found)",
+    "ck_categories_payment_month_not_monthly",
+    "JSON field periodicity"
+   ]
+  },
+  {
+   "from": "Periodicidad.trimestral",
+   "to": "periodicity.quarterly",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "web (PERIODICIDADES, recurrence fields, pending payments)",
+    "ios (none found)",
+    "ck_categories_payment_month_not_monthly",
+    "JSON field periodicity"
+   ]
+  },
+  {
+   "from": "Periodicidad.semestral",
+   "to": "periodicity.semiannual",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "web (PERIODICIDADES, recurrence fields, pending payments)",
+    "ios (none found)",
+    "ck_categories_payment_month_not_monthly",
+    "JSON field periodicity"
+   ]
+  },
+  {
+   "from": "Periodicidad.anual",
+   "to": "periodicity.annual",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "web (PERIODICIDADES, recurrence fields, pending payments)",
+    "ios (none found)",
+    "ck_categories_payment_month_not_monthly",
+    "JSON field periodicity"
+   ]
+  }
+ ],
+ "constraints": [
+  {
+   "from": "users_pkey",
+   "to": "pk_users",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "audit_log_pkey",
+   "to": "pk_audit_logs",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "accounts_pkey",
+   "to": "pk_accounts",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "categories_pkey",
+   "to": "pk_categories",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "tags_pkey",
+   "to": "pk_tags",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "transactions_pkey",
+   "to": "pk_transactions",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "transaction_splits_pkey",
+   "to": "pk_transaction_splits",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "transaction_tags_pkey",
+   "to": "pk_transaction_tags",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "import_batches_pkey",
+   "to": "pk_import_batches",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "import_rows_pkey",
+   "to": "pk_import_rows",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "category_rules_pkey",
+   "to": "pk_category_rules",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "user_preferences_pkey",
+   "to": "pk_user_preferences",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_audit_entity",
+   "to": "idx_audit_logs_entity_entity_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_accounts_user_archived",
+   "to": "idx_accounts_user_id_is_archived",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_categories_user_kind_parent",
+   "to": "idx_categories_user_id_kind_parent_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "uq_tags_user_name",
+   "to": "uq_tags_user_id_name",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_tx_user_import_batch",
+   "to": "idx_transactions_user_id_import_batch_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_tx_user_date",
+   "to": "idx_transactions_user_id_date",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_tx_user_category",
+   "to": "idx_transactions_user_id_category_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_tx_account_date",
+   "to": "idx_transactions_account_id_date",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_tx_transfer_group",
+   "to": "idx_transactions_transfer_group_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_splits_transaction",
+   "to": "idx_transaction_splits_transaction_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_tt_tag",
+   "to": "idx_transaction_tags_tag_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_import_batch_user_status",
+   "to": "idx_import_batches_user_id_status",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_import_row_batch_position",
+   "to": "idx_import_rows_batch_id_position",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_rule_user_priority",
+   "to": "idx_category_rules_user_id_priority",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "uq_rule_user_pattern",
+   "to": "uq_category_rules_user_id_pattern",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "uq_pref_user_key",
+   "to": "uq_user_preferences_user_id_pref_key",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "uq_tags_user_name_ci",
+   "to": "uq_tags_user_id_lower_name",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_audit_user_created",
+   "to": "idx_audit_logs_user_id_created_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_audit_action_created",
+   "to": "idx_audit_logs_action_created_at",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_tx_user_period",
+   "to": "idx_transactions_user_id_period",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "soportes_pkey",
+   "to": "pk_receipts",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "uq_soportes_uuid",
+   "to": "uq_receipts_uuid",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "uq_soportes_storage_key",
+   "to": "uq_receipts_storage_key",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_soportes_tx_orden",
+   "to": "idx_receipts_transaction_id_position",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "idx_soportes_user",
+   "to": "idx_receipts_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "uq_soportes_tx_huella",
+   "to": "uq_receipts_transaction_id_content_hash",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "uq_tx_user_external_ref",
+   "to": "uq_transactions_user_id_external_ref",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename; no client sees it"
+  },
+  {
+   "from": "fk_users_approved_by",
+   "to": "fk_users_approved_by_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_audit_user",
+   "to": "fk_audit_logs_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_accounts_user",
+   "to": "fk_accounts_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_categories_user",
+   "to": "fk_categories_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_categories_parent",
+   "to": "fk_categories_parent_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_tags_user",
+   "to": "fk_tags_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_tx_user",
+   "to": "fk_transactions_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_soportes_user",
+   "to": "fk_receipts_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_tx_account",
+   "to": "fk_transactions_account_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_tx_category",
+   "to": "fk_transactions_category_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_tx_import_batch",
+   "to": "fk_transactions_import_batch_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_splits_tx",
+   "to": "fk_transaction_splits_transaction_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_splits_category",
+   "to": "fk_transaction_splits_category_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_tt_tx",
+   "to": "fk_transaction_tags_transaction_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_tt_tag",
+   "to": "fk_transaction_tags_tag_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_import_batch_user",
+   "to": "fk_import_batches_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_import_batch_account",
+   "to": "fk_import_batches_account_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_import_row_batch",
+   "to": "fk_import_rows_batch_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_import_row_category",
+   "to": "fk_import_rows_category_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_import_row_duplicate",
+   "to": "fk_import_rows_duplicate_of_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_rule_user",
+   "to": "fk_category_rules_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_rule_category",
+   "to": "fk_category_rules_category_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_pref_user",
+   "to": "fk_user_preferences_user_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  },
+  {
+   "from": "fk_soportes_transaction",
+   "to": "fk_receipts_transaction_id",
+   "breaking": false,
+   "consumers": [],
+   "note": "DB object rename"
+  }
+ ],
+ "routes": [
+  {
+   "from": "GET /api/v1/transactions/historia",
+   "to": "GET /api/v1/transactions/history",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "GET /api/v1/transactions/:id/soportes",
+   "to": "GET /api/v1/transactions/:id/receipts",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "POST /api/v1/transactions/:id/soportes",
+   "to": "POST /api/v1/transactions/:id/receipts",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "GET /api/v1/transactions/:id/soportes/:soporteId",
+   "to": "GET /api/v1/transactions/:id/receipts/:receiptId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "DELETE /api/v1/transactions/:id/soportes/:soporteId",
+   "to": "DELETE /api/v1/transactions/:id/receipts/:receiptId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "GET /api/v1/categories/:id/usos",
+   "to": "GET /api/v1/categories/:id/usage",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "POST /api/v1/categories/:id/unificar",
+   "to": "POST /api/v1/categories/:id/merge",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "action sub-resource; documented exception to \"no verbs\""
+  },
+  {
+   "from": "multipart field \"archivos\"",
+   "to": "multipart field \"files\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "CONTRATO_DE_SOPORTES.campo"
+  },
+  {
+   "from": "header x-coco-cliente: nativo",
+   "to": "header x-coco-client: native",
+   "breaking": true,
+   "consumers": [
+    "ios",
+    "api"
+   ],
+   "note": "CABECERA_CLIENTE_NATIVO / CLIENTE_NATIVO"
+  }
+ ],
+ "verbRoutesKept": [
+  "POST /transactions/capture",
+  "POST /transactions/interpret",
+  "POST /transactions/transfer",
+  "POST /categories/seed",
+  "POST /categories/reorder",
+  "GET /categorization/suggest",
+  "POST /categorization/learn",
+  "POST /admin/users/:id/{approve,suspend,reactivate,role,reset-password}",
+  "POST /auth/{register,login,refresh,logout,logout-all,change-password}"
+ ],
+ "jsonFields": [
+  {
+   "from": "recurrente",
+   "to": "isRecurring",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "periodicidad",
+   "to": "periodicity",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "dia_de_pago",
+   "to": "paymentDay",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "mes_de_pago",
+   "to": "paymentMonth",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "estatico",
+   "to": "isStatic",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "presupuesto",
+   "to": "budget",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "pago_automatico",
+   "to": "isAutoPaid",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "varios_pagos",
+   "to": "isMultiPayment",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "palabras_clave",
+   "to": "keywords",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "por_revisar",
+   "to": "needsReview",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "clasificacion",
+   "to": "classification",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "certeza",
+   "to": "certainty",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "fuente",
+   "to": "source",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "concepto_id",
+   "to": "conceptId",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "categoria_id",
+   "to": "categoryId",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "nombre",
+   "to": "name",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "candidatos",
+   "to": "candidates",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "ruta",
+   "to": "path",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "motivo",
+   "to": "reason",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "resumen",
+   "to": "summary",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "repetido",
+   "to": "isDuplicate",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "fusionado",
+   "to": "isMerged",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "texto",
+   "to": "text",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "comercio",
+   "to": "merchant",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "monto",
+   "to": "amount",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "fecha",
+   "to": "date",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "nombre_de_archivo",
+   "to": "fileName",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "periodo",
+   "to": "period",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "nota",
+   "to": "note",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "centro_id",
+   "to": "costCenterId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "centro",
+   "to": "costCenter",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "orden",
+   "to": "position",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "nombre_archivo",
+   "to": "fileName",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "tamano",
+   "to": "sizeBytes",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "disponible",
+   "to": "isAvailable",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "cuentas_habilitadas",
+   "to": "accountsEnabled",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "destino_id",
+   "to": "targetId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "per_page",
+   "to": "perPage",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "sum_expense",
+   "to": "sumExpense",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "sum_income",
+   "to": "sumIncome",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "display_name",
+   "to": "displayName",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "created_at",
+   "to": "createdAt",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "access_token",
+   "to": "accessToken",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "expires_in",
+   "to": "expiresIn",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "refresh_token",
+   "to": "refreshToken",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "pending_approval",
+   "to": "pendingApproval",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "entity_id",
+   "to": "entityId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "category_id",
+   "to": "categoryId",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "credit_limit",
+   "to": "creditLimit",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "cutoff_day",
+   "to": "cutoffDay",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "payment_day",
+   "to": "paymentDay",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "opening_balance",
+   "to": "openingBalance",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "is_archived",
+   "to": "isArchived",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "balance_projected",
+   "to": "balanceProjected",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "available_credit",
+   "to": "availableCredit",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "parent_id",
+   "to": "parentId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "sort_order",
+   "to": "sortOrder",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "external_ref",
+   "to": "externalRef",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "captured_at",
+   "to": "capturedAt",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "account_id",
+   "to": "accountId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "transfer_group_id",
+   "to": "transferGroupId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "transfer_direction",
+   "to": "transferDirection",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "raw_text",
+   "to": "rawText",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "expected_amount",
+   "to": "expectedAmount",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "due_date",
+   "to": "dueDate",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "paid_amount",
+   "to": "paidAmount",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "net_worth",
+   "to": "netWorth",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "by_category",
+   "to": "byCategory",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "expense_by_center",
+   "to": "expenseByCostCenter",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "breakdown_level",
+   "to": "breakdownLevel",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "breakdown_parent",
+   "to": "breakdownParent",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "required_budget",
+   "to": "requiredBudget",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "mime_type",
+   "to": "mimeType",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "pref_key",
+   "to": "prefKey",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "pref_value",
+   "to": "prefValue",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "user_id",
+   "to": "userId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "from_account_id",
+   "to": "fromAccountId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "to_account_id",
+   "to": "toAccountId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "category_ids",
+   "to": "categoryIds",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "tag_id",
+   "to": "tagId",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "min_amount",
+   "to": "minAmount",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "max_amount",
+   "to": "maxAmount",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  },
+  {
+   "from": "include_archived",
+   "to": "includeArchived",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ],
+   "note": "casing only (7.2: camelCase JSON)"
+  }
+ ],
+ "jsonValues": [
+  {
+   "from": "periodicity: \"mensual\"",
+   "to": "\"monthly\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "periodicity: \"bimestral\"",
+   "to": "\"bimonthly\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "periodicity: \"trimestral\"",
+   "to": "\"quarterly\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "periodicity: \"semestral\"",
+   "to": "\"semiannual\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "periodicity: \"anual\"",
+   "to": "\"annual\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "breakdownLevel: \"centro de costos\"",
+   "to": "\"cost_center\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "breakdownLevel: \"categoría\"",
+   "to": "\"category\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "breakdownLevel: \"concepto\"",
+   "to": "\"concept\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "period.granularity: \"dia\"",
+   "to": "\"day\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "period.granularity: \"mes\"",
+   "to": "\"month\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "classification.certainty: \"alta\"",
+   "to": "\"high\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "classification.certainty: \"media\"",
+   "to": "\"medium\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "classification.certainty: \"ninguna\"",
+   "to": "\"none\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "classification.source: \"historial\"",
+   "to": "\"history\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "classification.source: \"palabras-clave\"",
+   "to": "\"keywords\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "classification.source: \"firma\"",
+   "to": "\"signature\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "classification.source: \"diccionario\"",
+   "to": "\"dictionary\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "suggestion.reason: \"historial\"",
+   "to": "\"history\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "suggestion.reason: \"regla\"",
+   "to": "\"rule\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "suggestion.reason: \"regla-sembrada\"",
+   "to": "\"seeded_rule\"",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "user_preferences.pref_key = \"cuentas_habilitadas\" (stored data)",
+   "to": "\"accounts_enabled\"",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "web",
+    "DB rows"
+   ],
+   "note": "UPDATE of stored keys during expand"
+  }
+ ],
+ "bridge": [
+  {
+   "from": "webkit.messageHandlers.cocoSesion",
+   "to": "cocoSession",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "webkit.messageHandlers.cocoEventos",
+   "to": "cocoEvents",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "message field \"tipo\"",
+   "to": "\"type\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "tipo \"pedirSesion\"",
+   "to": "\"requestSession\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "event \"salir\"",
+   "to": "\"signOut\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "event \"sesionCerrada\"",
+   "to": "\"sessionClosed\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "event \"sinSesion\"",
+   "to": "\"noSession\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "event \"abrirCaptura\"",
+   "to": "\"openCapture\"",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "window.__coco.ir",
+   "to": "window.__coco.navigate",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "window.__coco.abrirBusqueda",
+   "to": "window.__coco.openSearch",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "window.__coco.recibirSesion",
+   "to": "window.__coco.receiveSession",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  },
+  {
+   "from": "window.__coco.sesionCerrada",
+   "to": "window.__coco.sessionClosed",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios"
+   ]
+  }
+ ],
+ "spaRoutes": [
+  {
+   "from": "/entrar",
+   "to": "/sign-in",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "bookmarks"
+   ]
+  },
+  {
+   "from": "/registro",
+   "to": "/sign-up",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "bookmarks"
+   ]
+  },
+  {
+   "from": "/cuentas",
+   "to": "/accounts",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "/centros-de-costos",
+   "to": "/cost-centers",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios (MasView deep link)"
+   ]
+  },
+  {
+   "from": "/categorias",
+   "to": "(remove legacy redirect)",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  },
+  {
+   "from": "/mi-cuenta",
+   "to": "/account",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios (MasView deep link)"
+   ]
+  },
+  {
+   "from": "/administracion",
+   "to": "/admin",
+   "breaking": true,
+   "consumers": [
+    "web",
+    "ios (MasView deep link)"
+   ]
+  },
+  {
+   "from": "/administracion/bitacora",
+   "to": "/admin/audit-log",
+   "breaking": true,
+   "consumers": [
+    "web"
+   ]
+  }
+ ],
+ "envVars": [
+  {
+   "from": "SOPORTES_STORAGE",
+   "to": "RECEIPTS_STORAGE",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "Hostinger env",
+    "api/.env*"
+   ]
+  },
+  {
+   "from": "SOPORTES_DIR",
+   "to": "RECEIPTS_DIR",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "Hostinger env",
+    "scripts"
+   ]
+  },
+  {
+   "from": "SOPORTES_BUCKET",
+   "to": "RECEIPTS_BUCKET",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "Hostinger env",
+    "scripts"
+   ]
+  },
+  {
+   "from": "PERMITIR_BASE_REMOTA",
+   "to": "ALLOW_REMOTE_DATABASE",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "scripts",
+    "local .env"
+   ]
+  },
+  {
+   "from": "PERMITIR_AUTH_DESTRUCTIVA",
+   "to": "ALLOW_DESTRUCTIVE_AUTH",
+   "breaking": true,
+   "consumers": [
+    "api",
+    "local .env",
+    "e2e"
+   ]
+  }
+ ],
+ "clientStorage": [
+  {
+   "from": "localStorage \"sidenav-plegada\" = \"si\"/\"no\"",
+   "to": "\"sidenav-collapsed\" = \"true\"/\"false\"",
+   "breaking": true,
+   "consumers": [
+    "web (per browser; read old key once)"
+   ]
+  },
+  {
+   "from": "UserDefaults \"bienvenida-vista\"",
+   "to": "\"welcome-seen\"",
+   "breaking": true,
+   "consumers": [
+    "ios (on device; migrate on launch)"
+   ]
+  },
+  {
+   "from": "UserDefaults \"permiso-de-avisos-pedido\"",
+   "to": "\"notification-permission-requested\"",
+   "breaking": true,
+   "consumers": [
+    "ios"
+   ]
+  },
+  {
+   "from": "UserDefaults \"co.loatech.coco.conceptosRecientes\"",
+   "to": "\"co.loatech.coco.recentConcepts\"",
+   "breaking": true,
+   "consumers": [
+    "ios"
+   ]
+  }
+ ],
+ "packages": [
+  {
+   "from": "@coco/lectura (packages/lectura)",
+   "to": "@coco/receipt-parser (packages/receipt-parser)",
+   "breaking": false,
+   "consumers": [
+    "api",
+    "frontend",
+    "root postinstall"
+   ]
+  },
+  {
+   "from": "@coco/types (packages/types)",
+   "to": "(removed; generated from OpenAPI, 7.4)",
+   "breaking": false,
+   "consumers": [
+    "api",
+    "frontend"
+   ]
+  },
+  {
+   "from": "npm run sembrar:local",
+   "to": "npm run seed:local",
+   "breaking": false,
+   "consumers": [
+    "developers",
+    "docs"
+   ]
+  },
+  {
+   "from": "npm run respaldar",
+   "to": "npm run backup",
+   "breaking": false,
+   "consumers": [
+    "developers",
+    "docs"
+   ]
+  },
+  {
+   "from": "npm run cargar",
+   "to": "npm run load:history",
+   "breaking": false,
+   "consumers": [
+    "developers",
+    "docs"
+   ]
+  },
+  {
+   "from": "npm run soportes:reporte",
+   "to": "npm run receipts:report",
+   "breaking": false,
+   "consumers": [
+    "developers",
+    "docs"
+   ]
+  },
+  {
+   "from": "npm run soportes:importar",
+   "to": "npm run receipts:import",
+   "breaking": false,
+   "consumers": [
+    "developers",
+    "docs"
+   ]
+  },
+  {
+   "from": "npm run soportes:sincronizar",
+   "to": "npm run receipts:sync",
+   "breaking": false,
+   "consumers": [
+    "developers",
+    "docs"
+   ]
+  }
+ ],
+ "files": [
+  {
+   "from": "api/src/common/entorno.spec.ts",
+   "to": "api/src/common/env.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/common/entorno.ts",
+   "to": "api/src/common/env.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/auth/supabase-auth.candado.spec.ts",
+   "to": "api/src/modules/auth/supabase-auth.lock.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/auth/supabase-auth.errores.spec.ts",
+   "to": "api/src/modules/auth/supabase-auth.errors.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/auth/supabase-auth.errores.ts",
+   "to": "api/src/modules/auth/supabase-auth.errors.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/categories/categories.plantilla.spec.ts",
+   "to": "api/src/modules/categories/categories.template.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/categories/categories.plantilla.ts",
+   "to": "api/src/modules/categories/categories.template.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/categories/dto/palabras-clave.spec.ts",
+   "to": "api/src/modules/categories/dto/keywords.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/categories/palabras-clave.ts",
+   "to": "api/src/modules/categories/keywords.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/categories/varios-pagos.spec.ts",
+   "to": "api/src/modules/categories/multi-payment.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/categories/varios-pagos.ts",
+   "to": "api/src/modules/categories/multi-payment.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/dashboard/pagos-automaticos.ts",
+   "to": "api/src/modules/dashboard/automatic-payments.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/dashboard/pendientes.spec.ts",
+   "to": "api/src/modules/dashboard/pending.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/dashboard/pendientes.ts",
+   "to": "api/src/modules/dashboard/pending.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/interpretacion/duplicados.spec.ts",
+   "to": "api/src/modules/interpretation/duplicates.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/interpretacion/duplicados.ts",
+   "to": "api/src/modules/interpretation/duplicates.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/interpretacion/interpretacion.contrato.spec.ts",
+   "to": "api/src/modules/interpretation/interpretation.contract.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/interpretacion/interpretacion.dto.ts",
+   "to": "api/src/modules/interpretation/interpretation.dto.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/interpretacion/interpretacion.module.ts",
+   "to": "api/src/modules/interpretation/interpretation.module.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/interpretacion/interpretacion.service.spec.ts",
+   "to": "api/src/modules/interpretation/interpretation.service.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/interpretacion/interpretacion.service.ts",
+   "to": "api/src/modules/interpretation/interpretation.service.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/interpretacion/interpretar.spec.ts",
+   "to": "api/src/modules/interpretation/interpret.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/interpretacion/interpretar.ts",
+   "to": "api/src/modules/interpretation/interpret.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/soportes/receipt-store.spec.ts",
+   "to": "api/src/modules/receipts/receipt-store.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/soportes/receipt-store.ts",
+   "to": "api/src/modules/receipts/receipt-store.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/soportes/soportes.almacen.ts",
+   "to": "api/src/modules/receipts/receipts.storage.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/soportes/soportes.contrato.spec.ts",
+   "to": "api/src/modules/receipts/receipts.contract.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/soportes/soportes.controller.ts",
+   "to": "api/src/modules/receipts/receipts.controller.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/soportes/soportes.module.ts",
+   "to": "api/src/modules/receipts/receipts.module.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/soportes/soportes.optimizacion.spec.ts",
+   "to": "api/src/modules/receipts/receipts.optimization.spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/soportes/soportes.optimizacion.ts",
+   "to": "api/src/modules/receipts/receipts.optimization.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/src/modules/soportes/soportes.service.ts",
+   "to": "api/src/modules/receipts/receipts.service.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/test/auth-nativo.e2e-spec.ts",
+   "to": "api/test/auth-native.e2e-spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/test/captura.e2e-spec.ts",
+   "to": "api/test/capture.e2e-spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/test/cuentas-opcionales.e2e-spec.ts",
+   "to": "api/test/optional-accounts.e2e-spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/test/helpers/supabase-auth-falso.ts",
+   "to": "api/test/helpers/supabase-auth-fake.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/test/nucleo.e2e-spec.ts",
+   "to": "api/test/core.e2e-spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "api/test/soportes.e2e-spec.ts",
+   "to": "api/test/receipts.e2e-spec.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/app/movil.test.ts",
+   "to": "frontend/src/app/mobile.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/app/movil.ts",
+   "to": "frontend/src/app/mobile.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/atajos.test.tsx",
+   "to": "frontend/src/components/shortcuts.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/atajos.tsx",
+   "to": "frontend/src/components/shortcuts.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/buscador-de-concepto.dom.test.tsx",
+   "to": "frontend/src/components/concept-search.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/buscador-de-concepto.tsx",
+   "to": "frontend/src/components/concept-search.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/cabecera-de-pagina.test.ts",
+   "to": "frontend/src/components/page-header.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/cabecera-de-pagina.tsx",
+   "to": "frontend/src/components/page-header.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/calendario.test.ts",
+   "to": "frontend/src/components/calendar.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/calendario.tsx",
+   "to": "frontend/src/components/calendar.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/campos-de-palabras-clave.dom.test.tsx",
+   "to": "frontend/src/components/keywords-fields.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/campos-de-palabras-clave.tsx",
+   "to": "frontend/src/components/keywords-fields.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/campos-de-recurrencia.dom.test.tsx",
+   "to": "frontend/src/components/recurrence-fields.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/campos-de-recurrencia.test.ts",
+   "to": "frontend/src/components/recurrence-fields.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/campos-de-recurrencia.tsx",
+   "to": "frontend/src/components/recurrence-fields.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/dona.test.ts",
+   "to": "frontend/src/components/donut.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/dona.tsx",
+   "to": "frontend/src/components/donut.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/estado-vacio.tsx",
+   "to": "frontend/src/components/empty-state.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/filtro-clasificacion.tsx",
+   "to": "frontend/src/components/classification-filter.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/monto.tsx",
+   "to": "frontend/src/components/amount-display.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/navegacion.test.ts",
+   "to": "frontend/src/components/navigation.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/navegacion.tsx",
+   "to": "frontend/src/components/navigation.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/paginador.test.ts",
+   "to": "frontend/src/components/paginator.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/paginador.tsx",
+   "to": "frontend/src/components/paginator.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/pagos-pendientes.dom.test.tsx",
+   "to": "frontend/src/components/pending-payments.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/pagos-pendientes.tsx",
+   "to": "frontend/src/components/pending-payments.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/panel-de-busqueda.tsx",
+   "to": "frontend/src/components/search-panel.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/panel-de-la-cuenta.tsx",
+   "to": "frontend/src/components/account-panel.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/selector-de-fecha.dom.test.tsx",
+   "to": "frontend/src/components/date-selector.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/selector-de-fecha.tsx",
+   "to": "frontend/src/components/date-selector.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/soportes.tsx",
+   "to": "frontend/src/components/receipts.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/tabla-de-movimientos.tsx",
+   "to": "frontend/src/components/transaction-table.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/tendencia.test.ts",
+   "to": "frontend/src/components/trend.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/tendencia.tsx",
+   "to": "frontend/src/components/trend.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/toolbar-filtros.tsx",
+   "to": "frontend/src/components/toolbar-filters.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/bloque.tsx",
+   "to": "frontend/src/components/ui/block.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/button.llamadas.test.ts",
+   "to": "frontend/src/components/ui/button.call-sites.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/campo-de-dinero.tsx",
+   "to": "frontend/src/components/ui/money-field.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/casilla.tsx",
+   "to": "frontend/src/components/ui/checkbox.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/chip-icono.tsx",
+   "to": "frontend/src/components/ui/chip-icon.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/confirmacion.tsx",
+   "to": "frontend/src/components/ui/confirmation.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/iconos.tsx",
+   "to": "frontend/src/components/ui/icons.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/modal-partes.tsx",
+   "to": "frontend/src/components/ui/modal-parts.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/piso-tactil.test.ts",
+   "to": "frontend/src/components/ui/touch-target.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/progreso.tsx",
+   "to": "frontend/src/components/ui/progress.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/superficie.test.ts",
+   "to": "frontend/src/components/ui/surface.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/superficie.ts",
+   "to": "frontend/src/components/ui/surface.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/components/ui/tipografia.test.ts",
+   "to": "frontend/src/components/ui/typography.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/admin/bitacora-page.tsx",
+   "to": "frontend/src/features/admin/audit-log-page.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/admin/usuarios-page.tsx",
+   "to": "frontend/src/features/admin/users-page.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/auth/politica-de-contrasena.tsx",
+   "to": "frontend/src/features/auth/password-policy.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/categorization/use-sugerencia.ts",
+   "to": "frontend/src/features/categorization/use-category-suggestion.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/centros/categoria-modal.tsx",
+   "to": "frontend/src/features/cost-centers/category-modal.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/centros/centros-page.tsx",
+   "to": "frontend/src/features/cost-centers/cost-centers-page.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/centros/concepto-modal.tsx",
+   "to": "frontend/src/features/cost-centers/concept-modal.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/centros/confirmar-borrado.tsx",
+   "to": "frontend/src/features/cost-centers/confirm-deletion.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/cuenta/ajustes.tsx",
+   "to": "frontend/src/features/account-settings/settings.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/cuenta/cuenta-page.dom.test.tsx",
+   "to": "frontend/src/features/account-settings/account-page.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/cuenta/cuenta-page.tsx",
+   "to": "frontend/src/features/account-settings/account-page.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/transactions/interacciones.dom.test.tsx",
+   "to": "frontend/src/features/transactions/interactions.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/transactions/leer-soporte.ts",
+   "to": "frontend/src/features/transactions/read-receipt.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/transactions/movimiento-modal.deshacer.dom.test.tsx",
+   "to": "frontend/src/features/transactions/transaction-modal.undo.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/transactions/movimiento-modal.dom.test.tsx",
+   "to": "frontend/src/features/transactions/transaction-modal.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/features/transactions/movimiento-modal.tsx",
+   "to": "frontend/src/features/transactions/transaction-modal.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/agrupar-miles.test.ts",
+   "to": "frontend/src/lib/group-thousands.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/al-cambiar.dom.test.tsx",
+   "to": "frontend/src/lib/on-change.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/al-cambiar.ts",
+   "to": "frontend/src/lib/on-change.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/atajos.test.ts",
+   "to": "frontend/src/lib/shortcuts.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/atajos.ts",
+   "to": "frontend/src/lib/shortcuts.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/buscar-en-arbol.test.ts",
+   "to": "frontend/src/lib/search-in-tree.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/clasificar-con-diccionario.test.ts",
+   "to": "frontend/src/lib/classify-with-dictionary.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/deslizar.dom.test.tsx",
+   "to": "frontend/src/lib/swipe.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/deslizar.ts",
+   "to": "frontend/src/lib/swipe.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/diccionario.test.ts",
+   "to": "frontend/src/lib/dictionary.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/encoger-soporte.dom.test.ts",
+   "to": "frontend/src/lib/shrink-receipt.dom.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/encoger-soporte.ts",
+   "to": "frontend/src/lib/shrink-receipt.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/fechas.ts",
+   "to": "frontend/src/lib/dates.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/filtros.test.ts",
+   "to": "frontend/src/lib/filters.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/filtros.ts",
+   "to": "frontend/src/lib/filters.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/foco.test.ts",
+   "to": "frontend/src/lib/focus.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/foco.ts",
+   "to": "frontend/src/lib/focus.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/leer-fecha.test.ts",
+   "to": "frontend/src/lib/read-date.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/leer-fecha.ts",
+   "to": "frontend/src/lib/read-date.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/movimientos.ts",
+   "to": "frontend/src/lib/transactions.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/palabras-clave.test.ts",
+   "to": "frontend/src/lib/keywords.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/palabras-clave.ts",
+   "to": "frontend/src/lib/keywords.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/precedencia.test.ts",
+   "to": "frontend/src/lib/precedence.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/precedencia.ts",
+   "to": "frontend/src/lib/precedence.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/puente-nativo.test.ts",
+   "to": "frontend/src/lib/native-bridge.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/puente-nativo.ts",
+   "to": "frontend/src/lib/native-bridge.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/recientes.test.ts",
+   "to": "frontend/src/lib/recent.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/recientes.ts",
+   "to": "frontend/src/lib/recent.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/session.embebida.dom.test.ts",
+   "to": "frontend/src/lib/session.embedded.dom.test.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/lib/vista-de-usuario.dom.test.tsx",
+   "to": "frontend/src/lib/user-view.dom.test.tsx",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/pruebas/app-falsa.ts",
+   "to": "frontend/src/test/fake-app.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "frontend/src/pruebas/entorno.ts",
+   "to": "frontend/src/test/env.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/App/AjustesView.swift",
+   "to": "ios/Coco/App/SettingsView.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/App/Bitacora.swift",
+   "to": "ios/Coco/App/AuditLog.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/App/Enrutador.swift",
+   "to": "ios/Coco/App/Router.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/App/EntrarView.swift",
+   "to": "ios/Coco/App/SignInView.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/App/RaizView.swift",
+   "to": "ios/Coco/App/RootView.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Arbol/AlmacenDelArbolEnDisco.swift",
+   "to": "ios/Coco/Tree/DiskTreeStore.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Arbol/ArbolGuardado.swift",
+   "to": "ios/Coco/Tree/SavedTree.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Arbol/IndiceDelArbol.swift",
+   "to": "ios/Coco/Tree/TreeIndex.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Arbol/SincronizadorDelArbol.swift",
+   "to": "ios/Coco/Tree/TreeSynchronizer.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Avisos/AvisoDeVencimiento.swift",
+   "to": "ios/Coco/Notifications/DueNotice.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Avisos/LectorDePerfil.swift",
+   "to": "ios/Coco/Notifications/ProfileReader.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Avisos/NotificadorDelSistema.swift",
+   "to": "ios/Coco/Notifications/SystemNotifier.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Bienvenida/BienvenidaView.swift",
+   "to": "ios/Coco/Welcome/WelcomeView.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Bienvenida/PasosDeAutomatizacion.swift",
+   "to": "ios/Coco/Welcome/AutomationSteps.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/BuscadorDeConceptoView.swift",
+   "to": "ios/Coco/Capture/ConceptSearchView.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/CampoDeMonto.swift",
+   "to": "ios/Coco/Capture/AmountField.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/CapturasView.swift",
+   "to": "ios/Coco/Capture/CapturesView.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/ConceptosRecientes.swift",
+   "to": "ios/Coco/Capture/RecentConcepts.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/EncogedorDeFoto.swift",
+   "to": "ios/Coco/Capture/PhotoShrinker.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/FormularioRapidoView.swift",
+   "to": "ios/Coco/Capture/QuickFormView.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/LectorDeRecibo.swift",
+   "to": "ios/Coco/Capture/ReceiptReader.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/ModeloDelFormulario.swift",
+   "to": "ios/Coco/Capture/FormModel.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/RellenoDelFormulario.swift",
+   "to": "ios/Coco/Capture/FormPrefill.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Captura/TomaDeFoto.swift",
+   "to": "ios/Coco/Capture/PhotoCapture.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Cola/AlmacenDeColaEnDisco.swift",
+   "to": "ios/Coco/Queue/DiskQueueStore.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Cola/CapturaPendiente.swift",
+   "to": "ios/Coco/Queue/PendingCapture.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Cola/CapturadorConCola.swift",
+   "to": "ios/Coco/Queue/QueuedCapturer.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Cola/ColaDeCapturas.swift",
+   "to": "ios/Coco/Queue/CaptureQueue.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Cola/EnviadorPorAPI.swift",
+   "to": "ios/Coco/Queue/ApiSender.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Cola/ReductorDeFotos.swift",
+   "to": "ios/Coco/Queue/PhotoReducer.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Cola/Reintento.swift",
+   "to": "ios/Coco/Queue/Retry.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Dominio/Contratos.swift",
+   "to": "ios/Coco/Domain/Contracts.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Dominio/CuerpoDeCaptura.swift",
+   "to": "ios/Coco/Domain/CaptureBody.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Dominio/FechaDeBogota.swift",
+   "to": "ios/Coco/Domain/BogotaDate.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Dominio/LectorDeMonto.swift",
+   "to": "ios/Coco/Domain/AmountReader.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Dominio/Marca.swift",
+   "to": "ios/Coco/Domain/Mark.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Dominio/Pesos.swift",
+   "to": "ios/Coco/Domain/Pesos.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Dominio/Protocolos.swift",
+   "to": "ios/Coco/Domain/Protocols.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Intents/AtajosDeCoco.swift",
+   "to": "ios/Coco/Intents/CocoShortcuts.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Intents/DependenciasDeIntents.swift",
+   "to": "ios/Coco/Intents/IntentDependencies.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Intents/ParametrosDeAccion.swift",
+   "to": "ios/Coco/Intents/ActionParameters.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Intents/RegistrarGastoDeSMSIntent.swift",
+   "to": "ios/Coco/Intents/LogSmsExpenseIntent.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Intents/RegistrarGastoDeWalletIntent.swift",
+   "to": "ios/Coco/Intents/LogWalletExpenseIntent.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Intents/RegistrarGastoManualIntent.swift",
+   "to": "ios/Coco/Intents/LogManualExpenseIntent.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Red/ClienteAPI.swift",
+   "to": "ios/Coco/Networking/ApiClient.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Red/Conectividad.swift",
+   "to": "ios/Coco/Networking/Connectivity.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Red/ConfiguracionDeLaAPI.swift",
+   "to": "ios/Coco/Networking/ApiConfiguration.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Red/ErrorDeAPI.swift",
+   "to": "ios/Coco/Networking/ApiError.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Red/Peticion.swift",
+   "to": "ios/Coco/Networking/Request.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Red/TransporteURLSession.swift",
+   "to": "ios/Coco/Networking/UrlSessionTransport.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/SegundoPlano/TareasDeFondo.swift",
+   "to": "ios/Coco/Background/BackgroundTasks.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Sesion/Llavero.swift",
+   "to": "ios/Coco/Session/Keychain.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Sesion/LlaveroDelSistema.swift",
+   "to": "ios/Coco/Session/SystemKeychain.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Sesion/SesionNativa.swift",
+   "to": "ios/Coco/Session/NativeSession.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Web/ContenedorWeb.swift",
+   "to": "ios/Coco/Web/WebContainer.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Web/PuenteWeb.swift",
+   "to": "ios/Coco/Web/WebBridge.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Web/ScriptDeArranque.swift",
+   "to": "ios/Coco/Web/StartupScript.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/Coco/Web/SinConexionView.swift",
+   "to": "ios/Coco/Web/OfflineView.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoAccesos/AbrirCapturaIntent.swift",
+   "to": "ios/CocoWidgets/OpenCaptureIntent.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoAccesos/CocoAccesos.swift",
+   "to": "ios/CocoWidgets/CocoWidgets.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoAccesos/ControlDeCaptura.swift",
+   "to": "ios/CocoWidgets/CaptureControl.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoAccesos/WidgetDeCaptura.swift",
+   "to": "ios/CocoWidgets/CaptureWidget.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/AvisoDeVencimientoTests.swift",
+   "to": "ios/CocoTests/DueNoticeTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/CapturadorConColaTests.swift",
+   "to": "ios/CocoTests/QueuedCapturerTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/ClienteAPITests.swift",
+   "to": "ios/CocoTests/ApiClientTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/ColaDeCapturasTests.swift",
+   "to": "ios/CocoTests/CaptureQueueTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/ConceptosRecientesTests.swift",
+   "to": "ios/CocoTests/RecentConceptsTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/ConfiguracionDeLaAPITests.swift",
+   "to": "ios/CocoTests/ApiConfigurationTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/ConstructorDePeticionesTests.swift",
+   "to": "ios/CocoTests/RequestConstructorTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/ContratosTests.swift",
+   "to": "ios/CocoTests/ContractsTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/DoblesDeColaYPuente.swift",
+   "to": "ios/CocoTests/QueueAndBridgeStubs.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/EncogedorDeFotoTests.swift",
+   "to": "ios/CocoTests/PhotoShrinkerTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/EnrutadorTests.swift",
+   "to": "ios/CocoTests/RouterTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/FechaDeBogotaTests.swift",
+   "to": "ios/CocoTests/BogotaDateTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/IndiceDelArbolTests.swift",
+   "to": "ios/CocoTests/TreeIndexTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/LectorDeMontoTests.swift",
+   "to": "ios/CocoTests/AmountReaderTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/LectorDePerfilTests.swift",
+   "to": "ios/CocoTests/ProfileReaderTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/LectorDeReciboTests.swift",
+   "to": "ios/CocoTests/ReceiptReaderTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/ModeloDelFormularioTests.swift",
+   "to": "ios/CocoTests/FormModelTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/NotificadorTests.swift",
+   "to": "ios/CocoTests/NotifierTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/ParametrosDeAccionTests.swift",
+   "to": "ios/CocoTests/ActionParametersTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/PasosDeAutomatizacionTests.swift",
+   "to": "ios/CocoTests/AutomationStepsTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/PuenteWebTests.swift",
+   "to": "ios/CocoTests/WebBridgeTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/ReintentoTests.swift",
+   "to": "ios/CocoTests/RetryTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/RellenoDelFormularioTests.swift",
+   "to": "ios/CocoTests/FormPrefillTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/SesionNativaTests.swift",
+   "to": "ios/CocoTests/NativeSessionTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/SincronizadorDelArbolTests.swift",
+   "to": "ios/CocoTests/TreeSynchronizerTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/TareasDeFondoTests.swift",
+   "to": "ios/CocoTests/BackgroundTasksTests.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "ios/CocoTests/TransporteFalso.swift",
+   "to": "ios/CocoTests/FakeTransport.swift",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "packages/lectura/src/buscar.ts",
+   "to": "packages/receipt-parser/src/search.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "packages/lectura/src/clasificar.ts",
+   "to": "packages/receipt-parser/src/classify.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "packages/lectura/src/diccionario.ts",
+   "to": "packages/receipt-parser/src/dictionary.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "packages/lectura/src/fecha.ts",
+   "to": "packages/receipt-parser/src/date.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "packages/lectura/src/firmas.ts",
+   "to": "packages/receipt-parser/src/signatures.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "packages/lectura/src/index.ts",
+   "to": "packages/receipt-parser/src/index.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "packages/lectura/src/monto.ts",
+   "to": "packages/receipt-parser/src/amount-display.ts",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/cargar-historico.mjs",
+   "to": "scripts/load-history.mjs",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/cerrar-el-api-de-datos.sql",
+   "to": "scripts/close-data-api.sql",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/desplegar-api.sh",
+   "to": "scripts/deploy-api.sh",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/desplegar-frontend.sh",
+   "to": "scripts/deploy-frontend.sh",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/desplegar-migraciones.sh",
+   "to": "scripts/deploy-migrations.sh",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/migrar-datos-a-supabase.sh",
+   "to": "scripts/migrate-data-to-supabase.sh",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/nueva-migracion.sh",
+   "to": "scripts/new-migration.sh",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/preparar-tesseract.mjs",
+   "to": "scripts/prepare-tesseract.mjs",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/reajustar-secuencias.sql",
+   "to": "scripts/reset-sequences.sql",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/respaldar.sh",
+   "to": "scripts/backup.sh",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/sembrar-local.mjs",
+   "to": "scripts/seed-local.mjs",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/soportes/backup-from-server.sh",
+   "to": "scripts/receipts/backup-from-server.sh",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/soportes/copy-to-storage.mjs",
+   "to": "scripts/receipts/copy-to-storage.mjs",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/soportes/create-bucket.mjs",
+   "to": "scripts/receipts/create-bucket.mjs",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/soportes/emparejar.mjs",
+   "to": "scripts/receipts/match.mjs",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/soportes/importar.mjs",
+   "to": "scripts/receipts/import.mjs",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/soportes/reporte.mjs",
+   "to": "scripts/receipts/report.mjs",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/soportes/sincronizar.sh",
+   "to": "scripts/receipts/sync.sh",
+   "breaking": false,
+   "consumers": []
+  },
+  {
+   "from": "scripts/traer-datos-a-local.sh",
+   "to": "scripts/pull-data-to-local.sh",
+   "breaking": false,
+   "consumers": []
+  }
+ ],
+ "identifiers": [
+  {
+   "from": "AccionAuditada",
+   "to": "AuditedAction",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in api/src/common/audit/audit.service.ts"
+  },
+  {
+   "from": "EventoAuditado",
+   "to": "AuditedEvent",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/common/audit/audit.service.ts"
+  },
+  {
+   "from": "leerDelEntorno",
+   "to": "readEnvironment",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/entorno.ts"
+  },
+  {
+   "from": "sinComillas",
+   "to": "stripQuotes",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/entorno.ts"
+  },
+  {
+   "from": "esProduccion",
+   "to": "isProduction",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/entorno.ts"
+  },
+  {
+   "from": "PERMISO_DE_BASE_REMOTA",
+   "to": "ALLOW_REMOTE_DATABASE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/common/entorno.ts"
+  },
+  {
+   "from": "hostDeLaBase",
+   "to": "databaseHost",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/entorno.ts"
+  },
+  {
+   "from": "porQueNoArrancar",
+   "to": "whyNotStart",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/entorno.ts"
+  },
+  {
+   "from": "PERMISO_DE_AUTH_DESTRUCTIVA",
+   "to": "ALLOW_DESTRUCTIVE_AUTH",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/common/entorno.ts"
+  },
+  {
+   "from": "porQueNoTocarCuentasReales",
+   "to": "whyNotTouchRealAccounts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/entorno.ts"
+  },
+  {
+   "from": "extraerBearer",
+   "to": "extractBearer",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/guards/jwt-auth.guard.ts"
+  },
+  {
+   "from": "MovimientoDeSaldo",
+   "to": "BalanceMovement",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/common/money/balance.ts"
+  },
+  {
+   "from": "SaldoDerivado",
+   "to": "DerivedBalance",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/common/money/balance.ts"
+  },
+  {
+   "from": "esCuentaDePasivo",
+   "to": "isLiabilityAccount",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/balance.ts"
+  },
+  {
+   "from": "calcularSaldo",
+   "to": "computeBalance",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/balance.ts"
+  },
+  {
+   "from": "calcularCupoDisponible",
+   "to": "computeAvailableCredit",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/balance.ts"
+  },
+  {
+   "from": "sumar",
+   "to": "sum",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/money.ts"
+  },
+  {
+   "from": "sonIguales",
+   "to": "areEqual",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/money.ts"
+  },
+  {
+   "from": "esPositivo",
+   "to": "isPositive",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/money.ts"
+  },
+  {
+   "from": "esNegativo",
+   "to": "isNegative",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/money.ts"
+  },
+  {
+   "from": "serializar",
+   "to": "serialize",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/money.ts"
+  },
+  {
+   "from": "motivoDeRechazo",
+   "to": "rejectionReason",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/money.ts"
+  },
+  {
+   "from": "ResultadoDeCuadre",
+   "to": "ReconciliationResult",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/common/money/splits.ts"
+  },
+  {
+   "from": "verificarCuadreDeSplits",
+   "to": "verifySplitsReconciliation",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/common/money/splits.ts"
+  },
+  {
+   "from": "ContextoDePeticion",
+   "to": "RequestContext",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/auth/auth.service.ts"
+  },
+  {
+   "from": "PerfilPublico",
+   "to": "PublicProfile",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/auth/auth.service.ts"
+  },
+  {
+   "from": "ParDeTokens",
+   "to": "TokenPair",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/auth/auth.service.ts"
+  },
+  {
+   "from": "normalizarCorreo",
+   "to": "normalizeEmail",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/auth/auth.service.ts"
+  },
+  {
+   "from": "aPerfilPublico",
+   "to": "toPublicProfile",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/auth/auth.service.ts"
+  },
+  {
+   "from": "RefreshNativoDto",
+   "to": "NativeRefreshDto",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/src/modules/auth/dto/auth.dto.ts"
+  },
+  {
+   "from": "LONGITUD_MINIMA",
+   "to": "MIN_LENGTH",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/auth/password.policy.ts"
+  },
+  {
+   "from": "LONGITUD_MAXIMA",
+   "to": "MAX_LENGTH",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/auth/password.policy.ts"
+  },
+  {
+   "from": "ResultadoDePolitica",
+   "to": "PolicyResult",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/auth/password.policy.ts"
+  },
+  {
+   "from": "evaluarPolitica",
+   "to": "evaluatePolicy",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/auth/password.policy.ts"
+  },
+  {
+   "from": "derivaDeDatosPersonales",
+   "to": "derivesFromPersonalData",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/auth/password.policy.ts"
+  },
+  {
+   "from": "esCorreoRepetido",
+   "to": "isRepeatedEmail",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/auth/supabase-auth.errores.ts"
+  },
+  {
+   "from": "SesionDeSupabase",
+   "to": "SupabaseSession",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/auth/supabase-auth.service.ts"
+  },
+  {
+   "from": "NodoDePlantilla",
+   "to": "TemplateNode",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/categories/categories.plantilla.ts"
+  },
+  {
+   "from": "PLANTILLA_DE_CUENTA_NUEVA",
+   "to": "NEW_ACCOUNT_TEMPLATE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/categories/categories.plantilla.ts"
+  },
+  {
+   "from": "sembrarPlantilla",
+   "to": "seedTemplate",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/categories.plantilla.ts"
+  },
+  {
+   "from": "NodoDeCategoria",
+   "to": "CategoryNode",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "PROFUNDIDAD_MAXIMA",
+   "to": "MAX_DEPTH",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "NIVELES",
+   "to": "LEVELS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "nombreDelNivel",
+   "to": "levelName",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "generariaCiclo",
+   "to": "wouldCreateCycle",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "profundidadDe",
+   "to": "depthOf",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "descendientesDe",
+   "to": "descendantsOf",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "profundidadResultante",
+   "to": "resultingDepth",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "ConHijos",
+   "to": "WithChildren",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "anidar",
+   "to": "nest",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "idsDeCategorias",
+   "to": "categoryIds",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "ramasDe",
+   "to": "branchesOf",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/categories.tree.ts"
+  },
+  {
+   "from": "MAXIMO_DE_PALABRAS",
+   "to": "MAX_WORDS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/categories/dto/category.dto.ts"
+  },
+  {
+   "from": "LARGO_DE_UNA_PALABRA",
+   "to": "WORD_LENGTH",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/categories/dto/category.dto.ts"
+  },
+  {
+   "from": "limpiarPalabras",
+   "to": "cleanWords",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/dto/category.dto.ts"
+  },
+  {
+   "from": "UnificarCategoriaDto",
+   "to": "MergeCategoryDto",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/src/modules/categories/dto/category.dto.ts"
+  },
+  {
+   "from": "comoSeCompara",
+   "to": "comparisonKey",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/palabras-clave.ts"
+  },
+  {
+   "from": "limpiar",
+   "to": "clean",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/palabras-clave.ts"
+  },
+  {
+   "from": "unir",
+   "to": "join",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/palabras-clave.ts"
+  },
+  {
+   "from": "porQueNoAdmiteVariosPagos",
+   "to": "whyNotAcceptsMultiPayment",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categories/varios-pagos.ts"
+  },
+  {
+   "from": "PRIORIDAD_SEMBRADA",
+   "to": "SEEDED_PRIORITY",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/categorization/categorization.module.ts"
+  },
+  {
+   "from": "PRIORIDAD_APRENDIDA",
+   "to": "LEARNED_PRIORITY",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/categorization/categorization.module.ts"
+  },
+  {
+   "from": "SugerenciaView",
+   "to": "SuggestionView",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/categorization/categorization.module.ts"
+  },
+  {
+   "from": "CONFIANZA_MINIMA",
+   "to": "MIN_CONFIDENCE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/categorization/categorization.ts"
+  },
+  {
+   "from": "Sugerencia",
+   "to": "Suggestion",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/categorization/categorization.ts"
+  },
+  {
+   "from": "AntecedenteHistorico",
+   "to": "HistoricalPrecedent",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/categorization/categorization.ts"
+  },
+  {
+   "from": "ReglaDeCategoria",
+   "to": "CategoryRule",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/categorization/categorization.ts"
+  },
+  {
+   "from": "sugerirCategoria",
+   "to": "suggestCategory",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categorization/categorization.ts"
+  },
+  {
+   "from": "tokensSignificativos",
+   "to": "significantTokens",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categorization/categorization.ts"
+  },
+  {
+   "from": "PALABRAS_GENERICAS",
+   "to": "GENERIC_WORDS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/categorization/categorization.ts"
+  },
+  {
+   "from": "patronParaAprender",
+   "to": "learnablePattern",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categorization/categorization.ts"
+  },
+  {
+   "from": "normalizarDescripcion",
+   "to": "normalizeDescription",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/categorization/description.ts"
+  },
+  {
+   "from": "MovimientoAgregable",
+   "to": "AddableTransaction",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "FlujoDelPeriodo",
+   "to": "PeriodFlow",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "calcularFlujo",
+   "to": "computeFlow",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "GastoPorCategoria",
+   "to": "ExpenseByCategory",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "calcularGastoPorCategoria",
+   "to": "computeExpenseByCategory",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "CategoriaPlana",
+   "to": "FlatCategory",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "ancestroEnNivel",
+   "to": "ancestorAtLevel",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "diasDelRango",
+   "to": "rangeDays",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "mesesDelRango",
+   "to": "rangeMonths",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "granularidadPara",
+   "to": "granularityFor",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "cuboDe",
+   "to": "bucketOf",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "cubosDelRango",
+   "to": "rangeBuckets",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/dashboard.aggregate.ts"
+  },
+  {
+   "from": "PuntoDeTendencia",
+   "to": "TrendPoint",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/dashboard/dashboard.module.ts"
+  },
+  {
+   "from": "PagosAutomaticosService",
+   "to": "AutomaticPaymentsService",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/src/modules/dashboard/pagos-automaticos.ts"
+  },
+  {
+   "from": "mesAbsoluto",
+   "to": "absoluteMonth",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/pendientes.ts"
+  },
+  {
+   "from": "tocaEnElMes",
+   "to": "isDueInMonth",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/pendientes.ts"
+  },
+  {
+   "from": "vencimiento",
+   "to": "due",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/pendientes.ts"
+  },
+  {
+   "from": "mesesAnteriores",
+   "to": "previousMonths",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/pendientes.ts"
+  },
+  {
+   "from": "estimadoDelMes",
+   "to": "monthlyEstimate",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/pendientes.ts"
+  },
+  {
+   "from": "esperadoDelMes",
+   "to": "monthlyExpected",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/pendientes.ts"
+  },
+  {
+   "from": "huellaDelCobro",
+   "to": "chargeFingerprint",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/pendientes.ts"
+  },
+  {
+   "from": "tocaCobrarAutomatico",
+   "to": "isAutoChargeDue",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/pendientes.ts"
+  },
+  {
+   "from": "comoQuedaElPendiente",
+   "to": "remainingPending",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/dashboard/pendientes.ts"
+  },
+  {
+   "from": "VENTANA_DE_DUPLICADO_MS",
+   "to": "DUPLICATE_MS_WINDOW",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/interpretacion/duplicados.ts"
+  },
+  {
+   "from": "VENTANA_PARCIAL_MS",
+   "to": "PARTIAL_WINDOW_MS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/interpretacion/duplicados.ts"
+  },
+  {
+   "from": "ORIGENES_QUE_SE_DUPLICAN",
+   "to": "DUPLICATING_SOURCES",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/interpretacion/duplicados.ts"
+  },
+  {
+   "from": "CapturaConocida",
+   "to": "KnownCapture",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/interpretacion/duplicados.ts"
+  },
+  {
+   "from": "CapturaNueva",
+   "to": "NewCapture",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/interpretacion/duplicados.ts"
+  },
+  {
+   "from": "Veredicto",
+   "to": "Verdict",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in api/src/modules/interpretacion/duplicados.ts"
+  },
+  {
+   "from": "decidirDuplicado",
+   "to": "decideDuplicate",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/interpretacion/duplicados.ts"
+  },
+  {
+   "from": "enriquecer",
+   "to": "enrich",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/interpretacion/duplicados.ts"
+  },
+  {
+   "from": "InterpretacionController",
+   "to": "InterpretationController",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/src/modules/interpretacion/interpretacion.module.ts"
+  },
+  {
+   "from": "InterpretacionModule",
+   "to": "InterpretationModule",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/src/modules/interpretacion/interpretacion.module.ts"
+  },
+  {
+   "from": "ClasificacionView",
+   "to": "ClassificationView",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/interpretacion/interpretacion.service.ts"
+  },
+  {
+   "from": "InterpretacionView",
+   "to": "InterpretationView",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/interpretacion/interpretacion.service.ts"
+  },
+  {
+   "from": "CapturaView",
+   "to": "CaptureView",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/interpretacion/interpretacion.service.ts"
+  },
+  {
+   "from": "InterpretacionService",
+   "to": "InterpretationService",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/src/modules/interpretacion/interpretacion.service.ts"
+  },
+  {
+   "from": "Certeza",
+   "to": "ClassificationCertainty",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in api/src/modules/interpretacion/interpretar.ts"
+  },
+  {
+   "from": "Fuente",
+   "to": "ClassificationSource",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in api/src/modules/interpretacion/interpretar.ts"
+  },
+  {
+   "from": "EntradaParaInterpretar",
+   "to": "InterpretationInput",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/interpretacion/interpretar.ts"
+  },
+  {
+   "from": "Contexto",
+   "to": "Context",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/interpretacion/interpretar.ts"
+  },
+  {
+   "from": "ClasificacionInterpretada",
+   "to": "InterpretedClassification",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/interpretacion/interpretar.ts"
+  },
+  {
+   "from": "Interpretado",
+   "to": "Interpreted",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/interpretacion/interpretar.ts"
+  },
+  {
+   "from": "HISTORIAL_SEGURO",
+   "to": "SAFE_HISTORY",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/interpretacion/interpretar.ts"
+  },
+  {
+   "from": "interpretar",
+   "to": "interpret",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/interpretacion/interpretar.ts"
+  },
+  {
+   "from": "resumenDe",
+   "to": "summaryOf",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/interpretacion/interpretar.ts"
+  },
+  {
+   "from": "CUENTAS_HABILITADAS",
+   "to": "ENABLED_ACCOUNTS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/preferences/preferences.ts"
+  },
+  {
+   "from": "Preferencias",
+   "to": "Preferences",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/preferences/preferences.ts"
+  },
+  {
+   "from": "PREFERENCIAS_POR_DEFECTO",
+   "to": "DEFAULT_PREFERENCE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/preferences/preferences.ts"
+  },
+  {
+   "from": "ClaveDePreferencia",
+   "to": "PreferenceKey",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in api/src/modules/preferences/preferences.ts"
+  },
+  {
+   "from": "CLAVES",
+   "to": "KEYS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/preferences/preferences.ts"
+  },
+  {
+   "from": "esClaveConocida",
+   "to": "isKnownKey",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/preferences/preferences.ts"
+  },
+  {
+   "from": "combinarConDefectos",
+   "to": "mergeWithDefaults",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/preferences/preferences.ts"
+  },
+  {
+   "from": "TIPOS_ACEPTADOS",
+   "to": "ACCEPTED_TYPES",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "carpetaDelAlmacen",
+   "to": "storeFolder",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "almacenListo",
+   "to": "storeReady",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "rutaDe",
+   "to": "pathOf",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "huellaDe",
+   "to": "fingerprintOf",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "claveNueva",
+   "to": "newKey",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "guardar",
+   "to": "save",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "existe",
+   "to": "exists",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "abrir",
+   "to": "open",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "rutaAbsoluta",
+   "to": "absolutePath",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.almacen.ts"
+  },
+  {
+   "from": "SoportesController",
+   "to": "ReceiptsController",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/src/modules/soportes/soportes.controller.ts"
+  },
+  {
+   "from": "SoportesModule",
+   "to": "ReceiptsModule",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/src/modules/soportes/soportes.module.ts"
+  },
+  {
+   "from": "TIPOS_DE_ENTRADA",
+   "to": "INPUT_TYPES",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/soportes/soportes.optimizacion.ts"
+  },
+  {
+   "from": "TAMANO_MAXIMO",
+   "to": "MAX_SIZE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/soportes/soportes.optimizacion.ts"
+  },
+  {
+   "from": "SoporteOptimizado",
+   "to": "OptimizedReceipt",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/soportes/soportes.optimizacion.ts"
+  },
+  {
+   "from": "optimizar",
+   "to": "optimize",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.optimizacion.ts"
+  },
+  {
+   "from": "comoLlego",
+   "to": "howItArrived",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.optimizacion.ts"
+  },
+  {
+   "from": "esFaltaDeRecursos",
+   "to": "isOutOfResources",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.optimizacion.ts"
+  },
+  {
+   "from": "nombreDeSoporte",
+   "to": "receiptName",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/soportes/soportes.optimizacion.ts"
+  },
+  {
+   "from": "ArchivoSubido",
+   "to": "UploadedFile",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/soportes/soportes.service.ts"
+  },
+  {
+   "from": "SoporteView",
+   "to": "ReceiptView",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/soportes/soportes.service.ts"
+  },
+  {
+   "from": "SoportesService",
+   "to": "ReceiptsService",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/src/modules/soportes/soportes.service.ts"
+  },
+  {
+   "from": "CampoOrdenable",
+   "to": "SortableField",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in api/src/modules/transactions/transactions.sort.ts"
+  },
+  {
+   "from": "parseOrden",
+   "to": "parseOrder",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/transactions/transactions.sort.ts"
+  },
+  {
+   "from": "Paginacion",
+   "to": "Pagination",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/src/modules/transactions/transactions.sort.ts"
+  },
+  {
+   "from": "PER_PAGE_POR_DEFECTO",
+   "to": "DEFAULT_PER_PAGE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/transactions/transactions.sort.ts"
+  },
+  {
+   "from": "PER_PAGE_MAXIMO",
+   "to": "MAX_PER_PAGE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/src/modules/transactions/transactions.sort.ts"
+  },
+  {
+   "from": "parsePaginacion",
+   "to": "parsePagination",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/src/modules/transactions/transactions.sort.ts"
+  },
+  {
+   "from": "EntornoDePruebas",
+   "to": "TestEnvironment",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/test/helpers/app.ts"
+  },
+  {
+   "from": "DatosDeUsuario",
+   "to": "UserData",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/test/helpers/app.ts"
+  },
+  {
+   "from": "UsuarioDePrueba",
+   "to": "TestUser",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in api/test/helpers/app.ts"
+  },
+  {
+   "from": "PASSWORD_VALIDA",
+   "to": "VALID_PASSWORD",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/test/helpers/app.ts"
+  },
+  {
+   "from": "PASSWORD_NUEVA",
+   "to": "NEW_PASSWORD",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in api/test/helpers/app.ts"
+  },
+  {
+   "from": "correoDePrueba",
+   "to": "testEmail",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/test/helpers/app.ts"
+  },
+  {
+   "from": "levantarApp",
+   "to": "bootstrapApp",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in api/test/helpers/app.ts"
+  },
+  {
+   "from": "SupabaseAuthFalso",
+   "to": "SupabaseAuthFake",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in api/test/helpers/supabase-auth-falso.ts"
+  },
+  {
+   "from": "CONSULTA_MOVIL",
+   "to": "QUERY_MOBILE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/app/movil.ts"
+  },
+  {
+   "from": "CONSULTA_ESCRITORIO",
+   "to": "QUERY_DESKTOP",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/app/movil.ts"
+  },
+  {
+   "from": "useEsMovil",
+   "to": "useIsMobile",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/app/movil.ts"
+  },
+  {
+   "from": "PaginaDeAtajo",
+   "to": "ShortcutPage",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/components/atajos.tsx"
+  },
+  {
+   "from": "useSuperficieDeAtajos",
+   "to": "useShortcutSurface",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/atajos.tsx"
+  },
+  {
+   "from": "CandidatoDelRecibo",
+   "to": "ReceiptCandidate",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/components/buscador-de-concepto.tsx"
+  },
+  {
+   "from": "BuscadorDeConcepto",
+   "to": "ConceptSearch",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/buscador-de-concepto.tsx"
+  },
+  {
+   "from": "TITULO_DE_PAGINA",
+   "to": "PAGE_TITLE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/cabecera-de-pagina.tsx"
+  },
+  {
+   "from": "CabeceraDePagina",
+   "to": "PageHeader",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/cabecera-de-pagina.tsx"
+  },
+  {
+   "from": "celdasDelMes",
+   "to": "monthCells",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/calendario.tsx"
+  },
+  {
+   "from": "mesDeISO",
+   "to": "isoMonth",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/calendario.tsx"
+  },
+  {
+   "from": "Calendario",
+   "to": "Calendar",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/calendario.tsx"
+  },
+  {
+   "from": "CamposDePalabrasClave",
+   "to": "KeywordsFields",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/campos-de-palabras-clave.tsx"
+  },
+  {
+   "from": "Recurrencia",
+   "to": "Recurrence",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/components/campos-de-recurrencia.tsx"
+  },
+  {
+   "from": "CamposDeRecurrencia",
+   "to": "RecurrenceFields",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/campos-de-recurrencia.tsx"
+  },
+  {
+   "from": "entre1y31",
+   "to": "between1and31",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/campos-de-recurrencia.tsx"
+  },
+  {
+   "from": "cuandoVuelve",
+   "to": "whenReturns",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/campos-de-recurrencia.tsx"
+  },
+  {
+   "from": "avisoDeMesCorto",
+   "to": "shortMonthNotice",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/campos-de-recurrencia.tsx"
+  },
+  {
+   "from": "ArcoDeLaDona",
+   "to": "DonutArc",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/components/dona.tsx"
+  },
+  {
+   "from": "sectorDeLaDona",
+   "to": "donutSector",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/dona.tsx"
+  },
+  {
+   "from": "arcosDeLaDona",
+   "to": "donutArcs",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/dona.tsx"
+  },
+  {
+   "from": "PorcionDeDona",
+   "to": "DonutPortion",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/components/dona.tsx"
+  },
+  {
+   "from": "Dona",
+   "to": "Donut",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/dona.tsx"
+  },
+  {
+   "from": "EstadoVacio",
+   "to": "EmptyState",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/estado-vacio.tsx"
+  },
+  {
+   "from": "FiltroClasificacion",
+   "to": "FilterClassification",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/filtro-clasificacion.tsx"
+  },
+  {
+   "from": "LogoCompacto",
+   "to": "CompactLogo",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/logo.tsx"
+  },
+  {
+   "from": "MenuTitulo",
+   "to": "MenuTitle",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/menu.tsx"
+  },
+  {
+   "from": "MenuSeparador",
+   "to": "MenuSeparator",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/menu.tsx"
+  },
+  {
+   "from": "MenuOpcion",
+   "to": "MenuOption",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/menu.tsx"
+  },
+  {
+   "from": "Monto",
+   "to": "Amount",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/monto.tsx"
+  },
+  {
+   "from": "Saldo",
+   "to": "Balance",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/monto.tsx"
+  },
+  {
+   "from": "Seccion",
+   "to": "Section",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/components/navegacion.tsx"
+  },
+  {
+   "from": "SECCIONES",
+   "to": "SECTIONS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/navegacion.tsx"
+  },
+  {
+   "from": "SECCIONES_DE_ADMIN",
+   "to": "ADMIN_SECTIONS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/navegacion.tsx"
+  },
+  {
+   "from": "MI_CUENTA",
+   "to": "MY_ACCOUNT",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/navegacion.tsx"
+  },
+  {
+   "from": "useSecciones",
+   "to": "useSections",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/navegacion.tsx"
+  },
+  {
+   "from": "EnlaceDeSeccion",
+   "to": "SectionLink",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/navegacion.tsx"
+  },
+  {
+   "from": "MenuDeLaCuenta",
+   "to": "AccountMenu",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/navegacion.tsx"
+  },
+  {
+   "from": "Paginador",
+   "to": "Paginator",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/paginador.tsx"
+  },
+  {
+   "from": "numerosVisibles",
+   "to": "visiblePageNumbers",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/paginador.tsx"
+  },
+  {
+   "from": "PagosPendientes",
+   "to": "PendingPayments",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/pagos-pendientes.tsx"
+  },
+  {
+   "from": "PanelDeBusqueda",
+   "to": "SearchPanel",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/panel-de-busqueda.tsx"
+  },
+  {
+   "from": "PanelDeLaCuenta",
+   "to": "AccountPanel",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/panel-de-la-cuenta.tsx"
+  },
+  {
+   "from": "FilaDeEnlace",
+   "to": "LinkRow",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/panel-de-la-cuenta.tsx"
+  },
+  {
+   "from": "FILA_DE_PANEL",
+   "to": "PANEL_ROW",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/panel-inferior.tsx"
+  },
+  {
+   "from": "SelectorDeFecha",
+   "to": "DateSelector",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/selector-de-fecha.tsx"
+  },
+  {
+   "from": "Soportes",
+   "to": "Receipts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/soportes.tsx"
+  },
+  {
+   "from": "PanelDeSubida",
+   "to": "UploadPanel",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/soportes.tsx"
+  },
+  {
+   "from": "Soltar",
+   "to": "Drop",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/soportes.tsx"
+  },
+  {
+   "from": "LienzoPdf",
+   "to": "PdfCanvas",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/soportes.tsx"
+  },
+  {
+   "from": "SeparadorDeMandos",
+   "to": "ControlsSeparator",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/soportes.tsx"
+  },
+  {
+   "from": "BotonOscuro",
+   "to": "DarkButton",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/soportes.tsx"
+  },
+  {
+   "from": "FalloDeSoporte",
+   "to": "ReceiptFailure",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in frontend/src/components/soportes.tsx"
+  },
+  {
+   "from": "PreviaDeArchivo",
+   "to": "FilePreview",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/soportes.tsx"
+  },
+  {
+   "from": "COLUMNAS",
+   "to": "COLUMNS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/tabla-de-movimientos.tsx"
+  },
+  {
+   "from": "OrdenDeColumna",
+   "to": "ColumnOrder",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/components/tabla-de-movimientos.tsx"
+  },
+  {
+   "from": "TablaDeMovimientos",
+   "to": "TransactionTable",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/tabla-de-movimientos.tsx"
+  },
+  {
+   "from": "TablaEsqueleto",
+   "to": "TableSkeleton",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/tabla.tsx"
+  },
+  {
+   "from": "Tendencia",
+   "to": "Trend",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/tendencia.tsx"
+  },
+  {
+   "from": "TendenciaEsqueleto",
+   "to": "TrendSkeleton",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/tendencia.tsx"
+  },
+  {
+   "from": "curva",
+   "to": "curve",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/tendencia.tsx"
+  },
+  {
+   "from": "fechaLarga",
+   "to": "longDate",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/tendencia.tsx"
+  },
+  {
+   "from": "etiquetasDelEje",
+   "to": "axisLabels",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/tendencia.tsx"
+  },
+  {
+   "from": "etiquetaDeCubo",
+   "to": "bucketLabel",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/tendencia.tsx"
+  },
+  {
+   "from": "ORDENES",
+   "to": "ORDERS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/toolbar-filtros.tsx"
+  },
+  {
+   "from": "Orden",
+   "to": "Order",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in frontend/src/components/toolbar-filtros.tsx"
+  },
+  {
+   "from": "ToolbarFiltros",
+   "to": "ToolbarFilters",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/toolbar-filtros.tsx"
+  },
+  {
+   "from": "TonoDeAviso",
+   "to": "NoticeTone",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in frontend/src/components/ui/alert.tsx"
+  },
+  {
+   "from": "ICONOS_DE_TONO",
+   "to": "TONE_ICONS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/ui/alert.tsx"
+  },
+  {
+   "from": "mostrarAviso",
+   "to": "showNotice",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/aviso.tsx"
+  },
+  {
+   "from": "olvidarAvisos",
+   "to": "forgetNotices",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/aviso.tsx"
+  },
+  {
+   "from": "useAvisos",
+   "to": "useNotices",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/aviso.tsx"
+  },
+  {
+   "from": "PilaDeAvisos",
+   "to": "NoticeStack",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/aviso.tsx"
+  },
+  {
+   "from": "TonoDeEtiqueta",
+   "to": "LabelTone",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in frontend/src/components/ui/badge.tsx"
+  },
+  {
+   "from": "Etiqueta",
+   "to": "Label",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/badge.tsx"
+  },
+  {
+   "from": "BLOQUE",
+   "to": "BLOCK",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/ui/bloque.tsx"
+  },
+  {
+   "from": "Bloque",
+   "to": "Block",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/bloque.tsx"
+  },
+  {
+   "from": "CampoDeDinero",
+   "to": "MoneyField",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/campo-de-dinero.tsx"
+  },
+  {
+   "from": "SignoDePesos",
+   "to": "PesoSign",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/campo-de-dinero.tsx"
+  },
+  {
+   "from": "useDentroDeUnCampo",
+   "to": "useInsideField",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/campo.tsx"
+  },
+  {
+   "from": "HUECO_DE_LA_ETIQUETA",
+   "to": "LABEL_SLOT",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/ui/campo.tsx"
+  },
+  {
+   "from": "FOCO_DEL_CAMPO",
+   "to": "FIELD_FOCUS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/ui/campo.tsx"
+  },
+  {
+   "from": "disparadorDeCampo",
+   "to": "fieldTrigger",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/campo.tsx"
+  },
+  {
+   "from": "Casilla",
+   "to": "Checkbox",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/casilla.tsx"
+  },
+  {
+   "from": "ColorDeChip",
+   "to": "ChipColor",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in frontend/src/components/ui/chip-icono.tsx"
+  },
+  {
+   "from": "ChipIcono",
+   "to": "ChipIcon",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/chip-icono.tsx"
+  },
+  {
+   "from": "OpcionDeCombo",
+   "to": "ComboOption",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/components/ui/combo.tsx"
+  },
+  {
+   "from": "Opcion",
+   "to": "Option",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/combo.tsx"
+  },
+  {
+   "from": "Confirmacion",
+   "to": "Confirmation",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/confirmacion.tsx"
+  },
+  {
+   "from": "ICONOS_DE_CATEGORIA",
+   "to": "CATEGORY_ICONS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/ui/iconos.tsx"
+  },
+  {
+   "from": "IconoDeCategoria",
+   "to": "CategoryIcon",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/iconos.tsx"
+  },
+  {
+   "from": "PANEL_DE_MODAL",
+   "to": "MODAL_PANEL",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/ui/modal-partes.tsx"
+  },
+  {
+   "from": "CabeceraDeModal",
+   "to": "ModalHeader",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/modal-partes.tsx"
+  },
+  {
+   "from": "PieDeModal",
+   "to": "ModalFooter",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/modal-partes.tsx"
+  },
+  {
+   "from": "Progreso",
+   "to": "Progress",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/progreso.tsx"
+  },
+  {
+   "from": "OpcionDeSelect",
+   "to": "SelectOption",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/components/ui/select.tsx"
+  },
+  {
+   "from": "SUPERFICIE_FLOTANTE",
+   "to": "FLOATING_SURFACE",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/ui/superficie.ts"
+  },
+  {
+   "from": "REALCE",
+   "to": "HIGHLIGHT",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/ui/superficie.ts"
+  },
+  {
+   "from": "REALCE_DE_SUPERFICIE",
+   "to": "SURFACE_HIGHLIGHT",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/components/ui/superficie.ts"
+  },
+  {
+   "from": "ConTooltip",
+   "to": "WithTooltip",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/components/ui/tooltip.tsx"
+  },
+  {
+   "from": "useUsuarios",
+   "to": "useUsers",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/admin/admin-queries.ts"
+  },
+  {
+   "from": "useBitacora",
+   "to": "useAuditLog",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/admin/admin-queries.ts"
+  },
+  {
+   "from": "useAccionSobreUsuario",
+   "to": "useUserAction",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/admin/admin-queries.ts"
+  },
+  {
+   "from": "useCambiarRol",
+   "to": "useChangeRole",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/admin/admin-queries.ts"
+  },
+  {
+   "from": "useRestablecerContrasena",
+   "to": "useResetPassword",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/admin/admin-queries.ts"
+  },
+  {
+   "from": "BitacoraPage",
+   "to": "AuditLogPage",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/admin/bitacora-page.tsx"
+  },
+  {
+   "from": "UsuariosPage",
+   "to": "UsersPage",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/admin/usuarios-page.tsx"
+  },
+  {
+   "from": "LONGITUD_MINIMA",
+   "to": "MIN_LENGTH",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/features/auth/politica-de-contrasena.tsx"
+  },
+  {
+   "from": "cumpleLaPolitica",
+   "to": "meetsPolicy",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/auth/politica-de-contrasena.tsx"
+  },
+  {
+   "from": "PoliticaDeContrasena",
+   "to": "PasswordPolicy",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/auth/politica-de-contrasena.tsx"
+  },
+  {
+   "from": "useSugerenciaDeCategoria",
+   "to": "useCategorySuggestion",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/categorization/use-sugerencia.ts"
+  },
+  {
+   "from": "CategoriaModal",
+   "to": "CategoryModal",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/centros/categoria-modal.tsx"
+  },
+  {
+   "from": "CentrosPage",
+   "to": "CostCentersPage",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/centros/centros-page.tsx"
+  },
+  {
+   "from": "ConceptoModal",
+   "to": "ConceptModal",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/centros/concepto-modal.tsx"
+  },
+  {
+   "from": "ConfirmarBorrado",
+   "to": "ConfirmDeletion",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/centros/confirmar-borrado.tsx"
+  },
+  {
+   "from": "destinosPosibles",
+   "to": "possibleTargets",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/centros/confirmar-borrado.tsx"
+  },
+  {
+   "from": "Ajustes",
+   "to": "Settings",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/cuenta/ajustes.tsx"
+  },
+  {
+   "from": "CuentaPage",
+   "to": "AccountPage",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/cuenta/cuenta-page.tsx"
+  },
+  {
+   "from": "SoporteLeido",
+   "to": "ReadReceipt",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/features/transactions/leer-soporte.ts"
+  },
+  {
+   "from": "ProgresoDeLectura",
+   "to": "ReadingProgress",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/features/transactions/leer-soporte.ts"
+  },
+  {
+   "from": "leerSoporte",
+   "to": "readReceipt",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/transactions/leer-soporte.ts"
+  },
+  {
+   "from": "MovimientoModal",
+   "to": "TransactionModal",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/features/transactions/movimiento-modal.tsx"
+  },
+  {
+   "from": "useAlCambiar",
+   "to": "useOnChange",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/al-cambiar.ts"
+  },
+  {
+   "from": "apiSubir",
+   "to": "apiUpload",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/api-client.ts"
+  },
+  {
+   "from": "MAXIMO_DE_ATAJOS",
+   "to": "MAX_SHORTCUTS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/lib/atajos.ts"
+  },
+  {
+   "from": "sembrarAtajos",
+   "to": "seedShortcuts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/atajos.ts"
+  },
+  {
+   "from": "leerAtajos",
+   "to": "readShortcuts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/atajos.ts"
+  },
+  {
+   "from": "anadirAtajo",
+   "to": "addShortcut",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/atajos.ts"
+  },
+  {
+   "from": "quitarAtajo",
+   "to": "removeShortcut",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/atajos.ts"
+  },
+  {
+   "from": "moverAtajo",
+   "to": "moveShortcut",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/atajos.ts"
+  },
+  {
+   "from": "olvidarAtajos",
+   "to": "forgetShortcuts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/atajos.ts"
+  },
+  {
+   "from": "useAtajos",
+   "to": "useShortcuts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/atajos.ts"
+  },
+  {
+   "from": "mensajeDeErrorDeAuth",
+   "to": "authErrorMessage",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/auth-context.tsx"
+  },
+  {
+   "from": "detallesDeError",
+   "to": "errorDetails",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/auth-context.tsx"
+  },
+  {
+   "from": "UMBRAL_DE_CIERRE",
+   "to": "CLOSE_THRESHOLD",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/lib/deslizar.ts"
+  },
+  {
+   "from": "Cierre",
+   "to": "Closing",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in frontend/src/lib/deslizar.ts"
+  },
+  {
+   "from": "avanceDe",
+   "to": "progressOf",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/deslizar.ts"
+  },
+  {
+   "from": "puedeDesplazarse",
+   "to": "canScroll",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/deslizar.ts"
+  },
+  {
+   "from": "useDeslizarParaCerrar",
+   "to": "useSwipeToClose",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/deslizar.ts"
+  },
+  {
+   "from": "encogerSoporte",
+   "to": "shrinkReceipt",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/encoger-soporte.ts"
+  },
+  {
+   "from": "encogerSoportes",
+   "to": "shrinkReceipts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/encoger-soporte.ts"
+  },
+  {
+   "from": "MESES_CORTOS",
+   "to": "SHORT_MONTHS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/lib/fechas.ts"
+  },
+  {
+   "from": "MESES_LARGOS",
+   "to": "LONG_MONTHS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/lib/fechas.ts"
+  },
+  {
+   "from": "diaLargo",
+   "to": "longDay",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/fechas.ts"
+  },
+  {
+   "from": "diaCorto",
+   "to": "shortDay",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/fechas.ts"
+  },
+  {
+   "from": "mesCorto",
+   "to": "shortMonth",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/fechas.ts"
+  },
+  {
+   "from": "rangoLargo",
+   "to": "longRange",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/fechas.ts"
+  },
+  {
+   "from": "llegaHastaHoy",
+   "to": "reachesToday",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/filtros.ts"
+  },
+  {
+   "from": "rangoDe",
+   "to": "rangeOf",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/filtros.ts"
+  },
+  {
+   "from": "Filtros",
+   "to": "Filters",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/filtros.ts"
+  },
+  {
+   "from": "useFiltros",
+   "to": "useFilters",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/filtros.ts"
+  },
+  {
+   "from": "aParametros",
+   "to": "toSearchParams",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/filtros.ts"
+  },
+  {
+   "from": "useFocoAtrapado",
+   "to": "useFocusTrap",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/foco.ts"
+  },
+  {
+   "from": "FechaLeida",
+   "to": "ParsedDate",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/leer-fecha.ts"
+  },
+  {
+   "from": "encontrarFecha",
+   "to": "findDate",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/leer-fecha.ts"
+  },
+  {
+   "from": "rutaSeleccionada",
+   "to": "selectedPath",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/movimientos.ts"
+  },
+  {
+   "from": "nombreDelMovimiento",
+   "to": "transactionName",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/movimientos.ts"
+  },
+  {
+   "from": "LARGO_MINIMO",
+   "to": "MIN_LENGTH",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "MAXIMO_DE_PALABRAS",
+   "to": "MAX_WORDS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "LARGO_MAXIMO",
+   "to": "MAX_LENGTH",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "comoSeCompara",
+   "to": "comparisonKey",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "limpiar",
+   "to": "clean",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "yaEsta",
+   "to": "isAlreadyPresent",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "partir",
+   "to": "split",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "porQueNoEntra",
+   "to": "whyNotEnters",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "conceptoQueYaLaUsa",
+   "to": "conceptAlreadyUsingIt",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "firmasDelArbol",
+   "to": "treeSignatures",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/palabras-clave.ts"
+  },
+  {
+   "from": "cargarPdfjs",
+   "to": "loadPdfjs",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/pdf.ts"
+  },
+  {
+   "from": "Origen",
+   "to": "Source",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in frontend/src/lib/precedencia.ts"
+  },
+  {
+   "from": "Clasificacion",
+   "to": "Classification",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/precedencia.ts"
+  },
+  {
+   "from": "SIN_CLASIFICAR",
+   "to": "UNCLASSIFIED",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/lib/precedencia.ts"
+  },
+  {
+   "from": "Propuesta",
+   "to": "Proposed",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/precedencia.ts"
+  },
+  {
+   "from": "aplicar",
+   "to": "apply",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/precedencia.ts"
+  },
+  {
+   "from": "nombreDelOrigen",
+   "to": "sourceName",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/precedencia.ts"
+  },
+  {
+   "from": "Preferencias",
+   "to": "Preferences",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/preferences.ts"
+  },
+  {
+   "from": "preferenciasKey",
+   "to": "preferenceKey",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/lib/preferences.ts"
+  },
+  {
+   "from": "usePreferencias",
+   "to": "usePreferences",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/preferences.ts"
+  },
+  {
+   "from": "useLlevaCuentas",
+   "to": "useHasAccounts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/preferences.ts"
+  },
+  {
+   "from": "useActualizarPreferencias",
+   "to": "useUpdatePreferences",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/preferences.ts"
+  },
+  {
+   "from": "PuenteWeb",
+   "to": "WebBridge",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/puente-nativo.ts"
+  },
+  {
+   "from": "PuenteError",
+   "to": "BridgeError",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in frontend/src/lib/puente-nativo.ts"
+  },
+  {
+   "from": "pedirSesion",
+   "to": "requestSession",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/puente-nativo.ts"
+  },
+  {
+   "from": "avisar",
+   "to": "notify",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/puente-nativo.ts"
+  },
+  {
+   "from": "registrarPuente",
+   "to": "registerBridge",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/puente-nativo.ts"
+  },
+  {
+   "from": "useSoportes",
+   "to": "useReceipts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useSubirSoportes",
+   "to": "useUploadReceipts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useEliminarSoporte",
+   "to": "useDeleteReceipt",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "NuevaCuenta",
+   "to": "NewAccount",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useCrearCuenta",
+   "to": "useCreateAccount",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useArchivarCuenta",
+   "to": "useArchiveAccount",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useSembrarDiccionario",
+   "to": "useSeedDictionary",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useCrearCategoria",
+   "to": "useCreateCategory",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "FiltrosDeMovimientos",
+   "to": "TransactionFilters",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useHistoria",
+   "to": "useHistory",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "NuevoMovimiento",
+   "to": "NewTransaction",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useCrearMovimiento",
+   "to": "useCreateTransaction",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useEliminarMovimiento",
+   "to": "useDeleteTransaction",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useCrearTransferencia",
+   "to": "useCreateTransfer",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "FiltrosDeResumen",
+   "to": "SummaryFilters",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useActualizarMovimiento",
+   "to": "useUpdateTransaction",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useActualizarCategoria",
+   "to": "useUpdateCategory",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useUnificarCategoria",
+   "to": "useMergeCategory",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useUsosDeCategoria",
+   "to": "useCategoryUsages",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "useEliminarCategoria",
+   "to": "useDeleteCategory",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/queries.ts"
+  },
+  {
+   "from": "conceptosRecientes",
+   "to": "recentConcepts",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/recientes.ts"
+  },
+  {
+   "from": "EstadoDeSesion",
+   "to": "SessionState",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "suscribirse",
+   "to": "subscribe",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "tokenPorExpirar",
+   "to": "tokenAboutToExpire",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "SesionError",
+   "to": "SessionError",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "entrar",
+   "to": "signIn",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "registrarse",
+   "to": "signUp",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "renovar",
+   "to": "renew",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "restaurar",
+   "to": "restore",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "salir",
+   "to": "signOut",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "salirDeTodosLosDispositivos",
+   "to": "signOutAllDevices",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "cambiarContrasena",
+   "to": "changePassword",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "descartarSesion",
+   "to": "discardSession",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "recibirSesion",
+   "to": "receiveSession",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "sesionCerrada",
+   "to": "sessionClosed",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/session.ts"
+  },
+  {
+   "from": "agruparMiles",
+   "to": "groupThousands",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/utils.ts"
+  },
+  {
+   "from": "soloCifras",
+   "to": "digitsOnly",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/utils.ts"
+  },
+  {
+   "from": "formatCOPCorto",
+   "to": "formatShortCop",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/lib/utils.ts"
+  },
+  {
+   "from": "fingirLaApp",
+   "to": "fakeApp",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/pruebas/app-falsa.ts"
+  },
+  {
+   "from": "salirDeLaApp",
+   "to": "signOutOfApp",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in frontend/src/pruebas/app-falsa.ts"
+  },
+  {
+   "from": "SESION_DE_LA_APP",
+   "to": "APP_SESSION",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in frontend/src/pruebas/app-falsa.ts"
+  },
+  {
+   "from": "AjustesView",
+   "to": "SettingsView",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/App/AjustesView.swift"
+  },
+  {
+   "from": "Validacion",
+   "to": "Validation",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/App/AjustesView.swift"
+  },
+  {
+   "from": "Bitacora",
+   "to": "AuditLog",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/App/Bitacora.swift"
+  },
+  {
+   "from": "DelegadoDeLaApp",
+   "to": "AppDelegate",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/Coco/App/CocoApp.swift"
+  },
+  {
+   "from": "RegistroDeIntents",
+   "to": "IntentRegistry",
+   "breaking": false,
+   "consumers": [],
+   "note": "typealias in ios/Coco/App/Dependencias.swift"
+  },
+  {
+   "from": "RegistroDeTareas",
+   "to": "TaskRegistry",
+   "breaking": false,
+   "consumers": [],
+   "note": "typealias in ios/Coco/App/Dependencias.swift"
+  },
+  {
+   "from": "ContadorDePendientes",
+   "to": "PendingCounter",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/Coco/App/Dependencias.swift"
+  },
+  {
+   "from": "Pestana",
+   "to": "Tab",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/App/Enrutador.swift"
+  },
+  {
+   "from": "Hoja",
+   "to": "Sheet",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/App/Enrutador.swift"
+  },
+  {
+   "from": "Enrutador",
+   "to": "Router",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/Coco/App/Enrutador.swift"
+  },
+  {
+   "from": "PeticionDeFormulario",
+   "to": "FormRequest",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/App/Enrutador.swift"
+  },
+  {
+   "from": "EntrarView",
+   "to": "SignInView",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/App/EntrarView.swift"
+  },
+  {
+   "from": "RaizView",
+   "to": "RootView",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/App/RaizView.swift"
+  },
+  {
+   "from": "AlmacenDelArbolEnDisco",
+   "to": "DiskTreeStore",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Arbol/AlmacenDelArbolEnDisco.swift"
+  },
+  {
+   "from": "ArbolGuardado",
+   "to": "SavedTree",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Arbol/ArbolGuardado.swift"
+  },
+  {
+   "from": "NivelDelArbol",
+   "to": "TreeLevel",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Arbol/IndiceDelArbol.swift"
+  },
+  {
+   "from": "EntradaDelIndice",
+   "to": "IndexEntry",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Arbol/IndiceDelArbol.swift"
+  },
+  {
+   "from": "IndiceDelArbol",
+   "to": "TreeIndex",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Arbol/IndiceDelArbol.swift"
+  },
+  {
+   "from": "SincronizadorDelArbol",
+   "to": "TreeSynchronizer",
+   "breaking": false,
+   "consumers": [],
+   "note": "actor in ios/Coco/Arbol/SincronizadorDelArbol.swift"
+  },
+  {
+   "from": "AvisoDeVencimiento",
+   "to": "DueNotice",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Avisos/AvisoDeVencimiento.swift"
+  },
+  {
+   "from": "LectorDePerfil",
+   "to": "ProfileReader",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Avisos/LectorDePerfil.swift"
+  },
+  {
+   "from": "CentroDeNotificaciones",
+   "to": "NotificationCenter",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Avisos/NotificadorDelSistema.swift"
+  },
+  {
+   "from": "NotificadorDelSistema",
+   "to": "SystemNotifier",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Avisos/NotificadorDelSistema.swift"
+  },
+  {
+   "from": "BienvenidaView",
+   "to": "WelcomeView",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Bienvenida/BienvenidaView.swift"
+  },
+  {
+   "from": "PasoDeAutomatizacion",
+   "to": "AutomationStep",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Bienvenida/PasosDeAutomatizacion.swift"
+  },
+  {
+   "from": "PasosDeAutomatizacion",
+   "to": "AutomationSteps",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Bienvenida/PasosDeAutomatizacion.swift"
+  },
+  {
+   "from": "AbrirAtajos",
+   "to": "OpenShortcuts",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Bienvenida/PasosDeAutomatizacion.swift"
+  },
+  {
+   "from": "BuscadorDeConceptoView",
+   "to": "ConceptSearchView",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Captura/BuscadorDeConceptoView.swift"
+  },
+  {
+   "from": "CampoDeMonto",
+   "to": "AmountField",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Captura/CampoDeMonto.swift"
+  },
+  {
+   "from": "CapturasView",
+   "to": "CapturesView",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Captura/CapturasView.swift"
+  },
+  {
+   "from": "ConceptosRecientes",
+   "to": "RecentConcepts",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Captura/ConceptosRecientes.swift"
+  },
+  {
+   "from": "AlmacenDeRecientes",
+   "to": "RecentStore",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Captura/ConceptosRecientes.swift"
+  },
+  {
+   "from": "EncogedorDeFoto",
+   "to": "PhotoShrinker",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Captura/EncogedorDeFoto.swift"
+  },
+  {
+   "from": "FormularioRapidoView",
+   "to": "QuickFormView",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Captura/FormularioRapidoView.swift"
+  },
+  {
+   "from": "LectorDeTextoDeRecibo",
+   "to": "ReceiptTextReader",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Captura/LectorDeRecibo.swift"
+  },
+  {
+   "from": "LectorDeRecibo",
+   "to": "ReceiptReader",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Captura/LectorDeRecibo.swift"
+  },
+  {
+   "from": "ModeloDelFormulario",
+   "to": "FormModel",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/Coco/Captura/ModeloDelFormulario.swift"
+  },
+  {
+   "from": "CamposDelFormulario",
+   "to": "FormFields",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Captura/RellenoDelFormulario.swift"
+  },
+  {
+   "from": "RellenoDelFormulario",
+   "to": "FormPrefill",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Captura/RellenoDelFormulario.swift"
+  },
+  {
+   "from": "Resultado",
+   "to": "Result",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Captura/RellenoDelFormulario.swift"
+  },
+  {
+   "from": "TomaDeFoto",
+   "to": "PhotoCapture",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Captura/TomaDeFoto.swift"
+  },
+  {
+   "from": "Coordinador",
+   "to": "Coordinator",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/Coco/Captura/TomaDeFoto.swift"
+  },
+  {
+   "from": "ErrorDeCola",
+   "to": "QueueError",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Cola/AlmacenDeColaEnDisco.swift"
+  },
+  {
+   "from": "AlmacenDeColaEnDisco",
+   "to": "DiskQueueStore",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Cola/AlmacenDeColaEnDisco.swift"
+  },
+  {
+   "from": "CapturaPendiente",
+   "to": "PendingCapture",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Cola/CapturaPendiente.swift"
+  },
+  {
+   "from": "Fase",
+   "to": "Phase",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Cola/CapturaPendiente.swift"
+  },
+  {
+   "from": "CapturadorConCola",
+   "to": "QueuedCapturer",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Cola/CapturadorConCola.swift"
+  },
+  {
+   "from": "ResumenDeEnvio",
+   "to": "SendSummary",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Cola/ColaDeCapturas.swift"
+  },
+  {
+   "from": "ColaDeCapturas",
+   "to": "CaptureQueue",
+   "breaking": false,
+   "consumers": [],
+   "note": "actor in ios/Coco/Cola/ColaDeCapturas.swift"
+  },
+  {
+   "from": "EnviadorPorAPI",
+   "to": "ApiSender",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Cola/EnviadorPorAPI.swift"
+  },
+  {
+   "from": "ReductorDeFotos",
+   "to": "PhotoReducer",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Cola/ReductorDeFotos.swift"
+  },
+  {
+   "from": "Reintento",
+   "to": "Retry",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Cola/Reintento.swift"
+  },
+  {
+   "from": "PerfilPublico",
+   "to": "PublicProfile",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "SesionRespuesta",
+   "to": "SessionResponse",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "ClasificacionPropuesta",
+   "to": "ProposedClassification",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "Candidato",
+   "to": "Candidate",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "Interpretacion",
+   "to": "Interpretation",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "TransaccionResumida",
+   "to": "TransactionSummary",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "Captura",
+   "to": "Capture",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "Soporte",
+   "to": "Receipt",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "NodoDelArbol",
+   "to": "TreeNode",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "ErrorDeLaAPI",
+   "to": "ApiError",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "Detalle",
+   "to": "Detail",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "Sobre",
+   "to": "Envelope",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "OrigenDeCaptura",
+   "to": "CaptureSource",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Dominio/Contratos.swift"
+  },
+  {
+   "from": "CuerpoDeCaptura",
+   "to": "CaptureBody",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/CuerpoDeCaptura.swift"
+  },
+  {
+   "from": "CapturaRequest",
+   "to": "CaptureRequest",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/CuerpoDeCaptura.swift"
+  },
+  {
+   "from": "FechaDeBogota",
+   "to": "BogotaDate",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Dominio/FechaDeBogota.swift"
+  },
+  {
+   "from": "LectorDeMonto",
+   "to": "AmountReader",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Dominio/LectorDeMonto.swift"
+  },
+  {
+   "from": "Marca",
+   "to": "Mark",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Dominio/Marca.swift"
+  },
+  {
+   "from": "EstadoDeSesion",
+   "to": "SessionState",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "SesionParaLaWeb",
+   "to": "WebSession",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "ErrorDeSesion",
+   "to": "SessionError",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "Sesion",
+   "to": "Session",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "Transporte",
+   "to": "Transport",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "ResultadoGuardado",
+   "to": "SavedResult",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "ResultadoDeCaptura",
+   "to": "CaptureResult",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "Capturador",
+   "to": "Capturer",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "AlmacenDeCola",
+   "to": "QueueStore",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "EnviadorDeCapturas",
+   "to": "CaptureSender",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "Notificador",
+   "to": "Notifier",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "Destino",
+   "to": "Destination",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "Navegacion",
+   "to": "Navigation",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "AlmacenDelArbol",
+   "to": "TreeStore",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Dominio/Protocolos.swift"
+  },
+  {
+   "from": "AtajosDeCoco",
+   "to": "CocoShortcuts",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Intents/AtajosDeCoco.swift"
+  },
+  {
+   "from": "ClavesDeDependencias",
+   "to": "DependencyKeys",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Intents/DependenciasDeIntents.swift"
+  },
+  {
+   "from": "DependenciasDeIntents",
+   "to": "IntentDependencies",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Intents/DependenciasDeIntents.swift"
+  },
+  {
+   "from": "ErrorDeParametros",
+   "to": "ParametersError",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Intents/ParametrosDeAccion.swift"
+  },
+  {
+   "from": "ParametrosDeAccion",
+   "to": "ActionParameters",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Intents/ParametrosDeAccion.swift"
+  },
+  {
+   "from": "RegistrarGastoDeSMSIntent",
+   "to": "LogSmsExpenseIntent",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Intents/RegistrarGastoDeSMSIntent.swift"
+  },
+  {
+   "from": "RegistrarGastoDeWalletIntent",
+   "to": "LogWalletExpenseIntent",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Intents/RegistrarGastoDeWalletIntent.swift"
+  },
+  {
+   "from": "RegistrarGastoManualIntent",
+   "to": "LogManualExpenseIntent",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Intents/RegistrarGastoManualIntent.swift"
+  },
+  {
+   "from": "ClienteAPI",
+   "to": "ApiClient",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Red/ClienteAPI.swift"
+  },
+  {
+   "from": "Conectividad",
+   "to": "Connectivity",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/Coco/Red/Conectividad.swift"
+  },
+  {
+   "from": "ConfiguracionDeLaAPI",
+   "to": "ApiConfiguration",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Red/ConfiguracionDeLaAPI.swift"
+  },
+  {
+   "from": "ErrorDeAPI",
+   "to": "ApiError",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Red/ErrorDeAPI.swift"
+  },
+  {
+   "from": "Peticion",
+   "to": "Request",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Red/Peticion.swift"
+  },
+  {
+   "from": "ParteMultipart",
+   "to": "MultipartPart",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Red/Peticion.swift"
+  },
+  {
+   "from": "ConstructorDePeticiones",
+   "to": "RequestConstructor",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Red/Peticion.swift"
+  },
+  {
+   "from": "TransporteURLSession",
+   "to": "UrlSessionTransport",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Red/TransporteURLSession.swift"
+  },
+  {
+   "from": "TareasDeFondo",
+   "to": "BackgroundTasks",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/SegundoPlano/TareasDeFondo.swift"
+  },
+  {
+   "from": "ClaveDelLlavero",
+   "to": "KeychainKey",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Sesion/Llavero.swift"
+  },
+  {
+   "from": "Llavero",
+   "to": "Keychain",
+   "breaking": false,
+   "consumers": [],
+   "note": "protocol in ios/Coco/Sesion/Llavero.swift"
+  },
+  {
+   "from": "LlaveroEnMemoria",
+   "to": "InMemoryKeychain",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/Coco/Sesion/Llavero.swift"
+  },
+  {
+   "from": "ErrorDelLlavero",
+   "to": "KeychainError",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Sesion/LlaveroDelSistema.swift"
+  },
+  {
+   "from": "LlaveroDelSistema",
+   "to": "SystemKeychain",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Sesion/LlaveroDelSistema.swift"
+  },
+  {
+   "from": "LlaveroDeKeychain",
+   "to": "KeychainStore",
+   "breaking": false,
+   "consumers": [],
+   "note": "typealias in ios/Coco/Sesion/LlaveroDelSistema.swift"
+  },
+  {
+   "from": "SesionNativa",
+   "to": "NativeSession",
+   "breaking": false,
+   "consumers": [],
+   "note": "actor in ios/Coco/Sesion/SesionNativa.swift"
+  },
+  {
+   "from": "RecorteDeJSON",
+   "to": "JsonCrop",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Sesion/SesionNativa.swift"
+  },
+  {
+   "from": "ContenedorWeb",
+   "to": "WebContainer",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Web/ContenedorWeb.swift"
+  },
+  {
+   "from": "EstadoDeCarga",
+   "to": "LoadState",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Web/PuenteWeb.swift"
+  },
+  {
+   "from": "EventoDeLaWeb",
+   "to": "WebEvent",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Web/PuenteWeb.swift"
+  },
+  {
+   "from": "PuenteWeb",
+   "to": "WebBridge",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/Coco/Web/PuenteWeb.swift"
+  },
+  {
+   "from": "ScriptDeArranque",
+   "to": "StartupScript",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/Coco/Web/ScriptDeArranque.swift"
+  },
+  {
+   "from": "SinConexionView",
+   "to": "OfflineView",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/Coco/Web/SinConexionView.swift"
+  },
+  {
+   "from": "URLDeCaptura",
+   "to": "CaptureUrl",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/CocoAccesos/AbrirCapturaIntent.swift"
+  },
+  {
+   "from": "AbrirCapturaIntent",
+   "to": "OpenCaptureIntent",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/CocoAccesos/AbrirCapturaIntent.swift"
+  },
+  {
+   "from": "CocoAccesos",
+   "to": "CocoWidgets",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/CocoAccesos/CocoAccesos.swift"
+  },
+  {
+   "from": "ControlDeCaptura",
+   "to": "CaptureControl",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/CocoAccesos/ControlDeCaptura.swift"
+  },
+  {
+   "from": "WidgetDeCaptura",
+   "to": "CaptureWidget",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/CocoAccesos/WidgetDeCaptura.swift"
+  },
+  {
+   "from": "EntradaFija",
+   "to": "FixedInput",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/CocoAccesos/WidgetDeCaptura.swift"
+  },
+  {
+   "from": "ProveedorFijo",
+   "to": "FixedProvider",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/CocoAccesos/WidgetDeCaptura.swift"
+  },
+  {
+   "from": "VistaDelWidget",
+   "to": "WidgetView",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/CocoAccesos/WidgetDeCaptura.swift"
+  },
+  {
+   "from": "AvisoDeVencimientoTests",
+   "to": "DueNoticeTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/AvisoDeVencimientoTests.swift"
+  },
+  {
+   "from": "CapturadorConColaTests",
+   "to": "QueuedCapturerTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/CapturadorConColaTests.swift"
+  },
+  {
+   "from": "ClienteAPITests",
+   "to": "ApiClientTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ClienteAPITests.swift"
+  },
+  {
+   "from": "ColaDeCapturasTests",
+   "to": "CaptureQueueTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ColaDeCapturasTests.swift"
+  },
+  {
+   "from": "Ahora",
+   "to": "Now",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ColaDeCapturasTests.swift"
+  },
+  {
+   "from": "ConceptosRecientesTests",
+   "to": "RecentConceptsTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ConceptosRecientesTests.swift"
+  },
+  {
+   "from": "ConfiguracionDeLaAPITests",
+   "to": "ApiConfigurationTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ConfiguracionDeLaAPITests.swift"
+  },
+  {
+   "from": "ConstructorDePeticionesTests",
+   "to": "RequestConstructorTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ConstructorDePeticionesTests.swift"
+  },
+  {
+   "from": "ContratosTests",
+   "to": "ContractsTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ContratosTests.swift"
+  },
+  {
+   "from": "Registro",
+   "to": "Log",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/DependenciasTests.swift"
+  },
+  {
+   "from": "EntrarViewTests",
+   "to": "SignInViewTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/DependenciasTests.swift"
+  },
+  {
+   "from": "AjustesViewTests",
+   "to": "SettingsViewTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/DependenciasTests.swift"
+  },
+  {
+   "from": "SesionDoble",
+   "to": "SessionStub",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/DoblesDeColaYPuente.swift"
+  },
+  {
+   "from": "NotificadorDoble",
+   "to": "NotifierStub",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/DoblesDeColaYPuente.swift"
+  },
+  {
+   "from": "EnviadorDoble",
+   "to": "SenderStub",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/DoblesDeColaYPuente.swift"
+  },
+  {
+   "from": "Respuesta",
+   "to": "Response",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/CocoTests/DoblesDeColaYPuente.swift"
+  },
+  {
+   "from": "CapturadorDoble",
+   "to": "CapturerStub",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/DoblesDeColaYPuente.swift"
+  },
+  {
+   "from": "NavegacionDoble",
+   "to": "NavigationStub",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/DoblesDeColaYPuente.swift"
+  },
+  {
+   "from": "AlmacenQueFalla",
+   "to": "FailingStore",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/DoblesDeColaYPuente.swift"
+  },
+  {
+   "from": "Muerto",
+   "to": "DeadLetter",
+   "breaking": false,
+   "consumers": [],
+   "note": "struct in ios/CocoTests/DoblesDeColaYPuente.swift"
+  },
+  {
+   "from": "EncogedorDeFotoTests",
+   "to": "PhotoShrinkerTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/EncogedorDeFotoTests.swift"
+  },
+  {
+   "from": "EnrutadorTests",
+   "to": "RouterTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/EnrutadorTests.swift"
+  },
+  {
+   "from": "FechaDeBogotaTests",
+   "to": "BogotaDateTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/FechaDeBogotaTests.swift"
+  },
+  {
+   "from": "IndiceDelArbolTests",
+   "to": "TreeIndexTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/IndiceDelArbolTests.swift"
+  },
+  {
+   "from": "LectorDeMontoTests",
+   "to": "AmountReaderTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/LectorDeMontoTests.swift"
+  },
+  {
+   "from": "LectorDePerfilTests",
+   "to": "ProfileReaderTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/LectorDePerfilTests.swift"
+  },
+  {
+   "from": "LectorDeReciboTests",
+   "to": "ReceiptReaderTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/LectorDeReciboTests.swift"
+  },
+  {
+   "from": "LectorFalso",
+   "to": "FakeReader",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/LectorDeReciboTests.swift"
+  },
+  {
+   "from": "ImagenDePrueba",
+   "to": "TestImage",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/CocoTests/LectorDeReciboTests.swift"
+  },
+  {
+   "from": "ModeloDelFormularioTests",
+   "to": "FormModelTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ModeloDelFormularioTests.swift"
+  },
+  {
+   "from": "CentroFalso",
+   "to": "FakeCostCenter",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/NotificadorTests.swift"
+  },
+  {
+   "from": "NotificadorTests",
+   "to": "NotifierTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/NotificadorTests.swift"
+  },
+  {
+   "from": "ParametrosDeAccionTests",
+   "to": "ActionParametersTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ParametrosDeAccionTests.swift"
+  },
+  {
+   "from": "PasosDeAutomatizacionTests",
+   "to": "AutomationStepsTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/PasosDeAutomatizacionTests.swift"
+  },
+  {
+   "from": "PuenteWebTests",
+   "to": "WebBridgeTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/PuenteWebTests.swift"
+  },
+  {
+   "from": "RelojQueSalta",
+   "to": "JumpingClock",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/PuenteWebTests.swift"
+  },
+  {
+   "from": "ReintentoTests",
+   "to": "RetryTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/ReintentoTests.swift"
+  },
+  {
+   "from": "RellenoDelFormularioTests",
+   "to": "FormPrefillTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/RellenoDelFormularioTests.swift"
+  },
+  {
+   "from": "SesionNativaTests",
+   "to": "NativeSessionTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/SesionNativaTests.swift"
+  },
+  {
+   "from": "SincronizadorDelArbolTests",
+   "to": "TreeSynchronizerTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/SincronizadorDelArbolTests.swift"
+  },
+  {
+   "from": "TareasDeFondoTests",
+   "to": "BackgroundTasksTests",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/TareasDeFondoTests.swift"
+  },
+  {
+   "from": "TransporteFalso",
+   "to": "FakeTransport",
+   "breaking": false,
+   "consumers": [],
+   "note": "class in ios/CocoTests/TransporteFalso.swift"
+  },
+  {
+   "from": "Respuesta",
+   "to": "Response",
+   "breaking": false,
+   "consumers": [],
+   "note": "enum in ios/CocoTests/TransporteFalso.swift"
+  },
+  {
+   "from": "NodoBuscable",
+   "to": "SearchableNode",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/buscar.ts"
+  },
+  {
+   "from": "NivelDelArbol",
+   "to": "TreeLevel",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/lectura/src/buscar.ts"
+  },
+  {
+   "from": "EntradaDelIndice",
+   "to": "IndexEntry",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/buscar.ts"
+  },
+  {
+   "from": "indexarArbol",
+   "to": "indexTree",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/buscar.ts"
+  },
+  {
+   "from": "buscarEnArbol",
+   "to": "searchInTree",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/buscar.ts"
+  },
+  {
+   "from": "Certeza",
+   "to": "ClassificationCertainty",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/lectura/src/buscar.ts"
+  },
+  {
+   "from": "Resolucion",
+   "to": "Resolution",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/buscar.ts"
+  },
+  {
+   "from": "resolverTerminos",
+   "to": "resolveTerms",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/buscar.ts"
+  },
+  {
+   "from": "ClasificacionEnElArbol",
+   "to": "TreeClassification",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/clasificar.ts"
+  },
+  {
+   "from": "Lectura",
+   "to": "Reading",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/clasificar.ts"
+  },
+  {
+   "from": "EntradaDeLectura",
+   "to": "ReadingInput",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/clasificar.ts"
+  },
+  {
+   "from": "clasificar",
+   "to": "classify",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/clasificar.ts"
+  },
+  {
+   "from": "UMBRAL_DE_REVISION",
+   "to": "REVIEW_THRESHOLD",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/lectura/src/clasificar.ts"
+  },
+  {
+   "from": "necesitaRevision",
+   "to": "needsReview",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/clasificar.ts"
+  },
+  {
+   "from": "GrupoDelDiccionario",
+   "to": "DictionaryGroup",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/diccionario.ts"
+  },
+  {
+   "from": "DICCIONARIO",
+   "to": "DICTIONARY",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/lectura/src/diccionario.ts"
+  },
+  {
+   "from": "TUBERIAS",
+   "to": "PIPELINES",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/lectura/src/diccionario.ts"
+  },
+  {
+   "from": "ComercioHallado",
+   "to": "FoundMerchant",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/diccionario.ts"
+  },
+  {
+   "from": "comerciosEn",
+   "to": "merchantsIn",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/diccionario.ts"
+  },
+  {
+   "from": "terminosPara",
+   "to": "termsFor",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/diccionario.ts"
+  },
+  {
+   "from": "FechaCandidata",
+   "to": "DateCandidate",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/fecha.ts"
+  },
+  {
+   "from": "fechasDe",
+   "to": "datesIn",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/fecha.ts"
+  },
+  {
+   "from": "leerFecha",
+   "to": "readDate",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/fecha.ts"
+  },
+  {
+   "from": "Firma",
+   "to": "Signature",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/firmas.ts"
+  },
+  {
+   "from": "RECAUDADORES",
+   "to": "COLLECTORS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/lectura/src/firmas.ts"
+  },
+  {
+   "from": "FIRMAS",
+   "to": "SIGNATURES",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/lectura/src/firmas.ts"
+  },
+  {
+   "from": "PRIORIDAD_DE_LO_ESCRITO",
+   "to": "TYPED_TEXT_PRIORITY",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/lectura/src/firmas.ts"
+  },
+  {
+   "from": "ConceptoConPalabras",
+   "to": "ConceptWithWords",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/firmas.ts"
+  },
+  {
+   "from": "firmasDeConceptos",
+   "to": "conceptSignatures",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/firmas.ts"
+  },
+  {
+   "from": "normalizar",
+   "to": "normalize",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/firmas.ts"
+  },
+  {
+   "from": "conceptosConPalabrasDelArbol",
+   "to": "treeConceptWithWords",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/firmas.ts"
+  },
+  {
+   "from": "firmasDelArbol",
+   "to": "treeSignatures",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/firmas.ts"
+  },
+  {
+   "from": "clasificar",
+   "to": "classify",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "necesitaRevision",
+   "to": "needsReview",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "UMBRAL_DE_REVISION",
+   "to": "REVIEW_THRESHOLD",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "fechasDe",
+   "to": "datesIn",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "leerFecha",
+   "to": "readDate",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "leerMonto",
+   "to": "readAmount",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "FIRMAS",
+   "to": "SIGNATURES",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "PRIORIDAD_DE_LO_ESCRITO",
+   "to": "TYPED_TEXT_PRIORITY",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "RECAUDADORES",
+   "to": "COLLECTORS",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "conceptosConPalabrasDelArbol",
+   "to": "treeConceptWithWords",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "firmasDeConceptos",
+   "to": "conceptSignatures",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "firmasDelArbol",
+   "to": "treeSignatures",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "normalizar",
+   "to": "normalize",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "buscarEnArbol",
+   "to": "searchInTree",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "indexarArbol",
+   "to": "indexTree",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "resolverTerminos",
+   "to": "resolveTerms",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "DICCIONARIO",
+   "to": "DICTIONARY",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "TUBERIAS",
+   "to": "PIPELINES",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "comerciosEn",
+   "to": "merchantsIn",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "terminosPara",
+   "to": "termsFor",
+   "breaking": false,
+   "consumers": [],
+   "note": "reexport in packages/lectura/src/index.ts"
+  },
+  {
+   "from": "MontoCandidato",
+   "to": "AmountCandidate",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/lectura/src/monto.ts"
+  },
+  {
+   "from": "leerMonto",
+   "to": "readAmount",
+   "breaking": false,
+   "consumers": [],
+   "note": "function in packages/lectura/src/monto.ts"
+  },
+  {
+   "from": "PerfilPublico",
+   "to": "PublicProfile",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "SesionResponse",
+   "to": "SessionResponse",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "CABECERA_CLIENTE_NATIVO",
+   "to": "NATIVE_CLIENT_HEADER",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/types/src/index.ts"
+  },
+  {
+   "from": "CLIENTE_NATIVO",
+   "to": "NATIVE_CLIENT",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/types/src/index.ts"
+  },
+  {
+   "from": "RefreshNativoRequest",
+   "to": "NativeRefreshRequest",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "SesionParaLaWeb",
+   "to": "WebSession",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/types/src/index.ts"
+  },
+  {
+   "from": "MensajeAlPuente",
+   "to": "BridgeMessage",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/types/src/index.ts"
+  },
+  {
+   "from": "EventoAlPuente",
+   "to": "BridgeEvent",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/types/src/index.ts"
+  },
+  {
+   "from": "RegistroResponse",
+   "to": "RegisterResponse",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "MotivoDeSugerencia",
+   "to": "SuggestionReason",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/types/src/index.ts"
+  },
+  {
+   "from": "SugerenciaDeCategoria",
+   "to": "CategorySuggestion",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "CONTRATO_DE_SOPORTES",
+   "to": "RECEIPT_CONTRACT",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/types/src/index.ts"
+  },
+  {
+   "from": "CertezaDeClasificacion",
+   "to": "ClassificationCertainty",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/types/src/index.ts"
+  },
+  {
+   "from": "FuenteDeClasificacion",
+   "to": "ClassificationSource",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/types/src/index.ts"
+  },
+  {
+   "from": "ClasificacionPropuesta",
+   "to": "ProposedClassification",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "Interpretacion",
+   "to": "Interpretation",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "Captura",
+   "to": "Capture",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "InterpretacionRequest",
+   "to": "InterpretationRequest",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "CapturaRequest",
+   "to": "CaptureRequest",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "PERIODICIDADES",
+   "to": "PERIODICITIES",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/types/src/index.ts"
+  },
+  {
+   "from": "Periodicidad",
+   "to": "Periodicity",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/types/src/index.ts"
+  },
+  {
+   "from": "PagoPendiente",
+   "to": "PendingPayment",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  },
+  {
+   "from": "NIVELES_DE_CATEGORIA",
+   "to": "CATEGORY_LEVELS",
+   "breaking": false,
+   "consumers": [],
+   "note": "const in packages/types/src/index.ts"
+  },
+  {
+   "from": "NivelDeCategoria",
+   "to": "CategoryLevel",
+   "breaking": false,
+   "consumers": [],
+   "note": "type in packages/types/src/index.ts"
+  },
+  {
+   "from": "Soporte",
+   "to": "Receipt",
+   "breaking": false,
+   "consumers": [],
+   "note": "interface in packages/types/src/index.ts"
+  }
+ ]
+}
