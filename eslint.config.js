@@ -136,7 +136,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['api/test/**/*.ts', 'api/src/**/*.spec.ts'],
+    files: ['api/test/**/*.ts', 'api/src/**/*.spec.ts', 'packages/*/src/**/*.spec.ts'],
     languageOptions: { globals: globals.jest },
   },
   {
@@ -205,7 +205,12 @@ export default defineConfig(
     // A test file is a list of `describe`/`it` callbacks: the callback IS the
     // function, and cutting it to 50 lines only scatters one scenario. Tests
     // still have the 300-line file limit.
-    files: ['api/src/**/*.spec.ts', 'frontend/src/**/*.test.{ts,tsx}', 'frontend/src/pruebas/**'],
+    files: [
+      'api/src/**/*.spec.ts',
+      'packages/*/src/**/*.spec.ts',
+      'frontend/src/**/*.test.{ts,tsx}',
+      'frontend/src/pruebas/**',
+    ],
     rules: { 'max-lines-per-function': 'off' },
   },
   {
@@ -232,6 +237,7 @@ export default defineConfig(
     files: [
       'api/test/**/*.ts',
       'api/src/**/*.spec.ts',
+      'packages/*/src/**/*.spec.ts',
       'frontend/src/**/*.test.{ts,tsx}',
       'frontend/src/pruebas/**',
     ],
