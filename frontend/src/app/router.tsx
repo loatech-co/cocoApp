@@ -1,16 +1,52 @@
 import { Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import { BitacoraPage } from '@/features/admin/pages/bitacora-page';
-import { UsuariosPage } from '@/features/admin/pages/usuarios-page';
 import { RequireAdmin, RequireAuth } from '@/features/auth/components/require-auth';
-import { RegisterPage } from '@/features/auth/pages/register-page';
-import { AccountsPage } from '@/features/bank-accounts/pages/accounts-page';
-import { CentrosPage } from '@/features/centros/pages/centros-page';
-import { CuentaPage } from '@/features/profile/pages/cuenta-page';
 import { DashboardPage } from '@/features/transactions/pages/dashboard-page';
 import { TITULO_DE_PAGINA } from '@/shared/ui/atoms/cabecera-de-pagina';
 
 import { AppShell } from './app-shell';
+
+/*
+  Every screen but the first one loads on demand (ADR 0018). The index is the
+  dashboard, and the login is drawn by `RequireAuth` in its place: those two
+  are the first paint and stay in the entry chunk. The rest —accounts, cost
+  centers, the user's account, registration, administration— arrive as their
+  own chunk the first time someone navigates there.
+*/
+const lazily = {
+  accounts: async () => ({
+    Component: (await import('@/features/bank-accounts/pages/accounts-page')).AccountsPage,
+  }),
+  centros: async () => ({
+    Component: (await import('@/features/centros/pages/centros-page')).CentrosPage,
+  }),
+  cuenta: async () => ({
+    Component: (await import('@/features/profile/pages/cuenta-page')).CuentaPage,
+  }),
+  register: async () => ({
+    Component: (await import('@/features/auth/pages/register-page')).RegisterPage,
+  }),
+  usuarios: async () => {
+    const { UsuariosPage } = await import('@/features/admin/pages/usuarios-page');
+    return {
+      element: (
+        <RequireAdmin>
+          <UsuariosPage />
+        </RequireAdmin>
+      ),
+    };
+  },
+  bitacora: async () => {
+    const { BitacoraPage } = await import('@/features/admin/pages/bitacora-page');
+    return {
+      element: (
+        <RequireAdmin>
+          <BitacoraPage />
+        </RequireAdmin>
+      ),
+    };
+  },
+};
 
 /**
  * Rutas en español, una por módulo del catálogo.
@@ -35,7 +71,7 @@ const router = createBrowserRouter([
     quede en `/entrar` después de cerrar sesión.
   */
   { path: '/entrar', element: <Navigate to="/" replace /> },
-  { path: '/registro', element: <RegisterPage /> },
+  { path: '/registro', lazy: lazily.register },
   {
     // Dentro de la app del teléfono, `window.__coco` —ir a una ruta, abrir la
     // búsqueda— lo publica `PuenteDeNavegacion`, un hijo del armazón: es el
@@ -48,32 +84,18 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <DashboardPage /> },
-      { path: 'cuentas', element: <AccountsPage /> },
-      { path: 'centros-de-costos', element: <CentrosPage /> },
+      { path: 'cuentas', lazy: lazily.accounts },
+      { path: 'centros-de-costos', lazy: lazily.centros },
       // La ruta vieja sigue viva y redirige: hay enlaces guardados y marcadores
       // apuntando a /categorias, y romperlos por un cambio de nombre es gratis
       // de evitar.
       { path: 'categorias', element: <Navigate to="/centros-de-costos" replace /> },
-      { path: 'mi-cuenta', element: <CuentaPage /> },
+      { path: 'mi-cuenta', lazy: lazily.cuenta },
 
       // Administración. El RequireAdmin es comodidad de navegación; quien
       // decide de verdad es el RolesGuard del backend.
-      {
-        path: 'administracion',
-        element: (
-          <RequireAdmin>
-            <UsuariosPage />
-          </RequireAdmin>
-        ),
-      },
-      {
-        path: 'administracion/bitacora',
-        element: (
-          <RequireAdmin>
-            <BitacoraPage />
-          </RequireAdmin>
-        ),
-      },
+      { path: 'administracion', lazy: lazily.usuarios },
+      { path: 'administracion/bitacora', lazy: lazily.bitacora },
     ],
   },
   {
