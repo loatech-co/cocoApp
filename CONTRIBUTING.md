@@ -522,3 +522,94 @@ Both are exempt in `user-isolation.e2e-spec.ts`, with their reason.
 **Why.** An unreachable database and a dead process are different failures
 with different fixes: restarting the API does not bring the database back.
 With one route for both, a database outage looked like a crashed API.
+
+## Tests
+
+### The pyramid
+
+**Rule.** Four layers, each for what only it can see:
+
+| Layer                      | Where                                                         | Runs against                                            |
+| -------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| Unit                       | `api/src/**/*.spec.ts`, `packages/*/src/**/*.spec.ts`         | Pure logic, in memory                                   |
+| Repository and integration | `api/test/*.e2e-spec.ts`                                      | The local Postgres test database                        |
+| API end to end             | `api/test/*.e2e-spec.ts`, one flow per resource, `supertest`  | The whole app, built by `configureApp` as in production |
+| Web                        | Component tests (Testing Library) and the Playwright journeys | See the frontend                                        |
+
+**Why.** A rule about money, dates or recurrence is cheapest to pin down as a
+pure function, and a hundred cases run in a second. What a query returns, a
+constraint rejects or a guard lets through only shows against a real database
+and the real app: a mock of them would test the mock.
+
+### No Prisma mocks
+
+**Rule.** Nothing that reaches the database is mocked. Repositories, and
+anything else that talks to Prisma, are tested against the local test
+database. Mocking a repository or another service in the unit test of a
+service is fine; mocking `PrismaService` is not.
+
+**Why.** Prisma's own guidance for data-layer code is integration tests
+against a real database. The bugs worth catching there are a missing
+`user_id` in a `where`, a `SET NULL` that orphans rows, a unique index that
+turns a retry into a 409; a mocked client returns whatever the test told it
+to and catches none of them.
+
+### Test data comes from factories
+
+**Rule.** Rows are built with the factories in `api/test/factories/`
+(`makeAccount`, `makeConcept`, `makeTransaction`), and objects with the ones
+next to each package's tests (`packages/lectura/src/testing/`). A test writes
+only the fields it is about: `makeTransaction(prisma, user.id, { amount: '100' })`.
+Users come from `levantarApp().crearUsuario()`, which also opens their
+session.
+
+**Why.** A fixture with every field spelled out hides the one that matters,
+and twenty copies of it drift apart. A factory keeps the valid defaults in one
+place, so a new required column changes one file.
+
+### No test depends on another
+
+**Rule.** Every test sets up what it needs and passes alone (`-t`) or
+shuffled (`--randomize`). Suites with state shared across tests (a rate
+limiter, the list of covered routes) rebuild it per test or declare it outside
+the tests. The e2e app listens once per suite (`levantarApp`): never hand
+`supertest` a server that is not listening.
+
+**Why.** A test that passes only after another one hides a bug in the order,
+not in the code, and fails the day someone runs it alone. The `socket hang
+up` that came and went in `auth.e2e-spec.ts` was supertest opening a server
+per request: when the OS handed back a port already used, Node's keep-alive
+pool sent the next request down a socket the old server had closed.
+
+### One test database per worktree
+
+**Rule.** When several worktrees run tests at once, each one points
+`DATABASE_URL` and `DIRECT_URL` in its `api/.env.test` at its own database,
+whose name ends in `_test` (the guard in `api/test/helpers/app.ts` refuses
+anything else), and runs `npm run db:test:push --workspace api` once.
+
+**Why.** `limpiar()` empties every table, so two runs against the same
+database break each other. The failures look like flaky tests (rows vanishing
+mid-test, a 401 for a user created a line earlier) and send whoever sees them
+after a bug that is not there.
+
+### Coverage
+
+**Rule.** CI fails below 80 % of lines or of branches in `api/src` (unit and
+e2e measured together: `npm run test:cov --workspace api`) and in
+`packages/lectura` (its `npm test` always measures). `src/common/money` keeps
+90 %. A threshold only goes up. `packages/types` has no behavior —types and
+constant lists— so there is nothing in it to cover.
+
+**Why.** The number is a floor, not a goal: it catches a module landing
+without tests. What to test is still decided by risk —money, pending payments,
+recurrence, classification, capture and idempotency first—, and a test written
+only to move the number is not a test.
+
+### Names
+
+**Rule.** `describe` names the unit; `it` states the behavior in the present
+tense, in English: `it('rejects a concept that is both auto-paid and multi-payment')`.
+
+**Why.** Read in a row, the titles are the specification of the unit, and a
+failure reads as the sentence that stopped being true.
