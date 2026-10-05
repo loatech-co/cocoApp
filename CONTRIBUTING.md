@@ -717,3 +717,40 @@ A flag exists to ship something dark or to a few users first, and it is
 - **Remove it** by `removeBy`. CI (`scripts/ci/flags-expiry.mjs`) warns once
   the date passes and fails 30 days later. Moving the date needs a reason in
   the PR.
+
+## Versioning
+
+**Versions are never bumped by hand: release-please derives them from the
+commits on `Dev` and the release is merging its PR.**
+
+On every push to `Dev` (the deploy branch, D8), `release-please`
+(`.github/workflows/release-please.yml`, `release-please-config.json`) reads
+the Conventional Commits since the last tag and keeps one PR open, titled
+`chore: release X.Y.Z`. That PR bumps the root `package.json`, records the
+version in `.release-please-manifest.json` and writes `CHANGELOG.md`. Merging
+it — through `scripts/merge.sh`, like any PR — tags `vX.Y.Z` and publishes the
+GitHub release with the same notes.
+
+- One version for the whole app (API, web and packages ship together); the
+  tag carries no component name.
+- While the version is `0.x`: `fix` and `perf` bump the patch, `feat` and a
+  breaking change (`!` or a `BREAKING CHANGE:` footer) bump the minor.
+- The CHANGELOG lists features, bug fixes, performance and reverts. `refactor`,
+  `docs`, `test`, `build`, `ci`, `chore` and `style` stay out: they do not
+  change what the app does. It is generated, so it is never edited by hand and
+  Prettier skips it.
+
+This is why commit messages are conventional and checked: the type of each
+commit is what decides the next version and what the user-facing notes say. A
+`fix` written as `chore` disappears from the CHANGELOG; a `feat` written as
+`fix` ships a new capability as a patch.
+
+**The token.** A PR opened with the workflow's `GITHUB_TOKEN` does not trigger
+other workflows, so `ci.yml` would never run on the release PR and
+`scripts/merge.sh` could not integrate it (D21). release-please therefore uses
+a **fine-grained personal access token** stored as the repository secret
+`RELEASE_PLEASE_TOKEN`: access to this repository only, permissions
+**Contents: read and write** and **Pull requests: read and write**, with an
+expiry date and a reminder to rotate it. The repository owner creates it (it
+cannot be created from a workflow). Until it exists the job is skipped with a
+warning instead of failing.
