@@ -7,9 +7,9 @@ import WidgetKit
 @main
 struct CocoAccesos: WidgetBundle {
     var body: some Widget {
-        WidgetDeCaptura()
+        CaptureWidget()
         if #available(iOS 18.0, *) {
-            ControlDeCaptura()
+            CaptureControl()
         }
     }
 }
