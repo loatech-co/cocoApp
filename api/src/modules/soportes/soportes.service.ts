@@ -1,6 +1,7 @@
 import type { Readable } from 'node:stream';
 
 import {
+  Inject,
   BadRequestException,
   Injectable,
   Logger,
@@ -12,7 +13,8 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { almacenListo, claveNueva, guardar, huellaDe, abrir, existe } from './soportes.almacen';
+import { RECEIPT_STORE, type ReceiptStore } from './receipt-store';
+import { claveNueva, huellaDe } from './soportes.almacen';
 import {
   nombreDeSoporte,
   comoLlego,
@@ -45,7 +47,10 @@ export interface SoporteView {
 export class SoportesService implements OnModuleInit {
   private readonly logger = new Logger(SoportesService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(RECEIPT_STORE) private readonly store: ReceiptStore,
+  ) {}
 
   /**
    * Decir al arrancar si el almacén está donde dice estar.
@@ -60,20 +65,20 @@ export class SoportesService implements OnModuleInit {
    * Diagnosticarlo costó leer `/proc/<pid>/environ` del proceso en producción.
    * Esta línea lo habría dicho en el primer reinicio.
    */
-  onModuleInit(): void {
-    const { carpeta, existe: hay } = almacenListo();
+  async onModuleInit(): Promise<void> {
+    const { ok, detail } = await this.store.check().catch((error: Error) => ({ ok: false, detail: error.message }));
 
-    if (hay) {
-      this.logger.log(`Almacén de soportes: ${carpeta}`);
+    if (ok) {
+      this.logger.log(`Almacén de soportes: ${this.store.describe()} — ${detail}`);
       return;
     }
 
     this.logger.error(
-      `El almacén de soportes NO existe: ${carpeta}. ` +
-        'Todos los soportes van a salir como no disponibles. ' +
-        'Revisa SOPORTES_DIR —ojo con las comillas— o crea la carpeta.',
+      `El almacén de soportes NO está listo (${this.store.describe()}): ${detail}. ` +
+        'Todos los soportes van a salir como no disponibles.',
     );
   }
+
 
   /**
    * Los soportes de un movimiento.
@@ -90,13 +95,16 @@ export class SoportesService implements OnModuleInit {
       orderBy: [{ orden: 'asc' }, { id: 'asc' }],
     });
 
-    return filas.map((s) => ({
+    // One check per receipt, in parallel: a movement has a handful at most.
+    const disponibles = await Promise.all(filas.map((s) => this.store.exists(s.storageKey).catch(() => false)));
+
+    return filas.map((s, indice) => ({
       id: s.id,
       orden: s.orden,
       nombre_archivo: s.nombreArchivo,
       mime_type: s.mimeType,
       tamano: s.tamano,
-      disponible: existe(s.storageKey),
+      disponible: disponibles[indice],
     }));
   }
 
@@ -124,7 +132,7 @@ export class SoportesService implements OnModuleInit {
 
     if (!soporte) throw new NotFoundException('El soporte no existe.');
 
-    const flujo = abrir(soporte.storageKey);
+    const flujo = await this.store.open(soporte.storageKey);
     if (!flujo) {
       // La ficha está y el archivo no. Es un estado posible —un almacén a
       // medio sincronizar— y decirlo así es más útil que un 404 pelado, que
@@ -276,7 +284,7 @@ export class SoportesService implements OnModuleInit {
       // El archivo primero y la ficha después: si se corta en medio queda un
       // binario que nadie alcanza, que es inofensivo. Al revés quedaría un
       // soporte que la aplicación promete y no puede enseñar.
-      await guardar(storageKey, contenido);
+      await this.store.save(storageKey, contenido, mime);
 
       await this.prisma.soporte.create({
         data: {
@@ -306,10 +314,46 @@ export class SoportesService implements OnModuleInit {
    * ve. La basura se recoge aparte, si alguna vez hace falta.
    */
   async eliminar(userId: bigint, transactionId: bigint, soporteId: bigint): Promise<void> {
-    const { count } = await this.prisma.soporte.deleteMany({
+    const soporte = await this.prisma.soporte.findFirst({
       where: { id: soporteId, transactionId, userId },
+      select: { storageKey: true },
     });
+    if (!soporte) throw new NotFoundException('El soporte no existe.');
 
-    if (count === 0) throw new NotFoundException('El soporte no existe.');
+    await this.prisma.soporte.deleteMany({ where: { id: soporteId, transactionId, userId } });
+    await this.removeFiles([soporte.storageKey]);
+  }
+
+  /** Storage keys of the receipts of these movements; read BEFORE deleting them (the rows cascade). */
+  async keysOf(userId: bigint, where: { transactionId?: bigint; transferGroupId?: string }): Promise<string[]> {
+    const rows = await this.prisma.soporte.findMany({
+      where: {
+        userId,
+        transaction: {
+          userId,
+          ...(where.transactionId !== undefined && { id: where.transactionId }),
+          ...(where.transferGroupId !== undefined && { transferGroupId: where.transferGroupId }),
+        },
+      },
+      select: { storageKey: true },
+    });
+    return rows.map((row) => row.storageKey);
+  }
+
+  /**
+   * Deletes the files of receipts whose rows are already gone (phase 6.9).
+   *
+   * After the database delete, never before: a file without a row is an
+   * orphan that costs a few kilobytes; a row without a file is a receipt
+   * that shows up broken. If the store fails here, the row is still gone and
+   * the failure is logged with the keys, so the orphan can be found.
+   */
+  async removeFiles(keys: string[]): Promise<void> {
+    if (keys.length === 0) return;
+    try {
+      await this.store.remove(keys);
+    } catch (error) {
+      this.logger.error(`Could not delete ${keys.length} receipt file(s): ${(error as Error).message} — keys: ${keys.join(', ')}`);
+    }
   }
 }

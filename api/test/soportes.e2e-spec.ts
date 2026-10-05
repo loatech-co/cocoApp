@@ -1,15 +1,10 @@
-import { readFileSync, rmSync } from 'node:fs';
+import { rmSync } from 'node:fs';
 
 import request from 'supertest';
 import sharp from 'sharp';
 
-import {
-  claveNueva,
-  carpetaDelAlmacen,
-  guardar,
-  huellaDe,
-  rutaAbsoluta,
-} from '../src/modules/soportes/soportes.almacen';
+import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/soportes/receipt-store';
+import { claveNueva, carpetaDelAlmacen, huellaDe } from '../src/modules/soportes/soportes.almacen';
 import { levantarApp, type EntornoDePruebas } from './helpers/app';
 
 /**
@@ -69,7 +64,8 @@ describe('Soportes (e2e)', () => {
 
     for (const [i, c] of contenidos.entries()) {
       const storageKey = claveNueva(userId, c.ext);
-      await guardar(storageKey, c.bytes);
+      // Through the app's store, so the suite runs against disk or the Storage bucket (6.9).
+      await entorno.app.get<ReceiptStore>(RECEIPT_STORE).save(storageKey, c.bytes, c.mime);
       soportes.push(
         await entorno.prisma.soporte.create({
           data: {
@@ -329,7 +325,8 @@ describe('Soportes (e2e)', () => {
 
       // Y el archivo guardado es gris y de 1100 de ancho, no la imagen original.
       const guardado = await entorno.prisma.soporte.findFirst({ where: { transactionId: BigInt(id) } });
-      const bytes = readFileSync(rutaAbsoluta(guardado!.storageKey));
+      const flujo = await entorno.app.get<ReceiptStore>(RECEIPT_STORE).open(guardado!.storageKey);
+      const bytes = Buffer.concat(await flujo!.toArray());
       const meta = await sharp(bytes).metadata();
 
       expect(meta.format).toBe('jpeg');

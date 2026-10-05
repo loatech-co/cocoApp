@@ -6,6 +6,7 @@ import { serializar, toMoney, type Money } from '../../common/money/money';
 import { verificarCuadreDeSplits } from '../../common/money/splits';
 import { PrismaService } from '../../prisma/prisma.service';
 import { idsDeCategorias, ramasDe } from '../categories/categories.tree';
+import { SoportesService } from '../soportes/soportes.service';
 import { TagsService } from '../tags/tags.module';
 import type {
   CreateTransactionDto,
@@ -77,6 +78,7 @@ export class TransactionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tags: TagsService,
+    private readonly soportes: SoportesService,
   ) {}
 
   // ── Lectura ────────────────────────────────────────────────────────────────
@@ -365,14 +367,20 @@ export class TransactionsService {
   async eliminar(userId: bigint, id: bigint): Promise<void> {
     const movimiento = await this.exigirMovimiento(userId, id);
 
+    // The receipt rows cascade with the movement; their files do not. Their
+    // keys are read first and the files go after the rows (phase 6.9).
     if (movimiento.transferGroupId) {
+      const keys = await this.soportes.keysOf(userId, { transferGroupId: movimiento.transferGroupId });
       await this.prisma.transaction.deleteMany({
         where: { userId, transferGroupId: movimiento.transferGroupId },
       });
+      await this.soportes.removeFiles(keys);
       return;
     }
 
+    const keys = await this.soportes.keysOf(userId, { transactionId: id });
     await this.prisma.transaction.deleteMany({ where: { id, userId } });
+    await this.soportes.removeFiles(keys);
   }
 
   // ── Apoyo ──────────────────────────────────────────────────────────────────
