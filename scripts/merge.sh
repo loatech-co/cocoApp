@@ -36,12 +36,29 @@ if [ "$(git rev-parse "origin/$BRANCH")" != "$(git rev-parse "$BRANCH")" ]; then
 fi
 
 echo "▸ Waiting for the checks of PR #${PR}…"
-if ! gh pr checks "$PR" --watch --fail-fast --interval 20; then
-  echo "Refusing: a check failed on PR #${PR}." >&2
+# The exit code of `gh pr checks --watch` is NOT trusted: on PR #14 it returned
+# 0 while two jobs had been CANCELLED (they never got a runner during a GitHub
+# Actions incident) and the branch was integrated with them unrun. The verdict
+# comes from the explicit state of every check below.
+gh pr checks "$PR" --watch --fail-fast --interval 20 || true
+
+# One verdict per check: the listing keeps every attempt (a cancelled run and its
+# re-run both appear). A pending attempt is the newest; otherwise the last to finish.
+CHECKS=$(gh pr checks "$PR" --json name,bucket,workflow,completedAt -q '
+  group_by(.workflow + "/" + .name)
+  | map(if any(.bucket == "pending") then (map(select(.bucket == "pending")) | first)
+        else max_by(.completedAt) end)
+  | .[] | "\(.bucket)\t\(.workflow)/\(.name)"')
+if [ -z "$CHECKS" ]; then
+  echo "Refusing: PR #${PR} has no checks at all." >&2
   exit 1
 fi
-if [ "$(gh pr checks "$PR" --json state -q 'length')" = "0" ]; then
-  echo "Refusing: PR #${PR} has no checks at all." >&2
+# Only `pass` and `skipping` are green. fail, cancel and pending all refuse.
+NOT_GREEN=$(printf '%s\n' "$CHECKS" | grep -vE '^(pass|skipping)\t' || true)
+if [ -n "$NOT_GREEN" ]; then
+  echo "Refusing: these checks of PR #${PR} are not green:" >&2
+  printf '%s\n' "$NOT_GREEN" | sed 's/^/  /' >&2
+  echo "Re-run them (gh run rerun <id> --failed) and run this again." >&2
   exit 1
 fi
 
