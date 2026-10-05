@@ -17,7 +17,7 @@ final class Dependencies {
     let queue: CaptureQueue
     let capturer: QueuedCapturer
     let tree: TreeSynchronizer
-    let puente: WebBridge
+    let bridge: WebBridge
     let notifier: Notifier
     let connectivity: Connectivity
     let router: Router
@@ -76,7 +76,7 @@ final class Dependencies {
         let tree = TreeSynchronizer(
             api: api, session: session, store: almacenDelArbol ?? Self.almacenDelArbolPorDefecto())
         self.tree = tree
-        puente = WebBridge(session: session, configuration: configuration, navigation: router)
+        bridge = WebBridge(session: session, configuration: configuration, navigation: router)
 
         contador.alContar = { [weak self] n in self?.pending = n }
 
@@ -97,7 +97,7 @@ final class Dependencies {
         AppLog.app.info("Arranca contra \(self.configuration.base.absoluteString, privacy: .public)")
         connectivity.start()
         observar()
-        puente.cargarInicio()
+        bridge.loadHome()
         await session.restore()
         await scheduleExpiry()
         pending = await queue.pending()
@@ -170,7 +170,7 @@ final class Dependencies {
         case .active:
             // Con documento cargado, la web recibe la sesión sin recargar; sin
             // él, la pedirá ella por el puente al arrancar.
-            if puente.hayDocumento { await puente.empujarSesion() }
+            if bridge.hasDocument { await bridge.pushSession() }
             await queue.sessionReturned()
             Task { _ = await self.queue.process() }
             Task { await self.tree.refreshIfNeeded() }
@@ -179,7 +179,7 @@ final class Dependencies {
                 router.go(.welcome)
             }
         case .signedOut:
-            if puente.hayDocumento { puente.avisarSesionCerrada() }
+            if bridge.hasDocument { bridge.notifySessionClosed() }
         case .offline, .loading:
             break
         }

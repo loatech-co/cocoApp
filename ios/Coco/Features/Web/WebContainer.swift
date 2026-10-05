@@ -3,13 +3,13 @@ import SwiftUI
 /// La web con sus dos estados nativos encima: sin red antes de cargar y la
 /// sesión web atascada. Con documento, la falta de red es una franja fina.
 struct WebContainer: View {
-    let puente: WebBridge
+    let bridge: WebBridge
     let connectivity: Connectivity
     let pending: Int
     let onCapture: () -> Void
 
-    init(puente: WebBridge, connectivity: Connectivity, pending: Int, onCapture: @escaping () -> Void) {
-        self.puente = puente
+    init(bridge: WebBridge, connectivity: Connectivity, pending: Int, onCapture: @escaping () -> Void) {
+        self.bridge = bridge
         self.connectivity = connectivity
         self.pending = pending
         self.onCapture = onCapture
@@ -17,32 +17,32 @@ struct WebContainer: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            WebViewRepresentable(puente: puente)
+            WebViewRepresentable(bridge: bridge)
                 .ignoresSafeArea()
-            if sinDocumentoNiRed {
-                OfflineView(pending: pending, retry: puente.recargar, capture: onCapture)
-            } else if puente.estadoDeCarga == .sesionWebAtascada {
-                sesionAtascada
+            if noDocumentNoNetwork {
+                OfflineView(pending: pending, retry: bridge.reload, capture: onCapture)
+            } else if bridge.loadState == .webSessionStuck {
+                sessionStuck
             } else if !connectivity.isOnline {
-                franjaSinRed
+                offlineBanner
             }
         }
         .onChange(of: connectivity.isOnline) { _, hay in
             guard hay else { return }
-            Task { await puente.conectividadVolvio() }
+            Task { await bridge.connectivityReturned() }
         }
     }
 
-    private var sinDocumentoNiRed: Bool {
-        if case .failure = puente.estadoDeCarga, !puente.hayDocumento { return true }
-        return !connectivity.isOnline && !puente.hayDocumento
+    private var noDocumentNoNetwork: Bool {
+        if case .failure = bridge.loadState, !bridge.hasDocument { return true }
+        return !connectivity.isOnline && !bridge.hasDocument
     }
 
-    private var sesionAtascada: some View {
+    private var sessionStuck: some View {
         VStack(spacing: 12) {
             Text("No se pudo abrir la sesión web")
                 .font(.headline)
-            Button("Reintentar", action: puente.recargar)
+            Button("Reintentar", action: bridge.reload)
                 .buttonStyle(.borderedProminent)
         }
         .padding(24)
@@ -50,7 +50,7 @@ struct WebContainer: View {
         .background(Color(.systemBackground))
     }
 
-    private var franjaSinRed: some View {
+    private var offlineBanner: some View {
         Text("Sin conexión")
             .font(.caption.weight(.medium))
             .frame(maxWidth: .infinity)

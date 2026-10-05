@@ -257,10 +257,10 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertEqual(s.expiresIn, 2600)
         XCTAssertGreaterThanOrEqual(s.expiresIn, 120)
         XCTAssertEqual(s.userJSON, Data(Self.userJSON.utf8))
-        let dic = try s.asDictionary()
-        XCTAssertNil(dic["refresh_token"])
-        XCTAssertEqual(Set(dic.keys), ["access_token", "expires_in", "user"])
-        XCTAssertEqual((dic["user"] as? [String: Any])?["created_at"] as? String, "2026-01-01T00:00:00Z")
+        let dict = try s.asDictionary()
+        XCTAssertNil(dict["refresh_token"])
+        XCTAssertEqual(Set(dict.keys), ["access_token", "expires_in", "user"])
+        XCTAssertEqual((dict["user"] as? [String: Any])?["created_at"] as? String, "2026-01-01T00:00:00Z")
         XCTAssertEqual(a.transport.received.count, 1)
     }
 

@@ -37,7 +37,7 @@ struct RootView: View {
     }
 
     private var inicio: some View {
-        WebContainer(puente: d.puente, connectivity: d.connectivity, pending: d.pending) {
+        WebContainer(bridge: d.bridge, connectivity: d.connectivity, pending: d.pending) {
             d.router.go(.quickForm(withCamera: false))
         }
     }
@@ -57,7 +57,7 @@ struct RootView: View {
         Binding(
             get: { d.router.pestana },
             set: { nueva in
-                if nueva == .inicio, d.router.pestana == .inicio { d.puente.go(to: "/") }
+                if nueva == .inicio, d.router.pestana == .inicio { d.bridge.go(to: "/") }
                 d.router.pestana = nueva
             }
         )
@@ -74,11 +74,11 @@ struct RootView: View {
     private func consumirPendientes() {
         if let path = d.router.rutaWebPendiente {
             d.router.rutaWebPendiente = nil
-            d.puente.go(to: path)
+            d.bridge.go(to: path)
         }
         if d.router.busquedaPendiente {
             d.router.busquedaPendiente = false
-            d.puente.abrirBusqueda()
+            d.bridge.openSearch()
         }
     }
 }
