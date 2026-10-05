@@ -210,8 +210,8 @@ English, imperative, lower case after the colon, no final period.
 
 - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `chore`,
   `ci`, `build`, `revert`.
-- Scope (optional): `api`, `web`, `ios`, `types`, `lectura`, `ci`, `deps`,
-  `docs`. Use it when the change lives in one workspace.
+- Scope (optional): `api`, `web`, `ios`, `types`, `lectura`, `flags`, `ci`,
+  `deps`, `docs`. Use it when the change lives in one workspace.
 
 ```text
 # Correct
