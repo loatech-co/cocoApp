@@ -36,7 +36,7 @@ final class Dependencies {
     init(
         configuration: APIConfiguration = .current(),
         transport: Transport = URLSessionTransport(),
-        llavero: KeychainStore = SystemKeychain(),
+        keychain: KeychainStore = SystemKeychain(),
         almacenDeCola: QueueStore? = nil,
         almacenDelArbol: TreeStore? = nil,
         notifier: Notifier = SystemNotifier(),
@@ -54,7 +54,7 @@ final class Dependencies {
         self.connectivity = connectivity ?? Connectivity()
         let api = APIClient(configuration: configuration, transport: transport)
         self.api = api
-        let session = NativeSession(api: api, llavero: llavero)
+        let session = NativeSession(api: api, keychain: keychain)
         self.session = session
         let enrutador = Router()
         self.enrutador = enrutador
@@ -164,7 +164,7 @@ final class Dependencies {
     }
 
     private func sesionCambio(_ state: SessionState) async {
-        AppLog.session.info("Sesión: \(Self.name(de: state), privacy: .public)")
+        AppLog.session.info("Sesión: \(Self.name(from: state), privacy: .public)")
         estadoDeSesion = state
         switch state {
         case .active:
@@ -196,10 +196,10 @@ final class Dependencies {
     /// El aviso de que la firma del equipo personal caduca. Sin perfil
     /// embebido —simulador— no hay nada que programar.
     private func scheduleExpiry() async {
-        guard let expiresAt = ProvisioningProfileReader.delBundle() else { return }
-        let momento = ExpiryReminder.momentoDelAviso(expiresAt: expiresAt, now: .now) ?? .now
+        guard let expiresAt = ProvisioningProfileReader.fromBundle() else { return }
+        let fireDate = ExpiryReminder.reminderDate(expiresAt: expiresAt, now: .now) ?? .now
         await notifier.scheduleExpiry(
-            expiresAt, text: ExpiryReminder.text(expiresAt: expiresAt, now: momento).body)
+            expiresAt, text: ExpiryReminder.text(expiresAt: expiresAt, now: fireDate).body)
     }
 
     // MARK: Por defecto
@@ -218,7 +218,7 @@ final class Dependencies {
             ?? DiskTreeStore(file: FileManager.default.temporaryDirectory.appending(path: "arbol.json"))
     }
 
-    private static func name(de state: SessionState) -> String {
+    private static func name(from state: SessionState) -> String {
         switch state {
         case .loading: "cargando"
         case .signedOut: "sin sesión"

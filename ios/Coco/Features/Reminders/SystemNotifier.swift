@@ -4,21 +4,21 @@ import UserNotifications
 /// Lo que el notificador necesita del centro de notificaciones: así se prueba
 /// con un centro falso, porque `UNUserNotificationCenter` no se puede crear.
 protocol NotificationCenterClient: Sendable {
-    func pedirAutorizacion() async throws -> Bool
+    func askAuthorization() async throws -> Bool
     func register(categories: Set<UNNotificationCategory>)
-    func anadir(_ request: UNNotificationRequest) async throws
-    func quitarPendientes(ids: [String])
+    func addRequest(_ request: UNNotificationRequest) async throws
+    func removePending(ids: [String])
     func pending() async -> [UNNotificationRequest]
     func setBadge(_ n: Int) async throws
 }
 
 extension UNUserNotificationCenter: NotificationCenterClient {
-    func pedirAutorizacion() async throws -> Bool {
+    func askAuthorization() async throws -> Bool {
         try await requestAuthorization(options: [.alert, .sound, .badge])
     }
     func register(categories: Set<UNNotificationCategory>) { setNotificationCategories(categories) }
-    func anadir(_ request: UNNotificationRequest) async throws { try await add(request) }
-    func quitarPendientes(ids: [String]) { removePendingNotificationRequests(withIdentifiers: ids) }
+    func addRequest(_ request: UNNotificationRequest) async throws { try await add(request) }
+    func removePending(ids: [String]) { removePendingNotificationRequests(withIdentifiers: ids) }
     func pending() async -> [UNNotificationRequest] { await pendingNotificationRequests() }
     func setBadge(_ n: Int) async throws { try await setBadgeCount(n) }
 }
@@ -26,11 +26,11 @@ extension UNUserNotificationCenter: NotificationCenterClient {
 /// Avisos locales. Solo locales: el equipo personal no permite APNs y no hace
 /// falta, todo lo que hay que contar pasa en el propio teléfono.
 struct SystemNotifier: Notifier {
-    static let idDeVencimiento = "firma-vence"
-    static let categoriaDeCaptura = "captura"
-    static let accionAbrir = "abrir"
+    static let expiryId = "firma-vence"
+    static let captureCategory = "captura"
+    static let openAction = "abrir"
     /// A dónde lleva el aviso de una captura; lo lee el enrutador.
-    static let destinoDeCaptura = "coco://capturas"
+    static let captureDestination = "coco://capturas"
 
     let center: NotificationCenterClient
     let clock: @Sendable () -> Date
@@ -44,7 +44,7 @@ struct SystemNotifier: Notifier {
     }
 
     /// Puro: lo que se lee de reojo. El resumen lo escribe la API.
-    static func textoDeCaptura(_ r: SavedResult) -> (title: String, body: String) {
+    static func captureText(_ r: SavedResult) -> (title: String, body: String) {
         let title: String
         if r.duplicate {
             title = "Ya estaba registrado"
@@ -58,59 +58,59 @@ struct SystemNotifier: Notifier {
     }
 
     func requestPermission() async -> Bool {
-        let abrir = UNNotificationAction(identifier: Self.accionAbrir, title: "Abrir", options: [.foreground])
+        let openButton = UNNotificationAction(identifier: Self.openAction, title: "Abrir", options: [.foreground])
         center.register(categories: [
-            UNNotificationCategory(identifier: Self.categoriaDeCaptura, actions: [abrir], intentIdentifiers: [])
+            UNNotificationCategory(identifier: Self.captureCategory, actions: [openButton], intentIdentifiers: [])
         ])
-        return (try? await center.pedirAutorizacion()) ?? false
+        return (try? await center.askAuthorization()) ?? false
     }
 
     func captureSaved(_ r: SavedResult, source: CaptureSource) async {
-        let text = Self.textoDeCaptura(r)
-        await mostrar(
+        let text = Self.captureText(r)
+        await show(
             id: "captura-\(r.transactionId)", title: text.title, body: text.body,
-            category: Self.categoriaDeCaptura)
+            category: Self.captureCategory)
     }
 
     func captureFailed(reason: String) async {
-        await mostrar(
+        await show(
             id: "captura-fallida-\(UUID().uuidString)", title: "No se pudo registrar", body: reason,
-            category: Self.categoriaDeCaptura)
+            category: Self.captureCategory)
     }
 
     func queueSent(count: Int) async {
         guard count > 0 else { return }
         let body = count == 1 ? "Se envió 1 captura pendiente" : "Se enviaron \(count) capturas pendientes"
-        await mostrar(
-            id: "cola-enviada", title: "Capturas enviadas", body: body, category: Self.categoriaDeCaptura)
+        await show(
+            id: "cola-enviada", title: "Capturas enviadas", body: body, category: Self.captureCategory)
     }
 
     /// Un solo aviso con id fijo: programarlo dos veces lo reemplaza.
     func scheduleExpiry(_ expiresAt: Date, text: String) async {
-        center.quitarPendientes(ids: [Self.idDeVencimiento])
+        center.removePending(ids: [Self.expiryId])
         let now = clock()
-        guard let momento = ExpiryReminder.momentoDelAviso(expiresAt: expiresAt, now: now) else { return }
-        let contenido = UNMutableNotificationContent()
-        contenido.title = ExpiryReminder.text(expiresAt: expiresAt, now: momento).title
-        contenido.body = text
-        contenido.sound = .default
-        let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: momento)
-        let disparador = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
-        try? await center.anadir(
-            UNNotificationRequest(identifier: Self.idDeVencimiento, content: contenido, trigger: disparador))
+        guard let fireDate = ExpiryReminder.reminderDate(expiresAt: expiresAt, now: now) else { return }
+        let content = UNMutableNotificationContent()
+        content.title = ExpiryReminder.text(expiresAt: expiresAt, now: fireDate).title
+        content.body = text
+        content.sound = .default
+        let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: fireDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
+        try? await center.addRequest(
+            UNNotificationRequest(identifier: Self.expiryId, content: content, trigger: trigger))
     }
 
     func setBadge(_ n: Int) async {
         try? await center.setBadge(max(0, n))
     }
 
-    private func mostrar(id: String, title: String, body: String, category: String) async {
-        let contenido = UNMutableNotificationContent()
-        contenido.title = title
-        contenido.body = body
-        contenido.sound = .default
-        contenido.categoryIdentifier = category
-        contenido.userInfo = ["destino": Self.destinoDeCaptura]
-        try? await center.anadir(UNNotificationRequest(identifier: id, content: contenido, trigger: nil))
+    private func show(id: String, title: String, body: String, category: String) async {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        content.categoryIdentifier = category
+        content.userInfo = ["destino": Self.captureDestination]
+        try? await center.addRequest(UNNotificationRequest(identifier: id, content: content, trigger: nil))
     }
 }

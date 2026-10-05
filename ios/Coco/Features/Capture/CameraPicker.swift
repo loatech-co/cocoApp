@@ -35,10 +35,10 @@ struct CameraPicker: UIViewControllerRepresentable {
     final class PickerCoordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate,
         PHPickerViewControllerDelegate
     {
-        private let padre: CameraPicker
+        private let parent: CameraPicker
 
-        init(_ padre: CameraPicker) {
-            self.padre = padre
+        init(_ parent: CameraPicker) {
+            self.parent = parent
         }
 
         func imagePickerController(
@@ -46,23 +46,23 @@ struct CameraPicker: UIViewControllerRepresentable {
             didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
         ) {
             if let image = info[.originalImage] as? UIImage {
-                padre.onCapture(image)
+                parent.onCapture(image)
             } else {
-                padre.onCancel()
+                parent.onCancel()
             }
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            padre.onCancel()
+            parent.onCancel()
         }
 
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
             guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else {
-                padre.onCancel()
+                parent.onCancel()
                 return
             }
-            let onCapture = padre.onCapture
-            let onCancel = padre.onCancel
+            let onCapture = parent.onCapture
+            let onCancel = parent.onCancel
             provider.loadObject(ofClass: UIImage.self) { object, _ in
                 DispatchQueue.main.async {
                     if let image = object as? UIImage { onCapture(image) } else { onCancel() }

@@ -49,7 +49,7 @@ struct SettingsView: View {
                 Section {
                     LabeledContent("Versión", value: "\(Brand.version) (\(Self.build))")
                     LabeledContent(
-                        "La firma caduca", value: Self.textoDeVencimiento(ProvisioningProfileReader.delBundle()))
+                        "La firma caduca", value: Self.textoDeVencimiento(ProvisioningProfileReader.fromBundle()))
                     LabeledContent("Pendientes de envío", value: "\(d.pending)")
                     LabeledContent("API", value: d.configuration.base.absoluteString)
                 } header: {
@@ -132,13 +132,13 @@ struct SettingsView: View {
 
     static func textoDeVencimiento(_ expiresAt: Date?, now: Date = .now) -> String {
         guard let expiresAt else { return "No disponible (simulador o sin perfil)" }
-        let dias = ExpiryReminder.diasRestantes(expiresAt: expiresAt, now: now)
+        let days = ExpiryReminder.daysLeft(expiresAt: expiresAt, now: now)
         let date = expiresAt.formatted(date: .abbreviated, time: .omitted)
-        switch dias {
+        switch days {
         case ..<0: return "Caducó el \(date)"
         case 0: return "Hoy (\(date))"
         case 1: return "Mañana (\(date))"
-        default: return "\(date) · quedan \(dias) días"
+        default: return "\(date) · quedan \(days) días"
         }
     }
 

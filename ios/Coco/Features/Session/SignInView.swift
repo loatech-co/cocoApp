@@ -4,20 +4,20 @@ import SwiftUI
 /// web embebida nunca enseña el suyo.
 struct SignInView: View {
     private let session: Session
-    private let alAjustes: (() -> Void)?
+    private let onSettings: (() -> Void)?
 
     @State private var email = ""
     @State private var password = ""
     @State private var error: String?
-    @State private var entrando = false
+    @State private var isSigningIn = false
 
-    init(session: Session, alAjustes: (() -> Void)? = nil) {
+    init(session: Session, onSettings: (() -> Void)? = nil) {
         self.session = session
-        self.alAjustes = alAjustes
+        self.onSettings = onSettings
     }
 
-    private var puedeEntrar: Bool {
-        !entrando && email.contains("@") && !password.isEmpty
+    private var canSignIn: Bool {
+        !isSigningIn && email.contains("@") && !password.isEmpty
     }
 
     var body: some View {
@@ -31,7 +31,7 @@ struct SignInView: View {
                         .autocorrectionDisabled()
                     SecureField("Contraseña", text: $password)
                         .textContentType(.password)
-                        .onSubmit { if puedeEntrar { signIn() } }
+                        .onSubmit { if canSignIn { signIn() } }
                 } footer: {
                     Text("La misma cuenta que en la web.")
                 }
@@ -47,20 +47,20 @@ struct SignInView: View {
                     Button(action: signIn) {
                         HStack {
                             Text("Entrar")
-                            if entrando {
+                            if isSigningIn {
                                 Spacer()
                                 ProgressView()
                             }
                         }
                     }
-                    .disabled(!puedeEntrar)
+                    .disabled(!canSignIn)
                 }
             }
             .navigationTitle("Entrar en Coco")
             .toolbar {
-                if let alAjustes {
+                if let onSettings {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Ajustes", systemImage: "gearshape", action: alAjustes)
+                        Button("Ajustes", systemImage: "gearshape", action: onSettings)
                     }
                 }
             }
@@ -69,8 +69,8 @@ struct SignInView: View {
     }
 
     private func signIn() {
-        guard puedeEntrar else { return }
-        entrando = true
+        guard canSignIn else { return }
+        isSigningIn = true
         error = nil
         let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let password = password
@@ -80,15 +80,15 @@ struct SignInView: View {
                 AppLog.session.info("Entró \(email, privacy: .private)")
                 // RootView retira la cubierta al observar el cambio de estado.
             } catch {
-                self.error = Self.message(de: error)
+                self.error = Self.message(from: error)
                 AppLog.session.error("Login falló: \(self.error ?? "", privacy: .public)")
             }
-            entrando = false
+            isSigningIn = false
         }
     }
 
     /// Un texto que diga qué hacer, no un código.
-    static func message(de error: Error) -> String {
+    static func message(from error: Error) -> String {
         switch APIError.from(error) {
         case .unauthenticated:
             return "Correo o contraseña incorrectos."
