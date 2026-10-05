@@ -138,7 +138,25 @@ function clasificarCon(
   enElArbol: NonNullable<ReturnType<typeof clasificar>['enElArbol']> | null,
   leido: { concepto: string | null; categoria: string | null; motivo: string },
 ): ClasificacionInterpretada {
-  // 1. El historial, si tiene algo que decir.
+  return (
+    porHistorial(contexto, indice) ??
+    (enElArbol ? porLectura(indice, enElArbol, leido) : null) ?? {
+      certeza: 'ninguna',
+      fuente: null,
+      conceptoId: null,
+      categoriaId: null,
+      nombre: null,
+      candidatos: [],
+      motivo: leido.motivo,
+    }
+  );
+}
+
+/** 1. El historial, si tiene algo que decir. */
+function porHistorial(
+  contexto: Contexto,
+  indice: readonly EntradaDelIndice[],
+): ClasificacionInterpretada | null {
   const { historial } = contexto;
   if (historial) {
     const entrada = indice.find((e) => String(e.id) === historial.categoryId);
@@ -160,43 +178,34 @@ function clasificarCon(
       };
     }
   }
+  return null;
+}
 
-  // 2 y 3. Lo que la lectura reconoció, por palabras clave, firma o diccionario.
-  if (enElArbol) {
-    const concepto =
-      enElArbol.conceptoId !== undefined
-        ? indice.find((e) => String(e.id) === String(enElArbol.conceptoId))
-        : undefined;
-    const categoria =
-      enElArbol.categoriaId !== undefined
-        ? indice.find((e) => String(e.id) === String(enElArbol.categoriaId))
-        : undefined;
-    return {
-      certeza: enElArbol.certeza,
-      fuente: enElArbol.fuente,
-      conceptoId: concepto ? String(concepto.id) : null,
-      categoriaId: categoria
-        ? String(categoria.id)
-        : concepto
-          ? String(concepto.categoriaId)
-          : null,
-      nombre: concepto?.nombre ?? categoria?.nombre ?? leido.concepto ?? leido.categoria,
-      candidatos: enElArbol.candidatos.map((c) => ({
-        id: String(c.id),
-        nombre: c.nombre,
-        ruta: c.ruta,
-      })),
-      motivo: leido.motivo,
-    };
-  }
-
+/** 2 y 3. Lo que la lectura reconoció, por palabras clave, firma o diccionario. */
+function porLectura(
+  indice: readonly EntradaDelIndice[],
+  enElArbol: NonNullable<ReturnType<typeof clasificar>['enElArbol']>,
+  leido: { motivo: string; concepto: string | null; categoria: string | null },
+): ClasificacionInterpretada {
+  const concepto =
+    enElArbol.conceptoId !== undefined
+      ? indice.find((e) => String(e.id) === String(enElArbol.conceptoId))
+      : undefined;
+  const categoria =
+    enElArbol.categoriaId !== undefined
+      ? indice.find((e) => String(e.id) === String(enElArbol.categoriaId))
+      : undefined;
   return {
-    certeza: 'ninguna',
-    fuente: null,
-    conceptoId: null,
-    categoriaId: null,
-    nombre: null,
-    candidatos: [],
+    certeza: enElArbol.certeza,
+    fuente: enElArbol.fuente,
+    conceptoId: concepto ? String(concepto.id) : null,
+    categoriaId: categoria ? String(categoria.id) : concepto ? String(concepto.categoriaId) : null,
+    nombre: concepto?.nombre ?? categoria?.nombre ?? leido.concepto ?? leido.categoria,
+    candidatos: enElArbol.candidatos.map((c) => ({
+      id: String(c.id),
+      nombre: c.nombre,
+      ruta: c.ruta,
+    })),
     motivo: leido.motivo,
   };
 }

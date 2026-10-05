@@ -172,28 +172,7 @@ export class CategoriesService {
       });
     }
 
-    await this.repo.actualizar(userId, id, {
-      ...(dto.name !== undefined && { name: dto.name }),
-      ...(dto.kind !== undefined && { kind: dto.kind }),
-      // La COLUMNA, no la relación: ver el porqué en `repo.actualizar`.
-      ...(dto.parent_id !== undefined && {
-        parentId: dto.parent_id === null ? null : BigInt(dto.parent_id),
-      }),
-      ...(dto.color !== undefined && { color: dto.color }),
-      ...(dto.icon !== undefined && { icon: dto.icon }),
-      ...(dto.sort_order !== undefined && { sortOrder: dto.sort_order }),
-      ...(dto.is_archived !== undefined && { isArchived: dto.is_archived }),
-      ...(dto.recurrente !== undefined && { recurrente: dto.recurrente }),
-      ...(dto.estatico !== undefined && { estatico: dto.estatico }),
-      ...(dto.periodicidad !== undefined && { periodicidad: dto.periodicidad }),
-      ...(dto.dia_de_pago !== undefined && { diaDePago: dto.dia_de_pago }),
-      ...(dto.mes_de_pago !== undefined && { mesDePago: dto.mes_de_pago }),
-      // `!== undefined` y no un truthy: `null` lo quita y CERO es un valor.
-      ...(dto.presupuesto !== undefined && { presupuesto: dto.presupuesto }),
-      ...(dto.pago_automatico !== undefined && { pagoAutomatico: dto.pago_automatico }),
-      ...(dto.varios_pagos !== undefined && { variosPagos: dto.varios_pagos }),
-      ...(dto.palabras_clave !== undefined && { palabrasClave: dto.palabras_clave }),
-    });
+    await this.repo.actualizar(userId, id, cambiosDe(dto));
 
     return this.obtener(userId, id);
   }
@@ -421,4 +400,30 @@ export class CategoriesService {
       palabras_clave: categoria.palabrasClave,
     };
   }
+}
+
+/** The columns a PATCH changes: only what the DTO brought. */
+function cambiosDe(dto: UpdateCategoryDto): Parameters<CategoriesRepository['actualizar']>[2] {
+  return {
+    ...(dto.name !== undefined && { name: dto.name }),
+    ...(dto.kind !== undefined && { kind: dto.kind }),
+    // La COLUMNA, no la relación: ver el porqué en `repo.actualizar`.
+    ...(dto.parent_id !== undefined && {
+      parentId: dto.parent_id === null ? null : BigInt(dto.parent_id),
+    }),
+    ...(dto.color !== undefined && { color: dto.color }),
+    ...(dto.icon !== undefined && { icon: dto.icon }),
+    ...(dto.sort_order !== undefined && { sortOrder: dto.sort_order }),
+    ...(dto.is_archived !== undefined && { isArchived: dto.is_archived }),
+    ...(dto.recurrente !== undefined && { recurrente: dto.recurrente }),
+    ...(dto.estatico !== undefined && { estatico: dto.estatico }),
+    ...(dto.periodicidad !== undefined && { periodicidad: dto.periodicidad }),
+    ...(dto.dia_de_pago !== undefined && { diaDePago: dto.dia_de_pago }),
+    ...(dto.mes_de_pago !== undefined && { mesDePago: dto.mes_de_pago }),
+    // `!== undefined` y no un truthy: `null` lo quita y CERO es un valor.
+    ...(dto.presupuesto !== undefined && { presupuesto: dto.presupuesto }),
+    ...(dto.pago_automatico !== undefined && { pagoAutomatico: dto.pago_automatico }),
+    ...(dto.varios_pagos !== undefined && { variosPagos: dto.varios_pagos }),
+    ...(dto.palabras_clave !== undefined && { palabrasClave: dto.palabras_clave }),
+  };
 }

@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 import { calcularFlujo, type MovimientoAgregable } from './dashboard.aggregate';
 import type { DashboardQueryDto } from './dashboard.dto';
-import { DashboardRepository, type SummaryCategory } from './dashboard.repository';
+import {
+  DashboardRepository,
+  type SummaryCategory,
+  type SummaryMovement,
+} from './dashboard.repository';
 import {
   aISO,
   arbolDe,
@@ -54,13 +58,7 @@ export class DashboardService {
       }),
     ]);
 
-    const agregables: MovimientoAgregable[] = movimientos.map((m) => ({
-      type: m.type,
-      amount: toMoney(m.amount),
-      categoryId: m.categoryId,
-      splits: m.splits.map((s) => ({ categoryId: s.categoryId, amount: toMoney(s.amount) })),
-    }));
-    const flujo = calcularFlujo(agregables);
+    const flujo = calcularFlujo(movimientos.map(agregable));
 
     const partes = desglose(movimientos, arbol, pedidas.length === 1 ? pedidas[0] : undefined);
     const datosDelPadre =
@@ -141,4 +139,13 @@ function ramaPorNombre(categorias: readonly SummaryCategory[], q: string): bigin
   const coinciden = categorias.filter((c) => c.name.toLowerCase().includes(aguja)).map((c) => c.id);
   const planas = categorias.map((c) => ({ id: c.id, parentId: c.parentId }));
   return coinciden.length > 0 ? ramasDe(planas, coinciden) : [];
+}
+
+function agregable(m: SummaryMovement): MovimientoAgregable {
+  return {
+    type: m.type,
+    amount: toMoney(m.amount),
+    categoryId: m.categoryId,
+    splits: m.splits.map((s) => ({ categoryId: s.categoryId, amount: toMoney(s.amount) })),
+  };
 }
