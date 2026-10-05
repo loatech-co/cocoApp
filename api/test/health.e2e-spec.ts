@@ -92,7 +92,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public health 
       .expect(401);
   });
 
-  it('con un token válido, la ruta protegida responde 200 con ESE usuario', async () => {
+  it('a valid token reaches a protected route as THAT user', async () => {
     const usuario = await entorno.crearUsuario();
 
     const response = await request(entorno.app.getHttpServer())
