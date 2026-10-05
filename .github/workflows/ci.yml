@@ -40,6 +40,10 @@ jobs:
     env:
       # Never a real secret: CI talks only to the throwaway Postgres above.
       TEST_DATABASE_URL: postgresql://coco_migrate:ci-only-password@localhost:5432/coco_test
+      # The API runs as coco_app, under row-level security, so the e2e suites
+      # test the policies too (ADR 0019). Migrations and fixtures stay owner.
+      COCO_APP_DB_PASSWORD: ci-only-coco-app-password
+      TEST_APP_DATABASE_URL: postgresql://coco_app:ci-only-coco-app-password@localhost:5432/coco_test
 
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +62,7 @@ jobs:
         run: |
           {
             echo 'NODE_ENV=test'
-            echo "DATABASE_URL=$TEST_DATABASE_URL"
+            echo "DATABASE_URL=$TEST_APP_DATABASE_URL"
             echo "DIRECT_URL=$TEST_DATABASE_URL"
             echo 'CORS_ORIGINS=http://localhost:5173'
             echo 'LOG_LEVEL=silent'
@@ -67,6 +71,11 @@ jobs:
             echo 'BOOTSTRAP_ADMIN_EMAIL=admin-e2e@pruebas.coco'
             echo 'SOPORTES_DIR=.soportes-test'
           } > api/.env.test
+
+      - name: Application role (coco_app)
+        run: bash scripts/db/create-app-role.sh
+        env:
+          ADMIN_DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
 
       - name: Prisma client and test database
         run: |

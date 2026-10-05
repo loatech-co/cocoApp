@@ -1,6 +1,4 @@
-import type { Account, Category, Prisma, Transaction } from '@prisma/client';
-
-import type { PrismaService } from '../../src/prisma/prisma.service';
+import type { Account, Category, Prisma, PrismaClient, Transaction } from '@prisma/client';
 
 /**
  * Test data factories. Each one writes a valid row with neutral defaults, so a
@@ -12,7 +10,8 @@ import type { PrismaService } from '../../src/prisma/prisma.service';
  * against the Supabase double; a bare user row could not log in.
  */
 
-type Db = PrismaService;
+/** The owner's client from `levantarApp()`, not the app's: fixtures cross users. */
+type Db = PrismaClient;
 
 export async function makeAccount(
   db: Db,

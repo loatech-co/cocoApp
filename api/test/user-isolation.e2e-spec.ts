@@ -7,9 +7,10 @@ import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './help
 /**
  * Phase 6.5: one user can never reach another user's data.
  *
- * Isolation depends on every Prisma query carrying `user_id`; nothing in the
- * database enforces it yet (RLS is evaluated in phase 7). This suite is the
- * check: Ana owns one of everything, and Bruno —a regular, authenticated
+ * Isolation depends on every Prisma query carrying `user_id`, and since step
+ * 7.11-b the database enforces it too: this suite runs against the app as
+ * `coco_app`, under row-level security (the second lock has its own suite,
+ * `row-level-security.e2e-spec.ts`). This suite is the first lock's check: Ana owns one of everything, and Bruno —a regular, authenticated
  * user— calls EVERY route with Ana's ids, or with Ana's ids inside his own
  * request bodies. He must get a 404/422, see none of her data in his lists,
  * and leave every one of her rows exactly as it was.

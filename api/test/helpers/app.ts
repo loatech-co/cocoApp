@@ -3,14 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import type { ThrottlerStorageRecord } from '@nestjs/throttler/dist/throttler-storage-record.interface';
-import type { User, UserRole, UserStatus } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient, type User, type UserRole, type UserStatus } from '@prisma/client';
 
 import { SupabaseAuthFalso } from './supabase-auth-falso';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
 import { installBigIntSerializer } from '../../src/common/serialization/bigint';
 import { SupabaseAuthService } from '../../src/modules/auth/supabase-auth.service';
-import { PrismaService } from '../../src/prisma/prisma.service';
 
 /**
  * Entorno de pruebas de extremo a extremo contra MariaDB real (base
@@ -29,7 +29,13 @@ import { PrismaService } from '../../src/prisma/prisma.service';
  */
 export interface EntornoDePruebas {
   app: INestApplication;
-  prisma: PrismaService;
+  /**
+   * The database as its OWNER (`DIRECT_URL`), not as the app: fixtures,
+   * cleanup and checks that look at every user's rows. The app itself runs
+   * as `coco_app` (`DATABASE_URL`), under row-level security, so a test that
+   * set up its data through the app's own client would see none of it.
+   */
+  prisma: PrismaClient;
   /** Crea un usuario ya listo para usar, sin pasar por el endpoint de registro. */
   crearUsuario: (datos?: DatosDeUsuario) => Promise<UsuarioDePrueba>;
   /** El doble de Supabase Auth, para fabricar casos que el flujo normal no da. */
@@ -85,14 +91,16 @@ export function correoDePrueba(prefijo = 'usuario'): string {
  * levantar nada, no se confía en que el `.env` correcto esté cargado.
  */
 function exigirBaseDePruebas(): void {
-  const url = process.env.DATABASE_URL ?? '';
-  const nombre = url.split('/').pop()?.split('?')[0] ?? '';
+  for (const variable of ['DATABASE_URL', 'DIRECT_URL']) {
+    const url = process.env[variable] ?? '';
+    const nombre = url.split('/').pop()?.split('?')[0] ?? '';
 
-  if (!nombre.endsWith('_test')) {
-    throw new Error(
-      `Las pruebas e2e vacían la base entera y esta no es de pruebas: "${nombre}". ` +
-        'Revisa que .env.test esté cargado (test/setup-env.ts).',
-    );
+    if (!nombre.endsWith('_test')) {
+      throw new Error(
+        `Las pruebas e2e vacían la base entera y ${variable} no es de pruebas: "${nombre}". ` +
+          'Revisa que .env.test esté cargado (test/setup-env.ts).',
+      );
+    }
   }
 }
 
@@ -142,7 +150,9 @@ export async function levantarApp(
   // `auth.e2e-spec.ts › una cuenta pendiente no puede entrar…`.
   await app.listen(0, '127.0.0.1');
 
-  const prisma = app.get(PrismaService);
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: process.env.DIRECT_URL }),
+  });
 
   const crearUsuario = async (datos: DatosDeUsuario = {}): Promise<UsuarioDePrueba> => {
     const password = datos.password ?? PASSWORD_VALIDA;
@@ -219,6 +229,7 @@ export async function levantarApp(
     limpiar,
     cerrar: async () => {
       await limpiar();
+      await prisma.$disconnect();
       await app.close();
     },
   };

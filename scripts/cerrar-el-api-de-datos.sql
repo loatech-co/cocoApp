@@ -71,7 +71,10 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
   REVOKE ALL ON SEQUENCES FROM anon, authenticated;
 
 -- ── Comprobación ────────────────────────────────────────────────────────────
--- Las tres cifras tienen que salir en cero.
+-- `tablas_sin_seguridad` y `permisos_abiertos` tienen que salir en cero. Desde
+-- el paso 7.11-b `politicas` sale en 14, y todas son `TO coco_app`: el rol con
+-- el que entra la API (ADR 0019). Ninguna nombra a `anon` ni a `authenticated`,
+-- así que para ellos sigue sin haber política, igual que antes.
 SELECT
   count(*) FILTER (WHERE NOT rowsecurity) AS tablas_sin_seguridad,
   (SELECT count(*) FROM pg_policies WHERE schemaname = 'public') AS politicas,
