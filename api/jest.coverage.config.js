@@ -1,3 +1,14 @@
+/**
+ * Coverage of `src/`, measured over the unit AND the e2e suites in one run.
+ *
+ * Neither alone says how much of the API is exercised: controllers, guards and
+ * repositories run only in the e2e suite (against Postgres, never mocked),
+ * and the pure rules are cheaper to reach from the unit tests. One run with
+ * two projects adds both up before the threshold is checked.
+ *
+ * `npm run test:cov` runs it; CI fails below the threshold. The threshold
+ * only goes up (CONTRIBUTING, «Tests»).
+ */
 const shared = {
   rootDir: __dirname,
   moduleFileExtensions: ['js', 'json', 'ts'],
@@ -20,7 +31,12 @@ module.exports = {
       transformIgnorePatterns: ['/node_modules/(?!jose)'],
     },
   ],
-  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.spec.ts', '!src/**/*.module.ts', '!src/main.ts'],
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.spec.ts', '!src/main.ts'],
   coverageDirectory: 'coverage',
+  coverageReporters: ['text-summary', 'json-summary'],
+  coverageThreshold: {
+    global: { lines: 80, branches: 80 },
+    './src/common/money/': { lines: 90, branches: 90, functions: 90, statements: 90 },
+  },
   testTimeout: 30000,
 };

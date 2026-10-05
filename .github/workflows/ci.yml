@@ -101,8 +101,12 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      - name: API e2e
-        run: npm run test:e2e --workspace api
+      # The e2e suite runs here, together with the unit one: coverage of
+      # api/src is measured over both, and the job fails below 80 % of lines
+      # or branches (api/jest.coverage.config.js). packages/lectura checks its
+      # own floor inside `npm test`.
+      - name: API e2e and coverage
+        run: npm run test:cov --workspace api
 
       - name: Production builds
         run: |

@@ -13,7 +13,7 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings 0",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test:cov": "NODE_ENV=test jest --config ./jest.coverage.config.js --runInBand --coverage",
     "test:e2e": "NODE_ENV=test jest --config ./test/jest-e2e.json --runInBand",
     "prisma:generate": "prisma generate",
     "prisma:studio": "dotenv -e .env.migrate -- prisma studio",
@@ -74,21 +74,7 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s",
-      "!**/*.module.ts",
-      "!main.ts"
-    ],
-    "coverageDirectory": "../coverage",
     "testEnvironment": "node",
-    "coverageThreshold": {
-      "./src/common/money/": {
-        "branches": 90,
-        "functions": 90,
-        "lines": 90,
-        "statements": 90
-      }
-    },
     "moduleNameMapper": {
       "^@coco/lectura$": "<rootDir>/../../packages/lectura/src/index.ts"
     }
