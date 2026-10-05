@@ -1,4 +1,4 @@
-import { normalizarDescripcion } from '../imports/fingerprint';
+import { normalizarDescripcion } from './description';
 
 /**
  * Categorización automática (T1) — lógica pura.

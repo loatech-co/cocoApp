@@ -32,13 +32,6 @@ const EXEMPT: Record<string, string> = {
   'POST /api/v1/auth/change-password':
     'acts on the token subject only (covered in auth.e2e-spec); a wrong password here would lock the test user out',
   'GET /api/v1/health': 'no user data',
-  'GET /api/v1/imports': 'removed in step 6.6',
-  'GET /api/v1/imports/:id': 'removed in step 6.6',
-  'POST /api/v1/imports': 'removed in step 6.6',
-  'PATCH /api/v1/imports/:id/rows/:rowId': 'removed in step 6.6',
-  'POST /api/v1/imports/:id/commit': 'removed in step 6.6',
-  'POST /api/v1/imports/:id/undo': 'removed in step 6.6',
-  'DELETE /api/v1/imports/:id': 'removed in step 6.6',
 };
 
 const PNG = Buffer.from(

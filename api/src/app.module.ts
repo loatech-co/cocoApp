@@ -15,7 +15,6 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { CategorizationModule } from './modules/categorization/categorization.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthModule } from './modules/health/health.module';
-import { ImportsModule } from './modules/imports/imports.module';
 import { InterpretacionModule } from './modules/interpretacion/interpretacion.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { SoportesModule } from './modules/soportes/soportes.module';
@@ -72,7 +71,6 @@ import { PrismaModule } from './prisma/prisma.module';
 
     // Fase 2 — importación y categorización automática.
     CategorizationModule,
-    ImportsModule,
 
     // La SPA compilada, servida por este mismo proceso. Va AL FINAL: su ruta
     // comodín tiene que ceder ante todas las de la API.

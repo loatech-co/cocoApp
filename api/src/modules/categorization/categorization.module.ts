@@ -14,7 +14,7 @@ import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
-import { normalizarDescripcion } from '../imports/fingerprint';
+import { normalizarDescripcion } from './description';
 import {
   patronParaAprender,
   sugerirCategoria,

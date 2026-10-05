@@ -224,55 +224,6 @@ export interface AuditEntry {
   created_at: DateTimeString;
 }
 
-// ─── Importación (M4) ────────────────────────────────────────────────────────
-
-export const IMPORT_STATUSES = ['draft', 'committed', 'discarded'] as const;
-export type ImportStatus = (typeof IMPORT_STATUSES)[number];
-
-/**
- * `duplicate` es una SOSPECHA, no un veredicto: dos cafés de $5.000 el mismo
- * día en el mismo sitio son dos movimientos reales. El sistema lo señala y la
- * persona decide.
- */
-export const IMPORT_ROW_STATUSES = ['pending', 'accepted', 'duplicate', 'skipped'] as const;
-export type ImportRowStatus = (typeof IMPORT_ROW_STATUSES)[number];
-
-export const IMPORT_SOURCES = ['image', 'pdf', 'csv', 'manual'] as const;
-export type ImportSource = (typeof IMPORT_SOURCES)[number];
-
-export interface ImportRow {
-  id: Id;
-  /** Orden en el documento original. */
-  position: number;
-  date: DateOnlyString;
-  amount: DecimalString;
-  type: TransactionType;
-  description: string | null;
-  status: ImportRowStatus;
-  /** Sugerencia de T1. Es una sugerencia: se puede cambiar o quitar. */
-  category_id: Id | null;
-  /** 0–100. Cuánto fiarse de la sugerencia. */
-  confidence: number | null;
-  /** A qué movimiento ya existente se parece, si se sospecha repetición. */
-  duplicate_of_id: Id | null;
-}
-
-export interface ImportBatch {
-  id: Id;
-  uuid: string;
-  account_id: Id;
-  source: ImportSource;
-  status: ImportStatus;
-  /** Nombre del archivo, para reconocer el lote. NUNCA su contenido. */
-  label: string | null;
-  ocr_provider: string | null;
-  committed_at: DateTimeString | null;
-  created_at: DateTimeString;
-  counts: Record<ImportRowStatus, number>;
-  /** Solo en el detalle: el listado de lotes no arrastra todas las filas. */
-  rows?: ImportRow[];
-}
-
 // ─── Categorización automática (T1) ──────────────────────────────────────────
 
 /** Por qué se sugirió. La interfaz lo muestra: "porque siempre lo clasificas así". */

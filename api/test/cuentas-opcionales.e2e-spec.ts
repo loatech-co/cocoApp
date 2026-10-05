@@ -11,7 +11,7 @@ import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './help
  * el primer café.
  *
  * Lo que se protege aquí es que esa promesa se cumpla de verdad en toda la
- * cadena: crear, importar, listar, y los saldos de quien SÍ lleva cuentas.
+ * cadena: crear, listar, y los saldos de quien SÍ lleva cuentas.
  */
 describe('Cuentas opcionales (e2e)', () => {
   let entorno: EntornoDePruebas;
@@ -227,98 +227,6 @@ describe('Cuentas opcionales (e2e)', () => {
         .expect(201);
 
       await gasto({ account_id: suya.body.data.id }).expect(422);
-    });
-  });
-
-  // ── Importación ────────────────────────────────────────────────────────────
-
-  describe('Importar sin cuenta', () => {
-    const FILAS = [
-      { date: '2026-08-01', amount: '45900.00', type: 'expense' as const, description: 'Exito' },
-      { date: '2026-08-02', amount: '23500.00', type: 'expense' as const, description: 'Rappi' },
-    ];
-
-    it('se puede importar un extracto sin decir a qué cuenta pertenece', async () => {
-      const respuesta = await http
-        .post('/api/v1/imports')
-        .set('Authorization', comoAna)
-        .send({ source: 'pdf', label: 'agosto.pdf', rows: FILAS })
-        .expect(201);
-
-      expect(respuesta.body.data.account_id).toBeNull();
-      expect(respuesta.body.data.counts.accepted).toBe(2);
-    });
-
-    it('confirmar crea movimientos sin cuenta', async () => {
-      const lote = await http
-        .post('/api/v1/imports')
-        .set('Authorization', comoAna)
-        .send({ source: 'pdf', rows: FILAS })
-        .expect(201);
-
-      await http
-        .post(`/api/v1/imports/${lote.body.data.id}/commit`)
-        .set('Authorization', comoAna)
-        .expect(200);
-
-      const movimientos = await http
-        .get('/api/v1/transactions')
-        .set('Authorization', comoAna)
-        .expect(200);
-      expect(movimientos.body.data).toHaveLength(2);
-      expect(movimientos.body.data.every((m: { account_id: null }) => m.account_id === null)).toBe(
-        true,
-      );
-    });
-
-    // ── La deduplicación sigue funcionando sin cuenta ──
-    it('detecta repetidos entre importaciones sin cuenta', async () => {
-      const primero = await http
-        .post('/api/v1/imports')
-        .set('Authorization', comoAna)
-        .send({ source: 'pdf', rows: FILAS })
-        .expect(201);
-      await http
-        .post(`/api/v1/imports/${primero.body.data.id}/commit`)
-        .set('Authorization', comoAna)
-        .expect(200);
-
-      const segundo = await http
-        .post('/api/v1/imports')
-        .set('Authorization', comoAna)
-        .send({ source: 'pdf', rows: FILAS })
-        .expect(201);
-
-      expect(segundo.body.data.counts.duplicate).toBe(2);
-    });
-
-    it('un movimiento CON cuenta no se confunde con uno sin cuenta', async () => {
-      // La huella lleva una marca explícita de "sin cuenta" justamente para
-      // que estos dos no colisionen.
-      const cuenta = await http
-        .post('/api/v1/accounts')
-        .set('Authorization', comoAna)
-        .send({ name: 'Bancolombia', type: 'debit', opening_balance: '0' })
-        .expect(201);
-
-      const conCuenta = await http
-        .post('/api/v1/imports')
-        .set('Authorization', comoAna)
-        .send({ account_id: cuenta.body.data.id, source: 'pdf', rows: FILAS })
-        .expect(201);
-      await http
-        .post(`/api/v1/imports/${conCuenta.body.data.id}/commit`)
-        .set('Authorization', comoAna)
-        .expect(200);
-
-      const sinCuenta = await http
-        .post('/api/v1/imports')
-        .set('Authorization', comoAna)
-        .send({ source: 'pdf', rows: FILAS })
-        .expect(201);
-
-      expect(sinCuenta.body.data.counts.duplicate).toBe(0);
-      expect(sinCuenta.body.data.counts.accepted).toBe(2);
     });
   });
 });
