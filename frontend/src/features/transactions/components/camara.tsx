@@ -1,5 +1,5 @@
 import { Camera, CameraOff, Loader2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 
 import { Button } from '@/shared/ui/atoms/button';
 import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
@@ -32,11 +32,40 @@ export function Camara({
   onTomar: (archivo: File) => void;
   onCerrar: () => void;
 }) {
+  const { video, estado } = useCameraStream();
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Viewfinder video={video} estado={estado} />
+
+      {/* El mismo pie que las demás fichas: a la derecha en el escritorio y
+          apilado a ancho completo en el teléfono. Los dos botones se repartían
+          el ancho a medias, así que «Cancelar» pesaba igual que «Capturar». */}
+      <PieDeModal>
+        <Button type="button" variant="outline" onClick={onCerrar}>
+          <X className="size-4" aria-hidden="true" />
+          Cancelar
+        </Button>
+        <Button
+          type="button"
+          onClick={() => captureFrame(video.current, onTomar)}
+          disabled={estado !== 'lista'}
+        >
+          <Camera className="size-4" aria-hidden="true" />
+          Capturar
+        </Button>
+      </PieDeModal>
+    </div>
+  );
+}
+
+type CameraState = 'pidiendo' | 'lista' | 'sin-permiso' | 'sin-camara';
+
+/** Pide la cámara de atrás al montar y la suelta al desmontar. */
+function useCameraStream(): { video: RefObject<HTMLVideoElement | null>; estado: CameraState } {
   const video = useRef<HTMLVideoElement>(null);
   const pista = useRef<MediaStream | null>(null);
-  const [estado, setEstado] = useState<'pidiendo' | 'lista' | 'sin-permiso' | 'sin-camara'>(
-    'pidiendo',
-  );
+  const [estado, setEstado] = useState<CameraState>('pidiendo');
 
   useEffect(() => {
     let vivo = true;
@@ -81,64 +110,58 @@ export function Camara({
     };
   }, []);
 
-  function disparar(): void {
-    const elemento = video.current;
-    if (!elemento) return;
+  return { video, estado };
+}
 
-    const lienzo = document.createElement('canvas');
-    lienzo.width = elemento.videoWidth;
-    lienzo.height = elemento.videoHeight;
-    lienzo.getContext('2d')?.drawImage(elemento, 0, 0);
+/** Saca una foto del vídeo y la entrega como archivo. */
+function captureFrame(elemento: HTMLVideoElement | null, onTomar: (archivo: File) => void): void {
+  if (!elemento) return;
 
-    // JPEG al 92 %: lo que importa aquí es que el OCR lea bien. El servidor lo
-    // pasa después a gris y lo comprime con los mismos parámetros del lote.
-    lienzo.toBlob(
-      (imagen) => {
-        if (!imagen) return;
-        onTomar(new File([imagen], `soporte-${Date.now()}.jpg`, { type: 'image/jpeg' }));
-      },
-      'image/jpeg',
-      0.92,
-    );
-  }
+  const lienzo = document.createElement('canvas');
+  lienzo.width = elemento.videoWidth;
+  lienzo.height = elemento.videoHeight;
+  lienzo.getContext('2d')?.drawImage(elemento, 0, 0);
 
+  // JPEG al 92 %: lo que importa aquí es que el OCR lea bien. El servidor lo
+  // pasa después a gris y lo comprime con los mismos parámetros del lote.
+  lienzo.toBlob(
+    (imagen) => {
+      if (!imagen) return;
+      onTomar(new File([imagen], `soporte-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+    },
+    'image/jpeg',
+    0.92,
+  );
+}
+
+function Viewfinder({
+  video,
+  estado,
+}: {
+  video: RefObject<HTMLVideoElement | null>;
+  estado: CameraState;
+}) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-sala">
-        {estado === 'lista' ? (
-          <video
-            ref={video}
-            autoPlay
-            playsInline
-            muted
-            className="size-full object-cover"
-            aria-label="Vista de la cámara"
-          />
-        ) : estado === 'pidiendo' ? (
-          <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
-        ) : (
-          <p className="flex max-w-xs flex-col items-center gap-2 px-4 text-center text-sm text-sala-tinta/80">
-            <CameraOff className="size-6" aria-hidden="true" />
-            {estado === 'sin-permiso'
-              ? 'El navegador no concedió acceso a la cámara. Se puede habilitar desde los permisos del sitio.'
-              : 'No se detectó ninguna cámara en este equipo.'}
-          </p>
-        )}
-      </div>
-
-      {/* El mismo pie que las demás fichas: a la derecha en el escritorio y
-          apilado a ancho completo en el teléfono. Los dos botones se repartían
-          el ancho a medias, así que «Cancelar» pesaba igual que «Capturar». */}
-      <PieDeModal>
-        <Button type="button" variant="outline" onClick={onCerrar}>
-          <X className="size-4" aria-hidden="true" />
-          Cancelar
-        </Button>
-        <Button type="button" onClick={disparar} disabled={estado !== 'lista'}>
-          <Camera className="size-4" aria-hidden="true" />
-          Capturar
-        </Button>
-      </PieDeModal>
+    <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-sala">
+      {estado === 'lista' ? (
+        <video
+          ref={video}
+          autoPlay
+          playsInline
+          muted
+          className="size-full object-cover"
+          aria-label="Vista de la cámara"
+        />
+      ) : estado === 'pidiendo' ? (
+        <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
+      ) : (
+        <p className="flex max-w-xs flex-col items-center gap-2 px-4 text-center text-sm text-sala-tinta/80">
+          <CameraOff className="size-6" aria-hidden="true" />
+          {estado === 'sin-permiso'
+            ? 'El navegador no concedió acceso a la cámara. Se puede habilitar desde los permisos del sitio.'
+            : 'No se detectó ninguna cámara en este equipo.'}
+        </p>
+      )}
     </div>
   );
 }
