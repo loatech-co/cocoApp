@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 import { cn, formatCOP } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
@@ -205,6 +205,42 @@ export function Dona({
   onElegir?: ((id: number) => void) | undefined;
   className?: string;
 }) {
+  const { caja, tarjeta, activa, setActiva, seguir, sitio, medida } = useDonutPointer();
+  const trazos = arcosDeLaDona(porciones, total);
+  const señalada = activa === null ? null : trazos[activa];
+  const marcado = { trazos, activa, setActiva, onElegir };
+
+  return (
+    <div
+      ref={caja}
+      className={cn('relative flex h-full items-center gap-4', className)}
+      onPointerMove={seguir}
+      onPointerLeave={() => setActiva(null)}
+    >
+      {/* La lista se desplaza dentro de su tarjeta. Sin esto, con doce
+          conceptos crecía más que la fila y se derramaba por debajo,
+          montándose sobre la tabla de movimientos. */}
+      {mostrarLista && <DonutLegend {...marcado} />}
+
+      <DonutRing {...marcado} mostrarLista={mostrarLista} />
+
+      {señalada && (
+        <DonutTooltip tarjeta={tarjeta} sitio={sitio} medida={medida} señalada={señalada} />
+      )}
+    </div>
+  );
+}
+
+/** Qué porción está señalada, y lo que hace falta para señalarla o bajar a ella. */
+interface DonutMarks {
+  trazos: ArcoDeLaDona[];
+  activa: number | null;
+  setActiva: (i: number | null) => void;
+  onElegir: ((id: number) => void) | undefined;
+}
+
+/** El puntero sobre la dona y la tarjeta que lo sigue. */
+function useDonutPointer() {
   const caja = useRef<HTMLDivElement>(null);
   const tarjeta = useRef<HTMLDivElement>(null);
   const [activa, setActiva] = useState<number | null>(null);
@@ -225,16 +261,12 @@ export function Dona({
     );
   }, [activa]);
 
-  const trazos = arcosDeLaDona(porciones, total);
-
   function seguir(e: React.PointerEvent): void {
     const r = caja.current?.getBoundingClientRect();
     if (!r) return;
     setMedida({ ancho: r.width, alto: r.height });
     setPuntero({ x: e.clientX - r.left, y: e.clientY - r.top });
   }
-
-  const señalada = activa === null ? null : trazos[activa];
 
   // La tarjeta salta al lado contrario del puntero cuando no cabe: siguiéndolo
   // sin más se sale de la tarjeta en los bordes.
@@ -246,165 +278,178 @@ export function Dona({
     top: Math.min(Math.max(0, puntero.y - tam.alto / 2), Math.max(0, medida.alto - tam.alto)),
   };
 
+  return { caja, tarjeta, activa, setActiva, seguir, sitio, medida: tam.ancho !== 0 };
+}
+
+function DonutLegend({ trazos, activa, setActiva, onElegir }: DonutMarks) {
+  return (
+    <ul className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto">
+      {trazos.map((seg, i) => {
+        const puedeBajar = seg.id !== null && onElegir !== undefined;
+
+        return (
+          <li key={seg.id ?? seg.nombre}>
+            <button
+              type="button"
+              disabled={!puedeBajar}
+              title={seg.nombre}
+              onPointerEnter={() => setActiva(i)}
+              onClick={() => {
+                if (seg.id !== null && onElegir !== undefined) onElegir(seg.id);
+              }}
+              className={cn(
+                'flex w-full min-w-0 items-center gap-2 rounded-md text-left transition-opacity',
+                puedeBajar ? 'cursor-pointer' : 'cursor-default',
+                activa !== null && activa !== i && 'opacity-40',
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: seg.color }}
+              />
+              <span className="min-w-0 flex-1 truncate text-sm">{seg.nombre}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function DonutRing({ mostrarLista, ...marcado }: DonutMarks & { mostrarLista: boolean }) {
+  return (
+    <svg
+      viewBox={`0 0 ${LADO} ${LADO}`}
+      /*
+        El tamaño sale del ANCHO, y el alto lo sigue.
+
+        Sacarlo del alto —`h-80% w-auto`— parecía más fino: la dona llenaba
+        su tarjeta. Pero el ancho que salía de ese alto no sabía nada de la
+        lista que tiene al lado, así que el aro se llevaba la fila entera y
+        los nombres se encogían hasta desaparecer.
+
+        Repartiendo el ANCHO entre los dos, cada uno tiene lo suyo: el aro el
+        62 % y la lista el 38 %. `max-h-full` es el freno por si la tarjeta
+        resulta más baja que ancha; el lienzo es cuadrado, así que al
+        achicarse sigue siendo un círculo, solo que más chico.
+
+        Para agrandar el aro hay dos mandos, y los dos están fuera de este
+        archivo o justo aquí: este porcentaje —que se lo quita a la lista— y
+        el ancho de la columna en el resumen, que se lo quita a la gráfica.
+      */
+      // Con la lista oculta el aro se CENTRA, no crece: creciendo, el ancho
+      // de la tarjeta dejaría de ser el mismo con y sin nombres y la fila
+      // entera se recolocaría cada vez que se pulsa el botón.
+      className={cn('max-h-full w-[62%] shrink-0', !mostrarLista && 'mx-auto')}
+      role="img"
+      aria-label="Distribución del gasto"
+    >
+      {/* El aro de fondo: es lo que se ve donde no llega ninguna porción. */}
+      <circle
+        cx={CENTRO}
+        cy={CENTRO}
+        r={RADIO}
+        fill="none"
+        stroke="var(--muted)"
+        strokeWidth={GROSOR}
+      />
+
+      {marcado.trazos.map((seg, i) => (
+        <DonutSlice key={seg.id ?? seg.nombre} seg={seg} i={i} {...marcado} />
+      ))}
+    </svg>
+  );
+}
+
+function DonutSlice({
+  seg,
+  i,
+  activa,
+  setActiva,
+  onElegir,
+}: Omit<DonutMarks, 'trazos'> & { seg: ArcoDeLaDona; i: number }) {
+  const puedeBajar = seg.id !== null && onElegir !== undefined;
+  const vuelta = seg.hasta - seg.desde;
+  if (vuelta <= 0) return null;
+
+  /*
+    ── Atenuar con COLOR, nunca con opacidad ─────────────────────────
+    Señalar una porción apaga las demás. Con `opacity` se vuelven
+    translúcidas, y debajo de cada una está la anterior entera —el aro
+    se pinta por capas—, así que asomaría por debajo. Mezclando el
+    color con el de la tarjeta se apaga igual sin dejar de ser opaca.
+    `transition-colors` incluye el relleno, así que sigue siendo
+    gradual.
+  */
+  const color =
+    activa !== null && activa !== i
+      ? `color-mix(in oklab, ${seg.color} 35%, var(--card))`
+      : seg.color;
+
+  const comun = {
+    onPointerEnter: () => setActiva(i),
+    onClick: () => {
+      if (seg.id !== null && onElegir !== undefined) onElegir(seg.id);
+    },
+    className: cn('transition-colors', puedeBajar && 'cursor-pointer'),
+  };
+
+  // La vuelta entera no es un sector: sus dos cortes caerían en el
+  // mismo sitio y el arco quedaría indefinido. Ahí es un aro y ya.
+  return vuelta >= 1 ? (
+    <circle
+      cx={CENTRO}
+      cy={CENTRO}
+      r={RADIO}
+      fill="none"
+      stroke={color}
+      strokeWidth={GROSOR}
+      {...comun}
+    />
+  ) : (
+    <path d={sectorDeLaDona(seg.desde, seg.hasta)} fill={color} {...comun} />
+  );
+}
+
+function DonutTooltip({
+  tarjeta,
+  sitio,
+  medida,
+  señalada,
+}: {
+  tarjeta: RefObject<HTMLDivElement | null>;
+  sitio: { left: number; top: number };
+  /** Ya se sabe cuánto mide: hasta entonces no se enseña. */
+  medida: boolean;
+  señalada: ArcoDeLaDona;
+}) {
   return (
     <div
-      ref={caja}
-      className={cn('relative flex h-full items-center gap-4', className)}
-      onPointerMove={seguir}
-      onPointerLeave={() => setActiva(null)}
+      ref={tarjeta}
+      style={{ left: `${sitio.left}px`, top: `${sitio.top}px` }}
+      className={cn(
+        'pointer-events-none absolute z-10 min-w-36 rounded-lg p-3',
+        SUPERFICIE_FLOTANTE,
+        // Sin medir todavía se pinta invisible: un primer fotograma en la
+        // esquina y otro en su sitio se ve como un salto.
+        !medida && 'opacity-0',
+      )}
     >
-      {/* La lista se desplaza dentro de su tarjeta. Sin esto, con doce
-          conceptos crecía más que la fila y se derramaba por debajo,
-          montándose sobre la tabla de movimientos. */}
-      {mostrarLista && (
-        <ul className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto">
-          {trazos.map((seg, i) => {
-            const puedeBajar = seg.id !== null && onElegir !== undefined;
-
-            return (
-              <li key={seg.id ?? seg.nombre}>
-                <button
-                  type="button"
-                  disabled={!puedeBajar}
-                  title={seg.nombre}
-                  onPointerEnter={() => setActiva(i)}
-                  onClick={() => {
-                    if (seg.id !== null && onElegir !== undefined) onElegir(seg.id);
-                  }}
-                  className={cn(
-                    'flex w-full min-w-0 items-center gap-2 rounded-md text-left transition-opacity',
-                    puedeBajar ? 'cursor-pointer' : 'cursor-default',
-                    activa !== null && activa !== i && 'opacity-40',
-                  )}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: seg.color }}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm">{seg.nombre}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      <svg
-        viewBox={`0 0 ${LADO} ${LADO}`}
-        /*
-          El tamaño sale del ANCHO, y el alto lo sigue.
-
-          Sacarlo del alto —`h-80% w-auto`— parecía más fino: la dona llenaba
-          su tarjeta. Pero el ancho que salía de ese alto no sabía nada de la
-          lista que tiene al lado, así que el aro se llevaba la fila entera y
-          los nombres se encogían hasta desaparecer.
-
-          Repartiendo el ANCHO entre los dos, cada uno tiene lo suyo: el aro el
-          62 % y la lista el 38 %. `max-h-full` es el freno por si la tarjeta
-          resulta más baja que ancha; el lienzo es cuadrado, así que al
-          achicarse sigue siendo un círculo, solo que más chico.
-
-          Para agrandar el aro hay dos mandos, y los dos están fuera de este
-          archivo o justo aquí: este porcentaje —que se lo quita a la lista— y
-          el ancho de la columna en el resumen, que se lo quita a la gráfica.
-        */
-        // Con la lista oculta el aro se CENTRA, no crece: creciendo, el ancho
-        // de la tarjeta dejaría de ser el mismo con y sin nombres y la fila
-        // entera se recolocaría cada vez que se pulsa el botón.
-        className={cn('max-h-full w-[62%] shrink-0', !mostrarLista && 'mx-auto')}
-        role="img"
-        aria-label="Distribución del gasto"
-      >
-        {/* El aro de fondo: es lo que se ve donde no llega ninguna porción. */}
-        <circle
-          cx={CENTRO}
-          cy={CENTRO}
-          r={RADIO}
-          fill="none"
-          stroke="var(--muted)"
-          strokeWidth={GROSOR}
+      <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+        <span
+          aria-hidden="true"
+          className="size-2.5 shrink-0 rounded-full"
+          style={{ backgroundColor: señalada.color }}
         />
-
-        {trazos.map((seg, i) => {
-          const puedeBajar = seg.id !== null && onElegir !== undefined;
-          const vuelta = seg.hasta - seg.desde;
-          if (vuelta <= 0) return null;
-
-          /*
-            ── Atenuar con COLOR, nunca con opacidad ─────────────────────────
-            Señalar una porción apaga las demás. Con `opacity` se vuelven
-            translúcidas, y debajo de cada una está la anterior entera —el aro
-            se pinta por capas—, así que asomaría por debajo. Mezclando el
-            color con el de la tarjeta se apaga igual sin dejar de ser opaca.
-            `transition-colors` incluye el relleno, así que sigue siendo
-            gradual.
-          */
-          const color =
-            activa !== null && activa !== i
-              ? `color-mix(in oklab, ${seg.color} 35%, var(--card))`
-              : seg.color;
-
-          const comun = {
-            onPointerEnter: () => setActiva(i),
-            onClick: () => {
-              if (seg.id !== null && onElegir !== undefined) onElegir(seg.id);
-            },
-            className: cn('transition-colors', puedeBajar && 'cursor-pointer'),
-          };
-
-          // La vuelta entera no es un sector: sus dos cortes caerían en el
-          // mismo sitio y el arco quedaría indefinido. Ahí es un aro y ya.
-          return vuelta >= 1 ? (
-            <circle
-              key={seg.id ?? seg.nombre}
-              cx={CENTRO}
-              cy={CENTRO}
-              r={RADIO}
-              fill="none"
-              stroke={color}
-              strokeWidth={GROSOR}
-              {...comun}
-            />
-          ) : (
-            <path
-              key={seg.id ?? seg.nombre}
-              d={sectorDeLaDona(seg.desde, seg.hasta)}
-              fill={color}
-              {...comun}
-            />
-          );
-        })}
-      </svg>
-
-      {señalada && (
-        <div
-          ref={tarjeta}
-          style={{ left: `${sitio.left}px`, top: `${sitio.top}px` }}
-          className={cn(
-            'pointer-events-none absolute z-10 min-w-36 rounded-lg p-3',
-            SUPERFICIE_FLOTANTE,
-            // Sin medir todavía se pinta invisible: un primer fotograma en la
-            // esquina y otro en su sitio se ve como un salto.
-            tam.ancho === 0 && 'opacity-0',
-          )}
-        >
-          <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-            <span
-              aria-hidden="true"
-              className="size-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: señalada.color }}
-            />
-            <span className="min-w-0 truncate">{señalada.nombre}</span>
-          </p>
-          <p className="tabular mt-1 font-display text-base font-semibold">
-            {formatCOP(señalada.valor)}
-          </p>
-          <p className="tabular mt-0.5 text-2xs text-muted-foreground">
-            {señalada.porcentaje}% del total
-          </p>
-        </div>
-      )}
+        <span className="min-w-0 truncate">{señalada.nombre}</span>
+      </p>
+      <p className="tabular mt-1 font-display text-base font-semibold">
+        {formatCOP(señalada.valor)}
+      </p>
+      <p className="tabular mt-0.5 text-2xs text-muted-foreground">
+        {señalada.porcentaje}% del total
+      </p>
     </div>
   );
 }
