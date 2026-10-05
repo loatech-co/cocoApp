@@ -12,9 +12,9 @@ principles govern it:
 ## Architecture
 
 A modular monolith: one NestJS process (`api/`) serves the JSON API under
-`/api/v2` (the deprecated `/api/v1` still answers) and the web build (`frontend/`), on a Hostinger Node.js app; data,
-identity and receipt files live on Supabase (PostgreSQL, Auth, Storage). The
-iOS app (`ios/`) is hybrid — native capture, the same web inside a
+`/api/v2` (the deprecated `/api/v1` still answers) and the web build
+(`frontend/`), on a Hostinger Node.js app; data, identity and receipt files
+live on Supabase (PostgreSQL, Auth, Storage). The iOS app (`ios/`) is hybrid — native capture, the same web inside a
 `WKWebView` — and a pure reading engine (`packages/lectura`) turns receipt,
 Wallet and SMS text into proposals, run by the API. Diagrams, flows and the
 decisions behind them: [`docs/architecture.md`](docs/architecture.md).
