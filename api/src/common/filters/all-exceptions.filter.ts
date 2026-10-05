@@ -10,11 +10,21 @@ import { Prisma } from '@prisma/client';
 import type { Request, Response } from 'express';
 
 import { checkViolationMessage } from './check-constraints';
+import { DomainError, type DomainErrorKind, type ErrorDetail } from '../errors/domain-error';
 
-interface ErrorDetail {
-  field?: string;
-  message: string;
-}
+/** The HTTP status of each domain error. The only place that knows it. */
+const DOMAIN_ERROR_STATUS: Readonly<Record<DomainErrorKind, number>> = {
+  bad_request: HttpStatus.BAD_REQUEST,
+  unauthenticated: HttpStatus.UNAUTHORIZED,
+  forbidden: HttpStatus.FORBIDDEN,
+  not_found: HttpStatus.NOT_FOUND,
+  conflict: HttpStatus.CONFLICT,
+  payload_too_large: HttpStatus.PAYLOAD_TOO_LARGE,
+  unsupported_media_type: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+  validation: HttpStatus.UNPROCESSABLE_ENTITY,
+  internal: HttpStatus.INTERNAL_SERVER_ERROR,
+  unavailable: HttpStatus.SERVICE_UNAVAILABLE,
+};
 
 /**
  * Da forma única a TODOS los errores de la API.
@@ -69,6 +79,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     message: string;
     details: ErrorDetail[];
   } {
+    if (exception instanceof DomainError) {
+      return this.fromDomainError(exception);
+    }
+
     if (exception instanceof HttpException) {
       return this.fromHttpException(exception);
     }
@@ -110,6 +124,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
       code: 'internal_error',
       message: 'Ocurrió un error inesperado. Intenta de nuevo.',
       details: [],
+    };
+  }
+
+  /**
+   * A domain error goes out exactly as the Nest exception it replaced did:
+   * same status, same `code` (from the same table), same message, and the
+   * details it carries.
+   */
+  private fromDomainError(exception: DomainError): {
+    status: number;
+    code: string;
+    message: string;
+    details: ErrorDetail[];
+  } {
+    const status = DOMAIN_ERROR_STATUS[exception.kind];
+    return {
+      status,
+      code: AllExceptionsFilter.STATUS_CODES[status] ?? 'error',
+      message: exception.message,
+      details: [...exception.details],
     };
   }
 
