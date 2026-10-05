@@ -32,9 +32,10 @@
     "cargar": "dotenv -e api/.env.supabase -- node scripts/cargar-historico.mjs",
     "soportes:reporte": "node scripts/soportes/reporte.mjs",
     "soportes:importar": "dotenv -e api/.env -- node scripts/soportes/importar.mjs",
-    "soportes:sincronizar": "bash scripts/soportes/sincronizar.sh"
+    "soportes:sincronizar": "bash scripts/soportes/sincronizar.sh",
+    "verify:clean-install": "bash scripts/verify-clean-install.sh"
   },
   "devDependencies": {
-    "tsx": "^4.23.13"
+    "tsx": "~4.20.6"
   }
 }
