@@ -696,3 +696,24 @@ twin, on the same data), the only thing v2 can get wrong is a name, and that is
 what the type checks catch. Isolation between users is checked per version:
 `user-isolation.e2e-spec.ts` (v1) and `user-isolation.v2.e2e-spec.ts` (v2) each
 attack every route of their prefix, and a route under any other prefix fails.
+
+## Feature flags
+
+A flag exists to ship something dark or to a few users first, and it is
+**deleted** when that rollout ends. It is not configuration.
+
+- **Declare it** in `packages/flags/src/registry.ts`: snake_case name,
+  description, owner and `removeBy` date. A name outside the registry does not
+  compile, and the API refuses to start if `FEATURES` lists one.
+- **Turn it on for everyone** with `FEATURES=flag_a,flag_b` in the API's
+  environment (`api/.env.example`).
+- **Turn it on (or off) for one user** with a `user_preferences` row, key
+  `feature:<name>`, boolean value. It wins over `FEATURES` both ways. The
+  preferences endpoint does not accept these keys: a user cannot set their own.
+- **Read it** only through OpenFeature. API: `FlagsService.isEnabled`
+  (`modules/flags`). Web: `useFlag` (`shared/api/flags.tsx`, over
+  `useBooleanFlagValue`). iOS: the `features` array of `GET /auth/me`. The
+  clients read the list the API resolved; none decides on its own.
+- **Remove it** by `removeBy`. CI (`scripts/ci/flags-expiry.mjs`) warns once
+  the date passes and fails 30 days later. Moving the date needs a reason in
+  the PR.
