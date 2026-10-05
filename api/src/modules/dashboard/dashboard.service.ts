@@ -16,6 +16,7 @@ import {
 import type { DashboardPayload, PagoPendientePayload } from './dashboard.types';
 import { idsDeCategorias, ramasDe } from '../../common/categories/categories.tree';
 import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
+import { Database } from '../../prisma/database';
 import { AccountsService } from '../accounts/accounts.service';
 import { CategoryLookupService, type SummaryCategory } from '../categories/category-lookup.service';
 import { LedgerService, type SummaryMovement } from '../transactions/ledger.service';
@@ -26,9 +27,20 @@ export class DashboardService {
     private readonly categories: CategoryLookupService,
     private readonly ledger: LedgerService,
     private readonly accounts: AccountsService,
+    private readonly db: Database,
   ) {}
 
-  async resumen(userId: bigint, query: DashboardQueryDto): Promise<DashboardPayload> {
+  /**
+   * One unit of work for the whole summary: its six reads share one
+   * transaction instead of opening one each. Measured in ADR 0019: the
+   * per-unit BEGIN/set_config/COMMIT, not the policies, is what RLS costs,
+   * and this screen is the one that pays it six times.
+   */
+  resumen(userId: bigint, query: DashboardQueryDto): Promise<DashboardPayload> {
+    return this.db.forUser(userId, () => this.leerResumen(userId, query));
+  }
+
+  private async leerResumen(userId: bigint, query: DashboardQueryDto): Promise<DashboardPayload> {
     const { inicio, fin } = rangoPorDefecto(query.from, query.to);
 
     // A GET only reads. Auto-paid concepts are charged by AutoChargeTask, once
