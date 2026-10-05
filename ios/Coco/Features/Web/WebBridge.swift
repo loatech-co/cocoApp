@@ -269,14 +269,14 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
-        failure((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
+        loadFailed((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
-        failure((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
+        loadFailed((error as? URLError)?.code ?? URLError.Code(rawValue: (error as NSError).code))
     }
 
-    private func failure(_ code: URLError.Code) {
+    private func loadFailed(_ code: URLError.Code) {
         // Cancelada es lo que WebKit dice cuando se pide otra carga encima:
         // no es un fallo de red.
         guard code != .cancelled else { return }

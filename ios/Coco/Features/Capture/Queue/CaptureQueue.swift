@@ -155,7 +155,7 @@ final actor CaptureQueue {
                     return await finish(&capture, with: result)
                 }
             } catch {
-                return await failure(&capture, error: error)
+                return await handleFailure(&capture, error: error)
             }
         }
         if case .photoToUpload(let transactionId) = capture.phase {
@@ -174,7 +174,7 @@ final actor CaptureQueue {
                 }
                 return await finish(&capture, with: result)
             } catch {
-                return await failure(&capture, error: error)
+                return await handleFailure(&capture, error: error)
             }
         }
         return .retry
@@ -205,7 +205,7 @@ final actor CaptureQueue {
         return .done(result)
     }
 
-    private func failure(_ capture: inout PendingCapture, error: Error) async -> SendOutcome {
+    private func handleFailure(_ capture: inout PendingCapture, error: Error) async -> SendOutcome {
         let api = APIError.from(error)
         let output: SendOutcome
         switch api {

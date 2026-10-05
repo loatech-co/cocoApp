@@ -62,7 +62,7 @@ final actor NativeSession: Session {
             RequestBuilder.login(email: email, password: password), token: nil)
         let (response, userJSON) = try Self.decodeSession(data)
         guard let refresh = response.refreshToken else { throw APIError.unreadableResponse }
-        try keychain.write(refresh, at: .refreshToken)
+        try keychain.write(refresh, for: .refreshToken)
         publish(tokens: Self.tokens(from: response, userJSON: userJSON, now: clock()))
         return response.user
     }
@@ -136,7 +136,7 @@ final actor NativeSession: Session {
                 // Si por lo que sea no vino refresh, el anterior sigue siendo
                 // el último conocido: no se pisa con nada.
                 if let newRefresh = response.refreshToken {
-                    try keychain.write(newRefresh, at: .refreshToken)
+                    try keychain.write(newRefresh, for: .refreshToken)
                 }
                 let tokens = Self.tokens(from: response, userJSON: userJSON, now: clock())
                 publish(tokens: tokens)

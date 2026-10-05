@@ -60,9 +60,9 @@ final class NativeSessionTests: XCTestCase {
             self.log = log
         }
         func read(_ key: KeychainKey) throws -> String? { try inner.read(key) }
-        func write(_ value: String, at key: KeychainKey) throws {
+        func write(_ value: String, for key: KeychainKey) throws {
             log.record("llavero:\(value)")
-            try inner.write(value, at: key)
+            try inner.write(value, for: key)
         }
         func delete(_ key: KeychainKey) throws { try inner.delete(key) }
     }

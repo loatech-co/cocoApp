@@ -12,7 +12,7 @@ protocol KeychainStore: Sendable {
     func read(_ key: KeychainKey) throws -> String?
     /// En el sistema: `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`,
     /// servicio `co.loatech.coco`.
-    func write(_ value: String, at key: KeychainKey) throws
+    func write(_ value: String, for key: KeychainKey) throws
     func delete(_ key: KeychainKey) throws
 }
 
@@ -43,7 +43,7 @@ final class InMemoryKeychain: KeychainStore, @unchecked Sendable {
         return lock.withLock { _values[key] }
     }
 
-    func write(_ value: String, at key: KeychainKey) throws {
+    func write(_ value: String, for key: KeychainKey) throws {
         if let failure { throw failure }
         lock.withLock {
             _values[key] = value

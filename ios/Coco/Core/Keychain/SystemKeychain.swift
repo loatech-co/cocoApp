@@ -37,7 +37,7 @@ struct SystemKeychain: KeychainStore {
         }
     }
 
-    func write(_ value: String, at key: KeychainKey) throws {
+    func write(_ value: String, for key: KeychainKey) throws {
         let data = Data(value.utf8)
         // Primero actualizar: es el caso corriente (cada renovación rota el
         // refresh). Solo si no existe se añade.
