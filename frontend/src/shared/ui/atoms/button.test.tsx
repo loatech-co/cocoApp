@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Button, buttonVariants } from './button';
 
@@ -120,5 +120,61 @@ describe('El botón mide lo mismo con cualquier variante', () => {
       alturas(getByText('Aplicar').className),
     );
     expect(radios(getByText('Cancelar').className)).toEqual(radios(getByText('Aplicar').className));
+  });
+});
+
+describe('Button', () => {
+  afterEach(cleanup);
+
+  it('is a button named by its text that reports a click', () => {
+    const onClick = vi.fn();
+    render(<Button onClick={onClick}>Guardar</Button>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('takes its name from aria-label when it only shows an icon', () => {
+    render(
+      <Button size="sm-icon" aria-label="Cerrar">
+        <svg aria-hidden="true" />
+      </Button>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Cerrar' })).toBeTruthy();
+  });
+
+  it('does not report clicks while disabled', () => {
+    const onClick = vi.fn();
+    render(
+      <Button disabled onClick={onClick}>
+        Guardar
+      </Button>,
+    );
+
+    const button = screen.getByRole<HTMLButtonElement>('button', { name: 'Guardar' });
+    fireEvent.click(button);
+
+    expect(button.disabled).toBe(true);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('never draws a focus ring: a button holds nothing to point at', () => {
+    for (const variant of VARIANTES) {
+      expect(buttonVariants({ variant }), variant).not.toMatch(/focus-visible:ring/);
+    }
+  });
+
+  it('lends its look to the child it wraps, without adding a button', () => {
+    render(
+      <Button asChild variant="outline">
+        <a href="/perfil">Perfil</a>
+      </Button>,
+    );
+
+    const link = screen.getByRole('link', { name: 'Perfil' });
+    expect(link.className).toBe(buttonVariants({ variant: 'outline' }));
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });

@@ -1,8 +1,45 @@
+// @vitest-environment jsdom
+import { cleanup, render, screen } from '@testing-library/react';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { afterEach, describe, expect, it } from 'vitest';
 
-import { TITULO_DE_PAGINA } from './cabecera-de-pagina';
+import { CabeceraDePagina, TITULO_DE_PAGINA } from './cabecera-de-pagina';
+
+// This file stays `.ts` because CLAUDE.md names it by path; the render tests
+// below build their elements with `createElement` for that reason.
+describe('CabeceraDePagina', () => {
+  afterEach(cleanup);
+
+  it('renders the one level-1 heading of the screen, inside a banner', () => {
+    render(
+      createElement(CabeceraDePagina, {
+        titulo: 'Movimientos',
+        ayuda: 'Lo que entró y salió.',
+        junto: createElement('span', null, 'Beta'),
+        acciones: createElement('button', { type: 'button' }, 'Registrar'),
+      }),
+    );
+
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1, name: 'Movimientos' })).toBeTruthy();
+    expect(screen.getByRole('banner').textContent).toContain('Lo que entró y salió.');
+    expect(screen.getByRole('button', { name: 'Registrar' })).toBeTruthy();
+    expect(screen.getByText('Beta').parentElement).toBe(
+      screen.getByRole('heading', { level: 1 }).parentElement,
+    );
+  });
+
+  it('leaves the help line out when there is none, and keeps the rule', () => {
+    render(createElement(CabeceraDePagina, { titulo: 'Perfil', alineado: 'abajo' }));
+
+    const banner = screen.getByRole('banner');
+    expect(banner.querySelector('p')).toBeNull();
+    expect(banner.className).toContain('border-b');
+    expect(banner.className).toContain('items-end');
+  });
+});
 
 /**
  * La cabecera de una pantalla se dibuja en un solo sitio.
