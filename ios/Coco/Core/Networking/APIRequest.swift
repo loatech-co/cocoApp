@@ -4,19 +4,21 @@ import Foundation
 /// distingue de las demás y nada más.
 struct APIRequest: Sendable {
     var method: String
-    /// Relativa a `/api/v1`: "/auth/login".
+    /// Relativa a `/api/v2`: "/auth/login".
     var path: String
+    /// La consulta, aparte de la ruta: `appending(path:)` escaparía el `?`.
+    var query: [URLQueryItem] = []
     var jsonBody: Data?
     var headers: [String: String] = [:]
     /// Solo `/auth/login`, `/auth/refresh` y `/auth/logout` llevan
-    /// `X-Coco-Cliente: nativo`; es lo que hace que el refresh viaje en el
+    /// `X-Coco-Client: native`; es lo que hace que el refresh viaje en el
     /// cuerpo y no en una cookie.
     var nativeClient: Bool = false
     var timeout: Duration = .seconds(15)
 }
 
 struct MultipartPart: Sendable {
-    /// "archivos" (`CONTRATO_DE_SOPORTES.field`).
+    /// "files": el campo multipart de `/transactions/:id/receipts`.
     let fieldName: String
     let fileName: String
     let mime: String
@@ -25,13 +27,15 @@ struct MultipartPart: Sendable {
 
 /// Construye peticiones. Puro: se prueba sin transporte.
 enum RequestBuilder {
-    static let nativeClientHeader = "X-Coco-Cliente"
-    static let nativeClient = "nativo"
-    static let attachmentsField = "archivos"
+    static let nativeClientHeader = "X-Coco-Client"
+    static let nativeClient = "native"
+    static let attachmentsField = "files"
 
     static func urlRequest(_ p: APIRequest, base: URL, token: String?, userAgent: String) -> URLRequest {
         let path = p.path.hasPrefix("/") ? String(p.path.dropFirst()) : p.path
-        var r = URLRequest(url: base.appending(path: path))
+        var url = base.appending(path: path)
+        if !p.query.isEmpty { url.append(queryItems: p.query) }
+        var r = URLRequest(url: url)
         r.httpMethod = p.method
         r.timeoutInterval = TimeInterval(p.timeout.components.seconds)
         r.setValue(userAgent, forHTTPHeaderField: "User-Agent")
@@ -58,13 +62,13 @@ enum RequestBuilder {
 
     static func refresh(refreshToken: String) -> APIRequest {
         APIRequest(
-            method: "POST", path: "/auth/refresh", jsonBody: json(["refresh_token": refreshToken]),
+            method: "POST", path: "/auth/refresh", jsonBody: json(["refreshToken": refreshToken]),
             nativeClient: true)
     }
 
     static func logout(refreshToken: String) -> APIRequest {
         APIRequest(
-            method: "POST", path: "/auth/logout", jsonBody: json(["refresh_token": refreshToken]), nativeClient: true
+            method: "POST", path: "/auth/logout", jsonBody: json(["refreshToken": refreshToken]), nativeClient: true
         )
     }
 
@@ -73,11 +77,27 @@ enum RequestBuilder {
     }
 
     static func interpret(_ c: CaptureBody) -> APIRequest {
-        APIRequest(method: "POST", path: "/transactions/interpret", jsonBody: try? jsonEncoder.encode(c))
+        APIRequest(
+            method: "POST", path: "/transactions/interpret",
+            jsonBody: try? jsonEncoder.encode(InterpretRequest(body: c))
+        )
     }
 
-    static func categories() -> APIRequest {
-        APIRequest(method: "GET", path: "/categories")
+    /// El tope de la v2 por página. El árbol se pagina por centros de costos,
+    /// así que casi siempre cabe en una.
+    static let maxPerPage = 200
+
+    /// Una página del árbol: `data` son centros de costos con sus hijos.
+    static func categories(page: Int) -> APIRequest {
+        APIRequest(
+            method: "GET", path: "/categories",
+            query: [
+                URLQueryItem(name: "page", value: "\(page)"), URLQueryItem(name: "perPage", value: "\(maxPerPage)"),
+            ])
+    }
+
+    static func receiptsPath(transactionId: Int) -> String {
+        "/transactions/\(transactionId)/receipts"
     }
 
     /// `multipart/form-data` armado a mano: URLSession no lo hace.

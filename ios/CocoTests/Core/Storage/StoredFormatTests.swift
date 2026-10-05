@@ -2,10 +2,11 @@ import XCTest
 
 @testable import Coco
 
-/// Las claves con las que se escriben en disco la cola y el árbol. Son las
-/// sintetizadas —los nombres de las propiedades, en inglés— salvo lo que va
-/// DENTRO y es contrato con la API: el `body` de una captura (`CaptureBody`)
-/// y cada nodo del árbol (`TreeNode`), que fija `APIKeysTests`.
+/// Las claves con las que se escriben en disco la cola y el árbol. La cola usa
+/// las sintetizadas —los nombres de las propiedades, en inglés—, `body`
+/// incluido: no depende del contrato con la API, que se traduce al enviar.
+/// El árbol es una copia del servidor y guarda las claves de `TreeNode`, que
+/// fija `APIKeysTests`.
 ///
 /// Si un renombre del código cambia una clave, una captura que ya estaba en la
 /// cola deja de leerse al actualizar la app. Las cadenas de aquí son el
@@ -41,7 +42,7 @@ final class StoredFormatTests: XCTestCase {
 
     func testThePendingCaptureKeepsItsKeysInEveryPhase() throws {
         let base =
-            #"{"attempts":2,"body":{"category_id":3,"comercio":"c","fecha":"2026-01-02","monto":"1","nombre_de_archivo":"f.jpg","nota":"n","periodo":"2026-01","texto":"t"},"createdAt":0,"id":"00000000-0000-0000-0000-000000000001","lastError":"e","nextAttempt":50,"phase":PHASE,"photoPath":"Photos/x.jpg","source":"ios_photo","textResult":{"duplicate":false,"finishedAt":100,"merged":true,"needsReview":true,"summary":"r","transactionId":9}}"#
+            #"{"attempts":2,"body":{"amount":"1","categoryId":3,"date":"2026-01-02","fileName":"f.jpg","merchant":"c","note":"n","period":"2026-01","text":"t"},"createdAt":0,"id":"00000000-0000-0000-0000-000000000001","lastError":"e","nextAttempt":50,"phase":PHASE,"photoPath":"Photos/x.jpg","source":"ios_photo","textResult":{"duplicate":false,"finishedAt":100,"merged":true,"needsReview":true,"summary":"r","transactionId":9}}"#
         let result =
             #"{"duplicate":false,"finishedAt":100,"merged":true,"needsReview":true,"summary":"r","transactionId":9}"#
         let phases: [(PendingCapture.Phase, String)] = [
@@ -66,7 +67,7 @@ final class StoredFormatTests: XCTestCase {
             downloadedAt: Date(timeIntervalSinceReferenceDate: 7))
         try roundTrip(
             tree,
-            #"{"downloadedAt":7,"roots":[{"children":[{"estatico":false,"id":2,"is_archived":false,"name":"B","palabras_clave":[],"parent_id":1}],"estatico":true,"id":1,"is_archived":true,"name":"A","palabras_clave":["k"]}]}"#
+            #"{"downloadedAt":7,"roots":[{"children":[{"id":2,"isArchived":false,"isStatic":false,"keywords":[],"name":"B","parentId":1}],"id":1,"isArchived":true,"isStatic":true,"keywords":["k"],"name":"A"}]}"#
         )
     }
 

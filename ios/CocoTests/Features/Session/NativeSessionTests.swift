@@ -6,11 +6,11 @@ final class NativeSessionTests: XCTestCase {
     // El `user` tal cual lo manda la API, con claves en un orden que no es el
     // alfabético: si la sesión lo reescribiera, se notaría.
     private static let userJSON =
-        #"{"id":7,"email":"ana@coco.co","display_name":null,"role":"owner","status":"active","created_at":"2026-01-01T00:00:00Z"}"#
+        #"{"id":7,"email":"ana@coco.co","displayName":null,"role":"owner","status":"active","createdAt":"2026-01-01T00:00:00Z"}"#
     private static func sessionJSON(access: String, refresh: String?, expiresIn: Int = 3600) -> String {
-        let refreshPart = refresh.map { #","refresh_token":"\#($0)""# } ?? ""
+        let refreshPart = refresh.map { #","refreshToken":"\#($0)""# } ?? ""
         return
-            #"{"data":{"access_token":"\#(access)","expires_in":\#(expiresIn),"user":\#(userJSON)\#(refreshPart)},"meta":{}}"#
+            #"{"data":{"accessToken":"\#(access)","expiresIn":\#(expiresIn),"user":\#(userJSON)\#(refreshPart)},"meta":{}}"#
     }
     private static let profile = PublicProfile(
         id: 7, email: "ana@coco.co", displayName: nil, role: "owner", status: "active",
@@ -108,7 +108,7 @@ final class NativeSessionTests: XCTestCase {
             return seen
         }
         XCTAssertEqual(tokens, Array(repeating: "a1", count: 10))
-        XCTAssertEqual(paths(a.transport), ["/api/v1/auth/refresh"])
+        XCTAssertEqual(paths(a.transport), ["/api/v2/auth/refresh"])
     }
 
     func testTheNewRefreshIsWrittenToTheKeychainBeforePublishingTheAccess() async throws {
@@ -128,8 +128,8 @@ final class NativeSessionTests: XCTestCase {
         let a = harness(replies: [.http(200, Self.sessionJSON(access: "a1", refresh: "r1"))])
         _ = try await a.session.validAccessToken()
         let r = try XCTUnwrap(a.transport.received.first)
-        XCTAssertEqual(r.value(forHTTPHeaderField: "X-Coco-Cliente"), "nativo")
-        XCTAssertEqual(body(r), #"{"refresh_token":"r0"}"#)
+        XCTAssertEqual(r.value(forHTTPHeaderField: "X-Coco-Client"), "native")
+        XCTAssertEqual(body(r), #"{"refreshToken":"r0"}"#)
         XCTAssertNil(r.value(forHTTPHeaderField: "Authorization"))
     }
 
@@ -156,8 +156,8 @@ final class NativeSessionTests: XCTestCase {
         } catch {
             XCTAssertEqual(error as? SessionError, .offline)
         }
-        XCTAssertEqual(paths(a.transport), ["/api/v1/auth/refresh", "/api/v1/auth/refresh"])
-        XCTAssertEqual(a.transport.received.map(body), [#"{"refresh_token":"r0"}"#, #"{"refresh_token":"r0"}"#])
+        XCTAssertEqual(paths(a.transport), ["/api/v2/auth/refresh", "/api/v2/auth/refresh"])
+        XCTAssertEqual(a.transport.received.map(body), [#"{"refreshToken":"r0"}"#, #"{"refreshToken":"r0"}"#])
         XCTAssertEqual(a.keychain.values[.refreshToken], "r0", "un fallo de red nunca borra el Keychain")
         let state = await a.session.state
         XCTAssertEqual(state, .offline(last: nil))
@@ -209,8 +209,8 @@ final class NativeSessionTests: XCTestCase {
         let profile = try await a.session.signIn(email: "ana@coco.co", password: "secreta")
         XCTAssertEqual(profile, Self.profile)
         let r = try XCTUnwrap(a.transport.received.first)
-        XCTAssertEqual(r.url?.path(), "/api/v1/auth/login")
-        XCTAssertEqual(r.value(forHTTPHeaderField: "X-Coco-Cliente"), "nativo")
+        XCTAssertEqual(r.url?.path(), "/api/v2/auth/login")
+        XCTAssertEqual(r.value(forHTTPHeaderField: "X-Coco-Client"), "native")
         XCTAssertEqual(body(r), #"{"email":"ana@coco.co","password":"secreta"}"#)
         XCTAssertEqual(a.keychain.values[.refreshToken], "r1")
         XCTAssertEqual(a.keychain.writes.map(\.1), ["r1"])
@@ -240,9 +240,9 @@ final class NativeSessionTests: XCTestCase {
         let base = URL(string: "https://api.coco.invalid") ?? URL(fileURLWithPath: "/")
         let api = APIClient(
             configuration: APIConfiguration(base: base), transport: a.transport, version: "0.1.0")
-        let _: [TreeNode] = try await api.send(RequestBuilder.categories(), token: "a1")
+        let _: [TreeNode] = try await api.send(RequestBuilder.categories(page: 1), token: "a1")
         let r = try XCTUnwrap(a.transport.received.first)
-        XCTAssertNil(r.value(forHTTPHeaderField: "X-Coco-Cliente"))
+        XCTAssertNil(r.value(forHTTPHeaderField: "X-Coco-Client"))
         XCTAssertEqual(r.value(forHTTPHeaderField: "Authorization"), "Bearer a1")
     }
 
@@ -260,7 +260,10 @@ final class NativeSessionTests: XCTestCase {
         let dict = try s.asDictionary()
         XCTAssertNil(dict["refresh_token"])
         XCTAssertEqual(Set(dict.keys), ["access_token", "expires_in", "user"])
-        XCTAssertEqual((dict["user"] as? [String: Any])?["created_at"] as? String, "2026-01-01T00:00:00Z")
+        // La web sigue en la v1: el perfil le llega con SUS claves.
+        let user = try XCTUnwrap(dict["user"] as? [String: Any])
+        XCTAssertEqual(Set(user.keys), ["id", "email", "display_name", "role", "status", "created_at"])
+        XCTAssertEqual(user["created_at"] as? String, "2026-01-01T00:00:00Z")
         XCTAssertEqual(a.transport.received.count, 1)
     }
 
@@ -280,7 +283,7 @@ final class NativeSessionTests: XCTestCase {
         let newRefresh = try await a.session.validAccessToken()
         XCTAssertEqual(newRefresh, "a2")
         XCTAssertEqual(a.transport.received.count, 2)
-        XCTAssertEqual(body(a.transport.received[1]), #"{"refresh_token":"r1"}"#)
+        XCTAssertEqual(body(a.transport.received[1]), #"{"refreshToken":"r1"}"#)
     }
 
     func testRefreshNowRefreshesEvenIfTheTokenLooksValid() async throws {
@@ -301,9 +304,9 @@ final class NativeSessionTests: XCTestCase {
         let a = harness(replies: [.failure(URLError(.notConnectedToInternet))])
         await a.session.signOut()
         let r = a.transport.received.first
-        XCTAssertEqual(r?.url?.path(), "/api/v1/auth/logout")
-        XCTAssertEqual(r?.value(forHTTPHeaderField: "X-Coco-Cliente"), "nativo")
-        XCTAssertEqual(r.map(body), #"{"refresh_token":"r0"}"#)
+        XCTAssertEqual(r?.url?.path(), "/api/v2/auth/logout")
+        XCTAssertEqual(r?.value(forHTTPHeaderField: "X-Coco-Client"), "native")
+        XCTAssertEqual(r.map(body), #"{"refreshToken":"r0"}"#)
         XCTAssertNil(a.keychain.values[.refreshToken])
         let state = await a.session.state
         XCTAssertEqual(state, .signedOut)

@@ -108,7 +108,7 @@ struct SettingsView: View {
     }
 
     /// `http(s)://host[:puerto]`, sin ruta ni consulta: la base a la que la
-    /// app añade `/api/v1`.
+    /// app añade `/api/v2`.
     static func validate(_ text: String) -> Validation {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return Validation(url: nil, reason: nil) }

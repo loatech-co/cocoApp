@@ -43,12 +43,12 @@ enum FormPrefill {
         if fields.conceptId == nil {
             let c = i.classification
             switch c.confidence {
-            case "alta":
+            case "high":
                 if let id = c.conceptId ?? c.categoryId {
                     output.conceptId = id
                     suggested = true
                 }
-            case "media":
+            case "medium":
                 candidates = c.candidates
             default:
                 break

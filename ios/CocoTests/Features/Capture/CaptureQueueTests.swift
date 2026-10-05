@@ -113,7 +113,7 @@ final class CaptureQueueTests: XCTestCase {
         let c = queue()
         let id = UUID()
         try await c.enqueue(body, source: .wallet, photo: nil, id: id)
-        // El doble contesta repetido:true cuando ya vio el external_ref.
+        // El doble contesta isDuplicate:true cuando ya vio el externalRef.
         _ = try await sender.capture(PendingCapture(id: id, source: .wallet, body: body).request)
         let summary = await c.process()
         XCTAssertEqual(summary.sent, 1)

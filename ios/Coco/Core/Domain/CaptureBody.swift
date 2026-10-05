@@ -1,7 +1,12 @@
 import Foundation
 
-/// Lo que la persona (o Atajos) aporta a una captura: `CapturaRequest` de @coco/types menos
-/// `source`, `external_ref` y `captured_at`, que los pone la cola.
+/// Lo que la persona (o Atajos) aporta a una captura, sin `source`,
+/// `externalRef` ni `capturedAt`, que los pone la cola.
+///
+/// Es un tipo de la app, no del contrato: se guarda en disco con sus claves
+/// sintetizadas y NUNCA se manda tal cual. Lo que viaja lo arman
+/// `CaptureRequest` e `InterpretRequest`, que escriben a mano las claves de la
+/// `/api/v2`; así un cambio de contrato no obliga a migrar la cola.
 struct CaptureBody: Codable, Equatable, Sendable {
     var text: String?
     var merchant: String?
@@ -11,20 +16,6 @@ struct CaptureBody: Codable, Equatable, Sendable {
     var fileName: String?
     var categoryId: Int?
     var note: String?
-
-    /// Claves del contrato `v1` con la API: así viaja a `/transactions/interpret`
-    /// y así se guarda dentro de cada captura de la cola. Pasan a inglés con la
-    /// `/api/v2`, no antes.
-    enum CodingKeys: String, CodingKey {
-        case text = "texto"
-        case merchant = "comercio"
-        case amount = "monto"
-        case date = "fecha"
-        case period = "periodo"
-        case note = "nota"
-        case fileName = "nombre_de_archivo"
-        case categoryId = "category_id"
-    }
 
     init(
         text: String? = nil, merchant: String? = nil, amount: String? = nil, date: String? = nil,
@@ -46,30 +37,21 @@ struct CaptureBody: Codable, Equatable, Sendable {
     }
 }
 
-/// Lo que viaja a `POST /transactions/capture`. El cuerpo se APLANA al
-/// codificar: la API recibe un solo objeto, no un `cuerpo` anidado.
+/// Lo que viaja a `POST /transactions/capture` (`CaptureInput` de la v2). El
+/// cuerpo se APLANA al codificar: la API recibe un solo objeto.
 struct CaptureRequest: Encodable, Equatable, Sendable {
     let source: CaptureSource
     let externalRef: String
     let capturedAt: String
     let body: CaptureBody
 
-    private enum FlatKey: String, CodingKey {
-        case source
-        case externalRef = "external_ref"
-        case capturedAt = "captured_at"
-        case text = "texto"
-        case merchant = "comercio"
-        case amount = "monto"
-        case date = "fecha"
-        case period = "periodo"
-        case note = "nota"
-        case fileName = "nombre_de_archivo"
-        case categoryId = "category_id"
+    private enum WireKey: String, CodingKey {
+        case source, externalRef, capturedAt
+        case text, merchant, amount, date, period, fileName, categoryId, note
     }
 
     func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: FlatKey.self)
+        var c = encoder.container(keyedBy: WireKey.self)
         try c.encode(source, forKey: .source)
         try c.encode(externalRef, forKey: .externalRef)
         try c.encode(capturedAt, forKey: .capturedAt)
@@ -79,8 +61,29 @@ struct CaptureRequest: Encodable, Equatable, Sendable {
         try c.encodeIfPresent(body.date, forKey: .date)
         try c.encodeIfPresent(body.period, forKey: .period)
         try c.encodeIfPresent(body.fileName, forKey: .fileName)
-        // El DTO lo pide como cadena numérica (`category_id?: string`).
+        // La v2 lo pide como cadena de dígitos (`categoryId: string`).
         try c.encodeIfPresent(body.categoryId.map(String.init), forKey: .categoryId)
         try c.encodeIfPresent(body.note, forKey: .note)
+    }
+}
+
+/// Lo que viaja a `POST /transactions/interpret` (`InterpretInput` de la v2).
+/// Solo lo que la API sabe leer: el concepto elegido y la nota son de la
+/// captura, no de la interpretación.
+struct InterpretRequest: Encodable, Equatable, Sendable {
+    let body: CaptureBody
+
+    private enum WireKey: String, CodingKey {
+        case text, merchant, amount, date, period, fileName
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: WireKey.self)
+        try c.encodeIfPresent(body.text, forKey: .text)
+        try c.encodeIfPresent(body.merchant, forKey: .merchant)
+        try c.encodeIfPresent(body.amount, forKey: .amount)
+        try c.encodeIfPresent(body.date, forKey: .date)
+        try c.encodeIfPresent(body.period, forKey: .period)
+        try c.encodeIfPresent(body.fileName, forKey: .fileName)
     }
 }

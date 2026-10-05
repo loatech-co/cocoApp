@@ -18,7 +18,7 @@ final class TreeSynchronizerTests: XCTestCase {
 
     private static let now = Date(timeIntervalSince1970: 1_800_000_000)
     private static let categoriesJSON =
-        #"{"data":[{"id":1,"name":"Costos fijos","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":true,"children":[{"id":10,"name":"Educación","parent_id":1,"palabras_clave":[],"is_archived":false,"estatico":false,"children":[{"id":100,"name":"Colegio","parent_id":10,"palabras_clave":["tuti"],"is_archived":false,"estatico":false,"children":null}]}]}],"meta":{}}"#
+        #"{"data":[{"id":1,"name":"Costos fijos","parentId":null,"keywords":[],"isArchived":false,"isStatic":true,"children":[{"id":10,"name":"Educación","parentId":1,"keywords":[],"isArchived":false,"isStatic":false,"children":[{"id":100,"name":"Colegio","parentId":10,"keywords":["tuti"],"isArchived":false,"isStatic":false,"children":null}]}]}],"meta":{"page":1,"perPage":200,"total":1}}"#
 
     private var file: URL = URL(fileURLWithPath: "/")
 
@@ -84,9 +84,11 @@ final class TreeSynchronizerTests: XCTestCase {
         let transport = FakeTransport([.http(200, Self.categoriesJSON)])
         let s = synchronizer(transport)
         await s.refreshIfNeeded()
-        XCTAssertEqual(transport.received.first?.url?.path(), "/api/v1/categories")
+        XCTAssertEqual(transport.received.first?.url?.path(), "/api/v2/categories")
         XCTAssertEqual(transport.received.first?.value(forHTTPHeaderField: "Authorization"), "Bearer a1")
-        XCTAssertNil(transport.received.first?.url?.query(), "sin include_archived: la API ya excluye lo archivado")
+        XCTAssertEqual(
+            transport.received.first?.url?.query(), "page=1&perPage=200",
+            "sin includeArchived: la API ya excluye lo archivado")
         let index = await s.index()
         XCTAssertEqual(index?.search("tuti").map(\.id), [100])
     }

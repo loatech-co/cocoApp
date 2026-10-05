@@ -17,7 +17,8 @@ struct APICaptureSender: CaptureSender {
         let part = MultipartPart(
             fieldName: RequestBuilder.attachmentsField, fileName: name, mime: "image/jpeg",
             data: jpeg)
-        return try await api.upload(parts: [part], to: "/transactions/\(transactionId)/soportes", token: token)
+        return try await api.upload(
+            parts: [part], to: RequestBuilder.receiptsPath(transactionId: transactionId), token: token)
     }
 
     private func validToken() async throws -> String {

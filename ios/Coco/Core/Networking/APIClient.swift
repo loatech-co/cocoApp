@@ -23,6 +23,26 @@ struct APIClient: Sendable {
         }
     }
 
+    /// Una lista paginada de la v2 entera: pide página tras página hasta
+    /// juntar `meta.total`. Una página vacía corta el bucle, por si el total
+    /// cambia mientras se baja.
+    func sendAllPages<T: Decodable>(_ page: (Int) -> APIRequest, token: String?) async throws -> [T] {
+        var items: [T] = []
+        var number = 1
+        while true {
+            let (data, _) = try await run(page(number), token: token)
+            let decoded: Page<T>
+            do {
+                decoded = try JSONDecoder().decode(Page<T>.self, from: data)
+            } catch {
+                throw APIError.unreadableResponse
+            }
+            items += decoded.data
+            if decoded.data.isEmpty || items.count >= decoded.meta.total { return items }
+            number += 1
+        }
+    }
+
     /// Para un 204: no intenta leer nada.
     func sendWithoutBody(_ p: APIRequest, token: String?) async throws {
         _ = try await run(p, token: token)
@@ -43,7 +63,7 @@ struct APIClient: Sendable {
 
     private func run(_ p: APIRequest, token: String?) async throws -> (Data, HTTPURLResponse) {
         let request = RequestBuilder.urlRequest(
-            p, base: configuration.apiV1, token: token, userAgent: userAgent)
+            p, base: configuration.apiV2, token: token, userAgent: userAgent)
         let data: Data
         let response: HTTPURLResponse
         do {

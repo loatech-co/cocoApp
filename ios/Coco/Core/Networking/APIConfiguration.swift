@@ -6,17 +6,17 @@ struct APIConfiguration: Sendable, Equatable {
     static let defaultsKey = "api-base-url"
     static let plistKey = "CocoAPIBaseURL"
 
-    /// Sin `/api/v1` y sin barra final.
+    /// Sin `/api/v2` y sin barra final.
     let base: URL
 
     init(base: URL) {
-        // Se quita la barra final para que `apiV1` nunca dé `//api/v1`.
+        // Se quita la barra final para que `apiV2` nunca dé `//api/v2`.
         var text = base.absoluteString
         while text.hasSuffix("/") { text.removeLast() }
         self.base = URL(string: text) ?? base
     }
 
-    var apiV1: URL { base.appending(path: "api/v1") }
+    var apiV2: URL { base.appending(path: "api/v2") }
 
     /// El override de UserDefaults manda; si no hay, el plist; si ni eso, la
     /// de desarrollo, para que la app nunca arranque sin destino.

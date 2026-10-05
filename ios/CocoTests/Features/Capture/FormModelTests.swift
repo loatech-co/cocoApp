@@ -30,7 +30,7 @@ final class FormModelTests: XCTestCase {
     ]
 
     private nonisolated static let interpretationJSON =
-        #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"clasificacion":{"certeza":"alta","fuente":"regla","concepto_id":200,"categoria_id":20,"nombre":"Mercado","candidatos":[],"motivo":"palabra clave"},"por_revisar":false}}"#
+        #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"classification":{"certainty":"high","source":"keywords","conceptId":200,"categoryId":20,"name":"Mercado","candidates":[],"reason":"palabra clave"},"needsReview":false}}"#
 
     private var transport = FakeTransport()
     private var capturer = CapturerDouble()
@@ -157,7 +157,7 @@ final class FormModelTests: XCTestCase {
         XCTAssertNotNil(m.photoJPEG)
         XCTAssertFalse(m.isReading)
         XCTAssertFalse(m.noNetwork)
-        XCTAssertEqual(transport.received.map { $0.url?.path }, ["/api/v1/transactions/interpret"])
+        XCTAssertEqual(transport.received.map { $0.url?.path }, ["/api/v2/transactions/interpret"])
         XCTAssertTrue(m.canConfirm)
     }
 
@@ -207,7 +207,7 @@ final class FormModelTests: XCTestCase {
 
     func testMediumConfidenceOpensSearchWithTheCandidates() async throws {
         let json =
-            #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"clasificacion":{"certeza":"media","fuente":null,"concepto_id":null,"categoria_id":null,"nombre":null,"candidatos":[{"id":200,"nombre":"Mercado","ruta":"Hogar › Alimentación › Mercado"},{"id":100,"nombre":"Colegio","ruta":"Costos fijos › Educación › Colegio"}],"motivo":""},"por_revisar":true}}"#
+            #"{"data":{"amount":"45000","date":"2026-10-03","merchant":"D1","description":null,"classification":{"certainty":"medium","source":null,"conceptId":null,"categoryId":null,"name":null,"candidates":[{"id":200,"name":"Mercado","path":"Hogar › Alimentación › Mercado"},{"id":100,"name":"Colegio","path":"Costos fijos › Educación › Colegio"}],"reason":""},"needsReview":true}}"#
         transport.reply(.http(200, json))
         let m = try model()
         await m.readPhoto(TestImage.square(10))

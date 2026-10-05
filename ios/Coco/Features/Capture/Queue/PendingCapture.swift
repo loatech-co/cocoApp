@@ -3,9 +3,9 @@ import Foundation
 /// Una captura en disco, esperando su turno. Es el dato del que hablan los
 /// protocolos `QueueStore` y `CaptureSender` (M4 añade la cola).
 struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
-    /// Es también el `external_ref`: la llave de la idempotencia.
+    /// Es también el `externalRef`: la llave de la idempotencia.
     let id: UUID
-    /// Es también el `captured_at`.
+    /// Es también el `capturedAt`.
     let createdAt: Date
     let source: CaptureSource
     var body: CaptureBody
@@ -28,8 +28,8 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
     }
 
     // La captura vive en disco con las claves sintetizadas (los nombres de las
-    // propiedades); `body` lleva dentro las claves de la API, porque es el
-    // mismo `CaptureBody` que viaja a `/transactions/interpret`. Lo vigila
+    // propiedades), `body` incluido: el formato es de la app y no del
+    // contrato, y se traduce al de la API al enviar (`request`). Lo vigila
     // `StoredFormatTests`.
 
     init(
@@ -58,7 +58,7 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
         }
     }
 
-    /// Lo que se manda a la API; el `captured_at` lleva zona (ISO 8601).
+    /// Lo que se manda a la API; el `capturedAt` lleva zona (ISO 8601).
     var request: CaptureRequest {
         CaptureRequest(
             source: source,

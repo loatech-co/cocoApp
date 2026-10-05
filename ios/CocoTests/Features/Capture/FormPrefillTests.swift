@@ -4,7 +4,7 @@ import XCTest
 
 final class FormPrefillTests: XCTestCase {
     private func interpretation(
-        amount: String? = "45000", date: String? = "2026-10-03", merchant: String? = "D1", confidence: String = "alta",
+        amount: String? = "45000", date: String? = "2026-10-03", merchant: String? = "D1", confidence: String = "high",
         conceptId: Int? = 100, candidates: [ProposedClassification.Candidate] = []
     ) -> Interpretation {
         Interpretation(
@@ -36,7 +36,7 @@ final class FormPrefillTests: XCTestCase {
             ProposedClassification.Candidate(id: 100, name: "Colegio", path: "Costos fijos › Educación › Colegio")
         ]
         let r = FormPrefill.apply(
-            interpretation(confidence: "media", conceptId: nil, candidates: candidates), to: FormFields())
+            interpretation(confidence: "medium", conceptId: nil, candidates: candidates), to: FormFields())
         XCTAssertNil(r.fields.conceptId)
         XCTAssertFalse(r.isConceptSuggested)
         XCTAssertEqual(r.candidates, candidates)

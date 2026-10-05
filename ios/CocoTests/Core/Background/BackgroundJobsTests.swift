@@ -69,7 +69,7 @@ final class BackgroundJobsTests: XCTestCase {
         let transport = FakeTransport([
             .http(
                 200,
-                #"{"data":[{"id":1,"name":"Hogar","parent_id":null,"palabras_clave":[],"is_archived":false,"estatico":false,"children":null}],"meta":{}}"#
+                #"{"data":[{"id":1,"name":"Hogar","parentId":null,"keywords":[],"isArchived":false,"isStatic":false,"children":null}],"meta":{"page":1,"perPage":200,"total":1}}"#
             )
         ])
         let base = try XCTUnwrap(URL(string: "https://api.coco.invalid"))
@@ -80,7 +80,7 @@ final class BackgroundJobsTests: XCTestCase {
         await BackgroundJobs.runRefresh(session: session, tree: tree)
 
         XCTAssertGreaterThanOrEqual(session.tokenReads, 1)
-        XCTAssertEqual(transport.received.map { $0.url?.path }, ["/api/v1/categories"])
+        XCTAssertEqual(transport.received.map { $0.url?.path }, ["/api/v2/categories"])
         let index = await tree.index()
         XCTAssertEqual(index?.entries.map(\.name), ["Hogar"])
     }

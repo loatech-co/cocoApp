@@ -83,7 +83,7 @@ final class DependenciesTests: XCTestCase {
         XCTAssertFalse(d.hasSession)
         XCTAssertNil(d.profile)
         XCTAssertEqual(
-            transport.received.filter { $0.url?.path.hasPrefix("/api/v1") == true }, [],
+            transport.received.filter { $0.url?.path.hasPrefix("/api/v2") == true }, [],
             "sin refresh no hay nada que renovar")
         await d.start()
         XCTAssertTrue(d.started, "arrancar dos veces no vuelve a hacer nada")
@@ -138,7 +138,7 @@ final class SettingsViewTests: XCTestCase {
         XCTAssertNil(SettingsView.validate("").url)
         XCTAssertNotNil(SettingsView.validate("localhost").reason)
         XCTAssertNotNil(SettingsView.validate("ftp://x.y").reason)
-        XCTAssertNotNil(SettingsView.validate("https://x.y/api/v1").reason, "la app añade /api/v1")
+        XCTAssertNotNil(SettingsView.validate("https://x.y/api/v2").reason, "la app añade /api/v2")
     }
 
     func testExpiryText() throws {

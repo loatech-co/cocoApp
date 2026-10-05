@@ -2,7 +2,7 @@ import XCTest
 
 @testable import Coco
 
-/// Fixtures con la forma exacta de la API (claves snake_case).
+/// Fixtures con la forma exacta de la `/api/v2` (`api/openapi.v2.json`).
 final class ContractsTests: XCTestCase {
     private func decode<T: Decodable>(_ kind: T.Type, _ json: String) throws -> T {
         try JSONDecoder().decode(Envelope<T>.self, from: Data(json.utf8)).data
@@ -10,8 +10,8 @@ final class ContractsTests: XCTestCase {
 
     func testNativeLogin() throws {
         let json = """
-            {"data":{"access_token":"eyJ.abc","expires_in":3600,"refresh_token":"r1",
-              "user":{"id":1,"email":"g@x.co","display_name":null,"role":"owner","status":"active","created_at":"2026-01-01T00:00:00.000Z"}},
+            {"data":{"accessToken":"eyJ.abc","expiresIn":3600,"refreshToken":"r1",
+              "user":{"id":1,"email":"g@x.co","displayName":null,"role":"admin","status":"active","createdAt":"2026-01-01T00:00:00.000Z"}},
              "meta":{}}
             """
         let s = try decode(SessionResponse.self, json)
@@ -25,19 +25,19 @@ final class ContractsTests: XCTestCase {
 
     func testWebLoginHasNoRefreshAndDoesNotBreak() throws {
         let json = """
-            {"data":{"access_token":"a","expires_in":900,
-              "user":{"id":1,"email":"g@x.co","display_name":"G","role":"owner","status":"active","created_at":"2026-01-01T00:00:00.000Z"}}}
+            {"data":{"accessToken":"a","expiresIn":900,
+              "user":{"id":1,"email":"g@x.co","displayName":"G","role":"user","status":"active","createdAt":"2026-01-01T00:00:00.000Z"}}}
             """
         XCTAssertNil(try decode(SessionResponse.self, json).refreshToken)
     }
 
     func testCapture() throws {
         let json = """
-            {"data":{"transaction":{"id":42,"uuid":"u","account_id":1,"date":"2026-10-03","period":"2026-10-01","amount":"45000.00","type":"expense",
-                "category_id":7,"description":null,"merchant":"Mercado","notes":null,"transfer_group_id":null,"transfer_direction":null,
-                "external_ref":"E1","status":"posted","source":"ios_manual","raw_text":null,"captured_at":"2026-10-03T20:00:00.000Z","por_revisar":false,"tags":[],"splits":[],"created_at":"2026-10-03T20:00:00.000Z"},
-              "clasificacion":{"certeza":"alta","fuente":null,"concepto_id":7,"categoria_id":3,"nombre":"Mercado","candidatos":[],"motivo":"Lo eligió la persona."},
-              "resumen":"Registrado: $45.000 · Mercado","repetido":false,"fusionado":false}}
+            {"data":{"transaction":{"id":42,"uuid":"u","accountId":1,"date":"2026-10-03","period":"2026-10-01","amount":"45000.00","currency":"COP","type":"expense",
+                "categoryId":7,"description":null,"merchant":"Mercado","notes":null,"transferGroupId":null,"transferDirection":null,
+                "externalRef":"E1","status":"cleared","source":"ios_manual","rawText":null,"capturedAt":"2026-10-03T20:00:00.000Z","needsReview":false,"tags":[],"splits":[],"createdAt":"2026-10-03T20:00:00.000Z"},
+              "classification":{"certainty":"high","source":null,"conceptId":7,"categoryId":3,"name":"Mercado","candidates":[],"reason":"Lo eligió la persona."},
+              "summary":"Registrado: $45.000 · Mercado","isDuplicate":false,"isMerged":false},"meta":{}}
             """
         let c = try decode(CaptureResponse.self, json)
         XCTAssertEqual(c.transaction.id, 42)
@@ -49,9 +49,9 @@ final class ContractsTests: XCTestCase {
     func testInterpretationWithCandidates() throws {
         let json = """
             {"data":{"amount":"12000","date":null,"merchant":"Koba","description":null,
-              "clasificacion":{"certeza":"media","fuente":"palabras-clave","concepto_id":null,"categoria_id":3,"nombre":"Transporte",
-                "candidatos":[{"id":9,"nombre":"Taxi","ruta":"Transporte › Taxi"}],"motivo":"Coincide una palabra clave."},
-              "por_revisar":true}}
+              "classification":{"certainty":"medium","source":"keywords","conceptId":null,"categoryId":3,"name":"Transporte",
+                "candidates":[{"id":9,"name":"Taxi","path":"Transporte › Taxi"}],"reason":"Coincide una palabra clave."},
+              "needsReview":true}}
             """
         let i = try decode(Interpretation.self, json)
         XCTAssertEqual(i.amount, "12000")
@@ -62,8 +62,9 @@ final class ContractsTests: XCTestCase {
 
     func testTreeWithChildrenAndMissingOptionalKey() throws {
         let json = """
-            {"data":[{"id":1,"name":"Hogar","parent_id":null,"kind":"expense","is_archived":false,"estatico":false,
-              "children":[{"id":2,"name":"Aseo","parent_id":1,"palabras_clave":["jabón"],"is_archived":false,"estatico":false,"children":null}]}]}
+            {"data":[{"id":1,"name":"Hogar","parentId":null,"kind":"expense","isArchived":false,"isStatic":false,
+              "children":[{"id":2,"name":"Aseo","parentId":1,"keywords":["jabón"],"isArchived":false,"isStatic":false,"children":[]}]}],
+             "meta":{"page":1,"perPage":50,"total":1}}
             """
         let roots = try decode([TreeNode].self, json)
         XCTAssertEqual(roots.first?.keywords, [])
@@ -84,11 +85,11 @@ final class ContractsTests: XCTestCase {
         let data = try JSONEncoder().encode(r)
         let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(object["source"] as? String, "ios_manual")
-        XCTAssertEqual(object["category_id"] as? String, "7")
-        XCTAssertEqual(object["monto"] as? String, "45000")
-        XCTAssertNil(object["cuerpo"])
-        XCTAssertNil(object["texto"])
-        XCTAssertEqual(Set(object.keys), ["source", "external_ref", "captured_at", "monto", "category_id", "nota"])
+        XCTAssertEqual(object["categoryId"] as? String, "7")
+        XCTAssertEqual(object["amount"] as? String, "45000")
+        XCTAssertNil(object["body"])
+        XCTAssertNil(object["text"])
+        XCTAssertEqual(Set(object.keys), ["source", "externalRef", "capturedAt", "amount", "categoryId", "note"])
     }
 
     func testIsSendable() {
@@ -99,7 +100,8 @@ final class ContractsTests: XCTestCase {
         XCTAssertTrue(CaptureBody(amount: "1", categoryId: 2).isSendable)
     }
 
-    /// Lee packages/types/src/index.ts y falla si la marca se separa.
+    /// Lee packages/types/src/index.ts y api/openapi.v2.json y falla si la
+    /// marca, la cabecera nativa o el campo de los soportes se separan.
     func testBrandMatchesCocoTypes() throws {
         // ios/CocoTests/Core/Networking/<este archivo> → la raíz del repo.
         let root = (0..<5).reduce(URL(fileURLWithPath: #filePath)) { url, _ in url.deletingLastPathComponent() }
@@ -111,10 +113,12 @@ final class ContractsTests: XCTestCase {
         let match = try XCTUnwrap(regex.firstMatch(in: source, range: NSRange(source.startIndex..., in: source)))
         let value = try XCTUnwrap(Range(match.range(at: 1), in: source)).map { String(source[$0]) }
         XCTAssertEqual(value, Brand.userAgentApp)
-        XCTAssertTrue(
-            source.contains(
-                "export const CABECERA_CLIENTE_NATIVO = '\(RequestBuilder.nativeClientHeader.lowercased())'"
-            ))
-        XCTAssertTrue(source.contains("campo: '\(RequestBuilder.attachmentsField)'"))
+        let spec = root.appending(path: "api/openapi.v2.json")
+        guard let openAPI = try? String(contentsOf: spec, encoding: .utf8) else {
+            throw XCTSkip("No está el contrato v2 al lado: \(spec.path)")
+        }
+        XCTAssertTrue(openAPI.contains(#""name": "\#(RequestBuilder.nativeClientHeader.lowercased())""#))
+        XCTAssertTrue(openAPI.contains(#""enum": ["\#(RequestBuilder.nativeClient)"]"#))
+        XCTAssertTrue(openAPI.contains(#""required": ["\#(RequestBuilder.attachmentsField)"]"#))
     }
 }

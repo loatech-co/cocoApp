@@ -744,7 +744,7 @@
     {
       "key": "settings.apiUrl.error.path",
       "source": "ios/Coco/Features/Settings/SettingsView.swift:128",
-      "value": "Solo el servidor, sin ruta: la app añade /api/v1."
+      "value": "Solo el servidor, sin ruta: la app añade /api/v2."
     },
     {
       "key": "settings.expiry.unavailable",

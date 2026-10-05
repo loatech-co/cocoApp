@@ -1,11 +1,11 @@
 import Foundation
 
-// Espejo de packages/types/src/index.ts. Las propiedades van en camelCase y
-// cada clave de la API se escribe en su `CodingKeys`, a la vista: una
-// diferencia con la API se ve ahí, no en un `keyDecodingStrategy` que la
+// Espejo de los esquemas de `api/openapi.v2.json`. Cada clave de la API se
+// escribe en su `CodingKeys`, a la vista, aunque coincida con la propiedad:
+// una diferencia con la API se ve ahí, no en un `keyDecodingStrategy` que la
 // esconda. `APIKeysTests` falla si una clave cambia.
 
-/// Lo único que la API cuenta de un usuario (`PerfilPublico` de @coco/types).
+/// Lo único que la API cuenta de un usuario (`Profile` de la v2).
 struct PublicProfile: Codable, Equatable, Sendable {
     let id: Int
     let email: String
@@ -15,14 +15,12 @@ struct PublicProfile: Codable, Equatable, Sendable {
     let createdAt: String
 
     enum CodingKeys: String, CodingKey {
-        case id, email, role, status
-        case displayName = "display_name"
-        case createdAt = "created_at"
+        case id, email, role, status, displayName, createdAt
     }
 }
 
-/// Respuesta de `/auth/login` y `/auth/refresh` (`SesionResponse`). El
-/// `refresh_token` solo llega con la cabecera de cliente nativo.
+/// Respuesta de `/auth/login` y `/auth/refresh` (`Session` de la v2). El
+/// `refreshToken` solo llega con la cabecera de cliente nativo.
 struct SessionResponse: Decodable, Sendable {
     let accessToken: String
     let expiresIn: Int
@@ -30,13 +28,12 @@ struct SessionResponse: Decodable, Sendable {
     let refreshToken: String?
 
     enum CodingKeys: String, CodingKey {
-        case user
-        case accessToken = "access_token"
-        case expiresIn = "expires_in"
-        case refreshToken = "refresh_token"
+        case user, accessToken, expiresIn, refreshToken
     }
 }
 
+/// `Classification` de la v2. `confidence` llega como `high`, `medium` o
+/// `none`; se guarda como cadena para que un valor nuevo no tumbe la lectura.
 struct ProposedClassification: Codable, Equatable, Sendable {
     let confidence: String
     let source: String?
@@ -47,13 +44,8 @@ struct ProposedClassification: Codable, Equatable, Sendable {
     let reason: String
 
     enum CodingKeys: String, CodingKey {
-        case confidence = "certeza"
-        case source = "fuente"
-        case name = "nombre"
-        case candidates = "candidatos"
-        case reason = "motivo"
-        case conceptId = "concepto_id"
-        case categoryId = "categoria_id"
+        case source, name, candidates, reason, conceptId, categoryId
+        case confidence = "certainty"
     }
 
     struct Candidate: Codable, Equatable, Sendable {
@@ -73,9 +65,7 @@ struct Interpretation: Codable, Equatable, Sendable {
     let needsReview: Bool
 
     enum CodingKeys: String, CodingKey {
-        case amount, date, merchant, description
-        case classification = "clasificacion"
-        case needsReview = "por_revisar"
+        case amount, date, merchant, description, classification, needsReview
     }
 }
 
@@ -91,13 +81,11 @@ struct TransactionSummary: Codable, Equatable, Sendable {
     let needsReview: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id, date, amount, description, merchant, source
-        case categoryId = "category_id"
-        case needsReview = "por_revisar"
+        case id, date, amount, description, merchant, source, categoryId, needsReview
     }
 }
 
-/// Lo que devuelve `POST /transactions/capture` (`Captura` de @coco/types).
+/// Lo que devuelve `POST /transactions/capture` (`Capture` de la v2).
 struct CaptureResponse: Codable, Equatable, Sendable {
     let transaction: TransactionSummary
     let classification: ProposedClassification
@@ -106,15 +94,13 @@ struct CaptureResponse: Codable, Equatable, Sendable {
     let merged: Bool
 
     enum CodingKeys: String, CodingKey {
-        case transaction
-        case classification = "clasificacion"
-        case summary = "resumen"
-        case duplicate = "repetido"
-        case merged = "fusionado"
+        case transaction, classification, summary
+        case duplicate = "isDuplicate"
+        case merged = "isMerged"
     }
 }
 
-/// La ficha de un soporte, no el archivo (`Soporte` de @coco/types).
+/// La ficha de un soporte, no el archivo (`Receipt` de la v2).
 struct Attachment: Codable, Equatable, Sendable {
     let id: Int
     let order: Int
@@ -124,16 +110,16 @@ struct Attachment: Codable, Equatable, Sendable {
     let available: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case order = "orden"
-        case size = "tamano"
-        case available = "disponible"
-        case fileName = "nombre_archivo"
-        case mimeType = "mime_type"
+        case id, fileName, mimeType
+        case order = "position"
+        case size = "sizeBytes"
+        case available = "isAvailable"
     }
 }
 
-/// Un nodo de `GET /categories` con sus hijos (`Category` recortada).
+/// Un nodo de `GET /categories` con sus hijos (`CategoryNode` recortado). Se
+/// guarda en disco con estas mismas claves: es una copia del servidor, y si
+/// no se deja leer se vuelve a bajar.
 struct TreeNode: Codable, Equatable, Sendable {
     let id: Int
     let name: String
@@ -144,14 +130,10 @@ struct TreeNode: Codable, Equatable, Sendable {
     let children: [TreeNode]?
 
     enum CodingKeys: String, CodingKey {
-        case id, name, children
-        case isStatic = "estatico"
-        case parentId = "parent_id"
-        case keywords = "palabras_clave"
-        case isArchived = "is_archived"
+        case id, name, children, parentId, keywords, isArchived, isStatic
     }
 
-    // `palabras_clave` puede faltar en respuestas viejas: se toma vacío en vez
+    // `keywords` puede faltar en respuestas viejas: se toma vacío en vez
     // de tumbar el árbol entero.
     init(
         id: Int, name: String, parentId: Int?, keywords: [String] = [], isArchived: Bool = false,
@@ -192,7 +174,19 @@ struct Envelope<T: Decodable>: Decodable {
     let data: T
 }
 
-/// `TRANSACTION_SOURCES`, sin `web`: por ahí no entra nada desde el teléfono.
+/// Una página de una lista de la v2: `meta.{page, perPage, total}`.
+struct Page<T: Decodable>: Decodable {
+    struct Meta: Decodable {
+        let page: Int
+        let perPage: Int
+        let total: Int
+    }
+    let data: [T]
+    let meta: Meta
+}
+
+/// `source` de `CaptureInput`, sin `web`: por ahí no entra nada desde el
+/// teléfono. La cola guarda en disco estos mismos valores.
 enum CaptureSource: String, Codable, Sendable {
     case wallet
     case sms
@@ -203,8 +197,6 @@ enum CaptureSource: String, Codable, Sendable {
 /// Fuera del tipo para no anidar tres niveles (SwiftLint `nesting`).
 extension ProposedClassification.Candidate {
     enum CodingKeys: String, CodingKey {
-        case id
-        case name = "nombre"
-        case path = "ruta"
+        case id, name, path
     }
 }

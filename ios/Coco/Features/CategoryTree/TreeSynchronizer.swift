@@ -54,7 +54,7 @@ final actor TreeSynchronizer {
 
     private func download() async throws {
         let token = try await session.validAccessToken()
-        let roots: [TreeNode] = try await api.send(RequestBuilder.categories(), token: token)
+        let roots: [TreeNode] = try await api.sendAllPages(RequestBuilder.categories(page:), token: token)
         let newTree = SavedTree(roots: roots, downloadedAt: clock())
         // Si el disco falla el índice sirve igual en esta ejecución; la
         // siguiente vuelve a bajarlo.
