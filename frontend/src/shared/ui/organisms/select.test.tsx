@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { Tag } from 'lucide-react';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { Select } from './select';
 
@@ -74,5 +75,104 @@ describe('El desplegable de un Select', () => {
 
     const elegida = screen.getByRole('option', { name: /Cada año/ });
     expect(elegida.getAttribute('aria-selected')).toBe('true');
+  });
+});
+
+describe('Select', () => {
+  it('shows the label of the chosen value on its trigger', () => {
+    render(
+      <Select etiqueta="Periodicidad" valor="anual" opciones={OPCIONES} onCambiar={vi.fn()} />,
+    );
+
+    const trigger = screen.getByRole('button', { name: /Cada año/ });
+    expect(trigger.getAttribute('aria-haspopup')).toBe('listbox');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('reports the chosen option and closes', () => {
+    const onCambiar = vi.fn();
+    render(
+      <Select etiqueta="Periodicidad" valor="mensual" opciones={OPCIONES} onCambiar={onCambiar} />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Cada mes/ }));
+    fireEvent.click(screen.getByRole('option', { name: /Cada año/ }));
+
+    expect(onCambiar).toHaveBeenCalledWith('anual');
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('offers the empty choice when one is allowed, and reports it as an empty string', () => {
+    const onCambiar = vi.fn();
+    render(
+      <Select
+        etiqueta="Periodicidad"
+        valor=""
+        vacio="Sin periodicidad"
+        opciones={OPCIONES}
+        onCambiar={onCambiar}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Sin periodicidad/ }));
+    const empty = screen.getByRole('option', { name: /Sin periodicidad/ });
+    expect(empty.getAttribute('aria-selected')).toBe('true');
+
+    fireEvent.click(empty);
+
+    expect(onCambiar).toHaveBeenCalledWith('');
+  });
+
+  it('closes with Escape without choosing anything', () => {
+    const onCambiar = vi.fn();
+    render(
+      <Select etiqueta="Periodicidad" valor="mensual" opciones={OPCIONES} onCambiar={onCambiar} />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Cada mes/ }));
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(onCambiar).not.toHaveBeenCalled();
+  });
+
+  it('is not a button while disabled', () => {
+    render(
+      <Select
+        etiqueta="Periodicidad"
+        valor="mensual"
+        opciones={OPCIONES}
+        onCambiar={vi.fn()}
+        deshabilitado
+      />,
+    );
+
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByText('Cada mes').closest('[aria-disabled="true"]')).not.toBeNull();
+  });
+
+  it('is disabled when there is nothing to choose', () => {
+    render(<Select etiqueta="Periodicidad" valor="" opciones={[]} onCambiar={vi.fn()} />);
+
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByText('—')).toBeTruthy();
+  });
+
+  it('draws its informative icon and its actions inside the trigger', () => {
+    render(
+      <Select
+        etiqueta="Etiqueta"
+        tamano="sm"
+        valor="mensual"
+        opciones={OPCIONES}
+        onCambiar={vi.fn()}
+        icono={Tag}
+        acciones={[<span key="a">acción</span>, null]}
+      />,
+    );
+
+    const trigger = screen.getByRole('button', { name: /Cada mes/ });
+    expect(trigger.querySelector('[data-icono]')).not.toBeNull();
+    expect(trigger.textContent).toContain('acción');
   });
 });
