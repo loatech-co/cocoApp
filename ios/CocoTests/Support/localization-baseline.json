@@ -1,0 +1,885 @@
+{
+  "base": "951ecdd389715f5f21b700f02fdfa529d54e3fed",
+  "texts": [
+    {
+      "key": "tabs.home",
+      "source": "ios/Coco/App/RootView.swift:16",
+      "value": "Inicio"
+    },
+    {
+      "key": "tabs.register",
+      "source": "ios/Coco/App/RootView.swift:19",
+      "value": "Registrar"
+    },
+    {
+      "key": "tabs.captures",
+      "source": "ios/Coco/App/RootView.swift:22",
+      "value": "Capturas"
+    },
+    {
+      "key": "tabs.more",
+      "source": "ios/Coco/App/RootView.swift:26",
+      "value": "Más"
+    },
+    {
+      "key": "capture.amount.placeholder",
+      "source": "ios/Coco/Features/Capture/AmountField.swift:11",
+      "value": "45.000"
+    },
+    {
+      "key": "capture.amount.label",
+      "source": "ios/Coco/Features/Capture/AmountField.swift:14",
+      "value": "Monto"
+    },
+    {
+      "key": "capture.amount.unreadable",
+      "source": "ios/Coco/Features/Capture/AmountField.swift:22",
+      "value": "No se entiende el monto"
+    },
+    {
+      "key": "captures.empty.title",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:44",
+      "value": "Nada capturado todavía"
+    },
+    {
+      "key": "captures.empty.description",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:46",
+      "value": "Lo que anotes desde el teléfono aparece aquí, con red o sin ella."
+    },
+    {
+      "key": "captures.section.pending",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:49",
+      "value": "Pendientes de envío · %@"
+    },
+    {
+      "key": "captures.section.awaitingSession",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:50",
+      "value": "Esperando sesión"
+    },
+    {
+      "key": "captures.section.failed",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:51",
+      "value": "Con error"
+    },
+    {
+      "key": "captures.section.sent",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:52",
+      "value": "Enviadas en los últimos 30 días"
+    },
+    {
+      "key": "captures.automations",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:57",
+      "value": "Automatizaciones"
+    },
+    {
+      "key": "captures.title",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:61",
+      "value": "Capturas"
+    },
+    {
+      "key": "captures.new",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:67",
+      "value": "Nueva captura"
+    },
+    {
+      "key": "captures.row.discard",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:90",
+      "value": "Descartar"
+    },
+    {
+      "key": "common.retry",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:95",
+      "value": "Reintentar"
+    },
+    {
+      "key": "captures.row.fallbackTitle",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:138",
+      "value": "Captura"
+    },
+    {
+      "key": "captures.row.toSend",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:144",
+      "value": "%@ · se enviará cuando haya red"
+    },
+    {
+      "key": "captures.row.photoToUpload",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:145",
+      "value": "%@ · registrada, subiendo la foto"
+    },
+    {
+      "key": "captures.row.awaitingSession",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:146",
+      "value": "%@ · inicia sesión para enviarla"
+    },
+    {
+      "key": "captures.row.failed",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:147",
+      "value": "%1$@ · %2$@"
+    },
+    {
+      "key": "captures.row.needsReview",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift:148",
+      "value": "%@ · por revisar"
+    },
+    {
+      "key": "capture.concept.treeMissing",
+      "source": "ios/Coco/Features/Capture/ConceptSearchView.swift:23",
+      "value": "Los conceptos aún no se han descargado. Guarda igual: la captura queda por clasificar."
+    },
+    {
+      "key": "capture.concept.suggested",
+      "source": "ios/Coco/Features/Capture/ConceptSearchView.swift:30",
+      "value": "Propuestos por el recibo"
+    },
+    {
+      "key": "capture.concept.recent",
+      "source": "ios/Coco/Features/Capture/ConceptSearchView.swift:37",
+      "value": "Recientes"
+    },
+    {
+      "key": "capture.concept.results",
+      "source": "ios/Coco/Features/Capture/ConceptSearchView.swift:37",
+      "value": "Resultados"
+    },
+    {
+      "key": "capture.concept.searchPrompt",
+      "source": "ios/Coco/Features/Capture/ConceptSearchView.swift:45",
+      "value": "Nombre o palabra clave"
+    },
+    {
+      "key": "capture.concept.title",
+      "source": "ios/Coco/Features/Capture/ConceptSearchView.swift:49",
+      "value": "Concepto"
+    },
+    {
+      "key": "common.cancel",
+      "source": "ios/Coco/Features/Capture/ConceptSearchView.swift:53",
+      "value": "Cancelar"
+    },
+    {
+      "key": "capture.receipt.photoUnreadable",
+      "source": "ios/Coco/Features/Capture/FormModel.swift:120",
+      "value": "No se pudo leer la foto. Escribe los datos; la foto se adjuntará igual."
+    },
+    {
+      "key": "capture.receipt.textUnreadable",
+      "source": "ios/Coco/Features/Capture/FormModel.swift:127",
+      "value": "No se pudo leer el texto del recibo. Escribe los datos; la foto se adjuntará igual."
+    },
+    {
+      "key": "capture.receipt.signInToInterpret",
+      "source": "ios/Coco/Features/Capture/FormModel.swift:145",
+      "value": "Inicia sesión para que Coco interprete el recibo."
+    },
+    {
+      "key": "capture.receipt.notInterpreted",
+      "source": "ios/Coco/Features/Capture/FormModel.swift:152",
+      "value": "No se pudo interpretar el recibo. Revisa los datos antes de guardar."
+    },
+    {
+      "key": "queue.error.sessionExpired",
+      "source": "ios/Coco/Features/Capture/Queue/CaptureQueue.swift:215",
+      "value": "La sesión expiró. Vuelve a entrar."
+    },
+    {
+      "key": "queue.error.unreadableResponse",
+      "source": "ios/Coco/Features/Capture/Queue/CaptureQueue.swift:223",
+      "value": "La API contestó algo que no se entiende."
+    },
+    {
+      "key": "queue.error.noNetwork",
+      "source": "ios/Coco/Features/Capture/Queue/CaptureQueue.swift:246",
+      "value": "Sin conexión"
+    },
+    {
+      "key": "queue.error.timedOut",
+      "source": "ios/Coco/Features/Capture/Queue/CaptureQueue.swift:247",
+      "value": "La API tardó demasiado"
+    },
+    {
+      "key": "queue.error.server",
+      "source": "ios/Coco/Features/Capture/Queue/CaptureQueue.swift:248",
+      "value": "La API no pudo ahora (%@)"
+    },
+    {
+      "key": "queue.error.generic",
+      "source": "ios/Coco/Features/Capture/Queue/CaptureQueue.swift:249",
+      "value": "Error"
+    },
+    {
+      "key": "queue.error.noPhotoSpace",
+      "source": "ios/Coco/Features/Capture/Queue/QueuedCapturer.swift:18",
+      "value": "No hay espacio para más fotos pendientes. Captura sin foto o espera a que se envíen."
+    },
+    {
+      "key": "queue.error.notSaved",
+      "source": "ios/Coco/Features/Capture/Queue/QueuedCapturer.swift:22",
+      "value": "No se pudo guardar la captura en el teléfono."
+    },
+    {
+      "key": "capture.form.amount",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:29",
+      "value": "Monto"
+    },
+    {
+      "key": "capture.form.concept",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:35",
+      "value": "Concepto"
+    },
+    {
+      "key": "capture.form.date",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:39",
+      "value": "Fecha"
+    },
+    {
+      "key": "capture.form.merchant",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:41",
+      "value": "Comercio"
+    },
+    {
+      "key": "capture.form.note",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:43",
+      "value": "Nota (opcional)"
+    },
+    {
+      "key": "capture.form.details",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:46",
+      "value": "Detalles"
+    },
+    {
+      "key": "capture.form.receipt",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:52",
+      "value": "Recibo"
+    },
+    {
+      "key": "capture.form.title",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:62",
+      "value": "Nuevo gasto"
+    },
+    {
+      "key": "common.cancel",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:66",
+      "value": "Cancelar"
+    },
+    {
+      "key": "capture.form.save",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:69",
+      "value": "Guardar"
+    },
+    {
+      "key": "capture.form.chooseConcept",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:125",
+      "value": "Elegir concepto"
+    },
+    {
+      "key": "capture.form.removeConcept",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:135",
+      "value": "Quitar concepto"
+    },
+    {
+      "key": "capture.receipt.reading",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:151",
+      "value": "Leyendo el recibo…"
+    },
+    {
+      "key": "capture.receipt.offline",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:154",
+      "value": "Sin conexión: escribe los datos; la foto se adjuntará igual"
+    },
+    {
+      "key": "capture.photo.take",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:161",
+      "value": "Tomar foto"
+    },
+    {
+      "key": "capture.photo.choose",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:161",
+      "value": "Elegir foto"
+    },
+    {
+      "key": "capture.photo.change",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:161",
+      "value": "Cambiar foto"
+    },
+    {
+      "key": "capture.photo.remove",
+      "source": "ios/Coco/Features/Capture/QuickFormView.swift:165",
+      "value": "Quitar foto"
+    },
+    {
+      "key": "onboarding.wallet.step1.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:19",
+      "value": "Abre Atajos y crea una automatización"
+    },
+    {
+      "key": "onboarding.wallet.step1.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:20",
+      "value": "Pestaña Automatización → Nueva automatización → Transacción."
+    },
+    {
+      "key": "onboarding.wallet.step2.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:22",
+      "value": "Elige tus tarjetas de Wallet"
+    },
+    {
+      "key": "onboarding.wallet.step2.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:23",
+      "value": "Marca las tarjetas con las que pagas y deja «Cualquier comercio»."
+    },
+    {
+      "key": "onboarding.runAlone.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:25",
+      "value": "Que corra sola"
+    },
+    {
+      "key": "onboarding.runAlone.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:26",
+      "value": "Activa «Ejecutar de inmediato» y desactiva «Notificar al ejecutar»."
+    },
+    {
+      "key": "onboarding.wallet.step4.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:28",
+      "value": "Añade la acción «Registrar gasto de Wallet»"
+    },
+    {
+      "key": "onboarding.wallet.step4.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:29",
+      "value": "Conecta Comercio ← Comercio, Monto ← Monto, Tarjeta ← Tarjeta o pase, Nombre ← Nombre."
+    },
+    {
+      "key": "onboarding.message.step1.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:36",
+      "value": "Crea otra automatización"
+    },
+    {
+      "key": "onboarding.message.step1.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:37",
+      "value": "Pestaña Automatización → Nueva automatización → Mensaje."
+    },
+    {
+      "key": "onboarding.message.step2.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:39",
+      "value": "Filtra por remitente"
+    },
+    {
+      "key": "onboarding.message.step2.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:40",
+      "value": "«Remitente contiene» los números o nombres con los que te escribe el banco."
+    },
+    {
+      "key": "onboarding.runAlone.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:42",
+      "value": "Que corra sola"
+    },
+    {
+      "key": "onboarding.runAlone.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:43",
+      "value": "Activa «Ejecutar de inmediato» y desactiva «Notificar al ejecutar»."
+    },
+    {
+      "key": "onboarding.message.step4.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:45",
+      "value": "Añade la acción «Registrar gasto de SMS»"
+    },
+    {
+      "key": "onboarding.message.step4.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:46",
+      "value": "Conecta Texto ← Contenido del mensaje y Remitente ← Remitente."
+    },
+    {
+      "key": "onboarding.access.actionButton.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:52",
+      "value": "Botón de acción (iOS 17)"
+    },
+    {
+      "key": "onboarding.access.actionButton.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:53",
+      "value": "Ajustes → Botón de acción → Atajo → «Registrar gasto en Coco»."
+    },
+    {
+      "key": "onboarding.access.controlCenter.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:55",
+      "value": "Centro de control y pantalla bloqueada (iOS 18)"
+    },
+    {
+      "key": "onboarding.access.controlCenter.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:56",
+      "value": "Añade el control «Registrar gasto» de Coco."
+    },
+    {
+      "key": "onboarding.access.widget.title",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:58",
+      "value": "Widget"
+    },
+    {
+      "key": "onboarding.access.widget.detail",
+      "source": "ios/Coco/Features/Onboarding/AutomationSteps.swift:58",
+      "value": "Mantén pulsada la pantalla de inicio → añadir widget → Coco."
+    },
+    {
+      "key": "onboarding.welcome.intro",
+      "source": "ios/Coco/Features/Onboarding/WelcomeView.swift:25",
+      "value": "Coco registra lo que pagas sin que tengas que abrirla: Atajos le pasa cada pago de Wallet y cada mensaje del banco."
+    },
+    {
+      "key": "onboarding.welcome.walletSection",
+      "source": "ios/Coco/Features/Onboarding/WelcomeView.swift:33",
+      "value": "Pagos con Wallet"
+    },
+    {
+      "key": "onboarding.welcome.messageSection",
+      "source": "ios/Coco/Features/Onboarding/WelcomeView.swift:34",
+      "value": "Mensajes del banco"
+    },
+    {
+      "key": "onboarding.welcome.accessSection",
+      "source": "ios/Coco/Features/Onboarding/WelcomeView.swift:35",
+      "value": "Accesos rápidos"
+    },
+    {
+      "key": "onboarding.welcome.openShortcuts",
+      "source": "ios/Coco/Features/Onboarding/WelcomeView.swift:37",
+      "value": "Abrir Atajos"
+    },
+    {
+      "key": "onboarding.welcome.title",
+      "source": "ios/Coco/Features/Onboarding/WelcomeView.swift:40",
+      "value": "Bienvenida"
+    },
+    {
+      "key": "common.done",
+      "source": "ios/Coco/Features/Onboarding/WelcomeView.swift:43",
+      "value": "Listo"
+    },
+    {
+      "key": "reminders.expiry.expired",
+      "source": "ios/Coco/Features/Reminders/ExpiryReminder.swift:23",
+      "value": "ya caducó"
+    },
+    {
+      "key": "reminders.expiry.today",
+      "source": "ios/Coco/Features/Reminders/ExpiryReminder.swift:24",
+      "value": "caduca hoy"
+    },
+    {
+      "key": "reminders.expiry.tomorrow",
+      "source": "ios/Coco/Features/Reminders/ExpiryReminder.swift:25",
+      "value": "caduca mañana"
+    },
+    {
+      "key": "reminders.expiry.inDays",
+      "source": "ios/Coco/Features/Reminders/ExpiryReminder.swift:26",
+      "value": "caduca en %@ días"
+    },
+    {
+      "key": "reminders.expiry.title",
+      "source": "ios/Coco/Features/Reminders/ExpiryReminder.swift:28",
+      "value": "Tu instalación de Coco %@"
+    },
+    {
+      "key": "reminders.expiry.body",
+      "source": "ios/Coco/Features/Reminders/ExpiryReminder.swift:28",
+      "value": "Vuelve a instalarla desde Xcode con el cable."
+    },
+    {
+      "key": "notifications.capture.duplicate",
+      "source": "ios/Coco/Features/Reminders/SystemNotifier.swift:50",
+      "value": "Ya estaba registrado"
+    },
+    {
+      "key": "notifications.capture.merged",
+      "source": "ios/Coco/Features/Reminders/SystemNotifier.swift:52",
+      "value": "Era el mismo pago"
+    },
+    {
+      "key": "notifications.capture.saved",
+      "source": "ios/Coco/Features/Reminders/SystemNotifier.swift:54",
+      "value": "Gasto registrado"
+    },
+    {
+      "key": "notifications.capture.needsReview",
+      "source": "ios/Coco/Features/Reminders/SystemNotifier.swift:56",
+      "value": "%@ · por revisar"
+    },
+    {
+      "key": "notifications.action.open",
+      "source": "ios/Coco/Features/Reminders/SystemNotifier.swift:61",
+      "value": "Abrir"
+    },
+    {
+      "key": "notifications.capture.failed",
+      "source": "ios/Coco/Features/Reminders/SystemNotifier.swift:77",
+      "value": "No se pudo registrar"
+    },
+    {
+      "key": "notifications.queue.sentOne",
+      "source": "ios/Coco/Features/Reminders/SystemNotifier.swift:83",
+      "value": "Se envió 1 captura pendiente"
+    },
+    {
+      "key": "notifications.queue.sentMany",
+      "source": "ios/Coco/Features/Reminders/SystemNotifier.swift:83",
+      "value": "Se enviaron %@ capturas pendientes"
+    },
+    {
+      "key": "notifications.queue.title",
+      "source": "ios/Coco/Features/Reminders/SystemNotifier.swift:85",
+      "value": "Capturas enviadas"
+    },
+    {
+      "key": "session.signIn.email",
+      "source": "ios/Coco/Features/Session/SignInView.swift:27",
+      "value": "Correo"
+    },
+    {
+      "key": "session.signIn.password",
+      "source": "ios/Coco/Features/Session/SignInView.swift:32",
+      "value": "Contraseña"
+    },
+    {
+      "key": "session.signIn.footer",
+      "source": "ios/Coco/Features/Session/SignInView.swift:36",
+      "value": "La misma cuenta que en la web."
+    },
+    {
+      "key": "session.signIn.submit",
+      "source": "ios/Coco/Features/Session/SignInView.swift:49",
+      "value": "Entrar"
+    },
+    {
+      "key": "session.signIn.title",
+      "source": "ios/Coco/Features/Session/SignInView.swift:59",
+      "value": "Entrar en Coco"
+    },
+    {
+      "key": "common.settings",
+      "source": "ios/Coco/Features/Session/SignInView.swift:63",
+      "value": "Ajustes"
+    },
+    {
+      "key": "session.error.badCredentials",
+      "source": "ios/Coco/Features/Session/SignInView.swift:94",
+      "value": "Correo o contraseña incorrectos."
+    },
+    {
+      "key": "session.error.noNetwork",
+      "source": "ios/Coco/Features/Session/SignInView.swift:96",
+      "value": "Sin conexión. Revisa la red e inténtalo otra vez."
+    },
+    {
+      "key": "session.error.timedOut",
+      "source": "ios/Coco/Features/Session/SignInView.swift:98",
+      "value": "La API no respondió a tiempo. Inténtalo otra vez."
+    },
+    {
+      "key": "session.error.rejected",
+      "source": "ios/Coco/Features/Session/SignInView.swift:100",
+      "value": "La API rechazó la petición."
+    },
+    {
+      "key": "session.error.tooManyAttempts",
+      "source": "ios/Coco/Features/Session/SignInView.swift:103",
+      "value": "Demasiados intentos. Espera un minuto."
+    },
+    {
+      "key": "session.error.server",
+      "source": "ios/Coco/Features/Session/SignInView.swift:103",
+      "value": "La API falló (%@). Inténtalo en un momento."
+    },
+    {
+      "key": "session.error.unreadableResponse",
+      "source": "ios/Coco/Features/Session/SignInView.swift:105",
+      "value": "La API respondió algo que la app no entiende. Revisa la URL de la API en Ajustes."
+    },
+    {
+      "key": "more.costCenters",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:14",
+      "value": "Centros de costos"
+    },
+    {
+      "key": "more.account",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:15",
+      "value": "Mi cuenta"
+    },
+    {
+      "key": "more.admin",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:17",
+      "value": "Administración"
+    },
+    {
+      "key": "more.welcome",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:24",
+      "value": "Bienvenida y automatizaciones"
+    },
+    {
+      "key": "common.settings",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:25",
+      "value": "Ajustes"
+    },
+    {
+      "key": "more.signOut.button",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:29",
+      "value": "Cerrar sesión"
+    },
+    {
+      "key": "more.title",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:32",
+      "value": "Más"
+    },
+    {
+      "key": "more.signOut.confirmTitle",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:34",
+      "value": "¿Cerrar sesión en este teléfono?"
+    },
+    {
+      "key": "more.signOut.confirm",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:36",
+      "value": "Cerrar sesión"
+    },
+    {
+      "key": "more.signOut.confirmMessage",
+      "source": "ios/Coco/Features/Settings/MoreView.swift:40",
+      "value": "Lo que esté pendiente de enviar se queda guardado y sale al volver a entrar."
+    },
+    {
+      "key": "settings.apiUrl.placeholder",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:25",
+      "value": "https://…"
+    },
+    {
+      "key": "settings.apiUrl.save",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:33",
+      "value": "Guardar y cerrar sesión"
+    },
+    {
+      "key": "settings.apiUrl.reset",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:35",
+      "value": "Restablecer la del bundle"
+    },
+    {
+      "key": "settings.apiUrl.title",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:37",
+      "value": "URL de la API"
+    },
+    {
+      "key": "settings.apiUrl.saved",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:41",
+      "value": "Guardada. Cierra la app del todo y vuelve a abrirla para usar la nueva URL."
+    },
+    {
+      "key": "settings.apiUrl.footer",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:42",
+      "value": "Cambiarla cierra la sesión de este teléfono; la nueva URL se usa al volver a abrir la app."
+    },
+    {
+      "key": "settings.install.version",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:50",
+      "value": "Versión"
+    },
+    {
+      "key": "settings.install.expiry",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:52",
+      "value": "La firma caduca"
+    },
+    {
+      "key": "settings.install.pending",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:53",
+      "value": "Pendientes de envío"
+    },
+    {
+      "key": "settings.install.api",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:54",
+      "value": "API"
+    },
+    {
+      "key": "settings.install.title",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:56",
+      "value": "Esta instalación"
+    },
+    {
+      "key": "settings.notifications.test",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:60",
+      "value": "Probar notificación"
+    },
+    {
+      "key": "settings.notifications.title",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:65",
+      "value": "Avisos"
+    },
+    {
+      "key": "settings.title",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:68",
+      "value": "Ajustes"
+    },
+    {
+      "key": "common.done",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:71",
+      "value": "Listo"
+    },
+    {
+      "key": "settings.notifications.denied",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:96",
+      "value": "Sin permiso de avisos. Actívalo en Ajustes de iOS → Coco."
+    },
+    {
+      "key": "settings.notifications.testBody",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:100",
+      "value": "Prueba: si ves esto, los avisos funcionan."
+    },
+    {
+      "key": "settings.notifications.sent",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:103",
+      "value": "Enviada. Aparece arriba aunque la app esté abierta."
+    },
+    {
+      "key": "settings.apiUrl.error.incomplete",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:121",
+      "value": "Escribe una URL completa, como https://cocoapp.ejemplo."
+    },
+    {
+      "key": "settings.apiUrl.error.scheme",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:124",
+      "value": "Solo http o https."
+    },
+    {
+      "key": "settings.apiUrl.error.path",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:128",
+      "value": "Solo el servidor, sin ruta: la app añade /api/v1."
+    },
+    {
+      "key": "settings.expiry.unavailable",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:134",
+      "value": "No disponible (simulador o sin perfil)"
+    },
+    {
+      "key": "settings.expiry.expired",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:138",
+      "value": "Caducó el %@"
+    },
+    {
+      "key": "settings.expiry.today",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:139",
+      "value": "Hoy (%@)"
+    },
+    {
+      "key": "settings.expiry.tomorrow",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:140",
+      "value": "Mañana (%@)"
+    },
+    {
+      "key": "settings.expiry.inDays",
+      "source": "ios/Coco/Features/Settings/SettingsView.swift:141",
+      "value": "%1$@ · quedan %2$@ días"
+    },
+    {
+      "key": "shortcuts.dialog.queued",
+      "source": "ios/Coco/Features/Shortcuts/ActionParameters.swift:11",
+      "value": "Guardado en el teléfono; se enviará cuando haya red."
+    },
+    {
+      "key": "shortcuts.dialog.needsReview",
+      "source": "ios/Coco/Features/Shortcuts/ActionParameters.swift:47",
+      "value": "%@ · por revisar"
+    },
+    {
+      "key": "shortcuts.dialog.queuedMany",
+      "source": "ios/Coco/Features/Shortcuts/ActionParameters.swift:49",
+      "value": "%1$@ %2$@ pendientes."
+    },
+    {
+      "key": "shortcuts.dialog.failed",
+      "source": "ios/Coco/Features/Shortcuts/ActionParameters.swift:51",
+      "value": "No se pudo registrar: %@"
+    },
+    {
+      "key": "web.error.sessionNotOpened",
+      "source": "ios/Coco/Features/Web/WebContainer.swift:43",
+      "value": "No se pudo abrir la sesión web"
+    },
+    {
+      "key": "common.retry",
+      "source": "ios/Coco/Features/Web/WebContainer.swift:45",
+      "value": "Reintentar"
+    },
+    {
+      "key": "common.offline",
+      "source": "ios/Coco/Features/Web/WebContainer.swift:54",
+      "value": "Sin conexión"
+    },
+    {
+      "key": "common.offline",
+      "source": "ios/Coco/Shared/OfflineView.swift:15",
+      "value": "Sin conexión"
+    },
+    {
+      "key": "common.retry",
+      "source": "ios/Coco/Shared/OfflineView.swift:22",
+      "value": "Reintentar"
+    },
+    {
+      "key": "offline.capture",
+      "source": "ios/Coco/Shared/OfflineView.swift:24",
+      "value": "Capturar"
+    },
+    {
+      "key": "offline.message",
+      "source": "ios/Coco/Shared/OfflineView.swift:34",
+      "value": "Lo que captures se guarda en el teléfono y se envía solo al volver la red."
+    },
+    {
+      "key": "offline.pendingOne",
+      "source": "ios/Coco/Shared/OfflineView.swift:35",
+      "value": " 1 pendiente."
+    },
+    {
+      "key": "offline.pendingMany",
+      "source": "ios/Coco/Shared/OfflineView.swift:35",
+      "value": " %@ pendientes."
+    },
+    {
+      "key": "widget.capture.title",
+      "source": "ios/CocoAccesos/CaptureControl.swift:14",
+      "value": "Registrar gasto"
+    },
+    {
+      "key": "widget.capture.title",
+      "source": "ios/CocoAccesos/CaptureControl.swift:17",
+      "value": "Registrar gasto"
+    },
+    {
+      "key": "widget.capture.description",
+      "source": "ios/CocoAccesos/CaptureControl.swift:18",
+      "value": "Abre Coco en el formulario rápido."
+    },
+    {
+      "key": "widget.capture.title",
+      "source": "ios/CocoAccesos/CaptureWidget.swift:16",
+      "value": "Registrar gasto"
+    },
+    {
+      "key": "widget.capture.description",
+      "source": "ios/CocoAccesos/CaptureWidget.swift:17",
+      "value": "Abre Coco en el formulario rápido."
+    },
+    {
+      "key": "widget.capture.register",
+      "source": "ios/CocoAccesos/CaptureWidget.swift:55",
+      "value": "Registrar"
+    },
+    {
+      "key": "widget.capture.photo",
+      "source": "ios/CocoAccesos/CaptureWidget.swift:58",
+      "value": "Foto"
+    },
+    {
+      "key": "widget.capture.title",
+      "source": "ios/CocoAccesos/CaptureWidget.swift:68",
+      "value": "Registrar gasto"
+    },
+    {
+      "key": "widget.capture.title",
+      "source": "ios/CocoAccesos/CaptureWidget.swift:73",
+      "value": "Registrar gasto"
+    }
+  ]
+}
