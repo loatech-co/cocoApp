@@ -115,7 +115,7 @@ reason on the same line, and should be rare:
 // Correct — named export, imports in ordered groups
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/ui/atoms/button';
 
 import { totalDe } from './totales';
 
@@ -284,10 +284,66 @@ constructor(private readonly transactions: TransactionsRepository) {}
 await this.prisma.transaction.findMany({ where: { userId } }); // in dashboard/
 ```
 
-**Web.** `frontend/src/features/<feature>/` do not import each other; what two
-features share moves to shared code (D10). The four imports that existed when
-the rule arrived, and one cycle in `lib/`, are listed as temporary exceptions
-in `.dependency-cruiser.cjs`; the frontend step removes them.
+## Web architecture
+
+`frontend/src` has three layers, and an import only goes down:
+
+| Layer                | What lives there                                                                                                                        |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/`               | Boot, routes, providers and the shell (rail, bottom bar, account sheet, shortcuts palette, navigation).                                 |
+| `features/<domain>/` | One folder per domain, not per screen: `pages/`, `components/`, `api/` (React Query hooks), `hooks/`, `model/` (business logic, types). |
+| `shared/`            | `ui/` (the design system), `lib/` (infrastructure: dates, formatting, focus, native bridge), `api/` (client, session, common queries).  |
+
+The features are `admin`, `auth`, `bank-accounts`, `centros`, `profile` and
+`transactions`. The full criterion, with examples from Coco and the inventory
+of `shared/ui`, is in `.claude/rules/web.md`; it is updated in the same PR
+that creates or changes a component.
+
+**Features never import each other.**
+
+Why: what two features share is shared by definition, and a hidden link
+between two domains is the one nobody remembers when changing either. It moves
+up to `shared/` (the category tree to `shared/api/categories.ts`, the password
+policy to `shared/ui/atoms`).
+
+**Nothing imports `app/`, and `shared/` never imports `features/`.**
+
+Why: each layer can then be read, tested and moved knowing only the layers
+below it.
+
+**`shared/ui` draws what it is given: no React Query, no api client, no
+session.**
+
+Why: a component that fetches can only be used where that data exists, and
+can only be tested with a server. A domain component that needs data lives in
+`features/<domain>/components/` and gets it from that feature's `api/` hooks.
+
+**A component's level is the lowest its imports allow.**
+
+| Level        | May use                        | Example                                       |
+| ------------ | ------------------------------ | --------------------------------------------- |
+| `atoms/`     | no other `shared/ui` component | `Button`, `Input`, `Campo`, `PanelInferior`   |
+| `molecules/` | atoms                          | `Menu` (Button + PanelInferior), `Calendario` |
+| `organisms/` | molecules and atoms            | `Select` (Menu + Campo), `Modal`              |
+| `templates/` | organisms, molecules and atoms | none yet                                      |
+
+Why: a level decided by opinion is argued once per component; a level decided
+by imports is checked by a machine. `shared/ui/foundations/` holds what every
+level may use and is not a component: class tokens (`SUPERFICIE_FLOTANTE`)
+and the field context (`useDentroDeUnCampo`, `FOCO_DEL_CAMPO`).
+
+`npm run depcruise` fails CI on any of these, and on any cycle. There are no
+exceptions.
+
+```ts
+// Correct — a feature page composes shared UI with its own data hook
+import { useAccounts } from '@/features/bank-accounts/api/accounts';
+import { Card } from '@/shared/ui/atoms/card';
+
+// Incorrect — a shared component fetching, or one feature reaching into another
+import { useTransactions } from '@/features/transactions/api/transactions'; // in shared/ui/
+import { MovimientoModal } from '@/features/transactions/components/movimiento-modal'; // in features/centros/
+```
 
 ## Errors
 
