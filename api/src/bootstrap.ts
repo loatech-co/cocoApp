@@ -1,12 +1,25 @@
-import { ValidationPipe, type INestApplication } from '@nestjs/common';
+import { ValidationPipe, VersioningType, type INestApplication } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 import { requestContext } from './common/logging/request-context';
+import { v1Deprecation } from './common/versioning/v1-deprecation';
 
-/** Every API route lives under this prefix; a breaking change opens `api/v2` next to it. */
-export const API_PREFIX = 'api/v1';
+/** Every API route lives under `/api/v<version>`. */
+const API_ROOT = 'api';
+
+/**
+ * The two contract versions side by side (7.2: a breaking change opens a new
+ * version, never an in-place change). A controller without a version is v1,
+ * which is every controller written before v2; the v2 ones say
+ * `version: '2'`. Kept apart from `configureApp` because the OpenAPI
+ * generator needs the routes and nothing else.
+ */
+export function configureRouting(app: INestApplication): void {
+  app.setGlobalPrefix(API_ROOT);
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+}
 
 /**
  * Configuración transversal de la aplicación: prefijo, cabeceras de seguridad,
@@ -25,7 +38,10 @@ export function configureApp(
   // First middleware: every later line of the request carries its id (6.8).
   app.use(requestContext(accessLog));
 
-  app.setGlobalPrefix(API_PREFIX);
+  // v1 answers with `Deprecation` and logs each use, until 7.10 removes it.
+  app.use(v1Deprecation(accessLog));
+
+  configureRouting(app);
 
   // El refresh token viaja en una cookie httpOnly; sin esto no se puede leer.
   app.use(cookieParser());

@@ -164,6 +164,13 @@ export function v2Values<F extends keyof ValueNames>(
 }
 
 /**
+ * A v1 DTO under construction: every field may still be `undefined`. Passed
+ * to `defined` as its type argument, it turns on the excess-property check,
+ * so a misspelt v1 field does not compile.
+ */
+export type V1Draft<T> = { [K in keyof T]?: T[K] | undefined };
+
+/**
  * Copies the keys whose value is not `undefined`.
  *
  * A v2 input becomes a v1 DTO for the service, and the services tell "not

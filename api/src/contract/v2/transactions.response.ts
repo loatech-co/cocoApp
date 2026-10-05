@@ -31,7 +31,7 @@ export class Transaction {
   transferGroupId!: string | null;
   @ApiProperty({ enum: ['out', 'in'], nullable: true })
   transferDirection!: 'out' | 'in' | null;
-  /** The client's own id for this capture; a second capture with it returns this one. */
+  /** The client's own id, unique per user; a capture that repeats it gets this one back. */
   externalRef!: string | null;
   @ApiProperty({ enum: TRANSACTION_STATUSES })
   status!: (typeof TRANSACTION_STATUSES)[number];

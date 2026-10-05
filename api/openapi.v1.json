@@ -5110,7 +5110,7 @@
   },
   "info": {
     "title": "Coco API",
-    "description": "Contract v1, served under `/api/v1`.\n\nEvery successful JSON response is wrapped as `{ data, meta }`. Every error is\n`{ error: { code, message, details } }`, where `details` lists the fields that failed.\n\nIdentifiers are integers (int64) and money travels as a decimal string.",
+    "description": "Contract v1, served under `/api/v1`. **Deprecated** since 2026-10-05: every response\ncarries `Deprecation` (RFC 9745) and a `Link` to its v2 successor. It is removed after\nseven days without uses (step 7.10).\n\nEvery successful JSON response is wrapped as `{ data, meta }`. Every error is\n`{ error: { code, message, details } }`, where `details` lists the fields that failed.\nMessages meant for the user are in Spanish.\n\nIdentifiers are integers (int64) and money travels as a decimal string.",
     "version": "1",
     "contact": {}
   },

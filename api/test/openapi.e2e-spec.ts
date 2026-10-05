@@ -6,15 +6,17 @@ import request from 'supertest';
 
 import { levantarApp, type EntornoDePruebas } from './helpers/app';
 import { AppModule } from '../src/app.module';
-import { API_PREFIX } from '../src/bootstrap';
+import { configureRouting } from '../src/bootstrap';
+import { successorOf } from '../src/common/versioning/v1-deprecation';
 import { SupabaseAuthService } from '../src/modules/auth/supabase-auth.service';
-import { setupApiDocs } from '../src/openapi/document';
+import { CONTRACT_VERSIONS, docsPath, setupApiDocs } from '../src/openapi/document';
 
 /**
- * The committed contract (`api/openapi.json`) against the app that runs.
+ * The committed contracts (`api/openapi.v1.json`, `api/openapi.v2.json`)
+ * against the app that runs.
  *
- * CI regenerates the document and fails if it differs from the committed one,
- * so the file is what the code describes. This suite closes the other gap:
+ * CI regenerates the documents and fails if they differ from the committed
+ * ones, so the files are what the code describes. This suite closes the other gap:
  * what the code describes against what Express actually serves. A route added
  * without being documented — or documented and then removed — fails here, the
  * same way the guard at the end of `user-isolation.e2e-spec.ts` catches a
@@ -29,23 +31,34 @@ interface OpenApiDocument {
   paths: Record<string, Record<string, Operation>>;
 }
 
-const DOCUMENT = JSON.parse(
-  readFileSync(join(__dirname, '..', 'openapi.json'), 'utf8'),
-) as OpenApiDocument;
+function readDocument(version: string): OpenApiDocument {
+  return JSON.parse(
+    readFileSync(join(__dirname, '..', `openapi.v${version}.json`), 'utf8'),
+  ) as OpenApiDocument;
+}
+
+const DOCUMENTS = CONTRACT_VERSIONS.map((version) => ({
+  version,
+  document: readDocument(version),
+}));
 
 /** The `@Public()` routes: they answer without a token, so they carry no security. */
-const PUBLIC = [
-  'GET /api/v1/health',
-  'GET /api/v1/ready',
-  'POST /api/v1/auth/register',
-  'POST /api/v1/auth/login',
-  'POST /api/v1/auth/refresh',
-  'POST /api/v1/auth/logout',
-];
+const PUBLIC = CONTRACT_VERSIONS.flatMap((version) => [
+  `GET /api/v${version}/health`,
+  `GET /api/v${version}/ready`,
+  `POST /api/v${version}/auth/register`,
+  `POST /api/v${version}/auth/login`,
+  `POST /api/v${version}/auth/refresh`,
+  `POST /api/v${version}/auth/logout`,
+]);
 
-/** `METHOD /path/{param}` for every operation the document describes. */
+/** `METHOD /path/{param}` for every operation the documents describe. */
 function documentedOperations(): { route: string; operation: Operation }[] {
-  return Object.entries(DOCUMENT.paths).flatMap(([path, operations]) =>
+  return DOCUMENTS.flatMap(({ document }) => operationsOf(document));
+}
+
+function operationsOf(document: OpenApiDocument): { route: string; operation: Operation }[] {
+  return Object.entries(document.paths).flatMap(([path, operations]) =>
     Object.entries(operations).map(([method, operation]) => ({
       route: `${method.toUpperCase()} ${path}`,
       operation,
@@ -73,7 +86,7 @@ function registeredRoutes(app: INestApplication): string[] {
     .filter((route) => route.includes('/api/') && !route.includes('*'));
 }
 
-describe('OpenAPI contract (api/openapi.json)', () => {
+describe('OpenAPI contracts (api/openapi.v1.json, api/openapi.v2.json)', () => {
   let env: EntornoDePruebas;
 
   beforeAll(async () => {
@@ -88,7 +101,7 @@ describe('OpenAPI contract (api/openapi.json)', () => {
     const registered = registeredRoutes(env.app);
     const documented = documentedOperations().map(({ route }) => route);
 
-    expect(registered.length).toBeGreaterThan(40);
+    expect(registered.length).toBeGreaterThan(100);
     expect(registered.filter((route) => !documented.includes(route))).toEqual([]);
     expect(documented.filter((route) => !registered.includes(route))).toEqual([]);
   });
@@ -118,7 +131,25 @@ describe('OpenAPI contract (api/openapi.json)', () => {
     }
   });
 
-  it('outside production, /api/docs serves the same routes the file describes', async () => {
+  it('each document holds its own version and nothing else, and the two cover the same routes', () => {
+    for (const { version, document } of DOCUMENTS) {
+      const routes = operationsOf(document).map(({ route }) => route);
+      expect(routes.filter((route) => !route.includes(`/api/v${version}/`))).toEqual([]);
+    }
+    // Every v1 route has its v2 successor (the one its `Link` header names), and
+    // v2 has nothing v1 did not: v2 is a translation, not new features.
+    const shape = (route: string): string => route.replace(/\{\w+\}/g, '{}');
+    const [v1, v2] = DOCUMENTS.map(({ document }) =>
+      operationsOf(document).map(({ route }) => route),
+    );
+    const successors = (v1 ?? []).map((route) => {
+      const [method, path] = route.split(' ') as [string, string];
+      return shape(`${method} ${successorOf(path)}`);
+    });
+    expect(successors.sort()).toEqual((v2 ?? []).map(shape).sort());
+  });
+
+  it('outside production, /api/docs/v<n> serves the same routes each file describes', async () => {
     // A second app, set up like main.ts does it: the docs routes go in BEFORE
     // init, which is when Nest closes the router with its 404 handler. It is
     // never initialised, so nothing connects and Supabase is not needed.
@@ -127,20 +158,23 @@ describe('OpenAPI contract (api/openapi.json)', () => {
       .useValue({})
       .compile();
     const app = moduleRef.createNestApplication();
-    app.setGlobalPrefix(API_PREFIX);
+    configureRouting(app);
 
     try {
       expect(setupApiDocs(app, 'test')).toBe(true);
 
       const server = app.getHttpServer();
-      await request(server).get('/api/docs').expect(200).expect('Content-Type', /html/);
-      const served = await request(server).get('/api/docs-json').expect(200);
+      for (const { version, document } of DOCUMENTS) {
+        const path = `/${docsPath(version)}`;
+        await request(server).get(path).expect(200).expect('Content-Type', /html/);
+        const served = await request(server).get(`${path}-json`).expect(200);
 
-      // Paths only: under ts-jest the Swagger CLI plugin does not run, so the
-      // schemas it infers from the DTOs are missing here and present in the file.
-      expect(Object.keys((served.body as OpenApiDocument).paths).sort()).toEqual(
-        Object.keys(DOCUMENT.paths).sort(),
-      );
+        // Paths only: under ts-jest the Swagger CLI plugin does not run, so the
+        // schemas it infers from the DTOs are missing here and present in the file.
+        expect(Object.keys((served.body as OpenApiDocument).paths).sort()).toEqual(
+          Object.keys(document.paths).sort(),
+        );
+      }
     } finally {
       await app.close();
     }

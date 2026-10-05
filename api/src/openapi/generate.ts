@@ -2,18 +2,19 @@ import { NestFactory } from '@nestjs/core';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { createOpenApiDocument } from './document';
+import { CONTRACT_VERSIONS, createOpenApiDocument } from './document';
 import { AppModule } from '../app.module';
-import { API_PREFIX } from '../bootstrap';
+import { configureRouting } from '../bootstrap';
 
 /**
- * Writes `api/openapi.json` from the compiled API (`npm run openapi`).
+ * Writes `api/openapi.v1.json` and `api/openapi.v2.json` from the compiled
+ * API (`npm run openapi`), one document per contract version.
  *
  * The app is built in PREVIEW mode: Nest resolves the module graph and reads
  * every controller's metadata, but instantiates no provider. Nothing connects
  * to a database, nothing reads a secret, and the environment can be empty —
- * which is what lets CI regenerate the document and compare it with the one
- * committed.
+ * which is what lets CI regenerate the documents and compare them with the
+ * ones committed.
  *
  * It runs from `dist/`, never through ts-node: the Swagger CLI plugin that
  * reads the DTO types and comments only runs inside `nest build`.
@@ -24,11 +25,16 @@ async function generate(): Promise<void> {
     logger: false,
     abortOnError: false,
   });
-  app.setGlobalPrefix(API_PREFIX);
+  configureRouting(app);
 
-  const document = createOpenApiDocument(app);
-  const target = process.argv[2] ?? join(__dirname, '..', '..', 'openapi.json');
-  writeFileSync(target, `${JSON.stringify(document, null, 2)}\n`);
+  const directory = process.argv[2] ?? join(__dirname, '..', '..');
+  for (const version of CONTRACT_VERSIONS) {
+    const document = createOpenApiDocument(app, version);
+    writeFileSync(
+      join(directory, `openapi.v${version}.json`),
+      `${JSON.stringify(document, null, 2)}\n`,
+    );
+  }
   await app.close();
 }
 

@@ -1,0 +1,1246 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v2/transactions": {
+      "get": {
+        "operationId": "Transactions_list",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "categoryIds",
+            "required": false,
+            "in": "query",
+            "description": "Several ids, comma separated: `?categoryIds=3,7`. Each brings its whole branch.",
+            "schema": {
+              "pattern": "^\\d+(,\\d+)*$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["expense", "income", "transfer"]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["cleared", "pending"]
+            }
+          },
+          {
+            "name": "tagId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Text search over description, merchant and notes.",
+            "schema": {
+              "maxLength": 255,
+              "type": "string"
+            }
+          },
+          {
+            "name": "minAmount",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "maxAmount",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "`date`, `amount`, `createdAt` or `merchant`; `-` in front for descending.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based; 1 by default.",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "perPage",
+            "required": false,
+            "in": "query",
+            "description": "50 by default, at most 200.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Transaction"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaV2"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `details` names each field at fault.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["TransactionsV2"]
+      },
+      "post": {
+        "operationId": "Transactions_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransactionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Transaction"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {},
+                      "maxProperties": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `details` names each field at fault.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed but breaks a business rule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["TransactionsV2"]
+      }
+    },
+    "/api/v2/transactions/history": {
+      "get": {
+        "description": "Before `:id`, or Express would read \"history\" as an id.",
+        "operationId": "Transactions_history",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionHistory"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {},
+                      "maxProperties": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": ["TransactionsV2"]
+      }
+    },
+    "/api/v2/transactions/transfer": {
+      "post": {
+        "description": "Before `:id`, for the same reason.",
+        "operationId": "Transactions_createTransfer",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTransferInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Transfer"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {},
+                      "maxProperties": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `details` names each field at fault.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed but breaks a business rule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "",
+        "tags": ["TransactionsV2"]
+      }
+    },
+    "/api/v2/transactions/{id}": {
+      "get": {
+        "operationId": "Transactions_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Transaction"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {},
+                      "maxProperties": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `details` names each field at fault.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["TransactionsV2"]
+      },
+      "patch": {
+        "operationId": "Transactions_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Transaction"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {},
+                      "maxProperties": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The input is invalid; `details` names each field at fault.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed but breaks a business rule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["TransactionsV2"]
+      },
+      "delete": {
+        "operationId": "Transactions_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done. No body."
+          },
+          "400": {
+            "description": "The input is invalid; `details` names each field at fault.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid access token (or session to renew).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not owned by this user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit reached; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["TransactionsV2"]
+      }
+    }
+  },
+  "info": {
+    "title": "Coco API",
+    "description": "Contract v2, served under `/api/v2`: the v1 API in English and camelCase, with every\nlist paginated as `{ data, meta: { page, perPage, total } }`.\n\nEvery successful JSON response is wrapped as `{ data, meta }`. Every error is\n`{ error: { code, message, details } }`, where `details` lists the fields that failed.\nMessages meant for the user are in Spanish.\n\nIdentifiers are integers (int64) and money travels as a decimal string.",
+    "version": "2",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "ErrorDetailResponse": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "The input field at fault, when there is one."
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["message"]
+      },
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Stable, machine-readable kind: bad_request, unauthenticated, forbidden, not_found, conflict, duplicate, unprocessable, rate_limited, payload_too_large, unsupported_media_type, internal_error, unavailable…",
+            "example": "not_found"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable, in Spanish: the client may show it as is."
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetailResponse"
+            }
+          }
+        },
+        "required": ["code", "message", "details"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "required": ["error"]
+      },
+      "Split": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "categoryId": {
+            "type": "number",
+            "nullable": true
+          },
+          "amount": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "categoryId", "amount", "note"]
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": ["expense", "income", "transfer"],
+            "type": "string"
+          },
+          "transferDirection": {
+            "nullable": true,
+            "enum": ["out", "in"],
+            "type": "string"
+          },
+          "status": {
+            "enum": ["cleared", "pending"],
+            "type": "string"
+          },
+          "source": {
+            "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"],
+            "type": "string"
+          },
+          "id": {
+            "type": "number"
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "number",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "description": "`YYYY-MM-DD`."
+          },
+          "period": {
+            "type": "string",
+            "description": "The month the transaction BELONGS to, as its first day (`YYYY-MM-DD`)."
+          },
+          "amount": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 code of `amount`."
+          },
+          "categoryId": {
+            "type": "number",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "merchant": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "transferGroupId": {
+            "type": "string",
+            "nullable": true
+          },
+          "externalRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "The client's own id for this capture; a second capture with it returns this one."
+          },
+          "rawText": {
+            "type": "string",
+            "nullable": true
+          },
+          "capturedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "needsReview": {
+            "type": "boolean",
+            "description": "Someone has to look at it: an unsure classification or a possible duplicate."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "splits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Split"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "transferDirection",
+          "status",
+          "source",
+          "id",
+          "uuid",
+          "accountId",
+          "date",
+          "period",
+          "amount",
+          "currency",
+          "categoryId",
+          "description",
+          "merchant",
+          "notes",
+          "transferGroupId",
+          "externalRef",
+          "rawText",
+          "capturedAt",
+          "needsReview",
+          "tags",
+          "splits",
+          "createdAt"
+        ]
+      },
+      "PageMetaV2": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "description": "1-based page number."
+          },
+          "perPage": {
+            "type": "number",
+            "description": "Items per page, 1–200."
+          },
+          "total": {
+            "type": "number",
+            "description": "Items across every page."
+          }
+        },
+        "required": ["page", "perPage", "total"]
+      },
+      "TransactionHistory": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "string",
+            "nullable": true
+          },
+          "last": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["first", "last"]
+      },
+      "Transfer": {
+        "type": "object",
+        "properties": {
+          "transferGroupId": {
+            "type": "string"
+          },
+          "legs": {
+            "description": "The two legs: out of one account, into the other.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transaction"
+            }
+          }
+        },
+        "required": ["transferGroupId", "legs"]
+      },
+      "CreateTransferInput": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "description": "The month the transfer BELONGS to, as `YYYY-MM-DD` of its first day."
+          },
+          "fromAccountId": {
+            "type": "number"
+          },
+          "toAccountId": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": ["fromAccountId", "toAccountId", "date", "amount"]
+      },
+      "SplitInput": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": ["amount"]
+      },
+      "CreateTransactionInput": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Always positive: `type` gives the sign."
+          },
+          "accountId": {
+            "type": "number",
+            "description": "Optional: keeping accounts is a setting, not a requirement.",
+            "minimum": 1
+          },
+          "categoryId": {
+            "type": "number",
+            "description": "Optional: a transaction may exist without a category."
+          },
+          "externalRef": {
+            "type": "string",
+            "description": "The client's own id: sending the same one twice creates one transaction.",
+            "maxLength": 255
+          },
+          "period": {
+            "type": "string",
+            "description": "The month the transaction BELONGS to, as `YYYY-MM-DD` of its first day.\nAbsent, it is the month of `date`; it differs when a bill crosses months."
+          },
+          "rawText": {
+            "type": "string",
+            "nullable": true,
+            "description": "The text it came from: the OCR of a receipt, a bank SMS.",
+            "maxLength": 20000
+          },
+          "capturedAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "When it was captured, ISO 8601 with offset."
+          },
+          "needsReview": {
+            "type": "boolean",
+            "description": "Someone has to look at it: an unsure classification or a possible duplicate."
+          },
+          "type": {
+            "enum": ["expense", "income", "transfer"],
+            "type": "string"
+          },
+          "status": {
+            "enum": ["cleared", "pending"],
+            "type": "string"
+          },
+          "source": {
+            "description": "Where it comes from: the web sends `web`, the phone app one of its own.",
+            "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"],
+            "type": "string"
+          },
+          "merchant": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "notes": {
+            "type": "string"
+          },
+          "tags": {
+            "description": "Names, not ids: the tags are created on the fly.",
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "splits": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SplitInput"
+            }
+          }
+        },
+        "required": ["date", "amount"]
+      },
+      "UpdateTransactionInput": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "number"
+          },
+          "categoryId": {
+            "type": "number",
+            "nullable": true,
+            "description": "`null` removes the category."
+          },
+          "period": {
+            "type": "string",
+            "description": "The month the transaction BELONGS to, as `YYYY-MM-DD` of its first day.\nAbsent, it is the month of `date`; it differs when a bill crosses months."
+          },
+          "rawText": {
+            "type": "string",
+            "nullable": true,
+            "description": "The text it came from: the OCR of a receipt, a bank SMS.",
+            "maxLength": 20000
+          },
+          "capturedAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "When it was captured, ISO 8601 with offset."
+          },
+          "needsReview": {
+            "type": "boolean",
+            "description": "Someone has to look at it: an unsure classification or a possible duplicate."
+          },
+          "type": {
+            "enum": ["expense", "income", "transfer"],
+            "type": "string"
+          },
+          "status": {
+            "enum": ["cleared", "pending"],
+            "type": "string"
+          },
+          "source": {
+            "description": "Where it comes from: the web sends `web`, the phone app one of its own.",
+            "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"],
+            "type": "string"
+          },
+          "merchant": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "notes": {
+            "type": "string"
+          },
+          "tags": {
+            "description": "Names, not ids: the tags are created on the fly.",
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "splits": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SplitInput"
+            }
+          }
+        }
+      }
+    }
+  }
+}
