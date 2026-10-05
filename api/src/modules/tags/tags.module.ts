@@ -7,7 +7,6 @@ import {
   HttpStatus,
   Injectable,
   Module,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -16,6 +15,7 @@ import { Prisma, type Tag } from '@prisma/client';
 import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { NotFoundError } from '../../common/errors/domain-error';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -110,7 +110,7 @@ export class TagsService {
       where: { id, userId },
       data: { name: dto.name.trim(), ...(dto.color !== undefined && { color: dto.color }) },
     });
-    if (count === 0) throw new NotFoundException('La etiqueta no existe.');
+    if (count === 0) throw new NotFoundError('La etiqueta no existe.');
 
     const tag = await this.prisma.tag.findFirstOrThrow({ where: { id, userId } });
     return presentar(tag);
@@ -119,7 +119,7 @@ export class TagsService {
   /** Borrar una etiqueta se lleva sus vínculos por CASCADE, no los movimientos. */
   async eliminar(userId: bigint, id: bigint): Promise<void> {
     const { count } = await this.prisma.tag.deleteMany({ where: { id, userId } });
-    if (count === 0) throw new NotFoundException('La etiqueta no existe.');
+    if (count === 0) throw new NotFoundError('La etiqueta no existe.');
   }
 }
 

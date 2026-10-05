@@ -1,15 +1,14 @@
-import {
-  ForbiddenException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 import { esCorreoRepetido } from './supabase-auth.errores';
 import { porQueNoTocarCuentasReales } from '../../common/entorno';
+import {
+  AuthenticationError,
+  ForbiddenError,
+  InternalError,
+} from '../../common/errors/domain-error';
 
 /**
  * Cliente de Supabase Auth (GoTrue).
@@ -80,7 +79,7 @@ export class SupabaseAuthService {
     } catch {
       // Sin detalles a propósito: distinguir "firma inválida" de "expirado" o
       // "emisor equivocado" solo ayuda a quien está probando tokens.
-      throw new UnauthorizedException('Token inválido o expirado.');
+      throw new AuthenticationError('Token inválido o expirado.');
     }
   }
 
@@ -234,7 +233,7 @@ export class SupabaseAuthService {
       const impedimento = porQueNoTocarCuentasReales();
       if (impedimento !== null) {
         this.logger.warn(`Operación de administración bloqueada: ${metodo} ${ruta}`);
-        throw new ForbiddenException(impedimento);
+        throw new ForbiddenError(impedimento);
       }
     }
 
@@ -257,7 +256,7 @@ export class SupabaseAuthService {
       // puede estar caído con el otro sano. Se distingue del "credenciales
       // incorrectas" porque la respuesta al usuario no es la misma.
       this.logger.error(`Supabase Auth no respondió: ${(error as Error).message}`);
-      throw new InternalServerErrorException('El servicio de identidad no está disponible.');
+      throw new InternalError('El servicio de identidad no está disponible.');
     }
 
     const texto = await respuesta.text();
@@ -295,7 +294,7 @@ export class SupabaseAuthService {
     this.logger.error(
       `Supabase Auth falló al ${quehacer}: ${respuesta.estado} ${typeof detalle === 'string' ? detalle : JSON.stringify(detalle)}`,
     );
-    throw new InternalServerErrorException(`No se pudo ${quehacer}.`);
+    throw new InternalError(`No se pudo ${quehacer}.`);
   }
 }
 

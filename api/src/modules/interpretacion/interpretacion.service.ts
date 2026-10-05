@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma, type TransactionSource } from '@prisma/client';
 
 import type { NodoBuscable } from '@coco/lectura';
@@ -17,6 +17,7 @@ import {
   type ClasificacionInterpretada,
   type Interpretado,
 } from './interpretar';
+import { ValidationError } from '../../common/errors/domain-error';
 import { toMoney } from '../../common/money/money';
 import { PrismaService } from '../../prisma/prisma.service';
 import { anidar } from '../categories/categories.tree';
@@ -233,7 +234,7 @@ export class InterpretacionService {
           porRevisar: elegida.certeza !== 'alta',
         };
       }
-      throw new UnprocessableEntityException('Hace falta un texto o, al menos, el comercio.');
+      throw new ValidationError('Hace falta un texto o, al menos, el comercio.');
     }
 
     const [arbol, historial] = await Promise.all([
@@ -296,13 +297,10 @@ export class InterpretacionService {
     });
     // La misma respuesta para «no existe» y «no es tuya»: decir cuál de las
     // dos es revelaría ids ajenos.
-    if (!fila)
-      throw new UnprocessableEntityException('La categoría indicada no existe o no es tuya.');
-    if (fila.isArchived) throw new UnprocessableEntityException('Ese concepto está archivado.');
+    if (!fila) throw new ValidationError('La categoría indicada no existe o no es tuya.');
+    if (fila.isArchived) throw new ValidationError('Ese concepto está archivado.');
     if (!fila.parent)
-      throw new UnprocessableEntityException(
-        'Un centro de costos no clasifica nada: elige un concepto.',
-      );
+      throw new ValidationError('Un centro de costos no clasifica nada: elige un concepto.');
 
     const esConcepto = fila.parent.parentId !== null;
     return {

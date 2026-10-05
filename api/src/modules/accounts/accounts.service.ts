@@ -1,13 +1,9 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { Account } from '@prisma/client';
 
 import { AccountsRepository } from './accounts.repository';
 import type { CreateAccountDto, UpdateAccountDto } from './dto/account.dto';
+import { BadRequestError, ConflictError, NotFoundError } from '../../common/errors/domain-error';
 import { calcularCupoDisponible, calcularSaldo } from '../../common/money/balance';
 import { serializar, toMoney } from '../../common/money/money';
 
@@ -104,7 +100,7 @@ export class AccountsService {
 
     const movimientos = await this.repo.contarMovimientos(userId, id);
     if (movimientos > 0) {
-      throw new ConflictException(
+      throw new ConflictError(
         `Esta cuenta tiene ${movimientos} movimiento(s). Archívala en vez de borrarla para no perder el histórico.`,
       );
     }
@@ -115,7 +111,7 @@ export class AccountsService {
   private async exigirCuenta(userId: bigint, id: bigint): Promise<Account> {
     const cuenta = await this.repo.buscarPorId(userId, id);
     // 404 y no 403: confirmar que existe ya sería filtrar información.
-    if (!cuenta) throw new NotFoundException('La cuenta no existe.');
+    if (!cuenta) throw new NotFoundError('La cuenta no existe.');
     return cuenta;
   }
 
@@ -138,7 +134,7 @@ export class AccountsService {
       .map(([nombre]) => nombre);
 
     if (invasores.length > 0) {
-      throw new BadRequestException(
+      throw new BadRequestError(
         `${invasores.join(', ')} solo aplica(n) a cuentas de tipo "credit".`,
       );
     }

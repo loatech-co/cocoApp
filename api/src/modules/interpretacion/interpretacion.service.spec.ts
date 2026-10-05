@@ -1,7 +1,6 @@
-import { UnprocessableEntityException } from '@nestjs/common';
-
 import { InterpretacionService } from './interpretacion.service';
 import * as motor from './interpretar';
+import { ValidationError } from '../../common/errors/domain-error';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { CategorizationService } from '../categorization/categorization.module';
 import type { TransactionsService } from '../transactions/transactions.service';
@@ -109,20 +108,20 @@ describe('InterpretacionService con una clasificación elegida', () => {
 
   it('un centro de costos no clasifica nada: 422', async () => {
     await expect(capturar({ monto: '1000', category_id: '10' })).rejects.toBeInstanceOf(
-      UnprocessableEntityException,
+      ValidationError,
     );
     expect(crear).not.toHaveBeenCalled();
   });
 
   it('un concepto archivado, 422', async () => {
     await expect(capturar({ monto: '1000', category_id: '31' })).rejects.toBeInstanceOf(
-      UnprocessableEntityException,
+      ValidationError,
     );
   });
 
   it('un id ajeno o inexistente, 422', async () => {
     await expect(capturar({ monto: '1000', category_id: '404' })).rejects.toBeInstanceOf(
-      UnprocessableEntityException,
+      ValidationError,
     );
     await expect(
       servicio.capturar(2n, {
@@ -131,7 +130,7 @@ describe('InterpretacionService con una clasificación elegida', () => {
         monto: '1000',
         category_id: '30',
       } as never),
-    ).rejects.toBeInstanceOf(UnprocessableEntityException);
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 
   it('sin texto ni comercio, con concepto y monto, construye el resultado sin llamar a interpretar()', async () => {
@@ -152,7 +151,7 @@ describe('InterpretacionService con una clasificación elegida', () => {
   });
 
   it('sin texto, sin comercio y sin concepto sigue siendo 422, aunque venga el monto', async () => {
-    await expect(capturar({ monto: '45000' })).rejects.toBeInstanceOf(UnprocessableEntityException);
+    await expect(capturar({ monto: '45000' })).rejects.toBeInstanceOf(ValidationError);
     expect(interpretar).not.toHaveBeenCalled();
   });
 

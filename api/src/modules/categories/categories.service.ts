@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { Category, CategoryKind, Periodicidad } from '@prisma/client';
 
 import { CategoriesRepository } from './categories.repository';
@@ -21,6 +16,7 @@ import type {
   UpdateCategoryDto,
 } from './dto/category.dto';
 import { porQueNoAdmiteVariosPagos } from './varios-pagos';
+import { ConflictError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 
 export interface CategoryView {
   id: bigint;
@@ -142,7 +138,7 @@ export class CategoriesService {
       if (nuevoPadre !== null) await this.exigirCategoria(userId, nuevoPadre);
 
       if (generariaCiclo(await arbol(), id, nuevoPadre)) {
-        throw new UnprocessableEntityException(
+        throw new ValidationError(
           'Una categoría no puede colgar de sí misma ni de una de sus descendientes.',
         );
       }
@@ -221,7 +217,7 @@ export class CategoriesService {
     const hijos = esqueleto.filter((nodo) => nodo.parentId === id).map((nodo) => nodo.id);
 
     if (hijos.length > 0 && !enCascada) {
-      throw new ConflictException(
+      throw new ConflictError(
         `Esta categoría tiene ${hijos.length} subcategoría(s). Archívala en cascada o reasigna sus hijas primero.`,
       );
     }
@@ -287,7 +283,7 @@ export class CategoriesService {
     const usos = await this.repo.contarUsos(userId, subarbol);
 
     if (usos > 0 && reasignarA === undefined) {
-      throw new ConflictException(
+      throw new ConflictError(
         `Esta categoría tiene ${usos} movimiento(s). Indica a qué categoría pasan.`,
       );
     }
@@ -296,7 +292,7 @@ export class CategoriesService {
       await this.exigirCategoria(userId, reasignarA);
 
       if (subarbol.some((candidato) => candidato === reasignarA)) {
-        throw new ConflictException(
+        throw new ConflictError(
           'El destino está dentro de lo que se va a eliminar. Elige uno de fuera.',
         );
       }
@@ -315,7 +311,7 @@ export class CategoriesService {
   async sembrarDiccionario(userId: bigint): Promise<{ creadas: number }> {
     const existentes = await this.repo.contarDelUsuario(userId);
     if (existentes > 0) {
-      throw new ConflictException(
+      throw new ConflictError(
         'Ya tienes centros de costos. La plantilla solo se siembra en una cuenta vacía.',
       );
     }
@@ -333,12 +329,12 @@ export class CategoriesService {
     profundidad: number;
   }): void {
     const motivo = porQueNoAdmiteVariosPagos(estado);
-    if (motivo !== null) throw new UnprocessableEntityException(motivo);
+    if (motivo !== null) throw new ValidationError(motivo);
   }
 
   private exigirProfundidadValida(profundidad: number): void {
     if (profundidad > PROFUNDIDAD_MAXIMA) {
-      throw new UnprocessableEntityException(
+      throw new ValidationError(
         `El árbol admite hasta ${PROFUNDIDAD_MAXIMA} niveles: centro de costos, categoría y concepto. ` +
           'Anidar más vuelve los reportes ilegibles.',
       );
@@ -347,7 +343,7 @@ export class CategoriesService {
 
   private async exigirCategoria(userId: bigint, id: bigint): Promise<Category> {
     const categoria = await this.repo.buscarPorId(userId, id);
-    if (!categoria) throw new NotFoundException('La categoría no existe.');
+    if (!categoria) throw new NotFoundError('La categoría no existe.');
     return categoria;
   }
 
@@ -375,7 +371,7 @@ export class CategoriesService {
     destinoId: bigint,
   ): Promise<{ movidos: number; destino: CategoryView }> {
     if (origenId === destinoId) {
-      throw new UnprocessableEntityException('Un concepto no se puede unificar consigo mismo.');
+      throw new ValidationError('Un concepto no se puede unificar consigo mismo.');
     }
 
     const origen = await this.exigirCategoria(userId, origenId);
@@ -385,7 +381,7 @@ export class CategoriesService {
     // nadie lo haya pedido, y un centro de costos ni siquiera tiene
     // movimientos propios que mover.
     if (origen.parentId === null || destino.parentId === null) {
-      throw new UnprocessableEntityException(
+      throw new ValidationError(
         'Solo se pueden unificar conceptos, no centros de costos ni categorías.',
       );
     }
@@ -395,7 +391,7 @@ export class CategoriesService {
     const todas = await this.repo.listar(userId, { incluirArchivadas: true });
     const conHijos = todas.filter((c) => c.parentId === origenId).length;
     if (conHijos > 0) {
-      throw new UnprocessableEntityException(
+      throw new ValidationError(
         'Ese concepto tiene otras categorías dentro. Vacíalo antes de unificarlo.',
       );
     }

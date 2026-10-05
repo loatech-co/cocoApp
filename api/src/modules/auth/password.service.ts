@@ -1,8 +1,9 @@
-import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 
 import { derivaDeDatosPersonales, evaluarPolitica } from './password.policy';
+import { ValidationError } from '../../common/errors/domain-error';
 
 /**
  * Política de contraseñas.
@@ -51,10 +52,10 @@ export class PasswordService {
     }
 
     if (problemas.length > 0) {
-      throw new UnprocessableEntityException({
-        message: 'La contraseña no cumple los requisitos.',
-        details: problemas.map((problema) => ({ field: 'password', message: problema })),
-      });
+      throw new ValidationError(
+        'La contraseña no cumple los requisitos.',
+        problemas.map((problema) => ({ field: 'password', message: problema })),
+      );
     }
   }
 

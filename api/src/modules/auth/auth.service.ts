@@ -1,10 +1,11 @@
-import { ForbiddenException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { User } from '@prisma/client';
 
 import { PasswordService } from './password.service';
 import { SupabaseAuthService } from './supabase-auth.service';
 import { AuditService } from '../../common/audit/audit.service';
+import { AuthenticationError, ForbiddenError } from '../../common/errors/domain-error';
 import { PrismaService } from '../../prisma/prisma.service';
 import { sembrarPlantilla } from '../categories/categories.plantilla';
 
@@ -184,7 +185,7 @@ export class AuthService {
         ip: contexto.ip,
         userAgent: contexto.userAgent,
       });
-      throw new UnauthorizedException('Correo o contraseña incorrectos.');
+      throw new AuthenticationError('Correo o contraseña incorrectos.');
     }
 
     const usuario = await this.prisma.user.findUnique({ where: { authId: sesion.authId } });
@@ -194,7 +195,7 @@ export class AuthService {
       // desde el panel de Supabase saltándose el registro de la app. Sin perfil
       // no hay rol ni estado, así que no se puede autorizar nada.
       this.logger.error(`Cuenta de Supabase ${sesion.authId} sin perfil en la aplicación.`);
-      throw new ForbiddenException('Tu cuenta no está habilitada. Contacta al administrador.');
+      throw new ForbiddenError('Tu cuenta no está habilitada. Contacta al administrador.');
     }
 
     this.exigirCuentaUsable(usuario);
@@ -235,10 +236,10 @@ export class AuthService {
     _contexto: ContextoDePeticion,
   ): Promise<{ tokens: ParDeTokens; perfil: PerfilPublico }> {
     const sesion = await this.supabase.refrescar(refreshToken);
-    if (!sesion) throw new UnauthorizedException('La sesión expiró. Vuelve a entrar.');
+    if (!sesion) throw new AuthenticationError('La sesión expiró. Vuelve a entrar.');
 
     const usuario = await this.prisma.user.findUnique({ where: { authId: sesion.authId } });
-    if (!usuario) throw new UnauthorizedException('La sesión ya no es válida.');
+    if (!usuario) throw new AuthenticationError('La sesión ya no es válida.');
 
     // El estado se revisa también al refrescar: si suspenden una cuenta, no
     // debe poder estirar su sesión indefinidamente cambiando un token por otro.
@@ -250,7 +251,7 @@ export class AuthService {
     // nuevo". Un 403 lo dejaría reintentando contra una sesión que no va a
     // revivir.
     if (usuario.status !== 'active') {
-      throw new UnauthorizedException('La sesión ya no es válida.');
+      throw new AuthenticationError('La sesión ya no es válida.');
     }
 
     return { tokens: aParDeTokens(sesion), perfil: aPerfilPublico(usuario) };
@@ -305,11 +306,11 @@ export class AuthService {
   ): Promise<void> {
     const usuario = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
     if (!usuario.authId) {
-      throw new ForbiddenException('Esta cuenta no tiene credenciales gestionadas.');
+      throw new ForbiddenError('Esta cuenta no tiene credenciales gestionadas.');
     }
 
     if (!(await this.supabase.contrasenaEsCorrecta(usuario.email, datos.actual))) {
-      throw new UnauthorizedException('La contraseña actual no es correcta.');
+      throw new AuthenticationError('La contraseña actual no es correcta.');
     }
 
     await this.passwords.exigirQueSeaFuerte(datos.nueva, {
@@ -359,12 +360,12 @@ export class AuthService {
 
   private exigirCuentaUsable(usuario: User): void {
     if (usuario.status === 'pending') {
-      throw new ForbiddenException(
+      throw new ForbiddenError(
         'Tu cuenta está pendiente de aprobación. Te avisaremos cuando esté lista.',
       );
     }
     if (usuario.status === 'suspended') {
-      throw new ForbiddenException('Tu cuenta está suspendida. Contacta al administrador.');
+      throw new ForbiddenError('Tu cuenta está suspendida. Contacta al administrador.');
     }
   }
 }

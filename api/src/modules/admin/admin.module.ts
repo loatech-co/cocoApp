@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,12 +6,10 @@ import {
   HttpStatus,
   Injectable,
   Module,
-  NotFoundException,
   Param,
   Post,
   Query,
   UseGuards,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import type { UserRole, UserStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
@@ -20,6 +17,7 @@ import { IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-
 
 import { AuditService } from '../../common/audit/audit.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { BadRequestError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { Roles, RolesGuard } from '../../common/guards/roles.guard';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -101,7 +99,7 @@ class AdminService {
     const usuario = await this.exigirUsuario(userId);
 
     if (usuario.status === 'active') {
-      throw new BadRequestException('Esa cuenta ya está activa.');
+      throw new BadRequestError('Esa cuenta ya está activa.');
     }
 
     const actualizado = await this.prisma.user.update({
@@ -228,7 +226,7 @@ class AdminService {
 
     // La contraseña la guarda Supabase; aquí no queda ni rastro de ella.
     if (!usuario.authId) {
-      throw new UnprocessableEntityException(
+      throw new ValidationError(
         'Esta cuenta no tiene credenciales gestionadas y no se le puede restablecer la contraseña.',
       );
     }
@@ -275,14 +273,14 @@ class AdminService {
 
   private async exigirUsuario(userId: bigint) {
     const usuario = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!usuario) throw new NotFoundException('El usuario no existe.');
+    if (!usuario) throw new NotFoundError('El usuario no existe.');
     return usuario;
   }
 
   /** Evita que un admin se deje a sí mismo fuera por accidente. */
   private exigirQueNoSeaUnoMismo(adminId: bigint, userId: bigint, accion: string): void {
     if (adminId === userId) {
-      throw new BadRequestException(`No puedes ${accion}.`);
+      throw new BadRequestError(`No puedes ${accion}.`);
     }
   }
 
@@ -295,7 +293,7 @@ class AdminService {
     });
 
     if (otrosAdmins === 0) {
-      throw new BadRequestException(
+      throw new BadRequestError(
         'Es el único administrador activo. Nombra otro antes de quitarle el acceso.',
       );
     }

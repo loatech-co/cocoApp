@@ -1,14 +1,4 @@
-import {
-  Inject,
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-  OnModuleInit,
-  PayloadTooLargeException,
-  ServiceUnavailableException,
-  UnsupportedMediaTypeException,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import type { Readable } from 'node:stream';
 
 import { RECEIPT_STORE, type ReceiptStore } from './receipt-store';
@@ -21,6 +11,13 @@ import {
   TAMANO_MAXIMO,
   TIPOS_DE_ENTRADA,
 } from './soportes.optimizacion';
+import {
+  BadRequestError,
+  NotFoundError,
+  PayloadTooLargeError,
+  ServiceUnavailableError,
+  UnsupportedMediaTypeError,
+} from '../../common/errors/domain-error';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /** Un archivo tal como llega del formulario. */
@@ -134,14 +131,14 @@ export class SoportesService implements OnModuleInit {
       where: { id: soporteId, transactionId, userId },
     });
 
-    if (!soporte) throw new NotFoundException('El soporte no existe.');
+    if (!soporte) throw new NotFoundError('El soporte no existe.');
 
     const flujo = await this.store.open(soporte.storageKey);
     if (!flujo) {
       // La ficha está y el archivo no. Es un estado posible —un almacén a
       // medio sincronizar— y decirlo así es más útil que un 404 pelado, que
       // haría pensar que el soporte nunca existió.
-      throw new NotFoundException('El archivo de ese soporte no está en el almacén.');
+      throw new NotFoundError('El archivo de ese soporte no está en el almacén.');
     }
 
     return {
@@ -177,17 +174,17 @@ export class SoportesService implements OnModuleInit {
       include: { category: { select: { name: true } } },
     });
 
-    if (!movimiento) throw new NotFoundException('El movimiento no existe.');
-    if (archivos.length === 0) throw new BadRequestException('No llegó ningún archivo.');
+    if (!movimiento) throw new NotFoundError('El movimiento no existe.');
+    if (archivos.length === 0) throw new BadRequestError('No llegó ningún archivo.');
 
     for (const archivo of archivos) {
       if (!TIPOS_DE_ENTRADA.has(archivo.mimetype)) {
-        throw new UnsupportedMediaTypeException(
+        throw new UnsupportedMediaTypeError(
           `“${archivo.originalname}” no es un PDF ni una imagen.`,
         );
       }
       if (archivo.size > TAMANO_MAXIMO) {
-        throw new PayloadTooLargeException(
+        throw new PayloadTooLargeError(
           `“${archivo.originalname}” pesa más de ${Math.round(TAMANO_MAXIMO / 1024 / 1024)} MB.`,
         );
       }
@@ -260,14 +257,14 @@ export class SoportesService implements OnModuleInit {
               return sinTratar;
             }
 
-            throw new ServiceUnavailableException(
+            throw new ServiceUnavailableError(
               `No se pudo procesar “${archivo.originalname}”: al servidor se le acabaron los ` +
                 `recursos para tratar la imagen. No es el archivo. Espera unos segundos y ` +
                 `vuelve a intentarlo. (${detalle})`,
             );
           }
 
-          throw new UnsupportedMediaTypeException(
+          throw new UnsupportedMediaTypeError(
             `No se pudo procesar “${archivo.originalname}”: este servidor no sabe abrir ese formato. ` +
               `Vuelve a intentarlo con un JPG, un PNG o un PDF. (${detalle})`,
           );
@@ -322,7 +319,7 @@ export class SoportesService implements OnModuleInit {
       where: { id: soporteId, transactionId, userId },
       select: { storageKey: true },
     });
-    if (!soporte) throw new NotFoundException('El soporte no existe.');
+    if (!soporte) throw new NotFoundError('El soporte no existe.');
 
     await this.prisma.soporte.deleteMany({ where: { id: soporteId, transactionId, userId } });
     await this.removeFiles([soporte.storageKey]);

@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Req,
-  Res,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
@@ -22,6 +12,7 @@ import {
 import { ChangePasswordDto, LoginDto, RefreshNativoDto, RegisterDto } from './dto/auth.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { AuthenticationError } from '../../common/errors/domain-error';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 
 /** El refresh token viaja SOLO en esta cookie; nunca en el cuerpo ni en la URL. */
@@ -125,7 +116,7 @@ export class AuthController {
   ): Promise<RespuestaDeSesion> {
     const refreshToken = this.refreshTokenDe(request, cuerpo);
     if (!refreshToken) {
-      throw new UnauthorizedException('No hay sesión que renovar.');
+      throw new AuthenticationError('No hay sesión que renovar.');
     }
 
     try {

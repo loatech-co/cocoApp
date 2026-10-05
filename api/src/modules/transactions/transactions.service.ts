@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma, type Transaction, type TransactionType } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
@@ -16,6 +16,7 @@ import type {
   UpdateTransactionDto,
 } from './dto/transaction.dto';
 import { parseOrden, parsePaginacion } from './transactions.sort';
+import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
 
 interface SplitView {
   id: bigint;
@@ -241,9 +242,7 @@ export class TransactionsService {
     const destino = BigInt(dto.to_account_id);
 
     if (origen === destino) {
-      throw new UnprocessableEntityException(
-        'La cuenta de origen y la de destino no pueden ser la misma.',
-      );
+      throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.');
     }
 
     await Promise.all([
@@ -493,7 +492,7 @@ export class TransactionsService {
     const cuadre = verificarCuadreDeSplits(amountCabecera, montos);
 
     if (!cuadre.cuadra) {
-      throw new UnprocessableEntityException(
+      throw new ValidationError(
         `La suma de los splits (${serializar(cuadre.suma)}) no coincide con el monto (${serializar(amountCabecera)}). Diferencia: ${serializar(cuadre.diferencia)}.`,
       );
     }
@@ -510,7 +509,7 @@ export class TransactionsService {
       where: { id, userId },
       include: INCLUIR_TODO,
     });
-    if (!movimiento) throw new NotFoundException('El movimiento no existe.');
+    if (!movimiento) throw new NotFoundError('El movimiento no existe.');
     return movimiento;
   }
 
@@ -518,14 +517,14 @@ export class TransactionsService {
   private async exigirCuentaPropia(userId: bigint, accountId: bigint): Promise<void> {
     const existe = await this.prisma.account.count({ where: { id: accountId, userId } });
     if (existe === 0) {
-      throw new UnprocessableEntityException('La cuenta indicada no existe o no es tuya.');
+      throw new ValidationError('La cuenta indicada no existe o no es tuya.');
     }
   }
 
   private async exigirCategoriaPropia(userId: bigint, categoryId: bigint): Promise<void> {
     const existe = await this.prisma.category.count({ where: { id: categoryId, userId } });
     if (existe === 0) {
-      throw new UnprocessableEntityException('La categoría indicada no existe o no es tuya.');
+      throw new ValidationError('La categoría indicada no existe o no es tuya.');
     }
   }
 

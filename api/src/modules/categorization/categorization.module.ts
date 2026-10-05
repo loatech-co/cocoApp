@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Global,
-  Injectable,
-  Module,
-  Post,
-  Query,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Body, Controller, Get, Global, Injectable, Module, Post, Query } from '@nestjs/common';
 import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 import {
@@ -20,6 +10,7 @@ import {
 } from './categorization';
 import { normalizarDescripcion } from './description';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ValidationError } from '../../common/errors/domain-error';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -153,7 +144,7 @@ export class CategorizationService {
       where: { id: categoryId, userId },
       select: { id: true },
     });
-    if (!suya) throw new UnprocessableEntityException('Esa categoría no existe en tu cuenta.');
+    if (!suya) throw new ValidationError('Esa categoría no existe en tu cuenta.');
 
     return { aprendido: await this.aprenderDe(userId, descripcion, categoryId) };
   }

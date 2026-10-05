@@ -1,6 +1,7 @@
-import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 
 import { Public } from '../../common/decorators/public.decorator';
+import { ServiceUnavailableError } from '../../common/errors/domain-error';
 import { PrismaService } from '../../prisma/prisma.service';
 
 interface HealthPayload {
@@ -29,7 +30,7 @@ export class HealthController {
   async check(): Promise<HealthPayload> {
     const reachable = await this.prisma.isDatabaseReachable();
     if (!reachable) {
-      throw new ServiceUnavailableException('La base de datos no responde.');
+      throw new ServiceUnavailableError('La base de datos no responde.');
     }
 
     return { status: 'ok', db: 'ok' };
