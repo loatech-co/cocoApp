@@ -48,16 +48,72 @@ Para trabajar con la interfaz: abrir `Coco.xcodeproj`, elegir iPhone 17, Run.
 
 ## Apuntar a la API local (cambiar la URL de la API)
 
-La app lee `CocoAPIBaseURL` de su Info.plist (lo declara `project.yml`; por
-defecto `https://dev-cocoapp.viteri.me`). Para cambiarla sin recompilar:
-Más → Ajustes → URL de la API → por ejemplo `http://localhost:3000`. El valor
-se guarda en UserDefaults y manda sobre el plist; «Restablecer» vuelve al plist.
+La app lee `CocoAPIBaseURL` de su Info.plist. `project.yml` lo escribe como
+`$(COCO_API_BASE_URL)`, un build setting cuyo valor base es
+`https://dev-cocoapp.viteri.me`. Hay dos formas de cambiarla:
+
+- **Sin recompilar:** Más → Ajustes → URL de la API (también desde la rueda
+  de la ficha de entrar) → por ejemplo `http://localhost:3000`. Se valida
+  (solo `http(s)://host[:puerto]`, sin ruta), se guarda en UserDefaults y manda
+  sobre el plist; guardar cierra la sesión y la nueva URL se usa al volver a
+  abrir la app del todo (las piezas de red se componen una vez al arrancar).
+  «Restablecer» vuelve al valor del bundle.
+- **Al compilar** (lo que usa el humo): pisar el build setting en la línea
+  de órdenes, sin tocar ningún archivo:
+
+  ```sh
+  xcodebuild -scheme Coco -destination 'platform=iOS Simulator,name=iPhone 17' \
+    CODE_SIGNING_ALLOWED=NO COCO_API_BASE_URL=http://localhost:3000 \
+    -derivedDataPath /tmp/dd-coco build
+  ```
 
 La API local arranca contra cocoApp-dev con `PERMITIR_AUTH_DESTRUCTIVA=si`
 solo en local. ATS permite red local sin TLS únicamente por
 `NSAllowsLocalNetworking`; cualquier otro host sigue exigiendo HTTPS. El
 usuario de desarrollo y su contraseña están en `api/.env.supabase-dev` (nunca
 en git).
+
+## Humo en el simulador contra la API local
+
+1. API: `cd api && npm run start` (usa `api/.env`: Postgres local en 5432,
+   Supabase dev, puerto 3000). Sirve la SPA desde `frontend/dist` si existe
+   (`npm run build` en `frontend` si no). Comprobar: `curl -s -o /dev/null -w
+   '%{http_code}' http://localhost:3000/` → 200.
+2. Simulador y app:
+
+   ```sh
+   cd ios && xcodegen generate -q
+   xcrun simctl boot "iPhone 17"
+   xcodebuild -scheme Coco -destination 'platform=iOS Simulator,name=iPhone 17' \
+     CODE_SIGNING_ALLOWED=NO COCO_API_BASE_URL=http://localhost:3000 \
+     -derivedDataPath /tmp/dd-coco build
+   xcrun simctl install booted /tmp/dd-coco/Build/Products/Debug-iphonesimulator/Coco.app
+   xcrun simctl launch booted co.loatech.coco
+   ```
+
+3. Bitácora de la app (subsistema `co.loatech.coco`, categorías `app`,
+   `navegacion`, `sesion`). En zsh `log` es un builtin: usar la ruta entera.
+
+   ```sh
+   /usr/bin/log stream --info --predicate 'subsystem == "co.loatech.coco"' --style compact
+   ```
+
+4. Entrar con el usuario de `api/.env.supabase-dev`. Después: Inicio carga la
+   web sin techo ni barra; Registrar guarda con la API apagada y Capturas
+   enseña «1 pendiente»; Más → Centros de costos abre la ruta en el mismo
+   webview; Más → Cerrar sesión vuelve a la ficha de entrar.
+5. Deep links: `xcrun simctl openurl booted coco://capturar/manual` (o
+   `coco://capturar/foto`, `coco://capturas`). iOS pregunta «¿Abrir en Coco?»
+   la primera vez que una URL `coco://` llega desde fuera de la app: hay que
+   tocar «Abrir». En la bitácora aparece `onOpenURL coco://…` y `ir
+   formularioRapido(...)`.
+6. Capturas: `xcrun simctl io booted screenshot ruta.png`.
+7. Apagar: `pkill -f "nest start"`, `xcrun simctl shutdown "iPhone 17"`.
+
+Avisos del humo en Xcode 27: la ventana del simulador la dibuja
+`DeviceHub.app` (en `Xcode.app/Contents/Applications`), y cerrarla APAGA el
+dispositivo. macOS no trae `timeout`: para acotar la API en el tiempo sirve
+`perl -e 'alarm 900; exec @ARGV' npm run start`.
 
 ## Instalar en el teléfono con una cuenta gratuita
 
@@ -128,7 +184,10 @@ xcodebuild -scheme Coco -destination 'platform=iOS Simulator,name=iPhone 17' tes
 `CocoTests` cubre la cola, la sesión, el reintento, los montos
 (`LectorDeMonto`), las fechas (`FechaDeBogota`), los parámetros de las
 acciones, la paridad del buscador con `frontend/src/lib/buscar-en-arbol.test.ts`,
-el puente, el perfil y su vencimiento, y el enrutador. `ContratosTests` lee
+el puente, el perfil y su vencimiento, el enrutador (URLs `coco://` y
+destinos), la composición (`Dependencias` con dobles: registra intents y
+tareas de fondo, sigue la insignia de la cola) y los textos de entrar y
+Ajustes. `ContratosTests` lee
 `packages/types/src/index.ts` y falla si `Marca.userAgentApp` se separa de
 `USER_AGENT_APP`.
 

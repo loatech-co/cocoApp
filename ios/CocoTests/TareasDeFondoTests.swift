@@ -24,10 +24,12 @@ final class TareasDeFondoTests: XCTestCase {
         XCTAssertEqual(procesado?.requiresNetworkConnectivity, true)
     }
 
-    func testProgramarSinRegistroNoTocaElScheduler() {
+    func testProgramarSinRegistroNoTocaElScheduler() throws {
         // `submit` sin registro es una excepción de ObjC, no un `throws`:
-        // programar tiene que saltárselo en vez de reventar.
-        XCTAssertFalse(TareasDeFondo.registradas)
+        // programar tiene que saltárselo en vez de reventar. La app
+        // anfitriona registra al arrancar (M9), así que dentro de ella la
+        // prueba no tiene el caso que quiere probar.
+        try XCTSkipIf(TareasDeFondo.registradas, "la app anfitriona ya registró las tareas al arrancar")
         TareasDeFondo.programar()
     }
 

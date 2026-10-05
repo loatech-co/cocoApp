@@ -23,6 +23,10 @@ settings:
     CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
+    # La API a la que habla la app; el Info.plist la lee de aquí. Se pisa
+    # desde la línea de órdenes para el humo contra la API local:
+    #   xcodebuild ... COCO_API_BASE_URL=http://localhost:3000
+    COCO_API_BASE_URL: https://dev-cocoapp.viteri.me
 targets:
   Coco:
     type: application
@@ -58,8 +62,9 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         ITSAppUsesNonExemptEncryption: false
-        # La API a la que habla la app. Se puede cambiar en Ajustes dentro de la app.
-        CocoAPIBaseURL: https://dev-cocoapp.viteri.me
+        # La API a la que habla la app (ver COCO_API_BASE_URL arriba). Se
+        # puede cambiar en Ajustes dentro de la app.
+        CocoAPIBaseURL: $(COCO_API_BASE_URL)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: co.loatech.coco
