@@ -1,6 +1,7 @@
 # The gate every change passes before it reaches the deploy branch (phase 7.6).
 #
-# Mirrors what "done" means in this repo: typecheck, lint, format, knip, unit tests, API e2e
+# Mirrors what "done" means in this repo: typecheck, lint, format, knip, layering
+# (dependency-cruiser), unit tests, API e2e
 # against a real Postgres, both production builds, and an install exactly like
 # the server's (NODE_ENV=production, no devDependencies). scripts/merge.sh
 # refuses to integrate a branch unless this is green.
@@ -83,6 +84,9 @@ jobs:
 
       - name: Unused code and dependencies (knip)
         run: npm run knip
+
+      - name: Architecture rules (dependency-cruiser)
+        run: npm run depcruise
 
       - name: Commit messages (commitlint)
         if: github.event_name == 'pull_request'

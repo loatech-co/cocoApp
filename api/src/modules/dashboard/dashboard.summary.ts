@@ -75,10 +75,7 @@ export function rangoPorDefecto(from?: string, to?: string): { inicio: Date; fin
 export const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
 
 /** En qué nivel está una categoría: 1 centro, 2 categoría, 3 concepto. */
-export function profundidadDeCategoria(
-  porId: ReadonlyMap<string, CategoriaPlana>,
-  id: bigint,
-): number {
+function profundidadDeCategoria(porId: ReadonlyMap<string, CategoriaPlana>, id: bigint): number {
   let nivel = 0;
   let actual: bigint | null = id;
   const visitados = new Set<string>();

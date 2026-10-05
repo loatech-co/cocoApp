@@ -1,0 +1,15 @@
+{
+  // Only for dependency-cruiser (`npm run depcruise`): one resolver for the
+  // whole repo. Each workspace still compiles with its own tsconfig.json.
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["frontend/src/*"],
+      "@coco/types": ["packages/types/src/index.ts"],
+      "@coco/types/*": ["packages/types/src/*"],
+      "@coco/lectura": ["packages/lectura/src/index.ts"]
+    }
+  },
+  "include": ["api/src", "frontend/src", "packages/*/src"]
+}
