@@ -107,6 +107,8 @@ Se actualiza en el mismo PR que crea o cambia un componente.
 | `atoms/logo.tsx`                   | átomo      | El logotipo, entero y compacto                                                             |
 | `atoms/monto.tsx`                  | átomo      | Una cifra de dinero con su signo (`Monto`) y un saldo (`Saldo`)                            |
 | `atoms/paginador.tsx`              | átomo      | Paginador de una tabla                                                                     |
+| `atoms/pdf-canvas.tsx`             | átomo      | La primera página de un PDF en un lienzo (`LienzoPdf`): miniatura o previsualización       |
+| `atoms/pdf-page.tsx`               | átomo      | Una página de un PDF al tamaño del zoom, sobre el velo de un visor (`PaginaPdf`)           |
 | `atoms/panel-inferior.tsx`         | átomo      | La hoja que sube desde abajo en el teléfono; `FILA_DE_PANEL`                               |
 | `atoms/politica-de-contrasena.tsx` | átomo      | Lo que una contraseña tiene que cumplir, y si lo cumple                                    |
 | `atoms/progreso.tsx`               | átomo      | Barra de progreso                                                                          |
@@ -119,6 +121,8 @@ Se actualiza en el mismo PR que crea o cambia un componente.
 | `molecules/link-row.tsx`           | molécula   | Fila de una hoja que lleva a una página (`FilaDeEnlace`)                                   |
 | `molecules/menu.tsx`               | molécula   | Base de todo desplegable: abrir, cerrar, Escape y colocarse; hoja en el teléfono           |
 | `molecules/modal-partes.tsx`       | molécula   | Cabecera, pie y ancho de una ficha (`PANEL_DE_MODAL`)                                      |
+| `molecules/overlay-control.tsx`    | molécula   | Mandos sobre un documento o un velo oscuro (`BotonOscuro`, `SeparadorDeMandos`)            |
+| `molecules/section.tsx`            | molécula   | Una parte de una ficha con su nombre encima (`Seccion`)                                    |
 | `molecules/tabla.tsx`              | molécula   | Tabla, filas, celdas, pie y esqueleto                                                      |
 | `organisms/combo.tsx`              | organismo  | Desplegable con filtro y, si se pide, «crear»                                              |
 | `organisms/confirmacion.tsx`       | organismo  | La ficha que pregunta antes de algo irreversible                                           |
