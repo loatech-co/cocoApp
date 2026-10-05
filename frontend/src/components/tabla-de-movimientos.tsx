@@ -8,7 +8,7 @@ import { Select } from '@/components/ui/select';
 import { ConTooltip } from '@/components/ui/tooltip';
 import { Card, CardContent } from '@/components/ui/card';
 import { useActualizarMovimiento } from '@/lib/queries';
-import { cn, formatCOP } from '@/lib/utils';
+import { cn, formatMoney } from '@/lib/utils';
 import type { Category, Transaction } from '@coco/types';
 
 /** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
@@ -230,7 +230,7 @@ function Fila({
         )}
       >
         {movimiento.type === 'income' ? '+' : '−'}
-        {formatCOP(movimiento.amount)}
+        {formatMoney(movimiento.amount, movimiento.currency)}
       </Td>
     </Tr>
   );

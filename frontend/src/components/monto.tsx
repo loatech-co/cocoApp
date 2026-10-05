@@ -1,9 +1,11 @@
 import type { TransactionType } from '@coco/types';
 import { ArrowRightLeft, Minus, Plus } from 'lucide-react';
-import { cn, formatCOP } from '@/lib/utils';
+import { cn, DEFAULT_CURRENCY, formatCOP, formatMoney } from '@/lib/utils';
 
 interface MontoProps {
   amount: string;
+  /** ISO 4217 code of the movement; aggregates leave it out. */
+  currency?: string;
   type?: TransactionType;
   className?: string;
   /** Oculta el icono cuando el contexto ya deja clarísimo el signo. */
@@ -21,7 +23,13 @@ interface MontoProps {
  * Semántica: ingreso = teal, gasto = morado. El rojo NO se usa para gastos;
  * está reservado para errores y acciones destructivas.
  */
-export function Monto({ amount, type = 'expense', className, soloTexto = false }: MontoProps) {
+export function Monto({
+  amount,
+  currency = DEFAULT_CURRENCY,
+  type = 'expense',
+  className,
+  soloTexto = false,
+}: MontoProps) {
   const estilos = {
     income: { color: 'text-income', signo: '+', Icono: Plus, etiqueta: 'Ingreso' },
     expense: { color: 'text-expense', signo: '−', Icono: Minus, etiqueta: 'Gasto' },
@@ -41,7 +49,7 @@ export function Monto({ amount, type = 'expense', className, soloTexto = false }
       <span className="sr-only">{estilos.etiqueta}: </span>
       <span>
         {estilos.signo}
-        {formatCOP(amount)}
+        {formatMoney(amount, currency)}
       </span>
     </span>
   );

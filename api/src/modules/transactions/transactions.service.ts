@@ -31,6 +31,8 @@ export interface TransactionView {
   /** El mes AL QUE PERTENECE el gasto, que no siempre es el del pago. */
   period: string;
   amount: string;
+  /** ISO 4217 code of `amount`. */
+  currency: string;
   type: TransactionType;
   category_id: bigint | null;
   description: string | null;
@@ -525,6 +527,7 @@ export class TransactionsService {
       date: fila.date.toISOString().slice(0, 10),
       period: fila.period.toISOString().slice(0, 10),
       amount: serializar(toMoney(fila.amount)),
+      currency: fila.currency,
       type: fila.type,
       category_id: fila.categoryId,
       description: fila.description,

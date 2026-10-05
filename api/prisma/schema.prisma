@@ -538,6 +538,9 @@ model Transaction {
   /// en su propio mes y obligar a declararlo sería fricción para nada.
   period          DateTime           @db.Date
   amount          Decimal            @db.Decimal(15, 2)
+  /// ISO 4217. Everything is COP today; the column exists so that formatting
+  /// reads the currency of the row instead of assuming it (phase 6.4).
+  currency        String             @default("COP") @db.Char(3)
   type            TransactionType    @default(expense)
   categoryId      BigInt?            @map("category_id")
   description     String?            @db.VarChar(255)

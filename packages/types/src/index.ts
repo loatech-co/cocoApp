@@ -553,6 +553,8 @@ export interface Transaction {
   period: DateOnlyString;
   /** Siempre positivo. El signo económico lo da `type`. */
   amount: DecimalString;
+  /** ISO 4217 code of `amount`. Always `COP` today. */
+  currency: string;
   type: TransactionType;
   category_id: Id | null;
   description: string | null;

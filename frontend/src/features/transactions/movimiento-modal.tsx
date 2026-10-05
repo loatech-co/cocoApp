@@ -48,7 +48,7 @@ import {
   useCrearMovimiento,
   useEliminarMovimiento,
 } from '@/lib/queries';
-import { cn, formatCOP } from '@/lib/utils';
+import { cn, DEFAULT_CURRENCY, formatMoney } from '@/lib/utils';
 import { useAlCambiar } from '@/lib/al-cambiar';
 import { BuscadorDeConcepto, type CandidatoDelRecibo } from '@/components/buscador-de-concepto';
 import { useSugerenciaDeCategoria } from '@/features/categorization/use-sugerencia';
@@ -1135,6 +1135,7 @@ export function MovimientoModal({
                       // vacío desde que la ficha cambió su campo libre por un selector.
                       nombre={movimiento ? nombreDelMovimiento(movimiento, arbol) : ''}
                       valor={amount}
+                      currency={movimiento?.currency ?? DEFAULT_CURRENCY}
                       fecha={date}
                       periodo={movimiento?.period}
                       ruta={[centro?.name, categoria?.name, concepto?.name].filter(Boolean) as string[]}
@@ -1257,6 +1258,7 @@ function VistaDeLectura({
   tipo,
   nombre,
   valor,
+  currency,
   fecha,
   periodo,
   ruta,
@@ -1264,6 +1266,8 @@ function VistaDeLectura({
   tipo: TransactionType;
   nombre: string;
   valor: string;
+  /** ISO 4217 code of the movement being read. */
+  currency: string;
   fecha: string;
   /** `YYYY-MM-DD` del día 1 del mes al que PERTENECE el gasto. */
   periodo?: string;
@@ -1327,7 +1331,7 @@ function VistaDeLectura({
               strokeWidth={2.75}
               aria-hidden="true"
             />
-            {formatCOP(valor || '0')}
+            {formatMoney(valor || '0', currency)}
           </p>
         </div>
 
