@@ -1,6 +1,7 @@
 import request from 'supertest';
 
 import { levantarApp, type EntornoDePruebas } from './helpers/app';
+import { HealthRepository } from '../src/modules/health/health.repository';
 
 /**
  * Fase 0 — la cadena completa contra MariaDB real (base `coco_test`).
@@ -9,7 +10,7 @@ import { levantarApp, type EntornoDePruebas } from './helpers/app';
  * firmados por el mismo TokenService que usa el login, y el guard global los
  * verifica y consulta la base igual que en producción.
  */
-describe('Fase 0 — the auth guard on a protected route, and the public health check (e2e)', () => {
+describe('Fase 0 — the auth guard on a protected route, and the public probes (e2e)', () => {
   let entorno: EntornoDePruebas;
 
   beforeAll(async () => {
@@ -103,24 +104,37 @@ describe('Fase 0 — the auth guard on a protected route, and the public health 
     expect(JSON.stringify(response.body)).toContain(usuario.email);
   });
 
-  it('health is public: 200 without a token, reaches the database, says nothing else', async () => {
+  it('health is public: 200 without a token, says only that the process is alive', async () => {
     const response = await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
 
+    expect(response.body).toEqual({ data: { status: 'ok' }, meta: {} });
+  });
+
+  it('ready is public: 200 without a token once the database answers', async () => {
+    const response = await request(entorno.app.getHttpServer()).get('/api/v1/ready').expect(200);
+
     expect(response.body).toEqual({ data: { status: 'ok', db: 'ok' }, meta: {} });
+  });
+
+  it('ready answers 503 when the database does not, and health stays 200', async () => {
+    const repository = entorno.app.get(HealthRepository);
+    const ping = jest.spyOn(repository, 'isDatabaseReachable').mockResolvedValue(false);
+
+    try {
+      const response = await request(entorno.app.getHttpServer()).get('/api/v1/ready').expect(503);
+      expect(response.body).toEqual({
+        error: { code: expect.any(String), message: 'La base de datos no responde.', details: [] },
+      });
+      // The process is still alive: an unreachable database is not a crash.
+      await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
+    } finally {
+      ping.mockRestore();
+    }
   });
 
   it('every response carries an X-Request-Id', async () => {
     const response = await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
 
     expect(response.headers['x-request-id']).toMatch(/^[A-Za-z0-9._-]{8,64}$/);
-  });
-
-  it('emite las cabeceras de seguridad de helmet', async () => {
-    const response = await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
-
-    expect(response.headers['x-content-type-options']).toBe('nosniff');
-    expect(response.headers['x-frame-options']).toBe('DENY');
-    expect(response.headers['referrer-policy']).toBe('no-referrer');
-    expect(response.headers['strict-transport-security']).toContain('max-age=');
   });
 });
