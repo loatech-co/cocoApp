@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type { TransactionFilters } from './transactions.domain';
+import type { TransactionFilters } from './transactions.inputs';
 import { parseOrder } from './transactions.sort';
 import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
 import { DuplicateError } from '../../common/errors/domain-error';

@@ -4,16 +4,18 @@ import { randomUUID } from 'node:crypto';
 import type { NewTransaction } from './ledger.types';
 import {
   transactionFromRow,
-  type SplitRequest,
   type Transaction,
-  type TransactionEdit,
-  type TransactionFilters,
   type TransactionHistory,
   type TransactionPage,
-  type TransactionRequest,
   type Transfer,
-  type TransferRequest,
 } from './transactions.domain';
+import type {
+  SplitRequest,
+  TransactionEdit,
+  TransactionFilters,
+  TransactionRequest,
+  TransferRequest,
+} from './transactions.inputs';
 import {
   TransactionsRepository,
   type SplitToWrite,

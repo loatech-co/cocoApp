@@ -1,4 +1,4 @@
-import type { SplitRequest } from './transactions.domain';
+import type { SplitRequest } from './transactions.inputs';
 import type { SplitToWrite } from './transactions.repository';
 import { ValidationError } from '../../common/errors/domain-error';
 import { serialize, toMoney, type Money } from '../../common/money/money';

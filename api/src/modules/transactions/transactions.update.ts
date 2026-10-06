@@ -1,4 +1,4 @@
-import type { TransactionEdit } from './transactions.domain';
+import type { TransactionEdit } from './transactions.inputs';
 import type { FullTransaction, TransactionChanges } from './transactions.repository';
 import { ValidationError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
