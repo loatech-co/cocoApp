@@ -10,11 +10,11 @@ import { SECCIONES_DE_ADMIN } from '@/shared/lib/sections';
 import { Alert, AlertDescription, AlertTitle, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
 import { Button } from '@/shared/ui/atoms/button';
-import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
-import { Campo } from '@/shared/ui/atoms/campo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
+import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
-import { PoliticaDeContrasena, cumpleLaPolitica } from '@/shared/ui/atoms/politica-de-contrasena';
+import { PageHeader } from '@/shared/ui/atoms/page-header';
+import { PasswordPolicy, meetsPolicy } from '@/shared/ui/atoms/password-policy';
 import { FilaDeEnlace } from '@/shared/ui/molecules/link-row';
 
 /**
@@ -37,7 +37,7 @@ export function CuentaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <CabeceraDePagina titulo={t('shell.account.myAccount')} ayuda={usuario?.email} />
+      <PageHeader title={t('shell.account.myAccount')} description={usuario?.email} />
 
       {esAdmin && (
         <Badge variant="info" className="self-start">
@@ -99,7 +99,7 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
   const { actual, setActual, nueva, setNueva, enviando, onSubmit } = form;
   return (
     <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-4">
-      <Campo etiqueta={t('profile.account.currentPassword')} id="actual">
+      <Field label={t('profile.account.currentPassword')} id="actual">
         <Input
           id="actual"
           type="password"
@@ -108,10 +108,10 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
           value={actual}
           onChange={(evento) => setActual(evento.target.value)}
         />
-      </Campo>
+      </Field>
 
       <div className="flex flex-col gap-2">
-        <Campo etiqueta={t('admin.userRow.newPassword')} id="nueva">
+        <Field label={t('admin.userRow.newPassword')} id="nueva">
           <Input
             id="nueva"
             type="password"
@@ -121,13 +121,13 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
             onChange={(evento) => setNueva(evento.target.value)}
             aria-describedby="requisitos-nueva"
           />
-        </Campo>
+        </Field>
         <div id="requisitos-nueva">
-          <PoliticaDeContrasena password={nueva} />
+          <PasswordPolicy password={nueva} />
         </div>
       </div>
 
-      <Button type="submit" disabled={enviando || !cumpleLaPolitica(nueva) || !actual}>
+      <Button type="submit" disabled={enviando || !meetsPolicy(nueva) || !actual}>
         {t('profile.account.changePassword')}
       </Button>
     </form>
@@ -137,7 +137,7 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
 function PasswordErrors({ error, problemas }: { error: string; problemas: string[] }) {
   return (
     <div className="mb-4">
-      <ErrorAlert mensaje={error} detalles={problemas} />
+      <ErrorAlert message={error} details={problemas} />
     </div>
   );
 }

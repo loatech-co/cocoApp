@@ -24,33 +24,33 @@ import { cn } from '@/shared/lib/utils';
  * nunca. Escondida con `hidden` sigue sirviendo de descripción: la
  * descripción accesible lee lo referenciado aunque no se vea.
  */
-export function ConTooltip({
-  texto,
+export function WithTooltip({
+  text,
   children,
   className,
 }: {
-  texto: string;
+  text: string;
   children: ReactNode;
   className?: string;
 }) {
-  const ancla = useRef<HTMLSpanElement>(null);
+  const anchor = useRef<HTMLSpanElement>(null);
   const id = useId();
-  const [sitio, setSitio] = useState<{ x: number; y: number } | null>(null);
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
 
-  function mostrar(): void {
-    const caja = ancla.current?.getBoundingClientRect();
-    if (!caja) return;
-    setSitio({ x: caja.left + caja.width / 2, y: caja.top });
+  function show(): void {
+    const box = anchor.current?.getBoundingClientRect();
+    if (!box) return;
+    setPosition({ x: box.left + box.width / 2, y: box.top });
   }
 
   return (
     <span
-      ref={ancla}
+      ref={anchor}
       className={cn('relative inline-flex', className)}
-      onPointerEnter={mostrar}
-      onPointerLeave={() => setSitio(null)}
-      onFocus={mostrar}
-      onBlur={() => setSitio(null)}
+      onPointerEnter={show}
+      onPointerLeave={() => setPosition(null)}
+      onFocus={show}
+      onBlur={() => setPosition(null)}
       tabIndex={0}
       aria-describedby={id}
     >
@@ -59,8 +59,8 @@ export function ConTooltip({
       <span
         id={id}
         role="tooltip"
-        hidden={!sitio}
-        style={sitio ? { left: `${sitio.x}px`, top: `${sitio.y - 8}px` } : undefined}
+        hidden={!position}
+        style={position ? { left: `${position.x}px`, top: `${position.y - 8}px` } : undefined}
         className={cn(
           'pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full',
           // `whitespace-normal` es obligatorio: estas explicaciones viven
@@ -95,7 +95,7 @@ export function ConTooltip({
           'shadow-[var(--sombra-flotante)] ring-1 ring-border',
         )}
       >
-        {texto}
+        {text}
       </span>
     </span>
   );

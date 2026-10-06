@@ -1,6 +1,6 @@
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { ICONOS_DE_CATEGORIA, IconoDeCategoria } from '@/shared/ui/atoms/iconos';
+import { CATEGORY_ICONS, CategoryIcon } from '@/shared/ui/atoms/icons';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
 /**
@@ -14,13 +14,13 @@ export function IconGrid({
   valor,
   onElegir,
 }: {
-  filtrados: typeof ICONOS_DE_CATEGORIA;
+  filtrados: typeof CATEGORY_ICONS;
   valor: string | null;
   onElegir: (icono: string | null) => void;
 }) {
   return (
     <div className="grid max-h-44 grid-cols-6 gap-1 overflow-y-auto sm:grid-cols-8">
-      {filtrados.map(({ nombre, etiqueta }) => {
+      {filtrados.map(({ name: nombre, label: etiqueta }) => {
         const elegido = valor === nombre;
 
         return (
@@ -40,7 +40,7 @@ export function IconGrid({
               elegido ? 'bg-primary text-primary-foreground' : cn('text-muted-foreground', REALCE),
             )}
           >
-            <IconoDeCategoria nombre={nombre} className="size-4" />
+            <CategoryIcon name={nombre} className="size-4" />
           </button>
         );
       })}

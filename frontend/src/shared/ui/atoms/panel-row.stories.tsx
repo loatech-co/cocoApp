@@ -17,7 +17,7 @@ export const Tones: Story = {
         <span className="min-w-0 flex-1 truncate">Agregar atajo</span>
         <Plus className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       </PanelRow>
-      <PanelRow tono="peligro" onClick={() => undefined}>
+      <PanelRow tone="danger" onClick={() => undefined}>
         <LogOut className="size-4 shrink-0" aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate">Cerrar sesión</span>
       </PanelRow>

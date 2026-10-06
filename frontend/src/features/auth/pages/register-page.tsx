@@ -6,11 +6,11 @@ import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/shared/api/aut
 import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, AlertTitle, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
-import { Campo } from '@/shared/ui/atoms/campo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
+import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
 import { Logo } from '@/shared/ui/atoms/logo';
-import { PoliticaDeContrasena, cumpleLaPolitica } from '@/shared/ui/atoms/politica-de-contrasena';
+import { PasswordPolicy, meetsPolicy } from '@/shared/ui/atoms/password-policy';
 import { TextLink } from '@/shared/ui/atoms/text-link';
 
 /**
@@ -122,7 +122,7 @@ function PasswordField({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <Campo etiqueta={t('auth.fields.password')} id="password">
+      <Field label={t('auth.fields.password')} id="password">
         <Input
           id="password"
           type="password"
@@ -132,9 +132,9 @@ function PasswordField({
           onChange={(evento) => onCambiar(evento.target.value)}
           aria-describedby="requisitos-password"
         />
-      </Campo>
+      </Field>
       <div id="requisitos-password">
-        <PoliticaDeContrasena password={password} />
+        <PasswordPolicy password={password} />
         <p className="mt-2 text-xs text-muted-foreground">{t('auth.register.passwordHelp')}</p>
       </div>
     </div>
@@ -143,10 +143,10 @@ function PasswordField({
 
 function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
   const { nombre, setNombre, email, setEmail, password, setPassword, enviando, onSubmit } = form;
-  const politicaOk = cumpleLaPolitica(password);
+  const politicaOk = meetsPolicy(password);
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <Campo etiqueta={t('auth.fields.name')} id="nombre">
+      <Field label={t('auth.fields.name')} id="nombre">
         <Input
           id="nombre"
           autoComplete="name"
@@ -155,9 +155,9 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
           value={nombre}
           onChange={(evento) => setNombre(evento.target.value)}
         />
-      </Campo>
+      </Field>
 
-      <Campo etiqueta={t('auth.fields.email')} id="email">
+      <Field label={t('auth.fields.email')} id="email">
         <Input
           id="email"
           type="email"
@@ -166,7 +166,7 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
           value={email}
           onChange={(evento) => setEmail(evento.target.value)}
         />
-      </Campo>
+      </Field>
 
       <PasswordField password={password} onCambiar={setPassword} />
 
@@ -184,7 +184,7 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
 
 function RegisterErrors({ error, problemas }: { error: string | null; problemas: string[] }) {
   if (!error) return null;
-  return <ErrorAlert mensaje={error} detalles={problemas} />;
+  return <ErrorAlert message={error} details={problemas} />;
 }
 
 /** Los campos de la solicitud, sus errores y el envío. */

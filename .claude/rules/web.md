@@ -31,7 +31,7 @@ Hoy son `admin`, `auth`, `bank-accounts`, `centros`, `profile` y
 Un enlace escondido entre dos dominios es el que nadie recuerda al cambiar
 uno. Ejemplos: el árbol de categorías lo usan centros y movimientos, y está en
 `shared/api/categories.ts`; la política de contraseña la usan auth, admin y
-perfil, y está en `shared/ui/atoms/politica-de-contrasena.tsx`; la lista de
+perfil, y está en `shared/ui/atoms/password-policy.tsx`; la lista de
 secciones la usan el armazón y Mi cuenta, y está en `shared/lib/sections.ts`.
 
 **`shared/` nunca importa de `features/`.**
@@ -124,12 +124,12 @@ lo que importa lo comprueba una máquina.
 
 | Nivel        | Puede usar                                | Ejemplos en Coco                                               |
 | ------------ | ----------------------------------------- | -------------------------------------------------------------- |
-| `atoms/`     | ningún otro componente de `shared/ui`     | `Button`, `Input`, `Campo`, `Casilla`, `PanelInferior`, `Dona` |
-| `molecules/` | solo átomos                               | `Menu` (Button + PanelInferior), `ModalPartes` (Button)        |
-| `organisms/` | moléculas y átomos, nunca otro organismo  | `Select` (Menu + Campo), `Confirmacion` (ModalPartes + Button) |
+| `atoms/`     | ningún otro componente de `shared/ui`     | `Button`, `Input`, `Field`, `Checkbox`, `BottomSheet`, `Donut` |
+| `molecules/` | solo átomos                               | `Menu` (Button + BottomSheet), `ModalPartes` (Button)          |
+| `organisms/` | moléculas y átomos, nunca otro organismo  | `Select` (Menu + Field), `Confirmacion` (ModalPartes + Button) |
 | `templates/` | organismos, moléculas y átomos, sin datos | Ninguna todavía                                                |
 
-Que `PanelInferior` o `Dona` sean átomos no dice que sean pequeños: dice que no
+Que `BottomSheet` o `Donut` sean átomos no dice que sean pequeños: dice que no
 se apoyan en ninguna otra pieza, así que cambiar otra pieza no los cambia.
 
 **`shared/ui/foundations/` es lo que todos los niveles pueden usar, y no es un
@@ -137,7 +137,7 @@ componente.**
 
 Clases y contextos sin marcado: `SUPERFICIE_FLOTANTE` (`superficie.ts`) y el
 contexto del campo con `FOCO_DEL_CAMPO` (`field.ts`). Sin esta carpeta, `Input`
-sería una molécula solo por leer el contexto de `Campo`.
+sería una molécula solo por leer el contexto de `Field`.
 
 **Los nombres nuevos de archivo y carpeta van en inglés kebab-case.**
 
@@ -183,64 +183,64 @@ añade en `index.css` con su razón (`leading-portada`, `pb-seguro`).
 
 Se actualiza en el mismo PR que crea o cambia un componente.
 
-| Componente                         | Nivel      | Para qué                                                                                          |
-| ---------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
-| `foundations/field.ts`             | fundamento | Contexto «dentro de un campo», hueco de la etiqueta, `FOCO_DEL_CAMPO`, `disparadorDeCampo`        |
-| `foundations/superficie.ts`        | fundamento | Color, tinta, sombra y canto de lo que flota; `REALCE` y `SURGE`                                  |
-| `atoms/add-surface.tsx`            | átomo      | El hueco punteado de «agregar» (`AddSurface`): `hueco`, `barra` o `fila`                          |
-| `atoms/alert.tsx`                  | átomo      | Aviso en línea: error o información; `ErrorAlert` con su lista de detalles                        |
-| `atoms/badge.tsx`                  | átomo      | `Etiqueta`, `Chip` y `Badge`: rótulos cortos con el color de su papel                             |
-| `atoms/bar-slot.tsx`               | átomo      | Los huecos de la barra de abajo: `BarSlotLink`, `BarSlotButton`, `BarIcon` y `BarFab`             |
-| `atoms/bloque.tsx`                 | átomo      | El bloque dentro de una tarjeta (`BLOQUE` para un `<label>` o `<button>`)                         |
-| `atoms/button.tsx`                 | átomo      | El botón; su tamaño lo decide `size`                                                              |
-| `atoms/cabecera-de-pagina.tsx`     | átomo      | Título, ayuda, raya y acciones de una pantalla; `TITULO_DE_PAGINA`                                |
-| `atoms/campo.tsx`                  | átomo      | Envoltorio con la etiqueta flotante de cualquier control                                          |
-| `atoms/card-row.tsx`               | átomo      | Fila pulsable de una lista dentro de una tarjeta (`CardRow`): un pago pendiente                   |
-| `atoms/card.tsx`                   | átomo      | La tarjeta: material apoyado en el pozo, sin borde                                                |
-| `atoms/casilla.tsx`                | átomo      | Casilla de verificación propia                                                                    |
-| `atoms/chip-icono.tsx`             | átomo      | Icono en su pastilla de color                                                                     |
-| `atoms/collapsible-header.tsx`     | átomo      | Cabecera de una tarjeta que se pliega, con su galón (`CollapsibleHeader`)                         |
-| `atoms/dona.tsx`                   | átomo      | Gráfica de dona con su pista flotante                                                             |
-| `atoms/drop-surface.tsx`           | átomo      | El cuadro donde se sueltan o se eligen archivos (`DropSurface`)                                   |
-| `atoms/estado-vacio.tsx`           | átomo      | Lo que se ve cuando una lista no tiene nada                                                       |
-| `atoms/file-picker.tsx`            | átomo      | El campo de archivos del navegador, escondido (`FilePicker`)                                      |
-| `atoms/iconos.tsx`                 | átomo      | Los iconos que se eligen para una categoría                                                       |
-| `atoms/input.tsx`                  | átomo      | Campo de texto con iconos informativos y acciones (`FieldAction`)                                 |
-| `atoms/interruptor.tsx`            | átomo      | Interruptor de encendido y apagado; `cargando` mientras guarda                                    |
-| `atoms/level-nav.tsx`              | átomo      | Moverse por un árbol: volver (`BackCrumb`) y bajar (`DrillButton`)                                |
-| `atoms/logo.tsx`                   | átomo      | El logotipo, entero y compacto                                                                    |
-| `atoms/monto.tsx`                  | átomo      | Una cifra de dinero con su `sentido` —entra, sale, se mueve— (`Monto`) y un saldo (`Saldo`)       |
-| `atoms/paginador.tsx`              | átomo      | Paginador de una tabla                                                                            |
-| `atoms/panel-inferior.tsx`         | átomo      | La hoja que sube desde abajo en el teléfono                                                       |
-| `atoms/panel-row.tsx`              | átomo      | Fila de 48 de un panel (`PanelRow`, tono `peligro`); `FILA_DE_PANEL` para un enlace               |
-| `atoms/pdf-canvas.tsx`             | átomo      | La primera página de un PDF en un lienzo (`LienzoPdf`): miniatura o previsualización              |
-| `atoms/pdf-page.tsx`               | átomo      | Una página de un PDF al tamaño del zoom, sobre el velo de un visor (`PaginaPdf`)                  |
-| `atoms/politica-de-contrasena.tsx` | átomo      | Lo que una contraseña tiene que cumplir, y si lo cumple                                           |
-| `atoms/progreso.tsx`               | átomo      | Barra de progreso                                                                                 |
-| `atoms/rail-toggle.tsx`            | átomo      | Plegar y desplegar el riel (`RailToggle`)                                                         |
-| `atoms/search-box.tsx`             | átomo      | La caja de filtrar una lista a la vista (`SearchBox`): `cabecera` o `caja`                        |
-| `atoms/skeleton.tsx`               | átomo      | Hueco de carga                                                                                    |
-| `atoms/text-button.tsx`            | átomo      | Acción que se lee como texto (`TextButton`): `primario`, `tenue` o `realce`                       |
-| `atoms/text-link.tsx`              | átomo      | Enlace dentro de una frase, subrayado en reposo (`TextLink`)                                      |
-| `atoms/textarea.tsx`               | átomo      | Campo de texto de varias líneas                                                                   |
-| `atoms/tile.tsx`                   | átomo      | Baldosa de la rejilla de atajos: `tileClass`, `MovableTile` y `TileRemove`                        |
-| `atoms/toggle-option.tsx`          | átomo      | Opción de una lista corta que se enciende (`ToggleOption`): los atajos de rango                   |
-| `atoms/tooltip.tsx`                | átomo      | Pista al pasar por encima (`ConTooltip`), anunciada con `aria-describedby`                        |
-| `molecules/aviso.tsx`              | molécula   | Avisos flotantes de la esquina: `mostrarAviso` y su pila                                          |
-| `molecules/calendario.tsx`         | molécula   | El calendario de los selectores de fecha: un día o un rango                                       |
-| `molecules/campo-de-dinero.tsx`    | molécula   | Campo de importe con separador de miles                                                           |
-| `molecules/icon-grid.tsx`          | molécula   | La rejilla de iconos de una categoría (`IconGrid`)                                                |
-| `molecules/link-row.tsx`           | molécula   | Fila de una hoja que lleva a una página (`FilaDeEnlace`)                                          |
-| `molecules/menu-rich-option.tsx`   | molécula   | Opción de menú con pastel y línea de ayuda (`MenuOpcionDetallada`)                                |
-| `molecules/menu.tsx`               | molécula   | Base de todo desplegable: abrir, cerrar, Escape y colocarse; `ancho` con nombre                   |
-| `molecules/modal-partes.tsx`       | molécula   | Cabecera, cuerpo, pie y ancho de una ficha (`PANEL_DE_MODAL`, `CuerpoDeModal`)                    |
-| `molecules/overlay-control.tsx`    | molécula   | Mandos sobre un documento o un velo (`BotonOscuro`, `SeparadorDeMandos`, `LecturaDeMandos`)       |
-| `molecules/section.tsx`            | molécula   | Una parte de una ficha con su nombre encima (`Seccion`)                                           |
-| `molecules/tabla.tsx`              | molécula   | Tabla, filas, celdas, pie y esqueleto                                                             |
-| `organisms/combo.tsx`              | organismo  | Desplegable con filtro y, si se pide, «crear» (`CreateOption`, también del buscador de conceptos) |
-| `organisms/confirmacion.tsx`       | organismo  | La ficha que pregunta antes de algo irreversible                                                  |
-| `organisms/modal.tsx`              | organismo  | El armazón de una ficha                                                                           |
-| `organisms/select.tsx`             | organismo  | El desplegable que reemplaza a `<select>`                                                         |
+| Componente                       | Nivel      | Para qué                                                                                          |
+| -------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| `foundations/field.ts`           | fundamento | Contexto «dentro de un campo», hueco de la etiqueta, `FOCO_DEL_CAMPO`, `disparadorDeCampo`        |
+| `foundations/superficie.ts`      | fundamento | Color, tinta, sombra y canto de lo que flota; `REALCE` y `SURGE`                                  |
+| `atoms/add-surface.tsx`          | átomo      | El hueco punteado de «agregar» (`AddSurface`): `slot`, `bar` o `row`                              |
+| `atoms/alert.tsx`                | átomo      | Aviso en línea: error o información; `ErrorAlert` con su lista de detalles                        |
+| `atoms/badge.tsx`                | átomo      | `Tag`, `Chip` y `Badge`: rótulos cortos con el color de su papel                                  |
+| `atoms/bar-slot.tsx`             | átomo      | Los huecos de la barra de abajo: `BarSlotLink`, `BarSlotButton`, `BarIcon` y `BarFab`             |
+| `atoms/block.tsx`                | átomo      | El bloque dentro de una tarjeta (`BLOCK` para un `<label>` o `<button>`)                          |
+| `atoms/button.tsx`               | átomo      | El botón; su tamaño lo decide `size`                                                              |
+| `atoms/page-header.tsx`          | átomo      | Título, ayuda, raya y acciones de una pantalla; `PAGE_TITLE`                                      |
+| `atoms/field.tsx`                | átomo      | Envoltorio con la etiqueta flotante de cualquier control                                          |
+| `atoms/card-row.tsx`             | átomo      | Fila pulsable de una lista dentro de una tarjeta (`CardRow`): un pago pendiente                   |
+| `atoms/card.tsx`                 | átomo      | La tarjeta: material apoyado en el pozo, sin borde                                                |
+| `atoms/checkbox.tsx`             | átomo      | Casilla de verificación propia                                                                    |
+| `atoms/icon-chip.tsx`            | átomo      | Icono en su pastilla de color                                                                     |
+| `atoms/collapsible-header.tsx`   | átomo      | Cabecera de una tarjeta que se pliega, con su galón (`CollapsibleHeader`)                         |
+| `atoms/donut.tsx`                | átomo      | Gráfica de dona con su pista flotante                                                             |
+| `atoms/drop-surface.tsx`         | átomo      | El cuadro donde se sueltan o se eligen archivos (`DropSurface`)                                   |
+| `atoms/empty-state.tsx`          | átomo      | Lo que se ve cuando una lista no tiene nada                                                       |
+| `atoms/file-picker.tsx`          | átomo      | El campo de archivos del navegador, escondido (`FilePicker`)                                      |
+| `atoms/icons.tsx`                | átomo      | Los iconos que se eligen para una categoría                                                       |
+| `atoms/input.tsx`                | átomo      | Campo de texto con iconos informativos y acciones (`FieldAction`)                                 |
+| `atoms/switch.tsx`               | átomo      | Interruptor de encendido y apagado; `isLoading` mientras guarda                                   |
+| `atoms/level-nav.tsx`            | átomo      | Moverse por un árbol: volver (`BackCrumb`) y bajar (`DrillButton`)                                |
+| `atoms/logo.tsx`                 | átomo      | El logotipo, entero y compacto                                                                    |
+| `atoms/amount.tsx`               | átomo      | Una cifra de dinero con su `direction` —entra, sale, se mueve— (`Amount`) y un saldo (`Balance`)  |
+| `atoms/pager.tsx`                | átomo      | Paginador de una tabla                                                                            |
+| `atoms/bottom-sheet.tsx`         | átomo      | La hoja que sube desde abajo en el teléfono                                                       |
+| `atoms/panel-row.tsx`            | átomo      | Fila de 48 de un panel (`PanelRow`, tono `danger`); `PANEL_ROW_CLASS` para un enlace              |
+| `atoms/pdf-canvas.tsx`           | átomo      | La primera página de un PDF en un lienzo (`PdfCanvas`): miniatura o previsualización              |
+| `atoms/pdf-page.tsx`             | átomo      | Una página de un PDF al tamaño del zoom, sobre el velo de un visor (`PdfPage`)                    |
+| `atoms/password-policy.tsx`      | átomo      | Lo que una contraseña tiene que cumplir, y si lo cumple                                           |
+| `atoms/progress.tsx`             | átomo      | Barra de progreso                                                                                 |
+| `atoms/rail-toggle.tsx`          | átomo      | Plegar y desplegar el riel (`RailToggle`)                                                         |
+| `atoms/search-box.tsx`           | átomo      | La caja de filtrar una lista a la vista (`SearchBox`): `header` o `box`                           |
+| `atoms/skeleton.tsx`             | átomo      | Hueco de carga                                                                                    |
+| `atoms/text-button.tsx`          | átomo      | Acción que se lee como texto (`TextButton`): `primary`, `subtle` o `highlight`                    |
+| `atoms/text-link.tsx`            | átomo      | Enlace dentro de una frase, subrayado en reposo (`TextLink`)                                      |
+| `atoms/textarea.tsx`             | átomo      | Campo de texto de varias líneas                                                                   |
+| `atoms/tile.tsx`                 | átomo      | Baldosa de la rejilla de atajos: `tileClass`, `MovableTile` y `TileRemove`                        |
+| `atoms/toggle-option.tsx`        | átomo      | Opción de una lista corta que se enciende (`ToggleOption`): los atajos de rango                   |
+| `atoms/tooltip.tsx`              | átomo      | Pista al pasar por encima (`WithTooltip`), anunciada con `aria-describedby`                       |
+| `molecules/aviso.tsx`            | molécula   | Avisos flotantes de la esquina: `mostrarAviso` y su pila                                          |
+| `molecules/calendario.tsx`       | molécula   | El calendario de los selectores de fecha: un día o un rango                                       |
+| `molecules/campo-de-dinero.tsx`  | molécula   | Campo de importe con separador de miles                                                           |
+| `molecules/icon-grid.tsx`        | molécula   | La rejilla de iconos de una categoría (`IconGrid`)                                                |
+| `molecules/link-row.tsx`         | molécula   | Fila de una hoja que lleva a una página (`FilaDeEnlace`)                                          |
+| `molecules/menu-rich-option.tsx` | molécula   | Opción de menú con pastel y línea de ayuda (`MenuOpcionDetallada`)                                |
+| `molecules/menu.tsx`             | molécula   | Base de todo desplegable: abrir, cerrar, Escape y colocarse; `ancho` con nombre                   |
+| `molecules/modal-partes.tsx`     | molécula   | Cabecera, cuerpo, pie y ancho de una ficha (`PANEL_DE_MODAL`, `CuerpoDeModal`)                    |
+| `molecules/overlay-control.tsx`  | molécula   | Mandos sobre un documento o un velo (`BotonOscuro`, `SeparadorDeMandos`, `LecturaDeMandos`)       |
+| `molecules/section.tsx`          | molécula   | Una parte de una ficha con su nombre encima (`Seccion`)                                           |
+| `molecules/tabla.tsx`            | molécula   | Tabla, filas, celdas, pie y esqueleto                                                             |
+| `organisms/combo.tsx`            | organismo  | Desplegable con filtro y, si se pide, «crear» (`CreateOption`, también del buscador de conceptos) |
+| `organisms/confirmacion.tsx`     | organismo  | La ficha que pregunta antes de algo irreversible                                                  |
+| `organisms/modal.tsx`            | organismo  | El armazón de una ficha                                                                           |
+| `organisms/select.tsx`           | organismo  | El desplegable que reemplaza a `<select>`                                                         |
 
 # Reglas de la interfaz
 
@@ -304,7 +304,7 @@ El alto, el radio y el peso de la letra viven en `size` dentro de
 `className`; si hace falta una medida nueva, se añade un `size`.
 
 Hay una prueba que lee el código fuente y falla si alguien lo hace:
-`shared/ui/atoms/button.llamadas.test.ts`.
+`shared/ui/atoms/button.calls.test.ts`.
 
 ## 3. El radio estándar es 10px
 
@@ -327,7 +327,7 @@ prohibidos.
 **Las dos excepciones son los cantos que miden una pantalla entera.** El
 pozo —la esquina donde se abre el contenido dentro de la página, en
 `app/app-shell.tsx`— lleva 14px, y las dos esquinas de arriba de una hoja
-que sube desde el borde de abajo —`shared/ui/atoms/panel-inferior.tsx`— llevan
+que sube desde el borde de abajo —`shared/ui/atoms/bottom-sheet.tsx`— llevan
 16px.
 
 Se pasan por lo mismo: son los cantos más largos que hay, y 10px en un
@@ -464,9 +464,9 @@ blanco inventados.
 
 ## 10. La cabecera de una pantalla
 
-**Regla:** Toda pantalla con contenido abre con `CabeceraDePagina`, su acción va en `size="sm"` y tiene un solo `<h1>`.
+**Regla:** Toda pantalla con contenido abre con `PageHeader`, su acción va en `size="sm"` y tiene un solo `<h1>`.
 
-Toda pantalla con contenido abre con `shared/ui/atoms/cabecera-de-pagina.tsx`.
+Toda pantalla con contenido abre con `shared/ui/atoms/page-header.tsx`.
 Nunca con un `<h1>` y un `<p>` escritos a mano.
 
 **Por qué.** Esas tres líneas se escribieron ocho veces y salieron TRES
@@ -496,13 +496,13 @@ Y su icono va **sin medida propia** (`<Plus />`, no
 `<Plus className="size-4" />`): el tamaño de los iconos lo pone el botón, y
 escribirlo en la llamada duplica una decisión que ya está tomada.
 
-**Los dos huecos.** `junto` va pegado al título —un botón de ayuda, una
-etiqueta de estado—; `acciones` va al extremo opuesto. Nada más entra en la
+**Los dos huecos.** `beside` va pegado al título —un botón de ayuda, una
+etiqueta de estado—; `actions` va al extremo opuesto. Nada más entra en la
 cabecera.
 
 **Lo que NO es una pantalla con contenido.** El 404 y las dos de acceso no
 tienen ayuda, ni acciones, ni contenido que separar con una raya. Usan la
-clase `TITULO_DE_PAGINA` del mismo archivo, que es la tipografía sola.
+clase `PAGE_TITLE` del mismo archivo, que es la tipografía sola.
 
 **Y toda pantalla tiene exactamente un `<h1>`.** Las de acceso lo llevan en
 `sr-only`, porque lo que se ve ahí es el logotipo y un SVG no puede hacer
@@ -510,7 +510,7 @@ ese papel: sin él, la única jerarquía de la página era el `<h2>` de la
 tarjeta y quien navega con lector de pantalla no encontraba ninguno del que
 colgaran los demás.
 
-`shared/ui/atoms/cabecera-de-pagina.test.ts` lee el código fuente y falla si una
+`shared/ui/atoms/page-header.test.ts` lee el código fuente y falla si una
 pantalla vuelve a escribir su propio `<h1>` o si una acción de cabecera pide
 un tamaño que no sea `sm`.
 
@@ -578,7 +578,7 @@ más cerca del pulgar, y ahí tiene que estar la acción principal.
 de uno relleno no se lee como un botón: se lee como el texto de al lado del
 botón.
 
-`shared/ui/atoms/button.llamadas.test.ts` falla si un `<Button>` vuelve a
+`shared/ui/atoms/button.calls.test.ts` falla si un `<Button>` vuelve a
 traer `flex-1`. (`w-full` sí se permite: estirar un botón a todo el ancho de
 una columna angosta —el «Iniciar sesión» de una tarjeta de 384px— es otra
 decisión, porque ahí no hay con quién competir.)
@@ -623,9 +623,9 @@ teléfono dos columnas de 170px no son dos columnas.
 
 ## 13. El nombre de un campo va DENTRO, y flota
 
-**Regla:** Todo campo va dentro de `Campo`, con su etiqueta flotante dentro; nunca un `<Label>` encima de un `<Input>`.
+**Regla:** Todo campo va dentro de `Field`, con su etiqueta flotante dentro; nunca un `<Label>` encima de un `<Input>`.
 
-Todo campo de formulario se envuelve en `shared/ui/atoms/campo.tsx`. Nunca un
+Todo campo de formulario se envuelve en `shared/ui/atoms/field.tsx`. Nunca un
 `<Label>` encima de un `<Input>`.
 
 **Cómo se comporta.** La etiqueta empieza donde estaría el marcador, del
@@ -660,12 +660,12 @@ envía sin él.
 
 ### Los iconos de un campo
 
-| Sitio                | Qué es                                            | Cuántos   |
-| -------------------- | ------------------------------------------------- | --------- |
-| Izquierda (`icono`)  | **Informativo.** De qué es el campo. No se pulsa  | Uno       |
-| Derecha (`acciones`) | **Activas.** Borrar lo escrito, ver la contraseña | Hasta dos |
+| Sitio               | Qué es                                            | Cuántos   |
+| ------------------- | ------------------------------------------------- | --------- |
+| Izquierda (`icon`)  | **Informativo.** De qué es el campo. No se pulsa  | Uno       |
+| Derecha (`actions`) | **Activas.** Borrar lo escrito, ver la contraseña | Hasta dos |
 
-`acciones` es una lista y no un `ReactNode` suelto porque el campo necesita
+`actions` es una lista y no un `ReactNode` suelto porque el campo necesita
 saber cuántas son para reservarles sitio con su relleno derecho, y contar
 los hijos de un fragmento no se puede hacer de forma fiable.
 
@@ -678,7 +678,7 @@ saber que «4 de abril de 2022» es una fecha—: es la señal de que esto abre
 un calendario, que es exactamente el papel de la flecha de un desplegable.
 Con las dos había dos iconos diciendo lo mismo, uno a cada lado del valor.
 
-`shared/ui/atoms/campo.test.tsx` comprueba los ganchos que el CSS necesita
+`shared/ui/atoms/field.test.tsx` comprueba los ganchos que el CSS necesita
 —el orden de los hermanos, el marcador que siempre está, los `data-` de un
 desplegable— y falla si una pantalla vuelve a escribir un `<Label>` suelto.
 
@@ -805,14 +805,14 @@ el peso de la letra tienen que decirlo también.
 
 Si algo aparece en dos pantallas, es un componente. Lo son la tabla de
 movimientos, el paginador, la barra de filtros, el calendario, la dona, la
-cabecera de una pantalla (`shared/ui/atoms/cabecera-de-pagina.tsx`), la cabecera
+cabecera de una pantalla (`shared/ui/atoms/page-header.tsx`), la cabecera
 y el pie de una ficha (`shared/ui/molecules/modal-partes.tsx`), el campo de un
-formulario con su etiqueta flotante (`shared/ui/atoms/campo.tsx`), el bloque
-dentro de una tarjeta (`shared/ui/atoms/bloque.tsx`) y la barra de progreso
-(`shared/ui/atoms/progreso.tsx`).
+formulario con su etiqueta flotante (`shared/ui/atoms/field.tsx`), el bloque
+dentro de una tarjeta (`shared/ui/atoms/block.tsx`) y la barra de progreso
+(`shared/ui/atoms/progress.tsx`).
 
 Lo que no puede ser un componente —porque hace falta un `<label>` o un
-`<button>` en vez de un `<div>`— exporta su CLASE, como hacen `BLOQUE` y
+`<button>` en vez de un `<div>`— exporta su CLASE, como hacen `BLOCK` y
 `SUPERFICIE_FLOTANTE`. Sigue siendo un solo sitio donde cambia el aspecto.
 
 Dos copias empiezan iguales y se separan: una aprende a marcar lo que

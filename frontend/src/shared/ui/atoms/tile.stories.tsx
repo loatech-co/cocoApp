@@ -19,26 +19,26 @@ export const States: Story = {
       </div>
       <div className="relative">
         <MovableTile
-          arrastrada={false}
-          etiqueta="Cuentas"
-          estilo={undefined}
-          onBajar={() => undefined}
-          onMover={() => undefined}
-          onSoltar={() => undefined}
+          isDragging={false}
+          label="Cuentas"
+          style={undefined}
+          onGrab={() => undefined}
+          onMove={() => undefined}
+          onRelease={() => undefined}
         >
           <Wallet className="size-6 shrink-0" aria-hidden="true" />
           <span className="text-2xs font-medium">Cuentas</span>
         </MovableTile>
-        <TileRemove etiqueta="Cuentas" onQuitar={() => undefined} />
+        <TileRemove label="Cuentas" onRemove={() => undefined} />
       </div>
       <div className="relative">
         <MovableTile
-          arrastrada
-          etiqueta="Cuentas"
-          estilo={undefined}
-          onBajar={() => undefined}
-          onMover={() => undefined}
-          onSoltar={() => undefined}
+          isDragging
+          label="Cuentas"
+          style={undefined}
+          onGrab={() => undefined}
+          onMove={() => undefined}
+          onRelease={() => undefined}
         >
           <Wallet className="size-6 shrink-0" aria-hidden="true" />
           <span className="text-2xs font-medium">Cuentas</span>

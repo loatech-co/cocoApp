@@ -17,25 +17,25 @@ import { REALCE } from '@/shared/ui/foundations/superficie';
  * donde el camino hace de título del desplegable.
  */
 export function BackCrumb({
-  ruta,
-  fuerte = false,
-  onVolver,
+  path,
+  isStrong = false,
+  onBack,
 }: {
-  ruta: readonly string[];
-  fuerte?: boolean;
-  onVolver: () => void;
+  path: readonly string[];
+  isStrong?: boolean;
+  onBack: () => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onVolver}
+      onClick={onBack}
       className={cn(
         'flex min-w-0 items-center gap-1 rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground',
-        fuerte && 'font-semibold',
+        isStrong && 'font-semibold',
       )}
     >
       <ChevronLeft className="size-3.5 shrink-0" aria-hidden="true" />
-      <span className="truncate">{ruta.join(' · ')}</span>
+      <span className="truncate">{path.join(' · ')}</span>
     </button>
   );
 }
@@ -46,13 +46,13 @@ export function BackCrumb({
  * Ocupa el alto ENTERO de la fila y 36 de ancho, porque la fila ya es otro
  * control —marcar— y este es una segunda puerta en el mismo renglón.
  */
-export function DrillButton({ nombre, onEntrar }: { nombre: string; onEntrar: () => void }) {
+export function DrillButton({ name, onDrill }: { name: string; onDrill: () => void }) {
   return (
     <button
       type="button"
-      onClick={onEntrar}
-      aria-label={t('ui.levelNav.open', { name: nombre })}
-      title={t('ui.levelNav.open', { name: nombre })}
+      onClick={onDrill}
+      aria-label={t('ui.levelNav.open', { name })}
+      title={t('ui.levelNav.open', { name })}
       className={cn(
         'grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors',
         REALCE,

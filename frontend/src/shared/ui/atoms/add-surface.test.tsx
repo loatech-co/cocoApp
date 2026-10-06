@@ -8,21 +8,21 @@ afterEach(cleanup);
 
 describe('AddSurface', () => {
   it.each([
-    ['hueco', 'min-h-64', 'size-5'],
-    ['barra', 'border-2', 'size-5'],
-    ['fila', 'min-h-[42px]', 'size-4'],
-  ] as const)('draws the %s form with its plus', (forma, clase, icono) => {
+    ['slot', 'min-h-64', 'size-5'],
+    ['bar', 'border-2', 'size-5'],
+    ['row', 'min-h-[42px]', 'size-4'],
+  ] as const)('draws the %s form with its plus', (shape, className, icon) => {
     const onClick = vi.fn();
     render(
-      <AddSurface forma={forma} onClick={onClick}>
+      <AddSurface shape={shape} onClick={onClick}>
         Agregar
       </AddSurface>,
     );
 
-    const boton = screen.getByRole('button', { name: 'Agregar' });
-    expect(boton.className).toContain(clase);
-    expect(boton.querySelector('svg')?.getAttribute('class')).toContain(icono);
-    fireEvent.click(boton);
+    const button = screen.getByRole('button', { name: 'Agregar' });
+    expect(button.className).toContain(className);
+    expect(button.querySelector('svg')?.getAttribute('class')).toContain(icon);
+    fireEvent.click(button);
     expect(onClick).toHaveBeenCalledOnce();
   });
 });

@@ -6,9 +6,9 @@ import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { conMayuscula, MESES_LARGOS } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { Campo } from '@/shared/ui/atoms/campo';
+import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
-import { Interruptor } from '@/shared/ui/atoms/interruptor';
+import { Switch } from '@/shared/ui/atoms/switch';
 import { CampoDeDinero } from '@/shared/ui/molecules/campo-de-dinero';
 import { Select } from '@/shared/ui/organisms/select';
 
@@ -102,7 +102,7 @@ export function CamposDeRecurrencia({
           </span>
         </span>
 
-        <Interruptor
+        <Switch
           checked={valor.recurrente}
           onChange={(e) => onCambiar({ ...valor, recurrente: e.target.checked })}
         />
@@ -159,7 +159,7 @@ function CampoDelDia({ dia, onCambiar }: { dia: number; onCambiar: (dia: number)
   useAlCambiar([dia], () => setEscrito(String(dia)));
 
   return (
-    <Campo etiqueta={t('centers.recurrence.dayOfMonth')} id="dia-de-pago">
+    <Field label={t('centers.recurrence.dayOfMonth')} id="dia-de-pago">
       <Input
         id="dia-de-pago"
         // `text` y no `number`: un campo numérico devuelve la cadena vacía
@@ -180,7 +180,7 @@ function CampoDelDia({ dia, onCambiar }: { dia: number; onCambiar: (dia: number)
         // volver a abrir la ficha.
         onBlur={() => setEscrito(String(dia))}
       />
-    </Campo>
+    </Field>
   );
 }
 
@@ -258,7 +258,7 @@ function InstallmentsSwitch({ valor, onCambiar }: RecurrenceFieldProps) {
         </span>
       </span>
 
-      <Interruptor
+      <Switch
         checked={valor.variosPagos}
         disabled={valor.pagoAutomatico}
         onChange={(e) => onCambiar({ ...valor, variosPagos: e.target.checked })}
@@ -284,7 +284,7 @@ function AutoPaySwitch({ valor, onCambiar }: RecurrenceFieldProps) {
         </span>
       </span>
 
-      <Interruptor
+      <Switch
         checked={valor.pagoAutomatico}
         disabled={valor.variosPagos}
         onChange={(e) => onCambiar({ ...valor, pagoAutomatico: e.target.checked })}
@@ -295,10 +295,10 @@ function AutoPaySwitch({ valor, onCambiar }: RecurrenceFieldProps) {
 
 function BudgetField({ valor, onCambiar }: RecurrenceFieldProps) {
   return (
-    <Campo
-      etiqueta={t('centers.recurrence.budget')}
+    <Field
+      label={t('centers.recurrence.budget')}
       id="presupuesto"
-      ayuda={
+      description={
         valor.presupuesto.trim() === ''
           ? t('centers.recurrence.budgetEmptyHelp')
           : t('centers.recurrence.budgetHelp')
@@ -311,7 +311,7 @@ function BudgetField({ valor, onCambiar }: RecurrenceFieldProps) {
         onCambiar={(presupuesto) => onCambiar({ ...valor, presupuesto })}
         placeholder={t('centers.recurrence.optional')}
       />
-    </Campo>
+    </Field>
   );
 }
 
@@ -331,7 +331,7 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
         valor.periodicidad === 'monthly' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
       )}
     >
-      <Campo etiqueta={t('centers.recurrence.howOften')} id="periodicidad">
+      <Field label={t('centers.recurrence.howOften')} id="periodicidad">
         <Select
           id="periodicidad"
           etiqueta={t('centers.recurrence.periodicity.label')}
@@ -339,10 +339,10 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
           opciones={PERIODICIDADES.map((p) => ({ valor: p, etiqueta: ETIQUETAS[p] }))}
           onCambiar={(v) => onCambiar({ ...valor, periodicidad: v as Periodicidad })}
         />
-      </Campo>
+      </Field>
 
       {valor.periodicidad !== 'monthly' && (
-        <Campo etiqueta={etiquetaDelMes(valor.periodicidad)} id="mes-de-pago">
+        <Field label={etiquetaDelMes(valor.periodicidad)} id="mes-de-pago">
           <Select
             id="mes-de-pago"
             etiqueta={t('centers.recurrence.month')}
@@ -350,7 +350,7 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
             opciones={MESES.map((m, i) => ({ valor: String(i + 1), etiqueta: m }))}
             onCambiar={(v) => onCambiar({ ...valor, mesDePago: Number(v) })}
           />
-        </Campo>
+        </Field>
       )}
 
       <CampoDelDia

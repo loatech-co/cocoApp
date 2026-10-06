@@ -4,16 +4,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Button, buttonVariants } from './button';
 
-const VARIANTES = [
+const VARIANTS = [
   'default',
-  'acento',
+  'accent',
   'secondary',
   'outline',
   'ghost',
   'link',
   'destructive',
-  'herramienta',
-  'campo',
+  'tool',
+  'field',
 ] as const;
 
 /**
@@ -25,24 +25,24 @@ const VARIANTES = [
  * comprobaciones seguían en verde comparando el vacío contra el vacío. Una
  * prueba que mide algo inexistente no avisa de nada.
  */
-const TAMANOS = ['sm', 'md', 'sm-icon', 'md-icon'] as const;
+const SIZES = ['sm', 'md', 'sm-icon', 'md-icon'] as const;
 
 /** Las clases que fijan el alto: `h-9`, `size-9`, `sm:size-10`… */
-const alturas = (clases: string): string[] =>
-  clases
+const heights = (classes: string): string[] =>
+  classes
     .split(/\s+/)
     .filter((c) => /^(sm:)?(h|size)-/.test(c))
     .sort();
 
 /** Las clases que fijan el radio. */
-const radios = (clases: string): string[] =>
-  clases
+const radios = (classes: string): string[] =>
+  classes
     .split(/\s+/)
     .filter((c) => c.startsWith('rounded'))
     .sort();
 
-const peso = (clases: string): string[] =>
-  clases
+const weight = (classes: string): string[] =>
+  classes
     .split(/\s+/)
     .filter((c) => c.startsWith('font-'))
     .sort();
@@ -51,25 +51,25 @@ describe('El botón mide lo mismo con cualquier variante', () => {
   it('los tamaños que se prueban son los que existen', () => {
     // Si alguien añade o quita un tamaño, esta falla antes que las otras y dice
     // exactamente qué pasó, en vez de dejarlas midiendo el vacío.
-    for (const size of TAMANOS) {
-      expect(alturas(buttonVariants({ size })), `el tamaño ${size} fija un alto`).not.toHaveLength(
+    for (const size of SIZES) {
+      expect(heights(buttonVariants({ size })), `el tamaño ${size} fija un alto`).not.toHaveLength(
         0,
       );
     }
   });
 
-  for (const size of TAMANOS) {
+  for (const size of SIZES) {
     it(`tamaño ${size}: todas las variantes comparten alto y radio`, () => {
       // Esto es lo que se rompía: el alto y el radio vivían en la base, así que
       // una variante que necesitara otras esquinas los pisaba con un className
       // y de paso se llevaba el alto. En una misma barra acabaron conviviendo
       // cuatro alturas distintas.
-      const referencia = buttonVariants({ variant: 'default', size });
+      const reference = buttonVariants({ variant: 'default', size });
 
-      for (const variant of VARIANTES) {
-        const clases = buttonVariants({ variant, size });
-        expect(alturas(clases), `alto de ${variant}/${size}`).toEqual(alturas(referencia));
-        expect(radios(clases), `radio de ${variant}/${size}`).toEqual(radios(referencia));
+      for (const variant of VARIANTS) {
+        const classes = buttonVariants({ variant, size });
+        expect(heights(classes), `alto de ${variant}/${size}`).toEqual(heights(reference));
+        expect(radios(classes), `radio de ${variant}/${size}`).toEqual(radios(reference));
       }
     });
   }
@@ -82,17 +82,17 @@ describe('El botón mide lo mismo con cualquier variante', () => {
     // campo —el selector de fecha—, y lo que enseña es un VALOR. Un valor en
     // semibold dentro de una fila de campos pesa más que la etiqueta que lo
     // nombra, y la fila se lee al revés.
-    const deAccion = VARIANTES.filter((v) => v !== 'campo');
-    const referencia = peso(buttonVariants({ variant: 'default', size: 'sm' }));
+    const actionVariants = VARIANTS.filter((v) => v !== 'field');
+    const reference = weight(buttonVariants({ variant: 'default', size: 'sm' }));
 
-    for (const variant of deAccion) {
-      expect(peso(buttonVariants({ variant, size: 'sm' })), variant).toEqual(referencia);
+    for (const variant of actionVariants) {
+      expect(weight(buttonVariants({ variant, size: 'sm' })), variant).toEqual(reference);
     }
   });
 
   it('ninguna VARIANTE trae alto ni radio: eso lo decide el tamaño', () => {
-    for (const variant of VARIANTES) {
-      const soloVariante = buttonVariants({ variant, size: undefined })
+    for (const variant of VARIANTS) {
+      const variantOnly = buttonVariants({ variant, size: undefined })
         .split(/\s+/)
         .filter((c) => /^(sm:)?(h|size)-/.test(c) || c.startsWith('rounded'));
 
@@ -101,7 +101,7 @@ describe('El botón mide lo mismo con cualquier variante', () => {
         .split(/\s+/)
         .filter((c) => /^(sm:)?(h|size)-/.test(c) || c.startsWith('rounded'));
 
-      expect(soloVariante.sort()).toEqual(base.sort());
+      expect(variantOnly.sort()).toEqual(base.sort());
     }
   });
 
@@ -109,15 +109,15 @@ describe('El botón mide lo mismo con cualquier variante', () => {
     // El par exacto que se veía descuadrado.
     const { getByText } = render(
       <>
-        <Button variant="herramienta" size="sm">
+        <Button variant="tool" size="sm">
           Cancelar
         </Button>
         <Button size="sm">Aplicar</Button>
       </>,
     );
 
-    expect(alturas(getByText('Cancelar').className)).toEqual(
-      alturas(getByText('Aplicar').className),
+    expect(heights(getByText('Cancelar').className)).toEqual(
+      heights(getByText('Aplicar').className),
     );
     expect(radios(getByText('Cancelar').className)).toEqual(radios(getByText('Aplicar').className));
   });
@@ -161,7 +161,7 @@ describe('Button', () => {
   });
 
   it('never draws a focus ring: a button holds nothing to point at', () => {
-    for (const variant of VARIANTES) {
+    for (const variant of VARIANTS) {
       expect(buttonVariants({ variant }), variant).not.toMatch(/focus-visible:ring/);
     }
   });

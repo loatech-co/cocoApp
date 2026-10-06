@@ -40,23 +40,23 @@ import {
 export function Input({
   className,
   type,
-  tamano = 'md',
-  icono: Icono,
-  acciones,
+  size = 'md',
+  icon: Icon,
+  actions,
   placeholder,
   ...props
-}: ComponentProps<'input'> & {
-  tamano?: 'sm' | 'md';
+}: Omit<ComponentProps<'input'>, 'size'> & {
+  size?: 'sm' | 'md';
   /** A la izquierda, informativo: de qué es este campo. */
-  icono?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  icon?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   /** A la derecha, activas. Una o dos. */
-  acciones?: ReactNode[];
+  actions?: ReactNode[];
 }) {
-  const derecha = acciones?.filter(Boolean) ?? [];
+  const right = actions?.filter(Boolean) ?? [];
   // Dentro de un `Campo`, el valor baja para dejarle sitio a la etiqueta.
-  const enCampo = useDentroDeUnCampo();
+  const isInField = useDentroDeUnCampo();
 
-  const campo = (
+  const field = (
     <input
       type={type}
       /*
@@ -68,35 +68,35 @@ export function Input({
         arriba desde el principio, tapando un campo vacío.
       */
       placeholder={placeholder ?? ' '}
-      className={cn(inputClass(tamano, enCampo, Boolean(Icono), derecha.length), className)}
+      className={cn(inputClass(size, isInField, Boolean(Icon), right.length), className)}
       {...props}
     />
   );
 
-  if (!Icono && derecha.length === 0) return campo;
+  if (!Icon && right.length === 0) return field;
 
   return (
     <span className="relative block">
-      {campo}
+      {field}
 
-      {Icono && (
+      {Icon && (
         <span
           // `data-icono` es lo que le dice a la etiqueta flotante que tiene que
           // arrancar más a la derecha. Lo lee `.campo` en `index.css`.
           data-icono=""
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         >
-          <Icono className="size-4" aria-hidden={true} />
+          <Icon className="size-4" aria-hidden={true} />
         </span>
       )}
 
-      {derecha.length > 0 && (
+      {right.length > 0 && (
         <span className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
-          {derecha.map((accion, i) => (
+          {right.map((action, i) => (
             // El índice como clave: esta lista no se reordena ni se filtra,
             // son uno o dos botones fijos que el campo declara al construirse.
             // eslint-disable-next-line @eslint-react/no-array-index-key -- lista fija y posicional, sin id propio
-            <span key={i}>{accion}</span>
+            <span key={i}>{action}</span>
           ))}
         </span>
       )}
@@ -106,14 +106,14 @@ export function Input({
 
 /** Las clases del `<input>`: su tamaño, su foco y el sitio de sus iconos. */
 function inputClass(
-  tamano: 'sm' | 'md',
-  enCampo: boolean,
-  conIcono: boolean,
-  acciones: number,
+  size: 'sm' | 'md',
+  isInField: boolean,
+  hasIcon: boolean,
+  actions: number,
 ): string {
   return cn(
     'flex w-full rounded-lg border border-input bg-card px-3',
-    tamano === 'sm' ? 'h-9 text-sm' : 'h-11 text-base',
+    size === 'sm' ? 'h-9 text-sm' : 'h-11 text-base',
     // El suelo táctil, aunque en `md` sobre: 44 ya pasa de 42. Se declara
     // igual porque `piso-tactil.test.ts` pide que quien dibuja un control
     // lo diga, y el día que alguien baje este alto el suelo sigue puesto.
@@ -126,7 +126,7 @@ function inputClass(
       Va aquí y no en la hoja de estilos porque una utilidad le gana a la
       capa `components`, y esta clase es justo la que ganaba.
     */
-    enCampo
+    isInField
       ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
       : 'placeholder:text-muted-foreground',
     // Al pasar por encima se tiñe el BORDE, igual que el `Select` y el
@@ -134,7 +134,7 @@ function inputClass(
     // respondía al ratón y el de al lado no, y parecía que uno estaba
     // apagado.
     'transition-colors hover:border-ring/40',
-    // El porqué del grosor y de `:focus-visible`, en `campo.tsx`.
+    // El porqué del grosor y de `:focus-visible`, en `field.tsx`.
     FOCO_DEL_CAMPO,
     'disabled:cursor-not-allowed disabled:opacity-50',
     'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive',
@@ -142,13 +142,13 @@ function inputClass(
     // app —no el `md:` de Tailwind, que mide solo el ancho—: una tableta
     // en vertical es táctil aunque mida 800, y Safari amplía la página
     // entera al enfocar un campo de menos de 16px.
-    tamano === 'md' && 'escritorio:text-sm',
+    size === 'md' && 'escritorio:text-sm',
     // Sitio para los iconos. A la izquierda: 12 de margen, 16 de icono y 8
     // de aire. A la derecha, lo mismo por cada botón de 28.
-    conIcono && 'pl-9',
-    acciones === 1 && 'pr-11',
-    acciones >= 2 && 'pr-19',
-    enCampo && HUECO_DE_LA_ETIQUETA,
+    hasIcon && 'pl-9',
+    actions === 1 && 'pr-11',
+    actions >= 2 && 'pr-19',
+    isInField && HUECO_DE_LA_ETIQUETA,
   );
 }
 
@@ -158,21 +158,21 @@ function inputClass(
  * nombre accesible y su pista.
  */
 export function FieldAction({
-  Icono,
-  etiqueta,
-  pista,
+  Icon,
+  label,
+  hint,
   ...props
 }: Omit<ComponentProps<'button'>, 'className' | 'children' | 'type'> & {
-  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  etiqueta: string;
+  Icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  label: string;
   /** La pista al pasar por encima, si es más corta que `etiqueta`. */
-  pista?: string;
+  hint?: string;
 }) {
   return (
     <button
       type="button"
-      aria-label={etiqueta}
-      title={pista ?? etiqueta}
+      aria-label={label}
+      title={hint ?? label}
       className={cn(
         'flex size-7 items-center justify-center rounded-md text-muted-foreground',
         'transition-colors hover:bg-muted hover:text-foreground',
@@ -180,7 +180,7 @@ export function FieldAction({
       )}
       {...props}
     >
-      <Icono className="size-4" aria-hidden={true} />
+      <Icon className="size-4" aria-hidden={true} />
     </button>
   );
 }

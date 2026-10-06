@@ -12,12 +12,12 @@ import { cn } from '@/shared/lib/utils';
  * mira la barra no tiene por qué saber cuál de los cinco cambia de pantalla y
  * cuál levanta una hoja. Lo que los distingue es lo que pasa al tocarlos.
  */
-const HUECO =
+const SLOT =
   'flex h-15 min-w-0 flex-1 items-center justify-center transition-colors duration-[120ms]';
 
-const tinta = (encendido: boolean) => (encendido ? 'text-sidebar-active' : 'text-sidebar-muted');
+const ink = (isOn: boolean) => (isOn ? 'text-sidebar-active' : 'text-sidebar-muted');
 
-type IconoDeBarra = ComponentType<{
+type BarIconComponent = ComponentType<{
   className?: string;
   'aria-hidden'?: boolean;
   fill?: string;
@@ -26,9 +26,9 @@ type IconoDeBarra = ComponentType<{
 }>;
 
 /** El icono de un hueco: relleno al 18 % de su propio color, trazo 1,75. */
-export function BarIcon({ Icono }: { Icono: IconoDeBarra }) {
+export function BarIcon({ Icon }: { Icon: BarIconComponent }) {
   return (
-    <Icono
+    <Icon
       className="size-6"
       fill="currentColor"
       fillOpacity={0.18}
@@ -41,36 +41,36 @@ export function BarIcon({ Icono }: { Icono: IconoDeBarra }) {
 /** Un hueco que lleva a una sección. */
 export function BarSlotLink({
   to,
-  exact,
-  etiqueta,
-  Icono,
+  isExact,
+  label,
+  Icon,
 }: {
   to: string;
-  exact: boolean;
-  etiqueta: string;
-  Icono: IconoDeBarra;
+  isExact: boolean;
+  label: string;
+  Icon: BarIconComponent;
 }) {
   return (
     <NavLink
       to={to}
-      end={exact}
-      aria-label={etiqueta}
-      className={({ isActive }) => cn(HUECO, tinta(isActive))}
+      end={isExact}
+      aria-label={label}
+      className={({ isActive }) => cn(SLOT, ink(isActive))}
     >
-      <BarIcon Icono={Icono} />
+      <BarIcon Icon={Icon} />
     </NavLink>
   );
 }
 
 /** Un hueco que no lleva a ninguna parte: abre algo sobre la página. */
 export function BarSlotButton({
-  etiqueta,
-  encendido,
+  label,
+  isOn,
   onClick,
   children,
 }: {
-  etiqueta: string;
-  encendido: boolean;
+  label: string;
+  isOn: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -78,9 +78,9 @@ export function BarSlotButton({
     <button
       type="button"
       onClick={onClick}
-      aria-label={etiqueta}
-      aria-expanded={encendido}
-      className={cn(HUECO, tinta(encendido))}
+      aria-label={label}
+      aria-expanded={isOn}
+      className={cn(SLOT, ink(isOn))}
     >
       {children}
     </button>
@@ -95,12 +95,12 @@ export function BarSlotButton({
  * parecer uno de ellos. Sube 16 por encima de la raya, y quedan 20 de barra
  * por debajo. Al pulsarla baja 2, como una tecla.
  */
-export function BarFab({ etiqueta, onClick }: { etiqueta: string; onClick: () => void }) {
+export function BarFab({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={etiqueta}
+      aria-label={label}
       className={cn(
         'grid size-14 place-items-center rounded-full',
         '-mt-4',

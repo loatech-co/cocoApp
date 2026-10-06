@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { BLOQUE } from '@/shared/ui/atoms/bloque';
+import { BLOCK } from '@/shared/ui/atoms/block';
 
 import { Seccion } from './section';
 
@@ -17,7 +17,7 @@ describe('Seccion', () => {
     );
 
     expect(screen.getByRole('heading', { level: 3, name: 'Soporte' })).toBeTruthy();
-    expect(screen.getByText('contenido').parentElement?.className).toContain(BLOQUE);
+    expect(screen.getByText('contenido').parentElement?.className).toContain(BLOCK);
     expect(container.querySelector('section')?.className).not.toContain('flex-1');
   });
 

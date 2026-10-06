@@ -8,8 +8,8 @@ import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
 import { Button } from '@/shared/ui/atoms/button';
-import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
+import { PageHeader } from '@/shared/ui/atoms/page-header';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
 /**
@@ -71,7 +71,7 @@ export function BitacoraPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <CabeceraDePagina titulo={t('shell.sections.auditLog')} ayuda={t('admin.auditLog.help')} />
+      <PageHeader title={t('shell.sections.auditLog')} description={t('admin.auditLog.help')} />
 
       {consulta.isPending && (
         <div className="flex flex-col gap-2">

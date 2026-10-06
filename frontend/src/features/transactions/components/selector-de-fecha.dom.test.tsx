@@ -85,7 +85,7 @@ describe('El campo de fecha que se escribe', () => {
 
 /*
   Los ganchos que la etiqueta flotante de `Campo` necesita, en el selector de
-  fecha. Vivían en `shared/ui/atoms/campo.test.tsx`; están aquí porque el
+  fecha. Vivían en `shared/ui/atoms/field.test.tsx`; están aquí porque el
   selector es de la feature de movimientos y `shared` no importa de una
   feature.
 */

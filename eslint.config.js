@@ -70,7 +70,7 @@ const NO_LETTERS = /^[^\p{L}]*$/u;
  */
 const RAW_ELEMENTS = {
   button: 'Button, or the shared/ui atom that draws that kind of control',
-  input: 'Input, SearchBox, Casilla, Interruptor or FilePicker (shared/ui/atoms)',
+  input: 'Input, SearchBox, Checkbox, Switch or FilePicker (shared/ui/atoms)',
   textarea: 'Textarea (shared/ui/atoms/textarea)',
   select: 'Select (shared/ui/organisms/select)',
   dialog: 'Modal or Confirmacion (shared/ui/organisms)',

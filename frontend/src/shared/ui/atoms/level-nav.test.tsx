@@ -7,23 +7,23 @@ import { BackCrumb, DrillButton } from './level-nav';
 afterEach(cleanup);
 
 describe('BackCrumb', () => {
-  it.each([false, true])('reads the levels walked and goes back (fuerte %s)', (fuerte) => {
-    const onVolver = vi.fn();
-    render(<BackCrumb ruta={['Hogar', 'Mercado']} fuerte={fuerte} onVolver={onVolver} />);
+  it.each([false, true])('reads the levels walked and goes back (fuerte %s)', (isStrong) => {
+    const onBack = vi.fn();
+    render(<BackCrumb path={['Hogar', 'Mercado']} isStrong={isStrong} onBack={onBack} />);
 
-    const boton = screen.getByRole('button', { name: 'Hogar · Mercado' });
-    expect(boton.className.includes('font-semibold')).toBe(fuerte);
-    fireEvent.click(boton);
-    expect(onVolver).toHaveBeenCalledOnce();
+    const button = screen.getByRole('button', { name: 'Hogar · Mercado' });
+    expect(button.className.includes('font-semibold')).toBe(isStrong);
+    fireEvent.click(button);
+    expect(onBack).toHaveBeenCalledOnce();
   });
 });
 
 describe('DrillButton', () => {
   it('names what it goes into', () => {
-    const onEntrar = vi.fn();
-    render(<DrillButton nombre="Hogar" onEntrar={onEntrar} />);
+    const onDrill = vi.fn();
+    render(<DrillButton name="Hogar" onDrill={onDrill} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Ver lo que hay dentro de Hogar' }));
-    expect(onEntrar).toHaveBeenCalledOnce();
+    expect(onDrill).toHaveBeenCalledOnce();
   });
 });

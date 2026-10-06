@@ -6,7 +6,7 @@ import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-
 import type { NodoDelArbol } from '@/shared/lib/arbol-buscable';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { Campo } from '@/shared/ui/atoms/campo';
+import { Field } from '@/shared/ui/atoms/field';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
 import { Menu } from '@/shared/ui/molecules/menu';
@@ -87,14 +87,14 @@ export function BuscadorDeConcepto({
 
   if (deshabilitado) {
     return (
-      <Campo etiqueta={t('transactions.fields.concept')} id={id} ayuda={ayuda}>
+      <Field label={t('transactions.fields.concept')} id={id} description={ayuda}>
         <ConceptoBloqueado id={id} elegida={b.elegida} />
-      </Campo>
+      </Field>
     );
   }
 
   return (
-    <Campo etiqueta={t('transactions.fields.concept')} id={id} ayuda={ayuda}>
+    <Field label={t('transactions.fields.concept')} id={id} description={ayuda}>
       <Menu
         etiqueta={t('transactions.fields.concept')}
         tipo="buscador"
@@ -118,7 +118,7 @@ export function BuscadorDeConcepto({
           />
         )}
       </Menu>
-    </Campo>
+    </Field>
   );
 }
 
@@ -280,7 +280,7 @@ function CajaDeBusqueda(props: PropsDelPanel) {
 
   return (
     <SearchBox
-      forma="cabecera"
+      shape="header"
       ref={campo}
       value={busca}
       onChange={(e) => setBusca(e.target.value)}

@@ -8,10 +8,10 @@ import { type TransactionType } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
 import { useEsMovil } from '@/shared/lib/movil';
+import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { Button } from '@/shared/ui/atoms/button';
-import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
 import { Input } from '@/shared/ui/atoms/input';
-import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
+import { PageHeader } from '@/shared/ui/atoms/page-header';
 
 import { SelectorDeFecha } from './selector-de-fecha';
 import { ClassificationMenu, NewMovementMenu, SortMenu } from './toolbar-menus';
@@ -69,11 +69,11 @@ export function ToolbarFiltros(props: ToolbarFiltrosProps) {
   const busqueda = useToolbarSearch(filtros, aplicar);
 
   return (
-    <CabeceraDePagina
-      titulo={titulo}
-      ayuda={subtitulo ?? resumen}
-      alineado="abajo"
-      acciones={
+    <PageHeader
+      title={titulo}
+      description={subtitulo ?? resumen}
+      align="bottom"
+      actions={
         /*
         ── La fila entera, en el teléfono ──────────────────────────────────
         `w-full` y sin envolver: los tres controles que quedan —buscar,
@@ -166,7 +166,7 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
     <>
       <Button
         type="button"
-        variant="herramienta"
+        variant="tool"
         size="sm-icon"
         aria-label={t('shell.bottomBar.search')}
         aria-pressed={buscando || filtrando}
@@ -176,10 +176,10 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
         <Search className="size-4" aria-hidden="true" />
       </Button>
 
-      <PanelInferior
-        abierto={buscando}
-        titulo={t('shell.bottomBar.search')}
-        cabeza={
+      <BottomSheet
+        isOpen={buscando}
+        title={t('shell.bottomBar.search')}
+        head={
           <div className="relative">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -197,7 +197,7 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
             />
           </div>
         }
-        onCerrar={() => setBuscando(false)}
+        onClose={() => setBuscando(false)}
       >
         {/* Qué hace esto, y no lo que hace la lupa de la barra de abajo.
           Las dos se ven igual y contestan preguntas distintas: aquella
@@ -206,7 +206,7 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
         <p className="px-3 py-2 text-sm text-muted-foreground">
           {t('transactions.toolbar.searchHelp')}
         </p>
-      </PanelInferior>
+      </BottomSheet>
     </>
   );
 }
@@ -218,7 +218,7 @@ function DesktopSearch({ busqueda }: { busqueda: ToolbarSearch }) {
     return (
       <Button
         type="button"
-        variant="herramienta"
+        variant="tool"
         size="sm-icon"
         aria-label={t('shell.bottomBar.search')}
         title={t('shell.bottomBar.search')}
@@ -258,7 +258,7 @@ function ClearFiltersButton({ onClick }: { onClick: () => void }) {
   return (
     <Button
       type="button"
-      variant="herramienta"
+      variant="tool"
       size="sm-icon"
       aria-label={t('transactions.toolbar.clearFilters')}
       title={t('transactions.toolbar.clearFilters')}

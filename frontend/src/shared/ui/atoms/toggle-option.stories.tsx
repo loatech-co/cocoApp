@@ -13,12 +13,12 @@ export const States: Story = {
   render: () => (
     <ul className="flex w-44 flex-col gap-1">
       <li>
-        <ToggleOption encendida onClick={() => undefined}>
+        <ToggleOption isOn onClick={() => undefined}>
           Este mes
         </ToggleOption>
       </li>
       <li>
-        <ToggleOption encendida={false} onClick={() => undefined}>
+        <ToggleOption isOn={false} onClick={() => undefined}>
           Últimos 90 días
         </ToggleOption>
       </li>

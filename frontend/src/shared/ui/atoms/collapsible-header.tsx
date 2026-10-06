@@ -13,23 +13,23 @@ import type { ReactNode } from 'react';
  * tarjeta —lo que se viene a leer está debajo—.
  */
 export function CollapsibleHeader({
-  abierta,
-  onAlternar,
+  isOpen,
+  onToggle,
   children,
 }: {
-  abierta: boolean;
-  onAlternar: () => void;
+  isOpen: boolean;
+  onToggle: () => void;
   children: ReactNode;
 }) {
-  const Galon = abierta ? ChevronDown : ChevronRight;
+  const Chevron = isOpen ? ChevronDown : ChevronRight;
   return (
     <button
       type="button"
-      onClick={onAlternar}
-      aria-expanded={abierta}
+      onClick={onToggle}
+      aria-expanded={isOpen}
       className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left sm:p-4"
     >
-      <Galon className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+      <Chevron className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
       {children}
     </button>
   );

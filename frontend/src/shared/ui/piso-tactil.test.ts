@@ -51,12 +51,12 @@ const EXCEPCIONES: [ruta: string, clase: string, razon: string][] = [
     'el menos de una baldosa mide 24: se llega a él dentro de un modo al que se entra manteniendo pulsada la baldosa, y uno mayor se pulsaría al arrastrar',
   ],
   [
-    'shared/ui/atoms/panel-inferior.tsx',
+    'shared/ui/atoms/bottom-sheet.tsx',
     'h-[5px] w-[72px]',
     'el tirador es un INDICADOR, no un control: el gesto se lee en todo el panel, no encima de la raya',
   ],
   [
-    'shared/ui/atoms/casilla.tsx',
+    'shared/ui/atoms/checkbox.tsx',
     'size-4',
     'el recuadro mide 16, pero vive dentro de una fila que sí tiene suelo y que lo alterna entera',
   ],

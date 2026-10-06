@@ -377,12 +377,12 @@ can only be tested with a server. A domain component that needs data lives in
 
 **A component's level is the lowest its imports allow.**
 
-| Level        | May use                        | Example                                       |
-| ------------ | ------------------------------ | --------------------------------------------- |
-| `atoms/`     | no other `shared/ui` component | `Button`, `Input`, `Campo`, `PanelInferior`   |
-| `molecules/` | atoms                          | `Menu` (Button + PanelInferior), `Calendario` |
-| `organisms/` | molecules and atoms            | `Select` (Menu + Campo), `Modal`              |
-| `templates/` | organisms, molecules and atoms | none yet                                      |
+| Level        | May use                        | Example                                     |
+| ------------ | ------------------------------ | ------------------------------------------- |
+| `atoms/`     | no other `shared/ui` component | `Button`, `Input`, `Field`, `BottomSheet`   |
+| `molecules/` | atoms                          | `Menu` (Button + BottomSheet), `Calendario` |
+| `organisms/` | molecules and atoms            | `Select` (Menu + Field), `Modal`            |
+| `templates/` | organisms, molecules and atoms | none yet                                    |
 
 Why: a level decided by opinion is argued once per component; a level decided
 by imports is checked by a machine. `shared/ui/foundations/` holds what every

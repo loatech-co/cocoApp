@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Modal } from './modal';
 import { Button } from '../atoms/button';
-import { Campo } from '../atoms/campo';
+import { Field } from '../atoms/field';
 import { Input } from '../atoms/input';
 import { PieDeModal } from '../molecules/modal-partes';
 
@@ -31,9 +31,9 @@ function Demo({ withActions = false, withHelp = true }) {
           : {})}
         onCerrar={close}
       >
-        <Campo etiqueta="Nombre" id="modal-nombre">
+        <Field label="Nombre" id="modal-nombre">
           <Input id="modal-nombre" placeholder="Ej. Hogar" />
-        </Campo>
+        </Field>
         <PieDeModal>
           <Button variant="outline" onClick={close}>
             Cancelar

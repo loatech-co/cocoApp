@@ -6,59 +6,59 @@ import { t } from '@/shared/lib/i18n';
 import { drawPdfPage } from '@/shared/lib/pdf';
 
 /** El ancho de una hoja al 100 %: carta legible en un portátil sin ampliar. */
-export const ANCHO_HOJA = 620;
+export const PAGE_WIDTH = 620;
 
 interface PdfPageProps {
   url: string;
-  pagina: number;
-  escala: number;
-  onPaginas: (n: number) => void;
+  page: number;
+  scale: number;
+  onPageCount: (n: number) => void;
 }
 
 /** Dibuja la página en el lienzo cada vez que cambia el documento, la página o la escala. */
 function usePdfPageDrawing(
-  lienzo: RefObject<HTMLCanvasElement | null>,
-  { url, pagina, escala, onPaginas }: PdfPageProps,
-): { fallo: boolean; pintando: boolean } {
-  const [fallo, setFallo] = useState(false);
-  const [pintando, setPintando] = useState(true);
+  canvas: RefObject<HTMLCanvasElement | null>,
+  { url, page, scale, onPageCount }: PdfPageProps,
+): { hasFailed: boolean; isPainting: boolean } {
+  const [hasFailed, setHasFailed] = useState(false);
+  const [isPainting, setIsPainting] = useState(true);
 
   // «Pintando» desde el primer render de cada cambio, no un fotograma después:
   // es estado que se deriva de que cambió el documento, la página o la escala.
-  useAlCambiar([url, pagina, escala], () => setPintando(true));
+  useAlCambiar([url, page, scale], () => setIsPainting(true));
 
   useEffect(() => {
-    let vivo = true;
+    let isAlive = true;
     // Se lee con una función: el análisis de tipos no ve que la limpieza lo
     // apaga mientras se espera, y daría cada comprobación por inútil.
-    const sigueVivo = (): boolean => vivo;
+    const isStillAlive = (): boolean => isAlive;
 
     drawPdfPage({
       url,
-      page: pagina,
+      page,
       // Al DOBLE de píxeles de los que se enseñan: es lo que lo deja nítido
       // en una pantalla retina.
-      scale: (anchoDeLaHoja) => ((ANCHO_HOJA * escala) / anchoDeLaHoja) * 2,
-      canvas: () => lienzo.current,
-      isAlive: sigueVivo,
-      onPages: onPaginas,
+      scale: (pageWidth) => ((PAGE_WIDTH * scale) / pageWidth) * 2,
+      canvas: () => canvas.current,
+      isAlive: isStillAlive,
+      onPages: onPageCount,
     })
-      .then((dibujo) => {
-        if (dibujo && sigueVivo()) setPintando(false);
+      .then((drawing) => {
+        if (drawing && isStillAlive()) setIsPainting(false);
       })
       .catch(() => {
-        if (sigueVivo()) {
-          setFallo(true);
-          setPintando(false);
+        if (isStillAlive()) {
+          setHasFailed(true);
+          setIsPainting(false);
         }
       });
 
     return () => {
-      vivo = false;
+      isAlive = false;
     };
-  }, [lienzo, url, pagina, escala, onPaginas]);
+  }, [canvas, url, page, scale, onPageCount]);
 
-  return { fallo, pintando };
+  return { hasFailed, isPainting };
 }
 
 /**
@@ -72,11 +72,11 @@ function usePdfPageDrawing(
  * Va sobre el velo oscuro de un visor a pantalla completa: por eso su tinta
  * es la de la sala y no la de la página.
  */
-export function PaginaPdf({ url, pagina, escala, onPaginas }: PdfPageProps) {
-  const lienzo = useRef<HTMLCanvasElement>(null);
-  const { fallo, pintando } = usePdfPageDrawing(lienzo, { url, pagina, escala, onPaginas });
+export function PdfPage({ url, page, scale, onPageCount }: PdfPageProps) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const { hasFailed, isPainting } = usePdfPageDrawing(canvas, { url, page, scale, onPageCount });
 
-  if (fallo) {
+  if (hasFailed) {
     return (
       <p className="flex items-center gap-2 self-center text-sm text-sala-tinta/80">
         <FileWarning className="size-5" aria-hidden="true" />
@@ -87,7 +87,7 @@ export function PaginaPdf({ url, pagina, escala, onPaginas }: PdfPageProps) {
 
   return (
     <>
-      {pintando && (
+      {isPainting && (
         <Loader2
           className="absolute size-6 animate-spin self-center text-sala-tinta/70"
           aria-hidden="true"
@@ -96,9 +96,9 @@ export function PaginaPdf({ url, pagina, escala, onPaginas }: PdfPageProps) {
       {/* El lienzo se dibuja al doble de píxeles y se enseña a la mitad: es lo
           que lo deja nítido en una pantalla retina. */}
       <canvas
-        ref={lienzo}
+        ref={canvas}
         className="h-fit max-w-none rounded-lg bg-white shadow-2xl"
-        style={{ width: ANCHO_HOJA * escala }}
+        style={{ width: PAGE_WIDTH * scale }}
       />
     </>
   );

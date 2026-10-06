@@ -21,12 +21,12 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
-import { Bloque } from '@/shared/ui/atoms/bloque';
+import { Block } from '@/shared/ui/atoms/block';
 import { Button } from '@/shared/ui/atoms/button';
-import { Campo } from '@/shared/ui/atoms/campo';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
+import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
-import { PoliticaDeContrasena, cumpleLaPolitica } from '@/shared/ui/atoms/politica-de-contrasena';
+import { PasswordPolicy, meetsPolicy } from '@/shared/ui/atoms/password-policy';
 
 /** La fila de una cuenta en Usuarios: quién es, en qué estado está y qué se le puede hacer. */
 
@@ -108,8 +108,8 @@ function RestablecerContrasena({ usuario, onListo }: { usuario: Profile; onListo
   }
 
   return (
-    <Bloque className="p-4">
-      <Campo etiqueta={t('admin.userRow.newPassword')} id={`nueva-${usuario.id}`}>
+    <Block className="p-4">
+      <Field label={t('admin.userRow.newPassword')} id={`nueva-${usuario.id}`}>
         <Input
           id={`nueva-${usuario.id}`}
           type="text"
@@ -117,15 +117,15 @@ function RestablecerContrasena({ usuario, onListo }: { usuario: Profile; onListo
           value={password}
           onChange={(evento) => setPassword(evento.target.value)}
         />
-      </Campo>
-      <PoliticaDeContrasena password={password} />
+      </Field>
+      <PasswordPolicy password={password} />
 
       {error && <ResetError error={error} />}
 
       <div className="mt-3 flex gap-2">
         <Button
           size="sm"
-          disabled={!cumpleLaPolitica(password) || restablecer.isPending}
+          disabled={!meetsPolicy(password) || restablecer.isPending}
           onClick={() =>
             restablecer.mutate(
               { id: usuario.id, newPassword: password },
@@ -140,7 +140,7 @@ function RestablecerContrasena({ usuario, onListo }: { usuario: Profile; onListo
           {t('common.cancel')}
         </Button>
       </div>
-    </Bloque>
+    </Block>
   );
 }
 
@@ -185,7 +185,7 @@ function RolBadge({ esAdmin }: { esAdmin: boolean }) {
 function ResetError({ error }: { error: ApiClientError }) {
   return (
     <div className="mt-3">
-      <ErrorAlert mensaje={error.message} detalles={error.details.map((d) => d.message)} />
+      <ErrorAlert message={error.message} details={error.details.map((d) => d.message)} />
     </div>
   );
 }

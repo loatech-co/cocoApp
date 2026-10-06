@@ -53,7 +53,7 @@ export function BotonOscuro({
       variant="ghost"
       // Redondo: estos mandos viven dentro de una pastilla redonda, y un
       // resaltado cuadrado ahí deja dos esquinas asomando en cada extremo.
-      size="sm-icon-redondo"
+      size="sm-icon-round"
       onClick={onClick}
       disabled={deshabilitado}
       aria-label={etiqueta}

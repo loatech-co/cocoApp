@@ -814,7 +814,7 @@
    absoluto, un `<textarea>`, el disparador de un desplegable dentro de la
    caja de `Menu`, y el del selector de fecha— y un selector estructural que
    acertara con las cinco sería más frágil que un contexto de React. El
-   contexto está en `ui/campo.tsx`.
+   contexto está en `shared/ui/atoms/field.tsx`.
 
    ── Por qué el marcador solo aparece con el foco ───────────────────────────
    Porque en reposo el sitio del marcador lo ocupa la ETIQUETA. Los dos a la
@@ -1105,7 +1105,7 @@
    filas; la lista de páginas es el alto entero—, y pasar de uno a otro era un
    SALTO mientras entrar y salir eran suaves.
 
-   Quien lo resuelve es la MEDIDA: `panel-inferior.tsx` observa su columna y le
+   Quien lo resuelve es la MEDIDA: `bottom-sheet.tsx` observa su columna y le
    pone al panel un alto en píxeles, porque una transición necesita dos valores
    definidos y de `auto` a `auto` el valor declarado no cambia por mucho que el
    contenido mida otra cosa.

@@ -7,8 +7,8 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { CardRow } from '@/shared/ui/atoms/card-row';
-import { Casilla } from '@/shared/ui/atoms/casilla';
-import { Progreso } from '@/shared/ui/atoms/progreso';
+import { Checkbox } from '@/shared/ui/atoms/checkbox';
+import { Progress } from '@/shared/ui/atoms/progress';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 import { Menu, MenuTitulo } from '@/shared/ui/molecules/menu';
 
@@ -152,9 +152,9 @@ function PendingProgress({
   if (avance === null) return null;
   return (
     <span className="block w-full">
-      <Progreso
-        avance={avance}
-        etiqueta={t('transactions.pending.progressLabel', {
+      <Progress
+        value={avance}
+        label={t('transactions.pending.progressLabel', {
           name: pago.name,
           paid: formatCOP(pago.paidAmount),
           expected: formatCOP(pago.expectedAmount ?? '0'),
@@ -307,7 +307,7 @@ function CenterFilter({
                 marcado && 'font-medium',
               )}
             >
-              <Casilla
+              <Checkbox
                 checked={marcado}
                 onChange={() => setOcultos((antes) => toggleCenter(antes, id, marcado))}
               />

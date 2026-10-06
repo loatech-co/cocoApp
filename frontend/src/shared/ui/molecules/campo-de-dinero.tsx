@@ -42,7 +42,7 @@ export function CampoDeDinero({
   return (
     <Input
       inputMode="decimal"
-      icono={SignoDePesos}
+      icon={SignoDePesos}
       value={agruparMiles(valor)}
       className={cn(className)}
       onChange={(e) => {

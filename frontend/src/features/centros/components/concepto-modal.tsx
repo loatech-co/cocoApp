@@ -6,9 +6,9 @@ import { findTwin, siblingCategories } from '@/features/centros/model/concept-fo
 import { useCategories } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
-import { Bloque } from '@/shared/ui/atoms/bloque';
+import { Block } from '@/shared/ui/atoms/block';
 import { Button } from '@/shared/ui/atoms/button';
-import { Campo } from '@/shared/ui/atoms/campo';
+import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
 import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
 import { Modal } from '@/shared/ui/organisms/modal';
@@ -117,7 +117,7 @@ function ConceptForm({ form, concepto, arbol, gemelo, onCerrar }: ConceptFormPro
 
   return (
     <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
-      <Campo etiqueta={t('common.name')} id="concepto-nombre">
+      <Field label={t('common.name')} id="concepto-nombre">
         <Input
           id="concepto-nombre"
           value={form.nombre}
@@ -125,7 +125,7 @@ function ConceptForm({ form, concepto, arbol, gemelo, onCerrar }: ConceptFormPro
           placeholder={t('centers.conceptModal.namePlaceholder')}
           required
         />
-      </Campo>
+      </Field>
 
       {/* Solo al editar: al crear, la categoría es aquella cuyo botón se pulsó
           para abrir esto, así que preguntarlo otra vez es preguntar por
@@ -187,7 +187,7 @@ function TwinNotice({
       `warning-surface` es un marrón que sobre el verde del modal daba
       un verde oliva sucio.
     */
-    <Bloque className="flex flex-col gap-3">
+    <Block className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
         <strong className="font-semibold text-foreground">
           {t('centers.conceptModal.duplicateBefore', { name: gemelo.name })}
@@ -201,7 +201,7 @@ function TwinNotice({
       {concepto && (
         <Button
           type="button"
-          variant="herramienta"
+          variant="tool"
           size="sm"
           className="self-start"
           disabled={form.guardando}
@@ -211,7 +211,7 @@ function TwinNotice({
           {t('centers.conceptModal.mergeWith', { name: gemelo.name })}
         </Button>
       )}
-    </Bloque>
+    </Block>
   );
 }
 
@@ -248,10 +248,10 @@ function SiblingCategoryField({
   hermanos: { valor: string; etiqueta: string }[];
 }) {
   return (
-    <Campo
-      etiqueta={t('centers.levels.category')}
+    <Field
+      label={t('centers.levels.category')}
       id="concepto-categoria"
-      ayuda={t('centers.conceptModal.categoryHelp')}
+      description={t('centers.conceptModal.categoryHelp')}
     >
       <Select
         id="concepto-categoria"
@@ -260,6 +260,6 @@ function SiblingCategoryField({
         opciones={hermanos}
         onCambiar={form.setCategoría}
       />
-    </Campo>
+    </Field>
   );
 }

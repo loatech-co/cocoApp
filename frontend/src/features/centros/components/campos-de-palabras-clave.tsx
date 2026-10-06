@@ -11,7 +11,7 @@ import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Chip } from '@/shared/ui/atoms/badge';
-import { Campo } from '@/shared/ui/atoms/campo';
+import { Field } from '@/shared/ui/atoms/field';
 import { FieldAction, Input } from '@/shared/ui/atoms/input';
 
 interface KeywordFieldsProps {
@@ -66,10 +66,10 @@ export function CamposDePalabrasClave({
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <Campo
-        etiqueta={t('centers.keywords.label')}
+      <Field
+        label={t('centers.keywords.label')}
         id="concepto-palabras-clave"
-        ayuda={t('centers.keywords.help')}
+        description={t('centers.keywords.help')}
       >
         <Input
           id="concepto-palabras-clave"
@@ -85,10 +85,10 @@ export function CamposDePalabrasClave({
           // escribir.
           onBlur={añadir}
           placeholder={t('centers.keywords.placeholder')}
-          icono={ScanText}
-          acciones={[<AddKeywordButton key="añadir" escrita={escrita} onClick={añadir} />]}
+          icon={ScanText}
+          actions={[<AddKeywordButton key="añadir" escrita={escrita} onClick={añadir} />]}
         />
-      </Campo>
+      </Field>
 
       {valor.length > 0 && <KeywordChips valor={valor} onQuitar={quitar} />}
 
@@ -127,8 +127,8 @@ function KeywordChips({
               `onClick`, y el chip lo pinta como texto en vez de como un
               botón que no haría nada. */}
           <Chip
-            onQuitar={() => onQuitar(palabra)}
-            etiquetaDeQuitar={t('centers.keywords.remove', { word: palabra })}
+            onRemove={() => onQuitar(palabra)}
+            removeLabel={t('centers.keywords.remove', { word: palabra })}
             className="max-w-full"
           >
             {palabra}
@@ -211,9 +211,9 @@ function AddKeywordButton({ escrita, onClick }: { escrita: string; onClick: () =
     // Enter y este es el único sitio donde se ve que la caja no guarda una
     // frase sino una lista.
     <FieldAction
-      Icono={Plus}
-      etiqueta={t('centers.keywords.add')}
-      pista={t('centers.keywords.addHint')}
+      Icon={Plus}
+      label={t('centers.keywords.add')}
+      hint={t('centers.keywords.addHint')}
       onClick={onClick}
       disabled={limpiar(escrita) === ''}
     />

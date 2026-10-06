@@ -62,7 +62,7 @@ export function ShortcutGrid({
 
       {(estado === 'arreglando' || baldosas.length === 0) && (
         <div className="col-span-3">
-          <AddSurface forma="fila" onClick={() => setEstado('eligiendo')}>
+          <AddSurface shape="row" onClick={() => setEstado('eligiendo')}>
             {t('shell.shortcuts.add')}
           </AddSurface>
         </div>
@@ -137,12 +137,12 @@ function Baldosa(props: PropsDeBaldosa) {
     <div className="relative" data-baldosa>
       {arreglando ? (
         <MovableTile
-          arrastrada={arrastrada}
-          etiqueta={etiqueta}
-          estilo={estilo}
-          onBajar={empezarAContar}
-          onMover={props.onMover}
-          onSoltar={props.onSoltar}
+          isDragging={arrastrada}
+          label={etiqueta}
+          style={estilo}
+          onGrab={empezarAContar}
+          onMove={props.onMover}
+          onRelease={props.onSoltar}
         >
           {contenido}
         </MovableTile>
@@ -157,7 +157,7 @@ function Baldosa(props: PropsDeBaldosa) {
         </EnlaceDeBaldosa>
       )}
 
-      {arreglando && <TileRemove etiqueta={etiqueta} onQuitar={onQuitar} />}
+      {arreglando && <TileRemove label={etiqueta} onRemove={onQuitar} />}
     </div>
   );
 }

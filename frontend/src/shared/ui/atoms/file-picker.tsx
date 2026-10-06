@@ -12,24 +12,24 @@ import type { RefObject } from 'react';
 export function FilePicker({
   ref,
   accept,
-  multiple = false,
-  onArchivos,
+  multiple: isMultiple = false,
+  onFiles,
 }: {
   ref: RefObject<HTMLInputElement | null>;
   /** Los tipos que se aceptan, como en `accept`. */
   accept: string;
   multiple?: boolean;
-  onArchivos: (archivos: File[]) => void;
+  onFiles: (files: File[]) => void;
 }) {
   return (
     <input
       ref={ref}
       type="file"
-      multiple={multiple}
+      multiple={isMultiple}
       accept={accept}
       className="hidden"
       onChange={(e) => {
-        onArchivos(Array.from(e.target.files ?? []));
+        onFiles(Array.from(e.target.files ?? []));
         e.target.value = '';
       }}
     />

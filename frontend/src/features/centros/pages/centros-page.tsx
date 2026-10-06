@@ -8,8 +8,8 @@ import { useCategories } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
-import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
+import { PageHeader } from '@/shared/ui/atoms/page-header';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
 /**
@@ -30,13 +30,13 @@ export function CentrosPage() {
       {/* El botón al extremo opuesto del título, como en el resto de la app:
           es la única acción de la pantalla y se busca siempre en la misma
           esquina. */}
-      <CabeceraDePagina
-        titulo={t('shell.sections.costCenters')}
-        ayuda={t('centers.page.help')}
+      <PageHeader
+        title={t('shell.sections.costCenters')}
+        description={t('centers.page.help')}
         /* La explicación se enseña una vez y estorba el resto de las veces.
            Detrás del signo de interrogación sigue estando para quien la
            necesite, sin ocupar media pantalla para quien ya la leyó. */
-        junto={
+        beside={
           <Button
             type="button"
             variant="ghost"
@@ -49,7 +49,7 @@ export function CentrosPage() {
             <CircleHelp className="size-5" aria-hidden="true" />
           </Button>
         }
-        acciones={
+        actions={
           // `size="sm"` como la acción principal del resumen, y el icono sin
           // medida propia: el tamaño de los iconos lo pone el botón.
           <Button type="button" size="sm" onClick={() => setCreando(true)} className="shrink-0">
@@ -90,7 +90,7 @@ function ListaDeCentros({
 
       {/* A failed load is NOT an empty tree: inviting to create here would
           duplicate centers that already exist. */}
-      {categorias.isError && <ErrorAlert mensaje={t('centers.page.loadFailed')} />}
+      {categorias.isError && <ErrorAlert message={t('centers.page.loadFailed')} />}
 
       {categorias.isSuccess && arbol.length === 0 && <SinCentros onCrear={onCrear} />}
 

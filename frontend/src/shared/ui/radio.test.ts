@@ -46,7 +46,7 @@ const TOPE = 10;
  *   VECINOS no tengan esquinas distintas: el pozo no es vecino de ninguna
  *   tarjeta, es el fondo sobre el que se apoyan todas.
  *
- * · `components/panel-inferior.tsx` — las dos esquinas de ARRIBA de una hoja
+ * · `shared/ui/atoms/bottom-sheet.tsx` — las dos esquinas de ARRIBA de una hoja
  *   que sube desde el borde de abajo. Lleva `rounded-t-[16px]`.
  *
  *   Mismo motivo que el pozo y misma forma de no romper la regla. La esquina
@@ -55,7 +55,7 @@ const TOPE = 10;
  *   sigue debajo— depende de que se vea. Y no tiene vecinos: está encima de
  *   todo lo demás.
  */
-const PERMITIDOS = new Set<string>(['app/app-shell.tsx', 'shared/ui/atoms/panel-inferior.tsx']);
+const PERMITIDOS = new Set<string>(['app/app-shell.tsx', 'shared/ui/atoms/bottom-sheet.tsx']);
 
 describe('Ningún contenedor se pasa del radio estándar', () => {
   const archivos = fuentes(join(import.meta.dirname, '..', '..'));

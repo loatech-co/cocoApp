@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Badge, Chip, Etiqueta } from './badge';
+import { Badge, Chip, Tag } from './badge';
 
 afterEach(cleanup);
 
@@ -10,9 +10,9 @@ describe('Etiqueta', () => {
   it('paints each role with its own colour', () => {
     render(
       <>
-        <Etiqueta tono="ingreso">Ingreso</Etiqueta>
-        <Etiqueta tono="pendiente">Pendiente</Etiqueta>
-        <Etiqueta tono="error">Error</Etiqueta>
+        <Tag tone="income">Ingreso</Tag>
+        <Tag tone="pending">Pendiente</Tag>
+        <Tag tone="error">Error</Tag>
       </>,
     );
 
@@ -22,11 +22,11 @@ describe('Etiqueta', () => {
   });
 
   it('dims what is not there yet with the theme ink, never with opacity', () => {
-    render(<Etiqueta tono="apagado">Pronto</Etiqueta>);
+    render(<Tag tone="muted">Pronto</Tag>);
 
-    const clase = screen.getByText('Pronto').className;
-    expect(clase).toContain('text-muted-foreground');
-    expect(clase).not.toContain('opacity');
+    const className = screen.getByText('Pronto').className;
+    expect(className).toContain('text-muted-foreground');
+    expect(className).not.toContain('opacity');
   });
 });
 
@@ -38,10 +38,10 @@ describe('Badge', () => {
     ['expense', 'text-expense'],
     ['warning', 'text-warning'],
     ['info', 'text-info'],
-  ] as const)('maps the %s variant onto the matching tone', (variant, clase) => {
+  ] as const)('maps the %s variant onto the matching tone', (variant, className) => {
     render(<Badge variant={variant}>Rótulo</Badge>);
 
-    expect(screen.getByText('Rótulo').className).toContain(clase);
+    expect(screen.getByText('Rótulo').className).toContain(className);
   });
 
   it('falls back to the neutral tone', () => {
@@ -55,7 +55,7 @@ describe('Chip', () => {
   it('is a toggle button that reports whether it is on', () => {
     const onClick = vi.fn();
     render(
-      <Chip activo onClick={onClick}>
+      <Chip isActive onClick={onClick}>
         Pagados
       </Chip>,
     );
@@ -77,21 +77,21 @@ describe('Chip', () => {
   });
 
   it('shows its name as plain text when it can only be removed', () => {
-    const onQuitar = vi.fn();
-    render(<Chip onQuitar={onQuitar}>mercado</Chip>);
+    const onRemove = vi.fn();
+    render(<Chip onRemove={onRemove}>mercado</Chip>);
 
     expect(screen.queryByRole('button', { name: 'mercado' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Quitar' }));
 
-    expect(onQuitar).toHaveBeenCalledOnce();
+    expect(onRemove).toHaveBeenCalledOnce();
   });
 
   it('keeps the name as a button when it also opens something, and names the remove button', () => {
     const onClick = vi.fn();
-    const onQuitar = vi.fn();
+    const onRemove = vi.fn();
     render(
-      <Chip activo onClick={onClick} onQuitar={onQuitar} etiquetaDeQuitar="Quitar mercado">
+      <Chip isActive onClick={onClick} onRemove={onRemove} removeLabel="Quitar mercado">
         mercado
       </Chip>,
     );
@@ -100,6 +100,6 @@ describe('Chip', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Quitar mercado' }));
 
     expect(onClick).toHaveBeenCalledOnce();
-    expect(onQuitar).toHaveBeenCalledOnce();
+    expect(onRemove).toHaveBeenCalledOnce();
   });
 });

@@ -9,8 +9,8 @@ import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Chip } from '@/shared/ui/atoms/badge';
-import { Bloque } from '@/shared/ui/atoms/bloque';
-import { IconoDeCategoria } from '@/shared/ui/atoms/iconos';
+import { Block } from '@/shared/ui/atoms/block';
+import { CategoryIcon } from '@/shared/ui/atoms/icons';
 import { Menu, MenuOpcion } from '@/shared/ui/molecules/menu';
 
 /**
@@ -47,7 +47,7 @@ export function Categoría({ categoria, arbol }: PropsDeCategoria) {
        kebab, que es un botón de 36 con un icono de 16 dentro, y esos diez
        píxeles de aire suyo se suman a los del borde. Con el relleno parejo,
        el título quedaba hundido. */
-    <Bloque className={cn('pt-2 sm:p-4 sm:pt-2.5', BALDOSA)}>
+    <Block className={cn('pt-2 sm:p-4 sm:pt-2.5', BALDOSA)}>
       <div className="flex items-center justify-between gap-2">
         <NombreDeCategoria categoria={categoria} />
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
@@ -113,7 +113,7 @@ export function Categoría({ categoria, arbol }: PropsDeCategoria) {
         categoriaId={categoria.id}
         onCerrar={() => setCreando(false)}
       />
-    </Bloque>
+    </Block>
   );
 }
 
@@ -134,7 +134,7 @@ export function Categoría({ categoria, arbol }: PropsDeCategoria) {
 function NombreDeCategoria({ categoria }: { categoria: CategoryTree }) {
   return (
     <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-      <IconoDeCategoria nombre={categoria.icon} className="size-4 shrink-0 text-muted-foreground" />
+      <CategoryIcon name={categoria.icon} className="size-4 shrink-0 text-muted-foreground" />
       <span className="min-w-0 truncate">{categoria.name}</span>
     </h3>
   );

@@ -9,7 +9,7 @@ import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { ErrorAlert } from '@/shared/ui/atoms/alert';
-import { Paginador } from '@/shared/ui/atoms/paginador';
+import { Pager } from '@/shared/ui/atoms/pager';
 import { TablaPie, Td } from '@/shared/ui/molecules/tabla';
 
 type Tabla = ReturnType<typeof useDashboardPage>['tabla'];
@@ -33,7 +33,7 @@ export function DashboardMovements({
       {/* Not an empty table: «no movements» on a failed load reads as if
           they were gone. */}
       {movimientos.isError ? (
-        <ErrorAlert mensaje={t('transactions.dashboard.movementsLoadFailed')} />
+        <ErrorAlert message={t('transactions.dashboard.movementsLoadFailed')} />
       ) : (
         <TablaDeMovimientos
           movimientos={movimientos.data?.data ?? []}
@@ -46,11 +46,11 @@ export function DashboardMovements({
         />
       )}
 
-      <Paginador
-        pagina={pagina}
+      <Pager
+        page={pagina}
         total={movimientos.data?.meta.total ?? 0}
-        porPagina={POR_PAGINA}
-        onCambiar={setPagina}
+        perPage={POR_PAGINA}
+        onPageChange={setPagina}
       />
     </div>
   );

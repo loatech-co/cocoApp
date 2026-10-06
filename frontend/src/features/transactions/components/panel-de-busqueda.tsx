@@ -12,9 +12,9 @@ import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { diaCorto } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { ErrorAlert } from '@/shared/ui/atoms/alert';
+import { Amount } from '@/shared/ui/atoms/amount';
+import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { Input } from '@/shared/ui/atoms/input';
-import { Monto } from '@/shared/ui/atoms/monto';
-import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
 import { PanelRow } from '@/shared/ui/atoms/panel-row';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
@@ -53,11 +53,11 @@ export function PanelDeBusqueda({
   const { texto, setTexto, consulta } = useDebouncedSearch(abierto);
 
   return (
-    <PanelInferior
-      abierto={abierto}
-      titulo={t('shell.bottomBar.search')}
-      cabeza={<SearchHead texto={texto} onCambiar={setTexto} />}
-      onCerrar={onCerrar}
+    <BottomSheet
+      isOpen={abierto}
+      title={t('shell.bottomBar.search')}
+      head={<SearchHead texto={texto} onCambiar={setTexto} />}
+      onClose={onCerrar}
     >
       {/*
         La lista es un componente aparte y solo se monta cuando hay algo que
@@ -72,7 +72,7 @@ export function PanelDeBusqueda({
       ) : (
         <Resultados consulta={consulta} onElegir={onElegir} />
       )}
-    </PanelInferior>
+    </BottomSheet>
   );
 }
 
@@ -98,7 +98,7 @@ function Resultados({
   }
 
   if (movimientos.isError) {
-    return <ErrorAlert mensaje={t('transactions.searchPanel.failed')} />;
+    return <ErrorAlert message={t('transactions.searchPanel.failed')} />;
   }
 
   const filas = movimientos.data.data;
@@ -147,10 +147,10 @@ function ResultRow({
           {diaCorto(movimiento.date)}
         </span>
       </span>
-      <Monto
+      <Amount
         amount={movimiento.amount}
         currency={movimiento.currency}
-        sentido={sentidoDelMovimiento(movimiento.type)}
+        direction={sentidoDelMovimiento(movimiento.type)}
         className="shrink-0 text-sm"
       />
     </PanelRow>

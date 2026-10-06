@@ -66,8 +66,8 @@ describe('nombreDelMovimiento', () => {
 
 describe('sentidoDelMovimiento', () => {
   it('maps each movement type to the direction of the money', () => {
-    expect(sentidoDelMovimiento('income')).toBe('entra');
-    expect(sentidoDelMovimiento('expense')).toBe('sale');
-    expect(sentidoDelMovimiento('transfer')).toBe('mueve');
+    expect(sentidoDelMovimiento('income')).toBe('in');
+    expect(sentidoDelMovimiento('expense')).toBe('out');
+    expect(sentidoDelMovimiento('transfer')).toBe('transfer');
   });
 });

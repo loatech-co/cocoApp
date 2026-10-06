@@ -12,13 +12,13 @@ import { formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
+import { Balance } from '@/shared/ui/atoms/amount';
 import { Badge } from '@/shared/ui/atoms/badge';
 import { Button } from '@/shared/ui/atoms/button';
-import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
-import { Campo } from '@/shared/ui/atoms/campo';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
+import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
-import { Saldo } from '@/shared/ui/atoms/monto';
+import { PageHeader } from '@/shared/ui/atoms/page-header';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 import { Select } from '@/shared/ui/organisms/select';
 
@@ -43,10 +43,10 @@ export function AccountsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <CabeceraDePagina
-        titulo={t('shell.sections.accounts')}
-        ayuda={t('accounts.help')}
-        acciones={
+      <PageHeader
+        title={t('shell.sections.accounts')}
+        description={t('accounts.help')}
+        actions={
           <Button size="sm" onClick={() => setFormularioAbierto((abierto) => !abierto)}>
             <Plus aria-hidden="true" />
             {t('accounts.new')}
@@ -63,7 +63,7 @@ export function AccountsPage() {
         </div>
       )}
 
-      {cuentas.isError && <ErrorAlert mensaje={t('accounts.loadFailed')} />}
+      {cuentas.isError && <ErrorAlert message={t('accounts.loadFailed')} />}
 
       {cuentas.isSuccess && activas.length === 0 && !formularioAbierto && (
         <NoAccounts onCrear={() => setFormularioAbierto(true)} />
@@ -116,7 +116,7 @@ function TarjetaDeCuenta({ cuenta }: { cuenta: Account }) {
           <p className="text-xs text-muted-foreground">
             {esTarjeta ? t('accounts.owed') : t('accounts.available')}
           </p>
-          <Saldo amount={cuenta.balance} className="text-2xl" />
+          <Balance amount={cuenta.balance} className="text-2xl" />
         </div>
 
         {esTarjeta && cuenta.availableCredit !== null && (
@@ -175,7 +175,7 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
   const { creditLimit, setCreditLimit, esTarjeta } = form;
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Campo etiqueta={t('common.name')} id="name">
+      <Field label={t('common.name')} id="name">
         <Input
           id="name"
           required
@@ -183,9 +183,9 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
           onChange={(evento) => setName(evento.target.value)}
           placeholder={t('accounts.namePlaceholder')}
         />
-      </Campo>
+      </Field>
 
-      <Campo etiqueta={t('accounts.form.type')} id="type">
+      <Field label={t('accounts.form.type')} id="type">
         <Select
           id="type"
           etiqueta={t('accounts.form.accountType')}
@@ -193,10 +193,10 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
           opciones={TIPOS.map((o) => ({ valor: o.valor, etiqueta: o.etiqueta }))}
           onCambiar={(v) => setType(v as Account['type'])}
         />
-      </Campo>
+      </Field>
 
-      <Campo
-        etiqueta={esTarjeta ? t('accounts.form.currentDebt') : t('accounts.form.openingBalance')}
+      <Field
+        label={esTarjeta ? t('accounts.form.currentDebt') : t('accounts.form.openingBalance')}
         id="opening"
       >
         <Input
@@ -206,10 +206,10 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
           onChange={(evento) => setOpeningBalance(evento.target.value)}
           className="tabular"
         />
-      </Campo>
+      </Field>
 
       {esTarjeta && (
-        <Campo etiqueta={t('accounts.form.creditLimit')} id="limit">
+        <Field label={t('accounts.form.creditLimit')} id="limit">
           <Input
             id="limit"
             inputMode="decimal"
@@ -218,7 +218,7 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
             className="tabular"
             placeholder="5000000"
           />
-        </Campo>
+        </Field>
       )}
     </div>
   );

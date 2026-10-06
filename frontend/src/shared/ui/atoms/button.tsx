@@ -41,7 +41,7 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
         /** El acento del tema: una superficie tenue con su propia tinta. */
-        acento: 'bg-accent text-accent-foreground hover:brightness-95',
+        accent: 'bg-accent text-accent-foreground hover:brightness-95',
         /**
          * El `secondary` del TEMA, que aquí es el oro.
          *
@@ -69,8 +69,7 @@ const buttonVariants = cva(
           ni palomita ni texto que lo diga— el color más fuerte tiene que ir
           a lo encendido. Es la excepción que la regla 8 ya contemplaba.
         */
-        herramienta:
-          'border border-border bg-card text-foreground hover:bg-muted aria-pressed:border-primary/40 aria-pressed:bg-primary/15 aria-pressed:text-primary',
+        tool: 'border border-border bg-card text-foreground hover:bg-muted aria-pressed:border-primary/40 aria-pressed:bg-primary/15 aria-pressed:text-primary',
         /**
          * Un botón que hace de CAMPO: el selector de fecha, que por dentro es
          * un botón porque abre un calendario, pero en la fila de un formulario
@@ -97,7 +96,7 @@ const buttonVariants = cva(
          * llamadas lo permite a propósito: prohíbe el alto, el relleno
          * VERTICAL y el radio —que son del tamaño— y no el horizontal.
          */
-        campo:
+        field:
           'border border-input bg-card font-normal text-foreground transition-colors hover:border-ring/40 aria-expanded:border-ring',
       },
       /*
@@ -134,7 +133,7 @@ const buttonVariants = cva(
           resaltado cuadrado dentro de una píldora deja dos esquinas asomando
           en cada extremo, y eso se ve más que el propio botón.
         */
-        'sm-icon-redondo': 'size-9 rounded-full',
+        'sm-icon-round': 'size-9 rounded-full',
       },
     },
     defaultVariants: {
@@ -149,8 +148,14 @@ export type ButtonProps = ComponentProps<'button'> &
     asChild?: boolean;
   };
 
-export function Button({ className, variant, size, asChild = false, ...props }: ButtonProps) {
-  const Comp = asChild ? Slot : 'button';
+export function Button({
+  className,
+  variant,
+  size,
+  asChild: isSlot = false,
+  ...props
+}: ButtonProps) {
+  const Comp = isSlot ? Slot : 'button';
   return <Comp className={cn(buttonVariants({ variant, size }), className)} {...props} />;
 }
 

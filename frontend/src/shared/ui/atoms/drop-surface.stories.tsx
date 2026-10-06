@@ -13,39 +13,39 @@ export const States: Story = {
   render: () => (
     <div className="flex flex-wrap items-start gap-4">
       <DropSurface
-        forma="cuadro"
-        encima={false}
-        ocupada={false}
-        etiqueta="Agregar soportes"
-        onPulsar={() => undefined}
+        shape="square"
+        isOver={false}
+        isBusy={false}
+        label="Agregar soportes"
+        onPick={() => undefined}
       >
         <span className="pointer-events-none text-xs">Agregar</span>
       </DropSurface>
       <DropSurface
-        forma="cuadro"
-        encima
-        ocupada={false}
-        etiqueta="Agregar soportes"
-        onPulsar={() => undefined}
+        shape="square"
+        isOver
+        isBusy={false}
+        label="Agregar soportes"
+        onPick={() => undefined}
       >
         <span className="pointer-events-none text-xs">Suelta aquí</span>
       </DropSurface>
       <DropSurface
-        forma="cuadro"
-        encima={false}
-        ocupada
-        etiqueta="Agregar soportes"
-        onPulsar={() => undefined}
+        shape="square"
+        isOver={false}
+        isBusy
+        label="Agregar soportes"
+        onPick={() => undefined}
       >
         <span className="pointer-events-none text-xs">Subiendo…</span>
       </DropSurface>
       <div className="flex w-80">
         <DropSurface
-          forma="completa"
-          encima={false}
-          ocupada={false}
-          etiqueta="Agregar soportes"
-          onPulsar={() => undefined}
+          shape="full"
+          isOver={false}
+          isBusy={false}
+          label="Agregar soportes"
+          onPick={() => undefined}
         >
           <span className="pointer-events-none text-sm">Arrastra, elige o pega un archivo</span>
         </DropSurface>

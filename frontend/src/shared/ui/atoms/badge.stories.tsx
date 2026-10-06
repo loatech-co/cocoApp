@@ -1,25 +1,25 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 
-import { Badge, Chip, Etiqueta } from './badge';
+import { Badge, Chip, Tag } from './badge';
 
 const TONES = [
-  'neutro',
-  'apagado',
-  'contorno',
-  'ingreso',
-  'gasto',
-  'pendiente',
+  'neutral',
+  'muted',
+  'outline',
+  'income',
+  'expense',
+  'pending',
   'info',
   'error',
 ] as const;
 
 const meta = {
   title: 'Atoms/Badge',
-  component: Etiqueta,
-  args: { children: 'Pendiente', tono: 'pendiente' },
-  argTypes: { tono: { control: 'select', options: TONES } },
-} satisfies Meta<typeof Etiqueta>;
+  component: Tag,
+  args: { children: 'Pendiente', tone: 'pending' },
+  argTypes: { tone: { control: 'select', options: TONES } },
+} satisfies Meta<typeof Tag>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -29,21 +29,21 @@ export const Playground: Story = {};
 export const LabelTones: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
-      {TONES.map((tono) => (
-        <Etiqueta key={tono} tono={tono}>
-          {tono}
-        </Etiqueta>
+      {TONES.map((tone) => (
+        <Tag key={tone} tone={tone}>
+          {tone}
+        </Tag>
       ))}
     </div>
   ),
 };
 
 function ToggleChips() {
-  const [active, setActive] = useState(true);
+  const [isActive, setIsActive] = useState(true);
   const [filters, setFilters] = useState(['Costos fijos', 'Mercado']);
   return (
     <div className="flex flex-wrap gap-2">
-      <Chip activo={active} onClick={() => setActive(!active)}>
+      <Chip isActive={isActive} onClick={() => setIsActive(!isActive)}>
         Solo pendientes
       </Chip>
       <Chip>Apagado</Chip>
@@ -51,8 +51,8 @@ function ToggleChips() {
       {filters.map((filter) => (
         <Chip
           key={filter}
-          etiquetaDeQuitar={`Quitar ${filter}`}
-          onQuitar={() => setFilters(filters.filter((f) => f !== filter))}
+          removeLabel={`Quitar ${filter}`}
+          onRemove={() => setFilters(filters.filter((f) => f !== filter))}
         >
           {filter}
         </Chip>

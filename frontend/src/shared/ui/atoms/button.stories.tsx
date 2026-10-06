@@ -5,7 +5,7 @@ import { Button, type ButtonProps } from './button';
 
 const VARIANTS = [
   'default',
-  'acento',
+  'accent',
   'secondary',
   'outline',
   'ghost',
@@ -21,7 +21,7 @@ const meta = {
     variant: { control: 'select', options: VARIANTS },
     size: {
       control: 'select',
-      options: ['sm', 'md', 'sm-icon', 'md-icon', 'sm-icon-redondo'],
+      options: ['sm', 'md', 'sm-icon', 'md-icon', 'sm-icon-round'],
     },
   },
 } satisfies Meta<typeof Button>;
@@ -61,7 +61,7 @@ export const Sizes: Story = {
       <Button {...args} size="md-icon" aria-label="Eliminar">
         <Trash2 />
       </Button>
-      <Button {...args} size="sm-icon-redondo" aria-label="Nuevo">
+      <Button {...args} size="sm-icon-round" aria-label="Nuevo">
         <Plus />
       </Button>
     </div>

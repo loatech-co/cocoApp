@@ -1,7 +1,7 @@
 import { type CategoryTree } from '@/shared/api/categories';
 import { type Transaction, type TransactionType } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
-import type { SentidoDelDinero } from '@/shared/ui/atoms/monto';
+import type { MoneyDirection } from '@/shared/ui/atoms/amount';
 
 /**
  * Lo que un movimiento ES, y de dónde saca su nombre.
@@ -94,8 +94,8 @@ export function nombreDelMovimiento(
 }
 
 /** Hacia dónde va la plata de un movimiento, en el idioma de `Monto`. */
-export function sentidoDelMovimiento(type: TransactionType): SentidoDelDinero {
-  if (type === 'income') return 'entra';
-  if (type === 'transfer') return 'mueve';
-  return 'sale';
+export function sentidoDelMovimiento(type: TransactionType): MoneyDirection {
+  if (type === 'income') return 'in';
+  if (type === 'transfer') return 'transfer';
+  return 'out';
 }

@@ -24,41 +24,41 @@ import { REALCE } from '@/shared/ui/foundations/superficie';
  * que cambie el tema, el gasto seguirá siendo el gasto.
  */
 
-const etiquetaVariants = cva(
+const tagVariants = cva(
   cn(
     'inline-flex items-center gap-1 whitespace-nowrap rounded-full border',
     'px-2 py-0.5 text-xs font-medium [&_svg]:size-3',
   ),
   {
     variants: {
-      tono: {
-        neutro: 'border-transparent bg-muted text-foreground',
+      tone: {
+        neutral: 'border-transparent bg-muted text-foreground',
         // Lo que todavía no está —«Pronto»—. Se apaga con la tinta apagada
         // del tema y nunca con opacidad: `muted-foreground` sobre `muted` da
         // 5:1 en los dos temas, y la misma etiqueta al 60 % daba 2,3:1.
-        apagado: 'border-transparent bg-muted text-muted-foreground',
-        contorno: 'border-border text-foreground',
+        muted: 'border-transparent bg-muted text-muted-foreground',
+        outline: 'border-border text-foreground',
         // `income`, no `success`: valen lo mismo —en una app de dinero «se
         // guardó» y «entró plata» son la misma buena noticia— pero esta
         // etiqueta dice INGRESO, y el token que lo nombra existe.
-        ingreso: 'border-transparent bg-income-surface text-income',
-        gasto: 'border-transparent bg-expense-surface text-expense',
-        pendiente: 'border-transparent bg-warning-surface text-warning',
+        income: 'border-transparent bg-income-surface text-income',
+        expense: 'border-transparent bg-expense-surface text-expense',
+        pending: 'border-transparent bg-warning-surface text-warning',
         info: 'border-transparent bg-info-surface text-info',
         error: 'border-transparent bg-destructive-surface text-destructive',
       },
     },
-    defaultVariants: { tono: 'neutro' },
+    defaultVariants: { tone: 'neutral' },
   },
 );
 
 /** Un rótulo que describe algo. No se pulsa. */
-export function Etiqueta({
+export function Tag({
   className,
-  tono,
+  tone,
   ...props
-}: ComponentProps<'span'> & VariantProps<typeof etiquetaVariants>) {
-  return <span className={cn(etiquetaVariants({ tono }), className)} {...props} />;
+}: ComponentProps<'span'> & VariantProps<typeof tagVariants>) {
+  return <span className={cn(tagVariants({ tone }), className)} {...props} />;
 }
 
 /**
@@ -72,31 +72,31 @@ export function Etiqueta({
  * solo botón obligaría a adivinar cuál de las dos cosas va a pasar.
  */
 export function Chip({
-  activo = false,
-  onQuitar,
-  etiquetaDeQuitar,
+  isActive = false,
+  onRemove,
+  removeLabel,
   className,
   children,
   ...props
 }: Omit<ComponentProps<'button'>, 'children'> & {
-  activo?: boolean;
-  onQuitar?: () => void;
+  isActive?: boolean;
+  onRemove?: () => void;
   /** Nombre accesible del aspa. Sin él, un lector dice solo "botón". */
-  etiquetaDeQuitar?: string;
+  removeLabel?: string;
   children: ReactNode;
 }) {
-  const forma = chipShape(activo);
+  const shape = chipShape(isActive);
 
-  if (!onQuitar) {
+  if (!onRemove) {
     return (
-      <button type="button" aria-pressed={activo} className={cn(forma, className)} {...props}>
+      <button type="button" aria-pressed={isActive} className={cn(shape, className)} {...props}>
         {children}
       </button>
     );
   }
 
   return (
-    <span className={cn(forma, 'pr-1', className)}>
+    <span className={cn(shape, 'pr-1', className)}>
       {/*
         El nombre es un botón solo si abre algo.
 
@@ -120,16 +120,16 @@ export function Chip({
       )}
       <button
         type="button"
-        onClick={onQuitar}
-        aria-label={etiquetaDeQuitar ?? t('ui.badge.remove')}
-        title={etiquetaDeQuitar ?? t('ui.badge.remove')}
+        onClick={onRemove}
+        aria-label={removeLabel ?? t('ui.badge.remove')}
+        title={removeLabel ?? t('ui.badge.remove')}
         className={cn(
           'flex size-4 shrink-0 items-center justify-center rounded-full transition-colors',
           // Encendido, el chip es `--primary` y el aspa lleva su tinta: el
           // resaltado tiene que ser esa misma tinta rebajada, no un negro.
           // En oscuro el primario es teal CLARO, así que un negro al 20 %
           // hacía un borrón oscuro sobre un chip claro.
-          activo ? 'hover:bg-primary-foreground/20' : 'hover:bg-muted-foreground/20',
+          isActive ? 'hover:bg-primary-foreground/20' : 'hover:bg-muted-foreground/20',
         )}
       >
         <X className="size-3" aria-hidden="true" />
@@ -151,20 +151,20 @@ export function Badge({
 }: ComponentProps<'span'> & {
   variant?: 'default' | 'outline' | 'income' | 'expense' | 'warning' | 'info';
 }) {
-  const equivalencia = {
-    default: 'neutro',
-    outline: 'contorno',
-    income: 'ingreso',
-    expense: 'gasto',
-    warning: 'pendiente',
+  const mapping = {
+    default: 'neutral',
+    outline: 'outline',
+    income: 'income',
+    expense: 'expense',
+    warning: 'pending',
     info: 'info',
   } as const;
 
-  return <Etiqueta tono={equivalencia[variant ?? 'default']} className={className} {...props} />;
+  return <Tag tone={mapping[variant ?? 'default']} className={className} {...props} />;
 }
 
 /** La forma del chip, encendido o apagado. */
-function chipShape(activo: boolean): string {
+function chipShape(isActive: boolean): string {
   return cn(
     /*
       ── La esquina: 6px, no una píldora ─────────────────────────────────────
@@ -187,7 +187,7 @@ function chipShape(activo: boolean): string {
     // El nombre de un concepto es un nombre propio: a 12px, el peso normal se
     // deshace contra el relleno del chip.
     'font-medium transition-colors [&_svg]:size-3.5',
-    activo
+    isActive
       ? 'border-transparent bg-primary text-primary-foreground'
       : /*
           ── El relleno: la tinta al 10 %, y no una superficie del tema ────────

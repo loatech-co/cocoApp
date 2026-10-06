@@ -13,7 +13,7 @@ describe('MenuOpcionDetallada', () => {
     render(
       <MenuOpcionDetallada
         Icono={TrendingDown}
-        color="gasto"
+        color="expense"
         titulo="Gasto"
         ayuda="Plata que sale"
         onClick={onClick}
@@ -30,7 +30,7 @@ describe('MenuOpcionDetallada', () => {
     render(
       <MenuOpcionDetallada
         Icono={TrendingDown}
-        color="ingreso"
+        color="income"
         titulo="Ingreso"
         ayuda="Plata que entra"
         nota="Pronto"

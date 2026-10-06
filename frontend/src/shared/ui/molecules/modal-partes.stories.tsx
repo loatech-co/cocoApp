@@ -3,7 +3,7 @@ import { Pencil, ShoppingCart, Trash2 } from 'lucide-react';
 
 import { CabeceraDeModal, CuerpoDeModal, PANEL_DE_MODAL, PieDeModal } from './modal-partes';
 import { Button } from '../atoms/button';
-import { ChipIcono } from '../atoms/chip-icono';
+import { IconChip } from '../atoms/icon-chip';
 
 const meta = {
   title: 'Molecules/ModalPartes',
@@ -32,7 +32,7 @@ export const HeaderWithActions: Story = {
   args: {
     titulo: 'Mercado',
     ayuda: 'Hogar · octubre',
-    antes: <ChipIcono Icono={ShoppingCart} color="gasto" tamano="sm" />,
+    antes: <IconChip Icon={ShoppingCart} color="expense" size="sm" />,
     acciones: (
       <>
         <Button variant="ghost" size="sm-icon" aria-label="Editar">

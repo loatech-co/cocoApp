@@ -7,8 +7,8 @@ import { FieldAction, Input } from './input';
 const meta = {
   title: 'Atoms/Input',
   component: Input,
-  args: { placeholder: 'Ej. Mercado', tamano: 'md', 'aria-label': 'Nombre' },
-  argTypes: { tamano: { control: 'inline-radio', options: ['sm', 'md'] } },
+  args: { placeholder: 'Ej. Mercado', size: 'md', 'aria-label': 'Nombre' },
+  argTypes: { size: { control: 'inline-radio', options: ['sm', 'md'] } },
   decorators: [
     (Story) => (
       <div className="max-w-sm">
@@ -27,8 +27,8 @@ export const Playground: Story = {};
 export const Sizes: Story = {
   render: (args) => (
     <div className="flex flex-col gap-3">
-      <Input {...args} tamano="sm" />
-      <Input {...args} tamano="md" />
+      <Input {...args} size="sm" />
+      <Input {...args} size="md" />
     </div>
   ),
 };
@@ -38,10 +38,10 @@ export const Filled: Story = { args: { defaultValue: 'Mercado' } };
 /** Left: informative. Right: up to two actions. */
 export const WithIcons: Story = {
   args: {
-    icono: Mail,
+    icon: Mail,
     type: 'email',
     defaultValue: 'nombre@ejemplo.com',
-    acciones: [
+    actions: [
       <Button key="borrar" variant="ghost" size="sm-icon" aria-label="Borrar">
         <X />
       </Button>,
@@ -52,7 +52,7 @@ export const WithIcons: Story = {
   },
 };
 
-export const SearchField: Story = { args: { icono: Search, placeholder: 'Buscar' } };
+export const SearchField: Story = { args: { icon: Search, placeholder: 'Buscar' } };
 
 export const Disabled: Story = { args: { disabled: true, defaultValue: 'No se puede cambiar' } };
 
@@ -65,13 +65,8 @@ export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: ['inp
 export const WithFieldAction: Story = {
   args: {
     placeholder: 'Escribe y pulsa agregar',
-    acciones: [
-      <FieldAction
-        key="agregar"
-        Icono={Plus}
-        etiqueta="Agregar la palabra clave"
-        pista="Agregar"
-      />,
+    actions: [
+      <FieldAction key="agregar" Icon={Plus} label="Agregar la palabra clave" hint="Agregar" />,
     ],
   },
 };

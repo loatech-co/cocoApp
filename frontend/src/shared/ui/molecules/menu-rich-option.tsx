@@ -1,8 +1,8 @@
 import type { ComponentType } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { Etiqueta } from '@/shared/ui/atoms/badge';
-import { ChipIcono, type ColorDeChip } from '@/shared/ui/atoms/chip-icono';
+import { Tag } from '@/shared/ui/atoms/badge';
+import { IconChip, type ChipColor } from '@/shared/ui/atoms/icon-chip';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
 /**
@@ -31,7 +31,7 @@ export function MenuOpcionDetallada({
   onClick,
 }: {
   Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  color: ColorDeChip;
+  color: ChipColor;
   titulo: string;
   ayuda: string;
   /** Por qué no se puede todavía, en una palabra. */
@@ -51,7 +51,7 @@ export function MenuOpcionDetallada({
         deshabilitada ? 'cursor-not-allowed opacity-50' : REALCE,
       )}
     >
-      <ChipIcono Icono={Icono} color={color} tamano="sm" />
+      <IconChip Icon={Icono} color={color} size="sm" />
 
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold">{titulo}</span>
@@ -63,9 +63,9 @@ export function MenuOpcionDetallada({
           que no está en la escala—: tres decisiones repetidas para decir lo
           que `Etiqueta` ya dice. */}
       {nota && (
-        <Etiqueta tono="neutro" className="shrink-0 text-muted-foreground">
+        <Tag tone="neutral" className="shrink-0 text-muted-foreground">
           {nota}
-        </Etiqueta>
+        </Tag>
       )}
     </button>
   );

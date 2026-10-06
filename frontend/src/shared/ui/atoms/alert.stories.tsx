@@ -26,9 +26,9 @@ export const Playground: Story = {};
 export const Tones: Story = {
   render: () => (
     <div className="flex max-w-xl flex-col gap-3">
-      {TONES.map((tono) => (
-        <Alert key={tono} variant={tono}>
-          <AlertTitle>Tono {tono}</AlertTitle>
+      {TONES.map((tone) => (
+        <Alert key={tone} variant={tone}>
+          <AlertTitle>Tono {tone}</AlertTitle>
           <AlertDescription>Una línea que explica qué pasó.</AlertDescription>
         </Alert>
       ))}
@@ -49,8 +49,8 @@ export const WithoutTitle: Story = {
 export const ErrorWithDetails: Story = {
   render: () => (
     <ErrorAlert
-      mensaje="La contraseña no cumple la política."
-      detalles={['Al menos 12 caracteres.', 'Al menos un número.']}
+      message="La contraseña no cumple la política."
+      details={['Al menos 12 caracteres.', 'Al menos un número.']}
     />
   ),
 };

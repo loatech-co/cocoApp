@@ -4,7 +4,7 @@ import { mayuscula, nombreDelTipo } from '@/features/transactions/model/movement
 import { type PendingPayment, type TransactionType } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
-import { ChipIcono } from '@/shared/ui/atoms/chip-icono';
+import { IconChip } from '@/shared/ui/atoms/icon-chip';
 import { CabeceraDeModal } from '@/shared/ui/molecules/modal-partes';
 
 interface SheetMode {
@@ -74,10 +74,10 @@ export function MovementHeader({ modo, onEditar, onEliminar, onCerrar }: Movemen
       titulo={sheetTitle(modo)}
       ayuda={sheetHelp(modo.confirmando)}
       antes={
-        <ChipIcono
-          Icono={type === 'income' ? TrendingUp : TrendingDown}
-          color={type === 'income' ? 'ingreso' : 'gasto'}
-          tamano="sm"
+        <IconChip
+          Icon={type === 'income' ? TrendingUp : TrendingDown}
+          color={type === 'income' ? 'income' : 'expense'}
+          size="sm"
         />
       }
       acciones={

@@ -15,20 +15,20 @@ import { cn } from '@/shared/lib/utils';
  * ASPECTO. Las de botón usan `PanelRow`; las de enlace, la clase, igual que
  * `BLOQUE` y `SUPERFICIE_FLOTANTE`. Un solo sitio donde cambia.
  */
-export const FILA_DE_PANEL =
+export const PANEL_ROW_CLASS =
   'flex min-h-[48px] w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors hover:bg-muted';
 
 /** Rojo solo para lo que no se deshace: cerrar la sesión. */
-const TONOS = {
+const TONES = {
   normal: '',
-  peligro: 'font-medium text-destructive hover:bg-destructive/10',
+  danger: 'font-medium text-destructive hover:bg-destructive/10',
 } as const;
 
 export function PanelRow({
-  tono = 'normal',
+  tone = 'normal',
   type = 'button',
   ...props
-}: Omit<ComponentProps<'button'>, 'className'> & { tono?: keyof typeof TONOS }) {
+}: Omit<ComponentProps<'button'>, 'className'> & { tone?: keyof typeof TONES }) {
   // Sin `className`: lo que la fila necesite distinto es un tono más aquí.
-  return <button type={type} className={cn(FILA_DE_PANEL, TONOS[tono])} {...props} />;
+  return <button type={type} className={cn(PANEL_ROW_CLASS, TONES[tone])} {...props} />;
 }

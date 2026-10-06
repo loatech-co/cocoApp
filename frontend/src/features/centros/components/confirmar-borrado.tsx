@@ -6,7 +6,7 @@ import { type CategoryTree } from '@/shared/api/categories';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
-import { Campo } from '@/shared/ui/atoms/campo';
+import { Field } from '@/shared/ui/atoms/field';
 import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
 import { Select } from '@/shared/ui/organisms/select';
 
@@ -97,7 +97,7 @@ export function ConfirmarBorrado({
 
         {usos.isPending && <p>{t('centers.deletion.counting')}</p>}
 
-        {usos.isError && <ErrorAlert mensaje={t('centers.deletion.countFailed')} />}
+        {usos.isError && <ErrorAlert message={t('centers.deletion.countFailed')} />}
 
         {hayQueReasignar && (
           <ReassignTarget
@@ -207,7 +207,7 @@ function ReassignTarget({
         </AlertDescription>
       </Alert>
 
-      <Campo etiqueta={t('centers.deletion.destination')} id="destino-del-borrado">
+      <Field label={t('centers.deletion.destination')} id="destino-del-borrado">
         <Select
           id="destino-del-borrado"
           etiqueta={t('centers.deletion.destination')}
@@ -216,7 +216,7 @@ function ReassignTarget({
           opciones={opciones}
           onCambiar={onCambiar}
         />
-      </Campo>
+      </Field>
     </>
   );
 }

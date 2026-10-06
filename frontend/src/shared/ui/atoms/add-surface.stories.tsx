@@ -12,13 +12,13 @@ type Story = StoryObj;
 export const Forms: Story = {
   render: () => (
     <div className="flex w-96 flex-col gap-4">
-      <AddSurface forma="hueco" onClick={() => undefined}>
+      <AddSurface shape="slot" onClick={() => undefined}>
         Agregar categoría
       </AddSurface>
-      <AddSurface forma="barra" onClick={() => undefined}>
+      <AddSurface shape="bar" onClick={() => undefined}>
         Agregar categoría
       </AddSurface>
-      <AddSurface forma="fila" onClick={() => undefined}>
+      <AddSurface shape="row" onClick={() => undefined}>
         Agregar atajo
       </AddSurface>
     </div>

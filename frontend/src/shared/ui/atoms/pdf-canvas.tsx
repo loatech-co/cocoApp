@@ -11,12 +11,12 @@ import { cn } from '@/shared/lib/utils';
  * retina, dibujarla al tamaño de la caja deja un texto borroso que parece un
  * escaneo malo cuando el escaneo está bien.
  */
-export function LienzoPdf({
+export function PdfCanvas({
   url,
-  ajuste = 'cover',
-  ancho = 240,
-  onTamano,
-  estilo,
+  fit = 'cover',
+  width = 240,
+  onResize,
+  style,
 }: {
   url: string;
   /**
@@ -27,57 +27,57 @@ export function LienzoPdf({
    * COMPROBAR una cifra, recortar esconde justo lo que se viene a leer, que
    * casi nunca está en la cabecera.
    */
-  ajuste?: 'cover' | 'contain';
+  fit?: 'cover' | 'contain';
   /** A cuántos píxeles se dibuja la página. Más, para verla grande. */
-  ancho?: number;
+  width?: number;
   /** El tamaño real del dibujo, para quien necesite encuadrarlo. */
-  onTamano?: (ancho: number, alto: number) => void;
+  onResize?: (width: number, height: number) => void;
   /** Si se pasa, el lienzo se mide por aquí en vez de llenar su caja. */
-  estilo?: CSSProperties;
+  style?: CSSProperties;
 }) {
-  const lienzo = useRef<HTMLCanvasElement>(null);
-  const [fallo, setFallo] = useState(false);
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const [hasFailed, setHasFailed] = useState(false);
 
   // El aviso del tamaño como evento de efecto: en las dependencias haría que
   // el PDF se volviera a dibujar en cada render del padre. `useEffectEvent`
   // da una función estable que llama siempre a la versión más reciente sin
   // ser dependencia. Antes era una ref escrita durante el render, que hace lo
   // mismo a mano y es lo que la regla de los refs prohíbe.
-  const avisarTamano = useEffectEvent((ancho: number, alto: number) => onTamano?.(ancho, alto));
+  const reportSize = useEffectEvent((width: number, height: number) => onResize?.(width, height));
 
   useEffect(() => {
-    let vivo = true;
+    let isAlive = true;
     // Se lee con una función: el análisis de tipos no ve que la limpieza lo
     // apaga mientras se espera, y daría cada comprobación por inútil.
-    const sigueVivo = (): boolean => vivo;
+    const isStillAlive = (): boolean => isAlive;
 
     drawPdfPage({
       url,
       page: 1,
-      scale: (anchoDeLaHoja) => ancho / anchoDeLaHoja,
-      canvas: () => lienzo.current,
-      isAlive: sigueVivo,
+      scale: (pageWidth) => width / pageWidth,
+      canvas: () => canvas.current,
+      isAlive: isStillAlive,
     })
-      .then((dibujo) => {
-        if (dibujo && sigueVivo()) avisarTamano(dibujo.width, dibujo.height);
+      .then((drawing) => {
+        if (drawing && isStillAlive()) reportSize(drawing.width, drawing.height);
       })
       .catch(() => {
-        if (sigueVivo()) setFallo(true);
+        if (isStillAlive()) setHasFailed(true);
       });
 
     return () => {
-      vivo = false;
+      isAlive = false;
     };
-  }, [url, ancho]);
+  }, [url, width]);
 
-  if (fallo) return <FileWarning className="size-6 text-muted-foreground" aria-hidden="true" />;
+  if (hasFailed) return <FileWarning className="size-6 text-muted-foreground" aria-hidden="true" />;
 
-  if (estilo) return <canvas ref={lienzo} style={estilo} aria-hidden="true" />;
+  if (style) return <canvas ref={canvas} style={style} aria-hidden="true" />;
 
   return (
     <canvas
-      ref={lienzo}
-      className={cn('size-full', ajuste === 'cover' ? 'object-cover object-top' : 'object-contain')}
+      ref={canvas}
+      className={cn('size-full', fit === 'cover' ? 'object-cover object-top' : 'object-contain')}
       aria-hidden="true"
     />
   );

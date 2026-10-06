@@ -6,13 +6,13 @@ import { categoryModalTexts } from '@/features/centros/model/category-form';
 import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { BLOQUE } from '@/shared/ui/atoms/bloque';
+import { BLOCK } from '@/shared/ui/atoms/block';
 import { Button } from '@/shared/ui/atoms/button';
-import { Campo } from '@/shared/ui/atoms/campo';
-import { ICONOS_DE_CATEGORIA } from '@/shared/ui/atoms/iconos';
+import { Field } from '@/shared/ui/atoms/field';
+import { CATEGORY_ICONS } from '@/shared/ui/atoms/icons';
 import { Input } from '@/shared/ui/atoms/input';
-import { Interruptor } from '@/shared/ui/atoms/interruptor';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
+import { Switch } from '@/shared/ui/atoms/switch';
 import { IconGrid } from '@/shared/ui/molecules/icon-grid';
 import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
 import { Modal } from '@/shared/ui/organisms/modal';
@@ -56,17 +56,17 @@ function SelectorDeIcono({
 
   const filtrados = useMemo(() => {
     const q = normal(busca);
-    if (q === '') return ICONOS_DE_CATEGORIA;
-    return ICONOS_DE_CATEGORIA.filter((i) => normal(i.etiqueta).includes(q));
+    if (q === '') return CATEGORY_ICONS;
+    return CATEGORY_ICONS.filter((i) => normal(i.label).includes(q));
   }, [busca]);
 
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="mb-2 text-sm font-medium">{t('centers.categoryModal.icon')}</legend>
 
-      <div className={cn(BLOQUE, 'flex flex-col gap-2')}>
+      <div className={cn(BLOCK, 'flex flex-col gap-2')}>
         <SearchBox
-          forma="caja"
+          shape="box"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder={t('centers.categoryModal.iconSearchPlaceholder')}
@@ -129,7 +129,7 @@ export function CategoriaModal({
   return (
     <Modal abierta={abierta} titulo={titulo} ayuda={ayuda} onCerrar={onCerrar}>
       <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
-        <Campo etiqueta={t('common.name')} id="categoria-nombre">
+        <Field label={t('common.name')} id="categoria-nombre">
           <Input
             id="categoria-nombre"
             value={nombre}
@@ -138,7 +138,7 @@ export function CategoriaModal({
             maxLength={255}
             required
           />
-        </Campo>
+        </Field>
 
         {/*
           El selector de icono, solo en las categorías.
@@ -224,14 +224,14 @@ function StaticSwitch({
   onCambiar: (estatico: boolean) => void;
 }) {
   return (
-    <label className={cn(BLOQUE, 'flex cursor-pointer items-center justify-between gap-4')}>
+    <label className={cn(BLOCK, 'flex cursor-pointer items-center justify-between gap-4')}>
       <span className="min-w-0">
         <span className="block text-sm font-medium">{t('centers.categoryModal.static')}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">
           {t('centers.categoryModal.staticHelp')}
         </span>
       </span>
-      <Interruptor checked={estatico} onChange={(e) => onCambiar(e.target.checked)} />
+      <Switch checked={estatico} onChange={(e) => onCambiar(e.target.checked)} />
     </label>
   );
 }

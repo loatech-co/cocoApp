@@ -15,14 +15,14 @@ export const States: Story = {
     <div className="flex w-72 flex-col rounded-lg bg-popover p-1">
       <MenuOpcionDetallada
         Icono={TrendingDown}
-        color="gasto"
+        color="expense"
         titulo="Gasto"
         ayuda="Plata que sale"
         onClick={() => undefined}
       />
       <MenuOpcionDetallada
         Icono={TrendingUp}
-        color="ingreso"
+        color="income"
         titulo="Ingreso"
         ayuda="Plata que entra"
         nota="Pronto"

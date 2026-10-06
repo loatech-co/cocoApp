@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 
 import { Combo } from './combo';
-import { Campo } from '../atoms/campo';
+import { Field } from '../atoms/field';
 
 const START = [
   { valor: '1', etiqueta: 'Mercado' },
@@ -19,7 +19,7 @@ function Controlled(props: { start?: string; canCreate?: boolean; disabled?: boo
     setValue(created.valor);
   };
   return (
-    <Campo etiqueta="Concepto" id="combo-concepto" className="max-w-sm">
+    <Field label="Concepto" id="combo-concepto" className="max-w-sm">
       <Combo
         id="combo-concepto"
         etiqueta="Concepto"
@@ -30,7 +30,7 @@ function Controlled(props: { start?: string; canCreate?: boolean; disabled?: boo
         deshabilitado={props.disabled ?? false}
         {...(props.canCreate ? { onCrear: create } : {})}
       />
-    </Campo>
+    </Field>
   );
 }
 

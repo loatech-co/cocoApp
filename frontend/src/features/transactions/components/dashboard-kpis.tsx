@@ -1,7 +1,7 @@
 import { type Dashboard, type CategorySpend } from '@/shared/api/generated/model';
 import { rangoLargo, formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
-import { Etiqueta } from '@/shared/ui/atoms/badge';
+import { Tag } from '@/shared/ui/atoms/badge';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 
 /** Los cuatro indicadores del resumen. */
@@ -122,9 +122,9 @@ function Kpi({
                 mano: `Etiqueta` ya decide su redondeo, su relleno y su
                 tamaño de letra. */}
             {pronto && (
-              <Etiqueta tono="apagado" className="shrink-0">
+              <Tag tone="muted" className="shrink-0">
                 {t('transactions.kpis.soon')}
-              </Etiqueta>
+              </Tag>
             )}
           </p>
           <p className={claseDeCifra(pronto, acento)}>{valor}</p>

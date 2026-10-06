@@ -21,19 +21,19 @@ import { REALCE_DE_SUPERFICIE } from '@/shared/ui/foundations/superficie';
  * `encima` mientras se arrastra algo por encima; `ocupada` mientras se sube.
  */
 export function DropSurface({
-  forma,
-  encima,
-  ocupada,
-  etiqueta,
-  onPulsar,
+  shape,
+  isOver,
+  isBusy,
+  label,
+  onPick,
   children,
 }: {
-  forma: 'cuadro' | 'completa';
-  encima: boolean;
-  ocupada: boolean;
+  shape: 'square' | 'full';
+  isOver: boolean;
+  isBusy: boolean;
   /** El nombre accesible del botón que la cubre: «Agregar soportes». */
-  etiqueta: string;
-  onPulsar: () => void;
+  label: string;
+  onPick: () => void;
   children: ReactNode;
 }) {
   return (
@@ -41,10 +41,10 @@ export function DropSurface({
       className={cn(
         'relative flex flex-col items-center justify-center gap-1.5 rounded-lg',
         'border-2 border-dashed transition-colors',
-        forma === 'completa' ? 'min-h-36 flex-1 px-4 py-8' : 'size-[104px]',
-        ocupada
+        shape === 'full' ? 'min-h-36 flex-1 px-4 py-8' : 'size-[104px]',
+        isBusy
           ? 'cursor-wait border-border text-muted-foreground'
-          : encima
+          : isOver
             ? 'border-acento-tinta bg-accent text-accent-foreground'
             : cn('border-border text-muted-foreground', REALCE_DE_SUPERFICIE),
       )}
@@ -53,9 +53,9 @@ export function DropSurface({
           todos a la vez (regla 18). */}
       <button
         type="button"
-        onClick={onPulsar}
-        disabled={ocupada}
-        aria-label={etiqueta}
+        onClick={onPick}
+        disabled={isBusy}
+        aria-label={label}
         className="absolute inset-0 rounded-lg"
       />
       {children}

@@ -29,7 +29,7 @@ import { FOCO_DEL_CAMPO, useDentroDeUnCampo } from '@/shared/ui/foundations/fiel
 export function Textarea({ className, placeholder, ...props }: ComponentProps<'textarea'>) {
   // Dentro de un `Campo`, la primera línea baja para dejarle sitio a la
   // etiqueta; fuera, el relleno es simétrico.
-  const enCampo = useDentroDeUnCampo();
+  const isInField = useDentroDeUnCampo();
 
   return (
     <textarea
@@ -39,9 +39,9 @@ export function Textarea({ className, placeholder, ...props }: ComponentProps<'t
       placeholder={placeholder ?? ' '}
       className={cn(
         'flex w-full rounded-lg border border-input bg-card px-3 py-2 text-base',
-        enCampo && 'pb-2 pt-6',
+        isInField && 'pb-2 pt-6',
         // Dentro de un campo, el marcador solo con el foco. Ver `input.tsx`.
-        enCampo
+        isInField
           ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
           : 'placeholder:text-muted-foreground',
         'transition-colors hover:border-ring/40',

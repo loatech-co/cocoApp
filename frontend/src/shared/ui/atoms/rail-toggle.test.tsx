@@ -10,13 +10,13 @@ describe('RailToggle', () => {
   it.each([
     [true, 'Desplegar la barra lateral', 'w-full'],
     [false, 'Plegar la barra lateral', '-mr-2.25'],
-  ])('folded %s: «%s»', (plegada, nombre, clase) => {
-    const onAlternar = vi.fn();
-    render(<RailToggle plegada={plegada} onAlternar={onAlternar} />);
+  ])('folded %s: «%s»', (isCollapsed, name, className) => {
+    const onToggle = vi.fn();
+    render(<RailToggle isCollapsed={isCollapsed} onToggle={onToggle} />);
 
-    const boton = screen.getByRole('button', { name: nombre });
-    expect(boton.className).toContain(clase);
-    fireEvent.click(boton);
-    expect(onAlternar).toHaveBeenCalledOnce();
+    const button = screen.getByRole('button', { name });
+    expect(button.className).toContain(className);
+    fireEvent.click(button);
+    expect(onToggle).toHaveBeenCalledOnce();
   });
 });

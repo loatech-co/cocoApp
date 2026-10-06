@@ -7,17 +7,17 @@ import { CollapsibleHeader } from './collapsible-header';
 afterEach(cleanup);
 
 describe('CollapsibleHeader', () => {
-  it.each([true, false])('says whether it is open (%s) and toggles', (abierta) => {
-    const onAlternar = vi.fn();
+  it.each([true, false])('says whether it is open (%s) and toggles', (isOpen) => {
+    const onToggle = vi.fn();
     render(
-      <CollapsibleHeader abierta={abierta} onAlternar={onAlternar}>
+      <CollapsibleHeader isOpen={isOpen} onToggle={onToggle}>
         Hogar
       </CollapsibleHeader>,
     );
 
-    const cabecera = screen.getByRole('button', { name: 'Hogar' });
-    expect(cabecera.getAttribute('aria-expanded')).toBe(String(abierta));
-    fireEvent.click(cabecera);
-    expect(onAlternar).toHaveBeenCalledOnce();
+    const header = screen.getByRole('button', { name: 'Hogar' });
+    expect(header.getAttribute('aria-expanded')).toBe(String(isOpen));
+    fireEvent.click(header);
+    expect(onToggle).toHaveBeenCalledOnce();
   });
 });

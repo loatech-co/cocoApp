@@ -9,12 +9,12 @@ afterEach(cleanup);
 describe('TextButton', () => {
   it('gives the faint tone a 24px hit area (WCAG 2.5.8)', () => {
     render(
-      <TextButton tono="tenue" onClick={() => undefined}>
+      <TextButton tone="subtle" onClick={() => undefined}>
         Elegir por centro y categoría
       </TextButton>,
     );
 
-    const boton = screen.getByRole('button', { name: 'Elegir por centro y categoría' });
-    expect(boton.className).toContain('min-h-6');
+    const button = screen.getByRole('button', { name: 'Elegir por centro y categoría' });
+    expect(button.className).toContain('min-h-6');
   });
 });

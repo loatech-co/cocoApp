@@ -12,9 +12,9 @@ import { t } from '@/shared/lib/i18n';
 import { useEnLaApp, useEsMovil } from '@/shared/lib/movil';
 import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
+import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { Button } from '@/shared/ui/atoms/button';
 import { Logo } from '@/shared/ui/atoms/logo';
-import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
 import { PilaDeAvisos } from '@/shared/ui/molecules/aviso';
 
 import { BarraInferior } from './barra-inferior';
@@ -280,14 +280,14 @@ function PhoneSheets({ shell }: { shell: ShellState }) {
       {/* Las tres hojas van montadas siempre, abiertas o cerradas: lo que
           se desliza no se puede reconstruir en cada render, o aparece en
           vez de llegar. */}
-      <PanelInferior
-        abierto={shell.atajosAbiertos}
-        titulo={t('shell.shortcuts.title')}
-        cabeza={shell.cabeza}
-        onCerrar={() => shell.setAtajosAbiertos(false)}
+      <BottomSheet
+        isOpen={shell.atajosAbiertos}
+        title={t('shell.shortcuts.title')}
+        head={shell.cabeza}
+        onClose={() => shell.setAtajosAbiertos(false)}
       >
         {shell.cuerpo}
-      </PanelInferior>
+      </BottomSheet>
 
       <PanelDeLaCuenta
         abierto={shell.cuentaAbierta}

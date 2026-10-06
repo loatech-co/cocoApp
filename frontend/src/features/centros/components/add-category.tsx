@@ -53,7 +53,7 @@ export function Agregar({
   return (
     <>
       <div className={solo ? undefined : 'mt-3'}>
-        <AddSurface forma={solo ? 'hueco' : 'barra'} onClick={() => setAbierta(true)}>
+        <AddSurface shape={solo ? 'slot' : 'bar'} onClick={() => setAbierta(true)}>
           {t('centers.addCategory')}
         </AddSurface>
       </div>

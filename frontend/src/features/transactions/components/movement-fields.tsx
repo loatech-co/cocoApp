@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 
 import { t } from '@/shared/lib/i18n';
-import { Campo } from '@/shared/ui/atoms/campo';
+import { Field } from '@/shared/ui/atoms/field';
 import { Textarea } from '@/shared/ui/atoms/textarea';
 import { CampoDeDinero } from '@/shared/ui/molecules/campo-de-dinero';
 
@@ -37,7 +37,7 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
       <MovementClassification {...props} />
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Campo etiqueta={t('transactions.fields.amount')} id="mov-valor">
+        <Field label={t('transactions.fields.amount')} id="mov-valor">
           {/* Agrupa los miles al escribir y conserva el cursor. El porqué largo
               está en el componente. */}
           <CampoDeDinero
@@ -47,11 +47,11 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
             placeholder="0"
             required
           />
-        </Campo>
+        </Field>
 
-        <Campo etiqueta={t('transactions.fields.date')} id="mov-fecha">
+        <Field label={t('transactions.fields.date')} id="mov-fecha">
           <SelectorDeFecha id="mov-fecha" valor={ficha.date} onElegir={ficha.setDate} requerido />
-        </Campo>
+        </Field>
       </div>
 
       {/*
@@ -62,7 +62,7 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
         una nota sobre este movimiento es un campo más de los que se rellenan
         al registrarlo, y va donde va el siguiente, no donde sobra sitio.
       */}
-      <Campo etiqueta={t('transactions.fields.notes')} id="mov-notas">
+      <Field label={t('transactions.fields.notes')} id="mov-notas">
         {/* Sin marcador. Decía «Opcional», que no es un ejemplo de lo que va
             ahí sino una nota sobre la validación: este campo no lleva
             `required`, y eso ya se sabe porque el formulario se envía sin él. */}
@@ -72,7 +72,7 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
           onChange={(e) => ficha.setNotes(e.target.value)}
           rows={3}
         />
-      </Campo>
+      </Field>
     </div>
   );
 }

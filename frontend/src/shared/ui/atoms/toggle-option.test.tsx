@@ -7,18 +7,18 @@ import { ToggleOption } from './toggle-option';
 afterEach(cleanup);
 
 describe('ToggleOption', () => {
-  it.each([true, false])('announces whether it is on (%s)', (encendida) => {
+  it.each([true, false])('announces whether it is on (%s)', (isOn) => {
     const onClick = vi.fn();
     render(
-      <ToggleOption encendida={encendida} onClick={onClick}>
+      <ToggleOption isOn={isOn} onClick={onClick}>
         Este mes
       </ToggleOption>,
     );
 
-    const opcion = screen.getByRole('button', { name: 'Este mes' });
-    expect(opcion.getAttribute('aria-pressed')).toBe(String(encendida));
-    expect(opcion.className.includes('text-primary')).toBe(encendida);
-    fireEvent.click(opcion);
+    const option = screen.getByRole('button', { name: 'Este mes' });
+    expect(option.getAttribute('aria-pressed')).toBe(String(isOn));
+    expect(option.className.includes('text-primary')).toBe(isOn);
+    fireEvent.click(option);
     expect(onClick).toHaveBeenCalledOnce();
   });
 });

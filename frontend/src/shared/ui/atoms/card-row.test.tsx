@@ -11,18 +11,18 @@ describe('CardRow', () => {
     const onClick = vi.fn();
     render(<CardRow onClick={onClick}>Arriendo</CardRow>);
 
-    const fila = screen.getByRole('button', { name: 'Arriendo' });
-    expect(fila).not.toHaveProperty('disabled', true);
-    expect(fila.className).toContain('cursor-pointer');
-    fireEvent.click(fila);
+    const row = screen.getByRole('button', { name: 'Arriendo' });
+    expect(row).not.toHaveProperty('disabled', true);
+    expect(row.className).toContain('cursor-pointer');
+    fireEvent.click(row);
     expect(onClick).toHaveBeenCalledOnce();
   });
 
   it('stays still without an action', () => {
     render(<CardRow>Internet</CardRow>);
 
-    const fila = screen.getByRole('button', { name: 'Internet' });
-    expect(fila).toHaveProperty('disabled', true);
-    expect(fila.className).toContain('cursor-default');
+    const row = screen.getByRole('button', { name: 'Internet' });
+    expect(row).toHaveProperty('disabled', true);
+    expect(row.className).toContain('cursor-default');
   });
 });

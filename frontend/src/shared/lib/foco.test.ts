@@ -87,8 +87,8 @@ const LLEVAN_ANILLO: Record<string, string> = {
     'Un campo sí: hace falta saber cuál está recibiendo lo que se teclea. Es `FOCO_DEL_CAMPO`, y un desplegable es un campo aunque esté hecho con un <button>.',
   'shared/ui/atoms/input.tsx': 'El del error, que va a plena tinta.',
   'shared/ui/atoms/textarea.tsx': 'El del error, que va a plena tinta.',
-  'shared/ui/atoms/casilla.tsx': 'Una casilla es un <input> y guarda un estado.',
-  'shared/ui/atoms/interruptor.tsx': 'Un interruptor es un <input> y guarda un estado.',
+  'shared/ui/atoms/checkbox.tsx': 'Una casilla es un <input> y guarda un estado.',
+  'shared/ui/atoms/switch.tsx': 'Un interruptor es un <input> y guarda un estado.',
   'features/transactions/components/tendencia.tsx':
     'La gráfica entra en el orden del tabulador y se recorre con las flechas: sin anillo, quien llega con el teclado no sabe que está ahí.',
 };

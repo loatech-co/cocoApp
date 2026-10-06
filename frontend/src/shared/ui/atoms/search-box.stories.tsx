@@ -13,11 +13,11 @@ export const Forms: Story = {
   render: () => (
     <div className="flex w-80 flex-col gap-4">
       <div className="rounded-lg bg-popover">
-        <SearchBox forma="cabecera" placeholder="Buscar…" aria-label="Buscar" />
+        <SearchBox shape="header" placeholder="Buscar…" aria-label="Buscar" />
       </div>
       <div className="rounded-lg bg-muted p-3">
         <SearchBox
-          forma="caja"
+          shape="box"
           placeholder="Buscar: educación, mercado, salud…"
           aria-label="Buscar un icono"
         />

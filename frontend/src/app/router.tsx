@@ -3,7 +3,7 @@ import { Navigate, createBrowserRouter, RouterProvider, type RouteObject } from 
 import { RequireAdmin, RequireAuth } from '@/features/auth/components/require-auth';
 import { DashboardPage } from '@/features/transactions/pages/dashboard-page';
 import { t } from '@/shared/lib/i18n';
-import { TITULO_DE_PAGINA } from '@/shared/ui/atoms/cabecera-de-pagina';
+import { PAGE_TITLE } from '@/shared/ui/atoms/page-header';
 
 import { AppShell } from './app-shell';
 import { PantallaDeError } from './pantalla-de-error';
@@ -113,7 +113,7 @@ export const rutas: RouteObject[] = [
         path: '*',
         element: (
           <main className="flex min-h-dvh flex-col items-center justify-center gap-2 px-4 text-center">
-            <h1 className={TITULO_DE_PAGINA}>{t('shell.notFound.title')}</h1>
+            <h1 className={PAGE_TITLE}>{t('shell.notFound.title')}</h1>
             <p className="text-sm text-muted-foreground">{t('shell.notFound.help')}</p>
             <a className="text-primary underline underline-offset-4" href="/">
               {t('common.goHome')}

@@ -3,7 +3,7 @@ import { Landmark } from 'lucide-react';
 import { useState } from 'react';
 
 import { Select } from './select';
-import { Campo } from '../atoms/campo';
+import { Field } from '../atoms/field';
 
 const OPTIONS = [
   { valor: 'hogar', etiqueta: 'Hogar' },
@@ -14,7 +14,7 @@ const OPTIONS = [
 function Controlled(props: { start?: string; tamano?: 'sm' | 'md'; disabled?: boolean }) {
   const [value, setValue] = useState(props.start ?? '');
   return (
-    <Campo etiqueta="Centro de costos" id="select-centro" className="max-w-sm">
+    <Field label="Centro de costos" id="select-centro" className="max-w-sm">
       <Select
         id="select-centro"
         etiqueta="Centro de costos"
@@ -25,7 +25,7 @@ function Controlled(props: { start?: string; tamano?: 'sm' | 'md'; disabled?: bo
         tamano={props.tamano ?? 'md'}
         deshabilitado={props.disabled}
       />
-    </Campo>
+    </Field>
   );
 }
 

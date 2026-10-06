@@ -53,21 +53,21 @@ describe('ErrorAlert', () => {
   it('says what failed and lists what explains it', () => {
     render(
       <ErrorAlert
-        mensaje="La contraseña no cumple."
-        detalles={['Doce caracteres.', 'Un número.']}
+        message="La contraseña no cumple."
+        details={['Doce caracteres.', 'Un número.']}
       />,
     );
 
-    const aviso = screen.getByRole('alert');
-    expect(aviso.textContent).toContain('La contraseña no cumple.');
-    expect(Array.from(aviso.querySelectorAll('li'), (li) => li.textContent)).toEqual([
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toContain('La contraseña no cumple.');
+    expect(Array.from(alert.querySelectorAll('li'), (li) => li.textContent)).toEqual([
       'Doce caracteres.',
       'Un número.',
     ]);
   });
 
   it('is a plain error without details', () => {
-    render(<ErrorAlert mensaje="Algo falló." />);
+    render(<ErrorAlert message="Algo falló." />);
 
     expect(screen.getByRole('alert').querySelector('ul')).toBeNull();
   });

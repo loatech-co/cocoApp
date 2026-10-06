@@ -3,7 +3,7 @@ import { useSyncExternalStore, type ComponentType } from 'react';
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/shared/lib/utils';
-import type { TonoDeAviso } from '@/shared/ui/atoms/alert';
+import type { AlertTone } from '@/shared/ui/atoms/alert';
 import { SUPERFICIE_FLOTANTE, SURGE } from '@/shared/ui/foundations/superficie';
 
 /**
@@ -57,7 +57,7 @@ interface Aviso {
   id: number;
   titulo: string;
   detalle?: string | undefined;
-  tono: TonoDeAviso;
+  tono: AlertTone;
 }
 
 /**
@@ -68,7 +68,7 @@ interface Aviso {
  * círculo: con un icono circular, el resultado son dos círculos concéntricos y
  * el glifo se pierde. Así que aquí van los trazos desnudos.
  */
-const GLIFOS: Record<TonoDeAviso, ComponentType<{ className?: string }> | null> = {
+const GLIFOS: Record<AlertTone, ComponentType<{ className?: string }> | null> = {
   default: null,
   destructive: X,
   warning: TriangleAlert,
@@ -83,7 +83,7 @@ const GLIFOS: Record<TonoDeAviso, ComponentType<{ className?: string }> | null> 
  * existe en el CSS final—, así que cada combinación se escribe entera. Es la
  * misma razón por la que los pasteles de los chips son una tabla.
  */
-const COLORES: Record<TonoDeAviso, { pastilla: string; halo: string; resplandor: string }> = {
+const COLORES: Record<AlertTone, { pastilla: string; halo: string; resplandor: string }> = {
   default: { pastilla: '', halo: '', resplandor: '' },
   destructive: {
     pastilla: 'bg-destructive text-destructive-foreground',
@@ -133,7 +133,7 @@ function programarElOlvido(id: number): void {
 
 export function mostrarAviso(
   titulo: string,
-  opciones: { detalle?: string; tono?: TonoDeAviso } = {},
+  opciones: { detalle?: string; tono?: AlertTone } = {},
 ): void {
   const { detalle, tono = 'default' } = opciones;
 

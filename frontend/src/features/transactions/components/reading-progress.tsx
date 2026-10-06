@@ -2,8 +2,8 @@ import type { ProgresoDeLectura } from '@/features/transactions/api/leer-soporte
 import { t } from '@/shared/lib/i18n';
 import { useObjectUrl } from '@/shared/lib/object-url';
 import { cn } from '@/shared/lib/utils';
-import { LienzoPdf } from '@/shared/ui/atoms/pdf-canvas';
-import { Progreso } from '@/shared/ui/atoms/progreso';
+import { PdfCanvas } from '@/shared/ui/atoms/pdf-canvas';
+import { Progress } from '@/shared/ui/atoms/progress';
 
 /**
  * El documento, con una banda de luz cruzándolo mientras se lee.
@@ -52,7 +52,7 @@ export function Escaneando({
           <img src={url} alt="" className="size-full object-cover object-top opacity-80" />
         ) : (
           <div className="grid size-full place-items-center overflow-hidden">
-            <LienzoPdf url={url} />
+            <PdfCanvas url={url} />
           </div>
         )}
 
@@ -65,7 +65,7 @@ export function Escaneando({
           barra es la compartida: esta medía 4px de alto y 192 de ancho y la de
           la importación 8px y todo el ancho, siendo la misma espera del mismo
           trabajo. */}
-      <Progreso avance={progreso?.avance ?? 0} etiqueta={etapa} className="w-full max-w-sm" />
+      <Progress value={progreso?.avance ?? 0} label={etapa} className="w-full max-w-sm" />
     </div>
   );
 }

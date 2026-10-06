@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
-import { FILA_DE_PANEL, PanelRow } from '@/shared/ui/atoms/panel-row';
+import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
+import { PANEL_ROW_CLASS, PanelRow } from '@/shared/ui/atoms/panel-row';
 import { FilaDeEnlace } from '@/shared/ui/molecules/link-row';
 
 import { Avatar } from './navegacion';
@@ -40,11 +40,11 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
   const nombre = usuario?.displayName ?? usuario?.email ?? '?';
 
   return (
-    <PanelInferior
-      abierto={abierto}
-      titulo={t('shell.account.myAccount')}
-      cabeza={<Perfil nombre={nombre} />}
-      onCerrar={onCerrar}
+    <BottomSheet
+      isOpen={abierto}
+      title={t('shell.account.myAccount')}
+      head={<Perfil nombre={nombre} />}
+      onClose={onCerrar}
     >
       <div className="flex flex-col">
         {/*
@@ -86,12 +86,12 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
         */}
         {esAdminDeVerdad && <ViewAsUserRow onCerrar={onCerrar} />}
 
-        <PanelRow tono="peligro" onClick={() => void salir()}>
+        <PanelRow tone="danger" onClick={() => void salir()}>
           <LogOut className="size-4 shrink-0" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate">{t('shell.account.signOut')}</span>
         </PanelRow>
       </div>
-    </PanelInferior>
+    </BottomSheet>
   );
 }
 
@@ -108,7 +108,7 @@ function Perfil({ nombre }: { nombre: string }) {
   return (
     <Link
       to="/mi-cuenta"
-      className={cn(FILA_DE_PANEL, '-mx-1.5 gap-3')}
+      className={cn(PANEL_ROW_CLASS, '-mx-1.5 gap-3')}
       aria-label={t('shell.account.myAccountOf', { name: nombre })}
     >
       <Avatar nombre={nombre} className="size-10" />

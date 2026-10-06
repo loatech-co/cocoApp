@@ -15,15 +15,15 @@ export const Bar: Story = {
   render: () => (
     <MemoryRouter initialEntries={['/']}>
       <nav className="flex w-96 items-stretch bg-sidebar pt-6">
-        <BarSlotLink to="/" exact etiqueta="Resumen" Icono={LayoutGrid} />
-        <BarSlotButton etiqueta="Buscar" encendido onClick={() => undefined}>
-          <BarIcon Icono={Search} />
+        <BarSlotLink to="/" isExact label="Resumen" Icon={LayoutGrid} />
+        <BarSlotButton label="Buscar" isOn onClick={() => undefined}>
+          <BarIcon Icon={Search} />
         </BarSlotButton>
         <div className="flex w-18 shrink-0 items-start justify-center">
-          <BarFab etiqueta="Registrar un gasto" onClick={() => undefined} />
+          <BarFab label="Registrar un gasto" onClick={() => undefined} />
         </div>
-        <BarSlotButton etiqueta="Atajos" encendido={false} onClick={() => undefined}>
-          <BarIcon Icono={LayoutGrid} />
+        <BarSlotButton label="Atajos" isOn={false} onClick={() => undefined}>
+          <BarIcon Icon={LayoutGrid} />
         </BarSlotButton>
       </nav>
     </MemoryRouter>

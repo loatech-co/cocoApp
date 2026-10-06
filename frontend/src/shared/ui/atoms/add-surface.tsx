@@ -23,18 +23,18 @@ import { REALCE_DE_SUPERFICIE } from '@/shared/ui/foundations/superficie';
  * superficies grandes (el porqué está en `superficie.ts`): el acento entero en
  * mil por doscientos cincuenta píxeles es un fogonazo.
  */
-const FORMAS = {
-  hueco: cn('min-h-64 flex-col gap-2 border-2 p-4', REALCE_DE_SUPERFICIE),
-  barra: cn('gap-2 border-2 p-4', REALCE_DE_SUPERFICIE),
-  fila: 'min-h-[42px] gap-2 border py-3 hover:bg-muted',
+const SHAPES = {
+  slot: cn('min-h-64 flex-col gap-2 border-2 p-4', REALCE_DE_SUPERFICIE),
+  bar: cn('gap-2 border-2 p-4', REALCE_DE_SUPERFICIE),
+  row: 'min-h-[42px] gap-2 border py-3 hover:bg-muted',
 } as const;
 
 export function AddSurface({
-  forma,
+  shape,
   onClick,
   children,
 }: {
-  forma: keyof typeof FORMAS;
+  shape: keyof typeof SHAPES;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -45,10 +45,10 @@ export function AddSurface({
       className={cn(
         'flex w-full items-center justify-center rounded-lg border-dashed border-border text-center',
         'text-sm font-medium text-muted-foreground transition-colors',
-        FORMAS[forma],
+        SHAPES[shape],
       )}
     >
-      <Plus className={cn('shrink-0', forma === 'fila' ? 'size-4' : 'size-5')} aria-hidden="true" />
+      <Plus className={cn('shrink-0', shape === 'row' ? 'size-4' : 'size-5')} aria-hidden="true" />
       {children}
     </button>
   );

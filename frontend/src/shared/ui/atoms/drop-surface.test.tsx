@@ -6,38 +6,38 @@ import { DropSurface } from './drop-surface';
 
 afterEach(cleanup);
 
-function caja(props: { forma: 'cuadro' | 'completa'; encima: boolean; ocupada: boolean }) {
-  const onPulsar = vi.fn();
+function box(props: { shape: 'square' | 'full'; isOver: boolean; isBusy: boolean }) {
+  const onPick = vi.fn();
   render(
-    <DropSurface {...props} etiqueta="Agregar soportes" onPulsar={onPulsar}>
+    <DropSurface {...props} label="Agregar soportes" onPick={onPick}>
       <span>rótulo</span>
     </DropSurface>,
   );
-  const boton = screen.getByRole('button', { name: 'Agregar soportes' });
-  return { boton, marco: boton.parentElement!, onPulsar };
+  const button = screen.getByRole('button', { name: 'Agregar soportes' });
+  return { button, frame: button.parentElement!, onPick };
 }
 
 describe('DropSurface', () => {
   it('opens the picker from anywhere in the box', () => {
-    const { boton, marco, onPulsar } = caja({ forma: 'cuadro', encima: false, ocupada: false });
+    const { button, frame, onPick } = box({ shape: 'square', isOver: false, isBusy: false });
 
-    expect(marco.className).toContain('size-[104px]');
-    expect(marco.textContent).toBe('rótulo');
-    fireEvent.click(boton);
-    expect(onPulsar).toHaveBeenCalledOnce();
+    expect(frame.className).toContain('size-[104px]');
+    expect(frame.textContent).toBe('rótulo');
+    fireEvent.click(button);
+    expect(onPick).toHaveBeenCalledOnce();
   });
 
   it('lights up while something is dragged over it', () => {
-    const { marco } = caja({ forma: 'completa', encima: true, ocupada: false });
+    const { frame } = box({ shape: 'full', isOver: true, isBusy: false });
 
-    expect(marco.className).toContain('min-h-36');
-    expect(marco.className).toContain('border-acento-tinta');
+    expect(frame.className).toContain('min-h-36');
+    expect(frame.className).toContain('border-acento-tinta');
   });
 
   it('cannot be pressed while it uploads', () => {
-    const { boton, marco } = caja({ forma: 'cuadro', encima: true, ocupada: true });
+    const { button, frame } = box({ shape: 'square', isOver: true, isBusy: true });
 
-    expect(boton).toHaveProperty('disabled', true);
-    expect(marco.className).toContain('cursor-wait');
+    expect(button).toHaveProperty('disabled', true);
+    expect(frame.className).toContain('cursor-wait');
   });
 });

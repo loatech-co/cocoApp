@@ -206,7 +206,7 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
       */
       etiqueta={etiqueta}
       Icono={CalendarDays}
-      variante="herramienta"
+      variante="tool"
       // La etiqueta es el rango entero y tiene que poder encogerse: es el
       // único ancho a medida de toda la barra.
       claseCaja={cn('max-w-full', claseCaja)}

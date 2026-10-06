@@ -6,8 +6,8 @@ import { mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
-import { Campo } from '@/shared/ui/atoms/campo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
+import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
 import { Logo } from '@/shared/ui/atoms/logo';
 import { TextLink } from '@/shared/ui/atoms/text-link';
@@ -162,7 +162,7 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
         )}
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <Campo etiqueta={t('auth.fields.email')} id="email">
+          <Field label={t('auth.fields.email')} id="email">
             <Input
               id="email"
               type="email"
@@ -172,9 +172,9 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
               onChange={(evento) => setEmail(evento.target.value)}
               aria-invalid={error !== null}
             />
-          </Campo>
+          </Field>
 
-          <Campo etiqueta={t('auth.fields.password')} id="password">
+          <Field label={t('auth.fields.password')} id="password">
             <Input
               id="password"
               type="password"
@@ -184,7 +184,7 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
               onChange={(evento) => setPassword(evento.target.value)}
               aria-invalid={error !== null}
             />
-          </Campo>
+          </Field>
 
           <LoginSubmit enviando={enviando} />
         </form>

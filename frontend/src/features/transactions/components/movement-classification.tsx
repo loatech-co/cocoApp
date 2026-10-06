@@ -3,7 +3,7 @@ import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
 import { nombreDelOrigen } from '@/features/transactions/model/precedencia';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
-import { Campo } from '@/shared/ui/atoms/campo';
+import { Field } from '@/shared/ui/atoms/field';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { Combo } from '@/shared/ui/organisms/combo';
 
@@ -78,7 +78,7 @@ export function MovementClassification({
         // -mt-3 y no -mt-2: el botón mide 24 y su letra 16, así que el texto
         // queda donde estaba.
         <div className="-mt-3 flex self-start">
-          <TextButton tono="tenue" onClick={() => ficha.setCascadaVisible((v) => !v)}>
+          <TextButton tone="subtle" onClick={() => ficha.setCascadaVisible((v) => !v)}>
             {ficha.cascadaVisible
               ? t('transactions.classification.hidePicker')
               : t('transactions.classification.showPicker')}
@@ -114,7 +114,7 @@ function ClassificationCascade(props: ClassificationProps) {
     <>
       <CostCenterField centro={centro} arbol={arbol} estatico={estatico} onElegir={elegir} />
 
-      <Campo etiqueta={t('centers.levels.category')} id="mov-categoria">
+      <Field label={t('centers.levels.category')} id="mov-categoria">
         <Combo
           id="mov-categoria"
           etiqueta={t('centers.levels.category')}
@@ -133,9 +133,9 @@ function ClassificationCascade(props: ClassificationProps) {
           onCambiar={(v) => elegir(v === '' ? centro?.id : Number(v))}
           onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
         />
-      </Campo>
+      </Field>
 
-      <Campo etiqueta={t('transactions.fields.concept')} id="mov-concepto-cascada">
+      <Field label={t('transactions.fields.concept')} id="mov-concepto-cascada">
         <Combo
           id="mov-concepto-cascada"
           etiqueta={t('transactions.fields.concept')}
@@ -154,7 +154,7 @@ function ClassificationCascade(props: ClassificationProps) {
           onCambiar={(v) => elegir(v === '' ? categoria?.id : Number(v))}
           onCrear={(nombre) => void crearDentro(nombre, categoria?.id)}
         />
-      </Campo>
+      </Field>
     </>
   );
 }
@@ -172,7 +172,7 @@ function CostCenterField({
   onElegir: (id?: number) => void;
 }) {
   return (
-    <Campo etiqueta={t('centers.levels.costCenter')} id="mov-centro">
+    <Field label={t('centers.levels.costCenter')} id="mov-centro">
       <Combo
         id="mov-centro"
         etiqueta={t('centers.levels.costCenter')}
@@ -181,6 +181,6 @@ function CostCenterField({
         deshabilitado={estatico}
         onCambiar={(v) => onElegir(v === '' ? undefined : Number(v))}
       />
-    </Campo>
+    </Field>
   );
 }

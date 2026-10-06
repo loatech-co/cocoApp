@@ -205,7 +205,7 @@ function ComboPanel({ campo, busqueda, valor, vacio, creando, cerrar }: ComboPan
   return (
     <div className="flex flex-col">
       <SearchBox
-        forma="cabecera"
+        shape="header"
         ref={campo}
         value={busca}
         onChange={(e) => setBusca(e.target.value)}

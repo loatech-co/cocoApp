@@ -12,17 +12,17 @@ import { REALCE } from '@/shared/ui/foundations/superficie';
  * misma que el botón `herramienta`. Se anuncia con `aria-pressed`.
  */
 export function ToggleOption({
-  encendida,
+  isOn,
   type = 'button',
   ...props
-}: Omit<ComponentProps<'button'>, 'className' | 'aria-pressed'> & { encendida: boolean }) {
+}: Omit<ComponentProps<'button'>, 'className' | 'aria-pressed'> & { isOn: boolean }) {
   return (
     <button
       type={type}
-      aria-pressed={encendida}
+      aria-pressed={isOn}
       className={cn(
         'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
-        encendida ? 'bg-primary/15 font-medium text-primary' : cn('text-muted-foreground', REALCE),
+        isOn ? 'bg-primary/15 font-medium text-primary' : cn('text-muted-foreground', REALCE),
       )}
       {...props}
     />

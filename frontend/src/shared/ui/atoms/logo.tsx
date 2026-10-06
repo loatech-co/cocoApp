@@ -12,13 +12,13 @@
  * La proporción es 3.82:1, muy apaisada: se le da ALTO y el ancho sale solo.
  * Fijar el ancho lo deja demasiado bajito para leerse.
  */
-export function Logo({ className, titulo = 'Coco' }: { className?: string; titulo?: string }) {
+export function Logo({ className, title = 'Coco' }: { className?: string; title?: string }) {
   return (
     <svg
       viewBox="0 0 1528.36 399.83"
       className={className}
       role="img"
-      aria-label={titulo}
+      aria-label={title}
       fill="currentColor"
     >
       <path d="M788.59,330.02c-79.41-92.87-56.57-235.48,49.71-299.38,74.43-44.75,169.59-34.8,234.18,22.7,23.45,20.88,28.06,55.28,6.96,79.76-19.66,22.81-55.63,26.31-78.95,4.88-28.98-26.62-71.03-32.36-105.43-11.82-32.81,19.59-50.28,59.16-39.79,97.84,9.66,35.64,41.8,63.13,80.61,64.57,25.03,1.16,48.16-8.05,65.54-25.92,19.34-14.28,35.99-30.19,53.01-47.23,36.89-38.08,71.27-78.11,103.7-120,54.06-87.76,166.83-121.64,258.76-73.39,46.77,24.55,83.09,65.73,100.92,115.44,8.28,23.1,11.21,46.14,10.41,70.13-3.11,94.29-73.32,173.09-164.4,189.12-94.62,16.66-186.84-35.08-222.11-125.42l-46.86,53.57c-78.45,97.52-224.84,100.36-306.26,5.14ZM1417.64,199.91c0-49.19-39.88-89.07-89.07-89.07s-89.07,39.88-89.07,89.07,39.88,89.07,89.07,89.07,89.07-39.88,89.07-89.07Z" />
@@ -36,7 +36,7 @@ export function Logo({ className, titulo = 'Coco' }: { className?: string; titul
  * `currentColor` y así es lima sobre la barra y tinta sobre el lienzo claro,
  * sin mantener tres copias del archivo.
  */
-export function LogoCompacto({ className }: { className?: string }) {
+export function CompactLogo({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 787.18 784.67"

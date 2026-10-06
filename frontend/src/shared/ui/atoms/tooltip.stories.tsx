@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Info } from 'lucide-react';
 
-import { ConTooltip } from './tooltip';
+import { WithTooltip } from './tooltip';
 
 const meta = {
-  title: 'Atoms/ConTooltip',
-  component: ConTooltip,
+  title: 'Atoms/WithTooltip',
+  component: WithTooltip,
   args: {
-    texto: 'Lo que falta por clasificar',
+    text: 'Lo que falta por clasificar',
     children: <Info className="size-4" aria-label="Más información" />,
   },
   decorators: [
@@ -17,7 +17,7 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof ConTooltip>;
+} satisfies Meta<typeof WithTooltip>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

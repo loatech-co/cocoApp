@@ -5,7 +5,7 @@ import { ApiClientError } from '@/shared/api/api-client';
 import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
-import { Interruptor } from '@/shared/ui/atoms/interruptor';
+import { Switch } from '@/shared/ui/atoms/switch';
 
 /**
  * Ajustes de la aplicación.
@@ -31,7 +31,7 @@ export function Ajustes() {
       <CardContent className="flex flex-col gap-4">
         {/* Without the saved value, the switch would show «off» as if it were
             the person's choice. */}
-        {preferencias.isError && <ErrorAlert mensaje={t('profile.settings.loadFailed')} />}
+        {preferencias.isError && <ErrorAlert message={t('profile.settings.loadFailed')} />}
 
         {error && (
           <Alert variant="destructive">
@@ -80,10 +80,10 @@ function SettingRow({
         <p className="mt-0.5 text-sm text-muted-foreground">{descripcion}</p>
       </div>
 
-      <Interruptor
+      <Switch
         checked={activo}
         aria-label={titulo}
-        cargando={cargando}
+        isLoading={cargando}
         onChange={(e) => onCambiar(e.target.checked)}
         className="mt-1"
       />

@@ -133,7 +133,7 @@ function RangePresets({
       {PRESETS.filter((p) => p.valor !== 'personalizado').map((p) => (
         <li key={p.valor} className="sm:w-full">
           <ToggleOption
-            encendida={borrador.preset === p.valor}
+            isOn={borrador.preset === p.valor}
             onClick={() => onElegir(p.valor)}
             title={p.ayuda}
           >

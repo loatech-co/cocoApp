@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { drawPdfPage } from '@/shared/lib/pdf';
 
-import { LienzoPdf } from './pdf-canvas';
+import { PdfCanvas } from './pdf-canvas';
 
 vi.mock('@/shared/lib/pdf', () => ({ drawPdfPage: vi.fn() }));
 const draw = vi.mocked(drawPdfPage);
@@ -24,10 +24,10 @@ afterEach(() => {
 describe('LienzoPdf', () => {
   it('draws the first page at the asked width and reports the drawn size', async () => {
     draw.mockResolvedValue({ width: 240, height: 320 });
-    const onTamano = vi.fn();
-    const { container } = render(<LienzoPdf url="/a.pdf" onTamano={onTamano} />);
+    const onResize = vi.fn();
+    const { container } = render(<PdfCanvas url="/a.pdf" onResize={onResize} />);
 
-    await waitFor(() => expect(onTamano).toHaveBeenCalledWith(240, 320));
+    await waitFor(() => expect(onResize).toHaveBeenCalledWith(240, 320));
     const call = firstDrawing();
     expect(call.page).toBe(1);
     expect(call.scale(480)).toBe(0.5);
@@ -38,17 +38,17 @@ describe('LienzoPdf', () => {
 
   it('shows the whole sheet with contain and does not report a drawing that stopped', async () => {
     draw.mockResolvedValue(null);
-    const onTamano = vi.fn();
-    const { container } = render(<LienzoPdf url="/a.pdf" ajuste="contain" onTamano={onTamano} />);
+    const onResize = vi.fn();
+    const { container } = render(<PdfCanvas url="/a.pdf" fit="contain" onResize={onResize} />);
 
     await waitFor(() => expect(draw).toHaveBeenCalled());
-    expect(onTamano).not.toHaveBeenCalled();
+    expect(onResize).not.toHaveBeenCalled();
     expect(container.querySelector('canvas')?.className).toContain('object-contain');
   });
 
   it('sizes the canvas by the given style instead of filling its box', () => {
     draw.mockResolvedValue(null);
-    const { container } = render(<LienzoPdf url="/a.pdf" estilo={{ width: 100 }} />);
+    const { container } = render(<PdfCanvas url="/a.pdf" style={{ width: 100 }} />);
 
     const canvas = container.querySelector('canvas');
     expect(canvas?.style.width).toBe('100px');
@@ -57,7 +57,7 @@ describe('LienzoPdf', () => {
 
   it('shows a warning icon when the pdf cannot be drawn', async () => {
     draw.mockRejectedValue(new Error('broken'));
-    const { container } = render(<LienzoPdf url="/a.pdf" />);
+    const { container } = render(<PdfCanvas url="/a.pdf" />);
 
     await waitFor(() => expect(container.querySelector('canvas')).toBeNull());
     expect(container.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
@@ -65,7 +65,7 @@ describe('LienzoPdf', () => {
 
   it('stops listening once it unmounts', () => {
     draw.mockReturnValue(new Promise(() => undefined));
-    const { unmount } = render(<LienzoPdf url="/a.pdf" />);
+    const { unmount } = render(<PdfCanvas url="/a.pdf" />);
 
     unmount();
     expect(firstDrawing().isAlive()).toBe(false);

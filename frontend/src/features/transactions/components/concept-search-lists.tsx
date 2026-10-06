@@ -24,7 +24,7 @@ export function CategoriaParaNuevo({
         <span className="min-w-0 truncate">
           {t('transactions.conceptSearch.whichCategory', { name: nombreNuevo })}
         </span>
-        <TextButton tono="realce" onClick={onVolver}>
+        <TextButton tone="highlight" onClick={onVolver}>
           {t('transactions.conceptSearch.back')}
         </TextButton>
       </div>

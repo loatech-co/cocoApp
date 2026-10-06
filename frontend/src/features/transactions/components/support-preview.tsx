@@ -5,7 +5,7 @@ import type { FalloDeSoporte } from '@/features/transactions/model/supports';
 import { t } from '@/shared/lib/i18n';
 import { usePanZoom } from '@/shared/lib/pan-zoom';
 import { cn } from '@/shared/lib/utils';
-import { LienzoPdf } from '@/shared/ui/atoms/pdf-canvas';
+import { PdfCanvas } from '@/shared/ui/atoms/pdf-canvas';
 import { BotonOscuro, LecturaDeMandos } from '@/shared/ui/molecules/overlay-control';
 
 import { SoporteQueNoSeVe } from './support-unavailable';
@@ -226,7 +226,7 @@ function PreviewDocument({
   if (!esImagen) {
     // A 1400 y no a 240: esto se mira para leer una cifra, y el tamaño de una
     // miniatura la deja borrosa.
-    return <LienzoPdf url={url} ancho={1400} onTamano={onTamano} estilo={encuadre} />;
+    return <PdfCanvas url={url} width={1400} onResize={onTamano} style={encuadre} />;
   }
 
   return (

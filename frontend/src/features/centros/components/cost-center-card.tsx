@@ -84,7 +84,7 @@ function Desplegar({
   const conceptos = categorias.reduce((n, g) => n + (g.children?.length ?? 0), 0);
 
   return (
-    <CollapsibleHeader abierta={abierto} onAlternar={onAlternar}>
+    <CollapsibleHeader isOpen={abierto} onToggle={onAlternar}>
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-2">
           {/* `text-lg` y no `text-xl`: el nombre de un centro es el

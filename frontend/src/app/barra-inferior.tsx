@@ -86,32 +86,28 @@ export function BarraInferior({
       <div className="flex flex-1">
         <BarSlotLink
           to={DASHBOARD.to}
-          exact={DASHBOARD.exact}
-          etiqueta={DASHBOARD.label}
-          Icono={DASHBOARD.Icono}
+          isExact={DASHBOARD.exact}
+          label={DASHBOARD.label}
+          Icon={DASHBOARD.Icono}
         />
         <BarSlotButton
-          etiqueta={t('shell.bottomBar.search')}
-          encendido={busquedaAbierta}
+          label={t('shell.bottomBar.search')}
+          isOn={busquedaAbierta}
           onClick={onBuscar}
         >
-          <BarIcon Icono={Search} />
+          <BarIcon Icon={Search} />
         </BarSlotButton>
       </div>
 
       {/* Ancho fijo: es lo que mantiene el botón en el centro exacto cuando
           los grupos no tienen el mismo número de huecos. */}
       <div className="flex w-18 shrink-0 items-start justify-center">
-        <BarFab etiqueta={t('shell.bottomBar.newExpense')} onClick={onNuevoGasto} />
+        <BarFab label={t('shell.bottomBar.newExpense')} onClick={onNuevoGasto} />
       </div>
 
       <div className="flex flex-1">
-        <BarSlotButton
-          etiqueta={t('shell.shortcuts.title')}
-          encendido={atajosAbiertos}
-          onClick={onAtajos}
-        >
-          <BarIcon Icono={LayoutGrid} />
+        <BarSlotButton label={t('shell.shortcuts.title')} isOn={atajosAbiertos} onClick={onAtajos}>
+          <BarIcon Icon={LayoutGrid} />
         </BarSlotButton>
 
         <AccountSlot nombre={nombre} abierta={cuentaAbierta} onClick={onCuenta} />
@@ -130,7 +126,7 @@ function AccountSlot({
   onClick: () => void;
 }) {
   return (
-    <BarSlotButton etiqueta={t('shell.account.myAccount')} encendido={abierta} onClick={onClick}>
+    <BarSlotButton label={t('shell.account.myAccount')} isOn={abierta} onClick={onClick}>
       {/* Apagado va de la superficie tenue de la barra y encendido del
           color de la marca con su tinta. Nunca al revés: cuando el avatar
           llevaba el color de la barra, el círculo desaparecía y quedaban

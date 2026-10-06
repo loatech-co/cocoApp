@@ -169,16 +169,11 @@ function CabezaDeAtajos({
         </h2>
 
         {estado === 'galeria' ? (
-          <Button
-            type="button"
-            variant="herramienta"
-            size="sm"
-            onClick={() => setEstado('arreglando')}
-          >
+          <Button type="button" variant="tool" size="sm" onClick={() => setEstado('arreglando')}>
             {t('common.edit')}
           </Button>
         ) : (
-          <Button type="button" variant="acento" size="sm" onClick={() => setEstado('galeria')}>
+          <Button type="button" variant="accent" size="sm" onClick={() => setEstado('galeria')}>
             {t('shell.shortcuts.done')}
           </Button>
         )}

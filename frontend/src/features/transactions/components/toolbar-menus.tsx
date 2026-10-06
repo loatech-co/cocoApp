@@ -97,7 +97,7 @@ export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) 
         <div className="flex flex-col">
           <MenuOpcionDetallada
             Icono={TrendingDown}
-            color="gasto"
+            color="expense"
             titulo={t('transactions.types.expense')}
             ayuda={t('transactions.toolbar.expenseHelp')}
             onClick={() => {
@@ -110,7 +110,7 @@ export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) 
               la aplicación no sabe registrarlos. Apagada dice que sabrá. */}
           <MenuOpcionDetallada
             Icono={TrendingUp}
-            color="ingreso"
+            color="income"
             titulo={t('transactions.types.income')}
             ayuda={t('transactions.toolbar.incomeHelp')}
             nota={t('transactions.kpis.soon')}

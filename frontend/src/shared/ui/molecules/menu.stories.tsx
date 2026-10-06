@@ -27,7 +27,7 @@ const meta = {
   component: Menu,
   args: { etiqueta: 'Acciones', Icono: Filter, alineado: 'izquierda', children: options },
   argTypes: {
-    variante: { control: 'inline-radio', options: ['herramienta', 'ghost', 'default'] },
+    variante: { control: 'inline-radio', options: ['tool', 'ghost', 'default'] },
     alineado: { control: 'inline-radio', options: ['izquierda', 'derecha'] },
     direccion: { control: 'inline-radio', options: ['abajo', 'arriba'] },
   },

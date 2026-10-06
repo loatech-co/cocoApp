@@ -12,8 +12,8 @@ type Story = StoryObj;
 export const Back: Story = {
   render: () => (
     <div className="flex flex-col items-start gap-3">
-      <BackCrumb ruta={['Hogar', 'Mercado']} onVolver={() => undefined} />
-      <BackCrumb ruta={['Hogar', 'Mercado']} fuerte onVolver={() => undefined} />
+      <BackCrumb path={['Hogar', 'Mercado']} onBack={() => undefined} />
+      <BackCrumb path={['Hogar', 'Mercado']} isStrong onBack={() => undefined} />
     </div>
   ),
 };
@@ -23,7 +23,7 @@ export const Drill: Story = {
   render: () => (
     <div className="flex h-10 w-64 items-stretch rounded-lg bg-card">
       <span className="flex flex-1 items-center px-3 text-sm">Hogar</span>
-      <DrillButton nombre="Hogar" onEntrar={() => undefined} />
+      <DrillButton name="Hogar" onDrill={() => undefined} />
     </div>
   ),
 };

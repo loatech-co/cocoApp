@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ConTooltip } from './tooltip';
+import { WithTooltip } from './tooltip';
 
 afterEach(() => {
   cleanup();
@@ -16,9 +16,9 @@ function renderTooltip() {
     width: 40,
   } as DOMRect);
   render(
-    <ConTooltip texto="Pagado con tarjeta">
+    <WithTooltip text="Pagado con tarjeta">
       <span>icono</span>
-    </ConTooltip>,
+    </WithTooltip>,
   );
   return screen.getByText('icono').parentElement!;
 }

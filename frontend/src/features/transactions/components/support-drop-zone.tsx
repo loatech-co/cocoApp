@@ -81,11 +81,11 @@ export function Soltar({ subiendo, progreso, solo, alPulsar, onArchivos }: DropZ
   return (
     <div className={cn(solo && 'flex w-full self-stretch')} {...soltando.handlers}>
       <DropSurface
-        forma={solo ? 'completa' : 'cuadro'}
-        encima={soltando.encima}
-        ocupada={subiendo}
-        etiqueta={t('transactions.supports.add')}
-        onPulsar={alPulsar ?? (() => campo.current?.click())}
+        shape={solo ? 'full' : 'square'}
+        isOver={soltando.encima}
+        isBusy={subiendo}
+        label={t('transactions.supports.add')}
+        onPick={alPulsar ?? (() => campo.current?.click())}
       >
         <DropZoneLabel subiendo={subiendo} progreso={progreso} solo={solo} />
 
@@ -103,7 +103,7 @@ export function Soltar({ subiendo, progreso, solo, alPulsar, onArchivos }: DropZ
         ref={campo}
         multiple
         accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,image/webp"
-        onArchivos={onArchivos}
+        onFiles={onArchivos}
       />
     </div>
   );

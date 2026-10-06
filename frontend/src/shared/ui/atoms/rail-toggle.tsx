@@ -14,21 +14,27 @@ import { cn } from '@/shared/lib/utils';
  *
  * Plegado ocupa el ancho del riel, encima de las secciones.
  */
-export function RailToggle({ plegada, onAlternar }: { plegada: boolean; onAlternar: () => void }) {
-  const etiqueta = plegada ? t('ui.railToggle.expand') : t('ui.railToggle.collapse');
-  const Icono = plegada ? PanelLeftOpen : PanelLeftClose;
+export function RailToggle({
+  isCollapsed,
+  onToggle,
+}: {
+  isCollapsed: boolean;
+  onToggle: () => void;
+}) {
+  const label = isCollapsed ? t('ui.railToggle.expand') : t('ui.railToggle.collapse');
+  const Icon = isCollapsed ? PanelLeftOpen : PanelLeftClose;
   return (
     <button
       type="button"
-      onClick={onAlternar}
-      aria-label={etiqueta}
-      title={etiqueta}
+      onClick={onToggle}
+      aria-label={label}
+      title={label}
       className={cn(
         'grid place-items-center rounded-lg text-sidebar-muted transition-colors hover:text-sidebar-foreground',
-        plegada ? 'mb-2 h-9 w-full' : '-mr-2.25 size-9 shrink-0',
+        isCollapsed ? 'mb-2 h-9 w-full' : '-mr-2.25 size-9 shrink-0',
       )}
     >
-      <Icono className="size-4.5" aria-hidden="true" />
+      <Icon className="size-4.5" aria-hidden="true" />
     </button>
   );
 }

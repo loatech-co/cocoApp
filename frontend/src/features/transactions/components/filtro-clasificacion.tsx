@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { Casilla } from '@/shared/ui/atoms/casilla';
+import { Checkbox } from '@/shared/ui/atoms/checkbox';
 import { BackCrumb, DrillButton } from '@/shared/ui/atoms/level-nav';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { REALCE } from '@/shared/ui/foundations/superficie';
@@ -101,7 +101,7 @@ function FilterFooter({ marcados, onLimpiar }: { marcados: number[]; onLimpiar: 
             : t('transactions.classificationFilter.markedMany', { n: marcados.length })}
       </span>
       {marcados.length > 0 && (
-        <TextButton tono="primario" onClick={onLimpiar}>
+        <TextButton tone="primary" onClick={onLimpiar}>
           {t('transactions.classificationFilter.clear')}
         </TextButton>
       )}
@@ -135,7 +135,7 @@ function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: Filt
           marcado && 'font-medium',
         )}
       >
-        <Casilla checked={marcado} onChange={onAlternar} />
+        <Checkbox checked={marcado} onChange={onAlternar} />
         <span className="min-w-0 flex-1 truncate">{nodo.name}</span>
         {conMarcaDentro && (
           <span
@@ -146,7 +146,7 @@ function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: Filt
         )}
       </label>
 
-      {hijos.length > 0 && <DrillButton nombre={nodo.name} onEntrar={onEntrar} />}
+      {hijos.length > 0 && <DrillButton name={nodo.name} onDrill={onEntrar} />}
     </li>
   );
 }
@@ -156,7 +156,7 @@ function FilterPath({ camino, onVolver }: { camino: CategoryTree[]; onVolver: ()
   return (
     <div className="flex min-h-9 items-center gap-1 px-3 py-1.5">
       {camino.length > 0 ? (
-        <BackCrumb ruta={camino.map((n) => n.name)} fuerte onVolver={onVolver} />
+        <BackCrumb path={camino.map((n) => n.name)} isStrong onBack={onVolver} />
       ) : (
         <span className="text-xs font-semibold text-muted-foreground">
           {t('shell.sections.costCenters')}

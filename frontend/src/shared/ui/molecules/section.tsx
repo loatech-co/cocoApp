@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { Bloque } from '@/shared/ui/atoms/bloque';
+import { Block } from '@/shared/ui/atoms/block';
 
 /**
  * Una parte de una ficha, con su nombre ENCIMA y no sobre el borde.
@@ -45,7 +45,7 @@ export function Seccion({
         que titula. El tamaño y el gris ya dicen que es un rótulo.
       */}
       <h3 className="text-xs font-semibold text-muted-foreground">{titulo}</h3>
-      {caja ? <Bloque className="flex flex-col gap-3">{children}</Bloque> : children}
+      {caja ? <Block className="flex flex-col gap-3">{children}</Block> : children}
     </section>
   );
 }

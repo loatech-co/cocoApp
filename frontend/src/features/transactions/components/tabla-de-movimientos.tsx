@@ -9,8 +9,8 @@ import { formatMoney, diaCorto, mesCorto } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
-import { EstadoVacio } from '@/shared/ui/atoms/estado-vacio';
-import { ConTooltip } from '@/shared/ui/atoms/tooltip';
+import { EmptyState } from '@/shared/ui/atoms/empty-state';
+import { WithTooltip } from '@/shared/ui/atoms/tooltip';
 import { Tabla, TablaEsqueleto, Td, Th, Tr } from '@/shared/ui/molecules/tabla';
 import { Select } from '@/shared/ui/organisms/select';
 
@@ -74,10 +74,10 @@ export function TablaDeMovimientos({
       <Card>
         <CardContent className="p-0">
           {vacio ?? (
-            <EstadoVacio
-              Icono={SearchX}
-              titulo={t('transactions.table.noMatchTitle')}
-              ayuda={t('transactions.table.noMatchHelp')}
+            <EmptyState
+              Icon={SearchX}
+              title={t('transactions.table.noMatchTitle')}
+              description={t('transactions.table.noMatchHelp')}
             />
           )}
         </CardContent>
@@ -229,9 +229,9 @@ function SelectorEnFila({
   if (!deshabilitado || motivo === undefined) return selector;
 
   return (
-    <ConTooltip texto={motivo} className="w-full">
+    <WithTooltip text={motivo} className="w-full">
       {selector}
-    </ConTooltip>
+    </WithTooltip>
   );
 }
 
@@ -260,8 +260,8 @@ function PeriodCell({ movimiento }: { movimiento: Transaction }) {
         agosto caro— así que se marca, con punto y con explicación.
       */}
       {desfasado(movimiento) ? (
-        <ConTooltip
-          texto={t('transactions.table.latePayment', {
+        <WithTooltip
+          text={t('transactions.table.latePayment', {
             month: mesCorto(periodo(movimiento)),
             day: diaCorto(movimiento.date),
           })}
@@ -272,7 +272,7 @@ function PeriodCell({ movimiento }: { movimiento: Transaction }) {
               que preguntar. */}
           <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />
           {mesCorto(periodo(movimiento))}
-        </ConTooltip>
+        </WithTooltip>
       ) : (
         mesCorto(periodo(movimiento))
       )}

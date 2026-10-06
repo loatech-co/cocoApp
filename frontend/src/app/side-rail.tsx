@@ -1,7 +1,7 @@
 import { t } from '@/shared/lib/i18n';
 import type { Seccion } from '@/shared/lib/sections';
 import { cn } from '@/shared/lib/utils';
-import { Logo, LogoCompacto } from '@/shared/ui/atoms/logo';
+import { Logo, CompactLogo } from '@/shared/ui/atoms/logo';
 import { RailToggle } from '@/shared/ui/atoms/rail-toggle';
 
 import { EnlaceDeSeccion, MenuDeLaCuenta, useSecciones } from './navegacion';
@@ -26,7 +26,7 @@ export function SideRail({ plegada, onAlternar }: { plegada: boolean; onAlternar
     >
       <RailHeader plegada={plegada} onAlternar={onAlternar} />
 
-      {plegada && <RailToggle plegada onAlternar={onAlternar} />}
+      {plegada && <RailToggle isCollapsed onToggle={onAlternar} />}
 
       <nav className="flex flex-1 flex-col gap-1" aria-label={t('shell.rail.label')}>
         <SectionLinks secciones={diaADia} plegada={plegada} />
@@ -71,7 +71,7 @@ function RailHeader({ plegada, onAlternar }: { plegada: boolean; onAlternar: () 
       )}
     >
       {plegada ? (
-        <LogoCompacto className="size-7 text-sidebar-active" />
+        <CompactLogo className="size-7 text-sidebar-active" />
       ) : (
         <>
           {/* Se le da ALTO: el logotipo es 3.82:1 y fijarle el ancho lo
@@ -79,7 +79,7 @@ function RailHeader({ plegada, onAlternar }: { plegada: boolean; onAlternar: () 
               que es el color con el que cada tema dice "aquí": verde
               británico sobre el riel claro, lima sobre el oscuro. */}
           <Logo className="h-7 w-auto text-sidebar-active" />
-          <RailToggle plegada={false} onAlternar={onAlternar} />
+          <RailToggle isCollapsed={false} onToggle={onAlternar} />
         </>
       )}
     </div>

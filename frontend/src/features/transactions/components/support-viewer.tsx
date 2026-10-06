@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import type { FalloDeSoporte } from '@/features/transactions/model/supports';
 import { type Receipt } from '@/shared/api/generated/model';
-import { ANCHO_HOJA, PaginaPdf } from '@/shared/ui/atoms/pdf-page';
+import { PAGE_WIDTH, PdfPage } from '@/shared/ui/atoms/pdf-page';
 
 import { ConfirmSupportDeletion } from './confirm-support-deletion';
 import { SoporteQueNoSeVe } from './support-unavailable';
@@ -195,10 +195,10 @@ function ViewerSheet({
           // cosa, el botón de ampliar haría dos cosas distintas según qué
           // soporte estuviera abierto.
           className="h-fit max-w-none rounded-lg bg-white shadow-2xl"
-          style={{ width: ANCHO_HOJA * escala }}
+          style={{ width: PAGE_WIDTH * escala }}
         />
       ) : (
-        <PaginaPdf url={url} pagina={pagina} escala={escala} onPaginas={onPaginas} />
+        <PdfPage url={url} page={pagina} scale={escala} onPageCount={onPaginas} />
       )}
     </div>
   );

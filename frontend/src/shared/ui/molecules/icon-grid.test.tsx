@@ -7,8 +7,8 @@ import { IconGrid } from './icon-grid';
 afterEach(cleanup);
 
 const ICONOS = [
-  { nombre: 'house', etiqueta: 'Vivienda' },
-  { nombre: 'zap', etiqueta: 'Energía' },
+  { name: 'house', label: 'Vivienda' },
+  { name: 'zap', label: 'Energía' },
 ];
 
 describe('IconGrid', () => {

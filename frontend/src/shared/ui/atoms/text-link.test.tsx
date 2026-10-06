@@ -17,8 +17,8 @@ describe('TextLink', () => {
       </MemoryRouter>,
     );
 
-    const enlace = screen.getByRole('link', { name: 'Solicitar acceso' });
-    expect(enlace.getAttribute('href')).toBe('/registro');
-    expect(enlace.className.split(' ')).toContain('underline');
+    const link = screen.getByRole('link', { name: 'Solicitar acceso' });
+    expect(link.getAttribute('href')).toBe('/registro');
+    expect(link.className.split(' ')).toContain('underline');
   });
 });

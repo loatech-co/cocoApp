@@ -12,45 +12,45 @@ import { REALCE } from '@/shared/ui/foundations/superficie';
  * la sombra flotante (levantar, no flotar: ver `superficie.test.ts`). Fuera de
  * ese modo son enlaces, y quien las dibuja como enlace usa `tileClass`.
  */
-export function tileClass(arreglando: boolean, arrastrada: boolean): string {
+export function tileClass(isArranging: boolean, isDragging: boolean): string {
   return cn(
     'relative flex aspect-square flex-col items-center justify-center gap-2 rounded-lg bg-muted p-2 text-center text-foreground transition-colors',
     REALCE,
     // La baldosa que va en el dedo no tiembla: la animación pisaría el
     // desplazamiento en línea y se quedaría quieta bajo el dedo.
-    arreglando && !arrastrada && 'animate-[baldosa-tiembla_.4s_ease-in-out_infinite]',
-    arrastrada && 'z-10 scale-105 shadow-[var(--sombra-flotante)]',
+    isArranging && !isDragging && 'animate-[baldosa-tiembla_.4s_ease-in-out_infinite]',
+    isDragging && 'z-10 scale-105 shadow-[var(--sombra-flotante)]',
   );
 }
 
 /** La baldosa mientras se arregla la rejilla: se agarra y se arrastra. */
 export function MovableTile({
-  arrastrada,
-  etiqueta,
-  estilo,
-  onBajar,
-  onMover,
-  onSoltar,
+  isDragging,
+  label,
+  style,
+  onGrab,
+  onMove,
+  onRelease,
   children,
 }: {
-  arrastrada: boolean;
-  etiqueta: string;
-  estilo: CSSProperties | undefined;
-  onBajar: (e: PointerEvent<HTMLElement>) => void;
-  onMover: (e: PointerEvent<HTMLElement>) => void;
-  onSoltar: () => void;
+  isDragging: boolean;
+  label: string;
+  style: CSSProperties | undefined;
+  onGrab: (e: PointerEvent<HTMLElement>) => void;
+  onMove: (e: PointerEvent<HTMLElement>) => void;
+  onRelease: () => void;
   children: ReactNode;
 }) {
   return (
     <button
       type="button"
-      className={cn(tileClass(true, arrastrada), 'w-full touch-none')}
-      style={estilo}
-      onPointerDown={onBajar}
-      onPointerMove={onMover}
-      onPointerUp={onSoltar}
-      onPointerCancel={onSoltar}
-      aria-label={t('ui.tile.move', { name: etiqueta })}
+      className={cn(tileClass(true, isDragging), 'w-full touch-none')}
+      style={style}
+      onPointerDown={onGrab}
+      onPointerMove={onMove}
+      onPointerUp={onRelease}
+      onPointerCancel={onRelease}
+      aria-label={t('ui.tile.move', { name: label })}
     >
       {children}
     </button>
@@ -66,17 +66,17 @@ export function MovableTile({
  * querer justo al arrastrar, que es lo otro que se hace aquí.
  */
 export function TileRemove({
-  etiqueta,
-  onQuitar,
+  label,
+  onRemove,
 }: {
-  etiqueta: string;
-  onQuitar: () => void;
+  label: string;
+  onRemove: () => void;
 }): ReactNode {
   return (
     <button
       type="button"
-      onClick={onQuitar}
-      aria-label={t('ui.tile.remove', { name: etiqueta })}
+      onClick={onRemove}
+      aria-label={t('ui.tile.remove', { name: label })}
       className="absolute -left-1 -top-1 grid size-6 place-items-center rounded-full bg-foreground text-background shadow-[var(--sombra-pegada)]"
     >
       <Minus className="size-3.5" strokeWidth={3} aria-hidden="true" />

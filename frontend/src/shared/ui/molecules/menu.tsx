@@ -4,8 +4,8 @@ import { type ComponentType, type ReactNode } from 'react';
 import { panelStyle, useMenuState, type Anclaje } from '@/shared/lib/menu-anchor';
 import { useEsMovil } from '@/shared/lib/movil';
 import { cn } from '@/shared/lib/utils';
+import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { Button } from '@/shared/ui/atoms/button';
-import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
 import { REALCE, SUPERFICIE_FLOTANTE, SURGE } from '@/shared/ui/foundations/superficie';
 
 const ROL = { menu: 'menu', panel: 'dialog', lista: 'listbox', buscador: 'dialog' } as const;
@@ -62,7 +62,7 @@ interface MenuProps {
    * pone `size="sm"` en el botón— para que un menú mida siempre lo mismo
    * que los filtros que tiene al lado.
    */
-  variante?: 'herramienta' | 'ghost' | 'default';
+  variante?: 'tool' | 'ghost' | 'default';
   /**
    * Quita el acolchado del panel.
    *
@@ -168,17 +168,17 @@ export function Menu(props: MenuProps) {
           puede reconstruir en cada render, o aparece en vez de llegar. Y solo
           por debajo del corte, para que en el escritorio no cueste nada. */}
       {enHoja && (
-        <PanelInferior
-          abierto={abierto}
-          titulo={etiqueta}
+        <BottomSheet
+          isOpen={abierto}
+          title={etiqueta}
           // Por encima de una ficha: un calendario o un kebab se abren DESDE
           // dentro de un modal, y en la capa de fábrica se dibujarían detrás
           // del que los pidió.
-          capa="z-[70]"
-          onCerrar={cerrar}
+          layer="z-[70]"
+          onClose={cerrar}
         >
           {contenido}
-        </PanelInferior>
+        </BottomSheet>
       )}
 
       {abierto && !enHoja && (
@@ -242,7 +242,7 @@ function withDefaults(p: MenuProps): MenuConfig {
     ancho: p.ancho ?? 'base',
     tipo: p.tipo ?? 'menu',
     flotante: p.flotante ?? false,
-    variante: p.variante ?? 'herramienta',
+    variante: p.variante ?? 'tool',
     sinRelleno: p.sinRelleno ?? false,
     anchoPropio: p.anchoPropio ?? false,
   };

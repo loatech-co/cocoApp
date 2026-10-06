@@ -17,40 +17,40 @@ describe('tileClass', () => {
 
 describe('MovableTile', () => {
   it('passes the pointer through and is named for moving', () => {
-    const onBajar = vi.fn();
-    const onMover = vi.fn();
-    const onSoltar = vi.fn();
+    const onGrab = vi.fn();
+    const onMove = vi.fn();
+    const onRelease = vi.fn();
     render(
       <MovableTile
-        arrastrada={false}
-        etiqueta="Cuentas"
-        estilo={{ transform: 'translate(4px, 0px)' }}
-        onBajar={onBajar}
-        onMover={onMover}
-        onSoltar={onSoltar}
+        isDragging={false}
+        label="Cuentas"
+        style={{ transform: 'translate(4px, 0px)' }}
+        onGrab={onGrab}
+        onMove={onMove}
+        onRelease={onRelease}
       >
         Cuentas
       </MovableTile>,
     );
 
-    const baldosa = screen.getByRole('button', { name: 'Mover Cuentas' });
-    expect(baldosa.style.transform).toBe('translate(4px, 0px)');
-    fireEvent.pointerDown(baldosa);
-    fireEvent.pointerMove(baldosa);
-    fireEvent.pointerUp(baldosa);
-    fireEvent.pointerCancel(baldosa);
-    expect(onBajar).toHaveBeenCalledOnce();
-    expect(onMover).toHaveBeenCalledOnce();
-    expect(onSoltar).toHaveBeenCalledTimes(2);
+    const tile = screen.getByRole('button', { name: 'Mover Cuentas' });
+    expect(tile.style.transform).toBe('translate(4px, 0px)');
+    fireEvent.pointerDown(tile);
+    fireEvent.pointerMove(tile);
+    fireEvent.pointerUp(tile);
+    fireEvent.pointerCancel(tile);
+    expect(onGrab).toHaveBeenCalledOnce();
+    expect(onMove).toHaveBeenCalledOnce();
+    expect(onRelease).toHaveBeenCalledTimes(2);
   });
 });
 
 describe('TileRemove', () => {
   it('removes the tile it names', () => {
-    const onQuitar = vi.fn();
-    render(<TileRemove etiqueta="Cuentas" onQuitar={onQuitar} />);
+    const onRemove = vi.fn();
+    render(<TileRemove label="Cuentas" onRemove={onRemove} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Quitar Cuentas' }));
-    expect(onQuitar).toHaveBeenCalledOnce();
+    expect(onRemove).toHaveBeenCalledOnce();
   });
 });

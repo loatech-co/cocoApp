@@ -11,7 +11,7 @@ import { type TrendPoint } from '@/shared/api/generated/model';
 import { formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { EstadoVacio } from '@/shared/ui/atoms/estado-vacio';
+import { EmptyState } from '@/shared/ui/atoms/empty-state';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
 import { Punto, TrendAxis, TrendCard, TrendLines, TrendSummary } from './trend-parts';
@@ -45,11 +45,11 @@ export function Tendencia({
 
   if (primero === undefined || ultimo === undefined || vacia) {
     return (
-      <EstadoVacio
+      <EmptyState
         className="h-full"
-        Icono={ChartLine}
-        titulo={t('transactions.trend.emptyTitle')}
-        ayuda={t('transactions.trend.emptyHelp')}
+        Icon={ChartLine}
+        title={t('transactions.trend.emptyTitle')}
+        description={t('transactions.trend.emptyHelp')}
       />
     );
   }

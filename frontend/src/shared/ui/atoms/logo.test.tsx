@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Logo, LogoCompacto } from './logo';
+import { Logo, CompactLogo } from './logo';
 
 afterEach(cleanup);
 
@@ -14,7 +14,7 @@ describe('Logo', () => {
   });
 
   it('takes the name the caller gives it', () => {
-    render(<Logo titulo="Coco, inicio" />);
+    render(<Logo title="Coco, inicio" />);
 
     expect(screen.getByRole('img', { name: 'Coco, inicio' })).toBeTruthy();
   });
@@ -22,7 +22,7 @@ describe('Logo', () => {
 
 describe('LogoCompacto', () => {
   it('is an image named after the app', () => {
-    render(<LogoCompacto className="size-8" />);
+    render(<CompactLogo className="size-8" />);
 
     expect(screen.getByRole('img', { name: 'Coco' }).getAttribute('class')).toBe('size-8');
   });

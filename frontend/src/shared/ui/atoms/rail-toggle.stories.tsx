@@ -14,10 +14,10 @@ export const States: Story = {
     <div className="flex gap-6 bg-sidebar p-3">
       <div className="flex w-56 items-center justify-between">
         <span className="text-sm">Coco</span>
-        <RailToggle plegada={false} onAlternar={() => undefined} />
+        <RailToggle isCollapsed={false} onToggle={() => undefined} />
       </div>
       <div className="w-16">
-        <RailToggle plegada onAlternar={() => undefined} />
+        <RailToggle isCollapsed onToggle={() => undefined} />
       </div>
     </div>
   ),

@@ -2,14 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 
 import { CampoDeDinero } from './campo-de-dinero';
-import { Campo } from '../atoms/campo';
+import { Field } from '../atoms/field';
 
 function Controlled({ start, invalid = false }: { start: string; invalid?: boolean }) {
   const [value, setValue] = useState(start);
   return (
-    <Campo etiqueta="Valor" id="campo-valor" className="max-w-sm">
+    <Field label="Valor" id="campo-valor" className="max-w-sm">
       <CampoDeDinero id="campo-valor" valor={value} onCambiar={setValue} aria-invalid={invalid} />
-    </Campo>
+    </Field>
   );
 }
 

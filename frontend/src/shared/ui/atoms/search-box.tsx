@@ -15,22 +15,22 @@ import { cn } from '@/shared/lib/utils';
  * | `cabecera` | Arriba de un desplegable, separada de la lista por una raya  |
  * | `caja`     | Dentro de un bloque, sobre una rejilla: la de los iconos     |
  */
-const FORMAS = {
-  cabecera: { caja: 'border-b border-border px-3 py-2', campo: '' },
-  caja: { caja: 'rounded-md border border-input bg-card px-3', campo: 'h-9' },
+const SHAPES = {
+  header: { box: 'border-b border-border px-3 py-2', field: '' },
+  box: { box: 'rounded-md border border-input bg-card px-3', field: 'h-9' },
 } as const;
 
 export function SearchBox({
-  forma,
+  shape,
   ...props
-}: Omit<ComponentProps<'input'>, 'className' | 'type'> & { forma: keyof typeof FORMAS }) {
+}: Omit<ComponentProps<'input'>, 'className' | 'type'> & { shape: keyof typeof SHAPES }) {
   return (
-    <div className={cn('flex items-center gap-2', FORMAS[forma].caja)}>
+    <div className={cn('flex items-center gap-2', SHAPES[shape].box)}>
       <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       <input
         className={cn(
           'min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground',
-          FORMAS[forma].campo,
+          SHAPES[shape].field,
         )}
         {...props}
       />

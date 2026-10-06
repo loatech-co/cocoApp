@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { Bloque } from './bloque';
+import { Block } from './block';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 
 const meta = {
@@ -33,7 +33,7 @@ export const WithBlock: Story = {
         <CardTitle>Con un bloque dentro</CardTitle>
       </CardHeader>
       <CardContent>
-        <Bloque className="text-sm">Lo elegido va en `muted`.</Bloque>
+        <Block className="text-sm">Lo elegido va en `muted`.</Block>
       </CardContent>
     </Card>
   ),

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
-import { Dona } from '@/shared/ui/atoms/dona';
+import { Donut } from '@/shared/ui/atoms/donut';
 import { BackCrumb } from '@/shared/ui/atoms/level-nav';
 
 interface PropsDeDistribucion {
@@ -62,7 +62,7 @@ export function Distribucion({
             era limpiar el filtro entero desde la barra de arriba. */}
         {ruta.length > 0 ? (
           <div className="flex min-w-0 self-start">
-            <BackCrumb ruta={ruta.map((n) => n.name)} onVolver={onSubir} />
+            <BackCrumb path={ruta.map((n) => n.name)} onBack={onSubir} />
           </div>
         ) : (
           /* El NOMBRE de a quién pertenecen estas filas, no el nivel al que
@@ -74,16 +74,16 @@ export function Distribucion({
 
         {/* `flex-1` para que la dona tenga contra qué medir: la tarjeta ya
             tiene alto —se lo dio la fila— y este es el trozo que le queda. */}
-        <Dona
+        <Donut
           className="mt-6 min-h-0 flex-1"
-          mostrarLista={verLista}
+          isListVisible={verLista}
           total={total}
-          porciones={filas.map((f) => ({
+          portions={filas.map((f) => ({
             id: f.categoryId,
-            nombre: f.name,
-            valor: Number.parseFloat(f.total) || 0,
+            name: f.name,
+            value: Number.parseFloat(f.total) || 0,
           }))}
-          onElegir={nivel === 'concepto' ? undefined : onBajar}
+          onSelect={nivel === 'concepto' ? undefined : onBajar}
         />
       </CardContent>
     </Card>
@@ -100,7 +100,7 @@ function VerNombres({ verLista, onAlternar }: { verLista: boolean; onAlternar: (
   return (
     <Button
       type="button"
-      variant="herramienta"
+      variant="tool"
       size="sm-icon"
       aria-pressed={!verLista}
       aria-label={

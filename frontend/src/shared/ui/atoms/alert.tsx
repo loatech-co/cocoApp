@@ -49,7 +49,7 @@ const alertVariants = cva(
   },
 );
 
-export type TonoDeAviso = NonNullable<VariantProps<typeof alertVariants>['variant']>;
+export type AlertTone = NonNullable<VariantProps<typeof alertVariants>['variant']>;
 
 /**
  * El icono de cada tono. `default` no lleva: no anuncia nada.
@@ -58,7 +58,7 @@ export type TonoDeAviso = NonNullable<VariantProps<typeof alertVariants>['varian
  * que usar los mismos cuatro iconos: un error que en línea es un círculo y
  * flotando es un triángulo son dos errores distintos para quien mira.
  */
-const ICONOS_DE_TONO: Record<TonoDeAviso, ComponentType<{ className?: string }> | null> = {
+const TONE_ICONS: Record<AlertTone, ComponentType<{ className?: string }> | null> = {
   default: null,
   destructive: CircleAlert,
   warning: TriangleAlert,
@@ -72,7 +72,7 @@ export function Alert({
   children,
   ...props
 }: ComponentProps<'div'> & VariantProps<typeof alertVariants>) {
-  const Icono = ICONOS_DE_TONO[variant ?? 'default'];
+  const Icon = TONE_ICONS[variant ?? 'default'];
 
   return (
     // `role="alert"` solo en lo que salió mal: un lector de pantalla interrumpe
@@ -83,7 +83,7 @@ export function Alert({
       className={cn(alertVariants({ variant }), className)}
       {...props}
     >
-      {Icono && <Icono className="size-4 translate-y-0.5" aria-hidden="true" />}
+      {Icon && <Icon className="size-4 translate-y-0.5" aria-hidden="true" />}
       {children}
     </div>
   );
@@ -105,15 +105,15 @@ export function AlertDescription({ className, ...props }: ComponentProps<'div'>)
  * restablecimiento desde administración— y una copia ya había empezado a
  * leer los detalles de otro sitio. Sin detalles es un aviso de error normal.
  */
-export function ErrorAlert({ mensaje, detalles = [] }: { mensaje: string; detalles?: string[] }) {
+export function ErrorAlert({ message, details = [] }: { message: string; details?: string[] }) {
   return (
     <Alert variant="destructive">
       <AlertDescription>
-        {mensaje}
-        {detalles.length > 0 && (
+        {message}
+        {details.length > 0 && (
           <ul className="mt-2 list-disc space-y-0.5 pl-4">
-            {detalles.map((detalle) => (
-              <li key={detalle}>{detalle}</li>
+            {details.map((detail) => (
+              <li key={detail}>{detail}</li>
             ))}
           </ul>
         )}

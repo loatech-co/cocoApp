@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 
-import { ICONOS_DE_CATEGORIA } from '@/shared/ui/atoms/iconos';
+import { CATEGORY_ICONS } from '@/shared/ui/atoms/icons';
 
 import { IconGrid } from './icon-grid';
 
@@ -20,7 +20,7 @@ function Picker() {
   const [valor, setValor] = useState<string | null>('house');
   return (
     <div className="w-96">
-      <IconGrid filtrados={ICONOS_DE_CATEGORIA} valor={valor} onElegir={setValor} />
+      <IconGrid filtrados={CATEGORY_ICONS} valor={valor} onElegir={setValor} />
     </div>
   );
 }

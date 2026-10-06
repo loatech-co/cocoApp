@@ -19,22 +19,22 @@ import { REALCE } from '@/shared/ui/foundations/superficie';
  *
  * Sin `className`: lo que haga falta distinto es un tono más aquí.
  */
-const TONOS = {
-  primario: 'rounded-sm font-medium text-primary hover:underline',
+const TONES = {
+  primary: 'rounded-sm font-medium text-primary hover:underline',
   // 24px de alto aunque la letra mida 12: vive junto a un campo, y un blanco
   // de 16 queda por debajo del mínimo táctil (WCAG 2.5.8). El texto se centra
   // en esa caja, así que a la vista no crece.
-  tenue: cn(
+  subtle: cn(
     'inline-flex min-h-6 items-center',
     'text-xs text-muted-foreground underline-offset-2 hover:underline',
   ),
-  realce: cn('rounded-md px-1.5 py-0.5', REALCE),
+  highlight: cn('rounded-md px-1.5 py-0.5', REALCE),
 } as const;
 
 export function TextButton({
-  tono,
+  tone,
   type = 'button',
   ...props
-}: Omit<ComponentProps<'button'>, 'className'> & { tono: keyof typeof TONOS }) {
-  return <button type={type} className={cn('shrink-0', TONOS[tono])} {...props} />;
+}: Omit<ComponentProps<'button'>, 'className'> & { tone: keyof typeof TONES }) {
+  return <button type={type} className={cn('shrink-0', TONES[tone])} {...props} />;
 }

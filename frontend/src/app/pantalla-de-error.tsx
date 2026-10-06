@@ -2,7 +2,7 @@ import { useRouteError } from 'react-router-dom';
 
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
-import { TITULO_DE_PAGINA } from '@/shared/ui/atoms/cabecera-de-pagina';
+import { PAGE_TITLE } from '@/shared/ui/atoms/page-header';
 
 /**
  * A screen's code that a deploy has replaced: the chunk with the old hash is
@@ -32,7 +32,7 @@ export function PantallaDeError() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 text-center">
       <div className="flex flex-col gap-2">
-        <h1 className={TITULO_DE_PAGINA}>
+        <h1 className={PAGE_TITLE}>
           {obsoleto ? t('shell.error.newVersionTitle') : t('shell.error.title')}
         </h1>
         <p className="text-sm text-muted-foreground">

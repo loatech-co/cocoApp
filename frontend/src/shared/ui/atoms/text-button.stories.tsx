@@ -14,15 +14,15 @@ export const Tones: Story = {
     <div className="flex flex-col items-start gap-3 text-sm">
       <span>
         3 marcados ·{' '}
-        <TextButton tono="primario" onClick={() => undefined}>
+        <TextButton tone="primary" onClick={() => undefined}>
           Limpiar
         </TextButton>
       </span>
-      <TextButton tono="tenue" onClick={() => undefined}>
+      <TextButton tone="subtle" onClick={() => undefined}>
         Elegir por centro y categoría
       </TextButton>
       <span className="text-xs text-muted-foreground">
-        <TextButton tono="realce" onClick={() => undefined}>
+        <TextButton tone="highlight" onClick={() => undefined}>
           Volver
         </TextButton>
       </span>

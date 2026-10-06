@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import { Link } from 'react-router-dom';
 
-import { FILA_DE_PANEL } from '@/shared/ui/atoms/panel-row';
+import { PANEL_ROW_CLASS } from '@/shared/ui/atoms/panel-row';
 
 /**
  * Una fila que lleva a una página: icono y nombre.
@@ -32,7 +32,7 @@ export function FilaDeEnlace({
   children: string;
 }) {
   return (
-    <Link to={a} onClick={onIr} className={FILA_DE_PANEL}>
+    <Link to={a} onClick={onIr} className={PANEL_ROW_CLASS}>
       <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />
       <span className="min-w-0 flex-1 truncate">{children}</span>
     </Link>
