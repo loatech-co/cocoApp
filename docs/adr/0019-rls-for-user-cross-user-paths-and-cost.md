@@ -42,6 +42,22 @@ and `''::bigint` is an error. With `NULLIF` a query outside any unit sees zero
 rows, on a fresh connection or a reused one. Every table already had an index
 starting with `user_id` (or the parent key), so no index was added.
 
+**What a row points at is the user's too** (`20261006000200_rls_foreign_references`,
+step R-2-rls). Postgres checks a foreign key as the table's owner, with no
+policy in the way, so the first version let a user's row name another user's
+row: a split of Ana's movement on Bruno's concept, Bruno's tag on Ana's
+movement — twelve references, all accepted. Every `WITH CHECK` now also
+requires each non-null reference to belong to the setting's user: splits →
+concept, tags → tag, movements → concept, account and import batch, concepts
+→ parent, rules → concept, receipts → movement, import batches → account,
+imported rows → concept and duplicate. Only `WITH CHECK`: reads pay nothing
+new. A policy on `categories` cannot read `categories` (42P17, infinite
+recursion), so the parent goes through `app_private.is_own_category()`, a
+caller-rights function. A composite foreign key `(user_id, category_id)` would
+have needed `user_id` on the three child tables and an expand-and-contract;
+the check gives the same guarantee with no schema change. The same migration
+takes `DELETE` on `users` from `coco_app`: the API never deletes an account.
+
 **The paths that cross users — no `BYPASSRLS` role for the app.** A second
 login role with `BYPASSRLS` would mean a second secret and a second pool for
 three call sites; each was solved where it lives instead:
@@ -59,8 +75,13 @@ three call sites; each was solved where it lives instead:
    concept. `app_private.auto_paid_owner_ids()`, `SECURITY DEFINER`, returns
    ids and nothing else, has a fixed `search_path`, lives in a schema the
    Supabase data API does not publish, and only `coco_app` may execute it.
-   Each charge then runs in `forUser(owner)`. The admin bootstrap needs nothing:
-   it creates a `users` row and seeds the categories inside `forUser(newId)`.
+   Each charge then runs in `forUser(owner)`. The function is the ONLY
+   `SECURITY DEFINER` in `public` and `app_private`, it answers
+   `SETOF bigint` and `PUBLIC` cannot execute it — an e2e test checks the
+   three. The sweep's charges have their own e2e test under `FORCE`.
+   The admin bootstrap needs nothing: it creates a `users` row and seeds the
+   categories inside `forUser(newId)` (`auth.e2e-spec.ts` checks the tree is
+   there, because a failed seed is only logged).
 
 **`FORCE`** (`20261006000100_force_row_level_security`) binds the owner too.
 It changes nothing for `coco_app` (not the owner) or for `postgres` in Supabase
@@ -139,4 +160,5 @@ not.
 - Bad: the owner role must keep `BYPASSRLS`, and a `pg_dump` restore needs
   `coco_app` to exist first (the policies name it).
 - The `users` table has no per-user policy; a forgotten filter there is caught
-  only by the first lock. Revisit if a non-admin route ever lists users.
+  only by the first lock, and any `UPDATE` through the app role can change
+  a role or a status: the guard and the admin service are what limit it. Revisit if a non-admin route ever lists users.

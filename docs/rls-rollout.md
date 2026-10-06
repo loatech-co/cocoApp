@@ -61,8 +61,9 @@ bash scripts/desplegar-migraciones.sh
 ```
 
 (or the programmatic gate in force at the time). Applies
-`20261006000000_add_row_level_security` and
-`20261006000100_force_row_level_security`. Nothing changes for the API: it
+`20261006000000_add_row_level_security`,
+`20261006000100_force_row_level_security` and
+`20261006000200_rls_foreign_references`. Nothing changes for the API: it
 connects as `postgres`, which bypasses the policies.
 
 Verify with the data-API script's check
@@ -87,9 +88,11 @@ DO $$ DECLARE p record; BEGIN
   END LOOP;
 END $$;
 DROP SCHEMA app_private CASCADE;
+GRANT DELETE ON TABLE public.users TO coco_app;
 DELETE FROM _prisma_migrations
  WHERE migration_name IN ('20261006000000_add_row_level_security',
-                          '20261006000100_force_row_level_security');
+                          '20261006000100_force_row_level_security',
+                          '20261006000200_rls_foreign_references');
 ```
 
 RLS stays ENABLED (0007 turned it on before this step), so the tables are

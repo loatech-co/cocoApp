@@ -137,6 +137,11 @@ describe('Auth propia (e2e)', () => {
       expect(admin.role).toBe('admin');
       expect(admin.status).toBe('active');
       expect(admin.approvedAt).not.toBeNull();
+      // Its tree is seeded as itself under row-level security: a failed seed
+      // is only logged, so this is the one place it would show (ADR 0019).
+      expect(await entorno.prisma.category.count({ where: { userId: admin.id } })).toBeGreaterThan(
+        0,
+      );
     });
 
     it('el PRIMER registro NO se lleva el panel si no es el correo configurado', async () => {
