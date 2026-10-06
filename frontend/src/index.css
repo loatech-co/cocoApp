@@ -1,26 +1,27 @@
 @import 'tailwindcss';
 
-/* Modo oscuro por clase en <html>, con preferencia persistida en user_preferences. */
+/* Dark mode by class on <html>, with the preference persisted in user_preferences. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   EL CORTE — dónde deja de haber ratón
+   THE BREAKPOINT — where the mouse stops
 
-   Uno solo, y hace DOS preguntas: cuánto mide la ventana Y de qué lado está.
+   Just one, and it asks TWO questions: how wide the window is AND which way
+   up it is.
 
-   Una tableta mide entre 768 y 1024 de ancho. Un iPad en vertical queda por
-   encima de cualquier línea de 767px, así que con el ancho solo recibiría el
-   escritorio —riel a la izquierda y todo— dentro de una columna con forma de
-   teléfono. Girado, el mismo aparato mide 1024 o más y ahí el escritorio es lo
-   correcto. 1024 es el techo porque es el iPad más ancho en vertical.
+   A tablet is between 768 and 1024 wide. An iPad in portrait sits above any
+   767px line, so with width alone it would get the desktop —rail on the left
+   and all— inside a phone-shaped column. Turned, the same device measures
+   1024 or more, and there the desktop is the right thing. 1024 is the ceiling
+   because it is the widest iPad in portrait.
 
-   Las dos son COMPLEMENTARIAS: ningún tamaño cae en las dos ni en ninguna. Eso
-   no se confía a la vista, lo comprueba `app/movil.test.ts` barriendo tamaños.
+   The two are COMPLEMENTARY: no size falls in both or in neither. That is not
+   left to the eye; `shared/lib/mobile.test.ts` checks it by sweeping sizes.
 
-   Tailwind sí sabe ponerle nombre a una consulta de medios, así que en las
-   clases se escribe `movil:` y `escritorio:` y la cadena no anda copiada por el
-   proyecto. Las únicas copias son esta y la de `app/movil.ts`, que hace falta
-   para decidir qué se MONTA; la prueba comprueba que digan lo mismo.
+   Tailwind does know how to name a media query, so classes say `movil:` and
+   `escritorio:` and the string is not copied around the project. The only
+   copies are this one and the one in `shared/lib/mobile.ts`, which is needed
+   to decide what gets MOUNTED; the test checks they say the same thing.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @custom-variant movil {
@@ -36,161 +37,162 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LO QUE NO DEPENDE DEL TEMA
+   WHAT DOES NOT DEPEND ON THE THEME
 
-   Aquí vive lo que vale igual en claro y en oscuro: las familias tipográficas.
-   Los COLORES no están aquí —están abajo, en la capa del tema, declarados dos
-   veces porque valen dos cosas—.
+   Here lives what is the same in light and in dark: the type families. The
+   COLORS are not here —they are below, in the theme layer, declared twice
+   because they are worth two things—.
 
-   Hasta el cambio a Solstice este bloque tenía además cinco rampas enteras
-   —bosque, lima, esmeralda, tinta y las píldoras de estado, unas sesenta
-   líneas— y una cabecera que las explicaba: el acento era lima y había una
-   regla sobre escribir en tinta encima. Cuando el tema cambió, ni las rampas
-   ni la regla desaparecieron: dejaron de usarse. El problema de un token
-   muerto no es que ocupe —que también, porque `@theme` los publica todos en
-   `:root` se usen o no—, es que sigue ahí para que alguien lo encuentre y lo
-   use creyendo que es del tema.
+   Until the switch to Solstice this block also had five whole ramps —forest,
+   lime, emerald, ink and the status pills, some sixty lines— and a header
+   explaining them: the accent was lime and there was a rule about writing in
+   ink on top of it. When the theme changed, neither the ramps nor the rule
+   went away: they stopped being used. The problem with a dead token is not
+   that it takes room —which it does, because `@theme` publishes them all in
+   `:root` whether used or not—, it is that it is still there for someone to
+   find and use believing it belongs to the theme.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  /* ── Tipografía ─────────────────────────────────────────────────────────
-     Las tres del tema, tal como las declara.
+  /* ── Typography ─────────────────────────────────────────────────────────
+     The theme's three, as it declares them.
 
-     Geist para todo el texto y todos los controles: es una neogrotesca con
-     cifras tabulares de serie, que es lo que necesita una columna de dinero.
+     Geist for all the text and all the controls: it is a neo-grotesque with
+     tabular figures out of the box, which is what a column of money needs.
 
-     `--font-display` apunta a la misma y no a otra, a propósito. Existía para
-     separar titulares de párrafo cuando eran dos familias distintas; con una
-     sola, mantener el nombre evita tocar los cuarenta sitios que lo usan y
-     deja la puerta abierta a volver a separarlas cambiando esta línea.
+     `--font-display` points to the same one and not another, on purpose. It
+     existed to separate headings from body when they were two different
+     families; with only one, keeping the name avoids touching the forty
+     places that use it and leaves the door open to separating them again by
+     changing this line.
 
-     La serif del tema queda disponible para lo editorial —una cifra grande,
-     un vacío— y la mono para lo que tenga que alinear por carácter. */
+     The theme's serif stays available for the editorial —a big figure, an
+     empty state— and the mono for whatever has to align by character. */
   --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: Geist, ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* ── El escalón por debajo de `text-xs` ─────────────────────────────────
-     11px. Aparecía escrito a mano —`text-[11px]`— en trece sitios: el correo
-     bajo el nombre de la cuenta, las marcas de una gráfica, el pie de una
-     miniatura, el rótulo de un indicador. Trece copias de una medida son
-     trece sitios donde esa medida puede separarse, y ya habían empezado:
-     algunos llevaban `leading-none` y otros no.
+  /* ── The step below `text-xs` ───────────────────────────────────────────
+     11px. It appeared hand-written —`text-[11px]`— in thirteen places: the
+     e-mail under the account name, a chart's ticks, a thumbnail's caption, an
+     indicator's label. Thirteen copies of a measure are thirteen places where
+     that measure can drift, and they had started to: some carried
+     `leading-none` and others did not.
 
-     Existe porque hace falta: `text-xs` son 12px y hay sitios —un eje, una
-     nota bajo un dato— donde 12 pesa igual que el dato que acompaña. Por
-     debajo de 11 no se baja: deja de leerse. */
+     It exists because it is needed: `text-xs` is 12px and there are places
+     —an axis, a note under a figure— where 12 weighs as much as the figure it
+     goes with. Nothing goes below 11: it stops being readable. */
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: calc(1 / 0.6875);
 
-  /* El interlineado de la frase grande de la portada (48–60px, dos
-     renglones). `leading-none` junta tanto los renglones que las ascendentes
-     de «claras» tocan las descendentes de arriba; `leading-tight` (1.25) los
-     separa como si fueran dos frases. Vivía como `leading-[1.08]` en la
-     pantalla, que es una medida que mañana nadie sabe de dónde salió. */
+  /* The line height of the landing page's big sentence (48–60px, two lines).
+     `leading-none` squeezes the lines so much that the ascenders of «claras»
+     touch the descenders above; `leading-tight` (1.25) separates them as if
+     they were two sentences. It lived as `leading-[1.08]` on the screen,
+     which is a measure nobody will know the origin of tomorrow. */
   --leading-portada: 1.08;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   EL TEMA — Solstice
+   THE THEME — Solstice
 
-   Los componentes consumen SIEMPRE estos tokens, nunca un hex suelto: cambiar
-   de tema es cambiar esta capa, no rastrear colores por toda la app.
+   Components ALWAYS consume these tokens, never a loose hex: changing theme
+   is changing this layer, not hunting colors across the app.
 
-   Cuatro verdes y nada más.
+   Four greens and nothing else.
 
-   En CLARO el acento es el British Racing Green —#004225—, que es un verde
-   muy oscuro: su identidad está en la profundidad, no en el brillo. Se usa a
-   plena tinta y el blanco encima da 11.6:1.
+   In LIGHT the accent is British Racing Green —#004225—, which is a very dark
+   green: its identity is in its depth, not its brightness. It is used at full
+   ink and white on top gives 11.6:1.
 
-   En OSCURO no se puede usar tal cual —un verde de luz 13 sobre un lienzo de
-   luz 4 no se ve— y el derivado claro del mismo verde salía a un menta
-   correcto y sin carácter. Así que ahí el acento es LIMA, #d3f24b: el
-   amarillo verdoso de una pelota de tenis, 13.9:1 contra el material.
+   In DARK it cannot be used as is —a green of lightness 13 on a canvas of
+   lightness 4 does not show— and the light derivative of the same green came
+   out a correct mint with no character. So there the accent is LIME,
+   #d3f24b: the greenish yellow of a tennis ball, 13.9:1 against the material.
 
-   Que los dos temas no lleven el mismo tono no es una incoherencia, es la
-   regla de siempre —el acento se resuelve según el tema— llevada hasta el
-   matiz. Y la imagen aguanta: la pista es verde oscuro y la pelota es lima.
+   The two themes not carrying the same hue is not an inconsistency, it is
+   the usual rule —the accent resolves per theme— taken down to the hue. And
+   the image holds: the court is dark green and the ball is lime.
 
-   Y el lima lo lleva TODO lo que en esta app significa "gasto": lo activo, lo
-   enfocado, lo que se pulsa, la línea de la tendencia, la porción mayor de la
-   dona y las cifras que salen. Es la decisión del producto y está tomada a
-   propósito, sabiendo lo que cuesta: un color que está en todas partes pierde
-   fuerza para señalar, y por eso lo que se enciende necesita además otra
-   señal —peso de letra, un lavado de fondo— y no solo el color.
+   And the lime is carried by EVERYTHING that in this app means "expense":
+   what is active, what is focused, what is pressed, the trend line, the
+   biggest slice of the donut and the figures going out. It is the product's
+   decision and it was taken on purpose, knowing what it costs: a color that
+   is everywhere loses strength to point things out, and that is why what
+   lights up needs another signal as well —font weight, a background wash—
+   and not just the color.
 
-   ── La paleta entera, y por qué no hay un ámbar ──────────────────────────
-   Cuatro colores, y los cuatro son verdes:
+   ── The whole palette, and why there is no amber ─────────────────────────
+   Four colors, and all four are greens:
 
-   · VERDE BRITÁNICO #004225 — el acento en claro, y el fondo de lo que se
-     pulsa. Su identidad está en la profundidad.
-   · LIMA #d3f24b — el acento en oscuro y el color del GASTO, que es la mayor
-     parte de lo que esta app enseña.
-   · TURQUESA #3fc9a8 — lo que ENTRA, y de paso lo que salió bien. En una app
-     de dinero son la misma buena noticia.
-   · VERDE MEDIO #46c285 — lo informativo.
+   · BRITISH GREEN #004225 — the accent in light, and the background of what
+     is pressed. Its identity is in its depth.
+   · LIME #d3f24b — the accent in dark and the color of EXPENSE, which is
+     most of what this app shows.
+   · TURQUOISE #3fc9a8 — what COMES IN, and incidentally what went well. In a
+     money app they are the same good news.
+   · MID GREEN #46c285 — the informative.
 
-   ── Y una naranja, que no es de la paleta ────────────────────────────────
-   Lo VENCIDO va en naranja (#f0985a en oscuro, #a8530d en claro), y es el
-   único color cálido que queda en toda la app.
+   ── And an orange, which is not part of the palette ──────────────────────
+   What is OVERDUE goes in orange (#f0985a in dark, #a8530d in light), and it
+   is the only warm color left in the whole app.
 
-   Estuvo un rato en verde medio, con el resto, y no funcionaba: en una lista
-   donde todo es verde, un verde más no avisa de nada. Un aviso tiene que
-   salirse de la familia o no es un aviso. El latón de antes se fue porque
-   pintaba ÁREAS —porciones de la dona, chips, series de una gráfica— y ahí sí
-   se leía como un color de adorno traído de otra parte; la naranja no pinta
-   áreas: solo tiñe una fecha que ya pasó.
+   It spent a while in mid green, with the rest, and it did not work: in a
+   list where everything is green, one more green warns of nothing. A warning
+   has to step out of the family or it is not a warning. The brass from
+   before went away because it painted AREAS —donut slices, chips, chart
+   series— and there it did read as a decorative color brought from
+   elsewhere; the orange paints no areas: it only tints a date that has passed.
 
-   Por eso son cosas distintas y conviven: la naranja avisa, el rojo dice que
-   algo salió mal o que no se puede deshacer. El rojo tampoco es de la paleta,
-   y por la misma razón.
+   That is why they are different things and live together: the orange
+   warns, the red says something went wrong or cannot be undone. The red is
+   not part of the palette either, for the same reason.
 
-   ── Tres superficies, no cinco ───────────────────────────────────────────
-   Había cinco escalones —riel, lienzo, tarjeta, bloque, chip— y el ojo no
-   distingue cinco grises casi iguales: lo que veía era una pantalla lavada
-   con bordes por todas partes marcando lo que el color no marcaba.
+   ── Three surfaces, not five ─────────────────────────────────────────────
+   There were five steps —rail, canvas, card, block, chip— and the eye does
+   not tell apart five nearly equal grays: what it saw was a washed-out
+   screen with borders everywhere marking what the color did not.
 
-   Ahora hay tres y cada uno tiene un trabajo:
+   Now there are three and each has a job:
 
-   · EL MATERIAL (`--card`, `--popover`, `--sidebar`, y son el mismo valor).
-     Es de lo que están hechos el riel y las tarjetas. Que compartan color es
-     lo que hace que el riel parezca envolver el contenido en vez de ser otra
-     columna más.
-   · EL POZO (`--background`). El hueco donde se apoyan las tarjetas. Va por
-     DEBAJO del material, y ese escalón es lo que las separa: por eso la
-     tarjeta ya no lleva borde.
-   · LO ELEGIDO (`--muted`). Un bloque dentro de una tarjeta, la opción ya
-     seleccionada. Sube desde el material, no baja.
+   · THE MATERIAL (`--card`, `--popover`, `--sidebar`, and they are the same
+     value). It is what the rail and the cards are made of. Sharing a color is
+     what makes the rail seem to wrap the content instead of being one more
+     column.
+   · THE WELL (`--background`). The hollow the cards rest on. It goes BELOW
+     the material, and that step is what separates them: that is why the card
+     no longer carries a border.
+   · THE CHOSEN (`--muted`). A block inside a card, the option already
+     selected. It rises from the material, it does not sink.
 
-   Lo que FLOTA sigue teniendo su anillo (regla 9): un desplegable del color
-   del material, abierto sobre una tarjeta del color del material, solo se
-   separa por el canto.
+   What FLOATS keeps its ring (rule 9): a dropdown the color of the material,
+   open over a card the color of the material, is separated only by its edge.
 
-   ── Qué añade la app por encima ──────────────────────────────────────────
-   Un tema de componentes no sabe de dinero. Tres familias de tokens son
-   nuestras y se derivan de las suyas, nunca inventadas al lado:
+   ── What the app adds on top ─────────────────────────────────────────────
+   A component theme knows nothing about money. Three families of tokens are
+   ours and derive from the theme's, never invented alongside:
 
-   · Lo que entra y lo que sale. Un tema monocromo no distingue un ingreso de
-     un gasto, y aquí esa distinción es el producto.
-   · Lo pendiente. Va en el verde medio y nunca en rojo: el rojo se reserva a
-     lo que salió mal y a lo que no se puede deshacer.
-   · Las porciones de la dona. Pintan ÁREAS grandes, y un color que se
-     distingue como trazo de 2px puede ser invisible como relleno.
+   · What comes in and what goes out. A monochrome theme does not tell income
+     from expense apart, and here that distinction is the product.
+   · What is pending. It goes in mid green and never in red: red is reserved
+     for what went wrong and for what cannot be undone.
+   · The donut slices. They paint big AREAS, and a color that is
+     distinguishable as a 2px stroke can be invisible as a fill.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* 10px. Es el radio del tema, y a partir de aquí el estándar de la app:
-     lo usan las tarjetas, los desplegables, los modales y los campos. Puede
-     ser MENOR donde haga falta —una casilla, un chip— pero nunca mayor: dos
-     contenedores vecinos con esquinas distintas se leen como dos sistemas. */
+  /* 10px. It is the theme's radius, and from here on the app's standard: the
+     cards, the dropdowns, the modals and the fields use it. It can be SMALLER
+     where needed —a checkbox, a chip— but never bigger: two neighboring
+     containers with different corners read as two systems. */
   --radius: 0.625rem;
 
-  /* Un aviso, a 24 del borde de abajo. En el teléfono lo pisa la barra, así
-     que allí este mismo nombre vale otra cosa. */
+  /* A toast, 24 from the bottom edge. On the phone the bar covers it, so
+     there this same name is worth something else. */
   --bajo-la-barra: 1.5rem;
 
-  /* ── Superficies y tinta ──────────────────────────────────────────────── */
+  /* ── Surfaces and ink ─────────────────────────────────────────────────── */
   --background: #efede6;
   --foreground: #0f1f1d;
 
@@ -206,10 +208,10 @@
   --secondary: #dbeee7;
   --secondary-foreground: #004225;
 
-  /* LO ELEGIDO, y en claro es el mismo valor que el pozo: un bloque dentro de
-     una tarjeta es un hueco en la tarjeta, igual que el pozo es un hueco en la
-     página. En oscuro no puede ser el mismo —allí lo de dentro va hacia
-     ARRIBA—, y por eso este token se declara dos veces. */
+  /* THE CHOSEN, and in light it is the same value as the well: a block inside
+     a card is a hollow in the card, just as the well is a hollow in the page.
+     In dark it cannot be the same —there what is inside goes UP—, and that is
+     why this token is declared twice. */
   --muted: #efede6;
   --muted-foreground: #5c6663;
 
@@ -224,98 +226,99 @@
   --ring: #00633b;
 
   /*
-    El acento como TINTA, que no es el acento como fondo.
+    The accent as INK, which is not the accent as background.
 
-    Hace falta un solo nombre porque el mismo dato —una cifra destacada, el
-    borde de la baldosa activa— tiene que resolverse solo según el tema: aquí
-    el verde británico a media altura —#00633b, que sobre blanco da 7.4:1— y
-    en oscuro su derivado claro. El #004225 a pelo NO sirve de tinta: contra
-    el texto normal, que ya es un casi negro verdoso, no se lee como color
-    sino como texto en negrita. Sin esto, cada llamada tendría que
-    acordarse de cuál de los dos le toca.
+    One name is needed because the same datum —a highlighted figure, the
+    active tile's border— has to resolve on its own per theme: here the
+    British green at half height —#00633b, which on white gives 7.4:1— and in
+    dark its light derivative. The bare #004225 does NOT work as ink: against
+    normal text, which is already a greenish near-black, it does not read as a
+    color but as bold text. Without this, every call would have to remember
+    which of the two applies.
   */
   --acento-tinta: #00633b;
 
-  /* ── Dinero ───────────────────────────────────────────────────────────── */
-  /* El gasto es el `primary` del tema: es la mayoría de lo que esta app
-     enseña, así que le toca el color de la casa. */
+  /* ── Money ────────────────────────────────────────────────────────────── */
+  /* Expense is the theme's `primary`: it is most of what this app shows, so
+     it gets the house color. */
   --expense: #004225;
   --expense-surface: #e4efe8;
-  /* Y el ingreso se va al verde AZULADO, que antes no hacía falta.
-     Mientras el gasto fue pino —un teal oscuro— el ingreso podía ser verde y
-     los separaban 19° de matiz. Con el acento en verde británico, el gasto ES
-     verde: dejar el ingreso donde estaba los habría puesto a 3° uno del otro,
-     o sea el mismo color con dos significados opuestos. Corrido a 163° vuelve
-     a haber matiz Y luminosidad entre los dos, que es lo que hace falta para
-     leer una columna de plata de un vistazo.
+  /* And income moves to the BLUISH green, which was not needed before.
+     While expense was pine —a dark teal— income could be green and 19° of hue
+     set them apart. With the accent in British green, expense IS green:
+     leaving income where it was would have put them 3° from each other, that
+     is, the same color with two opposite meanings. Shifted to 163° there is
+     hue AND lightness between the two again, which is what it takes to read a
+     column of money at a glance.
 
-     Oscurecido para que como TEXTO cumpla el 4,5:1 sobre el pozo (da 4.5) y
-     sobre el material (5.3). */
+     Darkened so that as TEXT it meets 4.5:1 on the well (it gives 4.5) and on
+     the material (5.3). */
   --income: #0a7a5f;
   --income-surface: #e0f2ec;
 
-  /* Lo VENCIDO va en naranja, el único cálido que queda. En una app donde
-     todo es verde, un verde más no avisa de nada: un aviso tiene que salirse
-     de la familia. Y no es el latón de antes, que pintaba áreas enteras —la
-     dona, los chips, las series— y por eso se leía de adorno. */
+  /* What is OVERDUE goes in orange, the only warm one left. In an app where
+     everything is green, one more green warns of nothing: a warning has to
+     step out of the family. And it is not the brass from before, which
+     painted whole areas —the donut, the chips, the series— and that is why it
+     read as decoration. */
   --warning: #a8530d;
   --warning-surface: #fbeade;
   --info: #00633b;
   --info-surface: #ddeee6;
 
   /*
-    ── La tinta que va ENCIMA de cada color de severidad ────────────────────
-    Distinta de la superficie. `--success-surface` es un verde muy claro para
-    poner texto verde encima; esto es lo contrario: el verde a plena tinta
-    haciendo de fondo, con algo legible encima.
+    ── The ink that goes ON TOP of each severity color ──────────────────────
+    Different from the surface. `--success-surface` is a very light green to
+    put green text on; this is the opposite: the green at full ink acting as
+    background, with something legible on top.
 
-    Hace falta para la pastilla redonda de un aviso flotante, donde el glifo
-    va sobre el color y no al lado. Y hace falta DECLARADA y no calculada,
-    porque el sentido se invierte con el tema: en claro estos tres colores son
-    oscuros y la tinta es blanca; en oscuro son claros y la tinta es casi
-    negra. Es el mismo problema que ya resolvieron las porciones de la dona.
+    It is needed for the round pill of a floating toast, where the glyph sits
+    on the color and not next to it. And it is needed DECLARED and not
+    computed, because the sense flips with the theme: in light these three
+    colors are dark and the ink is white; in dark they are light and the ink
+    is near-black. It is the same problem the donut slices already solved.
 
-    `--destructive` no aparece aquí porque su tinta ya existe:
-    `--destructive-foreground`, que el tema declara para su botón.
+    `--destructive` does not appear here because its ink already exists:
+    `--destructive-foreground`, which the theme declares for its button.
   */
   --success-foreground: #ffffff;
   --warning-foreground: #ffffff;
   --info-foreground: #ffffff;
   /*
-    Lo que SALIÓ BIEN comparte el verde del ingreso, y no es un descuido:
-    en una app de dinero "se guardó" y "entró plata" son la misma buena
-    noticia, y dos verdes distintos a un palmo uno del otro se leen como si
-    quisieran decir cosas distintas.
+    What WENT WELL shares income's green, and it is not an oversight: in a
+    money app "it was saved" and "money came in" are the same good news, and
+    two different greens a hand apart read as if they meant different things.
   */
   --success: #0a7a5f;
   --success-surface: #e0f2ec;
   /*
-    El rojo tiene DOS papeles y hacen falta dos tokens: el del botón que borra
-    —fondo rojo, letra clara— y el del aviso que explica un error, que es una
-    superficie tenue con la tinta roja encima. Con uno solo, un aviso de error
-    salía como un rectángulo rojo a sangre.
+    Red has TWO roles and two tokens are needed: the one of the button that
+    deletes —red background, light lettering— and the one of the notice that
+    explains an error, which is a faint surface with the red ink on top. With
+    only one, an error notice came out as a blood-red rectangle.
   */
   --destructive-surface: #f7e3e2;
 
-  /* ── Gráficas ─────────────────────────────────────────────────────────────
-     La serie de colores del tema: cinco tonos que se distinguen ENTRE SÍ.
+  /* ── Charts ───────────────────────────────────────────────────────────────
+     The theme's color series: five hues that are distinguishable FROM EACH
+     OTHER.
 
-     Son para una gráfica cuyas series no significan nada por sí solas —tres
-     cuentas, cinco meses—. La de tendencia NO las usa, y a propósito: sus dos
-     series son lo que sale y lo que entra, y eso ya tiene color en esta app.
-     Pintadas con la rampa, el gasto salía teal en la gráfica y pino en la
-     tabla. La dona sí tiene rampa propia, `--dona-*`, porque pinta ÁREAS y un
-     color que se distingue como trazo de 2px puede ser invisible como
-     relleno. */
+     They are for a chart whose series mean nothing on their own —three
+     accounts, five months—. The trend chart does NOT use them, on purpose:
+     its two series are what goes out and what comes in, and that already has
+     a color in this app. Painted with the ramp, expense came out teal in the
+     chart and pine in the table. The donut does have a ramp of its own,
+     `--dona-*`, because it paints AREAS and a color distinguishable as a 2px
+     stroke can be invisible as a fill. */
   --chart-1: #00633b;
   --chart-2: #1a7a52;
   --chart-3: #004225;
   --chart-4: #4fae86;
   --chart-5: #8ecdb0;
 
-  /* ── Las porciones de la dona ─────────────────────────────────────────────
-     Cada una con su TINTA, declarada y no calculada: sobre el pino el blanco
-     se lee, sobre los claros NO y hay que bajar a tinta. */
+  /* ── The donut slices ─────────────────────────────────────────────────────
+     Each one with its INK, declared and not computed: on the pine, white
+     reads; on the light ones it does NOT, and it has to go down to ink. */
   --dona-1: #004225;
   --dona-1-tinta: #ffffff;
   --dona-2: #00734a;
