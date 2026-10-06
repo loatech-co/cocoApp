@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { avisoDeMesCorto, cuandoVuelve, entre1y31 } from './campos-de-recurrencia';
+import { avisoDeMesCorto, cuandoVuelve, entre1y31 } from './recurrence-fields';
 
 describe('El día de pago escrito a mano', () => {
   it('deja pasar cualquier día del mes', () => {

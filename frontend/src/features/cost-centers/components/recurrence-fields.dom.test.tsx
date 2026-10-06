@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { CamposDeRecurrencia, type Recurrencia } from './campos-de-recurrencia';
+import { CamposDeRecurrencia, type Recurrencia } from './recurrence-fields';
 
 /**
  * «Pago automático» y «se paga en varias veces» no pueden convivir.

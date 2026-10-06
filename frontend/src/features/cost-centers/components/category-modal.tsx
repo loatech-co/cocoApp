@@ -1,8 +1,8 @@
 import { Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { useCategoryForm } from '@/features/centros/hooks/use-category-form';
-import { categoryModalTexts } from '@/features/centros/model/category-form';
+import { useCategoryForm } from '@/features/cost-centers/hooks/use-category-form';
+import { categoryModalTexts } from '@/features/cost-centers/model/category-form';
 import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';

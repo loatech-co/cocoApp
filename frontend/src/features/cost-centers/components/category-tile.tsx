@@ -1,10 +1,10 @@
 import { EllipsisVertical, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { CategoriaModal } from '@/features/centros/components/categoria-modal';
-import { trasCerrar } from '@/features/centros/components/close-then';
-import { ConceptoModal } from '@/features/centros/components/concepto-modal';
-import { ConfirmarBorrado } from '@/features/centros/components/confirmar-borrado';
+import { CategoriaModal } from '@/features/cost-centers/components/category-modal';
+import { trasCerrar } from '@/features/cost-centers/components/close-then';
+import { ConceptoModal } from '@/features/cost-centers/components/concept-modal';
+import { ConfirmarBorrado } from '@/features/cost-centers/components/confirm-deletion';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';

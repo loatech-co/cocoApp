@@ -1,7 +1,7 @@
 import { useState, type SubmitEvent } from 'react';
 
-import { useActualizarCategoria } from '@/features/centros/api/categories';
-import { categoryChanges, newCategory } from '@/features/centros/model/category-form';
+import { useActualizarCategoria } from '@/features/cost-centers/api/categories';
+import { categoryChanges, newCategory } from '@/features/cost-centers/model/category-form';
 import { ApiClientError } from '@/shared/api/api-client';
 import { useCreateCategory } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';

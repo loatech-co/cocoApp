@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CentrosPage } from './centros-page';
+import { CentrosPage } from './cost-centers-page';
 
 const consulta = {
   data: undefined as unknown[] | undefined,
@@ -12,8 +12,10 @@ const consulta = {
 };
 
 vi.mock('@/shared/api/categories', () => ({ useCategories: () => consulta }));
-vi.mock('@/features/centros/components/categoria-modal', () => ({ CategoriaModal: () => null }));
-vi.mock('@/features/centros/components/cost-center-card', () => ({ Centro: () => null }));
+vi.mock('@/features/cost-centers/components/category-modal', () => ({
+  CategoriaModal: () => null,
+}));
+vi.mock('@/features/cost-centers/components/cost-center-card', () => ({ Centro: () => null }));
 
 afterEach(cleanup);
 

@@ -6,7 +6,7 @@ import {
   limpiar,
   partir,
   porQueNoEntra,
-} from '@/features/centros/model/palabras-clave';
+} from '@/features/cost-centers/model/keywords';
 import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';

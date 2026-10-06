@@ -23,7 +23,7 @@ tabla, sus filtros y su ficha. Por eso vive en `features/transactions/pages/`.
 Cada feature tiene `pages/`, `components/`, `api/` (hooks de React Query),
 `hooks/` y `model/` (lógica de negocio y tipos), y solo las carpetas que usa.
 
-Hoy son `admin`, `auth`, `bank-accounts`, `centros`, `profile` y
+Hoy son `admin`, `auth`, `bank-accounts`, `cost-centers`, `profile` y
 `transactions`.
 
 **Las features no se importan entre sí: lo común sube a `shared/`.**

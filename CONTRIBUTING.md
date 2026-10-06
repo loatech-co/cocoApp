@@ -351,7 +351,7 @@ await this.prisma.transaction.findMany({ where: { userId } }); // in dashboard/
 | `features/<domain>/` | One folder per domain, not per screen: `pages/`, `components/`, `api/` (React Query hooks), `hooks/`, `model/` (business logic, types). |
 | `shared/`            | `ui/` (the design system), `lib/` (infrastructure: dates, formatting, focus, native bridge), `api/` (client, session, common queries).  |
 
-The features are `admin`, `auth`, `bank-accounts`, `centros`, `profile` and
+The features are `admin`, `auth`, `bank-accounts`, `cost-centers`, `profile` and
 `transactions`. The full criterion, with examples from Coco and the inventory
 of `shared/ui`, is in `.claude/rules/web.md`; it is updated in the same PR
 that creates or changes a component.
@@ -399,7 +399,7 @@ import { Card } from '@/shared/ui/atoms/card';
 
 // Incorrect — a shared component fetching, or one feature reaching into another
 import { useTransactions } from '@/features/transactions/api/transactions'; // in shared/ui/
-import { TransactionModal } from '@/features/transactions/components/transaction-modal'; // in features/centros/
+import { TransactionModal } from '@/features/transactions/components/transaction-modal'; // in features/cost-centers/
 ```
 
 ### API client
@@ -640,7 +640,7 @@ frontend`), and the CI `verify` job fails under the thresholds in
 | `frontend/src/shared/ui` | 98 %  | 96 %     |
 
 The plan's target for `frontend/src` is **70 %** of lines and branches. The
-gap is in `features/` (transactions and centros above all), which gets its
+gap is in `features/` (transactions and cost-centers above all), which gets its
 tests once its components are split into reviewable units. **Thresholds only
 go up**: a PR that adds coverage raises them to the new floor; lowering one
 needs an ADR with the reason.

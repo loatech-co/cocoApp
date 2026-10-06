@@ -1,7 +1,7 @@
 import { Repeat } from 'lucide-react';
 import { useState } from 'react';
 
-import { PERIODICIDADES, type Periodicidad } from '@/features/centros/model/periodicity';
+import { PERIODICIDADES, type Periodicidad } from '@/features/cost-centers/model/periodicity';
 import { capitalize, LONG_MONTHS } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { useOnChange } from '@/shared/lib/on-change';

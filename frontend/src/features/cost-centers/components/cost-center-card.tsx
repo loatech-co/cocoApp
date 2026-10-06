@@ -1,12 +1,12 @@
 import { EllipsisVertical, Lock, LockOpen, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { useActualizarCategoria } from '@/features/centros/api/categories';
-import { Agregar } from '@/features/centros/components/add-category';
-import { CategoriaModal } from '@/features/centros/components/categoria-modal';
-import { Categoría } from '@/features/centros/components/category-tile';
-import { trasCerrar } from '@/features/centros/components/close-then';
-import { ConfirmarBorrado } from '@/features/centros/components/confirmar-borrado';
+import { useActualizarCategoria } from '@/features/cost-centers/api/categories';
+import { Agregar } from '@/features/cost-centers/components/add-category';
+import { CategoriaModal } from '@/features/cost-centers/components/category-modal';
+import { Categoría } from '@/features/cost-centers/components/category-tile';
+import { trasCerrar } from '@/features/cost-centers/components/close-then';
+import { ConfirmarBorrado } from '@/features/cost-centers/components/confirm-deletion';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';

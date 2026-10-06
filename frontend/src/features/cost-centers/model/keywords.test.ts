@@ -11,7 +11,7 @@ import {
   partir,
   porQueNoEntra,
   yaEsta,
-} from './palabras-clave';
+} from './keywords';
 
 /** Un concepto de mentira, con lo mínimo que mira el código de aquí. */
 function concepto(id: number, name: string, palabras: string[] = []): CategoryTree {

@@ -20,7 +20,7 @@ const lazily = {
     Component: (await import('@/features/bank-accounts/pages/accounts-page')).AccountsPage,
   }),
   centros: async () => ({
-    Component: (await import('@/features/centros/pages/centros-page')).CentrosPage,
+    Component: (await import('@/features/cost-centers/pages/cost-centers-page')).CentrosPage,
   }),
   cuenta: async () => ({
     Component: (await import('@/features/profile/pages/cuenta-page')).CuentaPage,

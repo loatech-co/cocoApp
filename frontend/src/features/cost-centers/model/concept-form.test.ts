@@ -10,7 +10,7 @@ import {
   newConcept,
   siblingCategories,
 } from './concept-form';
-import type { Recurrencia } from '../components/campos-de-recurrencia';
+import type { Recurrencia } from '../components/recurrence-fields';
 
 function node(id: number, name: string, extra: Partial<Category> = {}): Category {
   return {

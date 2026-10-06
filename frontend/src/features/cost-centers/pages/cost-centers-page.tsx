@@ -1,9 +1,9 @@
 import { CircleHelp, Plus } from 'lucide-react';
 import { useState } from 'react';
 
-import { CategoriaModal } from '@/features/centros/components/categoria-modal';
-import { Explicacion } from '@/features/centros/components/centros-help';
-import { Centro } from '@/features/centros/components/cost-center-card';
+import { CategoriaModal } from '@/features/cost-centers/components/category-modal';
+import { Centro } from '@/features/cost-centers/components/cost-center-card';
+import { Explicacion } from '@/features/cost-centers/components/cost-centers-help';
 import { useCategories } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { ErrorAlert } from '@/shared/ui/atoms/alert';

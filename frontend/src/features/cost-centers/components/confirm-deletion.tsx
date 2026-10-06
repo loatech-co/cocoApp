@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useEliminarCategoria, useUsosDeCategoria } from '@/features/centros/api/categories';
+import { useEliminarCategoria, useUsosDeCategoria } from '@/features/cost-centers/api/categories';
 import { ApiClientError } from '@/shared/api/api-client';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';

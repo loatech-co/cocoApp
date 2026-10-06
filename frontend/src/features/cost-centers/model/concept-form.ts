@@ -1,6 +1,6 @@
 import { type CategoryTree } from '@/shared/api/categories';
 
-import type { Recurrencia } from '../components/campos-de-recurrencia';
+import type { Recurrencia } from '../components/recurrence-fields';
 
 /**
  * Lo que la ficha de un concepto lee del árbol y lo que manda al servidor.

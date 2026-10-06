@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { CategoriaModal } from '@/features/centros/components/categoria-modal';
+import { CategoriaModal } from '@/features/cost-centers/components/category-modal';
 import { t } from '@/shared/lib/i18n';
 import { AddSurface } from '@/shared/ui/atoms/add-surface';
 

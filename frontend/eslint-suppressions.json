@@ -89,52 +89,52 @@
       "count": 6
     }
   },
-  "src/features/centros/components/add-category.tsx": {
+  "src/features/cost-centers/components/add-category.tsx": {
     "@typescript-eslint/naming-convention": {
       "count": 2
     }
   },
-  "src/features/centros/components/categoria-modal.tsx": {
+  "src/features/cost-centers/components/category-modal.tsx": {
     "@typescript-eslint/naming-convention": {
       "count": 8
     }
   },
-  "src/features/centros/components/category-tile.tsx": {
+  "src/features/cost-centers/components/category-tile.tsx": {
     "@typescript-eslint/naming-convention": {
       "count": 3
     }
   },
-  "src/features/centros/components/concepto-modal.tsx": {
+  "src/features/cost-centers/components/concept-modal.tsx": {
     "@typescript-eslint/naming-convention": {
       "count": 4
     }
   },
-  "src/features/centros/components/confirmar-borrado.tsx": {
+  "src/features/cost-centers/components/confirm-deletion.tsx": {
     "@typescript-eslint/naming-convention": {
       "count": 3
     }
   },
-  "src/features/centros/components/cost-center-card.tsx": {
+  "src/features/cost-centers/components/cost-center-card.tsx": {
     "@typescript-eslint/naming-convention": {
       "count": 5
     }
   },
-  "src/features/centros/hooks/use-category-form.ts": {
+  "src/features/cost-centers/hooks/use-category-form.ts": {
     "@typescript-eslint/naming-convention": {
       "count": 3
     }
   },
-  "src/features/centros/hooks/use-concept-form.ts": {
+  "src/features/cost-centers/hooks/use-concept-form.ts": {
     "@typescript-eslint/naming-convention": {
       "count": 2
     }
   },
-  "src/features/centros/model/category-form.ts": {
+  "src/features/cost-centers/model/category-form.ts": {
     "@typescript-eslint/naming-convention": {
       "count": 6
     }
   },
-  "src/features/centros/pages/centros-page.tsx": {
+  "src/features/cost-centers/pages/cost-centers-page.tsx": {
     "@typescript-eslint/naming-convention": {
       "count": 3
     }

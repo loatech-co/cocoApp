@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CamposDePalabrasClave } from './campos-de-palabras-clave';
+import { CamposDePalabrasClave } from './keywords-fields';
 
 /**
  * Escribir una palabra clave es escribir una LISTA, no una frase.

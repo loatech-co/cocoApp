@@ -1,13 +1,16 @@
 import { useState, type SubmitEvent } from 'react';
 
-import { useActualizarCategoria, useUnificarCategoria } from '@/features/centros/api/categories';
-import type { Recurrencia } from '@/features/centros/components/campos-de-recurrencia';
+import {
+  useActualizarCategoria,
+  useUnificarCategoria,
+} from '@/features/cost-centers/api/categories';
+import type { Recurrencia } from '@/features/cost-centers/components/recurrence-fields';
 import {
   conceptChanges,
   conceptFields,
   initialRecurrence,
   newConcept,
-} from '@/features/centros/model/concept-form';
+} from '@/features/cost-centers/model/concept-form';
 import { ApiClientError } from '@/shared/api/api-client';
 import { useCreateCategory } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';

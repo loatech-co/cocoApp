@@ -1,8 +1,8 @@
 import { Loader2, Merge, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { useConceptForm } from '@/features/centros/hooks/use-concept-form';
-import { findTwin, siblingCategories } from '@/features/centros/model/concept-form';
+import { useConceptForm } from '@/features/cost-centers/hooks/use-concept-form';
+import { findTwin, siblingCategories } from '@/features/cost-centers/model/concept-form';
 import { useCategories } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
@@ -14,9 +14,9 @@ import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 import { Modal } from '@/shared/ui/organisms/modal';
 import { Select } from '@/shared/ui/organisms/select';
 
-import { CamposDePalabrasClave } from './campos-de-palabras-clave';
-import { CamposDeRecurrencia } from './campos-de-recurrencia';
-import { ConfirmarBorrado } from './confirmar-borrado';
+import { ConfirmarBorrado } from './confirm-deletion';
+import { CamposDePalabrasClave } from './keywords-fields';
+import { CamposDeRecurrencia } from './recurrence-fields';
 
 interface ConceptoModalProps {
   abierta: boolean;
