@@ -6,7 +6,7 @@
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["frontend/src/*"],
-      "@coco/lectura": ["packages/lectura/src/index.ts"]
+      "@coco/receipt-parser": ["packages/receipt-parser/src/index.ts"]
     }
   },
   "include": ["api/src", "frontend/src", "packages/*/src"]

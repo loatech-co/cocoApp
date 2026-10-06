@@ -29,9 +29,9 @@ pre-commit:
     3_typecheck-web:
       glob: '{frontend/**/*.{ts,tsx},packages/**/*.ts}'
       run: npm run typecheck --workspace frontend
-    4_typecheck-lectura:
-      glob: 'packages/lectura/**/*.ts'
-      run: npm run typecheck --workspace @coco/lectura
+    4_typecheck-receipt-parser:
+      glob: 'packages/receipt-parser/**/*.ts'
+      run: npm run typecheck --workspace @coco/receipt-parser
     6_lint-ios:
       # swift-format + SwiftLint, strict. Without Xcode or SwiftLint it warns
       # and lets the commit through: the iOS workflow (ios.yml) is the gate.

@@ -43,7 +43,7 @@
         "entry": [".storybook/preview.tsx", "src/**/*.stories.tsx"],
       },
     },
-    "packages/lectura": {
+    "packages/receipt-parser": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"],
     },

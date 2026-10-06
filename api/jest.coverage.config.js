@@ -15,7 +15,7 @@ const shared = {
   testEnvironment: 'node',
   transform: { '^.+\\.(t|j)s$': 'ts-jest' },
   moduleNameMapper: {
-    '^@coco/lectura$': '<rootDir>/../packages/lectura/src/index.ts',
+    '^@coco/receipt-parser$': '<rootDir>/../packages/receipt-parser/src/index.ts',
   },
 };
 

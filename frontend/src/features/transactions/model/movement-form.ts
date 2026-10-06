@@ -6,13 +6,13 @@ import {
 } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import {
-  buscarEnArbol,
-  normalizar,
-  resolverTerminos,
-  terminosPara,
-  type EntradaDelIndice,
-  type Lectura,
-} from '@coco/lectura';
+  searchInTree,
+  normalize,
+  resolveTerms,
+  termsFor,
+  type IndexEntry,
+  type Reading,
+} from '@coco/receipt-parser';
 
 import type { Origen } from './precedencia';
 
@@ -102,12 +102,12 @@ export function initialAmountAndDate(
  * no hay ninguna razón para que un acento los separe.
  */
 function conceptoLlamado(arbol: CategoryTree[], nombre: string): CategoryTree | undefined {
-  const buscado = normalizar(nombre);
+  const buscado = normalize(nombre);
 
   for (const centro of arbol) {
     for (const categoria of centro.children ?? []) {
       for (const concepto of categoria.children ?? []) {
-        if (normalizar(concepto.name) === buscado) return concepto;
+        if (normalize(concepto.name) === buscado) return concepto;
       }
     }
   }
@@ -123,18 +123,18 @@ function conceptoLlamado(arbol: CategoryTree[], nombre: string): CategoryTree | 
  * quedan a la vista en el buscador.
  */
 export function proposalFromText(
-  indice: readonly EntradaDelIndice[],
+  indice: readonly IndexEntry[],
   escrito: string,
 ): AutoProposal | null {
-  const conceptos = buscarEnArbol(indice, escrito).filter((e) => e.nivel === 'concepto');
+  const conceptos = searchInTree(indice, escrito).filter((e) => e.nivel === 'concepto');
   const [unico] = conceptos;
   if (conceptos.length === 1 && unico !== undefined) {
     return { categoryId: Number(unico.id), origen: 'palabras-clave' };
   }
 
-  const terminos = terminosPara(escrito);
+  const terminos = termsFor(escrito);
   if (terminos.length === 0) return null;
-  const resuelto = resolverTerminos(indice, terminos);
+  const resuelto = resolveTerms(indice, terminos);
   if (resuelto.certeza === 'alta' && resuelto.concepto) {
     return { categoryId: Number(resuelto.concepto.id), origen: 'diccionario' };
   }
@@ -165,7 +165,7 @@ export function proposalFromText(
  * clave; el diccionario, con el suyo. Sin ids —un árbol que no llegó—, por el
  * nombre, como siempre. `null` si el recibo no dijo nada de esto.
  */
-export function proposalFromReading(leida: Lectura, arbol: CategoryTree[]): AutoProposal | null {
+export function proposalFromReading(leida: Reading, arbol: CategoryTree[]): AutoProposal | null {
   const enElArbol = leida.enElArbol;
   if (!enElArbol) {
     const suyo = leida.concepto ? conceptoLlamado(arbol, leida.concepto) : undefined;
@@ -213,7 +213,7 @@ export function proposalFromReading(leida: Lectura, arbol: CategoryTree[]): Auto
  * En los dos casos el archivo se queda adjunto: se subió para guardarlo, no
  * solo para leerlo.
  */
-export function unreadNotice(leida: Lectura, texto: string): string | null {
+export function unreadNotice(leida: Reading, texto: string): string | null {
   const algoUtil = leida.valor !== null || leida.fecha !== null || leida.concepto !== null;
   if (algoUtil) return null;
   return texto.trim() === ''

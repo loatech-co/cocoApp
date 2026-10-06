@@ -177,7 +177,7 @@ empty.
 
 ## TypeScript strictness
 
-Every workspace (`api`, `frontend`, `packages/lectura`)
+Every workspace (`api`, `frontend`, `packages/receipt-parser`)
 compiles with `strict`, `noUncheckedIndexedAccess`,
 `exactOptionalPropertyTypes` and `noImplicitOverride`. No explicit `any`, no
 `@ts-ignore`; `@ts-expect-error` only with a written reason after it.
@@ -435,7 +435,7 @@ apiFetch<{ display_name: string }[]>('/accounts');
   table passes its own `page` and `perPage` (at most 200).
 - **Contracts that speak another dialect are translated at the edge, once.**
   The iOS bridge still delivers a v1 session (`session.ts`,
-  `desdeElPuente`); `@coco/lectura` still reads `palabras_clave`
+  `desdeElPuente`); `@coco/receipt-parser` still reads `palabras_clave`
   (`shared/lib/arbol-buscable.ts`); the dashboard's `breakdownLevel` and
   `granularity` become the Spanish words the screen shows
   (`dashboard-charts.tsx`). Nothing inside a feature knows.
@@ -774,7 +774,7 @@ to and catches none of them.
 
 **Rule.** Rows are built with the factories in `api/test/factories/`
 (`makeAccount`, `makeConcept`, `makeTransaction`), and objects with the ones
-next to each package's tests (`packages/lectura/src/testing/`). A test writes
+next to each package's tests (`packages/receipt-parser/src/testing/`). A test writes
 only the fields it is about: `makeTransaction(prisma, user.id, { amount: '100' })`.
 Users come from `levantarApp().crearUsuario()`, which also opens their
 session.
@@ -816,7 +816,7 @@ after a bug that is not there.
 
 **Rule.** CI fails below 80 % of lines or of branches in `api/src` (unit and
 e2e measured together: `npm run test:cov --workspace api`) and in
-`packages/lectura` (its `npm test` always measures). `src/common/money` keeps
+`packages/receipt-parser` (its `npm test` always measures). `src/common/money` keeps
 90 %. A threshold only goes up. `packages/types` has no behavior —types and
 constant lists— so there is nothing in it to cover.
 

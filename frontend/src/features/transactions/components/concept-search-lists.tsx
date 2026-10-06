@@ -4,7 +4,7 @@ import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-
 import { t } from '@/shared/lib/i18n';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { CreateOption, Opcion } from '@/shared/ui/organisms/combo';
-import { rutaLegible, type EntradaDelIndice } from '@coco/lectura';
+import { readablePath, type IndexEntry } from '@coco/receipt-parser';
 
 /** El paso de elegir en qué categoría va el concepto que se va a crear. */
 export function CategoriaParaNuevo({
@@ -14,9 +14,9 @@ export function CategoriaParaNuevo({
   onCrearEn,
 }: {
   nombreNuevo: string;
-  categorias: EntradaDelIndice[];
+  categorias: IndexEntry[];
   onVolver: () => void;
-  onCrearEn: (categoria: EntradaDelIndice) => void;
+  onCrearEn: (categoria: IndexEntry) => void;
 }) {
   return (
     <>
@@ -49,13 +49,13 @@ export function CategoriaParaNuevo({
 
 export interface PropsDeResultados {
   busca: string;
-  resultados: EntradaDelIndice[];
-  recientes: EntradaDelIndice[];
+  resultados: IndexEntry[];
+  recientes: IndexEntry[];
   candidatos: readonly CandidatoDelRecibo[];
-  elegida: EntradaDelIndice | undefined;
+  elegida: IndexEntry | undefined;
   puedeCrear: boolean;
   creando: boolean;
-  onElegir: (e: EntradaDelIndice | undefined) => void;
+  onElegir: (e: IndexEntry | undefined) => void;
   onElegirCandidato: (c: CandidatoDelRecibo) => void;
   onPedirCategoria: () => void;
 }
@@ -167,12 +167,12 @@ function CrearConcepto({
 }
 
 /** Nombre y camino. Una categoría se marca para que no se confunda con un concepto. */
-function Fila({ entrada }: { entrada: EntradaDelIndice }) {
+function Fila({ entrada }: { entrada: IndexEntry }) {
   return (
     <span className="flex min-w-0 items-baseline gap-2">
       <span className="truncate">{entrada.nombre}</span>
       {entrada.ruta.length > 0 && (
-        <span className="truncate text-xs text-muted-foreground">{rutaLegible(entrada)}</span>
+        <span className="truncate text-xs text-muted-foreground">{readablePath(entrada)}</span>
       )}
       {entrada.nivel === 'categoria' && (
         <span className="ml-auto shrink-0 text-xs text-muted-foreground">

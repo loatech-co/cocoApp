@@ -1,4 +1,4 @@
-import type { EntradaDelIndice } from '@coco/lectura';
+import type { IndexEntry } from '@coco/receipt-parser';
 
 /**
  * Los conceptos que alguien usó últimamente, para el buscador en blanco.
@@ -10,7 +10,7 @@ import type { EntradaDelIndice } from '@coco/lectura';
  */
 export function conceptosRecientes(
   movimientos: readonly { categoryId: number | null }[] | undefined | null,
-  indice: readonly EntradaDelIndice[],
+  indice: readonly IndexEntry[],
   maximo = 5,
 ): number[] {
   // Si la respuesta no es una lista —una API vieja, un error envuelto— no hay

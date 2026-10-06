@@ -1,4 +1,4 @@
-import { normalizar } from './firmas';
+import { normalize } from './signatures';
 
 /**
  * Buscar en el árbol de categorías de una persona.
@@ -22,19 +22,19 @@ import { normalizar } from './firmas';
  */
 
 /** Lo mínimo que un nodo del árbol necesita para poder buscarse. */
-export interface NodoBuscable {
+export interface SearchableNode {
   id: number | string;
   name: string;
   palabras_clave?: readonly string[];
-  children?: readonly NodoBuscable[];
+  children?: readonly SearchableNode[];
 }
 
-export type NivelDelArbol = 'centro' | 'categoria' | 'concepto';
+export type TreeLevel = 'centro' | 'categoria' | 'concepto';
 
 /** Un nodo del árbol, aplanado y listo para comparar. */
-export interface EntradaDelIndice {
+export interface IndexEntry {
   id: number | string;
-  nivel: NivelDelArbol;
+  nivel: TreeLevel;
   nombre: string;
   /**
    * De dónde cuelga, del más cercano al más lejano: para un concepto,
@@ -51,42 +51,48 @@ export interface EntradaDelIndice {
 }
 
 /** Aplana el árbol. Se hace una vez por árbol, no una vez por búsqueda. */
-export function indexarArbol(raices: readonly NodoBuscable[]): EntradaDelIndice[] {
-  const entradas: EntradaDelIndice[] = [];
+export function indexTree(roots: readonly SearchableNode[]): IndexEntry[] {
+  const entries: IndexEntry[] = [];
 
-  for (const centro of raices) {
-    entradas.push(entrada(centro, 'centro', [], centro.id));
-    for (const categoria of centro.children ?? []) {
-      entradas.push(entrada(categoria, 'categoria', [centro.name], centro.id));
-      for (const concepto of categoria.children ?? []) {
-        entradas.push(
-          entrada(concepto, 'concepto', [categoria.name, centro.name], centro.id, categoria.id),
+  for (const costCenter of roots) {
+    entries.push(toEntry(costCenter, 'centro', [], costCenter.id));
+    for (const category of costCenter.children ?? []) {
+      entries.push(toEntry(category, 'categoria', [costCenter.name], costCenter.id));
+      for (const concept of category.children ?? []) {
+        entries.push(
+          toEntry(
+            concept,
+            'concepto',
+            [category.name, costCenter.name],
+            costCenter.id,
+            category.id,
+          ),
         );
       }
     }
   }
 
-  return entradas;
+  return entries;
 }
 
-function entrada(
-  nodo: NodoBuscable,
-  nivel: NivelDelArbol,
-  ruta: readonly string[],
-  centroId: number | string,
-  categoriaId?: number | string,
-): EntradaDelIndice {
-  const palabrasClave = nodo.palabras_clave ?? [];
+function toEntry(
+  node: SearchableNode,
+  level: TreeLevel,
+  path: readonly string[],
+  costCenterId: number | string,
+  categoryId?: number | string,
+): IndexEntry {
+  const keywords = node.palabras_clave ?? [];
   return {
-    id: nodo.id,
-    nivel,
-    nombre: nodo.name,
-    ruta,
-    centroId,
-    categoriaId,
-    palabrasClave,
-    nombreNormalizado: normalizar(nodo.name),
-    palabrasNormalizadas: palabrasClave.map(normalizar),
+    id: node.id,
+    nivel: level,
+    nombre: node.name,
+    ruta: path,
+    centroId: costCenterId,
+    categoriaId: categoryId,
+    palabrasClave: keywords,
+    nombreNormalizado: normalize(node.name),
+    palabrasNormalizadas: keywords.map(normalize),
   };
 }
 
@@ -98,18 +104,18 @@ function entrada(
  * «mercado» tiene que poner «Mercado» antes que «Supermercado», y los dos
  * antes que un concepto que tenga «mercado» como palabra clave.
  */
-function puntuar(e: EntradaDelIndice, tokens: readonly string[]): number {
+function scoreOf(e: IndexEntry, tokens: readonly string[]): number {
   let total = 0;
   for (const token of tokens) {
-    let mejor = 0;
-    if (e.nombreNormalizado === token) mejor = 4;
-    else if (e.nombreNormalizado.startsWith(token)) mejor = 3;
-    else if (e.nombreNormalizado.includes(token)) mejor = 2;
-    else if (e.palabrasNormalizadas.some((p) => p === token || p.includes(token))) mejor = 1;
+    let best = 0;
+    if (e.nombreNormalizado === token) best = 4;
+    else if (e.nombreNormalizado.startsWith(token)) best = 3;
+    else if (e.nombreNormalizado.includes(token)) best = 2;
+    else if (e.palabrasNormalizadas.some((p) => p === token || p.includes(token))) best = 1;
     // Todos los tokens tienen que encontrarse en algún sitio: «mercado d1» no
     // debe traer todo lo que diga «mercado» aunque no sepa nada de «d1».
-    if (mejor === 0) return 0;
-    total += mejor;
+    if (best === 0) return 0;
+    total += best;
   }
   return total;
 }
@@ -118,55 +124,55 @@ function puntuar(e: EntradaDelIndice, tokens: readonly string[]): number {
  * Busca lo escrito en el índice. Vacío devuelve vacío: lo que se enseña con
  * el buscador en blanco —los recientes— lo decide quien llama.
  */
-export function buscarEnArbol(
-  indice: readonly EntradaDelIndice[],
-  consulta: string,
-  opciones: { niveles?: readonly NivelDelArbol[]; limite?: number } = {},
-): EntradaDelIndice[] {
-  const tokens = normalizar(consulta).split(' ').filter(Boolean);
+export function searchInTree(
+  index: readonly IndexEntry[],
+  query: string,
+  options: { niveles?: readonly TreeLevel[]; limite?: number } = {},
+): IndexEntry[] {
+  const tokens = normalize(query).split(' ').filter(Boolean);
   if (tokens.length === 0) return [];
 
   // Conceptos y categorías por defecto. Un centro de costos solo no clasifica
   // nada: elegirlo dejaría el movimiento igual de sin clasificar.
-  const niveles = new Set(opciones.niveles ?? ['concepto', 'categoria']);
-  const PESO_DEL_NIVEL: Record<NivelDelArbol, number> = { concepto: 2, categoria: 1, centro: 0 };
+  const levels = new Set(options.niveles ?? ['concepto', 'categoria']);
+  const LEVEL_WEIGHT: Record<TreeLevel, number> = { concepto: 2, categoria: 1, centro: 0 };
 
-  return indice
-    .filter((e) => niveles.has(e.nivel))
-    .map((e) => ({ e, puntos: puntuar(e, tokens) }))
+  return index
+    .filter((e) => levels.has(e.nivel))
+    .map((e) => ({ e, puntos: scoreOf(e, tokens) }))
     .filter(({ puntos }) => puntos > 0)
     .sort(
       (a, b) =>
         b.puntos - a.puntos ||
         // A igual parecido, el concepto antes que la categoría: es lo que
         // clasifica del todo.
-        PESO_DEL_NIVEL[b.e.nivel] - PESO_DEL_NIVEL[a.e.nivel] ||
+        LEVEL_WEIGHT[b.e.nivel] - LEVEL_WEIGHT[a.e.nivel] ||
         a.e.nombre.localeCompare(b.e.nombre, 'es'),
     )
-    .slice(0, opciones.limite ?? 20)
+    .slice(0, options.limite ?? 20)
     .map(({ e }) => e);
 }
 
 /** El camino de una entrada tal como se enseña: «Familia › Costos fijos». */
-export function rutaLegible(e: EntradaDelIndice): string {
+export function readablePath(e: IndexEntry): string {
   return e.ruta.join(' › ');
 }
 
 // ── Resolver términos genéricos: lo que usa el diccionario ───────────────────
 
-export type Certeza = 'alta' | 'media' | 'ninguna';
+export type ClassificationCertainty = 'alta' | 'media' | 'ninguna';
 
-export interface Resolucion {
-  certeza: Certeza;
+export interface Resolution {
+  certeza: ClassificationCertainty;
   /** Solo con certeza alta: el único concepto al que llevan los términos. */
-  concepto?: EntradaDelIndice | undefined;
+  concepto?: IndexEntry | undefined;
   /**
    * Con certeza media: la categoría que se propone, si los términos llevan a
    * una sola. Varios conceptos de categorías distintas no proponen ninguna.
    */
-  categoria?: EntradaDelIndice | undefined;
+  categoria?: IndexEntry | undefined;
   /** Con certeza media: entre qué se está dudando, para dejarlo a la vista. */
-  candidatos: EntradaDelIndice[];
+  candidatos: IndexEntry[];
 }
 
 /**
@@ -183,43 +189,38 @@ export interface Resolucion {
  * conceptos distintos de la misma cuenta, y elegir uno sería mover plata a un
  * sitio que nadie pidió.
  */
-export function resolverTerminos(
-  indice: readonly EntradaDelIndice[],
-  terminos: readonly string[],
-): Resolucion {
-  const conceptos = new Map<string, EntradaDelIndice>();
-  const categorias = new Map<string, EntradaDelIndice>();
+export function resolveTerms(index: readonly IndexEntry[], terms: readonly string[]): Resolution {
+  const concepts = new Map<string, IndexEntry>();
+  const categories = new Map<string, IndexEntry>();
 
-  for (const termino of terminos) {
-    for (const hallada of buscarEnArbol(indice, termino)) {
-      const clave = String(hallada.id);
-      if (hallada.nivel === 'concepto') conceptos.set(clave, hallada);
-      else if (hallada.nivel === 'categoria') categorias.set(clave, hallada);
+  for (const term of terms) {
+    for (const match of searchInTree(index, term)) {
+      const key = String(match.id);
+      if (match.nivel === 'concepto') concepts.set(key, match);
+      else if (match.nivel === 'categoria') categories.set(key, match);
     }
   }
 
-  if (conceptos.size === 1) {
-    return { certeza: 'alta', concepto: [...conceptos.values()][0], candidatos: [] };
+  if (concepts.size === 1) {
+    return { certeza: 'alta', concepto: [...concepts.values()][0], candidatos: [] };
   }
 
-  if (conceptos.size > 1) {
-    const candidatos = [...conceptos.values()];
-    const categoriasDeLosCandidatos = new Set(candidatos.map((c) => String(c.categoriaId)));
-    const categoria =
-      categoriasDeLosCandidatos.size === 1
-        ? indice.find(
-            (e) => e.nivel === 'categoria' && String(e.id) === [...categoriasDeLosCandidatos][0],
-          )
+  if (concepts.size > 1) {
+    const candidates = [...concepts.values()];
+    const candidateCategories = new Set(candidates.map((c) => String(c.categoriaId)));
+    const category =
+      candidateCategories.size === 1
+        ? index.find((e) => e.nivel === 'categoria' && String(e.id) === [...candidateCategories][0])
         : undefined;
-    return { certeza: 'media', categoria, candidatos };
+    return { certeza: 'media', categoria: category, candidatos: candidates };
   }
 
-  if (categorias.size >= 1) {
-    const candidatas = [...categorias.values()];
+  if (categories.size >= 1) {
+    const matchedCategories = [...categories.values()];
     return {
       certeza: 'media',
-      categoria: candidatas.length === 1 ? candidatas[0] : undefined,
-      candidatos: candidatas,
+      categoria: matchedCategories.length === 1 ? matchedCategories[0] : undefined,
+      candidatos: matchedCategories,
     };
   }
 

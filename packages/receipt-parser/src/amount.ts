@@ -1,4 +1,4 @@
-import { normalizar } from './firmas';
+import { normalize } from './signatures';
 
 /**
  * Cuánto se pagó, sacado de un recibo.
@@ -17,7 +17,7 @@ import { normalizar } from './firmas';
  */
 
 /** Las líneas donde de verdad está lo que se pagó, de más a menos fiable. */
-const LINEAS_DE_TOTAL: { patron: RegExp; puntos: number }[] = [
+const TOTAL_LINES: { patron: RegExp; puntos: number }[] = [
   { patron: /valor\s+a\s+pagar/i, puntos: 10 },
   { patron: /total\s+a\s+pagar/i, puntos: 10 },
   { patron: /total\s+pagado/i, puntos: 10 },
@@ -37,7 +37,7 @@ const LINEAS_DE_TOTAL: { patron: RegExp; puntos: number }[] = [
  * cotización —varios millones— y no se paga. Está en la misma página que el
  * valor a pagar y suele ser mayor.
  */
-const DELATORES: { patron: RegExp; puntos: number }[] = [
+const RED_FLAGS: { patron: RegExp; puntos: number }[] = [
   { patron: /\bibc\b/i, puntos: -20 },
   { patron: /ingreso\s+base/i, puntos: -20 },
   { patron: /\bnit\b/i, puntos: -15 },
@@ -56,7 +56,7 @@ const DELATORES: { patron: RegExp; puntos: number }[] = [
 ];
 
 /** Un número tal como puede aparecer escrito: con miles, decimales o peso. */
-const CANDIDATO =
+const CANDIDATE =
   /\$?\s?\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?|\$\s?\d+(?:[.,]\d{1,2})?|\b\d{4,9}\b/g;
 
 /**
@@ -70,7 +70,7 @@ const CANDIDATO =
 const IPV4 =
   /\b(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/;
 
-export interface MontoCandidato {
+export interface AmountCandidate {
   valor: number;
   puntaje: number;
   linea: string;
@@ -86,33 +86,33 @@ export interface MontoCandidato {
  * cuarenta y cinco mil novecientos pesos, y confundirlo con 45,90 deja el año
  * mil veces mal con una cifra que se ve plausible.
  */
-export function aNumero(texto: string): number | null {
-  const limpio = texto.replace(/[$\s]/g, '');
-  if (!/^\d[\d.,]*$/.test(limpio)) return null;
+export function toNumber(text: string): number | null {
+  const clean = text.replace(/[$\s]/g, '');
+  if (!/^\d[\d.,]*$/.test(clean)) return null;
 
-  const puntos = (limpio.match(/\./g) ?? []).length;
-  const comas = (limpio.match(/,/g) ?? []).length;
-  let entero = limpio;
-  let decimales = '';
+  const dots = (clean.match(/\./g) ?? []).length;
+  const commas = (clean.match(/,/g) ?? []).length;
+  let integer = clean;
+  let decimals = '';
 
-  if (puntos > 0 && comas > 0) {
-    const decimal = limpio.lastIndexOf('.') > limpio.lastIndexOf(',') ? '.' : ',';
-    const corte = limpio.lastIndexOf(decimal);
-    entero = limpio.slice(0, corte);
-    decimales = limpio.slice(corte + 1);
-  } else if (puntos === 1 || comas === 1) {
-    const separador = puntos === 1 ? '.' : ',';
+  if (dots > 0 && commas > 0) {
+    const decimal = clean.lastIndexOf('.') > clean.lastIndexOf(',') ? '.' : ',';
+    const cut = clean.lastIndexOf(decimal);
+    integer = clean.slice(0, cut);
+    decimals = clean.slice(cut + 1);
+  } else if (dots === 1 || commas === 1) {
+    const separator = dots === 1 ? '.' : ',';
     // Hay exactamente un separador, así que siempre salen dos partes.
-    const [izquierda = '', derecha = ''] = limpio.split(separador);
-    if (derecha.length === 3) entero = izquierda + derecha;
+    const [left = '', right = ''] = clean.split(separator);
+    if (right.length === 3) integer = left + right;
     else {
-      entero = izquierda;
-      decimales = derecha;
+      integer = left;
+      decimals = right;
     }
   }
 
-  const numero = Number(`${entero.replace(/[.,]/g, '')}.${decimales || '0'}`);
-  return Number.isFinite(numero) ? numero : null;
+  const parsed = Number(`${integer.replace(/[.,]/g, '')}.${decimals || '0'}`);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 /**
@@ -122,67 +122,72 @@ export function aNumero(texto: string): number | null {
  * es el IBC y el que se paga está en el resumen. Sin esa distinción, todas las
  * planillas salen con la base de cotización en vez de con el aporte.
  */
-export function leerMonto(
-  texto: string,
-  opciones: { esPlanilla?: boolean; rango?: { min: number; max: number } | undefined } = {},
-): MontoCandidato | null {
-  const candidatos: MontoCandidato[] = [];
+export function readAmount(
+  text: string,
+  options: { esPlanilla?: boolean; rango?: { min: number; max: number } | undefined } = {},
+): AmountCandidate | null {
+  const candidates: AmountCandidate[] = [];
 
-  for (const cruda of texto.split(/\r?\n/)) {
-    const linea = cruda.trim();
-    if (linea === '') continue;
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (line === '') continue;
 
     // Si la línea ES una IP, no hay nada que sacar de ella.
-    const sinIp = linea.replace(IPV4, ' ');
-    const normal = normalizar(linea);
+    const withoutIp = line.replace(IPV4, ' ');
+    const normal = normalize(line);
 
-    let contexto = 0;
-    let deTotal = false;
-    for (const { patron, puntos } of LINEAS_DE_TOTAL) {
-      if (patron.test(linea)) {
-        contexto = Math.max(contexto, puntos);
-        deTotal = true;
+    let context = 0;
+    let isTotalLine = false;
+    for (const { patron: pattern, puntos: points } of TOTAL_LINES) {
+      if (pattern.test(line)) {
+        context = Math.max(context, points);
+        isTotalLine = true;
         break;
       }
     }
-    for (const { patron, puntos } of DELATORES) {
-      if (patron.test(linea)) contexto += puntos;
+    for (const { patron: pattern, puntos: points } of RED_FLAGS) {
+      if (pattern.test(line)) context += points;
     }
 
     // En una planilla, el IBC pesa tanto que conviene decirlo aparte.
-    if (opciones.esPlanilla && /\bibc\b|ingreso\s+base/i.test(linea)) continue;
+    if (options.esPlanilla && /\bibc\b|ingreso\s+base/i.test(line)) continue;
 
-    for (const bruto of sinIp.match(CANDIDATO) ?? []) {
-      const valor = aNumero(bruto);
-      if (valor === null || valor <= 0) continue;
+    for (const raw of withoutIp.match(CANDIDATE) ?? []) {
+      const value = toNumber(raw);
+      if (value === null || value <= 0) continue;
 
-      let puntaje = contexto;
+      let score = context;
 
       // Formato de dinero: separador de miles o peso delante. Un número
       // pelado de seis cifras puede ser un monto o un número de factura; uno
       // escrito `1.526.000` ya eligió ser dinero.
-      if (/[.,]\d{3}/.test(bruto)) puntaje += 5;
-      if (bruto.includes('$')) puntaje += 4;
+      if (/[.,]\d{3}/.test(raw)) score += 5;
+      if (raw.includes('$')) score += 4;
       // Nadie paga 43 pesos, y un recibo de casa no llega a mil millones.
-      if (valor < 1000) puntaje -= 6;
-      if (valor > 50_000_000) puntaje -= 10;
+      if (value < 1000) score -= 6;
+      if (value > 50_000_000) score -= 10;
       // Un año suelto no es plata.
-      if (/^\d{4}$/.test(bruto) && valor >= 1900 && valor <= 2100) puntaje -= 12;
+      if (/^\d{4}$/.test(raw) && value >= 1900 && value <= 2100) score -= 12;
       // Una hora tampoco.
-      if (/\d{1,2}:\d{2}/.test(linea) && valor < 10_000) puntaje -= 4;
+      if (/\d{1,2}:\d{2}/.test(line) && value < 10_000) score -= 4;
       // Y si cae en el rango que este acreedor suele cobrar, es buena señal.
-      if (opciones.rango && valor >= opciones.rango.min && valor <= opciones.rango.max) {
-        puntaje += 3;
+      if (options.rango && value >= options.rango.min && value <= options.rango.max) {
+        score += 3;
       }
 
-      candidatos.push({ valor, puntaje, linea: normal.slice(0, 80), deLineaDeTotal: deTotal });
+      candidates.push({
+        valor: value,
+        puntaje: score,
+        linea: normal.slice(0, 80),
+        deLineaDeTotal: isTotalLine,
+      });
     }
   }
 
-  if (candidatos.length === 0) return null;
+  if (candidates.length === 0) return null;
 
   // Puntaje primero; el tamaño solo desempata. Al revés, un número de factura
   // de nueve cifras le gana a un total de seis.
-  candidatos.sort((a, b) => b.puntaje - a.puntaje || b.valor - a.valor);
-  return candidatos[0] ?? null;
+  candidates.sort((a, b) => b.puntaje - a.puntaje || b.valor - a.valor);
+  return candidates[0] ?? null;
 }

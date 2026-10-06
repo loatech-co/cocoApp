@@ -1,9 +1,9 @@
-import { clasificar, necesitaRevision, UMBRAL_DE_REVISION, type Lectura } from './clasificar';
-import { firmasDeConceptos, firmasDelArbol, type Firma } from './firmas';
+import { classify, needsReview, REVIEW_THRESHOLD, type Reading } from './classify';
+import { conceptSignatures, treeSignatures, type Signature } from './signatures';
 import { makeConceptWithWords, makeTree } from './testing/factories';
 
 /** A catalogue signature, owned by the test so the shipped catalogue can change freely. */
-function makeSignature(overrides: Partial<Firma> = {}): Firma {
+function makeSignature(overrides: Partial<Signature> = {}): Signature {
   return {
     concepto: 'Energía',
     categoria: 'Servicios públicos',
@@ -15,7 +15,7 @@ function makeSignature(overrides: Partial<Firma> = {}): Firma {
 
 describe('clasificar', () => {
   it('recognises the creditor by NIT, alias and file name, and explains it', () => {
-    const lectura = clasificar({
+    const reading = classify({
       texto: 'ENEL Colombia NIT 860.063.875-8\nPagado en Bancolombia\nTotal a pagar $ 152.300',
       fuente: 'texto-embebido',
       nombreDeArchivo: 'FACT-enel-marzo.pdf',
@@ -30,18 +30,18 @@ describe('clasificar', () => {
       ],
     });
 
-    expect(lectura).toMatchObject({ concepto: 'Energía', valor: 152300, fecha: '2026-03-15' });
-    expect(lectura.señales).toEqual({
+    expect(reading).toMatchObject({ concepto: 'Energía', valor: 152300, fecha: '2026-03-15' });
+    expect(reading.señales).toEqual({
       texto: ['enel'],
       nombre: ['enel', 'FACT'],
       nit: ['8600638758'],
       recaudadoresIgnorados: ['bancolombia'],
     });
-    expect(lectura.motivo).toBe(
+    expect(reading.motivo).toBe(
       'Energía por NIT 8600638758 + “enel” en el texto + “enel”, “FACT” en el nombre ' +
         '(texto-embebido). Ignoré bancolombia por ser recaudador.',
     );
-    expect(lectura.enElArbol).toBeNull();
+    expect(reading.enElArbol).toBeNull();
   });
 
   it('lowers confidence for OCR, a close runner-up and a value out of range', () => {
@@ -49,27 +49,27 @@ describe('clasificar', () => {
       texto: 'enel\nTotal 152.300',
       firmas: [makeSignature()],
     };
-    const limpia = clasificar({ ...base, fuente: 'texto-embebido' });
-    const ocr = clasificar({ ...base, fuente: 'ocr' });
-    const empatada = clasificar({
+    const clean = classify({ ...base, fuente: 'texto-embebido' });
+    const ocr = classify({ ...base, fuente: 'ocr' });
+    const tied = classify({
       ...base,
       fuente: 'texto-embebido',
       firmas: [makeSignature(), makeSignature({ concepto: 'Otra' })],
     });
-    const fueraDeRango = clasificar({
+    const outOfRange = classify({
       ...base,
       fuente: 'texto-embebido',
       firmas: [makeSignature({ rango: { min: 1, max: 10 } })],
     });
 
-    expect(ocr.confianza).toBeLessThan(limpia.confianza);
-    expect(empatada.confianza).toBeLessThan(limpia.confianza);
-    expect(empatada.alternativas).toEqual([{ concepto: 'Otra', puntaje: 30 }]);
-    expect(fueraDeRango.confianza).toBeLessThan(limpia.confianza);
+    expect(ocr.confianza).toBeLessThan(clean.confianza);
+    expect(tied.confianza).toBeLessThan(clean.confianza);
+    expect(tied.alternativas).toEqual([{ concepto: 'Otra', puntaje: 30 }]);
+    expect(outOfRange.confianza).toBeLessThan(clean.confianza);
   });
 
   it('lets the higher priority win even with fewer points', () => {
-    const lectura = clasificar({
+    const reading = classify({
       texto: 'enel 860063875 planilla',
       fuente: 'texto-embebido',
       firmas: [
@@ -77,39 +77,39 @@ describe('clasificar', () => {
         makeSignature({ concepto: 'Prioritaria', alias: ['planilla'], prioridad: 9 }),
       ],
     });
-    expect(lectura.concepto).toBe('Prioritaria');
-    expect(lectura.motivo).toContain('“planilla” en el texto');
+    expect(reading.concepto).toBe('Prioritaria');
+    expect(reading.motivo).toContain('“planilla” en el texto');
   });
 
   it('discards a signature whose exclusion appears in the text', () => {
-    const lectura = clasificar({
+    const reading = classify({
       texto: 'enel solar',
       fuente: 'texto-embebido',
       firmas: [makeSignature({ excluye: ['solar'] })],
     });
-    expect(lectura.concepto).toBeNull();
-    expect(lectura.motivo).toMatch(/no reconocí al acreedor/i);
-    expect(lectura.confianza).toBeLessThanOrEqual(0.35);
+    expect(reading.concepto).toBeNull();
+    expect(reading.motivo).toMatch(/no reconocí al acreedor/i);
+    expect(reading.confianza).toBeLessThanOrEqual(0.35);
   });
 
   it('skips the IBC line when the winner is the payroll form', () => {
-    const lectura = clasificar({
+    const reading = classify({
       texto: 'Planilla PILA\nIBC 1.300.000\nTotal pagado 520.000',
       fuente: 'texto-embebido',
     });
-    expect(lectura.concepto).toBe('PILA / Seguridad Social');
-    expect(lectura.valor).toBe(520000);
+    expect(reading.concepto).toBe('PILA / Seguridad Social');
+    expect(reading.valor).toBe(520000);
   });
 
   it('places a written keyword in the tree as a keyword match', () => {
-    const arbol = makeTree();
-    const lectura = clasificar({
+    const tree = makeTree();
+    const reading = classify({
       texto: 'Factura ENEL total 80.000',
       fuente: 'ocr',
-      firmas: firmasDelArbol(arbol),
-      arbol,
+      firmas: treeSignatures(tree),
+      arbol: tree,
     });
-    expect(lectura.enElArbol).toEqual({
+    expect(reading.enElArbol).toEqual({
       certeza: 'alta',
       fuente: 'palabras-clave',
       conceptoId: 'luz',
@@ -119,39 +119,39 @@ describe('clasificar', () => {
   });
 
   it('marks a catalogue signature as such, even when the tree lacks the concept', () => {
-    const lectura = clasificar({
+    const reading = classify({
       texto: 'enel',
       fuente: 'ocr',
       firmas: [makeSignature({ concepto: 'Luz' })],
       arbol: makeTree(),
     });
-    expect(lectura.enElArbol).toMatchObject({ fuente: 'firma', conceptoId: undefined });
-    expect(lectura.motivo).toContain('(ocr)');
+    expect(reading.enElArbol).toMatchObject({ fuente: 'firma', conceptoId: undefined });
+    expect(reading.motivo).toContain('(ocr)');
   });
 
   describe('when no signature matches', () => {
-    const sinFirmas = { fuente: 'texto-embebido' as const, firmas: [] };
+    const withoutSignatures = { fuente: 'texto-embebido' as const, firmas: [] };
 
     it('resolves a known merchant to one concept of the tree', () => {
-      const lectura = clasificar({
-        ...sinFirmas,
+      const reading = classify({
+        ...withoutSignatures,
         texto: 'Compra Carulla\nTotal 45.000',
         arbol: makeTree(),
       });
-      expect(lectura).toMatchObject({
+      expect(reading).toMatchObject({
         concepto: 'Supermercado',
         categoria: 'Mercado',
         centro: 'Hogar',
         valor: 45000,
       });
-      expect(lectura.enElArbol).toMatchObject({ certeza: 'alta', fuente: 'diccionario' });
-      expect(lectura.motivo).toMatch(/un solo concepto/);
-      expect(lectura.confianza).toBeLessThanOrEqual(0.75);
+      expect(reading.enElArbol).toMatchObject({ certeza: 'alta', fuente: 'diccionario' });
+      expect(reading.motivo).toMatch(/un solo concepto/);
+      expect(reading.confianza).toBeLessThanOrEqual(0.75);
     });
 
     it('offers the candidates when the merchant leads to several places', () => {
-      const arbol = makeTree();
-      arbol[1] = {
+      const tree = makeTree();
+      tree[1] = {
         id: 'oficina',
         name: 'Oficina',
         children: [
@@ -162,31 +162,31 @@ describe('clasificar', () => {
           },
         ],
       };
-      const lectura = clasificar({ ...sinFirmas, texto: 'Carulla', arbol });
-      expect(lectura.concepto).toBeNull();
-      expect(lectura.enElArbol?.candidatos.map((c) => c.id)).toEqual(['super', 'super2']);
-      expect(lectura.motivo).toMatch(/lleva a 2 sitios/);
+      const reading = classify({ ...withoutSignatures, texto: 'Carulla', arbol: tree });
+      expect(reading.concepto).toBeNull();
+      expect(reading.enElArbol?.candidatos.map((c) => c.id)).toEqual(['super', 'super2']);
+      expect(reading.motivo).toMatch(/lleva a 2 sitios/);
     });
 
     it('stops at the category when the tree has no matching concept', () => {
-      const arbol = makeTree();
-      arbol[0]!.children = [{ id: 'mercado', name: 'Mercado', children: [] }];
-      const lectura = clasificar({ ...sinFirmas, texto: 'Carulla', arbol });
-      expect(lectura).toMatchObject({ concepto: null, categoria: 'Mercado', centro: 'Hogar' });
-      expect(lectura.motivo).toMatch(/una categoría, sin concepto/);
+      const tree = makeTree();
+      tree[0]!.children = [{ id: 'mercado', name: 'Mercado', children: [] }];
+      const reading = classify({ ...withoutSignatures, texto: 'Carulla', arbol: tree });
+      expect(reading).toMatchObject({ concepto: null, categoria: 'Mercado', centro: 'Hogar' });
+      expect(reading.motivo).toMatch(/una categoría, sin concepto/);
     });
 
     it('gives up when the merchant is unknown or the tree has nothing for it', () => {
-      const conArbol = clasificar({ ...sinFirmas, texto: 'zapateria', arbol: makeTree() });
-      const sinComercioEnElArbol = clasificar({
-        ...sinFirmas,
+      const withTree = classify({ ...withoutSignatures, texto: 'zapateria', arbol: makeTree() });
+      const merchantNotInTree = classify({
+        ...withoutSignatures,
         texto: 'Carulla',
         arbol: [{ id: 'x', name: 'Viajes' }],
       });
-      const sinArbol = clasificar({ ...sinFirmas, texto: 'Carulla' });
-      for (const lectura of [conArbol, sinComercioEnElArbol, sinArbol]) {
-        expect(lectura.concepto).toBeNull();
-        expect(lectura.enElArbol).toBeNull();
+      const withoutTree = classify({ ...withoutSignatures, texto: 'Carulla' });
+      for (const reading of [withTree, merchantNotInTree, withoutTree]) {
+        expect(reading.concepto).toBeNull();
+        expect(reading.enElArbol).toBeNull();
       }
     });
   });
@@ -194,11 +194,11 @@ describe('clasificar', () => {
 
 describe('firmasDeConceptos', () => {
   it('turns written keywords into top-priority signatures and skips concepts without them', () => {
-    const firmas = firmasDeConceptos([
+    const signatures = conceptSignatures([
       makeConceptWithWords(),
       makeConceptWithWords({ concepto: 'Sin palabras', palabras: [] }),
     ]);
-    expect(firmas).toEqual([
+    expect(signatures).toEqual([
       {
         concepto: 'Energía',
         categoria: 'Servicios públicos',
@@ -212,13 +212,13 @@ describe('firmasDeConceptos', () => {
 });
 
 describe('necesitaRevision', () => {
-  const lectura = (overrides: Partial<Lectura>): Lectura => ({
+  const reading = (overrides: Partial<Reading>): Reading => ({
     concepto: 'Energía',
     categoria: 'Servicios públicos',
     centro: 'Hogar',
     valor: 1000,
     fecha: null,
-    confianza: UMBRAL_DE_REVISION,
+    confianza: REVIEW_THRESHOLD,
     señales: { texto: [], nombre: [], nit: [], recaudadoresIgnorados: [] },
     motivo: '',
     alternativas: [],
@@ -226,9 +226,9 @@ describe('necesitaRevision', () => {
   });
 
   it('asks for review below the threshold or with a missing concept or value', () => {
-    expect(necesitaRevision(lectura({}))).toBe(false);
-    expect(necesitaRevision(lectura({ confianza: 0.79 }))).toBe(true);
-    expect(necesitaRevision(lectura({ concepto: null }))).toBe(true);
-    expect(necesitaRevision(lectura({ valor: null }))).toBe(true);
+    expect(needsReview(reading({}))).toBe(false);
+    expect(needsReview(reading({ confianza: 0.79 }))).toBe(true);
+    expect(needsReview(reading({ concepto: null }))).toBe(true);
+    expect(needsReview(reading({ valor: null }))).toBe(true);
   });
 });

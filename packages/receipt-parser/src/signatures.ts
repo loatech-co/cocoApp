@@ -15,7 +15,7 @@
  * colombiana.
  */
 
-export interface Firma {
+export interface Signature {
   /** El concepto exacto, tal como existe en el árbol de categorías. */
   concepto: string;
   categoria: string;
@@ -59,7 +59,7 @@ export interface Firma {
  * clasificador que los tome por el destinatario acaba con la mitad del año en
  * "Bancolombia", que no es un gasto: es una tubería.
  */
-export const RECAUDADORES = [
+export const COLLECTORS = [
   'bancolombia',
   'bbva',
   'scotiabank',
@@ -88,7 +88,7 @@ export const RECAUDADORES = [
  * No se inventó: cada alias y cada exclusión está aquí porque un recibo real
  * lo necesitaba.
  */
-export const FIRMAS: Firma[] = [
+export const SIGNATURES: Signature[] = [
   // ── Servicios públicos ──────────────────────────────────────────────────
   {
     concepto: 'Aquaoccidente (Agua)',
@@ -256,10 +256,10 @@ export const FIRMAS: Firma[] = [
  * catálogo reconozca a otro acreedor con más señales, porque el catálogo son
  * mis suposiciones y esto es su cuenta.
  */
-export const PRIORIDAD_DE_LO_ESCRITO = 100;
+export const TYPED_TEXT_PRIORITY = 100;
 
 /** Un concepto del árbol de alguien, con lo que se busca para reconocerlo. */
-export interface ConceptoConPalabras {
+export interface ConceptWithWords {
   concepto: string;
   categoria: string;
   centro: string;
@@ -286,22 +286,22 @@ export interface ConceptoConPalabras {
  * Los conceptos sin palabras no producen firma: una firma sin señales no
  * coincide nunca y solo alarga el recorrido.
  */
-export function firmasDeConceptos(conceptos: readonly ConceptoConPalabras[]): Firma[] {
-  return conceptos
-    .filter((concepto) => concepto.palabras.length > 0)
-    .map((concepto) => ({
-      concepto: concepto.concepto,
-      categoria: concepto.categoria,
-      centro: concepto.centro,
-      alias: [...concepto.palabras],
-      tokensDeNombre: [...concepto.palabras],
-      prioridad: PRIORIDAD_DE_LO_ESCRITO,
+export function conceptSignatures(concepts: readonly ConceptWithWords[]): Signature[] {
+  return concepts
+    .filter((concept) => concept.palabras.length > 0)
+    .map((concept) => ({
+      concepto: concept.concepto,
+      categoria: concept.categoria,
+      centro: concept.centro,
+      alias: [...concept.palabras],
+      tokensDeNombre: [...concept.palabras],
+      prioridad: TYPED_TEXT_PRIORITY,
     }));
 }
 
 /** Sin tildes, en minúscula y con los espacios normalizados. */
-export function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+export function normalize(text: string): string {
+  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -316,8 +316,8 @@ export function normalizar(texto: string): string {
  * Toma la forma mínima de un nodo para no depender del tipo de nadie: el árbol
  * del frontend y el que la API arma desde Prisma encajan los dos.
  */
-export function conceptosConPalabrasDelArbol(
-  raices: readonly {
+export function treeConceptsWithWords(
+  roots: readonly {
     name: string;
     palabras_clave?: readonly string[];
     children?: readonly {
@@ -326,22 +326,20 @@ export function conceptosConPalabrasDelArbol(
       children?: readonly { name: string; palabras_clave?: readonly string[] }[];
     }[];
   }[],
-): ConceptoConPalabras[] {
-  return raices.flatMap((centro) =>
-    (centro.children ?? []).flatMap((categoria) =>
-      (categoria.children ?? []).map((concepto) => ({
-        concepto: concepto.name,
-        categoria: categoria.name,
-        centro: centro.name,
-        palabras: concepto.palabras_clave ?? [],
+): ConceptWithWords[] {
+  return roots.flatMap((costCenter) =>
+    (costCenter.children ?? []).flatMap((category) =>
+      (category.children ?? []).map((concept) => ({
+        concepto: concept.name,
+        categoria: category.name,
+        centro: costCenter.name,
+        palabras: concept.palabras_clave ?? [],
       })),
     ),
   );
 }
 
 /** Las firmas que salen de las palabras clave de un árbol. */
-export function firmasDelArbol(
-  raices: Parameters<typeof conceptosConPalabrasDelArbol>[0],
-): Firma[] {
-  return firmasDeConceptos(conceptosConPalabrasDelArbol(raices));
+export function treeSignatures(roots: Parameters<typeof treeConceptsWithWords>[0]): Signature[] {
+  return conceptSignatures(treeConceptsWithWords(roots));
 }

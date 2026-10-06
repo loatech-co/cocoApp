@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { type CategoryTree } from '@/shared/api/categories';
-import { clasificar, FIRMAS } from '@coco/lectura';
+import { classify, SIGNATURES } from '@coco/receipt-parser';
 
 import {
   conceptoQueYaLaUsa,
@@ -84,7 +84,7 @@ describe('Una palabra en dos conceptos se avisa, no se prohíbe', () => {
 
 describe('Las palabras clave clasifican un soporte', () => {
   /** Como lo arma `leerSoporte`: lo escrito delante, el catálogo detrás. */
-  const conElArbol = (arbol: CategoryTree[]) => [...firmasDelArbol(arbol), ...FIRMAS];
+  const conElArbol = (arbol: CategoryTree[]) => [...firmasDelArbol(arbol), ...SIGNATURES];
 
   it('un concepto sin palabras no produce firma', () => {
     expect(firmasDelArbol(arbolCon(concepto(1, 'Energía')))).toEqual([]);
@@ -93,7 +93,7 @@ describe('Las palabras clave clasifican un soporte', () => {
   it('reconoce un acreedor que el catálogo no conoce', () => {
     const arbol = arbolCon(concepto(1, 'Arriendo oficina', ['Inmobiliaria del Valle']));
 
-    const lectura = clasificar({
+    const lectura = classify({
       texto: 'INMOBILIARIA DEL VALLE S.A.S.\nCanon de arrendamiento\nTotal a pagar $1.200.000',
       fuente: 'texto-embebido',
       firmas: conElArbol(arbol),
@@ -106,7 +106,7 @@ describe('Las palabras clave clasifican un soporte', () => {
   it('lo encuentra también en el nombre del archivo, que es lo que queda de un escaneo malo', () => {
     const arbol = arbolCon(concepto(1, 'Colegio', ['Comfandi']));
 
-    const lectura = clasificar({
+    const lectura = classify({
       // El reconocimiento no sacó nada útil del papel.
       texto: 'recibo de caja  ****  ',
       fuente: 'ocr',
@@ -122,7 +122,7 @@ describe('Las palabras clave clasifican un soporte', () => {
     // esa misma palabra en SU concepto, manda el suyo.
     const arbol = arbolCon(concepto(1, 'Luz de la casa', ['Celsia']));
 
-    const lectura = clasificar({
+    const lectura = classify({
       texto: 'CELSIA S.A. E.S.P.\nFactura de energía\nTotal a pagar $180.000',
       fuente: 'texto-embebido',
       firmas: conElArbol(arbol),
@@ -135,7 +135,7 @@ describe('Las palabras clave clasifican un soporte', () => {
   });
 
   it('sin palabras clave, el catálogo sigue mandando', () => {
-    const lectura = clasificar({
+    const lectura = classify({
       texto: 'CELSIA S.A. E.S.P.\nFactura de energía\nTotal a pagar $180.000',
       fuente: 'texto-embebido',
       firmas: conElArbol(arbolCon(concepto(1, 'Energía'))),

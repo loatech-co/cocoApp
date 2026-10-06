@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type { NodoBuscable } from '@coco/lectura';
+import type { SearchableNode } from '@coco/receipt-parser';
 
 import {
   ORIGENES_QUE_SE_DUPLICAN,
@@ -264,14 +264,14 @@ export class InterpretacionService {
    * Archivado quiere decir «esto ya no vuelve»: proponerlo sería clasificar
    * un gasto de hoy en el gimnasio que se dio de baja.
    */
-  private async arbolDe(userId: bigint): Promise<NodoBuscable[]> {
+  private async arbolDe(userId: bigint): Promise<SearchableNode[]> {
     const filas = await this.categories.findSearchable(userId);
     const aNodo = (f: {
       id: bigint;
       name: string;
       palabrasClave: string[];
       children: unknown[];
-    }): NodoBuscable => ({
+    }): SearchableNode => ({
       id: f.id.toString(),
       name: f.name,
       palabras_clave: f.palabrasClave,

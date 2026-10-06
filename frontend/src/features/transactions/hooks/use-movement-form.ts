@@ -18,7 +18,7 @@ import {
   type TransactionType,
 } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import type { Lectura } from '@coco/lectura';
+import type { Reading } from '@coco/receipt-parser';
 
 /** Con qué se abre la ficha. Cambiar cualquiera de estos la vuelve a llenar. */
 export interface SheetOpening {
@@ -174,7 +174,7 @@ function useSheetStatus(apertura: SheetOpening, descartes: number) {
 function useSheetSupports(apertura: SheetOpening, descartes: number) {
   const { abierta, movimiento, pago, tipoPorDefecto } = apertura;
   const [progresoDeLectura, setProgresoDeLectura] = useState<ProgresoDeLectura | null>(null);
-  const [lectura, setLectura] = useState<Lectura | null>(null);
+  const [lectura, setLectura] = useState<Reading | null>(null);
   /**
    * Lo que NO se pudo leer, para decirlo.
    *

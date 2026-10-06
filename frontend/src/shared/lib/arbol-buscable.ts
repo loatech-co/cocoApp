@@ -1,4 +1,4 @@
-import type { NodoBuscable } from '@coco/lectura';
+import type { SearchableNode } from '@coco/receipt-parser';
 
 /** A node of the category tree as the web holds it: the API's shape (v2). */
 export interface NodoDelArbol {
@@ -9,7 +9,7 @@ export interface NodoDelArbol {
 }
 
 /**
- * The tree in the shape `@coco/lectura` searches.
+ * The tree in the shape `@coco/receipt-parser` searches.
  *
  * The API says `keywords` (v2); the package, shared with the API's own
  * classifier, still says `palabras_clave`. Without this step the keywords
@@ -17,7 +17,7 @@ export interface NodoDelArbol {
  * and a concept would stop being found by its own words without anyone
  * noticing.
  */
-export function comoNodosBuscables(arbol: readonly NodoDelArbol[]): NodoBuscable[] {
+export function comoNodosBuscables(arbol: readonly NodoDelArbol[]): SearchableNode[] {
   return arbol.map(({ id, name, keywords, children }) => ({
     id,
     name,

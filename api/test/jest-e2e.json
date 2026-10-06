@@ -10,7 +10,7 @@
   "testTimeout": 30000,
   "transformIgnorePatterns": ["/node_modules/(?!jose)"],
   "moduleNameMapper": {
-    "^@coco/lectura$": "<rootDir>/../../packages/lectura/src/index.ts",
+    "^@coco/receipt-parser$": "<rootDir>/../../packages/receipt-parser/src/index.ts",
     "^@coco/flags$": "<rootDir>/../../packages/flags/src/index.ts"
   }
 }

@@ -1,14 +1,18 @@
 import { type CategoryTree } from '@/shared/api/categories';
 import { comoNodosBuscables } from '@/shared/lib/arbol-buscable';
 import { t } from '@/shared/lib/i18n';
-import { firmasDelArbol as firmasDelArbolCompartido, normalizar, type Firma } from '@coco/lectura';
+import {
+  treeSignatures as firmasDelArbolCompartido,
+  normalize,
+  type Signature,
+} from '@coco/receipt-parser';
 
 /**
  * Las palabras que alguien escribe en un concepto para que sus recibos se
  * reconozcan solos.
  *
  * ── Por qué el usuario tiene que poder escribirlas ──────────────────────────
- * Porque el catálogo de firmas —`packages/lectura/firmas.ts`— se sacó de 443
+ * Porque el catálogo de firmas —`packages/receipt-parser/firmas.ts`— se sacó de 443
  * soportes reales, y eso es exactamente lo que le pasa: sabe reconocer a los
  * acreedores de QUIEN los trajo. El primer recibo de una inmobiliaria que no
  * está ahí no se reconoce, y la única salida era abrir el código.
@@ -41,7 +45,7 @@ const LARGO_MAXIMO = 60;
 
 /** Sin tildes, en minúscula y con los espacios apretados. Para comparar, no para guardar. */
 function comoSeCompara(palabra: string): string {
-  return normalizar(palabra);
+  return normalize(palabra);
 }
 
 /**
@@ -132,9 +136,9 @@ export function conceptoQueYaLaUsa(
  * Las firmas que salen del árbol de alguien.
  *
  * Van DELANTE del catálogo cuando se clasifica, y además con más prioridad:
- * ver `PRIORIDAD_DE_LO_ESCRITO` en `packages/lectura/firmas.ts`.
+ * ver `PRIORIDAD_DE_LO_ESCRITO` en `packages/receipt-parser/firmas.ts`.
  */
-export function firmasDelArbol(arbol: readonly CategoryTree[]): Firma[] {
+export function firmasDelArbol(arbol: readonly CategoryTree[]): Signature[] {
   // El recorrido vive en el paquete desde la fase 3: la API lo necesita igual.
   return firmasDelArbolCompartido(comoNodosBuscables(arbol));
 }

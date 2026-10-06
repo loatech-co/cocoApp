@@ -1,12 +1,12 @@
-import { buscarEnArbol, indexarArbol, resolverTerminos, rutaLegible } from './buscar';
+import { searchInTree, indexTree, resolveTerms, readablePath } from './search';
 import { makeTree } from './testing/factories';
 
 describe('indexarArbol', () => {
   it('indexes every level with its path and its ancestors', () => {
-    const indice = indexarArbol(makeTree());
-    const luz = indice.find((e) => e.id === 'luz');
+    const index = indexTree(makeTree());
+    const power = index.find((e) => e.id === 'luz');
 
-    expect(indice.map((e) => e.nivel)).toEqual([
+    expect(index.map((e) => e.nivel)).toEqual([
       'centro',
       'categoria',
       'concepto',
@@ -16,21 +16,21 @@ describe('indexarArbol', () => {
       'concepto',
       'centro',
     ]);
-    expect(luz).toMatchObject({ centroId: 'hogar', categoriaId: 'servicios' });
-    expect(rutaLegible(luz!)).toBe('Servicios públicos › Hogar');
+    expect(power).toMatchObject({ centroId: 'hogar', categoriaId: 'servicios' });
+    expect(readablePath(power!)).toBe('Servicios públicos › Hogar');
   });
 
   it('normalises names and keywords', () => {
-    const indice = indexarArbol(makeTree());
-    expect(indice.find((e) => e.id === 'super')?.palabrasNormalizadas).toEqual(['exito']);
-    expect(indice.find((e) => e.id === 'oficina')?.palabrasClave).toEqual([]);
+    const index = indexTree(makeTree());
+    expect(index.find((e) => e.id === 'super')?.palabrasNormalizadas).toEqual(['exito']);
+    expect(index.find((e) => e.id === 'oficina')?.palabrasClave).toEqual([]);
   });
 });
 
 describe('buscarEnArbol', () => {
-  const indice = indexarArbol(makeTree());
-  const ids = (consulta: string, opciones?: Parameters<typeof buscarEnArbol>[2]) =>
-    buscarEnArbol(indice, consulta, opciones).map((e) => e.id);
+  const index = indexTree(makeTree());
+  const ids = (query: string, options?: Parameters<typeof searchInTree>[2]) =>
+    searchInTree(index, query, options).map((e) => e.id);
 
   it('returns nothing for an empty query', () => {
     expect(ids('   ')).toEqual([]);
@@ -60,37 +60,37 @@ describe('buscarEnArbol', () => {
 });
 
 describe('resolverTerminos', () => {
-  const indice = indexarArbol(makeTree());
+  const index = indexTree(makeTree());
 
   it('is certain when the terms point to one concept', () => {
-    const r = resolverTerminos(indice, ['enel', 'energia']);
+    const r = resolveTerms(index, ['enel', 'energia']);
     expect(r.certeza).toBe('alta');
     expect(r.concepto?.id).toBe('luz');
   });
 
   it('names the shared category when several concepts of one category match', () => {
-    const r = resolverTerminos(indice, ['agua', 'vanti']);
+    const r = resolveTerms(index, ['agua', 'vanti']);
     expect(r.certeza).toBe('media');
     expect(r.categoria?.id).toBe('servicios');
     expect(r.candidatos.map((c) => c.id)).toEqual(['agua', 'gas']);
   });
 
   it('names no category when the matching concepts are in different ones', () => {
-    const r = resolverTerminos(indice, ['agua', 'exito']);
+    const r = resolveTerms(index, ['agua', 'exito']);
     expect(r.certeza).toBe('media');
     expect(r.categoria).toBeUndefined();
   });
 
   it('falls back to categories when no concept matches', () => {
-    expect(resolverTerminos(indice, ['servicios'])).toMatchObject({
+    expect(resolveTerms(index, ['servicios'])).toMatchObject({
       certeza: 'media',
       categoria: { id: 'servicios' },
     });
-    const varias = resolverTerminos(indice, ['servicios', 'mercado']);
-    expect(varias.certeza).toBe('alta');
+    const several = resolveTerms(index, ['servicios', 'mercado']);
+    expect(several.certeza).toBe('alta');
   });
 
   it('is uncertain when nothing matches', () => {
-    expect(resolverTerminos(indice, ['zapatos'])).toEqual({ certeza: 'ninguna', candidatos: [] });
+    expect(resolveTerms(index, ['zapatos'])).toEqual({ certeza: 'ninguna', candidatos: [] });
   });
 });

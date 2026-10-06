@@ -1,4 +1,4 @@
-import type { NodoBuscable } from '@coco/lectura';
+import type { SearchableNode } from '@coco/receipt-parser';
 
 import { HISTORIAL_SEGURO, interpretar, pesos, resumenDe } from './interpretar';
 
@@ -6,7 +6,7 @@ import { HISTORIAL_SEGURO, interpretar, pesos, resumenDe } from './interpretar';
  * El cerebro, a solas: de un texto a un gasto interpretado, con la precedencia
  * del plan y sin adivinar.
  */
-const ARBOL: NodoBuscable[] = [
+const ARBOL: SearchableNode[] = [
   {
     id: '2',
     name: 'Costos variables',

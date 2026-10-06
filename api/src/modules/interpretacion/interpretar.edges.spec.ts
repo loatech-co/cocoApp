@@ -1,9 +1,9 @@
-import type { NodoBuscable } from '@coco/lectura';
+import type { SearchableNode } from '@coco/receipt-parser';
 
 import { interpretar, pesos, resumenDe, type ClasificacionInterpretada } from './interpretar';
 
 /** The edges of capture: odd structured values, history that points above a concept. */
-const TREE: NodoBuscable[] = [
+const TREE: SearchableNode[] = [
   {
     id: '1',
     name: 'Costos variables',

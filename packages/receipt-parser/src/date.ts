@@ -15,7 +15,7 @@
  * las que se leen, la que cae en ese mes.
  */
 
-const MESES: Record<string, number> = {
+const MONTHS: Record<string, number> = {
   ene: 1,
   enero: 1,
   feb: 2,
@@ -45,43 +45,43 @@ const MESES: Record<string, number> = {
 };
 
 const ISO = /\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/g;
-const DIA_MES_ANIO = /\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2}|\d{2})\b/g;
-const CON_MES_EN_PALABRA = new RegExp(
-  String.raw`\b(\d{1,2})\s*[-/ ]?\s*(?:de\s+)?(${Object.keys(MESES).join('|')})\w*\s*[-/ ]?\s*(?:de\s+)?(20\d{2})\b`,
+const DAY_MONTH_YEAR = /\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2}|\d{2})\b/g;
+const WITH_MONTH_NAME = new RegExp(
+  String.raw`\b(\d{1,2})\s*[-/ ]?\s*(?:de\s+)?(${Object.keys(MONTHS).join('|')})\w*\s*[-/ ]?\s*(?:de\s+)?(20\d{2})\b`,
   'gi',
 );
 
-export interface FechaCandidata {
+export interface DateCandidate {
   iso: string;
   /** Si cae dentro del mes al que pertenece el gasto. */
   enElPeriodo: boolean;
 }
 
-const valida = (a: number, m: number, d: number): boolean =>
+const isValidDate = (a: number, m: number, d: number): boolean =>
   m >= 1 && m <= 12 && d >= 1 && d <= 31 && a >= 2000 && a <= 2100;
 
-const aIso = (a: number, m: number, d: number): string =>
+const toIso = (a: number, m: number, d: number): string =>
   `${a}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
 /** Todas las fechas que aparecen, en el orden en que aparecen. */
-export function fechasDe(texto: string): string[] {
-  const encontradas: string[] = [];
-  const anotar = (a: number, m: number, d: number): void => {
-    if (valida(a, m, d)) encontradas.push(aIso(a, m, d));
+export function datesIn(text: string): string[] {
+  const found: string[] = [];
+  const record = (a: number, m: number, d: number): void => {
+    if (isValidDate(a, m, d)) found.push(toIso(a, m, d));
   };
 
   // Los grupos de los tres patrones son obligatorios: los `= ''` nunca se usan.
-  for (const [, a = '', m = '', d = ''] of texto.matchAll(ISO)) anotar(+a, +m, +d);
-  for (const [, d = '', m = '', a = ''] of texto.matchAll(DIA_MES_ANIO)) {
+  for (const [, a = '', m = '', d = ''] of text.matchAll(ISO)) record(+a, +m, +d);
+  for (const [, d = '', m = '', a = ''] of text.matchAll(DAY_MONTH_YEAR)) {
     // Dos cifras de año: 22 es 2022, no 1922. Estos recibos no son de antes.
-    anotar(a.length === 2 ? 2000 + +a : +a, +m, +d);
+    record(a.length === 2 ? 2000 + +a : +a, +m, +d);
   }
-  for (const [, d = '', mes = '', a = ''] of texto.matchAll(CON_MES_EN_PALABRA)) {
-    const m = MESES[mes.toLowerCase().slice(0, 4)] ?? MESES[mes.toLowerCase().slice(0, 3)];
-    if (m) anotar(+a, m, +d);
+  for (const [, d = '', month = '', a = ''] of text.matchAll(WITH_MONTH_NAME)) {
+    const m = MONTHS[month.toLowerCase().slice(0, 4)] ?? MONTHS[month.toLowerCase().slice(0, 3)];
+    if (m) record(+a, m, +d);
   }
 
-  return [...new Set(encontradas)];
+  return [...new Set(found)];
 }
 
 /**
@@ -92,19 +92,19 @@ export function fechasDe(texto: string): string[] {
  * medio del mes, así que el error máximo es de dos semanas y nunca cae en otro
  * mes —que es el error que descuadra un resumen—.
  */
-export function leerFecha(texto: string, periodo?: string): FechaCandidata | null {
-  const todas = fechasDe(texto);
+export function readDate(text: string, period?: string): DateCandidate | null {
+  const all = datesIn(text);
 
-  if (periodo) {
-    const delPeriodo = todas.filter((f) => f.startsWith(periodo));
+  if (period) {
+    const ofPeriod = all.filter((f) => f.startsWith(period));
     // La primera del mes: en un recibo, la de expedición va antes que la de
     // vencimiento, y la que se pagó se parece más a la primera.
-    const [primeraDelPeriodo] = delPeriodo;
-    if (primeraDelPeriodo !== undefined) return { iso: primeraDelPeriodo, enElPeriodo: true };
+    const [firstOfPeriod] = ofPeriod;
+    if (firstOfPeriod !== undefined) return { iso: firstOfPeriod, enElPeriodo: true };
   }
 
-  const [primera] = todas;
-  if (primera !== undefined) return { iso: primera, enElPeriodo: false };
-  if (periodo) return { iso: `${periodo}-15`, enElPeriodo: false };
+  const [first] = all;
+  if (first !== undefined) return { iso: first, enElPeriodo: false };
+  if (period) return { iso: `${period}-15`, enElPeriodo: false };
   return null;
 }

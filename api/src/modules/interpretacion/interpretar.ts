@@ -1,18 +1,18 @@
 import {
-  FIRMAS,
-  clasificar,
-  firmasDelArbol,
-  indexarArbol,
-  rutaLegible,
-  type EntradaDelIndice,
-  type NodoBuscable,
-} from '@coco/lectura';
+  SIGNATURES,
+  classify,
+  treeSignatures,
+  indexTree,
+  readablePath,
+  type IndexEntry,
+  type SearchableNode,
+} from '@coco/receipt-parser';
 
 /**
  * El cerebro: de un texto o de unos datos, a un gasto interpretado.
  *
  * ── Por qué está en la API y no solo en el navegador ────────────────────────
- * La interpretación vivía en `@coco/lectura` y corría solo en el navegador. La
+ * La interpretación vivía en `@coco/receipt-parser` y corría solo en el navegador. La
  * API no clasificaba, no sabía de dónde venía un gasto y descartaba el texto
  * leído; una app externa no tenía a quién preguntarle. Ahora el paquete corre
  * aquí tal cual —no se movió ni se duplicó— y la web usa el mismo motor.
@@ -52,7 +52,7 @@ export interface EntradaParaInterpretar {
 
 export interface Contexto {
   /** El árbol de la persona, con ids como cadenas. */
-  arbol: readonly NodoBuscable[];
+  arbol: readonly SearchableNode[];
   /** Lo que el historial sugiere para este texto, si algo. */
   historial: { categoryId: string; confidence: number } | null;
   /** Hoy, `YYYY-MM-DD`, para no aceptar fechas futuras de un OCR torcido. */
@@ -90,19 +90,19 @@ export interface Interpretado {
 export const HISTORIAL_SEGURO = 80;
 
 export function interpretar(entrada: EntradaParaInterpretar, contexto: Contexto): Interpretado {
-  const indice = indexarArbol(contexto.arbol);
+  const indice = indexTree(contexto.arbol);
   const textoLibre = (entrada.texto ?? '').trim();
   const comercio = (entrada.comercio ?? '').trim();
 
   // Lo que se le da a leer: el texto si lo hay; si no, el comercio solo. Un
   // comercio es un texto muy corto, y el lector sabe sacar de ahí el acreedor
   // aunque no haya monto ni fecha que leer.
-  const lectura = clasificar({
+  const lectura = classify({
     texto: textoLibre || comercio,
     fuente: 'texto-embebido',
     nombreDeArchivo: entrada.nombreDeArchivo ?? undefined,
     periodo: entrada.periodo ?? undefined,
-    firmas: [...firmasDelArbol(contexto.arbol), ...FIRMAS],
+    firmas: [...treeSignatures(contexto.arbol), ...SIGNATURES],
     arbol: contexto.arbol,
   });
 
@@ -134,8 +134,8 @@ export function interpretar(entrada: EntradaParaInterpretar, contexto: Contexto)
 
 function clasificarCon(
   contexto: Contexto,
-  indice: readonly EntradaDelIndice[],
-  enElArbol: NonNullable<ReturnType<typeof clasificar>['enElArbol']> | null,
+  indice: readonly IndexEntry[],
+  enElArbol: NonNullable<ReturnType<typeof classify>['enElArbol']> | null,
   leido: { concepto: string | null; categoria: string | null; motivo: string },
 ): ClasificacionInterpretada {
   return (
@@ -155,7 +155,7 @@ function clasificarCon(
 /** 1. El historial, si tiene algo que decir. */
 function porHistorial(
   contexto: Contexto,
-  indice: readonly EntradaDelIndice[],
+  indice: readonly IndexEntry[],
 ): ClasificacionInterpretada | null {
   const { historial } = contexto;
   if (historial) {
@@ -171,7 +171,7 @@ function porHistorial(
         nombre: entrada.nombre,
         candidatos: alta
           ? []
-          : [{ id: String(entrada.id), nombre: entrada.nombre, ruta: rutaLegible(entrada) }],
+          : [{ id: String(entrada.id), nombre: entrada.nombre, ruta: readablePath(entrada) }],
         motivo: alta
           ? `Tu historial lo clasifica así (${historial.confidence}% de las veces).`
           : `Tu historial apunta aquí, pero no siempre (${historial.confidence}%): mejor míralo.`,
@@ -183,8 +183,8 @@ function porHistorial(
 
 /** 2 y 3. Lo que la lectura reconoció, por palabras clave, firma o diccionario. */
 function porLectura(
-  indice: readonly EntradaDelIndice[],
-  enElArbol: NonNullable<ReturnType<typeof clasificar>['enElArbol']>,
+  indice: readonly IndexEntry[],
+  enElArbol: NonNullable<ReturnType<typeof classify>['enElArbol']>,
   leido: { motivo: string; concepto: string | null; categoria: string | null },
 ): ClasificacionInterpretada {
   const concepto =

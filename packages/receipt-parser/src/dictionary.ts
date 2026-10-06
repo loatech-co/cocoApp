@@ -1,4 +1,4 @@
-import { normalizar } from './firmas';
+import { normalize } from './signatures';
 
 /**
  * El diccionario del sistema: comercios colombianos → términos genéricos.
@@ -28,7 +28,7 @@ import { normalizar } from './firmas';
  * COLOMBIA» es D1 y «JERONIMO MARTINS» es Ara, y sin eso el diccionario no
  * reconocería a los dos supermercados más frecuentes del país.
  */
-export interface GrupoDelDiccionario {
+export interface DictionaryGroup {
   /** Para leerlo en un informe. No se enseña. */
   grupo: string;
   /** Lo que se busca en el árbol de la persona, por nombre y palabra clave. */
@@ -37,7 +37,7 @@ export interface GrupoDelDiccionario {
   comercios: readonly string[];
 }
 
-export const DICCIONARIO: readonly GrupoDelDiccionario[] = [
+export const DICTIONARY: readonly DictionaryGroup[] = [
   {
     grupo: 'mercado',
     terminos: ['mercado', 'supermercado', 'viveres', 'alimentacion', 'despensa', 'tienda'],
@@ -351,7 +351,7 @@ export const DICCIONARIO: readonly GrupoDelDiccionario[] = [
  * No se tocan los `RECAUDADORES`: esa lista decide qué NO es el acreedor de un
  * recibo, y cambiarla es cosa de la lectura de soportes, no de esta fase.
  */
-export const TUBERIAS: readonly string[] = [
+export const PIPELINES: readonly string[] = [
   'mercado pago',
   'mercadopago',
   'payu',
@@ -362,13 +362,13 @@ export const TUBERIAS: readonly string[] = [
   'payvalida',
 ];
 
-export interface ComercioHallado {
-  grupo: GrupoDelDiccionario;
+export interface FoundMerchant {
+  grupo: DictionaryGroup;
   /** El alias que apareció, tal como está en el diccionario. */
   alias: string;
 }
 
-const ESCAPAR = /[.*+?^${}()|[\]\\/]/g;
+const ESCAPE = /[.*+?^${}()|[\]\\/]/g;
 
 /**
  * Qué comercios del diccionario aparecen en un texto, del más seguro al menos.
@@ -383,40 +383,41 @@ const ESCAPAR = /[.*+?^${}()|[\]\\/]/g;
  *    segundo ya no puede aparecer dentro de él. Lo mismo con «claro hogar» y
  *    «claro».
  */
-export function comerciosEn(texto: string): ComercioHallado[] {
-  let trabajo = ` ${normalizar(texto)} `;
-  for (const tuberia of TUBERIAS) trabajo = trabajo.split(tuberia).join(' ');
+export function merchantsIn(text: string): FoundMerchant[] {
+  let remaining = ` ${normalize(text)} `;
+  for (const pipeline of PIPELINES) remaining = remaining.split(pipeline).join(' ');
 
-  const candidatos: { grupo: GrupoDelDiccionario; alias: string; largo: number }[] = [];
-  for (const grupo of DICCIONARIO) {
-    for (const alias of grupo.comercios) candidatos.push({ grupo, alias, largo: alias.length });
+  const candidates: { grupo: DictionaryGroup; alias: string; largo: number }[] = [];
+  for (const group of DICTIONARY) {
+    for (const alias of group.comercios)
+      candidates.push({ grupo: group, alias, largo: alias.length });
   }
-  candidatos.sort((a, b) => b.largo - a.largo);
+  candidates.sort((a, b) => b.largo - a.largo);
 
-  const hallados: ComercioHallado[] = [];
-  const gruposVistos = new Set<string>();
+  const found: FoundMerchant[] = [];
+  const seenGroups = new Set<string>();
 
-  for (const { grupo, alias } of candidatos) {
-    const patron = new RegExp(
-      `(^|[^a-z0-9])(${normalizar(alias).replace(ESCAPAR, '\\$&')})(?=[^a-z0-9]|$)`,
+  for (const { grupo: group, alias } of candidates) {
+    const pattern = new RegExp(
+      `(^|[^a-z0-9])(${normalize(alias).replace(ESCAPE, '\\$&')})(?=[^a-z0-9]|$)`,
     );
-    const m = patron.exec(trabajo);
+    const m = pattern.exec(remaining);
     if (!m) continue;
 
     // Se consume lo hallado para que un alias más corto no vuelva a dar con
     // él. Se deja un espacio para que los límites de palabra sigan valiendo.
     // Los dos grupos son obligatorios en el patrón: siempre vienen.
-    const [, previo = '', hallado = ''] = m;
-    const inicio = m.index + previo.length;
-    trabajo = `${trabajo.slice(0, inicio)} ${' '.repeat(hallado.length - 1)}${trabajo.slice(inicio + hallado.length)}`;
+    const [, before = '', match = ''] = m;
+    const start = m.index + before.length;
+    remaining = `${remaining.slice(0, start)} ${' '.repeat(match.length - 1)}${remaining.slice(start + match.length)}`;
 
-    if (!gruposVistos.has(grupo.grupo)) {
-      gruposVistos.add(grupo.grupo);
-      hallados.push({ grupo, alias });
+    if (!seenGroups.has(group.grupo)) {
+      seenGroups.add(group.grupo);
+      found.push({ grupo: group, alias });
     }
   }
 
-  return hallados;
+  return found;
 }
 
 /**
@@ -426,16 +427,16 @@ export function comerciosEn(texto: string): ComercioHallado[] {
  * aparecen a la vez —«RAPPI*EXITO»—, los términos del hallado más largo van
  * primero; quien resuelva decide qué hacer con la mezcla.
  */
-export function terminosPara(texto: string): string[] {
-  const vistos = new Set<string>();
-  const terminos: string[] = [];
-  for (const { grupo } of comerciosEn(texto)) {
-    for (const t of grupo.terminos) {
-      if (!vistos.has(t)) {
-        vistos.add(t);
-        terminos.push(t);
+export function termsFor(text: string): string[] {
+  const seen = new Set<string>();
+  const terms: string[] = [];
+  for (const { grupo: group } of merchantsIn(text)) {
+    for (const t of group.terminos) {
+      if (!seen.has(t)) {
+        seen.add(t);
+        terms.push(t);
       }
     }
   }
-  return terminos;
+  return terms;
 }

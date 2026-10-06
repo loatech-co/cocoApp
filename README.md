@@ -15,14 +15,14 @@ A modular monolith: one NestJS process (`api/`) serves the JSON API under
 `/api/v2` (the deprecated `/api/v1` still answers) and the web build
 (`frontend/`), on a Hostinger Node.js app; data, identity and receipt files
 live on Supabase (PostgreSQL, Auth, Storage). The iOS app (`ios/`) is hybrid — native capture, the same web inside a
-`WKWebView` — and a pure reading engine (`packages/lectura`) turns receipt,
+`WKWebView` — and a pure reading engine (`packages/receipt-parser`) turns receipt,
 Wallet and SMS text into proposals, run by the API. Diagrams, flows and the
 decisions behind them: [`docs/architecture.md`](docs/architecture.md).
 
 ```
 api/                NestJS 11 + Prisma; prisma/schema.prisma and migrations/
 frontend/           React 19 + Vite + TypeScript SPA
-packages/lectura/   reading and classification engine (compiled on install)
+packages/receipt-parser/   reading and classification engine (compiled on install)
 ios/                SwiftUI app (XcodeGen project)
 scripts/            merge, migrations, backups, local data
 docs/               architecture, ADRs, runbook, standards
@@ -51,7 +51,7 @@ cp api/.env.example         api/.env
 cp api/.env.migrate.example api/.env.migrate
 cp frontend/.env.example    frontend/.env
 
-npm install                                   # also prepares Tesseract and builds @coco/lectura
+npm install                                   # also prepares Tesseract and builds @coco/receipt-parser
 npm run prisma:migrate:dev --workspace api    # creates the schema
 npm run sembrar:local                         # idempotent seed: user, template, recurring concepts
 ```

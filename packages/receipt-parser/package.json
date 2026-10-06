@@ -1,5 +1,5 @@
 {
-  "name": "@coco/lectura",
+  "name": "@coco/receipt-parser",
   "version": "0.1.0",
   "private": true,
   "description": "Lee un soporte y dice de qué es: firmas, montos y fechas. Corre igual en el navegador y en el servidor.",

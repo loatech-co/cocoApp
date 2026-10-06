@@ -3,7 +3,7 @@ import { interpretacionInterpret } from '@/shared/api/generated/interpretacion-v
 import type { ClassificationSource, Interpretation } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { cargarPdfjs } from '@/shared/lib/pdf';
-import type { ClasificacionEnElArbol, Lectura } from '@coco/lectura';
+import type { TreeClassification, Reading } from '@coco/receipt-parser';
 
 /**
  * Leer un recibo: sacarle el texto y, con él, de qué es.
@@ -25,7 +25,7 @@ import type { ClasificacionEnElArbol, Lectura } from '@coco/lectura';
 export interface SoporteLeido {
   texto: string;
   fuente: 'texto-embebido' | 'ocr';
-  lectura: Lectura;
+  lectura: Reading;
 }
 
 export interface ProgresoDeLectura {
@@ -253,7 +253,7 @@ async function interpretText(
  * confianza se traduce de la certeza: alta sin revisar es seguro; lo demás,
  * por debajo del umbral, para que la ficha lo diga.
  */
-function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Lectura {
+function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Reading {
   const c = i.classification;
   return {
     concepto: c.conceptId !== null ? c.name : null,
@@ -287,10 +287,10 @@ function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Lect
 }
 
 /**
- * The API speaks English (v2); `@coco/lectura`, which the sheet reads, still
+ * The API speaks English (v2); `@coco/receipt-parser`, which the sheet reads, still
  * names its sources in Spanish. Translated here, at the edge.
  */
-const FUENTE: Record<NonNullable<ClassificationSource>, ClasificacionEnElArbol['fuente']> = {
+const FUENTE: Record<NonNullable<ClassificationSource>, TreeClassification['fuente']> = {
   history: 'historial',
   keywords: 'palabras-clave',
   signature: 'firma',

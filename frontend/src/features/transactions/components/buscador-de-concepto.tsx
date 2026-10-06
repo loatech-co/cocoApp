@@ -10,7 +10,7 @@ import { Campo } from '@/shared/ui/atoms/campo';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
 import { Menu } from '@/shared/ui/molecules/menu';
-import { rutaLegible, type EntradaDelIndice } from '@coco/lectura';
+import { readablePath, type IndexEntry } from '@coco/receipt-parser';
 
 import {
   CategoriaParaNuevo,
@@ -180,7 +180,7 @@ function PanelDelMenu({
 }
 
 /** En un centro estático: lo elegido se enseña, pero no abre nada. */
-function ConceptoBloqueado({ id, elegida }: { id: string; elegida: EntradaDelIndice | undefined }) {
+function ConceptoBloqueado({ id, elegida }: { id: string; elegida: IndexEntry | undefined }) {
   return (
     <span
       id={id}
@@ -203,7 +203,7 @@ function ValorDelBuscador({
   elegida,
   abierto,
 }: {
-  elegida: EntradaDelIndice | undefined;
+  elegida: IndexEntry | undefined;
   abierto: boolean;
 }) {
   const enCampo = useDentroDeUnCampo();
@@ -223,7 +223,7 @@ function ValorDelBuscador({
         </span>
         {elegida && elegida.ruta.length > 0 && (
           <span className="hidden truncate text-xs text-muted-foreground sm:inline">
-            {rutaLegible(elegida)}
+            {readablePath(elegida)}
           </span>
         )}
       </span>
@@ -239,10 +239,10 @@ interface PropsDelPanel extends PropsDeResultados {
   campo: RefObject<HTMLInputElement | null>;
   setBusca: (v: string) => void;
   modo: 'buscar' | 'categoria-para-nuevo';
-  categorias: EntradaDelIndice[];
+  categorias: IndexEntry[];
   nombreNuevo: string;
   onVolver: () => void;
-  onCrearEn: (categoria: EntradaDelIndice) => void;
+  onCrearEn: (categoria: IndexEntry) => void;
 }
 
 function Panel(props: PropsDelPanel) {

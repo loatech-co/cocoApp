@@ -7,7 +7,7 @@ import { conceptosRecientes } from '@/features/transactions/model/recientes';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { comoNodosBuscables } from '@/shared/lib/arbol-buscable';
-import { indexarArbol } from '@coco/lectura';
+import { indexTree } from '@coco/receipt-parser';
 
 import type { MovementSheetState } from './use-movement-form';
 
@@ -45,7 +45,7 @@ export function useClassificationProposals(
     arbol: Category[] | undefined;
   },
 ) {
-  const indiceDelArbol = useMemo(() => indexarArbol(comoNodosBuscables(arbol ?? [])), [arbol]);
+  const indiceDelArbol = useMemo(() => indexTree(comoNodosBuscables(arbol ?? [])), [arbol]);
   const proponiendo = abierta && ficha.paso === 'formulario' && ficha.editable;
 
   const sugerenciaDelHistorial = useSugerenciaDeCategoria(proponiendo ? ficha.description : '');

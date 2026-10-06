@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { comoNodosBuscables, type NodoDelArbol } from '@/shared/lib/arbol-buscable';
-import { buscarEnArbol, indexarArbol, type EntradaDelIndice } from '@coco/lectura';
+import { searchInTree, indexTree, type IndexEntry } from '@coco/receipt-parser';
 
 /** Qué se está haciendo dentro del panel: buscar, o elegir dónde va lo nuevo. */
 export type ModoDelBuscador = 'buscar' | 'categoria-para-nuevo';
@@ -22,12 +22,12 @@ function useConceptLists({
   recientes: readonly number[];
   busca: string;
 }) {
-  const indice = useMemo(() => indexarArbol(comoNodosBuscables(arbol)), [arbol]);
+  const indice = useMemo(() => indexTree(comoNodosBuscables(arbol)), [arbol]);
   const elegida = useMemo(
     () => (valor === undefined ? undefined : indice.find((e) => String(e.id) === String(valor))),
     [indice, valor],
   );
-  const resultados = useMemo(() => buscarEnArbol(indice, busca, { limite: 12 }), [indice, busca]);
+  const resultados = useMemo(() => searchInTree(indice, busca, { limite: 12 }), [indice, busca]);
   const entradasRecientes = useMemo(
     () => recientesDelIndice(indice, recientes),
     [indice, recientes],
@@ -37,7 +37,7 @@ function useConceptLists({
     () =>
       busca.trim() === ''
         ? categorias
-        : buscarEnArbol(indice, busca, { niveles: ['categoria'], limite: 30 }),
+        : searchInTree(indice, busca, { niveles: ['categoria'], limite: 30 }),
     [indice, categorias, busca],
   );
 
@@ -95,14 +95,14 @@ export function useConceptSearch({
 }
 
 function recientesDelIndice(
-  indice: readonly EntradaDelIndice[],
+  indice: readonly IndexEntry[],
   recientes: readonly number[],
-): EntradaDelIndice[] {
+): IndexEntry[] {
   // Sin repetidos aunque lleguen: quien los calcula ya los quita, pero una
   // lista con el mismo concepto dos veces se vería como un error del
   // buscador y no de quien lo llamó.
   return [...new Set(recientes.map(String))]
     .map((r) => indice.find((e) => e.nivel === 'concepto' && String(e.id) === r))
-    .filter((e): e is EntradaDelIndice => e !== undefined)
+    .filter((e): e is IndexEntry => e !== undefined)
     .slice(0, 5);
 }

@@ -419,14 +419,14 @@ export default defineConfig(
     // (step 7.4). The frontend ones were split in 7.4-web-b and 7.4-web-b2;
     // these two are packages, outside the web steps. A file never gets added
     // to it.
-    files: ['packages/lectura/src/diccionario.ts'],
+    files: ['packages/receipt-parser/src/dictionary.ts'],
     rules: { 'max-lines': 'off' },
   },
   {
     // TEMPORARY: the files with a function over 50 lines when the limit
     // arrived (step 7.4). The frontend ones were split in 7.4-web-b3; this one
     // is a package, outside the web steps. Same rule as the list above.
-    files: ['packages/lectura/src/clasificar.ts'],
+    files: ['packages/receipt-parser/src/classify.ts'],
     rules: { 'max-lines-per-function': 'off' },
   },
 

@@ -26,7 +26,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@coco/lectura": ["../packages/lectura/src/index.ts"],
+      "@coco/receipt-parser": ["../packages/receipt-parser/src/index.ts"],
       "@coco/flags": ["../packages/flags/src/index.ts"]
     },
 

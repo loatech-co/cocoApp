@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { indexarArbol } from '@coco/lectura';
+import { indexTree } from '@coco/receipt-parser';
 
 import { conceptosRecientes } from './recientes';
 
-const indice = indexarArbol([
+const indice = indexTree([
   {
     id: 1,
     name: 'Centro',

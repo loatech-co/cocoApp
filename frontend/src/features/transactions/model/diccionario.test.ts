@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DICCIONARIO, comerciosEn, terminosPara } from '@coco/lectura';
+import { DICTIONARY, merchantsIn, termsFor } from '@coco/receipt-parser';
 
 /**
  * El diccionario del sistema: de un comercio a términos genéricos.
@@ -9,7 +9,7 @@ import { DICCIONARIO, comerciosEn, terminosPara } from '@coco/lectura';
  * las que separan una ayuda de una molestia: límites de palabra y alias más
  * largo primero.
  */
-const grupos = (texto: string) => comerciosEn(texto).map((h) => h.grupo.grupo);
+const grupos = (texto: string) => merchantsIn(texto).map((h) => h.grupo.grupo);
 
 describe('Reconocer comercios en un texto', () => {
   it('reconoce la razón social, que es lo que imprime el datáfono', () => {
@@ -35,7 +35,7 @@ describe('Reconocer comercios en un texto', () => {
   });
 
   it('lo hallado se consume: «claro hogar» no vuelve a contar como «claro»', () => {
-    const hallados = comerciosEn('CLARO HOGAR FACTURA');
+    const hallados = merchantsIn('CLARO HOGAR FACTURA');
     expect(hallados).toHaveLength(1);
     expect(hallados[0]!.alias).toBe('claro hogar');
   });
@@ -43,7 +43,7 @@ describe('Reconocer comercios en un texto', () => {
   it('las tuberías se quitan antes: «MERCADO PAGO*D1» es D1, no «mercado»', () => {
     // Sin esto, cualquier compra pagada por Mercado Pago sería mercado.
     expect(grupos('Compra en MERCADO PAGO*D1 por $45.000')).toEqual(['mercado']);
-    expect(comerciosEn('Compra en MERCADO PAGO*D1')[0]!.alias).toBe('d1');
+    expect(merchantsIn('Compra en MERCADO PAGO*D1')[0]!.alias).toBe('d1');
     expect(grupos('Pago PAYU*NETFLIX')).toEqual(['suscripciones digitales']);
   });
 
@@ -67,20 +67,20 @@ describe('Reconocer comercios en un texto', () => {
 
 describe('Los términos que un texto sugiere', () => {
   it('son los del grupo hallado, sin repetir', () => {
-    const t = terminosPara('KOBA COLOMBIA');
+    const t = termsFor('KOBA COLOMBIA');
     expect(t[0]).toBe('mercado');
     expect(t).toContain('supermercado');
     expect(new Set(t).size).toBe(t.length);
   });
 
   it('nada reconocido, ningún término', () => {
-    expect(terminosPara('Ferretería La Esquina')).toEqual([]);
+    expect(termsFor('Ferretería La Esquina')).toEqual([]);
   });
 });
 
 describe('El diccionario en sí', () => {
   it('cubre los once grupos que pide el plan', () => {
-    expect(DICCIONARIO.map((g) => g.grupo)).toEqual([
+    expect(DICTIONARY.map((g) => g.grupo)).toEqual([
       'mercado',
       'restaurantes y domicilios',
       'transporte',
@@ -99,7 +99,7 @@ describe('El diccionario en sí', () => {
     // Un alias en dos grupos es una ambigüedad que el emparejado no puede
     // resolver: siempre ganaría el primero por orden del archivo.
     const vistos = new Map<string, string>();
-    for (const g of DICCIONARIO) {
+    for (const g of DICTIONARY) {
       for (const alias of g.comercios) {
         expect(
           vistos.get(alias),
@@ -111,7 +111,7 @@ describe('El diccionario en sí', () => {
   });
 
   it('ningún alias es una palabra tan corta que aparezca por todas partes', () => {
-    for (const g of DICCIONARIO) {
+    for (const g of DICTIONARY) {
       for (const alias of g.comercios) expect(alias.length, `«${alias}»`).toBeGreaterThanOrEqual(2);
     }
   });

@@ -87,10 +87,10 @@ api/.soportes/
 api/.soportes-test/
 soportes-origen/
 
-# `@coco/lectura` se compila a CommonJS para que la API lo importe en tiempo
+# `@coco/receipt-parser` se compila a CommonJS para que la API lo importe en tiempo
 # de ejecución; el frontend lo lee de la fuente por alias. Lo compilado no se
 # versiona: lo produce el `postinstall` y el `build`.
-packages/lectura/dist/
+packages/receipt-parser/dist/
 
 # Worktrees de los ejecutores (Claude Code): copias de trabajo, nunca parte del repo.
 .claude/worktrees/

@@ -28,14 +28,14 @@
     "sembrar:local": "dotenv -e api/.env.migrate -- tsx scripts/sembrar-local.mjs",
     "sql": "dotenv -e api/.env.migrate -- tsx scripts/sql.mjs",
     "sql:supabase": "dotenv -e api/.env.migrate -- bash scripts/sql-supabase.sh",
-    "postinstall": "node scripts/preparar-tesseract.mjs && npm run build --workspace @coco/lectura --workspace @coco/flags",
+    "postinstall": "node scripts/preparar-tesseract.mjs && npm run build --workspace @coco/receipt-parser --workspace @coco/flags",
     "start": "node api/dist/main.js",
     "respaldar": "bash scripts/respaldar.sh",
     "verify:clean-install": "bash scripts/verify-clean-install.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "knip": "knip",
-    "depcruise": "depcruise api/src frontend/src packages/lectura/src packages/flags/src --config .dependency-cruiser.cjs && node scripts/ci/table-ownership.mjs",
+    "depcruise": "depcruise api/src frontend/src packages/receipt-parser/src packages/flags/src --config .dependency-cruiser.cjs && node scripts/ci/table-ownership.mjs",
     "prepare": "[ -n \"$CI\" ] || [ \"$NODE_ENV\" = production ] || lefthook install || true"
   },
   "devDependencies": {

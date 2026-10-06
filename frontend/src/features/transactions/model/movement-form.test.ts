@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CategoryTree as Category } from '@/shared/api/categories';
 import type { PendingPayment as PagoPendiente, Transaction } from '@/shared/api/generated/model';
 import {
-  indexarArbol,
-  type ClasificacionEnElArbol,
-  type Lectura,
-  type NodoBuscable,
-} from '@coco/lectura';
+  indexTree,
+  type TreeClassification,
+  type Reading,
+  type SearchableNode,
+} from '@coco/receipt-parser';
 
 import {
   hoyEnBogota,
@@ -19,7 +19,7 @@ import {
   unreadNotice,
 } from './movement-form';
 
-const TREE: NodoBuscable[] = [
+const TREE: SearchableNode[] = [
   {
     id: 2,
     name: 'Costos variables',
@@ -38,7 +38,7 @@ const TREE: NodoBuscable[] = [
   },
 ];
 
-const ONE_MARKET: NodoBuscable[] = [
+const ONE_MARKET: SearchableNode[] = [
   {
     id: 2,
     name: 'Costos variables',
@@ -48,7 +48,7 @@ const ONE_MARKET: NodoBuscable[] = [
 
 const CATEGORY_TREE = TREE as unknown as Category[];
 
-function reading(parts: Partial<Lectura>): Lectura {
+function reading(parts: Partial<Reading>): Reading {
   return {
     concepto: null,
     categoria: null,
@@ -137,7 +137,7 @@ describe('initialAmountAndDate', () => {
 });
 
 describe('proposalFromText', () => {
-  const index = indexarArbol(TREE);
+  const index = indexTree(TREE);
 
   it('proposes the only concept a keyword leads to', () => {
     expect(proposalFromText(index, 'rappi')).toEqual({
@@ -151,7 +151,7 @@ describe('proposalFromText', () => {
   });
 
   it('proposes the concept the dictionary leads to when it is the only one', () => {
-    expect(proposalFromText(indexarArbol(ONE_MARKET), 'koba')).toEqual({
+    expect(proposalFromText(indexTree(ONE_MARKET), 'koba')).toEqual({
       categoryId: 200,
       origen: 'diccionario',
     });
@@ -200,7 +200,7 @@ describe('proposalFromReading', () => {
       fuente: 'historial',
       conceptoId: '200',
       candidatos: [],
-    } satisfies ClasificacionEnElArbol;
+    } satisfies TreeClassification;
 
     expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)).toEqual({
       categoryId: 200,
@@ -214,7 +214,7 @@ describe('proposalFromReading', () => {
       fuente: 'firma',
       conceptoId: 201,
       candidatos: [],
-    } satisfies ClasificacionEnElArbol;
+    } satisfies TreeClassification;
 
     expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)?.origen).toBe(
       'palabras-clave',
@@ -227,7 +227,7 @@ describe('proposalFromReading', () => {
       fuente: 'diccionario',
       categoriaId: '20',
       candidatos: [{ id: '200', nombre: 'Mercado', ruta: 'Costos variables › Alimentación' }],
-    } satisfies ClasificacionEnElArbol;
+    } satisfies TreeClassification;
 
     expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)).toEqual({
       categoryId: 20,
@@ -241,7 +241,7 @@ describe('proposalFromReading', () => {
       certeza: 'media',
       fuente: 'palabras-clave',
       candidatos: [],
-    } satisfies ClasificacionEnElArbol;
+    } satisfies TreeClassification;
 
     expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)).toEqual({
       categoryId: undefined,
@@ -255,7 +255,7 @@ describe('proposalFromReading', () => {
       certeza: 'alta',
       fuente: 'diccionario',
       candidatos: [],
-    } satisfies ClasificacionEnElArbol;
+    } satisfies TreeClassification;
 
     expect(proposalFromReading(reading({ enElArbol }), CATEGORY_TREE)).toEqual({
       categoryId: undefined,
