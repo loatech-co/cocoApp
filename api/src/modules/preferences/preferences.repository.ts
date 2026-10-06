@@ -17,9 +17,9 @@ export class PreferencesRepository {
   }
 
   /**
-   * `upsert` por (user_id, pref_key), que tiene índice único: la operación es
-   * idempotente y no hay que preguntar antes si la fila ya existía. Todas en
-   * una sola transacción.
+   * `upsert` on (user_id, pref_key), which has a unique index: the operation
+   * is idempotent and there is no need to ask first whether the row existed.
+   * All in one transaction.
    */
   async upsertMany(
     userId: bigint,

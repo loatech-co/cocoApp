@@ -6,50 +6,50 @@ import {
   isKnownKey,
 } from './preferences';
 
-describe('Preferencias del usuario', () => {
-  describe('valores por defecto', () => {
-    // ── La decisión de producto que ordena todo lo demás ──
-    it('las cuentas están APAGADAS por defecto', () => {
-      // Registrar un gasto no puede exigir haber inventado antes una cuenta.
+describe('User preferences', () => {
+  describe('defaults', () => {
+    // ── The product decision that orders everything else ──
+    it('accounts are OFF by default', () => {
+      // Recording an expense cannot require having made up an account first.
       expect(DEFAULT_PREFERENCES[ACCOUNTS_ENABLED]).toBe(false);
     });
 
-    it('el objeto por defecto está congelado', () => {
-      // Si fuera mutable, un servicio podría alterar el valor por defecto de
-      // TODOS los usuarios sin querer.
+    it('the default object is frozen', () => {
+      // If it were mutable, a service could change the default for EVERY user
+      // by accident.
       expect(Object.isFrozen(DEFAULT_PREFERENCES)).toBe(true);
     });
   });
 
-  describe('esClaveConocida', () => {
-    it('reconoce las del catálogo', () => {
+  describe('isKnownKey', () => {
+    it('recognises the catalogue ones', () => {
       expect(isKnownKey(ACCOUNTS_ENABLED)).toBe(true);
       for (const key of KEYS) expect(isKnownKey(key)).toBe(true);
     });
 
-    it('rechaza cualquier otra', () => {
+    it('rejects any other', () => {
       expect(isKnownKey('lo_que_sea')).toBe(false);
       expect(isKnownKey('')).toBe(false);
     });
 
-    it('no se deja engañar por propiedades heredadas de Object', () => {
-      // `'toString' in objeto` daría true. Por eso se usa hasOwnProperty.
+    it('is not fooled by properties inherited from Object', () => {
+      // `'toString' in object` would be true. That is why hasOwnProperty is used.
       expect(isKnownKey('toString')).toBe(false);
       expect(isKnownKey('constructor')).toBe(false);
     });
   });
 
-  describe('combinarConDefectos', () => {
-    it('sin nada guardado devuelve los valores por defecto', () => {
+  describe('withDefaults', () => {
+    it('with nothing stored it returns the defaults', () => {
       expect(withDefaults([])).toEqual(DEFAULT_PREFERENCES);
     });
 
-    it('lo guardado gana al valor por defecto', () => {
+    it('what is stored wins over the default', () => {
       const result = withDefaults([{ prefKey: ACCOUNTS_ENABLED, prefValue: true }]);
       expect(result[ACCOUNTS_ENABLED]).toBe(true);
     });
 
-    it('no devuelve el objeto congelado, sino una copia', () => {
+    it('returns a copy, not the frozen object', () => {
       const result = withDefaults([]);
       expect(result).not.toBe(DEFAULT_PREFERENCES);
       expect(() => {
@@ -57,28 +57,28 @@ describe('Preferencias del usuario', () => {
       }).not.toThrow();
     });
 
-    // ── Tolerancia: son preferencias de interfaz, no pueden tumbar nada ──
-    it('ignora una clave que ya no existe', () => {
+    // ── Tolerance: they are interface preferences, they cannot break anything ──
+    it('ignores a key that no longer exists', () => {
       expect(withDefaults([{ prefKey: 'preferencia_de_otra_epoca', prefValue: true }])).toEqual(
         DEFAULT_PREFERENCES,
       );
     });
 
     it.each([
-      ['una cadena', 'true'],
-      ['un número', 1],
+      ['a string', 'true'],
+      ['a number', 1],
       ['null', null],
-      ['un objeto', { a: 1 }],
-      ['un arreglo', []],
-    ])('ignora un valor que es %s en vez de booleano', (_, value) => {
-      // Una preferencia mal guardada no puede impedirle a nadie ver sus
-      // finanzas: se descarta y se usa el valor por defecto.
+      ['an object', { a: 1 }],
+      ['an array', []],
+    ])('ignores a value that is %s instead of a boolean', (_, value) => {
+      // A badly stored preference cannot stop anybody from seeing their
+      // finances: it is dropped and the default is used.
       expect(withDefaults([{ prefKey: ACCOUNTS_ENABLED, prefValue: value }])).toEqual(
         DEFAULT_PREFERENCES,
       );
     });
 
-    it('con varias filas, la última de la misma clave manda', () => {
+    it('with several rows, the last one for the same key wins', () => {
       const result = withDefaults([
         { prefKey: ACCOUNTS_ENABLED, prefValue: true },
         { prefKey: ACCOUNTS_ENABLED, prefValue: false },

@@ -16,9 +16,9 @@ import { IsMoney } from '../../../common/validation/is-money.decorator';
 import { AccountType } from '../../../generated/prisma/client';
 
 /**
- * Ningún DTO expone `userId`: el ValidationPipe corre con
- * `forbidNonWhitelisted`, así que si alguien intenta colar uno en el body, la
- * petición muere antes de llegar al servicio.
+ * No DTO exposes `userId`: the ValidationPipe runs with
+ * `forbidNonWhitelisted`, so if someone tries to slip one into the body, the
+ * request dies before it reaches the service.
  */
 export class CreateAccountDto {
   @IsString()
@@ -38,7 +38,7 @@ export class CreateAccountDto {
   @Matches(/^\d{4}$/, { message: 'last4 deben ser exactamente 4 dígitos.' })
   last4?: string;
 
-  /** Solo aplica a `type: 'credit'`. El servicio valida esa coherencia. */
+  /** Only applies to `type: 'credit'`. The service checks that consistency. */
   @IsOptional()
   @IsMoney()
   credit_limit?: string;
@@ -55,7 +55,7 @@ export class CreateAccountDto {
   @Max(31)
   payment_day?: number;
 
-  /** Punto de partida del saldo derivado. Puede ser negativo (sobregiro). */
+  /** Starting point of the derived balance. It can be negative (overdraft). */
   @IsOptional()
   @IsMoney()
   opening_balance?: string;
@@ -101,7 +101,7 @@ export class UpdateAccountDto {
   @IsMoney()
   opening_balance?: string;
 
-  /** Archivar es la operación por defecto: nunca se borra historial. */
+  /** Archiving is the default operation: history is never deleted. */
   @IsOptional()
   @IsBoolean()
   is_archived?: boolean;

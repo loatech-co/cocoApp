@@ -26,10 +26,11 @@ import {
 import { accountV1, type AccountV1 } from '../../presenters/v1/accounts.presenter';
 
 /**
- * M3 — Cuentas / medios de pago.
+ * M3 — Accounts / means of payment.
  *
- * El controlador no tiene lógica de negocio: recibe, saca el userId del token
- * y delega. El envelope `{ data, meta }` lo pone el TransformInterceptor global.
+ * The controller has no business logic: it receives, takes the userId from
+ * the token and delegates. The global TransformInterceptor adds the
+ * `{ data, meta }` envelope.
  */
 @ApiAuthenticated()
 @Controller('accounts')

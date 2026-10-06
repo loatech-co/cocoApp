@@ -14,13 +14,13 @@ export class TagsRepository {
   }
 
   /**
-   * La comparación ignora mayúsculas A PROPÓSITO. MariaDB lo hacía solo por
-   * su colación; Postgres distingue, y sin esto "Comida" y "comida" serían
-   * dos etiquetas. La UI las crea al vuelo mientras la persona escribe, así
-   * que los duplicados por mayúscula aparecerían enseguida y en silencio.
+   * The comparison ignores case ON PURPOSE. MariaDB did it on its own through
+   * its collation; Postgres does not, and without this "Comida" and "comida"
+   * would be two tags. The UI creates them on the fly while the person types,
+   * so case duplicates would show up at once and silently.
    *
-   * El nombre se GUARDA tal cual se escribió: solo la búsqueda es
-   * insensible. Quien escribió "Comida" la sigue viendo así.
+   * The name is STORED as it was typed: only the lookup is case-insensitive.
+   * Whoever typed "Comida" keeps seeing it that way.
    */
   findByName(userId: bigint, name: string): Promise<Tag | null> {
     return this.db.forUser(userId, (tx) =>

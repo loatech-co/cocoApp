@@ -5,7 +5,7 @@ import { PreferencesRepository } from './preferences.repository';
 import { PreferencesService } from './preferences.service';
 import { PreferencesV2Controller } from './preferences.v2.controller';
 
-/** Global: lo consultan varios módulos para saber si las cuentas están activas. */
+/** Global: several modules ask it whether accounts are switched on. */
 @Global()
 @Module({
   controllers: [PreferencesController, PreferencesV2Controller],

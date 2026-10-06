@@ -7,7 +7,7 @@ import { computeAvailableCredit, computeBalance } from '../../common/money/balan
 import { serialize, toMoney } from '../../common/money/money';
 import type { Account as AccountRow } from '../../generated/prisma/client';
 
-/** Una cuenta como la entrega el servicio (el dominio). Montos como string decimal. */
+/** An account as the service hands it out (the domain). Amounts as decimal strings. */
 export interface Account {
   id: bigint;
   name: string;
@@ -21,11 +21,11 @@ export interface Account {
   paymentDay: number | null;
   openingBalance: string;
   isArchived: boolean;
-  /** Derivado de los movimientos. No existe como columna. */
+  /** Derived from the transactions. It does not exist as a column. */
   balance: string;
-  /** Incluye los movimientos `pending`. */
+  /** Includes the `pending` transactions. */
   balanceProjected: string;
-  /** Solo en tarjetas: `creditLimit − saldo adeudado`. */
+  /** Cards only: `creditLimit − balance owed`. */
   availableCredit: string | null;
   createdAt: Date;
 }
@@ -92,9 +92,9 @@ export class AccountsService {
   }
 
   /**
-   * Borrar una cuenta con movimientos destruiría historial financiero, así que
-   * está prohibido: se archiva. Solo se permite el borrado físico cuando la
-   * cuenta nunca se usó.
+   * Deleting an account with transactions would destroy financial history, so
+   * it is not allowed: it is archived. A physical delete is only allowed when
+   * the account was never used.
    */
   async remove(userId: bigint, id: bigint): Promise<void> {
     await this.requireAccount(userId, id);
@@ -112,19 +112,19 @@ export class AccountsService {
 
   private async requireAccount(userId: bigint, id: bigint): Promise<AccountRow> {
     const account = await this.repo.findById(userId, id);
-    // 404 y no 403: confirmar que existe ya sería filtrar información.
+    // 404 and not 403: confirming it exists would already leak information.
     if (!account) throw new NotFoundError('La cuenta no existe.');
     return account;
   }
 
-  /** Los campos de tarjeta solo tienen sentido en cuentas de crédito. */
+  /** Card fields only make sense on credit accounts. */
   private checkCreditFields(
     type: AccountRow['type'],
     dto: Pick<UpdateAccountDto, 'credit_limit' | 'cutoff_day' | 'payment_day'>,
   ): void {
     if (type === 'credit') return;
 
-    // `unknown`: con @IsOptional el JSON puede traer un null que el tipo no dice.
+    // `unknown`: with @IsOptional the JSON can carry a null the type does not mention.
     const creditFields: readonly (readonly [string, unknown])[] = [
       ['credit_limit', dto.credit_limit],
       ['cutoff_day', dto.cutoff_day],

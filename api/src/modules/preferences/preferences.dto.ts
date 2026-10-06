@@ -1,11 +1,11 @@
 import { IsBoolean, IsOptional } from 'class-validator';
 
 /**
- * Un campo por preferencia, no un objeto libre.
+ * One field per preference, not a free-form object.
  *
- * Con `whitelist` y `forbidNonWhitelisted` en el ValidationPipe, esto rechaza
- * de plano cualquier clave que no esté declarada — no hace falta validarlo a
- * mano en el servicio.
+ * With `whitelist` and `forbidNonWhitelisted` on the ValidationPipe, this
+ * rejects outright any key that is not declared — no need to check it by hand
+ * in the service.
  */
 export class UpdatePreferencesDto {
   @IsOptional()

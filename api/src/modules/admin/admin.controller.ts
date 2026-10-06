@@ -29,10 +29,10 @@ import { auditPageV1, userPageV1 } from '../../presenters/v1/admin.presenter';
 import { profileV1, type ProfileV1 } from '../../presenters/v1/auth.presenter';
 
 /**
- * Panel de administración.
+ * The admin panel.
  *
- * `@Roles('admin')` a nivel de clase: todas las rutas quedan restringidas de
- * una, sin depender de que alguien se acuerde de anotarlas una por una.
+ * `@Roles('admin')` at class level: every route is restricted at once,
+ * without depending on someone remembering to annotate them one by one.
  */
 @ApiAuthenticated()
 @ApiErrors(403)

@@ -1,23 +1,24 @@
 /**
- * Preferencias del usuario — catálogo y lógica pura.
+ * User preferences — catalogue and pure logic.
  *
- * ── Por qué hay un catálogo cerrado ────────────────────────────────────────
- * `user_preferences` es una tabla clave-valor con `pref_value` en JSON, así que
- * técnicamente admite cualquier cosa. Sin un catálogo, en seis meses habría
- * claves escritas de tres formas distintas y valores de tipos inesperados
- * reventando en producción. Aquí se declara qué preferencias existen, de qué
- * tipo son y qué valor tienen cuando nadie las ha tocado.
+ * ── Why there is a closed catalogue ──────────────────────────────────────────
+ * `user_preferences` is a key-value table with `pref_value` in JSON, so it
+ * technically takes anything. Without a catalogue, in six months there would
+ * be keys spelled three different ways and values of unexpected types failing
+ * in production. This declares which preferences exist, their type and their
+ * value when nobody has touched them.
  *
- * El valor por defecto se decide UNA vez, aquí. Si viviera repartido por los
- * servicios, un módulo leería `false` donde otro lee `true`.
+ * The default is decided ONCE, here. If it were spread across the services,
+ * one module would read `false` where another reads `true`.
  */
 
 /**
- * Llevar cuentas —tarjetas, ahorros, efectivo— está APAGADO por defecto.
+ * Keeping accounts —cards, savings, cash— is OFF by default.
  *
- * Es la decisión de producto que ordena todo lo demás: registrar un gasto no
- * puede exigir haber inventado antes una cuenta. Quien quiera seguir saldos lo
- * enciende; para el resto, las cuentas sencillamente no existen.
+ * It is the product decision that orders everything else: recording an
+ * expense cannot require having made up an account first. Whoever wants to
+ * follow balances switches it on; for everyone else, accounts simply do not
+ * exist. The key is the stored one (`pref_key`), and the v1 field.
  */
 export const ACCOUNTS_ENABLED = 'cuentas_habilitadas';
 
@@ -38,12 +39,12 @@ export function isKnownKey(key: string): key is PreferenceKey {
 }
 
 /**
- * Combina lo guardado con los valores por defecto.
+ * Merges what is stored with the defaults.
  *
- * Tolerante a propósito: una fila con una clave que ya no existe, o con un
- * valor del tipo equivocado, se IGNORA en vez de tumbar la petición. Estas son
- * preferencias de interfaz — que una quede mal guardada no puede impedirle a
- * nadie ver sus finanzas.
+ * Tolerant on purpose: a row with a key that no longer exists, or with a value
+ * of the wrong type, is IGNORED instead of failing the request. These are
+ * interface preferences — one badly stored cannot stop anybody from seeing
+ * their finances.
  */
 export function withDefaults(
   saved: readonly { prefKey: string; prefValue: unknown }[],
@@ -54,8 +55,8 @@ export function withDefaults(
     if (!isKnownKey(row.prefKey)) continue;
 
     const value = row.prefValue;
-    // Hoy todas las preferencias son booleanas. Cuando haya de otro tipo, esta
-    // comprobación se abre por clave — no antes.
+    // Today every preference is a boolean. When there is one of another type,
+    // this check opens up per key — not before.
     if (typeof value === 'boolean') {
       result[row.prefKey] = value;
     }

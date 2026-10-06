@@ -80,9 +80,9 @@ export class AdminService {
   }
 
   /**
-   * Suspender corta el acceso AL INSTANTE: además de cambiar el estado, revoca
-   * todas las sesiones. Sin eso, quien ya tuviera un access token seguiría
-   * entrando hasta que expirara.
+   * Suspending cuts access AT ONCE: besides changing the status, it revokes
+   * every session. Without that, whoever already had an access token would
+   * keep getting in until it expired.
    */
   async suspend(adminId: bigint, userId: bigint, context: RequestContext): Promise<Profile> {
     this.requireNotSelf(adminId, userId, 'suspenderte a ti mismo');
@@ -136,9 +136,9 @@ export class AdminService {
 
     const updated = await this.users.setRole(adminId, userId, role);
 
-    // El rol se lee de la base en cada petición, así que el cambio ya aplica.
-    // Aun así se cierran las sesiones: un cambio de permisos merece que la
-    // persona vuelva a entrar y vea su nuevo contexto desde cero.
+    // The role is read from the database on every request, so the change
+    // already applies. The sessions are closed anyway: a change of permissions
+    // deserves the person signing in again and seeing their new context fresh.
     await this.auth.revokeAllSessions(userId);
 
     await this.audit.record({
@@ -154,13 +154,13 @@ export class AdminService {
   }
 
   /**
-   * Restablece la contraseña de otra cuenta.
+   * Resets another account's password.
    *
-   * Existe porque el envío de correos del plan gratuito no da para un
-   * autoservicio de recuperación fiable: el administrador es el camino de
-   * vuelta para quien olvide su clave.
-   * Es una operación potente y por eso queda auditada, y cierra todas las
-   * sesiones de esa persona.
+   * It exists because the free plan's email sending is not enough for a
+   * reliable self-service recovery: the admin is the way back for whoever
+   * forgets their password.
+   * It is a powerful operation, so it is audited, and it closes every session
+   * of that person.
    */
   async resetPassword(
     adminId: bigint,
@@ -175,7 +175,7 @@ export class AdminService {
       displayName: user.displayName ?? undefined,
     });
 
-    // La contraseña la guarda Supabase; aquí no queda ni rastro de ella.
+    // Supabase keeps the password; not a trace of it stays here.
     if (!user.authId) {
       throw new ValidationError(
         'Esta cuenta no tiene credenciales gestionadas y no se le puede restablecer la contraseña.',
@@ -194,7 +194,7 @@ export class AdminService {
     });
   }
 
-  /** The query arrives as URL text: de ahí el `Number`. */
+  /** The query arrives as URL text: hence the `Number`. */
   async auditLog(adminId: bigint, query: { page?: string; per_page?: string }): Promise<AuditPage> {
     const page = query.page ? Number(query.page) : 1;
     const perPage = query.per_page ? Number(query.per_page) : 50;
@@ -222,14 +222,14 @@ export class AdminService {
     return user;
   }
 
-  /** Evita que un admin se deje a sí mismo fuera por accidente. */
+  /** Keeps an admin from locking themselves out by accident. */
   private requireNotSelf(adminId: bigint, userId: bigint, action: string): void {
     if (adminId === userId) {
       throw new BadRequestError(`No puedes ${action}.`, { code: 'cannot_target_self' });
     }
   }
 
-  /** Impide quedarse sin ningún administrador y perder el panel para siempre. */
+  /** Prevents ending up with no admin and losing the panel forever. */
   private async requireAnotherAdmin(role: UserRole, userId: bigint): Promise<void> {
     if (role !== 'admin') return;
 

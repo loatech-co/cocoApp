@@ -24,7 +24,7 @@ import {
 import { TagResponse } from '../../contract/v1/tags.response';
 import { tagListV1, type TagListV1 } from '../../presenters/v1/tags.presenter';
 
-/** M2 — Etiquetas transversales. */
+/** M2 — Cross-cutting tags. */
 @ApiAuthenticated()
 @Controller('tags')
 export class TagsController {

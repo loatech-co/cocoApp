@@ -21,11 +21,11 @@ export class TagsService {
   }
 
   /**
-   * Get-or-create idempotente sobre el unique (user_id, name).
+   * Idempotent get-or-create on the unique (user_id, name).
    *
-   * El PRD es explícito: un nombre repetido NO es un error, devuelve la
-   * etiqueta existente. La UI las crea al vuelo mientras el usuario escribe, y
-   * un 409 ahí sería fricción sin ningún beneficio.
+   * The PRD is explicit: a repeated name is NOT an error, it returns the
+   * existing tag. The UI creates them on the fly while the user types, and a
+   * 409 there would be friction with no benefit.
    */
   async getOrCreate(userId: bigint, name: string, color?: string): Promise<Tag> {
     const trimmed = name.trim();
@@ -39,14 +39,14 @@ export class TagsService {
     const created = await this.repository.createUnlessTaken(userId, trimmed, color ?? null);
     if (created) return tagOf(created);
 
-    // Entre el SELECT y el INSERT, otra petición creó la misma etiqueta. No es
-    // un error para quien pide —el PRD dice que un nombre repetido devuelve la
-    // existente—, así que se vuelve a buscar y se devuelve la que ganó la
-    // carrera.
+    // Between the SELECT and the INSERT, another request created the same tag.
+    // It is not an error for the caller —the PRD says a repeated name returns
+    // the existing one—, so it is looked up again and the one that won the
+    // race is returned.
     return tagOf(await this.repository.findByNameOrThrow(userId, trimmed));
   }
 
-  /** Resuelve una lista de nombres a ids, creando las que falten. */
+  /** Resolves a list of names to ids, creating the missing ones. */
   async resolveNames(userId: bigint, names: readonly string[]): Promise<bigint[]> {
     const unique = [...new Set(names.map((n) => n.trim()).filter(Boolean))];
     const tags = await Promise.all(unique.map((trimmed) => this.getOrCreate(userId, trimmed)));
@@ -63,7 +63,7 @@ export class TagsService {
     return tagOf(await this.repository.findOneOrThrow(userId, id));
   }
 
-  /** Borrar una etiqueta se lleva sus vínculos por CASCADE, no los movimientos. */
+  /** Deleting a tag takes its links with it by CASCADE, not the transactions. */
   async remove(userId: bigint, id: bigint): Promise<void> {
     if ((await this.repository.delete(userId, id)) === 0) {
       throw new NotFoundError('La etiqueta no existe.');

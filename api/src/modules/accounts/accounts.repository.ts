@@ -10,8 +10,9 @@ export class AccountsRepository {
   constructor(private readonly db: Database) {}
 
   /**
-   * Toda consulta filtra por `userId`. No es una convención de estilo: sin ese
-   * filtro, cambiar un id en la URL leería datos de otro usuario (IDOR).
+   * Every query filters by `userId`. It is not a style convention: without
+   * that filter, changing an id in the URL would read another user's data
+   * (IDOR).
    */
   async list(userId: bigint, shouldIncludeArchived: boolean): Promise<Account[]> {
     return this.db.forUser(userId, (tx) =>
@@ -27,14 +28,14 @@ export class AccountsRepository {
   }
 
   async create(userId: bigint, data: Prisma.AccountUncheckedCreateInput): Promise<Account> {
-    // El userId se fija desde el token, nunca desde el payload.
+    // The userId comes from the token, never from the payload.
     return this.db.forUser(userId, (tx) => tx.account.create({ data: { ...data, userId } }));
   }
 
   /**
-   * `updateMany` con userId en el where, no `update` por id a secas: si la fila
-   * es de otro usuario el count queda en 0 y podemos responder 404 sin haberla
-   * tocado ni confirmado que existe.
+   * `updateMany` with userId in the where, not a bare `update` by id: if the
+   * row belongs to another user the count stays at 0 and we can answer 404
+   * without having touched it or confirmed it exists.
    */
   async update(userId: bigint, id: bigint, data: Prisma.AccountUpdateInput): Promise<number> {
     const { count } = await this.db.forUser(userId, (tx) =>
@@ -55,13 +56,13 @@ export class AccountsRepository {
   }
 
   /**
-   * Agrega los movimientos de TODAS las cuentas del usuario en una sola
-   * consulta, agrupados por (cuenta, tipo, dirección, estado).
+   * Aggregates the transactions of ALL the user's accounts in a single query,
+   * grouped by (account, type, direction, status).
    *
-   * Se agrupa en vez de traer las filas una por una porque el efecto de un
-   * movimiento sobre el saldo es lineal en el monto: sumar primero y aplicar el
-   * signo después da exactamente el mismo resultado que recorrer cada fila, y
-   * evita traerse años de historial a memoria solo para listar cuentas.
+   * It groups instead of fetching the rows one by one because a transaction's
+   * effect on the balance is linear in the amount: adding first and applying
+   * the sign afterwards gives exactly the same result as walking every row,
+   * and avoids pulling years of history into memory just to list accounts.
    */
   async balanceMovements(userId: bigint, until?: Date): Promise<Map<string, BalanceMovement[]>> {
     const groups = await this.db.forUser(userId, (tx) =>
@@ -69,10 +70,10 @@ export class AccountsRepository {
         by: ['accountId', 'type', 'transferDir', 'status'],
         where: {
           userId,
-          // Un movimiento sin cuenta no participa de ningún saldo, y se descarta
-          // aquí en vez de más abajo para no traerse filas que hay que ignorar.
-          // Los saldos siguen siendo exactos para las cuentas que existan;
-          // sencillamente no hay saldo para lo que no pertenece a ninguna.
+          // A transaction without an account takes part in no balance, and it
+          // is dropped here instead of further down so rows that would be
+          // ignored are not fetched. Balances stay exact for the accounts that
+          // exist; there is simply no balance for what belongs to none.
           accountId: { not: null },
           ...(until ? { date: { lte: until } } : {}),
         },
@@ -83,7 +84,7 @@ export class AccountsRepository {
     const byAccount = new Map<string, BalanceMovement[]>();
 
     for (const group of groups) {
-      // El filtro del where ya lo garantiza; TypeScript no puede saberlo.
+      // The where filter already guarantees it; TypeScript cannot know.
       if (group.accountId === null) continue;
       const key = group.accountId.toString();
       const movements = byAccount.get(key) ?? [];

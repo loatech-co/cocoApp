@@ -21,7 +21,7 @@ export class PreferencesService {
     return preferencesOf(await this.saved(userId));
   }
 
-  /** Guarda solo lo que venga en el DTO. */
+  /** Saves only what comes in the DTO. */
   async update(userId: bigint, changes: UpdatePreferencesDto): Promise<Preferences> {
     const entries = Object.entries(changes)
       .filter(([, value]) => value !== undefined)
@@ -35,11 +35,11 @@ export class PreferencesService {
   }
 
   /**
-   * Atajo para el resto de la aplicación.
+   * A shortcut for the rest of the app.
    *
-   * Lo consultan el dashboard y el módulo de movimientos para saber si tiene
-   * sentido hablar de saldos. Vive aquí para que la respuesta a "¿este usuario
-   * lleva cuentas?" tenga una sola fuente.
+   * The dashboard and the transactions module ask it whether talking about
+   * balances makes sense. It lives here so the answer to "does this user keep
+   * accounts?" has a single source.
    */
   async tracksAccounts(userId: bigint): Promise<boolean> {
     return (await this.saved(userId))[ACCOUNTS_ENABLED];
@@ -48,7 +48,7 @@ export class PreferencesService {
   /**
    * This user's own feature flag values: rows `feature:<name>` holding a
    * boolean (step 7.8). The flags module reads them through here because this
-   * module owns `user_preferences`. They are not part of `Preferencias` and the
+   * module owns `user_preferences`. They are not part of `StoredPreferences` and the
    * DTO does not accept them: a person cannot turn a flag on for themselves.
    */
   async featureOverrides(userId: bigint): Promise<ReadonlyMap<FlagName, boolean>> {
@@ -60,7 +60,7 @@ export class PreferencesService {
     return overrides;
   }
 
-  /** Lo guardado, por clave de la tabla, con los valores por defecto. */
+  /** What is stored, by table key, with the defaults. */
   private async saved(userId: bigint): Promise<StoredPreferences> {
     return withDefaults(await this.repository.findByUser(userId));
   }
