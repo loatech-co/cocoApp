@@ -1,9 +1,11 @@
 import { ValidationPipe, VersioningType, type INestApplication } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 import { requestContext } from './common/logging/request-context';
+import { proxyHeadersProbe, trustProxyHops } from './common/proxy/client-ip';
 import { v1Deprecation } from './common/versioning/v1-deprecation';
 
 /** Every API route lives under `/api/v<version>`. */
@@ -35,8 +37,16 @@ export function configureApp(
   config: ConfigService,
   accessLog: (entry: Record<string, unknown>) => void = () => undefined,
 ): void {
+  // `req.ip` is the client, not LiteSpeed: the rate limiter and audit_log
+  // key on it. See `client-ip.ts` for why it is a hop count.
+  (app as NestExpressApplication).set(
+    'trust proxy',
+    trustProxyHops(config.get<string>('TRUST_PROXY_HOPS')),
+  );
+
   // First middleware: every later line of the request carries its id (6.8).
   app.use(requestContext(accessLog));
+  app.use(proxyHeadersProbe(config.get<string>('LOG_PROXY_HEADERS') === 'true', accessLog));
 
   // v1 answers with `Deprecation` and logs each use, until 7.10 removes it.
   app.use(v1Deprecation(accessLog));

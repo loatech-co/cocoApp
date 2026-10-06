@@ -47,6 +47,50 @@ describe('Limitador de tasa (e2e)', () => {
     expect(estados[10]).toBe(429);
   });
 
+  it('detrás del proxy cada cliente tiene su cupo, y cada correo el suyo', async () => {
+    // LiteSpeed appends the address it saw; documentation-range IPs stand in.
+    const usuario = await entorno.crearUsuario();
+    const otro = await entorno.crearUsuario();
+    const entrar = (email: string, ip: string) =>
+      http
+        .post('/api/v1/auth/login')
+        .set('X-Forwarded-For', ip)
+        .send({ email, password: 'Zz9$Otra-Cosa-Aqui!' });
+
+    for (let intento = 0; intento < 10; intento += 1) {
+      await entrar(usuario.email, '203.0.113.1').expect(401);
+    }
+
+    // Another client is not blocked by the first one's failures: before
+    // `trust proxy`, every request came from LiteSpeed and this was a 429.
+    await entrar(otro.email, '203.0.113.2').expect(401);
+
+    // The same account from a fresh address: the per-email limit holds,
+    // and v2 shares it with v1.
+    await entrar(usuario.email, '203.0.113.3').expect(429);
+    await http
+      .post('/api/v2/auth/login')
+      .set('X-Forwarded-For', '203.0.113.4')
+      .send({ email: usuario.email.toUpperCase(), password: 'Zz9$Otra-Cosa-Aqui!' })
+      .expect(429);
+  });
+
+  it('el cliente no elige su IP: solo cuenta la que añade el proxy', async () => {
+    const usuario = await entorno.crearUsuario();
+    for (let intento = 0; intento < 10; intento += 1) {
+      await http
+        .post('/api/v1/auth/login')
+        .set('X-Forwarded-For', `198.51.100.${String(intento)}, 203.0.113.9`)
+        .send({ email: correoDePrueba(`ip-${String(intento)}`), password: 'Zz9$Otra-Cosa-Aqui!' })
+        .expect(401);
+    }
+    await http
+      .post('/api/v1/auth/login')
+      .set('X-Forwarded-For', '198.51.100.99, 203.0.113.9')
+      .send({ email: usuario.email, password: 'Zz9$Otra-Cosa-Aqui!' })
+      .expect(429);
+  });
+
   it('corta la renovación de sesión al intento 31 en un minuto', async () => {
     // Sin cookie ni token: cada intento llega al controlador y responde 401.
     // Lo que se mide es que el tope de la ruta existe, no la renovación.

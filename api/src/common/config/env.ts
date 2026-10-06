@@ -81,6 +81,11 @@ const envSchema = z.object({
   BOOTSTRAP_ADMIN_EMAIL: optionalText,
   CHECK_BREACHED_PASSWORDS: z.enum(['true', 'false']).optional(),
   CORS_ORIGINS: optionalText,
+  TRUST_PROXY_HOPS: z
+    .string()
+    .regex(/^\d$/, 'must be the number of proxies in front of the API')
+    .optional(),
+  LOG_PROXY_HEADERS: z.enum(['true', 'false']).optional(),
 
   SOPORTES_DIR: optionalText,
   SOPORTES_STORAGE: z.enum(['supabase', 'disk']).optional(),

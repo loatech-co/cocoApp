@@ -6,6 +6,7 @@ import { join } from 'node:path';
 
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { LOGIN_PER_EMAIL } from './common/proxy/login-throttle';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -48,7 +49,8 @@ import { PrismaModule } from './prisma/prisma.module';
     // alcanza; si algún día hubiera varias instancias, se cambia a un store
     // compartido sin tocar los controladores. Los endpoints sensibles
     // (registro, login) llevan además su propio @Throttle más estricto.
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
+    // Login además cuenta por correo, sea cual sea la IP (`login-throttle.ts`).
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }, LOGIN_PER_EMAIL]),
 
     PrismaModule,
     AuthModule,
