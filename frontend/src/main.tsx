@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { Providers } from '@/app/providers';
+import { instalarRecargaPorVersion } from '@/app/recarga-por-version';
 import { AppRouter } from '@/app/router';
 import { enLaApp } from '@/shared/lib/puente-nativo';
 import './index.css';
@@ -18,6 +19,10 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 if (enLaApp()) {
   document.documentElement.dataset.embebido = 'si';
 }
+
+// Un despliegue nuevo deja obsoletos los trozos con hash de una pestaña
+// abierta: se recarga una vez para traer los nuevos (ver el archivo).
+instalarRecargaPorVersion();
 
 const container = document.getElementById('root');
 if (!container) {

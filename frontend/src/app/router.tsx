@@ -1,10 +1,11 @@
-import { Navigate, createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Navigate, createBrowserRouter, RouterProvider, type RouteObject } from 'react-router-dom';
 
 import { RequireAdmin, RequireAuth } from '@/features/auth/components/require-auth';
 import { DashboardPage } from '@/features/transactions/pages/dashboard-page';
 import { TITULO_DE_PAGINA } from '@/shared/ui/atoms/cabecera-de-pagina';
 
 import { AppShell } from './app-shell';
+import { PantallaDeError } from './pantalla-de-error';
 
 /*
   Every screen but the first one loads on demand (ADR 0018). The index is the
@@ -61,8 +62,17 @@ const lazily = {
  * nunca pasó por ahí: vive en `features/transactions/leer-soporte.ts` y sigue
  * intacto.
  */
-const router = createBrowserRouter([
-  /*
+export const rutas: RouteObject[] = [
+  {
+    /*
+      Every route hangs from this one, which has no path and no element: it is
+      only there for its `errorElement`. Whatever breaks below —a screen that
+      throws, a chunk a deploy has removed— draws Coco's error screen, in
+      Spanish, instead of React Router's default page.
+    */
+    errorElement: <PantallaDeError />,
+    children: [
+      /*
     La dirección vieja de entrar. Sigue viva y redirige: hay marcadores y
     enlaces guardados apuntando ahí, y romperlos es gratis de evitar.
 
@@ -70,47 +80,51 @@ const router = createBrowserRouter([
     donde se estaba pidiendo entrar, para que la barra de direcciones no se
     quede en `/entrar` después de cerrar sesión.
   */
-  { path: '/entrar', element: <Navigate to="/" replace /> },
-  { path: '/registro', lazy: lazily.register },
-  {
-    // Dentro de la app del teléfono, `window.__coco` —ir a una ruta, abrir la
-    // búsqueda— lo publica `PuenteDeNavegacion`, un hijo del armazón: es el
-    // único sitio que llega a la vez al enrutador y a la búsqueda.
-    path: '/',
-    element: (
-      <RequireAuth>
-        <AppShell />
-      </RequireAuth>
-    ),
-    children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'cuentas', lazy: lazily.accounts },
-      { path: 'centros-de-costos', lazy: lazily.centros },
-      // La ruta vieja sigue viva y redirige: hay enlaces guardados y marcadores
-      // apuntando a /categorias, y romperlos por un cambio de nombre es gratis
-      // de evitar.
-      { path: 'categorias', element: <Navigate to="/centros-de-costos" replace /> },
-      { path: 'mi-cuenta', lazy: lazily.cuenta },
+      { path: '/entrar', element: <Navigate to="/" replace /> },
+      { path: '/registro', lazy: lazily.register },
+      {
+        // Dentro de la app del teléfono, `window.__coco` —ir a una ruta, abrir la
+        // búsqueda— lo publica `PuenteDeNavegacion`, un hijo del armazón: es el
+        // único sitio que llega a la vez al enrutador y a la búsqueda.
+        path: '/',
+        element: (
+          <RequireAuth>
+            <AppShell />
+          </RequireAuth>
+        ),
+        children: [
+          { index: true, element: <DashboardPage /> },
+          { path: 'cuentas', lazy: lazily.accounts },
+          { path: 'centros-de-costos', lazy: lazily.centros },
+          // La ruta vieja sigue viva y redirige: hay enlaces guardados y marcadores
+          // apuntando a /categorias, y romperlos por un cambio de nombre es gratis
+          // de evitar.
+          { path: 'categorias', element: <Navigate to="/centros-de-costos" replace /> },
+          { path: 'mi-cuenta', lazy: lazily.cuenta },
 
-      // Administración. El RequireAdmin es comodidad de navegación; quien
-      // decide de verdad es el RolesGuard del backend.
-      { path: 'administracion', lazy: lazily.usuarios },
-      { path: 'administracion/bitacora', lazy: lazily.bitacora },
+          // Administración. El RequireAdmin es comodidad de navegación; quien
+          // decide de verdad es el RolesGuard del backend.
+          { path: 'administracion', lazy: lazily.usuarios },
+          { path: 'administracion/bitacora', lazy: lazily.bitacora },
+        ],
+      },
+      {
+        path: '*',
+        element: (
+          <main className="flex min-h-dvh flex-col items-center justify-center gap-2 px-4 text-center">
+            <h1 className={TITULO_DE_PAGINA}>Esta página no existe</h1>
+            <p className="text-sm text-muted-foreground">Revisa la dirección o vuelve al inicio.</p>
+            <a className="text-primary underline underline-offset-4" href="/">
+              Ir al inicio
+            </a>
+          </main>
+        ),
+      },
     ],
   },
-  {
-    path: '*',
-    element: (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-2 px-4 text-center">
-        <h1 className={TITULO_DE_PAGINA}>Esta página no existe</h1>
-        <p className="text-sm text-muted-foreground">Revisa la dirección o vuelve al inicio.</p>
-        <a className="text-primary underline underline-offset-4" href="/">
-          Ir al inicio
-        </a>
-      </main>
-    ),
-  },
-]);
+];
+
+const router = createBrowserRouter(rutas);
 
 export function AppRouter() {
   return <RouterProvider router={router} />;

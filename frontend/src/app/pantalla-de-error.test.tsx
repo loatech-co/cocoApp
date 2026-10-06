@@ -1,0 +1,60 @@
+// @vitest-environment jsdom
+import { cleanup, render, screen } from '@testing-library/react';
+import { RouterProvider, createMemoryRouter, type RouteObject } from 'react-router-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { PantallaDeError, esCodigoObsoleto } from './pantalla-de-error';
+import { rutas } from './router';
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+function pintarFallo(fallo: () => never | Promise<never>) {
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const router = createMemoryRouter([
+    { errorElement: <PantallaDeError />, children: [{ path: '/', lazy: fallo }] },
+  ]);
+  render(<RouterProvider router={router} />);
+}
+
+describe('the router error screen', () => {
+  it('wraps every route of the app', () => {
+    expect(rutas).toHaveLength(1);
+    expect(rutas[0]?.errorElement).toBeTruthy();
+    const caminos = (rutas[0]?.children ?? []).map((r: RouteObject) => r.path);
+    expect(caminos).toEqual(expect.arrayContaining(['/', '/registro', '*']));
+  });
+
+  it('says in Spanish that something broke, without the error itself', async () => {
+    pintarFallo(() => {
+      throw new Error('detalle interno que no se enseña');
+    });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Algo salió mal' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Recargar la página' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Ir al inicio' })).toBeTruthy();
+    expect(screen.queryByText(/detalle interno/)).toBeNull();
+    expect(screen.queryByText(/Unexpected Application Error/)).toBeNull();
+  });
+
+  it('tells a chunk a deploy removed apart from any other failure', async () => {
+    pintarFallo(() =>
+      Promise.reject(new TypeError('Failed to fetch dynamically imported module: /assets/a.js')),
+    );
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Hay una versión nueva de Coco' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Ir al inicio' })).toBeNull();
+  });
+
+  it('recognises how each browser words a missing chunk', () => {
+    expect(esCodigoObsoleto(new TypeError('Importing a module script failed.'))).toBe(true);
+    expect(esCodigoObsoleto(new TypeError('error loading dynamically imported module'))).toBe(true);
+    expect(esCodigoObsoleto(new Error('Cannot read properties of undefined'))).toBe(false);
+    expect(esCodigoObsoleto('no es un error')).toBe(false);
+  });
+});
