@@ -45,7 +45,7 @@ export class CategoryLookupRepository {
     return this.db.forUser(userId, (tx) =>
       tx.category.findMany({
         where: { userId, isArchived: false },
-        select: { id: true, parentId: true, name: true, palabrasClave: true },
+        select: { id: true, parentId: true, name: true, keywords: true },
         orderBy: { sortOrder: 'asc' },
       }),
     );
@@ -61,13 +61,13 @@ export class CategoryLookupRepository {
           color: true,
           icon: true,
           parentId: true,
-          recurrente: true,
-          periodicidad: true,
-          diaDePago: true,
-          mesDePago: true,
-          presupuesto: true,
-          pagoAutomatico: true,
-          variosPagos: true,
+          isRecurring: true,
+          periodicity: true,
+          paymentDay: true,
+          paymentMonth: true,
+          budget: true,
+          isAutoPaid: true,
+          isMultiPayment: true,
           isArchived: true,
         },
       }),
@@ -77,14 +77,14 @@ export class CategoryLookupRepository {
   findAutoPaid(userId: bigint): Promise<AutoPaidConcept[]> {
     return this.db.forUser(userId, (tx) =>
       tx.category.findMany({
-        where: { userId, recurrente: true, pagoAutomatico: true, isArchived: false },
+        where: { userId, isRecurring: true, isAutoPaid: true, isArchived: false },
         select: {
           id: true,
           name: true,
-          periodicidad: true,
-          diaDePago: true,
-          mesDePago: true,
-          presupuesto: true,
+          periodicity: true,
+          paymentDay: true,
+          paymentMonth: true,
+          budget: true,
         },
       }),
     );

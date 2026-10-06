@@ -4,6 +4,7 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsNumber,
   IsOptional,
@@ -16,7 +17,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { CategoryKind, Periodicidad } from '../../../generated/prisma/client';
+import { SPANISH_PERIODICITIES, type SpanishPeriodicity } from '../../../common/vocabulary';
+import { CategoryKind } from '../../../generated/prisma/client';
 import { unir } from '../palabras-clave';
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
@@ -100,8 +102,8 @@ export class CreateCategoryDto {
   estatico?: boolean;
 
   @IsOptional()
-  @IsEnum(Periodicidad, { message: 'La periodicidad no es válida.' })
-  periodicidad?: Periodicidad | null;
+  @IsIn(SPANISH_PERIODICITIES, { message: 'La periodicidad no es válida.' })
+  periodicidad?: SpanishPeriodicity | null;
 
   @IsOptional()
   @Type(() => Number)
@@ -245,8 +247,8 @@ export class UpdateCategoryDto {
   estatico?: boolean;
 
   @IsOptional()
-  @IsEnum(Periodicidad, { message: 'La periodicidad no es válida.' })
-  periodicidad?: Periodicidad | null;
+  @IsIn(SPANISH_PERIODICITIES, { message: 'La periodicidad no es válida.' })
+  periodicidad?: SpanishPeriodicity | null;
 
   @IsOptional()
   @Type(() => Number)

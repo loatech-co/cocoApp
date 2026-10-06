@@ -1,4 +1,4 @@
-import type { Periodicidad, Prisma } from '../../generated/prisma/client';
+import type { Periodicity, Prisma } from '../../generated/prisma/client';
 
 /** A category the person picked by hand, with what decides if it can classify. */
 export interface ChosenCategory {
@@ -13,7 +13,7 @@ export interface SearchableCategory {
   id: bigint;
   parentId: bigint | null;
   name: string;
-  palabrasClave: string[];
+  keywords: string[];
 }
 
 /** A category as the dashboard summary reads it: tree position and recurrence. */
@@ -23,13 +23,13 @@ export interface SummaryCategory {
   color: string | null;
   icon: string | null;
   parentId: bigint | null;
-  recurrente: boolean;
-  periodicidad: Periodicidad | null;
-  diaDePago: number | null;
-  mesDePago: number | null;
-  presupuesto: Prisma.Decimal | null;
-  pagoAutomatico: boolean;
-  variosPagos: boolean;
+  isRecurring: boolean;
+  periodicity: Periodicity | null;
+  paymentDay: number | null;
+  paymentMonth: number | null;
+  budget: Prisma.Decimal | null;
+  isAutoPaid: boolean;
+  isMultiPayment: boolean;
   isArchived: boolean;
 }
 
@@ -37,8 +37,8 @@ export interface SummaryCategory {
 export interface AutoPaidConcept {
   id: bigint;
   name: string;
-  periodicidad: Periodicidad | null;
-  diaDePago: number | null;
-  mesDePago: number | null;
-  presupuesto: Prisma.Decimal | null;
+  periodicity: Periodicity | null;
+  paymentDay: number | null;
+  paymentMonth: number | null;
+  budget: Prisma.Decimal | null;
 }

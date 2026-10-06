@@ -50,16 +50,16 @@ describe('API v2 (e2e)', () => {
     user = await env.crearUsuario({ displayName: 'Vera' });
     auth = env.como(user);
     const tree = await makeConcept(env.prisma, user.id, {
-      center: { name: 'Hogar', estatico: true },
+      center: { name: 'Hogar', isStatic: true },
       category: { name: 'Servicios' },
       concept: {
         name: 'Internet',
-        recurrente: true,
-        periodicidad: 'trimestral',
-        diaDePago: 5,
-        mesDePago: 2,
-        presupuesto: '90000',
-        palabrasClave: ['fibra'],
+        isRecurring: true,
+        periodicity: 'quarterly',
+        paymentDay: 5,
+        paymentMonth: 2,
+        budget: '90000',
+        keywords: ['fibra'],
       },
     });
     conceptId = tree.concept.id;

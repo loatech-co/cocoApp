@@ -17,6 +17,14 @@ export const PERIODICITY = {
   anual: 'annual',
 } as const;
 
+/**
+ * v1's periodicities, the database's values. The Prisma client speaks the
+ * English ones and maps them to these (`@map`, step 7.2-c), so the v1 inputs
+ * validate against this list and turn into English before they reach it.
+ */
+export const SPANISH_PERIODICITIES = Object.keys(PERIODICITY) as SpanishPeriodicity[];
+export type SpanishPeriodicity = keyof typeof PERIODICITY;
+
 export const BREAKDOWN_LEVEL = {
   'centro de costos': 'cost_center',
   categoría: 'category',

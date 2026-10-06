@@ -141,7 +141,7 @@ export class TransactionsService {
         source: dto.source ?? 'web',
         rawText: dto.raw_text ?? null,
         capturedAt: dto.captured_at ? new Date(dto.captured_at) : null,
-        porRevisar: dto.por_revisar ?? false,
+        needsReview: dto.por_revisar ?? false,
       },
       splits,
       tagIds,

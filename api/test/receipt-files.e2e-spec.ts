@@ -54,7 +54,7 @@ describe('Receipt files follow their rows (e2e)', () => {
       .attach('archivos', image, { filename: 'r.png', contentType: 'image/png' })
       .expect(201);
 
-    const row = await env.prisma.soporte.findFirstOrThrow({ where: { transactionId: BigInt(id) } });
+    const row = await env.prisma.receipt.findFirstOrThrow({ where: { transactionId: BigInt(id) } });
     return { id, key: row.storageKey, soporteId: String(row.id) };
   }
 
@@ -89,7 +89,7 @@ describe('Receipt files follow their rows (e2e)', () => {
 
     await http.delete(`/api/v1/transactions/${id}`).set('Authorization', asAna).expect(204);
 
-    expect(await env.prisma.soporte.count({ where: { storageKey: key } })).toBe(0);
+    expect(await env.prisma.receipt.count({ where: { storageKey: key } })).toBe(0);
     expect(await store.exists(key)).toBe(false);
   });
 

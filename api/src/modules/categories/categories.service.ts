@@ -23,7 +23,12 @@ import {
   PROFUNDIDAD_MAXIMA,
 } from '../../common/categories/categories.tree';
 import { ConflictError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
-import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
+import { english, PERIODICITY, type SpanishPeriodicity } from '../../common/vocabulary';
+import type {
+  Category as CategoryRow,
+  CategoryKind,
+  Periodicity,
+} from '../../generated/prisma/client';
 
 @Injectable()
 export class CategoriesService {
@@ -78,15 +83,15 @@ export class CategoriesService {
       // La fila se arma campo por campo, así que un dato nuevo del DTO no
       // llega solo: hay que nombrarlo aquí o se pierde en silencio, con la
       // API devolviendo 201 y el concepto creado sin su recurrencia.
-      recurrente: dto.recurrente ?? false,
-      estatico: dto.estatico ?? false,
-      periodicidad: dto.periodicidad ?? null,
-      diaDePago: dto.dia_de_pago ?? null,
-      mesDePago: dto.mes_de_pago ?? null,
-      presupuesto: dto.presupuesto ?? null,
-      pagoAutomatico: dto.pago_automatico ?? false,
-      variosPagos: dto.varios_pagos ?? false,
-      palabrasClave: dto.palabras_clave ?? [],
+      isRecurring: dto.recurrente ?? false,
+      isStatic: dto.estatico ?? false,
+      periodicity: periodicityOf(dto.periodicidad ?? null),
+      paymentDay: dto.dia_de_pago ?? null,
+      paymentMonth: dto.mes_de_pago ?? null,
+      budget: dto.presupuesto ?? null,
+      isAutoPaid: dto.pago_automatico ?? false,
+      isMultiPayment: dto.varios_pagos ?? false,
+      keywords: dto.palabras_clave ?? [],
     });
 
     return categoryFromRow(categoria);
@@ -130,7 +135,7 @@ export class CategoriesService {
       exactamente lo que no puede ocurrir—. Por eso cada campo se lee del DTO
       si viene y de la fila que hay si no.
     */
-    const variosPagosFinal = dto.varios_pagos ?? actual.variosPagos;
+    const variosPagosFinal = dto.varios_pagos ?? actual.isMultiPayment;
     if (variosPagosFinal) {
       const padreFinal =
         dto.parent_id !== undefined
@@ -141,8 +146,8 @@ export class CategoriesService {
 
       this.exigirVariosPagosCoherente({
         variosPagos: true,
-        pagoAutomatico: dto.pago_automatico ?? actual.pagoAutomatico,
-        recurrente: dto.recurrente ?? actual.recurrente,
+        pagoAutomatico: dto.pago_automatico ?? actual.isAutoPaid,
+        recurrente: dto.recurrente ?? actual.isRecurring,
         profundidad: profundidadResultante(await arbol(), id, padreFinal),
       });
     }
@@ -367,6 +372,11 @@ export class CategoriesService {
 }
 
 /** The columns a PATCH changes: only what the DTO brought. */
+/** The v1 word the DTO carries, as the client's English one; `null` stays `null`. */
+function periodicityOf(word: SpanishPeriodicity | null): Periodicity | null {
+  return word === null ? null : english(PERIODICITY, word);
+}
+
 function cambiosDe(dto: UpdateCategoryDto): Parameters<CategoriesRepository['actualizar']>[2] {
   return {
     ...(dto.name !== undefined && { name: dto.name }),
@@ -379,15 +389,15 @@ function cambiosDe(dto: UpdateCategoryDto): Parameters<CategoriesRepository['act
     ...(dto.icon !== undefined && { icon: dto.icon }),
     ...(dto.sort_order !== undefined && { sortOrder: dto.sort_order }),
     ...(dto.is_archived !== undefined && { isArchived: dto.is_archived }),
-    ...(dto.recurrente !== undefined && { recurrente: dto.recurrente }),
-    ...(dto.estatico !== undefined && { estatico: dto.estatico }),
-    ...(dto.periodicidad !== undefined && { periodicidad: dto.periodicidad }),
-    ...(dto.dia_de_pago !== undefined && { diaDePago: dto.dia_de_pago }),
-    ...(dto.mes_de_pago !== undefined && { mesDePago: dto.mes_de_pago }),
+    ...(dto.recurrente !== undefined && { isRecurring: dto.recurrente }),
+    ...(dto.estatico !== undefined && { isStatic: dto.estatico }),
+    ...(dto.periodicidad !== undefined && { periodicity: periodicityOf(dto.periodicidad) }),
+    ...(dto.dia_de_pago !== undefined && { paymentDay: dto.dia_de_pago }),
+    ...(dto.mes_de_pago !== undefined && { paymentMonth: dto.mes_de_pago }),
     // `!== undefined` y no un truthy: `null` lo quita y CERO es un valor.
-    ...(dto.presupuesto !== undefined && { presupuesto: dto.presupuesto }),
-    ...(dto.pago_automatico !== undefined && { pagoAutomatico: dto.pago_automatico }),
-    ...(dto.varios_pagos !== undefined && { variosPagos: dto.varios_pagos }),
-    ...(dto.palabras_clave !== undefined && { palabrasClave: dto.palabras_clave }),
+    ...(dto.presupuesto !== undefined && { budget: dto.presupuesto }),
+    ...(dto.pago_automatico !== undefined && { isAutoPaid: dto.pago_automatico }),
+    ...(dto.varios_pagos !== undefined && { isMultiPayment: dto.varios_pagos }),
+    ...(dto.palabras_clave !== undefined && { keywords: dto.palabras_clave }),
   };
 }

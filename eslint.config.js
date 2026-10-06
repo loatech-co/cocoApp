@@ -200,7 +200,7 @@ export default defineConfig(
     '**/node_modules/**',
     'frontend/public/**',
     'api/prisma/migrations/**',
-    'api/prisma/migraciones-mysql-archivadas/**',
+    'api/prisma/archived-mysql-migrations/**',
     // Prisma 7 client, written by `prisma generate` (ADR 0020).
     'api/src/generated/**',
     'ios/**',

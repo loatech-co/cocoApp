@@ -96,7 +96,7 @@ export function transactionFromRow(row: TransaccionCompleta): Transaction {
     source: row.source,
     rawText: row.rawText,
     capturedAt: row.capturedAt,
-    needsReview: row.porRevisar,
+    needsReview: row.needsReview,
     tags: row.tags.map((link) => link.tag.name),
     splits: row.splits.map((split) => ({
       id: split.id,

@@ -14,49 +14,49 @@ import { toMoney } from '../../common/money/money';
 describe('Pagos pendientes', () => {
   describe('Si toca en el mes', () => {
     it('lo mensual toca todos los meses, sin referencia que valga', () => {
-      expect(tocaEnElMes('mensual', null, '2026-09-01')).toBe(true);
-      expect(tocaEnElMes('mensual', 3, '2026-09-01')).toBe(true);
+      expect(tocaEnElMes('monthly', null, '2026-09-01')).toBe(true);
+      expect(tocaEnElMes('monthly', 3, '2026-09-01')).toBe(true);
     });
 
     it('lo trimestral cae en su mes y cada tres desde ahí', () => {
       // Con referencia en marzo: marzo, junio, septiembre, diciembre.
       for (const mes of ['2026-03-01', '2026-06-01', '2026-09-01', '2026-12-01']) {
-        expect(tocaEnElMes('trimestral', 3, mes)).toBe(true);
+        expect(tocaEnElMes('quarterly', 3, mes)).toBe(true);
       }
       for (const mes of ['2026-04-01', '2026-05-01', '2026-07-01']) {
-        expect(tocaEnElMes('trimestral', 3, mes)).toBe(false);
+        expect(tocaEnElMes('quarterly', 3, mes)).toBe(false);
       }
     });
 
     it('dos trimestrales con referencias distintas caen en meses distintos', () => {
       // Es justo lo que "cada tres meses" a secas no puede expresar.
-      expect(tocaEnElMes('trimestral', 1, '2026-04-01')).toBe(true);
-      expect(tocaEnElMes('trimestral', 2, '2026-04-01')).toBe(false);
+      expect(tocaEnElMes('quarterly', 1, '2026-04-01')).toBe(true);
+      expect(tocaEnElMes('quarterly', 2, '2026-04-01')).toBe(false);
     });
 
     it('lo anual cae solo en su mes', () => {
-      expect(tocaEnElMes('anual', 9, '2026-09-01')).toBe(true);
-      expect(tocaEnElMes('anual', 9, '2027-09-01')).toBe(true);
-      expect(tocaEnElMes('anual', 9, '2026-03-01')).toBe(false);
+      expect(tocaEnElMes('annual', 9, '2026-09-01')).toBe(true);
+      expect(tocaEnElMes('annual', 9, '2027-09-01')).toBe(true);
+      expect(tocaEnElMes('annual', 9, '2026-03-01')).toBe(false);
     });
 
     it('lo semestral, dos veces al año', () => {
-      expect(tocaEnElMes('semestral', 2, '2026-02-01')).toBe(true);
-      expect(tocaEnElMes('semestral', 2, '2026-08-01')).toBe(true);
-      expect(tocaEnElMes('semestral', 2, '2026-05-01')).toBe(false);
+      expect(tocaEnElMes('semiannual', 2, '2026-02-01')).toBe(true);
+      expect(tocaEnElMes('semiannual', 2, '2026-08-01')).toBe(true);
+      expect(tocaEnElMes('semiannual', 2, '2026-05-01')).toBe(false);
     });
 
     it('funciona hacia ATRÁS del mes de referencia', () => {
       // El ciclo no empieza a existir el día que se configuró: febrero de 2020
       // también era un mes par si la referencia es febrero.
-      expect(tocaEnElMes('bimestral', 2, '2020-02-01')).toBe(true);
-      expect(tocaEnElMes('bimestral', 2, '2020-03-01')).toBe(false);
+      expect(tocaEnElMes('bimonthly', 2, '2020-02-01')).toBe(true);
+      expect(tocaEnElMes('bimonthly', 2, '2020-03-01')).toBe(false);
     });
 
     it('sin referencia se asume que toca', () => {
       // Alguien lo marcó como recurrente y no hay registro: callarlo sería
       // esconder justo lo que se quiere ver.
-      expect(tocaEnElMes('anual', null, '2026-09-01')).toBe(true);
+      expect(tocaEnElMes('annual', null, '2026-09-01')).toBe(true);
     });
   });
 

@@ -269,12 +269,12 @@ export class InterpretacionService {
     const aNodo = (f: {
       id: bigint;
       name: string;
-      palabrasClave: string[];
+      keywords: string[];
       children: unknown[];
     }): SearchableNode => ({
       id: f.id.toString(),
       name: f.name,
-      keywords: f.palabrasClave,
+      keywords: f.keywords,
       children: (f.children as (typeof f)[]).map(aNodo),
     });
     return anidar(filas).map(aNodo);

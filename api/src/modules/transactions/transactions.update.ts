@@ -81,6 +81,6 @@ export function cambiosDe(
     ...(dto.captured_at !== undefined && {
       capturedAt: dto.captured_at === null ? null : new Date(dto.captured_at),
     }),
-    ...(dto.por_revisar !== undefined && { porRevisar: dto.por_revisar }),
+    ...(dto.por_revisar !== undefined && { needsReview: dto.por_revisar }),
   };
 }

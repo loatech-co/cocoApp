@@ -1,5 +1,5 @@
 import type { ConHijos } from '../../common/categories/categories.tree';
-import { english, PERIODICITY, type English } from '../../common/vocabulary';
+import { PERIODICITY, type English } from '../../common/vocabulary';
 import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
 
 /**
@@ -77,14 +77,14 @@ export function categoryFromRow(row: CategoryRow): Category {
     icon: row.icon,
     sortOrder: row.sortOrder,
     isArchived: row.isArchived,
-    isRecurring: row.recurrente,
-    isStatic: row.estatico,
-    periodicity: row.periodicidad === null ? null : english(PERIODICITY, row.periodicidad),
-    paymentDay: row.diaDePago,
-    paymentMonth: row.mesDePago,
-    budget: row.presupuesto === null ? null : row.presupuesto.toString(),
-    isAutoPaid: row.pagoAutomatico,
-    isMultiPayment: row.variosPagos,
-    keywords: row.palabrasClave,
+    isRecurring: row.isRecurring,
+    isStatic: row.isStatic,
+    periodicity: row.periodicity,
+    paymentDay: row.paymentDay,
+    paymentMonth: row.paymentMonth,
+    budget: row.budget === null ? null : row.budget.toString(),
+    isAutoPaid: row.isAutoPaid,
+    isMultiPayment: row.isMultiPayment,
+    keywords: row.keywords,
   };
 }

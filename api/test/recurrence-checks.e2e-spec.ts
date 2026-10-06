@@ -38,9 +38,9 @@ describe('Recurrence CHECK constraints (e2e)', () => {
         userId: ana.id,
         name: 'Arriendo',
         kind: 'expense',
-        recurrente: true,
-        periodicidad: 'mensual',
-        diaDePago: 5,
+        isRecurring: true,
+        periodicity: 'monthly',
+        paymentDay: 5,
       },
     });
     return concept.id;

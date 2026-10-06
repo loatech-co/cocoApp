@@ -60,9 +60,9 @@ export class CaptureRepository {
           return { kind: 'merged', id: verdict.id };
         }
 
-        const porRevisar = movement.data.porRevisar === true || verdict.flag;
+        const needsReview = movement.data.needsReview === true || verdict.flag;
         const created = await tx.transaction.create({
-          data: { ...movement.data, porRevisar },
+          data: { ...movement.data, needsReview },
           select: { id: true },
         });
         await writeDetails(tx, created.id, movement.splits, movement.tagIds);

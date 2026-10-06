@@ -239,13 +239,13 @@ export class CategoriesRepository {
         los dos, que es justo por lo que se crearon duplicados.
       */
       const [origen, destino] = await Promise.all([
-        tx.category.findUnique({ where: { id: origenId }, select: { palabrasClave: true } }),
-        tx.category.findUnique({ where: { id: destinoId }, select: { palabrasClave: true } }),
+        tx.category.findUnique({ where: { id: origenId }, select: { keywords: true } }),
+        tx.category.findUnique({ where: { id: destinoId }, select: { keywords: true } }),
       ]);
 
-      const juntas = unir(destino?.palabrasClave ?? [], origen?.palabrasClave ?? []);
-      if (juntas.length !== (destino?.palabrasClave.length ?? 0)) {
-        await tx.category.update({ where: { id: destinoId }, data: { palabrasClave: juntas } });
+      const juntas = unir(destino?.keywords ?? [], origen?.keywords ?? []);
+      if (juntas.length !== (destino?.keywords.length ?? 0)) {
+        await tx.category.update({ where: { id: destinoId }, data: { keywords: juntas } });
       }
 
       await tx.category.delete({ where: { id: origenId } });
@@ -275,7 +275,7 @@ async function copyTemplate(
         kind: 'expense',
         parentId,
         icon: nodo.icon ?? null,
-        estatico: nodo.estatico ?? false,
+        isStatic: nodo.estatico ?? false,
         // Explícito y correlativo, no el 0 de fábrica: con todo en cero el
         // orden lo acaba decidiendo el id, que es el orden de inserción por
         // casualidad y no por decisión.

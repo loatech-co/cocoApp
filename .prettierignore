@@ -13,7 +13,7 @@ package-lock.json
 frontend/public/tesseract/
 api/supabase/.temp/
 api/prisma/migrations/
-api/prisma/migraciones-mysql-archivadas/
+api/prisma/archived-mysql-migrations/
 
 # The iOS app has its own toolchain (swift-format, step 7.13)
 ios/

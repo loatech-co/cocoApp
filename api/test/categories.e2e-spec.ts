@@ -81,7 +81,7 @@ describe('Categories (e2e)', () => {
 
   it('keeps a multi-payment concept on the concept level, recurring and not auto-paid', async () => {
     const { concept, center } = await makeConcept(env.prisma, user.id, {
-      concept: { recurrente: true, periodicidad: 'mensual', diaDePago: 1, variosPagos: true },
+      concept: { isRecurring: true, periodicity: 'monthly', paymentDay: 1, isMultiPayment: true },
     });
 
     const autoPaid = await patch(concept.id, { pago_automatico: true }).expect(422);

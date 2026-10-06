@@ -100,10 +100,10 @@ export class SoportesService implements OnModuleInit {
 
     return filas.map((s, indice) => ({
       id: s.id,
-      position: s.orden,
-      fileName: s.nombreArchivo,
+      position: s.position,
+      fileName: s.fileName,
       mimeType: s.mimeType,
-      sizeBytes: s.tamano,
+      sizeBytes: s.sizeBytes,
       // Promise.all devuelve uno por fila: el respaldo nunca se usa.
       isAvailable: disponibles[indice] ?? false,
     }));
@@ -143,9 +143,9 @@ export class SoportesService implements OnModuleInit {
 
     return {
       flujo,
-      nombre: soporte.nombreArchivo,
+      nombre: soporte.fileName,
       mime: soporte.mimeType,
-      tamano: soporte.tamano,
+      tamano: soporte.sizeBytes,
     };
   }
 
@@ -200,12 +200,12 @@ export class SoportesService implements OnModuleInit {
       await this.repository.create({
         userId,
         transactionId,
-        orden,
-        nombreArchivo: nombreDeSoporte(concepto, fecha, extension),
+        position: orden,
+        fileName: nombreDeSoporte(concepto, fecha, extension),
         mimeType: mime,
         storageKey,
-        tamano: contenido.length,
-        huella,
+        sizeBytes: contenido.length,
+        contentHash: huella,
       });
 
       orden += 1;

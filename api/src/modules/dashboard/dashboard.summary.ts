@@ -13,7 +13,6 @@ import {
 import type { CategorySpend, PendingPayment, TrendPoint } from './dashboard.types';
 import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
 import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
-import { english, PERIODICITY } from '../../common/vocabulary';
 import type { Account } from '../accounts/accounts.service';
 import type { SummaryCategory } from '../categories/category-lookup.service';
 import type { MonthlyHistory, SummaryMovement } from '../transactions/ledger.service';
@@ -309,7 +308,7 @@ export function tendencia(
 
 /** A recurring concept that can be due: it has a periodicity. */
 export type Recurrente = SummaryCategory & {
-  periodicidad: NonNullable<SummaryCategory['periodicidad']>;
+  periodicity: NonNullable<SummaryCategory['periodicity']>;
 };
 
 /*
@@ -329,7 +328,7 @@ export type Recurrente = SummaryCategory & {
 */
 export function recurrentesVivos(categorias: readonly SummaryCategory[]): Recurrente[] {
   return categorias.filter(
-    (c): c is Recurrente => c.recurrente && c.periodicidad !== null && !c.isArchived,
+    (c): c is Recurrente => c.isRecurring && c.periodicity !== null && !c.isArchived,
   );
 }
 
@@ -356,7 +355,7 @@ export function pendientesDelMes(
   for (const concepto of recurrentes) {
     // Primero si toca este mes: un trimestral que no cae aquí no cuenta
     // para el presupuesto ni aparece como pendiente.
-    if (!tocaEnElMes(concepto.periodicidad, concepto.mesDePago, mesEnCurso)) continue;
+    if (!tocaEnElMes(concepto.periodicity, concepto.paymentMonth, mesEnCurso)) continue;
 
     const clave = concepto.id.toString();
     const pagado = datos.pagadoEsteMes.get(clave);
@@ -368,7 +367,7 @@ export function pendientesDelMes(
     // Y el presupuesto del concepto, cuando lo tiene, gana al promedio.
     // Ver `esperadoDelMes`.
     const esperado = esperadoDelMes(
-      concepto.presupuesto === null ? null : toMoney(concepto.presupuesto),
+      concepto.budget === null ? null : toMoney(concepto.budget),
       datos.historiaDe.get(clave) ?? new Map(),
       mesEnCurso.slice(0, 7),
     );
@@ -378,7 +377,7 @@ export function pendientesDelMes(
     // entre sí: un concepto que sale de la lista por estar cubierto no
     // puede entrar al presupuesto por lo que se esperaba.
     const estado = comoQuedaElPendiente({
-      variosPagos: concepto.variosPagos,
+      variosPagos: concepto.isMultiPayment,
       hayPago: pagado !== undefined,
       pagado: pagado ?? CERO,
       esperado,
@@ -420,15 +419,15 @@ function pendienteDe(
     categoryId: concepto.id,
     name: concepto.name,
     path: camino.join(' · '),
-    periodicity: english(PERIODICITY, concepto.periodicidad),
-    dueDate: vencimiento(mesEnCurso, concepto.diaDePago),
+    periodicity: concepto.periodicity,
+    dueDate: vencimiento(mesEnCurso, concepto.paymentDay),
     expectedAmount: esperado === null ? null : serializar(toMoney(esperado)),
     costCenterId: BigInt(raiz),
     costCenter: arbol.datosDe.get(raiz)?.name ?? '',
     // Siempre, también en los normales —donde es cero—, para que la
     // pantalla no tenga que preguntarse si el campo viene.
     paidAmount: serializar(pagado ?? CERO),
-    isMultiPayment: concepto.variosPagos,
+    isMultiPayment: concepto.isMultiPayment,
   };
 }
 

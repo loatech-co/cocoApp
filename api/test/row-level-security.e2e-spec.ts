@@ -39,11 +39,11 @@ async function seedEverything(db: PrismaClient, userId: bigint, mark: string): P
   const { concept } = await makeConcept(db, userId, {
     concept: {
       name: `${mark} concepto`,
-      recurrente: true,
-      periodicidad: 'mensual',
-      diaDePago: 1,
-      pagoAutomatico: true,
-      presupuesto: '10',
+      isRecurring: true,
+      periodicity: 'monthly',
+      paymentDay: 1,
+      isAutoPaid: true,
+      budget: '10',
     },
   });
   const transaction = await makeTransaction(db, userId, {
@@ -59,15 +59,15 @@ async function seedEverything(db: PrismaClient, userId: bigint, mark: string): P
   await db.transactionTag.create({ data: { transactionId: transaction.id, tagId: tag.id } });
   await db.categoryRule.create({ data: { userId, pattern: mark, categoryId: concept.id } });
   await db.userPreference.create({ data: { userId, prefKey: 'tema', prefValue: mark } });
-  await db.soporte.create({
+  await db.receipt.create({
     data: {
       userId,
       transactionId: transaction.id,
-      nombreArchivo: `${mark}.pdf`,
+      fileName: `${mark}.pdf`,
       mimeType: 'application/pdf',
       storageKey: `${userId}/${mark}.pdf`,
-      tamano: 1,
-      huella: 'a'.repeat(64),
+      sizeBytes: 1,
+      contentHash: 'a'.repeat(64),
     },
   });
   const batch = await db.importBatch.create({ data: { userId } });
@@ -85,7 +85,7 @@ async function seedEverything(db: PrismaClient, userId: bigint, mark: string): P
 /** The ids of one user's seeded rows, read as the owner. */
 async function rowsOf(db: PrismaClient, userId: bigint) {
   const transaction = await db.transaction.findFirstOrThrow({ where: { userId } });
-  const concept = await db.category.findFirstOrThrow({ where: { userId, recurrente: true } });
+  const concept = await db.category.findFirstOrThrow({ where: { userId, isRecurring: true } });
   const account = await db.account.findFirstOrThrow({ where: { userId } });
   const tag = await db.tag.findFirstOrThrow({ where: { userId } });
   const batch = await db.importBatch.findFirstOrThrow({ where: { userId } });
@@ -190,7 +190,7 @@ describe('Row-level security (e2e)', () => {
       await tx.transaction.updateMany({ data: { notes: 'tocado' } });
       await tx.transactionTag.deleteMany({});
       await tx.transactionSplit.deleteMany({});
-      await tx.soporte.deleteMany({});
+      await tx.receipt.deleteMany({});
       await tx.transaction.deleteMany({});
       await tx.tag.deleteMany({});
     });
@@ -366,10 +366,10 @@ describe('Row-level security (e2e)', () => {
       [
         'my receipt on their movement',
         (tx) =>
-          tx.soporte.updateMany({
+          tx.receipt.updateMany({
             where: { userId: ana.id },
             // Another fingerprint: both users' seeded receipts share one.
-            data: { transactionId: theirs.transaction, huella: 'c'.repeat(64) },
+            data: { transactionId: theirs.transaction, contentHash: 'c'.repeat(64) },
           }),
       ],
       [

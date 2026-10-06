@@ -41,11 +41,11 @@ describe('Auto-charge task (e2e)', () => {
       category: { name: `${name} grupo` },
       concept: {
         name,
-        recurrente: true,
-        periodicidad: 'mensual',
-        diaDePago: 1,
-        presupuesto: '50000',
-        pagoAutomatico: true,
+        isRecurring: true,
+        periodicity: 'monthly',
+        paymentDay: 1,
+        budget: '50000',
+        isAutoPaid: true,
       },
     });
     return concept.id;

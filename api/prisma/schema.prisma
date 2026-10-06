@@ -196,8 +196,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(3)
 
-  approvedBy    User?            @relation("AprobadoPor", fields: [approvedById], references: [id], onDelete: SetNull, map: "fk_users_approved_by")
-  aprobados     User[]           @relation("AprobadoPor")
+  approvedBy    User?            @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull, map: "fk_users_approved_by")
+  approvedUsers User[]           @relation("ApprovedBy")
   auditEvents   AuditLog[]
   accounts      Account[]
   categories    Category[]
@@ -206,7 +206,7 @@ model User {
   preferences   UserPreference[]
   importBatches ImportBatch[]
   categoryRules CategoryRule[]
-  soportes      Soporte[]
+  receipts      Receipt[]
 
   @@index([status], map: "idx_users_status")
   @@map("users")
@@ -286,12 +286,14 @@ model Account {
 // sobreviven SIN categoría (SetNull) — coherente con la no-rigidez.
 
 /// Cada cuánto vuelve un pago recurrente.
-enum Periodicidad {
-  mensual
-  bimestral
-  trimestral
-  semestral
-  anual
+enum Periodicity {
+  monthly    @map("mensual")
+  bimonthly  @map("bimestral")
+  quarterly  @map("trimestral")
+  semiannual @map("semestral")
+  annual     @map("anual")
+
+  @@map("Periodicidad")
 }
 
 /// ── Soportes ─────────────────────────────────────────────────────────────
@@ -308,7 +310,7 @@ enum Periodicidad {
 /// árbol web. Guardar megabytes en la base engorda cada respaldo, cada
 /// consulta y cada restauración, y no compra nada: igual hace falta un
 /// endpoint que verifique la sesión antes de entregarlo.
-model Soporte {
+model Receipt {
   id            BigInt   @id @default(autoincrement())
   uuid          String   @unique(map: "uq_soportes_uuid") @default(uuid()) @db.Char(36)
   /// DENORMALIZADO desde el movimiento, y a propósito.
@@ -320,26 +322,26 @@ model Soporte {
   userId        BigInt   @map("user_id")
   transactionId BigInt   @map("transaction_id")
   /// 1..N. Es el "1 de 3" del nombre del archivo: el orden en que se miran.
-  orden         Int      @default(1)
+  position      Int      @default(1) @map("orden")
   /// El nombre con el que llegó. Solo para enseñarlo y para descargarlo con
   /// un nombre que signifique algo; NUNCA se usa para construir una ruta.
-  nombreArchivo String   @map("nombre_archivo") @db.VarChar(255)
+  fileName      String   @map("nombre_archivo") @db.VarChar(255)
   mimeType      String   @map("mime_type") @db.VarChar(100)
   /// La ruta RELATIVA dentro del almacén privado, y la escribe el servidor:
   /// `<userId>/<uuid>.<ext>`. Opaca a propósito —no lleva nada que venga del
   /// nombre original— para que no exista forma de salirse del almacén.
   storageKey    String   @unique(map: "uq_soportes_storage_key") @map("storage_key") @db.VarChar(500)
-  tamano        Int
+  sizeBytes     Int      @map("tamano")
   /// sha256 del CONTENIDO. Es lo que hace la importación idempotente: el
   /// mismo archivo dos veces es el mismo soporte, aunque cambie de nombre.
-  huella        String   @db.Char(64)
+  contentHash   String   @map("huella") @db.Char(64)
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(3)
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_soportes_user")
   transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade, map: "fk_soportes_transaction")
 
-  @@unique([transactionId, huella], map: "uq_soportes_tx_huella")
-  @@index([transactionId, orden], map: "idx_soportes_tx_orden")
+  @@unique([transactionId, contentHash], map: "uq_soportes_tx_huella")
+  @@index([transactionId, position], map: "idx_soportes_tx_orden")
   @@index([userId], map: "idx_soportes_user")
   @@map("soportes")
 }
@@ -362,16 +364,16 @@ model Category {
   /// movimiento habría que repetirla doce veces al año y mantenerlas de
   /// acuerdo entre sí; y al mirar un mes sin pagar no habría ningún movimiento
   /// donde leerla, que es justo cuando hace falta saber que falta.
-  recurrente   Boolean       @default(false)
-  periodicidad Periodicidad?
+  isRecurring  Boolean      @default(false) @map("recurrente")
+  periodicity  Periodicity? @map("periodicidad")
   /// Día del mes en que se debe pagar. 1–31, y los meses cortos se recortan al
   /// último día: un 31 en febrero es el 28.
-  diaDePago    Int?          @map("dia_de_pago") @db.SmallInt
+  paymentDay   Int?         @map("dia_de_pago") @db.SmallInt
   /// El mes de referencia del ciclo, 1–12. Solo cuando la periodicidad NO es
   /// mensual: un pago trimestral no cae "cada tres meses" a secas, cae en
   /// marzo, junio, septiembre y diciembre, o en enero, abril, julio y octubre,
   /// según dónde empiece. Sin este dato, "cada tres meses" no dice cuáles.
-  mesDePago    Int?          @map("mes_de_pago") @db.SmallInt
+  paymentMonth Int?         @map("mes_de_pago") @db.SmallInt
 
   /// ── Presupuesto ───────────────────────────────────────────────────────
   /// Lo que se espera que cueste este concepto cada vez que toca. Puesto,
@@ -390,7 +392,7 @@ model Category {
   /// Solo significa algo en un CONCEPTO recurrente. Un centro de costos y una
   /// categoría son sumas de lo que cuelga de ellos, y un concepto que no
   /// vuelve no tiene un "cada vez".
-  presupuesto Decimal? @db.Decimal(15, 2)
+  budget Decimal? @map("presupuesto") @db.Decimal(15, 2)
 
   /// ── Pago automático ───────────────────────────────────────────────────
   /// El concepto no espera a que alguien lo registre: cuando llega su día de
@@ -406,7 +408,7 @@ model Category {
   /// dio por buenas.
   ///
   /// Solo significa algo en un CONCEPTO recurrente.
-  pagoAutomatico Boolean @default(false) @map("pago_automatico")
+  isAutoPaid Boolean @default(false) @map("pago_automatico")
 
   /// ── Se paga en varias veces ───────────────────────────────────────────
   /// El concepto no se salda con un pago: se va cubriendo. El mercado se
@@ -433,7 +435,7 @@ model Category {
   ///
   /// Solo significa algo en un CONCEPTO recurrente, y solo cuando hay una
   /// cifra esperada: sin un total al que llegar, «lo que falta» no existe.
-  variosPagos Boolean @default(false) @map("varios_pagos")
+  isMultiPayment Boolean @default(false) @map("varios_pagos")
 
   /// ── Estático ──────────────────────────────────────────────────────────
   /// Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica: ni desde
@@ -445,7 +447,7 @@ model Category {
   ///
   /// Solo se lee del CENTRO, que es el nivel de arriba: un grupo o un concepto
   /// heredan lo que diga el suyo.
-  estatico Boolean @default(false)
+  isStatic Boolean @default(false) @map("estatico")
 
   /// ── Palabras clave ────────────────────────────────────────────────────
   /// Lo que hay que encontrar en un soporte para saber que es de este
@@ -462,7 +464,7 @@ model Category {
   /// Se guardan TAL COMO se escribieron. Quitar las tildes y bajar a
   /// minúsculas es cosa de la comparación, y hacerlo al guardar convertiría
   /// «Aquaoccidente» en «aquaoccidente» en la pantalla de quien lo escribió.
-  palabrasClave String[] @default([]) @map("palabras_clave")
+  keywords String[] @default([]) @map("palabras_clave")
 
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_categories_user")
   parent       Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull, map: "fk_categories_parent")
@@ -563,34 +565,34 @@ model Transaction {
 
   /// ── Captura ────────────────────────────────────────────────────────────
   /// `web` por defecto para todo lo que ya existe: es por donde entró.
-  source          TransactionSource  @default(web)
+  source      TransactionSource @default(web)
   /// El texto del que salió el gasto —el OCR del recibo, el SMS del banco—.
   /// Hasta ahora se descartaba, y con él se iba la única forma de saber por
   /// qué se clasificó como se clasificó, y de reinterpretarlo cuando el motor
   /// aprenda algo nuevo.
-  rawText         String?            @map("raw_text") @db.Text
+  rawText     String?           @map("raw_text") @db.Text
   /// Cuándo se capturó, con zona horaria. Distinto de `date` —el día del
   /// gasto— y de `created_at` —cuándo llegó al servidor—: una captura en cola
   /// sin conexión se crea horas después de capturarse.
-  capturedAt      DateTime?          @map("captured_at") @db.Timestamptz(3)
+  capturedAt  DateTime?         @map("captured_at") @db.Timestamptz(3)
   /// Lo que el sistema no pudo clasificar con certeza, o que podría ser un
   /// duplicado. Nunca adivina: lo marca y lo deja para alguien.
-  porRevisar      Boolean            @default(false) @map("por_revisar")
+  needsReview Boolean           @default(false) @map("por_revisar")
 
-  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamp(3)
-  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamp(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(3)
 
   user     User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_tx_user")
   account  Account?           @relation(fields: [accountId], references: [id], onDelete: Restrict, map: "fk_tx_account")
   category Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_tx_category")
   splits   TransactionSplit[]
   tags     TransactionTag[]
-  soportes Soporte[]
+  receipts Receipt[]
 
   /// SetNull y no Cascade: borrar el registro de una importación no puede
   /// llevarse por delante movimientos que la persona ya dio por buenos.
-  importBatch    ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull, map: "fk_tx_import_batch")
-  posiblesCopias ImportRow[]  @relation("PosibleDuplicado")
+  importBatch        ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull, map: "fk_tx_import_batch")
+  possibleDuplicates ImportRow[]  @relation("PossibleDuplicate")
 
   /// ÚNICO, no solo indexado. `external_ref` es la huella con la que dos
   /// caminos evitan duplicar: el importador histórico y el pago automático,
@@ -718,7 +720,7 @@ model ImportRow {
 
   batch       ImportBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade, map: "fk_import_row_batch")
   category    Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull, map: "fk_import_row_category")
-  duplicateOf Transaction? @relation("PosibleDuplicado", fields: [duplicateOfId], references: [id], onDelete: SetNull, map: "fk_import_row_duplicate")
+  duplicateOf Transaction? @relation("PossibleDuplicate", fields: [duplicateOfId], references: [id], onDelete: SetNull, map: "fk_import_row_duplicate")
 
   @@index([batchId, position], map: "idx_import_row_batch_position")
   @@map("import_rows")

@@ -41,7 +41,7 @@ export async function snapshotOf(env: EntornoDePruebas, userId: bigint): Promise
         include: { tags: true, splits: true },
       }),
       env.prisma.tag.findMany({ where, orderBy: { id: 'asc' } }),
-      env.prisma.soporte.findMany({ where, orderBy: { id: 'asc' } }),
+      env.prisma.receipt.findMany({ where, orderBy: { id: 'asc' } }),
       env.prisma.categoryRule.findMany({ where, orderBy: { id: 'asc' } }),
       env.prisma.userPreference.findMany({ where, orderBy: { id: 'asc' } }),
     ]);
@@ -66,12 +66,12 @@ export async function seedAna(env: EntornoDePruebas, userId: bigint): Promise<An
       userId,
       name: `${MARK} concepto`,
       parentId: group.id,
-      recurrente: true,
-      periodicidad: 'mensual',
-      diaDePago: 1,
-      presupuesto: '777777',
-      pagoAutomatico: true,
-      palabrasClave: [MARK, 'supermercado'],
+      isRecurring: true,
+      periodicity: 'monthly',
+      paymentDay: 1,
+      budget: '777777',
+      isAutoPaid: true,
+      keywords: [MARK, 'supermercado'],
     },
   });
   const tag = await p.tag.create({ data: { userId, name: `${MARK}-tag` } });
@@ -91,15 +91,15 @@ export async function seedAna(env: EntornoDePruebas, userId: bigint): Promise<An
       splits: { create: [{ categoryId: concept.id, amount: '777777', note: `${MARK} split` }] },
     },
   });
-  const soporte = await p.soporte.create({
+  const soporte = await p.receipt.create({
     data: {
       userId,
       transactionId: transaction.id,
-      nombreArchivo: `${MARK}.png`,
+      fileName: `${MARK}.png`,
       mimeType: 'image/png',
       storageKey: `${MARK}/key.png`,
-      tamano: 1,
-      huella: '0'.repeat(64),
+      sizeBytes: 1,
+      contentHash: '0'.repeat(64),
     },
   });
   const rule = await p.categoryRule.create({

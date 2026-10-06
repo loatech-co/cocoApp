@@ -60,7 +60,7 @@ export class PagosAutomaticosService {
     if (conceptos.length === 0) return 0;
 
     const delMes = conceptos.filter(
-      (c) => c.periodicidad !== null && tocaEnElMes(c.periodicidad, c.mesDePago, mesEnCurso),
+      (c) => c.periodicity !== null && tocaEnElMes(c.periodicity, c.paymentMonth, mesEnCurso),
     );
     if (delMes.length === 0) return 0;
 
@@ -109,9 +109,9 @@ export class PagosAutomaticosService {
     mesEnCurso: string,
     hoy: string,
   ): Promise<boolean> {
-    const vence = vencimiento(mesEnCurso, concepto.diaDePago);
+    const vence = vencimiento(mesEnCurso, concepto.paymentDay);
     const esperado = esperadoDelMes(
-      concepto.presupuesto === null ? null : toMoney(concepto.presupuesto),
+      concepto.budget === null ? null : toMoney(concepto.budget),
       historiaDe.get(concepto.id.toString()) ?? new Map(),
       mesEnCurso.slice(0, 7),
     );
@@ -150,7 +150,7 @@ export class PagosAutomaticosService {
           sabiendo que hace falta.
         */
         notes:
-          concepto.presupuesto === null
+          concepto.budget === null
             ? 'Cobrado automáticamente. El valor es un estimado del promedio de los meses anteriores: corrígelo cuando tengas el recibo.'
             : 'Cobrado automáticamente, por el presupuesto del concepto.',
         externalRef: huellaDelCobro(concepto.id, mesEnCurso),

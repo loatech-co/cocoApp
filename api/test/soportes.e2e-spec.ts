@@ -66,16 +66,16 @@ describe('Soportes (e2e)', () => {
       // Through the app's store, so the suite runs against disk or the Storage bucket (6.9).
       await entorno.app.get<ReceiptStore>(RECEIPT_STORE).save(storageKey, c.bytes, c.mime);
       soportes.push(
-        await entorno.prisma.soporte.create({
+        await entorno.prisma.receipt.create({
           data: {
             userId,
             transactionId,
-            orden: i + 1,
-            nombreArchivo: c.nombre,
+            position: i + 1,
+            fileName: c.nombre,
             mimeType: c.mime,
             storageKey,
-            tamano: c.bytes.length,
-            huella: huellaDe(c.bytes),
+            sizeBytes: c.bytes.length,
+            contentHash: huellaDe(c.bytes),
           },
         }),
       );
@@ -162,7 +162,7 @@ describe('Soportes (e2e)', () => {
         .expect(404);
 
       // Y no se creó nada: la propiedad se comprueba ANTES de procesar.
-      expect(await entorno.prisma.soporte.count({ where: { transactionId } })).toBe(1);
+      expect(await entorno.prisma.receipt.count({ where: { transactionId } })).toBe(1);
     });
 
     it('sin sesión no se sube ni se borra', async () => {
@@ -189,7 +189,7 @@ describe('Soportes (e2e)', () => {
         .set('Authorization', beto)
         .expect(404);
 
-      expect(await entorno.prisma.soporte.count({ where: { transactionId } })).toBe(1);
+      expect(await entorno.prisma.receipt.count({ where: { transactionId } })).toBe(1);
     });
 
     it('una clave que se sale del almacén no entrega nada', async () => {
@@ -198,7 +198,7 @@ describe('Soportes (e2e)', () => {
       // Nadie puede escribir esto desde fuera —la clave la genera el servidor—
       // pero si algún día una llega torcida, el resolver es lo único que queda
       // entre eso y el sistema de archivos.
-      await entorno.prisma.soporte.update({
+      await entorno.prisma.receipt.update({
         where: { id: soportes[0]!.id },
         data: { storageKey: '../../../../../../etc/passwd' },
       });
@@ -269,7 +269,7 @@ describe('Soportes (e2e)', () => {
       const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
 
       // Un almacén a medio sincronizar: la fila existe, el binario todavía no.
-      await entorno.prisma.soporte.update({
+      await entorno.prisma.receipt.update({
         where: { id: soportes[0]!.id },
         data: { storageKey: `${anaId}/no-existe.pdf` },
       });
@@ -323,7 +323,7 @@ describe('Soportes (e2e)', () => {
       expect(soporte.orden).toBe(1);
 
       // Y el archivo guardado es gris y de 1100 de ancho, no la imagen original.
-      const guardado = await entorno.prisma.soporte.findFirst({
+      const guardado = await entorno.prisma.receipt.findFirst({
         where: { transactionId: BigInt(id) },
       });
       const flujo = await entorno.app.get<ReceiptStore>(RECEIPT_STORE).open(guardado!.storageKey);
@@ -446,7 +446,7 @@ describe('Soportes (e2e)', () => {
         .set('Authorization', ana)
         .expect(204);
 
-      expect(await entorno.prisma.soporte.count({ where: { transactionId } })).toBe(0);
+      expect(await entorno.prisma.receipt.count({ where: { transactionId } })).toBe(0);
     });
   });
 });

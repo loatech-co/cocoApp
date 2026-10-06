@@ -1,13 +1,13 @@
 import { CERO, type Money } from '../../common/money/money';
-import type { Periodicidad } from '../../generated/prisma/client';
+import type { Periodicity } from '../../generated/prisma/client';
 
 /** Cada cuántos meses vuelve cada periodicidad. */
-const MESES_ENTRE_PAGOS: Record<Periodicidad, number> = {
-  mensual: 1,
-  bimestral: 2,
-  trimestral: 3,
-  semestral: 6,
-  anual: 12,
+const MESES_ENTRE_PAGOS: Record<Periodicity, number> = {
+  monthly: 1,
+  bimonthly: 2,
+  quarterly: 3,
+  semiannual: 6,
+  annual: 12,
 };
 
 /** `2026-09-01` → 24320. Meses absolutos, para restar sin pelear con años. */
@@ -33,11 +33,11 @@ export function mesAbsoluto(iso: string): number {
  * Lo mensual no necesita referencia: toca todos los meses.
  */
 export function tocaEnElMes(
-  periodicidad: Periodicidad,
+  periodicidad: Periodicity,
   mesDeReferencia: number | null,
   mes: string,
 ): boolean {
-  if (periodicidad === 'mensual') return true;
+  if (periodicidad === 'monthly') return true;
 
   const cada = MESES_ENTRE_PAGOS[periodicidad];
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type { Prisma, Soporte } from '../../generated/prisma/client';
+import type { Prisma, Receipt } from '../../generated/prisma/client';
 import { Database } from '../../prisma/database';
 
 /** What an upload needs to know about the movement it attaches to. */
@@ -19,19 +19,19 @@ export interface MovementForUpload {
 export class SoportesRepository {
   constructor(private readonly db: Database) {}
 
-  findByTransaction(userId: bigint, transactionId: bigint): Promise<Soporte[]> {
+  findByTransaction(userId: bigint, transactionId: bigint): Promise<Receipt[]> {
     return this.db.forUser(userId, (tx) =>
-      tx.soporte.findMany({
+      tx.receipt.findMany({
         where: { userId, transactionId },
-        orderBy: [{ orden: 'asc' }, { id: 'asc' }],
+        orderBy: [{ position: 'asc' }, { id: 'asc' }],
       }),
     );
   }
 
   /** The receipt, its movement and its owner, all three in the same `where`. */
-  findOne(userId: bigint, transactionId: bigint, soporteId: bigint): Promise<Soporte | null> {
+  findOne(userId: bigint, transactionId: bigint, soporteId: bigint): Promise<Receipt | null> {
     return this.db.forUser(userId, (tx) =>
-      tx.soporte.findFirst({ where: { id: soporteId, transactionId, userId } }),
+      tx.receipt.findFirst({ where: { id: soporteId, transactionId, userId } }),
     );
   }
 
@@ -51,25 +51,28 @@ export class SoportesRepository {
 
   async maxOrder(userId: bigint, transactionId: bigint): Promise<number | null> {
     const ultimo = await this.db.forUser(userId, (tx) =>
-      tx.soporte.aggregate({ where: { userId, transactionId }, _max: { orden: true } }),
+      tx.receipt.aggregate({ where: { userId, transactionId }, _max: { position: true } }),
     );
-    return ultimo._max.orden;
+    return ultimo._max.position;
   }
 
   async existsWithHash(userId: bigint, transactionId: bigint, huella: string): Promise<boolean> {
     const found = await this.db.forUser(userId, (tx) =>
-      tx.soporte.findFirst({ where: { userId, transactionId, huella }, select: { id: true } }),
+      tx.receipt.findFirst({
+        where: { userId, transactionId, contentHash: huella },
+        select: { id: true },
+      }),
     );
     return found !== null;
   }
 
-  async create(data: Prisma.SoporteUncheckedCreateInput & { userId: bigint }): Promise<void> {
-    await this.db.forUser(data.userId, (tx) => tx.soporte.create({ data }));
+  async create(data: Prisma.ReceiptUncheckedCreateInput & { userId: bigint }): Promise<void> {
+    await this.db.forUser(data.userId, (tx) => tx.receipt.create({ data }));
   }
 
   async delete(userId: bigint, transactionId: bigint, soporteId: bigint): Promise<void> {
     await this.db.forUser(userId, (tx) =>
-      tx.soporte.deleteMany({ where: { id: soporteId, transactionId, userId } }),
+      tx.receipt.deleteMany({ where: { id: soporteId, transactionId, userId } }),
     );
   }
 
@@ -78,7 +81,7 @@ export class SoportesRepository {
     where: { transactionId?: bigint; transferGroupId?: string },
   ): Promise<string[]> {
     const rows = await this.db.forUser(userId, (tx) =>
-      tx.soporte.findMany({
+      tx.receipt.findMany({
         where: {
           userId,
           transaction: {

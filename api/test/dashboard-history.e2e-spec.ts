@@ -55,7 +55,7 @@ describe('Dashboard: bounded recurring history (e2e)', () => {
 
   async function recurringIds(): Promise<bigint[]> {
     const concepts = await env.prisma.category.findMany({
-      where: { userId: user.id, recurrente: true },
+      where: { userId: user.id, isRecurring: true },
       select: { id: true },
     });
     return concepts.map((c) => c.id);
@@ -105,9 +105,9 @@ describe('Dashboard: bounded recurring history (e2e)', () => {
           userId,
           name,
           parentId: group.id,
-          recurrente: true,
-          periodicidad: 'mensual',
-          diaDePago: 5,
+          isRecurring: true,
+          periodicity: 'monthly',
+          paymentDay: 5,
           ...extra,
         },
       });
@@ -116,14 +116,14 @@ describe('Dashboard: bounded recurring history (e2e)', () => {
     const power = await concept('Luz');
     // Annual, due in October: nothing in the three months before, so the
     // estimate falls back to last October.
-    const insurance = await concept('Seguro', { periodicidad: 'anual', mesDePago: 10 });
+    const insurance = await concept('Seguro', { periodicity: 'annual', paymentMonth: 10 });
     // Last paid in 2014: the fallback month is twelve years back, and it has
     // two payments on different days that must both come back.
     const gym = await concept('Gimnasio');
     // Paid in two of the three window months.
     const water = await concept('Agua');
     // Has a budget: the history must not override it.
-    const rent = await concept('Arriendo', { presupuesto: '1000.00' });
+    const rent = await concept('Arriendo', { budget: '1000.00' });
     // Never paid: no estimate at all.
     await concept('Nuevo');
 

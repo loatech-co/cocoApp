@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { CategoryKind, Periodicidad } from '../../generated/prisma/client';
+import { SPANISH_PERIODICITIES, type SpanishPeriodicity } from '../../common/vocabulary';
+import { CategoryKind } from '../../generated/prisma/client';
 
 /** What every category carries, whatever its level (cost center, category, concept). */
 class CategoryFields {
@@ -16,8 +17,8 @@ class CategoryFields {
   recurrente!: boolean;
   /** Whether the cost center refuses reclassification from the transactions table. */
   estatico!: boolean;
-  @ApiProperty({ enum: Periodicidad, nullable: true })
-  periodicidad!: Periodicidad | null;
+  @ApiProperty({ enum: SPANISH_PERIODICITIES, nullable: true })
+  periodicidad!: SpanishPeriodicity | null;
   /** Day of the month it is due. */
   dia_de_pago!: number | null;
   /** Reference month of the cycle, 1–12. Only when the periodicity is not monthly. */
