@@ -10,6 +10,7 @@ import {
 import { CategorizationRepository } from './categorization.repository';
 import { normalizarDescripcion } from './description';
 import { ValidationError } from '../../common/errors/domain-error';
+import { english, SUGGESTION_REASON, type English } from '../../common/vocabulary';
 import { CategoryLookupService } from '../categories/category-lookup.service';
 import { LedgerService } from '../transactions/ledger.service';
 
@@ -30,10 +31,17 @@ const ANTECEDENTES_A_LEER = 400;
 const PRIORIDAD_SEMBRADA = 0;
 const PRIORIDAD_APRENDIDA = 10;
 
-export interface SugerenciaView {
-  category_id: number;
+/** A suggested category, as the service hands it out (the domain). */
+export interface Suggestion {
+  categoryId: number;
+  /** 0–100. */
   confidence: number;
-  reason: Sugerencia['motivo'];
+  reason: English<typeof SUGGESTION_REASON>;
+}
+
+/** Whether confirming a classification left a rule behind. */
+export interface Learning {
+  learned: boolean;
 }
 
 @Injectable()
@@ -51,9 +59,9 @@ export class CategorizationService {
    * `prepararContexto` + `sugerirParaLote`: leer el historial una sola vez en
    * lugar de una por fila.
    */
-  async sugerirPara(userId: bigint, descripcion: string): Promise<SugerenciaView | null> {
+  async sugerirPara(userId: bigint, descripcion: string): Promise<Suggestion | null> {
     const contexto = await this.prepararContexto(userId);
-    return aVista(sugerirCategoria(descripcion, contexto));
+    return suggestionOf(sugerirCategoria(descripcion, contexto));
   }
 
   /**
@@ -63,7 +71,7 @@ export class CategorizationService {
   async suggestForQuery(
     userId: bigint,
     descripcion: string | undefined,
-  ): Promise<SugerenciaView | null> {
+  ): Promise<Suggestion | null> {
     return descripcion?.trim() ? this.sugerirPara(userId, descripcion) : null;
   }
 
@@ -123,20 +131,22 @@ export class CategorizationService {
     userId: bigint,
     descripcion: string,
     categoryId: bigint,
-  ): Promise<{ aprendido: boolean }> {
+  ): Promise<Learning> {
     if (!(await this.categories.isOwn(userId, categoryId)))
-      throw new ValidationError('Esa categoría no existe en tu cuenta.');
+      throw new ValidationError('Esa categoría no existe en tu cuenta.', {
+        code: 'category_not_owned',
+      });
 
-    return { aprendido: await this.aprenderDe(userId, descripcion, categoryId) };
+    return { learned: await this.aprenderDe(userId, descripcion, categoryId) };
   }
 }
 
-function aVista(sugerencia: Sugerencia | null): SugerenciaView | null {
+function suggestionOf(sugerencia: Sugerencia | null): Suggestion | null {
   return sugerencia
     ? {
-        category_id: Number(sugerencia.categoryId),
+        categoryId: Number(sugerencia.categoryId),
         confidence: sugerencia.confidence,
-        reason: sugerencia.motivo,
+        reason: english(SUGGESTION_REASON, sugerencia.motivo),
       }
     : null;
 }

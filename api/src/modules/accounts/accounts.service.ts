@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Account } from '@prisma/client';
+import type { Account as AccountRow } from '@prisma/client';
 
 import { AccountsRepository } from './accounts.repository';
 import type { CreateAccountDto, UpdateAccountDto } from './dto/account.dto';
@@ -7,33 +7,34 @@ import { BadRequestError, ConflictError, NotFoundError } from '../../common/erro
 import { calcularCupoDisponible, calcularSaldo } from '../../common/money/balance';
 import { serializar, toMoney } from '../../common/money/money';
 
-/** Forma con la que una cuenta sale por la API. Montos como string decimal. */
-export interface AccountView {
+/** Una cuenta como la entrega el servicio (el dominio). Montos como string decimal. */
+export interface Account {
   id: bigint;
   name: string;
-  type: Account['type'];
+  type: AccountRow['type'];
+  /** ISO 4217. */
   currency: string;
   institution: string | null;
   last4: string | null;
-  credit_limit: string | null;
-  cutoff_day: number | null;
-  payment_day: number | null;
-  opening_balance: string;
-  is_archived: boolean;
+  creditLimit: string | null;
+  cutoffDay: number | null;
+  paymentDay: number | null;
+  openingBalance: string;
+  isArchived: boolean;
   /** Derivado de los movimientos. No existe como columna. */
   balance: string;
   /** Incluye los movimientos `pending`. */
-  balance_projected: string;
-  /** Solo en tarjetas: `credit_limit − saldo adeudado`. */
-  available_credit: string | null;
-  created_at: Date;
+  balanceProjected: string;
+  /** Solo en tarjetas: `creditLimit − saldo adeudado`. */
+  availableCredit: string | null;
+  createdAt: Date;
 }
 
 @Injectable()
 export class AccountsService {
   constructor(private readonly repo: AccountsRepository) {}
 
-  async listar(userId: bigint, incluirArchivadas = false): Promise<AccountView[]> {
+  async listar(userId: bigint, incluirArchivadas = false): Promise<Account[]> {
     const [cuentas, agregados] = await Promise.all([
       this.repo.listar(userId, incluirArchivadas),
       this.repo.agregadosDeSaldo(userId),
@@ -44,13 +45,13 @@ export class AccountsService {
     );
   }
 
-  async obtener(userId: bigint, id: bigint): Promise<AccountView> {
+  async obtener(userId: bigint, id: bigint): Promise<Account> {
     const cuenta = await this.exigirCuenta(userId, id);
     const agregados = await this.repo.agregadosDeSaldo(userId);
     return this.presentar(cuenta, agregados.get(cuenta.id.toString()) ?? []);
   }
 
-  async crear(userId: bigint, dto: CreateAccountDto): Promise<AccountView> {
+  async crear(userId: bigint, dto: CreateAccountDto): Promise<Account> {
     this.validarCoherenciaDeCredito(dto.type, dto);
 
     const cuenta = await this.repo.crear(userId, {
@@ -68,7 +69,7 @@ export class AccountsService {
     return this.presentar(cuenta, []);
   }
 
-  async actualizar(userId: bigint, id: bigint, dto: UpdateAccountDto): Promise<AccountView> {
+  async actualizar(userId: bigint, id: bigint, dto: UpdateAccountDto): Promise<Account> {
     const actual = await this.exigirCuenta(userId, id);
     const tipoResultante = dto.type ?? actual.type;
     this.validarCoherenciaDeCredito(tipoResultante, dto);
@@ -102,13 +103,14 @@ export class AccountsService {
     if (movimientos > 0) {
       throw new ConflictError(
         `Esta cuenta tiene ${movimientos} movimiento(s). Archívala en vez de borrarla para no perder el histórico.`,
+        { code: 'account_has_transactions' },
       );
     }
 
     await this.repo.borrar(userId, id);
   }
 
-  private async exigirCuenta(userId: bigint, id: bigint): Promise<Account> {
+  private async exigirCuenta(userId: bigint, id: bigint): Promise<AccountRow> {
     const cuenta = await this.repo.buscarPorId(userId, id);
     // 404 y no 403: confirmar que existe ya sería filtrar información.
     if (!cuenta) throw new NotFoundError('La cuenta no existe.');
@@ -117,7 +119,7 @@ export class AccountsService {
 
   /** Los campos de tarjeta solo tienen sentido en cuentas de crédito. */
   private validarCoherenciaDeCredito(
-    tipo: Account['type'],
+    tipo: AccountRow['type'],
     dto: Pick<UpdateAccountDto, 'credit_limit' | 'cutoff_day' | 'payment_day'>,
   ): void {
     if (tipo === 'credit') return;
@@ -136,14 +138,12 @@ export class AccountsService {
     if (invasores.length > 0) {
       throw new BadRequestError(
         `${invasores.join(', ')} solo aplica(n) a cuentas de tipo "credit".`,
+        { code: 'credit_fields_on_non_credit' },
       );
     }
   }
 
-  private presentar(
-    cuenta: Account,
-    movimientos: Parameters<typeof calcularSaldo>[2],
-  ): AccountView {
+  private presentar(cuenta: AccountRow, movimientos: Parameters<typeof calcularSaldo>[2]): Account {
     const openingBalance = toMoney(cuenta.openingBalance);
     const saldo = calcularSaldo(cuenta.type, openingBalance, movimientos);
     const creditLimit = cuenta.creditLimit ? toMoney(cuenta.creditLimit) : null;
@@ -156,15 +156,15 @@ export class AccountsService {
       currency: cuenta.currency,
       institution: cuenta.institution,
       last4: cuenta.last4,
-      credit_limit: creditLimit ? serializar(creditLimit) : null,
-      cutoff_day: cuenta.cutoffDay,
-      payment_day: cuenta.paymentDay,
-      opening_balance: serializar(openingBalance),
-      is_archived: cuenta.isArchived,
+      creditLimit: creditLimit ? serializar(creditLimit) : null,
+      cutoffDay: cuenta.cutoffDay,
+      paymentDay: cuenta.paymentDay,
+      openingBalance: serializar(openingBalance),
+      isArchived: cuenta.isArchived,
       balance: serializar(saldo.cleared),
-      balance_projected: serializar(saldo.proyectado),
-      available_credit: cupo ? serializar(cupo) : null,
-      created_at: cuenta.createdAt,
+      balanceProjected: serializar(saldo.proyectado),
+      availableCredit: cupo ? serializar(cupo) : null,
+      createdAt: cuenta.createdAt,
     };
   }
 }

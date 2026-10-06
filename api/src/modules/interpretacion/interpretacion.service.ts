@@ -16,20 +16,21 @@ import {
   type Interpretado,
 } from './interpretar';
 import {
-  aVista,
-  clasificacionAVista,
+  classificationOf,
+  interpretationOf,
   hoyEnBogota,
   idParaGuardar,
   notasDe,
-  type CapturaView,
-  type InterpretacionView,
-} from './interpretation.view';
+  type Capture,
+  type Interpretation,
+} from './interpretation.domain';
 import { anidar } from '../../common/categories/categories.tree';
 import { DuplicateError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { CategoryLookupService } from '../categories/category-lookup.service';
 import { CategorizationService } from '../categorization/categorization.service';
 import { LedgerService } from '../transactions/ledger.service';
-import { TransactionsService, type TransactionView } from '../transactions/transactions.service';
+import type { Transaction } from '../transactions/transactions.domain';
+import { TransactionsService } from '../transactions/transactions.service';
 
 /**
  * El único cerebro: interpreta, clasifica, detecta duplicados y registra.
@@ -53,12 +54,12 @@ export class InterpretacionService {
     private readonly transactions: TransactionsService,
   ) {}
 
-  async interpretar(userId: bigint, dto: InterpretBodyDto): Promise<InterpretacionView> {
+  async interpretar(userId: bigint, dto: InterpretBodyDto): Promise<Interpretation> {
     const interpretado = await this.leer(userId, dto);
-    return aVista(interpretado);
+    return interpretationOf(interpretado);
   }
 
-  async capturar(userId: bigint, dto: CaptureBodyDto): Promise<CapturaView> {
+  async capturar(userId: bigint, dto: CaptureBodyDto): Promise<Capture> {
     /*
       ── Idempotencia, antes que nada ────────────────────────────────────────
       Un cliente que reintenta manda el mismo `external_ref`. Si ya está, se
@@ -113,7 +114,7 @@ export class InterpretacionService {
     dto: CaptureBodyDto,
     nueva: CapturaNueva,
     interpretado: Interpretado,
-  ): Promise<CapturaView> {
+  ): Promise<Capture> {
     const alta = altaDe(dto, nueva, interpretado);
     try {
       if (!ORIGENES_QUE_SE_DUPLICAN.has(dto.source)) {
@@ -178,7 +179,9 @@ export class InterpretacionService {
           porRevisar: elegida.certeza !== 'alta',
         };
       }
-      throw new ValidationError('Hace falta un texto o, al menos, el comercio.');
+      throw new ValidationError('Hace falta un texto o, al menos, el comercio.', {
+        code: 'interpretation_needs_text',
+      });
     }
 
     const [arbol, historial] = await Promise.all([
@@ -201,7 +204,7 @@ export class InterpretacionService {
       {
         arbol,
         historial: historial
-          ? { categoryId: String(historial.category_id), confidence: historial.confidence }
+          ? { categoryId: String(historial.categoryId), confidence: historial.confidence }
           : null,
         hoy: hoyEnBogota(),
       },
@@ -233,10 +236,16 @@ export class InterpretacionService {
     const fila = await this.categories.findChosen(userId, id);
     // La misma respuesta para «no existe» y «no es tuya»: decir cuál de las
     // dos es revelaría ids ajenos.
-    if (!fila) throw new ValidationError('La categoría indicada no existe o no es tuya.');
-    if (fila.isArchived) throw new ValidationError('Ese concepto está archivado.');
+    if (!fila)
+      throw new ValidationError('La categoría indicada no existe o no es tuya.', {
+        code: 'category_not_owned',
+      });
+    if (fila.isArchived)
+      throw new ValidationError('Ese concepto está archivado.', { code: 'concept_archived' });
     if (!fila.parent)
-      throw new ValidationError('Un centro de costos no clasifica nada: elige un concepto.');
+      throw new ValidationError('Un centro de costos no clasifica nada: elige un concepto.', {
+        code: 'cost_center_cannot_classify',
+      });
 
     const esConcepto = fila.parent.parentId !== null;
     return {
@@ -279,15 +288,15 @@ export class InterpretacionService {
     repetido: boolean,
     fusionado: boolean,
     clasificacion?: ClasificacionInterpretada,
-  ): Promise<CapturaView> {
+  ): Promise<Capture> {
     const transaction = await this.transactions.obtener(userId, id);
     const vista: ClasificacionInterpretada = clasificacion ??
       // De una repetida no se vuelve a interpretar: lo que importa es lo que
       // quedó guardado, que es lo que se le dice.
       {
-        certeza: transaction.category_id === null ? 'ninguna' : 'alta',
+        certeza: transaction.categoryId === null ? 'ninguna' : 'alta',
         fuente: null,
-        conceptoId: transaction.category_id === null ? null : transaction.category_id.toString(),
+        conceptoId: transaction.categoryId === null ? null : transaction.categoryId.toString(),
         categoriaId: null,
         nombre: null,
         candidatos: [],
@@ -295,12 +304,12 @@ export class InterpretacionService {
       };
     return {
       transaction,
-      clasificacion: clasificacionAVista(vista),
-      resumen: fusionado
+      classification: classificationOf(vista),
+      summary: fusionado
         ? `Era el mismo pago: ${resumenDe(transaction.amount, vista).replace(/^Registrado: /, '')}`
         : resumenDe(transaction.amount, vista),
-      repetido,
-      fusionado,
+      isDuplicate: repetido,
+      isMerged: fusionado,
     };
   }
 }
@@ -330,12 +339,12 @@ function altaDe(
   };
 }
 
-function creadaAVista(creada: TransactionView, interpretado: Interpretado): CapturaView {
+function creadaAVista(creada: Transaction, interpretado: Interpretado): Capture {
   return {
     transaction: creada,
-    clasificacion: clasificacionAVista(interpretado.clasificacion),
-    resumen: resumenDe(interpretado.monto, interpretado.clasificacion),
-    repetido: false,
-    fusionado: false,
+    classification: classificationOf(interpretado.clasificacion),
+    summary: resumenDe(interpretado.monto, interpretado.clasificacion),
+    isDuplicate: false,
+    isMerged: false,
   };
 }

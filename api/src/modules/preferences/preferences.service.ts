@@ -3,7 +3,13 @@ import type { Prisma } from '@prisma/client';
 
 import { flagOfPreferenceKey, type FlagName } from '@coco/flags';
 
-import { CUENTAS_HABILITADAS, combinarConDefectos, type Preferencias } from './preferences';
+import {
+  CUENTAS_HABILITADAS,
+  combinarConDefectos,
+  preferencesOf,
+  type Preferencias,
+  type Preferences,
+} from './preferences';
 import type { UpdatePreferencesDto } from './preferences.dto';
 import { PreferencesRepository } from './preferences.repository';
 
@@ -11,12 +17,12 @@ import { PreferencesRepository } from './preferences.repository';
 export class PreferencesService {
   constructor(private readonly repository: PreferencesRepository) {}
 
-  async leer(userId: bigint): Promise<Preferencias> {
-    return combinarConDefectos(await this.repository.findByUser(userId));
+  async leer(userId: bigint): Promise<Preferences> {
+    return preferencesOf(await this.guardadas(userId));
   }
 
   /** Guarda solo lo que venga en el DTO. */
-  async actualizar(userId: bigint, cambios: UpdatePreferencesDto): Promise<Preferencias> {
+  async actualizar(userId: bigint, cambios: UpdatePreferencesDto): Promise<Preferences> {
     const entradas = Object.entries(cambios)
       .filter(([, valor]) => valor !== undefined)
       .map(([clave, valor]) => [clave, valor as Prisma.InputJsonValue] as const);
@@ -36,7 +42,7 @@ export class PreferencesService {
    * lleva cuentas?" tenga una sola fuente.
    */
   async llevaCuentas(userId: bigint): Promise<boolean> {
-    return (await this.leer(userId))[CUENTAS_HABILITADAS];
+    return (await this.guardadas(userId))[CUENTAS_HABILITADAS];
   }
 
   /**
@@ -52,5 +58,10 @@ export class PreferencesService {
       if (name !== null && typeof row.prefValue === 'boolean') overrides.set(name, row.prefValue);
     }
     return overrides;
+  }
+
+  /** Lo guardado, por clave de la tabla, con los valores por defecto. */
+  private async guardadas(userId: bigint): Promise<Preferencias> {
+    return combinarConDefectos(await this.repository.findByUser(userId));
   }
 }

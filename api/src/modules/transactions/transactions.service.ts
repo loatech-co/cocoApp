@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Transaction, TransactionType } from '@prisma/client';
+import type { TransactionType } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
 import type {
@@ -10,6 +10,13 @@ import type {
   UpdateTransactionDto,
 } from './dto/transaction.dto';
 import type { NewTransaction } from './ledger.types';
+import {
+  transactionFromRow,
+  type Transaction,
+  type TransactionHistory,
+  type TransactionPage,
+  type Transfer,
+} from './transactions.domain';
 import {
   TransactionsRepository,
   type SplitToWrite,
@@ -29,41 +36,6 @@ import { NotFoundError, ValidationError } from '../../common/errors/domain-error
 import { serializar, toMoney, type Money } from '../../common/money/money';
 import { SoportesService } from '../soportes/soportes.service';
 import { TagsService } from '../tags/tags.service';
-
-interface SplitView {
-  id: bigint;
-  category_id: bigint | null;
-  amount: string;
-  note: string | null;
-}
-
-export interface TransactionView {
-  id: bigint;
-  uuid: string;
-  account_id: bigint | null;
-  date: string;
-  /** El mes AL QUE PERTENECE el gasto, que no siempre es el del pago. */
-  period: string;
-  amount: string;
-  /** ISO 4217 code of `amount`. */
-  currency: string;
-  type: TransactionType;
-  category_id: bigint | null;
-  description: string | null;
-  merchant: string | null;
-  notes: string | null;
-  transfer_group_id: string | null;
-  transfer_direction: 'out' | 'in' | null;
-  external_ref: string | null;
-  status: Transaction['status'];
-  source: Transaction['source'];
-  raw_text: string | null;
-  captured_at: Date | null;
-  por_revisar: boolean;
-  tags: string[];
-  splits: SplitView[];
-  created_at: Date;
-}
 
 /**
  * El primer día del mes de una fecha.
@@ -86,19 +58,7 @@ export class TransactionsService {
 
   // ── Lectura ────────────────────────────────────────────────────────────────
 
-  async listar(
-    userId: bigint,
-    query: ListTransactionsQueryDto,
-  ): Promise<{
-    data: TransactionView[];
-    meta: {
-      page: number;
-      per_page: number;
-      total: number;
-      sum_expense: string;
-      sum_income: string;
-    };
-  }> {
+  async listar(userId: bigint, query: ListTransactionsQueryDto): Promise<TransactionPage> {
     const { page, perPage, skip, take } = parsePaginacion(query.page, query.per_page);
     const {
       rows: filas,
@@ -111,14 +71,8 @@ export class TransactionsService {
     const sumaDe = (tipo: TransactionType): string => serializar(sumOf(tipo));
 
     return {
-      data: filas.map((fila) => this.presentar(fila)),
-      meta: {
-        page,
-        per_page: perPage,
-        total,
-        sum_expense: sumaDe('expense'),
-        sum_income: sumaDe('income'),
-      },
+      data: filas.map(transactionFromRow),
+      meta: { page, perPage, total, sumExpense: sumaDe('expense'), sumIncome: sumaDe('income') },
     };
   }
 
@@ -132,22 +86,22 @@ export class TransactionsService {
    *
    * Por PERIODO y no por fecha de pago: es el eje con el que se mira la app.
    */
-  async historia(userId: bigint): Promise<{ first: string | null; last: string | null }> {
+  async historia(userId: bigint): Promise<TransactionHistory> {
     const { first, last } = await this.repository.periodRange(userId);
     const iso = (fecha: Date | null): string | null => fecha?.toISOString().slice(0, 10) ?? null;
     return { first: iso(first), last: iso(last) };
   }
 
-  async obtener(userId: bigint, id: bigint): Promise<TransactionView> {
-    return this.presentar(await this.exigirMovimiento(userId, id));
+  async obtener(userId: bigint, id: bigint): Promise<Transaction> {
+    return transactionFromRow(await this.exigirMovimiento(userId, id));
   }
 
   // ── Escritura ──────────────────────────────────────────────────────────────
 
-  async crear(userId: bigint, dto: CreateTransactionDto): Promise<TransactionView> {
+  async crear(userId: bigint, dto: CreateTransactionDto): Promise<Transaction> {
     const nuevo = await this.prepararAlta(userId, dto);
     const creada = await this.repository.createWithDetails(nuevo.data, nuevo.splits, nuevo.tagIds);
-    return this.presentar(creada);
+    return transactionFromRow(creada);
   }
 
   /**
@@ -200,15 +154,14 @@ export class TransactionsService {
    * No cuenta como gasto ni como ingreso: solo redistribuye saldo entre
    * bolsillos del propio usuario.
    */
-  async crearTransferencia(
-    userId: bigint,
-    dto: CreateTransferDto,
-  ): Promise<{ transfer_group_id: string; legs: TransactionView[] }> {
+  async crearTransferencia(userId: bigint, dto: CreateTransferDto): Promise<Transfer> {
     const origen = BigInt(dto.from_account_id);
     const destino = BigInt(dto.to_account_id);
 
     if (origen === destino) {
-      throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.');
+      throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.', {
+        code: 'transfer_same_account',
+      });
     }
 
     await Promise.all([
@@ -233,14 +186,10 @@ export class TransactionsService {
 
     const patas = await this.repository.createTransfer(base, origen, destino);
 
-    return { transfer_group_id: grupo, legs: patas.map((pata) => this.presentar(pata)) };
+    return { transferGroupId: grupo, legs: patas.map(transactionFromRow) };
   }
 
-  async actualizar(
-    userId: bigint,
-    id: bigint,
-    dto: UpdateTransactionDto,
-  ): Promise<TransactionView> {
+  async actualizar(userId: bigint, id: bigint, dto: UpdateTransactionDto): Promise<Transaction> {
     const actual = await this.exigirMovimiento(userId, id);
 
     const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : actual.accountId;
@@ -266,7 +215,7 @@ export class TransactionsService {
     const otra = await this.otraPata(userId, actual, dto, cambios);
     const actualizada = await this.repository.updateWithDetails(id, cambios, splits, tagIds, otra);
 
-    return this.presentar(actualizada);
+    return transactionFromRow(actualizada);
   }
 
   /**
@@ -310,7 +259,9 @@ export class TransactionsService {
     if (dto.account_id !== undefined) {
       const suya = await this.repository.partnerAccount(userId, actual.transferGroupId, actual.id);
       if (suya !== null && suya === BigInt(dto.account_id)) {
-        throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.');
+        throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.', {
+          code: 'transfer_same_account',
+        });
       }
     }
     return {
@@ -332,7 +283,9 @@ export class TransactionsService {
     const listos = splitsParaEscribir(amountCabecera, splits);
     const ids = listos.flatMap((split) => (split.categoryId !== null ? [split.categoryId] : []));
     if (!(await this.repository.categoriesBelongTo(userId, ids))) {
-      throw new ValidationError('La categoría indicada no existe o no es tuya.');
+      throw new ValidationError('La categoría indicada no existe o no es tuya.', {
+        code: 'category_not_owned',
+      });
     }
     return listos;
   }
@@ -346,46 +299,17 @@ export class TransactionsService {
   /** Sin esta verificación se podría asociar un movimiento a la cuenta de otro. */
   private async exigirCuentaPropia(userId: bigint, accountId: bigint): Promise<void> {
     if (!(await this.repository.accountBelongsTo(userId, accountId))) {
-      throw new ValidationError('La cuenta indicada no existe o no es tuya.');
+      throw new ValidationError('La cuenta indicada no existe o no es tuya.', {
+        code: 'account_not_owned',
+      });
     }
   }
 
   private async exigirCategoriaPropia(userId: bigint, categoryId: bigint): Promise<void> {
     if (!(await this.repository.categoryBelongsTo(userId, categoryId))) {
-      throw new ValidationError('La categoría indicada no existe o no es tuya.');
+      throw new ValidationError('La categoría indicada no existe o no es tuya.', {
+        code: 'category_not_owned',
+      });
     }
-  }
-
-  private presentar(fila: TransaccionCompleta): TransactionView {
-    return {
-      id: fila.id,
-      uuid: fila.uuid,
-      account_id: fila.accountId,
-      date: fila.date.toISOString().slice(0, 10),
-      period: fila.period.toISOString().slice(0, 10),
-      amount: serializar(toMoney(fila.amount)),
-      currency: fila.currency,
-      type: fila.type,
-      category_id: fila.categoryId,
-      description: fila.description,
-      merchant: fila.merchant,
-      notes: fila.notes,
-      transfer_group_id: fila.transferGroupId,
-      transfer_direction: fila.transferDir,
-      external_ref: fila.externalRef,
-      status: fila.status,
-      source: fila.source,
-      raw_text: fila.rawText,
-      captured_at: fila.capturedAt,
-      por_revisar: fila.porRevisar,
-      tags: fila.tags.map((vinculo) => vinculo.tag.name),
-      splits: fila.splits.map((split) => ({
-        id: split.id,
-        category_id: split.categoryId,
-        amount: serializar(toMoney(split.amount)),
-        note: split.note,
-      })),
-      created_at: fila.createdAt,
-    };
   }
 }

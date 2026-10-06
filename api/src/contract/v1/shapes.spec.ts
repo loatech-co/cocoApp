@@ -3,42 +3,52 @@ import type { Prisma } from '@prisma/client';
 import type { AccountResponse } from './accounts.response';
 import type { AuditEntryResponse, AuditUserResponse } from './admin.response';
 import type { MeResponse, ProfileResponse, SessionResponse } from './auth.response';
-import type { CategoryMergeResponse, CategoryResponse } from './categories.response';
-import type { SuggestionResponse } from './categorization.response';
+import type {
+  CategoryMergeResponse,
+  CategoryResponse,
+  CategorySeedResponse,
+  CategoryUsageResponse,
+} from './categories.response';
+import type { LearnResponse, SuggestionResponse } from './categorization.response';
 import type { DashboardResponse } from './dashboard.response';
 import type { LivenessResponse, ReadinessResponse } from './health.response';
 import type { CaptureResponse, InterpretationResponse } from './interpretation.response';
 import type { PreferencesResponse } from './preferences.response';
 import type { SoporteResponse } from './soportes.response';
 import type { TagResponse } from './tags.response';
-import type { TransactionResponse, TransferResponse } from './transactions.response';
-import type { AccountView } from '../../modules/accounts/accounts.service';
-import type { AdminService } from '../../modules/admin/admin.service';
-import type { RespuestaDeSesion } from '../../modules/auth/auth.controller';
-import type { PerfilConFlags, PerfilPublico } from '../../modules/auth/auth.service';
-import type { CategoryPayload } from '../../modules/categories/categories.controller';
-import type { CategoriesService } from '../../modules/categories/categories.service';
-import type { SugerenciaView } from '../../modules/categorization/categorization.service';
-import type { DashboardPayload } from '../../modules/dashboard/dashboard.types';
-import type { LivenessPayload, ReadinessPayload } from '../../modules/health/health.service';
 import type {
-  CapturaView,
-  InterpretacionView,
-} from '../../modules/interpretacion/interpretation.view';
-import type { Preferencias } from '../../modules/preferences/preferences';
-import type { SoporteView } from '../../modules/soportes/soportes.service';
-import type { TagView } from '../../modules/tags/tags.service';
-import type { TransactionView } from '../../modules/transactions/transactions.service';
+  TransactionHistoryResponse,
+  TransactionResponse,
+  TransferResponse,
+} from './transactions.response';
+import type { LivenessPayload, ReadinessPayload } from '../../modules/health/health.service';
+import type { Tag } from '../../modules/tags/tags.service';
+import type { TransactionHistory } from '../../modules/transactions/transactions.domain';
+import type { AccountV1 } from '../../presenters/v1/accounts.presenter';
+import type { AuditEntryV1 } from '../../presenters/v1/admin.presenter';
+import type { MeV1, ProfileV1, SessionV1 } from '../../presenters/v1/auth.presenter';
+import type {
+  categoryMergeV1,
+  categorySeedV1,
+  categoryUsageV1,
+  CategoryV1,
+} from '../../presenters/v1/categories.presenter';
+import type { LearningV1, SuggestionV1 } from '../../presenters/v1/categorization.presenter';
+import type { DashboardV1 } from '../../presenters/v1/dashboard.presenter';
+import type { CaptureV1, InterpretationV1 } from '../../presenters/v1/interpretation.presenter';
+import type { PreferencesV1 } from '../../presenters/v1/preferences.presenter';
+import type { ReceiptV1 } from '../../presenters/v1/receipts.presenter';
+import type { TransactionV1, TransferV1 } from '../../presenters/v1/transactions.presenter';
 
 /**
- * The documented response shapes ARE the ones the services return.
+ * The documented v1 shapes ARE the ones the v1 presenters build.
  *
  * The OpenAPI document is built from the classes in this folder, but what the
- * client receives is built by the services from their own view types. If one
- * gains a field and the class does not, the document lies without any route
+ * client receives is built by `presenters/v1` from the domain. If one gains a
+ * field and the class does not, the document lies without any route
  * changing. These checks make that a compile error (`npm run typecheck`).
  *
- * `Wire<T>` is what `JSON.stringify` makes of a view: a bigint goes out as a
+ * `Wire<T>` is what `JSON.stringify` makes of a body: a bigint goes out as a
  * number (`installBigIntSerializer`). A Date stays a Date here because the
  * class declares it as one and the plugin documents it as `date-time`.
  */
@@ -55,40 +65,44 @@ type Wire<T> = T extends bigint
 /** Mutual assignability: a missing, extra or retyped field fails either way. */
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 
-type AuditEntry = Awaited<ReturnType<AdminService['bitacora']>>['data'][number];
-type MergeResult = Awaited<ReturnType<CategoriesService['unificar']>>;
-
 const CHECKS = {
-  account: true satisfies Same<AccountResponse, Wire<AccountView>>,
+  account: true satisfies Same<AccountResponse, Wire<AccountV1>>,
   auditEntry: true satisfies Same<
     Omit<AuditEntryResponse, 'changes' | 'user'>,
-    Wire<Omit<AuditEntry, 'changes' | 'user'>>
+    Wire<Omit<AuditEntryV1, 'changes' | 'user'>>
   >,
-  auditUser: true satisfies Same<AuditUserResponse | null, AuditEntry['user']>,
-  auditChanges: true satisfies Same<Prisma.JsonValue, AuditEntry['changes']>,
-  profile: true satisfies Same<ProfileResponse, Wire<PerfilPublico>>,
-  me: true satisfies Same<MeResponse, Wire<PerfilConFlags>>,
-  session: true satisfies Same<SessionResponse, Wire<RespuestaDeSesion>>,
-  category: true satisfies Same<CategoryResponse, Wire<CategoryPayload>>,
-  categoryMerge: true satisfies Same<CategoryMergeResponse, Wire<MergeResult>>,
-  suggestion: true satisfies Same<SuggestionResponse, Wire<SugerenciaView>>,
-  dashboard: true satisfies Same<DashboardResponse, Wire<DashboardPayload>>,
+  auditUser: true satisfies Same<AuditUserResponse | null, AuditEntryV1['user']>,
+  auditChanges: true satisfies Same<Prisma.JsonValue, AuditEntryV1['changes']>,
+  profile: true satisfies Same<ProfileResponse, Wire<ProfileV1>>,
+  me: true satisfies Same<MeResponse, Wire<MeV1>>,
+  session: true satisfies Same<SessionResponse, Wire<SessionV1>>,
+  category: true satisfies Same<CategoryResponse, Wire<CategoryV1>>,
+  categoryMerge: true satisfies Same<
+    CategoryMergeResponse,
+    Wire<ReturnType<typeof categoryMergeV1>>
+  >,
+  categoryUsage: true satisfies Same<
+    CategoryUsageResponse,
+    Wire<ReturnType<typeof categoryUsageV1>>
+  >,
+  categorySeed: true satisfies Same<CategorySeedResponse, ReturnType<typeof categorySeedV1>>,
+  suggestion: true satisfies Same<SuggestionResponse, Wire<SuggestionV1>>,
+  learning: true satisfies Same<LearnResponse, LearningV1>,
+  dashboard: true satisfies Same<DashboardResponse, Wire<DashboardV1>>,
   liveness: true satisfies Same<LivenessResponse, LivenessPayload>,
   readiness: true satisfies Same<ReadinessResponse, ReadinessPayload>,
-  interpretation: true satisfies Same<InterpretationResponse, Wire<InterpretacionView>>,
-  capture: true satisfies Same<CaptureResponse, Wire<CapturaView>>,
-  preferences: true satisfies Same<PreferencesResponse, Preferencias>,
-  soporte: true satisfies Same<SoporteResponse, Wire<SoporteView>>,
-  tag: true satisfies Same<TagResponse, Wire<TagView>>,
-  transaction: true satisfies Same<TransactionResponse, Wire<TransactionView>>,
-  transfer: true satisfies Same<
-    TransferResponse,
-    Wire<{ transfer_group_id: string; legs: TransactionView[] }>
-  >,
+  interpretation: true satisfies Same<InterpretationResponse, Wire<InterpretationV1>>,
+  capture: true satisfies Same<CaptureResponse, Wire<CaptureV1>>,
+  preferences: true satisfies Same<PreferencesResponse, PreferencesV1>,
+  soporte: true satisfies Same<SoporteResponse, Wire<ReceiptV1>>,
+  tag: true satisfies Same<TagResponse, Wire<Tag>>,
+  transaction: true satisfies Same<TransactionResponse, Wire<TransactionV1>>,
+  history: true satisfies Same<TransactionHistoryResponse, TransactionHistory>,
+  transfer: true satisfies Same<TransferResponse, Wire<TransferV1>>,
 };
 
 describe('v1 response classes', () => {
-  it('match the views the services return (checked by the compiler)', () => {
+  it('match what the v1 presenters build (checked by the compiler)', () => {
     expect(Object.values(CHECKS).every(Boolean)).toBe(true);
   });
 });

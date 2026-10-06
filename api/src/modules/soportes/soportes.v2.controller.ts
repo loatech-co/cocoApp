@@ -17,7 +17,11 @@ import { ApiBody, ApiConsumes, ApiOkResponse, ApiProduces } from '@nestjs/swagge
 import type { Response } from 'express';
 
 import { TAMANO_MAXIMO } from './soportes.optimizacion';
-import { SoportesService, type ArchivoSubido, type SoporteView } from './soportes.service';
+import {
+  SoportesService,
+  type ArchivoSubido,
+  type Receipt as ReceiptBody,
+} from './soportes.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -26,7 +30,7 @@ import { Receipt } from '../../contract/v2/misc.response';
 import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
 import { PageQuery } from '../../contract/v2/page.dto';
 import { paginate, type Page } from '../../contract/v2/pagination';
-import { toV2, type ToV2 } from '../../contract/v2/to-v2';
+import { receiptV2 } from '../../presenters/v2/receipts.presenter';
 
 /** The same cap as v1: files per upload. */
 const MAX_PER_UPLOAD = 10;
@@ -50,8 +54,8 @@ export class SoportesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Query() query: PageQuery,
-  ): Promise<Page<ToV2<SoporteView>>> {
-    return paginate(toV2(await this.soportes.listar(user.id, id)), query);
+  ): Promise<Page<ReceiptBody>> {
+    return paginate((await this.soportes.listar(user.id, id)).map(receiptV2), query);
   }
 
   @Post(':id/receipts')
@@ -84,8 +88,8 @@ export class SoportesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @UploadedFiles() files: ArchivoSubido[] | undefined,
-  ): Promise<Page<ToV2<SoporteView>>> {
-    return paginate(toV2(await this.soportes.subir(user.id, id, files ?? [])), {});
+  ): Promise<Page<ReceiptBody>> {
+    return paginate((await this.soportes.subir(user.id, id, files ?? [])).map(receiptV2), {});
   }
 
   @Delete(':id/receipts/:receiptId')

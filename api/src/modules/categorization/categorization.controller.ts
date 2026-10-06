@@ -1,11 +1,17 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 
 import { LearnBodyDto, SuggestQueryDto } from './categorization.dto';
-import { CategorizationService, type SugerenciaView } from './categorization.service';
+import { CategorizationService } from './categorization.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { LearnResponse, SuggestionResponse } from '../../contract/v1/categorization.response';
 import { ApiAuthenticated, ApiData, ApiErrors } from '../../contract/v1/openapi.decorators';
+import {
+  learningV1,
+  suggestionV1,
+  type LearningV1,
+  type SuggestionV1,
+} from '../../presenters/v1/categorization.presenter';
 
 @ApiAuthenticated()
 @Controller('categorization')
@@ -27,14 +33,12 @@ export class CategorizationController {
   async sugerir(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: SuggestQueryDto,
-  ): Promise<{ data: SugerenciaView | null; meta: Record<string, never> }> {
+  ): Promise<{ data: SuggestionV1 | null; meta: Record<string, never> }> {
     // Se arma el envelope a mano: el TransformInterceptor deja pasar `null`
     // tal cual, y la respuesta saldría con el cuerpo vacío en vez de con la
     // forma `{ data, meta }` que el cliente espera de TODA respuesta.
-    return {
-      data: await this.categorization.suggestForQuery(user.id, query.description),
-      meta: {},
-    };
+    const suggestion = await this.categorization.suggestForQuery(user.id, query.description);
+    return { data: suggestion && suggestionV1(suggestion), meta: {} };
   }
 
   /**
@@ -50,11 +54,13 @@ export class CategorizationController {
   async aprender(
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: LearnBodyDto,
-  ): Promise<{ aprendido: boolean }> {
-    return this.categorization.aprenderDesdeLaFicha(
-      user.id,
-      body.description,
-      BigInt(body.category_id),
+  ): Promise<LearningV1> {
+    return learningV1(
+      await this.categorization.aprenderDesdeLaFicha(
+        user.id,
+        body.description,
+        BigInt(body.category_id),
+      ),
     );
   }
 }

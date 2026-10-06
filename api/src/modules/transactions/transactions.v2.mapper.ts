@@ -12,7 +12,7 @@ import type {
   SplitInput,
   UpdateTransactionInput,
 } from './dto/v2/transactions.dto';
-import { defined, type V1Draft } from '../../contract/v2/to-v2';
+import { defined, type V1Draft } from '../../contract/v2/v1-input';
 
 /**
  * v2 inputs → the v1 DTOs the services take, field by field. Each object is

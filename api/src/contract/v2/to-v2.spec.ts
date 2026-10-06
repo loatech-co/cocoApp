@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { defined, FIELD_NAMES, toV1Value, toV2, VALUE_NAMES } from './to-v2';
+import { FIELD_NAMES, toV2 } from './to-v2';
+import { defined } from './v1-input';
 
 describe('toV2', () => {
   it('renames the Spanish fields, re-cases the rest and leaves camelCase alone', () => {
@@ -36,15 +37,6 @@ describe('toV2', () => {
   it('copies the audit log changes as they were recorded', () => {
     const changes = { por_revisar: true, periodicidad: 'mensual' };
     expect(toV2({ entity_id: 1, changes })).toEqual({ entityId: 1, changes });
-  });
-
-  it('turns every v2 literal back into its v1 word', () => {
-    for (const [field, table] of Object.entries(VALUE_NAMES)) {
-      for (const [spanish, english] of Object.entries(table)) {
-        expect(toV1Value(field as keyof typeof VALUE_NAMES, english)).toBe(spanish);
-      }
-    }
-    expect(() => toV1Value('certeza', 'alta')).toThrow();
   });
 
   it('drops only the undefined keys, so null still means "clear it"', () => {

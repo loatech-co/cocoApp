@@ -27,6 +27,7 @@ export function exigirDesgloseCuadrado(
   if (!cuadre.cuadra) {
     throw new ValidationError(
       'El monto nuevo no coincide con la suma del desglose. Envía también los splits ajustados al monto nuevo.',
+      { code: 'amount_breaks_splits' },
     );
   }
 }
@@ -52,6 +53,7 @@ export function exigirQueSigaSiendoTransferencia(dto: UpdateTransactionDto): voi
   if (dto.type !== undefined && dto.type !== 'transfer') {
     throw new ValidationError(
       'Una transferencia no puede cambiar de tipo. Bórrala y registra el movimiento de nuevo.',
+      { code: 'transfer_leg_locked' },
     );
   }
 }

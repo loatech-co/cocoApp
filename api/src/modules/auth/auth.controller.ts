@@ -8,8 +8,7 @@ import {
   AuthService,
   type ContextoDePeticion,
   type ParDeTokens,
-  type PerfilConFlags,
-  type PerfilPublico,
+  type Profile,
 } from './auth.service';
 import { ChangePasswordDto, LoginDto, RefreshNativoDto, RegisterDto } from './dto/auth.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -24,19 +23,12 @@ import {
   ApiNoContent,
   ApiPublic,
 } from '../../contract/v1/openapi.decorators';
+import { meV1, sessionV1, type MeV1, type SessionV1 } from '../../presenters/v1/auth.presenter';
 import { FlagsService } from '../flags/flags.service';
 
 /** El refresh token viaja SOLO en esta cookie; nunca en el cuerpo ni en la URL. */
 const COOKIE_REFRESH = 'coco_refresh';
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-
-export interface RespuestaDeSesion {
-  access_token: string;
-  expires_in: number;
-  user: PerfilPublico;
-  /** Solo para un cliente nativo. La web nunca lo recibe en el cuerpo. */
-  refresh_token?: string;
-}
 
 /**
  * ── El cliente nativo ───────────────────────────────────────────────────────
@@ -124,7 +116,7 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<RespuestaDeSesion> {
+  ): Promise<SessionV1> {
     const { tokens, perfil } = await this.auth.entrar(dto, contextoDe(request));
     return this.entregarSesion(request, response, tokens, perfil);
   }
@@ -144,10 +136,10 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
     @Body() cuerpo: RefreshNativoDto,
-  ): Promise<RespuestaDeSesion> {
+  ): Promise<SessionV1> {
     const refreshToken = this.refreshTokenDe(request, cuerpo);
     if (!refreshToken) {
-      throw new AuthenticationError('No hay sesión que renovar.');
+      throw new AuthenticationError('No hay sesión que renovar.', { code: 'session_expired' });
     }
 
     try {
@@ -203,12 +195,12 @@ export class AuthController {
   @Get('me')
   @ApiAuthenticated()
   @ApiData(MeResponse)
-  async perfil(@CurrentUser() user: AuthenticatedUser): Promise<PerfilConFlags> {
+  async perfil(@CurrentUser() user: AuthenticatedUser): Promise<MeV1> {
     const [perfil, features] = await Promise.all([
       this.auth.perfilDe(user.id),
       this.flags.activeFor(user.id),
     ]);
-    return { ...perfil, features };
+    return meV1({ ...perfil, features });
   }
 
   @Post('change-password')
@@ -250,13 +242,12 @@ export class AuthController {
     request: Request,
     response: Response,
     tokens: ParDeTokens,
-    perfil: PerfilPublico,
-  ): RespuestaDeSesion {
-    if (esClienteNativo(request)) {
-      return { ...respuestaDeSesion(tokens, perfil), refresh_token: tokens.refreshToken };
-    }
+    perfil: Profile,
+  ): SessionV1 {
+    if (esClienteNativo(request)) return sessionV1(tokens, perfil, true);
+    // El refresh token NO se devuelve en el cuerpo: solo va en la cookie httpOnly.
     this.ponerCookie(response, tokens.refreshToken);
-    return respuestaDeSesion(tokens, perfil);
+    return sessionV1(tokens, perfil, false);
   }
 
   // ── Cookie ─────────────────────────────────────────────────────────────────
@@ -286,15 +277,6 @@ export class AuthController {
   private borrarCookie(response: Response): void {
     response.clearCookie(COOKIE_REFRESH, this.opcionesDeCookie());
   }
-}
-
-function respuestaDeSesion(tokens: ParDeTokens, perfil: PerfilPublico): RespuestaDeSesion {
-  // El refresh token NO se devuelve en el cuerpo: solo va en la cookie httpOnly.
-  return {
-    access_token: tokens.accessToken,
-    expires_in: tokens.expiresIn,
-    user: perfil,
-  };
 }
 
 function contextoDe(request: Request): ContextoDePeticion {

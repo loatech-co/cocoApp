@@ -65,3 +65,13 @@ export function combinarConDefectos(
 
   return resultado;
 }
+
+/** The preferences as the service hands them out: the domain, by meaning and not by table key. */
+export interface Preferences {
+  /** Whether this user keeps accounts at all. */
+  accountsEnabled: boolean;
+}
+
+export function preferencesOf(stored: Preferencias): Preferences {
+  return { accountsEnabled: stored[CUENTAS_HABILITADAS] };
+}

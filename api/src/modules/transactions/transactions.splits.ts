@@ -17,6 +17,7 @@ export function splitsParaEscribir(
   if (!cuadre.cuadra) {
     throw new ValidationError(
       `La suma de los splits (${serializar(cuadre.suma)}) no coincide con el monto (${serializar(amountCabecera)}). Diferencia: ${serializar(cuadre.diferencia)}.`,
+      { code: 'splits_unbalanced' },
     );
   }
 

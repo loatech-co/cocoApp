@@ -16,7 +16,7 @@ import { ApiBody, ApiConsumes, ApiOkResponse, ApiProduces } from '@nestjs/swagge
 import type { Response } from 'express';
 
 import { TAMANO_MAXIMO } from './soportes.optimizacion';
-import { SoportesService, type ArchivoSubido, type SoporteView } from './soportes.service';
+import { SoportesService, type ArchivoSubido } from './soportes.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -27,6 +27,7 @@ import {
   ApiNoContent,
 } from '../../contract/v1/openapi.decorators';
 import { SoporteResponse } from '../../contract/v1/soportes.response';
+import { receiptV1, type ReceiptV1 } from '../../presenters/v1/receipts.presenter';
 
 /** Cuántos archivos se aceptan de una vez. Ocho es el récord del lote. */
 const MAXIMO_POR_SUBIDA = 10;
@@ -51,11 +52,11 @@ export class SoportesController {
   @Get(':id/soportes')
   @ApiData(SoporteResponse, { isArray: true })
   @ApiErrors(400, 404)
-  listar(
+  async listar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<SoporteView[]> {
-    return this.soportes.listar(user.id, id);
+  ): Promise<ReceiptV1[]> {
+    return (await this.soportes.listar(user.id, id)).map(receiptV1);
   }
 
   /**
@@ -97,13 +98,13 @@ export class SoportesController {
     description: 'Every receipt of the transaction after the upload.',
   })
   @ApiErrors(400, 404, 413, 415, 503)
-  subir(
+  async subir(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     // Sin archivos en la petición, multer no deja ni el arreglo vacío.
     @UploadedFiles() archivos: ArchivoSubido[] | undefined,
-  ): Promise<SoporteView[]> {
-    return this.soportes.subir(user.id, id, archivos ?? []);
+  ): Promise<ReceiptV1[]> {
+    return (await this.soportes.subir(user.id, id, archivos ?? [])).map(receiptV1);
   }
 
   @Delete(':id/soportes/:soporteId')

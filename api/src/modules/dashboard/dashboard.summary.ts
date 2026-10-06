@@ -10,14 +10,11 @@ import {
   granularidadPara,
   type CategoriaPlana,
 } from './dashboard.aggregate';
-import type {
-  GastoPorCategoriaPayload,
-  PagoPendientePayload,
-  PuntoDeTendencia,
-} from './dashboard.types';
+import type { CategorySpend, PendingPayment, TrendPoint } from './dashboard.types';
 import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
 import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
-import type { AccountView } from '../accounts/accounts.service';
+import { english, PERIODICITY } from '../../common/vocabulary';
+import type { Account } from '../accounts/accounts.service';
 import type { SummaryCategory } from '../categories/category-lookup.service';
 import type { MonthlyHistory, SummaryMovement } from '../transactions/ledger.service';
 
@@ -129,12 +126,12 @@ function agrupar(
 function aFilas(
   agrupado: Agrupado,
   datosDe: ReadonlyMap<string, SummaryCategory>,
-): GastoPorCategoriaPayload[] {
+): CategorySpend[] {
   return [...agrupado.values()]
     .map((fila) => {
       const datos = fila.id === null ? undefined : datosDe.get(fila.id.toString());
       return {
-        category_id: fila.id,
+        categoryId: fila.id,
         name: datos?.name ?? 'Sin clasificar',
         color: datos?.color ?? null,
         icon: datos?.icon ?? null,
@@ -154,8 +151,8 @@ export function desglose(
   arbol: Arbol,
   unicaPedida: bigint | undefined,
 ): {
-  porCategoria: GastoPorCategoriaPayload[];
-  porCentro: GastoPorCategoriaPayload[];
+  porCategoria: CategorySpend[];
+  porCentro: CategorySpend[];
   nivelMostrado: number;
   padre: bigint | null;
 } {
@@ -252,7 +249,7 @@ export function tendencia(
   movimientos: readonly SummaryMovement[],
   inicio: Date,
   fin: Date,
-): { granularidad: 'dia' | 'mes'; puntos: PuntoDeTendencia[] } {
+): { granularidad: 'dia' | 'mes'; puntos: TrendPoint[] } {
   const granularidad = granularidadPara(inicio, fin);
   const cubos = new Map(
     cubosDelRango(inicio, fin, granularidad).map((b) => [
@@ -352,8 +349,8 @@ export function pendientesDelMes(
   datos: { historiaDe: MonthlyHistory; pagadoEsteMes: ReadonlyMap<string, Money> },
   mesEnCurso: string,
   arbol: Arbol,
-): { pendientes: PagoPendientePayload[]; presupuesto: Money } {
-  const pendientes: PagoPendientePayload[] = [];
+): { pendientes: PendingPayment[]; presupuesto: Money } {
+  const pendientes: PendingPayment[] = [];
   let presupuesto = CERO;
 
   for (const concepto of recurrentes) {
@@ -394,7 +391,7 @@ export function pendientesDelMes(
   }
 
   // Por fecha: lo que vence antes es lo que hay que mirar antes.
-  pendientes.sort((a, b) => a.due_date.localeCompare(b.due_date));
+  pendientes.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   return { pendientes, presupuesto };
 }
 
@@ -404,7 +401,7 @@ function pendienteDe(
   pagado: Money | undefined,
   mesEnCurso: string,
   arbol: Arbol,
-): PagoPendientePayload {
+): PendingPayment {
   // El camino completo: "Alquiler" solo no dice de qué centro cuelga.
   // Y de paso queda a la vista la RAÍZ, que es el centro de costos: de
   // ella sale si esto es fijo o variable.
@@ -420,26 +417,26 @@ function pendienteDe(
   }
 
   return {
-    category_id: concepto.id,
+    categoryId: concepto.id,
     name: concepto.name,
     path: camino.join(' · '),
-    periodicidad: concepto.periodicidad,
-    due_date: vencimiento(mesEnCurso, concepto.diaDePago),
-    expected_amount: esperado === null ? null : serializar(toMoney(esperado)),
-    centro_id: BigInt(raiz),
-    centro: arbol.datosDe.get(raiz)?.name ?? '',
+    periodicity: english(PERIODICITY, concepto.periodicidad),
+    dueDate: vencimiento(mesEnCurso, concepto.diaDePago),
+    expectedAmount: esperado === null ? null : serializar(toMoney(esperado)),
+    costCenterId: BigInt(raiz),
+    costCenter: arbol.datosDe.get(raiz)?.name ?? '',
     // Siempre, también en los normales —donde es cero—, para que la
     // pantalla no tenga que preguntarse si el campo viene.
-    paid_amount: serializar(pagado ?? CERO),
-    varios_pagos: concepto.variosPagos,
+    paidAmount: serializar(pagado ?? CERO),
+    isMultiPayment: concepto.variosPagos,
   };
 }
 
 /** Assets (every non-credit account), debts (credit cards) and net worth. */
-export function totalesDe(cuentas: readonly AccountView[]): {
+export function totalesDe(cuentas: readonly Account[]): {
   assets: string;
   debts: string;
-  net_worth: string;
+  netWorth: string;
 } {
   const activos = cuentas
     .filter((c) => c.type !== 'credit')
@@ -451,6 +448,6 @@ export function totalesDe(cuentas: readonly AccountView[]): {
   return {
     assets: serializar(toMoney(activos)),
     debts: serializar(toMoney(deudas)),
-    net_worth: serializar(toMoney(activos.minus(deudas))),
+    netWorth: serializar(toMoney(activos.minus(deudas))),
   };
 }

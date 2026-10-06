@@ -30,15 +30,16 @@ export interface ArchivoSubido {
   buffer: Buffer;
 }
 
-/** La ficha de un soporte, sin el binario. Es lo que se lista en el modal. */
-export interface SoporteView {
+/** La ficha de un soporte, sin el binario (el dominio). Es lo que se lista en el modal. */
+export interface Receipt {
   id: bigint;
-  orden: number;
-  nombre_archivo: string;
-  mime_type: string;
-  tamano: number;
+  /** Order among the transaction's receipts. */
+  position: number;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
   /** Si el binario está de verdad en el almacén. */
-  disponible: boolean;
+  isAvailable: boolean;
 }
 
 @Injectable()
@@ -89,7 +90,7 @@ export class SoportesService implements OnModuleInit {
    * para esta consulta esos soportes no existen. No hay una rama del código
    * donde la comprobación pueda saltarse.
    */
-  async listar(userId: bigint, transactionId: bigint): Promise<SoporteView[]> {
+  async listar(userId: bigint, transactionId: bigint): Promise<Receipt[]> {
     const filas = await this.repository.findByTransaction(userId, transactionId);
 
     // One check per receipt, in parallel: a movement has a handful at most.
@@ -99,12 +100,12 @@ export class SoportesService implements OnModuleInit {
 
     return filas.map((s, indice) => ({
       id: s.id,
-      orden: s.orden,
-      nombre_archivo: s.nombreArchivo,
-      mime_type: s.mimeType,
-      tamano: s.tamano,
+      position: s.orden,
+      fileName: s.nombreArchivo,
+      mimeType: s.mimeType,
+      sizeBytes: s.tamano,
       // Promise.all devuelve uno por fila: el respaldo nunca se usa.
-      disponible: disponibles[indice] ?? false,
+      isAvailable: disponibles[indice] ?? false,
     }));
   }
 
@@ -135,7 +136,9 @@ export class SoportesService implements OnModuleInit {
       // La ficha está y el archivo no. Es un estado posible —un almacén a
       // medio sincronizar— y decirlo así es más útil que un 404 pelado, que
       // haría pensar que el soporte nunca existió.
-      throw new NotFoundError('El archivo de ese soporte no está en el almacén.');
+      throw new NotFoundError('El archivo de ese soporte no está en el almacén.', {
+        code: 'receipt_file_missing',
+      });
     }
 
     return {
@@ -165,7 +168,7 @@ export class SoportesService implements OnModuleInit {
     userId: bigint,
     transactionId: bigint,
     archivos: ArchivoSubido[],
-  ): Promise<SoporteView[]> {
+  ): Promise<Receipt[]> {
     const movimiento = await this.repository.findMovementForUpload(userId, transactionId);
 
     if (!movimiento) throw new NotFoundError('El movimiento no existe.');
@@ -269,12 +272,14 @@ export class SoportesService implements OnModuleInit {
           `No se pudo procesar “${archivo.originalname}”: al servidor se le acabaron los ` +
             `recursos para tratar la imagen. No es el archivo. Espera unos segundos y ` +
             `vuelve a intentarlo. (${detalle})`,
+          { code: 'image_processing_unavailable' },
         );
       }
 
       throw new UnsupportedMediaTypeError(
         `No se pudo procesar “${archivo.originalname}”: este servidor no sabe abrir ese formato. ` +
           `Vuelve a intentarlo con un JPG, un PNG o un PDF. (${detalle})`,
+        { code: 'image_format_unsupported' },
       );
     });
   }
@@ -325,21 +330,26 @@ export class SoportesService implements OnModuleInit {
 
 /** Type and size of every file, before a single byte is processed. */
 function validateUploads(archivos: readonly ArchivoSubido[]): void {
-  if (archivos.length === 0) throw new BadRequestError('No llegó ningún archivo.');
+  if (archivos.length === 0)
+    throw new BadRequestError('No llegó ningún archivo.', { code: 'no_files' });
 
   for (const archivo of archivos) {
     if (!TIPOS_DE_ENTRADA.has(archivo.mimetype)) {
-      throw new UnsupportedMediaTypeError(`“${archivo.originalname}” no es un PDF ni una imagen.`);
+      throw new UnsupportedMediaTypeError(`“${archivo.originalname}” no es un PDF ni una imagen.`, {
+        code: 'file_type_not_allowed',
+      });
     }
     // The declared type comes from the client; the bytes decide (see FIRMAS).
     if (!coincideConSuTipo(archivo.buffer, archivo.mimetype)) {
       throw new UnsupportedMediaTypeError(
         `“${archivo.originalname}” no es lo que dice ser: su contenido no es un ${archivo.mimetype}.`,
+        { code: 'file_content_mismatch' },
       );
     }
     if (archivo.size > TAMANO_MAXIMO) {
       throw new PayloadTooLargeError(
         `“${archivo.originalname}” pesa más de ${Math.round(TAMANO_MAXIMO / 1024 / 1024)} MB.`,
+        { code: 'file_too_large' },
       );
     }
   }

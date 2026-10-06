@@ -125,9 +125,17 @@ describe('OpenAPI contracts (api/openapi.v1.json, api/openapi.v2.json)', () => {
       ](url);
 
       expect({ route, status: response.status }).toEqual({ route, status: 401 });
-      expect(response.body).toEqual({
-        error: { code: 'unauthenticated', message: expect.any(String), details: [] },
-      });
+      expect(response.body).toEqual(
+        url.startsWith('/api/v2/')
+          ? {
+              type: 'https://dev-cocoapp.viteri.me/problems/unauthenticated',
+              title: 'Hace falta iniciar sesión',
+              status: 401,
+              detail: expect.any(String),
+              code: 'unauthenticated',
+            }
+          : { error: { code: 'unauthenticated', message: expect.any(String), details: [] } },
+      );
     }
   });
 

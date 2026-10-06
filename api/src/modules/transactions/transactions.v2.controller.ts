@@ -17,7 +17,13 @@ import {
   ListTransactionsQuery,
   UpdateTransactionInput,
 } from './dto/v2/transactions.dto';
-import { TransactionsService, type TransactionView } from './transactions.service';
+import type {
+  Transaction as TransactionBody,
+  TransactionHistory as HistoryBody,
+  TransactionPage,
+  Transfer as TransferBody,
+} from './transactions.domain';
+import { TransactionsService } from './transactions.service';
 import {
   createTransaction,
   createTransfer,
@@ -29,17 +35,19 @@ import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { ApiAuthenticated, ApiErrors, ApiNoContent } from '../../contract/v1/openapi.decorators';
 import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
-import { toV2, type ToV2 } from '../../contract/v2/to-v2';
 import {
   Transaction,
   TransactionHistory,
   TransactionPageMeta,
   Transfer,
 } from '../../contract/v2/transactions.response';
+import {
+  transactionPageV2,
+  transactionV2,
+  transferV2,
+} from '../../presenters/v2/transactions.presenter';
 
-type ListView = Awaited<ReturnType<TransactionsService['listar']>>;
-
-/** v2 of the transactions: the same service, translated at the edge. */
+/** v2 of the transactions: the same service, its own presenter. */
 @ApiAuthenticated()
 @Controller({ path: 'transactions', version: '2' })
 export class TransactionsV2Controller {
@@ -51,16 +59,14 @@ export class TransactionsV2Controller {
   async list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTransactionsQuery,
-  ): Promise<ToV2<ListView>> {
-    return toV2(await this.transactions.listar(user.id, listTransactions(query)));
+  ): Promise<TransactionPage> {
+    return transactionPageV2(await this.transactions.listar(user.id, listTransactions(query)));
   }
 
   /** Before `:id`, or Express would read "history" as an id. */
   @Get('history')
   @ApiDataV2(TransactionHistory)
-  history(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<{ first: string | null; last: string | null }> {
+  history(@CurrentUser() user: AuthenticatedUser): Promise<HistoryBody> {
     return this.transactions.historia(user.id);
   }
 
@@ -71,8 +77,8 @@ export class TransactionsV2Controller {
   async createTransfer(
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateTransferInput,
-  ): Promise<ToV2<{ transfer_group_id: string; legs: TransactionView[] }>> {
-    return toV2(await this.transactions.crearTransferencia(user.id, createTransfer(input)));
+  ): Promise<TransferBody> {
+    return transferV2(await this.transactions.crearTransferencia(user.id, createTransfer(input)));
   }
 
   @Get(':id')
@@ -81,8 +87,8 @@ export class TransactionsV2Controller {
   async get(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<ToV2<TransactionView>> {
-    return toV2(await this.transactions.obtener(user.id, id));
+  ): Promise<TransactionBody> {
+    return transactionV2(await this.transactions.obtener(user.id, id));
   }
 
   @Post()
@@ -91,8 +97,8 @@ export class TransactionsV2Controller {
   async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateTransactionInput,
-  ): Promise<ToV2<TransactionView>> {
-    return toV2(await this.transactions.crear(user.id, createTransaction(input)));
+  ): Promise<TransactionBody> {
+    return transactionV2(await this.transactions.crear(user.id, createTransaction(input)));
   }
 
   @Patch(':id')
@@ -102,8 +108,8 @@ export class TransactionsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpdateTransactionInput,
-  ): Promise<ToV2<TransactionView>> {
-    return toV2(await this.transactions.actualizar(user.id, id, updateTransaction(input)));
+  ): Promise<TransactionBody> {
+    return transactionV2(await this.transactions.actualizar(user.id, id, updateTransaction(input)));
   }
 
   @Delete(':id')

@@ -4,13 +4,12 @@ import { ApiHeader } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 
-import type { RespuestaDeSesion } from './auth.controller';
 import {
   AuthService,
   type ContextoDePeticion,
   type ParDeTokens,
-  type PerfilConFlags,
-  type PerfilPublico,
+  type Me as MeBody,
+  type Profile,
 } from './auth.service';
 import { ChangePasswordDto, LoginDto, RegisterDto } from './dto/auth.dto';
 import { RefreshInput } from './dto/v2/auth.dto';
@@ -26,7 +25,7 @@ import {
 } from '../../contract/v1/openapi.decorators';
 import { Me, Registration, Session } from '../../contract/v2/auth.response';
 import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
-import { toV2, type ToV2 } from '../../contract/v2/to-v2';
+import { meV2, sessionV2, type SessionV2 } from '../../presenters/v2/auth.presenter';
 import { FlagsService } from '../flags/flags.service';
 
 const REFRESH_COOKIE = 'coco_refresh';
@@ -67,10 +66,6 @@ function readCookie(request: Request, name: string): string | undefined {
   if (typeof cookies !== 'object' || cookies === null) return undefined;
   const value = (cookies as Record<string, unknown>)[name];
   return typeof value === 'string' ? value : undefined;
-}
-
-function sessionOf(tokens: ParDeTokens, profile: PerfilPublico): RespuestaDeSesion {
-  return { access_token: tokens.accessToken, expires_in: tokens.expiresIn, user: profile };
 }
 
 /**
@@ -120,7 +115,7 @@ export class AuthV2Controller {
     @Body() input: LoginDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<ToV2<RespuestaDeSesion>> {
+  ): Promise<SessionV2> {
     const { tokens, perfil } = await this.auth.entrar(input, contextOf(request));
     return this.deliver(request, response, tokens, perfil);
   }
@@ -136,10 +131,10 @@ export class AuthV2Controller {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
     @Body() input: RefreshInput,
-  ): Promise<ToV2<RespuestaDeSesion>> {
+  ): Promise<SessionV2> {
     const refreshToken = this.refreshTokenOf(request, input);
     if (!refreshToken) {
-      throw new AuthenticationError('No hay sesión que renovar.');
+      throw new AuthenticationError('No hay sesión que renovar.', { code: 'session_expired' });
     }
     try {
       const { tokens, perfil } = await this.auth.refrescar(refreshToken, contextOf(request));
@@ -182,12 +177,12 @@ export class AuthV2Controller {
   @Get('me')
   @ApiAuthenticated()
   @ApiDataV2(Me)
-  async me(@CurrentUser() user: AuthenticatedUser): Promise<ToV2<PerfilConFlags>> {
+  async me(@CurrentUser() user: AuthenticatedUser): Promise<MeBody> {
     const [profile, features] = await Promise.all([
       this.auth.perfilDe(user.id),
       this.flags.activeFor(user.id),
     ]);
-    return toV2({ ...profile, features });
+    return meV2({ ...profile, features });
   }
 
   @Post('change-password')
@@ -219,16 +214,14 @@ export class AuthV2Controller {
     request: Request,
     response: Response,
     tokens: ParDeTokens,
-    profile: PerfilPublico,
-  ): ToV2<RespuestaDeSesion> {
-    if (isNativeClient(request)) {
-      return toV2({ ...sessionOf(tokens, profile), refresh_token: tokens.refreshToken });
-    }
+    profile: Profile,
+  ): SessionV2 {
+    if (isNativeClient(request)) return sessionV2(tokens, profile, true);
     response.cookie(REFRESH_COOKIE, tokens.refreshToken, {
       ...this.cookieOptions(),
       maxAge: REFRESH_TTL_MS,
     });
-    return toV2(sessionOf(tokens, profile));
+    return sessionV2(tokens, profile, false);
   }
 
   private cookieOptions(): CookieOptions {

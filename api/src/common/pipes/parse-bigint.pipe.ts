@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, type PipeTransform } from '@nestjs/common';
+import { Injectable, type PipeTransform } from '@nestjs/common';
+
+import { BadRequestError } from '../errors/domain-error';
 
 /**
  * Convierte un parámetro de ruta a `bigint`.
@@ -11,7 +13,9 @@ import { BadRequestException, Injectable, type PipeTransform } from '@nestjs/com
 export class ParseBigIntPipe implements PipeTransform<string, bigint> {
   transform(value: string): bigint {
     if (!/^\d+$/.test(value)) {
-      throw new BadRequestException('El identificador debe ser un número entero positivo.');
+      throw new BadRequestError('El identificador debe ser un número entero positivo.', {
+        code: 'invalid_id',
+      });
     }
     return BigInt(value);
   }

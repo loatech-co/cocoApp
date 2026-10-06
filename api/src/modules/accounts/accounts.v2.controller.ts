@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { AccountsService, type AccountView } from './accounts.service';
+import { AccountsService, type Account as AccountBody } from './accounts.service';
 import type { CreateAccountDto, UpdateAccountDto } from './dto/account.dto';
 import { CreateAccountInput, ListAccountsQuery, UpdateAccountInput } from './dto/v2/accounts.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -21,7 +21,8 @@ import { ApiAuthenticated, ApiErrors, ApiNoContent } from '../../contract/v1/ope
 import { Account } from '../../contract/v2/accounts.response';
 import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
 import { paginate, type Page } from '../../contract/v2/pagination';
-import { defined, toV2, type ToV2, type V1Draft } from '../../contract/v2/to-v2';
+import { defined, type V1Draft } from '../../contract/v2/v1-input';
+import { accountV2 } from '../../presenters/v2/accounts.presenter';
 
 function createAccount(input: CreateAccountInput): CreateAccountDto {
   return {
@@ -52,7 +53,7 @@ function updateAccount(input: UpdateAccountInput): UpdateAccountDto {
   });
 }
 
-/** v2 of the accounts: the same service, translated at the edge. */
+/** v2 of the accounts: the same service, its own presenter. */
 @ApiAuthenticated()
 @Controller({ path: 'accounts', version: '2' })
 export class AccountsV2Controller {
@@ -64,9 +65,9 @@ export class AccountsV2Controller {
   async list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListAccountsQuery,
-  ): Promise<Page<ToV2<AccountView>>> {
+  ): Promise<Page<AccountBody>> {
     const accounts = await this.accounts.listar(user.id, query.includeArchived ?? false);
-    return paginate(toV2(accounts), query);
+    return paginate(accounts.map(accountV2), query);
   }
 
   @Get(':id')
@@ -75,8 +76,8 @@ export class AccountsV2Controller {
   async get(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<ToV2<AccountView>> {
-    return toV2(await this.accounts.obtener(user.id, id));
+  ): Promise<AccountBody> {
+    return accountV2(await this.accounts.obtener(user.id, id));
   }
 
   @Post()
@@ -85,8 +86,8 @@ export class AccountsV2Controller {
   async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateAccountInput,
-  ): Promise<ToV2<AccountView>> {
-    return toV2(await this.accounts.crear(user.id, createAccount(input)));
+  ): Promise<AccountBody> {
+    return accountV2(await this.accounts.crear(user.id, createAccount(input)));
   }
 
   @Patch(':id')
@@ -96,8 +97,8 @@ export class AccountsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpdateAccountInput,
-  ): Promise<ToV2<AccountView>> {
-    return toV2(await this.accounts.actualizar(user.id, id, updateAccount(input)));
+  ): Promise<AccountBody> {
+    return accountV2(await this.accounts.actualizar(user.id, id, updateAccount(input)));
   }
 
   @Delete(':id')

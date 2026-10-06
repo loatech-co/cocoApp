@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 
 import { ChangeRoleDto, ResetPasswordDto } from './admin.dto';
-import { AdminService } from './admin.service';
+import { AdminService, type AuditPage, type UserPage } from './admin.service';
 import { ListUsersQuery } from './dto/v2/admin.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles, RolesGuard } from '../../common/guards/roles.guard';
@@ -21,14 +21,13 @@ import { ApiAuthenticated, ApiErrors, ApiNoContent } from '../../contract/v1/ope
 import { AuditEntry, Profile } from '../../contract/v2/auth.response';
 import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
 import { PageQuery } from '../../contract/v2/page.dto';
-import type { Page } from '../../contract/v2/pagination';
-import { defined, toV2, type ToV2 } from '../../contract/v2/to-v2';
-import type { PerfilPublico } from '../auth/auth.service';
-
-type AuditEntryView = Awaited<ReturnType<AdminService['bitacora']>>['data'][number];
+import { defined } from '../../contract/v2/v1-input';
+import { auditPageV2, userPageV2 } from '../../presenters/v2/admin.presenter';
+import { profileV2 } from '../../presenters/v2/auth.presenter';
+import type { Profile as ProfileBody } from '../auth/auth.service';
 
 /**
- * v2 of the administration: the same service, translated at the edge. The
+ * v2 of the administration: the same service, its own presenter. The
  * bodies (`role`, `newPassword`) were English already, so they are the v1 DTOs.
  */
 @ApiAuthenticated()
@@ -42,8 +41,8 @@ export class AdminV2Controller {
   @Get('users')
   @ApiDataV2(Profile, { isPage: true })
   @ApiErrors(400)
-  async listUsers(@Query() query: ListUsersQuery): Promise<Page<ToV2<PerfilPublico>>> {
-    return toV2(
+  async listUsers(@Query() query: ListUsersQuery): Promise<UserPage> {
+    return userPageV2(
       await this.admin.listarUsuarios(
         defined({ status: query.status, page: query.page, per_page: query.perPage }),
       ),
@@ -56,8 +55,8 @@ export class AdminV2Controller {
   async approve(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<ToV2<PerfilPublico>> {
-    return toV2(await this.admin.aprobar(user.id, id, {}));
+  ): Promise<ProfileBody> {
+    return profileV2(await this.admin.aprobar(user.id, id, {}));
   }
 
   @Post('users/:id/suspend')
@@ -66,8 +65,8 @@ export class AdminV2Controller {
   async suspend(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<ToV2<PerfilPublico>> {
-    return toV2(await this.admin.suspender(user.id, id, {}));
+  ): Promise<ProfileBody> {
+    return profileV2(await this.admin.suspender(user.id, id, {}));
   }
 
   @Post('users/:id/reactivate')
@@ -76,8 +75,8 @@ export class AdminV2Controller {
   async reactivate(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<ToV2<PerfilPublico>> {
-    return toV2(await this.admin.reactivar(user.id, id, {}));
+  ): Promise<ProfileBody> {
+    return profileV2(await this.admin.reactivar(user.id, id, {}));
   }
 
   @Post('users/:id/role')
@@ -87,8 +86,8 @@ export class AdminV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: ChangeRoleDto,
-  ): Promise<ToV2<PerfilPublico>> {
-    return toV2(await this.admin.cambiarRol(user.id, id, input.role, {}));
+  ): Promise<ProfileBody> {
+    return profileV2(await this.admin.cambiarRol(user.id, id, input.role, {}));
   }
 
   @Post('users/:id/reset-password')
@@ -106,8 +105,8 @@ export class AdminV2Controller {
   @Get('audit-log')
   @ApiDataV2(AuditEntry, { isPage: true })
   @ApiErrors(400)
-  async auditLog(@Query() query: PageQuery): Promise<Page<ToV2<AuditEntryView>>> {
-    return toV2(
+  async auditLog(@Query() query: PageQuery): Promise<AuditPage> {
+    return auditPageV2(
       await this.admin.bitacora(
         defined({
           page: query.page === undefined ? undefined : String(query.page),

@@ -11,7 +11,14 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { CategoriesService, type CategoryView } from './categories.service';
+import type {
+  Category as CategoryBody,
+  CategoryMerge as MergeBody,
+  CategoryNode as NodeBody,
+  CategorySeed as SeedBody,
+  CategoryUsage as UsageBody,
+} from './categories.domain';
+import { CategoriesService } from './categories.service';
 import type {
   CreateCategoryDto,
   ReorderCategoriesDto,
@@ -25,10 +32,10 @@ import {
   ReorderCategoriesInput,
   UpdateCategoryInput,
 } from './dto/v2/categories.dto';
-import type { ConHijos } from '../../common/categories/categories.tree';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { PERIODICITY, spanish } from '../../common/vocabulary';
 import { ApiAuthenticated, ApiErrors, ApiNoContent } from '../../contract/v1/openapi.decorators';
 import {
   Category,
@@ -39,7 +46,14 @@ import {
 } from '../../contract/v2/categories.response';
 import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
 import { paginate, type Page } from '../../contract/v2/pagination';
-import { defined, toV1Value, toV2, type ToV2, type V1Draft } from '../../contract/v2/to-v2';
+import { defined, type V1Draft } from '../../contract/v2/v1-input';
+import {
+  categoryMergeV2,
+  categoryNodeV2,
+  categorySeedV2,
+  categoryUsageV2,
+  categoryV2,
+} from '../../presenters/v2/categories.presenter';
 
 type V1Fields = Omit<UpdateCategoryDto, 'name' | 'kind' | 'parent_id' | 'is_archived'>;
 
@@ -54,7 +68,7 @@ function fields(input: CreateCategoryInput | UpdateCategoryInput): V1Fields {
     periodicidad:
       input.periodicity === undefined || input.periodicity === null
         ? input.periodicity
-        : toV1Value('periodicidad', input.periodicity),
+        : spanish(PERIODICITY, input.periodicity),
     dia_de_pago: input.paymentDay,
     mes_de_pago: input.paymentMonth,
     pago_automatico: input.isAutoPaid,
@@ -109,12 +123,12 @@ export class CategoriesV2Controller {
   async list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListCategoriesQuery,
-  ): Promise<Page<ToV2<ConHijos<CategoryView>>>> {
-    const { arbol } = await this.categories.listarArbol(user.id, {
+  ): Promise<Page<NodeBody>> {
+    const { tree } = await this.categories.listarArbol(user.id, {
       kind: query.kind,
       incluirArchivadas: query.includeArchived ?? false,
     });
-    return paginate(toV2(arbol), query);
+    return paginate(tree.map(categoryNodeV2), query);
   }
 
   @Get(':id')
@@ -123,8 +137,8 @@ export class CategoriesV2Controller {
   async get(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<ToV2<CategoryView>> {
-    return toV2(await this.categories.obtener(user.id, id));
+  ): Promise<CategoryBody> {
+    return categoryV2(await this.categories.obtener(user.id, id));
   }
 
   @Post()
@@ -133,15 +147,15 @@ export class CategoriesV2Controller {
   async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateCategoryInput,
-  ): Promise<ToV2<CategoryView>> {
-    return toV2(await this.categories.crear(user.id, createCategory(input)));
+  ): Promise<CategoryBody> {
+    return categoryV2(await this.categories.crear(user.id, createCategory(input)));
   }
 
   /** Creates the starter tree for a user who has none. */
   @Post('seed')
   @ApiDataV2(CategorySeed, { status: 201 })
-  async seed(@CurrentUser() user: AuthenticatedUser): Promise<ToV2<{ creadas: number }>> {
-    return toV2(await this.categories.sembrarDiccionario(user.id));
+  async seed(@CurrentUser() user: AuthenticatedUser): Promise<SeedBody> {
+    return categorySeedV2(await this.categories.sembrarDiccionario(user.id));
   }
 
   @Post('reorder')
@@ -163,8 +177,8 @@ export class CategoriesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: MergeCategoryInput,
-  ): Promise<ToV2<{ movidos: number; destino: CategoryView }>> {
-    return toV2(await this.categories.unificar(user.id, id, BigInt(input.targetId)));
+  ): Promise<MergeBody> {
+    return categoryMergeV2(await this.categories.unificar(user.id, id, BigInt(input.targetId)));
   }
 
   @Patch(':id')
@@ -174,8 +188,8 @@ export class CategoriesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpdateCategoryInput,
-  ): Promise<ToV2<CategoryView>> {
-    return toV2(await this.categories.actualizar(user.id, id, updateCategory(input)));
+  ): Promise<CategoryBody> {
+    return categoryV2(await this.categories.actualizar(user.id, id, updateCategory(input)));
   }
 
   /** What deleting it would take with it: the transactions and categories below. */
@@ -185,8 +199,8 @@ export class CategoriesV2Controller {
   async usage(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<ToV2<{ movimientos: number; subcategorias: number }>> {
-    return toV2(await this.categories.usosDe(user.id, id));
+  ): Promise<UsageBody> {
+    return categoryUsageV2(await this.categories.usosDe(user.id, id));
   }
 
   /** Deletes the whole subtree; its transactions go to `reassignTo`. */

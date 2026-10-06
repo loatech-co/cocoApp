@@ -180,8 +180,8 @@ describe('API v2 (e2e)', () => {
       expect(second.body.data).toEqual([]);
 
       const tooLarge = await v2('/tags?perPage=201').expect(400);
-      expect(tooLarge.body.error.code).toBe('bad_request');
-      expect(JSON.stringify(tooLarge.body.error.details)).toContain('perPage');
+      expect(tooLarge.body.code).toBe('invalid_fields');
+      expect(tooLarge.body.errors).toEqual([{ field: 'perPage', message: expect.any(String) }]);
     });
 
     it('the tree is paged by its cost centers, each with what hangs from it', async () => {
@@ -311,7 +311,9 @@ describe('API v2 (e2e)', () => {
         .set('Authorization', auth)
         .send({ periodicity: 'mensual' })
         .expect(400);
-      expect(unknown.body.error.details).toEqual([{ message: 'La periodicidad no es válida.' }]);
+      expect(unknown.body.errors).toEqual([
+        { field: 'periodicity', message: 'La periodicidad no es válida.' },
+      ]);
 
       await http
         .post('/api/v2/categories/reorder')
@@ -471,10 +473,13 @@ describe('API v2 (e2e)', () => {
         .set('Authorization', auth)
         .send({ date: '2026-09-01', amount: '1', category_id: Number(conceptId) })
         .expect(400);
-      expect(response.body.error).toEqual({
-        code: 'bad_request',
-        message: expect.any(String),
-        details: [{ message: 'property category_id should not exist' }],
+      expect(response.body).toEqual({
+        type: 'https://dev-cocoapp.viteri.me/problems/invalid_fields',
+        title: 'Hay campos inválidos',
+        status: 400,
+        detail: 'Hay campos inválidos en la solicitud.',
+        code: 'invalid_fields',
+        errors: [{ field: 'category_id', message: 'property category_id should not exist' }],
       });
     });
   });

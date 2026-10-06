@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 
 import { UpsertTagDto } from './tags.dto';
-import { TagsService, type TagView } from './tags.service';
+import { TagsService, type Tag as TagBody } from './tags.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -37,15 +37,14 @@ export class TagsV2Controller {
   async list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: PageQuery,
-  ): Promise<Page<TagView>> {
-    const { data } = await this.tags.listar(user.id);
-    return paginate(data, query);
+  ): Promise<Page<TagBody>> {
+    return paginate(await this.tags.listar(user.id), query);
   }
 
   @Post()
   @ApiDataV2(Tag, { status: 201 })
   @ApiErrors(400, 409)
-  create(@CurrentUser() user: AuthenticatedUser, @Body() input: UpsertTagDto): Promise<TagView> {
+  create(@CurrentUser() user: AuthenticatedUser, @Body() input: UpsertTagDto): Promise<TagBody> {
     return this.tags.obtenerOCrear(user.id, input.name, input.color);
   }
 
@@ -56,7 +55,7 @@ export class TagsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpsertTagDto,
-  ): Promise<TagView> {
+  ): Promise<TagBody> {
     return this.tags.actualizar(user.id, id, input);
   }
 

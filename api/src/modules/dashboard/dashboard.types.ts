@@ -1,18 +1,20 @@
-import type { AccountView } from '../accounts/accounts.service';
+/** The dashboard as the service hands it out: the domain, in English (v1 and v2 present it). */
+import type { BREAKDOWN_LEVEL, English, GRANULARITY, PERIODICITY } from '../../common/vocabulary';
+import type { Account } from '../accounts/accounts.service';
 
-export interface PagoPendientePayload {
-  category_id: bigint;
+export interface PendingPayment {
+  categoryId: bigint;
   name: string;
   /** El camino hasta él, para saber de qué parte de la casa se habla. */
   path: string;
-  periodicidad: string;
+  periodicity: English<typeof PERIODICITY>;
   /** `YYYY-MM-DD`. Ya recortado a los meses cortos. */
-  due_date: string;
+  dueDate: string;
   /**
    * Lo que se espera que cueste: el promedio de los meses CON pago dentro de
    * los tres anteriores. `null` si nunca se ha pagado.
    */
-  expected_amount: string | null;
+  expectedAmount: string | null;
   /**
    * El centro de costos del que cuelga, que es por lo que se filtra la lista.
    *
@@ -20,8 +22,8 @@ export interface PagoPendientePayload {
    * se compara. Renombrar un centro desde la pantalla de al lado no tiene por
    * qué desmarcar nada.
    */
-  centro_id: bigint;
-  centro: string;
+  costCenterId: bigint;
+  costCenter: string;
   /**
    * Lo que YA se pagó de esto este mes, confirmado.
    *
@@ -31,19 +33,20 @@ export interface PagoPendientePayload {
    * pagado y algo que falta A LA VEZ, y la pantalla tiene que poder decir
    * «llevas 608.350 de 1.200.000».
    */
-  paid_amount: string;
+  paidAmount: string;
   /**
    * Si este se cubre a pedazos.
    *
-   * No se deduce de `paid_amount > 0`: un concepto normal con un pago
+   * No se deduce de `paidAmount > 0`: un concepto normal con un pago
    * confirmado no está en esta lista, y uno marcado en su primera ida tiene
    * cero pagado y sí lo está.
    */
-  varios_pagos: boolean;
+  isMultiPayment: boolean;
 }
 
-export interface GastoPorCategoriaPayload {
-  category_id: bigint | null;
+export interface CategorySpend {
+  /** `null` groups what has no category. */
+  categoryId: bigint | null;
   name: string;
   color: string | null;
   icon: string | null;
@@ -51,7 +54,7 @@ export interface GastoPorCategoriaPayload {
   count: number;
 }
 
-export interface PuntoDeTendencia {
+export interface TrendPoint {
   /** `2025-03-14` o `2025-03`, según la granularidad. */
   bucket: string;
   expense: string;
@@ -61,16 +64,16 @@ export interface PuntoDeTendencia {
   count: number;
 }
 
-export interface DashboardPayload {
-  period: { from: string; to: string; granularity: 'dia' | 'mes' };
-  accounts: AccountView[];
+export interface Dashboard {
+  period: { from: string; to: string; granularity: English<typeof GRANULARITY> };
+  accounts: Account[];
   totals: {
     /** Suma de las cuentas de activo. */
     assets: string;
     /** Suma de lo adeudado en tarjetas. */
     debts: string;
     /** Activos − deudas. */
-    net_worth: string;
+    netWorth: string;
   };
   /** Del RANGO filtrado, no del mes. */
   range: { income: string; expense: string; net: string; count: number };
@@ -79,17 +82,17 @@ export interface DashboardPayload {
    * centro de costos; dentro de un centro, por sus categorías; dentro de una categoría,
    * por sus conceptos. Es lo que permite ir bajando sin cambiar de pantalla.
    */
-  by_category: GastoPorCategoriaPayload[];
+  byCategory: CategorySpend[];
   /**
    * El gasto del rango repartido por CENTRO DE COSTOS, siempre en el nivel de
-   * arriba aunque `by_category` haya bajado.
+   * arriba aunque `byCategory` haya bajado.
    *
-   * Son dos preguntas distintas: `by_category` es "¿en qué se fue?" y baja
+   * Son dos preguntas distintas: `byCategory` es "¿en qué se fue?" y baja
    * hasta donde haga falta; esto es "¿de qué tipo era?", y ahí el nivel de
    * arriba —fijos contra variables— ES la respuesta.
    */
-  expense_by_center: GastoPorCategoriaPayload[];
-  breakdown_level: 'centro de costos' | 'categoría' | 'concepto';
+  expenseByCostCenter: CategorySpend[];
+  breakdownLevel: English<typeof BREAKDOWN_LEVEL>;
   /**
    * De quién son las filas del desglose.
    *
@@ -98,7 +101,7 @@ export interface DashboardPayload {
    * porque arriba había una sola fila— es la categoría a la que pertenecen
    * todas, y es lo único que explica por qué se está viendo ese nivel.
    */
-  breakdown_parent: { id: bigint; name: string } | null;
+  breakdownParent: { id: bigint; name: string } | null;
   /**
    * Lo que hace falta este mes para los costos fijos: la suma de TODOS los
    * conceptos recurrentes que vencen en el mes, pagados o no.
@@ -106,8 +109,8 @@ export interface DashboardPayload {
    * Del mes en curso, como `pending`, y no del rango filtrado: es una
    * pregunta sobre lo que viene, no sobre lo que se está revisando.
    */
-  required_budget: string;
+  requiredBudget: string;
   /** Lo que se espera pagar este mes y todavía no aparece. */
-  pending: PagoPendientePayload[];
-  trend: PuntoDeTendencia[];
+  pending: PendingPayment[];
+  trend: TrendPoint[];
 }

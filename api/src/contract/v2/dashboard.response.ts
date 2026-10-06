@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import { Account } from './accounts.response';
+import { PERIODICITIES } from './categories.response';
 
 export const GRANULARITIES = ['day', 'month'] as const;
 export const BREAKDOWN_LEVELS = ['cost_center', 'category', 'concept'] as const;
@@ -39,8 +40,8 @@ export class PendingPayment {
   categoryId!: number;
   name!: string;
   path!: string;
-  /** `monthly`, `bimonthly`, `quarterly`, `semiannual` or `annual`. */
-  periodicity!: string;
+  @ApiProperty({ enum: PERIODICITIES })
+  periodicity!: (typeof PERIODICITIES)[number];
   dueDate!: string;
   expectedAmount!: string | null;
   costCenterId!: number;

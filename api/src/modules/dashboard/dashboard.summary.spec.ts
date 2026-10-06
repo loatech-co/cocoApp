@@ -93,7 +93,7 @@ describe('desglose', () => {
 
     const byName = Object.fromEntries(porCentro.map((r) => [r.name, r]));
     expect(Object.keys(byName).sort()).toEqual(['Hogar', 'Oficina', 'Sin clasificar']);
-    expect(byName['Sin clasificar']).toMatchObject({ category_id: null, color: null });
+    expect(byName['Sin clasificar']).toMatchObject({ categoryId: null, color: null });
   });
 });
 

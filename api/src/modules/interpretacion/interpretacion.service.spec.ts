@@ -82,14 +82,14 @@ describe('InterpretacionService con una clasificación elegida', () => {
   it('un concepto elegido se guarda con certeza alta, sin fuente y sin revisar', async () => {
     const r = await capturar({ monto: '45000', category_id: '30' });
 
-    expect(r.clasificacion).toMatchObject({
-      certeza: 'alta',
-      fuente: null,
-      nombre: 'Mercado',
-      motivo: 'Lo eligió la persona.',
+    expect(r.classification).toMatchObject({
+      certainty: 'high',
+      source: null,
+      name: 'Mercado',
+      reason: 'Lo eligió la persona.',
     });
-    expect(r.clasificacion.concepto_id).toBe(30n);
-    expect(r.clasificacion.categoria_id).toBe(20n);
+    expect(r.classification.conceptId).toBe(30n);
+    expect(r.classification.categoryId).toBe(20n);
     expect(crear).toHaveBeenCalledWith(
       USUARIO,
       expect.objectContaining({ category_id: 30, por_revisar: false }),
@@ -99,11 +99,11 @@ describe('InterpretacionService con una clasificación elegida', () => {
   it('una categoría elegida (profundidad 2) queda con certeza media y por revisar', async () => {
     const r = await capturar({ monto: '18500', category_id: '21' });
 
-    expect(r.clasificacion).toMatchObject({
-      certeza: 'media',
-      concepto_id: null,
-      categoria_id: 21n,
-      nombre: 'Transporte',
+    expect(r.classification).toMatchObject({
+      certainty: 'medium',
+      conceptId: null,
+      categoryId: 21n,
+      name: 'Transporte',
     });
     expect(crear).toHaveBeenCalledWith(
       USUARIO,
@@ -152,7 +152,7 @@ describe('InterpretacionService con una clasificación elegida', () => {
         description: undefined,
       }),
     );
-    expect(r.resumen).toBe('Registrado: $45.000 · Mercado');
+    expect(r.summary).toBe('Registrado: $45.000 · Mercado');
   });
 
   it('sin texto, sin comercio y sin concepto sigue siendo 422, aunque venga el monto', async () => {
@@ -168,10 +168,10 @@ describe('InterpretacionService con una clasificación elegida', () => {
     });
 
     expect(interpretar).toHaveBeenCalledTimes(1);
-    expect(r.clasificacion).toMatchObject({
-      certeza: 'media',
-      categoria_id: 21n,
-      motivo: 'Lo eligió la persona.',
+    expect(r.classification).toMatchObject({
+      certainty: 'medium',
+      categoryId: 21n,
+      reason: 'Lo eligió la persona.',
     });
     // Y lo leído del texto se conserva.
     expect(crear).toHaveBeenCalledWith(

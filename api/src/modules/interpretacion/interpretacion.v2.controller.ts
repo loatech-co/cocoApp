@@ -3,13 +3,17 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { CaptureInput, InterpretInput } from './dto/v2/interpretation.dto';
 import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
 import { InterpretacionService } from './interpretacion.service';
-import type { CapturaView, InterpretacionView } from './interpretation.view';
+import type {
+  Capture as CaptureBody,
+  Interpretation as InterpretationBody,
+} from './interpretation.domain';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { ApiAuthenticated, ApiErrors } from '../../contract/v1/openapi.decorators';
 import { Capture, Interpretation } from '../../contract/v2/interpretation.response';
 import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
-import { defined, toV2, type ToV2, type V1Draft } from '../../contract/v2/to-v2';
+import { defined, type V1Draft } from '../../contract/v2/v1-input';
+import { captureV2, interpretationV2 } from '../../presenters/v2/interpretation.presenter';
 
 /** The fields both routes read, in their v1 names. */
 function textFields(input: InterpretInput): V1Draft<InterpretBodyDto> {
@@ -41,8 +45,8 @@ function captureBody(input: CaptureInput): CaptureBodyDto {
 }
 
 /**
- * v2 of reading a text and of the phone's capture: the same service,
- * translated at the edge. The capture keeps its idempotency: the same
+ * v2 of reading a text and of the phone's capture: the same service, its own
+ * presenter. The capture keeps its idempotency: the same
  * `externalRef` twice is one transaction.
  */
 @ApiAuthenticated()
@@ -57,8 +61,8 @@ export class InterpretacionV2Controller {
   async interpret(
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: InterpretInput,
-  ): Promise<ToV2<InterpretacionView>> {
-    return toV2(await this.interpretacion.interpretar(user.id, interpretBody(input)));
+  ): Promise<InterpretationBody> {
+    return interpretationV2(await this.interpretacion.interpretar(user.id, interpretBody(input)));
   }
 
   @Post('capture')
@@ -68,7 +72,7 @@ export class InterpretacionV2Controller {
   async capture(
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CaptureInput,
-  ): Promise<ToV2<CapturaView>> {
-    return toV2(await this.interpretacion.capturar(user.id, captureBody(input)));
+  ): Promise<CaptureBody> {
+    return captureV2(await this.interpretacion.capturar(user.id, captureBody(input)));
   }
 }

@@ -1,16 +1,11 @@
-import {
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-  type CanActivate,
-  type ExecutionContext,
-} from '@nestjs/common';
+import { Injectable, type CanActivate, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
 import { SupabaseAuthService } from './supabase-auth.service';
 import { UsersRepository } from './users.repository';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
+import { AuthenticationError, ForbiddenError } from '../../common/errors/domain-error';
 
 /**
  * Barrera de autenticación de toda la API.
@@ -49,7 +44,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = extraerBearer(request.headers.authorization);
 
     if (!token) {
-      throw new UnauthorizedException('Autenticación requerida.');
+      throw new AuthenticationError('Autenticación requerida.');
     }
 
     const { authId, iatMs } = await this.supabase.verificarAccessToken(token);
@@ -60,7 +55,7 @@ export class JwtAuthGuard implements CanActivate {
       // Token válido de Supabase, pero sin perfil en la aplicación. Pasa si la
       // cuenta se creó desde el panel de Supabase saltándose el registro. Sin
       // perfil no hay rol ni estado, así que no hay nada que autorizar.
-      throw new UnauthorizedException('Token inválido o expirado.');
+      throw new AuthenticationError('Token inválido o expirado.', { code: 'invalid_token' });
     }
 
     // REVOCACIÓN INMEDIATA: cualquier token emitido antes de esta marca queda
@@ -79,15 +74,17 @@ export class JwtAuthGuard implements CanActivate {
     // caer del lado equivocado y tener que reintentar. Rechazar de más durante
     // 600 ms es preferible a aceptar de menos.
     if (iatMs < usuario.sessionsValidFrom.getTime()) {
-      throw new UnauthorizedException('La sesión fue cerrada. Vuelve a entrar.');
+      throw new AuthenticationError('La sesión fue cerrada. Vuelve a entrar.', {
+        code: 'session_revoked',
+      });
     }
 
     if (usuario.status !== 'active') {
-      throw new ForbiddenException(
-        usuario.status === 'pending'
-          ? 'Tu cuenta está pendiente de aprobación.'
-          : 'Tu cuenta está suspendida.',
-      );
+      throw usuario.status === 'pending'
+        ? new ForbiddenError('Tu cuenta está pendiente de aprobación.', {
+            code: 'account_pending_approval',
+          })
+        : new ForbiddenError('Tu cuenta está suspendida.', { code: 'account_suspended' });
     }
 
     // El rol sale de la BASE, no del token: si un admin degrada a alguien, el

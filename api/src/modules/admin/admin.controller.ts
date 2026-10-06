@@ -25,7 +25,8 @@ import {
   ApiErrors,
   ApiNoContent,
 } from '../../contract/v1/openapi.decorators';
-import type { PerfilPublico } from '../auth/auth.service';
+import { auditPageV1, userPageV1 } from '../../presenters/v1/admin.presenter';
+import { profileV1, type ProfileV1 } from '../../presenters/v1/auth.presenter';
 
 /**
  * Panel de administración.
@@ -44,49 +45,49 @@ export class AdminController {
   @Get('users')
   @ApiData(ProfileResponse, { isArray: true, meta: 'page' })
   @ApiErrors(400)
-  listar(@Query() query: ListUsersQueryDto) {
-    return this.admin.listarUsuarios(query);
+  async listar(@Query() query: ListUsersQueryDto) {
+    return userPageV1(await this.admin.listarUsuarios(query));
   }
 
   @Post('users/:id/approve')
   @ApiData(ProfileResponse, { status: 201 })
   @ApiErrors(400, 404)
-  aprobar(
+  async aprobar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<PerfilPublico> {
-    return this.admin.aprobar(user.id, id, {});
+  ): Promise<ProfileV1> {
+    return profileV1(await this.admin.aprobar(user.id, id, {}));
   }
 
   @Post('users/:id/suspend')
   @ApiData(ProfileResponse, { status: 201 })
   @ApiErrors(400, 404)
-  suspender(
+  async suspender(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<PerfilPublico> {
-    return this.admin.suspender(user.id, id, {});
+  ): Promise<ProfileV1> {
+    return profileV1(await this.admin.suspender(user.id, id, {}));
   }
 
   @Post('users/:id/reactivate')
   @ApiData(ProfileResponse, { status: 201 })
   @ApiErrors(400, 404)
-  reactivar(
+  async reactivar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<PerfilPublico> {
-    return this.admin.reactivar(user.id, id, {});
+  ): Promise<ProfileV1> {
+    return profileV1(await this.admin.reactivar(user.id, id, {}));
   }
 
   @Post('users/:id/role')
   @ApiData(ProfileResponse, { status: 201 })
   @ApiErrors(400, 404, 422)
-  cambiarRol(
+  async cambiarRol(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() dto: ChangeRoleDto,
-  ): Promise<PerfilPublico> {
-    return this.admin.cambiarRol(user.id, id, dto.role, {});
+  ): Promise<ProfileV1> {
+    return profileV1(await this.admin.cambiarRol(user.id, id, dto.role, {}));
   }
 
   @Post('users/:id/reset-password')
@@ -105,7 +106,7 @@ export class AdminController {
   @ApiQuery({ name: 'page', required: false, type: Number, description: '1-based; 1 by default.' })
   @ApiQuery({ name: 'per_page', required: false, type: Number, description: '50 by default.' })
   @ApiData(AuditEntryResponse, { isArray: true, meta: 'page' })
-  bitacora(@Query() query: { page?: string; per_page?: string }) {
-    return this.admin.bitacora(query);
+  async bitacora(@Query() query: { page?: string; per_page?: string }) {
+    return auditPageV1(await this.admin.bitacora(query));
   }
 }

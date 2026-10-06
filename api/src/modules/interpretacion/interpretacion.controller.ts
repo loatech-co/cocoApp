@@ -2,11 +2,16 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 
 import { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
 import { InterpretacionService } from './interpretacion.service';
-import type { CapturaView, InterpretacionView } from './interpretation.view';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { CaptureResponse, InterpretationResponse } from '../../contract/v1/interpretation.response';
 import { ApiAuthenticated, ApiData, ApiErrors } from '../../contract/v1/openapi.decorators';
+import {
+  captureV1,
+  interpretationV1,
+  type CaptureV1,
+  type InterpretationV1,
+} from '../../presenters/v1/interpretation.presenter';
 
 @ApiAuthenticated()
 @Controller('transactions')
@@ -18,11 +23,11 @@ export class InterpretacionController {
   @HttpCode(HttpStatus.OK)
   @ApiData(InterpretationResponse)
   @ApiErrors(400, 422)
-  interpretar(
+  async interpretar(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: InterpretBodyDto,
-  ): Promise<InterpretacionView> {
-    return this.interpretacion.interpretar(user.id, dto);
+  ): Promise<InterpretationV1> {
+    return interpretationV1(await this.interpretacion.interpretar(user.id, dto));
   }
 
   /**
@@ -37,10 +42,10 @@ export class InterpretacionController {
   @HttpCode(HttpStatus.OK)
   @ApiData(CaptureResponse)
   @ApiErrors(400, 404, 409, 422)
-  capturar(
+  async capturar(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CaptureBodyDto,
-  ): Promise<CapturaView> {
-    return this.interpretacion.capturar(user.id, dto);
+  ): Promise<CaptureV1> {
+    return captureV1(await this.interpretacion.capturar(user.id, dto));
   }
 }

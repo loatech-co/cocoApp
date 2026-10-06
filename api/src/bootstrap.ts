@@ -1,4 +1,4 @@
-import { ValidationPipe, VersioningType, type INestApplication } from '@nestjs/common';
+import { VersioningType, type INestApplication } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
@@ -6,6 +6,7 @@ import helmet from 'helmet';
 
 import { requestContext } from './common/logging/request-context';
 import { proxyHeadersProbe, trustProxyHops } from './common/proxy/client-ip';
+import { FieldValidationPipe } from './common/validation/field-validation.pipe';
 import { v1Deprecation } from './common/versioning/v1-deprecation';
 
 /** Every API route lives under `/api/v<version>`. */
@@ -105,7 +106,7 @@ export function configureApp(
   });
 
   app.useGlobalPipes(
-    new ValidationPipe({
+    new FieldValidationPipe({
       // Descarta propiedades no declaradas en el DTO...
       whitelist: true,
       // ...y además rechaza la petición si venían. Así, si alguien intenta

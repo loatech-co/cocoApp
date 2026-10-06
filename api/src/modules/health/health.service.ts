@@ -37,7 +37,9 @@ export class HealthService {
 
   async ready(): Promise<ReadinessPayload> {
     if (!(await this.repository.isDatabaseReachable())) {
-      throw new ServiceUnavailableError('La base de datos no responde.');
+      throw new ServiceUnavailableError('La base de datos no responde.', {
+        code: 'database_unavailable',
+      });
     }
     return { status: 'ok', db: 'ok' };
   }

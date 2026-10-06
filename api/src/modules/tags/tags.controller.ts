@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 
 import { UpsertTagDto } from './tags.dto';
-import { TagsService, type TagView } from './tags.service';
+import { TagsService, type Tag } from './tags.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -22,6 +22,7 @@ import {
   ApiNoContent,
 } from '../../contract/v1/openapi.decorators';
 import { TagResponse } from '../../contract/v1/tags.response';
+import { tagListV1, type TagListV1 } from '../../presenters/v1/tags.presenter';
 
 /** M2 — Etiquetas transversales. */
 @ApiAuthenticated()
@@ -31,16 +32,14 @@ export class TagsController {
 
   @Get()
   @ApiData(TagResponse, { isArray: true, meta: 'total' })
-  listar(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<{ data: TagView[]; meta: { total: number } }> {
-    return this.tags.listar(user.id);
+  async listar(@CurrentUser() user: AuthenticatedUser): Promise<TagListV1> {
+    return tagListV1(await this.tags.listar(user.id));
   }
 
   @Post()
   @ApiData(TagResponse, { status: 201 })
   @ApiErrors(400, 409)
-  crear(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpsertTagDto): Promise<TagView> {
+  crear(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpsertTagDto): Promise<Tag> {
     return this.tags.obtenerOCrear(user.id, dto.name, dto.color);
   }
 
@@ -51,7 +50,7 @@ export class TagsController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() dto: UpsertTagDto,
-  ): Promise<TagView> {
+  ): Promise<Tag> {
     return this.tags.actualizar(user.id, id, dto);
   }
 

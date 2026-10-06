@@ -79,7 +79,7 @@ export class SupabaseAuthService {
     } catch {
       // Sin detalles a propósito: distinguir "firma inválida" de "expirado" o
       // "emisor equivocado" solo ayuda a quien está probando tokens.
-      throw new AuthenticationError('Token inválido o expirado.');
+      throw new AuthenticationError('Token inválido o expirado.', { code: 'invalid_token' });
     }
   }
 
@@ -233,7 +233,7 @@ export class SupabaseAuthService {
       const impedimento = porQueNoTocarCuentasReales();
       if (impedimento !== null) {
         this.logger.warn(`Operación de administración bloqueada: ${metodo} ${ruta}`);
-        throw new ForbiddenError(impedimento);
+        throw new ForbiddenError(impedimento, { code: 'real_accounts_protected' });
       }
     }
 
@@ -256,7 +256,9 @@ export class SupabaseAuthService {
       // puede estar caído con el otro sano. Se distingue del "credenciales
       // incorrectas" porque la respuesta al usuario no es la misma.
       this.logger.error(`Supabase Auth no respondió: ${(error as Error).message}`);
-      throw new InternalError('El servicio de identidad no está disponible.');
+      throw new InternalError('El servicio de identidad no está disponible.', {
+        code: 'identity_provider_failed',
+      });
     }
 
     const texto = await respuesta.text();
@@ -294,7 +296,7 @@ export class SupabaseAuthService {
     this.logger.error(
       `Supabase Auth falló al ${quehacer}: ${respuesta.estado} ${typeof detalle === 'string' ? detalle : JSON.stringify(detalle)}`,
     );
-    throw new InternalError(`No se pudo ${quehacer}.`);
+    throw new InternalError(`No se pudo ${quehacer}.`, { code: 'identity_provider_failed' });
   }
 }
 

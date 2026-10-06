@@ -13,10 +13,11 @@ import {
   totalesDe,
   type Arbol,
 } from './dashboard.summary';
-import type { DashboardPayload, PagoPendientePayload } from './dashboard.types';
+import type { Dashboard, PendingPayment } from './dashboard.types';
 import { ventanaDeLaHistoria } from './pendientes';
 import { idsDeCategorias, ramasDe } from '../../common/categories/categories.tree';
 import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
+import { BREAKDOWN_LEVEL, english, GRANULARITY } from '../../common/vocabulary';
 import { AccountsService } from '../accounts/accounts.service';
 import { CategoryLookupService, type SummaryCategory } from '../categories/category-lookup.service';
 import { LedgerService, type SummaryMovement } from '../transactions/ledger.service';
@@ -29,7 +30,7 @@ export class DashboardService {
     private readonly accounts: AccountsService,
   ) {}
 
-  async resumen(userId: bigint, query: DashboardQueryDto): Promise<DashboardPayload> {
+  async resumen(userId: bigint, query: DashboardQueryDto): Promise<Dashboard> {
     const { inicio, fin } = rangoPorDefecto(query.from, query.to);
 
     // A GET only reads. Auto-paid concepts are charged by AutoChargeTask, once
@@ -64,9 +65,10 @@ export class DashboardService {
       partes.padre === null ? undefined : arbol.datosDe.get(partes.padre.toString());
     const { granularidad, puntos } = tendencia(movimientos, inicio, fin);
     const { pendientes, presupuesto } = await this.pendientes(userId, categorias, arbol);
+    const granularity = english(GRANULARITY, granularidad);
 
     return {
-      period: { from: aISO(inicio), to: aISO(fin), granularity: granularidad },
+      period: { from: aISO(inicio), to: aISO(fin), granularity },
       accounts: cuentas,
       totals: totalesDe(cuentas),
       range: {
@@ -75,17 +77,14 @@ export class DashboardService {
         net: serializar(flujo.net),
         count: movimientos.length,
       },
-      by_category: partes.porCategoria,
-      expense_by_center: partes.porCentro,
-      // `nivelMostrado` va de 1 a 3: el respaldo nunca se usa.
-      breakdown_level:
-        (['centro de costos', 'categoría', 'concepto'] as const)[partes.nivelMostrado - 1] ??
-        'concepto',
-      breakdown_parent:
+      byCategory: partes.porCategoria,
+      expenseByCostCenter: partes.porCentro,
+      breakdownLevel: nivelDelDesglose(partes.nivelMostrado),
+      breakdownParent:
         partes.padre !== null && datosDelPadre
           ? { id: partes.padre, name: datosDelPadre.name }
           : null,
-      required_budget: serializar(toMoney(presupuesto)),
+      requiredBudget: serializar(toMoney(presupuesto)),
       pending: pendientes,
       trend: puntos,
     };
@@ -101,7 +100,7 @@ export class DashboardService {
     userId: bigint,
     categorias: readonly SummaryCategory[],
     arbol: Arbol,
-  ): Promise<{ pendientes: PagoPendientePayload[]; presupuesto: Money }> {
+  ): Promise<{ pendientes: PendingPayment[]; presupuesto: Money }> {
     const mesEnCurso = `${new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 7)}-01`;
     const recurrentes = recurrentesVivos(categorias);
     if (recurrentes.length === 0) return { pendientes: [], presupuesto: CERO };
@@ -151,4 +150,11 @@ function agregable(m: SummaryMovement): MovimientoAgregable {
     categoryId: m.categoryId,
     splits: m.splits.map((s) => ({ categoryId: s.categoryId, amount: toMoney(s.amount) })),
   };
+}
+
+/** The level the breakdown shows, from its depth (1 to 3). */
+function nivelDelDesglose(profundidad: number): Dashboard['breakdownLevel'] {
+  // `profundidad` va de 1 a 3: el respaldo nunca se usa.
+  const nivel = (['centro de costos', 'categoría', 'concepto'] as const)[profundidad - 1];
+  return english(BREAKDOWN_LEVEL, nivel ?? 'concepto');
 }

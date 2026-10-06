@@ -1,21 +1,27 @@
 /**
- * The v1 → v2 translation of what the services return.
+ * The v1 → v2 translation, as a REFERENCE: no route uses it.
  *
- * v2 is the same API in English and camelCase (decisions.md, "Final
- * decisions"): the services keep returning their v1 views, and the v2
- * controllers pass them through `toV2` at the edge. One table, applied
- * everywhere, instead of a hand-written mapper per route: a field renamed in
- * one response and forgotten in another is exactly the drift a version bump is
- * supposed to end.
+ * The services hand out the domain and each version has its presenter
+ * (`presenters/v1`, `presenters/v2`). What this file keeps is the rule that
+ * related the two versions when v2 was born (decisions.md, "Final
+ * decisions"): v2 is v1 in English and camelCase. `api-v2.e2e-spec.ts` reads
+ * the same data through both versions and checks that v2 is exactly what this
+ * makes of v1 — that is, that the two presenters agree. It goes the day v1
+ * does.
  *
  * Names come from `docs/standards/rename-map.json` (`jsonFields`,
  * `jsonValues`). A key that is not in `FIELD_NAMES` is only re-cased
  * (`created_at` → `createdAt`); one already in camelCase (`parentId`) is left
- * alone.
- *
- * `ToV2<T>` is the same translation done by the compiler, so the response
- * classes in this folder can be checked against it (`shapes.spec.ts`).
+ * alone. The literals are the tables in `common/vocabulary.ts`.
  */
+import {
+  BREAKDOWN_LEVEL,
+  CERTAINTY,
+  CLASSIFICATION_SOURCE,
+  GRANULARITY,
+  PERIODICITY,
+  SUGGESTION_REASON,
+} from '../../common/vocabulary';
 
 /** v1 field → v2 field, where the change is more than the casing. */
 export const FIELD_NAMES = {
@@ -59,27 +65,12 @@ export const FIELD_NAMES = {
 
 /** v1 literal → v2 literal, per v1 field (the same word can mean two things). */
 export const VALUE_NAMES = {
-  periodicidad: {
-    mensual: 'monthly',
-    bimestral: 'bimonthly',
-    trimestral: 'quarterly',
-    semestral: 'semiannual',
-    anual: 'annual',
-  },
-  breakdown_level: {
-    'centro de costos': 'cost_center',
-    categoría: 'category',
-    concepto: 'concept',
-  },
-  granularity: { dia: 'day', mes: 'month' },
-  certeza: { alta: 'high', media: 'medium', ninguna: 'none' },
-  fuente: {
-    historial: 'history',
-    'palabras-clave': 'keywords',
-    firma: 'signature',
-    diccionario: 'dictionary',
-  },
-  reason: { historial: 'history', regla: 'rule', 'regla-sembrada': 'seeded_rule' },
+  periodicidad: PERIODICITY,
+  breakdown_level: BREAKDOWN_LEVEL,
+  granularity: GRANULARITY,
+  certeza: CERTAINTY,
+  fuente: CLASSIFICATION_SOURCE,
+  reason: SUGGESTION_REASON,
 } as const;
 
 /**
@@ -137,43 +128,7 @@ function translate(value: unknown): unknown {
   );
 }
 
-/** A service's v1 view, as v2 sends it. */
+/** A v1 body, as v2 sends it. */
 export function toV2<T>(value: T): ToV2<T> {
   return translate(value) as ToV2<T>;
-}
-
-/**
- * v2 literal → v1 literal, for the inputs: the services still take the v1
- * words. The inverse of `VALUE_NAMES[field]`.
- */
-export function toV1Value<F extends keyof ValueNames>(
-  field: F,
-  value: string,
-): keyof ValueNames[F] {
-  const table: Readonly<Record<string, string>> = VALUE_NAMES[field];
-  const found = Object.entries(table).find(([, english]) => english === value);
-  if (!found) throw new Error(`No v1 value for ${field} =${value}`);
-  return found[0] as keyof ValueNames[F];
-}
-
-/**
- * A v1 DTO under construction: every field may still be `undefined`. Passed
- * to `defined` as its type argument, it turns on the excess-property check,
- * so a misspelt v1 field does not compile.
- */
-export type V1Draft<T> = { [K in keyof T]?: T[K] | undefined };
-
-/**
- * Copies the keys whose value is not `undefined`.
- *
- * A v2 input becomes a v1 DTO for the service, and the services tell "not
- * sent" from "sent as null" (`category_id: null` clears the category; absent
- * leaves it). Writing `key: undefined` for every absent field would blur that.
- */
-export function defined<T extends Record<string, unknown>>(
-  object: T,
-): { [K in keyof T]?: Exclude<T[K], undefined> } {
-  return Object.fromEntries(Object.entries(object).filter(([, value]) => value !== undefined)) as {
-    [K in keyof T]?: Exclude<T[K], undefined>;
-  };
 }

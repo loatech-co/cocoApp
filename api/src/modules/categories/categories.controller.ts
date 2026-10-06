@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { CategoriesService, type CategoryView } from './categories.service';
+import { CategoriesService } from './categories.service';
 import {
   CreateCategoryDto,
   UnificarCategoriaDto,
@@ -19,7 +19,6 @@ import {
   ReorderCategoriesDto,
   UpdateCategoryDto,
 } from './dto/category.dto';
-import type { ConHijos } from '../../common/categories/categories.tree';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -35,51 +34,16 @@ import {
   ApiErrors,
   ApiNoContent,
 } from '../../contract/v1/openapi.decorators';
+import {
+  categoryMergeV1,
+  categorySeedV1,
+  categoryTreeV1,
+  categoryUsageV1,
+  categoryV1,
+  type CategoryRecordV1,
+  type CategoryV1,
+} from '../../presenters/v1/categories.presenter';
 
-/** Forma pública: `parent_id` en snake_case, como el resto del contrato. */
-/**
- * Lo que sale por la API: la vista del servicio, con el padre en snake_case.
- *
- * ── Se DERIVA de `CategoryView`, no se vuelve a escribir ────────────────────
- * Era una copia a mano, campo por campo, y con ella una función que también
- * los nombraba uno a uno. Dos listas paralelas que nada obligaba a coincidir:
- * un campo nuevo en el modelo llegaba al servicio, se guardaba en la base, y
- * se caía aquí sin ruido. La API devolvía 200, el formulario lo releía vacío y
- * al siguiente guardado lo borraba.
- *
- * Pasó con `presupuesto` y `pago_automatico`, los dos a la vez, y el comentario
- * que había aquí ya avisaba de que iba a pasar. Un aviso no es una defensa.
- *
- * El filtro de verdad sigue existiendo y está donde debe: `presentar()`, en el
- * servicio, que elige a mano qué columnas del modelo se publican. Esto de aquí
- * no era una segunda puerta, era una copia de la primera.
- */
-export type CategoryPayload = Omit<CategoryView, 'parentId'> & {
-  parent_id: bigint | null;
-  children?: CategoryPayload[];
-};
-
-/**
- * La vista del servicio, tal cual, con dos únicos cambios.
- *
- * `parentId` pasa a `parent_id`, que es el nombre con el que sale todo lo
- * demás; y los hijos se recorren para que a ellos les pase lo mismo. Nada más
- * se nombra: lo que el servicio publique, sale.
- */
-export function aPayload(categoria: CategoryView | ConHijos<CategoryView>): CategoryPayload {
-  // Un nodo suelto no trae `children`; uno del árbol, sí.
-  const nodo: CategoryView & { children?: ConHijos<CategoryView>[] } = categoria;
-  const { parentId, children, ...resto } = nodo;
-  const payload: CategoryPayload = { ...resto, parent_id: parentId };
-
-  if (children !== undefined) {
-    payload.children = children.map(aPayload);
-  }
-
-  return payload;
-}
-
-/** M2 — Categorías. */
 @ApiAuthenticated()
 @Controller('categories')
 export class CategoriesController {
@@ -95,13 +59,12 @@ export class CategoriesController {
   async listar(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListCategoriesQueryDto,
-  ): Promise<{ data: CategoryPayload[]; meta: { total: number } }> {
-    const { arbol, total } = await this.categories.listarArbol(user.id, {
+  ): Promise<{ data: CategoryV1[]; meta: { total: number } }> {
+    const tree = await this.categories.listarArbol(user.id, {
       kind: query.kind,
       incluirArchivadas: query.include_archived ?? false,
     });
-
-    return { data: arbol.map(aPayload), meta: { total } };
+    return categoryTreeV1(tree);
   }
 
   @Get(':id')
@@ -110,8 +73,8 @@ export class CategoriesController {
   async obtener(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<CategoryPayload> {
-    return aPayload(await this.categories.obtener(user.id, id));
+  ): Promise<CategoryV1> {
+    return categoryV1(await this.categories.obtener(user.id, id));
   }
 
   @Post()
@@ -120,15 +83,15 @@ export class CategoriesController {
   async crear(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateCategoryDto,
-  ): Promise<CategoryPayload> {
-    return aPayload(await this.categories.crear(user.id, dto));
+  ): Promise<CategoryV1> {
+    return categoryV1(await this.categories.crear(user.id, dto));
   }
 
   /** Siembra el diccionario sugerido. Opcional: el usuario decide si lo quiere. */
   @Post('seed')
   @ApiData(CategorySeedResponse, { status: 201 })
-  sembrar(@CurrentUser() user: AuthenticatedUser): Promise<{ creadas: number }> {
-    return this.categories.sembrarDiccionario(user.id);
+  async sembrar(@CurrentUser() user: AuthenticatedUser): Promise<{ creadas: number }> {
+    return categorySeedV1(await this.categories.sembrarDiccionario(user.id));
   }
 
   @Post('reorder')
@@ -152,12 +115,12 @@ export class CategoriesController {
   @Post(':id/unificar')
   @ApiData(CategoryMergeResponse, { status: 201 })
   @ApiErrors(400, 404, 409, 422)
-  unificar(
+  async unificar(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() dto: UnificarCategoriaDto,
-  ): Promise<{ movidos: number; destino: CategoryView }> {
-    return this.categories.unificar(user.id, id, BigInt(dto.destino_id));
+  ): Promise<{ movidos: number; destino: CategoryRecordV1 }> {
+    return categoryMergeV1(await this.categories.unificar(user.id, id, BigInt(dto.destino_id)));
   }
 
   @Patch(':id')
@@ -167,8 +130,8 @@ export class CategoriesController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() dto: UpdateCategoryDto,
-  ): Promise<CategoryPayload> {
-    return aPayload(await this.categories.actualizar(user.id, id, dto));
+  ): Promise<CategoryV1> {
+    return categoryV1(await this.categories.actualizar(user.id, id, dto));
   }
 
   /**
@@ -190,7 +153,7 @@ export class CategoriesController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<{ movimientos: number; subcategorias: number }> {
-    return this.categories.usosDe(user.id, id);
+    return categoryUsageV1(await this.categories.usosDe(user.id, id));
   }
 
   /**

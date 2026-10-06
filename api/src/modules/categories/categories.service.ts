@@ -1,54 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import type { Category, CategoryKind, Periodicidad } from '@prisma/client';
+import type { Category as CategoryRow, CategoryKind } from '@prisma/client';
 
+import {
+  categoryFromRow,
+  type Category,
+  type CategoryMerge,
+  type CategorySeed,
+  type CategoryTree,
+  type CategoryUsage,
+} from './categories.domain';
 import { CategoriesRepository } from './categories.repository';
 import type {
   CreateCategoryDto,
   ReorderCategoriesDto,
   UpdateCategoryDto,
 } from './dto/category.dto';
-import { porQueNoAdmiteVariosPagos } from './varios-pagos';
+import { rechazoDeVariosPagos } from './varios-pagos';
 import {
   anidar,
   descendientesDe,
   generariaCiclo,
   profundidadResultante,
   PROFUNDIDAD_MAXIMA,
-  type ConHijos,
 } from '../../common/categories/categories.tree';
 import { ConflictError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
-
-export interface CategoryView {
-  id: bigint;
-  parentId: bigint | null;
-  name: string;
-  kind: CategoryKind;
-  color: string | null;
-  icon: string | null;
-  sort_order: number;
-  is_archived: boolean;
-  /** Si el concepto se paga cada cierto tiempo. */
-  recurrente: boolean;
-  /** Si el centro de costos no se reclasifica desde la tabla de movimientos. */
-  estatico: boolean;
-  periodicidad: Periodicidad | null;
-  /** Día del mes en que se debe pagar. */
-  dia_de_pago: number | null;
-  /** Mes de referencia del ciclo, 1–12. Solo si la periodicidad no es mensual. */
-  mes_de_pago: number | null;
-  /**
-   * Lo que se espera que cueste cada vez que toca. Puesto, manda sobre el
-   * promedio de los meses anteriores. Viaja como cadena, igual que todo lo que
-   * es dinero: un decimal en coma flotante pierde centavos.
-   */
-  presupuesto: string | null;
-  /** Si el movimiento se crea solo al llegar el día de pago. */
-  pago_automatico: boolean;
-  /** Si el concepto se cubre a pedazos y no se salda con un solo pago. */
-  varios_pagos: boolean;
-  /** Lo que se busca en un soporte para reconocer este concepto. */
-  palabras_clave: string[];
-}
 
 @Injectable()
 export class CategoriesService {
@@ -58,17 +33,16 @@ export class CategoriesService {
   async listarArbol(
     userId: bigint,
     filtros: { kind?: CategoryKind | undefined; incluirArchivadas?: boolean },
-  ): Promise<{ arbol: ConHijos<CategoryView>[]; total: number }> {
-    const categorias = await this.repo.listar(userId, filtros);
-    const vistas = categorias.map((categoria) => this.presentar(categoria));
-    return { arbol: anidar(vistas), total: vistas.length };
+  ): Promise<CategoryTree> {
+    const categorias = (await this.repo.listar(userId, filtros)).map(categoryFromRow);
+    return { tree: anidar(categorias), total: categorias.length };
   }
 
-  async obtener(userId: bigint, id: bigint): Promise<CategoryView> {
-    return this.presentar(await this.exigirCategoria(userId, id));
+  async obtener(userId: bigint, id: bigint): Promise<Category> {
+    return categoryFromRow(await this.exigirCategoria(userId, id));
   }
 
-  async crear(userId: bigint, dto: CreateCategoryDto): Promise<CategoryView> {
+  async crear(userId: bigint, dto: CreateCategoryDto): Promise<Category> {
     const parentId = dto.parent_id !== undefined ? BigInt(dto.parent_id) : null;
     // Sin padre es un centro de costos, que es el primer nivel.
     let profundidad = 1;
@@ -115,10 +89,10 @@ export class CategoriesService {
       palabrasClave: dto.palabras_clave ?? [],
     });
 
-    return this.presentar(categoria);
+    return categoryFromRow(categoria);
   }
 
-  async actualizar(userId: bigint, id: bigint, dto: UpdateCategoryDto): Promise<CategoryView> {
+  async actualizar(userId: bigint, id: bigint, dto: UpdateCategoryDto): Promise<Category> {
     const actual = await this.exigirCategoria(userId, id);
 
     /*
@@ -140,6 +114,7 @@ export class CategoriesService {
       if (generariaCiclo(await arbol(), id, nuevoPadre)) {
         throw new ValidationError(
           'Una categoría no puede colgar de sí misma ni de una de sus descendientes.',
+          { code: 'category_cycle' },
         );
       }
 
@@ -198,6 +173,7 @@ export class CategoriesService {
     if (hijos.length > 0 && !enCascada) {
       throw new ConflictError(
         `Esta categoría tiene ${hijos.length} subcategoría(s). Archívala en cascada o reasigna sus hijas primero.`,
+        { code: 'category_has_children' },
       );
     }
 
@@ -212,18 +188,15 @@ export class CategoriesService {
    * enterarse por el error, que es peor, porque el error llega después de
    * pulsar «Eliminar».
    */
-  async usosDe(
-    userId: bigint,
-    id: bigint,
-  ): Promise<{ movimientos: number; subcategorias: number }> {
+  async usosDe(userId: bigint, id: bigint): Promise<CategoryUsage> {
     await this.exigirCategoria(userId, id);
 
     const esqueleto = await this.repo.esqueletoDelArbol(userId);
     const descendientes = descendientesDe(esqueleto, id);
 
     return {
-      movimientos: await this.repo.contarUsos(userId, [id, ...descendientes]),
-      subcategorias: descendientes.length,
+      transactions: await this.repo.contarUsos(userId, [id, ...descendientes]),
+      subcategories: descendientes.length,
     };
   }
 
@@ -264,6 +237,7 @@ export class CategoriesService {
     if (usos > 0 && reasignarA === undefined) {
       throw new ConflictError(
         `Esta categoría tiene ${usos} movimiento(s). Indica a qué categoría pasan.`,
+        { code: 'reassignment_required' },
       );
     }
 
@@ -273,6 +247,7 @@ export class CategoriesService {
       if (subarbol.some((candidato) => candidato === reasignarA)) {
         throw new ConflictError(
           'El destino está dentro de lo que se va a eliminar. Elige uno de fuera.',
+          { code: 'reassignment_target_inside' },
         );
       }
     }
@@ -296,18 +271,19 @@ export class CategoriesService {
    * reaplica, es un punto de partida. Y es opcional por diseño — quien prefiera
    * armar su propia taxonomía simplemente no lo llama.
    */
-  async sembrarDiccionario(userId: bigint): Promise<{ creadas: number }> {
+  async sembrarDiccionario(userId: bigint): Promise<CategorySeed> {
     const existentes = await this.repo.contarDelUsuario(userId);
     if (existentes > 0) {
       throw new ConflictError(
         'Ya tienes centros de costos. La plantilla solo se siembra en una cuenta vacía.',
+        { code: 'template_requires_empty' },
       );
     }
 
     // La MISMA plantilla que se copia al crear la cuenta. Dos listas se
     // separan en cuanto alguien toque una: la cuenta nueva nacería con una
     // estructura y la que se quedó vacía se rellenaría con otra.
-    return { creadas: await this.repo.sembrarPlantilla(userId) };
+    return { created: await this.repo.sembrarPlantilla(userId) };
   }
 
   private exigirVariosPagosCoherente(estado: {
@@ -316,8 +292,8 @@ export class CategoriesService {
     recurrente: boolean;
     profundidad: number;
   }): void {
-    const motivo = porQueNoAdmiteVariosPagos(estado);
-    if (motivo !== null) throw new ValidationError(motivo);
+    const rechazo = rechazoDeVariosPagos(estado);
+    if (rechazo !== null) throw new ValidationError(rechazo.message, { code: rechazo.code });
   }
 
   private exigirProfundidadValida(profundidad: number): void {
@@ -325,11 +301,12 @@ export class CategoriesService {
       throw new ValidationError(
         `El árbol admite hasta ${PROFUNDIDAD_MAXIMA} niveles: centro de costos, categoría y concepto. ` +
           'Anidar más vuelve los reportes ilegibles.',
+        { code: 'category_too_deep' },
       );
     }
   }
 
-  private async exigirCategoria(userId: bigint, id: bigint): Promise<Category> {
+  private async exigirCategoria(userId: bigint, id: bigint): Promise<CategoryRow> {
     const categoria = await this.repo.buscarPorId(userId, id);
     if (!categoria) throw new NotFoundError('La categoría no existe.');
     return categoria;
@@ -353,13 +330,11 @@ export class CategoriesService {
    * Todo en UNA transacción. A medio camino quedarían movimientos apuntando a
    * una categoría ya borrada, y eso no se arregla mirando la pantalla.
    */
-  async unificar(
-    userId: bigint,
-    origenId: bigint,
-    destinoId: bigint,
-  ): Promise<{ movidos: number; destino: CategoryView }> {
+  async unificar(userId: bigint, origenId: bigint, destinoId: bigint): Promise<CategoryMerge> {
     if (origenId === destinoId) {
-      throw new ValidationError('Un concepto no se puede unificar consigo mismo.');
+      throw new ValidationError('Un concepto no se puede unificar consigo mismo.', {
+        code: 'merge_into_itself',
+      });
     }
 
     const origen = await this.exigirCategoria(userId, origenId);
@@ -371,6 +346,7 @@ export class CategoriesService {
     if (origen.parentId === null || destino.parentId === null) {
       throw new ValidationError(
         'Solo se pueden unificar conceptos, no centros de costos ni categorías.',
+        { code: 'merge_requires_concepts' },
       );
     }
 
@@ -381,33 +357,12 @@ export class CategoriesService {
     if (conHijos > 0) {
       throw new ValidationError(
         'Ese concepto tiene otras categorías dentro. Vacíalo antes de unificarlo.',
+        { code: 'merge_source_has_children' },
       );
     }
 
     const movidos = await this.repo.unificar(userId, origenId, destinoId);
-    return { movidos, destino: this.presentar(destino) };
-  }
-
-  private presentar(categoria: Category): CategoryView {
-    return {
-      id: categoria.id,
-      parentId: categoria.parentId,
-      name: categoria.name,
-      kind: categoria.kind,
-      color: categoria.color,
-      icon: categoria.icon,
-      sort_order: categoria.sortOrder,
-      is_archived: categoria.isArchived,
-      recurrente: categoria.recurrente,
-      estatico: categoria.estatico,
-      periodicidad: categoria.periodicidad,
-      dia_de_pago: categoria.diaDePago,
-      mes_de_pago: categoria.mesDePago,
-      presupuesto: categoria.presupuesto === null ? null : categoria.presupuesto.toString(),
-      pago_automatico: categoria.pagoAutomatico,
-      varios_pagos: categoria.variosPagos,
-      palabras_clave: categoria.palabrasClave,
-    };
+    return { moved: movidos, target: categoryFromRow(destino) };
   }
 }
 

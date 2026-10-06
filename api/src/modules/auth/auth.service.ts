@@ -16,17 +16,18 @@ export interface ContextoDePeticion {
   userAgent?: string | undefined;
 }
 
-export interface PerfilPublico {
+/** A user's public profile, as the service hands it out (the domain). */
+export interface Profile {
   id: bigint;
   email: string;
-  display_name: string | null;
+  displayName: string | null;
   role: User['role'];
   status: User['status'];
-  created_at: Date;
+  createdAt: Date;
 }
 
 /** What `/auth/me` answers: the profile plus the flags on for this user (step 7.8). */
-export type PerfilConFlags = PerfilPublico & { features: FlagName[] };
+export type Me = Profile & { features: FlagName[] };
 
 /** Lo que el controlador necesita para responder y poner la cookie. */
 export interface ParDeTokens {
@@ -177,7 +178,7 @@ export class AuthService {
   async entrar(
     datos: { email: string; password: string },
     contexto: ContextoDePeticion,
-  ): Promise<{ tokens: ParDeTokens; perfil: PerfilPublico }> {
+  ): Promise<{ tokens: ParDeTokens; perfil: Profile }> {
     const email = normalizarCorreo(datos.email);
     const sesion = await this.supabase.entrar(email, datos.password);
 
@@ -189,7 +190,9 @@ export class AuthService {
         ip: contexto.ip,
         userAgent: contexto.userAgent,
       });
-      throw new AuthenticationError('Correo o contraseña incorrectos.');
+      throw new AuthenticationError('Correo o contraseña incorrectos.', {
+        code: 'invalid_credentials',
+      });
     }
 
     const usuario = await this.users.findByAuthId(sesion.authId);
@@ -199,7 +202,9 @@ export class AuthService {
       // desde el panel de Supabase saltándose el registro de la app. Sin perfil
       // no hay rol ni estado, así que no se puede autorizar nada.
       this.logger.error(`Cuenta de Supabase ${sesion.authId} sin perfil en la aplicación.`);
-      throw new ForbiddenError('Tu cuenta no está habilitada. Contacta al administrador.');
+      throw new ForbiddenError('Tu cuenta no está habilitada. Contacta al administrador.', {
+        code: 'account_not_enabled',
+      });
     }
 
     this.exigirCuentaUsable(usuario);
@@ -230,7 +235,7 @@ export class AuthService {
       userAgent: contexto.userAgent,
     });
 
-    return { tokens: aParDeTokens(sesion), perfil: aPerfilPublico(actualizado) };
+    return { tokens: aParDeTokens(sesion), perfil: profileOf(actualizado) };
   }
 
   // ── Sesión ─────────────────────────────────────────────────────────────────
@@ -238,12 +243,16 @@ export class AuthService {
   async refrescar(
     refreshToken: string,
     _contexto: ContextoDePeticion,
-  ): Promise<{ tokens: ParDeTokens; perfil: PerfilPublico }> {
+  ): Promise<{ tokens: ParDeTokens; perfil: Profile }> {
     const sesion = await this.supabase.refrescar(refreshToken);
-    if (!sesion) throw new AuthenticationError('La sesión expiró. Vuelve a entrar.');
+    if (!sesion)
+      throw new AuthenticationError('La sesión expiró. Vuelve a entrar.', {
+        code: 'session_expired',
+      });
 
     const usuario = await this.users.findByAuthId(sesion.authId);
-    if (!usuario) throw new AuthenticationError('La sesión ya no es válida.');
+    if (!usuario)
+      throw new AuthenticationError('La sesión ya no es válida.', { code: 'session_revoked' });
 
     // El estado se revisa también al refrescar: si suspenden una cuenta, no
     // debe poder estirar su sesión indefinidamente cambiando un token por otro.
@@ -255,10 +264,10 @@ export class AuthService {
     // nuevo". Un 403 lo dejaría reintentando contra una sesión que no va a
     // revivir.
     if (usuario.status !== 'active') {
-      throw new AuthenticationError('La sesión ya no es válida.');
+      throw new AuthenticationError('La sesión ya no es válida.', { code: 'session_revoked' });
     }
 
-    return { tokens: aParDeTokens(sesion), perfil: aPerfilPublico(usuario) };
+    return { tokens: aParDeTokens(sesion), perfil: profileOf(usuario) };
   }
 
   async salir(refreshToken: string | undefined, contexto: ContextoDePeticion): Promise<void> {
@@ -310,11 +319,15 @@ export class AuthService {
   ): Promise<void> {
     const usuario = await this.users.findByIdOrThrow(userId);
     if (!usuario.authId) {
-      throw new ForbiddenError('Esta cuenta no tiene credenciales gestionadas.');
+      throw new ForbiddenError('Esta cuenta no tiene credenciales gestionadas.', {
+        code: 'credentials_not_managed',
+      });
     }
 
     if (!(await this.supabase.contrasenaEsCorrecta(usuario.email, datos.actual))) {
-      throw new AuthenticationError('La contraseña actual no es correcta.');
+      throw new AuthenticationError('La contraseña actual no es correcta.', {
+        code: 'wrong_current_password',
+      });
     }
 
     await this.passwords.exigirQueSeaFuerte(datos.nueva, {
@@ -335,8 +348,8 @@ export class AuthService {
     });
   }
 
-  async perfilDe(userId: bigint): Promise<PerfilPublico> {
-    return aPerfilPublico(await this.users.findByIdOrThrow(userId));
+  async perfilDe(userId: bigint): Promise<Profile> {
+    return profileOf(await this.users.findByIdOrThrow(userId));
   }
 
   // ── Interno ────────────────────────────────────────────────────────────────
@@ -365,10 +378,13 @@ export class AuthService {
     if (usuario.status === 'pending') {
       throw new ForbiddenError(
         'Tu cuenta está pendiente de aprobación. Te avisaremos cuando esté lista.',
+        { code: 'account_pending_approval' },
       );
     }
     if (usuario.status === 'suspended') {
-      throw new ForbiddenError('Tu cuenta está suspendida. Contacta al administrador.');
+      throw new ForbiddenError('Tu cuenta está suspendida. Contacta al administrador.', {
+        code: 'account_suspended',
+      });
     }
   }
 }
@@ -378,14 +394,14 @@ function normalizarCorreo(email: string): string {
   return email.trim().toLowerCase();
 }
 
-export function aPerfilPublico(usuario: User): PerfilPublico {
+export function profileOf(usuario: User): Profile {
   return {
     id: usuario.id,
     email: usuario.email,
-    display_name: usuario.displayName,
+    displayName: usuario.displayName,
     role: usuario.role,
     status: usuario.status,
-    created_at: usuario.createdAt,
+    createdAt: usuario.createdAt,
   };
 }
 

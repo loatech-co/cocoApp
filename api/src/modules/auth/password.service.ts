@@ -52,10 +52,10 @@ export class PasswordService {
     }
 
     if (problemas.length > 0) {
-      throw new ValidationError(
-        'La contraseña no cumple los requisitos.',
-        problemas.map((problema) => ({ field: 'password', message: problema })),
-      );
+      throw new ValidationError('La contraseña no cumple los requisitos.', {
+        code: 'weak_password',
+        details: problemas.map((problema) => ({ field: 'password', message: problema })),
+      });
     }
   }
 

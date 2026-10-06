@@ -11,41 +11,36 @@ import type { Learning, Suggestion } from './categorization.response';
 import type { Dashboard } from './dashboard.response';
 import type { Capture, Interpretation } from './interpretation.response';
 import type { Liveness, Preferences, Readiness, Receipt, Tag } from './misc.response';
-import type { ToV2 } from './to-v2';
 import type {
   Transaction,
   TransactionHistory,
   TransactionPageMeta,
   Transfer,
 } from './transactions.response';
-import type { ConHijos } from '../../common/categories/categories.tree';
-import type { AccountView } from '../../modules/accounts/accounts.service';
-import type { AdminService } from '../../modules/admin/admin.service';
-import type { RespuestaDeSesion } from '../../modules/auth/auth.controller';
-import type { PerfilConFlags, PerfilPublico } from '../../modules/auth/auth.service';
-import type { CategoriesService, CategoryView } from '../../modules/categories/categories.service';
-import type { SugerenciaView } from '../../modules/categorization/categorization.service';
-import type { DashboardPayload } from '../../modules/dashboard/dashboard.types';
+import type { Account as AccountDomain } from '../../modules/accounts/accounts.service';
+import type { AuditPage } from '../../modules/admin/admin.service';
+import type { Profile as ProfileDomain } from '../../modules/auth/auth.service';
+import type * as categories from '../../modules/categories/categories.domain';
+import type * as categorization from '../../modules/categorization/categorization.service';
+import type { Dashboard as DashboardDomain } from '../../modules/dashboard/dashboard.types';
 import type { LivenessPayload, ReadinessPayload } from '../../modules/health/health.service';
-import type {
-  CapturaView,
-  InterpretacionView,
-} from '../../modules/interpretacion/interpretation.view';
-import type { Preferencias } from '../../modules/preferences/preferences';
-import type { SoporteView } from '../../modules/soportes/soportes.service';
-import type { TagView } from '../../modules/tags/tags.service';
-import type {
-  TransactionView,
-  TransactionsService,
-} from '../../modules/transactions/transactions.service';
+import type * as interpretation from '../../modules/interpretacion/interpretation.domain';
+import type { Preferences as PreferencesDomain } from '../../modules/preferences/preferences';
+import type { Receipt as ReceiptDomain } from '../../modules/soportes/soportes.service';
+import type { Tag as TagDomain } from '../../modules/tags/tags.service';
+import type * as transactions from '../../modules/transactions/transactions.domain';
+import type { meV2, SessionV2 } from '../../presenters/v2/auth.presenter';
 
 /**
- * The v2 classes ARE what `toV2` makes of the service views.
+ * The documented v2 shapes ARE the ones the v2 presenters hand out.
  *
- * The same check as `contract/v1/shapes.spec.ts`, one step further: the view
- * goes through `ToV2` (the compiler's copy of the runtime translation) and
- * then over the wire. A field the table forgets to rename, or a class that
- * drifts from its view, is a compile error.
+ * The same check as `contract/v1/shapes.spec.ts`, for v2: what goes over the
+ * wire is the domain the service returns, through `presenters/v2`. A field
+ * the domain gains and this class does not document — or one v2 should not
+ * show and the presenter forgot to drop — is a compile error.
+ *
+ * `Wire<T>` is what `JSON.stringify` makes of a body: a bigint goes out as a
+ * number (`installBigIntSerializer`).
  */
 type Wire<T> = T extends bigint
   ? number
@@ -59,55 +54,45 @@ type Wire<T> = T extends bigint
 
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 
-type V2<T> = Wire<ToV2<T>>;
-
-type AuditEntryView = Awaited<ReturnType<AdminService['bitacora']>>['data'][number];
-type MergeView = Awaited<ReturnType<CategoriesService['unificar']>>;
-type UsageView = Awaited<ReturnType<CategoriesService['usosDe']>>;
-type SeedView = Awaited<ReturnType<CategoriesService['sembrarDiccionario']>>;
-type HistoryView = Awaited<ReturnType<TransactionsService['historia']>>;
-type ListMetaView = Awaited<ReturnType<TransactionsService['listar']>>['meta'];
+type AuditEntryDomain = AuditPage['data'][number];
 
 const CHECKS = {
-  account: true satisfies Same<Account, V2<AccountView>>,
+  account: true satisfies Same<Account, Wire<AccountDomain>>,
   auditEntry: true satisfies Same<
     Omit<AuditEntry, 'changes' | 'user'>,
-    V2<Omit<AuditEntryView, 'changes' | 'user'>>
+    Wire<Omit<AuditEntryDomain, 'changes' | 'user'>>
   >,
-  auditUser: true satisfies Same<AuditUser | null, V2<AuditEntryView['user']>>,
-  profile: true satisfies Same<Profile, V2<PerfilPublico>>,
-  me: true satisfies Same<Me, V2<PerfilConFlags>>,
-  session: true satisfies Same<Session, V2<RespuestaDeSesion>>,
-  registration: true satisfies Same<
-    Registration,
-    V2<{ pending_approval: boolean; message: string }>
+  auditUser: true satisfies Same<AuditUser | null, AuditEntryDomain['user']>,
+  profile: true satisfies Same<Profile, Wire<ProfileDomain>>,
+  me: true satisfies Same<Me, Wire<ReturnType<typeof meV2>>>,
+  session: true satisfies Same<Session, Wire<SessionV2>>,
+  registration: true satisfies Same<Registration, { pendingApproval: boolean; message: string }>,
+  category: true satisfies Same<Category, Wire<categories.Category>>,
+  categoryNode: true satisfies Same<CategoryNode, Wire<categories.CategoryNode>>,
+  categoryMerge: true satisfies Same<CategoryMerge, Wire<categories.CategoryMerge>>,
+  categoryUsage: true satisfies Same<CategoryUsage, categories.CategoryUsage>,
+  categorySeed: true satisfies Same<CategorySeed, categories.CategorySeed>,
+  suggestion: true satisfies Same<Suggestion, categorization.Suggestion>,
+  learning: true satisfies Same<Learning, categorization.Learning>,
+  dashboard: true satisfies Same<Dashboard, Wire<DashboardDomain>>,
+  liveness: true satisfies Same<Liveness, LivenessPayload>,
+  readiness: true satisfies Same<Readiness, ReadinessPayload>,
+  interpretation: true satisfies Same<Interpretation, Wire<interpretation.Interpretation>>,
+  capture: true satisfies Same<Capture, Wire<interpretation.Capture>>,
+  preferences: true satisfies Same<Preferences, PreferencesDomain>,
+  receipt: true satisfies Same<Receipt, Wire<ReceiptDomain>>,
+  tag: true satisfies Same<Tag, Wire<TagDomain>>,
+  transaction: true satisfies Same<Transaction, Wire<transactions.Transaction>>,
+  history: true satisfies Same<TransactionHistory, transactions.TransactionHistory>,
+  transactionPageMeta: true satisfies Same<
+    TransactionPageMeta,
+    transactions.TransactionPage['meta']
   >,
-  category: true satisfies Same<Category, V2<CategoryView>>,
-  categoryNode: true satisfies Same<CategoryNode, V2<ConHijos<CategoryView>>>,
-  categoryMerge: true satisfies Same<CategoryMerge, V2<MergeView>>,
-  categoryUsage: true satisfies Same<CategoryUsage, V2<UsageView>>,
-  categorySeed: true satisfies Same<CategorySeed, V2<SeedView>>,
-  suggestion: true satisfies Same<Suggestion, V2<SugerenciaView>>,
-  learning: true satisfies Same<Learning, V2<{ aprendido: boolean }>>,
-  dashboard: true satisfies Same<Dashboard, V2<DashboardPayload>>,
-  liveness: true satisfies Same<Liveness, V2<LivenessPayload>>,
-  readiness: true satisfies Same<Readiness, V2<ReadinessPayload>>,
-  interpretation: true satisfies Same<Interpretation, V2<InterpretacionView>>,
-  capture: true satisfies Same<Capture, V2<CapturaView>>,
-  preferences: true satisfies Same<Preferences, V2<Preferencias>>,
-  receipt: true satisfies Same<Receipt, V2<SoporteView>>,
-  tag: true satisfies Same<Tag, V2<TagView>>,
-  transaction: true satisfies Same<Transaction, V2<TransactionView>>,
-  history: true satisfies Same<TransactionHistory, V2<HistoryView>>,
-  transactionPageMeta: true satisfies Same<TransactionPageMeta, V2<ListMetaView>>,
-  transfer: true satisfies Same<
-    Transfer,
-    V2<{ transfer_group_id: string; legs: TransactionView[] }>
-  >,
+  transfer: true satisfies Same<Transfer, Wire<transactions.Transfer>>,
 };
 
 describe('v2 response classes', () => {
-  it('match what toV2 makes of the views the services return (checked by the compiler)', () => {
+  it('match what the v2 presenters hand out (checked by the compiler)', () => {
     expect(Object.values(CHECKS).every(Boolean)).toBe(true);
   });
 });
