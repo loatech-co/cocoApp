@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 
-import { MenuOpcionDetallada } from './menu-rich-option';
+import { MenuRichOption } from './menu-rich-option';
 
 /** A menu option with its coloured chip and a help line. */
-const meta: Meta = { title: 'Molecules/MenuOpcionDetallada' };
+const meta: Meta = { title: 'Molecules/MenuRichOption' };
 
 export default meta;
 type Story = StoryObj;
@@ -13,20 +13,20 @@ type Story = StoryObj;
 export const States: Story = {
   render: () => (
     <div className="flex w-72 flex-col rounded-lg bg-popover p-1">
-      <MenuOpcionDetallada
-        Icono={TrendingDown}
+      <MenuRichOption
+        Icon={TrendingDown}
         color="expense"
-        titulo="Gasto"
-        ayuda="Plata que sale"
+        title="Gasto"
+        description="Plata que sale"
         onClick={() => undefined}
       />
-      <MenuOpcionDetallada
-        Icono={TrendingUp}
+      <MenuRichOption
+        Icon={TrendingUp}
         color="income"
-        titulo="Ingreso"
-        ayuda="Plata que entra"
-        nota="Pronto"
-        deshabilitada
+        title="Ingreso"
+        description="Plata que entra"
+        note="Pronto"
+        disabled
       />
     </div>
   ),

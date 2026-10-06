@@ -5,7 +5,7 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 import { ToggleOption } from '@/shared/ui/atoms/toggle-option';
-import { Calendario } from '@/shared/ui/molecules/calendario';
+import { Calendar } from '@/shared/ui/molecules/calendar';
 
 /**
  * Lo que hay dentro del panel: los atajos, el mes y el pie.
@@ -57,14 +57,14 @@ export function PanelDeRango({
             mitad del ancho y sin sitio para los días. */}
         {atajos && <RangePresets borrador={borrador} onElegir={elegirPreset} />}
 
-        <Calendario
+        <Calendar
           className="flex-1 p-3"
-          desde={pinta ? pintado.from : undefined}
-          hasta={pinta ? pintado.to : undefined}
-          vista={vista}
-          onVista={setVista}
-          onDia={elegirDia}
-          onSobrevolar={(iso) => ancla && setSobrevolado(iso ?? ancla)}
+          from={pinta ? pintado.from : undefined}
+          to={pinta ? pintado.to : undefined}
+          view={vista}
+          onViewChange={setVista}
+          onSelectDay={elegirDia}
+          onHover={(iso) => ancla && setSobrevolado(iso ?? ancla)}
         />
       </div>
 

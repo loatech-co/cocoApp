@@ -1,22 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Pencil, ShoppingCart, Trash2 } from 'lucide-react';
 
-import { CabeceraDeModal, CuerpoDeModal, PANEL_DE_MODAL, PieDeModal } from './modal-partes';
+import { ModalHeader, ModalBody, MODAL_PANEL, ModalFooter } from './modal-parts';
 import { Button } from '../atoms/button';
 import { IconChip } from '../atoms/icon-chip';
 
 const meta = {
-  title: 'Molecules/ModalPartes',
-  component: CabeceraDeModal,
-  args: { titulo: 'Nuevo centro de costos', onCerrar: () => undefined },
+  title: 'Molecules/ModalParts',
+  component: ModalHeader,
+  args: { title: 'Nuevo centro de costos', onClose: () => undefined },
   decorators: [
     (Story) => (
-      <div className={PANEL_DE_MODAL}>
+      <div className={MODAL_PANEL}>
         <Story />
       </div>
     ),
   ],
-} satisfies Meta<typeof CabeceraDeModal>;
+} satisfies Meta<typeof ModalHeader>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -24,16 +24,16 @@ type Story = StoryObj<typeof meta>;
 export const HeaderTitleOnly: Story = {};
 
 export const HeaderWithHelp: Story = {
-  args: { ayuda: 'Agrupa los conceptos de una misma parte de la vida.' },
+  args: { description: 'Agrupa los conceptos de una misma parte de la vida.' },
 };
 
 /** Rule 11: the × goes next to the other whole-sheet actions. */
 export const HeaderWithActions: Story = {
   args: {
-    titulo: 'Mercado',
-    ayuda: 'Hogar · octubre',
-    antes: <IconChip Icon={ShoppingCart} color="expense" size="sm" />,
-    acciones: (
+    title: 'Mercado',
+    description: 'Hogar · octubre',
+    leading: <IconChip Icon={ShoppingCart} color="expense" size="sm" />,
+    actions: (
       <>
         <Button variant="ghost" size="sm-icon" aria-label="Editar">
           <Pencil />
@@ -49,25 +49,25 @@ export const HeaderWithActions: Story = {
 /** Buttons at the size of their text, on the right; stacked on the phone. */
 export const Footer: Story = {
   render: () => (
-    <PieDeModal>
+    <ModalFooter>
       <Button variant="outline">Cancelar</Button>
       <Button>Registrar</Button>
-    </PieDeModal>
+    </ModalFooter>
   ),
 };
 
 /** Header, scrolling body and footer, inside the 720px panel. */
 export const WithBody: Story = {
   render: () => (
-    <div className={`${PANEL_DE_MODAL} rounded-lg bg-popover`}>
-      <CabeceraDeModal titulo="Nuevo concepto" onCerrar={() => undefined} />
-      <CuerpoDeModal>
+    <div className={`${MODAL_PANEL} rounded-lg bg-popover`}>
+      <ModalHeader title="Nuevo concepto" onClose={() => undefined} />
+      <ModalBody>
         <p className="text-sm text-muted-foreground">El formulario va aquí.</p>
-        <PieDeModal>
+        <ModalFooter>
           <Button variant="outline">Cancelar</Button>
           <Button>Guardar</Button>
-        </PieDeModal>
-      </CuerpoDeModal>
+        </ModalFooter>
+      </ModalBody>
     </div>
   ),
 };

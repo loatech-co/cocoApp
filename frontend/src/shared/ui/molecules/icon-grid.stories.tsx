@@ -17,10 +17,10 @@ export const Playground: Story = {
 };
 
 function Picker() {
-  const [valor, setValor] = useState<string | null>('house');
+  const [value, setValue] = useState<string | null>('house');
   return (
     <div className="w-96">
-      <IconGrid filtrados={CATEGORY_ICONS} valor={valor} onElegir={setValor} />
+      <IconGrid icons={CATEGORY_ICONS} value={value} onSelect={setValue} />
     </div>
   );
 }

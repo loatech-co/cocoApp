@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
+import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
 /**
  * The colors of the slices. They live in `index.css` because they change with
@@ -451,7 +451,7 @@ function DonutTooltip({
       style={{ left: `${position.left}px`, top: `${position.top}px` }}
       className={cn(
         'pointer-events-none absolute z-10 min-w-36 rounded-lg p-3',
-        SUPERFICIE_FLOTANTE,
+        FLOATING_SURFACE,
         // Not measured yet, it is painted invisible: a first frame in the
         // corner and another in its place looks like a jump.
         !isMeasured && 'opacity-0',

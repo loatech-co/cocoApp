@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { DentroDeUnCampo } from '@/shared/ui/foundations/field';
+import { InsideField } from '@/shared/ui/foundations/field';
 
 /**
  * A form field: its name INSIDE the control, and the control.
@@ -55,7 +55,7 @@ export function Field({
         need to know.
       */}
       <div className="campo">
-        <DentroDeUnCampo.Provider value={true}>{children}</DentroDeUnCampo.Provider>
+        <InsideField.Provider value={true}>{children}</InsideField.Provider>
         <label htmlFor={id}>{label}</label>
       </div>
 

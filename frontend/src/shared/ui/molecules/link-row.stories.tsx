@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Settings, User } from 'lucide-react';
 
-import { FilaDeEnlace } from './link-row';
+import { LinkRow } from './link-row';
 
 const meta = {
-  title: 'Molecules/FilaDeEnlace',
-  component: FilaDeEnlace,
-  args: { Icono: User, a: '/perfil', children: 'Perfil' },
+  title: 'Molecules/LinkRow',
+  component: LinkRow,
+  args: { Icon: User, to: '/perfil', children: 'Perfil' },
   decorators: [
     (Story) => (
       <div className="max-w-sm">
@@ -14,7 +14,7 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof FilaDeEnlace>;
+} satisfies Meta<typeof LinkRow>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -24,12 +24,12 @@ export const Default: Story = {};
 export const List: Story = {
   render: () => (
     <div className="flex max-w-sm flex-col">
-      <FilaDeEnlace Icono={User} a="/perfil">
+      <LinkRow Icon={User} to="/perfil">
         Perfil
-      </FilaDeEnlace>
-      <FilaDeEnlace Icono={Settings} a="/ajustes">
+      </LinkRow>
+      <LinkRow Icon={Settings} to="/ajustes">
         Ajustes
-      </FilaDeEnlace>
+      </LinkRow>
     </div>
   ),
 };

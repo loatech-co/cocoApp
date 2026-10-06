@@ -10,7 +10,7 @@ import { Block } from '@/shared/ui/atoms/block';
 import { Button } from '@/shared/ui/atoms/button';
 import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
-import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
+import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 import { Modal } from '@/shared/ui/organisms/modal';
 import { Select } from '@/shared/ui/organisms/select';
 
@@ -52,17 +52,17 @@ export function ConceptoModal({ abierta, concepto, categoriaId, onCerrar }: Conc
   return (
     <>
       <Modal
-        abierta={abierta}
-        titulo={concepto ? t('centers.conceptModal.editTitle') : t('centers.conceptModal.newTitle')}
-        ayuda={t('centers.conceptModal.help')}
+        isOpen={abierta}
+        title={concepto ? t('centers.conceptModal.editTitle') : t('centers.conceptModal.newTitle')}
+        description={t('centers.conceptModal.help')}
         // Eliminar va en la cabecera, al lado de la equis: es la otra acción
         // de la ficha que no es "guardar".
-        acciones={
+        actions={
           concepto && (
             <DeleteConceptButton concepto={concepto} onClick={() => setConfirmando(true)} />
           )
         }
-        onCerrar={onCerrar}
+        onClose={onCerrar}
       >
         <ConceptForm
           form={form}
@@ -228,7 +228,7 @@ function ConceptFormFooter({
   onCerrar: () => void;
 }) {
   return (
-    <PieDeModal>
+    <ModalFooter>
       <Button type="button" variant="outline" onClick={onCerrar}>
         {t('common.cancel')}
       </Button>
@@ -236,7 +236,7 @@ function ConceptFormFooter({
         {form.guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
         {editando ? t('common.save') : t('common.create')}
       </Button>
-    </PieDeModal>
+    </ModalFooter>
   );
 }
 
@@ -245,7 +245,7 @@ function SiblingCategoryField({
   hermanos,
 }: {
   form: ReturnType<typeof useConceptForm>;
-  hermanos: { valor: string; etiqueta: string }[];
+  hermanos: { value: string; label: string }[];
 }) {
   return (
     <Field
@@ -255,10 +255,10 @@ function SiblingCategoryField({
     >
       <Select
         id="concepto-categoria"
-        etiqueta={t('centers.levels.category')}
-        valor={form.categoria}
-        opciones={hermanos}
-        onCambiar={form.setCategoría}
+        label={t('centers.levels.category')}
+        value={form.categoria}
+        options={hermanos}
+        onChange={form.setCategoría}
       />
     </Field>
   );

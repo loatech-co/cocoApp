@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { useDeslizarParaCerrar } from '@/shared/lib/deslizar';
 import { useEscape, useFocoAtrapado } from '@/shared/lib/foco';
 import { cn } from '@/shared/lib/utils';
-import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
+import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -191,10 +191,10 @@ function sheetClass(isOpen: boolean): string {
 
       And it does not break the rule, which talks about NEIGHBORING containers: the panel
       has no neighbors, it is on top of everything. It is registered with its
-      reason in `shared/ui/radio.test.ts`.
+      reason in `shared/ui/radius.test.ts`.
     */
     'rounded-t-[16px]',
-    SUPERFICIE_FLOTANTE,
+    FLOATING_SURFACE,
     // The same duration and the same curve for the travel and for the height:
     // it grows and shrinks with the same gesture it arrived with.
     'transition-[transform,height] duration-[220ms] ease-[cubic-bezier(.4,0,.2,1)]',

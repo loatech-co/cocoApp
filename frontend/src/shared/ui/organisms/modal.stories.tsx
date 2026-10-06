@@ -6,40 +6,42 @@ import { Modal } from './modal';
 import { Button } from '../atoms/button';
 import { Field } from '../atoms/field';
 import { Input } from '../atoms/input';
-import { PieDeModal } from '../molecules/modal-partes';
+import { ModalFooter } from '../molecules/modal-parts';
 
-function Demo({ withActions = false, withHelp = true }) {
-  const [open, setOpen] = useState(true);
-  const close = () => setOpen(false);
+function Demo({ hasActions = false, hasDescription = true }) {
+  const [isOpen, setIsOpen] = useState(true);
+  const close = () => setIsOpen(false);
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button size="sm" onClick={() => setIsOpen(true)}>
         Abrir la ficha
       </Button>
       <Modal
-        abierta={open}
-        titulo="Nuevo centro de costos"
-        {...(withHelp ? { ayuda: 'Agrupa los conceptos de una misma parte de la vida.' } : {})}
-        {...(withActions
+        isOpen={isOpen}
+        title="Nuevo centro de costos"
+        {...(hasDescription
+          ? { description: 'Agrupa los conceptos de una misma parte de la vida.' }
+          : {})}
+        {...(hasActions
           ? {
-              acciones: (
+              actions: (
                 <Button variant="ghost" size="sm-icon" aria-label="Eliminar">
                   <Trash2 />
                 </Button>
               ),
             }
           : {})}
-        onCerrar={close}
+        onClose={close}
       >
         <Field label="Nombre" id="modal-nombre">
           <Input id="modal-nombre" placeholder="Ej. Hogar" />
         </Field>
-        <PieDeModal>
+        <ModalFooter>
           <Button variant="outline" onClick={close}>
             Cancelar
           </Button>
           <Button onClick={close}>Guardar</Button>
-        </PieDeModal>
+        </ModalFooter>
       </Modal>
     </>
   );
@@ -48,7 +50,7 @@ function Demo({ withActions = false, withHelp = true }) {
 const meta = {
   title: 'Organisms/Modal',
   component: Modal,
-  args: { abierta: false, titulo: 'Ficha', onCerrar: () => undefined, children: null },
+  args: { isOpen: false, title: 'Ficha', onClose: () => undefined, children: null },
 } satisfies Meta<typeof Modal>;
 
 export default meta;
@@ -57,6 +59,6 @@ type Story = StoryObj<typeof meta>;
 /** Rule 12: at most 720px, 16px padding, 400px minimum height. */
 export const Default: Story = { render: () => <Demo /> };
 
-export const WithActions: Story = { render: () => <Demo withActions /> };
+export const WithActions: Story = { render: () => <Demo hasActions /> };
 
-export const TitleOnly: Story = { render: () => <Demo withHelp={false} /> };
+export const TitleOnly: Story = { render: () => <Demo hasDescription={false} /> };

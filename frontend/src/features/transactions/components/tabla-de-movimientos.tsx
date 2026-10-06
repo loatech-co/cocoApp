@@ -11,7 +11,7 @@ import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { EmptyState } from '@/shared/ui/atoms/empty-state';
 import { WithTooltip } from '@/shared/ui/atoms/tooltip';
-import { Tabla, TablaEsqueleto, Td, Th, Tr } from '@/shared/ui/molecules/tabla';
+import { Table, TableSkeleton, Td, Th, Tr } from '@/shared/ui/molecules/table';
 import { Select } from '@/shared/ui/organisms/select';
 
 /** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
@@ -25,8 +25,8 @@ const COLUMNAS = [
 ];
 
 interface OrdenDeColumna {
-  activo: 'asc' | 'desc' | null;
-  onCambiar: () => void;
+  direction: 'asc' | 'desc' | null;
+  onChange: () => void;
 }
 
 /** Cómo pide la tabla el orden de una columna: por qué campo, y en qué sentido empieza. */
@@ -66,7 +66,7 @@ export function TablaDeMovimientos({
   filasDelEsqueleto?: number;
 }) {
   if (cargando) {
-    return <TablaEsqueleto columnas={COLUMNAS} filas={filasDelEsqueleto} divisor={false} />;
+    return <TableSkeleton columns={COLUMNAS} rows={filasDelEsqueleto} hasDivider={false} />;
   }
 
   if (movimientos.length === 0) {
@@ -86,7 +86,7 @@ export function TablaDeMovimientos({
   }
 
   return (
-    <Tabla>
+    <Table>
       <MovementsHead orden={orden} />
 
       <tbody>
@@ -96,7 +96,7 @@ export function TablaDeMovimientos({
       </tbody>
 
       {pie}
-    </Tabla>
+    </Table>
   );
 }
 
@@ -138,7 +138,7 @@ function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
     : undefined;
 
   return (
-    <Tr onClick={onAbrir} atencion={sinClasificar} atenuada={actualizar.isPending}>
+    <Tr onClick={onAbrir} isFlagged={sinClasificar} isDimmed={actualizar.isPending}>
       <NameCell movimiento={movimiento} arbol={arbol} sinClasificar={sinClasificar} />
 
       <PeriodCell movimiento={movimiento} />
@@ -216,13 +216,13 @@ function SelectorEnFila({
 }) {
   const selector = (
     <Select
-      tamano="sm"
-      etiqueta={aria}
-      vacio={`${aria}…`}
-      valor={valor === undefined ? '' : String(valor)}
-      deshabilitado={deshabilitado}
-      opciones={opciones.map((o) => ({ valor: String(o.id), etiqueta: o.name }))}
-      onCambiar={(v) => onElegir(v === '' ? undefined : Number(v))}
+      size="sm"
+      label={aria}
+      emptyLabel={`${aria}…`}
+      value={valor === undefined ? '' : String(valor)}
+      disabled={deshabilitado}
+      options={opciones.map((o) => ({ value: String(o.id), label: o.name }))}
+      onChange={(v) => onElegir(v === '' ? undefined : Number(v))}
     />
   );
 
@@ -238,7 +238,7 @@ function SelectorEnFila({
 function AmountCell({ movimiento }: { movimiento: Transaction }) {
   return (
     <Td
-      alineado="derecha"
+      align="right"
       className={cn(
         'tabular whitespace-nowrap font-semibold',
         movimiento.type === 'income' ? 'text-income' : 'text-expense',
@@ -290,7 +290,7 @@ function NameCell({
   sinClasificar: boolean;
 }) {
   return (
-    <Td fija divisor={false} atencion={sinClasificar}>
+    <Td isSticky hasDivider={false} isFlagged={sinClasificar}>
       <span className="flex items-center gap-2">
         {sinClasificar && (
           <Flag
@@ -316,17 +316,17 @@ function MovementsHead({ orden }: { orden: ColumnOrder | undefined }) {
   return (
     <thead>
       <tr>
-        <Th fija divisor={false} orden={orden?.('merchant', 'asc')}>
+        <Th isSticky hasDivider={false} sort={orden?.('merchant', 'asc')}>
           {t('transactions.table.columns.concept')}
         </Th>
         {/* El periodo antes que el pago: es el eje con el que se mira la app
             —el mes AL QUE PERTENECE el gasto— y la fecha de pago es el dato
             de apoyo que explica por qué a veces no coinciden. */}
         <Th>{t('transactions.table.columns.period')}</Th>
-        <Th orden={orden?.('date', 'desc')}>{t('transactions.table.columns.paidOn')}</Th>
+        <Th sort={orden?.('date', 'desc')}>{t('transactions.table.columns.paidOn')}</Th>
         <Th>{t('transactions.table.columns.costCenter')}</Th>
         <Th>{t('transactions.table.columns.category')}</Th>
-        <Th alineado="derecha" orden={orden?.('amount', 'desc')}>
+        <Th align="right" sort={orden?.('amount', 'desc')}>
           {t('transactions.table.columns.amount')}
         </Th>
       </tr>

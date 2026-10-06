@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { useHistoria } from '@/features/transactions/api/transactions';
 import { rangoDe, type Filtros, type Preset } from '@/features/transactions/model/filtros';
-import { mesDeISO, type MesVisible } from '@/shared/ui/molecules/calendario';
+import { monthOfIso, type VisibleMonth } from '@/shared/ui/molecules/calendar';
 
 /** Las dos fechas en orden, vengan como vengan: se puede pintar al revés. */
 function ordenadas(a: string, b: string): { from: string; to: string } {
@@ -16,9 +16,9 @@ export interface Borrador {
 }
 
 /** El mes que conviene mostrar al abrir: donde termina el rango. */
-function mesDelBorrador(b: Borrador): MesVisible {
+function mesDelBorrador(b: Borrador): VisibleMonth {
   // En "Todo" el rango puede llegar lejos; abrir allá no ayuda a nadie.
-  return mesDeISO(b.preset === 'todo' ? new Date().toISOString().slice(0, 10) : b.to);
+  return monthOfIso(b.preset === 'todo' ? new Date().toISOString().slice(0, 10) : b.to);
 }
 
 /** El rango a medio elegir: el borrador, el primer clic y el mes a la vista. */

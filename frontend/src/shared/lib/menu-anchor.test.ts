@@ -8,17 +8,17 @@ describe('panelStyle', () => {
   it('caps the height at what is left below the trigger, whatever the width', () => {
     const tope = 'calc(100dvh - 416px)';
 
-    expect(panelStyle(ANCLAJE, false, 'izquierda').maxHeight).toBe(tope);
-    expect(panelStyle(ANCLAJE, true, 'izquierda').maxHeight).toBe(tope);
-    expect(panelStyle(ANCLAJE, true, 'derecha').maxHeight).toBe(tope);
+    expect(panelStyle(ANCLAJE, false, 'left').maxHeight).toBe(tope);
+    expect(panelStyle(ANCLAJE, true, 'left').maxHeight).toBe(tope);
+    expect(panelStyle(ANCLAJE, true, 'right').maxHeight).toBe(tope);
   });
 
   it('hangs 8px under the trigger, with its width or anchored by the side asked', () => {
-    expect(panelStyle(ANCLAJE, false, 'izquierda')).toMatchObject({
+    expect(panelStyle(ANCLAJE, false, 'left')).toMatchObject({
       top: '408px',
       left: '16px',
       width: '300px',
     });
-    expect(panelStyle(ANCLAJE, true, 'derecha')).toMatchObject({ top: '408px', right: '24px' });
+    expect(panelStyle(ANCLAJE, true, 'right')).toMatchObject({ top: '408px', right: '24px' });
   });
 });

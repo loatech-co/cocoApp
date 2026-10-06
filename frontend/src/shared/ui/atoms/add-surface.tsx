@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { REALCE_DE_SUPERFICIE } from '@/shared/ui/foundations/superficie';
+import { SURFACE_HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
  * The dashed slot where the next thing will go: «Agregar categoría»,
@@ -24,8 +24,8 @@ import { REALCE_DE_SUPERFICIE } from '@/shared/ui/foundations/superficie';
  * a thousand by two hundred fifty pixels is a flash.
  */
 const SHAPES = {
-  slot: cn('min-h-64 flex-col gap-2 border-2 p-4', REALCE_DE_SUPERFICIE),
-  bar: cn('gap-2 border-2 p-4', REALCE_DE_SUPERFICIE),
+  slot: cn('min-h-64 flex-col gap-2 border-2 p-4', SURFACE_HIGHLIGHT),
+  bar: cn('gap-2 border-2 p-4', SURFACE_HIGHLIGHT),
   row: 'min-h-[42px] gap-2 border py-3 hover:bg-muted',
 } as const;
 

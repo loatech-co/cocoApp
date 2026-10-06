@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
+import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
 import { Soltar } from './support-drop-zone';
 
@@ -69,7 +69,7 @@ export function PanelDeSubida({
       <div
         className={cn(
           'flex w-full flex-col p-4 sm:max-w-xl sm:p-5',
-          SUPERFICIE_FLOTANTE,
+          FLOATING_SURFACE,
           'emerge rounded-lg',
         )}
       >

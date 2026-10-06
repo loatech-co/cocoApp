@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
-import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { fieldTrigger, useInsideField } from '@/shared/ui/foundations/field';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 import { Menu } from '@/shared/ui/molecules/menu';
 
 /**
@@ -33,43 +33,43 @@ import { Menu } from '@/shared/ui/molecules/menu';
  * contiene cuando el modal tiene desplazamiento.
  */
 
-interface OpcionDeCombo {
-  valor: string;
-  etiqueta: string;
+interface ComboOption {
+  value: string;
+  label: string;
 }
 
 interface ComboProps {
   /** Nombre accesible. No se pinta: la etiqueta visible va fuera. */
-  etiqueta: string;
+  label: string;
   /** El valor elegido. `''` es ninguno. */
-  valor: string;
-  opciones: OpcionDeCombo[];
-  onCambiar: (valor: string) => void;
+  value: string;
+  options: ComboOption[];
+  onChange: (value: string) => void;
   /** Si se pasa, se ofrece crear lo que no exista. */
-  onCrear?: (nombre: string) => void;
-  vacio?: string;
-  deshabilitado?: boolean;
+  onCreate?: (name: string) => void;
+  emptyLabel?: string;
+  disabled?: boolean;
   /** Mientras se crea, para no dejar pulsar dos veces. */
-  creando?: boolean;
+  isCreating?: boolean;
   id?: string;
 }
 
 export function Combo({
-  etiqueta,
-  valor,
-  opciones,
-  onCambiar,
-  onCrear,
-  vacio = t('ui.combo.notChosen'),
-  deshabilitado = false,
-  creando = false,
+  label,
+  value,
+  options,
+  onChange,
+  onCreate,
+  emptyLabel = t('ui.combo.notChosen'),
+  disabled: isDisabled = false,
+  isCreating = false,
   id,
 }: ComboProps) {
-  const busqueda = useComboSearch(opciones, onCambiar, onCrear);
-  const campo = useRef<HTMLInputElement>(null);
-  const enCampo = useDentroDeUnCampo();
+  const search = useComboSearch(options, onChange, onCreate);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isInField = useInsideField();
 
-  const elegida = opciones.find((o) => o.valor === valor);
+  const selected = options.find((o) => o.value === value);
 
   /*
     Lo que se ve en el campo, abierto o cerrado, se pueda tocar o no.
@@ -87,37 +87,42 @@ export function Combo({
     vacío». Es la misma forma que ya tenía `Select`, que sí reutilizaba su
     contenido.
   */
-  const dentro = (abierto: boolean) => (
-    <ComboTriggerContent elegida={elegida} vacio={vacio} enCampo={enCampo} abierto={abierto} />
+  const triggerContent = (isOpen: boolean) => (
+    <ComboTriggerContent
+      selected={selected}
+      emptyLabel={emptyLabel}
+      isInField={isInField}
+      isOpen={isOpen}
+    />
   );
 
   // Bloqueado no puede ser un botón que abre nada: se pinta igual pero sin
   // desplegable detrás, para que el foco no caiga en una trampa.
-  if (deshabilitado) return <DisabledCombo id={id}>{dentro(false)}</DisabledCombo>;
+  if (isDisabled) return <DisabledCombo id={id}>{triggerContent(false)}</DisabledCombo>;
 
   return (
     <Menu
-      etiqueta={etiqueta}
-      tipo="lista"
-      alineado="izquierda"
-      flotante
+      label={label}
+      kind="list"
+      align="left"
+      isFloating
       // El panel dibuja sus propias franjas a sangre —el buscador arriba, el
       // "crear" abajo—: con el acolchado del menú, esas líneas quedarían
       // cortadas 4px antes de cada lado.
-      sinRelleno
-      claseCaja="w-full min-w-0"
-      claseDisparador={disparadorDeCampo()}
-      idDisparador={id}
-      disparador={({ abierto }) => dentro(abierto)}
+      isUnpadded
+      boxClassName="w-full min-w-0"
+      triggerClassName={fieldTrigger()}
+      triggerId={id}
+      trigger={({ isOpen }) => triggerContent(isOpen)}
     >
-      {(cerrar) => (
+      {(close) => (
         <ComboPanel
-          campo={campo}
-          busqueda={busqueda}
-          valor={valor}
-          vacio={vacio}
-          creando={creando}
-          cerrar={cerrar}
+          inputRef={inputRef}
+          search={search}
+          value={value}
+          emptyLabel={emptyLabel}
+          isCreating={isCreating}
+          close={close}
         />
       )}
     </Menu>
@@ -125,113 +130,113 @@ export function Combo({
 }
 
 interface ComboSearch {
-  busca: string;
-  setBusca: (v: string) => void;
-  filtradas: OpcionDeCombo[];
-  puedeCrear: boolean;
+  query: string;
+  setQuery: (v: string) => void;
+  filtered: ComboOption[];
+  canCreate: boolean;
   /** Elige una opción y vacía el buscador. */
-  elegir: (valor: string) => void;
+  select: (value: string) => void;
   /** Crea lo escrito y vacía el buscador. */
-  crear: () => void;
+  create: () => void;
 }
 
 /** Lo escrito en el buscador, lo que deja ver y lo que se puede crear con ello. */
 function useComboSearch(
-  opciones: OpcionDeCombo[],
-  onCambiar: (valor: string) => void,
-  onCrear: ((nombre: string) => void) | undefined,
+  options: ComboOption[],
+  onChange: (value: string) => void,
+  onCreate: ((name: string) => void) | undefined,
 ): ComboSearch {
-  const [busca, setBusca] = useState('');
+  const [query, setQuery] = useState('');
 
-  const filtradas = useMemo(() => {
-    const q = normal(busca);
-    if (q === '') return opciones;
-    return opciones.filter((o) => normal(o.etiqueta).includes(q));
-  }, [opciones, busca]);
+  const filtered = useMemo(() => {
+    const q = normal(query);
+    if (q === '') return options;
+    return options.filter((o) => normal(o.label).includes(q));
+  }, [options, query]);
 
   // Ofrecer crear solo cuando lo escrito no existe ya. Con un nombre que
   // coincide, "crear" produciría dos conceptos idénticos —y a partir de ahí
   // la misma plata sumando por separado en los dos—.
-  const puedeCrear =
-    onCrear !== undefined &&
-    busca.trim() !== '' &&
-    !opciones.some((o) => normal(o.etiqueta) === normal(busca));
+  const canCreate =
+    onCreate !== undefined &&
+    query.trim() !== '' &&
+    !options.some((o) => normal(o.label) === normal(query));
 
   return {
-    busca,
-    setBusca,
-    filtradas,
-    puedeCrear,
-    elegir: (v) => {
-      onCambiar(v);
-      setBusca('');
+    query,
+    setQuery,
+    filtered,
+    canCreate,
+    select: (v) => {
+      onChange(v);
+      setQuery('');
     },
-    crear: () => {
-      onCrear?.(busca.trim());
-      setBusca('');
+    create: () => {
+      onCreate?.(query.trim());
+      setQuery('');
     },
   };
 }
 
 interface ComboPanelProps {
-  campo: React.RefObject<HTMLInputElement | null>;
-  busqueda: ComboSearch;
-  valor: string;
-  vacio: string;
-  creando: boolean;
-  cerrar: () => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  search: ComboSearch;
+  value: string;
+  emptyLabel: string;
+  isCreating: boolean;
+  close: () => void;
 }
 
-function ComboPanel({ campo, busqueda, valor, vacio, creando, cerrar }: ComboPanelProps) {
-  const { busca, setBusca, filtradas, puedeCrear } = busqueda;
+function ComboPanel({ inputRef, search, value, emptyLabel, isCreating, close }: ComboPanelProps) {
+  const { query, setQuery, filtered, canCreate } = search;
 
   // El foco al abrir: si hay que pulsar el campo antes de escribir, el gesto
   // son dos clics y nadie llega a descubrir que se podía filtrar.
   useEffect(() => {
-    const t = setTimeout(() => campo.current?.focus(), 10);
+    const t = setTimeout(() => inputRef.current?.focus(), 10);
     return () => clearTimeout(t);
-  }, [campo]);
+  }, [inputRef]);
 
-  function onElegir(v: string): void {
-    busqueda.elegir(v);
-    cerrar();
+  function onSelect(v: string): void {
+    search.select(v);
+    close();
   }
 
-  function onCrear(): void {
-    busqueda.crear();
-    cerrar();
+  function onCreate(): void {
+    search.create();
+    close();
   }
 
   return (
     <div className="flex flex-col">
       <SearchBox
         shape="header"
-        ref={campo}
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
+        ref={inputRef}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
           // Enter elige lo único que queda, que es lo que uno espera después
           // de escribir tres letras y ver una sola fila.
           if (e.key !== 'Enter') return;
           e.preventDefault();
-          const [unica] = filtradas;
-          if (filtradas.length === 1 && unica !== undefined) onElegir(unica.valor);
-          else if (puedeCrear) onCrear();
+          const [only] = filtered;
+          if (filtered.length === 1 && only !== undefined) onSelect(only.value);
+          else if (canCreate) onCreate();
         }}
         placeholder={t('ui.combo.search')}
       />
 
       <ComboOptions
-        filtradas={filtradas}
-        valor={valor}
-        vacio={vacio}
-        puedeCrear={puedeCrear}
-        onElegir={onElegir}
+        filtered={filtered}
+        value={value}
+        emptyLabel={emptyLabel}
+        canCreate={canCreate}
+        onSelect={onSelect}
       />
 
-      {puedeCrear && (
-        <CreateOption creando={creando} onCrear={onCrear}>
-          {t('ui.combo.create', { name: busca.trim() })}
+      {canCreate && (
+        <CreateOption isCreating={isCreating} onCreate={onCreate}>
+          {t('ui.combo.create', { name: query.trim() })}
         </CreateOption>
       )}
     </div>
@@ -246,31 +251,31 @@ function ComboPanel({ campo, busqueda, valor, vacio, creando, cerrar }: ComboPan
  * que se puede elegir.
  */
 export function CreateOption({
-  creando,
-  conIntro = false,
-  onCrear,
+  isCreating,
+  hasEnterHint = false,
+  onCreate,
   children,
 }: {
-  creando: boolean;
-  conIntro?: boolean;
-  onCrear: () => void;
+  isCreating: boolean;
+  hasEnterHint?: boolean;
+  onCreate: () => void;
   children: ReactNode;
 }) {
   return (
     <button
       type="button"
-      onClick={onCrear}
-      disabled={creando}
+      onClick={onCreate}
+      disabled={isCreating}
       className={cn(
         'flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-left text-sm',
         'font-medium transition-colors',
-        REALCE,
+        HIGHLIGHT,
         'disabled:opacity-60',
       )}
     >
       <Plus className="size-4 shrink-0" aria-hidden="true" />
       <span className="min-w-0 truncate">{children}</span>
-      {conIntro && (
+      {hasEnterHint && (
         <CornerDownLeft className="ml-auto size-3.5 shrink-0 opacity-50" aria-hidden="true" />
       )}
     </button>
@@ -284,12 +289,12 @@ export function CreateOption({
  * el mismo realce y la misma palomita, para que elegir un concepto se vea igual
  * en los dos sitios. Dos copias se separan.
  */
-export function Opcion({
-  elegida,
+export function Option({
+  isSelected,
   onClick,
   children,
 }: {
-  elegida: boolean;
+  isSelected: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
@@ -297,53 +302,53 @@ export function Opcion({
     <button
       type="button"
       role="option"
-      aria-selected={elegida}
+      aria-selected={isSelected}
       onClick={onClick}
       className={cn(
         'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
         'movil:min-h-[42px]',
-        elegida ? cn('bg-muted font-medium', REALCE) : REALCE,
+        isSelected ? cn('bg-muted font-medium', HIGHLIGHT) : HIGHLIGHT,
       )}
     >
       <span className="min-w-0 flex-1 truncate">{children}</span>
-      {elegida && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
+      {isSelected && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
     </button>
   );
 }
 
 /** Sin tildes ni mayúsculas: "Educación" se encuentra escribiendo "educacion". */
-function normal(texto: string): string {
-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+function normal(text: string): string {
+  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
 function ComboOptions({
-  filtradas,
-  valor,
-  vacio,
-  puedeCrear,
-  onElegir,
-}: Pick<ComboSearch, 'filtradas' | 'puedeCrear'> & {
-  valor: string;
-  vacio: string;
-  onElegir: (valor: string) => void;
+  filtered,
+  value,
+  emptyLabel,
+  canCreate,
+  onSelect,
+}: Pick<ComboSearch, 'filtered' | 'canCreate'> & {
+  value: string;
+  emptyLabel: string;
+  onSelect: (value: string) => void;
 }) {
   return (
     <ul className="max-h-64 overflow-y-auto p-1">
       <li>
-        <Opcion elegida={valor === ''} onClick={() => onElegir('')}>
-          <span className="text-muted-foreground">{vacio}</span>
-        </Opcion>
+        <Option isSelected={value === ''} onClick={() => onSelect('')}>
+          <span className="text-muted-foreground">{emptyLabel}</span>
+        </Option>
       </li>
 
-      {filtradas.map((o) => (
-        <li key={o.valor}>
-          <Opcion elegida={o.valor === valor} onClick={() => onElegir(o.valor)}>
-            {o.etiqueta}
-          </Opcion>
+      {filtered.map((o) => (
+        <li key={o.value}>
+          <Option isSelected={o.value === value} onClick={() => onSelect(o.value)}>
+            {o.label}
+          </Option>
         </li>
       ))}
 
-      {filtradas.length === 0 && !puedeCrear && (
+      {filtered.length === 0 && !canCreate && (
         <li className="px-2.5 py-2 text-sm text-muted-foreground">
           {t('ui.combo.nothingMatches')}
         </li>
@@ -353,15 +358,15 @@ function ComboOptions({
 }
 
 function ComboTriggerContent({
-  elegida,
-  vacio,
-  enCampo,
-  abierto,
+  selected,
+  emptyLabel,
+  isInField,
+  isOpen,
 }: {
-  elegida: OpcionDeCombo | undefined;
-  vacio: string;
-  enCampo: boolean;
-  abierto: boolean;
+  selected: ComboOption | undefined;
+  emptyLabel: string;
+  isInField: boolean;
+  isOpen: boolean;
 }) {
   return (
     <>
@@ -371,18 +376,18 @@ function ComboTriggerContent({
         centraría en la caja de contenido en vez de en el campo.
       */}
       <span
-        data-lleno={elegida ? 'si' : 'no'}
-        data-vacio={elegida ? undefined : ''}
+        data-lleno={selected ? 'si' : 'no'}
+        data-vacio={selected ? undefined : ''}
         className={cn(
           'min-w-0 flex-1 truncate text-left',
-          !elegida && 'text-muted-foreground',
-          enCampo && 'pt-4',
+          !selected && 'text-muted-foreground',
+          isInField && 'pt-4',
         )}
       >
-        {elegida?.etiqueta ?? vacio}
+        {selected?.label ?? emptyLabel}
       </span>
       <ChevronDown
-        className={cn('size-4 shrink-0 opacity-60 transition-transform', abierto && 'rotate-180')}
+        className={cn('size-4 shrink-0 opacity-60 transition-transform', isOpen && 'rotate-180')}
         aria-hidden="true"
       />
     </>
@@ -393,7 +398,7 @@ function DisabledCombo({ id, children }: { id: string | undefined; children: Rea
     <span
       id={id}
       aria-disabled="true"
-      className={cn(disparadorDeCampo(), 'cursor-not-allowed opacity-50')}
+      className={cn(fieldTrigger(), 'cursor-not-allowed opacity-50')}
     >
       {children}
     </span>

@@ -2,25 +2,25 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Confirmacion } from './confirmacion';
+import { Confirmation } from './confirmation';
 
 afterEach(cleanup);
 
-function renderConfirmation(props: Partial<Parameters<typeof Confirmacion>[0]> = {}) {
-  const onConfirmar = vi.fn();
-  const onCancelar = vi.fn();
+function renderConfirmation(props: Partial<Parameters<typeof Confirmation>[0]> = {}) {
+  const onConfirm = vi.fn();
+  const onCancel = vi.fn();
   render(
-    <Confirmacion
-      abierta
-      titulo="Eliminar movimiento"
-      onConfirmar={onConfirmar}
-      onCancelar={onCancelar}
+    <Confirmation
+      isOpen
+      title="Eliminar movimiento"
+      onConfirm={onConfirm}
+      onCancel={onCancel}
       {...props}
     >
       El concepto sigue vivo.
-    </Confirmacion>,
+    </Confirmation>,
   );
-  return { onConfirmar, onCancelar };
+  return { onConfirm, onCancel };
 }
 
 const confirmButton = (name = 'Confirmar') =>
@@ -28,7 +28,7 @@ const confirmButton = (name = 'Confirmar') =>
 
 describe('Confirmacion', () => {
   it('renders nothing while closed', () => {
-    renderConfirmation({ abierta: false });
+    renderConfirmation({ isOpen: false });
 
     expect(screen.queryByRole('alertdialog')).toBeNull();
   });
@@ -48,16 +48,16 @@ describe('Confirmacion', () => {
   });
 
   it('confirms with its main button', () => {
-    const { onConfirmar, onCancelar } = renderConfirmation();
+    const { onConfirm, onCancel } = renderConfirmation();
 
     fireEvent.click(confirmButton());
 
-    expect(onConfirmar).toHaveBeenCalledOnce();
-    expect(onCancelar).not.toHaveBeenCalled();
+    expect(onConfirm).toHaveBeenCalledOnce();
+    expect(onCancel).not.toHaveBeenCalled();
   });
 
   it('cancels with the outline button, with Escape and with the veil', () => {
-    const { onCancelar, onConfirmar } = renderConfirmation();
+    const { onCancel, onConfirm } = renderConfirmation();
 
     const cancel = screen.getByRole('button', { name: 'Cancelar' });
     expect(cancel.className).toContain('border');
@@ -67,27 +67,27 @@ describe('Confirmacion', () => {
     fireEvent.mouseDown(screen.getByRole('alertdialog'));
     fireEvent.mouseDown(screen.getByText('El concepto sigue vivo.'));
 
-    expect(onCancelar).toHaveBeenCalledTimes(3);
-    expect(onConfirmar).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(3);
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 
   it('names the confirm button with the action and paints it as destructive when dangerous', () => {
-    renderConfirmation({ etiquetaConfirmar: 'Eliminar', peligrosa: true });
+    renderConfirmation({ confirmLabel: 'Eliminar', isDestructive: true });
 
     expect(confirmButton('Eliminar').className).toContain('bg-destructive');
   });
 
   it('cannot be confirmed while busy or while the caller forbids it', () => {
-    const { onConfirmar } = renderConfirmation({ ocupada: true });
+    const { onConfirm } = renderConfirmation({ isBusy: true });
     fireEvent.click(confirmButton());
     expect(confirmButton().disabled).toBe(true);
     cleanup();
 
-    const second = renderConfirmation({ confirmarDeshabilitado: true });
+    const second = renderConfirmation({ isConfirmDisabled: true });
     fireEvent.click(confirmButton());
 
     expect(confirmButton().disabled).toBe(true);
-    expect(onConfirmar).not.toHaveBeenCalled();
-    expect(second.onConfirmar).not.toHaveBeenCalled();
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(second.onConfirm).not.toHaveBeenCalled();
   });
 });

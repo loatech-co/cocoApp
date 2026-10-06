@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 
 import { cn } from '@/shared/lib/utils';
 import type { AlertTone } from '@/shared/ui/atoms/alert';
-import { SUPERFICIE_FLOTANTE, SURGE } from '@/shared/ui/foundations/superficie';
+import { FLOATING_SURFACE, SURGE } from '@/shared/ui/foundations/surface';
 
 /**
  * Un aviso.
@@ -53,11 +53,11 @@ import { SUPERFICIE_FLOTANTE, SURGE } from '@/shared/ui/foundations/superficie';
  * un cartel. El resplandor del borde da el color sin perder la elevación.
  */
 
-interface Aviso {
+interface ToastEntry {
   id: number;
-  titulo: string;
-  detalle?: string | undefined;
-  tono: AlertTone;
+  title: string;
+  detail?: string | undefined;
+  tone: AlertTone;
 }
 
 /**
@@ -68,7 +68,7 @@ interface Aviso {
  * círculo: con un icono circular, el resultado son dos círculos concéntricos y
  * el glifo se pierde. Así que aquí van los trazos desnudos.
  */
-const GLIFOS: Record<AlertTone, ComponentType<{ className?: string }> | null> = {
+const GLYPHS: Record<AlertTone, ComponentType<{ className?: string }> | null> = {
   default: null,
   destructive: X,
   warning: TriangleAlert,
@@ -83,93 +83,93 @@ const GLIFOS: Record<AlertTone, ComponentType<{ className?: string }> | null> = 
  * existe en el CSS final—, así que cada combinación se escribe entera. Es la
  * misma razón por la que los pasteles de los chips son una tabla.
  */
-const COLORES: Record<AlertTone, { pastilla: string; halo: string; resplandor: string }> = {
-  default: { pastilla: '', halo: '', resplandor: '' },
+const COLORS: Record<AlertTone, { pill: string; halo: string; glow: string }> = {
+  default: { pill: '', halo: '', glow: '' },
   destructive: {
-    pastilla: 'bg-destructive text-destructive-foreground',
+    pill: 'bg-destructive text-destructive-foreground',
     halo: 'bg-destructive/15',
-    resplandor: 'bg-gradient-to-r from-destructive/20 to-transparent to-65%',
+    glow: 'bg-gradient-to-r from-destructive/20 to-transparent to-65%',
   },
   warning: {
-    pastilla: 'bg-warning text-warning-foreground',
+    pill: 'bg-warning text-warning-foreground',
     halo: 'bg-warning/15',
-    resplandor: 'bg-gradient-to-r from-warning/20 to-transparent to-65%',
+    glow: 'bg-gradient-to-r from-warning/20 to-transparent to-65%',
   },
   success: {
-    pastilla: 'bg-success text-success-foreground',
+    pill: 'bg-success text-success-foreground',
     halo: 'bg-success/15',
-    resplandor: 'bg-gradient-to-r from-success/20 to-transparent to-65%',
+    glow: 'bg-gradient-to-r from-success/20 to-transparent to-65%',
   },
   info: {
-    pastilla: 'bg-info text-info-foreground',
+    pill: 'bg-info text-info-foreground',
     halo: 'bg-info/15',
-    resplandor: 'bg-gradient-to-r from-info/20 to-transparent to-65%',
+    glow: 'bg-gradient-to-r from-info/20 to-transparent to-65%',
   },
 };
 
-let avisos: Aviso[] = [];
-let siguienteId = 1;
-const oyentes = new Set<() => void>();
-const relojes = new Map<number, ReturnType<typeof setTimeout>>();
+let toasts: ToastEntry[] = [];
+let nextId = 1;
+const listeners = new Set<() => void>();
+const timers = new Map<number, ReturnType<typeof setTimeout>>();
 
 /** Lo que dura en pantalla. Bastante para leer dos líneas, no tanto que estorbe. */
-const DURACION = 5000;
+const DURATION_MS = 5000;
 
-function anunciar(): void {
-  for (const oyente of oyentes) oyente();
+function notify(): void {
+  for (const listener of listeners) listener();
 }
 
-function programarElOlvido(id: number): void {
-  clearTimeout(relojes.get(id));
-  relojes.set(
+function scheduleDismiss(id: number): void {
+  clearTimeout(timers.get(id));
+  timers.set(
     id,
     setTimeout(() => {
-      relojes.delete(id);
-      avisos = avisos.filter((a) => a.id !== id);
-      anunciar();
-    }, DURACION),
+      timers.delete(id);
+      toasts = toasts.filter((a) => a.id !== id);
+      notify();
+    }, DURATION_MS),
   );
 }
 
-export function mostrarAviso(
-  titulo: string,
-  opciones: { detalle?: string; tono?: AlertTone } = {},
+export function showToast(
+  title: string,
+  options: { detail?: string; tone?: AlertTone } = {},
 ): void {
-  const { detalle, tono = 'default' } = opciones;
+  const { detail, tone = 'default' } = options;
 
   // El mismo aviso reinicia su reloj en vez de apilarse. Se compara por lo que
   // DICE —titular y detalle—, no por el tono: el mismo texto con otro tono
   // sería el mismo aviso contado dos veces.
-  const yaEsta = avisos.find((a) => a.titulo === titulo && a.detalle === detalle);
-  if (yaEsta) {
-    programarElOlvido(yaEsta.id);
+  const existing = toasts.find((a) => a.title === title && a.detail === detail);
+  if (existing) {
+    scheduleDismiss(existing.id);
     return;
   }
 
-  const aviso: Aviso = { id: siguienteId++, titulo, detalle, tono };
-  avisos = [...avisos, aviso];
-  programarElOlvido(aviso.id);
-  anunciar();
+  const toast: ToastEntry = { id: nextId++, title, detail, tone };
+  toasts = [...toasts, toast];
+  scheduleDismiss(toast.id);
+  notify();
 }
 
 /** Para las pruebas: deja la pila vacía y sin relojes pendientes. */
-export function olvidarAvisos(): void {
-  for (const reloj of relojes.values()) clearTimeout(reloj);
-  relojes.clear();
-  avisos = [];
-  anunciar();
+export function clearToasts(): void {
+  for (const timer of timers.values()) clearTimeout(timer);
+  timers.clear();
+  toasts = [];
+  notify();
 }
 
-function suscribir(oyente: () => void): () => void {
-  oyentes.add(oyente);
-  return () => oyentes.delete(oyente);
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
-function useAvisos(): Aviso[] {
+function useToasts(): ToastEntry[] {
   return useSyncExternalStore(
-    suscribir,
-    () => avisos,
-    () => avisos,
+    subscribe,
+    () => toasts,
+    () => toasts,
   );
 }
 
@@ -180,9 +180,9 @@ function useAvisos(): Aviso[] {
  * sobrevive a lo que lo lanzó: cerrar el panel que lo pidió no tiene por qué
  * llevárselo por delante.
  */
-export function PilaDeAvisos() {
-  const avisos = useAvisos();
-  if (typeof document === 'undefined' || avisos.length === 0) return null;
+export function ToastStack() {
+  const toasts = useToasts();
+  if (typeof document === 'undefined' || toasts.length === 0) return null;
 
   return createPortal(
     <div
@@ -193,23 +193,23 @@ export function PilaDeAvisos() {
       role="status"
       aria-live="polite"
     >
-      {avisos.map((aviso) => (
-        <Toast key={aviso.id} aviso={aviso} />
+      {toasts.map((toast) => (
+        <Toast key={toast.id} toast={toast} />
       ))}
     </div>,
     document.body,
   );
 }
 
-function Toast({ aviso }: { aviso: Aviso }) {
-  const Glifo = GLIFOS[aviso.tono];
-  const color = COLORES[aviso.tono];
+function Toast({ toast }: { toast: ToastEntry }) {
+  const Glyph = GLYPHS[toast.tone];
+  const color = COLORS[toast.tone];
 
   return (
     <div
       className={cn(
         'pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-lg p-4',
-        SUPERFICIE_FLOTANTE,
+        FLOATING_SURFACE,
         SURGE,
         'movil:max-w-none escritorio:w-[26rem]',
       )}
@@ -222,14 +222,14 @@ function Toast({ aviso }: { aviso: Aviso }) {
         aquí el popover se queda de fondo y el degradado se apoya
         encima, con el texto por delante.
       */}
-      {color.resplandor && (
+      {color.glow && (
         <span
           aria-hidden="true"
-          className={cn('pointer-events-none absolute inset-0', color.resplandor)}
+          className={cn('pointer-events-none absolute inset-0', color.glow)}
         />
       )}
 
-      {Glifo && (
+      {Glyph && (
         <span
           aria-hidden="true"
           className={cn(
@@ -237,17 +237,17 @@ function Toast({ aviso }: { aviso: Aviso }) {
             color.halo,
           )}
         >
-          <span className={cn('grid size-7 place-items-center rounded-full', color.pastilla)}>
-            <Glifo className="size-4" />
+          <span className={cn('grid size-7 place-items-center rounded-full', color.pill)}>
+            <Glyph className="size-4" />
           </span>
         </span>
       )}
 
       <span className="relative min-w-0">
-        <span className="block text-sm font-semibold leading-tight">{aviso.titulo}</span>
-        {aviso.detalle && (
+        <span className="block text-sm font-semibold leading-tight">{toast.title}</span>
+        {toast.detail && (
           <span className="mt-1 block text-sm leading-snug text-muted-foreground">
-            {aviso.detalle}
+            {toast.detail}
           </span>
         )}
       </span>

@@ -6,7 +6,7 @@ import { t } from '@/shared/lib/i18n';
 import { usePanZoom } from '@/shared/lib/pan-zoom';
 import { cn } from '@/shared/lib/utils';
 import { PdfCanvas } from '@/shared/ui/atoms/pdf-canvas';
-import { BotonOscuro, LecturaDeMandos } from '@/shared/ui/molecules/overlay-control';
+import { OverlayButton, ControlReadout } from '@/shared/ui/molecules/overlay-control';
 
 import { SoporteQueNoSeVe } from './support-unavailable';
 
@@ -166,27 +166,27 @@ function PreviewZoom({
       hidden={!visible}
       className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
     >
-      <BotonOscuro
-        etiqueta={t('transactions.supports.zoomOut')}
-        deshabilitado={zoom === 0}
+      <OverlayButton
+        label={t('transactions.supports.zoomOut')}
+        disabled={zoom === 0}
         onClick={() => onZoom((z) => Math.max(0, z - 1))}
       >
         <Minus className="size-4" aria-hidden="true" />
-      </BotonOscuro>
-      <LecturaDeMandos
-        ancho="previa"
-        titulo={t('transactions.supports.resetZoom')}
+      </OverlayButton>
+      <ControlReadout
+        width="preview"
+        title={t('transactions.supports.resetZoom')}
         onClick={() => onZoom(() => 0)}
       >
         {Math.round(paso * 100)} %
-      </LecturaDeMandos>
-      <BotonOscuro
-        etiqueta={t('transactions.supports.zoomIn')}
-        deshabilitado={zoom === PASOS_DE_LA_PREVIA.length - 1}
+      </ControlReadout>
+      <OverlayButton
+        label={t('transactions.supports.zoomIn')}
+        disabled={zoom === PASOS_DE_LA_PREVIA.length - 1}
         onClick={() => onZoom((z) => Math.min(PASOS_DE_LA_PREVIA.length - 1, z + 1))}
       >
         <Plus className="size-4" aria-hidden="true" />
-      </BotonOscuro>
+      </OverlayButton>
     </div>
   );
 }
@@ -268,9 +268,9 @@ function PreviewActions({ onAbrir, acciones }: Pick<PreviewProps, 'onAbrir' | 'a
     >
       {acciones}
       {onAbrir && (
-        <BotonOscuro etiqueta={t('transactions.supports.enlarge')} onClick={onAbrir}>
+        <OverlayButton label={t('transactions.supports.enlarge')} onClick={onAbrir}>
           <Maximize2 className="size-4" aria-hidden="true" />
-        </BotonOscuro>
+        </OverlayButton>
       )}
     </div>
   );

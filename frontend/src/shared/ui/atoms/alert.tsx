@@ -8,7 +8,7 @@ import { cn } from '@/shared/lib/utils';
  * An INLINE notice: it stays where it is until it stops being true.
  *
  * ── How it differs from the floating notice ─────────────────────────────────
- * The one in `molecules/aviso.tsx` appears in a corner, says something and leaves: it serves to
+ * The one in `molecules/toast.tsx` appears in a corner, says something and leaves: it serves to
  * confirm an action that already happened —"it was saved"—. This one does not leave, because
  * it explains the state of what is underneath it: a form that could not be
  * submitted, a list empty because of a filter, an account not yet approved. If it left,

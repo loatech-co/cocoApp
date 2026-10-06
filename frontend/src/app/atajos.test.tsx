@@ -5,14 +5,14 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { olvidarAtajos } from '@/shared/lib/atajos';
-import { PilaDeAvisos, olvidarAvisos } from '@/shared/ui/molecules/aviso';
+import { ToastStack, clearToasts } from '@/shared/ui/molecules/toast';
 
 import { useSuperficieDeAtajos, type PaginaDeAtajo } from './atajos';
 
 afterEach(() => {
   cleanup();
   olvidarAtajos();
-  olvidarAvisos();
+  clearToasts();
 });
 
 const BIBLIOTECA: PaginaDeAtajo[] = [
@@ -52,7 +52,7 @@ function Superficie({
     <MemoryRouter>
       {cabeza}
       {cuerpo}
-      <PilaDeAvisos />
+      <ToastStack />
     </MemoryRouter>
   );
 }

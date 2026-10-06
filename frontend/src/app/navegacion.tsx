@@ -7,7 +7,7 @@ import { useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { MI_CUENTA, SECCIONES, SECCIONES_DE_ADMIN, type Seccion } from '@/shared/lib/sections';
 import { cn } from '@/shared/lib/utils';
-import { Menu, MenuOpcion, MenuSeparador } from '@/shared/ui/molecules/menu';
+import { Menu, MenuOption, MenuSeparator } from '@/shared/ui/molecules/menu';
 
 /**
  * La navegación: las secciones, la fila que las pinta y el menú de la cuenta.
@@ -133,12 +133,12 @@ export function EnlaceDeSeccion({
 export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
   return (
     <Menu
-      etiqueta={t('shell.account.yours')}
-      ancho="md"
-      alineado="izquierda"
-      direccion="arriba"
-      claseCaja="w-full"
-      claseDisparador={cn(
+      label={t('shell.account.yours')}
+      width="md"
+      align="left"
+      direction="up"
+      boxClassName="w-full"
+      triggerClassName={cn(
         // Sin fondo al pasar por encima, como las secciones: es la misma
         // columna, y un verde apareciendo solo aquí se leería como un control
         // de otra familia.
@@ -146,7 +146,7 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
         'movil:min-h-[42px]',
         plegada ? 'justify-center px-0' : 'px-2',
       )}
-      disparador={() => <AccountTrigger plegada={plegada} />}
+      trigger={() => <AccountTrigger plegada={plegada} />}
     >
       {(cerrar) => <AccountOptions cerrar={cerrar} />}
     </Menu>
@@ -189,26 +189,26 @@ function AccountOptions({ cerrar }: { cerrar: () => void }) {
 
   return (
     <>
-      <MenuOpcion Icono={UserCog} onClick={() => ir('/mi-cuenta')}>
+      <MenuOption Icon={UserCog} onClick={() => ir('/mi-cuenta')}>
         {t('shell.account.myAccount')}
-      </MenuOpcion>
+      </MenuOption>
 
-      <MenuOpcion Icono={Tags} onClick={() => ir('/centros-de-costos')}>
+      <MenuOption Icon={Tags} onClick={() => ir('/centros-de-costos')}>
         {t('shell.sections.costCenters')}
-      </MenuOpcion>
+      </MenuOption>
 
       {esAdmin && (
         <>
-          <MenuOpcion Icono={ShieldCheck} onClick={() => ir('/administracion')}>
+          <MenuOption Icon={ShieldCheck} onClick={() => ir('/administracion')}>
             {t('shell.sections.users')}
-          </MenuOpcion>
-          <MenuOpcion Icono={ScrollText} onClick={() => ir('/administracion/bitacora')}>
+          </MenuOption>
+          <MenuOption Icon={ScrollText} onClick={() => ir('/administracion/bitacora')}>
             {t('shell.sections.auditLog')}
-          </MenuOpcion>
+          </MenuOption>
         </>
       )}
 
-      <MenuSeparador />
+      <MenuSeparator />
 
       {/*
         ── Ver la aplicación como la ve quien no administra nada ────────
@@ -220,8 +220,8 @@ function AccountOptions({ cerrar }: { cerrar: () => void }) {
         ninguna parte, cambia cómo se ve todo lo demás.
       */}
       {esAdminDeVerdad && (
-        <MenuOpcion
-          Icono={viendoComoUsuario ? ShieldCheck : Eye}
+        <MenuOption
+          Icon={viendoComoUsuario ? ShieldCheck : Eye}
           onClick={() => {
             cerrar();
             verComoUsuario(!viendoComoUsuario);
@@ -232,12 +232,12 @@ function AccountOptions({ cerrar }: { cerrar: () => void }) {
           }}
         >
           {viendoComoUsuario ? t('common.backToAdmin') : t('shell.account.viewAsUser')}
-        </MenuOpcion>
+        </MenuOption>
       )}
 
-      <MenuOpcion Icono={LogOut} peligro onClick={() => void salir()}>
+      <MenuOption Icon={LogOut} isDestructive onClick={() => void salir()}>
         {t('shell.account.signOut')}
-      </MenuOpcion>
+      </MenuOption>
     </>
   );
 }

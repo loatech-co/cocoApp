@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { type Receipt } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
-import { BotonOscuro, LecturaDeMandos } from '@/shared/ui/molecules/overlay-control';
+import { OverlayButton, ControlReadout } from '@/shared/ui/molecules/overlay-control';
 
 /** Los saltos del zoom. Fijos y pocos: un control continuo pide precisión que
     nadie quiere darle a un recibo. */
@@ -80,12 +80,12 @@ export function ViewerHeader({
         )}
         {/* Poder quitar lo que se acaba de subir por error. Sin esto, una
             foto movida se queda para siempre colgando del movimiento. */}
-        <BotonOscuro onClick={onBorrar} etiqueta={t('transactions.supports.deleteTitle')}>
+        <OverlayButton onClick={onBorrar} label={t('transactions.supports.deleteTitle')}>
           <Trash2 className="size-4" aria-hidden="true" />
-        </BotonOscuro>
-        <BotonOscuro onClick={onCerrar} etiqueta={t('common.close')}>
+        </OverlayButton>
+        <OverlayButton onClick={onCerrar} label={t('common.close')}>
           <X className="size-4" aria-hidden="true" />
-        </BotonOscuro>
+        </OverlayButton>
       </div>
     </div>
   );
@@ -102,10 +102,10 @@ export function ViewerArrow({
   onClick: () => void;
 }) {
   return (
-    <BotonOscuro
+    <OverlayButton
       onClick={onClick}
-      deshabilitado={deshabilitado}
-      etiqueta={
+      disabled={deshabilitado}
+      label={
         hacia === 'anterior'
           ? t('transactions.supports.previousReceipt')
           : t('transactions.supports.nextReceipt')
@@ -117,7 +117,7 @@ export function ViewerArrow({
       ) : (
         <ChevronRight className="size-5" aria-hidden="true" />
       )}
-    </BotonOscuro>
+    </OverlayButton>
   );
 }
 
@@ -153,25 +153,25 @@ export function ViewerControls({ vista }: { vista: ReturnType<typeof useViewerZo
 function ZoomControls({ zoom, escala, onZoom }: ZoomProps) {
   return (
     <div className="flex items-center gap-1 rounded-full bg-sala-tinta/10 px-1">
-      <BotonOscuro
+      <OverlayButton
         onClick={() => onZoom(-1)}
-        deshabilitado={zoom === 0}
-        etiqueta={t('transactions.supports.zoomOut')}
+        disabled={zoom === 0}
+        label={t('transactions.supports.zoomOut')}
       >
         <Minus className="size-4" aria-hidden="true" />
-      </BotonOscuro>
+      </OverlayButton>
       {/* El porcentaje se pulsa para volver al tamaño normal: es donde todo el
           mundo intenta pulsar cuando se ha perdido ampliando. */}
-      <LecturaDeMandos ancho="zoom" onClick={() => onZoom(null)}>
+      <ControlReadout width="zoom" onClick={() => onZoom(null)}>
         {Math.round(escala * 100)} %
-      </LecturaDeMandos>
-      <BotonOscuro
+      </ControlReadout>
+      <OverlayButton
         onClick={() => onZoom(1)}
-        deshabilitado={zoom === ZOOMS.length - 1}
-        etiqueta={t('transactions.supports.zoomIn')}
+        disabled={zoom === ZOOMS.length - 1}
+        label={t('transactions.supports.zoomIn')}
       >
         <Plus className="size-4" aria-hidden="true" />
-      </BotonOscuro>
+      </OverlayButton>
     </div>
   );
 }
@@ -179,23 +179,23 @@ function ZoomControls({ zoom, escala, onZoom }: ZoomProps) {
 function PageControls({ pagina, paginas, onPagina }: PageProps) {
   return (
     <div className="flex items-center gap-1 rounded-full bg-sala-tinta/10 px-1">
-      <BotonOscuro
+      <OverlayButton
         onClick={() => onPagina((p) => p - 1)}
-        deshabilitado={pagina === 1}
-        etiqueta={t('transactions.supports.previousPage')}
+        disabled={pagina === 1}
+        label={t('transactions.supports.previousPage')}
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
-      </BotonOscuro>
-      <LecturaDeMandos ancho="paginas">
+      </OverlayButton>
+      <ControlReadout width="pages">
         {t('transactions.supports.pageShort', { page: pagina, pages: paginas })}
-      </LecturaDeMandos>
-      <BotonOscuro
+      </ControlReadout>
+      <OverlayButton
         onClick={() => onPagina((p) => p + 1)}
-        deshabilitado={pagina === paginas}
-        etiqueta={t('transactions.supports.nextPage')}
+        disabled={pagina === paginas}
+        label={t('transactions.supports.nextPage')}
       >
         <ChevronRight className="size-4" aria-hidden="true" />
-      </BotonOscuro>
+      </OverlayButton>
     </div>
   );
 }

@@ -117,42 +117,42 @@ function ClassificationCascade(props: ClassificationProps) {
       <Field label={t('centers.levels.category')} id="mov-categoria">
         <Combo
           id="mov-categoria"
-          etiqueta={t('centers.levels.category')}
-          valor={categoria ? String(categoria.id) : ''}
-          opciones={(centro?.children ?? []).map((g) => ({
-            valor: String(g.id),
-            etiqueta: g.name,
+          label={t('centers.levels.category')}
+          value={categoria ? String(categoria.id) : ''}
+          options={(centro?.children ?? []).map((g) => ({
+            value: String(g.id),
+            label: g.name,
           }))}
-          deshabilitado={estatico || !centro}
-          vacio={
+          disabled={estatico || !centro}
+          emptyLabel={
             centro
               ? t('transactions.classification.notChosen')
               : t('transactions.classification.chooseCostCenterFirst')
           }
-          creando={creando}
-          onCambiar={(v) => elegir(v === '' ? centro?.id : Number(v))}
-          onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
+          isCreating={creando}
+          onChange={(v) => elegir(v === '' ? centro?.id : Number(v))}
+          onCreate={(nombre) => void crearDentro(nombre, centro?.id)}
         />
       </Field>
 
       <Field label={t('transactions.fields.concept')} id="mov-concepto-cascada">
         <Combo
           id="mov-concepto-cascada"
-          etiqueta={t('transactions.fields.concept')}
-          valor={concepto ? String(concepto.id) : ''}
-          opciones={(categoria?.children ?? []).map((c) => ({
-            valor: String(c.id),
-            etiqueta: c.name,
+          label={t('transactions.fields.concept')}
+          value={concepto ? String(concepto.id) : ''}
+          options={(categoria?.children ?? []).map((c) => ({
+            value: String(c.id),
+            label: c.name,
           }))}
-          deshabilitado={estatico || !categoria}
-          vacio={
+          disabled={estatico || !categoria}
+          emptyLabel={
             categoria
               ? t('transactions.classification.notChosen')
               : t('transactions.classification.chooseCategoryFirst')
           }
-          creando={creando}
-          onCambiar={(v) => elegir(v === '' ? categoria?.id : Number(v))}
-          onCrear={(nombre) => void crearDentro(nombre, categoria?.id)}
+          isCreating={creando}
+          onChange={(v) => elegir(v === '' ? categoria?.id : Number(v))}
+          onCreate={(nombre) => void crearDentro(nombre, categoria?.id)}
         />
       </Field>
     </>
@@ -175,11 +175,11 @@ function CostCenterField({
     <Field label={t('centers.levels.costCenter')} id="mov-centro">
       <Combo
         id="mov-centro"
-        etiqueta={t('centers.levels.costCenter')}
-        valor={centro ? String(centro.id) : ''}
-        opciones={arbol.map((c) => ({ valor: String(c.id), etiqueta: c.name }))}
-        deshabilitado={estatico}
-        onCambiar={(v) => onElegir(v === '' ? undefined : Number(v))}
+        label={t('centers.levels.costCenter')}
+        value={centro ? String(centro.id) : ''}
+        options={arbol.map((c) => ({ value: String(c.id), label: c.name }))}
+        disabled={estatico}
+        onChange={(v) => onElegir(v === '' ? undefined : Number(v))}
       />
     </Field>
   );

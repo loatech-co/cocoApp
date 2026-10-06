@@ -12,7 +12,7 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { CollapsibleHeader } from '@/shared/ui/atoms/collapsible-header';
-import { Menu, MenuOpcion } from '@/shared/ui/molecules/menu';
+import { Menu, MenuOption } from '@/shared/ui/molecules/menu';
 
 /** Un centro de costos: su fila de cabecera y, desplegadas, sus categorías. */
 export function Centro({ centro, arbol }: { centro: CategoryTree; arbol: CategoryTree[] }) {
@@ -125,34 +125,34 @@ function MenuDelCentro({
 
   return (
     <Menu
-      etiqueta={t('centers.card.actionsOf', { name: centro.name })}
-      Icono={EllipsisVertical}
-      soloIcono
-      variante="ghost"
+      label={t('centers.card.actionsOf', { name: centro.name })}
+      Icon={EllipsisVertical}
+      isIconOnly
+      variant="ghost"
     >
       {(cerrar) => (
         <>
           {/* Renombrar. No existía por ningún camino: un centro con el
               nombre mal escrito había que borrarlo entero —con sus
               categorías y sus conceptos— y volver a armarlo. */}
-          <MenuOpcion Icono={Pencil} onClick={trasCerrar(cerrar, onEditar)}>
+          <MenuOption Icon={Pencil} onClick={trasCerrar(cerrar, onEditar)}>
             {t('common.edit')}
-          </MenuOpcion>
+          </MenuOption>
 
           {/* Poder cambiarlo después, no solo al crearlo: los centros que
               ya existían nacieron antes de que esto existiera. Se queda
               aquí además de en la ficha porque es de un solo golpe. */}
-          <MenuOpcion
-            Icono={centro.isStatic ? LockOpen : Lock}
+          <MenuOption
+            Icon={centro.isStatic ? LockOpen : Lock}
             onClick={trasCerrar(cerrar, () =>
               actualizar.mutate({ id: centro.id, cambios: { isStatic: !centro.isStatic } }),
             )}
           >
             {centro.isStatic ? t('centers.card.makeDynamic') : t('centers.card.makeStatic')}
-          </MenuOpcion>
-          <MenuOpcion Icono={Trash2} peligro onClick={trasCerrar(cerrar, onEliminar)}>
+          </MenuOption>
+          <MenuOption Icon={Trash2} isDestructive onClick={trasCerrar(cerrar, onEliminar)}>
             {t('common.delete')}
-          </MenuOpcion>
+          </MenuOption>
         </>
       )}
     </Menu>

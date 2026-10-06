@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { FOCO_DEL_CAMPO, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
+import { FIELD_FOCUS, useInsideField } from '@/shared/ui/foundations/field';
 
 /**
  * A multi-line field.
@@ -29,7 +29,7 @@ import { FOCO_DEL_CAMPO, useDentroDeUnCampo } from '@/shared/ui/foundations/fiel
 export function Textarea({ className, placeholder, ...props }: ComponentProps<'textarea'>) {
   // Inside a `Field`, the first line moves down to make room for the
   // label; outside, the padding is symmetric.
-  const isInField = useDentroDeUnCampo();
+  const isInField = useInsideField();
 
   return (
     <textarea
@@ -45,7 +45,7 @@ export function Textarea({ className, placeholder, ...props }: ComponentProps<'t
           ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
           : 'placeholder:text-muted-foreground',
         'transition-colors hover:border-ring/40',
-        FOCO_DEL_CAMPO,
+        FIELD_FOCUS,
         'disabled:cursor-not-allowed disabled:opacity-50',
         'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive',
         'escritorio:text-sm',

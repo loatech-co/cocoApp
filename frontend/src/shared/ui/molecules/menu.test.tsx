@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CONSULTA_MOVIL } from '@/shared/lib/movil';
 
-import { Menu, MenuOpcion, MenuSeparador, MenuTitulo } from './menu';
+import { Menu, MenuOption, MenuSeparator, MenuTitle } from './menu';
 
 const matchMediaOriginal = window.matchMedia.bind(window);
 
@@ -25,33 +25,33 @@ function onPhone(): void {
 }
 
 function renderMenu(props: Partial<Parameters<typeof Menu>[0]> = {}) {
-  const onElegir = vi.fn();
+  const onSelect = vi.fn();
   render(
     <div>
       <p>Outside</p>
-      <Menu etiqueta="Ordenar" {...props}>
-        {(cerrar) => (
+      <Menu label="Ordenar" {...props}>
+        {(close) => (
           <>
-            <MenuTitulo>Orden</MenuTitulo>
-            <MenuOpcion
-              elegida
+            <MenuTitle>Orden</MenuTitle>
+            <MenuOption
+              isSelected
               onClick={() => {
-                onElegir('fecha');
-                cerrar();
+                onSelect('fecha');
+                close();
               }}
             >
               Fecha
-            </MenuOpcion>
-            <MenuSeparador />
-            <MenuOpcion nota="A-Z" onClick={() => onElegir('nombre')}>
+            </MenuOption>
+            <MenuSeparator />
+            <MenuOption note="A-Z" onClick={() => onSelect('nombre')}>
               Nombre
-            </MenuOpcion>
+            </MenuOption>
           </>
         )}
       </Menu>
     </div>,
   );
-  return { onElegir, trigger: screen.getByRole('button', { name: /Ordenar/ }) };
+  return { onSelect, trigger: screen.getByRole('button', { name: /Ordenar/ }) };
 }
 
 describe('Menu', () => {
@@ -120,22 +120,22 @@ describe('Menu', () => {
   });
 
   it('hands its children a function that closes it', () => {
-    const { trigger, onElegir } = renderMenu();
+    const { trigger, onSelect } = renderMenu();
     fireEvent.click(trigger);
 
     fireEvent.click(screen.getByRole('menuitem', { name: /Fecha/ }));
 
-    expect(onElegir).toHaveBeenCalledWith('fecha');
+    expect(onSelect).toHaveBeenCalledWith('fecha');
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
   it('uses the listbox role when it is a list and the dialog role when it is a panel', () => {
     render(
       <>
-        <Menu etiqueta="Lista" tipo="lista">
+        <Menu label="Lista" kind="list">
           <span>a</span>
         </Menu>
-        <Menu etiqueta="Panel" tipo="panel">
+        <Menu label="Panel" kind="panel">
           <span>b</span>
         </Menu>
       </>,
@@ -150,7 +150,7 @@ describe('Menu', () => {
 
   it('names an icon-only trigger with its label', () => {
     render(
-      <Menu etiqueta="Filtrar" Icono={Filter} soloIcono variante="ghost">
+      <Menu label="Filtrar" Icon={Filter} isIconOnly variant="ghost">
         <span>x</span>
       </Menu>,
     );
@@ -162,7 +162,7 @@ describe('Menu', () => {
 
   it('marks the trigger pressed while it is active', () => {
     render(
-      <Menu etiqueta="Filtrar" activo>
+      <Menu label="Filtrar" isActive>
         <span>x</span>
       </Menu>,
     );
@@ -175,9 +175,9 @@ describe('Menu', () => {
   it('renders a custom trigger that reports whether it is open', () => {
     render(
       <Menu
-        etiqueta="Cuenta"
-        idDisparador="cuenta"
-        disparador={({ abierto }) => <span>{abierto ? 'abierto' : 'cerrado'}</span>}
+        label="Cuenta"
+        triggerId="cuenta"
+        trigger={({ isOpen }) => <span>{isOpen ? 'abierto' : 'cerrado'}</span>}
       >
         <span>x</span>
       </Menu>,
@@ -199,13 +199,13 @@ describe('Menu', () => {
 
     render(
       <>
-        <Menu etiqueta="Mismo ancho" flotante>
+        <Menu label="Mismo ancho" isFloating>
           <span>a</span>
         </Menu>
-        <Menu etiqueta="Derecha" flotante anchoPropio>
+        <Menu label="Derecha" isFloating hasOwnWidth>
           <span>b</span>
         </Menu>
-        <Menu etiqueta="Izquierda" flotante anchoPropio alineado="izquierda">
+        <Menu label="Izquierda" isFloating hasOwnWidth align="left">
           <span>c</span>
         </Menu>
       </>,
@@ -226,7 +226,7 @@ describe('Menu', () => {
 
   it('opens upwards when asked to', () => {
     render(
-      <Menu etiqueta="Arriba" direccion="arriba" alineado="izquierda">
+      <Menu label="Arriba" direction="up" align="left">
         <span>a</span>
       </Menu>,
     );
@@ -253,7 +253,7 @@ describe('Menu', () => {
   it('keeps a list hanging from its trigger on a phone', () => {
     onPhone();
     render(
-      <Menu etiqueta="Lista" tipo="lista">
+      <Menu label="Lista" kind="list">
         <span>a</span>
       </Menu>,
     );
@@ -268,9 +268,9 @@ describe('MenuOpcion', () => {
   it('cannot be chosen while disabled', () => {
     const onClick = vi.fn();
     render(
-      <MenuOpcion deshabilitada onClick={onClick}>
+      <MenuOption disabled onClick={onClick}>
         Exportar
-      </MenuOpcion>,
+      </MenuOption>,
     );
 
     const option = screen.getByRole('menuitem', { name: 'Exportar' });
@@ -282,9 +282,9 @@ describe('MenuOpcion', () => {
 
   it('paints a dangerous option in the error colour', () => {
     render(
-      <MenuOpcion peligro onClick={() => {}}>
+      <MenuOption isDestructive onClick={() => {}}>
         Eliminar
-      </MenuOpcion>,
+      </MenuOption>,
     );
 
     expect(screen.getByRole('menuitem', { name: 'Eliminar' }).className).toContain(
@@ -294,9 +294,9 @@ describe('MenuOpcion', () => {
 
   it('marks the chosen option with muted, not with the accent', () => {
     render(
-      <MenuOpcion elegida onClick={() => {}}>
+      <MenuOption isSelected onClick={() => {}}>
         Fecha
-      </MenuOpcion>,
+      </MenuOption>,
     );
 
     expect(screen.getByRole('menuitem', { name: 'Fecha' }).className).toContain('bg-muted');

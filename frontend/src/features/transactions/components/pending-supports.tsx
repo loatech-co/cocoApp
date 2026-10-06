@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { t } from '@/shared/lib/i18n';
 import { useObjectUrls } from '@/shared/lib/object-url';
 import { Button } from '@/shared/ui/atoms/button';
-import { BotonOscuro } from '@/shared/ui/molecules/overlay-control';
+import { OverlayButton } from '@/shared/ui/molecules/overlay-control';
 
 import { Soltar } from './support-drop-zone';
 import { SupportPager } from './support-pager';
@@ -161,22 +161,22 @@ function PendingActions({
     <>
       <SupportPager index={indice} total={total} onGo={onIr} />
 
-      <BotonOscuro etiqueta={t('transactions.supports.addAnother')} onClick={onAñadir}>
+      <OverlayButton label={t('transactions.supports.addAnother')} onClick={onAñadir}>
         <Plus className="size-4" aria-hidden="true" />
-      </BotonOscuro>
+      </OverlayButton>
 
       {/* Aquí no se pregunta antes de quitar: lo que se va es un archivo que
           todavía no se ha guardado en ninguna parte, así que volver a ponerlo
           es arrastrarlo otra vez. */}
-      <BotonOscuro
-        etiqueta={t('transactions.supports.removeThis')}
+      <OverlayButton
+        label={t('transactions.supports.removeThis')}
         onClick={() => {
           onQuitar(indice);
           if (indice > 0) onIr(indice - 1);
         }}
       >
         <Trash2 className="size-4" aria-hidden="true" />
-      </BotonOscuro>
+      </OverlayButton>
     </>
   );
 }

@@ -7,24 +7,24 @@ import { Modal } from './modal';
 afterEach(cleanup);
 
 function renderModal(props: Partial<Parameters<typeof Modal>[0]> = {}) {
-  const onCerrar = vi.fn();
+  const onClose = vi.fn();
   const result = render(
-    <Modal abierta titulo="Nueva cuenta" onCerrar={onCerrar} {...props}>
+    <Modal isOpen title="Nueva cuenta" onClose={onClose} {...props}>
       <p>Contenido</p>
     </Modal>,
   );
-  return { onCerrar, ...result };
+  return { onClose, ...result };
 }
 
 describe('Modal', () => {
   it('renders nothing while closed', () => {
-    renderModal({ abierta: false });
+    renderModal({ isOpen: false });
 
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('is a modal dialog named after its title', () => {
-    renderModal({ ayuda: 'Una cuenta de banco o de efectivo.' });
+    renderModal({ description: 'Una cuenta de banco o de efectivo.' });
 
     const dialog = screen.getByRole('dialog', { name: 'Nueva cuenta' });
     expect(dialog.getAttribute('aria-modal')).toBe('true');
@@ -34,7 +34,7 @@ describe('Modal', () => {
   });
 
   it('places the extra actions next to the close button', () => {
-    renderModal({ acciones: <button type="button">Eliminar</button> });
+    renderModal({ actions: <button type="button">Eliminar</button> });
 
     const close = screen.getByRole('button', { name: 'Cerrar' });
     const remove = screen.getByRole('button', { name: 'Eliminar' });
@@ -42,42 +42,42 @@ describe('Modal', () => {
   });
 
   it('closes with its close button', () => {
-    const { onCerrar } = renderModal();
+    const { onClose } = renderModal();
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
 
-    expect(onCerrar).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('closes with Escape', () => {
-    const { onCerrar } = renderModal();
+    const { onClose } = renderModal();
 
     fireEvent.keyDown(document, { key: 'Escape' });
     fireEvent.keyDown(document, { key: 'Tab' });
 
-    expect(onCerrar).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('closes when the veil is pressed, not when the panel is', () => {
-    const { onCerrar } = renderModal();
+    const { onClose } = renderModal();
 
     fireEvent.mouseDown(screen.getByText('Contenido'));
-    expect(onCerrar).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
 
     fireEvent.mouseDown(screen.getByRole('dialog'));
-    expect(onCerrar).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('stops listening for Escape once it closes', () => {
-    const { onCerrar, rerender } = renderModal();
+    const { onClose, rerender } = renderModal();
 
     rerender(
-      <Modal abierta={false} titulo="Nueva cuenta" onCerrar={onCerrar}>
+      <Modal isOpen={false} title="Nueva cuenta" onClose={onClose}>
         <p>Contenido</p>
       </Modal>,
     );
     fireEvent.keyDown(document, { key: 'Escape' });
 
-    expect(onCerrar).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

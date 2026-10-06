@@ -66,7 +66,7 @@ const files = sources(root).filter((r) => !r.endsWith('page-header.tsx'));
 const relative = (path: string): string => path.split('/src/')[1]!;
 
 /**
- * The content of `actions={…}` (and `acciones={…}`), counting braces.
+ * The content of `actions={…}`, counting braces.
  *
  * Counting them is needed because inside there is JSX with its own braces —an
  * `onClick={() => …}`, an `aria-label={…}`— and cutting at the first `}` would leave
@@ -74,9 +74,8 @@ const relative = (path: string): string => path.split('/src/')[1]!;
  */
 function actionBlocks(code: string): string[] {
   const blocks: string[] = [];
-  // `actions` is the page header's; `acciones` is still the modal header's
-  // until its own slice renames it (7.2-k). Both are checked, as before.
-  const OPENING = /\b(?:actions|acciones)=\{/g;
+  // The page header and the modal header both call the slot `actions`.
+  const OPENING = /\bactions=\{/g;
 
   for (const match of code.matchAll(OPENING)) {
     const from = match.index;

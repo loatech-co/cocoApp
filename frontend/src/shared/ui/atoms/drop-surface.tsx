@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { REALCE_DE_SUPERFICIE } from '@/shared/ui/foundations/superficie';
+import { SURFACE_HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
  * The dashed box where files are dropped or clicked to pick them.
@@ -46,7 +46,7 @@ export function DropSurface({
           ? 'cursor-wait border-border text-muted-foreground'
           : isOver
             ? 'border-acento-tinta bg-accent text-accent-foreground'
-            : cn('border-border text-muted-foreground', REALCE_DE_SUPERFICIE),
+            : cn('border-border text-muted-foreground', SURFACE_HIGHLIGHT),
       )}
     >
       {/* No ring of its own: `index.css` resolves the focus of a button for

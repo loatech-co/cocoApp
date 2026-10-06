@@ -11,14 +11,14 @@ import { PANEL_ROW_CLASS } from '@/shared/ui/atoms/panel-row';
  * allí—. Un componente y no una copia: la primera copia aprendería a marcar
  * algo que la otra no.
  */
-export function FilaDeEnlace({
-  Icono,
-  a,
-  onIr,
+export function LinkRow({
+  Icon,
+  to,
+  onNavigate,
   children,
 }: {
-  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  a: string;
+  Icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  to: string;
   /**
    * Cerrar la hoja es de la fila y no del armazón.
    *
@@ -28,12 +28,12 @@ export function FilaDeEnlace({
    * del sitio al que acababa de llevar. Fuera de una hoja no hay nada que
    * cerrar, y por eso es opcional.
    */
-  onIr?: () => void;
+  onNavigate?: () => void;
   children: string;
 }) {
   return (
-    <Link to={a} onClick={onIr} className={PANEL_ROW_CLASS}>
-      <Icono className="size-4 shrink-0 opacity-70" aria-hidden={true} />
+    <Link to={to} onClick={onNavigate} className={PANEL_ROW_CLASS}>
+      <Icon className="size-4 shrink-0 opacity-70" aria-hidden={true} />
       <span className="min-w-0 flex-1 truncate">{children}</span>
     </Link>
   );

@@ -7,7 +7,7 @@ import { type Transaction } from '@/shared/api/generated/model';
 import { DEFAULT_CURRENCY } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
-import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
+import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 
 import { MovementFields } from './movement-fields';
 import { MovementReadColumn } from './movement-read-view';
@@ -99,7 +99,7 @@ export function MovementSheetForm({
           salir ya está la equis de la esquina. Un botón "Cerrar" debajo de
           todo es una segunda puerta a la misma salida. */}
       {ficha.editable && (
-        <PieDeModal>
+        <ModalFooter>
           <Button type="button" variant="outline" onClick={onCancelar}>
             {t('common.cancel')}
           </Button>
@@ -107,7 +107,7 @@ export function MovementSheetForm({
             {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
             {movimiento ? t('common.save') : t('transactions.sheet.register')}
           </Button>
-        </PieDeModal>
+        </ModalFooter>
       )}
     </form>
   );

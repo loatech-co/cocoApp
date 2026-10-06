@@ -5,10 +5,11 @@ import { DIAS_DE_LA_SEMANA, diaLargo, MESES_LARGOS } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
-const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
-const utc = (anio: number, mes: number, dia: number): Date => new Date(Date.UTC(anio, mes, dia));
+const toIso = (date: Date): string => date.toISOString().slice(0, 10);
+const utc = (year: number, month: number, day: number): Date =>
+  new Date(Date.UTC(year, month, day));
 
 /**
  * Las celdas de un mes, alineadas a la rejilla de siete columnas.
@@ -17,36 +18,36 @@ const utc = (anio: number, mes: number, dia: number): Date => new Date(Date.UTC(
  * vecino: un día gris que sí se puede pulsar confunde sobre qué mes se está
  * mirando, y uno que no se puede pulsar es ruido.
  */
-export function celdasDelMes(anio: number, mes: number): (string | null)[] {
+export function monthCells(year: number, month: number): (string | null)[] {
   // getUTCDay() cuenta desde el domingo; con +6 %7 el lunes pasa a ser 0.
-  const hueco = (utc(anio, mes, 1).getUTCDay() + 6) % 7;
-  const total = utc(anio, mes + 1, 0).getUTCDate();
+  const blanks = (utc(year, month, 1).getUTCDay() + 6) % 7;
+  const total = utc(year, month + 1, 0).getUTCDate();
 
-  const celdas: (string | null)[] = Array.from({ length: hueco }, () => null);
-  for (let dia = 1; dia <= total; dia += 1) celdas.push(aISO(utc(anio, mes, dia)));
-  while (celdas.length % 7 !== 0) celdas.push(null);
+  const cells: (string | null)[] = Array.from({ length: blanks }, () => null);
+  for (let day = 1; day <= total; day += 1) cells.push(toIso(utc(year, month, day)));
+  while (cells.length % 7 !== 0) cells.push(null);
 
-  return celdas;
+  return cells;
 }
 
-export interface MesVisible {
-  anio: number;
-  mes: number;
+export interface VisibleMonth {
+  year: number;
+  month: number;
 }
 
-export const mesDeISO = (iso: string): MesVisible => ({
-  anio: Number(iso.slice(0, 4)),
-  mes: Number(iso.slice(5, 7)) - 1,
+export const monthOfIso = (iso: string): VisibleMonth => ({
+  year: Number(iso.slice(0, 4)),
+  month: Number(iso.slice(5, 7)) - 1,
 });
 
-interface CalendarioProps {
-  desde?: string | undefined;
-  hasta?: string | undefined;
+interface CalendarProps {
+  from?: string | undefined;
+  to?: string | undefined;
   /** El mes que se muestra. Sin esto, el propio calendario lo lleva. */
-  vista?: MesVisible;
-  onVista?: (mes: MesVisible) => void;
-  onDia: (iso: string) => void;
-  onSobrevolar?: (iso: string | null) => void;
+  view?: VisibleMonth;
+  onViewChange?: (month: VisibleMonth) => void;
+  onSelectDay: (iso: string) => void;
+  onHover?: (iso: string | null) => void;
   className?: string;
 }
 
@@ -63,27 +64,27 @@ interface CalendarioProps {
  * `desde` y `hasta` iguales pintan un solo día; distintos, la banda entre los
  * dos. Por eso no hay un modo "rango" y un modo "día": hay dos extremos.
  */
-export function Calendario({
-  desde,
-  hasta,
-  vista,
-  onVista,
-  onDia,
-  onSobrevolar,
+export function Calendar({
+  from,
+  to,
+  view,
+  onViewChange,
+  onSelectDay,
+  onHover,
   className,
-}: CalendarioProps) {
-  const [propio, setPropio] = useState<MesVisible>(() =>
-    mesDeISO(desde ?? hasta ?? aISO(new Date())),
+}: CalendarProps) {
+  const [ownView, setOwnView] = useState<VisibleMonth>(() =>
+    monthOfIso(from ?? to ?? toIso(new Date())),
   );
-  const actual = vista ?? propio;
-  const cambiarVista = onVista ?? setPropio;
+  const current = view ?? ownView;
+  const changeView = onViewChange ?? setOwnView;
 
-  const celdas = celdasDelMes(actual.anio, actual.mes);
-  const hoy = aISO(new Date());
+  const cells = monthCells(current.year, current.month);
+  const today = toIso(new Date());
 
-  function moverMes(pasos: number): void {
-    const d = utc(actual.anio, actual.mes + pasos, 1);
-    cambiarVista({ anio: d.getUTCFullYear(), mes: d.getUTCMonth() });
+  function moveMonth(steps: number): void {
+    const d = utc(current.year, current.month + steps, 1);
+    changeView({ year: d.getUTCFullYear(), month: d.getUTCMonth() });
   }
 
   return (
@@ -117,17 +118,17 @@ export function Calendario({
         ningún relleno.
       */}
       <div className="mx-auto w-[294px] max-w-full">
-        <MonthHeader actual={actual} moverMes={moverMes} />
+        <MonthHeader current={current} moveMonth={moveMonth} />
 
         <WeekdayRow />
 
         <MonthDays
-          celdas={celdas}
-          desde={desde}
-          hasta={hasta}
-          hoy={hoy}
-          onDia={onDia}
-          onSobrevolar={onSobrevolar}
+          cells={cells}
+          from={from}
+          to={to}
+          today={today}
+          onSelectDay={onSelectDay}
+          onHover={onHover}
         />
       </div>
     </div>
@@ -138,19 +139,19 @@ interface DayCellProps {
   iso: string;
   /** Su posición en la rejilla: decide dónde se curva la banda. */
   i: number;
-  desde: string | undefined;
-  hasta: string | undefined;
-  hoy: string;
-  onDia: (iso: string) => void;
-  onSobrevolar: ((iso: string | null) => void) | undefined;
+  from: string | undefined;
+  to: string | undefined;
+  today: string;
+  onSelectDay: (iso: string) => void;
+  onHover: ((iso: string | null) => void) | undefined;
 }
 
 /** Un día del mes: su banda de rango, su círculo y su número. */
-function DayCell({ iso, i, desde, hasta, hoy, onDia, onSobrevolar }: DayCellProps) {
-  const dentro = desde !== undefined && hasta !== undefined && iso >= desde && iso <= hasta;
-  const esInicio = iso === desde;
-  const esFin = iso === hasta;
-  const extremo = esInicio || esFin;
+function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps) {
+  const isInRange = from !== undefined && to !== undefined && iso >= from && iso <= to;
+  const isStart = iso === from;
+  const isEnd = iso === to;
+  const isEdge = isStart || isEnd;
 
   return (
     <div
@@ -164,27 +165,27 @@ function DayCell({ iso, i, desde, hasta, hoy, onDia, onSobrevolar }: DayCellProp
         // que está señalado. Llevaba además un `dark:bg-white/12`
         // encima: un blanco inventado que no sale de ningún token y
         // que en oscuro pintaba la banda de gris en vez de teal.
-        dentro && !extremo && 'bg-accent',
-        dentro && extremo && desde !== hasta && 'bg-accent',
+        isInRange && !isEdge && 'bg-accent',
+        isInRange && isEdge && from !== to && 'bg-accent',
         // Las puntas se redondean también al principio y al final de
         // cada fila, o la banda quedaría cortada a ras contra el borde.
-        (esInicio || i % 7 === 0) && 'rounded-l-full',
-        (esFin || i % 7 === 6) && 'rounded-r-full',
+        (isStart || i % 7 === 0) && 'rounded-l-full',
+        (isEnd || i % 7 === 6) && 'rounded-r-full',
       )}
     >
       <button
         type="button"
-        onClick={() => onDia(iso)}
-        onMouseEnter={() => onSobrevolar?.(iso)}
+        onClick={() => onSelectDay(iso)}
+        onMouseEnter={() => onHover?.(iso)}
         aria-label={diaLargo(iso)}
-        aria-pressed={extremo}
+        aria-pressed={isEdge}
         className={cn(
           'size-full select-none rounded-full text-sm transition-colors',
-          extremo
+          isEdge
             ? 'bg-primary font-semibold text-primary-foreground hover:bg-primary/90'
-            : dentro
-              ? cn('text-foreground', REALCE)
-              : cn('text-muted-foreground', REALCE),
+            : isInRange
+              ? cn('text-foreground', HIGHLIGHT)
+              : cn('text-muted-foreground', HIGHLIGHT),
           // Hoy lleva anillo, no relleno: el relleno es de lo elegido y
           // competirían por significar lo mismo.
           //
@@ -193,8 +194,8 @@ function DayCell({ iso, i, desde, hasta, hoy, onDia, onSobrevolar }: DayCellProp
           // contra un relleno blanco, no para distinguir una casilla de
           // 40px entre otras cuarenta: el círculo de hoy estaba puesto
           // y no se encontraba.
-          iso === hoy &&
-            !extremo &&
+          iso === today &&
+            !isEdge &&
             'font-semibold text-foreground ring-1 ring-inset ring-acento-tinta/50',
         )}
       >
@@ -206,11 +207,11 @@ function DayCell({ iso, i, desde, hasta, hoy, onDia, onSobrevolar }: DayCellProp
 
 /** El mes a la vista, con las dos flechas que lo mueven. */
 function MonthHeader({
-  actual,
-  moverMes,
+  current,
+  moveMonth,
 }: {
-  actual: MesVisible;
-  moverMes: (pasos: number) => void;
+  current: VisibleMonth;
+  moveMonth: (steps: number) => void;
 }) {
   return (
     <div className="mb-2 flex items-center justify-between">
@@ -218,7 +219,7 @@ function MonthHeader({
         type="button"
         variant="ghost"
         size="sm-icon"
-        onClick={() => moverMes(-1)}
+        onClick={() => moveMonth(-1)}
         aria-label={t('ui.calendar.previousMonth')}
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
@@ -238,14 +239,14 @@ function MonthHeader({
         depende de ninguna excepción del selector.
       */}
       <span aria-live="polite" className="font-display text-sm font-semibold">
-        <span className="capitalize">{MESES_LARGOS[actual.mes]}</span>
-        {t('ui.calendar.monthOfYear', { year: actual.anio })}
+        <span className="capitalize">{MESES_LARGOS[current.month]}</span>
+        {t('ui.calendar.monthOfYear', { year: current.year })}
       </span>
       <Button
         type="button"
         variant="ghost"
         size="sm-icon"
-        onClick={() => moverMes(1)}
+        onClick={() => moveMonth(1)}
         aria-label={t('ui.calendar.nextMonth')}
       >
         <ChevronRight className="size-4" aria-hidden="true" />
@@ -256,18 +257,18 @@ function MonthHeader({
 
 /** Los días del mes, con los huecos de delante y de detrás. */
 function MonthDays({
-  celdas,
-  desde,
-  hasta,
-  hoy,
-  onDia,
-  onSobrevolar,
-}: Omit<DayCellProps, 'iso' | 'i'> & { celdas: (string | null)[] }) {
+  cells,
+  from,
+  to,
+  today,
+  onSelectDay,
+  onHover,
+}: Omit<DayCellProps, 'iso' | 'i'> & { cells: (string | null)[] }) {
   // Sin separación entre celdas: la banda del rango tiene que ser continua, y
   // un hueco la partiría en cuadritos sueltos.
   return (
-    <div className="grid grid-cols-7" onMouseLeave={() => onSobrevolar?.(null)}>
-      {celdas.map((iso, i) => {
+    <div className="grid grid-cols-7" onMouseLeave={() => onHover?.(null)}>
+      {cells.map((iso, i) => {
         if (iso === null) {
           // eslint-disable-next-line @eslint-react/no-array-index-key -- los huecos de la rejilla solo tienen su posición
           return <span key={`hueco-${i}`} className="aspect-square" />;
@@ -278,11 +279,11 @@ function MonthDays({
             key={iso}
             iso={iso}
             i={i}
-            desde={desde}
-            hasta={hasta}
-            hoy={hoy}
-            onDia={onDia}
-            onSobrevolar={onSobrevolar}
+            from={from}
+            to={to}
+            today={today}
+            onSelectDay={onSelectDay}
+            onHover={onHover}
           />
         );
       })}

@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 import { cn } from '@/shared/lib/utils';
 import { Tag } from '@/shared/ui/atoms/badge';
 import { IconChip, type ChipColor } from '@/shared/ui/atoms/icon-chip';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
  * Una opción de menú con su pastel de color y una línea de ayuda debajo. Hoy,
@@ -21,50 +21,50 @@ import { REALCE } from '@/shared/ui/foundations/superficie';
  * leer rápido —empiezan distinto pero se parecen en la forma— y "plata que
  * sale" contra "plata que entra" no se confunden nunca.
  */
-export function MenuOpcionDetallada({
-  Icono,
+export function MenuRichOption({
+  Icon,
   color,
-  titulo,
-  ayuda,
-  nota,
-  deshabilitada = false,
+  title,
+  description,
+  note,
+  disabled: isDisabled = false,
   onClick,
 }: {
-  Icono: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  Icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   color: ChipColor;
-  titulo: string;
-  ayuda: string;
+  title: string;
+  description: string;
   /** Por qué no se puede todavía, en una palabra. */
-  nota?: string;
-  deshabilitada?: boolean;
+  note?: string;
+  disabled?: boolean;
   onClick?: () => void;
 }) {
   return (
     <button
       type="button"
       role="menuitem"
-      disabled={deshabilitada}
-      aria-disabled={deshabilitada}
+      disabled={isDisabled}
+      aria-disabled={isDisabled}
       onClick={onClick}
       className={cn(
         'flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left transition-colors',
-        deshabilitada ? 'cursor-not-allowed opacity-50' : REALCE,
+        isDisabled ? 'cursor-not-allowed opacity-50' : HIGHLIGHT,
       )}
     >
-      <IconChip Icon={Icono} color={color} size="sm" />
+      <IconChip Icon={Icon} color={color} size="sm" />
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold">{titulo}</span>
-        <span className="block truncate text-xs text-muted-foreground">{ayuda}</span>
+        <span className="block truncate text-sm font-semibold">{title}</span>
+        <span className="block truncate text-xs text-muted-foreground">{description}</span>
       </span>
 
       {/* La misma etiqueta que en el resto de la app. Era un `<span>` con su
           propio redondeo, su propio relleno y un tamaño de letra a mano —11px,
           que no está en la escala—: tres decisiones repetidas para decir lo
           que `Etiqueta` ya dice. */}
-      {nota && (
+      {note && (
         <Tag tone="neutral" className="shrink-0 text-muted-foreground">
-          {nota}
+          {note}
         </Tag>
       )}
     </button>

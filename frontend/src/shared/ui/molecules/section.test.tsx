@@ -4,16 +4,16 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { BLOCK } from '@/shared/ui/atoms/block';
 
-import { Seccion } from './section';
+import { Section } from './section';
 
 afterEach(cleanup);
 
 describe('Seccion', () => {
   it('names the part with a heading above its content, inside a block', () => {
     const { container } = render(
-      <Seccion titulo="Soporte">
+      <Section title="Soporte">
         <p>contenido</p>
-      </Seccion>,
+      </Section>,
     );
 
     expect(screen.getByRole('heading', { level: 3, name: 'Soporte' })).toBeTruthy();
@@ -23,9 +23,9 @@ describe('Seccion', () => {
 
   it('leaves the content loose without a box and takes the spare height when it grows', () => {
     const { container } = render(
-      <Seccion titulo="Archivos" caja={false} crece>
+      <Section title="Archivos" isBoxed={false} shouldGrow>
         <p>contenido</p>
-      </Seccion>,
+      </Section>,
     );
 
     expect(screen.getByText('contenido').parentElement?.tagName).toBe('SECTION');

@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 
-import { Calendario } from './calendario';
+import { Calendar } from './calendar';
 import { Card } from '../atoms/card';
 
 function OneDay() {
   const [day, setDay] = useState('2026-10-05');
-  return <Calendario desde={day} hasta={day} onDia={setDay} />;
+  return <Calendar from={day} to={day} onSelectDay={setDay} />;
 }
 
 function Range() {
@@ -16,13 +16,13 @@ function Range() {
   });
   const choose = (iso: string) =>
     setRange(range.from && !range.to && iso >= range.from ? { ...range, to: iso } : { from: iso });
-  return <Calendario desde={range.from} hasta={range.to} onDia={choose} />;
+  return <Calendar from={range.from} to={range.to} onSelectDay={choose} />;
 }
 
 const meta = {
-  title: 'Molecules/Calendario',
-  component: Calendario,
-  args: { onDia: () => undefined },
+  title: 'Molecules/Calendar',
+  component: Calendar,
+  args: { onSelectDay: () => undefined },
   decorators: [
     (Story) => (
       <Card className="inline-block p-3">
@@ -30,7 +30,7 @@ const meta = {
       </Card>
     ),
   ],
-} satisfies Meta<typeof Calendario>;
+} satisfies Meta<typeof Calendar>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -41,7 +41,7 @@ export const SingleDay: Story = { render: () => <OneDay /> };
 /** Two ends paint a range. */
 export const DateRange: Story = { render: () => <Range /> };
 
-export const Empty: Story = { args: { vista: { anio: 2026, mes: 9 } } };
+export const Empty: Story = { args: { view: { year: 2026, month: 9 } } };
 
 export const FocusVisible: Story = {
   parameters: { pseudo: { focusVisible: ['button'] } },

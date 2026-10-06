@@ -10,7 +10,7 @@ import { formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Pager } from '@/shared/ui/atoms/pager';
-import { TablaPie, Td } from '@/shared/ui/molecules/tabla';
+import { TableFooter, Td } from '@/shared/ui/molecules/table';
 
 type Tabla = ReturnType<typeof useDashboardPage>['tabla'];
 
@@ -78,19 +78,19 @@ function Cuenta({ pagina, total }: { pagina: number; total: number | undefined }
 function pieDeLaTabla(datos: Tabla['movimientos']['data']): ReactNode {
   if (!datos || datos.data.length === 0) return undefined;
   return (
-    <TablaPie>
+    <TableFooter>
       <tr>
-        <Td fija divisor={false}>
+        <Td isSticky hasDivider={false}>
           {t('transactions.dashboard.total', { total: datos.meta.total })}
         </Td>
         <Td />
         <Td />
         <Td />
         <Td />
-        <Td alineado="derecha" className="tabular font-semibold text-expense">
+        <Td align="right" className="tabular font-semibold text-expense">
           {formatCOP(datos.meta.sumExpense)}
         </Td>
       </tr>
-    </TablaPie>
+    </TableFooter>
   );
 }

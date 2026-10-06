@@ -68,7 +68,7 @@ export function useMenuState(enHoja: boolean) {
 export function panelStyle(
   anclaje: Anclaje,
   anchoPropio: boolean,
-  alineado: 'izquierda' | 'derecha',
+  alineado: 'left' | 'right',
 ): CSSProperties {
   /*
     El alto, hasta el borde de abajo de la ventana y ni un píxel más.
@@ -102,7 +102,7 @@ export function panelStyle(
     El tope es siempre lo que queda hasta el borde opuesto: lo que se sale de
     la ventana no se puede pulsar.
   */
-  return alineado === 'derecha'
+  return alineado === 'right'
     ? {
         top: `${anclaje.top + 8}px`,
         right: `${anclaje.derecha}px`,

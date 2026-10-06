@@ -1,11 +1,7 @@
 import type { ComponentProps, ComponentType, ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import {
-  FOCO_DEL_CAMPO,
-  HUECO_DE_LA_ETIQUETA,
-  useDentroDeUnCampo,
-} from '@/shared/ui/foundations/field';
+import { FIELD_FOCUS, LABEL_GAP, useInsideField } from '@/shared/ui/foundations/field';
 
 /**
  * A text field.
@@ -54,7 +50,7 @@ export function Input({
 }) {
   const right = actions?.filter(Boolean) ?? [];
   // Inside a `Field`, the value moves down to make room for the label.
-  const isInField = useDentroDeUnCampo();
+  const isInField = useInsideField();
 
   const field = (
     <input
@@ -135,7 +131,7 @@ function inputClass(
     // disabled.
     'transition-colors hover:border-ring/40',
     // The why of the thickness and of `:focus-visible`, in `field.tsx`.
-    FOCO_DEL_CAMPO,
+    FIELD_FOCUS,
     'disabled:cursor-not-allowed disabled:opacity-50',
     'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive',
     // 16px below the breakpoint and 14 above it, and the breakpoint is the app's
@@ -148,7 +144,7 @@ function inputClass(
     hasIcon && 'pl-9',
     actions === 1 && 'pr-11',
     actions >= 2 && 'pr-19',
-    isInField && HUECO_DE_LA_ETIQUETA,
+    isInField && LABEL_GAP,
   );
 }
 

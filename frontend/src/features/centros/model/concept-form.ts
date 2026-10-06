@@ -43,11 +43,11 @@ export function initialRecurrence(concepto: CategoryTree | null | undefined): Re
 export function siblingCategories(
   arbol: CategoryTree[],
   concepto: CategoryTree | null | undefined,
-): { valor: string; etiqueta: string }[] {
+): { value: string; label: string }[] {
   return arbol.flatMap((centro) => {
     const categorias = centro.children ?? [];
     return categorias.some((g) => g.id === Number(concepto?.parentId))
-      ? categorias.map((g) => ({ valor: String(g.id), etiqueta: g.name }))
+      ? categorias.map((g) => ({ value: String(g.id), label: g.name }))
       : [];
   });
 }

@@ -9,20 +9,20 @@ import { describe, expect, it } from 'vitest';
  * flotante: el problema no está en un componente sino en quién escribe la
  * clase, y una clase escrita a mano no la ve nadie hasta que hay quince.
  */
-function fuentes(dir: string): string[] {
-  return readdirSync(dir).flatMap((nombre) => {
-    const ruta = join(dir, nombre);
-    if (statSync(ruta).isDirectory()) return fuentes(ruta);
-    return ruta.endsWith('.tsx') ? [ruta] : [];
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((entry) => {
+    const filePath = join(dir, entry);
+    if (statSync(filePath).isDirectory()) return sourceFiles(filePath);
+    return filePath.endsWith('.tsx') ? [filePath] : [];
   });
 }
 
-const archivos = fuentes(join(import.meta.dirname, '..', '..'));
-const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
+const files = sourceFiles(join(import.meta.dirname, '..', '..'));
+const relativePath = (filePath: string): string => filePath.split('/src/')[1]!;
 
 describe('La tipografía sale de la escala y no grita', () => {
   it('encuentra los archivos del proyecto', () => {
-    expect(archivos.length).toBeGreaterThan(10);
+    expect(files.length).toBeGreaterThan(10);
   });
 
   it('ningún rótulo va en mayúsculas sostenidas', () => {
@@ -30,7 +30,7 @@ describe('La tipografía sale de la escala y no grita', () => {
     // "Soporte" y "SOPORTE" no se leen igual de rápido. Estaban en el rótulo
     // de los indicadores del resumen y en el grupo de secciones del riel, que
     // son justo los sitios que se leen de reojo.
-    const culpables: string[] = [];
+    const offenders: string[] = [];
 
     // La palabra suelta, y no un `className=` completo: la clase aparece
     // igual de a menudo dentro de un `cn(...)` con comillas simples, y una
@@ -43,30 +43,30 @@ describe('La tipografía sale de la escala y no grita', () => {
     // mayúscula una inicial. Lo que prohíbe esta regla es la utilidad suelta,
     // la que pone en versalitas un rótulo entero; de ahí el `(?<![-:\w])`,
     // que descarta cualquier variante que la preceda.
-    for (const ruta of archivos) {
-      for (const linea of readFileSync(ruta, 'utf8').split('\n')) {
-        if (/(?<![-:\w])uppercase\b/.test(linea)) {
-          culpables.push(`${relativa(ruta)}: ${linea.trim()}`);
+    for (const filePath of files) {
+      for (const line of readFileSync(filePath, 'utf8').split('\n')) {
+        if (/(?<![-:\w])uppercase\b/.test(line)) {
+          offenders.push(`${relativePath(filePath)}: ${line.trim()}`);
         }
       }
     }
 
-    expect(culpables, 'usa minúsculas; el tamaño y el gris ya dicen que es un rótulo').toEqual([]);
+    expect(offenders, 'usa minúsculas; el tamaño y el gris ya dicen que es un rótulo').toEqual([]);
   });
 
   it('ningún tamaño de letra se escribe en píxeles', () => {
     // `text-[11px]` estaba en trece sitios y ya se habían separado: unos con
     // `leading-none` y otros sin él. La escala tiene un escalón para eso,
     // `text-2xs`, declarado en `index.css` con su altura de línea.
-    const culpables: string[] = [];
+    const offenders: string[] = [];
 
-    for (const ruta of archivos) {
-      const codigo = readFileSync(ruta, 'utf8');
-      for (const uso of codigo.matchAll(/\btext-\[\d+(?:\.\d+)?(?:px|rem)\]/g)) {
-        culpables.push(`${relativa(ruta)}: ${uso[0]}`);
+    for (const filePath of files) {
+      const code = readFileSync(filePath, 'utf8');
+      for (const match of code.matchAll(/\btext-\[\d+(?:\.\d+)?(?:px|rem)\]/g)) {
+        offenders.push(`${relativePath(filePath)}: ${match[0]}`);
       }
     }
 
-    expect(culpables, 'usa la escala: text-2xs, text-xs, text-sm…').toEqual([]);
+    expect(offenders, 'usa la escala: text-2xs, text-xs, text-sm…').toEqual([]);
   });
 });

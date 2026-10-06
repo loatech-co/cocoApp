@@ -109,8 +109,8 @@ describe('initialRecurrence', () => {
 describe('siblingCategories', () => {
   it('offers only the categories of the concept own cost center', () => {
     expect(siblingCategories(TREE, TREE[0]!.children![0]!.children![0])).toEqual([
-      { valor: '10', etiqueta: 'Vivienda' },
-      { valor: '11', etiqueta: 'Servicios públicos' },
+      { value: '10', label: 'Vivienda' },
+      { value: '11', label: 'Servicios públicos' },
     ]);
   });
 

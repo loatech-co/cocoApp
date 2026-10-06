@@ -11,15 +11,15 @@ import { Block } from '@/shared/ui/atoms/block';
  * comía un trozo de lo primero que hubiera dentro. El nombre va fuera, que
  * además es lo que crea la jerarquía —etiqueta pequeña, contenido debajo—.
  */
-export function Seccion({
-  titulo,
-  caja = true,
-  crece = false,
+export function Section({
+  title,
+  isBoxed = true,
+  shouldGrow = false,
   children,
 }: {
-  titulo: string;
+  title: string;
   /** Con `false`, el contenido va suelto: lo que ya son tarjetas no necesita otra. */
-  caja?: boolean;
+  isBoxed?: boolean;
   /**
    * Se come el alto que sobre en la ficha.
    *
@@ -28,14 +28,14 @@ export function Seccion({
    * gesto —un cuadro donde se sueltan archivos— es la única a la que el tamaño
    * le sirve de algo, así que ese hueco es suyo.
    */
-  crece?: boolean;
+  shouldGrow?: boolean;
   children: ReactNode;
 }) {
   return (
     // `gap-3` y no `gap-2`: con miniaturas debajo, dos píxeles menos hacían
     // que el rótulo pareciera pegado a la primera fila, casi montado encima
     // —que es justo lo que se arregló quitando los `legend`—.
-    <section className={cn('flex flex-col gap-3', crece && 'min-h-0 flex-1')}>
+    <section className={cn('flex flex-col gap-3', shouldGrow && 'min-h-0 flex-1')}>
       {/*
         Sin mayúsculas sostenidas.
 
@@ -44,8 +44,8 @@ export function Seccion({
         ficha, donde todo el texto es corto, ese rótulo gritando compite con lo
         que titula. El tamaño y el gris ya dicen que es un rótulo.
       */}
-      <h3 className="text-xs font-semibold text-muted-foreground">{titulo}</h3>
-      {caja ? <Block className="flex flex-col gap-3">{children}</Block> : children}
+      <h3 className="text-xs font-semibold text-muted-foreground">{title}</h3>
+      {isBoxed ? <Block className="flex flex-col gap-3">{children}</Block> : children}
     </section>
   );
 }

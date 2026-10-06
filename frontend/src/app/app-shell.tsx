@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { Button } from '@/shared/ui/atoms/button';
 import { Logo } from '@/shared/ui/atoms/logo';
-import { PilaDeAvisos } from '@/shared/ui/molecules/aviso';
+import { ToastStack } from '@/shared/ui/molecules/toast';
 
 import { BarraInferior } from './barra-inferior';
 import { PanelDeLaCuenta } from './panel-de-la-cuenta';
@@ -214,7 +214,7 @@ export function AppShell() {
             // 14px, y es la única excepción al radio estándar de la app: es
             // el contenedor más grande que hay, y 10 en un canto que mide
             // toda la ventana casi no se ve. Está registrada, con su motivo,
-            // en `components/ui/radio.test.ts`.
+            // en `components/ui/radius.test.ts`.
             'bg-background escritorio:rounded-xl',
             // El pozo es el que se desplaza, no la página. `min-h-0` es lo
             // que se lo permite: sin él, un hijo de una columna flexible mide
@@ -254,7 +254,7 @@ export function AppShell() {
 
       {embebida && <PuenteDeNavegacion abrirBusqueda={shell.abrirBusqueda} />}
 
-      <PilaDeAvisos />
+      <ToastStack />
     </div>
   );
 }

@@ -7,17 +7,15 @@ import { Combo } from './combo';
 afterEach(cleanup);
 
 const OPTIONS = [
-  { valor: '1', etiqueta: 'Aseo' },
-  { valor: '2', etiqueta: 'Alimentación' },
-  { valor: '3', etiqueta: 'Transporte' },
+  { value: '1', label: 'Aseo' },
+  { value: '2', label: 'Alimentación' },
+  { value: '3', label: 'Transporte' },
 ];
 
 function renderCombo(props: Partial<Parameters<typeof Combo>[0]> = {}) {
-  const onCambiar = vi.fn();
-  render(
-    <Combo etiqueta="Concepto" valor="" opciones={OPTIONS} onCambiar={onCambiar} {...props} />,
-  );
-  return { onCambiar };
+  const onChange = vi.fn();
+  render(<Combo label="Concepto" value="" options={OPTIONS} onChange={onChange} {...props} />);
+  return { onChange };
 }
 
 function open(name: RegExp | string = /Sin elegir/): HTMLInputElement {
@@ -33,13 +31,13 @@ describe('Combo', () => {
   });
 
   it('shows the chosen option on its trigger', () => {
-    renderCombo({ valor: '3' });
+    renderCombo({ value: '3' });
 
     expect(screen.getByRole('button', { name: /Transporte/ })).toBeTruthy();
   });
 
   it('opens a listbox with every option plus the empty one', () => {
-    renderCombo({ valor: '1' });
+    renderCombo({ value: '1' });
 
     open(/Aseo/);
 
@@ -76,71 +74,71 @@ describe('Combo', () => {
   });
 
   it('reports the clicked option and closes', () => {
-    const { onCambiar } = renderCombo();
+    const { onChange } = renderCombo();
     open();
 
     fireEvent.click(screen.getByRole('option', { name: 'Transporte' }));
 
-    expect(onCambiar).toHaveBeenCalledWith('3');
+    expect(onChange).toHaveBeenCalledWith('3');
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
   it('clears the choice with the empty option', () => {
-    const { onCambiar } = renderCombo({ valor: '2' });
+    const { onChange } = renderCombo({ value: '2' });
     open(/Alimentación/);
 
     fireEvent.click(screen.getByRole('option', { name: 'Sin elegir' }));
 
-    expect(onCambiar).toHaveBeenCalledWith('');
+    expect(onChange).toHaveBeenCalledWith('');
   });
 
   it('chooses the only match with Enter', () => {
-    const { onCambiar } = renderCombo();
+    const { onChange } = renderCombo();
     const search = open();
 
     fireEvent.change(search, { target: { value: 'tra' } });
     fireEvent.keyDown(search, { key: 'Enter' });
 
-    expect(onCambiar).toHaveBeenCalledWith('3');
+    expect(onChange).toHaveBeenCalledWith('3');
   });
 
   it('does nothing on Enter when several options match and nothing can be created', () => {
-    const { onCambiar } = renderCombo();
+    const { onChange } = renderCombo();
     const search = open();
 
     fireEvent.change(search, { target: { value: 'a' } });
     fireEvent.keyDown(search, { key: 'Enter' });
     fireEvent.keyDown(search, { key: 'a' });
 
-    expect(onCambiar).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByRole('listbox')).toBeTruthy();
   });
 
   it('offers to create what is missing, with the trimmed name', () => {
-    const onCrear = vi.fn();
-    renderCombo({ onCrear });
+    const onCreate = vi.fn();
+    renderCombo({ onCreate });
     const search = open();
 
     fireEvent.change(search, { target: { value: '  Mascotas ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Crear “Mascotas”' }));
 
-    expect(onCrear).toHaveBeenCalledWith('Mascotas');
+    expect(onCreate).toHaveBeenCalledWith('Mascotas');
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
   it('creates with Enter when nothing matches', () => {
-    const onCrear = vi.fn();
-    renderCombo({ onCrear });
+    const onCreate = vi.fn();
+    renderCombo({ onCreate });
     const search = open();
 
     fireEvent.change(search, { target: { value: 'Mascotas' } });
     fireEvent.keyDown(search, { key: 'Enter' });
 
-    expect(onCrear).toHaveBeenCalledWith('Mascotas');
+    expect(onCreate).toHaveBeenCalledWith('Mascotas');
   });
 
   it('does not offer to create a name that already exists', () => {
-    renderCombo({ onCrear: vi.fn() });
+    renderCombo({ onCreate: vi.fn() });
     const search = open();
 
     fireEvent.change(search, { target: { value: 'aseo' } });
@@ -149,7 +147,7 @@ describe('Combo', () => {
   });
 
   it('disables the create button while creating', () => {
-    renderCombo({ onCrear: vi.fn(), creando: true });
+    renderCombo({ onCreate: vi.fn(), isCreating: true });
     const search = open();
 
     fireEvent.change(search, { target: { value: 'Mascotas' } });
@@ -160,7 +158,7 @@ describe('Combo', () => {
   });
 
   it('keeps showing the chosen option while disabled, and cannot be opened', () => {
-    renderCombo({ valor: '1', deshabilitado: true, id: 'concepto' });
+    renderCombo({ value: '1', disabled: true, id: 'concepto' });
 
     expect(screen.queryByRole('button')).toBeNull();
     const field = screen.getByText('Aseo').closest('[aria-disabled="true"]');

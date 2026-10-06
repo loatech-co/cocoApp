@@ -5,7 +5,7 @@ import { type PendingPayment, type TransactionType } from '@/shared/api/generate
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { IconChip } from '@/shared/ui/atoms/icon-chip';
-import { CabeceraDeModal } from '@/shared/ui/molecules/modal-partes';
+import { ModalHeader } from '@/shared/ui/molecules/modal-parts';
 
 interface SheetMode {
   type: TransactionType;
@@ -70,17 +70,17 @@ export function MovementHeader({ modo, onEditar, onEliminar, onCerrar }: Movemen
   const { type, editando, editable } = modo;
 
   return (
-    <CabeceraDeModal
-      titulo={sheetTitle(modo)}
-      ayuda={sheetHelp(modo.confirmando)}
-      antes={
+    <ModalHeader
+      title={sheetTitle(modo)}
+      description={sheetHelp(modo.confirmando)}
+      leading={
         <IconChip
           Icon={type === 'income' ? TrendingUp : TrendingDown}
           color={type === 'income' ? 'income' : 'expense'}
           size="sm"
         />
       }
-      acciones={
+      actions={
         <>
           {editando && !editable && (
             <Button
@@ -128,7 +128,7 @@ export function MovementHeader({ modo, onEditar, onEliminar, onCerrar }: Movemen
           )}
         </>
       }
-      onCerrar={onCerrar}
+      onClose={onCerrar}
     />
   );
 }

@@ -5,18 +5,18 @@ import { useEscapeToClose } from '@/shared/lib/escape';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
-import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
-import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
+import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
+import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 
 interface ConfirmationProps {
-  abierta: boolean;
-  titulo: string;
+  isOpen: boolean;
+  title: string;
   /** Qué va a pasar. Concreto: nombres, cantidades, consecuencias. */
   children: ReactNode;
-  etiquetaConfirmar?: string;
+  confirmLabel?: string;
   /** Pinta la acción en rojo. Solo para lo que destruye algo. */
-  peligrosa?: boolean;
-  ocupada?: boolean;
+  isDestructive?: boolean;
+  isBusy?: boolean;
   /**
    * Apaga el botón de confirmar porque falta un dato.
    *
@@ -26,9 +26,9 @@ interface ConfirmationProps {
    * después de pulsar «Eliminar» en un diálogo que avisa de que no se puede
    * deshacer es lo peor que puede pasar ahí.
    */
-  confirmarDeshabilitado?: boolean;
-  onConfirmar: () => void;
-  onCancelar: () => void;
+  isConfirmDisabled?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 /**
  * Pedir confirmación antes de algo que no se deshace solo.
@@ -52,27 +52,27 @@ interface ConfirmationProps {
  * Porque quien llega con Enter puesto no quiso confirmar nada: venía de pulsar
  * otra cosa. El foco arranca en Cancelar.
  */
-export function Confirmacion({
-  abierta,
-  titulo,
+export function Confirmation({
+  isOpen,
+  title,
   children,
-  etiquetaConfirmar = t('ui.confirm.confirm'),
-  peligrosa = false,
-  ocupada = false,
-  confirmarDeshabilitado = false,
-  onConfirmar,
-  onCancelar,
+  confirmLabel = t('ui.confirm.confirm'),
+  isDestructive = false,
+  isBusy = false,
+  isConfirmDisabled = false,
+  onConfirm,
+  onCancel,
 }: ConfirmationProps) {
-  useEscapeToClose(abierta, onCancelar);
+  useEscapeToClose(isOpen, onCancel);
 
-  if (!abierta) return null;
+  if (!isOpen) return null;
 
   return (
     <div
       role="alertdialog"
       aria-modal="true"
-      aria-label={titulo}
-      onMouseDown={(e) => e.target === e.currentTarget && onCancelar()}
+      aria-label={title}
+      onMouseDown={(e) => e.target === e.currentTarget && onCancel()}
       className={cn(
         'fixed inset-0 z-[60] flex items-center justify-center bg-[var(--velo)] backdrop-blur-sm',
         // 24 hasta el canto en el teléfono, los mismos que el resto de fichas.
@@ -88,20 +88,20 @@ export function Confirmacion({
           // 16 el texto quedaba a un dedo del canto y la caja parecía un aviso
           // flotante crecido, no un diálogo.
           'w-full max-w-md rounded-lg p-6',
-          SUPERFICIE_FLOTANTE,
+          FLOATING_SURFACE,
           'emerge',
         )}
       >
-        <h2 className="font-display text-lg font-semibold leading-tight">{titulo}</h2>
+        <h2 className="font-display text-lg font-semibold leading-tight">{title}</h2>
         <div className="mt-2 text-sm leading-relaxed text-muted-foreground">{children}</div>
 
         <ConfirmationFooter
-          etiquetaConfirmar={etiquetaConfirmar}
-          peligrosa={peligrosa}
-          ocupada={ocupada}
-          confirmarDeshabilitado={confirmarDeshabilitado}
-          onConfirmar={onConfirmar}
-          onCancelar={onCancelar}
+          confirmLabel={confirmLabel}
+          isDestructive={isDestructive}
+          isBusy={isBusy}
+          isConfirmDisabled={isConfirmDisabled}
+          onConfirm={onConfirm}
+          onCancel={onCancel}
         />
       </div>
     </div>
@@ -109,15 +109,15 @@ export function Confirmacion({
 }
 
 function ConfirmationFooter({
-  etiquetaConfirmar,
-  peligrosa,
-  ocupada,
-  confirmarDeshabilitado,
-  onConfirmar,
-  onCancelar,
-}: Required<Omit<ConfirmationProps, 'abierta' | 'titulo' | 'children'>>) {
+  confirmLabel,
+  isDestructive,
+  isBusy,
+  isConfirmDisabled,
+  onConfirm,
+  onCancel,
+}: Required<Omit<ConfirmationProps, 'isOpen' | 'title' | 'children'>>) {
   return (
-    <PieDeModal className="mt-6">
+    <ModalFooter className="mt-6">
       {/*
         `outline` y no `ghost`. Un botón sin contorno al lado de uno
         relleno no se lee como un botón: se lee como el texto de al lado
@@ -131,18 +131,18 @@ function ConfirmationFooter({
         foco vale también aquí: se pinta cuando se pide. La salida sigue
         estando a un Escape y a un tabulador.
       */}
-      <Button type="button" variant="outline" onClick={onCancelar}>
+      <Button type="button" variant="outline" onClick={onCancel}>
         {t('common.cancel')}
       </Button>
       <Button
         type="button"
-        variant={peligrosa ? 'destructive' : 'default'}
-        disabled={ocupada || confirmarDeshabilitado}
-        onClick={onConfirmar}
+        variant={isDestructive ? 'destructive' : 'default'}
+        disabled={isBusy || isConfirmDisabled}
+        onClick={onConfirm}
       >
-        {ocupada && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-        {etiquetaConfirmar}
+        {isBusy && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+        {confirmLabel}
       </Button>
-    </PieDeModal>
+    </ModalFooter>
   );
 }

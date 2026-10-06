@@ -97,15 +97,15 @@ describe('The field with a floating label', () => {
   });
 
   it('a dropdown says whether something is selected, and hides its «nothing selected» if not', () => {
-    const options = [{ valor: '1', etiqueta: 'Arriendo' }];
+    const options = [{ value: '1', label: 'Arriendo' }];
 
     const empty = render(
       <Select
-        etiqueta="Concepto"
-        valor=""
-        vacio="Sin elegir"
-        opciones={options}
-        onCambiar={() => {}}
+        label="Concepto"
+        value=""
+        emptyLabel="Sin elegir"
+        options={options}
+        onChange={() => {}}
       />,
     );
     expect(empty.container.querySelector('[data-lleno]')?.getAttribute('data-lleno')).toBe('no');
@@ -117,11 +117,11 @@ describe('The field with a floating label', () => {
 
     const filled = render(
       <Select
-        etiqueta="Concepto"
-        valor="1"
-        vacio="Sin elegir"
-        opciones={options}
-        onCambiar={() => {}}
+        label="Concepto"
+        value="1"
+        emptyLabel="Sin elegir"
+        options={options}
+        onChange={() => {}}
       />,
     );
     expect(filled.container.querySelector('[data-lleno]')?.getAttribute('data-lleno')).toBe('si');

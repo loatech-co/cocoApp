@@ -42,8 +42,9 @@ function useDashboardTable(filtros: ReturnType<typeof useFiltros>['filtros']) {
    * arriba; en un nombre, la A.
    */
   const ordenDe = (campo: string, primero: 'asc' | 'desc') => ({
-    activo: orden === campo ? ('asc' as const) : orden === `-${campo}` ? ('desc' as const) : null,
-    onCambiar: () => {
+    direction:
+      orden === campo ? ('asc' as const) : orden === `-${campo}` ? ('desc' as const) : null,
+    onChange: () => {
       setPagina(1);
       const descendente = `-${campo}` as Orden;
       const ascendente = campo as Orden;

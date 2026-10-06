@@ -6,27 +6,27 @@ import { IconGrid } from './icon-grid';
 
 afterEach(cleanup);
 
-const ICONOS = [
+const ICONS = [
   { name: 'house', label: 'Vivienda' },
   { name: 'zap', label: 'Energía' },
 ];
 
 describe('IconGrid', () => {
   it('chooses an icon, and pressing the chosen one clears it', () => {
-    const onElegir = vi.fn();
-    render(<IconGrid filtrados={ICONOS} valor="house" onElegir={onElegir} />);
+    const onSelect = vi.fn();
+    render(<IconGrid icons={ICONS} value="house" onSelect={onSelect} />);
 
-    const puesto = screen.getByRole('button', { name: 'Vivienda' });
-    expect(puesto.getAttribute('aria-pressed')).toBe('true');
-    fireEvent.click(puesto);
-    expect(onElegir).toHaveBeenLastCalledWith(null);
+    const pressed = screen.getByRole('button', { name: 'Vivienda' });
+    expect(pressed.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(pressed);
+    expect(onSelect).toHaveBeenLastCalledWith(null);
 
     fireEvent.click(screen.getByRole('button', { name: 'Energía' }));
-    expect(onElegir).toHaveBeenLastCalledWith('zap');
+    expect(onSelect).toHaveBeenLastCalledWith('zap');
   });
 
   it('says so when nothing matches', () => {
-    render(<IconGrid filtrados={[]} valor={null} onElegir={() => undefined} />);
+    render(<IconGrid icons={[]} value={null} onSelect={() => undefined} />);
 
     expect(screen.getByText('Ningún icono se llama así.')).toBeTruthy();
   });

@@ -6,7 +6,7 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { PANEL_ROW_CLASS, PanelRow } from '@/shared/ui/atoms/panel-row';
-import { FilaDeEnlace } from '@/shared/ui/molecules/link-row';
+import { LinkRow } from '@/shared/ui/molecules/link-row';
 
 import { Avatar } from './navegacion';
 
@@ -54,24 +54,24 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
           justificara el viaje. El ancla lleva al sitio exacto y la página sigue
           siendo una.
         */}
-        <FilaDeEnlace Icono={SlidersHorizontal} a="/mi-cuenta#ajustes" onIr={onCerrar}>
+        <LinkRow Icon={SlidersHorizontal} to="/mi-cuenta#ajustes" onNavigate={onCerrar}>
           {t('shell.account.settings')}
-        </FilaDeEnlace>
+        </LinkRow>
 
         {esAdmin && (
-          <FilaDeEnlace Icono={ShieldCheck} a="/administracion" onIr={onCerrar}>
+          <LinkRow Icon={ShieldCheck} to="/administracion" onNavigate={onCerrar}>
             {t('shell.sections.users')}
-          </FilaDeEnlace>
+          </LinkRow>
         )}
 
-        <FilaDeEnlace Icono={KeyRound} a="/mi-cuenta#seguridad" onIr={onCerrar}>
+        <LinkRow Icon={KeyRound} to="/mi-cuenta#seguridad" onNavigate={onCerrar}>
           {t('shell.account.security')}
-        </FilaDeEnlace>
+        </LinkRow>
 
         {esAdmin && (
-          <FilaDeEnlace Icono={ScrollText} a="/administracion/bitacora" onIr={onCerrar}>
+          <LinkRow Icon={ScrollText} to="/administracion/bitacora" onNavigate={onCerrar}>
             {t('shell.sections.auditLog')}
-          </FilaDeEnlace>
+          </LinkRow>
         )}
 
         {/* La raya, y no un hueco: lo de abajo no lleva a ninguna página. */}

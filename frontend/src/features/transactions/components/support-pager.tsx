@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { t } from '@/shared/lib/i18n';
-import { BotonOscuro, SeparadorDeMandos } from '@/shared/ui/molecules/overlay-control';
+import { OverlayButton, ControlSeparator } from '@/shared/ui/molecules/overlay-control';
 
 /**
  * Las flechas y el contador de los soportes, sobre el documento.
@@ -25,24 +25,24 @@ export function SupportPager({
 
   return (
     <>
-      <BotonOscuro
-        etiqueta={t('transactions.supports.previous')}
-        deshabilitado={index === 0}
+      <OverlayButton
+        label={t('transactions.supports.previous')}
+        disabled={index === 0}
         onClick={() => onGo(index - 1)}
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
-      </BotonOscuro>
+      </OverlayButton>
       <span className="tabular px-1 text-xs font-medium text-sala-tinta">
         {index + 1} / {total}
       </span>
-      <BotonOscuro
-        etiqueta={t('transactions.supports.next')}
-        deshabilitado={index === total - 1}
+      <OverlayButton
+        label={t('transactions.supports.next')}
+        disabled={index === total - 1}
         onClick={() => onGo(index + 1)}
       >
         <ChevronRight className="size-4" aria-hidden="true" />
-      </BotonOscuro>
-      <SeparadorDeMandos />
+      </OverlayButton>
+      <ControlSeparator />
     </>
   );
 }

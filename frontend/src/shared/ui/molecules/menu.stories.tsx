@@ -1,35 +1,35 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Copy, Ellipsis, Filter, Pencil, Trash2 } from 'lucide-react';
 
-import { Menu, MenuOpcion, MenuSeparador, MenuTitulo } from './menu';
+import { Menu, MenuOption, MenuSeparator, MenuTitle } from './menu';
 
 const options = (close: () => void) => (
   <>
-    <MenuTitulo>Movimiento</MenuTitulo>
-    <MenuOpcion Icono={Pencil} elegida onClick={close}>
+    <MenuTitle>Movimiento</MenuTitle>
+    <MenuOption Icon={Pencil} isSelected onClick={close}>
       Editar
-    </MenuOpcion>
-    <MenuOpcion Icono={Copy} nota="Ctrl D" onClick={close}>
+    </MenuOption>
+    <MenuOption Icon={Copy} note="Ctrl D" onClick={close}>
       Duplicar
-    </MenuOpcion>
-    <MenuOpcion deshabilitada onClick={close}>
+    </MenuOption>
+    <MenuOption disabled onClick={close}>
       Mover (no disponible)
-    </MenuOpcion>
-    <MenuSeparador />
-    <MenuOpcion Icono={Trash2} peligro onClick={close}>
+    </MenuOption>
+    <MenuSeparator />
+    <MenuOption Icon={Trash2} isDestructive onClick={close}>
       Eliminar
-    </MenuOpcion>
+    </MenuOption>
   </>
 );
 
 const meta = {
   title: 'Molecules/Menu',
   component: Menu,
-  args: { etiqueta: 'Acciones', Icono: Filter, alineado: 'izquierda', children: options },
+  args: { label: 'Acciones', Icon: Filter, align: 'left', children: options },
   argTypes: {
-    variante: { control: 'inline-radio', options: ['tool', 'ghost', 'default'] },
-    alineado: { control: 'inline-radio', options: ['izquierda', 'derecha'] },
-    direccion: { control: 'inline-radio', options: ['abajo', 'arriba'] },
+    variant: { control: 'inline-radio', options: ['tool', 'ghost', 'default'] },
+    align: { control: 'inline-radio', options: ['left', 'right'] },
+    direction: { control: 'inline-radio', options: ['down', 'up'] },
   },
   decorators: [
     (Story) => (
@@ -47,10 +47,10 @@ type Story = StoryObj<typeof meta>;
 export const Toolbar: Story = {};
 
 /** A toolbar button switched on: the roles invert (rule 8, the exception). */
-export const ToolbarActive: Story = { args: { activo: true } };
+export const ToolbarActive: Story = { args: { isActive: true } };
 
-export const IconOnly: Story = { args: { Icono: Ellipsis, soloIcono: true } };
+export const IconOnly: Story = { args: { Icon: Ellipsis, isIconOnly: true } };
 
-export const Ghost: Story = { args: { variante: 'ghost' } };
+export const Ghost: Story = { args: { variant: 'ghost' } };
 
 export const FocusVisible: Story = { parameters: { pseudo: { focusVisible: ['button'] } } };

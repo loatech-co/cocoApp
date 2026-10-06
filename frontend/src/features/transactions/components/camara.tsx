@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
-import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
+import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 
 /**
  * La cámara, dentro de la aplicación.
@@ -42,7 +42,7 @@ export function Camara({
       {/* El mismo pie que las demás fichas: a la derecha en el escritorio y
           apilado a ancho completo en el teléfono. Los dos botones se repartían
           el ancho a medias, así que «Cancelar» pesaba igual que «Capturar». */}
-      <PieDeModal>
+      <ModalFooter>
         <Button type="button" variant="outline" onClick={onCerrar}>
           <X className="size-4" aria-hidden="true" />
           {t('common.cancel')}
@@ -55,7 +55,7 @@ export function Camara({
           <Camera className="size-4" aria-hidden="true" />
           {t('transactions.camera.capture')}
         </Button>
-      </PieDeModal>
+      </ModalFooter>
     </div>
   );
 }

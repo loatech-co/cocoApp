@@ -19,16 +19,16 @@ import { describe, expect, it } from 'vitest';
  * Lee el código fuente, como la de los botones, porque el problema no está en
  * el componente sino en quién escribe la clase.
  */
-function fuentes(dir: string): string[] {
-  return readdirSync(dir).flatMap((nombre) => {
-    const ruta = join(dir, nombre);
-    if (statSync(ruta).isDirectory()) return fuentes(ruta);
-    return ruta.endsWith('.tsx') ? [ruta] : [];
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((entry) => {
+    const filePath = join(dir, entry);
+    if (statSync(filePath).isDirectory()) return sourceFiles(filePath);
+    return filePath.endsWith('.tsx') ? [filePath] : [];
   });
 }
 
 /** El tope, en píxeles: el `--radius` del tema. */
-const TOPE = 10;
+const MAX_RADIUS_PX = 10;
 
 /**
  * Lo que se permite pasarse, y por qué.
@@ -55,34 +55,34 @@ const TOPE = 10;
  *   sigue debajo— depende de que se vea. Y no tiene vecinos: está encima de
  *   todo lo demás.
  */
-const PERMITIDOS = new Set<string>(['app/app-shell.tsx', 'shared/ui/atoms/bottom-sheet.tsx']);
+const ALLOWED = new Set<string>(['app/app-shell.tsx', 'shared/ui/atoms/bottom-sheet.tsx']);
 
 describe('Ningún contenedor se pasa del radio estándar', () => {
-  const archivos = fuentes(join(import.meta.dirname, '..', '..'));
+  const files = sourceFiles(join(import.meta.dirname, '..', '..'));
 
   it('encuentra los archivos del proyecto', () => {
-    expect(archivos.length).toBeGreaterThan(10);
+    expect(files.length).toBeGreaterThan(10);
   });
 
   it('no hay radios por encima de 10px', () => {
-    const culpables: string[] = [];
+    const offenders: string[] = [];
 
-    for (const ruta of archivos) {
-      const relativa = ruta.split('/src/')[1]!;
-      if (PERMITIDOS.has(relativa)) continue;
+    for (const filePath of files) {
+      const relativePath = filePath.split('/src/')[1]!;
+      if (ALLOWED.has(relativePath)) continue;
 
-      const codigo = readFileSync(ruta, 'utf8');
+      const code = readFileSync(filePath, 'utf8');
 
       // `xl`, `2xl` y `3xl`: los dos últimos ni siquiera leen el tema.
-      for (const uso of codigo.matchAll(/\brounded(?:-[tbrl][lr]?)?-(?:xl|2xl|3xl)\b/g)) {
-        culpables.push(`${relativa}: ${uso[0]}`);
+      for (const match of code.matchAll(/\brounded(?:-[tbrl][lr]?)?-(?:xl|2xl|3xl)\b/g)) {
+        offenders.push(`${relativePath}: ${match[0]}`);
       }
 
-      for (const uso of codigo.matchAll(/\brounded(?:-[tbrl][lr]?)?-\[(\d+)px\]/g)) {
-        if (Number(uso[1]) > TOPE) culpables.push(`${relativa}: ${uso[0]}`);
+      for (const match of code.matchAll(/\brounded(?:-[tbrl][lr]?)?-\[(\d+)px\]/g)) {
+        if (Number(match[1]) > MAX_RADIUS_PX) offenders.push(`${relativePath}: ${match[0]}`);
       }
     }
 
-    expect(culpables, culpables.join('\n')).toEqual([]);
+    expect(offenders, offenders.join('\n')).toEqual([]);
   });
 });

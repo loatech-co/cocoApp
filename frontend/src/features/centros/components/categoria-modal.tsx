@@ -14,7 +14,7 @@ import { Input } from '@/shared/ui/atoms/input';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
 import { Switch } from '@/shared/ui/atoms/switch';
 import { IconGrid } from '@/shared/ui/molecules/icon-grid';
-import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
+import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 import { Modal } from '@/shared/ui/organisms/modal';
 
 /** Sin tildes ni mayúsculas: «Educación» se encuentra escribiendo «educacion». */
@@ -73,7 +73,7 @@ function SelectorDeIcono({
           aria-label={t('centers.categoryModal.iconSearch')}
         />
 
-        <IconGrid filtrados={filtrados} valor={valor} onElegir={onElegir} />
+        <IconGrid icons={filtrados} value={valor} onSelect={onElegir} />
       </div>
     </fieldset>
   );
@@ -127,7 +127,7 @@ export function CategoriaModal({
   const { titulo, ayuda } = categoryModalTexts(esCentro, editando);
 
   return (
-    <Modal abierta={abierta} titulo={titulo} ayuda={ayuda} onCerrar={onCerrar}>
+    <Modal isOpen={abierta} title={titulo} description={ayuda} onClose={onCerrar}>
       <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
         <Field label={t('common.name')} id="categoria-nombre">
           <Input
@@ -204,7 +204,7 @@ function CategoryFormFooter({
   onCerrar: () => void;
 }) {
   return (
-    <PieDeModal>
+    <ModalFooter>
       <Button type="button" variant="outline" onClick={onCerrar}>
         {t('common.cancel')}
       </Button>
@@ -212,7 +212,7 @@ function CategoryFormFooter({
         {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
         {editando ? t('common.save') : t('common.create')}
       </Button>
-    </PieDeModal>
+    </ModalFooter>
   );
 }
 

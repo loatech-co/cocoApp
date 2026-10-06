@@ -21,7 +21,7 @@
  * Es un ANILLO y no un borde a propósito: el anillo no ocupa sitio, así que
  * ponerlo no corre ni un píxel el contenido de los diez sitios que lo llevan.
  */
-export const SUPERFICIE_FLOTANTE =
+export const FLOATING_SURFACE =
   'bg-popover text-popover-foreground shadow-[var(--sombra-flotante)] ring-1 ring-border';
 
 /**
@@ -54,7 +54,7 @@ export const SURGE = 'surge';
  * claro el primario es un verde casi negro y esto tiene que servir de TINTA
  * sobre una superficie clara.
  */
-export const REALCE = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
+export const HIGHLIGHT = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
 
 /**
  * El realce de una superficie GRANDE que responde al cursor: el hueco del
@@ -87,4 +87,4 @@ export const REALCE = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
  * archivo encima: ahí sí hay algo que decir —«esto es lo que lo va a
  * recibir»— y el cambio de color lo dice de una vez.
  */
-export const REALCE_DE_SUPERFICIE = 'hover:bg-black/10 hover:text-foreground';
+export const SURFACE_HIGHLIGHT = 'hover:bg-black/10 hover:text-foreground';

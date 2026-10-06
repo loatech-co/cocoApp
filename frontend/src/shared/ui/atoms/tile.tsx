@@ -3,7 +3,7 @@ import type { CSSProperties, PointerEvent, ReactNode } from 'react';
 
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
  * The tiles of the shortcuts grid: an icon and a name in a square.
@@ -15,7 +15,7 @@ import { REALCE } from '@/shared/ui/foundations/superficie';
 export function tileClass(isArranging: boolean, isDragging: boolean): string {
   return cn(
     'relative flex aspect-square flex-col items-center justify-center gap-2 rounded-lg bg-muted p-2 text-center text-foreground transition-colors',
-    REALCE,
+    HIGHLIGHT,
     // The tile under the finger does not wiggle: the animation would override the
     // inline offset and it would stay still under the finger.
     isArranging && !isDragging && 'animate-[baldosa-tiembla_.4s_ease-in-out_infinite]',

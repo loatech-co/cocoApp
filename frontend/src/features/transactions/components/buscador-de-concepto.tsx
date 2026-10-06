@@ -8,7 +8,7 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Field } from '@/shared/ui/atoms/field';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
-import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
+import { fieldTrigger, useInsideField } from '@/shared/ui/foundations/field';
 import { Menu } from '@/shared/ui/molecules/menu';
 import { readablePath, type IndexEntry } from '@coco/receipt-parser';
 
@@ -96,15 +96,15 @@ export function BuscadorDeConcepto({
   return (
     <Field label={t('transactions.fields.concept')} id={id} description={ayuda}>
       <Menu
-        etiqueta={t('transactions.fields.concept')}
-        tipo="buscador"
-        alineado="izquierda"
-        flotante
-        sinRelleno
-        claseCaja="w-full min-w-0"
-        claseDisparador={disparadorDeCampo()}
-        idDisparador={id}
-        disparador={({ abierto }) => <ValorDelBuscador elegida={b.elegida} abierto={abierto} />}
+        label={t('transactions.fields.concept')}
+        kind="search"
+        align="left"
+        isFloating
+        isUnpadded
+        boxClassName="w-full min-w-0"
+        triggerClassName={fieldTrigger()}
+        triggerId={id}
+        trigger={({ isOpen }) => <ValorDelBuscador elegida={b.elegida} abierto={isOpen} />}
       >
         {(cerrar) => (
           <PanelDelMenu
@@ -185,7 +185,7 @@ function ConceptoBloqueado({ id, elegida }: { id: string; elegida: IndexEntry | 
     <span
       id={id}
       aria-disabled="true"
-      className={cn(disparadorDeCampo(), 'cursor-not-allowed opacity-50')}
+      className={cn(fieldTrigger(), 'cursor-not-allowed opacity-50')}
     >
       <ValorDelBuscador elegida={elegida} abierto={false} />
     </span>
@@ -206,7 +206,7 @@ function ValorDelBuscador({
   elegida: IndexEntry | undefined;
   abierto: boolean;
 }) {
-  const enCampo = useDentroDeUnCampo();
+  const enCampo = useInsideField();
   return (
     <>
       <span

@@ -2,31 +2,31 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mostrarAviso, olvidarAvisos, PilaDeAvisos } from './aviso';
+import { showToast, clearToasts, ToastStack } from './toast';
 
 beforeEach(() => {
   vi.useFakeTimers();
 });
 
 afterEach(() => {
-  act(() => olvidarAvisos());
+  act(() => clearToasts());
   cleanup();
   vi.useRealTimers();
 });
 
-const show = (...args: Parameters<typeof mostrarAviso>) => act(() => mostrarAviso(...args));
+const show = (...args: Parameters<typeof showToast>) => act(() => showToast(...args));
 
 describe('PilaDeAvisos', () => {
   it('renders nothing while there are no notices', () => {
-    render(<PilaDeAvisos />);
+    render(<ToastStack />);
 
     expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('announces a notice politely, with its headline and its detail', () => {
-    render(<PilaDeAvisos />);
+    render(<ToastStack />);
 
-    show('Movimiento guardado', { detalle: 'Ya aparece en la tabla.', tono: 'success' });
+    show('Movimiento guardado', { detail: 'Ya aparece en la tabla.', tone: 'success' });
 
     const stack = screen.getByRole('status');
     expect(stack.getAttribute('aria-live')).toBe('polite');
@@ -35,14 +35,14 @@ describe('PilaDeAvisos', () => {
   });
 
   it('draws a glyph for each severity, hidden from assistive tech, and none for the neutral tone', () => {
-    render(<PilaDeAvisos />);
+    render(<ToastStack />);
 
     show('Neutro');
     const stack = screen.getByRole('status');
     expect(stack.querySelectorAll('svg')).toHaveLength(0);
 
-    for (const tono of ['destructive', 'warning', 'success', 'info'] as const) {
-      show(tono, { tono });
+    for (const tone of ['destructive', 'warning', 'success', 'info'] as const) {
+      show(tone, { tone });
     }
     const glyphs = stack.querySelectorAll('svg');
     expect(glyphs).toHaveLength(4);
@@ -52,7 +52,7 @@ describe('PilaDeAvisos', () => {
   });
 
   it('stacks different notices and does not repeat the same one', () => {
-    render(<PilaDeAvisos />);
+    render(<ToastStack />);
 
     show('Uno');
     show('Dos');
@@ -64,7 +64,7 @@ describe('PilaDeAvisos', () => {
   });
 
   it('forgets a notice after five seconds', () => {
-    render(<PilaDeAvisos />);
+    render(<ToastStack />);
     show('Guardado');
 
     act(() => {
@@ -79,7 +79,7 @@ describe('PilaDeAvisos', () => {
   });
 
   it('restarts the clock when the same notice is shown again', () => {
-    render(<PilaDeAvisos />);
+    render(<ToastStack />);
     show('Guardado');
 
     act(() => {
@@ -94,11 +94,11 @@ describe('PilaDeAvisos', () => {
   });
 
   it('clears every notice at once', () => {
-    render(<PilaDeAvisos />);
+    render(<ToastStack />);
     show('Uno');
     show('Dos');
 
-    act(() => olvidarAvisos());
+    act(() => clearToasts());
 
     expect(screen.queryByRole('status')).toBeNull();
   });

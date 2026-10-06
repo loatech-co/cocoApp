@@ -12,9 +12,9 @@ import {
 } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
-import { CuerpoDeModal, PANEL_DE_MODAL } from '@/shared/ui/molecules/modal-partes';
-import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
+import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
+import { ModalBody, MODAL_PANEL } from '@/shared/ui/molecules/modal-parts';
+import { Confirmation } from '@/shared/ui/organisms/confirmation';
 
 import { Camara } from './camara';
 import { MovementHeader } from './movement-header';
@@ -95,7 +95,7 @@ export function MovimientoModal(props: MovementModalProps) {
           máximo del panel. Y es a su vez una columna porque el panel tiene
           alto mínimo: con eso el formulario puede estirarse y llevarse sus
           botones al fondo en vez de dejarlos a media altura. */}
-      <CuerpoDeModal>
+      <ModalBody>
         <MovementSteps hoja={hoja} movimiento={movimiento} onCerrar={onCerrar} />
 
         <ConfirmMovementDeletion
@@ -113,7 +113,7 @@ export function MovimientoModal(props: MovementModalProps) {
             })
           }
         />
-      </CuerpoDeModal>
+      </ModalBody>
     </SheetOverlay>
   );
 }
@@ -221,7 +221,7 @@ function SheetOverlay({
         // fichas. Y las cuatro esquinas, ya no solo las de arriba: separada
         // del borde de abajo, las de abajo también se ven, y dos cantos rectos
         // debajo de dos curvos es una caja a medio dibujar.
-        className={cn(PANEL_DE_MODAL, SUPERFICIE_FLOTANTE, 'emerge', 'rounded-lg')}
+        className={cn(MODAL_PANEL, FLOATING_SURFACE, 'emerge', 'rounded-lg')}
       >
         {children}
       </div>
@@ -250,16 +250,16 @@ function ConfirmMovementDeletion({
   onConfirmar: () => void;
 }) {
   return (
-    <Confirmacion
-      abierta={abierta}
-      titulo={t('transactions.sheet.deleteMovementTitle')}
-      peligrosa
-      etiquetaConfirmar={t('common.delete')}
-      ocupada={ocupada}
-      onCancelar={onCancelar}
-      onConfirmar={onConfirmar}
+    <Confirmation
+      isOpen={abierta}
+      title={t('transactions.sheet.deleteMovementTitle')}
+      isDestructive
+      confirmLabel={t('common.delete')}
+      isBusy={ocupada}
+      onCancel={onCancelar}
+      onConfirm={onConfirmar}
     >
       {t('transactions.sheet.deleteWarning', { concept: concepto })}
-    </Confirmacion>
+    </Confirmation>
   );
 }

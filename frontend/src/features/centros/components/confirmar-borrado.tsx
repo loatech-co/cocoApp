@@ -7,7 +7,7 @@ import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Field } from '@/shared/ui/atoms/field';
-import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
+import { Confirmation } from '@/shared/ui/organisms/confirmation';
 import { Select } from '@/shared/ui/organisms/select';
 
 interface ConfirmarBorradoProps {
@@ -75,20 +75,20 @@ export function ConfirmarBorrado({
   const hayQueReasignar = movimientos > 0;
 
   return (
-    <Confirmacion
-      abierta={abierta}
-      titulo={t('centers.deletion.title', { name: categoria.name })}
-      peligrosa
-      etiquetaConfirmar={t('common.delete')}
-      ocupada={borrado.ocupada}
+    <Confirmation
+      isOpen={abierta}
+      title={t('centers.deletion.title', { name: categoria.name })}
+      isDestructive
+      confirmLabel={t('common.delete')}
+      isBusy={borrado.ocupada}
       // Con movimientos dentro no se puede confirmar hasta decir a dónde van.
       // Apagado y no «falla al pulsar»: enterarse después de pulsar «Eliminar»
       // en un diálogo que avisa de que no se puede deshacer es lo peor.
       // Without the count it is unknown whether movements hang below: deleting
       // blind would leave them unclassified with no question asked.
-      confirmarDeshabilitado={usos.isError || (hayQueReasignar && destino === '')}
-      onCancelar={onCerrar}
-      onConfirmar={borrado.confirmar}
+      isConfirmDisabled={usos.isError || (hayQueReasignar && destino === '')}
+      onCancel={onCerrar}
+      onConfirm={borrado.confirmar}
     >
       <div className="flex flex-col gap-3">
         {/* Qué se va, y la pregunta. Los tres golpes del patrón: qué pasa, que
@@ -125,7 +125,7 @@ export function ConfirmarBorrado({
           </p>
         )}
       </div>
-    </Confirmacion>
+    </Confirmation>
   );
 }
 
@@ -191,7 +191,7 @@ function ReassignTarget({
   movimientos: number;
   destino: string;
   onCambiar: (destino: string) => void;
-  opciones: { valor: string; etiqueta: string }[];
+  opciones: { value: string; label: string }[];
 }) {
   return (
     <>
@@ -210,11 +210,11 @@ function ReassignTarget({
       <Field label={t('centers.deletion.destination')} id="destino-del-borrado">
         <Select
           id="destino-del-borrado"
-          etiqueta={t('centers.deletion.destination')}
-          vacio={t('centers.deletion.chooseDestination')}
-          valor={destino}
-          opciones={opciones}
-          onCambiar={onCambiar}
+          label={t('centers.deletion.destination')}
+          emptyLabel={t('centers.deletion.chooseDestination')}
+          value={destino}
+          options={opciones}
+          onChange={onCambiar}
         />
       </Field>
     </>
@@ -285,22 +285,22 @@ function loQueSeBorra(nivel: NivelDeCategoria, nombre: string, cuantas: number):
 function destinosPosibles(
   arbol: CategoryTree[],
   excluidoId: number,
-): { valor: string; etiqueta: string }[] {
-  const salida: { valor: string; etiqueta: string }[] = [];
+): { value: string; label: string }[] {
+  const salida: { value: string; label: string }[] = [];
 
   for (const centro of arbol) {
     if (centro.id === excluidoId) continue;
-    salida.push({ valor: String(centro.id), etiqueta: centro.name });
+    salida.push({ value: String(centro.id), label: centro.name });
 
     for (const categoria of centro.children ?? []) {
       if (categoria.id === excluidoId) continue;
-      salida.push({ valor: String(categoria.id), etiqueta: `${centro.name} › ${categoria.name}` });
+      salida.push({ value: String(categoria.id), label: `${centro.name} › ${categoria.name}` });
 
       for (const concepto of categoria.children ?? []) {
         if (concepto.id === excluidoId) continue;
         salida.push({
-          valor: String(concepto.id),
-          etiqueta: `${centro.name} › ${categoria.name} › ${concepto.name}`,
+          value: String(concepto.id),
+          label: `${centro.name} › ${categoria.name} › ${concepto.name}`,
         });
       }
     }

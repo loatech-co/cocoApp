@@ -5,7 +5,7 @@ import { diaLargo, mesLargo, formatMoney } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card } from '@/shared/ui/atoms/card';
-import { Seccion } from '@/shared/ui/molecules/section';
+import { Section } from '@/shared/ui/molecules/section';
 
 interface ReadViewProps {
   tipo: TransactionType;
@@ -33,11 +33,11 @@ export function MovementReadColumn({ notes, ...lectura }: ReadViewProps & { note
       <VistaDeLectura {...lectura} />
 
       {notes.trim() !== '' && (
-        <Seccion titulo={t('transactions.fields.notes')}>
+        <Section title={t('transactions.fields.notes')}>
           {/* `whitespace-pre-line`: las notas se escriben con saltos de línea
               y aplanarlas convierte una lista en un párrafo. */}
           <p className="whitespace-pre-line text-sm">{notes}</p>
-        </Seccion>
+        </Section>
       )}
     </div>
   );

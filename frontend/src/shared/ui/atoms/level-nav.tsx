@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /*
  * Moving through a tree of levels —centers, categories, concepts— inside
@@ -55,7 +55,7 @@ export function DrillButton({ name, onDrill }: { name: string; onDrill: () => vo
       title={t('ui.levelNav.open', { name })}
       className={cn(
         'grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors',
-        REALCE,
+        HIGHLIGHT,
       )}
     >
       <ChevronRight className="size-4" aria-hidden="true" />

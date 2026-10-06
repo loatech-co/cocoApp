@@ -15,7 +15,7 @@ import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
 import { PageHeader } from '@/shared/ui/atoms/page-header';
 import { PasswordPolicy, meetsPolicy } from '@/shared/ui/atoms/password-policy';
-import { FilaDeEnlace } from '@/shared/ui/molecules/link-row';
+import { LinkRow } from '@/shared/ui/molecules/link-row';
 
 /**
  * Mi cuenta: cambiar contraseña y cerrar sesión en todas partes.
@@ -219,9 +219,9 @@ function AdminLinks() {
             vez que se añada una pantalla. */}
         <nav aria-label={t('shell.rail.admin')} className="-mx-3 flex flex-col">
           {SECCIONES_DE_ADMIN.map((seccion) => (
-            <FilaDeEnlace key={seccion.to} Icono={seccion.Icono} a={seccion.to}>
+            <LinkRow key={seccion.to} Icon={seccion.Icono} to={seccion.to}>
               {seccion.label}
-            </FilaDeEnlace>
+            </LinkRow>
           ))}
         </nav>
       </CardContent>

@@ -2,31 +2,31 @@ import { Check, ChevronDown } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { fieldTrigger, useInsideField } from '@/shared/ui/foundations/field';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 import { Menu } from '@/shared/ui/molecules/menu';
 
-interface OpcionDeSelect {
-  valor: string;
-  etiqueta: string;
+interface SelectOption {
+  value: string;
+  label: string;
 }
 
 interface SelectProps {
   /** El valor elegido. `''` es "ninguno". */
-  valor: string;
-  onCambiar: (valor: string) => void;
-  opciones: OpcionDeSelect[];
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectOption[];
   /** Nombre accesible del campo. */
-  etiqueta: string;
+  label: string;
   /** Texto de la opción sin valor. Si se omite, elegir es obligatorio. */
-  vacio?: string;
+  emptyLabel?: string;
   /** Los mismos dos de toda la app: `sm` mide 36 y `md` mide 44. */
-  tamano?: 'sm' | 'md';
-  deshabilitado?: boolean | undefined;
+  size?: 'sm' | 'md';
+  disabled?: boolean | undefined;
   /** A la izquierda, informativo: de qué es este campo. */
-  icono?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+  icon?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   /** A la derecha, activas. Una o dos, antes de la flecha. */
-  acciones?: ReactNode[];
+  actions?: ReactNode[];
   /** El `id` del BOTÓN, para que una etiqueta pueda apuntarle. */
   id?: string;
   className?: string;
@@ -65,58 +65,58 @@ interface SelectProps {
  */
 export function Select(props: SelectProps) {
   const {
-    valor,
-    onCambiar,
-    opciones,
-    etiqueta,
-    vacio,
-    tamano = 'md',
-    deshabilitado = false,
+    value,
+    onChange,
+    options,
+    label,
+    emptyLabel,
+    size = 'md',
+    disabled: isDisabled = false,
     id,
     className,
   } = props;
-  const pequeno = tamano === 'sm';
-  const sinNada = deshabilitado || (opciones.length === 0 && vacio === undefined);
-  const enCampo = useDentroDeUnCampo();
-  const dentro = <SelectTriggerContent select={props} enCampo={enCampo} />;
+  const isSmall = size === 'sm';
+  const isInert = isDisabled || (options.length === 0 && emptyLabel === undefined);
+  const isInField = useInsideField();
+  const triggerContent = <SelectTriggerContent select={props} isInField={isInField} />;
 
   // Deshabilitado no puede ser un botón que abre nada: se pinta igual pero
   // sin desplegable detrás, para que el foco no caiga en una trampa.
-  if (sinNada) return <DisabledTrigger select={props}>{dentro}</DisabledTrigger>;
+  if (isInert) return <DisabledTrigger select={props}>{triggerContent}</DisabledTrigger>;
 
   return (
     <Menu
-      etiqueta={etiqueta}
-      tipo="lista"
-      alineado="izquierda"
+      label={label}
+      kind="list"
+      align="left"
       // Los selectores viven en formularios, y un formulario largo se
       // desplaza: sin esto, el panel lo recorta la caja que lo contiene.
-      flotante
-      ancho="campo"
-      idDisparador={id}
-      claseCaja={cn('w-full min-w-0', className)}
-      claseDisparador={disparadorDeCampo(pequeno)}
-      disparador={() => dentro}
+      isFloating
+      width="field"
+      triggerId={id}
+      boxClassName={cn('w-full min-w-0', className)}
+      triggerClassName={fieldTrigger(isSmall)}
+      trigger={() => triggerContent}
     >
-      {(cerrar) => (
+      {(close) => (
         <SelectOptions
-          valor={valor}
-          opciones={opciones}
-          vacio={vacio}
-          onCambiar={onCambiar}
-          cerrar={cerrar}
+          value={value}
+          options={options}
+          emptyLabel={emptyLabel}
+          onChange={onChange}
+          close={close}
         />
       )}
     </Menu>
   );
 }
 
-function Opcion({
-  elegida,
+function Option({
+  isSelected,
   onClick,
   children,
 }: {
-  elegida: boolean;
+  isSelected: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
@@ -125,75 +125,75 @@ function Opcion({
       <button
         type="button"
         role="option"
-        aria-selected={elegida}
+        aria-selected={isSelected}
         onClick={onClick}
         className={cn(
           'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
           'movil:min-h-[42px]',
           // Quieta en `muted`, señalada en `accent`: con el mismo color para
           // las dos, pasar por encima de la opción ya elegida no cambia nada.
-          elegida ? cn('bg-muted font-medium', REALCE) : REALCE,
+          isSelected ? cn('bg-muted font-medium', HIGHLIGHT) : HIGHLIGHT,
         )}
       >
         <span className="min-w-0 flex-1 truncate">{children}</span>
-        {elegida && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
+        {isSelected && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
       </button>
     </li>
   );
 }
 
 function SelectOptions({
-  valor,
-  opciones,
-  vacio,
-  onCambiar,
-  cerrar,
-}: Pick<SelectProps, 'valor' | 'opciones' | 'onCambiar'> & {
-  vacio: string | undefined;
-  cerrar: () => void;
+  value,
+  options,
+  emptyLabel,
+  onChange,
+  close,
+}: Pick<SelectProps, 'value' | 'options' | 'onChange'> & {
+  emptyLabel: string | undefined;
+  close: () => void;
 }) {
-  const vacioEsPosible = vacio !== undefined;
+  const canBeEmpty = emptyLabel !== undefined;
   return (
     <ul className="max-h-64 overflow-y-auto">
-      {vacioEsPosible && (
-        <Opcion
-          elegida={valor === ''}
+      {canBeEmpty && (
+        <Option
+          isSelected={value === ''}
           onClick={() => {
-            onCambiar('');
-            cerrar();
+            onChange('');
+            close();
           }}
         >
-          <span className="text-muted-foreground">{vacio}</span>
-        </Opcion>
+          <span className="text-muted-foreground">{emptyLabel}</span>
+        </Option>
       )}
 
-      {opciones.map((o) => (
-        <Opcion
-          key={o.valor}
-          elegida={o.valor === valor}
+      {options.map((o) => (
+        <Option
+          key={o.value}
+          isSelected={o.value === value}
           onClick={() => {
-            onCambiar(o.valor);
-            cerrar();
+            onChange(o.value);
+            close();
           }}
         >
-          {o.etiqueta}
-        </Opcion>
+          {o.label}
+        </Option>
       ))}
     </ul>
   );
 }
 
 /** Lo que se ve dentro del campo: el icono, lo elegido, las acciones y la flecha. */
-function SelectTriggerContent({ select, enCampo }: { select: SelectProps; enCampo: boolean }) {
-  const { icono: Icono, vacio } = select;
-  const pequeno = select.tamano === 'sm';
-  const elegida = select.opciones.find((o) => o.valor === select.valor);
-  const derecha = select.acciones?.filter(Boolean) ?? [];
+function SelectTriggerContent({ select, isInField }: { select: SelectProps; isInField: boolean }) {
+  const { icon: Icon, emptyLabel } = select;
+  const isSmall = select.size === 'sm';
+  const selected = select.options.find((o) => o.value === select.value);
+  const trailing = select.actions?.filter(Boolean) ?? [];
   return (
     <>
-      {Icono && (
+      {Icon && (
         <span data-icono="" className="shrink-0 text-muted-foreground">
-          <Icono className={pequeno ? 'size-3.5' : 'size-4'} aria-hidden={true} />
+          <Icon className={isSmall ? 'size-3.5' : 'size-4'} aria-hidden={true} />
         </span>
       )}
 
@@ -205,28 +205,28 @@ function SelectTriggerContent({ select, enCampo }: { select: SelectProps; enCamp
         flecha se queda en el centro del campo, que es donde se busca.
       */}
       <span
-        data-lleno={elegida ? 'si' : 'no'}
-        data-vacio={elegida ? undefined : ''}
+        data-lleno={selected ? 'si' : 'no'}
+        data-vacio={selected ? undefined : ''}
         className={cn(
           'min-w-0 flex-1 truncate text-left',
-          !elegida && 'text-muted-foreground',
-          enCampo && 'pt-4',
+          !selected && 'text-muted-foreground',
+          isInField && 'pt-4',
         )}
       >
-        {elegida?.etiqueta ?? vacio ?? '—'}
+        {selected?.label ?? emptyLabel ?? '—'}
       </span>
 
-      {derecha.map((accion, i) => (
+      {trailing.map((action, i) => (
         // El índice como clave: son uno o dos botones fijos que el campo
         // declara al construirse, no una lista que se reordene.
         // eslint-disable-next-line @eslint-react/no-array-index-key -- lista fija y posicional, sin id propio
         <span key={i} className="shrink-0">
-          {accion}
+          {action}
         </span>
       ))}
 
       <ChevronDown
-        className={cn('shrink-0 opacity-60', pequeno ? 'size-3.5' : 'size-4')}
+        className={cn('shrink-0 opacity-60', isSmall ? 'size-3.5' : 'size-4')}
         aria-hidden="true"
       />
     </>
@@ -237,7 +237,7 @@ function DisabledTrigger({ select, children }: { select: SelectProps; children: 
     <span
       id={select.id}
       className={cn(
-        disparadorDeCampo(select.tamano === 'sm'),
+        fieldTrigger(select.size === 'sm'),
         'cursor-not-allowed opacity-50',
         select.className,
       )}

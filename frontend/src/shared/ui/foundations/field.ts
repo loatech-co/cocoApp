@@ -19,11 +19,11 @@ import { cn } from '@/shared/lib/utils';
  * Y no es estado: es «dónde estoy». Un contexto sin valor que cambie no
  * provoca ni un renderizado de más.
  */
-export const DentroDeUnCampo = createContext(false);
+export const InsideField = createContext(false);
 
 /** `true` si este control vive dentro de un `Campo`. */
-export function useDentroDeUnCampo(): boolean {
-  return use(DentroDeUnCampo);
+export function useInsideField(): boolean {
+  return use(InsideField);
 }
 
 /**
@@ -35,7 +35,7 @@ export function useDentroDeUnCampo(): boolean {
  * mismo: con dos valores distintos, dos campos de la misma fila alinean su
  * texto a alturas distintas.
  */
-export const HUECO_DE_LA_ETIQUETA = 'pb-1 pt-5';
+export const LABEL_GAP = 'pb-1 pt-5';
 
 /**
  * Cómo se ve un campo que tiene el foco.
@@ -61,7 +61,7 @@ export const HUECO_DE_LA_ETIQUETA = 'pb-1 pt-5';
  * El error es la excepción y va a plena tinta: un campo mal rellenado tiene
  * que verse desde el otro lado de la ficha.
  */
-export const FOCO_DEL_CAMPO =
+export const FIELD_FOCUS =
   'outline-none focus-visible:border-ring/60 focus-visible:ring-1 focus-visible:ring-ring/20';
 
 /**
@@ -77,17 +77,17 @@ export const FOCO_DEL_CAMPO =
  * desplegable se rellena, y tiene que pesar igual que el campo de texto que
  * lleva al lado en la misma fila.
  */
-export function disparadorDeCampo(pequeno = false): string {
+export function fieldTrigger(isSmall = false): string {
   return cn(
     'flex w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-card text-left',
     'transition-colors hover:border-ring/40',
-    FOCO_DEL_CAMPO,
+    FIELD_FOCUS,
     'aria-expanded:border-ring',
     // El suelo táctil: apagado y encendido miden lo mismo, o la fila salta al
     // deshabilitarse.
     'movil:min-h-[42px]',
     // El relleno de la derecha es igual al de la izquierda porque lo que abre
     // ya está dentro del flex: no hay nada que esquivar.
-    pequeno ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',
+    isSmall ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',
   );
 }

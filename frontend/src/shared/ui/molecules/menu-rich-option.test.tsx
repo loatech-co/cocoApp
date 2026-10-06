@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { TrendingDown } from 'lucide-react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { MenuOpcionDetallada } from './menu-rich-option';
+import { MenuRichOption } from './menu-rich-option';
 
 afterEach(cleanup);
 
@@ -11,35 +11,35 @@ describe('MenuOpcionDetallada', () => {
   it('reads its title and help, and is chosen with a click', () => {
     const onClick = vi.fn();
     render(
-      <MenuOpcionDetallada
-        Icono={TrendingDown}
+      <MenuRichOption
+        Icon={TrendingDown}
         color="expense"
-        titulo="Gasto"
-        ayuda="Plata que sale"
+        title="Gasto"
+        description="Plata que sale"
         onClick={onClick}
       />,
     );
 
-    const opcion = screen.getByRole('menuitem');
-    expect(opcion.textContent).toContain('Plata que sale');
-    fireEvent.click(opcion);
+    const option = screen.getByRole('menuitem');
+    expect(option.textContent).toContain('Plata que sale');
+    fireEvent.click(option);
     expect(onClick).toHaveBeenCalledOnce();
   });
 
   it('shows why it is off, and cannot be chosen', () => {
     render(
-      <MenuOpcionDetallada
-        Icono={TrendingDown}
+      <MenuRichOption
+        Icon={TrendingDown}
         color="income"
-        titulo="Ingreso"
-        ayuda="Plata que entra"
-        nota="Pronto"
-        deshabilitada
+        title="Ingreso"
+        description="Plata que entra"
+        note="Pronto"
+        disabled
       />,
     );
 
-    const opcion = screen.getByRole('menuitem');
-    expect(opcion).toHaveProperty('disabled', true);
-    expect(opcion.textContent).toContain('Pronto');
+    const option = screen.getByRole('menuitem');
+    expect(option).toHaveProperty('disabled', true);
+    expect(option.textContent).toContain('Pronto');
   });
 });

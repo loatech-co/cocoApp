@@ -2,18 +2,18 @@ import { type ReactNode } from 'react';
 
 import { useEscapeToClose } from '@/shared/lib/escape';
 import { cn } from '@/shared/lib/utils';
-import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
-import { CabeceraDeModal, CuerpoDeModal, PANEL_DE_MODAL } from '@/shared/ui/molecules/modal-partes';
+import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
+import { ModalHeader, ModalBody, MODAL_PANEL } from '@/shared/ui/molecules/modal-parts';
 
 interface ModalProps {
-  abierta: boolean;
-  titulo: string;
+  isOpen: boolean;
+  title: string;
   /** La línea bajo el título: qué es esto, en una frase. */
-  ayuda?: string;
+  description?: string;
   /** Botones de icono a la izquierda de la equis. Por ejemplo, eliminar. */
-  acciones?: ReactNode;
-  ancho?: string;
-  onCerrar: () => void;
+  actions?: ReactNode;
+  width?: string;
+  onClose: () => void;
   children: ReactNode;
 }
 
@@ -56,27 +56,27 @@ interface ModalProps {
  * la cabecera, que se queda, y el cuerpo, que es lo que se recorre.
  */
 export function Modal({
-  abierta,
-  titulo,
-  ayuda,
-  acciones,
-  ancho = 'sm:max-w-xl',
-  onCerrar,
+  isOpen,
+  title,
+  description,
+  actions,
+  width = 'sm:max-w-xl',
+  onClose,
   children,
 }: ModalProps) {
-  useEscapeToClose(abierta, onCerrar);
+  useEscapeToClose(isOpen, onClose);
 
-  if (!abierta) return null;
+  if (!isOpen) return null;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={titulo}
+      aria-label={title}
       // `onMouseDown` y no `onClick`: con clic, arrastrar el ratón desde
       // dentro del panel hasta el velo —seleccionando un texto, por ejemplo—
       // cerraba la ficha con todo lo escrito dentro.
-      onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
       // La marca por la que preguntan las superficies de debajo. Una trampa de
       // foco se aparta mientras hay una ficha abierta, y Escape cierra primero
       // la ficha: dos trampas peleándose por el tabulador son un teclado que no
@@ -102,8 +102,8 @@ export function Modal({
     >
       <div
         className={cn(
-          PANEL_DE_MODAL,
-          SUPERFICIE_FLOTANTE,
+          MODAL_PANEL,
+          FLOATING_SURFACE,
           'emerge',
           // Pegado abajo se redondea solo arriba: las esquinas de abajo caen
           // fuera de la pantalla y curvarlas deja dos muescas del fondo.
@@ -111,10 +111,10 @@ export function Modal({
           // de abajo, las de abajo también se ven, y dos cantos rectos debajo
           // de dos curvos es una caja a medio dibujar.
           'rounded-lg',
-          ancho,
+          width,
         )}
       >
-        <CabeceraDeModal titulo={titulo} ayuda={ayuda} acciones={acciones} onCerrar={onCerrar} />
+        <ModalHeader title={title} description={description} actions={actions} onClose={onClose} />
 
         {/*
           `min-h-0` es lo que permite que esto se encoja: sin él, un hijo de
@@ -130,7 +130,7 @@ export function Modal({
           para llevarse sus botones al fondo. En una caja de bloque no habría
           sitio que repartir y el pie se quedaría a media altura.
         */}
-        <CuerpoDeModal>{children}</CuerpoDeModal>
+        <ModalBody>{children}</ModalBody>
       </div>
     </div>
   );

@@ -13,20 +13,20 @@ import { describe, expect, it } from 'vitest';
  * Una excepción se CONCEDE, no se descubre. Cada una está abajo con su razón;
  * un control por debajo de 42 que no esté en esa lista es un fallo.
  */
-const PISO = 42;
+const TOUCH_FLOOR_PX = 42;
 
-function fuentes(dir: string): string[] {
-  return readdirSync(dir).flatMap((nombre) => {
-    const ruta = join(dir, nombre);
-    if (statSync(ruta).isDirectory()) return fuentes(ruta);
-    return ruta.endsWith('.tsx') ? [ruta] : [];
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((entry) => {
+    const filePath = join(dir, entry);
+    if (statSync(filePath).isDirectory()) return sourceFiles(filePath);
+    return filePath.endsWith('.tsx') ? [filePath] : [];
   });
 }
 
-const RAIZ = join(import.meta.dirname, '..', '..');
+const SRC_ROOT = join(import.meta.dirname, '..', '..');
 
 /** Quien dibuja un control lo declara. Aquí está quién es "quien dibuja". */
-const CONTROLES: [ruta: string, que: string][] = [
+const CONTROLS: [filePath: string, what: string][] = [
   ['shared/ui/atoms/button.tsx', 'todos los botones, en la base del `cva`'],
   ['shared/ui/atoms/input.tsx', 'todos los campos de texto'],
   ['shared/ui/organisms/select.tsx', 'el campo que despliega una lista, encendido y apagado'],
@@ -44,7 +44,7 @@ const CONTROLES: [ruta: string, que: string][] = [
  * Se comprueba que la clase siga ahí: si alguien la cambia, la prueba falla y
  * hay que volver a pasar por esta lista en vez de por un `className`.
  */
-const EXCEPCIONES: [ruta: string, clase: string, razon: string][] = [
+const EXCEPTIONS: [filePath: string, className: string, reason: string][] = [
   [
     'shared/ui/atoms/tile.tsx',
     'size-6',
@@ -63,26 +63,27 @@ const EXCEPCIONES: [ruta: string, clase: string, razon: string][] = [
 ];
 
 describe('El suelo táctil', () => {
-  it.each(CONTROLES)('%s lo declara — %s', (ruta) => {
-    const codigo = readFileSync(join(RAIZ, ruta), 'utf8');
-    expect(codigo).toContain(`movil:min-h-[${PISO}px]`);
+  it.each(CONTROLS)('%s lo declara — %s', (filePath) => {
+    const code = readFileSync(join(SRC_ROOT, filePath), 'utf8');
+    expect(code).toContain(`movil:min-h-[${TOUCH_FLOOR_PX}px]`);
   });
 
-  it.each(EXCEPCIONES)('%s se queda debajo a propósito (%s)', (ruta, clase) => {
-    const codigo = readFileSync(join(RAIZ, ruta), 'utf8');
-    expect(codigo).toContain(clase);
+  it.each(EXCEPTIONS)('%s se queda debajo a propósito (%s)', (filePath, className) => {
+    const code = readFileSync(join(SRC_ROOT, filePath), 'utf8');
+    expect(code).toContain(className);
   });
 
   it('ningún suelo del teléfono se escribe por debajo de 42', () => {
-    const culpables: string[] = [];
+    const offenders: string[] = [];
 
-    for (const ruta of fuentes(RAIZ)) {
-      const codigo = readFileSync(ruta, 'utf8');
-      for (const uso of codigo.matchAll(/movil:min-(?:h|w)-\[(\d+)px\]/g)) {
-        if (Number(uso[1]) < PISO) culpables.push(`${ruta.split('/src/')[1]}: ${uso[0]}`);
+    for (const filePath of sourceFiles(SRC_ROOT)) {
+      const code = readFileSync(filePath, 'utf8');
+      for (const match of code.matchAll(/movil:min-(?:h|w)-\[(\d+)px\]/g)) {
+        if (Number(match[1]) < TOUCH_FLOOR_PX)
+          offenders.push(`${filePath.split('/src/')[1]}: ${match[0]}`);
       }
     }
 
-    expect(culpables, culpables.join('\n')).toEqual([]);
+    expect(offenders, offenders.join('\n')).toEqual([]);
   });
 });

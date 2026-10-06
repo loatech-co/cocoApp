@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
  * A row of a list INSIDE a card, which can be clicked: a pending
@@ -29,7 +29,7 @@ export function CardRow({
       onClick={onClick}
       className={cn(
         'flex w-full flex-col gap-2 rounded-md px-3 py-2.5 text-left transition-colors',
-        onClick ? cn('cursor-pointer', REALCE) : 'cursor-default',
+        onClick ? cn('cursor-pointer', HIGHLIGHT) : 'cursor-default',
       )}
       {...props}
     />

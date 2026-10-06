@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { SUPERFICIE_FLOTANTE } from './superficie';
+import { FLOATING_SURFACE } from './surface';
 
 /**
  * Todo lo que flota se dibuja igual.
@@ -16,17 +16,17 @@ import { SUPERFICIE_FLOTANTE } from './superficie';
  * Lee el código fuente, como las de los botones y el radio, porque el problema
  * no está en el componente sino en quién escribe la clase.
  */
-function fuentes(dir: string): string[] {
-  return readdirSync(dir).flatMap((nombre) => {
-    const ruta = join(dir, nombre);
-    if (statSync(ruta).isDirectory()) return fuentes(ruta);
-    return ruta.endsWith('.tsx') ? [ruta] : [];
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((entry) => {
+    const filePath = join(dir, entry);
+    if (statSync(filePath).isDirectory()) return sourceFiles(filePath);
+    return filePath.endsWith('.tsx') ? [filePath] : [];
   });
 }
 
-const archivos = fuentes(join(import.meta.dirname, '..', '..', '..'));
+const files = sourceFiles(join(import.meta.dirname, '..', '..', '..'));
 
-const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
+const relativePath = (filePath: string): string => filePath.split('/src/')[1]!;
 
 /**
  * Quién puede escribir la sombra sin pasar por la superficie, y por qué.
@@ -41,7 +41,7 @@ const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
  * El tooltip está aquí porque va INVERTIDO a propósito: es la tinta de la
  * página haciendo de fondo, y el motivo está escrito en su propio archivo.
  */
-const LEVANTAN = new Set([
+const LIFTED = new Set([
   'shared/ui/atoms/tile.tsx',
   'shared/ui/atoms/bar-slot.tsx',
   'shared/ui/atoms/tooltip.tsx',
@@ -49,43 +49,45 @@ const LEVANTAN = new Set([
 
 describe('La superficie de lo que flota está en un solo sitio', () => {
   it('encuentra los archivos del proyecto', () => {
-    expect(archivos.length).toBeGreaterThan(10);
+    expect(files.length).toBeGreaterThan(10);
   });
 
   it('nadie vuelve a escribir la sombra flotante a mano', () => {
-    const culpables = archivos
-      .filter((ruta) => !LEVANTAN.has(relativa(ruta)))
+    const offenders = files
+      .filter((filePath) => !LIFTED.has(relativePath(filePath)))
       // La CLASE, no la mención: un comentario que explique la diferencia
       // entre lo apoyado y lo que flota nombra la sombra sin usarla.
-      .filter((ruta) => readFileSync(ruta, 'utf8').includes('shadow-[var(--sombra-flotante)]'))
-      .map(relativa);
+      .filter((filePath) =>
+        readFileSync(filePath, 'utf8').includes('shadow-[var(--sombra-flotante)]'),
+      )
+      .map(relativePath);
 
-    expect(culpables, 'usa SUPERFICIE_FLOTANTE de shared/ui/foundations/superficie.ts').toEqual([]);
+    expect(offenders, 'usa SUPERFICIE_FLOTANTE de shared/ui/foundations/surface.ts').toEqual([]);
   });
 
   it('nadie separa un panel con un negro o un blanco inventados', () => {
     // `ring-black/5` sobre un popover blanco da #f2f2f2: dos puntos de
     // diferencia con el lienzo, o sea ningún canto. El borde del tema está
     // calculado para verse contra sus propias superficies, en los dos modos.
-    const culpables: string[] = [];
+    const offenders: string[] = [];
 
-    for (const ruta of archivos) {
-      const codigo = readFileSync(ruta, 'utf8');
-      for (const uso of codigo.matchAll(/\b(?:ring|border)-(?:black|white)\/\d+/g)) {
-        culpables.push(`${relativa(ruta)}: ${uso[0]}`);
+    for (const filePath of files) {
+      const code = readFileSync(filePath, 'utf8');
+      for (const match of code.matchAll(/\b(?:ring|border)-(?:black|white)\/\d+/g)) {
+        offenders.push(`${relativePath(filePath)}: ${match[0]}`);
       }
     }
 
-    expect(culpables, 'usa ring-border, o un token del tema').toEqual([]);
+    expect(offenders, 'usa ring-border, o un token del tema').toEqual([]);
   });
 
   it('la superficie trae color, tinta, sombra y canto', () => {
     // Las cuatro, porque las cuatro se han olvidado alguna vez: ocho de los
     // diez sitios no declaraban `text-popover-foreground` y heredaban la tinta
     // de la página, que en otro tema no tiene por qué coincidir.
-    expect(SUPERFICIE_FLOTANTE).toContain('bg-popover');
-    expect(SUPERFICIE_FLOTANTE).toContain('text-popover-foreground');
-    expect(SUPERFICIE_FLOTANTE).toContain('--sombra-flotante');
-    expect(SUPERFICIE_FLOTANTE).toContain('ring-border');
+    expect(FLOATING_SURFACE).toContain('bg-popover');
+    expect(FLOATING_SURFACE).toContain('text-popover-foreground');
+    expect(FLOATING_SURFACE).toContain('--sombra-flotante');
+    expect(FLOATING_SURFACE).toContain('ring-border');
   });
 });

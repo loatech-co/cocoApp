@@ -6,7 +6,7 @@ import { cn } from '@/shared/lib/utils';
 import { Checkbox } from '@/shared/ui/atoms/checkbox';
 import { BackCrumb, DrillButton } from '@/shared/ui/atoms/level-nav';
 import { TextButton } from '@/shared/ui/atoms/text-button';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
  * El filtro por centros de costos, categorías y conceptos.
@@ -131,7 +131,7 @@ function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: Filt
           // ancho del desplegable. Por eso la fila tiene suelo y el
           // recuadro no.
           'movil:min-h-[42px]',
-          REALCE,
+          HIGHLIGHT,
           marcado && 'font-medium',
         )}
       >

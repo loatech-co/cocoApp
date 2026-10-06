@@ -6,24 +6,24 @@ import { Select } from './select';
 import { Field } from '../atoms/field';
 
 const OPTIONS = [
-  { valor: 'hogar', etiqueta: 'Hogar' },
-  { valor: 'costos-fijos', etiqueta: 'Costos fijos' },
-  { valor: 'transporte', etiqueta: 'Transporte' },
+  { value: 'hogar', label: 'Hogar' },
+  { value: 'costos-fijos', label: 'Costos fijos' },
+  { value: 'transporte', label: 'Transporte' },
 ];
 
-function Controlled(props: { start?: string; tamano?: 'sm' | 'md'; disabled?: boolean }) {
+function Controlled(props: { start?: string; size?: 'sm' | 'md'; disabled?: boolean }) {
   const [value, setValue] = useState(props.start ?? '');
   return (
     <Field label="Centro de costos" id="select-centro" className="max-w-sm">
       <Select
         id="select-centro"
-        etiqueta="Centro de costos"
-        valor={value}
-        onCambiar={setValue}
-        opciones={OPTIONS}
-        vacio="Sin centro"
-        tamano={props.tamano ?? 'md'}
-        deshabilitado={props.disabled}
+        label="Centro de costos"
+        value={value}
+        onChange={setValue}
+        options={OPTIONS}
+        emptyLabel="Sin centro"
+        size={props.size ?? 'md'}
+        disabled={props.disabled}
       />
     </Field>
   );
@@ -32,7 +32,7 @@ function Controlled(props: { start?: string; tamano?: 'sm' | 'md'; disabled?: bo
 const meta = {
   title: 'Organisms/Select',
   component: Select,
-  args: { valor: '', onCambiar: () => undefined, opciones: OPTIONS, etiqueta: 'Centro' },
+  args: { value: '', onChange: () => undefined, options: OPTIONS, label: 'Centro' },
   decorators: [
     (Story) => (
       <div className="min-h-64">
@@ -50,12 +50,12 @@ export const Empty: Story = { render: () => <Controlled /> };
 
 export const Chosen: Story = { render: () => <Controlled start="hogar" /> };
 
-export const Small: Story = { render: () => <Controlled start="hogar" tamano="sm" /> };
+export const Small: Story = { render: () => <Controlled start="hogar" size="sm" /> };
 
 export const Disabled: Story = { render: () => <Controlled start="hogar" disabled /> };
 
 export const WithIcon: Story = {
-  args: { icono: Landmark, valor: 'hogar', className: 'max-w-sm' },
+  args: { icon: Landmark, value: 'hogar', className: 'max-w-sm' },
 };
 
 export const FocusVisible: Story = {

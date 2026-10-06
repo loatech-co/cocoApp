@@ -3,7 +3,7 @@ import { useId, type ReactNode } from 'react';
 import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
 import { t } from '@/shared/lib/i18n';
 import { TextButton } from '@/shared/ui/atoms/text-button';
-import { CreateOption, Opcion } from '@/shared/ui/organisms/combo';
+import { CreateOption, Option } from '@/shared/ui/organisms/combo';
 import { readablePath, type IndexEntry } from '@coco/receipt-parser';
 
 /** El paso de elegir en qué categoría va el concepto que se va a crear. */
@@ -37,9 +37,9 @@ export function CategoriaParaNuevo({
           aria-label={t('transactions.conceptSearch.categories')}
         >
           {categorias.map((c) => (
-            <Opcion key={String(c.id)} elegida={false} onClick={() => onCrearEn(c)}>
+            <Option key={String(c.id)} isSelected={false} onClick={() => onCrearEn(c)}>
               <Fila entrada={c} />
-            </Opcion>
+            </Option>
           ))}
         </div>
       )}
@@ -70,20 +70,24 @@ export function ResultadosDelBuscador(props: PropsDeResultados) {
       {hayOpciones(props) ? (
         <div className={LISTA} role="listbox" aria-label={t('transactions.conceptSearch.results')}>
           {elegida && (
-            <Opcion elegida={false} onClick={() => onElegir(undefined)}>
+            <Option isSelected={false} onClick={() => onElegir(undefined)}>
               <span className="text-muted-foreground">
                 {t('transactions.conceptSearch.remove')}
               </span>
-            </Opcion>
+            </Option>
           )}
 
           {!buscando && <SinBuscar {...props} />}
 
           {buscando &&
             resultados.map((r) => (
-              <Opcion key={String(r.id)} elegida={elegida?.id === r.id} onClick={() => onElegir(r)}>
+              <Option
+                key={String(r.id)}
+                isSelected={elegida?.id === r.id}
+                onClick={() => onElegir(r)}
+              >
                 <Fila entrada={r} />
-              </Opcion>
+              </Option>
             ))}
         </div>
       ) : (
@@ -121,16 +125,16 @@ function SinBuscar({
       {candidatos.length > 0 && (
         <Grupo titulo={t('transactions.conceptSearch.fromReceipt')}>
           {candidatos.map((c) => (
-            <Opcion
+            <Option
               key={c.id}
-              elegida={elegida !== undefined && String(elegida.id) === String(c.id)}
+              isSelected={elegida !== undefined && String(elegida.id) === String(c.id)}
               onClick={() => onElegirCandidato(c)}
             >
               <span className="flex min-w-0 items-baseline gap-2">
                 <span className="truncate">{c.nombre}</span>
                 <span className="truncate text-xs text-muted-foreground">{c.ruta}</span>
               </span>
-            </Opcion>
+            </Option>
           ))}
         </Grupo>
       )}
@@ -138,9 +142,13 @@ function SinBuscar({
       {candidatos.length === 0 && recientes.length > 0 && (
         <Grupo titulo={t('transactions.conceptSearch.recent')}>
           {recientes.map((r) => (
-            <Opcion key={String(r.id)} elegida={elegida?.id === r.id} onClick={() => onElegir(r)}>
+            <Option
+              key={String(r.id)}
+              isSelected={elegida?.id === r.id}
+              onClick={() => onElegir(r)}
+            >
               <Fila entrada={r} />
-            </Opcion>
+            </Option>
           ))}
         </Grupo>
       )}
@@ -160,7 +168,7 @@ function CrearConcepto({
   onPedirCategoria: () => void;
 }) {
   return (
-    <CreateOption creando={creando} conIntro={sinResultados} onCrear={onPedirCategoria}>
+    <CreateOption isCreating={creando} hasEnterHint={sinResultados} onCreate={onPedirCategoria}>
       {t('transactions.conceptSearch.createConcept', { name: busca.trim() })}
     </CreateOption>
   );

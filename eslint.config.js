@@ -73,8 +73,8 @@ const RAW_ELEMENTS = {
   input: 'Input, SearchBox, Checkbox, Switch or FilePicker (shared/ui/atoms)',
   textarea: 'Textarea (shared/ui/atoms/textarea)',
   select: 'Select (shared/ui/organisms/select)',
-  dialog: 'Modal or Confirmacion (shared/ui/organisms)',
-  table: 'Tabla (shared/ui/molecules/tabla)',
+  dialog: 'Modal or Confirmation (shared/ui/organisms)',
+  table: 'Table (shared/ui/molecules/table)',
 };
 
 /** `utility-[value]`, with any variant prefix (`movil:`, `hover:`) before it. */
@@ -122,7 +122,7 @@ function arbitraryUses(text) {
   for (const [token, utility, value] of text.matchAll(ARBITRARY)) {
     if (value.startsWith('var(')) continue;
     // The touch floor (`movil:min-h-[42px]`) has its own registry with its
-    // reasons: `shared/ui/piso-tactil.test.ts`, which also rejects any floor
+    // reasons: `shared/ui/touch-floor.test.ts`, which also rejects any floor
     // under 42. One place per rule, not two.
     if (token.startsWith('movil:min-')) continue;
     if (RADIUS.test(utility)) found.push({ token, kind: 'radius' });

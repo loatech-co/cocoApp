@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
  * An option of a short list that is TURNED ON: the range shortcuts («Este
@@ -22,7 +22,7 @@ export function ToggleOption({
       aria-pressed={isOn}
       className={cn(
         'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
-        isOn ? 'bg-primary/15 font-medium text-primary' : cn('text-muted-foreground', REALCE),
+        isOn ? 'bg-primary/15 font-medium text-primary' : cn('text-muted-foreground', HIGHLIGHT),
       )}
       {...props}
     />

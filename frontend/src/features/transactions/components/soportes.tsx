@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useSupportFiles, useSupportUpload } from '@/features/transactions/hooks/use-support-files';
 import { type Receipt } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
-import { BotonOscuro } from '@/shared/ui/molecules/overlay-control';
+import { OverlayButton } from '@/shared/ui/molecules/overlay-control';
 
 import { ConfirmSupportDeletion } from './confirm-support-deletion';
 import { Soltar } from './support-drop-zone';
@@ -147,21 +147,21 @@ function GalleryPreview({ g }: { g: Gallery }) {
         <>
           <SupportPager index={i} total={lista.length} onGo={g.setActivo} />
 
-          <BotonOscuro
-            etiqueta={t('transactions.supports.addAnother')}
+          <OverlayButton
+            label={t('transactions.supports.addAnother')}
             onClick={() => g.setAñadiendo(true)}
           >
             <Plus className="size-4" aria-hidden="true" />
-          </BotonOscuro>
+          </OverlayButton>
 
           {/* Borrar pregunta antes: es lo único de esta barra que no se puede
               deshacer. */}
-          <BotonOscuro
-            etiqueta={t('transactions.supports.deleteThis')}
+          <OverlayButton
+            label={t('transactions.supports.deleteThis')}
             onClick={() => g.setBorrando(enseñado)}
           >
             <Trash2 className="size-4" aria-hidden="true" />
-          </BotonOscuro>
+          </OverlayButton>
         </>
       }
     />

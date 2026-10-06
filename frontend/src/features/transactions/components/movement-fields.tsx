@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 import { t } from '@/shared/lib/i18n';
 import { Field } from '@/shared/ui/atoms/field';
 import { Textarea } from '@/shared/ui/atoms/textarea';
-import { CampoDeDinero } from '@/shared/ui/molecules/campo-de-dinero';
+import { MoneyField } from '@/shared/ui/molecules/money-field';
 
 import { MovementClassification } from './movement-classification';
 import { LoQueLei, NoSePudoLeer } from './reading-notices';
@@ -40,10 +40,10 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
         <Field label={t('transactions.fields.amount')} id="mov-valor">
           {/* Agrupa los miles al escribir y conserva el cursor. El porqué largo
               está en el componente. */}
-          <CampoDeDinero
+          <MoneyField
             id="mov-valor"
-            valor={ficha.amount}
-            onCambiar={ficha.setAmount}
+            value={ficha.amount}
+            onValueChange={ficha.setAmount}
             placeholder="0"
             required
           />

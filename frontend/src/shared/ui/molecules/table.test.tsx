@@ -2,33 +2,33 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Tabla, TablaEsqueleto, TablaPie, Td, Th, Tr } from './tabla';
+import { Table, TableSkeleton, TableFooter, Td, Th, Tr } from './table';
 
 afterEach(cleanup);
 
 describe('Tabla', () => {
   it('renders a real table with column headers, rows and a footer', () => {
     render(
-      <Tabla>
+      <Table>
         <thead>
           <tr>
-            <Th fija>Concepto</Th>
-            <Th alineado="derecha">Valor</Th>
+            <Th isSticky>Concepto</Th>
+            <Th align="right">Valor</Th>
           </tr>
         </thead>
         <tbody>
           <Tr>
-            <Td fija>Aseo</Td>
-            <Td alineado="derecha">x</Td>
+            <Td isSticky>Aseo</Td>
+            <Td align="right">x</Td>
           </Tr>
         </tbody>
-        <TablaPie>
+        <TableFooter>
           <tr>
             <Td>Total</Td>
             <Td />
           </tr>
-        </TablaPie>
-      </Tabla>,
+        </TableFooter>
+      </Table>,
     );
 
     const table = screen.getByRole('table');
@@ -60,12 +60,12 @@ describe('Th', () => {
   it.each([
     ['asc', 'ascending'],
     ['desc', 'descending'],
-  ] as const)('announces the %s order with aria-sort', (activo, aria) => {
+  ] as const)('announces the %s order with aria-sort', (direction, aria) => {
     render(
       <table>
         <thead>
           <tr>
-            <Th alineado="derecha" orden={{ activo, onCambiar: vi.fn() }}>
+            <Th align="right" sort={{ direction, onChange: vi.fn() }}>
               Valor
             </Th>
           </tr>
@@ -77,12 +77,12 @@ describe('Th', () => {
   });
 
   it('sorts through a button inside the header', () => {
-    const onCambiar = vi.fn();
+    const onChange = vi.fn();
     render(
       <table>
         <thead>
           <tr>
-            <Th orden={{ activo: null, onCambiar }}>Fecha</Th>
+            <Th sort={{ direction: null, onChange }}>Fecha</Th>
           </tr>
         </thead>
       </table>,
@@ -90,7 +90,7 @@ describe('Th', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Fecha' }));
 
-    expect(onCambiar).toHaveBeenCalledOnce();
+    expect(onChange).toHaveBeenCalledOnce();
     expect(screen.getByRole('columnheader').hasAttribute('aria-sort')).toBe(false);
   });
 });
@@ -101,7 +101,7 @@ describe('Tr', () => {
     render(
       <table>
         <tbody>
-          <Tr onClick={onClick} atenuada>
+          <Tr onClick={onClick} isDimmed>
             <Td>Aseo</Td>
           </Tr>
         </tbody>
@@ -118,8 +118,8 @@ describe('Tr', () => {
     render(
       <table>
         <tbody>
-          <Tr atencion>
-            <Td fija atencion>
+          <Tr isFlagged>
+            <Td isSticky isFlagged>
               Sin clasificar
             </Td>
           </Tr>
@@ -136,7 +136,7 @@ describe('Tr', () => {
 
 describe('TablaEsqueleto', () => {
   it('keeps the real column names while it loads, with the requested number of rows', () => {
-    render(<TablaEsqueleto columnas={['Concepto', 'Fecha', 'Valor']} filas={3} divisor={false} />);
+    render(<TableSkeleton columns={['Concepto', 'Fecha', 'Valor']} rows={3} hasDivider={false} />);
 
     expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual([
       'Concepto',

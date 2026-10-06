@@ -21,7 +21,7 @@ import { Button } from '@/shared/ui/atoms/button';
  * Va al 25 % de la tinta: tiene que verse como una división, no como un sexto
  * control.
  */
-export function SeparadorDeMandos() {
+export function ControlSeparator() {
   return <span aria-hidden="true" className="mx-0.5 h-4 w-px shrink-0 bg-sala-tinta/25" />;
 }
 
@@ -34,16 +34,16 @@ export function SeparadorDeMandos() {
  * la de uno guardado los borra del servidor, pero los dos botones son el mismo
  * objeto.
  */
-export function BotonOscuro({
+export function OverlayButton({
   onClick,
-  etiqueta,
-  deshabilitado = false,
+  label,
+  disabled: isDisabled = false,
   className,
   children,
 }: {
   onClick: () => void;
-  etiqueta: string;
-  deshabilitado?: boolean;
+  label: string;
+  disabled?: boolean;
   className?: string;
   children: ReactNode;
 }) {
@@ -55,9 +55,9 @@ export function BotonOscuro({
       // resaltado cuadrado ahí deja dos esquinas asomando en cada extremo.
       size="sm-icon-round"
       onClick={onClick}
-      disabled={deshabilitado}
-      aria-label={etiqueta}
-      title={etiqueta}
+      disabled={isDisabled}
+      aria-label={label}
+      title={label}
       className={cn('text-sala-tinta hover:bg-sala-tinta/10 hover:text-sala-tinta', className)}
     >
       {children}
@@ -78,28 +78,28 @@ export function BotonOscuro({
  * | `zoom`    | «100 %» en el visor a pantalla completa              |
  * | `paginas` | «Pág. 12 / 30» en el visor                           |
  */
-const LECTURAS = {
-  previa: 'min-w-[3rem] text-2xs',
+const READOUT_WIDTHS = {
+  preview: 'min-w-[3rem] text-2xs',
   zoom: 'min-w-[3.5rem] text-xs',
-  paginas: 'min-w-[4.5rem] text-xs',
+  pages: 'min-w-[4.5rem] text-xs',
 } as const;
 
-export function LecturaDeMandos({
-  ancho,
-  titulo,
+export function ControlReadout({
+  width,
+  title,
   onClick,
   children,
 }: {
-  ancho: keyof typeof LECTURAS;
+  width: keyof typeof READOUT_WIDTHS;
   /** La pista al pasar por encima, si se puede pulsar. */
-  titulo?: string;
+  title?: string;
   onClick?: () => void;
   children: ReactNode;
 }) {
-  const clase = cn('tabular text-center font-medium text-sala-tinta', LECTURAS[ancho]);
-  if (!onClick) return <span className={clase}>{children}</span>;
+  const classes = cn('tabular text-center font-medium text-sala-tinta', READOUT_WIDTHS[width]);
+  if (!onClick) return <span className={classes}>{children}</span>;
   return (
-    <button type="button" onClick={onClick} title={titulo} className={clase}>
+    <button type="button" onClick={onClick} title={title} className={classes}>
       {children}
     </button>
   );

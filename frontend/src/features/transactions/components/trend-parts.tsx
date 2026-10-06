@@ -14,7 +14,7 @@ import { type TrendPoint } from '@/shared/api/generated/model';
 import { formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
+import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
 /** Promedio y pico, encima de la gráfica. */
 export function TrendSummary({
@@ -187,7 +187,7 @@ export function TrendCard({
       style={{ left: `${sitio.left}px`, top: `${sitio.top}px` }}
       className={cn(
         'pointer-events-none absolute min-w-36 rounded-lg p-3',
-        SUPERFICIE_FLOTANTE,
+        FLOATING_SURFACE,
         // Sin medir todavía se pinta invisible: un primer fotograma en
         // la esquina y otro en su sitio se ve como un salto.
         !medida && 'opacity-0',

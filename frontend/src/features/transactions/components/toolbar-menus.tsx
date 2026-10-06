@@ -4,8 +4,8 @@ import type { Filtros } from '@/features/transactions/model/filtros';
 import { ORDENES, type Orden } from '@/features/transactions/model/sort-orders';
 import { type Category, type TransactionType } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
-import { Menu, MenuOpcion, MenuTitulo } from '@/shared/ui/molecules/menu';
-import { MenuOpcionDetallada } from '@/shared/ui/molecules/menu-rich-option';
+import { Menu, MenuOption, MenuTitle } from '@/shared/ui/molecules/menu';
+import { MenuRichOption } from '@/shared/ui/molecules/menu-rich-option';
 
 import { FiltroClasificacion } from './filtro-clasificacion';
 
@@ -22,26 +22,26 @@ export function SortMenu({
 }) {
   return (
     <Menu
-      etiqueta={t('transactions.toolbar.sort')}
-      Icono={ArrowDownUp}
-      soloIcono
-      activo={orden.valor !== '-date'}
-      ancho="sm"
+      label={t('transactions.toolbar.sort')}
+      Icon={ArrowDownUp}
+      isIconOnly
+      isActive={orden.valor !== '-date'}
+      width="sm"
     >
       {(cerrar) => (
         <>
-          <MenuTitulo>{t('transactions.toolbar.sortBy')}</MenuTitulo>
+          <MenuTitle>{t('transactions.toolbar.sortBy')}</MenuTitle>
           {ORDENES.map((o) => (
-            <MenuOpcion
+            <MenuOption
               key={o.valor}
-              elegida={orden.valor === o.valor}
+              isSelected={orden.valor === o.valor}
               onClick={() => {
                 orden.onCambiar(o.valor);
                 cerrar();
               }}
             >
               {o.etiqueta}
-            </MenuOpcion>
+            </MenuOption>
           ))}
         </>
       )}
@@ -60,16 +60,16 @@ export function ClassificationMenu({
 }) {
   return (
     <Menu
-      etiqueta={t('transactions.toolbar.filterByClassification')}
-      Icono={Filter}
-      soloIcono
-      activo={filtros.categoryIds.length > 0}
-      ancho="lg"
-      tipo="panel"
+      label={t('transactions.toolbar.filterByClassification')}
+      Icon={Filter}
+      isIconOnly
+      isActive={filtros.categoryIds.length > 0}
+      width="lg"
+      kind="panel"
       // Este panel trae cabecera, lista y pie separados por líneas que
       // cruzan de lado a lado: con el acolchado del menú quedarían
       // cortadas 4px antes de cada borde.
-      sinRelleno
+      isUnpadded
     >
       <FiltroClasificacion
         arbol={arbol}
@@ -87,19 +87,19 @@ export function ClassificationMenu({
 export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) => void }) {
   return (
     <Menu
-      etiqueta={t('transactions.newMovement')}
-      tipo="menu"
-      alineado="derecha"
-      variante="default"
-      Icono={Plus}
+      label={t('transactions.newMovement')}
+      kind="menu"
+      align="right"
+      variant="default"
+      Icon={Plus}
     >
       {(cerrar) => (
         <div className="flex flex-col">
-          <MenuOpcionDetallada
-            Icono={TrendingDown}
+          <MenuRichOption
+            Icon={TrendingDown}
             color="expense"
-            titulo={t('transactions.types.expense')}
-            ayuda={t('transactions.toolbar.expenseHelp')}
+            title={t('transactions.types.expense')}
+            description={t('transactions.toolbar.expenseHelp')}
             onClick={() => {
               cerrar();
               onNuevo('expense');
@@ -108,13 +108,13 @@ export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) 
           {/* Apagada, no escondida: los ingresos existen en el modelo
               —el resumen ya los suma— y quitar la opción haría creer que
               la aplicación no sabe registrarlos. Apagada dice que sabrá. */}
-          <MenuOpcionDetallada
-            Icono={TrendingUp}
+          <MenuRichOption
+            Icon={TrendingUp}
             color="income"
-            titulo={t('transactions.types.income')}
-            ayuda={t('transactions.toolbar.incomeHelp')}
-            nota={t('transactions.kpis.soon')}
-            deshabilitada
+            title={t('transactions.types.income')}
+            description={t('transactions.toolbar.incomeHelp')}
+            note={t('transactions.kpis.soon')}
+            disabled
           />
         </div>
       )}

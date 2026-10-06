@@ -9,8 +9,8 @@ import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { CardRow } from '@/shared/ui/atoms/card-row';
 import { Checkbox } from '@/shared/ui/atoms/checkbox';
 import { Progress } from '@/shared/ui/atoms/progress';
-import { REALCE } from '@/shared/ui/foundations/superficie';
-import { Menu, MenuTitulo } from '@/shared/ui/molecules/menu';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
+import { Menu, MenuTitle } from '@/shared/ui/molecules/menu';
 
 /** Hoy en America/Bogota, para saber qué ya venció. */
 function hoy(): string {
@@ -286,16 +286,16 @@ function CenterFilter({
 }) {
   return (
     <Menu
-      etiqueta={t('transactions.pending.filterByCostCenter')}
-      Icono={Filter}
-      soloIcono
-      activo={ocultos.size > 0}
-      tipo="panel"
-      ancho="sm"
-      alineado="derecha"
+      label={t('transactions.pending.filterByCostCenter')}
+      Icon={Filter}
+      isIconOnly
+      isActive={ocultos.size > 0}
+      kind="panel"
+      width="sm"
+      align="right"
     >
       <div className="flex flex-col">
-        <MenuTitulo>{t('shell.sections.costCenters')}</MenuTitulo>
+        <MenuTitle>{t('shell.sections.costCenters')}</MenuTitle>
         {centros.map(([id, nombre]) => {
           const marcado = !ocultos.has(id);
           return (
@@ -303,7 +303,7 @@ function CenterFilter({
               key={id}
               className={cn(
                 'flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm',
-                REALCE,
+                HIGHLIGHT,
                 marcado && 'font-medium',
               )}
             >

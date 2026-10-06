@@ -31,18 +31,16 @@ beforeAll(() => {
 // consultas encuentran elementos de la anterior.
 afterEach(cleanup);
 
-const OPCIONES = [
-  { valor: 'mensual', etiqueta: 'Cada mes' },
-  { valor: 'anual', etiqueta: 'Cada año' },
+const OPTIONS = [
+  { value: 'mensual', label: 'Cada mes' },
+  { value: 'anual', label: 'Cada año' },
 ];
 
 describe('El desplegable de un Select', () => {
   it('mide lo mismo que su campo', () => {
     // Un panel más ancho que su disparador se lee como otro elemento; uno más
     // angosto corta opciones que el campo sí muestra enteras.
-    render(
-      <Select etiqueta="Periodicidad" valor="mensual" opciones={OPCIONES} onCambiar={() => {}} />,
-    );
+    render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={() => {}} />);
 
     fireEvent.click(screen.getAllByRole('button')[0]!);
 
@@ -53,9 +51,7 @@ describe('El desplegable de un Select', () => {
   it('se coloca contra la VENTANA, no contra su caja', () => {
     // Vive dentro de formularios que se desplazan: con posición absoluta, el
     // recorte del contenedor se lo come.
-    render(
-      <Select etiqueta="Periodicidad" valor="mensual" opciones={OPCIONES} onCambiar={() => {}} />,
-    );
+    render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={() => {}} />);
 
     fireEvent.click(screen.getAllByRole('button')[0]!);
 
@@ -67,22 +63,18 @@ describe('El desplegable de un Select', () => {
   });
 
   it('muestra las opciones y marca la elegida', () => {
-    render(
-      <Select etiqueta="Periodicidad" valor="anual" opciones={OPCIONES} onCambiar={() => {}} />,
-    );
+    render(<Select label="Periodicidad" value="anual" options={OPTIONS} onChange={() => {}} />);
 
     fireEvent.click(screen.getAllByRole('button')[0]!);
 
-    const elegida = screen.getByRole('option', { name: /Cada año/ });
-    expect(elegida.getAttribute('aria-selected')).toBe('true');
+    const selected = screen.getByRole('option', { name: /Cada año/ });
+    expect(selected.getAttribute('aria-selected')).toBe('true');
   });
 });
 
 describe('Select', () => {
   it('shows the label of the chosen value on its trigger', () => {
-    render(
-      <Select etiqueta="Periodicidad" valor="anual" opciones={OPCIONES} onCambiar={vi.fn()} />,
-    );
+    render(<Select label="Periodicidad" value="anual" options={OPTIONS} onChange={vi.fn()} />);
 
     const trigger = screen.getByRole('button', { name: /Cada año/ });
     expect(trigger.getAttribute('aria-haspopup')).toBe('listbox');
@@ -90,27 +82,25 @@ describe('Select', () => {
   });
 
   it('reports the chosen option and closes', () => {
-    const onCambiar = vi.fn();
-    render(
-      <Select etiqueta="Periodicidad" valor="mensual" opciones={OPCIONES} onCambiar={onCambiar} />,
-    );
+    const onChange = vi.fn();
+    render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={onChange} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Cada mes/ }));
     fireEvent.click(screen.getByRole('option', { name: /Cada año/ }));
 
-    expect(onCambiar).toHaveBeenCalledWith('anual');
+    expect(onChange).toHaveBeenCalledWith('anual');
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
   it('offers the empty choice when one is allowed, and reports it as an empty string', () => {
-    const onCambiar = vi.fn();
+    const onChange = vi.fn();
     render(
       <Select
-        etiqueta="Periodicidad"
-        valor=""
-        vacio="Sin periodicidad"
-        opciones={OPCIONES}
-        onCambiar={onCambiar}
+        label="Periodicidad"
+        value=""
+        emptyLabel="Sin periodicidad"
+        options={OPTIONS}
+        onChange={onChange}
       />,
     );
 
@@ -120,31 +110,23 @@ describe('Select', () => {
 
     fireEvent.click(empty);
 
-    expect(onCambiar).toHaveBeenCalledWith('');
+    expect(onChange).toHaveBeenCalledWith('');
   });
 
   it('closes with Escape without choosing anything', () => {
-    const onCambiar = vi.fn();
-    render(
-      <Select etiqueta="Periodicidad" valor="mensual" opciones={OPCIONES} onCambiar={onCambiar} />,
-    );
+    const onChange = vi.fn();
+    render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={onChange} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Cada mes/ }));
     fireEvent.keyDown(document, { key: 'Escape' });
 
     expect(screen.queryByRole('listbox')).toBeNull();
-    expect(onCambiar).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('is not a button while disabled', () => {
     render(
-      <Select
-        etiqueta="Periodicidad"
-        valor="mensual"
-        opciones={OPCIONES}
-        onCambiar={vi.fn()}
-        deshabilitado
-      />,
+      <Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={vi.fn()} disabled />,
     );
 
     expect(screen.queryByRole('button')).toBeNull();
@@ -152,7 +134,7 @@ describe('Select', () => {
   });
 
   it('is disabled when there is nothing to choose', () => {
-    render(<Select etiqueta="Periodicidad" valor="" opciones={[]} onCambiar={vi.fn()} />);
+    render(<Select label="Periodicidad" value="" options={[]} onChange={vi.fn()} />);
 
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.getByText('—')).toBeTruthy();
@@ -161,13 +143,13 @@ describe('Select', () => {
   it('draws its informative icon and its actions inside the trigger', () => {
     render(
       <Select
-        etiqueta="Etiqueta"
-        tamano="sm"
-        valor="mensual"
-        opciones={OPCIONES}
-        onCambiar={vi.fn()}
-        icono={Tag}
-        acciones={[<span key="a">acción</span>, null]}
+        label="Etiqueta"
+        size="sm"
+        value="mensual"
+        options={OPTIONS}
+        onChange={vi.fn()}
+        icon={Tag}
+        actions={[<span key="a">acción</span>, null]}
       />,
     );
 

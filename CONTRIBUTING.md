@@ -377,17 +377,17 @@ can only be tested with a server. A domain component that needs data lives in
 
 **A component's level is the lowest its imports allow.**
 
-| Level        | May use                        | Example                                     |
-| ------------ | ------------------------------ | ------------------------------------------- |
-| `atoms/`     | no other `shared/ui` component | `Button`, `Input`, `Field`, `BottomSheet`   |
-| `molecules/` | atoms                          | `Menu` (Button + BottomSheet), `Calendario` |
-| `organisms/` | molecules and atoms            | `Select` (Menu + Field), `Modal`            |
-| `templates/` | organisms, molecules and atoms | none yet                                    |
+| Level        | May use                        | Example                                   |
+| ------------ | ------------------------------ | ----------------------------------------- |
+| `atoms/`     | no other `shared/ui` component | `Button`, `Input`, `Field`, `BottomSheet` |
+| `molecules/` | atoms                          | `Menu` (Button + BottomSheet), `Calendar` |
+| `organisms/` | molecules and atoms            | `Select` (Menu + Field), `Modal`          |
+| `templates/` | organisms, molecules and atoms | none yet                                  |
 
 Why: a level decided by opinion is argued once per component; a level decided
 by imports is checked by a machine. `shared/ui/foundations/` holds what every
-level may use and is not a component: class tokens (`SUPERFICIE_FLOTANTE`)
-and the field context (`useDentroDeUnCampo`, `FOCO_DEL_CAMPO`).
+level may use and is not a component: class tokens (`FLOATING_SURFACE`)
+and the field context (`useInsideField`, `FIELD_FOCUS`).
 
 `npm run depcruise` fails CI on any of these, and on any cycle. There are no
 exceptions.
@@ -464,7 +464,7 @@ details, each written by hand. A class from the call is how four button
 heights ended up in one toolbar.
 
 **The flexibility lives in the component, never in the call.** A new need is a
-variant of the component, the way `size` works on `Button` or `ancho` on
+variant of the component, the way `size` works on `Button` or `width` on
 `Menu`, not a `className` added where it is used. The call may place a piece
 (a margin, a grid cell); it does not dress it.
 
@@ -476,8 +476,8 @@ with its story in the catalogue.
 exist.** For these two rules that place is `DESIGN_EXCEPTIONS` in
 `eslint.config.js`; the lint also fails on an entry nobody uses any more. The
 touch floor (`movil:min-h-[42px]`) keeps its own registry in
-`shared/ui/piso-tactil.test.ts`, and a radius over 10px in
-`shared/ui/radio.test.ts`.
+`shared/ui/touch-floor.test.ts`, and a radius over 10px in
+`shared/ui/radius.test.ts`.
 
 A `var(--token)` is not arbitrary (it reads the theme), and a step of the
 scale is not either: `min-h-55` is 220px, `size-4.5` is 18px. A value the theme

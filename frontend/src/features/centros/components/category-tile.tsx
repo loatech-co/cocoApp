@@ -11,7 +11,7 @@ import { cn } from '@/shared/lib/utils';
 import { Chip } from '@/shared/ui/atoms/badge';
 import { Block } from '@/shared/ui/atoms/block';
 import { CategoryIcon } from '@/shared/ui/atoms/icons';
-import { Menu, MenuOpcion } from '@/shared/ui/molecules/menu';
+import { Menu, MenuOption } from '@/shared/ui/molecules/menu';
 
 /**
  * Lo que hace de una tarjeta una pieza de la mampostería.
@@ -153,29 +153,29 @@ function MenuDeCategoria({
 }) {
   return (
     <Menu
-      etiqueta={t('centers.tile.actionsOf', { name: nombre })}
-      Icono={EllipsisVertical}
-      soloIcono
-      variante="ghost"
-      claseCaja="-my-1 -mr-1.5 sm:-mr-2"
+      label={t('centers.tile.actionsOf', { name: nombre })}
+      Icon={EllipsisVertical}
+      isIconOnly
+      variant="ghost"
+      boxClassName="-my-1 -mr-1.5 sm:-mr-2"
     >
       {(cerrar) => (
         <>
           {/* Lo PRIMERO del menú: es lo que más se hace con una categoría.
               Eliminar va al final y en rojo, porque es lo que menos. */}
-          <MenuOpcion Icono={Plus} onClick={trasCerrar(cerrar, onAgregar)}>
+          <MenuOption Icon={Plus} onClick={trasCerrar(cerrar, onAgregar)}>
             {t('centers.tile.addConcept')}
-          </MenuOpcion>
+          </MenuOption>
 
           {/* Renombrar una categoría no existía por ningún camino, igual que en
               el centro: la única salida era borrarlo con sus conceptos
               dentro y volver a escribirlos. */}
-          <MenuOpcion Icono={Pencil} onClick={trasCerrar(cerrar, onEditar)}>
+          <MenuOption Icon={Pencil} onClick={trasCerrar(cerrar, onEditar)}>
             {t('common.edit')}
-          </MenuOpcion>
-          <MenuOpcion Icono={Trash2} peligro onClick={trasCerrar(cerrar, onEliminar)}>
+          </MenuOption>
+          <MenuOption Icon={Trash2} isDestructive onClick={trasCerrar(cerrar, onEliminar)}>
             {t('common.delete')}
-          </MenuOpcion>
+          </MenuOption>
         </>
       )}
     </Menu>

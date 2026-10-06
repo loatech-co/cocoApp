@@ -2,7 +2,7 @@ import { useEliminarSoporte } from '@/features/transactions/api/soportes';
 import { BORRAR_UN_SOPORTE } from '@/features/transactions/model/supports';
 import { type Receipt } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
-import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
+import { Confirmation } from '@/shared/ui/organisms/confirmation';
 
 /**
  * La pregunta antes de borrar un soporte: es lo único de sus mandos que no se
@@ -26,19 +26,19 @@ export function ConfirmSupportDeletion({
   const eliminar = useEliminarSoporte(transactionId);
 
   return (
-    <Confirmacion
-      abierta={soporte !== null}
-      titulo={t('transactions.supports.deleteTitle')}
-      peligrosa
-      etiquetaConfirmar={t('common.delete')}
-      ocupada={eliminar.isPending}
-      onCancelar={onCancelar}
-      onConfirmar={() => {
+    <Confirmation
+      isOpen={soporte !== null}
+      title={t('transactions.supports.deleteTitle')}
+      isDestructive
+      confirmLabel={t('common.delete')}
+      isBusy={eliminar.isPending}
+      onCancel={onCancelar}
+      onConfirm={() => {
         if (!soporte) return;
         eliminar.mutate(soporte.id, { onSuccess: onBorrado });
       }}
     >
       {BORRAR_UN_SOPORTE}
-    </Confirmacion>
+    </Confirmation>
   );
 }

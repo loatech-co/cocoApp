@@ -9,7 +9,7 @@ import { cn } from '@/shared/lib/utils';
 import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
 import { Switch } from '@/shared/ui/atoms/switch';
-import { CampoDeDinero } from '@/shared/ui/molecules/campo-de-dinero';
+import { MoneyField } from '@/shared/ui/molecules/money-field';
 import { Select } from '@/shared/ui/organisms/select';
 
 const ETIQUETAS: Record<Periodicidad, string> = {
@@ -305,10 +305,10 @@ function BudgetField({ valor, onCambiar }: RecurrenceFieldProps) {
       }
       className={valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3'}
     >
-      <CampoDeDinero
+      <MoneyField
         id="presupuesto"
-        valor={valor.presupuesto}
-        onCambiar={(presupuesto) => onCambiar({ ...valor, presupuesto })}
+        value={valor.presupuesto}
+        onValueChange={(presupuesto) => onCambiar({ ...valor, presupuesto })}
         placeholder={t('centers.recurrence.optional')}
       />
     </Field>
@@ -334,10 +334,10 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
       <Field label={t('centers.recurrence.howOften')} id="periodicidad">
         <Select
           id="periodicidad"
-          etiqueta={t('centers.recurrence.periodicity.label')}
-          valor={valor.periodicidad}
-          opciones={PERIODICIDADES.map((p) => ({ valor: p, etiqueta: ETIQUETAS[p] }))}
-          onCambiar={(v) => onCambiar({ ...valor, periodicidad: v as Periodicidad })}
+          label={t('centers.recurrence.periodicity.label')}
+          value={valor.periodicidad}
+          options={PERIODICIDADES.map((p) => ({ value: p, label: ETIQUETAS[p] }))}
+          onChange={(v) => onCambiar({ ...valor, periodicidad: v as Periodicidad })}
         />
       </Field>
 
@@ -345,10 +345,10 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
         <Field label={etiquetaDelMes(valor.periodicidad)} id="mes-de-pago">
           <Select
             id="mes-de-pago"
-            etiqueta={t('centers.recurrence.month')}
-            valor={String(valor.mesDePago)}
-            opciones={MESES.map((m, i) => ({ valor: String(i + 1), etiqueta: m }))}
-            onCambiar={(v) => onCambiar({ ...valor, mesDePago: Number(v) })}
+            label={t('centers.recurrence.month')}
+            value={String(valor.mesDePago)}
+            options={MESES.map((m, i) => ({ value: String(i + 1), label: m }))}
+            onChange={(v) => onCambiar({ ...valor, mesDePago: Number(v) })}
           />
         </Field>
       )}

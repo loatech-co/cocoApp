@@ -58,7 +58,7 @@ import { Button } from '@/shared/ui/atoms/button';
  * Una llamada puede pedir MENOS —la confirmación mide `max-w-md`— pero no más:
  * el tope vive aquí para que el día que cambie, cambie una vez.
  */
-export const PANEL_DE_MODAL =
+export const MODAL_PANEL =
   'flex max-h-[92dvh] min-h-[min(400px,92dvh)] w-full flex-col sm:max-w-[720px]';
 
 /**
@@ -75,22 +75,22 @@ export const PANEL_DE_MODAL =
  * la ficha ENTERA, frente a las que se hacen con lo que tiene dentro.
  * Repartidas en dos esquinas hay que buscarlas por separado.
  */
-export function CabeceraDeModal({
-  titulo,
-  ayuda,
-  antes,
-  acciones,
-  onCerrar,
+export function ModalHeader({
+  title,
+  description,
+  leading,
+  actions,
+  onClose,
   className,
 }: {
-  titulo: ReactNode;
+  title: ReactNode;
   /** Qué es esta ficha, en una frase. */
-  ayuda?: string | undefined;
+  description?: string | undefined;
   /** Va delante del título: el pastel de color de un movimiento. */
-  antes?: ReactNode;
+  leading?: ReactNode;
   /** Botones de icono a la izquierda de la equis. Eliminar, editar. */
-  acciones?: ReactNode;
-  onCerrar: () => void;
+  actions?: ReactNode;
+  onClose: () => void;
   className?: string;
 }) {
   return (
@@ -110,20 +110,20 @@ export function CabeceraDeModal({
         haya dos renglones de explicación.
       */}
       <div className="flex min-w-0 items-center gap-3">
-        {antes}
+        {leading}
         <div className="min-w-0">
-          <h2 className="truncate font-display text-lg font-semibold leading-tight">{titulo}</h2>
-          {ayuda && <p className="mt-1 text-sm text-muted-foreground">{ayuda}</p>}
+          <h2 className="truncate font-display text-lg font-semibold leading-tight">{title}</h2>
+          {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        {acciones}
+        {actions}
         <Button
           type="button"
           variant="ghost"
           size="sm-icon"
-          onClick={onCerrar}
+          onClick={onClose}
           aria-label={t('common.close')}
         >
           <X className="size-4" aria-hidden="true" />
@@ -167,7 +167,7 @@ export function CabeceraDeModal({
  * Solo hace algo dentro de una columna flexible con sitio de sobra. En la
  * confirmación, que no lo es, no estorba: ahí manda el `mt-6` de la llamada.
  */
-export function PieDeModal({ className, ...props }: ComponentProps<'div'>) {
+export function ModalFooter({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       className={cn(
@@ -193,7 +193,7 @@ export function PieDeModal({ className, ...props }: ComponentProps<'div'>) {
  *
  * Lo usan los dos armazones, `Modal` y la ficha del movimiento.
  */
-export function CuerpoDeModal({ children }: { children: ReactNode }) {
+export function ModalBody({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
       {children}

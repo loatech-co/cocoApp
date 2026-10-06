@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CampoDeDinero } from './campo-de-dinero';
+import { MoneyField } from './money-field';
 
 afterEach(() => {
   cleanup();
@@ -11,15 +11,15 @@ afterEach(() => {
 });
 
 /** A field with its own state, the way a form uses it. */
-function Controlled({ onCambiar }: { onCambiar: (raw: string) => void }) {
+function Controlled({ onValueChange }: { onValueChange: (raw: string) => void }) {
   const [value, setValue] = useState('');
   return (
-    <CampoDeDinero
+    <MoneyField
       aria-label="Valor"
-      valor={value}
-      onCambiar={(raw) => {
+      value={value}
+      onValueChange={(raw) => {
         setValue(raw);
-        onCambiar(raw);
+        onValueChange(raw);
       }}
     />
   );
@@ -27,7 +27,7 @@ function Controlled({ onCambiar }: { onCambiar: (raw: string) => void }) {
 
 describe('CampoDeDinero', () => {
   it('opens the decimal keyboard on a phone', () => {
-    render(<CampoDeDinero aria-label="Valor" valor="" onCambiar={vi.fn()} />);
+    render(<MoneyField aria-label="Valor" value="" onValueChange={vi.fn()} />);
 
     expect(screen.getByRole('textbox', { name: 'Valor' }).getAttribute('inputmode')).toBe(
       'decimal',
@@ -35,7 +35,7 @@ describe('CampoDeDinero', () => {
   });
 
   it('shows the thousands grouped', () => {
-    render(<CampoDeDinero aria-label="Valor" valor="1234567" onCambiar={vi.fn()} />);
+    render(<MoneyField aria-label="Valor" value="1234567" onValueChange={vi.fn()} />);
 
     expect(screen.getByRole<HTMLInputElement>('textbox').value).toBe('1.234.567');
   });
@@ -45,13 +45,13 @@ describe('CampoDeDinero', () => {
       cb(0);
       return 0;
     });
-    const onCambiar = vi.fn();
-    render(<Controlled onCambiar={onCambiar} />);
+    const onValueChange = vi.fn();
+    render(<Controlled onValueChange={onValueChange} />);
 
     const box = screen.getByRole<HTMLInputElement>('textbox');
     fireEvent.change(box, { target: { value: '$12a.345,5' } });
 
-    expect(onCambiar).toHaveBeenCalledWith('12345,5');
+    expect(onValueChange).toHaveBeenCalledWith('12345,5');
     expect(box.value).toBe('12.345,5');
   });
 
@@ -60,7 +60,7 @@ describe('CampoDeDinero', () => {
       cb(0);
       return 0;
     });
-    render(<Controlled onCambiar={vi.fn()} />);
+    render(<Controlled onValueChange={vi.fn()} />);
 
     const box = screen.getByRole<HTMLInputElement>('textbox');
     const setRange = vi.spyOn(box, 'setSelectionRange');
@@ -71,7 +71,9 @@ describe('CampoDeDinero', () => {
   });
 
   it('draws the currency sign as decoration', () => {
-    const { container } = render(<CampoDeDinero aria-label="Valor" valor="" onCambiar={vi.fn()} />);
+    const { container } = render(
+      <MoneyField aria-label="Valor" value="" onValueChange={vi.fn()} />,
+    );
 
     const sign = container.querySelector('[data-icono] [aria-hidden="true"]');
     expect(sign?.textContent).toBe('$');

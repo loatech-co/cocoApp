@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 
 import { cn } from '@/shared/lib/utils';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
  * An action that reads as TEXT within a line: «Limpiar», «Volver»,
@@ -28,7 +28,7 @@ const TONES = {
     'inline-flex min-h-6 items-center',
     'text-xs text-muted-foreground underline-offset-2 hover:underline',
   ),
-  highlight: cn('rounded-md px-1.5 py-0.5', REALCE),
+  highlight: cn('rounded-md px-1.5 py-0.5', HIGHLIGHT),
 } as const;
 
 export function TextButton({

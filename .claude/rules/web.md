@@ -125,8 +125,8 @@ lo que importa lo comprueba una máquina.
 | Nivel        | Puede usar                                | Ejemplos en Coco                                               |
 | ------------ | ----------------------------------------- | -------------------------------------------------------------- |
 | `atoms/`     | ningún otro componente de `shared/ui`     | `Button`, `Input`, `Field`, `Checkbox`, `BottomSheet`, `Donut` |
-| `molecules/` | solo átomos                               | `Menu` (Button + BottomSheet), `ModalPartes` (Button)          |
-| `organisms/` | moléculas y átomos, nunca otro organismo  | `Select` (Menu + Field), `Confirmacion` (ModalPartes + Button) |
+| `molecules/` | solo átomos                               | `Menu` (Button + BottomSheet), `ModalParts` (Button)           |
+| `organisms/` | moléculas y átomos, nunca otro organismo  | `Select` (Menu + Field), `Confirmation` (ModalPartes + Button) |
 | `templates/` | organismos, moléculas y átomos, sin datos | Ninguna todavía                                                |
 
 Que `BottomSheet` o `Donut` sean átomos no dice que sean pequeños: dice que no
@@ -135,8 +135,8 @@ se apoyan en ninguna otra pieza, así que cambiar otra pieza no los cambia.
 **`shared/ui/foundations/` es lo que todos los niveles pueden usar, y no es un
 componente.**
 
-Clases y contextos sin marcado: `SUPERFICIE_FLOTANTE` (`superficie.ts`) y el
-contexto del campo con `FOCO_DEL_CAMPO` (`field.ts`). Sin esta carpeta, `Input`
+Clases y contextos sin marcado: `FLOATING_SURFACE` (`surface.ts`) y el
+contexto del campo con `FIELD_FOCUS` (`field.ts`). Sin esta carpeta, `Input`
 sería una molécula solo por leer el contexto de `Field`.
 
 **Los nombres nuevos de archivo y carpeta van en inglés kebab-case.**
@@ -160,7 +160,7 @@ y `coco/no-arbitrary-values`, en `eslint.config.js`).
 **La flexibilidad vive en el componente, nunca en la llamada.**
 
 Una necesidad nueva es una variante del componente —como `size` en `Button` o
-`ancho` en `Menu`—, no un `className` donde se usa. La llamada puede COLOCAR la
+`width` en `Menu`—, no un `className` donde se usa. La llamada puede COLOCAR la
 pieza (un margen, una celda de la rejilla); no la viste. Por eso las piezas
 nuevas no aceptan `className`.
 
@@ -172,8 +172,8 @@ componente en el nivel más bajo posible, con su historia en el catálogo.**
 Para estas dos reglas, `DESIGN_EXCEPTIONS` en `eslint.config.js`; el lint
 falla también si una entrada ya no la usa nadie. El suelo táctil
 (`movil:min-h-[42px]`) tiene su propio registro en
-`shared/ui/piso-tactil.test.ts`, y el radio por encima de 10px en
-`shared/ui/radio.test.ts`.
+`shared/ui/touch-floor.test.ts`, y el radio por encima de 10px en
+`shared/ui/radius.test.ts`.
 
 Un `var(--token)` no es arbitrario —lee el tema— y un escalón de la escala
 tampoco: `min-h-55` son 220px y `size-4.5` son 18. Lo que el tema no tiene se
@@ -185,8 +185,8 @@ Se actualiza en el mismo PR que crea o cambia un componente.
 
 | Componente                       | Nivel      | Para qué                                                                                          |
 | -------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
-| `foundations/field.ts`           | fundamento | Contexto «dentro de un campo», hueco de la etiqueta, `FOCO_DEL_CAMPO`, `disparadorDeCampo`        |
-| `foundations/superficie.ts`      | fundamento | Color, tinta, sombra y canto de lo que flota; `REALCE` y `SURGE`                                  |
+| `foundations/field.ts`           | fundamento | Contexto «dentro de un campo», hueco de la etiqueta, `FIELD_FOCUS`, `fieldTrigger`                |
+| `foundations/surface.ts`         | fundamento | Color, tinta, sombra y canto de lo que flota; `HIGHLIGHT` y `SURGE`                               |
 | `atoms/add-surface.tsx`          | átomo      | El hueco punteado de «agregar» (`AddSurface`): `slot`, `bar` o `row`                              |
 | `atoms/alert.tsx`                | átomo      | Aviso en línea: error o información; `ErrorAlert` con su lista de detalles                        |
 | `atoms/badge.tsx`                | átomo      | `Tag`, `Chip` y `Badge`: rótulos cortos con el color de su papel                                  |
@@ -226,19 +226,19 @@ Se actualiza en el mismo PR que crea o cambia un componente.
 | `atoms/tile.tsx`                 | átomo      | Baldosa de la rejilla de atajos: `tileClass`, `MovableTile` y `TileRemove`                        |
 | `atoms/toggle-option.tsx`        | átomo      | Opción de una lista corta que se enciende (`ToggleOption`): los atajos de rango                   |
 | `atoms/tooltip.tsx`              | átomo      | Pista al pasar por encima (`WithTooltip`), anunciada con `aria-describedby`                       |
-| `molecules/aviso.tsx`            | molécula   | Avisos flotantes de la esquina: `mostrarAviso` y su pila                                          |
-| `molecules/calendario.tsx`       | molécula   | El calendario de los selectores de fecha: un día o un rango                                       |
-| `molecules/campo-de-dinero.tsx`  | molécula   | Campo de importe con separador de miles                                                           |
+| `molecules/toast.tsx`            | molécula   | Avisos flotantes de la esquina: `showToast` y su pila                                             |
+| `molecules/calendar.tsx`         | molécula   | El calendario de los selectores de fecha: un día o un rango                                       |
+| `molecules/money-field.tsx`      | molécula   | Campo de importe con separador de miles                                                           |
 | `molecules/icon-grid.tsx`        | molécula   | La rejilla de iconos de una categoría (`IconGrid`)                                                |
-| `molecules/link-row.tsx`         | molécula   | Fila de una hoja que lleva a una página (`FilaDeEnlace`)                                          |
-| `molecules/menu-rich-option.tsx` | molécula   | Opción de menú con pastel y línea de ayuda (`MenuOpcionDetallada`)                                |
-| `molecules/menu.tsx`             | molécula   | Base de todo desplegable: abrir, cerrar, Escape y colocarse; `ancho` con nombre                   |
-| `molecules/modal-partes.tsx`     | molécula   | Cabecera, cuerpo, pie y ancho de una ficha (`PANEL_DE_MODAL`, `CuerpoDeModal`)                    |
-| `molecules/overlay-control.tsx`  | molécula   | Mandos sobre un documento o un velo (`BotonOscuro`, `SeparadorDeMandos`, `LecturaDeMandos`)       |
-| `molecules/section.tsx`          | molécula   | Una parte de una ficha con su nombre encima (`Seccion`)                                           |
-| `molecules/tabla.tsx`            | molécula   | Tabla, filas, celdas, pie y esqueleto                                                             |
+| `molecules/link-row.tsx`         | molécula   | Fila de una hoja que lleva a una página (`LinkRow`)                                               |
+| `molecules/menu-rich-option.tsx` | molécula   | Opción de menú con pastel y línea de ayuda (`MenuRichOption`)                                     |
+| `molecules/menu.tsx`             | molécula   | Base de todo desplegable: abrir, cerrar, Escape y colocarse; `width` con nombre                   |
+| `molecules/modal-parts.tsx`      | molécula   | Cabecera, cuerpo, pie y ancho de una ficha (`MODAL_PANEL`, `ModalBody`)                           |
+| `molecules/overlay-control.tsx`  | molécula   | Mandos sobre un documento o un velo (`OverlayButton`, `ControlSeparator`, `ControlReadout`)       |
+| `molecules/section.tsx`          | molécula   | Una parte de una ficha con su nombre encima (`Section`)                                           |
+| `molecules/table.tsx`            | molécula   | Tabla, filas, celdas, pie y esqueleto                                                             |
 | `organisms/combo.tsx`            | organismo  | Desplegable con filtro y, si se pide, «crear» (`CreateOption`, también del buscador de conceptos) |
-| `organisms/confirmacion.tsx`     | organismo  | La ficha que pregunta antes de algo irreversible                                                  |
+| `organisms/confirmation.tsx`     | organismo  | La ficha que pregunta antes de algo irreversible                                                  |
 | `organisms/modal.tsx`            | organismo  | El armazón de una ficha                                                                           |
 | `organisms/select.tsx`           | organismo  | El desplegable que reemplaza a `<select>`                                                         |
 
@@ -293,7 +293,7 @@ cerrar con Escape y colocarse. Encima de él:
 | cualquier menú        | `shared/ui/molecules/menu.tsx`                                                                  |
 
 El calendario de los dos selectores de fecha es el mismo:
-`shared/ui/molecules/calendario.tsx`. Un extremo pinta un día, dos pintan un rango.
+`shared/ui/molecules/calendar.tsx`. Un extremo pinta un día, dos pintan un rango.
 
 ## 2. El tamaño de un botón lo decide el botón
 
@@ -308,7 +308,7 @@ Hay una prueba que lee el código fuente y falla si alguien lo hace:
 
 ## 3. El radio estándar es 10px
 
-**Regla:** El radio es `rounded-lg` (10px): menor donde haga falta, nunca mayor salvo lo registrado en `PERMITIDOS`.
+**Regla:** El radio es `rounded-lg` (10px): menor donde haga falta, nunca mayor salvo lo registrado en `ALLOWED`.
 
 `rounded-lg`, que es el `--radius` del tema. Lo usan las tarjetas, los
 desplegables, los modales, las tablas y los campos. Puede ser **menor**
@@ -318,7 +318,7 @@ distintos.
 
 Hay una prueba que lee el código fuente y falla si aparece un
 `rounded-xl`, `rounded-2xl`, `rounded-3xl` o un radio arbitrario por
-encima de 10px: `shared/ui/radio.test.ts`.
+encima de 10px: `shared/ui/radius.test.ts`.
 
 La escala crece en orden: `sm` 6, `md` 8, `lg` 10, `xl` 14. El `2xl` y el
 `3xl` de Tailwind no leen el tema —valen 16 y 24 fijos— y por eso están
@@ -337,7 +337,7 @@ hoja está ENCIMA y la página sigue debajo— depende de que se vean. Y
 ninguna rompe la regla, que habla de contenedores VECINOS: el pozo no es
 vecino de ninguna tarjeta, es el fondo de todas, y la hoja no tiene vecinos
 porque está sobre todo lo demás. Están registradas con su motivo en
-`PERMITIDOS`, dentro de la misma prueba; toda excepción nueva se escribe
+`ALLOWED`, dentro de la misma prueba; toda excepción nueva se escribe
 ahí o no existe.
 
 ## 4. Dos tamaños, y los mismos para todo
@@ -444,11 +444,11 @@ necesita; un icono encendido, sí.
 
 ## 9. Lo que flota se dibuja en un solo sitio
 
-**Regla:** Todo lo que flota usa `SUPERFICIE_FLOTANTE`, con canto obligatorio; la sombra nunca se escribe a mano.
+**Regla:** Todo lo que flota usa `FLOATING_SURFACE`, con canto obligatorio; la sombra nunca se escribe a mano.
 
 Un desplegable, un calendario, un modal, una confirmación, la pista de una
-gráfica y el aviso de una esquina comparten `SUPERFICIE_FLOTANTE`
-(`shared/ui/foundations/superficie.ts`): color, tinta, sombra y canto.
+gráfica y el aviso de una esquina comparten `FLOATING_SURFACE`
+(`shared/ui/foundations/surface.ts`): color, tinta, sombra y canto.
 
 El canto es **obligatorio** y sale del borde del tema. La sombra sola no
 delimita en ningún modo: en claro el popover es blanco sobre un lienzo
@@ -458,7 +458,7 @@ Una sombra sobre algo que ya tiene color no es una superficie flotante: es
 un objeto que se levanta —una ficha mientras se arrastra— y esa sí puede
 escribirse suelta.
 
-`shared/ui/foundations/superficie.test.ts` lee el código fuente y falla si alguien
+`shared/ui/foundations/surface.test.ts` lee el código fuente y falla si alguien
 vuelve a escribir la sombra a mano o a separar un panel con un negro o un
 blanco inventados.
 
@@ -516,10 +516,10 @@ un tamaño que no sea `sm`.
 
 ## 11. La cabecera y el pie de una ficha
 
-**Regla:** Toda ficha abre con `CabeceraDeModal` y cierra con `PieDeModal`; los botones del pie no se estiran y Cancelar va en `outline`.
+**Regla:** Toda ficha abre con `ModalHeader` y cierra con `ModalFooter`; los botones del pie no se estiran y Cancelar va en `outline`.
 
-Toda ficha abre con `CabeceraDeModal` y cierra con `PieDeModal`
-(`shared/ui/molecules/modal-partes.tsx`). Nunca con un `<div>` escrito a mano.
+Toda ficha abre con `ModalHeader` y cierra con `ModalFooter`
+(`shared/ui/molecules/modal-parts.tsx`). Nunca con un `<div>` escrito a mano.
 
 **Por qué están fuera de `Modal`.** Porque hay DOS armazones y siempre los
 va a haber: `shared/ui/organisms/modal.tsx` sirve para las fichas que caben en su forma
@@ -530,12 +530,12 @@ copiaba.
 
 ### La cabecera
 
-| Pieza      | Dónde va                                                            |
-| ---------- | ------------------------------------------------------------------- |
-| `antes`    | Delante del título: el pastel de color de un movimiento             |
-| `titulo`   | `text-lg`, familia de titulares. **Nunca en mayúsculas sostenidas** |
-| `ayuda`    | Debajo, `text-sm text-muted-foreground`. Una frase                  |
-| `acciones` | Botones de icono `sm-icon` a la izquierda de la equis               |
+| Pieza         | Dónde va                                                            |
+| ------------- | ------------------------------------------------------------------- |
+| `leading`     | Delante del título: el pastel de color de un movimiento             |
+| `title`       | `text-lg`, familia de titulares. **Nunca en mayúsculas sostenidas** |
+| `description` | Debajo, `text-sm text-muted-foreground`. Una frase                  |
+| `actions`     | Botones de icono `sm-icon` a la izquierda de la equis               |
 
 La equis la pone el componente y va **junto a las demás acciones**, no en
 la esquina opuesta: eliminar, editar y cerrar son las tres cosas que se
@@ -585,9 +585,9 @@ decisión, porque ahí no hay con quién competir.)
 
 ## 12. Una ficha mide 720px, y dentro reparte a la mitad
 
-**Regla:** Una ficha mide como mucho 720px (`PANEL_DE_MODAL`), 16px de relleno, 400px de alto mínimo y una sola rejilla mitad y mitad.
+**Regla:** Una ficha mide como mucho 720px (`MODAL_PANEL`), 16px de relleno, 400px de alto mínimo y una sola rejilla mitad y mitad.
 
-`PANEL_DE_MODAL`, en `shared/ui/molecules/modal-partes.tsx`, topa el ancho de
+`MODAL_PANEL`, en `shared/ui/molecules/modal-parts.tsx`, topa el ancho de
 **todas** las fichas en 720px. Una llamada puede pedir menos —la
 confirmación mide `max-w-md`— pero **nunca más**.
 
@@ -598,8 +598,8 @@ leerse como otra pantalla.
 
 **Relleno: 16px por los cuatro lados**, y lo mismo en la cabecera y en el
 pie. Eran 24 y sobraban: en una ficha topada a 720, ese marco se comía el
-ancho que necesitan dos columnas. Vive en `Modal`, en `CabeceraDeModal` y
-en `Confirmacion` —una llamada no lo escribe—, porque dos sangrados
+ancho que necesitan dos columnas. Vive en `Modal`, en `ModalHeader` y
+en `Confirmation` —una llamada no lo escribe—, porque dos sangrados
 distintos se ven como un escalón en el canto izquierdo de la ficha.
 
 **Alto mínimo: 400px.** Para que abrir dos fichas seguidas no sea ver el
@@ -648,7 +648,7 @@ habría que repetir las cuatro propiedades de la posición subida una vez por
 disparador.
 
 **El hueco de arriba lo reserva cada control**, leyendo el contexto
-`useDentroDeUnCampo()`. Hay cinco estructuras distintas —un `<input>`
+`useInsideField()`. Hay cinco estructuras distintas —un `<input>`
 suelto, uno con iconos en absoluto, un `<textarea>`, el disparador de un
 desplegable dentro de la caja de `Menu`, y el del selector de fecha— y un
 selector estructural que acertara con las cinco sería más frágil que un
@@ -684,9 +684,9 @@ desplegable— y falla si una pantalla vuelve a escribir un `<Label>` suelto.
 
 ## 14. Un aviso flotante dice su severidad de tres maneras
 
-**Regla:** `mostrarAviso` dice la severidad tres veces —pastilla con glifo, resplandor y halo— y nunca tiñe la superficie entera.
+**Regla:** `showToast` dice la severidad tres veces —pastilla con glifo, resplandor y halo— y nunca tiñe la superficie entera.
 
-`mostrarAviso(titular, { detalle, tono })`. Dos líneas: el titular dice QUÉ
+`showToast(title, { detail, tone })`. Dos líneas: el titular dice QUÉ
 pasó en tres palabras —se lee de reojo, que es como se leen los avisos— y el
 detalle explica. El detalle es opcional; un aviso que no necesita
 explicación no se inventa una.
@@ -806,14 +806,14 @@ el peso de la letra tienen que decirlo también.
 Si algo aparece en dos pantallas, es un componente. Lo son la tabla de
 movimientos, el paginador, la barra de filtros, el calendario, la dona, la
 cabecera de una pantalla (`shared/ui/atoms/page-header.tsx`), la cabecera
-y el pie de una ficha (`shared/ui/molecules/modal-partes.tsx`), el campo de un
+y el pie de una ficha (`shared/ui/molecules/modal-parts.tsx`), el campo de un
 formulario con su etiqueta flotante (`shared/ui/atoms/field.tsx`), el bloque
 dentro de una tarjeta (`shared/ui/atoms/block.tsx`) y la barra de progreso
 (`shared/ui/atoms/progress.tsx`).
 
 Lo que no puede ser un componente —porque hace falta un `<label>` o un
 `<button>` en vez de un `<div>`— exporta su CLASE, como hacen `BLOCK` y
-`SUPERFICIE_FLOTANTE`. Sigue siendo un solo sitio donde cambia el aspecto.
+`FLOATING_SURFACE`. Sigue siendo un solo sitio donde cambia el aspecto.
 
 Dos copias empiezan iguales y se separan: una aprende a marcar lo que
 falta por clasificar y la otra no, y la misma plata acaba viéndose
@@ -847,8 +847,8 @@ recorrer: los campos, la casilla y el interruptor —que son `<input>`— y la
 gráfica de tendencia, que entra en el orden del tabulador y se recorre con
 las flechas.
 
-**Dónde vive.** `FOCO_DEL_CAMPO`, en `shared/ui/foundations/field.ts`, y lo usan el
-`Input`, el `Textarea` y `disparadorDeCampo()`. Es el borde del anillo al
+**Dónde vive.** `FIELD_FOCUS`, en `shared/ui/foundations/field.ts`, y lo usan el
+`Input`, el `Textarea` y `fieldTrigger()`. Es el borde del anillo al
 60 % y un halo al 20 %: **un solo píxel de trazo**, el mismo que el campo ya
 tenía en reposo, cambiando de color y no de grosor. Estuvo a plena tinta
 —borde y anillo, dos píxeles de verde saturado— y con cuatro campos en una

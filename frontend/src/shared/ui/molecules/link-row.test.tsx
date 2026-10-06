@@ -4,7 +4,7 @@ import { User } from 'lucide-react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { FilaDeEnlace } from './link-row';
+import { LinkRow } from './link-row';
 
 afterEach(cleanup);
 
@@ -12,9 +12,9 @@ describe('FilaDeEnlace', () => {
   it('is a link to its page, named by its text', () => {
     render(
       <MemoryRouter>
-        <FilaDeEnlace Icono={User} a="/perfil">
+        <LinkRow Icon={User} to="/perfil">
           Perfil
-        </FilaDeEnlace>
+        </LinkRow>
       </MemoryRouter>,
     );
 
@@ -24,17 +24,17 @@ describe('FilaDeEnlace', () => {
   });
 
   it('tells the caller when it is followed, so a sheet can close', () => {
-    const onIr = vi.fn();
+    const onNavigate = vi.fn();
     render(
       <MemoryRouter>
-        <FilaDeEnlace Icono={User} a="/perfil" onIr={onIr}>
+        <LinkRow Icon={User} to="/perfil" onNavigate={onNavigate}>
           Perfil
-        </FilaDeEnlace>
+        </LinkRow>
       </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByRole('link', { name: 'Perfil' }));
 
-    expect(onIr).toHaveBeenCalledOnce();
+    expect(onNavigate).toHaveBeenCalledOnce();
   });
 });

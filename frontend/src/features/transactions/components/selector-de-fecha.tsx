@@ -7,8 +7,8 @@ import { diaLargo, rangoLargo } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { encontrarFecha } from '@/shared/lib/leer-fecha';
 import { cn } from '@/shared/lib/utils';
-import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
-import { Calendario } from '@/shared/ui/molecules/calendario';
+import { fieldTrigger, useInsideField } from '@/shared/ui/foundations/field';
+import { Calendar } from '@/shared/ui/molecules/calendar';
 import { Menu } from '@/shared/ui/molecules/menu';
 
 import { PanelDeRango } from './range-panel';
@@ -82,7 +82,7 @@ export function SelectorDeFecha(props: Dia | Rango) {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false }: Dia) {
-  const enCampo = useDentroDeUnCampo();
+  const enCampo = useInsideField();
 
   const { escrito, setEscrito, confirmar } = useTypedDate(valor, onElegir);
 
@@ -113,7 +113,7 @@ function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false
           el icono fuera de lo enfocado. */}
       <div
         className={cn(
-          disparadorDeCampo(),
+          fieldTrigger(),
           'focus-within:border-ring/60 focus-within:ring-1 focus-within:ring-ring/20',
         )}
       >
@@ -168,14 +168,14 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
 
   return (
     <Menu
-      tipo="panel"
+      kind="panel"
       // Anclado a la DERECHA: el control vive al final de una barra alineada a
       // la derecha, y abriendo hacia la izquierda un panel ancho se sale de la
       // pantalla.
-      alineado="derecha"
-      flotante
-      anchoPropio
-      sinRelleno
+      align="right"
+      isFloating
+      hasOwnWidth
+      isUnpadded
       /*
         ── El ancho lo pone lo que hay dentro ────────────────────────────────
         Eran 34rem fijos, y desde que el calendario tiene tope —siete columnas
@@ -191,7 +191,7 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
         sin dejarlas envolver. Por eso debajo del corte manda una medida, que
         es la del calendario más su relleno.
       */
-      ancho="calendario"
+      width="calendar"
       /*
         El disparador NO se escribe aquí: es el que `Menu` pone de serie
         —icono, etiqueta que se trunca y flecha que gira al abrir— con la
@@ -204,12 +204,12 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
         del control: quien no ve la pantalla oye qué recorte está puesto, que
         es mejor que oír "elegir rango".
       */
-      etiqueta={etiqueta}
-      Icono={CalendarDays}
-      variante="tool"
+      label={etiqueta}
+      Icon={CalendarDays}
+      variant="tool"
       // La etiqueta es el rango entero y tiene que poder encogerse: es el
       // único ancho a medida de toda la barra.
-      claseCaja={cn('max-w-full', claseCaja)}
+      boxClassName={cn('max-w-full', claseCaja)}
     >
       {(cerrar) => (
         <PanelDeRango filtros={filtros} aplicar={aplicar} atajos={atajos} cerrar={cerrar} />
@@ -226,26 +226,26 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
 function DayCalendar({ valor, onElegir }: { valor: string; onElegir: (iso: string) => void }) {
   return (
     <Menu
-      etiqueta={t('transactions.range.openCalendar')}
-      Icono={CalendarDays}
-      soloIcono
-      variante="ghost"
-      tipo="panel"
-      alineado="derecha"
-      flotante
-      anchoPropio
+      label={t('transactions.range.openCalendar')}
+      Icon={CalendarDays}
+      isIconOnly
+      variant="ghost"
+      kind="panel"
+      align="right"
+      isFloating
+      hasOwnWidth
       // El calendario trae su propio relleno: con el del menú encima queda
       // el doble por los cuatro lados.
-      sinRelleno
-      ancho="contenido"
-      claseCaja="shrink-0"
+      isUnpadded
+      width="content"
+      boxClassName="shrink-0"
     >
       {(cerrar) => (
-        <Calendario
+        <Calendar
           className="p-3"
-          desde={valor || undefined}
-          hasta={valor || undefined}
-          onDia={(iso) => {
+          from={valor || undefined}
+          to={valor || undefined}
+          onSelectDay={(iso) => {
             onElegir(iso);
             // Un solo día no necesita confirmarse: con el segundo clic ya
             // no queda nada por decidir.
@@ -259,7 +259,7 @@ function DayCalendar({ valor, onElegir }: { valor: string; onElegir: (iso: strin
 
 function DisabledDay({ valor, enCampo }: { valor: string; enCampo: boolean }) {
   return (
-    <span aria-disabled="true" className={cn(disparadorDeCampo(), 'opacity-50')}>
+    <span aria-disabled="true" className={cn(fieldTrigger(), 'opacity-50')}>
       <span className={cn('min-w-0 flex-1 truncate', enCampo && 'pt-4')}>
         {valor ? diaLargo(valor) : t('transactions.range.chooseDate')}
       </span>

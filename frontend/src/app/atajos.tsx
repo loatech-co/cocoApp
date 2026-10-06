@@ -6,7 +6,7 @@ import { MAXIMO_DE_ATAJOS, anadirAtajo, useAtajos } from '@/shared/lib/atajos';
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { Input } from '@/shared/ui/atoms/input';
-import { mostrarAviso } from '@/shared/ui/molecules/aviso';
+import { showToast } from '@/shared/ui/molecules/toast';
 
 import { ShortcutGrid } from './shortcut-grid';
 import { ShortcutPicker } from './shortcut-picker';
@@ -131,9 +131,9 @@ function anadir(ruta: string): void {
   if (!anadirAtajo(ruta)) {
     // La respuesta llega cuando se hace la pregunta: ni un contador
     // permanente ni un control apagado, que no contesta nada al pulsarlo.
-    mostrarAviso(t('shell.shortcuts.fullTitle'), {
-      detalle: t('shell.shortcuts.fullDetail', { max: MAXIMO_DE_ATAJOS }),
-      tono: 'warning',
+    showToast(t('shell.shortcuts.fullTitle'), {
+      detail: t('shell.shortcuts.fullDetail', { max: MAXIMO_DE_ATAJOS }),
+      tone: 'warning',
     });
   }
 }

@@ -188,10 +188,10 @@ function AccountFields({ form }: { form: ReturnType<typeof useAccountForm> }) {
       <Field label={t('accounts.form.type')} id="type">
         <Select
           id="type"
-          etiqueta={t('accounts.form.accountType')}
-          valor={type}
-          opciones={TIPOS.map((o) => ({ valor: o.valor, etiqueta: o.etiqueta }))}
-          onCambiar={(v) => setType(v as Account['type'])}
+          label={t('accounts.form.accountType')}
+          value={type}
+          options={TIPOS.map((o) => ({ value: o.valor, label: o.etiqueta }))}
+          onChange={(v) => setType(v as Account['type'])}
         />
       </Field>
 

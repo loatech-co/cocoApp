@@ -29,45 +29,45 @@ import { Input } from '@/shared/ui/atoms/input';
  * en Colombia. `inputMode="decimal"` abre el teclado numérico del teléfono sin
  * ninguna de las dos cosas.
  */
-export function CampoDeDinero({
-  valor,
-  onCambiar,
+export function MoneyField({
+  value,
+  onValueChange,
   className,
-  ...resto
+  ...rest
 }: {
   /** Solo cifras, sin puntos. Es lo que viaja a la API. */
-  valor: string;
-  onCambiar: (crudo: string) => void;
+  value: string;
+  onValueChange: (raw: string) => void;
 } & Omit<ComponentProps<typeof Input>, 'value' | 'onChange' | 'type' | 'icono'>) {
   return (
     <Input
       inputMode="decimal"
-      icon={SignoDePesos}
-      value={agruparMiles(valor)}
+      icon={PesoSign}
+      value={agruparMiles(value)}
       className={cn(className)}
       onChange={(e) => {
-        const limpio = soloCifras(e.target.value);
-        const campo = e.target;
-        const antes = (campo.value.slice(0, campo.selectionStart ?? 0).match(/[\d,]/g) ?? [])
+        const digits = soloCifras(e.target.value);
+        const input = e.target;
+        const digitsBefore = (input.value.slice(0, input.selectionStart ?? 0).match(/[\d,]/g) ?? [])
           .length;
 
-        onCambiar(limpio);
+        onValueChange(digits);
 
         requestAnimationFrame(() => {
-          const pintado = agruparMiles(limpio);
-          let cifras = 0;
-          let sitio = pintado.length;
-          for (let i = 0; i < pintado.length; i += 1) {
-            if (/[\d,]/.test(pintado.charAt(i))) cifras += 1;
-            if (cifras === antes) {
-              sitio = i + 1;
+          const formatted = agruparMiles(digits);
+          let seen = 0;
+          let caret = formatted.length;
+          for (let i = 0; i < formatted.length; i += 1) {
+            if (/[\d,]/.test(formatted.charAt(i))) seen += 1;
+            if (seen === digitsBefore) {
+              caret = i + 1;
               break;
             }
           }
-          campo.setSelectionRange(sitio, sitio);
+          input.setSelectionRange(caret, caret);
         });
       }}
-      {...resto}
+      {...rest}
     />
   );
 }
@@ -83,7 +83,7 @@ export function CampoDeDinero({
  * Es el `icono` del campo, así que no forma parte del valor: lo que se teclea
  * y lo que se guarda no lo llevan.
  */
-function SignoDePesos({ className }: { className?: string }) {
+function PesoSign({ className }: { className?: string }) {
   return (
     <span
       className={cn(className, 'grid place-items-center text-sm font-medium')}

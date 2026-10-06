@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from 'react';
 
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
-import { REALCE } from '@/shared/ui/foundations/superficie';
+import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
  * Tags and chips: two similar things that are NOT the same.
@@ -210,6 +210,6 @@ function chipShape(isActive: boolean): string {
           block, hovering the chip gave it exactly the color of the box that
           contains it and it disappeared.
         */
-        cn('border-border bg-foreground/10 text-foreground', REALCE),
+        cn('border-border bg-foreground/10 text-foreground', HIGHLIGHT),
   );
 }

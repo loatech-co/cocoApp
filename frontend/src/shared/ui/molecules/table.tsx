@@ -16,7 +16,7 @@ import { Skeleton } from '@/shared/ui/atoms/skeleton';
  * Lo que sí se comparte es lo que siempre se hace mal: el desplazamiento
  * horizontal, la primera columna fija y el pie con los totales.
  */
-export function Tabla({ children, className }: { children: ReactNode; className?: string }) {
+export function Table({ children, className }: { children: ReactNode; className?: string }) {
   return (
     // Sin borde, como la tarjeta y por lo mismo: la tabla es material apoyado
     // en el pozo, y el escalón de superficie ya dice dónde empieza. Una línea
@@ -44,28 +44,28 @@ export function Tabla({ children, className }: { children: ReactNode; className?
  */
 export function Th({
   children,
-  alineado = 'izquierda',
-  fija = false,
-  divisor = true,
-  orden,
+  align = 'left',
+  isSticky = false,
+  hasDivider = true,
+  sort,
   className,
 }: {
   children: ReactNode;
-  alineado?: 'izquierda' | 'derecha';
+  align?: 'left' | 'right';
   /** La primera columna, la que no se va al hacer scroll. */
-  fija?: boolean;
+  isSticky?: boolean;
   /**
    * La línea que separa la columna fija de las que se desplazan.
    *
    * Ayuda cuando hay tantas columnas que uno se pierde de qué fila está
    * leyendo. Con seis columnas que caben casi enteras, es una raya de más.
    */
-  divisor?: boolean;
-  orden?: { activo: 'asc' | 'desc' | null; onCambiar: () => void } | undefined;
+  hasDivider?: boolean;
+  sort?: { direction: 'asc' | 'desc' | null; onChange: () => void } | undefined;
   className?: string;
 }) {
-  const contenido = orden ? (
-    <SortButton orden={orden} alineado={alineado}>
+  const content = sort ? (
+    <SortButton sort={sort} align={align}>
       {children}
     </SortButton>
   ) : (
@@ -76,17 +76,21 @@ export function Th({
     <th
       scope="col"
       aria-sort={
-        orden?.activo === 'asc' ? 'ascending' : orden?.activo === 'desc' ? 'descending' : undefined
+        sort?.direction === 'asc'
+          ? 'ascending'
+          : sort?.direction === 'desc'
+            ? 'descending'
+            : undefined
       }
       className={cn(
         'whitespace-nowrap border-b border-border px-4 py-3 text-xs font-semibold text-muted-foreground',
-        alineado === 'derecha' ? 'text-right' : 'text-left',
-        fija && 'sticky left-0 z-10 bg-card',
-        fija && divisor && 'border-r',
+        align === 'right' ? 'text-right' : 'text-left',
+        isSticky && 'sticky left-0 z-10 bg-card',
+        isSticky && hasDivider && 'border-r',
         className,
       )}
     >
-      {contenido}
+      {content}
     </th>
   );
 }
@@ -94,15 +98,15 @@ export function Th({
 export function Tr({
   children,
   onClick,
-  atencion = false,
-  atenuada = false,
+  isFlagged = false,
+  isDimmed = false,
   className,
 }: {
   children: ReactNode;
   onClick?: () => void;
   /** La fila pide algo: un movimiento sin clasificar, por ejemplo. */
-  atencion?: boolean;
-  atenuada?: boolean;
+  isFlagged?: boolean;
+  isDimmed?: boolean;
   className?: string;
 }) {
   return (
@@ -116,8 +120,8 @@ export function Tr({
         'group/fila border-b border-border transition-colors last:border-b-0',
         // Ámbar y no rojo: sin clasificar no es un error, es algo pendiente. En
         // esta paleta el rojo está reservado a lo que de verdad salió mal.
-        atencion ? 'bg-warning-surface/40 hover:bg-warning-surface/60' : 'hover:bg-muted/60',
-        atenuada && 'opacity-50',
+        isFlagged ? 'bg-warning-surface/40 hover:bg-warning-surface/60' : 'hover:bg-muted/60',
+        isDimmed && 'opacity-50',
         onClick && 'cursor-pointer',
         className,
       )}
@@ -129,34 +133,34 @@ export function Tr({
 
 export function Td({
   children = null,
-  alineado = 'izquierda',
-  fija = false,
-  divisor = true,
-  atencion = false,
+  align = 'left',
+  isSticky = false,
+  hasDivider = true,
+  isFlagged = false,
   className,
 }: {
   children?: ReactNode;
-  alineado?: 'izquierda' | 'derecha';
-  fija?: boolean;
+  align?: 'left' | 'right';
+  isSticky?: boolean;
   /** Ver `Th`. */
-  divisor?: boolean;
+  hasDivider?: boolean;
   /** Hereda el tinte de la fila: una celda fija sobre fondo propio lo taparía. */
-  atencion?: boolean;
+  isFlagged?: boolean;
   className?: string;
 }) {
   return (
     <td
       className={cn(
         'px-4 py-3',
-        alineado === 'derecha' ? 'text-right' : 'text-left',
+        align === 'right' ? 'text-right' : 'text-left',
         // La celda fija necesita fondo PROPIO y opaco, o las columnas de atrás
         // se transparentarían por debajo al desplazarse. Como es opaco, tiene
         // que repetir a mano el resaltado de su fila: `color-mix` reproduce
         // exactamente lo que el navegador compone en las demás celdas.
-        fija && 'sticky left-0 z-10 transition-colors',
-        fija && divisor && 'border-r border-border',
-        fija &&
-          (atencion
+        isSticky && 'sticky left-0 z-10 transition-colors',
+        isSticky && hasDivider && 'border-r border-border',
+        isSticky &&
+          (isFlagged
             ? 'bg-[color-mix(in_srgb,var(--warning-surface)_40%,var(--card))] group-hover/fila:bg-[color-mix(in_srgb,var(--warning-surface)_60%,var(--card))]'
             : 'bg-card group-hover/fila:bg-[color-mix(in_srgb,var(--muted)_60%,var(--card))]'),
         className,
@@ -174,7 +178,7 @@ export function Td({
  * columnas y cada total queda bajo la suya. Un pie fuera de la tabla obliga a
  * repetir los anchos a mano y se desalinea al primer cambio.
  */
-export function TablaPie({ children }: { children: ReactNode }) {
+export function TableFooter({ children }: { children: ReactNode }) {
   return <tfoot className="border-t-2 border-border bg-muted/40 font-medium">{children}</tfoot>;
 }
 
@@ -185,71 +189,71 @@ export function TablaPie({ children }: { children: ReactNode }) {
  * un esqueleto de otra forma es un cambio de página, no una espera, y la vista
  * salta cuando llegan los datos.
  */
-export function TablaEsqueleto({
-  columnas,
-  filas = 8,
-  divisor = true,
+export function TableSkeleton({
+  columns,
+  rows = 8,
+  hasDivider = true,
 }: {
-  columnas: string[];
-  filas?: number;
-  divisor?: boolean;
+  columns: string[];
+  rows?: number;
+  hasDivider?: boolean;
 }) {
   return (
-    <Tabla>
+    <Table>
       <thead>
         <tr>
-          {columnas.map((nombre, i) => (
+          {columns.map((name, i) => (
             <Th
-              key={nombre}
-              fija={i === 0}
-              divisor={divisor}
-              alineado={i === columnas.length - 1 ? 'derecha' : 'izquierda'}
+              key={name}
+              isSticky={i === 0}
+              hasDivider={hasDivider}
+              align={i === columns.length - 1 ? 'right' : 'left'}
             >
-              {nombre}
+              {name}
             </Th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {Array.from({ length: filas }, (_, fila) => (
-          <tr key={fila} className="border-b border-border last:border-b-0">
-            {columnas.map((nombre, i) => (
-              <Td key={nombre} fija={i === 0} divisor={divisor}>
+        {Array.from({ length: rows }, (_, row) => (
+          <tr key={row} className="border-b border-border last:border-b-0">
+            {columns.map((name, i) => (
+              <Td key={name} isSticky={i === 0} hasDivider={hasDivider}>
                 <Skeleton className={cn('h-4', i === 0 ? 'w-40' : 'w-20')} />
               </Td>
             ))}
           </tr>
         ))}
       </tbody>
-    </Tabla>
+    </Table>
   );
 }
 /** El botón que ordena una columna, con su flecha siempre visible. */
 function SortButton({
-  orden,
-  alineado,
+  sort,
+  align,
   children,
 }: {
-  orden: { activo: 'asc' | 'desc' | null; onCambiar: () => void };
-  alineado: 'izquierda' | 'derecha';
+  sort: { direction: 'asc' | 'desc' | null; onChange: () => void };
+  align: 'left' | 'right';
   children: ReactNode;
 }) {
-  const Flecha =
-    orden.activo === 'asc' ? ChevronUp : orden.activo === 'desc' ? ChevronDown : ChevronsUpDown;
+  const Arrow =
+    sort.direction === 'asc' ? ChevronUp : sort.direction === 'desc' ? ChevronDown : ChevronsUpDown;
 
   return (
     <button
       type="button"
-      onClick={orden.onCambiar}
+      onClick={sort.onChange}
       className={cn(
         'inline-flex items-center gap-1 rounded-sm transition-colors hover:text-foreground',
-        alineado === 'derecha' && 'flex-row-reverse',
-        orden.activo && 'text-foreground',
+        align === 'right' && 'flex-row-reverse',
+        sort.direction && 'text-foreground',
       )}
     >
       {children}
-      <Flecha
-        className={cn('size-3.5 shrink-0', !orden.activo && 'opacity-40')}
+      <Arrow
+        className={cn('size-3.5 shrink-0', !sort.direction && 'opacity-40')}
         aria-hidden="true"
       />
     </button>
