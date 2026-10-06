@@ -24,6 +24,13 @@ export const DATABASE_URL =
   process.env.E2E_DATABASE_URL ??
   `postgresql://${userInfo().username}@localhost:5432/coco_e2e_pw_test`;
 
+/**
+ * The API's own connection. The owner (`DATABASE_URL`) migrates and empties
+ * the tables; the API connects as `coco_app` when this is set, so the
+ * journeys run under row-level security as production does (ADR 0019).
+ */
+export const APP_DATABASE_URL = process.env.E2E_APP_DATABASE_URL ?? DATABASE_URL;
+
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 
 /**

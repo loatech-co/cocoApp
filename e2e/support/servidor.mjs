@@ -6,7 +6,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import pg from 'pg';
 
-import { API_PORT, DATABASE_URL, GOTRUE_PORT, ROOT, requireTestDatabase } from './entorno.mjs';
+import {
+  API_PORT,
+  APP_DATABASE_URL,
+  DATABASE_URL,
+  GOTRUE_PORT,
+  ROOT,
+  requireTestDatabase,
+} from './entorno.mjs';
 import { startFakeGoTrue } from './gotrue-falso.mjs';
 
 /**
@@ -43,6 +50,9 @@ const SPA_SERVED = join(tmpdir(), `coco-e2e-spa-${API_PORT}`);
 
 async function prepareDatabase() {
   const name = requireTestDatabase(DATABASE_URL);
+  if (requireTestDatabase(APP_DATABASE_URL) !== name) {
+    throw new Error('E2E_APP_DATABASE_URL must point at the same database as E2E_DATABASE_URL.');
+  }
 
   const admin = new URL(DATABASE_URL);
   admin.pathname = '/postgres';
@@ -78,7 +88,7 @@ function pinEnvironment(gotrueUrl) {
     PORT: String(API_PORT),
     LOG_LEVEL: 'warn',
     LOG_DIR: '',
-    DATABASE_URL,
+    DATABASE_URL: APP_DATABASE_URL,
     DIRECT_URL: DATABASE_URL,
     PERMITIR_BASE_REMOTA: 'no',
     SUPABASE_URL: gotrueUrl,

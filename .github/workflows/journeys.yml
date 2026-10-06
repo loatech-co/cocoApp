@@ -41,6 +41,7 @@ jobs:
       # Never a real secret: the journeys talk only to the throwaway Postgres
       # above and to a fake Supabase Auth inside the runner.
       E2E_DATABASE_URL: postgresql://coco_migrate:ci-only-password@localhost:5432/coco_e2e_pw_test
+      E2E_APP_DATABASE_URL: postgresql://coco_app:ci-only-coco-app-password@localhost:5432/coco_e2e_pw_test
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -60,6 +61,12 @@ jobs:
       # without it the receipt journey gets a 415.
       - name: Ghostscript
         run: sudo apt-get install -y --no-install-recommends ghostscript
+
+      - name: Application role (coco_app)
+        run: bash scripts/db/create-app-role.sh
+        env:
+          ADMIN_DATABASE_URL: postgresql://coco_migrate:ci-only-password@localhost:5432/postgres
+          COCO_APP_DB_PASSWORD: ci-only-coco-app-password
 
       - name: Build the API and the web
         run: npm run e2e:build
