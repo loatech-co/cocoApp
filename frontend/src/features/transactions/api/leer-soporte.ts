@@ -107,12 +107,42 @@ async function primeraPaginaComoImagen(archivo: File): Promise<Blob | null> {
   return new Promise((resolver) => lienzo.toBlob((b) => resolver(b), 'image/png'));
 }
 
+/**
+ * Where the OCR engine comes from: our own origin, never a CDN.
+ *
+ * By default `tesseract.js` downloads its worker, its WASM core and the
+ * language data from jsDelivr at run time. `scripts/preparar-tesseract.mjs`
+ * already leaves all three in `public/tesseract/` (copied from node_modules,
+ * so the lockfile vouches for them), and these paths point there. A strict
+ * CSP would block the CDN anyway, and the receipt being read is nobody
+ * else's business.
+ *
+ * - `workerBlobURL: false` loads the worker straight from its URL instead of
+ *   wrapping it in a `blob:` URL, which the CSP would also have to allow.
+ * - `gzip: false` because the script downloads `spa.traineddata` raw, not
+ *   the `.gz` the CDN serves.
+ * - The URLs are absolute: the core and the language data are fetched from
+ *   inside the worker, where a relative path would resolve against the
+ *   worker's own script and not against the page.
+ */
+export function rutasDelOcr(origen: string = window.location.href) {
+  const base = new URL(`${import.meta.env.BASE_URL}tesseract/`, origen).href;
+  return {
+    workerPath: `${base}worker.min.js`,
+    corePath: `${base}core`,
+    langPath: `${base}lang`,
+    gzip: false,
+    workerBlobURL: false,
+  };
+}
+
 /** OCR. Se carga a demanda: son varios megas que casi nunca hacen falta. */
 async function ocr(fuente: Blob, onProgreso?: (p: ProgresoDeLectura) => void): Promise<string> {
   const { createWorker } = await import('tesseract.js');
   onProgreso?.({ avance: 0.3, etapa: 'Preparando el reconocimiento…' });
 
   const worker = await createWorker('spa', undefined, {
+    ...rutasDelOcr(),
     logger: (m: { status: string; progress: number }) => {
       if (m.status === 'recognizing text') {
         onProgreso?.({ avance: 0.4 + m.progress * 0.55, etapa: 'Reconociendo el texto…' });
