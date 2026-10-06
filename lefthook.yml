@@ -38,6 +38,16 @@ pre-commit:
       glob: 'ios/**/*.swift'
       run: bash ios/scripts/lint.sh --if-installed
 
+pre-push:
+  commands:
+    ios:
+      # swift-format (strict) + the iOS tests on the simulator, only when the
+      # push carries changes under ios/. This is the iOS gate for routine
+      # work: the workflow is manual because a macOS minute counts as ten.
+      # Without Xcode it warns and lets the push through.
+      glob: 'ios/**'
+      run: bash ios/scripts/pre-push.sh
+
 commit-msg:
   commands:
     commitlint:
