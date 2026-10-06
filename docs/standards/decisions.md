@@ -31,7 +31,8 @@ Code on 2026-10-05 under the plan's own rule, and are final for phase 7.
   from OpenAPI and lives next to v1; web and iOS move to v2; v1 answers with a
   `Deprecation` header, logs each use, and is removed only after **seven days
   with zero uses** (7.10 safeguard). The contraction step therefore cannot run
-  before seven days after the last client moves.
+  before seven days after the last client moves. _(Owner, 2026-10-06: one hour
+  with zero uses after the clients moved; v1 was retired that day.)_
 - **Database renames** (4 tables, 17 columns, 12 enum types, 5 enum values,
   14 `timestamptz` conversions) follow expand → verify row by row → contract,
   with a tested backup before any drop.
@@ -133,7 +134,7 @@ Changes: **D6, D9, D11, D16, D25 (partial), D27.** Amended keeps: **D12, D15, D2
 
 |                |                                                                                                                                                                                     |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **D4 default** | Plural kebab-case routes, `/api/v1`, `/api/v2` for breaking changes, camelCase JSON                                                                                                 |
+| **D4 default** | Plural kebab-case routes, `/api/v<n>` (v2 since v1 was retired in 7.10), a new version for breaking changes, camelCase JSON                                                         |
 | Evidence       | `Deprecation` header standardized as RFC 9745 (March 2025), value is a structured-field date (`@<epoch>`), paired with `Sunset` (RFC 8594) — https://www.rfc-editor.org/rfc/rfc9745 |
 | Conclusion     | **KEEP**; 7.10's deprecated routes send `Deprecation: @<epoch>` per RFC 9745                                                                                                        |
 

@@ -12,7 +12,7 @@ principles govern it:
 ## Architecture
 
 A modular monolith: one NestJS process (`api/`) serves the JSON API under
-`/api/v2` (the deprecated `/api/v1` still answers) and the web build
+`/api/v2` (v1 was retired in step 7.10) and the web build
 (`frontend/`), on a Hostinger Node.js app; data, identity and receipt files
 live on Supabase (PostgreSQL, Auth, Storage). The iOS app (`ios/`) is hybrid — native capture, the same web inside a
 `WKWebView` — and a pure reading engine (`packages/receipt-parser`) turns receipt,

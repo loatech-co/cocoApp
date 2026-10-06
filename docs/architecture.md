@@ -39,7 +39,7 @@ C4Container
   }
 
   Container_Boundary(host, "Hostinger Node.js app") {
-    Container(api, "API", "NestJS 11, Prisma", "/api/v1; serves the web build; one module per resource")
+    Container(api, "API", "NestJS 11, Prisma", "/api/v2; serves the web build; one module per resource")
     Container(lectura, "@coco/lectura", "TypeScript package", "Pure reading and classification engine")
   }
 

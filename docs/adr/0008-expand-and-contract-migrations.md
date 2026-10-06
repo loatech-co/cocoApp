@@ -22,7 +22,9 @@ and contract, and dropping is a stop for the owner.**
 2. Backfill and verify row by row.
 3. Move every reader to the new shape and deploy.
 4. Contract: drop the old one only after a tested backup, a full deploy, and
-   — for API routes — seven days with zero uses of the old one.
+   — for API routes — one hour with zero uses of the old one after every
+   client moved (owner's decision, 2026-10-06; it was seven days). The v1 of
+   the API was retired that way on 2026-10-06 (step 7.10).
 
 The gate before applying: `prisma migrate status` against production must
 list exactly the migrations expected, checked by the operator or by a script

@@ -303,7 +303,7 @@ Reglas de la investigación:
 **API**
 
 - Rutas: sustantivos en plural, `kebab-case`, sin verbos: `/transactions`, `/cost-centers`. Acciones que no son CRUD como sub-recurso: `/transactions/{id}/receipts`.
-- Prefijo `/api/v1` se mantiene. Cambios que rompen el contrato → `/api/v2`, nunca cambio en caliente.
+- Prefijo versionado: hoy `/api/v2` (la v1 se retiró en 7.10). Cambios que rompen el contrato → versión nueva, nunca cambio en caliente.
 - Campos JSON en `camelCase` en la API; el mapeo a `snake_case` lo hace Prisma con `@map`.
 
 **Verificación automática:** `@typescript-eslint/naming-convention` configurada con exactamente estas reglas; `eslint-plugin-check-file` para nombres de archivos y carpetas; una regla propia (script en CI) que falla ante identificadores con palabras en español, con lista de palabras y excepciones explícitas en `scripts/lint/spanish-identifiers.ts`.
@@ -419,10 +419,12 @@ Reglas de la investigación:
 Cada renombre de columna, tabla, valor de enum o ruta sigue este procedimiento, en despliegues separados:
 
 1. **Expandir.** Migración aditiva: columna o tabla con el nombre nuevo (o enum nuevo). El código escribe en ambos y lee del nuevo; se rellena el nuevo desde el viejo en la misma migración o en un script idempotente. Para rutas: la ruta nueva convive con la vieja; la vieja responde igual, con cabecera `Deprecation` y registro de cada uso.
-2. **Verificar.** Tras el despliegue: consulta que confirma que viejo y nuevo coinciden fila a fila; recorridos e2e en verde; para rutas, log con cero usos de la vieja durante el plazo que fija la tabla de paradas de [`CLAUDE.md`](../CLAUDE.md).
+2. **Verificar.** Tras el despliegue: consulta que confirma que viejo y nuevo coinciden fila a fila; recorridos e2e en verde; para rutas, log con cero usos de la vieja durante **una hora tras desplegar los clientes** (decisión del dueño, 6 oct 2026; antes eran siete días), como fija la tabla de paradas de [`CLAUDE.md`](../CLAUDE.md).
 3. **Contraer.** Con las condiciones de la tabla de paradas de [`CLAUDE.md`](../CLAUDE.md) (respaldo completo y restauración probada justo antes, y lo que no se borra en esta fase). El SQL exacto de cada borrado y la evidencia de la verificación quedan en el registro. Todos los borrados de la fase, en un solo paso al final: columnas y tablas viejas, valores de enum viejos, rutas viejas y los archivos de soportes del disco del servidor que la fase 6 dejó como respaldo.
 
 La app iOS se reinstala cada 7 días, así que no hay clientes viejos atrapados; aun así, la web y la app pasan a las rutas nuevas antes de contraer.
+
+**Hecho para las rutas (6 oct 2026, paso 7.10-v1):** la v1 se retiró tras más de cinco horas sin usos con la web y iOS ya en la v2. Fuera sus controladores, DTO, presentadores, el traductor v1↔v2, la cabecera `Deprecation`, el registro `v1_used` y su contador, `openapi.v1.json` y su chequeo de CI; los servicios reciben tipos de dominio en inglés y el puente de la app con la web habla la sesión de la v2. Quedan para el paso de contracción de la base las columnas, tablas y valores viejos y los soportes del disco del servidor.
 
 ---
 

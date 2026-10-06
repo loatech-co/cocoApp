@@ -23,7 +23,7 @@
 --
 -- ── Por qué no rompe nada ───────────────────────────────────────────────────
 -- Porque Coco nunca usa esa puerta. El frontend no lleva cliente de Supabase
--- ni clave —habla solo con su propia API, por `/api/v1`— y la API entra por
+-- ni clave —habla solo con su propia API, por `/api/v2`— y la API entra por
 -- cable con Prisma, como el rol `postgres`, que es DUEÑO de las catorce tablas
 -- y además tiene `rolbypassrls`. Una política que no existe no le afecta: el
 -- dueño de una tabla se salta la seguridad por filas mientras no se declare

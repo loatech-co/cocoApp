@@ -56,33 +56,24 @@ Why: twice a deploy "succeeded" in git while the build failed on the server,
 and before the unification of API and web a deploy to the wrong folder looked
 fine and changed nothing.
 
-**No probe, monitor or check points at the v1.** Every request to `/api/v1`
-leaves a `v1_used` line in the API log, and a probe counted as a client would
-never let the v1 reach the time without use it needs to be contracted (how
-long: the stop table in [`CLAUDE.md`](../CLAUDE.md)).
+**No probe, monitor or check points at a version being retired**: a probe
+counts as a client, and the old version would never reach the time without
+use it needs to be contracted (the stop table in [`CLAUDE.md`](../CLAUDE.md)).
 
-### v1 usage
+### The v1 was retired (step 7.10)
 
-`node scripts/ops/v1-usage.mjs` counts the `v1_used` lines of
-`~/domains/dev-cocoapp.viteri.me/logs/coco-api/api.log` and its rotated files,
-per day and per route, and says how many days the v1 has gone unused and since
-when there is a log (rotation keeps about 30 MB: if that does not cover seven
-days, it says so). It is the evidence for contracting the v1.
-
-It opens **one** read-only SSH connection (`BatchMode`, with a time limit) and
-runs a single `awk` there, because of the account's process limit. With
-`--file api.log …` it reads local files; with `--json` it prints for machines.
-
-### The web moved to the v2 (step 7.4 for the web)
-
-- **After the deploy that moved the web to `/api/v2`, every user signs in
-  once.** The refresh cookie of the v2 lives at `Path=/api/v2/auth`; the old
-  one, at the v1's path, never reaches the v2, so the first visit after that
-  deploy lands on the login. Nothing is lost: it is one sign-in per browser.
-- **`VITE_API_BASE_URL` is now `VITE_API_ORIGIN`**, and it holds only the
-  origin (`http://localhost:3000`), without `/api/v1`: the generated client
-  adds the versioned path. Rename it in every local `frontend/.env`; empty
-  means the same origin, which is what production uses.
+- **The API serves only `/api/v2`.** Anything under the old prefix is a `404`
+  in `application/problem+json`, like any unknown route; check it after a
+  deploy with `curl -s -o /dev/null -w '%{http_code}' <origin>/api/v1/health`
+  → `404`.
+- **The app's bridge speaks the v2 session** (`accessToken`, `expiresIn`, the
+  v2 profile). A build of the iOS app from before 7.10 hands the embedded web
+  a session it no longer reads: the web waits for one and shows nothing.
+  **Reinstall the app from Xcode after deploying 7.10** (the usual weekly
+  renewal does it too).
+- **`VITE_API_ORIGIN` holds only the origin** (`http://localhost:3000`): the
+  generated client adds the versioned path. Empty means the same origin, which
+  is what production uses.
 
 ## Roll back
 

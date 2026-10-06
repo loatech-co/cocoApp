@@ -434,14 +434,15 @@ apiFetch<{ display_name: string }[]>('/accounts');
   category tree, the accounts— uses `allPages` (`shared/api/pages.ts`); a
   table passes its own `page` and `perPage` (at most 200).
 - **Contracts that speak another dialect are translated at the edge, once.**
-  The iOS bridge still delivers a v1 session (`session.ts`,
-  `desdeElPuente`); the dashboard's `breakdownLevel` and
-  `granularity` become the Spanish words the screen shows
-  (`dashboard-charts.tsx`). Nothing inside a feature knows.
+  The dashboard's `breakdownLevel` and `granularity` become the Spanish words
+  the screen shows (`dashboard-charts.tsx`). Nothing inside a feature knows.
+  The iOS bridge delivers the v2 session as the API gave it to the app, and
+  the web stores it as it comes (`session.ts`).
 - **What is not in the OpenAPI document** —the bridge, the app's User-Agent
-  mark, the v1 contract the iPhone app still speaks— lives in
-  `shared/lib/native-contract.ts`. Two API specs and the iOS `ContratosTests`
-  read that file by path, so its literals are load-bearing. It replaced
+  mark, the receipt limits both clients follow— lives in
+  `shared/lib/native-contract.ts`. `receipts.contract.spec.ts` (api) and the
+  iOS `ContractsTests` read that file by path, so its literals are
+  load-bearing. It replaced
   `packages/types`, which no longer exists.
 - `shared/ui` imports neither the generated client nor the native contract,
   not even types (`web-ui-knows-no-contract`): a component gets a sign or a
@@ -537,14 +538,10 @@ Services, repositories, tasks and controllers throw a `DomainError`
 `AuthenticationError`, `ForbiddenError`, `PayloadTooLargeError`,
 `UnsupportedMediaTypeError`, `InternalError`, `ServiceUnavailableError`.
 `AllExceptionsFilter` is the only place that maps them to HTTP, and the wire
-format is a contract, one per version:
-
-- **v1**: `{ error: { code, message, details } }`, with the status, generic
-  `code` and Spanish message each error had before (its spec compares every
-  domain error with the Nest exception it replaced).
-- **v2**: `application/problem+json` (RFC 9457), `{ type, title, status,
-detail, code, errors? }`. `code` is stable, in English and one per business
-  rule; `detail` is the Spanish sentence; `errors[]` names each field at fault.
+format is a contract: `application/problem+json` (RFC 9457), `{ type, title,
+status, detail, code, errors? }`, for every error —one before routing too, like
+an unknown route. `code` is stable, in English and one per business rule;
+`detail` is the Spanish sentence; `errors[]` names each field at fault.
 
 A rule a client may want to react to gets its own code: add it to
 `common/errors/problem-codes.ts` (the only list; iOS and the web switch on it)
@@ -728,8 +725,8 @@ one query that crosses users and the measured cost.
 
 **Rule.** Two public routes, neither authenticated nor revealing anything:
 
-- `GET /api/v1/health` — the process is alive. Never touches the database.
-- `GET /api/v1/ready` — the process can serve: the database answers
+- `GET /api/v2/health` — the process is alive. Never touches the database.
+- `GET /api/v2/ready` — the process can serve: the database answers
   `SELECT 1`; `503` otherwise.
 
 Both are exempt in `user-isolation.e2e-spec.ts`, with their reason.
@@ -835,19 +832,19 @@ failure reads as the sentence that stopped being true.
 ## API contract (OpenAPI)
 
 **Rule.** The API describes itself: `@nestjs/swagger@11` builds one OpenAPI
-document per contract version from the controllers and DTOs, and the results
-are committed as `api/openapi.v1.json` and `api/openapi.v2.json`. A change to a
-route, a DTO or a response shape regenerates them in the same PR:
+document per contract version from the controllers and DTOs, and the result
+is committed as `api/openapi.v2.json` (the only version served since 7.10). A
+change to a route, a DTO or a response shape regenerates it in the same PR:
 
 ```sh
 npm run openapi --workspace api
 ```
 
 The script builds the API and opens it in Nest's preview mode —no provider is
-instantiated, so it needs no database and no secrets— and writes both files.
-CI runs it again and fails if either differs from the committed one, and keeps
-them as the `openapi` artifact. Swagger UI is served at `/api/docs/v1` and
-`/api/docs/v2` outside production only.
+instantiated, so it needs no database and no secrets— and writes one file per
+version. CI runs it again and fails if it differs from the committed one, and
+keeps it as the `openapi` artifact. Swagger UI is served at `/api/docs/v2`
+outside production only.
 
 **How a route is described.**
 
@@ -857,67 +854,66 @@ them as the `openapi` artifact. Swagger UI is served at `/api/docs/v1` and
   `*.response.ts`, so an input class lives in one of those, never inside a
   controller.
 - Responses are classes in `api/src/contract/v<n>/*.response.ts`, in the wire
-  format (a bigint goes out as a number). Each version's `shapes.spec.ts` makes
-  it a compile error if one stops matching the view its service returns.
-- Each controller says, with the decorators in `contract/v1/openapi.decorators.ts`
-  and `contract/v2/openapi.decorators.ts`: `@ApiAuthenticated()` or
-  `@ApiPublic()`; `@ApiData(…)` (v1) or `@ApiDataV2(Model, { isPage, status })`
-  (v2) for the `{ data, meta }` envelope; `@ApiNoContent()` for a 204; and
-  `@ApiErrors(…)` for the statuses it answers with an error (v1's envelope, or
-  v2's `application/problem+json` with the codes of each status listed).
+  format (a bigint goes out as a number). `shapes.spec.ts` makes it a compile
+  error if one stops matching the view its service returns.
+- Each controller says, with the decorators in
+  `contract/v2/openapi.decorators.ts`: `@ApiAuthenticated()` or `@ApiPublic()`;
+  `@ApiDataV2(Model, { isPage, status })` for the `{ data, meta }` envelope;
+  `@ApiNoContent()` for a 204; and `@ApiErrors(…)` for the statuses it answers
+  with an error (`application/problem+json`, with the codes of each status
+  listed).
 
 **Why.** One source of truth: the clients generate their types from these files
 (Orval in fetch mode, D11), so a document that drifts from the code is a client
 that compiles against an API that does not exist. `api/test/openapi.e2e-spec.ts`
 fails if Express registers a route no file describes (or the other way round),
-if a document holds a route of another version, if a v1 route has no v2
-successor, if a route documented as authenticated answers without a token, or if
-a route without a token is not on its list of public ones.
+if a document holds a route of another version, if a route documented as
+authenticated answers without a token, or if a route without a token is not on
+its list of public ones.
 
 ## API versions
 
 **Rule.** A breaking change to the contract is a new version next to the old
-one, never an edit of it (7.2, 7.10). Today there are two:
+one, never an edit of it (7.2, 7.10). Today there is one:
 
-- **v2** (`/api/v2`) is the contract the clients use: English and camelCase on
-  the wire, English literals (`high`, `quarterly`, `cost_center`), and every
-  list a page, `{ data, meta: { page, perPage, total } }` with `?page=` and
-  `?perPage=` (50 by default, 200 at most; D9). Messages meant for the user stay
-  in Spanish.
-- **v1** (`/api/v1`) answers exactly as it did, and is deprecated: every response
-  carries `Deprecation: @1791158400` (RFC 9745, 2026-10-05) and
-  `Link: <the same route in v2>; rel="successor-version"`, and every request
-  leaves one log line, `{"context":"deprecation","msg":"v1_used","route":…}`,
-  with the route template (ids as `:id`, no query string). It is removed once
-  those lines show seven days with zero uses (7.10); the health probes count, so
-  point monitors and deploy checks at `/api/v2/health` and `/api/v2/ready`.
+- **v2** (`/api/v2`) is the contract: English and camelCase on the wire,
+  English literals (`high`, `quarterly`, `cost_center`), and every list a page,
+  `{ data, meta: { page, perPage, total } }` with `?page=` and `?perPage=` (50
+  by default, 200 at most; D9). Messages meant for the user stay in Spanish.
+  Errors are `application/problem+json` (below, «Errors»).
+- **v1** was retired on 2026-10-06 (7.10). Any path under it, like any
+  unknown route, is a `404` problem.
 
-**How a version is written.** v2 changes no behaviour, so it has no logic of
-its own. Each module has a `*.v2.controller.ts` (`@Controller({ path, version:
-'2' })`) that calls the same service as v1 (ADR 0023):
+**Retiring a version** is expand and contract (ADR 0008): the new one ships
+next to the old, the old answers with `Deprecation` and `Link: <successor>;
+rel="successor-version"` and logs each use with its route template, every
+client moves, and the old one is deleted once its log has shown **one hour
+with zero uses after the last client moved** (owner's decision, 2026-10-06; it
+was seven days). Monitors and deploy checks never point at a version being
+retired: a probe would count as a client.
+
+**How a version is written.** One service per module and a presenter per
+version (ADR 0023):
 
 - out: the service returns the DOMAIN, in English (`*.domain.ts`, or the types
   next to the service); closed sets of words go through `common/vocabulary.ts`.
-  Each version builds its body with its presenter: `src/presenters/v1/*` puts
-  back v1 byte for byte, `src/presenters/v2/*` hands the domain out.
-  `contract/v1/shapes.spec.ts` and `contract/v2/shapes.spec.ts` tie each
-  version's response classes to what its presenters build.
-- in: the v2 DTOs live in `dto/v2/`, and a typed mapper builds the v1 DTO the
-  service still takes, through `defined<V1Draft<V1Dto>>({ … })`
-  (`contract/v2/v1-input.ts`): an absent field stays absent (never
-  `undefined`) and a misspelt v1 name does not compile.
+  `src/presenters/v2/*` builds the body; `contract/v2/shapes.spec.ts` ties the
+  response classes to what the presenters build.
+- in: the DTOs live in `dto/v2/` and the service takes English domain types
+  (`NewAccount`, `TransactionRequest`, `DashboardFilters`…), never a DTO. Where
+  the DTO already has the domain's shape the controller passes it as it is;
+  where it does not (a bigint, a renamed field), the controller builds the
+  input with `defined<Draft<T>>({ … })` (`common/defined.ts`): an absent field
+  stays absent (never `undefined`) and a misspelt name does not compile.
 - a list the service returns whole is cut with `paginate(items, query)`
   (`contract/v2/pagination.ts`); one the service already pages in SQL (the
   transactions, the admin lists) keeps its own meta.
 
 **Why.** Two copies of the same logic drift: one learns a rule and the other
-does not. With one service and a presenter per version, retiring v1 is deleting
-its controllers, DTOs, `contract/v1` and `presenters/v1`. The two presenters
-are checked against each other: `api/test/api-v2.e2e-spec.ts` compares each v2
-read with `toV2` of its v1 twin, on the same data (`contract/v2/to-v2.ts` is
-that reference translation, used by no route). Isolation between users is checked per version:
-`user-isolation.e2e-spec.ts` (v1) and `user-isolation.v2.e2e-spec.ts` (v2) each
-attack every route of their prefix, and a route under any other prefix fails.
+does not. With one service and a presenter per version, retiring a version is
+deleting its controllers, DTOs, `contract/v<n>` and `presenters/v<n>` —which
+is what 7.10 did with v1. `user-isolation.e2e-spec.ts` attacks every route,
+and a route outside `/api/v2/` fails it.
 
 ## Feature flags
 
@@ -1109,9 +1105,7 @@ release, and the hooks cover the routine at zero CI minutes.
   request body: translate at the edge, so a contract change is not a queue
   migration.
 - **What stays in Spanish without being user text** is a contract with
-  something outside `ios/`: the names of the web bridge messages and the
-  profile keys the bridge hands over (`WebSession.webProfileKeys`), which the
-  frontend defines while it is still on `v1`.
+  something outside `ios/`: the names of the web bridge messages.
 - **On-disk formats** use synthesized keys (the property names);
   `StoredFormatTests` pins them along with folders, UserDefaults and Keychain
   keys and task identifiers. Renaming a stored property is a migration, not a
