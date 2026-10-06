@@ -104,6 +104,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # `npm run lint` above already fails on a NEW Spanish name (step 7.2-a).
+      # This also fails if the PR made the baseline hold more of any name than
+      # its base: the baseline moves between folders, but only shrinks.
+      - name: Spanish names baseline only shrinks
+        if: github.event_name == 'pull_request'
+        run: npm run lint:spanish -- --against "${{ github.event.pull_request.base.sha }}"
+
       - name: Format
         run: npx prettier --check .
 
