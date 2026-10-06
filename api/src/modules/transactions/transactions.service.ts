@@ -122,7 +122,7 @@ export class TransactionsService {
     if (categoryId !== null) await this.exigirCategoriaPropia(userId, categoryId);
 
     const splits = await this.prepararSplits(userId, amount, dto.splits);
-    const tagIds = dto.tags?.length ? await this.tags.resolverNombres(userId, dto.tags) : [];
+    const tagIds = dto.tags?.length ? await this.tags.resolveNames(userId, dto.tags) : [];
 
     return {
       data: {
@@ -211,8 +211,7 @@ export class TransactionsService {
     exigirDesgloseCuadrado(actual, dto, amount);
     const splits =
       dto.splits !== undefined ? await this.prepararSplits(userId, amount, dto.splits) : null;
-    const tagIds =
-      dto.tags !== undefined ? await this.tags.resolverNombres(userId, dto.tags) : null;
+    const tagIds = dto.tags !== undefined ? await this.tags.resolveNames(userId, dto.tags) : null;
 
     const cambios = cambiosDe(dto, accountId, amount);
     const otra = await this.otraPata(userId, actual, dto, cambios);

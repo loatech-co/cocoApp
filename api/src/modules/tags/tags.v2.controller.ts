@@ -42,14 +42,14 @@ export class TagsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: PageQuery,
   ): Promise<Page<TagBody>> {
-    return paginate(await this.tags.listar(user.id), query);
+    return paginate(await this.tags.list(user.id), query);
   }
 
   @Post()
   @ApiDataV2(Tag, { status: 201 })
   @ApiErrors(400, 409)
   create(@CurrentUser() user: AuthenticatedUser, @Body() input: UpsertTagDto): Promise<TagBody> {
-    return this.tags.obtenerOCrear(user.id, input.name, input.color);
+    return this.tags.getOrCreate(user.id, input.name, input.color);
   }
 
   @Patch(':id')
@@ -60,7 +60,7 @@ export class TagsV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpsertTagDto,
   ): Promise<TagBody> {
-    return this.tags.actualizar(user.id, id, input);
+    return this.tags.update(user.id, id, input);
   }
 
   @Delete(':id')
@@ -71,6 +71,6 @@ export class TagsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<void> {
-    return this.tags.eliminar(user.id, id);
+    return this.tags.remove(user.id, id);
   }
 }

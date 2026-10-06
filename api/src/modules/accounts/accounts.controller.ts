@@ -39,55 +39,55 @@ export class AccountsController {
   @Get()
   @ApiData(AccountResponse, { isArray: true, meta: 'total' })
   @ApiErrors(400)
-  async listar(
+  async list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListAccountsQueryDto,
   ): Promise<{ data: AccountV1[]; meta: { total: number } }> {
-    const cuentas = (await this.accounts.listar(user.id, query.include_archived ?? false)).map(
+    const accounts = (await this.accounts.list(user.id, query.include_archived ?? false)).map(
       accountV1,
     );
-    return { data: cuentas, meta: { total: cuentas.length } };
+    return { data: accounts, meta: { total: accounts.length } };
   }
 
   @Get(':id')
   @ApiData(AccountResponse)
   @ApiErrors(400, 404)
-  async obtener(
+  async get(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<AccountV1> {
-    return accountV1(await this.accounts.obtener(user.id, id));
+    return accountV1(await this.accounts.get(user.id, id));
   }
 
   @Post()
   @ApiData(AccountResponse, { status: 201 })
   @ApiErrors(400, 409, 422)
-  async crear(
+  async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateAccountDto,
   ): Promise<AccountV1> {
-    return accountV1(await this.accounts.crear(user.id, dto));
+    return accountV1(await this.accounts.create(user.id, dto));
   }
 
   @Patch(':id')
   @ApiData(AccountResponse)
   @ApiErrors(400, 404, 409, 422)
-  async actualizar(
+  async update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() dto: UpdateAccountDto,
   ): Promise<AccountV1> {
-    return accountV1(await this.accounts.actualizar(user.id, id, dto));
+    return accountV1(await this.accounts.update(user.id, id, dto));
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContent()
   @ApiErrors(400, 404, 409)
-  eliminar(
+  remove(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<void> {
-    return this.accounts.eliminar(user.id, id);
+    return this.accounts.remove(user.id, id);
   }
 }

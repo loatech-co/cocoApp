@@ -1,5 +1,5 @@
 /** A receipt's record, without the file itself. */
-export class SoporteResponse {
+export class ReceiptResponse {
   id!: number;
   orden!: number;
   nombre_archivo!: string;

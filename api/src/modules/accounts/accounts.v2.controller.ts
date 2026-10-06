@@ -70,7 +70,7 @@ export class AccountsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListAccountsQuery,
   ): Promise<Page<AccountBody>> {
-    const accounts = await this.accounts.listar(user.id, query.includeArchived ?? false);
+    const accounts = await this.accounts.list(user.id, query.includeArchived ?? false);
     return paginate(accounts.map(accountV2), query);
   }
 
@@ -81,7 +81,7 @@ export class AccountsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<AccountBody> {
-    return accountV2(await this.accounts.obtener(user.id, id));
+    return accountV2(await this.accounts.get(user.id, id));
   }
 
   @Post()
@@ -91,7 +91,7 @@ export class AccountsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateAccountInput,
   ): Promise<AccountBody> {
-    return accountV2(await this.accounts.crear(user.id, createAccount(input)));
+    return accountV2(await this.accounts.create(user.id, createAccount(input)));
   }
 
   @Patch(':id')
@@ -102,7 +102,7 @@ export class AccountsV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpdateAccountInput,
   ): Promise<AccountBody> {
-    return accountV2(await this.accounts.actualizar(user.id, id, updateAccount(input)));
+    return accountV2(await this.accounts.update(user.id, id, updateAccount(input)));
   }
 
   @Delete(':id')
@@ -113,6 +113,6 @@ export class AccountsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<void> {
-    return this.accounts.eliminar(user.id, id);
+    return this.accounts.remove(user.id, id);
   }
 }

@@ -34,27 +34,27 @@ export interface Account {
 export class AccountsService {
   constructor(private readonly repo: AccountsRepository) {}
 
-  async listar(userId: bigint, incluirArchivadas = false): Promise<Account[]> {
-    const [cuentas, agregados] = await Promise.all([
-      this.repo.listar(userId, incluirArchivadas),
-      this.repo.agregadosDeSaldo(userId),
+  async list(userId: bigint, includeArchived = false): Promise<Account[]> {
+    const [rows, movementsByAccount] = await Promise.all([
+      this.repo.list(userId, includeArchived),
+      this.repo.balanceMovements(userId),
     ]);
 
-    return cuentas.map((cuenta) =>
-      this.presentar(cuenta, agregados.get(cuenta.id.toString()) ?? []),
+    return rows.map((account) =>
+      this.present(account, movementsByAccount.get(account.id.toString()) ?? []),
     );
   }
 
-  async obtener(userId: bigint, id: bigint): Promise<Account> {
-    const cuenta = await this.exigirCuenta(userId, id);
-    const agregados = await this.repo.agregadosDeSaldo(userId);
-    return this.presentar(cuenta, agregados.get(cuenta.id.toString()) ?? []);
+  async get(userId: bigint, id: bigint): Promise<Account> {
+    const account = await this.requireAccount(userId, id);
+    const movementsByAccount = await this.repo.balanceMovements(userId);
+    return this.present(account, movementsByAccount.get(account.id.toString()) ?? []);
   }
 
-  async crear(userId: bigint, dto: CreateAccountDto): Promise<Account> {
-    this.validarCoherenciaDeCredito(dto.type, dto);
+  async create(userId: bigint, dto: CreateAccountDto): Promise<Account> {
+    this.checkCreditFields(dto.type, dto);
 
-    const cuenta = await this.repo.crear(userId, {
+    const account = await this.repo.create(userId, {
       userId,
       name: dto.name,
       type: dto.type,
@@ -66,15 +66,15 @@ export class AccountsService {
       openingBalance: toMoney(dto.opening_balance ?? 0),
     });
 
-    return this.presentar(cuenta, []);
+    return this.present(account, []);
   }
 
-  async actualizar(userId: bigint, id: bigint, dto: UpdateAccountDto): Promise<Account> {
-    const actual = await this.exigirCuenta(userId, id);
-    const tipoResultante = dto.type ?? actual.type;
-    this.validarCoherenciaDeCredito(tipoResultante, dto);
+  async update(userId: bigint, id: bigint, dto: UpdateAccountDto): Promise<Account> {
+    const actual = await this.requireAccount(userId, id);
+    const resultingType = dto.type ?? actual.type;
+    this.checkCreditFields(resultingType, dto);
 
-    await this.repo.actualizar(userId, id, {
+    await this.repo.update(userId, id, {
       ...(dto.name !== undefined && { name: dto.name }),
       ...(dto.type !== undefined && { type: dto.type }),
       ...(dto.institution !== undefined && { institution: dto.institution }),
@@ -88,7 +88,7 @@ export class AccountsService {
       ...(dto.is_archived !== undefined && { isArchived: dto.is_archived }),
     });
 
-    return this.obtener(userId, id);
+    return this.get(userId, id);
   }
 
   /**
@@ -96,78 +96,75 @@ export class AccountsService {
    * está prohibido: se archiva. Solo se permite el borrado físico cuando la
    * cuenta nunca se usó.
    */
-  async eliminar(userId: bigint, id: bigint): Promise<void> {
-    await this.exigirCuenta(userId, id);
+  async remove(userId: bigint, id: bigint): Promise<void> {
+    await this.requireAccount(userId, id);
 
-    const movimientos = await this.repo.contarMovimientos(userId, id);
-    if (movimientos > 0) {
+    const transactionCount = await this.repo.countTransactions(userId, id);
+    if (transactionCount > 0) {
       throw new ConflictError(
-        `Esta cuenta tiene ${movimientos} movimiento(s). Archívala en vez de borrarla para no perder el histórico.`,
+        `Esta cuenta tiene ${transactionCount} movimiento(s). Archívala en vez de borrarla para no perder el histórico.`,
         { code: 'account_has_transactions' },
       );
     }
 
-    await this.repo.borrar(userId, id);
+    await this.repo.delete(userId, id);
   }
 
-  private async exigirCuenta(userId: bigint, id: bigint): Promise<AccountRow> {
-    const cuenta = await this.repo.buscarPorId(userId, id);
+  private async requireAccount(userId: bigint, id: bigint): Promise<AccountRow> {
+    const account = await this.repo.findById(userId, id);
     // 404 y no 403: confirmar que existe ya sería filtrar información.
-    if (!cuenta) throw new NotFoundError('La cuenta no existe.');
-    return cuenta;
+    if (!account) throw new NotFoundError('La cuenta no existe.');
+    return account;
   }
 
   /** Los campos de tarjeta solo tienen sentido en cuentas de crédito. */
-  private validarCoherenciaDeCredito(
-    tipo: AccountRow['type'],
+  private checkCreditFields(
+    type: AccountRow['type'],
     dto: Pick<UpdateAccountDto, 'credit_limit' | 'cutoff_day' | 'payment_day'>,
   ): void {
-    if (tipo === 'credit') return;
+    if (type === 'credit') return;
 
     // `unknown`: con @IsOptional el JSON puede traer un null que el tipo no dice.
-    const camposDeCredito: readonly (readonly [string, unknown])[] = [
+    const creditFields: readonly (readonly [string, unknown])[] = [
       ['credit_limit', dto.credit_limit],
       ['cutoff_day', dto.cutoff_day],
       ['payment_day', dto.payment_day],
     ];
 
-    const invasores = camposDeCredito
-      .filter(([, valor]) => valor !== undefined && valor !== null)
-      .map(([nombre]) => nombre);
+    const offending = creditFields
+      .filter(([, value]) => value !== undefined && value !== null)
+      .map(([name]) => name);
 
-    if (invasores.length > 0) {
+    if (offending.length > 0) {
       throw new BadRequestError(
-        `${invasores.join(', ')} solo aplica(n) a cuentas de tipo "credit".`,
+        `${offending.join(', ')} solo aplica(n) a cuentas de tipo "credit".`,
         { code: 'credit_fields_on_non_credit' },
       );
     }
   }
 
-  private presentar(
-    cuenta: AccountRow,
-    movimientos: Parameters<typeof computeBalance>[2],
-  ): Account {
-    const openingBalance = toMoney(cuenta.openingBalance);
-    const saldo = computeBalance(cuenta.type, openingBalance, movimientos);
-    const creditLimit = cuenta.creditLimit ? toMoney(cuenta.creditLimit) : null;
-    const cupo = computeAvailableCredit(creditLimit, saldo.cleared);
+  private present(account: AccountRow, movements: Parameters<typeof computeBalance>[2]): Account {
+    const openingBalance = toMoney(account.openingBalance);
+    const balance = computeBalance(account.type, openingBalance, movements);
+    const creditLimit = account.creditLimit ? toMoney(account.creditLimit) : null;
+    const availableCredit = computeAvailableCredit(creditLimit, balance.cleared);
 
     return {
-      id: cuenta.id,
-      name: cuenta.name,
-      type: cuenta.type,
-      currency: cuenta.currency,
-      institution: cuenta.institution,
-      last4: cuenta.last4,
+      id: account.id,
+      name: account.name,
+      type: account.type,
+      currency: account.currency,
+      institution: account.institution,
+      last4: account.last4,
       creditLimit: creditLimit ? serialize(creditLimit) : null,
-      cutoffDay: cuenta.cutoffDay,
-      paymentDay: cuenta.paymentDay,
+      cutoffDay: account.cutoffDay,
+      paymentDay: account.paymentDay,
       openingBalance: serialize(openingBalance),
-      isArchived: cuenta.isArchived,
-      balance: serialize(saldo.cleared),
-      balanceProjected: serialize(saldo.projected),
-      availableCredit: cupo ? serialize(cupo) : null,
-      createdAt: cuenta.createdAt,
+      isArchived: account.isArchived,
+      balance: serialize(balance.cleared),
+      balanceProjected: serialize(balance.projected),
+      availableCredit: availableCredit ? serialize(availableCredit) : null,
+      createdAt: account.createdAt,
     };
   }
 }

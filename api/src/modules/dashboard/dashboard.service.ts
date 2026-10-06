@@ -60,7 +60,7 @@ export class DashboardService {
     ];
 
     const [cuentas, movimientos] = await Promise.all([
-      this.accounts.listar(userId, false),
+      this.accounts.list(userId, false),
       this.ledger.findForSummary(userId, {
         from: inicio,
         to: fin,

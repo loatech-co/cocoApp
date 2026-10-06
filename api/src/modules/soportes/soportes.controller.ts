@@ -26,7 +26,7 @@ import {
   ApiErrors,
   ApiNoContent,
 } from '../../contract/v1/openapi.decorators';
-import { SoporteResponse } from '../../contract/v1/receipts.response';
+import { ReceiptResponse } from '../../contract/v1/receipts.response';
 import { receiptV1, type ReceiptV1 } from '../../presenters/v1/receipts.presenter';
 
 /** Cuántos archivos se aceptan de una vez. Ocho es el récord del lote. */
@@ -50,7 +50,7 @@ export class SoportesController {
   constructor(private readonly soportes: SoportesService) {}
 
   @Get(':id/soportes')
-  @ApiData(SoporteResponse, { isArray: true })
+  @ApiData(ReceiptResponse, { isArray: true })
   @ApiErrors(400, 404)
   async listar(
     @CurrentUser() user: AuthenticatedUser,
@@ -92,7 +92,7 @@ export class SoportesController {
       },
     },
   })
-  @ApiData(SoporteResponse, {
+  @ApiData(ReceiptResponse, {
     status: 201,
     isArray: true,
     description: 'Every receipt of the transaction after the upload.',

@@ -3964,7 +3964,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/SoporteResponse"
+                        "$ref": "#/components/schemas/ReceiptResponse"
                       }
                     },
                     "meta": {
@@ -4082,7 +4082,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/SoporteResponse"
+                        "$ref": "#/components/schemas/ReceiptResponse"
                       }
                     },
                     "meta": {
@@ -6451,7 +6451,7 @@
           }
         }
       },
-      "SoporteResponse": {
+      "ReceiptResponse": {
         "type": "object",
         "properties": {
           "id": {

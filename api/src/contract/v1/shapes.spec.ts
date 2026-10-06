@@ -12,7 +12,7 @@ import type { DashboardResponse } from './dashboard.response';
 import type { LivenessResponse, ReadinessResponse } from './health.response';
 import type { CaptureResponse, InterpretationResponse } from './interpretation.response';
 import type { PreferencesResponse } from './preferences.response';
-import type { SoporteResponse } from './receipts.response';
+import type { ReceiptResponse } from './receipts.response';
 import type { TagResponse } from './tags.response';
 import type {
   TransactionHistoryResponse,
@@ -93,7 +93,7 @@ const CHECKS = {
   interpretation: true satisfies Same<InterpretationResponse, Wire<InterpretationV1>>,
   capture: true satisfies Same<CaptureResponse, Wire<CaptureV1>>,
   preferences: true satisfies Same<PreferencesResponse, PreferencesV1>,
-  soporte: true satisfies Same<SoporteResponse, Wire<ReceiptV1>>,
+  receipt: true satisfies Same<ReceiptResponse, Wire<ReceiptV1>>,
   tag: true satisfies Same<TagResponse, Wire<Tag>>,
   transaction: true satisfies Same<TransactionResponse, Wire<TransactionV1>>,
   history: true satisfies Same<TransactionHistoryResponse, TransactionHistory>,

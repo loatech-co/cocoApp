@@ -53,8 +53,27 @@ function operationId(controllerKey: string, methodKey: string): string {
   const resource = controllerKey.endsWith('V2Controller')
     ? controllerKey.slice(0, -'V2Controller'.length)
     : controllerKey;
-  return `${resource}_${methodKey}`;
+  const id = `${resource}_${methodKey}`;
+  return V1_PUBLISHED_IDS[id] ?? id;
 }
+
+/**
+ * The v1 ids that were published with a Spanish method name. Step 7.2 put
+ * the controller methods in English; the published contract keeps its ids,
+ * so a renamed v1 method is listed here with the id it already had. The
+ * table goes with v1 (7.10).
+ */
+const V1_PUBLISHED_IDS: Readonly<Record<string, string>> = {
+  AccountsController_list: 'AccountsController_listar',
+  AccountsController_get: 'AccountsController_obtener',
+  AccountsController_create: 'AccountsController_crear',
+  AccountsController_update: 'AccountsController_actualizar',
+  AccountsController_remove: 'AccountsController_eliminar',
+  TagsController_list: 'TagsController_listar',
+  TagsController_create: 'TagsController_crear',
+  TagsController_update: 'TagsController_actualizar',
+  TagsController_remove: 'TagsController_eliminar',
+};
 
 /** Every `$ref` reachable from `value`, followed through `schemas`. */
 function reachableSchemas(value: unknown, schemas: Record<string, unknown>): Set<string> {

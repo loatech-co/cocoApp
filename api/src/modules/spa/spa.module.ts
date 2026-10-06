@@ -25,12 +25,12 @@ import { join, resolve } from 'node:path';
 @Module({})
 export class SpaModule {
   static forRoot(): DynamicModule {
-    const raiz = rutaDeLaSpa();
+    const root = spaRoot();
 
     // Sin build del frontend, el módulo simplemente no hace nada. Levantar
     // solo la API tiene que seguir siendo posible —es lo que hacen las
     // pruebas e2e— y reventar aquí lo impediría.
-    if (!raiz) {
+    if (!root) {
       return { module: SpaModule, imports: [] };
     }
 
@@ -38,7 +38,7 @@ export class SpaModule {
       module: SpaModule,
       imports: [
         ServeStaticModule.forRoot({
-          rootPath: raiz,
+          rootPath: root,
           // Cualquier ruta que no sea de la API cae en index.html y la
           // resuelve React Router. Sin esto, recargar en /movimientos daría
           // 404: ese archivo no existe en disco.
@@ -49,9 +49,9 @@ export class SpaModule {
             // apunta a los assets nuevos tras un despliegue.
             maxAge: '1y',
             index: false,
-            setHeaders: (respuesta: ServerResponse, ruta: string) => {
-              if (ruta.endsWith('index.html')) {
-                respuesta.setHeader('Cache-Control', 'no-cache, must-revalidate');
+            setHeaders: (response: ServerResponse, filePath: string) => {
+              if (filePath.endsWith('index.html')) {
+                response.setHeader('Cache-Control', 'no-cache, must-revalidate');
               }
             },
           },
@@ -68,12 +68,12 @@ export class SpaModule {
  * cómo se despliegue: desde `api/dist` en local, o desde la raíz del repo en
  * un despliegue de Hostinger.
  */
-function rutaDeLaSpa(): string | null {
-  const candidatas = [
+function spaRoot(): string | null {
+  const candidates = [
     process.env.SPA_DIST_PATH,
     resolve(process.cwd(), 'frontend', 'dist'),
     resolve(__dirname, '..', '..', '..', '..', 'frontend', 'dist'),
-  ].filter((ruta): ruta is string => Boolean(ruta));
+  ].filter((filePath): filePath is string => Boolean(filePath));
 
-  return candidatas.find((ruta) => existsSync(join(ruta, 'index.html'))) ?? null;
+  return candidates.find((filePath) => existsSync(join(filePath, 'index.html'))) ?? null;
 }
