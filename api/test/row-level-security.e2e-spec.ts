@@ -3,7 +3,7 @@ import type { PrismaClient } from '@prisma/client';
 import { makeAccount, makeConcept, makeTransaction } from './factories';
 import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
 import { AutoChargeTask } from '../src/modules/dashboard/auto-charge.task';
-import { Database } from '../src/prisma/database';
+import { Database, type UserTx } from '../src/prisma/database';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 /**
@@ -80,6 +80,22 @@ async function seedEverything(db: PrismaClient, userId: bigint, mark: string): P
       fingerprint: 'b'.repeat(64),
     },
   });
+}
+
+/** The ids of one user's seeded rows, read as the owner. */
+async function rowsOf(db: PrismaClient, userId: bigint) {
+  const transaction = await db.transaction.findFirstOrThrow({ where: { userId } });
+  const concept = await db.category.findFirstOrThrow({ where: { userId, recurrente: true } });
+  const account = await db.account.findFirstOrThrow({ where: { userId } });
+  const tag = await db.tag.findFirstOrThrow({ where: { userId } });
+  const batch = await db.importBatch.findFirstOrThrow({ where: { userId } });
+  return {
+    transaction: transaction.id,
+    concept: concept.id,
+    account: account.id,
+    tag: tag.id,
+    batch: batch.id,
+  };
 }
 
 async function countAll(
@@ -252,5 +268,175 @@ describe('Row-level security (e2e)', () => {
       _count: true,
     });
     expect(charged.map((c) => c.userId).sort()).toEqual([ana.id, bruno.id].sort());
+  });
+
+  it('rows that hang from another user’s movement: not read, moved or deleted through the child', async () => {
+    const theirs = await rowsOf(env.prisma, bruno.id);
+
+    const seen = await db.forUser(ana.id, async (tx) => ({
+      splits: await tx.transactionSplit.count({ where: { transactionId: theirs.transaction } }),
+      tags: await tx.transactionTag.count({ where: { transactionId: theirs.transaction } }),
+      rows: await tx.importRow.count({ where: { batchId: theirs.batch } }),
+    }));
+    expect(seen).toEqual({ splits: 0, tags: 0, rows: 0 });
+
+    await db.forUser(ana.id, async (tx) => {
+      await tx.transactionSplit.updateMany({ data: { amount: '7' } });
+      await tx.importRow.updateMany({ data: { description: 'tocado' } });
+      await tx.transactionSplit.deleteMany({ where: { transactionId: theirs.transaction } });
+      await tx.transactionTag.deleteMany({ where: { tagId: theirs.tag } });
+      await tx.importRow.deleteMany({ where: { batchId: theirs.batch } });
+    });
+
+    const split = await env.prisma.transactionSplit.findFirstOrThrow({
+      where: { transactionId: theirs.transaction },
+    });
+    expect(split.amount.toString()).toBe('1000');
+    expect(await env.prisma.transactionTag.count({ where: { tagId: theirs.tag } })).toBe(1);
+    const row = await env.prisma.importRow.findFirstOrThrow({ where: { batchId: theirs.batch } });
+    expect(row.description).toBeNull();
+  });
+
+  it('a row of mine cannot point at a row of another user', async () => {
+    const mine = await rowsOf(env.prisma, ana.id);
+    const theirs = await rowsOf(env.prisma, bruno.id);
+
+    // Every foreign key that leads from a user's row to another user's row.
+    // The key alone does not stop it: Postgres checks a foreign key as the
+    // table's owner, without the policies.
+    const attempts: [string, (tx: UserTx) => Promise<unknown>][] = [
+      [
+        'a split of my movement on their concept',
+        (tx) =>
+          tx.transactionSplit.create({
+            data: { transactionId: mine.transaction, categoryId: theirs.concept, amount: '1' },
+          }),
+      ],
+      [
+        'my split moved to their concept',
+        (tx) =>
+          tx.transactionSplit.updateMany({
+            where: { transactionId: mine.transaction },
+            data: { categoryId: theirs.concept },
+          }),
+      ],
+      [
+        'their tag on my movement',
+        (tx) =>
+          tx.transactionTag.create({
+            data: { transactionId: mine.transaction, tagId: theirs.tag },
+          }),
+      ],
+      [
+        'my movement on their concept',
+        (tx) =>
+          tx.transaction.update({
+            where: { id: mine.transaction },
+            data: { categoryId: theirs.concept },
+          }),
+      ],
+      [
+        'my movement on their account',
+        (tx) =>
+          tx.transaction.update({
+            where: { id: mine.transaction },
+            data: { accountId: theirs.account },
+          }),
+      ],
+      [
+        'my movement in their import batch',
+        (tx) =>
+          tx.transaction.update({
+            where: { id: mine.transaction },
+            data: { importBatchId: theirs.batch },
+          }),
+      ],
+      [
+        'my concept under their category',
+        (tx) =>
+          tx.category.update({ where: { id: mine.concept }, data: { parentId: theirs.concept } }),
+      ],
+      [
+        'my rule on their concept',
+        (tx) =>
+          tx.categoryRule.create({
+            data: { userId: ana.id, pattern: 'x', categoryId: theirs.concept },
+          }),
+      ],
+      [
+        'my receipt on their movement',
+        (tx) =>
+          tx.soporte.updateMany({
+            where: { userId: ana.id },
+            // Another fingerprint: both users' seeded receipts share one.
+            data: { transactionId: theirs.transaction, huella: 'c'.repeat(64) },
+          }),
+      ],
+      [
+        'my import batch on their account',
+        (tx) =>
+          tx.importBatch.update({ where: { id: mine.batch }, data: { accountId: theirs.account } }),
+      ],
+      [
+        'my imported row on their concept',
+        (tx) =>
+          tx.importRow.updateMany({
+            where: { batchId: mine.batch },
+            data: { categoryId: theirs.concept },
+          }),
+      ],
+      [
+        'my imported row as a copy of their movement',
+        (tx) =>
+          tx.importRow.updateMany({
+            where: { batchId: mine.batch },
+            data: { duplicateOfId: theirs.transaction },
+          }),
+      ],
+    ];
+
+    // Each attempt in its own unit, and every one reported, not just the first.
+    const notRefused: string[] = [];
+    for (const [what, attempt] of attempts) {
+      const outcome = await db.forUser(ana.id, attempt).then(
+        () => 'accepted',
+        (error: unknown) => (error instanceof Error ? error.message : String(error)),
+      );
+      if (!outcome.includes('row-level security')) notRefused.push(`${what}: ${outcome}`);
+    }
+    expect(notRefused).toEqual([]);
+
+    // The same references to her own rows still go through.
+    await db.forUser(ana.id, async (tx) => {
+      await tx.transactionSplit.create({
+        data: { transactionId: mine.transaction, categoryId: mine.concept, amount: '1' },
+      });
+      await tx.importRow.updateMany({
+        where: { batchId: mine.batch },
+        data: { categoryId: mine.concept, duplicateOfId: mine.transaction },
+      });
+    });
+  });
+
+  it('the users directory: readable for the guard, never deleted by the app', async () => {
+    expect(await appClient.user.count()).toBeGreaterThanOrEqual(2);
+    await expect(appClient.user.delete({ where: { id: bruno.id } })).rejects.toThrow(
+      /permission denied/,
+    );
+    expect(await env.prisma.user.count({ where: { id: bruno.id } })).toBe(1);
+  });
+
+  it('the one definer function answers ids, and only to the app', async () => {
+    const definers = await env.prisma.$queryRaw<{ name: string }[]>`
+      SELECT p.proname AS name
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname IN ('public', 'app_private') AND p.prosecdef`;
+    expect(definers).toEqual([{ name: 'auto_paid_owner_ids' }]);
+
+    const [shape] = await env.prisma.$queryRaw<{ result: string; anyone: boolean }[]>`
+      SELECT pg_get_function_result(p.oid) AS result,
+             has_function_privilege('public', p.oid, 'EXECUTE') AS anyone
+      FROM pg_proc p WHERE p.proname = 'auto_paid_owner_ids'`;
+    expect(shape).toEqual({ result: 'SETOF bigint', anyone: false });
   });
 });
