@@ -19,11 +19,11 @@ interface Point {
   y: number;
 }
 
-/** La caja de un elemento, medida otra vez cada vez que cambia de tamaño. */
+/** An element's box, measured again every time it changes size. */
 function useMeasuredBox(ref: RefObject<HTMLElement | null>): Size {
   const [box, setBox] = useState<Size>({ width: 0, height: 0 });
 
-  // La caja cambia de tamaño con la ventana, y los topes dependen de ella.
+  // The box changes size with the window, and the bounds depend on it.
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
@@ -40,7 +40,7 @@ function useMeasuredBox(ref: RefObject<HTMLElement | null>): Size {
   return box;
 }
 
-/** Arrastrar con `pointer`: el mismo código sirve para el ratón, el dedo y el lápiz. */
+/** Dragging with `pointer`: the same code serves the mouse, the finger and the pen. */
 function useDragToPan(isEnabled: boolean, pos: Point, onMove: (to: Point) => void) {
   const grip = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -56,13 +56,12 @@ function useDragToPan(isEnabled: boolean, pos: Point, onMove: (to: Point) => voi
       onPointerDown: (e: PointerEvent<HTMLElement>) => {
         if (!isEnabled) return;
         /*
-          Los mandos del zoom no arrastran nada.
+          The zoom controls drag nothing.
 
-          Aquí estaba el bug que hacía que el zoom "no funcionara": al pulsar
-          un mando, este marco tomaba `setPointerCapture` para el arrastre, y
-          la captura REDIRIGE también el `click` al elemento que capturó. El
-          estado del zoom nunca cambiaba porque el `onClick` del botón no
-          llegaba a dispararse nunca.
+          Here was the bug that made zoom "not work": on pressing a control,
+          this frame took `setPointerCapture` for the drag, and capture ALSO
+          REDIRECTS the `click` to the element that captured. The zoom state
+          never changed because the button's `onClick` never got to fire.
         */
         if ((e.target as HTMLElement).closest('[data-zoom-controls]')) return;
 
@@ -82,50 +81,51 @@ function useDragToPan(isEnabled: boolean, pos: Point, onMove: (to: Point) => voi
 }
 
 /**
- * Un documento que LLENA su caja y se recorre arrastrando.
+ * A document that FILLS its box and is explored by dragging.
  *
- * ── Por qué llena la caja y no entra entera ─────────────────────────────────
- * Porque una hoja completa metida en una caja baja deja la letra a un tamaño
- * en el que el total no se lee. Llenando la caja, el documento se ve al tamaño
- * en que se puede comprobar, y lo que no cabe se alcanza arrastrando.
+ * ── Why it fills the box and does not fit whole ─────────────────────────────
+ * Because a whole page squeezed into a short box leaves the text at a size at
+ * which the total cannot be read. Filling the box, the document shows at the
+ * size at which it can be checked, and what does not fit is reached by
+ * dragging.
  *
- * ── Los topes ───────────────────────────────────────────────────────────────
- * El desplazamiento se recorta a lo que falta por ver, así que nunca aparece
- * un hueco: el borde del documento no pasa del borde de la caja. Y si por el
- * lado corto el documento cabe justo, ese eje no se mueve —en vez de temblar
- * un píxel en cada arrastre—.
+ * ── The bounds ──────────────────────────────────────────────────────────────
+ * The offset is clamped to what is left to see, so a gap never appears: the
+ * document's edge does not go past the box's edge. And if on the short side
+ * the document fits exactly, that axis does not move —instead of trembling a
+ * pixel on every drag—.
  *
- * `pasos` son los saltos del zoom, como múltiplos de la escala que llena la
- * caja; el primero es el 100 %. `marco` es la caja: la crea quien la pinta.
+ * `steps` are the zoom jumps, as multiples of the scale that fills the box;
+ * the first one is 100 %. `frame` is the box: whoever paints it creates it.
  */
 export function usePanZoom(frame: RefObject<HTMLElement | null>, steps: readonly number[]) {
   const box = useMeasuredBox(frame);
-  /** El tamaño natural de lo dibujado, para saber cuánto sobra por cada lado. */
+  /** The natural size of what is drawn, to know how much is left over on each side. */
   const [natural, setNatural] = useState<Size | null>(null);
   const [pos, setPos] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(0);
 
-  // La escala que LLENA la caja: la mayor de las dos proporciones. Con la
-  // menor —que es `contain`— quedarían franjas vacías a los lados.
+  // The scale that FILLS the box: the larger of the two ratios. With the
+  // smaller —which is `contain`— there would be empty strips at the sides.
   const coverScale =
     natural && box.width > 0 ? Math.max(box.width / natural.width, box.height / natural.height) : 1;
-  // `zoom` nunca sale de `pasos`: los botones lo recortan.
+  // `zoom` never leaves `steps`: the buttons clamp it.
   const step = steps[zoom] ?? 1;
   const scale = coverScale * step;
   const width = natural ? natural.width * scale : 0;
   const height = natural ? natural.height * scale : 0;
 
-  /** Cuánto se puede mover cada eje. Negativo: es lo que sobra por ver. */
+  /** How far each axis can move. Negative: it is what is left to see. */
   const bounds = { x: Math.min(0, box.width - width), y: Math.min(0, box.height - height) };
   const clamp = ({ x, y }: Point): Point => ({
     x: Math.min(0, Math.max(bounds.x, x)),
     y: Math.min(0, Math.max(bounds.y, y)),
   });
 
-  // Empieza CENTRADO, y se recentra al cambiar el zoom: ampliar desde una
-  // esquina deja mirando un margen en blanco en vez de lo que se estaba
-  // leyendo. Solo al cambiar el documento, la caja o el zoom: recentrar en
-  // cada arrastre pelearía con el dedo.
+  // It starts CENTERED, and recenters when the zoom changes: zooming in from
+  // a corner leaves you looking at a blank margin instead of what you were
+  // reading. Only when the document, the box or the zoom changes: recentering
+  // on every drag would fight the finger.
   useOnChange([natural, box.width, box.height, zoom], () => {
     if (!natural || box.width === 0) return;
     setPos(clamp({ x: bounds.x / 2, y: bounds.y / 2 }));
@@ -140,8 +140,8 @@ export function usePanZoom(frame: RefObject<HTMLElement | null>, steps: readonly
     top: pos.y,
     width: width || undefined,
     height: height || undefined,
-    // Antes de medir se pinta invisible: un fotograma con el documento a su
-    // tamaño natural y sin encuadrar se ve como un salto.
+    // Before measuring it paints invisible: a frame with the document at its
+    // natural size and unframed looks like a jump.
     visibility: natural ? 'visible' : 'hidden',
   };
 

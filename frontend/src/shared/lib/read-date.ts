@@ -1,19 +1,19 @@
 /**
- * Lectura de una fecha escrita por una persona o por un banco.
+ * Reading a date written by a person or by a bank.
  *
- * Vive en `lib` y no en la importación porque la usan las dos: el CSV de un
- * extracto y el campo de fecha de un formulario, donde se puede escribir en
- * vez de abrir el calendario. Es el mismo problema —un texto que hay que
- * entender— y una segunda copia acabaría entendiendo cosas distintas según
- * dónde se escriba.
+ * It lives in `lib` and not in the import because both use it: a statement's
+ * CSV and a form's date field, where you can type instead of opening the
+ * calendar. It is the same problem —a text that has to be understood— and a
+ * second copy would end up understanding different things depending on where
+ * it is typed.
  *
- * Hay tres formas comunes y ninguna es negociable con el banco:
- *   `01/08/2026` · `2026-08-01` · `01 AGO` (sin año, dentro de un extracto mensual)
+ * There are three common forms and none is negotiable with the bank:
+ *   `01/08/2026` · `2026-08-01` · `01 AGO` (no year, inside a monthly statement)
  *
- * ── La ambigüedad de 01/08 ──────────────────────────────────────────────────
- * ¿1 de agosto o 8 de enero? En Colombia el orden es DÍA/MES, y así se lee.
- * El formato ISO `2026-08-01` se reconoce aparte por su forma, que es
- * inconfundible.
+ * ── The ambiguity of 01/08 ──────────────────────────────────────────────────
+ * August 1 or January 8? In Colombia the order is DAY/MONTH, and that is how
+ * it is read. The ISO format `2026-08-01` is recognized separately by its
+ * shape, which is unmistakable.
  */
 
 // The Spanish month names a receipt or a statement may use, by month number.
@@ -36,15 +36,15 @@ const MONTHS: Record<string, number> = Object.fromEntries(
 );
 
 export interface ParsedDate {
-  /** `YYYY-MM-DD`, que es lo que espera la API. */
+  /** `YYYY-MM-DD`, which is what the API expects. */
   iso: string;
   start: number;
   end: number;
 }
 
-/** ISO primero: su forma es inconfundible y no hay que adivinar nada. */
+/** ISO first: its shape is unmistakable and there is nothing to guess. */
 const ISO = /\b(\d{4})-(\d{2})-(\d{2})\b/;
-/** Día/mes/año, con año de 2 o 4 dígitos, o sin año. */
+/** Day/month/year, with a 2- or 4-digit year, or no year. */
 const DAY_MONTH = /\b(\d{1,2})[/\-.](\d{1,2})(?:[/\-.](\d{2,4}))?\b/;
 /** `01 AGO 2026`, `1 de agosto`, `AGO 01`. */
 const WITH_MONTH_NAME = new RegExp(
@@ -53,11 +53,11 @@ const WITH_MONTH_NAME = new RegExp(
 );
 
 /**
- * Encuentra la primera fecha de una línea.
+ * Finds the first date in a line.
  *
- * `anioPorDefecto` cubre el caso más común de todos: un extracto mensual que
- * escribe "01 AGO" sin año porque el año está en el encabezado. Sin él, cada
- * línea habría que corregirla a mano.
+ * `defaultYear` covers the most common case of all: a monthly statement that
+ * writes "01 AGO" without a year because the year is in the header. Without
+ * it, every line would have to be fixed by hand.
  */
 export function findDate(line: string, defaultYear: number): ParsedDate | null {
   const iso = ISO.exec(line);
@@ -83,7 +83,7 @@ export function findDate(line: string, defaultYear: number): ParsedDate | null {
 
   const dayMonth = DAY_MONTH.exec(line);
   if (dayMonth) {
-    // Día primero: en Colombia 01/08 es el 1 de agosto, no el 8 de enero.
+    // Day first: in Colombia 01/08 is August 1, not January 8.
     const day = Number(dayMonth[1]);
     const month = Number(dayMonth[2]);
     const year = dayMonth[3] ? fullYear(Number(dayMonth[3])) : defaultYear;
@@ -96,18 +96,18 @@ export function findDate(line: string, defaultYear: number): ParsedDate | null {
   return null;
 }
 
-/** `26` → 2026. Los extractos con año de dos dígitos siguen existiendo. */
+/** `26` → 2026. Statements with a two-digit year still exist. */
 function fullYear(year: number): number {
   if (year >= 1000) return year;
   return year < 70 ? 2000 + year : 1900 + year;
 }
 
 /**
- * Arma la fecha comprobando que EXISTA.
+ * Builds the date, checking that it EXISTS.
  *
- * `31/02` no es una fecha; dejarla pasar la convertiría en el 3 de marzo al
- * guardarla, que es exactamente el tipo de error silencioso que descuadra un
- * extracto sin que nadie sepa por qué.
+ * `31/02` is not a date; letting it through would turn it into March 3 when
+ * saved, which is exactly the kind of silent error that unbalances a
+ * statement without anyone knowing why.
  */
 function build(
   year: number,
