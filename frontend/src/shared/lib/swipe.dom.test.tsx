@@ -8,10 +8,10 @@ import { CLOSE_THRESHOLD, progressAlong, canScrollToward, useSwipeToClose } from
 afterEach(cleanup);
 
 /**
- * Se despachan `MouseEvent` con el nombre de los de puntero: un evento de
- * puntero ES un evento de ratón con más campos, y jsdom no trae su
- * constructor. Lo que se está probando —el umbral y el orden de los
- * fotogramas— no depende de los campos que faltan.
+ * `MouseEvent`s are dispatched with the names of the pointer ones: a pointer
+ * event IS a mouse event with more fields, and jsdom does not ship its
+ * constructor. What is being tested —the threshold and the order of the
+ * frames— does not depend on the missing fields.
  */
 function gesture(el: Element, steps: [x: number, y: number][]): void {
   const [first, ...rest] = steps;
@@ -37,8 +37,8 @@ function Panel({ onClose }: { onClose: () => void }) {
   );
 }
 
-describe('Deslizar para cerrar', () => {
-  it('por debajo del umbral no cierra, y suelta el control', () => {
+describe('Swipe to close', () => {
+  it('below the threshold it does not close, and releases the control', () => {
     const close = vi.fn();
     const { getByTestId } = render(<Panel onClose={close} />);
     const panel = getByTestId('panel');
@@ -53,7 +53,7 @@ describe('Deslizar para cerrar', () => {
     expect(panel.style.transform).toBe('');
   });
 
-  it('por encima del umbral cierra', () => {
+  it('above the threshold it closes', () => {
     const close = vi.fn();
     const { getByTestId } = render(<Panel onClose={close} />);
 
@@ -66,7 +66,7 @@ describe('Deslizar para cerrar', () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
-  it('el transform en línea sobrevive al cierre y se suelta un fotograma después', async () => {
+  it('the inline transform survives the close and is released one frame later', async () => {
     const close = vi.fn();
     const { getByTestId } = render(<Panel onClose={close} />);
     const panel = getByTestId('panel');
@@ -77,15 +77,15 @@ describe('Deslizar para cerrar', () => {
       [100, 400],
     ]);
 
-    // Soltarlo ANTES devolvería el panel a su sitio durante un fotograma y lo
-    // sacaría desde allí: se lee como un rebote.
+    // Releasing it BEFORE would return the panel to its place for one frame and
+    // take it out from there: it reads as a bounce.
     expect(panel.style.transform).toContain('translateY');
 
     await new Promise((done) => requestAnimationFrame(() => done(null)));
     expect(panel.style.transform).toBe('');
   });
 
-  it('un redibujo a mitad del arrastre no borra el gesto', () => {
+  it('a re-render in the middle of the drag does not erase the gesture', () => {
     const { getByTestId, rerender } = render(<Panel onClose={() => {}} />);
     const panel = getByTestId('panel');
     const inner = getByTestId('dentro');
@@ -98,9 +98,9 @@ describe('Deslizar para cerrar', () => {
     );
     expect(panel.style.transform).toContain('translateY');
 
-    // Otra función de cierre, como la que trae cualquier render del anfitrión.
-    // Si el efecto dependiera de ella, su limpieza dejaría el panel plantado
-    // bajo el dedo.
+    // Another close function, like the one any render of the host brings.
+    // If the effect depended on it, its cleanup would leave the panel stuck
+    // under the finger.
     rerender(<Panel onClose={() => {}} />);
 
     inner.dispatchEvent(
@@ -109,7 +109,7 @@ describe('Deslizar para cerrar', () => {
     expect(panel.style.transform).toBe('translateY(100px)');
   });
 
-  it('un gesto hacia el otro lado no mueve nada', () => {
+  it('a gesture the other way moves nothing', () => {
     const close = vi.fn();
     const { getByTestId } = render(<Panel onClose={close} />);
     const panel = getByTestId('panel');
@@ -124,7 +124,7 @@ describe('Deslizar para cerrar', () => {
     expect(panel.style.transform).toBe('');
   });
 
-  it('un gesto de lado tampoco: manda el otro eje', () => {
+  it('a sideways gesture neither: the other axis wins', () => {
     const close = vi.fn();
     const { getByTestId } = render(<Panel onClose={close} />);
 
@@ -137,7 +137,7 @@ describe('Deslizar para cerrar', () => {
     expect(close).not.toHaveBeenCalled();
   });
 
-  it('una región que se queda con el puntero no se arrastra', () => {
+  it('a region that keeps the pointer is not dragged', () => {
     const close = vi.fn();
     const { getByTestId } = render(<Panel onClose={close} />);
 
@@ -151,8 +151,8 @@ describe('Deslizar para cerrar', () => {
   });
 });
 
-describe('Cede ante un desplazamiento', () => {
-  it('`auto` y `scroll` cuentan como desplazables; `clip` y `hidden` no', () => {
+describe('Yields to a scroll', () => {
+  it('`auto` and `scroll` count as scrollable; `clip` and `hidden` do not', () => {
     const panel = document.createElement('div');
     const list = document.createElement('div');
     const row = document.createElement('div');
@@ -165,14 +165,14 @@ describe('Cede ante un desplazamiento', () => {
     Object.defineProperty(list, 'scrollHeight', { value: 400, configurable: true });
     Object.defineProperty(list, 'clientHeight', { value: 200, configurable: true });
 
-    // Le queda algo por enseñar hacia arriba: arrastrar hacia abajo es
-    // desplazar esa lista, no cerrar el panel.
+    // It still has something to reveal upward: dragging down scrolls that
+    // list, it does not close the panel.
     expect(canScrollToward(row, panel, 'down')).toBe(true);
-    // Hacia arriba también le queda.
+    // Upward it has some left too.
     expect(canScrollToward(row, panel, 'up')).toBe(true);
 
     Object.defineProperty(list, 'scrollTop', { value: 0, configurable: true });
-    // Ya está en su borde: el gesto es del panel.
+    // Already at its edge: the gesture belongs to the panel.
     expect(canScrollToward(row, panel, 'down')).toBe(false);
 
     list.style.overflowY = 'clip';
@@ -183,7 +183,7 @@ describe('Cede ante un desplazamiento', () => {
   });
 });
 
-describe('El avance se mide hacia donde cierra', () => {
+describe('Progress is measured toward where it closes', () => {
   it.each([
     ['down' as const, 0, 30, 30],
     ['up' as const, 0, -30, 30],

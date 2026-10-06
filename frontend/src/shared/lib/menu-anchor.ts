@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
 /**
- * Abrir, cerrar y colocar un desplegable.
+ * Opening, closing and placing a dropdown.
  *
- * Es lo que `Menu` sabe hacer y no dibuja: por eso vive en `lib` y no en la
- * interfaz. Lo de dibujar —la superficie, el origen, el ancho— sigue en
- * `shared/ui/molecules/menu.tsx`.
+ * It is what `Menu` knows how to do and does not draw: that is why it lives in
+ * `lib` and not in the UI. The drawing —the surface, the origin, the width—
+ * stays in `shared/ui/molecules/menu.tsx`.
  */
 
-/** Dónde está el disparador en la ventana, medido al abrir. */
+/** Where the trigger is in the window, measured on opening. */
 export interface Anchor {
   top: number;
   left: number;
-  /** Lo que queda desde el canto derecho del disparador hasta la ventana. */
+  /** What is left from the trigger's right edge to the window. */
   right: number;
   width: number;
 }
@@ -22,8 +22,8 @@ export function useMenuState(isSheet: boolean) {
   const box = useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
 
-  // Se mide al abrir: la posición de la caja en la ventana es lo único que
-  // hace falta para colocar un panel que ya no depende de ella.
+  // Measured on opening: the box's position in the window is all it takes
+  // to place a panel that no longer depends on it.
   function measure(): void {
     const r = box.current?.getBoundingClientRect();
     if (r) {
@@ -37,11 +37,11 @@ export function useMenuState(isSheet: boolean) {
   }
 
   /*
-    Cerrar al tocar fuera y con Escape — pero solo cuando el panel cuelga del
-    botón. La hoja trae sus cuatro salidas propias —el tirador, el velo,
-    Escape y deslizar hacia abajo—, y además vive PORTADA contra el `body`:
-    para esta caja, cualquier toque dentro de la hoja es un toque «fuera», así
-    que elegir una opción la habría cerrado antes de que el clic llegara.
+    Close on a tap outside and with Escape — but only when the panel hangs
+    from the button. The sheet brings its own four exits —the handle, the
+    scrim, Escape and swiping down—, and on top of that it lives PORTALED to
+    `body`: for this box, any tap inside the sheet is a tap «outside», so
+    picking an option would have closed it before the click arrived.
   */
   useEffect(() => {
     if (!isOpen || isSheet) return;
@@ -64,25 +64,24 @@ export function useMenuState(isSheet: boolean) {
   return { isOpen, setIsOpen, box, anchor, measure };
 }
 
-/** Dónde se coloca un panel flotante, medido contra la ventana. */
+/** Where a floating panel is placed, measured against the window. */
 export function panelStyle(
   anchor: Anchor,
   hasOwnWidth: boolean,
   align: 'left' | 'right',
 ): CSSProperties {
   /*
-    El alto, hasta el borde de abajo de la ventana y ni un píxel más.
+    The height, down to the bottom edge of the window and not one pixel more.
 
-    El panel es `fixed` y cuelga del canto inferior del disparador. Abierto
-    desde un campo que está a media pantalla en un teléfono, lo que no cabía
-    caía fuera de la ventana: ni se veía ni se podía pulsar, y no había nada
-    que desplazar para alcanzarlo. Con el tope, el panel se desplaza por
-    dentro.
+    The panel is `fixed` and hangs from the trigger's bottom edge. Opened
+    from a field halfway down a phone screen, whatever did not fit fell
+    outside the window: it could not be seen or tapped, and there was nothing
+    to scroll to reach it. With the cap, the panel scrolls inside.
   */
   const heightCap = { maxHeight: `calc(100dvh - ${anchor.top + 16}px)` };
-  // El MISMO ancho que el campo, no un mínimo: un panel más ancho que su
-  // disparador se lee como otro elemento, y uno más angosto corta las
-  // opciones que el campo sí muestra enteras.
+  // The SAME width as the field, not a minimum: a panel wider than its
+  // trigger reads as another element, and a narrower one cuts the options
+  // the field does show in full.
   if (!hasOwnWidth) {
     return {
       top: `${anchor.top + 8}px`,
@@ -92,15 +91,15 @@ export function panelStyle(
     };
   }
   /*
-    Se ancla por el canto que dice `alineado`, y no siempre por la izquierda.
+    It is anchored by the edge `align` names, and not always by the left.
 
-    Anclando siempre a la izquierda, un panel ancho colgado de un control que
-    vive al final de una barra —el rango de fechas— crece hacia fuera de la
-    pantalla: o se sale, o el recorte lo deja de la mitad de ancho. Por la
-    derecha crece hacia dentro, que es donde hay sitio.
+    Always anchoring to the left, a wide panel hanging from a control that
+    lives at the end of a bar —the date range— grows out of the screen: it
+    either spills over, or the clipping leaves it half as wide. From the
+    right it grows inward, which is where there is room.
 
-    El tope es siempre lo que queda hasta el borde opuesto: lo que se sale de
-    la ventana no se puede pulsar.
+    The cap is always what is left up to the opposite edge: what spills out
+    of the window cannot be tapped.
   */
   return align === 'right'
     ? {

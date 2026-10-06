@@ -1,35 +1,35 @@
 import { type RefObject, useEffect, useEffectEvent } from 'react';
 
 /**
- * Deslizar para cerrar.
+ * Swipe to close.
  *
- * ── Por qué no es un componente ─────────────────────────────────────────────
- * Porque no tiene forma. No hay nada que dibujar, ningún hueco que ocupar,
- * nada que Figma pudiera sostener. Tampoco tiene CSS propio: cada panel que
- * mueve ya declara su posición abierta y su posición cerrada, y esto solo pide
- * prestado el espacio que hay entre las dos.
+ * ── Why it is not a component ───────────────────────────────────────────────
+ * Because it has no shape. There is nothing to draw, no slot to fill, nothing
+ * Figma could hold. Nor does it have CSS of its own: every panel it moves
+ * already declares its open position and its closed position, and this only
+ * borrows the space between the two.
  *
- * ── Hacia dónde ─────────────────────────────────────────────────────────────
- * `hacia` nombra la dirección que CIERRA, que es siempre la dirección por la
- * que el panel vino. Uno que subió desde abajo vuelve abajo; el de secciones,
- * que entró por la derecha, vuelve a la derecha. Cualquier otra cosa es un
- * gesto que hay que aprender en vez de adivinar.
+ * ── Which way ───────────────────────────────────────────────────────────────
+ * `direction` names the direction that CLOSES, which is always the direction
+ * the panel came from. One that rose from the bottom goes back down; the
+ * sections one, which came in from the right, goes back to the right. Anything
+ * else is a gesture that has to be learned instead of guessed.
  *
- * ── Eventos de puntero, nunca de tacto ──────────────────────────────────────
- * `touchstart/touchmove/touchend` no sirve: un navegador de escritorio a una
- * ventana angosta —que es como se revisa cada uno de estos paneles— no dispara
- * NINGÚN evento de tacto, así que el gesto no existía donde se probaba.
+ * ── Pointer events, never touch events ──────────────────────────────────────
+ * `touchstart/touchmove/touchend` will not do: a desktop browser at a narrow
+ * window —which is how each of these panels gets reviewed— fires NO touch
+ * events at all, so the gesture did not exist where it was being tried.
  */
 
-/** Lo que hay que recorrer para que esto deje de ser un temblor. */
+/** How far to travel before this stops being a tremor. */
 const RECOGNITION_PX = 8;
 
 /**
- * Lo que hay que recorrer para que suelte.
+ * How far to travel for it to let go.
  *
- * 120 y no 60: cerrar es lo caro de deshacer —hay que volver a abrir y volver
- * a llegar a donde uno estaba—, así que el umbral se pone donde ya no puede
- * ser un roce.
+ * 120 and not 60: closing is the expensive thing to undo —you have to open
+ * again and get back to where you were—, so the threshold sits where it can
+ * no longer be a graze.
  */
 export const CLOSE_THRESHOLD = 120;
 
@@ -42,7 +42,7 @@ const AXIS: Record<SwipeDirection, 'x' | 'y'> = {
   left: 'x',
 };
 
-/** Cuánto se ha avanzado HACIA el cierre. Negativo es ir al revés. */
+/** How far it has moved TOWARD closing. Negative is going the other way. */
 export function progressAlong(direction: SwipeDirection, dx: number, dy: number): number {
   if (direction === 'down') return dy;
   if (direction === 'up') return -dy;
@@ -50,16 +50,16 @@ export function progressAlong(direction: SwipeDirection, dx: number, dy: number)
   return -dx;
 }
 
-/** Lo que se mueve en el otro eje. Si manda esto, el gesto no es el nuestro. */
+/** What moves on the other axis. If this wins, the gesture is not ours. */
 function crossOffset(direction: SwipeDirection, dx: number, dy: number): number {
   return Math.abs(AXIS[direction] === 'y' ? dx : dy);
 }
 
 /**
- * Si el gesto empezó dentro de algo que TODAVÍA puede desplazarse hacia allá.
+ * Whether the gesture started inside something that can STILL scroll that way.
  *
- * Porque entonces no es un cierre, es un desplazamiento: un panel cuya lista
- * está a la mitad se cierra solo cuando la lista ha vuelto a su borde.
+ * Because then it is not a close, it is a scroll: a panel whose list is
+ * halfway down closes only once the list is back at its edge.
  */
 export function canScrollToward(
   from: Element | null,
@@ -71,8 +71,8 @@ export function canScrollToward(
   while (node && node !== boundary.parentElement) {
     const style = typeof getComputedStyle === 'function' ? getComputedStyle(node) : null;
     const overflow = AXIS[direction] === 'y' ? style?.overflowY : style?.overflowX;
-    // `auto` y `scroll` SON desplazables; `clip`, `hidden` y `visible` no.
-    // Contarlos mal es exactamente el bug: el panel se mueve y la lista no.
+    // `auto` and `scroll` ARE scrollable; `clip`, `hidden` and `visible` are not.
+    // Counting them wrong is exactly the bug: the panel moves and the list does not.
     const isScrollable = overflow === 'auto' || overflow === 'scroll';
 
     if (isScrollable) {
@@ -81,8 +81,8 @@ export function canScrollToward(
       const remainingLeft = node.scrollLeft;
       const remainingRight = node.scrollWidth - node.clientWidth - node.scrollLeft;
 
-      // Arrastrar hacia abajo enseña lo que hay ARRIBA: lo consume quien tenga
-      // algo por encima todavía sin enseñar.
+      // Dragging down reveals what is ABOVE: whoever still has something
+      // unshown above consumes it.
       const remaining =
         direction === 'down'
           ? remainingTop
@@ -110,23 +110,23 @@ export function useSwipeToClose({
 }: {
   element: RefObject<HTMLElement | null>;
   direction: SwipeDirection;
-  /** Solo mientras está abierto: un panel cerrado no se arrastra. */
+  /** Only while open: a closed panel is not dragged. */
   isEnabled: boolean;
   onClose: () => void;
 }): void {
   /**
-   * El cierre, como evento de efecto.
+   * The close, as an effect event.
    *
-   * Si el efecto dependiera de `onCerrar` —que en la práctica es una función
-   * nueva en cada render— se volvería a enganchar cada vez, y su limpieza
-   * borraría el `transform` en línea A MITAD DE UN ARRASTRE: el panel se
-   * quedaría plantado bajo el dedo en cuanto cualquier otra cosa de la
-   * pantalla se redibujara.
+   * If the effect depended on `onClose` —which in practice is a new function
+   * on every render— it would hook itself up again every time, and its cleanup
+   * would wipe the inline `transform` IN THE MIDDLE OF A DRAG: the panel would
+   * stand still under the finger as soon as anything else on the screen
+   * re-rendered.
    *
-   * `useEffectEvent` es la pieza de React para esto: una función estable que
-   * llama siempre a la versión más reciente, sin entrar en las dependencias.
-   * Antes era una ref escrita durante el render, que hace lo mismo a mano y
-   * es lo que la regla de los refs prohíbe.
+   * `useEffectEvent` is React's piece for this: a stable function that always
+   * calls the latest version, without entering the dependencies. It used to be
+   * a ref written during render, which does the same by hand and is what the
+   * rule of refs forbids.
    */
   const handleClose = useEffectEvent(onClose);
 
@@ -154,7 +154,7 @@ export function useSwipeToClose({
   }, [element, direction, isEnabled]);
 }
 
-/** Un arrastre en curso sobre un panel. */
+/** A drag in progress on a panel. */
 interface Drag {
   el: HTMLElement;
   direction: SwipeDirection;
@@ -163,7 +163,7 @@ interface Drag {
   progress: number;
 }
 
-/** Devuelve el panel a lo que diga su CSS. */
+/** Returns the panel to whatever its CSS says. */
 function releaseElement(el: HTMLElement): void {
   el.style.transform = '';
   el.style.transition = '';
@@ -172,11 +172,11 @@ function releaseElement(el: HTMLElement): void {
 function startDrag(gesture: Drag, e: PointerEvent): void {
   if (e.button > 0) return;
 
-  // El destino puede no ser un elemento —el documento, un nodo de texto—, y
-  // esos no tienen `closest`.
+  // The target may not be an element —the document, a text node—, and
+  // those have no `closest`.
   const target = e.target;
-  // Una región que se maneja el puntero ella misma —una rejilla mientras
-  // se reordena— se queda con el gesto entero.
+  // A region that handles the pointer itself —a grid while it is being
+  // reordered— keeps the whole gesture.
   if (target instanceof Element && target.closest('[data-no-swipe]')) return;
 
   gesture.start = { x: e.clientX, y: e.clientY };
@@ -194,7 +194,7 @@ function moveDrag(gesture: Drag, e: PointerEvent): void {
 
   if (!gesture.isRecognized && !recognize(gesture, e, crossOffset(direction, dx, dy))) return;
 
-  // No se arrastra hacia el otro lado: el panel ya está en su sitio.
+  // It is not dragged the other way: the panel is already in place.
   const travel = Math.max(0, gesture.progress);
   el.style.transform =
     AXIS[direction] === 'y'
@@ -202,12 +202,12 @@ function moveDrag(gesture: Drag, e: PointerEvent): void {
       : `translateX(${direction === 'right' ? travel : -travel}px)`;
 }
 
-/** Decide si lo que empezó es este gesto. Si no lo es, lo abandona. */
+/** Decides whether what started is this gesture. If it is not, abandons it. */
 function recognize(gesture: Drag, e: PointerEvent, crossOffset: number): boolean {
   const { el, direction, progress } = gesture;
   if (Math.abs(progress) < RECOGNITION_PX && crossOffset < RECOGNITION_PX) return false;
 
-  // Va para el otro lado, o va de lado: no es este gesto.
+  // It goes the other way, or sideways: not this gesture.
   if (progress <= 0 || crossOffset > Math.abs(progress)) {
     gesture.start = null;
     return false;
@@ -219,10 +219,10 @@ function recognize(gesture: Drag, e: PointerEvent, crossOffset: number): boolean
   }
 
   gesture.isRecognized = true;
-  // jsdom no lo trae, aunque el tipo diga que todo elemento lo tiene.
+  // jsdom does not have it, even though the type says every element does.
   if ('setPointerCapture' in el) el.setPointerCapture(e.pointerId);
-  // En línea y no en una clase: con su propia curva encima, el panel
-  // llega tarde a donde ya está el dedo.
+  // Inline and not in a class: with its own curve on top, the panel
+  // arrives late to where the finger already is.
   el.style.transition = 'none';
   return true;
 }
@@ -236,7 +236,7 @@ function endDrag(gesture: Drag, handleClose: () => void): void {
   gesture.isRecognized = false;
 
   if (gesture.progress <= CLOSE_THRESHOLD) {
-    // Se queda: se suelta el control y su propia transición lo devuelve.
+    // It stays: the control is released and its own transition brings it back.
     releaseElement(gesture.el);
     return;
   }
@@ -244,13 +244,12 @@ function endDrag(gesture: Drag, handleClose: () => void): void {
   handleClose();
 
   /**
-   * EL FOTOGRAMA SIGUIENTE, y ahí está todo el truco.
+   * THE NEXT FRAME, and that is the whole trick.
    *
-   * Quitar el `transform` en línea ANTES de que el anfitrión cierre
-   * devuelve el panel a su posición abierta durante un fotograma y lo
-   * desliza desde allí: se lee como un rebote. Quitarlo un fotograma
-   * DESPUÉS es lo que convierte un arrastre y una transición en un solo
-   * movimiento continuo.
+   * Removing the inline `transform` BEFORE the host closes returns the panel
+   * to its open position for one frame and slides it from there: it reads as
+   * a bounce. Removing it one frame LATER is what turns a drag and a
+   * transition into a single continuous movement.
    */
   requestAnimationFrame(() => releaseElement(gesture.el));
 }
