@@ -11,7 +11,7 @@ import type { Prisma } from '../../generated/prisma/client';
 const SORTABLE_FIELDS = {
   date: 'date',
   amount: 'amount',
-  created_at: 'createdAt',
+  createdAt: 'createdAt',
   merchant: 'merchant',
 } as const satisfies Record<string, keyof Prisma.TransactionOrderByWithRelationInput>;
 

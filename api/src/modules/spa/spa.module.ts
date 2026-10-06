@@ -21,7 +21,7 @@ import { join, resolve } from 'node:path';
  * Putting them together also removes CORS: there is no cross origin to allow.
  *
  * In development this does not switch on: the Vite server is in charge there,
- * with hot reload, and the API only serves /api/v1.
+ * with hot reload, and the API only serves /api/v2.
  */
 @Module({})
 export class SpaModule {

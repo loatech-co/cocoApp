@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 
-import type { UpsertTagDto } from './tags.dto';
 import { TagsRepository } from './tags.repository';
 import { NotFoundError } from '../../common/errors/domain-error';
 import type { Tag as TagRow } from '../../generated/prisma/client';
@@ -10,6 +9,12 @@ export interface Tag {
   id: bigint;
   name: string;
   color: string | null;
+}
+
+/** A tag as it is written: a name, and a color if it has one. */
+export interface TagInput {
+  name: string;
+  color?: string;
 }
 
 @Injectable()
@@ -53,10 +58,10 @@ export class TagsService {
     return tags.map((tag) => tag.id);
   }
 
-  async update(userId: bigint, id: bigint, dto: UpsertTagDto): Promise<Tag> {
+  async update(userId: bigint, id: bigint, input: TagInput): Promise<Tag> {
     const count = await this.repository.update(userId, id, {
-      name: dto.name.trim(),
-      color: dto.color,
+      name: input.name.trim(),
+      color: input.color,
     });
     if (count === 0) throw new NotFoundError('La etiqueta no existe.');
 

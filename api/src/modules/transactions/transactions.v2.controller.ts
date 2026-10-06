@@ -24,12 +24,6 @@ import type {
   Transfer as TransferBody,
 } from './transactions.domain';
 import { TransactionsService } from './transactions.service';
-import {
-  createTransaction,
-  createTransfer,
-  listTransactions,
-  updateTransaction,
-} from './transactions.v2.mapper';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -64,7 +58,7 @@ export class TransactionsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTransactionsQuery,
   ): Promise<TransactionPage> {
-    return transactionPageV2(await this.transactions.list(user.id, listTransactions(query)));
+    return transactionPageV2(await this.transactions.list(user.id, query));
   }
 
   /** Before `:id`, or Express would read "history" as an id. */
@@ -82,7 +76,7 @@ export class TransactionsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateTransferInput,
   ): Promise<TransferBody> {
-    return transferV2(await this.transactions.createTransfer(user.id, createTransfer(input)));
+    return transferV2(await this.transactions.createTransfer(user.id, input));
   }
 
   @Get(':id')
@@ -102,7 +96,7 @@ export class TransactionsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateTransactionInput,
   ): Promise<TransactionBody> {
-    return transactionV2(await this.transactions.create(user.id, createTransaction(input)));
+    return transactionV2(await this.transactions.create(user.id, input));
   }
 
   @Patch(':id')
@@ -113,7 +107,7 @@ export class TransactionsV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpdateTransactionInput,
   ): Promise<TransactionBody> {
-    return transactionV2(await this.transactions.update(user.id, id, updateTransaction(input)));
+    return transactionV2(await this.transactions.update(user.id, id, input));
   }
 
   @Delete(':id')

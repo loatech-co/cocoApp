@@ -1,6 +1,5 @@
 import { Global, Module } from '@nestjs/common';
 
-import { PreferencesController } from './preferences.controller';
 import { PreferencesRepository } from './preferences.repository';
 import { PreferencesService } from './preferences.service';
 import { PreferencesV2Controller } from './preferences.v2.controller';
@@ -8,7 +7,7 @@ import { PreferencesV2Controller } from './preferences.v2.controller';
 /** Global: several modules ask it whether accounts are switched on. */
 @Global()
 @Module({
-  controllers: [PreferencesController, PreferencesV2Controller],
+  controllers: [PreferencesV2Controller],
   providers: [PreferencesService, PreferencesRepository],
   exports: [PreferencesService],
 })

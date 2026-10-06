@@ -19,15 +19,23 @@ import {
 import { CATEGORY_KINDS, PERIODICITIES } from '../../../../contract/v2/categories.response';
 import { PageQuery } from '../../../../contract/v2/page.dto';
 import { mergeKeywords } from '../../keywords';
-import { MAX_KEYWORDS } from '../category.dto';
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
+/**
+ * How many keywords a concept accepts and how long each one may be.
+ *
+ * The cap is not a technical limit: thirty words to recognize a creditor are
+ * no longer signals, they are a net that catches any receipt. And it lives
+ * here —in the contract— so a client other than this screen cannot fill the
+ * column either.
+ */
+export const MAX_KEYWORDS = 30;
 const LONGEST_KEYWORD = 60;
 
 type CategoryKind = (typeof CATEGORY_KINDS)[number];
 type Periodicity = (typeof PERIODICITIES)[number];
 
-/** The same clean-up as v1: no empty words, no repeats, in the order they came. */
+/** No empty words, no repeats, in the order they came. */
 function cleanKeywords({ value }: { value: unknown }): unknown {
   if (!Array.isArray(value)) return value;
   if (value.some((word) => typeof word !== 'string')) return value;

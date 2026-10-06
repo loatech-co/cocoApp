@@ -4,8 +4,8 @@ import type { Category as CategoryRow, CategoryKind } from '../../generated/pris
 
 /**
  * A category as the service hands it out, whatever its level (cost center,
- * category, concept): the domain, not a wire format. Each API version
- * presents it (`presenters/v1`, `presenters/v2`).
+ * category, concept): the domain, not a wire format. The API presents it
+ * (`presenters/v2`).
  */
 export interface Category {
   id: bigint;
@@ -46,8 +46,7 @@ export type CategoryNode = WithChildren<Category>;
 /**
  * What a PATCH changes, in the client's words: only the fields that came.
  *
- * Both controllers build it from their own body (v1 translates its snake_case
- * and its Spanish periodicities; v2 copies), so the service speaks one
+ * The controller builds it from the body, so the service speaks one
  * language. `null` clears a field; an absent key leaves it as it is.
  */
 export interface CategoryChanges {

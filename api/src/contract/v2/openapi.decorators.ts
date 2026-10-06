@@ -11,7 +11,9 @@ import { PageMetaV2 } from './envelope.response';
 import { Problem, ProblemFieldError } from './problem.response';
 import { PROBLEMS } from '../../common/errors/problem-codes';
 import { PROBLEM_JSON } from '../../common/filters/all-exceptions.filter';
-import { BEARER_SCHEME } from '../v1/openapi.decorators';
+
+/** Name of the bearer scheme every authenticated operation requires. */
+export const BEARER_SCHEME = 'bearer';
 
 interface DataOptions {
   /** 200 unless the route answers otherwise (a POST without `@HttpCode` is 201). */
@@ -26,11 +28,10 @@ interface DataOptions {
 }
 
 /**
- * A v2 success inside the `{ data, meta }` envelope. The same envelope as v1;
- * what changes is that every list is a page (`PageMetaV2`, in camelCase).
+ * A v2 success inside the `{ data, meta }` envelope. Every list is a page
+ * (`PageMetaV2`, in camelCase).
  *
- * The errors are not v1's: they are `application/problem+json` (`ApiErrors`
- * below).
+ * The errors are `application/problem+json` (`ApiErrors` below).
  */
 export function ApiDataV2(model: Type<unknown>, options: DataOptions = {}): MethodDecorator {
   const item = { $ref: getSchemaPath(model) };

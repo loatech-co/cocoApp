@@ -27,7 +27,7 @@ type TransactionType = (typeof TRANSACTION_TYPES)[number];
 type TransactionStatus = (typeof TRANSACTION_STATUSES)[number];
 type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
-export class SplitInput {
+class SplitInput {
   @IsOptional()
   @Type(() => Number)
   @IsInt()

@@ -55,7 +55,7 @@ describe('JsonLogger', () => {
     const logger = new JsonLogger({ directory: dir });
     const req = Object.assign(new EventEmitter(), {
       method: 'GET',
-      originalUrl: '/api/v1/transactions?search=privado',
+      originalUrl: '/api/v2/transactions?search=privado',
       header: () => undefined,
     }) as unknown as Request;
     const res = Object.assign(new EventEmitter(), {
@@ -78,7 +78,7 @@ describe('JsonLogger', () => {
       requestId: seen,
       context: 'http',
       method: 'GET',
-      path: '/api/v1/transactions',
+      path: '/api/v2/transactions',
       status: 200,
     });
     // The query string —search terms, personal data— never reaches the log.

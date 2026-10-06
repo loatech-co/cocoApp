@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
 import { computeFlow, type AggregableMovement } from './dashboard.aggregate';
-import type { DashboardQueryDto } from './dashboard.dto';
 import {
   toIsoDate,
   treeOf,
@@ -13,7 +12,7 @@ import {
   totalsOf,
   type Tree,
 } from './dashboard.summary';
-import type { Dashboard, PendingPayment } from './dashboard.types';
+import type { Dashboard, DashboardFilters, PendingPayment } from './dashboard.types';
 import { historyWindow } from './pending';
 import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
 import { ZERO, serialize, toMoney, type Money } from '../../common/money/money';
@@ -37,11 +36,11 @@ export class DashboardService {
    * per-unit BEGIN/set_config/COMMIT, not the policies, is what RLS costs,
    * and this screen is the one that pays it six times.
    */
-  summary(userId: bigint, query: DashboardQueryDto): Promise<Dashboard> {
+  summary(userId: bigint, query: DashboardFilters): Promise<Dashboard> {
     return this.db.forUser(userId, () => this.readSummary(userId, query));
   }
 
-  private async readSummary(userId: bigint, query: DashboardQueryDto): Promise<Dashboard> {
+  private async readSummary(userId: bigint, query: DashboardFilters): Promise<Dashboard> {
     const { start, end } = defaultRange(query.from, query.to);
 
     // A GET only reads. Auto-paid concepts are charged by AutoChargeTask, once
@@ -54,8 +53,8 @@ export class DashboardService {
     // Filtering by categories brings their WHOLE branch: movements hang from
     // the concept, never from the center or the category.
     const requested = [
-      ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
-      ...categoryIds(query.category_ids),
+      ...(query.categoryId !== undefined ? [BigInt(query.categoryId)] : []),
+      ...categoryIds(query.categoryIds),
     ];
 
     const [accounts, movements] = await Promise.all([

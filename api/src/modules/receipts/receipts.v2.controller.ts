@@ -36,16 +36,13 @@ import { PageQuery } from '../../contract/v2/page.dto';
 import { paginate, type Page } from '../../contract/v2/pagination';
 import { receiptV2 } from '../../presenters/v2/receipts.presenter';
 
-/** The same cap as v1: files per upload. */
+/** Files per upload. */
 const MAX_PER_UPLOAD = 10;
 
-/** The multipart field the files travel in (v1 called it `archivos`). */
+/** The multipart field the files travel in. */
 const FILES_FIELD = 'files';
 
-/**
- * v2 of a transaction's receipts (v1 `soportes`): the same service,
- * translated at the edge. The download is the file itself, as in v1.
- */
+/** A transaction's receipts. The download is the file itself. */
 // The tag the contract was published with: the swagger plugin derives it from
 // the class name, and the web's generated client is split by tag. It goes with
 // the published ids (src/openapi/document.ts).
@@ -112,7 +109,7 @@ export class ReceiptsV2Controller {
     return this.receipts.remove(user.id, id, receiptId);
   }
 
-  /** The same headers as v1: the file opens inline, is never cached and runs nothing. */
+  /** The file opens inline, is never cached and runs nothing. */
   @Get(':id/receipts/:receiptId')
   @ApiProduces('application/pdf', 'image/jpeg', 'image/png')
   @ApiOkResponse({

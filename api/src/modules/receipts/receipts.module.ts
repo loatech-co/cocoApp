@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 
 import { createReceiptStore, RECEIPT_STORE } from './receipt-store';
-import { ReceiptsController } from './receipts.controller';
 import { ReceiptsRepository } from './receipts.repository';
 import { ReceiptsService } from './receipts.service';
 import { ReceiptsV2Controller } from './receipts.v2.controller';
@@ -9,7 +8,7 @@ import { ReceiptsV2Controller } from './receipts.v2.controller';
 /** The receipts of transactions. The binary lives outside the database and
     outside the web tree; this only holds who may see it. */
 @Module({
-  controllers: [ReceiptsController, ReceiptsV2Controller],
+  controllers: [ReceiptsV2Controller],
   providers: [
     ReceiptsService,
     ReceiptsRepository,

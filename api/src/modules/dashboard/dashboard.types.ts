@@ -1,6 +1,17 @@
-/** The dashboard as the service hands it out: the domain, in English (v1 and v2 present it). */
+/** The dashboard as the service hands it out: the domain, in English. */
 import type { BREAKDOWN_LEVEL, English, GRANULARITY, PERIODICITY } from '../../common/vocabulary';
 import type { Account } from '../accounts/accounts.service';
+
+/** What the summary is asked for: a range, and the categories or the words to narrow it to. */
+export interface DashboardFilters {
+  /** `YYYY-MM-DD`; this month when not said. */
+  from?: string | undefined;
+  to?: string | undefined;
+  categoryId?: number | undefined;
+  /** Comma-separated ids. */
+  categoryIds?: string | undefined;
+  q?: string | undefined;
+}
 
 export interface PendingPayment {
   categoryId: bigint;

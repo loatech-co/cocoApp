@@ -34,8 +34,8 @@ import type { meV2, SessionV2 } from '../../presenters/v2/auth.presenter';
 /**
  * The documented v2 shapes ARE the ones the v2 presenters hand out.
  *
- * The same check as `contract/v1/shapes.spec.ts`, for v2: what goes over the
- * wire is the domain the service returns, through `presenters/v2`. A field
+ * What goes over the wire is the domain the service returns, through
+ * `presenters/v2`. A field
  * the domain gains and this class does not document — or one v2 should not
  * show and the presenter forgot to drop — is a compile error.
  *

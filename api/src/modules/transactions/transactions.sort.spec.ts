@@ -14,7 +14,7 @@ describe('Sorting by allowlist', () => {
   });
 
   it('maps the public name to the real field of the model', () => {
-    expect(parseOrder('created_at')).toEqual([{ createdAt: 'asc' }, { id: 'asc' }]);
+    expect(parseOrder('createdAt')).toEqual([{ createdAt: 'asc' }, { id: 'asc' }]);
   });
 
   it('ignores a field that is not in the allowlist', () => {

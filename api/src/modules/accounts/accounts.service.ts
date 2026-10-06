@@ -1,11 +1,27 @@
 import { Injectable } from '@nestjs/common';
 
 import { AccountsRepository } from './accounts.repository';
-import type { CreateAccountDto, UpdateAccountDto } from './dto/account.dto';
 import { BadRequestError, ConflictError, NotFoundError } from '../../common/errors/domain-error';
 import { computeAvailableCredit, computeBalance } from '../../common/money/balance';
 import { serialize, toMoney } from '../../common/money/money';
 import type { Account as AccountRow } from '../../generated/prisma/client';
+
+/** A new account. Amounts as decimal strings. */
+export interface NewAccount {
+  name: string;
+  type: AccountRow['type'];
+  institution?: string;
+  last4?: string;
+  creditLimit?: string;
+  cutoffDay?: number;
+  paymentDay?: number;
+  openingBalance?: string;
+}
+
+/** What an edit changes: only the fields it brings. */
+export interface AccountChanges extends Partial<NewAccount> {
+  isArchived?: boolean;
+}
 
 /** An account as the service hands it out (the domain). Amounts as decimal strings. */
 export interface Account {
@@ -51,41 +67,41 @@ export class AccountsService {
     return this.present(account, movementsByAccount.get(account.id.toString()) ?? []);
   }
 
-  async create(userId: bigint, dto: CreateAccountDto): Promise<Account> {
-    this.checkCreditFields(dto.type, dto);
+  async create(userId: bigint, input: NewAccount): Promise<Account> {
+    this.checkCreditFields(input.type, input);
 
     const account = await this.repo.create(userId, {
       userId,
-      name: dto.name,
-      type: dto.type,
-      institution: dto.institution ?? null,
-      last4: dto.last4 ?? null,
-      creditLimit: dto.credit_limit ? toMoney(dto.credit_limit) : null,
-      cutoffDay: dto.cutoff_day ?? null,
-      paymentDay: dto.payment_day ?? null,
-      openingBalance: toMoney(dto.opening_balance ?? 0),
+      name: input.name,
+      type: input.type,
+      institution: input.institution ?? null,
+      last4: input.last4 ?? null,
+      creditLimit: input.creditLimit ? toMoney(input.creditLimit) : null,
+      cutoffDay: input.cutoffDay ?? null,
+      paymentDay: input.paymentDay ?? null,
+      openingBalance: toMoney(input.openingBalance ?? 0),
     });
 
     return this.present(account, []);
   }
 
-  async update(userId: bigint, id: bigint, dto: UpdateAccountDto): Promise<Account> {
+  async update(userId: bigint, id: bigint, changes: AccountChanges): Promise<Account> {
     const actual = await this.requireAccount(userId, id);
-    const resultingType = dto.type ?? actual.type;
-    this.checkCreditFields(resultingType, dto);
+    const resultingType = changes.type ?? actual.type;
+    this.checkCreditFields(resultingType, changes);
 
     await this.repo.update(userId, id, {
-      ...(dto.name !== undefined && { name: dto.name }),
-      ...(dto.type !== undefined && { type: dto.type }),
-      ...(dto.institution !== undefined && { institution: dto.institution }),
-      ...(dto.last4 !== undefined && { last4: dto.last4 }),
-      ...(dto.credit_limit !== undefined && { creditLimit: toMoney(dto.credit_limit) }),
-      ...(dto.cutoff_day !== undefined && { cutoffDay: dto.cutoff_day }),
-      ...(dto.payment_day !== undefined && { paymentDay: dto.payment_day }),
-      ...(dto.opening_balance !== undefined && {
-        openingBalance: toMoney(dto.opening_balance),
+      ...(changes.name !== undefined && { name: changes.name }),
+      ...(changes.type !== undefined && { type: changes.type }),
+      ...(changes.institution !== undefined && { institution: changes.institution }),
+      ...(changes.last4 !== undefined && { last4: changes.last4 }),
+      ...(changes.creditLimit !== undefined && { creditLimit: toMoney(changes.creditLimit) }),
+      ...(changes.cutoffDay !== undefined && { cutoffDay: changes.cutoffDay }),
+      ...(changes.paymentDay !== undefined && { paymentDay: changes.paymentDay }),
+      ...(changes.openingBalance !== undefined && {
+        openingBalance: toMoney(changes.openingBalance),
       }),
-      ...(dto.is_archived !== undefined && { isArchived: dto.is_archived }),
+      ...(changes.isArchived !== undefined && { isArchived: changes.isArchived }),
     });
 
     return this.get(userId, id);
@@ -120,15 +136,15 @@ export class AccountsService {
   /** Card fields only make sense on credit accounts. */
   private checkCreditFields(
     type: AccountRow['type'],
-    dto: Pick<UpdateAccountDto, 'credit_limit' | 'cutoff_day' | 'payment_day'>,
+    fields: Pick<AccountChanges, 'creditLimit' | 'cutoffDay' | 'paymentDay'>,
   ): void {
     if (type === 'credit') return;
 
     // `unknown`: with @IsOptional the JSON can carry a null the type does not mention.
     const creditFields: readonly (readonly [string, unknown])[] = [
-      ['credit_limit', dto.credit_limit],
-      ['cutoff_day', dto.cutoff_day],
-      ['payment_day', dto.payment_day],
+      ['creditLimit', fields.creditLimit],
+      ['cutoffDay', fields.cutoffDay],
+      ['paymentDay', fields.paymentDay],
     ];
 
     const offending = creditFields

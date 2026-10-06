@@ -18,9 +18,8 @@ function fieldErrors(errors: readonly ValidationError[], parent = ''): ErrorDeta
 /**
  * The global `ValidationPipe`, keeping WHICH field failed.
  *
- * Nest's own factory flattens the errors into sentences and drops the field;
- * v1 sends those sentences as they are, and keeps doing so (`message` is the
- * exact list the default factory builds). v2 answers with `errors[]`, each
+ * Nest's own factory flattens the errors into sentences and drops the field
+ * (`message` is still that exact list). The API answers with `errors[]`, each
  * pointing at its field, from `fields`.
  */
 export class FieldValidationPipe extends ValidationPipe {

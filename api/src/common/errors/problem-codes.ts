@@ -1,9 +1,9 @@
 /**
- * The stable codes of the v2 errors (RFC 9457, `application/problem+json`).
+ * The stable codes of the API errors (RFC 9457, `application/problem+json`).
  *
- * v1 told its errors apart by the HTTP status and a Spanish sentence, so a
- * client that wanted to react to one rule ("the splits do not add up") had to
- * compare text. v2 sends a `code` per rule: English, snake_case, and never
+ * The retired v1 told its errors apart by the HTTP status and a Spanish
+ * sentence, so a client that wanted to react to one rule ("the splits do not
+ * add up") had to compare text. v2 sends a `code` per rule: English, snake_case, and never
  * renamed once published (iOS and the web switch on it). The sentence for the
  * person stays in `detail`, in Spanish, and may change freely.
  *

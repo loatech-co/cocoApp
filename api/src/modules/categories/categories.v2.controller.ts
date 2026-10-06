@@ -31,6 +31,7 @@ import {
   UpdateCategoryInput,
 } from './dto/v2/categories.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { defined, type Draft } from '../../common/defined';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import {
@@ -47,7 +48,6 @@ import {
   ApiDataV2,
 } from '../../contract/v2/openapi.decorators';
 import { paginate, type Page } from '../../contract/v2/pagination';
-import { defined, type V1Draft } from '../../contract/v2/v1-input';
 import {
   categoryMergeV2,
   categoryNodeV2,
@@ -60,7 +60,7 @@ type SharedFields = Omit<CategoryChanges, 'name' | 'kind' | 'parentId' | 'isArch
 
 /** The fields created and edited categories share. */
 function fieldsOf(input: CreateCategoryInput | UpdateCategoryInput): SharedFields {
-  return defined<V1Draft<SharedFields>>({
+  return defined<Draft<SharedFields>>({
     color: input.color,
     icon: input.icon,
     sortOrder: input.sortOrder,
@@ -79,7 +79,7 @@ function fieldsOf(input: CreateCategoryInput | UpdateCategoryInput): SharedField
 function newCategoryOf(input: CreateCategoryInput): NewCategory {
   return {
     ...fieldsOf(input),
-    ...defined<V1Draft<NewCategory>>({
+    ...defined<Draft<NewCategory>>({
       parentId: input.parentId === undefined ? undefined : BigInt(input.parentId),
     }),
     name: input.name,
@@ -90,7 +90,7 @@ function newCategoryOf(input: CreateCategoryInput): NewCategory {
 function changesOf(input: UpdateCategoryInput): CategoryChanges {
   return {
     ...fieldsOf(input),
-    ...defined<V1Draft<CategoryChanges>>({
+    ...defined<Draft<CategoryChanges>>({
       name: input.name,
       kind: input.kind,
       parentId:

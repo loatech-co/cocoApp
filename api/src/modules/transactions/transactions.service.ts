@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import type {
-  CreateTransactionDto,
-  CreateTransferDto,
-  ListTransactionsQueryDto,
-  SplitDto,
-  UpdateTransactionDto,
-} from './dto/transaction.dto';
 import type { NewTransaction } from './ledger.types';
 import {
   transactionFromRow,
+  type SplitRequest,
   type Transaction,
+  type TransactionEdit,
+  type TransactionFilters,
   type TransactionHistory,
   type TransactionPage,
+  type TransactionRequest,
   type Transfer,
+  type TransferRequest,
 } from './transactions.domain';
 import {
   TransactionsRepository,
@@ -61,8 +59,8 @@ export class TransactionsService {
 
   // ── Lectura ────────────────────────────────────────────────────────────────
 
-  async list(userId: bigint, query: ListTransactionsQueryDto): Promise<TransactionPage> {
-    const { page, perPage, skip, take } = parsePagination(query.page, query.per_page);
+  async list(userId: bigint, query: TransactionFilters): Promise<TransactionPage> {
+    const { page, perPage, skip, take } = parsePagination(query.page, query.perPage);
     const { rows, total, sumOf } = await this.repository.findPage(userId, query, {
       skip,
       take,
@@ -97,7 +95,7 @@ export class TransactionsService {
 
   // ── Escritura ──────────────────────────────────────────────────────────────
 
-  async create(userId: bigint, dto: CreateTransactionDto): Promise<Transaction> {
+  async create(userId: bigint, dto: TransactionRequest): Promise<Transaction> {
     const draft = await this.prepareCreate(userId, dto);
     const created = await this.repository.createWithDetails(draft.data, draft.splits, draft.tagIds);
     return transactionFromRow(created);
@@ -107,10 +105,10 @@ export class TransactionsService {
    * Validates a new movement and builds what gets written, without writing.
    * The capture uses it to write under its own lock (`LedgerService`).
    */
-  async prepareCreate(userId: bigint, dto: CreateTransactionDto): Promise<NewTransaction> {
+  async prepareCreate(userId: bigint, dto: TransactionRequest): Promise<NewTransaction> {
     // Without an account is a valid case, not an error: tracking them is optional.
-    const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : null;
-    const categoryId = dto.category_id !== undefined ? BigInt(dto.category_id) : null;
+    const accountId = dto.accountId !== undefined ? BigInt(dto.accountId) : null;
+    const categoryId = dto.categoryId !== undefined ? BigInt(dto.categoryId) : null;
     const amount = toMoney(dto.amount);
     const type = dto.type ?? 'expense';
 
@@ -132,12 +130,12 @@ export class TransactionsService {
         description: dto.description ?? null,
         merchant: dto.merchant ?? null,
         notes: dto.notes ?? null,
-        externalRef: dto.external_ref ?? null,
+        externalRef: dto.externalRef ?? null,
         status: dto.status ?? 'cleared',
         source: dto.source ?? 'web',
-        rawText: dto.raw_text ?? null,
-        capturedAt: dto.captured_at ? new Date(dto.captured_at) : null,
-        needsReview: dto.por_revisar ?? false,
+        rawText: dto.rawText ?? null,
+        capturedAt: dto.capturedAt ? new Date(dto.capturedAt) : null,
+        needsReview: dto.needsReview ?? false,
       },
       splits,
       tagIds,
@@ -153,9 +151,9 @@ export class TransactionsService {
    * It counts as neither expense nor income: it only moves balance between
    * the user's own pockets.
    */
-  async createTransfer(userId: bigint, dto: CreateTransferDto): Promise<Transfer> {
-    const fromAccountId = BigInt(dto.from_account_id);
-    const toAccountId = BigInt(dto.to_account_id);
+  async createTransfer(userId: bigint, dto: TransferRequest): Promise<Transfer> {
+    const fromAccountId = BigInt(dto.fromAccountId);
+    const toAccountId = BigInt(dto.toAccountId);
 
     if (fromAccountId === toAccountId) {
       throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.', {
@@ -188,16 +186,16 @@ export class TransactionsService {
     return { transferGroupId: groupId, legs: legs.map(transactionFromRow) };
   }
 
-  async update(userId: bigint, id: bigint, dto: UpdateTransactionDto): Promise<Transaction> {
+  async update(userId: bigint, id: bigint, dto: TransactionEdit): Promise<Transaction> {
     const actual = await this.requireTransaction(userId, id);
 
-    const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : actual.accountId;
-    if (accountId !== null && dto.account_id !== undefined) {
+    const accountId = dto.accountId !== undefined ? BigInt(dto.accountId) : actual.accountId;
+    if (accountId !== null && dto.accountId !== undefined) {
       await this.requireOwnAccount(userId, accountId);
     }
 
-    if (dto.category_id !== undefined && dto.category_id !== null) {
-      await this.requireOwnCategory(userId, BigInt(dto.category_id));
+    if (dto.categoryId !== undefined && dto.categoryId !== null) {
+      await this.requireOwnCategory(userId, BigInt(dto.categoryId));
     }
 
     const amount = dto.amount !== undefined ? toMoney(dto.amount) : toMoney(actual.amount);
@@ -256,18 +254,18 @@ export class TransactionsService {
   private async partnerLeg(
     userId: bigint,
     actual: FullTransaction,
-    dto: UpdateTransactionDto,
+    dto: TransactionEdit,
     changes: TransactionChanges,
   ): Promise<TransferPartner | null> {
     if (actual.transferGroupId === null) return null;
     requireStillTransfer(dto);
-    if (dto.account_id !== undefined) {
+    if (dto.accountId !== undefined) {
       const partnerAccount = await this.repository.partnerAccount(
         userId,
         actual.transferGroupId,
         actual.id,
       );
-      if (partnerAccount !== null && partnerAccount === BigInt(dto.account_id)) {
+      if (partnerAccount !== null && partnerAccount === BigInt(dto.accountId)) {
         throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.', {
           code: 'transfer_same_account',
         });
@@ -288,7 +286,7 @@ export class TransactionsService {
   private async prepareSplits(
     userId: bigint,
     headerAmount: Money,
-    splits: readonly SplitDto[] | undefined,
+    splits: readonly SplitRequest[] | undefined,
   ): Promise<SplitToWrite[]> {
     const listos = splitsToWrite(headerAmount, splits);
     const ids = listos.flatMap((split) => (split.categoryId !== null ? [split.categoryId] : []));

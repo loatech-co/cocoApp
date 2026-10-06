@@ -14,7 +14,7 @@ describe('The receipts contract', () => {
     join(__dirname, '../../../../frontend/src/shared/lib/native-contract.ts'),
     'utf8',
   );
-  const controller = readFileSync(join(__dirname, 'receipts.controller.ts'), 'utf8');
+  const controller = readFileSync(join(__dirname, 'receipts.v2.controller.ts'), 'utf8');
   const optimization = readFileSync(join(__dirname, 'receipts.optimization.ts'), 'utf8');
   const storage = readFileSync(join(__dirname, 'receipts.storage.ts'), 'utf8');
   const shrink = readFileSync(
@@ -33,10 +33,11 @@ describe('The receipts contract', () => {
   };
 
   it("the field and the per-upload maximum are the controller's", () => {
-    expect(controller).toContain("FilesInterceptor('archivos', MAX_FILES_PER_UPLOAD");
-    expect(contract).toContain("campo: 'archivos'");
+    expect(controller).toContain("const FILES_FIELD = 'files';");
+    expect(controller).toContain('FilesInterceptor(FILES_FIELD, MAX_PER_UPLOAD');
+    expect(contract).toContain("campo: 'files'");
     expect(numberIn(contract, /maximo_por_subida:\s*(\d+)/)).toBe(
-      numberIn(controller, /MAX_FILES_PER_UPLOAD = ([^;]+);/),
+      numberIn(controller, /MAX_PER_UPLOAD = ([^;]+);/),
     );
   });
 

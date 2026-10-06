@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 
 import { AccountsService, type Account as AccountBody } from './accounts.service';
-import type { CreateAccountDto, UpdateAccountDto } from './dto/account.dto';
 import { CreateAccountInput, ListAccountsQuery, UpdateAccountInput } from './dto/v2/accounts.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
@@ -25,39 +24,9 @@ import {
   ApiDataV2,
 } from '../../contract/v2/openapi.decorators';
 import { paginate, type Page } from '../../contract/v2/pagination';
-import { defined, type V1Draft } from '../../contract/v2/v1-input';
 import { accountV2 } from '../../presenters/v2/accounts.presenter';
 
-function createAccount(input: CreateAccountInput): CreateAccountDto {
-  return {
-    ...defined<V1Draft<CreateAccountDto>>({
-      institution: input.institution,
-      last4: input.last4,
-      credit_limit: input.creditLimit,
-      cutoff_day: input.cutoffDay,
-      payment_day: input.paymentDay,
-      opening_balance: input.openingBalance,
-    }),
-    name: input.name,
-    type: input.type,
-  };
-}
-
-function updateAccount(input: UpdateAccountInput): UpdateAccountDto {
-  return defined<V1Draft<UpdateAccountDto>>({
-    name: input.name,
-    type: input.type,
-    institution: input.institution,
-    last4: input.last4,
-    credit_limit: input.creditLimit,
-    cutoff_day: input.cutoffDay,
-    payment_day: input.paymentDay,
-    opening_balance: input.openingBalance,
-    is_archived: input.isArchived,
-  });
-}
-
-/** v2 of the accounts: the same service, its own presenter. */
+/** The accounts. */
 @ApiAuthenticated()
 @Controller({ path: 'accounts', version: '2' })
 export class AccountsV2Controller {
@@ -91,7 +60,7 @@ export class AccountsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateAccountInput,
   ): Promise<AccountBody> {
-    return accountV2(await this.accounts.create(user.id, createAccount(input)));
+    return accountV2(await this.accounts.create(user.id, input));
   }
 
   @Patch(':id')
@@ -102,7 +71,7 @@ export class AccountsV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpdateAccountInput,
   ): Promise<AccountBody> {
-    return accountV2(await this.accounts.update(user.id, id, updateAccount(input)));
+    return accountV2(await this.accounts.update(user.id, id, input));
   }
 
   @Delete(':id')

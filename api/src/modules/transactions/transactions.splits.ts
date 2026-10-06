@@ -1,4 +1,4 @@
-import type { SplitDto } from './dto/transaction.dto';
+import type { SplitRequest } from './transactions.domain';
 import type { SplitToWrite } from './transactions.repository';
 import { ValidationError } from '../../common/errors/domain-error';
 import { serialize, toMoney, type Money } from '../../common/money/money';
@@ -7,7 +7,7 @@ import { checkSplitsReconcile } from '../../common/money/splits';
 /** Checks that the splits reconcile and normalizes them. Throws 422 if they do not. */
 export function splitsToWrite(
   headerAmount: Money,
-  splits: readonly SplitDto[] | undefined,
+  splits: readonly SplitRequest[] | undefined,
 ): SplitToWrite[] {
   if (!splits || splits.length === 0) return [];
 
@@ -22,7 +22,7 @@ export function splitsToWrite(
   }
 
   return splits.map((split, index) => ({
-    categoryId: split.category_id !== undefined ? BigInt(split.category_id) : null,
+    categoryId: split.categoryId !== undefined ? BigInt(split.categoryId) : null,
     amount: amounts[index] ?? toMoney(split.amount), // same value: amounts[i] is this one
     note: split.note ?? null,
   }));

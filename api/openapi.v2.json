@@ -4383,7 +4383,7 @@
         "tags": ["SoportesV2"]
       },
       "get": {
-        "description": "The same headers as v1: the file opens inline, is never cached and runs nothing.",
+        "description": "The file opens inline, is never cached and runs nothing.",
         "operationId": "Soportes_download",
         "parameters": [
           {
@@ -5177,7 +5177,7 @@
   },
   "info": {
     "title": "Coco API",
-    "description": "Contract v2, served under `/api/v2`: the v1 API in English and camelCase, with every\nlist paginated as `{ data, meta: { page, perPage, total } }`.\n\nEvery successful JSON response is wrapped as `{ data, meta }`. Every error is\n`application/problem+json` (RFC 9457): `{ type, title, status, detail, code, errors? }`.\nSwitch on `code`: stable, in English, one per business rule. `errors` lists the fields\nthat failed.\nMessages meant for the user are in Spanish.\n\nIdentifiers are integers (int64) and money travels as a decimal string.",
+    "description": "Contract v2, served under `/api/v2`: English and camelCase, with every list paginated\nas `{ data, meta: { page, perPage, total } }`. v1 was retired on 2026-10-06 (step 7.10).\n\nEvery successful JSON response is wrapped as `{ data, meta }`. Every error is\n`application/problem+json` (RFC 9457): `{ type, title, status, detail, code, errors? }`.\nSwitch on `code`: stable, in English, one per business rule. `errors` lists the fields\nthat failed.\nMessages meant for the user are in Spanish.\n\nIdentifiers are integers (int64) and money travels as a decimal string.",
     "version": "2",
     "contact": {}
   },
@@ -5192,57 +5192,6 @@
       }
     },
     "schemas": {
-      "RegisterDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "maxLength": 255,
-            "format": "email"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 12,
-            "maxLength": 128
-          },
-          "displayName": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 255
-          }
-        },
-        "required": ["email", "password", "displayName"]
-      },
-      "LoginDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "maxLength": 255,
-            "format": "email"
-          },
-          "password": {
-            "type": "string",
-            "maxLength": 128
-          }
-        },
-        "required": ["email", "password"]
-      },
-      "ChangePasswordDto": {
-        "type": "object",
-        "properties": {
-          "currentPassword": {
-            "type": "string",
-            "maxLength": 128
-          },
-          "newPassword": {
-            "type": "string",
-            "minLength": 12,
-            "maxLength": 128
-          }
-        },
-        "required": ["currentPassword", "newPassword"]
-      },
       "ProblemFieldError": {
         "type": "object",
         "properties": {
@@ -5372,6 +5321,27 @@
         },
         "required": ["pendingApproval", "message"]
       },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          }
+        },
+        "required": ["email", "password", "displayName"]
+      },
       "Profile": {
         "type": "object",
         "properties": {
@@ -5420,6 +5390,21 @@
         },
         "required": ["accessToken", "expiresIn", "user"]
       },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "required": ["email", "password"]
+      },
       "RefreshInput": {
         "type": "object",
         "properties": {
@@ -5463,6 +5448,21 @@
           }
         },
         "required": ["role", "status", "features", "id", "email", "displayName", "createdAt"]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128
+          }
+        },
+        "required": ["currentPassword", "newPassword"]
       },
       "CategoryNode": {
         "type": "object",
@@ -5690,8 +5690,8 @@
             "maxLength": 255
           },
           "kind": {
-            "enum": ["expense", "income", "transfer"],
-            "type": "string"
+            "type": "string",
+            "enum": ["expense", "income", "transfer"]
           },
           "parentId": {
             "type": "number",
@@ -5717,9 +5717,9 @@
             "description": "Whether the cost center refuses reclassification from the transactions table."
           },
           "periodicity": {
+            "type": "string",
             "nullable": true,
-            "enum": ["monthly", "bimonthly", "quarterly", "semiannual", "annual"],
-            "type": "string"
+            "enum": ["monthly", "bimonthly", "quarterly", "semiannual", "annual"]
           },
           "paymentDay": {
             "type": "number",
@@ -5828,8 +5828,8 @@
             "maxLength": 255
           },
           "kind": {
-            "enum": ["expense", "income", "transfer"],
-            "type": "string"
+            "type": "string",
+            "enum": ["expense", "income", "transfer"]
           },
           "parentId": {
             "type": "number",
@@ -5859,9 +5859,9 @@
             "description": "Whether the cost center refuses reclassification from the transactions table."
           },
           "periodicity": {
+            "type": "string",
             "nullable": true,
-            "enum": ["monthly", "bimonthly", "quarterly", "semiannual", "annual"],
-            "type": "string"
+            "enum": ["monthly", "bimonthly", "quarterly", "semiannual", "annual"]
           },
           "paymentDay": {
             "type": "number",
@@ -5948,8 +5948,8 @@
         "type": "object",
         "properties": {
           "role": {
-            "enum": ["admin", "user"],
-            "type": "string"
+            "type": "string",
+            "enum": ["admin", "user"]
           }
         },
         "required": ["role"]
@@ -6107,8 +6107,8 @@
             "maxLength": 255
           },
           "type": {
-            "enum": ["cash", "debit", "credit", "bank", "savings", "other"],
-            "type": "string"
+            "type": "string",
+            "enum": ["cash", "debit", "credit", "bank", "savings", "other"]
           },
           "institution": {
             "type": "string",
@@ -6146,8 +6146,8 @@
             "maxLength": 255
           },
           "type": {
-            "enum": ["cash", "debit", "credit", "bank", "savings", "other"],
-            "type": "string"
+            "type": "string",
+            "enum": ["cash", "debit", "credit", "bank", "savings", "other"]
           },
           "institution": {
             "type": "string",
@@ -6178,20 +6178,6 @@
           }
         }
       },
-      "UpsertTagDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 255
-          },
-          "color": {
-            "type": "string"
-          }
-        },
-        "required": ["name"]
-      },
       "Tag": {
         "type": "object",
         "properties": {
@@ -6207,6 +6193,20 @@
           }
         },
         "required": ["id", "name", "color"]
+      },
+      "UpsertTagDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "color": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
       },
       "Split": {
         "type": "object",
@@ -6496,17 +6496,17 @@
             "description": "Someone has to look at it: an unsure classification or a possible duplicate."
           },
           "type": {
-            "enum": ["expense", "income", "transfer"],
-            "type": "string"
+            "type": "string",
+            "enum": ["expense", "income", "transfer"]
           },
           "status": {
-            "enum": ["cleared", "pending"],
-            "type": "string"
+            "type": "string",
+            "enum": ["cleared", "pending"]
           },
           "source": {
+            "type": "string",
             "description": "Where it comes from: the web sends `web`, the phone app one of its own.",
-            "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"],
-            "type": "string"
+            "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"]
           },
           "merchant": {
             "type": "string",
@@ -6574,17 +6574,17 @@
             "description": "Someone has to look at it: an unsure classification or a possible duplicate."
           },
           "type": {
-            "enum": ["expense", "income", "transfer"],
-            "type": "string"
+            "type": "string",
+            "enum": ["expense", "income", "transfer"]
           },
           "status": {
-            "enum": ["cleared", "pending"],
-            "type": "string"
+            "type": "string",
+            "enum": ["cleared", "pending"]
           },
           "source": {
+            "type": "string",
             "description": "Where it comes from: the web sends `web`, the phone app one of its own.",
-            "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"],
-            "type": "string"
+            "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"]
           },
           "merchant": {
             "type": "string",
@@ -6820,8 +6820,8 @@
             "pattern": "^\\d{4}-\\d{2}$"
           },
           "source": {
-            "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"],
-            "type": "string"
+            "type": "string",
+            "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"]
           },
           "externalRef": {
             "type": "string",

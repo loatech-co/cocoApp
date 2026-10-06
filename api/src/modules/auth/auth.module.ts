@@ -1,6 +1,5 @@
 import { Global, Module } from '@nestjs/common';
 
-import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AuthV2Controller } from './auth.v2.controller';
 import { PasswordService } from './password.service';
@@ -26,7 +25,7 @@ import { FlagsModule } from '../flags/flags.module';
   // The registration seeds the new account's categories (CategoriesService);
   // /auth/me lists the user's active feature flags (FlagsService).
   imports: [CategoriesModule, FlagsModule],
-  controllers: [AuthController, AuthV2Controller],
+  controllers: [AuthV2Controller],
   providers: [
     AuthService,
     SupabaseAuthService,

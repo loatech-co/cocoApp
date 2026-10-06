@@ -16,9 +16,10 @@ import {
   categoryIdToSave,
   notesOf,
   type Capture,
+  type CaptureRequest,
   type Interpretation,
+  type TextToRead,
 } from './interpretation.domain';
-import type { CaptureBodyDto, InterpretBodyDto } from './interpretation.dto';
 import { nest } from '../../common/categories/categories.tree';
 import { DuplicateError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { CategoryLookupService } from '../categories/category-lookup.service';
@@ -48,19 +49,19 @@ export class InterpretationService {
     private readonly transactions: TransactionsService,
   ) {}
 
-  async interpret(userId: bigint, dto: InterpretBodyDto): Promise<Interpretation> {
+  async interpret(userId: bigint, dto: TextToRead): Promise<Interpretation> {
     const interpreted = await this.read(userId, dto);
     return interpretationOf(interpreted);
   }
 
-  async capture(userId: bigint, dto: CaptureBodyDto): Promise<Capture> {
+  async capture(userId: bigint, dto: CaptureRequest): Promise<Capture> {
     /*
       ── Idempotency, before anything else ───────────────────────────────────
       A client that retries sends the same `external_ref`. If it is already
       there, what exists is returned and nothing is interpreted or created:
       the answer is the same one it got —or never got— the first time.
     */
-    const existingId = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
+    const existingId = await this.ledger.findIdByExternalRef(userId, dto.externalRef);
     if (existingId !== null) return this.alreadyRecorded(userId, existingId, dto, true, false);
 
     /*
@@ -71,11 +72,11 @@ export class InterpretationService {
       id answers 422 without spending a read of the tree.
     */
     const chosen =
-      dto.category_id === undefined
+      dto.categoryId === undefined
         ? null
-        : await this.chosenClassification(userId, BigInt(dto.category_id));
+        : await this.chosenClassification(userId, BigInt(dto.categoryId));
     const interpreted = await this.read(userId, dto, chosen);
-    const capturedAt = dto.captured_at ? new Date(dto.captured_at) : new Date();
+    const capturedAt = dto.capturedAt ? new Date(dto.capturedAt) : new Date();
 
     const incoming: NewCapture = {
       source: dto.source,
@@ -87,7 +88,7 @@ export class InterpretationService {
       // recording it at zero for somebody to fill in the figure.
       amount: interpreted.amount ?? '0',
       capturedAt,
-      rawText: dto.texto ?? null,
+      rawText: dto.text ?? null,
       merchant: interpreted.merchant,
       description: interpreted.description,
     };
@@ -105,7 +106,7 @@ export class InterpretationService {
   */
   private async record(
     userId: bigint,
-    dto: CaptureBodyDto,
+    dto: CaptureRequest,
     incoming: NewCapture,
     interpreted: Interpreted,
   ): Promise<Capture> {
@@ -140,7 +141,7 @@ export class InterpretationService {
         start.
       */
       if (!(error instanceof DuplicateError)) throw error;
-      const existingId = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
+      const existingId = await this.ledger.findIdByExternalRef(userId, dto.externalRef);
       // Parity with the former findFirstOrThrow: a vanished row is a 404.
       if (existingId === null) throw new NotFoundError('El recurso no existe.');
       return this.alreadyRecorded(userId, existingId, dto, true, false, interpreted.classification);
@@ -151,11 +152,11 @@ export class InterpretationService {
 
   private async read(
     userId: bigint,
-    dto: InterpretBodyDto,
+    dto: TextToRead,
     chosen: InterpretedClassification | null = null,
   ): Promise<Interpreted> {
-    const amount = dto.monto?.replace(',', '.');
-    if (!dto.texto?.trim() && !dto.comercio?.trim()) {
+    const amount = dto.amount?.replace(',', '.');
+    if (!dto.text?.trim() && !dto.merchant?.trim()) {
       /*
         An expense typed by hand on the phone —concept and amount, nothing
         else— has nothing to interpret: there is no text to get a merchant or a
@@ -167,7 +168,7 @@ export class InterpretationService {
       if (chosen && amount !== undefined) {
         return {
           amount,
-          date: dto.fecha ?? null,
+          date: dto.date ?? null,
           merchant: null,
           description: null,
           classification: chosen,
@@ -184,17 +185,17 @@ export class InterpretationService {
       // The history is asked with the closest thing to a description: the
       // merchant if it came; otherwise the text. A whole SMS carries a lot of
       // bank noise and the history shows it in its confidence, which is right.
-      this.categorization.suggestFor(userId, dto.comercio?.trim() || dto.texto?.trim() || ''),
+      this.categorization.suggestFor(userId, dto.merchant?.trim() || dto.text?.trim() || ''),
     ]);
 
     const parsed = interpret(
       {
-        text: dto.texto,
-        merchant: dto.comercio,
+        text: dto.text,
+        merchant: dto.merchant,
         amount,
-        date: dto.fecha,
-        fileName: dto.nombre_de_archivo,
-        period: dto.periodo,
+        date: dto.date,
+        fileName: dto.fileName,
+        period: dto.period,
       },
       {
         tree,
@@ -280,7 +281,7 @@ export class InterpretationService {
   private async alreadyRecorded(
     userId: bigint,
     id: bigint,
-    dto: CaptureBodyDto,
+    dto: CaptureRequest,
     isDuplicate: boolean,
     isMerged: boolean,
     classification?: InterpretedClassification,
@@ -296,7 +297,7 @@ export class InterpretationService {
         categoryId: null,
         name: null,
         candidates: [],
-        reason: `Ya estaba registrado con la referencia ${dto.external_ref}.`,
+        reason: `Ya estaba registrado con la referencia ${dto.externalRef}.`,
       };
     return {
       transaction,
@@ -310,12 +311,12 @@ export class InterpretationService {
   }
 }
 
-/** What `TransactionsService` needs to create, without importing its DTO (modules talk through services). */
+/** What `TransactionsService` needs to create (modules talk through services). */
 type NewTransaction = Parameters<TransactionsService['create']>[1];
 
 /** What a capture writes, as `TransactionsService` asks for it. */
 function newTransactionOf(
-  dto: CaptureBodyDto,
+  dto: CaptureRequest,
   incoming: NewCapture,
   interpreted: Interpreted,
 ): NewTransaction {
@@ -323,15 +324,15 @@ function newTransactionOf(
     date: incoming.date,
     amount: incoming.amount,
     type: 'expense',
-    category_id: categoryIdToSave(interpreted.classification),
+    categoryId: categoryIdToSave(interpreted.classification),
     description: interpreted.description ?? undefined,
     merchant: interpreted.merchant ?? undefined,
-    notes: notesOf(dto.nota, interpreted.amount),
-    external_ref: dto.external_ref,
+    notes: notesOf(dto.note, interpreted.amount),
+    externalRef: dto.externalRef,
     source: dto.source,
-    raw_text: dto.texto ?? null,
-    captured_at: incoming.capturedAt.toISOString(),
-    por_revisar: interpreted.needsReview,
+    rawText: dto.text ?? null,
+    capturedAt: incoming.capturedAt.toISOString(),
+    needsReview: interpreted.needsReview,
   };
 }
 

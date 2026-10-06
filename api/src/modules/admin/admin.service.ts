@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import type { ListUsersQueryDto } from './admin.dto';
 import { AuditService } from '../../common/audit/audit.service';
 import { BadRequestError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
-import type { Prisma, UserRole } from '../../generated/prisma/client';
+import type { Prisma, UserRole, UserStatus } from '../../generated/prisma/client';
 import { profileOf, AuthService, type Profile } from '../auth/auth.service';
 import { PasswordService } from '../auth/password.service';
 import { SupabaseAuthService } from '../auth/supabase-auth.service';
@@ -12,6 +11,17 @@ import { UsersService } from '../auth/users.service';
 interface RequestContext {
   ip?: string | null;
   userAgent?: string | null;
+}
+
+/** Which page of a list the database pages; the first, of 50, when not said. */
+export interface PageRequest {
+  page?: number | undefined;
+  perPage?: number | undefined;
+}
+
+/** Which users to list. */
+export interface UserFilters extends PageRequest {
+  status?: UserStatus | undefined;
 }
 
 /** A page of a list the database pages: the domain, before any version names it. */
@@ -23,7 +33,7 @@ interface Paged<T> {
 export type UserPage = Paged<Profile>;
 
 /** One entry of the audit log, as the service hands it out. */
-export interface AuditEntry {
+interface AuditEntry {
   id: bigint;
   action: string;
   entity: string;
@@ -47,9 +57,9 @@ export class AdminService {
     private readonly audit: AuditService,
   ) {}
 
-  async listUsers(filters: ListUsersQueryDto): Promise<UserPage> {
+  async listUsers(filters: UserFilters): Promise<UserPage> {
     const page = filters.page ?? 1;
-    const perPage = filters.per_page ?? 50;
+    const perPage = filters.perPage ?? 50;
     const { users, total } = await this.users.page(filters.status, (page - 1) * perPage, perPage);
 
     return {
@@ -195,9 +205,9 @@ export class AdminService {
   }
 
   /** The query arrives as URL text: hence the `Number`. */
-  async auditLog(adminId: bigint, query: { page?: string; per_page?: string }): Promise<AuditPage> {
-    const page = query.page ? Number(query.page) : 1;
-    const perPage = query.per_page ? Number(query.per_page) : 50;
+  async auditLog(adminId: bigint, request: PageRequest): Promise<AuditPage> {
+    const page = request.page ?? 1;
+    const perPage = request.perPage ?? 50;
 
     const { entries, total } = await this.audit.page(adminId, (page - 1) * perPage, perPage);
 

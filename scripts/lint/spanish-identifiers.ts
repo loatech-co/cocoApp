@@ -98,7 +98,6 @@ const IGNORED: { prefix: string; why: string }[] = [
     prefix: 'api/prisma/archived-mysql-migrations/',
     why: 'applied names of the MySQL era, kept as they were (7.2-c)',
   },
-  { prefix: 'api/src/contract/v2/to-v2.ts', why: 'its keys ARE the v1 contract; it goes in 7.10' },
   { prefix: 'frontend/src/locales/', why: 'user-visible text (7.3)' },
   { prefix: 'frontend/src/shared/api/generated/', why: 'written by Orval from openapi.v2.json' },
   { prefix: 'api/src/generated/', why: 'written by prisma generate' },

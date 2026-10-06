@@ -9,7 +9,7 @@
     "dev": "nest start --watch",
     "start": "nest start",
     "start:prod": "node dist/main.js",
-    "openapi": "nest build && node dist/openapi/generate.js && prettier --write openapi.v1.json openapi.v2.json",
+    "openapi": "nest build && node dist/openapi/generate.js && prettier --write openapi.v2.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings 0",
     "test": "jest",

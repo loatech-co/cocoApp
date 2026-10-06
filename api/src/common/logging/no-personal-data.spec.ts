@@ -20,7 +20,7 @@ const EMAIL = 'ana.privada@correo.test';
 const AMOUNT = '987654.32';
 const DESCRIPTION = 'Consulta-Psicologia-Privada';
 const QUERY = `q=${encodeURIComponent(EMAIL)}&amount=${AMOUNT}&description=${DESCRIPTION}`;
-const PATH = '/api/v1/transactions';
+const PATH = '/api/v2/transactions';
 
 const FORBIDDEN = [EMAIL, encodeURIComponent(EMAIL), AMOUNT, DESCRIPTION, QUERY, '?'];
 
@@ -65,7 +65,11 @@ describe('Logs carry no personal data and no amounts', () => {
     ['a 5xx, with its stack', new InternalError('Algo falló.')],
     ['an unknown throw', new Error('boom')],
   ])('the exceptions filter, on %s', (_label, exception) => {
-    const response = { status: () => response, json: () => undefined };
+    const response = {
+      status: () => response,
+      setHeader: () => response,
+      json: () => undefined,
+    };
     const host = {
       switchToHttp: () => ({ getResponse: () => response, getRequest: () => request }),
     } as unknown as ArgumentsHost;

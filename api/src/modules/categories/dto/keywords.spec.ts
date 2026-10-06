@@ -5,8 +5,8 @@ import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
-import { MAX_KEYWORDS, UpdateCategoryDto } from './category.dto';
 import { mergeKeywords } from '../keywords';
+import { MAX_KEYWORDS, UpdateCategoryInput } from './v2/categories.dto';
 
 /**
  * Keywords, at the door.
@@ -15,18 +15,18 @@ import { mergeKeywords } from '../keywords';
  * screen is not the only caller of this API. What is checked here is what
  * happens when something arrives that the screen would not have sent.
  */
-async function asReceived(words: unknown): Promise<{ dto: UpdateCategoryDto; errors: string[] }> {
-  const dto = plainToInstance(UpdateCategoryDto, { palabras_clave: words });
+async function asReceived(words: unknown): Promise<{ dto: UpdateCategoryInput; errors: string[] }> {
+  const dto = plainToInstance(UpdateCategoryInput, { keywords: words });
   const errors = await validate(dto);
   return { dto, errors: errors.flatMap((e) => Object.values(e.constraints ?? {})) };
 }
 
-describe('palabras_clave', () => {
+describe('keywords', () => {
   it('trims, squeezes the spaces and drops the empty ones', async () => {
     const { dto, errors } = await asReceived(['  Celsia ', '', '   ', 'Gases  de  Occidente']);
 
     expect(errors).toEqual([]);
-    expect(dto.palabras_clave).toEqual(['Celsia', 'Gases de Occidente']);
+    expect(dto.keywords).toEqual(['Celsia', 'Gases de Occidente']);
   });
 
   it('drops repeats regardless of accents and case', async () => {
@@ -34,16 +34,16 @@ describe('palabras_clave', () => {
     // match.
     const { dto } = await asReceived(['Energía', 'ENERGIA', 'energia ']);
 
-    expect(dto.palabras_clave).toEqual(['Energía']);
+    expect(dto.keywords).toEqual(['Energía']);
   });
 
   it('an empty list deletes them all, and is not the same as sending nothing', async () => {
     const empty = await asReceived([]);
     expect(empty.errors).toEqual([]);
-    expect(empty.dto.palabras_clave).toEqual([]);
+    expect(empty.dto.keywords).toEqual([]);
 
-    const withoutField = plainToInstance(UpdateCategoryDto, {});
-    expect(withoutField.palabras_clave).toBeUndefined();
+    const withoutField = plainToInstance(UpdateCategoryInput, {});
+    expect(withoutField.keywords).toBeUndefined();
   });
 
   it('rejects what is not a list of strings', async () => {
@@ -59,7 +59,7 @@ describe('palabras_clave', () => {
   });
 });
 
-describe('unir', () => {
+describe('mergeKeywords', () => {
   it('merges two lists without repeats, keeping the order they came in', () => {
     // It is what happens when merging two concepts: the kept one's go first
     // and the removed one's are appended. The form has to keep showing the

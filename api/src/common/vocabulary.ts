@@ -3,10 +3,9 @@
  * domain speaks (English), for every closed set of values that crosses the
  * service boundary.
  *
- * The services hand out the English word; v1 puts the Spanish one back
- * (`presenters/v1`), and the v2 inputs are turned into the Spanish one for the
- * services that still take it (`toV1Value`). One table per set, used in both
- * directions, so the two can never disagree.
+ * The services and the wire speak the English word; the Spanish one is what
+ * the database stores. One table per set, used in both directions, so the two
+ * can never disagree.
  */
 
 export const PERIODICITY = {
@@ -16,14 +15,6 @@ export const PERIODICITY = {
   semestral: 'semiannual',
   anual: 'annual',
 } as const;
-
-/**
- * v1's periodicities, the database's values. The Prisma client speaks the
- * English ones and maps them to these (`@map`, step 7.2-c), so the v1 inputs
- * validate against this list and turn into English before they reach it.
- */
-export const SPANISH_PERIODICITIES = Object.keys(PERIODICITY) as SpanishPeriodicity[];
-export type SpanishPeriodicity = keyof typeof PERIODICITY;
 
 export const BREAKDOWN_LEVEL = {
   'centro de costos': 'cost_center',

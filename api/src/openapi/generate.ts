@@ -7,7 +7,7 @@ import { AppModule } from '../app.module';
 import { configureRouting } from '../bootstrap';
 
 /**
- * Writes `api/openapi.v1.json` and `api/openapi.v2.json` from the compiled
+ * Writes `api/openapi.v<n>.json` (today only v2) from the compiled
  * API (`npm run openapi`), one document per contract version.
  *
  * The app is built in PREVIEW mode: Nest resolves the module graph and reads

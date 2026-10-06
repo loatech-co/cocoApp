@@ -7,10 +7,9 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { Preferences } from '../../contract/v2/misc.response';
 import { ApiAuthenticated, ApiErrors, ApiDataV2 } from '../../contract/v2/openapi.decorators';
-import { defined } from '../../contract/v2/v1-input';
 import { preferencesV2 } from '../../presenters/v2/preferences.presenter';
 
-/** v2 of the preferences: the same service, translated at the edge. */
+/** The person's preferences. */
 @ApiAuthenticated()
 @Controller({ path: 'preferences', version: '2' })
 export class PreferencesV2Controller {
@@ -29,7 +28,6 @@ export class PreferencesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: UpdatePreferencesInput,
   ): Promise<PreferencesBody> {
-    const changes = defined({ cuentas_habilitadas: input.accountsEnabled });
-    return preferencesV2(await this.preferences.update(user.id, changes));
+    return preferencesV2(await this.preferences.update(user.id, input));
   }
 }

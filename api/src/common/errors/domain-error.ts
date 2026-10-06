@@ -4,8 +4,7 @@
  * Services, repositories and tasks throw these, never a Nest `HttpException`:
  * they describe what went wrong in the domain ("that does not exist", "that
  * clashes with something that does"), and only `AllExceptionsFilter` decides
- * what that means on the wire: `{ error: { code, message, details } }` in v1,
- * `application/problem+json` in v2.
+ * what that means on the wire: `application/problem+json`.
  *
  * Each subclass exists because some code path needs its status today. Add a
  * new one only when a new status is needed, and map it in

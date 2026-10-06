@@ -9,7 +9,6 @@ import {
   type StoredPreferences,
   type Preferences,
 } from './preferences';
-import type { UpdatePreferencesDto } from './preferences.dto';
 import { PreferencesRepository } from './preferences.repository';
 import type { Prisma } from '../../generated/prisma/client';
 
@@ -21,11 +20,14 @@ export class PreferencesService {
     return preferencesOf(await this.saved(userId));
   }
 
-  /** Saves only what comes in the DTO. */
-  async update(userId: bigint, changes: UpdatePreferencesDto): Promise<Preferences> {
-    const entries = Object.entries(changes)
-      .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => [key, value as Prisma.InputJsonValue] as const);
+  /** Saves only the preferences the change brings, each under its table key. */
+  async update(userId: bigint, changes: Partial<Preferences>): Promise<Preferences> {
+    const stored: Partial<StoredPreferences> = {
+      ...(changes.accountsEnabled !== undefined && { [ACCOUNTS_ENABLED]: changes.accountsEnabled }),
+    };
+    const entries = Object.entries(stored).map(
+      ([key, isOn]) => [key, isOn as Prisma.InputJsonValue] as const,
+    );
 
     if (entries.length > 0) {
       await this.repository.upsertMany(userId, entries);

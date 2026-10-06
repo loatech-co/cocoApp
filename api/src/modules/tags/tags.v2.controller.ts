@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { UpsertTagDto } from './tags.dto';
+import { UpsertTagDto } from './dto/v2/tags.dto';
 import { TagsService, type Tag as TagBody } from './tags.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
@@ -27,8 +27,7 @@ import { PageQuery } from '../../contract/v2/page.dto';
 import { paginate, type Page } from '../../contract/v2/pagination';
 
 /**
- * v2 of the tags. The input (`name`, `color`) was already English, so it is
- * the v1 DTO; the output was too, and only the list changes, into a page.
+ * The tags. Every list is a page.
  */
 @ApiAuthenticated()
 @Controller({ path: 'tags', version: '2' })

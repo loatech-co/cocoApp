@@ -1,4 +1,4 @@
-import type { UpdateTransactionDto } from './dto/transaction.dto';
+import type { TransactionEdit } from './transactions.domain';
 import type { FullTransaction, TransactionChanges } from './transactions.repository';
 import { ValidationError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
@@ -17,7 +17,7 @@ import { checkSplitsReconcile } from '../../common/money/splits';
  */
 export function requireReconciledSplits(
   actual: FullTransaction,
-  dto: UpdateTransactionDto,
+  dto: TransactionEdit,
   amount: Money,
 ): void {
   if (dto.amount === undefined || dto.splits !== undefined || actual.splits.length === 0) return;
@@ -50,7 +50,7 @@ export function partnerLegChanges(changes: TransactionChanges): TransactionChang
 }
 
 /** A leg does not become an expense or an income: it would leave the other one alone. */
-export function requireStillTransfer(dto: UpdateTransactionDto): void {
+export function requireStillTransfer(dto: TransactionEdit): void {
   if (dto.type !== undefined && dto.type !== 'transfer') {
     throw new ValidationError(
       'Una transferencia no puede cambiar de tipo. Bórrala y registra el movimiento de nuevo.',
@@ -61,27 +61,27 @@ export function requireStillTransfer(dto: UpdateTransactionDto): void {
 
 /** The columns a PATCH changes: only what the DTO brought. */
 export function changesOf(
-  dto: UpdateTransactionDto,
+  dto: TransactionEdit,
   accountId: bigint | null,
   amount: Money,
 ): TransactionChanges {
   return {
-    ...(dto.account_id !== undefined && { accountId }),
+    ...(dto.accountId !== undefined && { accountId }),
     ...(dto.date !== undefined && { date: new Date(dto.date) }),
     ...(dto.amount !== undefined && { amount }),
     ...(dto.type !== undefined && { type: dto.type }),
-    ...(dto.category_id !== undefined && {
-      categoryId: dto.category_id === null ? null : BigInt(dto.category_id),
+    ...(dto.categoryId !== undefined && {
+      categoryId: dto.categoryId === null ? null : BigInt(dto.categoryId),
     }),
     ...(dto.description !== undefined && { description: dto.description }),
     ...(dto.merchant !== undefined && { merchant: dto.merchant }),
     ...(dto.notes !== undefined && { notes: dto.notes }),
     ...(dto.status !== undefined && { status: dto.status }),
     ...(dto.source !== undefined && { source: dto.source }),
-    ...(dto.raw_text !== undefined && { rawText: dto.raw_text }),
-    ...(dto.captured_at !== undefined && {
-      capturedAt: dto.captured_at === null ? null : new Date(dto.captured_at),
+    ...(dto.rawText !== undefined && { rawText: dto.rawText }),
+    ...(dto.capturedAt !== undefined && {
+      capturedAt: dto.capturedAt === null ? null : new Date(dto.capturedAt),
     }),
-    ...(dto.por_revisar !== undefined && { needsReview: dto.por_revisar }),
+    ...(dto.needsReview !== undefined && { needsReview: dto.needsReview }),
   };
 }

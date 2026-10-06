@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type { ListTransactionsQueryDto } from './dto/transaction.dto';
+import type { TransactionFilters } from './transactions.domain';
 import { parseOrder } from './transactions.sort';
 import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
 import { DuplicateError } from '../../common/errors/domain-error';
@@ -53,7 +53,7 @@ export class TransactionsRepository {
    */
   async findPage(
     userId: bigint,
-    query: ListTransactionsQueryDto,
+    query: TransactionFilters,
     page: { skip: number; take: number },
   ): Promise<{
     rows: FullTransaction[];
@@ -237,13 +237,13 @@ export class TransactionsRepository {
   private async buildWhere(
     tx: UserTx,
     userId: bigint,
-    query: ListTransactionsQueryDto,
+    query: TransactionFilters,
   ): Promise<Prisma.TransactionWhereInput> {
     const where: Prisma.TransactionWhereInput = { userId, ...plainFilters(query) };
 
     const requested = [
-      ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
-      ...categoryIds(query.category_ids),
+      ...(query.categoryId !== undefined ? [BigInt(query.categoryId)] : []),
+      ...categoryIds(query.categoryIds),
     ];
     // Filtering by "Costos fijos" has to bring EVERYTHING below it: the
     // transactions hang from the concept, which is the leaf.
@@ -298,7 +298,7 @@ async function branchByName(tx: UserTx, userId: bigint, text: string): Promise<b
 }
 
 /** The filters that need no lookup: period, account, type, status, tag, amount. */
-function plainFilters(query: ListTransactionsQueryDto): Prisma.TransactionWhereInput {
+function plainFilters(query: TransactionFilters): Prisma.TransactionWhereInput {
   return {
     // By PERIOD: the range the person picks at the top refers to the month the
     // expense belongs to, not to the day the money left. Filtering by `date`,
@@ -310,14 +310,14 @@ function plainFilters(query: ListTransactionsQueryDto): Prisma.TransactionWhereI
         ...(query.to && { lte: new Date(query.to) }),
       },
     }),
-    ...(query.account_id !== undefined && { accountId: BigInt(query.account_id) }),
+    ...(query.accountId !== undefined && { accountId: BigInt(query.accountId) }),
     ...(query.type && { type: query.type }),
     ...(query.status && { status: query.status }),
-    ...(query.tag_id !== undefined && { tags: { some: { tagId: BigInt(query.tag_id) } } }),
-    ...((query.min_amount || query.max_amount) && {
+    ...(query.tagId !== undefined && { tags: { some: { tagId: BigInt(query.tagId) } } }),
+    ...((query.minAmount || query.maxAmount) && {
       amount: {
-        ...(query.min_amount && { gte: toMoney(query.min_amount) }),
-        ...(query.max_amount && { lte: toMoney(query.max_amount) }),
+        ...(query.minAmount && { gte: toMoney(query.minAmount) }),
+        ...(query.maxAmount && { lte: toMoney(query.maxAmount) }),
       },
     }),
   };

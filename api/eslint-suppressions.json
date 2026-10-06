@@ -4,17 +4,7 @@
       "count": 2
     }
   },
-  "src/presenters/v1/auth.presenter.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
   "src/presenters/v2/auth.presenter.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "test/categorization.e2e-spec.ts": {
     "@typescript-eslint/naming-convention": {
       "count": 1
     }

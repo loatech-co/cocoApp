@@ -123,9 +123,8 @@ async function bootstrap(): Promise<void> {
 
   configureApp(app, config, (entry) => jsonLogger.entry(entry));
 
-  // Swagger UI at /api/docs/v1 and /api/docs/v2, never in production: the contract
-  // is already in api/openapi.v1.json and api/openapi.v2.json, and a live console
-  // beside real data is surface for nothing.
+  // Swagger UI at /api/docs/v2, never in production: the contract is already in
+  // api/openapi.v2.json, and a live console beside real data is surface for nothing.
   const areDocsServed = setupApiDocs(app, config.get<string>('NODE_ENV'));
 
   // Closes Prisma cleanly when the host recycles the process.
@@ -135,7 +134,7 @@ async function bootstrap(): Promise<void> {
   const port = Number(config.get<string>('PORT') ?? 3000);
   await app.listen(port, '0.0.0.0');
 
-  logger.log(`API listening on http://localhost:${port}/api/v1 and /api/v2`);
+  logger.log(`API listening on http://localhost:${port}/api/v2`);
   if (areDocsServed) {
     for (const version of CONTRACT_VERSIONS) {
       logger.log(`API docs at http://localhost:${port}/${docsPath(version)}`);

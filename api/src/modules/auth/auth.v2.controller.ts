@@ -11,8 +11,7 @@ import {
   type Me as MeBody,
   type Profile,
 } from './auth.service';
-import { ChangePasswordDto, LoginDto, RegisterDto } from './dto/auth.dto';
-import { RefreshInput } from './dto/v2/auth.dto';
+import { ChangePasswordDto, LoginDto, RefreshInput, RegisterDto } from './dto/v2/auth.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthenticationError } from '../../common/errors/domain-error';
@@ -32,14 +31,12 @@ const REFRESH_COOKIE = 'coco_refresh';
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
- * The cookie is scoped to the v2 auth routes, as v1's is to its own: the
- * browser sends it to refresh and logout and to nothing else. One consequence,
- * accepted: a web session opened on v1 does not carry over, so moving the web
- * to v2 asks each user to sign in once.
+ * The cookie is scoped to the v2 auth routes: the browser sends it to refresh
+ * and logout and to nothing else.
  */
 const COOKIE_PATH = '/api/v2/auth';
 
-/** v1 said `x-coco-cliente: nativo`; v2 says it in English. */
+/** A native client says so in this header. */
 const CLIENT_HEADER = 'x-coco-client';
 const NATIVE_CLIENT = 'native';
 
@@ -69,9 +66,8 @@ function readCookie(request: Request, name: string): string | undefined {
 }
 
 /**
- * v2 of the session routes: the same service and the same rules as v1 —
- * throttling, the web's httpOnly cookie, the native client's token in the
- * body — with English names on the wire.
+ * The session routes: throttling, the web's httpOnly cookie, the native
+ * client's token in the body.
  */
 @ApiPublic()
 @Controller({ path: 'auth', version: '2' })

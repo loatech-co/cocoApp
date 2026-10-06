@@ -10,9 +10,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { ChangeRoleDto, ResetPasswordDto } from './admin.dto';
 import { AdminService, type AuditPage, type UserPage } from './admin.service';
-import { ListUsersQuery } from './dto/v2/admin.dto';
+import { ChangeRoleDto, ListUsersQuery, ResetPasswordDto } from './dto/v2/admin.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles, RolesGuard } from '../../common/guards/roles.guard';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
@@ -25,14 +24,12 @@ import {
   ApiDataV2,
 } from '../../contract/v2/openapi.decorators';
 import { PageQuery } from '../../contract/v2/page.dto';
-import { defined } from '../../contract/v2/v1-input';
 import { auditPageV2, userPageV2 } from '../../presenters/v2/admin.presenter';
 import { profileV2 } from '../../presenters/v2/auth.presenter';
 import type { Profile as ProfileBody } from '../auth/auth.service';
 
 /**
- * v2 of the administration: the same service, its own presenter. The
- * bodies (`role`, `newPassword`) were English already, so they are the v1 DTOs.
+ * The administration: users waiting for approval, roles, and the audit log.
  */
 @ApiAuthenticated()
 @ApiErrors(403)
@@ -46,11 +43,7 @@ export class AdminV2Controller {
   @ApiDataV2(Profile, { isPage: true })
   @ApiErrors(400)
   async listUsers(@Query() query: ListUsersQuery): Promise<UserPage> {
-    return userPageV2(
-      await this.admin.listUsers(
-        defined({ status: query.status, page: query.page, per_page: query.perPage }),
-      ),
-    );
+    return userPageV2(await this.admin.listUsers(query));
   }
 
   @Post('users/:id/approve')
@@ -113,14 +106,6 @@ export class AdminV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: PageQuery,
   ): Promise<AuditPage> {
-    return auditPageV2(
-      await this.admin.auditLog(
-        user.id,
-        defined({
-          page: query.page === undefined ? undefined : String(query.page),
-          per_page: query.perPage === undefined ? undefined : String(query.perPage),
-        }),
-      ),
-    );
+    return auditPageV2(await this.admin.auditLog(user.id, query));
   }
 }

@@ -6,9 +6,18 @@ import { Liveness, Readiness } from '../../contract/v2/misc.response';
 import { ApiErrors, ApiPublic, ApiDataV2 } from '../../contract/v2/openapi.decorators';
 
 /**
- * The two public probes under v2. Same answers as v1 (they were English
- * already); what changes is that a probe pointed here does not count as a v1
- * use, so the seven days without v1 traffic (7.10) can actually happen.
+ * Two public probes, for anything that checks the service from outside (an
+ * uptime monitor, the deploy verification, an operator with curl), which has
+ * no user to sign in as:
+ *
+ *   · `GET /health` — the process is alive. Never touches the database.
+ *   · `GET /ready`  — the process can serve: the database answers `SELECT 1`.
+ *
+ * Kept apart so a database outage reads as "not ready" and not as "the API is
+ * down": restarting the process does not fix an unreachable database.
+ *
+ * Neither reveals anything about a user or the host: up or down, and which
+ * commit is running.
  */
 @ApiPublic()
 @Controller({ version: '2' })

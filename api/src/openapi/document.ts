@@ -1,10 +1,10 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 
-import { BEARER_SCHEME } from '../contract/v1/openapi.decorators';
+import { BEARER_SCHEME } from '../contract/v2/openapi.decorators';
 
 /** The contract versions the API serves, each with its own document. */
-export const CONTRACT_VERSIONS = ['1', '2'] as const;
+export const CONTRACT_VERSIONS = ['2'] as const;
 export type ContractVersion = (typeof CONTRACT_VERSIONS)[number];
 
 /** Where Swagger UI serves each version, outside production only. */
@@ -13,23 +13,14 @@ export function docsPath(version: ContractVersion): string {
 }
 
 const DESCRIPTION: Readonly<Record<ContractVersion, string>> = {
-  '1': [
-    'Contract v1, served under `/api/v1`. **Deprecated** since 2026-10-05: every response',
-    'carries `Deprecation` (RFC 9745) and a `Link` to its v2 successor. It is removed after',
-    'seven days without uses (step 7.10).',
-  ].join('\n'),
   '2': [
-    'Contract v2, served under `/api/v2`: the v1 API in English and camelCase, with every',
-    'list paginated as `{ data, meta: { page, perPage, total } }`.',
+    'Contract v2, served under `/api/v2`: English and camelCase, with every list paginated',
+    'as `{ data, meta: { page, perPage, total } }`. v1 was retired on 2026-10-06 (step 7.10).',
   ].join('\n'),
 };
 
-/** How each version answers, the errors included: v2's are RFC 9457. */
+/** How each version answers, the errors included (RFC 9457). */
 const ENVELOPES: Readonly<Record<ContractVersion, string>> = {
-  '1': [
-    'Every successful JSON response is wrapped as `{ data, meta }`. Every error is',
-    '`{ error: { code, message, details } }`, where `details` lists the fields that failed.',
-  ].join('\n'),
   '2': [
     'Every successful JSON response is wrapped as `{ data, meta }`. Every error is',
     '`application/problem+json` (RFC 9457): `{ type, title, status, detail, code, errors? }`.',
@@ -45,76 +36,17 @@ const COMMON = [
 ].join('\n');
 
 /**
- * The operation id a client generator turns into a function name. v1 keeps
- * the ids it was published with; v2 drops the `V2Controller` suffix, so the
- * web gets `Transactions_list` and not `TransactionsV2Controller_list`.
+ * The operation id a client generator turns into a function name. The
+ * `V2Controller` suffix is dropped, so the web gets `Transactions_list` and
+ * not `TransactionsV2Controller_list`.
  */
 function operationId(controllerKey: string, methodKey: string): string {
   const resource = controllerKey.endsWith('V2Controller')
     ? controllerKey.slice(0, -'V2Controller'.length)
     : controllerKey;
   const id = `${resource}_${methodKey}`;
-  return V1_PUBLISHED_IDS[id] ?? V2_PUBLISHED_IDS[id] ?? id;
+  return V2_PUBLISHED_IDS[id] ?? id;
 }
-
-/**
- * The v1 ids that were published with a Spanish method name. Step 7.2 put
- * the controller methods in English; the published contract keeps its ids,
- * so a renamed v1 method is listed here with the id it already had. The
- * table goes with v1 (7.10).
- */
-const V1_PUBLISHED_IDS: Readonly<Record<string, string>> = {
-  AuthController_register: 'AuthController_registrar',
-  AuthController_login: 'AuthController_entrar',
-  AuthController_refresh: 'AuthController_refrescar',
-  AuthController_logout: 'AuthController_salir',
-  AuthController_logoutAll: 'AuthController_salirDeTodo',
-  AuthController_me: 'AuthController_perfil',
-  AuthController_changePassword: 'AuthController_cambiarContrasena',
-  AccountsController_list: 'AccountsController_listar',
-  AccountsController_get: 'AccountsController_obtener',
-  AccountsController_create: 'AccountsController_crear',
-  AccountsController_update: 'AccountsController_actualizar',
-  AccountsController_remove: 'AccountsController_eliminar',
-  TagsController_list: 'TagsController_listar',
-  TagsController_create: 'TagsController_crear',
-  TagsController_update: 'TagsController_actualizar',
-  TagsController_remove: 'TagsController_eliminar',
-  AdminController_list: 'AdminController_listar',
-  AdminController_approve: 'AdminController_aprobar',
-  AdminController_suspend: 'AdminController_suspender',
-  AdminController_reactivate: 'AdminController_reactivar',
-  AdminController_changeRole: 'AdminController_cambiarRol',
-  AdminController_resetPassword: 'AdminController_restablecer',
-  AdminController_auditLog: 'AdminController_bitacora',
-  PreferencesController_read: 'PreferencesController_leer',
-  PreferencesController_update: 'PreferencesController_actualizar',
-  CategoriesController_list: 'CategoriesController_listar',
-  CategoriesController_get: 'CategoriesController_obtener',
-  CategoriesController_create: 'CategoriesController_crear',
-  CategoriesController_seed: 'CategoriesController_sembrar',
-  CategoriesController_reorder: 'CategoriesController_reordenar',
-  CategoriesController_merge: 'CategoriesController_unificar',
-  CategoriesController_update: 'CategoriesController_actualizar',
-  CategoriesController_usage: 'CategoriesController_usos',
-  CategoriesController_remove: 'CategoriesController_eliminar',
-  CategorizationController_suggest: 'CategorizationController_sugerir',
-  CategorizationController_learn: 'CategorizationController_aprender',
-  TransactionsController_list: 'TransactionsController_listar',
-  TransactionsController_history: 'TransactionsController_historia',
-  TransactionsController_createTransfer: 'TransactionsController_crearTransferencia',
-  TransactionsController_get: 'TransactionsController_obtener',
-  TransactionsController_create: 'TransactionsController_crear',
-  TransactionsController_update: 'TransactionsController_actualizar',
-  TransactionsController_remove: 'TransactionsController_eliminar',
-  DashboardController_get: 'DashboardController_resumen',
-  InterpretationController_interpret: 'InterpretacionController_interpretar',
-  InterpretationController_capture: 'InterpretacionController_capturar',
-  ReceiptsController_list: 'SoportesController_listar',
-  ReceiptsController_upload: 'SoportesController_subir',
-  ReceiptsController_remove: 'SoportesController_eliminar',
-  ReceiptsController_download: 'SoportesController_descargar',
-};
 
 /**
  * The v2 ids published with a Spanish controller name. The id is built from

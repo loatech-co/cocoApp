@@ -9,8 +9,8 @@ import { createHash } from 'node:crypto';
  * The per-IP limit (`@Throttle` on the route) stops one machine. It does not
  * stop guessing one person's password from many machines, each well under
  * its own limit. This one counts attempts against the same email, whoever
- * sends them, and it is shared by v1 and v2: the key leaves the route out, so
- * the two versions cannot be used to double the allowance.
+ * sends them. The key leaves the route out, so no other route (or a future
+ * version of this one) can be used to double the allowance.
  *
  * Ten per fifteen minutes: a person who mistypes their password does not get
  * near it, and a guesser gets forty tries an hour instead of unlimited. The

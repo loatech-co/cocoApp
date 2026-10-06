@@ -1,10 +1,39 @@
 /** What the interpretation service hands out (the domain), and the pure helpers that build it. */
 import type { InterpretedClassification, Interpreted } from './interpret';
 import { CERTAINTY, CLASSIFICATION_SOURCE, english, type English } from '../../common/vocabulary';
+import type { TransactionSource } from '../../generated/prisma/client';
 import type { Transaction } from '../transactions/transactions.service';
 
-export type Certainty = English<typeof CERTAINTY>;
-export type ClassificationSource = English<typeof CLASSIFICATION_SOURCE>;
+type Certainty = English<typeof CERTAINTY>;
+type ClassificationSource = English<typeof CLASSIFICATION_SOURCE>;
+
+/**
+ * What there is to read: free text (OCR, an SMS) or data already split (the
+ * Wallet trigger). At least the text or the merchant.
+ */
+export interface TextToRead {
+  text?: string | undefined;
+  merchant?: string | undefined;
+  /** Pesos, up to two decimals, as a string. */
+  amount?: string | undefined;
+  /** `YYYY-MM-DD`. */
+  date?: string | undefined;
+  fileName?: string | undefined;
+  /** `YYYY-MM`. */
+  period?: string | undefined;
+}
+
+/** A capture from a phone or the web: what to read, and how to record it. */
+export interface CaptureRequest extends TextToRead {
+  source: TransactionSource;
+  /** The idempotency key: the same one twice is one transaction. */
+  externalRef: string;
+  /** ISO 8601 with zone; now, when not said. */
+  capturedAt?: string | undefined;
+  /** The concept (or category) chosen by hand, as a numeric string. */
+  categoryId?: string | undefined;
+  note?: string | undefined;
+}
 
 interface Candidate {
   id: bigint;

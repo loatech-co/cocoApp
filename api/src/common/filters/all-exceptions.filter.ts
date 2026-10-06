@@ -28,13 +28,7 @@ const DOMAIN_ERROR_STATUS: Readonly<Record<DomainErrorKind, number>> = {
   unavailable: HttpStatus.SERVICE_UNAVAILABLE,
 };
 
-/** Kinds whose v1 `code` is not the generic one of their status. */
-const DOMAIN_ERROR_CODE: Readonly<Partial<Record<DomainErrorKind, string>>> = {
-  // The same code an unhandled P2002 gets below.
-  duplicate: 'duplicate',
-};
-
-/** The v2 code of a domain error that does not name its rule. */
+/** The code of a domain error that does not name its rule. */
 const DOMAIN_ERROR_PROBLEM: Readonly<Record<DomainErrorKind, ProblemCode>> = {
   bad_request: 'bad_request',
   unauthenticated: 'unauthenticated',
@@ -49,7 +43,7 @@ const DOMAIN_ERROR_PROBLEM: Readonly<Record<DomainErrorKind, ProblemCode>> = {
   unavailable: 'service_unavailable',
 };
 
-/** The v2 code of a status nothing more specific was said about. */
+/** The code of a status nothing more specific was said about. */
 const STATUS_PROBLEM: Readonly<Record<number, ProblemCode>> = {
   [HttpStatus.BAD_REQUEST]: 'bad_request',
   [HttpStatus.UNAUTHORIZED]: 'unauthenticated',
@@ -66,21 +60,17 @@ const STATUS_PROBLEM: Readonly<Record<number, ProblemCode>> = {
 /** 500 as a plain number: `status` is a number, not the enum. */
 const FIRST_SERVER_ERROR: number = HttpStatus.INTERNAL_SERVER_ERROR;
 
-/** Everything both wire formats are written from. */
+/** Everything the problem is written from. */
 interface Normalized {
   status: number;
-  /** v1 `error.code`: generic per status, as it always was. */
-  code: string;
-  /** v2 `code`: the rule, when there is one. */
+  /** `code`: the rule, when there is one. */
   problem: ProblemCode;
   message: string;
-  /** v1 `error.details`. */
-  details: ErrorDetail[];
-  /** v2 `errors`: the same problems, with the field when it is known. */
+  /** `errors`: what failed, with the field when it is known. */
   errors: ErrorDetail[];
 }
 
-/** RFC 9457 body of a v2 error. */
+/** RFC 9457 body of an error. */
 interface ProblemDetails {
   type: string;
   title: string;
@@ -92,14 +82,8 @@ interface ProblemDetails {
 
 export const PROBLEM_JSON = 'application/problem+json';
 
-/** A request to v2, by its path: errors before routing included. */
-function isV2(request: Request): boolean {
-  const path = (request.originalUrl || request.url).split('?')[0] ?? '';
-  return path === '/api/v2' || path.startsWith('/api/v2/');
-}
-
-/** The v2 body of a normalized error. */
-function toProblem(error: Omit<Normalized, 'code' | 'details'>): ProblemDetails {
+/** The body of a normalized error. */
+function toProblem(error: Normalized): ProblemDetails {
   return {
     type: problemType(error.problem),
     title: PROBLEMS[error.problem].title,
@@ -115,24 +99,14 @@ function toProblem(error: Omit<Normalized, 'code' | 'details'>): ProblemDetails 
  *
  * Two audiences, two levels of detail:
  *   · To the client: the right status and never a stack trace or SQL —leaking
- *     them hands an attacker the map of the app—. In v1,
- *     `{ error: { code, message, details } }`; in v2, `application/problem+json`
- *     (RFC 9457) with a stable `code` per business rule.
+ *     them hands an attacker the map of the app—, as
+ *     `application/problem+json` (RFC 9457) with a stable `code` per business
+ *     rule. Errors before routing too: an unknown route is a problem as well.
  *   · To the server log: the full detail, to be able to debug.
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger('Exceptions');
-
-  private static readonly STATUS_CODES: Readonly<Record<number, string>> = {
-    [HttpStatus.BAD_REQUEST]: 'bad_request',
-    [HttpStatus.UNAUTHORIZED]: 'unauthenticated',
-    [HttpStatus.FORBIDDEN]: 'forbidden',
-    [HttpStatus.NOT_FOUND]: 'not_found',
-    [HttpStatus.CONFLICT]: 'conflict',
-    [HttpStatus.UNPROCESSABLE_ENTITY]: 'unprocessable',
-    [HttpStatus.TOO_MANY_REQUESTS]: 'rate_limited',
-  };
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
@@ -140,7 +114,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = http.getRequest<Request>();
 
     const error = this.normalize(exception);
-    const { status, code, message, details } = error;
+    const { status } = error;
 
     // The log carries the internal user_id and the path, never amounts or descriptions.
     const who = request.user ? `user=${request.user.id}` : 'anon';
@@ -153,12 +127,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.warn(line);
     }
 
-    if (isV2(request)) {
-      response.status(status).setHeader('Content-Type', `${PROBLEM_JSON}; charset=utf-8`);
-      response.json(toProblem(error));
-      return;
-    }
-    response.status(status).json({ error: { code, message, details } });
+    response.status(status).setHeader('Content-Type', `${PROBLEM_JSON}; charset=utf-8`);
+    response.json(toProblem(error));
   }
 
   private normalize(exception: unknown): Normalized {
@@ -178,7 +148,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     ) {
       const message = checkViolationMessage(exception.message);
       if (message !== null) {
-        return plain(HttpStatus.UNPROCESSABLE_ENTITY, 'unprocessable', 'check_violation', message);
+        return plain(HttpStatus.UNPROCESSABLE_ENTITY, 'check_violation', message);
       }
     }
 
@@ -192,7 +162,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return plain(
         HttpStatus.INTERNAL_SERVER_ERROR,
         'internal_error',
-        'internal_error',
         'Ocurrió un error procesando la solicitud.',
       );
     }
@@ -200,25 +169,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
     return plain(
       HttpStatus.INTERNAL_SERVER_ERROR,
       'internal_error',
-      'internal_error',
       'Ocurrió un error inesperado. Intenta de nuevo.',
     );
   }
 
   /**
-   * A domain error goes out exactly as the Nest exception it replaced did:
-   * same status, same `code` (from the same table), same message, and the
-   * details it carries. v2 adds the rule's own code.
+   * A domain error goes out with the status of its kind, the rule's own code
+   * (or its kind's), its message and the details it carries.
    */
   private fromDomainError(exception: DomainError): Normalized {
-    const status = DOMAIN_ERROR_STATUS[exception.kind];
     return {
-      status,
-      code:
-        DOMAIN_ERROR_CODE[exception.kind] ?? AllExceptionsFilter.STATUS_CODES[status] ?? 'error',
+      status: DOMAIN_ERROR_STATUS[exception.kind],
       problem: exception.code ?? DOMAIN_ERROR_PROBLEM[exception.kind],
       message: exception.message,
-      details: [...exception.details],
       errors: [...exception.details],
     };
   }
@@ -255,20 +218,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
         details.push(...body.details);
       }
 
-      // The same problems, each with its field (`FieldValidationPipe`): v2 only.
+      // The same problems, each with its field (`FieldValidationPipe`).
       if (Array.isArray(body.fields)) fields = body.fields;
     }
 
     return {
       status,
-      code: AllExceptionsFilter.STATUS_CODES[status] ?? 'error',
       problem:
         fields !== undefined
           ? 'invalid_fields'
           : (STATUS_PROBLEM[status] ??
             (status >= FIRST_SERVER_ERROR ? 'internal_error' : 'bad_request')),
       message,
-      details,
       errors: fields ?? details,
     };
   }
@@ -277,28 +238,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
     switch (exception.code) {
       // Unique index violation
       case 'P2002':
-        return plain(
-          HttpStatus.CONFLICT,
-          'duplicate',
-          'duplicate',
-          'Ya existe un registro con esos datos.',
-        );
+        return plain(HttpStatus.CONFLICT, 'duplicate', 'Ya existe un registro con esos datos.');
       // Foreign key violation (e.g. deleting an account with transactions)
       case 'P2003':
         return plain(
           HttpStatus.CONFLICT,
-          'constraint_violation',
           'constraint_violation',
           'La operación rompería una relación existente.',
         );
       // Record not found. Someone else's resource lands here because of the
       // user_id scoping, and answering 404 (not 403) avoids confirming it exists.
       case 'P2025':
-        return plain(HttpStatus.NOT_FOUND, 'not_found', 'not_found', 'El recurso no existe.');
+        return plain(HttpStatus.NOT_FOUND, 'not_found', 'El recurso no existe.');
       default:
         return plain(
           HttpStatus.INTERNAL_SERVER_ERROR,
-          'internal_error',
           'internal_error',
           'Ocurrió un error procesando la solicitud.',
         );
@@ -306,9 +260,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 }
 
-/** An error with no details, in both formats. */
-function plain(status: number, code: string, problem: ProblemCode, message: string): Normalized {
-  return { status, code, problem, message, details: [], errors: [] };
+/** An error with no details. */
+function plain(status: number, problem: ProblemCode, message: string): Normalized {
+  return { status, problem, message, errors: [] };
 }
 
 /** `instanceof` alone narrows to `DomainError<any>`. */

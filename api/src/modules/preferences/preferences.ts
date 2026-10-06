@@ -18,7 +18,7 @@
  * It is the product decision that orders everything else: recording an
  * expense cannot require having made up an account first. Whoever wants to
  * follow balances switches it on; for everyone else, accounts simply do not
- * exist. The key is the stored one (`pref_key`), and the v1 field.
+ * exist. The key is the stored one (`pref_key`).
  */
 export const ACCOUNTS_ENABLED = 'cuentas_habilitadas';
 
