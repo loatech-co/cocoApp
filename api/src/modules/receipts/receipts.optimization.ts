@@ -64,14 +64,14 @@ sharp.concurrency(Number(process.env.SHARP_CONCURRENCY) || 1);
 sharp.cache(false);
 
 /** Ancho máximo de una imagen. Un recibo más ancho no se lee mejor. */
-const ANCHO_MAXIMO = 1100;
+const MAX_WIDTH = 1100;
 /** Calidad JPEG. Por debajo de 50 el valor empieza a costar de leer. */
-const CALIDAD = 55;
+const JPEG_QUALITY = 55;
 /** Resolución de las imágenes dentro de un PDF. */
 const PPP = 120;
 
 /** Lo que se acepta subir, por tipo declarado. */
-export const TIPOS_DE_ENTRADA = new Set([
+export const INPUT_TYPES = new Set([
   'application/pdf',
   'image/jpeg',
   'image/png',
@@ -91,24 +91,26 @@ export const TIPOS_DE_ENTRADA = new Set([
  * HEIC/HEIF son contenedores ISO BMFF (`ftyp` en el byte 4); WEBP es RIFF con
  * `WEBP` en el byte 8.
  */
-const FIRMAS: Record<string, readonly { desde: number; bytes: Buffer }[]> = {
-  'application/pdf': [{ desde: 0, bytes: Buffer.from('%PDF-', 'latin1') }],
-  'image/jpeg': [{ desde: 0, bytes: Buffer.from([0xff, 0xd8, 0xff]) }],
-  'image/png': [{ desde: 0, bytes: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) }],
-  'image/heic': [{ desde: 4, bytes: Buffer.from('ftyp', 'latin1') }],
-  'image/heif': [{ desde: 4, bytes: Buffer.from('ftyp', 'latin1') }],
+const MAGIC_BYTES: Record<string, readonly { offset: number; bytes: Buffer }[]> = {
+  'application/pdf': [{ offset: 0, bytes: Buffer.from('%PDF-', 'latin1') }],
+  'image/jpeg': [{ offset: 0, bytes: Buffer.from([0xff, 0xd8, 0xff]) }],
+  'image/png': [
+    { offset: 0, bytes: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) },
+  ],
+  'image/heic': [{ offset: 4, bytes: Buffer.from('ftyp', 'latin1') }],
+  'image/heif': [{ offset: 4, bytes: Buffer.from('ftyp', 'latin1') }],
   'image/webp': [
-    { desde: 0, bytes: Buffer.from('RIFF', 'latin1') },
-    { desde: 8, bytes: Buffer.from('WEBP', 'latin1') },
+    { offset: 0, bytes: Buffer.from('RIFF', 'latin1') },
+    { offset: 8, bytes: Buffer.from('WEBP', 'latin1') },
   ],
 };
 
 /** ¿Los bytes del archivo son de verdad del tipo que se declaró? */
-export function coincideConSuTipo(contenido: Buffer, mime: string): boolean {
-  const firmas = FIRMAS[mime];
-  if (!firmas) return false;
-  return firmas.every(({ desde, bytes }) =>
-    contenido.subarray(desde, desde + bytes.length).equals(bytes),
+export function matchesDeclaredType(content: Buffer, mime: string): boolean {
+  const signatures = MAGIC_BYTES[mime];
+  if (!signatures) return false;
+  return signatures.every(({ offset, bytes }) =>
+    content.subarray(offset, offset + bytes.length).equals(bytes),
   );
 }
 
@@ -117,13 +119,13 @@ export function coincideConSuTipo(contenido: Buffer, mime: string): boolean {
  * tarda segundos; uno hecho para colgarlo se queda con un proceso de una
  * cuota que en el hosting es mínima. Pasado el tope, se mata.
  */
-const LIMITE_DE_GHOSTSCRIPT_MS = 20_000;
+const GHOSTSCRIPT_TIMEOUT_MS = 20_000;
 
 /** Tope de entrada. Lo que salga de aquí pesará una fracción. */
-export const TAMANO_MAXIMO = 25 * 1024 * 1024;
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
-export interface SoporteOptimizado {
-  contenido: Buffer;
+export interface OptimizedReceipt {
+  content: Buffer;
   mime: string;
   /** Sin punto: `pdf` o `jpg`. */
   extension: 'pdf' | 'jpg' | 'png';
@@ -137,7 +139,7 @@ export interface SoporteOptimizado {
  * y porque si algún día no está, conviene poder apuntarlo a otro sin tocar
  * código.
  */
-function binarioDeGhostscript(): string {
+function ghostscriptBinary(): string {
   // Con comillas dentro del valor —que es como llega en el servidor— `spawn`
   // busca un ejecutable llamado `"/usr/bin/gs"` y ningún PDF se optimiza.
   return readEnv('GHOSTSCRIPT_BIN') ?? 'gs';
@@ -150,12 +152,12 @@ function binarioDeGhostscript(): string {
  * las que no son la primera— y cualquier imagen sale como JPG, venga como
  * venga: png, webp o la foto HEIC de un iPhone.
  */
-export async function optimizar(contenido: Buffer, mime: string): Promise<SoporteOptimizado> {
+export async function optimize(content: Buffer, mime: string): Promise<OptimizedReceipt> {
   if (mime === 'application/pdf') {
-    return { contenido: await optimizarPdf(contenido), mime: 'application/pdf', extension: 'pdf' };
+    return { content: await optimizePdf(content), mime: 'application/pdf', extension: 'pdf' };
   }
 
-  return { contenido: await optimizarImagen(contenido), mime: 'image/jpeg', extension: 'jpg' };
+  return { content: await optimizeImage(content), mime: 'image/jpeg', extension: 'jpg' };
 }
 
 /**
@@ -168,9 +170,9 @@ export async function optimizar(contenido: Buffer, mime: string): Promise<Soport
  * modelo del teléfono y, si el GPS estaba encendido, las coordenadas de dónde
  * se tomó. Eso no es parte del recibo.
  */
-async function optimizarImagen(contenido: Buffer): Promise<Buffer> {
+async function optimizeImage(content: Buffer): Promise<Buffer> {
   return (
-    sharp(contenido, { failOn: 'none' })
+    sharp(content, { failOn: 'none' })
       .rotate() // Respeta el EXIF antes de tirarlo: si no, la foto sale tumbada.
       .grayscale()
       /*
@@ -182,8 +184,8 @@ async function optimizarImagen(contenido: Buffer): Promise<Buffer> {
         `-colorspace Gray` en ImageMagick, con el que se trató el lote.
       */
       .toColourspace('b-w')
-      .resize({ width: ANCHO_MAXIMO, withoutEnlargement: true })
-      .jpeg({ quality: CALIDAD, mozjpeg: true })
+      .resize({ width: MAX_WIDTH, withoutEnlargement: true })
+      .jpeg({ quality: JPEG_QUALITY, mozjpeg: true })
       .toBuffer()
   );
 }
@@ -204,17 +206,17 @@ async function optimizarImagen(contenido: Buffer): Promise<Buffer> {
  * con sus propios avisos en el mismo flujo. Un archivo temporal cuesta dos
  * escrituras y no tiene forma de salir corrupto.
  */
-async function optimizarPdf(contenido: Buffer): Promise<Buffer> {
-  const carpeta = await mkdtemp(join(tmpdir(), 'coco-soporte-'));
-  const entrada = join(carpeta, `${randomUUID()}.pdf`);
-  const salida = join(carpeta, `${randomUUID()}.pdf`);
+async function optimizePdf(content: Buffer): Promise<Buffer> {
+  const folder = await mkdtemp(join(tmpdir(), 'coco-soporte-'));
+  const input = join(folder, `${randomUUID()}.pdf`);
+  const output = join(folder, `${randomUUID()}.pdf`);
 
   try {
-    await writeFile(entrada, contenido);
+    await writeFile(input, content);
 
-    await correr(binarioDeGhostscript(), argumentosDeGhostscript(entrada, salida));
+    await run(ghostscriptBinary(), ghostscriptArgs(input, output));
 
-    const resultado = await readFile(salida);
+    const result = await readFile(output);
 
     /*
       Si el tratamiento no adelgaza, se queda el original.
@@ -224,9 +226,9 @@ async function optimizarPdf(contenido: Buffer): Promise<Buffer> {
       nada. Quedarse con el resultado más grande sería pagar por el trabajo de
       empeorarlo.
     */
-    return resultado.length > 0 && resultado.length < contenido.length ? resultado : contenido;
+    return result.length > 0 && result.length < content.length ? result : content;
   } finally {
-    await rm(carpeta, { recursive: true, force: true });
+    await rm(folder, { recursive: true, force: true });
   }
 }
 
@@ -236,11 +238,11 @@ async function optimizarPdf(contenido: Buffer): Promise<Buffer> {
  * servidor y que ejecute órdenes. Las versiones recientes lo traen por
  * defecto; se escribe igual para no depender de la que haya instalada.
  */
-export function argumentosDeGhostscript(entrada: string, salida: string): string[] {
+export function ghostscriptArgs(input: string, output: string): string[] {
   return [
     '-dSAFER',
     '-o',
-    salida,
+    output,
     '-sDEVICE=pdfwrite',
     '-sColorConversionStrategy=Gray',
     '-sProcessColorModel=DeviceGray',
@@ -253,52 +255,50 @@ export function argumentosDeGhostscript(entrada: string, salida: string): string
     '-dNOPAUSE',
     '-dBATCH',
     '-dQUIET',
-    entrada,
+    input,
   ];
 }
 
 /** Ejecuta un proceso y falla con su salida de error, que es la que explica. */
-export function correr(
-  binario: string,
-  argumentos: string[],
-  limiteMs = LIMITE_DE_GHOSTSCRIPT_MS,
+export function run(
+  binary: string,
+  args: string[],
+  timeoutMs = GHOSTSCRIPT_TIMEOUT_MS,
 ): Promise<void> {
-  return new Promise((resolver, rechazar) => {
-    const proceso = spawn(binario, argumentos, { stdio: ['ignore', 'ignore', 'pipe'] });
+  return new Promise((resolve, reject) => {
+    const child = spawn(binary, args, { stdio: ['ignore', 'ignore', 'pipe'] });
     let error = '';
-    let vencido = false;
+    let isTimedOut = false;
 
     // SIGKILL y no SIGTERM: un intérprete atascado puede ignorar la petición
     // de terminar, y lo que se quiere es recuperar el proceso.
-    const reloj = setTimeout(() => {
-      vencido = true;
-      proceso.kill('SIGKILL');
-    }, limiteMs);
+    const timer = setTimeout(() => {
+      isTimedOut = true;
+      child.kill('SIGKILL');
+    }, timeoutMs);
 
-    proceso.stderr.on('data', (trozo: Buffer) => {
-      error += trozo.toString();
+    child.stderr.on('data', (chunk: Buffer) => {
+      error += chunk.toString();
     });
 
-    proceso.on('error', (e) => {
-      clearTimeout(reloj);
-      rechazar(
+    child.on('error', (e) => {
+      clearTimeout(timer);
+      reject(
         new Error(
-          `No se pudo ejecutar ${binario}: ${e.message}. ` +
+          `No se pudo ejecutar ${binary}: ${e.message}. ` +
             'Define GHOSTSCRIPT_BIN si está en otra ruta.',
         ),
       );
     });
 
-    proceso.on('close', (codigo) => {
-      clearTimeout(reloj);
-      if (vencido) {
-        rechazar(
-          new Error(`${binario} tardó más de ${Math.round(limiteMs / 1000)} s y se detuvo.`),
-        );
-      } else if (codigo === 0) {
-        resolver();
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (isTimedOut) {
+        reject(new Error(`${binary} tardó más de ${Math.round(timeoutMs / 1000)} s y se detuvo.`));
+      } else if (code === 0) {
+        resolve();
       } else {
-        rechazar(new Error(`${binario} salió con ${codigo}: ${error}`));
+        reject(new Error(`${binary} salió con ${code}: ${error}`));
       }
     });
   });
@@ -322,14 +322,14 @@ export function correr(
  * tratar sería guardar un archivo que después no se puede mirar: ahí el
  * problema es el formato y ceder no arregla nada.
  */
-export function comoLlego(contenido: Buffer, mime: string): SoporteOptimizado | null {
+export function asReceived(content: Buffer, mime: string): OptimizedReceipt | null {
   // La extensión dice la VERDAD de lo que se guarda. Un PNG con nombre `.jpg`
   // es un archivo que miente sobre sí mismo, y el día que alguien lea el
   // almacén por fuera de la aplicación —un respaldo, un script— se encuentra
   // con que la mitad de los `.jpg` no lo son.
-  if (mime === 'application/pdf') return { contenido, mime, extension: 'pdf' };
-  if (mime === 'image/jpeg') return { contenido, mime, extension: 'jpg' };
-  if (mime === 'image/png') return { contenido, mime, extension: 'png' };
+  if (mime === 'application/pdf') return { content, mime, extension: 'pdf' };
+  if (mime === 'image/jpeg') return { content, mime, extension: 'jpg' };
+  if (mime === 'image/png') return { content, mime, extension: 'png' };
   return null;
 }
 
@@ -355,11 +355,11 @@ export function comoLlego(contenido: Buffer, mime: string): SoporteOptimizado | 
  * reservar memoria, no quedar descriptores— y sus nombres no los inventa
  * ninguna librería: los pone `errno`.
  */
-export function esFaltaDeRecursos(causa: unknown): boolean {
-  const mensaje = causa instanceof Error ? causa.message : String(causa);
+export function isOutOfResources(cause: unknown): boolean {
+  const message = cause instanceof Error ? cause.message : String(cause);
 
   return /resource temporarily unavailable|error creating thread|cannot allocate memory|out of memory|enomem|eagain|too many open files|emfile|enfile|cannot fork|resource deadlock/i.test(
-    mensaje,
+    message,
   );
 }
 
@@ -377,8 +377,8 @@ export function esFaltaDeRecursos(causa: unknown): boolean {
  * tres anteriores. El orden vive en su columna y el "i de N" se calcula al
  * mirarlo.
  */
-export function nombreDeSoporte(concepto: string, fechaISO: string, extension: string): string {
-  return `${saneado(concepto)} - ${fechaISO}.${extension}`;
+export function receiptFileName(concept: string, isoDate: string, extension: string): string {
+  return `${sanitized(concept)} - ${isoDate}.${extension}`;
 }
 
 /**
@@ -387,9 +387,9 @@ export function nombreDeSoporte(concepto: string, fechaISO: string, extension: s
  * La barra es el caso real: "PILA / Seguridad Social" no cabe en un nombre de
  * archivo y en el lote se guardó como "PILA - Seguridad Social".
  */
-function saneado(texto: string): string {
+function sanitized(text: string): string {
   return (
-    texto
+    text
       .replace(/[/\\]/g, '-')
       // eslint-disable-next-line no-control-regex
       .replace(/[<>:"|?* -]/g, '')

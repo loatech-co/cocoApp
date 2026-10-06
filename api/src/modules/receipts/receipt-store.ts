@@ -1,7 +1,7 @@
 import { unlink } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 
-import { abrir, almacenListo, existe, guardar, rutaDe } from './soportes.almacen';
+import { openFromDisk, diskStoreStatus, exists, saveToDisk, diskPathOf } from './receipts.storage';
 import { readEnv } from '../../common/env';
 
 /**
@@ -52,29 +52,29 @@ export function createReceiptStore(env: NodeJS.ProcessEnv = process.env): Receip
 
 class DiskReceiptStore implements ReceiptStore {
   describe(): string {
-    return `disk ${almacenListo().carpeta}`;
+    return `disk ${diskStoreStatus().folder}`;
   }
 
   check(): Promise<{ ok: boolean; detail: string }> {
-    const { carpeta, existe: present } = almacenListo();
+    const { folder, exists: doesExist } = diskStoreStatus();
     return Promise.resolve({
-      ok: present,
-      detail: present
-        ? carpeta
-        : `${carpeta} does not exist — check SOPORTES_DIR (mind the quotes)`,
+      ok: doesExist,
+      detail: doesExist
+        ? folder
+        : `${folder} does not exist — check SOPORTES_DIR (mind the quotes)`,
     });
   }
 
   save(key: string, content: Buffer): Promise<void> {
-    return guardar(key, content);
+    return saveToDisk(key, content);
   }
 
   open(key: string): Promise<Readable | null> {
-    return Promise.resolve(abrir(key));
+    return Promise.resolve(openFromDisk(key));
   }
 
   exists(key: string): Promise<boolean> {
-    return Promise.resolve(existe(key));
+    return Promise.resolve(exists(key));
   }
 
   async remove(keys: string[]): Promise<void> {
@@ -83,7 +83,7 @@ class DiskReceiptStore implements ReceiptStore {
     if (process.env.NODE_ENV === 'production') return;
 
     for (const key of keys) {
-      const path = rutaDe(key);
+      const path = diskPathOf(key);
       if (path) await unlink(path).catch(() => undefined);
     }
   }

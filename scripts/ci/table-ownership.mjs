@@ -19,7 +19,7 @@ const OWNER = {
   transaction: 'modules/transactions',
   transactionSplit: 'modules/transactions',
   transactionTag: 'modules/transactions',
-  receipt: 'modules/soportes',
+  receipt: 'modules/receipts',
   userPreference: 'modules/preferences',
   importBatch: 'modules/categories',
   importRow: 'modules/categories',
@@ -44,7 +44,7 @@ const KNOWN = {
     'categoryRule',
   ],
   // Receipts hang from movements; transactions deletes their files.
-  'modules/soportes/soportes.repository.ts': ['transaction'],
+  'modules/receipts/receipts.repository.ts': ['transaction'],
   // Ownership checks of the account and category a movement points at, and
   // the category branch a filter expands to.
   'modules/transactions/transactions.repository.ts': ['account', 'category'],

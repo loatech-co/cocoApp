@@ -32,14 +32,14 @@ import type {
   TwinVerdict,
 } from '../transactions/ledger.service';
 
-export const VENTANA_DE_DUPLICADO_MS = 10 * 60_000;
+export const DUPLICATE_WINDOW_MS = 10 * 60_000;
 /** Hasta dónde un parecido cuenta como parcial y no como casualidad. */
-const VENTANA_PARCIAL_MS = 24 * 60 * 60_000;
+const PARTIAL_WINDOW_MS = 24 * 60 * 60_000;
 
 /** Los orígenes que producen la otra cara de un mismo pago. */
-export const ORIGENES_QUE_SE_DUPLICAN: ReadonlySet<string> = new Set(['wallet', 'sms']);
+export const DUPLICATING_SOURCES: ReadonlySet<string> = new Set(['wallet', 'sms']);
 
-export interface CapturaConocida {
+export interface KnownCapture {
   id: bigint;
   source: string;
   /** `YYYY-MM-DD`. */
@@ -53,7 +53,7 @@ export interface CapturaConocida {
   description: string | null;
 }
 
-export interface CapturaNueva {
+export interface NewCapture {
   source: string;
   date: string;
   amount: string;
@@ -63,112 +63,112 @@ export interface CapturaNueva {
   description: string | null;
 }
 
-export type Veredicto =
-  | { tipo: 'exacto'; con: CapturaConocida }
-  | { tipo: 'parcial'; con: CapturaConocida }
-  | { tipo: 'ninguno' };
+export type DuplicateVerdict =
+  | { kind: 'exact'; match: KnownCapture }
+  | { kind: 'partial'; match: KnownCapture }
+  | { kind: 'none' };
 
-export function decidirDuplicado(
-  nueva: CapturaNueva,
-  candidatas: readonly CapturaConocida[],
-): Veredicto {
-  if (!ORIGENES_QUE_SE_DUPLICAN.has(nueva.source)) return { tipo: 'ninguno' };
+export function decideDuplicate(
+  incoming: NewCapture,
+  candidates: readonly KnownCapture[],
+): DuplicateVerdict {
+  if (!DUPLICATING_SOURCES.has(incoming.source)) return { kind: 'none' };
 
-  const comparables = candidatas
-    .filter((c) => c.source !== nueva.source)
-    .filter((c) => mismoMonto(c.amount, nueva.amount))
+  const comparable = candidates
+    .filter((c) => c.source !== incoming.source)
+    .filter((c) => isSameAmount(c.amount, incoming.amount))
     .map((c) => ({
       c,
-      distancia: Math.abs((c.capturedAt ?? c.createdAt).getTime() - nueva.capturedAt.getTime()),
+      distance: Math.abs((c.capturedAt ?? c.createdAt).getTime() - incoming.capturedAt.getTime()),
     }))
-    .sort((a, b) => a.distancia - b.distancia);
+    .sort((a, b) => a.distance - b.distance);
 
-  const exacto = comparables.find(
-    ({ c, distancia }) => c.date === nueva.date && distancia <= VENTANA_DE_DUPLICADO_MS,
+  const exact = comparable.find(
+    ({ c, distance }) => c.date === incoming.date && distance <= DUPLICATE_WINDOW_MS,
   );
-  if (exacto) return { tipo: 'exacto', con: exacto.c };
+  if (exact) return { kind: 'exact', match: exact.c };
 
-  const parcial = comparables.find(
-    ({ c, distancia }) =>
-      (c.date === nueva.date && distancia <= VENTANA_PARCIAL_MS) ||
-      (diasEntre(c.date, nueva.date) <= 1 && distancia <= VENTANA_DE_DUPLICADO_MS),
+  const partial = comparable.find(
+    ({ c, distance }) =>
+      (c.date === incoming.date && distance <= PARTIAL_WINDOW_MS) ||
+      (daysBetween(c.date, incoming.date) <= 1 && distance <= DUPLICATE_WINDOW_MS),
   );
-  if (parcial) return { tipo: 'parcial', con: parcial.c };
+  if (partial) return { kind: 'partial', match: partial.c };
 
-  return { tipo: 'ninguno' };
+  return { kind: 'none' };
 }
 
 /**
  * Lo que la captura nueva le aporta a la que ya estaba: solo lo que falte.
  * Nunca se pisa lo que había, que fue lo primero que se supo.
  */
-export function enriquecer(
-  existente: CapturaConocida,
-  nueva: CapturaNueva,
-): Partial<Pick<CapturaConocida, 'rawText' | 'merchant' | 'description'>> {
-  const cambios: Partial<Pick<CapturaConocida, 'rawText' | 'merchant' | 'description'>> = {};
-  if (!existente.rawText && nueva.rawText) cambios.rawText = nueva.rawText;
-  if (!existente.merchant && nueva.merchant) cambios.merchant = nueva.merchant;
-  if (!existente.description && nueva.description) cambios.description = nueva.description;
-  return cambios;
+export function enrich(
+  existing: KnownCapture,
+  incoming: NewCapture,
+): Partial<Pick<KnownCapture, 'rawText' | 'merchant' | 'description'>> {
+  const changes: Partial<Pick<KnownCapture, 'rawText' | 'merchant' | 'description'>> = {};
+  if (!existing.rawText && incoming.rawText) changes.rawText = incoming.rawText;
+  if (!existing.merchant && incoming.merchant) changes.merchant = incoming.merchant;
+  if (!existing.description && incoming.description) changes.description = incoming.description;
+  return changes;
 }
 
-function mismoMonto(a: string, b: string): boolean {
+function isSameAmount(a: string, b: string): boolean {
   return Math.abs(Number(a) - Number(b)) < 0.005;
 }
 
-function diasEntre(a: string, b: string): number {
+function daysBetween(a: string, b: string): number {
   return Math.abs(Date.parse(a) - Date.parse(b)) / (24 * 60 * 60_000);
 }
 
-const DIA_MS = 24 * 60 * 60_000;
+const DAY_MS = 24 * 60 * 60_000;
 
 /**
  * Lo que se le pide a la base: misma persona, mismo monto, otro origen, ±1 día
  * de fecha y dentro de la ventana parcial de captura. Lo fino lo decide
  * `decidirDuplicado`.
  */
-export function criteriosDeGemela(
+export function twinCriteria(
   userId: bigint,
   source: TransactionSource,
-  nueva: CapturaNueva,
+  incoming: NewCapture,
 ): DuplicateCriteria {
-  const dia = new Date(nueva.date).getTime();
-  const captura = nueva.capturedAt.getTime();
+  const day = new Date(incoming.date).getTime();
+  const captured = incoming.capturedAt.getTime();
   return {
     userId,
     source,
-    amount: toMoney(nueva.amount),
-    days: { from: new Date(dia - DIA_MS), to: new Date(dia + DIA_MS) },
+    amount: toMoney(incoming.amount),
+    days: { from: new Date(day - DAY_MS), to: new Date(day + DAY_MS) },
     window: {
-      from: new Date(captura - VENTANA_PARCIAL_MS),
-      to: new Date(captura + VENTANA_PARCIAL_MS),
+      from: new Date(captured - PARTIAL_WINDOW_MS),
+      to: new Date(captured + PARTIAL_WINDOW_MS),
     },
   };
 }
 
 /** El veredicto, dicho como lo escribe la base: fusionar en una, o crear (marcada si fue parcial). */
-export function veredictoDeGemela(
-  nueva: CapturaNueva,
-  filas: readonly DuplicateCandidateRow[],
+export function twinVerdict(
+  incoming: NewCapture,
+  rows: readonly DuplicateCandidateRow[],
 ): TwinVerdict {
-  const veredicto = decidirDuplicado(nueva, filas.map(aCapturaConocida));
-  if (veredicto.tipo === 'exacto') {
-    return { kind: 'merge', id: veredicto.con.id, changes: enriquecer(veredicto.con, nueva) };
+  const verdict = decideDuplicate(incoming, rows.map(toKnownCapture));
+  if (verdict.kind === 'exact') {
+    return { kind: 'merge', id: verdict.match.id, changes: enrich(verdict.match, incoming) };
   }
-  return { kind: 'new', flag: veredicto.tipo === 'parcial' };
+  return { kind: 'new', flag: verdict.kind === 'partial' };
 }
 
-function aCapturaConocida(fila: DuplicateCandidateRow): CapturaConocida {
+function toKnownCapture(row: DuplicateCandidateRow): KnownCapture {
   return {
-    id: fila.id,
-    source: fila.source,
-    date: fila.date.toISOString().slice(0, 10),
-    amount: fila.amount.toString(),
-    capturedAt: fila.capturedAt,
-    createdAt: fila.createdAt,
-    rawText: fila.rawText,
-    merchant: fila.merchant,
-    description: fila.description,
+    id: row.id,
+    source: row.source,
+    date: row.date.toISOString().slice(0, 10),
+    amount: row.amount.toString(),
+    capturedAt: row.capturedAt,
+    createdAt: row.createdAt,
+    rawText: row.rawText,
+    merchant: row.merchant,
+    description: row.description,
   };
 }

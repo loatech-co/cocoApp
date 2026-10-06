@@ -12,11 +12,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiProduces } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 
-import { TAMANO_MAXIMO } from './soportes.optimizacion';
-import { SoportesService, type ArchivoSubido } from './soportes.service';
+import { MAX_UPLOAD_BYTES } from './receipts.optimization';
+import { ReceiptsService, type IncomingFile } from './receipts.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -30,7 +30,7 @@ import { ReceiptResponse } from '../../contract/v1/receipts.response';
 import { receiptV1, type ReceiptV1 } from '../../presenters/v1/receipts.presenter';
 
 /** Cuántos archivos se aceptan de una vez. Ocho es el récord del lote. */
-const MAXIMO_POR_SUBIDA = 10;
+const MAX_FILES_PER_UPLOAD = 10;
 
 /**
  * Los soportes de un movimiento: el recibo que prueba que ese pago existió.
@@ -44,19 +44,23 @@ const MAXIMO_POR_SUBIDA = 10;
  * repetirlo: una anotación que se puede olvidar es una anotación que un día se
  * olvida.
  */
+// The tag the contract was published with: the swagger plugin derives it from
+// the class name, and the web's generated client is split by tag. It goes with
+// the published ids (src/openapi/document.ts).
+@ApiTags('Soportes')
 @ApiAuthenticated()
 @Controller('transactions')
-export class SoportesController {
-  constructor(private readonly soportes: SoportesService) {}
+export class ReceiptsController {
+  constructor(private readonly receipts: ReceiptsService) {}
 
   @Get(':id/soportes')
   @ApiData(ReceiptResponse, { isArray: true })
   @ApiErrors(400, 404)
-  async listar(
+  async list(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<ReceiptV1[]> {
-    return (await this.soportes.listar(user.id, id)).map(receiptV1);
+    return (await this.receipts.list(user.id, id)).map(receiptV1);
   }
 
   /**
@@ -74,8 +78,8 @@ export class SoportesController {
    */
   @Post(':id/soportes')
   @UseInterceptors(
-    FilesInterceptor('archivos', MAXIMO_POR_SUBIDA, {
-      limits: { fileSize: TAMANO_MAXIMO, files: MAXIMO_POR_SUBIDA },
+    FilesInterceptor('archivos', MAX_FILES_PER_UPLOAD, {
+      limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_FILES_PER_UPLOAD },
     }),
   )
   @ApiConsumes('multipart/form-data')
@@ -86,7 +90,7 @@ export class SoportesController {
       properties: {
         archivos: {
           type: 'array',
-          maxItems: MAXIMO_POR_SUBIDA,
+          maxItems: MAX_FILES_PER_UPLOAD,
           items: { type: 'string', format: 'binary' },
         },
       },
@@ -98,25 +102,25 @@ export class SoportesController {
     description: 'Every receipt of the transaction after the upload.',
   })
   @ApiErrors(400, 404, 413, 415, 503)
-  async subir(
+  async upload(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     // Sin archivos en la petición, multer no deja ni el arreglo vacío.
-    @UploadedFiles() archivos: ArchivoSubido[] | undefined,
+    @UploadedFiles() files: IncomingFile[] | undefined,
   ): Promise<ReceiptV1[]> {
-    return (await this.soportes.subir(user.id, id, archivos ?? [])).map(receiptV1);
+    return (await this.receipts.upload(user.id, id, files ?? [])).map(receiptV1);
   }
 
   @Delete(':id/soportes/:soporteId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContent()
   @ApiErrors(400, 404, 503)
-  eliminar(
+  remove(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-    @Param('soporteId', ParseBigIntPipe) soporteId: bigint,
+    @Param('soporteId', ParseBigIntPipe) receiptId: bigint,
   ): Promise<void> {
-    return this.soportes.eliminar(user.id, id, soporteId);
+    return this.receipts.remove(user.id, id, receiptId);
   }
 
   @Get(':id/soportes/:soporteId')
@@ -126,20 +130,24 @@ export class SoportesController {
     schema: { type: 'string', format: 'binary' },
   })
   @ApiErrors(400, 404, 503)
-  async descargar(
+  async download(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-    @Param('soporteId', ParseBigIntPipe) soporteId: bigint,
+    @Param('soporteId', ParseBigIntPipe) receiptId: bigint,
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
-    const { flujo, nombre, mime, tamano } = await this.soportes.descargar(user.id, id, soporteId);
+    const { stream, fileName, mime, sizeBytes } = await this.receipts.download(
+      user.id,
+      id,
+      receiptId,
+    );
 
     res.set({
       'Content-Type': mime,
-      'Content-Length': String(tamano),
+      'Content-Length': String(sizeBytes),
       // `inline`: el visor del modal lo enseña, no lo descarga. El nombre va
       // entre comillas y codificado porque lleva espacios, tildes y paréntesis.
-      'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(nombre)}`,
+      'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(fileName)}`,
       // Sin esto, un archivo subido con el tipo equivocado podría interpretarse
       // como HTML y ejecutarse en el origen de la aplicación.
       'X-Content-Type-Options': 'nosniff',
@@ -151,6 +159,6 @@ export class SoportesController {
       'Content-Security-Policy': "default-src 'none'; object-src 'self'; frame-ancestors 'self'",
     });
 
-    return new StreamableFile(flujo);
+    return new StreamableFile(stream);
   }
 }

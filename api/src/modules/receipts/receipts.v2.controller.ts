@@ -13,15 +13,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiProduces } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 
-import { TAMANO_MAXIMO } from './soportes.optimizacion';
+import { MAX_UPLOAD_BYTES } from './receipts.optimization';
 import {
-  SoportesService,
-  type ArchivoSubido,
+  ReceiptsService,
+  type IncomingFile,
   type Receipt as ReceiptBody,
-} from './soportes.service';
+} from './receipts.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -46,10 +46,14 @@ const FILES_FIELD = 'files';
  * v2 of a transaction's receipts (v1 `soportes`): the same service,
  * translated at the edge. The download is the file itself, as in v1.
  */
+// The tag the contract was published with: the swagger plugin derives it from
+// the class name, and the web's generated client is split by tag. It goes with
+// the published ids (src/openapi/document.ts).
+@ApiTags('SoportesV2')
 @ApiAuthenticated()
 @Controller({ path: 'transactions', version: '2' })
-export class SoportesV2Controller {
-  constructor(private readonly soportes: SoportesService) {}
+export class ReceiptsV2Controller {
+  constructor(private readonly receipts: ReceiptsService) {}
 
   @Get(':id/receipts')
   @ApiDataV2(Receipt, { isPage: true })
@@ -59,13 +63,13 @@ export class SoportesV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Query() query: PageQuery,
   ): Promise<Page<ReceiptBody>> {
-    return paginate((await this.soportes.listar(user.id, id)).map(receiptV2), query);
+    return paginate((await this.receipts.list(user.id, id)).map(receiptV2), query);
   }
 
   @Post(':id/receipts')
   @UseInterceptors(
     FilesInterceptor(FILES_FIELD, MAX_PER_UPLOAD, {
-      limits: { fileSize: TAMANO_MAXIMO, files: MAX_PER_UPLOAD },
+      limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_PER_UPLOAD },
     }),
   )
   @ApiConsumes('multipart/form-data')
@@ -91,9 +95,9 @@ export class SoportesV2Controller {
   async upload(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-    @UploadedFiles() files: ArchivoSubido[] | undefined,
+    @UploadedFiles() files: IncomingFile[] | undefined,
   ): Promise<Page<ReceiptBody>> {
-    return paginate((await this.soportes.subir(user.id, id, files ?? [])).map(receiptV2), {});
+    return paginate((await this.receipts.upload(user.id, id, files ?? [])).map(receiptV2), {});
   }
 
   @Delete(':id/receipts/:receiptId')
@@ -105,7 +109,7 @@ export class SoportesV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Param('receiptId', ParseBigIntPipe) receiptId: bigint,
   ): Promise<void> {
-    return this.soportes.eliminar(user.id, id, receiptId);
+    return this.receipts.remove(user.id, id, receiptId);
   }
 
   /** The same headers as v1: the file opens inline, is never cached and runs nothing. */
@@ -122,15 +126,19 @@ export class SoportesV2Controller {
     @Param('receiptId', ParseBigIntPipe) receiptId: bigint,
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
-    const { flujo, nombre, mime, tamano } = await this.soportes.descargar(user.id, id, receiptId);
+    const { stream, fileName, mime, sizeBytes } = await this.receipts.download(
+      user.id,
+      id,
+      receiptId,
+    );
     res.set({
       'Content-Type': mime,
-      'Content-Length': String(tamano),
-      'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(nombre)}`,
+      'Content-Length': String(sizeBytes),
+      'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(fileName)}`,
       'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'private, no-store',
       'Content-Security-Policy': "default-src 'none'; object-src 'self'; frame-ancestors 'self'",
     });
-    return new StreamableFile(flujo);
+    return new StreamableFile(stream);
   }
 }

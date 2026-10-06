@@ -1,5 +1,5 @@
 import { transactionV2 } from './transactions.presenter';
-import type { Capture, Interpretation } from '../../modules/interpretacion/interpretation.domain';
+import type { Capture, Interpretation } from '../../modules/interpretation/interpretation.domain';
 
 /** v2 bodies of the interpretation and the capture (see `transactions.presenter.ts`). */
 

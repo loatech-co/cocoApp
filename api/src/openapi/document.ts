@@ -54,7 +54,7 @@ function operationId(controllerKey: string, methodKey: string): string {
     ? controllerKey.slice(0, -'V2Controller'.length)
     : controllerKey;
   const id = `${resource}_${methodKey}`;
-  return V1_PUBLISHED_IDS[id] ?? id;
+  return V1_PUBLISHED_IDS[id] ?? V2_PUBLISHED_IDS[id] ?? id;
 }
 
 /**
@@ -108,6 +108,27 @@ const V1_PUBLISHED_IDS: Readonly<Record<string, string>> = {
   TransactionsController_update: 'TransactionsController_actualizar',
   TransactionsController_remove: 'TransactionsController_eliminar',
   DashboardController_get: 'DashboardController_resumen',
+  InterpretationController_interpret: 'InterpretacionController_interpretar',
+  InterpretationController_capture: 'InterpretacionController_capturar',
+  ReceiptsController_list: 'SoportesController_listar',
+  ReceiptsController_upload: 'SoportesController_subir',
+  ReceiptsController_remove: 'SoportesController_eliminar',
+  ReceiptsController_download: 'SoportesController_descargar',
+};
+
+/**
+ * The v2 ids published with a Spanish controller name. The id is built from
+ * the class, and the web's generated client turns it into a function name:
+ * renaming the class (7.2-g) must not rename the client's functions. The
+ * table goes when the web regenerates its client with the English ids.
+ */
+const V2_PUBLISHED_IDS: Readonly<Record<string, string>> = {
+  Interpretation_interpret: 'Interpretacion_interpret',
+  Interpretation_capture: 'Interpretacion_capture',
+  Receipts_list: 'Soportes_list',
+  Receipts_upload: 'Soportes_upload',
+  Receipts_remove: 'Soportes_remove',
+  Receipts_download: 'Soportes_download',
 };
 
 /** Every `$ref` reachable from `value`, followed through `schemas`. */

@@ -34,7 +34,7 @@ import {
 import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { serialize, toMoney, type Money } from '../../common/money/money';
 import type { TransactionType } from '../../generated/prisma/client';
-import { SoportesService } from '../soportes/soportes.service';
+import { ReceiptsService } from '../receipts/receipts.service';
 import { TagsService } from '../tags/tags.service';
 
 /** What other modules see of a transaction: they reach the domain through the service. */
@@ -56,7 +56,7 @@ export class TransactionsService {
   constructor(
     private readonly repository: TransactionsRepository,
     private readonly tags: TagsService,
-    private readonly receipts: SoportesService,
+    private readonly receipts: ReceiptsService,
   ) {}
 
   // ── Lectura ────────────────────────────────────────────────────────────────

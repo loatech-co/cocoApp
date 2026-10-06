@@ -16,7 +16,7 @@ export interface MovementForUpload {
  * movement does not exist for these queries, so no branch can skip the check.
  */
 @Injectable()
-export class SoportesRepository {
+export class ReceiptsRepository {
   constructor(private readonly db: Database) {}
 
   findByTransaction(userId: bigint, transactionId: bigint): Promise<Receipt[]> {
@@ -29,9 +29,9 @@ export class SoportesRepository {
   }
 
   /** The receipt, its movement and its owner, all three in the same `where`. */
-  findOne(userId: bigint, transactionId: bigint, soporteId: bigint): Promise<Receipt | null> {
+  findOne(userId: bigint, transactionId: bigint, receiptId: bigint): Promise<Receipt | null> {
     return this.db.forUser(userId, (tx) =>
-      tx.receipt.findFirst({ where: { id: soporteId, transactionId, userId } }),
+      tx.receipt.findFirst({ where: { id: receiptId, transactionId, userId } }),
     );
   }
 
@@ -50,16 +50,16 @@ export class SoportesRepository {
   }
 
   async maxOrder(userId: bigint, transactionId: bigint): Promise<number | null> {
-    const ultimo = await this.db.forUser(userId, (tx) =>
+    const last = await this.db.forUser(userId, (tx) =>
       tx.receipt.aggregate({ where: { userId, transactionId }, _max: { position: true } }),
     );
-    return ultimo._max.position;
+    return last._max.position;
   }
 
-  async existsWithHash(userId: bigint, transactionId: bigint, huella: string): Promise<boolean> {
+  async existsWithHash(userId: bigint, transactionId: bigint, hash: string): Promise<boolean> {
     const found = await this.db.forUser(userId, (tx) =>
       tx.receipt.findFirst({
-        where: { userId, transactionId, contentHash: huella },
+        where: { userId, transactionId, contentHash: hash },
         select: { id: true },
       }),
     );
@@ -70,9 +70,9 @@ export class SoportesRepository {
     await this.db.forUser(data.userId, (tx) => tx.receipt.create({ data }));
   }
 
-  async delete(userId: bigint, transactionId: bigint, soporteId: bigint): Promise<void> {
+  async delete(userId: bigint, transactionId: bigint, receiptId: bigint): Promise<void> {
     await this.db.forUser(userId, (tx) =>
-      tx.receipt.deleteMany({ where: { id: soporteId, transactionId, userId } }),
+      tx.receipt.deleteMany({ where: { id: receiptId, transactionId, userId } }),
     );
   }
 

@@ -1,5 +1,5 @@
-import { InterpretacionService } from './interpretacion.service';
-import * as motor from './interpretar';
+import * as engine from './interpret';
+import { InterpretationService } from './interpretation.service';
 import { ValidationError } from '../../common/errors/domain-error';
 import type { CategoryLookupService } from '../categories/category-lookup.service';
 import type { CategorizationService } from '../categorization/categorization.service';
@@ -13,11 +13,11 @@ import type { TransactionsService } from '../transactions/transactions.service';
  * se decide aquí es la forma de la clasificación y a qué se llama, no el SQL.
  */
 describe('InterpretacionService con una clasificación elegida', () => {
-  const USUARIO = 1n;
+  const USER_ID = 1n;
 
   // Costos variables (10) › Alimentación (20) › Mercado (30); Transporte (21)
   // es categoría sin conceptos; Gimnasio (31) está archivado.
-  const filas = new Map<
+  const rows = new Map<
     bigint,
     {
       id: bigint;
@@ -36,12 +36,12 @@ describe('InterpretacionService con una clasificación elegida', () => {
     [31n, { id: 31n, name: 'Gimnasio', isArchived: true, parent: { id: 20n, parentId: 10n } }],
   ]);
 
-  let crear: jest.Mock;
-  let servicio: InterpretacionService;
-  let interpretar: jest.SpyInstance;
+  let create: jest.Mock;
+  let service: InterpretationService;
+  let interpretSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    crear = jest.fn((_userId: bigint, dto: Record<string, unknown>) =>
+    create = jest.fn((_userId: bigint, dto: Record<string, unknown>) =>
       Promise.resolve({ ...dto, id: 99n }),
     );
     // Sin repetidas ni candidatas a duplicado: aquí se prueba la clasificación.
@@ -51,7 +51,7 @@ describe('InterpretacionService con una clasificación elegida', () => {
     } as unknown as LedgerService;
     const categories = {
       findChosen: jest.fn((userId: bigint, id: bigint) =>
-        Promise.resolve(userId === USUARIO ? (filas.get(id) ?? null) : null),
+        Promise.resolve(userId === USER_ID ? (rows.get(id) ?? null) : null),
       ),
       findSearchable: jest.fn().mockResolvedValue([
         { id: 10n, parentId: null, name: 'Costos variables', keywords: [] },
@@ -66,21 +66,21 @@ describe('InterpretacionService con una clasificación elegida', () => {
     // Wallet y SMS pasan por `prepararAlta` y la escritura con candado; lo
     // que se escribe es lo mismo, así que las dos puertas comparten el doble.
     const transactions = {
-      create: crear,
-      prepareCreate: crear,
+      create,
+      prepareCreate: create,
       get: jest.fn((_userId: bigint, id: bigint) => Promise.resolve({ id })),
     } as unknown as TransactionsService;
-    servicio = new InterpretacionService(ledger, categories, categorization, transactions);
-    interpretar = jest.spyOn(motor, 'interpretar');
+    service = new InterpretationService(ledger, categories, categorization, transactions);
+    interpretSpy = jest.spyOn(engine, 'interpret');
   });
 
   afterEach(() => jest.restoreAllMocks());
 
-  const capturar = (body: Record<string, unknown>) =>
-    servicio.capturar(USUARIO, { source: 'ios_manual', external_ref: 'ref-1', ...body } as never);
+  const capture = (body: Record<string, unknown>) =>
+    service.capture(USER_ID, { source: 'ios_manual', external_ref: 'ref-1', ...body } as never);
 
   it('un concepto elegido se guarda con certeza alta, sin fuente y sin revisar', async () => {
-    const r = await capturar({ monto: '45000', category_id: '30' });
+    const r = await capture({ monto: '45000', category_id: '30' });
 
     expect(r.classification).toMatchObject({
       certainty: 'high',
@@ -90,14 +90,14 @@ describe('InterpretacionService con una clasificación elegida', () => {
     });
     expect(r.classification.conceptId).toBe(30n);
     expect(r.classification.categoryId).toBe(20n);
-    expect(crear).toHaveBeenCalledWith(
-      USUARIO,
+    expect(create).toHaveBeenCalledWith(
+      USER_ID,
       expect.objectContaining({ category_id: 30, por_revisar: false }),
     );
   });
 
   it('una categoría elegida (profundidad 2) queda con certeza media y por revisar', async () => {
-    const r = await capturar({ monto: '18500', category_id: '21' });
+    const r = await capture({ monto: '18500', category_id: '21' });
 
     expect(r.classification).toMatchObject({
       certainty: 'medium',
@@ -105,31 +105,31 @@ describe('InterpretacionService con una clasificación elegida', () => {
       categoryId: 21n,
       name: 'Transporte',
     });
-    expect(crear).toHaveBeenCalledWith(
-      USUARIO,
+    expect(create).toHaveBeenCalledWith(
+      USER_ID,
       expect.objectContaining({ category_id: 21, por_revisar: true }),
     );
   });
 
   it('un centro de costos no clasifica nada: 422', async () => {
-    await expect(capturar({ monto: '1000', category_id: '10' })).rejects.toBeInstanceOf(
+    await expect(capture({ monto: '1000', category_id: '10' })).rejects.toBeInstanceOf(
       ValidationError,
     );
-    expect(crear).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('un concepto archivado, 422', async () => {
-    await expect(capturar({ monto: '1000', category_id: '31' })).rejects.toBeInstanceOf(
+    await expect(capture({ monto: '1000', category_id: '31' })).rejects.toBeInstanceOf(
       ValidationError,
     );
   });
 
   it('un id ajeno o inexistente, 422', async () => {
-    await expect(capturar({ monto: '1000', category_id: '404' })).rejects.toBeInstanceOf(
+    await expect(capture({ monto: '1000', category_id: '404' })).rejects.toBeInstanceOf(
       ValidationError,
     );
     await expect(
-      servicio.capturar(2n, {
+      service.capture(2n, {
         source: 'ios_manual',
         external_ref: 'ref-2',
         monto: '1000',
@@ -140,11 +140,11 @@ describe('InterpretacionService con una clasificación elegida', () => {
 
   it('sin texto ni comercio, con concepto y monto, construye el resultado sin llamar a interpretar()', async () => {
     // La coma decimal se normaliza aquí, igual que cuando pasa por el motor.
-    const r = await capturar({ monto: '45000,00', fecha: '2026-10-03', category_id: '30' });
+    const r = await capture({ monto: '45000,00', fecha: '2026-10-03', category_id: '30' });
 
-    expect(interpretar).not.toHaveBeenCalled();
-    expect(crear).toHaveBeenCalledWith(
-      USUARIO,
+    expect(interpretSpy).not.toHaveBeenCalled();
+    expect(create).toHaveBeenCalledWith(
+      USER_ID,
       expect.objectContaining({
         amount: '45000.00',
         date: '2026-10-03',
@@ -156,46 +156,46 @@ describe('InterpretacionService con una clasificación elegida', () => {
   });
 
   it('sin texto, sin comercio y sin concepto sigue siendo 422, aunque venga el monto', async () => {
-    await expect(capturar({ monto: '45000' })).rejects.toBeInstanceOf(ValidationError);
-    expect(interpretar).not.toHaveBeenCalled();
+    await expect(capture({ monto: '45000' })).rejects.toBeInstanceOf(ValidationError);
+    expect(interpretSpy).not.toHaveBeenCalled();
   });
 
   it('con texto, lo elegido manda sobre lo que el motor propone', async () => {
-    const r = await capturar({
+    const r = await capture({
       texto: 'compra por $45.000 en KOBA COLOMBIA el 03/10/2026',
       source: 'sms',
       category_id: '21',
     });
 
-    expect(interpretar).toHaveBeenCalledTimes(1);
+    expect(interpretSpy).toHaveBeenCalledTimes(1);
     expect(r.classification).toMatchObject({
       certainty: 'medium',
       categoryId: 21n,
       reason: 'Lo eligió la persona.',
     });
     // Y lo leído del texto se conserva.
-    expect(crear).toHaveBeenCalledWith(
-      USUARIO,
+    expect(create).toHaveBeenCalledWith(
+      USER_ID,
       expect.objectContaining({ amount: '45000', date: '2026-10-03', category_id: 21 }),
     );
   });
 
   it('la nota va a notes, y sin monto se le añade el aviso', async () => {
-    await capturar({ monto: '1000', category_id: '30', nota: 'Para la semana' });
-    expect(crear).toHaveBeenLastCalledWith(
-      USUARIO,
+    await capture({ monto: '1000', category_id: '30', nota: 'Para la semana' });
+    expect(create).toHaveBeenLastCalledWith(
+      USER_ID,
       expect.objectContaining({ notes: 'Para la semana' }),
     );
 
-    await capturar({ comercio: 'Exito', category_id: '30', nota: 'Sin ticket' });
-    expect(crear).toHaveBeenLastCalledWith(
-      USUARIO,
+    await capture({ comercio: 'Exito', category_id: '30', nota: 'Sin ticket' });
+    expect(create).toHaveBeenLastCalledWith(
+      USER_ID,
       expect.objectContaining({ notes: 'Sin ticket\nCapturado sin valor: hay que ponerlo.' }),
     );
 
-    await capturar({ comercio: 'Exito', category_id: '30' });
-    expect(crear).toHaveBeenLastCalledWith(
-      USUARIO,
+    await capture({ comercio: 'Exito', category_id: '30' });
+    expect(create).toHaveBeenLastCalledWith(
+      USER_ID,
       expect.objectContaining({ notes: 'Capturado sin valor: hay que ponerlo.' }),
     );
   });

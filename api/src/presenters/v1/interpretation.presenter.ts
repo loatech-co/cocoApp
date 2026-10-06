@@ -6,7 +6,7 @@ import type {
   Classification,
   ClassificationSource,
   Interpretation,
-} from '../../modules/interpretacion/interpretation.domain';
+} from '../../modules/interpretation/interpretation.domain';
 
 interface ClassificationV1 {
   certeza: Spanish<typeof CERTAINTY, Certainty>;

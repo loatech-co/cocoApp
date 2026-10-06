@@ -1,12 +1,13 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { CaptureInput, InterpretInput } from './dto/v2/interpretation.dto';
-import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
-import { InterpretacionService } from './interpretacion.service';
 import type {
   Capture as CaptureBody,
   Interpretation as InterpretationBody,
 } from './interpretation.domain';
+import type { CaptureBodyDto, InterpretBodyDto } from './interpretation.dto';
+import { InterpretationService } from './interpretation.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { Capture, Interpretation } from '../../contract/v2/interpretation.response';
@@ -48,10 +49,14 @@ function captureBody(input: CaptureInput): CaptureBodyDto {
  * presenter. The capture keeps its idempotency: the same
  * `externalRef` twice is one transaction.
  */
+// The tag the contract was published with: the swagger plugin derives it from
+// the class name, and the web's generated client is split by tag. It goes with
+// the published ids (src/openapi/document.ts).
+@ApiTags('InterpretacionV2')
 @ApiAuthenticated()
 @Controller({ path: 'transactions', version: '2' })
-export class InterpretacionV2Controller {
-  constructor(private readonly interpretacion: InterpretacionService) {}
+export class InterpretationV2Controller {
+  constructor(private readonly interpretation: InterpretationService) {}
 
   @Post('interpret')
   @HttpCode(HttpStatus.OK)
@@ -61,7 +66,7 @@ export class InterpretacionV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: InterpretInput,
   ): Promise<InterpretationBody> {
-    return interpretationV2(await this.interpretacion.interpretar(user.id, interpretBody(input)));
+    return interpretationV2(await this.interpretation.interpret(user.id, interpretBody(input)));
   }
 
   @Post('capture')
@@ -72,6 +77,6 @@ export class InterpretacionV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CaptureInput,
   ): Promise<CaptureBody> {
-    return captureV2(await this.interpretacion.capturar(user.id, captureBody(input)));
+    return captureV2(await this.interpretation.capture(user.id, captureBody(input)));
   }
 }

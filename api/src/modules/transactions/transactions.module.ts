@@ -7,11 +7,11 @@ import { TransactionsController } from './transactions.controller';
 import { TransactionsRepository } from './transactions.repository';
 import { TransactionsService } from './transactions.service';
 import { TransactionsV2Controller } from './transactions.v2.controller';
-import { SoportesModule } from '../soportes/soportes.module';
+import { ReceiptsModule } from '../receipts/receipts.module';
 import { TagsModule } from '../tags/tags.module';
 
 @Module({
-  imports: [TagsModule, SoportesModule],
+  imports: [TagsModule, ReceiptsModule],
   controllers: [TransactionsController, TransactionsV2Controller],
   providers: [
     TransactionsService,

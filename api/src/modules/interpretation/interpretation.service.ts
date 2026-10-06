@@ -2,28 +2,23 @@ import { Injectable } from '@nestjs/common';
 
 import type { SearchableNode } from '@coco/receipt-parser';
 
+import { DUPLICATING_SOURCES, twinCriteria, twinVerdict, type NewCapture } from './duplicates';
 import {
-  ORIGENES_QUE_SE_DUPLICAN,
-  criteriosDeGemela,
-  veredictoDeGemela,
-  type CapturaNueva,
-} from './duplicados';
-import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
-import {
-  interpretar,
-  resumenDe,
-  type ClasificacionInterpretada,
-  type Interpretado,
-} from './interpretar';
+  interpret,
+  summaryOf,
+  type InterpretedClassification,
+  type Interpreted,
+} from './interpret';
 import {
   classificationOf,
   interpretationOf,
-  hoyEnBogota,
-  idParaGuardar,
-  notasDe,
+  todayInBogota,
+  categoryIdToSave,
+  notesOf,
   type Capture,
   type Interpretation,
 } from './interpretation.domain';
+import type { CaptureBodyDto, InterpretBodyDto } from './interpretation.dto';
 import { nest } from '../../common/categories/categories.tree';
 import { DuplicateError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { CategoryLookupService } from '../categories/category-lookup.service';
@@ -45,7 +40,7 @@ import { TransactionsService, type Transaction } from '../transactions/transacti
  * escribe lo que digan.
  */
 @Injectable()
-export class InterpretacionService {
+export class InterpretationService {
   constructor(
     private readonly ledger: LedgerService,
     private readonly categories: CategoryLookupService,
@@ -53,20 +48,20 @@ export class InterpretacionService {
     private readonly transactions: TransactionsService,
   ) {}
 
-  async interpretar(userId: bigint, dto: InterpretBodyDto): Promise<Interpretation> {
-    const interpretado = await this.leer(userId, dto);
-    return interpretationOf(interpretado);
+  async interpret(userId: bigint, dto: InterpretBodyDto): Promise<Interpretation> {
+    const interpreted = await this.read(userId, dto);
+    return interpretationOf(interpreted);
   }
 
-  async capturar(userId: bigint, dto: CaptureBodyDto): Promise<Capture> {
+  async capture(userId: bigint, dto: CaptureBodyDto): Promise<Capture> {
     /*
       ── Idempotencia, antes que nada ────────────────────────────────────────
       Un cliente que reintenta manda el mismo `external_ref`. Si ya está, se
       devuelve lo que hay y no se interpreta ni se crea nada: la respuesta es
       la misma que recibió —o no llegó a recibir— la primera vez.
     */
-    const repetida = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
-    if (repetida !== null) return this.yaEstaba(userId, repetida, dto, true, false);
+    const existingId = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
+    if (existingId !== null) return this.alreadyRecorded(userId, existingId, dto, true, false);
 
     /*
       ── Lo elegido manda ────────────────────────────────────────────────────
@@ -75,29 +70,29 @@ export class InterpretacionService {
       para clasificar, y se guarda tal cual. Se resuelve ANTES de interpretar
       para que un id malo responda 422 sin gastar una lectura del árbol.
     */
-    const elegida =
+    const chosen =
       dto.category_id === undefined
         ? null
-        : await this.clasificacionElegida(userId, BigInt(dto.category_id));
-    const interpretado = await this.leer(userId, dto, elegida);
-    const capturadaEn = dto.captured_at ? new Date(dto.captured_at) : new Date();
+        : await this.chosenClassification(userId, BigInt(dto.category_id));
+    const interpreted = await this.read(userId, dto, chosen);
+    const capturedAt = dto.captured_at ? new Date(dto.captured_at) : new Date();
 
-    const nueva: CapturaNueva = {
+    const incoming: NewCapture = {
       source: dto.source,
       // Sin fecha legible, la del momento de la captura: un gasto necesita un
       // día, y el de la captura es la mejor aproximación. Queda marcado.
-      date: interpretado.fecha ?? capturadaEn.toISOString().slice(0, 10),
+      date: interpreted.date ?? capturedAt.toISOString().slice(0, 10),
       // Sin monto, cero y marcado: Wallet a veces agota su espera y manda la
       // transacción sin valor. Perderla sería peor que registrarla en cero
       // para que alguien le ponga la cifra.
-      amount: interpretado.monto ?? '0',
-      capturedAt: capturadaEn,
+      amount: interpreted.amount ?? '0',
+      capturedAt,
       rawText: dto.texto ?? null,
-      merchant: interpretado.comercio,
-      description: interpretado.descripcion,
+      merchant: interpreted.merchant,
+      description: interpreted.description,
     };
 
-    return this.registrar(userId, dto, nueva, interpretado);
+    return this.record(userId, dto, incoming, interpreted);
   }
 
   /*
@@ -108,34 +103,34 @@ export class InterpretacionService {
     al primero y lo encuentra. Exacto: se enriquece la que había y se
     devuelve. Parcial: se crea, pero marcada. Decide la función pura.
   */
-  private async registrar(
+  private async record(
     userId: bigint,
     dto: CaptureBodyDto,
-    nueva: CapturaNueva,
-    interpretado: Interpretado,
+    incoming: NewCapture,
+    interpreted: Interpreted,
   ): Promise<Capture> {
-    const alta = altaDe(dto, nueva, interpretado);
+    const newTransaction = newTransactionOf(dto, incoming, interpreted);
     try {
-      if (!ORIGENES_QUE_SE_DUPLICAN.has(dto.source)) {
-        return creadaAVista(await this.transactions.create(userId, alta), interpretado);
+      if (!DUPLICATING_SOURCES.has(dto.source)) {
+        return createdCapture(await this.transactions.create(userId, newTransaction), interpreted);
       }
-      const lista = await this.transactions.prepareCreate(userId, alta);
-      const destino = await this.ledger.createUnlessTwin(
-        lista,
-        criteriosDeGemela(userId, dto.source, nueva),
-        (filas) => veredictoDeGemela(nueva, filas),
+      const prepared = await this.transactions.prepareCreate(userId, newTransaction);
+      const outcome = await this.ledger.createUnlessTwin(
+        prepared,
+        twinCriteria(userId, dto.source, incoming),
+        (rows) => twinVerdict(incoming, rows),
       );
-      if (destino.kind === 'merged') {
-        return await this.yaEstaba(
+      if (outcome.kind === 'merged') {
+        return await this.alreadyRecorded(
           userId,
-          destino.id,
+          outcome.id,
           dto,
           false,
           true,
-          interpretado.clasificacion,
+          interpreted.classification,
         );
       }
-      return creadaAVista(await this.transactions.get(userId, destino.id), interpretado);
+      return createdCapture(await this.transactions.get(userId, outcome.id), interpreted);
     } catch (error) {
       /*
         Dos capturas con el mismo `external_ref` a la vez —dos reintentos que
@@ -145,21 +140,21 @@ export class InterpretacionService {
         estado desde el principio.
       */
       if (!(error instanceof DuplicateError)) throw error;
-      const existente = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
+      const existingId = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
       // Parity with the former findFirstOrThrow: a vanished row is a 404.
-      if (existente === null) throw new NotFoundError('El recurso no existe.');
-      return this.yaEstaba(userId, existente, dto, true, false, interpretado.clasificacion);
+      if (existingId === null) throw new NotFoundError('El recurso no existe.');
+      return this.alreadyRecorded(userId, existingId, dto, true, false, interpreted.classification);
     }
   }
 
   // ── Plomería ───────────────────────────────────────────────────────────────
 
-  private async leer(
+  private async read(
     userId: bigint,
     dto: InterpretBodyDto,
-    elegida: ClasificacionInterpretada | null = null,
-  ): Promise<Interpretado> {
-    const monto = dto.monto?.replace(',', '.');
+    chosen: InterpretedClassification | null = null,
+  ): Promise<Interpreted> {
+    const amount = dto.monto?.replace(',', '.');
     if (!dto.texto?.trim() && !dto.comercio?.trim()) {
       /*
         Un gasto anotado a mano en el teléfono —concepto y monto, nada más— no
@@ -168,14 +163,14 @@ export class InterpretacionService {
         directo sin pasar por `interpretar()`, que seguiría buscando en vacío.
         Sin monto o sin elección, sí falta algo que leer.
       */
-      if (elegida && monto !== undefined) {
+      if (chosen && amount !== undefined) {
         return {
-          monto,
-          fecha: dto.fecha ?? null,
-          comercio: null,
-          descripcion: null,
-          clasificacion: elegida,
-          porRevisar: elegida.certeza !== 'alta',
+          amount,
+          date: dto.fecha ?? null,
+          merchant: null,
+          description: null,
+          classification: chosen,
+          needsReview: chosen.certainty !== 'alta',
         };
       }
       throw new ValidationError('Hace falta un texto o, al menos, el comercio.', {
@@ -183,38 +178,38 @@ export class InterpretacionService {
       });
     }
 
-    const [arbol, historial] = await Promise.all([
-      this.arbolDe(userId),
+    const [tree, history] = await Promise.all([
+      this.treeOf(userId),
       // El historial se consulta con lo más parecido a una descripción: el
       // comercio si viene; si no, el texto. Un SMS entero trae mucho ruido de
       // banco y el historial lo nota en la confianza, que es lo correcto.
       this.categorization.suggestFor(userId, dto.comercio?.trim() || dto.texto?.trim() || ''),
     ]);
 
-    const leido = interpretar(
+    const parsed = interpret(
       {
-        texto: dto.texto,
-        comercio: dto.comercio,
-        monto,
-        fecha: dto.fecha,
-        nombreDeArchivo: dto.nombre_de_archivo,
-        periodo: dto.periodo,
+        text: dto.texto,
+        merchant: dto.comercio,
+        amount,
+        date: dto.fecha,
+        fileName: dto.nombre_de_archivo,
+        period: dto.periodo,
       },
       {
-        arbol,
-        historial: historial
-          ? { categoryId: String(historial.categoryId), confidence: historial.confidence }
+        tree,
+        history: history
+          ? { categoryId: String(history.categoryId), confidence: history.confidence }
           : null,
-        hoy: hoyEnBogota(),
+        today: todayInBogota(),
       },
     );
-    if (!elegida) return leido;
+    if (!chosen) return parsed;
 
     // Lo que el motor entendió del texto —monto, fecha, comercio— se queda;
     // lo que propuso como clasificación, no: la persona ya lo decidió. Y lo
     // que marca para revisar es solo la elección a medias (una categoría sin
     // concepto), no la duda del motor, que aquí no cuenta.
-    return { ...leido, clasificacion: elegida, porRevisar: elegida.certeza !== 'alta' };
+    return { ...parsed, classification: chosen, needsReview: chosen.certainty !== 'alta' };
   }
 
   /**
@@ -228,33 +223,33 @@ export class InterpretacionService {
    * clasifica nada —los movimientos viven tres niveles más abajo— y lo
    * archivado ya no vuelve, así que ninguno de los dos se acepta.
    */
-  private async clasificacionElegida(
+  private async chosenClassification(
     userId: bigint,
     id: bigint,
-  ): Promise<ClasificacionInterpretada> {
-    const fila = await this.categories.findChosen(userId, id);
+  ): Promise<InterpretedClassification> {
+    const row = await this.categories.findChosen(userId, id);
     // La misma respuesta para «no existe» y «no es tuya»: decir cuál de las
     // dos es revelaría ids ajenos.
-    if (!fila)
+    if (!row)
       throw new ValidationError('La categoría indicada no existe o no es tuya.', {
         code: 'category_not_owned',
       });
-    if (fila.isArchived)
+    if (row.isArchived)
       throw new ValidationError('Ese concepto está archivado.', { code: 'concept_archived' });
-    if (!fila.parent)
+    if (!row.parent)
       throw new ValidationError('Un centro de costos no clasifica nada: elige un concepto.', {
         code: 'cost_center_cannot_classify',
       });
 
-    const esConcepto = fila.parent.parentId !== null;
+    const isConcept = row.parent.parentId !== null;
     return {
-      certeza: esConcepto ? 'alta' : 'media',
-      fuente: null,
-      conceptoId: esConcepto ? fila.id.toString() : null,
-      categoriaId: esConcepto ? fila.parent.id.toString() : fila.id.toString(),
-      nombre: fila.name,
-      candidatos: [],
-      motivo: 'Lo eligió la persona.',
+      certainty: isConcept ? 'alta' : 'media',
+      source: null,
+      conceptId: isConcept ? row.id.toString() : null,
+      categoryId: isConcept ? row.parent.id.toString() : row.id.toString(),
+      name: row.name,
+      candidates: [],
+      reason: 'Lo eligió la persona.',
     };
   }
 
@@ -264,9 +259,9 @@ export class InterpretacionService {
    * Archivado quiere decir «esto ya no vuelve»: proponerlo sería clasificar
    * un gasto de hoy en el gimnasio que se dio de baja.
    */
-  private async arbolDe(userId: bigint): Promise<SearchableNode[]> {
-    const filas = await this.categories.findSearchable(userId);
-    const aNodo = (f: {
+  private async treeOf(userId: bigint): Promise<SearchableNode[]> {
+    const rows = await this.categories.findSearchable(userId);
+    const toNode = (f: {
       id: bigint;
       name: string;
       keywords: string[];
@@ -275,74 +270,74 @@ export class InterpretacionService {
       id: f.id.toString(),
       name: f.name,
       keywords: f.keywords,
-      children: (f.children as (typeof f)[]).map(aNodo),
+      children: (f.children as (typeof f)[]).map(toNode),
     });
-    return nest(filas).map(aNodo);
+    return nest(rows).map(toNode);
   }
 
-  private async yaEstaba(
+  private async alreadyRecorded(
     userId: bigint,
     id: bigint,
     dto: CaptureBodyDto,
-    repetido: boolean,
-    fusionado: boolean,
-    clasificacion?: ClasificacionInterpretada,
+    isDuplicate: boolean,
+    isMerged: boolean,
+    classification?: InterpretedClassification,
   ): Promise<Capture> {
     const transaction = await this.transactions.get(userId, id);
-    const vista: ClasificacionInterpretada = clasificacion ??
+    const shown: InterpretedClassification = classification ??
       // De una repetida no se vuelve a interpretar: lo que importa es lo que
       // quedó guardado, que es lo que se le dice.
       {
-        certeza: transaction.categoryId === null ? 'ninguna' : 'alta',
-        fuente: null,
-        conceptoId: transaction.categoryId === null ? null : transaction.categoryId.toString(),
-        categoriaId: null,
-        nombre: null,
-        candidatos: [],
-        motivo: `Ya estaba registrado con la referencia ${dto.external_ref}.`,
+        certainty: transaction.categoryId === null ? 'ninguna' : 'alta',
+        source: null,
+        conceptId: transaction.categoryId === null ? null : transaction.categoryId.toString(),
+        categoryId: null,
+        name: null,
+        candidates: [],
+        reason: `Ya estaba registrado con la referencia ${dto.external_ref}.`,
       };
     return {
       transaction,
-      classification: classificationOf(vista),
-      summary: fusionado
-        ? `Era el mismo pago: ${resumenDe(transaction.amount, vista).replace(/^Registrado: /, '')}`
-        : resumenDe(transaction.amount, vista),
-      isDuplicate: repetido,
-      isMerged: fusionado,
+      classification: classificationOf(shown),
+      summary: isMerged
+        ? `Era el mismo pago: ${summaryOf(transaction.amount, shown).replace(/^Registrado: /, '')}`
+        : summaryOf(transaction.amount, shown),
+      isDuplicate,
+      isMerged,
     };
   }
 }
 
 /** Lo que `TransactionsService` pide para crear, sin importar su DTO (los módulos hablan por servicios). */
-type NuevoMovimiento = Parameters<TransactionsService['create']>[1];
+type NewTransaction = Parameters<TransactionsService['create']>[1];
 
 /** Lo que se escribe de una captura, como lo pide `TransactionsService`. */
-function altaDe(
+function newTransactionOf(
   dto: CaptureBodyDto,
-  nueva: CapturaNueva,
-  interpretado: Interpretado,
-): NuevoMovimiento {
+  incoming: NewCapture,
+  interpreted: Interpreted,
+): NewTransaction {
   return {
-    date: nueva.date,
-    amount: nueva.amount,
+    date: incoming.date,
+    amount: incoming.amount,
     type: 'expense',
-    category_id: idParaGuardar(interpretado.clasificacion),
-    description: interpretado.descripcion ?? undefined,
-    merchant: interpretado.comercio ?? undefined,
-    notes: notasDe(dto.nota, interpretado.monto),
+    category_id: categoryIdToSave(interpreted.classification),
+    description: interpreted.description ?? undefined,
+    merchant: interpreted.merchant ?? undefined,
+    notes: notesOf(dto.nota, interpreted.amount),
     external_ref: dto.external_ref,
     source: dto.source,
     raw_text: dto.texto ?? null,
-    captured_at: nueva.capturedAt.toISOString(),
-    por_revisar: interpretado.porRevisar,
+    captured_at: incoming.capturedAt.toISOString(),
+    por_revisar: interpreted.needsReview,
   };
 }
 
-function creadaAVista(creada: Transaction, interpretado: Interpretado): Capture {
+function createdCapture(created: Transaction, interpreted: Interpreted): Capture {
   return {
-    transaction: creada,
-    classification: classificationOf(interpretado.clasificacion),
-    summary: resumenDe(interpretado.monto, interpretado.clasificacion),
+    transaction: created,
+    classification: classificationOf(interpreted.classification),
+    summary: summaryOf(interpreted.amount, interpreted.classification),
     isDuplicate: false,
     isMerged: false,
   };

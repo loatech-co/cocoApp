@@ -3,8 +3,8 @@ import sharp from 'sharp';
 import request from 'supertest';
 
 import { levantarApp, type EntornoDePruebas } from './helpers/app';
-import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/soportes/receipt-store';
-import { claveNueva, carpetaDelAlmacen, huellaDe } from '../src/modules/soportes/soportes.almacen';
+import { RECEIPT_STORE, type ReceiptStore } from '../src/modules/receipts/receipt-store';
+import { newStorageKey, storeFolder, hashOf } from '../src/modules/receipts/receipts.storage';
 
 /**
  * Soportes — el recibo de un movimiento.
@@ -33,7 +33,7 @@ describe('Soportes (e2e)', () => {
     // El almacén de pruebas se va entero: son bytes de mentira, pero acumular
     // basura entre corridas acaba escondiendo un fallo real detrás de un
     // archivo que quedó de la vez pasada.
-    rmSync(carpetaDelAlmacen(), { recursive: true, force: true });
+    rmSync(storeFolder(), { recursive: true, force: true });
   });
 
   beforeEach(async () => {
@@ -62,7 +62,7 @@ describe('Soportes (e2e)', () => {
     const soportes = [];
 
     for (const [i, c] of contenidos.entries()) {
-      const storageKey = claveNueva(userId, c.ext);
+      const storageKey = newStorageKey(userId, c.ext);
       // Through the app's store, so the suite runs against disk or the Storage bucket (6.9).
       await entorno.app.get<ReceiptStore>(RECEIPT_STORE).save(storageKey, c.bytes, c.mime);
       soportes.push(
@@ -75,7 +75,7 @@ describe('Soportes (e2e)', () => {
             mimeType: c.mime,
             storageKey,
             sizeBytes: c.bytes.length,
-            contentHash: huellaDe(c.bytes),
+            contentHash: hashOf(c.bytes),
           },
         }),
       );

@@ -1,10 +1,10 @@
 import {
-  argumentosDeGhostscript,
-  coincideConSuTipo,
-  comoLlego,
-  correr,
-  esFaltaDeRecursos,
-} from './soportes.optimizacion';
+  ghostscriptArgs,
+  matchesDeclaredType,
+  asReceived,
+  run,
+  isOutOfResources,
+} from './receipts.optimization';
 
 /**
  * Qué se le contesta a quien sube un soporte que no se pudo tratar.
@@ -21,19 +21,19 @@ describe('Falta de recursos contra formato que no se entiende', () => {
     // cuenta tiene un cupo de procesos, libvips pide su piscina de hilos y
     // `pthread_create` devuelve EAGAIN.
     expect(
-      esFaltaDeRecursos(new Error('glib: Error creating thread: Resource temporarily unavailable')),
+      isOutOfResources(new Error('glib: Error creating thread: Resource temporarily unavailable')),
     ).toBe(true);
   });
 
   it('reconoce quedarse sin memoria y sin descriptores', () => {
-    for (const mensaje of [
+    for (const message of [
       'Cannot allocate memory',
       'vips__init: out of memory',
       'spawn ENOMEM',
       'EMFILE: too many open files',
       'gs salió con 1: fork: Resource temporarily unavailable',
     ]) {
-      expect(esFaltaDeRecursos(new Error(mensaje))).toBe(true);
+      expect(isOutOfResources(new Error(message))).toBe(true);
     }
   });
 
@@ -41,21 +41,21 @@ describe('Falta de recursos contra formato que no se entiende', () => {
     // El HEIC del iPhone: libvips solo lo entiende si se compiló con soporte
     // para él, y casi nunca lo está. Reintentarlo no cambia nada, así que esto
     // tiene que seguir contestando 415 y no 503.
-    for (const mensaje of [
+    for (const message of [
       'Input buffer contains unsupported image format',
       'heifload: unsupported compression',
       'VipsForeignLoad: buffer is not in a known format',
     ]) {
-      expect(esFaltaDeRecursos(new Error(mensaje))).toBe(false);
+      expect(isOutOfResources(new Error(message))).toBe(false);
     }
   });
 
   it('aguanta lo que no es un Error', () => {
     // Una librería nativa puede rechazar con una cadena suelta, y el camino
     // que lee `causa.message` se caería justo dentro del manejador de errores.
-    expect(esFaltaDeRecursos('Resource temporarily unavailable')).toBe(true);
-    expect(esFaltaDeRecursos(undefined)).toBe(false);
-    expect(esFaltaDeRecursos(null)).toBe(false);
+    expect(isOutOfResources('Resource temporarily unavailable')).toBe(true);
+    expect(isOutOfResources(undefined)).toBe(false);
+    expect(isOutOfResources(null)).toBe(false);
   });
 });
 
@@ -72,20 +72,20 @@ describe('Guardar el archivo tal como llegó', () => {
 
     // La extensión dice la verdad: un PNG guardado como `.jpg` es un archivo
     // que miente sobre sí mismo.
-    expect(comoLlego(bytes, 'image/png')).toEqual({
-      contenido: bytes,
+    expect(asReceived(bytes, 'image/png')).toEqual({
+      content: bytes,
       mime: 'image/png',
       extension: 'png',
     });
-    expect(comoLlego(bytes, 'image/jpeg')?.extension).toBe('jpg');
-    expect(comoLlego(bytes, 'application/pdf')?.extension).toBe('pdf');
+    expect(asReceived(bytes, 'image/jpeg')?.extension).toBe('jpg');
+    expect(asReceived(bytes, 'application/pdf')?.extension).toBe('pdf');
   });
 
   it('se niega con lo que después no se podría mirar', () => {
     // Un HEIC sin tratar es un archivo que el visor no abre: ahí el problema
     // es el formato, y guardarlo igual solo aplaza el fallo.
-    expect(comoLlego(Buffer.alloc(0), 'image/heic')).toBeNull();
-    expect(comoLlego(Buffer.alloc(0), 'image/webp')).toBeNull();
+    expect(asReceived(Buffer.alloc(0), 'image/heic')).toBeNull();
+    expect(asReceived(Buffer.alloc(0), 'image/webp')).toBeNull();
   });
 });
 
@@ -96,31 +96,31 @@ describe('Lo que se sube es lo que dice ser', () => {
   const POSTSCRIPT = Buffer.from('%!PS-Adobe-3.0\n', 'latin1');
 
   it('acepta cada tipo con su firma', () => {
-    expect(coincideConSuTipo(PDF, 'application/pdf')).toBe(true);
-    expect(coincideConSuTipo(JPEG, 'image/jpeg')).toBe(true);
-    expect(coincideConSuTipo(PNG, 'image/png')).toBe(true);
-    expect(coincideConSuTipo(Buffer.from('....ftypheic', 'latin1'), 'image/heic')).toBe(true);
-    expect(coincideConSuTipo(Buffer.from('RIFF....WEBPVP8 ', 'latin1'), 'image/webp')).toBe(true);
+    expect(matchesDeclaredType(PDF, 'application/pdf')).toBe(true);
+    expect(matchesDeclaredType(JPEG, 'image/jpeg')).toBe(true);
+    expect(matchesDeclaredType(PNG, 'image/png')).toBe(true);
+    expect(matchesDeclaredType(Buffer.from('....ftypheic', 'latin1'), 'image/heic')).toBe(true);
+    expect(matchesDeclaredType(Buffer.from('RIFF....WEBPVP8 ', 'latin1'), 'image/webp')).toBe(true);
   });
 
   it('rechaza lo que no coincide con el tipo declarado', () => {
     // Un PostScript etiquetado como PDF llegaría directo al intérprete.
-    expect(coincideConSuTipo(POSTSCRIPT, 'application/pdf')).toBe(false);
-    expect(coincideConSuTipo(PNG, 'image/jpeg')).toBe(false);
-    expect(coincideConSuTipo(JPEG, 'application/pdf')).toBe(false);
-    expect(coincideConSuTipo(Buffer.alloc(0), 'image/png')).toBe(false);
-    expect(coincideConSuTipo(PDF, 'text/plain')).toBe(false);
+    expect(matchesDeclaredType(POSTSCRIPT, 'application/pdf')).toBe(false);
+    expect(matchesDeclaredType(PNG, 'image/jpeg')).toBe(false);
+    expect(matchesDeclaredType(JPEG, 'application/pdf')).toBe(false);
+    expect(matchesDeclaredType(Buffer.alloc(0), 'image/png')).toBe(false);
+    expect(matchesDeclaredType(PDF, 'text/plain')).toBe(false);
   });
 });
 
 describe('Ghostscript con protecciones', () => {
   it('corre en modo seguro', () => {
-    expect(argumentosDeGhostscript('/tmp/a.pdf', '/tmp/b.pdf')[0]).toBe('-dSAFER');
+    expect(ghostscriptArgs('/tmp/a.pdf', '/tmp/b.pdf')[0]).toBe('-dSAFER');
   });
 
   it('mata el proceso que pasa del tiempo límite', async () => {
-    const inicio = Date.now();
-    await expect(correr('sleep', ['5'], 100)).rejects.toThrow(/tardó más de/);
-    expect(Date.now() - inicio).toBeLessThan(2000);
+    const start = Date.now();
+    await expect(run('sleep', ['5'], 100)).rejects.toThrow(/tardó más de/);
+    expect(Date.now() - start).toBeLessThan(2000);
   });
 });

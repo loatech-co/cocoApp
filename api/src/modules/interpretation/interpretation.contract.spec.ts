@@ -14,37 +14,39 @@ import { join } from 'node:path';
  * recorrer por reflexión sin instanciarlo con datos.
  */
 describe('El contrato de captura', () => {
-  const tipos = readFileSync(
+  const nativeContract = readFileSync(
     join(__dirname, '../../../../frontend/src/shared/lib/native-contract.ts'),
     'utf8',
   );
-  const dto = readFileSync(join(__dirname, 'interpretacion.dto.ts'), 'utf8');
+  const dto = readFileSync(join(__dirname, 'interpretation.dto.ts'), 'utf8');
 
   /** El cuerpo entre llaves de la primera declaración que empiece así. */
-  const cuerpoDe = (fuente: string, cabecera: RegExp): string => {
-    const m = cabecera.exec(fuente);
-    if (!m) throw new Error(`No encontré ${String(cabecera)}`);
-    const desde = fuente.indexOf('{', m.index);
-    return fuente.slice(desde + 1, fuente.indexOf('\n}', desde));
+  const bodyOf = (source: string, header: RegExp): string => {
+    const m = header.exec(source);
+    if (!m) throw new Error(`No encontré ${String(header)}`);
+    const start = source.indexOf('{', m.index);
+    return source.slice(start + 1, source.indexOf('\n}', start));
   };
 
   /** Los nombres de propiedad: la palabra al inicio de una línea seguida de `?:`, `!:` o `:`. */
-  const clavesDe = (cuerpo: string): Set<string> =>
-    new Set([...cuerpo.matchAll(/^\s+([a-z_]+)[?!]?:/gm)].map((m) => m[1]!));
+  const keysOf = (body: string): Set<string> =>
+    new Set([...body.matchAll(/^\s+([a-z_]+)[?!]?:/gm)].map((m) => m[1]!));
 
   it('CaptureBodyDto y CapturaRequest tienen exactamente las mismas claves', () => {
-    const delDto = new Set([
-      ...clavesDe(cuerpoDe(dto, /export class InterpretBodyDto/)),
-      ...clavesDe(cuerpoDe(dto, /export class CaptureBodyDto extends InterpretBodyDto/)),
+    const fromDto = new Set([
+      ...keysOf(bodyOf(dto, /export class InterpretBodyDto/)),
+      ...keysOf(bodyOf(dto, /export class CaptureBodyDto extends InterpretBodyDto/)),
     ]);
-    const delContrato = new Set([
-      ...clavesDe(cuerpoDe(tipos, /export interface InterpretacionRequest/)),
-      ...clavesDe(cuerpoDe(tipos, /export interface CapturaRequest extends InterpretacionRequest/)),
+    const fromContract = new Set([
+      ...keysOf(bodyOf(nativeContract, /export interface InterpretacionRequest/)),
+      ...keysOf(
+        bodyOf(nativeContract, /export interface CapturaRequest extends InterpretacionRequest/),
+      ),
     ]);
 
     // Que la lectura encontró algo: una regex que no casa daría dos vacíos iguales.
-    expect(delDto.has('external_ref')).toBe(true);
-    expect(delDto.has('category_id')).toBe(true);
-    expect([...delDto].sort()).toEqual([...delContrato].sort());
+    expect(fromDto.has('external_ref')).toBe(true);
+    expect(fromDto.has('category_id')).toBe(true);
+    expect([...fromDto].sort()).toEqual([...fromContract].sort());
   });
 });

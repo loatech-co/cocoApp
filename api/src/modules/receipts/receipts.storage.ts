@@ -31,7 +31,7 @@ import { readEnv } from '../../common/env';
  * @public — nada lo importa: `soportes.contrato.spec.ts` lo lee como texto
  * para comprobar que el contrato publica estos mismos tipos (excepción de knip).
  */
-export const TIPOS_ACEPTADOS: Record<string, string> = {
+export const ACCEPTED_TYPES: Record<string, string> = {
   pdf: 'application/pdf',
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
@@ -45,13 +45,13 @@ export const TIPOS_ACEPTADOS: Record<string, string> = {
  * desarrollo cae a `api/.soportes`, que está en el `.gitignore`: los recibos
  * de verdad no entran al repositorio ni por descuido.
  */
-export function carpetaDelAlmacen(): string {
+export function storeFolder(): string {
   // `readEnv` y no `process.env` a secas: en el servidor la variable
   // llega con las comillas dentro del valor, y una ruta que empieza por `"` no
   // es absoluta, así que `resolve` la colgaba del directorio de trabajo. Ver
   // `common/env.ts`.
-  const declarada = readEnv('SOPORTES_DIR');
-  if (declarada) return resolve(declarada);
+  const declared = readEnv('SOPORTES_DIR');
+  if (declared) return resolve(declared);
   return resolve(__dirname, '..', '..', '..', '.soportes');
 }
 
@@ -64,9 +64,9 @@ export function carpetaDelAlmacen(): string {
  * se diagnostica mirando `/proc/<pid>/environ` del proceso en producción, que
  * es donde acabamos la primera vez.
  */
-export function almacenListo(): { carpeta: string; existe: boolean } {
-  const carpeta = carpetaDelAlmacen();
-  return { carpeta, existe: existsSync(carpeta) };
+export function diskStoreStatus(): { folder: string; exists: boolean } {
+  const folder = storeFolder();
+  return { folder, exists: existsSync(folder) };
 }
 
 /**
@@ -76,46 +76,46 @@ export function almacenListo(): { carpeta: string; existe: boolean } {
  * pregunta, un archivo que no existe y un archivo que no puede tocar tienen
  * que verse igual.
  */
-export function rutaDe(storageKey: string): string | null {
-  const base = carpetaDelAlmacen();
-  const destino = resolve(base, storageKey);
+export function diskPathOf(storageKey: string): string | null {
+  const base = storeFolder();
+  const target = resolve(base, storageKey);
 
   // `resolve` ya colapsó los `..`, así que aquí se ve el resultado real. El
   // separador al final del prefijo importa: sin él, `/soportes-otro` pasaría
   // por estar dentro de `/soportes`.
-  if (destino !== base && !destino.startsWith(base + sep)) return null;
-  return destino;
+  if (target !== base && !target.startsWith(base + sep)) return null;
+  return target;
 }
 
 /** sha256 del contenido: dos veces el mismo archivo es el mismo soporte. */
-export function huellaDe(contenido: Buffer): string {
-  return createHash('sha256').update(contenido).digest('hex');
+export function hashOf(content: Buffer): string {
+  return createHash('sha256').update(content).digest('hex');
 }
 
 /** La clave que le toca a un archivo nuevo. La escribe el servidor, entera. */
-export function claveNueva(userId: bigint, extension: string): string {
+export function newStorageKey(userId: bigint, extension: string): string {
   const ext = extension.toLowerCase().replace(/[^a-z0-9]/g, '');
   return `${userId.toString()}/${randomUUID()}.${ext}`;
 }
 
 /** Guarda el binario. No pisa nada: la clave lleva un uuid recién hecho. */
-export async function guardar(storageKey: string, contenido: Buffer): Promise<void> {
-  const destino = rutaDe(storageKey);
-  if (destino === null) throw new Error(`Clave de almacenamiento inválida: ${storageKey}`);
+export async function saveToDisk(storageKey: string, content: Buffer): Promise<void> {
+  const target = diskPathOf(storageKey);
+  if (target === null) throw new Error(`Clave de almacenamiento inválida: ${storageKey}`);
 
-  await mkdir(dirname(destino), { recursive: true });
-  await writeFile(destino, contenido, { flag: 'wx' });
+  await mkdir(dirname(target), { recursive: true });
+  await writeFile(target, content, { flag: 'wx' });
 }
 
 /** Si el binario está en disco. La ficha puede existir sin él —y al revés—. */
-export function existe(storageKey: string): boolean {
-  const destino = rutaDe(storageKey);
-  return destino !== null && existsSync(destino);
+export function exists(storageKey: string): boolean {
+  const target = diskPathOf(storageKey);
+  return target !== null && existsSync(target);
 }
 
 /** El binario, en un flujo. No se carga entero en memoria para entregarlo. */
-export function abrir(storageKey: string): ReturnType<typeof createReadStream> | null {
-  const destino = rutaDe(storageKey);
-  if (destino === null || !existsSync(destino)) return null;
-  return createReadStream(destino);
+export function openFromDisk(storageKey: string): ReturnType<typeof createReadStream> | null {
+  const target = diskPathOf(storageKey);
+  if (target === null || !existsSync(target)) return null;
+  return createReadStream(target);
 }

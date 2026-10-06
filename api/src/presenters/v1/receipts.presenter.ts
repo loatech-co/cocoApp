@@ -1,4 +1,4 @@
-import type { Receipt } from '../../modules/soportes/soportes.service';
+import type { Receipt } from '../../modules/receipts/receipts.service';
 
 export interface ReceiptV1 {
   id: bigint;
