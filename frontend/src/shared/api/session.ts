@@ -243,9 +243,7 @@ export async function renew(): Promise<boolean> {
       // Inside the SAME shared promise: two `renew()` at once are a single
       // message to the app, just as outside they are a single request.
       storeSession(
-        isInNativeApp()
-          ? fromBridge(await requestSession())
-          : await callAuth<Session>(AUTH.refresh),
+        isInNativeApp() ? await requestSession() : await callAuth<Session>(AUTH.refresh),
       );
       return true;
     } catch {
@@ -338,21 +336,7 @@ export function discardSession(): void {
 
 /** The app pushes a session: on a start without one, or after the native login. */
 export function receiveSession(session: BridgeSession): void {
-  storeSession(fromBridge(session));
-}
-
-/**
- * The bridge still speaks v1 (snake_case): it changes when the app moves to
- * v2, together with this function. Until then the web translates at the edge
- * and nothing inside it knows.
- */
-function fromBridge(session: BridgeSession): Session {
-  const { display_name, created_at, ...rest } = session.user;
-  return {
-    accessToken: session.access_token,
-    expiresIn: session.expires_in,
-    user: { ...rest, displayName: display_name, createdAt: created_at },
-  };
+  storeSession(session);
 }
 
 /** The app closed the real session (401 on renewal): the web forgets its own. */

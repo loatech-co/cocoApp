@@ -104,8 +104,8 @@ function isBridgeSession(value: unknown): value is BridgeSession {
   if (typeof value !== 'object' || value === null) return false;
   const session = value as Record<string, unknown>;
   return (
-    typeof session.access_token === 'string' &&
-    typeof session.expires_in === 'number' &&
+    typeof session.accessToken === 'string' &&
+    typeof session.expiresIn === 'number' &&
     typeof session.user === 'object' &&
     session.user !== null
   );

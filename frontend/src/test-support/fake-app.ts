@@ -44,14 +44,14 @@ export function leaveNativeApp(): void {
 
 /** What the app answers to `pedirSesion`: a session WITHOUT a refresh token. */
 export const APP_SESSION: BridgeSession = {
-  access_token: 'token-de-la-app',
-  expires_in: 900,
+  accessToken: 'token-de-la-app',
+  expiresIn: 900,
   user: {
     id: 1,
     email: 'g@coco.app',
-    display_name: 'Gerardo',
+    displayName: 'Gerardo',
     role: 'user',
     status: 'active',
-    created_at: '2026-01-01T00:00:00.000Z',
+    createdAt: '2026-01-01T00:00:00.000Z',
   },
 };
