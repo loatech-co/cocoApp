@@ -24,7 +24,7 @@ async function data<T>(response: Awaited<ReturnType<APIRequestContext['get']>>):
 
 /** The id of a category by its path, e.g. `['Costos fijos', 'Vivienda']`. */
 async function categoryId(api: APIRequestContext, path: string[]): Promise<number> {
-  let level = await data<Node[]>(await api.get('/api/v1/categories'));
+  let level = await data<Node[]>(await api.get('/api/v2/categories?perPage=200'));
   let found: Node | undefined;
   for (const name of path) {
     found = level.find((n) => n.name === name);
@@ -36,12 +36,12 @@ async function categoryId(api: APIRequestContext, path: string[]): Promise<numbe
 }
 
 export interface ConceptOptions {
-  palabras_clave?: string[];
-  recurrente?: boolean;
-  periodicidad?: 'mensual';
-  dia_de_pago?: number;
-  presupuesto?: number;
-  varios_pagos?: boolean;
+  keywords?: string[];
+  isRecurring?: boolean;
+  periodicity?: 'monthly';
+  paymentDay?: number;
+  budget?: number;
+  isMultiPayment?: boolean;
 }
 
 /** Creates a concept under `[centre, category]` and returns its id. */
@@ -51,10 +51,10 @@ export async function createConcept(
   name: string,
   options: ConceptOptions = {},
 ): Promise<number> {
-  const parent_id = await categoryId(api, under);
+  const parentId = await categoryId(api, under);
   const created = await data<{ id: number }>(
-    await api.post('/api/v1/categories', {
-      data: { name, kind: 'expense', parent_id, ...options },
+    await api.post('/api/v2/categories', {
+      data: { name, kind: 'expense', parentId, ...options },
     }),
   );
   return created.id;
@@ -68,12 +68,12 @@ function today(): string {
 /** Registers an expense of `amount` (whole pesos) in a concept, today. */
 export async function createExpense(
   api: APIRequestContext,
-  category_id: number,
+  categoryId: number,
   amount: number,
 ): Promise<number> {
   const created = await data<{ id: number }>(
-    await api.post('/api/v1/transactions', {
-      data: { category_id, amount: String(amount), date: today(), type: 'expense' },
+    await api.post('/api/v2/transactions', {
+      data: { categoryId, amount: String(amount), date: today(), type: 'expense' },
     }),
   );
   return created.id;

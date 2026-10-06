@@ -36,7 +36,7 @@ describe('Cuentas opcionales (e2e)', () => {
 
   const gasto = (body: Record<string, unknown> = {}) =>
     http
-      .post('/api/v1/transactions')
+      .post('/api/v2/transactions')
       .set('Authorization', comoAna)
       .send({ date: '2026-08-01', amount: '45900.50', type: 'expense', ...body });
 
@@ -45,34 +45,34 @@ describe('Cuentas opcionales (e2e)', () => {
   describe('La preferencia', () => {
     it('nace APAGADA: registrar un gasto no exige inventarse una cuenta', async () => {
       const respuesta = await http
-        .get('/api/v1/preferences')
+        .get('/api/v2/preferences')
         .set('Authorization', comoAna)
         .expect(200);
 
-      expect(respuesta.body.data).toEqual({ cuentas_habilitadas: false });
+      expect(respuesta.body.data).toEqual({ accountsEnabled: false });
     });
 
     it('se puede encender y queda guardada', async () => {
       await http
-        .patch('/api/v1/preferences')
+        .patch('/api/v2/preferences')
         .set('Authorization', comoAna)
-        .send({ cuentas_habilitadas: true })
+        .send({ accountsEnabled: true })
         .expect(200);
 
       const respuesta = await http
-        .get('/api/v1/preferences')
+        .get('/api/v2/preferences')
         .set('Authorization', comoAna)
         .expect(200);
-      expect(respuesta.body.data.cuentas_habilitadas).toBe(true);
+      expect(respuesta.body.data.accountsEnabled).toBe(true);
     });
 
     it('encenderla dos veces no duplica nada', async () => {
       // El upsert va contra el índice único (user_id, pref_key): es idempotente.
       for (let i = 0; i < 3; i += 1) {
         await http
-          .patch('/api/v1/preferences')
+          .patch('/api/v2/preferences')
           .set('Authorization', comoAna)
-          .send({ cuentas_habilitadas: true })
+          .send({ accountsEnabled: true })
           .expect(200);
       }
       expect(await entorno.prisma.userPreference.count({ where: { userId: ana.id } })).toBe(1);
@@ -80,7 +80,7 @@ describe('Cuentas opcionales (e2e)', () => {
 
     it('rechaza una preferencia que no existe en el catálogo', async () => {
       await http
-        .patch('/api/v1/preferences')
+        .patch('/api/v2/preferences')
         .set('Authorization', comoAna)
         .send({ inventada: true })
         .expect(400);
@@ -88,25 +88,25 @@ describe('Cuentas opcionales (e2e)', () => {
 
     it('rechaza un valor que no es booleano', async () => {
       await http
-        .patch('/api/v1/preferences')
+        .patch('/api/v2/preferences')
         .set('Authorization', comoAna)
-        .send({ cuentas_habilitadas: 'si' })
+        .send({ accountsEnabled: 'si' })
         .expect(400);
     });
 
     it('las preferencias de otra persona no se ven', async () => {
       const beto = await entorno.crearUsuario();
       await http
-        .patch('/api/v1/preferences')
+        .patch('/api/v2/preferences')
         .set('Authorization', comoAna)
-        .send({ cuentas_habilitadas: true })
+        .send({ accountsEnabled: true })
         .expect(200);
 
       const respuesta = await http
-        .get('/api/v1/preferences')
+        .get('/api/v2/preferences')
         .set('Authorization', entorno.como(beto))
         .expect(200);
-      expect(respuesta.body.data.cuentas_habilitadas).toBe(false);
+      expect(respuesta.body.data.accountsEnabled).toBe(false);
     });
   });
 
@@ -117,7 +117,7 @@ describe('Cuentas opcionales (e2e)', () => {
       const respuesta = await gasto({ description: 'Café' }).expect(201);
 
       expect(respuesta.body.data).toMatchObject({
-        account_id: null,
+        accountId: null,
         amount: '45900.50',
         description: 'Café',
       });
@@ -127,12 +127,12 @@ describe('Cuentas opcionales (e2e)', () => {
       await gasto({ description: 'Café' }).expect(201);
 
       const respuesta = await http
-        .get('/api/v1/transactions')
+        .get('/api/v2/transactions')
         .set('Authorization', comoAna)
         .expect(200);
 
       expect(respuesta.body.data).toHaveLength(1);
-      expect(respuesta.body.data[0].account_id).toBeNull();
+      expect(respuesta.body.data[0].accountId).toBeNull();
     });
 
     it('respeta los centavos, cuenta o no cuenta', async () => {
@@ -142,18 +142,18 @@ describe('Cuentas opcionales (e2e)', () => {
 
     it('se puede categorizar igual', async () => {
       const categoria = await http
-        .post('/api/v1/categories')
+        .post('/api/v2/categories')
         .set('Authorization', comoAna)
         .send({ name: 'Mercado', kind: 'expense' })
         .expect(201);
 
-      const respuesta = await gasto({ category_id: categoria.body.data.id }).expect(201);
-      expect(respuesta.body.data.category_id).toBe(categoria.body.data.id);
+      const respuesta = await gasto({ categoryId: categoria.body.data.id }).expect(201);
+      expect(respuesta.body.data.categoryId).toBe(categoria.body.data.id);
     });
 
     it('el dashboard funciona sin una sola cuenta', async () => {
       await gasto().expect(201);
-      await http.get('/api/v1/dashboard').set('Authorization', comoAna).expect(200);
+      await http.get('/api/v2/dashboard').set('Authorization', comoAna).expect(200);
     });
   });
 
@@ -162,9 +162,9 @@ describe('Cuentas opcionales (e2e)', () => {
   describe('Quien SÍ lleva cuentas', () => {
     const crearCuenta = () =>
       http
-        .post('/api/v1/accounts')
+        .post('/api/v2/accounts')
         .set('Authorization', comoAna)
-        .send({ name: 'Bancolombia', type: 'debit', opening_balance: '500000' })
+        .send({ name: 'Bancolombia', type: 'debit', openingBalance: '500000' })
         .expect(201);
 
     it('el saldo IGNORA los movimientos sin cuenta', async () => {
@@ -172,10 +172,10 @@ describe('Cuentas opcionales (e2e)', () => {
       // pertenece a ninguna cuenta no puede alterar el saldo de ninguna.
       const cuenta = await crearCuenta();
 
-      await gasto({ account_id: cuenta.body.data.id, amount: '100000.00' }).expect(201);
+      await gasto({ accountId: cuenta.body.data.id, amount: '100000.00' }).expect(201);
       await gasto({ amount: '999999.00' }).expect(201); // sin cuenta
 
-      const cuentas = await http.get('/api/v1/accounts').set('Authorization', comoAna).expect(200);
+      const cuentas = await http.get('/api/v2/accounts').set('Authorization', comoAna).expect(200);
 
       // 500000 − 100000, sin rastro de los 999999.
       expect(cuentas.body.data[0].balance).toBe('400000.00');
@@ -183,17 +183,17 @@ describe('Cuentas opcionales (e2e)', () => {
 
     it('los dos tipos de movimiento conviven en el mismo listado', async () => {
       const cuenta = await crearCuenta();
-      await gasto({ account_id: cuenta.body.data.id }).expect(201);
+      await gasto({ accountId: cuenta.body.data.id }).expect(201);
       await gasto().expect(201);
 
       const respuesta = await http
-        .get('/api/v1/transactions')
+        .get('/api/v2/transactions')
         .set('Authorization', comoAna)
         .expect(200);
 
       expect(respuesta.body.data).toHaveLength(2);
       const conCuenta = respuesta.body.data.filter(
-        (m: { account_id: number | null }) => m.account_id !== null,
+        (m: { accountId: number | null }) => m.accountId !== null,
       );
       expect(conCuenta).toHaveLength(1);
     });
@@ -203,24 +203,24 @@ describe('Cuentas opcionales (e2e)', () => {
       const movimiento = await gasto({ amount: '100000.00' }).expect(201);
 
       await http
-        .patch(`/api/v1/transactions/${movimiento.body.data.id}`)
+        .patch(`/api/v2/transactions/${movimiento.body.data.id}`)
         .set('Authorization', comoAna)
-        .send({ account_id: cuenta.body.data.id })
+        .send({ accountId: cuenta.body.data.id })
         .expect(200);
 
-      const cuentas = await http.get('/api/v1/accounts').set('Authorization', comoAna).expect(200);
+      const cuentas = await http.get('/api/v2/accounts').set('Authorization', comoAna).expect(200);
       expect(cuentas.body.data[0].balance).toBe('400000.00');
     });
 
     it('sigue rechazando una cuenta ajena, con 422', async () => {
       const beto = await entorno.crearUsuario();
       const suya = await http
-        .post('/api/v1/accounts')
+        .post('/api/v2/accounts')
         .set('Authorization', entorno.como(beto))
-        .send({ name: 'Suya', type: 'debit', opening_balance: '0' })
+        .send({ name: 'Suya', type: 'debit', openingBalance: '0' })
         .expect(201);
 
-      await gasto({ account_id: suya.body.data.id }).expect(422);
+      await gasto({ accountId: suya.body.data.id }).expect(422);
     });
   });
 });

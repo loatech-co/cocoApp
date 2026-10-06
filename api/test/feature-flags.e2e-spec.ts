@@ -34,7 +34,7 @@ describe('Feature flags in /auth/me (e2e)', () => {
   it('lists the flags FEATURES turns on, next to the profile it already had', async () => {
     const ana = await entorno.crearUsuario();
     const me = await http
-      .get('/api/v1/auth/me')
+      .get('/api/v2/auth/me')
       .set('Authorization', entorno.como(ana))
       .expect(200);
 
@@ -44,7 +44,7 @@ describe('Feature flags in /auth/me (e2e)', () => {
     );
   });
 
-  it('v2 lists the same flags as features, next to its camelCase profile', async () => {
+  it('the flags sit next to the camelCase profile, per user', async () => {
     const ana = await entorno.crearUsuario();
     await entorno.prisma.userPreference.create({
       data: { userId: ana.id, prefKey: 'feature:flags_canary', prefValue: false },
@@ -71,8 +71,8 @@ describe('Feature flags in /auth/me (e2e)', () => {
       data: { userId: bruno.id, prefKey: 'feature:flags_canary', prefValue: false },
     });
 
-    const asBruno = await http.get('/api/v1/auth/me').set('Authorization', entorno.como(bruno));
-    const asAna = await http.get('/api/v1/auth/me').set('Authorization', entorno.como(ana));
+    const asBruno = await http.get('/api/v2/auth/me').set('Authorization', entorno.como(bruno));
+    const asAna = await http.get('/api/v2/auth/me').set('Authorization', entorno.como(ana));
     expect(asBruno.body.data.features).toEqual([]);
     expect(asAna.body.data.features).toEqual(['flags_canary']);
   });
@@ -80,7 +80,7 @@ describe('Feature flags in /auth/me (e2e)', () => {
   it('the preferences endpoint cannot write a flag', async () => {
     const ana = await entorno.crearUsuario();
     await http
-      .patch('/api/v1/preferences')
+      .patch('/api/v2/preferences')
       .set('Authorization', entorno.como(ana))
       .send({ 'feature:flags_canary': false });
 
@@ -97,9 +97,9 @@ describe('Feature flags in /auth/me (e2e)', () => {
     });
 
     const preferences = await http
-      .get('/api/v1/preferences')
+      .get('/api/v2/preferences')
       .set('Authorization', entorno.como(ana))
       .expect(200);
-    expect(preferences.body.data).toEqual({ cuentas_habilitadas: false });
+    expect(preferences.body.data).toEqual({ accountsEnabled: false });
   });
 });

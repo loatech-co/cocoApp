@@ -29,7 +29,7 @@ describe('Accounts (e2e)', () => {
     auth = env.como(user);
   });
 
-  const base = '/api/v1/accounts';
+  const base = '/api/v2/accounts';
 
   it('creates a credit card and derives its balance and available credit', async () => {
     const created = await http
@@ -40,10 +40,10 @@ describe('Accounts (e2e)', () => {
         type: 'credit',
         institution: 'Banco',
         last4: '1234',
-        credit_limit: '5000000',
-        cutoff_day: 15,
-        payment_day: 30,
-        opening_balance: '0',
+        creditLimit: '5000000',
+        cutoffDay: 15,
+        paymentDay: 30,
+        openingBalance: '0',
       })
       .expect(201);
     const id = BigInt(created.body.data.id);
@@ -57,28 +57,28 @@ describe('Accounts (e2e)', () => {
 
     const read = await http.get(`${base}/${id}`).set('Authorization', auth).expect(200);
     expect(read.body.data).toMatchObject({
-      credit_limit: '5000000.00',
-      cutoff_day: 15,
-      payment_day: 30,
+      creditLimit: '5000000.00',
+      cutoffDay: 15,
+      paymentDay: 30,
       last4: '1234',
     });
-    expect(read.body.data.available_credit).toEqual(expect.any(String));
-    expect(read.body.data.balance).not.toBe(read.body.data.balance_projected);
+    expect(read.body.data.availableCredit).toEqual(expect.any(String));
+    expect(read.body.data.balance).not.toBe(read.body.data.balanceProjected);
   });
 
   it('rejects credit fields on an account that is not a credit card', async () => {
     const response = await http
       .post(base)
       .set('Authorization', auth)
-      .send({ name: 'Efectivo', type: 'cash', credit_limit: '100', payment_day: 5 })
+      .send({ name: 'Efectivo', type: 'cash', creditLimit: '100', paymentDay: 5 })
       .expect(400);
-    expect(response.body.error.message).toMatch(/credit_limit, payment_day/);
+    expect(response.body.detail).toMatch(/creditLimit, paymentDay/);
 
     const cash = await makeAccount(env.prisma, user.id);
     await http
       .patch(`${base}/${cash.id}`)
       .set('Authorization', auth)
-      .send({ cutoff_day: 3 })
+      .send({ cutoffDay: 3 })
       .expect(400);
   });
 
@@ -93,11 +93,11 @@ describe('Accounts (e2e)', () => {
         type: 'credit',
         institution: 'Otro banco',
         last4: '9876',
-        credit_limit: '1000000',
-        cutoff_day: 1,
-        payment_day: 20,
-        opening_balance: '250000',
-        is_archived: true,
+        creditLimit: '1000000',
+        cutoffDay: 1,
+        paymentDay: 20,
+        openingBalance: '250000',
+        isArchived: true,
       })
       .expect(200);
 
@@ -106,11 +106,11 @@ describe('Accounts (e2e)', () => {
       type: 'credit',
       institution: 'Otro banco',
       last4: '9876',
-      credit_limit: '1000000.00',
-      cutoff_day: 1,
-      payment_day: 20,
-      opening_balance: '250000.00',
-      is_archived: true,
+      creditLimit: '1000000.00',
+      cutoffDay: 1,
+      paymentDay: 20,
+      openingBalance: '250000.00',
+      isArchived: true,
     });
   });
 
@@ -124,7 +124,7 @@ describe('Accounts (e2e)', () => {
         .sort();
 
     expect(await names({})).toEqual(['Activa']);
-    expect(await names({ include_archived: 'true' })).toEqual(['Activa', 'Vieja']);
+    expect(await names({ includeArchived: 'true' })).toEqual(['Activa', 'Vieja']);
   });
 
   it('deletes an empty account and refuses one with history', async () => {
@@ -134,7 +134,7 @@ describe('Accounts (e2e)', () => {
 
     await http.delete(`${base}/${empty.id}`).set('Authorization', auth).expect(204);
     const conflict = await http.delete(`${base}/${used.id}`).set('Authorization', auth).expect(409);
-    expect(conflict.body.error.message).toMatch(/Archívala/);
+    expect(conflict.body.detail).toMatch(/Archívala/);
     await http.get(`${base}/${empty.id}`).set('Authorization', auth).expect(404);
   });
 });

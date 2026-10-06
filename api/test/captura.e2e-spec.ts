@@ -47,13 +47,13 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
 
   const capturar = (body: Record<string, unknown>) =>
     http
-      .post('/api/v1/transactions/capture')
+      .post('/api/v2/transactions/capture')
       .set('Authorization', entorno.como(usuario))
       .send(body);
 
   const interpretar = (body: Record<string, unknown>) =>
     http
-      .post('/api/v1/transactions/interpret')
+      .post('/api/v2/transactions/interpret')
       .set('Authorization', entorno.como(usuario))
       .send(body);
 
@@ -64,65 +64,65 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
 
   describe('Un SMS bancario', () => {
     it('se vuelve un gasto clasificado en una sola petición', async () => {
-      const r = await capturar({ texto: SMS, source: 'sms', external_ref: 'sms-001' });
+      const r = await capturar({ text: SMS, source: 'sms', externalRef: 'sms-001' });
 
       expect(r.status).toBe(200);
-      expect(r.body.data.repetido).toBe(false);
-      expect(r.body.data.fusionado).toBe(false);
-      expect(r.body.data.transaction.category_id).toBe(Number(mercadoId));
+      expect(r.body.data.isDuplicate).toBe(false);
+      expect(r.body.data.isMerged).toBe(false);
+      expect(r.body.data.transaction.categoryId).toBe(Number(mercadoId));
       expect(r.body.data.transaction.amount).toBe('45000.00');
       expect(r.body.data.transaction.date).toBe('2026-10-03');
       expect(r.body.data.transaction.source).toBe('sms');
-      expect(r.body.data.transaction.raw_text).toBe(SMS);
-      expect(r.body.data.transaction.por_revisar).toBe(false);
-      expect(r.body.data.clasificacion).toMatchObject({
-        certeza: 'alta',
-        fuente: 'diccionario',
-        nombre: 'Mercado',
+      expect(r.body.data.transaction.rawText).toBe(SMS);
+      expect(r.body.data.transaction.needsReview).toBe(false);
+      expect(r.body.data.classification).toMatchObject({
+        certainty: 'high',
+        source: 'dictionary',
+        name: 'Mercado',
       });
-      expect(r.body.data.resumen).toBe('Registrado: $45.000 · Mercado');
+      expect(r.body.data.summary).toBe('Registrado: $45.000 · Mercado');
       expect(await cuantas()).toBe(1);
     });
 
     it('repetido con el mismo external_ref no crea un segundo gasto, y contesta lo mismo', async () => {
-      const primera = await capturar({ texto: SMS, source: 'sms', external_ref: 'sms-002' });
-      const segunda = await capturar({ texto: SMS, source: 'sms', external_ref: 'sms-002' });
+      const primera = await capturar({ text: SMS, source: 'sms', externalRef: 'sms-002' });
+      const segunda = await capturar({ text: SMS, source: 'sms', externalRef: 'sms-002' });
 
       expect(segunda.status).toBe(200);
-      expect(segunda.body.data.repetido).toBe(true);
+      expect(segunda.body.data.isDuplicate).toBe(true);
       expect(segunda.body.data.transaction.id).toBe(primera.body.data.transaction.id);
       expect(await cuantas()).toBe(1);
     });
 
     it('un comercio que lleva a una categoría sin concepto: se guarda con la categoría y por revisar', async () => {
       const r = await capturar({
-        texto: 'UBER *TRIP $18.500 03/10/2026',
+        text: 'UBER *TRIP $18.500 03/10/2026',
         source: 'sms',
-        external_ref: 'sms-003',
+        externalRef: 'sms-003',
       });
 
       expect(r.status).toBe(200);
-      expect(r.body.data.clasificacion.certeza).toBe('media');
-      expect(r.body.data.transaction.por_revisar).toBe(true);
+      expect(r.body.data.classification.certainty).toBe('medium');
+      expect(r.body.data.transaction.needsReview).toBe(true);
       // La categoría queda puesta: ya está en el sitio correcto a medias.
       const transporte = await entorno.prisma.category.findFirst({
         where: { userId: usuario.id, name: 'Transporte' },
       });
-      expect(r.body.data.transaction.category_id).toBe(Number(transporte!.id));
-      expect(r.body.data.resumen).toContain('(por revisar)');
+      expect(r.body.data.transaction.categoryId).toBe(Number(transporte!.id));
+      expect(r.body.data.summary).toContain('(por revisar)');
     });
 
     it('un comercio desconocido se guarda sin clasificar y por revisar: nunca adivina', async () => {
       const r = await capturar({
-        texto: 'FERRETERIA LA ESQUINA $80.000 03/10/2026',
+        text: 'FERRETERIA LA ESQUINA $80.000 03/10/2026',
         source: 'sms',
-        external_ref: 'sms-004',
+        externalRef: 'sms-004',
       });
 
       expect(r.status).toBe(200);
-      expect(r.body.data.transaction.category_id).toBeNull();
-      expect(r.body.data.transaction.por_revisar).toBe(true);
-      expect(r.body.data.resumen).toBe('Registrado: $80.000 · Pendiente de clasificar');
+      expect(r.body.data.transaction.categoryId).toBeNull();
+      expect(r.body.data.transaction.needsReview).toBe(true);
+      expect(r.body.data.summary).toBe('Registrado: $80.000 · Pendiente de clasificar');
     });
   });
 
@@ -132,26 +132,26 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
 
     const wallet = () =>
       capturar({
-        comercio: 'Exito Poblado',
-        monto: '120000',
-        fecha: '2026-10-02',
+        merchant: 'Exito Poblado',
+        amount: '120000',
+        date: '2026-10-02',
         source: 'wallet',
-        external_ref: 'w-1',
-        captured_at: t0.toISOString(),
+        externalRef: 'w-1',
+        capturedAt: t0.toISOString(),
       });
 
     it('el SMS que llega a los dos minutos se FUSIONA con la transacción de Wallet', async () => {
       await wallet();
       const sms = await capturar({
-        texto: 'Bancolombia: compra por $120.000 en EXITO POBLADO el 02/10/2026',
+        text: 'Bancolombia: compra por $120.000 en EXITO POBLADO el 02/10/2026',
         source: 'sms',
-        external_ref: 's-1',
-        captured_at: masTarde(2 * 60_000),
+        externalRef: 's-1',
+        capturedAt: masTarde(2 * 60_000),
       });
 
       expect(sms.status).toBe(200);
-      expect(sms.body.data.fusionado).toBe(true);
-      expect(sms.body.data.repetido).toBe(false);
+      expect(sms.body.data.isMerged).toBe(true);
+      expect(sms.body.data.isDuplicate).toBe(false);
       expect(await cuantas()).toBe(1);
       // Y la de Wallet quedó enriquecida con el texto del SMS, sin perder lo suyo.
       const unica = await entorno.prisma.transaction.findFirstOrThrow({
@@ -160,38 +160,38 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       expect(unica.source).toBe('wallet');
       expect(unica.merchant).toBe('Exito Poblado');
       expect(unica.rawText).toContain('EXITO POBLADO');
-      expect(sms.body.data.resumen).toMatch(/^Era el mismo pago/);
+      expect(sms.body.data.summary).toMatch(/^Era el mismo pago/);
     });
 
     it('un parecido parcial —mismo monto, fuera de la ventana— crea el gasto marcado para revisar', async () => {
       await wallet();
       const sms = await capturar({
-        texto: 'Bancolombia: compra por $120.000 en EXITO POBLADO el 02/10/2026',
+        text: 'Bancolombia: compra por $120.000 en EXITO POBLADO el 02/10/2026',
         source: 'sms',
-        external_ref: 's-2',
-        captured_at: masTarde(45 * 60_000),
+        externalRef: 's-2',
+        capturedAt: masTarde(45 * 60_000),
       });
 
-      expect(sms.body.data.fusionado).toBe(false);
-      expect(sms.body.data.transaction.por_revisar).toBe(true);
+      expect(sms.body.data.isMerged).toBe(false);
+      expect(sms.body.data.transaction.needsReview).toBe(true);
       expect(await cuantas()).toBe(2);
     });
 
     it('dos capturas del MISMO origen nunca se fusionan: dos SMS son dos compras', async () => {
       await capturar({
-        texto: 'compra por $6.000 en TOSTAO 02/10/2026',
+        text: 'compra por $6.000 en TOSTAO 02/10/2026',
         source: 'sms',
-        external_ref: 's-3',
-        captured_at: masTarde(0),
+        externalRef: 's-3',
+        capturedAt: masTarde(0),
       });
       const otra = await capturar({
-        texto: 'compra por $6.000 en TOSTAO 02/10/2026',
+        text: 'compra por $6.000 en TOSTAO 02/10/2026',
         source: 'sms',
-        external_ref: 's-4',
-        captured_at: masTarde(60_000),
+        externalRef: 's-4',
+        capturedAt: masTarde(60_000),
       });
 
-      expect(otra.body.data.fusionado).toBe(false);
+      expect(otra.body.data.isMerged).toBe(false);
       expect(await cuantas()).toBe(2);
     });
   });
@@ -199,17 +199,17 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
   describe('Interpretar', () => {
     it('devuelve lo entendido y NO escribe nada', async () => {
       const antes = await cuantas();
-      const r = await interpretar({ texto: SMS });
+      const r = await interpretar({ text: SMS });
 
       expect(r.status).toBe(200);
       expect(r.body.data.amount).toBe('45000');
       expect(r.body.data.date).toBe('2026-10-03');
-      expect(r.body.data.clasificacion).toMatchObject({
-        certeza: 'alta',
-        concepto_id: Number(mercadoId),
-        nombre: 'Mercado',
+      expect(r.body.data.classification).toMatchObject({
+        certainty: 'high',
+        conceptId: Number(mercadoId),
+        name: 'Mercado',
       });
-      expect(r.body.data.por_revisar).toBe(false);
+      expect(r.body.data.needsReview).toBe(false);
       expect(await cuantas()).toBe(antes);
     });
 
@@ -219,10 +219,10 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     });
 
     it('Wallet sin monto se interpreta igual, y se marca', async () => {
-      const r = await interpretar({ comercio: 'Exito Poblado', fecha: '2026-10-02' });
+      const r = await interpretar({ merchant: 'Exito Poblado', date: '2026-10-02' });
       expect(r.status).toBe(200);
       expect(r.body.data.amount).toBeNull();
-      expect(r.body.data.por_revisar).toBe(true);
+      expect(r.body.data.needsReview).toBe(true);
     });
   });
 
@@ -241,20 +241,20 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
         data: { userId: usuario.id, name: 'Taxi', kind: 'expense', parentId: transporte },
       });
       const r = await capturar({
-        texto: SMS,
+        text: SMS,
         source: 'sms',
-        external_ref: 'e-1',
-        category_id: String(taxi.id),
+        externalRef: 'e-1',
+        categoryId: String(taxi.id),
       });
 
       expect(r.status).toBe(200);
-      expect(r.body.data.transaction.category_id).toBe(Number(taxi.id));
-      expect(r.body.data.transaction.por_revisar).toBe(false);
-      expect(r.body.data.clasificacion).toMatchObject({
-        certeza: 'alta',
-        fuente: null,
-        nombre: 'Taxi',
-        motivo: 'Lo eligió la persona.',
+      expect(r.body.data.transaction.categoryId).toBe(Number(taxi.id));
+      expect(r.body.data.transaction.needsReview).toBe(false);
+      expect(r.body.data.classification).toMatchObject({
+        certainty: 'high',
+        source: null,
+        name: 'Taxi',
+        reason: 'Lo eligió la persona.',
       });
       // Lo leído del texto se conserva.
       expect(r.body.data.transaction.amount).toBe('45000.00');
@@ -264,24 +264,24 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     it('una captura ios_manual sin texto ni comercio, con monto y concepto, se crea', async () => {
       const r = await capturar({
         source: 'ios_manual',
-        external_ref: 'e-2',
-        monto: '12000',
-        fecha: '2026-10-03',
-        category_id: String(mercadoId),
+        externalRef: 'e-2',
+        amount: '12000',
+        date: '2026-10-03',
+        categoryId: String(mercadoId),
       });
 
       expect(r.status).toBe(200);
-      expect(r.body.data.transaction.category_id).toBe(Number(mercadoId));
+      expect(r.body.data.transaction.categoryId).toBe(Number(mercadoId));
       expect(r.body.data.transaction.amount).toBe('12000.00');
       expect(r.body.data.transaction.date).toBe('2026-10-03');
       expect(r.body.data.transaction.merchant).toBeNull();
-      expect(r.body.data.transaction.por_revisar).toBe(false);
-      expect(r.body.data.resumen).toBe('Registrado: $12.000 · Mercado');
+      expect(r.body.data.transaction.needsReview).toBe(false);
+      expect(r.body.data.summary).toBe('Registrado: $12.000 · Mercado');
       expect(await cuantas()).toBe(1);
     });
 
     it('sin texto, sin comercio y sin concepto sigue siendo 422', async () => {
-      const r = await capturar({ source: 'ios_manual', external_ref: 'e-3', monto: '12000' });
+      const r = await capturar({ source: 'ios_manual', externalRef: 'e-3', amount: '12000' });
       expect(r.status).toBe(422);
       expect(await cuantas()).toBe(0);
     });
@@ -290,20 +290,20 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       const transporte = await transporteId();
       const r = await capturar({
         source: 'ios_manual',
-        external_ref: 'e-4',
-        monto: '18500',
-        category_id: String(transporte),
+        externalRef: 'e-4',
+        amount: '18500',
+        categoryId: String(transporte),
       });
 
       expect(r.status).toBe(200);
-      expect(r.body.data.transaction.category_id).toBe(Number(transporte));
-      expect(r.body.data.transaction.por_revisar).toBe(true);
-      expect(r.body.data.clasificacion).toMatchObject({
-        certeza: 'media',
-        concepto_id: null,
-        categoria_id: Number(transporte),
+      expect(r.body.data.transaction.categoryId).toBe(Number(transporte));
+      expect(r.body.data.transaction.needsReview).toBe(true);
+      expect(r.body.data.classification).toMatchObject({
+        certainty: 'medium',
+        conceptId: null,
+        categoryId: Number(transporte),
       });
-      expect(r.body.data.resumen).toContain('(por revisar)');
+      expect(r.body.data.summary).toContain('(por revisar)');
     });
 
     it('un centro de costos no clasifica nada: 422', async () => {
@@ -312,9 +312,9 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       });
       const r = await capturar({
         source: 'ios_manual',
-        external_ref: 'e-5',
-        monto: '1000',
-        category_id: String(centro.id),
+        externalRef: 'e-5',
+        amount: '1000',
+        categoryId: String(centro.id),
       });
       expect(r.status).toBe(422);
       expect(await cuantas()).toBe(0);
@@ -327,9 +327,9 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       });
       const archivado = await capturar({
         source: 'ios_manual',
-        external_ref: 'e-6',
-        monto: '1000',
-        category_id: String(mercadoId),
+        externalRef: 'e-6',
+        amount: '1000',
+        categoryId: String(mercadoId),
       });
       expect(archivado.status).toBe(422);
 
@@ -345,9 +345,9 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
       });
       const ajeno = await capturar({
         source: 'ios_manual',
-        external_ref: 'e-7',
-        monto: '1000',
-        category_id: String(conceptoAjeno.id),
+        externalRef: 'e-7',
+        amount: '1000',
+        categoryId: String(conceptoAjeno.id),
       });
       expect(ajeno.status).toBe(422);
       expect(await cuantas()).toBe(0);
@@ -356,20 +356,20 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     it('la nota se guarda en notes, y sin monto se le añade el aviso', async () => {
       const conMonto = await capturar({
         source: 'ios_manual',
-        external_ref: 'e-8',
-        monto: '1000',
-        category_id: String(mercadoId),
-        nota: 'Para la semana',
+        externalRef: 'e-8',
+        amount: '1000',
+        categoryId: String(mercadoId),
+        note: 'Para la semana',
       });
       expect(conMonto.status).toBe(200);
       expect(conMonto.body.data.transaction.notes).toBe('Para la semana');
 
       const sinMonto = await capturar({
         source: 'wallet',
-        external_ref: 'e-9',
-        comercio: 'Exito Poblado',
-        category_id: String(mercadoId),
-        nota: 'Sin ticket',
+        externalRef: 'e-9',
+        merchant: 'Exito Poblado',
+        categoryId: String(mercadoId),
+        note: 'Sin ticket',
       });
       expect(sinMonto.status).toBe(200);
       expect(sinMonto.body.data.transaction.notes).toBe(
@@ -380,11 +380,11 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     it('Wallet con fecha en Bogotá: el día es el que manda la app, no el UTC de captured_at', async () => {
       const r = await capturar({
         source: 'wallet',
-        external_ref: 'e-10',
-        comercio: 'Exito Poblado',
-        monto: '5000',
-        fecha: '2026-10-03',
-        captured_at: '2026-10-04T04:30:00Z',
+        externalRef: 'e-10',
+        merchant: 'Exito Poblado',
+        amount: '5000',
+        date: '2026-10-03',
+        capturedAt: '2026-10-04T04:30:00Z',
       });
       expect(r.status).toBe(200);
       expect(r.body.data.transaction.date).toBe('2026-10-03');
@@ -393,9 +393,9 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
     it('un id de categoría que no es numérico, 400', async () => {
       const r = await capturar({
         source: 'ios_manual',
-        external_ref: 'e-11',
-        monto: '1000',
-        category_id: 'abc',
+        externalRef: 'e-11',
+        amount: '1000',
+        categoryId: 'abc',
       });
       expect(r.status).toBe(400);
     });
@@ -404,29 +404,29 @@ describe('Fase 3 — Interpretar y capturar (e2e)', () => {
   describe('El movimiento que crea la web', () => {
     it('acepta las columnas nuevas y sigue funcionando igual sin ellas', async () => {
       const sinNada = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', entorno.como(usuario))
         .send({ date: '2026-10-01', amount: '10000', type: 'expense' });
       expect(sinNada.status).toBe(201);
       expect(sinNada.body.data.source).toBe('web');
-      expect(sinNada.body.data.por_revisar).toBe(false);
-      expect(sinNada.body.data.raw_text).toBeNull();
+      expect(sinNada.body.data.needsReview).toBe(false);
+      expect(sinNada.body.data.rawText).toBeNull();
 
       const conTodo = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', entorno.como(usuario))
         .send({
           date: '2026-10-01',
           amount: '10000',
           type: 'expense',
           source: 'web',
-          raw_text: 'KOBA COLOMBIA',
-          captured_at: '2026-10-01T10:00:00-05:00',
-          por_revisar: true,
+          rawText: 'KOBA COLOMBIA',
+          capturedAt: '2026-10-01T10:00:00-05:00',
+          needsReview: true,
         });
       expect(conTodo.status).toBe(201);
-      expect(conTodo.body.data.raw_text).toBe('KOBA COLOMBIA');
-      expect(conTodo.body.data.por_revisar).toBe(true);
+      expect(conTodo.body.data.rawText).toBe('KOBA COLOMBIA');
+      expect(conTodo.body.data.needsReview).toBe(true);
     });
   });
 });

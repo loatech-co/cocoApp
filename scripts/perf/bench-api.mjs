@@ -124,7 +124,7 @@ export async function startBenchApi({ port = 0 } = {}) {
 
   return {
     origin,
-    base: `${origin}/api/v1`,
+    base: `${origin}/api/v2`,
     database: db,
     rows: top.rows,
     /** The captures write rows: take them back out so the next run starts equal. */

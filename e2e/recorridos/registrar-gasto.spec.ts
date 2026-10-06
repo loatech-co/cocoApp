@@ -34,7 +34,7 @@ test.describe('registering an expense', () => {
   }) => {
     // The receipt says "La Esquina": the keyword is what suggests the concept.
     await createConcept(cuenta.api, ['Costos variables', 'Licencias'], 'Mercado', {
-      palabras_clave: ['La Esquina'],
+      keywords: ['La Esquina'],
     });
     await entrar();
 

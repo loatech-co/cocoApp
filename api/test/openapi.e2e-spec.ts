@@ -7,16 +7,14 @@ import request from 'supertest';
 import { levantarApp, type EntornoDePruebas } from './helpers/app';
 import { AppModule } from '../src/app.module';
 import { configureRouting } from '../src/bootstrap';
-import { successorOf } from '../src/common/versioning/v1-deprecation';
 import { SupabaseAuthService } from '../src/modules/auth/supabase-auth.service';
 import { CONTRACT_VERSIONS, docsPath, setupApiDocs } from '../src/openapi/document';
 
 /**
- * The committed contracts (`api/openapi.v1.json`, `api/openapi.v2.json`)
- * against the app that runs.
+ * The committed contract (`api/openapi.v2.json`) against the app that runs.
  *
- * CI regenerates the documents and fails if they differ from the committed
- * ones, so the files are what the code describes. This suite closes the other gap:
+ * CI regenerates the document and fails if it differs from the committed
+ * one, so the file is what the code describes. This suite closes the other gap:
  * what the code describes against what Express actually serves. A route added
  * without being documented — or documented and then removed — fails here, the
  * same way the guard at the end of `user-isolation.e2e-spec.ts` catches a
@@ -86,7 +84,7 @@ function registeredRoutes(app: INestApplication): string[] {
     .filter((route) => route.includes('/api/') && !route.includes('*'));
 }
 
-describe('OpenAPI contracts (api/openapi.v1.json, api/openapi.v2.json)', () => {
+describe('OpenAPI contract (api/openapi.v2.json)', () => {
   let env: EntornoDePruebas;
 
   beforeAll(async () => {
@@ -101,7 +99,7 @@ describe('OpenAPI contracts (api/openapi.v1.json, api/openapi.v2.json)', () => {
     const registered = registeredRoutes(env.app);
     const documented = documentedOperations().map(({ route }) => route);
 
-    expect(registered.length).toBeGreaterThan(100);
+    expect(registered.length).toBeGreaterThan(50);
     expect(registered.filter((route) => !documented.includes(route))).toEqual([]);
     expect(documented.filter((route) => !registered.includes(route))).toEqual([]);
   });
@@ -125,36 +123,21 @@ describe('OpenAPI contracts (api/openapi.v1.json, api/openapi.v2.json)', () => {
       ](url);
 
       expect({ route, status: response.status }).toEqual({ route, status: 401 });
-      expect(response.body).toEqual(
-        url.startsWith('/api/v2/')
-          ? {
-              type: 'https://dev-cocoapp.viteri.me/problems/unauthenticated',
-              title: 'Hace falta iniciar sesión',
-              status: 401,
-              detail: expect.any(String),
-              code: 'unauthenticated',
-            }
-          : { error: { code: 'unauthenticated', message: expect.any(String), details: [] } },
-      );
+      expect(response.body).toEqual({
+        type: 'https://dev-cocoapp.viteri.me/problems/unauthenticated',
+        title: 'Hace falta iniciar sesión',
+        status: 401,
+        detail: expect.any(String),
+        code: 'unauthenticated',
+      });
     }
   });
 
-  it('each document holds its own version and nothing else, and the two cover the same routes', () => {
+  it('each document holds its own version and nothing else', () => {
     for (const { version, document } of DOCUMENTS) {
       const routes = operationsOf(document).map(({ route }) => route);
       expect(routes.filter((route) => !route.includes(`/api/v${version}/`))).toEqual([]);
     }
-    // Every v1 route has its v2 successor (the one its `Link` header names), and
-    // v2 has nothing v1 did not: v2 is a translation, not new features.
-    const shape = (route: string): string => route.replace(/\{\w+\}/g, '{}');
-    const [v1, v2] = DOCUMENTS.map(({ document }) =>
-      operationsOf(document).map(({ route }) => route),
-    );
-    const successors = (v1 ?? []).map((route) => {
-      const [method, path] = route.split(' ') as [string, string];
-      return shape(`${method} ${successorOf(path)}`);
-    });
-    expect(successors.sort()).toEqual((v2 ?? []).map(shape).sort());
   });
 
   it('outside production, /api/docs/v<n> serves the same routes each file describes', async () => {

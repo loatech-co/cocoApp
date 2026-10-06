@@ -6,7 +6,7 @@ import { createConcept } from '../support/semilla';
 test.describe('the concept finder', () => {
   test('finds a concept by one of its keywords', async ({ page, cuenta, entrar }) => {
     await createConcept(cuenta.api, ['Costos variables', 'Licencias'], 'Mercado', {
-      palabras_clave: ['Supertienda'],
+      keywords: ['Supertienda'],
     });
     await createConcept(cuenta.api, ['Costos fijos', 'Vivienda'], 'Arriendo');
     await entrar();

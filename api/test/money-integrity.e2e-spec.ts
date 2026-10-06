@@ -6,27 +6,13 @@ import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './help
 
 /**
  * Integridad del dinero (R-3): lo que una edición o dos capturas a la vez no
- * pueden dejar a medias. Cada caso corre por la v1 y por la v2.
+ * pueden dejar a medias. Cada caso corre por la v2.
  *
  * - Cambiar el monto sin reenviar el desglose: 422, y nada cambia.
  * - Editar una pata de una transferencia edita las dos, o ninguna.
  * - Wallet y el SMS del mismo pago, a la vez: un solo movimiento.
  */
 const VERSIONES = [
-  {
-    v: 'v1',
-    transfer: 'transfer_group_id',
-    merged: 'fusionado',
-    capture: (ref: string, extra: Record<string, unknown>) => ({ external_ref: ref, ...extra }),
-    wallet: (monto: string, en: string) => ({
-      comercio: 'Exito Poblado',
-      monto,
-      fecha: '2026-10-02',
-      source: 'wallet',
-      captured_at: en,
-    }),
-    sms: (texto: string, en: string) => ({ texto, source: 'sms', captured_at: en }),
-  },
   {
     v: 'v2',
     transfer: 'transferGroupId',
@@ -152,7 +138,7 @@ describe.each(VERSIONES)('Integridad del dinero por la $v (e2e)', (version) => {
 
       await patch(t.in.id, { type: 'expense' }).expect(422);
       await patch(t.in.id, {
-        [version.v === 'v1' ? 'account_id' : 'accountId']: Number(t.from.id),
+        accountId: Number(t.from.id),
       }).expect(422);
     });
 

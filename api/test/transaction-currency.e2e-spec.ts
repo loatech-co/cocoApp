@@ -30,7 +30,7 @@ describe('Transaction currency (e2e)', () => {
 
   it('a new movement is COP and says so', async () => {
     const created = await http
-      .post('/api/v1/transactions')
+      .post('/api/v2/transactions')
       .set('Authorization', asAna)
       .send({ date: '2026-10-01', amount: '45900', type: 'expense' })
       .expect(201);
@@ -52,7 +52,7 @@ describe('Transaction currency (e2e)', () => {
       },
     });
 
-    const list = await http.get('/api/v1/transactions').set('Authorization', asAna).expect(200);
+    const list = await http.get('/api/v2/transactions').set('Authorization', asAna).expect(200);
 
     expect(list.body.data.map((t: { currency: string }) => t.currency)).toEqual(['USD']);
   });

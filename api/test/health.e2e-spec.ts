@@ -26,10 +26,12 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
   });
 
   it('sin header Authorization responde 401 con el envelope canónico', async () => {
-    const response = await request(entorno.app.getHttpServer()).get('/api/v1/auth/me').expect(401);
+    const response = await request(entorno.app.getHttpServer()).get('/api/v2/auth/me').expect(401);
 
-    expect(response.body).toEqual({
-      error: { code: 'unauthenticated', message: expect.any(String), details: [] },
+    expect(response.body).toMatchObject({
+      status: 401,
+      code: 'unauthenticated',
+      detail: expect.any(String),
     });
     // Y jamás filtra detalle interno.
     expect(JSON.stringify(response.body)).not.toMatch(/stack|at Object|\.ts:/i);
@@ -37,7 +39,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
 
   it('con un token que no es un JWT responde 401', async () => {
     await request(entorno.app.getHttpServer())
-      .get('/api/v1/auth/me')
+      .get('/api/v2/auth/me')
       .set('Authorization', 'Bearer esto-no-es-un-token')
       .expect(401);
   });
@@ -55,7 +57,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
     const token = entorno.supabase.emitirToken(huerfano);
 
     await request(entorno.app.getHttpServer())
-      .get('/api/v1/auth/me')
+      .get('/api/v2/auth/me')
       .set('Authorization', `Bearer ${token}`)
       .expect(401);
   });
@@ -75,7 +77,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
     });
 
     await request(entorno.app.getHttpServer())
-      .get('/api/v1/auth/me')
+      .get('/api/v2/auth/me')
       .set('Authorization', `Bearer ${viejo}`)
       .expect(401);
   });
@@ -88,7 +90,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
     await entorno.prisma.user.delete({ where: { id: usuario.id } });
 
     await request(entorno.app.getHttpServer())
-      .get('/api/v1/auth/me')
+      .get('/api/v2/auth/me')
       .set('Authorization', cabecera)
       .expect(401);
   });
@@ -97,7 +99,7 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
     const usuario = await entorno.crearUsuario();
 
     const response = await request(entorno.app.getHttpServer())
-      .get('/api/v1/auth/me')
+      .get('/api/v2/auth/me')
       .set('Authorization', entorno.como(usuario))
       .expect(200);
 
@@ -105,19 +107,17 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
   });
 
   it('health is public: 200 without a token, says only that it is alive and which commit', async () => {
-    for (const path of ['/api/v1/health', '/api/v2/health']) {
-      const response = await request(entorno.app.getHttpServer()).get(path).expect(200);
+    const response = await request(entorno.app.getHttpServer()).get('/api/v2/health').expect(200);
 
-      // Exactly these two keys: the short SHA and nothing more about the deploy.
-      expect(response.body).toEqual({
-        data: { status: 'ok', version: expect.stringMatching(/^([0-9a-f]{7}|unknown)$/) },
-        meta: {},
-      });
-    }
+    // Exactly these two keys: the short SHA and nothing more about the deploy.
+    expect(response.body).toEqual({
+      data: { status: 'ok', version: expect.stringMatching(/^([0-9a-f]{7}|unknown)$/) },
+      meta: {},
+    });
   });
 
   it('ready is public: 200 without a token once the database answers', async () => {
-    const response = await request(entorno.app.getHttpServer()).get('/api/v1/ready').expect(200);
+    const response = await request(entorno.app.getHttpServer()).get('/api/v2/ready').expect(200);
 
     expect(response.body).toEqual({ data: { status: 'ok', db: 'ok' }, meta: {} });
   });
@@ -127,19 +127,21 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
     const ping = jest.spyOn(repository, 'isDatabaseReachable').mockResolvedValue(false);
 
     try {
-      const response = await request(entorno.app.getHttpServer()).get('/api/v1/ready').expect(503);
-      expect(response.body).toEqual({
-        error: { code: expect.any(String), message: 'La base de datos no responde.', details: [] },
+      const response = await request(entorno.app.getHttpServer()).get('/api/v2/ready').expect(503);
+      expect(response.body).toMatchObject({
+        status: 503,
+        code: 'database_unavailable',
+        detail: 'La base de datos no responde.',
       });
       // The process is still alive: an unreachable database is not a crash.
-      await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
+      await request(entorno.app.getHttpServer()).get('/api/v2/health').expect(200);
     } finally {
       ping.mockRestore();
     }
   });
 
   it('every response carries an X-Request-Id', async () => {
-    const response = await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
+    const response = await request(entorno.app.getHttpServer()).get('/api/v2/health').expect(200);
 
     expect(response.headers['x-request-id']).toMatch(/^[A-Za-z0-9._-]{8,64}$/);
   });

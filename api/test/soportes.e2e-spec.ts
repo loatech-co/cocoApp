@@ -50,10 +50,10 @@ describe('Soportes (e2e)', () => {
   const conSoportes = async (
     auth: string,
     userId: bigint,
-    contenidos: { nombre: string; mime: string; ext: string; bytes: Buffer }[],
+    contenidos: { name: string; mime: string; ext: string; bytes: Buffer }[],
   ) => {
     const movimiento = await http
-      .post('/api/v1/transactions')
+      .post('/api/v2/transactions')
       .set('Authorization', auth)
       .send({ date: '2026-08-12', amount: '120000', type: 'expense' })
       .expect(201);
@@ -71,7 +71,7 @@ describe('Soportes (e2e)', () => {
             userId,
             transactionId,
             position: i + 1,
-            fileName: c.nombre,
+            fileName: c.name,
             mimeType: c.mime,
             storageKey,
             sizeBytes: c.bytes.length,
@@ -85,7 +85,7 @@ describe('Soportes (e2e)', () => {
   };
 
   const pdf = (texto: string) => ({
-    nombre: `${texto}.pdf`,
+    name: `${texto}.pdf`,
     mime: 'application/pdf',
     ext: 'pdf',
     // Un PDF de verdad empieza por %PDF-: así el content-type no es una
@@ -99,9 +99,9 @@ describe('Soportes (e2e)', () => {
     it('sin sesión, 401 en listar y en descargar', async () => {
       const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
 
-      await http.get(`/api/v1/transactions/${transactionId}/soportes`).expect(401);
+      await http.get(`/api/v2/transactions/${transactionId}/receipts`).expect(401);
       await http
-        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
         .expect(401);
     });
 
@@ -109,7 +109,7 @@ describe('Soportes (e2e)', () => {
       const { transactionId } = await conSoportes(ana, anaId, [pdf('recibo')]);
 
       await http
-        .get(`/api/v1/transactions/${transactionId}/soportes`)
+        .get(`/api/v2/transactions/${transactionId}/receipts`)
         .set('Authorization', 'Bearer no-soy-un-token')
         .expect(401);
     });
@@ -120,13 +120,13 @@ describe('Soportes (e2e)', () => {
       // La lista no dice "prohibido": para esa consulta esos soportes no
       // existen. Decir "prohibido" confirmaría que el movimiento es de alguien.
       const lista = await http
-        .get(`/api/v1/transactions/${transactionId}/soportes`)
+        .get(`/api/v2/transactions/${transactionId}/receipts`)
         .set('Authorization', beto)
         .expect(200);
       expect(lista.body.data).toEqual([]);
 
       await http
-        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
         .set('Authorization', beto)
         .expect(404);
     });
@@ -139,7 +139,7 @@ describe('Soportes (e2e)', () => {
       const deBeto = await conSoportes(beto, betoId, [pdf('el-de-beto')]);
 
       await http
-        .get(`/api/v1/transactions/${deBeto.transactionId}/soportes/${deAna.soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${deBeto.transactionId}/receipts/${deAna.soportes[0]!.id}`)
         .set('Authorization', beto)
         .expect(404);
     });
@@ -156,9 +156,9 @@ describe('Soportes (e2e)', () => {
       // 404 y no 403: confirmar que el movimiento existe ya es contar algo de
       // la base de otro.
       await http
-        .post(`/api/v1/transactions/${transactionId}/soportes`)
+        .post(`/api/v2/transactions/${transactionId}/receipts`)
         .set('Authorization', beto)
-        .attach('archivos', hoja, { filename: 'x.png', contentType: 'image/png' })
+        .attach('files', hoja, { filename: 'x.png', contentType: 'image/png' })
         .expect(404);
 
       // Y no se creó nada: la propiedad se comprueba ANTES de procesar.
@@ -169,15 +169,15 @@ describe('Soportes (e2e)', () => {
       const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
 
       await http
-        .post(`/api/v1/transactions/${transactionId}/soportes`)
-        .attach('archivos', Buffer.from('%PDF-1.4\n%%EOF\n'), {
+        .post(`/api/v2/transactions/${transactionId}/receipts`)
+        .attach('files', Buffer.from('%PDF-1.4\n%%EOF\n'), {
           filename: 'x.pdf',
           contentType: 'application/pdf',
         })
         .expect(401);
 
       await http
-        .delete(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
+        .delete(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
         .expect(401);
     });
 
@@ -185,7 +185,7 @@ describe('Soportes (e2e)', () => {
       const { transactionId, soportes } = await conSoportes(ana, anaId, [pdf('recibo')]);
 
       await http
-        .delete(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
+        .delete(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
         .set('Authorization', beto)
         .expect(404);
 
@@ -204,7 +204,7 @@ describe('Soportes (e2e)', () => {
       });
 
       await http
-        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
         .set('Authorization', ana)
         .expect(404);
     });
@@ -221,13 +221,13 @@ describe('Soportes (e2e)', () => {
       ]);
 
       const r = await http
-        .get(`/api/v1/transactions/${transactionId}/soportes`)
+        .get(`/api/v2/transactions/${transactionId}/receipts`)
         .set('Authorization', ana)
         .expect(200);
 
-      expect(r.body.data.map((s: { orden: number }) => s.orden)).toEqual([1, 2, 3]);
-      expect(r.body.data[0].nombre_archivo).toBe('uno.pdf');
-      expect(r.body.data.every((s: { disponible: boolean }) => s.disponible)).toBe(true);
+      expect(r.body.data.map((s: { position: number }) => s.position)).toEqual([1, 2, 3]);
+      expect(r.body.data[0].fileName).toBe('uno.pdf');
+      expect(r.body.data.every((s: { isAvailable: boolean }) => s.isAvailable)).toBe(true);
       // La ficha NO lleva la ruta del almacén. Enseñarla no abriría ninguna
       // puerta —no hay servidor de archivos detrás— pero dibuja el mapa.
       expect(r.body.data[0]).not.toHaveProperty('storage_key');
@@ -238,7 +238,7 @@ describe('Soportes (e2e)', () => {
       const { transactionId, soportes } = await conSoportes(ana, anaId, [uno]);
 
       const r = await http
-        .get(`/api/v1/transactions/${transactionId}/soportes/${soportes[0]!.id}`)
+        .get(`/api/v2/transactions/${transactionId}/receipts/${soportes[0]!.id}`)
         .set('Authorization', ana)
         .expect(200);
 
@@ -252,13 +252,13 @@ describe('Soportes (e2e)', () => {
 
     it('un movimiento sin soportes devuelve una lista vacía, no un error', async () => {
       const movimiento = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({ date: '2026-08-12', amount: '1000', type: 'expense' })
         .expect(201);
 
       const r = await http
-        .get(`/api/v1/transactions/${Number(movimiento.body.data.id)}/soportes`)
+        .get(`/api/v2/transactions/${Number(movimiento.body.data.id)}/receipts`)
         .set('Authorization', ana)
         .expect(200);
 
@@ -275,19 +275,19 @@ describe('Soportes (e2e)', () => {
       });
 
       const r = await http
-        .get(`/api/v1/transactions/${transactionId}/soportes`)
+        .get(`/api/v2/transactions/${transactionId}/receipts`)
         .set('Authorization', ana)
         .expect(200);
 
-      // Se lista igual, marcado como no disponible: esconderlo haría creer que
+      // Se lista igual, marcado como no isAvailable: esconderlo haría creer que
       // el soporte nunca se cargó, que es un problema distinto.
       expect(r.body.data).toHaveLength(1);
-      expect(r.body.data[0].disponible).toBe(false);
+      expect(r.body.data[0].isAvailable).toBe(false);
     });
 
     it('sube un soporte y lo deja en gris, liviano y con el nombre del movimiento', async () => {
       const movimiento = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({
           date: '2026-08-12',
@@ -308,9 +308,9 @@ describe('Soportes (e2e)', () => {
         .toBuffer();
 
       const r = await http
-        .post(`/api/v1/transactions/${id}/soportes`)
+        .post(`/api/v2/transactions/${id}/receipts`)
         .set('Authorization', ana)
-        .attach('archivos', color, { filename: 'IMG_4821.PNG', contentType: 'image/png' })
+        .attach('files', color, { filename: 'IMG_4821.PNG', contentType: 'image/png' })
         .expect(201);
 
       expect(r.body.data).toHaveLength(1);
@@ -318,9 +318,9 @@ describe('Soportes (e2e)', () => {
 
       // El nombre sale del MOVIMIENTO, no del archivo, y la barra que no cabe
       // en un nombre de archivo se cambia por un guion —igual que en el lote—.
-      expect(soporte.nombre_archivo).toBe('PILA - Seguridad Social - 2026-08-12.jpg');
-      expect(soporte.mime_type).toBe('image/jpeg');
-      expect(soporte.orden).toBe(1);
+      expect(soporte.fileName).toBe('PILA - Seguridad Social - 2026-08-12.jpg');
+      expect(soporte.mimeType).toBe('image/jpeg');
+      expect(soporte.position).toBe(1);
 
       // Y el archivo guardado es gris y de 1100 de ancho, no la imagen original.
       const guardado = await entorno.prisma.receipt.findFirst({
@@ -338,7 +338,7 @@ describe('Soportes (e2e)', () => {
 
     it('el "i de N" se recalcula al agregar, sin renombrar lo anterior', async () => {
       const movimiento = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({ date: '2026-08-12', amount: '90000', type: 'expense', description: 'Claro Movil' })
         .expect(201);
@@ -358,31 +358,31 @@ describe('Soportes (e2e)', () => {
           .toBuffer();
 
       const dos = await http
-        .post(`/api/v1/transactions/${id}/soportes`)
+        .post(`/api/v2/transactions/${id}/receipts`)
         .set('Authorization', ana)
-        .attach('archivos', await hoja(10), { filename: 'a.png', contentType: 'image/png' })
-        .attach('archivos', await hoja(120), { filename: 'b.png', contentType: 'image/png' })
+        .attach('files', await hoja(10), { filename: 'a.png', contentType: 'image/png' })
+        .attach('files', await hoja(120), { filename: 'b.png', contentType: 'image/png' })
         .expect(201);
 
-      expect(dos.body.data.map((s: { orden: number }) => s.orden)).toEqual([1, 2]);
+      expect(dos.body.data.map((s: { position: number }) => s.position)).toEqual([1, 2]);
 
       const tres = await http
-        .post(`/api/v1/transactions/${id}/soportes`)
+        .post(`/api/v2/transactions/${id}/receipts`)
         .set('Authorization', ana)
-        .attach('archivos', await hoja(230), { filename: 'c.png', contentType: 'image/png' })
+        .attach('files', await hoja(230), { filename: 'c.png', contentType: 'image/png' })
         .expect(201);
 
-      // El tercero continúa la cuenta, y los dos primeros NO cambian de nombre:
+      // El tercero continúa la cuenta, y los dos primeros NO cambian de name:
       // el total no está horneado en ninguno, se cuenta al mirarlos.
-      expect(tres.body.data.map((s: { orden: number }) => s.orden)).toEqual([1, 2, 3]);
-      expect(
-        new Set(tres.body.data.map((s: { nombre_archivo: string }) => s.nombre_archivo)),
-      ).toEqual(new Set(['Claro Movil - 2026-08-12.jpg']));
+      expect(tres.body.data.map((s: { position: number }) => s.position)).toEqual([1, 2, 3]);
+      expect(new Set(tres.body.data.map((s: { fileName: string }) => s.fileName))).toEqual(
+        new Set(['Claro Movil - 2026-08-12.jpg']),
+      );
     });
 
     it('subir el mismo archivo dos veces no lo duplica', async () => {
       const movimiento = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({ date: '2026-08-12', amount: '90000', type: 'expense', description: 'Agua' })
         .expect(201);
@@ -395,15 +395,15 @@ describe('Soportes (e2e)', () => {
         .toBuffer();
 
       await http
-        .post(`/api/v1/transactions/${id}/soportes`)
+        .post(`/api/v2/transactions/${id}/receipts`)
         .set('Authorization', ana)
-        .attach('archivos', hoja, { filename: 'recibo.png', contentType: 'image/png' })
+        .attach('files', hoja, { filename: 'recibo.png', contentType: 'image/png' })
         .expect(201);
 
       const segunda = await http
-        .post(`/api/v1/transactions/${id}/soportes`)
+        .post(`/api/v2/transactions/${id}/receipts`)
         .set('Authorization', ana)
-        .attach('archivos', hoja, { filename: 'otro-nombre.png', contentType: 'image/png' })
+        .attach('files', hoja, { filename: 'otro-nombre.png', contentType: 'image/png' })
         .expect(201);
 
       // La huella es del archivo YA TRATADO: dos originales distintos que
@@ -413,15 +413,15 @@ describe('Soportes (e2e)', () => {
 
     it('rechaza lo que no es un PDF ni una imagen', async () => {
       const movimiento = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', ana)
         .send({ date: '2026-08-12', amount: '1000', type: 'expense' })
         .expect(201);
 
       await http
-        .post(`/api/v1/transactions/${Number(movimiento.body.data.id)}/soportes`)
+        .post(`/api/v2/transactions/${Number(movimiento.body.data.id)}/receipts`)
         .set('Authorization', ana)
-        .attach('archivos', Buffer.from('#!/bin/sh\nrm -rf /'), {
+        .attach('files', Buffer.from('#!/bin/sh\nrm -rf /'), {
           filename: 'travieso.sh',
           contentType: 'application/x-sh',
         })
@@ -429,9 +429,9 @@ describe('Soportes (e2e)', () => {
 
       // A PostScript program labelled as a PDF never reaches ghostscript.
       await http
-        .post(`/api/v1/transactions/${Number(movimiento.body.data.id)}/soportes`)
+        .post(`/api/v2/transactions/${Number(movimiento.body.data.id)}/receipts`)
         .set('Authorization', ana)
-        .attach('archivos', Buffer.from('%!PS-Adobe-3.0\nshowpage\n'), {
+        .attach('files', Buffer.from('%!PS-Adobe-3.0\nshowpage\n'), {
           filename: 'recibo.pdf',
           contentType: 'application/pdf',
         })
@@ -442,7 +442,7 @@ describe('Soportes (e2e)', () => {
       const { transactionId } = await conSoportes(ana, anaId, [pdf('uno'), pdf('dos')]);
 
       await http
-        .delete(`/api/v1/transactions/${transactionId}`)
+        .delete(`/api/v2/transactions/${transactionId}`)
         .set('Authorization', ana)
         .expect(204);
 

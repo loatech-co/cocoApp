@@ -42,16 +42,16 @@ describe('Receipt files follow their rows (e2e)', () => {
 
   async function movementWithReceipt(): Promise<{ id: string; key: string; soporteId: string }> {
     const created = await http
-      .post('/api/v1/transactions')
+      .post('/api/v2/transactions')
       .set('Authorization', asAna)
       .send({ date: '2026-10-01', amount: '1000', type: 'expense' })
       .expect(201);
     const id = String(created.body.data.id);
 
     await http
-      .post(`/api/v1/transactions/${id}/soportes`)
+      .post(`/api/v2/transactions/${id}/receipts`)
       .set('Authorization', asAna)
-      .attach('archivos', image, { filename: 'r.png', contentType: 'image/png' })
+      .attach('files', image, { filename: 'r.png', contentType: 'image/png' })
       .expect(201);
 
     const row = await env.prisma.receipt.findFirstOrThrow({ where: { transactionId: BigInt(id) } });
@@ -63,12 +63,12 @@ describe('Receipt files follow their rows (e2e)', () => {
 
     expect(await store.exists(key)).toBe(true);
     const list = await http
-      .get(`/api/v1/transactions/${id}/soportes`)
+      .get(`/api/v2/transactions/${id}/receipts`)
       .set('Authorization', asAna)
       .expect(200);
-    expect(list.body.data[0].disponible).toBe(true);
+    expect(list.body.data[0].isAvailable).toBe(true);
     await http
-      .get(`/api/v1/transactions/${id}/soportes/${soporteId}`)
+      .get(`/api/v2/transactions/${id}/receipts/${soporteId}`)
       .set('Authorization', asAna)
       .expect(200);
   });
@@ -77,7 +77,7 @@ describe('Receipt files follow their rows (e2e)', () => {
     const { id, key, soporteId } = await movementWithReceipt();
 
     await http
-      .delete(`/api/v1/transactions/${id}/soportes/${soporteId}`)
+      .delete(`/api/v2/transactions/${id}/receipts/${soporteId}`)
       .set('Authorization', asAna)
       .expect(204);
 
@@ -87,7 +87,7 @@ describe('Receipt files follow their rows (e2e)', () => {
   it('deleting a movement deletes the files of its receipts', async () => {
     const { id, key } = await movementWithReceipt();
 
-    await http.delete(`/api/v1/transactions/${id}`).set('Authorization', asAna).expect(204);
+    await http.delete(`/api/v2/transactions/${id}`).set('Authorization', asAna).expect(204);
 
     expect(await env.prisma.receipt.count({ where: { storageKey: key } })).toBe(0);
     expect(await store.exists(key)).toBe(false);
@@ -98,7 +98,7 @@ describe('Receipt files follow their rows (e2e)', () => {
     const bruno = await env.crearUsuario({ displayName: 'Bruno' });
 
     await http
-      .delete(`/api/v1/transactions/${id}`)
+      .delete(`/api/v2/transactions/${id}`)
       .set('Authorization', env.como(bruno))
       .expect(404);
 

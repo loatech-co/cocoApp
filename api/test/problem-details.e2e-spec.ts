@@ -5,7 +5,7 @@ import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './help
 
 /**
  * v2 errors are `application/problem+json` (RFC 9457) with a stable `code`
- * per business rule; v1 keeps `{ error: { code, message, details } }`.
+ * per business rule.
  *
  * Each case is a rule a client has to tell apart from the others without
  * reading the Spanish sentence: the code is what iOS and the web switch on, so
@@ -157,19 +157,8 @@ describe('v2 errors: problem+json with a code per rule (e2e)', () => {
     expectProblem(response, 404, 'not_found');
   });
 
-  it('v1 keeps its envelope and its generic code for the same rule', async () => {
-    const response = await http
-      .post('/api/v1/transactions')
-      .set('Authorization', auth)
-      .send({
-        date: '2026-09-10',
-        amount: '1000',
-        splits: [{ category_id: Number(conceptId), amount: '400' }],
-      })
-      .expect(422);
-    expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
-    expect(response.body).toEqual({
-      error: { code: 'unprocessable', message: expect.any(String), details: [] },
-    });
+  it('a version that does not exist is a problem too', async () => {
+    const response = await http.get('/api/v3/transactions').set('Authorization', auth);
+    expectProblem(response, 404, 'not_found');
   });
 });

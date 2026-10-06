@@ -33,19 +33,19 @@ async function readData<T>(response: Awaited<ReturnType<APIRequestContext['get']
 
 async function login(email: string): Promise<APIRequestContext> {
   const anonymous = await request.newContext({ baseURL: BASE_URL });
-  const { access_token } = await readData<{ access_token: string }>(
-    await anonymous.post('/api/v1/auth/login', { data: { email, password: PASSWORD } }),
+  const { accessToken } = await readData<{ accessToken: string }>(
+    await anonymous.post('/api/v2/auth/login', { data: { email, password: PASSWORD } }),
   );
   await anonymous.dispose();
   return request.newContext({
     baseURL: BASE_URL,
-    extraHTTPHeaders: { Authorization: `Bearer ${access_token}` },
+    extraHTTPHeaders: { Authorization: `Bearer ${accessToken}` },
   });
 }
 
 async function register(email: string, displayName: string): Promise<void> {
   const anonymous = await request.newContext({ baseURL: BASE_URL });
-  const response = await anonymous.post('/api/v1/auth/register', {
+  const response = await anonymous.post('/api/v2/auth/register', {
     data: { email, password: PASSWORD, displayName },
   });
   await anonymous.dispose();
@@ -90,11 +90,11 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await register(email, displayName);
 
     const pending = await readData<{ id: string | number; email: string }[]>(
-      await admin.get('/api/v1/admin/users?status=pending&per_page=200'),
+      await admin.get('/api/v2/admin/users?status=pending&perPage=200'),
     );
     const user = pending.find((u) => u.email === email);
     if (!user) throw new Error(`${email} is not pending approval`);
-    await readData(await admin.post(`/api/v1/admin/users/${String(user.id)}/approve`));
+    await readData(await admin.post(`/api/v2/admin/users/${String(user.id)}/approve`));
 
     const api = await login(email);
     await use({ email, displayName, api });

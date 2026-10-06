@@ -79,7 +79,7 @@ describe('Auto-charge task (e2e)', () => {
   it('GET /dashboard no longer writes', async () => {
     await autoPaidConcept(ana.id, 'Netflix');
 
-    await http.get('/api/v1/dashboard').set('Authorization', env.como(ana)).expect(200);
+    await http.get('/api/v2/dashboard').set('Authorization', env.como(ana)).expect(200);
 
     expect(await env.prisma.transaction.count({ where: { userId: ana.id } })).toBe(0);
   });

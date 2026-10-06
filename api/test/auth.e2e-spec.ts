@@ -35,7 +35,7 @@ describe('Auth propia (e2e)', () => {
   });
 
   const registrar = (body: Record<string, unknown> = {}) =>
-    http.post('/api/v1/auth/register').send({
+    http.post('/api/v2/auth/register').send({
       email: correoDePrueba(),
       password: PASSWORD_VALIDA,
       displayName: 'Persona de Prueba',
@@ -43,7 +43,7 @@ describe('Auth propia (e2e)', () => {
     });
 
   const entrar = (email: string, password: string) =>
-    http.post('/api/v1/auth/login').send({ email, password });
+    http.post('/api/v2/auth/login').send({ email, password });
 
   /** Extrae la cookie de refresh de una respuesta de login/refresh. */
   const cookieDe = (respuesta: request.Response): string => {
@@ -60,7 +60,7 @@ describe('Auth propia (e2e)', () => {
       const email = correoDePrueba();
       const respuesta = await registrar({ email }).expect(201);
 
-      expect(respuesta.body.data.pending_approval).toBe(true);
+      expect(respuesta.body.data.pendingApproval).toBe(true);
 
       const usuario = await entorno.prisma.user.findUniqueOrThrow({ where: { email } });
       expect(usuario.status).toBe('pending');
@@ -74,8 +74,8 @@ describe('Auth propia (e2e)', () => {
     it('rechaza una contraseña débil diciendo EXACTAMENTE qué le falta', async () => {
       const respuesta = await registrar({ password: 'abcdefghijkl' }).expect(422);
 
-      expect(respuesta.body.error.code).toBe('unprocessable');
-      const mensajes = respuesta.body.error.details.map((d: { message: string }) => d.message);
+      expect(respuesta.body.code).toBe('weak_password');
+      const mensajes = respuesta.body.errors.map((d: { message: string }) => d.message);
       expect(mensajes).toEqual(
         expect.arrayContaining([
           'Debe incluir al menos una letra mayúscula.',
@@ -160,8 +160,8 @@ describe('Auth propia (e2e)', () => {
 
       const respuesta = await entrar(usuario.email, PASSWORD_VALIDA).expect(200);
 
-      expect(respuesta.body.data.access_token).toEqual(expect.any(String));
-      expect(respuesta.body.data.expires_in).toBe(15 * 60);
+      expect(respuesta.body.data.accessToken).toEqual(expect.any(String));
+      expect(respuesta.body.data.expiresIn).toBe(15 * 60);
       expect(respuesta.body.data.user.email).toBe(usuario.email);
 
       // El refresh token no aparece por ningún lado del cuerpo.
@@ -171,7 +171,7 @@ describe('Auth propia (e2e)', () => {
       const cookie = cookies.find((c) => c.startsWith('coco_refresh='))!;
       expect(cookie).toContain('HttpOnly'); // ni un XSS puede leerla
       expect(cookie).toContain('SameSite=Strict'); // neutraliza el CSRF aquí
-      expect(cookie).toContain('Path=/api/v1/auth'); // no viaja en cada llamada
+      expect(cookie).toContain('Path=/api/v2/auth'); // no viaja en cada llamada
     });
 
     it('con contraseña incorrecta responde EXACTAMENTE lo mismo que con un correo inexistente', async () => {
@@ -187,14 +187,14 @@ describe('Auth propia (e2e)', () => {
       const usuario = await entorno.crearUsuario({ status: 'pending' });
 
       const respuesta = await entrar(usuario.email, PASSWORD_VALIDA).expect(403);
-      expect(respuesta.body.error.message).toMatch(/pendiente de aprobación/i);
+      expect(respuesta.body.detail).toMatch(/pendiente de aprobación/i);
     });
 
     it('una cuenta suspendida no puede entrar', async () => {
       const usuario = await entorno.crearUsuario({ status: 'suspended' });
 
       const respuesta = await entrar(usuario.email, PASSWORD_VALIDA).expect(403);
-      expect(respuesta.body.error.message).toMatch(/suspendida/i);
+      expect(respuesta.body.detail).toMatch(/suspendida/i);
     });
 
     it('el estado de la cuenta solo se revela a quien acertó la contraseña', async () => {
@@ -203,7 +203,7 @@ describe('Auth propia (e2e)', () => {
       const usuario = await entorno.crearUsuario({ status: 'pending' });
 
       const respuesta = await entrar(usuario.email, 'Zz9$Otra-Cosa-Aqui!').expect(401);
-      expect(respuesta.body.error.message).not.toMatch(/pendiente|suspendida/i);
+      expect(respuesta.body.detail).not.toMatch(/pendiente|suspendida/i);
     });
   });
 
@@ -221,7 +221,7 @@ describe('Auth propia (e2e)', () => {
   // token por otro.
   describe('Refresh token', () => {
     it('sin cookie responde 401', async () => {
-      await http.post('/api/v1/auth/refresh').expect(401);
+      await http.post('/api/v2/auth/refresh').expect(401);
     });
 
     // ── El control más importante de todo el módulo ──
@@ -235,7 +235,7 @@ describe('Auth propia (e2e)', () => {
         data: { status: 'suspended' },
       });
 
-      await http.post('/api/v1/auth/refresh').set('Cookie', cookieDe(login)).expect(401);
+      await http.post('/api/v2/auth/refresh').set('Cookie', cookieDe(login)).expect(401);
     });
   });
 
@@ -246,34 +246,34 @@ describe('Auth propia (e2e)', () => {
       const usuario = await entorno.crearUsuario();
       const cabecera = entorno.como(usuario);
 
-      await http.get('/api/v1/auth/me').set('Authorization', cabecera).expect(200);
+      await http.get('/api/v2/auth/me').set('Authorization', cabecera).expect(200);
 
-      await http.post('/api/v1/auth/logout-all').set('Authorization', cabecera).expect(204);
+      await http.post('/api/v2/auth/logout-all').set('Authorization', cabecera).expect(204);
 
       // El token sigue siendo criptográficamente válido y sin expirar. Lo que
       // lo mata es `sessionsValidFrom`, que el guard compara en cada petición.
-      await http.get('/api/v1/auth/me').set('Authorization', cabecera).expect(401);
+      await http.get('/api/v2/auth/me').set('Authorization', cabecera).expect(401);
     });
 
     it('suspender una cuenta expulsa al instante a quien ya estaba dentro', async () => {
       const usuario = await entorno.crearUsuario();
       const cabecera = entorno.como(usuario);
 
-      await http.get('/api/v1/auth/me').set('Authorization', cabecera).expect(200);
+      await http.get('/api/v2/auth/me').set('Authorization', cabecera).expect(200);
 
       await entorno.prisma.user.update({
         where: { id: usuario.id },
         data: { status: 'suspended' },
       });
 
-      await http.get('/api/v1/auth/me').set('Authorization', cabecera).expect(403);
+      await http.get('/api/v2/auth/me').set('Authorization', cabecera).expect(403);
     });
 
     it('el rol sale de la BASE, no del token', async () => {
       const usuario = await entorno.crearUsuario({ role: 'user' });
       const cabecera = entorno.como(usuario);
 
-      await http.get('/api/v1/admin/users').set('Authorization', cabecera).expect(403);
+      await http.get('/api/v2/admin/users').set('Authorization', cabecera).expect(403);
 
       // Se promueve por fuera, sin emitir un token nuevo: si el rol viniera del
       // token, esto seguiría dando 403 hasta que expirara.
@@ -282,7 +282,7 @@ describe('Auth propia (e2e)', () => {
         data: { role: 'admin' },
       });
 
-      await http.get('/api/v1/admin/users').set('Authorization', cabecera).expect(200);
+      await http.get('/api/v2/admin/users').set('Authorization', cabecera).expect(200);
     });
   });
 
@@ -294,7 +294,7 @@ describe('Auth propia (e2e)', () => {
 
       // Si bastara el access token, quien robara uno se apoderaría de la cuenta.
       await http
-        .post('/api/v1/auth/change-password')
+        .post('/api/v2/auth/change-password')
         .set('Authorization', entorno.como(usuario))
         .send({ currentPassword: 'Zz9$Otra-Cosa-Aqui!', newPassword: PASSWORD_NUEVA })
         .expect(401);
@@ -304,7 +304,7 @@ describe('Auth propia (e2e)', () => {
       const usuario = await entorno.crearUsuario();
 
       await http
-        .post('/api/v1/auth/change-password')
+        .post('/api/v2/auth/change-password')
         .set('Authorization', entorno.como(usuario))
         .send({ currentPassword: PASSWORD_VALIDA, newPassword: 'todominusculas1234' })
         .expect(422);
@@ -315,13 +315,13 @@ describe('Auth propia (e2e)', () => {
       const cabecera = entorno.como(usuario);
 
       await http
-        .post('/api/v1/auth/change-password')
+        .post('/api/v2/auth/change-password')
         .set('Authorization', cabecera)
         .send({ currentPassword: PASSWORD_VALIDA, newPassword: PASSWORD_NUEVA })
         .expect(204);
 
       // Si un atacante tenía una sesión abierta, muere aquí.
-      await http.get('/api/v1/auth/me').set('Authorization', cabecera).expect(401);
+      await http.get('/api/v2/auth/me').set('Authorization', cabecera).expect(401);
 
       await entrar(usuario.email, PASSWORD_VALIDA).expect(401);
       await entrar(usuario.email, PASSWORD_NUEVA).expect(200);
@@ -334,15 +334,15 @@ describe('Auth propia (e2e)', () => {
     const crearAdmin = () => entorno.crearUsuario({ role: 'admin', displayName: 'La Jefa' });
 
     it.each([
-      ['get', '/api/v1/admin/users'],
-      ['get', '/api/v1/admin/audit-log'],
+      ['get', '/api/v2/admin/users'],
+      ['get', '/api/v2/admin/audit-log'],
     ])('un usuario normal recibe 403 en %s %s', async (metodo, ruta) => {
       const usuario = await entorno.crearUsuario({ role: 'user' });
       await http[metodo as 'get'](ruta).set('Authorization', entorno.como(usuario)).expect(403);
     });
 
     it('sin autenticar responde 401, no 403: primero se autentica, después se autoriza', async () => {
-      await http.get('/api/v1/admin/users').expect(401);
+      await http.get('/api/v2/admin/users').expect(401);
     });
 
     it('aprobar una cuenta pendiente le permite entrar', async () => {
@@ -352,7 +352,7 @@ describe('Auth propia (e2e)', () => {
       await entrar(pendiente.email, PASSWORD_VALIDA).expect(403);
 
       const respuesta = await http
-        .post(`/api/v1/admin/users/${pendiente.id}/approve`)
+        .post(`/api/v2/admin/users/${pendiente.id}/approve`)
         .set('Authorization', entorno.como(admin))
         .expect(201);
 
@@ -370,7 +370,7 @@ describe('Auth propia (e2e)', () => {
       await entorno.crearUsuario({ status: 'pending' });
 
       const respuesta = await http
-        .get('/api/v1/admin/users?status=pending')
+        .get('/api/v2/admin/users?status=pending')
         .set('Authorization', entorno.como(admin))
         .expect(200);
 
@@ -386,10 +386,10 @@ describe('Auth propia (e2e)', () => {
       const victima = await entorno.crearUsuario();
       const cabeceraVictima = entorno.como(victima);
 
-      await http.get('/api/v1/auth/me').set('Authorization', cabeceraVictima).expect(200);
+      await http.get('/api/v2/auth/me').set('Authorization', cabeceraVictima).expect(200);
 
       await http
-        .post(`/api/v1/admin/users/${victima.id}/suspend`)
+        .post(`/api/v2/admin/users/${victima.id}/suspend`)
         .set('Authorization', entorno.como(admin))
         .expect(201);
 
@@ -397,7 +397,7 @@ describe('Auth propia (e2e)', () => {
       // guard comprueba la revocación antes que el estado. El efecto para quien
       // estaba dentro es el mismo —queda fuera en la siguiente petición— y el
       // mensaje revela menos.
-      await http.get('/api/v1/auth/me').set('Authorization', cabeceraVictima).expect(401);
+      await http.get('/api/v2/auth/me').set('Authorization', cabeceraVictima).expect(401);
 
       // Y tampoco puede volver a entrar por la puerta.
       await entrar(victima.email, PASSWORD_VALIDA).expect(403);
@@ -407,7 +407,7 @@ describe('Auth propia (e2e)', () => {
       const admin = await crearAdmin();
 
       await http
-        .post(`/api/v1/admin/users/${admin.id}/suspend`)
+        .post(`/api/v2/admin/users/${admin.id}/suspend`)
         .set('Authorization', entorno.como(admin))
         .expect(400);
     });
@@ -418,7 +418,7 @@ describe('Auth propia (e2e)', () => {
 
       // Degradar al otro admin deja uno: permitido.
       await http
-        .post(`/api/v1/admin/users/${otro.id}/role`)
+        .post(`/api/v2/admin/users/${otro.id}/role`)
         .set('Authorization', entorno.como(admin))
         .send({ role: 'user' })
         .expect(201);
@@ -427,13 +427,13 @@ describe('Auth propia (e2e)', () => {
       // ni ser degradado sin dejar el panel inalcanzable para siempre.
       const tercero = await entorno.crearUsuario({ role: 'admin' });
       await http
-        .post(`/api/v1/admin/users/${admin.id}/role`)
+        .post(`/api/v2/admin/users/${admin.id}/role`)
         .set('Authorization', entorno.como(tercero))
         .send({ role: 'user' })
         .expect(201);
 
       await http
-        .post(`/api/v1/admin/users/${tercero.id}/suspend`)
+        .post(`/api/v2/admin/users/${tercero.id}/suspend`)
         .set('Authorization', entorno.como(tercero))
         .expect(400);
     });
@@ -444,18 +444,18 @@ describe('Auth propia (e2e)', () => {
       const cabecera = entorno.como(olvidadizo);
 
       await http
-        .post(`/api/v1/admin/users/${olvidadizo.id}/reset-password`)
+        .post(`/api/v2/admin/users/${olvidadizo.id}/reset-password`)
         .set('Authorization', entorno.como(admin))
         .send({ newPassword: 'floja' })
         .expect(422);
 
       await http
-        .post(`/api/v1/admin/users/${olvidadizo.id}/reset-password`)
+        .post(`/api/v2/admin/users/${olvidadizo.id}/reset-password`)
         .set('Authorization', entorno.como(admin))
         .send({ newPassword: PASSWORD_NUEVA })
         .expect(204);
 
-      await http.get('/api/v1/auth/me').set('Authorization', cabecera).expect(401);
+      await http.get('/api/v2/auth/me').set('Authorization', cabecera).expect(401);
       await entrar(olvidadizo.email, PASSWORD_NUEVA).expect(200);
     });
 
@@ -465,12 +465,12 @@ describe('Auth propia (e2e)', () => {
       const cabecera = entorno.como(usuario);
 
       await http
-        .post(`/api/v1/admin/users/${usuario.id}/role`)
+        .post(`/api/v2/admin/users/${usuario.id}/role`)
         .set('Authorization', entorno.como(admin))
         .send({ role: 'admin' })
         .expect(201);
 
-      await http.get('/api/v1/auth/me').set('Authorization', cabecera).expect(401);
+      await http.get('/api/v2/auth/me').set('Authorization', cabecera).expect(401);
     });
 
     it('rechaza un rol que no existe', async () => {
@@ -478,7 +478,7 @@ describe('Auth propia (e2e)', () => {
       const usuario = await entorno.crearUsuario();
 
       await http
-        .post(`/api/v1/admin/users/${usuario.id}/role`)
+        .post(`/api/v2/admin/users/${usuario.id}/role`)
         .set('Authorization', entorno.como(admin))
         .send({ role: 'superadmin' })
         .expect(400);
@@ -500,7 +500,7 @@ describe('Auth propia (e2e)', () => {
     });
 
     it('registra el intento contra un correo inexistente con user_id nulo', async () => {
-      // Por eso `audit_log.user_id` es nullable: sin esa desviación del esquema
+      // Por eso `audit_log.userId` es nullable: sin esa desviación del esquema
       // canónico, los intentos contra correos que no existen —justo los que
       // delatan un barrido— no quedarían registrados en ninguna parte.
       await entrar('fantasma@pruebas.coco', 'Zz9$Otra-Cosa-Aqui!').expect(401);
@@ -534,7 +534,7 @@ describe('Auth propia (e2e)', () => {
       await entrar(admin.email, PASSWORD_VALIDA).expect(200);
 
       const respuesta = await http
-        .get('/api/v1/admin/audit-log')
+        .get('/api/v2/admin/audit-log')
         .set('Authorization', entorno.como(admin))
         .expect(200);
 
@@ -563,17 +563,17 @@ describe('Auth propia (e2e)', () => {
       const usuario = await entorno.crearUsuario();
 
       const respuesta = await http
-        .get('/api/v1/auth/me')
+        .get('/api/v2/auth/me')
         .set('Authorization', entorno.como(usuario))
         .expect(200);
 
       expect(respuesta.body.data).toEqual({
         id: Number(usuario.id),
         email: usuario.email,
-        display_name: usuario.displayName,
+        displayName: usuario.displayName,
         role: 'user',
         status: 'active',
-        created_at: expect.any(String),
+        createdAt: expect.any(String),
         // Feature flags on for this user (step 7.8): none without FEATURES.
         features: [],
       });

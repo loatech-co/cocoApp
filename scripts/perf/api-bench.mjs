@@ -35,20 +35,19 @@ let sequence = 0;
 const sms = () => {
   sequence += 1;
   return {
-    texto:
-      'Bancolombia le informa compra por $45.000 en KOBA COLOMBIA el 03/10/2026 con tu tarjeta *1234',
+    text: 'Bancolombia le informa compra por $45.000 en KOBA COLOMBIA el 03/10/2026 con tu tarjeta *1234',
     source: 'sms',
-    external_ref: `bench-sms-${process.pid}-${sequence}`,
+    externalRef: `bench-sms-${process.pid}-${sequence}`,
   };
 };
 const manual = () => {
   sequence += 1;
   return {
-    comercio: 'Bench',
-    monto: '1000',
-    fecha: new Date().toISOString().slice(0, 10),
+    merchant: 'Bench',
+    amount: '1000',
+    date: new Date().toISOString().slice(0, 10),
     source: 'web',
-    external_ref: `bench-manual-${process.pid}-${sequence}`,
+    externalRef: `bench-manual-${process.pid}-${sequence}`,
   };
 };
 
@@ -61,9 +60,9 @@ const ENDPOINTS = [
   },
   {
     name: 'GET /transactions (page 1, 25, -date)',
-    path: '/transactions?page=1&per_page=25&sort=-date',
+    path: '/transactions?page=1&perPage=25&sort=-date',
   },
-  { name: 'GET /transactions (per_page=200)', path: '/transactions?per_page=200' },
+  { name: 'GET /transactions (perPage=200)', path: '/transactions?perPage=200' },
   { name: 'POST /transactions/capture (manual)', path: '/transactions/capture', body: manual },
   { name: 'POST /transactions/capture (SMS)', path: '/transactions/capture', body: sms },
 ].filter((e) => !args.only || e.name.includes(args.only));

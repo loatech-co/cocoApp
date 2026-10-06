@@ -40,16 +40,16 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
   const crearCuenta = async (auth: string, body: Record<string, unknown> = {}) => {
     const respuesta = await http
-      .post('/api/v1/accounts')
+      .post('/api/v2/accounts')
       .set('Authorization', auth)
-      .send({ name: 'Bancolombia', type: 'debit', opening_balance: '0', ...body })
+      .send({ name: 'Bancolombia', type: 'debit', openingBalance: '0', ...body })
       .expect(201);
     return respuesta.body.data;
   };
 
   const crearCategoria = async (auth: string, body: Record<string, unknown> = {}) => {
     const respuesta = await http
-      .post('/api/v1/categories')
+      .post('/api/v2/categories')
       .set('Authorization', auth)
       .send({ name: 'Mercado', kind: 'expense', ...body })
       .expect(201);
@@ -60,21 +60,21 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
   describe('Saldos derivados', () => {
     it('el saldo cuadra al centavo con la suma de los movimientos', async () => {
-      const cuenta = await crearCuenta(comoAna(), { opening_balance: '500000' });
+      const cuenta = await crearCuenta(comoAna(), { openingBalance: '500000' });
 
       for (const movimiento of [
         { amount: '1000000', type: 'income' },
         { amount: '300000', type: 'expense' },
       ]) {
         await http
-          .post('/api/v1/transactions')
+          .post('/api/v2/transactions')
           .set('Authorization', comoAna())
-          .send({ account_id: Number(cuenta.id), date: '2026-08-05', ...movimiento })
+          .send({ accountId: Number(cuenta.id), date: '2026-08-05', ...movimiento })
           .expect(201);
       }
 
       const respuesta = await http
-        .get(`/api/v1/accounts/${cuenta.id}`)
+        .get(`/api/v2/accounts/${cuenta.id}`)
         .set('Authorization', comoAna())
         .expect(200);
 
@@ -82,13 +82,13 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
 
     it('un movimiento pending no altera el saldo confirmado, pero sí el proyectado', async () => {
-      const cuenta = await crearCuenta(comoAna(), { opening_balance: '100000' });
+      const cuenta = await crearCuenta(comoAna(), { openingBalance: '100000' });
 
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '50000',
           type: 'expense',
@@ -97,27 +97,27 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(201);
 
       const respuesta = await http
-        .get(`/api/v1/accounts/${cuenta.id}`)
+        .get(`/api/v2/accounts/${cuenta.id}`)
         .set('Authorization', comoAna())
         .expect(200);
 
       expect(respuesta.body.data.balance).toBe('100000.00');
-      expect(respuesta.body.data.balance_projected).toBe('50000.00');
+      expect(respuesta.body.data.balanceProjected).toBe('50000.00');
     });
 
     it('en una tarjeta de crédito el consumo aumenta la deuda y baja el cupo', async () => {
       const tarjeta = await crearCuenta(comoAna(), {
         name: 'Visa',
         type: 'credit',
-        credit_limit: '5000000',
-        opening_balance: '0',
+        creditLimit: '5000000',
+        openingBalance: '0',
       });
 
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(tarjeta.id),
+          accountId: Number(tarjeta.id),
           date: '2026-08-05',
           amount: '1240000',
           type: 'expense',
@@ -125,12 +125,12 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(201);
 
       const respuesta = await http
-        .get(`/api/v1/accounts/${tarjeta.id}`)
+        .get(`/api/v2/accounts/${tarjeta.id}`)
         .set('Authorization', comoAna())
         .expect(200);
 
       expect(respuesta.body.data.balance).toBe('1240000.00');
-      expect(respuesta.body.data.available_credit).toBe('3760000.00');
+      expect(respuesta.body.data.availableCredit).toBe('3760000.00');
     });
   });
 
@@ -143,16 +143,16 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const aseo = await crearCategoria(comoAna(), { name: 'Aseo' });
 
       const respuesta = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '150000',
           type: 'expense',
           splits: [
-            { category_id: Number(mercado.id), amount: '105000', note: 'Mercado' },
-            { category_id: Number(aseo.id), amount: '45000', note: 'Aseo' },
+            { categoryId: Number(mercado.id), amount: '105000', note: 'Mercado' },
+            { categoryId: Number(aseo.id), amount: '45000', note: 'Aseo' },
           ],
         })
         .expect(201);
@@ -164,10 +164,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const cuenta = await crearCuenta(comoAna());
 
       const respuesta = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '150000',
           type: 'expense',
@@ -175,11 +175,11 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         })
         .expect(422);
 
-      expect(respuesta.body.error.message).toMatch(/no coincide/i);
+      expect(respuesta.body.detail).toMatch(/no coincide/i);
 
       // El ROLLBACK debe haber dejado la base intacta.
       const listado = await http
-        .get('/api/v1/transactions')
+        .get('/api/v2/transactions')
         .set('Authorization', comoAna())
         .expect(200);
       expect(listado.body.meta.total).toBe(0);
@@ -190,15 +190,15 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
   describe('Transferencias', () => {
     it('crea dos patas emparejadas y no altera el patrimonio total', async () => {
-      const origen = await crearCuenta(comoAna(), { name: 'Ahorros', opening_balance: '1000000' });
+      const origen = await crearCuenta(comoAna(), { name: 'Ahorros', openingBalance: '1000000' });
       const destino = await crearCuenta(comoAna(), { name: 'Efectivo', type: 'cash' });
 
       const respuesta = await http
-        .post('/api/v1/transactions/transfer')
+        .post('/api/v2/transactions/transfer')
         .set('Authorization', comoAna())
         .send({
-          from_account_id: Number(origen.id),
-          to_account_id: Number(destino.id),
+          fromAccountId: Number(origen.id),
+          toAccountId: Number(destino.id),
           date: '2026-08-05',
           amount: '300000',
         })
@@ -207,7 +207,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(respuesta.body.data.legs).toHaveLength(2);
 
       const cuentas = await http
-        .get('/api/v1/accounts')
+        .get('/api/v2/accounts')
         .set('Authorization', comoAna())
         .expect(200);
 
@@ -226,11 +226,11 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const cuenta = await crearCuenta(comoAna());
 
       await http
-        .post('/api/v1/transactions/transfer')
+        .post('/api/v2/transactions/transfer')
         .set('Authorization', comoAna())
         .send({
-          from_account_id: Number(cuenta.id),
-          to_account_id: Number(cuenta.id),
+          fromAccountId: Number(cuenta.id),
+          toAccountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '100000',
         })
@@ -238,15 +238,15 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     });
 
     it('borrar una pata borra la otra: nunca queda una transferencia coja', async () => {
-      const origen = await crearCuenta(comoAna(), { name: 'A', opening_balance: '500000' });
+      const origen = await crearCuenta(comoAna(), { name: 'A', openingBalance: '500000' });
       const destino = await crearCuenta(comoAna(), { name: 'B', type: 'cash' });
 
       const transferencia = await http
-        .post('/api/v1/transactions/transfer')
+        .post('/api/v2/transactions/transfer')
         .set('Authorization', comoAna())
         .send({
-          from_account_id: Number(origen.id),
-          to_account_id: Number(destino.id),
+          fromAccountId: Number(origen.id),
+          toAccountId: Number(destino.id),
           date: '2026-08-05',
           amount: '200000',
         })
@@ -255,12 +255,12 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const primeraPata = transferencia.body.data.legs[0];
 
       await http
-        .delete(`/api/v1/transactions/${primeraPata.id}`)
+        .delete(`/api/v2/transactions/${primeraPata.id}`)
         .set('Authorization', comoAna())
         .expect(204);
 
       const listado = await http
-        .get('/api/v1/transactions')
+        .get('/api/v2/transactions')
         .set('Authorization', comoAna())
         .expect(200);
 
@@ -275,31 +275,31 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const cuenta = await crearCuenta(comoAna());
 
       const respuesta = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '32000',
           type: 'expense',
         })
         .expect(201);
 
-      expect(respuesta.body.data.category_id).toBeNull();
+      expect(respuesta.body.data.categoryId).toBeNull();
     });
 
     it('permite exceder el cupo de la tarjeta: informa, no bloquea', async () => {
       const tarjeta = await crearCuenta(comoAna(), {
         name: 'Visa',
         type: 'credit',
-        credit_limit: '1000000',
+        creditLimit: '1000000',
       });
 
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(tarjeta.id),
+          accountId: Number(tarjeta.id),
           date: '2026-08-05',
           amount: '1150000',
           type: 'expense',
@@ -307,11 +307,11 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(201);
 
       const respuesta = await http
-        .get(`/api/v1/accounts/${tarjeta.id}`)
+        .get(`/api/v2/accounts/${tarjeta.id}`)
         .set('Authorization', comoAna())
         .expect(200);
 
-      expect(respuesta.body.data.available_credit).toBe('-150000.00');
+      expect(respuesta.body.data.availableCredit).toBe('-150000.00');
     });
   });
 
@@ -321,10 +321,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     it('Beto no ve los movimientos de Ana', async () => {
       const cuenta = await crearCuenta(comoAna());
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '50000',
           type: 'expense',
@@ -332,7 +332,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(201);
 
       const listado = await http
-        .get('/api/v1/transactions')
+        .get('/api/v2/transactions')
         .set('Authorization', comoBeto())
         .expect(200);
 
@@ -342,14 +342,14 @@ describe('Fase 1 — Núcleo (e2e)', () => {
     it('pedir una cuenta ajena por id responde 404, no 403: no confirma que exista', async () => {
       const cuenta = await crearCuenta(comoAna());
 
-      await http.get(`/api/v1/accounts/${cuenta.id}`).set('Authorization', comoBeto()).expect(404);
+      await http.get(`/api/v2/accounts/${cuenta.id}`).set('Authorization', comoBeto()).expect(404);
     });
 
     it('Beto no puede editar una cuenta de Ana', async () => {
       const cuenta = await crearCuenta(comoAna());
 
       await http
-        .patch(`/api/v1/accounts/${cuenta.id}`)
+        .patch(`/api/v2/accounts/${cuenta.id}`)
         .set('Authorization', comoBeto())
         .send({ name: 'Secuestrada' })
         .expect(404);
@@ -359,10 +359,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const cuenta = await crearCuenta(comoAna());
 
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoBeto())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '50000',
           type: 'expense',
@@ -374,14 +374,14 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const cuenta = await crearCuenta(comoAna());
 
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '50000',
           type: 'expense',
-          user_id: 99999,
+          userId: 99999,
         })
         .expect(400);
     });
@@ -394,52 +394,52 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       // La forma pública se arma campo por campo, así que un dato nuevo se
       // pierde en silencio con la API devolviendo 201: ya pasó con la
       // recurrencia. Esta prueba existe para que no vuelva a pasar.
-      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos', estatico: true });
-      expect(centro.estatico).toBe(true);
+      const centro = await crearCategoria(comoAna(), { name: 'Costos fijos', isStatic: true });
+      expect(centro.isStatic).toBe(true);
 
       // Y llega al árbol, que es de donde lo lee la tabla de movimientos.
       const arbol = await http
-        .get('/api/v1/categories')
+        .get('/api/v2/categories')
         .set('Authorization', comoAna())
         .expect(200);
       expect(
         arbol.body.data.find((c: { id: number | string }) => Number(c.id) === Number(centro.id))
-          .estatico,
+          .isStatic,
       ).toBe(true);
 
       const suelto = await http
-        .patch(`/api/v1/categories/${Number(centro.id)}`)
+        .patch(`/api/v2/categories/${Number(centro.id)}`)
         .set('Authorization', comoAna())
-        .send({ estatico: false })
+        .send({ isStatic: false })
         .expect(200);
-      expect(suelto.body.data.estatico).toBe(false);
+      expect(suelto.body.data.isStatic).toBe(false);
     });
 
     it('un centro nace dinámico si nadie dice lo contrario', async () => {
       const centro = await crearCategoria(comoAna(), { name: 'Costos variables' });
-      expect(centro.estatico).toBe(false);
+      expect(centro.isStatic).toBe(false);
     });
 
     it('rechaza con 422 un ciclo en el árbol', async () => {
       const padre = await crearCategoria(comoAna(), { name: 'Hogar' });
       const hijo = await crearCategoria(comoAna(), {
         name: 'Servicios',
-        parent_id: Number(padre.id),
+        parentId: Number(padre.id),
       });
 
       await http
-        .patch(`/api/v1/categories/${padre.id}`)
+        .patch(`/api/v2/categories/${padre.id}`)
         .set('Authorization', comoAna())
-        .send({ parent_id: Number(hijo.id) })
+        .send({ parentId: Number(hijo.id) })
         .expect(422);
     });
 
     it('devuelve el árbol anidado, no una lista plana', async () => {
       const padre = await crearCategoria(comoAna(), { name: 'Hogar' });
-      await crearCategoria(comoAna(), { name: 'Servicios', parent_id: Number(padre.id) });
+      await crearCategoria(comoAna(), { name: 'Servicios', parentId: Number(padre.id) });
 
       const respuesta = await http
-        .get('/api/v1/categories')
+        .get('/api/v2/categories')
         .set('Authorization', comoAna())
         .expect(200);
 
@@ -450,16 +450,16 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
     it('siembra el diccionario inicial y luego se niega a repetirlo', async () => {
       const primera = await http
-        .post('/api/v1/categories/seed')
+        .post('/api/v2/categories/seed')
         .set('Authorization', comoAna())
         .expect(201);
 
       // La plantilla es un SNAPSHOT de dos centros y siete categorías desde el
       // 17 de septiembre de 2026 (ver `categories.template.ts`): nueve filas.
       // Antes sembraba un diccionario de cuarenta y pico conceptos.
-      expect(primera.body.data.creadas).toBe(9);
+      expect(primera.body.data.created).toBe(9);
 
-      await http.post('/api/v1/categories/seed').set('Authorization', comoAna()).expect(409);
+      await http.post('/api/v2/categories/seed').set('Authorization', comoAna()).expect(409);
     });
   });
 
@@ -470,51 +470,51 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
       const vivienda = await crearCategoria(comoAna(), {
         name: 'Vivienda',
-        parent_id: Number(centro.id),
+        parentId: Number(centro.id),
       });
       const servicios = await crearCategoria(comoAna(), {
         name: 'Servicios públicos',
-        parent_id: Number(centro.id),
+        parentId: Number(centro.id),
       });
       const concepto = await crearCategoria(comoAna(), {
         name: 'Claro Móvil',
-        parent_id: Number(vivienda.id),
+        parentId: Number(vivienda.id),
       });
 
       const movido = await http
-        .patch(`/api/v1/categories/${Number(concepto.id)}`)
+        .patch(`/api/v2/categories/${Number(concepto.id)}`)
         .set('Authorization', comoAna())
-        .send({ parent_id: Number(servicios.id) })
+        .send({ parentId: Number(servicios.id) })
         .expect(200);
 
-      expect(Number(movido.body.data.parent_id)).toBe(Number(servicios.id));
+      expect(Number(movido.body.data.parentId)).toBe(Number(servicios.id));
     });
 
     it('lo acepta junto con el resto de los campos de la ficha', async () => {
       // Como lo manda la interfaz: el nombre, la recurrencia y el grupo en la
       // misma petición.
       const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
-      const a = await crearCategoria(comoAna(), { name: 'A', parent_id: Number(centro.id) });
-      const b = await crearCategoria(comoAna(), { name: 'B', parent_id: Number(centro.id) });
+      const a = await crearCategoria(comoAna(), { name: 'A', parentId: Number(centro.id) });
+      const b = await crearCategoria(comoAna(), { name: 'B', parentId: Number(centro.id) });
       const concepto = await crearCategoria(comoAna(), {
         name: 'Claro',
-        parent_id: Number(a.id),
+        parentId: Number(a.id),
       });
 
       const movido = await http
-        .patch(`/api/v1/categories/${Number(concepto.id)}`)
+        .patch(`/api/v2/categories/${Number(concepto.id)}`)
         .set('Authorization', comoAna())
         .send({
           name: 'Claro Móvil',
-          recurrente: true,
-          periodicidad: 'mensual',
-          dia_de_pago: 1,
-          mes_de_pago: null,
-          parent_id: Number(b.id),
+          isRecurring: true,
+          periodicity: 'monthly',
+          paymentDay: 1,
+          paymentMonth: null,
+          parentId: Number(b.id),
         })
         .expect(200);
 
-      expect(Number(movido.body.data.parent_id)).toBe(Number(b.id));
+      expect(Number(movido.body.data.parentId)).toBe(Number(b.id));
       expect(movido.body.data.name).toBe('Claro Móvil');
     });
   });
@@ -538,7 +538,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(grupo.icon).toBe('house');
 
       const cambiado = await http
-        .patch(`/api/v1/categories/${Number(grupo.id)}`)
+        .patch(`/api/v2/categories/${Number(grupo.id)}`)
         .set('Authorization', comoAna())
         .send({ icon: 'zap' })
         .expect(200);
@@ -546,7 +546,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       expect(cambiado.body.data.icon).toBe('zap');
 
       const sinIcono = await http
-        .patch(`/api/v1/categories/${Number(grupo.id)}`)
+        .patch(`/api/v2/categories/${Number(grupo.id)}`)
         .set('Authorization', comoAna())
         .send({ icon: null })
         .expect(200);
@@ -558,7 +558,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const grupo = await crearCategoria(comoAna(), { name: 'Servicios' });
 
       await http
-        .patch(`/api/v1/categories/${Number(grupo.id)}`)
+        .patch(`/api/v2/categories/${Number(grupo.id)}`)
         .set('Authorization', comoAna())
         .send({ icon: 'x'.repeat(65) })
         .expect(400);
@@ -584,23 +584,23 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
       const grupo = await crearCategoria(comoAna(), {
         name: 'Servicios públicos',
-        parent_id: Number(centro.id),
+        parentId: Number(centro.id),
       });
       const concepto = await crearCategoria(comoAna(), {
         name: 'Aseo',
-        parent_id: Number(grupo.id),
+        parentId: Number(grupo.id),
       });
       const otro = await crearCategoria(comoAna(), { name: 'Variables' });
 
       const movimiento = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-09-16',
           amount: '450000',
           type: 'expense',
-          category_id: Number(concepto.id),
+          categoryId: Number(concepto.id),
         })
         .expect(201);
 
@@ -612,17 +612,17 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       // Contando solo el id del centro, un centro con cuarenta daba cero.
       const { centro, grupo, concepto } = await conUnMovimiento();
 
-      for (const [categoria, subcategorias] of [
+      for (const [categoria, subcategories] of [
         [centro, 2],
         [grupo, 1],
         [concepto, 0],
       ] as const) {
         const respuesta = await http
-          .get(`/api/v1/categories/${Number(categoria.id)}/usos`)
+          .get(`/api/v2/categories/${Number(categoria.id)}/usage`)
           .set('Authorization', comoAna())
           .expect(200);
 
-        expect(respuesta.body.data).toEqual({ movimientos: 1, subcategorias });
+        expect(respuesta.body.data).toEqual({ transactions: 1, subcategories });
       }
     });
 
@@ -630,7 +630,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const { concepto } = await conUnMovimiento();
 
       await http
-        .delete(`/api/v1/categories/${Number(concepto.id)}`)
+        .delete(`/api/v2/categories/${Number(concepto.id)}`)
         .set('Authorization', comoAna())
         .expect(409);
     });
@@ -639,7 +639,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const { concepto, otro, movimiento } = await conUnMovimiento();
 
       await http
-        .delete(`/api/v1/categories/${Number(concepto.id)}?reasignar_a=${Number(otro.id)}`)
+        .delete(`/api/v2/categories/${Number(concepto.id)}?reassignTo=${Number(otro.id)}`)
         .set('Authorization', comoAna())
         .expect(204);
 
@@ -647,11 +647,11 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       // es que quede en null: `category_id` es `ON DELETE SET NULL`, así que un
       // borrado sin reasignar lo deja sin clasificar en silencio.
       const despues = await http
-        .get(`/api/v1/transactions/${Number(movimiento.id)}`)
+        .get(`/api/v2/transactions/${Number(movimiento.id)}`)
         .set('Authorization', comoAna())
         .expect(200);
 
-      expect(Number(despues.body.data.category_id)).toBe(Number(otro.id));
+      expect(Number(despues.body.data.categoryId)).toBe(Number(otro.id));
     });
 
     it('se lleva el subárbol entero: los conceptos no ascienden a centros', async () => {
@@ -661,12 +661,12 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const { grupo, concepto, otro } = await conUnMovimiento();
 
       await http
-        .delete(`/api/v1/categories/${Number(grupo.id)}?reasignar_a=${Number(otro.id)}`)
+        .delete(`/api/v2/categories/${Number(grupo.id)}?reassignTo=${Number(otro.id)}`)
         .set('Authorization', comoAna())
         .expect(204);
 
       const arbol = await http
-        .get('/api/v1/categories')
+        .get('/api/v2/categories')
         .set('Authorization', comoAna())
         .expect(200);
 
@@ -681,7 +681,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const { grupo, concepto } = await conUnMovimiento();
 
       await http
-        .delete(`/api/v1/categories/${Number(grupo.id)}?reasignar_a=${Number(concepto.id)}`)
+        .delete(`/api/v2/categories/${Number(grupo.id)}?reassignTo=${Number(concepto.id)}`)
         .set('Authorization', comoAna())
         .expect(409);
     });
@@ -690,7 +690,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const vacia = await crearCategoria(comoAna(), { name: 'Sin usar' });
 
       await http
-        .delete(`/api/v1/categories/${Number(vacia.id)}`)
+        .delete(`/api/v2/categories/${Number(vacia.id)}`)
         .set('Authorization', comoAna())
         .expect(204);
     });
@@ -699,7 +699,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const deAna = await crearCategoria(comoAna(), { name: 'Privada' });
 
       await http
-        .delete(`/api/v1/categories/${Number(deAna.id)}`)
+        .delete(`/api/v2/categories/${Number(deAna.id)}`)
         .set('Authorization', comoBeto())
         .expect(404);
     });
@@ -710,13 +710,13 @@ describe('Fase 1 — Núcleo (e2e)', () => {
   describe('Etiquetas', () => {
     it('crear una etiqueta repetida devuelve la existente en vez de fallar', async () => {
       const primera = await http
-        .post('/api/v1/tags')
+        .post('/api/v2/tags')
         .set('Authorization', comoAna())
         .send({ name: 'reembolsable' })
         .expect(201);
 
       const segunda = await http
-        .post('/api/v1/tags')
+        .post('/api/v2/tags')
         .set('Authorization', comoAna())
         .send({ name: 'reembolsable' })
         .expect(201);
@@ -728,10 +728,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const cuenta = await crearCuenta(comoAna());
 
       const respuesta = await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '45000',
           type: 'expense',
@@ -746,13 +746,13 @@ describe('Fase 1 — Núcleo (e2e)', () => {
   // ── Cuentas ────────────────────────────────────────────────────────────────
 
   describe('Cuentas', () => {
-    it('no deja borrar una cuenta con movimientos: obliga a archivar', async () => {
+    it('no deja borrar una cuenta con transactions: obliga a archivar', async () => {
       const cuenta = await crearCuenta(comoAna());
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '10000',
           type: 'expense',
@@ -760,18 +760,18 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(201);
 
       const respuesta = await http
-        .delete(`/api/v1/accounts/${cuenta.id}`)
+        .delete(`/api/v2/accounts/${cuenta.id}`)
         .set('Authorization', comoAna())
         .expect(409);
 
-      expect(respuesta.body.error.message).toMatch(/archív/i);
+      expect(respuesta.body.detail).toMatch(/archív/i);
     });
 
     it('rechaza campos de tarjeta en una cuenta que no es de crédito', async () => {
       await http
-        .post('/api/v1/accounts')
+        .post('/api/v2/accounts')
         .set('Authorization', comoAna())
-        .send({ name: 'Efectivo', type: 'cash', credit_limit: '1000000' })
+        .send({ name: 'Efectivo', type: 'cash', creditLimit: '1000000' })
         .expect(400);
     });
   });
@@ -780,15 +780,15 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
   describe('Dashboard', () => {
     it('el flujo del mes excluye transferencias y el gasto por categoría cuadra', async () => {
-      const cuenta = await crearCuenta(comoAna(), { opening_balance: '0' });
+      const cuenta = await crearCuenta(comoAna(), { openingBalance: '0' });
       const otra = await crearCuenta(comoAna(), { name: 'Ahorros', type: 'savings' });
       const categoria = await crearCategoria(comoAna(), { name: 'Mercado' });
 
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-05',
           amount: '5200000',
           type: 'income',
@@ -796,24 +796,24 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(201);
 
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
-          account_id: Number(cuenta.id),
+          accountId: Number(cuenta.id),
           date: '2026-08-06',
           amount: '89900',
           type: 'expense',
-          category_id: Number(categoria.id),
+          categoryId: Number(categoria.id),
         })
         .expect(201);
 
       // Una transferencia que NO debe aparecer en el flujo.
       await http
-        .post('/api/v1/transactions/transfer')
+        .post('/api/v2/transactions/transfer')
         .set('Authorization', comoAna())
         .send({
-          from_account_id: Number(cuenta.id),
-          to_account_id: Number(otra.id),
+          fromAccountId: Number(cuenta.id),
+          toAccountId: Number(otra.id),
           date: '2026-08-07',
           amount: '1000000',
         })
@@ -822,11 +822,11 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       // El resumen se pide por RANGO, no por mes: es el mismo recorte que usa
       // la lista de movimientos, para que las cifras de una expliquen la otra.
       const respuesta = await http
-        .get('/api/v1/dashboard?from=2026-08-01&to=2026-08-31')
+        .get('/api/v2/dashboard?from=2026-08-01&to=2026-08-31')
         .set('Authorization', comoAna())
         .expect(200);
 
-      const { range, by_category, trend, breakdown_level } = respuesta.body.data;
+      const { range, byCategory, trend, breakdownLevel } = respuesta.body.data;
 
       expect(range.income).toBe('5200000.00');
       expect(range.expense).toBe('89900.00');
@@ -834,11 +834,11 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
       // Un mes entero se agrupa por día, y los días sin gasto vienen en cero:
       // omitirlos haría que la línea uniera el 3 con el 20 en línea recta.
-      expect(breakdown_level).toBe('centro de costos');
+      expect(breakdownLevel).toBe('cost_center');
       expect(trend).toHaveLength(31);
       expect(trend.every((p: { bucket: string }) => p.bucket.startsWith('2026-08'))).toBe(true);
 
-      const sumaPorCategoria = by_category.reduce(
+      const sumaPorCategoria = byCategory.reduce(
         (total: number, fila: { total: string }) => total + Number(fila.total),
         0,
       );
@@ -854,21 +854,21 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
       const grupo = await crearCategoria(comoAna(), {
         name: 'Servicios públicos',
-        parent_id: Number(centro.id),
+        parentId: Number(centro.id),
       });
       const concepto = await crearCategoria(comoAna(), {
         name: 'Celsia (Energia)',
-        parent_id: Number(grupo.id),
+        parentId: Number(grupo.id),
       });
 
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
           date: '2026-08-10',
           amount: '200000',
           type: 'expense',
-          category_id: Number(concepto.id),
+          categoryId: Number(concepto.id),
           description: 'Celsia (Energia)',
         })
         .expect(201);
@@ -877,7 +877,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       // encontrarlo igual, o un desglose por centro saldría siempre vacío.
       for (const id of [centro.id, grupo.id, concepto.id]) {
         const r = await http
-          .get(`/api/v1/transactions?category_id=${Number(id)}`)
+          .get(`/api/v2/transactions?categoryId=${Number(id)}`)
           .set('Authorization', comoAna())
           .expect(200);
         expect(r.body.data).toHaveLength(1);
@@ -886,7 +886,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
     it('la búsqueda NO distingue mayúsculas', async () => {
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
           date: '2026-08-11',
@@ -899,7 +899,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       // Postgres compara distinguiendo mayúsculas, a diferencia de MariaDB.
       // Quien busca escribe en minúscula y espera encontrarlo.
       const r = await http
-        .get('/api/v1/transactions?q=celsia')
+        .get('/api/v2/transactions?q=celsia')
         .set('Authorization', comoAna())
         .expect(200);
 
@@ -914,19 +914,19 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
       const servicios = await crearCategoria(comoAna(), {
         name: 'Servicios públicos',
-        parent_id: Number(centro.id),
+        parentId: Number(centro.id),
       });
       const celsia = await crearCategoria(comoAna(), {
         name: 'Celsia',
-        parent_id: Number(servicios.id),
+        parentId: Number(servicios.id),
       });
       const vivienda = await crearCategoria(comoAna(), {
         name: 'Vivienda',
-        parent_id: Number(centro.id),
+        parentId: Number(centro.id),
       });
       const alquiler = await crearCategoria(comoAna(), {
         name: 'Alquiler',
-        parent_id: Number(vivienda.id),
+        parentId: Number(vivienda.id),
       });
       const otroCentro = await crearCategoria(comoAna(), { name: 'Costos variables' });
 
@@ -936,22 +936,22 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         [otroCentro.id, '50000'],
       ] as const) {
         await http
-          .post('/api/v1/transactions')
+          .post('/api/v2/transactions')
           .set('Authorization', comoAna())
-          .send({ date: '2026-08-12', amount, type: 'expense', category_id: Number(id) })
+          .send({ date: '2026-08-12', amount, type: 'expense', categoryId: Number(id) })
           .expect(201);
       }
 
       const sinFiltro = await http
-        .get('/api/v1/dashboard?from=2026-08-01&to=2026-08-31')
+        .get('/api/v2/dashboard?from=2026-08-01&to=2026-08-31')
         .set('Authorization', comoAna())
         .expect(200);
-      expect(sinFiltro.body.data.breakdown_level).toBe('centro de costos');
-      expect(sinFiltro.body.data.by_category[0].name).toBe('Costos fijos');
+      expect(sinFiltro.body.data.breakdownLevel).toBe('cost_center');
+      expect(sinFiltro.body.data.byCategory[0].name).toBe('Costos fijos');
 
       // Fijos contra variables, con los nombres de los centros.
       expect(
-        sinFiltro.body.data.expense_by_center.map((f: { name: string; total: string }) => [
+        sinFiltro.body.data.expenseByCostCenter.map((f: { name: string; total: string }) => [
           f.name,
           f.total,
         ]),
@@ -961,29 +961,29 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       ]);
 
       const dentroDelCentro = await http
-        .get(`/api/v1/dashboard?from=2026-08-01&to=2026-08-31&category_id=${Number(centro.id)}`)
+        .get(`/api/v2/dashboard?from=2026-08-01&to=2026-08-31&categoryId=${Number(centro.id)}`)
         .set('Authorization', comoAna())
         .expect(200);
-      expect(dentroDelCentro.body.data.breakdown_level).toBe('categoría');
-      expect(dentroDelCentro.body.data.by_category[0].name).toBe('Vivienda');
+      expect(dentroDelCentro.body.data.breakdownLevel).toBe('category');
+      expect(dentroDelCentro.body.data.byCategory[0].name).toBe('Vivienda');
 
       const dentroDelGrupo = await http
-        .get(`/api/v1/dashboard?from=2026-08-01&to=2026-08-31&category_id=${Number(servicios.id)}`)
+        .get(`/api/v2/dashboard?from=2026-08-01&to=2026-08-31&categoryId=${Number(servicios.id)}`)
         .set('Authorization', comoAna())
         .expect(200);
-      expect(dentroDelGrupo.body.data.breakdown_level).toBe('concepto');
-      expect(dentroDelGrupo.body.data.by_category[0].name).toBe('Celsia');
+      expect(dentroDelGrupo.body.data.breakdownLevel).toBe('concept');
+      expect(dentroDelGrupo.body.data.byCategory[0].name).toBe('Celsia');
     });
 
     it('con un solo centro con gasto, el desglose se salta ese nivel', async () => {
       const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
       const servicios = await crearCategoria(comoAna(), {
         name: 'Servicios públicos',
-        parent_id: Number(centro.id),
+        parentId: Number(centro.id),
       });
       const vivienda = await crearCategoria(comoAna(), {
         name: 'Vivienda',
-        parent_id: Number(centro.id),
+        parentId: Number(centro.id),
       });
       // Un centro más, SIN gasto: existir no basta para salir en el desglose.
       await crearCategoria(comoAna(), { name: 'Costos variables' });
@@ -993,32 +993,32 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         [vivienda.id, '900000'],
       ] as const) {
         await http
-          .post('/api/v1/transactions')
+          .post('/api/v2/transactions')
           .set('Authorization', comoAna())
-          .send({ date: '2026-08-12', amount, type: 'expense', category_id: Number(id) })
+          .send({ date: '2026-08-12', amount, type: 'expense', categoryId: Number(id) })
           .expect(201);
       }
 
       const r = await http
-        .get('/api/v1/dashboard?from=2026-08-01&to=2026-08-31')
+        .get('/api/v2/dashboard?from=2026-08-01&to=2026-08-31')
         .set('Authorization', comoAna())
         .expect(200);
 
       // Se muestran los GRUPOS del único centro con gasto, y el nombre del
       // centro pasa a ser el subtítulo. Enseñar "Costos fijos, 100 %" no
       // responde nada: eso ya se sabía antes de mirar.
-      expect(r.body.data.breakdown_level).toBe('categoría');
-      expect(r.body.data.breakdown_parent.name).toBe('Costos fijos');
-      expect(r.body.data.by_category.map((f: { name: string }) => f.name)).toEqual([
+      expect(r.body.data.breakdownLevel).toBe('category');
+      expect(r.body.data.breakdownParent.name).toBe('Costos fijos');
+      expect(r.body.data.byCategory.map((f: { name: string }) => f.name)).toEqual([
         'Vivienda',
         'Servicios públicos',
       ]);
 
       // El reparto fijos/variables NO baja con el desglose: aunque la dona
       // esté enseñando grupos, esta pregunta se responde en los centros.
-      expect(r.body.data.expense_by_center).toHaveLength(1);
-      expect(r.body.data.expense_by_center[0].name).toBe('Costos fijos');
-      expect(r.body.data.expense_by_center[0].total).toBe('1200000.00');
+      expect(r.body.data.expenseByCostCenter).toHaveLength(1);
+      expect(r.body.data.expenseByCostCenter[0].name).toBe('Costos fijos');
+      expect(r.body.data.expenseByCostCenter[0].total).toBe('1200000.00');
     });
 
     it('el presupuesto del mes suma los recurrentes, pagados o no', async () => {
@@ -1034,29 +1034,29 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
       const alquiler = await crearCategoria(comoAna(), {
         name: 'Alquiler',
-        parent_id: Number(centro.id),
-        recurrente: true,
-        periodicidad: 'mensual',
-        dia_de_pago: 15,
+        parentId: Number(centro.id),
+        isRecurring: true,
+        periodicity: 'monthly',
+        paymentDay: 15,
       });
       const agua = await crearCategoria(comoAna(), {
         name: 'Agua',
-        parent_id: Number(centro.id),
-        recurrente: true,
-        periodicidad: 'mensual',
-        dia_de_pago: 10,
+        parentId: Number(centro.id),
+        isRecurring: true,
+        periodicity: 'monthly',
+        paymentDay: 10,
       });
       // Sin marcar: un gasto que no vuelve no es presupuesto.
       const mercado = await crearCategoria(comoAna(), {
         name: 'Mercado',
-        parent_id: Number(centro.id),
+        parentId: Number(centro.id),
       });
 
       const gasto = async (categoryId: unknown, date: string, amount: string) => {
         await http
-          .post('/api/v1/transactions')
+          .post('/api/v2/transactions')
           .set('Authorization', comoAna())
-          .send({ date, amount, type: 'expense', category_id: Number(categoryId) })
+          .send({ date, amount, type: 'expense', categoryId: Number(categoryId) })
           .expect(201);
       };
 
@@ -1070,7 +1070,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       await gasto(mercado.id, `${mes}-01`, '80000');
 
       const r = await http
-        .get(`/api/v1/dashboard?from=${mes}-01&to=${mes}-28`)
+        .get(`/api/v2/dashboard?from=${mes}-01&to=${mes}-28`)
         .set('Authorization', comoAna())
         .expect(200);
 
@@ -1078,13 +1078,13 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       // que costaba— más 120.000 del agua, que falta y se estima promediando
       // sus dos meses: (100.000 + 140.000) / 2. El mercado no entra: no es
       // recurrente.
-      expect(r.body.data.required_budget).toBe('1220000.00');
+      expect(r.body.data.requiredBudget).toBe('1220000.00');
 
       // Y lo que falta es solo el agua. El presupuesto no se encoge al pagar
       // —esa es la diferencia entre las dos cifras—, la lista de pendientes sí.
       expect(r.body.data.pending).toHaveLength(1);
       expect(r.body.data.pending[0].name).toBe('Agua');
-      expect(r.body.data.pending[0].expected_amount).toBe('120000.00');
+      expect(r.body.data.pending[0].expectedAmount).toBe('120000.00');
     });
 
     it('un movimiento SIN confirmar no saca al concepto de los pendientes', async () => {
@@ -1094,28 +1094,28 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       const centro = await crearCategoria(comoAna(), { name: 'Costos fijos' });
       const agua = await crearCategoria(comoAna(), {
         name: 'Agua',
-        parent_id: Number(centro.id),
-        recurrente: true,
-        periodicidad: 'mensual',
-        dia_de_pago: 10,
+        parentId: Number(centro.id),
+        isRecurring: true,
+        periodicity: 'monthly',
+        paymentDay: 10,
       });
 
       // Un pago anunciado pero no confirmado: una transferencia programada, un
       // débito que todavía no aparece en el extracto.
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
           date: `${mes}-01`,
           amount: '120000',
           type: 'expense',
-          category_id: Number(agua.id),
+          categoryId: Number(agua.id),
           status: 'pending',
         })
         .expect(201);
 
       const r = await http
-        .get(`/api/v1/dashboard?from=${mes}-01&to=${mes}-28`)
+        .get(`/api/v2/dashboard?from=${mes}-01&to=${mes}-28`)
         .set('Authorization', comoAna())
         .expect(200);
 
@@ -1148,51 +1148,51 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       // El agua no se toca: es el testigo de que la lista sigue viva.
       await crearCategoria(comoAna(), {
         name: 'Agua',
-        parent_id: Number(centro.id),
-        recurrente: true,
-        periodicidad: 'mensual',
-        dia_de_pago: 10,
+        parentId: Number(centro.id),
+        isRecurring: true,
+        periodicity: 'monthly',
+        paymentDay: 10,
       });
       const gimnasio = await crearCategoria(comoAna(), {
         name: 'Gimnasio',
-        parent_id: Number(centro.id),
-        recurrente: true,
-        periodicidad: 'mensual',
-        dia_de_pago: 5,
+        parentId: Number(centro.id),
+        isRecurring: true,
+        periodicity: 'monthly',
+        paymentDay: 5,
       });
 
       // El gimnasio se pagó el mes pasado; este mes ninguno de los dos.
       await http
-        .post('/api/v1/transactions')
+        .post('/api/v2/transactions')
         .set('Authorization', comoAna())
         .send({
           date: `${mesPasado}-05`,
           amount: '90000',
           type: 'expense',
-          category_id: Number(gimnasio.id),
+          categoryId: Number(gimnasio.id),
         })
         .expect(201);
 
       // Y después se da de baja: se archiva, no se borra.
       await http
-        .patch(`/api/v1/categories/${gimnasio.id}`)
+        .patch(`/api/v2/categories/${gimnasio.id}`)
         .set('Authorization', comoAna())
-        .send({ is_archived: true })
+        .send({ isArchived: true })
         .expect(200);
 
       const r = await http
-        .get(`/api/v1/dashboard?from=${mesPasado}-01&to=${mes}-28`)
+        .get(`/api/v2/dashboard?from=${mesPasado}-01&to=${mes}-28`)
         .set('Authorization', comoAna())
         .expect(200);
 
       // Sin pagar este mes los dos, pero solo el agua se pide: el gimnasio
       // archivado ya no es algo que falte pagar, ni entra en el presupuesto.
       expect(r.body.data.pending.map((p: { name: string }) => p.name)).toEqual(['Agua']);
-      expect(r.body.data.required_budget).toBe('0.00');
+      expect(r.body.data.requiredBudget).toBe('0.00');
 
       // Lo que costó mientras estuvo vivo sigue ahí: en el total y en la dona.
       expect(r.body.data.range.expense).toBe('90000.00');
-      const porCategoria = r.body.data.by_category as { category_id: unknown; total: string }[];
+      const porCategoria = r.body.data.byCategory as { categoryId: unknown; total: string }[];
       expect(porCategoria.map((fila) => Number(fila.total)).reduce((a, b) => a + b, 0)).toBe(90000);
     });
   });
@@ -1205,10 +1205,10 @@ describe('Fase 1 — Núcleo (e2e)', () => {
 
       for (let i = 1; i <= 5; i += 1) {
         await http
-          .post('/api/v1/transactions')
+          .post('/api/v2/transactions')
           .set('Authorization', comoAna())
           .send({
-            account_id: Number(cuenta.id),
+            accountId: Number(cuenta.id),
             date: `2026-08-${String(i).padStart(2, '0')}`,
             amount: `${i}0000`,
             type: 'expense',
@@ -1217,12 +1217,12 @@ describe('Fase 1 — Núcleo (e2e)', () => {
       }
 
       const pagina1 = await http
-        .get('/api/v1/transactions?page=1&per_page=2')
+        .get('/api/v2/transactions?page=1&perPage=2')
         .set('Authorization', comoAna())
         .expect(200);
 
       const pagina2 = await http
-        .get('/api/v1/transactions?page=2&per_page=2')
+        .get('/api/v2/transactions?page=2&perPage=2')
         .set('Authorization', comoAna())
         .expect(200);
 

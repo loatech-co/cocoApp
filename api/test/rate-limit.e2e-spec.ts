@@ -36,7 +36,7 @@ describe('Limitador de tasa (e2e)', () => {
     const estados: number[] = [];
     for (let intento = 0; intento < 11; intento += 1) {
       const respuesta = await http
-        .post('/api/v1/auth/login')
+        .post('/api/v2/auth/login')
         .send({ email: usuario.email, password: 'Zz9$Otra-Cosa-Aqui!' });
       estados.push(respuesta.status);
     }
@@ -53,7 +53,7 @@ describe('Limitador de tasa (e2e)', () => {
     const otro = await entorno.crearUsuario();
     const entrar = (email: string, ip: string) =>
       http
-        .post('/api/v1/auth/login')
+        .post('/api/v2/auth/login')
         .set('X-Forwarded-For', ip)
         .send({ email, password: 'Zz9$Otra-Cosa-Aqui!' });
 
@@ -66,7 +66,7 @@ describe('Limitador de tasa (e2e)', () => {
     await entrar(otro.email, '203.0.113.2').expect(401);
 
     // The same account from a fresh address: the per-email limit holds,
-    // and v2 shares it with v1.
+    // whatever the case the address is written in.
     await entrar(usuario.email, '203.0.113.3').expect(429);
     await http
       .post('/api/v2/auth/login')
@@ -79,13 +79,13 @@ describe('Limitador de tasa (e2e)', () => {
     const usuario = await entorno.crearUsuario();
     for (let intento = 0; intento < 10; intento += 1) {
       await http
-        .post('/api/v1/auth/login')
+        .post('/api/v2/auth/login')
         .set('X-Forwarded-For', `198.51.100.${String(intento)}, 203.0.113.9`)
         .send({ email: correoDePrueba(`ip-${String(intento)}`), password: 'Zz9$Otra-Cosa-Aqui!' })
         .expect(401);
     }
     await http
-      .post('/api/v1/auth/login')
+      .post('/api/v2/auth/login')
       .set('X-Forwarded-For', '198.51.100.99, 203.0.113.9')
       .send({ email: usuario.email, password: 'Zz9$Otra-Cosa-Aqui!' })
       .expect(429);
@@ -96,7 +96,7 @@ describe('Limitador de tasa (e2e)', () => {
     // Lo que se mide es que el tope de la ruta existe, no la renovación.
     const estados: number[] = [];
     for (let intento = 0; intento < 31; intento += 1) {
-      const respuesta = await http.post('/api/v1/auth/refresh').send({});
+      const respuesta = await http.post('/api/v2/auth/refresh').send({});
       estados.push(respuesta.status);
     }
 
@@ -107,7 +107,7 @@ describe('Limitador de tasa (e2e)', () => {
   it('corta el registro al sexto intento en un minuto', async () => {
     const estados: number[] = [];
     for (let intento = 0; intento < 6; intento += 1) {
-      const respuesta = await http.post('/api/v1/auth/register').send({
+      const respuesta = await http.post('/api/v2/auth/register').send({
         email: correoDePrueba('rafaga'),
         password: PASSWORD_VALIDA,
         displayName: 'Ráfaga',
@@ -122,14 +122,17 @@ describe('Limitador de tasa (e2e)', () => {
   it('el 429 sale con el envelope canónico de errores', async () => {
     const registrar = () =>
       http
-        .post('/api/v1/auth/register')
+        .post('/api/v2/auth/register')
         .send({ email: correoDePrueba(), password: PASSWORD_VALIDA, displayName: 'Ráfaga' });
     for (let intento = 0; intento < 5; intento += 1) await registrar().expect(201);
 
     const respuesta = await registrar().expect(429);
 
-    expect(respuesta.body).toEqual({
-      error: { code: 'rate_limited', message: expect.any(String), details: [] },
+    expect(respuesta.headers['content-type']).toMatch(/^application\/problem\+json/);
+    expect(respuesta.body).toMatchObject({
+      status: 429,
+      code: 'rate_limited',
+      detail: expect.any(String),
     });
   });
 });

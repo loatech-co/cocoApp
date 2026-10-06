@@ -34,7 +34,7 @@ describe('Security headers and CORS (e2e)', () => {
   });
 
   it('sends the helmet headers on every response', async () => {
-    const response = await http.get('/api/v1/health').expect(200);
+    const response = await http.get('/api/v2/health').expect(200);
 
     expect(response.headers['x-content-type-options']).toBe('nosniff');
     expect(response.headers['x-frame-options']).toBe('DENY');
@@ -48,7 +48,7 @@ describe('Security headers and CORS (e2e)', () => {
   });
 
   it('sends a content security policy that allows only what the app needs', async () => {
-    const csp = (await http.get('/api/v1/health').expect(200)).headers['content-security-policy'];
+    const csp = (await http.get('/api/v2/health').expect(200)).headers['content-security-policy'];
 
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("frame-ancestors 'none'");
@@ -60,7 +60,7 @@ describe('Security headers and CORS (e2e)', () => {
 
   it('answers a preflight from an allowed origin with that exact origin and credentials', async () => {
     const response = await http
-      .options('/api/v1/auth/login')
+      .options('/api/v2/auth/login')
       .set('Origin', allowed)
       .set('Access-Control-Request-Method', 'POST')
       .set('Access-Control-Request-Headers', 'Content-Type');
@@ -75,10 +75,10 @@ describe('Security headers and CORS (e2e)', () => {
 
   it('gives a foreign origin no CORS permission at all', async () => {
     const preflight = await http
-      .options('/api/v1/auth/login')
+      .options('/api/v2/auth/login')
       .set('Origin', REJECTED)
       .set('Access-Control-Request-Method', 'POST');
-    const simple = await http.get('/api/v1/health').set('Origin', REJECTED).expect(200);
+    const simple = await http.get('/api/v2/health').set('Origin', REJECTED).expect(200);
 
     // Without the header the browser blocks the response; never a wildcard.
     for (const response of [preflight, simple]) {

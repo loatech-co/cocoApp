@@ -3,8 +3,7 @@ import type { INestApplication } from '@nestjs/common';
 import type { EntornoDePruebas } from './app';
 
 /**
- * What the two user-isolation suites share (`user-isolation.e2e-spec.ts` for
- * v1, `user-isolation.v2.e2e-spec.ts` for v2): Ana's data, the snapshot that
+ * What `user-isolation.e2e-spec.ts` needs: Ana's data, the snapshot that
  * proves it untouched, and the routes Express actually serves.
  */
 

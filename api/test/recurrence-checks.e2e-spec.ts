@@ -85,15 +85,15 @@ describe('Recurrence CHECK constraints (e2e)', () => {
     // The DTO does not require a periodicity on a recurring concept, so this
     // request reaches the table and the constraint is what stops it.
     const response = await http
-      .post('/api/v1/categories')
+      .post('/api/v2/categories')
       .set('Authorization', asAna)
-      .send({ name: 'Arriendo', kind: 'expense', recurrente: true })
+      .send({ name: 'Arriendo', kind: 'expense', isRecurring: true })
       .expect(422);
 
-    expect(response.body.error).toEqual({
-      code: 'unprocessable',
-      message: 'Un concepto recurrente necesita una periodicidad: cada cuánto vuelve.',
-      details: [],
+    expect(response.body).toMatchObject({
+      status: 422,
+      code: 'check_violation',
+      detail: 'Un concepto recurrente necesita una periodicidad: cada cuánto vuelve.',
     });
     expect(await env.prisma.category.count({ where: { userId: ana.id } })).toBe(0);
   });

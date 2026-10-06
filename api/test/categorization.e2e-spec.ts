@@ -44,18 +44,18 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
 
   const crearCategoria = async (auth: string, name: string) => {
     const respuesta = await http
-      .post('/api/v1/categories')
+      .post('/api/v2/categories')
       .set('Authorization', auth)
       .send({ name, kind: 'expense' })
       .expect(201);
     return respuesta.body.data as { id: number };
   };
 
-  const aprender = (auth: string, description: string, category_id: number) =>
+  const aprender = (auth: string, description: string, categoryId: number) =>
     http
-      .post('/api/v1/categorization/learn')
+      .post('/api/v2/categorization/learn')
       .set('Authorization', auth)
-      .send({ description, category_id });
+      .send({ description, categoryId });
 
   /** Las reglas de un usuario, leídas de la base: lo que de verdad quedó. */
   const reglasDe = (usuario: UsuarioDePrueba) =>
@@ -70,7 +70,7 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
     const energia = await crearCategoria(comoAna, 'Energía');
 
     const r = await aprender(comoAna, 'Pago Celsia Energía', energia.id).expect(201);
-    expect(r.body.data).toEqual({ aprendido: true });
+    expect(r.body.data).toEqual({ learned: true });
 
     // «pago» es genérico y se descarta; de «celsia» y «energia» gana el más
     // largo. Sin tildes: la regla tiene que coincidir con lo que escriba la
@@ -100,11 +100,11 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
     await aprender(comoAna, 'Pago Celsia Energía', energia.id).expect(201);
 
     const r = await http
-      .get('/api/v1/categorization/suggest?description=Energ%C3%ADa%20octubre')
+      .get('/api/v2/categorization/suggest?description=Energ%C3%ADa%20octubre')
       .set('Authorization', comoAna)
       .expect(200);
 
-    expect(r.body.data).toMatchObject({ category_id: energia.id, reason: 'regla' });
+    expect(r.body.data).toMatchObject({ categoryId: energia.id, reason: 'rule' });
   });
 
   // ── Lo que no deja regla ───────────────────────────────────────────────────
@@ -113,7 +113,7 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
     const energia = await crearCategoria(comoAna, 'Energía');
 
     const r = await aprender(comoAna, '', energia.id).expect(201);
-    expect(r.body.data).toEqual({ aprendido: false });
+    expect(r.body.data).toEqual({ learned: false });
     expect(await reglasDe(ana)).toEqual([]);
   });
 
@@ -123,7 +123,7 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
     // Todo genérico o demasiado corto o un número: no hay nada que recordar.
     // Una regla «pago» clasificaría la mitad de los movimientos como energía.
     const r = await aprender(comoAna, 'PAGO FACTURA SERVICIOS 2026', energia.id).expect(201);
-    expect(r.body.data).toEqual({ aprendido: false });
+    expect(r.body.data).toEqual({ learned: false });
     expect(await reglasDe(ana)).toEqual([]);
   });
 
@@ -140,14 +140,14 @@ describe('Fase 2 — Aprender al guardar (e2e)', () => {
 
   it('exige el cuerpo completo: sin categoría o sin descripción es 400', async () => {
     await http
-      .post('/api/v1/categorization/learn')
+      .post('/api/v2/categorization/learn')
       .set('Authorization', comoAna)
       .send({ description: 'Celsia' })
       .expect(400);
     await http
-      .post('/api/v1/categorization/learn')
+      .post('/api/v2/categorization/learn')
       .set('Authorization', comoAna)
-      .send({ category_id: 1 })
+      .send({ categoryId: 1 })
       .expect(400);
   });
 });

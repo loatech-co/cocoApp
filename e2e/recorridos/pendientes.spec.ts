@@ -5,10 +5,10 @@ import { createConcept, createExpense } from '../support/semilla';
 
 /** Rent: a monthly concept in the static centre, due on day 1. */
 const RENT = {
-  recurrente: true,
-  periodicidad: 'mensual',
-  dia_de_pago: 1,
-  presupuesto: 1_000_000,
+  isRecurring: true,
+  periodicity: 'monthly',
+  paymentDay: 1,
+  budget: 1_000_000,
 } as const;
 
 test.describe('pending payments', () => {

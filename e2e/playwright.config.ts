@@ -36,7 +36,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'node support/servidor.mjs',
-    url: `http://localhost:${API_PORT}/api/v1/health`,
+    url: `http://localhost:${API_PORT}/api/v2/health`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: { PRISMA_HIDE_UPDATE_MESSAGE: '1' },
