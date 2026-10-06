@@ -1,6 +1,6 @@
 import { datesIn, readDate } from './date';
 
-describe('fechasDe', () => {
+describe('datesIn', () => {
   it('reads ISO, day-month-year and month-in-words dates', () => {
     expect(datesIn('2026-03-05')).toEqual(['2026-03-05']);
     expect(datesIn('05/03/2026')).toEqual(['2026-03-05']);
@@ -16,7 +16,7 @@ describe('fechasDe', () => {
   });
 });
 
-describe('leerFecha', () => {
+describe('readDate', () => {
   const text = 'Emitida 2026-02-27. Pagada 2026-03-02';
 
   it('prefers the first date inside the period', () => {

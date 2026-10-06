@@ -1,39 +1,42 @@
 import { normalize } from './signatures';
 
 /**
- * El diccionario del sistema: comercios colombianos → términos genéricos.
+ * The system dictionary: Colombian merchants → generic terms.
  *
- * ── Por qué apunta a TÉRMINOS y no a categorías ─────────────────────────────
- * Porque las categorías son de cada cuenta. «D1» no es «Mercado»: es un
- * comercio donde se compra mercado, y en el árbol de alguien eso puede
- * llamarse «Mercado», «Supermercado» o «Víveres», o estar bajo «Alimentación»
- * sin concepto. El diccionario traduce el comercio a palabras, y las palabras
- * se buscan en el árbol de esa persona con el mismo buscador de la ficha. Lo
- * que sale de ahí —un concepto, una categoría, nada— es de ella.
+ * The terms and merchant names below are DATA: Spanish words searched for in
+ * Spanish receipts and in Spanish category trees. They are not translated.
  *
- * ── Por qué está en el código y no en una tabla ─────────────────────────────
- * Igual que `FIRMAS` y `RECAUDADORES`: es conocimiento del sistema, no datos
- * de nadie. Versionado, se revisa como se revisa el código, y la fase 3 se lo
- * lleva a la API sin tocar el esquema.
+ * ── Why it points to TERMS and not to categories ────────────────────────────
+ * Because categories belong to each account. «D1» is not «Mercado»: it is a
+ * shop where groceries are bought, and in someone's tree that can be called
+ * «Mercado», «Supermercado» or «Víveres», or sit under «Alimentación» with no
+ * concept. The dictionary turns the merchant into words, and the words are
+ * searched in that person's tree with the same search as the sheet. What
+ * comes out —a concept, a category, nothing— is theirs.
  *
- * ── Es la ÚLTIMA fuente ─────────────────────────────────────────────────────
- * Por debajo del historial de la persona y de sus palabras clave. Solo habla
- * cuando nadie más tiene nada que decir, y aun así lo que diga pasa por la
- * ficha antes de guardarse. Una entrada equivocada aquí propone mal; no
- * clasifica mal.
+ * ── Why it is in the code and not in a table ────────────────────────────────
+ * Like `SIGNATURES` and `COLLECTORS`: it is system knowledge, nobody's data.
+ * Versioned, it is reviewed the way code is reviewed, and phase 3 takes it to
+ * the API without touching the schema.
  *
- * ── Qué va en `comercios` ───────────────────────────────────────────────────
- * Lo que de verdad sale en un recibo o en un SMS del banco: el nombre
- * comercial Y la razón social, que es lo que imprime el datáfono. «KOBA
- * COLOMBIA» es D1 y «JERONIMO MARTINS» es Ara, y sin eso el diccionario no
- * reconocería a los dos supermercados más frecuentes del país.
+ * ── It is the LAST source ───────────────────────────────────────────────────
+ * Below the person's history and their keywords. It only speaks when nobody
+ * else has anything to say, and even then what it says goes through the
+ * sheet before being saved. A wrong entry here proposes badly; it does not
+ * classify badly.
+ *
+ * ── What goes in `merchants` ────────────────────────────────────────────────
+ * What really shows up on a receipt or in a bank SMS: the trade name AND the
+ * legal name, which is what the card terminal prints. «KOBA COLOMBIA» is D1
+ * and «JERONIMO MARTINS» is Ara, and without that the dictionary would not
+ * recognise the two most frequent supermarkets in the country.
  */
 export interface DictionaryGroup {
-  /** Para leerlo en un informe. No se enseña. */
+  /** To read in a report. Never shown. */
   group: string;
-  /** Lo que se busca en el árbol de la persona, por nombre y palabra clave. */
+  /** What is searched in the person's tree, by name and keyword. */
   terms: readonly string[];
-  /** Tal como aparecen en el texto. Se normalizan al comparar. */
+  /** As they appear in the text. Normalised when comparing. */
   merchants: readonly string[];
 }
 
@@ -340,16 +343,16 @@ export const DICTIONARY: readonly DictionaryGroup[] = [
 ];
 
 /**
- * Las tuberías: por donde pasó la plata, no adónde fue.
+ * The pipelines: where the money went through, not where it went.
  *
- * `RECAUDADORES` ya cubre a los bancos para la lectura de recibos. Esto añade
- * a las pasarelas de pago que aparecen en los SMS de compra —«Compra en
- * MERCADO PAGO*D1»— y que, dejadas en el texto, confundirían: «mercado pago»
- * no es mercado. Se quitan del texto ANTES de buscar comercios, y así el «d1»
- * que viene detrás sí se encuentra.
+ * `COLLECTORS` already covers the banks for reading receipts. This adds the
+ * payment gateways that show up in purchase SMS —«Compra en MERCADO PAGO*D1»—
+ * and that, left in the text, would mislead: «mercado pago» is not groceries.
+ * They are removed from the text BEFORE looking for merchants, so the «d1»
+ * that follows is found.
  *
- * No se tocan los `RECAUDADORES`: esa lista decide qué NO es el acreedor de un
- * recibo, y cambiarla es cosa de la lectura de soportes, no de esta fase.
+ * `COLLECTORS` is not touched: that list decides what is NOT the creditor of a
+ * receipt, and changing it belongs to receipt reading, not to this phase.
  */
 export const PIPELINES: readonly string[] = [
   'mercado pago',
@@ -364,23 +367,23 @@ export const PIPELINES: readonly string[] = [
 
 export interface FoundMerchant {
   group: DictionaryGroup;
-  /** El alias que apareció, tal como está en el diccionario. */
+  /** The alias that appeared, as it is in the dictionary. */
   alias: string;
 }
 
 const ESCAPE = /[.*+?^${}()|[\]\\/]/g;
 
 /**
- * Qué comercios del diccionario aparecen en un texto, del más seguro al menos.
+ * Which dictionary merchants appear in a text, from most to least certain.
  *
- * ── Dos reglas que importan más que la lista ────────────────────────────────
- * 1. Solo cuenta entre LÍMITES DE PALABRA. «ara» aparece dentro de «para»,
- *    «compara» y «barato»; sin esto, todo lo que dijera «para» sería mercado.
- *    Vale para todos los alias, no solo los cortos: «presto» está dentro de
- *    «prestamo».
- * 2. Gana el alias MÁS LARGO, y lo que ocupa se consume: «didi food» es
- *    domicilios y «didi» a secas es transporte; encontrado el primero, el
- *    segundo ya no puede aparecer dentro de él. Lo mismo con «claro hogar» y
+ * ── Two rules that matter more than the list ────────────────────────────────
+ * 1. It only counts between WORD BOUNDARIES. «ara» appears inside «para»,
+ *    «compara» and «barato»; without this, everything that said «para» would
+ *    be groceries. It holds for every alias, not only the short ones:
+ *    «presto» is inside «prestamo».
+ * 2. The LONGEST alias wins, and what it covers is consumed: «didi food» is
+ *    delivery and plain «didi» is transport; once the first is found, the
+ *    second can no longer appear inside it. Same with «claro hogar» and
  *    «claro».
  */
 export function merchantsIn(text: string): FoundMerchant[] {
@@ -403,9 +406,9 @@ export function merchantsIn(text: string): FoundMerchant[] {
     const m = pattern.exec(remaining);
     if (!m) continue;
 
-    // Se consume lo hallado para que un alias más corto no vuelva a dar con
-    // él. Se deja un espacio para que los límites de palabra sigan valiendo.
-    // Los dos grupos son obligatorios en el patrón: siempre vienen.
+    // What was found is consumed so a shorter alias does not hit it again.
+    // Spaces are left so word boundaries still hold. Both groups are
+    // mandatory in the pattern: they always come.
     const [, before = '', match = ''] = m;
     const start = m.index + before.length;
     remaining = `${remaining.slice(0, start)} ${' '.repeat(match.length - 1)}${remaining.slice(start + match.length)}`;
@@ -420,11 +423,11 @@ export function merchantsIn(text: string): FoundMerchant[] {
 }
 
 /**
- * Los términos genéricos que un texto sugiere, en orden de seguridad.
+ * The generic terms a text suggests, in order of certainty.
  *
- * Es lo que se busca después en el árbol de la persona. Si varios comercios
- * aparecen a la vez —«RAPPI*EXITO»—, los términos del hallado más largo van
- * primero; quien resuelva decide qué hacer con la mezcla.
+ * It is what is then searched in the person's tree. If several merchants
+ * appear at once —«RAPPI*EXITO»—, the terms of the longest match go first;
+ * whoever resolves them decides what to do with the mix.
  */
 export function termsFor(text: string): string[] {
   const seen = new Set<string>();

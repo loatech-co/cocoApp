@@ -2,7 +2,7 @@
   "name": "@coco/receipt-parser",
   "version": "0.1.0",
   "private": true,
-  "description": "Lee un soporte y dice de qué es: firmas, montos y fechas. Corre igual en el navegador y en el servidor.",
+  "description": "Reads a receipt and says what it is for: signatures, amounts and dates. Runs the same in the browser and on the server.",
   "license": "UNLICENSED",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

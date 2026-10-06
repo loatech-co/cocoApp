@@ -12,7 +12,7 @@ import {
  * reconozcan solos.
  *
  * ── Por qué el usuario tiene que poder escribirlas ──────────────────────────
- * Porque el catálogo de firmas —`packages/receipt-parser/firmas.ts`— se sacó de 443
+ * Porque el catálogo de firmas —`packages/receipt-parser/src/signatures.ts`— se sacó de 443
  * soportes reales, y eso es exactamente lo que le pasa: sabe reconocer a los
  * acreedores de QUIEN los trajo. El primer recibo de una inmobiliaria que no
  * está ahí no se reconoce, y la única salida era abrir el código.
@@ -136,7 +136,7 @@ export function conceptoQueYaLaUsa(
  * Las firmas que salen del árbol de alguien.
  *
  * Van DELANTE del catálogo cuando se clasifica, y además con más prioridad:
- * ver `PRIORIDAD_DE_LO_ESCRITO` en `packages/receipt-parser/firmas.ts`.
+ * ver `TYPED_TEXT_PRIORITY` en `packages/receipt-parser/src/signatures.ts`.
  */
 export function firmasDelArbol(arbol: readonly CategoryTree[]): Signature[] {
   // El recorrido vive en el paquete desde la fase 3: la API lo necesita igual.

@@ -1,6 +1,6 @@
 import { DICTIONARY, PIPELINES, merchantsIn, termsFor } from './dictionary';
 
-describe('comerciosEn', () => {
+describe('merchantsIn', () => {
   it('finds a merchant as a whole word, ignoring case and accents', () => {
     const found = merchantsIn('COMPRA ALMACENES ÉXITO CALLE 80');
     expect(found.map((h) => [h.group.group, h.alias])).toEqual([['mercado', 'almacenes exito']]);
@@ -21,7 +21,7 @@ describe('comerciosEn', () => {
   });
 });
 
-describe('terminosPara', () => {
+describe('termsFor', () => {
   it('returns the search terms of every group found, without repeats', () => {
     const groceries = DICTIONARY.find((g) => g.group === 'mercado')!;
     expect(termsFor('compra en carulla y en el exito')).toEqual([...groceries.terms]);

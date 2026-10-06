@@ -11,11 +11,10 @@ export interface NodoDelArbol {
 /**
  * The tree in the shape `@coco/receipt-parser` searches.
  *
- * The API says `keywords` (v2); the package, shared with the API's own
- * classifier, still says `palabras_clave`. Without this step the keywords
- * would not fail: they would just be ignored —the field is optional there—
- * and a concept would stop being found by its own words without anyone
- * noticing.
+ * Only the four fields the search reads, recursively. Both sides say
+ * `keywords` (v2 and the package); `keywords` is optional in the package, so
+ * a node that lost it would not fail: a concept would just stop being found by
+ * its own words without anyone noticing.
  */
 export function comoNodosBuscables(arbol: readonly NodoDelArbol[]): SearchableNode[] {
   return arbol.map(({ id, name, keywords, children }) => ({

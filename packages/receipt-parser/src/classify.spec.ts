@@ -13,7 +13,7 @@ function makeSignature(overrides: Partial<Signature> = {}): Signature {
   };
 }
 
-describe('clasificar', () => {
+describe('classify', () => {
   it('recognises the creditor by NIT, alias and file name, and explains it', () => {
     const reading = classify({
       text: 'ENEL Colombia NIT 860.063.875-8\nPagado en Bancolombia\nTotal a pagar $ 152.300',
@@ -192,7 +192,7 @@ describe('clasificar', () => {
   });
 });
 
-describe('firmasDeConceptos', () => {
+describe('conceptSignatures', () => {
   it('turns written keywords into top-priority signatures and skips concepts without them', () => {
     const signatures = conceptSignatures([
       makeConceptWithWords(),
@@ -211,7 +211,7 @@ describe('firmasDeConceptos', () => {
   });
 });
 
-describe('necesitaRevision', () => {
+describe('needsReview', () => {
   const reading = (overrides: Partial<Reading>): Reading => ({
     concept: 'Energía',
     category: 'Servicios públicos',

@@ -1,18 +1,18 @@
 /**
- * Cuándo se pagó, sacado de un recibo.
+ * When it was paid, read from a receipt.
  *
- * Tres formas conviven en los recibos colombianos y ninguna es negociable:
+ * Several forms live together in Colombian receipts and none is negotiable:
  *   `04/01/2022` · `2022-01-04` · `04 Enero 2022` · `31-octubre-2023` · `04/ene/2022`
  *
- * ── La ambigüedad de 04/01 ──────────────────────────────────────────────────
- * ¿4 de enero u 1 de abril? En Colombia el orden es DÍA/MES. El ISO
- * `2022-01-04` se reconoce aparte por su forma, que es inconfundible.
+ * ── The 04/01 ambiguity ─────────────────────────────────────────────────────
+ * January 4th or April 1st? In Colombia the order is DAY/MONTH. The ISO
+ * `2022-01-04` is recognised apart by its shape, which cannot be mistaken.
  *
- * ── Por qué se prefiere la del periodo ──────────────────────────────────────
- * Un recibo trae varias fechas: la de expedición, la de vencimiento, la de
- * suspensión, la del próximo corte. La que interesa es la del pago, y la única
- * pista fiable de cuál es esa es el mes al que pertenece el gasto: entre todas
- * las que se leen, la que cae en ese mes.
+ * ── Why the one in the period wins ──────────────────────────────────────────
+ * A receipt carries several dates: issue, due date, suspension, next billing
+ * cut. The one that matters is the payment, and the only reliable hint of
+ * which one that is, is the month the expense belongs to: among all the dates
+ * read, the one that falls in that month.
  */
 
 // Spanish month names, as receipts print them: data, not code, hence strings.
@@ -54,7 +54,7 @@ const WITH_MONTH_NAME = new RegExp(
 
 export interface DateCandidate {
   iso: string;
-  /** Si cae dentro del mes al que pertenece el gasto. */
+  /** Whether it falls in the month the expense belongs to. */
   inPeriod: boolean;
 }
 
@@ -64,17 +64,17 @@ const isValidDate = (a: number, m: number, d: number): boolean =>
 const toIso = (a: number, m: number, d: number): string =>
   `${a}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-/** Todas las fechas que aparecen, en el orden en que aparecen. */
+/** Every date in the text, in the order it appears. */
 export function datesIn(text: string): string[] {
   const found: string[] = [];
   const record = (a: number, m: number, d: number): void => {
     if (isValidDate(a, m, d)) found.push(toIso(a, m, d));
   };
 
-  // Los grupos de los tres patrones son obligatorios: los `= ''` nunca se usan.
+  // The groups of the three patterns are mandatory: the `= ''` are never used.
   for (const [, a = '', m = '', d = ''] of text.matchAll(ISO)) record(+a, +m, +d);
   for (const [, d = '', m = '', a = ''] of text.matchAll(DAY_MONTH_YEAR)) {
-    // Dos cifras de año: 22 es 2022, no 1922. Estos recibos no son de antes.
+    // A two-digit year: 22 is 2022, not 1922. These receipts are not older.
     record(a.length === 2 ? 2000 + +a : +a, +m, +d);
   }
   for (const [, d = '', month = '', a = ''] of text.matchAll(WITH_MONTH_NAME)) {
@@ -86,20 +86,20 @@ export function datesIn(text: string): string[] {
 }
 
 /**
- * La fecha del pago.
+ * The payment date.
  *
- * `periodo` es el mes al que pertenece el gasto, en `YYYY-MM`. Si hay una
- * fecha de ese mes, es esa. Si no hay ninguna legible, se cae al día 15: es el
- * medio del mes, así que el error máximo es de dos semanas y nunca cae en otro
- * mes —que es el error que descuadra un resumen—.
+ * `period` is the month the expense belongs to, as `YYYY-MM`. If there is a
+ * date in that month, that is the one. If none can be read, it falls back to
+ * the 15th: the middle of the month, so the worst error is two weeks and it
+ * never lands in another month —the error that breaks a summary—.
  */
 export function readDate(text: string, period?: string): DateCandidate | null {
   const all = datesIn(text);
 
   if (period) {
     const ofPeriod = all.filter((f) => f.startsWith(period));
-    // La primera del mes: en un recibo, la de expedición va antes que la de
-    // vencimiento, y la que se pagó se parece más a la primera.
+    // The first one in the month: on a receipt the issue date comes before
+    // the due date, and the payment date is closer to the first.
     const [firstOfPeriod] = ofPeriod;
     if (firstOfPeriod !== undefined) return { iso: firstOfPeriod, inPeriod: true };
   }

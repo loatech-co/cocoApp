@@ -435,8 +435,7 @@ apiFetch<{ display_name: string }[]>('/accounts');
   table passes its own `page` and `perPage` (at most 200).
 - **Contracts that speak another dialect are translated at the edge, once.**
   The iOS bridge still delivers a v1 session (`session.ts`,
-  `desdeElPuente`); `@coco/receipt-parser` still reads `palabras_clave`
-  (`shared/lib/arbol-buscable.ts`); the dashboard's `breakdownLevel` and
+  `desdeElPuente`); the dashboard's `breakdownLevel` and
   `granularity` become the Spanish words the screen shows
   (`dashboard-charts.tsx`). Nothing inside a feature knows.
 - **What is not in the OpenAPI document** —the bridge, the app's User-Agent

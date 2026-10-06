@@ -1,63 +1,62 @@
 /**
- * Las firmas: por qué señales se reconoce a cada acreedor.
+ * Signatures: the signals each creditor is recognised by.
  *
- * ── Por qué una tabla y no condiciones repartidas por el código ─────────────
- * Porque esto crece con cada recibo nuevo que llega mal clasificado, y crece
- * por AÑADIDO: un alias más, un NIT más. Repartido en `if`s, cada añadido
- * obliga a leer el flujo entero para saber dónde ponerlo y qué otra cosa va a
- * romper. Siendo datos, se añade una línea y las pruebas dicen si algo se
- * movió de sitio.
+ * ── Why a table and not conditions spread through the code ──────────────────
+ * Because this grows with every new receipt that arrives misclassified, and it
+ * grows by ADDING: one more alias, one more NIT. Spread over `if`s, every
+ * addition means reading the whole flow to know where it goes and what else it
+ * will break. As data, a line is added and the tests say whether anything
+ * moved.
  *
- * ── Por qué el NIT pesa más que el nombre ──────────────────────────────────
- * Porque un nombre comercial aparece en cualquier parte del recibo —en la
- * publicidad del reverso, en el nombre del banco que recauda— y el NIT solo
- * aparece donde identifica a alguien. Es el dato menos ambiguo de una factura
- * colombiana.
+ * ── Why the NIT weighs more than the name ───────────────────────────────────
+ * Because a trade name shows up anywhere on a receipt —in the ads on the back,
+ * in the name of the collecting bank— and the NIT only shows up where it
+ * identifies someone. It is the least ambiguous datum of a Colombian invoice.
  */
 
 export interface Signature {
-  /** El concepto exacto, tal como existe en el árbol de categorías. */
+  /** The exact concept, as it exists in the category tree. */
   concept: string;
   category: string;
   costCenter: string;
-  /** Razones sociales y nombres comerciales tal como salen en el texto. */
+  /** Legal and trade names as they appear in the text. */
   alias: string[];
-  /** NIT sin puntos ni dígito de verificación. La señal más fuerte. */
+  /** NIT without dots or check digit. The strongest signal. */
   nits?: string[];
   /**
-   * Trozos que aparecen en el NOMBRE del archivo o de la carpeta. Señal de
-   * apoyo: quien nombra un archivo ya sabía de qué era.
+   * Pieces that appear in the NAME of the file or its folder. A supporting
+   * signal: whoever named a file already knew what it was.
    */
   nameTokens?: string[];
   /**
-   * Abreviaturas que solo valen ANCLADAS al principio del nombre. "AO" en
-   * medio de una palabra no dice nada; "AO - agosto.pdf" sí.
+   * Abbreviations that only count ANCHORED at the start of the name. "AO" in
+   * the middle of a word says nothing; "AO - agosto.pdf" does.
    */
   namePrefixes?: string[];
   /**
-   * Palabras que DESCARTAN esta firma aunque el alias coincida. Es lo que
-   * separa "Claro Hogar" de "Claro Movil" cuando el recibo dice las dos.
+   * Words that RULE OUT this signature even when the alias matches. It is what
+   * separates "Claro Hogar" from "Claro Movil" when the receipt says both.
    */
   excludes?: string[];
   /**
-   * Desempata cuando dos firmas coinciden. Más alto gana.
+   * Breaks the tie when two signatures match. Higher wins.
    *
-   * Existe por un caso real: una planilla de la PILA menciona "ARL Sura" y
-   * "EPS Sura", así que coincide con Sura y con Seguridad Social a la vez. Y
-   * es Seguridad Social: lo que se pagó es la planilla, Sura solo es a dónde
-   * fue una parte.
+   * It exists because of a real case: a PILA form mentions "ARL Sura" and
+   * "EPS Sura", so it matches Sura and Social Security at once. And it is
+   * Social Security: what was paid is the form, Sura is only where one part
+   * went.
    */
   priority?: number;
-  /** Rango típico en pesos. Un valor muy fuera baja la confianza. */
+  /** Typical range in pesos. A value far outside lowers the confidence. */
   range?: { min: number; max: number };
 }
 
 /**
- * Los bancos y recaudadores: NO son el acreedor.
+ * Banks and collectors: they are NOT the creditor.
  *
- * Aparecen en casi todos los recibos porque son por donde pasó la plata. Un
- * clasificador que los tome por el destinatario acaba con la mitad del año en
- * "Bancolombia", que no es un gasto: es una tubería.
+ * They appear on almost every receipt because the money went through them. A
+ * classifier that takes them for the payee ends up with half the year in
+ * "Bancolombia", which is not an expense: it is a pipe.
  */
 export const COLLECTORS = [
   'bancolombia',
@@ -83,13 +82,13 @@ export const COLLECTORS = [
 ];
 
 /**
- * El catálogo inicial, sacado de los 443 soportes que ya están cargados.
+ * The initial catalogue, taken from the 443 receipts already loaded.
  *
- * No se inventó: cada alias y cada exclusión está aquí porque un recibo real
- * lo necesitaba.
+ * It was not invented: every alias and every exclusion is here because a real
+ * receipt needed it.
  */
 export const SIGNATURES: Signature[] = [
-  // ── Servicios públicos ──────────────────────────────────────────────────
+  // ── Utilities ───────────────────────────────────────────────────────────
   {
     concept: 'Aquaoccidente (Agua)',
     category: 'Servicios públicos',
@@ -112,10 +111,10 @@ export const SIGNATURES: Signature[] = [
     concept: 'Celsia (Energia)',
     category: 'Servicios públicos',
     costCenter: 'Costos fijos',
-    // "celcia" con c: es como lo escribe el OCR cuando el logo está impreso
-    // en un tipo estrecho.
+    // "celcia" with a c: it is how the OCR writes it when the logo is printed
+    // in a narrow typeface.
     alias: ['celsia', 'celcia', 'epsa'],
-    // El internet de Celsia es otro servicio y se factura aparte.
+    // Celsia's internet is another service, billed apart.
     excludes: ['internet', 'fibra'],
     nameTokens: ['energia', 'energía', 'luz', 'celsia'],
     range: { min: 20_000, max: 900_000 },
@@ -125,7 +124,7 @@ export const SIGNATURES: Signature[] = [
     category: 'Servicios públicos',
     costCenter: 'Costos fijos',
     alias: ['claro', 'comcel'],
-    // Sin esto, los dos Claro coinciden con todo recibo de Claro.
+    // Without this, both Claro match every Claro receipt.
     nameTokens: ['hogar', 'multiplay'],
     priority: 2,
     range: { min: 30_000, max: 500_000 },
@@ -148,7 +147,7 @@ export const SIGNATURES: Signature[] = [
     range: { min: 10_000, max: 600_000 },
   },
 
-  // ── Seguridad social ────────────────────────────────────────────────────
+  // ── Social security ─────────────────────────────────────────────────────
   {
     concept: 'PILA / Seguridad Social',
     category: 'Seguridad social',
@@ -165,13 +164,13 @@ export const SIGNATURES: Signature[] = [
       'liquidación de aportes',
     ],
     nameTokens: ['pila', 'seguridad social'],
-    // Más alta que Sura: una planilla menciona "ARL Sura" y "EPS Sura", y lo
-    // que se pagó es la planilla.
+    // Higher than Sura: a form mentions "ARL Sura" and "EPS Sura", and what
+    // was paid is the form.
     priority: 9,
     range: { min: 100_000, max: 8_000_000 },
   },
 
-  // ── Salud y vida ────────────────────────────────────────────────────────
+  // ── Health and life ─────────────────────────────────────────────────────
   {
     concept: 'Sura',
     category: 'Salud y vida',
@@ -205,15 +204,15 @@ export const SIGNATURES: Signature[] = [
     range: { min: 50_000, max: 3_000_000 },
   },
 
-  // ── Vehículos ───────────────────────────────────────────────────────────
+  // ── Vehicles ────────────────────────────────────────────────────────────
   {
     concept: 'AXA Seguro Duster',
     category: 'Vehículos',
     costCenter: 'Costos fijos',
     alias: ['axa'],
     nameTokens: ['duster'],
-    // Por encima de la medicina prepagada: el Duster lo nombra el archivo, y
-    // el texto de los dos dice "AXA".
+    // Above the prepaid health plan: the file names the Duster, and the text
+    // of both says "AXA".
     priority: 4,
     range: { min: 100_000, max: 4_000_000 },
   },
@@ -227,7 +226,7 @@ export const SIGNATURES: Signature[] = [
     range: { min: 200_000, max: 1_500_000 },
   },
 
-  // ── Educación ───────────────────────────────────────────────────────────
+  // ── Education ───────────────────────────────────────────────────────────
   {
     concept: 'Colegio Rafael Pombo',
     category: 'Educación',
@@ -248,43 +247,42 @@ export const SIGNATURES: Signature[] = [
 ];
 
 /**
- * La prioridad de una firma escrita por una persona.
+ * The priority of a signature a person wrote.
  *
- * Por encima de todas las del catálogo —la más alta es 9— y no por poco: lo
- * que alguien escribió en su concepto no es otro candidato más, es una
- * instrucción. «Si el recibo dice Comfandi, es este concepto» gana aunque el
- * catálogo reconozca a otro acreedor con más señales, porque el catálogo son
- * mis suposiciones y esto es su cuenta.
+ * Above every one in the catalogue —the highest is 9— and not by a little:
+ * what someone wrote in their concept is not one more candidate, it is an
+ * instruction. «If the receipt says Comfandi, it is this concept» wins even
+ * when the catalogue recognises another creditor with more signals, because
+ * the catalogue is my guesses and this is their account.
  */
 export const TYPED_TEXT_PRIORITY = 100;
 
-/** Un concepto del árbol de alguien, con lo que se busca para reconocerlo. */
+/** A concept of someone's tree, with what is searched to recognise it. */
 export interface ConceptWithWords {
   concept: string;
   category: string;
   costCenter: string;
-  /** Tal como se escribieron. Se normalizan al comparar. */
+  /** As they were written. Normalised when comparing. */
   words: readonly string[];
 }
 
 /**
- * Convierte los conceptos de alguien en firmas.
+ * Turns someone's concepts into signatures.
  *
- * ── Por qué la misma palabra va al texto Y al nombre del archivo ────────────
- * Porque es la misma palabra y los dos sitios fallan de forma distinta. En un
- * escaneo torcido el reconocimiento se come el nombre del acreedor, y ahí lo
- * único que queda es que el archivo se llame «comfandi agosto.pdf». Al revés
- * —un PDF digital con el nombre «documento (3).pdf»— la señal está en el
- * texto. Pedir dos listas para eso sería pedir que la misma palabra se
- * escriba dos veces.
+ * ── Why the same word goes to the text AND to the file name ─────────────────
+ * Because it is the same word and the two places fail differently. In a
+ * crooked scan the recognition eats the creditor's name, and all that is left
+ * is a file called «comfandi agosto.pdf». The other way round —a digital PDF
+ * named «documento (3).pdf»— the signal is in the text. Asking for two lists
+ * would be asking for the same word to be written twice.
  *
- * Un NIT escrito como palabra clave entra por `alias` y no por `nits`, y es a
- * propósito: `nits` compara sin puntos ni espacios, y lo que se escribe a mano
- * en un campo de texto puede ser cualquier cosa —un nombre, un número, media
- * frase—. Se busca tal cual, que es lo que quien lo escribió espera.
+ * A NIT written as a keyword goes in through `alias` and not `nits`, on
+ * purpose: `nits` compares without dots or spaces, and what is typed by hand
+ * into a text field can be anything —a name, a number, half a sentence—. It
+ * is searched as is, which is what whoever wrote it expects.
  *
- * Los conceptos sin palabras no producen firma: una firma sin señales no
- * coincide nunca y solo alarga el recorrido.
+ * Concepts without words produce no signature: a signature without signals
+ * never matches and only makes the walk longer.
  */
 export function conceptSignatures(concepts: readonly ConceptWithWords[]): Signature[] {
   return concepts
@@ -299,22 +297,22 @@ export function conceptSignatures(concepts: readonly ConceptWithWords[]): Signat
     }));
 }
 
-/** Sin tildes, en minúscula y con los espacios normalizados. */
+/** Without accents, lower case and with spaces normalised. */
 export function normalize(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 /**
- * Los conceptos de un árbol, con lo que hace falta para reconocerlos.
+ * The concepts of a tree, with what it takes to recognise them.
  *
- * Es el recorrido que hacía el frontend para sacar firmas de las palabras
- * clave de la persona. Vive aquí porque la API necesita exactamente el mismo
- * —el cerebro pasa al servidor y tiene que leer el mismo árbol igual—, y dos
- * recorridos distintos es cómo una palabra clave vale en el navegador y no en
- * la API.
+ * It is the walk the frontend did to get signatures out of the person's
+ * keywords. It lives here because the API needs exactly the same one —the
+ * brain moves to the server and has to read the same tree the same way—, and
+ * two different walks is how a keyword works in the browser and not in the
+ * API.
  *
- * Toma la forma mínima de un nodo para no depender del tipo de nadie: el árbol
- * del frontend y el que la API arma desde Prisma encajan los dos.
+ * It takes the minimal shape of a node so as not to depend on anyone's type:
+ * the frontend's tree and the one the API builds from Prisma both fit.
  */
 export function treeConceptsWithWords(
   roots: readonly {
@@ -339,7 +337,7 @@ export function treeConceptsWithWords(
   );
 }
 
-/** Las firmas que salen de las palabras clave de un árbol. */
+/** The signatures that come out of a tree's keywords. */
 export function treeSignatures(roots: Parameters<typeof treeConceptsWithWords>[0]): Signature[] {
   return conceptSignatures(treeConceptsWithWords(roots));
 }

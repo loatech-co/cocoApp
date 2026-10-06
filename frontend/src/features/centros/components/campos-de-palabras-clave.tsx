@@ -35,7 +35,7 @@ interface KeywordFieldsProps {
  * y hasta hoy la única salida era abrir el código.
  *
  * Aquí se escribe lo que dice ESE recibo —«Comfandi», el NIT— y el siguiente
- * entra clasificado. Lo escrito gana al catálogo: ver `PRIORIDAD_DE_LO_ESCRITO`.
+ * entra clasificado. Lo escrito gana al catálogo: ver `TYPED_TEXT_PRIORITY`.
  *
  * ── Por qué en el concepto y no en una pantalla de reglas ───────────────────
  * Porque el momento en que uno sabe qué palabra reconoce un recibo es el

@@ -1,12 +1,12 @@
 import { treeConceptsWithWords, normalize } from './signatures';
 
-describe('normalizar', () => {
+describe('normalize', () => {
   it('drops accents, lowers case and collapses spaces', () => {
     expect(normalize('  Ñandú   ÉXITO\tCalle ')).toBe('nandu exito calle');
   });
 });
 
-describe('conceptosConPalabrasDelArbol', () => {
+describe('treeConceptsWithWords', () => {
   it('reads only the concept level and tolerates missing children and keywords', () => {
     expect(
       treeConceptsWithWords([

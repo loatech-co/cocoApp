@@ -1,6 +1,6 @@
 import { toNumber, readAmount } from './amount';
 
-describe('aNumero', () => {
+describe('toNumber', () => {
   it.each([
     ['89.900', 89900],
     ['89,900', 89900],
@@ -25,7 +25,7 @@ describe('aNumero', () => {
   });
 });
 
-describe('leerMonto', () => {
+describe('readAmount', () => {
   it('returns null when the text has no amount', () => {
     expect(readAmount('')).toBeNull();
     expect(readAmount('gracias por su compra\n\n')).toBeNull();

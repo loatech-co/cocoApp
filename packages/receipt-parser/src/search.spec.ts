@@ -1,7 +1,7 @@
 import { searchInTree, indexTree, resolveTerms, readablePath } from './search';
 import { makeTree } from './testing/factories';
 
-describe('indexarArbol', () => {
+describe('indexTree', () => {
   it('indexes every level with its path and its ancestors', () => {
     const index = indexTree(makeTree());
     const power = index.find((e) => e.id === 'luz');
@@ -27,7 +27,7 @@ describe('indexarArbol', () => {
   });
 });
 
-describe('buscarEnArbol', () => {
+describe('searchInTree', () => {
   const index = indexTree(makeTree());
   const ids = (query: string, options?: Parameters<typeof searchInTree>[2]) =>
     searchInTree(index, query, options).map((e) => e.id);
@@ -59,7 +59,7 @@ describe('buscarEnArbol', () => {
   });
 });
 
-describe('resolverTerminos', () => {
+describe('resolveTerms', () => {
   const index = indexTree(makeTree());
 
   it('is certain when the terms point to one concept', () => {

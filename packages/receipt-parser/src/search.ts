@@ -1,27 +1,27 @@
 import { normalize } from './signatures';
 
 /**
- * Buscar en el árbol de categorías de una persona.
+ * Searching a person's category tree.
  *
- * ── Por qué vive aquí y no en el frontend ───────────────────────────────────
- * Porque lo usan dos cosas que no se conocen: el buscador de la ficha de un
- * movimiento, en el navegador, y el diccionario del sistema, que traduce un
- * comercio a términos genéricos y necesita encontrarlos en el árbol de cada
- * cuenta. Escrito dos veces, «mercado» encontraría «Mercado» en un sitio y no
- * en el otro. Y en la fase 3 este motor pasa a la API, que lo hereda tal cual.
+ * ── Why it lives here and not in the frontend ───────────────────────────────
+ * Because two things that do not know each other use it: the search box of
+ * a transaction sheet, in the browser, and the system dictionary, which turns
+ * a merchant into generic terms and has to find them in each account's tree.
+ * Written twice, «mercado» would find «Mercado» in one place and not in the
+ * other. And in phase 3 this engine moves to the API, which inherits it as is.
  *
- * ── Por qué corre en el navegador y no en el servidor ───────────────────────
- * Un árbol tiene treinta y pico conceptos. Buscar en él es recorrer una lista
- * que ya está descargada; una petición por tecla sería pedirle a la red que
- * haga lo que cabe en un `filter`.
+ * ── Why it runs in the browser and not on the server ────────────────────────
+ * A tree has thirty-odd concepts. Searching it is walking a list that is
+ * already downloaded; a request per keystroke would ask the network to do what
+ * fits in a `filter`.
  *
- * ── Qué se busca ────────────────────────────────────────────────────────────
- * Los nombres de los conceptos y de las categorías, y sus palabras clave: si
- * «Mercado» tiene la palabra clave «D1», escribir «d1» lo encuentra. Sin
- * tildes ni mayúsculas, con la misma normalización que todo lo demás.
+ * ── What is searched ────────────────────────────────────────────────────────
+ * The names of concepts and categories, and their keywords: if «Mercado» has
+ * the keyword «D1», typing «d1» finds it. Without accents or capitals, with
+ * the same normalisation as everything else.
  */
 
-/** Lo mínimo que un nodo del árbol necesita para poder buscarse. */
+/** The least a tree node needs to be searchable. */
 export interface SearchableNode {
   id: number | string;
   name: string;
@@ -31,26 +31,26 @@ export interface SearchableNode {
 
 export type TreeLevel = 'centro' | 'categoria' | 'concepto';
 
-/** Un nodo del árbol, aplanado y listo para comparar. */
+/** A tree node, flattened and ready to compare. */
 export interface IndexEntry {
   id: number | string;
   level: TreeLevel;
   name: string;
   /**
-   * De dónde cuelga, del más cercano al más lejano: para un concepto,
-   * `[categoría, centro]`; para una categoría, `[centro]`. Es lo que distingue
-   * dos «Mercado» en la pantalla.
+   * What it hangs from, nearest first: for a concept,
+   * `[category, cost center]`; for a category, `[cost center]`. It is what
+   * tells two «Mercado» apart on screen.
    */
   path: readonly string[];
   costCenterId: number | string;
   categoryId?: number | string | undefined;
   keywords: readonly string[];
-  /** Normalizados una vez, al indexar, y no en cada tecla. */
+  /** Normalised once, when indexing, and not on every keystroke. */
   normalizedName: string;
   normalizedKeywords: readonly string[];
 }
 
-/** Aplana el árbol. Se hace una vez por árbol, no una vez por búsqueda. */
+/** Flattens the tree. Once per tree, not once per search. */
 export function indexTree(roots: readonly SearchableNode[]): IndexEntry[] {
   const entries: IndexEntry[] = [];
 
@@ -97,12 +97,12 @@ function toEntry(
 }
 
 /**
- * Cuánto se parece una entrada a lo escrito. Cero es nada.
+ * How close an entry is to what was typed. Zero is nothing.
  *
- * El orden importa más que el número: el nombre exacto gana al que empieza
- * igual, que gana al que lo contiene, que gana a la palabra clave. Escribir
- * «mercado» tiene que poner «Mercado» antes que «Supermercado», y los dos
- * antes que un concepto que tenga «mercado» como palabra clave.
+ * The order matters more than the number: the exact name beats the one that
+ * starts the same, which beats the one that contains it, which beats a
+ * keyword. Typing «mercado» has to put «Mercado» before «Supermercado», and
+ * both before a concept that has «mercado» as a keyword.
  */
 function scoreOf(e: IndexEntry, tokens: readonly string[]): number {
   let total = 0;
@@ -112,8 +112,8 @@ function scoreOf(e: IndexEntry, tokens: readonly string[]): number {
     else if (e.normalizedName.startsWith(token)) best = 3;
     else if (e.normalizedName.includes(token)) best = 2;
     else if (e.normalizedKeywords.some((p) => p === token || p.includes(token))) best = 1;
-    // Todos los tokens tienen que encontrarse en algún sitio: «mercado d1» no
-    // debe traer todo lo que diga «mercado» aunque no sepa nada de «d1».
+    // Every token has to be found somewhere: «mercado d1» must not bring
+    // everything that says «mercado» while knowing nothing of «d1».
     if (best === 0) return 0;
     total += best;
   }
@@ -121,8 +121,8 @@ function scoreOf(e: IndexEntry, tokens: readonly string[]): number {
 }
 
 /**
- * Busca lo escrito en el índice. Vacío devuelve vacío: lo que se enseña con
- * el buscador en blanco —los recientes— lo decide quien llama.
+ * Searches the index for what was typed. Empty returns empty: what an empty
+ * search box shows —the recent ones— is the caller's decision.
  */
 export function searchInTree(
   index: readonly IndexEntry[],
@@ -132,8 +132,8 @@ export function searchInTree(
   const tokens = normalize(query).split(' ').filter(Boolean);
   if (tokens.length === 0) return [];
 
-  // Conceptos y categorías por defecto. Un centro de costos solo no clasifica
-  // nada: elegirlo dejaría el movimiento igual de sin clasificar.
+  // Concepts and categories by default. A cost center alone classifies
+  // nothing: choosing it would leave the transaction just as unclassified.
   const levels = new Set(options.levels ?? ['concepto', 'categoria']);
   const LEVEL_WEIGHT = Object.fromEntries([
     ['concepto', 2],
@@ -148,8 +148,8 @@ export function searchInTree(
     .sort(
       (a, b) =>
         b.points - a.points ||
-        // A igual parecido, el concepto antes que la categoría: es lo que
-        // clasifica del todo.
+        // On a tie, the concept before the category: it is what classifies
+        // all the way.
         LEVEL_WEIGHT[b.e.level] - LEVEL_WEIGHT[a.e.level] ||
         a.e.name.localeCompare(b.e.name, 'es'),
     )
@@ -157,41 +157,42 @@ export function searchInTree(
     .map(({ e }) => e);
 }
 
-/** El camino de una entrada tal como se enseña: «Familia › Costos fijos». */
+/** An entry's path as it is shown: «Familia › Costos fijos». */
 export function readablePath(e: IndexEntry): string {
   return e.path.join(' › ');
 }
 
-// ── Resolver términos genéricos: lo que usa el diccionario ───────────────────
+// ── Resolving generic terms: what the dictionary uses ───────────────────────
 
 export type ClassificationCertainty = 'alta' | 'media' | 'ninguna';
 
 export interface Resolution {
   certainty: ClassificationCertainty;
-  /** Solo con certeza alta: el único concepto al que llevan los términos. */
+  /** Only with high certainty: the one concept the terms lead to. */
   concept?: IndexEntry | undefined;
   /**
-   * Con certeza media: la categoría que se propone, si los términos llevan a
-   * una sola. Varios conceptos de categorías distintas no proponen ninguna.
+   * With medium certainty: the proposed category, if the terms lead to just
+   * one. Several concepts in different categories propose none.
    */
   category?: IndexEntry | undefined;
-  /** Con certeza media: entre qué se está dudando, para dejarlo a la vista. */
+  /** With medium certainty: what is in doubt, to keep it in sight. */
   candidates: IndexEntry[];
 }
 
 /**
- * A dónde llevan unos términos genéricos dentro del árbol de alguien.
+ * Where some generic terms lead inside someone's tree.
  *
- * ── Los tres niveles de certeza ─────────────────────────────────────────────
- * · ALTA: los términos llevan a un solo concepto. Se propone.
- * · MEDIA: llevan a una categoría pero a ningún concepto, o a varios
- *   conceptos. Se propone la categoría —si es una sola— y se dejan los
- *   candidatos a la vista para que la persona elija.
- * · NINGUNA: no llevan a nada. No se propone nada; el buscador queda listo.
+ * ── The three certainty levels ──────────────────────────────────────────────
+ * · HIGH (`alta`): the terms lead to one concept. It is proposed.
+ * · MEDIUM (`media`): they lead to a category but no concept, or to several
+ *   concepts. The category is proposed —if there is only one— and the
+ *   candidates stay in sight for the person to choose.
+ * · NONE (`ninguna`): they lead nowhere. Nothing is proposed; the search box
+ *   is ready.
  *
- * Nunca se adivina entre varios: «mercado» y «supermercado» pueden ser dos
- * conceptos distintos de la misma cuenta, y elegir uno sería mover plata a un
- * sitio que nadie pidió.
+ * It never guesses among several: «mercado» and «supermercado» can be two
+ * different concepts of the same account, and choosing one would move money
+ * somewhere nobody asked for.
  */
 export function resolveTerms(index: readonly IndexEntry[], terms: readonly string[]): Resolution {
   const concepts = new Map<string, IndexEntry>();

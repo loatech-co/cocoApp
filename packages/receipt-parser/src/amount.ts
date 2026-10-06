@@ -1,22 +1,22 @@
 import { normalize } from './signatures';
 
 /**
- * Cuánto se pagó, sacado de un recibo.
+ * How much was paid, read from a receipt.
  *
- * ── Por qué no vale coger el número más grande ──────────────────────────────
- * Porque un recibo está lleno de números grandes que no son plata: el número
- * de la factura, el código de autorización, el CUS de una transacción, el NIT,
- * un IBC que no se paga, una dirección IP. Coger el mayor acierta a veces y
- * falla justo en los recibos que más importan.
+ * ── Why taking the biggest number does not work ─────────────────────────────
+ * Because a receipt is full of big numbers that are not money: the invoice
+ * number, the authorisation code, the CUS of a transaction, the NIT, an IBC
+ * that is not paid, an IP address. Taking the biggest is right sometimes and
+ * wrong precisely on the receipts that matter most.
  *
- * ── Cómo se decide ──────────────────────────────────────────────────────────
- * Cada candidato empieza en cero y suma por lo que lo hace parecer dinero
- * —está en una línea que dice "total a pagar", trae separador de miles, trae
- * un peso delante— y resta por lo que lo delata como identificador. El mayor
- * puntaje gana, y solo a igualdad de puntaje se mira el tamaño.
+ * ── How it is decided ───────────────────────────────────────────────────────
+ * Every candidate starts at zero, adds for what makes it look like money —it
+ * is on a line that says "total a pagar", it has a thousands separator, a peso
+ * sign in front— and subtracts for what gives it away as an identifier. The
+ * highest score wins, and size only counts on a tie.
  */
 
-/** Las líneas donde de verdad está lo que se pagó, de más a menos fiable. */
+/** The lines where what was paid really is, from most to least reliable. */
 const TOTAL_LINES: { pattern: RegExp; points: number }[] = [
   { pattern: /valor\s+a\s+pagar/i, points: 10 },
   { pattern: /total\s+a\s+pagar/i, points: 10 },
@@ -31,11 +31,11 @@ const TOTAL_LINES: { pattern: RegExp; points: number }[] = [
 ];
 
 /**
- * Lo que descarta un número por completo.
+ * What rules a number out.
  *
- * `IBC` es el caso más caro: en una planilla de la PILA es la base de
- * cotización —varios millones— y no se paga. Está en la misma página que el
- * valor a pagar y suele ser mayor.
+ * `IBC` is the most expensive case: on a PILA form it is the contribution base
+ * —several million— and it is not paid. It sits on the same page as the
+ * amount to pay and is usually bigger.
  */
 const RED_FLAGS: { pattern: RegExp; points: number }[] = [
   { pattern: /\bibc\b/i, points: -20 },
@@ -55,17 +55,17 @@ const RED_FLAGS: { pattern: RegExp; points: number }[] = [
   { pattern: /consumo|m3|kwh/i, points: -6 },
 ];
 
-/** Un número tal como puede aparecer escrito: con miles, decimales o peso. */
+/** A number as it can be written: with thousands, decimals or a peso sign. */
 const CANDIDATE =
   /\$?\s?\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?|\$\s?\d+(?:[.,]\d{1,2})?|\b\d{4,9}\b/g;
 
 /**
- * Una IPv4 de verdad: los cuatro grupos de 0 a 255.
+ * A real IPv4: four groups from 0 to 255.
  *
- * Con un patrón laxo —`\d{1,3}(\.\d{1,3}){3}`— un monto como `3.321.802` no es
- * una IP, pero `1.234.567.890` sí lo parecería, y al revés: `192.168.1.1` se
- * colaría como monto. Estricto es la diferencia entre descartar una IP y
- * comerse tres millones de pesos.
+ * With a loose pattern —`\d{1,3}(\.\d{1,3}){3}`— an amount like `3.321.802` is
+ * not an IP, but `1.234.567.890` would look like one, and the other way round:
+ * `192.168.1.1` would slip in as an amount. Being strict is the difference
+ * between dropping an IP and swallowing three million pesos.
  */
 const IPV4 =
   /\b(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/;
@@ -74,17 +74,17 @@ export interface AmountCandidate {
   value: number;
   score: number;
   line: string;
-  /** Si salió de una línea que nombra un total. Sube la confianza. */
+  /** Whether it came from a line that names a total. Raises the confidence. */
   fromTotalLine: boolean;
 }
 
 /**
- * Convierte lo escrito en un número.
+ * Turns what is written into a number.
  *
- * La regla del separador es la misma que usa el importador de extractos: si
- * hay uno solo seguido de exactamente tres cifras, es de miles. `45.900` son
- * cuarenta y cinco mil novecientos pesos, y confundirlo con 45,90 deja el año
- * mil veces mal con una cifra que se ve plausible.
+ * The separator rule is the one the statement importer uses: a single
+ * separator followed by exactly three digits is a thousands separator.
+ * `45.900` is forty-five thousand nine hundred pesos, and taking it for 45.90
+ * leaves the year a thousand times off with a figure that looks plausible.
  */
 export function toNumber(text: string): number | null {
   const clean = text.replace(/[$\s]/g, '');
@@ -102,7 +102,7 @@ export function toNumber(text: string): number | null {
     decimals = clean.slice(cut + 1);
   } else if (dots === 1 || commas === 1) {
     const separator = dots === 1 ? '.' : ',';
-    // Hay exactamente un separador, así que siempre salen dos partes.
+    // There is exactly one separator, so there are always two parts.
     const [left = '', right = ''] = clean.split(separator);
     if (right.length === 3) integer = left + right;
     else {
@@ -116,11 +116,11 @@ export function toNumber(text: string): number | null {
 }
 
 /**
- * El valor del recibo.
+ * The amount of the receipt.
  *
- * `esPlanilla` cambia el criterio: en una planilla de la PILA el número mayor
- * es el IBC y el que se paga está en el resumen. Sin esa distinción, todas las
- * planillas salen con la base de cotización en vez de con el aporte.
+ * `isPayroll` changes the rule: on a PILA form the biggest number is the IBC
+ * and the one paid is in the summary. Without that distinction every form
+ * comes out with the contribution base instead of the contribution.
  */
 export function readAmount(
   text: string,
@@ -132,7 +132,7 @@ export function readAmount(
     const line = rawLine.trim();
     if (line === '') continue;
 
-    // Si la línea ES una IP, no hay nada que sacar de ella.
+    // If the line IS an IP, there is nothing to take from it.
     const withoutIp = line.replace(IPV4, ' ');
     const normal = normalize(line);
 
@@ -149,7 +149,7 @@ export function readAmount(
       if (pattern.test(line)) context += points;
     }
 
-    // En una planilla, el IBC pesa tanto que conviene decirlo aparte.
+    // On a PILA form the IBC weighs so much that it is worth saying apart.
     if (options.isPayroll && /\bibc\b|ingreso\s+base/i.test(line)) continue;
 
     for (const raw of withoutIp.match(CANDIDATE) ?? []) {
@@ -158,19 +158,19 @@ export function readAmount(
 
       let score = context;
 
-      // Formato de dinero: separador de miles o peso delante. Un número
-      // pelado de seis cifras puede ser un monto o un número de factura; uno
-      // escrito `1.526.000` ya eligió ser dinero.
+      // Money format: a thousands separator or a peso sign. A bare six-digit
+      // number can be an amount or an invoice number; one written `1.526.000`
+      // already chose to be money.
       if (/[.,]\d{3}/.test(raw)) score += 5;
       if (raw.includes('$')) score += 4;
-      // Nadie paga 43 pesos, y un recibo de casa no llega a mil millones.
+      // Nobody pays 43 pesos, and a household receipt never reaches a billion.
       if (value < 1000) score -= 6;
       if (value > 50_000_000) score -= 10;
-      // Un año suelto no es plata.
+      // A year on its own is not money.
       if (/^\d{4}$/.test(raw) && value >= 1900 && value <= 2100) score -= 12;
-      // Una hora tampoco.
+      // Nor is a time of day.
       if (/\d{1,2}:\d{2}/.test(line) && value < 10_000) score -= 4;
-      // Y si cae en el rango que este acreedor suele cobrar, es buena señal.
+      // And falling in the range this creditor usually charges is a good sign.
       if (options.range && value >= options.range.min && value <= options.range.max) {
         score += 3;
       }
@@ -186,8 +186,8 @@ export function readAmount(
 
   if (candidates.length === 0) return null;
 
-  // Puntaje primero; el tamaño solo desempata. Al revés, un número de factura
-  // de nueve cifras le gana a un total de seis.
+  // Score first; size only breaks ties. The other way round, a nine-digit
+  // invoice number beats a six-digit total.
   candidates.sort((a, b) => b.score - a.score || b.value - a.value);
   return candidates[0] ?? null;
 }
