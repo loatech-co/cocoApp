@@ -920,6 +920,31 @@
       "key": "shortcuts.dialog.unconfirmed",
       "source": "ios/Coco/Features/Shortcuts/ActionParameters.swift",
       "value": "Se envió, pero la respuesta no se pudo leer. Revísalo en Capturas."
+    },
+    {
+      "key": "problem.accountNotEnabled",
+      "source": "ios/Coco/Shared/L10n.swift (APIProblem.userMessage)",
+      "value": "Tu cuenta todavía no está habilitada. Escríbele a quien te invitó."
+    },
+    {
+      "key": "problem.accountPendingApproval",
+      "source": "ios/Coco/Shared/L10n.swift (APIProblem.userMessage)",
+      "value": "Tu cuenta está pendiente de aprobación. Te avisaremos cuando esté lista."
+    },
+    {
+      "key": "problem.accountSuspended",
+      "source": "ios/Coco/Shared/L10n.swift (APIProblem.userMessage)",
+      "value": "Tu cuenta está suspendida. Escríbele a quien administra Coco."
+    },
+    {
+      "key": "problem.sessionExpired",
+      "source": "ios/Coco/Shared/L10n.swift (APIProblem.userMessage)",
+      "value": "La sesión expiró. Vuelve a entrar."
+    },
+    {
+      "key": "problem.sessionRevoked",
+      "source": "ios/Coco/Shared/L10n.swift (APIProblem.userMessage)",
+      "value": "Tu sesión se cerró en otro lugar. Vuelve a entrar."
     }
   ]
 }

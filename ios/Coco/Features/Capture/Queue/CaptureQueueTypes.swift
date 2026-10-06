@@ -32,6 +32,15 @@ extension CaptureQueue {
         Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18
     }
 
+    /// El resultado de un 409 `duplicate`: el de su texto si ya lo tenía (el
+    /// duplicado fue la foto); si no, uno sin transacción conocida.
+    static func alreadyRegistered(_ capture: PendingCapture, _ problem: APIProblem, at date: Date) -> SavedResult {
+        capture.textResult
+            ?? SavedResult(
+                transactionId: 0, summary: problem.detail, duplicate: true, merged: false, needsReview: false,
+                finishedAt: date)
+    }
+
     static func describe(_ e: APIError) -> String {
         switch e {
         case .noNetwork: L10n.Queue.errorNoNetwork

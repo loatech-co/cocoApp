@@ -246,7 +246,7 @@ final class CaptureQueueTests: XCTestCase {
         let id = UUID()
         try await c.enqueue(body, source: .wallet, photo: nil, id: id)
         sender.replyToCapture(
-            .failure(APIError.rejected(status: 422, code: "VALIDATION", message: "Falta el texto")))
+            .failure(APIError.rejected(APIProblem(status: 422, code: .validationFailed, detail: "Falta el texto"))))
         let summary = await c.process()
         XCTAssertEqual(summary.failed, 1)
         let phase422 = await c.capture(id: id)?.phase

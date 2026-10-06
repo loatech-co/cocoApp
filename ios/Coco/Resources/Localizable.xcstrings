@@ -1167,6 +1167,61 @@
         }
       }
     },
+    "problem.accountNotEnabled" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu cuenta todavía no está habilitada. Escríbele a quien te invitó."
+          }
+        }
+      }
+    },
+    "problem.accountPendingApproval" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu cuenta está pendiente de aprobación. Te avisaremos cuando esté lista."
+          }
+        }
+      }
+    },
+    "problem.accountSuspended" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu cuenta está suspendida. Escríbele a quien administra Coco."
+          }
+        }
+      }
+    },
+    "problem.sessionExpired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sesión expiró. Vuelve a entrar."
+          }
+        }
+      }
+    },
+    "problem.sessionRevoked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu sesión se cerró en otro lugar. Vuelve a entrar."
+          }
+        }
+      }
+    },
     "queue.error.generic" : {
       "extractionState" : "manual",
       "localizations" : {

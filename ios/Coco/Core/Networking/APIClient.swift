@@ -71,19 +71,9 @@ struct APIClient: Sendable {
         } catch {
             throw APIError.from(error)
         }
-        switch response.statusCode {
-        case 200...299:
-            return (data, response)
-        case 401:
-            throw APIError.unauthenticated
-        case 408, 429, 500...599:
-            throw APIError.server(status: response.statusCode)
-        default:
-            guard let error = try? JSONDecoder().decode(APIErrorBody.self, from: data) else {
-                throw APIError.unreadableResponse
-            }
-            throw APIError.rejected(
-                status: response.statusCode, code: error.error.code, message: error.error.message)
+        guard (200...299).contains(response.statusCode) else {
+            throw APIError.from(status: response.statusCode, body: data)
         }
+        return (data, response)
     }
 }

@@ -141,7 +141,7 @@ final actor NativeSession: Session {
                 let tokens = Self.tokens(from: response, userJSON: userJSON, now: clock())
                 publish(tokens: tokens)
                 return tokens
-            } catch APIError.unauthenticated {
+            } catch APIError.unauthenticated, APIError.sessionRevoked {
                 closeLocally()
                 throw SessionError.signedOut
             } catch let error as APIError where error.isNetworkError && attempts > 0 {

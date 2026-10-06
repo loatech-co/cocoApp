@@ -45,7 +45,7 @@ final class QueuedCapturerTests: XCTestCase {
 
     func testA422ReturnsFailedAndNotifiesTheFailure() async {
         sender.replyToCapture(
-            .failure(APIError.rejected(status: 422, code: "VALIDATION", message: "Falta el texto")))
+            .failure(APIError.rejected(APIProblem(status: 422, code: .validationFailed, detail: "Falta el texto"))))
         let r = await capturer().capture(body, source: .wallet, photo: nil, budget: .seconds(10))
         XCTAssertEqual(r, .failed(reason: "Falta el texto"))
         XCTAssertEqual(notifier.failures, ["Falta el texto"])

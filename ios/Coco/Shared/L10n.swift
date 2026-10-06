@@ -138,6 +138,14 @@ enum L10n {
         static var welcomeWalletSection: String { text("onboarding.welcome.walletSection") }
     }
 
+    enum Problem {
+        static var accountNotEnabled: String { text("problem.accountNotEnabled") }
+        static var accountPendingApproval: String { text("problem.accountPendingApproval") }
+        static var accountSuspended: String { text("problem.accountSuspended") }
+        static var sessionExpired: String { text("problem.sessionExpired") }
+        static var sessionRevoked: String { text("problem.sessionRevoked") }
+    }
+
     enum Queue {
         static var errorGeneric: String { text("queue.error.generic") }
         static var errorNoNetwork: String { text("queue.error.noNetwork") }

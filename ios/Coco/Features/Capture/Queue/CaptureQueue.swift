@@ -245,7 +245,18 @@ final actor CaptureQueue {
             capture.phase = .awaitingSession
             capture.lastError = L10n.Queue.errorSessionExpired
             output = .retry
-        case .rejected(_, _, let message):
+        case .sessionRevoked:
+            // Renovar no sirve: la sesión se cierra aquí y la captura espera
+            // a que la persona vuelva a entrar.
+            await session.discard()
+            capture.phase = .awaitingSession
+            capture.lastError = L10n.Problem.sessionRevoked
+            output = .retry
+        case .duplicate(let problem):
+            // Ya estaba registrada (un reenvío): cuenta como hecha.
+            return await finish(&capture, with: Self.alreadyRegistered(capture, problem, at: clock()))
+        case .rejected(let problem):
+            let message = problem.userMessage()
             capture.phase = .failed(reason: message)
             capture.lastError = message
             await notifier.captureFailed(reason: message)

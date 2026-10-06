@@ -41,7 +41,7 @@ final class APIClientTests: XCTestCase {
     func test422WithCodeAndMessage() async {
         let e = await error(
             FakeTransport([.http(422, #"{"error":{"code":"VALIDACION","message":"Falta el monto","details":[]}}"#)]))
-        XCTAssertEqual(e, .rejected(status: 422, code: "VALIDACION", message: "Falta el monto"))
+        XCTAssertEqual(e, .rejected(APIProblem(status: 422, code: .other("VALIDACION"), detail: "Falta el monto")))
         XCTAssertEqual(e?.isRetryable, false)
     }
 

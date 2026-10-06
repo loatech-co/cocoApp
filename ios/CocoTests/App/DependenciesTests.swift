@@ -137,7 +137,8 @@ final class SignInViewTests: XCTestCase {
         XCTAssertEqual(
             SignInView.message(from: APIError.timedOut), "La API no respondió a tiempo. Inténtalo otra vez.")
         XCTAssertEqual(
-            SignInView.message(from: APIError.rejected(status: 400, code: "x", message: "El correo no es válido.")),
+            SignInView.message(
+                from: APIError.rejected(APIProblem(status: 400, code: .other("x"), detail: "El correo no es válido."))),
             "El correo no es válido.")
         XCTAssertEqual(
             SignInView.message(from: APIError.server(status: 429)), "Demasiados intentos. Espera un minuto.")

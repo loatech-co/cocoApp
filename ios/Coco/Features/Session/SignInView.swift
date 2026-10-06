@@ -96,8 +96,10 @@ struct SignInView: View {
             return L10n.Session.errorNoNetwork
         case .timedOut, .cancelled:
             return L10n.Session.errorTimedOut
-        case .rejected(_, _, let message):
-            return message.isEmpty ? L10n.Session.errorRejected : message
+        case .sessionRevoked:
+            return L10n.Problem.sessionRevoked
+        case .rejected(let problem), .duplicate(let problem):
+            return problem.userMessage(fallback: L10n.Session.errorRejected)
         case .server(let status):
             return status == 429
                 ? L10n.Session.errorTooManyAttempts : L10n.Session.errorServer(status)
