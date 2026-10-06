@@ -455,7 +455,7 @@ describe('Fase 1 — Núcleo (e2e)', () => {
         .expect(201);
 
       // La plantilla es un SNAPSHOT de dos centros y siete categorías desde el
-      // 17 de septiembre de 2026 (ver `categories.plantilla.ts`): nueve filas.
+      // 17 de septiembre de 2026 (ver `categories.template.ts`): nueve filas.
       // Antes sembraba un diccionario de cuarenta y pico conceptos.
       expect(primera.body.data.creadas).toBe(9);
 

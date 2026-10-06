@@ -19,7 +19,7 @@ import {
 
 import { SPANISH_PERIODICITIES, type SpanishPeriodicity } from '../../../common/vocabulary';
 import { CategoryKind } from '../../../generated/prisma/client';
-import { unir } from '../palabras-clave';
+import { mergeKeywords } from '../keywords';
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
@@ -31,8 +31,8 @@ const HEX = /^#[0-9A-Fa-f]{6}$/;
  * el contrato— para que un cliente que no sea esta pantalla tampoco pueda
  * llenar la columna.
  */
-export const MAXIMO_DE_PALABRAS = 30;
-const LARGO_DE_UNA_PALABRA = 60;
+export const MAX_KEYWORDS = 30;
+const MAX_KEYWORD_LENGTH = 60;
 
 /**
  * Limpia la lista antes de validarla: recorta, tira las vacías y quita las
@@ -46,11 +46,11 @@ const LARGO_DE_UNA_PALABRA = 60;
  * Lo que no sea una lista de textos se devuelve intacto: rechazarlo es trabajo
  * de `@IsArray` y `@IsString`, que dan un mensaje que se entiende.
  */
-function limpiarPalabras({ value }: { value: unknown }): unknown {
+function cleanKeywords({ value }: { value: unknown }): unknown {
   if (!Array.isArray(value)) return value;
-  if (value.some((palabra) => typeof palabra !== 'string')) return value;
+  if (value.some((word) => typeof word !== 'string')) return value;
 
-  return unir(value as string[]);
+  return mergeKeywords(value as string[]);
 }
 
 export class CreateCategoryDto {
@@ -181,13 +181,13 @@ export class CreateCategoryDto {
    * aparecen en ninguna factura.
    */
   @IsOptional()
-  @Transform(limpiarPalabras)
+  @Transform(cleanKeywords)
   @IsArray()
-  @ArrayMaxSize(MAXIMO_DE_PALABRAS, {
-    message: `Un concepto admite hasta ${MAXIMO_DE_PALABRAS} palabras clave.`,
+  @ArrayMaxSize(MAX_KEYWORDS, {
+    message: `Un concepto admite hasta ${MAX_KEYWORDS} palabras clave.`,
   })
   @IsString({ each: true })
-  @MaxLength(LARGO_DE_UNA_PALABRA, { each: true })
+  @MaxLength(MAX_KEYWORD_LENGTH, { each: true })
   palabras_clave?: string[];
 }
 
@@ -298,13 +298,13 @@ export class UpdateCategoryDto {
 
   /** Ver `CreateCategoryDto`. Una lista vacía las borra todas. */
   @IsOptional()
-  @Transform(limpiarPalabras)
+  @Transform(cleanKeywords)
   @IsArray()
-  @ArrayMaxSize(MAXIMO_DE_PALABRAS, {
-    message: `Un concepto admite hasta ${MAXIMO_DE_PALABRAS} palabras clave.`,
+  @ArrayMaxSize(MAX_KEYWORDS, {
+    message: `Un concepto admite hasta ${MAX_KEYWORDS} palabras clave.`,
   })
   @IsString({ each: true })
-  @MaxLength(LARGO_DE_UNA_PALABRA, { each: true })
+  @MaxLength(MAX_KEYWORD_LENGTH, { each: true })
   palabras_clave?: string[];
 }
 
@@ -337,7 +337,7 @@ export class ReorderCategoriesDto {
   items!: ReorderItemDto[];
 }
 
-export class UnificarCategoriaDto {
+export class MergeCategoryDto {
   /** El concepto que SOBREVIVE. El de la ruta es el que desaparece. */
   @Type(() => Number)
   @IsInt()

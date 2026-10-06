@@ -128,9 +128,9 @@ export class CategoriesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListCategoriesQuery,
   ): Promise<Page<NodeBody>> {
-    const { tree } = await this.categories.listarArbol(user.id, {
+    const { tree } = await this.categories.listTree(user.id, {
       kind: query.kind,
-      incluirArchivadas: query.includeArchived ?? false,
+      includeArchived: query.includeArchived ?? false,
     });
     return paginate(tree.map(categoryNodeV2), query);
   }
@@ -142,7 +142,7 @@ export class CategoriesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<CategoryBody> {
-    return categoryV2(await this.categories.obtener(user.id, id));
+    return categoryV2(await this.categories.get(user.id, id));
   }
 
   @Post()
@@ -152,14 +152,14 @@ export class CategoriesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateCategoryInput,
   ): Promise<CategoryBody> {
-    return categoryV2(await this.categories.crear(user.id, createCategory(input)));
+    return categoryV2(await this.categories.create(user.id, createCategory(input)));
   }
 
   /** Creates the starter tree for a user who has none. */
   @Post('seed')
   @ApiDataV2(CategorySeed, { status: 201 })
   async seed(@CurrentUser() user: AuthenticatedUser): Promise<SeedBody> {
-    return categorySeedV2(await this.categories.sembrarDiccionario(user.id));
+    return categorySeedV2(await this.categories.seed(user.id));
   }
 
   @Post('reorder')
@@ -170,7 +170,7 @@ export class CategoriesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: ReorderCategoriesInput,
   ): Promise<void> {
-    return this.categories.reordenar(user.id, reorder(input));
+    return this.categories.reorder(user.id, reorder(input));
   }
 
   /** Moves every transaction of this concept to `targetId` and removes this one. */
@@ -182,7 +182,7 @@ export class CategoriesV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: MergeCategoryInput,
   ): Promise<MergeBody> {
-    return categoryMergeV2(await this.categories.unificar(user.id, id, BigInt(input.targetId)));
+    return categoryMergeV2(await this.categories.merge(user.id, id, BigInt(input.targetId)));
   }
 
   @Patch(':id')
@@ -193,7 +193,7 @@ export class CategoriesV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpdateCategoryInput,
   ): Promise<CategoryBody> {
-    return categoryV2(await this.categories.actualizar(user.id, id, updateCategory(input)));
+    return categoryV2(await this.categories.update(user.id, id, updateCategory(input)));
   }
 
   /** What deleting it would take with it: the transactions and categories below. */
@@ -204,7 +204,7 @@ export class CategoriesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<UsageBody> {
-    return categoryUsageV2(await this.categories.usosDe(user.id, id));
+    return categoryUsageV2(await this.categories.usageOf(user.id, id));
   }
 
   /** Deletes the whole subtree; its transactions go to `reassignTo`. */
@@ -217,7 +217,7 @@ export class CategoriesV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Query() query: DeleteCategoryQuery,
   ): Promise<void> {
-    await this.categories.eliminar(
+    await this.categories.remove(
       user.id,
       id,
       query.reassignTo === undefined ? undefined : BigInt(query.reassignTo),

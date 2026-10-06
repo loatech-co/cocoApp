@@ -12,7 +12,7 @@
  * del MISMO movimiento. Si no se quitara, la huella nunca coincidiría y el
  * dedupe no serviría de nada.
  */
-const RUIDO: RegExp[] = [
+const NOISE: RegExp[] = [
   // Referencias de transacción: "REF 000123456", "AUT 45219".
   /\b(?:ref|aut|apr|autoriz\w*|comprobante|cus|doc)[\s.:#-]*\d{3,}\b/g,
   // Fragmentos de tarjeta: "****1234", "XXXX 5678", "terminada en 1234".
@@ -47,21 +47,21 @@ const RUIDO: RegExp[] = [
  * la persona desmarca la casilla. El fallo contrario —duplicados que se cuelan
  * sin avisar— es mucho más caro de descubrir y de limpiar.
  */
-export function normalizarDescripcion(texto: string | null | undefined): string {
-  if (!texto) return '';
+export function normalizeDescription(text: string | null | undefined): string {
+  if (!text) return '';
 
-  let resultado = texto
+  let result = text
     .toLowerCase()
     // NFD separa cada letra de su marca diacrítica; el rango ̀-ͯ son
     // esas marcas. Incluye la virgulilla de la ñ, que aquí se pliega a propósito.
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '');
 
-  for (const patron of RUIDO) {
-    resultado = resultado.replace(patron, ' ');
+  for (const pattern of NOISE) {
+    result = result.replace(pattern, ' ');
   }
 
-  return resultado
+  return result
     .replace(/[^a-z0-9 ]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

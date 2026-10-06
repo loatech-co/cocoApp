@@ -1,5 +1,5 @@
 import type { UpdateTransactionDto } from './dto/transaction.dto';
-import type { TransaccionCompleta, TransactionChanges } from './transactions.repository';
+import type { FullTransaction, TransactionChanges } from './transactions.repository';
 import { ValidationError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
 import { checkSplitsReconcile } from '../../common/money/splits';
@@ -14,17 +14,17 @@ import { checkSplitsReconcile } from '../../common/money/splits';
  * Cambiar el monto de un movimiento con desglose sin mandar el desglose nuevo
  * es 422. El sistema no reparte la diferencia: no sabe a qué concepto le toca.
  */
-export function exigirDesgloseCuadrado(
-  actual: TransaccionCompleta,
+export function requireReconciledSplits(
+  actual: FullTransaction,
   dto: UpdateTransactionDto,
   amount: Money,
 ): void {
   if (dto.amount === undefined || dto.splits !== undefined || actual.splits.length === 0) return;
-  const cuadre = checkSplitsReconcile(
+  const reconciliation = checkSplitsReconcile(
     amount,
     actual.splits.map((split) => toMoney(split.amount)),
   );
-  if (!cuadre.balances) {
+  if (!reconciliation.balances) {
     throw new ValidationError(
       'El monto nuevo no coincide con la suma del desglose. Envía también los splits ajustados al monto nuevo.',
       { code: 'amount_breaks_splits' },
@@ -37,8 +37,8 @@ export function exigirDesgloseCuadrado(
  * cambia en las dos, en la misma transacción. La cuenta no: cada pata tiene
  * la suya.
  */
-export function cambiosDeLaOtraPata(cambios: TransactionChanges): TransactionChanges {
-  const { date, period, amount, description, status } = cambios;
+export function partnerLegChanges(changes: TransactionChanges): TransactionChanges {
+  const { date, period, amount, description, status } = changes;
   return {
     ...(date !== undefined && { date }),
     ...(period !== undefined && { period }),
@@ -49,7 +49,7 @@ export function cambiosDeLaOtraPata(cambios: TransactionChanges): TransactionCha
 }
 
 /** Una pata no se vuelve gasto ni ingreso: dejaría a la otra sola. */
-export function exigirQueSigaSiendoTransferencia(dto: UpdateTransactionDto): void {
+export function requireStillTransfer(dto: UpdateTransactionDto): void {
   if (dto.type !== undefined && dto.type !== 'transfer') {
     throw new ValidationError(
       'Una transferencia no puede cambiar de tipo. Bórrala y registra el movimiento de nuevo.',
@@ -59,7 +59,7 @@ export function exigirQueSigaSiendoTransferencia(dto: UpdateTransactionDto): voi
 }
 
 /** The columns a PATCH changes: only what the DTO brought. */
-export function cambiosDe(
+export function changesOf(
   dto: UpdateTransactionDto,
   accountId: bigint | null,
   amount: Money,

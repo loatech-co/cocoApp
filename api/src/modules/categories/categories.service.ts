@@ -14,7 +14,7 @@ import type {
   ReorderCategoriesDto,
   UpdateCategoryDto,
 } from './dto/category.dto';
-import { rechazoDeVariosPagos } from './varios-pagos';
+import { multiPaymentRejection } from './multi-payment';
 import {
   nest,
   descendantsOf,
@@ -35,44 +35,44 @@ export class CategoriesService {
   constructor(private readonly repo: CategoriesRepository) {}
 
   /** Devuelve el árbol anidado, no la lista plana: es como lo consume la UI. */
-  async listarArbol(
+  async listTree(
     userId: bigint,
-    filtros: { kind?: CategoryKind | undefined; incluirArchivadas?: boolean },
+    filters: { kind?: CategoryKind | undefined; includeArchived?: boolean },
   ): Promise<CategoryTree> {
-    const categorias = (await this.repo.listar(userId, filtros)).map(categoryFromRow);
-    return { tree: nest(categorias), total: categorias.length };
+    const categories = (await this.repo.list(userId, filters)).map(categoryFromRow);
+    return { tree: nest(categories), total: categories.length };
   }
 
-  async obtener(userId: bigint, id: bigint): Promise<Category> {
-    return categoryFromRow(await this.exigirCategoria(userId, id));
+  async get(userId: bigint, id: bigint): Promise<Category> {
+    return categoryFromRow(await this.requireCategory(userId, id));
   }
 
-  async crear(userId: bigint, dto: CreateCategoryDto): Promise<Category> {
+  async create(userId: bigint, dto: CreateCategoryDto): Promise<Category> {
     const parentId = dto.parent_id !== undefined ? BigInt(dto.parent_id) : null;
     // Sin padre es un centro de costos, que es el primer nivel.
-    let profundidad = 1;
+    let depth = 1;
 
     if (parentId !== null) {
-      const padre = await this.exigirCategoria(userId, parentId);
-      const esqueleto = await this.repo.esqueletoDelArbol(userId);
+      const parent = await this.requireCategory(userId, parentId);
+      const skeleton = await this.repo.treeSkeleton(userId);
 
       // Una categoría nueva no tiene hijos: su profundidad es la del padre + 1.
-      profundidad = resultingDepth(
-        [...esqueleto, { id: BigInt(-1), parentId: padre.id }],
+      depth = resultingDepth(
+        [...skeleton, { id: BigInt(-1), parentId: parent.id }],
         BigInt(-1),
-        padre.id,
+        parent.id,
       );
-      this.exigirProfundidadValida(profundidad);
+      this.requireValidDepth(depth);
     }
 
-    this.exigirVariosPagosCoherente({
-      variosPagos: dto.varios_pagos ?? false,
-      pagoAutomatico: dto.pago_automatico ?? false,
-      recurrente: dto.recurrente ?? false,
-      profundidad,
+    this.requireConsistentMultiPayment({
+      isMultiPayment: dto.varios_pagos ?? false,
+      isAutoPaid: dto.pago_automatico ?? false,
+      isRecurring: dto.recurrente ?? false,
+      depth: depth,
     });
 
-    const categoria = await this.repo.crear(userId, {
+    const category = await this.repo.create(userId, {
       userId,
       name: dto.name,
       kind: dto.kind,
@@ -94,11 +94,11 @@ export class CategoriesService {
       keywords: dto.palabras_clave ?? [],
     });
 
-    return categoryFromRow(categoria);
+    return categoryFromRow(category);
   }
 
-  async actualizar(userId: bigint, id: bigint, dto: UpdateCategoryDto): Promise<Category> {
-    const actual = await this.exigirCategoria(userId, id);
+  async update(userId: bigint, id: bigint, dto: UpdateCategoryDto): Promise<Category> {
+    const actual = await this.requireCategory(userId, id);
 
     /*
       El árbol se pide UNA vez y se reparte, porque lo necesitan dos
@@ -108,22 +108,22 @@ export class CategoriesService {
       Perezoso, eso sí: la mayoría de las actualizaciones no tocan ni el padre
       ni esa marca, y entonces no hace falta ninguna.
     */
-    let esqueleto: Awaited<ReturnType<typeof this.repo.esqueletoDelArbol>> | null = null;
-    const arbol = async (): Promise<NonNullable<typeof esqueleto>> =>
-      (esqueleto ??= await this.repo.esqueletoDelArbol(userId));
+    let skeleton: Awaited<ReturnType<typeof this.repo.treeSkeleton>> | null = null;
+    const tree = async (): Promise<NonNullable<typeof skeleton>> =>
+      (skeleton ??= await this.repo.treeSkeleton(userId));
 
     if (dto.parent_id !== undefined) {
-      const nuevoPadre = dto.parent_id === null ? null : BigInt(dto.parent_id);
-      if (nuevoPadre !== null) await this.exigirCategoria(userId, nuevoPadre);
+      const newParentId = dto.parent_id === null ? null : BigInt(dto.parent_id);
+      if (newParentId !== null) await this.requireCategory(userId, newParentId);
 
-      if (wouldCreateCycle(await arbol(), id, nuevoPadre)) {
+      if (wouldCreateCycle(await tree(), id, newParentId)) {
         throw new ValidationError(
           'Una categoría no puede colgar de sí misma ni de una de sus descendientes.',
           { code: 'category_cycle' },
         );
       }
 
-      this.exigirProfundidadValida(resultingDepth(await arbol(), id, nuevoPadre));
+      this.requireValidDepth(resultingDepth(await tree(), id, newParentId));
     }
 
     /*
@@ -135,30 +135,30 @@ export class CategoriesService {
       exactamente lo que no puede ocurrir—. Por eso cada campo se lee del DTO
       si viene y de la fila que hay si no.
     */
-    const variosPagosFinal = dto.varios_pagos ?? actual.isMultiPayment;
-    if (variosPagosFinal) {
-      const padreFinal =
+    const isMultiPaymentAfter = dto.varios_pagos ?? actual.isMultiPayment;
+    if (isMultiPaymentAfter) {
+      const finalParentId =
         dto.parent_id !== undefined
           ? dto.parent_id === null
             ? null
             : BigInt(dto.parent_id)
           : actual.parentId;
 
-      this.exigirVariosPagosCoherente({
-        variosPagos: true,
-        pagoAutomatico: dto.pago_automatico ?? actual.isAutoPaid,
-        recurrente: dto.recurrente ?? actual.isRecurring,
-        profundidad: resultingDepth(await arbol(), id, padreFinal),
+      this.requireConsistentMultiPayment({
+        isMultiPayment: true,
+        isAutoPaid: dto.pago_automatico ?? actual.isAutoPaid,
+        isRecurring: dto.recurrente ?? actual.isRecurring,
+        depth: resultingDepth(await tree(), id, finalParentId),
       });
     }
 
-    await this.repo.actualizar(userId, id, cambiosDe(dto));
+    await this.repo.update(userId, id, changesOf(dto));
 
-    return this.obtener(userId, id);
+    return this.get(userId, id);
   }
 
-  async reordenar(userId: bigint, dto: ReorderCategoriesDto): Promise<void> {
-    await this.repo.reordenar(
+  async reorder(userId: bigint, dto: ReorderCategoriesDto): Promise<void> {
+    await this.repo.reorder(
       userId,
       dto.items.map((item) => ({ id: BigInt(item.id), sortOrder: item.sort_order })),
     );
@@ -169,20 +169,20 @@ export class CategoriesService {
    * pasados dejarían de cuadrar si desapareciera una categoría en uso.
    * El borrado físico solo se permite cuando nunca se usó.
    */
-  async archivar(userId: bigint, id: bigint, enCascada: boolean): Promise<void> {
-    await this.exigirCategoria(userId, id);
+  async archive(userId: bigint, id: bigint, shouldCascade: boolean): Promise<void> {
+    await this.requireCategory(userId, id);
 
-    const esqueleto = await this.repo.esqueletoDelArbol(userId);
-    const hijos = esqueleto.filter((nodo) => nodo.parentId === id).map((nodo) => nodo.id);
+    const skeleton = await this.repo.treeSkeleton(userId);
+    const childIds = skeleton.filter((node) => node.parentId === id).map((node) => node.id);
 
-    if (hijos.length > 0 && !enCascada) {
+    if (childIds.length > 0 && !shouldCascade) {
       throw new ConflictError(
-        `Esta categoría tiene ${hijos.length} subcategoría(s). Archívala en cascada o reasigna sus hijas primero.`,
+        `Esta categoría tiene ${childIds.length} subcategoría(s). Archívala en cascada o reasigna sus hijas primero.`,
         { code: 'category_has_children' },
       );
     }
 
-    await this.repo.archivarVarias(userId, enCascada ? [id, ...hijos] : [id]);
+    await this.repo.archiveMany(userId, shouldCascade ? [id, ...childIds] : [id]);
   }
 
   /**
@@ -193,15 +193,15 @@ export class CategoriesService {
    * enterarse por el error, que es peor, porque el error llega después de
    * pulsar «Eliminar».
    */
-  async usosDe(userId: bigint, id: bigint): Promise<CategoryUsage> {
-    await this.exigirCategoria(userId, id);
+  async usageOf(userId: bigint, id: bigint): Promise<CategoryUsage> {
+    await this.requireCategory(userId, id);
 
-    const esqueleto = await this.repo.esqueletoDelArbol(userId);
-    const descendientes = descendantsOf(esqueleto, id);
+    const skeleton = await this.repo.treeSkeleton(userId);
+    const descendants = descendantsOf(skeleton, id);
 
     return {
-      transactions: await this.repo.contarUsos(userId, [id, ...descendientes]),
-      subcategories: descendientes.length,
+      transactions: await this.repo.countUsage(userId, [id, ...descendants]),
+      subcategories: descendants.length,
     };
   }
 
@@ -228,28 +228,28 @@ export class CategoriesService {
    * que desaparece en la misma operación deja los movimientos sin clasificar
    * por el `ON DELETE SET NULL`, que es exactamente lo que se quería evitar.
    */
-  async eliminar(
+  async remove(
     userId: bigint,
     id: bigint,
-    reasignarA?: bigint,
-  ): Promise<{ eliminadas: number; reasignados: number }> {
-    await this.exigirCategoria(userId, id);
+    reassignTo?: bigint,
+  ): Promise<{ deleted: number; reassigned: number }> {
+    await this.requireCategory(userId, id);
 
-    const esqueleto = await this.repo.esqueletoDelArbol(userId);
-    const subarbol = [id, ...descendantsOf(esqueleto, id)];
-    const usos = await this.repo.contarUsos(userId, subarbol);
+    const skeleton = await this.repo.treeSkeleton(userId);
+    const subtree = [id, ...descendantsOf(skeleton, id)];
+    const usageCount = await this.repo.countUsage(userId, subtree);
 
-    if (usos > 0 && reasignarA === undefined) {
+    if (usageCount > 0 && reassignTo === undefined) {
       throw new ConflictError(
-        `Esta categoría tiene ${usos} movimiento(s). Indica a qué categoría pasan.`,
+        `Esta categoría tiene ${usageCount} movimiento(s). Indica a qué categoría pasan.`,
         { code: 'reassignment_required' },
       );
     }
 
-    if (reasignarA !== undefined) {
-      await this.exigirCategoria(userId, reasignarA);
+    if (reassignTo !== undefined) {
+      await this.requireCategory(userId, reassignTo);
 
-      if (subarbol.some((candidato) => candidato === reasignarA)) {
+      if (subtree.some((candidate) => candidate === reassignTo)) {
         throw new ConflictError(
           'El destino está dentro de lo que se va a eliminar. Elige uno de fuera.',
           { code: 'reassignment_target_inside' },
@@ -257,7 +257,7 @@ export class CategoriesService {
       }
     }
 
-    return this.repo.borrarSubarbolReasignando(userId, subarbol, reasignarA ?? null);
+    return this.repo.deleteSubtreeReassigning(userId, subtree, reassignTo ?? null);
   }
 
   /**
@@ -266,7 +266,7 @@ export class CategoriesService {
    * Returns how many rows it created.
    */
   seedNewAccount(userId: bigint): Promise<number> {
-    return this.repo.sembrarPlantilla(userId);
+    return this.repo.seedTemplate(userId);
   }
 
   /**
@@ -276,8 +276,8 @@ export class CategoriesService {
    * reaplica, es un punto de partida. Y es opcional por diseño — quien prefiera
    * armar su propia taxonomía simplemente no lo llama.
    */
-  async sembrarDiccionario(userId: bigint): Promise<CategorySeed> {
-    const existentes = await this.repo.contarDelUsuario(userId);
+  async seed(userId: bigint): Promise<CategorySeed> {
+    const existentes = await this.repo.countForUser(userId);
     if (existentes > 0) {
       throw new ConflictError(
         'Ya tienes centros de costos. La plantilla solo se siembra en una cuenta vacía.',
@@ -288,21 +288,21 @@ export class CategoriesService {
     // La MISMA plantilla que se copia al crear la cuenta. Dos listas se
     // separan en cuanto alguien toque una: la cuenta nueva nacería con una
     // estructura y la que se quedó vacía se rellenaría con otra.
-    return { created: await this.repo.sembrarPlantilla(userId) };
+    return { created: await this.repo.seedTemplate(userId) };
   }
 
-  private exigirVariosPagosCoherente(estado: {
-    variosPagos: boolean;
-    pagoAutomatico: boolean;
-    recurrente: boolean;
-    profundidad: number;
+  private requireConsistentMultiPayment(state: {
+    isMultiPayment: boolean;
+    isAutoPaid: boolean;
+    isRecurring: boolean;
+    depth: number;
   }): void {
-    const rechazo = rechazoDeVariosPagos(estado);
-    if (rechazo !== null) throw new ValidationError(rechazo.message, { code: rechazo.code });
+    const rejection = multiPaymentRejection(state);
+    if (rejection !== null) throw new ValidationError(rejection.message, { code: rejection.code });
   }
 
-  private exigirProfundidadValida(profundidad: number): void {
-    if (profundidad > MAX_DEPTH) {
+  private requireValidDepth(depth: number): void {
+    if (depth > MAX_DEPTH) {
       throw new ValidationError(
         `El árbol admite hasta ${MAX_DEPTH} niveles: centro de costos, categoría y concepto. ` +
           'Anidar más vuelve los reportes ilegibles.',
@@ -311,10 +311,10 @@ export class CategoriesService {
     }
   }
 
-  private async exigirCategoria(userId: bigint, id: bigint): Promise<CategoryRow> {
-    const categoria = await this.repo.buscarPorId(userId, id);
-    if (!categoria) throw new NotFoundError('La categoría no existe.');
-    return categoria;
+  private async requireCategory(userId: bigint, id: bigint): Promise<CategoryRow> {
+    const category = await this.repo.findById(userId, id);
+    if (!category) throw new NotFoundError('La categoría no existe.');
+    return category;
   }
 
   /**
@@ -335,20 +335,20 @@ export class CategoriesService {
    * Todo en UNA transacción. A medio camino quedarían movimientos apuntando a
    * una categoría ya borrada, y eso no se arregla mirando la pantalla.
    */
-  async unificar(userId: bigint, origenId: bigint, destinoId: bigint): Promise<CategoryMerge> {
-    if (origenId === destinoId) {
+  async merge(userId: bigint, sourceId: bigint, targetId: bigint): Promise<CategoryMerge> {
+    if (sourceId === targetId) {
       throw new ValidationError('Un concepto no se puede unificar consigo mismo.', {
         code: 'merge_into_itself',
       });
     }
 
-    const origen = await this.exigirCategoria(userId, origenId);
-    const destino = await this.exigirCategoria(userId, destinoId);
+    const source = await this.requireCategory(userId, sourceId);
+    const target = await this.requireCategory(userId, targetId);
 
     // Solo entre conceptos. Fundir una categoría en otro movería sus hijos sin que
     // nadie lo haya pedido, y un centro de costos ni siquiera tiene
     // movimientos propios que mover.
-    if (origen.parentId === null || destino.parentId === null) {
+    if (source.parentId === null || target.parentId === null) {
       throw new ValidationError(
         'Solo se pueden unificar conceptos, no centros de costos ni categorías.',
         { code: 'merge_requires_concepts' },
@@ -357,17 +357,17 @@ export class CategoriesService {
 
     // Un concepto con cosas dentro no es un concepto: es una categoría mal puesto,
     // y fundirlo movería sus hijos sin que nadie lo haya pedido.
-    const todas = await this.repo.listar(userId, { incluirArchivadas: true });
-    const conHijos = todas.filter((c) => c.parentId === origenId).length;
-    if (conHijos > 0) {
+    const allCategories = await this.repo.list(userId, { includeArchived: true });
+    const childCount = allCategories.filter((c) => c.parentId === sourceId).length;
+    if (childCount > 0) {
       throw new ValidationError(
         'Ese concepto tiene otras categorías dentro. Vacíalo antes de unificarlo.',
         { code: 'merge_source_has_children' },
       );
     }
 
-    const movidos = await this.repo.unificar(userId, origenId, destinoId);
-    return { moved: movidos, target: categoryFromRow(destino) };
+    const moved = await this.repo.merge(userId, sourceId, targetId);
+    return { moved: moved, target: categoryFromRow(target) };
   }
 }
 
@@ -377,7 +377,7 @@ function periodicityOf(word: SpanishPeriodicity | null): Periodicity | null {
   return word === null ? null : english(PERIODICITY, word);
 }
 
-function cambiosDe(dto: UpdateCategoryDto): Parameters<CategoriesRepository['actualizar']>[2] {
+function changesOf(dto: UpdateCategoryDto): Parameters<CategoriesRepository['update']>[2] {
   return {
     ...(dto.name !== undefined && { name: dto.name }),
     ...(dto.kind !== undefined && { kind: dto.kind }),

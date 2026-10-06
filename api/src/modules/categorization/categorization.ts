@@ -1,4 +1,5 @@
-import { normalizarDescripcion } from './description';
+import { normalizeDescription } from './description';
+import type { English, SUGGESTION_REASON } from '../../common/vocabulary';
 
 /**
  * Categorización automática (T1) — lógica pura.
@@ -20,28 +21,28 @@ import { normalizarDescripcion } from './description';
  */
 
 /** Confianza mínima para mostrar una sugerencia. Por debajo, mejor callar. */
-export const CONFIANZA_MINIMA = 40;
+export const MIN_CONFIDENCE = 40;
 
-export interface Sugerencia {
+export interface SuggestedCategory {
   categoryId: bigint;
   /** 0–100. Se enseña para que se sepa cuánto fiarse. */
   confidence: number;
   /** Por qué se sugirió. Aparece en la interfaz: "porque siempre lo clasificas así". */
-  motivo: 'historial' | 'regla' | 'regla-sembrada';
+  reason: English<typeof SUGGESTION_REASON>;
 }
 
 /** Un movimiento ya categorizado por la persona, para aprender de él. */
-export interface AntecedenteHistorico {
+export interface HistoryEntry {
   description: string | null;
   categoryId: bigint;
 }
 
-export interface ReglaDeCategoria {
+export interface CategoryRule {
   pattern: string;
   categoryId: bigint;
   priority: number;
   /** Distingue lo que sembramos de lo que creó la persona. */
-  sembrada?: boolean;
+  isSeeded?: boolean;
 }
 
 /**
@@ -52,17 +53,17 @@ export interface ReglaDeCategoria {
  * los informes, y descubrirlo tres meses después cuesta mucho más que haber
  * escrito la categoría a mano.
  */
-export function sugerirCategoria(
-  descripcion: string | null | undefined,
-  contexto: { historial: AntecedenteHistorico[]; reglas: ReglaDeCategoria[] },
-): Sugerencia | null {
-  const normalizada = normalizarDescripcion(descripcion);
-  if (!normalizada) return null;
+export function suggestCategory(
+  description: string | null | undefined,
+  context: { history: HistoryEntry[]; rules: CategoryRule[] },
+): SuggestedCategory | null {
+  const normalized = normalizeDescription(description);
+  if (!normalized) return null;
 
-  const delHistorial = desdeHistorial(normalizada, contexto.historial);
-  if (delHistorial) return delHistorial;
+  const historyMatch = fromHistory(normalized, context.history);
+  if (historyMatch) return historyMatch;
 
-  return desdeReglas(normalizada, contexto.reglas);
+  return fromRules(normalized, context.rules);
 }
 
 /**
@@ -73,65 +74,65 @@ export function sugerirCategoria(
  * categoría por cuántos antecedentes comparten tokens significativos, y gana
  * la que domine con claridad.
  */
-function desdeHistorial(normalizada: string, historial: AntecedenteHistorico[]): Sugerencia | null {
-  if (historial.length === 0) return null;
+function fromHistory(normalized: string, history: HistoryEntry[]): SuggestedCategory | null {
+  if (history.length === 0) return null;
 
-  const tokens = tokensSignificativos(normalizada);
+  const tokens = significantTokens(normalized);
   if (tokens.size === 0) return null;
 
-  const puntajes = new Map<bigint, number>();
+  const scores = new Map<bigint, number>();
   let total = 0;
 
-  for (const antecedente of historial) {
-    const suyos = tokensSignificativos(normalizarDescripcion(antecedente.description));
-    if (suyos.size === 0) continue;
+  for (const entry of history) {
+    const entryTokens = significantTokens(normalizeDescription(entry.description));
+    if (entryTokens.size === 0) continue;
 
-    let comunes = 0;
+    let shared = 0;
     for (const token of tokens) {
-      if (suyos.has(token)) comunes += 1;
+      if (entryTokens.has(token)) shared += 1;
     }
-    if (comunes === 0) continue;
+    if (shared === 0) continue;
 
     // Un antecedente que comparte 2 de 2 tokens pesa más que uno que comparte
     // 1 de 5: se puntúa por proporción, no por conteo bruto.
-    const peso = comunes / Math.max(tokens.size, suyos.size);
-    puntajes.set(antecedente.categoryId, (puntajes.get(antecedente.categoryId) ?? 0) + peso);
+    const peso = shared / Math.max(tokens.size, entryTokens.size);
+    scores.set(entry.categoryId, (scores.get(entry.categoryId) ?? 0) + peso);
     total += peso;
   }
 
   if (total === 0) return null;
 
-  const [ganadora, puntaje] = [...puntajes.entries()].reduce((mejor, actual) =>
-    actual[1] > mejor[1] ? actual : mejor,
+  const [winner, score] = [...scores.entries()].reduce((best, actual) =>
+    actual[1] > best[1] ? actual : best,
   );
 
   // La confianza es cuánto DOMINA la ganadora sobre las demás, no cuántas
   // veces apareció. Si el historial está repartido entre tres categorías,
   // ninguna merece imponerse.
-  const confidence = Math.round((puntaje / total) * 100);
+  const confidence = Math.round((score / total) * 100);
 
-  return confidence >= CONFIANZA_MINIMA
-    ? { categoryId: ganadora, confidence, motivo: 'historial' }
+  return confidence >= MIN_CONFIDENCE
+    ? { categoryId: winner, confidence, reason: 'history' }
     : null;
 }
 
 /** Aplica las reglas por palabra clave. Gana la de mayor prioridad. */
-function desdeReglas(normalizada: string, reglas: ReglaDeCategoria[]): Sugerencia | null {
-  const coincidencias = reglas
-    .filter((regla) => regla.pattern.length > 0 && normalizada.includes(regla.pattern))
+function fromRules(normalized: string, rules: CategoryRule[]): SuggestedCategory | null {
+  const matches = rules
+    .filter((rule) => rule.pattern.length > 0 && normalized.includes(rule.pattern))
     // A igualdad de prioridad gana el patrón más largo: "juan valdez" es más
     // específico que "juan" y debe ganarle.
     .sort((a, b) => b.priority - a.priority || b.pattern.length - a.pattern.length);
 
-  const mejor = coincidencias[0];
-  if (!mejor) return null;
+  const best = matches[0];
+  if (!best) return null;
 
   return {
-    categoryId: mejor.categoryId,
+    categoryId: best.categoryId,
     // Una regla propia es una decisión explícita de la persona; una sembrada
     // es una suposición mía. La confianza lo refleja.
-    confidence: mejor.sembrada ? 60 : 85,
-    motivo: mejor.sembrada ? 'regla-sembrada' : 'regla',
+    confidence: best.isSeeded ? 60 : 85,
+    reason: best.isSeeded ? 'seeded_rule' : 'rule',
   };
 }
 
@@ -141,7 +142,7 @@ function desdeReglas(normalizada: string, reglas: ReglaDeCategoria[]): Sugerenci
  * Fuera las de una y dos letras y las muy comunes: "de", "la", "el" aparecen
  * en medio catálogo y solo introducen ruido en la comparación.
  */
-const VACIAS = new Set([
+const STOP_WORDS = new Set([
   'de',
   'la',
   'el',
@@ -162,11 +163,11 @@ const VACIAS = new Set([
   'tienda',
 ]);
 
-export function tokensSignificativos(normalizada: string): Set<string> {
+export function significantTokens(normalized: string): Set<string> {
   return new Set(
-    normalizada
+    normalized
       .split(' ')
-      .filter((token) => token.length >= 3 && !VACIAS.has(token) && !/^\d+$/.test(token)),
+      .filter((token) => token.length >= 3 && !STOP_WORDS.has(token) && !/^\d+$/.test(token)),
   );
 }
 
@@ -177,7 +178,7 @@ export function tokensSignificativos(normalizada: string): Set<string> {
  * «pago → Mercado» convertiría en mercado cada «pago de» que llegue después.
  * El plan lo dice tal cual: no se aprende de descripciones vacías ni genéricas.
  */
-const PALABRAS_GENERICAS: ReadonlySet<string> = new Set([
+const GENERIC_WORDS: ReadonlySet<string> = new Set([
   'pago',
   'pagos',
   'compra',
@@ -219,13 +220,13 @@ const PALABRAS_GENERICAS: ReadonlySet<string> = new Set([
  * regla convive con el aprendizaje por historial, que corrige por su cuenta,
  * y una regla mala pesa poco frente a un historial consistente.
  */
-export function patronParaAprender(
-  descripcion: string | null | undefined,
-  normalizar: (texto: string) => string,
+export function learnablePattern(
+  description: string | null | undefined,
+  normalize: (text: string) => string,
 ): string | null {
-  const tokens = normalizar(descripcion ?? '')
+  const tokens = normalize(description ?? '')
     .split(' ')
-    .filter((token) => token.length >= 4 && !/^\d+$/.test(token) && !PALABRAS_GENERICAS.has(token));
+    .filter((token) => token.length >= 4 && !/^\d+$/.test(token) && !GENERIC_WORDS.has(token));
 
   return tokens.sort((a, b) => b.length - a.length)[0] ?? null;
 }

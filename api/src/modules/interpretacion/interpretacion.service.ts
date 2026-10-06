@@ -117,9 +117,9 @@ export class InterpretacionService {
     const alta = altaDe(dto, nueva, interpretado);
     try {
       if (!ORIGENES_QUE_SE_DUPLICAN.has(dto.source)) {
-        return creadaAVista(await this.transactions.crear(userId, alta), interpretado);
+        return creadaAVista(await this.transactions.create(userId, alta), interpretado);
       }
-      const lista = await this.transactions.prepararAlta(userId, alta);
+      const lista = await this.transactions.prepareCreate(userId, alta);
       const destino = await this.ledger.createUnlessTwin(
         lista,
         criteriosDeGemela(userId, dto.source, nueva),
@@ -135,7 +135,7 @@ export class InterpretacionService {
           interpretado.clasificacion,
         );
       }
-      return creadaAVista(await this.transactions.obtener(userId, destino.id), interpretado);
+      return creadaAVista(await this.transactions.get(userId, destino.id), interpretado);
     } catch (error) {
       /*
         Dos capturas con el mismo `external_ref` a la vez —dos reintentos que
@@ -188,7 +188,7 @@ export class InterpretacionService {
       // El historial se consulta con lo más parecido a una descripción: el
       // comercio si viene; si no, el texto. Un SMS entero trae mucho ruido de
       // banco y el historial lo nota en la confianza, que es lo correcto.
-      this.categorization.sugerirPara(userId, dto.comercio?.trim() || dto.texto?.trim() || ''),
+      this.categorization.suggestFor(userId, dto.comercio?.trim() || dto.texto?.trim() || ''),
     ]);
 
     const leido = interpretar(
@@ -288,7 +288,7 @@ export class InterpretacionService {
     fusionado: boolean,
     clasificacion?: ClasificacionInterpretada,
   ): Promise<Capture> {
-    const transaction = await this.transactions.obtener(userId, id);
+    const transaction = await this.transactions.get(userId, id);
     const vista: ClasificacionInterpretada = clasificacion ??
       // De una repetida no se vuelve a interpretar: lo que importa es lo que
       // quedó guardado, que es lo que se le dice.
@@ -314,7 +314,7 @@ export class InterpretacionService {
 }
 
 /** Lo que `TransactionsService` pide para crear, sin importar su DTO (los módulos hablan por servicios). */
-type NuevoMovimiento = Parameters<TransactionsService['crear']>[1];
+type NuevoMovimiento = Parameters<TransactionsService['create']>[1];
 
 /** Lo que se escribe de una captura, como lo pide `TransactionsService`. */
 function altaDe(

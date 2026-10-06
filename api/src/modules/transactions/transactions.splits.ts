@@ -5,25 +5,25 @@ import { serialize, toMoney, type Money } from '../../common/money/money';
 import { checkSplitsReconcile } from '../../common/money/splits';
 
 /** Valida el cuadre y normaliza los splits. Lanza 422 si no cuadran. */
-export function splitsParaEscribir(
-  amountCabecera: Money,
+export function splitsToWrite(
+  headerAmount: Money,
   splits: readonly SplitDto[] | undefined,
 ): SplitToWrite[] {
   if (!splits || splits.length === 0) return [];
 
-  const montos = splits.map((split) => toMoney(split.amount));
-  const cuadre = checkSplitsReconcile(amountCabecera, montos);
+  const amounts = splits.map((split) => toMoney(split.amount));
+  const reconciliation = checkSplitsReconcile(headerAmount, amounts);
 
-  if (!cuadre.balances) {
+  if (!reconciliation.balances) {
     throw new ValidationError(
-      `La suma de los splits (${serialize(cuadre.total)}) no coincide con el monto (${serialize(amountCabecera)}). Diferencia: ${serialize(cuadre.difference)}.`,
+      `La suma de los splits (${serialize(reconciliation.total)}) no coincide con el monto (${serialize(headerAmount)}). Diferencia: ${serialize(reconciliation.difference)}.`,
       { code: 'splits_unbalanced' },
     );
   }
 
-  return splits.map((split, indice) => ({
+  return splits.map((split, index) => ({
     categoryId: split.category_id !== undefined ? BigInt(split.category_id) : null,
-    amount: montos[indice] ?? toMoney(split.amount), // mismo valor: montos[i] es este
+    amount: amounts[index] ?? toMoney(split.amount), // mismo valor: montos[i] es este
     note: split.note ?? null,
   }));
 }

@@ -51,11 +51,11 @@ export class TransactionsController {
   @Get()
   @ApiData(TransactionResponse, { isArray: true, meta: 'page' })
   @ApiErrors(400)
-  async listar(
+  async list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTransactionsQueryDto,
   ): Promise<TransactionPageV1> {
-    return transactionPageV1(await this.transactions.listar(user.id, query));
+    return transactionPageV1(await this.transactions.list(user.id, query));
   }
 
   /**
@@ -64,8 +64,8 @@ export class TransactionsController {
    */
   @Get('historia')
   @ApiData(TransactionHistoryResponse)
-  historia(@CurrentUser() user: AuthenticatedUser): Promise<TransactionHistory> {
-    return this.transactions.historia(user.id);
+  history(@CurrentUser() user: AuthenticatedUser): Promise<TransactionHistory> {
+    return this.transactions.history(user.id);
   }
 
   /**
@@ -75,52 +75,52 @@ export class TransactionsController {
   @Post('transfer')
   @ApiData(TransferResponse, { status: 201 })
   @ApiErrors(400, 404, 422)
-  async crearTransferencia(
+  async createTransfer(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateTransferDto,
   ): Promise<TransferV1> {
-    return transferV1(await this.transactions.crearTransferencia(user.id, dto));
+    return transferV1(await this.transactions.createTransfer(user.id, dto));
   }
 
   @Get(':id')
   @ApiData(TransactionResponse)
   @ApiErrors(400, 404)
-  async obtener(
+  async get(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<TransactionV1> {
-    return transactionV1(await this.transactions.obtener(user.id, id));
+    return transactionV1(await this.transactions.get(user.id, id));
   }
 
   @Post()
   @ApiData(TransactionResponse, { status: 201 })
   @ApiErrors(400, 404, 409, 422)
-  async crear(
+  async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateTransactionDto,
   ): Promise<TransactionV1> {
-    return transactionV1(await this.transactions.crear(user.id, dto));
+    return transactionV1(await this.transactions.create(user.id, dto));
   }
 
   @Patch(':id')
   @ApiData(TransactionResponse)
   @ApiErrors(400, 404, 409, 422)
-  async actualizar(
+  async update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() dto: UpdateTransactionDto,
   ): Promise<TransactionV1> {
-    return transactionV1(await this.transactions.actualizar(user.id, id, dto));
+    return transactionV1(await this.transactions.update(user.id, id, dto));
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContent()
   @ApiErrors(400, 404)
-  eliminar(
+  remove(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<void> {
-    return this.transactions.eliminar(user.id, id);
+    return this.transactions.remove(user.id, id);
   }
 }

@@ -1247,7 +1247,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UnificarCategoriaDto"
+                "$ref": "#/components/schemas/MergeCategoryDto"
               }
             }
           }
@@ -5658,7 +5658,7 @@
         },
         "required": ["movidos", "destino"]
       },
-      "UnificarCategoriaDto": {
+      "MergeCategoryDto": {
         "type": "object",
         "properties": {
           "destino_id": {

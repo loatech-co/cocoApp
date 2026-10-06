@@ -64,14 +64,14 @@ export class TransactionsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListTransactionsQuery,
   ): Promise<TransactionPage> {
-    return transactionPageV2(await this.transactions.listar(user.id, listTransactions(query)));
+    return transactionPageV2(await this.transactions.list(user.id, listTransactions(query)));
   }
 
   /** Before `:id`, or Express would read "history" as an id. */
   @Get('history')
   @ApiDataV2(TransactionHistory)
   history(@CurrentUser() user: AuthenticatedUser): Promise<HistoryBody> {
-    return this.transactions.historia(user.id);
+    return this.transactions.history(user.id);
   }
 
   /** Before `:id`, for the same reason. */
@@ -82,7 +82,7 @@ export class TransactionsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateTransferInput,
   ): Promise<TransferBody> {
-    return transferV2(await this.transactions.crearTransferencia(user.id, createTransfer(input)));
+    return transferV2(await this.transactions.createTransfer(user.id, createTransfer(input)));
   }
 
   @Get(':id')
@@ -92,7 +92,7 @@ export class TransactionsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<TransactionBody> {
-    return transactionV2(await this.transactions.obtener(user.id, id));
+    return transactionV2(await this.transactions.get(user.id, id));
   }
 
   @Post()
@@ -102,7 +102,7 @@ export class TransactionsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateTransactionInput,
   ): Promise<TransactionBody> {
-    return transactionV2(await this.transactions.crear(user.id, createTransaction(input)));
+    return transactionV2(await this.transactions.create(user.id, createTransaction(input)));
   }
 
   @Patch(':id')
@@ -113,7 +113,7 @@ export class TransactionsV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpdateTransactionInput,
   ): Promise<TransactionBody> {
-    return transactionV2(await this.transactions.actualizar(user.id, id, updateTransaction(input)));
+    return transactionV2(await this.transactions.update(user.id, id, updateTransaction(input)));
   }
 
   @Delete(':id')
@@ -124,6 +124,6 @@ export class TransactionsV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<void> {
-    return this.transactions.eliminar(user.id, id);
+    return this.transactions.remove(user.id, id);
   }
 }

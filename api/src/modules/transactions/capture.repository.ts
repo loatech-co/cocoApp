@@ -60,9 +60,9 @@ export class CaptureRepository {
           return { kind: 'merged', id: verdict.id };
         }
 
-        const needsReview = movement.data.needsReview === true || verdict.flag;
+        const shouldReview = movement.data.needsReview === true || verdict.flag;
         const created = await tx.transaction.create({
-          data: { ...movement.data, needsReview },
+          data: { ...movement.data, needsReview: shouldReview },
           select: { id: true },
         });
         await writeDetails(tx, created.id, movement.splits, movement.tagIds);

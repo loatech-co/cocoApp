@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { PLANTILLA_DE_CUENTA_NUEVA, type NodoDePlantilla } from './categories.plantilla';
-import { unir } from './palabras-clave';
+import { NEW_ACCOUNT_TEMPLATE, type TemplateNode } from './categories.template';
+import { mergeKeywords } from './keywords';
 import type { CategoryNode } from '../../common/categories/categories.tree';
 import type { Category, CategoryKind, Prisma } from '../../generated/prisma/client';
 import { Database, type UserTx } from '../../prisma/database';
@@ -10,16 +10,16 @@ import { Database, type UserTx } from '../../prisma/database';
 export class CategoriesRepository {
   constructor(private readonly db: Database) {}
 
-  async listar(
+  async list(
     userId: bigint,
-    filtros: { kind?: CategoryKind | undefined; incluirArchivadas?: boolean } = {},
+    filters: { kind?: CategoryKind | undefined; includeArchived?: boolean } = {},
   ): Promise<Category[]> {
     return this.db.forUser(userId, (tx) =>
       tx.category.findMany({
         where: {
           userId,
-          ...(filtros.kind ? { kind: filtros.kind } : {}),
-          ...(filtros.incluirArchivadas ? {} : { isArchived: false }),
+          ...(filters.kind ? { kind: filters.kind } : {}),
+          ...(filters.includeArchived ? {} : { isArchived: false }),
         },
         orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
       }),
@@ -30,17 +30,17 @@ export class CategoriesRepository {
    * Solo id y parentId: para validar ciclos y profundidad no hace falta traerse
    * el árbol completo con nombres y colores.
    */
-  async esqueletoDelArbol(userId: bigint): Promise<CategoryNode[]> {
+  async treeSkeleton(userId: bigint): Promise<CategoryNode[]> {
     return this.db.forUser(userId, (tx) =>
       tx.category.findMany({ where: { userId }, select: { id: true, parentId: true } }),
     );
   }
 
-  async buscarPorId(userId: bigint, id: bigint): Promise<Category | null> {
+  async findById(userId: bigint, id: bigint): Promise<Category | null> {
     return this.db.forUser(userId, (tx) => tx.category.findFirst({ where: { id, userId } }));
   }
 
-  async crear(userId: bigint, data: Prisma.CategoryUncheckedCreateInput): Promise<Category> {
+  async create(userId: bigint, data: Prisma.CategoryUncheckedCreateInput): Promise<Category> {
     return this.db.forUser(userId, (tx) => tx.category.create({ data: { ...data, userId } }));
   }
 
@@ -59,7 +59,7 @@ export class CategoriesRepository {
    * `Unchecked` es la variante que expone las claves ajenas como lo que son
    * —`parentId`, un número—, que es como se cambia un padre desde aquí.
    */
-  async actualizar(
+  async update(
     userId: bigint,
     id: bigint,
     data: Prisma.CategoryUncheckedUpdateManyInput,
@@ -70,7 +70,7 @@ export class CategoriesRepository {
     return count;
   }
 
-  async archivarVarias(userId: bigint, ids: readonly bigint[]): Promise<number> {
+  async archiveMany(userId: bigint, ids: readonly bigint[]): Promise<number> {
     if (ids.length === 0) return 0;
     const { count } = await this.db.forUser(userId, (tx) =>
       tx.category.updateMany({
@@ -89,11 +89,11 @@ export class CategoriesRepository {
    * conceptos que hay tres niveles más abajo. Contando solo el id de arriba,
    * un centro con cuarenta movimientos daba cero.
    */
-  async contarUsos(userId: bigint, categoryIds: readonly bigint[]): Promise<number> {
+  async countUsage(userId: bigint, categoryIds: readonly bigint[]): Promise<number> {
     if (categoryIds.length === 0) return 0;
     const ids = [...categoryIds];
 
-    const [enMovimientos, enSplits] = await this.db.forUser(userId, (tx) =>
+    const [inTransactions, enSplits] = await this.db.forUser(userId, (tx) =>
       Promise.all([
         tx.transaction.count({ where: { userId, categoryId: { in: ids } } }),
         tx.transactionSplit.count({
@@ -101,7 +101,7 @@ export class CategoriesRepository {
         }),
       ]),
     );
-    return enMovimientos + enSplits;
+    return inTransactions + enSplits;
   }
 
   /**
@@ -120,37 +120,37 @@ export class CategoriesRepository {
    * así que un borrado sin reasignación previa deja los movimientos sin
    * clasificar en silencio.
    */
-  async borrarSubarbolReasignando(
+  async deleteSubtreeReassigning(
     userId: bigint,
     ids: readonly bigint[],
-    reasignarA: bigint | null,
-  ): Promise<{ eliminadas: number; reasignados: number }> {
-    const lista = [...ids];
+    reassignTo: bigint | null,
+  ): Promise<{ deleted: number; reassigned: number }> {
+    const idList = [...ids];
 
     return this.db.forUser(userId, async (tx) => {
-      let reasignados = 0;
+      let reassigned = 0;
 
-      if (reasignarA !== null) {
-        const [movimientos, splits] = await Promise.all([
+      if (reassignTo !== null) {
+        const [transactions, splits] = await Promise.all([
           tx.transaction.updateMany({
-            where: { userId, categoryId: { in: lista } },
-            data: { categoryId: reasignarA },
+            where: { userId, categoryId: { in: idList } },
+            data: { categoryId: reassignTo },
           }),
           tx.transactionSplit.updateMany({
-            where: { categoryId: { in: lista }, transaction: { userId } },
-            data: { categoryId: reasignarA },
+            where: { categoryId: { in: idList }, transaction: { userId } },
+            data: { categoryId: reassignTo },
           }),
         ]);
-        reasignados = movimientos.count + splits.count;
+        reassigned = transactions.count + splits.count;
       }
 
-      const { count } = await tx.category.deleteMany({ where: { userId, id: { in: lista } } });
-      return { eliminadas: count, reasignados };
+      const { count } = await tx.category.deleteMany({ where: { userId, id: { in: idList } } });
+      return { deleted: count, reassigned: reassigned };
     });
   }
 
   /** Reordena en una sola transacción: o queda todo el orden nuevo, o ninguno. */
-  async reordenar(
+  async reorder(
     userId: bigint,
     items: readonly { id: bigint; sortOrder: number }[],
   ): Promise<void> {
@@ -164,7 +164,7 @@ export class CategoriesRepository {
     });
   }
 
-  async contarDelUsuario(userId: bigint): Promise<number> {
+  async countForUser(userId: bigint): Promise<number> {
     return this.db.forUser(userId, (tx) => tx.category.count({ where: { userId } }));
   }
 
@@ -174,7 +174,7 @@ export class CategoriesRepository {
    * La llaman dos sitios que no se conocen entre sí: el registro, para que una
    * cuenta nazca con su estructura (por `CategoriesService.seedNewAccount`), y
    * `POST /categories/seed`, para rellenar una que se quedó vacía.
-   * `categories.plantilla.ts` es la ESTRUCTURA y el porqué de cada decisión;
+   * `categories.template.ts` es la ESTRUCTURA y el porqué de cada decisión;
    * esto es el acceso a la base.
    *
    * ── Por qué nivel por nivel y no un `createMany` ────────────────────────────
@@ -182,10 +182,8 @@ export class CategoriesRepository {
    * ids que acaba de asignar. El árbol son nueve filas: el ahorro de una sola
    * consulta no paga tener que resolver eso a mano.
    */
-  async sembrarPlantilla(userId: bigint): Promise<number> {
-    return this.db.forUser(userId, (tx) =>
-      copyTemplate(tx, userId, PLANTILLA_DE_CUENTA_NUEVA, null),
-    );
+  async seedTemplate(userId: bigint): Promise<number> {
+    return this.db.forUser(userId, (tx) => copyTemplate(tx, userId, NEW_ACCOUNT_TEMPLATE, null));
   }
 
   /**
@@ -194,11 +192,11 @@ export class CategoriesRepository {
    * En UNA transacción. A medio camino quedarían movimientos apuntando a una
    * categoría ya borrada, y eso no se arregla mirando la pantalla.
    */
-  async unificar(userId: bigint, origenId: bigint, destinoId: bigint): Promise<number> {
+  async merge(userId: bigint, sourceId: bigint, targetId: bigint): Promise<number> {
     return this.db.forUser(userId, async (tx) => {
-      const movidos = await tx.transaction.updateMany({
-        where: { userId, categoryId: origenId },
-        data: { categoryId: destinoId },
+      const moved = await tx.transaction.updateMany({
+        where: { userId, categoryId: sourceId },
+        data: { categoryId: targetId },
       });
 
       // Los splits reparten un movimiento entre categorías: si uno apuntaba al
@@ -208,20 +206,20 @@ export class CategoriesRepository {
       // que apuntara al origen (de cuando los splits no validaban la categoría)
       // saltaría al árbol de este usuario.
       await tx.transactionSplit.updateMany({
-        where: { categoryId: origenId, transaction: { userId } },
-        data: { categoryId: destinoId },
+        where: { categoryId: sourceId, transaction: { userId } },
+        data: { categoryId: targetId },
       });
 
       await tx.importRow.updateMany({
-        where: { categoryId: origenId, batch: { userId } },
-        data: { categoryId: destinoId },
+        where: { categoryId: sourceId, batch: { userId } },
+        data: { categoryId: targetId },
       });
 
       // Las reglas aprendidas son únicas por (usuario, patrón), así que
       // cambiarles la categoría nunca choca con las del destino.
       await tx.categoryRule.updateMany({
-        where: { userId, categoryId: origenId },
-        data: { categoryId: destinoId },
+        where: { userId, categoryId: sourceId },
+        data: { categoryId: targetId },
       });
 
       /*
@@ -238,19 +236,19 @@ export class CategoriesRepository {
         `unir` las junta sin repetir: el nombre del acreedor suele estar en
         los dos, que es justo por lo que se crearon duplicados.
       */
-      const [origen, destino] = await Promise.all([
-        tx.category.findUnique({ where: { id: origenId }, select: { keywords: true } }),
-        tx.category.findUnique({ where: { id: destinoId }, select: { keywords: true } }),
+      const [source, target] = await Promise.all([
+        tx.category.findUnique({ where: { id: sourceId }, select: { keywords: true } }),
+        tx.category.findUnique({ where: { id: targetId }, select: { keywords: true } }),
       ]);
 
-      const juntas = unir(destino?.keywords ?? [], origen?.keywords ?? []);
-      if (juntas.length !== (destino?.keywords.length ?? 0)) {
-        await tx.category.update({ where: { id: destinoId }, data: { keywords: juntas } });
+      const merged = mergeKeywords(target?.keywords ?? [], source?.keywords ?? []);
+      if (merged.length !== (target?.keywords.length ?? 0)) {
+        await tx.category.update({ where: { id: targetId }, data: { keywords: merged } });
       }
 
-      await tx.category.delete({ where: { id: origenId } });
+      await tx.category.delete({ where: { id: sourceId } });
 
-      return movidos.count;
+      return moved.count;
     });
   }
 }
@@ -258,36 +256,36 @@ export class CategoriesRepository {
 async function copyTemplate(
   tx: UserTx,
   userId: bigint,
-  nodos: readonly NodoDePlantilla[],
+  nodes: readonly TemplateNode[],
   parentId: bigint | null,
 ): Promise<number> {
-  let creadas = 0;
+  let created = 0;
 
-  for (const [posicion, nodo] of nodos.entries()) {
-    const fila = await tx.category.create({
+  for (const [position, node] of nodes.entries()) {
+    const row = await tx.category.create({
       data: {
         userId,
-        name: nodo.name,
+        name: node.name,
         // Todo lo de la plantilla es gasto. Los ingresos no se clasifican
         // todavía en esta app —la opción está apagada y rotulada «Pronto»—,
         // así que sembrar un árbol de ingresos sería sembrar algo que no se
         // puede usar.
         kind: 'expense',
         parentId,
-        icon: nodo.icon ?? null,
-        isStatic: nodo.estatico ?? false,
+        icon: node.icon ?? null,
+        isStatic: node.isStatic ?? false,
         // Explícito y correlativo, no el 0 de fábrica: con todo en cero el
         // orden lo acaba decidiendo el id, que es el orden de inserción por
         // casualidad y no por decisión.
-        sortOrder: posicion,
+        sortOrder: position,
       },
     });
-    creadas += 1;
+    created += 1;
 
-    if (nodo.children?.length) {
-      creadas += await copyTemplate(tx, userId, nodo.children, fila.id);
+    if (node.children?.length) {
+      created += await copyTemplate(tx, userId, node.children, row.id);
     }
   }
 
-  return creadas;
+  return created;
 }

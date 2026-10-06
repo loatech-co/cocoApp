@@ -30,7 +30,7 @@ export class CategorizationController {
     description: '`data` is `null` when nothing is confident enough.',
   })
   @ApiErrors(400)
-  async sugerir(
+  async suggest(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: SuggestQueryDto,
   ): Promise<{ data: SuggestionV1 | null; meta: Record<string, never> }> {
@@ -51,16 +51,12 @@ export class CategorizationController {
   @Post('learn')
   @ApiData(LearnResponse, { status: 201 })
   @ApiErrors(400, 404, 422)
-  async aprender(
+  async learn(
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: LearnBodyDto,
   ): Promise<LearningV1> {
     return learningV1(
-      await this.categorization.aprenderDesdeLaFicha(
-        user.id,
-        body.description,
-        BigInt(body.category_id),
-      ),
+      await this.categorization.learnFromForm(user.id, body.description, BigInt(body.category_id)),
     );
   }
 }

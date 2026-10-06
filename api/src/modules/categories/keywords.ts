@@ -18,13 +18,13 @@
  */
 
 /** Sin tildes, en minúscula y con los espacios apretados. Para comparar. */
-function comoSeCompara(palabra: string): string {
-  return palabra.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+function comparisonKey(word: string): string {
+  return word.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
 /** Recorta y aprieta los espacios, conservando tildes y mayúsculas. */
-function limpiar(palabra: string): string {
-  return palabra.replace(/\s+/g, ' ').trim();
+function clean(word: string): string {
+  return word.replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -34,22 +34,22 @@ function limpiar(palabra: string): string {
  * quien las lee: reordenarlas haría que la ficha enseñara otra lista de la que
  * se escribió.
  */
-export function unir(...listas: readonly (readonly string[])[]): string[] {
-  const vistas = new Set<string>();
-  const juntas: string[] = [];
+export function mergeKeywords(...lists: readonly (readonly string[])[]): string[] {
+  const seen = new Set<string>();
+  const merged: string[] = [];
 
-  for (const lista of listas) {
-    for (const cruda of lista) {
-      const palabra = limpiar(cruda);
-      if (palabra === '') continue;
+  for (const list of lists) {
+    for (const raw of list) {
+      const word = clean(raw);
+      if (word === '') continue;
 
-      const clave = comoSeCompara(palabra);
-      if (vistas.has(clave)) continue;
+      const key = comparisonKey(word);
+      if (seen.has(key)) continue;
 
-      vistas.add(clave);
-      juntas.push(palabra);
+      seen.add(key);
+      merged.push(word);
     }
   }
 
-  return juntas;
+  return merged;
 }

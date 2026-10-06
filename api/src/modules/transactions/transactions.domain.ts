@@ -1,4 +1,4 @@
-import type { TransaccionCompleta } from './transactions.repository';
+import type { FullTransaction } from './transactions.repository';
 import { serialize, toMoney } from '../../common/money/money';
 import type {
   TransactionSource,
@@ -75,7 +75,7 @@ export interface Transfer {
 }
 
 /** A row with its tags and splits, as the domain sees it. */
-export function transactionFromRow(row: TransaccionCompleta): Transaction {
+export function transactionFromRow(row: FullTransaction): Transaction {
   return {
     id: row.id,
     uuid: row.uuid,

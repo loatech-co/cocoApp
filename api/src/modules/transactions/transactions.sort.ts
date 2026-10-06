@@ -8,17 +8,17 @@ import type { Prisma } from '../../generated/prisma/client';
  * forma del esquema y, según el motor, a algo peor. Lo que no está en esta
  * tabla no existe.
  */
-const CAMPOS_PERMITIDOS = {
+const SORTABLE_FIELDS = {
   date: 'date',
   amount: 'amount',
   created_at: 'createdAt',
   merchant: 'merchant',
 } as const satisfies Record<string, keyof Prisma.TransactionOrderByWithRelationInput>;
 
-type CampoOrdenable = keyof typeof CAMPOS_PERMITIDOS;
+type SortableField = keyof typeof SORTABLE_FIELDS;
 
 /** Orden por defecto: lo más reciente primero, que es como se lee un extracto. */
-const ORDEN_POR_DEFECTO: Prisma.TransactionOrderByWithRelationInput[] = [
+const DEFAULT_ORDER: Prisma.TransactionOrderByWithRelationInput[] = [
   { date: 'desc' },
   { id: 'desc' },
 ];
@@ -34,38 +34,38 @@ const ORDEN_POR_DEFECTO: Prisma.TransactionOrderByWithRelationInput[] = [
  * desempate, dos filas con la misma fecha pueden alternar de página entre
  * consultas y el usuario vería un movimiento repetido o se le perdería otro.
  */
-export function parseOrden(sort?: string): Prisma.TransactionOrderByWithRelationInput[] {
-  if (!sort) return ORDEN_POR_DEFECTO;
+export function parseOrder(sort?: string): Prisma.TransactionOrderByWithRelationInput[] {
+  if (!sort) return DEFAULT_ORDER;
 
-  const descendente = sort.startsWith('-');
-  const nombre = descendente ? sort.slice(1) : sort;
+  const isDescending = sort.startsWith('-');
+  const fieldName = isDescending ? sort.slice(1) : sort;
 
-  if (!(nombre in CAMPOS_PERMITIDOS)) return ORDEN_POR_DEFECTO;
+  if (!(fieldName in SORTABLE_FIELDS)) return DEFAULT_ORDER;
 
-  const campo = CAMPOS_PERMITIDOS[nombre as CampoOrdenable];
-  const direccion: Prisma.SortOrder = descendente ? 'desc' : 'asc';
+  const field = SORTABLE_FIELDS[fieldName as SortableField];
+  const direction: Prisma.SortOrder = isDescending ? 'desc' : 'asc';
 
-  return [{ [campo]: direccion }, { id: direccion }];
+  return [{ [field]: direction }, { id: direction }];
 }
 
-export interface Paginacion {
+export interface Pagination {
   page: number;
   perPage: number;
   skip: number;
   take: number;
 }
 
-const PER_PAGE_POR_DEFECTO = 50;
-export const PER_PAGE_MAXIMO = 200;
+const DEFAULT_PER_PAGE = 50;
+export const MAX_PER_PAGE = 200;
 
-export function parsePaginacion(page?: number, perPage?: number): Paginacion {
-  const paginaSegura = Math.max(1, page ?? 1);
-  const porPaginaSegura = Math.min(PER_PAGE_MAXIMO, Math.max(1, perPage ?? PER_PAGE_POR_DEFECTO));
+export function parsePagination(page?: number, perPage?: number): Pagination {
+  const safePage = Math.max(1, page ?? 1);
+  const safePerPage = Math.min(MAX_PER_PAGE, Math.max(1, perPage ?? DEFAULT_PER_PAGE));
 
   return {
-    page: paginaSegura,
-    perPage: porPaginaSegura,
-    skip: (paginaSegura - 1) * porPaginaSegura,
-    take: porPaginaSegura,
+    page: safePage,
+    perPage: safePerPage,
+    skip: (safePage - 1) * safePerPage,
+    take: safePerPage,
   };
 }

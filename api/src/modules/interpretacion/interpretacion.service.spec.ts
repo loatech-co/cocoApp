@@ -54,21 +54,21 @@ describe('InterpretacionService con una clasificación elegida', () => {
         Promise.resolve(userId === USUARIO ? (filas.get(id) ?? null) : null),
       ),
       findSearchable: jest.fn().mockResolvedValue([
-        { id: 10n, parentId: null, name: 'Costos variables', palabrasClave: [] },
-        { id: 20n, parentId: 10n, name: 'Alimentación', palabrasClave: [] },
-        { id: 21n, parentId: 10n, name: 'Transporte', palabrasClave: [] },
-        { id: 30n, parentId: 20n, name: 'Mercado', palabrasClave: ['koba'] },
+        { id: 10n, parentId: null, name: 'Costos variables', keywords: [] },
+        { id: 20n, parentId: 10n, name: 'Alimentación', keywords: [] },
+        { id: 21n, parentId: 10n, name: 'Transporte', keywords: [] },
+        { id: 30n, parentId: 20n, name: 'Mercado', keywords: ['koba'] },
       ]),
     } as unknown as CategoryLookupService;
     const categorization = {
-      sugerirPara: jest.fn().mockResolvedValue(null),
+      suggestFor: jest.fn().mockResolvedValue(null),
     } as unknown as CategorizationService;
     // Wallet y SMS pasan por `prepararAlta` y la escritura con candado; lo
     // que se escribe es lo mismo, así que las dos puertas comparten el doble.
     const transactions = {
-      crear,
-      prepararAlta: crear,
-      obtener: jest.fn((_userId: bigint, id: bigint) => Promise.resolve({ id })),
+      create: crear,
+      prepareCreate: crear,
+      get: jest.fn((_userId: bigint, id: bigint) => Promise.resolve({ id })),
     } as unknown as TransactionsService;
     servicio = new InterpretacionService(ledger, categories, categorization, transactions);
     interpretar = jest.spyOn(motor, 'interpretar');

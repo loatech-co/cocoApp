@@ -19,17 +19,17 @@ import {
 import {
   TransactionsRepository,
   type SplitToWrite,
-  type TransaccionCompleta,
+  type FullTransaction,
   type TransactionChanges,
   type TransferPartner,
 } from './transactions.repository';
-import { parsePaginacion } from './transactions.sort';
-import { splitsParaEscribir } from './transactions.splits';
+import { parsePagination } from './transactions.sort';
+import { splitsToWrite } from './transactions.splits';
 import {
-  cambiosDe,
-  cambiosDeLaOtraPata,
-  exigirDesgloseCuadrado,
-  exigirQueSigaSiendoTransferencia,
+  changesOf,
+  partnerLegChanges,
+  requireReconciledSplits,
+  requireStillTransfer,
 } from './transactions.update';
 import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { serialize, toMoney, type Money } from '../../common/money/money';
@@ -47,8 +47,8 @@ export type { Transaction } from './transactions.domain';
  * mes en que se pagaron, y obligar a declararlo en cada registro sería fricción
  * para el caso común. Solo las facturas que cruzan de mes necesitan decirlo.
  */
-function mesDe(fecha: Date): Date {
-  return new Date(Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), 1));
+function monthOf(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 }
 
 @Injectable()
@@ -56,26 +56,26 @@ export class TransactionsService {
   constructor(
     private readonly repository: TransactionsRepository,
     private readonly tags: TagsService,
-    private readonly soportes: SoportesService,
+    private readonly receipts: SoportesService,
   ) {}
 
   // ── Lectura ────────────────────────────────────────────────────────────────
 
-  async listar(userId: bigint, query: ListTransactionsQueryDto): Promise<TransactionPage> {
-    const { page, perPage, skip, take } = parsePaginacion(query.page, query.per_page);
+  async list(userId: bigint, query: ListTransactionsQueryDto): Promise<TransactionPage> {
+    const { page, perPage, skip, take } = parsePagination(query.page, query.per_page);
     const {
-      rows: filas,
+      rows: rows,
       total,
       sumOf,
     } = await this.repository.findPage(userId, query, {
       skip,
       take,
     });
-    const sumaDe = (tipo: TransactionType): string => serialize(sumOf(tipo));
+    const totalOf = (type: TransactionType): string => serialize(sumOf(type));
 
     return {
-      data: filas.map(transactionFromRow),
-      meta: { page, perPage, total, sumExpense: sumaDe('expense'), sumIncome: sumaDe('income') },
+      data: rows.map(transactionFromRow),
+      meta: { page, perPage, total, sumExpense: totalOf('expense'), sumIncome: totalOf('income') },
     };
   }
 
@@ -89,39 +89,39 @@ export class TransactionsService {
    *
    * Por PERIODO y no por fecha de pago: es el eje con el que se mira la app.
    */
-  async historia(userId: bigint): Promise<TransactionHistory> {
+  async history(userId: bigint): Promise<TransactionHistory> {
     const { first, last } = await this.repository.periodRange(userId);
-    const iso = (fecha: Date | null): string | null => fecha?.toISOString().slice(0, 10) ?? null;
+    const iso = (date: Date | null): string | null => date?.toISOString().slice(0, 10) ?? null;
     return { first: iso(first), last: iso(last) };
   }
 
-  async obtener(userId: bigint, id: bigint): Promise<Transaction> {
-    return transactionFromRow(await this.exigirMovimiento(userId, id));
+  async get(userId: bigint, id: bigint): Promise<Transaction> {
+    return transactionFromRow(await this.requireTransaction(userId, id));
   }
 
   // ── Escritura ──────────────────────────────────────────────────────────────
 
-  async crear(userId: bigint, dto: CreateTransactionDto): Promise<Transaction> {
-    const nuevo = await this.prepararAlta(userId, dto);
-    const creada = await this.repository.createWithDetails(nuevo.data, nuevo.splits, nuevo.tagIds);
-    return transactionFromRow(creada);
+  async create(userId: bigint, dto: CreateTransactionDto): Promise<Transaction> {
+    const draft = await this.prepareCreate(userId, dto);
+    const created = await this.repository.createWithDetails(draft.data, draft.splits, draft.tagIds);
+    return transactionFromRow(created);
   }
 
   /**
    * Validates a new movement and builds what gets written, without writing.
    * The capture uses it to write under its own lock (`LedgerService`).
    */
-  async prepararAlta(userId: bigint, dto: CreateTransactionDto): Promise<NewTransaction> {
+  async prepareCreate(userId: bigint, dto: CreateTransactionDto): Promise<NewTransaction> {
     // Sin cuenta es un caso válido, no un error: llevarlas es opcional.
     const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : null;
     const categoryId = dto.category_id !== undefined ? BigInt(dto.category_id) : null;
     const amount = toMoney(dto.amount);
-    const tipo = dto.type ?? 'expense';
+    const type = dto.type ?? 'expense';
 
-    if (accountId !== null) await this.exigirCuentaPropia(userId, accountId);
-    if (categoryId !== null) await this.exigirCategoriaPropia(userId, categoryId);
+    if (accountId !== null) await this.requireOwnAccount(userId, accountId);
+    if (categoryId !== null) await this.requireOwnCategory(userId, categoryId);
 
-    const splits = await this.prepararSplits(userId, amount, dto.splits);
+    const splits = await this.prepareSplits(userId, amount, dto.splits);
     const tagIds = dto.tags?.length ? await this.tags.resolveNames(userId, dto.tags) : [];
 
     return {
@@ -129,9 +129,9 @@ export class TransactionsService {
         userId,
         accountId,
         date: new Date(dto.date),
-        period: dto.period ? new Date(dto.period) : mesDe(new Date(dto.date)),
+        period: dto.period ? new Date(dto.period) : monthOf(new Date(dto.date)),
         amount,
-        type: tipo,
+        type: type,
         categoryId,
         description: dto.description ?? null,
         merchant: dto.merchant ?? null,
@@ -157,74 +157,74 @@ export class TransactionsService {
    * No cuenta como gasto ni como ingreso: solo redistribuye saldo entre
    * bolsillos del propio usuario.
    */
-  async crearTransferencia(userId: bigint, dto: CreateTransferDto): Promise<Transfer> {
-    const origen = BigInt(dto.from_account_id);
-    const destino = BigInt(dto.to_account_id);
+  async createTransfer(userId: bigint, dto: CreateTransferDto): Promise<Transfer> {
+    const fromAccountId = BigInt(dto.from_account_id);
+    const toAccountId = BigInt(dto.to_account_id);
 
-    if (origen === destino) {
+    if (fromAccountId === toAccountId) {
       throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.', {
         code: 'transfer_same_account',
       });
     }
 
     await Promise.all([
-      this.exigirCuentaPropia(userId, origen),
-      this.exigirCuentaPropia(userId, destino),
+      this.requireOwnAccount(userId, fromAccountId),
+      this.requireOwnAccount(userId, toAccountId),
     ]);
 
     const amount = toMoney(dto.amount);
-    const grupo = randomUUID();
-    const fecha = new Date(dto.date);
+    const groupId = randomUUID();
+    const date = new Date(dto.date);
 
     const base = {
       userId,
-      date: fecha,
-      period: dto.period ? new Date(dto.period) : mesDe(fecha),
+      date: date,
+      period: dto.period ? new Date(dto.period) : monthOf(date),
       amount,
       type: 'transfer' as const,
       description: dto.description ?? null,
-      transferGroupId: grupo,
+      transferGroupId: groupId,
       status: 'cleared' as const,
     };
 
-    const patas = await this.repository.createTransfer(base, origen, destino);
+    const legs = await this.repository.createTransfer(base, fromAccountId, toAccountId);
 
-    return { transferGroupId: grupo, legs: patas.map(transactionFromRow) };
+    return { transferGroupId: groupId, legs: legs.map(transactionFromRow) };
   }
 
-  async actualizar(userId: bigint, id: bigint, dto: UpdateTransactionDto): Promise<Transaction> {
-    const actual = await this.exigirMovimiento(userId, id);
+  async update(userId: bigint, id: bigint, dto: UpdateTransactionDto): Promise<Transaction> {
+    const actual = await this.requireTransaction(userId, id);
 
     const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : actual.accountId;
     if (accountId !== null && dto.account_id !== undefined) {
-      await this.exigirCuentaPropia(userId, accountId);
+      await this.requireOwnAccount(userId, accountId);
     }
 
     if (dto.category_id !== undefined && dto.category_id !== null) {
-      await this.exigirCategoriaPropia(userId, BigInt(dto.category_id));
+      await this.requireOwnCategory(userId, BigInt(dto.category_id));
     }
 
     const amount = dto.amount !== undefined ? toMoney(dto.amount) : toMoney(actual.amount);
 
     // Si llegan splits nuevos, se revalida el cuadre contra el monto resultante;
     // si no llegan y el monto cambia, el desglose que ya hay tiene que cuadrar.
-    exigirDesgloseCuadrado(actual, dto, amount);
+    requireReconciledSplits(actual, dto, amount);
     const splits =
-      dto.splits !== undefined ? await this.prepararSplits(userId, amount, dto.splits) : null;
+      dto.splits !== undefined ? await this.prepareSplits(userId, amount, dto.splits) : null;
     const tagIds = dto.tags !== undefined ? await this.tags.resolveNames(userId, dto.tags) : null;
 
-    const cambios = cambiosDe(dto, accountId, amount);
-    const otra = await this.otraPata(userId, actual, dto, cambios);
-    const actualizada = await this.repository.updateWithDetails(
+    const changes = changesOf(dto, accountId, amount);
+    const partner = await this.partnerLeg(userId, actual, dto, changes);
+    const updated = await this.repository.updateWithDetails(
       userId,
       id,
-      cambios,
+      changes,
       splits,
       tagIds,
-      otra,
+      partner,
     );
 
-    return transactionFromRow(actualizada);
+    return transactionFromRow(updated);
   }
 
   /**
@@ -232,23 +232,23 @@ export class TransactionsService {
    * descuadraría el patrimonio, porque el dinero saldría de una cuenta sin
    * entrar a ninguna.
    */
-  async eliminar(userId: bigint, id: bigint): Promise<void> {
-    const movimiento = await this.exigirMovimiento(userId, id);
+  async remove(userId: bigint, id: bigint): Promise<void> {
+    const transaction = await this.requireTransaction(userId, id);
 
     // The receipt rows cascade with the movement; their files do not. Their
     // keys are read first and the files go after the rows (phase 6.9).
-    if (movimiento.transferGroupId) {
-      const keys = await this.soportes.keysOf(userId, {
-        transferGroupId: movimiento.transferGroupId,
+    if (transaction.transferGroupId) {
+      const keys = await this.receipts.keysOf(userId, {
+        transferGroupId: transaction.transferGroupId,
       });
-      await this.repository.deleteTransferGroup(userId, movimiento.transferGroupId);
-      await this.soportes.removeFiles(keys);
+      await this.repository.deleteTransferGroup(userId, transaction.transferGroupId);
+      await this.receipts.removeFiles(keys);
       return;
     }
 
-    const keys = await this.soportes.keysOf(userId, { transactionId: id });
+    const keys = await this.receipts.keysOf(userId, { transactionId: id });
     await this.repository.deleteOne(userId, id);
-    await this.soportes.removeFiles(keys);
+    await this.receipts.removeFiles(keys);
   }
 
   // ── Apoyo ──────────────────────────────────────────────────────────────────
@@ -257,17 +257,21 @@ export class TransactionsService {
    * Editar una pata de transferencia edita las dos (como borrar): un monto
    * distinto en cada pata descuadra los saldos de las dos cuentas.
    */
-  private async otraPata(
+  private async partnerLeg(
     userId: bigint,
-    actual: TransaccionCompleta,
+    actual: FullTransaction,
     dto: UpdateTransactionDto,
-    cambios: TransactionChanges,
+    changes: TransactionChanges,
   ): Promise<TransferPartner | null> {
     if (actual.transferGroupId === null) return null;
-    exigirQueSigaSiendoTransferencia(dto);
+    requireStillTransfer(dto);
     if (dto.account_id !== undefined) {
-      const suya = await this.repository.partnerAccount(userId, actual.transferGroupId, actual.id);
-      if (suya !== null && suya === BigInt(dto.account_id)) {
+      const partnerAccount = await this.repository.partnerAccount(
+        userId,
+        actual.transferGroupId,
+        actual.id,
+      );
+      if (partnerAccount !== null && partnerAccount === BigInt(dto.account_id)) {
         throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.', {
           code: 'transfer_same_account',
         });
@@ -276,7 +280,7 @@ export class TransactionsService {
     return {
       userId,
       transferGroupId: actual.transferGroupId,
-      changes: cambiosDeLaOtraPata(cambios),
+      changes: partnerLegChanges(changes),
     };
   }
 
@@ -284,12 +288,12 @@ export class TransactionsService {
    * Valida el cuadre y exige que cada categoría sea del usuario (422): sin eso
    * un split colgaba un movimiento propio de un concepto ajeno.
    */
-  private async prepararSplits(
+  private async prepareSplits(
     userId: bigint,
-    amountCabecera: Money,
+    headerAmount: Money,
     splits: readonly SplitDto[] | undefined,
   ): Promise<SplitToWrite[]> {
-    const listos = splitsParaEscribir(amountCabecera, splits);
+    const listos = splitsToWrite(headerAmount, splits);
     const ids = listos.flatMap((split) => (split.categoryId !== null ? [split.categoryId] : []));
     if (!(await this.repository.categoriesBelongTo(userId, ids))) {
       throw new ValidationError('La categoría indicada no existe o no es tuya.', {
@@ -299,14 +303,14 @@ export class TransactionsService {
     return listos;
   }
 
-  private async exigirMovimiento(userId: bigint, id: bigint): Promise<TransaccionCompleta> {
-    const movimiento = await this.repository.findOwned(userId, id);
-    if (!movimiento) throw new NotFoundError('El movimiento no existe.');
-    return movimiento;
+  private async requireTransaction(userId: bigint, id: bigint): Promise<FullTransaction> {
+    const transaction = await this.repository.findOwned(userId, id);
+    if (!transaction) throw new NotFoundError('El movimiento no existe.');
+    return transaction;
   }
 
   /** Sin esta verificación se podría asociar un movimiento a la cuenta de otro. */
-  private async exigirCuentaPropia(userId: bigint, accountId: bigint): Promise<void> {
+  private async requireOwnAccount(userId: bigint, accountId: bigint): Promise<void> {
     if (!(await this.repository.accountBelongsTo(userId, accountId))) {
       throw new ValidationError('La cuenta indicada no existe o no es tuya.', {
         code: 'account_not_owned',
@@ -314,7 +318,7 @@ export class TransactionsService {
     }
   }
 
-  private async exigirCategoriaPropia(userId: bigint, categoryId: bigint): Promise<void> {
+  private async requireOwnCategory(userId: bigint, categoryId: bigint): Promise<void> {
     if (!(await this.repository.categoryBelongsTo(userId, categoryId))) {
       throw new ValidationError('La categoría indicada no existe o no es tuya.', {
         code: 'category_not_owned',

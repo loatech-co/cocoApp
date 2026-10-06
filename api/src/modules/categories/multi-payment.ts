@@ -2,7 +2,7 @@ import { LEVELS, MAX_DEPTH } from '../../common/categories/categories.tree';
 import type { CodeWithStatus } from '../../common/errors/domain-error';
 
 /** Una negativa: su código estable (v2) y la frase para la persona. */
-export interface RechazoDeVariosPagos {
+export interface MultiPaymentRejection {
   code: CodeWithStatus<422>;
   message: string;
 }
@@ -27,34 +27,34 @@ export interface RechazoDeVariosPagos {
  * tocó. Y cada una lleva su código, para que un cliente no tenga que leer la
  * frase para saber cuál fue.
  */
-export function rechazoDeVariosPagos({
-  variosPagos,
-  pagoAutomatico,
-  recurrente,
-  profundidad,
+export function multiPaymentRejection({
+  isMultiPayment: isMultiPayment,
+  isAutoPaid: isAutoPaid,
+  isRecurring: isRecurring,
+  depth: depth,
 }: {
-  variosPagos: boolean;
-  pagoAutomatico: boolean;
-  recurrente: boolean;
-  profundidad: number;
-}): RechazoDeVariosPagos | null {
+  isMultiPayment: boolean;
+  isAutoPaid: boolean;
+  isRecurring: boolean;
+  depth: number;
+}): MultiPaymentRejection | null {
   // Apagada no restringe nada: lo que no está marcado no tiene por qué cumplir
   // las condiciones de estarlo. Si no, archivar un centro de costos viejo
   // fallaría por una marca que nadie encendió.
-  if (!variosPagos) return null;
+  if (!isMultiPayment) return null;
 
-  if (profundidad !== MAX_DEPTH) {
+  if (depth !== MAX_DEPTH) {
     return {
       code: 'multi_payment_requires_concept',
       message:
         `«Se paga en varias veces» es de un ${LEVELS[MAX_DEPTH - 1]}, y esto es ` +
-        `un ${LEVELS[Math.max(0, Math.min(profundidad, MAX_DEPTH) - 1)]}. ` +
+        `un ${LEVELS[Math.max(0, Math.min(depth, MAX_DEPTH) - 1)]}. ` +
         `Un centro de costos y una categoría son sumas de lo que cuelga de ellos: ` +
         `no se pagan, ni de una vez ni de varias.`,
     };
   }
 
-  if (!recurrente) {
+  if (!isRecurring) {
     return {
       code: 'multi_payment_requires_recurring',
       message:
@@ -64,7 +64,7 @@ export function rechazoDeVariosPagos({
     };
   }
 
-  if (pagoAutomatico) {
+  if (isAutoPaid) {
     return {
       code: 'multi_payment_excludes_auto_paid',
       message:
@@ -80,8 +80,8 @@ export function rechazoDeVariosPagos({
 }
 
 /** La frase de la negativa, o `null` si la marca cabe. */
-export function porQueNoAdmiteVariosPagos(
-  estado: Parameters<typeof rechazoDeVariosPagos>[0],
+export function whyNotMultiPayment(
+  state: Parameters<typeof multiPaymentRejection>[0],
 ): string | null {
-  return rechazoDeVariosPagos(estado)?.message ?? null;
+  return multiPaymentRejection(state)?.message ?? null;
 }

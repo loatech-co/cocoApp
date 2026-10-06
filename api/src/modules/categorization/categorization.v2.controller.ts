@@ -40,11 +40,7 @@ export class CategorizationV2Controller {
     @Body() input: LearnInput,
   ): Promise<LearningBody> {
     return learningV2(
-      await this.categorization.aprenderDesdeLaFicha(
-        user.id,
-        input.description,
-        BigInt(input.categoryId),
-      ),
+      await this.categorization.learnFromForm(user.id, input.description, BigInt(input.categoryId)),
     );
   }
 }

@@ -10,10 +10,10 @@ export class LedgerRepository {
   constructor(private readonly db: Database) {}
 
   async findIdByExternalRef(userId: bigint, externalRef: string): Promise<bigint | null> {
-    const fila = await this.db.forUser(userId, (tx) =>
+    const row = await this.db.forUser(userId, (tx) =>
       tx.transaction.findFirst({ where: { userId, externalRef }, select: { id: true } }),
     );
-    return fila?.id ?? null;
+    return row?.id ?? null;
   }
 
   /** The most recent categorized movements with a description, newest first. */
@@ -77,7 +77,7 @@ export class LedgerRepository {
     categoryIds: readonly bigint[],
     { before, since }: { before: Date; since: Date },
   ): Promise<MonthlyHistory> {
-    const historia = await this.db.forUser(userId, async (tx) => {
+    const history = await this.db.forUser(userId, async (tx) => {
       // El último periodo de cada concepto: un agregado en la base, sin traer filas.
       const ultimos = await tx.transaction.groupBy({
         by: ['categoryId'],
@@ -85,29 +85,29 @@ export class LedgerRepository {
         _max: { period: true },
       });
 
-      const tramos = ultimos.flatMap(({ categoryId, _max }) =>
+      const ranges = ultimos.flatMap(({ categoryId, _max }) =>
         categoryId === null || _max.period === null
           ? []
-          : [{ categoryId, period: { gte: desdeParaElConcepto(_max.period, since), lt: before } }],
+          : [{ categoryId, period: { gte: sinceForConcept(_max.period, since), lt: before } }],
       );
-      if (tramos.length === 0) return [];
+      if (ranges.length === 0) return [];
 
       return tx.transaction.findMany({
-        where: { userId, OR: tramos },
+        where: { userId, OR: ranges },
         select: { categoryId: true, amount: true, period: true },
       });
     });
 
-    const historiaDe: MonthlyHistory = new Map();
-    for (const t of historia) {
-      const clave = t.categoryId?.toString();
-      if (clave === undefined) continue;
-      const mes = t.period.toISOString().slice(0, 7);
-      const meses = historiaDe.get(clave) ?? new Map<string, Money>();
-      meses.set(mes, (meses.get(mes) ?? ZERO).plus(toMoney(t.amount)));
-      historiaDe.set(clave, meses);
+    const historyByCategory: MonthlyHistory = new Map();
+    for (const t of history) {
+      const key = t.categoryId?.toString();
+      if (key === undefined) continue;
+      const monthKey = t.period.toISOString().slice(0, 7);
+      const months = historyByCategory.get(key) ?? new Map<string, Money>();
+      months.set(monthKey, (months.get(monthKey) ?? ZERO).plus(toMoney(t.amount)));
+      historyByCategory.set(key, months);
     }
-    return historiaDe;
+    return historyByCategory;
   }
 
   /**
@@ -119,7 +119,7 @@ export class LedgerRepository {
     categoryIds: readonly bigint[],
     month: Date,
   ): Promise<Map<string, Money>> {
-    const pagados = await this.db.forUser(userId, (tx) =>
+    const paidRows = await this.db.forUser(userId, (tx) =>
       tx.transaction.findMany({
         where: {
           userId,
@@ -131,13 +131,13 @@ export class LedgerRepository {
       }),
     );
 
-    const pagado = new Map<string, Money>();
-    for (const t of pagados) {
-      const clave = t.categoryId?.toString();
-      if (clave === undefined) continue;
-      pagado.set(clave, (pagado.get(clave) ?? ZERO).plus(toMoney(t.amount)));
+    const paid = new Map<string, Money>();
+    for (const t of paidRows) {
+      const key = t.categoryId?.toString();
+      if (key === undefined) continue;
+      paid.set(key, (paid.get(key) ?? ZERO).plus(toMoney(t.amount)));
     }
-    return pagado;
+    return paid;
   }
 
   /** Which of these concepts already have a movement in that period, in ANY status. */
@@ -146,13 +146,13 @@ export class LedgerRepository {
     categoryIds: readonly bigint[],
     period: Date,
   ): Promise<Set<string | undefined>> {
-    const yaHay = await this.db.forUser(userId, (tx) =>
+    const existing = await this.db.forUser(userId, (tx) =>
       tx.transaction.findMany({
         where: { userId, categoryId: { in: [...categoryIds] }, period },
         select: { categoryId: true },
       }),
     );
-    return new Set(yaHay.map((t) => t.categoryId?.toString()));
+    return new Set(existing.map((t) => t.categoryId?.toString()));
   }
 
   /**
@@ -177,7 +177,7 @@ export class LedgerRepository {
  * falls inside the window, or the first day of the month of that last payment
  * when it is older, so the fallback month comes back whole.
  */
-function desdeParaElConcepto(ultimo: Date, since: Date): Date {
-  const mesDelUltimo = new Date(Date.UTC(ultimo.getUTCFullYear(), ultimo.getUTCMonth(), 1));
-  return mesDelUltimo < since ? mesDelUltimo : since;
+function sinceForConcept(last: Date, since: Date): Date {
+  const lastMonthStart = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), 1));
+  return lastMonthStart < since ? lastMonthStart : since;
 }

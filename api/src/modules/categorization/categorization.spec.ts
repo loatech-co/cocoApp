@@ -1,150 +1,149 @@
 import {
-  CONFIANZA_MINIMA,
-  sugerirCategoria,
-  tokensSignificativos,
-  type AntecedenteHistorico,
-  type ReglaDeCategoria,
-  patronParaAprender,
+  MIN_CONFIDENCE,
+  suggestCategory,
+  significantTokens,
+  type HistoryEntry,
+  type CategoryRule,
+  learnablePattern,
 } from './categorization';
 
-const DOMICILIOS = 10n;
-const MERCADO = 20n;
-const TRANSPORTE = 30n;
+const DELIVERY = 10n;
+const GROCERIES = 20n;
+const TRANSPORT = 30n;
 
 describe('Categorización automática (T1)', () => {
-  const sinContexto = { historial: [], reglas: [] };
+  const noContext = { history: [], rules: [] };
 
   describe('cuándo NO sugiere', () => {
     it.each<[string, string | null | undefined]>([
       ['vacía', ''],
       ['null', null],
       ['undefined', undefined],
-    ])('devuelve null con una descripción %s', (_, descripcion) => {
-      expect(sugerirCategoria(descripcion, sinContexto)).toBeNull();
+    ])('devuelve null con una descripción %s', (_, description) => {
+      expect(suggestCategory(description, noContext)).toBeNull();
     });
 
     it('devuelve null sin historial ni reglas', () => {
-      expect(sugerirCategoria('Exito Poblado', sinContexto)).toBeNull();
+      expect(suggestCategory('Exito Poblado', noContext)).toBeNull();
     });
 
     it('devuelve null cuando la descripción es solo ruido', () => {
-      expect(sugerirCategoria('REF 000123', { historial: [], reglas: REGLAS })).toBeNull();
+      expect(suggestCategory('REF 000123', { history: [], rules: RULES })).toBeNull();
     });
 
     it('calla cuando el historial está repartido y ninguna categoría domina', () => {
       // Sugerir mal es peor que no sugerir: una categoría equivocada que se
       // cuela sin mirar contamina los informes durante meses.
-      const historial: AntecedenteHistorico[] = [
-        { description: 'Rappi', categoryId: DOMICILIOS },
-        { description: 'Rappi', categoryId: MERCADO },
-        { description: 'Rappi', categoryId: TRANSPORTE },
+      const history: HistoryEntry[] = [
+        { description: 'Rappi', categoryId: DELIVERY },
+        { description: 'Rappi', categoryId: GROCERIES },
+        { description: 'Rappi', categoryId: TRANSPORT },
       ];
-      expect(sugerirCategoria('Rappi', { historial, reglas: [] })).toBeNull();
+      expect(suggestCategory('Rappi', { history: history, rules: [] })).toBeNull();
     });
   });
 
   describe('aprende del historial', () => {
-    const historial: AntecedenteHistorico[] = [
-      { description: 'RAPPI*RESTAURANTE', categoryId: DOMICILIOS },
-      { description: 'Rappi Comida', categoryId: DOMICILIOS },
-      { description: 'rappi ref 998877', categoryId: DOMICILIOS },
+    const history: HistoryEntry[] = [
+      { description: 'RAPPI*RESTAURANTE', categoryId: DELIVERY },
+      { description: 'Rappi Comida', categoryId: DELIVERY },
+      { description: 'rappi ref 998877', categoryId: DELIVERY },
     ];
 
     it('sugiere lo que la persona ya viene clasificando', () => {
-      const sugerencia = sugerirCategoria('RAPPI Domicilio', { historial, reglas: [] });
-      expect(sugerencia).toMatchObject({ categoryId: DOMICILIOS, motivo: 'historial' });
-      expect(sugerencia!.confidence).toBe(100);
+      const suggestion = suggestCategory('RAPPI Domicilio', { history: history, rules: [] });
+      expect(suggestion).toMatchObject({ categoryId: DELIVERY, reason: 'history' });
+      expect(suggestion!.confidence).toBe(100);
     });
 
     it('ignora tildes, mayúsculas y ruido de referencia al comparar', () => {
-      expect(sugerirCategoria('compra rappi REF 12345', { historial, reglas: [] })).toMatchObject({
-        categoryId: DOMICILIOS,
+      expect(
+        suggestCategory('compra rappi REF 12345', { history: history, rules: [] }),
+      ).toMatchObject({
+        categoryId: DELIVERY,
       });
     });
 
     it('el historial GANA a las reglas sembradas', () => {
       // Las listas envejecen; el historial refleja cómo organiza SUS finanzas
       // esta persona, no las mías.
-      const reglas: ReglaDeCategoria[] = [
-        { pattern: 'rappi', categoryId: MERCADO, priority: 0, sembrada: true },
+      const rules: CategoryRule[] = [
+        { pattern: 'rappi', categoryId: GROCERIES, priority: 0, isSeeded: true },
       ];
-      expect(sugerirCategoria('Rappi', { historial, reglas })).toMatchObject({
-        categoryId: DOMICILIOS,
-        motivo: 'historial',
+      expect(suggestCategory('Rappi', { history: history, rules: rules })).toMatchObject({
+        categoryId: DELIVERY,
+        reason: 'history',
       });
     });
 
     it('no sugiere nada si ningún antecedente comparte palabras', () => {
-      expect(sugerirCategoria('Terpel Calle 10', { historial, reglas: [] })).toBeNull();
+      expect(suggestCategory('Terpel Calle 10', { history: history, rules: [] })).toBeNull();
     });
 
     it('la categoría dominante gana aunque haya algo de ruido', () => {
-      const mezclado: AntecedenteHistorico[] = [
-        ...historial,
-        { description: 'Rappi', categoryId: MERCADO },
-      ];
-      const sugerencia = sugerirCategoria('Rappi', { historial: mezclado, reglas: [] });
-      expect(sugerencia).toMatchObject({ categoryId: DOMICILIOS });
-      expect(sugerencia!.confidence).toBeGreaterThanOrEqual(CONFIANZA_MINIMA);
-      expect(sugerencia!.confidence).toBeLessThan(100);
+      const mixed: HistoryEntry[] = [...history, { description: 'Rappi', categoryId: GROCERIES }];
+      const suggestion = suggestCategory('Rappi', { history: mixed, rules: [] });
+      expect(suggestion).toMatchObject({ categoryId: DELIVERY });
+      expect(suggestion!.confidence).toBeGreaterThanOrEqual(MIN_CONFIDENCE);
+      expect(suggestion!.confidence).toBeLessThan(100);
     });
   });
 
   describe('reglas por palabra clave', () => {
     it('sugiere desde una regla sembrada, con confianza moderada', () => {
-      const sugerencia = sugerirCategoria('EXITO POBLADO', { historial: [], reglas: REGLAS });
-      expect(sugerencia).toMatchObject({ categoryId: MERCADO, motivo: 'regla-sembrada' });
+      const suggestion = suggestCategory('EXITO POBLADO', { history: [], rules: RULES });
+      expect(suggestion).toMatchObject({ categoryId: GROCERIES, reason: 'seeded_rule' });
       // Moderada a propósito: una regla sembrada es una suposición nuestra.
-      expect(sugerencia!.confidence).toBe(60);
+      expect(suggestion!.confidence).toBe(60);
     });
 
     it('una regla propia pesa más que una sembrada', () => {
-      const reglas: ReglaDeCategoria[] = [
-        { pattern: 'exito', categoryId: MERCADO, priority: 0, sembrada: true },
-        { pattern: 'exito', categoryId: DOMICILIOS, priority: 10 },
+      const rules: CategoryRule[] = [
+        { pattern: 'exito', categoryId: GROCERIES, priority: 0, isSeeded: true },
+        { pattern: 'exito', categoryId: DELIVERY, priority: 10 },
       ];
-      const sugerencia = sugerirCategoria('Exito Poblado', { historial: [], reglas });
-      expect(sugerencia).toMatchObject({ categoryId: DOMICILIOS, motivo: 'regla' });
-      expect(sugerencia!.confidence).toBe(85);
+      const suggestion = suggestCategory('Exito Poblado', { history: [], rules: rules });
+      expect(suggestion).toMatchObject({ categoryId: DELIVERY, reason: 'rule' });
+      expect(suggestion!.confidence).toBe(85);
     });
 
     it('a igual prioridad gana el patrón más específico', () => {
-      const reglas: ReglaDeCategoria[] = [
-        { pattern: 'juan', categoryId: MERCADO, priority: 0 },
-        { pattern: 'juan valdez', categoryId: DOMICILIOS, priority: 0 },
+      const rules: CategoryRule[] = [
+        { pattern: 'juan', categoryId: GROCERIES, priority: 0 },
+        { pattern: 'juan valdez', categoryId: DELIVERY, priority: 0 },
       ];
-      expect(sugerirCategoria('Juan Valdez Cafe', { historial: [], reglas })).toMatchObject({
-        categoryId: DOMICILIOS,
+      expect(suggestCategory('Juan Valdez Cafe', { history: [], rules: rules })).toMatchObject({
+        categoryId: DELIVERY,
       });
     });
 
     it('ignora patrones vacíos sin reventar', () => {
-      const reglas: ReglaDeCategoria[] = [{ pattern: '', categoryId: MERCADO, priority: 99 }];
-      expect(sugerirCategoria('Lo que sea', { historial: [], reglas })).toBeNull();
+      const rules: CategoryRule[] = [{ pattern: '', categoryId: GROCERIES, priority: 99 }];
+      expect(suggestCategory('Lo que sea', { history: [], rules: rules })).toBeNull();
     });
   });
 
   describe('tokensSignificativos', () => {
     it('descarta palabras de menos de tres letras', () => {
-      expect([...tokensSignificativos('d1 la 10 casa')]).toEqual(['casa']);
+      expect([...significantTokens('d1 la 10 casa')]).toEqual(['casa']);
     });
 
     it('descarta palabras vacías de comercio', () => {
-      expect([...tokensSignificativos('exito de la 80 sas colombia')]).toEqual(['exito']);
+      expect([...significantTokens('exito de la 80 sas colombia')]).toEqual(['exito']);
     });
 
     it('descarta números sueltos, que suelen ser referencias', () => {
-      expect([...tokensSignificativos('terpel 998877')]).toEqual(['terpel']);
+      expect([...significantTokens('terpel 998877')]).toEqual(['terpel']);
     });
   });
 });
 
 /** Un subconjunto de las reglas sembradas, para las pruebas. */
-const REGLAS: ReglaDeCategoria[] = [
-  { pattern: 'exito', categoryId: MERCADO, priority: 0, sembrada: true },
-  { pattern: 'carulla', categoryId: MERCADO, priority: 0, sembrada: true },
-  { pattern: 'rappi', categoryId: DOMICILIOS, priority: 0, sembrada: true },
-  { pattern: 'uber', categoryId: TRANSPORTE, priority: 0, sembrada: true },
+const RULES: CategoryRule[] = [
+  { pattern: 'exito', categoryId: GROCERIES, priority: 0, isSeeded: true },
+  { pattern: 'carulla', categoryId: GROCERIES, priority: 0, isSeeded: true },
+  { pattern: 'rappi', categoryId: DELIVERY, priority: 0, isSeeded: true },
+  { pattern: 'uber', categoryId: TRANSPORT, priority: 0, isSeeded: true },
 ];
 
 /**
@@ -163,27 +162,27 @@ describe('El patrón con el que se aprende', () => {
       .trim();
 
   it('es el token más largo que no sea número', () => {
-    expect(patronParaAprender('RAPPI*RESTAURANTE EL SITIO 2025', normal)).toBe('restaurante');
+    expect(learnablePattern('RAPPI*RESTAURANTE EL SITIO 2025', normal)).toBe('restaurante');
   });
 
   it('de una descripción vacía no sale nada', () => {
-    expect(patronParaAprender('', normal)).toBeNull();
-    expect(patronParaAprender(null, normal)).toBeNull();
-    expect(patronParaAprender('   ', normal)).toBeNull();
+    expect(learnablePattern('', normal)).toBeNull();
+    expect(learnablePattern(null, normal)).toBeNull();
+    expect(learnablePattern('   ', normal)).toBeNull();
   });
 
   it('de una descripción genérica tampoco', () => {
-    expect(patronParaAprender('Pago', normal)).toBeNull();
-    expect(patronParaAprender('pago factura servicios', normal)).toBeNull();
-    expect(patronParaAprender('Transferencia 12345', normal)).toBeNull();
+    expect(learnablePattern('Pago', normal)).toBeNull();
+    expect(learnablePattern('pago factura servicios', normal)).toBeNull();
+    expect(learnablePattern('Transferencia 12345', normal)).toBeNull();
   });
 
   it('pero una palabra genérica no esconde a la que sí dice algo', () => {
-    expect(patronParaAprender('Pago Netflix', normal)).toBe('netflix');
-    expect(patronParaAprender('compra en Carulla', normal)).toBe('carulla');
+    expect(learnablePattern('Pago Netflix', normal)).toBe('netflix');
+    expect(learnablePattern('compra en Carulla', normal)).toBe('carulla');
   });
 
   it('y las de menos de cuatro letras no cuentan', () => {
-    expect(patronParaAprender('D1 ARA', normal)).toBeNull();
+    expect(learnablePattern('D1 ARA', normal)).toBeNull();
   });
 });

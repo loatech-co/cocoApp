@@ -26,7 +26,7 @@
  * Por lo mismo no se copia la recurrencia ni las palabras clave: las dos viven
  * en el concepto, que es el nivel que no viaja.
  */
-export interface NodoDePlantilla {
+export interface TemplateNode {
   name: string;
   /** Nombre de lucide. El único set permitido. */
   icon?: string;
@@ -34,16 +34,16 @@ export interface NodoDePlantilla {
    * Solo en el primer nivel, y solo se lee de ahí: lo que cuelga de un centro
    * estático no se reclasifica desde la tabla ni desde la ficha.
    */
-  estatico?: boolean;
-  children?: readonly NodoDePlantilla[];
+  isStatic?: boolean;
+  children?: readonly TemplateNode[];
 }
 
-export const PLANTILLA_DE_CUENTA_NUEVA: readonly NodoDePlantilla[] = [
+export const NEW_ACCOUNT_TEMPLATE: readonly TemplateNode[] = [
   {
     name: 'Costos fijos',
     // Estático porque es la estructura que no se improvisa: el alquiler no
     // cambia de categoría un martes.
-    estatico: true,
+    isStatic: true,
     children: [
       { name: 'Educación', icon: 'graduation-cap' },
       { name: 'Vivienda', icon: 'house' },

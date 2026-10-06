@@ -18,8 +18,8 @@ import {
 
 import { CATEGORY_KINDS, PERIODICITIES } from '../../../../contract/v2/categories.response';
 import { PageQuery } from '../../../../contract/v2/page.dto';
-import { unir } from '../../palabras-clave';
-import { MAXIMO_DE_PALABRAS } from '../category.dto';
+import { mergeKeywords } from '../../keywords';
+import { MAX_KEYWORDS } from '../category.dto';
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 const LONGEST_KEYWORD = 60;
@@ -31,7 +31,7 @@ type Periodicity = (typeof PERIODICITIES)[number];
 function cleanKeywords({ value }: { value: unknown }): unknown {
   if (!Array.isArray(value)) return value;
   if (value.some((word) => typeof word !== 'string')) return value;
-  return unir(value as string[]);
+  return mergeKeywords(value as string[]);
 }
 
 /** What a category may carry, created or edited. */
@@ -103,8 +103,8 @@ class CategoryFields {
   @IsOptional()
   @Transform(cleanKeywords)
   @IsArray()
-  @ArrayMaxSize(MAXIMO_DE_PALABRAS, {
-    message: `Un concepto admite hasta ${MAXIMO_DE_PALABRAS} palabras clave.`,
+  @ArrayMaxSize(MAX_KEYWORDS, {
+    message: `Un concepto admite hasta ${MAX_KEYWORDS} palabras clave.`,
   })
   @IsString({ each: true })
   @MaxLength(LONGEST_KEYWORD, { each: true })

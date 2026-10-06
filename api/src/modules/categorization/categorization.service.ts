@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 
 import {
-  patronParaAprender,
-  sugerirCategoria,
-  type AntecedenteHistorico,
-  type ReglaDeCategoria,
-  type Sugerencia,
+  learnablePattern,
+  suggestCategory,
+  type HistoryEntry,
+  type CategoryRule,
+  type SuggestedCategory,
 } from './categorization';
 import { CategorizationRepository } from './categorization.repository';
-import { normalizarDescripcion } from './description';
+import { normalizeDescription } from './description';
 import { ValidationError } from '../../common/errors/domain-error';
-import { english, SUGGESTION_REASON, type English } from '../../common/vocabulary';
+import { SUGGESTION_REASON, type English } from '../../common/vocabulary';
 import { CategoryLookupService } from '../categories/category-lookup.service';
 import { LedgerService } from '../transactions/ledger.service';
 
@@ -21,15 +21,15 @@ import { LedgerService } from '../transactions/ledger.service';
  * el historial": traer diez mil filas en cada sugerencia sería absurdo, y los
  * movimientos recientes describen mejor cómo organiza sus finanzas HOY.
  */
-const ANTECEDENTES_A_LEER = 400;
+const HISTORY_SIZE = 400;
 
 /**
  * Prioridad con la que nacen las reglas sembradas por defecto, frente a las que
  * la persona crea o confirma. La diferencia no es decorativa: decide quién gana
  * cuando dos reglas coinciden, y con qué confianza se muestra la sugerencia.
  */
-const PRIORIDAD_SEMBRADA = 0;
-const PRIORIDAD_APRENDIDA = 10;
+const SEEDED_PRIORITY = 0;
+const LEARNED_PRIORITY = 10;
 
 /** A suggested category, as the service hands it out (the domain). */
 export interface Suggestion {
@@ -59,9 +59,9 @@ export class CategorizationService {
    * `prepararContexto` + `sugerirParaLote`: leer el historial una sola vez en
    * lugar de una por fila.
    */
-  async sugerirPara(userId: bigint, descripcion: string): Promise<Suggestion | null> {
-    const contexto = await this.prepararContexto(userId);
-    return suggestionOf(sugerirCategoria(descripcion, contexto));
+  async suggestFor(userId: bigint, description: string): Promise<Suggestion | null> {
+    const context = await this.loadContext(userId);
+    return suggestionOf(suggestCategory(description, context));
   }
 
   /**
@@ -70,9 +70,9 @@ export class CategorizationService {
    */
   async suggestForQuery(
     userId: bigint,
-    descripcion: string | undefined,
+    description: string | undefined,
   ): Promise<Suggestion | null> {
-    return descripcion?.trim() ? this.sugerirPara(userId, descripcion) : null;
+    return description?.trim() ? this.suggestFor(userId, description) : null;
   }
 
   /**
@@ -81,26 +81,26 @@ export class CategorizationService {
    * Se separa a propósito: una importación de cuarenta filas debe costar dos
    * consultas, no ochenta.
    */
-  async prepararContexto(userId: bigint): Promise<{
-    historial: AntecedenteHistorico[];
-    reglas: ReglaDeCategoria[];
+  async loadContext(userId: bigint): Promise<{
+    history: HistoryEntry[];
+    rules: CategoryRule[];
   }> {
-    const [movimientos, reglas] = await Promise.all([
-      this.ledger.findCategorizedHistory(userId, ANTECEDENTES_A_LEER),
+    const [transactions, rules] = await Promise.all([
+      this.ledger.findCategorizedHistory(userId, HISTORY_SIZE),
       this.repository.findRules(userId),
     ]);
 
     return {
       // El filtro de la consulta garantiza que no hay nulos; `flatMap` se lo
       // demuestra a TypeScript sin quitar nada.
-      historial: movimientos.flatMap((movimiento) =>
-        movimiento.categoryId === null
+      history: transactions.flatMap((transaction) =>
+        transaction.categoryId === null
           ? []
-          : [{ description: movimiento.description, categoryId: movimiento.categoryId }],
+          : [{ description: transaction.description, categoryId: transaction.categoryId }],
       ),
-      reglas: reglas.map((regla) => ({
-        ...regla,
-        sembrada: regla.priority === PRIORIDAD_SEMBRADA,
+      rules: rules.map((rule) => ({
+        ...rule,
+        isSeeded: rule.priority === SEEDED_PRIORITY,
       })),
     };
   }
@@ -111,11 +111,11 @@ export class CategorizationService {
    * Es lo que hace que el sistema mejore con el uso sin pedirle nada a nadie:
    * la próxima importación acertará más porque esta se corrigió.
    */
-  async aprenderDe(userId: bigint, descripcion: string, categoryId: bigint): Promise<boolean> {
-    const patron = patronParaAprender(descripcion, normalizarDescripcion);
-    if (!patron) return false;
+  async learnFrom(userId: bigint, description: string, categoryId: bigint): Promise<boolean> {
+    const pattern = learnablePattern(description, normalizeDescription);
+    if (!pattern) return false;
 
-    await this.repository.upsertRule(userId, patron, categoryId, PRIORIDAD_APRENDIDA);
+    await this.repository.upsertRule(userId, pattern, categoryId, LEARNED_PRIORITY);
     return true;
   }
 
@@ -127,26 +127,22 @@ export class CategorizationService {
    * esta comprobación alguien podría crear una regla que apunte a la categoría
    * de otra cuenta —inútil para él, pero una fila que no debería existir—.
    */
-  async aprenderDesdeLaFicha(
-    userId: bigint,
-    descripcion: string,
-    categoryId: bigint,
-  ): Promise<Learning> {
+  async learnFromForm(userId: bigint, description: string, categoryId: bigint): Promise<Learning> {
     if (!(await this.categories.isOwn(userId, categoryId)))
       throw new ValidationError('Esa categoría no existe en tu cuenta.', {
         code: 'category_not_owned',
       });
 
-    return { learned: await this.aprenderDe(userId, descripcion, categoryId) };
+    return { learned: await this.learnFrom(userId, description, categoryId) };
   }
 }
 
-function suggestionOf(sugerencia: Sugerencia | null): Suggestion | null {
-  return sugerencia
+function suggestionOf(suggested: SuggestedCategory | null): Suggestion | null {
+  return suggested
     ? {
-        categoryId: Number(sugerencia.categoryId),
-        confidence: sugerencia.confidence,
-        reason: english(SUGGESTION_REASON, sugerencia.motivo),
+        categoryId: Number(suggested.categoryId),
+        confidence: suggested.confidence,
+        reason: suggested.reason,
       }
     : null;
 }

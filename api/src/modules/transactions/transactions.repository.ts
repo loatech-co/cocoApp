@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import type { ListTransactionsQueryDto } from './dto/transaction.dto';
-import { parseOrden } from './transactions.sort';
+import { parseOrder } from './transactions.sort';
 import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
 import { DuplicateError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
@@ -9,11 +9,11 @@ import { Prisma, type TransactionType } from '../../generated/prisma/client';
 import { Database, type UserTx } from '../../prisma/database';
 
 /** Lo que Prisma devuelve cuando se incluyen splits y etiquetas. */
-export type TransaccionCompleta = Prisma.TransactionGetPayload<{
+export type FullTransaction = Prisma.TransactionGetPayload<{
   include: { splits: true; tags: { include: { tag: true } } };
 }>;
 
-const INCLUIR_TODO = {
+const INCLUDE_ALL = {
   splits: true,
   tags: { include: { tag: true } },
 } as const;
@@ -56,7 +56,7 @@ export class TransactionsRepository {
     query: ListTransactionsQueryDto,
     page: { skip: number; take: number },
   ): Promise<{
-    rows: TransaccionCompleta[];
+    rows: FullTransaction[];
     total: number;
     sumOf: (type: TransactionType) => Money;
   }> {
@@ -65,8 +65,8 @@ export class TransactionsRepository {
       return Promise.all([
         tx.transaction.findMany({
           where,
-          include: INCLUIR_TODO,
-          orderBy: parseOrden(query.sort),
+          include: INCLUDE_ALL,
+          orderBy: parseOrder(query.sort),
           skip: page.skip,
           take: page.take,
         }),
@@ -81,19 +81,19 @@ export class TransactionsRepository {
   }
 
   async periodRange(userId: bigint): Promise<{ first: Date | null; last: Date | null }> {
-    const extremos = await this.db.forUser(userId, (tx) =>
+    const bounds = await this.db.forUser(userId, (tx) =>
       tx.transaction.aggregate({
         where: { userId },
         _min: { period: true },
         _max: { period: true },
       }),
     );
-    return { first: extremos._min.period, last: extremos._max.period };
+    return { first: bounds._min.period, last: bounds._max.period };
   }
 
-  findOwned(userId: bigint, id: bigint): Promise<TransaccionCompleta | null> {
+  findOwned(userId: bigint, id: bigint): Promise<FullTransaction | null> {
     return this.db.forUser(userId, (tx) =>
-      tx.transaction.findFirst({ where: { id, userId }, include: INCLUIR_TODO }),
+      tx.transaction.findFirst({ where: { id, userId }, include: INCLUDE_ALL }),
     );
   }
 
@@ -108,14 +108,14 @@ export class TransactionsRepository {
     data: Prisma.TransactionUncheckedCreateInput & { userId: bigint },
     splits: readonly SplitToWrite[],
     tagIds: readonly bigint[],
-  ): Promise<TransaccionCompleta> {
+  ): Promise<FullTransaction> {
     try {
       return await this.db.forUser(data.userId, async (tx) => {
-        const movimiento = await tx.transaction.create({ data });
-        await writeDetails(tx, movimiento.id, splits, tagIds);
+        const transaction = await tx.transaction.create({ data });
+        await writeDetails(tx, transaction.id, splits, tagIds);
         return tx.transaction.findUniqueOrThrow({
-          where: { id: movimiento.id },
-          include: INCLUIR_TODO,
+          where: { id: transaction.id },
+          include: INCLUDE_ALL,
         });
       });
     } catch (error) {
@@ -132,16 +132,18 @@ export class TransactionsRepository {
       userId: bigint;
       transferGroupId: string;
     },
-    origen: bigint,
-    destino: bigint,
-  ): Promise<TransaccionCompleta[]> {
+    fromAccountId: bigint,
+    toAccountId: bigint,
+  ): Promise<FullTransaction[]> {
     return this.db.forUser(base.userId, async (tx) => {
-      await tx.transaction.create({ data: { ...base, accountId: origen, transferDir: 'out' } });
-      await tx.transaction.create({ data: { ...base, accountId: destino, transferDir: 'in' } });
+      await tx.transaction.create({
+        data: { ...base, accountId: fromAccountId, transferDir: 'out' },
+      });
+      await tx.transaction.create({ data: { ...base, accountId: toAccountId, transferDir: 'in' } });
 
       return tx.transaction.findMany({
         where: { userId: base.userId, transferGroupId: base.transferGroupId },
-        include: INCLUIR_TODO,
+        include: INCLUDE_ALL,
         orderBy: { transferDir: 'asc' },
       });
     });
@@ -161,7 +163,7 @@ export class TransactionsRepository {
     splits: readonly SplitToWrite[] | null,
     tagIds: readonly bigint[] | null,
     partner: TransferPartner | null = null,
-  ): Promise<TransaccionCompleta> {
+  ): Promise<FullTransaction> {
     return this.db.forUser(userId, async (tx) => {
       await tx.transaction.update({ where: { id }, data });
       if (partner !== null && Object.keys(partner.changes).length > 0) {
@@ -179,7 +181,7 @@ export class TransactionsRepository {
       if (tagIds !== null) await tx.transactionTag.deleteMany({ where: { transactionId: id } });
       await writeDetails(tx, id, splits ?? [], tagIds ?? []);
 
-      return tx.transaction.findUniqueOrThrow({ where: { id }, include: INCLUIR_TODO });
+      return tx.transaction.findUniqueOrThrow({ where: { id }, include: INCLUDE_ALL });
     });
   }
 
@@ -189,13 +191,13 @@ export class TransactionsRepository {
     transferGroupId: string,
     id: bigint,
   ): Promise<bigint | null> {
-    const otra = await this.db.forUser(userId, (tx) =>
+    const otherLeg = await this.db.forUser(userId, (tx) =>
       tx.transaction.findFirst({
         where: { userId, transferGroupId, id: { not: id } },
         select: { accountId: true },
       }),
     );
-    return otra?.accountId ?? null;
+    return otherLeg?.accountId ?? null;
   }
 
   async deleteTransferGroup(userId: bigint, transferGroupId: string): Promise<void> {
@@ -239,14 +241,14 @@ export class TransactionsRepository {
   ): Promise<Prisma.TransactionWhereInput> {
     const where: Prisma.TransactionWhereInput = { userId, ...plainFilters(query) };
 
-    const pedidas = [
+    const requested = [
       ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
       ...categoryIds(query.category_ids),
     ];
     // Filtrar por "Costos fijos" tiene que traer TODO lo que hay debajo: los
     // movimientos cuelgan del concepto, que es la hoja.
-    if (pedidas.length > 0) {
-      where.categoryId = { in: branchesOf(await categoryNodes(tx, userId), pedidas) };
+    if (requested.length > 0) {
+      where.categoryId = { in: branchesOf(await categoryNodes(tx, userId), requested) };
     }
 
     if (query.q) {
@@ -254,7 +256,7 @@ export class TransactionsRepository {
       // públicos" tiene que traer todo lo que cuelga de esa categoría, aunque
       // ninguna fila lo diga en su descripción. Quien busca piensa en el
       // nombre con el que ordenó su plata, no en cómo vino escrito el cargo.
-      const porClasificacion = await branchByName(tx, userId, query.q);
+      const byCategoryName = await branchByName(tx, userId, query.q);
 
       // `mode: 'insensitive'` NO es opcional. Postgres compara distinguiendo
       // mayúsculas —MariaDB no lo hacía—, así que buscar "celsia" no
@@ -263,7 +265,7 @@ export class TransactionsRepository {
         { description: { contains: query.q, mode: 'insensitive' } },
         { merchant: { contains: query.q, mode: 'insensitive' } },
         { notes: { contains: query.q, mode: 'insensitive' } },
-        ...(porClasificacion.length > 0 ? [{ categoryId: { in: porClasificacion } }] : []),
+        ...(byCategoryName.length > 0 ? [{ categoryId: { in: byCategoryName } }] : []),
       ];
     }
 
@@ -288,11 +290,11 @@ function categoryNodes(
  * concepto, así que buscar el nombre de una categoría sin expandirla no
  * devolvería ni una fila.
  */
-async function branchByName(tx: UserTx, userId: bigint, texto: string): Promise<bigint[]> {
-  const todas = await categoryNodes(tx, userId);
-  const aguja = texto.toLowerCase();
-  const coinciden = todas.filter((c) => c.name.toLowerCase().includes(aguja)).map((c) => c.id);
-  return coinciden.length === 0 ? [] : branchesOf(todas, coinciden);
+async function branchByName(tx: UserTx, userId: bigint, text: string): Promise<bigint[]> {
+  const nodes = await categoryNodes(tx, userId);
+  const needle = text.toLowerCase();
+  const matches = nodes.filter((c) => c.name.toLowerCase().includes(needle)).map((c) => c.id);
+  return matches.length === 0 ? [] : branchesOf(nodes, matches);
 }
 
 /** The filters that need no lookup: period, account, type, status, tag, amount. */

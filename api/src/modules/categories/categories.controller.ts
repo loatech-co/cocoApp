@@ -14,7 +14,7 @@ import {
 import { CategoriesService } from './categories.service';
 import {
   CreateCategoryDto,
-  UnificarCategoriaDto,
+  MergeCategoryDto,
   ListCategoriesQueryDto,
   ReorderCategoriesDto,
   UpdateCategoryDto,
@@ -40,7 +40,6 @@ import {
   categoryTreeV1,
   categoryUsageV1,
   categoryV1,
-  type CategoryRecordV1,
   type CategoryV1,
 } from '../../presenters/v1/categories.presenter';
 
@@ -56,13 +55,13 @@ export class CategoriesController {
     description: 'The tree: cost centers with their `children`. `meta.total` counts every node.',
   })
   @ApiErrors(400)
-  async listar(
+  async list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: ListCategoriesQueryDto,
   ): Promise<{ data: CategoryV1[]; meta: { total: number } }> {
-    const tree = await this.categories.listarArbol(user.id, {
+    const tree = await this.categories.listTree(user.id, {
       kind: query.kind,
-      incluirArchivadas: query.include_archived ?? false,
+      includeArchived: query.include_archived ?? false,
     });
     return categoryTreeV1(tree);
   }
@@ -70,39 +69,39 @@ export class CategoriesController {
   @Get(':id')
   @ApiData(CategoryResponse)
   @ApiErrors(400, 404)
-  async obtener(
+  async get(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
   ): Promise<CategoryV1> {
-    return categoryV1(await this.categories.obtener(user.id, id));
+    return categoryV1(await this.categories.get(user.id, id));
   }
 
   @Post()
   @ApiData(CategoryResponse, { status: 201 })
   @ApiErrors(400, 404, 409, 422)
-  async crear(
+  async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateCategoryDto,
   ): Promise<CategoryV1> {
-    return categoryV1(await this.categories.crear(user.id, dto));
+    return categoryV1(await this.categories.create(user.id, dto));
   }
 
   /** Siembra el diccionario sugerido. Opcional: el usuario decide si lo quiere. */
   @Post('seed')
   @ApiData(CategorySeedResponse, { status: 201 })
-  async sembrar(@CurrentUser() user: AuthenticatedUser): Promise<{ creadas: number }> {
-    return categorySeedV1(await this.categories.sembrarDiccionario(user.id));
+  async seed(@CurrentUser() user: AuthenticatedUser): Promise<ReturnType<typeof categorySeedV1>> {
+    return categorySeedV1(await this.categories.seed(user.id));
   }
 
   @Post('reorder')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContent()
   @ApiErrors(400, 404)
-  reordenar(
+  reorder(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ReorderCategoriesDto,
   ): Promise<void> {
-    return this.categories.reordenar(user.id, dto);
+    return this.categories.reorder(user.id, dto);
   }
 
   /**
@@ -115,23 +114,23 @@ export class CategoriesController {
   @Post(':id/unificar')
   @ApiData(CategoryMergeResponse, { status: 201 })
   @ApiErrors(400, 404, 409, 422)
-  async unificar(
+  async merge(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-    @Body() dto: UnificarCategoriaDto,
-  ): Promise<{ movidos: number; destino: CategoryRecordV1 }> {
-    return categoryMergeV1(await this.categories.unificar(user.id, id, BigInt(dto.destino_id)));
+    @Body() dto: MergeCategoryDto,
+  ): Promise<ReturnType<typeof categoryMergeV1>> {
+    return categoryMergeV1(await this.categories.merge(user.id, id, BigInt(dto.destino_id)));
   }
 
   @Patch(':id')
   @ApiData(CategoryResponse)
   @ApiErrors(400, 404, 409, 422)
-  async actualizar(
+  async update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() dto: UpdateCategoryDto,
   ): Promise<CategoryV1> {
-    return categoryV1(await this.categories.actualizar(user.id, id, dto));
+    return categoryV1(await this.categories.update(user.id, id, dto));
   }
 
   /**
@@ -149,11 +148,11 @@ export class CategoriesController {
   @Get(':id/usos')
   @ApiData(CategoryUsageResponse)
   @ApiErrors(400, 404)
-  async usos(
+  async usage(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-  ): Promise<{ movimientos: number; subcategorias: number }> {
-    return categoryUsageV1(await this.categories.usosDe(user.id, id));
+  ): Promise<ReturnType<typeof categoryUsageV1>> {
+    return categoryUsageV1(await this.categories.usageOf(user.id, id));
   }
 
   /**
@@ -177,15 +176,15 @@ export class CategoriesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContent()
   @ApiErrors(400, 404, 409, 422)
-  async eliminar(
+  async remove(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseBigIntPipe) id: bigint,
-    @Query('reasignar_a') reasignarA?: string,
+    @Query('reasignar_a') reassignTo?: string,
   ): Promise<void> {
-    await this.categories.eliminar(
+    await this.categories.remove(
       user.id,
       id,
-      reasignarA === undefined || reasignarA === '' ? undefined : BigInt(reasignarA),
+      reassignTo === undefined || reassignTo === '' ? undefined : BigInt(reassignTo),
     );
   }
 }
