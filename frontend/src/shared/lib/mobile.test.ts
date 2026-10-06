@@ -7,15 +7,15 @@ import { USER_AGENT_APP } from '@/shared/lib/native-contract';
 import { DESKTOP_QUERY, MOBILE_QUERY, useIsInNativeApp } from './mobile';
 
 /**
- * Las dos consultas tienen que ser COMPLEMENTARIAS.
+ * The two queries have to be COMPLEMENTARY.
  *
- * Un tamaño que cayera en las dos pintaría el riel y la barra de abajo a la
- * vez; uno que no cayera en ninguna se quedaría sin navegación. Escritas a
- * mano, ninguna de las dos cosas se ve leyendo: se ven probando.
+ * A size that fell in both would paint the rail and the bottom bar at once;
+ * one that fell in neither would be left without navigation. Written by hand,
+ * neither problem shows when reading: they show when testing.
  *
- * Por eso esta prueba trae un evaluador mínimo —solo entiende `max-width`,
- * `min-width` y `orientation`, que es todo lo que usan estas dos cadenas— y
- * barre una rejilla de tamaños reales.
+ * That is why this test brings a minimal evaluator —it only understands
+ * `max-width`, `min-width` and `orientation`, which is all these two strings
+ * use— and sweeps a grid of real sizes.
  */
 function evaluate(query: string, width: number, height: number): boolean {
   return query.split(',').some((branch) =>
@@ -27,8 +27,8 @@ function evaluate(query: string, width: number, height: number): boolean {
         if (!feature) throw new Error(`No sé evaluar: ${condition}`);
 
         if (feature === 'orientation') {
-          // La definición de CSS: vertical es alto MAYOR O IGUAL que ancho. Un
-          // cuadrado es vertical.
+          // The CSS definition: portrait is height GREATER THAN OR EQUAL to
+          // width. A square is portrait.
           return value === 'portrait' ? height >= width : width > height;
         }
 
@@ -40,7 +40,7 @@ function evaluate(query: string, width: number, height: number): boolean {
   );
 }
 
-/** Aparatos de verdad, no números redondos. */
+/** Real devices, not round numbers. */
 const DEVICES: [name: string, width: number, height: number, isMobile: boolean][] = [
   ['iPhone 15 vertical', 390, 844, true],
   ['iPhone 15 horizontal', 844, 390, false],
@@ -56,13 +56,13 @@ const DEVICES: [name: string, width: number, height: number, isMobile: boolean][
   ['monitor girado', 1200, 1920, false],
 ];
 
-describe('El corte entre el teléfono y el escritorio', () => {
-  it.each(DEVICES)('%s cae donde debe', (_name, width, height, isMobile) => {
+describe('The breakpoint between phone and desktop', () => {
+  it.each(DEVICES)('%s falls where it should', (_name, width, height, isMobile) => {
     expect(evaluate(MOBILE_QUERY, width, height)).toBe(isMobile);
     expect(evaluate(DESKTOP_QUERY, width, height)).toBe(!isMobile);
   });
 
-  it('ningún tamaño cae en las dos ni en ninguna', () => {
+  it('no size falls in both or in neither', () => {
     const unanswered: string[] = [];
 
     for (let width = 200; width <= 2000; width += 1) {
@@ -78,33 +78,33 @@ describe('El corte entre el teléfono y el escritorio', () => {
   });
 });
 
-describe('La copia de CSS dice lo mismo', () => {
+describe('The CSS copy says the same', () => {
   const css = readFileSync(join(import.meta.dirname, '..', '..', 'index.css'), 'utf8');
 
-  it('`movil` y `escritorio` son las mismas cadenas, carácter por carácter', () => {
+  it('`movil` and `escritorio` are the same strings, character by character', () => {
     expect(css).toContain(`@media ${MOBILE_QUERY}`);
     expect(css).toContain(`@media ${DESKTOP_QUERY}`);
   });
 
-  it('nadie escribió el corte a mano en otro sitio', () => {
-    // Dos: la variante `movil` y el bloque de reglas del armazón. Más que eso
-    // significa que alguien volvió a copiarlo, y entonces cambiarlo ya no es
-    // cambiar un sitio.
+  it('nobody wrote the breakpoint by hand somewhere else', () => {
+    // Two: the `movil` variant and the shell's block of rules. More than that
+    // means someone copied it again, and then changing it is no longer
+    // changing one place.
     const copies = css.split('(max-width: 767px)').length - 1;
     expect(copies).toBeLessThanOrEqual(2);
   });
 });
 
-describe('Dentro de la app del teléfono', () => {
+describe('Inside the phone app', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  // No llama a ningún gancho de React por dentro, así que se puede preguntar
-  // fuera de un render: es lo que permite probarlo sin DOM.
-  it('sin ventana ni puente, no', () => {
+  // It calls no React hook inside, so it can be asked outside a render: that
+  // is what lets it be tested without a DOM.
+  it('without a window or a bridge, no', () => {
     expect(useIsInNativeApp()).toBe(false);
   });
 
-  it('con la marca y el puente, sí', () => {
+  it('with the mark and the bridge, yes', () => {
     vi.stubGlobal('navigator', { userAgent: `Mozilla/5.0 ${USER_AGENT_APP}0.1.0` });
     vi.stubGlobal('window', {
       webkit: { messageHandlers: { cocoSesion: { postMessage: () => Promise.resolve() } } },
@@ -112,7 +112,7 @@ describe('Dentro de la app del teléfono', () => {
     expect(useIsInNativeApp()).toBe(true);
   });
 
-  it('con la marca pero sin puente, no', () => {
+  it('with the mark but without a bridge, no', () => {
     vi.stubGlobal('navigator', { userAgent: `Mozilla/5.0 ${USER_AGENT_APP}0.1.0` });
     vi.stubGlobal('window', {});
     expect(useIsInNativeApp()).toBe(false);

@@ -11,60 +11,60 @@ import {
 } from './shortcuts';
 
 /**
- * Esta pantalla estuvo muerta dos días porque el almacén era un par de
- * funciones vacías: cada escritura caía en un agujero y cada redibujo volvía
- * con lo de fábrica, así que añadir, quitar y reordenar parecían tres botones
- * rotos y no lo era ninguno.
+ * This screen was dead for two days because the store was a pair of empty
+ * functions: every write fell into a hole and every redraw came back with the
+ * factory set, so adding, removing and reordering looked like three broken
+ * buttons and none of them was.
  *
- * Por eso lo que se comprueba aquí es lo aburrido: que lo escrito se pueda
- * LEER DE VUELTA.
+ * That is why what is checked here is the boring part: that what was written
+ * can be READ BACK.
  */
 afterEach(forgetShortcuts);
 
-describe('El almacén de atajos', () => {
-  it('se siembra una sola vez', () => {
+describe('The shortcut store', () => {
+  it('is seeded only once', () => {
     seedShortcuts(['/', '/centros-de-costos']);
     seedShortcuts(['/otra-cosa']);
     expect(readShortcuts()).toEqual(['/', '/centros-de-costos']);
   });
 
-  it('lo que se añade se lee de vuelta', () => {
+  it('what is added reads back', () => {
     seedShortcuts(['/']);
     expect(addShortcut('/cuentas')).toBe(true);
     expect(readShortcuts()).toEqual(['/', '/cuentas']);
   });
 
-  it('lo que se quita deja de estar', () => {
+  it('what is removed is gone', () => {
     seedShortcuts(['/', '/cuentas']);
     removeShortcut('/cuentas');
     expect(readShortcuts()).toEqual(['/']);
   });
 
-  it('reordenar mueve, no intercambia', () => {
+  it('reordering moves, it does not swap', () => {
     seedShortcuts(['/a', '/b', '/c']);
     moveShortcut(0, 2);
     expect(readShortcuts()).toEqual(['/b', '/c', '/a']);
   });
 
-  it('el décimo no entra, y se sabe', () => {
+  it('the tenth does not get in, and that is known', () => {
     seedShortcuts(Array.from({ length: MAX_SHORTCUTS }, (_, i) => `/p${i}`));
     expect(addShortcut('/uno-mas')).toBe(false);
     expect(readShortcuts()).toHaveLength(MAX_SHORTCUTS);
   });
 
-  it('sembrar de más se recorta al máximo', () => {
+  it('seeding too many is trimmed to the maximum', () => {
     seedShortcuts(Array.from({ length: 20 }, (_, i) => `/p${i}`));
     expect(readShortcuts()).toHaveLength(MAX_SHORTCUTS);
   });
 
-  it('añadir dos veces la misma ruta no la duplica', () => {
+  it('adding the same path twice does not duplicate it', () => {
     seedShortcuts(['/']);
     addShortcut('/cuentas');
     addShortcut('/cuentas');
     expect(readShortcuts()).toEqual(['/', '/cuentas']);
   });
 
-  it('un índice que no existe no rompe el orden', () => {
+  it('an index that does not exist does not break the order', () => {
     seedShortcuts(['/a', '/b']);
     moveShortcut(0, 9);
     expect(readShortcuts()).toEqual(['/a', '/b']);

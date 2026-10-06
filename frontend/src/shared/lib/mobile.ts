@@ -3,31 +3,30 @@ import { useSyncExternalStore } from 'react';
 import { isInNativeApp } from './bridge';
 
 /**
- * EL CORTE. Uno solo, y hace DOS preguntas.
+ * THE BREAKPOINT. Just one, and it asks TWO questions.
  *
- * ── Por qué la orientación y no solo el ancho ───────────────────────────────
- * Una tableta mide entre 768 y 1024 puntos de ancho. Un iPad en vertical queda
- * POR ENCIMA de cualquier línea de 767px, así que recibiría la pantalla de
- * escritorio —riel a la izquierda y todo— dentro de una columna con forma de
- * teléfono. Girado, el mismo aparato mide de 1024 a 1366 y ahí el escritorio
- * es lo correcto.
+ * ── Why orientation and not just width ──────────────────────────────────────
+ * A tablet is between 768 and 1024 points wide. An iPad in portrait sits
+ * ABOVE any 767px line, so it would get the desktop screen —rail on the left
+ * and all— inside a phone-shaped column. Turned, the same device measures
+ * 1024 to 1366, and there the desktop is the right thing.
  *
- * Así que la pregunta nunca es "cuánto mide" sino "cuánto mide Y de qué lado
- * está". 1024 es el techo porque es el iPad más ancho en vertical: el de
- * 12,9 pulgadas, 1024×1366.
+ * So the question is never "how wide" but "how wide AND which way up". 1024
+ * is the ceiling because it is the widest iPad in portrait: the 12.9-inch
+ * one, 1024×1366.
  *
- * ── Por qué dos cadenas y no una negada ─────────────────────────────────────
- * Porque `not` sobre una lista de condiciones no se comporta como uno espera
- * en una consulta de medios. Escritas a mano, las dos tienen que ser
- * COMPLEMENTARIAS: nada puede caer en las dos ni en ninguna. Eso no se confía
- * a la vista — lo comprueba `movil.test.ts` sobre un barrido de tamaños.
+ * ── Why two strings and not one negated ─────────────────────────────────────
+ * Because `not` over a list of conditions does not behave as you would expect
+ * in a media query. Written by hand, the two have to be COMPLEMENTARY:
+ * nothing may fall in both or in neither. That is not left to the eye —
+ * `mobile.test.ts` checks it over a sweep of sizes.
  *
- * ── Dónde vive la copia de CSS ──────────────────────────────────────────────
- * En `index.css`, como `@custom-variant movil` y `@custom-variant escritorio`.
- * Tailwind sí sabe ponerle nombre a una consulta de medios, así que en las
- * clases se escribe `movil:` y `escritorio:` y la cadena no se repite por el
- * proyecto. Esta de aquí y la de allá son las dos únicas; la prueba comprueba
- * que digan lo mismo, carácter por carácter.
+ * ── Where the CSS copy lives ────────────────────────────────────────────────
+ * In `index.css`, as `@custom-variant movil` and `@custom-variant escritorio`.
+ * Tailwind does know how to name a media query, so classes say `movil:` and
+ * `escritorio:` and the string is not repeated across the project. This one
+ * and that one are the only two; the test checks that they say the same
+ * thing, character by character.
  */
 export const MOBILE_QUERY = '(max-width: 767px), (orientation: portrait) and (max-width: 1024px)';
 
@@ -40,37 +39,37 @@ function subscribe(onChange: () => void): () => void {
 }
 
 /**
- * Si estamos por debajo del corte.
+ * Whether we are below the breakpoint.
  *
- * Se usa para MONTAR o no montar —la barra de abajo, el panel de secciones—,
- * no para dar estilo: para eso están las variantes `movil:` y `escritorio:`.
+ * It is used to MOUNT or not mount —the bottom bar, the sections panel—, not
+ * for styling: that is what the `movil:` and `escritorio:` variants are for.
  *
- * Montar y no esconder, porque un riel escondido con CSS sigue siendo nueve
- * enlaces en el orden de tabulación, y un panel escondido con CSS es una
- * segunda copia de cada `id` que hay dentro.
+ * Mount and not hide, because a rail hidden with CSS is still nine links in
+ * the tab order, and a panel hidden with CSS is a second copy of every `id`
+ * inside it.
  */
 export function useIsMobile(): boolean {
   return useSyncExternalStore(
     subscribe,
     () => window.matchMedia(MOBILE_QUERY).matches,
-    // En un render sin ventana no hay ancho que medir. Escritorio es la
-    // respuesta menos destructiva: pinta el riel, que es lo que el HTML
-    // servido ya tenía.
+    // A render without a window has no width to measure. Desktop is the least
+    // destructive answer: it paints the rail, which is what the served HTML
+    // already had.
     () => false,
   );
 }
 
 /**
- * Si la web corre DENTRO de la app del teléfono.
+ * Whether the web runs INSIDE the phone app.
  *
- * Vive junto a `useEsMovil` porque responde a la misma clase de pregunta: qué
- * se MONTA. Embebida, la barra de abajo, el techo y la hoja de la cuenta no
- * se montan —la barra nativa y la pestaña «Más» hacen ese papel—.
+ * It lives next to `useIsMobile` because it answers the same kind of question:
+ * what gets MOUNTED. Embedded, the bottom bar, the top bar and the account
+ * sheet are not mounted —the native bar and the «Más» tab do that job—.
  *
- * No es un `useSyncExternalStore`: la respuesta no cambia en toda la vida de
- * la página. El `User-Agent` y el puente los pone la app al crear el webview,
- * antes de cargar nada, y no hay forma de entrar o salir de la app sin
- * recargar el documento.
+ * It is not a `useSyncExternalStore`: the answer does not change for the
+ * whole life of the page. The app sets the `User-Agent` and the bridge when it
+ * creates the webview, before loading anything, and there is no way into or
+ * out of the app without reloading the document.
  */
 // eslint-disable-next-line @eslint-react/no-unnecessary-use-prefix -- rename belongs to step 7.2
 export function useIsInNativeApp(): boolean {

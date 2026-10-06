@@ -1,32 +1,32 @@
 import { useSyncExternalStore } from 'react';
 
 /**
- * Los atajos: qué páginas y en qué orden.
+ * The shortcuts: which pages and in what order.
  *
- * ── Qué se guarda y qué no ──────────────────────────────────────────────────
- * Solo RUTAS. El icono y el nombre salen de la navegación, que es la única
- * lista de páginas del producto: una segunda se separaría de ella la primera
- * vez que se añada una pantalla, y la separación sería invisible.
+ * ── What is kept and what is not ────────────────────────────────────────────
+ * Only PATHS. The icon and the name come from the navigation, which is the
+ * product's only list of pages: a second one would drift from it the first
+ * time a screen is added, and the drift would be invisible.
  *
- * Una ruta guardada que ya no existe se descarta al dibujar, no aquí: quien
- * sabe qué páginas hay es quien pinta.
+ * A saved path that no longer exists is dropped when drawing, not here: the
+ * one that knows which pages exist is the one that paints.
  *
- * ── Por qué es efímero a propósito ──────────────────────────────────────────
- * Vive lo que vive la pestaña y se olvida al recargar. Así una edición se ve
- * en el momento en que se hace, y quien revise después de alguien que lo
- * reordenó todo sigue recibiendo lo de fábrica.
+ * ── Why it is ephemeral on purpose ──────────────────────────────────────────
+ * It lives as long as the tab and is forgotten on reload. That way an edit is
+ * seen the moment it is made, and whoever reviews after someone who reordered
+ * everything still gets the factory set.
  *
- * ── Y por qué esto tiene pruebas ────────────────────────────────────────────
- * Porque cada edición es una escritura seguida de una RELECTURA: el render
- * vuelve a dibujar desde aquí. El DOM nunca es el registro, es una foto suya.
- * Si la pantalla deja de responder, lo primero que hay que comprobar es que
- * esto se pueda leer de vuelta, antes de mirar una sola línea de la superficie.
+ * ── And why this has tests ──────────────────────────────────────────────────
+ * Because every edit is a write followed by a RE-READ: the render draws again
+ * from here. The DOM is never the record, it is a picture of it. If the screen
+ * stops responding, the first thing to check is that this can be read back,
+ * before looking at a single line of the surface.
  */
 
 /**
- * Nueve: tres filas de tres, lo que cabe sin desplazar en el teléfono más
- * corto para el que está dibujado esto. Un panel deja de ser una capa sobre la
- * página en cuanto hay que desplazarlo para leerlo entero.
+ * Nine: three rows of three, what fits without scrolling on the shortest phone
+ * this is drawn for. A panel stops being a layer over the page as soon as it
+ * has to be scrolled to be read whole.
  */
 export const MAX_SHORTCUTS = 9;
 
@@ -45,10 +45,10 @@ function subscribe(listener: () => void): () => void {
 }
 
 /**
- * Deja lo de fábrica, solo la primera vez.
+ * Sets the factory set, only the first time.
  *
- * Lo de fábrica lo decide quien dibuja, porque depende de quién ha entrado:
- * las páginas de administración no existen para todo el mundo.
+ * The factory set is decided by whoever draws, because it depends on who has
+ * signed in: the administration pages do not exist for everyone.
  */
 export function seedShortcuts(defaults: readonly string[]): void {
   if (paths !== null) return;
@@ -59,7 +59,7 @@ export function readShortcuts(): readonly string[] {
   return paths ?? EMPTY;
 }
 
-/** Devuelve `false` si no cupo. Quien llama decide qué contestar. */
+/** Returns `false` if it did not fit. The caller decides what to answer. */
 export function addShortcut(path: string): boolean {
   const current = readShortcuts();
   if (current.includes(path)) return true;
@@ -92,16 +92,16 @@ export function moveShortcut(from: number, to: number): void {
   announce();
 }
 
-/** Para las pruebas: deja el almacén como recién cargada la página. */
+/** For the tests: leaves the store as if the page had just loaded. */
 export function forgetShortcuts(): void {
   paths = null;
   announce();
 }
 
 export function useShortcuts(defaults: readonly string[]): readonly string[] {
-  // La siembra tiene que ocurrir antes de la primera lectura, y quien tiene lo
-  // de fábrica es quien dibuja. Es idempotente —solo actúa si nadie sembró—,
-  // así que repetirla en un render doble no cambia nada.
+  // Seeding has to happen before the first read, and whoever holds the
+  // factory set is whoever draws. It is idempotent —it only acts if nobody
+  // seeded—, so repeating it in a double render changes nothing.
   seedShortcuts(defaults);
   return useSyncExternalStore(subscribe, readShortcuts, readShortcuts);
 }

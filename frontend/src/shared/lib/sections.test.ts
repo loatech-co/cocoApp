@@ -3,38 +3,39 @@ import { describe, expect, it } from 'vitest';
 import { SECTIONS, ADMIN_SECTIONS } from '@/shared/lib/sections';
 
 /**
- * Qué ve en el riel quien no es administrador.
+ * What someone who is not an administrator sees in the rail.
  *
- * El riel es presentación, no control de acceso —quien decide de verdad es el
- * RolesGuard de la API—, y por eso esconder algo aquí no protege nada: solo
- * deja de decir que existe. Esconder lo que además es PROPIO de cada cuenta es
- * dejar a esa persona sin forma de llegar a sus cosas.
+ * The rail is presentation, not access control —the one that really decides
+ * is the API's RolesGuard—, and that is why hiding something here protects
+ * nothing: it only stops saying it exists. Hiding what is also each account's
+ * OWN leaves that person with no way to reach their things.
  */
-describe('Las secciones del riel', () => {
-  it('Centros de costos está para todo el mundo', () => {
-    // Cada cuenta tiene su propio árbol y nace con una plantilla: lo primero
-    // que va a querer hacer es ajustarla. Estuvo bajo «Administración», donde
-    // quien no era admin no lo veía —aunque `/centros-de-costos` nunca pasó
-    // por `RequireAdmin`, así que igual podía abrirlo escribiendo la dirección.
+describe('The rail sections', () => {
+  it('Cost centers is there for everyone', () => {
+    // Each account has its own tree and is born with a template: the first
+    // thing it will want to do is adjust it. It sat under «Administración»,
+    // where non-admins did not see it —even though `/centros-de-costos` never
+    // went through `RequireAdmin`, so they could still open it by typing the
+    // address.
     const paths = SECTIONS.map((s) => s.to);
 
     expect(paths).toContain('/centros-de-costos');
     expect(ADMIN_SECTIONS.map((s) => s.to)).not.toContain('/centros-de-costos');
   });
 
-  it('y no depende de ninguna preferencia', () => {
-    // `requiere` es para lo que puede no existir —las cuentas, que se apagan
-    // desde Ajustes—. Un árbol de categorías siempre existe: sin él no hay
-    // dónde clasificar un movimiento.
+  it('and does not depend on any preference', () => {
+    // `requires` is for what may not exist —the accounts, which are turned off
+    // from Settings—. A category tree always exists: without it there is
+    // nowhere to classify a movement.
     const costCenters = SECTIONS.find((s) => s.to === '/centros-de-costos');
 
     expect(costCenters).toBeDefined();
     expect(costCenters?.requires).toBeUndefined();
   });
 
-  it('en Administración solo queda lo que administra a OTRAS personas', () => {
-    // Es lo que hace que un administrador lo sea. Lo que administra lo propio
-    // —el árbol, los ajustes, la contraseña— no pertenece a ese grupo.
+  it('in Administration only what administers OTHER people remains', () => {
+    // It is what makes an administrator one. What administers one's own
+    // things —the tree, the settings, the password— does not belong to that group.
     expect(ADMIN_SECTIONS.map((s) => s.to)).toEqual([
       '/administracion',
       '/administracion/bitacora',
