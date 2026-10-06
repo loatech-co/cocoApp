@@ -3,17 +3,15 @@ import { Injectable } from '@nestjs/common';
 import {
   categoryFromRow,
   type Category,
+  type CategoryChanges,
+  type CategoryPosition,
   type CategoryMerge,
   type CategorySeed,
   type CategoryTree,
   type CategoryUsage,
+  type NewCategory,
 } from './categories.domain';
 import { CategoriesRepository } from './categories.repository';
-import type {
-  CreateCategoryDto,
-  ReorderCategoriesDto,
-  UpdateCategoryDto,
-} from './dto/category.dto';
 import { multiPaymentRejection } from './multi-payment';
 import {
   nest,
@@ -23,12 +21,7 @@ import {
   MAX_DEPTH,
 } from '../../common/categories/categories.tree';
 import { ConflictError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
-import { english, PERIODICITY, type SpanishPeriodicity } from '../../common/vocabulary';
-import type {
-  Category as CategoryRow,
-  CategoryKind,
-  Periodicity,
-} from '../../generated/prisma/client';
+import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
 
 @Injectable()
 export class CategoriesService {
@@ -47,8 +40,8 @@ export class CategoriesService {
     return categoryFromRow(await this.requireCategory(userId, id));
   }
 
-  async create(userId: bigint, dto: CreateCategoryDto): Promise<Category> {
-    const parentId = dto.parent_id !== undefined ? BigInt(dto.parent_id) : null;
+  async create(userId: bigint, input: NewCategory): Promise<Category> {
+    const parentId = input.parentId ?? null;
     // Sin padre es un centro de costos, que es el primer nivel.
     let depth = 1;
 
@@ -66,38 +59,38 @@ export class CategoriesService {
     }
 
     this.requireConsistentMultiPayment({
-      isMultiPayment: dto.varios_pagos ?? false,
-      isAutoPaid: dto.pago_automatico ?? false,
-      isRecurring: dto.recurrente ?? false,
-      depth: depth,
+      isMultiPayment: input.isMultiPayment ?? false,
+      isAutoPaid: input.isAutoPaid ?? false,
+      isRecurring: input.isRecurring ?? false,
+      depth,
     });
 
     const category = await this.repo.create(userId, {
       userId,
-      name: dto.name,
-      kind: dto.kind,
+      name: input.name,
+      kind: input.kind,
       parentId,
-      color: dto.color ?? null,
-      icon: dto.icon ?? null,
-      sortOrder: dto.sort_order ?? 0,
+      color: input.color ?? null,
+      icon: input.icon ?? null,
+      sortOrder: input.sortOrder ?? 0,
       // La fila se arma campo por campo, así que un dato nuevo del DTO no
       // llega solo: hay que nombrarlo aquí o se pierde en silencio, con la
       // API devolviendo 201 y el concepto creado sin su recurrencia.
-      isRecurring: dto.recurrente ?? false,
-      isStatic: dto.estatico ?? false,
-      periodicity: periodicityOf(dto.periodicidad ?? null),
-      paymentDay: dto.dia_de_pago ?? null,
-      paymentMonth: dto.mes_de_pago ?? null,
-      budget: dto.presupuesto ?? null,
-      isAutoPaid: dto.pago_automatico ?? false,
-      isMultiPayment: dto.varios_pagos ?? false,
-      keywords: dto.palabras_clave ?? [],
+      isRecurring: input.isRecurring ?? false,
+      isStatic: input.isStatic ?? false,
+      periodicity: input.periodicity ?? null,
+      paymentDay: input.paymentDay ?? null,
+      paymentMonth: input.paymentMonth ?? null,
+      budget: input.budget ?? null,
+      isAutoPaid: input.isAutoPaid ?? false,
+      isMultiPayment: input.isMultiPayment ?? false,
+      keywords: input.keywords ?? [],
     });
 
     return categoryFromRow(category);
   }
 
-  async update(userId: bigint, id: bigint, dto: UpdateCategoryDto): Promise<Category> {
+  async update(userId: bigint, id: bigint, changes: CategoryChanges): Promise<Category> {
     const actual = await this.requireCategory(userId, id);
 
     /*
@@ -112,8 +105,8 @@ export class CategoriesService {
     const tree = async (): Promise<NonNullable<typeof skeleton>> =>
       (skeleton ??= await this.repo.treeSkeleton(userId));
 
-    if (dto.parent_id !== undefined) {
-      const newParentId = dto.parent_id === null ? null : BigInt(dto.parent_id);
+    if (changes.parentId !== undefined) {
+      const newParentId = changes.parentId;
       if (newParentId !== null) await this.requireCategory(userId, newParentId);
 
       if (wouldCreateCycle(await tree(), id, newParentId)) {
@@ -135,33 +128,25 @@ export class CategoriesService {
       exactamente lo que no puede ocurrir—. Por eso cada campo se lee del DTO
       si viene y de la fila que hay si no.
     */
-    const isMultiPaymentAfter = dto.varios_pagos ?? actual.isMultiPayment;
+    const isMultiPaymentAfter = changes.isMultiPayment ?? actual.isMultiPayment;
     if (isMultiPaymentAfter) {
-      const finalParentId =
-        dto.parent_id !== undefined
-          ? dto.parent_id === null
-            ? null
-            : BigInt(dto.parent_id)
-          : actual.parentId;
+      const finalParentId = changes.parentId !== undefined ? changes.parentId : actual.parentId;
 
       this.requireConsistentMultiPayment({
         isMultiPayment: true,
-        isAutoPaid: dto.pago_automatico ?? actual.isAutoPaid,
-        isRecurring: dto.recurrente ?? actual.isRecurring,
+        isAutoPaid: changes.isAutoPaid ?? actual.isAutoPaid,
+        isRecurring: changes.isRecurring ?? actual.isRecurring,
         depth: resultingDepth(await tree(), id, finalParentId),
       });
     }
 
-    await this.repo.update(userId, id, changesOf(dto));
+    await this.repo.update(userId, id, columnsOf(changes));
 
     return this.get(userId, id);
   }
 
-  async reorder(userId: bigint, dto: ReorderCategoriesDto): Promise<void> {
-    await this.repo.reorder(
-      userId,
-      dto.items.map((item) => ({ id: BigInt(item.id), sortOrder: item.sort_order })),
-    );
+  async reorder(userId: bigint, positions: readonly CategoryPosition[]): Promise<void> {
+    await this.repo.reorder(userId, positions);
   }
 
   /**
@@ -367,37 +352,33 @@ export class CategoriesService {
     }
 
     const moved = await this.repo.merge(userId, sourceId, targetId);
-    return { moved: moved, target: categoryFromRow(target) };
+    return { moved, target: categoryFromRow(target) };
   }
 }
 
-/** The columns a PATCH changes: only what the DTO brought. */
-/** The v1 word the DTO carries, as the client's English one; `null` stays `null`. */
-function periodicityOf(word: SpanishPeriodicity | null): Periodicity | null {
-  return word === null ? null : english(PERIODICITY, word);
-}
-
-function changesOf(dto: UpdateCategoryDto): Parameters<CategoriesRepository['update']>[2] {
+/**
+ * The columns a PATCH changes, named one by one: a key that is not listed
+ * here does not reach the row, whatever the caller put in the object.
+ */
+function columnsOf(changes: CategoryChanges): Parameters<CategoriesRepository['update']>[2] {
   return {
-    ...(dto.name !== undefined && { name: dto.name }),
-    ...(dto.kind !== undefined && { kind: dto.kind }),
+    ...(changes.name !== undefined && { name: changes.name }),
+    ...(changes.kind !== undefined && { kind: changes.kind }),
     // La COLUMNA, no la relación: ver el porqué en `repo.actualizar`.
-    ...(dto.parent_id !== undefined && {
-      parentId: dto.parent_id === null ? null : BigInt(dto.parent_id),
-    }),
-    ...(dto.color !== undefined && { color: dto.color }),
-    ...(dto.icon !== undefined && { icon: dto.icon }),
-    ...(dto.sort_order !== undefined && { sortOrder: dto.sort_order }),
-    ...(dto.is_archived !== undefined && { isArchived: dto.is_archived }),
-    ...(dto.recurrente !== undefined && { isRecurring: dto.recurrente }),
-    ...(dto.estatico !== undefined && { isStatic: dto.estatico }),
-    ...(dto.periodicidad !== undefined && { periodicity: periodicityOf(dto.periodicidad) }),
-    ...(dto.dia_de_pago !== undefined && { paymentDay: dto.dia_de_pago }),
-    ...(dto.mes_de_pago !== undefined && { paymentMonth: dto.mes_de_pago }),
+    ...(changes.parentId !== undefined && { parentId: changes.parentId }),
+    ...(changes.color !== undefined && { color: changes.color }),
+    ...(changes.icon !== undefined && { icon: changes.icon }),
+    ...(changes.sortOrder !== undefined && { sortOrder: changes.sortOrder }),
+    ...(changes.isArchived !== undefined && { isArchived: changes.isArchived }),
+    ...(changes.isRecurring !== undefined && { isRecurring: changes.isRecurring }),
+    ...(changes.isStatic !== undefined && { isStatic: changes.isStatic }),
+    ...(changes.periodicity !== undefined && { periodicity: changes.periodicity }),
+    ...(changes.paymentDay !== undefined && { paymentDay: changes.paymentDay }),
+    ...(changes.paymentMonth !== undefined && { paymentMonth: changes.paymentMonth }),
     // `!== undefined` y no un truthy: `null` lo quita y CERO es un valor.
-    ...(dto.presupuesto !== undefined && { budget: dto.presupuesto }),
-    ...(dto.pago_automatico !== undefined && { isAutoPaid: dto.pago_automatico }),
-    ...(dto.varios_pagos !== undefined && { isMultiPayment: dto.varios_pagos }),
-    ...(dto.palabras_clave !== undefined && { keywords: dto.palabras_clave }),
+    ...(changes.budget !== undefined && { budget: changes.budget }),
+    ...(changes.isAutoPaid !== undefined && { isAutoPaid: changes.isAutoPaid }),
+    ...(changes.isMultiPayment !== undefined && { isMultiPayment: changes.isMultiPayment }),
+    ...(changes.keywords !== undefined && { keywords: changes.keywords }),
   };
 }

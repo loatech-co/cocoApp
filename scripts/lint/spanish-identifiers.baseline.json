@@ -86,17 +86,6 @@
   "api/src/modules/auth": {
     "motivo": 1
   },
-  "api/src/modules/categories": {
-    "dia_de_pago": 1,
-    "estatico": 1,
-    "mes_de_pago": 1,
-    "pago_automatico": 1,
-    "palabras_clave": 1,
-    "periodicidad": 1,
-    "presupuesto": 1,
-    "recurrente": 1,
-    "varios_pagos": 1
-  },
   "api/src/modules/categories/dto": {
     "destino_id": 1,
     "dia_de_pago": 2,

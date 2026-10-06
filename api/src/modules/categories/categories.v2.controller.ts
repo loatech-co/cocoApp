@@ -13,17 +13,15 @@ import {
 
 import type {
   Category as CategoryBody,
+  CategoryChanges,
+  CategoryPosition,
   CategoryMerge as MergeBody,
   CategoryNode as NodeBody,
   CategorySeed as SeedBody,
   CategoryUsage as UsageBody,
+  NewCategory,
 } from './categories.domain';
 import { CategoriesService } from './categories.service';
-import type {
-  CreateCategoryDto,
-  ReorderCategoriesDto,
-  UpdateCategoryDto,
-} from './dto/category.dto';
 import {
   CreateCategoryInput,
   DeleteCategoryQuery,
@@ -35,7 +33,6 @@ import {
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { PERIODICITY, spanish } from '../../common/vocabulary';
 import {
   Category,
   CategoryMerge,
@@ -59,52 +56,54 @@ import {
   categoryV2,
 } from '../../presenters/v2/categories.presenter';
 
-type V1Fields = Omit<UpdateCategoryDto, 'name' | 'kind' | 'parent_id' | 'is_archived'>;
+type SharedFields = Omit<CategoryChanges, 'name' | 'kind' | 'parentId' | 'isArchived'>;
 
-/** The fields created and edited categories share, in their v1 names and words. */
-function fields(input: CreateCategoryInput | UpdateCategoryInput): V1Fields {
-  return defined<V1Draft<V1Fields>>({
+/** The fields created and edited categories share. */
+function fieldsOf(input: CreateCategoryInput | UpdateCategoryInput): SharedFields {
+  return defined<V1Draft<SharedFields>>({
     color: input.color,
     icon: input.icon,
-    sort_order: input.sortOrder,
-    recurrente: input.isRecurring,
-    estatico: input.isStatic,
-    periodicidad:
-      input.periodicity === undefined || input.periodicity === null
-        ? input.periodicity
-        : spanish(PERIODICITY, input.periodicity),
-    dia_de_pago: input.paymentDay,
-    mes_de_pago: input.paymentMonth,
-    pago_automatico: input.isAutoPaid,
-    varios_pagos: input.isMultiPayment,
-    presupuesto: input.budget,
-    palabras_clave: input.keywords,
+    sortOrder: input.sortOrder,
+    isRecurring: input.isRecurring,
+    isStatic: input.isStatic,
+    periodicity: input.periodicity,
+    paymentDay: input.paymentDay,
+    paymentMonth: input.paymentMonth,
+    isAutoPaid: input.isAutoPaid,
+    isMultiPayment: input.isMultiPayment,
+    budget: input.budget,
+    keywords: input.keywords,
   });
 }
 
-function createCategory(input: CreateCategoryInput): CreateCategoryDto {
+function newCategoryOf(input: CreateCategoryInput): NewCategory {
   return {
-    ...fields(input),
-    ...defined<V1Draft<CreateCategoryDto>>({ parent_id: input.parentId }),
+    ...fieldsOf(input),
+    ...defined<V1Draft<NewCategory>>({
+      parentId: input.parentId === undefined ? undefined : BigInt(input.parentId),
+    }),
     name: input.name,
     kind: input.kind,
   };
 }
 
-function updateCategory(input: UpdateCategoryInput): UpdateCategoryDto {
+function changesOf(input: UpdateCategoryInput): CategoryChanges {
   return {
-    ...fields(input),
-    ...defined<V1Draft<UpdateCategoryDto>>({
+    ...fieldsOf(input),
+    ...defined<V1Draft<CategoryChanges>>({
       name: input.name,
       kind: input.kind,
-      parent_id: input.parentId,
-      is_archived: input.isArchived,
+      parentId:
+        input.parentId === undefined || input.parentId === null
+          ? input.parentId
+          : BigInt(input.parentId),
+      isArchived: input.isArchived,
     }),
   };
 }
 
-function reorder(input: ReorderCategoriesInput): ReorderCategoriesDto {
-  return { items: input.items.map(({ id, sortOrder }) => ({ id, sort_order: sortOrder })) };
+function positionsOf(input: ReorderCategoriesInput): CategoryPosition[] {
+  return input.items.map(({ id, sortOrder }) => ({ id: BigInt(id), sortOrder }));
 }
 
 /**
@@ -152,7 +151,7 @@ export class CategoriesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: CreateCategoryInput,
   ): Promise<CategoryBody> {
-    return categoryV2(await this.categories.create(user.id, createCategory(input)));
+    return categoryV2(await this.categories.create(user.id, newCategoryOf(input)));
   }
 
   /** Creates the starter tree for a user who has none. */
@@ -170,7 +169,7 @@ export class CategoriesV2Controller {
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: ReorderCategoriesInput,
   ): Promise<void> {
-    return this.categories.reorder(user.id, reorder(input));
+    return this.categories.reorder(user.id, positionsOf(input));
   }
 
   /** Moves every transaction of this concept to `targetId` and removes this one. */
@@ -193,7 +192,7 @@ export class CategoriesV2Controller {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() input: UpdateCategoryInput,
   ): Promise<CategoryBody> {
-    return categoryV2(await this.categories.update(user.id, id, updateCategory(input)));
+    return categoryV2(await this.categories.update(user.id, id, changesOf(input)));
   }
 
   /** What deleting it would take with it: the transactions and categories below. */

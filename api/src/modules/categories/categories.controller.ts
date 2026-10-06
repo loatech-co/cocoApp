@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 
+import type { CategoryChanges, NewCategory } from './categories.domain';
 import { CategoriesService } from './categories.service';
 import {
   CreateCategoryDto,
@@ -22,6 +23,7 @@ import {
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { english, PERIODICITY } from '../../common/vocabulary';
 import {
   CategoryMergeResponse,
   CategoryResponse,
@@ -34,6 +36,7 @@ import {
   ApiErrors,
   ApiNoContent,
 } from '../../contract/v1/openapi.decorators';
+import { defined, type V1Draft } from '../../contract/v2/v1-input';
 import {
   categoryMergeV1,
   categorySeedV1,
@@ -42,6 +45,55 @@ import {
   categoryV1,
   type CategoryV1,
 } from '../../presenters/v1/categories.presenter';
+
+type SharedFields = Omit<CategoryChanges, 'name' | 'kind' | 'parentId' | 'isArchived'>;
+
+/** The fields created and edited categories share, from their v1 names and words. */
+function fieldsOf(dto: CreateCategoryDto | UpdateCategoryDto): SharedFields {
+  return defined<V1Draft<SharedFields>>({
+    color: dto.color,
+    icon: dto.icon,
+    sortOrder: dto.sort_order,
+    isRecurring: dto.recurrente,
+    isStatic: dto.estatico,
+    periodicity:
+      dto.periodicidad === undefined || dto.periodicidad === null
+        ? dto.periodicidad
+        : english(PERIODICITY, dto.periodicidad),
+    paymentDay: dto.dia_de_pago,
+    paymentMonth: dto.mes_de_pago,
+    isAutoPaid: dto.pago_automatico,
+    isMultiPayment: dto.varios_pagos,
+    budget: dto.presupuesto,
+    keywords: dto.palabras_clave,
+  });
+}
+
+function newCategoryOf(dto: CreateCategoryDto): NewCategory {
+  return {
+    ...fieldsOf(dto),
+    ...defined<V1Draft<NewCategory>>({
+      parentId: dto.parent_id === undefined ? undefined : BigInt(dto.parent_id),
+    }),
+    name: dto.name,
+    kind: dto.kind,
+  };
+}
+
+function changesOf(dto: UpdateCategoryDto): CategoryChanges {
+  return {
+    ...fieldsOf(dto),
+    ...defined<V1Draft<CategoryChanges>>({
+      name: dto.name,
+      kind: dto.kind,
+      parentId:
+        dto.parent_id === undefined || dto.parent_id === null
+          ? dto.parent_id
+          : BigInt(dto.parent_id),
+      isArchived: dto.is_archived,
+    }),
+  };
+}
 
 @ApiAuthenticated()
 @Controller('categories')
@@ -83,7 +135,7 @@ export class CategoriesController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateCategoryDto,
   ): Promise<CategoryV1> {
-    return categoryV1(await this.categories.create(user.id, dto));
+    return categoryV1(await this.categories.create(user.id, newCategoryOf(dto)));
   }
 
   /** Siembra el diccionario sugerido. Opcional: el usuario decide si lo quiere. */
@@ -101,7 +153,10 @@ export class CategoriesController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ReorderCategoriesDto,
   ): Promise<void> {
-    return this.categories.reorder(user.id, dto);
+    return this.categories.reorder(
+      user.id,
+      dto.items.map((item) => ({ id: BigInt(item.id), sortOrder: item.sort_order })),
+    );
   }
 
   /**
@@ -130,7 +185,7 @@ export class CategoriesController {
     @Param('id', ParseBigIntPipe) id: bigint,
     @Body() dto: UpdateCategoryDto,
   ): Promise<CategoryV1> {
-    return categoryV1(await this.categories.update(user.id, id, dto));
+    return categoryV1(await this.categories.update(user.id, id, changesOf(dto)));
   }
 
   /**

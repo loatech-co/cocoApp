@@ -15,17 +15,17 @@ import { mergeKeywords } from '../keywords';
  * no es la única que llama a esta API. Lo que aquí se comprueba es lo que pasa
  * cuando llega lo que la pantalla no habría mandado.
  */
-async function asReceived(words: unknown): Promise<{ dto: UpdateCategoryDto; errores: string[] }> {
+async function asReceived(words: unknown): Promise<{ dto: UpdateCategoryDto; errors: string[] }> {
   const dto = plainToInstance(UpdateCategoryDto, { palabras_clave: words });
-  const errores = await validate(dto);
-  return { dto, errores: errores.flatMap((e) => Object.values(e.constraints ?? {})) };
+  const errors = await validate(dto);
+  return { dto, errors: errors.flatMap((e) => Object.values(e.constraints ?? {})) };
 }
 
 describe('palabras_clave', () => {
   it('recorta, aprieta los espacios y tira las vacías', async () => {
-    const { dto, errores } = await asReceived(['  Celsia ', '', '   ', 'Gases  de  Occidente']);
+    const { dto, errors } = await asReceived(['  Celsia ', '', '   ', 'Gases  de  Occidente']);
 
-    expect(errores).toEqual([]);
+    expect(errors).toEqual([]);
     expect(dto.palabras_clave).toEqual(['Celsia', 'Gases de Occidente']);
   });
 
@@ -39,7 +39,7 @@ describe('palabras_clave', () => {
 
   it('una lista vacía las borra todas, y no es lo mismo que no mandar nada', async () => {
     const empty = await asReceived([]);
-    expect(empty.errores).toEqual([]);
+    expect(empty.errors).toEqual([]);
     expect(empty.dto.palabras_clave).toEqual([]);
 
     const withoutField = plainToInstance(UpdateCategoryDto, {});
@@ -47,15 +47,15 @@ describe('palabras_clave', () => {
   });
 
   it('rechaza lo que no es una lista de textos', async () => {
-    expect((await asReceived('Celsia')).errores.join(' ')).toContain('array');
-    expect((await asReceived([1, 2])).errores.join(' ')).toContain('string');
+    expect((await asReceived('Celsia')).errors.join(' ')).toContain('array');
+    expect((await asReceived([1, 2])).errors.join(' ')).toContain('string');
   });
 
   it('rechaza una lista interminable y una palabra interminable', async () => {
     const tooMany = Array.from({ length: MAX_KEYWORDS + 1 }, (_, i) => `palabra${i}`);
-    expect((await asReceived(tooMany)).errores.join(' ')).toContain(String(MAX_KEYWORDS));
+    expect((await asReceived(tooMany)).errors.join(' ')).toContain(String(MAX_KEYWORDS));
 
-    expect((await asReceived(['x'.repeat(61)])).errores.join(' ')).toContain('60');
+    expect((await asReceived(['x'.repeat(61)])).errors.join(' ')).toContain('60');
   });
 });
 

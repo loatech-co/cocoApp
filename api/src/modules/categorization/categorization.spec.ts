@@ -39,7 +39,7 @@ describe('Categorización automática (T1)', () => {
         { description: 'Rappi', categoryId: GROCERIES },
         { description: 'Rappi', categoryId: TRANSPORT },
       ];
-      expect(suggestCategory('Rappi', { history: history, rules: [] })).toBeNull();
+      expect(suggestCategory('Rappi', { history, rules: [] })).toBeNull();
     });
   });
 
@@ -51,15 +51,13 @@ describe('Categorización automática (T1)', () => {
     ];
 
     it('sugiere lo que la persona ya viene clasificando', () => {
-      const suggestion = suggestCategory('RAPPI Domicilio', { history: history, rules: [] });
+      const suggestion = suggestCategory('RAPPI Domicilio', { history, rules: [] });
       expect(suggestion).toMatchObject({ categoryId: DELIVERY, reason: 'history' });
       expect(suggestion!.confidence).toBe(100);
     });
 
     it('ignora tildes, mayúsculas y ruido de referencia al comparar', () => {
-      expect(
-        suggestCategory('compra rappi REF 12345', { history: history, rules: [] }),
-      ).toMatchObject({
+      expect(suggestCategory('compra rappi REF 12345', { history, rules: [] })).toMatchObject({
         categoryId: DELIVERY,
       });
     });
@@ -70,14 +68,14 @@ describe('Categorización automática (T1)', () => {
       const rules: CategoryRule[] = [
         { pattern: 'rappi', categoryId: GROCERIES, priority: 0, isSeeded: true },
       ];
-      expect(suggestCategory('Rappi', { history: history, rules: rules })).toMatchObject({
+      expect(suggestCategory('Rappi', { history, rules })).toMatchObject({
         categoryId: DELIVERY,
         reason: 'history',
       });
     });
 
     it('no sugiere nada si ningún antecedente comparte palabras', () => {
-      expect(suggestCategory('Terpel Calle 10', { history: history, rules: [] })).toBeNull();
+      expect(suggestCategory('Terpel Calle 10', { history, rules: [] })).toBeNull();
     });
 
     it('la categoría dominante gana aunque haya algo de ruido', () => {
@@ -102,7 +100,7 @@ describe('Categorización automática (T1)', () => {
         { pattern: 'exito', categoryId: GROCERIES, priority: 0, isSeeded: true },
         { pattern: 'exito', categoryId: DELIVERY, priority: 10 },
       ];
-      const suggestion = suggestCategory('Exito Poblado', { history: [], rules: rules });
+      const suggestion = suggestCategory('Exito Poblado', { history: [], rules });
       expect(suggestion).toMatchObject({ categoryId: DELIVERY, reason: 'rule' });
       expect(suggestion!.confidence).toBe(85);
     });
@@ -112,14 +110,14 @@ describe('Categorización automática (T1)', () => {
         { pattern: 'juan', categoryId: GROCERIES, priority: 0 },
         { pattern: 'juan valdez', categoryId: DELIVERY, priority: 0 },
       ];
-      expect(suggestCategory('Juan Valdez Cafe', { history: [], rules: rules })).toMatchObject({
+      expect(suggestCategory('Juan Valdez Cafe', { history: [], rules })).toMatchObject({
         categoryId: DELIVERY,
       });
     });
 
     it('ignora patrones vacíos sin reventar', () => {
       const rules: CategoryRule[] = [{ pattern: '', categoryId: GROCERIES, priority: 99 }];
-      expect(suggestCategory('Lo que sea', { history: [], rules: rules })).toBeNull();
+      expect(suggestCategory('Lo que sea', { history: [], rules })).toBeNull();
     });
   });
 

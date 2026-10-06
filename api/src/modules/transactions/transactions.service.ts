@@ -63,11 +63,7 @@ export class TransactionsService {
 
   async list(userId: bigint, query: ListTransactionsQueryDto): Promise<TransactionPage> {
     const { page, perPage, skip, take } = parsePagination(query.page, query.per_page);
-    const {
-      rows: rows,
-      total,
-      sumOf,
-    } = await this.repository.findPage(userId, query, {
+    const { rows, total, sumOf } = await this.repository.findPage(userId, query, {
       skip,
       take,
     });
@@ -131,7 +127,7 @@ export class TransactionsService {
         date: new Date(dto.date),
         period: dto.period ? new Date(dto.period) : monthOf(new Date(dto.date)),
         amount,
-        type: type,
+        type,
         categoryId,
         description: dto.description ?? null,
         merchant: dto.merchant ?? null,
@@ -178,7 +174,7 @@ export class TransactionsService {
 
     const base = {
       userId,
-      date: date,
+      date,
       period: dto.period ? new Date(dto.period) : monthOf(date),
       amount,
       type: 'transfer' as const,

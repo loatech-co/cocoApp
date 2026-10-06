@@ -43,6 +43,45 @@ export interface Category {
 /** A category with everything that hangs from it. */
 export type CategoryNode = WithChildren<Category>;
 
+/**
+ * What a PATCH changes, in the client's words: only the fields that came.
+ *
+ * Both controllers build it from their own body (v1 translates its snake_case
+ * and its Spanish periodicities; v2 copies), so the service speaks one
+ * language. `null` clears a field; an absent key leaves it as it is.
+ */
+export interface CategoryChanges {
+  name?: string;
+  kind?: CategoryKind;
+  parentId?: bigint | null;
+  color?: string;
+  icon?: string;
+  sortOrder?: number;
+  isArchived?: boolean;
+  isRecurring?: boolean;
+  isStatic?: boolean;
+  periodicity?: English<typeof PERIODICITY> | null;
+  paymentDay?: number | null;
+  paymentMonth?: number | null;
+  budget?: number | null;
+  isAutoPaid?: boolean;
+  isMultiPayment?: boolean;
+  keywords?: string[];
+}
+
+/** What creating one takes. Without a parent it is a cost center. */
+export type NewCategory = Omit<CategoryChanges, 'name' | 'kind' | 'parentId' | 'isArchived'> & {
+  name: string;
+  kind: CategoryKind;
+  parentId?: bigint;
+};
+
+/** One row of a reorder: where the category goes among its siblings. */
+export interface CategoryPosition {
+  id: bigint;
+  sortOrder: number;
+}
+
 /** The tree, by its roots, and how many nodes it holds in all. */
 export interface CategoryTree {
   tree: CategoryNode[];

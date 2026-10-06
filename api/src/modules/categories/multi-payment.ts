@@ -28,10 +28,10 @@ export interface MultiPaymentRejection {
  * frase para saber cuál fue.
  */
 export function multiPaymentRejection({
-  isMultiPayment: isMultiPayment,
-  isAutoPaid: isAutoPaid,
-  isRecurring: isRecurring,
-  depth: depth,
+  isMultiPayment,
+  isAutoPaid,
+  isRecurring,
+  depth,
 }: {
   isMultiPayment: boolean;
   isAutoPaid: boolean;

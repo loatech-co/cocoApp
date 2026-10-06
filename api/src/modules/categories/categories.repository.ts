@@ -145,7 +145,7 @@ export class CategoriesRepository {
       }
 
       const { count } = await tx.category.deleteMany({ where: { userId, id: { in: idList } } });
-      return { deleted: count, reassigned: reassigned };
+      return { deleted: count, reassigned };
     });
   }
 
