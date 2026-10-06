@@ -330,17 +330,17 @@
   --dona-5: #8ecdb0;
   --dona-5-tinta: #06231a;
 
-  /* ── Los pasteles de los chips ────────────────────────────────────────────
-     Se nombran por su PAPEL —gasto, ingreso— y no por su color.
+  /* ── The chip pastels ─────────────────────────────────────────────────────
+     They are named by their ROLE —expense, income— and not by their color.
 
-     Estaban como `violeta`, `turquesa`, `verde` y `lima`, y ese nombre es
-     exactamente lo que obliga a renombrarlo todo cuando cambia el tema: el
-     chip del gasto pasó de violeta a pino y el nombre se volvió mentira. Con
-     el papel en el nombre, un tema nuevo cambia dos líneas aquí y ni una
-     llamada.
+     They were `violeta`, `turquesa`, `verde` and `lima`, and that name is
+     exactly what forces renaming everything when the theme changes: the
+     expense chip went from violet to pine and the name became a lie. With the
+     role in the name, a new theme changes two lines here and not a single
+     call.
 
-     Y salen del @theme estático porque dependen del tema: estos pasteles
-     funcionan sobre un fondo casi blanco y brillarían sobre uno casi negro. */
+     And they leave the static @theme because they depend on the theme: these
+     pastels work on a near-white background and would glare on a near-black one. */
   --chip-gasto: #e4efe8;
   --chip-gasto-tinta: #004225;
   --chip-ingreso: #e0f2ec;
@@ -350,7 +350,7 @@
   --chip-movimientos: #e2f2e8;
   --chip-movimientos-tinta: #1a7a52;
 
-  /* ── Barra lateral ────────────────────────────────────────────────────── */
+  /* ── Sidebar ──────────────────────────────────────────────────────────── */
   --sidebar: #ffffff;
   --sidebar-foreground: #0f1f1d;
   --sidebar-muted: #5c6663;
@@ -359,10 +359,10 @@
   --sidebar-hover: #e4efe8;
   --sidebar-border: #e6e5de;
 
-  /* ── Sombras ──────────────────────────────────────────────────────────────
-     Los parámetros son del tema: tinta #0f1f1d al 6 %, 4px de desenfoque,
-     −1px de expansión, 1px hacia abajo. La flotante los escala, porque un
-     panel que se levanta necesita más que una tarjeta apoyada. */
+  /* ── Shadows ──────────────────────────────────────────────────────────────
+     The parameters are the theme's: ink #0f1f1d at 6 %, 4px of blur, −1px of
+     spread, 1px downward. The floating one scales them, because a panel that
+     lifts needs more than a card that rests. */
   --sombra-flotante:
     0 1px 4px -1px rgba(15, 31, 29, 0.06), 0 8px 20px -6px rgba(15, 31, 29, 0.12),
     0 24px 48px -20px rgba(15, 31, 29, 0.18);
@@ -372,40 +372,40 @@
     0 -1px 4px -1px rgba(15, 31, 29, 0.06), 0 -1px 2px -1px rgba(15, 31, 29, 0.06);
 
   /*
-    El velo: negro al 30 %, y el MISMO para todo lo que se abre encima.
+    The scrim: black at 30 %, and the SAME for everything that opens on top.
 
-    Un solo token porque abrir un panel, una ficha o una confirmación tienen
-    que oscurecer igual: con tres valores repartidos por el código, cada
-    superficie atenúa un poco distinto y la aplicación parece parpadear al
-    pasar de una a otra.
+    A single token because opening a panel, a sheet or a confirmation have to
+    darken the same: with three values spread across the code, each surface
+    dims a little differently and the app seems to flicker going from one to
+    another.
 
-    Negro y no la tinta del tema: un velo tintado de verde sobre una pantalla
-    verde no oscurece, tiñe. Y al 30 % —no al 60— porque lo de detrás tiene que
-    seguir leyéndose: el velo dice "esto de aquí está en pausa", no "esto de
-    aquí ya no existe". El desenfoque hace el resto del trabajo.
+    Black and not the theme's ink: a green-tinted scrim over a green screen
+    does not darken, it tints. And at 30 % —not 60— because what is behind has
+    to stay readable: the scrim says "this here is on pause", not "this here
+    no longer exists". The blur does the rest of the work.
   */
   --velo: rgba(0, 0, 0, 0.3);
 
   /*
-    ── La sala oscura ───────────────────────────────────────────────────────
-    El visor de un soporte, el encuadre de la cámara y el velo que tapa una
-    miniatura mientras se decide qué hacer con ella.
+    ── The dark room ────────────────────────────────────────────────────────
+    A receipt's viewer, the camera's framing and the scrim that covers a
+    thumbnail while deciding what to do with it.
 
-    Es el único sitio de la app que NO sigue el tema, y no por descuido: lo
-    que se está mirando ahí es un papel blanco o una foto, y lo único que
-    tiene que haber alrededor es lo menos posible. Cualquier verde, por
-    apagado que sea, se le suma al documento y le cambia el color; es el mismo
-    motivo por el que el velo es negro y no la tinta del tema.
+    It is the only place in the app that does NOT follow the theme, and not by
+    oversight: what is being looked at there is a white paper or a photo, and
+    the only thing that should be around it is as little as possible. Any
+    green, however muted, adds itself to the document and changes its color;
+    it is the same reason the scrim is black and not the theme's ink.
 
-    Y por eso tampoco cambia en oscuro: la sala ya está oscura.
+    And that is also why it does not change in dark: the room is already dark.
 
-    Eran `tinta-950` y `tinta-50`, dos escalones de la paleta ANTERIOR al
-    tema: seguían pintando porque la paleta sigue declarada, no porque
-    alguien hubiera decidido que ese negro era el correcto.
+    They were `tinta-950` and `tinta-50`, two steps of the palette from BEFORE
+    the theme: they kept painting because the palette is still declared, not
+    because anyone had decided that black was the right one.
 
-    Se declaran como colores planos —no como rgba— para que la opacidad la
-    ponga cada uso: la cámara necesita el fondo entero, el visor un 90 % y el
-    velo de una miniatura poco más de la mitad.
+    They are declared as flat colors —not as rgba— so each use sets the
+    opacity: the camera needs the full background, the viewer 90 % and a
+    thumbnail's scrim a little more than half.
   */
   --sala: #000000;
   --sala-tinta: #ffffff;
@@ -413,24 +413,24 @@
 
 .dark {
   /*
-    ── La rampa de superficies: tres, y el pozo abajo ──────────────────────
-    Eran cinco escalones de unos cinco puntos de luz cada uno —riel, lienzo,
-    tarjeta, bloque, chip— y en oscuro cinco verdes casi iguales no se leen
-    como profundidad: se leen como suciedad. La app se veía lavada y cada
-    contenedor necesitaba un borde para existir.
+    ── The surface ramp: three, and the well below ─────────────────────────
+    There were five steps of about five lightness points each —rail, canvas,
+    card, block, chip— and in dark five nearly equal greens do not read as
+    depth: they read as dirt. The app looked washed out and every container
+    needed a border to exist.
 
-    Ahora el material es UNO —#111b19, y lo comparten la tarjeta, el
-    desplegable y el riel— y el pozo queda por debajo, en #060c0b. Ese
-    escalón, que es el único que hay, es el que separa la tarjeta del fondo:
-    por eso la tarjeta ya no lleva borde y no lo echa de menos.
+    Now the material is ONE —#111b19, shared by the card, the dropdown and the
+    rail— and the well sits below, at #060c0b. That step, which is the only
+    one, is what separates the card from the background: that is why the card
+    no longer carries a border and does not miss it.
 
-    En oscuro esto importa más que en claro. Una sombra negra sobre un fondo
-    casi negro no proyecta nada, así que la única forma de decir "esto está
-    encima" es que sea más claro que lo de abajo. Es justo al revés que en el
-    papel, donde lo de encima proyecta y lo de abajo recibe.
+    In dark this matters more than in light. A black shadow on a near-black
+    background casts nothing, so the only way to say "this is on top" is for
+    it to be lighter than what is below. It is exactly the reverse of paper,
+    where what is on top casts and what is below receives.
 
-    Y el borde SUBE respecto al material: sigue haciendo falta dentro de un
-    modal, donde todo está a la misma altura, y en los campos.
+    And the border goes UP from the material: it is still needed inside a
+    modal, where everything is at the same height, and in the fields.
   */
   --background: #060c0b;
   --foreground: #e8edeb;
@@ -450,12 +450,13 @@
   --muted: #1b2624;
   --muted-foreground: #8a9693;
 
-  /* `--accent` es la superficie de LO QUE RESPONDE —la opción bajo el cursor,
-     el botón encendido, la banda de un rango— y casi siempre se pinta sobre el
-     material (#111b19), no sobre el pozo. Así que se mide contra el material,
-     no contra el fondo de la página: con el valor del tema daba 1.2:1 —el
-     resaltado existía y no se veía, y los desplegables parecían trabados—.
-     Y lleva el matiz del acento: lo que responde es verde, no gris. */
+  /* `--accent` is the surface of WHAT RESPONDS —the option under the cursor,
+     the button that is on, the band of a range— and it is almost always
+     painted over the material (#111b19), not over the well. So it is measured
+     against the material, not against the page background: with the theme's
+     value it gave 1.2:1 —the highlight existed and could not be seen, and the
+     dropdowns seemed stuck—. And it carries the accent's hue: what responds is
+     green, not gray. */
   --accent: #1e3b30;
   --accent-foreground: #86dfae;
 
@@ -468,11 +469,11 @@
 
   --acento-tinta: #d3f24b;
 
-  /* En oscuro el gasto NO puede ser el verde británico: un verde de luz 13
-     sobre un pozo de luz 4 no se ve. Le toca el `primary` de este tema, que
-     aquí es el lima. Es el mismo trato que en claro —el gasto lleva el color
-     de la casa, porque es la mayoría de lo que esta app enseña— y lo que
-     cambia es qué color es la casa en cada tema. */
+  /* In dark, expense CANNOT be the British green: a green of lightness 13 on
+     a well of lightness 4 does not show. It gets this theme's `primary`,
+     which here is the lime. It is the same treatment as in light —expense
+     carries the house color, because it is most of what this app shows— and
+     what changes is which color the house is in each theme. */
   --expense: #d3f24b;
   --expense-surface: #242c12;
   --income: #3fc9a8;
@@ -486,8 +487,7 @@
   --success-surface: #0e2a24;
   --destructive-surface: #2e1211;
 
-  /* Aquí los tres colores son CLAROS, así que la tinta de encima se da la
-     vuelta. */
+  /* Here the three colors are LIGHT, so the ink on top flips. */
   --success-foreground: #06120f;
   --warning-foreground: #2a1408;
   --info-foreground: #06120f;
@@ -498,8 +498,8 @@
   --chart-4: #3fc9a8;
   --chart-5: #86dfae;
 
-  /* La primera porción NO puede ser el color de la tarjeta: era `bosque-800`
-     sobre una tarjeta `bosque-900` y la dona parecía vacía. */
+  /* The first slice CANNOT be the card's color: it was `bosque-800` on a
+     `bosque-900` card and the donut looked empty. */
   --dona-1: #d3f24b;
   --dona-1-tinta: #14230a;
   --dona-2: #46c285;
@@ -520,21 +520,21 @@
   --chip-movimientos: #12251c;
   --chip-movimientos-tinta: #46c285;
 
-  /* Tres escalones: la barra lateral es la superficie MÁS oscura, el área de
-     trabajo sube uno y las tarjetas otro. Con dos, la barra desaparecía
-     contra el contenido. */
+  /* Three steps: the sidebar is the DARKEST surface, the work area goes up
+     one and the cards another. With two, the bar disappeared against the
+     content. */
   --sidebar: #111b19;
   --sidebar-foreground: #e8edeb;
   --sidebar-muted: #8a9693;
   --sidebar-active: #d3f24b;
   --sidebar-active-foreground: #14230a;
-  /* El mismo escalón que `--accent`: señalar una sección del riel y señalar
-     una opción de un menú son el mismo gesto y tienen que pesar igual. */
+  /* The same step as `--accent`: pointing out a section of the rail and
+     pointing out an option of a menu are the same gesture and must weigh the same. */
   --sidebar-hover: #1e3b30;
   --sidebar-border: #23302c;
 
-  /* Negra y profunda: sobre un fondo casi negro, la sombra del tema claro no
-     separa nada del fondo. */
+  /* Black and deep: on a near-black background, the light theme's shadow
+     separates nothing from the background. */
   --sombra-flotante:
     0 2px 8px rgba(0, 0, 0, 0.4), 0 14px 32px -8px rgba(0, 0, 0, 0.55),
     0 40px 72px -24px rgba(0, 0, 0, 0.7);
@@ -545,7 +545,7 @@
   --velo: rgba(0, 0, 0, 0.3);
 }
 
-/* Expone los tokens como utilidades de Tailwind (bg-background, text-income…). */
+/* Exposes the tokens as Tailwind utilities (bg-background, text-income…). */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -622,19 +622,18 @@
   }
 
   /*
-    ── Las barras de desplazamiento ──────────────────────────────────────────
-    Negras al 20 %, en todas partes. Una barra a plena tinta compite con lo
-    que tiene al lado —una cifra, un nombre— y en macOS, donde FLOTA encima
-    del contenido en vez de ocupar sitio, se lee como si fuera parte de la
-    fila.
+    ── The scrollbars ────────────────────────────────────────────────────────
+    Black at 20 %, everywhere. A bar at full ink competes with what is next
+    to it —a figure, a name— and on macOS, where it FLOATS over the content
+    instead of taking room, it reads as if it were part of the row.
 
-    Negro y no un color del tema: en oscuro, la tinta del tema es CLARA, así
-    que la barra salía blanca y resaltaba todavía más que antes.
+    Black and not a theme color: in dark, the theme's ink is LIGHT, so the bar
+    came out white and stood out even more than before.
 
-    Se recolorea con `scrollbar-color`, que se hereda, y no con
-    `::-webkit-scrollbar`: tocar el pseudo-elemento las convierte en las
-    barras clásicas de ancho fijo, que dejan de flotar, se quedan visibles
-    siempre y se comen un trozo de cada lista.
+    It is recolored with `scrollbar-color`, which is inherited, and not with
+    `::-webkit-scrollbar`: touching the pseudo-element turns them into the
+    classic fixed-width bars, which stop floating, stay visible all the time
+    and eat a piece of every list.
   */
   html {
     scrollbar-color: rgb(0 0 0 / 0.2) transparent;
