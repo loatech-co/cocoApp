@@ -49,13 +49,13 @@ const relative = (path: string): string => path.split('/src/')[1]!;
  */
 const BORN_FOCUSED: Record<string, string> = {
   'app/atajos.tsx': 'The page palette: it opens to type the name of one, and has no other control.',
-  'features/transactions/components/toolbar-filtros.tsx':
+  'features/transactions/components/toolbar-filters.tsx':
     'The search box appears on pressing the magnifier. It is the same gesture.',
-  'features/transactions/components/panel-de-busqueda.tsx':
+  'features/transactions/components/search-panel.tsx':
     "The phone's search sheet: it rises on tapping the magnifier in the bottom bar, and the field is all it has.",
   'shared/ui/organisms/combo.tsx':
     'The filter of a dropdown with many options: if it has to be pressed before typing, nobody discovers they could filter.',
-  'features/transactions/components/buscador-de-concepto.tsx':
+  'features/transactions/components/concept-search.tsx':
     "The sheet's concept finder: it opens to type, like a Combo's filter, and the box is the first thing inside.",
 };
 
@@ -89,7 +89,7 @@ const HAVE_RING: Record<string, string> = {
   'shared/ui/atoms/textarea.tsx': 'The error one, which goes at full ink.',
   'shared/ui/atoms/checkbox.tsx': 'A checkbox is an <input> and keeps a state.',
   'shared/ui/atoms/switch.tsx': 'A switch is an <input> and keeps a state.',
-  'features/transactions/components/tendencia.tsx':
+  'features/transactions/components/trend.tsx':
     'The chart enters the tab order and is walked with the arrows: without a ring, whoever arrives by keyboard does not know it is there.',
 };
 

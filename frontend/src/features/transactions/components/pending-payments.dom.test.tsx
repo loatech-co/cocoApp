@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { type PendingPayment } from '@/shared/api/generated/model';
 
-import { PendingPayments } from './pagos-pendientes';
+import { PendingPayments } from './pending-payments';
 
 /**
  * Un concepto que se cubre a pedazos no es «sin pagar».

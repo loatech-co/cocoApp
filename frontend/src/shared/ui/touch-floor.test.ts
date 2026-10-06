@@ -33,7 +33,7 @@ const CONTROLS: [filePath: string, what: string][] = [
   ['shared/ui/molecules/menu.tsx', 'a menu option'],
   ['app/navegacion.tsx', 'a section row and the account trigger'],
   [
-    'features/transactions/components/filtro-clasificacion.tsx',
+    'features/transactions/components/classification-filter.tsx',
     'the row with a checkbox: the row is the control',
   ],
 ];

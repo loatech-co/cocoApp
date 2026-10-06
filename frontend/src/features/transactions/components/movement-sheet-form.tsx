@@ -12,7 +12,7 @@ import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 import { MovementFields } from './movement-fields';
 import { MovementReadColumn } from './movement-read-view';
 import { PendingReceipts } from './pending-supports';
-import { Receipts } from './soportes';
+import { Receipts } from './receipts';
 
 /**
  * LA rejilla de una ficha de movimiento: el papel y lo que dice.

@@ -5,9 +5,9 @@ import { Field } from '@/shared/ui/atoms/field';
 import { Textarea } from '@/shared/ui/atoms/textarea';
 import { MoneyField } from '@/shared/ui/molecules/money-field';
 
+import { DateSelector } from './date-selector';
 import { MovementClassification } from './movement-classification';
 import { WhatWasRead, CouldNotRead } from './reading-notices';
-import { DateSelector } from './selector-de-fecha';
 
 /**
  * La columna de los campos, cuando la ficha se puede tocar.

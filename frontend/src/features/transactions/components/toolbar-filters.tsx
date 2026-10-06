@@ -13,10 +13,10 @@ import { Button } from '@/shared/ui/atoms/button';
 import { Input } from '@/shared/ui/atoms/input';
 import { PageHeader } from '@/shared/ui/atoms/page-header';
 
-import { DateSelector } from './selector-de-fecha';
+import { DateSelector } from './date-selector';
 import { ClassificationMenu, NewMovementMenu, SortMenu } from './toolbar-menus';
 
-interface FiltersToolbarProps {
+interface ToolbarFiltersProps {
   title: string;
   /** Lo que se está viendo, en una línea. Ej: "377 movimientos". */
   subtitle?: string;
@@ -61,7 +61,7 @@ interface FiltersToolbarProps {
  * la lista, las cifras de arriba no explicarían las filas de abajo y habría
  * que desconfiar de ambas.
  */
-export function FiltersToolbar(props: FiltersToolbarProps) {
+export function ToolbarFilters(props: ToolbarFiltersProps) {
   const { title, subtitle, summary, filters, apply, clear, hasActiveFilters } = props;
   const { sort, onNew, actions } = props;
   const categories = useCategories();

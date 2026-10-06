@@ -7,7 +7,7 @@ import { Field } from '@/shared/ui/atoms/field';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { Combo } from '@/shared/ui/organisms/combo';
 
-import { ConceptSearch } from './buscador-de-concepto';
+import { ConceptSearch } from './concept-search';
 
 interface ClassificationProps {
   sheet: MovementSheetState;

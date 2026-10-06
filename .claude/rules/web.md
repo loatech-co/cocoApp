@@ -286,11 +286,11 @@ Windows.
 `shared/ui/molecules/menu.tsx`, que es el que sabe abrir, cerrar al tocar fuera,
 cerrar con Escape y colocarse. Encima de él:
 
-| En vez de             | Va                                                                                              |
-| --------------------- | ----------------------------------------------------------------------------------------------- |
-| `<select>`            | `shared/ui/organisms/select.tsx`                                                                |
-| `<input type="date">` | `features/transactions/components/selector-de-fecha.tsx` (`SelectorDeFecha`: un día o un rango) |
-| cualquier menú        | `shared/ui/molecules/menu.tsx`                                                                  |
+| En vez de             | Va                                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| `<select>`            | `shared/ui/organisms/select.tsx`                                                         |
+| `<input type="date">` | `features/transactions/components/date-selector.tsx` (`DateSelector`: un día o un rango) |
+| cualquier menú        | `shared/ui/molecules/menu.tsx`                                                           |
 
 El calendario de los dos selectores de fecha es el mismo:
 `shared/ui/molecules/calendar.tsx`. Un extremo pinta un día, dos pintan un rango.

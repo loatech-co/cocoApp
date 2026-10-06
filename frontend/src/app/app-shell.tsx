@@ -3,8 +3,8 @@ import { Eye } from 'lucide-react';
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
-import { TransactionModal } from '@/features/transactions/components/movimiento-modal';
-import { SearchPanel } from '@/features/transactions/components/panel-de-busqueda';
+import { SearchPanel } from '@/features/transactions/components/search-panel';
+import { TransactionModal } from '@/features/transactions/components/transaction-modal';
 import { useAuth } from '@/shared/api/auth-context';
 import { registerBridge } from '@/shared/api/native-bridge';
 import { invalidateDerived } from '@/shared/api/query-keys';

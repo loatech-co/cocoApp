@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { TreeNode } from '@/shared/lib/searchable-tree';
 
-import { ConceptSearch } from './buscador-de-concepto';
+import { ConceptSearch } from './concept-search';
 
 /**
  * El buscador que reemplaza a la cascada.

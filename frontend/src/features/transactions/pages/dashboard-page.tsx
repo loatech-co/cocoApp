@@ -2,8 +2,8 @@ import { DashboardCharts } from '@/features/transactions/components/dashboard-ch
 import { DashboardKpis } from '@/features/transactions/components/dashboard-kpis';
 import { DashboardMovements } from '@/features/transactions/components/dashboard-movements';
 import { DashboardSkeleton } from '@/features/transactions/components/dashboard-skeleton';
-import { TransactionModal } from '@/features/transactions/components/movimiento-modal';
-import { FiltersToolbar } from '@/features/transactions/components/toolbar-filtros';
+import { ToolbarFilters } from '@/features/transactions/components/toolbar-filters';
+import { TransactionModal } from '@/features/transactions/components/transaction-modal';
 import { useDashboardPage } from '@/features/transactions/hooks/use-dashboard-page';
 import { ApiClientError } from '@/shared/api/api-client';
 import { useAuth } from '@/shared/api/auth-context';
@@ -103,7 +103,7 @@ function Barra({ pagina: p }: { pagina: ReturnType<typeof useDashboardPage> }) {
   const { dashboard, tabla, ficha } = p;
 
   return (
-    <FiltersToolbar
+    <ToolbarFilters
       title={
         nombreDePila(user)
           ? t('transactions.dashboard.greetingNamed', { name: nombreDePila(user) })

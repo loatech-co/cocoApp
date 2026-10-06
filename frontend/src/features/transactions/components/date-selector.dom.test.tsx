@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Input } from '@/shared/ui/atoms/input';
 
-import { DateSelector } from './selector-de-fecha';
+import { DateSelector } from './date-selector';
 
 /**
  * La fecha se escribe, y lo escrito se entiende.

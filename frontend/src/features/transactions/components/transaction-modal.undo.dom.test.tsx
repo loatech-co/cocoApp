@@ -8,7 +8,7 @@ import { leerSoporte } from '@/features/transactions/api/leer-soporte';
 import { type CategoryTree } from '@/shared/api/categories';
 import { keys } from '@/shared/api/query-keys';
 
-import { TransactionModal } from './movimiento-modal';
+import { TransactionModal } from './transaction-modal';
 
 /*
   La red, de mentira.

@@ -7,12 +7,12 @@ import { t } from '@/shared/lib/i18n';
 import { Menu, MenuOption, MenuTitle } from '@/shared/ui/molecules/menu';
 import { MenuRichOption } from '@/shared/ui/molecules/menu-rich-option';
 
-import { ClassificationFilter } from './filtro-clasificacion';
+import { ClassificationFilter } from './classification-filter';
 
 /**
  * Los desplegables de la barra de filtros: ordenar, filtrar por clasificación
  * y registrar un movimiento nuevo. La búsqueda y el rango viven en
- * `toolbar-filtros.tsx`.
+ * `toolbar-filters.tsx`.
  */
 
 export function SortMenu({ sort }: { sort: { value: Orden; onChange: (value: Orden) => void } }) {

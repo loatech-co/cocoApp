@@ -1,4 +1,4 @@
-import { TrendSkeleton } from '@/features/transactions/components/tendencia';
+import { TrendSkeleton } from '@/features/transactions/components/trend';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 

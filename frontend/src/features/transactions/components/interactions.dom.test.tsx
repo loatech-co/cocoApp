@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type CategoryTree } from '@/shared/api/categories';
 import { keys } from '@/shared/api/query-keys';
 
-import { TransactionModal } from './movimiento-modal';
+import { TransactionModal } from './transaction-modal';
 
 /*
   Cuántas veces tiene que tocar la pantalla una persona para anotar un gasto.

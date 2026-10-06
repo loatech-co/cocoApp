@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
 import { Distribution } from '@/features/transactions/components/cost-distribution';
-import { PendingPayments } from '@/features/transactions/components/pagos-pendientes';
-import { Trend } from '@/features/transactions/components/tendencia';
+import { PendingPayments } from '@/features/transactions/components/pending-payments';
+import { Trend } from '@/features/transactions/components/trend';
 import type {
   Category,
   Dashboard,

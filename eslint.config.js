@@ -92,7 +92,7 @@ const MEASURE =
  */
 const DESIGN_EXCEPTIONS = [
   {
-    file: 'features/transactions/components/selector-de-fecha.tsx',
+    file: 'features/transactions/components/date-selector.tsx',
     use: 'input',
     why: 'type="hidden": carries the chosen day to a native <form>. Nothing is drawn, so there is no component to use.',
   },

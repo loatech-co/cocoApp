@@ -16,7 +16,7 @@ import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 import { ModalBody, MODAL_PANEL } from '@/shared/ui/molecules/modal-parts';
 import { Confirmation } from '@/shared/ui/organisms/confirmation';
 
-import { CameraCapture } from './camara';
+import { CameraCapture } from './camera-capture';
 import { MovementHeader } from './movement-header';
 import { MovementSheetForm } from './movement-sheet-form';
 import { Scanning } from './reading-progress';

@@ -399,7 +399,7 @@ import { Card } from '@/shared/ui/atoms/card';
 
 // Incorrect — a shared component fetching, or one feature reaching into another
 import { useTransactions } from '@/features/transactions/api/transactions'; // in shared/ui/
-import { MovimientoModal } from '@/features/transactions/components/movimiento-modal'; // in features/centros/
+import { TransactionModal } from '@/features/transactions/components/transaction-modal'; // in features/centros/
 ```
 
 ### API client

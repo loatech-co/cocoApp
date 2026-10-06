@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { TransactionsTable } from '@/features/transactions/components/tabla-de-movimientos';
+import { TransactionsTable } from '@/features/transactions/components/transactions-table';
 import {
   POR_PAGINA,
   type useDashboardPage,
