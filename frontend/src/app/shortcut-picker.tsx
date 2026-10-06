@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react';
 
+import { t } from '@/shared/lib/i18n';
 import { PanelRow } from '@/shared/ui/atoms/panel-row';
 
 import type { PaginaDeAtajo } from './shortcut-types';
@@ -32,9 +33,7 @@ export function ShortcutPicker({
 
       {disponibles.length === 0 && (
         <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-          {busqueda.trim() === ''
-            ? 'No queda ninguna página por agregar.'
-            : 'No hay ninguna página con ese nombre.'}
+          {busqueda.trim() === '' ? t('shell.shortcuts.nothingLeft') : t('shell.shortcuts.noMatch')}
         </p>
       )}
     </ul>

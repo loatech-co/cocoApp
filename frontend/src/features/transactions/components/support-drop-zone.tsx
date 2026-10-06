@@ -2,6 +2,7 @@ import { ClipboardPaste, FileText, ImagePlus, Loader2, Upload } from 'lucide-rea
 import { type DragEvent, useRef, useState } from 'react';
 
 import { usePasteScreenshot } from '@/features/transactions/hooks/use-paste-screenshot';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 import { DropSurface } from '@/shared/ui/atoms/drop-surface';
@@ -83,7 +84,7 @@ export function Soltar({ subiendo, progreso, solo, alPulsar, onArchivos }: DropZ
         forma={solo ? 'completa' : 'cuadro'}
         encima={soltando.encima}
         ocupada={subiendo}
-        etiqueta="Agregar soportes"
+        etiqueta={t('transactions.supports.add')}
         onPulsar={alPulsar ?? (() => campo.current?.click())}
       >
         <DropZoneLabel subiendo={subiendo} progreso={progreso} solo={solo} />
@@ -114,7 +115,7 @@ function PasteScreenshot({ onPegar, problema }: { onPegar: () => void; problema:
     <div className="relative mt-4 flex flex-col items-center gap-1">
       <Button type="button" variant="outline" size="sm" onClick={onPegar}>
         <ClipboardPaste aria-hidden="true" />
-        Pegar una captura
+        {t('transactions.supports.paste')}
       </Button>
       {problema && (
         <p role="alert" className="max-w-xs text-center text-xs text-muted-foreground">
@@ -156,21 +157,20 @@ function DropZoneLabel({
           */}
           <Upload className="size-6" aria-hidden="true" />
           <span className="text-center text-sm font-medium text-foreground">
-            Agregar los soportes del movimiento
+            {t('transactions.supports.dropTitle')}
           </span>
-          <span className="text-center text-xs">
-            El recibo, la factura o el comprobante de pago. Arrastrarlos aquí o seleccionarlos del
-            equipo.
-          </span>
+          <span className="text-center text-xs">{t('transactions.supports.dropHelp')}</span>
           <span className="mt-1 flex items-center gap-1.5 text-center text-2xs text-muted-foreground">
             <FileText className="size-3.5 shrink-0" aria-hidden="true" />
-            PDF, JPG, PNG, HEIC o WEBP
+            {t('transactions.supports.formats')}
           </span>
         </>
       ) : (
         <>
           <ImagePlus className="size-6" aria-hidden="true" />
-          <span className="px-2 text-center text-2xs leading-tight">Agregar soporte</span>
+          <span className="px-2 text-center text-2xs leading-tight">
+            {t('transactions.supports.addOne')}
+          </span>
         </>
       )}
     </div>

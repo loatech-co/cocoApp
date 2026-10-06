@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
-import { cn, formatCOP } from '@/shared/lib/utils';
+import { formatCOP } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
+import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 
 /**
@@ -343,7 +345,7 @@ function DonutRing({ mostrarLista, ...marcado }: DonutMarks & { mostrarLista: bo
       // entera se recolocaría cada vez que se pulsa el botón.
       className={cn('max-h-full w-[62%] shrink-0', !mostrarLista && 'mx-auto')}
       role="img"
-      aria-label="Distribución del gasto"
+      aria-label={t('ui.donut.label')}
     >
       {/* El aro de fondo: es lo que se ve donde no llega ninguna porción. */}
       <circle
@@ -448,7 +450,7 @@ function DonutTooltip({
         {formatCOP(señalada.valor)}
       </p>
       <p className="tabular mt-0.5 text-2xs text-muted-foreground">
-        {señalada.porcentaje}% del total
+        {t('ui.donut.ofTotal', { percent: señalada.porcentaje })}
       </p>
     </div>
   );

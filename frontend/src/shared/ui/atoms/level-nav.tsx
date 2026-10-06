@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
@@ -50,8 +51,8 @@ export function DrillButton({ nombre, onEntrar }: { nombre: string; onEntrar: ()
     <button
       type="button"
       onClick={onEntrar}
-      aria-label={`Ver lo que hay dentro de ${nombre}`}
-      title={`Ver lo que hay dentro de ${nombre}`}
+      aria-label={t('ui.levelNav.open', { name: nombre })}
+      title={t('ui.levelNav.open', { name: nombre })}
       className={cn(
         'grid w-9 shrink-0 place-items-center text-muted-foreground transition-colors',
         REALCE,

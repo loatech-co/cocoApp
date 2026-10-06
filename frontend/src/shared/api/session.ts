@@ -1,3 +1,4 @@
+import { t } from '@/shared/lib/i18n';
 import { type SesionParaLaWeb } from '@/shared/lib/native-contract';
 import { avisar as avisarALaApp, enLaApp, pedirSesion } from '@/shared/lib/puente-nativo';
 
@@ -191,7 +192,7 @@ async function llamarAuth<T>(
   const cuerpo: unknown = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok) {
-    const { code, message, details } = leerProblema(cuerpo, 'No se pudo completar la operación.');
+    const { code, message, details } = leerProblema(cuerpo, t('errors.operationFailed'));
     throw new SesionError(respuesta.status, code, message, details);
   }
 
@@ -290,7 +291,7 @@ export async function salirDeTodosLosDispositivos(): Promise<void> {
   // solo tiene que descartarlo, sin llamar a nada.
   if (enLaApp()) avisarALaApp({ tipo: 'sesionCerrada' });
   if (!respuesta.ok && respuesta.status !== 401) {
-    throw new SesionError(respuesta.status, 'logout_all_failed', 'No se pudo cerrar todo.');
+    throw new SesionError(respuesta.status, 'logout_all_failed', t('errors.signOutAllFailed'));
   }
 }
 
@@ -310,7 +311,7 @@ export async function cambiarContrasena(
 
   if (!respuesta.ok) {
     const cuerpo: unknown = await respuesta.json().catch(() => null);
-    const { code, message, details } = leerProblema(cuerpo, 'No se pudo cambiar la contraseña.');
+    const { code, message, details } = leerProblema(cuerpo, t('errors.passwordChangeFailed'));
     throw new SesionError(respuesta.status, code, message, details);
   }
 

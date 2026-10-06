@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 
 /**
@@ -40,7 +41,7 @@ export function Paginador({
   if (paginas <= 1) return null;
 
   return (
-    <nav className={cn('flex justify-center', className)} aria-label="Paginación">
+    <nav className={cn('flex justify-center', className)} aria-label={t('common.pagination')}>
       {/*
         Sin relleno propio: el paginador se apoya en el fondo de la página en
         vez de flotar sobre él. Con `bg-card` se leía como una tarjeta más —del
@@ -55,10 +56,10 @@ export function Paginador({
           <Celda
             deshabilitada={pagina <= 1}
             onClick={() => onCambiar(pagina - 1)}
-            aria-label="Página anterior"
+            aria-label={t('common.previousPage')}
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Anterior</span>
+            <span className="hidden sm:inline">{t('common.previous')}</span>
           </Celda>
         </li>
 
@@ -68,9 +69,9 @@ export function Paginador({
           <Celda
             deshabilitada={pagina >= paginas}
             onClick={() => onCambiar(pagina + 1)}
-            aria-label="Página siguiente"
+            aria-label={t('common.nextPage')}
           >
-            <span className="hidden sm:inline">Siguiente</span>
+            <span className="hidden sm:inline">{t('common.next')}</span>
             <ArrowRight className="size-4" aria-hidden="true" />
           </Celda>
         </li>
@@ -167,7 +168,7 @@ function PageNumbers({
             <Celda
               actual={n === pagina}
               onClick={() => onCambiar(n)}
-              aria-label={`Página ${n}`}
+              aria-label={t('common.pageN', { n })}
               aria-current={n === pagina ? 'page' : undefined}
             >
               <span className="tabular w-4 text-center">{n}</span>

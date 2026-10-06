@@ -1,6 +1,8 @@
 import { LayoutDashboard, ScrollText, ShieldCheck, Tags, UserCog, Wallet } from 'lucide-react';
 import { type ComponentType } from 'react';
 
+import { t } from '@/shared/lib/i18n';
+
 /*
   Las secciones de la aplicación: la lista de lo que existe y a dónde lleva.
 
@@ -43,7 +45,7 @@ export interface Seccion {
  */
 export const DASHBOARD: Seccion = {
   to: '/',
-  label: 'Dashboard',
+  label: t('shell.sections.dashboard'),
   Icono: LayoutDashboard,
   exact: true,
 };
@@ -52,7 +54,13 @@ export const SECCIONES: readonly Seccion[] = [
   DASHBOARD,
   // Para quien no lleva cuentas, este enlace no existe. Ni oculto con CSS ni
   // deshabilitado: ausente.
-  { to: '/cuentas', label: 'Cuentas', Icono: Wallet, exact: false, requiere: 'cuentas' },
+  {
+    to: '/cuentas',
+    label: t('shell.sections.accounts'),
+    Icono: Wallet,
+    exact: false,
+    requiere: 'cuentas',
+  },
   /*
     ── Centros de costos es de TODOS, no de administración ──────────────────
     Estuvo bajo «Administración», con este argumento: se configura una vez y
@@ -72,7 +80,7 @@ export const SECCIONES: readonly Seccion[] = [
     Va el último de los tres porque sigue siendo lo que menos se visita: se
     entra a mirar el resumen, no a ordenar la taxonomía.
   */
-  { to: '/centros-de-costos', label: 'Centros de costos', Icono: Tags, exact: false },
+  { to: '/centros-de-costos', label: t('shell.sections.costCenters'), Icono: Tags, exact: false },
 ];
 
 /**
@@ -89,14 +97,19 @@ export const SECCIONES_DE_ADMIN: readonly Seccion[] = [
   // 'Usuarios', no 'Cuentas': en esta misma barra 'Cuentas' ya significa
   // tarjetas y ahorros. Dos cosas distintas con el mismo nombre a diez píxeles
   // de distancia.
-  { to: '/administracion', label: 'Usuarios', Icono: ShieldCheck, exact: true },
-  { to: '/administracion/bitacora', label: 'Bitácora', Icono: ScrollText, exact: false },
+  { to: '/administracion', label: t('shell.sections.users'), Icono: ShieldCheck, exact: true },
+  {
+    to: '/administracion/bitacora',
+    label: t('shell.sections.auditLog'),
+    Icono: ScrollText,
+    exact: false,
+  },
 ];
 
 /** Mi cuenta no es una sección del riel, pero sí una página que existe. */
 export const MI_CUENTA: Seccion = {
   to: '/mi-cuenta',
-  label: 'Mi cuenta',
+  label: t('shell.account.myAccount'),
   Icono: UserCog,
   exact: true,
 };

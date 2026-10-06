@@ -7,6 +7,7 @@ import {
 import { Link } from 'react-router-dom';
 
 import { quitarAtajo } from '@/shared/lib/atajos';
+import { t } from '@/shared/lib/i18n';
 import { AddSurface } from '@/shared/ui/atoms/add-surface';
 import { MovableTile, TileRemove, tileClass } from '@/shared/ui/atoms/tile';
 
@@ -62,7 +63,7 @@ export function ShortcutGrid({
       {(estado === 'arreglando' || baldosas.length === 0) && (
         <div className="col-span-3">
           <AddSurface forma="fila" onClick={() => setEstado('eligiendo')}>
-            Agregar atajo
+            {t('shell.shortcuts.add')}
           </AddSurface>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { LayoutGrid, Search } from 'lucide-react';
 
+import { t } from '@/shared/lib/i18n';
 import { DASHBOARD } from '@/shared/lib/sections';
 import { cn } from '@/shared/lib/utils';
 import { BarFab, BarIcon, BarSlotButton, BarSlotLink } from '@/shared/ui/atoms/bar-slot';
@@ -16,6 +17,21 @@ interface BottomBarProps {
   cuentaAbierta: boolean;
   onCuenta: () => void;
 }
+
+/** The bar itself: fixed to the bottom edge, over the page and under the top bar. */
+const CLASES_DE_LA_BARRA = cn(
+  'fixed inset-x-0 bottom-0 flex items-stretch',
+  // Por DEBAJO del techo, que va a 20, y a propósito: un desplegable
+  // anclado al techo es hijo suyo, así que ningún z-index de dentro
+  // puede ganarle a un hermano del techo. Las dos barras no se solapan
+  // nunca —una está arriba y otra al pie—, así que no se pierde nada.
+  'z-[15]',
+  'bg-sidebar pb-seguro',
+  // El relleno de abajo, y no más alto: la fila de la barra mide 60
+  // exactos y el borde seguro del teléfono es hueco muerto por debajo,
+  // que es justo lo que ese hueco es.
+  'border-t border-sidebar-border shadow-[var(--sombra-pegada-arriba)]',
+);
 
 /**
  * La barra de abajo. La forma de llegar a lo del día a día con una mano.
@@ -64,20 +80,8 @@ export function BarraInferior({
   return (
     <nav
       data-armazon="barra"
-      aria-label="Accesos"
-      className={cn(
-        'fixed inset-x-0 bottom-0 flex items-stretch',
-        // Por DEBAJO del techo, que va a 20, y a propósito: un desplegable
-        // anclado al techo es hijo suyo, así que ningún z-index de dentro
-        // puede ganarle a un hermano del techo. Las dos barras no se solapan
-        // nunca —una está arriba y otra al pie—, así que no se pierde nada.
-        'z-[15]',
-        'bg-sidebar pb-seguro',
-        // El relleno de abajo, y no más alto: la fila de la barra mide 60
-        // exactos y el borde seguro del teléfono es hueco muerto por debajo,
-        // que es justo lo que ese hueco es.
-        'border-t border-sidebar-border shadow-[var(--sombra-pegada-arriba)]',
-      )}
+      aria-label={t('shell.bottomBar.label')}
+      className={CLASES_DE_LA_BARRA}
     >
       <div className="flex flex-1">
         <BarSlotLink
@@ -86,7 +90,11 @@ export function BarraInferior({
           etiqueta={DASHBOARD.label}
           Icono={DASHBOARD.Icono}
         />
-        <BarSlotButton etiqueta="Buscar" encendido={busquedaAbierta} onClick={onBuscar}>
+        <BarSlotButton
+          etiqueta={t('shell.bottomBar.search')}
+          encendido={busquedaAbierta}
+          onClick={onBuscar}
+        >
           <BarIcon Icono={Search} />
         </BarSlotButton>
       </div>
@@ -94,11 +102,15 @@ export function BarraInferior({
       {/* Ancho fijo: es lo que mantiene el botón en el centro exacto cuando
           los grupos no tienen el mismo número de huecos. */}
       <div className="flex w-18 shrink-0 items-start justify-center">
-        <BarFab etiqueta="Registrar un gasto" onClick={onNuevoGasto} />
+        <BarFab etiqueta={t('shell.bottomBar.newExpense')} onClick={onNuevoGasto} />
       </div>
 
       <div className="flex flex-1">
-        <BarSlotButton etiqueta="Atajos" encendido={atajosAbiertos} onClick={onAtajos}>
+        <BarSlotButton
+          etiqueta={t('shell.shortcuts.title')}
+          encendido={atajosAbiertos}
+          onClick={onAtajos}
+        >
           <BarIcon Icono={LayoutGrid} />
         </BarSlotButton>
 
@@ -118,7 +130,7 @@ function AccountSlot({
   onClick: () => void;
 }) {
   return (
-    <BarSlotButton etiqueta="Mi cuenta" encendido={abierta} onClick={onClick}>
+    <BarSlotButton etiqueta={t('shell.account.myAccount')} encendido={abierta} onClick={onClick}>
       {/* Apagado va de la superficie tenue de la barra y encendido del
           color de la marca con su tinta. Nunca al revés: cuando el avatar
           llevaba el color de la barra, el círculo desaparecía y quedaban

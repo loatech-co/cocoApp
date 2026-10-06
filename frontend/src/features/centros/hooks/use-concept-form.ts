@@ -12,6 +12,7 @@ import { ApiClientError } from '@/shared/api/api-client';
 import { useCrearCategoria } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { t } from '@/shared/lib/i18n';
 
 interface ConceptFormOptions {
   abierta: boolean;
@@ -41,7 +42,10 @@ export function useConceptForm({ abierta, concepto, categoriaId, onCerrar }: Con
   function onUnificar(destinoId: number): Promise<void> {
     if (!concepto) return Promise.resolve();
     const origenId = concepto.id;
-    return guardar(() => unificar.mutateAsync({ origenId, destinoId }), 'No se pudo unificar.');
+    return guardar(
+      () => unificar.mutateAsync({ origenId, destinoId }),
+      t('centers.conceptModal.mergeFailed'),
+    );
   }
 
   function onSubmit(evento: SubmitEvent<HTMLFormElement>): Promise<void> {
@@ -55,7 +59,7 @@ export function useConceptForm({ abierta, concepto, categoriaId, onCerrar }: Con
               cambios: conceptChanges(campos, categoria, concepto),
             })
           : crear.mutateAsync(newConcept(campos, categoriaId)),
-      'No se pudo guardar.',
+      t('centers.saveFailed'),
     );
   }
 

@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useHistoria } from '@/features/transactions/api/transactions';
+import { t } from '@/shared/lib/i18n';
 
 /**
  * Filtros compartidos por el Resumen y los Movimientos.
@@ -23,13 +24,41 @@ export type Preset =
   | 'personalizado';
 
 export const PRESETS: { valor: Preset; etiqueta: string; ayuda: string }[] = [
-  { valor: 'todo', etiqueta: 'Todo', ayuda: 'Sin límite de fechas' },
-  { valor: 'mes-actual', etiqueta: 'Mes en curso', ayuda: 'Del 1 hasta hoy' },
-  { valor: 'mes-pasado', etiqueta: 'Mes pasado', ayuda: 'El mes anterior completo' },
-  { valor: 'trimestre', etiqueta: 'Últimos 3 meses', ayuda: 'Los tres meses anteriores a hoy' },
-  { valor: 'anio-actual', etiqueta: 'Año en curso', ayuda: 'Del 1 de enero hasta hoy' },
-  { valor: 'anio-pasado', etiqueta: 'Año pasado', ayuda: 'El año anterior completo' },
-  { valor: 'personalizado', etiqueta: 'Personalizado', ayuda: 'Elige las dos fechas' },
+  {
+    valor: 'todo',
+    etiqueta: t('transactions.range.presets.all'),
+    ayuda: t('transactions.range.presets.allHelp'),
+  },
+  {
+    valor: 'mes-actual',
+    etiqueta: t('transactions.range.presets.thisMonth'),
+    ayuda: t('transactions.range.presets.thisMonthHelp'),
+  },
+  {
+    valor: 'mes-pasado',
+    etiqueta: t('transactions.range.presets.lastMonth'),
+    ayuda: t('transactions.range.presets.lastMonthHelp'),
+  },
+  {
+    valor: 'trimestre',
+    etiqueta: t('transactions.range.presets.last3Months'),
+    ayuda: t('transactions.range.presets.last3MonthsHelp'),
+  },
+  {
+    valor: 'anio-actual',
+    etiqueta: t('transactions.range.presets.thisYear'),
+    ayuda: t('transactions.range.presets.thisYearHelp'),
+  },
+  {
+    valor: 'anio-pasado',
+    etiqueta: t('transactions.range.presets.lastYear'),
+    ayuda: t('transactions.range.presets.lastYearHelp'),
+  },
+  {
+    valor: 'personalizado',
+    etiqueta: t('transactions.range.presets.custom'),
+    ayuda: t('transactions.range.presets.customHelp'),
+  },
 ];
 
 /**

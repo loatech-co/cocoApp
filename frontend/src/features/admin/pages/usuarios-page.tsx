@@ -4,6 +4,7 @@ import { useUsuarios } from '@/features/admin/api/admin-queries';
 import { FilaDeUsuario } from '@/features/admin/components/user-row';
 import { useAuth } from '@/shared/api/auth-context';
 import { type ProfileStatus } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
@@ -11,10 +12,10 @@ import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
 const FILTROS: { valor: ProfileStatus | undefined; etiqueta: string }[] = [
-  { valor: 'pending', etiqueta: 'Pendientes' },
-  { valor: 'active', etiqueta: 'Activas' },
-  { valor: 'suspended', etiqueta: 'Suspendidas' },
-  { valor: undefined, etiqueta: 'Todas' },
+  { valor: 'pending', etiqueta: t('admin.users.filters.pending') },
+  { valor: 'active', etiqueta: t('admin.users.filters.active') },
+  { valor: 'suspended', etiqueta: t('admin.users.filters.suspended') },
+  { valor: undefined, etiqueta: t('admin.users.filters.all') },
 ];
 
 /**
@@ -30,9 +31,13 @@ export function UsuariosPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <CabeceraDePagina titulo="Usuarios" ayuda="Nadie entra a Coco sin que apruebes su cuenta." />
+      <CabeceraDePagina titulo={t('shell.sections.users')} ayuda={t('admin.users.help')} />
 
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
+      <div
+        className="flex flex-wrap gap-2"
+        role="group"
+        aria-label={t('admin.users.filterByStatus')}
+      >
         {FILTROS.map(({ valor, etiqueta }) => (
           <Button
             key={etiqueta}
@@ -55,18 +60,14 @@ export function UsuariosPage() {
 
       {consulta.isError && (
         <Alert variant="destructive">
-          <AlertDescription>
-            No se pudieron cargar las cuentas. Recarga la página e inténtalo de nuevo.
-          </AlertDescription>
+          <AlertDescription>{t('admin.users.loadFailed')}</AlertDescription>
         </Alert>
       )}
 
       {consulta.data?.data.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            {filtro === 'pending'
-              ? 'No hay solicitudes esperando aprobación.'
-              : 'No hay cuentas con ese estado.'}
+            {filtro === 'pending' ? t('admin.users.emptyPending') : t('admin.users.emptyFiltered')}
           </CardContent>
         </Card>
       )}

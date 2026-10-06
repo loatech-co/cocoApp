@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 
@@ -118,7 +119,13 @@ export function CabeceraDeModal({
 
       <div className="flex shrink-0 items-center gap-1">
         {acciones}
-        <Button type="button" variant="ghost" size="sm-icon" onClick={onCerrar} aria-label="Cerrar">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm-icon"
+          onClick={onCerrar}
+          aria-label={t('common.close')}
+        >
           <X className="size-4" aria-hidden="true" />
         </Button>
       </div>

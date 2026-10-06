@@ -17,6 +17,7 @@ import {
 } from '@/features/admin/api/admin-queries';
 import { ApiClientError } from '@/shared/api/api-client';
 import { type Profile, type ProfileStatus } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
@@ -75,7 +76,7 @@ export function FilaDeUsuario({ usuario, soyYo }: { usuario: Profile; soyYo: boo
             aria-expanded={restableciendo}
           >
             <KeyRound aria-hidden="true" />
-            Restablecer contraseña
+            {t('admin.userRow.resetPassword')}
           </Button>
         </div>
 
@@ -108,7 +109,7 @@ function RestablecerContrasena({ usuario, onListo }: { usuario: Profile; onListo
 
   return (
     <Bloque className="p-4">
-      <Campo etiqueta="Contraseña nueva" id={`nueva-${usuario.id}`}>
+      <Campo etiqueta={t('admin.userRow.newPassword')} id={`nueva-${usuario.id}`}>
         <Input
           id={`nueva-${usuario.id}`}
           type="text"
@@ -133,10 +134,10 @@ function RestablecerContrasena({ usuario, onListo }: { usuario: Profile; onListo
           }
         >
           {restablecer.isPending && <Loader2 className="animate-spin" aria-hidden="true" />}
-          Restablecer
+          {t('admin.userRow.reset')}
         </Button>
         <Button size="sm" variant="ghost" onClick={onListo}>
-          Cancelar
+          {t('common.cancel')}
         </Button>
       </div>
     </Bloque>
@@ -149,7 +150,7 @@ function EstadoBadge({ status }: { status: ProfileStatus }) {
     return (
       <Badge variant="warning">
         <Clock aria-hidden="true" />
-        Pendiente
+        {t('admin.userRow.statusPending')}
       </Badge>
     );
   }
@@ -157,14 +158,14 @@ function EstadoBadge({ status }: { status: ProfileStatus }) {
     return (
       <Badge variant="outline" className="border-destructive text-destructive">
         <Slash aria-hidden="true" />
-        Suspendida
+        {t('admin.userRow.statusSuspended')}
       </Badge>
     );
   }
   return (
     <Badge variant="income">
       <Check aria-hidden="true" />
-      Activa
+      {t('admin.userRow.statusActive')}
     </Badge>
   );
 }
@@ -176,7 +177,7 @@ function RolBadge({ esAdmin }: { esAdmin: boolean }) {
       className={cn(!esAdmin && 'text-muted-foreground')}
     >
       {esAdmin ? <ShieldCheck aria-hidden="true" /> : <UserIcon aria-hidden="true" />}
-      {esAdmin ? 'Administrador' : 'Usuario'}
+      {esAdmin ? t('admin.userRow.roleAdmin') : t('admin.userRow.roleUser')}
     </Badge>
   );
 }
@@ -193,8 +194,7 @@ function ResetDone({ usuario }: { usuario: Profile }) {
   return (
     <Alert variant="info">
       <AlertDescription>
-        Contraseña restablecida. Comunícasela a {usuario.displayName ?? usuario.email} por un canal
-        seguro. Sus sesiones abiertas se cerraron.
+        {t('admin.userRow.passwordReset', { name: usuario.displayName ?? usuario.email })}
       </AlertDescription>
     </Alert>
   );
@@ -225,7 +225,7 @@ function UserStatusActions({
           ) : (
             <Check aria-hidden="true" />
           )}
-          Aprobar
+          {t('admin.userRow.approve')}
         </Button>
       )}
 
@@ -237,7 +237,7 @@ function UserStatusActions({
           onClick={() => onAccion('reactivate')}
         >
           <Play aria-hidden="true" />
-          Reactivar
+          {t('admin.userRow.reactivate')}
         </Button>
       )}
 
@@ -251,14 +251,14 @@ function UserStatusActions({
           onClick={() => onAccion('suspend')}
         >
           <Slash aria-hidden="true" />
-          Suspender
+          {t('admin.userRow.suspend')}
         </Button>
       )}
 
       {!soyYo && (
         <Button size="sm" variant="outline" disabled={ocupado} onClick={onCambiarRol}>
           <ShieldCheck aria-hidden="true" />
-          {usuario.role === 'admin' ? 'Quitar administración' : 'Hacer administrador'}
+          {usuario.role === 'admin' ? t('admin.userRow.removeAdmin') : t('admin.userRow.makeAdmin')}
         </Button>
       )}
     </>
@@ -271,7 +271,7 @@ function UserHeader({ usuario, soyYo }: { usuario: Profile; soyYo: boolean }) {
       <div className="min-w-0">
         <p className="flex items-center gap-2 font-medium">
           <span className="truncate">{usuario.displayName ?? usuario.email}</span>
-          {soyYo && <span className="text-xs text-muted-foreground">(tú)</span>}
+          {soyYo && <span className="text-xs text-muted-foreground">{t('admin.userRow.you')}</span>}
         </p>
         <p className="truncate text-sm text-muted-foreground">{usuario.email}</p>
       </div>

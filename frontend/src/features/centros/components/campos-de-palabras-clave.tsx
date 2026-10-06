@@ -8,6 +8,7 @@ import {
   porQueNoEntra,
 } from '@/features/centros/model/palabras-clave';
 import { type Category } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Chip } from '@/shared/ui/atoms/badge';
 import { Campo } from '@/shared/ui/atoms/campo';
@@ -66,9 +67,9 @@ export function CamposDePalabrasClave({
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <Campo
-        etiqueta="Palabras clave"
+        etiqueta={t('centers.keywords.label')}
         id="concepto-palabras-clave"
-        ayuda="Lo que dice el recibo y no cambia de un mes a otro: el acreedor, su NIT. Pulsa Enter para agregar cada una."
+        ayuda={t('centers.keywords.help')}
       >
         <Input
           id="concepto-palabras-clave"
@@ -83,7 +84,7 @@ export function CamposDePalabrasClave({
           // nadie relee una lista para comprobar que está lo que acaba de
           // escribir.
           onBlur={añadir}
-          placeholder="Aquaoccidente, 805027653…"
+          placeholder={t('centers.keywords.placeholder')}
           icono={ScanText}
           acciones={[<AddKeywordButton key="añadir" escrita={escrita} onClick={añadir} />]}
         />
@@ -102,9 +103,9 @@ export function CamposDePalabrasClave({
 
       {!aviso && enOtroConcepto?.otro && (
         <p className="text-xs leading-relaxed text-muted-foreground">
-          “{enOtroConcepto.palabra}” también está en{' '}
-          <strong className="font-medium text-foreground">{enOtroConcepto.otro.name}</strong>. Un
-          recibo que la diga puede caer en cualquiera de los dos.
+          {t('centers.keywords.sharedMiddle', { word: enOtroConcepto.palabra })}
+          <strong className="font-medium text-foreground">{enOtroConcepto.otro.name}</strong>
+          {t('centers.keywords.sharedAfter')}
         </p>
       )}
     </div>
@@ -127,7 +128,7 @@ function KeywordChips({
               botón que no haría nada. */}
           <Chip
             onQuitar={() => onQuitar(palabra)}
-            etiquetaDeQuitar={`Quitar ${palabra}`}
+            etiquetaDeQuitar={t('centers.keywords.remove', { word: palabra })}
             className="max-w-full"
           >
             {palabra}
@@ -211,8 +212,8 @@ function AddKeywordButton({ escrita, onClick }: { escrita: string; onClick: () =
     // frase sino una lista.
     <FieldAction
       Icono={Plus}
-      etiqueta="Agregar la palabra clave"
-      pista="Agregar"
+      etiqueta={t('centers.keywords.add')}
+      pista={t('centers.keywords.addHint')}
       onClick={onClick}
       disabled={limpiar(escrita) === ''}
     />

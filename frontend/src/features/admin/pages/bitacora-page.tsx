@@ -3,6 +3,8 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { useBitacora } from '@/features/admin/api/admin-queries';
 import type { AuditEntry } from '@/shared/api/generated/model';
+import { fechaYHora } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
 import { Button } from '@/shared/ui/atoms/button';
@@ -34,28 +36,23 @@ const esConocida = (accion: string): accion is AuditAction => Object.hasOwn(ETIQ
 
 /** Cada acción auditada, en español y sin jerga. */
 const ETIQUETAS: Record<AuditAction, string> = {
-  'auth.register': 'Solicitó acceso',
-  'auth.login': 'Entró',
-  'auth.login_failed': 'Intento de acceso fallido',
-  'auth.logout': 'Cerró sesión',
-  'auth.logout_all': 'Cerró sesión en todos los dispositivos',
-  'auth.token_reuse_detected': 'Reuso de token detectado',
-  'auth.password_changed': 'Cambió su contraseña',
-  'admin.user_approved': 'Aprobó una cuenta',
-  'admin.user_rejected': 'Rechazó una cuenta',
-  'admin.user_suspended': 'Suspendió una cuenta',
-  'admin.user_reactivated': 'Reactivó una cuenta',
-  'admin.password_reset': 'Restableció una contraseña',
-  'admin.role_changed': 'Cambió un rol',
+  'auth.register': t('admin.auditLog.actions.register'),
+  'auth.login': t('admin.auditLog.actions.login'),
+  'auth.login_failed': t('admin.auditLog.actions.loginFailed'),
+  'auth.logout': t('admin.auditLog.actions.logout'),
+  'auth.logout_all': t('admin.auditLog.actions.logoutAll'),
+  'auth.token_reuse_detected': t('admin.auditLog.actions.tokenReuse'),
+  'auth.password_changed': t('admin.auditLog.actions.passwordChanged'),
+  'admin.user_approved': t('admin.auditLog.actions.userApproved'),
+  'admin.user_rejected': t('admin.auditLog.actions.userRejected'),
+  'admin.user_suspended': t('admin.auditLog.actions.userSuspended'),
+  'admin.user_reactivated': t('admin.auditLog.actions.userReactivated'),
+  'admin.password_reset': t('admin.auditLog.actions.passwordReset'),
+  'admin.role_changed': t('admin.auditLog.actions.roleChanged'),
 };
 
 /** Las que merecen destacarse a simple vista. */
 const PREOCUPANTES = new Set<AuditAction>(['auth.login_failed', 'auth.token_reuse_detected']);
-
-const formatoDeFecha = new Intl.DateTimeFormat('es-CO', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-});
 
 /**
  * Bitácora de seguridad.
@@ -74,10 +71,7 @@ export function BitacoraPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <CabeceraDePagina
-        titulo="Bitácora"
-        ayuda="Quién hizo qué y cuándo. Nunca registra montos ni contraseñas."
-      />
+      <CabeceraDePagina titulo={t('shell.sections.auditLog')} ayuda={t('admin.auditLog.help')} />
 
       {consulta.isPending && (
         <div className="flex flex-col gap-2">
@@ -89,14 +83,14 @@ export function BitacoraPage() {
 
       {consulta.isError && (
         <Alert variant="destructive">
-          <AlertDescription>No se pudo cargar la bitácora.</AlertDescription>
+          <AlertDescription>{t('admin.auditLog.loadFailed')}</AlertDescription>
         </Alert>
       )}
 
       {consulta.data?.data.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Todavía no hay eventos registrados.
+            {t('admin.auditLog.empty')}
           </CardContent>
         </Card>
       )}
@@ -129,12 +123,14 @@ function Evento({ evento }: { evento: AuditEntry }) {
               {esConocida(evento.action) ? ETIQUETAS[evento.action] : evento.action}
               {preocupante && (
                 <Badge variant="warning" className="font-normal">
-                  Revisar
+                  {t('admin.auditLog.review')}
                 </Badge>
               )}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {evento.user ? (evento.user.name ?? evento.user.email) : 'Cuenta desconocida'}
+              {evento.user
+                ? (evento.user.name ?? evento.user.email)
+                : t('admin.auditLog.unknownAccount')}
               {evento.ip && ` · ${evento.ip}`}
             </p>
           </div>
@@ -142,7 +138,7 @@ function Evento({ evento }: { evento: AuditEntry }) {
             dateTime={evento.createdAt}
             className="shrink-0 text-xs tabular-nums text-muted-foreground"
           >
-            {formatoDeFecha.format(new Date(evento.createdAt))}
+            {fechaYHora.format(new Date(evento.createdAt))}
           </time>
         </CardContent>
       </Card>
@@ -160,7 +156,7 @@ function LogPager({
   setPagina: Dispatch<SetStateAction<number>>;
 }) {
   return (
-    <nav className="flex items-center justify-between" aria-label="Paginación">
+    <nav className="flex items-center justify-between" aria-label={t('common.pagination')}>
       <Button
         variant="outline"
         size="sm"
@@ -168,10 +164,10 @@ function LogPager({
         onClick={() => setPagina((p) => p - 1)}
       >
         <ChevronLeft aria-hidden="true" />
-        Anterior
+        {t('common.previous')}
       </Button>
       <span className="text-sm text-muted-foreground">
-        Página {pagina} de {ultimaPagina}
+        {t('admin.auditLog.page', { page: pagina, pages: ultimaPagina })}
       </span>
       <Button
         variant="outline"
@@ -179,7 +175,7 @@ function LogPager({
         disabled={pagina >= ultimaPagina}
         onClick={() => setPagina((p) => p + 1)}
       >
-        Siguiente
+        {t('common.next')}
         <ChevronRight aria-hidden="true" />
       </Button>
     </nav>

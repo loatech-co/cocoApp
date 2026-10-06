@@ -2,8 +2,9 @@ import { Filter } from 'lucide-react';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { type PendingPayment } from '@/shared/api/generated/model';
-import { diaCorto } from '@/shared/lib/fechas';
-import { cn, formatCOP } from '@/shared/lib/utils';
+import { diaCorto, formatCOP } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
+import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { CardRow } from '@/shared/ui/atoms/card-row';
 import { Casilla } from '@/shared/ui/atoms/casilla';
@@ -84,7 +85,7 @@ export function PagosPendientes({
     <Card className={cn('h-full', className)}>
       <CardContent className="flex h-full flex-col p-4 sm:p-6">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="font-display text-lg font-semibold">Pagos pendientes</h2>
+          <h2 className="font-display text-lg font-semibold">{t('transactions.pending.title')}</h2>
 
           {/*
             Solo con más de un centro: una casilla única no separa nada, y un
@@ -105,7 +106,9 @@ export function PagosPendientes({
             de lo que se ve. Añadirle un «solo fijos» al filtrar movía el texto
             debajo del título cada vez que se pulsaba el botón. */}
         <p className="truncate text-xs text-muted-foreground">
-          {total > 0 ? `Unos ${formatCOP(total)} este mes` : 'Este mes'}
+          {total > 0
+            ? t('transactions.pending.aboutThisMonth', { amount: formatCOP(total) })
+            : t('transactions.pending.thisMonth')}
         </p>
 
         {/* Se desplaza en vez de crecer: la tarjeta comparte fila con la
@@ -118,18 +121,16 @@ export function PagosPendientes({
              barra, encima del relleno y fuera de las filas— y su contenido
              termina justo en el borde interior de la tarjeta. */}
         <ul className="-mr-3 mt-4 flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto pr-3">
-          {visibles.map((pago) => {
-            return (
-              <PendingRow key={pago.categoryId} pago={pago} ahora={ahora} onElegir={onElegir} />
-            );
-          })}
+          {visibles.map((pago) => (
+            <PendingRow key={pago.categoryId} pago={pago} ahora={ahora} onElegir={onElegir} />
+          ))}
           {/* Apagados TODOS, la lista queda vacía y la tarjeta se quedaría sin
               nada que enseñar salvo el botón para volver. Se dice, porque un
               hueco en blanco se lee como «no hay nada pendiente», que es lo
               contrario de lo que pasa. */}
           {visibles.length === 0 && (
             <li className="py-6 text-center text-sm text-muted-foreground">
-              Lo que queda es de los centros que están apagados.
+              {t('transactions.pending.offCentersNote')}
             </li>
           )}
         </ul>
@@ -153,15 +154,21 @@ function PendingProgress({
     <span className="block w-full">
       <Progreso
         avance={avance}
-        etiqueta={`${pago.name}: lleva ${formatCOP(pago.paidAmount)} de ${formatCOP(pago.expectedAmount ?? '0')}`}
+        etiqueta={t('transactions.pending.progressLabel', {
+          name: pago.name,
+          paid: formatCOP(pago.paidAmount),
+          expected: formatCOP(pago.expectedAmount ?? '0'),
+        })}
         className="h-1"
       />
       <span className="mt-1.5 flex items-baseline justify-between gap-2 text-xs">
         <span className="tabular min-w-0 truncate text-muted-foreground">
-          Lleva {formatCOP(pago.paidAmount)}
+          {t('transactions.pending.soFar', { amount: formatCOP(pago.paidAmount) })}
         </span>
         {conAccion && (
-          <span className="shrink-0 font-medium text-acento-tinta">Registrar otro</span>
+          <span className="shrink-0 font-medium text-acento-tinta">
+            {t('transactions.sheet.registerAnother')}
+          </span>
         )}
       </span>
     </span>
@@ -279,7 +286,7 @@ function CenterFilter({
 }) {
   return (
     <Menu
-      etiqueta="Filtrar por centro de costos"
+      etiqueta={t('transactions.pending.filterByCostCenter')}
       Icono={Filter}
       soloIcono
       activo={ocultos.size > 0}
@@ -288,7 +295,7 @@ function CenterFilter({
       alineado="derecha"
     >
       <div className="flex flex-col">
-        <MenuTitulo>Centros de costos</MenuTitulo>
+        <MenuTitulo>{t('shell.sections.costCenters')}</MenuTitulo>
         {centros.map(([id, nombre]) => {
           const marcado = !ocultos.has(id);
           return (

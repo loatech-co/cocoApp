@@ -1,5 +1,6 @@
 import { Check, X } from 'lucide-react';
 
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 
 /**
@@ -23,13 +24,13 @@ interface Requisito {
 
 const REQUISITOS: Requisito[] = [
   {
-    etiqueta: `Al menos ${LONGITUD_MINIMA} caracteres`,
+    etiqueta: t('ui.passwordPolicy.minLength', { min: LONGITUD_MINIMA }),
     cumple: (p) => p.length >= LONGITUD_MINIMA,
   },
-  { etiqueta: 'Una letra minúscula', cumple: (p) => /[a-z]/.test(p) },
-  { etiqueta: 'Una letra mayúscula', cumple: (p) => /[A-Z]/.test(p) },
-  { etiqueta: 'Un número', cumple: (p) => /[0-9]/.test(p) },
-  { etiqueta: 'Un símbolo (! @ # $ % & *)', cumple: (p) => /[^A-Za-z0-9]/.test(p) },
+  { etiqueta: t('ui.passwordPolicy.smallLetter'), cumple: (p) => /[a-z]/.test(p) },
+  { etiqueta: t('ui.passwordPolicy.capitalLetter'), cumple: (p) => /[A-Z]/.test(p) },
+  { etiqueta: t('ui.passwordPolicy.number'), cumple: (p) => /[0-9]/.test(p) },
+  { etiqueta: t('ui.passwordPolicy.symbol'), cumple: (p) => /[^A-Za-z0-9]/.test(p) },
 ];
 
 export function cumpleLaPolitica(password: string): boolean {
@@ -38,7 +39,7 @@ export function cumpleLaPolitica(password: string): boolean {
 
 export function PoliticaDeContrasena({ password }: { password: string }) {
   return (
-    <ul className="mt-2 space-y-1" aria-label="Requisitos de la contraseña">
+    <ul className="mt-2 space-y-1" aria-label={t('ui.passwordPolicy.label')}>
       {REQUISITOS.map((requisito) => {
         const cumple = requisito.cumple(password);
         // El icono acompaña al color, nunca lo sustituye: el estado tiene que

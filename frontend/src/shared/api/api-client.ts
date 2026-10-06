@@ -1,3 +1,5 @@
+import { t } from '@/shared/lib/i18n';
+
 import type { ProblemFieldError } from './generated/model';
 import { API_ORIGIN } from './origin';
 import { leerProblema } from './problem';
@@ -52,7 +54,7 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
 
   if (respuesta.status === 204) return undefined as T;
 
-  if (!respuesta.ok) throw await errorDe(respuesta, 'No se pudo completar la operación.');
+  if (!respuesta.ok) throw await errorDe(respuesta, t('errors.operationFailed'));
 
   const tipo = respuesta.headers.get('Content-Type') ?? '';
   if (!tipo.includes('json')) return (await respuesta.blob()) as T;
@@ -79,7 +81,7 @@ export async function apiBlob(url: string, signal?: AbortSignal): Promise<Blob> 
   const respuesta = await conSesion(url, signal === undefined ? {} : { signal });
 
   // El cuerpo de un error SÍ es JSON aunque la ruta devuelva binarios.
-  if (!respuesta.ok) throw await errorDe(respuesta, 'No se pudo abrir el archivo.');
+  if (!respuesta.ok) throw await errorDe(respuesta, t('errors.fileOpenFailed'));
 
   return respuesta.blob();
 }
@@ -131,11 +133,10 @@ export async function apiSubir<TData>(
       }
 
       if (peticion.status === 401) descartarSesion();
-      rechazar(errorDelCuerpo(peticion.status, cuerpo, 'No se pudo subir el archivo.'));
+      rechazar(errorDelCuerpo(peticion.status, cuerpo, t('errors.uploadFailed')));
     };
 
-    peticion.onerror = () =>
-      rechazar(new ApiClientError(0, 'network_error', 'No hay conexión con el servidor.'));
+    peticion.onerror = () => rechazar(new ApiClientError(0, 'network_error', t('errors.offline')));
 
     peticion.send(datos);
   });
@@ -151,7 +152,7 @@ async function conSesion(url: string, init: RequestInit): Promise<Response> {
     const renovada = await renovar();
     if (!renovada) {
       descartarSesion();
-      throw new ApiClientError(401, 'unauthenticated', 'Tu sesión expiró. Vuelve a entrar.');
+      throw new ApiClientError(401, 'unauthenticated', t('errors.sessionExpired'));
     }
     respuesta = await enviar(url, init);
   }

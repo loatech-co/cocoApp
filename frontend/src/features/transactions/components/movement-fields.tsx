@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react';
 
+import { t } from '@/shared/lib/i18n';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { Textarea } from '@/shared/ui/atoms/textarea';
 import { CampoDeDinero } from '@/shared/ui/molecules/campo-de-dinero';
@@ -36,7 +37,7 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
       <MovementClassification {...props} />
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Campo etiqueta="Valor" id="mov-valor">
+        <Campo etiqueta={t('transactions.fields.amount')} id="mov-valor">
           {/* Agrupa los miles al escribir y conserva el cursor. El porqué largo
               está en el componente. */}
           <CampoDeDinero
@@ -48,7 +49,7 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
           />
         </Campo>
 
-        <Campo etiqueta="Fecha" id="mov-fecha">
+        <Campo etiqueta={t('transactions.fields.date')} id="mov-fecha">
           <SelectorDeFecha id="mov-fecha" valor={ficha.date} onElegir={ficha.setDate} requerido />
         </Campo>
       </div>
@@ -61,7 +62,7 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
         una nota sobre este movimiento es un campo más de los que se rellenan
         al registrarlo, y va donde va el siguiente, no donde sobra sitio.
       */}
-      <Campo etiqueta="Notas" id="mov-notas">
+      <Campo etiqueta={t('transactions.fields.notes')} id="mov-notas">
         {/* Sin marcador. Decía «Opcional», que no es un ejemplo de lo que va
             ahí sino una nota sobre la validación: este campo no lleva
             `required`, y eso ya se sabe porque el formulario se envía sin él. */}

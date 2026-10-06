@@ -1,6 +1,7 @@
 import { ApiClientError } from '@/shared/api/api-client';
 import { interpretacionInterpret } from '@/shared/api/generated/interpretacion-v2/interpretacion-v2';
 import type { ClassificationSource, Interpretation } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { cargarPdfjs } from '@/shared/lib/pdf';
 import type { ClasificacionEnElArbol, Lectura } from '@coco/lectura';
 
@@ -139,13 +140,16 @@ export function rutasDelOcr(origen: string = window.location.href) {
 /** OCR. Se carga a demanda: son varios megas que casi nunca hacen falta. */
 async function ocr(fuente: Blob, onProgreso?: (p: ProgresoDeLectura) => void): Promise<string> {
   const { createWorker } = await import('tesseract.js');
-  onProgreso?.({ avance: 0.3, etapa: 'Preparando el reconocimiento…' });
+  onProgreso?.({ avance: 0.3, etapa: t('transactions.reading.stages.preparing') });
 
   const worker = await createWorker('spa', undefined, {
     ...rutasDelOcr(),
     logger: (m: { status: string; progress: number }) => {
       if (m.status === 'recognizing text') {
-        onProgreso?.({ avance: 0.4 + m.progress * 0.55, etapa: 'Reconociendo el texto…' });
+        onProgreso?.({
+          avance: 0.4 + m.progress * 0.55,
+          etapa: t('transactions.reading.stages.recognizingText'),
+        });
       }
     },
   });
@@ -183,9 +187,9 @@ export async function leerSoporte(
   const { onProgreso } = opciones;
   const { texto, fuente } = await extractText(archivo, onProgreso);
 
-  onProgreso?.({ avance: 0.9, etapa: 'Interpretando…' });
+  onProgreso?.({ avance: 0.9, etapa: t('transactions.reading.stages.interpreting') });
   const interpretacion = await interpretText(texto, archivo, opciones.periodo);
-  onProgreso?.({ avance: 1, etapa: 'Listo' });
+  onProgreso?.({ avance: 1, etapa: t('transactions.reading.stages.done') });
 
   return { texto, fuente, lectura: lecturaDesde(interpretacion, fuente) };
 }
@@ -198,11 +202,11 @@ async function extractText(
   const esPdf = archivo.type === 'application/pdf' || /\.pdf$/i.test(archivo.name);
 
   if (!esPdf) {
-    onProgreso?.({ avance: 0.2, etapa: 'Reconociendo la imagen…' });
+    onProgreso?.({ avance: 0.2, etapa: t('transactions.reading.stages.recognizingImage') });
     return { texto: await ocr(archivo, onProgreso), fuente: 'ocr' };
   }
 
-  onProgreso?.({ avance: 0.1, etapa: 'Abriendo el documento…' });
+  onProgreso?.({ avance: 0.1, etapa: t('transactions.reading.stages.openingDocument') });
   let texto: string;
   try {
     texto = await textoDelPdf(archivo);
@@ -212,7 +216,7 @@ async function extractText(
 
   if (texto.replace(/\s/g, '').length < MINIMO_DE_TEXTO) {
     // Un escaneo: el PDF es una foto con forma de documento.
-    onProgreso?.({ avance: 0.2, etapa: 'Es un escaneo: se reconoce el texto…' });
+    onProgreso?.({ avance: 0.2, etapa: t('transactions.reading.stages.scan') });
     const imagen = await primeraPaginaComoImagen(archivo);
     if (imagen) return { texto: await ocr(imagen, onProgreso), fuente: 'ocr' };
   }
@@ -237,10 +241,7 @@ async function interpretText(
     // El archivo ya está adjunto; lo que falló es entenderlo. Se dice así, y
     // quien lo lee escribe los datos a mano en la misma ficha.
     const detalle = e instanceof ApiClientError ? ` (${e.message})` : '';
-    throw new Error(
-      `No se pudo interpretar el soporte en el servidor${detalle}. Escribe los datos a mano; el archivo queda adjunto al movimiento.`,
-      { cause: e },
-    );
+    throw new Error(t('transactions.reading.serverFailed', { detail: detalle }), { cause: e });
   }
 }
 

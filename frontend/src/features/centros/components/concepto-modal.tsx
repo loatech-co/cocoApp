@@ -5,6 +5,7 @@ import { useConceptForm } from '@/features/centros/hooks/use-concept-form';
 import { findTwin, siblingCategories } from '@/features/centros/model/concept-form';
 import { useCategories } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { Bloque } from '@/shared/ui/atoms/bloque';
 import { Button } from '@/shared/ui/atoms/button';
 import { Campo } from '@/shared/ui/atoms/campo';
@@ -52,8 +53,8 @@ export function ConceptoModal({ abierta, concepto, categoriaId, onCerrar }: Conc
     <>
       <Modal
         abierta={abierta}
-        titulo={concepto ? 'Editar concepto' : 'Nuevo concepto'}
-        ayuda="Lo más específico: lo que aparece en la factura."
+        titulo={concepto ? t('centers.conceptModal.editTitle') : t('centers.conceptModal.newTitle')}
+        ayuda={t('centers.conceptModal.help')}
         // Eliminar va en la cabecera, al lado de la equis: es la otra acción
         // de la ficha que no es "guardar".
         acciones={
@@ -94,8 +95,8 @@ function DeleteConceptButton({ concepto, onClick }: { concepto: Category; onClic
       variant="ghost"
       size="sm-icon"
       onClick={onClick}
-      aria-label={`Eliminar ${concepto.name}`}
-      title="Eliminar concepto"
+      aria-label={t('centers.conceptModal.deleteNamed', { name: concepto.name })}
+      title={t('centers.conceptModal.delete')}
       className="text-muted-foreground hover:text-destructive"
     >
       <Trash2 className="size-4" aria-hidden="true" />
@@ -116,12 +117,12 @@ function ConceptForm({ form, concepto, arbol, gemelo, onCerrar }: ConceptFormPro
 
   return (
     <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
-      <Campo etiqueta="Nombre" id="concepto-nombre">
+      <Campo etiqueta={t('common.name')} id="concepto-nombre">
         <Input
           id="concepto-nombre"
           value={form.nombre}
           onChange={(e) => form.setNombre(e.target.value)}
-          placeholder="Celsia (Energía), Claro Móvil…"
+          placeholder={t('centers.conceptModal.namePlaceholder')}
           required
         />
       </Campo>
@@ -188,9 +189,14 @@ function TwinNotice({
     */
     <Bloque className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
-        <strong className="font-semibold text-foreground">Ya existe “{gemelo.name}”.</strong> Si lo
-        unificas, sus movimientos pasan a ese concepto y{' '}
-        {concepto ? `“${concepto.name}” desaparece` : 'no se crea uno nuevo'}.
+        <strong className="font-semibold text-foreground">
+          {t('centers.conceptModal.duplicateBefore', { name: gemelo.name })}
+        </strong>
+        {t('centers.conceptModal.duplicateMiddle')}
+        {concepto
+          ? t('centers.conceptModal.duplicateDisappears', { name: concepto.name })
+          : t('centers.conceptModal.duplicateNoNew')}
+        .
       </p>
       {concepto && (
         <Button
@@ -202,7 +208,7 @@ function TwinNotice({
           onClick={() => void form.onUnificar(gemelo.id)}
         >
           <Merge className="size-4" aria-hidden="true" />
-          Unificar con “{gemelo.name}”
+          {t('centers.conceptModal.mergeWith', { name: gemelo.name })}
         </Button>
       )}
     </Bloque>
@@ -224,11 +230,11 @@ function ConceptFormFooter({
   return (
     <PieDeModal>
       <Button type="button" variant="outline" onClick={onCerrar}>
-        Cancelar
+        {t('common.cancel')}
       </Button>
       <Button type="submit" disabled={form.guardando || form.nombre.trim() === '' || bloqueado}>
         {form.guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-        {editando ? 'Guardar' : 'Crear'}
+        {editando ? t('common.save') : t('common.create')}
       </Button>
     </PieDeModal>
   );
@@ -243,13 +249,13 @@ function SiblingCategoryField({
 }) {
   return (
     <Campo
-      etiqueta="Categoría"
+      etiqueta={t('centers.levels.category')}
       id="concepto-categoria"
-      ayuda="Solo las categorías de su mismo centro de costos."
+      ayuda={t('centers.conceptModal.categoryHelp')}
     >
       <Select
         id="concepto-categoria"
-        etiqueta="Categoría"
+        etiqueta={t('centers.levels.category')}
         valor={form.categoria}
         opciones={hermanos}
         onCambiar={form.setCategoría}

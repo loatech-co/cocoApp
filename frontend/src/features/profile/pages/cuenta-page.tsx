@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { Ajustes } from '@/features/profile/components/ajustes';
 import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
+import { t } from '@/shared/lib/i18n';
 import { useEnLaApp } from '@/shared/lib/movil';
 import { SECCIONES_DE_ADMIN } from '@/shared/lib/sections';
 import { Alert, AlertDescription, AlertTitle, ErrorAlert } from '@/shared/ui/atoms/alert';
@@ -36,12 +37,12 @@ export function CuentaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <CabeceraDePagina titulo="Mi cuenta" ayuda={usuario?.email} />
+      <CabeceraDePagina titulo={t('shell.account.myAccount')} ayuda={usuario?.email} />
 
       {esAdmin && (
         <Badge variant="info" className="self-start">
           <ShieldCheck aria-hidden="true" />
-          Administrador
+          {t('admin.userRow.roleAdmin')}
         </Badge>
       )}
 
@@ -72,10 +73,8 @@ function CambiarContrasena() {
   if (form.hecho) {
     return (
       <Alert variant="info">
-        <AlertTitle>Contraseña cambiada</AlertTitle>
-        <AlertDescription>
-          Se cerraron todas tus sesiones, incluida esta. Vuelve a entrar con la contraseña nueva.
-        </AlertDescription>
+        <AlertTitle>{t('profile.account.passwordChangedTitle')}</AlertTitle>
+        <AlertDescription>{t('profile.account.passwordChangedHelp')}</AlertDescription>
       </Alert>
     );
   }
@@ -83,11 +82,8 @@ function CambiarContrasena() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cambiar contraseña</CardTitle>
-        <CardDescription>
-          Pedimos la actual a propósito: sin ella, cualquiera que robara tu sesión podría quedarse
-          con la cuenta. Al cambiarla se cierran todas tus sesiones.
-        </CardDescription>
+        <CardTitle>{t('profile.account.changePassword')}</CardTitle>
+        <CardDescription>{t('profile.account.changePasswordHelp')}</CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -103,7 +99,7 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
   const { actual, setActual, nueva, setNueva, enviando, onSubmit } = form;
   return (
     <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-4">
-      <Campo etiqueta="Contraseña actual" id="actual">
+      <Campo etiqueta={t('profile.account.currentPassword')} id="actual">
         <Input
           id="actual"
           type="password"
@@ -115,7 +111,7 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
       </Campo>
 
       <div className="flex flex-col gap-2">
-        <Campo etiqueta="Contraseña nueva" id="nueva">
+        <Campo etiqueta={t('admin.userRow.newPassword')} id="nueva">
           <Input
             id="nueva"
             type="password"
@@ -132,7 +128,7 @@ function PasswordForm({ form }: { form: ReturnType<typeof usePasswordChange> }) 
       </div>
 
       <Button type="submit" disabled={enviando || !cumpleLaPolitica(nueva) || !actual}>
-        Cambiar contraseña
+        {t('profile.account.changePassword')}
       </Button>
     </form>
   );
@@ -183,15 +179,13 @@ function SessionCards({ embebida }: { embebida: boolean }) {
       {embebida && (
         <Card>
           <CardHeader>
-            <CardTitle>Cerrar sesión</CardTitle>
-            <CardDescription>
-              Solo en este dispositivo. La app olvida tu sesión y vuelve a pedirte entrar.
-            </CardDescription>
+            <CardTitle>{t('shell.account.signOut')}</CardTitle>
+            <CardDescription>{t('profile.account.signOutHelp')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" size="sm" onClick={() => void salir()}>
               <LogOut aria-hidden="true" />
-              Cerrar sesión
+              {t('shell.account.signOut')}
             </Button>
           </CardContent>
         </Card>
@@ -199,16 +193,13 @@ function SessionCards({ embebida }: { embebida: boolean }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Cerrar sesión en todos los dispositivos</CardTitle>
-          <CardDescription>
-            Invalida al instante todas las sesiones abiertas, incluida esta. Úsalo si crees que
-            alguien más tiene acceso a tu cuenta.
-          </CardDescription>
+          <CardTitle>{t('profile.account.signOutAllTitle')}</CardTitle>
+          <CardDescription>{t('profile.account.signOutAllHelp')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="outline" onClick={() => void salirDeTodosLosDispositivos()}>
             <LogOut aria-hidden="true" />
-            Cerrar todo
+            {t('profile.account.signOutAll')}
           </Button>
         </CardContent>
       </Card>
@@ -220,13 +211,13 @@ function AdminLinks() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Administración</CardTitle>
+        <CardTitle>{t('shell.rail.admin')}</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Las mismas secciones, en el mismo orden, que el riel y la hoja
             del avatar: una segunda lista se separaría de esta la primera
             vez que se añada una pantalla. */}
-        <nav aria-label="Administración" className="-mx-3 flex flex-col">
+        <nav aria-label={t('shell.rail.admin')} className="-mx-3 flex flex-col">
           {SECCIONES_DE_ADMIN.map((seccion) => (
             <FilaDeEnlace key={seccion.to} Icono={seccion.Icono} a={seccion.to}>
               {seccion.label}

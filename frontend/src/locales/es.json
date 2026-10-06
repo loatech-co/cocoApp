@@ -1,0 +1,739 @@
+{
+  "shell": {
+    "userView": {
+      "notice": "Estás viendo Coco como la ve una cuenta sin administración. Tus datos son los mismos."
+    },
+    "shortcuts": {
+      "title": "Atajos",
+      "fullTitle": "No caben más atajos",
+      "fullDetail": "El máximo son {{max}}. Quita uno para agregar otro.",
+      "back": "Volver a los atajos",
+      "add": "Agregar atajo",
+      "done": "Listo",
+      "searchPlaceholder": "Buscar una página",
+      "nothingLeft": "No queda ninguna página por agregar.",
+      "noMatch": "No hay ninguna página con ese nombre."
+    },
+    "bottomBar": {
+      "label": "Accesos",
+      "search": "Buscar",
+      "newExpense": "Registrar un gasto"
+    },
+    "account": {
+      "myAccount": "Mi cuenta",
+      "yours": "Tu cuenta",
+      "viewAsUser": "Ver como usuario",
+      "signOut": "Cerrar sesión",
+      "settings": "Ajustes",
+      "security": "Seguridad",
+      "myAccountOf": "Mi cuenta, {{name}}"
+    },
+    "sections": {
+      "costCenters": "Centros de costos",
+      "users": "Usuarios",
+      "auditLog": "Bitácora",
+      "dashboard": "Dashboard",
+      "accounts": "Cuentas"
+    },
+    "error": {
+      "newVersionTitle": "Hay una versión nueva de Coco",
+      "title": "Algo salió mal",
+      "newVersionHelp": "Recarga la página para seguir con la versión actual.",
+      "help": "Recarga la página o vuelve al inicio. Lo que ya guardaste sigue ahí.",
+      "reload": "Recargar la página"
+    },
+    "notFound": {
+      "title": "Esta página no existe",
+      "help": "Revisa la dirección o vuelve al inicio."
+    },
+    "rail": {
+      "label": "Secciones",
+      "admin": "Administración"
+    }
+  },
+  "common": {
+    "backToAdmin": "Volver a administrador",
+    "edit": "Editar",
+    "goHome": "Ir al inicio",
+    "cancel": "Cancelar",
+    "pagination": "Paginación",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "save": "Guardar",
+    "name": "Nombre",
+    "create": "Crear",
+    "delete": "Eliminar",
+    "close": "Cerrar",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "pageN": "Página {{n}}"
+  },
+  "errors": {
+    "operationFailed": "No se pudo completar la operación.",
+    "fileOpenFailed": "No se pudo abrir el archivo.",
+    "uploadFailed": "No se pudo subir el archivo.",
+    "offline": "No hay conexión con el servidor.",
+    "sessionExpired": "Tu sesión expiró. Vuelve a entrar.",
+    "offlineRetry": "No hay conexión con el servidor. Revisa tu red e inténtalo de nuevo.",
+    "operationFailedRetry": "No se pudo completar la operación. Inténtalo de nuevo.",
+    "signOutAllFailed": "No se pudo cerrar todo.",
+    "passwordChangeFailed": "No se pudo cambiar la contraseña.",
+    "bridge": {
+      "noSession": "La app no entregó la sesión.",
+      "missing": "No hay puente con la app.",
+      "timeout": "La app no contestó a tiempo.",
+      "notASession": "La app contestó algo que no es una sesión."
+    }
+  },
+  "admin": {
+    "userRow": {
+      "resetPassword": "Restablecer contraseña",
+      "newPassword": "Contraseña nueva",
+      "reset": "Restablecer",
+      "statusPending": "Pendiente",
+      "statusSuspended": "Suspendida",
+      "statusActive": "Activa",
+      "roleAdmin": "Administrador",
+      "roleUser": "Usuario",
+      "passwordReset": "Contraseña restablecida. Comunícasela a {{name}} por un canal seguro. Sus sesiones abiertas se cerraron.",
+      "approve": "Aprobar",
+      "reactivate": "Reactivar",
+      "suspend": "Suspender",
+      "removeAdmin": "Quitar administración",
+      "makeAdmin": "Hacer administrador",
+      "you": "(tú)"
+    },
+    "auditLog": {
+      "help": "Quién hizo qué y cuándo. Nunca registra montos ni contraseñas.",
+      "loadFailed": "No se pudo cargar la bitácora.",
+      "empty": "Todavía no hay eventos registrados.",
+      "review": "Revisar",
+      "unknownAccount": "Cuenta desconocida",
+      "page": "Página {{page}} de {{pages}}",
+      "actions": {
+        "register": "Solicitó acceso",
+        "login": "Entró",
+        "loginFailed": "Intento de acceso fallido",
+        "logout": "Cerró sesión",
+        "logoutAll": "Cerró sesión en todos los dispositivos",
+        "tokenReuse": "Reuso de token detectado",
+        "passwordChanged": "Cambió su contraseña",
+        "userApproved": "Aprobó una cuenta",
+        "userRejected": "Rechazó una cuenta",
+        "userSuspended": "Suspendió una cuenta",
+        "userReactivated": "Reactivó una cuenta",
+        "passwordReset": "Restableció una contraseña",
+        "roleChanged": "Cambió un rol"
+      }
+    },
+    "users": {
+      "help": "Nadie entra a Coco sin que apruebes su cuenta.",
+      "filterByStatus": "Filtrar por estado",
+      "loadFailed": "No se pudieron cargar las cuentas. Recarga la página e inténtalo de nuevo.",
+      "emptyPending": "No hay solicitudes esperando aprobación.",
+      "emptyFiltered": "No hay cuentas con ese estado.",
+      "filters": {
+        "pending": "Pendientes",
+        "active": "Activas",
+        "suspended": "Suspendidas",
+        "all": "Todas"
+      }
+    }
+  },
+  "auth": {
+    "guard": {
+      "openingFromApp": "Abriendo tu sesión desde la app…",
+      "forbiddenTitle": "No tienes acceso a esta sección",
+      "forbiddenHelp": "La administración está reservada a las cuentas con rol de administrador.",
+      "backHome": "Volver al inicio",
+      "verifying": "Verificando la sesión…"
+    },
+    "login": {
+      "documentTitle": "Coco — iniciar sesión",
+      "forgotPassword": "¿Olvidaste tu contraseña? Pídele al administrador que la restablezca.",
+      "taglineFirst": "Tus finanzas,",
+      "taglineSecond": "claras.",
+      "greeting": "¡Hola de nuevo!",
+      "help": "Accede con tu correo y contraseña.",
+      "noAccount": "¿No tienes cuenta? "
+    },
+    "fields": {
+      "email": "Correo",
+      "password": "Contraseña",
+      "name": "Nombre"
+    },
+    "requestAccess": "Solicitar acceso",
+    "wait": "Un momento…",
+    "signIn": "Iniciar sesión",
+    "register": {
+      "documentTitle": "Coco — solicitar acceso",
+      "help": "Un administrador debe aprobar tu cuenta antes de que puedas entrar.",
+      "haveAccount": "¿Ya tienes cuenta? ",
+      "sentDocumentTitle": "Coco — solicitud enviada",
+      "readyTitle": "Tu cuenta está lista",
+      "receivedTitle": "Recibimos tu solicitud",
+      "readyHelp": "Eres el administrador de esta instalación. Ya puedes entrar con el correo y la contraseña que acabas de elegir.",
+      "receivedHelp": "Un administrador debe aprobarla antes de que puedas entrar. Cuando esté lista, podrás acceder con el correo y la contraseña que acabas de elegir.",
+      "backToSignIn": "Volver a iniciar sesión",
+      "passwordHelp": "No puede contener tu nombre ni tu correo, ni aparecer en filtraciones públicas conocidas."
+    }
+  },
+  "accounts": {
+    "help": "Dónde tienes tu dinero. El saldo se calcula de tus movimientos.",
+    "new": "Nueva cuenta",
+    "loadFailed": "No se pudieron cargar las cuentas. Revisa tu conexión e inténtalo de nuevo.",
+    "unarchive": "Desarchivar",
+    "archive": "Archivar",
+    "owed": "Debes",
+    "available": "Disponible",
+    "creditAvailable": "Cupo disponible: {{amount}}",
+    "withPending": "Con movimientos pendientes: {{amount}}",
+    "namePlaceholder": "Bancolombia débito",
+    "createFailed": "No se pudo crear la cuenta.",
+    "archived": "Archivadas",
+    "empty": "Aún no tienes cuentas. Crea la primera —efectivo, tu tarjeta débito o una de crédito— para empezar a registrar movimientos.",
+    "create": "Crear cuenta",
+    "types": {
+      "cash": "Efectivo",
+      "debit": "Débito",
+      "credit": "Tarjeta de crédito",
+      "bank": "Cuenta bancaria",
+      "savings": "Ahorros",
+      "other": "Otra"
+    },
+    "form": {
+      "type": "Tipo",
+      "accountType": "Tipo de cuenta",
+      "currentDebt": "Deuda actual",
+      "openingBalance": "Saldo inicial",
+      "creditLimit": "Cupo total"
+    }
+  },
+  "centers": {
+    "addCategory": "Agregar categoría",
+    "keywords": {
+      "label": "Palabras clave",
+      "help": "Lo que dice el recibo y no cambia de un mes a otro: el acreedor, su NIT. Pulsa Enter para agregar cada una.",
+      "placeholder": "Aquaoccidente, 805027653…",
+      "sharedMiddle": "“{{word}}” también está en ",
+      "sharedAfter": ". Un recibo que la diga puede caer en cualquiera de los dos.",
+      "remove": "Quitar {{word}}",
+      "add": "Agregar la palabra clave",
+      "addHint": "Agregar",
+      "tooShort": "“{{word}}” es muy corta: con menos de {{min}} letras aparece dentro de otras palabras y reconocería cualquier recibo.",
+      "tooLong": "“{{start}}…” es muy larga. Con el nombre del acreedor basta.",
+      "duplicate": "“{{word}}” ya está en la lista.",
+      "tooMany": "Un concepto admite hasta {{max}} palabras clave."
+    },
+    "recurrence": {
+      "title": "Pago recurrente",
+      "scopeConcept": "Aplica a \"{{concept}}\", no solo a este movimiento",
+      "scopePending": "Aparece en los pendientes del mes hasta que se registre",
+      "dayOfMonth": "Día del mes",
+      "february28": "En febrero será el 28, salvo en años bisiestos.",
+      "also30": " y el 30 en abril, junio, septiembre y noviembre",
+      "february2829": "En febrero será el 28 —29 en bisiestos—{{thirtyDays}}.",
+      "inInstalments": "Se paga en varias veces",
+      "instalmentsNoAuto": "No se puede junto al pago automático: ese registra el valor entero el día de pago.",
+      "instalmentsAverage": "Sigue en pagos pendientes hasta cubrir el promedio de los meses anteriores.",
+      "instalmentsBudget": "Sigue en pagos pendientes, mostrando lo que lleva, hasta cubrir el presupuesto.",
+      "autoPay": "Pago automático",
+      "autoPayAverage": "El movimiento se registra solo el día de pago, con el promedio de los meses anteriores.",
+      "autoPayBudget": "El movimiento se registra solo el día de pago, por el presupuesto.",
+      "budget": "Presupuesto",
+      "budgetEmptyHelp": "Vacío: se estima con el promedio de los meses anteriores.",
+      "budgetHelp": "Este valor se usa cada mes, en vez del promedio.",
+      "optional": "Opcional",
+      "howOften": "Cada cuánto",
+      "month": "Mes",
+      "cycleMonth": "Mes del ciclo",
+      "periodicity": {
+        "monthly": "Cada mes",
+        "bimonthly": "Cada dos meses",
+        "quarterly": "Cada tres meses",
+        "semiannual": "Cada seis meses",
+        "annual": "Cada año",
+        "label": "Periodicidad"
+      },
+      "summary": {
+        "monthly": "Todos los meses el día {{day}}.",
+        "annual": "Cada {{day}} de {{month}}.",
+        "everyFew": "El día {{day}} de {{months}}."
+      }
+    },
+    "categoryModal": {
+      "icon": "Icono",
+      "iconSearchPlaceholder": "Buscar: educación, mercado, salud…",
+      "iconSearch": "Buscar un icono",
+      "namePlaceholder": "Costos fijos, Negocio…",
+      "static": "Estático",
+      "staticHelp": "La clasificación de sus movimientos solo se modifica desde Centros de costos.",
+      "costCenterHelp": "El nivel más general: Costos fijos, Variables, Negocio.",
+      "categoryHelp": "El nivel de en medio: Servicios públicos, Educación, Transporte.",
+      "editCostCenter": "Editar centro de costos",
+      "newCostCenter": "Nuevo centro de costos",
+      "editCategory": "Editar categoría",
+      "newCategory": "Nueva categoría"
+    },
+    "tile": {
+      "actionsOf": "Acciones de {{name}}",
+      "addConcept": "Agregar concepto",
+      "editConcept": "Editar {{name}}",
+      "recurring": "Se paga cada cierto tiempo"
+    },
+    "help": {
+      "title": "Cómo funciona",
+      "intro": "Tres niveles. Cada movimiento se guarda en el último, y los de arriba suman solos.",
+      "costCenterExplain": "El bloque grande de tu dinero.",
+      "costCenterExample": "Costos fijos",
+      "categoryExplain": "Un tipo de gasto dentro de ese bloque.",
+      "categoryExample": "Servicios públicos",
+      "conceptExplain": "A quién le pagas. Aquí van los movimientos.",
+      "conceptExample": "Celsia (Energía)",
+      "sumBefore": "Así, ",
+      "sumQuestion": "¿cuánto se gastó en servicios públicos?",
+      "sumAfter": " es la suma de sus conceptos, y no hay que registrarlo por separado en ningún lado.",
+      "example": "{{text}} Ej: "
+    },
+    "levels": {
+      "costCenter": "Centro de costos",
+      "category": "Categoría",
+      "concept": "Concepto"
+    },
+    "conceptModal": {
+      "editTitle": "Editar concepto",
+      "newTitle": "Nuevo concepto",
+      "help": "Lo más específico: lo que aparece en la factura.",
+      "deleteNamed": "Eliminar {{name}}",
+      "delete": "Eliminar concepto",
+      "namePlaceholder": "Celsia (Energía), Claro Móvil…",
+      "duplicateBefore": "Ya existe “{{name}}”.",
+      "duplicateMiddle": " Si lo unificas, sus movimientos pasan a ese concepto y ",
+      "duplicateNoNew": "no se crea uno nuevo",
+      "mergeWith": "Unificar con “{{name}}”",
+      "categoryHelp": "Solo las categorías de su mismo centro de costos.",
+      "duplicateDisappears": "“{{name}}” desaparece",
+      "mergeFailed": "No se pudo unificar."
+    },
+    "deletion": {
+      "title": "Eliminar “{{name}}”",
+      "counting": "Contando qué hay dentro…",
+      "countFailed": "No se pudo contar qué hay dentro, así que no se puede eliminar todavía. Inténtalo de nuevo.",
+      "areYouSure": "¿Estás seguro de querer continuar?",
+      "failed": "No se pudo eliminar.",
+      "movesOne": "Hay 1 movimiento aquí dentro. No se borra: pasa a donde elijas.",
+      "movesMany": "Hay {{n}} movimientos aquí dentro. No se borran: pasan a donde elijas.",
+      "destination": "Destino de los movimientos",
+      "chooseDestination": "Elige un destino",
+      "thisCostCenter": "el centro de costos",
+      "oneCategory": "la categoría asociada a este centro de costos",
+      "manyCategories": "las {{n}} categorías asociadas a este centro de costos",
+      "thisCategory": "la categoría",
+      "oneConcept": "el concepto asociado a esta categoría",
+      "manyConcepts": "los {{n}} conceptos asociados a esta categoría",
+      "thisConcept": "el concepto",
+      "summary": "Estás a punto de borrar {{what}} “{{name}}”{{inside}}. Esta acción no se puede deshacer.",
+      "andInside": " y {{what}}"
+    },
+    "card": {
+      "static": "Centro estático",
+      "categoriesCount": "{{categories}} categoría(s) · {{concepts}} concepto(s)",
+      "actionsOf": "Acciones de {{name}}",
+      "makeDynamic": "Marcar como dinámico",
+      "makeStatic": "Marcar como estático"
+    },
+    "saveFailed": "No se pudo guardar.",
+    "page": {
+      "help": "La estructura con la que se ordena tu dinero.",
+      "hideHowItWorks": "Ocultar cómo funciona",
+      "newCostCenter": "Nuevo centro de costos",
+      "loadFailed": "No se pudieron cargar los centros de costos. Revisa tu conexión e inténtalo de nuevo.",
+      "empty": "Todavía no hay centros de costos.",
+      "createCostCenter": "Crear un centro de costos"
+    }
+  },
+  "profile": {
+    "settings": {
+      "help": "Qué partes de Coco quieres usar.",
+      "loadFailed": "No se pudieron cargar tus ajustes. Revisa tu conexión e inténtalo de nuevo.",
+      "accountsTitle": "Llevar cuentas",
+      "accountsHelp": "Tarjetas, ahorros y efectivo, cada uno con su saldo. Si lo apagas, registras gastos sin tener que decir de dónde salió el dinero.",
+      "accountsOffNote": "Los movimientos que ya registraste sin cuenta siguen ahí y no cuentan para ningún saldo. Puedes asignarles una cuando quieras."
+    },
+    "account": {
+      "passwordChangedTitle": "Contraseña cambiada",
+      "passwordChangedHelp": "Se cerraron todas tus sesiones, incluida esta. Vuelve a entrar con la contraseña nueva.",
+      "changePassword": "Cambiar contraseña",
+      "changePasswordHelp": "Pedimos la actual a propósito: sin ella, cualquiera que robara tu sesión podría quedarse con la cuenta. Al cambiarla se cierran todas tus sesiones.",
+      "currentPassword": "Contraseña actual",
+      "signOutHelp": "Solo en este dispositivo. La app olvida tu sesión y vuelve a pedirte entrar.",
+      "signOutAllTitle": "Cerrar sesión en todos los dispositivos",
+      "signOutAllHelp": "Invalida al instante todas las sesiones abiertas, incluida esta. Úsalo si crees que alguien más tiene acceso a tu cuenta.",
+      "signOutAll": "Cerrar todo"
+    }
+  },
+  "transactions": {
+    "reading": {
+      "serverFailed": "No se pudo interpretar el soporte en el servidor{{detail}}. Escribe los datos a mano; el archivo queda adjunto al movimiento.",
+      "verifyNotice": "Los datos se extrajeron del soporte. Conviene verificarlos antes de guardar.",
+      "reading": "Leyendo el soporte…",
+      "fileReadFailed": "No se pudo leer ese archivo.",
+      "noText": "No se pudo extraer el texto de este archivo. Escribe los datos a mano; el archivo queda adjunto al movimiento.",
+      "noAmountNorDate": "Se leyó el archivo, pero no se reconoció el valor ni la fecha. Escríbelos a mano; el archivo queda adjunto al movimiento.",
+      "stages": {
+        "preparing": "Preparando el reconocimiento…",
+        "recognizingText": "Reconociendo el texto…",
+        "interpreting": "Interpretando…",
+        "done": "Listo",
+        "recognizingImage": "Reconociendo la imagen…",
+        "openingDocument": "Abriendo el documento…",
+        "scan": "Es un escaneo: se reconoce el texto…"
+      }
+    },
+    "fields": {
+      "concept": "Concepto",
+      "amount": "Valor",
+      "date": "Fecha",
+      "notes": "Notas"
+    },
+    "conceptSearch": {
+      "placeholder": "Buscar concepto o categoría",
+      "filterCategoriesPlaceholder": "Filtrar categorías…",
+      "searchPlaceholder": "Buscar por nombre o palabra clave…",
+      "filterCategories": "Filtrar categorías",
+      "whichCategory": "¿En qué categoría va «{{name}}»?",
+      "back": "Volver",
+      "noCategory": "Ninguna categoría coincide.",
+      "categories": "Categorías",
+      "results": "Resultados",
+      "remove": "Quitar",
+      "nothingMatches": "Nada coincide.",
+      "typeToSearch": "Escribe para buscar.",
+      "fromReceipt": "Del recibo",
+      "recent": "Recientes",
+      "createConcept": "Crear concepto «{{name}}»",
+      "category": "categoría"
+    },
+    "camera": {
+      "capture": "Capturar",
+      "preview": "Vista de la cámara",
+      "denied": "El navegador no concedió acceso a la cámara. Se puede habilitar desde los permisos del sitio.",
+      "notFound": "No se detectó ninguna cámara en este equipo."
+    },
+    "supports": {
+      "deleteTitle": "Eliminar soporte",
+      "uploadFile": "Cargar archivo",
+      "takePhoto": "Tomar foto",
+      "addAnother": "Agregar otro soporte",
+      "removeThis": "Quitar este soporte",
+      "searching": "Buscando soportes…",
+      "deleteThis": "Eliminar este soporte",
+      "add": "Agregar soportes",
+      "paste": "Pegar una captura",
+      "dropTitle": "Agregar los soportes del movimiento",
+      "dropHelp": "El recibo, la factura o el comprobante de pago. Arrastrarlos aquí o seleccionarlos del equipo.",
+      "formats": "PDF, JPG, PNG, HEIC o WEBP",
+      "addOne": "Agregar soporte",
+      "previous": "Soporte anterior",
+      "next": "Soporte siguiente",
+      "zoomOut": "Alejar",
+      "resetZoom": "Volver al tamaño normal",
+      "zoomIn": "Acercar",
+      "loading": "Cargando el soporte",
+      "enlarge": "Ver en grande",
+      "missingFile": "Este soporte no está en el servidor. Su ficha sí: el archivo es lo que falta.",
+      "loadFailed": "No se pudo cargar este soporte. El archivo puede estar bien.",
+      "retry": "Reintentar",
+      "kilobytes": "{{size}} KB",
+      "download": "Descargar",
+      "downloadNamed": "Descargar {{fileName}}",
+      "previousReceipt": "Receipt anterior",
+      "nextReceipt": "Receipt siguiente",
+      "previousPage": "Página anterior",
+      "pageShort": "Pág. {{page}} / {{pages}}",
+      "nextPage": "Página siguiente",
+      "uploadFailed": "No se pudo subir. Inténtalo otra vez.",
+      "deleteWarning": "Estás a punto de borrar un soporte. El movimiento no se elimina. Esta acción no se puede deshacer. ¿Estás seguro de que quieres continuar?",
+      "position": "{{n}} de {{total}} · ",
+      "clipboardEmpty": "En el portapapeles no hay ninguna imagen.",
+      "clipboardDenied": "El navegador no dejó leer el portapapeles. Arrastra la captura o elígela del equipo."
+    },
+    "distribution": {
+      "title": "Distribución de costos",
+      "byLevel": "Por {{level}}",
+      "hideNames": "Ocultar los nombres",
+      "showNames": "Mostrar los nombres"
+    },
+    "dashboard": {
+      "behaviour": "Comportamiento",
+      "movementsLoadFailed": "No se pudieron cargar los movimientos. Revisa tu conexión e inténtalo de nuevo.",
+      "movements": "Movimientos",
+      "range": "{{from}} a {{to}} de {{total}}",
+      "total": "Total · {{total}} movimientos",
+      "loadFailed": "No se pudo cargar el dashboard",
+      "loadFailedHelp": "Revisa que la API esté corriendo.",
+      "help": "Todo se calcula de tus movimientos.",
+      "levels": {
+        "costCenter": "centro de costos",
+        "category": "categoría"
+      },
+      "greetingNamed": "¡Hola de nuevo, {{name}}!",
+      "greeting": "¡Hola de nuevo!",
+      "rangeSummary": "{{n}} movimientos · {{amount}} gastados"
+    },
+    "kpis": {
+      "budgetNeeded": "Presupuesto necesario",
+      "fixedCostsThisMonth": "Costos fijos de este mes",
+      "periodCost": "Lo que costó el periodo",
+      "periodExpenses": "Gastos del periodo",
+      "periodIncome": "Ingresos del periodo",
+      "movements": "Movimientos",
+      "soon": "Pronto"
+    },
+    "classificationFilter": {
+      "nothingToExpand": "Nada que desglosar aquí.",
+      "unfiltered": "Sin filtrar",
+      "clear": "Limpiar",
+      "somethingMarked": "Hay algo marcado dentro",
+      "markedOne": "{{n}} marcado",
+      "markedMany": "{{n}} marcados"
+    },
+    "classification": {
+      "severalConcepts": "El recibo apunta a varios conceptos: elige uno en el buscador.",
+      "hidePicker": "Ocultar centro y categoría",
+      "showPicker": "Elegir por centro y categoría",
+      "notChosen": "Sin elegir",
+      "chooseCostCenterFirst": "Elige antes un centro de costos",
+      "chooseCategoryFirst": "Elige antes una categoría",
+      "suggestedByHistory": "sugerido por tu historial",
+      "suggestedByKeywords": "sugerido por tus palabras clave",
+      "suggestedByMerchant": "sugerido por el comercio",
+      "canChange": "{{origin}}. Puedes cambiarlo."
+    },
+    "sheet": {
+      "registerAnother": "Registrar otro",
+      "confirmPayment": "Confirmar pago",
+      "newOfType": "Nuevo {{type}}",
+      "editOfType": "Editar {{type}}",
+      "instalmentNote": "{{name}}. Esto se paga en varias veces: anota lo de ESTA vez, no el total del mes.",
+      "expectedNote": "{{name}}. El valor y la fecha son los esperados: adjunta el soporte y se corrigen con lo que diga el recibo.",
+      "attachNote": "{{name}}. Adjunta el soporte y se leen el valor y la fecha.",
+      "editMovement": "Editar movimiento",
+      "deleteMovement": "Eliminar movimiento",
+      "register": "Registrar",
+      "conceptFallback": "al que pertenece",
+      "editMovementTitle": "Editar movimiento",
+      "newMovementTitle": "Nuevo movimiento",
+      "deleteMovementTitle": "Eliminar movimiento",
+      "deleteWarning": "Estás a punto de borrar el registro de un movimiento. No se elimina el concepto “{{concept}}”. Esta acción no se puede deshacer. ¿Estás seguro de que quieres continuar?",
+      "createFailed": "No se pudo crear.",
+      "supportFailedUndone": "{{detail}} No quedó registrado nada: un movimiento no se guarda sin el soporte que se le adjuntó. Vuelve a intentarlo.",
+      "supportFailedKept": "{{detail}} El movimiento quedó registrado, su soporte no, y tampoco se pudo deshacer. Reintenta para adjuntarlo, o bórralo desde la tabla: no se va a duplicar."
+    },
+    "readView": {
+      "unclassified": "Este movimiento está sin clasificar.",
+      "paidOn": "Pagado el {{day}}",
+      "belongsTo": "Pertenece a {{month}}"
+    },
+    "noConcept": "Sin concepto",
+    "pending": {
+      "title": "Pagos pendientes",
+      "aboutThisMonth": "Unos {{amount}} este mes",
+      "thisMonth": "Este mes",
+      "offCentersNote": "Lo que queda es de los centros que están apagados.",
+      "soFar": "Lleva {{amount}}",
+      "filterByCostCenter": "Filtrar por centro de costos",
+      "progressLabel": "{{name}}: lleva {{paid}} de {{expected}}"
+    },
+    "searchPanel": {
+      "help": "Escribe el concepto, el comercio o lo que decía el recibo.",
+      "failed": "No se pudo buscar. Revisa tu conexión e inténtalo de nuevo.",
+      "noMatch": "Ningún movimiento dice «{{query}}».",
+      "latest": "Los {{shown}} más recientes de {{total}}. Afina la palabra para ver los otros.",
+      "placeholder": "Buscar: celsia, colegio, sura…",
+      "label": "Buscar un movimiento"
+    },
+    "range": {
+      "chooseEnd": "Elige la fecha final",
+      "fromDay": "Desde {{day}}",
+      "allTime": "Todo el histórico",
+      "apply": "Aplicar",
+      "datePlaceholder": "19 de septiembre 2026",
+      "range": "Rango",
+      "openCalendar": "Abrir el calendario",
+      "chooseDate": "Elige una fecha",
+      "presets": {
+        "all": "Todo",
+        "allHelp": "Sin límite de fechas",
+        "thisMonth": "Mes en curso",
+        "thisMonthHelp": "Del 1 hasta hoy",
+        "lastMonth": "Mes pasado",
+        "lastMonthHelp": "El mes anterior completo",
+        "last3Months": "Últimos 3 meses",
+        "last3MonthsHelp": "Los tres meses anteriores a hoy",
+        "thisYear": "Año en curso",
+        "thisYearHelp": "Del 1 de enero hasta hoy",
+        "lastYear": "Año pasado",
+        "lastYearHelp": "El año anterior completo",
+        "custom": "Personalizado",
+        "customHelp": "Elige las dos fechas"
+      }
+    },
+    "table": {
+      "noMatchTitle": "Ningún movimiento coincide",
+      "noMatchHelp": "Los filtros están dejando todo fuera.",
+      "staticCenter": "“{{name}}” es un centro estático. La clasificación solo se modifica desde Centros de costos.",
+      "latePayment": "Pertenece a {{month}}, pero se pagó el {{day}}",
+      "unclassified": "Sin clasificar",
+      "columns": {
+        "concept": "Concepto",
+        "period": "Periodo",
+        "paidOn": "Fecha de pago",
+        "costCenter": "Centro de costos",
+        "category": "Categoría",
+        "amount": "Valor"
+      }
+    },
+    "trend": {
+      "emptyTitle": "Sin movimientos en este periodo",
+      "emptyHelp": "Amplía el rango de fechas o quita los filtros para ver la tendencia.",
+      "averagePer": "Promedio por {{unit}} ",
+      "peak": "Pico ",
+      "peakOn": " en {{bucket}}",
+      "ofIncome": "{{amount}} de ingreso",
+      "units": {
+        "day": "día",
+        "month": "mes"
+      },
+      "chartLabel": "Gasto por {{unit}}, de {{from}} a {{to}}. Promedio {{average}}, pico {{peak}}.",
+      "pointerLabel": "Gasto por {{unit}}. Usa las flechas para recorrer los puntos.",
+      "movementsOne": "{{n}} movimiento",
+      "movementsMany": "{{n}} movimientos"
+    },
+    "toolbar": {
+      "searchByKeyword": "Buscar por palabra clave",
+      "searchHelp": "Recorta lo que estás viendo. Lo escrito se queda puesto hasta que lo borres.",
+      "clearFilters": "Limpiar filtros",
+      "sort": "Ordenar",
+      "sortBy": "Ordenar por",
+      "filterByClassification": "Filtrar por clasificación",
+      "expenseHelp": "Dinero que sale",
+      "incomeHelp": "Dinero que entra",
+      "sortOrders": {
+        "newest": "Más recientes",
+        "oldest": "Más antiguos",
+        "highest": "Mayor valor",
+        "lowest": "Menor valor",
+        "conceptAZ": "Concepto A–Z"
+      }
+    },
+    "newMovement": "Nuevo movimiento",
+    "types": {
+      "expense": "Gasto",
+      "income": "Ingreso",
+      "transfer": "Transferencia",
+      "incomeNoun": "ingreso",
+      "expenseNoun": "gasto"
+    }
+  },
+  "ui": {
+    "badge": {
+      "remove": "Quitar"
+    },
+    "donut": {
+      "label": "Distribución del gasto",
+      "ofTotal": "{{percent}}% del total"
+    },
+    "icons": {
+      "home": "Vivienda",
+      "energy": "Energía",
+      "water": "Agua",
+      "gas": "Gas",
+      "internet": "Internet",
+      "phone": "Telefonía",
+      "tv": "Televisión",
+      "cleaning": "Aseo",
+      "groceries": "Mercado",
+      "restaurants": "Restaurantes",
+      "coffee": "Café",
+      "outings": "Salidas",
+      "vehicle": "Vehículo",
+      "fuel": "Combustible",
+      "transport": "Transporte",
+      "bicycle": "Bicicleta",
+      "travel": "Viajes",
+      "parking": "Parqueadero",
+      "health": "Salud",
+      "appointments": "Consultas",
+      "medicine": "Medicamentos",
+      "gym": "Gimnasio",
+      "education": "Educación",
+      "books": "Libros",
+      "school": "Colegio",
+      "baby": "Bebé",
+      "pets": "Mascotas",
+      "clothes": "Ropa",
+      "hairdresser": "Peluquería",
+      "gifts": "Regalos",
+      "celebrations": "Celebraciones",
+      "cinema": "Cine",
+      "music": "Música",
+      "videogames": "Videojuegos",
+      "tickets": "Entradas",
+      "technology": "Tecnología",
+      "work": "Trabajo",
+      "taxes": "Impuestos",
+      "cards": "Tarjetas",
+      "cash": "Efectivo",
+      "savings": "Ahorro",
+      "bills": "Facturas",
+      "insurance": "Seguros",
+      "maintenance": "Mantenimiento",
+      "household": "Hogar",
+      "donations": "Donaciones",
+      "shopping": "Compras",
+      "shipping": "Envíos",
+      "family": "Familia",
+      "general": "General"
+    },
+    "levelNav": {
+      "open": "Ver lo que hay dentro de {{name}}"
+    },
+    "pdf": {
+      "drawFailed": "No se pudo dibujar este PDF."
+    },
+    "passwordPolicy": {
+      "minLength": "Al menos {{min}} caracteres",
+      "smallLetter": "Una letra minúscula",
+      "capitalLetter": "Una letra mayúscula",
+      "number": "Un número",
+      "symbol": "Un símbolo (! @ # $ % & *)",
+      "label": "Requisitos de la contraseña"
+    },
+    "railToggle": {
+      "expand": "Desplegar la barra lateral",
+      "collapse": "Plegar la barra lateral"
+    },
+    "tile": {
+      "move": "Mover {{name}}",
+      "remove": "Quitar {{name}}"
+    },
+    "calendar": {
+      "previousMonth": "Mes anterior",
+      "monthOfYear": " de {{year}}",
+      "nextMonth": "Mes siguiente"
+    },
+    "iconGrid": {
+      "noMatch": "Ningún icono se llama así."
+    },
+    "combo": {
+      "notChosen": "Sin elegir",
+      "search": "Buscar…",
+      "create": "Crear “{{name}}”",
+      "nothingMatches": "Nada coincide."
+    },
+    "confirm": {
+      "confirm": "Confirmar"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { Minus } from 'lucide-react';
 import type { CSSProperties, PointerEvent, ReactNode } from 'react';
 
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
@@ -49,7 +50,7 @@ export function MovableTile({
       onPointerMove={onMover}
       onPointerUp={onSoltar}
       onPointerCancel={onSoltar}
-      aria-label={`Mover ${etiqueta}`}
+      aria-label={t('ui.tile.move', { name: etiqueta })}
     >
       {children}
     </button>
@@ -75,7 +76,7 @@ export function TileRemove({
     <button
       type="button"
       onClick={onQuitar}
-      aria-label={`Quitar ${etiqueta}`}
+      aria-label={t('ui.tile.remove', { name: etiqueta })}
       className="absolute -left-1 -top-1 grid size-6 place-items-center rounded-full bg-foreground text-background shadow-[var(--sombra-pegada)]"
     >
       <Minus className="size-3.5" strokeWidth={3} aria-hidden="true" />

@@ -1,3 +1,4 @@
+import { t } from '@/shared/lib/i18n';
 import {
   USER_AGENT_APP,
   type AvisosDeLaApp,
@@ -83,7 +84,7 @@ const TIEMPO_MAXIMO_MS = 10_000;
 export class PuenteError extends Error {
   constructor(
     readonly motivo: 'sin-puente' | 'tiempo' | 'sin-sesion' | 'respuesta',
-    message = 'La app no entregó la sesión.',
+    message = t('errors.bridge.noSession'),
   ) {
     super(message);
     this.name = 'PuenteError';
@@ -121,12 +122,12 @@ function esUnaSesion(valor: unknown): valor is SesionParaLaWeb {
  */
 export function pedirSesion(): Promise<SesionParaLaWeb> {
   const puente = window.webkit?.messageHandlers?.cocoSesion;
-  if (!puente) return Promise.reject(new PuenteError('sin-puente', 'No hay puente con la app.'));
+  if (!puente) return Promise.reject(new PuenteError('sin-puente', t('errors.bridge.missing')));
 
   let temporizador: ReturnType<typeof setTimeout> | undefined;
   const tiempo = new Promise<never>((_, rechazar) => {
     temporizador = setTimeout(
-      () => rechazar(new PuenteError('tiempo', 'La app no contestó a tiempo.')),
+      () => rechazar(new PuenteError('tiempo', t('errors.bridge.timeout'))),
       TIEMPO_MAXIMO_MS,
     );
   });
@@ -138,7 +139,7 @@ export function pedirSesion(): Promise<SesionParaLaWeb> {
     .then(
       (valor) => {
         if (!esUnaSesion(valor)) {
-          throw new PuenteError('respuesta', 'La app contestó algo que no es una sesión.');
+          throw new PuenteError('respuesta', t('errors.bridge.notASession'));
         }
         return valor;
       },

@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { MAXIMO_DE_ATAJOS, anadirAtajo, useAtajos } from '@/shared/lib/atajos';
+import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { Input } from '@/shared/ui/atoms/input';
 import { mostrarAviso } from '@/shared/ui/molecules/aviso';
@@ -130,8 +131,8 @@ function anadir(ruta: string): void {
   if (!anadirAtajo(ruta)) {
     // La respuesta llega cuando se hace la pregunta: ni un contador
     // permanente ni un control apagado, que no contesta nada al pulsarlo.
-    mostrarAviso('No caben más atajos', {
-      detalle: `El máximo son ${MAXIMO_DE_ATAJOS}. Quita uno para agregar otro.`,
+    mostrarAviso(t('shell.shortcuts.fullTitle'), {
+      detalle: t('shell.shortcuts.fullDetail', { max: MAXIMO_DE_ATAJOS }),
       tono: 'warning',
     });
   }
@@ -157,14 +158,14 @@ function CabezaDeAtajos({
             variant="ghost"
             size="sm-icon"
             onClick={() => setEstado('arreglando')}
-            aria-label="Volver a los atajos"
+            aria-label={t('shell.shortcuts.back')}
           >
             <ChevronLeft className="size-4" aria-hidden="true" />
           </Button>
         )}
 
         <h2 className="min-w-0 flex-1 truncate font-display text-lg font-semibold">
-          {estado === 'eligiendo' ? 'Agregar atajo' : 'Atajos'}
+          {estado === 'eligiendo' ? t('shell.shortcuts.add') : t('shell.shortcuts.title')}
         </h2>
 
         {estado === 'galeria' ? (
@@ -174,11 +175,11 @@ function CabezaDeAtajos({
             size="sm"
             onClick={() => setEstado('arreglando')}
           >
-            Editar
+            {t('common.edit')}
           </Button>
         ) : (
           <Button type="button" variant="acento" size="sm" onClick={() => setEstado('galeria')}>
-            Listo
+            {t('shell.shortcuts.done')}
           </Button>
         )}
       </div>
@@ -206,8 +207,8 @@ function BuscarPagina({
       <Input
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
-        placeholder="Buscar una página"
-        aria-label="Buscar una página"
+        placeholder={t('shell.shortcuts.searchPlaceholder')}
+        aria-label={t('shell.shortcuts.searchPlaceholder')}
         className="pl-9"
         autoFocus
       />

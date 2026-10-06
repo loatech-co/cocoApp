@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 
@@ -52,7 +53,7 @@ export function PanelDeSubida({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Agregar soportes"
+      aria-label={t('transactions.supports.add')}
       // Por encima de la ficha, que está en z-50, igual que el pase.
       className={cn(
         'fixed inset-0 z-[60] flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',

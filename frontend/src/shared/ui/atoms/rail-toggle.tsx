@@ -1,5 +1,6 @@
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 
 /**
@@ -14,7 +15,7 @@ import { cn } from '@/shared/lib/utils';
  * Plegado ocupa el ancho del riel, encima de las secciones.
  */
 export function RailToggle({ plegada, onAlternar }: { plegada: boolean; onAlternar: () => void }) {
-  const etiqueta = plegada ? 'Desplegar la barra lateral' : 'Plegar la barra lateral';
+  const etiqueta = plegada ? t('ui.railToggle.expand') : t('ui.railToggle.collapse');
   const Icono = plegada ? PanelLeftOpen : PanelLeftClose;
   return (
     <button

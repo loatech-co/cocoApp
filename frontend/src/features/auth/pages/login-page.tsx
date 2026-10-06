@@ -3,6 +3,7 @@ import { useState, type SubmitEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
+import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
 import { Campo } from '@/shared/ui/atoms/campo';
@@ -67,14 +68,14 @@ export function LoginPage() {
           encabezado en encabezado y aquí no encontraba ninguno del que
           colgaran los demás. El logotipo es un SVG y no puede hacer ese papel.
         */}
-          <h1 className="sr-only">Coco — iniciar sesión</h1>
+          <h1 className="sr-only">{t('auth.login.documentTitle')}</h1>
 
           <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
           <LoginCard form={form} />
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            ¿Olvidaste tu contraseña? Pídele al administrador que la restablezca.
+            {t('auth.login.forgotPassword')}
           </p>
         </div>
       </section>
@@ -134,9 +135,9 @@ function LoginBrand() {
             primario es, por definición, la que se lee sobre él —blanca en
             claro, casi negra en oscuro— sin que haya que elegir. */}
           <p className="absolute inset-x-0 bottom-0 p-10 text-5xl font-bold leading-portada tracking-tight text-primary-foreground xl:p-14 xl:text-6xl">
-            Tus finanzas,
+            {t('auth.login.taglineFirst')}
             <br />
-            claras.
+            {t('auth.login.taglineSecond')}
           </p>
         </div>
       </section>
@@ -149,8 +150,8 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>¡Hola de nuevo!</CardTitle>
-        <CardDescription>Accede con tu correo y contraseña.</CardDescription>
+        <CardTitle>{t('auth.login.greeting')}</CardTitle>
+        <CardDescription>{t('auth.login.help')}</CardDescription>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4">
@@ -161,7 +162,7 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
         )}
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <Campo etiqueta="Correo" id="email">
+          <Campo etiqueta={t('auth.fields.email')} id="email">
             <Input
               id="email"
               type="email"
@@ -173,7 +174,7 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
             />
           </Campo>
 
-          <Campo etiqueta="Contraseña" id="password">
+          <Campo etiqueta={t('auth.fields.password')} id="password">
             <Input
               id="password"
               type="password"
@@ -189,7 +190,8 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          ¿No tienes cuenta? <TextLink to="/registro">Solicitar acceso</TextLink>
+          {t('auth.login.noAccount')}
+          <TextLink to="/registro">{t('auth.requestAccess')}</TextLink>
         </p>
       </CardContent>
     </Card>
@@ -223,7 +225,7 @@ function LoginSubmit({ enviando }: { enviando: boolean }) {
       ) : (
         <LogIn aria-hidden="true" />
       )}
-      {enviando ? 'Un momento…' : 'Iniciar sesión'}
+      {enviando ? t('auth.wait') : t('auth.signIn')}
     </Button>
   );
 }

@@ -1,4 +1,5 @@
 import type { ProgresoDeLectura } from '@/features/transactions/api/leer-soporte';
+import { t } from '@/shared/lib/i18n';
 import { useObjectUrl } from '@/shared/lib/object-url';
 import { cn } from '@/shared/lib/utils';
 import { LienzoPdf } from '@/shared/ui/atoms/pdf-canvas';
@@ -26,7 +27,7 @@ export function Escaneando({
 }) {
   const url = useObjectUrl(archivo);
   const esImagen = archivo?.type.startsWith('image/') ?? false;
-  const etapa = progreso?.etapa ?? 'Leyendo el soporte…';
+  const etapa = progreso?.etapa ?? t('transactions.reading.reading');
 
   return (
     <div className="flex flex-col items-center gap-4 py-6" role="status" aria-live="polite">

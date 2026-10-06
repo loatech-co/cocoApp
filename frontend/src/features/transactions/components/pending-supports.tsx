@@ -1,6 +1,7 @@
 import { Camera, Plus, Trash2, Upload } from 'lucide-react';
 import { useState } from 'react';
 
+import { t } from '@/shared/lib/i18n';
 import { useObjectUrls } from '@/shared/lib/object-url';
 import { Button } from '@/shared/ui/atoms/button';
 import { BotonOscuro } from '@/shared/ui/molecules/overlay-control';
@@ -131,11 +132,11 @@ function EmptyPendingSupports({
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
         <Button type="button" variant="outline" size="sm" onClick={onCargar}>
           <Upload aria-hidden="true" />
-          Cargar archivo
+          {t('transactions.supports.uploadFile')}
         </Button>
         <Button type="button" variant="outline" size="sm" onClick={onTakePhoto}>
           <Camera aria-hidden="true" />
-          Tomar foto
+          {t('transactions.supports.takePhoto')}
         </Button>
       </div>
     </>
@@ -160,7 +161,7 @@ function PendingActions({
     <>
       <SupportPager index={indice} total={total} onGo={onIr} />
 
-      <BotonOscuro etiqueta="Agregar otro soporte" onClick={onAñadir}>
+      <BotonOscuro etiqueta={t('transactions.supports.addAnother')} onClick={onAñadir}>
         <Plus className="size-4" aria-hidden="true" />
       </BotonOscuro>
 
@@ -168,7 +169,7 @@ function PendingActions({
           todavía no se ha guardado en ninguna parte, así que volver a ponerlo
           es arrastrarlo otra vez. */}
       <BotonOscuro
-        etiqueta="Quitar este soporte"
+        etiqueta={t('transactions.supports.removeThis')}
         onClick={() => {
           onQuitar(indice);
           if (indice > 0) onIr(indice - 1);

@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { useSupportFiles, useSupportUpload } from '@/features/transactions/hooks/use-support-files';
 import { type Receipt } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { BotonOscuro } from '@/shared/ui/molecules/overlay-control';
 
 import { ConfirmSupportDeletion } from './confirm-support-deletion';
@@ -81,7 +82,7 @@ export function Soportes({ transactionId }: { transactionId: number }) {
     return (
       <p className="flex min-h-62 flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        Buscando soportes…
+        {t('transactions.supports.searching')}
       </p>
     );
   }
@@ -146,13 +147,19 @@ function GalleryPreview({ g }: { g: Gallery }) {
         <>
           <SupportPager index={i} total={lista.length} onGo={g.setActivo} />
 
-          <BotonOscuro etiqueta="Agregar otro soporte" onClick={() => g.setAñadiendo(true)}>
+          <BotonOscuro
+            etiqueta={t('transactions.supports.addAnother')}
+            onClick={() => g.setAñadiendo(true)}
+          >
             <Plus className="size-4" aria-hidden="true" />
           </BotonOscuro>
 
           {/* Borrar pregunta antes: es lo único de esta barra que no se puede
               deshacer. */}
-          <BotonOscuro etiqueta="Eliminar este soporte" onClick={() => g.setBorrando(enseñado)}>
+          <BotonOscuro
+            etiqueta={t('transactions.supports.deleteThis')}
+            onClick={() => g.setBorrando(enseñado)}
+          >
             <Trash2 className="size-4" aria-hidden="true" />
           </BotonOscuro>
         </>

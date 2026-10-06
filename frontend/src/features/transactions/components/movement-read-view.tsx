@@ -1,8 +1,9 @@
 import { ArrowUpRight } from 'lucide-react';
 
 import { type TransactionType } from '@/shared/api/generated/model';
-import { diaLargo, mesLargo } from '@/shared/lib/fechas';
-import { cn, formatMoney } from '@/shared/lib/utils';
+import { diaLargo, mesLargo, formatMoney } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
+import { cn } from '@/shared/lib/utils';
 import { Card } from '@/shared/ui/atoms/card';
 import { Seccion } from '@/shared/ui/molecules/section';
 
@@ -32,7 +33,7 @@ export function MovementReadColumn({ notes, ...lectura }: ReadViewProps & { note
       <VistaDeLectura {...lectura} />
 
       {notes.trim() !== '' && (
-        <Seccion titulo="Notas">
+        <Seccion titulo={t('transactions.fields.notes')}>
           {/* `whitespace-pre-line`: las notas se escriben con saltos de línea
               y aplanarlas convierte una lista en un párrafo. */}
           <p className="whitespace-pre-line text-sm">{notes}</p>
@@ -97,7 +98,7 @@ function VistaDeLectura({ tipo, nombre, valor, currency, fecha, periodo, ruta }:
       </Card>
 
       {ruta.length === 0 && (
-        <p className="text-sm text-muted-foreground">Este movimiento está sin clasificar.</p>
+        <p className="text-sm text-muted-foreground">{t('transactions.readView.unclassified')}</p>
       )}
     </div>
   );
@@ -119,7 +120,7 @@ function ReadDetails({
 
   return (
     <div className="flex flex-col gap-1 border-t border-border px-4 py-3">
-      <p className="truncate text-base font-medium">{nombre || 'Sin concepto'}</p>
+      <p className="truncate text-base font-medium">{nombre || t('transactions.noConcept')}</p>
 
       {/* El camino, sin etiqueta y sin fichas. Con fichas parecían pestañas
           —algo que se pulsa y cambia lo de abajo— y aquí no se pulsa nada: es
@@ -137,11 +138,13 @@ function ReadDetails({
         </p>
       )}
 
-      <p className="mt-1 text-xs text-muted-foreground">Pagado el {diaLargo(fecha)}</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {t('transactions.readView.paidOn', { day: diaLargo(fecha) })}
+      </p>
 
       {desfasado && (
         <p className="text-xs font-medium text-warning">
-          Pertenece a {mesLargo(periodo.slice(0, 7))}
+          {t('transactions.readView.belongsTo', { month: mesLargo(periodo.slice(0, 7)) })}
         </p>
       )}
     </div>

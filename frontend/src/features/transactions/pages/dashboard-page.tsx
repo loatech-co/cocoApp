@@ -7,7 +7,8 @@ import { ToolbarFiltros } from '@/features/transactions/components/toolbar-filtr
 import { useDashboardPage } from '@/features/transactions/hooks/use-dashboard-page';
 import { ApiClientError } from '@/shared/api/api-client';
 import { useAuth } from '@/shared/api/auth-context';
-import { formatCOP } from '@/shared/lib/utils';
+import { formatCOP } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
 
 /**
@@ -86,9 +87,11 @@ export function DashboardPage() {
 function ErrorDelResumen({ error }: { error: Error }) {
   return (
     <Alert variant="destructive">
-      <AlertTitle>No se pudo cargar el dashboard</AlertTitle>
+      <AlertTitle>{t('transactions.dashboard.loadFailed')}</AlertTitle>
       <AlertDescription>
-        {error instanceof ApiClientError ? error.message : 'Revisa que la API esté corriendo.'}
+        {error instanceof ApiClientError
+          ? error.message
+          : t('transactions.dashboard.loadFailedHelp')}
       </AlertDescription>
     </Alert>
   );
@@ -101,11 +104,18 @@ function Barra({ pagina: p }: { pagina: ReturnType<typeof useDashboardPage> }) {
 
   return (
     <ToolbarFiltros
-      titulo={`¡Hola de nuevo${nombreDePila(usuario) ? `, ${nombreDePila(usuario)}` : ''}!`}
+      titulo={
+        nombreDePila(usuario)
+          ? t('transactions.dashboard.greetingNamed', { name: nombreDePila(usuario) })
+          : t('transactions.dashboard.greeting')
+      }
       subtitulo={
         dashboard.data
-          ? `${dashboard.data.range.count} movimientos · ${formatCOP(dashboard.data.range.expense)} gastados`
-          : 'Todo se calcula de tus movimientos.'
+          ? t('transactions.dashboard.rangeSummary', {
+              n: dashboard.data.range.count,
+              amount: formatCOP(dashboard.data.range.expense),
+            })
+          : t('transactions.dashboard.help')
       }
       filtros={p.filtros}
       aplicar={(c) => {

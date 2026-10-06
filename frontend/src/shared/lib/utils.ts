@@ -7,51 +7,6 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 /**
- * The currency of anything that is not a single movement: totals, averages,
- * budgets. A sum mixes rows and has no currency of its own; today every row is
- * COP, so the sum is too. (Phase 6.4 added `transactions.currency`; a movement
- * is formatted with its own.)
- */
-export const DEFAULT_CURRENCY = 'COP';
-
-interface MoneyFormatters {
-  whole: Intl.NumberFormat;
-  withCents: Intl.NumberFormat;
-}
-
-/** One pair of formatters per currency, built on first use: Intl formatters are costly to create. */
-const formattersByCurrency = new Map<string, MoneyFormatters>();
-
-function formattersFor(currency: string): MoneyFormatters {
-  let formatters = formattersByCurrency.get(currency);
-  if (!formatters) {
-    const options = { style: 'currency', currency } as const;
-    formatters = {
-      whole: new Intl.NumberFormat('es-CO', {
-        ...options,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }),
-      withCents: new Intl.NumberFormat('es-CO', {
-        ...options,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    };
-    formattersByCurrency.set(currency, formatters);
-  }
-  return formatters;
-}
-
-/**
- * Formatea un monto para MOSTRAR.
- *
- * Recibe el string decimal que entrega la API. Se convierte a número solo aquí,
- * en el borde de presentación: nunca se hace aritmética de dinero con el
- * resultado. Los centavos se ocultan cuando son `.00`, que es el caso normal
- * en COP.
- */
-/**
  * Agrupa los miles mientras se escribe una cifra.
  *
  * ── Por qué no `formatCOP` ──────────────────────────────────────────────────
@@ -88,22 +43,4 @@ export function soloCifras(escrito: string): string {
 
   // Dos comas no son un número. Se queda la primera y lo demás se pega detrás.
   return resto.length > 0 ? `${enteros},${resto.join('')}` : enteros;
-}
-
-/**
- * Formats an amount for DISPLAY in the given currency. Cents are hidden when
- * they are `.00`, which is the normal case in COP.
- */
-export function formatMoney(amount: string | number, currency: string = DEFAULT_CURRENCY): string {
-  const value = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
-  if (!Number.isFinite(value)) return '—';
-
-  const { whole, withCents } = formattersFor(currency);
-  const hasCents = Math.round(value * 100) % 100 !== 0;
-  return (hasCents ? withCents : whole).format(value);
-}
-
-/** An aggregate —no row of its own— in the default currency. */
-export function formatCOP(amount: string | number): string {
-  return formatMoney(amount, DEFAULT_CURRENCY);
 }

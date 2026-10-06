@@ -3,6 +3,7 @@ import { ArrowDownUp, Filter, Plus, TrendingDown, TrendingUp } from 'lucide-reac
 import type { Filtros } from '@/features/transactions/model/filtros';
 import { ORDENES, type Orden } from '@/features/transactions/model/sort-orders';
 import { type Category, type TransactionType } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { Menu, MenuOpcion, MenuTitulo } from '@/shared/ui/molecules/menu';
 import { MenuOpcionDetallada } from '@/shared/ui/molecules/menu-rich-option';
 
@@ -21,7 +22,7 @@ export function SortMenu({
 }) {
   return (
     <Menu
-      etiqueta="Ordenar"
+      etiqueta={t('transactions.toolbar.sort')}
       Icono={ArrowDownUp}
       soloIcono
       activo={orden.valor !== '-date'}
@@ -29,7 +30,7 @@ export function SortMenu({
     >
       {(cerrar) => (
         <>
-          <MenuTitulo>Ordenar por</MenuTitulo>
+          <MenuTitulo>{t('transactions.toolbar.sortBy')}</MenuTitulo>
           {ORDENES.map((o) => (
             <MenuOpcion
               key={o.valor}
@@ -59,7 +60,7 @@ export function ClassificationMenu({
 }) {
   return (
     <Menu
-      etiqueta="Filtrar por clasificación"
+      etiqueta={t('transactions.toolbar.filterByClassification')}
       Icono={Filter}
       soloIcono
       activo={filtros.categoryIds.length > 0}
@@ -86,7 +87,7 @@ export function ClassificationMenu({
 export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) => void }) {
   return (
     <Menu
-      etiqueta="Nuevo movimiento"
+      etiqueta={t('transactions.newMovement')}
       tipo="menu"
       alineado="derecha"
       variante="default"
@@ -97,8 +98,8 @@ export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) 
           <MenuOpcionDetallada
             Icono={TrendingDown}
             color="gasto"
-            titulo="Gasto"
-            ayuda="Dinero que sale"
+            titulo={t('transactions.types.expense')}
+            ayuda={t('transactions.toolbar.expenseHelp')}
             onClick={() => {
               cerrar();
               onNuevo('expense');
@@ -110,9 +111,9 @@ export function NewMovementMenu({ onNuevo }: { onNuevo: (tipo: TransactionType) 
           <MenuOpcionDetallada
             Icono={TrendingUp}
             color="ingreso"
-            titulo="Ingreso"
-            ayuda="Dinero que entra"
-            nota="Pronto"
+            titulo={t('transactions.types.income')}
+            ayuda={t('transactions.toolbar.incomeHelp')}
+            nota={t('transactions.kpis.soon')}
             deshabilitada
           />
         </div>

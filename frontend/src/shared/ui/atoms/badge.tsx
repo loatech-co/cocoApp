@@ -2,6 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { X } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
@@ -120,8 +121,8 @@ export function Chip({
       <button
         type="button"
         onClick={onQuitar}
-        aria-label={etiquetaDeQuitar ?? 'Quitar'}
-        title={etiquetaDeQuitar ?? 'Quitar'}
+        aria-label={etiquetaDeQuitar ?? t('ui.badge.remove')}
+        title={etiquetaDeQuitar ?? t('ui.badge.remove')}
         className={cn(
           'flex size-4 shrink-0 items-center justify-center rounded-full transition-colors',
           // Encendido, el chip es `--primary` y el aspa lleva su tinta: el

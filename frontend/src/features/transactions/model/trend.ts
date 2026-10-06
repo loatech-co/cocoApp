@@ -1,8 +1,16 @@
-import { diaLargo, mesLargo } from '@/shared/lib/fechas';
+import { diaLargo, MESES_CORTOS, mesLargo } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 
 /*
   La geometría y el eje de la gráfica de tendencia: lo que se calcula sin dibujar.
 */
+
+/** The unit a trend is grouped by, as a person reads it: `día` or `mes`. */
+export function unidad(granularidad: 'dia' | 'mes'): string {
+  return granularidad === 'dia'
+    ? t('transactions.trend.units.day')
+    : t('transactions.trend.units.month');
+}
 
 /** Coordenada X de un punto en el lienzo de 0–100. */
 export function equis(i: number, total: number): number {
@@ -121,8 +129,6 @@ export function area(serie: number[], techo: number, total: number): string {
   return `${linea(serie, techo, total)} L ${equis(total - 1, total).toFixed(2)} ${base} L ${equis(0, total).toFixed(2)} ${base} Z`;
 }
 
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-
 /**
  * La fecha de un punto, entera: `6 de septiembre de 2026` o `Septiembre de
  * 2026`.
@@ -183,7 +189,7 @@ export function etiquetasDelEje(
       .filter(({ indice }) => indice % cada === 0)
       .map(({ indice, bucket }) => {
         const [anio, mes = ''] = bucket.split('-');
-        const nombre = MESES[Number(mes) - 1] ?? mes;
+        const nombre = MESES_CORTOS[Number(mes) - 1] ?? mes;
         const conMayuscula = nombre.charAt(0).toUpperCase() + nombre.slice(1);
         // El año ENTERO, no sus dos últimas cifras. "Abr 23" obliga a
         // completarlo mentalmente, y en un histórico que arranca en 2022 eso
@@ -205,7 +211,7 @@ export function etiquetasDelEje(
     if (!esQuinto && !esUltimo) return;
 
     const clave = p.bucket.slice(0, 7);
-    const texto = clave === mesEscrito ? String(dia) : `${dia} ${MESES[mes - 1] ?? mes}`;
+    const texto = clave === mesEscrito ? String(dia) : `${dia} ${MESES_CORTOS[mes - 1] ?? mes}`;
     mesEscrito = clave;
 
     etiquetas.push({ indice, texto });
@@ -224,7 +230,7 @@ export function etiquetasDelEje(
  */
 export function etiquetaDeCubo(bucket: string, mismoAnio = false): string {
   const [anio = '', mes = '', dia] = bucket.split('-');
-  const nombre = MESES[Number(mes) - 1] ?? mes;
+  const nombre = MESES_CORTOS[Number(mes) - 1] ?? mes;
   if (dia) return `${Number(dia)} ${nombre}`;
   return mismoAnio ? nombre : `${nombre} ${anio.slice(2)}`;
 }

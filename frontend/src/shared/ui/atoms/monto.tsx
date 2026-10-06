@@ -1,6 +1,8 @@
 import { ArrowRightLeft, Minus, Plus } from 'lucide-react';
 
-import { cn, DEFAULT_CURRENCY, formatCOP, formatMoney } from '@/shared/lib/utils';
+import { DEFAULT_CURRENCY, formatCOP, formatMoney } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
+import { cn } from '@/shared/lib/utils';
 
 /**
  * Hacia dónde va la plata: entra, sale o solo se mueve entre cuentas.
@@ -41,13 +43,23 @@ export function Monto({
   soloTexto = false,
 }: MontoProps) {
   const estilos = {
-    entra: { color: 'text-income', signo: '+', Icono: Plus, etiqueta: 'Ingreso' },
-    sale: { color: 'text-expense', signo: '−', Icono: Minus, etiqueta: 'Gasto' },
+    entra: {
+      color: 'text-income',
+      signo: '+',
+      Icono: Plus,
+      etiqueta: t('transactions.types.income'),
+    },
+    sale: {
+      color: 'text-expense',
+      signo: '−',
+      Icono: Minus,
+      etiqueta: t('transactions.types.expense'),
+    },
     mueve: {
       color: 'text-muted-foreground',
       signo: '',
       Icono: ArrowRightLeft,
-      etiqueta: 'Transferencia',
+      etiqueta: t('transactions.types.transfer'),
     },
   }[sentido];
 

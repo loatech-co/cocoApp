@@ -1,6 +1,7 @@
 import { leerSoporte } from '@/features/transactions/api/leer-soporte';
 import { unreadNotice, proposalFromReading } from '@/features/transactions/model/movement-form';
 import { type Category } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 
 import type { MovementSheetState } from './use-movement-form';
 
@@ -80,7 +81,7 @@ export function makeReceiptScan(ficha: MovementSheetState, arbol: Category[] | u
         if (candidatos) ficha.setCandidatosDelRecibo(candidatos);
       }
     } catch (e) {
-      ficha.setError(e instanceof Error ? e.message : 'No se pudo leer ese archivo.');
+      ficha.setError(e instanceof Error ? e.message : t('transactions.reading.fileReadFailed'));
     } finally {
       // El piso de la espera, salga bien o mal. También cuando falla: un
       // mensaje de error que aparece de un fogonazo se lee como un fallo de

@@ -9,6 +9,7 @@ import type {
   DashboardBreakdownLevel,
   PendingPayment,
 } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 
@@ -160,7 +161,9 @@ function Comportamiento({
       )}
     >
       <CardContent className="flex h-full flex-col p-4 sm:p-6">
-        <h2 className="mb-4 font-display text-lg font-semibold">Comportamiento</h2>
+        <h2 className="mb-4 font-display text-lg font-semibold">
+          {t('transactions.dashboard.behaviour')}
+        </h2>
         {/*
           `flex-1` con un mínimo, no una proporción fija.
 
@@ -182,7 +185,7 @@ function Comportamiento({
 
 /** The API names the level in English (v2); the screen says it in Spanish. */
 const NOMBRE_DEL_NIVEL: Record<DashboardBreakdownLevel, string> = {
-  cost_center: 'centro de costos',
-  category: 'categoría',
+  cost_center: t('transactions.dashboard.levels.costCenter'),
+  category: t('transactions.dashboard.levels.category'),
   concept: 'concepto',
 };

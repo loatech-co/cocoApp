@@ -1,9 +1,16 @@
 import { ChartLine } from 'lucide-react';
 
 import { sitioDeLaTarjeta, useTrendPointer } from '@/features/transactions/hooks/use-trend-pointer';
-import { equis, etiquetaDeCubo, etiquetasDelEje } from '@/features/transactions/model/trend';
+import {
+  equis,
+  etiquetaDeCubo,
+  etiquetasDelEje,
+  unidad,
+} from '@/features/transactions/model/trend';
 import { type TrendPoint } from '@/shared/api/generated/model';
-import { cn, formatCOP } from '@/shared/lib/utils';
+import { formatCOP } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
+import { cn } from '@/shared/lib/utils';
 import { EstadoVacio } from '@/shared/ui/atoms/estado-vacio';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
@@ -41,8 +48,8 @@ export function Tendencia({
       <EstadoVacio
         className="h-full"
         Icono={ChartLine}
-        titulo="Sin movimientos en este periodo"
-        ayuda="Amplía el rango de fechas o quita los filtros para ver la tendencia."
+        titulo={t('transactions.trend.emptyTitle')}
+        ayuda={t('transactions.trend.emptyHelp')}
       />
     );
   }
@@ -75,7 +82,7 @@ function Grafica({
   const s = resumen(puntos);
   // `maximo` sale de `gastos`, así que siempre se encuentra: el respaldo no se usa.
   const pico = puntos[s.gastos.indexOf(s.maximo)] ?? primero;
-  const periodo = granularidad === 'dia' ? 'día' : 'mes';
+  const periodo = unidad(granularidad);
 
   return (
     // `h-full` y el lienzo en `flex-1`: la tarjeta la estira su vecina de al
@@ -94,7 +101,13 @@ function Grafica({
           ingresos={s.ingresos}
           hayIngresos={s.hayIngresos}
           techo={s.techo}
-          ariaLabel={`Gasto por ${periodo}, de ${etiquetaDeCubo(primero.bucket)} a ${etiquetaDeCubo(ultimo.bucket)}. Promedio ${formatCOP(s.promedio)}, pico ${formatCOP(s.maximo)}.`}
+          ariaLabel={t('transactions.trend.chartLabel', {
+            unit: periodo,
+            from: etiquetaDeCubo(primero.bucket),
+            to: etiquetaDeCubo(ultimo.bucket),
+            average: formatCOP(s.promedio),
+            peak: formatCOP(s.maximo),
+          })}
         />
       </Lienzo>
 
@@ -141,7 +154,7 @@ function Lienzo({
       )}
       tabIndex={0}
       role="application"
-      aria-label={`Gasto por ${granularidad === 'dia' ? 'día' : 'mes'}. Usa las flechas para recorrer los puntos.`}
+      aria-label={t('transactions.trend.pointerLabel', { unit: unidad(granularidad) })}
       onPointerDown={(e) => apuntar(e.clientX)}
       onPointerMove={(e) => apuntar(e.clientX)}
       onPointerLeave={() => setActivo(null)}

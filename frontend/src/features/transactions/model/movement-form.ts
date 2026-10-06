@@ -4,6 +4,7 @@ import {
   type Transaction,
   type TransactionType,
 } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import {
   buscarEnArbol,
   normalizar,
@@ -40,7 +41,9 @@ export function hoyEnBogota(): string {
 
 /** `expense` → "gasto". El tipo, dicho como se dice. */
 export function nombreDelTipo(tipo: TransactionType): string {
-  return tipo === 'income' ? 'ingreso' : 'gasto';
+  return tipo === 'income'
+    ? t('transactions.types.incomeNoun')
+    : t('transactions.types.expenseNoun');
 }
 
 export function mayuscula(texto: string): string {
@@ -214,6 +217,6 @@ export function unreadNotice(leida: Lectura, texto: string): string | null {
   const algoUtil = leida.valor !== null || leida.fecha !== null || leida.concepto !== null;
   if (algoUtil) return null;
   return texto.trim() === ''
-    ? 'No se pudo extraer el texto de este archivo. Escribe los datos a mano; el archivo queda adjunto al movimiento.'
-    : 'Se leyó el archivo, pero no se reconoció el valor ni la fecha. Escríbelos a mano; el archivo queda adjunto al movimiento.';
+    ? t('transactions.reading.noText')
+    : t('transactions.reading.noAmountNorDate');
 }

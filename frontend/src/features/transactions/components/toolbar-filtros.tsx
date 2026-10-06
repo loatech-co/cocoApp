@@ -6,6 +6,7 @@ import type { Orden } from '@/features/transactions/model/sort-orders';
 import { useCategories } from '@/shared/api/categories';
 import { type TransactionType } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { t } from '@/shared/lib/i18n';
 import { useEsMovil } from '@/shared/lib/movil';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
@@ -167,7 +168,7 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
         type="button"
         variant="herramienta"
         size="sm-icon"
-        aria-label="Buscar"
+        aria-label={t('shell.bottomBar.search')}
         aria-pressed={buscando || filtrando}
         aria-expanded={buscando}
         onClick={() => setBuscando(true)}
@@ -177,7 +178,7 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
 
       <PanelInferior
         abierto={buscando}
-        titulo="Buscar"
+        titulo={t('shell.bottomBar.search')}
         cabeza={
           <div className="relative">
             <Search
@@ -190,8 +191,8 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
               autoFocus
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              placeholder="Buscar: celsia, colegio, sura…"
-              aria-label="Buscar por palabra clave"
+              placeholder={t('transactions.searchPanel.placeholder')}
+              aria-label={t('transactions.toolbar.searchByKeyword')}
               className="pl-9"
             />
           </div>
@@ -203,7 +204,7 @@ function PhoneSearch({ busqueda, filtrando }: { busqueda: ToolbarSearch; filtran
           BUSCA un movimiento en toda la aplicación; esta RECORTA lo que
           se está mirando, y lo que escriba se queda puesto al cerrar. */}
         <p className="px-3 py-2 text-sm text-muted-foreground">
-          Recorta lo que estás viendo. Lo escrito se queda puesto hasta que lo borres.
+          {t('transactions.toolbar.searchHelp')}
         </p>
       </PanelInferior>
     </>
@@ -219,8 +220,8 @@ function DesktopSearch({ busqueda }: { busqueda: ToolbarSearch }) {
         type="button"
         variant="herramienta"
         size="sm-icon"
-        aria-label="Buscar"
-        title="Buscar"
+        aria-label={t('shell.bottomBar.search')}
+        title={t('shell.bottomBar.search')}
         onClick={() => {
           setBuscando(true);
           // El foco no se hereda de un elemento que acaba de nacer.
@@ -245,8 +246,8 @@ function DesktopSearch({ busqueda }: { busqueda: ToolbarSearch }) {
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
         onBlur={() => texto === '' && setBuscando(false)}
-        placeholder="Buscar: celsia, colegio, sura…"
-        aria-label="Buscar por palabra clave"
+        placeholder={t('transactions.searchPanel.placeholder')}
+        aria-label={t('transactions.toolbar.searchByKeyword')}
         className="h-9 rounded-lg pl-9"
       />
     </div>
@@ -259,8 +260,8 @@ function ClearFiltersButton({ onClick }: { onClick: () => void }) {
       type="button"
       variant="herramienta"
       size="sm-icon"
-      aria-label="Limpiar filtros"
-      title="Limpiar filtros"
+      aria-label={t('transactions.toolbar.clearFilters')}
+      title={t('transactions.toolbar.clearFilters')}
       onClick={onClick}
     >
       <X className="size-4" aria-hidden="true" />

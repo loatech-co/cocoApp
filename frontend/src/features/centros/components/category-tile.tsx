@@ -6,6 +6,7 @@ import { trasCerrar } from '@/features/centros/components/close-then';
 import { ConceptoModal } from '@/features/centros/components/concepto-modal';
 import { ConfirmarBorrado } from '@/features/centros/components/confirmar-borrado';
 import { type CategoryTree } from '@/shared/api/categories';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Chip } from '@/shared/ui/atoms/badge';
 import { Bloque } from '@/shared/ui/atoms/bloque';
@@ -152,7 +153,7 @@ function MenuDeCategoria({
 }) {
   return (
     <Menu
-      etiqueta={`Acciones de ${nombre}`}
+      etiqueta={t('centers.tile.actionsOf', { name: nombre })}
       Icono={EllipsisVertical}
       soloIcono
       variante="ghost"
@@ -163,17 +164,17 @@ function MenuDeCategoria({
           {/* Lo PRIMERO del menú: es lo que más se hace con una categoría.
               Eliminar va al final y en rojo, porque es lo que menos. */}
           <MenuOpcion Icono={Plus} onClick={trasCerrar(cerrar, onAgregar)}>
-            Agregar concepto
+            {t('centers.tile.addConcept')}
           </MenuOpcion>
 
           {/* Renombrar una categoría no existía por ningún camino, igual que en
               el centro: la única salida era borrarlo con sus conceptos
               dentro y volver a escribirlos. */}
           <MenuOpcion Icono={Pencil} onClick={trasCerrar(cerrar, onEditar)}>
-            Editar
+            {t('common.edit')}
           </MenuOpcion>
           <MenuOpcion Icono={Trash2} peligro onClick={trasCerrar(cerrar, onEliminar)}>
-            Eliminar
+            {t('common.delete')}
           </MenuOpcion>
         </>
       )}
@@ -206,13 +207,13 @@ function Conceptos({
                 tarjeta y se salía por el lado. */}
           <Chip
             onClick={() => onEditar(concepto)}
-            title={`Editar ${concepto.name}`}
+            title={t('centers.tile.editConcept', { name: concepto.name })}
             className="max-w-full"
           >
             {concepto.isRecurring && (
               <Repeat
                 className="size-3 shrink-0 opacity-70"
-                aria-label="Se paga cada cierto tiempo"
+                aria-label={t('centers.tile.recurring')}
               />
             )}
             <span className="min-w-0 truncate">{concepto.name}</span>

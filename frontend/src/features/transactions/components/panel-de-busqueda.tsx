@@ -9,7 +9,8 @@ import {
 import { useCategories } from '@/shared/api/categories';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import { diaCorto } from '@/shared/lib/fechas';
+import { diaCorto } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Input } from '@/shared/ui/atoms/input';
 import { Monto } from '@/shared/ui/atoms/monto';
@@ -54,7 +55,7 @@ export function PanelDeBusqueda({
   return (
     <PanelInferior
       abierto={abierto}
-      titulo="Buscar"
+      titulo={t('shell.bottomBar.search')}
       cabeza={<SearchHead texto={texto} onCambiar={setTexto} />}
       onCerrar={onCerrar}
     >
@@ -66,7 +67,7 @@ export function PanelDeBusqueda({
       */}
       {consulta === '' ? (
         <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-          Escribe el concepto, el comercio o lo que decía el recibo.
+          {t('transactions.searchPanel.help')}
         </p>
       ) : (
         <Resultados consulta={consulta} onElegir={onElegir} />
@@ -97,7 +98,7 @@ function Resultados({
   }
 
   if (movimientos.isError) {
-    return <ErrorAlert mensaje="No se pudo buscar. Revisa tu conexión e inténtalo de nuevo." />;
+    return <ErrorAlert mensaje={t('transactions.searchPanel.failed')} />;
   }
 
   const filas = movimientos.data.data;
@@ -105,7 +106,7 @@ function Resultados({
   if (filas.length === 0) {
     return (
       <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-        Ningún movimiento dice «{consulta}».
+        {t('transactions.searchPanel.noMatch', { query: consulta })}
       </p>
     );
   }
@@ -122,7 +123,7 @@ function Resultados({
           trescientos se leen como trescientos. */}
       {total > filas.length && (
         <p className="px-3 pt-3 text-center text-xs text-muted-foreground">
-          Los {filas.length} más recientes de {total}. Afina la palabra para ver los otros.
+          {t('transactions.searchPanel.latest', { shown: filas.length, total })}
         </p>
       )}
     </div>
@@ -168,8 +169,8 @@ function SearchHead({ texto, onCambiar }: { texto: string; onCambiar: (texto: st
         autoFocus
         value={texto}
         onChange={(e) => onCambiar(e.target.value)}
-        placeholder="Buscar: celsia, colegio, sura…"
-        aria-label="Buscar un movimiento"
+        placeholder={t('transactions.searchPanel.placeholder')}
+        aria-label={t('transactions.searchPanel.label')}
         className="pl-9"
       />
     </div>

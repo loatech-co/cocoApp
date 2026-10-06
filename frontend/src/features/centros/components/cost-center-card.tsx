@@ -8,6 +8,7 @@ import { Categoría } from '@/features/centros/components/category-tile';
 import { trasCerrar } from '@/features/centros/components/close-then';
 import { ConfirmarBorrado } from '@/features/centros/components/confirmar-borrado';
 import { type CategoryTree } from '@/shared/api/categories';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { CollapsibleHeader } from '@/shared/ui/atoms/collapsible-header';
@@ -94,11 +95,17 @@ function Desplegar({
               centro, y en una lista se reconoce antes por su forma que
               leyendo una etiqueta en cada fila. */}
           {centro.isStatic && (
-            <Lock className="size-4 shrink-0 text-muted-foreground" aria-label="Centro estático" />
+            <Lock
+              className="size-4 shrink-0 text-muted-foreground"
+              aria-label={t('centers.card.static')}
+            />
           )}
         </span>
         <span className="block text-xs text-muted-foreground">
-          {categorias.length} categoría(s) · {conceptos} concepto(s)
+          {t('centers.card.categoriesCount', {
+            categories: categorias.length,
+            concepts: conceptos,
+          })}
         </span>
       </span>
     </CollapsibleHeader>
@@ -118,7 +125,7 @@ function MenuDelCentro({
 
   return (
     <Menu
-      etiqueta={`Acciones de ${centro.name}`}
+      etiqueta={t('centers.card.actionsOf', { name: centro.name })}
       Icono={EllipsisVertical}
       soloIcono
       variante="ghost"
@@ -129,7 +136,7 @@ function MenuDelCentro({
               nombre mal escrito había que borrarlo entero —con sus
               categorías y sus conceptos— y volver a armarlo. */}
           <MenuOpcion Icono={Pencil} onClick={trasCerrar(cerrar, onEditar)}>
-            Editar
+            {t('common.edit')}
           </MenuOpcion>
 
           {/* Poder cambiarlo después, no solo al crearlo: los centros que
@@ -141,10 +148,10 @@ function MenuDelCentro({
               actualizar.mutate({ id: centro.id, cambios: { isStatic: !centro.isStatic } }),
             )}
           >
-            {centro.isStatic ? 'Marcar como dinámico' : 'Marcar como estático'}
+            {centro.isStatic ? t('centers.card.makeDynamic') : t('centers.card.makeStatic')}
           </MenuOpcion>
           <MenuOpcion Icono={Trash2} peligro onClick={trasCerrar(cerrar, onEliminar)}>
-            Eliminar
+            {t('common.delete')}
           </MenuOpcion>
         </>
       )}

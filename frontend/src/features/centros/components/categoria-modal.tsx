@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useCategoryForm } from '@/features/centros/hooks/use-category-form';
 import { categoryModalTexts } from '@/features/centros/model/category-form';
 import { type Category } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { BLOQUE } from '@/shared/ui/atoms/bloque';
 import { Button } from '@/shared/ui/atoms/button';
@@ -61,15 +62,15 @@ function SelectorDeIcono({
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 text-sm font-medium">Icono</legend>
+      <legend className="mb-2 text-sm font-medium">{t('centers.categoryModal.icon')}</legend>
 
       <div className={cn(BLOQUE, 'flex flex-col gap-2')}>
         <SearchBox
           forma="caja"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar: educación, mercado, salud…"
-          aria-label="Buscar un icono"
+          placeholder={t('centers.categoryModal.iconSearchPlaceholder')}
+          aria-label={t('centers.categoryModal.iconSearch')}
         />
 
         <IconGrid filtrados={filtrados} valor={valor} onElegir={onElegir} />
@@ -128,12 +129,12 @@ export function CategoriaModal({
   return (
     <Modal abierta={abierta} titulo={titulo} ayuda={ayuda} onCerrar={onCerrar}>
       <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
-        <Campo etiqueta="Nombre" id="categoria-nombre">
+        <Campo etiqueta={t('common.name')} id="categoria-nombre">
           <Input
             id="categoria-nombre"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            placeholder="Costos fijos, Negocio…"
+            placeholder={t('centers.categoryModal.namePlaceholder')}
             maxLength={255}
             required
           />
@@ -205,11 +206,11 @@ function CategoryFormFooter({
   return (
     <PieDeModal>
       <Button type="button" variant="outline" onClick={onCerrar}>
-        Cancelar
+        {t('common.cancel')}
       </Button>
       <Button type="submit" disabled={deshabilitado}>
         {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-        {editando ? 'Guardar' : 'Crear'}
+        {editando ? t('common.save') : t('common.create')}
       </Button>
     </PieDeModal>
   );
@@ -225,9 +226,9 @@ function StaticSwitch({
   return (
     <label className={cn(BLOQUE, 'flex cursor-pointer items-center justify-between gap-4')}>
       <span className="min-w-0">
-        <span className="block text-sm font-medium">Estático</span>
+        <span className="block text-sm font-medium">{t('centers.categoryModal.static')}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">
-          La clasificación de sus movimientos solo se modifica desde Centros de costos.
+          {t('centers.categoryModal.staticHelp')}
         </span>
       </span>
       <Interruptor checked={estatico} onChange={(e) => onCambiar(e.target.checked)} />

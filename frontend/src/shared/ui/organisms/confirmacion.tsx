@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react';
 import { type ReactNode } from 'react';
 
 import { useEscapeToClose } from '@/shared/lib/escape';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
@@ -55,7 +56,7 @@ export function Confirmacion({
   abierta,
   titulo,
   children,
-  etiquetaConfirmar = 'Confirmar',
+  etiquetaConfirmar = t('ui.confirm.confirm'),
   peligrosa = false,
   ocupada = false,
   confirmarDeshabilitado = false,
@@ -131,7 +132,7 @@ function ConfirmationFooter({
         estando a un Escape y a un tabulador.
       */}
       <Button type="button" variant="outline" onClick={onCancelar}>
-        Cancelar
+        {t('common.cancel')}
       </Button>
       <Button
         type="button"

@@ -3,6 +3,8 @@ import { useState } from 'react';
 
 import { PERIODICIDADES, type Periodicidad } from '@/features/centros/model/periodicity';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { conMayuscula, MESES_LARGOS } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { Input } from '@/shared/ui/atoms/input';
@@ -11,11 +13,11 @@ import { CampoDeDinero } from '@/shared/ui/molecules/campo-de-dinero';
 import { Select } from '@/shared/ui/organisms/select';
 
 const ETIQUETAS: Record<Periodicidad, string> = {
-  monthly: 'Cada mes',
-  bimonthly: 'Cada dos meses',
-  quarterly: 'Cada tres meses',
-  semiannual: 'Cada seis meses',
-  annual: 'Cada año',
+  monthly: t('centers.recurrence.periodicity.monthly'),
+  bimonthly: t('centers.recurrence.periodicity.bimonthly'),
+  quarterly: t('centers.recurrence.periodicity.quarterly'),
+  semiannual: t('centers.recurrence.periodicity.semiannual'),
+  annual: t('centers.recurrence.periodicity.annual'),
 };
 
 export interface Recurrencia {
@@ -41,20 +43,7 @@ export interface Recurrencia {
   variosPagos: boolean;
 }
 
-const MESES = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+const MESES = MESES_LARGOS.map(conMayuscula);
 
 /**
  * Marcar un concepto como un pago que vuelve.
@@ -105,11 +94,11 @@ export function CamposDeRecurrencia({
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-medium">Pago recurrente</span>
+          <span className="block text-sm font-medium">{t('centers.recurrence.title')}</span>
           <span className="mt-0.5 block text-xs text-muted-foreground">
             {concepto
-              ? `Aplica a "${concepto}", no solo a este movimiento`
-              : 'Aparece en los pendientes del mes hasta que se registre'}
+              ? t('centers.recurrence.scopeConcept', { concept: concepto })
+              : t('centers.recurrence.scopePending')}
           </span>
         </span>
 
@@ -170,7 +159,7 @@ function CampoDelDia({ dia, onCambiar }: { dia: number; onCambiar: (dia: number)
   useAlCambiar([dia], () => setEscrito(String(dia)));
 
   return (
-    <Campo etiqueta="Día del mes" id="dia-de-pago">
+    <Campo etiqueta={t('centers.recurrence.dayOfMonth')} id="dia-de-pago">
       <Input
         id="dia-de-pago"
         // `text` y no `number`: un campo numérico devuelve la cadena vacía
@@ -215,8 +204,12 @@ export function entre1y31(escrito: string): number {
  * acuerdo.
  */
 export function cuandoVuelve(periodicidad: Periodicidad, dia: number, mes: number): string {
-  if (periodicidad === 'monthly') return `Todos los meses el día ${dia}.`;
-  if (periodicidad === 'annual') return `Cada ${dia} de ${(MESES[mes - 1] ?? '').toLowerCase()}.`;
+  if (periodicidad === 'monthly') return t('centers.recurrence.summary.monthly', { day: dia });
+  if (periodicidad === 'annual')
+    return t('centers.recurrence.summary.annual', {
+      day: dia,
+      month: (MESES[mes - 1] ?? '').toLowerCase(),
+    });
 
   const cada = { bimonthly: 2, quarterly: 3, semiannual: 6 }[periodicidad];
 
@@ -225,7 +218,7 @@ export function cuandoVuelve(periodicidad: Periodicidad, dia: number, mes: numbe
   const meses: string[] = [];
   for (let m = (mes - 1) % cada; m < 12; m += cada) meses.push((MESES[m] ?? '').toLowerCase());
 
-  return `El día ${dia} de ${meses.join(', ')}.`;
+  return t('centers.recurrence.summary.everyFew', { day: dia, months: meses.join(', ') });
 }
 
 /**
@@ -238,11 +231,11 @@ export function avisoDeMesCorto(dia: number): string {
   if (dia <= 28) return '';
 
   if (dia === 29) {
-    return 'En febrero será el 28, salvo en años bisiestos.';
+    return t('centers.recurrence.february28');
   }
 
-  const deTreinta = dia === 31 ? ' y el 30 en abril, junio, septiembre y noviembre' : '';
-  return `En febrero será el 28 —29 en bisiestos—${deTreinta}.`;
+  const deTreinta = dia === 31 ? t('centers.recurrence.also30') : '';
+  return t('centers.recurrence.february2829', { thirtyDays: deTreinta });
 }
 
 function InstallmentsSwitch({ valor, onCambiar }: RecurrenceFieldProps) {
@@ -255,13 +248,13 @@ function InstallmentsSwitch({ valor, onCambiar }: RecurrenceFieldProps) {
       )}
     >
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium">Se paga en varias veces</span>
+        <span className="block text-sm font-medium">{t('centers.recurrence.inInstalments')}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">
           {valor.pagoAutomatico
-            ? 'No se puede junto al pago automático: ese registra el valor entero el día de pago.'
+            ? t('centers.recurrence.instalmentsNoAuto')
             : valor.presupuesto.trim() === ''
-              ? 'Sigue en pagos pendientes hasta cubrir el promedio de los meses anteriores.'
-              : 'Sigue en pagos pendientes, mostrando lo que lleva, hasta cubrir el presupuesto.'}
+              ? t('centers.recurrence.instalmentsAverage')
+              : t('centers.recurrence.instalmentsBudget')}
         </span>
       </span>
 
@@ -283,11 +276,11 @@ function AutoPaySwitch({ valor, onCambiar }: RecurrenceFieldProps) {
       )}
     >
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium">Pago automático</span>
+        <span className="block text-sm font-medium">{t('centers.recurrence.autoPay')}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">
           {valor.presupuesto.trim() === ''
-            ? 'El movimiento se registra solo el día de pago, con el promedio de los meses anteriores.'
-            : 'El movimiento se registra solo el día de pago, por el presupuesto.'}
+            ? t('centers.recurrence.autoPayAverage')
+            : t('centers.recurrence.autoPayBudget')}
         </span>
       </span>
 
@@ -303,12 +296,12 @@ function AutoPaySwitch({ valor, onCambiar }: RecurrenceFieldProps) {
 function BudgetField({ valor, onCambiar }: RecurrenceFieldProps) {
   return (
     <Campo
-      etiqueta="Presupuesto"
+      etiqueta={t('centers.recurrence.budget')}
       id="presupuesto"
       ayuda={
         valor.presupuesto.trim() === ''
-          ? 'Vacío: se estima con el promedio de los meses anteriores.'
-          : 'Este valor se usa cada mes, en vez del promedio.'
+          ? t('centers.recurrence.budgetEmptyHelp')
+          : t('centers.recurrence.budgetHelp')
       }
       className={valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3'}
     >
@@ -316,11 +309,15 @@ function BudgetField({ valor, onCambiar }: RecurrenceFieldProps) {
         id="presupuesto"
         valor={valor.presupuesto}
         onCambiar={(presupuesto) => onCambiar({ ...valor, presupuesto })}
-        placeholder="Opcional"
+        placeholder={t('centers.recurrence.optional')}
       />
     </Campo>
   );
 }
+
+/** Once a year it is THE month; every few months, the month the cycle starts on. */
+const etiquetaDelMes = (periodicidad: Periodicidad): string =>
+  periodicidad === 'annual' ? t('centers.recurrence.month') : t('centers.recurrence.cycleMonth');
 
 /** Lo que aparece debajo del interruptor cuando el pago es recurrente. */
 function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
@@ -334,10 +331,10 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
         valor.periodicidad === 'monthly' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
       )}
     >
-      <Campo etiqueta="Cada cuánto" id="periodicidad">
+      <Campo etiqueta={t('centers.recurrence.howOften')} id="periodicidad">
         <Select
           id="periodicidad"
-          etiqueta="Periodicidad"
+          etiqueta={t('centers.recurrence.periodicity.label')}
           valor={valor.periodicidad}
           opciones={PERIODICIDADES.map((p) => ({ valor: p, etiqueta: ETIQUETAS[p] }))}
           onCambiar={(v) => onCambiar({ ...valor, periodicidad: v as Periodicidad })}
@@ -345,13 +342,10 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
       </Campo>
 
       {valor.periodicidad !== 'monthly' && (
-        <Campo
-          etiqueta={valor.periodicidad === 'annual' ? 'Mes' : 'Mes del ciclo'}
-          id="mes-de-pago"
-        >
+        <Campo etiqueta={etiquetaDelMes(valor.periodicidad)} id="mes-de-pago">
           <Select
             id="mes-de-pago"
-            etiqueta="Mes"
+            etiqueta={t('centers.recurrence.month')}
             valor={String(valor.mesDePago)}
             opciones={MESES.map((m, i) => ({ valor: String(i + 1), etiqueta: m }))}
             onCambiar={(v) => onCambiar({ ...valor, mesDePago: Number(v) })}

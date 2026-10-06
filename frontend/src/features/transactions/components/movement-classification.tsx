@@ -2,6 +2,7 @@ import type { MovementSheetState } from '@/features/transactions/hooks/use-movem
 import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
 import { nombreDelOrigen } from '@/features/transactions/model/precedencia';
 import { type CategoryTree } from '@/shared/api/categories';
+import { t } from '@/shared/lib/i18n';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { Combo } from '@/shared/ui/organisms/combo';
@@ -21,10 +22,12 @@ interface ClassificationProps {
 function searchHelp(ficha: MovementSheetState): string | undefined {
   const { clasificacion, categoryId, candidatosDelRecibo } = ficha;
   if (clasificacion.origen && clasificacion.origen !== 'manual' && categoryId !== undefined) {
-    return `${nombreDelOrigen(clasificacion.origen).replace(/^\w/, (c) => c.toUpperCase())}. Puedes cambiarlo.`;
+    return t('transactions.classification.canChange', {
+      origin: nombreDelOrigen(clasificacion.origen).replace(/^\w/, (c) => c.toUpperCase()),
+    });
   }
   return candidatosDelRecibo.length > 0 && clasificacion.origen !== 'manual'
-    ? 'El recibo apunta a varios conceptos: elige uno en el buscador.'
+    ? t('transactions.classification.severalConcepts')
     : undefined;
 }
 
@@ -76,7 +79,9 @@ export function MovementClassification({
         // queda donde estaba.
         <div className="-mt-3 flex self-start">
           <TextButton tono="tenue" onClick={() => ficha.setCascadaVisible((v) => !v)}>
-            {ficha.cascadaVisible ? 'Ocultar centro y categoría' : 'Elegir por centro y categoría'}
+            {ficha.cascadaVisible
+              ? t('transactions.classification.hidePicker')
+              : t('transactions.classification.showPicker')}
           </TextButton>
         </div>
       )}
@@ -109,34 +114,42 @@ function ClassificationCascade(props: ClassificationProps) {
     <>
       <CostCenterField centro={centro} arbol={arbol} estatico={estatico} onElegir={elegir} />
 
-      <Campo etiqueta="Categoría" id="mov-categoria">
+      <Campo etiqueta={t('centers.levels.category')} id="mov-categoria">
         <Combo
           id="mov-categoria"
-          etiqueta="Categoría"
+          etiqueta={t('centers.levels.category')}
           valor={categoria ? String(categoria.id) : ''}
           opciones={(centro?.children ?? []).map((g) => ({
             valor: String(g.id),
             etiqueta: g.name,
           }))}
           deshabilitado={estatico || !centro}
-          vacio={centro ? 'Sin elegir' : 'Elige antes un centro de costos'}
+          vacio={
+            centro
+              ? t('transactions.classification.notChosen')
+              : t('transactions.classification.chooseCostCenterFirst')
+          }
           creando={creando}
           onCambiar={(v) => elegir(v === '' ? centro?.id : Number(v))}
           onCrear={(nombre) => void crearDentro(nombre, centro?.id)}
         />
       </Campo>
 
-      <Campo etiqueta="Concepto" id="mov-concepto-cascada">
+      <Campo etiqueta={t('transactions.fields.concept')} id="mov-concepto-cascada">
         <Combo
           id="mov-concepto-cascada"
-          etiqueta="Concepto"
+          etiqueta={t('transactions.fields.concept')}
           valor={concepto ? String(concepto.id) : ''}
           opciones={(categoria?.children ?? []).map((c) => ({
             valor: String(c.id),
             etiqueta: c.name,
           }))}
           deshabilitado={estatico || !categoria}
-          vacio={categoria ? 'Sin elegir' : 'Elige antes una categoría'}
+          vacio={
+            categoria
+              ? t('transactions.classification.notChosen')
+              : t('transactions.classification.chooseCategoryFirst')
+          }
           creando={creando}
           onCambiar={(v) => elegir(v === '' ? categoria?.id : Number(v))}
           onCrear={(nombre) => void crearDentro(nombre, categoria?.id)}
@@ -159,10 +172,10 @@ function CostCenterField({
   onElegir: (id?: number) => void;
 }) {
   return (
-    <Campo etiqueta="Centro de costos" id="mov-centro">
+    <Campo etiqueta={t('centers.levels.costCenter')} id="mov-centro">
       <Combo
         id="mov-centro"
-        etiqueta="Centro de costos"
+        etiqueta={t('centers.levels.costCenter')}
         valor={centro ? String(centro.id) : ''}
         opciones={arbol.map((c) => ({ valor: String(c.id), etiqueta: c.name }))}
         deshabilitado={estatico}

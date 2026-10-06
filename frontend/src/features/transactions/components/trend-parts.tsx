@@ -8,9 +8,12 @@ import {
   fechaLarga,
   linea,
   ye,
+  unidad,
 } from '@/features/transactions/model/trend';
 import { type TrendPoint } from '@/shared/api/generated/model';
-import { cn, formatCOP } from '@/shared/lib/utils';
+import { formatCOP } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
+import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 
 /** Promedio y pico, encima de la gráfica. */
@@ -28,12 +31,13 @@ export function TrendSummary({
   return (
     <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs text-muted-foreground">
       <span>
-        Promedio por {granularidad === 'dia' ? 'día' : 'mes'}{' '}
+        {t('transactions.trend.averagePer', { unit: unidad(granularidad) })}
         <strong className="tabular font-semibold text-foreground">{formatCOP(promedio)}</strong>
       </span>
       <span>
-        Pico <strong className="tabular font-semibold text-foreground">{formatCOP(maximo)}</strong>{' '}
-        en {etiquetaDeCubo(pico.bucket)}
+        {t('transactions.trend.peak')}
+        <strong className="tabular font-semibold text-foreground">{formatCOP(maximo)}</strong>
+        {t('transactions.trend.peakOn', { bucket: etiquetaDeCubo(pico.bucket) })}
       </span>
     </div>
   );
@@ -195,11 +199,13 @@ export function TrendCard({
       </p>
       {hayIngresos && Number(punto.income) > 0 && (
         <p className="tabular mt-0.5 text-xs text-income">
-          {formatCOP(Number(punto.income))} de ingreso
+          {t('transactions.trend.ofIncome', { amount: formatCOP(Number(punto.income)) })}
         </p>
       )}
       <p className="mt-1 text-2xs text-muted-foreground">
-        {punto.count} {punto.count === 1 ? 'movimiento' : 'movimientos'}
+        {punto.count === 1
+          ? t('transactions.trend.movementsOne', { n: punto.count })
+          : t('transactions.trend.movementsMany', { n: punto.count })}
       </p>
     </div>
   );

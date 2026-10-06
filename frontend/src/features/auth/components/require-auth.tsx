@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { useAuth } from '@/shared/api/auth-context';
+import { t } from '@/shared/lib/i18n';
 import { avisar, enLaApp } from '@/shared/lib/puente-nativo';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
@@ -56,7 +57,7 @@ function SesionDesdeLaApp() {
     avisar({ tipo: 'sinSesion' });
   }, []);
 
-  return <Esperando texto="Abriendo tu sesión desde la app…" />;
+  return <Esperando texto={t('auth.guard.openingFromApp')} />;
 }
 
 /**
@@ -104,13 +105,11 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
     return (
       <div className="mx-auto max-w-md py-10">
         <Alert variant="destructive">
-          <AlertTitle>No tienes acceso a esta sección</AlertTitle>
-          <AlertDescription>
-            La administración está reservada a las cuentas con rol de administrador.
-          </AlertDescription>
+          <AlertTitle>{t('auth.guard.forbiddenTitle')}</AlertTitle>
+          <AlertDescription>{t('auth.guard.forbiddenHelp')}</AlertDescription>
         </Alert>
         <Button asChild variant="outline" className="mt-4">
-          <a href="/">Volver al inicio</a>
+          <a href="/">{t('auth.guard.backHome')}</a>
         </Button>
       </div>
     );
@@ -119,7 +118,7 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-function Esperando({ texto = 'Verificando la sesión…' }: { texto?: string }) {
+function Esperando({ texto = t('auth.guard.verifying') }: { texto?: string }) {
   return (
     <div className="flex min-h-dvh items-center justify-center" role="status" aria-live="polite">
       <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />

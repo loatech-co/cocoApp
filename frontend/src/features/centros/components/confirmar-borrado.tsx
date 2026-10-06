@@ -4,6 +4,7 @@ import { useEliminarCategoria, useUsosDeCategoria } from '@/features/centros/api
 import { ApiClientError } from '@/shared/api/api-client';
 import { type CategoryTree } from '@/shared/api/categories';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
@@ -76,9 +77,9 @@ export function ConfirmarBorrado({
   return (
     <Confirmacion
       abierta={abierta}
-      titulo={`Eliminar “${categoria.name}”`}
+      titulo={t('centers.deletion.title', { name: categoria.name })}
       peligrosa
-      etiquetaConfirmar="Eliminar"
+      etiquetaConfirmar={t('common.delete')}
       ocupada={borrado.ocupada}
       // Con movimientos dentro no se puede confirmar hasta decir a dónde van.
       // Apagado y no «falla al pulsar»: enterarse después de pulsar «Eliminar»
@@ -94,11 +95,9 @@ export function ConfirmarBorrado({
             no hay vuelta atrás, y si de verdad. */}
         <p>{loQueSeBorra(nivel, categoria.name, usos.data?.subcategories ?? 0)}</p>
 
-        {usos.isPending && <p>Contando qué hay dentro…</p>}
+        {usos.isPending && <p>{t('centers.deletion.counting')}</p>}
 
-        {usos.isError && (
-          <ErrorAlert mensaje="No se pudo contar qué hay dentro, así que no se puede eliminar todavía. Inténtalo de nuevo." />
-        )}
+        {usos.isError && <ErrorAlert mensaje={t('centers.deletion.countFailed')} />}
 
         {hayQueReasignar && (
           <ReassignTarget
@@ -118,7 +117,7 @@ export function ConfirmarBorrado({
           arriba quedaba contestada antes de poder contestarla; aquí abajo cae
           justo encima de los botones, que es donde se responde.
         */}
-        <p>¿Estás seguro de querer continuar?</p>
+        <p>{t('centers.deletion.areYouSure')}</p>
 
         {error && (
           <p role="alert" className="text-sm text-destructive">
@@ -166,7 +165,8 @@ function useDeleteCategory({
           onCerrar();
           onEliminada?.();
         },
-        onError: (e) => setError(e instanceof ApiClientError ? e.message : 'No se pudo eliminar.'),
+        onError: (e) =>
+          setError(e instanceof ApiClientError ? e.message : t('centers.deletion.failed')),
       },
     );
   }
@@ -202,16 +202,16 @@ function ReassignTarget({
               concepto —los tres niveles están en la lista—, así que
               nombrar solo uno prometería menos de lo que se ofrece. */}
           {movimientos === 1
-            ? 'Hay 1 movimiento aquí dentro. No se borra: pasa a donde elijas.'
-            : `Hay ${movimientos} movimientos aquí dentro. No se borran: pasan a donde elijas.`}
+            ? t('centers.deletion.movesOne')
+            : t('centers.deletion.movesMany', { n: movimientos })}
         </AlertDescription>
       </Alert>
 
-      <Campo etiqueta="Destino de los movimientos" id="destino-del-borrado">
+      <Campo etiqueta={t('centers.deletion.destination')} id="destino-del-borrado">
         <Select
           id="destino-del-borrado"
-          etiqueta="Destino de los movimientos"
-          vacio="Elige un destino"
+          etiqueta={t('centers.deletion.destination')}
+          vacio={t('centers.deletion.chooseDestination')}
           valor={destino}
           opciones={opciones}
           onCambiar={onCambiar}
@@ -245,24 +245,26 @@ function loQueSeBorra(nivel: NivelDeCategoria, nombre: string, cuantas: number):
   */
   const { esto, uno, varios } = {
     'centro de costos': {
-      esto: 'el centro de costos',
-      uno: 'la categoría asociada a este centro de costos',
-      varios: (n: number) => `las ${n} categorías asociadas a este centro de costos`,
+      esto: t('centers.deletion.thisCostCenter'),
+      uno: t('centers.deletion.oneCategory'),
+      varios: (n: number) => t('centers.deletion.manyCategories', { n }),
     },
     categoría: {
-      esto: 'la categoría',
-      uno: 'el concepto asociado a esta categoría',
-      varios: (n: number) => `los ${n} conceptos asociados a esta categoría`,
+      esto: t('centers.deletion.thisCategory'),
+      uno: t('centers.deletion.oneConcept'),
+      varios: (n: number) => t('centers.deletion.manyConcepts', { n }),
     },
     // Un concepto es la última hoja del árbol: no tiene nada dentro, así que
     // su frase no habla de hijos aunque le llegue un número.
-    concepto: { esto: 'el concepto', uno: null, varios: null },
+    concepto: { esto: t('centers.deletion.thisConcept'), uno: null, varios: null },
   }[nivel];
 
   const dentro =
-    cuantas === 0 || uno === null ? '' : cuantas === 1 ? ` y ${uno}` : ` y ${varios(cuantas)}`;
+    cuantas === 0 || uno === null
+      ? ''
+      : t('centers.deletion.andInside', { what: cuantas === 1 ? uno : varios(cuantas) });
 
-  return `Estás a punto de borrar ${esto} “${nombre}”${dentro}. Esta acción no se puede deshacer.`;
+  return t('centers.deletion.summary', { what: esto, name: nombre, inside: dentro });
 }
 
 /**

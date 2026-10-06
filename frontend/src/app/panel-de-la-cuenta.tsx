@@ -2,6 +2,7 @@ import { Eye, KeyRound, LogOut, ScrollText, ShieldCheck, SlidersHorizontal } fro
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/shared/api/auth-context';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
 import { FILA_DE_PANEL, PanelRow } from '@/shared/ui/atoms/panel-row';
@@ -41,7 +42,7 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
   return (
     <PanelInferior
       abierto={abierto}
-      titulo="Mi cuenta"
+      titulo={t('shell.account.myAccount')}
       cabeza={<Perfil nombre={nombre} />}
       onCerrar={onCerrar}
     >
@@ -54,22 +55,22 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
           siendo una.
         */}
         <FilaDeEnlace Icono={SlidersHorizontal} a="/mi-cuenta#ajustes" onIr={onCerrar}>
-          Ajustes
+          {t('shell.account.settings')}
         </FilaDeEnlace>
 
         {esAdmin && (
           <FilaDeEnlace Icono={ShieldCheck} a="/administracion" onIr={onCerrar}>
-            Usuarios
+            {t('shell.sections.users')}
           </FilaDeEnlace>
         )}
 
         <FilaDeEnlace Icono={KeyRound} a="/mi-cuenta#seguridad" onIr={onCerrar}>
-          Seguridad
+          {t('shell.account.security')}
         </FilaDeEnlace>
 
         {esAdmin && (
           <FilaDeEnlace Icono={ScrollText} a="/administracion/bitacora" onIr={onCerrar}>
-            Bitácora
+            {t('shell.sections.auditLog')}
           </FilaDeEnlace>
         )}
 
@@ -87,7 +88,7 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
 
         <PanelRow tono="peligro" onClick={() => void salir()}>
           <LogOut className="size-4 shrink-0" aria-hidden="true" />
-          <span className="min-w-0 flex-1 truncate">Cerrar sesión</span>
+          <span className="min-w-0 flex-1 truncate">{t('shell.account.signOut')}</span>
         </PanelRow>
       </div>
     </PanelInferior>
@@ -108,7 +109,7 @@ function Perfil({ nombre }: { nombre: string }) {
     <Link
       to="/mi-cuenta"
       className={cn(FILA_DE_PANEL, '-mx-1.5 gap-3')}
-      aria-label={`Mi cuenta, ${nombre}`}
+      aria-label={t('shell.account.myAccountOf', { name: nombre })}
     >
       <Avatar nombre={nombre} className="size-10" />
       <span className="min-w-0 flex-1">
@@ -143,7 +144,7 @@ function ViewAsUserRow({ onCerrar }: { onCerrar: () => void }) {
         <Eye className="size-4 shrink-0 opacity-70" aria-hidden="true" />
       )}
       <span className="min-w-0 flex-1 truncate">
-        {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}
+        {viendoComoUsuario ? t('common.backToAdmin') : t('shell.account.viewAsUser')}
       </span>
     </PanelRow>
   );

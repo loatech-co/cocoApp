@@ -10,6 +10,7 @@ import {
   type Transaction,
   type TransactionType,
 } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 import { CuerpoDeModal, PANEL_DE_MODAL } from '@/shared/ui/molecules/modal-partes';
@@ -100,7 +101,7 @@ export function MovimientoModal(props: MovementModalProps) {
         <ConfirmMovementDeletion
           abierta={ficha.confirmandoBorrado}
           ocupada={hoja.guardar.eliminar.isPending}
-          concepto={concepto?.name ?? categoria?.name ?? 'al que pertenece'}
+          concepto={concepto?.name ?? categoria?.name ?? t('transactions.sheet.conceptFallback')}
           onCancelar={() => ficha.setConfirmandoBorrado(false)}
           onConfirmar={() =>
             movimiento &&
@@ -208,7 +209,11 @@ function SheetOverlay({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={editando ? 'Editar movimiento' : 'Nuevo movimiento'}
+        aria-label={
+          editando
+            ? t('transactions.sheet.editMovementTitle')
+            : t('transactions.sheet.newMovementTitle')
+        }
         // En móvil entra desde abajo y ocupa el ancho: es el patrón que la
         // gente espera de una app, y deja el pulgar cerca de los botones.
         //
@@ -247,15 +252,14 @@ function ConfirmMovementDeletion({
   return (
     <Confirmacion
       abierta={abierta}
-      titulo="Eliminar movimiento"
+      titulo={t('transactions.sheet.deleteMovementTitle')}
       peligrosa
-      etiquetaConfirmar="Eliminar"
+      etiquetaConfirmar={t('common.delete')}
       ocupada={ocupada}
       onCancelar={onCancelar}
       onConfirmar={onConfirmar}
     >
-      Estás a punto de borrar el registro de un movimiento. No se elimina el concepto “{concepto}”.
-      Esta acción no se puede deshacer. ¿Estás seguro de que quieres continuar?
+      {t('transactions.sheet.deleteWarning', { concept: concepto })}
     </Confirmacion>
   );
 }

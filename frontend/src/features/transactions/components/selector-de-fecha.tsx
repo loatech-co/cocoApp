@@ -3,7 +3,8 @@ import { useState } from 'react';
 
 import { PRESETS, type Filtros } from '@/features/transactions/model/filtros';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import { diaLargo, rangoLargo } from '@/shared/lib/fechas';
+import { diaLargo, rangoLargo } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { encontrarFecha } from '@/shared/lib/leer-fecha';
 import { cn } from '@/shared/lib/utils';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
@@ -124,7 +125,7 @@ function DeUnDia({ id, valor, onElegir, requerido = false, deshabilitado = false
           // El marcador es un EJEMPLO de lo que se puede escribir, no una
           // instrucción: enseña el formato sin gastar un renglón de ayuda. Y
           // hace falta para que la etiqueta flotante sepa cuándo subir.
-          placeholder="19 de septiembre 2026"
+          placeholder={t('transactions.range.datePlaceholder')}
           onChange={(e) => setEscrito(e.target.value)}
           onBlur={confirmar}
           onKeyDown={(e) => {
@@ -160,10 +161,10 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
   const activo = PRESETS.find((p) => p.valor === filtros.preset);
   const etiqueta =
     filtros.preset === 'todo'
-      ? 'Todo el histórico'
+      ? t('transactions.range.allTime')
       : filtros.preset === 'personalizado'
         ? rangoLargo(filtros.from, filtros.to)
-        : (activo?.etiqueta ?? 'Rango');
+        : (activo?.etiqueta ?? t('transactions.range.range'));
 
   return (
     <Menu
@@ -225,7 +226,7 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
 function DayCalendar({ valor, onElegir }: { valor: string; onElegir: (iso: string) => void }) {
   return (
     <Menu
-      etiqueta="Abrir el calendario"
+      etiqueta={t('transactions.range.openCalendar')}
       Icono={CalendarDays}
       soloIcono
       variante="ghost"
@@ -260,7 +261,7 @@ function DisabledDay({ valor, enCampo }: { valor: string; enCampo: boolean }) {
   return (
     <span aria-disabled="true" className={cn(disparadorDeCampo(), 'opacity-50')}>
       <span className={cn('min-w-0 flex-1 truncate', enCampo && 'pt-4')}>
-        {valor ? diaLargo(valor) : 'Elige una fecha'}
+        {valor ? diaLargo(valor) : t('transactions.range.chooseDate')}
       </span>
       <CalendarDays className="size-4 shrink-0 opacity-70" aria-hidden="true" />
     </span>

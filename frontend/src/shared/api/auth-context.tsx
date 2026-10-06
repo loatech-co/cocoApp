@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { type Profile } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { t } from '@/shared/lib/i18n';
 
 import * as sesion from './session';
 
@@ -138,9 +139,9 @@ export function useAuth(): AuthState {
 export function mensajeDeErrorDeAuth(error: unknown): string {
   if (error instanceof sesion.SesionError) return error.message;
   if (error instanceof TypeError) {
-    return 'No hay conexión con el servidor. Revisa tu red e inténtalo de nuevo.';
+    return t('errors.offlineRetry');
   }
-  return 'No se pudo completar la operación. Inténtalo de nuevo.';
+  return t('errors.operationFailedRetry');
 }
 
 /** Detalles por campo de un error de validación (p. ej. la política de contraseñas). */

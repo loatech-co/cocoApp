@@ -8,6 +8,7 @@ import { PanelDeBusqueda } from '@/features/transactions/components/panel-de-bus
 import { useAuth } from '@/shared/api/auth-context';
 import { registrarPuente } from '@/shared/api/native-bridge';
 import { invalidateDerived } from '@/shared/api/query-keys';
+import { t } from '@/shared/lib/i18n';
 import { useEnLaApp, useEsMovil } from '@/shared/lib/movil';
 import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
@@ -74,9 +75,7 @@ function VistaDeUsuario() {
     <Alert variant="warning" className="mb-4 items-center">
       <Eye aria-hidden="true" />
       <AlertDescription className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <span>
-          Estás viendo Coco como la ve una cuenta sin administración. Tus datos son los mismos.
-        </span>
+        <span>{t('shell.userView.notice')}</span>
         <Button
           type="button"
           variant="outline"
@@ -84,7 +83,7 @@ function VistaDeUsuario() {
           className="shrink-0"
           onClick={() => verComoUsuario(false)}
         >
-          Volver a administrador
+          {t('common.backToAdmin')}
         </Button>
       </AlertDescription>
     </Alert>
@@ -283,7 +282,7 @@ function PhoneSheets({ shell }: { shell: ShellState }) {
           vez de llegar. */}
       <PanelInferior
         abierto={shell.atajosAbiertos}
-        titulo="Atajos"
+        titulo={t('shell.shortcuts.title')}
         cabeza={shell.cabeza}
         onCerrar={() => shell.setAtajosAbiertos(false)}
       >

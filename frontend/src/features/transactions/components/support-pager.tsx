@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { t } from '@/shared/lib/i18n';
 import { BotonOscuro, SeparadorDeMandos } from '@/shared/ui/molecules/overlay-control';
 
 /**
@@ -25,7 +26,7 @@ export function SupportPager({
   return (
     <>
       <BotonOscuro
-        etiqueta="Soporte anterior"
+        etiqueta={t('transactions.supports.previous')}
         deshabilitado={index === 0}
         onClick={() => onGo(index - 1)}
       >
@@ -35,7 +36,7 @@ export function SupportPager({
         {index + 1} / {total}
       </span>
       <BotonOscuro
-        etiqueta="Soporte siguiente"
+        etiqueta={t('transactions.supports.next')}
         deshabilitado={index === total - 1}
         onClick={() => onGo(index + 1)}
       >

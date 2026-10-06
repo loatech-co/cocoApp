@@ -1,3 +1,5 @@
+import { t } from '@/shared/lib/i18n';
+
 /**
  * Por qué no se está viendo un soporte. Dos motivos, y no son el mismo.
  *
@@ -30,6 +32,4 @@ export type FalloDeSoporte = 'ausente' | 'sin-cargar';
  * que el concepto no se toca: lo que se está borrando se ve DENTRO de lo otro,
  * así que la papelera parece apuntar al contenedor.
  */
-export const BORRAR_UN_SOPORTE =
-  'Estás a punto de borrar un soporte. El movimiento no se elimina. Esta acción no se ' +
-  'puede deshacer. ¿Estás seguro de que quieres continuar?';
+export const BORRAR_UN_SOPORTE = t('transactions.supports.deleteWarning');

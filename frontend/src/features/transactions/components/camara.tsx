@@ -1,6 +1,7 @@
 import { Camera, CameraOff, Loader2, X } from 'lucide-react';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 
+import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
 
@@ -44,7 +45,7 @@ export function Camara({
       <PieDeModal>
         <Button type="button" variant="outline" onClick={onCerrar}>
           <X className="size-4" aria-hidden="true" />
-          Cancelar
+          {t('common.cancel')}
         </Button>
         <Button
           type="button"
@@ -52,7 +53,7 @@ export function Camara({
           disabled={estado !== 'lista'}
         >
           <Camera className="size-4" aria-hidden="true" />
-          Capturar
+          {t('transactions.camera.capture')}
         </Button>
       </PieDeModal>
     </div>
@@ -150,7 +151,7 @@ function Viewfinder({
           playsInline
           muted
           className="size-full object-cover"
-          aria-label="Vista de la cámara"
+          aria-label={t('transactions.camera.preview')}
         />
       ) : estado === 'pidiendo' ? (
         <Loader2 className="size-6 animate-spin text-sala-tinta/70" aria-hidden="true" />
@@ -158,8 +159,8 @@ function Viewfinder({
         <p className="flex max-w-xs flex-col items-center gap-2 px-4 text-center text-sm text-sala-tinta/80">
           <CameraOff className="size-6" aria-hidden="true" />
           {estado === 'sin-permiso'
-            ? 'El navegador no concedió acceso a la cámara. Se puede habilitar desde los permisos del sitio.'
-            : 'No se detectó ninguna cámara en este equipo.'}
+            ? t('transactions.camera.denied')
+            : t('transactions.camera.notFound')}
         </p>
       )}
     </div>

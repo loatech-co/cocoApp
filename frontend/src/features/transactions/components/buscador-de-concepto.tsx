@@ -4,6 +4,7 @@ import { useEffect, useRef, type RefObject } from 'react';
 import { useConceptSearch } from '@/features/transactions/hooks/use-concept-search';
 import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
 import type { NodoDelArbol } from '@/shared/lib/arbol-buscable';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
@@ -86,16 +87,16 @@ export function BuscadorDeConcepto({
 
   if (deshabilitado) {
     return (
-      <Campo etiqueta="Concepto" id={id} ayuda={ayuda}>
+      <Campo etiqueta={t('transactions.fields.concept')} id={id} ayuda={ayuda}>
         <ConceptoBloqueado id={id} elegida={b.elegida} />
       </Campo>
     );
   }
 
   return (
-    <Campo etiqueta="Concepto" id={id} ayuda={ayuda}>
+    <Campo etiqueta={t('transactions.fields.concept')} id={id} ayuda={ayuda}>
       <Menu
-        etiqueta="Concepto"
+        etiqueta={t('transactions.fields.concept')}
         tipo="buscador"
         alineado="izquierda"
         flotante
@@ -217,7 +218,9 @@ function ValorDelBuscador({
           enCampo && 'pt-4',
         )}
       >
-        <span className="truncate">{elegida?.nombre ?? 'Buscar concepto o categoría'}</span>
+        <span className="truncate">
+          {elegida?.nombre ?? t('transactions.conceptSearch.placeholder')}
+        </span>
         {elegida && elegida.ruta.length > 0 && (
           <span className="hidden truncate text-xs text-muted-foreground sm:inline">
             {rutaLegible(elegida)}
@@ -295,9 +298,15 @@ function CajaDeBusqueda(props: PropsDelPanel) {
         else if (resultados.length === 0 && puedeCrear) props.onPedirCategoria();
       }}
       placeholder={
-        eligiendoCategoria ? 'Filtrar categorías…' : 'Buscar por nombre o palabra clave…'
+        eligiendoCategoria
+          ? t('transactions.conceptSearch.filterCategoriesPlaceholder')
+          : t('transactions.conceptSearch.searchPlaceholder')
       }
-      aria-label={eligiendoCategoria ? 'Filtrar categorías' : 'Buscar concepto o categoría'}
+      aria-label={
+        eligiendoCategoria
+          ? t('transactions.conceptSearch.filterCategories')
+          : t('transactions.conceptSearch.placeholder')
+      }
     />
   );
 }

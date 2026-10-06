@@ -1,5 +1,6 @@
 import { type CategoryTree } from '@/shared/api/categories';
 import { comoNodosBuscables } from '@/shared/lib/arbol-buscable';
+import { t } from '@/shared/lib/i18n';
 import { firmasDelArbol as firmasDelArbolCompartido, normalizar, type Firma } from '@coco/lectura';
 
 /**
@@ -76,16 +77,16 @@ export function porQueNoEntra(palabra: string, yaPuestas: readonly string[]): st
   const limpia = limpiar(palabra);
 
   if (limpia.length < LARGO_MINIMO) {
-    return `“${limpia}” es muy corta: con menos de ${LARGO_MINIMO} letras aparece dentro de otras palabras y reconocería cualquier recibo.`;
+    return t('centers.keywords.tooShort', { word: limpia, min: LARGO_MINIMO });
   }
   if (limpia.length > LARGO_MAXIMO) {
-    return `“${limpia.slice(0, 20)}…” es muy larga. Con el nombre del acreedor basta.`;
+    return t('centers.keywords.tooLong', { start: limpia.slice(0, 20) });
   }
   if (yaEsta(yaPuestas, limpia)) {
-    return `“${limpia}” ya está en la lista.`;
+    return t('centers.keywords.duplicate', { word: limpia });
   }
   if (yaPuestas.length >= MAXIMO_DE_PALABRAS) {
-    return `Un concepto admite hasta ${MAXIMO_DE_PALABRAS} palabras clave.`;
+    return t('centers.keywords.tooMany', { max: MAXIMO_DE_PALABRAS });
   }
 
   return null;

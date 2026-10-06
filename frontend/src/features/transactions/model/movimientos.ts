@@ -1,5 +1,6 @@
 import { type CategoryTree } from '@/shared/api/categories';
 import { type Transaction, type TransactionType } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import type { SentidoDelDinero } from '@/shared/ui/atoms/monto';
 
 /**
@@ -88,7 +89,7 @@ export function nombreDelMovimiento(
     categoria?.name ??
     movimiento.description ??
     movimiento.merchant ??
-    'Sin concepto'
+    t('transactions.noConcept')
   );
 }
 

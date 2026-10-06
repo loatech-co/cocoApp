@@ -1,3 +1,4 @@
+import { t } from '@/shared/lib/i18n';
 import type { Seccion } from '@/shared/lib/sections';
 import { cn } from '@/shared/lib/utils';
 import { Logo, LogoCompacto } from '@/shared/ui/atoms/logo';
@@ -27,7 +28,7 @@ export function SideRail({ plegada, onAlternar }: { plegada: boolean; onAlternar
 
       {plegada && <RailToggle plegada onAlternar={onAlternar} />}
 
-      <nav className="flex flex-1 flex-col gap-1" aria-label="Secciones">
+      <nav className="flex flex-1 flex-col gap-1" aria-label={t('shell.rail.label')}>
         <SectionLinks secciones={diaADia} plegada={plegada} />
 
         {administracion.length > 0 && (
@@ -38,7 +39,7 @@ export function SideRail({ plegada, onAlternar }: { plegada: boolean; onAlternar
               <hr className="my-3 border-sidebar-border" />
             ) : (
               <p className="mt-6 mb-1 px-3 text-xs font-semibold text-sidebar-muted">
-                Administración
+                {t('shell.rail.admin')}
               </p>
             )}
             <SectionLinks secciones={administracion} plegada={plegada} />

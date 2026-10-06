@@ -5,6 +5,7 @@ import { CategoriaModal } from '@/features/centros/components/categoria-modal';
 import { Explicacion } from '@/features/centros/components/centros-help';
 import { Centro } from '@/features/centros/components/cost-center-card';
 import { useCategories } from '@/shared/api/categories';
+import { t } from '@/shared/lib/i18n';
 import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
@@ -30,8 +31,8 @@ export function CentrosPage() {
           es la única acción de la pantalla y se busca siempre en la misma
           esquina. */}
       <CabeceraDePagina
-        titulo="Centros de costos"
-        ayuda="La estructura con la que se ordena tu dinero."
+        titulo={t('shell.sections.costCenters')}
+        ayuda={t('centers.page.help')}
         /* La explicación se enseña una vez y estorba el resto de las veces.
            Detrás del signo de interrogación sigue estando para quien la
            necesite, sin ocupar media pantalla para quien ya la leyó. */
@@ -41,8 +42,8 @@ export function CentrosPage() {
             variant="ghost"
             size="sm-icon"
             aria-pressed={verAyuda}
-            aria-label={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
-            title={verAyuda ? 'Ocultar cómo funciona' : 'Cómo funciona'}
+            aria-label={verAyuda ? t('centers.page.hideHowItWorks') : t('centers.help.title')}
+            title={verAyuda ? t('centers.page.hideHowItWorks') : t('centers.help.title')}
             onClick={() => setVerAyuda((v) => !v)}
           >
             <CircleHelp className="size-5" aria-hidden="true" />
@@ -53,7 +54,7 @@ export function CentrosPage() {
           // medida propia: el tamaño de los iconos lo pone el botón.
           <Button type="button" size="sm" onClick={() => setCreando(true)} className="shrink-0">
             <Plus aria-hidden="true" />
-            Nuevo centro de costos
+            {t('centers.page.newCostCenter')}
           </Button>
         }
       />
@@ -89,9 +90,7 @@ function ListaDeCentros({
 
       {/* A failed load is NOT an empty tree: inviting to create here would
           duplicate centers that already exist. */}
-      {categorias.isError && (
-        <ErrorAlert mensaje="No se pudieron cargar los centros de costos. Revisa tu conexión e inténtalo de nuevo." />
-      )}
+      {categorias.isError && <ErrorAlert mensaje={t('centers.page.loadFailed')} />}
 
       {categorias.isSuccess && arbol.length === 0 && <SinCentros onCrear={onCrear} />}
 
@@ -106,13 +105,13 @@ function SinCentros({ onCrear }: { onCrear: () => void }) {
   return (
     <Card>
       <CardContent className="p-10 text-center">
-        <p className="text-sm text-muted-foreground">Todavía no hay centros de costos.</p>
+        <p className="text-sm text-muted-foreground">{t('centers.page.empty')}</p>
         {/* El botón aquí además de arriba: en una pantalla vacía, lo
             único que se puede hacer tiene que estar donde se está
             mirando. */}
         <Button type="button" onClick={onCrear} className="mt-4">
           <Plus className="size-4" aria-hidden="true" />
-          Crear un centro de costos
+          {t('centers.page.createCostCenter')}
         </Button>
       </CardContent>
     </Card>

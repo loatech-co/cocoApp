@@ -3,6 +3,7 @@ import { useState, type SubmitEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 
 import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
+import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, AlertTitle, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
 import { Campo } from '@/shared/ui/atoms/campo';
@@ -46,16 +47,14 @@ export function RegisterPage() {
           encabezado en encabezado y aquí no encontraba ninguno del que
           colgaran los demás. El logotipo es un SVG y no puede hacer ese papel.
         */}
-        <h1 className="sr-only">Coco — solicitar acceso</h1>
+        <h1 className="sr-only">{t('auth.register.documentTitle')}</h1>
 
         <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
         <Card>
           <CardHeader>
-            <CardTitle>Solicitar acceso</CardTitle>
-            <CardDescription>
-              Un administrador debe aprobar tu cuenta antes de que puedas entrar.
-            </CardDescription>
+            <CardTitle>{t('auth.requestAccess')}</CardTitle>
+            <CardDescription>{t('auth.register.help')}</CardDescription>
           </CardHeader>
 
           <CardContent className="flex flex-col gap-4">
@@ -64,7 +63,8 @@ export function RegisterPage() {
             <RegisterForm form={form} />
 
             <p className="text-center text-sm text-muted-foreground">
-              ¿Ya tienes cuenta? <TextLink to="/">Iniciar sesión</TextLink>
+              {t('auth.register.haveAccount')}
+              <TextLink to="/">{t('auth.signIn')}</TextLink>
             </p>
           </CardContent>
         </Card>
@@ -89,16 +89,16 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
         {/* h-11 ≈ 168px de ancho, que es lo que medía la placa que tenía detrás
             (24px + logotipo + 24px). `mx-auto` y no `text-center`: es un SVG de
             BLOQUE con ancho automático, y centrar texto no lo movería. */}
-        <h1 className="sr-only">Coco — solicitud enviada</h1>
+        <h1 className="sr-only">{t('auth.register.sentDocumentTitle')}</h1>
 
         <Logo className="mx-auto mb-8 h-11 w-auto text-sidebar-active" />
 
         <Alert variant="info" className="text-left">
-          <AlertTitle>{lista ? 'Tu cuenta está lista' : 'Recibimos tu solicitud'}</AlertTitle>
+          <AlertTitle>
+            {lista ? t('auth.register.readyTitle') : t('auth.register.receivedTitle')}
+          </AlertTitle>
           <AlertDescription>
-            {lista
-              ? 'Eres el administrador de esta instalación. Ya puedes entrar con el correo y la contraseña que acabas de elegir.'
-              : 'Un administrador debe aprobarla antes de que puedas entrar. Cuando esté lista, podrás acceder con el correo y la contraseña que acabas de elegir.'}
+            {lista ? t('auth.register.readyHelp') : t('auth.register.receivedHelp')}
           </AlertDescription>
         </Alert>
 
@@ -106,7 +106,7 @@ function SolicitudRecibida({ estado }: { estado: 'pendiente' | 'lista' }) {
           to="/"
           className="mt-6 inline-block text-sm text-primary underline-offset-4 hover:underline"
         >
-          {lista ? 'Iniciar sesión' : 'Volver a iniciar sesión'}
+          {lista ? t('auth.signIn') : t('auth.register.backToSignIn')}
         </Link>
       </div>
     </main>
@@ -122,7 +122,7 @@ function PasswordField({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <Campo etiqueta="Contraseña" id="password">
+      <Campo etiqueta={t('auth.fields.password')} id="password">
         <Input
           id="password"
           type="password"
@@ -135,9 +135,7 @@ function PasswordField({
       </Campo>
       <div id="requisitos-password">
         <PoliticaDeContrasena password={password} />
-        <p className="mt-2 text-xs text-muted-foreground">
-          No puede contener tu nombre ni tu correo, ni aparecer en filtraciones públicas conocidas.
-        </p>
+        <p className="mt-2 text-xs text-muted-foreground">{t('auth.register.passwordHelp')}</p>
       </div>
     </div>
   );
@@ -148,7 +146,7 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
   const politicaOk = cumpleLaPolitica(password);
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <Campo etiqueta="Nombre" id="nombre">
+      <Campo etiqueta={t('auth.fields.name')} id="nombre">
         <Input
           id="nombre"
           autoComplete="name"
@@ -159,7 +157,7 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
         />
       </Campo>
 
-      <Campo etiqueta="Correo" id="email">
+      <Campo etiqueta={t('auth.fields.email')} id="email">
         <Input
           id="email"
           type="email"
@@ -178,7 +176,7 @@ function RegisterForm({ form }: { form: ReturnType<typeof useRegisterForm> }) {
         ) : (
           <UserPlus aria-hidden="true" />
         )}
-        {enviando ? 'Un momento…' : 'Solicitar acceso'}
+        {enviando ? t('auth.wait') : t('auth.requestAccess')}
       </Button>
     </form>
   );

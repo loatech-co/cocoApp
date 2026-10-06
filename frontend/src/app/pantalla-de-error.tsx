@@ -1,5 +1,6 @@
 import { useRouteError } from 'react-router-dom';
 
+import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { TITULO_DE_PAGINA } from '@/shared/ui/atoms/cabecera-de-pagina';
 
@@ -32,19 +33,17 @@ export function PantallaDeError() {
     <main className="flex min-h-dvh flex-col items-center justify-center gap-4 px-4 text-center">
       <div className="flex flex-col gap-2">
         <h1 className={TITULO_DE_PAGINA}>
-          {obsoleto ? 'Hay una versión nueva de Coco' : 'Algo salió mal'}
+          {obsoleto ? t('shell.error.newVersionTitle') : t('shell.error.title')}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {obsoleto
-            ? 'Recarga la página para seguir con la versión actual.'
-            : 'Recarga la página o vuelve al inicio. Lo que ya guardaste sigue ahí.'}
+          {obsoleto ? t('shell.error.newVersionHelp') : t('shell.error.help')}
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button onClick={() => window.location.reload()}>Recargar la página</Button>
+        <Button onClick={() => window.location.reload()}>{t('shell.error.reload')}</Button>
         {!obsoleto && (
           <Button variant="outline" asChild>
-            <a href="/">Ir al inicio</a>
+            <a href="/">{t('common.goHome')}</a>
           </Button>
         )}
       </div>

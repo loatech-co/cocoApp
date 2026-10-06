@@ -1,6 +1,7 @@
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
+import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { Dona } from '@/shared/ui/atoms/dona';
@@ -50,7 +51,9 @@ export function Distribucion({
     <Card className="h-full min-h-0">
       <CardContent className="flex h-full flex-col p-4 sm:p-6">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="font-display text-lg font-semibold">Distribución de costos</h2>
+          <h2 className="font-display text-lg font-semibold">
+            {t('transactions.distribution.title')}
+          </h2>
           <VerNombres verLista={verLista} onAlternar={() => setVerLista((v) => !v)} />
         </div>
 
@@ -64,7 +67,9 @@ export function Distribucion({
         ) : (
           /* El NOMBRE de a quién pertenecen estas filas, no el nivel al que
              están. "Por categoría" no dice de qué: las categorías de cuál centro. */
-          <p className="truncate text-xs text-muted-foreground">{padre?.name ?? `Por ${nivel}`}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {padre?.name ?? t('transactions.distribution.byLevel', { level: nivel })}
+          </p>
         )}
 
         {/* `flex-1` para que la dona tenga contra qué medir: la tarjeta ya
@@ -98,8 +103,16 @@ function VerNombres({ verLista, onAlternar }: { verLista: boolean; onAlternar: (
       variant="herramienta"
       size="sm-icon"
       aria-pressed={!verLista}
-      aria-label={verLista ? 'Ocultar los nombres' : 'Mostrar los nombres'}
-      title={verLista ? 'Ocultar los nombres' : 'Mostrar los nombres'}
+      aria-label={
+        verLista
+          ? t('transactions.distribution.hideNames')
+          : t('transactions.distribution.showNames')
+      }
+      title={
+        verLista
+          ? t('transactions.distribution.hideNames')
+          : t('transactions.distribution.showNames')
+      }
       onClick={onAlternar}
     >
       {verLista ? (

@@ -5,7 +5,9 @@ import { useActualizarMovimiento } from '@/features/transactions/api/transaction
 import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/movimientos';
 import { type CategoryTree } from '@/shared/api/categories';
 import { type Transaction } from '@/shared/api/generated/model';
-import { cn, formatMoney } from '@/shared/lib/utils';
+import { formatMoney, diaCorto, mesCorto } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
+import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { EstadoVacio } from '@/shared/ui/atoms/estado-vacio';
 import { ConTooltip } from '@/shared/ui/atoms/tooltip';
@@ -13,7 +15,14 @@ import { Tabla, TablaEsqueleto, Td, Th, Tr } from '@/shared/ui/molecules/tabla';
 import { Select } from '@/shared/ui/organisms/select';
 
 /** Las columnas, en un solo sitio: el esqueleto tiene que tener las mismas. */
-const COLUMNAS = ['Concepto', 'Periodo', 'Fecha de pago', 'Centro de costos', 'Categoría', 'Valor'];
+const COLUMNAS = [
+  t('transactions.table.columns.concept'),
+  t('transactions.table.columns.period'),
+  t('transactions.table.columns.paidOn'),
+  t('transactions.table.columns.costCenter'),
+  t('transactions.table.columns.category'),
+  t('transactions.table.columns.amount'),
+];
 
 interface OrdenDeColumna {
   activo: 'asc' | 'desc' | null;
@@ -67,8 +76,8 @@ export function TablaDeMovimientos({
           {vacio ?? (
             <EstadoVacio
               Icono={SearchX}
-              titulo="Ningún movimiento coincide"
-              ayuda="Los filtros están dejando todo fuera."
+              titulo={t('transactions.table.noMatchTitle')}
+              ayuda={t('transactions.table.noMatchHelp')}
             />
           )}
         </CardContent>
@@ -125,7 +134,7 @@ function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
   */
   const estatico = centro?.isStatic ?? false;
   const motivo = estatico
-    ? `“${centro?.name}” es un centro estático. La clasificación solo se modifica desde Centros de costos.`
+    ? t('transactions.table.staticCenter', { name: centro?.name })
     : undefined;
 
   return (
@@ -135,7 +144,7 @@ function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
       <PeriodCell movimiento={movimiento} />
 
       <Td className="tabular whitespace-nowrap text-muted-foreground">
-        {diaBonito(movimiento.date)}
+        {diaCorto(movimiento.date)}
       </Td>
 
       {/* Los selectores paran el clic: desplegar una lista no puede abrir
@@ -143,7 +152,7 @@ function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
       <Td className="w-48">
         <span onClick={(e) => e.stopPropagation()}>
           <SelectorEnFila
-            aria="Centro de costos"
+            aria={t('centers.levels.costCenter')}
             valor={centro?.id}
             opciones={arbol}
             deshabilitado={estatico}
@@ -156,7 +165,7 @@ function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
       <Td className="w-48">
         <span onClick={(e) => e.stopPropagation()}>
           <SelectorEnFila
-            aria="Categoría"
+            aria={t('centers.levels.category')}
             valor={categoria?.id}
             opciones={centro?.children ?? []}
             deshabilitado={estatico || !centro}
@@ -170,8 +179,6 @@ function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
     </Tr>
   );
 }
-
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 const mesDe = (iso: string): string => iso.slice(0, 7);
 
@@ -189,18 +196,6 @@ const periodo = (
 
 /** El gasto pertenece a un mes y se pagó en otro. */
 const desfasado = (m: Transaction): boolean => periodo(m) !== mesDe(m.date);
-
-/** `2026-03-06` → `6 mar 2026`. */
-function diaBonito(iso: string): string {
-  const [a, m, d] = iso.split('-');
-  return `${Number(d)} ${MESES[Number(m) - 1] ?? m} ${a}`;
-}
-
-/** `2026-03-01` → `mar 2026`. El periodo es un mes, no un día. */
-function mesBonito(iso: string): string {
-  const [a, m] = iso.split('-');
-  return `${MESES[Number(m) - 1] ?? m} ${a}`;
-}
 
 function SelectorEnFila({
   aria,
@@ -266,17 +261,20 @@ function PeriodCell({ movimiento }: { movimiento: Transaction }) {
       */}
       {desfasado(movimiento) ? (
         <ConTooltip
-          texto={`Pertenece a ${mesBonito(periodo(movimiento))}, pero se pagó el ${diaBonito(movimiento.date)}`}
+          texto={t('transactions.table.latePayment', {
+            month: mesCorto(periodo(movimiento)),
+            day: diaCorto(movimiento.date),
+          })}
           className="items-center gap-1.5 font-medium text-warning"
         >
           {/* El punto hace notar la marca: el color solo se pierde en una
               columna de texto gris, y quien no lo nota no sabe que hay algo
               que preguntar. */}
           <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />
-          {mesBonito(periodo(movimiento))}
+          {mesCorto(periodo(movimiento))}
         </ConTooltip>
       ) : (
-        mesBonito(periodo(movimiento))
+        mesCorto(periodo(movimiento))
       )}
     </Td>
   );
@@ -298,7 +296,7 @@ function NameCell({
           <Flag
             className="size-3.5 shrink-0 text-warning"
             fill="currentColor"
-            aria-label="Sin clasificar"
+            aria-label={t('transactions.table.unclassified')}
           />
         )}
         {/* El nombre SALE del concepto: un movimiento es un registro y lo
@@ -319,17 +317,17 @@ function MovementsHead({ orden }: { orden: ColumnOrder | undefined }) {
     <thead>
       <tr>
         <Th fija divisor={false} orden={orden?.('merchant', 'asc')}>
-          Concepto
+          {t('transactions.table.columns.concept')}
         </Th>
         {/* El periodo antes que el pago: es el eje con el que se mira la app
             —el mes AL QUE PERTENECE el gasto— y la fecha de pago es el dato
             de apoyo que explica por qué a veces no coinciden. */}
-        <Th>Periodo</Th>
-        <Th orden={orden?.('date', 'desc')}>Fecha de pago</Th>
-        <Th>Centro de costos</Th>
-        <Th>Categoría</Th>
+        <Th>{t('transactions.table.columns.period')}</Th>
+        <Th orden={orden?.('date', 'desc')}>{t('transactions.table.columns.paidOn')}</Th>
+        <Th>{t('transactions.table.columns.costCenter')}</Th>
+        <Th>{t('transactions.table.columns.category')}</Th>
         <Th alineado="derecha" orden={orden?.('amount', 'desc')}>
-          Valor
+          {t('transactions.table.columns.amount')}
         </Th>
       </tr>
     </thead>

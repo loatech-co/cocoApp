@@ -5,6 +5,7 @@ import type { FalloDeSoporte } from '@/features/transactions/model/supports';
 import { ApiClientError, apiBlob } from '@/shared/api/api-client';
 import { getSoportesDownloadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { t } from '@/shared/lib/i18n';
 
 /**
  * Los archivos de los soportes de un movimiento, ya descargados.
@@ -114,7 +115,7 @@ export function useSupportUpload(transactionId: number, alTerminar: () => void) 
       alTerminar();
     } catch (e) {
       setErrorDeSubida(
-        e instanceof ApiClientError ? e.message : 'No se pudo subir. Inténtalo otra vez.',
+        e instanceof ApiClientError ? e.message : t('transactions.supports.uploadFailed'),
       );
     }
   }

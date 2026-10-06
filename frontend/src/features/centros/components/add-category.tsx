@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { CategoriaModal } from '@/features/centros/components/categoria-modal';
+import { t } from '@/shared/lib/i18n';
 import { AddSurface } from '@/shared/ui/atoms/add-surface';
 
 /**
@@ -53,7 +54,7 @@ export function Agregar({
     <>
       <div className={solo ? undefined : 'mt-3'}>
         <AddSurface forma={solo ? 'hueco' : 'barra'} onClick={() => setAbierta(true)}>
-          Agregar categoría
+          {t('centers.addCategory')}
         </AddSurface>
       </div>
 

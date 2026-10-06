@@ -1,3 +1,4 @@
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { ICONOS_DE_CATEGORIA, IconoDeCategoria } from '@/shared/ui/atoms/iconos';
 import { REALCE } from '@/shared/ui/foundations/superficie';
@@ -46,7 +47,7 @@ export function IconGrid({
 
       {filtrados.length === 0 && (
         <p className="col-span-full px-1 py-2 text-sm text-muted-foreground">
-          Ningún icono se llama así.
+          {t('ui.iconGrid.noMatch')}
         </p>
       )}
     </div>

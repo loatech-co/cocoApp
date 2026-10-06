@@ -6,7 +6,8 @@ import {
   type useDashboardPage,
 } from '@/features/transactions/hooks/use-dashboard-page';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
-import { formatCOP } from '@/shared/lib/utils';
+import { formatCOP } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Paginador } from '@/shared/ui/atoms/paginador';
 import { TablaPie, Td } from '@/shared/ui/molecules/tabla';
@@ -32,7 +33,7 @@ export function DashboardMovements({
       {/* Not an empty table: «no movements» on a failed load reads as if
           they were gone. */}
       {movimientos.isError ? (
-        <ErrorAlert mensaje="No se pudieron cargar los movimientos. Revisa tu conexión e inténtalo de nuevo." />
+        <ErrorAlert mensaje={t('transactions.dashboard.movementsLoadFailed')} />
       ) : (
         <TablaDeMovimientos
           movimientos={movimientos.data?.data ?? []}
@@ -58,10 +59,16 @@ export function DashboardMovements({
 function Cuenta({ pagina, total }: { pagina: number; total: number | undefined }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-2">
-      <h2 className="font-display text-lg font-semibold">Movimientos</h2>
+      <h2 className="font-display text-lg font-semibold">
+        {t('transactions.dashboard.movements')}
+      </h2>
       {total !== undefined && total > 0 && (
         <p className="text-sm text-muted-foreground" aria-live="polite">
-          {(pagina - 1) * POR_PAGINA + 1} a {Math.min(pagina * POR_PAGINA, total)} de {total}
+          {t('transactions.dashboard.range', {
+            from: (pagina - 1) * POR_PAGINA + 1,
+            to: Math.min(pagina * POR_PAGINA, total),
+            total,
+          })}
         </p>
       )}
     </div>
@@ -74,7 +81,7 @@ function pieDeLaTabla(datos: Tabla['movimientos']['data']): ReactNode {
     <TablaPie>
       <tr>
         <Td fija divisor={false}>
-          Total · {datos.meta.total} movimientos
+          {t('transactions.dashboard.total', { total: datos.meta.total })}
         </Td>
         <Td />
         <Td />

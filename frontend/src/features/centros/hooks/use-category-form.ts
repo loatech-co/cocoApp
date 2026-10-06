@@ -6,6 +6,7 @@ import { ApiClientError } from '@/shared/api/api-client';
 import { useCrearCategoria } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { t } from '@/shared/lib/i18n';
 
 interface CategoryFormOptions {
   abierta: boolean;
@@ -61,7 +62,7 @@ export function useCategoryForm({
       }
       onCerrar();
     } catch (e) {
-      setError(e instanceof ApiClientError ? e.message : 'No se pudo guardar.');
+      setError(e instanceof ApiClientError ? e.message : t('centers.saveFailed'));
     }
   }
 

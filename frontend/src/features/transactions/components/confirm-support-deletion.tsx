@@ -1,6 +1,7 @@
 import { useEliminarSoporte } from '@/features/transactions/api/soportes';
 import { BORRAR_UN_SOPORTE } from '@/features/transactions/model/supports';
 import { type Receipt } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
 
 /**
@@ -27,9 +28,9 @@ export function ConfirmSupportDeletion({
   return (
     <Confirmacion
       abierta={soporte !== null}
-      titulo="Eliminar soporte"
+      titulo={t('transactions.supports.deleteTitle')}
       peligrosa
-      etiquetaConfirmar="Eliminar"
+      etiquetaConfirmar={t('common.delete')}
       ocupada={eliminar.isPending}
       onCancelar={onCancelar}
       onConfirmar={() => {

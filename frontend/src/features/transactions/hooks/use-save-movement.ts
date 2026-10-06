@@ -11,6 +11,7 @@ import { categorizationLearn } from '@/shared/api/generated/categorization-v2/ca
 import { type Transaction } from '@/shared/api/generated/model';
 import { getSoportesUploadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
 import { encogerSoportes } from '@/shared/lib/encoger-soporte';
+import { t } from '@/shared/lib/i18n';
 
 import type { MovementSheetState } from './use-movement-form';
 
@@ -94,7 +95,9 @@ export function useCreateInside(ficha: MovementSheetState) {
       });
       ficha.proponer({ categoryId: nuevo.id, origen: 'manual' });
     } catch (e) {
-      ficha.setError(e instanceof ApiClientError ? e.message : 'No se pudo crear.');
+      ficha.setError(
+        e instanceof ApiClientError ? e.message : t('transactions.sheet.createFailed'),
+      );
     }
   }
 
@@ -111,15 +114,10 @@ async function undoCreation(
   try {
     await eliminar.mutateAsync(id);
     ficha.setRegistrado(null);
-    ficha.setError(
-      `${dijo} No quedó registrado nada: un movimiento no se guarda sin el soporte que se le adjuntó. Vuelve a intentarlo.`,
-    );
+    ficha.setError(t('transactions.sheet.supportFailedUndone', { detail: dijo }));
   } catch {
     ficha.setRegistrado(id);
-    ficha.setError(
-      `${dijo} El movimiento quedó registrado, su soporte no, y tampoco se pudo deshacer. ` +
-        'Reintenta para adjuntarlo, o bórralo desde la tabla: no se va a duplicar.',
-    );
+    ficha.setError(t('transactions.sheet.supportFailedKept', { detail: dijo }));
   }
 }
 
@@ -182,7 +180,7 @@ export function useSaveMovement(
       if (ficha.huboSugerencia) learnFromSuggestion(cuerpo);
       onCerrar();
     } catch (e) {
-      const dijo = e instanceof ApiClientError ? e.message : 'No se pudo guardar.';
+      const dijo = e instanceof ApiClientError ? e.message : t('centers.saveFailed');
       // Editando, o reintentando sobre uno que ya estaba: aquí no hay nada que
       // deshacer. Lo que había antes sigue estando, que es lo correcto.
       if (!recienCreado || id === undefined) ficha.setError(dijo);

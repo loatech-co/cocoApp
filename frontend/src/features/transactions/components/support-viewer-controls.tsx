@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { type Receipt } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { t } from '@/shared/lib/i18n';
 import { BotonOscuro, LecturaDeMandos } from '@/shared/ui/molecules/overlay-control';
 
 /** Los saltos del zoom. Fijos y pocos: un control continuo pide precisión que
@@ -57,8 +58,8 @@ export function ViewerHeader({
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-sala-tinta">{soporte.fileName}</p>
         <p className="tabular text-xs text-sala-tinta/60">
-          {total > 1 && `${indice + 1} de ${total} · `}
-          {(soporte.sizeBytes / 1024).toFixed(0)} KB
+          {total > 1 && t('transactions.supports.position', { n: indice + 1, total })}
+          {t('transactions.supports.kilobytes', { size: (soporte.sizeBytes / 1024).toFixed(0) })}
         </p>
       </div>
 
@@ -70,8 +71,8 @@ export function ViewerHeader({
           <a
             href={url}
             download={soporte.fileName}
-            title="Descargar"
-            aria-label={`Descargar ${soporte.fileName}`}
+            title={t('transactions.supports.download')}
+            aria-label={t('transactions.supports.downloadNamed', { fileName: soporte.fileName })}
             className="flex size-9 items-center justify-center rounded-lg text-sala-tinta transition-colors hover:bg-sala-tinta/10"
           >
             <Download className="size-4" aria-hidden="true" />
@@ -79,10 +80,10 @@ export function ViewerHeader({
         )}
         {/* Poder quitar lo que se acaba de subir por error. Sin esto, una
             foto movida se queda para siempre colgando del movimiento. */}
-        <BotonOscuro onClick={onBorrar} etiqueta="Eliminar soporte">
+        <BotonOscuro onClick={onBorrar} etiqueta={t('transactions.supports.deleteTitle')}>
           <Trash2 className="size-4" aria-hidden="true" />
         </BotonOscuro>
-        <BotonOscuro onClick={onCerrar} etiqueta="Cerrar">
+        <BotonOscuro onClick={onCerrar} etiqueta={t('common.close')}>
           <X className="size-4" aria-hidden="true" />
         </BotonOscuro>
       </div>
@@ -104,7 +105,11 @@ export function ViewerArrow({
     <BotonOscuro
       onClick={onClick}
       deshabilitado={deshabilitado}
-      etiqueta={hacia === 'anterior' ? 'Receipt anterior' : 'Receipt siguiente'}
+      etiqueta={
+        hacia === 'anterior'
+          ? t('transactions.supports.previousReceipt')
+          : t('transactions.supports.nextReceipt')
+      }
       className="self-center"
     >
       {hacia === 'anterior' ? (
@@ -148,7 +153,11 @@ export function ViewerControls({ vista }: { vista: ReturnType<typeof useViewerZo
 function ZoomControls({ zoom, escala, onZoom }: ZoomProps) {
   return (
     <div className="flex items-center gap-1 rounded-full bg-sala-tinta/10 px-1">
-      <BotonOscuro onClick={() => onZoom(-1)} deshabilitado={zoom === 0} etiqueta="Alejar">
+      <BotonOscuro
+        onClick={() => onZoom(-1)}
+        deshabilitado={zoom === 0}
+        etiqueta={t('transactions.supports.zoomOut')}
+      >
         <Minus className="size-4" aria-hidden="true" />
       </BotonOscuro>
       {/* El porcentaje se pulsa para volver al tamaño normal: es donde todo el
@@ -159,7 +168,7 @@ function ZoomControls({ zoom, escala, onZoom }: ZoomProps) {
       <BotonOscuro
         onClick={() => onZoom(1)}
         deshabilitado={zoom === ZOOMS.length - 1}
-        etiqueta="Acercar"
+        etiqueta={t('transactions.supports.zoomIn')}
       >
         <Plus className="size-4" aria-hidden="true" />
       </BotonOscuro>
@@ -173,17 +182,17 @@ function PageControls({ pagina, paginas, onPagina }: PageProps) {
       <BotonOscuro
         onClick={() => onPagina((p) => p - 1)}
         deshabilitado={pagina === 1}
-        etiqueta="Página anterior"
+        etiqueta={t('transactions.supports.previousPage')}
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
       </BotonOscuro>
       <LecturaDeMandos ancho="paginas">
-        Pág. {pagina} / {paginas}
+        {t('transactions.supports.pageShort', { page: pagina, pages: paginas })}
       </LecturaDeMandos>
       <BotonOscuro
         onClick={() => onPagina((p) => p + 1)}
         deshabilitado={pagina === paginas}
-        etiqueta="Página siguiente"
+        etiqueta={t('transactions.supports.nextPage')}
       >
         <ChevronRight className="size-4" aria-hidden="true" />
       </BotonOscuro>

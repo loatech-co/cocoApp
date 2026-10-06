@@ -4,7 +4,8 @@ import type { ComponentProps, SubmitEvent } from 'react';
 import type { MovementSheetState } from '@/features/transactions/hooks/use-movement-form';
 import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/movimientos';
 import { type Transaction } from '@/shared/api/generated/model';
-import { DEFAULT_CURRENCY } from '@/shared/lib/utils';
+import { DEFAULT_CURRENCY } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { PieDeModal } from '@/shared/ui/molecules/modal-partes';
 
@@ -100,11 +101,11 @@ export function MovementSheetForm({
       {ficha.editable && (
         <PieDeModal>
           <Button type="button" variant="outline" onClick={onCancelar}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button type="submit" disabled={guardando}>
             {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            {movimiento ? 'Guardar' : 'Registrar'}
+            {movimiento ? t('common.save') : t('transactions.sheet.register')}
           </Button>
         </PieDeModal>
       )}

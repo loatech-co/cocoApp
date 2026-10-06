@@ -1,6 +1,6 @@
 import { type Dashboard, type CategorySpend } from '@/shared/api/generated/model';
-import { rangoLargo } from '@/shared/lib/fechas';
-import { formatCOP } from '@/shared/lib/utils';
+import { rangoLargo, formatCOP } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { Etiqueta } from '@/shared/ui/atoms/badge';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 
@@ -30,12 +30,14 @@ export function DashboardKpis({ datos, alDia }: { datos: Dashboard; alDia: boole
         costos fijos.
       */}
       <Kpi
-        etiqueta="Presupuesto necesario"
+        etiqueta={t('transactions.kpis.budgetNeeded')}
         valor={formatCOP(alDia ? datos.requiredBudget : datos.range.expense)}
-        detalle={alDia ? 'Costos fijos de este mes' : 'Lo que costó el periodo'}
+        detalle={
+          alDia ? t('transactions.kpis.fixedCostsThisMonth') : t('transactions.kpis.periodCost')
+        }
       />
       <Kpi
-        etiqueta="Gastos del periodo"
+        etiqueta={t('transactions.kpis.periodExpenses')}
         valor={formatCOP(datos.range.expense)}
         // Cuánto fue fijo y cuánto variable. Los nombres son los de los
         // centros de costos, así que si mañana se llaman de otra forma,
@@ -49,9 +51,13 @@ export function DashboardKpis({ datos, alDia }: { datos: Dashboard; alDia: boole
           se queda porque es el dato de hoy: no hay ingresos
           registrados. Es el mismo trato que la opción «Ingreso» del
           menú de nuevo movimiento. */}
-      <Kpi etiqueta="Ingresos del periodo" valor={formatCOP(datos.range.income)} pronto />
       <Kpi
-        etiqueta="Movimientos"
+        etiqueta={t('transactions.kpis.periodIncome')}
+        valor={formatCOP(datos.range.income)}
+        pronto
+      />
+      <Kpi
+        etiqueta={t('transactions.kpis.movements')}
         valor={String(datos.range.count)}
         detalle={rangoLargo(datos.period.from, datos.period.to)}
       />
@@ -117,7 +123,7 @@ function Kpi({
                 tamaño de letra. */}
             {pronto && (
               <Etiqueta tono="apagado" className="shrink-0">
-                Pronto
+                {t('transactions.kpis.soon')}
               </Etiqueta>
             )}
           </p>

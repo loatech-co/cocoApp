@@ -2,6 +2,7 @@ import { Wallet } from 'lucide-react';
 
 import { useActualizarPreferencias, usePreferencias } from '@/features/profile/api/preferences';
 import { ApiClientError } from '@/shared/api/api-client';
+import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
 import { Interruptor } from '@/shared/ui/atoms/interruptor';
@@ -23,16 +24,14 @@ export function Ajustes() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ajustes</CardTitle>
-        <CardDescription>Qué partes de Coco quieres usar.</CardDescription>
+        <CardTitle>{t('shell.account.settings')}</CardTitle>
+        <CardDescription>{t('profile.settings.help')}</CardDescription>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4">
         {/* Without the saved value, the switch would show «off» as if it were
             the person's choice. */}
-        {preferencias.isError && (
-          <ErrorAlert mensaje="No se pudieron cargar tus ajustes. Revisa tu conexión e inténtalo de nuevo." />
-        )}
+        {preferencias.isError && <ErrorAlert mensaje={t('profile.settings.loadFailed')} />}
 
         {error && (
           <Alert variant="destructive">
@@ -42,18 +41,15 @@ export function Ajustes() {
 
         <SettingRow
           icono={<Wallet className="size-5" aria-hidden="true" />}
-          titulo="Llevar cuentas"
-          descripcion="Tarjetas, ahorros y efectivo, cada uno con su saldo. Si lo apagas, registras gastos sin tener que decir de dónde salió el dinero."
+          titulo={t('profile.settings.accountsTitle')}
+          descripcion={t('profile.settings.accountsHelp')}
           activo={activo}
           cargando={preferencias.isPending || actualizar.isPending}
           onCambiar={(valor) => actualizar.mutate({ accountsEnabled: valor })}
         />
 
         {activo && (
-          <p className="text-xs text-muted-foreground">
-            Los movimientos que ya registraste sin cuenta siguen ahí y no cuentan para ningún saldo.
-            Puedes asignarles una cuando quieras.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('profile.settings.accountsOffNote')}</p>
         )}
       </CardContent>
     </Card>

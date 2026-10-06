@@ -2,6 +2,7 @@ import { Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 
 import { mayuscula, nombreDelTipo } from '@/features/transactions/model/movement-form';
 import { type PendingPayment, type TransactionType } from '@/shared/api/generated/model';
+import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
 import { ChipIcono } from '@/shared/ui/atoms/chip-icono';
 import { CabeceraDeModal } from '@/shared/ui/molecules/modal-partes';
@@ -21,9 +22,14 @@ interface SheetMode {
  * ficha que se abre tiene que ser la que se pidió.
  */
 function sheetTitle({ type, editando, editable, confirmando }: SheetMode): string {
-  if (confirmando) return confirmando.isMultiPayment ? 'Registrar otro' : 'Confirmar pago';
-  if (!editando) return `Nuevo ${nombreDelTipo(type)}`;
-  return editable ? `Editar ${nombreDelTipo(type)}` : mayuscula(nombreDelTipo(type));
+  if (confirmando)
+    return confirmando.isMultiPayment
+      ? t('transactions.sheet.registerAnother')
+      : t('transactions.sheet.confirmPayment');
+  if (!editando) return t('transactions.sheet.newOfType', { type: nombreDelTipo(type) });
+  return editable
+    ? t('transactions.sheet.editOfType', { type: nombreDelTipo(type) })
+    : mayuscula(nombreDelTipo(type));
 }
 
 /**
@@ -38,11 +44,11 @@ function sheetTitle({ type, editando, editable, confirmando }: SheetMode): strin
 function sheetHelp(pago: PendingPayment | null): string | undefined {
   if (!pago) return undefined;
   if (pago.isMultiPayment) {
-    return `${pago.name}. Esto se paga en varias veces: anota lo de ESTA vez, no el total del mes.`;
+    return t('transactions.sheet.instalmentNote', { name: pago.name });
   }
   return pago.expectedAmount != null
-    ? `${pago.name}. El valor y la fecha son los esperados: adjunta el soporte y se corrigen con lo que diga el recibo.`
-    : `${pago.name}. Adjunta el soporte y se leen el valor y la fecha.`;
+    ? t('transactions.sheet.expectedNote', { name: pago.name })
+    : t('transactions.sheet.attachNote', { name: pago.name });
 }
 
 interface MovementHeaderProps {
@@ -82,8 +88,8 @@ export function MovementHeader({ modo, onEditar, onEliminar, onCerrar }: Movemen
               variant="ghost"
               size="sm-icon"
               onClick={onEditar}
-              aria-label="Editar movimiento"
-              title="Editar"
+              aria-label={t('transactions.sheet.editMovement')}
+              title={t('common.edit')}
             >
               <Pencil className="size-4" aria-hidden="true" />
             </Button>
@@ -105,8 +111,8 @@ export function MovementHeader({ modo, onEditar, onEliminar, onCerrar }: Movemen
               variant="ghost"
               size="sm-icon"
               onClick={onEliminar}
-              aria-label="Eliminar movimiento"
-              title="Eliminar"
+              aria-label={t('transactions.sheet.deleteMovement')}
+              title={t('common.delete')}
               /*
                 El MISMO color y el mismo tamaño que el lápiz y la equis: apagar
                 uno de tres no dice nada, dice que ese está medio deshabilitado.

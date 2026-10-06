@@ -1,3 +1,4 @@
+import { t } from '@/shared/lib/i18n';
 /**
  * Lo que la ficha de un centro o una categoría manda al servidor.
  *
@@ -44,11 +45,15 @@ export function categoryModalTexts(
 ): { titulo: string; ayuda: string } {
   return esCentro
     ? {
-        titulo: `${editando ? 'Editar' : 'Nuevo'} centro de costos`,
-        ayuda: 'El nivel más general: Costos fijos, Variables, Negocio.',
+        titulo: editando
+          ? t('centers.categoryModal.editCostCenter')
+          : t('centers.categoryModal.newCostCenter'),
+        ayuda: t('centers.categoryModal.costCenterHelp'),
       }
     : {
-        titulo: `${editando ? 'Editar' : 'Nueva'} categoría`,
-        ayuda: 'El nivel de en medio: Servicios públicos, Educación, Transporte.',
+        titulo: editando
+          ? t('centers.categoryModal.editCategory')
+          : t('centers.categoryModal.newCategory'),
+        ayuda: t('centers.categoryModal.categoryHelp'),
       };
 }

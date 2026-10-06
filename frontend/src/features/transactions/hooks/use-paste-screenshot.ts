@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { t } from '@/shared/lib/i18n';
+
 /**
  * Le pone nombre a una captura pegada.
  *
@@ -51,15 +53,13 @@ export function usePasteScreenshot(onArchivos: (archivos: File[]) => void) {
       }
 
       if (capturas.length === 0) {
-        setProblemaAlPegar('En el portapapeles no hay ninguna imagen.');
+        setProblemaAlPegar(t('transactions.supports.clipboardEmpty'));
         return;
       }
 
       onArchivos(capturas);
     } catch {
-      setProblemaAlPegar(
-        'El navegador no dejó leer el portapapeles. Arrastra la captura o elígela del equipo.',
-      );
+      setProblemaAlPegar(t('transactions.supports.clipboardDenied'));
     }
   }
 

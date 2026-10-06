@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 
 import { useLlevaCuentas } from '@/features/profile/api/preferences';
 import { useAuth } from '@/shared/api/auth-context';
+import { t } from '@/shared/lib/i18n';
 import { MI_CUENTA, SECCIONES, SECCIONES_DE_ADMIN, type Seccion } from '@/shared/lib/sections';
 import { cn } from '@/shared/lib/utils';
 import { Menu, MenuOpcion, MenuSeparador } from '@/shared/ui/molecules/menu';
@@ -132,7 +133,7 @@ export function EnlaceDeSeccion({
 export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
   return (
     <Menu
-      etiqueta="Tu cuenta"
+      etiqueta={t('shell.account.yours')}
       ancho="md"
       alineado="izquierda"
       direccion="arriba"
@@ -189,20 +190,20 @@ function AccountOptions({ cerrar }: { cerrar: () => void }) {
   return (
     <>
       <MenuOpcion Icono={UserCog} onClick={() => ir('/mi-cuenta')}>
-        Mi cuenta
+        {t('shell.account.myAccount')}
       </MenuOpcion>
 
       <MenuOpcion Icono={Tags} onClick={() => ir('/centros-de-costos')}>
-        Centros de costos
+        {t('shell.sections.costCenters')}
       </MenuOpcion>
 
       {esAdmin && (
         <>
           <MenuOpcion Icono={ShieldCheck} onClick={() => ir('/administracion')}>
-            Usuarios
+            {t('shell.sections.users')}
           </MenuOpcion>
           <MenuOpcion Icono={ScrollText} onClick={() => ir('/administracion/bitacora')}>
-            Bitácora
+            {t('shell.sections.auditLog')}
           </MenuOpcion>
         </>
       )}
@@ -230,12 +231,12 @@ function AccountOptions({ cerrar }: { cerrar: () => void }) {
             if (!viendoComoUsuario) void navegar('/');
           }}
         >
-          {viendoComoUsuario ? 'Volver a administrador' : 'Ver como usuario'}
+          {viendoComoUsuario ? t('common.backToAdmin') : t('shell.account.viewAsUser')}
         </MenuOpcion>
       )}
 
       <MenuOpcion Icono={LogOut} peligro onClick={() => void salir()}>
-        Cerrar sesión
+        {t('shell.account.signOut')}
       </MenuOpcion>
     </>
   );

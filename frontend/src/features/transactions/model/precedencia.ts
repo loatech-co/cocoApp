@@ -1,3 +1,4 @@
+import { t } from '@/shared/lib/i18n';
 /**
  * De dónde salió la clasificación de un movimiento, y quién puede cambiarla.
  *
@@ -56,10 +57,10 @@ export function nombreDelOrigen(origen: Origen): string {
     case 'manual':
       return 'elegido';
     case 'historial':
-      return 'sugerido por tu historial';
+      return t('transactions.classification.suggestedByHistory');
     case 'palabras-clave':
-      return 'sugerido por tus palabras clave';
+      return t('transactions.classification.suggestedByKeywords');
     case 'diccionario':
-      return 'sugerido por el comercio';
+      return t('transactions.classification.suggestedByMerchant');
   }
 }

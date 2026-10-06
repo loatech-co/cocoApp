@@ -1,6 +1,7 @@
 import { FileWarning } from 'lucide-react';
 
 import type { FalloDeSoporte } from '@/features/transactions/model/supports';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 
@@ -48,10 +49,10 @@ export function SoporteQueNoSeVe({
       <span className="flex max-w-xs flex-col items-center gap-2 text-sm">
         <FileWarning className="size-6 shrink-0" aria-hidden="true" />
         {fallo === 'ausente' ? (
-          <span>Este soporte no está en el servidor. Su ficha sí: el archivo es lo que falta.</span>
+          <span>{t('transactions.supports.missingFile')}</span>
         ) : (
           <>
-            <span>No se pudo cargar este soporte. El archivo puede estar bien.</span>
+            <span>{t('transactions.supports.loadFailed')}</span>
             {onReintentar && (
               <Button
                 type="button"
@@ -60,7 +61,7 @@ export function SoporteQueNoSeVe({
                 className="mt-1"
                 onClick={onReintentar}
               >
-                Reintentar
+                {t('transactions.supports.retry')}
               </Button>
             )}
           </>

@@ -1,5 +1,7 @@
 import { Sparkles, TriangleAlert } from 'lucide-react';
 
+import { t } from '@/shared/lib/i18n';
+
 /**
  * Lo que el soporte NO dijo.
  *
@@ -58,7 +60,7 @@ export function LoQueLei() {
     */
     <p className="flex min-h-16 items-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-medium text-accent-foreground">
       <Sparkles className="size-4 shrink-0" aria-hidden="true" />
-      Los datos se extrajeron del soporte. Conviene verificarlos antes de guardar.
+      {t('transactions.reading.verifyNotice')}
     </p>
   );
 }

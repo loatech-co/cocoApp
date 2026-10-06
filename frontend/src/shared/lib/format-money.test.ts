@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_CURRENCY, formatCOP, formatMoney } from './utils';
+import { DEFAULT_CURRENCY, formatCOP, formatMoney } from './format';
 
 // Intl separates the symbol with a non-breaking space; compare on plain spaces.
 const plain = (text: string): string => text.replace(/\s/g, ' ');

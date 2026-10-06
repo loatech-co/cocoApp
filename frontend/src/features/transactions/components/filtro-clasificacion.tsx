@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { type CategoryTree } from '@/shared/api/categories';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Casilla } from '@/shared/ui/atoms/casilla';
 import { BackCrumb, DrillButton } from '@/shared/ui/atoms/level-nav';
@@ -63,7 +64,9 @@ export function FiltroClasificacion({
           largo que la pantalla y sin forma de llegar al pie. */}
       <ul className="max-h-64 overflow-y-auto border-y border-border py-1">
         {lista.length === 0 ? (
-          <li className="px-3 py-2 text-sm text-muted-foreground">Nada que desglosar aquí.</li>
+          <li className="px-3 py-2 text-sm text-muted-foreground">
+            {t('transactions.classificationFilter.nothingToExpand')}
+          </li>
         ) : (
           lista.map((nodo) => {
             const marcado = marcados.includes(nodo.id);
@@ -92,12 +95,14 @@ function FilterFooter({ marcados, onLimpiar }: { marcados: number[]; onLimpiar: 
     <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
       <span className="text-muted-foreground">
         {marcados.length === 0
-          ? 'Sin filtrar'
-          : `${marcados.length} ${marcados.length === 1 ? 'marcado' : 'marcados'}`}
+          ? t('transactions.classificationFilter.unfiltered')
+          : marcados.length === 1
+            ? t('transactions.classificationFilter.markedOne', { n: marcados.length })
+            : t('transactions.classificationFilter.markedMany', { n: marcados.length })}
       </span>
       {marcados.length > 0 && (
         <TextButton tono="primario" onClick={onLimpiar}>
-          Limpiar
+          {t('transactions.classificationFilter.clear')}
         </TextButton>
       )}
     </div>
@@ -135,7 +140,7 @@ function FilterRow({ nodo, marcado, conMarcaDentro, onAlternar, onEntrar }: Filt
         {conMarcaDentro && (
           <span
             aria-hidden="true"
-            title="Hay algo marcado dentro"
+            title={t('transactions.classificationFilter.somethingMarked')}
             className="size-1.5 shrink-0 rounded-full bg-primary"
           />
         )}
@@ -153,7 +158,9 @@ function FilterPath({ camino, onVolver }: { camino: CategoryTree[]; onVolver: ()
       {camino.length > 0 ? (
         <BackCrumb ruta={camino.map((n) => n.name)} fuerte onVolver={onVolver} />
       ) : (
-        <span className="text-xs font-semibold text-muted-foreground">Centros de costos</span>
+        <span className="text-xs font-semibold text-muted-foreground">
+          {t('shell.sections.costCenters')}
+        </span>
       )}
     </div>
   );

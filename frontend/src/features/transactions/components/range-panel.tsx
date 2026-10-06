@@ -1,6 +1,7 @@
 import { useRangeDraft, type Borrador } from '@/features/transactions/hooks/use-range-draft';
 import { PRESETS, type Filtros, type Preset } from '@/features/transactions/model/filtros';
-import { diaLargo, rangoLargo } from '@/shared/lib/fechas';
+import { diaLargo, rangoLargo } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 import { ToggleOption } from '@/shared/ui/atoms/toggle-option';
@@ -96,19 +97,19 @@ function RangeFooter({
     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3">
       <span className="text-xs text-muted-foreground">
         {ancla !== null
-          ? 'Elige la fecha final'
+          ? t('transactions.range.chooseEnd')
           : borrador.preset === 'todo'
             ? primero
-              ? `Desde ${diaLargo(primero)}`
-              : 'Todo el histórico'
+              ? t('transactions.range.fromDay', { day: diaLargo(primero) })
+              : t('transactions.range.allTime')
             : rangoLargo(borrador.from, borrador.to)}
       </span>
       <div className="flex items-center gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onCancelar}>
-          Cancelar
+          {t('common.cancel')}
         </Button>
         <Button type="button" size="sm" onClick={onAplicar} disabled={ancla !== null}>
-          Aplicar
+          {t('transactions.range.apply')}
         </Button>
       </div>
     </div>

@@ -2,7 +2,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { formatCOP, formatMoney } from '@/shared/lib/utils';
+import { formatCOP, formatMoney } from '@/shared/lib/format';
 
 import { Monto, Saldo } from './monto';
 

@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from 'react';
 
 import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
+import { t } from '@/shared/lib/i18n';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { CreateOption, Opcion } from '@/shared/ui/organisms/combo';
 import { rutaLegible, type EntradaDelIndice } from '@coco/lectura';
@@ -20,15 +21,21 @@ export function CategoriaParaNuevo({
   return (
     <>
       <div className="flex items-center justify-between gap-2 px-3 pt-2 text-xs text-muted-foreground">
-        <span className="min-w-0 truncate">¿En qué categoría va «{nombreNuevo}»?</span>
+        <span className="min-w-0 truncate">
+          {t('transactions.conceptSearch.whichCategory', { name: nombreNuevo })}
+        </span>
         <TextButton tono="realce" onClick={onVolver}>
-          Volver
+          {t('transactions.conceptSearch.back')}
         </TextButton>
       </div>
       {categorias.length === 0 ? (
-        <Vacio>Ninguna categoría coincide.</Vacio>
+        <Vacio>{t('transactions.conceptSearch.noCategory')}</Vacio>
       ) : (
-        <div className={LISTA} role="listbox" aria-label="Categorías">
+        <div
+          className={LISTA}
+          role="listbox"
+          aria-label={t('transactions.conceptSearch.categories')}
+        >
           {categorias.map((c) => (
             <Opcion key={String(c.id)} elegida={false} onClick={() => onCrearEn(c)}>
               <Fila entrada={c} />
@@ -61,10 +68,12 @@ export function ResultadosDelBuscador(props: PropsDeResultados) {
   return (
     <>
       {hayOpciones(props) ? (
-        <div className={LISTA} role="listbox" aria-label="Resultados">
+        <div className={LISTA} role="listbox" aria-label={t('transactions.conceptSearch.results')}>
           {elegida && (
             <Opcion elegida={false} onClick={() => onElegir(undefined)}>
-              <span className="text-muted-foreground">Quitar</span>
+              <span className="text-muted-foreground">
+                {t('transactions.conceptSearch.remove')}
+              </span>
             </Opcion>
           )}
 
@@ -79,7 +88,11 @@ export function ResultadosDelBuscador(props: PropsDeResultados) {
         </div>
       ) : (
         !(buscando && puedeCrear) && (
-          <Vacio>{buscando ? 'Nada coincide.' : 'Escribe para buscar.'}</Vacio>
+          <Vacio>
+            {buscando
+              ? t('transactions.conceptSearch.nothingMatches')
+              : t('transactions.conceptSearch.typeToSearch')}
+          </Vacio>
         )
       )}
 
@@ -106,7 +119,7 @@ function SinBuscar({
   return (
     <>
       {candidatos.length > 0 && (
-        <Grupo titulo="Del recibo">
+        <Grupo titulo={t('transactions.conceptSearch.fromReceipt')}>
           {candidatos.map((c) => (
             <Opcion
               key={c.id}
@@ -123,7 +136,7 @@ function SinBuscar({
       )}
 
       {candidatos.length === 0 && recientes.length > 0 && (
-        <Grupo titulo="Recientes">
+        <Grupo titulo={t('transactions.conceptSearch.recent')}>
           {recientes.map((r) => (
             <Opcion key={String(r.id)} elegida={elegida?.id === r.id} onClick={() => onElegir(r)}>
               <Fila entrada={r} />
@@ -148,7 +161,7 @@ function CrearConcepto({
 }) {
   return (
     <CreateOption creando={creando} conIntro={sinResultados} onCrear={onPedirCategoria}>
-      Crear concepto «{busca.trim()}»
+      {t('transactions.conceptSearch.createConcept', { name: busca.trim() })}
     </CreateOption>
   );
 }
@@ -162,7 +175,9 @@ function Fila({ entrada }: { entrada: EntradaDelIndice }) {
         <span className="truncate text-xs text-muted-foreground">{rutaLegible(entrada)}</span>
       )}
       {entrada.nivel === 'categoria' && (
-        <span className="ml-auto shrink-0 text-xs text-muted-foreground">categoría</span>
+        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+          {t('transactions.conceptSearch.category')}
+        </span>
       )}
     </span>
   );

@@ -2,6 +2,7 @@ import { FileWarning, Loader2 } from 'lucide-react';
 import { type RefObject, useEffect, useRef, useState } from 'react';
 
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { t } from '@/shared/lib/i18n';
 import { drawPdfPage } from '@/shared/lib/pdf';
 
 /** El ancho de una hoja al 100 %: carta legible en un portátil sin ampliar. */
@@ -79,7 +80,7 @@ export function PaginaPdf({ url, pagina, escala, onPaginas }: PdfPageProps) {
     return (
       <p className="flex items-center gap-2 self-center text-sm text-sala-tinta/80">
         <FileWarning className="size-5" aria-hidden="true" />
-        No se pudo dibujar este PDF.
+        {t('ui.pdf.drawFailed')}
       </p>
     );
   }

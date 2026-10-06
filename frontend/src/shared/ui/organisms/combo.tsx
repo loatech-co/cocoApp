@@ -1,6 +1,7 @@
 import { Check, ChevronDown, CornerDownLeft, Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
 import { disparadorDeCampo, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
@@ -59,7 +60,7 @@ export function Combo({
   opciones,
   onCambiar,
   onCrear,
-  vacio = 'Sin elegir',
+  vacio = t('ui.combo.notChosen'),
   deshabilitado = false,
   creando = false,
   id,
@@ -217,7 +218,7 @@ function ComboPanel({ campo, busqueda, valor, vacio, creando, cerrar }: ComboPan
           if (filtradas.length === 1 && unica !== undefined) onElegir(unica.valor);
           else if (puedeCrear) onCrear();
         }}
-        placeholder="Buscar…"
+        placeholder={t('ui.combo.search')}
       />
 
       <ComboOptions
@@ -230,7 +231,7 @@ function ComboPanel({ campo, busqueda, valor, vacio, creando, cerrar }: ComboPan
 
       {puedeCrear && (
         <CreateOption creando={creando} onCrear={onCrear}>
-          Crear “{busca.trim()}”
+          {t('ui.combo.create', { name: busca.trim() })}
         </CreateOption>
       )}
     </div>
@@ -343,7 +344,9 @@ function ComboOptions({
       ))}
 
       {filtradas.length === 0 && !puedeCrear && (
-        <li className="px-2.5 py-2 text-sm text-muted-foreground">Nada coincide.</li>
+        <li className="px-2.5 py-2 text-sm text-muted-foreground">
+          {t('ui.combo.nothingMatches')}
+        </li>
       )}
     </ul>
   );

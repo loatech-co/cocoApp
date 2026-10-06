@@ -1,17 +1,11 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-import { diaLargo, MESES_LARGOS } from '@/shared/lib/fechas';
+import { DIAS_DE_LA_SEMANA, diaLargo, MESES_LARGOS } from '@/shared/lib/format';
+import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 import { REALCE } from '@/shared/ui/foundations/superficie';
-
-/**
- * La semana empieza en LUNES, no en domingo: es como se lee un calendario en
- * Colombia, y el fin de semana queda junto al final de la fila en vez de
- * partido entre las dos puntas.
- */
-const DIAS = ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];
 
 const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
 const utc = (anio: number, mes: number, dia: number): Date => new Date(Date.UTC(anio, mes, dia));
@@ -225,7 +219,7 @@ function MonthHeader({
         variant="ghost"
         size="sm-icon"
         onClick={() => moverMes(-1)}
-        aria-label="Mes anterior"
+        aria-label={t('ui.calendar.previousMonth')}
       >
         <ChevronLeft className="size-4" aria-hidden="true" />
       </Button>
@@ -244,14 +238,15 @@ function MonthHeader({
         depende de ninguna excepción del selector.
       */}
       <span aria-live="polite" className="font-display text-sm font-semibold">
-        <span className="capitalize">{MESES_LARGOS[actual.mes]}</span> de {actual.anio}
+        <span className="capitalize">{MESES_LARGOS[actual.mes]}</span>
+        {t('ui.calendar.monthOfYear', { year: actual.anio })}
       </span>
       <Button
         type="button"
         variant="ghost"
         size="sm-icon"
         onClick={() => moverMes(1)}
-        aria-label="Mes siguiente"
+        aria-label={t('ui.calendar.nextMonth')}
       >
         <ChevronRight className="size-4" aria-hidden="true" />
       </Button>
@@ -298,7 +293,7 @@ function MonthDays({
 function WeekdayRow() {
   return (
     <div className="grid grid-cols-7">
-      {DIAS.map((d) => (
+      {DIAS_DE_LA_SEMANA.map((d) => (
         <span
           key={d}
           aria-hidden="true"
