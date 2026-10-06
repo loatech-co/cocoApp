@@ -168,10 +168,10 @@ export class SupabaseAuthService {
     });
 
     if (isDuplicateEmail(response.status, response.data)) return null;
-    if (response.status >= 400) this.fail(response, 'crear el usuario');
+    if (response.status >= 400) this.fail(response, 'create the user');
 
     const id = response.data?.id;
-    if (typeof id !== 'string') this.fail(response, 'crear el usuario');
+    if (typeof id !== 'string') this.fail(response, 'create the user');
     return id;
   }
 
@@ -180,7 +180,7 @@ export class SupabaseAuthService {
       body: { password: newPassword },
       key: this.serviceKey,
     });
-    if (response.status >= 400) this.fail(response, 'cambiar la contraseña');
+    if (response.status >= 400) this.fail(response, 'change the password');
   }
 
   async deleteUser(authId: string): Promise<void> {
@@ -228,7 +228,7 @@ export class SupabaseAuthService {
     if (path.startsWith('/admin/')) {
       const blocker = whyNotTouchRealAccounts();
       if (blocker !== null) {
-        this.logger.warn(`Operación de administración bloqueada: ${method} ${path}`);
+        this.logger.warn(`Admin operation blocked: ${method} ${path}`);
         throw new ForbiddenError(blocker, { code: 'real_accounts_protected' });
       }
     }
@@ -251,7 +251,7 @@ export class SupabaseAuthService {
       // The database and the identity provider are separate services now: one
       // can be down while the other is fine. It is told apart from "wrong
       // credentials" because the answer to the user is not the same.
-      this.logger.error(`Supabase Auth no respondió: ${(error as Error).message}`);
+      this.logger.error(`Supabase Auth did not answer: ${(error as Error).message}`);
       throw new InternalError('El servicio de identidad no está disponible.', {
         code: 'identity_provider_failed',
       });
@@ -275,7 +275,7 @@ export class SupabaseAuthService {
     const user = d?.user as { id?: string; email?: string } | undefined;
 
     if (typeof accessToken !== 'string' || typeof refreshToken !== 'string' || !user?.id) {
-      this.fail(response, 'abrir la sesión');
+      this.fail(response, 'open the session');
     }
 
     return {
@@ -287,12 +287,14 @@ export class SupabaseAuthService {
     };
   }
 
-  private fail(response: SupabaseReply, action: string): never {
-    const detail = response.data?.msg ?? response.data?.message ?? 'sin detalle';
+  private fail(response: SupabaseReply, action: SupabaseAction): never {
+    const detail = response.data?.msg ?? response.data?.message ?? 'no detail';
     this.logger.error(
-      `Supabase Auth falló al ${action}: ${response.status} ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`,
+      `Supabase Auth failed (${action}): ${response.status} ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`,
     );
-    throw new InternalError(`No se pudo ${action}.`, { code: 'identity_provider_failed' });
+    throw new InternalError(`No se pudo ${USER_ACTION[action]}.`, {
+      code: 'identity_provider_failed',
+    });
   }
 }
 
@@ -303,6 +305,14 @@ export interface SupabaseSession {
   authId: string;
   email: string;
 }
+
+/** What was being done when Supabase failed: English for the log, Spanish for the person. */
+const USER_ACTION = {
+  'create the user': 'crear el usuario',
+  'change the password': 'cambiar la contraseña',
+  'open the session': 'abrir la sesión',
+} as const;
+type SupabaseAction = keyof typeof USER_ACTION;
 
 interface SupabaseReply {
   status: number;

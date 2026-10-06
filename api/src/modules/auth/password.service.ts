@@ -87,7 +87,7 @@ export class PasswordService {
       const body = await response.text();
       return body.split('\n').some((line) => line.split(':')[0]?.trim().toUpperCase() === suffix);
     } catch {
-      this.logger.warn('No se pudo consultar la base de contraseñas filtradas; se omite.');
+      this.logger.warn('Could not query the breached-password database; skipping the check.');
       return false;
     }
   }

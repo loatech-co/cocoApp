@@ -18,7 +18,7 @@ export class HealthRepository {
       return true;
     } catch (error) {
       this.logger.error(
-        'La base de datos no responde',
+        'The database does not answer',
         error instanceof Error ? error.stack : String(error),
       );
       return false;

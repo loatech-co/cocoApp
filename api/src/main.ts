@@ -52,7 +52,7 @@ function loadConfiguration(): void {
   const file = join(__dirname, '..', process.env.NODE_ENV === 'test' ? '.env.test' : '.env');
   const { parsed } = loadDotenv({ path: file, override: true });
   if (!parsed) {
-    Logger.warn(`No se encontró ${file}; se usan las variables del entorno.`, 'Bootstrap');
+    Logger.warn(`${file} not found; using the environment variables.`, 'Bootstrap');
   }
   unquoteDatabaseUrls();
 }
@@ -78,7 +78,7 @@ function unquoteDatabaseUrls(): void {
     const unquoted = value.replace(/^(['"])(.*)\1$/s, '$2');
     if (unquoted !== value) {
       process.env[key] = unquoted;
-      Logger.warn(`Se quitaron las comillas de ${key}, heredada del entorno.`, 'Bootstrap');
+      Logger.warn(`Stripped the quotes from ${key}, inherited from the environment.`, 'Bootstrap');
     }
   }
 }
@@ -135,13 +135,13 @@ async function bootstrap(): Promise<void> {
   const port = Number(config.get<string>('PORT') ?? 3000);
   await app.listen(port, '0.0.0.0');
 
-  logger.log(`API escuchando en http://localhost:${port}/api/v1 y /api/v2`);
+  logger.log(`API listening on http://localhost:${port}/api/v1 and /api/v2`);
   if (areDocsServed) {
     for (const version of CONTRACT_VERSIONS) {
       logger.log(`API docs at http://localhost:${port}/${docsPath(version)}`);
     }
   }
-  logger.log(`CORS permitido para: ${parseOrigins(config).join(', ') || '(ninguno)'}`);
+  logger.log(`CORS allowed for: ${parseOrigins(config).join(', ') || '(none)'}`);
 }
 
 void bootstrap();

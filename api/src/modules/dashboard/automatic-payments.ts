@@ -167,9 +167,7 @@ export class AutomaticPaymentsService {
         Any other error is logged and does not bring down the run either: one
         failed concept must not stop the rest of the user's charges.
       */
-      this.logger.error(
-        `No se pudo cobrar “${concept.name}” (${concept.id}): ${(error as Error).message}`,
-      );
+      this.logger.error(`Could not auto-charge concept ${concept.id}: ${(error as Error).message}`);
       return false;
     }
   }

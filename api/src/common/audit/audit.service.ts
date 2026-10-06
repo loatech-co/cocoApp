@@ -60,7 +60,7 @@ export class AuditService {
       });
     } catch (error) {
       this.logger.error(
-        `No se pudo auditar ${event.action}`,
+        `Could not audit ${event.action}`,
         error instanceof Error ? error.stack : String(error),
       );
     }

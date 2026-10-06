@@ -22,8 +22,8 @@ export function installSafetyNet(
     const isPrismaPanic = /PANIC|timer has gone away/i.test(error.message);
     logger.error(
       isPrismaPanic
-        ? `El motor de Prisma entró en pánico (${error.message}). El proceso se reinicia.`
-        : `Excepción no atrapada: ${error.message}`,
+        ? `The Prisma engine panicked (${error.message}). The process restarts.`
+        : `Uncaught exception: ${error.message}`,
       error.stack,
     );
     // Exit 0 and not 1: LiteSpeed treats a non-zero code as a startup failure
@@ -34,7 +34,7 @@ export function installSafetyNet(
 
   proc.on('unhandledRejection', (reason: unknown) => {
     logger.error(
-      `Promesa rechazada sin manejar: ${reason instanceof Error ? reason.message : String(reason)}`,
+      `Unhandled promise rejection: ${reason instanceof Error ? reason.message : String(reason)}`,
       reason instanceof Error ? reason.stack : undefined,
     );
     // The same 0 as above, for the same reason: a promise rejected while

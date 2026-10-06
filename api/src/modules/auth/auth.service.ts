@@ -108,7 +108,7 @@ export class AuthService {
     const authId = await this.supabase.createUser(email, input.password);
 
     if (!authId) {
-      this.logger.warn('Intento de registro sobre un correo ya existente.');
+      this.logger.warn('Sign-up attempt with an email that already exists.');
       return { isPendingApproval: true };
     }
 
@@ -151,7 +151,7 @@ export class AuthService {
       await this.categories.seedNewAccount(user.id);
     } catch (error) {
       this.logger.error(
-        `No se pudo sembrar la plantilla de la cuenta ${user.id}: ${(error as Error).message}`,
+        `Could not seed the template for account ${user.id}: ${(error as Error).message}`,
       );
     }
 
@@ -205,7 +205,7 @@ export class AuthService {
       // when it was created from the Supabase dashboard, skipping the app's
       // sign-up. Without a profile there is no role or status, so nothing can
       // be authorized.
-      this.logger.error(`Cuenta de Supabase ${session.authId} sin perfil en la aplicación.`);
+      this.logger.error(`Supabase account ${session.authId} has no profile in the app.`);
       throw new ForbiddenError('Tu cuenta no está habilitada. Contacta al administrador.', {
         code: 'account_not_enabled',
       });

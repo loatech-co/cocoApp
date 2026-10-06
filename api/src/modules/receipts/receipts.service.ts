@@ -71,13 +71,13 @@ export class ReceiptsService implements OnModuleInit {
     }));
 
     if (isReady) {
-      this.logger.log(`Almacén de soportes: ${this.store.describe()} — ${detail}`);
+      this.logger.log(`Receipt store: ${this.store.describe()} — ${detail}`);
       return;
     }
 
     this.logger.error(
-      `El almacén de soportes NO está listo (${this.store.describe()}): ${detail}. ` +
-        'Todos los soportes van a salir como no disponibles.',
+      `The receipt store is NOT ready (${this.store.describe()}): ${detail}. ` +
+        'Every receipt will show as unavailable.',
     );
   }
 
@@ -260,7 +260,7 @@ export class ReceiptsService implements OnModuleInit {
         const unprocessed = asReceived(file.buffer, file.mimetype);
         if (unprocessed) {
           this.logger.warn(
-            `Sin recursos para tratar “${file.originalname}”: se guarda tal cual. (${detail})`,
+            `No resources to process an upload (${file.mimetype}): stored as it arrived. (${detail})`,
           );
           return unprocessed;
         }
