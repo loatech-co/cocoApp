@@ -41,7 +41,8 @@ demás.
 
 **`shared/lib` es el suelo: no dibuja ni pide datos.**
 
-Fechas, formato de dinero, foco, gestos, el puente con la app. Si algo de
+Fechas y dinero (`format.ts`), los textos (`i18n.ts`), foco, gestos, el
+puente con la app. Si algo de
 `lib/` necesita la sesión, es de `shared/api` (por eso `registrarPuente` vive
 en `shared/api/native-bridge.ts` y no en `shared/lib/puente-nativo.ts`).
 
@@ -74,6 +75,37 @@ llamando a esas funciones (`useAccounts` → `accountsList`).
   de iOS lo leen por su ruta. Reemplazó a `packages/types`, que ya no existe.
 - `shared/ui` no importa ni el cliente generado ni el contrato nativo, ni
   siquiera sus tipos (`web-ui-knows-no-contract`).
+
+## Los textos: `locales/es.json`
+
+**Ningún texto que lea una persona se escribe en un componente.** Vive en
+`locales/es.json`, con clave en inglés y por dominio
+(`transactions.fields.amount`), y se lee con `t` de `shared/lib/i18n.ts`. Las
+claves están tipadas desde el propio JSON: una que no existe no compila.
+
+- **Dónde va una clave.** Bajo su dominio (`transactions`, `centers`,
+  `accounts`, `admin`, `auth`, `profile`), el armazón bajo `shell`, la
+  interfaz compartida bajo `ui`, los errores del cliente bajo `errors`, y lo
+  que se repite en varias pantallas («Cancelar», «Guardar») bajo `common`.
+- **Lo que rellena el código va interpolado**, nunca pegado:
+  `t('accounts.creditAvailable', { amount })` con `"Cupo disponible: {{amount}}"`.
+  Partir una frase en dos claves alrededor de un valor la deja imposible de
+  revisar. La excepción es un elemento DENTRO de la frase (un `<strong>`): ahí
+  se parte, o se usa `Trans` de react-i18next.
+- **Singular y plural son dos claves** (`movementsOne`, `movementsMany`), no el
+  `count` de i18next: es explícito y no depende de reglas de plural.
+- **Lo que manda la API se muestra tal cual.** El `detail` de un
+  `problem+json` ya está escrito para la persona: no se busca en el catálogo.
+- **Dinero y fechas salen de `shared/lib/format.ts`**, el único sitio que
+  llama a `Intl` (siempre `es-CO`). Los nombres de meses y días también: no
+  se escribe una lista a mano.
+
+`i18next/no-literal-string` falla con un texto con letras escrito como hijo de
+JSX; sus excepciones están en `TEXT_EXCEPTIONS` (`eslint.config.js`).
+`locales/catalog.test.ts` compara el catálogo con el inventario de los textos
+de antes (`es.inventory.json`) y falla si alguno cambió o se perdió, o si hay
+una clave que ninguna pantalla usa. Cambiar un texto a propósito es cambiarlo
+en los dos archivos en el mismo commit.
 
 ## La interfaz: `shared/ui`
 

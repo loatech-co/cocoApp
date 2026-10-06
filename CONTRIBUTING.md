@@ -78,6 +78,9 @@ What is on:
   relative, alphabetized, one blank line between groups; no duplicate imports;
   **no default exports** except in tool config files that require one
   (`eslint.config.js`, `vite.config.ts`, `vitest.config.ts`…).
+- `i18next/no-literal-string` (`jsx-text-only`) in `frontend/src`: a text
+  with letters written as a JSX child fails. See
+  [User-facing text](#user-facing-text).
 - `eslint-config-prettier` last.
 
 Three options differ from the presets, each written with its reason in the
@@ -439,13 +442,48 @@ does not have is added to `index.css` with its reason (`leading-portada`,
 
 ```tsx
 // Correct — the piece decides how it looks; the screen picks a variant
-<TextButton tono="primario" onClick={limpiar}>Limpiar</TextButton>
+<TextButton tono="primario" onClick={limpiar}>{t('transactions.classificationFilter.clear')}</TextButton>
 <Menu ancho="sm" … />
 
 // Incorrect — a control drawn in the screen, and a measure from the call
 <button className="rounded-sm font-medium text-primary hover:underline">Limpiar</button>
 <Menu ancho="w-[min(22rem,calc(100vw-2rem))]" … />
 ```
+
+### User-facing text
+
+**Every text a person reads lives in `frontend/src/locales/es.json`, under an
+English key, and is read with `t` from `shared/lib/i18n.ts`** (step 7.3, D5).
+The keys are typed from the JSON itself: `t('nope')` does not compile, and
+neither does a missing interpolation.
+
+```tsx
+// Correct — the key says where it lives; the value fills its gap
+<p>{t('accounts.creditAvailable', { amount: formatCOP(cuenta.availableCredit) })}</p>
+
+// Incorrect — a literal in the component, and a sentence glued around a value
+<p>Cupo disponible: {formatCOP(cuenta.availableCredit)}</p>
+```
+
+- Keys go under their domain (`transactions`, `centers`, `accounts`, `admin`,
+  `auth`, `profile`), the shell under `shell`, `shared/ui` under `ui`, client
+  errors under `errors`, and what several screens repeat under `common`.
+- Singular and plural are two keys, not i18next's `count`.
+- The `detail` of a problem+json is shown as the API wrote it; it is never
+  looked up in the catalog.
+- **Money and dates go through `shared/lib/format.ts`**, the one module that
+  calls `Intl` (always `es-CO`), month and weekday names included.
+
+The checks: `i18next/no-literal-string` in `jsx-text-only` mode (D6), whose
+exceptions live in `TEXT_EXCEPTIONS` in `eslint.config.js`, each with its
+reason; and `frontend/src/locales/catalog.test.ts`, which fails if a text of
+the inventory taken before the move (`es.inventory.json`) changed or was lost,
+or if a key is no longer used. Changing a text on purpose means changing it in
+both files in the same commit.
+
+The catalog, i18next and react-i18next load in their own chunk, awaited at the
+top of `i18n.ts`: they do not count against the initial bundle, and nothing
+renders before the texts are there ([ADR 0024](docs/adr/0024-text-catalog-loads-beside-the-entry.md)).
 
 ## Errors
 
