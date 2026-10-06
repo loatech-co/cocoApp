@@ -25,6 +25,16 @@ export interface SplitToWrite {
   note: string | null;
 }
 
+/** The columns a PATCH writes on one movement. */
+export type TransactionChanges = Prisma.TransactionUncheckedUpdateInput;
+
+/** The other leg of a transfer being edited, and what it has to take too. */
+export interface TransferPartner {
+  userId: bigint;
+  transferGroupId: string;
+  changes: TransactionChanges;
+}
+
 /**
  * Every multi-row write here is ONE repository method that runs its whole
  * unit of work inside `prisma.$transaction`: a movement never exists without
@@ -131,15 +141,32 @@ export class TransactionsRepository {
     });
   }
 
-  /** `null` splits or tags leave them as they are; a list replaces them. */
+  /**
+   * `null` splits or tags leave them as they are; a list replaces them.
+   *
+   * With a `partner`, the other leg of the transfer takes its changes in the
+   * SAME transaction: if its write fails, this one is rolled back too, and the
+   * two legs never disagree on the amount or the date.
+   */
   updateWithDetails(
     id: bigint,
-    data: Prisma.TransactionUncheckedUpdateInput,
+    data: TransactionChanges,
     splits: readonly SplitToWrite[] | null,
     tagIds: readonly bigint[] | null,
+    partner: TransferPartner | null = null,
   ): Promise<TransaccionCompleta> {
     return this.prisma.$transaction(async (tx) => {
       await tx.transaction.update({ where: { id }, data });
+      if (partner !== null && Object.keys(partner.changes).length > 0) {
+        await tx.transaction.updateMany({
+          where: {
+            userId: partner.userId,
+            transferGroupId: partner.transferGroupId,
+            id: { not: id },
+          },
+          data: partner.changes,
+        });
+      }
 
       if (splits !== null) await tx.transactionSplit.deleteMany({ where: { transactionId: id } });
       if (tagIds !== null) await tx.transactionTag.deleteMany({ where: { transactionId: id } });
@@ -147,6 +174,19 @@ export class TransactionsRepository {
 
       return tx.transaction.findUniqueOrThrow({ where: { id }, include: INCLUIR_TODO });
     });
+  }
+
+  /** The account of the OTHER leg of a transfer, or null when it has none. */
+  async partnerAccount(
+    userId: bigint,
+    transferGroupId: string,
+    id: bigint,
+  ): Promise<bigint | null> {
+    const otra = await this.prisma.transaction.findFirst({
+      where: { userId, transferGroupId, id: { not: id } },
+      select: { accountId: true },
+    });
+    return otra?.accountId ?? null;
   }
 
   async deleteTransferGroup(userId: bigint, transferGroupId: string): Promise<void> {
@@ -260,7 +300,8 @@ function plainFilters(query: ListTransactionsQueryDto): Prisma.TransactionWhereI
   };
 }
 
-async function writeDetails(
+/** A movement's splits and tags, inside the transaction that wrote it. Also used by the capture. */
+export async function writeDetails(
   tx: Prisma.TransactionClient,
   transactionId: bigint,
   splits: readonly SplitToWrite[],

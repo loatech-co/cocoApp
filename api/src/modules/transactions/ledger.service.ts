@@ -1,20 +1,26 @@
 import { Injectable } from '@nestjs/common';
 
+import { CaptureRepository } from './capture.repository';
 import { LedgerRepository } from './ledger.repository';
 import type {
   AutoCharge,
+  CaptureOutcome,
   DuplicateCandidateRow,
   DuplicateCriteria,
-  EnrichChanges,
   MonthlyHistory,
+  NewTransaction,
   SummaryFilter,
   SummaryMovement,
+  TwinVerdict,
 } from './ledger.types';
 import type { Money } from '../../common/money/money';
 
 export type {
   AutoCharge,
   DuplicateCandidateRow,
+  DuplicateCriteria,
+  NewTransaction,
+  TwinVerdict,
   MonthlyHistory,
   SummaryFilter,
   SummaryMovement,
@@ -28,18 +34,22 @@ export type {
  */
 @Injectable()
 export class LedgerService {
-  constructor(private readonly repository: LedgerRepository) {}
+  constructor(
+    private readonly repository: LedgerRepository,
+    private readonly captures: CaptureRepository,
+  ) {}
 
   findIdByExternalRef(userId: bigint, externalRef: string): Promise<bigint | null> {
     return this.repository.findIdByExternalRef(userId, externalRef);
   }
 
-  enrich(id: bigint, changes: EnrichChanges): Promise<void> {
-    return this.repository.enrich(id, changes);
-  }
-
-  findDuplicateCandidates(criteria: DuplicateCriteria): Promise<DuplicateCandidateRow[]> {
-    return this.repository.findDuplicateCandidates(criteria);
+  /** A Wallet or SMS capture: merged into its twin or written, under one lock. */
+  createUnlessTwin(
+    movement: NewTransaction,
+    criteria: DuplicateCriteria,
+    decide: (candidates: DuplicateCandidateRow[]) => TwinVerdict,
+  ): Promise<CaptureOutcome> {
+    return this.captures.createUnlessTwin(movement, criteria, decide);
   }
 
   findCategorizedHistory(

@@ -47,7 +47,7 @@ describe('InterpretacionService con una clasificación elegida', () => {
     // Sin repetidas ni candidatas a duplicado: aquí se prueba la clasificación.
     const ledger = {
       findIdByExternalRef: jest.fn().mockResolvedValue(null),
-      findDuplicateCandidates: jest.fn().mockResolvedValue([]),
+      createUnlessTwin: jest.fn().mockResolvedValue({ kind: 'created', id: 99n }),
     } as unknown as LedgerService;
     const categories = {
       findChosen: jest.fn((userId: bigint, id: bigint) =>
@@ -63,7 +63,13 @@ describe('InterpretacionService con una clasificación elegida', () => {
     const categorization = {
       sugerirPara: jest.fn().mockResolvedValue(null),
     } as unknown as CategorizationService;
-    const transactions = { crear } as unknown as TransactionsService;
+    // Wallet y SMS pasan por `prepararAlta` y la escritura con candado; lo
+    // que se escribe es lo mismo, así que las dos puertas comparten el doble.
+    const transactions = {
+      crear,
+      prepararAlta: crear,
+      obtener: jest.fn((_userId: bigint, id: bigint) => Promise.resolve({ id })),
+    } as unknown as TransactionsService;
     servicio = new InterpretacionService(ledger, categories, categorization, transactions);
     interpretar = jest.spyOn(motor, 'interpretar');
   });

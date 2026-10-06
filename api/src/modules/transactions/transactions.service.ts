@@ -9,13 +9,22 @@ import type {
   SplitDto,
   UpdateTransactionDto,
 } from './dto/transaction.dto';
+import type { NewTransaction } from './ledger.types';
 import {
   TransactionsRepository,
   type SplitToWrite,
   type TransaccionCompleta,
+  type TransactionChanges,
+  type TransferPartner,
 } from './transactions.repository';
 import { parsePaginacion } from './transactions.sort';
 import { splitsParaEscribir } from './transactions.splits';
+import {
+  cambiosDe,
+  cambiosDeLaOtraPata,
+  exigirDesgloseCuadrado,
+  exigirQueSigaSiendoTransferencia,
+} from './transactions.update';
 import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { serializar, toMoney, type Money } from '../../common/money/money';
 import { SoportesService } from '../soportes/soportes.service';
@@ -136,6 +145,16 @@ export class TransactionsService {
   // ── Escritura ──────────────────────────────────────────────────────────────
 
   async crear(userId: bigint, dto: CreateTransactionDto): Promise<TransactionView> {
+    const nuevo = await this.prepararAlta(userId, dto);
+    const creada = await this.repository.createWithDetails(nuevo.data, nuevo.splits, nuevo.tagIds);
+    return this.presentar(creada);
+  }
+
+  /**
+   * Validates a new movement and builds what gets written, without writing.
+   * The capture uses it to write under its own lock (`LedgerService`).
+   */
+  async prepararAlta(userId: bigint, dto: CreateTransactionDto): Promise<NewTransaction> {
     // Sin cuenta es un caso válido, no un error: llevarlas es opcional.
     const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : null;
     const categoryId = dto.category_id !== undefined ? BigInt(dto.category_id) : null;
@@ -148,8 +167,8 @@ export class TransactionsService {
     const splits = await this.prepararSplits(userId, amount, dto.splits);
     const tagIds = dto.tags?.length ? await this.tags.resolverNombres(userId, dto.tags) : [];
 
-    const creada = await this.repository.createWithDetails(
-      {
+    return {
+      data: {
         userId,
         accountId,
         date: new Date(dto.date),
@@ -169,9 +188,7 @@ export class TransactionsService {
       },
       splits,
       tagIds,
-    );
-
-    return this.presentar(creada);
+    };
   }
 
   /**
@@ -237,18 +254,17 @@ export class TransactionsService {
 
     const amount = dto.amount !== undefined ? toMoney(dto.amount) : toMoney(actual.amount);
 
-    // Si llegan splits nuevos, se revalida el cuadre contra el monto resultante.
+    // Si llegan splits nuevos, se revalida el cuadre contra el monto resultante;
+    // si no llegan y el monto cambia, el desglose que ya hay tiene que cuadrar.
+    exigirDesgloseCuadrado(actual, dto, amount);
     const splits =
       dto.splits !== undefined ? await this.prepararSplits(userId, amount, dto.splits) : null;
     const tagIds =
       dto.tags !== undefined ? await this.tags.resolverNombres(userId, dto.tags) : null;
 
-    const actualizada = await this.repository.updateWithDetails(
-      id,
-      cambiosDe(dto, accountId, amount),
-      splits,
-      tagIds,
-    );
+    const cambios = cambiosDe(dto, accountId, amount);
+    const otra = await this.otraPata(userId, actual, dto, cambios);
+    const actualizada = await this.repository.updateWithDetails(id, cambios, splits, tagIds, otra);
 
     return this.presentar(actualizada);
   }
@@ -278,6 +294,31 @@ export class TransactionsService {
   }
 
   // ── Apoyo ──────────────────────────────────────────────────────────────────
+
+  /**
+   * Editar una pata de transferencia edita las dos (como borrar): un monto
+   * distinto en cada pata descuadra los saldos de las dos cuentas.
+   */
+  private async otraPata(
+    userId: bigint,
+    actual: TransaccionCompleta,
+    dto: UpdateTransactionDto,
+    cambios: TransactionChanges,
+  ): Promise<TransferPartner | null> {
+    if (actual.transferGroupId === null) return null;
+    exigirQueSigaSiendoTransferencia(dto);
+    if (dto.account_id !== undefined) {
+      const suya = await this.repository.partnerAccount(userId, actual.transferGroupId, actual.id);
+      if (suya !== null && suya === BigInt(dto.account_id)) {
+        throw new ValidationError('La cuenta de origen y la de destino no pueden ser la misma.');
+      }
+    }
+    return {
+      userId,
+      transferGroupId: actual.transferGroupId,
+      changes: cambiosDeLaOtraPata(cambios),
+    };
+  }
 
   /**
    * Valida el cuadre y exige que cada categoría sea del usuario (422): sin eso
@@ -347,31 +388,4 @@ export class TransactionsService {
       created_at: fila.createdAt,
     };
   }
-}
-
-/** The columns a PATCH changes: only what the DTO brought. */
-function cambiosDe(
-  dto: UpdateTransactionDto,
-  accountId: bigint | null,
-  amount: Money,
-): Parameters<TransactionsRepository['updateWithDetails']>[1] {
-  return {
-    ...(dto.account_id !== undefined && { accountId }),
-    ...(dto.date !== undefined && { date: new Date(dto.date) }),
-    ...(dto.amount !== undefined && { amount }),
-    ...(dto.type !== undefined && { type: dto.type }),
-    ...(dto.category_id !== undefined && {
-      categoryId: dto.category_id === null ? null : BigInt(dto.category_id),
-    }),
-    ...(dto.description !== undefined && { description: dto.description }),
-    ...(dto.merchant !== undefined && { merchant: dto.merchant }),
-    ...(dto.notes !== undefined && { notes: dto.notes }),
-    ...(dto.status !== undefined && { status: dto.status }),
-    ...(dto.source !== undefined && { source: dto.source }),
-    ...(dto.raw_text !== undefined && { rawText: dto.raw_text }),
-    ...(dto.captured_at !== undefined && {
-      capturedAt: dto.captured_at === null ? null : new Date(dto.captured_at),
-    }),
-    ...(dto.por_revisar !== undefined && { porRevisar: dto.por_revisar }),
-  };
 }

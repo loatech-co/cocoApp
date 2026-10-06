@@ -1,14 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type {
-  AutoCharge,
-  DuplicateCandidateRow,
-  DuplicateCriteria,
-  EnrichChanges,
-  MonthlyHistory,
-  SummaryFilter,
-  SummaryMovement,
-} from './ledger.types';
+import type { AutoCharge, MonthlyHistory, SummaryFilter, SummaryMovement } from './ledger.types';
 import { CERO, toMoney, type Money } from '../../common/money/money';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -23,39 +15,6 @@ export class LedgerRepository {
       select: { id: true },
     });
     return fila?.id ?? null;
-  }
-
-  async enrich(id: bigint, changes: EnrichChanges): Promise<void> {
-    await this.prisma.transaction.update({ where: { id }, data: changes });
-  }
-
-  /** Sin hora de captura, por la de creación. A lo sumo veinte. */
-  findDuplicateCandidates(criteria: DuplicateCriteria): Promise<DuplicateCandidateRow[]> {
-    const { userId, source, amount, days, window } = criteria;
-    return this.prisma.transaction.findMany({
-      where: {
-        userId,
-        amount,
-        source: { not: source },
-        date: { gte: days.from, lte: days.to },
-        OR: [
-          { capturedAt: { gte: window.from, lte: window.to } },
-          { capturedAt: null, createdAt: { gte: window.from, lte: window.to } },
-        ],
-      },
-      select: {
-        id: true,
-        source: true,
-        date: true,
-        amount: true,
-        capturedAt: true,
-        createdAt: true,
-        rawText: true,
-        merchant: true,
-        description: true,
-      },
-      take: 20,
-    });
   }
 
   /** The most recent categorized movements with a description, newest first. */

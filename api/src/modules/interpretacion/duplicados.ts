@@ -23,9 +23,19 @@
  *
  * Es una función pura: quien tiene la base trae las candidatas, y esto decide.
  */
+
+import type { TransactionSource } from '@prisma/client';
+
+import { toMoney } from '../../common/money/money';
+import type {
+  DuplicateCandidateRow,
+  DuplicateCriteria,
+  TwinVerdict,
+} from '../transactions/ledger.service';
+
 export const VENTANA_DE_DUPLICADO_MS = 10 * 60_000;
 /** Hasta dónde un parecido cuenta como parcial y no como casualidad. */
-export const VENTANA_PARCIAL_MS = 24 * 60 * 60_000;
+const VENTANA_PARCIAL_MS = 24 * 60 * 60_000;
 
 /** Los orígenes que producen la otra cara de un mismo pago. */
 export const ORIGENES_QUE_SE_DUPLICAN: ReadonlySet<string> = new Set(['wallet', 'sms']);
@@ -110,4 +120,56 @@ function mismoMonto(a: string, b: string): boolean {
 
 function diasEntre(a: string, b: string): number {
   return Math.abs(Date.parse(a) - Date.parse(b)) / (24 * 60 * 60_000);
+}
+
+const DIA_MS = 24 * 60 * 60_000;
+
+/**
+ * Lo que se le pide a la base: misma persona, mismo monto, otro origen, ±1 día
+ * de fecha y dentro de la ventana parcial de captura. Lo fino lo decide
+ * `decidirDuplicado`.
+ */
+export function criteriosDeGemela(
+  userId: bigint,
+  source: TransactionSource,
+  nueva: CapturaNueva,
+): DuplicateCriteria {
+  const dia = new Date(nueva.date).getTime();
+  const captura = nueva.capturedAt.getTime();
+  return {
+    userId,
+    source,
+    amount: toMoney(nueva.amount),
+    days: { from: new Date(dia - DIA_MS), to: new Date(dia + DIA_MS) },
+    window: {
+      from: new Date(captura - VENTANA_PARCIAL_MS),
+      to: new Date(captura + VENTANA_PARCIAL_MS),
+    },
+  };
+}
+
+/** El veredicto, dicho como lo escribe la base: fusionar en una, o crear (marcada si fue parcial). */
+export function veredictoDeGemela(
+  nueva: CapturaNueva,
+  filas: readonly DuplicateCandidateRow[],
+): TwinVerdict {
+  const veredicto = decidirDuplicado(nueva, filas.map(aCapturaConocida));
+  if (veredicto.tipo === 'exacto') {
+    return { kind: 'merge', id: veredicto.con.id, changes: enriquecer(veredicto.con, nueva) };
+  }
+  return { kind: 'new', flag: veredicto.tipo === 'parcial' };
+}
+
+function aCapturaConocida(fila: DuplicateCandidateRow): CapturaConocida {
+  return {
+    id: fila.id,
+    source: fila.source,
+    date: fila.date.toISOString().slice(0, 10),
+    amount: fila.amount.toString(),
+    capturedAt: fila.capturedAt,
+    createdAt: fila.createdAt,
+    rawText: fila.rawText,
+    merchant: fila.merchant,
+    description: fila.description,
+  };
 }

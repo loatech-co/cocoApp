@@ -1,14 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import type { TransactionSource } from '@prisma/client';
 
 import type { NodoBuscable } from '@coco/lectura';
 
 import {
   ORIGENES_QUE_SE_DUPLICAN,
-  VENTANA_PARCIAL_MS,
-  decidirDuplicado,
-  enriquecer,
-  type CapturaConocida,
+  criteriosDeGemela,
+  veredictoDeGemela,
   type CapturaNueva,
 } from './duplicados';
 import type { CaptureBodyDto, InterpretBodyDto } from './interpretacion.dto';
@@ -29,11 +26,10 @@ import {
 } from './interpretation.view';
 import { anidar } from '../../common/categories/categories.tree';
 import { DuplicateError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
-import { toMoney } from '../../common/money/money';
 import { CategoryLookupService } from '../categories/category-lookup.service';
 import { CategorizationService } from '../categorization/categorization.service';
 import { LedgerService } from '../transactions/ledger.service';
-import { TransactionsService } from '../transactions/transactions.service';
+import { TransactionsService, type TransactionView } from '../transactions/transactions.service';
 
 /**
  * El único cerebro: interpreta, clasifica, detecta duplicados y registra.
@@ -101,89 +97,45 @@ export class InterpretacionService {
       description: interpretado.descripcion,
     };
 
-    const gemela = await this.otraCaraDelMismoPago(userId, dto, nueva, interpretado);
-    if (gemela.fusionada) return gemela.fusionada;
-
-    return this.registrar(
-      userId,
-      dto,
-      nueva,
-      interpretado,
-      interpretado.porRevisar || gemela.parcial,
-    );
+    return this.registrar(userId, dto, nueva, interpretado);
   }
 
   /*
     ── La otra cara del mismo pago ─────────────────────────────────────────
-    Solo desde Wallet o SMS. Se traen las candidatas de la base —misma
-    persona, mismo monto, otro origen, cerca en fecha y en tiempo— y decide
-    la función pura. Exacto: se enriquece la que había y se devuelve. Parcial:
-    se crea, pero marcada.
+    Solo desde Wallet o SMS. La búsqueda de la gemela y la escritura van en
+    UNA transacción, bajo un candado por persona y monto (`LedgerService.
+    createUnlessTwin`): si Wallet y el SMS llegan a la vez, el segundo espera
+    al primero y lo encuentra. Exacto: se enriquece la que había y se
+    devuelve. Parcial: se crea, pero marcada. Decide la función pura.
   */
-  private async otraCaraDelMismoPago(
-    userId: bigint,
-    dto: CaptureBodyDto,
-    nueva: CapturaNueva,
-    interpretado: Interpretado,
-  ): Promise<{ fusionada: CapturaView | null; parcial: boolean }> {
-    if (!ORIGENES_QUE_SE_DUPLICAN.has(dto.source)) return { fusionada: null, parcial: false };
-
-    const candidatas = await this.candidatasADuplicado(
-      userId,
-      dto.source,
-      nueva.amount,
-      nueva.date,
-      nueva.capturedAt,
-    );
-    const veredicto = decidirDuplicado(nueva, candidatas);
-
-    if (veredicto.tipo === 'exacto') {
-      const cambios = enriquecer(veredicto.con, nueva);
-      if (Object.keys(cambios).length > 0) {
-        await this.ledger.enrich(veredicto.con.id, cambios);
-      }
-      const fusionada = await this.yaEstaba(
-        userId,
-        veredicto.con.id,
-        dto,
-        false,
-        true,
-        interpretado.clasificacion,
-      );
-      return { fusionada, parcial: false };
-    }
-    return { fusionada: null, parcial: veredicto.tipo === 'parcial' };
-  }
-
   private async registrar(
     userId: bigint,
     dto: CaptureBodyDto,
     nueva: CapturaNueva,
     interpretado: Interpretado,
-    porRevisar: boolean,
   ): Promise<CapturaView> {
+    const alta = altaDe(dto, nueva, interpretado);
     try {
-      const creada = await this.transactions.crear(userId, {
-        date: nueva.date,
-        amount: nueva.amount,
-        type: 'expense',
-        category_id: idParaGuardar(interpretado.clasificacion),
-        description: interpretado.descripcion ?? undefined,
-        merchant: interpretado.comercio ?? undefined,
-        notes: notasDe(dto.nota, interpretado.monto),
-        external_ref: dto.external_ref,
-        source: dto.source,
-        raw_text: dto.texto ?? null,
-        captured_at: nueva.capturedAt.toISOString(),
-        por_revisar: porRevisar,
-      });
-      return {
-        transaction: creada,
-        clasificacion: clasificacionAVista(interpretado.clasificacion),
-        resumen: resumenDe(interpretado.monto, interpretado.clasificacion),
-        repetido: false,
-        fusionado: false,
-      };
+      if (!ORIGENES_QUE_SE_DUPLICAN.has(dto.source)) {
+        return creadaAVista(await this.transactions.crear(userId, alta), interpretado);
+      }
+      const lista = await this.transactions.prepararAlta(userId, alta);
+      const destino = await this.ledger.createUnlessTwin(
+        lista,
+        criteriosDeGemela(userId, dto.source, nueva),
+        (filas) => veredictoDeGemela(nueva, filas),
+      );
+      if (destino.kind === 'merged') {
+        return await this.yaEstaba(
+          userId,
+          destino.id,
+          dto,
+          false,
+          true,
+          interpretado.clasificacion,
+        );
+      }
+      return creadaAVista(await this.transactions.obtener(userId, destino.id), interpretado);
     } catch (error) {
       /*
         Dos capturas con el mismo `external_ref` a la vez —dos reintentos que
@@ -320,39 +272,6 @@ export class InterpretacionService {
     return anidar(filas).map(aNodo);
   }
 
-  private async candidatasADuplicado(
-    userId: bigint,
-    source: TransactionSource,
-    monto: string,
-    fecha: string,
-    capturadaEn: Date,
-  ): Promise<CapturaConocida[]> {
-    const dia = new Date(fecha);
-    const desde = new Date(dia.getTime() - 24 * 60 * 60_000);
-    const hasta = new Date(dia.getTime() + 24 * 60 * 60_000);
-    const filas = await this.ledger.findDuplicateCandidates({
-      userId,
-      source,
-      amount: toMoney(monto),
-      days: { from: desde, to: hasta },
-      window: {
-        from: new Date(capturadaEn.getTime() - VENTANA_PARCIAL_MS),
-        to: new Date(capturadaEn.getTime() + VENTANA_PARCIAL_MS),
-      },
-    });
-    return filas.map((f) => ({
-      id: f.id,
-      source: f.source,
-      date: f.date.toISOString().slice(0, 10),
-      amount: f.amount.toString(),
-      capturedAt: f.capturedAt,
-      createdAt: f.createdAt,
-      rawText: f.rawText,
-      merchant: f.merchant,
-      description: f.description,
-    }));
-  }
-
   private async yaEstaba(
     userId: bigint,
     id: bigint,
@@ -384,4 +303,39 @@ export class InterpretacionService {
       fusionado,
     };
   }
+}
+
+/** Lo que `TransactionsService` pide para crear, sin importar su DTO (los módulos hablan por servicios). */
+type NuevoMovimiento = Parameters<TransactionsService['crear']>[1];
+
+/** Lo que se escribe de una captura, como lo pide `TransactionsService`. */
+function altaDe(
+  dto: CaptureBodyDto,
+  nueva: CapturaNueva,
+  interpretado: Interpretado,
+): NuevoMovimiento {
+  return {
+    date: nueva.date,
+    amount: nueva.amount,
+    type: 'expense',
+    category_id: idParaGuardar(interpretado.clasificacion),
+    description: interpretado.descripcion ?? undefined,
+    merchant: interpretado.comercio ?? undefined,
+    notes: notasDe(dto.nota, interpretado.monto),
+    external_ref: dto.external_ref,
+    source: dto.source,
+    raw_text: dto.texto ?? null,
+    captured_at: nueva.capturedAt.toISOString(),
+    por_revisar: interpretado.porRevisar,
+  };
+}
+
+function creadaAVista(creada: TransactionView, interpretado: Interpretado): CapturaView {
+  return {
+    transaction: creada,
+    clasificacion: clasificacionAVista(interpretado.clasificacion),
+    resumen: resumenDe(interpretado.monto, interpretado.clasificacion),
+    repetido: false,
+    fusionado: false,
+  };
 }
