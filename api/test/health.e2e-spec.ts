@@ -104,10 +104,16 @@ describe('Fase 0 — the auth guard on a protected route, and the public probes 
     expect(JSON.stringify(response.body)).toContain(usuario.email);
   });
 
-  it('health is public: 200 without a token, says only that the process is alive', async () => {
-    const response = await request(entorno.app.getHttpServer()).get('/api/v1/health').expect(200);
+  it('health is public: 200 without a token, says only that it is alive and which commit', async () => {
+    for (const path of ['/api/v1/health', '/api/v2/health']) {
+      const response = await request(entorno.app.getHttpServer()).get(path).expect(200);
 
-    expect(response.body).toEqual({ data: { status: 'ok' }, meta: {} });
+      // Exactly these two keys: the short SHA and nothing more about the deploy.
+      expect(response.body).toEqual({
+        data: { status: 'ok', version: expect.stringMatching(/^([0-9a-f]{7}|unknown)$/) },
+        meta: {},
+      });
+    }
   });
 
   it('ready is public: 200 without a token once the database answers', async () => {

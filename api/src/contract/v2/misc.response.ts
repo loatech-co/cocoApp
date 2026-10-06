@@ -3,6 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 export class Liveness {
   @ApiProperty({ enum: ['ok'] })
   status!: 'ok';
+  /** Short SHA of the deployed commit, or `unknown` without a repository. */
+  @ApiProperty({ example: 'a1b2c3d' })
+  version!: string;
 }
 
 export class Readiness {

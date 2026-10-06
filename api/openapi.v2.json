@@ -5879,9 +5879,14 @@
           "status": {
             "type": "string",
             "enum": ["ok"]
+          },
+          "version": {
+            "type": "string",
+            "description": "Short SHA of the deployed commit, or `unknown` without a repository.",
+            "example": "a1b2c3d"
           }
         },
-        "required": ["status"]
+        "required": ["status", "version"]
       },
       "Readiness": {
         "type": "object",

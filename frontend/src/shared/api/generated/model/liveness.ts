@@ -16,4 +16,6 @@ import type { LivenessStatus } from './livenessStatus';
 
 export interface Liveness {
   status: LivenessStatus;
+  /** Short SHA of the deployed commit, or `unknown` without a repository. */
+  version: string;
 }
