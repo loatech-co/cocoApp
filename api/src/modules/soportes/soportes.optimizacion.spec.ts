@@ -1,4 +1,10 @@
-import { comoLlego, esFaltaDeRecursos } from './soportes.optimizacion';
+import {
+  argumentosDeGhostscript,
+  coincideConSuTipo,
+  comoLlego,
+  correr,
+  esFaltaDeRecursos,
+} from './soportes.optimizacion';
 
 /**
  * Qué se le contesta a quien sube un soporte que no se pudo tratar.
@@ -80,5 +86,41 @@ describe('Guardar el archivo tal como llegó', () => {
     // es el formato, y guardarlo igual solo aplaza el fallo.
     expect(comoLlego(Buffer.alloc(0), 'image/heic')).toBeNull();
     expect(comoLlego(Buffer.alloc(0), 'image/webp')).toBeNull();
+  });
+});
+
+describe('Lo que se sube es lo que dice ser', () => {
+  const PDF = Buffer.from('%PDF-1.7\n', 'latin1');
+  const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]);
+  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0]);
+  const POSTSCRIPT = Buffer.from('%!PS-Adobe-3.0\n', 'latin1');
+
+  it('acepta cada tipo con su firma', () => {
+    expect(coincideConSuTipo(PDF, 'application/pdf')).toBe(true);
+    expect(coincideConSuTipo(JPEG, 'image/jpeg')).toBe(true);
+    expect(coincideConSuTipo(PNG, 'image/png')).toBe(true);
+    expect(coincideConSuTipo(Buffer.from('....ftypheic', 'latin1'), 'image/heic')).toBe(true);
+    expect(coincideConSuTipo(Buffer.from('RIFF....WEBPVP8 ', 'latin1'), 'image/webp')).toBe(true);
+  });
+
+  it('rechaza lo que no coincide con el tipo declarado', () => {
+    // Un PostScript etiquetado como PDF llegaría directo al intérprete.
+    expect(coincideConSuTipo(POSTSCRIPT, 'application/pdf')).toBe(false);
+    expect(coincideConSuTipo(PNG, 'image/jpeg')).toBe(false);
+    expect(coincideConSuTipo(JPEG, 'application/pdf')).toBe(false);
+    expect(coincideConSuTipo(Buffer.alloc(0), 'image/png')).toBe(false);
+    expect(coincideConSuTipo(PDF, 'text/plain')).toBe(false);
+  });
+});
+
+describe('Ghostscript con protecciones', () => {
+  it('corre en modo seguro', () => {
+    expect(argumentosDeGhostscript('/tmp/a.pdf', '/tmp/b.pdf')[0]).toBe('-dSAFER');
+  });
+
+  it('mata el proceso que pasa del tiempo límite', async () => {
+    const inicio = Date.now();
+    await expect(correr('sleep', ['5'], 100)).rejects.toThrow(/tardó más de/);
+    expect(Date.now() - inicio).toBeLessThan(2000);
   });
 });

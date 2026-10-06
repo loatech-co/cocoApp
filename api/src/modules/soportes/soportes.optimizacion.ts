@@ -80,6 +80,45 @@ export const TIPOS_DE_ENTRADA = new Set([
   'image/webp',
 ]);
 
+/**
+ * La firma con la que empieza cada tipo de entrada.
+ *
+ * El `mimetype` lo escribe el cliente: se puede mandar cualquier cosa
+ * etiquetada como `application/pdf` y llegaría tal cual a ghostscript, que es
+ * un intérprete de PostScript. Lo que se procesa es lo que los PRIMEROS bytes
+ * dicen que es, y tiene que coincidir con lo que se declaró.
+ *
+ * HEIC/HEIF son contenedores ISO BMFF (`ftyp` en el byte 4); WEBP es RIFF con
+ * `WEBP` en el byte 8.
+ */
+const FIRMAS: Record<string, readonly { desde: number; bytes: Buffer }[]> = {
+  'application/pdf': [{ desde: 0, bytes: Buffer.from('%PDF-', 'latin1') }],
+  'image/jpeg': [{ desde: 0, bytes: Buffer.from([0xff, 0xd8, 0xff]) }],
+  'image/png': [{ desde: 0, bytes: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) }],
+  'image/heic': [{ desde: 4, bytes: Buffer.from('ftyp', 'latin1') }],
+  'image/heif': [{ desde: 4, bytes: Buffer.from('ftyp', 'latin1') }],
+  'image/webp': [
+    { desde: 0, bytes: Buffer.from('RIFF', 'latin1') },
+    { desde: 8, bytes: Buffer.from('WEBP', 'latin1') },
+  ],
+};
+
+/** ¿Los bytes del archivo son de verdad del tipo que se declaró? */
+export function coincideConSuTipo(contenido: Buffer, mime: string): boolean {
+  const firmas = FIRMAS[mime];
+  if (!firmas) return false;
+  return firmas.every(({ desde, bytes }) =>
+    contenido.subarray(desde, desde + bytes.length).equals(bytes),
+  );
+}
+
+/**
+ * Lo más que puede tardar ghostscript con un PDF. Uno legítimo de recibos
+ * tarda segundos; uno hecho para colgarlo se queda con un proceso de una
+ * cuota que en el hosting es mínima. Pasado el tope, se mata.
+ */
+const LIMITE_DE_GHOSTSCRIPT_MS = 20_000;
+
 /** Tope de entrada. Lo que salga de aquí pesará una fracción. */
 export const TAMANO_MAXIMO = 25 * 1024 * 1024;
 
@@ -173,23 +212,7 @@ async function optimizarPdf(contenido: Buffer): Promise<Buffer> {
   try {
     await writeFile(entrada, contenido);
 
-    await correr(binarioDeGhostscript(), [
-      '-o',
-      salida,
-      '-sDEVICE=pdfwrite',
-      '-sColorConversionStrategy=Gray',
-      '-sProcessColorModel=DeviceGray',
-      '-dCompatibilityLevel=1.4',
-      '-dPDFSETTINGS=/ebook',
-      '-dDownsampleColorImages=true',
-      `-dColorImageResolution=${PPP}`,
-      '-dDownsampleGrayImages=true',
-      `-dGrayImageResolution=${PPP}`,
-      '-dNOPAUSE',
-      '-dBATCH',
-      '-dQUIET',
-      entrada,
-    ]);
+    await correr(binarioDeGhostscript(), argumentosDeGhostscript(entrada, salida));
 
     const resultado = await readFile(salida);
 
@@ -207,28 +230,77 @@ async function optimizarPdf(contenido: Buffer): Promise<Buffer> {
   }
 }
 
+/**
+ * Los argumentos de ghostscript. `-dSAFER` va primero y es la protección: sin
+ * él, un PDF puede pedirle al intérprete que lea o escriba archivos del
+ * servidor y que ejecute órdenes. Las versiones recientes lo traen por
+ * defecto; se escribe igual para no depender de la que haya instalada.
+ */
+export function argumentosDeGhostscript(entrada: string, salida: string): string[] {
+  return [
+    '-dSAFER',
+    '-o',
+    salida,
+    '-sDEVICE=pdfwrite',
+    '-sColorConversionStrategy=Gray',
+    '-sProcessColorModel=DeviceGray',
+    '-dCompatibilityLevel=1.4',
+    '-dPDFSETTINGS=/ebook',
+    '-dDownsampleColorImages=true',
+    `-dColorImageResolution=${PPP}`,
+    '-dDownsampleGrayImages=true',
+    `-dGrayImageResolution=${PPP}`,
+    '-dNOPAUSE',
+    '-dBATCH',
+    '-dQUIET',
+    entrada,
+  ];
+}
+
 /** Ejecuta un proceso y falla con su salida de error, que es la que explica. */
-function correr(binario: string, argumentos: string[]): Promise<void> {
+export function correr(
+  binario: string,
+  argumentos: string[],
+  limiteMs = LIMITE_DE_GHOSTSCRIPT_MS,
+): Promise<void> {
   return new Promise((resolver, rechazar) => {
     const proceso = spawn(binario, argumentos, { stdio: ['ignore', 'ignore', 'pipe'] });
     let error = '';
+    let vencido = false;
+
+    // SIGKILL y no SIGTERM: un intérprete atascado puede ignorar la petición
+    // de terminar, y lo que se quiere es recuperar el proceso.
+    const reloj = setTimeout(() => {
+      vencido = true;
+      proceso.kill('SIGKILL');
+    }, limiteMs);
 
     proceso.stderr.on('data', (trozo: Buffer) => {
       error += trozo.toString();
     });
 
-    proceso.on('error', (e) =>
+    proceso.on('error', (e) => {
+      clearTimeout(reloj);
       rechazar(
         new Error(
           `No se pudo ejecutar ${binario}: ${e.message}. ` +
             'Define GHOSTSCRIPT_BIN si está en otra ruta.',
         ),
-      ),
-    );
+      );
+    });
 
-    proceso.on('close', (codigo) =>
-      codigo === 0 ? resolver() : rechazar(new Error(`${binario} salió con ${codigo}: ${error}`)),
-    );
+    proceso.on('close', (codigo) => {
+      clearTimeout(reloj);
+      if (vencido) {
+        rechazar(
+          new Error(`${binario} tardó más de ${Math.round(limiteMs / 1000)} s y se detuvo.`),
+        );
+      } else if (codigo === 0) {
+        resolver();
+      } else {
+        rechazar(new Error(`${binario} salió con ${codigo}: ${error}`));
+      }
+    });
   });
 }
 

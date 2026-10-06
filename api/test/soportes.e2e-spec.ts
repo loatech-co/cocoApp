@@ -426,6 +426,16 @@ describe('Soportes (e2e)', () => {
           contentType: 'application/x-sh',
         })
         .expect(415);
+
+      // A PostScript program labelled as a PDF never reaches ghostscript.
+      await http
+        .post(`/api/v1/transactions/${Number(movimiento.body.data.id)}/soportes`)
+        .set('Authorization', ana)
+        .attach('archivos', Buffer.from('%!PS-Adobe-3.0\nshowpage\n'), {
+          filename: 'recibo.pdf',
+          contentType: 'application/pdf',
+        })
+        .expect(415);
     });
 
     it('borrar el movimiento se lleva sus soportes', async () => {

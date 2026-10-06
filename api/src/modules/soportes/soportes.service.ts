@@ -10,6 +10,7 @@ import {
   optimizar,
   TAMANO_MAXIMO,
   TIPOS_DE_ENTRADA,
+  coincideConSuTipo,
   type SoporteOptimizado,
 } from './soportes.optimizacion';
 import { SoportesRepository } from './soportes.repository';
@@ -329,6 +330,12 @@ function validateUploads(archivos: readonly ArchivoSubido[]): void {
   for (const archivo of archivos) {
     if (!TIPOS_DE_ENTRADA.has(archivo.mimetype)) {
       throw new UnsupportedMediaTypeError(`“${archivo.originalname}” no es un PDF ni una imagen.`);
+    }
+    // The declared type comes from the client; the bytes decide (see FIRMAS).
+    if (!coincideConSuTipo(archivo.buffer, archivo.mimetype)) {
+      throw new UnsupportedMediaTypeError(
+        `“${archivo.originalname}” no es lo que dice ser: su contenido no es un ${archivo.mimetype}.`,
+      );
     }
     if (archivo.size > TAMANO_MAXIMO) {
       throw new PayloadTooLargeError(
