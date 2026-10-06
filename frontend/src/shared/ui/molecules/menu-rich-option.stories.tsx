@@ -3,7 +3,7 @@ import { TrendingDown, TrendingUp } from 'lucide-react';
 
 import { MenuRichOption } from './menu-rich-option';
 
-/** A menu option with its coloured chip and a help line. */
+/** A menu option with its colored chip and a help line. */
 const meta: Meta = { title: 'Molecules/MenuRichOption' };
 
 export default meta;

@@ -134,7 +134,7 @@ describe("Nobody changes a button's size from outside", () => {
 
     expect(
       offenders,
-      'usa PieDeModal: apila a ancho completo en el teléfono y alinea a la derecha en el escritorio',
+      'use ModalFooter: it stacks at full width on the phone and aligns right on the desktop',
     ).toEqual([]);
   });
 });

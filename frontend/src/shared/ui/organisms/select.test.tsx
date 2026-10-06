@@ -6,9 +6,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Select } from './select';
 
 /**
- * jsdom no hace diseño: sin esto, cualquier medida da cero y no habría nada
- * que comprobar. Se le pone un tamaño a la caja para poder verificar que el
- * panel lo COPIA, que es lo que se quiere garantizar.
+ * jsdom does no layout: without this, every measurement is zero and there
+ * would be nothing to check. The box is given a size so it can be verified
+ * that the panel COPIES it, which is what is meant to be guaranteed.
  */
 beforeAll(() => {
   Element.prototype.getBoundingClientRect = function (): DOMRect {
@@ -26,9 +26,9 @@ beforeAll(() => {
   };
 });
 
-// Sin `globals: true` en la configuración, Testing Library no registra su
-// limpieza automática: el DOM de una prueba sobrevive a la siguiente y las
-// consultas encuentran elementos de la anterior.
+// Without `globals: true` in the config, Testing Library does not register its
+// automatic cleanup: one test's DOM survives into the next and the queries
+// find elements from the previous one.
 afterEach(cleanup);
 
 const OPTIONS = [
@@ -36,10 +36,10 @@ const OPTIONS = [
   { value: 'anual', label: 'Cada año' },
 ];
 
-describe('El desplegable de un Select', () => {
-  it('mide lo mismo que su campo', () => {
-    // Un panel más ancho que su disparador se lee como otro elemento; uno más
-    // angosto corta opciones que el campo sí muestra enteras.
+describe('The dropdown of a Select', () => {
+  it('measures the same as its field', () => {
+    // A panel wider than its trigger reads as another element; a narrower one
+    // cuts off options the field does show whole.
     render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={() => {}} />);
 
     fireEvent.click(screen.getAllByRole('button')[0]!);
@@ -48,9 +48,9 @@ describe('El desplegable de un Select', () => {
     expect(panel.style.width).toBe('240px');
   });
 
-  it('se coloca contra la VENTANA, no contra su caja', () => {
-    // Vive dentro de formularios que se desplazan: con posición absoluta, el
-    // recorte del contenedor se lo come.
+  it('is placed against the WINDOW, not against its box', () => {
+    // It lives inside forms that scroll: with absolute positioning, the
+    // container's clipping eats it.
     render(<Select label="Periodicidad" value="mensual" options={OPTIONS} onChange={() => {}} />);
 
     fireEvent.click(screen.getAllByRole('button')[0]!);
@@ -58,11 +58,11 @@ describe('El desplegable de un Select', () => {
     const panel = screen.getByRole('listbox');
     expect(panel.className).toContain('fixed');
     expect(panel.style.left).toBe('32px');
-    // Ocho píxeles bajo el borde inferior del campo.
+    // Eight pixels below the field's bottom edge.
     expect(panel.style.top).toBe('148px');
   });
 
-  it('muestra las opciones y marca la elegida', () => {
+  it('shows the options and marks the chosen one', () => {
     render(<Select label="Periodicidad" value="anual" options={OPTIONS} onChange={() => {}} />);
 
     fireEvent.click(screen.getAllByRole('button')[0]!);

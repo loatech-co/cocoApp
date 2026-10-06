@@ -6,20 +6,20 @@ import { IconChip, type ChipColor } from '@/shared/ui/atoms/icon-chip';
 import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
- * Una opción de menú con su pastel de color y una línea de ayuda debajo. Hoy,
- * las dos formas de empezar un movimiento: gasto o ingreso.
+ * A menu option with its color swatch and a description line below. Today,
+ * the two ways of starting a transaction: expense or income.
  *
- * ── Por qué no son dos filas de texto ───────────────────────────────────────
- * Porque esta es la interacción que se repite todos los días, y en ella la
- * primera decisión —gasto o ingreso— no es un ajuste: es de qué se va a
- * hablar. Dos renglones iguales obligan a leer para distinguirlos; con el
- * pastel del color que ya significa eso en el resumen —violeta para lo que
- * sale, verde para lo que entra— la elección se hace mirando, que es lo que
- * uno quiere hacer veinte veces por semana.
+ * ── Why they are not two rows of text ───────────────────────────────────────
+ * Because this is the interaction repeated every day, and in it the first
+ * decision —expense or income— is not a setting: it is what is going to be
+ * talked about. Two identical lines force reading to tell them apart; with
+ * the swatch in the color that already means that in the summary —violet for
+ * what goes out, green for what comes in— the choice is made by looking, which
+ * is what one wants to do twenty times a week.
  *
- * La segunda línea existe por lo mismo. "Gasto" e "Ingreso" se confunden al
- * leer rápido —empiezan distinto pero se parecen en la forma— y "plata que
- * sale" contra "plata que entra" no se confunden nunca.
+ * The second line exists for the same reason. "Gasto" and "Ingreso" get mixed
+ * up when reading fast —they start differently but look alike in shape— and
+ * "plata que sale" versus "plata que entra" never get mixed up.
  */
 export function MenuRichOption({
   Icon,
@@ -34,7 +34,7 @@ export function MenuRichOption({
   color: ChipColor;
   title: string;
   description: string;
-  /** Por qué no se puede todavía, en una palabra. */
+  /** Why it cannot be done yet, in one word. */
   note?: string;
   disabled?: boolean;
   onClick?: () => void;
@@ -58,10 +58,10 @@ export function MenuRichOption({
         <span className="block truncate text-xs text-muted-foreground">{description}</span>
       </span>
 
-      {/* La misma etiqueta que en el resto de la app. Era un `<span>` con su
-          propio redondeo, su propio relleno y un tamaño de letra a mano —11px,
-          que no está en la escala—: tres decisiones repetidas para decir lo
-          que `Etiqueta` ya dice. */}
+      {/* The same tag as in the rest of the app. It was a `<span>` with its
+          own rounding, its own padding and a hand-written font size —11px,
+          which is not on the scale—: three repeated decisions to say what
+          `Tag` already says. */}
       {note && (
         <Tag tone="neutral" className="shrink-0 text-muted-foreground">
           {note}

@@ -264,7 +264,7 @@ describe('Menu', () => {
   });
 });
 
-describe('MenuOpcion', () => {
+describe('MenuOption', () => {
   it('cannot be chosen while disabled', () => {
     const onClick = vi.fn();
     render(
@@ -280,7 +280,7 @@ describe('MenuOpcion', () => {
     expect(option.getAttribute('aria-disabled')).toBe('true');
   });
 
-  it('paints a dangerous option in the error colour', () => {
+  it('paints a dangerous option in the error color', () => {
     render(
       <MenuOption isDestructive onClick={() => {}}>
         Eliminar

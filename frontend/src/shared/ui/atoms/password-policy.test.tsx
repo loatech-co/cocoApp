@@ -33,7 +33,7 @@ describe('PasswordPolicy', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(5);
   });
 
-  it('says in words, not only in colour, which ones are met', () => {
+  it('says in words, not only in color, which ones are met', () => {
     render(<PasswordPolicy password="abc" />);
 
     const items = screen.getAllByRole('listitem').map((li) => li.textContent);

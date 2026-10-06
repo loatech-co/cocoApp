@@ -1,90 +1,92 @@
 /**
- * La superficie de todo lo que FLOTA sobre la página.
+ * The surface of everything that FLOATS over the page.
  *
- * Un desplegable, un calendario, un modal, una confirmación, la pista de una
- * gráfica y el aviso de una esquina son cosas distintas con un mismo trabajo:
- * levantarse del plano y decir "esto está encima". Eso son tres decisiones
- * —color, sombra y línea— y estaban escritas diez veces.
+ * A dropdown, a calendar, a modal, a confirmation, a chart's tooltip and the
+ * toast in a corner are different things with one job in common: to lift off
+ * the plane and say "this is on top". That is three decisions —color, shadow
+ * and line— and they were written ten times.
  *
- * ── Por qué la LÍNEA no puede faltar ────────────────────────────────────────
- * Porque la sombra sola no delimita en ningún tema: en claro el popover es
- * blanco sobre un lienzo casi blanco, y en oscuro la sombra es negra sobre un
- * fondo casi negro. Lo que dibuja el canto es la línea.
+ * ── Why the LINE cannot be missing ──────────────────────────────────────────
+ * Because the shadow alone does not delimit in any theme: in light the
+ * popover is white on an almost-white canvas, and in dark the shadow is black
+ * on an almost-black background. What draws the edge is the line.
  *
- * ── Por qué es el borde del TEMA y no un negro al 5 % ───────────────────────
- * Era `ring-black/5` con `dark:ring-white/12`: dos valores inventados que no
- * salen de ningún token. Sobre #ffffff, un negro al 5 % da #f2f2f2 —dos puntos
- * de diferencia con el lienzo—, así que el panel no tenía canto. `--border`
- * está calculado por el tema justamente para verse contra sus superficies, en
- * los dos modos, y cambia con él.
+ * ── Why it is the THEME's border and not a 5 % black ────────────────────────
+ * It was `ring-black/5` with `dark:ring-white/12`: two made-up values that
+ * come from no token. On #ffffff, a 5 % black gives #f2f2f2 —two points of
+ * difference from the canvas—, so the panel had no edge. `--border` is
+ * computed by the theme precisely to show against its surfaces, in both
+ * modes, and it changes with it.
  *
- * Es un ANILLO y no un borde a propósito: el anillo no ocupa sitio, así que
- * ponerlo no corre ni un píxel el contenido de los diez sitios que lo llevan.
+ * It is a RING and not a border on purpose: the ring takes no room, so adding
+ * it does not shift the content of the ten places that carry it by a single
+ * pixel.
  */
 export const FLOATING_SURFACE =
   'bg-popover text-popover-foreground shadow-[var(--sombra-flotante)] ring-1 ring-border';
 
 /**
- * Lo que aparece de golpe se lee como un fallo de pintado.
+ * What appears all at once reads as a painting glitch.
  *
- * 120ms y un 4 % de escala: suficiente para que el ojo entienda que el panel
- * SALE del botón que lo abrió, y demasiado poco para que nadie espere. La
- * animación está en `index.css` —con su excepción para quien pide menos
- * movimiento— y aquí solo se nombra.
+ * 120ms and 4 % of scale: enough for the eye to understand that the panel
+ * COMES OUT of the button that opened it, and too little for anyone to wait.
+ * The animation is in `index.css` —with its exception for whoever asks for
+ * reduced motion— and here it is only named.
  */
 export const SURGE = 'surge';
 
 /**
- * El realce de LO QUE RESPONDE al cursor: una opción, una fila, un día del
- * calendario, una baldosa.
+ * The highlight of WHAT RESPONDS to the cursor: an option, a row, a day of
+ * the calendar, a tile.
  *
- * ── Por qué el acento como TINTA y no como superficie ───────────────────────
- * Era `bg-accent`, que en este tema es un verde esmeralda apagado. Funciona
- * —se ve que algo cambió— pero no se parece a nada: el color con el que esta
- * app dice «esto» es el lima, y estaba reservado a lo elegido. Así que al
- * pasar por encima había un verde y al elegir, otro, sin que la relación
- * entre los dos significara nada.
+ * ── Why the accent as INK and not as a surface ──────────────────────────────
+ * It was `bg-accent`, which in this theme is a muted emerald green. It works
+ * —you can see something changed— but it looks like nothing: the color with
+ * which this app says «this» is the lime, and it was reserved for the
+ * selected. So hovering showed one green and selecting another, without the
+ * relation between the two meaning anything.
  *
- * Ahora es el mismo lima en los dos, a dos intensidades: al 10 % tiñe el
- * fondo mientras el cursor está encima, y lo elegido se queda con su fondo
- * quieto. La diferencia entre «estoy señalando esto» y «esto es lo que hay»
- * pasa a ser de grado y no de color, que es lo que son.
+ * Now it is the same lime in both, at two intensities: at 10 % it tints the
+ * background while the cursor is over it, and the selected keeps its still
+ * background. The difference between «I am pointing at this» and «this is
+ * what is there» becomes one of degree and not of color, which is what they
+ * are.
  *
- * `--acento-tinta` y no `--primary`: es el mismo color en oscuro, pero en
- * claro el primario es un verde casi negro y esto tiene que servir de TINTA
- * sobre una superficie clara.
+ * `--acento-tinta` and not `--primary`: it is the same color in dark, but in
+ * light the primary is an almost-black green and this has to work as INK on
+ * a light surface.
  */
 export const HIGHLIGHT = 'hover:bg-acento-tinta/10 hover:text-acento-tinta';
 
 /**
- * El realce de una superficie GRANDE que responde al cursor: el hueco del
- * próximo categoría, la zona donde se sueltan los soportes, la de la importación.
+ * The highlight of a LARGE surface that responds to the cursor: the slot for
+ * the next category, the zone where receipts are dropped, the import one.
  *
- * ── Un negro al 10 %, y no el acento ────────────────────────────────────────
- * Lo que responde se tiñe con el acento. Aquí no, y es la excepción con más
- * historia del proyecto: se probó con `bg-accent` entero, con un tercio y con
- * un 5 % de `--acento-tinta`, y las tres veces se veía lo mismo —un rectángulo
- * VERDE encendiéndose y apagándose—.
+ * ── A 10 % black, and not the accent ────────────────────────────────────────
+ * What responds is tinted with the accent. Not here, and it is the exception
+ * with the most history in the project: it was tried with the full
+ * `bg-accent`, with a third and with 5 % of `--acento-tinta`, and all three
+ * times the same thing showed —a GREEN rectangle switching on and off—.
  *
- * El motivo es el tamaño. Un tinte de color sobre 200 por 32 píxeles es un
- * apunte; sobre mil por doscientos cincuenta, el ojo integra el tono sobre
- * toda el área y lo lee como que la zona cambió de estado, no como que el
- * cursor está encima. Bajar el porcentaje no arregla eso: el color sigue
- * siendo un color, solo que más flojo.
+ * The reason is size. A color tint on 200 by 32 pixels is a hint; on a
+ * thousand by two hundred and fifty, the eye integrates the hue over the
+ * whole area and reads it as the zone changing state, not as the cursor being
+ * over it. Lowering the percentage does not fix that: the color is still a
+ * color, only weaker.
  *
- * Un negro al 10 % no introduce ningún color: hunde un poco lo que hay debajo,
- * que es lo que hace una superficie al ser pulsada. Funciona en los dos temas
- * por lo mismo —oscurece el claro y oscurece el oscuro— y no compite con el
- * verde de la app, que es de lo que aquí se trataba.
+ * A 10 % black introduces no color: it sinks what is below a little, which is
+ * what a surface does when pressed. It works in both themes for the same
+ * reason —it darkens the light one and darkens the dark one— and it does not
+ * compete with the app's green, which is what this was about.
  *
- * La letra sube a plena tinta al mismo tiempo, y es lo que hace legible la
- * respuesta sobre un fondo que apenas se mueve.
+ * The text goes up to full ink at the same time, and that is what makes the
+ * response legible on a background that barely moves.
  *
- * ── Y no toca el trazo ──────────────────────────────────────────────────────
- * Estas superficies llevan borde punteado. Cambiarle el color redibuja el
- * contorno entero de golpe, y en un rectángulo de ese tamaño eso se lee como
- * movimiento y no como respuesta. El trazo se reserva para cuando hay un
- * archivo encima: ahí sí hay algo que decir —«esto es lo que lo va a
- * recibir»— y el cambio de color lo dice de una vez.
+ * ── And it does not touch the stroke ────────────────────────────────────────
+ * These surfaces carry a dashed border. Changing its color redraws the whole
+ * outline at once, and on a rectangle that size that reads as motion and not
+ * as a response. The stroke is reserved for when there is a file over it:
+ * there there is something to say —«this is what will receive it»— and the
+ * color change says it in one go.
  */
 export const SURFACE_HIGHLIGHT = 'hover:bg-black/10 hover:text-foreground';

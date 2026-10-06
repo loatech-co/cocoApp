@@ -12,14 +12,14 @@ const utc = (year: number, month: number, day: number): Date =>
   new Date(Date.UTC(year, month, day));
 
 /**
- * Las celdas de un mes, alineadas a la rejilla de siete columnas.
+ * The cells of a month, aligned to the seven-column grid.
  *
- * Los huecos del principio y del final son `null` en vez de días del mes
- * vecino: un día gris que sí se puede pulsar confunde sobre qué mes se está
- * mirando, y uno que no se puede pulsar es ruido.
+ * The gaps at the start and at the end are `null` instead of days of the
+ * neighboring month: a gray day that can be pressed confuses which month is
+ * being looked at, and one that cannot be pressed is noise.
  */
 export function monthCells(year: number, month: number): (string | null)[] {
-  // getUTCDay() cuenta desde el domingo; con +6 %7 el lunes pasa a ser 0.
+  // getUTCDay() counts from Sunday; with +6 %7 Monday becomes 0.
   const blanks = (utc(year, month, 1).getUTCDay() + 6) % 7;
   const total = utc(year, month + 1, 0).getUTCDate();
 
@@ -43,7 +43,7 @@ export const monthOfIso = (iso: string): VisibleMonth => ({
 interface CalendarProps {
   from?: string | undefined;
   to?: string | undefined;
-  /** El mes que se muestra. Sin esto, el propio calendario lo lleva. */
+  /** The month shown. Without this, the calendar keeps track of it itself. */
   view?: VisibleMonth;
   onViewChange?: (month: VisibleMonth) => void;
   onSelectDay: (iso: string) => void;
@@ -52,17 +52,18 @@ interface CalendarProps {
 }
 
 /**
- * La rejilla de un mes.
+ * The grid of a month.
  *
- * ── Uno solo para los dos usos ──────────────────────────────────────────────
- * El filtro de fechas elige un RANGO y el formulario de un movimiento elige UN
- * día. Es el mismo calendario: cambia cuántos extremos tiene pintados. Escrito
- * dos veces, uno de los dos acabaría empezando la semana en domingo, o
- * marcando hoy de otra forma, y serían dos calendarios distintos dentro de la
- * misma app.
+ * ── A single one for both uses ──────────────────────────────────────────────
+ * The date filter picks a RANGE and a transaction's form picks ONE day. It is
+ * the same calendar: what changes is how many ends it has painted. Written
+ * twice, one of the two would end up starting the week on Sunday, or marking
+ * today some other way, and they would be two different calendars inside the
+ * same app.
  *
- * `desde` y `hasta` iguales pintan un solo día; distintos, la banda entre los
- * dos. Por eso no hay un modo "rango" y un modo "día": hay dos extremos.
+ * Equal `from` and `to` paint a single day; different, the band between the
+ * two. That is why there is no "range" mode and "day" mode: there are two
+ * ends.
  */
 export function Calendar({
   from,
@@ -90,32 +91,33 @@ export function Calendar({
   return (
     <div className={cn('min-w-0', className)}>
       {/*
-        ── El mes mide 294px, y va en su PROPIA caja ────────────────────────
-        Siete columnas de 42, que es el suelo de lo que se toca en esta app
-        —el mismo que usan la barra del teléfono y sus campos—. La casilla es
-        cuadrada, así que de ahí salen los 42x42 de cada día.
+        ── The month measures 294px, and goes in its OWN box ────────────────
+        Seven columns of 42, which is the floor for what is touched in this
+        app —the same one the phone bar and its fields use—. The cell is
+        square, so that is where the 42x42 of each day comes from.
 
-        La medida va en el CONJUNTO y no en la casilla. Puesta en la casilla,
-        la celda se quedaría corta dentro de su columna y entre una y otra
-        habría un hueco: la banda del rango se partiría en cuadritos sueltos.
-        Así las columnas siguen tocándose y lo que mide 294 es el mes entero.
+        The measurement goes on the WHOLE and not on the cell. Put on the
+        cell, the cell would fall short inside its column and there would be
+        a gap between one and the next: the range band would break into loose
+        little squares. This way the columns keep touching and what measures
+        294 is the whole month.
 
-        ── Por qué un ANCHO y no un tope ────────────────────────────────────
-        Con `max-w` no salían 42. Un tope solo recorta lo que sobra, y aquí no
-        sobraba nada: el panel que envuelve a esto se ajusta a su contenido
-        —`w-auto`—, así que su ancho lo pide el contenido, y lo que pide una
-        rejilla de columnas automáticas es lo que ocupa el número más ancho.
-        El mes salía de unos 140px y el tope de 294 no llegaba a tocarse
-        nunca. Pidiendo el ancho, el panel se ajusta A ÉL.
+        ── Why a WIDTH and not a cap ────────────────────────────────────────
+        With `max-w` it did not come out at 42. A cap only trims the excess,
+        and here there was no excess: the panel wrapping this fits its content
+        —`w-auto`—, so its width is asked for by the content, and what a grid
+        of auto columns asks for is what the widest number takes. The month
+        came out at about 140px and the 294 cap was never reached. Asking for
+        the width, the panel fits TO IT.
 
-        `max-w-full` es la salida para una pantalla más angosta que 294: ahí
-        las columnas se encogen por igual, que es mejor que salirse.
+        `max-w-full` is the way out for a screen narrower than 294: there the
+        columns shrink evenly, which is better than running off.
 
-        ── Y por qué en una caja propia ─────────────────────────────────────
-        Porque la de fuera es la que recibe el relleno del que llama —`p-3` en
-        el selector de rango— y con `border-box` esos 24px se descontarían de
-        los 294: la columna caía a 38,6. Aquí la medida no comparte caja con
-        ningún relleno.
+        ── And why in its own box ───────────────────────────────────────────
+        Because the outer one is the one that receives the caller's padding
+        —`p-3` in the range picker— and with `border-box` those 24px would be
+        taken off the 294: the column dropped to 38.6. Here the measurement
+        shares its box with no padding.
       */}
       <div className="mx-auto w-[294px] max-w-full">
         <MonthHeader current={current} moveMonth={moveMonth} />
@@ -137,7 +139,7 @@ export function Calendar({
 
 interface DayCellProps {
   iso: string;
-  /** Su posición en la rejilla: decide dónde se curva la banda. */
+  /** Its position in the grid: decides where the band curves. */
   i: number;
   from: string | undefined;
   to: string | undefined;
@@ -146,7 +148,7 @@ interface DayCellProps {
   onHover: ((iso: string | null) => void) | undefined;
 }
 
-/** Un día del mes: su banda de rango, su círculo y su número. */
+/** A day of the month: its range band, its circle and its number. */
 function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps) {
   const isInRange = from !== undefined && to !== undefined && iso >= from && iso <= to;
   const isStart = iso === from;
@@ -156,19 +158,19 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
   return (
     <div
       className={cn(
-        // CUADRADA, no de alto fijo: la celda mide lo que mida su
-        // columna, y el círculo de dentro mide lo que mida la celda.
-        // Con 36px fijos, en un panel estrecho el círculo se salía por
-        // los lados de su casilla.
+        // SQUARE, not fixed height: the cell measures whatever its
+        // column measures, and the circle inside measures whatever the
+        // cell measures. With a fixed 36px, in a narrow panel the circle
+        // stuck out the sides of its cell.
         'aspect-square',
-        // La banda del rango es `--accent`, el token del tema para lo
-        // que está señalado. Llevaba además un `dark:bg-white/12`
-        // encima: un blanco inventado que no sale de ningún token y
-        // que en oscuro pintaba la banda de gris en vez de teal.
+        // The range band is `--accent`, the theme's token for what is
+        // pointed at. It also carried a `dark:bg-white/12` on top: a
+        // made-up white that comes from no token and that in dark
+        // painted the band gray instead of teal.
         isInRange && !isEdge && 'bg-accent',
         isInRange && isEdge && from !== to && 'bg-accent',
-        // Las puntas se redondean también al principio y al final de
-        // cada fila, o la banda quedaría cortada a ras contra el borde.
+        // The ends are also rounded at the start and at the end of each
+        // row, or the band would be cut flush against the edge.
         (isStart || i % 7 === 0) && 'rounded-l-full',
         (isEnd || i % 7 === 6) && 'rounded-r-full',
       )}
@@ -186,14 +188,13 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
             : isInRange
               ? cn('text-foreground', HIGHLIGHT)
               : cn('text-muted-foreground', HIGHLIGHT),
-          // Hoy lleva anillo, no relleno: el relleno es de lo elegido y
-          // competirían por significar lo mismo.
+          // Today carries a ring, not a fill: the fill belongs to the
+          // selected and they would compete to mean the same thing.
           //
-          // El anillo va en el acento como TINTA y no en `--input`.
-          // `--input` es el borde de un campo, calculado para verse
-          // contra un relleno blanco, no para distinguir una casilla de
-          // 40px entre otras cuarenta: el círculo de hoy estaba puesto
-          // y no se encontraba.
+          // The ring is in the accent as INK and not in `--input`.
+          // `--input` is a field's border, computed to show against a
+          // white fill, not to tell one 40px cell apart from forty
+          // others: today's circle was there and could not be found.
           iso === today &&
             !isEdge &&
             'font-semibold text-foreground ring-1 ring-inset ring-acento-tinta/50',
@@ -205,7 +206,7 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
   );
 }
 
-/** El mes a la vista, con las dos flechas que lo mueven. */
+/** The month in view, with the two arrows that move it. */
 function MonthHeader({
   current,
   moveMonth,
@@ -225,18 +226,18 @@ function MonthHeader({
         <ChevronLeft className="size-4" aria-hidden="true" />
       </Button>
       {/*
-        La mayúscula va SOLO en el mes.
+        The capital goes ONLY on the month.
 
-        Estaba `capitalize` en toda la frase, y eso pone en mayúscula la
-        primera letra de CADA palabra: «septiembre de 2026» salía
-        «Septiembre De 2026». El «de» es una preposición, no una palabra que
-        se titule.
+        There was `capitalize` on the whole phrase, and that capitalizes the
+        first letter of EVERY word: «septiembre de 2026» came out
+        «Septiembre De 2026». The «de» is a preposition, not a word that
+        gets title case.
 
-        Y no vale `first-letter:uppercase` en el conjunto: `::first-letter`
-        solo se aplica a contenedores de bloque, y esto es un `span` en
-        línea, así que la regla no engancharía y el mes saldría en
-        minúscula. Envolver la palabra que sí se titula es explícito y no
-        depende de ninguna excepción del selector.
+        And `first-letter:uppercase` on the whole does not work:
+        `::first-letter` only applies to block containers, and this is an
+        inline `span`, so the rule would not catch and the month would come
+        out in lowercase. Wrapping the word that does get title case is
+        explicit and depends on no exception of the selector.
       */}
       <span aria-live="polite" className="font-display text-sm font-semibold">
         <span className="capitalize">{MESES_LARGOS[current.month]}</span>
@@ -255,7 +256,7 @@ function MonthHeader({
   );
 }
 
-/** Los días del mes, con los huecos de delante y de detrás. */
+/** The days of the month, with the gaps before and after. */
 function MonthDays({
   cells,
   from,
@@ -264,13 +265,13 @@ function MonthDays({
   onSelectDay,
   onHover,
 }: Omit<DayCellProps, 'iso' | 'i'> & { cells: (string | null)[] }) {
-  // Sin separación entre celdas: la banda del rango tiene que ser continua, y
-  // un hueco la partiría en cuadritos sueltos.
+  // No spacing between cells: the range band has to be continuous, and a gap
+  // would break it into loose little squares.
   return (
     <div className="grid grid-cols-7" onMouseLeave={() => onHover?.(null)}>
       {cells.map((iso, i) => {
         if (iso === null) {
-          // eslint-disable-next-line @eslint-react/no-array-index-key -- los huecos de la rejilla solo tienen su posición
+          // eslint-disable-next-line @eslint-react/no-array-index-key -- the grid's gaps only have their position
           return <span key={`hueco-${i}`} className="aspect-square" />;
         }
 

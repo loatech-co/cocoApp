@@ -18,7 +18,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = {};
 
-/** Rule 5: the colours are named by their role, not by the hue they have today. */
+/** Rule 5: the colors are named by their role, not by the hue they have today. */
 export const Roles: Story = {
   render: () => (
     <div className="flex flex-col gap-4">

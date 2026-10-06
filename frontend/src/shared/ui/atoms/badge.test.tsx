@@ -7,7 +7,7 @@ import { Badge, Chip, Tag } from './badge';
 afterEach(cleanup);
 
 describe('Tag', () => {
-  it('paints each role with its own colour', () => {
+  it('paints each role with its own color', () => {
     render(
       <>
         <Tag tone="income">Ingreso</Tag>

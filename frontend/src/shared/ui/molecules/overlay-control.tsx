@@ -4,21 +4,21 @@ import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 
 /**
- * La raya entre dos grupos de mandos dentro de la misma pastilla.
+ * The line between two groups of controls inside the same pill.
  *
- * ── Qué separa ──────────────────────────────────────────────────────────────
- * Moverse de lo que MODIFICA. Pasar al soporte siguiente no cambia nada;
- * agregar y borrar sí, y borrar no se deshace. Seguidos sin nada en medio, las
- * flechas y el más se leen como una sola regleta de cinco botones, y el que
- * está justo después del contador —el más— se pulsa creyendo que es «el
- * siguiente».
+ * ── What it separates ───────────────────────────────────────────────────────
+ * Moving from what MODIFIES. Going to the next receipt changes nothing; adding
+ * and deleting do, and deleting cannot be undone. Placed in a row with nothing
+ * in between, the arrows and the plus read as a single strip of five buttons,
+ * and the one right after the counter —the plus— gets pressed in the belief
+ * that it is «next».
  *
- * ── Por qué una raya y no un hueco ──────────────────────────────────────────
- * Un hueco dentro de una pastilla de 40px de alto tiene que ser grande para
- * leerse como separación, y entonces la pastilla crece a lo ancho encima del
- * papel. Un píxel dice lo mismo y no ocupa nada.
+ * ── Why a line and not a gap ────────────────────────────────────────────────
+ * A gap inside a 40px-tall pill has to be large to read as a separation, and
+ * then the pill grows sideways over the paper. One pixel says the same and
+ * takes no room.
  *
- * Va al 25 % de la tinta: tiene que verse como una división, no como un sexto
+ * It is at 25 % of the ink: it has to look like a division, not like a sixth
  * control.
  */
 export function ControlSeparator() {
@@ -26,13 +26,13 @@ export function ControlSeparator() {
 }
 
 /**
- * Un mando que vive SOBRE un documento o sobre el velo oscuro de un visor.
+ * A control that lives ON a document or on the dark backdrop of a viewer.
  *
- * No usa la paleta de la aplicación: encima de un recibo —que es blanco— un
- * control claro desaparece. Los mandos de una previsualización los pone quien
- * la usa: la ficha de un movimiento sin guardar quita archivos de la memoria y
- * la de uno guardado los borra del servidor, pero los dos botones son el mismo
- * objeto.
+ * It does not use the app's palette: on top of a receipt —which is white— a
+ * light control disappears. The controls of a preview are supplied by whoever
+ * uses it: the modal of an unsaved transaction removes files from memory and
+ * the one of a saved transaction deletes them from the server, but both
+ * buttons are the same object.
  */
 export function OverlayButton({
   onClick,
@@ -51,8 +51,8 @@ export function OverlayButton({
     <Button
       type="button"
       variant="ghost"
-      // Redondo: estos mandos viven dentro de una pastilla redonda, y un
-      // resaltado cuadrado ahí deja dos esquinas asomando en cada extremo.
+      // Round: these controls live inside a round pill, and a square
+      // highlight there leaves two corners sticking out at each end.
       size="sm-icon-round"
       onClick={onClick}
       disabled={isDisabled}
@@ -66,17 +66,18 @@ export function OverlayButton({
 }
 
 /**
- * La lectura entre dos mandos: el porcentaje del zoom, la página. Cifras
- * tabulares, para que «95 %» y «100 %» no muevan los botones de al lado.
+ * The readout between two controls: the zoom percentage, the page. Tabular
+ * figures, so that «95 %» and «100 %» do not move the buttons next to them.
  *
- * Con `onClick` es un botón (el porcentaje vuelve al tamaño normal: es donde
- * todo el mundo pulsa cuando se ha perdido ampliando); sin él, solo se lee.
+ * With `onClick` it is a button (the percentage goes back to normal size: it
+ * is where everyone clicks when they got lost zooming in); without it, it is
+ * only read.
  *
- * | Ancho     | Lo que cabe                                          |
+ * | Width     | What fits                                            |
  * | --------- | ---------------------------------------------------- |
- * | `previa`  | «100 %» en letra 2xs, sobre la previsualización      |
- * | `zoom`    | «100 %» en el visor a pantalla completa              |
- * | `paginas` | «Pág. 12 / 30» en el visor                           |
+ * | `preview` | «100 %» in 2xs type, over the preview                |
+ * | `zoom`    | «100 %» in the full-screen viewer                    |
+ * | `pages`   | «Pág. 12 / 30» in the viewer                         |
  */
 const READOUT_WIDTHS = {
   preview: 'min-w-[3rem] text-2xs',
@@ -91,7 +92,7 @@ export function ControlReadout({
   children,
 }: {
   width: keyof typeof READOUT_WIDTHS;
-  /** La pista al pasar por encima, si se puede pulsar. */
+  /** The hint on hover, if it can be pressed. */
   title?: string;
   onClick?: () => void;
   children: ReactNode;

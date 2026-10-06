@@ -12,56 +12,56 @@ interface SelectOption {
 }
 
 interface SelectProps {
-  /** El valor elegido. `''` es "ninguno". */
+  /** The selected value. `''` is "none". */
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
-  /** Nombre accesible del campo. */
+  /** Accessible name of the field. */
   label: string;
-  /** Texto de la opción sin valor. Si se omite, elegir es obligatorio. */
+  /** Text of the option with no value. If omitted, choosing is required. */
   emptyLabel?: string;
-  /** Los mismos dos de toda la app: `sm` mide 36 y `md` mide 44. */
+  /** The same two as the whole app: `sm` measures 36 and `md` measures 44. */
   size?: 'sm' | 'md';
   disabled?: boolean | undefined;
-  /** A la izquierda, informativo: de qué es este campo. */
+  /** On the left, informative: what this field is for. */
   icon?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  /** A la derecha, activas. Una o dos, antes de la flecha. */
+  /** On the right, active. One or two, before the chevron. */
   actions?: ReactNode[];
-  /** El `id` del BOTÓN, para que una etiqueta pueda apuntarle. */
+  /** The `id` of the BUTTON, so that a label can point at it. */
   id?: string;
   className?: string;
 }
 
 /**
- * Una lista desplegable, dibujada por la app.
+ * A dropdown list, drawn by the app.
  *
- * ── Por qué no es un `<select>` ─────────────────────────────────────────────
- * Porque su lista la pinta el SISTEMA OPERATIVO: su tipografía, sus colores,
- * su idioma y su flecha pegada al borde derecho. La misma pantalla se ve
- * distinta en cada máquina, y en medio de un formulario verde aparece un
- * cuadro gris de Windows.
+ * ── Why it is not a `<select>` ──────────────────────────────────────────────
+ * Because its list is painted by the OPERATING SYSTEM: its typeface, its
+ * colors, its language and its chevron stuck to the right edge. The same
+ * screen looks different on every machine, and in the middle of a green form
+ * a gray Windows box appears.
  *
- * Está construida sobre `Menu`, que es quien sabe abrirse, cerrarse al tocar
- * fuera y cerrarse con Escape. Si esa mecánica se arregla, se arregla aquí y
- * en el filtro y en el menú de la cuenta a la vez.
+ * It is built on `Menu`, which is what knows how to open, close on a tap
+ * outside and close with Escape. If that mechanism gets fixed, it gets fixed
+ * here and in the filter and in the account menu at once.
  *
- * ── Qué se pierde y por qué se acepta ───────────────────────────────────────
- * El nativo en un teléfono abre la rueda de iOS o el diálogo de Android, que
- * están bien hechos. Se renuncia a eso a cambio de que la app se vea igual en
- * todas partes; a cambio, esta lista se desplaza, marca lo elegido y cierra al
- * elegir, que es lo que se usa el 99 % de las veces.
+ * ── What is lost and why it is accepted ─────────────────────────────────────
+ * The native one on a phone opens the iOS wheel or the Android dialog, which
+ * are well made. That is given up in exchange for the app looking the same
+ * everywhere; in return, this list scrolls, marks the selection and closes on
+ * choosing, which is what gets used 99 % of the time.
  *
- * ── Los iconos, los mismos que en un campo de texto ─────────────────────────
- * `icono` a la izquierda es informativo; `acciones` a la derecha son activas y
- * van ANTES de la flecha, que es la acción propia del desplegable y siempre la
- * última. Aquí no hace falta reservarles sitio con relleno como en un
- * `<input>`: un botón sí puede tener hijos, así que van en la misma fila y el
- * texto se encoge solo.
+ * ── The icons, the same as in a text field ──────────────────────────────────
+ * `icon` on the left is informative; `actions` on the right are active and go
+ * BEFORE the chevron, which is the dropdown's own action and always the last.
+ * Here there is no need to reserve room for them with padding as in an
+ * `<input>`: a button can have children, so they go in the same row and the
+ * text shrinks by itself.
  *
- * ── Qué es `data-lleno` y qué es `data-vacio` ───────────────────────────────
- * Los dos los lee la etiqueta flotante de `.campo`, en `index.css`: el primero
- * para subirse cuando hay algo elegido, el segundo para esconder el texto de
- * «sin elegir» mientras la etiqueta está ocupando su sitio.
+ * ── What `data-lleno` is and what `data-vacio` is ───────────────────────────
+ * Both are read by the floating label of `.campo`, in `index.css`: the first
+ * to rise when something is selected, the second to hide the «not chosen»
+ * text while the label is taking its place.
  */
 export function Select(props: SelectProps) {
   const {
@@ -80,8 +80,8 @@ export function Select(props: SelectProps) {
   const isInField = useInsideField();
   const triggerContent = <SelectTriggerContent select={props} isInField={isInField} />;
 
-  // Deshabilitado no puede ser un botón que abre nada: se pinta igual pero
-  // sin desplegable detrás, para que el foco no caiga en una trampa.
+  // Disabled cannot be a button that opens anything: it is painted the same
+  // but with no dropdown behind it, so that focus does not fall into a trap.
   if (isInert) return <DisabledTrigger select={props}>{triggerContent}</DisabledTrigger>;
 
   return (
@@ -89,8 +89,8 @@ export function Select(props: SelectProps) {
       label={label}
       kind="list"
       align="left"
-      // Los selectores viven en formularios, y un formulario largo se
-      // desplaza: sin esto, el panel lo recorta la caja que lo contiene.
+      // Selects live in forms, and a long form scrolls: without this, the
+      // panel is clipped by the box that contains it.
       isFloating
       width="field"
       triggerId={id}
@@ -130,8 +130,8 @@ function Option({
         className={cn(
           'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
           'movil:min-h-[42px]',
-          // Quieta en `muted`, señalada en `accent`: con el mismo color para
-          // las dos, pasar por encima de la opción ya elegida no cambia nada.
+          // Still on `muted`, pointed at on `accent`: with the same color for
+          // both, hovering over the already-selected option changes nothing.
           isSelected ? cn('bg-muted font-medium', HIGHLIGHT) : HIGHLIGHT,
         )}
       >
@@ -183,7 +183,7 @@ function SelectOptions({
   );
 }
 
-/** Lo que se ve dentro del campo: el icono, lo elegido, las acciones y la flecha. */
+/** What shows inside the field: the icon, the selection, the actions and the chevron. */
 function SelectTriggerContent({ select, isInField }: { select: SelectProps; isInField: boolean }) {
   const { icon: Icon, emptyLabel } = select;
   const isSmall = select.size === 'sm';
@@ -198,11 +198,12 @@ function SelectTriggerContent({ select, isInField }: { select: SelectProps; isIn
       )}
 
       {/*
-        El relleno de arriba va en el TEXTO y no en el botón, y por eso la
-        flecha no se mueve: con el botón relleno, `items-center` centraría la
-        flecha en la caja de contenido en vez de en el campo y quedaría ocho
-        píxeles baja. Estirando solo el texto, la línea crece hacia arriba y la
-        flecha se queda en el centro del campo, que es donde se busca.
+        The top padding goes on the TEXT and not on the button, and that is
+        why the chevron does not move: with the button padded, `items-center`
+        would center the chevron in the content box instead of in the field
+        and it would sit eight pixels low. Stretching only the text, the line
+        grows upward and the chevron stays in the center of the field, which
+        is where it is looked for.
       */}
       <span
         data-lleno={selected ? 'si' : 'no'}
@@ -217,9 +218,9 @@ function SelectTriggerContent({ select, isInField }: { select: SelectProps; isIn
       </span>
 
       {trailing.map((action, i) => (
-        // El índice como clave: son uno o dos botones fijos que el campo
-        // declara al construirse, no una lista que se reordene.
-        // eslint-disable-next-line @eslint-react/no-array-index-key -- lista fija y posicional, sin id propio
+        // The index as key: they are one or two fixed buttons the field
+        // declares when it is built, not a list that gets reordered.
+        // eslint-disable-next-line @eslint-react/no-array-index-key -- fixed, positional list with no id of its own
         <span key={i} className="shrink-0">
           {action}
         </span>

@@ -4,30 +4,30 @@ import { agruparMiles, cn, soloCifras } from '@/shared/lib/utils';
 import { Input } from '@/shared/ui/atoms/input';
 
 /**
- * Un campo donde se escribe plata.
+ * A field where money is typed.
  *
- * ── Los miles se agrupan MIENTRAS se escribe ────────────────────────────────
- * «453132» no se lee: hay que contar los dígitos de tres en tres con el dedo
- * para saber si son cuatrocientos mil o cuatro millones. Es el dato más
- * importante de cualquier ficha que hable de dinero y es el único que no se
- * podía leer de un vistazo.
+ * ── Thousands are grouped WHILE typing ──────────────────────────────────────
+ * «453132» cannot be read: one has to count the digits in threes with a finger
+ * to know whether it is four hundred thousand or four million. It is the most
+ * important piece of data in any modal that talks about money and it was the
+ * only one that could not be read at a glance.
  *
- * Se GUARDA sin puntos y se ENSEÑA con ellos: el valor que viaja a la API es
- * el que se teclea, no lo que se ve.
+ * It is STORED without dots and SHOWN with them: the value that travels to
+ * the API is the one typed, not the one seen.
  *
- * ── Y el cursor se queda donde estaba ───────────────────────────────────────
- * Es la mitad difícil, y por eso esto es un componente y no dos llamadas
- * parecidas. Al reagrupar, la cadena pintada cambia de largo, y si el cursor
- * se deja donde el navegador lo dejó salta al final en cuanto aparece un punto
- * nuevo: corregir una cifra por la mitad se vuelve imposible.
+ * ── And the caret stays where it was ────────────────────────────────────────
+ * It is the hard half, and that is why this is a component and not two similar
+ * call sites. On regrouping, the painted string changes length, and if the
+ * caret is left where the browser left it, it jumps to the end as soon as a
+ * new dot appears: correcting a figure in the middle becomes impossible.
  *
- * Lo que se conserva no es la posición sino CUÁNTOS DÍGITOS hay antes del
- * cursor, que es lo único que no cambia al reagrupar.
+ * What is kept is not the position but HOW MANY DIGITS there are before the
+ * caret, which is the only thing that does not change on regrouping.
  *
- * ── Por qué no es `type="number"` ───────────────────────────────────────────
- * Traería flechitas que nadie usa y rechazaría la coma decimal que se escribe
- * en Colombia. `inputMode="decimal"` abre el teclado numérico del teléfono sin
- * ninguna de las dos cosas.
+ * ── Why it is not `type="number"` ───────────────────────────────────────────
+ * It would bring little arrows nobody uses and would reject the decimal comma
+ * written in Colombia. `inputMode="decimal"` opens the phone's numeric
+ * keyboard with neither of the two.
  */
 export function MoneyField({
   value,
@@ -35,7 +35,7 @@ export function MoneyField({
   className,
   ...rest
 }: {
-  /** Solo cifras, sin puntos. Es lo que viaja a la API. */
+  /** Digits only, no dots. It is what travels to the API. */
   value: string;
   onValueChange: (raw: string) => void;
 } & Omit<ComponentProps<typeof Input>, 'value' | 'onChange' | 'type' | 'icono'>) {
@@ -73,15 +73,16 @@ export function MoneyField({
 }
 
 /**
- * El signo de pesos, a la izquierda.
+ * The peso sign, on the left.
  *
- * ── Por qué un signo y no la palabra ────────────────────────────────────────
- * Porque «Valor» ya está en la etiqueta del campo, y lo que hace falta a la
- * izquierda del número es decir que ESTO es dinero: al lado puede haber otro
- * número —el día del mes de una recurrencia— que se escribe igual.
+ * ── Why a sign and not the word ─────────────────────────────────────────────
+ * Because «Valor» is already in the field's label, and what is needed to the
+ * left of the number is to say that THIS is money: next to it there may be
+ * another number —the day of the month of a recurrence— that is typed the
+ * same way.
  *
- * Es el `icono` del campo, así que no forma parte del valor: lo que se teclea
- * y lo que se guarda no lo llevan.
+ * It is the field's `icon`, so it is not part of the value: what is typed
+ * and what is stored do not carry it.
  */
 function PesoSign({ className }: { className?: string }) {
   return (

@@ -116,10 +116,7 @@ describe("A screen's header is drawn in a single place", () => {
       }
     }
 
-    expect(
-      offenders,
-      'usa CabeceraDePagina, o su clase TITULO_DE_PAGINA si no es una cabecera',
-    ).toEqual([]);
+    expect(offenders, 'use PageHeader, or its PAGE_TITLE class if it is not a header').toEqual([]);
   });
 
   it('a header action is `sm`', () => {
@@ -138,7 +135,7 @@ describe("A screen's header is drawn in a single place", () => {
       }
     }
 
-    expect(offenders, 'una acción de cabecera lleva size="sm"').toEqual([]);
+    expect(offenders, 'a header action takes size="sm"').toEqual([]);
   });
 
   it('the title class carries family, weight and the screen step', () => {

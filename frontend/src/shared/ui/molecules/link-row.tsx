@@ -4,12 +4,11 @@ import { Link } from 'react-router-dom';
 import { PANEL_ROW_CLASS } from '@/shared/ui/atoms/panel-row';
 
 /**
- * Una fila que lleva a una página: icono y nombre.
+ * A row that leads to a page: icon and name.
  *
- * Exportada porque Mi cuenta, dentro de la app del teléfono, ofrece las
- * secciones de administración con esta misma fila —esta hoja no se monta
- * allí—. Un componente y no una copia: la primera copia aprendería a marcar
- * algo que la otra no.
+ * Exported because Mi cuenta, inside the phone app, offers the admin sections
+ * with this same row —this sheet is not mounted there—. A component and not a
+ * copy: the first copy would learn to mark something the other would not.
  */
 export function LinkRow({
   Icon,
@@ -20,13 +19,13 @@ export function LinkRow({
   Icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   to: string;
   /**
-   * Cerrar la hoja es de la fila y no del armazón.
+   * Closing the sheet belongs to the row and not to the shell.
    *
-   * El armazón cierra lo que tapa la página cada vez que cambia la RUTA, y dos
-   * de estas filas no la cambian: estando ya en Mi cuenta, ir a su ancla de
-   * Seguridad deja la ruta igual y la hoja se habría quedado abierta encima
-   * del sitio al que acababa de llevar. Fuera de una hoja no hay nada que
-   * cerrar, y por eso es opcional.
+   * The shell closes whatever covers the page every time the ROUTE changes,
+   * and two of these rows do not change it: when already on Mi cuenta, going
+   * to its Seguridad anchor leaves the route the same and the sheet would have
+   * stayed open on top of the place it had just led to. Outside a sheet there
+   * is nothing to close, and that is why it is optional.
    */
   onNavigate?: () => void;
   children: string;

@@ -25,7 +25,7 @@ function Controlled({ onValueChange }: { onValueChange: (raw: string) => void })
   );
 }
 
-describe('CampoDeDinero', () => {
+describe('MoneyField', () => {
   it('opens the decimal keyboard on a phone', () => {
     render(<MoneyField aria-label="Valor" value="" onValueChange={vi.fn()} />);
 

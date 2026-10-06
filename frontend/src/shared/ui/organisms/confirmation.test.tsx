@@ -26,7 +26,7 @@ function renderConfirmation(props: Partial<Parameters<typeof Confirmation>[0]> =
 const confirmButton = (name = 'Confirmar') =>
   screen.getByRole<HTMLButtonElement>('button', { name });
 
-describe('Confirmacion', () => {
+describe('Confirmation', () => {
   it('renders nothing while closed', () => {
     renderConfirmation({ isOpen: false });
 

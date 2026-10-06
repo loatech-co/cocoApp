@@ -11,46 +11,47 @@ import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 interface ConfirmationProps {
   isOpen: boolean;
   title: string;
-  /** Qué va a pasar. Concreto: nombres, cantidades, consecuencias. */
+  /** What is going to happen. Concrete: names, quantities, consequences. */
   children: ReactNode;
   confirmLabel?: string;
-  /** Pinta la acción en rojo. Solo para lo que destruye algo. */
+  /** Paints the action red. Only for what destroys something. */
   isDestructive?: boolean;
   isBusy?: boolean;
   /**
-   * Apaga el botón de confirmar porque falta un dato.
+   * Disables the confirm button because a piece of data is missing.
    *
-   * Distinto de `ocupada`, que dice «ya se pulsó, espera». Esto dice «todavía
-   * no se puede». Lo usa el borrado de una categoría con movimientos dentro:
-   * hasta que se diga a dónde pasan no hay nada que confirmar, y enterarse
-   * después de pulsar «Eliminar» en un diálogo que avisa de que no se puede
-   * deshacer es lo peor que puede pasar ahí.
+   * Different from `isBusy`, which says «it was already pressed, wait». This
+   * says «it cannot be done yet». The deletion of a category with
+   * transactions inside uses it: until it is said where they move to there is
+   * nothing to confirm, and finding out after pressing «Eliminar» in a dialog
+   * that warns it cannot be undone is the worst thing that can happen there.
    */
   isConfirmDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
 /**
- * Pedir confirmación antes de algo que no se deshace solo.
+ * Asking for confirmation before something that does not undo itself.
  *
- * ── Por qué un diálogo y no un `confirm()` ──────────────────────────────────
- * El del navegador se dibuja con los colores del sistema operativo, bloquea la
- * página entera y no deja explicar nada: solo caben dos botones y una línea.
- * Aquí lo que hace falta es decir QUÉ va a pasar —que archivar no es borrar,
- * que los movimientos conservan su clasificación—, y eso no cabe en una línea.
+ * ── Why a dialog and not a `confirm()` ──────────────────────────────────────
+ * The browser's is drawn with the operating system's colors, blocks the whole
+ * page and lets nothing be explained: only two buttons and one line fit. What
+ * is needed here is to say WHAT is going to happen —that archiving is not
+ * deleting, that the transactions keep their classification—, and that does
+ * not fit in one line.
  *
- * ── El título AFIRMA y el cuerpo pregunta ───────────────────────────────────
- * «Eliminar movimiento», no «¿Eliminar este movimiento?». La pregunta va al
- * final del cuerpo, después de decir qué pasa y que no se deshace, y con las
- * dos cosas preguntando el diálogo interrogaba dos veces y respondía una.
+ * ── The title STATES and the body asks ──────────────────────────────────────
+ * «Eliminar movimiento», not «¿Eliminar este movimiento?». The question goes
+ * at the end of the body, after saying what happens and that it cannot be
+ * undone, and with both asking the dialog questioned twice and answered once.
  *
- * El cuerpo lleva tres golpes, en este orden: qué está a punto de pasar, que
- * no se puede deshacer, y la pregunta. El orden importa: la pregunta no
- * significa nada antes de saber qué se contesta.
+ * The body carries three beats, in this order: what is about to happen, that
+ * it cannot be undone, and the question. The order matters: the question
+ * means nothing before knowing what is being answered.
  *
- * ── Por qué el botón peligroso no es el que tiene el foco ───────────────────
- * Porque quien llega con Enter puesto no quiso confirmar nada: venía de pulsar
- * otra cosa. El foco arranca en Cancelar.
+ * ── Why the dangerous button is not the one with focus ──────────────────────
+ * Because whoever arrives with Enter pressed did not mean to confirm anything:
+ * they were coming from pressing something else. Focus starts on Cancel.
  */
 export function Confirmation({
   isOpen,
@@ -75,18 +76,18 @@ export function Confirmation({
       onMouseDown={(e) => e.target === e.currentTarget && onCancel()}
       className={cn(
         'fixed inset-0 z-[60] flex items-center justify-center bg-[var(--velo)] backdrop-blur-sm',
-        // 24 hasta el canto en el teléfono, los mismos que el resto de fichas.
+        // 24 to the edge on the phone, the same as the rest of the modals.
         'p-6 sm:p-4',
         'se-revela',
       )}
     >
       <div
         className={cn(
-          // 24 de relleno, no 16. Es la única superficie de la app que se abre
-          // ENCIMA de otra ficha —y con su propio velo—, así que no tiene nada
-          // alrededor con lo que alinearse: lo que la enmarca es su aire. Con
-          // 16 el texto quedaba a un dedo del canto y la caja parecía un aviso
-          // flotante crecido, no un diálogo.
+          // 24 of padding, not 16. It is the only surface in the app that
+          // opens ON TOP of another modal —and with its own backdrop—, so it
+          // has nothing around it to align with: what frames it is its air.
+          // With 16 the text sat a finger from the edge and the box looked like
+          // an overgrown toast, not a dialog.
           'w-full max-w-md rounded-lg p-6',
           FLOATING_SURFACE,
           'emerge',
@@ -119,17 +120,17 @@ function ConfirmationFooter({
   return (
     <ModalFooter className="mt-6">
       {/*
-        `outline` y no `ghost`. Un botón sin contorno al lado de uno
-        relleno no se lee como un botón: se lee como el texto de al lado
-        del botón, y la salida de un diálogo que pregunta antes de borrar
-        algo es exactamente lo que no puede costar encontrar.
+        `outline` and not `ghost`. A button without an outline next to a
+        filled one does not read as a button: it reads as the text next to
+        the button, and the way out of a dialog that asks before deleting
+        something is exactly what must not be hard to find.
       */}
       {/*
-        Y sin `autoFocus`. Lo llevaba para que la salida fuera lo primero
-        que encontrara el teclado, y el precio era que toda confirmación se
-        abría con un botón encendido que nadie había elegido. La regla del
-        foco vale también aquí: se pinta cuando se pide. La salida sigue
-        estando a un Escape y a un tabulador.
+        And without `autoFocus`. It had it so that the way out would be the
+        first thing the keyboard found, and the price was that every
+        confirmation opened with a lit-up button nobody had chosen. The focus
+        rule applies here too: it is painted when asked for. The way out is
+        still one Escape or one Tab away.
       */}
       <Button type="button" variant="outline" onClick={onCancel}>
         {t('common.cancel')}

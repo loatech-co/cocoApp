@@ -7,50 +7,50 @@ import type { AlertTone } from '@/shared/ui/atoms/alert';
 import { FLOATING_SURFACE, SURGE } from '@/shared/ui/foundations/surface';
 
 /**
- * Un aviso.
+ * A toast.
  *
- * ── Para qué ────────────────────────────────────────────────────────────────
- * Para responder a algo que se acaba de pulsar y no tiene otra respuesta. El
- * caso que lo trajo: pedir un atajo número diez.
+ * ── What for ────────────────────────────────────────────────────────────────
+ * To answer something that was just pressed and has no other answer. The case
+ * that brought it in: asking for a tenth shortcut.
  *
- * Y no un contador ("9 de 9", que gasta sitio permanente en una regla que
- * importa una vez de cada cuarenta) ni un control apagado (que no responde
- * nada cuando se pulsa, porque no se puede pulsar). La respuesta llega cuando
- * se hace la pregunta.
+ * And not a counter ("9 de 9", which spends permanent room on a rule that
+ * matters once in forty) nor a disabled control (which answers nothing when
+ * pressed, because it cannot be pressed). The answer arrives when the
+ * question is asked.
  *
- * ── Una tarjeta, se pulse las veces que se pulse ────────────────────────────
- * El mismo aviso no se apila: reinicia su reloj. Diez toques seguidos en el
- * mismo sitio son una insistencia, no diez noticias.
+ * ── One card, however many times it is pressed ──────────────────────────────
+ * The same toast does not stack: it restarts its clock. Ten taps in a row in
+ * the same place are insistence, not ten pieces of news.
  *
- * ── Dónde se pone ───────────────────────────────────────────────────────────
- * En el teléfono, POR ENCIMA de la barra de abajo: la esquina de siempre es
- * justo donde está la barra.
+ * ── Where it goes ───────────────────────────────────────────────────────────
+ * On the phone, ABOVE the bottom bar: the usual corner is exactly where the
+ * bar is.
  *
- * ── Titular y detalle ───────────────────────────────────────────────────────
- * Dos líneas y no una: el titular dice QUÉ pasó en tres palabras —se lee de
- * reojo, que es como se leen los avisos— y el detalle explica. Con una sola
- * línea había que elegir entre ser legible de un vistazo o ser útil.
+ * ── Title and detail ────────────────────────────────────────────────────────
+ * Two lines and not one: the title says WHAT happened in three words —it is
+ * read out of the corner of the eye, which is how toasts are read— and the
+ * detail explains. With a single line one had to choose between being legible
+ * at a glance or being useful.
  *
- * El detalle es opcional. Un aviso que no necesita explicación no se inventa
- * una.
+ * The detail is optional. A toast that needs no explanation does not make one
+ * up.
  *
- * ── Los tonos ───────────────────────────────────────────────────────────────
- * Los mismos cuatro que el aviso en línea, con TRES señales a la vez para
- * cada uno y a propósito:
+ * ── The tones ───────────────────────────────────────────────────────────────
+ * The same four as the inline alert, with THREE signals at once for each one,
+ * on purpose:
  *
- * · Una pastilla redonda del color de la severidad, con su glifo encima. El
- *   color solo no basta: uno de cada doce hombres no distingue el rojo del
- *   verde, así que la forma —palomita, triángulo, aspa— dice lo mismo por
- *   otra vía.
- * · Un resplandor del mismo color entrando por el borde izquierdo, que tiñe
- *   la tarjeta sin llegar a colorearla.
- * · El halo de la pastilla, que es el mismo color al 15 %.
+ * · A round pill in the severity's color, with its glyph on top. Color alone
+ *   is not enough: one in twelve men cannot tell red from green, so the shape
+ *   —check, triangle, cross— says the same thing another way.
+ * · A glow of the same color coming in from the left edge, which tints the
+ *   card without coloring it.
+ * · The pill's halo, which is the same color at 15 %.
  *
- * ── Por qué la superficie NO se tiñe entera ─────────────────────────────────
- * Porque un aviso flotante está encima de todo lo demás, y lo que dice que
- * está encima es la sombra sobre el color del popover. Teñir el rectángulo
- * entero de rojo rompe esa lectura: deja de parecer una capa y pasa a parecer
- * un cartel. El resplandor del borde da el color sin perder la elevación.
+ * ── Why the surface is NOT tinted whole ─────────────────────────────────────
+ * Because a floating toast is on top of everything else, and what says it is
+ * on top is the shadow over the popover's color. Tinting the whole rectangle
+ * red breaks that reading: it stops looking like a layer and starts looking
+ * like a sign. The edge glow gives the color without losing the elevation.
  */
 
 interface ToastEntry {
@@ -61,12 +61,12 @@ interface ToastEntry {
 }
 
 /**
- * El glifo de cada tono, y por qué NO son los del aviso en línea.
+ * The glyph of each tone, and why they are NOT the inline alert's.
  *
- * Allí el icono va suelto sobre el texto, así que lleva su propio contorno
- * —`CircleCheck`, `CircleAlert`—. Aquí va DENTRO de una pastilla que ya es un
- * círculo: con un icono circular, el resultado son dos círculos concéntricos y
- * el glifo se pierde. Así que aquí van los trazos desnudos.
+ * There the icon sits bare over the text, so it carries its own outline
+ * —`CircleCheck`, `CircleAlert`—. Here it goes INSIDE a pill that is already a
+ * circle: with a circular icon, the result is two concentric circles and the
+ * glyph gets lost. So here go the bare strokes.
  */
 const GLYPHS: Record<AlertTone, ComponentType<{ className?: string }> | null> = {
   default: null,
@@ -77,11 +77,11 @@ const GLYPHS: Record<AlertTone, ComponentType<{ className?: string }> | null> = 
 };
 
 /**
- * Los tres colores de cada tono, escritos y no calculados.
+ * The three colors of each tone, written out and not computed.
  *
- * Tailwind no ve una clase construida con una plantilla —`bg-${tono}` no
- * existe en el CSS final—, así que cada combinación se escribe entera. Es la
- * misma razón por la que los pasteles de los chips son una tabla.
+ * Tailwind does not see a class built with a template —`bg-${tone}` does not
+ * exist in the final CSS—, so every combination is written whole. It is the
+ * same reason the chips' swatches are a table.
  */
 const COLORS: Record<AlertTone, { pill: string; halo: string; glow: string }> = {
   default: { pill: '', halo: '', glow: '' },
@@ -112,7 +112,7 @@ let nextId = 1;
 const listeners = new Set<() => void>();
 const timers = new Map<number, ReturnType<typeof setTimeout>>();
 
-/** Lo que dura en pantalla. Bastante para leer dos líneas, no tanto que estorbe. */
+/** How long it stays on screen. Enough to read two lines, not so long it gets in the way. */
 const DURATION_MS = 5000;
 
 function notify(): void {
@@ -137,9 +137,9 @@ export function showToast(
 ): void {
   const { detail, tone = 'default' } = options;
 
-  // El mismo aviso reinicia su reloj en vez de apilarse. Se compara por lo que
-  // DICE —titular y detalle—, no por el tono: el mismo texto con otro tono
-  // sería el mismo aviso contado dos veces.
+  // The same toast restarts its clock instead of stacking. It is compared by
+  // what it SAYS —title and detail—, not by the tone: the same text with
+  // another tone would be the same toast told twice.
   const existing = toasts.find((a) => a.title === title && a.detail === detail);
   if (existing) {
     scheduleDismiss(existing.id);
@@ -152,7 +152,7 @@ export function showToast(
   notify();
 }
 
-/** Para las pruebas: deja la pila vacía y sin relojes pendientes. */
+/** For tests: leaves the stack empty and with no pending clocks. */
 export function clearToasts(): void {
   for (const timer of timers.values()) clearTimeout(timer);
   timers.clear();
@@ -174,11 +174,11 @@ function useToasts(): ToastEntry[] {
 }
 
 /**
- * La pila. Se monta UNA vez, contra el `body`, desde el armazón.
+ * The stack. It is mounted ONCE, against the `body`, from the shell.
  *
- * Contra el `body` y no dentro de la pantalla de turno porque un aviso
- * sobrevive a lo que lo lanzó: cerrar el panel que lo pidió no tiene por qué
- * llevárselo por delante.
+ * Against the `body` and not inside the current screen because a toast
+ * outlives what raised it: closing the panel that asked for it need not take
+ * it down along the way.
  */
 export function ToastStack() {
   const toasts = useToasts();
@@ -186,9 +186,8 @@ export function ToastStack() {
 
   return createPortal(
     <div
-      // Por encima del velo de una superficie (50) y de la barra (15): un
-      // aviso que responde a algo que se pulsó DENTRO de un panel tiene que
-      // verse sobre el panel.
+      // Above the backdrop of a surface (50) and the bar (15): a toast that
+      // answers something pressed INSIDE a panel has to show over the panel.
       className="pointer-events-none fixed bottom-[var(--bajo-la-barra)] right-6 z-[60] flex flex-col gap-2 movil:left-4 movil:right-4"
       role="status"
       aria-live="polite"
@@ -215,12 +214,12 @@ function Toast({ toast }: { toast: ToastEntry }) {
       )}
     >
       {/*
-        El resplandor, en su propia capa detrás del contenido.
+        The glow, on its own layer behind the content.
 
-        En la misma capa que la tarjeta habría que elegir entre el color
-        del popover y el degradado, porque los dos son `background`;
-        aquí el popover se queda de fondo y el degradado se apoya
-        encima, con el texto por delante.
+        On the same layer as the card one would have to choose between the
+        popover's color and the gradient, because both are `background`;
+        here the popover stays as the background and the gradient rests on
+        top, with the text in front.
       */}
       {color.glow && (
         <span

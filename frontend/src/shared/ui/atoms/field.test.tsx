@@ -175,6 +175,6 @@ describe('No form puts the name above the field again', () => {
       }
     }
 
-    expect(offenders, 'usa Campo: la etiqueta va dentro del control y flota').toEqual([]);
+    expect(offenders, 'use Field: the label goes inside the control and floats').toEqual([]);
   });
 });

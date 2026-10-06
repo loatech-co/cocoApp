@@ -6,7 +6,7 @@ import { Table, TableSkeleton, TableFooter, Td, Th, Tr } from './table';
 
 afterEach(cleanup);
 
-describe('Tabla', () => {
+describe('Table', () => {
   it('renders a real table with column headers, rows and a footer', () => {
     render(
       <Table>
@@ -134,7 +134,7 @@ describe('Tr', () => {
   });
 });
 
-describe('TablaEsqueleto', () => {
+describe('TableSkeleton', () => {
   it('keeps the real column names while it loads, with the requested number of rows', () => {
     render(<TableSkeleton columns={['Concepto', 'Fecha', 'Valor']} rows={3} hasDivider={false} />);
 

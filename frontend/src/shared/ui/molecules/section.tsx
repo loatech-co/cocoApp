@@ -4,12 +4,12 @@ import { cn } from '@/shared/lib/utils';
 import { Block } from '@/shared/ui/atoms/block';
 
 /**
- * Una parte de una ficha, con su nombre ENCIMA y no sobre el borde.
+ * A part of a modal, with its name ABOVE and not on the border.
  *
- * Antes eran `<fieldset>` con `<legend>`, y un `legend` lo dibuja el navegador
- * montado sobre la línea del borde: el texto partía la caja por arriba y se
- * comía un trozo de lo primero que hubiera dentro. El nombre va fuera, que
- * además es lo que crea la jerarquía —etiqueta pequeña, contenido debajo—.
+ * They used to be `<fieldset>` with `<legend>`, and the browser draws a
+ * `legend` sitting on the border line: the text split the box at the top and
+ * ate a chunk of whatever was first inside. The name goes outside, which is
+ * also what creates the hierarchy —small label, content below—.
  */
 export function Section({
   title,
@@ -18,31 +18,32 @@ export function Section({
   children,
 }: {
   title: string;
-  /** Con `false`, el contenido va suelto: lo que ya son tarjetas no necesita otra. */
+  /** With `false`, the content goes bare: what are already cards need no other. */
   isBoxed?: boolean;
   /**
-   * Se come el alto que sobre en la ficha.
+   * Takes up whatever height is left over in the modal.
    *
-   * La ficha tiene alto mínimo, así que con pocos campos sobra sitio, y el pie
-   * se lo lleva al fondo con su `mt-auto`. Una sección que es el blanco de un
-   * gesto —un cuadro donde se sueltan archivos— es la única a la que el tamaño
-   * le sirve de algo, así que ese hueco es suyo.
+   * The modal has a minimum height, so with few fields there is room to
+   * spare, and the footer takes it to the bottom with its `mt-auto`. A section
+   * that is the target of a gesture —a box where files are dropped— is the
+   * only one that size is of any use to, so that gap is its own.
    */
   shouldGrow?: boolean;
   children: ReactNode;
 }) {
   return (
-    // `gap-3` y no `gap-2`: con miniaturas debajo, dos píxeles menos hacían
-    // que el rótulo pareciera pegado a la primera fila, casi montado encima
-    // —que es justo lo que se arregló quitando los `legend`—.
+    // `gap-3` and not `gap-2`: with thumbnails below, two pixels less made the
+    // heading look stuck to the first row, almost sitting on it —which is
+    // exactly what was fixed by removing the `legend`s—.
     <section className={cn('flex flex-col gap-3', shouldGrow && 'min-h-0 flex-1')}>
       {/*
-        Sin mayúsculas sostenidas.
+        No sustained capitals.
 
-        Una palabra en versalitas pierde la silueta que la hace reconocible
-        —"Soporte" y "SOPORTE" no se leen igual de rápido— y dentro de una
-        ficha, donde todo el texto es corto, ese rótulo gritando compite con lo
-        que titula. El tamaño y el gris ya dicen que es un rótulo.
+        A word in small caps loses the silhouette that makes it recognizable
+        —"Soporte" and "SOPORTE" are not read equally fast— and inside a
+        modal, where all the text is short, that shouting heading competes
+        with what it titles. The size and the gray already say it is a
+        heading.
       */}
       <h3 className="text-xs font-semibold text-muted-foreground">{title}</h3>
       {isBoxed ? <Block className="flex flex-col gap-3">{children}</Block> : children}

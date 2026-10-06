@@ -30,7 +30,7 @@ describe('WithTooltip', () => {
     expect(screen.queryByRole('tooltip')).toBeNull();
   });
 
-  it('shows the hint above the centre of its anchor when the pointer enters', () => {
+  it('shows the hint above the center of its anchor when the pointer enters', () => {
     const anchor = renderTooltip();
 
     fireEvent.pointerEnter(anchor);

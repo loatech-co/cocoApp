@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Card } from './card';
 import { Donut } from './donut';
 
-/** Made-up slices: the catalogue never shows real data. */
+/** Made-up slices: the catalog never shows real data. */
 const SLICES = [
   { id: 1, name: 'Vivienda', value: 40 },
   { id: 2, name: 'Mercado', value: 25 },

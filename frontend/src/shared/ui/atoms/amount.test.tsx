@@ -8,11 +8,11 @@ import { Amount, Balance } from './amount';
 
 afterEach(cleanup);
 
-// A neutral sample: these tests are about the sign and the colour, not the figure.
+// A neutral sample: these tests are about the sign and the color, not the figure.
 const AMOUNT = '1';
 
 describe('Amount', () => {
-  it('reads an expense with a minus sign, its colour and a spoken label', () => {
+  it('reads an expense with a minus sign, its color and a spoken label', () => {
     const { container } = render(<Amount amount={AMOUNT} />);
 
     const root = container.firstElementChild!;
@@ -28,7 +28,7 @@ describe('Amount', () => {
     expect(container.firstElementChild!.className).toContain('text-income');
   });
 
-  it('reads a transfer without a sign, in the muted colour', () => {
+  it('reads a transfer without a sign, in the muted color', () => {
     const { container } = render(<Amount amount={AMOUNT} direction="transfer" currency="USD" />);
 
     expect(container.textContent).toBe(`Transferencia: ${formatMoney(AMOUNT, 'USD')}`);
@@ -47,7 +47,7 @@ describe('Amount', () => {
 });
 
 describe('Balance', () => {
-  it('marks a negative balance with the pending colour, not with red', () => {
+  it('marks a negative balance with the pending color, not with red', () => {
     const { container } = render(<Balance amount="-1" />);
 
     const balance = container.firstElementChild!;
@@ -56,7 +56,7 @@ describe('Balance', () => {
     expect(balance.textContent).toBe(formatCOP('-1'));
   });
 
-  it('leaves a positive or unreadable balance in the normal colour', () => {
+  it('leaves a positive or unreadable balance in the normal color', () => {
     const { container, rerender } = render(<Balance amount={AMOUNT} />);
     expect(container.firstElementChild!.className).not.toContain('text-warning');
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Table, TableSkeleton, TableFooter, Td, Th, Tr } from './table';
 import { Amount } from '../atoms/amount';
 
-/** Made-up rows: the catalogue never shows real data. */
+/** Made-up rows: the catalog never shows real data. */
 const ROWS = [
   { id: 1, name: 'Mercado', center: 'Hogar', amount: '85000', direction: 'out' as const },
   { id: 2, name: 'Arriendo', center: 'Costos fijos', amount: '900000', direction: 'out' as const },

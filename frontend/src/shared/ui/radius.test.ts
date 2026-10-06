@@ -3,21 +3,22 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * El radio estándar de un contenedor es 10px: `rounded-lg`.
+ * The standard radius of a container is 10px: `rounded-lg`.
  *
- * Es el `--radius` del tema, y `rounded-lg` es la clase que lo lee. Menor está
- * bien donde haga falta —una casilla, un chip— pero mayor no: dos contenedores
- * vecinos con esquinas distintas se leen como dos sistemas distintos, y es
- * exactamente lo que pasaba con tarjetas de 24px pegadas a tablas de 16.
+ * It is the theme's `--radius`, and `rounded-lg` is the class that reads it.
+ * Smaller is fine where needed —a checkbox, a chip— but larger is not: two
+ * neighboring containers with different corners read as two different
+ * systems, and that is exactly what happened with 24px cards stuck to 16px
+ * tables.
  *
- * Antes el estándar era `rounded-2xl` y la escala estaba corrida —`rounded-lg`
- * valía 16 y `rounded-xl` 20, porque `--radius` era 1rem—. Con 10px la escala
- * vuelve a crecer en orden: sm 6, md 8, lg 10, xl 14. Lo que pasa de ahí es el
- * 2xl y el 3xl de Tailwind, que no leen el tema, y por eso los prohíbe esta
- * prueba.
+ * The standard used to be `rounded-2xl` and the scale was shifted
+ * —`rounded-lg` was 16 and `rounded-xl` 20, because `--radius` was 1rem—.
+ * With 10px the scale grows in order again: sm 6, md 8, lg 10, xl 14. What
+ * goes beyond that is Tailwind's 2xl and 3xl, which do not read the theme, and
+ * that is why this test forbids them.
  *
- * Lee el código fuente, como la de los botones, porque el problema no está en
- * el componente sino en quién escribe la clase.
+ * It reads the source code, like the button one, because the problem is not
+ * in the component but in whoever writes the class.
  */
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
@@ -27,44 +28,44 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
-/** El tope, en píxeles: el `--radius` del tema. */
+/** The cap, in pixels: the theme's `--radius`. */
 const MAX_RADIUS_PX = 10;
 
 /**
- * Lo que se permite pasarse, y por qué.
+ * What is allowed to go over, and why.
  *
- * · `app/app-shell.tsx` — la esquina del POZO, el hueco donde se abre el
- *   contenido dentro de la página. Lleva `rounded-tl-xl`, que son 14px y es
- *   un valor de la escala del tema, no un número inventado.
+ * · `app/app-shell.tsx` — the corner of the WELL, the gap where the content
+ *   opens inside the page. It carries `rounded-tl-xl`, which is 14px and is a
+ *   value of the theme's scale, not a made-up number.
  *
- *   Se pasa porque es el contenedor más grande que existe: una esquina de
- *   10px en un canto que mide toda la altura de la ventana casi no se ve, y
- *   lo que esa esquina tiene que contar —que el riel envuelve al contenido en
- *   vez de estar pegado a su lado— depende de que se vea.
+ *   It goes over because it is the largest container there is: a 10px corner
+ *   on an edge that spans the whole height of the window is barely visible,
+ *   and what that corner has to tell —that the rail wraps the content instead
+ *   of being stuck next to it— depends on it being seen.
  *
- *   Y NO rompe la regla que esta prueba defiende, que es que dos contenedores
- *   VECINOS no tengan esquinas distintas: el pozo no es vecino de ninguna
- *   tarjeta, es el fondo sobre el que se apoyan todas.
+ *   And it does NOT break the rule this test defends, which is that two
+ *   NEIGHBORING containers must not have different corners: the well is no
+ *   card's neighbor, it is the background all of them rest on.
  *
- * · `shared/ui/atoms/bottom-sheet.tsx` — las dos esquinas de ARRIBA de una hoja
- *   que sube desde el borde de abajo. Lleva `rounded-t-[16px]`.
+ * · `shared/ui/atoms/bottom-sheet.tsx` — the two TOP corners of a sheet that
+ *   rises from the bottom edge. It carries `rounded-t-[16px]`.
  *
- *   Mismo motivo que el pozo y misma forma de no romper la regla. La esquina
- *   mide el ancho entero de la pantalla, así que 10px en ella casi no se ven,
- *   y lo que tiene que contar —que esto es una hoja que subió y que la página
- *   sigue debajo— depende de que se vea. Y no tiene vecinos: está encima de
- *   todo lo demás.
+ *   Same reason as the well and same way of not breaking the rule. The corner
+ *   spans the whole width of the screen, so 10px on it is barely visible, and
+ *   what it has to tell —that this is a sheet that rose and that the page is
+ *   still underneath— depends on it being seen. And it has no neighbors: it
+ *   is on top of everything else.
  */
 const ALLOWED = new Set<string>(['app/app-shell.tsx', 'shared/ui/atoms/bottom-sheet.tsx']);
 
-describe('Ningún contenedor se pasa del radio estándar', () => {
+describe('No container goes over the standard radius', () => {
   const files = sourceFiles(join(import.meta.dirname, '..', '..'));
 
-  it('encuentra los archivos del proyecto', () => {
+  it('finds the project files', () => {
     expect(files.length).toBeGreaterThan(10);
   });
 
-  it('no hay radios por encima de 10px', () => {
+  it('there are no radii above 10px', () => {
     const offenders: string[] = [];
 
     for (const filePath of files) {
@@ -73,7 +74,7 @@ describe('Ningún contenedor se pasa del radio estándar', () => {
 
       const code = readFileSync(filePath, 'utf8');
 
-      // `xl`, `2xl` y `3xl`: los dos últimos ni siquiera leen el tema.
+      // `xl`, `2xl` and `3xl`: the last two do not even read the theme.
       for (const match of code.matchAll(/\brounded(?:-[tbrl][lr]?)?-(?:xl|2xl|3xl)\b/g)) {
         offenders.push(`${relativePath}: ${match[0]}`);
       }

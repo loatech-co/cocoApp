@@ -12,131 +12,133 @@ const ROLE = { menu: 'menu', panel: 'dialog', list: 'listbox', search: 'dialog' 
 const ARIA = { menu: 'menu', panel: 'dialog', list: 'listbox', search: 'dialog' } as const;
 
 interface MenuProps {
-  /** Lo que dice el botón. Si `soloIcono`, pasa a ser su nombre accesible. */
+  /** What the button says. With `isIconOnly`, it becomes its accessible name. */
   label: string;
   Icon?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   isIconOnly?: boolean;
-  /** Pinta el botón encendido: hay algo elegido aquí dentro. */
+  /** Paints the button switched on: something in here is selected. */
   isActive?: boolean;
   align?: 'left' | 'right';
   /**
-   * Hacia dónde se abre. `arriba` para los disparadores que viven al pie de
-   * algo: abriendo hacia abajo, el panel se sale de la pantalla y la mitad de
-   * las opciones quedan fuera.
+   * Which way it opens. `up` for triggers that live at the foot of
+   * something: opening downward, the panel runs off the screen and half of
+   * the options are left outside.
    */
   direction?: 'down' | 'up';
-  /** Cuánto mide el panel cuando no copia el de su disparador. Ver `ANCHOS`. */
+  /** How wide the panel is when it does not copy its trigger's. See `WIDTHS`. */
   width?: keyof typeof WIDTHS;
   /**
-   * `menu` es una lista de acciones; `panel` es un formulario dentro de un
-   * desplegable; `lista` es un campo que elige un valor entre varios.
-   * Anunciar como menú algo que lleva selectores hace que un lector de
-   * pantalla prometa "elige una opción" y entregue otra cosa.
+   * `menu` is a list of actions; `panel` is a form inside a dropdown;
+   * `list` is a field that picks one value among several.
+   * Announcing as a menu something that holds pickers makes a screen reader
+   * promise "pick an option" and deliver something else.
    *
-   * `buscador` es una `lista` con su caja de búsqueda: se queda pegado a su
-   * campo como ella, pero el panel es un diálogo y no una lista, porque una
-   * lista solo puede contener opciones y aquí dentro hay una caja de texto,
-   * botones y la lista de verdad. La lista la pone quien llena el panel.
+   * `search` is a `list` with its search box: it stays attached to its
+   * field as a `list` does, but the panel is a dialog and not a list,
+   * because a list can only contain options and in here there is a text box,
+   * buttons and the actual list. Whoever fills the panel supplies the list.
    */
   kind?: 'menu' | 'panel' | 'list' | 'search';
-  /** Clases de la caja que envuelve todo. Para estirarla a lo ancho. */
+  /** Classes of the box that wraps everything. To stretch it across. */
   boxClassName?: string;
-  /** Clases del botón cuando se pasa un `disparador` propio. */
+  /** Classes of the button when a custom `trigger` is passed. */
   triggerClassName?: string;
   /**
-   * Coloca el panel contra la VENTANA en vez de contra su caja.
+   * Places the panel against the WINDOW instead of against its box.
    *
-   * Para los que viven dentro de algo que se desplaza —un formulario largo en
-   * un modal, una tabla—: ahí cualquier ancestro con `overflow` recorta lo que
-   * se salga de él, y un desplegable, por definición, se sale.
+   * For the ones that live inside something that scrolls —a long form in a
+   * modal, a table—: there any ancestor with `overflow` clips whatever
+   * sticks out of it, and a dropdown, by definition, sticks out.
    */
   isFloating?: boolean;
   /**
-   * Cómo se ve el botón. `herramienta` es el recuadro de las barras de
-   * filtros; `ghost` es solo el icono, para los que viven dentro de una
-   * tarjeta y no tienen que competir con su contenido.
+   * How the button looks. `tool` is the box of the filter bars; `ghost` is
+   * just the icon, for the ones that live inside a card and must not compete
+   * with its content.
    */
   /**
-   * `default` es el acento: para la acción principal de una barra. Las otras
-   * dos son controles secundarios. El ALTO y el radio no se eligen aquí —los
-   * pone `size="sm"` en el botón— para que un menú mida siempre lo mismo
-   * que los filtros que tiene al lado.
+   * `default` is the accent: for the main action of a bar. The other two
+   * are secondary controls. The HEIGHT and the radius are not chosen here
+   * —`size="sm"` on the button sets them— so that a menu always measures the
+   * same as the filters next to it.
    */
   variant?: 'tool' | 'ghost' | 'default';
   /**
-   * Quita el acolchado del panel.
+   * Removes the panel's padding.
    *
-   * El panel lleva 4px alrededor para que el resaltado de una opción sea una
-   * pastilla por dentro y no una banda que choca contra la curva de la
-   * esquina. Un panel con franjas A SANGRE —un buscador arriba con su línea,
-   * un "crear" abajo con la suya— necesita lo contrario: con el acolchado,
-   * esas líneas quedarían cortadas 4px antes de cada lado.
+   * The panel carries 4px all around so that an option's highlight is a pill
+   * inside it and not a band that crashes into the curve of the corner. A
+   * panel with FULL-BLEED strips —a search box on top with its line, a
+   * "create" at the bottom with its own— needs the opposite: with the
+   * padding, those lines would stop 4px short of each side.
    */
   isUnpadded?: boolean;
   /**
-   * El `id` del BOTÓN, no de la caja.
+   * The `id` of the BUTTON, not of the box.
    *
-   * Hace falta para que una etiqueta flotante pueda apuntarle con `htmlFor`.
-   * Y tiene que ser el botón: `htmlFor` solo vale para los elementos que se
-   * pueden etiquetar —`button`, `input`, `select`, `textarea`— y un `div` o un
-   * `span` no está entre ellos, así que una etiqueta apuntando a la caja se
-   * queda sin asociar y quien navega con lector de pantalla oye «botón» y
-   * nada más.
+   * It is needed so that a floating label can point at it with `htmlFor`.
+   * And it has to be the button: `htmlFor` only works on labelable elements
+   * —`button`, `input`, `select`, `textarea`— and a `div` or a `span` is not
+   * among them, so a label pointing at the box stays unassociated and
+   * whoever navigates with a screen reader hears "button" and nothing
+   * more.
    */
   triggerId?: string | undefined;
   /**
-   * Flotando, deja que el panel mida lo SUYO en vez de lo que mide el botón.
+   * When floating, lets the panel take ITS OWN width instead of the button's.
    *
-   * Por defecto un panel flotante copia el ancho de su disparador, y eso es lo
-   * correcto para un desplegable: un panel más ancho que su campo se lee como
-   * otro elemento. Pero un calendario no cabe en un campo —necesita siete
-   * columnas— y encogerlo al ancho del botón deja los días de tres píxeles.
+   * By default a floating panel copies the width of its trigger, and that is
+   * right for a dropdown: a panel wider than its field reads as another
+   * element. But a calendar does not fit in a field —it needs seven columns—
+   * and shrinking it to the button's width leaves days three pixels wide.
    *
-   * Con esto se aplica la clase `ancho`, y el panel se recorta al hueco que
-   * quede hasta el borde de la ventana en vez de salirse.
+   * With this the `width` class applies, and the panel is clipped to the gap
+   * left up to the edge of the window instead of running off it.
    */
   hasOwnWidth?: boolean;
-  /** Reemplaza el botón por completo (el avatar, por ejemplo). */
+  /** Replaces the button entirely (the avatar, for example). */
   trigger?: (props: { isOpen: boolean }) => ReactNode;
   children: ReactNode | ((close: () => void) => ReactNode);
 }
 
 /**
- * Un desplegable.
+ * A dropdown.
  *
- * ── Por qué es un componente y no tres ──────────────────────────────────────
- * El filtro, el orden y el menú de la cuenta son la misma mecánica: un botón
- * que abre un panel, que se cierra al tocar fuera y con Escape. Escrita tres
- * veces, esa mecánica se arregla una vez y sigue rota en las otras dos — que
- * es exactamente como quedan los menús que se cierran solos en una pantalla y
- * en otra no.
+ * ── Why it is one component and not three ───────────────────────────────────
+ * The filter, the sort and the account menu are the same mechanism: a button
+ * that opens a panel, which closes on a tap outside and with Escape. Written
+ * three times, that mechanism gets fixed once and stays broken in the other
+ * two — which is exactly how you end up with menus that close by themselves
+ * on one screen and not on another.
  *
- * Lo que cambia entre ellos es el contenido, y eso es lo que se pasa.
+ * What changes between them is the content, and that is what gets passed.
  *
- * ── Y en el teléfono no se despliega: SUBE ──────────────────────────────────
- * Por debajo del corte, un `menu` y un `panel` se abren como una hoja desde el
- * borde de abajo en vez de colgar del botón. Son tres cosas a la vez:
+ * ── And on the phone it does not drop down: it RISES ────────────────────────
+ * Below the breakpoint, a `menu` and a `panel` open as a sheet from the
+ * bottom edge instead of hanging from the button. That is three things at
+ * once:
  *
- *   1. un desplegable colgado de un kebab que vive en la esquina de una fila
- *      se abre donde no hay sitio —contra el borde derecho, contra el pie de
- *      la pantalla— y acaba recortado o pegado al canto;
- *   2. las opciones caen lejos del pulgar, arriba de la pantalla, cuando el
- *      dedo está abajo;
- *   3. un calendario o un árbol de conceptos no caben en el ancho de un
- *      desplegable, así que había que angostarlos hasta que dejaran de
- *      poderse usar.
+ *   1. a dropdown hanging from a kebab that lives in the corner of a row
+ *      opens where there is no room —against the right edge, against the
+ *      foot of the screen— and ends up clipped or stuck to the edge;
+ *   2. the options land far from the thumb, at the top of the screen, when
+ *      the finger is at the bottom;
+ *   3. a calendar or a tree of concepts does not fit in the width of a
+ *      dropdown, so they had to be narrowed until they stopped being
+ *      usable.
  *
- * La hoja resuelve las tres sin que la llamada tenga que saber nada: el mismo
- * `<Menu>` se dibuja de las dos formas.
+ * The sheet solves all three without the call site having to know anything:
+ * the same `<Menu>` is drawn both ways.
  *
- * `lista` y `buscador` NO entran. Un campo que elige un valor —un desplegable de un
- * formulario— tiene que quedarse pegado a su campo: separarlo del sitio donde
- * se va a escribir el valor es perder de vista qué se está contestando.
+ * `list` and `search` are NOT included. A field that picks a value —a
+ * dropdown in a form— has to stay attached to its field: separating it from
+ * the place where the value is going to be written is losing sight of what
+ * is being answered.
  */
 export function Menu(props: MenuProps) {
   const m = withDefaults(props);
   const { label, kind, isFloating, trigger, children } = m;
-  /** Se abre como hoja desde abajo en vez de colgar del botón. */
+  /** Opens as a sheet from the bottom instead of hanging from the button. */
   const isSheet = useEsMovil() && kind !== 'list' && kind !== 'search';
   const { abierto: isOpen, setAbierto: setIsOpen, caja, anclaje, medir } = useMenuState(isSheet);
   const close = (): void => setIsOpen(false);
@@ -164,16 +166,16 @@ export function Menu(props: MenuProps) {
         <MenuButton m={m} isOpen={isOpen} onClick={toggle} />
       )}
 
-      {/* La hoja se monta SIEMPRE, abierta o cerrada: lo que se desliza no se
-          puede reconstruir en cada render, o aparece en vez de llegar. Y solo
-          por debajo del corte, para que en el escritorio no cueste nada. */}
+      {/* The sheet is mounted ALWAYS, open or closed: what slides cannot be
+          rebuilt on every render, or it pops in instead of arriving. And only
+          below the breakpoint, so that it costs nothing on the desktop. */}
       {isSheet && (
         <BottomSheet
           isOpen={isOpen}
           title={label}
-          // Por encima de una ficha: un calendario o un kebab se abren DESDE
-          // dentro de un modal, y en la capa de fábrica se dibujarían detrás
-          // del que los pidió.
+          // Above a modal: a calendar or a kebab open FROM inside a modal,
+          // and on the default layer they would be drawn behind the one that
+          // asked for them.
           layer="z-[70]"
           onClose={close}
         >
@@ -191,18 +193,19 @@ export function Menu(props: MenuProps) {
 }
 
 /**
- * Los anchos de un panel. Eran una clase libre en cada llamada, y así llegó a
- * haber un `w-[min(…)]` escrito a mano en una pantalla. Uno nuevo se añade aquí.
+ * The widths of a panel. They were a free class at every call site, and that
+ * is how a hand-written `w-[min(…)]` ended up on one screen. A new one is
+ * added here.
  *
- * | Ancho        | Para                                                     |
- * | ------------ | -------------------------------------------------------- |
- * | `sm`         | Una lista corta de acciones: ordenar, pagos pendientes   |
- * | `md`         | El menú de la cuenta en el riel                          |
- * | `base`       | El de fábrica                                            |
- * | `lg`         | Un árbol con casillas: el filtro de clasificación        |
- * | `campo`      | Un desplegable de formulario: su campo, y nunca menos de 12rem |
- * | `contenido`  | Lo que mida lo de dentro: el calendario de un día        |
- * | `calendario` | El de un rango: en el teléfono, el calendario y su relleno sin salirse; arriba del corte, su contenido |
+ * | Width      | For                                                         |
+ * | ---------- | ----------------------------------------------------------- |
+ * | `sm`       | A short list of actions: sort, pending payments             |
+ * | `md`       | The account menu in the rail                                |
+ * | `base`     | The default                                                 |
+ * | `lg`       | A tree with checkboxes: the classification filter           |
+ * | `field`    | A form dropdown: its field, and never less than 12rem       |
+ * | `content`  | Whatever the inside measures: the calendar of a single day  |
+ * | `calendar` | The one of a range: on the phone, the calendar and its padding without running off; above the breakpoint, its content |
  */
 const WIDTHS = {
   sm: 'w-56',
@@ -226,12 +229,12 @@ type Defaulted =
   | 'isUnpadded'
   | 'hasOwnWidth';
 
-/** Las propiedades de un menú con sus valores de fábrica ya puestos. */
+/** The props of a menu with their defaults already applied. */
 type MenuConfig = Omit<MenuProps, Defaulted> & Required<Pick<MenuProps, Defaulted>>;
 
-// Con `??` y no con un `...` de valores de fábrica: una llamada que pasa un
-// `undefined` explícito tiene que recibir el de fábrica, como con el valor
-// por defecto de una desestructuración.
+// With `??` and not with a `...` of defaults: a call site that passes an
+// explicit `undefined` has to get the default, as with the default value of
+// a destructuring.
 function withDefaults(p: MenuProps): MenuConfig {
   return {
     ...p,
@@ -248,7 +251,7 @@ function withDefaults(p: MenuProps): MenuConfig {
   };
 }
 
-/** El botón de un menú sin disparador propio: icono, nombre y flecha. */
+/** The button of a menu without a custom trigger: icon, name and chevron. */
 function MenuButton({
   m,
   isOpen,
@@ -267,8 +270,8 @@ function MenuButton({
       onClick={onClick}
       aria-expanded={isOpen}
       aria-haspopup={ARIA[m.kind]}
-      // Encendido cuando hay algo elegido aquí dentro, o mientras está
-      // abierto: el propio estilo lo resuelve la variante.
+      // On when something in here is selected, or while it is open: the
+      // variant itself resolves the style.
       aria-pressed={isActive || isOpen}
       aria-label={isIconOnly ? label : undefined}
       title={isIconOnly ? label : undefined}
@@ -277,12 +280,12 @@ function MenuButton({
         <Icon
           className={cn(
             'size-4 shrink-0',
-            // El kebab, más tenue. Es un control SECUNDARIO: vive en la
-            // esquina de cada fila y se repite tantas veces como filas
-            // haya. A plena tinta, esa columna de puntos pesa más que los
-            // nombres, que es lo que se viene a leer. Va aquí y no en cada
-            // llamada para que los dos kebabs —el del centro y el del
-            // categoría— no puedan separarse.
+            // The kebab, fainter. It is a SECONDARY control: it lives in the
+            // corner of every row and repeats as many times as there are
+            // rows. At full ink, that column of dots weighs more than the
+            // names, which are what people come to read. It goes here and
+            // not at each call site so that the two kebabs —the cost
+            // center's and the category's— cannot drift apart.
             variant === 'ghost' && isIconOnly && 'opacity-70',
           )}
           aria-hidden={true}
@@ -302,7 +305,7 @@ function MenuButton({
   );
 }
 
-/** El panel que cuelga del botón, en el escritorio. */
+/** The panel that hangs from the button, on the desktop. */
 function MenuDropdown({
   m,
   anchor,
@@ -324,19 +327,19 @@ function MenuDropdown({
   );
 }
 
-/** El panel que cuelga del botón: su superficie, su origen y su ancho. */
+/** The panel that hangs from the button: its surface, its origin and its width. */
 function panelClass({ isFloating, hasOwnWidth, direction, align, width, isUnpadded }: MenuConfig) {
   return cn(
     'z-50 rounded-lg',
-    // Flotando lleva tope de alto (`panelStyle`), así que lo que no quepa se
-    // desplaza dentro del panel en vez de recortarse.
+    // Floating, it has a height cap (`panelStyle`), so whatever does not fit
+    // scrolls inside the panel instead of being clipped.
     isFloating ? 'overflow-y-auto overscroll-contain' : 'overflow-hidden',
     isUnpadded ? 'p-0' : 'p-1',
     FLOATING_SURFACE,
     SURGE,
-    // De dónde SALE. Un panel que crece desde su propio centro no viene
-    // de ningún sitio; creciendo desde la esquina que toca el botón,
-    // se lee como que lo despliega el botón.
+    // Where it COMES FROM. A panel that grows from its own center comes
+    // from nowhere; growing from the corner that touches the button, it
+    // reads as the button unfolding it.
     isFloating
       ? 'origin-top'
       : direction === 'up'
@@ -348,15 +351,15 @@ function panelClass({ isFloating, hasOwnWidth, direction, align, width, isUnpadd
           : 'origin-top-left',
     isFloating ? 'fixed' : 'absolute',
     !isFloating && (direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'),
-    // Flotando, el ancho lo da el disparador —la clase mediría contra
-    // la ventana, que no es la caja de nadie— salvo que se pida lo
-    // contrario.
+    // Floating, the width comes from the trigger —the class would measure
+    // against the window, which is nobody's box— unless the opposite is
+    // asked for.
     (!isFloating || hasOwnWidth) && WIDTHS[width],
     'max-w-[calc(100vw-2rem)]',
     !isFloating && (align === 'right' ? 'right-0' : 'left-0'),
   );
 }
-/** El rótulo de un bloque del menú: "Ordenar por", "Filtrar por"… */
+/** The heading of a block of the menu: "Ordenar por", "Filtrar por"… */
 export function MenuTitle({ children }: { children: ReactNode }) {
   return (
     <p className="px-2.5 pb-1 pt-1.5 text-xs font-semibold text-muted-foreground">{children}</p>
@@ -364,21 +367,22 @@ export function MenuTitle({ children }: { children: ReactNode }) {
 }
 
 /**
- * Una línea que cruza el panel ENTERO.
+ * A line that crosses the WHOLE panel.
  *
- * El `-mx-1` anula el acolchado del panel: un separador que respeta el margen
- * de las opciones no separa dos bloques, parece una opción más que salió mal.
+ * The `-mx-1` cancels the panel's padding: a separator that respects the
+ * options' margin does not separate two blocks, it looks like one more option
+ * that came out wrong.
  */
 export function MenuSeparator() {
   return <hr className="-mx-1 my-1 border-border" />;
 }
 
 /**
- * Una opción.
+ * An option.
  *
- * La marca de elegida va a la DERECHA y el fondo cambia: la marca sola se
- * pierde al recorrer la lista con la vista, y el fondo solo no distingue lo
- * elegido de lo que está bajo el cursor.
+ * The selected mark goes on the RIGHT and the background changes: the mark
+ * alone gets lost when scanning the list by eye, and the background alone
+ * does not tell the selected apart from what is under the cursor.
  */
 export function MenuOption({
   Icon,
@@ -391,14 +395,14 @@ export function MenuOption({
 }: {
   Icon?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   isSelected?: boolean;
-  /** Rojo. Reservado a lo que no se puede deshacer, como cerrar la sesión. */
+  /** Red. Reserved for what cannot be undone, like signing out. */
   isDestructive?: boolean;
   /**
-   * Se ve pero no se puede elegir.
+   * Visible but not selectable.
    *
-   * Se enseña en vez de esconderse cuando la opción EXISTE y todavía no está:
-   * quitarla haría pensar que la aplicación no sabe hacer eso; apagada dice
-   * que sabrá. `nota` es el porqué, en dos palabras.
+   * It is shown instead of hidden when the option EXISTS and is not there
+   * yet: removing it would suggest the app cannot do that; dimmed, it says it
+   * will. `note` is the why, in two words.
    */
   disabled?: boolean;
   note?: string;
@@ -414,17 +418,17 @@ export function MenuOption({
       aria-disabled={isDisabled}
       className={cn(
         'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
-        // Una fila de menú son 36 de puntero. Con el dedo, 42.
+        // A menu row is 36 with a pointer. With a finger, 42.
         'movil:min-h-[42px]',
         isDisabled
           ? 'cursor-not-allowed text-muted-foreground opacity-60'
           : isDestructive
             ? 'font-medium text-destructive hover:bg-destructive/10'
-            : // ── Elegida y señalada NO son el mismo color ─────────────────────
-              // Lo elegido se queda en `muted`, que es la superficie quieta; lo
-              // que está bajo el cursor pasa a `accent`, que es la del tema para
-              // lo que responde. Con `muted` en los dos, pasar por encima de la
-              // opción ya elegida no cambiaba nada y el menú parecía trabado.
+            : // ── Selected and pointed at are NOT the same color ──────────────
+              // The selected stays on `muted`, which is the still surface; what
+              // is under the cursor goes to `accent`, which is the theme's one
+              // for what responds. With `muted` on both, hovering over the
+              // already-selected option changed nothing and the menu looked stuck.
               isSelected
               ? cn('bg-muted font-medium text-foreground', HIGHLIGHT)
               : cn('text-foreground', HIGHLIGHT),

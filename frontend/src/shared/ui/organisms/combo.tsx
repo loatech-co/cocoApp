@@ -9,28 +9,29 @@ import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 import { Menu } from '@/shared/ui/molecules/menu';
 
 /**
- * Un desplegable en el que se escribe.
+ * A dropdown you type into.
  *
- * ── Por qué no basta con el `Select` ────────────────────────────────────────
- * Porque una lista de cuarenta conceptos no se recorre con la rueda del ratón.
- * Escribiendo tres letras queda uno, y ese es el gesto con el que todo el
- * mundo busca desde hace veinte años. El `Select` sigue siendo el correcto
- * donde las opciones son cinco y caben de un vistazo.
+ * ── Why the `Select` is not enough ──────────────────────────────────────────
+ * Because a list of forty concepts is not browsed with the mouse wheel. Typing
+ * three letters leaves one, and that is the gesture everyone has searched with
+ * for twenty years. The `Select` is still the right one where there are five
+ * options and they fit at a glance.
  *
- * ── Por qué "crear" vive aquí dentro ────────────────────────────────────────
- * Porque el momento en que uno descubre que un concepto no existe es
- * exactamente el momento en que lo está buscando. Mandarlo a otra pantalla a
- * crearlo —y a volver, y a buscar otra vez— es donde se abandona la tarea.
+ * ── Why "create" lives in here ──────────────────────────────────────────────
+ * Because the moment one discovers that a concept does not exist is exactly
+ * the moment one is looking for it. Sending them to another screen to create
+ * it —and to come back, and to search again— is where the task gets
+ * abandoned.
  *
- * Y es OPCIONAL a propósito: en los centros de costos no se ofrece. Un centro
- * es la estructura de arriba, se define tres veces en la vida de una cuenta, y
- * poder inventar uno al vuelo mientras se registra un gasto es como acaban las
- * cuentas con "Casa", "casa" y "Hogar" siendo lo mismo.
+ * And it is OPTIONAL on purpose: it is not offered for cost centers. A center
+ * is the top structure, it is defined three times in the life of an account,
+ * and being able to invent one on the fly while recording an expense is how
+ * accounts end up with "Casa", "casa" and "Hogar" being the same thing.
  *
- * ── Ningún control del sistema operativo ────────────────────────────────────
- * Se construye sobre `menu.tsx`, como todo lo que se despliega en esta app: es
- * el que sabe cerrarse al tocar fuera, con Escape, y salirse de la caja que lo
- * contiene cuando el modal tiene desplazamiento.
+ * ── No operating system control ─────────────────────────────────────────────
+ * It is built on `menu.tsx`, like everything that drops down in this app: it
+ * is the one that knows how to close on a tap outside, with Escape, and how
+ * to break out of the box that contains it when the modal scrolls.
  */
 
 interface ComboOption {
@@ -39,17 +40,17 @@ interface ComboOption {
 }
 
 interface ComboProps {
-  /** Nombre accesible. No se pinta: la etiqueta visible va fuera. */
+  /** Accessible name. Not painted: the visible label goes outside. */
   label: string;
-  /** El valor elegido. `''` es ninguno. */
+  /** The selected value. `''` is none. */
   value: string;
   options: ComboOption[];
   onChange: (value: string) => void;
-  /** Si se pasa, se ofrece crear lo que no exista. */
+  /** If passed, creating what does not exist is offered. */
   onCreate?: (name: string) => void;
   emptyLabel?: string;
   disabled?: boolean;
-  /** Mientras se crea, para no dejar pulsar dos veces. */
+  /** While creating, so it cannot be pressed twice. */
   isCreating?: boolean;
   id?: string;
 }
@@ -72,20 +73,20 @@ export function Combo({
   const selected = options.find((o) => o.value === value);
 
   /*
-    Lo que se ve en el campo, abierto o cerrado, se pueda tocar o no.
+    What shows in the field, open or closed, whether it can be touched or not.
 
-    ── Por qué es UNO y no dos ─────────────────────────────────────────────
-    Estaba escrito dos veces, y las dos copias decían cosas distintas: la del
-    control bloqueado pintaba SIEMPRE el marcador e ignoraba lo elegido. En la
-    ficha de un movimiento de un centro estático —donde los tres desplegables
-    salen bloqueados a propósito, porque esa clasificación no se toca desde
-    aquí— eso significaba abrir un movimiento bien clasificado y leer «Elige
-    una opción» en centro, categoría y concepto. El formulario decía que no estaba
-    clasificado, que es exactamente lo contrario de lo que pasaba.
+    ── Why it is ONE and not two ──────────────────────────────────────────
+    It was written twice, and the two copies said different things: the one
+    for the locked control ALWAYS painted the placeholder and ignored the
+    selection. In the modal of a transaction from a static center —where the
+    three dropdowns come out locked on purpose, because that classification is
+    not touched from here— that meant opening a well-classified transaction
+    and reading «Elige una opción» in center, category and concept. The form
+    said it was not classified, which is exactly the opposite of what was
+    happening.
 
-    Bloqueado quiere decir «esto no se cambia desde aquí», nunca «esto está
-    vacío». Es la misma forma que ya tenía `Select`, que sí reutilizaba su
-    contenido.
+    Locked means «this is not changed from here», never «this is empty». It
+    is the same shape `Select` already had, which did reuse its content.
   */
   const triggerContent = (isOpen: boolean) => (
     <ComboTriggerContent
@@ -96,8 +97,8 @@ export function Combo({
     />
   );
 
-  // Bloqueado no puede ser un botón que abre nada: se pinta igual pero sin
-  // desplegable detrás, para que el foco no caiga en una trampa.
+  // Locked cannot be a button that opens anything: it is painted the same but
+  // with no dropdown behind it, so that focus does not fall into a trap.
   if (isDisabled) return <DisabledCombo id={id}>{triggerContent(false)}</DisabledCombo>;
 
   return (
@@ -106,9 +107,9 @@ export function Combo({
       kind="list"
       align="left"
       isFloating
-      // El panel dibuja sus propias franjas a sangre —el buscador arriba, el
-      // "crear" abajo—: con el acolchado del menú, esas líneas quedarían
-      // cortadas 4px antes de cada lado.
+      // The panel draws its own full-bleed strips —the search box on top, the
+      // "create" at the bottom—: with the menu's padding, those lines would
+      // stop 4px short of each side.
       isUnpadded
       boxClassName="w-full min-w-0"
       triggerClassName={fieldTrigger()}
@@ -134,13 +135,13 @@ interface ComboSearch {
   setQuery: (v: string) => void;
   filtered: ComboOption[];
   canCreate: boolean;
-  /** Elige una opción y vacía el buscador. */
+  /** Picks an option and empties the search box. */
   select: (value: string) => void;
-  /** Crea lo escrito y vacía el buscador. */
+  /** Creates what was typed and empties the search box. */
   create: () => void;
 }
 
-/** Lo escrito en el buscador, lo que deja ver y lo que se puede crear con ello. */
+/** What was typed in the search box, what it lets through and what can be created with it. */
 function useComboSearch(
   options: ComboOption[],
   onChange: (value: string) => void,
@@ -154,9 +155,9 @@ function useComboSearch(
     return options.filter((o) => normal(o.label).includes(q));
   }, [options, query]);
 
-  // Ofrecer crear solo cuando lo escrito no existe ya. Con un nombre que
-  // coincide, "crear" produciría dos conceptos idénticos —y a partir de ahí
-  // la misma plata sumando por separado en los dos—.
+  // Offer to create only when what was typed does not exist yet. With a
+  // matching name, "create" would produce two identical concepts —and from
+  // then on the same money adding up separately in both—.
   const canCreate =
     onCreate !== undefined &&
     query.trim() !== '' &&
@@ -190,8 +191,8 @@ interface ComboPanelProps {
 function ComboPanel({ inputRef, search, value, emptyLabel, isCreating, close }: ComboPanelProps) {
   const { query, setQuery, filtered, canCreate } = search;
 
-  // El foco al abrir: si hay que pulsar el campo antes de escribir, el gesto
-  // son dos clics y nadie llega a descubrir que se podía filtrar.
+  // Focus on open: if the field has to be clicked before typing, the gesture
+  // is two clicks and nobody ever discovers that it could filter.
   useEffect(() => {
     const t = setTimeout(() => inputRef.current?.focus(), 10);
     return () => clearTimeout(t);
@@ -215,8 +216,8 @@ function ComboPanel({ inputRef, search, value, emptyLabel, isCreating, close }: 
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
-          // Enter elige lo único que queda, que es lo que uno espera después
-          // de escribir tres letras y ver una sola fila.
+          // Enter picks the only thing left, which is what one expects after
+          // typing three letters and seeing a single row.
           if (e.key !== 'Enter') return;
           e.preventDefault();
           const [only] = filtered;
@@ -244,11 +245,11 @@ function ComboPanel({ inputRef, search, value, emptyLabel, isCreating, close }: 
 }
 
 /**
- * La fila de «crear lo que falta», al pie de una lista con buscador.
+ * The «create what is missing» row, at the foot of a list with a search box.
  *
- * Exportada porque el buscador de conceptos ofrece lo mismo: dos copias se
- * separan. `conIntro` añade la pista de que Intro la elige, cuando es lo único
- * que se puede elegir.
+ * Exported because the concept search offers the same: two copies drift
+ * apart. `hasEnterHint` adds the hint that Enter picks it, when it is the only
+ * thing that can be picked.
  */
 export function CreateOption({
   isCreating,
@@ -283,11 +284,11 @@ export function CreateOption({
 }
 
 /**
- * Una fila elegible de un desplegable con buscador.
+ * A selectable row of a dropdown with a search box.
  *
- * Exportada porque la usa también el buscador de conceptos: la misma fila, con
- * el mismo realce y la misma palomita, para que elegir un concepto se vea igual
- * en los dos sitios. Dos copias se separan.
+ * Exported because the concept search uses it too: the same row, with the
+ * same highlight and the same check mark, so that picking a concept looks the
+ * same in both places. Two copies drift apart.
  */
 export function Option({
   isSelected,
@@ -316,7 +317,7 @@ export function Option({
   );
 }
 
-/** Sin tildes ni mayúsculas: "Educación" se encuentra escribiendo "educacion". */
+/** Without accents or capitals: "Educación" is found by typing "educacion". */
 function normal(text: string): string {
   return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
@@ -371,9 +372,9 @@ function ComboTriggerContent({
   return (
     <>
       {/*
-        El relleno de arriba va en el TEXTO y no en el botón: con el botón
-        relleno, la flecha quedaría ocho píxeles baja porque `items-center` la
-        centraría en la caja de contenido en vez de en el campo.
+        The top padding goes on the TEXT and not on the button: with the button
+        padded, the chevron would sit eight pixels low because `items-center`
+        would center it in the content box instead of in the field.
       */}
       <span
         data-lleno={selected ? 'si' : 'no'}

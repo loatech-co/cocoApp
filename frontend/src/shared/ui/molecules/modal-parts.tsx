@@ -6,74 +6,75 @@ import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
 
 /**
- * La cabecera y el pie de una ficha.
+ * The header and the footer of a modal.
  *
- * ── Por qué están fuera de `Modal` ──────────────────────────────────────────
- * Porque hay DOS armazones. `ui/modal.tsx` sirve para las fichas que caben en
- * su forma —un título, una línea de ayuda, una equis— y la del movimiento
- * tiene el suyo, porque lleva un pastel de color delante del título y un ancho
- * distinto. Escritas dentro de `Modal`, la del movimiento no podía usarlas y
- * se copiaban; sueltas, las usan las dos.
+ * ── Why they live outside `Modal` ───────────────────────────────────────────
+ * Because there are TWO frames. `ui/modal.tsx` serves the modals that fit its
+ * shape —a title, a description line, a close X— and the transaction's has its
+ * own, because it carries a color swatch before the title and a different
+ * width. Written inside `Modal`, the transaction's could not use them and they
+ * got copied; standing alone, both use them.
  *
- * Y el pie estaba escrito TRES veces —centro de costos, concepto y
- * movimiento—, las tres con `flex-1` en los dos botones. En una ficha estrecha
- * eso se ve bien; en la del movimiento, que llega a 1024px, cada botón se
- * comía media pantalla y «Cancelar» pesaba exactamente lo mismo que
+ * And the footer was written THREE times —cost center, concept and
+ * transaction—, all three with `flex-1` on both buttons. In a narrow modal
+ * that looks fine; in the transaction's, which reached 1024px, each button
+ * ate half the screen and «Cancelar» weighed exactly the same as
  * «Registrar».
  */
 
 /**
- * El panel de una ficha: la caja blanca que flota sobre el velo.
+ * The panel of a modal: the white box that floats over the backdrop.
  *
- * ── Por qué es una clase y no un componente ─────────────────────────────────
- * Porque los dos armazones ponen cosas distintas dentro —la del movimiento
- * lleva pasos, cámara y lectura— y lo que comparten es la CAJA: una columna
- * con un alto máximo y uno mínimo. Exportar la clase es el mismo recurso que
- * `BLOQUE` y `SUPERFICIE_FLOTANTE`: un solo sitio donde cambia la medida.
+ * ── Why it is a class and not a component ───────────────────────────────────
+ * Because the two frames put different things inside —the transaction's
+ * carries steps, camera and reading— and what they share is the BOX: a column
+ * with a maximum height and a minimum one. Exporting the class is the same
+ * device as `BLOCK` and `FLOATING_SURFACE`: a single place where the
+ * measurement changes.
  *
- * ── El alto mínimo: 400px ───────────────────────────────────────────────────
- * Sin él, una ficha mide lo que mida su formulario, y eso hace que la misma
- * ventana sea tres ventanas: «Nuevo categoría» salía de 260px, «Nuevo concepto»
- * de 420 y la del movimiento de 700. Abrir dos seguidas era ver el panel
- * crecer y encogerse en el mismo sitio de la pantalla, y en la corta los
- * botones quedaban a media altura, donde no los busca nadie.
+ * ── The minimum height: 400px ───────────────────────────────────────────────
+ * Without it, a modal measures whatever its form measures, and that turns the
+ * same window into three windows: «Nuevo categoría» came out at 260px, «Nuevo
+ * concepto» at 420 and the transaction's at 700. Opening two in a row meant
+ * watching the panel grow and shrink in the same spot on the screen, and in
+ * the short one the buttons sat at mid-height, where nobody looks for them.
  *
- * ── Por qué `min(400px, 92dvh)` y no 400px a secas ──────────────────────────
- * Porque en CSS el alto mínimo GANA al máximo: en una pantalla baja —un
- * teléfono pequeño, una ventana a media altura— un `min-h` de 600 se comería
- * el `max-h` de 92dvh y la ficha se saldría por abajo, con sus botones fuera.
- * Con `min()` el mínimo nunca puede pasarse del máximo.
+ * ── Why `min(400px, 92dvh)` and not plain 400px ─────────────────────────────
+ * Because in CSS the minimum height WINS over the maximum: on a short screen
+ * —a small phone, a half-height window— a `min-h` of 600 would eat the
+ * `max-h` of 92dvh and the modal would run off the bottom, with its buttons
+ * outside. With `min()` the minimum can never exceed the maximum.
 
- * Fueron 600 y bajaron a 400: con 600, una ficha de dos campos —una categoría, una
- * confirmación con un selector— se abría con un palmo de vacío debajo de sus
- * botones. El mínimo está para que abrir dos fichas seguidas no sea ver el
- * panel crecer y encogerse, no para estirar las cortas.
+ * It was 600 and came down to 400: with 600, a two-field modal —a category, a
+ * confirmation with one picker— opened with a hand's width of empty space
+ * below its buttons. The minimum is there so that opening two modals in a row
+ * is not watching the panel grow and shrink, not to stretch the short ones.
  *
- * ── El ancho máximo: 720px ──────────────────────────────────────────────────
- * Y aquí, no en cada llamada. La ficha del movimiento llegaba a 1024 porque su
- * columna del soporte pedía sitio, y una ficha de 1024 en una pantalla de 1440
- * es una ventana dentro de otra: deja de leerse como algo que está ENCIMA de
- * la aplicación y empieza a leerse como otra pantalla.
+ * ── The maximum width: 720px ────────────────────────────────────────────────
+ * And here, not at each call site. The transaction's modal reached 1024
+ * because its receipt column asked for room, and a 1024 modal on a 1440
+ * screen is a window inside another: it stops reading as something that is
+ * ON TOP of the app and starts reading as another screen.
  *
- * Una llamada puede pedir MENOS —la confirmación mide `max-w-md`— pero no más:
- * el tope vive aquí para que el día que cambie, cambie una vez.
+ * A call site may ask for LESS —the confirmation measures `max-w-md`— but not
+ * more: the cap lives here so that the day it changes, it changes once.
  */
 export const MODAL_PANEL =
   'flex max-h-[92dvh] min-h-[min(400px,92dvh)] w-full flex-col sm:max-w-[720px]';
 
 /**
- * La cabecera de una ficha.
+ * The header of a modal.
  *
- * ── Por qué no se desplaza ──────────────────────────────────────────────────
- * Lo pone quien la coloca —con `shrink-0` dentro de una columna—, y hace falta:
- * en una ficha larga el título y la equis se iban por arriba, y a mitad de un
- * formulario no quedaba en pantalla ni qué se estaba editando ni por dónde
- * salir.
+ * ── Why it does not scroll ──────────────────────────────────────────────────
+ * Whoever places it sets that —with `shrink-0` inside a column—, and it is
+ * needed: in a long modal the title and the close X scrolled off the top, and
+ * halfway through a form there was nothing left on screen saying what was
+ * being edited or how to get out.
  *
- * ── Por qué la equis va junto a las demás acciones ──────────────────────────
- * Porque eliminar, editar y cerrar son las tres cosas que se pueden hacer con
- * la ficha ENTERA, frente a las que se hacen con lo que tiene dentro.
- * Repartidas en dos esquinas hay que buscarlas por separado.
+ * ── Why the close X goes next to the other actions ──────────────────────────
+ * Because delete, edit and close are the three things that can be done with
+ * the WHOLE modal, as opposed to the ones done with what is inside it. Spread
+ * over two corners, they have to be looked for separately.
  */
 export function ModalHeader({
   title,
@@ -84,11 +85,11 @@ export function ModalHeader({
   className,
 }: {
   title: ReactNode;
-  /** Qué es esta ficha, en una frase. */
+  /** What this modal is, in one sentence. */
   description?: string | undefined;
-  /** Va delante del título: el pastel de color de un movimiento. */
+  /** Goes before the title: the color swatch of a transaction. */
   leading?: ReactNode;
-  /** Botones de icono a la izquierda de la equis. Eliminar, editar. */
+  /** Icon buttons to the left of the close X. Delete, edit. */
   actions?: ReactNode;
   onClose: () => void;
   className?: string;
@@ -96,18 +97,18 @@ export function ModalHeader({
   return (
     <div
       className={cn(
-        // 16 por los cuatro lados, como el cuerpo: la cabecera y lo que hay
-        // debajo son la misma columna, y dos sangrados distintos se ven como
-        // un escalón en el canto izquierdo de la ficha.
+        // 16 on all four sides, like the body: the header and what is below
+        // it are the same column, and two different insets look like a step
+        // on the left edge of the modal.
         'flex shrink-0 items-start justify-between gap-3 px-4 pb-4 pt-4',
         className,
       )}
     >
       {/*
-        La fila interior va centrada y la exterior arranca arriba, y no es lo
-        mismo: el pastel tiene que quedar a la altura del título —no de su
-        línea de ayuda—, y la equis tiene que quedarse arriba aunque debajo
-        haya dos renglones de explicación.
+        The inner row is centered and the outer one starts at the top, and
+        they are not the same: the swatch has to sit level with the title —not
+        with its description line—, and the close X has to stay at the top
+        even if there are two lines of explanation below.
       */}
       <div className="flex min-w-0 items-center gap-3">
         {leading}
@@ -134,38 +135,41 @@ export function ModalHeader({
 }
 
 /**
- * El pie de una ficha: lo que cierra y lo que confirma.
+ * The footer of a modal: what closes it and what confirms.
  *
- * ── Por qué los botones NO se estiran ───────────────────────────────────────
- * Los tres pies que había llevaban `flex-1` en los dos botones, así que se
- * repartían el ancho a medias. En una ficha estrecha pasa desapercibido; en
- * la del movimiento, que llega a 1024px, cada botón medía 480px y «Cancelar»
- * pesaba exactamente lo mismo que «Registrar». Un botón del tamaño de su
- * texto dice cuál es la acción principal sin tener que gritarlo.
+ * ── Why the buttons do NOT stretch ──────────────────────────────────────────
+ * The three footers there were carried `flex-1` on both buttons, so they
+ * split the width in half. In a narrow modal it goes unnoticed; in the
+ * transaction's, which reached 1024px, each button measured 480px and
+ * «Cancelar» weighed exactly the same as «Registrar». A button the size of
+ * its text says which one is the main action without having to shout it.
  *
- * ── Por qué a la derecha ────────────────────────────────────────────────────
- * Es donde termina de leerse un formulario: se recorre de arriba abajo y de
- * izquierda a derecha, y la acción que lo cierra va donde acaba el recorrido.
+ * ── Why on the right ────────────────────────────────────────────────────────
+ * It is where a form finishes being read: it is scanned top to bottom and
+ * left to right, and the action that closes it goes where the scan ends.
  *
- * ── Por qué en el teléfono se apilan a ancho completo ───────────────────────
- * Porque dos botones del tamaño de su texto, en una esquina, son dos blancos
- * pequeños y juntos: es donde se pulsa «Cancelar» queriendo pulsar «Guardar».
- * Apilados y a todo el ancho no hay forma de equivocarse.
+ * ── Why on the phone they stack at full width ───────────────────────────────
+ * Because two buttons the size of their text, in a corner, are two small
+ * targets close together: it is where you tap «Cancelar» meaning to tap
+ * «Guardar». Stacked and full width there is no way to get it wrong.
  *
- * Y se apilan en el ORDEN en que están escritos, sin invertirlo: en el
- * teléfono esta ficha está pegada al pie de la pantalla, así que lo de más
- * abajo es lo que queda más cerca del pulgar, y ahí tiene que estar la acción
- * principal. Invertirlo —como hace la convención de escritorio, que sube el
- * botón primario— la alejaría justo en la pantalla donde más cuesta llegar.
+ * And they stack in the ORDER they are written, without reversing it: on the
+ * phone this modal is attached to the foot of the screen, so whatever is
+ * lowest is what sits closest to the thumb, and that is where the main action
+ * has to be. Reversing it —as the desktop convention does, which lifts the
+ * primary button— would push it away precisely on the screen where it is
+ * hardest to reach.
  *
- * ── Por qué `mt-auto` ───────────────────────────────────────────────────────
- * Desde que el panel tiene alto mínimo, en un formulario corto sobra sitio
- * debajo. Sin esto los botones se quedaban pegados al último campo, a media
- * altura, con un palmo de vacío debajo: parecía una ficha a medio cargar. El
- * margen automático los manda al fondo, que es donde termina de leerse.
+ * ── Why `mt-auto` ───────────────────────────────────────────────────────────
+ * Since the panel has a minimum height, a short form leaves room to spare
+ * below. Without this the buttons stayed stuck to the last field, at
+ * mid-height, with a hand's width of empty space below: it looked like a
+ * half-loaded modal. The automatic margin sends them to the bottom, which is
+ * where reading ends.
  *
- * Solo hace algo dentro de una columna flexible con sitio de sobra. En la
- * confirmación, que no lo es, no estorba: ahí manda el `mt-6` de la llamada.
+ * It only does something inside a flex column with room to spare. In the
+ * confirmation, which is not one, it does no harm: there the call site's
+ * `mt-6` rules.
  */
 export function ModalFooter({ className, ...props }: ComponentProps<'div'>) {
   return (
@@ -173,7 +177,7 @@ export function ModalFooter({ className, ...props }: ComponentProps<'div'>) {
       className={cn(
         'mt-auto flex flex-col gap-2 pt-2',
         'sm:flex-row sm:justify-end',
-        // A ancho completo apilados, al tamaño de su texto en una fila.
+        // Full width when stacked, the size of their text in a row.
         '[&>*]:w-full sm:[&>*]:w-auto',
         className,
       )}
@@ -183,15 +187,15 @@ export function ModalFooter({ className, ...props }: ComponentProps<'div'>) {
 }
 
 /**
- * El cuerpo de una ficha: lo que se desplaza entre la cabecera y el borde.
+ * The body of a modal: what scrolls between the header and the edge.
  *
- * `min-h-0` deja que se encoja dentro de la columna del panel (sin él mide lo
- * que mida su contenido y se lleva por delante el alto máximo). Es una
- * COLUMNA porque el panel tiene alto mínimo: así `PieDeModal` puede irse al
- * fondo. Y el relleno de abajo reserva el borde seguro del teléfono: pegada al
- * pie, la última fila caía debajo de la barra del sistema.
+ * `min-h-0` lets it shrink inside the panel's column (without it, it measures
+ * whatever its content measures and runs over the maximum height). It is a
+ * COLUMN because the panel has a minimum height: that way `ModalFooter` can go
+ * to the bottom. And the bottom padding reserves the phone's safe edge: stuck
+ * to the foot, the last row fell under the system bar.
  *
- * Lo usan los dos armazones, `Modal` y la ficha del movimiento.
+ * Both frames use it, `Modal` and the transaction's modal.
  */
 export function ModalBody({ children }: { children: ReactNode }) {
   return (

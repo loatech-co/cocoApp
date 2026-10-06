@@ -3,11 +3,11 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * Dos reglas de tipografía que se rompen solas, y por eso se vigilan.
+ * Two typography rules that break by themselves, and so are watched.
  *
- * Lee el código fuente, como las de los botones, el radio y la superficie
- * flotante: el problema no está en un componente sino en quién escribe la
- * clase, y una clase escrita a mano no la ve nadie hasta que hay quince.
+ * It reads the source code, like the button, radius and floating surface
+ * ones: the problem is not in a component but in whoever writes the class,
+ * and a hand-written class goes unseen by everyone until there are fifteen.
  */
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
@@ -20,29 +20,28 @@ function sourceFiles(dir: string): string[] {
 const files = sourceFiles(join(import.meta.dirname, '..', '..'));
 const relativePath = (filePath: string): string => filePath.split('/src/')[1]!;
 
-describe('La tipografía sale de la escala y no grita', () => {
-  it('encuentra los archivos del proyecto', () => {
+describe('Typography comes from the scale and does not shout', () => {
+  it('finds the project files', () => {
     expect(files.length).toBeGreaterThan(10);
   });
 
-  it('ningún rótulo va en mayúsculas sostenidas', () => {
-    // Una palabra en versalitas pierde la silueta que la hace reconocible:
-    // "Soporte" y "SOPORTE" no se leen igual de rápido. Estaban en el rótulo
-    // de los indicadores del resumen y en el grupo de secciones del riel, que
-    // son justo los sitios que se leen de reojo.
+  it('no label goes in sustained capitals', () => {
+    // A word in small caps loses the silhouette that makes it recognizable:
+    // "Soporte" and "SOPORTE" are not read equally fast. They were on the
+    // label of the summary indicators and on the section group of the rail,
+    // which are exactly the places read out of the corner of the eye.
     const offenders: string[] = [];
 
-    // La palabra suelta, y no un `className=` completo: la clase aparece
-    // igual de a menudo dentro de un `cn(...)` con comillas simples, y una
-    // expresión que intente abarcar las dos formas se queda corta en la
-    // tercera. Aquí «uppercase» solo puede ser la utilidad de Tailwind —los
-    // comentarios de este proyecto están en castellano y dicen «mayúsculas
-    // sostenidas»—, así que buscarla a secas basta.
+    // The bare word, and not a whole `className=`: the class shows up just as
+    // often inside a `cn(...)` with single quotes, and an expression that
+    // tries to cover both forms falls short on the third. Here «uppercase»
+    // can only be the Tailwind utility —this project's comments say
+    // «sustained capitals»—, so searching for it plainly is enough.
     //
-    // Con una excepción: `first-letter:uppercase` NO es gritar, es poner en
-    // mayúscula una inicial. Lo que prohíbe esta regla es la utilidad suelta,
-    // la que pone en versalitas un rótulo entero; de ahí el `(?<![-:\w])`,
-    // que descarta cualquier variante que la preceda.
+    // With one exception: `first-letter:uppercase` is NOT shouting, it is
+    // capitalizing an initial. What this rule forbids is the bare utility,
+    // the one that puts a whole label in small caps; hence the `(?<![-:\w])`,
+    // which discards any variant preceding it.
     for (const filePath of files) {
       for (const line of readFileSync(filePath, 'utf8').split('\n')) {
         if (/(?<![-:\w])uppercase\b/.test(line)) {
@@ -51,13 +50,13 @@ describe('La tipografía sale de la escala y no grita', () => {
       }
     }
 
-    expect(offenders, 'usa minúsculas; el tamaño y el gris ya dicen que es un rótulo').toEqual([]);
+    expect(offenders, 'use lowercase; the size and the gray already say it is a label').toEqual([]);
   });
 
-  it('ningún tamaño de letra se escribe en píxeles', () => {
-    // `text-[11px]` estaba en trece sitios y ya se habían separado: unos con
-    // `leading-none` y otros sin él. La escala tiene un escalón para eso,
-    // `text-2xs`, declarado en `index.css` con su altura de línea.
+  it('no font size is written in pixels', () => {
+    // `text-[11px]` was in thirteen places and they had already drifted
+    // apart: some with `leading-none` and some without. The scale has a step
+    // for that, `text-2xs`, declared in `index.css` with its line height.
     const offenders: string[] = [];
 
     for (const filePath of files) {
@@ -67,6 +66,6 @@ describe('La tipografía sale de la escala y no grita', () => {
       }
     }
 
-    expect(offenders, 'usa la escala: text-2xs, text-xs, text-sm…').toEqual([]);
+    expect(offenders, 'use the scale: text-2xs, text-xs, text-sm…').toEqual([]);
   });
 });

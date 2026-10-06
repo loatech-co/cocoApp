@@ -8,9 +8,9 @@ import { ModalHeader, ModalBody, MODAL_PANEL } from '@/shared/ui/molecules/modal
 interface ModalProps {
   isOpen: boolean;
   title: string;
-  /** La línea bajo el título: qué es esto, en una frase. */
+  /** The line under the title: what this is, in one sentence. */
   description?: string;
-  /** Botones de icono a la izquierda de la equis. Por ejemplo, eliminar. */
+  /** Icon buttons to the left of the close X. Delete, for example. */
   actions?: ReactNode;
   width?: string;
   onClose: () => void;
@@ -18,42 +18,44 @@ interface ModalProps {
 }
 
 /**
- * El armazón de una ficha: el velo, el panel y su cabecera.
+ * The frame of a modal: the backdrop, the panel and its header.
  *
- * ── Por qué es un componente y no se copia ──────────────────────────────────
- * Porque el modal no es un rectángulo: es un velo que cierra al tocarlo, una
- * tecla de escape, un panel que se desliza desde abajo en un teléfono y se
- * centra en un escritorio, un alto máximo con desplazamiento dentro y una
- * equis en su esquina. Son seis decisiones, y copiadas empiezan iguales y se
- * separan: una aprende a cerrar con Escape y la otra no, y la misma app se
- * comporta distinto según por dónde se entre.
+ * ── Why it is a component and is not copied ─────────────────────────────────
+ * Because the modal is not a rectangle: it is a backdrop that closes when
+ * tapped, an escape key, a panel that slides up from the bottom on a phone and
+ * is centered on a desktop, a maximum height with scrolling inside and a close
+ * X in its corner. That is six decisions, and copied they start out the same
+ * and drift apart: one learns to close with Escape and the other does not, and
+ * the same app behaves differently depending on where you come in.
  *
- * ── Por qué se pega abajo en el teléfono ────────────────────────────────────
- * Porque ahí es donde llega el pulgar. Un panel centrado con los botones a
- * media pantalla obliga a cambiar de mano para guardar.
+ * ── Why it sticks to the bottom on the phone ────────────────────────────────
+ * Because that is where the thumb reaches. A centered panel with the buttons
+ * at mid-screen forces switching hands to save.
  *
- * ── Por qué NO enfoca su primer campo ───────────────────────────────────────
- * Porque abrir una ficha no es empezar a escribir en ella. El primer campo
- * enfocado y resaltado dice «escribe aquí» cuando lo que uno viene a hacer casi
- * siempre es LEER lo que hay —de qué movimiento se trata, qué valor tiene— y
- * corregir un campo concreto, que rara vez es el primero. Y con la etiqueta
- * flotante es peor: el campo enfocado sube su etiqueta y enseña su marcador,
- * así que un formulario vacío parece uno a medio llenar.
+ * ── Why it does NOT focus its first field ───────────────────────────────────
+ * Because opening a modal is not starting to type in it. The first field
+ * focused and highlighted says «type here» when what one comes to do is almost
+ * always READ what is there —which transaction it is, what amount it has— and
+ * correct one specific field, which is rarely the first. And with the floating
+ * label it is worse: the focused field raises its label and shows its
+ * placeholder, so an empty form looks half filled in.
  *
- * Donde SÍ se enfoca es en un campo que aparece porque alguien lo pidió: la
- * búsqueda que sale al pulsar la lupa, el «Agregar concepto» que sale al pulsar
- * su botón. Ahí el foco no es un añadido, es la segunda mitad de ese clic; sin
- * él habría que pulsar y luego apuntar al campo que acaba de aparecer.
+ * Where it DOES focus is on a field that appears because someone asked for
+ * it: the search that comes out when the magnifier is pressed, the «Agregar
+ * concepto» that comes out when its button is pressed. There the focus is not
+ * an extra, it is the second half of that click; without it one would have to
+ * click and then aim at the field that just appeared.
  *
- * La confirmación es el otro caso aparte, y enfoca CANCELAR a propósito: quien
- * llega con Enter puesto no quiso borrar nada, venía de pulsar otra cosa.
+ * The confirmation is the other special case, and it focuses CANCEL on
+ * purpose: whoever arrives with Enter pressed did not mean to delete anything,
+ * they were coming from pressing something else.
  *
- * ── Por qué la cabecera NO se desplaza ──────────────────────────────────────
- * El desplazamiento estaba en el panel entero, así que en una ficha larga el
- * título y la equis se iban por arriba: a mitad de un formulario no quedaba
- * en pantalla ni qué se estaba editando ni por dónde salir, y la única forma
- * de cerrar era subir otra vez. Ahora el panel es una columna con dos partes:
- * la cabecera, que se queda, y el cuerpo, que es lo que se recorre.
+ * ── Why the header does NOT scroll ──────────────────────────────────────────
+ * The scroll was on the whole panel, so in a long modal the title and the
+ * close X went off the top: halfway through a form there was nothing left on
+ * screen saying what was being edited or how to get out, and the only way to
+ * close was to scroll up again. Now the panel is a column with two parts: the
+ * header, which stays, and the body, which is what gets scrolled.
  */
 export function Modal({
   isOpen,
@@ -73,28 +75,27 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      // `onMouseDown` y no `onClick`: con clic, arrastrar el ratón desde
-      // dentro del panel hasta el velo —seleccionando un texto, por ejemplo—
-      // cerraba la ficha con todo lo escrito dentro.
+      // `onMouseDown` and not `onClick`: with click, dragging the mouse from
+      // inside the panel to the backdrop —selecting some text, for example—
+      // closed the modal with everything typed inside it.
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
-      // La marca por la que preguntan las superficies de debajo. Una trampa de
-      // foco se aparta mientras hay una ficha abierta, y Escape cierra primero
-      // la ficha: dos trampas peleándose por el tabulador son un teclado que no
-      // hace nada.
+      // The mark the surfaces below ask about. A focus trap steps aside while
+      // a modal is open, and Escape closes the modal first: two traps fighting
+      // over the Tab key are a keyboard that does nothing.
       data-modal=""
       className={cn(
         'fixed inset-0 z-50 flex items-end justify-center bg-[var(--velo)] backdrop-blur-sm',
         /*
-          ── 24 hasta el borde de la pantalla, en el teléfono ──────────────
-          La ficha no va a sangre. Pegada a los tres cantos, se lee como otra
-          PANTALLA: se come el ancho entero, la esquina de abajo desaparece y
-          lo único que dice que la aplicación sigue detrás es una franja de
-          velo arriba. Separada, vuelve a leerse como lo que es —algo que está
-          ENCIMA— y el velo se ve por los cuatro lados.
+          ── 24 to the edge of the screen, on the phone ────────────────────
+          The modal is not full-bleed. Stuck to the three edges, it reads as
+          another SCREEN: it eats the whole width, the bottom corner
+          disappears and the only thing saying the app is still behind is a
+          strip of backdrop at the top. Separated, it reads again as what it
+          is —something ON TOP— and the backdrop shows on all four sides.
 
-          Es distancia de la ficha al canto de la pantalla, no relleno de la
-          ficha: lo de dentro sigue en 16, que es lo que `Modal` y
-          `CabeceraDeModal` ya fijan.
+          It is distance from the modal to the edge of the screen, not the
+          modal's padding: the inside stays at 16, which is what `Modal` and
+          `ModalHeader` already set.
         */
         'p-6',
         'se-revela sm:items-center sm:p-4',
@@ -105,11 +106,11 @@ export function Modal({
           MODAL_PANEL,
           FLOATING_SURFACE,
           'emerge',
-          // Pegado abajo se redondea solo arriba: las esquinas de abajo caen
-          // fuera de la pantalla y curvarlas deja dos muescas del fondo.
-          // Las cuatro esquinas, ya no solo las de arriba: separada del borde
-          // de abajo, las de abajo también se ven, y dos cantos rectos debajo
-          // de dos curvos es una caja a medio dibujar.
+          // Stuck to the bottom it is rounded only on top: the bottom corners
+          // fall off the screen and curving them leaves two notches of the
+          // background. All four corners, no longer just the top ones:
+          // separated from the bottom edge, the bottom ones show too, and two
+          // straight corners under two curved ones is a half-drawn box.
           'rounded-lg',
           width,
         )}
@@ -117,18 +118,18 @@ export function Modal({
         <ModalHeader title={title} description={description} actions={actions} onClose={onClose} />
 
         {/*
-          `min-h-0` es lo que permite que esto se encoja: sin él, un hijo de
-          una columna flexible mide lo que mide su contenido y se lleva por
-          delante el alto máximo del panel —es el mismo motivo por el que la
-          fila del resumen se desbordaba sobre la tabla—.
+          `min-h-0` is what lets this shrink: without it, a child of a flex
+          column measures whatever its content measures and runs over the
+          panel's maximum height —the same reason the summary row overflowed
+          onto the table—.
 
-          Y el relleno de abajo reserva el borde seguro del teléfono: pegada al
-          pie, la última fila de la ficha caía debajo de la barra del sistema.
+          And the bottom padding reserves the phone's safe edge: stuck to the
+          foot, the modal's last row fell under the system bar.
 
-          Es una COLUMNA porque el panel tiene alto mínimo: con un formulario
-          corto sobra sitio, y hace falta que el formulario pueda estirarse
-          para llevarse sus botones al fondo. En una caja de bloque no habría
-          sitio que repartir y el pie se quedaría a media altura.
+          It is a COLUMN because the panel has a minimum height: with a short
+          form there is room to spare, and the form needs to be able to
+          stretch to take its buttons to the bottom. In a block box there
+          would be no room to share and the footer would sit at mid-height.
         */}
         <ModalBody>{children}</ModalBody>
       </div>

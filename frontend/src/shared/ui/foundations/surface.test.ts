@@ -5,16 +5,16 @@ import { describe, expect, it } from 'vitest';
 import { FLOATING_SURFACE } from './surface';
 
 /**
- * Todo lo que flota se dibuja igual.
+ * Everything that floats is drawn the same way.
  *
- * Esta regla ya se había roto una vez sin que nadie la rompiera a propósito:
- * diez archivos —los dos selectores de fecha, el menú, los tres modales, el
- * aviso, las dos pistas de las gráficas y el panel del teléfono— repetían la
- * misma pareja de clases, así que el día que se cambió de tema había diez
- * sitios que actualizar y se actualizaron cero.
+ * This rule had already been broken once without anyone breaking it on
+ * purpose: ten files —the two date pickers, the menu, the three modals, the
+ * toast, the two chart tooltips and the phone panel— repeated the same pair of
+ * classes, so the day the theme changed there were ten places to update and
+ * zero got updated.
  *
- * Lee el código fuente, como las de los botones y el radio, porque el problema
- * no está en el componente sino en quién escribe la clase.
+ * It reads the source code, like the button and radius ones, because the
+ * problem is not in the component but in whoever writes the class.
  */
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
@@ -29,17 +29,18 @@ const files = sourceFiles(join(import.meta.dirname, '..', '..', '..'));
 const relativePath = (filePath: string): string => filePath.split('/src/')[1]!;
 
 /**
- * Quién puede escribir la sombra sin pasar por la superficie, y por qué.
+ * Who may write the shadow without going through the surface, and why.
  *
- * La diferencia es entre LEVANTAR y FLOTAR. Una superficie que flota trae su
- * propio color, su tinta, su sombra y su canto, y son esas cuatro decisiones
- * juntas las que tienen que estar en un solo sitio. Una sombra sola sobre algo
- * que YA tiene color no es una superficie: es un objeto de la página que se
- * levanta un momento —una ficha mientras se arrastra, el botón redondo de la
- * barra—, y obligarlo a traer el fondo de un desplegable lo volvería otra cosa.
+ * The difference is between LIFTING and FLOATING. A surface that floats brings
+ * its own color, its ink, its shadow and its edge, and it is those four
+ * decisions together that have to be in a single place. A shadow alone on
+ * something that ALREADY has color is not a surface: it is an object of the
+ * page lifting for a moment —a card while it is dragged, the round button of
+ * the bar—, and forcing it to bring a dropdown's background would turn it into
+ * something else.
  *
- * El tooltip está aquí porque va INVERTIDO a propósito: es la tinta de la
- * página haciendo de fondo, y el motivo está escrito en su propio archivo.
+ * The tooltip is here because it is INVERTED on purpose: it is the page's ink
+ * acting as background, and the reason is written in its own file.
  */
 const LIFTED = new Set([
   'shared/ui/atoms/tile.tsx',
@@ -47,28 +48,28 @@ const LIFTED = new Set([
   'shared/ui/atoms/tooltip.tsx',
 ]);
 
-describe('La superficie de lo que flota está en un solo sitio', () => {
-  it('encuentra los archivos del proyecto', () => {
+describe('The surface of what floats lives in a single place', () => {
+  it('finds the project files', () => {
     expect(files.length).toBeGreaterThan(10);
   });
 
-  it('nadie vuelve a escribir la sombra flotante a mano', () => {
+  it('nobody writes the floating shadow by hand again', () => {
     const offenders = files
       .filter((filePath) => !LIFTED.has(relativePath(filePath)))
-      // La CLASE, no la mención: un comentario que explique la diferencia
-      // entre lo apoyado y lo que flota nombra la sombra sin usarla.
+      // The CLASS, not the mention: a comment explaining the difference
+      // between what rests and what floats names the shadow without using it.
       .filter((filePath) =>
         readFileSync(filePath, 'utf8').includes('shadow-[var(--sombra-flotante)]'),
       )
       .map(relativePath);
 
-    expect(offenders, 'usa SUPERFICIE_FLOTANTE de shared/ui/foundations/surface.ts').toEqual([]);
+    expect(offenders, 'use FLOATING_SURFACE from shared/ui/foundations/surface.ts').toEqual([]);
   });
 
-  it('nadie separa un panel con un negro o un blanco inventados', () => {
-    // `ring-black/5` sobre un popover blanco da #f2f2f2: dos puntos de
-    // diferencia con el lienzo, o sea ningún canto. El borde del tema está
-    // calculado para verse contra sus propias superficies, en los dos modos.
+  it('nobody separates a panel with a made-up black or white', () => {
+    // `ring-black/5` on a white popover gives #f2f2f2: two points of
+    // difference from the canvas, that is, no edge at all. The theme's border
+    // is computed to show against its own surfaces, in both modes.
     const offenders: string[] = [];
 
     for (const filePath of files) {
@@ -78,13 +79,13 @@ describe('La superficie de lo que flota está en un solo sitio', () => {
       }
     }
 
-    expect(offenders, 'usa ring-border, o un token del tema').toEqual([]);
+    expect(offenders, 'use ring-border, or a theme token').toEqual([]);
   });
 
-  it('la superficie trae color, tinta, sombra y canto', () => {
-    // Las cuatro, porque las cuatro se han olvidado alguna vez: ocho de los
-    // diez sitios no declaraban `text-popover-foreground` y heredaban la tinta
-    // de la página, que en otro tema no tiene por qué coincidir.
+  it('the surface brings color, ink, shadow and edge', () => {
+    // All four, because all four have been forgotten at some point: eight of
+    // the ten places did not declare `text-popover-foreground` and inherited
+    // the page's ink, which in another theme need not match.
     expect(FLOATING_SURFACE).toContain('bg-popover');
     expect(FLOATING_SURFACE).toContain('text-popover-foreground');
     expect(FLOATING_SURFACE).toContain('--sombra-flotante');

@@ -16,7 +16,7 @@ afterEach(() => {
 
 const show = (...args: Parameters<typeof showToast>) => act(() => showToast(...args));
 
-describe('PilaDeAvisos', () => {
+describe('ToastStack', () => {
   it('renders nothing while there are no notices', () => {
     render(<ToastStack />);
 

@@ -5,28 +5,28 @@ import { cn } from '@/shared/lib/utils';
 import { Skeleton } from '@/shared/ui/atoms/skeleton';
 
 /**
- * Las piezas de una tabla de datos.
+ * The pieces of a data table.
  *
- * ── Por qué son piezas sueltas y no una `<Tabla columnas={…} filas={…} />` ──
- * Porque cada columna de esta app hace algo distinto: una edita en sitio, otra
- * formatea plata, otra abre un modal. Una tabla "genérica" acabaría recibiendo
- * una función de render por columna, que es exactamente escribir la celda a
- * mano pero con una capa de indirección encima.
+ * ── Why they are loose pieces and not a `<Table columns={…} rows={…} />` ───
+ * Because every column in this app does something different: one edits in
+ * place, another formats money, another opens a modal. A "generic" table would
+ * end up receiving a render function per column, which is exactly writing the
+ * cell by hand but with a layer of indirection on top.
  *
- * Lo que sí se comparte es lo que siempre se hace mal: el desplazamiento
- * horizontal, la primera columna fija y el pie con los totales.
+ * What is shared is what always goes wrong: the horizontal scroll, the sticky
+ * first column and the footer with the totals.
  */
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    // Sin borde, como la tarjeta y por lo mismo: la tabla es material apoyado
-    // en el pozo, y el escalón de superficie ya dice dónde empieza. Una línea
-    // alrededor de una tabla que ADEMÁS lleva líneas entre sus filas son dos
-    // retículas superpuestas.
+    // No border, like the card and for the same reason: the table is material
+    // resting in the well, and the surface step already says where it starts.
+    // A line around a table that ALSO carries lines between its rows is two
+    // overlapping grids.
     <div className="overflow-x-auto overscroll-x-contain rounded-lg bg-card">
       {/*
-        `min-w` fuerza el desplazamiento en vez de apretar las columnas hasta
-        que el texto se parte en cuatro líneas. Con la primera columna fija, se
-        arrastra a los lados sin perder de vista de qué fila es cada número.
+        `min-w` forces the scroll instead of squeezing the columns until the
+        text breaks into four lines. With the first column sticky, it is
+        dragged sideways without losing sight of which row each number is in.
       */}
       <table className={cn('w-full min-w-[48rem] border-collapse text-sm', className)}>
         {children}
@@ -36,11 +36,11 @@ export function Table({ children, className }: { children: ReactNode; className?
 }
 
 /**
- * Una cabecera de columna.
+ * A column header.
  *
- * Cuando ordena, la flecha va SIEMPRE visible aunque esté apagada: si solo
- * apareciera en la columna activa, no habría forma de saber que las demás
- * también se pueden ordenar sin ir probando una por una.
+ * When it sorts, the arrow is ALWAYS visible even when off: if it only showed
+ * on the active column, there would be no way to know that the others can be
+ * sorted too without trying them one by one.
  */
 export function Th({
   children,
@@ -52,13 +52,14 @@ export function Th({
 }: {
   children: ReactNode;
   align?: 'left' | 'right';
-  /** La primera columna, la que no se va al hacer scroll. */
+  /** The first column, the one that does not go away on scroll. */
   isSticky?: boolean;
   /**
-   * La línea que separa la columna fija de las que se desplazan.
+   * The line that separates the sticky column from the ones that scroll.
    *
-   * Ayuda cuando hay tantas columnas que uno se pierde de qué fila está
-   * leyendo. Con seis columnas que caben casi enteras, es una raya de más.
+   * It helps when there are so many columns that one loses track of which row
+   * one is reading. With six columns that almost fit whole, it is one line too
+   * many.
    */
   hasDivider?: boolean;
   sort?: { direction: 'asc' | 'desc' | null; onChange: () => void } | undefined;
@@ -104,7 +105,7 @@ export function Tr({
 }: {
   children: ReactNode;
   onClick?: () => void;
-  /** La fila pide algo: un movimiento sin clasificar, por ejemplo. */
+  /** The row asks for something: an unclassified transaction, for example. */
   isFlagged?: boolean;
   isDimmed?: boolean;
   className?: string;
@@ -113,13 +114,13 @@ export function Tr({
     <tr
       onClick={onClick}
       className={cn(
-        // `group/fila` deja que la celda FIJA sepa que su fila está bajo el
-        // cursor: esa celda necesita fondo propio y opaco para que las columnas
-        // no se transparenten al desplazarse, y ese fondo opaco tapaba el
-        // resaltado de la fila. Se marcaba todo menos la primera columna.
+        // `group/fila` lets the STICKY cell know that its row is under the
+        // cursor: that cell needs its own opaque background so the columns do
+        // not show through when scrolling, and that opaque background covered
+        // the row's highlight. Everything was marked except the first column.
         'group/fila border-b border-border transition-colors last:border-b-0',
-        // Ámbar y no rojo: sin clasificar no es un error, es algo pendiente. En
-        // esta paleta el rojo está reservado a lo que de verdad salió mal.
+        // Amber and not red: unclassified is not an error, it is something
+        // pending. In this palette red is reserved for what really went wrong.
         isFlagged ? 'bg-warning-surface/40 hover:bg-warning-surface/60' : 'hover:bg-muted/60',
         isDimmed && 'opacity-50',
         onClick && 'cursor-pointer',
@@ -142,9 +143,9 @@ export function Td({
   children?: ReactNode;
   align?: 'left' | 'right';
   isSticky?: boolean;
-  /** Ver `Th`. */
+  /** See `Th`. */
   hasDivider?: boolean;
-  /** Hereda el tinte de la fila: una celda fija sobre fondo propio lo taparía. */
+  /** Inherits the row's tint: a sticky cell on its own background would cover it. */
   isFlagged?: boolean;
   className?: string;
 }) {
@@ -153,10 +154,10 @@ export function Td({
       className={cn(
         'px-4 py-3',
         align === 'right' ? 'text-right' : 'text-left',
-        // La celda fija necesita fondo PROPIO y opaco, o las columnas de atrás
-        // se transparentarían por debajo al desplazarse. Como es opaco, tiene
-        // que repetir a mano el resaltado de su fila: `color-mix` reproduce
-        // exactamente lo que el navegador compone en las demás celdas.
+        // The sticky cell needs its OWN opaque background, or the columns
+        // behind would show through underneath when scrolling. Since it is
+        // opaque, it has to repeat its row's highlight by hand: `color-mix`
+        // reproduces exactly what the browser composites in the other cells.
         isSticky && 'sticky left-0 z-10 transition-colors',
         isSticky && hasDivider && 'border-r border-border',
         isSticky &&
@@ -172,22 +173,23 @@ export function Td({
 }
 
 /**
- * El pie con los totales.
+ * The footer with the totals.
  *
- * Va dentro de la tabla y no debajo a propósito: así se desplaza con las
- * columnas y cada total queda bajo la suya. Un pie fuera de la tabla obliga a
- * repetir los anchos a mano y se desalinea al primer cambio.
+ * It goes inside the table and not below it on purpose: that way it scrolls
+ * with the columns and each total sits under its own. A footer outside the
+ * table forces repeating the widths by hand and falls out of alignment at the
+ * first change.
  */
 export function TableFooter({ children }: { children: ReactNode }) {
   return <tfoot className="border-t-2 border-border bg-muted/40 font-medium">{children}</tfoot>;
 }
 
 /**
- * La tabla mientras llega su dato.
+ * The table while its data arrives.
  *
- * Con el MISMO número de columnas y el mismo alto de fila que la de verdad:
- * un esqueleto de otra forma es un cambio de página, no una espera, y la vista
- * salta cuando llegan los datos.
+ * With the SAME number of columns and the same row height as the real one: a
+ * skeleton of another shape is a page change, not a wait, and the view jumps
+ * when the data arrives.
  */
 export function TableSkeleton({
   columns,
@@ -228,7 +230,7 @@ export function TableSkeleton({
     </Table>
   );
 }
-/** El botón que ordena una columna, con su flecha siempre visible. */
+/** The button that sorts a column, with its arrow always visible. */
 function SortButton({
   sort,
   align,

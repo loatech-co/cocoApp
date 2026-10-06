@@ -4,10 +4,11 @@ import { CATEGORY_ICONS, CategoryIcon } from '@/shared/ui/atoms/icons';
 import { HIGHLIGHT } from '@/shared/ui/foundations/surface';
 
 /**
- * La rejilla de iconos de una categoría, ya filtrada: se elige uno pulsándolo.
+ * The icon grid of a category, already filtered: one is picked by pressing it.
  *
- * Encendido lleva el primario lleno: es lo único que dice cuál está puesto,
- * porque no hay palomita ni texto (la excepción de la regla 8).
+ * Switched on it carries the filled primary: it is the only thing that says
+ * which one is set, because there is no check mark or text (the exception to
+ * rule 8).
  */
 export function IconGrid({
   icons,
@@ -27,9 +28,9 @@ export function IconGrid({
           <button
             key={name}
             type="button"
-            // Pulsar el que ya está puesto lo quita: es el gesto que todo
-            // el mundo prueba para deshacer una elección, y sin él haría
-            // falta un botón de "ninguno" ocupando una plaza de la rejilla.
+            // Pressing the one already set removes it: it is the gesture
+            // everyone tries to undo a choice, and without it a "none"
+            // button taking up a slot of the grid would be needed.
             onClick={() => onSelect(isSelected ? null : name)}
             aria-pressed={isSelected}
             title={label}

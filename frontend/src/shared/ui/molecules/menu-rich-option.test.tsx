@@ -7,7 +7,7 @@ import { MenuRichOption } from './menu-rich-option';
 
 afterEach(cleanup);
 
-describe('MenuOpcionDetallada', () => {
+describe('MenuRichOption', () => {
   it('reads its title and help, and is chosen with a click', () => {
     const onClick = vi.fn();
     render(

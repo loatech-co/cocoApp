@@ -8,7 +8,7 @@ import { LinkRow } from './link-row';
 
 afterEach(cleanup);
 
-describe('FilaDeEnlace', () => {
+describe('LinkRow', () => {
   it('is a link to its page, named by its text', () => {
     render(
       <MemoryRouter>

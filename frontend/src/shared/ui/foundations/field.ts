@@ -3,79 +3,78 @@ import { createContext, use } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * «Estás dentro de un campo con etiqueta flotante».
+ * «You are inside a field with a floating label».
  *
- * ── Por qué un contexto y no una propiedad ──────────────────────────────────
- * Porque lo único que cambia es el RELLENO DE ARRIBA del control, para dejarle
- * sitio a la etiqueta subida, y eso lo tienen que saber cinco componentes con
- * cinco estructuras distintas: un `<input>` suelto, un `<input>` con iconos
- * colocados en absoluto, un `<textarea>`, el disparador de un desplegable
- * —que lo pinta `Menu`, dos niveles más abajo— y el del selector de fecha.
+ * ── Why a context and not a prop ────────────────────────────────────────────
+ * Because the only thing that changes is the TOP PADDING of the control, to
+ * make room for the raised label, and five components with five different
+ * structures have to know it: a bare `<input>`, an `<input>` with absolutely
+ * positioned icons, a `<textarea>`, the trigger of a dropdown —which `Menu`
+ * paints, two levels further down— and the one of the date picker.
  *
- * Pasarlo como propiedad obligaría a cada una de las nueve llamadas a
- * escribirlo, y a `Menu` a reenviarlo a un botón que no es suyo. Con un
- * contexto, ninguna llamada cambia y cada control lo lee donde le sirve.
+ * Passing it as a prop would force each of the nine call sites to write it,
+ * and `Menu` to forward it to a button that is not its own. With a context,
+ * no call site changes and each control reads it where it needs it.
  *
- * Y no es estado: es «dónde estoy». Un contexto sin valor que cambie no
- * provoca ni un renderizado de más.
+ * And it is not state: it is «where I am». A context whose value never
+ * changes does not cause a single extra render.
  */
 export const InsideField = createContext(false);
 
-/** `true` si este control vive dentro de un `Campo`. */
+/** `true` if this control lives inside a `Field`. */
 export function useInsideField(): boolean {
   return use(InsideField);
 }
 
 /**
- * El hueco que reserva arriba un control con etiqueta flotante.
+ * The gap a control with a floating label reserves on top.
  *
- * 20px arriba y 4 abajo en un campo de 44: la etiqueta subida ocupa de 7 a 18,
- * y el valor queda centrado en la mitad de abajo. Vive aquí, junto al
- * contexto, porque los cinco controles tienen que reservar exactamente el
- * mismo: con dos valores distintos, dos campos de la misma fila alinean su
- * texto a alturas distintas.
+ * 20px on top and 4 at the bottom in a 44 field: the raised label takes 7 to
+ * 18, and the value stays centered in the bottom half. It lives here, next to
+ * the context, because the five controls have to reserve exactly the same
+ * one: with two different values, two fields in the same row align their
+ * text at different heights.
  */
 export const LABEL_GAP = 'pb-1 pt-5';
 
 /**
- * Cómo se ve un campo que tiene el foco.
+ * How a field with focus looks.
  *
- * ── Fino y translúcido ──────────────────────────────────────────────────────
- * Era el borde a plena tinta del anillo MÁS un anillo de 1px, también a plena
- * tinta: dos píxeles de verde saturado alrededor de la caja. Con cuatro campos
- * en una ficha, el que estaba enfocado no se leía como enfocado sino como
- * seleccionado, o como marcado en rojo pero en verde.
+ * ── Thin and translucent ────────────────────────────────────────────────────
+ * It was the ring's border at full ink PLUS a 1px ring, also at full ink: two
+ * pixels of saturated green around the box. With four fields in a modal, the
+ * focused one did not read as focused but as selected, or as flagged in red
+ * but in green.
  *
- * Ahora es un solo trazo: el borde teñido al 60 % —un píxel, el mismo que
- * tenía en reposo, cambiando de color y no de grosor— y el anillo bajado al
- * 20 %, que ya no es un canto sino el halo que lo despega de lo que tiene
- * detrás. Sigue siendo el primer sitio donde va el ojo al mirar la ficha, que
- * es todo lo que tiene que hacer.
+ * Now it is a single stroke: the border tinted at 60 % —one pixel, the same
+ * it had at rest, changing color and not thickness— and the ring lowered to
+ * 20 %, which is no longer an edge but the halo that lifts it off what is
+ * behind. It is still the first place the eye goes when looking at the modal,
+ * which is all it has to do.
  *
- * ── Y solo con `:focus-visible` ─────────────────────────────────────────────
- * Nunca con `:focus`. La diferencia es justo la regla: `:focus` se enciende
- * también cuando el foco lo pone el programa —al abrir una ficha, al cerrar un
- * desplegable que lo devuelve a su botón— y entonces hay un campo encendido
- * que nadie eligió.
+ * ── And only with `:focus-visible` ──────────────────────────────────────────
+ * Never with `:focus`. The difference is exactly the rule: `:focus` also
+ * lights up when the focus is set by the program —on opening a modal, on
+ * closing a dropdown that hands it back to its button— and then there is a
+ * field lit up that nobody chose.
  *
- * El error es la excepción y va a plena tinta: un campo mal rellenado tiene
- * que verse desde el otro lado de la ficha.
+ * The error is the exception and goes at full ink: a wrongly filled field has
+ * to be visible from the other side of the modal.
  */
 export const FIELD_FOCUS =
   'outline-none focus-visible:border-ring/60 focus-visible:ring-1 focus-visible:ring-ring/20';
 
 /**
- * El aspecto de un campo que se DESPLIEGA: un `Select`, un `Combo`, un
- * selector de fecha.
+ * The look of a field that DROPS DOWN: a `Select`, a `Combo`, a date picker.
  *
- * Los tres lo escribían a mano y ya se habían separado —uno tenía
- * `aria-expanded:border-ring` y los otros no—. Son el mismo objeto: una caja
- * con el borde de un campo, que se tiñe al pasar por encima y se enciende al
- * recibir el foco, con su valor a la izquierda y lo que abre a la derecha.
+ * All three wrote it by hand and had already drifted apart —one had
+ * `aria-expanded:border-ring` and the others did not—. They are the same
+ * object: a box with a field's border, which tints on hover and lights up on
+ * receiving focus, with its value on the left and what it opens on the right.
  *
- * El borde es el de los CAMPOS —`--input`— y no el de los contenedores: un
- * desplegable se rellena, y tiene que pesar igual que el campo de texto que
- * lleva al lado en la misma fila.
+ * The border is the FIELDS' one —`--input`— and not the containers': a
+ * dropdown gets filled in, and it has to weigh the same as the text field
+ * next to it in the same row.
  */
 export function fieldTrigger(isSmall = false): string {
   return cn(
@@ -83,11 +82,11 @@ export function fieldTrigger(isSmall = false): string {
     'transition-colors hover:border-ring/40',
     FIELD_FOCUS,
     'aria-expanded:border-ring',
-    // El suelo táctil: apagado y encendido miden lo mismo, o la fila salta al
-    // deshabilitarse.
+    // The touch floor: disabled and enabled measure the same, or the row
+    // jumps on being disabled.
     'movil:min-h-[42px]',
-    // El relleno de la derecha es igual al de la izquierda porque lo que abre
-    // ya está dentro del flex: no hay nada que esquivar.
+    // The right padding equals the left one because what it opens is
+    // already inside the flex: there is nothing to dodge.
     isSmall ? 'h-9 px-3 text-xs' : 'h-11 px-3 text-sm',
   );
 }

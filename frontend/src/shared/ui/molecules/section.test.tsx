@@ -8,7 +8,7 @@ import { Section } from './section';
 
 afterEach(cleanup);
 
-describe('Seccion', () => {
+describe('Section', () => {
   it('names the part with a heading above its content, inside a block', () => {
     const { container } = render(
       <Section title="Soporte">

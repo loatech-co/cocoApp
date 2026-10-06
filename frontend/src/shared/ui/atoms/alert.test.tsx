@@ -40,7 +40,7 @@ describe('Alert', () => {
     }
   });
 
-  it('keeps red for errors: the pending tone uses the warning colour', () => {
+  it('keeps red for errors: the pending tone uses the warning color', () => {
     render(<Alert variant="warning">Pendiente</Alert>);
 
     const status = screen.getByRole('status');

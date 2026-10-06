@@ -30,7 +30,7 @@ export const Filled: Story = {
 };
 
 /**
- * The label floats up and takes the ring colour only with `:focus-visible`.
+ * The label floats up and takes the ring color only with `:focus-visible`.
  *
  * `focus` too: the placeholder comes back with `:focus` (`input.tsx`), and a
  * real browser never has `:focus-visible` without `:focus`. Simulating only

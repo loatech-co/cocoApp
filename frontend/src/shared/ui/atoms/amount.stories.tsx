@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { Amount, Balance } from './amount';
 
-/** Made-up figures: the catalogue never shows real amounts. */
+/** Made-up figures: the catalog never shows real amounts. */
 const meta = {
   title: 'Atoms/Amount',
   component: Amount,
@@ -15,7 +15,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = {};
 
-/** The sign, not only the colour, says which way the money went (rule 16). */
+/** The sign, not only the color, says which way the money went (rule 16). */
 export const Types: Story = {
   render: () => (
     <div className="flex flex-col gap-2">

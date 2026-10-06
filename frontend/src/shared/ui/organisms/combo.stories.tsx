@@ -55,7 +55,7 @@ export const Filter: Story = { render: () => <Controlled /> };
 
 export const Chosen: Story = { render: () => <Controlled start="2" /> };
 
-/** With `onCrear`, writing a missing name offers to create it (never rename, rule 15). */
+/** With `onCreate`, writing a missing name offers to create it (never rename, rule 15). */
 export const CanCreate: Story = { render: () => <Controlled canCreate /> };
 
 export const Creating: Story = { args: { isCreating: true, onCreate: () => undefined } };

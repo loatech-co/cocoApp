@@ -13,7 +13,7 @@ describe('IconChip', () => {
     ['income', 'ingreso'],
     ['budget', 'presupuesto'],
     ['transactions', 'movimientos'],
-  ] as const)('takes the %s colour and its ink from the theme, by role', (color, token) => {
+  ] as const)('takes the %s color and its ink from the theme, by role', (color, token) => {
     const { container } = render(<IconChip Icon={Wallet} color={color} />);
 
     const chip = container.firstElementChild as HTMLElement;

@@ -3,15 +3,15 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * El suelo táctil: 42px por debajo del corte.
+ * The touch floor: 42px below the breakpoint.
  *
- * Los tamaños del producto están dibujados para un puntero —`sm` mide 36 y
- * `default` 40—. Apple dice 44 y Material dice 48, así que 42 es el MÍNIMO y
- * no la meta.
+ * The product's sizes are drawn for a pointer —`sm` measures 36 and
+ * `default` 40—. Apple says 44 and Material says 48, so 42 is the MINIMUM and
+ * not the goal.
  *
- * ── Esta prueba es el sitio donde se declaran las excepciones ───────────────
- * Una excepción se CONCEDE, no se descubre. Cada una está abajo con su razón;
- * un control por debajo de 42 que no esté en esa lista es un fallo.
+ * ── This test is the place where the exceptions are declared ────────────────
+ * An exception is GRANTED, not discovered. Each one is below with its reason;
+ * a control below 42 that is not on that list is a failure.
  */
 const TOUCH_FLOOR_PX = 42;
 
@@ -25,24 +25,25 @@ function sourceFiles(dir: string): string[] {
 
 const SRC_ROOT = join(import.meta.dirname, '..', '..');
 
-/** Quien dibuja un control lo declara. Aquí está quién es "quien dibuja". */
+/** Whoever draws a control declares it. Here is who "whoever draws" is. */
 const CONTROLS: [filePath: string, what: string][] = [
-  ['shared/ui/atoms/button.tsx', 'todos los botones, en la base del `cva`'],
-  ['shared/ui/atoms/input.tsx', 'todos los campos de texto'],
-  ['shared/ui/organisms/select.tsx', 'el campo que despliega una lista, encendido y apagado'],
-  ['shared/ui/molecules/menu.tsx', 'la opción de un menú'],
-  ['app/navegacion.tsx', 'la fila de una sección y el disparador de la cuenta'],
+  ['shared/ui/atoms/button.tsx', 'every button, in the base of the `cva`'],
+  ['shared/ui/atoms/input.tsx', 'every text field'],
+  ['shared/ui/organisms/select.tsx', 'the field that drops down a list, enabled and disabled'],
+  ['shared/ui/molecules/menu.tsx', 'a menu option'],
+  ['app/navegacion.tsx', 'a section row and the account trigger'],
   [
     'features/transactions/components/filtro-clasificacion.tsx',
-    'la fila con casilla: la fila es el control',
+    'the row with a checkbox: the row is the control',
   ],
 ];
 
 /**
- * Lo que va por debajo del suelo, y por qué.
+ * What goes below the floor, and why.
  *
- * Se comprueba que la clase siga ahí: si alguien la cambia, la prueba falla y
- * hay que volver a pasar por esta lista en vez de por un `className`.
+ * It checks that the class is still there: if someone changes it, the test
+ * fails and one has to go through this list again instead of through a
+ * `className`.
  */
 const EXCEPTIONS: [filePath: string, className: string, reason: string][] = [
   [
@@ -62,18 +63,18 @@ const EXCEPTIONS: [filePath: string, className: string, reason: string][] = [
   ],
 ];
 
-describe('El suelo táctil', () => {
-  it.each(CONTROLS)('%s lo declara — %s', (filePath) => {
+describe('The touch floor', () => {
+  it.each(CONTROLS)('%s declares it — %s', (filePath) => {
     const code = readFileSync(join(SRC_ROOT, filePath), 'utf8');
     expect(code).toContain(`movil:min-h-[${TOUCH_FLOOR_PX}px]`);
   });
 
-  it.each(EXCEPTIONS)('%s se queda debajo a propósito (%s)', (filePath, className) => {
+  it.each(EXCEPTIONS)('%s stays below on purpose (%s)', (filePath, className) => {
     const code = readFileSync(join(SRC_ROOT, filePath), 'utf8');
     expect(code).toContain(className);
   });
 
-  it('ningún suelo del teléfono se escribe por debajo de 42', () => {
+  it('no phone floor is written below 42', () => {
     const offenders: string[] = [];
 
     for (const filePath of sourceFiles(SRC_ROOT)) {

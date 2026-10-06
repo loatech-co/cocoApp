@@ -6,7 +6,7 @@ import { ControlReadout, ControlSeparator } from './overlay-control';
 
 afterEach(cleanup);
 
-describe('LecturaDeMandos', () => {
+describe('ControlReadout', () => {
   it('is a button when it can be pressed', () => {
     const onClick = vi.fn();
     render(
@@ -29,7 +29,7 @@ describe('LecturaDeMandos', () => {
   });
 });
 
-describe('SeparadorDeMandos', () => {
+describe('ControlSeparator', () => {
   it('is a division the screen reader skips', () => {
     const { container } = render(<ControlSeparator />);
 
