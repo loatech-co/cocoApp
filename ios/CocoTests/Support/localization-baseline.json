@@ -945,6 +945,11 @@
       "key": "problem.sessionRevoked",
       "source": "ios/Coco/Shared/L10n.swift (APIProblem.userMessage)",
       "value": "Tu sesión se cerró en otro lugar. Vuelve a entrar."
+    },
+    {
+      "key": "queue.error.duplicateWithPhoto",
+      "source": "ios/Coco/Features/Capture/Queue/CaptureQueue.swift (duplicate)",
+      "value": "Ya estaba registrado, pero la foto no se adjuntó. Adjúntala al movimiento desde la web."
     }
   ]
 }

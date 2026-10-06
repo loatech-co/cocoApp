@@ -33,12 +33,15 @@ extension CaptureQueue {
     }
 
     /// El resultado de un 409 `duplicate`: el de su texto si ya lo tenía (el
-    /// duplicado fue la foto); si no, uno sin transacción conocida.
-    static func alreadyRegistered(_ capture: PendingCapture, _ problem: APIProblem, at date: Date) -> SavedResult {
-        capture.textResult
-            ?? SavedResult(
-                transactionId: 0, summary: problem.detail, duplicate: true, merged: false, needsReview: false,
-                finishedAt: date)
+    /// duplicado fue la foto); si no hay foto, uno sin transacción conocida.
+    /// `nil` si queda una foto sin movimiento al que adjuntarla: cerrarla
+    /// como hecha borraría el recibo.
+    static func alreadyRegistered(_ capture: PendingCapture, _ problem: APIProblem, at date: Date) -> SavedResult? {
+        if let result = capture.textResult { return result }
+        guard capture.photoPath == nil else { return nil }
+        return SavedResult(
+            transactionId: 0, summary: problem.detail, duplicate: true, merged: false, needsReview: false,
+            finishedAt: date)
     }
 
     static func describe(_ e: APIError) -> String {

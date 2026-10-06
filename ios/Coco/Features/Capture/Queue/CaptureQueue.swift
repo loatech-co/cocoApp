@@ -240,21 +240,27 @@ final actor CaptureQueue {
             // Ni intento ni error: la captura sigue en disco como estaba y la
             // próxima corrida la retoma.
             return .cancelled
-        case .unauthenticated:
+        case .unauthenticated, .sessionRevoked:
             // Sin crecer la espera: no es culpa de la red, es de la sesión.
-            capture.phase = .awaitingSession
-            capture.lastError = L10n.Queue.errorSessionExpired
-            output = .retry
-        case .sessionRevoked:
-            // Renovar no sirve: la sesión se cierra aquí y la captura espera
+            // Revocada, renovar no sirve: se cierra aquí y la captura espera
             // a que la persona vuelva a entrar.
-            await session.discard()
+            let revoked = api == .sessionRevoked
+            if revoked { await session.discard() }
             capture.phase = .awaitingSession
-            capture.lastError = L10n.Problem.sessionRevoked
+            capture.lastError = revoked ? L10n.Problem.sessionRevoked : L10n.Queue.errorSessionExpired
             output = .retry
         case .duplicate(let problem):
-            // Ya estaba registrada (un reenvío): cuenta como hecha.
-            return await finish(&capture, with: Self.alreadyRegistered(capture, problem, at: clock()))
+            // Ya estaba registrada (un reenvío): cuenta como hecha, salvo si
+            // queda una foto sin saber a qué movimiento va. La API no deja
+            // buscarlo por `externalRef`, así que la foto se conserva y la
+            // captura queda «Por revisar», visible en Capturas.
+            if let result = Self.alreadyRegistered(capture, problem, at: clock()) {
+                return await finish(&capture, with: result)
+            }
+            AppLog.queue.warning("Duplicado con foto sin movimiento conocido: captura sin confirmar")
+            capture.phase = .unconfirmed(at: clock())
+            capture.lastError = L10n.Queue.errorDuplicateWithPhoto
+            output = .unconfirmed
         case .rejected(let problem):
             let message = problem.userMessage()
             capture.phase = .failed(reason: message)

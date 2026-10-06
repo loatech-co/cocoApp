@@ -1222,6 +1222,17 @@
         }
       }
     },
+    "queue.error.duplicateWithPhoto" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya estaba registrado, pero la foto no se adjuntó. Adjúntala al movimiento desde la web."
+          }
+        }
+      }
+    },
     "queue.error.generic" : {
       "extractionState" : "manual",
       "localizations" : {

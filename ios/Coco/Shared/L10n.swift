@@ -147,6 +147,7 @@ enum L10n {
     }
 
     enum Queue {
+        static var errorDuplicateWithPhoto: String { text("queue.error.duplicateWithPhoto") }
         static var errorGeneric: String { text("queue.error.generic") }
         static var errorNoNetwork: String { text("queue.error.noNetwork") }
         static var errorNoPhotoSpace: String { text("queue.error.noPhotoSpace") }

@@ -109,6 +109,30 @@ final class CaptureQueueProblemTests: XCTestCase {
         XCTAssertEqual(notifier.failures, [])
     }
 
+    /// Un duplicado en el texto con una foto pendiente: no se sabe a qué
+    /// movimiento va, así que NO se cierra como hecha (borraría el recibo).
+    /// Queda «Por revisar», con la foto en disco y el motivo visible.
+    func testADuplicateWithAPendingPhotoKeepsThePhotoForReview() async throws {
+        let jpeg = Data(repeating: 0xAB, count: 64)
+        let (c, id) = try await enqueued(photo: jpeg)
+        sender.replyToCapture(problem(409, "duplicate"))
+        let summary = await c.process()
+        XCTAssertEqual(summary.unconfirmed, 1)
+        XCTAssertEqual(summary.sent, 0)
+        let stored = await c.capture(id: id)
+        let capture = try XCTUnwrap(stored)
+        guard case .unconfirmed = capture.phase else { return XCTFail("debería quedar por revisar") }
+        XCTAssertEqual(capture.lastError, L10n.Queue.errorDuplicateWithPhoto)
+        let path = try XCTUnwrap(capture.photoPath)
+        XCTAssertEqual(try store.photo(at: path), jpeg)
+        XCTAssertEqual(sender.uploads.count, 0)
+        XCTAssertEqual(notifier.isRegistered, [])
+
+        // Una corrida más no la reenvía.
+        await c.process()
+        XCTAssertEqual(sender.requests.count, 1)
+    }
+
     /// Un duplicado al subir la foto: la foto ya estaba, la captura queda hecha
     /// con el resultado del texto.
     func testADuplicatePhotoKeepsTheTextResult() async throws {
