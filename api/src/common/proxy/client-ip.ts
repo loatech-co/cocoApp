@@ -23,7 +23,7 @@ import { isIP } from 'node:net';
  * is the number of proxies in front of the API. One is LiteSpeed; if a CDN is
  * ever put in front, it becomes two (`TRUST_PROXY_HOPS`).
  */
-export const DEFAULT_TRUST_PROXY_HOPS = 1;
+const DEFAULT_TRUST_PROXY_HOPS = 1;
 
 export function trustProxyHops(value: string | undefined): number {
   return value === undefined ? DEFAULT_TRUST_PROXY_HOPS : Number(value);
