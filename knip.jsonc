@@ -2,6 +2,9 @@
   // knip: unused files, exports and dependencies fail CI (CONTRIBUTING.md,
   // "No dead code"). Every exception below says why it is one.
   "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  // pg_dump: a system binary (brew install postgresql@17) that
+  // scripts/respaldo/extraer.mjs spawns for the full backup; not an npm package.
+  "ignoreBinaries": ["pg_dump"],
   "workspaces": {
     ".": {
       // Operational scripts, run by hand (`npm run sql`, `npx tsx …`).

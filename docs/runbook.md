@@ -131,38 +131,106 @@ scripts/desplegar-migraciones.sh              # production: status, confirm, dep
 ## Backups and restore
 
 **Back up before any migration that is not purely additive, and before any
-operation on production data.**
+operation on production data.** A full, tested backup is a precondition of
+every deletion in production (step 7.10 included).
 
 ```bash
-npm run respaldar            # production → $COCO_DATA_DIR/respaldos/coco-<date>.sql, then restore-tested
-bash scripts/soportes/backup-from-server.sh   # receipts on the server disk → $COCO_DATA_DIR/respaldos/soportes-<date>/
+npm run respaldar              # full backup → $COCO_DATA_DIR/respaldos/coco-<date>.tar.age, restore-tested
+bash scripts/restaurar.sh      # restore the newest one into a throwaway local database and count rows
 ```
 
-- `respaldar.sh` dumps schema and data of `public` only (with Supabase's
-  internal schemas the file restores only into another Supabase), restores
-  it into a throwaway local database and counts tables and users. A backup
-  that was never restored is not a backup.
-- **`$COCO_DATA_DIR` lives outside the repository** (default
-  `~/Documents/VS Code/Personal/coco-datos/`, with `datos/` and
-  `respaldos/`). Why: it is real financial data; a stray `git add -f`, a zip
-  of the folder or a sync tool would take it along.
-- Supabase's free plan keeps backups briefly and has no point-in-time
-  recovery. Ours are the ones that count.
-- `traer-datos-a-local.sh` copies production DATA (not schema) into the local
-  database, read-only on production; it is the sanctioned way to work with
-  real data locally. Login works because local and production share Auth.
+### What a backup holds
+
+One `coco-<date>.tar.age`: a tar encrypted with [age](https://age-encryption.org),
+holding
+
+- `db.dump` — `pg_dump` custom format of the `public` schema (the app) and the
+  `auth` schema (Supabase users, identities and sessions). Without `auth`, a
+  restored `public` gives back the data of accounts nobody can log into;
+- `soportes/` — every object of the private `soportes` bucket, each one checked
+  by sha256 against `soportes.huella` while downloading;
+- `conteos.tsv` — the row count of every table in both schemas;
+- `sumas.sha256` and `manifest.json` — the file hashes, versions, totals and
+  timings. No secrets and no amounts.
+
+The counts, the bucket listing and the dump come from ONE snapshot (a
+read-only `REPEATABLE READ` transaction that exports it to `pg_dump
+--snapshot`): counted apart, `auth.refresh_tokens` changes with every token
+refresh and the counts would never match. Production is only read: the
+`postgres` role of `DIRECT_URL` has `SELECT` on every `auth` table, and the
+bucket is downloaded with GET and the service key. The plain copy is built
+in a private temporary folder and deleted at the end; only the encrypted file
+lands in `respaldos/`.
+
+The run of 2026-10-05: 41 tables and 3,040 rows, 463 objects (31 MB), a 32 MB
+file; about 90 s to back up and 15 s to restore and count.
+
+### Where it lives: off the laptop
+
+`$COCO_DATA_DIR` (default `~/Documents/VS Code/Personal/coco-datos/`, with
+`datos/` and `respaldos/`) is outside the repository and inside `Documents`,
+which iCloud Drive syncs ("Desktop & Documents"; checked on 2026-10-05: the
+folder belongs to the iCloud Drive file provider and existing backups report
+uploaded). `respaldar.sh` checks it on every run and warns if the destination
+is not under iCloud Drive. Why outside the repository: it is real financial
+data; a stray `git add -f`, or a zip of the project, would take it along.
+
+Supabase's free plan keeps backups briefly, has no point-in-time recovery and
+does not back up Storage. Ours are the ones that count.
+
+`traer-datos-a-local.sh` copies production DATA (not schema) into the local
+database, read-only on production; it is the sanctioned way to work with real
+data locally.
+
+### The encryption key — OWNER ACTION
+
+Encrypting needs only the public key (`~/.config/coco/respaldo.pub`, or
+`$COCO_BACKUP_RECIPIENT`); restoring needs the private one
+(`~/.config/coco/respaldo.key`, mode 600, or `$COCO_BACKUP_KEY`). The private
+key never goes in the repository, nor next to the backups in iCloud: whoever
+holds both holds everything.
+
+An interim key was created on the laptop on 2026-10-05. If the laptop is lost,
+so is that key and every backup encrypted with it. **The owner must:**
+
+1. Keep a copy of `~/.config/coco/respaldo.key` in the password manager (a
+   secure note), and ideally a paper copy in a drawer. Not in iCloud Drive,
+   not in an email.
+2. Or replace it with a key born there: `age-keygen -o respaldo.key`, store
+   the file in the password manager, and leave only the public line
+   (`age-keygen -y respaldo.key > ~/.config/coco/respaldo.pub`) on the laptop.
+   Without the private key on the laptop, `respaldar.sh` tests the plain copy
+   before encrypting and says the decryption was not proven.
+
+Backups made with the interim key need it to be read: keep it until they
+expire.
 
 ### Restore
 
-**Restoring into production is a stop for the owner.** To check or recover:
-
 ```bash
-createdb coco_restore && psql -v ON_ERROR_STOP=1 -d coco_restore -f "$COCO_DATA_DIR/respaldos/coco-<date>.sql"
+bash scripts/restaurar.sh [coco-<date>.tar.age | decrypted folder]
 ```
 
-For a new production project: restore the file, run
-`cerrar-el-api-de-datos.sql`, then point `DATABASE_URL` / `DIRECT_URL` at it
-(see [Rotate secrets](#rotate-secrets)).
+- **No `--target`:** restores into the local throwaway database
+  `coco_restore_test` (or `$COCO_RESTORE_DB`, which must end in
+  `_restore_test`), checks every file's sha256, compares the rows of every
+  table of `public` and `auth` with `conteos.tsv`, and drops the database.
+  Exit code 0 only if everything matches.
+- **`--target <url>`:** restores elsewhere after typing the name of the
+  target database letter by letter. A production URL (the ref in
+  `api/.env.supabase`; without that file, any Supabase URL) is refused unless
+  `--i-know-this-is-production` is also passed. **Restoring into production is
+  a stop for the owner.**
+- Into a Supabase project, `auth` goes in data-only (Supabase owns the schema),
+  so it is for a NEW project with an empty `auth`. Then run
+  `cerrar-el-api-de-datos.sql` and point `DATABASE_URL` / `DIRECT_URL` at it
+  (see [Rotate secrets](#rotate-secrets)). This path has not been run yet.
+- The bucket is not uploaded by `restaurar.sh`. Decrypt by hand and re-upload:
+  `age -d -i ~/.config/coco/respaldo.key coco-<date>.tar.age | tar -xf -`, then
+  `scripts/soportes/copy-to-storage.mjs --from coco-<date>/soportes` (it
+  verifies every file by sha256).
+- The older `coco-<date>.sql` files (public only, plain SQL) restore with
+  `createdb coco_restore && psql -v ON_ERROR_STOP=1 -d coco_restore -f <file>`.
 
 ### Retention — PROPOSAL, not in force
 
