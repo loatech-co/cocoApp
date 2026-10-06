@@ -322,7 +322,10 @@ function MenuDropdown({
 /** El panel que cuelga del botón: su superficie, su origen y su ancho. */
 function panelClass({ flotante, anchoPropio, direccion, alineado, ancho, sinRelleno }: MenuConfig) {
   return cn(
-    'z-50 overflow-hidden rounded-lg',
+    'z-50 rounded-lg',
+    // Flotando lleva tope de alto (`panelStyle`), así que lo que no quepa se
+    // desplaza dentro del panel en vez de recortarse.
+    flotante ? 'overflow-y-auto overscroll-contain' : 'overflow-hidden',
     sinRelleno ? 'p-0' : 'p-1',
     SUPERFICIE_FLOTANTE,
     SURGE,

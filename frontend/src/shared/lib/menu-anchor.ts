@@ -70,6 +70,16 @@ export function panelStyle(
   anchoPropio: boolean,
   alineado: 'izquierda' | 'derecha',
 ): CSSProperties {
+  /*
+    El alto, hasta el borde de abajo de la ventana y ni un píxel más.
+
+    El panel es `fixed` y cuelga del canto inferior del disparador. Abierto
+    desde un campo que está a media pantalla en un teléfono, lo que no cabía
+    caía fuera de la ventana: ni se veía ni se podía pulsar, y no había nada
+    que desplazar para alcanzarlo. Con el tope, el panel se desplaza por
+    dentro.
+  */
+  const alto = { maxHeight: `calc(100dvh - ${anclaje.top + 16}px)` };
   // El MISMO ancho que el campo, no un mínimo: un panel más ancho que su
   // disparador se lee como otro elemento, y uno más angosto corta las
   // opciones que el campo sí muestra enteras.
@@ -78,6 +88,7 @@ export function panelStyle(
       top: `${anclaje.top + 8}px`,
       left: `${anclaje.left}px`,
       width: `${anclaje.ancho}px`,
+      ...alto,
     };
   }
   /*
@@ -96,10 +107,12 @@ export function panelStyle(
         top: `${anclaje.top + 8}px`,
         right: `${anclaje.derecha}px`,
         maxWidth: `calc(100vw - ${anclaje.derecha}px - 1rem)`,
+        ...alto,
       }
     : {
         top: `${anclaje.top + 8}px`,
         left: `${anclaje.left}px`,
         maxWidth: `calc(100vw - ${anclaje.left}px - 1rem)`,
+        ...alto,
       };
 }
