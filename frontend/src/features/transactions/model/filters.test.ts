@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { rangoDe } from './filtros';
+import { rangoDe } from './filters';
 
 /**
  * Los rangos se calculan en America/Bogota (UTC−5). Se fija el reloj para que

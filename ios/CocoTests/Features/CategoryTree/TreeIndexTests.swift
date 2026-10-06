@@ -155,6 +155,7 @@ final class TreeIndexTests: XCTestCase {
     /// Dónde ha vivido la prueba de la web. La 7.4 la movió de `lib/` a la
     /// feature de movimientos; se aceptan las dos mientras convivan ramas.
     static let parityPaths = [
+        "frontend/src/features/transactions/model/search-in-tree.test.ts",
         "frontend/src/features/transactions/model/buscar-en-arbol.test.ts",
         "frontend/src/lib/buscar-en-arbol.test.ts",
     ]

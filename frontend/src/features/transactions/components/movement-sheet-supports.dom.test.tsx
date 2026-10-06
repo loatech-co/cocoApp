@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { leerSoporte } from '@/features/transactions/api/leer-soporte';
+import { leerSoporte } from '@/features/transactions/api/read-receipt';
 import {
   CELSIA_READING,
   openConfirmation,
@@ -18,7 +18,7 @@ import {
   DESPUÉS de leer, no cómo se lee. Eso ya lo prueban `lib/palabras-clave` y el
   paquete de lectura.
 */
-vi.mock('@/features/transactions/api/leer-soporte', () => ({
+vi.mock('@/features/transactions/api/read-receipt', () => ({
   leerSoporte: vi.fn(),
 }));
 

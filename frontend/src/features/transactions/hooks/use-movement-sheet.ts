@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
+import { rutaSeleccionada } from '@/features/transactions/model/transactions';
 import { useCategories } from '@/shared/api/categories';
 
 import { makeReceiptScan } from './receipt-scan';

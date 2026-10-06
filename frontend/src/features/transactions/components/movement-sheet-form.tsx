@@ -2,7 +2,7 @@ import { Loader2 } from 'lucide-react';
 import type { ComponentProps, SubmitEvent } from 'react';
 
 import type { MovementSheetState } from '@/features/transactions/hooks/use-movement-form';
-import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/movimientos';
+import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/transactions';
 import { type Transaction } from '@/shared/api/generated/model';
 import { DEFAULT_CURRENCY } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';

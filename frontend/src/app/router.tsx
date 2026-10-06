@@ -60,7 +60,7 @@ const lazily = {
  * La de escanear extractos SE FUE, y con ella sus redirecciones: era una
  * pantalla para cargar un CSV o un PDF de banco y revisar sus filas antes de
  * guardarlas. Lo que sí se usa —leer UN soporte al registrar un movimiento—
- * nunca pasó por ahí: vive en `features/transactions/leer-soporte.ts` y sigue
+ * nunca pasó por ahí: vive en `features/transactions/api/read-receipt.ts` y sigue
  * intacto.
  */
 export const rutas: RouteObject[] = [

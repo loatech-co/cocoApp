@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { useSoportes, useSubirSoportes } from '@/features/transactions/api/soportes';
+import { useSoportes, useSubirSoportes } from '@/features/transactions/api/receipts';
 import type { FalloDeSoporte } from '@/features/transactions/model/supports';
 import { ApiClientError, apiBlob } from '@/shared/api/api-client';
 import { getSoportesDownloadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';

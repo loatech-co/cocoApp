@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { SIN_CLASIFICAR, aplicar, type Propuesta } from './precedencia';
+import { SIN_CLASIFICAR, aplicar, type Propuesta } from './precedence';
 
 /**
  * «Una fuente inferior nunca reemplaza a una superior ni a la elección

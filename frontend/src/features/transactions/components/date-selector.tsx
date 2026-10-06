@@ -1,7 +1,7 @@
 import { CalendarDays } from 'lucide-react';
 import { useState } from 'react';
 
-import { PRESETS, type Filtros } from '@/features/transactions/model/filtros';
+import { PRESETS, type Filtros } from '@/features/transactions/model/filters';
 import { longDay, longRange } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { useOnChange } from '@/shared/lib/on-change';

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { indexTree } from '@coco/receipt-parser';
 
-import { conceptosRecientes } from './recientes';
+import { conceptosRecientes } from './recent';
 
 const indice = indexTree([
   {

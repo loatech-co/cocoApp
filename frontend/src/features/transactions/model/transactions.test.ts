@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { CategoryTree as Category } from '@/shared/api/categories';
 
-import { nombreDelMovimiento, rutaSeleccionada, sentidoDelMovimiento } from './movimientos';
+import { nombreDelMovimiento, rutaSeleccionada, sentidoDelMovimiento } from './transactions';
 
 const leaf = (id: number, name: string, children?: Category[]): Category =>
   ({ id, name, ...(children ? { children } : {}) }) as Category;

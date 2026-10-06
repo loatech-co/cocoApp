@@ -4,7 +4,7 @@ import {
   useMovementSheet,
   type MovementSheet,
 } from '@/features/transactions/hooks/use-movement-sheet';
-import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
+import { rutaSeleccionada } from '@/features/transactions/model/transactions';
 import {
   type PendingPayment,
   type Transaction,

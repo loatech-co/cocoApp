@@ -1,4 +1,4 @@
-import { leerSoporte } from '@/features/transactions/api/leer-soporte';
+import { leerSoporte } from '@/features/transactions/api/read-receipt';
 import { unreadNotice, proposalFromReading } from '@/features/transactions/model/movement-form';
 import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';

@@ -1,5 +1,5 @@
 import { useRangeDraft, type Borrador } from '@/features/transactions/hooks/use-range-draft';
-import { PRESETS, type Filtros, type Preset } from '@/features/transactions/model/filtros';
+import { PRESETS, type Filtros, type Preset } from '@/features/transactions/model/filters';
 import { longDay, longRange } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';

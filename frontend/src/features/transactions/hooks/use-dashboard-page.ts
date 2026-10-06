@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { useDashboard, useTransactions } from '@/features/transactions/api/transactions';
-import { aParametros, llegaHastaHoy, useFiltros } from '@/features/transactions/model/filtros';
-import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
+import { aParametros, llegaHastaHoy, useFiltros } from '@/features/transactions/model/filters';
 import type { Orden } from '@/features/transactions/model/sort-orders';
+import { rutaSeleccionada } from '@/features/transactions/model/transactions';
 import { useCategories } from '@/shared/api/categories';
 import {
   type Category,

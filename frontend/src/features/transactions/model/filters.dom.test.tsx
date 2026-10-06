@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { aParametros, llegaHastaHoy, rangoDe, useFiltros, type Filtros } from './filtros';
+import { aParametros, llegaHastaHoy, rangoDe, useFiltros, type Filtros } from './filters';
 
 const history = vi.hoisted(() => ({
   data: undefined as { first: string | null; last: string | null } | undefined,

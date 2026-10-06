@@ -1,4 +1,4 @@
-import type { ProgresoDeLectura } from '@/features/transactions/api/leer-soporte';
+import type { ProgresoDeLectura } from '@/features/transactions/api/read-receipt';
 import { t } from '@/shared/lib/i18n';
 import { useObjectUrl } from '@/shared/lib/object-url';
 import { cn } from '@/shared/lib/utils';

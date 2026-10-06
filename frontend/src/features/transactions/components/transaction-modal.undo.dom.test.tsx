@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { leerSoporte } from '@/features/transactions/api/leer-soporte';
+import { leerSoporte } from '@/features/transactions/api/read-receipt';
 import { type CategoryTree } from '@/shared/api/categories';
 import { keys } from '@/shared/api/query-keys';
 
@@ -44,7 +44,7 @@ vi.mock('@/shared/api/api-client', async () => {
   };
 });
 
-vi.mock('@/features/transactions/api/leer-soporte', () => ({ leerSoporte: vi.fn() }));
+vi.mock('@/features/transactions/api/read-receipt', () => ({ leerSoporte: vi.fn() }));
 
 /*
   El encogido, de paso.

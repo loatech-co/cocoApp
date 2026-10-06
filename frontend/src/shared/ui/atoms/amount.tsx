@@ -9,7 +9,7 @@ import { cn } from '@/shared/lib/utils';
  *
  * It is the only thing `Amount` needs to know, and it is not a domain type: whoever
  * has a transaction translates its `type` with `sentidoDelMovimiento`
- * (`features/transactions/model/movimientos.ts`). That way `shared/ui` does not know
+ * (`features/transactions/model/transactions.ts`). That way `shared/ui` does not know
  * what a transaction is.
  */
 export type MoneyDirection = 'in' | 'out' | 'transfer';

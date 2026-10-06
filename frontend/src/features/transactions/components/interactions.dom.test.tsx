@@ -42,7 +42,7 @@ vi.mock('@/shared/api/api-client', async () => {
   return { ...real, apiRequest: (url: string, init?: RequestInit) => asPath(url, init) };
 });
 
-vi.mock('@/features/transactions/api/leer-soporte', () => ({ leerSoporte: vi.fn() }));
+vi.mock('@/features/transactions/api/read-receipt', () => ({ leerSoporte: vi.fn() }));
 
 /*
   La sugerencia del historial, de mentira y bajo control de cada prueba.
@@ -56,7 +56,7 @@ vi.mock('@/features/transactions/api/leer-soporte', () => ({ leerSoporte: vi.fn(
 const suggestion = vi.fn<
   () => { categoryId: number; confidence: number; reason: 'historial' } | null
 >(() => null);
-vi.mock('@/features/transactions/hooks/use-sugerencia', () => ({
+vi.mock('@/features/transactions/hooks/use-category-suggestion', () => ({
   useSugerenciaDeCategoria: () => suggestion(),
 }));
 

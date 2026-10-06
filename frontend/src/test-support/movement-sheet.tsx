@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 
-import type { leerSoporte } from '@/features/transactions/api/leer-soporte';
+import type { leerSoporte } from '@/features/transactions/api/read-receipt';
 import { TransactionModal } from '@/features/transactions/components/transaction-modal';
 import { type CategoryTree } from '@/shared/api/categories';
 import { type PendingPayment, type Transaction } from '@/shared/api/generated/model';

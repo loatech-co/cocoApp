@@ -8,7 +8,7 @@ vi.mock('@/shared/api/generated/interpretacion-v2/interpretacion-v2', () => ({
   interpretacionInterpret: vi.fn(() => Promise.reject(new Error('sin servidor'))),
 }));
 
-const { leerSoporte, rutasDelOcr } = await import('./leer-soporte');
+const { leerSoporte, rutasDelOcr } = await import('./read-receipt');
 
 describe('the OCR engine is served from our own origin', () => {
   beforeEach(() => {

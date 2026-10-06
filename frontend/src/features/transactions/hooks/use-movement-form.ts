@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { ProgresoDeLectura } from '@/features/transactions/api/leer-soporte';
+import type { ProgresoDeLectura } from '@/features/transactions/api/read-receipt';
 import {
   hoyEnBogota,
   initialAmountAndDate,
@@ -11,7 +11,7 @@ import {
   aplicar,
   type Clasificacion,
   type Origen,
-} from '@/features/transactions/model/precedencia';
+} from '@/features/transactions/model/precedence';
 import {
   type PendingPayment,
   type Transaction,
@@ -41,7 +41,7 @@ function useMovementFields(apertura: SheetOpening, descartes: number) {
     palabras clave, el diccionario—. Toda propuesta pasa por `aplicar()`, que
     es la única que sabe quién puede reemplazar a quién: lo elegido a mano no
     lo toca nada automático, y una fuente inferior nunca pisa a una superior.
-    Ver `model/precedencia.ts`.
+    Ver `model/precedence.ts`.
 
     Un solo objeto y actualizaciones funcionales, a propósito: las propuestas
     llegan por caminos asíncronos —la lectura de un recibo, una petición— y

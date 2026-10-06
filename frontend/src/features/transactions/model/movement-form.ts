@@ -14,7 +14,7 @@ import {
   type Reading,
 } from '@coco/receipt-parser';
 
-import type { Origen } from './precedencia';
+import type { Origen } from './precedence';
 
 /** Un concepto que la lectura dejó entre lo que dudar, para el buscador. */
 export interface CandidatoDelRecibo {

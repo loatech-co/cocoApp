@@ -5,7 +5,7 @@ import { useTransactions } from '@/features/transactions/api/transactions';
 import {
   nombreDelMovimiento,
   sentidoDelMovimiento,
-} from '@/features/transactions/model/movimientos';
+} from '@/features/transactions/model/transactions';
 import { useCategories } from '@/shared/api/categories';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { shortDay } from '@/shared/lib/format';

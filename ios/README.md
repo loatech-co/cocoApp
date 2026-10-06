@@ -248,7 +248,7 @@ bash ios/scripts/lint.sh
 
 `CocoTests` cubre la cola, la sesión, el reintento, los montos
 (`AmountParser`), las fechas (`BogotaDate`), los parámetros de las acciones,
-la paridad del buscador con `buscar-en-arbol.test.ts` de la web (y falla si
+la paridad del buscador con `search-in-tree.test.ts` de la web (y falla si
 esa prueba desaparece de las rutas que conoce), el puente, el perfil y su
 vencimiento, el enrutador (URLs `coco://` y destinos), la composición
 (`Dependencies` con dobles: registra intents y tareas de fondo, sigue la

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { nombreDelOrigen } from './precedencia';
+import { nombreDelOrigen } from './precedence';
 
 describe('nombreDelOrigen', () => {
   it('names each source the way the sheet shows it', () => {

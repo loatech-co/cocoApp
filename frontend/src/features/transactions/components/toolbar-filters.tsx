@@ -1,7 +1,7 @@
 import { Search, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import type { Filtros } from '@/features/transactions/model/filtros';
+import type { Filtros } from '@/features/transactions/model/filters';
 import type { Orden } from '@/features/transactions/model/sort-orders';
 import { useCategories } from '@/shared/api/categories';
 import { type TransactionType } from '@/shared/api/generated/model';

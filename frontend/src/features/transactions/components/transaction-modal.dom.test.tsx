@@ -24,7 +24,7 @@ import {
   DESPUÉS de leer, no cómo se lee. Eso ya lo prueban `lib/palabras-clave` y el
   paquete de lectura.
 */
-vi.mock('@/features/transactions/api/leer-soporte', () => ({
+vi.mock('@/features/transactions/api/read-receipt', () => ({
   leerSoporte: vi.fn(),
 }));
 

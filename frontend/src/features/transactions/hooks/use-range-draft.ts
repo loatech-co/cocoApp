@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { useHistoria } from '@/features/transactions/api/transactions';
-import { rangoDe, type Filtros, type Preset } from '@/features/transactions/model/filtros';
+import { rangoDe, type Filtros, type Preset } from '@/features/transactions/model/filters';
 import { monthOfIso, type VisibleMonth } from '@/shared/ui/molecules/calendar';
 
 /** Las dos fechas en orden, vengan como vengan: se puede pintar al revés. */

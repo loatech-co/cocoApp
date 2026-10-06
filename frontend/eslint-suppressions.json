@@ -149,7 +149,7 @@
       "count": 5
     }
   },
-  "src/features/transactions/api/leer-soporte.ts": {
+  "src/features/transactions/api/read-receipt.ts": {
     "@typescript-eslint/naming-convention": {
       "count": 1
     }
@@ -199,7 +199,7 @@
       "count": 1
     }
   },
-  "src/features/transactions/model/filtros.ts": {
+  "src/features/transactions/model/filters.ts": {
     "@typescript-eslint/naming-convention": {
       "count": 1
     }

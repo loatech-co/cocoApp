@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
 import { useTransactions } from '@/features/transactions/api/transactions';
-import { useSugerenciaDeCategoria } from '@/features/transactions/hooks/use-sugerencia';
+import { useSugerenciaDeCategoria } from '@/features/transactions/hooks/use-category-suggestion';
 import { proposalFromText } from '@/features/transactions/model/movement-form';
-import { conceptosRecientes } from '@/features/transactions/model/recientes';
+import { conceptosRecientes } from '@/features/transactions/model/recent';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { useOnChange } from '@/shared/lib/on-change';
 import { toSearchableNodes } from '@/shared/lib/searchable-tree';

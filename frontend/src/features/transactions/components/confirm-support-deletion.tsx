@@ -1,4 +1,4 @@
-import { useEliminarSoporte } from '@/features/transactions/api/soportes';
+import { useEliminarSoporte } from '@/features/transactions/api/receipts';
 import { BORRAR_UN_SOPORTE } from '@/features/transactions/model/supports';
 import { type Receipt } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';

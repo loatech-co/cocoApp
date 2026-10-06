@@ -2,7 +2,7 @@ import { Flag, SearchX } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useActualizarMovimiento } from '@/features/transactions/api/transactions';
-import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/movimientos';
+import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/transactions';
 import { type CategoryTree } from '@/shared/api/categories';
 import { type Transaction } from '@/shared/api/generated/model';
 import { formatMoney, shortDay, shortMonth } from '@/shared/lib/format';

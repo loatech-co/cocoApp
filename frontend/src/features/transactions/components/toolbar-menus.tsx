@@ -1,6 +1,6 @@
 import { ArrowDownUp, Filter, Plus, TrendingDown, TrendingUp } from 'lucide-react';
 
-import type { Filtros } from '@/features/transactions/model/filtros';
+import type { Filtros } from '@/features/transactions/model/filters';
 import { ORDENES, type Orden } from '@/features/transactions/model/sort-orders';
 import { type Category, type TransactionType } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';

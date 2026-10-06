@@ -727,7 +727,7 @@ movimientos: «Aseo» pasaría a llamarse «Aseo y limpieza» en Centros de
 costos y en la tabla seguirían los cuarenta viejos diciendo «Aseo». Dos
 nombres para lo mismo y ninguna forma de saber cuál es el bueno.
 
-Está en `nombreDelMovimiento()` (`features/transactions/model/movimientos.ts`), con sus dos
+Está en `nombreDelMovimiento()` (`features/transactions/model/transactions.ts`), con sus dos
 respaldos: si solo está clasificado hasta la categoría, su nombre; y
 si no tiene clasificación —un movimiento importado y aún sin clasificar—, lo
 que decía el papel (`description`, `merchant`). Ahí «PAGO PSE COMCEL» es

@@ -1,6 +1,6 @@
 import type { MovementSheetState } from '@/features/transactions/hooks/use-movement-form';
-import { rutaSeleccionada } from '@/features/transactions/model/movimientos';
-import { nombreDelOrigen } from '@/features/transactions/model/precedencia';
+import { nombreDelOrigen } from '@/features/transactions/model/precedence';
+import { rutaSeleccionada } from '@/features/transactions/model/transactions';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { Field } from '@/shared/ui/atoms/field';
