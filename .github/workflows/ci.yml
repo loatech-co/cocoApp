@@ -5,12 +5,17 @@
 # against a real Postgres, both production builds, and an install exactly like
 # the server's (NODE_ENV=production, no devDependencies). scripts/merge.sh
 # refuses to integrate a branch unless this is green.
+#
+# Not on the push to Dev (step R-1a, Actions quota): merge.sh integrates by
+# fast-forward, so the commit that lands is the one this already passed on
+# its PR. And not on a PR that only touches docs: `hygiene` covers those.
 name: ci
 
 on:
   pull_request:
+    paths-ignore: ['docs/**', '.claude/**', '**/*.md']
   push:
-    branches: [Dev, main]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -42,11 +47,11 @@ jobs:
       TEST_DATABASE_URL: postgresql://coco_migrate:ci-only-password@localhost:5432/coco_test
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          fetch-depth: 0 # commitlint reads the PR's commits
+          fetch-depth: 0 # the catalogue step diffs the PR against its base
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -99,21 +104,17 @@ jobs:
       - name: Architecture rules (dependency-cruiser)
         run: npm run depcruise
 
-      - name: Commit messages (commitlint)
-        if: github.event_name == 'pull_request'
-        run: >-
-          npx commitlint --verbose
-          --from ${{ github.event.pull_request.base.sha }}
-          --to ${{ github.event.pull_request.head.sha }}
-
       - name: Feature flag expiry (warns past removeBy, fails 30 days later)
         run: node scripts/ci/flags-expiry.mjs
 
       - name: Dependency audit (high/critical, production deps)
         run: node scripts/ci/audit.mjs
 
-      - name: Unit tests
-        run: npm test
+      # Each suite once (step R-1a). `npm test` at the root would also run the
+      # frontend's and the API's unit tests, which run again below: the
+      # frontend's under coverage, the API's inside test:cov with the e2e.
+      - name: Unit tests (packages)
+        run: npm test --workspace packages --if-present
 
       # Fails under the thresholds in frontend/vitest.config.ts. They only go up.
       - name: Frontend coverage
@@ -139,7 +140,25 @@ jobs:
       # The component catalogue (CONTRIBUTING, "Component catalogue"). Built
       # so a story that stops compiling fails here and not when someone opens
       # it. It needs no network and no data: stories never fetch.
+      # Only when something it is built from changed (step R-1a): every story
+      # lives in shared/ui. Outside a PR it always runs.
+      - name: Did the catalogue's sources change?
+        id: catalogue
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" != pull_request ] \
+            || git diff --name-only "${BASE_SHA}...${HEAD_SHA}" \
+              | grep -qE '^(frontend/src/shared/ui/|frontend/\.storybook/|frontend/package\.json$|package-lock\.json$|\.github/workflows/ci\.yml$)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Component catalogue (Storybook)
+        if: steps.catalogue.outputs.changed == 'true'
         run: npm run build-storybook --workspace frontend
 
       # The contracts (step 7.4): one document per version, api/openapi.v1.json
@@ -154,7 +173,7 @@ jobs:
 
       - name: OpenAPI artifact
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: openapi
           path: |
@@ -167,8 +186,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
       - name: Clean install and production build

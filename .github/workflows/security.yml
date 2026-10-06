@@ -1,9 +1,14 @@
-# Secrets in the history and known-vulnerable dependencies (phase 7.6).
-# Weekly, on every PR, and on demand.
+# Secrets in the WHOLE history and known-vulnerable dependencies (phase 7.6).
+# Weekly and on demand.
+#
+# Not on pull requests (step R-1a, Actions quota): there, `hygiene` scans only
+# the commits the PR adds and `ci` runs the audit. What this catches that the
+# PR checks cannot is what changes without a commit: a new advisory against a
+# dependency already installed, or a gitleaks rule that now recognises an old
+# leak.
 name: security
 
 on:
-  pull_request:
   schedule:
     - cron: '0 11 * * 1' # Mondays 06:00 Bogotá
   workflow_dispatch:
@@ -18,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
       - name: Scan the whole history
@@ -32,8 +37,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
       - name: High/critical advisories in production dependencies

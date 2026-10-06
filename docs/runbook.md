@@ -259,6 +259,32 @@ fix it.**
 
 ---
 
+## GitHub Actions minutes
+
+The repo is private on the free plan: 2,000 Linux minutes a month, each job
+billed rounded UP to the minute (macOS counts 10x). If they run out, no check
+runs and `scripts/merge.sh` integrates nothing.
+
+- **What runs where.** On every PR: `hygiene` (gitleaks over the PR's
+  commits, commitlint, prettier over the changed files). On a PR that touches
+  anything outside `docs/`, `.claude/` and `*.md`: `ci` and `journeys` too.
+  Weekly and on demand: `security` (gitleaks over the whole history, audit).
+  Nothing runs on the push to `Dev`: merge.sh fast-forwards, so the SHA is the
+  one its PR already passed.
+- **Measure the month.** The billing endpoint needs the `user` scope
+  (`gh auth refresh -s user`, then
+  `gh api users/loatech-co/settings/billing/actions`). Without it, sum the
+  jobs of `gh api 'repos/loatech-co/cocoApp/actions/runs?created=>=YYYY-MM-01'`,
+  each rounded up to the minute.
+- **Running low.** Batch small docs changes into one PR, and do not re-push
+  a PR just to retrigger: `gh run rerun <id> --failed` re-runs only what
+  failed. Keep the spending limit at 0 USD so running out stops and never
+  bills.
+- **Actions are pinned by SHA** with the version in a comment; Dependabot
+  (`github-actions`, monthly) proposes the bumps.
+
+---
+
 ## Hosting traps (Hostinger shared plan)
 
 **LiteSpeed runs several processes of the API, not one.** Three started

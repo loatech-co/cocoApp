@@ -34,7 +34,7 @@ jobs:
           echo "::warning title=release-please skipped::RELEASE_PLEASE_TOKEN is
           not set. See CONTRIBUTING.md, Versioning."
 
-      - uses: googleapis/release-please-action@v5
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         if: env.HAS_TOKEN == 'true'
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
