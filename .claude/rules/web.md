@@ -747,9 +747,9 @@ anota y se corrige lo que PASÓ; no se rehace el mapa con el que se ordena.
 Por eso el `Combo` de un concepto ofrece crear lo que falta pero nunca
 renombrar ni borrar, y por eso el de centro de costos no ofrece ni crear.
 
-Y allí los tres niveles se editan y se borran igual: `CategoriaModal` para
+Y allí los tres niveles se editan y se borran igual: `CategoryModal` para
 renombrar —y para lo estático, que solo existe en un centro— y
-`ConfirmarBorrado` para quitar.
+`ConfirmDeletion` para quitar.
 
 **Borrar una categoría PREGUNTA a dónde pasan sus movimientos.** No se
 niega. Negarse era lo que había antes —«Si tiene movimientos, el sistema se
