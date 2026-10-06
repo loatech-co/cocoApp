@@ -1,5 +1,6 @@
-import type { ErrorDetailResponse, ErrorResponse } from './generated/model';
+import type { ProblemFieldError } from './generated/model';
 import { API_ORIGIN } from './origin';
+import { leerProblema } from './problem';
 import { descartarSesion, renovar, tokenActual, tokenPorExpirar } from './session';
 
 /**
@@ -11,7 +12,7 @@ export class ApiClientError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly details: ErrorDetailResponse[] = [],
+    readonly details: ProblemFieldError[] = [],
   ) {
     super(message);
     this.name = 'ApiClientError';
@@ -165,13 +166,8 @@ async function errorDe(respuesta: Response, porDefecto: string): Promise<ApiClie
 }
 
 function errorDelCuerpo(status: number, cuerpo: unknown, porDefecto: string): ApiClientError {
-  const error = (cuerpo as ErrorResponse | null)?.error;
-  return new ApiClientError(
-    status,
-    error?.code ?? 'unknown_error',
-    error?.message ?? porDefecto,
-    error?.details ?? [],
-  );
+  const { code, message, details } = leerProblema(cuerpo, porDefecto);
+  return new ApiClientError(status, code, message, details);
 }
 
 function enviar(url: string, init: RequestInit): Promise<Response> {

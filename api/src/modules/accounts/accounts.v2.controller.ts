@@ -17,9 +17,13 @@ import { CreateAccountInput, ListAccountsQuery, UpdateAccountInput } from './dto
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { ApiAuthenticated, ApiErrors, ApiNoContent } from '../../contract/v1/openapi.decorators';
 import { Account } from '../../contract/v2/accounts.response';
-import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+import {
+  ApiAuthenticated,
+  ApiErrors,
+  ApiNoContent,
+  ApiDataV2,
+} from '../../contract/v2/openapi.decorators';
 import { paginate, type Page } from '../../contract/v2/pagination';
 import { defined, type V1Draft } from '../../contract/v2/v1-input';
 import { accountV2 } from '../../presenters/v2/accounts.presenter';

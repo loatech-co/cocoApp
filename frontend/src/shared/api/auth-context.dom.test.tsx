@@ -29,7 +29,13 @@ describe('Arranque de la aplicación', () => {
           status: 401,
           ok: false,
           json: () =>
-            Promise.resolve({ error: { code: 'unauthenticated', message: 'x', details: [] } }),
+            Promise.resolve({
+              type: 'https://dev-cocoapp.viteri.me/problems/unauthenticated',
+              title: 'Hace falta iniciar sesión',
+              status: 401,
+              detail: 'x',
+              code: 'unauthenticated',
+            }),
         } as unknown as Response),
       ),
     );

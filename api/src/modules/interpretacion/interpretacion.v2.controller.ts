@@ -9,9 +9,8 @@ import type {
 } from './interpretation.domain';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { ApiAuthenticated, ApiErrors } from '../../contract/v1/openapi.decorators';
 import { Capture, Interpretation } from '../../contract/v2/interpretation.response';
-import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+import { ApiAuthenticated, ApiErrors, ApiDataV2 } from '../../contract/v2/openapi.decorators';
 import { defined, type V1Draft } from '../../contract/v2/v1-input';
 import { captureV2, interpretationV2 } from '../../presenters/v2/interpretation.presenter';
 

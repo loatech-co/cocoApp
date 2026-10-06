@@ -2,9 +2,8 @@ import { Controller, Get } from '@nestjs/common';
 
 import { HealthService, type LivenessPayload, type ReadinessPayload } from './health.service';
 import { Public } from '../../common/decorators/public.decorator';
-import { ApiErrors, ApiPublic } from '../../contract/v1/openapi.decorators';
 import { Liveness, Readiness } from '../../contract/v2/misc.response';
-import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+import { ApiErrors, ApiPublic, ApiDataV2 } from '../../contract/v2/openapi.decorators';
 
 /**
  * The two public probes under v2. Same answers as v1 (they were English

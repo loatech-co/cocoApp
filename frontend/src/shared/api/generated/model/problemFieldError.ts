@@ -6,15 +6,18 @@
  * list paginated as `{ data, meta: { page, perPage, total } }`.
  *
  * Every successful JSON response is wrapped as `{ data, meta }`. Every error is
- * `{ error: { code, message, details } }`, where `details` lists the fields that failed.
+ * `application/problem+json` (RFC 9457): `{ type, title, status, detail, code, errors? }`.
+ * Switch on `code`: stable, in English, one per business rule. `errors` lists the fields
+ * that failed.
  * Messages meant for the user are in Spanish.
  *
  * Identifiers are integers (int64) and money travels as a decimal string.
  * OpenAPI spec version: 2
  */
 
-export interface ErrorDetailResponse {
-  /** The input field at fault, when there is one. */
+export interface ProblemFieldError {
+  /** Path of the field at fault (`splits.0.amount`), when there is one. */
   field?: string;
+  /** In Spanish: the client may show it next to the field. */
   message: string;
 }

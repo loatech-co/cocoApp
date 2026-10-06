@@ -38,51 +38,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -139,51 +139,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "403": {
-            "description": "The user may not do this.",
+            "description": "The user may not do this. Codes: `forbidden`, `account_not_enabled`, `account_pending_approval`, `account_suspended`, `credentials_not_managed`, `real_accounts_protected`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -240,51 +240,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "403": {
-            "description": "The user may not do this.",
+            "description": "The user may not do this. Codes: `forbidden`, `account_not_enabled`, `account_pending_approval`, `account_suspended`, `credentials_not_managed`, `real_accounts_protected`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -323,31 +323,31 @@
             "description": "Done. No body."
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -365,31 +365,31 @@
             "description": "Done. No body."
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -430,31 +430,31 @@
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -487,51 +487,51 @@
             "description": "Done. No body."
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -613,41 +613,41 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -696,71 +696,71 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -811,51 +811,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -914,71 +914,71 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1020,71 +1020,71 @@
             "description": "Done. No body."
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1127,31 +1127,31 @@
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1185,51 +1185,51 @@
             "description": "Done. No body."
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1291,71 +1291,71 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1408,51 +1408,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1494,21 +1494,21 @@
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1544,31 +1544,31 @@
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "503": {
-            "description": "A dependency (the database) does not answer.",
+            "description": "A dependency (the database) does not answer. Codes: `service_unavailable`, `image_processing_unavailable`, `database_unavailable`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1637,51 +1637,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "403": {
-            "description": "The user may not do this.",
+            "description": "The user may not do this. Codes: `forbidden`, `account_not_enabled`, `account_pending_approval`, `account_suspended`, `credentials_not_managed`, `real_accounts_protected`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1732,61 +1732,61 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "403": {
-            "description": "The user may not do this.",
+            "description": "The user may not do this. Codes: `forbidden`, `account_not_enabled`, `account_pending_approval`, `account_suspended`, `credentials_not_managed`, `real_accounts_protected`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1837,61 +1837,61 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "403": {
-            "description": "The user may not do this.",
+            "description": "The user may not do this. Codes: `forbidden`, `account_not_enabled`, `account_pending_approval`, `account_suspended`, `credentials_not_managed`, `real_accounts_protected`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1942,61 +1942,61 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "403": {
-            "description": "The user may not do this.",
+            "description": "The user may not do this. Codes: `forbidden`, `account_not_enabled`, `account_pending_approval`, `account_suspended`, `credentials_not_managed`, `real_accounts_protected`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2057,71 +2057,71 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "403": {
-            "description": "The user may not do this.",
+            "description": "The user may not do this. Codes: `forbidden`, `account_not_enabled`, `account_pending_approval`, `account_suspended`, `credentials_not_managed`, `real_accounts_protected`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2164,71 +2164,71 @@
             "description": "Done. No body."
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "403": {
-            "description": "The user may not do this.",
+            "description": "The user may not do this. Codes: `forbidden`, `account_not_enabled`, `account_pending_approval`, `account_suspended`, `credentials_not_managed`, `real_accounts_protected`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2292,51 +2292,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "403": {
-            "description": "The user may not do this.",
+            "description": "The user may not do this. Codes: `forbidden`, `account_not_enabled`, `account_pending_approval`, `account_suspended`, `credentials_not_managed`, `real_accounts_protected`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2409,41 +2409,41 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2492,61 +2492,61 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2597,51 +2597,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2700,71 +2700,71 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2795,61 +2795,61 @@
             "description": "Done. No body."
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2913,41 +2913,41 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2996,51 +2996,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -3101,61 +3101,61 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -3186,51 +3186,51 @@
             "description": "Done. No body."
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -3397,41 +3397,41 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -3480,71 +3480,71 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -3586,31 +3586,31 @@
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -3663,61 +3663,61 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -3769,51 +3769,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -3872,71 +3872,71 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -3967,51 +3967,51 @@
             "description": "Done. No body."
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -4084,51 +4084,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -4199,81 +4199,81 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "413": {
-            "description": "A file is over the size limit.",
+            "description": "A file is over the size limit. Codes: `payload_too_large`, `file_too_large`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "415": {
-            "description": "A file type the API does not accept.",
+            "description": "A file type the API does not accept. Codes: `unsupported_media_type`, `file_type_not_allowed`, `file_content_mismatch`, `image_format_unsupported`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "503": {
-            "description": "A dependency (the database) does not answer.",
+            "description": "A dependency (the database) does not answer. Codes: `service_unavailable`, `image_processing_unavailable`, `database_unavailable`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -4315,61 +4315,61 @@
             "description": "Done. No body."
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "503": {
-            "description": "A dependency (the database) does not answer.",
+            "description": "A dependency (the database) does not answer. Codes: `service_unavailable`, `image_processing_unavailable`, `database_unavailable`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -4430,91 +4430,61 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/pdf": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              },
-              "image/jpeg": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              },
-              "image/png": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/pdf": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              },
-              "image/jpeg": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              },
-              "image/png": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "503": {
-            "description": "A dependency (the database) does not answer.",
+            "description": "A dependency (the database) does not answer. Codes: `service_unavailable`, `image_processing_unavailable`, `database_unavailable`.",
             "content": {
-              "application/pdf": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              },
-              "image/jpeg": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              },
-              "image/png": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -4566,51 +4536,51 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -4661,71 +4631,71 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "409": {
-            "description": "Conflicts with the current state (a duplicate, a resource in use).",
+            "description": "Conflicts with the current state (a duplicate, a resource in use). Codes: `conflict`, `duplicate`, `constraint_violation`, `account_has_transactions`, `category_has_children`, `reassignment_required`, `reassignment_target_inside`, `template_requires_empty`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -4812,41 +4782,41 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -4887,31 +4857,31 @@
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -4960,41 +4930,41 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -5051,41 +5021,41 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -5136,61 +5106,61 @@
             }
           },
           "400": {
-            "description": "The input is invalid; `details` names each field at fault.",
+            "description": "The input is invalid; `errors` names each field at fault. Codes: `bad_request`, `invalid_fields`, `invalid_id`, `user_already_active`, `cannot_target_self`, `last_active_admin`, `credit_fields_on_non_credit`, `no_files`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "401": {
-            "description": "No valid access token (or session to renew).",
+            "description": "No valid access token (or session to renew). Codes: `unauthenticated`, `invalid_credentials`, `invalid_token`, `session_expired`, `session_revoked`, `wrong_current_password`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "404": {
-            "description": "Not found, or not owned by this user.",
+            "description": "Not found, or not owned by this user. Codes: `not_found`, `receipt_file_missing`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "422": {
-            "description": "Well-formed but breaks a business rule.",
+            "description": "Well-formed but breaks a business rule. Codes: `validation_failed`, `check_violation`, `weak_password`, `password_reset_not_managed`, `splits_unbalanced`, `amount_breaks_splits`, `transfer_same_account`, `transfer_leg_locked`, `account_not_owned`, `category_not_owned`, `category_cycle`, `category_too_deep`, `multi_payment_requires_concept`, `multi_payment_requires_recurring`, `multi_payment_excludes_auto_paid`, `merge_into_itself`, `merge_requires_concepts`, `merge_source_has_children`, `interpretation_needs_text`, `concept_archived`, `cost_center_cannot_classify`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "429": {
-            "description": "Rate limit reached; retry later.",
+            "description": "Rate limit reached; retry later. Codes: `rate_limited`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected failure.",
+            "description": "Unexpected failure. Codes: `internal_error`, `identity_provider_failed`.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -5207,7 +5177,7 @@
   },
   "info": {
     "title": "Coco API",
-    "description": "Contract v2, served under `/api/v2`: the v1 API in English and camelCase, with every\nlist paginated as `{ data, meta: { page, perPage, total } }`.\n\nEvery successful JSON response is wrapped as `{ data, meta }`. Every error is\n`{ error: { code, message, details } }`, where `details` lists the fields that failed.\nMessages meant for the user are in Spanish.\n\nIdentifiers are integers (int64) and money travels as a decimal string.",
+    "description": "Contract v2, served under `/api/v2`: the v1 API in English and camelCase, with every\nlist paginated as `{ data, meta: { page, perPage, total } }`.\n\nEvery successful JSON response is wrapped as `{ data, meta }`. Every error is\n`application/problem+json` (RFC 9457): `{ type, title, status, detail, code, errors? }`.\nSwitch on `code`: stable, in English, one per business rule. `errors` lists the fields\nthat failed.\nMessages meant for the user are in Spanish.\n\nIdentifiers are integers (int64) and money travels as a decimal string.",
     "version": "2",
     "contact": {}
   },
@@ -5222,49 +5192,6 @@
       }
     },
     "schemas": {
-      "ErrorDetailResponse": {
-        "type": "object",
-        "properties": {
-          "field": {
-            "type": "string",
-            "description": "The input field at fault, when there is one."
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": ["message"]
-      },
-      "ErrorBody": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Stable, machine-readable kind: bad_request, unauthenticated, forbidden, not_found, conflict, duplicate, unprocessable, rate_limited, payload_too_large, unsupported_media_type, internal_error, unavailable…",
-            "example": "not_found"
-          },
-          "message": {
-            "type": "string",
-            "description": "Human-readable, in Spanish: the client may show it as is."
-          },
-          "details": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ErrorDetailResponse"
-            }
-          }
-        },
-        "required": ["code", "message", "details"]
-      },
-      "ErrorResponse": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "$ref": "#/components/schemas/ErrorBody"
-          }
-        },
-        "required": ["error"]
-      },
       "RegisterDto": {
         "type": "object",
         "properties": {
@@ -5315,6 +5242,121 @@
           }
         },
         "required": ["currentPassword", "newPassword"]
+      },
+      "ProblemFieldError": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Path of the field at fault (`splits.0.amount`), when there is one."
+          },
+          "message": {
+            "type": "string",
+            "description": "In Spanish: the client may show it next to the field."
+          }
+        },
+        "required": ["message"]
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri",
+            "description": "Identifies the kind of problem: `https://dev-cocoapp.viteri.me/problems/<code>`.",
+            "example": "https://dev-cocoapp.viteri.me/problems/not_found"
+          },
+          "code": {
+            "enum": [
+              "bad_request",
+              "invalid_fields",
+              "invalid_id",
+              "unauthenticated",
+              "forbidden",
+              "not_found",
+              "conflict",
+              "duplicate",
+              "constraint_violation",
+              "payload_too_large",
+              "unsupported_media_type",
+              "validation_failed",
+              "check_violation",
+              "rate_limited",
+              "internal_error",
+              "service_unavailable",
+              "invalid_credentials",
+              "invalid_token",
+              "session_expired",
+              "session_revoked",
+              "wrong_current_password",
+              "account_not_enabled",
+              "account_pending_approval",
+              "account_suspended",
+              "credentials_not_managed",
+              "real_accounts_protected",
+              "weak_password",
+              "identity_provider_failed",
+              "user_already_active",
+              "cannot_target_self",
+              "last_active_admin",
+              "password_reset_not_managed",
+              "splits_unbalanced",
+              "amount_breaks_splits",
+              "transfer_same_account",
+              "transfer_leg_locked",
+              "account_not_owned",
+              "category_not_owned",
+              "account_has_transactions",
+              "credit_fields_on_non_credit",
+              "category_cycle",
+              "category_too_deep",
+              "category_has_children",
+              "reassignment_required",
+              "reassignment_target_inside",
+              "template_requires_empty",
+              "multi_payment_requires_concept",
+              "multi_payment_requires_recurring",
+              "multi_payment_excludes_auto_paid",
+              "merge_into_itself",
+              "merge_requires_concepts",
+              "merge_source_has_children",
+              "interpretation_needs_text",
+              "concept_archived",
+              "cost_center_cannot_classify",
+              "no_files",
+              "file_type_not_allowed",
+              "file_content_mismatch",
+              "file_too_large",
+              "image_format_unsupported",
+              "image_processing_unavailable",
+              "receipt_file_missing",
+              "database_unavailable"
+            ],
+            "type": "string",
+            "description": "Stable, machine-readable: one per business rule (`problem-codes.ts`).",
+            "example": "not_found"
+          },
+          "title": {
+            "type": "string",
+            "description": "Short summary of the kind of problem, in Spanish; the same for every occurrence."
+          },
+          "status": {
+            "type": "number",
+            "description": "The HTTP status, repeated."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What happened this time, in Spanish: the client may show it as is."
+          },
+          "errors": {
+            "description": "One per invalid field; present only when the input itself is at fault.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProblemFieldError"
+            }
+          }
+        },
+        "required": ["type", "code", "title", "status", "detail"]
       },
       "Registration": {
         "type": "object",
@@ -6894,6 +6936,10 @@
       "PendingPayment": {
         "type": "object",
         "properties": {
+          "periodicity": {
+            "enum": ["monthly", "bimonthly", "quarterly", "semiannual", "annual"],
+            "type": "string"
+          },
           "categoryId": {
             "type": "number"
           },
@@ -6902,10 +6948,6 @@
           },
           "path": {
             "type": "string"
-          },
-          "periodicity": {
-            "type": "string",
-            "description": "`monthly`, `bimonthly`, `quarterly`, `semiannual` or `annual`."
           },
           "dueDate": {
             "type": "string"
@@ -6928,10 +6970,10 @@
           }
         },
         "required": [
+          "periodicity",
           "categoryId",
           "name",
           "path",
-          "periodicity",
           "dueDate",
           "expectedAmount",
           "costCenterId",

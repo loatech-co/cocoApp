@@ -8,9 +8,8 @@ import {
 import { LearnInput, SuggestQuery } from './dto/v2/categorization.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { ApiAuthenticated, ApiErrors } from '../../contract/v1/openapi.decorators';
 import { Learning, Suggestion } from '../../contract/v2/categorization.response';
-import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+import { ApiAuthenticated, ApiErrors, ApiDataV2 } from '../../contract/v2/openapi.decorators';
 import { learningV2, suggestionV2 } from '../../presenters/v2/categorization.presenter';
 
 /** v2 of the automatic classification: the same service, its own presenter. */

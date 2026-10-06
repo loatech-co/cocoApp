@@ -6,19 +6,21 @@
  * list paginated as `{ data, meta: { page, perPage, total } }`.
  *
  * Every successful JSON response is wrapped as `{ data, meta }`. Every error is
- * `{ error: { code, message, details } }`, where `details` lists the fields that failed.
+ * `application/problem+json` (RFC 9457): `{ type, title, status, detail, code, errors? }`.
+ * Switch on `code`: stable, in English, one per business rule. `errors` lists the fields
+ * that failed.
  * Messages meant for the user are in Spanish.
  *
  * Identifiers are integers (int64) and money travels as a decimal string.
  * OpenAPI spec version: 2
  */
+import type { PendingPaymentPeriodicity } from './pendingPaymentPeriodicity';
 
 export interface PendingPayment {
+  periodicity: PendingPaymentPeriodicity;
   categoryId: number;
   name: string;
   path: string;
-  /** `monthly`, `bimonthly`, `quarterly`, `semiannual` or `annual`. */
-  periodicity: string;
   dueDate: string;
   /** @nullable */
   expectedAmount: string | null;

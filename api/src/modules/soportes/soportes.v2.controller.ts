@@ -25,9 +25,13 @@ import {
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { ApiAuthenticated, ApiErrors, ApiNoContent } from '../../contract/v1/openapi.decorators';
 import { Receipt } from '../../contract/v2/misc.response';
-import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+import {
+  ApiAuthenticated,
+  ApiErrors,
+  ApiNoContent,
+  ApiDataV2,
+} from '../../contract/v2/openapi.decorators';
 import { PageQuery } from '../../contract/v2/page.dto';
 import { paginate, type Page } from '../../contract/v2/pagination';
 import { receiptV2 } from '../../presenters/v2/receipts.presenter';

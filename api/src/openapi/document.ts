@@ -24,10 +24,21 @@ const DESCRIPTION: Readonly<Record<ContractVersion, string>> = {
   ].join('\n'),
 };
 
+/** How each version answers, the errors included: v2's are RFC 9457. */
+const ENVELOPES: Readonly<Record<ContractVersion, string>> = {
+  '1': [
+    'Every successful JSON response is wrapped as `{ data, meta }`. Every error is',
+    '`{ error: { code, message, details } }`, where `details` lists the fields that failed.',
+  ].join('\n'),
+  '2': [
+    'Every successful JSON response is wrapped as `{ data, meta }`. Every error is',
+    '`application/problem+json` (RFC 9457): `{ type, title, status, detail, code, errors? }`.',
+    'Switch on `code`: stable, in English, one per business rule. `errors` lists the fields',
+    'that failed.',
+  ].join('\n'),
+};
+
 const COMMON = [
-  '',
-  'Every successful JSON response is wrapped as `{ data, meta }`. Every error is',
-  '`{ error: { code, message, details } }`, where `details` lists the fields that failed.',
   'Messages meant for the user are in Spanish.',
   '',
   'Identifiers are integers (int64) and money travels as a decimal string.',
@@ -85,7 +96,7 @@ export function createOpenApiDocument(
 ): OpenAPIObject {
   const config = new DocumentBuilder()
     .setTitle('Coco API')
-    .setDescription(`${DESCRIPTION[version]}\n${COMMON}`)
+    .setDescription(`${DESCRIPTION[version]}\n\n${ENVELOPES[version]}\n${COMMON}`)
     .setVersion(version)
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, BEARER_SCHEME)
     .build();

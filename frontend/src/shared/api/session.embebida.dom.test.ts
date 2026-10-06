@@ -177,7 +177,11 @@ describe('Sin puente', () => {
   */
   it('sin la cookie de la v2, renovar() deja la sesión vacía sin lanzar', async () => {
     const red = fetchQueContesta(401, {
-      error: { code: 'unauthenticated', message: 'Sesión no válida.', details: [] },
+      type: 'https://dev-cocoapp.viteri.me/problems/unauthenticated',
+      title: 'Hace falta iniciar sesión',
+      status: 401,
+      detail: 'Sesión no válida.',
+      code: 'unauthenticated',
     });
     vi.stubGlobal('fetch', red);
     salirDeLaApp();

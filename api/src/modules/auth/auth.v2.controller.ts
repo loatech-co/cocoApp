@@ -17,14 +17,14 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthenticationError } from '../../common/errors/domain-error';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
+import { Me, Registration, Session } from '../../contract/v2/auth.response';
 import {
   ApiAuthenticated,
   ApiErrors,
   ApiNoContent,
   ApiPublic,
-} from '../../contract/v1/openapi.decorators';
-import { Me, Registration, Session } from '../../contract/v2/auth.response';
-import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+  ApiDataV2,
+} from '../../contract/v2/openapi.decorators';
 import { meV2, sessionV2, type SessionV2 } from '../../presenters/v2/auth.presenter';
 import { FlagsService } from '../flags/flags.service';
 

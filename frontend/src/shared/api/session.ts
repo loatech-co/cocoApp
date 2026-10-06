@@ -1,8 +1,9 @@
 import { type SesionParaLaWeb } from '@/shared/lib/native-contract';
 import { avisar as avisarALaApp, enLaApp, pedirSesion } from '@/shared/lib/puente-nativo';
 
-import type { ErrorResponse, Profile, Registration, Session } from './generated/model';
+import type { ProblemFieldError, Profile, Registration, Session } from './generated/model';
 import { API_ORIGIN } from './origin';
+import { leerProblema } from './problem';
 
 /**
  * The auth routes, written here and not taken from the generated client.
@@ -190,13 +191,8 @@ async function llamarAuth<T>(
   const cuerpo: unknown = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok) {
-    const error = (cuerpo as ErrorResponse | null)?.error;
-    throw new SesionError(
-      respuesta.status,
-      error?.code ?? 'unknown_error',
-      error?.message ?? 'No se pudo completar la operación.',
-      error?.details ?? [],
-    );
+    const { code, message, details } = leerProblema(cuerpo, 'No se pudo completar la operación.');
+    throw new SesionError(respuesta.status, code, message, details);
   }
 
   return (cuerpo as { data: T }).data;
@@ -208,7 +204,7 @@ export class SesionError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly details: ErrorResponse['error']['details'] = [],
+    readonly details: ProblemFieldError[] = [],
   ) {
     super(message);
     this.name = 'SesionError';
@@ -314,13 +310,8 @@ export async function cambiarContrasena(
 
   if (!respuesta.ok) {
     const cuerpo: unknown = await respuesta.json().catch(() => null);
-    const error = (cuerpo as ErrorResponse | null)?.error;
-    throw new SesionError(
-      respuesta.status,
-      error?.code ?? 'unknown_error',
-      error?.message ?? 'No se pudo cambiar la contraseña.',
-      error?.details ?? [],
-    );
+    const { code, message, details } = leerProblema(cuerpo, 'No se pudo cambiar la contraseña.');
+    throw new SesionError(respuesta.status, code, message, details);
   }
 
   // Cambiar la contraseña cierra TODAS las sesiones en el servidor, incluida

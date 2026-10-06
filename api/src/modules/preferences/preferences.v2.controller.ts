@@ -5,9 +5,8 @@ import type { Preferences as PreferencesBody } from './preferences';
 import { PreferencesService } from './preferences.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { ApiAuthenticated, ApiErrors } from '../../contract/v1/openapi.decorators';
 import { Preferences } from '../../contract/v2/misc.response';
-import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+import { ApiAuthenticated, ApiErrors, ApiDataV2 } from '../../contract/v2/openapi.decorators';
 import { defined } from '../../contract/v2/v1-input';
 import { preferencesV2 } from '../../presenters/v2/preferences.presenter';
 

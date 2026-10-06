@@ -6,9 +6,8 @@ import type { Dashboard as DashboardBody } from './dashboard.types';
 import { DashboardQuery } from './dto/v2/dashboard.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { ApiAuthenticated, ApiErrors } from '../../contract/v1/openapi.decorators';
 import { Dashboard } from '../../contract/v2/dashboard.response';
-import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+import { ApiAuthenticated, ApiErrors, ApiDataV2 } from '../../contract/v2/openapi.decorators';
 import { defined, type V1Draft } from '../../contract/v2/v1-input';
 import { dashboardV2 } from '../../presenters/v2/dashboard.presenter';
 

@@ -6,7 +6,9 @@
  * list paginated as `{ data, meta: { page, perPage, total } }`.
  *
  * Every successful JSON response is wrapped as `{ data, meta }`. Every error is
- * `{ error: { code, message, details } }`, where `details` lists the fields that failed.
+ * `application/problem+json` (RFC 9457): `{ type, title, status, detail, code, errors? }`.
+ * Switch on `code`: stable, in English, one per business rule. `errors` lists the fields
+ * that failed.
  * Messages meant for the user are in Spanish.
  *
  * Identifiers are integers (int64) and money travels as a decimal string.
@@ -108,9 +110,6 @@ export * from './dashboardPeriod';
 export * from './dashboardPeriodGranularity';
 export * from './dashboardRange';
 export * from './dashboardTotals';
-export * from './errorBody';
-export * from './errorDetailResponse';
-export * from './errorResponse';
 export * from './healthLive200';
 export * from './healthLive200Meta';
 export * from './healthReady200';
@@ -133,11 +132,15 @@ export * from './meRole';
 export * from './meStatus';
 export * from './pageMetaV2';
 export * from './pendingPayment';
+export * from './pendingPaymentPeriodicity';
 export * from './preferences';
 export * from './preferencesGet200';
 export * from './preferencesGet200Meta';
 export * from './preferencesUpdate200';
 export * from './preferencesUpdate200Meta';
+export * from './problem';
+export * from './problemCode';
+export * from './problemFieldError';
 export * from './profile';
 export * from './profileRole';
 export * from './profileStatus';

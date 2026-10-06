@@ -17,9 +17,13 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles, RolesGuard } from '../../common/guards/roles.guard';
 import { ParseBigIntPipe } from '../../common/pipes/parse-bigint.pipe';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
-import { ApiAuthenticated, ApiErrors, ApiNoContent } from '../../contract/v1/openapi.decorators';
 import { AuditEntry, Profile } from '../../contract/v2/auth.response';
-import { ApiDataV2 } from '../../contract/v2/openapi.decorators';
+import {
+  ApiAuthenticated,
+  ApiErrors,
+  ApiNoContent,
+  ApiDataV2,
+} from '../../contract/v2/openapi.decorators';
 import { PageQuery } from '../../contract/v2/page.dto';
 import { defined } from '../../contract/v2/v1-input';
 import { auditPageV2, userPageV2 } from '../../presenters/v2/admin.presenter';
