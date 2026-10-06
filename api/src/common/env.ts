@@ -1,31 +1,31 @@
 /**
- * Leer una variable de entorno sin fiarse de cómo la escribió quien la puso.
+ * Read an environment variable without trusting how whoever set it wrote it.
  *
- * ── El fallo que esto arregla ───────────────────────────────────────────────
- * En el servidor, LiteSpeed inyecta el `.env` en el proceso TAL CUAL está
- * escrito, comillas incluidas. `SOPORTES_DIR="/home/u.../soportes-cocoapp"`
- * llega con las comillas dentro del valor, y entonces:
+ * ── The bug this fixes ───────────────────────────────────────────────────────
+ * On the server, LiteSpeed injects the `.env` into the process EXACTLY as it
+ * is written, quotes included. `SOPORTES_DIR="/home/u.../soportes-cocoapp"`
+ * arrives with the quotes inside the value, and then:
  *
  *   resolve('"/home/u.../soportes-cocoapp"')
  *
- * no empieza por `/`, así que `resolve` lo trata como RELATIVO y lo cuelga del
- * directorio de trabajo. El resultado es una carpeta que no existe, dentro de
- * la versión desplegada, con las comillas en el nombre. `existsSync` decía que
- * no para los 445 soportes, la lista los marcaba como no disponibles y la
- * pantalla contestaba «este soporte no está en el servidor» —que era cierto
- * para la ruta que se estaba mirando, y mentira para el archivo—.
+ * does not start with `/`, so `resolve` treats it as RELATIVE and hangs it off
+ * the working directory. The result is a folder that does not exist, inside
+ * the deployed release, with the quotes in its name. `existsSync` said no for
+ * all 445 receipts, the list marked them unavailable and the screen answered
+ * «este soporte no está en el servidor» —true for the path being looked at,
+ * and false for the file—.
  *
- * Lo mismo le pasaba a `GHOSTSCRIPT_BIN`: `spawn` buscaba un ejecutable
- * llamado `"/usr/bin/gs"`, con comillas, y ningún PDF se optimizaba.
+ * The same happened to `GHOSTSCRIPT_BIN`: `spawn` looked for an executable
+ * called `"/usr/bin/gs"`, quotes and all, and no PDF got optimized.
  *
- * ── Por qué se arregla aquí y no en el servidor ─────────────────────────────
- * Quitar las comillas del `.env` del servidor también lo arregla, y hay que
- * hacerlo. Pero entonces la aplicación seguiría rompiéndose en silencio la
- * próxima vez que alguien las escriba —que es lo normal en un `.env`, y lo que
- * hace `dotenv` es justo quitarlas al leerlas—. Aquí depende de nosotros.
+ * ── Why it is fixed here and not on the server ───────────────────────────────
+ * Removing the quotes from the server's `.env` fixes it too, and it has to be
+ * done. But the app would then keep breaking silently the next time someone
+ * writes them —which is normal in a `.env`, and `dotenv` strips them when it
+ * reads—. Here it is up to us.
  *
- * Solo se quitan las comillas EMPAREJADAS de los extremos. Una ruta que de
- * verdad lleve una comilla en medio se queda como está.
+ * Only MATCHING quotes at both ends are stripped. A path that really carries
+ * a quote in the middle stays as it is.
  */
 export function readEnv(name: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
   const raw = env[name]?.trim();
@@ -35,7 +35,7 @@ export function readEnv(name: string, env: NodeJS.ProcessEnv = process.env): str
   return clean === '' ? undefined : clean;
 }
 
-/** `"algo"` y `'algo'` son `algo`. Lo demás se queda igual. */
+/** `"thing"` and `'thing'` are `thing`. Anything else stays the same. */
 export function stripQuotes(value: string): string {
   const first = value[0];
   if ((first === '"' || first === "'") && value.length >= 2 && value.endsWith(first)) {
@@ -45,36 +45,36 @@ export function stripQuotes(value: string): string {
 }
 
 /**
- * ¿`NODE_ENV` dice «production»? Leído como se lee todo lo demás.
+ * Does `NODE_ENV` say «production»? Read the way everything else is read.
  *
- * ── Esto estuvo a punto de tumbar el sitio ──────────────────────────────────
- * La comprobación de abajo compara `NODE_ENV` contra «production», y si falla
- * la API NO ARRANCA. En el servidor, `NODE_ENV` llega desde el entorno que
- * inyecta LiteSpeed, y ese entorno es irregular con las comillas: de las ocho
- * variables del despliegue, cuatro llegan CON ellas y cuatro sin. La diferencia
- * es cómo están escritas en el archivo de configuración —lo de comilla simple
- * llega limpio, lo de comilla doble llega con la comilla dentro del valor—.
+ * ── This nearly took the site down ───────────────────────────────────────────
+ * The check below compares `NODE_ENV` with «production», and if it fails the
+ * API DOES NOT START. On the server, `NODE_ENV` comes from the environment
+ * LiteSpeed injects, and that environment is uneven with quotes: of the eight
+ * deployment variables, four arrive WITH them and four without. The
+ * difference is how they are written in the config file —single quotes
+ * arrive clean, double quotes arrive with the quote inside the value—.
  *
- * Hoy `NODE_ENV='production'` lleva comilla simple y llega limpio. Pero eso es
- * suerte, no diseño: quien reescriba esa línea con comillas dobles —lo más
- * natural del mundo en un `.env`— haría que el valor llegara como
- * `"production"`, la comparación fallaría, y la API se negaría a arrancar en
- * producción creyendo que es una sesión de desarrollo.
+ * Today `NODE_ENV='production'` has single quotes and arrives clean. But that
+ * is luck, not design: whoever rewrites that line with double quotes —the
+ * most natural thing in a `.env`— would make the value arrive as
+ * `"production"`, the comparison would fail, and the API would refuse to start
+ * in production believing it is a development session.
  *
- * Una variable de la que depende el arranque no puede leerse de forma más
- * frágil que `SOPORTES_DIR`.
+ * A variable the startup depends on cannot be read more fragilely than
+ * `SOPORTES_DIR`.
  */
 export function isProduction(env: NodeJS.ProcessEnv = process.env): boolean {
   return stripQuotes((env.NODE_ENV ?? '').trim()) === 'production';
 }
 
-/** Los únicos hosts que cuentan como «mi máquina». */
+/** The only hosts that count as «my machine». */
 const HOSTS_LOCALES = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0', 'host.docker.internal']);
 
-/** La válvula de escape, para cuando apuntar fuera es deliberado. */
+/** The escape hatch, for when pointing elsewhere is deliberate. */
 export const ALLOW_REMOTE_DATABASE = 'PERMITIR_BASE_REMOTA';
 
-/** El host de una URL de conexión, o `null` si no se puede leer. */
+/** The host of a connection URL, or `null` if it cannot be read. */
 function databaseHost(url: string): string | null {
   try {
     return new URL(url).hostname || null;
@@ -84,29 +84,28 @@ function databaseHost(url: string): string | null {
 }
 
 /**
- * Por qué esta API NO debería arrancar, o `null` si puede.
+ * Why this API should NOT start, or `null` if it may.
  *
- * ── El accidente que esto impide ────────────────────────────────────────────
- * `api/.env` apuntaba al Postgres de producción. Cualquier `npm run dev`,
- * cualquier script de prueba y cualquier experimento escribía en los datos de
- * verdad sin que nada lo dijera. Ya costó un incidente: los recibos subidos en
- * local creaban su ficha en la base compartida y dejaban el archivo en el
- * disco del portátil, así que en producción salían como inexistentes.
+ * ── The accident this prevents ───────────────────────────────────────────────
+ * `api/.env` pointed at the production Postgres. Any `npm run dev`, any test
+ * script and any experiment wrote to the real data without anything saying
+ * so. It already caused an incident: receipts uploaded locally created their
+ * record in the shared database and left the file on the laptop's disk, so in
+ * production they showed up as missing.
  *
- * El error no fue de nadie en particular: era la configuración por defecto.
+ * It was nobody's mistake in particular: it was the default configuration.
  *
- * ── Por qué una lista de hosts LOCALES y no «bloquear Supabase» ─────────────
- * Porque la pregunta correcta no es «¿esto es producción?» sino «¿esto es mi
- * máquina?». Nombrar a Supabase deja pasar cualquier otra base remota —una
- * copia en un servidor, la de un compañero— que tampoco debería recibir
- * escrituras de una sesión de desarrollo. Lo que se permite se enumera; lo
- * demás se niega.
+ * ── Why a list of LOCAL hosts and not «block Supabase» ───────────────────────
+ * Because the right question is not «is this production?» but «is this my
+ * machine?». Naming Supabase lets through any other remote database —a copy on
+ * a server, a colleague's— that should not take writes from a development
+ * session either. What is allowed is listed; everything else is refused.
  *
- * ── Y por qué hay válvula de escape ─────────────────────────────────────────
- * Porque esto defiende de un DESCUIDO, no de una decisión. Quien de verdad
- * necesite apuntar fuera lo dice en voz alta con `PERMITIR_BASE_REMOTA=si`, y
- * entonces es un acto deliberado que se ve en el entorno y en el registro, no
- * un valor heredado que nadie revisó.
+ * ── And why there is an escape hatch ─────────────────────────────────────────
+ * Because this guards against an OVERSIGHT, not a decision. Whoever really
+ * needs to point elsewhere says so out loud with `PERMITIR_BASE_REMOTA=si`,
+ * and then it is a deliberate act visible in the environment and in the log,
+ * not an inherited value nobody checked.
  */
 export function whyRefuseToStart(env: NodeJS.ProcessEnv = process.env): string | null {
   if (isProduction(env)) return null;
@@ -129,32 +128,31 @@ export function whyRefuseToStart(env: NodeJS.ProcessEnv = process.env): string |
   );
 }
 
-/** La válvula de escape del candado de abajo. */
+/** The escape hatch of the lock below. */
 export const ALLOW_DESTRUCTIVE_AUTH = 'PERMITIR_AUTH_DESTRUCTIVA';
 
 /**
- * Por qué esta sesión NO puede tocar cuentas de verdad, o `null` si puede.
+ * Why this session may NOT touch real accounts, or `null` if it may.
  *
- * ── Lo que esto impide ──────────────────────────────────────────────────────
- * La base de datos ya está separada, pero la AUTENTICACIÓN no: en desarrollo
- * se sigue hablando con el Supabase Auth de producción, porque no hay otro.
- * Entrar es tolerable —escribe una fila de sesión y poco más—, pero cuatro
- * operaciones no lo son, porque alcanzan cuentas reales desde una sesión
- * local:
+ * ── What this prevents ───────────────────────────────────────────────────────
+ * The database is already separate, but AUTHENTICATION is not: development
+ * still talks to the production Supabase Auth, because there is no other.
+ * Signing in is tolerable —it writes a session row and little else—, but four
+ * operations are not, because they reach real accounts from a local session:
  *
- *   · crear un usuario        → una cuenta de verdad, nacida de una prueba
- *   · cambiar una contraseña  → deja fuera a quien la tenía
- *   · eliminar un usuario     → no se deshace
- *   · cerrar todas las sesiones → te saca del sitio publicado, en tu teléfono
+ *   · create a user             → a real account, born from a test
+ *   · change a password         → locks out whoever had it
+ *   · delete a user             → cannot be undone
+ *   · close every session       → signs you out of the live site, on your phone
  *
- * La última es la que delata al resto: probar «revocar sesiones» en local te
- * cerraría la sesión en producción, y nada en la pantalla lo habría dicho.
+ * The last one gives the rest away: trying «revoke sessions» locally would
+ * sign you out in production, and nothing on screen would have said so.
  *
- * ── Por qué una válvula y no una prohibición ────────────────────────────────
- * Porque el día que exista un proyecto de Supabase aparte para desarrollo,
- * estas cuatro dejan de ser peligrosas y vuelven a hacer falta —no se puede
- * probar el registro sin crear usuarios—. Ese día se enciende el permiso y ya;
- * no hay que volver a tocar este archivo.
+ * ── Why an escape hatch and not a ban ────────────────────────────────────────
+ * Because the day there is a separate Supabase project for development, these
+ * four stop being dangerous and are needed again —sign-up cannot be tested
+ * without creating users—. That day the permission is switched on and that is
+ * it; this file does not need touching again.
  */
 export function whyNotTouchRealAccounts(env: NodeJS.ProcessEnv = process.env): string | null {
   if (isProduction(env)) return null;

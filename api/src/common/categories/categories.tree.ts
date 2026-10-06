@@ -1,37 +1,37 @@
 /**
- * Lógica pura del árbol de categorías.
+ * Pure logic of the category tree.
  *
- * Vive separada del servicio para poder probarla sin base de datos: son reglas
- * de forma (ciclos, profundidad, anidación) que no dependen de Prisma.
+ * It lives apart from the service so it can be tested without a database:
+ * they are shape rules (cycles, depth, nesting) that do not depend on Prisma.
  */
 
-/** Lo mínimo que hace falta de una categoría para razonar sobre el árbol. */
+/** The least of a category needed to reason about the tree. */
 export interface CategoryNode {
   id: bigint;
   parentId: bigint | null;
 }
 
 /**
- * Profundidad máxima: TRES niveles, que es la forma del modelo.
+ * Maximum depth: THREE levels, which is the shape of the model.
  *
- *   Centro de costos  →  Categoría  →  Concepto
- *   Costos fijos          Servicios públicos   Celsia (Energía)
+ *   Cost center   →  Category  →  Concept
+ *   Costos fijos      Servicios públicos   Celsia (Energía)
  *
- * El movimiento se cuelga del CONCEPTO, que es la hoja. Los dos niveles de
- * arriba no se usan para clasificar: existen para sumar. "¿Cuánto se fue en
- * servicios públicos?" es la suma de sus conceptos, y "¿cuánto en costos
- * fijos?" la de sus categorías.
+ * A transaction hangs from the CONCEPT, which is the leaf. The two levels
+ * above are not used to classify: they exist to add up. "How much went on
+ * utilities?" is the sum of its concepts, and "how much on fixed costs?" the
+ * sum of its categories.
  *
- * No más de tres: un cuarto nivel obliga a decidir en qué rama va cada cosa
- * antes de poder registrarla, y esa fricción es la que hace que la gente deje
- * de registrar.
+ * No more than three: a fourth level forces deciding which branch each thing
+ * goes in before it can be recorded, and that friction is what makes people
+ * stop recording.
  */
 export const MAX_DEPTH = 3;
 
-/** Los tres niveles, por su nombre de dominio. `profundidadDe` devuelve 1, 2 o 3. */
+/** The three levels, by their domain name (user-facing). `depthOf` returns 1, 2 or 3. */
 export const LEVELS = ['centro de costos', 'categoría', 'concepto'] as const;
 
-/** El nombre del nivel que ocupa una profundidad dada. */
+/** The name of the level at a given depth. */
 export function levelName(depth: number): string {
   return LEVELS[depth - 1] ?? 'nivel';
 }
@@ -43,15 +43,15 @@ function indexById<T extends CategoryNode>(categories: readonly T[]): Map<string
 }
 
 /**
- * ¿Poner `nuevoPadreId` como padre de `id` crearía un ciclo?
+ * Would making `newParentId` the parent of `id` create a cycle?
  *
- * Sube por la cadena de ancestros del padre propuesto: si en el camino aparece
- * la propia categoría, el árbol se mordería la cola y quedaría un corro de
- * filas inalcanzables desde la raíz. También cuenta el caso trivial de ser su
- * propio padre.
+ * It climbs the proposed parent's chain of ancestors: if the category itself
+ * shows up on the way, the tree would bite its own tail and leave a ring of
+ * rows unreachable from the root. Being its own parent, the trivial case,
+ * counts too.
  *
- * El recorrido lleva un conjunto de visitados: si los datos YA estuvieran
- * corruptos con un ciclo, esto termina igual en vez de colgarse.
+ * The walk keeps a visited set: if the data were ALREADY corrupt with a
+ * cycle, this still ends instead of hanging.
  */
 export function wouldCreateCycle(
   categories: readonly CategoryNode[],
@@ -78,7 +78,7 @@ export function wouldCreateCycle(
   return false;
 }
 
-/** Cuántos niveles hay desde la raíz hasta esta categoría (la raíz es 1). */
+/** How many levels from the root down to this category (the root is 1). */
 export function depthOf(categories: readonly CategoryNode[], id: bigint | null): number {
   if (id === null) return 0;
 
@@ -100,7 +100,7 @@ export function depthOf(categories: readonly CategoryNode[], id: bigint | null):
   return depth;
 }
 
-/** Los descendientes de una categoría, en cualquier nivel. */
+/** A category's descendants, at any level. */
 export function descendantsOf(categories: readonly CategoryNode[], id: bigint): bigint[] {
   const childrenByParent = new Map<string, bigint[]>();
   for (const category of categories) {
@@ -126,9 +126,9 @@ export function descendantsOf(categories: readonly CategoryNode[], id: bigint): 
 }
 
 /**
- * Rama del árbol resultante: la profundidad que tendría el subárbol de `id` si
- * colgara de `nuevoPadreId`. Sirve para rechazar movimientos que excederían el
- * límite arrastrando hijos consigo.
+ * The resulting branch: the depth the subtree of `id` would reach if it hung
+ * from `newParentId`. Used to reject moves that would go past the limit by
+ * dragging children along.
  */
 export function resultingDepth(
   categories: readonly CategoryNode[],
@@ -139,7 +139,7 @@ export function resultingDepth(
 
   const byId = indexById(categories);
   const subtreeHeight = descendantsOf(categories, id).reduce((highest, descendant) => {
-    // Distancia del descendiente hasta `id`.
+    // Distance from the descendant up to `id`.
     let distance = 0;
     let actual: bigint | null = descendant;
     const visited = new Set<string>();
@@ -158,13 +158,14 @@ export function resultingDepth(
   return parentDepth + 1 + subtreeHeight;
 }
 
-/** Categoría con sus hijos anidados, como la espera el cliente. */
+/** A category with its children nested, the way the client expects it. */
 export type WithChildren<T> = T & { children: WithChildren<T>[] };
 
 /**
- * Anida una lista plana. Las categorías cuyo padre no está en la lista (porque
- * se filtró por `kind`, por ejemplo) suben a la raíz en vez de desaparecer:
- * perder categorías en silencio sería peor que mostrarlas fuera de su rama.
+ * Nests a flat list. Categories whose parent is not in the list (because it
+ * was filtered by `kind`, for instance) move up to the root instead of
+ * vanishing: losing categories silently would be worse than showing them
+ * outside their branch.
  */
 export function nest<T extends CategoryNode>(categories: readonly T[]): WithChildren<T>[] {
   const nodes = new Map<string, WithChildren<T>>(
@@ -175,7 +176,7 @@ export function nest<T extends CategoryNode>(categories: readonly T[]): WithChil
 
   for (const category of categories) {
     const node = nodes.get(key(category.id));
-    if (node === undefined) continue; // `nodos` sale de esta misma lista: siempre está
+    if (node === undefined) continue; // `nodes` comes from this same list: it is always there
     const parent = category.parentId !== null ? nodes.get(key(category.parentId)) : undefined;
 
     if (parent) {
@@ -189,17 +190,17 @@ export function nest<T extends CategoryNode>(categories: readonly T[]): WithChil
 }
 
 /**
- * Los ids de un filtro de categorías: `"3,7,12"` → `[3n, 7n, 12n]`.
+ * The ids of a category filter: `"3,7,12"` → `[3n, 7n, 12n]`.
  *
- * ── Por qué una lista y no un id ────────────────────────────────────────────
- * Porque el panel de filtros son casillas: se pueden marcar varios centros a
- * la vez, o dos categorías de centros distintos. Con un solo id habría que elegir
- * entre "Casa" y "Transporte" cuando la pregunta real suele ser "¿cuánto me
- * cuestan los dos juntos?".
+ * ── Why a list and not one id ────────────────────────────────────────────────
+ * Because the filter panel is checkboxes: several centers can be ticked at
+ * once, or two categories from different centers. With a single id one would
+ * have to choose between "Casa" and "Transporte" when the real question is
+ * usually "how much do the two cost me together?".
  *
- * Lo que no sea un número se descarta en silencio. Un parámetro mal escrito en
- * una URL pegada no debería impedirle a alguien ver sus movimientos, y el
- * filtro más amplio —sin filtro— nunca esconde datos.
+ * Anything that is not a number is dropped silently. A mistyped parameter in
+ * a pasted URL should not stop someone from seeing their transactions, and the
+ * widest filter —no filter— never hides data.
  */
 export function categoryIds(raw?: string | number | null): bigint[] {
   if (raw === undefined || raw === null || raw === '') return [];
@@ -218,11 +219,11 @@ export function categoryIds(raw?: string | number | null): bigint[] {
 }
 
 /**
- * Cada id con toda su rama por debajo, sin repetidos.
+ * Each id with its whole branch below it, without repeats.
  *
- * Los movimientos cuelgan del CONCEPTO, nunca del centro ni dla categoría, así que
- * filtrar por un centro sin expandir su rama devuelve cero filas — que es
- * exactamente lo que pasaba antes de esto.
+ * Transactions hang from the CONCEPT, never from the center or the category,
+ * so filtering by a center without expanding its branch returns zero rows —
+ * which is exactly what used to happen before this.
  */
 export function branchesOf(categories: readonly CategoryNode[], ids: readonly bigint[]): bigint[] {
   const branch = new Set<string>();

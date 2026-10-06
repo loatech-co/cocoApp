@@ -24,80 +24,80 @@ const n = (id: number, parentId: number | null = null): CategoryNode => ({
  */
 const tree: CategoryNode[] = [n(1), n(2, 1), n(3, 2), n(4)];
 
-describe('Detección de ciclos', () => {
-  it('no hay ciclo al mover una categoría a la raíz', () => {
+describe('Cycle detection', () => {
+  it('moving a category to the root is no cycle', () => {
     expect(wouldCreateCycle(tree, BigInt(2), null)).toBe(false);
   });
 
-  it('no hay ciclo al colgar de una rama ajena', () => {
+  it('hanging it from another branch is no cycle', () => {
     expect(wouldCreateCycle(tree, BigInt(4), BigInt(1))).toBe(false);
   });
 
-  it('ser su propio padre es un ciclo', () => {
+  it('being its own parent is a cycle', () => {
     expect(wouldCreateCycle(tree, BigInt(1), BigInt(1))).toBe(true);
   });
 
-  it('colgar de un hijo propio es un ciclo', () => {
-    // Hogar(1) no puede colgar de Servicios(2), que es su hijo.
+  it('hanging from its own child is a cycle', () => {
+    // Hogar(1) cannot hang from Servicios(2), its child.
     expect(wouldCreateCycle(tree, BigInt(1), BigInt(2))).toBe(true);
   });
 
-  it('colgar de un nieto propio también es un ciclo', () => {
+  it('hanging from its own grandchild is a cycle too', () => {
     expect(wouldCreateCycle(tree, BigInt(1), BigInt(3))).toBe(true);
   });
 
-  it('termina aunque los datos ya vengan con un ciclo, en vez de colgarse', () => {
-    // 10 → 11 → 10: dato corrupto.
+  it('ends even when the data already has a cycle, instead of hanging', () => {
+    // 10 → 11 → 10: corrupt data.
     const corrupt = [n(10, 11), n(11, 10), n(12)];
     expect(wouldCreateCycle(corrupt, BigInt(12), BigInt(10))).toBe(true);
   });
 });
 
-describe('Profundidad', () => {
-  it('la raíz está en el nivel 1', () => {
+describe('Depth', () => {
+  it('the root is at level 1', () => {
     expect(depthOf(tree, BigInt(1))).toBe(1);
   });
 
-  it('un hijo está en el nivel 2', () => {
+  it('a child is at level 2', () => {
     expect(depthOf(tree, BigInt(2))).toBe(2);
   });
 
-  it('un nieto está en el nivel 3', () => {
+  it('a grandchild is at level 3', () => {
     expect(depthOf(tree, BigInt(3))).toBe(3);
   });
 
-  it('sin padre, la profundidad es 0', () => {
+  it('with no parent, the depth is 0', () => {
     expect(depthOf(tree, null)).toBe(0);
   });
 
-  it('mover una hoja bajo una raíz la deja en el nivel 2', () => {
+  it('moving a leaf under a root leaves it at level 2', () => {
     expect(resultingDepth(tree, BigInt(4), BigInt(1))).toBe(2);
   });
 
-  it('mover una rama arrastra a sus hijos y suma su altura', () => {
-    // Servicios(2) tiene a Energía(3) debajo. Colgarlo de Alimentación(4)
-    // dejaría a Energía en el nivel 3.
+  it('moving a branch drags its children and adds their height', () => {
+    // Servicios(2) has Energía(3) below it. Hanging it from Alimentación(4)
+    // would leave Energía at level 3.
     expect(resultingDepth(tree, BigInt(2), BigInt(4))).toBe(3);
   });
 
-  it('una categoría sin hijos movida a la raíz queda en el nivel 1', () => {
+  it('a childless category moved to the root ends at level 1', () => {
     expect(resultingDepth(tree, BigInt(3), null)).toBe(1);
   });
 });
 
-describe('Descendientes', () => {
-  it('encuentra hijos y nietos', () => {
+describe('Descendants', () => {
+  it('finds children and grandchildren', () => {
     const ids = descendantsOf(tree, BigInt(1)).map(Number).sort();
     expect(ids).toEqual([2, 3]);
   });
 
-  it('una hoja no tiene descendientes', () => {
+  it('a leaf has no descendants', () => {
     expect(descendantsOf(tree, BigInt(3))).toEqual([]);
   });
 });
 
-describe('Anidar', () => {
-  it('arma el árbol desde una lista plana', () => {
+describe('Nesting', () => {
+  it('builds the tree from a flat list', () => {
     const roots = nest(tree);
 
     expect(roots).toHaveLength(2);
@@ -107,37 +107,37 @@ describe('Anidar', () => {
     expect(home.children[0]!.children[0]!.id).toBe(BigInt(3));
   });
 
-  it('un huérfano (por filtro de kind) sube a la raíz en vez de perderse', () => {
-    // Solo Energía(3), cuyo padre Servicios(2) quedó fuera del filtro.
+  it('an orphan (filtered out by kind) moves up to the root instead of getting lost', () => {
+    // Only Energía(3), whose parent Servicios(2) was filtered out.
     const roots = nest([n(3, 2)]);
 
     expect(roots).toHaveLength(1);
     expect(roots[0]!.id).toBe(BigInt(3));
   });
 
-  it('una lista vacía da un árbol vacío', () => {
+  it('an empty list gives an empty tree', () => {
     expect(nest([])).toEqual([]);
   });
 
-  describe('Los tres niveles del modelo', () => {
-    it('admite centro de costos → categoría → concepto, y nada más', () => {
+  describe('The three levels of the model', () => {
+    it('allows cost center → category → concept, and nothing more', () => {
       expect(MAX_DEPTH).toBe(3);
     });
 
-    it('nombra cada nivel por su nombre de dominio', () => {
+    it('names each level by its domain name', () => {
       expect(levelName(1)).toBe('centro de costos');
       expect(levelName(2)).toBe('categoría');
       expect(levelName(3)).toBe('concepto');
     });
 
-    it('un concepto cabe: colgar un nieto de la raíz da profundidad 3', () => {
-      // 1 (centro) → 2 (categoría) → 3 (concepto)
+    it('a concept fits: a grandchild of the root has depth 3', () => {
+      // 1 (center) → 2 (category) → 3 (concept)
       expect(depthOf(tree, BigInt(3))).toBeLessThanOrEqual(MAX_DEPTH);
     });
   });
 });
 
-describe('Filtro por varias categorías', () => {
+describe('Filtering by several categories', () => {
   const tree = [
     { id: BigInt(1), parentId: null },
     { id: BigInt(2), parentId: BigInt(1) },
@@ -146,35 +146,35 @@ describe('Filtro por varias categorías', () => {
     { id: BigInt(11), parentId: BigInt(10) },
   ];
 
-  it('lee una lista separada por comas', () => {
+  it('reads a comma-separated list', () => {
     expect(categoryIds('1,10')).toEqual([BigInt(1), BigInt(10)]);
   });
 
-  it('descarta lo que no sea un número en vez de reventar', () => {
-    // Un parámetro mal escrito en una URL pegada no puede impedirle a alguien
-    // ver sus movimientos.
+  it('drops anything that is not a number instead of failing', () => {
+    // A mistyped parameter in a pasted URL cannot stop someone from seeing
+    // their transactions.
     expect(categoryIds('1,abc,,10')).toEqual([BigInt(1), BigInt(10)]);
     expect(categoryIds('')).toEqual([]);
     expect(categoryIds(undefined)).toEqual([]);
   });
 
-  it('no repite ids', () => {
+  it('does not repeat ids', () => {
     expect(categoryIds('4,4,4')).toEqual([BigInt(4)]);
   });
 
-  it('cada id arrastra su rama entera', () => {
-    // Los movimientos cuelgan del concepto: sin expandir, filtrar por un
-    // centro devolvería cero filas.
+  it('each id brings its whole branch', () => {
+    // Transactions hang from the concept: without expanding, filtering by a
+    // center would return zero rows.
     expect(branchesOf(tree, [BigInt(1)]).sort()).toEqual([BigInt(1), BigInt(2), BigInt(3)].sort());
   });
 
-  it('une las ramas de varios sin repetir', () => {
+  it('joins the branches of several without repeats', () => {
     const branch = branchesOf(tree, [BigInt(1), BigInt(2), BigInt(10)]);
     expect(new Set(branch).size).toBe(branch.length);
     expect(branch.sort()).toEqual([BigInt(1), BigInt(2), BigInt(3), BigInt(10), BigInt(11)].sort());
   });
 
-  it('sin ids, ninguna rama', () => {
+  it('no ids, no branch', () => {
     expect(branchesOf(tree, [])).toEqual([]);
   });
 });

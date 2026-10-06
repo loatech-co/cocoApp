@@ -29,7 +29,7 @@ export interface Profile {
 /** What `/auth/me` answers: the profile plus the flags on for this user (step 7.8). */
 export type Me = Profile & { features: FlagName[] };
 
-/** Lo que el controlador necesita para responder y poner la cookie. */
+/** What the controller needs to answer and set the cookie. */
 export interface TokenPair {
   accessToken: string;
   refreshToken: string;
@@ -37,26 +37,27 @@ export interface TokenPair {
 }
 
 /**
- * Autenticación de la app.
+ * The app's authentication.
  *
- * ── Reparto de responsabilidades tras migrar a Supabase Auth ────────────────
- * Supabase guarda las credenciales, las verifica, y emite y rota los tokens.
- * Aquí se queda todo lo que es del PRODUCTO y que Supabase no modela:
+ * ── Who does what after moving to Supabase Auth ──────────────────────────────
+ * Supabase stores the credentials, checks them, and issues and rotates the
+ * tokens. Everything that belongs to the PRODUCT and that Supabase does not
+ * model stays here:
  *
- *   · La aprobación por un admin. Toda cuenta nace `pending` y no entra hasta
- *     que alguien la activa. Supabase daría por buena cualquier cuenta con el
- *     correo confirmado.
- *   · La bitácora. Cada entrada, salida y fallo queda registrado con IP y
- *     agente, que en una app de finanzas es parte del producto.
- *   · La revocación inmediata, vía `sessions_valid_from`.
- *   · La política de contraseñas, que es más exigente que la de Supabase.
+ *   · Approval by an admin. Every account is born `pending` and cannot sign in
+ *     until someone activates it. Supabase would accept any account with a
+ *     confirmed email.
+ *   · The audit log. Every sign-in, sign-out and failure is recorded with IP
+ *     and agent, which in a finance app is part of the product.
+ *   · Immediate revocation, through `sessions_valid_from`.
+ *   · The password policy, which is stricter than Supabase's.
  *
- * Lo que SÍ se perdió y conviene saber: la resistencia a ataques de tiempo del
- * login. Antes se gastaba un argon2 equivalente cuando el correo no existía,
- * para que la duración de la respuesta no delatara qué correos tienen cuenta.
- * Ahora la verificación ocurre dentro de Supabase y ese control ya no es
- * nuestro. En el registro sí se conserva el equivalente: se llama siempre a
- * Supabase, exista o no el correo, y la respuesta es idéntica en ambos casos.
+ * What WAS lost, and is worth knowing: the login's resistance to timing
+ * attacks. An equivalent argon2 used to be spent when the email did not
+ * exist, so the response time would not give away which emails have an
+ * account. Verification now happens inside Supabase and that control is no
+ * longer ours. Registration keeps the equivalent: Supabase is always called,
+ * whether the email exists or not, and the answer is identical in both cases.
  */
 @Injectable()
 export class AuthService {
@@ -75,19 +76,20 @@ export class AuthService {
       config.get<string>('BOOTSTRAP_ADMIN_EMAIL')?.trim().toLowerCase() || null;
   }
 
-  // ── Registro ───────────────────────────────────────────────────────────────
+  // ── Registration ───────────────────────────────────────────────────────────
 
   /**
-   * Crea la cuenta en Supabase y su perfil aquí, en estado `pending`.
+   * Creates the account in Supabase and its profile here, as `pending`.
    *
-   * Devuelve SIEMPRE el mismo resultado, exista o no el correo. Responder "ese
-   * correo ya está registrado" convertiría este endpoint en un oráculo para
-   * averiguar quién tiene cuenta. Como toda cuenta queda a la espera de
-   * aprobación, el usuario legítimo no pierde nada: en ambos casos espera.
+   * It ALWAYS returns the same result, whether the email exists or not.
+   * Answering "that email is already registered" would turn this endpoint into
+   * an oracle for finding out who has an account. Since every account waits
+   * for approval, the legitimate user loses nothing: they wait either way.
    *
-   * La excepción es `BOOTSTRAP_ADMIN_EMAIL`, que nace admin y activo. Se hace
-   * así, y no "el primer registro gana", porque si la app estuviera desplegada
-   * antes de que el dueño se registre, cualquiera se llevaría el panel.
+   * The exception is `BOOTSTRAP_ADMIN_EMAIL`, which is born admin and active.
+   * It is done this way, and not "the first sign-up wins", because if the app
+   * were deployed before the owner signed up, anyone would walk off with the
+   * panel.
    */
   async register(
     input: { email: string; password: string; displayName: string },
@@ -96,12 +98,13 @@ export class AuthService {
     const email = normalizeEmail(input.email);
     const displayName = input.displayName.trim();
 
-    // La política se valida SIEMPRE, antes de mirar si el correo existe: si
-    // solo se validara para correos nuevos, el tiempo de respuesta los delataría.
+    // The policy is ALWAYS checked, before looking at whether the email
+    // exists: if it were only checked for new emails, the response time would
+    // give them away.
     await this.passwords.requireStrong(input.password, { email, displayName });
 
-    // Se llama a Supabase exista o no el correo, para que la duración de la
-    // respuesta sea la misma en ambos casos. Devuelve null si ya existía.
+    // Supabase is called whether the email exists or not, so the response
+    // takes the same time in both cases. It returns null if it already existed.
     const authId = await this.supabase.createUser(email, input.password);
 
     if (!authId) {
@@ -118,31 +121,31 @@ export class AuthService {
       role: isInitialAdmin ? 'admin' : 'user',
       status: isInitialAdmin ? 'active' : 'pending',
       approvedAt: isInitialAdmin ? new Date() : null,
-      // Explícito, no por DEFAULT del motor. El guard compara este valor
-      // contra el `iat` del token que emite Supabase; si uno lo pusiera el
-      // reloj de Postgres y el otro el de Supabase, un desfase de
-      // milisegundos entre relojes invalidaría sesiones legítimas.
+      // Explicit, not the engine's DEFAULT. The guard compares this value
+      // against the `iat` of the token Supabase issues; if Postgres's clock
+      // set one and Supabase's the other, a few milliseconds of skew between
+      // the clocks would invalidate legitimate sessions.
       sessionsValidFrom: toSecond(new Date()),
     });
 
     /*
-      ── La cuenta nace con su estructura ──────────────────────────────────
-      Los centros de costos son de cada cuenta y no se comparten, así que una
-      cuenta recién creada no tiene NINGUNO: al entrar, Centros de costos
-      estaba vacío y la ficha de un movimiento no tenía dónde clasificar nada.
-      Se copia la plantilla —los dos primeros niveles, congelados— y desde ese
-      momento el árbol es suyo.
+      ── The account is born with its structure ────────────────────────────
+      Cost centers belong to each account and are not shared, so a brand-new
+      account has NONE: on signing in, Cost centers was empty and a
+      transaction's sheet had nowhere to classify anything. The template is
+      copied —the first two levels, frozen— and from then on the tree is
+      theirs.
 
-      Se hace aquí y no al aprobar porque la fila ya existe aquí, y porque una
-      cuenta rechazada se lleva sus categorías por delante con el borrado en
-      cascada: no queda nada suelto.
+      It is done here and not on approval because the row already exists here,
+      and because a rejected account takes its categories with it through the
+      cascading delete: nothing is left dangling.
 
-      ── Y si falla, la cuenta se crea igual ───────────────────────────────
-      Sembrar es una comodidad; registrarse es la operación. Reventar aquí
-      dejaría a la persona con su usuario ya creado en Supabase —así que
-      reintentar no serviría de nada, el correo «ya existe»— y sin perfil, que
-      es el único estado del que no se sale solo. El árbol se puede rellenar
-      después desde `POST /categories/seed`.
+      ── And if it fails, the account is created anyway ────────────────────
+      Seeding is a convenience; signing up is the operation. Failing here would
+      leave the person with their user already created in Supabase —so
+      retrying would be useless, the email «already exists»— and with no
+      profile, which is the one state there is no way out of alone. The tree
+      can be filled later from `POST /categories/seed`.
     */
     try {
       await this.categories.seedNewAccount(user.id);
@@ -168,12 +171,12 @@ export class AuthService {
   // ── Login ──────────────────────────────────────────────────────────────────
 
   /**
-   * Verifica credenciales contra Supabase y abre sesión.
+   * Checks the credentials against Supabase and opens a session.
    *
-   * Orden deliberado: primero la contraseña, DESPUÉS el estado de la cuenta.
-   * Así los mensajes específicos ("pendiente de aprobación", "suspendida")
-   * solo los ve quien ya demostró conocer la contraseña. Al revés, cualquiera
-   * podría averiguar qué correos tienen cuenta.
+   * Deliberate order: the password first, THEN the account's status. That way
+   * the specific messages ("pending approval", "suspended") are only seen by
+   * someone who has already shown they know the password. The other way
+   * round, anyone could find out which emails have an account.
    */
   async signIn(
     input: { email: string; password: string },
@@ -198,9 +201,10 @@ export class AuthService {
     const user = await this.users.findByAuthId(session.authId);
 
     if (!user) {
-      // La cuenta existe en Supabase pero no tiene perfil aquí. Pasa si se creó
-      // desde el panel de Supabase saltándose el registro de la app. Sin perfil
-      // no hay rol ni estado, así que no se puede autorizar nada.
+      // The account exists in Supabase but has no profile here. It happens
+      // when it was created from the Supabase dashboard, skipping the app's
+      // sign-up. Without a profile there is no role or status, so nothing can
+      // be authorized.
       this.logger.error(`Cuenta de Supabase ${session.authId} sin perfil en la aplicación.`);
       throw new ForbiddenError('Tu cuenta no está habilitada. Contacta al administrador.', {
         code: 'account_not_enabled',
@@ -209,14 +213,14 @@ export class AuthService {
 
     this.requireUsableAccount(user);
 
-    // Si la marca de revocación quedó por delante del token que Supabase acaba
-    // de emitir, se baja hasta él. Pasa al volver a entrar en el mismo segundo
-    // en que se cerraron todas las sesiones: sin esto, el login parecería
-    // correcto y la siguiente petición daría 401.
+    // If the revocation mark ended up ahead of the token Supabase just issued,
+    // it is lowered to it. It happens when signing in again in the same second
+    // every session was closed: without this, the login would look fine and
+    // the next request would get a 401.
     //
-    // Bajarla solo puede revivir tokens emitidos en ESE segundo, y solo cuando
-    // alguien acaba de demostrar que conoce la contraseña. Lo anterior a ese
-    // segundo sigue muerto.
+    // Lowering it can only revive tokens issued in THAT second, and only when
+    // someone has just shown they know the password. Anything before that
+    // second stays dead.
     const signedInAt = new Date(Math.floor(Date.now() / 1000) * 1000);
     const stamp = user.sessionsValidFrom > signedInAt ? signedInAt : user.sessionsValidFrom;
 
@@ -237,7 +241,7 @@ export class AuthService {
     return { tokens: toTokenPair(session), profile: profileOf(updated) };
   }
 
-  // ── Sesión ─────────────────────────────────────────────────────────────────
+  // ── Session ────────────────────────────────────────────────────────────────
 
   async refresh(
     refreshToken: string,
@@ -253,15 +257,15 @@ export class AuthService {
     if (!user)
       throw new AuthenticationError('La sesión ya no es válida.', { code: 'session_revoked' });
 
-    // El estado se revisa también al refrescar: si suspenden una cuenta, no
-    // debe poder estirar su sesión indefinidamente cambiando un token por otro.
+    // The status is checked on refresh too: a suspended account must not be
+    // able to stretch its session forever by trading one token for another.
     //
-    // Aquí es 401 y no 403, a diferencia del login. En el login la persona
-    // acaba de demostrar que sabe la contraseña y merece saber POR QUÉ no
-    // entra. En el refresco no hay nadie mirando: es el cliente renovando en
-    // segundo plano, y un 401 le dice "esta sesión murió, mandá a entrar de
-    // nuevo". Un 403 lo dejaría reintentando contra una sesión que no va a
-    // revivir.
+    // Here it is 401 and not 403, unlike the login. At login the person has
+    // just shown they know the password and deserves to know WHY they cannot
+    // get in. On refresh nobody is watching: it is the client renewing in the
+    // background, and a 401 tells it "this session died, send them to sign in
+    // again". A 403 would leave it retrying against a session that will not
+    // come back.
     if (user.status !== 'active') {
       throw new AuthenticationError('La sesión ya no es válida.', { code: 'session_revoked' });
     }
@@ -289,7 +293,7 @@ export class AuthService {
     });
   }
 
-  /** Cierra sesión en todos los dispositivos, de inmediato. */
+  /** Signs out on every device, at once. */
   async signOutEverywhere(userId: bigint, context: RequestContext): Promise<void> {
     await this.revokeAllSessions(userId);
     await this.audit.record({
@@ -302,14 +306,14 @@ export class AuthService {
     });
   }
 
-  // ── Contraseña ─────────────────────────────────────────────────────────────
+  // ── Password ───────────────────────────────────────────────────────────────
 
   /**
-   * Cambio de contraseña por el propio usuario.
+   * A password change by the user themselves.
    *
-   * Exige la actual: si bastara el access token, quien robara uno podría
-   * apoderarse de la cuenta cambiándola. Al terminar cierra todas las sesiones
-   * — incluida la del atacante, si la hubiera.
+   * It requires the current one: if the access token were enough, whoever
+   * stole one could take over the account by changing it. When done it closes
+   * every session — the attacker's included, if there is one.
    */
   async changePassword(
     userId: bigint,
@@ -351,17 +355,17 @@ export class AuthService {
     return profileOf(await this.users.findByIdOrThrow(userId));
   }
 
-  // ── Interno ────────────────────────────────────────────────────────────────
+  // ── Internal ───────────────────────────────────────────────────────────────
 
   /**
-   * Corta las sesiones por los DOS lados.
+   * Cuts the sessions on BOTH sides.
    *
-   * `sessionsValidFrom` surte efecto en la siguiente petición sin salir a la
-   * red, y es lo que hace que suspender una cuenta sea instantáneo. Revocar
-   * además en Supabase es lo que impide que un refresh token robado siga
-   * canjeándose por tokens nuevos. Hacer solo una de las dos deja un agujero:
-   * la primera sin la segunda permite refrescar para siempre; la segunda sin la
-   * primera deja vivo el access token actual hasta que expire.
+   * `sessionsValidFrom` takes effect on the next request without going to the
+   * network, and it is what makes suspending an account instant. Revoking in
+   * Supabase too is what stops a stolen refresh token from still being traded
+   * for new tokens. Doing only one of the two leaves a hole: the first without
+   * the second allows refreshing forever; the second without the first leaves
+   * the current access token alive until it expires.
    */
   async revokeAllSessions(userId: bigint): Promise<void> {
     const user = await this.users.update(userId, {
@@ -388,7 +392,7 @@ export class AuthService {
   }
 }
 
-/** Minúsculas y sin espacios: `Gerardo@X.com ` y `gerardo@x.com` son la misma cuenta. */
+/** Lowercase and trimmed: `Gerardo@X.com ` and `gerardo@x.com` are the same account. */
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -405,23 +409,24 @@ export function profileOf(user: User): Profile {
 }
 
 /**
- * Recorta un instante al segundo. Toda comparación con `sessionsValidFrom` se
- * hace en esta unidad porque el `iat` de un JWT no tiene más precisión: si aquí
- * se guardaran milisegundos, un token emitido en el mismo segundo parecería
- * ANTERIOR a su propia sesión y el guard lo rechazaría nada más nacer.
+ * Truncates an instant to the second. Every comparison with
+ * `sessionsValidFrom` happens in this unit because a JWT's `iat` has no more
+ * precision: if milliseconds were stored here, a token issued in the same
+ * second would look OLDER than its own session and the guard would reject it
+ * the moment it was born.
  */
 function toSecond(instant: Date): Date {
   return new Date(Math.floor(instant.getTime() / 1000) * 1000);
 }
 
 /**
- * El primer instante que una sesión nueva puede tener para considerarse
- * posterior a una revocación: el segundo SIGUIENTE.
+ * The first instant a new session can have to count as later than a
+ * revocation: the NEXT second.
  *
- * Apuntar al segundo en curso dejaría vivos los tokens emitidos en ese mismo
- * segundo —justo la ventana que necesita alguien con un token robado—, así que
- * se redondea hacia arriba. El precio es un borde de menos de un segundo al
- * volver a entrar, que `entrar` resuelve.
+ * Pointing at the current second would leave alive the tokens issued in that
+ * same second —exactly the window someone with a stolen token needs—, so it
+ * rounds up. The price is an edge of under a second when signing in again,
+ * which `signIn` handles.
  */
 function toNextSecond(instant: Date): Date {
   return new Date(Math.floor(instant.getTime() / 1000) * 1000 + 1000);
