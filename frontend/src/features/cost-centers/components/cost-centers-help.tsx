@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui/atoms/button';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
 
 /** El modelo explicado con el ejemplo más común, no en abstracto. */
-export function Explicacion({ onCerrar }: { onCerrar: () => void }) {
+export function CostCentersHelp({ onClose }: { onClose: () => void }) {
   return (
     <Card>
       <CardContent className="p-4 sm:p-6">
@@ -18,7 +18,7 @@ export function Explicacion({ onCerrar }: { onCerrar: () => void }) {
             type="button"
             variant="ghost"
             size="sm-icon"
-            onClick={onCerrar}
+            onClick={onClose}
             aria-label={t('common.close')}
             title={t('common.close')}
           >
@@ -27,23 +27,23 @@ export function Explicacion({ onCerrar }: { onCerrar: () => void }) {
         </div>
 
         <ol className="mt-4 flex flex-col gap-3">
-          <Nivel
-            numero={1}
-            nombre={t('centers.levels.costCenter')}
-            explicacion={t('centers.help.costCenterExplain')}
-            ejemplo={t('centers.help.costCenterExample')}
+          <Level
+            depth={1}
+            name={t('centers.levels.costCenter')}
+            explanation={t('centers.help.costCenterExplain')}
+            example={t('centers.help.costCenterExample')}
           />
-          <Nivel
-            numero={2}
-            nombre={t('centers.levels.category')}
-            explicacion={t('centers.help.categoryExplain')}
-            ejemplo={t('centers.help.categoryExample')}
+          <Level
+            depth={2}
+            name={t('centers.levels.category')}
+            explanation={t('centers.help.categoryExplain')}
+            example={t('centers.help.categoryExample')}
           />
-          <Nivel
-            numero={3}
-            nombre={t('centers.levels.concept')}
-            explicacion={t('centers.help.conceptExplain')}
-            ejemplo={t('centers.help.conceptExample')}
+          <Level
+            depth={3}
+            name={t('centers.levels.concept')}
+            explanation={t('centers.help.conceptExplain')}
+            example={t('centers.help.conceptExample')}
           />
         </ol>
 
@@ -57,27 +57,27 @@ export function Explicacion({ onCerrar }: { onCerrar: () => void }) {
   );
 }
 
-function Nivel({
-  numero,
-  nombre,
-  explicacion,
-  ejemplo,
+function Level({
+  depth,
+  name,
+  explanation,
+  example,
 }: {
-  numero: number;
-  nombre: string;
-  explicacion: string;
-  ejemplo: string;
+  depth: number;
+  name: string;
+  explanation: string;
+  example: string;
 }) {
   return (
-    <li className="flex gap-3" style={{ paddingLeft: `${(numero - 1) * 1.25}rem` }}>
+    <li className="flex gap-3" style={{ paddingLeft: `${(depth - 1) * 1.25}rem` }}>
       <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-        {numero}
+        {depth}
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-semibold">{nombre}</span>
+        <span className="block text-sm font-semibold">{name}</span>
         <span className="block text-sm text-muted-foreground">
-          {t('centers.help.example', { text: explicacion })}
-          <em className="text-foreground">{ejemplo}</em>
+          {t('centers.help.example', { text: explanation })}
+          <em className="text-foreground">{example}</em>
         </span>
       </span>
     </li>

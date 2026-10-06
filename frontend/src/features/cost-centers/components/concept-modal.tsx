@@ -14,16 +14,16 @@ import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 import { Modal } from '@/shared/ui/organisms/modal';
 import { Select } from '@/shared/ui/organisms/select';
 
-import { ConfirmarBorrado } from './confirm-deletion';
-import { CamposDePalabrasClave } from './keywords-fields';
-import { CamposDeRecurrencia } from './recurrence-fields';
+import { ConfirmDeletion } from './confirm-deletion';
+import { KeywordsFields } from './keywords-fields';
+import { RecurrenceFields } from './recurrence-fields';
 
-interface ConceptoModalProps {
-  abierta: boolean;
+interface ConceptModalProps {
+  isOpen: boolean;
   /** Sin concepto, el formulario crea dentro de `categoríaId`. Con él, edita. */
-  concepto?: Category | null;
-  categoriaId?: number;
-  onCerrar: () => void;
+  concept?: Category | null;
+  categoryId?: number;
+  onClose: () => void;
 }
 
 /**
@@ -39,63 +39,55 @@ interface ConceptoModalProps {
  * guardar. Dos formularios distintos para lo mismo obligan a aprender dos
  * veces dónde está el botón de guardar.
  */
-export function ConceptoModal({ abierta, concepto, categoriaId, onCerrar }: ConceptoModalProps) {
-  const categorias = useCategories();
-  const form = useConceptForm({ abierta, concepto, categoriaId, onCerrar });
-  const [confirmando, setConfirmando] = useState(false);
+export function ConceptModal({ isOpen, concept, categoryId, onClose }: ConceptModalProps) {
+  const categories = useCategories();
+  const form = useConceptForm({ isOpen, concept, categoryId, onClose });
+  const [isConfirming, setIsConfirming] = useState(false);
 
-  if (!abierta) return null;
+  if (!isOpen) return null;
 
-  const arbol = categorias.data ?? [];
-  const gemelo = findTwin(arbol, concepto, form.nombre);
+  const tree = categories.data ?? [];
+  const twin = findTwin(tree, concept, form.name);
 
   return (
     <>
       <Modal
-        isOpen={abierta}
-        title={concepto ? t('centers.conceptModal.editTitle') : t('centers.conceptModal.newTitle')}
+        isOpen={isOpen}
+        title={concept ? t('centers.conceptModal.editTitle') : t('centers.conceptModal.newTitle')}
         description={t('centers.conceptModal.help')}
         // Eliminar va en la cabecera, al lado de la equis: es la otra acción
         // de la ficha que no es "guardar".
         actions={
-          concepto && (
-            <DeleteConceptButton concepto={concepto} onClick={() => setConfirmando(true)} />
-          )
+          concept && <DeleteConceptButton concept={concept} onClick={() => setIsConfirming(true)} />
         }
-        onClose={onCerrar}
+        onClose={onClose}
       >
-        <ConceptForm
-          form={form}
-          concepto={concepto}
-          arbol={arbol}
-          gemelo={gemelo}
-          onCerrar={onCerrar}
-        />
+        <ConceptForm form={form} concept={concept} tree={tree} twin={twin} onClose={onClose} />
       </Modal>
 
-      {concepto && (
-        <ConfirmarBorrado
-          categoria={concepto}
-          nivel="concepto"
-          arbol={arbol}
-          abierta={confirmando}
-          onCerrar={() => setConfirmando(false)}
+      {concept && (
+        <ConfirmDeletion
+          category={concept}
+          level="concept"
+          tree={tree}
+          isOpen={isConfirming}
+          onClose={() => setIsConfirming(false)}
           // Sin el concepto, esta ficha no tiene de qué hablar.
-          onEliminada={onCerrar}
+          onDeleted={onClose}
         />
       )}
     </>
   );
 }
 
-function DeleteConceptButton({ concepto, onClick }: { concepto: Category; onClick: () => void }) {
+function DeleteConceptButton({ concept, onClick }: { concept: Category; onClick: () => void }) {
   return (
     <Button
       type="button"
       variant="ghost"
       size="sm-icon"
       onClick={onClick}
-      aria-label={t('centers.conceptModal.deleteNamed', { name: concepto.name })}
+      aria-label={t('centers.conceptModal.deleteNamed', { name: concept.name })}
       title={t('centers.conceptModal.delete')}
       className="text-muted-foreground hover:text-destructive"
     >
@@ -106,22 +98,22 @@ function DeleteConceptButton({ concepto, onClick }: { concepto: Category; onClic
 
 interface ConceptFormProps {
   form: ReturnType<typeof useConceptForm>;
-  concepto: Category | null | undefined;
-  arbol: Category[];
-  gemelo: Category | undefined;
-  onCerrar: () => void;
+  concept: Category | null | undefined;
+  tree: Category[];
+  twin: Category | undefined;
+  onClose: () => void;
 }
 
-function ConceptForm({ form, concepto, arbol, gemelo, onCerrar }: ConceptFormProps) {
-  const hermanos = siblingCategories(arbol, concepto);
+function ConceptForm({ form, concept, tree, twin, onClose }: ConceptFormProps) {
+  const siblings = siblingCategories(tree, concept);
 
   return (
     <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
       <Field label={t('common.name')} id="concepto-nombre">
         <Input
           id="concepto-nombre"
-          value={form.nombre}
-          onChange={(e) => form.setNombre(e.target.value)}
+          value={form.name}
+          onChange={(e) => form.setName(e.target.value)}
           placeholder={t('centers.conceptModal.namePlaceholder')}
           required
         />
@@ -130,9 +122,9 @@ function ConceptForm({ form, concepto, arbol, gemelo, onCerrar }: ConceptFormPro
       {/* Solo al editar: al crear, la categoría es aquella cuyo botón se pulsó
           para abrir esto, así que preguntarlo otra vez es preguntar por
           algo que se acaba de decir. */}
-      {concepto && hermanos.length > 1 && <SiblingCategoryField form={form} hermanos={hermanos} />}
+      {concept && siblings.length > 1 && <SiblingCategoryField form={form} siblings={siblings} />}
 
-      <CamposDeRecurrencia valor={form.recurrencia} onCambiar={form.setRecurrencia} />
+      <RecurrenceFields value={form.recurrence} onChange={form.setRecurrence} />
 
       {/*
         Después de la recurrencia y no antes del nombre.
@@ -143,14 +135,14 @@ function ConceptForm({ form, concepto, arbol, gemelo, onCerrar }: ConceptFormPro
         que llega—. Arriba obligaría a pasar por encima de un campo que la
         mayoría de las veces se deja vacío.
       */}
-      <CamposDePalabrasClave
-        valor={form.palabrasClave}
-        onCambiar={form.setPalabrasClave}
-        arbol={arbol}
-        conceptoId={concepto?.id}
+      <KeywordsFields
+        value={form.keywords}
+        onChange={form.setKeywords}
+        tree={tree}
+        conceptId={concept?.id}
       />
 
-      {gemelo && <TwinNotice gemelo={gemelo} concepto={concepto} form={form} />}
+      {twin && <TwinNotice twin={twin} concept={concept} form={form} />}
 
       {form.error && (
         <p role="alert" className="text-sm text-destructive">
@@ -160,21 +152,21 @@ function ConceptForm({ form, concepto, arbol, gemelo, onCerrar }: ConceptFormPro
 
       <ConceptFormFooter
         form={form}
-        editando={concepto != null}
-        bloqueado={gemelo !== undefined}
-        onCerrar={onCerrar}
+        isEditing={concept != null}
+        isLocked={twin !== undefined}
+        onClose={onClose}
       />
     </form>
   );
 }
 
 function TwinNotice({
-  gemelo,
-  concepto,
+  twin,
+  concept,
   form,
 }: {
-  gemelo: Category;
-  concepto: Category | null | undefined;
+  twin: Category;
+  concept: Category | null | undefined;
   form: ReturnType<typeof useConceptForm>;
 }) {
   return (
@@ -190,25 +182,25 @@ function TwinNotice({
     <Block className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
         <strong className="font-semibold text-foreground">
-          {t('centers.conceptModal.duplicateBefore', { name: gemelo.name })}
+          {t('centers.conceptModal.duplicateBefore', { name: twin.name })}
         </strong>
         {t('centers.conceptModal.duplicateMiddle')}
-        {concepto
-          ? t('centers.conceptModal.duplicateDisappears', { name: concepto.name })
+        {concept
+          ? t('centers.conceptModal.duplicateDisappears', { name: concept.name })
           : t('centers.conceptModal.duplicateNoNew')}
         .
       </p>
-      {concepto && (
+      {concept && (
         <Button
           type="button"
           variant="tool"
           size="sm"
           className="self-start"
-          disabled={form.guardando}
-          onClick={() => void form.onUnificar(gemelo.id)}
+          disabled={form.isSaving}
+          onClick={() => void form.onMerge(twin.id)}
         >
           <Merge className="size-4" aria-hidden="true" />
-          {t('centers.conceptModal.mergeWith', { name: gemelo.name })}
+          {t('centers.conceptModal.mergeWith', { name: twin.name })}
         </Button>
       )}
     </Block>
@@ -217,24 +209,24 @@ function TwinNotice({
 
 function ConceptFormFooter({
   form,
-  editando,
-  bloqueado,
-  onCerrar,
+  isEditing,
+  isLocked,
+  onClose,
 }: {
   form: ReturnType<typeof useConceptForm>;
-  editando: boolean;
+  isEditing: boolean;
   /** Hay otro concepto con el mismo nombre: se unifica, no se guarda. */
-  bloqueado: boolean;
-  onCerrar: () => void;
+  isLocked: boolean;
+  onClose: () => void;
 }) {
   return (
     <ModalFooter>
-      <Button type="button" variant="outline" onClick={onCerrar}>
+      <Button type="button" variant="outline" onClick={onClose}>
         {t('common.cancel')}
       </Button>
-      <Button type="submit" disabled={form.guardando || form.nombre.trim() === '' || bloqueado}>
-        {form.guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-        {editando ? t('common.save') : t('common.create')}
+      <Button type="submit" disabled={form.isSaving || form.name.trim() === '' || isLocked}>
+        {form.isSaving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+        {isEditing ? t('common.save') : t('common.create')}
       </Button>
     </ModalFooter>
   );
@@ -242,10 +234,10 @@ function ConceptFormFooter({
 
 function SiblingCategoryField({
   form,
-  hermanos,
+  siblings,
 }: {
   form: ReturnType<typeof useConceptForm>;
-  hermanos: { value: string; label: string }[];
+  siblings: { value: string; label: string }[];
 }) {
   return (
     <Field
@@ -256,9 +248,9 @@ function SiblingCategoryField({
       <Select
         id="concepto-categoria"
         label={t('centers.levels.category')}
-        value={form.categoria}
-        options={hermanos}
-        onChange={form.setCategoría}
+        value={form.category}
+        options={siblings}
+        onChange={form.setCategory}
       />
     </Field>
   );

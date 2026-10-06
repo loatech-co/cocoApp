@@ -1,10 +1,7 @@
 import { useState, type SubmitEvent } from 'react';
 
-import {
-  useActualizarCategoria,
-  useUnificarCategoria,
-} from '@/features/cost-centers/api/categories';
-import type { Recurrencia } from '@/features/cost-centers/components/recurrence-fields';
+import { useUpdateCategory, useMergeCategory } from '@/features/cost-centers/api/categories';
+import type { Recurrence } from '@/features/cost-centers/components/recurrence-fields';
 import {
   conceptChanges,
   conceptFields,
@@ -18,92 +15,92 @@ import { t } from '@/shared/lib/i18n';
 import { useOnChange } from '@/shared/lib/on-change';
 
 interface ConceptFormOptions {
-  abierta: boolean;
-  concepto?: Category | null | undefined;
-  categoriaId?: number | undefined;
-  onCerrar: () => void;
+  isOpen: boolean;
+  concept?: Category | null | undefined;
+  categoryId?: number | undefined;
+  onClose: () => void;
 }
 
 /** El estado de la ficha de un concepto, y cómo se guarda o se funde con otro. */
-export function useConceptForm({ abierta, concepto, categoriaId, onCerrar }: ConceptFormOptions) {
-  const crear = useCreateCategory();
-  const actualizar = useActualizarCategoria();
-  const unificar = useUnificarCategoria();
-  const campos = useConceptFields(abierta, concepto);
-  const { nombre, recurrencia, palabrasClave, categoria, setError } = campos;
+export function useConceptForm({ isOpen, concept, categoryId, onClose }: ConceptFormOptions) {
+  const create = useCreateCategory();
+  const update = useUpdateCategory();
+  const merge = useMergeCategory();
+  const fields = useConceptFields(isOpen, concept);
+  const { name, recurrence, keywords, category, setError } = fields;
 
-  async function guardar(accion: () => Promise<unknown>, siFalla: string): Promise<void> {
+  async function save(action: () => Promise<unknown>, failureMessage: string): Promise<void> {
     setError(null);
     try {
-      await accion();
-      onCerrar();
+      await action();
+      onClose();
     } catch (e) {
-      setError(e instanceof ApiClientError ? e.message : siFalla);
+      setError(e instanceof ApiClientError ? e.message : failureMessage);
     }
   }
 
-  function onUnificar(destinoId: number): Promise<void> {
-    if (!concepto) return Promise.resolve();
-    const origenId = concepto.id;
-    return guardar(
-      () => unificar.mutateAsync({ origenId, destinoId }),
+  function onMerge(targetId: number): Promise<void> {
+    if (!concept) return Promise.resolve();
+    const sourceId = concept.id;
+    return save(
+      () => merge.mutateAsync({ sourceId, targetId }),
       t('centers.conceptModal.mergeFailed'),
     );
   }
 
-  function onSubmit(evento: SubmitEvent<HTMLFormElement>): Promise<void> {
-    evento.preventDefault();
-    const campos = conceptFields(nombre, recurrencia, palabrasClave);
-    return guardar(
+  function onSubmit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    const payload = conceptFields(name, recurrence, keywords);
+    return save(
       () =>
-        concepto
-          ? actualizar.mutateAsync({
-              id: concepto.id,
-              cambios: conceptChanges(campos, categoria, concepto),
+        concept
+          ? update.mutateAsync({
+              id: concept.id,
+              changes: conceptChanges(payload, category, concept),
             })
-          : crear.mutateAsync(newConcept(campos, categoriaId)),
+          : create.mutateAsync(newConcept(payload, categoryId)),
       t('centers.saveFailed'),
     );
   }
 
   return {
-    ...campos,
-    guardando: crear.isPending || actualizar.isPending || unificar.isPending,
-    onUnificar,
+    ...fields,
+    isSaving: create.isPending || update.isPending || merge.isPending,
+    onMerge,
     onSubmit,
   };
 }
 
 /** Los campos de la ficha, rellenos con lo del concepto en cada apertura. */
-function useConceptFields(abierta: boolean, concepto: Category | null | undefined) {
-  const [nombre, setNombre] = useState('');
-  const [recurrencia, setRecurrencia] = useState<Recurrencia>(() => initialRecurrence(null));
+function useConceptFields(isOpen: boolean, concept: Category | null | undefined) {
+  const [name, setName] = useState('');
+  const [recurrence, setRecurrence] = useState<Recurrence>(() => initialRecurrence(null));
   const [error, setError] = useState<string | null>(null);
   /** Lo que se busca en un soporte para reconocer este concepto. */
-  const [palabrasClave, setPalabrasClave] = useState<string[]>([]);
+  const [keywords, setKeywords] = useState<string[]>([]);
   /** La categoría al que pertenece. Vacío mientras no se esté editando. */
-  const [categoria, setCategoría] = useState('');
+  const [category, setCategory] = useState('');
 
   // Se recarga en cada apertura: sin esto, abrir el segundo concepto mostraría
   // los datos del primero.
-  useOnChange([abierta, concepto], () => {
-    if (!abierta) return;
-    setNombre(concepto?.name ?? '');
-    setRecurrencia(initialRecurrence(concepto));
-    setCategoría(concepto?.parentId != null ? String(concepto.parentId) : '');
-    setPalabrasClave(concepto?.keywords ?? []);
+  useOnChange([isOpen, concept], () => {
+    if (!isOpen) return;
+    setName(concept?.name ?? '');
+    setRecurrence(initialRecurrence(concept));
+    setCategory(concept?.parentId != null ? String(concept.parentId) : '');
+    setKeywords(concept?.keywords ?? []);
     setError(null);
   });
 
   return {
-    nombre,
-    setNombre,
-    recurrencia,
-    setRecurrencia,
-    palabrasClave,
-    setPalabrasClave,
-    categoria,
-    setCategoría,
+    name,
+    setName,
+    recurrence,
+    setRecurrence,
+    keywords,
+    setKeywords,
+    category,
+    setCategory,
     error,
     setError,
   };

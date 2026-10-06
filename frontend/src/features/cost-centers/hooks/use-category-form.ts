@@ -1,6 +1,6 @@
 import { useState, type SubmitEvent } from 'react';
 
-import { useActualizarCategoria } from '@/features/cost-centers/api/categories';
+import { useUpdateCategory } from '@/features/cost-centers/api/categories';
 import { categoryChanges, newCategory } from '@/features/cost-centers/model/category-form';
 import { ApiClientError } from '@/shared/api/api-client';
 import { useCreateCategory } from '@/shared/api/categories';
@@ -9,11 +9,11 @@ import { t } from '@/shared/lib/i18n';
 import { useOnChange } from '@/shared/lib/on-change';
 
 interface CategoryFormOptions {
-  abierta: boolean;
-  nivel: 'centro' | 'categoria';
-  categoria?: Category | null | undefined;
-  padreId?: number | undefined;
-  onCerrar: () => void;
+  isOpen: boolean;
+  level: 'costCenter' | 'category';
+  category?: Category | null | undefined;
+  parentId?: number | undefined;
+  onClose: () => void;
 }
 
 /**
@@ -24,57 +24,57 @@ interface CategoryFormOptions {
  * el icono a la categoría—.
  */
 export function useCategoryForm({
-  abierta,
-  nivel,
-  categoria,
-  padreId,
-  onCerrar,
+  isOpen,
+  level,
+  category,
+  parentId,
+  onClose,
 }: CategoryFormOptions) {
-  const crear = useCreateCategory();
-  const actualizar = useActualizarCategoria();
-  const [nombre, setNombre] = useState('');
-  const [estatico, setEstatico] = useState(false);
-  const [icono, setIcono] = useState<string | null>(null);
+  const create = useCreateCategory();
+  const update = useUpdateCategory();
+  const [name, setName] = useState('');
+  const [isStatic, setIsStatic] = useState(false);
+  const [icon, setIcon] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const esCentro = nivel === 'centro';
+  const isCostCenter = level === 'costCenter';
 
   // Se rellena en cada apertura con lo que toque: sin esto, lo que se canceló
   // la vez anterior reaparece escrito la siguiente.
-  useOnChange([abierta, categoria], () => {
-    if (!abierta) return;
-    setNombre(categoria?.name ?? '');
-    setEstatico(categoria?.isStatic ?? false);
-    setIcono(categoria?.icon ?? null);
+  useOnChange([isOpen, category], () => {
+    if (!isOpen) return;
+    setName(category?.name ?? '');
+    setIsStatic(category?.isStatic ?? false);
+    setIcon(category?.icon ?? null);
     setError(null);
   });
 
-  async function onSubmit(evento: SubmitEvent<HTMLFormElement>): Promise<void> {
-    evento.preventDefault();
+  async function onSubmit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
     setError(null);
 
-    const valores = { esCentro, nombre, estatico, icono };
+    const valores = { isCostCenter, name, isStatic, icon };
     try {
-      if (categoria != null) {
-        await actualizar.mutateAsync({ id: categoria.id, cambios: categoryChanges(valores) });
+      if (category != null) {
+        await update.mutateAsync({ id: category.id, changes: categoryChanges(valores) });
       } else {
-        await crear.mutateAsync(newCategory(valores, padreId));
+        await create.mutateAsync(newCategory(valores, parentId));
       }
-      onCerrar();
+      onClose();
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : t('centers.saveFailed'));
     }
   }
 
   return {
-    nombre,
-    setNombre,
-    estatico,
-    setEstatico,
-    icono,
-    setIcono,
+    name,
+    setName,
+    isStatic,
+    setIsStatic,
+    icon,
+    setIcon,
     error,
-    guardando: crear.isPending || actualizar.isPending,
+    isSaving: create.isPending || update.isPending,
     onSubmit,
   };
 }

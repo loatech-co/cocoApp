@@ -18,8 +18,8 @@ import { ModalFooter } from '@/shared/ui/molecules/modal-parts';
 import { Modal } from '@/shared/ui/organisms/modal';
 
 /** Sin tildes ni mayúsculas: «Educación» se encuentra escribiendo «educacion». */
-function normal(texto: string): string {
-  return texto
+function normal(text: string): string {
+  return text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -45,20 +45,20 @@ function normal(texto: string): string {
  * ningún dibujo— y sin una forma de volver atrás, el primer icono que alguien
  * pulse por curiosidad se queda ahí para siempre.
  */
-function SelectorDeIcono({
-  valor,
-  onElegir,
+function IconPicker({
+  value,
+  onSelect,
 }: {
-  valor: string | null;
-  onElegir: (icono: string | null) => void;
+  value: string | null;
+  onSelect: (icon: string | null) => void;
 }) {
-  const [busca, setBusca] = useState('');
+  const [query, setQuery] = useState('');
 
-  const filtrados = useMemo(() => {
-    const q = normal(busca);
+  const filtered = useMemo(() => {
+    const q = normal(query);
     if (q === '') return CATEGORY_ICONS;
     return CATEGORY_ICONS.filter((i) => normal(i.label).includes(q));
-  }, [busca]);
+  }, [query]);
 
   return (
     <fieldset className="flex flex-col gap-2">
@@ -67,31 +67,31 @@ function SelectorDeIcono({
       <div className={cn(BLOCK, 'flex flex-col gap-2')}>
         <SearchBox
           shape="box"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder={t('centers.categoryModal.iconSearchPlaceholder')}
           aria-label={t('centers.categoryModal.iconSearch')}
         />
 
-        <IconGrid icons={filtrados} value={valor} onSelect={onElegir} />
+        <IconGrid icons={filtered} value={value} onSelect={onSelect} />
       </div>
     </fieldset>
   );
 }
 
-interface CategoriaModalProps {
-  abierta: boolean;
+interface CategoryModalProps {
+  isOpen: boolean;
   /**
    * Qué se está tocando. Cambia el título, la ayuda y si aparece el
    * interruptor: lo estático se lee del CENTRO, que es el nivel de arriba, y
    * una categoría hereda lo que diga el suyo.
    */
-  nivel: 'centro' | 'categoria';
+  level: 'costCenter' | 'category';
   /** Con una categoría, se edita. Sin ella, se crea. */
-  categoria?: Category | null;
+  category?: Category | null;
   /** Al crear una categoría, de qué centro cuelga. */
-  padreId?: number;
-  onCerrar: () => void;
+  parentId?: number;
+  onClose: () => void;
 }
 
 /**
@@ -113,27 +113,21 @@ interface CategoriaModalProps {
  * ningún sitio. Un nombre mal escrito obligaba a borrar el centro entero —con
  * sus categorías y sus conceptos— y volver a armarlo.
  */
-export function CategoriaModal({
-  abierta,
-  nivel,
-  categoria,
-  padreId,
-  onCerrar,
-}: CategoriaModalProps) {
-  const form = useCategoryForm({ abierta, nivel, categoria, padreId, onCerrar });
-  const { nombre, setNombre, icono, setIcono, error, guardando } = form;
-  const editando = categoria != null;
-  const esCentro = nivel === 'centro';
-  const { titulo, ayuda } = categoryModalTexts(esCentro, editando);
+export function CategoryModal({ isOpen, level, category, parentId, onClose }: CategoryModalProps) {
+  const form = useCategoryForm({ isOpen, level, category, parentId, onClose });
+  const { name, setName, icon, setIcon, error, isSaving } = form;
+  const isEditing = category != null;
+  const isCostCenter = level === 'costCenter';
+  const { title, help } = categoryModalTexts(isCostCenter, isEditing);
 
   return (
-    <Modal isOpen={abierta} title={titulo} description={ayuda} onClose={onCerrar}>
+    <Modal isOpen={isOpen} title={title} description={help} onClose={onClose}>
       <form onSubmit={(e) => void form.onSubmit(e)} className="flex flex-1 flex-col gap-4">
         <Field label={t('common.name')} id="categoria-nombre">
           <Input
             id="categoria-nombre"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder={t('centers.categoryModal.namePlaceholder')}
             maxLength={255}
             required
@@ -152,7 +146,7 @@ export function CategoriaModal({
           reconocen mirando, que es para lo que existe un icono. Ocupa cuatro
           filas de ocho, con su propio desplazamiento para no estirar la ficha.
         */}
-        {!esCentro && <SelectorDeIcono valor={icono} onElegir={setIcono} />}
+        {!isCostCenter && <IconPicker value={icon} onSelect={setIcon} />}
 
         {/*
           El interruptor a la DERECHA y dentro de una caja.
@@ -173,7 +167,7 @@ export function CategoriaModal({
         {/* Solo en los centros: lo estático se lee del nivel de arriba, y un
             categoría hereda lo que diga el suyo. Ofrecerlo en una categoría sería un
             interruptor que no hace nada. */}
-        {esCentro && <StaticSwitch estatico={form.estatico} onCambiar={form.setEstatico} />}
+        {isCostCenter && <StaticSwitch isStatic={form.isStatic} onChange={form.setIsStatic} />}
 
         {error && (
           <p role="alert" className="text-sm text-destructive">
@@ -182,10 +176,10 @@ export function CategoriaModal({
         )}
 
         <CategoryFormFooter
-          editando={editando}
-          guardando={guardando}
-          deshabilitado={guardando || nombre.trim() === ''}
-          onCerrar={onCerrar}
+          isEditing={isEditing}
+          isSaving={isSaving}
+          isDisabled={isSaving || name.trim() === ''}
+          onClose={onClose}
         />
       </form>
     </Modal>
@@ -193,35 +187,35 @@ export function CategoriaModal({
 }
 
 function CategoryFormFooter({
-  editando,
-  guardando,
-  deshabilitado,
-  onCerrar,
+  isEditing,
+  isSaving,
+  isDisabled,
+  onClose,
 }: {
-  editando: boolean;
-  guardando: boolean;
-  deshabilitado: boolean;
-  onCerrar: () => void;
+  isEditing: boolean;
+  isSaving: boolean;
+  isDisabled: boolean;
+  onClose: () => void;
 }) {
   return (
     <ModalFooter>
-      <Button type="button" variant="outline" onClick={onCerrar}>
+      <Button type="button" variant="outline" onClick={onClose}>
         {t('common.cancel')}
       </Button>
-      <Button type="submit" disabled={deshabilitado}>
-        {guardando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-        {editando ? t('common.save') : t('common.create')}
+      <Button type="submit" disabled={isDisabled}>
+        {isSaving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+        {isEditing ? t('common.save') : t('common.create')}
       </Button>
     </ModalFooter>
   );
 }
 
 function StaticSwitch({
-  estatico,
-  onCambiar,
+  isStatic,
+  onChange,
 }: {
-  estatico: boolean;
-  onCambiar: (estatico: boolean) => void;
+  isStatic: boolean;
+  onChange: (isStatic: boolean) => void;
 }) {
   return (
     <label className={cn(BLOCK, 'flex cursor-pointer items-center justify-between gap-4')}>
@@ -231,7 +225,7 @@ function StaticSwitch({
           {t('centers.categoryModal.staticHelp')}
         </span>
       </span>
-      <Switch checked={estatico} onChange={(e) => onCambiar(e.target.checked)} />
+      <Switch checked={isStatic} onChange={(e) => onChange(e.target.checked)} />
     </label>
   );
 }

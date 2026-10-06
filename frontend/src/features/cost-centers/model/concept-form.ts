@@ -1,6 +1,6 @@
 import { type CategoryTree } from '@/shared/api/categories';
 
-import type { Recurrencia } from '../components/recurrence-fields';
+import type { Recurrence } from '../components/recurrence-fields';
 
 /**
  * Lo que la ficha de un concepto lee del árbol y lo que manda al servidor.
@@ -10,20 +10,20 @@ import type { Recurrencia } from '../components/recurrence-fields';
  */
 
 /** La recurrencia con la que abre la ficha: la del concepto, o la de fábrica. */
-export function initialRecurrence(concepto: CategoryTree | null | undefined): Recurrencia {
+export function initialRecurrence(concept: CategoryTree | null | undefined): Recurrence {
   return {
-    recurrente: concepto?.isRecurring ?? false,
-    periodicidad: concepto?.periodicity ?? 'monthly',
-    diaDePago: concepto?.paymentDay ?? 1,
+    isRecurring: concept?.isRecurring ?? false,
+    periodicity: concept?.periodicity ?? 'monthly',
+    paymentDay: concept?.paymentDay ?? 1,
     // El mes en curso: si alguien pasa a trimestral, lo más probable es que el
     // ciclo empiece ahora, no en enero.
-    mesDePago: concepto?.paymentMonth ?? new Date().getMonth() + 1,
+    paymentMonth: concept?.paymentMonth ?? new Date().getMonth() + 1,
     // Sin decimales: el campo escribe pesos enteros, que es como se escribe
     // la plata aquí. Un «180000.00» que vuelve de la API se enseñaría con un
     // «.00» que nadie tecleó y que el campo no deja borrar.
-    presupuesto: concepto?.budget != null ? String(Math.round(Number(concepto.budget))) : '',
-    pagoAutomatico: concepto?.isAutoPaid ?? false,
-    variosPagos: concepto?.isMultiPayment ?? false,
+    budget: concept?.budget != null ? String(Math.round(Number(concept.budget))) : '',
+    isAutoPay: concept?.isAutoPaid ?? false,
+    isMultiPayment: concept?.isMultiPayment ?? false,
   };
 }
 
@@ -41,13 +41,13 @@ export function initialRecurrence(concepto: CategoryTree | null | undefined): Re
   propio, la pregunta no existe.
 */
 export function siblingCategories(
-  arbol: CategoryTree[],
-  concepto: CategoryTree | null | undefined,
+  tree: CategoryTree[],
+  concept: CategoryTree | null | undefined,
 ): { value: string; label: string }[] {
-  return arbol.flatMap((centro) => {
-    const categorias = centro.children ?? [];
-    return categorias.some((g) => g.id === Number(concepto?.parentId))
-      ? categorias.map((g) => ({ value: String(g.id), label: g.name }))
+  return tree.flatMap((costCenter) => {
+    const categories = costCenter.children ?? [];
+    return categories.some((g) => g.id === Number(concept?.parentId))
+      ? categories.map((g) => ({ value: String(g.id), label: g.name }))
       : [];
   });
 }
@@ -67,26 +67,26 @@ export function siblingCategories(
   escriben distinto dos veces la misma cosa.
 */
 export function findTwin(
-  arbol: CategoryTree[],
-  concepto: CategoryTree | null | undefined,
-  nombre: string,
+  tree: CategoryTree[],
+  concept: CategoryTree | null | undefined,
+  name: string,
 ): CategoryTree | undefined {
-  return conceptosDe(arbol).find(
-    (c) => c.id !== concepto?.id && normalizar(c.name) === normalizar(nombre),
+  return conceptsOf(tree).find(
+    (c) => c.id !== concept?.id && normalize(c.name) === normalize(name),
   );
 }
 
 /** Los campos que se guardan, al crear y al editar. */
-export function conceptFields(nombre: string, recurrencia: Recurrencia, palabrasClave: string[]) {
+export function conceptFields(name: string, recurrence: Recurrence, keywords: string[]) {
   return {
-    name: nombre.trim(),
-    isRecurring: recurrencia.recurrente,
-    periodicity: recurrencia.recurrente ? recurrencia.periodicidad : null,
-    paymentDay: recurrencia.recurrente ? recurrencia.diaDePago : null,
+    name: name.trim(),
+    isRecurring: recurrence.isRecurring,
+    periodicity: recurrence.isRecurring ? recurrence.periodicity : null,
+    paymentDay: recurrence.isRecurring ? recurrence.paymentDay : null,
     // El mes solo significa algo si el ciclo no es mensual.
     paymentMonth:
-      recurrencia.recurrente && recurrencia.periodicidad !== 'monthly'
-        ? recurrencia.mesDePago
+      recurrence.isRecurring && recurrence.periodicity !== 'monthly'
+        ? recurrence.paymentMonth
         : null,
     /*
       Vacío es `null`, no cero.
@@ -100,12 +100,10 @@ export function conceptFields(nombre: string, recurrencia: Recurrencia, palabras
       «cada vez» no significa nada donde no hay una próxima vez.
     */
     budget:
-      recurrencia.recurrente && recurrencia.presupuesto.trim() !== ''
-        ? Number(recurrencia.presupuesto)
-        : null,
+      recurrence.isRecurring && recurrence.budget.trim() !== '' ? Number(recurrence.budget) : null,
     // Se va con la recurrencia, como el presupuesto: cobrar solo «cada vez»
     // no significa nada donde no hay una próxima vez.
-    isAutoPaid: recurrencia.recurrente && recurrencia.pagoAutomatico,
+    isAutoPaid: recurrence.isRecurring && recurrence.isAutoPay,
     /*
       Se va con la recurrencia por lo mismo, y además NUNCA junto al pago
       automático.
@@ -118,46 +116,45 @@ export function conceptFields(nombre: string, recurrencia: Recurrencia, palabras
       como última defensa pero es un error que no tiene por qué llegar a
       ocurrir.
     */
-    isMultiPayment:
-      recurrencia.recurrente && recurrencia.variosPagos && !recurrencia.pagoAutomatico,
-    keywords: palabrasClave,
+    isMultiPayment: recurrence.isRecurring && recurrence.isMultiPayment && !recurrence.isAutoPay,
+    keywords,
   };
 }
 
 /** Los cambios al editar: los campos, y la categoría solo si de verdad cambió. */
 export function conceptChanges(
-  campos: ReturnType<typeof conceptFields>,
-  categoria: string,
-  concepto: CategoryTree,
+  fields: ReturnType<typeof conceptFields>,
+  category: string,
+  concept: CategoryTree,
 ) {
   return {
-    ...campos,
+    ...fields,
     // Solo si de verdad cambió: un `parentId` en cada guardado
     // dispara la comprobación de ciclos y de profundidad del árbol
     // para nada.
-    ...(categoria !== '' && Number(categoria) !== Number(concepto.parentId)
-      ? { parentId: Number(categoria) }
+    ...(category !== '' && Number(category) !== Number(concept.parentId)
+      ? { parentId: Number(category) }
       : {}),
   };
 }
 
 /** Lo que se crea, colgado de la categoría cuyo botón abrió la ficha. */
-export function newConcept(campos: ReturnType<typeof conceptFields>, categoriaId?: number) {
+export function newConcept(fields: ReturnType<typeof conceptFields>, categoryId?: number) {
   return {
-    ...campos,
+    ...fields,
     kind: 'expense' as const,
-    ...(categoriaId === undefined ? {} : { parentId: categoriaId }),
+    ...(categoryId === undefined ? {} : { parentId: categoryId }),
   };
 }
 
 /** Los conceptos del árbol: las hojas, que es donde cuelgan los movimientos. */
-function conceptosDe(arbol: CategoryTree[]): CategoryTree[] {
-  return arbol.flatMap((centro) =>
-    (centro.children ?? []).flatMap((categoria) => categoria.children ?? []),
+function conceptsOf(tree: CategoryTree[]): CategoryTree[] {
+  return tree.flatMap((costCenter) =>
+    (costCenter.children ?? []).flatMap((category) => category.children ?? []),
   );
 }
 
 /** Dos nombres son el mismo si solo se diferencian en mayúsculas o espacios. */
-function normalizar(nombre: string): string {
-  return nombre.trim().toLowerCase().replace(/\s+/g, ' ');
+function normalize(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, ' ');
 }

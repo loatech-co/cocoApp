@@ -89,56 +89,6 @@
       "count": 6
     }
   },
-  "src/features/cost-centers/components/add-category.tsx": {
-    "@typescript-eslint/naming-convention": {
-      "count": 2
-    }
-  },
-  "src/features/cost-centers/components/category-modal.tsx": {
-    "@typescript-eslint/naming-convention": {
-      "count": 8
-    }
-  },
-  "src/features/cost-centers/components/category-tile.tsx": {
-    "@typescript-eslint/naming-convention": {
-      "count": 3
-    }
-  },
-  "src/features/cost-centers/components/concept-modal.tsx": {
-    "@typescript-eslint/naming-convention": {
-      "count": 4
-    }
-  },
-  "src/features/cost-centers/components/confirm-deletion.tsx": {
-    "@typescript-eslint/naming-convention": {
-      "count": 3
-    }
-  },
-  "src/features/cost-centers/components/cost-center-card.tsx": {
-    "@typescript-eslint/naming-convention": {
-      "count": 5
-    }
-  },
-  "src/features/cost-centers/hooks/use-category-form.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 3
-    }
-  },
-  "src/features/cost-centers/hooks/use-concept-form.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 2
-    }
-  },
-  "src/features/cost-centers/model/category-form.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 6
-    }
-  },
-  "src/features/cost-centers/pages/cost-centers-page.tsx": {
-    "@typescript-eslint/naming-convention": {
-      "count": 3
-    }
-  },
   "src/features/profile/components/ajustes.tsx": {
     "@typescript-eslint/naming-convention": {
       "count": 4

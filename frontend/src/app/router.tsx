@@ -19,8 +19,8 @@ const lazily = {
   accounts: async () => ({
     Component: (await import('@/features/bank-accounts/pages/accounts-page')).AccountsPage,
   }),
-  centros: async () => ({
-    Component: (await import('@/features/cost-centers/pages/cost-centers-page')).CentrosPage,
+  costCenters: async () => ({
+    Component: (await import('@/features/cost-centers/pages/cost-centers-page')).CostCentersPage,
   }),
   cuenta: async () => ({
     Component: (await import('@/features/profile/pages/cuenta-page')).CuentaPage,
@@ -96,7 +96,7 @@ export const rutas: RouteObject[] = [
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'cuentas', lazy: lazily.accounts },
-          { path: 'centros-de-costos', lazy: lazily.centros },
+          { path: 'centros-de-costos', lazy: lazily.costCenters },
           // La ruta vieja sigue viva y redirige: hay enlaces guardados y marcadores
           // apuntando a /categorias, y romperlos por un cambio de nombre es gratis
           // de evitar.

@@ -2,10 +2,10 @@ import { Plus, ScanText } from 'lucide-react';
 import { useState, type KeyboardEvent } from 'react';
 
 import {
-  conceptoQueYaLaUsa,
-  limpiar,
-  partir,
-  porQueNoEntra,
+  conceptAlreadyUsing,
+  cleanKeyword,
+  splitKeywords,
+  rejectionReason,
 } from '@/features/cost-centers/model/keywords';
 import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
@@ -15,12 +15,12 @@ import { Field } from '@/shared/ui/atoms/field';
 import { FieldAction, Input } from '@/shared/ui/atoms/input';
 
 interface KeywordFieldsProps {
-  valor: string[];
-  onCambiar: (siguiente: string[]) => void;
+  value: string[];
+  onChange: (next: string[]) => void;
   /** Para avisar si otra palabra ya está puesta en otro concepto. */
-  arbol?: readonly Category[];
+  tree?: readonly Category[];
   /** El concepto que se está editando, para no avisar de sí mismo. */
-  conceptoId?: Category['id'] | undefined;
+  conceptId?: Category['id'] | undefined;
   className?: string;
 }
 
@@ -48,21 +48,21 @@ interface KeywordFieldsProps {
  * —que es la otra forma— no se ve dónde acaba una y empieza la otra, y quitar
  * la del medio es editar una cadena a mano.
  */
-export function CamposDePalabrasClave({
-  valor,
-  onCambiar,
-  arbol,
-  conceptoId,
+export function KeywordsFields({
+  value,
+  onChange,
+  tree,
+  conceptId,
   className,
 }: KeywordFieldsProps) {
-  const { escrita, setEscrita, aviso, setAviso, añadir, alTeclear, quitar } = useKeywordInput(
-    valor,
-    onCambiar,
+  const { draft, setDraft, notice, setNotice, add, onKeyDown, remove } = useKeywordInput(
+    value,
+    onChange,
   );
 
-  const enOtroConcepto = valor
-    .map((palabra) => ({ palabra, otro: conceptoQueYaLaUsa(arbol ?? [], palabra, conceptoId) }))
-    .find((par) => par.otro !== undefined);
+  const inOtherConcept = value
+    .map((keyword) => ({ keyword, other: conceptAlreadyUsing(tree ?? [], keyword, conceptId) }))
+    .find((par) => par.other !== undefined);
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
@@ -73,24 +73,24 @@ export function CamposDePalabrasClave({
       >
         <Input
           id="concepto-palabras-clave"
-          value={escrita}
+          value={draft}
           onChange={(e) => {
-            setEscrita(e.target.value);
-            if (aviso) setAviso(null);
+            setDraft(e.target.value);
+            if (notice) setNotice(null);
           }}
-          onKeyDown={alTeclear}
+          onKeyDown={onKeyDown}
           // Lo tecleado y no confirmado entra igual al salir del campo: si no,
           // escribir la palabra y pulsar «Guardar» la pierde en silencio, y
           // nadie relee una lista para comprobar que está lo que acaba de
           // escribir.
-          onBlur={añadir}
+          onBlur={add}
           placeholder={t('centers.keywords.placeholder')}
           icon={ScanText}
-          actions={[<AddKeywordButton key="añadir" escrita={escrita} onClick={añadir} />]}
+          actions={[<AddKeywordButton key="añadir" draft={draft} onClick={add} />]}
         />
       </Field>
 
-      {valor.length > 0 && <KeywordChips valor={valor} onQuitar={quitar} />}
+      {value.length > 0 && <KeywordChips value={value} onRemove={remove} />}
 
       {/*
         Los dos avisos, en gris y no en rojo.
@@ -99,12 +99,12 @@ export function CamposDePalabrasClave({
         otro que ya está puesta en otro concepto —que se puede hacer, y a veces
         es lo que se quiere—. El rojo es para lo que salió mal.
       */}
-      {aviso && <p className="text-xs leading-relaxed text-muted-foreground">{aviso}</p>}
+      {notice && <p className="text-xs leading-relaxed text-muted-foreground">{notice}</p>}
 
-      {!aviso && enOtroConcepto?.otro && (
+      {!notice && inOtherConcept?.other && (
         <p className="text-xs leading-relaxed text-muted-foreground">
-          {t('centers.keywords.sharedMiddle', { word: enOtroConcepto.palabra })}
-          <strong className="font-medium text-foreground">{enOtroConcepto.otro.name}</strong>
+          {t('centers.keywords.sharedMiddle', { word: inOtherConcept.keyword })}
+          <strong className="font-medium text-foreground">{inOtherConcept.other.name}</strong>
           {t('centers.keywords.sharedAfter')}
         </p>
       )}
@@ -113,25 +113,25 @@ export function CamposDePalabrasClave({
 }
 
 function KeywordChips({
-  valor,
-  onQuitar,
+  value,
+  onRemove,
 }: {
-  valor: string[];
-  onQuitar: (palabra: string) => void;
+  value: string[];
+  onRemove: (keyword: string) => void;
 }) {
   return (
     <ul className="flex flex-wrap gap-1.5">
-      {valor.map((palabra) => (
-        <li key={palabra}>
+      {value.map((keyword) => (
+        <li key={keyword}>
           {/* El nombre no abre nada: solo se quita. Por eso va sin
               `onClick`, y el chip lo pinta como texto en vez de como un
               botón que no haría nada. */}
           <Chip
-            onRemove={() => onQuitar(palabra)}
-            removeLabel={t('centers.keywords.remove', { word: palabra })}
+            onRemove={() => onRemove(keyword)}
+            removeLabel={t('centers.keywords.remove', { word: keyword })}
             className="max-w-full"
           >
-            {palabra}
+            {keyword}
           </Chip>
         </li>
       ))}
@@ -140,42 +140,42 @@ function KeywordChips({
 }
 
 /** Lo que se está escribiendo, el aviso de lo que no entró y los gestos que añaden y quitan. */
-function useKeywordInput(valor: string[], onCambiar: (siguiente: string[]) => void) {
-  const [escrita, setEscrita] = useState('');
-  const [aviso, setAviso] = useState<string | null>(null);
+function useKeywordInput(value: string[], onChange: (next: string[]) => void) {
+  const [draft, setDraft] = useState('');
+  const [notice, setNotice] = useState<string | null>(null);
 
   /**
    * Añade lo que haya escrito. Devuelve lo que no pudo entrar, para dejarlo en
    * la caja: borrar lo que alguien acaba de teclear sin decir por qué es la
    * forma más rápida de que deje de escribir.
    */
-  function añadir(): void {
-    const candidatas = partir(escrita);
-    if (candidatas.length === 0) {
-      setEscrita('');
+  function add(): void {
+    const candidates = splitKeywords(draft);
+    if (candidates.length === 0) {
+      setDraft('');
       return;
     }
 
-    const puestas = [...valor];
-    const rechazadas: string[] = [];
-    let primerAviso: string | null = null;
+    const current = [...value];
+    const rejected: string[] = [];
+    let firstNotice: string | null = null;
 
-    for (const candidata of candidatas) {
-      const problema = porQueNoEntra(candidata, puestas);
-      if (problema) {
-        primerAviso ??= problema;
-        rechazadas.push(candidata);
+    for (const candidate of candidates) {
+      const problem = rejectionReason(candidate, current);
+      if (problem) {
+        firstNotice ??= problem;
+        rejected.push(candidate);
         continue;
       }
-      puestas.push(limpiar(candidata));
+      current.push(cleanKeyword(candidate));
     }
 
-    if (puestas.length !== valor.length) onCambiar(puestas);
-    setEscrita(rechazadas.join(', '));
-    setAviso(primerAviso);
+    if (current.length !== value.length) onChange(current);
+    setDraft(rejected.join(', '));
+    setNotice(firstNotice);
   }
 
-  function alTeclear(evento: KeyboardEvent<HTMLInputElement>): void {
+  function onKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     /*
       Enter añade, y NO envía el formulario.
 
@@ -183,29 +183,29 @@ function useKeywordInput(valor: string[], onCambiar: (siguiente: string[]) => vo
       gesto con el que se escribe una lista— guardaba el concepto con la
       palabra a medio escribir y cerraba la ficha.
     */
-    if (evento.key === 'Enter') {
-      evento.preventDefault();
-      añadir();
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      add();
       return;
     }
 
     // Retroceso con la caja vacía quita la última: es como se corrige una
     // lista de chips en cualquier parte, y ahorra apuntar a un aspa de 16px.
-    if (evento.key === 'Backspace' && escrita === '' && valor.length > 0) {
-      onCambiar(valor.slice(0, -1));
-      setAviso(null);
+    if (event.key === 'Backspace' && draft === '' && value.length > 0) {
+      onChange(value.slice(0, -1));
+      setNotice(null);
     }
   }
 
-  function quitar(palabra: string): void {
-    onCambiar(valor.filter((suya) => suya !== palabra));
-    setAviso(null);
+  function remove(keyword: string): void {
+    onChange(value.filter((kept) => kept !== keyword));
+    setNotice(null);
   }
 
-  return { escrita, setEscrita, aviso, setAviso, añadir, alTeclear, quitar };
+  return { draft, setDraft, notice, setNotice, add, onKeyDown, remove };
 }
 
-function AddKeywordButton({ escrita, onClick }: { escrita: string; onClick: () => void }) {
+function AddKeywordButton({ draft, onClick }: { draft: string; onClick: () => void }) {
   return (
     // Enter ya lo hace, pero en un teléfono el teclado no siempre enseña un
     // Enter y este es el único sitio donde se ve que la caja no guarda una
@@ -215,7 +215,7 @@ function AddKeywordButton({ escrita, onClick }: { escrita: string; onClick: () =
       label={t('centers.keywords.add')}
       hint={t('centers.keywords.addHint')}
       onClick={onClick}
-      disabled={limpiar(escrita) === ''}
+      disabled={cleanKeyword(draft) === ''}
     />
   );
 }

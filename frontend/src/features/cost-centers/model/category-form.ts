@@ -8,52 +8,50 @@ import { t } from '@/shared/lib/i18n';
  */
 
 export interface CategoryFormValues {
-  esCentro: boolean;
-  nombre: string;
-  estatico: boolean;
-  icono: string | null;
+  isCostCenter: boolean;
+  name: string;
+  isStatic: boolean;
+  icon: string | null;
 }
 
 /** Los cambios al renombrar. */
-export function categoryChanges({ esCentro, nombre, estatico, icono }: CategoryFormValues) {
-  return esCentro
-    ? { name: nombre.trim(), isStatic: estatico }
-    : { name: nombre.trim(), icon: icono };
+export function categoryChanges({ isCostCenter, name, isStatic, icon }: CategoryFormValues) {
+  return isCostCenter ? { name: name.trim(), isStatic } : { name: name.trim(), icon };
 }
 
 /** Lo que se crea. Una categoría cuelga de su padre, si lo hay. */
 export function newCategory(
-  { esCentro, nombre, estatico, icono }: CategoryFormValues,
-  padreId: number | undefined,
+  { isCostCenter, name, isStatic, icon }: CategoryFormValues,
+  parentId: number | undefined,
 ) {
   return {
-    name: nombre.trim(),
+    name: name.trim(),
     kind: 'expense' as const,
-    ...(esCentro
-      ? { isStatic: estatico }
+    ...(isCostCenter
+      ? { isStatic }
       : {
-          ...(padreId === undefined ? {} : { parentId: padreId }),
-          ...(icono ? { icon: icono } : {}),
+          ...(parentId === undefined ? {} : { parentId }),
+          ...(icon ? { icon } : {}),
         }),
   };
 }
 
 /** El título y la línea de ayuda de la ficha. */
 export function categoryModalTexts(
-  esCentro: boolean,
-  editando: boolean,
-): { titulo: string; ayuda: string } {
-  return esCentro
+  isCostCenter: boolean,
+  isEditing: boolean,
+): { title: string; help: string } {
+  return isCostCenter
     ? {
-        titulo: editando
+        title: isEditing
           ? t('centers.categoryModal.editCostCenter')
           : t('centers.categoryModal.newCostCenter'),
-        ayuda: t('centers.categoryModal.costCenterHelp'),
+        help: t('centers.categoryModal.costCenterHelp'),
       }
     : {
-        titulo: editando
+        title: isEditing
           ? t('centers.categoryModal.editCategory')
           : t('centers.categoryModal.newCategory'),
-        ayuda: t('centers.categoryModal.categoryHelp'),
+        help: t('centers.categoryModal.categoryHelp'),
       };
 }

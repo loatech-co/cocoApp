@@ -2,7 +2,7 @@ import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { toSearchableNodes } from '@/shared/lib/searchable-tree';
 import {
-  treeSignatures as firmasDelArbolCompartido,
+  treeSignatures as sharedTreeSignatures,
   normalize,
   type Signature,
 } from '@coco/receipt-parser';
@@ -37,29 +37,29 @@ import {
  * nombre del archivo (`prefijosDeNombre`), que es otra cosa; lo que se escribe
  * aquí se busca suelto en todo el texto.
  */
-export const LARGO_MINIMO = 3;
+export const MIN_LENGTH = 3;
 
 /** Lo que admite la API. Se repite aquí para no dejar escribir lo que se va a rechazar. */
-export const MAXIMO_DE_PALABRAS = 30;
-const LARGO_MAXIMO = 60;
+export const MAX_KEYWORDS = 30;
+const MAX_LENGTH = 60;
 
 /** Sin tildes, en minúscula y con los espacios apretados. Para comparar, no para guardar. */
-function comoSeCompara(palabra: string): string {
-  return normalize(palabra);
+function comparisonKey(keyword: string): string {
+  return normalize(keyword);
 }
 
 /**
  * Recorta y aprieta los espacios. Lo que se guarda: con sus tildes y sus
  * mayúsculas.
  */
-export function limpiar(palabra: string): string {
-  return palabra.replace(/\s+/g, ' ').trim();
+export function cleanKeyword(keyword: string): string {
+  return keyword.replace(/\s+/g, ' ').trim();
 }
 
 /** ¿Esta lista ya tiene esta palabra? Sin mirar tildes ni mayúsculas. */
-export function yaEsta(palabras: readonly string[], palabra: string): boolean {
-  const buscada = comoSeCompara(palabra);
-  return palabras.some((suya) => comoSeCompara(suya) === buscada);
+export function includesKeyword(keywords: readonly string[], keyword: string): boolean {
+  const wanted = comparisonKey(keyword);
+  return keywords.some((kept) => comparisonKey(kept) === wanted);
 }
 
 /**
@@ -69,42 +69,42 @@ export function yaEsta(palabras: readonly string[], palabra: string): boolean {
  * y porque nadie escribe un acreedor con una coma dentro. El salto de línea,
  * porque copiar tres renglones de un recibo es el otro gesto.
  */
-export function partir(escrito: string): string[] {
-  return escrito
+export function splitKeywords(text: string): string[] {
+  return text
     .split(/[,\n]/)
-    .map(limpiar)
-    .filter((palabra) => palabra !== '');
+    .map(cleanKeyword)
+    .filter((keyword) => keyword !== '');
 }
 
 /** Por qué una palabra no entra. `null` si entra. */
-export function porQueNoEntra(palabra: string, yaPuestas: readonly string[]): string | null {
-  const limpia = limpiar(palabra);
+export function rejectionReason(keyword: string, existing: readonly string[]): string | null {
+  const cleaned = cleanKeyword(keyword);
 
-  if (limpia.length < LARGO_MINIMO) {
-    return t('centers.keywords.tooShort', { word: limpia, min: LARGO_MINIMO });
+  if (cleaned.length < MIN_LENGTH) {
+    return t('centers.keywords.tooShort', { word: cleaned, min: MIN_LENGTH });
   }
-  if (limpia.length > LARGO_MAXIMO) {
-    return t('centers.keywords.tooLong', { start: limpia.slice(0, 20) });
+  if (cleaned.length > MAX_LENGTH) {
+    return t('centers.keywords.tooLong', { start: cleaned.slice(0, 20) });
   }
-  if (yaEsta(yaPuestas, limpia)) {
-    return t('centers.keywords.duplicate', { word: limpia });
+  if (includesKeyword(existing, cleaned)) {
+    return t('centers.keywords.duplicate', { word: cleaned });
   }
-  if (yaPuestas.length >= MAXIMO_DE_PALABRAS) {
-    return t('centers.keywords.tooMany', { max: MAXIMO_DE_PALABRAS });
+  if (existing.length >= MAX_KEYWORDS) {
+    return t('centers.keywords.tooMany', { max: MAX_KEYWORDS });
   }
 
   return null;
 }
 
 /** Los conceptos del árbol: las hojas, que es donde cuelgan los movimientos. */
-function conceptosDe(arbol: readonly CategoryTree[]): {
-  concepto: CategoryTree;
-  categoria: CategoryTree;
-  centro: CategoryTree;
+function conceptsOf(tree: readonly CategoryTree[]): {
+  concept: CategoryTree;
+  category: CategoryTree;
+  costCenter: CategoryTree;
 }[] {
-  return arbol.flatMap((centro) =>
-    (centro.children ?? []).flatMap((categoria) =>
-      (categoria.children ?? []).map((concepto) => ({ concepto, categoria, centro })),
+  return tree.flatMap((costCenter) =>
+    (costCenter.children ?? []).flatMap((category) =>
+      (category.children ?? []).map((concept) => ({ concept, category, costCenter })),
     ),
   );
 }
@@ -118,18 +118,17 @@ function conceptosDe(arbol: readonly CategoryTree[]): {
  * en «Internet» sin que nadie entienda por qué. Es la misma clase de aviso que
  * el del concepto duplicado: se dice lo que hay y se deja decidir.
  */
-export function conceptoQueYaLaUsa(
-  arbol: readonly CategoryTree[],
-  palabra: string,
-  exceptoId?: CategoryTree['id'],
+export function conceptAlreadyUsing(
+  tree: readonly CategoryTree[],
+  keyword: string,
+  exceptId?: CategoryTree['id'],
 ): CategoryTree | undefined {
-  const buscada = comoSeCompara(palabra);
+  const wanted = comparisonKey(keyword);
 
-  return conceptosDe(arbol).find(
-    ({ concepto }) =>
-      concepto.id !== exceptoId &&
-      concepto.keywords.some((suya) => comoSeCompara(suya) === buscada),
-  )?.concepto;
+  return conceptsOf(tree).find(
+    ({ concept }) =>
+      concept.id !== exceptId && concept.keywords.some((kept) => comparisonKey(kept) === wanted),
+  )?.concept;
 }
 
 /**
@@ -138,7 +137,7 @@ export function conceptoQueYaLaUsa(
  * Van DELANTE del catálogo cuando se clasifica, y además con más prioridad:
  * ver `TYPED_TEXT_PRIORITY` en `packages/receipt-parser/src/signatures.ts`.
  */
-export function firmasDelArbol(arbol: readonly CategoryTree[]): Signature[] {
+export function treeSignatures(tree: readonly CategoryTree[]): Signature[] {
   // El recorrido vive en el paquete desde la fase 3: la API lo necesita igual.
-  return firmasDelArbolCompartido(toSearchableNodes(arbol));
+  return sharedTreeSignatures(toSearchableNodes(tree));
 }

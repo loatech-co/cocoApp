@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useEliminarCategoria, useUsosDeCategoria } from '@/features/cost-centers/api/categories';
+import { useDeleteCategory, useCategoryUsage } from '@/features/cost-centers/api/categories';
 import { ApiClientError } from '@/shared/api/api-client';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
@@ -10,8 +10,8 @@ import { Field } from '@/shared/ui/atoms/field';
 import { Confirmation } from '@/shared/ui/organisms/confirmation';
 import { Select } from '@/shared/ui/organisms/select';
 
-interface ConfirmarBorradoProps {
-  categoria: CategoryTree;
+interface ConfirmDeletionProps {
+  category: CategoryTree;
   /**
    * En cuál de los tres niveles está lo que se va a borrar.
    *
@@ -25,13 +25,13 @@ interface ConfirmarBorradoProps {
    * de costos decía «estás a punto de borrar la categoría “Vivienda”», que es
    * nombrar mal justo en la pantalla donde más caro sale equivocarse.
    */
-  nivel: NivelDeCategoria;
+  level: CategoryLevel;
   /** El árbol entero: de ahí salen los destinos posibles. */
-  arbol: CategoryTree[];
-  abierta: boolean;
-  onCerrar: () => void;
+  tree: CategoryTree[];
+  isOpen: boolean;
+  onClose: () => void;
   /** Se llama después de borrar. Por ejemplo, para cerrar la ficha de encima. */
-  onEliminada?: (() => void) | undefined;
+  onDeleted?: (() => void) | undefined;
 }
 
 /**
@@ -60,51 +60,51 @@ interface ConfirmarBorradoProps {
  * como que se van los movimientos.
  */
 /** The three levels of the tree, as the person reads them. */
-type NivelDeCategoria = 'centro de costos' | 'categoría' | 'concepto';
+type CategoryLevel = 'costCenter' | 'category' | 'concept';
 
-export function ConfirmarBorrado({
-  categoria,
-  nivel,
-  arbol,
-  abierta,
-  onCerrar,
-  onEliminada,
-}: ConfirmarBorradoProps) {
-  const borrado = useDeleteCategory({ categoria, abierta, onCerrar, onEliminada });
-  const { usos, destino, error, movimientos } = borrado;
-  const hayQueReasignar = movimientos > 0;
+export function ConfirmDeletion({
+  category,
+  level,
+  tree,
+  isOpen,
+  onClose,
+  onDeleted,
+}: ConfirmDeletionProps) {
+  const deletion = useDeletionFlow({ category, isOpen, onClose, onDeleted });
+  const { usage, target, error, transactions } = deletion;
+  const shouldReassign = transactions > 0;
 
   return (
     <Confirmation
-      isOpen={abierta}
-      title={t('centers.deletion.title', { name: categoria.name })}
+      isOpen={isOpen}
+      title={t('centers.deletion.title', { name: category.name })}
       isDestructive
       confirmLabel={t('common.delete')}
-      isBusy={borrado.ocupada}
+      isBusy={deletion.isBusy}
       // Con movimientos dentro no se puede confirmar hasta decir a dónde van.
       // Apagado y no «falla al pulsar»: enterarse después de pulsar «Eliminar»
       // en un diálogo que avisa de que no se puede deshacer es lo peor.
       // Without the count it is unknown whether movements hang below: deleting
       // blind would leave them unclassified with no question asked.
-      isConfirmDisabled={usos.isError || (hayQueReasignar && destino === '')}
-      onCancel={onCerrar}
-      onConfirm={borrado.confirmar}
+      isConfirmDisabled={usage.isError || (shouldReassign && target === '')}
+      onCancel={onClose}
+      onConfirm={deletion.confirm}
     >
       <div className="flex flex-col gap-3">
         {/* Qué se va, y la pregunta. Los tres golpes del patrón: qué pasa, que
             no hay vuelta atrás, y si de verdad. */}
-        <p>{loQueSeBorra(nivel, categoria.name, usos.data?.subcategories ?? 0)}</p>
+        <p>{whatGetsDeleted(level, category.name, usage.data?.subcategories ?? 0)}</p>
 
-        {usos.isPending && <p>{t('centers.deletion.counting')}</p>}
+        {usage.isPending && <p>{t('centers.deletion.counting')}</p>}
 
-        {usos.isError && <ErrorAlert message={t('centers.deletion.countFailed')} />}
+        {usage.isError && <ErrorAlert message={t('centers.deletion.countFailed')} />}
 
-        {hayQueReasignar && (
+        {shouldReassign && (
           <ReassignTarget
-            movimientos={movimientos}
-            destino={destino}
-            onCambiar={borrado.setDestino}
-            opciones={destinosPosibles(arbol, categoria.id)}
+            transactions={transactions}
+            target={target}
+            onChange={deletion.setTarget}
+            options={possibleTargets(tree, category.id)}
           />
         )}
 
@@ -130,40 +130,40 @@ export function ConfirmarBorrado({
 }
 
 /** Lo que se borra, a dónde van sus movimientos y cómo se confirma. */
-function useDeleteCategory({
-  categoria,
-  abierta,
-  onCerrar,
-  onEliminada,
-}: Pick<ConfirmarBorradoProps, 'categoria' | 'abierta' | 'onCerrar' | 'onEliminada'>) {
-  const eliminar = useEliminarCategoria();
+function useDeletionFlow({
+  category,
+  isOpen,
+  onClose,
+  onDeleted,
+}: Pick<ConfirmDeletionProps, 'category' | 'isOpen' | 'onClose' | 'onDeleted'>) {
+  const deleteCategory = useDeleteCategory();
   // Solo se pregunta cuando el diálogo está abierto: es una consulta por
   // categoría, y el árbol tiene cuarenta.
-  const usos = useUsosDeCategoria(abierta ? categoria.id : undefined);
+  const usage = useCategoryUsage(isOpen ? category.id : undefined);
 
-  const [destino, setDestino] = useState('');
+  const [target, setTarget] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   // Cada apertura empieza limpia: un destino elegido y cancelado la vez
   // anterior no tiene por qué reaparecer apuntando a otra categoría.
-  useOnChange([abierta], () => {
-    if (abierta) {
-      setDestino('');
+  useOnChange([isOpen], () => {
+    if (isOpen) {
+      setTarget('');
       setError(null);
     }
   });
 
-  function confirmar(): void {
+  function confirm(): void {
     setError(null);
-    eliminar.mutate(
+    deleteCategory.mutate(
       {
-        id: categoria.id,
-        reasignarA: destino === '' ? undefined : Number(destino),
+        id: category.id,
+        reassignTo: target === '' ? undefined : Number(target),
       },
       {
         onSuccess: () => {
-          onCerrar();
-          onEliminada?.();
+          onClose();
+          onDeleted?.();
         },
         onError: (e) =>
           setError(e instanceof ApiClientError ? e.message : t('centers.deletion.failed')),
@@ -172,26 +172,26 @@ function useDeleteCategory({
   }
 
   return {
-    usos,
-    movimientos: usos.data?.transactions ?? 0,
-    ocupada: eliminar.isPending || usos.isPending,
-    destino,
-    setDestino,
+    usage,
+    transactions: usage.data?.transactions ?? 0,
+    isBusy: deleteCategory.isPending || usage.isPending,
+    target,
+    setTarget,
     error,
-    confirmar,
+    confirm,
   };
 }
 
 function ReassignTarget({
-  movimientos,
-  destino,
-  onCambiar,
-  opciones,
+  transactions,
+  target,
+  onChange,
+  options,
 }: {
-  movimientos: number;
-  destino: string;
-  onCambiar: (destino: string) => void;
-  opciones: { value: string; label: string }[];
+  transactions: number;
+  target: string;
+  onChange: (target: string) => void;
+  options: { value: string; label: string }[];
 }) {
   return (
     <>
@@ -201,9 +201,9 @@ function ReassignTarget({
               destino puede ser un centro de costos, una categoría o un
               concepto —los tres niveles están en la lista—, así que
               nombrar solo uno prometería menos de lo que se ofrece. */}
-          {movimientos === 1
+          {transactions === 1
             ? t('centers.deletion.movesOne')
-            : t('centers.deletion.movesMany', { n: movimientos })}
+            : t('centers.deletion.movesMany', { n: transactions })}
         </AlertDescription>
       </Alert>
 
@@ -212,9 +212,9 @@ function ReassignTarget({
           id="destino-del-borrado"
           label={t('centers.deletion.destination')}
           emptyLabel={t('centers.deletion.chooseDestination')}
-          value={destino}
-          options={opciones}
-          onChange={onCambiar}
+          value={target}
+          options={options}
+          onChange={onChange}
         />
       </Field>
     </>
@@ -234,7 +234,7 @@ function ReassignTarget({
  * Un concepto no tiene nada dentro: es la última hoja del árbol, así que su
  * frase no habla de hijos aunque le llegue un número.
  */
-function loQueSeBorra(nivel: NivelDeCategoria, nombre: string, cuantas: number): string {
+function whatGetsDeleted(level: CategoryLevel, name: string, count: number): string {
   /*
     Las frases enteras, no piezas que se peguen.
 
@@ -243,28 +243,28 @@ function loQueSeBorra(nivel: NivelDeCategoria, nombre: string, cuantas: number):
     a una palabra salían «la 3 conceptos» y «el categoría». Escritas enteras no
     hay forma de que una concuerde mal.
   */
-  const { esto, uno, varios } = {
-    'centro de costos': {
-      esto: t('centers.deletion.thisCostCenter'),
-      uno: t('centers.deletion.oneCategory'),
-      varios: (n: number) => t('centers.deletion.manyCategories', { n }),
+  const { subject, one, many } = {
+    costCenter: {
+      subject: t('centers.deletion.thisCostCenter'),
+      one: t('centers.deletion.oneCategory'),
+      many: (n: number) => t('centers.deletion.manyCategories', { n }),
     },
-    categoría: {
-      esto: t('centers.deletion.thisCategory'),
-      uno: t('centers.deletion.oneConcept'),
-      varios: (n: number) => t('centers.deletion.manyConcepts', { n }),
+    category: {
+      subject: t('centers.deletion.thisCategory'),
+      one: t('centers.deletion.oneConcept'),
+      many: (n: number) => t('centers.deletion.manyConcepts', { n }),
     },
     // Un concepto es la última hoja del árbol: no tiene nada dentro, así que
     // su frase no habla de hijos aunque le llegue un número.
-    concepto: { esto: t('centers.deletion.thisConcept'), uno: null, varios: null },
-  }[nivel];
+    concept: { subject: t('centers.deletion.thisConcept'), one: null, many: null },
+  }[level];
 
-  const dentro =
-    cuantas === 0 || uno === null
+  const inside =
+    count === 0 || one === null
       ? ''
-      : t('centers.deletion.andInside', { what: cuantas === 1 ? uno : varios(cuantas) });
+      : t('centers.deletion.andInside', { what: count === 1 ? one : many(count) });
 
-  return t('centers.deletion.summary', { what: esto, name: nombre, inside: dentro });
+  return t('centers.deletion.summary', { what: subject, name, inside });
 }
 
 /**
@@ -282,29 +282,29 @@ function loQueSeBorra(nivel: NivelDeCategoria, nombre: string, cuantas: number):
  * mejor que no poder borrar: siguen clasificados, y el concepto se les asigna
  * después desde la tabla.
  */
-function destinosPosibles(
-  arbol: CategoryTree[],
-  excluidoId: number,
+function possibleTargets(
+  tree: CategoryTree[],
+  excludedId: number,
 ): { value: string; label: string }[] {
-  const salida: { value: string; label: string }[] = [];
+  const result: { value: string; label: string }[] = [];
 
-  for (const centro of arbol) {
-    if (centro.id === excluidoId) continue;
-    salida.push({ value: String(centro.id), label: centro.name });
+  for (const costCenter of tree) {
+    if (costCenter.id === excludedId) continue;
+    result.push({ value: String(costCenter.id), label: costCenter.name });
 
-    for (const categoria of centro.children ?? []) {
-      if (categoria.id === excluidoId) continue;
-      salida.push({ value: String(categoria.id), label: `${centro.name} › ${categoria.name}` });
+    for (const category of costCenter.children ?? []) {
+      if (category.id === excludedId) continue;
+      result.push({ value: String(category.id), label: `${costCenter.name} › ${category.name}` });
 
-      for (const concepto of categoria.children ?? []) {
-        if (concepto.id === excluidoId) continue;
-        salida.push({
-          value: String(concepto.id),
-          label: `${centro.name} › ${categoria.name} › ${concepto.name}`,
+      for (const concept of category.children ?? []) {
+        if (concept.id === excludedId) continue;
+        result.push({
+          value: String(concept.id),
+          label: `${costCenter.name} › ${category.name} › ${concept.name}`,
         });
       }
     }
   }
 
-  return salida;
+  return result;
 }

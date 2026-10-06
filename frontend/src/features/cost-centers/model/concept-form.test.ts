@@ -10,7 +10,7 @@ import {
   newConcept,
   siblingCategories,
 } from './concept-form';
-import type { Recurrencia } from '../components/recurrence-fields';
+import type { Recurrence } from '../components/recurrence-fields';
 
 function node(id: number, name: string, extra: Partial<Category> = {}): Category {
   return {
@@ -49,14 +49,14 @@ const TREE: Category[] = [
   node(3, 'Sin ramas'),
 ];
 
-const RECURRENCE: Recurrencia = {
-  recurrente: true,
-  periodicidad: 'quarterly',
-  diaDePago: 15,
-  mesDePago: 3,
-  presupuesto: '180000',
-  pagoAutomatico: false,
-  variosPagos: false,
+const RECURRENCE: Recurrence = {
+  isRecurring: true,
+  periodicity: 'quarterly',
+  paymentDay: 15,
+  paymentMonth: 3,
+  budget: '180000',
+  isAutoPay: false,
+  isMultiPayment: false,
 };
 
 describe('initialRecurrence', () => {
@@ -67,13 +67,13 @@ describe('initialRecurrence', () => {
     vi.setSystemTime(new Date(2026, 6, 10));
 
     expect(initialRecurrence(null)).toEqual({
-      recurrente: false,
-      periodicidad: 'monthly',
-      diaDePago: 1,
-      mesDePago: 7,
-      presupuesto: '',
-      pagoAutomatico: false,
-      variosPagos: false,
+      isRecurring: false,
+      periodicity: 'monthly',
+      paymentDay: 1,
+      paymentMonth: 7,
+      budget: '',
+      isAutoPay: false,
+      isMultiPayment: false,
     });
   });
 
@@ -89,20 +89,20 @@ describe('initialRecurrence', () => {
     });
 
     expect(initialRecurrence(concept)).toEqual({
-      recurrente: true,
-      periodicidad: 'annual',
-      diaDePago: 5,
-      mesDePago: 2,
-      presupuesto: '180000',
-      pagoAutomatico: true,
-      variosPagos: false,
+      isRecurring: true,
+      periodicity: 'annual',
+      paymentDay: 5,
+      paymentMonth: 2,
+      budget: '180000',
+      isAutoPay: true,
+      isMultiPayment: false,
     });
   });
 
   it('rounds a fractional budget to whole pesos', () => {
     const concept = node(100, 'Arriendo', { budget: '99.6' });
 
-    expect(initialRecurrence(concept).presupuesto).toBe('100');
+    expect(initialRecurrence(concept).budget).toBe('100');
   });
 });
 
@@ -163,23 +163,23 @@ describe('conceptFields', () => {
   });
 
   it('drops the month of a monthly concept', () => {
-    expect(conceptFields('A', { ...RECURRENCE, periodicidad: 'monthly' }, []).paymentMonth).toBe(
+    expect(conceptFields('A', { ...RECURRENCE, periodicity: 'monthly' }, []).paymentMonth).toBe(
       null,
     );
   });
 
   it('sends an empty budget as null, not zero', () => {
-    expect(conceptFields('A', { ...RECURRENCE, presupuesto: '  ' }, []).budget).toBeNull();
+    expect(conceptFields('A', { ...RECURRENCE, budget: '  ' }, []).budget).toBeNull();
   });
 
   it('keeps an explicit zero budget', () => {
-    expect(conceptFields('A', { ...RECURRENCE, presupuesto: '0' }, []).budget).toBe(0);
+    expect(conceptFields('A', { ...RECURRENCE, budget: '0' }, []).budget).toBe(0);
   });
 
   it('clears everything recurring when the concept stops recurring', () => {
     const fields = conceptFields(
       'A',
-      { ...RECURRENCE, recurrente: false, pagoAutomatico: true, variosPagos: true },
+      { ...RECURRENCE, isRecurring: false, isAutoPay: true, isMultiPayment: true },
       [],
     );
 
@@ -195,18 +195,16 @@ describe('conceptFields', () => {
   });
 
   it('never sends automatic payment together with several payments', () => {
-    const fields = conceptFields(
-      'A',
-      { ...RECURRENCE, pagoAutomatico: true, variosPagos: true },
-      [],
-    );
+    const fields = conceptFields('A', { ...RECURRENCE, isAutoPay: true, isMultiPayment: true }, []);
 
     expect(fields.isAutoPaid).toBe(true);
     expect(fields.isMultiPayment).toBe(false);
   });
 
   it('sends several payments when automatic payment is off', () => {
-    expect(conceptFields('A', { ...RECURRENCE, variosPagos: true }, []).isMultiPayment).toBe(true);
+    expect(conceptFields('A', { ...RECURRENCE, isMultiPayment: true }, []).isMultiPayment).toBe(
+      true,
+    );
   });
 });
 

@@ -10,12 +10,12 @@ import type { UpdateCategoryInput } from '@/shared/api/generated/model';
 import type { Changes } from '@/shared/api/pages';
 import { keys } from '@/shared/api/query-keys';
 
-export function useActualizarCategoria() {
+export function useUpdateCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, cambios }: { id: number; cambios: Changes<UpdateCategoryInput> }) =>
-      (await categoriesUpdate(id, cambios as UpdateCategoryInput)).data,
+    mutationFn: async ({ id, changes }: { id: number; changes: Changes<UpdateCategoryInput> }) =>
+      (await categoriesUpdate(id, changes as UpdateCategoryInput)).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -30,12 +30,12 @@ export function useActualizarCategoria() {
  * de movimientos— porque después de esto no hay una sola pantalla que siga
  * mostrando lo mismo.
  */
-export function useUnificarCategoria() {
+export function useMergeCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ origenId, destinoId }: { origenId: number; destinoId: number }) =>
-      (await categoriesMerge(origenId, { targetId: destinoId })).data,
+    mutationFn: async ({ sourceId, targetId }: { sourceId: number; targetId: number }) =>
+      (await categoriesMerge(sourceId, { targetId })).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });
       void queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -51,7 +51,7 @@ export function useUnificarCategoria() {
  * traerla para las cuarenta del árbol, cada vez que se abre la pantalla, sería
  * pagar cuarenta peticiones por una que casi nunca se usa.
  */
-export function useUsosDeCategoria(id: number | undefined) {
+export function useCategoryUsage(id: number | undefined) {
   return useQuery({
     queryKey: ['categories', 'usos', id] as const,
     enabled: id !== undefined,
@@ -60,7 +60,7 @@ export function useUsosDeCategoria(id: number | undefined) {
   });
 }
 
-export function useEliminarCategoria() {
+export function useDeleteCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -72,8 +72,8 @@ export function useEliminarCategoria() {
      * pertenece a «Vivienda» o a «Oficina», y elegir por su cuenta significa
      * mover plata a un sitio que nadie pidió.
      */
-    mutationFn: async ({ id, reasignarA }: { id: number; reasignarA?: number | undefined }) => {
-      await categoriesRemove(id, reasignarA === undefined ? {} : { reassignTo: reasignarA });
+    mutationFn: async ({ id, reassignTo }: { id: number; reassignTo?: number | undefined }) => {
+      await categoriesRemove(id, reassignTo === undefined ? {} : { reassignTo });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });

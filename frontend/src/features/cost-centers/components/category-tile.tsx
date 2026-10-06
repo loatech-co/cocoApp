@@ -1,10 +1,10 @@
 import { EllipsisVertical, Pencil, Plus, Repeat, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { CategoriaModal } from '@/features/cost-centers/components/category-modal';
-import { trasCerrar } from '@/features/cost-centers/components/close-then';
-import { ConceptoModal } from '@/features/cost-centers/components/concept-modal';
-import { ConfirmarBorrado } from '@/features/cost-centers/components/confirm-deletion';
+import { CategoryModal } from '@/features/cost-centers/components/category-modal';
+import { afterClose } from '@/features/cost-centers/components/close-then';
+import { ConceptModal } from '@/features/cost-centers/components/concept-modal';
+import { ConfirmDeletion } from '@/features/cost-centers/components/confirm-deletion';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
@@ -28,28 +28,28 @@ import { Menu, MenuOption } from '@/shared/ui/molecules/menu';
  * quedan pegadas. Doce píxeles, los mismos del `gap-3` de al lado, para que la
  * separación se lea igual en los dos sentidos.
  */
-const BALDOSA = 'mb-3 break-inside-avoid';
+const TILE = 'mb-3 break-inside-avoid';
 
-interface PropsDeCategoria {
-  categoria: CategoryTree;
-  arbol: CategoryTree[];
+interface CategoryTileProps {
+  category: CategoryTree;
+  tree: CategoryTree[];
 }
 
-export function Categoría({ categoria, arbol }: PropsDeCategoria) {
-  const [editando, setEditando] = useState<CategoryTree | null>(null);
-  const [renombrando, setRenombrando] = useState(false);
-  const [creando, setCreando] = useState(false);
-  const [confirmando, setConfirmando] = useState(false);
-  const conceptos = categoria.children ?? [];
+export function CategoryTile({ category, tree }: CategoryTileProps) {
+  const [isEditing, setIsEditing] = useState<CategoryTree | null>(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const concepts = category.children ?? [];
 
   return (
     /* `pt` más corto que el resto del relleno: arriba de la tarjeta manda el
        kebab, que es un botón de 36 con un icono de 16 dentro, y esos diez
        píxeles de aire suyo se suman a los del borde. Con el relleno parejo,
        el título quedaba hundido. */
-    <Block className={cn('pt-2 sm:p-4 sm:pt-2.5', BALDOSA)}>
+    <Block className={cn('pt-2 sm:p-4 sm:pt-2.5', TILE)}>
       <div className="flex items-center justify-between gap-2">
-        <NombreDeCategoria categoria={categoria} />
+        <CategoryName category={category} />
         {/* El mismo menú que en el centro: un icono suelto no tiene dónde
             pulsarse —en un teléfono hay que acertarle a 16px— y no se ve como
             algo pulsable hasta que uno lo prueba. */}
@@ -67,11 +67,11 @@ export function Categoría({ categoria, arbol }: PropsDeCategoria) {
           él. El área táctil se come el relleno de la tarjeta, que es espacio
           muerto de todos modos.
         */}
-        <MenuDeCategoria
-          nombre={categoria.name}
-          onAgregar={() => setCreando(true)}
-          onEditar={() => setRenombrando(true)}
-          onEliminar={() => setConfirmando(true)}
+        <CategoryMenu
+          name={category.name}
+          onAdd={() => setIsCreating(true)}
+          onEdit={() => setIsRenaming(true)}
+          onDelete={() => setIsConfirming(true)}
         />
       </div>
 
@@ -86,32 +86,32 @@ export function Categoría({ categoria, arbol }: PropsDeCategoria) {
         infla a nadie— y desplazar escondía detrás de un gesto justamente lo
         que se viene a leer a esta pantalla.
       */}
-      {conceptos.length > 0 && <Conceptos conceptos={conceptos} onEditar={setEditando} />}
+      {concepts.length > 0 && <ConceptList concepts={concepts} onEdit={setIsEditing} />}
 
-      <ConfirmarBorrado
-        categoria={categoria}
-        nivel="categoría"
-        arbol={arbol}
-        abierta={confirmando}
-        onCerrar={() => setConfirmando(false)}
+      <ConfirmDeletion
+        category={category}
+        level="category"
+        tree={tree}
+        isOpen={isConfirming}
+        onClose={() => setIsConfirming(false)}
       />
 
-      <CategoriaModal
-        nivel="categoria"
-        categoria={renombrando ? categoria : null}
-        abierta={renombrando}
-        onCerrar={() => setRenombrando(false)}
+      <CategoryModal
+        level="category"
+        category={isRenaming ? category : null}
+        isOpen={isRenaming}
+        onClose={() => setIsRenaming(false)}
       />
 
-      <ConceptoModal
-        abierta={editando !== null}
-        concepto={editando}
-        onCerrar={() => setEditando(null)}
+      <ConceptModal
+        isOpen={isEditing !== null}
+        concept={isEditing}
+        onClose={() => setIsEditing(null)}
       />
-      <ConceptoModal
-        abierta={creando}
-        categoriaId={categoria.id}
-        onCerrar={() => setCreando(false)}
+      <ConceptModal
+        isOpen={isCreating}
+        categoryId={category.id}
+        onClose={() => setIsCreating(false)}
       />
     </Block>
   );
@@ -131,49 +131,49 @@ export function Categoría({ categoria, arbol }: PropsDeCategoria) {
   vacío alineado con los que sí tienen icono se ve como un icono que
   no cargó.
 */
-function NombreDeCategoria({ categoria }: { categoria: CategoryTree }) {
+function CategoryName({ category }: { category: CategoryTree }) {
   return (
     <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-      <CategoryIcon name={categoria.icon} className="size-4 shrink-0 text-muted-foreground" />
-      <span className="min-w-0 truncate">{categoria.name}</span>
+      <CategoryIcon name={category.icon} className="size-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 truncate">{category.name}</span>
     </h3>
   );
 }
 
-function MenuDeCategoria({
-  nombre,
-  onAgregar,
-  onEditar,
-  onEliminar,
+function CategoryMenu({
+  name,
+  onAdd,
+  onEdit,
+  onDelete,
 }: {
-  nombre: string;
-  onAgregar: () => void;
-  onEditar: () => void;
-  onEliminar: () => void;
+  name: string;
+  onAdd: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   return (
     <Menu
-      label={t('centers.tile.actionsOf', { name: nombre })}
+      label={t('centers.tile.actionsOf', { name })}
       Icon={EllipsisVertical}
       isIconOnly
       variant="ghost"
       boxClassName="-my-1 -mr-1.5 sm:-mr-2"
     >
-      {(cerrar) => (
+      {(close) => (
         <>
           {/* Lo PRIMERO del menú: es lo que más se hace con una categoría.
               Eliminar va al final y en rojo, porque es lo que menos. */}
-          <MenuOption Icon={Plus} onClick={trasCerrar(cerrar, onAgregar)}>
+          <MenuOption Icon={Plus} onClick={afterClose(close, onAdd)}>
             {t('centers.tile.addConcept')}
           </MenuOption>
 
           {/* Renombrar una categoría no existía por ningún camino, igual que en
               el centro: la única salida era borrarlo con sus conceptos
               dentro y volver a escribirlos. */}
-          <MenuOption Icon={Pencil} onClick={trasCerrar(cerrar, onEditar)}>
+          <MenuOption Icon={Pencil} onClick={afterClose(close, onEdit)}>
             {t('common.edit')}
           </MenuOption>
-          <MenuOption Icon={Trash2} isDestructive onClick={trasCerrar(cerrar, onEliminar)}>
+          <MenuOption Icon={Trash2} isDestructive onClick={afterClose(close, onDelete)}>
             {t('common.delete')}
           </MenuOption>
         </>
@@ -182,17 +182,17 @@ function MenuDeCategoria({
   );
 }
 
-function Conceptos({
-  conceptos,
-  onEditar,
+function ConceptList({
+  concepts,
+  onEdit,
 }: {
-  conceptos: CategoryTree[];
-  onEditar: (concepto: CategoryTree) => void;
+  concepts: CategoryTree[];
+  onEdit: (concept: CategoryTree) => void;
 }) {
   return (
     <ul className="mt-3 flex flex-wrap gap-1.5">
-      {conceptos.map((concepto) => (
-        <li key={concepto.id}>
+      {concepts.map((concept) => (
+        <li key={concept.id}>
           {/* Se abren para editar: renombrar y decir si se pagan solos.
                 Antes eran texto muerto, y el único modo de corregir un
                 nombre mal escrito era borrar el concepto y crearlo de nuevo
@@ -206,17 +206,17 @@ function Conceptos({
                 un concepto con nombre largo hacía un chip más ancho que su
                 tarjeta y se salía por el lado. */}
           <Chip
-            onClick={() => onEditar(concepto)}
-            title={t('centers.tile.editConcept', { name: concepto.name })}
+            onClick={() => onEdit(concept)}
+            title={t('centers.tile.editConcept', { name: concept.name })}
             className="max-w-full"
           >
-            {concepto.isRecurring && (
+            {concept.isRecurring && (
               <Repeat
                 className="size-3 shrink-0 opacity-70"
                 aria-label={t('centers.tile.recurring')}
               />
             )}
-            <span className="min-w-0 truncate">{concepto.name}</span>
+            <span className="min-w-0 truncate">{concept.name}</span>
           </Chip>
         </li>
       ))}

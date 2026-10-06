@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { CategoriaModal } from '@/features/cost-centers/components/category-modal';
+import { CategoryModal } from '@/features/cost-centers/components/category-modal';
 import { t } from '@/shared/lib/i18n';
 import { AddSurface } from '@/shared/ui/atoms/add-surface';
 
@@ -39,30 +39,30 @@ import { AddSurface } from '@/shared/ui/atoms/add-surface';
  * lo que se puede cambiar al editar. Y de paso desaparece el único campo de la
  * pantalla que nacía enfocado.
  */
-export function Agregar({
-  padreId,
-  solo = false,
+export function AddCategory({
+  parentId,
+  isAlone = false,
 }: {
   /** De qué centro cuelga la categoría que se va a crear. */
-  padreId: number;
+  parentId: number;
   /** Sin ningún categoría todavía: el hueco es lo único que hay en el centro. */
-  solo?: boolean;
+  isAlone?: boolean;
 }) {
-  const [abierta, setAbierta] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <div className={solo ? undefined : 'mt-3'}>
-        <AddSurface shape={solo ? 'slot' : 'bar'} onClick={() => setAbierta(true)}>
+      <div className={isAlone ? undefined : 'mt-3'}>
+        <AddSurface shape={isAlone ? 'slot' : 'bar'} onClick={() => setIsOpen(true)}>
           {t('centers.addCategory')}
         </AddSurface>
       </div>
 
-      <CategoriaModal
-        nivel="categoria"
-        padreId={padreId}
-        abierta={abierta}
-        onCerrar={() => setAbierta(false)}
+      <CategoryModal
+        level="category"
+        parentId={parentId}
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
       />
     </>
   );

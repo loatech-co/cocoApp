@@ -1,12 +1,12 @@
 import { EllipsisVertical, Lock, LockOpen, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { useActualizarCategoria } from '@/features/cost-centers/api/categories';
-import { Agregar } from '@/features/cost-centers/components/add-category';
-import { CategoriaModal } from '@/features/cost-centers/components/category-modal';
-import { Categoría } from '@/features/cost-centers/components/category-tile';
-import { trasCerrar } from '@/features/cost-centers/components/close-then';
-import { ConfirmarBorrado } from '@/features/cost-centers/components/confirm-deletion';
+import { useUpdateCategory } from '@/features/cost-centers/api/categories';
+import { AddCategory } from '@/features/cost-centers/components/add-category';
+import { CategoryModal } from '@/features/cost-centers/components/category-modal';
+import { CategoryTile } from '@/features/cost-centers/components/category-tile';
+import { afterClose } from '@/features/cost-centers/components/close-then';
+import { ConfirmDeletion } from '@/features/cost-centers/components/confirm-deletion';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
@@ -14,11 +14,16 @@ import { Card, CardContent } from '@/shared/ui/atoms/card';
 import { CollapsibleHeader } from '@/shared/ui/atoms/collapsible-header';
 import { Menu, MenuOption } from '@/shared/ui/molecules/menu';
 
+interface CostCenterCardProps {
+  costCenter: CategoryTree;
+  tree: CategoryTree[];
+}
+
 /** Un centro de costos: su fila de cabecera y, desplegadas, sus categorías. */
-export function Centro({ centro, arbol }: { centro: CategoryTree; arbol: CategoryTree[] }) {
-  const [abierto, setAbierto] = useState(true);
-  const [confirmando, setConfirmando] = useState(false);
-  const [editando, setEditando] = useState(false);
+export function CostCenterCard({ costCenter, tree }: CostCenterCardProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   return (
     <Card>
@@ -36,65 +41,69 @@ export function Centro({ centro, arbol }: { centro: CategoryTree; arbol: Categor
             'flex items-center gap-2 pr-3 transition-colors hover:bg-muted sm:pr-4',
             'rounded-t-lg',
             // Cerrado, la fila ES la tarjeta: se redondea también por abajo.
-            !abierto && 'rounded-b-lg',
+            !isExpanded && 'rounded-b-lg',
           )}
         >
-          <Desplegar centro={centro} abierto={abierto} onAlternar={() => setAbierto((v) => !v)} />
+          <ExpandToggle
+            costCenter={costCenter}
+            isExpanded={isExpanded}
+            onToggle={() => setIsExpanded((wasExpanded) => !wasExpanded)}
+          />
 
           {/* Fuera del botón que despliega: dentro, pulsarlo abriría el centro
               además de abrir el menú, porque el clic llega a los dos. */}
-          <MenuDelCentro
-            centro={centro}
-            onEditar={() => setEditando(true)}
-            onEliminar={() => setConfirmando(true)}
+          <CostCenterMenu
+            costCenter={costCenter}
+            onEdit={() => setIsEditing(true)}
+            onDelete={() => setIsConfirming(true)}
           />
         </div>
 
-        <ConfirmarBorrado
-          categoria={centro}
-          nivel="centro de costos"
-          arbol={arbol}
-          abierta={confirmando}
-          onCerrar={() => setConfirmando(false)}
+        <ConfirmDeletion
+          category={costCenter}
+          level="costCenter"
+          tree={tree}
+          isOpen={isConfirming}
+          onClose={() => setIsConfirming(false)}
         />
 
-        <CategoriaModal
-          nivel="centro"
-          categoria={editando ? centro : null}
-          abierta={editando}
-          onCerrar={() => setEditando(false)}
+        <CategoryModal
+          level="costCenter"
+          category={isEditing ? costCenter : null}
+          isOpen={isEditing}
+          onClose={() => setIsEditing(false)}
         />
 
-        {abierto && <CuerpoDelCentro centro={centro} arbol={arbol} />}
+        {isExpanded && <CostCenterBody costCenter={costCenter} tree={tree} />}
       </CardContent>
     </Card>
   );
 }
 
-function Desplegar({
-  centro,
-  abierto,
-  onAlternar,
+function ExpandToggle({
+  costCenter,
+  isExpanded,
+  onToggle,
 }: {
-  centro: CategoryTree;
-  abierto: boolean;
-  onAlternar: () => void;
+  costCenter: CategoryTree;
+  isExpanded: boolean;
+  onToggle: () => void;
 }) {
-  const categorias = centro.children ?? [];
-  const conceptos = categorias.reduce((n, g) => n + (g.children?.length ?? 0), 0);
+  const categories = costCenter.children ?? [];
+  const concepts = categories.reduce((n, g) => n + (g.children?.length ?? 0), 0);
 
   return (
-    <CollapsibleHeader isOpen={abierto} onToggle={onAlternar}>
+    <CollapsibleHeader isOpen={isExpanded} onToggle={onToggle}>
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-2">
           {/* `text-lg` y no `text-xl`: el nombre de un centro es el
               título de una tarjeta, y a 20px competía con el título de
               la pantalla, que mide 24. */}
-          <span className="truncate text-lg font-semibold">{centro.name}</span>
+          <span className="truncate text-lg font-semibold">{costCenter.name}</span>
           {/* El candado y no la palabra "estático": es un estado del
               centro, y en una lista se reconoce antes por su forma que
               leyendo una etiqueta en cada fila. */}
-          {centro.isStatic && (
+          {costCenter.isStatic && (
             <Lock
               className="size-4 shrink-0 text-muted-foreground"
               aria-label={t('centers.card.static')}
@@ -103,8 +112,8 @@ function Desplegar({
         </span>
         <span className="block text-xs text-muted-foreground">
           {t('centers.card.categoriesCount', {
-            categories: categorias.length,
-            concepts: conceptos,
+            categories: categories.length,
+            concepts,
           })}
         </span>
       </span>
@@ -112,30 +121,30 @@ function Desplegar({
   );
 }
 
-function MenuDelCentro({
-  centro,
-  onEditar,
-  onEliminar,
+function CostCenterMenu({
+  costCenter,
+  onEdit,
+  onDelete,
 }: {
-  centro: CategoryTree;
-  onEditar: () => void;
-  onEliminar: () => void;
+  costCenter: CategoryTree;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
-  const actualizar = useActualizarCategoria();
+  const update = useUpdateCategory();
 
   return (
     <Menu
-      label={t('centers.card.actionsOf', { name: centro.name })}
+      label={t('centers.card.actionsOf', { name: costCenter.name })}
       Icon={EllipsisVertical}
       isIconOnly
       variant="ghost"
     >
-      {(cerrar) => (
+      {(close) => (
         <>
           {/* Renombrar. No existía por ningún camino: un centro con el
               nombre mal escrito había que borrarlo entero —con sus
               categorías y sus conceptos— y volver a armarlo. */}
-          <MenuOption Icon={Pencil} onClick={trasCerrar(cerrar, onEditar)}>
+          <MenuOption Icon={Pencil} onClick={afterClose(close, onEdit)}>
             {t('common.edit')}
           </MenuOption>
 
@@ -143,14 +152,14 @@ function MenuDelCentro({
               ya existían nacieron antes de que esto existiera. Se queda
               aquí además de en la ficha porque es de un solo golpe. */}
           <MenuOption
-            Icon={centro.isStatic ? LockOpen : Lock}
-            onClick={trasCerrar(cerrar, () =>
-              actualizar.mutate({ id: centro.id, cambios: { isStatic: !centro.isStatic } }),
+            Icon={costCenter.isStatic ? LockOpen : Lock}
+            onClick={afterClose(close, () =>
+              update.mutate({ id: costCenter.id, changes: { isStatic: !costCenter.isStatic } }),
             )}
           >
-            {centro.isStatic ? t('centers.card.makeDynamic') : t('centers.card.makeStatic')}
+            {costCenter.isStatic ? t('centers.card.makeDynamic') : t('centers.card.makeStatic')}
           </MenuOption>
-          <MenuOption Icon={Trash2} isDestructive onClick={trasCerrar(cerrar, onEliminar)}>
+          <MenuOption Icon={Trash2} isDestructive onClick={afterClose(close, onDelete)}>
             {t('common.delete')}
           </MenuOption>
         </>
@@ -159,14 +168,14 @@ function MenuDelCentro({
   );
 }
 
-function CuerpoDelCentro({ centro, arbol }: { centro: CategoryTree; arbol: CategoryTree[] }) {
-  const categorias = centro.children ?? [];
+function CostCenterBody({ costCenter, tree }: { costCenter: CategoryTree; tree: CategoryTree[] }) {
+  const categories = costCenter.children ?? [];
 
   /* El hueco para el siguiente categoría. Se declara aquí porque va en dos sitios
      —dentro de las columnas cuando hay categorías, suelto cuando no— y son el
      mismo botón con los mismos textos: escrito dos veces, cambiar uno y
      olvidar el otro es cuestión de tiempo. */
-  const hueco = <Agregar padreId={centro.id} solo={categorias.length === 0} />;
+  const gap = <AddCategory parentId={costCenter.id} isAlone={categories.length === 0} />;
 
   return (
     <div className="border-t border-border p-3 sm:p-4">
@@ -216,7 +225,7 @@ function CuerpoDelCentro({ centro, arbol }: { centro: CategoryTree; arbol: Categ
         Y el ancho de una tarjeta es el de su columna, así que no depende
         de cuántas haya: dos categorías se ven del mismo tamaño que doce.
       */}
-      {categorias.length > 0 && (
+      {categories.length > 0 && (
         /* Sin margen negativo que compense el `mb-3` de la última
            tarjeta de cada columna.
 
@@ -233,8 +242,8 @@ function CuerpoDelCentro({ centro, arbol }: { centro: CategoryTree; arbol: Categ
            todo no hay ningún margen que compensar: el relleno de la
            tarjeta es el que dice que sea, siempre. */
         <div className="columns-1 gap-3 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5">
-          {categorias.map((categoria) => (
-            <Categoría key={categoria.id} categoria={categoria} arbol={arbol} />
+          {categories.map((category) => (
+            <CategoryTile key={category.id} category={category} tree={tree} />
           ))}
         </div>
       )}
@@ -253,7 +262,7 @@ function CuerpoDelCentro({ centro, arbol }: { centro: CategoryTree; arbol: Categ
         A todo el ancho y al final está siempre donde termina de leerse
         el centro, y remata el borde irregular con una línea recta.
       */}
-      {hueco}
+      {gap}
     </div>
   );
 }

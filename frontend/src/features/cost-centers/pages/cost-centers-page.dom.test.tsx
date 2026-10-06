@@ -2,27 +2,29 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CentrosPage } from './cost-centers-page';
+import { CostCentersPage } from './cost-centers-page';
 
-const consulta = {
+const query = {
   data: undefined as unknown[] | undefined,
   isPending: false,
   isError: false,
   isSuccess: false,
 };
 
-vi.mock('@/shared/api/categories', () => ({ useCategories: () => consulta }));
+vi.mock('@/shared/api/categories', () => ({ useCategories: () => query }));
 vi.mock('@/features/cost-centers/components/category-modal', () => ({
-  CategoriaModal: () => null,
+  CategoryModal: () => null,
 }));
-vi.mock('@/features/cost-centers/components/cost-center-card', () => ({ Centro: () => null }));
+vi.mock('@/features/cost-centers/components/cost-center-card', () => ({
+  CostCenterCard: () => null,
+}));
 
 afterEach(cleanup);
 
 describe('CentrosPage when the tree fails to load', () => {
   it('says it failed and does NOT invite to create (that duplicates centers)', () => {
-    Object.assign(consulta, { data: undefined, isError: true, isSuccess: false });
-    render(<CentrosPage />);
+    Object.assign(query, { data: undefined, isError: true, isSuccess: false });
+    render(<CostCentersPage />);
 
     expect(screen.getByRole('alert').textContent).toContain(
       'No se pudieron cargar los centros de costos',
@@ -31,8 +33,8 @@ describe('CentrosPage when the tree fails to load', () => {
   });
 
   it('a truly empty tree still invites to create', () => {
-    Object.assign(consulta, { data: [], isError: false, isSuccess: true });
-    render(<CentrosPage />);
+    Object.assign(query, { data: [], isError: false, isSuccess: true });
+    render(<CostCentersPage />);
 
     expect(screen.getByText('Todavía no hay centros de costos.')).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();

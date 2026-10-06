@@ -1,7 +1,7 @@
 import { Repeat } from 'lucide-react';
 import { useState } from 'react';
 
-import { PERIODICIDADES, type Periodicidad } from '@/features/cost-centers/model/periodicity';
+import { PERIODICITIES, type Periodicity } from '@/features/cost-centers/model/periodicity';
 import { capitalize, LONG_MONTHS } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { useOnChange } from '@/shared/lib/on-change';
@@ -12,7 +12,7 @@ import { Switch } from '@/shared/ui/atoms/switch';
 import { MoneyField } from '@/shared/ui/molecules/money-field';
 import { Select } from '@/shared/ui/organisms/select';
 
-const ETIQUETAS: Record<Periodicidad, string> = {
+const LABELS: Record<Periodicity, string> = {
   monthly: t('centers.recurrence.periodicity.monthly'),
   bimonthly: t('centers.recurrence.periodicity.bimonthly'),
   quarterly: t('centers.recurrence.periodicity.quarterly'),
@@ -20,19 +20,19 @@ const ETIQUETAS: Record<Periodicidad, string> = {
   annual: t('centers.recurrence.periodicity.annual'),
 };
 
-export interface Recurrencia {
-  recurrente: boolean;
-  periodicidad: Periodicidad;
-  diaDePago: number;
+export interface Recurrence {
+  isRecurring: boolean;
+  periodicity: Periodicity;
+  paymentDay: number;
   /** El mes del ciclo. Solo se usa —y se pregunta— si no es mensual. */
-  mesDePago: number;
+  paymentMonth: number;
   /**
    * Lo que se espera que cueste cada vez. Solo cifras, sin puntos; vacío es
    * «no lo sé, estímalo».
    */
-  presupuesto: string;
+  budget: string;
   /** Si el movimiento se crea solo al llegar el día de pago. */
-  pagoAutomatico: boolean;
+  isAutoPay: boolean;
   /**
    * Si el concepto se cubre a pedazos: el mercado en cuatro idas, la gasolina
    * en seis tanqueadas. Se queda en pagos pendientes hasta que lo pagado
@@ -40,10 +40,10 @@ export interface Recurrencia {
    *
    * Incompatible con `pagoAutomatico`: ver el porqué junto al interruptor.
    */
-  variosPagos: boolean;
+  isMultiPayment: boolean;
 }
 
-const MESES = LONG_MONTHS.map(capitalize);
+const MONTHS = LONG_MONTHS.map(capitalize);
 
 /**
  * Marcar un concepto como un pago que vuelve.
@@ -56,16 +56,16 @@ const MESES = LONG_MONTHS.map(capitalize);
  *
  * Por eso el aviso: tocarla aquí cambia el concepto entero, no esta fila.
  */
-export function CamposDeRecurrencia({
-  valor,
-  onCambiar,
+export function RecurrenceFields({
+  value,
+  onChange,
   /** El nombre del concepto, para que el aviso diga a qué afecta. */
-  concepto,
+  concept,
   className,
 }: {
-  valor: Recurrencia;
-  onCambiar: (siguiente: Recurrencia) => void;
-  concepto?: string;
+  value: Recurrence;
+  onChange: (next: Recurrence) => void;
+  concept?: string;
   className?: string;
 }) {
   return (
@@ -96,15 +96,15 @@ export function CamposDeRecurrencia({
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-medium">{t('centers.recurrence.title')}</span>
           <span className="mt-0.5 block text-xs text-muted-foreground">
-            {concepto
-              ? t('centers.recurrence.scopeConcept', { concept: concepto })
+            {concept
+              ? t('centers.recurrence.scopeConcept', { concept })
               : t('centers.recurrence.scopePending')}
           </span>
         </span>
 
         <Switch
-          checked={valor.recurrente}
-          onChange={(e) => onCambiar({ ...valor, recurrente: e.target.checked })}
+          checked={value.isRecurring}
+          onChange={(e) => onChange({ ...value, isRecurring: e.target.checked })}
         />
       </label>
 
@@ -114,7 +114,7 @@ export function CamposDeRecurrencia({
         ¿tres meses contados desde cuándo? Por eso, en cuanto deja de ser
         mensual, aparece el mes del ciclo.
       */}
-      {valor.recurrente && <RecurrenceDetails valor={valor} onCambiar={onCambiar} />}
+      {value.isRecurring && <RecurrenceDetails value={value} onChange={onChange} />}
     </div>
   );
 }
@@ -151,12 +151,12 @@ export function CamposDeRecurrencia({
  * pantalla hasta que alguien pulsa «Guardar» es un error que nadie ve hasta
  * que ya no está mirando el campo.
  */
-function CampoDelDia({ dia, onCambiar }: { dia: number; onCambiar: (dia: number) => void }) {
-  const [escrito, setEscrito] = useState(String(dia));
+function DayField({ day, onChange }: { day: number; onChange: (day: number) => void }) {
+  const [draft, setDraft] = useState(String(day));
 
   // El día puede cambiar desde fuera —al abrir la ficha de otro concepto— y lo
   // que se ve tiene que seguirlo.
-  useOnChange([dia], () => setEscrito(String(dia)));
+  useOnChange([day], () => setDraft(String(day)));
 
   return (
     <Field label={t('centers.recurrence.dayOfMonth')} id="dia-de-pago">
@@ -169,25 +169,25 @@ function CampoDelDia({ dia, onCambiar }: { dia: number; onCambiar: (dia: number)
         type="text"
         inputMode="numeric"
         maxLength={2}
-        value={escrito}
+        value={draft}
         onChange={(e) => {
-          const limpio = e.target.value.replace(/\D/g, '').slice(0, 2);
-          setEscrito(limpio);
-          if (limpio !== '') onCambiar(entre1y31(limpio));
+          const digits = e.target.value.replace(/\D/g, '').slice(0, 2);
+          setDraft(digits);
+          if (digits !== '') onChange(clampDay(digits));
         }}
         // Al salir, lo que se ve vuelve a ser el día guardado: un campo en
         // blanco con un dato detrás es una mentira que solo se descubre al
         // volver a abrir la ficha.
-        onBlur={() => setEscrito(String(dia))}
+        onBlur={() => setDraft(String(day))}
       />
     </Field>
   );
 }
 
-export function entre1y31(escrito: string): number {
-  const numero = Number.parseInt(escrito, 10);
-  if (!Number.isFinite(numero)) return 1;
-  return Math.min(31, Math.max(1, numero));
+export function clampDay(draft: string): number {
+  const depth = Number.parseInt(draft, 10);
+  if (!Number.isFinite(depth)) return 1;
+  return Math.min(31, Math.max(1, depth));
 }
 
 /**
@@ -203,22 +203,22 @@ export function entre1y31(escrito: string): number {
  * ya tiene: obligaría a declarar dos veces lo mismo y a mantenerlos de
  * acuerdo.
  */
-export function cuandoVuelve(periodicidad: Periodicidad, dia: number, mes: number): string {
-  if (periodicidad === 'monthly') return t('centers.recurrence.summary.monthly', { day: dia });
-  if (periodicidad === 'annual')
+export function whenItRecurs(periodicity: Periodicity, day: number, month: number): string {
+  if (periodicity === 'monthly') return t('centers.recurrence.summary.monthly', { day });
+  if (periodicity === 'annual')
     return t('centers.recurrence.summary.annual', {
-      day: dia,
-      month: (MESES[mes - 1] ?? '').toLowerCase(),
+      day,
+      month: (MONTHS[month - 1] ?? '').toLowerCase(),
     });
 
-  const cada = { bimonthly: 2, quarterly: 3, semiannual: 6 }[periodicidad];
+  const step = { bimonthly: 2, quarterly: 3, semiannual: 6 }[periodicity];
 
   // Los meses concretos, no "cada tres meses": es lo que hay que poder
   // comprobar de un vistazo antes de guardar.
-  const meses: string[] = [];
-  for (let m = (mes - 1) % cada; m < 12; m += cada) meses.push((MESES[m] ?? '').toLowerCase());
+  const months: string[] = [];
+  for (let m = (month - 1) % step; m < 12; m += step) months.push((MONTHS[m] ?? '').toLowerCase());
 
-  return t('centers.recurrence.summary.everyFew', { day: dia, months: meses.join(', ') });
+  return t('centers.recurrence.summary.everyFew', { day, months: months.join(', ') });
 }
 
 /**
@@ -227,88 +227,88 @@ export function cuandoVuelve(periodicidad: Periodicidad, dia: number, mes: numbe
  * Se dice ANTES de que ocurra, y con los meses concretos. "Se ajusta en los
  * meses cortos" obliga a imaginarse cuáles; "en febrero será el 28" no.
  */
-export function avisoDeMesCorto(dia: number): string {
-  if (dia <= 28) return '';
+export function shortMonthNotice(day: number): string {
+  if (day <= 28) return '';
 
-  if (dia === 29) {
+  if (day === 29) {
     return t('centers.recurrence.february28');
   }
 
-  const deTreinta = dia === 31 ? t('centers.recurrence.also30') : '';
-  return t('centers.recurrence.february2829', { thirtyDays: deTreinta });
+  const thirtyDays = day === 31 ? t('centers.recurrence.also30') : '';
+  return t('centers.recurrence.february2829', { thirtyDays });
 }
 
-function InstallmentsSwitch({ valor, onCambiar }: RecurrenceFieldProps) {
+function InstallmentsSwitch({ value, onChange }: RecurrenceFieldProps) {
   return (
     <label
       className={cn(
         'flex items-center gap-3 rounded-lg border border-border bg-card p-3',
-        valor.pagoAutomatico ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
-        valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3',
+        value.isAutoPay ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
+        value.periodicity === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3',
       )}
     >
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{t('centers.recurrence.inInstalments')}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">
-          {valor.pagoAutomatico
+          {value.isAutoPay
             ? t('centers.recurrence.instalmentsNoAuto')
-            : valor.presupuesto.trim() === ''
+            : value.budget.trim() === ''
               ? t('centers.recurrence.instalmentsAverage')
               : t('centers.recurrence.instalmentsBudget')}
         </span>
       </span>
 
       <Switch
-        checked={valor.variosPagos}
-        disabled={valor.pagoAutomatico}
-        onChange={(e) => onCambiar({ ...valor, variosPagos: e.target.checked })}
+        checked={value.isMultiPayment}
+        disabled={value.isAutoPay}
+        onChange={(e) => onChange({ ...value, isMultiPayment: e.target.checked })}
       />
     </label>
   );
 }
 
-function AutoPaySwitch({ valor, onCambiar }: RecurrenceFieldProps) {
+function AutoPaySwitch({ value, onChange }: RecurrenceFieldProps) {
   return (
     <label
       className={cn(
         'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3',
-        valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3',
+        value.periodicity === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3',
       )}
     >
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{t('centers.recurrence.autoPay')}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">
-          {valor.presupuesto.trim() === ''
+          {value.budget.trim() === ''
             ? t('centers.recurrence.autoPayAverage')
             : t('centers.recurrence.autoPayBudget')}
         </span>
       </span>
 
       <Switch
-        checked={valor.pagoAutomatico}
-        disabled={valor.variosPagos}
-        onChange={(e) => onCambiar({ ...valor, pagoAutomatico: e.target.checked })}
+        checked={value.isAutoPay}
+        disabled={value.isMultiPayment}
+        onChange={(e) => onChange({ ...value, isAutoPay: e.target.checked })}
       />
     </label>
   );
 }
 
-function BudgetField({ valor, onCambiar }: RecurrenceFieldProps) {
+function BudgetField({ value, onChange }: RecurrenceFieldProps) {
   return (
     <Field
       label={t('centers.recurrence.budget')}
       id="presupuesto"
       description={
-        valor.presupuesto.trim() === ''
+        value.budget.trim() === ''
           ? t('centers.recurrence.budgetEmptyHelp')
           : t('centers.recurrence.budgetHelp')
       }
-      className={valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3'}
+      className={value.periodicity === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3'}
     >
       <MoneyField
         id="presupuesto"
-        value={valor.presupuesto}
-        onValueChange={(presupuesto) => onCambiar({ ...valor, presupuesto })}
+        value={value.budget}
+        onValueChange={(budget) => onChange({ ...value, budget })}
         placeholder={t('centers.recurrence.optional')}
       />
     </Field>
@@ -316,11 +316,11 @@ function BudgetField({ valor, onCambiar }: RecurrenceFieldProps) {
 }
 
 /** Once a year it is THE month; every few months, the month the cycle starts on. */
-const etiquetaDelMes = (periodicidad: Periodicidad): string =>
-  periodicidad === 'annual' ? t('centers.recurrence.month') : t('centers.recurrence.cycleMonth');
+const monthLabel = (periodicity: Periodicity): string =>
+  periodicity === 'annual' ? t('centers.recurrence.month') : t('centers.recurrence.cycleMonth');
 
 /** Lo que aparece debajo del interruptor cuando el pago es recurrente. */
-function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
+function RecurrenceDetails({ value, onChange }: RecurrenceFieldProps) {
   return (
     <div
       className={cn(
@@ -328,34 +328,34 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
         // Tantas columnas como campos haya: con dos columnas fijas, el
         // tercer campo se quedaba solo en un renglón a media anchura, y la
         // fila parecía cortada por la mitad.
-        valor.periodicidad === 'monthly' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
+        value.periodicity === 'monthly' ? 'sm:grid-cols-2' : 'sm:grid-cols-3',
       )}
     >
       <Field label={t('centers.recurrence.howOften')} id="periodicidad">
         <Select
           id="periodicidad"
           label={t('centers.recurrence.periodicity.label')}
-          value={valor.periodicidad}
-          options={PERIODICIDADES.map((p) => ({ value: p, label: ETIQUETAS[p] }))}
-          onChange={(v) => onCambiar({ ...valor, periodicidad: v as Periodicidad })}
+          value={value.periodicity}
+          options={PERIODICITIES.map((p) => ({ value: p, label: LABELS[p] }))}
+          onChange={(v) => onChange({ ...value, periodicity: v as Periodicity })}
         />
       </Field>
 
-      {valor.periodicidad !== 'monthly' && (
-        <Field label={etiquetaDelMes(valor.periodicidad)} id="mes-de-pago">
+      {value.periodicity !== 'monthly' && (
+        <Field label={monthLabel(value.periodicity)} id="mes-de-pago">
           <Select
             id="mes-de-pago"
             label={t('centers.recurrence.month')}
-            value={String(valor.mesDePago)}
-            options={MESES.map((m, i) => ({ value: String(i + 1), label: m }))}
-            onChange={(v) => onCambiar({ ...valor, mesDePago: Number(v) })}
+            value={String(value.paymentMonth)}
+            options={MONTHS.map((m, i) => ({ value: String(i + 1), label: m }))}
+            onChange={(v) => onChange({ ...value, paymentMonth: Number(v) })}
           />
         </Field>
       )}
 
-      <CampoDelDia
-        dia={valor.diaDePago}
-        onCambiar={(diaDePago) => onCambiar({ ...valor, diaDePago })}
+      <DayField
+        day={value.paymentDay}
+        onChange={(paymentDay) => onChange({ ...value, paymentDay })}
       />
 
       {/*
@@ -366,7 +366,7 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
         es otra, y en la misma fila se leería como un cuarto ajuste del
         calendario.
       */}
-      <BudgetField valor={valor} onCambiar={onCambiar} />
+      <BudgetField value={value} onChange={onChange} />
 
       {/*
         ── Que se cobre solo ───────────────────────────────────────────
@@ -380,7 +380,7 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
         y no un campo más de la rejilla: enciende un comportamiento, no
         guarda un dato.
       */}
-      <AutoPaySwitch valor={valor} onCambiar={onCambiar} />
+      <AutoPaySwitch value={value} onChange={onChange} />
 
       {/*
         ── Que se cubra a pedazos ──────────────────────────────────────
@@ -395,29 +395,29 @@ function RecurrenceDetails({ valor, onCambiar }: RecurrenceFieldProps) {
         a alguien un ajuste que no tocó. Lo que queda es decirlo: el que no
         se puede usar está apagado y explica por qué.
       */}
-      <InstallmentsSwitch valor={valor} onCambiar={onCambiar} />
+      <InstallmentsSwitch value={value} onChange={onChange} />
 
-      <WhenItReturns valor={valor} />
+      <WhenItReturns value={value} />
     </div>
   );
 }
 
 interface RecurrenceFieldProps {
-  valor: Recurrencia;
-  onCambiar: (siguiente: Recurrencia) => void;
+  value: Recurrence;
+  onChange: (next: Recurrence) => void;
 }
 
 /** Cuándo vuelve, dicho con palabras. */
-function WhenItReturns({ valor }: { valor: Recurrencia }) {
+function WhenItReturns({ value }: { value: Recurrence }) {
   return (
     <p
       className={cn(
         'text-xs text-muted-foreground',
-        valor.periodicidad === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3',
+        value.periodicity === 'monthly' ? 'sm:col-span-2' : 'sm:col-span-3',
       )}
     >
-      {cuandoVuelve(valor.periodicidad, valor.diaDePago, valor.mesDePago)}{' '}
-      {avisoDeMesCorto(valor.diaDePago)}
+      {whenItRecurs(value.periodicity, value.paymentDay, value.paymentMonth)}{' '}
+      {shortMonthNotice(value.paymentDay)}
     </p>
   );
 }
