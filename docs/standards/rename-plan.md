@@ -5,7 +5,7 @@ executor each and do not step on each other. The names themselves are in
 [`rename-map.json`](rename-map.json) (version 2); this document is the order and the rules.
 
 **Base.** `origin/Dev` at `167d3f3` (the v2 contract, #36, is already merged). Read with it: iOS
-#29 (`feat/ios-localizable`, all iOS identifiers in English, ADR 0002) and #39 (iOS on
+#29 (`feat/ios-localizable`, all iOS identifiers in English, ADR 0021) and #39 (iOS on
 `/api/v2`). `feat/web-api-v2` (the web on v2) **was not pushed** when the map was made, so the
 web still speaks v1 and its wire fields wait for it.
 
@@ -116,7 +116,7 @@ any order (r1 and r2 after p; r4 and r5 after c). 7.10 last.
 | Web routes (8)                                                                           | expand-contract                 | New route + `<Navigate replace>` from the old one. iOS links three of them (`/centros-de-costos`, `/mi-cuenta`, `/administracion`) and changes in the same step. Redirects go in 7.10                                               |
 | Filter query params (5) and range values (7)                                             | expand-contract                 | Read both, write the new one                                                                                                                                                                                                        |
 | `localStorage` `sidenav-plegada` = `si`/`no`                                             | expand-contract                 | Read the old key once, write `sidenav-collapsed` = `true`/`false`, remove the old                                                                                                                                                   |
-| Bridge (12 names)                                                                        | **coordinated, direct**         | No app is installed (ADR 0002), so there is no old client to keep alive: web and iOS change in one step and ship together                                                                                                           |
+| Bridge (12 names)                                                                        | **coordinated, direct**         | No app is installed (ADR 0021), so there is no old client to keep alive: web and iOS change in one step and ship together                                                                                                           |
 | Env vars `SOPORTES_*`, `PERMITIR_*` (5)                                                  | expand-contract                 | The zod schema accepts the new name and falls back to the old one with a warning; the new one is set on the server (additive). Removing the old from the server is 7.10 (stop)                                                      |
 | Columns (14 Spanish), table `soportes` → `receipts`, `audit_log` → `audit_logs`          | expand-contract                 | New column/table, the code writes both and reads the new, backfill in the same migration, row-by-row check                                                                                                                          |
 | `Periodicidad` type and its 5 values                                                     | expand-contract                 | New type `periodicity` with English values, new column, backfill; the old CHECK `ck_categories_payment_month_not_monthly` gets a twin on the new column                                                                             |
@@ -269,3 +269,19 @@ vacias vacio valida validar valor variante varias varios ve veces velo vence ven
 ventana ver verdad veredicto verificar victima viejo viendo vinculo visibles visitados visitar
 visitas vista vistas vistos vivas vivienda vivo vivos volcado volver vuelo vuelta vuelve yo
 ```
+
+## Decisiones del director (5 oct 2026)
+
+1. **Los tipos enum de la base pasan a inglés por expandir y contraer (7.10),
+   no con un `ALTER TYPE … RENAME` en caliente.** Prisma castea cada valor por
+   el NOMBRE del tipo: renombrarlo con la API desplegada rompe toda consulta
+   que lo use hasta que el código nuevo llega. Se crea el tipo nuevo, se
+   escribe en los dos, se cambia la lectura y el viejo se borra en la
+   contracción.
+2. **El bucket `soportes` pasa a `receipts` por expandir y contraer**: bucket
+   nuevo, copia de cada archivo verificada por su huella, cambio de la API
+   para leer y escribir en el nuevo, y el viejo se borra en la contracción.
+   Nada se mueve sin haber comprobado la copia.
+3. **`CLAUDE.md` se pone al día con los nombres nuevos en 7.14**, y la carpeta
+   del servidor `soportes-cocoapp` se borra en la contracción de 7.10, no
+   antes.

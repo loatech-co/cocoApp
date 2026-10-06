@@ -4,7 +4,7 @@
   "base": { "branch": "origin/Dev", "commit": "167d3f3" },
   "pullRequestsConsidered": {
     "#36 (merged into Dev)": "v2 contract in English, merged into Dev at the base commit: routes, headers, jsonFields and jsonValues are done; v1 stays until the 7.10 contract",
-    "#29 feat/ios-localizable": "iOS identifiers, storage, intents, widgets in English (ADR 0002). Only the bridge, the SPA routes and the v1 JSON keys stay Spanish on the iOS side",
+    "#29 feat/ios-localizable": "iOS identifiers, storage, intents, widgets in English (ADR 0021). Only the bridge, the SPA routes and the v1 JSON keys stay Spanish on the iOS side",
     "#39 feat/ios-api-v2": "iOS talks to /api/v2",
     "feat/web-api-v2": "NOT PUSHED when this map was made: the web still speaks v1, so the wire properties of frontend/ and packages/types wait for it"
   },
@@ -3478,7 +3478,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "webkit.messageHandlers.cocoEventos",
@@ -3487,7 +3487,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "message field \"tipo\"",
@@ -3496,7 +3496,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "tipo \"pedirSesion\"",
@@ -3505,7 +3505,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "event \"salir\"",
@@ -3514,7 +3514,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "event \"sesionCerrada\"",
@@ -3523,7 +3523,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "event \"sinSesion\"",
@@ -3532,7 +3532,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "event \"abrirCaptura\"",
@@ -3541,7 +3541,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "window.__coco.ir",
@@ -3550,7 +3550,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "window.__coco.abrirBusqueda",
@@ -3559,7 +3559,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "window.__coco.recibirSesion",
@@ -3568,7 +3568,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     },
     {
       "from": "window.__coco.sesionCerrada",
@@ -3577,7 +3577,7 @@
       "consumers": ["web", "ios"],
       "definedIn": "frontend/src/shared/api/native-bridge.ts",
       "strategy": "coordinated",
-      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0002), so no compatibility window"
+      "note": "iOS (#29 feat/ios-localizable) kept these names on purpose; web and iOS change in the same sub-step. No installed app (ADR 0021), so no compatibility window"
     }
   ],
   "spaRoutes": [
@@ -3822,21 +3822,21 @@
       "to": "\"welcome-seen\"",
       "breaking": true,
       "consumers": ["ios (on device; migrate on launch)"],
-      "status": "done in #29 feat/ios-localizable without migration (app not installed, ADR 0002)"
+      "status": "done in #29 feat/ios-localizable without migration (app not installed, ADR 0021)"
     },
     {
       "from": "UserDefaults \"permiso-de-avisos-pedido\"",
       "to": "\"notification-permission-requested\"",
       "breaking": true,
       "consumers": ["ios"],
-      "status": "done in #29 feat/ios-localizable without migration (app not installed, ADR 0002)"
+      "status": "done in #29 feat/ios-localizable without migration (app not installed, ADR 0021)"
     },
     {
       "from": "UserDefaults \"co.loatech.coco.conceptosRecientes\"",
       "to": "\"co.loatech.coco.recentConcepts\"",
       "breaking": true,
       "consumers": ["ios"],
-      "status": "done in #29 feat/ios-localizable without migration (app not installed, ADR 0002)"
+      "status": "done in #29 feat/ios-localizable without migration (app not installed, ADR 0021)"
     }
   ],
   "infrastructure": [
