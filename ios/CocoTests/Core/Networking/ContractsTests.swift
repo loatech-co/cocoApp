@@ -100,12 +100,13 @@ final class ContractsTests: XCTestCase {
         XCTAssertTrue(CaptureBody(amount: "1", categoryId: 2).isSendable)
     }
 
-    /// Lee packages/types/src/index.ts y api/openapi.v2.json y falla si la
-    /// marca, la cabecera nativa o el campo de los soportes se separan.
+    /// Lee frontend/src/shared/lib/native-contract.ts y api/openapi.v2.json y
+    /// falla si la marca, la cabecera nativa o el campo de los soportes se
+    /// separan.
     func testBrandMatchesCocoTypes() throws {
         // ios/CocoTests/Core/Networking/<este archivo> → la raíz del repo.
         let root = (0..<5).reduce(URL(fileURLWithPath: #filePath)) { url, _ in url.deletingLastPathComponent() }
-        let path = root.appending(path: "packages/types/src/index.ts")
+        let path = root.appending(path: "frontend/src/shared/lib/native-contract.ts")
         guard let source = try? String(contentsOf: path, encoding: .utf8) else {
             throw XCTSkip("No está el repo al lado: \(path.path)")
         }

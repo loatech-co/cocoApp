@@ -47,7 +47,7 @@ Las reglas completas están en `CONTRIBUTING.md`, sección «iOS». En corto:
 - **Todo identificador en inglés**: archivos, tipos, miembros, los App
   Intents y sus `@Parameter`, el target `CocoWidgets`, los `kind`, las tareas
   de fondo, las claves de UserDefaults y Keychain, las carpetas y las claves
-  de lo que se guarda en disco (ADR 0002). **Lo que ve la persona, en
+  de lo que se guarda en disco (ADR 0021). **Lo que ve la persona, en
   español**, incluidas las frases y los títulos de Atajos y Siri.
 - **La app habla solo con la `/api/v2`.** Sus claves JSON están en los
   `CodingKeys` y, para lo que se manda, en `CaptureRequest` e
@@ -254,7 +254,7 @@ vencimiento, el enrutador (URLs `coco://` y destinos), la composición
 (`Dependencies` con dobles: registra intents y tareas de fondo, sigue la
 insignia de la cola) y los textos de entrar y Ajustes.
 `StoredFormatTests` fija las claves de la cola y del árbol, y `APIKeysTests`
-las de los contratos de la API. `ContractsTests` lee `packages/types/src/index.ts`
+las de los contratos de la API. `ContractsTests` lee `frontend/src/shared/lib/native-contract.ts`
 y `api/openapi.v2.json`, y falla si `Brand.userAgentApp` se separa de
 `USER_AGENT_APP` o la cabecera nativa o el campo de los soportes se separan
 de la v2 (en el simulador se salta: no puede leer el archivo).

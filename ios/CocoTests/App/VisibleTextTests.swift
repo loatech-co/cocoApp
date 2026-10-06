@@ -24,7 +24,7 @@ final class VisibleTextTests: XCTestCase {
         "App Intent: título, descripción y parámetros son lo que se ve en Atajos y Siri, escrito en el intent"
 
     private static let exceptions: [Exception] = [
-        // Texto de usuario de Atajos y Siri: va literal en el intent (ADR 0002).
+        // Texto de usuario de Atajos y Siri: va literal en el intent (ADR 0021).
         .init(
             file: "Coco/Features/Shortcuts/CocoShortcuts.swift", text: nil,
             reason: "Frases y títulos de los App Shortcuts: lo que se dice a Siri y se ve en Atajos"),

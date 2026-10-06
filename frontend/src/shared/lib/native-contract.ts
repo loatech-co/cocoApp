@@ -11,8 +11,7 @@
  * path, so names and literals below are load-bearing:
  *   - `api/src/modules/soportes/soportes.contrato.spec.ts` and
  *     `api/src/modules/interpretacion/interpretacion.contrato.spec.ts`;
- *   - `ios/CocoTests/ContratosTests.swift` (`USER_AGENT_APP`,
- *     `CABECERA_CLIENTE_NATIVO`, `campo: '…'`).
+ *   - `ios/CocoTests/Core/Networking/ContractsTests.swift` (`USER_AGENT_APP`).
  */
 
 // ─── The web EMBEDDED in the app ─────────────────────────────────────────────

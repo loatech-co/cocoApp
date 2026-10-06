@@ -140,3 +140,6 @@ looks at them; nothing is filed silently.
 | Trunk-based; `Dev` deploys, only through `merge.sh`       | [0009](adr/0009-trunk-based-with-dev-as-deploy-branch.md)                               |
 | Row-level security with an application role (proposed)    | [0010](adr/0010-rls-with-application-role.md)                                           |
 | Phase 7 tooling changes                                   | [0011](adr/0011-i18next-no-literal-string.md)–[0016](adr/0016-lighthouse-cli-script.md) |
+| The dashboard reads only the history its estimate uses    | [0017](adr/0017-dashboard-reads-bounded-history.md)                                     |
+| Every screen but the first loads on demand                | [0018](adr/0018-screens-load-on-demand.md)                                              |
+| iOS identifiers in English, no compatibility exceptions   | [0021](adr/0021-ios-english-without-compatibility-exceptions.md)                        |

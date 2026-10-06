@@ -5,7 +5,7 @@ import XCTest
 /// Las claves JSON del contrato `v2` con la API (`api/openapi.v2.json`), en los
 /// dos sentidos: lo que la app manda y lo que lee. Cambiar una aquí rompe las
 /// capturas contra la API desplegada: las cadenas de esta prueba son el
-/// contrato y no se tocan para que pase (ADR 0002).
+/// contrato y no se tocan para que pase (ADR 0021).
 final class APIKeysTests: XCTestCase {
     private func json<T: Encodable>(_ value: T) throws -> String {
         let jsonEncoder = JSONEncoder()

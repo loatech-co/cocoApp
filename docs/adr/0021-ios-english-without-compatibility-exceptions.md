@@ -1,4 +1,4 @@
-# 0002 — iOS identifiers in English, with no compatibility exceptions
+# 0021 — iOS identifiers in English, with no compatibility exceptions
 
 - Status: accepted
 - Date: 2026-10-05
