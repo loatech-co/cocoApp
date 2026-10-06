@@ -18,6 +18,6 @@
 export type ChangeRoleDtoRole = (typeof ChangeRoleDtoRole)[keyof typeof ChangeRoleDtoRole];
 
 export const ChangeRoleDtoRole = {
-  user: 'user',
   admin: 'admin',
+  user: 'user',
 } as const;

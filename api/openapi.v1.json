@@ -5812,7 +5812,7 @@
         "type": "object",
         "properties": {
           "role": {
-            "enum": ["user", "admin"],
+            "enum": ["admin", "user"],
             "type": "string"
           }
         },
