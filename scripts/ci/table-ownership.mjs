@@ -19,7 +19,7 @@ const OWNER = {
   transaction: 'modules/transactions',
   transactionSplit: 'modules/transactions',
   transactionTag: 'modules/transactions',
-  soporte: 'modules/soportes',
+  receipt: 'modules/soportes',
   userPreference: 'modules/preferences',
   importBatch: 'modules/categories',
   importRow: 'modules/categories',
