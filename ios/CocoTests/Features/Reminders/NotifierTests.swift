@@ -3,6 +3,8 @@ import XCTest
 
 @testable import Coco
 
+// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
 final class FakeNotificationCenter: NotificationCenterClient, @unchecked Sendable {
     private let lock = NSLock()
     private var requests: [UNNotificationRequest] = []

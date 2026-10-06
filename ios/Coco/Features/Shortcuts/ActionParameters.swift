@@ -47,6 +47,8 @@ enum ActionParameters {
             return g.needsReview ? L10n.Shortcuts.dialogNeedsReview(g.summary) : g.summary
         case .queued(let pending):
             return pending > 1 ? L10n.Shortcuts.dialogQueuedMany(queuedText, pending: pending) : queuedText
+        case .unconfirmed:
+            return L10n.Shortcuts.dialogUnconfirmed
         case .failed(let reason):
             return L10n.Shortcuts.dialogFailed(reason)
         }

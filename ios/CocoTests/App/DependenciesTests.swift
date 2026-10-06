@@ -1,4 +1,5 @@
 import XCTest
+import os
 
 @testable import Coco
 
@@ -8,11 +9,12 @@ import XCTest
 final class DependenciesTests: XCTestCase {
     private var root: URL = URL(fileURLWithPath: "/")
 
-    override func setUpWithError() throws {
+    // `async`: así corren en el actor principal, como la clase.
+    override func setUp() async throws {
         root = try TemporaryDirectory.directory()
     }
 
-    override func tearDownWithError() throws {
+    override func tearDown() async throws {
         try? FileManager.default.removeItem(at: root)
     }
 
@@ -100,6 +102,20 @@ final class DependenciesTests: XCTestCase {
         }
         XCTAssertEqual(d.pending, 1)
         XCTAssertEqual(notifier.badges.last, 1, "el notificador real también recibe la cuenta")
+    }
+
+    /// Cada captura que llega a la API se le avisa a la web (`capturado`), y
+    /// el aviso al sistema sigue saliendo.
+    func testASavedCaptureNotifiesTheWeb() async {
+        let real = NotifierDouble()
+        let counter = PendingCounter(notifier: real)
+        let saved = OSAllocatedUnfairLock(initialState: 0)
+        counter.onSaved = { saved.withLock { $0 += 1 } }
+        let result = SavedResult(
+            transactionId: 1, summary: "s", duplicate: false, merged: false, needsReview: false, finishedAt: .now)
+        await counter.captureSaved(result, source: .wallet)
+        XCTAssertEqual(saved.withLock { $0 }, 1)
+        XCTAssertEqual(real.isRegistered, [result])
     }
 
     func testIsAdminOnlyWithTheRole() throws {

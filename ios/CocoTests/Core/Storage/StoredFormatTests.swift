@@ -42,7 +42,7 @@ final class StoredFormatTests: XCTestCase {
 
     func testThePendingCaptureKeepsItsKeysInEveryPhase() throws {
         let base =
-            #"{"attempts":2,"body":{"amount":"1","categoryId":3,"date":"2026-01-02","fileName":"f.jpg","merchant":"c","note":"n","period":"2026-01","text":"t"},"createdAt":0,"id":"00000000-0000-0000-0000-000000000001","lastError":"e","nextAttempt":50,"phase":PHASE,"photoPath":"Photos/x.jpg","source":"ios_photo","textResult":{"duplicate":false,"finishedAt":100,"merged":true,"needsReview":true,"summary":"r","transactionId":9}}"#
+            #"{"attempts":2,"body":{"amount":"1","categoryId":3,"date":"2026-01-02","fileName":"f.jpg","merchant":"c","note":"n","period":"2026-01","text":"t"},"createdAt":0,"id":"00000000-0000-0000-0000-000000000001","lastError":"e","nextAttempt":50,"phase":PHASE,"photoPath":"Photos/x.jpg","source":"ios_photo","textResult":{"duplicate":false,"finishedAt":100,"merged":true,"needsReview":true,"summary":"r","transactionId":9},"version":1}"#
         let result =
             #"{"duplicate":false,"finishedAt":100,"merged":true,"needsReview":true,"summary":"r","transactionId":9}"#
         let phases: [(PendingCapture.Phase, String)] = [
@@ -50,6 +50,7 @@ final class StoredFormatTests: XCTestCase {
             (.photoToUpload(transactionId: 4), #"{"photoToUpload":{"transactionId":4}}"#),
             (.awaitingSession, #"{"awaitingSession":{}}"#),
             (.done(Self.result), #"{"done":{"_0":RES}}"#.replacingOccurrences(of: "RES", with: result)),
+            (.unconfirmed(at: Date(timeIntervalSinceReferenceDate: 60)), #"{"unconfirmed":{"at":60}}"#),
             (.failed(reason: "m"), #"{"failed":{"reason":"m"}}"#),
         ]
         for (phase, key) in phases {
@@ -81,6 +82,8 @@ final class StoredFormatTests: XCTestCase {
         XCTAssertEqual(BackgroundJobs.queue, "co.loatech.coco.queue")
         XCTAssertEqual(DiskQueueStore.folderName, "Queue")
         XCTAssertEqual(DiskQueueStore.photosFolderName, "Photos")
+        XCTAssertEqual(DiskQueueStore.quarantineFolderName, "Quarantine")
+        XCTAssertEqual(PendingCapture.formatVersion, 1)
         XCTAssertEqual(DiskTreeStore.fileName, "tree.json")
         XCTAssertEqual(WelcomeView.key, "welcome-seen")
         XCTAssertEqual(Dependencies.permissionAskedKey, "notification-permission-requested")

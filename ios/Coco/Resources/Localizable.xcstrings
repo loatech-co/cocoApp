@@ -342,6 +342,17 @@
         }
       }
     },
+    "captures.diskError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El teléfono no deja guardar la cola. Lo que captures ahora puede no quedar guardado."
+          }
+        }
+      }
+    },
     "captures.empty.description" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -441,6 +452,17 @@
         }
       }
     },
+    "captures.row.reviewed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya lo revisé"
+          }
+        }
+      }
+    },
     "captures.row.toSend" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -448,6 +470,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ · se enviará cuando haya red"
+          }
+        }
+      }
+    },
+    "captures.row.unconfirmed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · llegó, pero sin confirmar: búscalo en Movimientos"
           }
         }
       }
@@ -496,6 +529,17 @@
         }
       }
     },
+    "captures.section.toReview" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por revisar"
+          }
+        }
+      }
+    },
     "captures.title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -503,6 +547,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Capturas"
+          }
+        }
+      }
+    },
+    "captures.unreadable.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Están guardadas aparte en el teléfono; no se borró nada."
+          }
+        }
+      }
+    },
+    "captures.unreadable.many" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ capturas no se pudieron leer"
+          }
+        }
+      }
+    },
+    "captures.unreadable.one" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 captura no se pudo leer"
           }
         }
       }
@@ -1691,6 +1768,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ %2$@ pendientes."
+          }
+        }
+      }
+    },
+    "shortcuts.dialog.unconfirmed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se envió, pero la respuesta no se pudo leer. Revísalo en Capturas."
           }
         }
       }

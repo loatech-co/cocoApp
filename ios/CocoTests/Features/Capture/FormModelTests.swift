@@ -37,7 +37,8 @@ final class FormModelTests: XCTestCase {
     private var connectivity = Connectivity()
     private var reader = FakeReceiptReader(text: "D1\nTOTAL 45.000")
 
-    override func setUp() {
+    // `async`: así corre en el actor principal, como la clase.
+    override func setUp() async throws {
         transport = FakeTransport()
         capturer = CapturerDouble()
         connectivity = Connectivity()

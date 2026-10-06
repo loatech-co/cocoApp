@@ -25,9 +25,9 @@ configFiles:
   Release: Signing.xcconfig
 settings:
   base:
-    # Xcode 27 trae Swift 6.4; el modo de lenguaje 5.10 evita que la
-    # concurrencia estricta frene la fase. Se sube cuando todo esté acotado.
-    SWIFT_VERSION: "5.10"
+    # Modo de lenguaje 6: la concurrencia estricta es un error de compilación,
+    # no un aviso. Un `@unchecked Sendable` lleva escrito por qué es seguro.
+    SWIFT_VERSION: "6.0"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     # La API a la que habla la app; el Info.plist la lee de aquí. Se pisa

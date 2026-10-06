@@ -948,7 +948,7 @@ The app in `ios/` follows its own toolchain; `ios/README.md` has the folder
 map. Local: `bash ios/scripts/lint.sh` and `xcodebuild test` (see the README).
 CI: the `ios` workflow, **manual only** (`workflow_dispatch`): a macOS minute
 counts as ten against the free plan's quota, so it runs before every app
-release, and the pre-commit hook covers the routine.
+release, and the hooks cover the routine at zero CI minutes.
 
 - **Format: `swift-format`**, the Swift project's official formatter that
   ships with Xcode 16+, configured by `ios/.swift-format` (4 spaces, 120
@@ -961,10 +961,27 @@ release, and the pre-commit hook covers the routine.
   job; tests (`ios/CocoTests/.swiftlint.yml`) only relax line length (one-line
   JSON fixtures) and type and file length (a test class is a list of cases).
   An inline `swiftlint:disable:next` names the rule and says why above it.
-- **The hook** (`6_lint-ios` in `lefthook.yml`) runs on commits that touch
-  `ios/**/*.swift`. Without Xcode, or with another SwiftLint version, it warns
-  and lets the commit through: someone working only on the web must not be
-  blocked, and the workflow is the gate.
+- **The hooks.** `6_lint-ios` (pre-commit) lints commits that touch
+  `ios/**/*.swift`. `ios` (pre-push, `ios/scripts/pre-push.sh`) runs
+  `swift-format lint --strict` and `xcodebuild test` on the newest iPhone
+  simulator when the push carries changes under `ios/`: that is the routine
+  gate, since the workflow is manual. Without Xcode, or with another SwiftLint
+  version, both warn and let the change through: someone working only on the
+  web must not be blocked.
+- **Swift 6 language mode** (`SWIFT_VERSION` in `project.yml`): data races
+  are compile errors. No `@unchecked Sendable` or `nonisolated(unsafe)`
+  without a comment saying why it is safe; shared state goes in an actor or
+  an `OSAllocatedUnfairLock`, and test doubles live in `CocoTests`, never in
+  the app.
+- **The capture queue never swallows an error.** No `try?` on the queue's
+  disk: a failure is logged (`AppLog.queue`, the step and the error type,
+  never the capture) and shown in Captures. The queue lives in
+  `Application Support`, never in the temporary directory. Its budget is a
+  hard limit: cancellation reaches the request in flight and the capture
+  stays queued as it was. A 2xx whose body cannot be read is `unconfirmed`
+  ("done, check it"), never retried. Every queue file carries `version`; one
+  that cannot be read goes to `Queue/Quarantine`, intact, and is counted on
+  screen.
 - **Structure by feature**: `Coco/Features/<Feature>` holds everything for one
   thing a person does; `Coco/Core` is infrastructure (networking, storage,
   Keychain, background tasks, domain contracts); `Coco/Shared` is common UI

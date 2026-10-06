@@ -88,20 +88,20 @@ struct SignInView: View {
     }
 
     /// Un texto que diga qué hacer, no un código.
-    static func message(from error: Error) -> String {
+    nonisolated static func message(from error: Error) -> String {
         switch APIError.from(error) {
         case .unauthenticated:
             return L10n.Session.errorBadCredentials
         case .noNetwork:
             return L10n.Session.errorNoNetwork
-        case .timedOut:
+        case .timedOut, .cancelled:
             return L10n.Session.errorTimedOut
         case .rejected(_, _, let message):
             return message.isEmpty ? L10n.Session.errorRejected : message
         case .server(let status):
             return status == 429
                 ? L10n.Session.errorTooManyAttempts : L10n.Session.errorServer(status)
-        case .unreadableResponse:
+        case .unreadableResponse, .unreadableSuccess:
             return L10n.Session.errorUnreadableResponse
         }
     }

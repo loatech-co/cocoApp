@@ -79,6 +79,8 @@ struct SavedResult: Codable, Equatable, Sendable {
 enum CaptureResult: Equatable, Sendable {
     case sent(SavedResult)
     case queued(pending: Int)
+    /// Llegó a la API, pero su respuesta no se pudo leer: hay que revisarla.
+    case unconfirmed
     case failed(reason: String)
 }
 
@@ -95,6 +97,8 @@ protocol QueueStore: Sendable {
     func photo(at path: String) throws -> Data
     func deletePhoto(at path: String) throws
     func photoBytes() throws -> Int
+    /// Cuántos archivos de la cola se apartaron por no poder leerse.
+    func quarantined() throws -> Int
 }
 
 protocol CaptureSender: Sendable {

@@ -109,7 +109,7 @@ struct SettingsView: View {
 
     /// `http(s)://host[:puerto]`, sin ruta ni consulta: la base a la que la
     /// app añade `/api/v2`.
-    static func validate(_ text: String) -> Validation {
+    nonisolated static func validate(_ text: String) -> Validation {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return Validation(url: nil, reason: nil) }
         guard let url = URL(string: cleaned), let scheme = url.scheme?.lowercased(), let host = url.host(),
@@ -127,7 +127,7 @@ struct SettingsView: View {
         return Validation(url: APIConfiguration(base: url).base, reason: nil)
     }
 
-    static func expiryText(_ expiresAt: Date?, now: Date = .now) -> String {
+    nonisolated static func expiryText(_ expiresAt: Date?, now: Date = .now) -> String {
         guard let expiresAt else { return L10n.Settings.expiryUnavailable }
         let days = ExpiryReminder.daysLeft(expiresAt: expiresAt, now: now)
         let date = expiresAt.formatted(date: .abbreviated, time: .omitted)

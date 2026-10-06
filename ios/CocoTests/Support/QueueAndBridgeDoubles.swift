@@ -6,6 +6,8 @@ import Foundation
 // Con nombres propios («Doble») para no chocar con los que escriben las
 // pruebas de la sesión real.
 
+// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
 final class SessionDouble: Session, @unchecked Sendable {
     private let lock = NSLock()
     private var _state: SessionState
@@ -74,6 +76,8 @@ final class SessionDouble: Session, @unchecked Sendable {
     }
 }
 
+// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
 final class NotifierDouble: Notifier, @unchecked Sendable {
     private let lock = NSLock()
     private(set) var isRegistered: [SavedResult] = []
@@ -93,10 +97,15 @@ final class NotifierDouble: Notifier, @unchecked Sendable {
 
 /// Un enviador programable: una lista de respuestas por llamada, en orden, y
 /// el registro de todo lo que recibió.
+/// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+/// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
 final class SenderDouble: CaptureSender, @unchecked Sendable {
     enum Reply {
         case ok
         case failure(Error)
+        /// Una petición que no contesta: espera un minuto, o hasta que la
+        /// cancelen —como `URLSession`—.
+        case hang
     }
 
     private let lock = NSLock()
@@ -131,6 +140,7 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
             return (captures.isEmpty ? .ok : captures.removeFirst(), seen && duplicateIfSeen)
         }
         if case .failure(let e) = response { throw e }
+        if case .hang = response { try await Task.sleep(for: .seconds(60)) }
         let t = TransactionSummary(
             id: transactionId, date: r.body.date ?? "2026-10-05", amount: r.body.amount ?? "0", categoryId: nil,
             description: r.body.text, merchant: r.body.merchant, source: r.source.rawValue,
@@ -150,6 +160,7 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
             return photos.isEmpty ? .ok : photos.removeFirst()
         }
         if case .failure(let e) = response { throw e }
+        if case .hang = response { try await Task.sleep(for: .seconds(60)) }
         return [
             Attachment(
                 id: 1, order: 1, fileName: name, mimeType: "image/jpeg", size: jpeg.count, available: true)
@@ -157,6 +168,8 @@ final class SenderDouble: CaptureSender, @unchecked Sendable {
     }
 }
 
+// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
 final class CapturerDouble: Capturer, @unchecked Sendable {
     private let lock = NSLock()
     private(set) var received: [(body: CaptureBody, source: CaptureSource)] = []
@@ -170,6 +183,8 @@ final class CapturerDouble: Capturer, @unchecked Sendable {
     }
 }
 
+// `@unchecked Sendable`: doble de pruebas. `destinations` solo se escribe
+// desde `go`, que corre en el actor principal.
 final class NavigationDouble: Navigation, @unchecked Sendable {
     private(set) var destinations: [Destination] = []
     @MainActor func go(_ destination: Destination) { destinations.append(destination) }
@@ -177,6 +192,8 @@ final class NavigationDouble: Navigation, @unchecked Sendable {
 
 /// Un almacén que falla cuando se le pide: para simular el disco muriendo
 /// entre la fase 1 y la 2.
+/// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+/// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
 final class FailingStore: QueueStore, @unchecked Sendable {
     let real: DiskQueueStore
     var failsSave = false
@@ -194,6 +211,7 @@ final class FailingStore: QueueStore, @unchecked Sendable {
     func photo(at path: String) throws -> Data { try real.photo(at: path) }
     func deletePhoto(at path: String) throws { try real.deletePhoto(at: path) }
     func photoBytes() throws -> Int { try real.photoBytes() }
+    func quarantined() throws -> Int { try real.quarantined() }
 }
 
 enum TemporaryDirectory {

@@ -43,6 +43,7 @@ final class VisibleTextTests: XCTestCase {
         .init(file: "Coco/Core/Networking/APIRequest.swift", text: "Authorization", reason: "Cabecera HTTP"),
         .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Queue", reason: "Carpeta en disco"),
         .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Photos", reason: "Carpeta en disco"),
+        .init(file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Quarantine", reason: "Carpeta en disco"),
         .init(
             file: "Coco/Core/Storage/DiskQueueStore.swift", text: "Fecha ilegible: %@",
             reason: "Descripción de un error de decodificación, para depurar"),
@@ -58,7 +59,8 @@ final class VisibleTextTests: XCTestCase {
             reason: "JavaScript que se evalúa en la web"),
     ]
 
-    private static let logCall = #/\.(debug|info|notice|warning|error|fault)\($/#
+    // Calculada: un `Regex` no es `Sendable` y no puede ser una constante global.
+    private static var logCall: Regex<(Substring, Substring)> { #/\.(debug|info|notice|warning|error|fault)\($/# }
 
     func testNoVisibleTextOutsideTheCatalog() throws {
         // Las carpetas van copiadas en el paquete de pruebas (project.yml).

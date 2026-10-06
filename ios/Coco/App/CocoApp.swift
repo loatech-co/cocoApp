@@ -56,13 +56,19 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         return true
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async
+    // `nonisolated`: el centro de notificaciones llama desde su propio hilo y
+    // lo que entrega no es `Sendable`; aquí solo se mira la URL de destino.
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter, willPresent notification: UNNotification
+    ) async
         -> UNNotificationPresentationOptions
     {
         [.banner, .sound, .badge]
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
+    ) async {
         guard let url = URL(string: SystemNotifier.captureDestination) else { return }
         await MainActor.run {
             _ = Dependencies.shared.router.open(url: url)

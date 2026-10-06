@@ -114,6 +114,13 @@ final class ContractsTests: XCTestCase {
         let match = try XCTUnwrap(regex.firstMatch(in: source, range: NSRange(source.startIndex..., in: source)))
         let value = try XCTUnwrap(Range(match.range(at: 1), in: source)).map { String(source[$0]) }
         XCTAssertEqual(value, Brand.userAgentApp)
+        // Los avisos de la app a la web (`AvisosDeLaApp`): si la web ya los
+        // declara, se llaman igual que los manda la app.
+        if source.contains("interface AvisosDeLaApp") {
+            for notice in WebNotice.allCases {
+                XCTAssertTrue(source.contains("  \(notice.rawValue)(): void;"), notice.rawValue)
+            }
+        }
         let spec = root.appending(path: "api/openapi.v2.json")
         guard let openAPI = try? String(contentsOf: spec, encoding: .utf8) else {
             throw XCTSkip("No está el contrato v2 al lado: \(spec.path)")

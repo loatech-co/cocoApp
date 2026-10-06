@@ -1,34 +1,31 @@
 import Foundation
 
-/// Lo que dejó una corrida de `process()`.
-struct SendSummary: Equatable, Sendable {
-    var sent: Int = 0
-    var failed: Int = 0
-    var pending: Int = 0
-    var results: [SavedResult] = []
-}
-
 /// La columna vertebral: toda captura se escribe en disco ANTES de tocar la
 /// red, y de ahí sale de una en una, FIFO, con reintentos. Nada se pierde:
-/// lo que la API rechaza queda `.fallida` con su motivo, visible, no borrado.
+/// lo que la API rechaza queda `.failed` con su motivo, visible, no borrado; lo
+/// que el disco no deja leer o escribir se registra y se enseña en Capturas.
 final actor CaptureQueue {
-    private let store: QueueStore
+    let store: QueueStore
     private let sender: CaptureSender
     private let session: Session
     private let notifier: Notifier
     private let retryPolicy: Retry
-    private let clock: @Sendable () -> Date
+    let clock: @Sendable () -> Date
     private let spacing: Duration
     private let photoBytesLimit: Int
     private let shrinkPhoto: @Sendable (Data) -> Data
 
     /// Publica la cola entera tras cada transición; quien escucha saca de ahí
     /// el número de pendientes.
-    nonisolated let changes: AsyncStream<[PendingCapture]>
-    private let continuation: AsyncStream<[PendingCapture]>.Continuation
+    nonisolated let changes: AsyncStream<QueueSnapshot>
+    private let continuation: AsyncStream<QueueSnapshot>.Continuation
 
     private var inFlight: Task<SendSummary, Never>?
     private var lastSend: ContinuousClock.Instant?
+    /// Lo último que se pudo leer: si el disco falla, la insignia no cae a 0.
+    private var lastRead: [PendingCapture] = []
+    /// Una lectura o escritura falló y ninguna escritura ha ido bien después.
+    private var diskError = false
 
     init(
         store: QueueStore,
@@ -50,7 +47,7 @@ final actor CaptureQueue {
         self.spacing = spacing
         self.photoBytesLimit = photoBytesLimit
         self.shrinkPhoto = shrinkPhoto
-        let (stream, continuation) = AsyncStream<[PendingCapture]>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        let (stream, continuation) = AsyncStream<QueueSnapshot>.makeStream(bufferingPolicy: .bufferingNewest(1))
         self.changes = stream
         self.continuation = continuation
     }
@@ -79,29 +76,45 @@ final actor CaptureQueue {
 
     // MARK: Envío
 
-    /// Una sola corrida en vuelo: quien llega mientras otra corre espera su
-    /// resultado. Respeta `nextAttempt` y para al agotar el presupuesto.
+    /// Una sola corrida en vuelo. El presupuesto es un TOPE, no una pista: al
+    /// vencer se cancela lo que esté en vuelo —también una petición a mitad— y
+    /// la captura se queda en la cola tal como estaba en disco. Cancelar a
+    /// quien llama hace lo mismo (`withTaskCancellationHandler`).
+    ///
+    /// Quien llega con otra corrida en marcha la espera, pero solo hasta SU
+    /// presupuesto: un intent de 10 s no hereda los 25 s del primer plano.
     @discardableResult
     func process(budget: Duration = .seconds(25)) async -> SendSummary {
-        if let inFlight { return await inFlight.value }
-        let task = Task { await self.runTask(budget: budget) }
-        inFlight = task
-        let summary = await task.value
+        if let inFlight {
+            return await Self.value(of: inFlight, within: budget) ?? SendSummary(pending: countPending())
+        }
+        let run = Task { await self.runTask() }
+        inFlight = run
+        let deadline = Task {
+            guard (try? await Task.sleep(for: budget)) != nil else { return }
+            run.cancel()
+        }
+        let summary = await withTaskCancellationHandler {
+            await run.value
+        } onCancel: {
+            run.cancel()
+        }
+        deadline.cancel()
         inFlight = nil
         return summary
     }
 
-    private func runTask(budget: Duration) async -> SendSummary {
-        let limit = ContinuousClock.now + budget
+    private func runTask() async -> SendSummary {
         var summary = SendSummary()
         var sentFromQueue = 0
         var attempted = Set<UUID>()
 
-        while ContinuousClock.now < limit {
+        loop: while !Task.isCancelled {
             let now = clock()
             guard let capture = ready(at: now).first(where: { !attempted.contains($0.id) }) else { break }
             attempted.insert(capture.id)
             await keepSpacing()
+            if Task.isCancelled { break }
             let wasQueued = capture.attempts > 0
             let output = await send(capture)
             switch output {
@@ -109,16 +122,18 @@ final actor CaptureQueue {
                 summary.sent += 1
                 summary.results.append(r)
                 if wasQueued { sentFromQueue += 1 }
+            case .unconfirmed:
+                summary.unconfirmed += 1
             case .failed:
                 summary.failed += 1
             case .retry:
                 continue
-            case .noNetwork:
-                break
+            case .noNetwork, .cancelled:
+                // Sin red no tiene sentido seguir con las demás: cada una
+                // esperaría su propio timeout para decir lo mismo. Cancelada,
+                // la corrida termina aquí y lo demás espera a la siguiente.
+                break loop
             }
-            // Sin red no tiene sentido seguir con las demás: cada una
-            // esperaría su propio timeout para decir lo mismo.
-            if case .noNetwork = output { break }
         }
 
         summary.pending = countPending()
@@ -128,7 +143,7 @@ final actor CaptureQueue {
 
     private enum SendOutcome {
         case done(SavedResult)
-        case failed, retry, noNetwork
+        case failed, unconfirmed, retry, noNetwork, cancelled
     }
 
     /// Fase 1 (texto) y fase 2 (foto) sobre una captura. Cada transición se
@@ -150,7 +165,7 @@ final actor CaptureQueue {
                 if capture.photoPath != nil {
                     capture.phase = .photoToUpload(transactionId: result.transactionId)
                     capture.textResult = result
-                    try? store.save(capture)
+                    persist(capture, step: .savePhotoPhase)
                 } else {
                     return await finish(&capture, with: result)
                 }
@@ -164,8 +179,13 @@ final actor CaptureQueue {
                 ?? SavedResult(
                     transactionId: transactionId, summary: "", duplicate: false, merged: false, needsReview: false,
                     finishedAt: clock())
-            guard let path = capture.photoPath, let jpeg = try? store.photo(at: path) else {
+            let jpeg: Data
+            do {
+                guard let path = capture.photoPath else { return await finish(&capture, with: result) }
+                jpeg = try store.photo(at: path)
+            } catch {
                 // Sin archivo no hay nada que subir: el texto ya está registrado.
+                report(.readPhoto, error, visible: false)
                 return await finish(&capture, with: result)
             }
             do {
@@ -174,6 +194,8 @@ final actor CaptureQueue {
                 }
                 return await finish(&capture, with: result)
             } catch {
+                // Un 2xx ilegible al subir la foto: la foto llegó.
+                if case .unreadableSuccess = APIError.from(error) { return await finish(&capture, with: result) }
                 return await handleFailure(&capture, error: error)
             }
         }
@@ -181,25 +203,30 @@ final actor CaptureQueue {
     }
 
     /// Un 401 pide UNA renovación y reintenta de inmediato; si sigue en 401,
-    /// la captura espera a que la persona vuelva a entrar.
+    /// la captura espera a que la persona vuelva a entrar. Cancelada a mitad
+    /// de la renovación, es una cancelación y no una sesión caída.
     private func withRefreshIfNeeded<T>(_ operation: () async throws -> T) async throws -> T {
         do {
             return try await operation()
         } catch APIError.unauthenticated {
-            do { try await session.refreshNow() } catch { throw APIError.unauthenticated }
+            do {
+                try await session.refreshNow()
+            } catch {
+                throw Task.isCancelled ? APIError.cancelled : APIError.unauthenticated
+            }
             return try await operation()
         }
     }
 
     private func finish(_ capture: inout PendingCapture, with result: SavedResult) async -> SendOutcome {
         if let path = capture.photoPath {
-            try? store.deletePhoto(at: path)
+            do { try store.deletePhoto(at: path) } catch { report(.deleteSentPhoto, error, visible: false) }
             capture.photoPath = nil
         }
         capture.phase = .done(result)
         capture.textResult = nil
         capture.lastError = nil
-        try? store.save(capture)
+        persist(capture, step: .saveDone)
         await notifier.captureSaved(result, source: capture.source)
         await publish()
         return .done(result)
@@ -209,6 +236,10 @@ final actor CaptureQueue {
         let api = APIError.from(error)
         let output: SendOutcome
         switch api {
+        case .cancelled:
+            // Ni intento ni error: la captura sigue en disco como estaba y la
+            // próxima corrida la retoma.
+            return .cancelled
         case .unauthenticated:
             // Sin crecer la espera: no es culpa de la red, es de la sesión.
             capture.phase = .awaitingSession
@@ -219,6 +250,13 @@ final actor CaptureQueue {
             capture.lastError = message
             await notifier.captureFailed(reason: message)
             output = .failed
+        case .unreadableSuccess(let status):
+            // El servidor la creó: reintentarla dependería de la idempotencia
+            // para no duplicar el gasto. Queda «hecha, revisar».
+            AppLog.queue.warning("Respuesta \(status, privacy: .public) ilegible: captura sin confirmar")
+            capture.phase = .unconfirmed(at: clock())
+            capture.lastError = nil
+            output = .unconfirmed
         case .unreadableResponse:
             let reason = L10n.Queue.errorUnreadableResponse
             capture.phase = .failed(reason: reason)
@@ -232,22 +270,9 @@ final actor CaptureQueue {
             capture.lastError = Self.describe(api)
             output = api.isNetworkError ? .noNetwork : .retry
         }
-        try? store.save(capture)
+        persist(capture, step: .saveFailure)
         await publish()
         return output
-    }
-
-    private static func seconds(_ d: Duration) -> TimeInterval {
-        Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18
-    }
-
-    private static func describe(_ e: APIError) -> String {
-        switch e {
-        case .noNetwork: L10n.Queue.errorNoNetwork
-        case .timedOut: L10n.Queue.errorTimedOut
-        case .server(let status): L10n.Queue.errorServer(status)
-        default: L10n.Queue.errorGeneric
-        }
     }
 
     private func keepSpacing() async {
@@ -260,9 +285,7 @@ final actor CaptureQueue {
 
     /// Lo que toca enviar ahora, en el orden en que se capturó.
     private func ready(at now: Date) -> [PendingCapture] {
-        let all = (try? store.all()) ?? []
-        return
-            all
+        load()
             .filter { c in
                 switch c.phase {
                 case .toSend, .photoToUpload: c.nextAttempt <= now
@@ -273,87 +296,66 @@ final actor CaptureQueue {
     }
 }
 
-// MARK: Acciones de la persona
+// MARK: Disco y lectura
 
+// Lo comparten el envío y las acciones de la persona
+// (`CaptureQueue+Actions.swift`); fuera de la cola no se llama.
 extension CaptureQueue {
+    func search(_ id: UUID) -> PendingCapture? {
+        load().first { $0.id == id }
+    }
 
-    func retryNow(id: UUID) async {
-        guard var capture = search(id) else { return }
-        switch capture.phase {
-        case .failed, .awaitingSession: capture.phase = .toSend
-        case .toSend, .photoToUpload: break
-        case .done: return
+    func countPending() -> Int {
+        load().filter(\.isPending).count
+    }
+
+    func makeSnapshot() -> QueueSnapshot {
+        let captures = load().sorted { $0.createdAt > $1.createdAt }
+        var unreadable = 0
+        do { unreadable = try store.quarantined() } catch { report(.countQuarantine, error) }
+        return QueueSnapshot(captures: captures, unreadable: unreadable, diskError: diskError)
+    }
+
+    func publish() async {
+        let snapshot = makeSnapshot()
+        continuation.yield(snapshot)
+        await notifier.setBadge(snapshot.captures.filter(\.isPending).count)
+    }
+
+    // MARK: Disco
+
+    /// Lo que hay en disco; si no se deja leer, lo último que se leyó —y el
+    /// fallo queda registrado y a la vista—, no una cola vacía.
+    @discardableResult
+    func load() -> [PendingCapture] {
+        do {
+            lastRead = try store.all()
+        } catch {
+            report(.readQueue, error)
         }
-        capture.nextAttempt = .distantPast
-        try? store.save(capture)
-        await publish()
+        return lastRead
     }
 
-    /// Solo lo que aún no llegó a la API: editar algo ya registrado sería
-    /// mentir sobre lo que se envió.
-    func edit(id: UUID, body: CaptureBody) async throws {
-        guard var capture = search(id) else { throw QueueError.notFound(id) }
-        switch capture.phase {
-        case .failed, .toSend: break
-        default: throw QueueError.notEditable(id)
+    func persist(_ capture: PendingCapture, step: DiskStep) {
+        do {
+            try store.save(capture)
+            diskError = false
+        } catch {
+            report(step, error)
         }
-        capture.body = body
-        capture.phase = .toSend
-        capture.nextAttempt = .distantPast
-        capture.lastError = nil
-        try store.save(capture)
-        await publish()
     }
 
-    func discard(id: UUID) async throws {
-        guard let capture = search(id) else { return }
-        if let path = capture.photoPath { try? store.deletePhoto(at: path) }
-        try store.delete(id: id)
-        await publish()
+    /// Qué paso falló y el tipo de error, nunca el contenido de la captura.
+    /// `visible`: si Capturas tiene que avisar. Una foto que sobra en disco no
+    /// cambia nada de lo que la persona ve.
+    func report(_ step: DiskStep, _ error: Error, visible: Bool = true) {
+        if visible { diskError = true }
+        let ns = error as NSError
+        let what = String(describing: step)
+        AppLog.queue.error("No se pudo: \(what, privacy: .public) \(ns.domain, privacy: .public) \(ns.code)")
     }
 
-    /// Tras un login: lo que esperaba sesión vuelve a la fila.
-    func sessionReturned() async {
-        for var capture in (try? store.all()) ?? [] where capture.phase == .awaitingSession {
-            capture.phase = .toSend
-            capture.nextAttempt = .distantPast
-            try? store.save(capture)
-        }
-        await publish()
-    }
-
-    func purge(doneOlderThan age: Duration = .seconds(30 * 86_400)) async {
-        let now = clock()
-        let seconds = TimeInterval(age.components.seconds)
-        for capture in (try? store.all()) ?? [] {
-            if case .done(let r) = capture.phase, now.timeIntervalSince(r.finishedAt) > seconds {
-                try? store.delete(id: capture.id)
-            }
-        }
-        await publish()
-    }
-
-    // MARK: Lectura
-
-    func pending() async -> Int { countPending() }
-
-    func all() async -> [PendingCapture] {
-        ((try? store.all()) ?? []).sorted { $0.createdAt > $1.createdAt }
-    }
-
-    func capture(id: UUID) async -> PendingCapture? { search(id) }
-
-    private func search(_ id: UUID) -> PendingCapture? {
-        (try? store.all())?.first { $0.id == id }
-    }
-
-    private func countPending() -> Int {
-        ((try? store.all()) ?? []).filter(\.isPending).count
-    }
-
-    private func publish() async {
-        let all = ((try? store.all()) ?? []).sorted { $0.createdAt > $1.createdAt }
-        continuation.yield(all)
-        await notifier.setBadge(all.filter(\.isPending).count)
-    }
+    /// Espera a `task` como mucho `limit`, sin cancelarla: devuelve nil si
+    /// vence el plazo o si se cancela a quien espera. La corrida sigue y lo que
+    /// consiga queda en disco.
 }

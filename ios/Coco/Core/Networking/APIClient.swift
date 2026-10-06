@@ -15,11 +15,11 @@ struct APIClient: Sendable {
 
     /// Decodifica `Envelope<T>.data`.
     func send<T: Decodable>(_ p: APIRequest, token: String?) async throws -> T {
-        let (data, _) = try await run(p, token: token)
+        let (data, response) = try await run(p, token: token)
         do {
             return try JSONDecoder().decode(Envelope<T>.self, from: data).data
         } catch {
-            throw APIError.unreadableResponse
+            throw APIError.unreadableSuccess(status: response.statusCode)
         }
     }
 
@@ -30,12 +30,12 @@ struct APIClient: Sendable {
         var items: [T] = []
         var number = 1
         while true {
-            let (data, _) = try await run(page(number), token: token)
+            let (data, response) = try await run(page(number), token: token)
             let decoded: Page<T>
             do {
                 decoded = try JSONDecoder().decode(Page<T>.self, from: data)
             } catch {
-                throw APIError.unreadableResponse
+                throw APIError.unreadableSuccess(status: response.statusCode)
             }
             items += decoded.data
             if decoded.data.isEmpty || items.count >= decoded.meta.total { return items }

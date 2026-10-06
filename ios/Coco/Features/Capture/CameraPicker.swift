@@ -5,8 +5,8 @@ import UIKit
 /// La cámara si la hay; si no —el simulador—, el selector de fotos del
 /// sistema, para que la prueba de humo pueda adjuntar un recibo igual.
 struct CameraPicker: UIViewControllerRepresentable {
-    let onCapture: (UIImage) -> Void
-    let onCancel: () -> Void
+    let onCapture: @MainActor (UIImage) -> Void
+    let onCancel: @MainActor () -> Void
 
     static var hayCamara: Bool {
         UIImagePickerController.isSourceTypeAvailable(.camera)
@@ -64,8 +64,9 @@ struct CameraPicker: UIViewControllerRepresentable {
             let onCapture = parent.onCapture
             let onCancel = parent.onCancel
             provider.loadObject(ofClass: UIImage.self) { object, _ in
-                DispatchQueue.main.async {
-                    if let image = object as? UIImage { onCapture(image) } else { onCancel() }
+                let image = object as? UIImage
+                Task { @MainActor in
+                    if let image { onCapture(image) } else { onCancel() }
                 }
             }
         }

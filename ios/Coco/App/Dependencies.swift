@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 
 /// La composición de la app, hecha UNA vez. Todo lo que cruza módulos nace
 /// aquí y se pasa por el constructor: nadie más llama a `.shared` ni a un
@@ -79,6 +80,10 @@ final class Dependencies {
         bridge = WebBridge(session: session, configuration: configuration, navigation: router)
 
         counter.onCount = { [weak self] n in self?.pending = n }
+        counter.onSaved = { [weak self] in
+            guard let self else { return }
+            Task { await self.bridge.notify(.captured) }
+        }
 
         // Antes de que iOS pueda lanzar un intent o una tarea de fondo: en el
         // init de la App, no después.
@@ -107,6 +112,7 @@ final class Dependencies {
     /// Al volver a primer plano: árbol si toca y cola.
     func returnedToForeground() {
         guard started else { return }
+        Task { await self.bridge.notify(.foreground) }
         Task {
             await self.tree.refreshIfNeeded()
             _ = await self.queue.process()
@@ -185,7 +191,7 @@ final class Dependencies {
         }
     }
 
-    static let permissionAskedKey = "notification-permission-requested"
+    nonisolated static let permissionAskedKey = "notification-permission-requested"
 
     private func requestNotificationPermissionOnce() async {
         guard !defaults.bool(forKey: Self.permissionAskedKey) else { return }
@@ -204,25 +210,23 @@ final class Dependencies {
 
     // MARK: Por defecto
 
-    /// Si el disco de la app no se deja crear, la cola va al temporal: peor
-    /// que lo normal, pero mejor que arrancar sin cola.
+    /// Siempre en `Application Support`. Si el disco falla, la cola lo dice
+    /// en Capturas en vez de esconderse en el temporal, que iOS vacía.
     private static func defaultQueueStore() -> QueueStore {
-        let root =
-            (try? DiskQueueStore.defaultRoot())
-            ?? FileManager.default.temporaryDirectory.appending(path: "cola", directoryHint: .isDirectory)
-        return DiskQueueStore(root: root)
+        DiskQueueStore(root: DiskQueueStore.defaultRoot)
     }
 
     private static func defaultTreeStore() -> TreeStore {
-        (try? DiskTreeStore.atDefaultLocation())
-            ?? DiskTreeStore(file: FileManager.default.temporaryDirectory.appending(path: "tree.json"))
+        DiskTreeStore.atDefaultLocation
     }
 
     private static func name(from state: SessionState) -> String {
         switch state {
         case .loading: "cargando"
         case .signedOut: "sin sesión"
-        case .active(let p): "activa (\(p.email))"
+        // Sin el correo: el registro del sistema lo puede leer quien tenga el
+        // teléfono conectado a un Mac, y un dato personal no tiene que estar.
+        case .active: "activa"
         case .offline: "sin conexión"
         }
     }
@@ -230,14 +234,22 @@ final class Dependencies {
 
 /// Reenvía todo al notificador real y, de paso, cuenta lo que la cola dice
 /// que está pendiente cada vez que actualiza la insignia del icono.
-final class PendingCounter: Notifier, @unchecked Sendable {
+final class PendingCounter: Notifier {
     private let real: Notifier
-    private let lock = NSLock()
-    private var _onCount: (@MainActor (Int) -> Void)?
+    private let onCountLock = OSAllocatedUnfairLock<(@MainActor @Sendable (Int) -> Void)?>(initialState: nil)
 
-    var onCount: (@MainActor (Int) -> Void)? {
-        get { lock.withLock { _onCount } }
-        set { lock.withLock { _onCount = newValue } }
+    var onCount: (@MainActor @Sendable (Int) -> Void)? {
+        get { onCountLock.withLock { $0 } }
+        set { onCountLock.withLock { $0 = newValue } }
+    }
+
+    private let onSavedLock = OSAllocatedUnfairLock<(@MainActor @Sendable () -> Void)?>(initialState: nil)
+
+    /// Una captura llegó a la API: la web tiene que volver a pedir lo que
+    /// cambia con un movimiento nuevo.
+    var onSaved: (@MainActor @Sendable () -> Void)? {
+        get { onSavedLock.withLock { $0 } }
+        set { onSavedLock.withLock { $0 = newValue } }
     }
 
     init(notifier: Notifier) {
@@ -246,6 +258,7 @@ final class PendingCounter: Notifier, @unchecked Sendable {
 
     func requestPermission() async -> Bool { await real.requestPermission() }
     func captureSaved(_ r: SavedResult, source: CaptureSource) async {
+        if let onSaved { await onSaved() }
         await real.captureSaved(r, source: source)
     }
     func captureFailed(reason: String) async { await real.captureFailed(reason: reason) }

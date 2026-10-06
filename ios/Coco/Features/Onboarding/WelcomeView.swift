@@ -3,7 +3,7 @@ import SwiftUI
 /// La guía para crear las dos automatizaciones y los accesos. Se marca como
 /// vista en UserDefaults y se puede reabrir desde Más y desde Capturas.
 struct WelcomeView: View {
-    static let key = "welcome-seen"
+    nonisolated static let key = "welcome-seen"
 
     let onFinish: () -> Void
     let defaults: UserDefaults
@@ -13,7 +13,7 @@ struct WelcomeView: View {
         self.defaults = defaults
     }
 
-    static func wasSeen(defaults: UserDefaults = .standard) -> Bool {
+    nonisolated static func wasSeen(defaults: UserDefaults = .standard) -> Bool {
         defaults.bool(forKey: key)
     }
 

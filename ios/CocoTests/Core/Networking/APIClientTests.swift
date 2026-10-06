@@ -63,11 +63,23 @@ final class APIClientTests: XCTestCase {
         XCTAssertEqual(timeout, .timedOut)
     }
 
+    /// Un 2xx ilegible NO es lo mismo que un error ilegible: el servidor ya
+    /// hizo lo que se pidió, y la cola no debe repetirlo.
     func testUnreadableBody() async {
         let html = await error(FakeTransport([.http(200, "<html>")]))
-        XCTAssertEqual(html, .unreadableResponse)
-        let otherShape = await error(FakeTransport([.http(200, #"{"data":{"no":"es un árbol"}}"#)]))
-        XCTAssertEqual(otherShape, .unreadableResponse)
+        XCTAssertEqual(html, .unreadableSuccess(status: 200))
+        let otherShape = await error(FakeTransport([.http(201, #"{"data":{"no":"es un árbol"}}"#)]))
+        XCTAssertEqual(otherShape, .unreadableSuccess(status: 201))
+        XCTAssertEqual(otherShape?.isRetryable, false)
+        let unreadableError = await error(FakeTransport([.http(422, "<html>")]))
+        XCTAssertEqual(unreadableError, .unreadableResponse)
+    }
+
+    func testCancellationIsNotANetworkFailure() async {
+        XCTAssertEqual(APIError.from(CancellationError()), .cancelled)
+        XCTAssertEqual(APIError.from(URLError(.cancelled)), .cancelled)
+        XCTAssertEqual(APIError.cancelled.isRetryable, false)
+        XCTAssertEqual(APIError.cancelled.isNetworkError, false)
     }
 
     func test204DoesNotDecode() async throws {

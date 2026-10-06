@@ -1,5 +1,6 @@
 import WebKit
 import XCTest
+import os
 
 @testable import Coco
 
@@ -86,11 +87,13 @@ final class WebBridgeTests: XCTestCase {
 
     /// Un reloj que avanza 31 s en cada lectura: cada entrega cae fuera de la
     /// ventana de la anterior.
-    final class JumpingClock: @unchecked Sendable {
-        private var t = Date(timeIntervalSince1970: 1_800_000_000)
+    final class JumpingClock: Sendable {
+        private let t = OSAllocatedUnfairLock(initialState: Date(timeIntervalSince1970: 1_800_000_000))
         func read() -> Date {
-            t = t.addingTimeInterval(31)
-            return t
+            t.withLock {
+                $0 = $0.addingTimeInterval(31)
+                return $0
+            }
         }
     }
 
@@ -100,6 +103,39 @@ final class WebBridgeTests: XCTestCase {
         return WebBridge(
             session: session, configuration: APIConfiguration(base: base), navigation: navigation, version: "0.1.0",
             clock: { clock.read() }, openExternal: { _ in })
+    }
+
+    // MARK: Avisos hacia la web
+
+    func testNoticesUseTheContractNamesAndNeverFailOnAnOldWeb() {
+        XCTAssertEqual(WebNotice.captured.rawValue, "capturado")
+        XCTAssertEqual(WebNotice.foreground.rawValue, "primerPlano")
+        for notice in WebNotice.allCases {
+            XCTAssertEqual(WebBridge.javascript(for: notice), "window.__coco?.\(notice.rawValue)?.(); true;")
+        }
+    }
+
+    /// En un WKWebView de verdad: sin `__coco` (sin sesión), con un `__coco`
+    /// viejo que no conoce los avisos, y con uno que sí.
+    @MainActor
+    func testNoticesReachTheWebAndAreHarmlessWithoutIt() async throws {
+        let p = bridge(session: SessionDouble())
+        p.webView.loadHTMLString("<html><body></body></html>", baseURL: nil)
+        for _ in 0..<100 where p.webView.isLoading { try await Task.sleep(for: .milliseconds(20)) }
+
+        let withoutCoco = await p.notify(.captured)
+        XCTAssertTrue(withoutCoco)
+        _ = try await p.webView.evaluateJavaScript("window.__coco = { ir() {} }; true;")
+        let oldWeb = await p.notify(.foreground)
+        XCTAssertTrue(oldWeb)
+
+        _ = try await p.webView.evaluateJavaScript(
+            "window.avisos = []; window.__coco = { capturado() { avisos.push('c') }, primerPlano() { avisos.push('p') } }; true;"
+        )
+        await p.notify(.captured)
+        await p.notify(.foreground)
+        let received = try await p.webView.evaluateJavaScript("avisos.join(',')") as? String
+        XCTAssertEqual(received, "c,p")
     }
 
     @MainActor

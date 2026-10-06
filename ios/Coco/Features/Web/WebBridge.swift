@@ -40,8 +40,8 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 {
     static let sessionHandler = "cocoSesion"
     static let eventsHandler = "cocoEventos"
-    static let deliveryWindow: TimeInterval = 30
-    static let maxConsecutiveDeliveries = 2
+    nonisolated static let deliveryWindow: TimeInterval = 30
+    nonisolated static let maxConsecutiveDeliveries = 2
 
     let webView: WKWebView
     private(set) var loadState: LoadState = .loading
@@ -162,7 +162,7 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
         deliveryPending = false
         lastDelivery = now
         consecutiveDeliveries += 1
-        webView.evaluateJavaScript("window.__coco?.recibirSesion?.(\(json)); true;") { _, _ in }
+        _ = try? await webView.evaluateJavaScript("window.__coco?.recibirSesion?.(\(json)); true;")
     }
 
     func notifySessionClosed() {
@@ -302,7 +302,8 @@ final class WebBridge: NSObject, WKScriptMessageHandlerWithReply, WKScriptMessag
 
     // MARK: Puros
 
-    nonisolated static func isOriginAllowed(_ source: WKSecurityOrigin, base: URL, isMainFrame: Bool) -> Bool {
+    /// En el hilo principal: `WKSecurityOrigin` solo se lee ahí.
+    static func isOriginAllowed(_ source: WKSecurityOrigin, base: URL, isMainFrame: Bool) -> Bool {
         isOriginAllowed(
             originProtocol: source.protocol, host: source.host, port: source.port, base: base,
             isMainFrame: isMainFrame)

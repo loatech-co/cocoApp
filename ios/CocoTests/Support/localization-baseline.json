@@ -880,6 +880,46 @@
       "key": "widget.capture.title",
       "source": "ios/CocoWidgets/CaptureWidget.swift:73",
       "value": "Registrar gasto"
+    },
+    {
+      "key": "captures.section.toReview",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift",
+      "value": "Por revisar"
+    },
+    {
+      "key": "captures.row.unconfirmed",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift",
+      "value": "%@ · llegó, pero sin confirmar: búscalo en Movimientos"
+    },
+    {
+      "key": "captures.row.reviewed",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift",
+      "value": "Ya lo revisé"
+    },
+    {
+      "key": "captures.unreadable.one",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift",
+      "value": "1 captura no se pudo leer"
+    },
+    {
+      "key": "captures.unreadable.many",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift",
+      "value": "%@ capturas no se pudieron leer"
+    },
+    {
+      "key": "captures.unreadable.detail",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift",
+      "value": "Están guardadas aparte en el teléfono; no se borró nada."
+    },
+    {
+      "key": "captures.diskError",
+      "source": "ios/Coco/Features/Capture/CapturesView.swift",
+      "value": "El teléfono no deja guardar la cola. Lo que captures ahora puede no quedar guardado."
+    },
+    {
+      "key": "shortcuts.dialog.unconfirmed",
+      "source": "ios/Coco/Features/Shortcuts/ActionParameters.swift",
+      "value": "Se envió, pero la respuesta no se pudo leer. Revísalo en Capturas."
     }
   ]
 }

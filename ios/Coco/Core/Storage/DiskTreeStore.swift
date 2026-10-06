@@ -8,11 +8,10 @@ struct DiskTreeStore: TreeStore {
     /// Dentro de `Application Support`. Fija su nombre `StoredFormatTests`.
     static let fileName = "tree.json"
 
-    /// `Application Support/tree.json` del contenedor de la app.
-    static func atDefaultLocation(fileManager: FileManager = .default) throws -> DiskTreeStore {
-        let supportDirectory = try fileManager.url(
-            for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        return DiskTreeStore(file: supportDirectory.appending(path: Self.fileName))
+    /// `Application Support/tree.json` del contenedor de la app. No toca el
+    /// disco: la carpeta la crea `save`. Nunca el directorio temporal.
+    static var atDefaultLocation: DiskTreeStore {
+        DiskTreeStore(file: URL.applicationSupportDirectory.appending(path: Self.fileName))
     }
 
     func load() throws -> SavedTree? {

@@ -11,6 +11,8 @@ final class CaptureQueueTests: XCTestCase {
     /// Reloj fijo que las pruebas mueven a mano.
     private let now = ControlledNow()
 
+    // `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+    // corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
     final class ControlledNow: @unchecked Sendable {
         private let lock = NSLock()
         private var value = Date(timeIntervalSince1970: 1_800_000_000)
@@ -353,12 +355,13 @@ final class CaptureQueueTests: XCTestCase {
 
     func testChangesPublishesTheQueueAfterEachTransitionAndTheBadgeCarriesThePending() async throws {
         let c = queue()
-        var pendingSeen: [Int] = []
         let reader = Task {
+            var seen: [Int] = []
             for await list in c.changes {
-                pendingSeen.append(list.filter(\.isPending).count)
-                if pendingSeen.count == 2 { break }
+                seen.append(list.captures.filter(\.isPending).count)
+                if seen.count == 2 { break }
             }
+            return seen
         }
         sender.replyToCapture(.failure(APIError.noNetwork(.notConnectedToInternet)))
         try await c.enqueue(body, source: .wallet, photo: nil)
@@ -366,7 +369,7 @@ final class CaptureQueueTests: XCTestCase {
         // La publicación va por un buffer de uno; se da tiempo al lector.
         try await Task.sleep(for: .milliseconds(50))
         await c.process()
-        await reader.value
+        let pendingSeen = await reader.value
         XCTAssertEqual(pendingSeen.first, 1)
         XCTAssertEqual(notifier.badges.first, 1)
         let pendingBefore = await c.pending()

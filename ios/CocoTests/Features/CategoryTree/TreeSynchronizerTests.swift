@@ -4,7 +4,7 @@ import XCTest
 
 final class TreeSynchronizerTests: XCTestCase {
     /// Una sesión que siempre tiene token: aquí se prueba el árbol, no la sesión.
-    private final class FixedSession: Session, @unchecked Sendable {
+    private final class FixedSession: Session {
         var state: SessionState { .signedOut }
         let changes: AsyncStream<SessionState> = AsyncStream { $0.finish() }
         func restore() async {}

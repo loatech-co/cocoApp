@@ -1,19 +1,23 @@
 import SwiftUI
 
 /// Lo que se capturó desde el teléfono: pendientes (con cuenta), esperando
-/// sesión, fallidas y hechas de los últimos 30 días. Se lee de la cola
-/// local, así que tiene contenido sin red.
+/// sesión, por revisar, fallidas y hechas de los últimos 30 días. Se lee de la
+/// cola local, así que tiene contenido sin red. Arriba, si los hay, los dos
+/// avisos que la cola no puede resolver sola: archivos que no se pudieron leer
+/// y un disco que no deja escribir.
 struct CapturesView: View {
     private let queue: CaptureQueue
     private let navigation: any Navigation
 
-    @State private var captures: [PendingCapture] = []
+    @State private var snapshot = QueueSnapshot()
     @State private var loaded = false
 
     init(queue: CaptureQueue, navigation: any Navigation) {
         self.queue = queue
         self.navigation = navigation
     }
+
+    private var captures: [PendingCapture] { snapshot.captures }
 
     private var pending: [PendingCapture] {
         captures.filter {
@@ -23,6 +27,9 @@ struct CapturesView: View {
         }
     }
     private var awaitingSession: [PendingCapture] { captures.filter { $0.phase == .awaitingSession } }
+    private var toReview: [PendingCapture] {
+        captures.filter { if case .unconfirmed = $0.phase { return true } else { return false } }
+    }
     private var failedCaptures: [PendingCapture] {
         captures.filter { if case .failed = $0.phase { return true } else { return false } }
     }
@@ -37,6 +44,7 @@ struct CapturesView: View {
     var body: some View {
         NavigationStack {
             List {
+                storageNotices
                 if !loaded {
                     ProgressView()
                 } else if captures.isEmpty {
@@ -48,6 +56,7 @@ struct CapturesView: View {
                 }
                 section(L10n.Captures.sectionPending(pending.count), pending)
                 section(L10n.Captures.sectionAwaitingSession, awaitingSession)
+                section(L10n.Captures.sectionToReview, toReview)
                 section(L10n.Captures.sectionFailed, failedCaptures)
                 section(L10n.Captures.sectionSent, doneCaptures)
                 Section {
@@ -70,11 +79,33 @@ struct CapturesView: View {
             }
             .task {
                 await queue.purge()
-                captures = await queue.all()
+                snapshot = await queue.snapshot()
                 loaded = true
-                for await list in queue.changes {
-                    captures = list
+                for await next in queue.changes {
+                    snapshot = next
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var storageNotices: some View {
+        if snapshot.unreadable > 0 {
+            Section {
+                Label {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(L10n.Captures.unreadable(snapshot.unreadable))
+                        Text(L10n.Captures.unreadableDetail).font(.footnote).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "doc.badge.ellipsis")
+                }
+            }
+        }
+        if snapshot.diskError {
+            Section {
+                Label(L10n.Captures.diskError, systemImage: "externaldrive.badge.exclamationmark")
+                    .foregroundStyle(.red)
             }
         }
     }
@@ -86,7 +117,13 @@ struct CapturesView: View {
                 ForEach(items) { capture in
                     CaptureRow(capture: capture)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            if !capture.isDone {
+                            if capture.isUnconfirmed {
+                                // Solo quita el aviso del teléfono: el gasto
+                                // ya está en la API.
+                                Button(L10n.Captures.rowReviewed) {
+                                    Task { try? await queue.discard(id: capture.id) }
+                                }
+                            } else if !capture.isDone {
                                 Button(L10n.Captures.rowDiscard, role: .destructive) {
                                     Task { try? await queue.discard(id: capture.id) }
                                 }
@@ -144,6 +181,7 @@ private struct CaptureRow: View {
         case .toSend: return L10n.Captures.rowToSend(date)
         case .photoToUpload: return L10n.Captures.rowPhotoToUpload(date)
         case .awaitingSession: return L10n.Captures.rowAwaitingSession(date)
+        case .unconfirmed: return L10n.Captures.rowUnconfirmed(date)
         case .failed(let reason): return L10n.Captures.rowFailed(date, reason: reason)
         case .done(let r): return r.needsReview ? L10n.Captures.rowNeedsReview(date) : date
         }
@@ -153,10 +191,11 @@ private struct CaptureRow: View {
 extension PendingCapture {
     fileprivate var isDone: Bool { if case .done = phase { return true } else { return false } }
     fileprivate var isFailed: Bool { if case .failed = phase { return true } else { return false } }
+    fileprivate var isUnconfirmed: Bool { if case .unconfirmed = phase { return true } else { return false } }
     fileprivate var canRetry: Bool {
         switch phase {
         case .toSend, .awaitingSession, .failed: true
-        case .photoToUpload, .done: false
+        case .photoToUpload, .done, .unconfirmed: false
         }
     }
 }

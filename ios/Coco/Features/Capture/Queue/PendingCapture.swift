@@ -3,6 +3,12 @@ import Foundation
 /// Una captura en disco, esperando su turno. Es el dato del que hablan los
 /// protocolos `QueueStore` y `CaptureSender` (M4 añade la cola).
 struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
+    /// La versión del formato en disco que entiende esta app. Un archivo con
+    /// otra —o sin ella— no se adivina: va a la cuarentena (`DiskQueueStore`).
+    static let formatVersion = 1
+
+    /// La versión con la que se escribió este archivo.
+    var version: Int = Self.formatVersion
     /// Es también el `externalRef`: la llave de la idempotencia.
     let id: UUID
     /// Es también el `capturedAt`.
@@ -24,6 +30,10 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
         case photoToUpload(transactionId: Int)
         case awaitingSession
         case done(SavedResult)
+        /// La API contestó 2xx pero la respuesta no se pudo leer: la captura
+        /// LLEGÓ, y lo que falta es comprobarlo. No se reintenta sola, porque
+        /// repetirla podría registrar el gasto dos veces.
+        case unconfirmed(at: Date)
         case failed(reason: String)
     }
 
@@ -54,7 +64,7 @@ struct PendingCapture: Codable, Identifiable, Equatable, Sendable {
     var isPending: Bool {
         switch phase {
         case .toSend, .photoToUpload, .awaitingSession: true
-        case .done, .failed: false
+        case .done, .unconfirmed, .failed: false
         }
     }
 

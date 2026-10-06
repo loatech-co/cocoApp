@@ -33,6 +33,10 @@ struct RootView: View {
         .sheet(item: $router.sheet, content: sheetContent)
         .onChange(of: router.pendingWebPath, initial: true) { _, _ in consumePending() }
         .onChange(of: router.searchPending) { _, _ in consumePending() }
+        // Volver a la pestaña de la web es volver a primer plano para ella.
+        .onChange(of: router.tab) { old, new in
+            if new == .home, old != .home { Task { await d.bridge.notify(.foreground) } }
+        }
         .task { await d.start() }
     }
 

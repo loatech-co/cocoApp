@@ -43,6 +43,7 @@ enum L10n {
 
     enum Captures {
         static var automations: String { text("captures.automations") }
+        static var diskError: String { text("captures.diskError") }
         static var emptyDescription: String { text("captures.empty.description") }
         static var emptyTitle: String { text("captures.empty.title") }
         static var new: String { text("captures.new") }
@@ -52,12 +53,19 @@ enum L10n {
         static var rowFallbackTitle: String { text("captures.row.fallbackTitle") }
         static func rowNeedsReview(_ date: String) -> String { format("captures.row.needsReview", date) }
         static func rowPhotoToUpload(_ date: String) -> String { format("captures.row.photoToUpload", date) }
+        static var rowReviewed: String { text("captures.row.reviewed") }
         static func rowToSend(_ date: String) -> String { format("captures.row.toSend", date) }
+        static func rowUnconfirmed(_ date: String) -> String { format("captures.row.unconfirmed", date) }
         static var sectionAwaitingSession: String { text("captures.section.awaitingSession") }
         static var sectionFailed: String { text("captures.section.failed") }
         static func sectionPending(_ count: Int) -> String { format("captures.section.pending", String(count)) }
         static var sectionSent: String { text("captures.section.sent") }
+        static var sectionToReview: String { text("captures.section.toReview") }
         static var title: String { text("captures.title") }
+        static func unreadable(_ count: Int) -> String {
+            count == 1 ? text("captures.unreadable.one") : format("captures.unreadable.many", String(count))
+        }
+        static var unreadableDetail: String { text("captures.unreadable.detail") }
     }
 
     enum Common {
@@ -199,6 +207,7 @@ enum L10n {
         static func dialogFailed(_ reason: String) -> String { format("shortcuts.dialog.failed", reason) }
         static func dialogNeedsReview(_ summary: String) -> String { format("shortcuts.dialog.needsReview", summary) }
         static var dialogQueued: String { text("shortcuts.dialog.queued") }
+        static var dialogUnconfirmed: String { text("shortcuts.dialog.unconfirmed") }
         static func dialogQueuedMany(_ queued: String, pending: Int) -> String {
             format("shortcuts.dialog.queuedMany", queued, String(pending))
         }

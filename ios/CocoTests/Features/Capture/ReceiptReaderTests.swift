@@ -33,6 +33,8 @@ final class ReceiptReaderTests: XCTestCase {
     }
 }
 
+// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
 final class FakeReceiptReader: ReceiptTextReader, @unchecked Sendable {
     private let lock = NSLock()
     private(set) var reads = 0

@@ -17,6 +17,8 @@ final class NativeSessionTests: XCTestCase {
         createdAt: "2026-01-01T00:00:00Z")
 
     /// Un reloj que las pruebas mueven a mano.
+    /// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+    /// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
     private final class TestClock: @unchecked Sendable {
         private let lock = NSLock()
         private var _now = Date(timeIntervalSince1970: 1_800_000_000)
@@ -29,6 +31,8 @@ final class NativeSessionTests: XCTestCase {
 
     /// Apuntes en orden de lo que pasó: «red» cuando el transporte responde,
     /// «llavero:<valor>» cuando se escribe el refresh.
+    /// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+    /// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
     private final class AppLog: @unchecked Sendable {
         private let lock = NSLock()
         private var _lines: [String] = []
@@ -36,7 +40,7 @@ final class NativeSessionTests: XCTestCase {
         func record(_ l: String) { lock.withLock { _lines.append(l) } }
     }
 
-    private final class RecordingTransport: Transport, @unchecked Sendable {
+    private final class RecordingTransport: Transport {
         let inner: FakeTransport
         let log: AppLog
         init(_ inner: FakeTransport, log: AppLog) {
@@ -52,7 +56,7 @@ final class NativeSessionTests: XCTestCase {
         }
     }
 
-    private final class RecordingKeychain: KeychainStore, @unchecked Sendable {
+    private final class RecordingKeychain: KeychainStore {
         let inner: InMemoryKeychain
         let log: AppLog
         init(_ inner: InMemoryKeychain, log: AppLog) {

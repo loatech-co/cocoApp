@@ -10,7 +10,8 @@ enum QueueError: Error, Equatable {
 
 /// Un JSON por captura en `Application Support/Queue/<uuid>.json` y la foto en
 /// `Queue/Photos/<uuid>.jpg`. Escritura atómica: una captura o está entera en
-/// disco o no está; nunca a medias.
+/// disco o no está; nunca a medias. Lo que no se deja leer se aparta a
+/// `Queue/Quarantine`, intacto, y se cuenta: nunca se pierde en silencio.
 struct DiskQueueStore: QueueStore {
     let root: URL
 
@@ -22,26 +23,34 @@ struct DiskQueueStore: QueueStore {
     static let folderName = "Queue"
     /// Dentro de la carpeta de la cola.
     static let photosFolderName = "Photos"
+    /// Dentro de la carpeta de la cola: los archivos que no se pudieron leer.
+    static let quarantineFolderName = "Quarantine"
 
     init(root: URL) {
         self.root = root
     }
 
-    /// `Application Support/Queue`, creada y excluida de la copia de iCloud: lo
-    /// que hay aquí se envía en minutos y restaurarlo en otro teléfono
-    /// duplicaría gastos.
-    static func defaultRoot(fileManager: FileManager = .default) throws -> URL {
-        let supportDirectory = try fileManager.url(
-            for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        var root = supportDirectory.appending(path: folderName, directoryHint: .isDirectory)
-        try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
+    /// `Application Support/Queue`. No toca el disco, así que no falla: la
+    /// carpeta se crea —y se excluye de la copia de iCloud— al escribir. Nunca
+    /// el directorio temporal, que iOS vacía cuando quiere.
+    static var defaultRoot: URL {
+        URL.applicationSupportDirectory.appending(path: folderName, directoryHint: .isDirectory)
+    }
+
+    /// Crea la carpeta si falta y la excluye de la copia de iCloud: lo que hay
+    /// aquí se envía en minutos y restaurarlo en otro teléfono duplicaría
+    /// gastos.
+    private func prepareRoot() throws {
+        guard !FileManager.default.fileExists(atPath: root.path(percentEncoded: false)) else { return }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
-        try root.setResourceValues(values)
-        return root
+        var url = root
+        try url.setResourceValues(values)
     }
 
     private var photos: URL { root.appending(path: Self.photosFolderName, directoryHint: .isDirectory) }
+    private var quarantine: URL { root.appending(path: Self.quarantineFolderName, directoryHint: .isDirectory) }
 
     private func file(_ id: UUID) -> URL {
         root.appending(path: "\(id.uuidString).json")
@@ -49,17 +58,14 @@ struct DiskQueueStore: QueueStore {
 
     // ISO 8601 CON fracción de segundo: la estrategia `.iso8601` de serie la
     // tira, y una captura dejaría de ser igual a sí misma al volver del disco.
-    private static let dateFormatter: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
+    // Un `FormatStyle` y no un `ISO8601DateFormatter`: es `Sendable`.
+    private static let dateFormat = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
 
     private static let jsonEncoder: JSONEncoder = {
         let e = JSONEncoder()
         e.dateEncodingStrategy = .custom { date, encoder in
             var c = encoder.singleValueContainer()
-            try c.encode(dateFormatter.string(from: date))
+            try c.encode(dateFormat.format(date))
         }
         e.outputFormatting = [.sortedKeys]
         return e
@@ -69,7 +75,7 @@ struct DiskQueueStore: QueueStore {
         let d = JSONDecoder()
         d.dateDecodingStrategy = .custom { decoder in
             let text = try decoder.singleValueContainer().decode(String.self)
-            guard let date = dateFormatter.date(from: text) ?? ISO8601DateFormatter().date(from: text) else {
+            guard let date = (try? dateFormat.parse(text)) ?? (try? Date.ISO8601FormatStyle().parse(text)) else {
                 throw DecodingError.dataCorrupted(
                     .init(codingPath: decoder.codingPath, debugDescription: "Fecha ilegible: \(text)"))
             }
@@ -79,22 +85,45 @@ struct DiskQueueStore: QueueStore {
     }()
 
     func save(_ capture: PendingCapture) throws {
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        try prepareRoot()
         let data = try Self.jsonEncoder.encode(capture)
         try data.write(to: file(capture.id), options: Self.options)
     }
 
-    /// Un archivo que no se deja leer se salta y no tumba la cola entera.
+    /// Lo que se lee y es de esta versión. Un archivo corrupto o de una versión
+    /// que esta app no conoce se mueve a la cuarentena con su contenido, y la
+    /// cola sigue con los demás. Si el DISCO no deja leer —el teléfono aún no
+    /// se ha desbloqueado—, lanza: eso no es un archivo malo.
     func all() throws -> [PendingCapture] {
         guard FileManager.default.fileExists(atPath: root.path(percentEncoded: false)) else { return [] }
         let urls = try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)
-        return
-            urls
-            .filter { $0.pathExtension == "json" }
-            .compactMap { url in
-                guard let data = try? Data(contentsOf: url) else { return nil }
-                return try? Self.jsonDecoder.decode(PendingCapture.self, from: data)
+        var captures: [PendingCapture] = []
+        for url in urls where url.pathExtension == "json" {
+            let data = try Data(contentsOf: url)
+            if let capture = try? Self.jsonDecoder.decode(PendingCapture.self, from: data),
+                capture.version == PendingCapture.formatVersion
+            {
+                captures.append(capture)
+            } else {
+                try moveToQuarantine(url)
             }
+        }
+        return captures
+    }
+
+    func quarantined() throws -> Int {
+        guard FileManager.default.fileExists(atPath: quarantine.path(percentEncoded: false)) else { return 0 }
+        return try FileManager.default.contentsOfDirectory(at: quarantine, includingPropertiesForKeys: nil).count
+    }
+
+    private func moveToQuarantine(_ url: URL) throws {
+        try FileManager.default.createDirectory(at: quarantine, withIntermediateDirectories: true)
+        var target = quarantine.appending(path: url.lastPathComponent)
+        if FileManager.default.fileExists(atPath: target.path(percentEncoded: false)) {
+            target = quarantine.appending(path: "\(UUID().uuidString)-\(url.lastPathComponent)")
+        }
+        try FileManager.default.moveItem(at: url, to: target)
+        AppLog.queue.error("Captura ilegible apartada a la cuarentena: \(url.lastPathComponent, privacy: .public)")
     }
 
     func delete(id: UUID) throws {
@@ -104,6 +133,7 @@ struct DiskQueueStore: QueueStore {
     }
 
     func savePhoto(_ jpeg: Data, id: UUID) throws -> String {
+        try prepareRoot()
         try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
         let relativePath = "\(Self.photosFolderName)/\(id.uuidString).jpg"
         try jpeg.write(to: root.appending(path: relativePath), options: Self.options)

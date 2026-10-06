@@ -1,5 +1,6 @@
 import BackgroundTasks
 import Foundation
+import os
 
 /// Lo que iOS concede en segundo plano: una renovación corta (sesión tibia y
 /// árbol fresco) y un procesado de la cola con red. Son una ayuda, no una
@@ -21,17 +22,9 @@ enum BackgroundJobs {
 
     /// `submit` sin un handler registrado no lanza un error: lanza una
     /// excepción de Objective-C que tumba la app. Por eso se recuerda si
-    /// `registrar` ya pasó y `programar` no hace nada antes.
-    private static let registry = Registry()
-    private final class Registry: @unchecked Sendable {
-        private let lock = NSLock()
-        private var done = false
-        var value: Bool {
-            get { lock.withLock { done } }
-            set { lock.withLock { done = newValue } }
-        }
-    }
-    static var isRegistered: Bool { registry.value }
+    /// `register` ya pasó y `schedule` no hace nada antes.
+    private static let registry = OSAllocatedUnfairLock(initialState: false)
+    static var isRegistered: Bool { registry.withLock { $0 } }
 
     /// Antes de que termine `didFinishLaunching`; después iOS ya no deja.
     @MainActor
@@ -39,7 +32,7 @@ enum BackgroundJobs {
         session: Session, queue: CaptureQueue, tree: TreeSynchronizer, notifier: Notifier,
         scheduler: BGTaskScheduler = .shared
     ) {
-        registry.value = true
+        registry.withLock { $0 = true }
         scheduler.register(forTaskWithIdentifier: refresh, using: nil) { task in
             runTask(task, scheduler: scheduler) {
                 await runRefresh(session: session, tree: tree)
@@ -91,13 +84,26 @@ enum BackgroundJobs {
         return summary.sent
     }
 
+    /// `BGTask` no es `Sendable`, pero lo único que se hace con él fuera del
+    /// hilo donde llega —`setTaskCompleted` y `expirationHandler`— lo admite
+    /// desde cualquier hilo (documentación de BackgroundTasks). Esta caja solo
+    /// le deja cruzar al `Task` que hace el trabajo.
+    private struct TaskHandle: @unchecked Sendable {
+        let task: BGTask
+        let scheduler: BGTaskScheduler
+    }
+
+    /// El trabajo corre en un `Task` que iOS cancela al expirar la tarea: la
+    /// cancelación llega a la cola (`withTaskCancellationHandler`), que corta
+    /// la petición en vuelo y deja la captura en disco tal como estaba.
     private static func runTask(
         _ task: BGTask, scheduler: BGTaskScheduler, _ work: @escaping @Sendable () async -> Void
     ) {
+        let handle = TaskHandle(task: task, scheduler: scheduler)
         let execution = Task {
             await work()
-            task.setTaskCompleted(success: !Task.isCancelled)
-            schedule(scheduler: scheduler)
+            handle.task.setTaskCompleted(success: !Task.isCancelled)
+            schedule(scheduler: handle.scheduler)
         }
         // Al expirar se cancela el trabajo; el propio `Task` cierra la tarea
         // una sola vez al salir.

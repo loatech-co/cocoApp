@@ -4,6 +4,8 @@ import Foundation
 
 /// Un transporte programable: responde lo que se le diga y recuerda lo que
 /// recibió. Lo comparten las pruebas de red, sesión y cola.
+/// `@unchecked Sendable`: doble de pruebas. Lo que cambia mientras la prueba
+/// corre va bajo `lock`; lo que se configura se escribe antes de usarlo.
 final class FakeTransport: Transport, @unchecked Sendable {
     enum Reply {
         case http(Int, String)
