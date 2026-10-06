@@ -16,11 +16,11 @@ import type {
 } from './dto/category.dto';
 import { rechazoDeVariosPagos } from './varios-pagos';
 import {
-  anidar,
-  descendientesDe,
-  generariaCiclo,
-  profundidadResultante,
-  PROFUNDIDAD_MAXIMA,
+  nest,
+  descendantsOf,
+  wouldCreateCycle,
+  resultingDepth,
+  MAX_DEPTH,
 } from '../../common/categories/categories.tree';
 import { ConflictError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { english, PERIODICITY, type SpanishPeriodicity } from '../../common/vocabulary';
@@ -40,7 +40,7 @@ export class CategoriesService {
     filtros: { kind?: CategoryKind | undefined; incluirArchivadas?: boolean },
   ): Promise<CategoryTree> {
     const categorias = (await this.repo.listar(userId, filtros)).map(categoryFromRow);
-    return { tree: anidar(categorias), total: categorias.length };
+    return { tree: nest(categorias), total: categorias.length };
   }
 
   async obtener(userId: bigint, id: bigint): Promise<Category> {
@@ -57,7 +57,7 @@ export class CategoriesService {
       const esqueleto = await this.repo.esqueletoDelArbol(userId);
 
       // Una categoría nueva no tiene hijos: su profundidad es la del padre + 1.
-      profundidad = profundidadResultante(
+      profundidad = resultingDepth(
         [...esqueleto, { id: BigInt(-1), parentId: padre.id }],
         BigInt(-1),
         padre.id,
@@ -116,14 +116,14 @@ export class CategoriesService {
       const nuevoPadre = dto.parent_id === null ? null : BigInt(dto.parent_id);
       if (nuevoPadre !== null) await this.exigirCategoria(userId, nuevoPadre);
 
-      if (generariaCiclo(await arbol(), id, nuevoPadre)) {
+      if (wouldCreateCycle(await arbol(), id, nuevoPadre)) {
         throw new ValidationError(
           'Una categoría no puede colgar de sí misma ni de una de sus descendientes.',
           { code: 'category_cycle' },
         );
       }
 
-      this.exigirProfundidadValida(profundidadResultante(await arbol(), id, nuevoPadre));
+      this.exigirProfundidadValida(resultingDepth(await arbol(), id, nuevoPadre));
     }
 
     /*
@@ -148,7 +148,7 @@ export class CategoriesService {
         variosPagos: true,
         pagoAutomatico: dto.pago_automatico ?? actual.isAutoPaid,
         recurrente: dto.recurrente ?? actual.isRecurring,
-        profundidad: profundidadResultante(await arbol(), id, padreFinal),
+        profundidad: resultingDepth(await arbol(), id, padreFinal),
       });
     }
 
@@ -197,7 +197,7 @@ export class CategoriesService {
     await this.exigirCategoria(userId, id);
 
     const esqueleto = await this.repo.esqueletoDelArbol(userId);
-    const descendientes = descendientesDe(esqueleto, id);
+    const descendientes = descendantsOf(esqueleto, id);
 
     return {
       transactions: await this.repo.contarUsos(userId, [id, ...descendientes]),
@@ -236,7 +236,7 @@ export class CategoriesService {
     await this.exigirCategoria(userId, id);
 
     const esqueleto = await this.repo.esqueletoDelArbol(userId);
-    const subarbol = [id, ...descendientesDe(esqueleto, id)];
+    const subarbol = [id, ...descendantsOf(esqueleto, id)];
     const usos = await this.repo.contarUsos(userId, subarbol);
 
     if (usos > 0 && reasignarA === undefined) {
@@ -302,9 +302,9 @@ export class CategoriesService {
   }
 
   private exigirProfundidadValida(profundidad: number): void {
-    if (profundidad > PROFUNDIDAD_MAXIMA) {
+    if (profundidad > MAX_DEPTH) {
       throw new ValidationError(
-        `El árbol admite hasta ${PROFUNDIDAD_MAXIMA} niveles: centro de costos, categoría y concepto. ` +
+        `El árbol admite hasta ${MAX_DEPTH} niveles: centro de costos, categoría y concepto. ` +
           'Anidar más vuelve los reportes ilegibles.',
         { code: 'category_too_deep' },
       );

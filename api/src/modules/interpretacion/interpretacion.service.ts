@@ -24,7 +24,7 @@ import {
   type Capture,
   type Interpretation,
 } from './interpretation.domain';
-import { anidar } from '../../common/categories/categories.tree';
+import { nest } from '../../common/categories/categories.tree';
 import { DuplicateError, NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { CategoryLookupService } from '../categories/category-lookup.service';
 import { CategorizationService } from '../categorization/categorization.service';
@@ -277,7 +277,7 @@ export class InterpretacionService {
       keywords: f.keywords,
       children: (f.children as (typeof f)[]).map(aNodo),
     });
-    return anidar(filas).map(aNodo);
+    return nest(filas).map(aNodo);
   }
 
   private async yaEstaba(

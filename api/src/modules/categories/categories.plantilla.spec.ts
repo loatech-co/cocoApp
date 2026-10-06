@@ -1,5 +1,5 @@
 import { PLANTILLA_DE_CUENTA_NUEVA, type NodoDePlantilla } from './categories.plantilla';
-import { PROFUNDIDAD_MAXIMA } from '../../common/categories/categories.tree';
+import { MAX_DEPTH } from '../../common/categories/categories.tree';
 
 /**
  * La plantilla con la que nace una cuenta.
@@ -30,7 +30,7 @@ describe('La plantilla de una cuenta nueva', () => {
 
     // Un cuarto nivel lo rechaza el servicio al crear la categoría, así que la
     // cuenta nacería a medias: con los centros puestos y la rama de más, no.
-    expect(masHondo).toBeLessThanOrEqual(PROFUNDIDAD_MAXIMA);
+    expect(masHondo).toBeLessThanOrEqual(MAX_DEPTH);
   });
 
   it('llega hasta las categorías y no hasta los conceptos', () => {

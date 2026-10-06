@@ -1,4 +1,4 @@
-import { NIVELES, PROFUNDIDAD_MAXIMA } from '../../common/categories/categories.tree';
+import { LEVELS, MAX_DEPTH } from '../../common/categories/categories.tree';
 import type { CodeWithStatus } from '../../common/errors/domain-error';
 
 /** Una negativa: su código estable (v2) y la frase para la persona. */
@@ -43,12 +43,12 @@ export function rechazoDeVariosPagos({
   // fallaría por una marca que nadie encendió.
   if (!variosPagos) return null;
 
-  if (profundidad !== PROFUNDIDAD_MAXIMA) {
+  if (profundidad !== MAX_DEPTH) {
     return {
       code: 'multi_payment_requires_concept',
       message:
-        `«Se paga en varias veces» es de un ${NIVELES[PROFUNDIDAD_MAXIMA - 1]}, y esto es ` +
-        `un ${NIVELES[Math.max(0, Math.min(profundidad, PROFUNDIDAD_MAXIMA) - 1)]}. ` +
+        `«Se paga en varias veces» es de un ${LEVELS[MAX_DEPTH - 1]}, y esto es ` +
+        `un ${LEVELS[Math.max(0, Math.min(profundidad, MAX_DEPTH) - 1)]}. ` +
         `Un centro de costos y una categoría son sumas de lo que cuelga de ellos: ` +
         `no se pagan, ni de una vez ni de varias.`,
     };

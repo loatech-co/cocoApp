@@ -1,4 +1,4 @@
-import type { ConHijos } from '../../common/categories/categories.tree';
+import type { WithChildren } from '../../common/categories/categories.tree';
 import { PERIODICITY, type English } from '../../common/vocabulary';
 import type { Category as CategoryRow, CategoryKind } from '../../generated/prisma/client';
 
@@ -41,7 +41,7 @@ export interface Category {
 }
 
 /** A category with everything that hangs from it. */
-export type CategoryNode = ConHijos<Category>;
+export type CategoryNode = WithChildren<Category>;
 
 /** The tree, by its roots, and how many nodes it holds in all. */
 export interface CategoryTree {

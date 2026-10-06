@@ -15,7 +15,7 @@ import {
 } from './dashboard.summary';
 import type { Dashboard, PendingPayment } from './dashboard.types';
 import { ventanaDeLaHistoria } from './pendientes';
-import { idsDeCategorias, ramasDe } from '../../common/categories/categories.tree';
+import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
 import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
 import { BREAKDOWN_LEVEL, english, GRANULARITY } from '../../common/vocabulary';
 import { Database } from '../../prisma/database';
@@ -56,7 +56,7 @@ export class DashboardService {
     // concepto, nunca del centro ni dla categoría.
     const pedidas = [
       ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
-      ...idsDeCategorias(query.category_ids),
+      ...categoryIds(query.category_ids),
     ];
 
     const [cuentas, movimientos] = await Promise.all([
@@ -64,7 +64,7 @@ export class DashboardService {
       this.ledger.findForSummary(userId, {
         from: inicio,
         to: fin,
-        branch: pedidas.length > 0 ? ramasDe(planas, pedidas) : null,
+        branch: pedidas.length > 0 ? branchesOf(planas, pedidas) : null,
         q: query.q,
         byName: query.q ? ramaPorNombre(categorias, query.q) : [],
       }),
@@ -152,7 +152,7 @@ function ramaPorNombre(categorias: readonly SummaryCategory[], q: string): bigin
   const aguja = q.toLowerCase();
   const coinciden = categorias.filter((c) => c.name.toLowerCase().includes(aguja)).map((c) => c.id);
   const planas = categorias.map((c) => ({ id: c.id, parentId: c.parentId }));
-  return coinciden.length > 0 ? ramasDe(planas, coinciden) : [];
+  return coinciden.length > 0 ? branchesOf(planas, coinciden) : [];
 }
 
 function agregable(m: SummaryMovement): MovimientoAgregable {

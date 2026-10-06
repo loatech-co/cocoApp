@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { PLANTILLA_DE_CUENTA_NUEVA, type NodoDePlantilla } from './categories.plantilla';
 import { unir } from './palabras-clave';
-import type { NodoDeCategoria } from '../../common/categories/categories.tree';
+import type { CategoryNode } from '../../common/categories/categories.tree';
 import type { Category, CategoryKind, Prisma } from '../../generated/prisma/client';
 import { Database, type UserTx } from '../../prisma/database';
 
@@ -30,7 +30,7 @@ export class CategoriesRepository {
    * Solo id y parentId: para validar ciclos y profundidad no hace falta traerse
    * el árbol completo con nombres y colores.
    */
-  async esqueletoDelArbol(userId: bigint): Promise<NodoDeCategoria[]> {
+  async esqueletoDelArbol(userId: bigint): Promise<CategoryNode[]> {
     return this.db.forUser(userId, (tx) =>
       tx.category.findMany({ where: { userId }, select: { id: true, parentId: true } }),
     );

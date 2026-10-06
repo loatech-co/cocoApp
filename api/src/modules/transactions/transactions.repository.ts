@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import type { ListTransactionsQueryDto } from './dto/transaction.dto';
 import { parseOrden } from './transactions.sort';
-import { idsDeCategorias, ramasDe } from '../../common/categories/categories.tree';
+import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
 import { DuplicateError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
 import { Prisma, type TransactionType } from '../../generated/prisma/client';
@@ -241,12 +241,12 @@ export class TransactionsRepository {
 
     const pedidas = [
       ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
-      ...idsDeCategorias(query.category_ids),
+      ...categoryIds(query.category_ids),
     ];
     // Filtrar por "Costos fijos" tiene que traer TODO lo que hay debajo: los
     // movimientos cuelgan del concepto, que es la hoja.
     if (pedidas.length > 0) {
-      where.categoryId = { in: ramasDe(await categoryNodes(tx, userId), pedidas) };
+      where.categoryId = { in: branchesOf(await categoryNodes(tx, userId), pedidas) };
     }
 
     if (query.q) {
@@ -292,7 +292,7 @@ async function branchByName(tx: UserTx, userId: bigint, texto: string): Promise<
   const todas = await categoryNodes(tx, userId);
   const aguja = texto.toLowerCase();
   const coinciden = todas.filter((c) => c.name.toLowerCase().includes(aguja)).map((c) => c.id);
-  return coinciden.length === 0 ? [] : ramasDe(todas, coinciden);
+  return coinciden.length === 0 ? [] : branchesOf(todas, coinciden);
 }
 
 /** The filters that need no lookup: period, account, type, status, tag, amount. */
