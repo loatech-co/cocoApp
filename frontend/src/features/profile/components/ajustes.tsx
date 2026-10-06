@@ -2,7 +2,7 @@ import { Wallet } from 'lucide-react';
 
 import { useActualizarPreferencias, usePreferencias } from '@/features/profile/api/preferences';
 import { ApiClientError } from '@/shared/api/api-client';
-import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
+import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/atoms/card';
 import { Interruptor } from '@/shared/ui/atoms/interruptor';
 
@@ -28,6 +28,12 @@ export function Ajustes() {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4">
+        {/* Without the saved value, the switch would show «off» as if it were
+            the person's choice. */}
+        {preferencias.isError && (
+          <ErrorAlert mensaje="No se pudieron cargar tus ajustes. Revisa tu conexión e inténtalo de nuevo." />
+        )}
+
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>

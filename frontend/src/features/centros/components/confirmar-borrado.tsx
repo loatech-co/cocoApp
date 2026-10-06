@@ -4,7 +4,7 @@ import { useEliminarCategoria, useUsosDeCategoria } from '@/features/centros/api
 import { ApiClientError } from '@/shared/api/api-client';
 import { type CategoryTree } from '@/shared/api/categories';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
+import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Campo } from '@/shared/ui/atoms/campo';
 import { Confirmacion } from '@/shared/ui/organisms/confirmacion';
 import { Select } from '@/shared/ui/organisms/select';
@@ -83,7 +83,9 @@ export function ConfirmarBorrado({
       // Con movimientos dentro no se puede confirmar hasta decir a dónde van.
       // Apagado y no «falla al pulsar»: enterarse después de pulsar «Eliminar»
       // en un diálogo que avisa de que no se puede deshacer es lo peor.
-      confirmarDeshabilitado={hayQueReasignar && destino === ''}
+      // Without the count it is unknown whether movements hang below: deleting
+      // blind would leave them unclassified with no question asked.
+      confirmarDeshabilitado={usos.isError || (hayQueReasignar && destino === '')}
       onCancelar={onCerrar}
       onConfirmar={borrado.confirmar}
     >
@@ -93,6 +95,10 @@ export function ConfirmarBorrado({
         <p>{loQueSeBorra(nivel, categoria.name, usos.data?.subcategories ?? 0)}</p>
 
         {usos.isPending && <p>Contando qué hay dentro…</p>}
+
+        {usos.isError && (
+          <ErrorAlert mensaje="No se pudo contar qué hay dentro, así que no se puede eliminar todavía. Inténtalo de nuevo." />
+        )}
 
         {hayQueReasignar && (
           <ReassignTarget

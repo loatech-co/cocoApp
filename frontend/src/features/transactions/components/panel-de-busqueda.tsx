@@ -10,6 +10,7 @@ import { useCategories } from '@/shared/api/categories';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { diaCorto } from '@/shared/lib/fechas';
+import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Input } from '@/shared/ui/atoms/input';
 import { Monto } from '@/shared/ui/atoms/monto';
 import { PanelInferior } from '@/shared/ui/atoms/panel-inferior';
@@ -95,7 +96,11 @@ function Resultados({
     );
   }
 
-  const filas = movimientos.data?.data ?? [];
+  if (movimientos.isError) {
+    return <ErrorAlert mensaje="No se pudo buscar. Revisa tu conexión e inténtalo de nuevo." />;
+  }
+
+  const filas = movimientos.data.data;
 
   if (filas.length === 0) {
     return (
@@ -105,7 +110,7 @@ function Resultados({
     );
   }
 
-  const total = movimientos.data?.meta.total ?? filas.length;
+  const total = movimientos.data.meta.total;
 
   return (
     <div className="flex flex-col">

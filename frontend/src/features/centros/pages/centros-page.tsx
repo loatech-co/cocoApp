@@ -5,6 +5,7 @@ import { CategoriaModal } from '@/features/centros/components/categoria-modal';
 import { Explicacion } from '@/features/centros/components/centros-help';
 import { Centro } from '@/features/centros/components/cost-center-card';
 import { useCategories } from '@/shared/api/categories';
+import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
@@ -22,8 +23,6 @@ export function CentrosPage() {
 
   const [creando, setCreando] = useState(false);
   const [verAyuda, setVerAyuda] = useState(false);
-
-  const arbol = categorias.data ?? [];
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
@@ -61,6 +60,25 @@ export function CentrosPage() {
 
       {verAyuda && <Explicacion onCerrar={() => setVerAyuda(false)} />}
 
+      <ListaDeCentros categorias={categorias} onCrear={() => setCreando(true)} />
+
+      <CategoriaModal nivel="centro" abierta={creando} onCerrar={() => setCreando(false)} />
+    </div>
+  );
+}
+
+/** The tree, or what stands in for it: loading, failed, or truly empty. */
+function ListaDeCentros({
+  categorias,
+  onCrear,
+}: {
+  categorias: ReturnType<typeof useCategories>;
+  onCrear: () => void;
+}) {
+  const arbol = categorias.data ?? [];
+
+  return (
+    <>
       {categorias.isPending && (
         <div className="flex flex-col gap-3">
           {[0, 1, 2].map((i) => (
@@ -69,16 +87,18 @@ export function CentrosPage() {
         </div>
       )}
 
-      {arbol.length === 0 && !categorias.isPending && (
-        <SinCentros onCrear={() => setCreando(true)} />
+      {/* A failed load is NOT an empty tree: inviting to create here would
+          duplicate centers that already exist. */}
+      {categorias.isError && (
+        <ErrorAlert mensaje="No se pudieron cargar los centros de costos. Revisa tu conexión e inténtalo de nuevo." />
       )}
+
+      {categorias.isSuccess && arbol.length === 0 && <SinCentros onCrear={onCrear} />}
 
       {arbol.map((centro) => (
         <Centro key={centro.id} centro={centro} arbol={arbol} />
       ))}
-
-      <CategoriaModal nivel="centro" abierta={creando} onCerrar={() => setCreando(false)} />
-    </div>
+    </>
   );
 }
 

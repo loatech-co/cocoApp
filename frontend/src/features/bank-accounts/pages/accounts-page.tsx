@@ -9,7 +9,7 @@ import {
 import { ApiClientError } from '@/shared/api/api-client';
 import { type Account } from '@/shared/api/generated/model';
 import { cn, formatCOP } from '@/shared/lib/utils';
-import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
+import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
 import { Button } from '@/shared/ui/atoms/button';
 import { CabeceraDePagina } from '@/shared/ui/atoms/cabecera-de-pagina';
@@ -59,6 +59,10 @@ export function AccountsPage() {
           <Skeleton className="h-28" />
           <Skeleton className="h-28" />
         </div>
+      )}
+
+      {cuentas.isError && (
+        <ErrorAlert mensaje="No se pudieron cargar las cuentas. Revisa tu conexión e inténtalo de nuevo." />
       )}
 
       {cuentas.isSuccess && activas.length === 0 && !formularioAbierto && (

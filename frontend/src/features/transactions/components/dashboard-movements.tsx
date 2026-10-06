@@ -7,6 +7,7 @@ import {
 } from '@/features/transactions/hooks/use-dashboard-page';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { formatCOP } from '@/shared/lib/utils';
+import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Paginador } from '@/shared/ui/atoms/paginador';
 import { TablaPie, Td } from '@/shared/ui/molecules/tabla';
 
@@ -28,15 +29,21 @@ export function DashboardMovements({
     <div className="flex min-w-0 flex-col gap-3">
       <Cuenta pagina={pagina} total={movimientos.data?.meta.total} />
 
-      <TablaDeMovimientos
-        movimientos={movimientos.data?.data ?? []}
-        arbol={arbol}
-        cargando={movimientos.isPending}
-        onAbrir={onAbrir}
-        orden={ordenDe}
-        filasDelEsqueleto={8}
-        pie={pieDeLaTabla(movimientos.data)}
-      />
+      {/* Not an empty table: «no movements» on a failed load reads as if
+          they were gone. */}
+      {movimientos.isError ? (
+        <ErrorAlert mensaje="No se pudieron cargar los movimientos. Revisa tu conexión e inténtalo de nuevo." />
+      ) : (
+        <TablaDeMovimientos
+          movimientos={movimientos.data?.data ?? []}
+          arbol={arbol}
+          cargando={movimientos.isPending}
+          onAbrir={onAbrir}
+          orden={ordenDe}
+          filasDelEsqueleto={8}
+          pie={pieDeLaTabla(movimientos.data)}
+        />
+      )}
 
       <Paginador
         pagina={pagina}
