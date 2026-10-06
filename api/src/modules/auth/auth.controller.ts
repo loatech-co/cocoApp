@@ -21,27 +21,26 @@ import {
 import { meV1, sessionV1, type MeV1, type SessionV1 } from '../../presenters/v1/auth.presenter';
 import { FlagsService } from '../flags/flags.service';
 
-/** El refresh token viaja SOLO en esta cookie; nunca en el cuerpo ni en la URL. */
+/** The refresh token travels ONLY in this cookie; never in the body or the URL. */
 const COOKIE_REFRESH = 'coco_refresh';
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
- * ── El cliente nativo ───────────────────────────────────────────────────────
- * La web guarda el refresh token en una cookie `httpOnly; sameSite: strict`,
- * que es lo correcto para un navegador: ningún script la lee. Una app del
- * teléfono no puede mantener esa cookie, así que, si se identifica con esta
- * cabecera, el refresh token entra y sale por el CUERPO y ella lo guarda en el
- * llavero del sistema.
+ * ── The native client ────────────────────────────────────────────────────────
+ * The web keeps the refresh token in an `httpOnly; sameSite: strict` cookie,
+ * which is right for a browser: no script reads it. A phone app cannot keep
+ * that cookie, so, if it identifies itself with this header, the refresh
+ * token goes in and out through the BODY and the app keeps it in the system
+ * keychain.
  *
- * Por cabecera y no por un campo del cuerpo porque es una propiedad del
- * cliente y no de la petición —`refresh` y `logout` no llevan cuerpo en la
- * web— y así los mismos tres endpoints sirven a los dos sin que la web cambie
- * en nada. Lo que NO cambia para nadie: el token rota en cada renovación, la
- * revocación por `sessions_valid_from` aplica igual, y los límites de
- * intentos son los mismos.
+ * A header and not a body field because it is a property of the client and
+ * not of the request —`refresh` and `logout` carry no body on the web— and
+ * that way the same three endpoints serve both without the web changing at
+ * all. What does NOT change for anyone: the token rotates on every renewal,
+ * revocation through `sessions_valid_from` applies the same, and the attempt
+ * limits are the same.
  *
- * Nunca en la URL: una URL queda en registros de servidores, proxies e
- * historiales.
+ * Never in the URL: a URL ends up in server, proxy and browser history logs.
  */
 const CLIENT_HEADER = 'x-coco-cliente';
 const NATIVE_CLIENT = 'nativo';
@@ -74,12 +73,12 @@ export class AuthController {
     this.inProduction = config.get<string>('NODE_ENV') === 'production';
   }
 
-  // ── Público ────────────────────────────────────────────────────────────────
+  // ── Public ─────────────────────────────────────────────────────────────────
 
   /**
-   * Límite estricto: cada intento crea una cuenta en Supabase y una fila aquí,
-   * y consulta el servicio de contraseñas filtradas. Sin tope sería un vector
-   * de agotamiento de recursos ajenos, además de los propios.
+   * Strict limit: every attempt creates an account in Supabase and a row here,
+   * and queries the breached-passwords service. Without a cap it would be a
+   * way to exhaust other people's resources, as well as ours.
    */
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -117,8 +116,8 @@ export class AuthController {
   }
 
   /**
-   * Renueva el access token. Es público porque el access token ya expiró: la
-   * credencial aquí es la cookie de refresh.
+   * Renews the access token. It is public because the access token has already
+   * expired: the credential here is the refresh cookie.
    */
   @Public()
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
@@ -141,21 +140,21 @@ export class AuthController {
       const { tokens, profile } = await this.auth.refresh(refreshToken, contextOf(request));
       return this.deliverSession(request, response, tokens, profile);
     } catch (error) {
-      // Si la sesión murió, la cookie sobra: dejarla haría que el cliente
-      // reintentara en bucle contra un token que ya no sirve. A un cliente
-      // nativo no se le borra nada: el token vive en su llavero, y el 401 le
-      // dice que lo tire.
+      // If the session died, the cookie is useless: keeping it would make the
+      // client retry in a loop against a token that no longer works. Nothing
+      // is cleared for a native client: the token lives in its keychain, and
+      // the 401 tells it to throw it away.
       if (!isNativeClient(request)) this.clearCookie(response);
       throw error;
     }
   }
 
   /**
-   * Cerrar sesión es público a propósito: la credencial aquí es la cookie, no
-   * el access token. Si exigiera un access token vigente, quien lo tuviera
-   * expirado quedaría en un callejón sin salida —sin poder cerrar sesión y con
-   * la cookie de refresh todavía viva—, que es justo lo contrario de lo que
-   * uno quiere de un botón de "salir".
+   * Signing out is public on purpose: the credential here is the cookie, not
+   * the access token. If it required a valid access token, someone whose token
+   * had expired would be stuck —unable to sign out and with the refresh cookie
+   * still alive—, which is the exact opposite of what one wants from a "sign
+   * out" button.
    */
   @Public()
   @Post('logout')
@@ -172,7 +171,7 @@ export class AuthController {
     if (!isNativeClient(request)) this.clearCookie(response);
   }
 
-  /** Cierra la sesión en todos los dispositivos, con efecto inmediato. */
+  /** Signs out on every device, effective immediately. */
   @Post('logout-all')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiAuthenticated()
@@ -214,25 +213,24 @@ export class AuthController {
       { currentPassword: dto.currentPassword, newPassword: dto.newPassword },
       contextOf(request),
     );
-    // Cambiar la contraseña cierra todas las sesiones, incluida esta: si un
-    // atacante tenía una abierta, muere aquí.
+    // Changing the password closes every session, this one included: if an
+    // attacker had one open, it dies here.
     this.clearCookie(response);
   }
 
-  // ── Web o nativo ───────────────────────────────────────────────────────────
+  // ── Web or native ──────────────────────────────────────────────────────────
 
   /**
-   * De dónde sale el refresh token: del cuerpo si el cliente es nativo, de la
-   * cookie si no. Nunca de los dos a la vez: un cliente nativo que mandara
-   * también una cookie estaría mezclando dos mundos, y se le hace caso al
-   * suyo.
+   * Where the refresh token comes from: the body if the client is native, the
+   * cookie otherwise. Never both at once: a native client that also sent a
+   * cookie would be mixing two worlds, and its own one wins.
    */
   private refreshTokenOf(request: Request, body: RefreshNativeDto): string | undefined {
     if (isNativeClient(request)) return body.refresh_token?.trim() || undefined;
     return readCookie(request, COOKIE_REFRESH);
   }
 
-  /** La sesión, por donde corresponda: cookie para la web, cuerpo para la app. */
+  /** The session, through the right channel: cookie for the web, body for the app. */
   private deliverSession(
     request: Request,
     response: Response,
@@ -240,7 +238,7 @@ export class AuthController {
     profile: Profile,
   ): SessionV1 {
     if (isNativeClient(request)) return sessionV1(tokens, profile, true);
-    // El refresh token NO se devuelve en el cuerpo: solo va en la cookie httpOnly.
+    // The refresh token is NOT returned in the body: it only goes in the httpOnly cookie.
     this.setCookie(response, tokens.refreshToken);
     return sessionV1(tokens, profile, false);
   }
@@ -248,10 +246,10 @@ export class AuthController {
   // ── Cookie ─────────────────────────────────────────────────────────────────
 
   /**
-   * `httpOnly` para que ningún JavaScript pueda leerla —ni siquiera el nuestro,
-   * ni un XSS—. `sameSite: strict` para que no viaje en peticiones iniciadas
-   * desde otro sitio, que es lo que neutraliza el CSRF sobre este endpoint.
-   * `path` acotado a /auth para que no se envíe en cada llamada a la API.
+   * `httpOnly` so no JavaScript can read it —not even ours, nor an XSS—.
+   * `sameSite: strict` so it does not travel on requests started from another
+   * site, which is what neutralises CSRF on this endpoint. `path` narrowed to
+   * /auth so it is not sent on every API call.
    */
   private cookieOptions(): CookieOptions {
     return {
@@ -282,8 +280,8 @@ function contextOf(request: Request): RequestContext {
 }
 
 function readCookie(request: Request, name: string): string | undefined {
-  // cookie-parser deja aquí las cookies ya decodificadas. Express no las tipa,
-  // así que se estrecha explícitamente en vez de arrastrar un `any`.
+  // cookie-parser leaves the cookies here already decoded. Express does not
+  // type them, so they are narrowed explicitly instead of dragging an `any`.
   const cookies: unknown = (request as Request & { cookies?: unknown }).cookies;
   if (typeof cookies !== 'object' || cookies === null) return undefined;
 

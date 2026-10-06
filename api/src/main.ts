@@ -14,39 +14,39 @@ import { installBigIntSerializer } from './common/serialization/bigint';
 import { CONTRACT_VERSIONS, docsPath, setupApiDocs } from './openapi/document';
 
 /**
- * Arranque de la API.
+ * The API's startup.
  *
- * En Hostinger esto corre como Node.js Web App: un proceso persistente cuyo
- * entry es el `dist/main.js` compilado, no el TypeScript. El bootstrap ocurre
- * UNA vez (y de nuevo tras cada reinicio), no por petición — por eso el pool de
- * conexiones de Prisma queda vivo entre requests, que es justamente la ventaja
- * de un proceso de larga vida frente al modelo "un intérprete por petición".
+ * On Hostinger this runs as a Node.js Web App: a persistent process whose
+ * entry is the compiled `dist/main.js`, not the TypeScript. Bootstrap happens
+ * ONCE (and again after every restart), not per request — which is why
+ * Prisma's connection pool stays alive between requests, precisely the
+ * advantage of a long-lived process over the "one interpreter per request"
+ * model.
  *
- * Este mismo proceso sirve también la SPA compilada (ver SpaModule): una sola
- * app, un solo dominio, sin CORS y con la cookie de sesión como cookie de
- * primera parte.
+ * This same process also serves the built SPA (see SpaModule): one app, one
+ * domain, no CORS and the session cookie as a first-party cookie.
  */
 /**
- * Carga el `.env` de la aplicación ANTES de que Nest construya nada, y le da
- * PRIORIDAD sobre las variables que ya estén en el entorno.
+ * Loads the app's `.env` BEFORE Nest builds anything, and gives it PRIORITY
+ * over the variables already in the environment.
  *
- * Esto invierte la precedencia habitual, y es deliberado. En la Node.js Web App
- * de Hostinger, LiteSpeed inyecta las variables configuradas en hPanel al
- * arrancar el proceso. Esa configuración se llenó una vez, al crear la app, y
- * queda invisible desde el repositorio y desde SSH: no hay archivo que editar.
- * Cuando la base cambió de MariaDB a Postgres, hPanel siguió inyectando la
- * `DATABASE_URL` vieja y ganaba siempre —dotenv nunca pisa una clave existente—,
- * así que la aplicación se conectaba a la base equivocada o no arrancaba.
+ * This reverses the usual precedence, on purpose. In Hostinger's Node.js Web
+ * App, LiteSpeed injects the variables set in hPanel when the process starts.
+ * That configuration was filled in once, when the app was created, and it is
+ * invisible from the repository and from SSH: there is no file to edit. When
+ * the database moved from MariaDB to Postgres, hPanel kept injecting the old
+ * `DATABASE_URL` and it always won —dotenv never overwrites an existing key—,
+ * so the app connected to the wrong database or did not start.
  *
- * El síntoma era engañoso: Prisma fallaba con un P1012 que se lee como si la
- * URL estuviera mal escrita ("the URL must start with postgresql://") cuando en
- * realidad estaba recibiendo, intacta, la URL de MySQL de hace meses.
+ * The symptom was misleading: Prisma failed with a P1012 that reads as if the
+ * URL were mistyped ("the URL must start with postgresql://") when it was in
+ * fact receiving, intact, the months-old MySQL URL.
  *
- * La ruta es ABSOLUTA, derivada de __dirname (`api/dist`), para no depender del
- * directorio de trabajo con que la plataforma arranque el proceso.
+ * The path is ABSOLUTE, derived from __dirname (`api/dist`), so it does not
+ * depend on the working directory the platform starts the process in.
  *
- * Consecuencia a tener presente: para cambiar la base ya no sirve tocar hPanel,
- * hay que cambiar el archivo `.env` que acompaña al despliegue.
+ * A consequence to keep in mind: changing the database no longer works from
+ * hPanel; the `.env` file that ships with the deployment has to change.
  */
 function loadConfiguration(): void {
   const file = join(__dirname, '..', process.env.NODE_ENV === 'test' ? '.env.test' : '.env');
@@ -58,18 +58,18 @@ function loadConfiguration(): void {
 }
 
 /**
- * Quita las comillas que envuelven un valor heredado del entorno.
+ * Strips the quotes around a value inherited from the environment.
  *
- * LiteSpeed inyecta las variables de la Node.js App tal como se guardaron,
- * comillas incluidas: `DATABASE_URL` llega literalmente como
- * `"postgresql://…"`, con la comilla dentro del valor. Un archivo `.env` lo
- * tolera porque dotenv interpreta las comillas; una variable de entorno no,
- * y Prisma rechaza la URL con un P1012 que culpa al protocolo.
+ * LiteSpeed injects the Node.js App's variables as they were saved, quotes
+ * included: `DATABASE_URL` arrives literally as `"postgresql://…"`, with the
+ * quote inside the value. A `.env` file tolerates it because dotenv parses
+ * quotes; an environment variable does not, and Prisma rejects the URL with a
+ * P1012 that blames the protocol.
  *
- * Mientras el `.env` del despliegue exista, esto no cambia nada: ese archivo ya
- * ganó. Importa el día que falte —un despliegue a medias, un archivo sin
- * copiar— porque entonces el valor heredado es lo único que queda, y así al
- * menos es utilizable en vez de fallar por un par de comillas.
+ * While the deployment's `.env` exists, this changes nothing: that file
+ * already won. It matters the day it is missing —a half-done deployment, a
+ * file not copied— because then the inherited value is all that is left, and
+ * this way it is at least usable instead of failing over a pair of quotes.
  */
 function unquoteDatabaseUrls(): void {
   for (const key of ['DATABASE_URL', 'DIRECT_URL']) {
@@ -87,16 +87,16 @@ async function bootstrap(): Promise<void> {
   loadConfiguration();
 
   /*
-    Antes de nada: ¿a qué base apunta esto?
+    First of all: which database does this point at?
 
-    Va AQUÍ, delante de `NestFactory.create`, porque lo que hay que impedir es
-    la conexión. Comprobarlo más tarde —en un módulo, en un guard— ya sería
-    tarde: Prisma se conecta al construirse, así que la sesión contra la base
-    remota ya existiría cuando saltara el aviso.
+    It goes HERE, before `NestFactory.create`, because what has to be
+    prevented is the connection. Checking later —in a module, in a guard—
+    would be too late: Prisma connects when it is built, so the session
+    against the remote database would already exist when the warning fired.
 
-    Y se sale con código 1, que es lo correcto para un arranque que no debía
-    ocurrir. El código 0 de más abajo es para otra cosa: un pánico de Prisma en
-    marcha, donde LiteSpeed tiene que respawnear sin penalización.
+    And it exits with code 1, which is right for a startup that should not
+    have happened. The code 0 further down is for something else: a Prisma
+    panic while running, where LiteSpeed has to respawn without penalty.
   */
   // The environment is checked first, whole (step 7.4): one message listing
   // every missing or invalid variable instead of a crash at the first use.
@@ -128,10 +128,10 @@ async function bootstrap(): Promise<void> {
   // beside real data is surface for nothing.
   const areDocsServed = setupApiDocs(app, config.get<string>('NODE_ENV'));
 
-  // Cierra Prisma limpiamente cuando el hosting recicla el proceso.
+  // Closes Prisma cleanly when the host recycles the process.
   app.enableShutdownHooks();
 
-  // Hostinger inyecta el puerto por variable de entorno: nunca uno fijo.
+  // Hostinger injects the port through an environment variable: never a fixed one.
   const port = Number(config.get<string>('PORT') ?? 3000);
   await app.listen(port, '0.0.0.0');
 

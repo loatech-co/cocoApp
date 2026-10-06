@@ -8,22 +8,23 @@ import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 import { AuthenticationError, ForbiddenError } from '../../common/errors/domain-error';
 
 /**
- * Barrera de autenticación de toda la API.
+ * The authentication barrier for the whole API.
  *
- * Se registra como guard GLOBAL a propósito: si la protección fuera opt-in,
- * tarde o temprano un controlador nuevo se publicaría sin querer. Aquí es al
- * revés — abrir una ruta exige marcarla con @Public().
+ * It is registered as a GLOBAL guard on purpose: if protection were opt-in,
+ * sooner or later a new controller would be published by accident. Here it is
+ * the other way round — opening a route requires marking it with @Public().
  *
- * ── Qué cambió al pasar a Supabase Auth ─────────────────────────────────────
- * La firma del token la verifica Supabase (ES256, contra su JWKS). Lo que NO
- * se delegó es la autorización: el rol y el estado siguen saliendo de NUESTRA
- * base en cada petición. Un JWT de Supabase dice quién es alguien; no sabe si
- * su cuenta fue aprobada, suspendida o degradada hace diez segundos.
+ * ── What changed with Supabase Auth ──────────────────────────────────────────
+ * Supabase verifies the token's signature (ES256, against its JWKS). What was
+ * NOT delegated is authorization: role and status still come from OUR
+ * database on every request. A Supabase JWT says who someone is; it does not
+ * know whether their account was approved, suspended or demoted ten seconds
+ * ago.
  *
- * Esa lectura por petición es una consulta indexada y barata, y es lo que
- * permite tres cosas que un JWT solo no puede dar: revocación inmediata de
- * sesiones, expulsión inmediata al suspender una cuenta, y cambio de rol sin
- * esperar a que expire el token.
+ * That per-request read is a cheap indexed query, and it is what allows three
+ * things a JWT alone cannot give: immediate session revocation, immediate
+ * lock-out when an account is suspended, and role changes without waiting for
+ * the token to expire.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -52,27 +53,27 @@ export class JwtAuthGuard implements CanActivate {
     const user = await this.users.findSessionUser(authId);
 
     if (!user) {
-      // Token válido de Supabase, pero sin perfil en la aplicación. Pasa si la
-      // cuenta se creó desde el panel de Supabase saltándose el registro. Sin
-      // perfil no hay rol ni estado, así que no hay nada que autorizar.
+      // A valid Supabase token, but no profile in the app. It happens when the
+      // account was created from the Supabase dashboard, skipping sign-up.
+      // Without a profile there is no role or status, so nothing to authorize.
       throw new AuthenticationError('Token inválido o expirado.', { code: 'invalid_token' });
     }
 
-    // REVOCACIÓN INMEDIATA: cualquier token emitido antes de esta marca queda
-    // muerto. Cambiar la contraseña, suspender la cuenta o "cerrar sesión en
-    // todos los dispositivos" solo adelantan `sessionsValidFrom`, y el efecto
-    // es instantáneo sin salir a la red ni esperar a que expire nada.
+    // IMMEDIATE REVOCATION: any token issued before this mark is dead.
+    // Changing the password, suspending the account or "sign out on every
+    // device" only move `sessionsValidFrom` forward, and the effect is instant
+    // without going to the network or waiting for anything to expire.
     //
-    // La comparación NO redondea `sessionsValidFrom` al segundo. Hacerlo
-    // parecía razonable —el `iat` de un JWT solo tiene precisión de segundos—
-    // pero abre un hueco: un token emitido en el mismo segundo en que se revoca
-    // la sesión sobreviviría. Esa es justamente la ventana que alguien con un
-    // token robado necesita.
+    // The comparison does NOT round `sessionsValidFrom` to the second. Doing
+    // so looked reasonable —a JWT's `iat` only has second precision— but it
+    // opens a gap: a token issued in the same second the session is revoked
+    // would survive. That is exactly the window someone with a stolen token
+    // needs.
     //
-    // El precio es un borde de menos de un segundo: si alguien vuelve a entrar
-    // en el mismo segundo en que cerró todas sus sesiones, su token nuevo puede
-    // caer del lado equivocado y tener que reintentar. Rechazar de más durante
-    // 600 ms es preferible a aceptar de menos.
+    // The price is an edge of under a second: if someone signs in again in the
+    // same second they closed all their sessions, their new token may land on
+    // the wrong side and have to retry. Rejecting too much for 600 ms is better
+    // than accepting too little.
     if (iatMs < user.sessionsValidFrom.getTime()) {
       throw new AuthenticationError('La sesión fue cerrada. Vuelve a entrar.', {
         code: 'session_revoked',
@@ -87,8 +88,9 @@ export class JwtAuthGuard implements CanActivate {
         : new ForbiddenError('Tu cuenta está suspendida.', { code: 'account_suspended' });
     }
 
-    // El rol sale de la BASE, no del token: si un admin degrada a alguien, el
-    // cambio aplica en la siguiente petición y no cuando expire su token.
+    // The role comes from the DATABASE, not the token: if an admin demotes
+    // someone, the change applies on the next request and not when their token
+    // expires.
     request.user = { id: user.id, email: user.email, role: user.role };
     return true;
   }

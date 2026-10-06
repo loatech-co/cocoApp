@@ -6,23 +6,23 @@ import type {
   TransferDirection,
 } from '../../generated/prisma/client';
 
-/** Lo mínimo que hace falta de un movimiento para calcular un saldo. */
+/** The least of a transaction needed to compute a balance. */
 export interface BalanceMovement {
   type: TransactionType;
-  /** Solo relevante cuando `type === 'transfer'`. */
+  /** Only relevant when `type === 'transfer'`. */
   transferDir: TransferDirection | null;
   amount: Money;
   status: TransactionStatus;
 }
 
 export interface DerivedBalance {
-  /** Solo movimientos `cleared`. Es el saldo que el banco confirmaría. */
+  /** `cleared` transactions only. The balance the bank would confirm. */
   cleared: Money;
-  /** Incluye los `pending`. Es "cuánto voy a tener cuando todo aterrice". */
+  /** Includes the `pending` ones. "How much I will have once everything lands". */
   projected: Money;
 }
 
-/** Las cuentas de crédito son PASIVO: el saldo representa deuda, no dinero. */
+/** Credit accounts are a LIABILITY: the balance is debt, not money. */
 const LIABILITY_TYPES: ReadonlySet<AccountType> = new Set<AccountType>(['credit']);
 
 function isLiabilityAccount(type: AccountType): boolean {
@@ -30,15 +30,15 @@ function isLiabilityAccount(type: AccountType): boolean {
 }
 
 /**
- * Efecto de un movimiento sobre el saldo de UNA cuenta de activo
- * (efectivo, débito, banco, ahorros, otro).
+ * The effect of a transaction on the balance of ONE asset account (cash,
+ * debit, bank, savings, other).
  *
- *   ingreso        → suma
- *   gasto          → resta
- *   transferencia  → suma si entra, resta si sale
+ *   income    → adds
+ *   expense   → subtracts
+ *   transfer  → adds if it comes in, subtracts if it goes out
  *
- * Una transferencia sin dirección es un dato corrupto: no se puede adivinar de
- * qué lado está el dinero, así que aporta cero en vez de inventar un signo.
+ * A transfer without a direction is corrupt data: there is no telling which
+ * side the money is on, so it contributes zero instead of inventing a sign.
  */
 function deltaAsAsset(movement: BalanceMovement): Money {
   switch (movement.type) {
@@ -54,16 +54,15 @@ function deltaAsAsset(movement: BalanceMovement): Money {
 }
 
 /**
- * Calcula el saldo DERIVADO de una cuenta.
+ * Computes an account's DERIVED balance.
  *
- * No existe ninguna columna de saldo en la base, y es a propósito: un saldo
- * almacenado se desincroniza en cuanto un camino de escritura se olvida de
- * actualizarlo, y entonces la cifra que ve el usuario deja de ser la suma real
- * de sus movimientos. Aquí siempre se calcula.
+ * There is no balance column in the database, on purpose: a stored balance
+ * drifts the moment some write path forgets to update it, and then the figure
+ * the user sees is no longer the real sum of their transactions. Here it is
+ * always computed.
  *
- * En cuentas de crédito el signo se invierte: el saldo representa lo ADEUDADO,
- * así que un gasto lo aumenta y un pago (una transferencia que entra a la
- * tarjeta) lo reduce.
+ * On credit accounts the sign flips: the balance is what is OWED, so an
+ * expense raises it and a payment (a transfer into the card) lowers it.
  */
 export function computeBalance(
   accountType: AccountType,
@@ -88,10 +87,10 @@ export function computeBalance(
 }
 
 /**
- * Cupo disponible de una tarjeta: `credit_limit − saldo_adeudado`.
+ * A card's available credit: `credit_limit − balance_owed`.
  *
- * Puede quedar negativo si se excedió el cupo. El sistema lo informa y no lo
- * bloquea: no-rigidez.
+ * It can go negative if the limit was exceeded. The system reports it and does
+ * not block it: no rigidity.
  */
 export function computeAvailableCredit(
   creditLimit: Money | null,

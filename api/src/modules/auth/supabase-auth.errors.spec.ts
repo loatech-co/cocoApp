@@ -1,30 +1,29 @@
 import { isDuplicateEmail } from './supabase-auth.errors';
 
 /**
- * Qué cuenta como «ese correo ya está registrado».
+ * What counts as «that email is already registered».
  *
- * Es la función que decide si una solicitud de acceso se pierde en SILENCIO.
- * Devolver `true` de más significa contestar «recibimos tu solicitud» sin crear
- * nada: ni fila, ni entrada en la bitácora, ni nada que un administrador pueda
- * aprobar. Ya pasó una vez, cuando cualquier 422 se trataba como correo
- * repetido y se tragaba también las contraseñas débiles y los registros
- * deshabilitados.
+ * It is the function that decides whether an access request is lost
+ * SILENTLY. Returning `true` too often means answering «we got your request»
+ * without creating anything: no row, no audit entry, nothing an admin could
+ * approve. It already happened once, when any 422 was treated as a repeated
+ * email and swallowed weak passwords and disabled sign-ups too.
  *
- * Se exporta justo para esto, y hasta ahora no tenía prueba.
+ * It is exported for exactly this, and until now it had no test.
  */
-describe('Reconocer un correo ya registrado', () => {
-  it('el 409 es un conflicto y no admite otra lectura', () => {
+describe('Recognising an email that is already registered', () => {
+  it('409 is a conflict and allows no other reading', () => {
     expect(isDuplicateEmail(409, null)).toBe(true);
   });
 
-  it('reconoce el código que manda GoTrue', () => {
+  it('recognises the code GoTrue sends', () => {
     expect(isDuplicateEmail(422, { error_code: 'email_exists' })).toBe(true);
     expect(isDuplicateEmail(422, { code: 'user_already_exists' })).toBe(true);
     expect(isDuplicateEmail(400, { error_code: 'EMAIL_EXISTS' })).toBe(true);
   });
 
-  it('con código, el código MANDA sobre el texto', () => {
-    // Un `msg` que hable de otra cosa no puede contradecir un código explícito.
+  it('with a code, the code WINS over the text', () => {
+    // A `msg` about something else cannot contradict an explicit code.
     expect(
       isDuplicateEmail(422, {
         error_code: 'weak_password',
@@ -33,7 +32,7 @@ describe('Reconocer un correo ya registrado', () => {
     ).toBe(false);
   });
 
-  it('cae al texto solo cuando no vino código', () => {
+  it('falls back to the text only when no code came', () => {
     expect(
       isDuplicateEmail(422, { msg: 'A user with this email address has already been registered' }),
     ).toBe(true);
@@ -41,17 +40,17 @@ describe('Reconocer un correo ya registrado', () => {
     expect(isDuplicateEmail(422, { msg: 'Password is too weak' })).toBe(false);
   });
 
-  it('el código NUMÉRICO de las versiones viejas no tapa el respaldo por texto', () => {
-    // GoTrue mandaba `code: 422` —el propio estado— sin `error_code`. Eso no
-    // es un código de error, así que el texto sigue decidiendo.
+  it('the NUMERIC code of old versions does not hide the text fallback', () => {
+    // GoTrue used to send `code: 422` —the status itself— without
+    // `error_code`. That is not an error code, so the text still decides.
     expect(isDuplicateEmail(422, { code: 422, msg: 'already registered' })).toBe(true);
     expect(isDuplicateEmail(422, { code: 422, msg: 'Signups not allowed' })).toBe(false);
   });
 
-  it('un campo que llega como objeto no se convierte en código', () => {
-    // `String({})` da «[object Object]»: una cadena que no coincide con ningún
-    // código pero que TAMPOCO está vacía, así que apagaba el respaldo por
-    // mensaje y un correo repetido de verdad se contestaba con un 500.
+  it('a field that arrives as an object does not become a code', () => {
+    // `String({})` gives «[object Object]»: a string that matches no code but
+    // is NOT empty either, so it switched off the message fallback and a
+    // really repeated email was answered with a 500.
     expect(
       isDuplicateEmail(422, {
         error_code: { detail: 'algo' },
@@ -60,9 +59,9 @@ describe('Reconocer un correo ya registrado', () => {
     ).toBe(true);
   });
 
-  it('lo que no es 409, 422 ni 400 no es un correo repetido', () => {
-    // Un 500 o un 401 son otra cosa, y tratarlos como repetido perdería la
-    // solicitud sin dejar rastro.
+  it('anything other than 409, 422 or 400 is not a repeated email', () => {
+    // A 500 or a 401 is something else, and treating them as repeated would
+    // lose the request without a trace.
     expect(isDuplicateEmail(500, { msg: 'already been registered' })).toBe(false);
     expect(isDuplicateEmail(401, { error_code: 'email_exists' })).toBe(false);
   });

@@ -6,22 +6,21 @@ import { derivesFromPersonalData, evaluatePolicy } from './password.policy';
 import { ValidationError } from '../../common/errors/domain-error';
 
 /**
- * Política de contraseñas.
+ * Password policy.
  *
- * ── Por qué sigue existiendo tras migrar a Supabase Auth ────────────────────
- * Supabase guarda y verifica las credenciales, pero su política por defecto es
- * mínima: una longitud y poco más. Esta se mantiene porque comprueba tres
- * cosas que la suya no: longitud y composición propias, que la contraseña no
- * derive del nombre o del correo de la persona, y —la que más importa— que no
- * aparezca en filtraciones públicas conocidas.
+ * ── Why it still exists after moving to Supabase Auth ────────────────────────
+ * Supabase stores and checks the credentials, but its default policy is
+ * minimal: a length and little else. This one stays because it checks three
+ * things Supabase's does not: our own length and composition, that the
+ * password does not derive from the person's name or email, and —the one
+ * that matters most— that it does not appear in known public breaches.
  *
- * Se valida ANTES de mandar la contraseña a Supabase. Si no pasa, Supabase ni
- * se entera: la cuenta no llega a crearse con una contraseña que ya está en un
- * diccionario de ataque.
+ * It is checked BEFORE the password is sent to Supabase. If it fails,
+ * Supabase never hears of it: the account is never created with a password
+ * that is already in an attack dictionary.
  *
- * Lo que ya NO vive aquí es el hasheo. Las credenciales son de Supabase y esta
- * clase no toca ni un hash: aquí no hay argon2, ni señuelos de tiempo, ni nada
- * que verificar.
+ * What NO longer lives here is hashing. The credentials belong to Supabase and
+ * this class touches no hash: no argon2, no timing decoys, nothing to verify.
  */
 @Injectable()
 export class PasswordService {
@@ -29,13 +28,13 @@ export class PasswordService {
   private readonly checkBreaches: boolean;
 
   constructor(config: ConfigService) {
-    // Se puede apagar para entornos sin salida a internet (CI, pruebas).
+    // It can be switched off for environments without internet access (CI, tests).
     this.checkBreaches = config.get<string>('CHECK_BREACHED_PASSWORDS', 'true') !== 'false';
   }
 
   /**
-   * Valida una contraseña candidata contra las tres capas: composición,
-   * relación con los datos de la cuenta, y filtraciones conocidas.
+   * Checks a candidate password against the three layers: composition,
+   * relation to the account's data, and known breaches.
    */
   async requireStrong(
     password: string,
@@ -60,15 +59,15 @@ export class PasswordService {
   }
 
   /**
-   * Consulta Have I Been Pwned con k-anonimato.
+   * Queries Have I Been Pwned with k-anonymity.
    *
-   * Solo viajan los 5 primeros caracteres del SHA-1: el servicio devuelve todos
-   * los sufijos que empiezan así (cientos) y la comparación se hace aquí. La
-   * contraseña —ni su hash completo— sale nunca de este proceso.
+   * Only the first 5 characters of the SHA-1 travel: the service returns every
+   * suffix that starts that way (hundreds) and the comparison happens here.
+   * Neither the password nor its full hash ever leaves this process.
    *
-   * Falla ABIERTO a propósito: si el servicio está caído, no se bloquea el
-   * registro. Perder disponibilidad por un chequeo complementario sería peor
-   * que aceptar una contraseña que ya pasó las otras dos capas.
+   * It fails OPEN on purpose: if the service is down, sign-up is not blocked.
+   * Losing availability over a complementary check would be worse than
+   * accepting a password that already passed the other two layers.
    */
   private async appearsInBreaches(password: string): Promise<boolean> {
     if (!this.checkBreaches) return false;

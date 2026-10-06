@@ -1,28 +1,28 @@
 /**
- * Qué contesta GoTrue cuando el correo ya está registrado.
+ * What GoTrue answers when the email is already registered.
  *
- * ── Por qué vive aparte del servicio ────────────────────────────────────────
- * Porque es lógica pura y hay que poder probarla. `supabase-auth.service.ts`
- * importa `jose`, que es solo ESM, y Jest —que corre en CommonJS— no lo puede
- * cargar: importar el servicio desde una prueba revienta antes de llegar a la
- * primera comprobación. Esa es la razón de que esta función se exportara «para
- * poder probarla» y llevara meses sin una sola prueba.
+ * ── Why it lives apart from the service ──────────────────────────────────────
+ * Because it is pure logic and it has to be testable. `supabase-auth.service.ts`
+ * imports `jose`, which is ESM only, and Jest —which runs CommonJS— cannot
+ * load it: importing the service from a test fails before the first check.
+ * That is why this function was exported «to be testable» and went months
+ * without a single test.
  *
- * Es el mismo recurso que ya usan `pendientes.ts`, `categories.tree.ts` y
- * `common/env.ts`: lo que se puede decidir sin red ni base vive en su
- * propio archivo, sin dependencias.
+ * It is the same device `pendientes.ts`, `categories.tree.ts` and
+ * `common/env.ts` already use: what can be decided without network or
+ * database lives in its own file, with no dependencies.
  */
 
 /**
- * Una propiedad del cuerpo de GoTrue, como texto, solo si de verdad lo es.
+ * A property of GoTrue's body, as text, only if it really is one.
  *
- * El cuerpo llega como `Record<string, unknown>`: cualquier campo puede ser un
- * objeto. `String()` sobre uno devuelve «[object Object]», que después se
- * comparaba contra códigos de error como si fuera un dato — una cadena que no
- * dice nada y que nunca coincide, pero que tampoco es vacía, así que apagaba
- * el respaldo por mensaje.
+ * The body arrives as `Record<string, unknown>`: any field can be an object.
+ * `String()` on one returns «[object Object]», which was then compared
+ * against error codes as if it were data — a string that says nothing and
+ * never matches, but is not empty either, so it switched off the message
+ * fallback.
  *
- * El número sí se acepta: las versiones viejas de GoTrue mandan `code: 422`.
+ * A number is accepted: old GoTrue versions send `code: 422`.
  */
 function asText(value: unknown): string {
   if (typeof value === 'string') return value;
@@ -37,8 +37,8 @@ export function isDuplicateEmail(status: number, data: Record<string, unknown> |
   const code = (asText(data?.error_code) || asText(data?.code)).toLowerCase();
   if (code === 'email_exists' || code === 'user_already_exists') return true;
 
-  // Solo se consulta el texto cuando no vino código: con código, el código
-  // manda, y un `msg` que hable de otra cosa no puede contradecirlo.
+  // The text is only read when no code came: with a code, the code wins, and
+  // a `msg` about something else cannot contradict it.
   if (code !== '' && code !== '422' && code !== '400') return false;
 
   const message = (asText(data?.msg) || asText(data?.message)).toLowerCase();

@@ -1,29 +1,30 @@
 /**
- * Política de contraseñas.
+ * Password policy.
  *
- * Lógica pura y sin dependencias para poder probarla exhaustivamente: es la
- * única barrera entre una cuenta y quien intente adivinarla.
+ * Pure logic with no dependencies so it can be tested exhaustively: it is the
+ * only barrier between an account and whoever tries to guess it.
  *
- * Nota sobre el diseño: NIST SP 800-63B desaconseja las reglas de composición
- * (exigir mayúscula, número y símbolo) porque empujan a la gente hacia
- * variaciones predecibles del tipo `P@ssw0rd1!`, que cumplen todo y están en
- * cualquier diccionario de ataque. Lo que sí funciona es la LONGITUD y
- * contrastar contra contraseñas ya filtradas.
+ * A design note: NIST SP 800-63B advises against composition rules (requiring
+ * an uppercase letter, a number and a symbol) because they push people toward
+ * predictable variations like `P@ssw0rd1!`, which tick every box and are in
+ * every attack dictionary. What does work is LENGTH and checking against
+ * already-breached passwords.
  *
- * Aquí se aplican las dos cosas: la composición que pidió el dueño del producto
- * (12 caracteres con mayúscula, minúscula, número y símbolo) y, encima, el
- * contraste contra la base de filtradas que hace `PasswordService`. La
- * composición sola sería insuficiente; junto al contraste, es sólida.
+ * Both are applied here: the composition the product owner asked for (12
+ * characters with upper and lower case, a number and a symbol) and, on top,
+ * the check against the breached-passwords database that `PasswordService`
+ * does. Composition alone would not be enough; together with the check, it is
+ * solid.
  */
 
 export const MIN_LENGTH = 12;
-/** Tope alto para que argon2 no se convierta en un vector de denegación. */
+/** A high cap so hashing cannot become a denial-of-service vector. */
 export const MAX_LENGTH = 128;
 
 export interface PolicyResult {
   isValid: boolean;
-  /** Todos los incumplimientos, no solo el primero: corregir de a uno es
-   *  frustrante y empuja a elegir la contraseña más floja que pase. */
+  /** Every failure, not just the first: fixing them one at a time is
+   *  frustrating and pushes people to pick the weakest password that passes. */
   problems: string[];
 }
 
@@ -51,8 +52,8 @@ export function evaluatePolicy(password: string): PolicyResult {
     if (!rule.test.test(password)) problems.push(rule.problem);
   }
 
-  // Un espacio al inicio o al final casi siempre es un error de copiado, y
-  // produce un "la contraseña no funciona" imposible de diagnosticar.
+  // A space at the start or the end is nearly always a copy-paste mistake, and
+  // it produces a "the password does not work" that is impossible to diagnose.
   if (password !== password.trim()) {
     problems.push('No puede empezar ni terminar con espacios.');
   }
@@ -61,10 +62,10 @@ export function evaluatePolicy(password: string): PolicyResult {
 }
 
 /**
- * Rechaza contraseñas construidas a partir de datos de la propia cuenta.
+ * Rejects passwords built from the account's own data.
  *
- * `Gerardo2026!` cumple todas las reglas de composición y es de lo primero que
- * probaría alguien que conozca al dueño de la cuenta.
+ * `Gerardo2026!` passes every composition rule and is among the first things
+ * someone who knows the account's owner would try.
  */
 export function derivesFromPersonalData(
   password: string,

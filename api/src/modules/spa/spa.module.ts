@@ -5,31 +5,32 @@ import type { ServerResponse } from 'node:http';
 import { join, resolve } from 'node:path';
 
 /**
- * Sirve la SPA compilada desde el MISMO proceso que la API.
+ * Serves the built SPA from the SAME process as the API.
  *
- * ── Por qué un solo proceso y un solo dominio ───────────────────────────────
- * No es comodidad de despliegue: es lo que sostiene el diseño de la sesión.
+ * ── Why one process and one domain ───────────────────────────────────────────
+ * It is not deployment convenience: it is what holds up the session design.
  *
- * El refresh token vive en una cookie `SameSite=Strict`, que es lo que
- * neutraliza el CSRF sobre /auth. "Strict" significa que el navegador solo la
- * envía cuando la petición sale del MISMO sitio. Si la API viviera en
- * `api-cocoapp.viteri.me` y la interfaz en `cocoapp.viteri.me`, el navegador
- * las trataría como sitios distintos y no enviaría nunca la cookie — habría
- * que bajar a `SameSite=None`, que es exactamente la protección que se quería.
+ * The refresh token lives in a `SameSite=Strict` cookie, which is what
+ * neutralises CSRF on /auth. "Strict" means the browser only sends it when the
+ * request comes from the SAME site. If the API lived on
+ * `api-cocoapp.viteri.me` and the interface on `cocoapp.viteri.me`, the
+ * browser would treat them as different sites and never send the cookie — it
+ * would have to drop to `SameSite=None`, which is exactly the protection that
+ * was wanted.
  *
- * Juntarlos también elimina el CORS: no hay origen cruzado que permitir.
+ * Putting them together also removes CORS: there is no cross origin to allow.
  *
- * En desarrollo esto no se activa: ahí manda el servidor de Vite, con su
- * recarga en caliente, y la API solo atiende /api/v1.
+ * In development this does not switch on: the Vite server is in charge there,
+ * with hot reload, and the API only serves /api/v1.
  */
 @Module({})
 export class SpaModule {
   static forRoot(): DynamicModule {
     const root = spaRoot();
 
-    // Sin build del frontend, el módulo simplemente no hace nada. Levantar
-    // solo la API tiene que seguir siendo posible —es lo que hacen las
-    // pruebas e2e— y reventar aquí lo impediría.
+    // Without a frontend build, the module simply does nothing. Starting the
+    // API alone has to stay possible —it is what the e2e tests do— and
+    // failing here would prevent it.
     if (!root) {
       return { module: SpaModule, imports: [] };
     }
@@ -39,14 +40,14 @@ export class SpaModule {
       imports: [
         ServeStaticModule.forRoot({
           rootPath: root,
-          // Cualquier ruta que no sea de la API cae en index.html y la
-          // resuelve React Router. Sin esto, recargar en /movimientos daría
-          // 404: ese archivo no existe en disco.
+          // Any path that is not the API's falls back to index.html and React
+          // Router resolves it. Without this, reloading on /movimientos would
+          // give a 404: that file does not exist on disk.
           exclude: ['/api/{*ruta}'],
           serveStaticOptions: {
-            // Los nombres de los assets llevan hash, así que su contenido es
-            // inmutable y se puede cachear un año. index.html no: es lo que
-            // apunta a los assets nuevos tras un despliegue.
+            // Asset names carry a hash, so their content is immutable and can
+            // be cached for a year. Not index.html: it is what points at the
+            // new assets after a deployment.
             maxAge: '1y',
             index: false,
             setHeaders: (response: ServerResponse, filePath: string) => {
@@ -62,11 +63,11 @@ export class SpaModule {
 }
 
 /**
- * Dónde quedó el build del frontend.
+ * Where the frontend build ended up.
  *
- * Se prueban dos rutas porque el proceso arranca desde sitios distintos según
- * cómo se despliegue: desde `api/dist` en local, o desde la raíz del repo en
- * un despliegue de Hostinger.
+ * Two paths are tried because the process starts from different places
+ * depending on how it is deployed: from `api/dist` locally, or from the repo
+ * root in a Hostinger deployment.
  */
 function spaRoot(): string | null {
   const candidates = [

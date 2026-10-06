@@ -2,7 +2,7 @@ import { computeAvailableCredit, computeBalance, type BalanceMovement } from './
 import { serialize, toMoney } from './money';
 import type { AccountType } from '../../generated/prisma/client';
 
-/** Atajos para que las tablas de casos se lean como el enunciado del PRD. */
+/** Shortcuts so the case tables read like the PRD's statement. */
 const income = (amount: string, status: 'cleared' | 'pending' = 'cleared'): BalanceMovement => ({
   type: 'income',
   transferDir: null,
@@ -43,29 +43,29 @@ const balanceOf = (
   };
 };
 
-describe('Saldo derivado — cuentas de activo', () => {
-  it('S1 · sin saldo inicial: +500.000 ingreso, −120.000 gasto → 380.000', () => {
+describe('Derived balance — asset accounts', () => {
+  it('S1 · no opening balance: +500.000 income, −120.000 expense → 380.000', () => {
     expect(balanceOf('debit', '0.00', [income('500000'), expense('120000')]).cleared).toBe(
       '380000.00',
     );
   });
 
-  it('S2 · con saldo inicial: 1.000.000 −250.000 −250.000 +100.000 → 600.000', () => {
+  it('S2 · with an opening balance: 1.000.000 −250.000 −250.000 +100.000 → 600.000', () => {
     expect(
       balanceOf('bank', '1000000.00', [expense('250000'), expense('250000'), income('100000')])
         .cleared,
     ).toBe('600000.00');
   });
 
-  it('S3 · una transferencia que sale resta del origen', () => {
+  it('S3 · an outgoing transfer subtracts from the source', () => {
     expect(balanceOf('savings', '0.00', [transferOut('300000')]).cleared).toBe('-300000.00');
   });
 
-  it('S4 · una transferencia que entra suma al destino', () => {
+  it('S4 · an incoming transfer adds to the target', () => {
     expect(balanceOf('cash', '0.00', [transferIn('300000')]).cleared).toBe('300000.00');
   });
 
-  it('la transferencia no altera el patrimonio: las dos patas suman cero', () => {
+  it('a transfer does not change net worth: the two legs add up to zero', () => {
     const source = computeBalance('bank', toMoney('1000000'), [transferOut('300000')]);
     const target = computeBalance('savings', toMoney('0'), [transferIn('300000')]);
 
@@ -73,33 +73,33 @@ describe('Saldo derivado — cuentas de activo', () => {
     expect(serialize(total)).toBe('1000000.00');
   });
 
-  it('caso del PRD: opening 500.000, +1.000.000, −300.000 → 1.200.000', () => {
+  it('the PRD case: opening 500.000, +1.000.000, −300.000 → 1.200.000', () => {
     expect(balanceOf('debit', '500000.00', [income('1000000'), expense('300000')]).cleared).toBe(
       '1200000.00',
     );
   });
 
-  it('mantiene la exactitud al centavo con montos de muchos dígitos', () => {
+  it('stays exact to the cent with many-digit amounts', () => {
     expect(
       balanceOf('debit', '0.00', [income('195466.67'), expense('89900.33'), income('0.01')])
         .cleared,
     ).toBe('105566.35');
   });
 
-  it('sin movimientos, el saldo es el de apertura', () => {
+  it('with no transactions, the balance is the opening one', () => {
     expect(balanceOf('cash', '250000.00', []).cleared).toBe('250000.00');
   });
 });
 
-describe('Saldo derivado — pendientes', () => {
-  it('S5 · un gasto pending no toca el saldo cleared pero sí el proyectado', () => {
+describe('Derived balance — pending', () => {
+  it('S5 · a pending expense leaves the cleared balance alone but moves the projected one', () => {
     const balance = balanceOf('debit', '0.00', [expense('50000', 'pending')]);
 
     expect(balance.cleared).toBe('0.00');
     expect(balance.projected).toBe('-50000.00');
   });
 
-  it('caso del PRD: sumar un gasto pending deja el cleared intacto', () => {
+  it('the PRD case: adding a pending expense leaves the cleared balance intact', () => {
     const movements = [income('1000000'), expense('300000'), expense('100000', 'pending')];
     const balance = balanceOf('debit', '500000.00', movements);
 
@@ -108,20 +108,20 @@ describe('Saldo derivado — pendientes', () => {
   });
 });
 
-describe('Saldo derivado — tarjetas de crédito (pasivo)', () => {
-  it('el saldo representa DEUDA: un consumo la aumenta', () => {
+describe('Derived balance — credit cards (liability)', () => {
+  it('the balance is DEBT: a purchase raises it', () => {
     expect(balanceOf('credit', '0.00', [expense('430000')]).cleared).toBe('430000.00');
   });
 
-  it('una transferencia que entra a la tarjeta es un pago: reduce la deuda', () => {
+  it('a transfer into the card is a payment: it lowers the debt', () => {
     expect(balanceOf('credit', '1000000.00', [transferIn('400000')]).cleared).toBe('600000.00');
   });
 
-  it('un ingreso a la tarjeta (una devolución) también reduce la deuda', () => {
+  it('income on the card (a refund) lowers the debt too', () => {
     expect(balanceOf('credit', '500000.00', [income('80000')]).cleared).toBe('420000.00');
   });
 
-  it('consumir y pagar en el mismo periodo deja el neto correcto', () => {
+  it('spending and paying in the same period leaves the right net', () => {
     const balance = balanceOf('credit', '0.00', [
       expense('1200000'),
       expense('300000'),
@@ -130,7 +130,7 @@ describe('Saldo derivado — tarjetas de crédito (pasivo)', () => {
     expect(balance.cleared).toBe('500000.00');
   });
 
-  it('invierte el signo respecto a una cuenta de activo con los mismos movimientos', () => {
+  it('flips the sign against an asset account with the same transactions', () => {
     const movements = [expense('100000'), income('30000')];
 
     expect(balanceOf('debit', '0.00', movements).cleared).toBe('-70000.00');
@@ -138,24 +138,24 @@ describe('Saldo derivado — tarjetas de crédito (pasivo)', () => {
   });
 });
 
-describe('Cupo disponible', () => {
-  it('es el cupo menos lo adeudado', () => {
+describe('Available credit', () => {
+  it('is the limit minus what is owed', () => {
     const available = computeAvailableCredit(toMoney('5000000'), toMoney('1240000'));
     expect(serialize(available!)).toBe('3760000.00');
   });
 
-  it('queda negativo si se excedió el cupo — se informa, no se bloquea', () => {
+  it('goes negative if the limit was exceeded — reported, not blocked', () => {
     const available = computeAvailableCredit(toMoney('1000000'), toMoney('1150000'));
     expect(serialize(available!)).toBe('-150000.00');
   });
 
-  it('es null cuando la cuenta no tiene cupo definido', () => {
+  it('is null when the account has no limit set', () => {
     expect(computeAvailableCredit(null, toMoney('500000'))).toBeNull();
   });
 });
 
-describe('Saldo derivado — datos incompletos', () => {
-  it('una transferencia sin dirección aporta cero en vez de inventar un signo', () => {
+describe('Derived balance — incomplete data', () => {
+  it('a transfer without a direction contributes zero instead of inventing a sign', () => {
     const corrupt: BalanceMovement = {
       type: 'transfer',
       transferDir: null,

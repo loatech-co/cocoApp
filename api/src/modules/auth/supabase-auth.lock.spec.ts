@@ -2,21 +2,21 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * El candado de las cuentas reales, comprobado leyendo el código fuente.
+ * The real-accounts lock, checked by reading the source code.
  *
- * ── Por qué así y no ejecutándolo ───────────────────────────────────────────
- * `supabase-auth.service.ts` importa `jose`, que se publica solo como ESM, y
- * Jest corre en CommonJS: el archivo no se puede cargar en una prueba. Es el
- * mismo motivo por el que `esCorreoRepetido` vive en un módulo aparte.
+ * ── Why this way and not by running it ───────────────────────────────────────
+ * `supabase-auth.service.ts` imports `jose`, which ships only as ESM, and Jest
+ * runs CommonJS: the file cannot be loaded in a test. It is the same reason
+ * `isDuplicateEmail` lives in a separate module.
  *
- * Leer la fuente parece pobre, pero aquí protege justo lo que hace falta: que
- * el candado siga estando, y que nadie abra un atajo por el que pasar sin él.
- * Es la misma técnica que ya usan `foco.test.ts` y `radio.test.ts`.
+ * Reading the source looks poor, but here it protects exactly what is needed:
+ * that the lock is still there, and that nobody opens a shortcut around it.
+ * It is the same technique `foco.test.ts` and `radio.test.ts` already use.
  */
-describe('El candado de las operaciones de administración', () => {
+describe('The lock on admin operations', () => {
   const source = readFileSync(join(__dirname, 'supabase-auth.service.ts'), 'utf8');
 
-  it('la comprobación está dentro de `llamar`', () => {
+  it('the check is inside `call`', () => {
     const callBody = source.slice(source.indexOf('private async call('));
     const untilNextMethod = callBody.slice(0, callBody.indexOf('\n  private toSession'));
 
@@ -24,21 +24,21 @@ describe('El candado de las operaciones de administración', () => {
     expect(untilNextMethod).toContain('whyNotTouchRealAccounts');
   });
 
-  it('y se comprueba ANTES de llamar a la red', () => {
-    // Si el `fetch` fuera primero, el candado solo serviría para ocultar la
-    // respuesta de una operación que ya ocurrió.
+  it('and it is checked BEFORE going to the network', () => {
+    // If the `fetch` came first, the lock would only hide the answer to an
+    // operation that already happened.
     expect(source.indexOf('whyNotTouchRealAccounts')).toBeLessThan(source.indexOf('await fetch('));
   });
 
-  it('no hay ningún `fetch` fuera de `llamar`', () => {
-    // El candado vale lo que valga este invariante: un segundo sitio que
-    // hablara con GoTrue por su cuenta pasaría por encima sin enterarse.
+  it('there is no `fetch` outside `call`', () => {
+    // The lock is only as good as this invariant: a second place talking to
+    // GoTrue on its own would go right past it.
     const calls = source.match(/fetch\(/g) ?? [];
     expect(calls).toHaveLength(1);
   });
 
-  it('las cuatro operaciones peligrosas siguen yendo por `/admin/`', () => {
-    // Si alguna dejara de usar ese prefijo, saldría del candado en silencio.
+  it('the four dangerous operations still go through `/admin/`', () => {
+    // If one stopped using that prefix, it would leave the lock silently.
     for (const method of ['signOutEverywhere', 'createUser', 'changePassword', 'deleteUser']) {
       const start = source.indexOf(`async ${method}(`);
       expect(start).toBeGreaterThan(-1);
@@ -48,9 +48,9 @@ describe('El candado de las operaciones de administración', () => {
     }
   });
 
-  it('entrar y refrescar NO pasan por el candado', () => {
-    // Si entrar quedara bloqueado, la aplicación no se podría usar en local, y
-    // el candado habría cambiado un riesgo por una obstrucción.
+  it('signing in and refreshing do NOT go through the lock', () => {
+    // If signing in were blocked, the app could not be used locally, and the
+    // lock would have traded a risk for an obstruction.
     for (const method of ['signIn', 'refresh']) {
       const start = source.indexOf(`async ${method}(`);
       const body = source.slice(start, start + 500);
