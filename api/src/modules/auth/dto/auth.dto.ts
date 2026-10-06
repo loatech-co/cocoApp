@@ -4,19 +4,18 @@ import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-valid
 import { MAX_LENGTH, MIN_LENGTH } from '../password.policy';
 
 /**
- * Los DTO validan FORMA, no fortaleza: la política completa de contraseñas
- * (composición, relación con los datos personales y contraste contra
- * filtraciones) vive en PasswordService, para que sea una sola fuente de verdad
- * y esté cubierta por pruebas.
+ * The DTOs check SHAPE, not strength: the full password policy (composition,
+ * relation to personal data and the check against breaches) lives in
+ * PasswordService, so it is a single source of truth and covered by tests.
  */
 
 /**
- * Normaliza el correo ANTES de validarlo.
+ * Normalises the email BEFORE validating it.
  *
- * Sin esto, ` Gerardo@X.com ` —lo que produce cualquier autocompletado o un
- * copiar/pegar— fallaría con "formato inválido" y la persona no tendría forma
- * de saber que el problema es un espacio invisible. Además garantiza que la
- * misma dirección escrita de dos maneras sea siempre la misma cuenta.
+ * Without this, ` Gerardo@X.com ` —what any autocomplete or copy-paste
+ * produces— would fail with "invalid format" and the person would have no way
+ * of knowing the problem is an invisible space. It also makes sure the same
+ * address written two ways is always the same account.
  */
 const NormalizeEmail = (): PropertyDecorator =>
   Transform(({ value }: { value: unknown }) =>
@@ -48,9 +47,9 @@ export class LoginDto {
   @MaxLength(255)
   email!: string;
 
-  // Sin MinLength: exigir longitud aquí revelaría la política a quien solo
-  // intenta entrar, y además haría que una contraseña vieja y corta fallara
-  // con un mensaje distinto al de "credenciales incorrectas".
+  // No MinLength: requiring a length here would reveal the policy to someone
+  // who is only trying to sign in, and an old, short password would fail with
+  // a message other than "wrong credentials".
   @IsString()
   @MaxLength(MAX_LENGTH)
   password!: string;
@@ -68,8 +67,8 @@ export class ChangePasswordDto {
 }
 
 /**
- * Lo que trae el cuerpo de `/auth/refresh` y `/auth/logout` cuando el cliente
- * es nativo. En la web el cuerpo va vacío y la credencial es la cookie.
+ * What the body of `/auth/refresh` and `/auth/logout` carries when the client
+ * is native. On the web the body is empty and the credential is the cookie.
  */
 export class RefreshNativeDto {
   @IsOptional()

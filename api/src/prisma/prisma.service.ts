@@ -4,28 +4,28 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
 
 /**
- * Único punto de acceso a la base de datos.
+ * The single access point to the database.
  *
- * Es un singleton dentro del proceso Node persistente, así que el pool de
- * conexiones queda VIVO entre peticiones — esa es justamente la ventaja del
- * proceso de larga vida frente al modelo "un intérprete por request".
+ * It is a singleton inside the persistent Node process, so the connection
+ * pool stays ALIVE between requests — precisely the advantage of a long-lived
+ * process over the "one interpreter per request" model.
  *
- * El tamaño del pool se controla con `connection_limit` en la DATABASE_URL y se
- * mantiene bajo (5–10): se sale por el pooler de Supabase, y abrir más
- * conexiones de las que el plan permite las hace fallar sin aviso.
+ * The pool size is set with `connection_limit` in the DATABASE_URL and kept
+ * low (5–10): traffic goes out through Supabase's pooler, and opening more
+ * connections than the plan allows makes them fail without warning.
  *
- * Ningún service ni controller instancia PrismaClient por su cuenta, y desde
- * el paso 7.4 tampoco lo inyectan: solo los repositorios (`*.repository.ts`)
- * hablan con la base.
+ * No service or controller creates a PrismaClient of its own, and since step
+ * 7.4 they do not inject it either: only the repositories (`*.repository.ts`)
+ * talk to the database.
  */
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    // El adaptador `pg` reemplaza al motor Rust de Prisma. Ver la nota del
-    // generador en schema.prisma: el motor entraba en pánico al suspenderse el
-    // proceso y tumbaba el sitio.
+    // The `pg` adapter replaces Prisma's Rust engine. See the generator note
+    // in schema.prisma: the engine panicked when the process was suspended and
+    // took the site down.
     super({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
   }
 

@@ -3,20 +3,20 @@ import { areEqual, sum, toMoney, type Money } from './money';
 export interface ReconciliationResult {
   balances: boolean;
   total: Money;
-  /** `suma − amount`. Positivo: los splits se pasan. Negativo: faltan. */
+  /** `total − amount`. Positive: the splits go over. Negative: they fall short. */
   difference: Money;
 }
 
 /**
- * Verifica la invariante de los splits: su suma debe igualar EXACTAMENTE el
- * monto de la transacción.
+ * Checks the splits' invariant: their sum must equal the transaction's amount
+ * EXACTLY.
  *
- * Se compara con `Prisma.Decimal.equals`, no con `===` (compararía referencias)
- * ni con `Math.abs(a - b) < epsilon` (un epsilon en dinero es una licencia para
- * perder centavos). En una app financiera "casi igual" no existe.
+ * It compares with `Prisma.Decimal.equals`, not `===` (it would compare
+ * references) nor `Math.abs(a - b) < epsilon` (an epsilon on money is a
+ * licence to lose cents). In a finance app "almost equal" does not exist.
  *
- * La `diferencia` se devuelve para que la UI pueda ofrecer "ajustar al
- * restante" en vez de solo decir que está mal.
+ * The `difference` is returned so the UI can offer "adjust to the remainder"
+ * instead of just saying it is wrong.
  */
 export function checkSplitsReconcile(
   headerAmount: Money,

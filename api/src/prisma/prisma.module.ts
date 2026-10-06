@@ -4,9 +4,9 @@ import { Database } from './database';
 import { PrismaService } from './prisma.service';
 
 /**
- * Global para poder inyectar `Database` (o, en las excepciones listadas en
- * `database.rule.spec.ts`, PrismaService) en cualquier repository sin
- * reimportarlo módulo por módulo.
+ * Global so `Database` (or, in the exceptions listed in
+ * `database.rule.spec.ts`, PrismaService) can be injected into any repository
+ * without importing it module by module.
  */
 @Global()
 @Module({

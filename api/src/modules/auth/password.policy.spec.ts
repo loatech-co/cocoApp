@@ -1,8 +1,8 @@
 import { MAX_LENGTH, MIN_LENGTH, derivesFromPersonalData, evaluatePolicy } from './password.policy';
 
-describe('Política de contraseñas', () => {
-  describe('evaluarPolitica', () => {
-    it('acepta una contraseña que cumple las cuatro reglas y la longitud', () => {
+describe('Password policy', () => {
+  describe('evaluatePolicy', () => {
+    it('accepts a password that meets the four rules and the length', () => {
       expect(evaluatePolicy('Xk9$Ronda-Verde!')).toEqual({ isValid: true, problems: [] });
     });
 
@@ -12,67 +12,67 @@ describe('Política de contraseñas', () => {
       ['abcdefgh1234$', 'Debe incluir al menos una letra mayúscula.'],
       ['Abcdefghijkl$', 'Debe incluir al menos un número.'],
       ['Abcdefghijkl1', 'Debe incluir al menos un símbolo (por ejemplo: ! @ # $ % & *).'],
-    ])('rechaza %p con el motivo exacto', (password, reason) => {
+    ])('rejects %p with the exact reason', (password, reason) => {
       const { isValid, problems } = evaluatePolicy(password);
       expect(isValid).toBe(false);
       expect(problems).toContain(reason);
     });
 
-    it('acepta exactamente la longitud mínima', () => {
+    it('accepts exactly the minimum length', () => {
       const password = `Ab1$${'x'.repeat(MIN_LENGTH - 4)}`;
       expect(password).toHaveLength(MIN_LENGTH);
       expect(evaluatePolicy(password).isValid).toBe(true);
     });
 
-    it('rechaza por encima del máximo, para que argon2 no sea un vector de denegación', () => {
+    it('rejects above the maximum, so hashing cannot become a denial vector', () => {
       const password = `Ab1$${'x'.repeat(MAX_LENGTH)}`;
       expect(evaluatePolicy(password).problems).toContain(
         `No puede superar los ${MAX_LENGTH} caracteres.`,
       );
     });
 
-    it('rechaza espacios al inicio o al final, que casi siempre son un error de copiado', () => {
+    it('rejects spaces at the start or the end, nearly always a copy-paste mistake', () => {
       const reason = 'No puede empezar ni terminar con espacios.';
       expect(evaluatePolicy(' Xk9$Ronda-Verde!').problems).toContain(reason);
       expect(evaluatePolicy('Xk9$Ronda-Verde! ').problems).toContain(reason);
     });
 
-    it('acepta espacios EN MEDIO: las frases largas son buenas contraseñas', () => {
+    it('accepts spaces IN THE MIDDLE: long phrases make good passwords', () => {
       expect(evaluatePolicy('Un Perro 7 Azul!').isValid).toBe(true);
     });
 
-    it('acumula TODOS los incumplimientos, no solo el primero', () => {
-      // Corregir de a uno es frustrante y empuja a elegir lo más flojo que pase.
+    it('collects EVERY failure, not just the first', () => {
+      // Fixing them one at a time is frustrating and pushes toward the weakest thing that passes.
       expect(evaluatePolicy('abc').problems).toHaveLength(4);
     });
   });
 
-  describe('derivaDeDatosPersonales', () => {
+  describe('derivesFromPersonalData', () => {
     const personal = { email: 'gerardo@ejemplo.com', displayName: 'Gerardo Viteri' };
 
     it.each([
-      ['Gerardo2026!x', 'el nombre'],
-      ['xxViteri2026!', 'el apellido'],
-      ['gerardo-Larga1!', 'la parte local del correo'],
-      ['MiCocoApp2026!', 'el nombre del producto'],
-    ])('rechaza %p porque contiene %s', (password) => {
+      ['Gerardo2026!x', 'the first name'],
+      ['xxViteri2026!', 'the last name'],
+      ['gerardo-Larga1!', 'the local part of the email'],
+      ['MiCocoApp2026!', 'the product name'],
+    ])('rejects %p because it contains %s', (password) => {
       expect(derivesFromPersonalData(password, personal)).toBe(true);
     });
 
-    it('ignora mayúsculas y minúsculas al comparar', () => {
+    it('ignores case when comparing', () => {
       expect(derivesFromPersonalData('GERARDO-Larga1!', personal)).toBe(true);
     });
 
-    it('acepta una contraseña sin relación con la cuenta', () => {
+    it('accepts a password unrelated to the account', () => {
       expect(derivesFromPersonalData('Xk9$Ronda-Verde!', personal)).toBe(false);
     });
 
-    it('no se dispara con fragmentos de menos de 4 letras', () => {
-      // Con "Ana" bastarían tres letras para prohibir media lengua española.
+    it('does not fire on fragments shorter than 4 letters', () => {
+      // With "Ana", three letters would be enough to ban half the Spanish language.
       expect(derivesFromPersonalData('Xk9$Ronda-Verde!', { displayName: 'Ana' })).toBe(false);
     });
 
-    it('funciona sin datos: nadie tiene por qué haber puesto nombre todavía', () => {
+    it('works without data: nobody has to have set a name yet', () => {
       expect(derivesFromPersonalData('Xk9$Ronda-Verde!', {})).toBe(false);
     });
   });

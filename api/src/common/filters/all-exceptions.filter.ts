@@ -111,14 +111,14 @@ function toProblem(error: Omit<Normalized, 'code' | 'details'>): ProblemDetails 
 }
 
 /**
- * Da forma única a TODOS los errores de la API.
+ * Gives ALL of the API's errors one shape.
  *
- * Dos audiencias, dos niveles de detalle:
- *   · Al cliente: el status correcto y nunca un stack trace ni SQL —filtrarlos
- *     le regala al atacante el mapa de la aplicación—. En v1,
- *     `{ error: { code, message, details } }`; en v2, `application/problem+json`
- *     (RFC 9457) con un `code` estable por regla de negocio.
- *   · Al log del servidor: el detalle completo, para poder depurar.
+ * Two audiences, two levels of detail:
+ *   · To the client: the right status and never a stack trace or SQL —leaking
+ *     them hands an attacker the map of the app—. In v1,
+ *     `{ error: { code, message, details } }`; in v2, `application/problem+json`
+ *     (RFC 9457) with a stable `code` per business rule.
+ *   · To the server log: the full detail, to be able to debug.
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -142,7 +142,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const error = this.normalize(exception);
     const { status, code, message, details } = error;
 
-    // El log lleva user_id interno y ruta, nunca montos ni descripciones.
+    // The log carries the internal user_id and the path, never amounts or descriptions.
     const who = request.user ? `user=${request.user.id}` : 'anon';
     // Path only: the query string carries search terms and other personal data.
     const line = `${request.method} ${request.url.split('?')[0]} → ${status} [${error.problem}] ${who}`;
@@ -187,8 +187,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     if (exception instanceof Prisma.PrismaClientValidationError) {
-      // Forma de datos inválida que llegó hasta Prisma: es un bug nuestro, no
-      // del cliente. Se registra como 500 sin revelar el detalle del esquema.
+      // An invalid data shape that reached Prisma: it is our bug, not the
+      // client's. It is logged as a 500 without revealing the schema's detail.
       return plain(
         HttpStatus.INTERNAL_SERVER_ERROR,
         'internal_error',
@@ -225,8 +225,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   private fromHttpException(exception: HttpException): Normalized {
     const status = exception.getStatus();
-    // `unknown`: el tipo dice `string | object`, pero una excepción construida
-    // a mano puede traer cualquier cosa, null incluido.
+    // `unknown`: the type says `string | object`, but a hand-built exception
+    // can carry anything, null included.
     const payload: unknown = exception.getResponse();
     const details: ErrorDetail[] = [];
     let fields: ErrorDetail[] | undefined;
@@ -240,7 +240,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         error?: string;
       };
 
-      // El ValidationPipe entrega un array con un mensaje por campo inválido.
+      // The ValidationPipe hands over an array with one message per invalid field.
       if (Array.isArray(body.message)) {
         details.push(...body.message.map((m) => ({ message: m })));
         message = 'Hay campos inválidos en la solicitud.';
@@ -248,9 +248,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = body.message;
       }
 
-      // Detalles que el propio servicio armó por campo (la política de
-      // contraseñas, por ejemplo). Sin esto se perderían y el cliente recibiría
-      // "no cumple los requisitos" sin poder decir CUÁL.
+      // Details the service itself built per field (the password policy, for
+      // instance). Without this they would be lost and the client would get
+      // "does not meet the requirements" with no way to say WHICH.
       if (Array.isArray(body.details)) {
         details.push(...body.details);
       }
@@ -275,7 +275,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   private fromPrismaError(exception: Prisma.PrismaClientKnownRequestError): Normalized {
     switch (exception.code) {
-      // Violación de índice único
+      // Unique index violation
       case 'P2002':
         return plain(
           HttpStatus.CONFLICT,
@@ -283,7 +283,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           'duplicate',
           'Ya existe un registro con esos datos.',
         );
-      // Violación de clave foránea (p. ej. borrar una cuenta con movimientos)
+      // Foreign key violation (e.g. deleting an account with transactions)
       case 'P2003':
         return plain(
           HttpStatus.CONFLICT,
@@ -291,8 +291,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
           'constraint_violation',
           'La operación rompería una relación existente.',
         );
-      // Registro no encontrado. Un recurso ajeno cae aquí por el scoping por
-      // user_id, y devolver 404 (no 403) evita confirmar que existe.
+      // Record not found. Someone else's resource lands here because of the
+      // user_id scoping, and answering 404 (not 403) avoids confirming it exists.
       case 'P2025':
         return plain(HttpStatus.NOT_FOUND, 'not_found', 'not_found', 'El recurso no existe.');
       default:
