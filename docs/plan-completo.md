@@ -295,7 +295,7 @@ Reglas de la investigación:
 **Base de datos**
 
 - Tablas en plural `snake_case`; columnas `snake_case`; PK `id`; FKs `<singular>_id`.
-- Toda tabla con `created_at` y `updated_at` (`timestamptz NOT NULL`).
+- Toda tabla con `created_at` y `updated_at` (`NOT NULL`). En 7.2 se añade `updated_at` donde falte; el paso de `timestamp(3)` a `timestamptz(3)` es de la fase 8 (ADR 0026, `docs/adr/0026-database-names-stay-behind-prisma-map.md`).
 - Nombres de restricciones e índices: `pk_<table>`, `fk_<table>_<column>`, `uq_<table>_<cols>`, `ck_<table>_<rule>`, `idx_<table>_<cols>`.
 - Enums de Postgres con valores en inglés `snake_case`. Hoy `Periodicidad` tiene valores en español: va al mapa de renombres que rompen.
 - Migraciones nombradas `YYYYMMDDHHMMSS_<verb>_<object>` en inglés.
