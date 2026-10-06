@@ -27,6 +27,7 @@ import eslintReact from '@eslint-react/eslint-plugin';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import prettier from 'eslint-config-prettier/flat';
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
+import checkFile from 'eslint-plugin-check-file';
 import i18next from 'eslint-plugin-i18next';
 import { importX } from 'eslint-plugin-import-x';
 import reactHooks from 'eslint-plugin-react-hooks';
@@ -427,6 +428,82 @@ export default defineConfig(
     // is a package, outside the web steps. Same rule as the list above.
     files: ['packages/lectura/src/clasificar.ts'],
     rules: { 'max-lines-per-function': 'off' },
+  },
+
+  // ── Naming (step 7.2) ─────────────────────────────────────────────────────
+  /*
+   * docs/plan-completo.md §7.2 «Nomenclatura». Files and folders in
+   * kebab-case (the role suffix and `.test`/`.spec`/`.stories` are middle
+   * extensions); camelCase values, PascalCase types and components,
+   * UPPER_CASE module constants; booleans with a prefix; no `I` prefix and no
+   * `Type` suffix on types. Properties are not checked: object keys are often
+   * a wire or a database name (`category_id`, `X-Coco-Client`).
+   *
+   * The LANGUAGE of a name is scripts/lint/spanish-identifiers.ts, not this.
+   */
+  {
+    files: ['api/{src,test}/**/*.ts', 'frontend/src/**/*.{ts,tsx}', 'packages/*/src/**/*.ts'],
+    plugins: { 'check-file': checkFile },
+    rules: {
+      'check-file/filename-naming-convention': [
+        'error',
+        { '**/*.{ts,tsx}': 'KEBAB_CASE' },
+        { ignoreMiddleExtensions: true },
+      ],
+      'check-file/folder-naming-convention': [
+        'error',
+        {
+          'api/{src,test}/**/': 'KEBAB_CASE',
+          'frontend/src/**/': 'KEBAB_CASE',
+          'packages/*/src/**/': 'KEBAB_CASE',
+        },
+      ],
+      '@typescript-eslint/naming-convention': [
+        'error',
+        { selector: 'default', format: ['camelCase'], leadingUnderscore: 'allow' },
+        { selector: 'import', format: null },
+        // Keys are often a wire or a database name (`category_id`).
+        { selector: 'property', format: null },
+        // A component passed in a prop (`{ icon: Icon }`), a Storybook
+        // decorator's `Story`, a component mocked inside `vi.mock`.
+        {
+          selector: ['parameter', 'objectLiteralMethod'],
+          format: ['camelCase', 'PascalCase'],
+          leadingUnderscore: 'allow',
+        },
+        // Destructuring keeps the name of what it takes apart (a JSON body).
+        { selector: ['variable', 'parameter'], modifiers: ['destructured'], format: null },
+        { selector: 'enumMember', format: ['PascalCase', 'UPPER_CASE'] },
+        {
+          selector: 'variable',
+          modifiers: ['const'],
+          format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+          leadingUnderscore: 'allow',
+        },
+        { selector: 'function', format: ['camelCase', 'PascalCase'] },
+        { selector: 'typeLike', format: ['PascalCase'] },
+        {
+          selector: 'interface',
+          format: ['PascalCase'],
+          custom: { regex: '^I[A-Z]', match: false },
+        },
+        // `AccountType` and `TransactionType` are the domain's names (the kind
+        // of an account), not a `Type` suffix on `Account`.
+        {
+          selector: 'typeAlias',
+          filter: { regex: '^(Account|Transaction)Type$', match: false },
+          format: ['PascalCase'],
+          custom: { regex: 'Type$', match: false },
+        },
+        {
+          selector: ['variable', 'parameter'],
+          types: ['boolean'],
+          format: ['PascalCase'],
+          prefix: ['is', 'has', 'can', 'should', 'was', 'did', 'will', 'are', 'does'],
+          leadingUnderscore: 'allow',
+        },
+      ],
+    },
   },
 
   // ── Tests, every workspace ────────────────────────────────────────────────

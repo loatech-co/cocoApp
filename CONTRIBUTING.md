@@ -97,10 +97,10 @@ strings, multer leaves `undefined` when nothing was uploaded, and JSON can
 carry `null` where a DTO says `string`: fix the type, keep the guard.
 
 Not here, on purpose: `jsx-a11y` (no release supports ESLint 10; accessibility
-is checked with axe in the Playwright journeys, step 7.7); naming and file-name
-rules — `@typescript-eslint/naming-convention`, `eslint-plugin-check-file` and
-`@eslint-react`'s naming rules — which arrive with the renames of step 7.2;
-import cycles (dependency-cruiser, see [Architecture](#architecture)).
+is checked with axe in the Playwright journeys, step 7.7); `@eslint-react`'s
+naming rules, which arrive with the renames of step 7.2; import cycles
+(dependency-cruiser, see [Architecture](#architecture)). Naming has its own
+section: [Naming](#naming).
 
 **Never disable a rule globally.** A per-line disable needs the rule name and a
 reason on the same line, and should be rare:
@@ -130,6 +130,50 @@ import { useState } from 'react';
 
 export default function Resumen() { … }
 ```
+
+## Naming
+
+`docs/plan-completo.md` §7.2 is the rule; three checks hold it, all in
+`npm run lint`:
+
+- **`eslint-plugin-check-file`**: files and folders in `kebab-case` under
+  `api/{src,test}`, `frontend/src` and `packages/*/src`. The role suffix and
+  `.test`/`.spec`/`.stories` are middle extensions and are not checked.
+- **`@typescript-eslint/naming-convention`**: `camelCase` values and functions,
+  `PascalCase` types and components, `UPPER_CASE` module constants, no `I`
+  prefix and no `Type` suffix on types, and booleans with a prefix (`is`,
+  `has`, `can`, `should`…). Object keys and destructured names are not
+  checked: they are often a wire or a database name (`category_id`).
+- **`scripts/lint/spanish-identifiers.ts`** (`npm run lint:spanish`): no
+  declared name, file or folder in Spanish under `api/`, `frontend/`,
+  `packages/`, `scripts/`, `e2e/` and `ios/`. Strings, comments and test titles
+  are not read (visible text is the catalog's, [User-facing text](#user-facing-text)).
+
+```ts
+// Correct
+const isLoading = true;
+export function createTransaction(input: CreateTransactionInput) { … }
+
+// Incorrect — no prefix on a boolean, Spanish name, `Type` suffix
+const cargando = true;
+export function crearMovimiento(input: MovimientoInputType) { … }
+```
+
+**Baselines, while step 7.2 renames.** What broke these rules when they arrived
+is recorded, and only that passes:
+
+- `scripts/lint/spanish-identifiers.baseline.json`: Spanish names per folder,
+  with a count. One more in a folder fails; one fewer fails too until the
+  baseline is shrunk with `npm run lint:spanish -- --update`. CI also fails if
+  the baseline holds more of any name than on the PR's base.
+- `<workspace>/eslint-suppressions.json`: ESLint's bulk suppressions for
+  `naming-convention` (booleans without a prefix, mostly). After a rename,
+  `npx eslint . --prune-suppressions` from the workspace (in `api/`,
+  `eslint "{src,test}/**/*.ts" --prune-suppressions`). Never
+  `--suppress-rule` again: a new name is fixed, not suppressed.
+
+Each 7.2 slice empties its folder in both, and they are deleted when they are
+empty.
 
 ## TypeScript strictness
 
@@ -187,7 +231,8 @@ export function totalDeOtraForma(…) { … }
 and `|| true` covers a copy without git.
 
 - **pre-commit**: `lint-staged` (`lint-staged.config.js`) runs `eslint --fix`
-  on staged TypeScript files of the workspaces and `prettier --write` on every
+  on staged TypeScript files of the workspaces, from each workspace (where its
+  `eslint-suppressions.json` is), and `prettier --write` on every
   staged file; then `tsc --noEmit` runs for each workspace that has a staged
   TypeScript file.
 - **commit-msg**: `commitlint` (next section).

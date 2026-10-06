@@ -1,0 +1,667 @@
+{
+  "src/app/app-shell.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/app/app-shell.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/app/atajos.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/app/atajos.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/app/barra-inferior.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/app/navegacion.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 9
+    }
+  },
+  "src/app/panel-de-la-cuenta.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/app/pantalla-de-error.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/app/shortcut-grid.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/app/side-rail.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/app/use-shell-state.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 5
+    }
+  },
+  "src/features/admin/components/user-row.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 9
+    }
+  },
+  "src/features/admin/pages/bitacora-page.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/auth/components/require-auth.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/features/auth/pages/login-page.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/features/auth/pages/register-page.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 5
+    }
+  },
+  "src/features/bank-accounts/api/accounts.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/features/bank-accounts/pages/accounts-page.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 6
+    }
+  },
+  "src/features/centros/components/add-category.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/features/centros/components/categoria-modal.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 8
+    }
+  },
+  "src/features/centros/components/category-tile.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/centros/components/concepto-modal.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/features/centros/components/confirmar-borrado.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/centros/components/cost-center-card.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 5
+    }
+  },
+  "src/features/centros/hooks/use-category-form.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/centros/hooks/use-concept-form.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/features/centros/model/category-form.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 6
+    }
+  },
+  "src/features/centros/pages/centros-page.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/profile/components/ajustes.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/features/profile/pages/cuenta-page.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 6
+    }
+  },
+  "src/features/transactions/api/leer-soporte.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/buscador-de-concepto.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 8
+    }
+  },
+  "src/features/transactions/components/camara.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/concept-search-lists.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/features/transactions/components/cost-distribution.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/transactions/components/dashboard-charts.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/features/transactions/components/dashboard-kpis.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/transactions/components/filtro-clasificacion.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/transactions/components/movement-classification.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 6
+    }
+  },
+  "src/features/transactions/components/movement-header.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/features/transactions/components/movement-read-view.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/movement-sheet-form.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/movimiento-modal.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 5
+    }
+  },
+  "src/features/transactions/components/pagos-pendientes.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 6
+    }
+  },
+  "src/features/transactions/components/panel-de-busqueda.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/features/transactions/components/pending-supports.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/range-panel.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/features/transactions/components/reading-progress.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/selector-de-fecha.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 5
+    }
+  },
+  "src/features/transactions/components/soportes.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/support-drop-zone.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 6
+    }
+  },
+  "src/features/transactions/components/support-preview.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/transactions/components/support-unavailable.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/support-upload-panel.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/support-viewer-controls.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/support-viewer.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/components/tabla-de-movimientos.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 5
+    }
+  },
+  "src/features/transactions/components/tendencia.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/features/transactions/components/toolbar-filtros.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 6
+    }
+  },
+  "src/features/transactions/components/trend-parts.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/transactions/hooks/use-classification-proposals.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/features/transactions/hooks/use-concept-search.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/hooks/use-dashboard-page.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/transactions/hooks/use-movement-form.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 8
+    }
+  },
+  "src/features/transactions/hooks/use-movement-sheet.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/features/transactions/hooks/use-range-draft.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/hooks/use-save-movement.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/hooks/use-trend-pointer.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/model/filtros.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/features/transactions/model/movement-form.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/features/transactions/model/trend.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/pruebas/movement-sheet.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/api/api-client.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/api/auth-context.dom.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/api/auth-context.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/api/flags-engine.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/api/session.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/api/vista-de-usuario.dom.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/shared/lib/al-cambiar.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/lib/deslizar.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/lib/encoger-soporte.dom.test.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/lib/encoger-soporte.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/lib/escape.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/lib/foco.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/lib/menu-anchor.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/shared/lib/movil.test.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/shared/lib/pan-zoom.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/shared/ui/atoms/badge.stories.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/badge.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/ui/atoms/bar-slot.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/shared/ui/atoms/button.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/casilla.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/chip-icono.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/collapsible-header.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/collapsible-header.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/dona.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 6
+    }
+  },
+  "src/shared/ui/atoms/drop-surface.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/ui/atoms/file-picker.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/input.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/shared/ui/atoms/interruptor.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/ui/atoms/level-nav.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/level-nav.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/monto.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/ui/atoms/paginador.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/ui/atoms/panel-inferior.stories.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/ui/atoms/panel-inferior.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/panel-inferior.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/shared/ui/atoms/pdf-canvas.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/ui/atoms/pdf-page.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 5
+    }
+  },
+  "src/shared/ui/atoms/politica-de-contrasena.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/rail-toggle.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/rail-toggle.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/textarea.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/tile.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/shared/ui/atoms/toggle-option.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/atoms/toggle-option.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/foundations/field.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/molecules/aviso.stories.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/molecules/calendario.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    }
+  },
+  "src/shared/ui/molecules/campo-de-dinero.stories.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/molecules/icon-grid.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/molecules/menu-rich-option.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/molecules/menu.test.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/molecules/menu.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 13
+    }
+  },
+  "src/shared/ui/molecules/overlay-control.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/molecules/section.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/shared/ui/molecules/tabla.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 8
+    }
+  },
+  "src/shared/ui/organisms/combo.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 14
+    }
+  },
+  "src/shared/ui/organisms/confirmacion.stories.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/shared/ui/organisms/confirmacion.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 7
+    }
+  },
+  "src/shared/ui/organisms/modal.stories.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/shared/ui/organisms/modal.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/shared/ui/organisms/select.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 8
+    }
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "src/common/money/balance.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/common/process/safety-net.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/common/proxy/client-ip.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/main.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/accounts/accounts.repository.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/accounts/accounts.service.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/auth/auth.controller.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/auth/auth.service.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/auth/auth.v2.controller.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/auth/jwt-auth.guard.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/auth/password.policy.spec.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/auth/password.service.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/categories/categories.service.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/modules/categories/varios-pagos.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/modules/dashboard/dashboard.summary.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/dashboard/pendientes.spec.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/dashboard/pendientes.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/modules/flags/coco-flag-provider.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "src/modules/interpretacion/interpretacion.service.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    }
+  },
+  "src/modules/interpretacion/interpretar.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/soportes/receipt-store.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/soportes/soportes.optimizacion.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/soportes/soportes.service.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/transactions/capture.repository.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/modules/transactions/transactions.sort.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/presenters/v1/auth.presenter.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "src/presenters/v2/auth.presenter.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "test/categorization.e2e-spec.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  }
+}
