@@ -13,20 +13,20 @@ interface Envelope<T> {
   meta: Record<string, unknown>;
 }
 
-/** Marca de que el handler ya armó su propio `meta` (paginación, totales…). */
+/** Says the handler already built its own `meta` (pagination, totals…). */
 function hasEnvelope(value: unknown): value is Envelope<unknown> {
   return typeof value === 'object' && value !== null && 'data' in value && 'meta' in value;
 }
 
 /**
- * Envuelve toda respuesta exitosa en `{ data, meta }`.
+ * Wraps every successful response in `{ data, meta }`.
  *
- * Los controladores devuelven el recurso "desnudo" y no repiten el envoltorio;
- * cuando necesitan poblar `meta` (paginación, por ejemplo) devuelven ya
- * `{ data, meta }` y el interceptor lo respeta.
+ * Controllers return the "bare" resource and do not repeat the envelope; when
+ * they need to fill `meta` (pagination, for instance) they already return
+ * `{ data, meta }` and the interceptor respects it.
  *
- * Un 204 no lleva cuerpo: se deja pasar tal cual. Un `StreamableFile` tampoco
- * se toca: es un binario, no un recurso.
+ * A 204 has no body: it goes through as it is. A `StreamableFile` is not
+ * touched either: it is a binary, not a resource.
  */
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, Envelope<T> | T> {
@@ -39,10 +39,10 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Envelope<T> |
         if (hasEnvelope(payload)) {
           return payload;
         }
-        // Un archivo se entrega tal cual. Envuelto en `{ data, meta }` deja de
-        // ser un flujo y pasa a ser un objeto vacío serializado a JSON: el
-        // navegador recibe `{"data":{},"meta":{}}` con el content-type de un
-        // PDF y no enseña nada, sin ningún error que lo explique.
+        // A file is handed over as it is. Wrapped in `{ data, meta }` it stops
+        // being a stream and becomes an empty object serialised to JSON: the
+        // browser gets `{"data":{},"meta":{}}` with a PDF's content type and
+        // shows nothing, with no error to explain it.
         if (payload instanceof StreamableFile) {
           return payload;
         }

@@ -49,7 +49,7 @@ export class UsersRepository {
     return this.prisma.user.update({ where: { id }, data });
   }
 
-  /** One page of users. Los pendientes primero: son los que exigen una decisión. */
+  /** One page of users. Pending ones first: they are the ones that need a decision. */
   findPage(status: UserStatus | undefined, skip: number, take: number): Promise<User[]> {
     return this.prisma.user.findMany({
       where: status ? { status } : {},

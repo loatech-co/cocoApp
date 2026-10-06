@@ -13,18 +13,18 @@ import type { UserRole } from '../../generated/prisma/client';
 
 const ROLES_KEY = 'roles';
 
-/** Restringe una ruta a ciertos roles. Sin él, cualquier usuario autenticado pasa. */
+/** Restricts a route to certain roles. Without it, any authenticated user gets through. */
 export const Roles = (...roles: UserRole[]): CustomDecorator => SetMetadata(ROLES_KEY, roles);
 
 /**
- * Autorización por rol.
+ * Authorization by role.
  *
- * Corre DESPUÉS del JwtAuthGuard, así que `request.user.role` ya viene de la
- * base y no del token: degradar a alguien tiene efecto en la siguiente
- * petición, no cuando expire su sesión.
+ * It runs AFTER the JwtAuthGuard, so `request.user.role` already comes from
+ * the database and not the token: demoting someone takes effect on the next
+ * request, not when their session expires.
  *
- * Responde 404 y no 403 en las rutas de administración, para no confirmarle a
- * un usuario común que ese panel existe.
+ * It answers 404 and not 403 on admin routes, so as not to confirm to a
+ * regular user that the panel exists.
  */
 @Injectable()
 export class RolesGuard implements CanActivate {

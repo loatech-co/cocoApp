@@ -112,10 +112,10 @@ export function whyRefuseToStart(env: NodeJS.ProcessEnv = process.env): string |
   if (readEnv(ALLOW_REMOTE_DATABASE, env)?.toLowerCase() === 'si') return null;
 
   const url = readEnv('DATABASE_URL', env);
-  if (!url) return null; // Sin URL falla más abajo, con su propio mensaje.
+  if (!url) return null; // Without a URL it fails further down, with its own message.
 
   const host = databaseHost(url);
-  if (host === null) return null; // Ilegible: que se queje quien la use.
+  if (host === null) return null; // Unreadable: whoever uses it will complain.
   if (HOSTS_LOCALES.has(host)) return null;
 
   return (

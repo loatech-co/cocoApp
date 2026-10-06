@@ -9,8 +9,8 @@ export class HealthRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Ping para el healthcheck: confirma que el proceso puede hablar con la base.
-   * Distingue "la API está viva" de "la API está viva Y ve la base".
+   * Ping for the health check: confirms the process can talk to the database.
+   * It tells "the API is alive" from "the API is alive AND sees the database".
    */
   async isDatabaseReachable(): Promise<boolean> {
     try {

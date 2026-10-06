@@ -1,17 +1,17 @@
 /**
- * Enseña a `JSON.stringify` a serializar BigInt.
+ * Teaches `JSON.stringify` to serialise BigInt.
  *
- * Las PK del esquema son `BIGINT UNSIGNED`, y Prisma las entrega como `bigint`
- * de JavaScript. Sin esto, cualquier respuesta que incluya un id revienta con
- * "Do not know how to serialize a BigInt".
+ * The schema's primary keys are `BIGINT`, and Prisma hands them out as
+ * JavaScript `bigint`. Without this, any response that includes an id fails
+ * with "Do not know how to serialize a BigInt".
  *
- * Se emite como number mientras quepa en el rango seguro (2^53), que cubre
- * cualquier volumen realista de esta app, y como string si alguna vez lo
- * excediera — así nunca se pierde precisión en silencio.
+ * It is written as a number while it fits the safe range (2^53), which covers
+ * any realistic volume of this app, and as a string if it ever went past it —
+ * so precision is never lost silently.
  *
- * Ojo: esto NO aplica a los montos. El dinero es `Decimal`, y `Prisma.Decimal`
- * ya serializa a string por su cuenta, que es justo lo que queremos: un monto
- * jamás debe viajar como `number`.
+ * Careful: this does NOT apply to amounts. Money is `Decimal`, and
+ * `Prisma.Decimal` already serialises to a string on its own, which is
+ * exactly what we want: an amount must never travel as a `number`.
  */
 export function installBigIntSerializer(): void {
   const MAX = BigInt(Number.MAX_SAFE_INTEGER);

@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AuditRepository, type AuditEntryWithUser } from './audit.repository';
 import type { Prisma } from '../../generated/prisma/client';
 
-/** Acciones auditadas. Tipadas para que no se cuelen cadenas sueltas. */
+/** Audited actions. Typed so loose strings cannot slip in. */
 type AuditedAction =
   | 'auth.register'
   | 'auth.login'
@@ -20,7 +20,7 @@ type AuditedAction =
   | 'admin.role_changed';
 
 export interface AuditedEvent {
-  /** NULL cuando el intento no corresponde a ningún usuario conocido. */
+  /** NULL when the attempt matches no known user. */
   userId?: bigint | null;
   entity: string;
   entityId?: bigint | null;
@@ -37,15 +37,15 @@ export class AuditService {
   constructor(private readonly repository: AuditRepository) {}
 
   /**
-   * Registra un evento.
+   * Records an event.
    *
-   * NUNCA lanza: si la auditoría falla, la operación del usuario debe seguir su
-   * curso. Un error escribiendo la bitácora no puede convertirse en un error de
-   * negocio — pero sí queda en el log del servidor para que no pase inadvertido.
+   * It NEVER throws: if auditing fails, the user's operation must go on. An
+   * error writing the audit log cannot turn into a business error — but it
+   * does stay in the server log so it does not go unnoticed.
    *
-   * Qué NO se guarda aquí: contraseñas, tokens, montos ni descripciones de
-   * movimientos. La bitácora dice "qué entidad y qué operación", no "cuánto
-   * dinero".
+   * What is NOT stored here: passwords, tokens, amounts or transaction
+   * descriptions. The audit log says "which entity and which operation", not
+   * "how much money".
    */
   async record(event: AuditedEvent): Promise<void> {
     try {

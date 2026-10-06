@@ -1,13 +1,13 @@
 import type { UserRole } from '../../generated/prisma/client';
 
 /**
- * Usuario resuelto por el JwtAuthGuard a partir del access token verificado.
+ * The user the JwtAuthGuard resolved from the verified access token.
  *
- * `id` es el user_id interno y es el ÚNICO valor que la aplicación usa para
- * scopear consultas. Nunca proviene del cliente.
+ * `id` is the internal user_id and the ONLY value the app uses to scope
+ * queries. It never comes from the client.
  */
 export interface AuthenticatedUser {
-  /** PK interna en `users`. Todo `where` la usa para scopear. */
+  /** Internal primary key in `users`. Every `where` uses it to scope. */
   id: bigint;
   email: string;
   role: UserRole;

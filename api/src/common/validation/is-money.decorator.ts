@@ -8,11 +8,11 @@ import { Prisma } from '../../generated/prisma/client';
 import { rejectionReason } from '../money/money';
 
 /**
- * Valida que un campo sea un monto representable en DECIMAL(15,2).
+ * Checks that a field is an amount that fits DECIMAL(15,2).
  *
- * Acepta string o number en el JSON de entrada, pero el servicio siempre lo
- * convierte a `Prisma.Decimal` antes de tocar la base: el `number` solo se
- * tolera en el borde, jamás en la aritmética.
+ * It accepts a string or a number in the input JSON, but the service always
+ * turns it into `Prisma.Decimal` before touching the database: `number` is
+ * only tolerated at the edge, never in arithmetic.
  */
 export function IsMoney(options?: ValidationOptions) {
   return function (object: object, propertyName: string): void {
@@ -50,9 +50,9 @@ export function IsMoney(options?: ValidationOptions) {
 }
 
 /**
- * Como IsMoney, pero además exige que sea mayor que cero.
- * El `amount` de un movimiento nunca puede ser 0 ni negativo: el signo
- * económico lo da `type`, no el signo del número.
+ * Like IsMoney, but it also requires it to be greater than zero.
+ * A transaction's `amount` can never be 0 or negative: the economic sign
+ * comes from `type`, not from the number's sign.
  */
 export function IsPositiveMoney(options?: ValidationOptions) {
   return function (object: object, propertyName: string): void {

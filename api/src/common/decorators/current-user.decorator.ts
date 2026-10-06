@@ -8,11 +8,11 @@ import type { Request } from 'express';
 import type { AuthenticatedUser } from '../types/authenticated-user';
 
 /**
- * Inyecta en el controlador el usuario que el FirebaseAuthGuard resolvió a
- * partir del token verificado.
+ * Injects into the controller the user the JwtAuthGuard resolved from the
+ * verified token.
  *
- * Si falta, es un error de programación (una ruta marcada @Public() que aun así
- * pide el usuario), no un error del cliente: por eso 500 y no 401.
+ * If it is missing, it is a programming error (a route marked @Public() that
+ * still asks for the user), not a client error: hence 500 and not 401.
  */
 export const CurrentUser = createParamDecorator(
   (_data: unknown, context: ExecutionContext): AuthenticatedUser => {

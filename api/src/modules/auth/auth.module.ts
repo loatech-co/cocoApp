@@ -13,12 +13,13 @@ import { CategoriesModule } from '../categories/categories.module';
 import { FlagsModule } from '../flags/flags.module';
 
 /**
- * Global porque el JwtAuthGuard —que es global— necesita SupabaseAuthService
- * para verificar la firma y UsersRepository para leer rol y estado, y el módulo de administración necesita AuthService
- * y PasswordService.
+ * Global because the JwtAuthGuard —which is global— needs SupabaseAuthService
+ * to verify the signature and UsersRepository to read role and status, and
+ * the admin module needs AuthService and PasswordService.
  *
- * Ya no importa JwtModule: esta API dejó de firmar tokens al migrar a Supabase
- * Auth. Solo los verifica, y eso lo hace `jose` contra el JWKS del proyecto.
+ * It no longer imports JwtModule: this API stopped signing tokens when it
+ * moved to Supabase Auth. It only verifies them, and `jose` does that against
+ * the project's JWKS.
  */
 @Global()
 @Module({

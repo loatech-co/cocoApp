@@ -3,10 +3,10 @@ import { SetMetadata, type CustomDecorator } from '@nestjs/common';
 export const IS_PUBLIC_KEY = 'isPublic';
 
 /**
- * Exime a una ruta del FirebaseAuthGuard global.
+ * Exempts a route from the global JwtAuthGuard.
  *
- * El guard es global a propósito: así ninguna ruta queda desprotegida por
- * olvido. Abrir una ruta exige escribirlo explícitamente, que es justo lo que
- * se quiere revisar en un PR.
+ * The guard is global on purpose: that way no route is left unprotected by
+ * oversight. Opening a route requires writing it explicitly, which is exactly
+ * what one wants to review in a PR.
  */
 export const Public = (): CustomDecorator => SetMetadata(IS_PUBLIC_KEY, true);
