@@ -447,13 +447,24 @@ Services, repositories, tasks and controllers throw a `DomainError`
 `AuthenticationError`, `ForbiddenError`, `PayloadTooLargeError`,
 `UnsupportedMediaTypeError`, `InternalError`, `ServiceUnavailableError`.
 `AllExceptionsFilter` is the only place that maps them to HTTP, and the wire
-format is a contract: `{ error: { code, message, details } }`, with the
-status, `code` and Spanish message each error had before (its spec compares
-every domain error with the Nest exception it replaced). Add a subclass only
-for a status no existing one covers.
+format is a contract, one per version:
 
-Guards, pipes and param decorators are the HTTP adapter and keep Nest's
-exceptions. ESLint fails on `new XxxException(…)` in `*.service.ts`,
+- **v1**: `{ error: { code, message, details } }`, with the status, generic
+  `code` and Spanish message each error had before (its spec compares every
+  domain error with the Nest exception it replaced).
+- **v2**: `application/problem+json` (RFC 9457), `{ type, title, status,
+detail, code, errors? }`. `code` is stable, in English and one per business
+  rule; `detail` is the Spanish sentence; `errors[]` names each field at fault.
+
+A rule a client may want to react to gets its own code: add it to
+`common/errors/problem-codes.ts` (the only list; iOS and the web switch on it)
+and throw with it, `new ValidationError('…', { code: 'splits_unbalanced' })`.
+Each subclass only accepts the codes of its own status. A published code is
+never renamed. Add a subclass only for a status no existing one covers.
+
+Guards, pipes and param decorators are the HTTP adapter: they may keep Nest's
+exceptions, or throw a `DomainError` when the rule has a code of its own (the
+session guard does, for `account_suspended` and its siblings). ESLint fails on `new XxxException(…)` in `*.service.ts`,
 `*.controller.ts`, `*.repository.ts` and `*.task.ts`.
 
 ```ts
@@ -741,8 +752,8 @@ them as the `openapi` artifact. Swagger UI is served at `/api/docs/v1` and
   and `contract/v2/openapi.decorators.ts`: `@ApiAuthenticated()` or
   `@ApiPublic()`; `@ApiData(…)` (v1) or `@ApiDataV2(Model, { isPage, status })`
   (v2) for the `{ data, meta }` envelope; `@ApiNoContent()` for a 204; and
-  `@ApiErrors(…)` for the statuses it answers with
-  `{ error: { code, message, details } }`.
+  `@ApiErrors(…)` for the statuses it answers with an error (v1's envelope, or
+  v2's `application/problem+json` with the codes of each status listed).
 
 **Why.** One source of truth: the clients generate their types from these files
 (Orval in fetch mode, D11), so a document that drifts from the code is a client
@@ -770,26 +781,30 @@ one, never an edit of it (7.2, 7.10). Today there are two:
   those lines show seven days with zero uses (7.10); the health probes count, so
   point monitors and deploy checks at `/api/v2/health` and `/api/v2/ready`.
 
-**How v2 is written.** v2 changes no behaviour, so it has no logic of its own.
-Each module has a `*.v2.controller.ts` (`@Controller({ path, version: '2' })`)
-that calls the same service as v1 and translates at the edge:
+**How a version is written.** v2 changes no behaviour, so it has no logic of
+its own. Each module has a `*.v2.controller.ts` (`@Controller({ path, version:
+'2' })`) that calls the same service as v1 (ADR 0023):
 
-- out: `toV2(view)` (`contract/v2/to-v2.ts`) renames the fields and literals
-  with one table that follows `docs/standards/rename-map.json`; a field the
-  table does not name is only re-cased. `ToV2<T>` is the same translation in
-  the type system, so the response classes are checked against it.
+- out: the service returns the DOMAIN, in English (`*.domain.ts`, or the types
+  next to the service); closed sets of words go through `common/vocabulary.ts`.
+  Each version builds its body with its presenter: `src/presenters/v1/*` puts
+  back v1 byte for byte, `src/presenters/v2/*` hands the domain out.
+  `contract/v1/shapes.spec.ts` and `contract/v2/shapes.spec.ts` tie each
+  version's response classes to what its presenters build.
 - in: the v2 DTOs live in `dto/v2/`, and a typed mapper builds the v1 DTO the
-  service takes, through `defined<V1Draft<V1Dto>>({ … })`: an absent field stays
-  absent (never `undefined`) and a misspelt v1 name does not compile.
+  service still takes, through `defined<V1Draft<V1Dto>>({ … })`
+  (`contract/v2/v1-input.ts`): an absent field stays absent (never
+  `undefined`) and a misspelt v1 name does not compile.
 - a list the service returns whole is cut with `paginate(items, query)`
-  (`contract/v2/pagination.ts`); one the service already pages in SQL keeps its
-  own meta, translated.
+  (`contract/v2/pagination.ts`); one the service already pages in SQL (the
+  transactions, the admin lists) keeps its own meta.
 
 **Why.** Two copies of the same logic drift: one learns a rule and the other
-does not. With the translation at the edge and the equivalence tested
-(`api/test/api-v2.e2e-spec.ts` compares each v2 read with `toV2` of its v1
-twin, on the same data), the only thing v2 can get wrong is a name, and that is
-what the type checks catch. Isolation between users is checked per version:
+does not. With one service and a presenter per version, retiring v1 is deleting
+its controllers, DTOs, `contract/v1` and `presenters/v1`. The two presenters
+are checked against each other: `api/test/api-v2.e2e-spec.ts` compares each v2
+read with `toV2` of its v1 twin, on the same data (`contract/v2/to-v2.ts` is
+that reference translation, used by no route). Isolation between users is checked per version:
 `user-isolation.e2e-spec.ts` (v1) and `user-isolation.v2.e2e-spec.ts` (v2) each
 attack every route of their prefix, and a route under any other prefix fails.
 

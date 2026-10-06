@@ -8,7 +8,7 @@ import type {
   Interpretation,
 } from '../../modules/interpretacion/interpretation.domain';
 
-export interface ClassificationV1 {
+interface ClassificationV1 {
   certeza: Spanish<typeof CERTAINTY, Certainty>;
   fuente: Spanish<typeof CLASSIFICATION_SOURCE, ClassificationSource> | null;
   concepto_id: bigint | null;

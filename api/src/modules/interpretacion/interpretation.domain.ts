@@ -6,7 +6,7 @@ import type { Transaction } from '../transactions/transactions.domain';
 export type Certainty = English<typeof CERTAINTY>;
 export type ClassificationSource = English<typeof CLASSIFICATION_SOURCE>;
 
-export interface Candidate {
+interface Candidate {
   id: bigint;
   name: string;
   /** Where it hangs, as the user reads it: `Center › Category › Concept`. */

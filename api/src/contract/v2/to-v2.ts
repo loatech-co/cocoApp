@@ -64,7 +64,7 @@ export const FIELD_NAMES = {
 } as const;
 
 /** v1 literal → v2 literal, per v1 field (the same word can mean two things). */
-export const VALUE_NAMES = {
+const VALUE_NAMES = {
   periodicidad: PERIODICITY,
   breakdown_level: BREAKDOWN_LEVEL,
   granularity: GRANULARITY,

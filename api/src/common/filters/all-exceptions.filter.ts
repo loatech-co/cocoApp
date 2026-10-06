@@ -81,7 +81,7 @@ interface Normalized {
 }
 
 /** RFC 9457 body of a v2 error. */
-export interface ProblemDetails {
+interface ProblemDetails {
   type: string;
   title: string;
   status: number;
@@ -99,7 +99,7 @@ function isV2(request: Request): boolean {
 }
 
 /** The v2 body of a normalized error. */
-export function toProblem(error: Omit<Normalized, 'code' | 'details'>): ProblemDetails {
+function toProblem(error: Omit<Normalized, 'code' | 'details'>): ProblemDetails {
   return {
     type: problemType(error.problem),
     title: PROBLEMS[error.problem].title,

@@ -7,7 +7,7 @@ import type { ErrorDetail } from '../errors/domain-error';
  * (`splits.0.amount`). Nested errors carry no message of their own: only the
  * leaves with constraints do.
  */
-export function fieldErrors(errors: readonly ValidationError[], parent = ''): ErrorDetail[] {
+function fieldErrors(errors: readonly ValidationError[], parent = ''): ErrorDetail[] {
   return errors.flatMap((error) => {
     const field = parent === '' ? error.property : `${parent}.${error.property}`;
     const own = Object.values(error.constraints ?? {}).map((message) => ({ field, message }));
