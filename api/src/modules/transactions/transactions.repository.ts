@@ -165,6 +165,14 @@ export class TransactionsRepository {
     return (await this.prisma.category.count({ where: { id: categoryId, userId } })) > 0;
   }
 
+  /** True only when EVERY id in `categoryIds` is one of the user's categories. Empty is true. */
+  async categoriesBelongTo(userId: bigint, categoryIds: readonly bigint[]): Promise<boolean> {
+    const unique = [...new Set(categoryIds)];
+    if (unique.length === 0) return true;
+    const owned = await this.prisma.category.count({ where: { id: { in: unique }, userId } });
+    return owned === unique.length;
+  }
+
   private async buildWhere(
     userId: bigint,
     query: ListTransactionsQueryDto,

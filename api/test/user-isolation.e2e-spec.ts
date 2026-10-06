@@ -287,6 +287,56 @@ describe('User isolation (e2e)', () => {
     ).toBe(0);
   });
 
+  it('splits: Bruno cannot split a movement into Ana’s concept, and merging his concepts never moves her splits', async () => {
+    await untouched(async () => {
+      const hers = { category_id: Number(a.conceptId) };
+      const mine = { category_id: Number(brunoConceptId) };
+
+      const created = await http
+        .post('/api/v1/transactions')
+        .set('Authorization', asBruno)
+        .send({
+          date: '2026-09-11',
+          amount: '10',
+          type: 'expense',
+          splits: [
+            { ...mine, amount: '4' },
+            { ...hers, amount: '6' },
+          ],
+        });
+      expect([404, 422]).toContain(created.status);
+
+      const edited = await http
+        .patch(`/api/v1/transactions/${String(brunoTransactionId)}`)
+        .set('Authorization', asBruno)
+        .send({ amount: '10', splits: [{ ...hers, amount: '10' }] });
+      expect([404, 422]).toContain(edited.status);
+    });
+    expect(await env.prisma.transactionSplit.count({ where: { categoryId: a.conceptId } })).toBe(1); // only Ana's own seeded split
+
+    // A split of Ana's that points at Bruno's concept: the data the missing
+    // check above could leave behind. Merging that concept must not drag it
+    // into the rest of Bruno's tree.
+    const brunoConcept = await env.prisma.category.findUniqueOrThrow({
+      where: { id: brunoConceptId },
+    });
+    const destino = await env.prisma.category.create({
+      data: { userId: bruno.id, parentId: brunoConcept.parentId, name: 'Agua B' },
+    });
+    const legacy = await env.prisma.transactionSplit.create({
+      data: { transactionId: a.transactionId, categoryId: brunoConceptId, amount: '1' },
+    });
+
+    await http
+      .post(`/api/v1/categories/${String(brunoConceptId)}/unificar`)
+      .set('Authorization', asBruno)
+      .send({ destino_id: Number(destino.id) })
+      .expect(201);
+
+    const after = await env.prisma.transactionSplit.findUniqueOrThrow({ where: { id: legacy.id } });
+    expect(after.categoryId).not.toBe(destino.id);
+  });
+
   // ── Receipts (soportes) ────────────────────────────────────────────────────
 
   covers([

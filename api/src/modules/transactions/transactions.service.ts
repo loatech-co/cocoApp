@@ -15,9 +15,9 @@ import {
   type TransaccionCompleta,
 } from './transactions.repository';
 import { parsePaginacion } from './transactions.sort';
+import { splitsParaEscribir } from './transactions.splits';
 import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
 import { serializar, toMoney, type Money } from '../../common/money/money';
-import { verificarCuadreDeSplits } from '../../common/money/splits';
 import { SoportesService } from '../soportes/soportes.service';
 import { TagsService } from '../tags/tags.service';
 
@@ -145,7 +145,7 @@ export class TransactionsService {
     if (accountId !== null) await this.exigirCuentaPropia(userId, accountId);
     if (categoryId !== null) await this.exigirCategoriaPropia(userId, categoryId);
 
-    const splits = this.prepararSplits(amount, dto.splits);
+    const splits = await this.prepararSplits(userId, amount, dto.splits);
     const tagIds = dto.tags?.length ? await this.tags.resolverNombres(userId, dto.tags) : [];
 
     const creada = await this.repository.createWithDetails(
@@ -238,7 +238,8 @@ export class TransactionsService {
     const amount = dto.amount !== undefined ? toMoney(dto.amount) : toMoney(actual.amount);
 
     // Si llegan splits nuevos, se revalida el cuadre contra el monto resultante.
-    const splits = dto.splits !== undefined ? this.prepararSplits(amount, dto.splits) : null;
+    const splits =
+      dto.splits !== undefined ? await this.prepararSplits(userId, amount, dto.splits) : null;
     const tagIds =
       dto.tags !== undefined ? await this.tags.resolverNombres(userId, dto.tags) : null;
 
@@ -278,27 +279,21 @@ export class TransactionsService {
 
   // ── Apoyo ──────────────────────────────────────────────────────────────────
 
-  /** Valida el cuadre y normaliza los splits. Lanza 422 si no cuadran. */
-  private prepararSplits(
+  /**
+   * Valida el cuadre y exige que cada categoría sea del usuario (422): sin eso
+   * un split colgaba un movimiento propio de un concepto ajeno.
+   */
+  private async prepararSplits(
+    userId: bigint,
     amountCabecera: Money,
     splits: readonly SplitDto[] | undefined,
-  ): SplitToWrite[] {
-    if (!splits || splits.length === 0) return [];
-
-    const montos = splits.map((split) => toMoney(split.amount));
-    const cuadre = verificarCuadreDeSplits(amountCabecera, montos);
-
-    if (!cuadre.cuadra) {
-      throw new ValidationError(
-        `La suma de los splits (${serializar(cuadre.suma)}) no coincide con el monto (${serializar(amountCabecera)}). Diferencia: ${serializar(cuadre.diferencia)}.`,
-      );
+  ): Promise<SplitToWrite[]> {
+    const listos = splitsParaEscribir(amountCabecera, splits);
+    const ids = listos.flatMap((split) => (split.categoryId !== null ? [split.categoryId] : []));
+    if (!(await this.repository.categoriesBelongTo(userId, ids))) {
+      throw new ValidationError('La categoría indicada no existe o no es tuya.');
     }
-
-    return splits.map((split, indice) => ({
-      categoryId: split.category_id !== undefined ? BigInt(split.category_id) : null,
-      amount: montos[indice] ?? toMoney(split.amount), // mismo valor: montos[i] es este
-      note: split.note ?? null,
-    }));
+    return listos;
   }
 
   private async exigirMovimiento(userId: bigint, id: bigint): Promise<TransaccionCompleta> {

@@ -234,13 +234,17 @@ export class CategoriesRepository {
 
       // Los splits reparten un movimiento entre categorías: si uno apuntaba al
       // concepto que desaparece, hay que moverlo o se quedaría sin clasificar.
+      // Ni los splits ni las filas de importación llevan `user_id`: se filtran
+      // por el dueño del movimiento o del lote. Sin ese filtro, una fila ajena
+      // que apuntara al origen (de cuando los splits no validaban la categoría)
+      // saltaría al árbol de este usuario.
       await tx.transactionSplit.updateMany({
-        where: { categoryId: origenId },
+        where: { categoryId: origenId, transaction: { userId } },
         data: { categoryId: destinoId },
       });
 
       await tx.importRow.updateMany({
-        where: { categoryId: origenId },
+        where: { categoryId: origenId, batch: { userId } },
         data: { categoryId: destinoId },
       });
 
