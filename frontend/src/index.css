@@ -901,29 +901,29 @@
   }
 
   /*
-    ── Por qué el MARCADOR no se apaga desde aquí ────────────────────────────
-    Estuvo aquí y no funcionaba. Esta capa es `components`, y una utilidad de
-    Tailwind le gana siempre: el `placeholder:text-muted-foreground` que el
-    propio campo lleva en su `className` pisaba el `color: transparent` de
-    aquí, así que en reposo se veían las dos cosas a la vez —la etiqueta
-    centrada y el marcador ocho píxeles más abajo, cruzándose—.
+    ── Why the PLACEHOLDER is not turned off from here ──────────────────────
+    It used to be here and it did not work. This layer is `components`, and a
+    Tailwind utility always wins over it: the `placeholder:text-muted-foreground`
+    the field itself carries in its `className` overrode the
+    `color: transparent` here, so at rest both showed at once —the label
+    centered and the placeholder eight pixels lower, crossing each other—.
 
-    Que las utilidades ganen a esta capa es lo correcto y no se toca: es lo
-    que permite que una llamada ajuste un campo concreto. Lo que no se puede
-    es pelear contra eso desde aquí. Así que el marcador lo apaga el propio
-    campo, con utilidades, en `ui/input.tsx` y `ui/textarea.tsx`.
+    Utilities winning over this layer is right and stays: it is what lets a
+    call adjust a specific field. What cannot be done is fight that from here.
+    So the field itself turns its placeholder off, with utilities, in
+    `shared/ui/atoms/input.tsx` and `shared/ui/atoms/textarea.tsx`.
 
-    Lo de abajo sí puede vivir aquí: el texto de «sin elegir» de un
-    desplegable se apaga con `opacity`, y ninguna utilidad del proyecto le
-    pone opacidad a ese `span`.
+    What follows can live here: a dropdown's «nothing chosen» text is turned
+    off with `opacity`, and no utility in the project sets opacity on that
+    `span`.
   */
 
   /*
-    Y su equivalente en un desplegable.
+    And its equivalent in a dropdown.
 
-    Un `<select>` de esta app no tiene marcador: tiene el texto de «sin
-    elegir», que hace el mismo papel. Se marca con `data-vacio` y se esconde
-    en reposo por lo mismo que el marcador: ahí está la etiqueta.
+    A `<select>` in this app has no placeholder: it has the «nothing chosen»
+    text, which plays the same role. It is marked with `data-vacio` and hidden
+    at rest for the same reason as the placeholder: the label is there.
   */
   .campo [data-vacio] {
     opacity: 0;
@@ -937,36 +937,36 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LO QUE SURGE
+   WHAT EMERGES
 
-   Un panel que aparece de golpe se lee como un fallo de pintado: en un
-   fotograma no estaba y en el siguiente ocupa un tercio de la pantalla, y la
-   vista tiene que volver a buscar dónde estaba mirando.
+   A panel that appears all at once reads as a painting glitch: in one frame
+   it was not there and in the next it takes a third of the screen, and the
+   eye has to search again for where it was looking.
 
-   120ms y un 4 % de escala. Es el tiempo que tarda el ojo en seguir un
-   movimiento sin que la mano lo note como espera —por debajo de 100 no se
-   percibe, por encima de 200 estorba—, y la escala dice de dónde SALE el
-   panel: del borde del botón que lo abrió.
+   120ms and 4 % of scale. It is the time the eye takes to follow a movement
+   without the hand feeling it as a wait —under 100 it is not perceived, over
+   200 it gets in the way—, and the scale says where the panel COMES FROM: the
+   edge of the button that opened it.
 
-   El origen lo pone quien lo usa: un menú alineado a la izquierda crece desde
-   su esquina superior izquierda, y uno pegado al pie desde abajo. Sin eso, el
-   panel parece salir de su propio centro y flota sin venir de ningún sitio.
+   The origin is set by whoever uses it: a left-aligned menu grows from its
+   top left corner, and one stuck to the bottom from below. Without that, the
+   panel seems to come out of its own center and floats in from nowhere.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @utility surge {
   animation: surgir 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Una ficha no SURGE de un botón: llega. Sube 12px y crece un 2 %, que es lo
-   justo para que se vea venir de abajo —de donde llega en el teléfono— sin que
-   parezca que rebota. Y 160ms en vez de 120: es una superficie grande, y a la
-   velocidad de un desplegable un panel de media pantalla da un tirón. */
+/* A sheet does not EMERGE from a button: it arrives. It rises 12px and grows
+   2 %, just enough to be seen coming from below —where it comes from on the
+   phone— without seeming to bounce. And 160ms instead of 120: it is a big
+   surface, and at a dropdown's speed a half-screen panel jerks. */
 @utility emerge {
   animation: emerger 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* El velo solo se desvanece. Cualquier movimiento suyo se leería como que la
-   página de detrás se mueve, y la página de detrás no se ha movido. */
+/* The scrim only fades. Any movement of it would read as the page behind
+   moving, and the page behind has not moved. */
 @utility se-revela {
   animation: revelar 160ms ease-out;
 }
@@ -1002,8 +1002,8 @@
   }
 }
 
-/* Quien pide menos movimiento recibe la aparición sin el viaje —no la pierde
-   entera—: el desvanecido sigue diciendo que algo llegó. */
+/* Whoever asks for less motion gets the appearance without the journey —not
+   losing it entirely—: the fade still says something arrived. */
 @media (prefers-reduced-motion: reduce) {
   @keyframes surgir {
     from {
@@ -1025,26 +1025,26 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   EL ARMAZÓN DEL TELÉFONO
+   THE PHONE SHELL
 
-   Aquí está lo que NINGÚN componente puede decir por su cuenta: qué le pasa a
-   la página cuando se abre algo encima. Una hoja no sabe que detrás hay un
-   documento que se desplaza, y el documento no sabe que hay una hoja — pero el
-   armazón sí sabe las dos cosas, porque las dos son suyas.
+   Here is what NO component can say on its own: what happens to the page
+   when something opens on top. A sheet does not know there is a scrolling
+   document behind it, and the document does not know there is a sheet — but
+   the shell knows both, because both are its own.
 
-   Va fuera de `@layer`, así que gana a cualquier utilidad de Tailwind sin
-   necesidad de `!important`.
+   It goes outside `@layer`, so it beats any Tailwind utility without needing
+   `!important`.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 767px), (orientation: portrait) and (max-width: 1024px) {
-  /* ── La barra de desplazamiento no ocupa sitio ───────────────────────────
-     Un teléfono pinta una barra SUPERPUESTA, que no mide nada; un escritorio
-     pinta la clásica, que son 15px de diseño de verdad. Así que una pantalla
-     revisada a 390 está en realidad maquetada a 375 — y se retroalimenta: la
-     columna más angosta es más alta, y más alta mantiene la barra.
+  /* ── The scrollbar takes no room ─────────────────────────────────────────
+     A phone paints an OVERLAY bar, which measures nothing; a desktop paints
+     the classic one, which is 15px of real layout. So a screen reviewed at
+     390 is actually laid out at 375 — and it feeds itself: the narrower
+     column is taller, and taller keeps the bar.
 
-     Solo por debajo del corte. En un escritorio de verdad la barra es el
-     mueble que se espera, y la única señal de que una página larga sigue. */
+     Only below the breakpoint. On a real desktop the bar is the expected
+     fixture, and the only sign that a long page goes on. */
   html {
     scrollbar-width: none;
   }
@@ -1055,73 +1055,73 @@
     height: 0;
   }
 
-  /* ── Lo que ocupa la barra de abajo ──────────────────────────────────────
-     El hueco que el cuerpo se reserva al pie y la altura a la que empieza un
-     aviso. Los dos salen de aquí porque los dos miden lo MISMO: la barra.
+  /* ── What the bottom bar takes ───────────────────────────────────────────
+     The room the body reserves at the bottom and the height at which a toast
+     starts. Both come from here because both measure the SAME thing: the bar.
 
-     60 de barra, 16 porque el botón redondo del centro sobresale por encima
-     de ella —el estorbo real es más alto que la barra—, 24 de aire porque una
-     página que termina justo contra la barra se lee cortada y no terminada, y
-     el borde seguro del teléfono encima de todo. */
+     60 of bar, 16 because the round button in the middle sticks out above it
+     —the real obstacle is taller than the bar—, 24 of air because a page
+     that ends right against the bar reads as cut off and not finished, and
+     the phone's safe edge on top of everything. */
   :root {
     --hueco-de-la-barra: calc(60px + 16px + 24px + env(safe-area-inset-bottom, 0px));
     --bajo-la-barra: calc(60px + env(safe-area-inset-bottom, 0px) + 12px);
   }
 
-  /* ── Dentro de la app del teléfono ───────────────────────────────────────
-     La barra de abajo es la nativa y queda FUERA del webview, así que aquí
-     no hay nada que esquivar: el cuerpo no reserva hueco y un aviso vuelve a
-     salir cerca del borde. La marca la pone `main.tsx` al arrancar.
+  /* ── Inside the phone app ────────────────────────────────────────────────
+     The bottom bar is the native one and sits OUTSIDE the webview, so there
+     is nothing to dodge here: the body reserves no room and a toast comes out
+     near the edge again. `main.tsx` sets the mark on startup.
 
-     Se redefine la VARIABLE y no se añade una variante: una `@custom-variant`
-     competiría a igual especificidad con `movil:` y dependería del orden en
-     que Tailwind emita las dos. Un selector de atributo gana a `:root` por
-     especificidad, así que no depende de dónde esté escrito. */
+     The VARIABLE is redefined and no variant is added: a `@custom-variant`
+     would compete at equal specificity with `movil:` and would depend on the
+     order in which Tailwind emits the two. An attribute selector beats
+     `:root` on specificity, so it does not depend on where it is written. */
   html[data-embebido='si'] {
     --hueco-de-la-barra: 0px;
     --bajo-la-barra: 12px;
   }
 
-  /* ── La coreografía ──────────────────────────────────────────────────────
-     Se deriva con `:has()` del estado de la PROPIA superficie. Nunca de una
-     clase que mantenga un script: un cierre que se olvide de quitarla deja la
-     página bloqueada sin nada abierto, y eso no se puede depurar mirando lo
-     que hay en pantalla.
+  /* ── The choreography ────────────────────────────────────────────────────
+     It is derived with `:has()` from the state of the surface ITSELF. Never
+     from a class a script maintains: a close that forgets to remove it leaves
+     the page locked with nothing open, and that cannot be debugged by looking
+     at what is on screen.
 
-     Por qué se bloquea el desplazamiento: una hoja abierta deja la página
-     DETRÁS, así que un gesto que falle su lista desplazaba la página, y al
-     cerrarla uno aparecía en un sitio que no eligió. La lista de la hoja
-     sigue desplazándose: lo que se bloquea es el documento.
+     Why scrolling is locked: an open sheet leaves the page BEHIND, so a
+     gesture that missed its list scrolled the page, and on closing it you
+     showed up somewhere you did not choose. The sheet's list keeps scrolling:
+     what is locked is the document.
 
-     Aquí vivía además la retirada de la barra y del techo, y se fue con el
-     menú de hamburguesa: era para un panel a PANTALLA COMPLETA, que tapaba las
-     dos. Una hoja ocupa la parte de abajo y deja el techo a la vista, y la
-     barra se queda detrás de su velo, que es donde tiene que estar. */
+     The withdrawal of the bar and the top bar also lived here, and it went
+     away with the hamburger menu: it was for a FULL-SCREEN panel, which
+     covered both. A sheet takes the bottom part and leaves the top bar in
+     view, and the bar stays behind its scrim, which is where it belongs. */
   html:has([data-superficie='panel'][data-abierta='si']) {
     overflow: hidden;
   }
 }
 
-/* ── El alto de un panel se anima ──────────────────────────────────────────
-   Un panel inferior mide lo que mide su contenido —seis baldosas son dos
-   filas; la lista de páginas es el alto entero—, y pasar de uno a otro era un
-   SALTO mientras entrar y salir eran suaves.
+/* ── A panel's height is animated ──────────────────────────────────────────
+   A bottom panel measures what its content measures —six tiles are two rows;
+   the list of pages is the whole height—, and going from one to the other
+   was a JUMP while entering and leaving were smooth.
 
-   Quien lo resuelve es la MEDIDA: `bottom-sheet.tsx` observa su columna y le
-   pone al panel un alto en píxeles, porque una transición necesita dos valores
-   definidos y de `auto` a `auto` el valor declarado no cambia por mucho que el
-   contenido mida otra cosa.
+   What solves it is the MEASURE: `bottom-sheet.tsx` observes its column and
+   gives the panel a height in pixels, because a transition needs two defined
+   values and from `auto` to `auto` the declared value does not change however
+   much the content measures something else.
 
-   Esto de aquí es la red debajo: mientras no hay medida —el primer fotograma,
-   o un navegador sin `ResizeObserver`— el alto sigue siendo `auto`, y con
-   `interpolate-size` una palabra clave puede al menos interpolarse. Donde no
-   esté soportado, el tamaño salta y ya. */
+   This here is the net underneath: while there is no measure —the first
+   frame, or a browser without `ResizeObserver`— the height is still `auto`,
+   and with `interpolate-size` a keyword can at least be interpolated. Where
+   it is not supported, the size just jumps. */
 [data-superficie='panel'] {
   interpolate-size: allow-keywords;
 }
 
-/* El contenido de un panel entra al EXISTIR: el cuerpo se reemplaza entero en
-   cada llenado, así que no hay nada que disparar. */
+/* A panel's content enters on EXISTING: the body is replaced whole on every
+   fill, so there is nothing to trigger. */
 @keyframes panel-entra-el-contenido {
   from {
     opacity: 0;
@@ -1137,9 +1137,9 @@
   animation: panel-entra-el-contenido 0.18s ease both;
 }
 
-/* Las baldosas tiemblan mientras se arreglan: dice que se pueden mover sin
-   gastar una línea de texto en decirlo, y que lo que se ve no es lo de
-   siempre. Muy poco ángulo —0,6 grados—, que a más parece un error de pintado. */
+/* The tiles tremble while being arranged: it says they can be moved without
+   spending a line of text saying so, and that what is shown is not the usual.
+   Very little angle —0.6 degrees—, since more looks like a painting glitch. */
 @keyframes baldosa-tiembla {
   0%,
   100% {
@@ -1150,10 +1150,10 @@
   }
 }
 
-/* ── Quien pidió que nada se mueva ─────────────────────────────────────────
-   En un solo sitio, y no variante por variante en cada componente: una
-   superficie nueva que se olvide de honrarlo es una superficie que se mueve
-   para alguien a quien el movimiento le sienta mal. */
+/* ── Whoever asked for nothing to move ─────────────────────────────────────
+   In a single place, and not variant by variant in each component: a new
+   surface that forgets to honor it is a surface that moves for someone motion
+   makes unwell. */
 @media (prefers-reduced-motion: reduce) {
   [data-armazon='barra'],
   [data-armazon='techo'],
