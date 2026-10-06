@@ -138,6 +138,11 @@ describe('API v2 (e2e)', () => {
       expect(await read('/dashboard?from=2026-08-01&to=2026-09-30')).toMatchObject({
         breakdownLevel: 'concept',
       });
+      // The search reaches what hangs from a category with that name.
+      const searched = await read('/dashboard?from=2026-08-01&to=2026-09-30&q=servicios');
+      expect(searched).toMatchObject({
+        byCategory: [expect.objectContaining({ name: 'Internet' })],
+      });
       expect(
         await read('/categorization/suggest?description=Fibra%20SAS%20internet'),
       ).toMatchObject({ categoryId: Number(conceptId), reason: 'history' });
@@ -401,6 +406,12 @@ describe('API v2 (e2e)', () => {
         .set('Authorization', auth)
         .send({ name: 'viaje', color: '#112233' });
       expect([200, 201]).toContain(tag.status);
+      // The same name again is the same tag; a color that comes with it is kept.
+      const again = await http
+        .post('/api/v2/tags')
+        .set('Authorization', auth)
+        .send({ name: 'Viaje', color: '#445566' });
+      expect(again.body.data).toMatchObject({ id: tag.body.data.id, color: '#445566' });
       await http
         .patch(`/api/v2/tags/${String(tag.body.data.id)}`)
         .set('Authorization', auth)
@@ -625,6 +636,21 @@ describe('API v2 (e2e)', () => {
         .set('Authorization', asAdmin)
         .expect(201);
       expect(approved.body.data).toMatchObject({ status: 'active', createdAt: expect.any(String) });
+      const twice = await http
+        .post(`/api/v2/admin/users/${String(waiting.id)}/approve`)
+        .set('Authorization', asAdmin)
+        .expect(400);
+      expect(twice.body.code).toBe('user_already_active');
+
+      await http
+        .post(`/api/v2/admin/users/${String(waiting.id)}/suspend`)
+        .set('Authorization', asAdmin)
+        .expect(201);
+      const reactivated = await http
+        .post(`/api/v2/admin/users/${String(waiting.id)}/reactivate`)
+        .set('Authorization', asAdmin)
+        .expect(201);
+      expect(reactivated.body.data.status).toBe('active');
 
       const log = await http
         .get('/api/v2/admin/audit-log?perPage=5')
