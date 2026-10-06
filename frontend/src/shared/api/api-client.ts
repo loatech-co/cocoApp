@@ -6,8 +6,8 @@ import { readProblem } from './problem';
 import { discardSession, renew, currentToken, isTokenExpiring } from './session';
 
 /**
- * Error de API ya normalizado. Trae el `code` estable que el backend garantiza,
- * para que la UI decida qué hacer sin parsear mensajes.
+ * An API error, already normalized. It carries the stable `code` the backend
+ * guarantees, so the UI decides what to do without parsing messages.
  */
 export class ApiClientError extends Error {
   constructor(
@@ -24,30 +24,30 @@ export class ApiClientError extends Error {
     return this.status === 401;
   }
 
-  /** Cuenta pendiente de aprobación o suspendida. */
+  /** Account pending approval, or suspended. */
   get isForbidden(): boolean {
     return this.status === 403;
   }
 }
 
 /**
- * Única puerta de red hacia la API, y el `mutator` del cliente generado
- * (`orval.config.ts`): cada función de `generated/` llama aquí con la URL ya
- * armada —`/api/v2/...`— y las opciones de `fetch`.
+ * The one network door to the API, and the `mutator` of the generated client
+ * (`orval.config.ts`): every function in `generated/` calls here with the URL
+ * already built —`/api/v2/...`— and the `fetch` options.
  *
- * Ningún componente hace `fetch` por su cuenta: si lo hiciera, tarde o temprano
- * se le olvidaría adjuntar el token o manejar el envelope de error, y esos bugs
- * aparecen en producción, no en desarrollo.
+ * No component calls `fetch` on its own: if one did, sooner or later it would
+ * forget to attach the token or to handle the error envelope, and those bugs
+ * show up in production, not in development.
  *
- * El access token dura 15 minutos y vive solo en memoria (ver `session.ts`).
- * Aquí se hacen dos cosas para que eso sea invisible:
- *   1. Si está por expirar, se renueva ANTES de salir a la red.
- *   2. Si aun así vuelve un 401, se intenta renovar UNA vez y se reintenta.
- *      Una sola vez: si el segundo intento también falla, la sesión murió de
- *      verdad y reintentar en bucle solo escondería el problema.
+ * The access token lasts 15 minutes and lives only in memory (see `session.ts`).
+ * Two things happen here to make that invisible:
+ *   1. If it is about to expire, it is renewed BEFORE going out to the network.
+ *   2. If a 401 comes back anyway, it tries to renew ONCE and retries.
+ *      Only once: if the second attempt fails too, the session really died,
+ *      and retrying in a loop would only hide the problem.
  *
- * Devuelve el cuerpo tal cual —el envelope `{ data, meta }`—, un `Blob` si la
- * respuesta no es JSON (un soporte), o nada si es un 204.
+ * Returns the body as is —the `{ data, meta }` envelope—, a `Blob` if the
+ * response is not JSON (a receipt), or nothing on a 204.
  */
 export async function apiRequest<T>(url: string, init: RequestInit = {}): Promise<T> {
   const response = await withSession(url, init);
@@ -62,43 +62,43 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
 }
 
 /**
- * Un binario de la API: un recibo, por ejemplo.
+ * A binary from the API: a receipt, for example.
  *
- * ── Por qué no basta con poner la URL en un `<img>` ─────────────────────────
- * Porque el token de sesión vive en MEMORIA, no en una cookie (ver
- * `session.ts`), así que una petición que hace el navegador por su cuenta
- * —la de un `src`— sale sin cabecera de autorización y el servidor la rechaza
- * con razón. El archivo hay que pedirlo desde el código, con el token, y
- * convertirlo en un `blob:` que el visor sí puede consumir.
+ * ── Why putting the URL in an `<img>` is not enough ─────────────────────────
+ * Because the session token lives in MEMORY, not in a cookie (see
+ * `session.ts`), so a request the browser makes on its own —the one for a
+ * `src`— goes out without an authorization header and the server rightly
+ * rejects it. The file has to be requested from code, with the token, and
+ * turned into a `blob:` the viewer can consume.
  *
- * Eso no es un rodeo: es lo que permite que el archivo NO tenga una URL
- * pública que funcione para quien la tenga.
+ * That is not a detour: it is what lets the file NOT have a public URL that
+ * works for whoever holds it.
  *
- * Quien llama se encarga de `URL.revokeObjectURL` cuando termina, o el blob se
- * queda en memoria hasta que se recargue la página.
+ * The caller is in charge of `URL.revokeObjectURL` when it is done, or the
+ * blob stays in memory until the page reloads.
  */
 export async function apiBlob(url: string, signal?: AbortSignal): Promise<Blob> {
   const response = await withSession(url, signal === undefined ? {} : { signal });
 
-  // El cuerpo de un error SÍ es JSON aunque la ruta devuelva binarios.
+  // The body of an error IS JSON even when the route returns binaries.
   if (!response.ok) throw await errorFrom(response, t('errors.fileOpenFailed'));
 
   return response.blob();
 }
 
 /**
- * Sube archivos: `multipart/form-data` con el token de la sesión.
+ * Uploads files: `multipart/form-data` with the session token.
  *
- * ── Por qué no pasa por `apiRequest` ────────────────────────────────────────
- * Por el progreso. `fetch` todavía no sabe informar del progreso de una
- * SUBIDA —lo que trae es para la descarga— y aquí hace falta: una foto de
- * móvil tarda lo suyo, y una barra quieta es indistinguible de una aplicación
- * colgada. Así que XMLHttpRequest, y es la única vez en toda la aplicación.
+ * ── Why it does not go through `apiRequest` ─────────────────────────────────
+ * Because of progress. `fetch` still cannot report the progress of an
+ * UPLOAD —what it offers is for downloads— and here it is needed: a phone
+ * photo takes a while, and a bar that does not move is indistinguishable from
+ * a frozen app. So XMLHttpRequest, and it is the only time in the whole app.
  *
- * El `FormData` se entrega al navegador TAL CUAL: es él quien inventa la
- * frontera entre las partes y la escribe en el `Content-Type`. Poner esa
- * cabecera a mano —aunque sea la correcta— rompe la petición, porque la
- * frontera que se declara no es la que el cuerpo lleva dentro.
+ * The `FormData` is handed to the browser AS IS: the browser is the one that
+ * invents the boundary between the parts and writes it into `Content-Type`.
+ * Setting that header by hand —even the right one— breaks the request,
+ * because the boundary it declares is not the one the body carries.
  */
 export async function apiUpload<TData>(
   url: string,
@@ -142,7 +142,7 @@ export async function apiUpload<TData>(
   });
 }
 
-/** Sale a la red con el token, renovándolo antes si hace falta y una vez tras un 401. */
+/** Goes out to the network with the token, renewing it first if needed and once after a 401. */
 async function withSession(url: string, init: RequestInit): Promise<Response> {
   if (isTokenExpiring()) await renew();
 

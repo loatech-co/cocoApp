@@ -1,6 +1,6 @@
 import type { Problem, ProblemFieldError } from './generated/model';
 
-/** Lo que la web necesita de un error de la API. */
+/** What the web needs from an API error. */
 export interface ParsedProblem {
   code: string;
   message: string;
@@ -8,11 +8,11 @@ export interface ParsedProblem {
 }
 
 /**
- * Lee un error de la v2: `application/problem+json` (RFC 9457).
+ * Reads a v2 error: `application/problem+json` (RFC 9457).
  *
- * `code` es el estable, uno por regla de negocio; `detail` es la frase para la
- * persona; `errors`, los campos que fallaron. Si el cuerpo no es un problema
- * —una caída del proxy, una página HTML—, queda el mensaje por defecto.
+ * `code` is the stable one, one per business rule; `detail` is the sentence for
+ * the person; `errors`, the fields that failed. If the body is not a problem
+ * —a proxy outage, an HTML page—, the default message stays.
  */
 export function readProblem(body: unknown, fallback: string): ParsedProblem {
   const problem = (typeof body === 'object' ? body : null) as Partial<Problem> | null;

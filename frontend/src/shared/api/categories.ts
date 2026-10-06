@@ -5,7 +5,7 @@ import type { Category, CreateCategoryInput } from './generated/model';
 import { allPages } from './pages';
 import { keys } from './query-keys';
 
-// ── Categorías ───────────────────────────────────────────────────────────────
+// ── Categories ───────────────────────────────────────────────────────────────
 
 /**
  * A node of the tree. The API sends `children` always (`CategoryNode`); it is

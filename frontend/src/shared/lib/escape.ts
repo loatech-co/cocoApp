@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 
 /**
- * Escape cierra lo que está abierto.
+ * Escape closes what is open.
  *
- * Un panel que solo se cierra con su propio botón obliga a apuntar con el
- * ratón para deshacer lo que se abrió sin querer. Lo usan la ficha y la
- * confirmación; un desplegable tiene su propio Escape en `Menu`.
+ * A panel that only closes with its own button forces you to aim with the
+ * mouse to undo what was opened by accident. The sheet and the confirmation
+ * use it; a dropdown has its own Escape in `Menu`.
  */
 export function useEscapeToClose(isOpen: boolean, onClose: () => void): void {
   useEffect(() => {

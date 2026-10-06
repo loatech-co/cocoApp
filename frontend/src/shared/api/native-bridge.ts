@@ -4,23 +4,23 @@ import { refocus } from './query-client';
 import { receiveSession, sessionClosed } from './session';
 
 /*
-  Por qué esto no vive en `puente-nativo`.
+  Why this does not live in `bridge`.
 
-  `session` usa el puente (`enLaApp`, `pedirSesion`, `avisar`) y el puente
-  publica dos funciones de `session` para que la app las llame. Con las dos
-  mitades en el mismo archivo, `session` y `puente-nativo` se importaban el
-  uno al otro. Aquí se juntan las dos y ninguna conoce a la otra: el puente
-  sigue siendo el único sitio que conoce `window.webkit`, y el armazón sigue
-  sin saber nada de `session`.
+  `session` uses the bridge (`isInNativeApp`, `requestSession`, `notifyApp`)
+  and the bridge publishes two functions of `session` for the app to call.
+  With both halves in the same file, `session` and the bridge imported each
+  other. Here the two meet and neither knows the other: the bridge is still
+  the only place that knows `window.webkit`, and the shell still knows nothing
+  about `session`.
 */
 
 /**
- * Publica `window.__coco`, lo que la app llama hacia la web.
+ * Publishes `window.__coco`, what the app calls on the web.
  *
- * SOLO en la app: en un navegador normal no se instala nada, para que la
- * página no exponga una forma de navegar o de inyectar una sesión a quien no
- * es la app. Devuelve cómo quitarlo, para que el `useEffect` que lo registra
- * lo deje limpio al desmontarse (y `StrictMode` no deje dos copias).
+ * ONLY in the app: in a normal browser nothing is installed, so the page does
+ * not expose a way to navigate or to inject a session to anyone who is not
+ * the app. Returns how to remove it, so the `useEffect` that registers it
+ * leaves it clean on unmount (and `StrictMode` does not leave two copies).
  */
 export function registerBridge(actions: {
   ir: (path: string) => void;
@@ -28,7 +28,7 @@ export function registerBridge(actions: {
   /** A capture synced in the app: refetch what a new movement changes. */
   capturado: () => void;
 }): () => void {
-  // Fuera de la app no hay nada que quitar.
+  // Outside the app there is nothing to remove.
   if (!isInNativeApp()) return () => undefined;
 
   window.__coco = {

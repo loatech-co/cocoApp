@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { readProblem } from './problem';
 
 describe('leerProblema', () => {
-  it('lee el código, la frase y los campos de un problem+json', () => {
+  it('reads the code, the sentence and the fields of a problem+json', () => {
     const body = {
       type: 'https://dev-cocoapp.viteri.me/problems/invalid_fields',
       title: 'Hay campos inválidos',
@@ -20,12 +20,12 @@ describe('leerProblema', () => {
     });
   });
 
-  it('sin campos, la lista va vacía', () => {
+  it('without fields, the list is empty', () => {
     const body = { code: 'splits_unbalanced', detail: 'No cuadra.', status: 422 };
     expect(readProblem(body, 'Por defecto.').details).toEqual([]);
   });
 
-  it('si el cuerpo no es un problema, queda el mensaje por defecto', () => {
+  it('if the body is not a problem, the default message stays', () => {
     expect(readProblem(null, 'Por defecto.')).toEqual({
       code: 'unknown_error',
       message: 'Por defecto.',

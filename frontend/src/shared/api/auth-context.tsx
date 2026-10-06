@@ -9,37 +9,38 @@ import * as session from './session';
 
 interface AuthState {
   user: Profile | null;
-  /** `true` mientras se intenta restaurar la sesión desde la cookie de refresh.
-   *  Sin esto, la app parpadearía mostrando el login a alguien ya autenticado. */
+  /** `true` while the session is being restored from the refresh cookie.
+   *  Without it, the app would flicker the login at someone already signed in. */
   isLoading: boolean;
   /**
-   * Si esta pantalla se dibuja como la de un administrador.
+   * Whether this screen is drawn as an administrator's.
    *
-   * Es el EFECTIVO, no el rol: un admin que encendió la vista de usuario lo
-   * tiene en `false`. Lo lee todo el que decide qué enseñar —el riel, la hoja
-   * de la cuenta, `RequireAdmin`— y por eso la vista funciona sin que ninguno
-   * de ellos sepa que existe.
+   * It is the EFFECTIVE value, not the role: an admin who turned on the user
+   * view has it `false`. Everything that decides what to show reads it —the
+   * rail, the account sheet, `RequireAdmin`— and that is why the view works
+   * without any of them knowing it exists.
    */
   isAdmin: boolean;
-  /** El rol de verdad. Solo para lo que tiene que sobrevivir a la vista. */
+  /** The real role. Only for what has to survive the view. */
   isRealAdmin: boolean;
   isViewingAsUser: boolean;
   /**
-   * Enciende o apaga la vista de usuario.
+   * Turns the user view on or off.
    *
-   * ── Qué es y qué NO es ──────────────────────────────────────────────────
-   * Es una forma de VER la aplicación como la ve quien no administra nada:
-   * sin el grupo de Administración en el riel, sin la insignia en Mi cuenta,
-   * con las pantallas de administración cerradas. Sirve para revisar lo que
-   * recibe alguien a quien se acaba de aprobar la cuenta.
+   * ── What it is and what it is NOT ───────────────────────────────────────
+   * It is a way to SEE the app the way someone who administers nothing sees
+   * it: without the Administration group in the rail, without the badge in My
+   * account, with the administration screens closed. It is for reviewing what
+   * someone whose account was just approved gets.
    *
-   * NO es un cambio de permisos. El token que viaja sigue siendo el de un
-   * administrador y la API le sigue contestando como a tal: lo que cambia es
-   * lo que esta pantalla ofrece, no lo que el servidor permite. Quien decide
-   * de verdad es el `RolesGuard`, como siempre.
+   * It is NOT a change of permissions. The token that travels is still an
+   * administrator's and the API keeps answering it as one: what changes is
+   * what this screen offers, not what the server allows. The one that really
+   * decides is the `RolesGuard`, as always.
    *
-   * Tampoco es entrar como OTRA persona: no hay segunda sesión ni otro
-   * usuario. Es la misma cuenta, con sus mismos movimientos, sin el panel.
+   * Nor is it signing in as SOMEONE ELSE: there is no second session and no
+   * other user. It is the same account, with the same movements, without the
+   * panel.
    */
   setViewAsUser: (value: boolean) => void;
   signIn: (email: string, password: string) => Promise<void>;
@@ -56,48 +57,50 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null);
 
 /**
- * Capa fina de React sobre `session.ts`.
+ * A thin React layer over `session.ts`.
  *
- * La lógica de sesión vive fuera de React porque el cliente de API la necesita
- * sin estar dentro de un componente. Aquí solo se suscribe a los cambios con
- * `useSyncExternalStore`, que es la forma correcta de leer un estado externo
- * sin desincronizarse durante el renderizado concurrente de React 19.
+ * The session logic lives outside React because the API client needs it
+ * without being inside a component. This only subscribes to the changes with
+ * `useSyncExternalStore`, which is the right way to read an external state
+ * without falling out of sync during React 19's concurrent rendering.
  *
- * Solo correo y contraseña. Sin proveedores externos: la autenticación es
- * propia de punta a punta.
+ * E-mail and password only. No external providers: authentication is our own
+ * from end to end.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const state = useSyncExternalStore(session.subscribe, session.currentState);
 
   /*
-    ── La vista de usuario vive en memoria, y se olvida al recargar ──────────
-    Como los atajos, y por el mismo motivo: es estado de ESTA pestaña y de este
-    momento, no una preferencia. Guardarla tendría además un riesgo propio —un
-    administrador que la enciende, cierra y vuelve dentro de tres días se
-    encuentra la aplicación sin panel y sin recordar por qué—, y la salida de
-    ese lío sería justo la que no se le ocurre buscar.
+    ── The user view lives in memory, and is forgotten on reload ─────────────
+    Like the shortcuts, and for the same reason: it is state of THIS tab and of
+    this moment, not a preference. Saving it would also carry a risk of its own
+    —an administrator who turns it on, closes and comes back three days later
+    finds the app without the panel and without remembering why—, and the way
+    out of that mess would be exactly the one it does not occur to them to
+    look for.
 
-    Recargar la apaga. Es la red de seguridad de un modo que quita cosas de la
-    pantalla: nunca se puede quedar encendido de una forma de la que no se sepa
-    salir.
+    Reloading turns it off. It is the safety net of a mode that takes things
+    off the screen: it can never stay on in a way nobody knows how to leave.
   */
   const [isViewingAsUser, setIsViewingAsUser] = useState(false);
   const isRealAdmin = state.user?.role === 'admin';
 
   /*
-    Dejar de ser admin la apaga sola.
+    Ceasing to be an admin turns it off on its own.
 
-    Pasa al cerrar sesión y volver a entrar con otra cuenta, y al quitarse el
-    rol a uno mismo. Sin esto quedaría encendida para alguien que ya no tiene
-    dónde apagarla: el interruptor solo se le enseña a un administrador.
+    It happens on signing out and back in with another account, and on
+    removing the role from oneself. Without this it would stay on for someone
+    who no longer has anywhere to turn it off: the switch is only shown to an
+    administrator.
   */
   useOnChange([isRealAdmin], () => {
     if (!isRealAdmin) setIsViewingAsUser(false);
   });
 
   useEffect(() => {
-    // Un único intento al arrancar: si hay cookie de refresh viva, la sesión
-    // vuelve sola; si no, `cargando` pasa a false y se muestra el login.
+    // A single attempt on startup: if there is a live refresh cookie, the
+    // session comes back on its own; if not, `isLoading` turns false and the
+    // login shows.
     void session.restore();
   }, []);
 
@@ -130,11 +133,11 @@ export function useAuth(): AuthState {
 }
 
 /**
- * Mensaje legible para un error de sesión.
+ * A readable message for a session error.
  *
- * Los mensajes vienen del servidor ya en español y ya pensados para no revelar
- * de más —"correo o contraseña incorrectos" es idéntico exista o no la cuenta—.
- * Aquí solo se cubre el caso de que no haya respuesta útil.
+ * The messages come from the server already in Spanish and already written
+ * not to reveal too much —"wrong e-mail or password" is identical whether or
+ * not the account exists—. This only covers the case of no useful response.
  */
 export function authErrorMessage(error: unknown): string {
   if (error instanceof session.SessionError) return error.message;
@@ -144,7 +147,7 @@ export function authErrorMessage(error: unknown): string {
   return t('errors.operationFailedRetry');
 }
 
-/** Detalles por campo de un error de validación (p. ej. la política de contraseñas). */
+/** Per-field details of a validation error (e.g. the password policy). */
 export function errorDetails(error: unknown): string[] {
   if (error instanceof session.SessionError) {
     return error.details.map((detail) => detail.message);

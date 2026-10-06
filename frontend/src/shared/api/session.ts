@@ -25,45 +25,45 @@ const AUTH = {
 } as const;
 
 /**
- * Estado de sesión del cliente.
+ * The client's session state.
  *
- * Vive fuera de React a propósito: el cliente de API necesita el access token
- * en cada llamada, y no puede depender de estar dentro de un componente.
- * `auth-context.tsx` es una capa fina de React encima de esto.
+ * It lives outside React on purpose: the API client needs the access token on
+ * every call, and cannot depend on being inside a component.
+ * `auth-context.tsx` is a thin React layer on top of this.
  *
- * ── Dónde se guarda el access token ────────────────────────────────────────
- * EN MEMORIA. Ni localStorage ni sessionStorage: cualquier XSS puede leerlos
- * enteros, y ahí un token robado vale por 15 minutos de acceso completo. En
- * memoria, un recarga de página lo pierde — y eso está bien: el refresh token
- * vive en una cookie httpOnly que ningún JavaScript puede leer, y con ella se
- * restaura la sesión al arrancar.
+ * ── Where the access token is kept ─────────────────────────────────────────
+ * IN MEMORY. Neither localStorage nor sessionStorage: any XSS can read them
+ * whole, and there a stolen token is worth 15 minutes of full access. In
+ * memory, a page reload loses it — and that is fine: the refresh token lives
+ * in an httpOnly cookie no JavaScript can read, and with it the session is
+ * restored on startup.
  *
- * El precio es un viaje de red extra al cargar la app. Es barato comparado con
- * la alternativa.
+ * The price is one extra network round trip when the app loads. Cheap
+ * compared with the alternative.
  *
- * ── Y dentro de la app del teléfono ─────────────────────────────────────────
- * La web embebida no tiene refresh token: lo tiene la app, en el llavero, y
- * es la única que lo rota. Aquí cambia UNA función —`renovar()`—, que en vez
- * de llamar a `/auth/refresh` le pide el access token a la app por el puente
- * (`puente-nativo.ts`). Todo lo demás —restaurar, el temporizador, el
- * reintento tras un 401— ya pasa por `renovar()`, así que queda cubierto sin
- * tocarlo. Las funciones que cierran sesión le cuentan a la app lo que pasó,
- * porque la sesión real es la suya.
+ * ── And inside the phone app ────────────────────────────────────────────────
+ * The embedded web has no refresh token: the app has it, in the keychain, and
+ * it is the only one that rotates it. ONE function changes here —`renew()`—,
+ * which instead of calling `/auth/refresh` asks the app for the access token
+ * over the bridge (`bridge.ts`). Everything else —restoring, the timer, the
+ * retry after a 401— already goes through `renew()`, so it is covered without
+ * touching it. The functions that sign out tell the app what happened,
+ * because the real session is the app's.
  */
 
 /**
- * Margen antes de la expiración para renovar sin que se note.
+ * Margin before expiry to renew without anyone noticing.
  *
- * La app del teléfono renueva con 120 s de margen, a propósito más que estos
- * 60: así lo que la web recibe por el puente siempre tiene más de un minuto
- * de vida y `programarRenovacion()` nunca cae en su espera mínima de 5 s
- * pidiendo una y otra vez un token que la app aún no ha renovado.
+ * The phone app renews with a 120 s margin, on purpose more than these 60:
+ * that way what the web receives over the bridge always has more than a
+ * minute left, and `scheduleRenewal()` never falls into its 5 s minimum wait,
+ * asking again and again for a token the app has not renewed yet.
  */
 const RENEWAL_MARGIN_MS = 60_000;
 
 export interface SessionState {
   user: Profile | null;
-  /** `true` hasta que el primer intento de restaurar la sesión termina. */
+  /** `true` until the first attempt to restore the session finishes. */
   isLoading: boolean;
 }
 
@@ -75,17 +75,17 @@ let isLoading = true;
 let renewalTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
- * Renovación en vuelo.
+ * Renewal in flight.
  *
- * CRÍTICO: el backend rota el refresh token en cada uso y detecta reusos —dos
- * llamadas con el mismo token revocan la sesión entera—. Si tres peticiones
- * recibieran 401 a la vez y cada una llamara a /refresh, la segunda y la
- * tercera parecerían un robo y cerrarían la sesión del usuario legítimo.
- * Por eso todas comparten la MISMA promesa.
+ * CRITICAL: the backend rotates the refresh token on every use and detects
+ * reuse —two calls with the same token revoke the whole session—. If three
+ * requests got a 401 at once and each called /refresh, the second and the
+ * third would look like a theft and sign the legitimate user out.
+ * That is why they all share the SAME promise.
  */
 let renewalInFlight: Promise<boolean> | null = null;
 
-// ── Suscripción ──────────────────────────────────────────────────────────────
+// ── Subscription ─────────────────────────────────────────────────────────────
 
 const listeners = new Set<(state: SessionState) => void>();
 
@@ -97,17 +97,17 @@ export function subscribe(listener: (state: SessionState) => void): () => void {
 }
 
 /**
- * Instantánea del estado, ESTABLE entre llamadas.
+ * Snapshot of the state, STABLE between calls.
  *
- * Que sea el mismo objeto mientras nada cambie no es un detalle de eficiencia:
- * `useSyncExternalStore` compara instantáneas con `Object.is` para decidir si
- * hay que volver a pintar. Devolviendo `{ usuario, cargando }` recién creado en
- * cada llamada, React ve un objeto distinto en cada render, cree que el estado
- * cambió, vuelve a pintar, vuelve a pedir la instantánea… y a los pocos ciclos
- * aborta el árbol entero.
+ * Being the same object while nothing changes is not an efficiency detail:
+ * `useSyncExternalStore` compares snapshots with `Object.is` to decide whether
+ * to render again. Returning a freshly built `{ user, isLoading }` on every
+ * call, React sees a different object on every render, believes the state
+ * changed, renders again, asks for the snapshot again… and after a few cycles
+ * aborts the whole tree.
  *
- * El síntoma es una PANTALLA EN BLANCO sin un solo error en el servidor: el
- * HTML, los assets y la API responden perfectamente. Pasó en producción.
+ * The symptom is a BLANK SCREEN without a single error on the server: the
+ * HTML, the assets and the API all answer perfectly. It happened in production.
  */
 let snapshot: SessionState = { user: null, isLoading: true };
 
@@ -116,7 +116,7 @@ export function currentState(): SessionState {
 }
 
 function notifyListeners(): void {
-  // Se construye UNA vez por cambio real, no una por lectura.
+  // Built ONCE per real change, not once per read.
   snapshot = { user, isLoading };
   for (const listener of listeners) listener(snapshot);
 }
@@ -149,11 +149,11 @@ function clearSession(): void {
 }
 
 /**
- * Renueva ANTES de que expire, no cuando ya falló.
+ * Renews BEFORE it expires, not once it has already failed.
  *
- * Reaccionar solo al 401 funciona, pero le regala al usuario una petición
- * fallida cada quince minutos —y con ella un parpadeo o un reintento visible—.
- * Renovar un minuto antes hace que eso no ocurra nunca en uso normal.
+ * Reacting only to the 401 works, but it hands the user a failed request every
+ * fifteen minutes —and with it a flicker or a visible retry—. Renewing a
+ * minute early means that never happens in normal use.
  */
 function scheduleRenewal(): void {
   if (renewalTimer) clearTimeout(renewalTimer);
@@ -168,13 +168,13 @@ export function isTokenExpiring(): boolean {
   return accessToken !== null && Date.now() >= expiresAt - RENEWAL_MARGIN_MS;
 }
 
-// ── Operaciones ──────────────────────────────────────────────────────────────
+// ── Operations ───────────────────────────────────────────────────────────────
 
 /**
- * Llama a la API sin pasar por el cliente autenticado.
+ * Calls the API without going through the authenticated client.
  *
- * `credentials: 'include'` es imprescindible en /auth: es lo que hace que el
- * navegador envíe y acepte la cookie httpOnly de refresh.
+ * `credentials: 'include'` is essential on /auth: it is what makes the
+ * browser send and accept the httpOnly refresh cookie.
  */
 async function callAuth<T>(
   url: string,
@@ -199,7 +199,7 @@ async function callAuth<T>(
   return (body as { data: T }).data;
 }
 
-/** Error de una operación de sesión, con el `code` estable de la API. */
+/** Error of a session operation, with the API's stable `code`. */
 export class SessionError extends Error {
   constructor(
     readonly status: number,
@@ -225,22 +225,23 @@ export async function signUp(
 }
 
 /**
- * Canjea la cookie de refresh por un access token nuevo. Dentro de la app, se
- * lo pide a ella por el puente.
+ * Trades the refresh cookie for a new access token. Inside the app, it asks
+ * the app for one over the bridge.
  *
- * Devuelve `false` —sin lanzar— cuando no hay sesión que restaurar, porque ese
- * es el caso normal de alguien que abre la app sin haber entrado.
+ * Returns `false` —without throwing— when there is no session to restore,
+ * because that is the normal case of someone opening the app without having
+ * signed in.
  *
- * El `catch` NO avisa a la app. Un fallo del puente —red, tiempo— no dice
- * nada sobre el llavero, y avisar «sesión cerrada» por un corte de red le
- * haría borrar un refresh perfectamente válido. La web limpia su memoria y
- * `RequireAuth` espera a que la app le empuje la sesión.
+ * The `catch` does NOT tell the app. A bridge failure —network, timeout— says
+ * nothing about the keychain, and reporting «session closed» because of a
+ * network drop would make it delete a perfectly valid refresh. The web clears
+ * its memory and `RequireAuth` waits for the app to push the session.
  */
 export async function renew(): Promise<boolean> {
   renewalInFlight ??= (async () => {
     try {
-      // Dentro de la MISMA promesa compartida: dos `renovar()` a la vez son
-      // un solo mensaje a la app, igual que fuera son una sola petición.
+      // Inside the SAME shared promise: two `renew()` at once are a single
+      // message to the app, just as outside they are a single request.
       storeSession(
         isInNativeApp()
           ? fromBridge(await requestSession())
@@ -258,15 +259,16 @@ export async function renew(): Promise<boolean> {
   return renewalInFlight;
 }
 
-/** Se llama una vez al arrancar la app. */
+/** Called once when the app starts. */
 export async function restore(): Promise<void> {
   await renew();
 }
 
 export async function signOut(): Promise<void> {
-  // En la app, la sesión real es la suya: ella llama a `/auth/logout` con su
-  // refresh y borra el llavero. La web solo avisa y olvida su memoria; llamar
-  // además desde aquí sería un logout sin cookie que no cierra nada.
+  // In the app, the real session is the app's: it calls `/auth/logout` with
+  // its refresh and wipes the keychain. The web only tells it and forgets its
+  // memory; calling from here as well would be a logout without a cookie that
+  // closes nothing.
   if (isInNativeApp()) {
     notifyApp({ tipo: 'salir' });
     clearSession();
@@ -276,8 +278,8 @@ export async function signOut(): Promise<void> {
   try {
     await callAuth<unknown>(AUTH.logout);
   } finally {
-    // Aunque el servidor falle, localmente la sesión se cierra: dejar al
-    // usuario "dentro" tras pulsar Salir sería lo peor de los dos mundos.
+    // Even if the server fails, the session closes locally: leaving the user
+    // "inside" after pressing Sign out would be the worst of both worlds.
     clearSession();
   }
 }
@@ -289,8 +291,8 @@ export async function signOutEverywhere(): Promise<void> {
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
   clearSession();
-  // El servidor ya mató la familia entera, incluida la del llavero: la app
-  // solo tiene que descartarlo, sin llamar a nada.
+  // The server already killed the whole family, the keychain's included: the
+  // app only has to discard it, without calling anything.
   if (isInNativeApp()) notifyApp({ tipo: 'sesionCerrada' });
   if (!response.ok && response.status !== 401) {
     throw new SessionError(response.status, 'logout_all_failed', t('errors.signOutAllFailed'));
@@ -314,26 +316,27 @@ export async function changePassword(currentPassword: string, newPassword: strin
     throw new SessionError(response.status, code, message, details);
   }
 
-  // Cambiar la contraseña cierra TODAS las sesiones en el servidor, incluida
-  // esta. Reflejarlo aquí evita que la app siga creyéndose autenticada.
+  // Changing the password closes ALL sessions on the server, this one
+  // included. Reflecting it here keeps the app from still believing it is
+  // authenticated.
   clearSession();
   if (isInNativeApp()) notifyApp({ tipo: 'sesionCerrada' });
 }
 
 /**
- * Cierra la sesión localmente sin llamar al servidor. Para un 401 irrecuperable.
+ * Closes the session locally without calling the server. For an unrecoverable 401.
  *
- * NO avisa a la app: un 401 en una llamada de la web puede ser un token que
- * caducó mientras el teléfono dormía, y la app sigue teniendo un refresh
- * bueno con el que empujar una sesión nueva.
+ * It does NOT tell the app: a 401 on a web call may be a token that expired
+ * while the phone slept, and the app still has a good refresh with which to
+ * push a new session.
  */
 export function discardSession(): void {
   clearSession();
 }
 
-// ── Lo que la app llama hacia la web (`window.__coco`) ──────────────────────
+// ── What the app calls on the web (`window.__coco`) ─────────────────────────
 
-/** La app empuja una sesión: al arrancar sin ella, o tras el login nativo. */
+/** The app pushes a session: on a start without one, or after the native login. */
 export function receiveSession(session: BridgeSession): void {
   storeSession(fromBridge(session));
 }
@@ -352,7 +355,7 @@ function fromBridge(session: BridgeSession): Session {
   };
 }
 
-/** La app cerró la sesión real (401 al renovar): la web olvida la suya. */
+/** The app closed the real session (401 on renewal): the web forgets its own. */
 export function sessionClosed(): void {
   clearSession();
 }

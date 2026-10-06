@@ -58,7 +58,7 @@ export function refocus(): void {
  * Empties the cache whenever the person changes: on sign out, and when a
  * different account signs in on the same browser or web view.
  *
- * Listening to the session instead of calling it from `salir()` covers every
+ * Listening to the session instead of calling it from `signOut()` covers every
  * exit at once: the button, «close everywhere», a password change, the app
  * closing the session, an unrecoverable 401. Without this, the next person
  * would see the previous one's movements until each query refetched.

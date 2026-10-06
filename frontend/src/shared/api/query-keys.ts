@@ -1,12 +1,13 @@
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 /**
- * Claves de caché.
+ * Cache keys.
  *
- * Como todo en Coco se DERIVA de los movimientos, al crear o editar uno hay que
- * invalidar también cuentas y dashboard: sus cifras acaban de cambiar aunque
- * nadie las haya tocado directamente. Esa es la contraparte de no almacenar
- * saldos — no hay nada que sincronizar, pero sí que refrescar.
+ * Since everything in Coco is DERIVED from the movements, creating or editing
+ * one must also invalidate accounts and the dashboard: their figures just
+ * changed even though nobody touched them directly. That is the counterpart
+ * of not storing balances — there is nothing to sync, but there is something
+ * to refresh.
  */
 export const keys = {
   accounts: ['accounts'] as const,
@@ -18,7 +19,7 @@ export const keys = {
   receipts: (transactionId: number) => ['soportes', transactionId] as const,
 };
 
-/** Lo que cambia cuando cambia un movimiento: sus listas, las cuentas y el resumen. */
+/** What changes when a movement changes: its lists, the accounts and the summary. */
 export function useInvalidateDerived() {
   const queryClient = useQueryClient();
   return () => invalidateDerived(queryClient);
