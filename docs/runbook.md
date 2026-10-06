@@ -407,6 +407,49 @@ runs and `scripts/merge.sh` integrates nothing.
 
 ---
 
+## Dependency vulnerabilities
+
+**The gate is `node scripts/ci/audit.mjs`**, in `ci` on every PR and weekly in
+`security`. It audits PRODUCTION dependencies only (`npm audit --omit=dev`)
+and fails on any high or critical advisory that is not in its `ACCEPTED`
+list, where each exception carries its reason and the date it was last
+checked. A new advisory in a production dependency blocks every PR until it
+is fixed or accepted.
+
+**Hostinger's emails are not the gate.** Its scanner reads the whole
+lockfile, DEVELOPMENT dependencies included (jest, vite, orval, storybook),
+and still reports advisories GitHub has withdrawn. A mail from Hostinger is
+not a CI failure and not, by itself, a risk on the server: the server
+installs without devDependencies.
+
+When one arrives:
+
+1. Run `node scripts/ci/audit.mjs`. Red means a production advisory: that
+   is the urgent part, and it already blocks the PRs.
+2. For each package in the mail, `npm ls <name> --all` says who brings it
+   and whether it is dev-only.
+3. Fix with the smallest move: a patch bump of the direct dependency, or
+   `npm update <name>` when the parent's range already allows the fixed
+   version. If a third party PINS the vulnerable version, add an `overrides`
+   entry in the root `package.json`, scoped to that parent or to the major
+   (`"brace-expansion@1"`), never a bare name that would drag other majors.
+4. Without a fix (Prisma's `deepmerge-ts` and `mysql2`), add or refresh the
+   `ACCEPTED` entry with its reason and today's date. A withdrawn advisory
+   (esbuild GHSA-gv7w-rqvm-qjhr) is documented as a false positive in the
+   same file, not accepted.
+5. Re-run `bash scripts/verify-clean-install.sh`: there must still be ONE
+   esbuild, or the server install breaks.
+
+**npm trap with overrides.** With the lockfile already present, npm 11
+ignores a new override for a pinned nested dependency (it stayed on the
+old version for `js-yaml` under `@nestjs/swagger`). Write the new version
+into that lockfile entry (`version`, `resolved`, `integrity` from
+`npm view <name>@<v> dist`), then `npm ci` and `npm install` to confirm it
+holds. In a workspace `npm ls` then marks it `invalid`: that is an npm bug
+in reading overrides, not a broken tree.
+
+---
+
 ## Hosting traps (Hostinger shared plan)
 
 **LiteSpeed runs several processes of the API, not one.** Three started

@@ -8,7 +8,7 @@ const ACCEPTED = {
   'https://github.com/advisories/GHSA-ggr8-5vv4-36mx':
     'deepmerge-ts < 8 inside the Prisma CLI (@prisma/config 7.10.0 still pins 7.1.5). Build-time ' +
     'config merge, never on a request path. Every stable Prisma (6.x and 7.x) is in the affected ' +
-    'range; drop when a stable Prisma ships deepmerge-ts 8 (checked 2026-10-05 on prisma 7.10.0: ' +
+    'range; drop when a stable Prisma ships deepmerge-ts 8 (checked 2026-10-06 on prisma 7.10.0: ' +
     'only 8.x pre-releases do).',
   // Prisma 7's CLI pins mysql2 3.15.3 for Studio and `prisma dev` against MySQL. The API never
   // loads it: Coco is Postgres through @prisma/adapter-pg. A root `overrides` entry did not take
@@ -16,11 +16,18 @@ const ACCEPTED = {
   'https://github.com/advisories/GHSA-3f6p-5ww8-9rcr':
     'mysql2 < 3.22 pinned by the Prisma 7 CLI (prisma 7.10.0 → mysql2 3.15.3). Only used to talk ' +
     'to MySQL from the CLI; Coco is Postgres and the API never imports it. Drop when a stable ' +
-    'Prisma pins mysql2 >= 3.24 (checked 2026-10-05).',
+    'Prisma pins mysql2 >= 3.24 (checked 2026-10-06 on prisma 7.10.0).',
   'https://github.com/advisories/GHSA-rgwj-5xj2-c3m3':
     'mysql2 <= 3.23 pinned by the Prisma 7 CLI, same path and same exit as GHSA-3f6p-5ww8-9rcr ' +
-    '(checked 2026-10-05).',
+    '(checked 2026-10-06).',
 };
+
+// Known false positive, NOT an entry above because npm audit no longer reports it:
+// esbuild 0.25.12 (vite, storybook, tsx — all dev) is flagged by scanners that still carry
+// GHSA-gv7w-rqvm-qjhr ("missing binary integrity verification in Deno module", >= 0.17.0
+// < 0.28.1). GitHub WITHDREW it on 2026-06-17: https://github.com/advisories/GHSA-gv7w-rqvm-qjhr
+// Hostinger's scanner still mails about it. Do not bump esbuild for it: the tree must keep ONE
+// esbuild (scripts/verify-clean-install.sh) and vite 6 pins 0.25 (checked 2026-10-06).
 
 let report;
 try {
