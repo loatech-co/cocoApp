@@ -1,48 +1,50 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Coco App — espejo canónico del modelo de datos.
+// Coco App — the canonical mirror of the data model.
 //
-// Motor: MariaDB (Hostinger). Prisma la trata con provider = "mysql": el código
-// no sabe ni le importa si detrás hay MySQL o MariaDB, y por eso la etapa 2 es
-// un cambio de DATABASE_URL, no una reescritura (análisis 5.1).
+// Engine: MariaDB (Hostinger). Prisma treats it as provider = "mysql": the code
+// neither knows nor cares whether MySQL or MariaDB sits behind it, which is why
+// stage 2 is a DATABASE_URL change, not a rewrite (analysis 5.1).
 //
-// Se usa el CONECTOR ESTÁNDAR, nunca el driver adapter @prisma/adapter-mariadb:
-// tiene un bug conocido con columnas JSON, y aquí se usa JSON en
-// user_preferences.pref_value y (más adelante) audit_log.changes_json.
+// The STANDARD CONNECTOR is used, never the @prisma/adapter-mariadb driver
+// adapter: it has a known bug with JSON columns, and JSON is used here in
+// user_preferences.pref_value and (later on) audit_log.changes_json.
 //
-// Reglas inamovibles:
-//   · Nombres físicos snake_case plural vía @@map / @map. Son inamovibles.
-//   · Dinero SIEMPRE Decimal @db.Decimal(15,2). Jamás Float. En TypeScript se
-//     opera con Prisma.Decimal (.plus/.minus/.times), nunca con `number`:
-//     `number` en JS es IEEE-754 y acumula error de redondeo.
-//   · Fechas de negocio: DateTime @db.Date (un movimiento ocurre "un día").
-//     Timestamps: DateTime @db.Timestamp(3) en UTC, mostrados en America/Bogota.
-//   · Toda entidad de primer nivel lleva user_id. Ninguna consulta cruza usuarios.
-//   · onDelete explícito en cada relación, elegido por semántica de negocio.
+// Fixed rules:
+//   · Physical names are snake_case plural through @@map / @map. They do not move.
+//   · The client is English; where the database kept a Spanish name, @map and
+//     @@map pair the two, and this file is the one place that does (ADR 0026).
+//   · Money is ALWAYS Decimal @db.Decimal(15,2). Never Float. In TypeScript it
+//     is handled with Prisma.Decimal (.plus/.minus/.times), never with `number`:
+//     a JS `number` is IEEE-754 and piles up rounding error.
+//   · Business dates: DateTime @db.Date (a transaction happens on "a day").
+//     Timestamps: DateTime @db.Timestamp(3) in UTC, shown in America/Bogota.
+//   · Every top-level entity carries user_id. No query crosses users.
+//   · An explicit onDelete on every relation, chosen by business meaning.
 // ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
-  // Prisma 7: el generador `prisma-client` escribe el cliente en TypeScript
-  // dentro de `src/generated/prisma` (no en node_modules), así que `nest build`
-  // lo compila con el resto y viaja dentro de `dist/`. `cjs` porque la API de
-  // Nest es CommonJS (ADR 0020).
+  // Prisma 7: the `prisma-client` generator writes the client in TypeScript
+  // into `src/generated/prisma` (not node_modules), so `nest build` compiles
+  // it with the rest and it travels inside `dist/`. `cjs` because the Nest API
+  // is CommonJS (ADR 0020).
   //
-  // Sin motor en Rust: Prisma habla con Postgres por el adaptador `pg`. No es
-  // una optimización: el motor Rust entraba en pánico con
-  // "PANIC: timer has gone away" cada vez que la plataforma suspendía el
-  // proceso por inactividad, se llevaba el proceso por delante y dejaba el
-  // sitio en 503 hasta un reinicio. Sin motor Rust no hay hilo de
-  // temporizadores que se pueda morir.
+  // No Rust engine: Prisma talks to Postgres through the `pg` adapter. It is
+  // not an optimization: the Rust engine panicked with
+  // "PANIC: timer has gone away" every time the platform suspended the
+  // process for inactivity, took the process down with it and left the site
+  // on 503 until a restart. Without the Rust engine there is no timer thread
+  // left to die.
   provider     = "prisma-client"
   output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
 
-// Las URLs viven en `api/prisma.config.ts` desde Prisma 7.
+// The URLs live in `api/prisma.config.ts` since Prisma 7.
 datasource db {
   provider = "postgresql"
 }
 
-// ── Enums (espejo de las columnas ENUM) ──────────────────────────────────────
+// ── Enums (mirror of the ENUM columns) ───────────────────────────────────────
 
 enum AccountType {
   cash
@@ -65,13 +67,13 @@ enum TransactionType {
   transfer
 }
 
-/// De dónde entró un movimiento.
+/// Where a transaction came in from.
 ///
-/// Hasta ahora todo entraba por la web y no hacía falta decirlo. Con la app
-/// del teléfono entran por cuatro caminos más, y saberlo no es curiosidad:
-/// decide si hay que buscar un duplicado —un pago con Apple Pay produce la
-/// transacción de Wallet Y el SMS del banco— y permite leer después qué camino
-/// acierta y cuál manda a revisar.
+/// Until now everything came in through the web and there was no need to say
+/// so. With the phone app there are four more ways in, and knowing which is
+/// not curiosity: it decides whether to look for a duplicate —an Apple Pay
+/// payment produces the Wallet transaction AND the bank's SMS— and it lets us
+/// read later which way gets it right and which one sends things to review.
 enum TransactionSource {
   web
   ios_manual
@@ -85,54 +87,54 @@ enum TransactionStatus {
   pending
 }
 
-/// Distingue las dos patas de una transferencia.
+/// Tells apart the two legs of a transfer.
 ///
-/// Añadido en Fase 1 sobre el esquema canónico: las dos patas comparten
-/// `transfer_group_id`, son ambas `type='transfer'` y guardan `amount` positivo,
-/// así que sin esta columna es IMPOSIBLE saber de qué cuenta salió el dinero y
-/// a cuál entró — y el saldo derivado depende justamente de eso. El contrato de
-/// la API ya devolvía `direction: "out" | "in"` en las patas, así que esto es
-/// materializar lo que el contrato ya prometía.
+/// Added in Phase 1 on top of the canonical schema: both legs share
+/// `transfer_group_id`, are both `type='transfer'` and store a positive
+/// `amount`, so without this column it is IMPOSSIBLE to know which account the
+/// money left and which it entered — and the derived balance depends on
+/// exactly that. The API contract already returned `direction: "out" | "in"`
+/// on the legs, so this materializes what the contract already promised.
 ///
-/// Es NULL en todo movimiento que no sea transferencia.
+/// NULL on every transaction that is not a transfer.
 enum TransferDirection {
   out
   in
 }
 
-/// Rol de la cuenta. Solo `admin` ve el panel de administración.
+/// The account's role. Only `admin` sees the admin panel.
 enum UserRole {
   admin
   user
 }
 
-/// Ciclo de vida de la cuenta.
+/// The account's life cycle.
 ///
-/// `pending` es el estado inicial de todo registro: la cuenta existe pero NO
-/// puede entrar hasta que un admin la apruebe. Es lo que evita que cualquiera
-/// con el enlace se meta a una app de finanzas.
+/// `pending` is where every sign-up starts: the account exists but CANNOT get
+/// in until an admin approves it. It is what keeps anyone with the link out of
+/// a finance app.
 enum UserStatus {
   pending
   active
   suspended
 }
 
-/// Ciclo de vida de un lote de importación (M4).
+/// Life cycle of an import batch (M4).
 ///
-/// `draft` es el estado en el que se revisa: las filas existen pero todavía no
-/// hay ni un movimiento en `transactions`. Nada entra a las finanzas del
-/// usuario sin que confirme.
+/// `draft` is the state it is reviewed in: the rows exist but there is not a
+/// single transaction in `transactions` yet. Nothing enters the user's
+/// finances without their confirmation.
 enum ImportStatus {
   draft
   committed
   discarded
 }
 
-/// Qué se decidió sobre cada fila leída del documento.
+/// What was decided about each row read from the document.
 ///
-/// `duplicate` es una SOSPECHA, no un veredicto: dos cafés de $5.000 el mismo
-/// día en el mismo sitio son dos movimientos reales. El sistema lo señala y la
-/// persona decide — informar, no bloquear.
+/// `duplicate` is a SUSPICION, not a verdict: two $5,000 coffees on the same
+/// day at the same place are two real transactions. The system points it out
+/// and the person decides — inform, do not block.
 enum ImportRowStatus {
   pending
   accepted
@@ -140,56 +142,56 @@ enum ImportRowStatus {
   skipped
 }
 
-/// De dónde salió el texto que se parseó.
+/// Where the parsed text came from.
 ///
-/// Se guarda para poder depurar un parseo malo sin conservar el documento: si
-/// veinte filas de `pdf` salen torcidas y las de `image` no, el problema está
-/// en el extractor de PDF.
+/// Kept so a bad parse can be debugged without keeping the document: if twenty
+/// `pdf` rows come out crooked and the `image` ones do not, the problem is in
+/// the PDF extractor.
 enum ImportSource {
   image
   pdf
-  /// Un CSV preparado por la persona.
+  /// A CSV prepared by the person.
   ///
-  /// Es la vía EXACTA: no hay reconocimiento de texto que pueda equivocarse,
-  /// así que es lo indicado para migrar años de historial de una sola vez.
-  /// Se guarda aparte de `pdf` e `image` para poder comparar después qué vía
-  /// produce menos correcciones en la revisión.
+  /// It is the EXACT way in: there is no text recognition that can get it
+  /// wrong, so it is the right one to migrate years of history in one go.
+  /// Kept apart from `pdf` and `image` so we can compare later which way
+  /// needs fewer corrections in review.
   csv
   manual
 }
 
 // ── users ────────────────────────────────────────────────────────────────────
-// Raíz de todo el scoping y, desde ahora, también la autoridad de identidad:
-// la autenticación es propia, no delegada.
+// The root of all scoping and, from now on, the identity authority too:
+// authentication is our own, not delegated.
 
 model User {
   id          BigInt     @id @default(autoincrement())
   uuid        String     @unique(map: "uq_users_uuid") @default(uuid()) @db.Char(36)
   email       String     @unique(map: "uq_users_email") @db.VarChar(255)
-  /// Enlace a `auth.users` de Supabase, que es donde viven las credenciales.
-  /// Aquí no hay ni contraseña ni hash: esta tabla es el PERFIL de la persona
-  /// —rol, estado, quién la aprobó—, no su credencial.
+  /// Link to Supabase's `auth.users`, which is where the credentials live.
+  /// There is no password or hash here: this table is the person's PROFILE
+  /// —role, status, who approved them—, not their credential.
   ///
-  /// Es opcional solo por la transición: una fila sin `auth_id` es anterior a
-  /// la migración a Supabase Auth y no puede iniciar sesión hasta que se le
-  /// cree la cuenta correspondiente.
+  /// Optional only because of the transition: a row without `auth_id` predates
+  /// the move to Supabase Auth and cannot sign in until its matching account
+  /// is created.
   authId      String?    @unique(map: "uq_users_auth_id") @map("auth_id") @db.Uuid
   displayName String?    @map("display_name") @db.VarChar(255)
   role        UserRole   @default(user)
   status      UserStatus @default(pending)
 
-  /// Revocación inmediata de sesiones. Todo access token emitido ANTES de esta
-  /// marca se rechaza, sin salir a la red: el guard ya lee esta fila en cada
-  /// petición. Cambiar la contraseña, suspender la cuenta o "cerrar sesión en
-  /// todos los dispositivos" simplemente adelantan este valor.
+  /// Immediate session revocation. Every access token issued BEFORE this mark
+  /// is rejected, without going to the network: the guard already reads this
+  /// row on every request. Changing the password, suspending the account or
+  /// "signing out on every device" simply move this value forward.
   sessionsValidFrom DateTime @default(now()) @map("sessions_valid_from") @db.Timestamp(3)
 
-  /// La defensa contra fuerza bruta pasó a Supabase con la migración: el login
-  /// ya no atraviesa este código, así que contar fallos aquí no protegería de
-  /// nada. Solo se conserva la última entrada, que sí es dato del perfil.
+  /// The brute-force defense moved to Supabase with the migration: sign-in no
+  /// longer goes through this code, so counting failures here would protect
+  /// nothing. Only the last sign-in is kept, which is profile data.
   lastLoginAt DateTime? @map("last_login_at") @db.Timestamp(3)
 
-  /// Traza de quién aprobó la cuenta y cuándo.
+  /// Trace of who approved the account and when.
   approvedAt   DateTime? @map("approved_at") @db.Timestamp(3)
   approvedById BigInt?   @map("approved_by_id")
 
@@ -212,25 +214,26 @@ model User {
   @@map("users")
 }
 
-// ── Sesiones ─────────────────────────────────────────────────────────────────
-// Aquí había una tabla `refresh_tokens` con rotación y detección de reuso. La
-// emisión y rotación de tokens pasó a Supabase Auth con la migración, así que
-// la tabla se eliminó: mantener dos almacenes de sesiones en paralelo sería
-// garantizar que se desincronicen.
+// ── Sessions ─────────────────────────────────────────────────────────────────
+// There was a `refresh_tokens` table here, with rotation and reuse detection.
+// Issuing and rotating tokens moved to Supabase Auth with the migration, so
+// the table was dropped: keeping two session stores side by side would be
+// guaranteeing they drift apart.
 //
-// Lo que NO se delegó es la revocación inmediata: `users.sessions_valid_from`
-// sigue siendo nuestro, y el guard lo compara contra el `iat` del token de
-// Supabase en cada petición. Suspender una cuenta o cerrar todas las sesiones
-// surte efecto al instante, sin esperar a que expire nada ni depender de que
-// Supabase nos conteste.
+// What was NOT delegated is immediate revocation: `users.sessions_valid_from`
+// is still ours, and the guard compares it with the `iat` of the Supabase
+// token on every request. Suspending an account or closing every session takes
+// effect at once, without waiting for anything to expire or depending on
+// Supabase answering.
 
 // ── audit_log (T4) ───────────────────────────────────────────────────────────
-// Bitácora de solo-inserción. Se adelanta a la Fase 1 en vez de esperar a la 5:
-// en una app de finanzas, poder reconstruir qué pasó y cuándo no es un extra.
+// Insert-only log. Brought forward to Phase 1 instead of waiting for Phase 5:
+// in a finance app, being able to rebuild what happened and when is not an
+// extra.
 //
-// `user_id` es NULL-able —a diferencia del esquema canónico— porque un intento
-// de login contra un correo inexistente también debe quedar registrado, y ahí
-// no hay usuario al que atribuirlo.
+// `user_id` is nullable —unlike the canonical schema— because a sign-in
+// attempt against an email that does not exist must be logged too, and there
+// is no user to attribute it to.
 
 model AuditLog {
   id          BigInt   @id @default(autoincrement())
@@ -252,9 +255,9 @@ model AuditLog {
 }
 
 // ── accounts ─────────────────────────────────────────────────────────────────
-// Medios de pago. El saldo NO se almacena: se deriva de opening_balance más la
-// suma firmada de los movimientos. Las cuentas con historial se archivan
-// (is_archived), nunca se borran.
+// Means of payment. The balance is NOT stored: it is derived from
+// opening_balance plus the signed sum of the transactions. Accounts with
+// history are archived (is_archived), never deleted.
 
 model Account {
   id             BigInt      @id @default(autoincrement())
@@ -281,11 +284,13 @@ model Account {
 }
 
 // ── categories ───────────────────────────────────────────────────────────────
-// Taxonomía editable del usuario, jerarquía de 1 nivel (hasta 2) vía parent_id.
-// Se archivan, no se borran. Si aun así se borrara una, las transacciones
-// sobreviven SIN categoría (SetNull) — coherente con la no-rigidez.
+// The user's editable taxonomy, one level of hierarchy (up to two) through
+// parent_id. They are archived, not deleted. If one were deleted anyway, its
+// transactions survive WITHOUT a category (SetNull) — in line with not being
+// rigid.
 
-/// Cada cuánto vuelve un pago recurrente.
+/// How often a recurring payment comes back. The database keeps the type's
+/// name and its Spanish values (`mensual`…); the client speaks these.
 enum Periodicity {
   monthly    @map("mensual")
   bimonthly  @map("bimestral")
@@ -296,44 +301,44 @@ enum Periodicity {
   @@map("Periodicidad")
 }
 
-/// ── Soportes ─────────────────────────────────────────────────────────────
-/// El recibo de un movimiento: el PDF o la foto que prueba que ese pago
-/// existió.
+/// ── Receipts ─────────────────────────────────────────────────────────────
+/// A transaction's receipt: the PDF or the photo that proves the payment
+/// happened. The table is still `soportes`.
 ///
-/// ── Por qué una tabla y no una columna ──────────────────────────────────
-/// Porque un pago puede traer varios papeles —la factura de Claro llega
-/// partida en tres— y una columna obligaría a inventar un separador, a
-/// mantenerlo y a no poder ordenarlos.
+/// ── Why a table and not a column ────────────────────────────────────────
+/// Because one payment can come with several papers —the Claro bill arrives
+/// split in three— and a column would force us to invent a separator, keep
+/// it up and give up ordering them.
 ///
-/// ── Por qué el archivo NO está aquí ─────────────────────────────────────
-/// En la tabla vive la FICHA; el binario vive en un almacén privado fuera del
-/// árbol web. Guardar megabytes en la base engorda cada respaldo, cada
-/// consulta y cada restauración, y no compra nada: igual hace falta un
-/// endpoint que verifique la sesión antes de entregarlo.
+/// ── Why the file is NOT here ────────────────────────────────────────────
+/// The table holds the RECORD; the binary lives in a private store outside
+/// the web tree. Keeping megabytes in the database bloats every backup, every
+/// query and every restore, and buys nothing: an endpoint that checks the
+/// session before handing it over is needed anyway.
 model Receipt {
   id            BigInt   @id @default(autoincrement())
   uuid          String   @unique(map: "uq_soportes_uuid") @default(uuid()) @db.Char(36)
-  /// DENORMALIZADO desde el movimiento, y a propósito.
+  /// DENORMALIZED from the transaction, on purpose.
   ///
-  /// El control de acceso se resuelve con un `where` sobre esta columna, sin
-  /// pasar por un join. Un día alguien escribe una consulta que se olvida del
-  /// join y entrega el recibo de otro; con el dueño aquí, la consulta que se
-  /// olvida no devuelve nada en vez de devolver de más.
+  /// Access control is a `where` on this column, without going through a
+  /// join. One day someone writes a query that forgets the join and hands out
+  /// someone else's receipt; with the owner here, the query that forgets
+  /// returns nothing instead of returning too much.
   userId        BigInt   @map("user_id")
   transactionId BigInt   @map("transaction_id")
-  /// 1..N. Es el "1 de 3" del nombre del archivo: el orden en que se miran.
+  /// 1..N. It is the "1 of 3" of the file name: the order they are looked at in.
   position      Int      @default(1) @map("orden")
-  /// El nombre con el que llegó. Solo para enseñarlo y para descargarlo con
-  /// un nombre que signifique algo; NUNCA se usa para construir una ruta.
+  /// The name it arrived with. Only for showing it and for downloading it with
+  /// a name that means something; NEVER used to build a path.
   fileName      String   @map("nombre_archivo") @db.VarChar(255)
   mimeType      String   @map("mime_type") @db.VarChar(100)
-  /// La ruta RELATIVA dentro del almacén privado, y la escribe el servidor:
-  /// `<userId>/<uuid>.<ext>`. Opaca a propósito —no lleva nada que venga del
-  /// nombre original— para que no exista forma de salirse del almacén.
+  /// The RELATIVE path inside the private store, written by the server:
+  /// `<userId>/<uuid>.<ext>`. Opaque on purpose —it carries nothing that comes
+  /// from the original name— so there is no way to step out of the store.
   storageKey    String   @unique(map: "uq_soportes_storage_key") @map("storage_key") @db.VarChar(500)
   sizeBytes     Int      @map("tamano")
-  /// sha256 del CONTENIDO. Es lo que hace la importación idempotente: el
-  /// mismo archivo dos veces es el mismo soporte, aunque cambie de nombre.
+  /// sha256 of the CONTENT. It is what makes the import idempotent: the same
+  /// file twice is the same receipt, even if its name changes.
   contentHash   String   @map("huella") @db.Char(64)
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(3)
 
@@ -358,112 +363,115 @@ model Category {
   isArchived Boolean      @default(false) @map("is_archived")
   createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
 
-  /// ── Recurrencia ───────────────────────────────────────────────────────
-  /// Vive en la CATEGORÍA y no en el movimiento porque lo que se repite es el
-  /// concepto —"el alquiler"— y no el pago concreto de un mes. Puesta en cada
-  /// movimiento habría que repetirla doce veces al año y mantenerlas de
-  /// acuerdo entre sí; y al mirar un mes sin pagar no habría ningún movimiento
-  /// donde leerla, que es justo cuando hace falta saber que falta.
+  /// ── Recurrence ────────────────────────────────────────────────────────
+  /// It lives on the CATEGORY and not on the transaction because what repeats
+  /// is the concept —"the rent"— and not one month's payment. Put on each
+  /// transaction it would have to be repeated twelve times a year and the
+  /// copies kept in agreement; and when looking at an unpaid month there
+  /// would be no transaction to read it from, which is exactly when we need
+  /// to know something is missing.
   isRecurring  Boolean      @default(false) @map("recurrente")
   periodicity  Periodicity? @map("periodicidad")
-  /// Día del mes en que se debe pagar. 1–31, y los meses cortos se recortan al
-  /// último día: un 31 en febrero es el 28.
+  /// Day of the month it is due. 1–31, and short months are clipped to their
+  /// last day: a 31st in February is the 28th.
   paymentDay   Int?         @map("dia_de_pago") @db.SmallInt
-  /// El mes de referencia del ciclo, 1–12. Solo cuando la periodicidad NO es
-  /// mensual: un pago trimestral no cae "cada tres meses" a secas, cae en
-  /// marzo, junio, septiembre y diciembre, o en enero, abril, julio y octubre,
-  /// según dónde empiece. Sin este dato, "cada tres meses" no dice cuáles.
+  /// The cycle's reference month, 1–12. Only when the periodicity is NOT
+  /// monthly: a quarterly payment does not just fall "every three months", it
+  /// falls in March, June, September and December, or in January, April,
+  /// July and October, depending on where it starts. Without this,
+  /// "every three months" does not say which.
   paymentMonth Int?         @map("mes_de_pago") @db.SmallInt
 
-  /// ── Presupuesto ───────────────────────────────────────────────────────
-  /// Lo que se espera que cueste este concepto cada vez que toca. Puesto,
-  /// manda: la previsión del mes es este número y no el promedio de lo que
-  /// costó antes.
+  /// ── Budget ────────────────────────────────────────────────────────────
+  /// What this concept is expected to cost each time it is due. When set, it
+  /// wins: the month's forecast is this number and not the average of what
+  /// it cost before.
   ///
-  /// Existe porque hay gastos cuyo valor se SABE y no se estima —un alquiler
-  /// con contrato, una mensualidad de colegio, una cuota fija— y promediar
-  /// los tres meses anteriores les daba una cifra peor que el dato: la
-  /// arrastraba hacia arriba el mes que se pagó con recargo, o hacia abajo
-  /// el que se pagó a medias.
+  /// It exists because some expenses have a value that is KNOWN, not
+  /// estimated —rent under contract, a school fee, a fixed instalment— and
+  /// averaging the three previous months gave them a worse figure than the
+  /// data: the month paid with a surcharge pulled it up, the one paid in part
+  /// pulled it down.
   ///
-  /// Vacío se sigue promediando, que es lo correcto para lo que de verdad
-  /// varía: la luz, el mercado, la gasolina.
+  /// Empty, it keeps being averaged, which is right for what really varies:
+  /// electricity, groceries, fuel.
   ///
-  /// Solo significa algo en un CONCEPTO recurrente. Un centro de costos y una
-  /// categoría son sumas de lo que cuelga de ellos, y un concepto que no
-  /// vuelve no tiene un "cada vez".
+  /// It only means something on a recurring CONCEPT. A cost center and a
+  /// category are sums of what hangs from them, and a concept that does not
+  /// come back has no "each time".
   budget Decimal? @map("presupuesto") @db.Decimal(15, 2)
 
-  /// ── Pago automático ───────────────────────────────────────────────────
-  /// El concepto no espera a que alguien lo registre: cuando llega su día de
-  /// pago, el movimiento se crea solo y deja de estar pendiente.
+  /// ── Auto-paid ─────────────────────────────────────────────────────────
+  /// The concept does not wait for someone to record it: when its due day
+  /// comes, the transaction creates itself and stops being pending.
   ///
-  /// Para lo que se cobra sin que uno haga nada —un débito automático, una
-  /// suscripción, una cuota domiciliada—. Sin esto había que ir a marcarlo
-  /// cada mes, que es trabajo de escribano para un dinero que ya salió.
+  /// For what is charged without anyone doing anything —a direct debit, a
+  /// subscription, a standing order—. Without it, someone had to go and mark
+  /// it every month, which is clerk's work for money that already left.
   ///
-  /// Solo desde el mes en que se enciende, hacia adelante: nunca rellena
-  /// meses pasados. Un mes viejo sin movimiento es un dato —no se pagó, o no
-  /// se registró— y fabricarlo hacia atrás cambiaría cifras que alguien ya
-  /// dio por buenas.
+  /// Only from the month it is switched on, going forward: it never fills in
+  /// past months. An old month without a transaction is data —it was not paid,
+  /// or not recorded— and making it up backwards would change figures someone
+  /// already took as good.
   ///
-  /// Solo significa algo en un CONCEPTO recurrente.
+  /// It only means something on a recurring CONCEPT.
   isAutoPaid Boolean @default(false) @map("pago_automatico")
 
-  /// ── Se paga en varias veces ───────────────────────────────────────────
-  /// El concepto no se salda con un pago: se va cubriendo. El mercado se
-  /// hace en cuatro idas, la gasolina en seis tanqueadas, y ninguna de esas
-  /// idas termina el mes.
+  /// ── Paid in several payments ──────────────────────────────────────────
+  /// The concept is not settled by one payment: it gets covered bit by bit.
+  /// Groceries take four trips, fuel six fill-ups, and none of those trips
+  /// ends the month.
   ///
-  /// Sin esto, el primer movimiento sacaba el concepto de pagos pendientes,
-  /// y el resto del mes la lista decía que el mercado estaba resuelto con
-  /// 320.000 de un presupuesto de 1.200.000. La cifra que faltaba no estaba
-  /// mal en ningún sitio —la dona y los totales la tenían—, pero la única
-  /// pantalla que responde «¿qué me falta pagar?» contestaba que nada.
+  /// Without it, the first transaction took the concept off pending payments,
+  /// and for the rest of the month the list said groceries were done with
+  /// 320,000 out of a 1,200,000 budget. The missing figure was not wrong
+  /// anywhere —the donut and the totals had it—, but the only screen that
+  /// answers "what do I still have to pay?" answered that nothing.
   ///
-  /// Marcado, el concepto se queda en la lista mientras lo pagado sea MENOR
-  /// que lo esperado, enseñando cuánto lleva. Sale cuando lo alcanza o lo
-  /// pasa, que es cuando de verdad dejó de faltar.
+  /// When marked, the concept stays on the list while what was paid is LESS
+  /// than what was expected, showing how much it is at. It leaves when it
+  /// reaches or passes it, which is when it really stopped being missing.
   ///
-  /// ── Es incompatible con el pago automático ────────────────────────────
-  /// Y no por una limitación técnica: las dos marcas dicen cosas contrarias
-  /// sobre el mismo concepto. El pago automático dice «esto se cobra solo,
-  /// entero, el día que vence»; este dice «esto se cubre a pedazos y no se
-  /// sabe cuántos». Encendidas a la vez, el cobro automático escribiría el
-  /// importe completo el día del vencimiento y el concepto saldría de la
-  /// lista sin que nadie hubiera ido al mercado.
+  /// ── It cannot be combined with auto-paid ──────────────────────────────
+  /// And not because of a technical limit: the two flags say opposite things
+  /// about the same concept. Auto-paid says "this is charged on its own, in
+  /// full, on its due day"; this one says "this is covered in pieces and
+  /// nobody knows how many". Both on, the automatic charge would write the
+  /// full amount on the due day and the concept would leave the list without
+  /// anyone having gone shopping.
   ///
-  /// Solo significa algo en un CONCEPTO recurrente, y solo cuando hay una
-  /// cifra esperada: sin un total al que llegar, «lo que falta» no existe.
+  /// It only means something on a recurring CONCEPT, and only when there is
+  /// an expected figure: without a total to reach, "what is missing" does not
+  /// exist.
   isMultiPayment Boolean @default(false) @map("varios_pagos")
 
-  /// ── Estático ──────────────────────────────────────────────────────────
-  /// Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica: ni desde
-  /// la tabla de movimientos ni desde el modal de un movimiento. Es para la
-  /// estructura que no se improvisa —el alquiler no cambia de grupo un
-  /// martes— y para que un clic distraído en una tabla de cien filas no mueva
-  /// plata de sitio sin que nadie lo note. La salida es hacer el centro
-  /// dinámico en Centros de costos.
+  /// ── Static ────────────────────────────────────────────────────────────
+  /// What hangs from a STATIC cost center is not reclassified: neither from
+  /// the transactions table nor from a transaction's modal. It is for the
+  /// structure that is not improvised —the rent does not change group on a
+  /// Tuesday— and so that a distracted click in a hundred-row table does not
+  /// move money around without anyone noticing. The way out is making the
+  /// center dynamic in Cost centers.
   ///
-  /// Solo se lee del CENTRO, que es el nivel de arriba: un grupo o un concepto
-  /// heredan lo que diga el suyo.
+  /// It is only read from the CENTER, the top level: a category or a concept
+  /// inherits what theirs says.
   isStatic Boolean @default(false) @map("estatico")
 
-  /// ── Palabras clave ────────────────────────────────────────────────────
-  /// Lo que hay que encontrar en un soporte para saber que es de este
-  /// concepto: la razón social del acreedor, su NIT, el nombre con el que
-  /// aparece en la factura. Se buscan en el texto que sale del recibo —el
-  /// embebido del PDF o el del OCR— y también en el nombre del archivo.
+  /// ── Keywords ──────────────────────────────────────────────────────────
+  /// What has to be found in a receipt to know it belongs to this concept: the
+  /// creditor's business name, its tax id, the name it shows on the bill. They
+  /// are searched for in the text that comes out of the receipt —the PDF's
+  /// embedded text or the OCR's— and in the file name too.
   ///
-  /// Vive en la CATEGORÍA y no en una tabla aparte porque se escribe y se
-  /// borra junto con el concepto, nunca por su cuenta: son un dato suyo, como
-  /// su icono o su periodicidad. Una tabla obligaría a mantener su propio
-  /// ciclo de vida —crear, listar, borrar huérfanas al unificar— para guardar
-  /// tres palabras.
+  /// It lives on the CATEGORY and not in a table of its own because it is
+  /// written and deleted together with the concept, never on its own: it is
+  /// the concept's data, like its icon or its periodicity. A table would need
+  /// its own life cycle —create, list, delete orphans on merging— to keep
+  /// three words.
   ///
-  /// Se guardan TAL COMO se escribieron. Quitar las tildes y bajar a
-  /// minúsculas es cosa de la comparación, y hacerlo al guardar convertiría
-  /// «Aquaoccidente» en «aquaoccidente» en la pantalla de quien lo escribió.
+  /// They are stored AS THEY WERE TYPED. Dropping accents and lowercasing is
+  /// the comparison's job, and doing it on save would turn «Aquaoccidente»
+  /// into «aquaoccidente» on the screen of whoever typed it.
   keywords String[] @default([]) @map("palabras_clave")
 
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_categories_user")
@@ -479,13 +487,12 @@ model Category {
 }
 
 // ── tags ─────────────────────────────────────────────────────────────────────
-// Etiquetas libres y transversales ("reembolsable", "viaje-cartagena"). A
-// diferencia de las categorías —que son la taxonomía vertical y única— una
-// etiqueta cruza cualquier categoría, cuenta o tipo, y un movimiento puede
-// llevar varias.
+// Free, cross-cutting labels ("reimbursable", "cartagena-trip"). Unlike
+// categories —the vertical, single taxonomy— a tag cuts across any category,
+// account or type, and a transaction can carry several.
 //
-// El unique (user_id, name) permite un "get-or-create" idempotente: la UI las
-// crea al vuelo mientras el usuario escribe, sin pedir permiso.
+// The unique (user_id, name) allows an idempotent "get-or-create": the UI
+// creates them on the fly while the user types, without asking.
 
 model Tag {
   id     BigInt  @id @default(autoincrement())
@@ -501,46 +508,47 @@ model Tag {
 }
 
 // ── transactions ─────────────────────────────────────────────────────────────
-// EL NÚCLEO. Todo lo demás se deriva de aquí.
-// `amount` se almacena SIEMPRE positivo; el signo económico lo da `type`.
-// `category_id` es NULL-able a propósito: un movimiento puede existir sin
-// categoría y eso jamás bloquea el guardado.
+// THE CORE. Everything else is derived from here.
+// `amount` is ALWAYS stored positive; the economic sign comes from `type`.
+// `category_id` is nullable on purpose: a transaction can exist without a
+// category and that never blocks saving it.
 //
-// account_id es Restrict (no se borra una cuenta con movimientos: se archiva).
-// category_id es SetNull (enriquecimiento opcional que no destruye el movimiento).
+// account_id is Restrict (an account with transactions is not deleted: it is
+// archived). category_id is SetNull (optional enrichment that does not destroy
+// the transaction).
 //
-// recurring_concept_id e import_batch_id llegan en sus fases (3 y 2); se añaden
-// como migraciones nuevas, nunca reescribiendo una ya aplicada.
+// recurring_concept_id and import_batch_id arrive in their phases (3 and 2);
+// they are added as new migrations, never by rewriting one already applied.
 
 model Transaction {
   id              BigInt             @id @default(autoincrement())
   uuid            String             @unique(map: "uq_transactions_uuid") @default(uuid()) @db.Char(36)
   userId          BigInt             @map("user_id")
-  /// OPCIONAL a propósito.
+  /// OPTIONAL on purpose.
   ///
-  /// Llevar cuentas —tarjetas, ahorros, efectivo— es una función que se
-  /// enciende en los ajustes, no un requisito para registrar un gasto. Quien
-  /// solo quiere saber cuánto gastó este mes no debería tener que inventarse
-  /// una cuenta primero.
+  /// Keeping accounts —cards, savings, cash— is a feature switched on in the
+  /// settings, not a requirement for recording an expense. Whoever only wants
+  /// to know how much they spent this month should not have to make up an
+  /// account first.
   ///
-  /// La consecuencia hay que asumirla de frente: un movimiento sin cuenta no
-  /// participa de ningún saldo. Los saldos siguen siendo exactos para las
-  /// cuentas que existan, y sencillamente no hay saldo para lo demás.
+  /// The consequence has to be faced head on: a transaction without an
+  /// account takes part in no balance. Balances stay exact for the accounts
+  /// that exist, and there is simply no balance for the rest.
   accountId       BigInt?            @map("account_id")
   date            DateTime           @db.Date
-  /// El MES AL QUE PERTENECE el gasto, que no siempre es el de `date`.
+  /// The MONTH THE EXPENSE BELONGS TO, which is not always the one of `date`.
   ///
-  /// La factura de marzo se paga el 6 de abril: `date` guarda el 6 de abril
-  /// —es cuando salió la plata, y los saldos dependen de eso— y `period`
-  /// guarda marzo, que es el mes del que uno habla cuando pregunta "¿cuánto
-  /// gasté en marzo?".
+  /// March's bill is paid on April 6th: `date` stores April 6th —it is when
+  /// the money left, and balances depend on that— and `period` stores March,
+  /// which is the month one means when asking "how much did I spend in
+  /// March?".
   ///
-  /// Se guarda como el DÍA 1 del mes. Es una fecha y no un texto "2026-03"
-  /// para poder ordenar, filtrar por rango y agrupar con las mismas
-  /// herramientas que `date`.
+  /// Stored as DAY 1 of the month. It is a date and not a "2026-03" string so
+  /// it can be sorted, filtered by range and grouped with the same tools as
+  /// `date`.
   ///
-  /// Cuando no se sabe, es el mes de `date`: la mayoría de los gastos se pagan
-  /// en su propio mes y obligar a declararlo sería fricción para nada.
+  /// When unknown, it is the month of `date`: most expenses are paid in their
+  /// own month and making people declare it would be friction for nothing.
   period          DateTime           @db.Date
   amount          Decimal            @db.Decimal(15, 2)
   /// ISO 4217. Everything is COP today; the column exists so that formatting
@@ -553,30 +561,30 @@ model Transaction {
   notes           String?            @db.Text
   transferGroupId String?            @map("transfer_group_id") @db.Char(36)
   transferDir     TransferDirection? @map("transfer_direction")
-  /// Huella del movimiento cuando vino de una importación. Sirve para detectar
-  /// repeticiones en importaciones futuras. NO lleva UNIQUE a propósito: dos
-  /// cafés de $5.000 el mismo día en el mismo sitio son dos movimientos reales,
-  /// y un constraint rechazaría el segundo. Se informa, no se bloquea.
+  /// The transaction's fingerprint when it came from an import. Used to spot
+  /// repeats in future imports. It has NO UNIQUE on purpose: two $5,000
+  /// coffees on the same day at the same place are two real transactions, and
+  /// a constraint would reject the second. It informs, it does not block.
   externalRef     String?            @map("external_ref") @db.VarChar(255)
-  /// De qué importación salió, si salió de alguna. Es lo que permite deshacer
-  /// un lote entero sin borrar cuarenta movimientos a mano.
+  /// Which import it came from, if any. It is what lets a whole batch be
+  /// undone without deleting forty transactions by hand.
   importBatchId   BigInt?            @map("import_batch_id")
   status          TransactionStatus  @default(cleared)
 
-  /// ── Captura ────────────────────────────────────────────────────────────
-  /// `web` por defecto para todo lo que ya existe: es por donde entró.
+  /// ── Capture ────────────────────────────────────────────────────────────
+  /// `web` by default for everything that already exists: it is where it came in.
   source      TransactionSource @default(web)
-  /// El texto del que salió el gasto —el OCR del recibo, el SMS del banco—.
-  /// Hasta ahora se descartaba, y con él se iba la única forma de saber por
-  /// qué se clasificó como se clasificó, y de reinterpretarlo cuando el motor
-  /// aprenda algo nuevo.
+  /// The text the expense came from —the receipt's OCR, the bank's SMS—.
+  /// Until now it was thrown away, and with it went the only way of knowing
+  /// why it was classified the way it was, and of reinterpreting it when the
+  /// engine learns something new.
   rawText     String?           @map("raw_text") @db.Text
-  /// Cuándo se capturó, con zona horaria. Distinto de `date` —el día del
-  /// gasto— y de `created_at` —cuándo llegó al servidor—: una captura en cola
-  /// sin conexión se crea horas después de capturarse.
+  /// When it was captured, with time zone. Different from `date` —the day of
+  /// the expense— and from `created_at` —when it reached the server—: a
+  /// capture queued offline is created hours after it was taken.
   capturedAt  DateTime?         @map("captured_at") @db.Timestamptz(3)
-  /// Lo que el sistema no pudo clasificar con certeza, o que podría ser un
-  /// duplicado. Nunca adivina: lo marca y lo deja para alguien.
+  /// What the system could not classify with certainty, or what might be a
+  /// duplicate. It never guesses: it flags it and leaves it to someone.
   needsReview Boolean           @default(false) @map("por_revisar")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(3)
@@ -589,16 +597,16 @@ model Transaction {
   tags     TransactionTag[]
   receipts Receipt[]
 
-  /// SetNull y no Cascade: borrar el registro de una importación no puede
-  /// llevarse por delante movimientos que la persona ya dio por buenos.
+  /// SetNull and not Cascade: deleting an import's record cannot take with it
+  /// transactions the person already took as good.
   importBatch        ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull, map: "fk_tx_import_batch")
   possibleDuplicates ImportRow[]  @relation("PossibleDuplicate")
 
-  /// ÚNICO, no solo indexado. `external_ref` es la huella con la que dos
-  /// caminos evitan duplicar: el importador histórico y el pago automático,
-  /// que escribe `auto:<concepto>:<mes>`. Los dos comprueban antes de
-  /// insertar, y los dos pueden perder esa carrera contra otra petición
-  /// simultánea —dos pestañas abiertas bastan—. Aquí no se pierde.
+  /// UNIQUE, not just indexed. `external_ref` is the fingerprint two paths use
+  /// to avoid duplicating: the history importer and auto-pay, which writes
+  /// `auto:<concept>:<month>`. Both check before inserting, and both can lose
+  /// that race against another simultaneous request —two open tabs are
+  /// enough—. Here it is not lost.
   @@unique([userId, externalRef], map: "uq_tx_user_external_ref")
   @@index([userId, importBatchId], map: "idx_tx_user_import_batch")
   @@index([userId, date], map: "idx_tx_user_date")
@@ -610,16 +618,16 @@ model Transaction {
 }
 
 // ── transaction_splits ───────────────────────────────────────────────────────
-// Reparte un movimiento entre varias categorías (una compra de supermercado que
-// es 70% mercado y 30% aseo).
+// Splits a transaction across several categories (a supermarket purchase that
+// is 70% groceries and 30% cleaning).
 //
-// INVARIANTE INVIOLABLE: la suma de los splits debe igualar EXACTAMENTE el
-// `amount` de la transacción. MySQL/MariaDB no puede expresar esa suma como
-// constraint declarativo, así que la valida el servicio con Prisma.Decimal
-// dentro del $transaction, antes de confirmar. Si no cuadra: 422 y ROLLBACK.
+// INVARIANT THAT CANNOT BREAK: the splits must add up to EXACTLY the
+// transaction's `amount`. MySQL/MariaDB cannot express that sum as a
+// declarative constraint, so the service checks it with Prisma.Decimal inside
+// the $transaction, before committing. If it does not add up: 422 and ROLLBACK.
 //
-// Cuando un movimiento tiene splits, la agregación por categoría consume los
-// splits, no el category_id de cabecera.
+// When a transaction has splits, the per-category aggregation uses the
+// splits, not the header's category_id.
 
 model TransactionSplit {
   id            BigInt  @id @default(autoincrement())
@@ -636,9 +644,9 @@ model TransactionSplit {
 }
 
 // ── transaction_tags ─────────────────────────────────────────────────────────
-// Puente N:M entre movimientos y etiquetas. La PK compuesta impide duplicados y
-// hace de índice a la vez. CASCADE por ambos lados: al borrar el movimiento o
-// la etiqueta, la relación desaparece sola.
+// N:M bridge between transactions and tags. The composite PK prevents
+// duplicates and doubles as the index. CASCADE on both sides: when the
+// transaction or the tag is deleted, the link goes away on its own.
 
 model TransactionTag {
   transactionId BigInt @map("transaction_id")
@@ -653,31 +661,31 @@ model TransactionTag {
 }
 
 // ── import_batches (M4) ──────────────────────────────────────────────────────
-// Un documento leído: un screenshot, un PDF de extracto, un pegado de texto.
+// One document read: a screenshot, a statement PDF, a pasted text.
 //
-// QUÉ NO SE GUARDA AQUÍ, a propósito: ni la imagen, ni el PDF, ni el texto
-// crudo del OCR. Todo el beneficio de hacer OCR en el navegador es que el
-// extracto NUNCA sale del equipo del usuario (análisis 5.6); subirlo al
-// servidor destruiría exactamente eso. Lo que se guarda son las filas ya
-// parseadas, que es lo que la persona va a revisar.
+// WHAT IS NOT KEPT HERE, on purpose: not the image, not the PDF, not the raw
+// OCR text. The whole point of doing OCR in the browser is that the statement
+// NEVER leaves the user's device (analysis 5.6); uploading it to the server
+// would destroy exactly that. What is kept are the rows already parsed, which
+// is what the person is going to review.
 //
-// El lote sobrevive al commit porque es lo que permite DESHACER: sin él, una
-// importación mal parseada solo se arregla borrando cuarenta movimientos a
-// mano.
+// The batch outlives the commit because it is what allows UNDOING: without
+// it, a badly parsed import can only be fixed by deleting forty transactions
+// by hand.
 
 model ImportBatch {
   id          BigInt       @id @default(autoincrement())
   uuid        String       @unique(map: "uq_import_batches_uuid") @default(uuid()) @db.Char(36)
   userId      BigInt       @map("user_id")
-  /// Opcional, por lo mismo que en transactions: se puede importar un extracto
-  /// sin declarar a qué cuenta pertenece.
+  /// Optional, for the same reason as in transactions: a statement can be
+  /// imported without saying which account it belongs to.
   accountId   BigInt?      @map("account_id")
   source      ImportSource @default(image)
   status      ImportStatus @default(draft)
-  /// Nombre del archivo, solo para que la persona reconozca el lote. Nunca su contenido.
+  /// The file name, only so the person recognizes the batch. Never its content.
   label       String?      @db.VarChar(255)
-  /// Qué implementación de OcrProvider lo produjo. Sirve para comparar calidad
-  /// el día que exista una alternativa de servidor.
+  /// Which OcrProvider implementation produced it. Used to compare quality
+  /// the day a server-side alternative exists.
   ocrProvider String?      @map("ocr_provider") @db.VarChar(64)
   committedAt DateTime?    @map("committed_at") @db.Timestamp(3)
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamp(3)
@@ -693,29 +701,31 @@ model ImportBatch {
 }
 
 // ── import_rows (M4) ─────────────────────────────────────────────────────────
-// Una línea candidata del documento. Vive en `draft` mientras se revisa y no
-// toca las finanzas del usuario hasta que el lote se confirma.
+// A candidate line from the document. It lives in `draft` while it is
+// reviewed and does not touch the user's finances until the batch is
+// confirmed.
 //
-// `amount` es Decimal como cualquier otro dinero de la app: parsear a `number`
-// aquí y convertir después ya habría perdido centavos.
+// `amount` is Decimal like any other money in the app: parsing to `number`
+// here and converting later would already have lost cents.
 
 model ImportRow {
   id            BigInt          @id @default(autoincrement())
   batchId       BigInt          @map("batch_id")
-  /// Orden en el documento. Revisar en desorden es desorientador.
+  /// Order in the document. Reviewing out of order is disorienting.
   position      Int
   date          DateTime        @db.Date
   amount        Decimal         @db.Decimal(15, 2)
   type          TransactionType @default(expense)
   description   String?         @db.VarChar(255)
   status        ImportRowStatus @default(pending)
-  /// Categoría sugerida por T1. Es una SUGERENCIA: la persona la cambia o la quita.
+  /// Category suggested by T1. It is a SUGGESTION: the person changes it or
+  /// removes it.
   categoryId    BigInt?         @map("category_id")
-  /// 0–100. Se muestra para que se sepa cuánto fiarse de la sugerencia.
+  /// 0–100. Shown so it is clear how much to trust the suggestion.
   confidence    Int?            @db.SmallInt
-  /// Huella determinista para detectar repeticiones. Ver `fingerprint.ts`.
+  /// Deterministic fingerprint to spot repeats. See `fingerprint.ts`.
   fingerprint   String          @db.Char(64)
-  /// Si se sospecha repetición, a qué movimiento ya existente se parece.
+  /// If a repeat is suspected, which existing transaction it looks like.
   duplicateOfId BigInt?         @map("duplicate_of_id")
 
   batch       ImportBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade, map: "fk_import_row_batch")
@@ -727,26 +737,27 @@ model ImportRow {
 }
 
 // ── category_rules (T1) ──────────────────────────────────────────────────────
-// Reglas de categorización automática: "si la descripción contiene X, sugiere
-// la categoría Y".
+// Automatic categorization rules: "if the description contains X, suggest
+// category Y".
 //
-// Son SUGERENCIAS. El principio de no-rigidez del producto manda: el sistema
-// informa, nunca bloquea, y un movimiento sin categoría siempre se puede
-// guardar.
+// They are SUGGESTIONS. The product's no-rigidity principle rules: the system
+// informs, never blocks, and a transaction without a category can always be
+// saved.
 //
-// Además de estas reglas explícitas, el servicio aprende del historial del
-// propio usuario, que es la señal más fuerte y no exige mantener listas.
+// Besides these explicit rules, the service learns from the user's own
+// history, which is the strongest signal and needs no lists to maintain.
 
 model CategoryRule {
   id         BigInt   @id @default(autoincrement())
   userId     BigInt   @map("user_id")
-  /// Fragmento a buscar en la descripción, ya en minúsculas y sin tildes.
+  /// Fragment to look for in the description, already lowercase and without
+  /// accents.
   pattern    String   @db.VarChar(120)
   categoryId BigInt   @map("category_id")
-  /// Mayor prioridad gana cuando varias reglas coinciden. Las creadas por la
-  /// persona pesan más que las sembradas por defecto.
+  /// Higher priority wins when several rules match. The ones the person
+  /// creates weigh more than the ones seeded by default.
   priority   Int      @default(0)
-  /// Cuántas veces ha acertado. Sube cuando se acepta la sugerencia.
+  /// How many times it got it right. Goes up when the suggestion is accepted.
   hits       Int      @default(0)
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(3)
 
@@ -759,13 +770,13 @@ model CategoryRule {
 }
 
 // ── user_preferences (T5) ────────────────────────────────────────────────────
-// Almacén clave-valor por usuario. pref_value es JSON para admitir estructuras
-// arbitrarias sin migrar el esquema. El unique (user_id, pref_key) habilita un
-// upsert idempotente.
+// Per-user key-value store. pref_value is JSON so it can hold arbitrary
+// structures without migrating the schema. The unique (user_id, pref_key)
+// allows an idempotent upsert.
 //
-// Nota MariaDB: implementa JSON como LONGTEXT con un CHECK de validez, no como
-// tipo nativo. Funciona igual para almacenar y leer; se verifica en la primera
-// migración.
+// MariaDB note: it implements JSON as LONGTEXT with a validity CHECK, not as a
+// native type. It works the same for storing and reading; checked in the
+// first migration.
 
 model UserPreference {
   id        BigInt @id @default(autoincrement())
