@@ -483,7 +483,7 @@ both files in the same commit.
 
 The catalog, i18next and react-i18next load in their own chunk, awaited at the
 top of `i18n.ts`: they do not count against the initial bundle, and nothing
-renders before the texts are there ([ADR 0024](docs/adr/0024-text-catalog-loads-beside-the-entry.md)).
+renders before the texts are there ([ADR 0025](docs/adr/0025-text-catalog-loads-beside-the-entry.md)).
 
 ## Errors
 

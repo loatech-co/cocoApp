@@ -1,4 +1,4 @@
-# 0024 — The text catalog loads beside the entry, awaited before anything renders
+# 0025 — The text catalog loads beside the entry, awaited before anything renders
 
 - Status: accepted
 - Date: 2026-10-05

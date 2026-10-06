@@ -12,7 +12,7 @@ import type { TFunction } from 'i18next';
  * 200 kB initial budget (`.size-limit.cjs`). They go in their own chunk, and
  * this module waits for it: ES modules that import this one are not evaluated
  * until the `await` resolves, so no screen (and no module constant built with
- * `t`) ever runs against an empty catalog. ADR 0024 has the numbers.
+ * `t`) ever runs against an empty catalog. ADR 0025 has the numbers.
  *
  * ── Why a module `t` and not `useTranslation()` everywhere ──────────────────
  * A good share of the texts live outside components: option lists, labels

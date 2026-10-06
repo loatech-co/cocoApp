@@ -15,7 +15,7 @@ export default defineConfig({
     // Sin sourcemaps en producción: no se regalan las rutas del código.
     sourcemap: false,
     // Top-level await: `shared/lib/i18n.ts` waits for the text catalog
-    // (step 7.3, ADR 0024). Vite's default stops at Safari 14; every browser
+    // (step 7.3, ADR 0025). Vite's default stops at Safari 14; every browser
     // listed here has it, and the iOS app's WebView (iOS 17) is past them all.
     target: ['es2022', 'chrome89', 'edge89', 'firefox89', 'safari15'],
     // Tesseract.js y pdf.js (Fase 2) son grandes y NO deben entrar al bundle
