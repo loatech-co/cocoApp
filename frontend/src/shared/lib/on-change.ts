@@ -1,49 +1,48 @@
 import { useState } from 'react';
 
 /**
- * Reacciona a que algo de fuera cambie, DURANTE el render.
+ * Reacts to something from outside changing, DURING the render.
  *
- * ── Lo que reemplaza ────────────────────────────────────────────────────────
- * Esto:
+ * ── What it replaces ────────────────────────────────────────────────────────
+ * This:
  *
- *   useEffect(() => { setX(valorDeFuera); }, [valorDeFuera]);
+ *   useEffect(() => { setX(outsideValue); }, [outsideValue]);
  *
- * que es la forma en que esta aplicación reiniciaba el estado de una ficha al
- * abrirla, seguía un campo de texto al valor que le llegaba, o cerraba los
- * paneles al cambiar de página. Doce sitios, el mismo gesto.
+ * which is how this app used to reset a sheet's state on opening it, keep a
+ * text field in step with the value it received, or close the panels on
+ * changing page. Twelve places, the same gesture.
  *
- * ── Por qué en el render y no en un efecto ──────────────────────────────────
- * Un efecto corre DESPUÉS de pintar. Así que la secuencia era: se pinta la
- * ficha con los datos del movimiento anterior, corre el efecto, se vuelve a
- * pintar con los buenos. Un fotograma con datos viejos, y un render de más
- * cada vez. En una ficha de quince campos eso es quince estados cambiando en
- * dos tandas en vez de una.
+ * ── Why in the render and not in an effect ──────────────────────────────────
+ * An effect runs AFTER painting. So the sequence was: the sheet paints with
+ * the previous movement's data, the effect runs, it paints again with the
+ * right data. One frame with stale data, and one extra render every time. In
+ * a sheet of fifteen fields that is fifteen states changing in two batches
+ * instead of one.
  *
- * Ajustar el estado durante el render es lo que React documenta para este
- * caso: si se llama a un `setState` mientras el componente se está pintando,
- * React descarta ese render y vuelve a empezar con el estado nuevo, antes de
- * tocar el DOM. No hay fotograma intermedio.
+ * Adjusting state during the render is what React documents for this case:
+ * if a `setState` is called while the component is rendering, React discards
+ * that render and starts over with the new state, before touching the DOM.
+ * There is no intermediate frame.
  *
- * ── Es fiel a `useEffect`, a propósito ──────────────────────────────────────
- * Dos cosas que podrían haberse «mejorado» y no se han tocado, porque esto
- * sustituye a doce efectos que ya funcionaban y la regla era no cambiar lo que
- * hace la pantalla:
+ * ── It is faithful to `useEffect`, on purpose ───────────────────────────────
+ * Two things that could have been «improved» and were left alone, because
+ * this replaces twelve effects that already worked and the rule was not to
+ * change what the screen does:
  *
- *   · Se dispara también al MONTAR, como un efecto. Una ficha que se monta ya
- *     abierta se rellena igual que una que se abre después.
- *   · Compara cada elemento con `Object.is`, como el array de dependencias.
- *     Un objeto nuevo con el mismo contenido cuenta como cambio, igual que
- *     contaba antes.
+ *   · It also fires on MOUNT, like an effect. A sheet that mounts already
+ *     open fills in the same as one that opens later.
+ *   · It compares each element with `Object.is`, like the dependency array.
+ *     A new object with the same contents counts as a change, as it did
+ *     before.
  *
- * ── Qué NO es ───────────────────────────────────────────────────────────────
- * No es para efectos de verdad: una suscripción, una petición, un recurso del
- * navegador que haya que soltar. Eso sigue siendo un `useEffect` con su
- * limpieza. Esto es solo para «cuando cambie esto, el estado tiene que decir
- * aquello».
+ * ── What it is NOT ──────────────────────────────────────────────────────────
+ * It is not for real effects: a subscription, a request, a browser resource
+ * that has to be released. That is still a `useEffect` with its cleanup. This
+ * is only for «when this changes, the state has to say that».
  */
 export function useOnChange(signature: readonly unknown[], react: () => void): void {
-  // `null` y no `firma`: así la primera pasada siempre cuenta como cambio y la
-  // reacción corre al montar, que es lo que hacía el efecto.
+  // `null` and not `signature`: that way the first pass always counts as a
+  // change and the reaction runs on mount, which is what the effect did.
   const [previous, setPrevious] = useState<readonly unknown[] | null>(null);
 
   const hasChanged =

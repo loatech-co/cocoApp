@@ -12,15 +12,15 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('enLaApp() exige las dos señales', () => {
-  it('un navegador normal no es la app', () => {
+describe('isInNativeApp() requires both signals', () => {
+  it('a normal browser is not the app', () => {
     leaveNativeApp();
     expect(isInNativeApp()).toBe(false);
   });
 
-  it('la marca en el User-Agent sin puente no es la app', () => {
-    // Un UA se finge con una extensión. Sin el puente, creerlo dejaría a la
-    // web normal esperando a una app que no existe.
+  it('the User-Agent mark without a bridge is not the app', () => {
+    // A UA can be faked with an extension. Without the bridge, believing it
+    // would leave the normal web waiting for an app that does not exist.
     Object.defineProperty(navigator, 'userAgent', {
       value: `Mozilla/5.0 ${USER_AGENT_APP}1.0`,
       configurable: true,
@@ -28,7 +28,7 @@ describe('enLaApp() exige las dos señales', () => {
     expect(isInNativeApp()).toBe(false);
   });
 
-  it('el puente sin la marca no es la app', () => {
+  it('the bridge without the mark is not the app', () => {
     fakeNativeApp();
     Object.defineProperty(navigator, 'userAgent', {
       value: 'Mozilla/5.0 (iPhone)',
@@ -37,24 +37,24 @@ describe('enLaApp() exige las dos señales', () => {
     expect(isInNativeApp()).toBe(false);
   });
 
-  it('las dos juntas sí', () => {
+  it('both together are', () => {
     fakeNativeApp();
     expect(isInNativeApp()).toBe(true);
   });
 });
 
-describe('pedirSesion()', () => {
-  it('resuelve con lo que contesta la app, pidiéndolo por cocoSesion', async () => {
+describe('requestSession()', () => {
+  it('resolves with what the app answers, asking for it through cocoSesion', async () => {
     const { cocoSesion } = fakeNativeApp();
 
     await expect(requestSession()).resolves.toEqual(APP_SESSION);
     expect(cocoSesion.postMessage).toHaveBeenCalledWith({ tipo: 'pedirSesion' });
   });
 
-  it('falla por tiempo si la app no contesta en 10 s', async () => {
+  it('fails on timeout if the app does not answer within 10 s', async () => {
     vi.useFakeTimers();
     fakeNativeApp();
-    // Una app colgada: la promesa no se resuelve nunca.
+    // A frozen app: the promise never resolves.
     window.webkit!.messageHandlers!.cocoSesion!.postMessage = () => new Promise(() => {});
 
     const promise = requestSession();
@@ -63,7 +63,7 @@ describe('pedirSesion()', () => {
     await result;
   });
 
-  it('la app sin sesión es un PuenteError, no un error cualquiera', async () => {
+  it('the app without a session is a BridgeError, not just any error', async () => {
     fakeNativeApp({ failWith: 'sin sesión' });
 
     const error = await requestSession().catch((cause: unknown) => cause);
@@ -72,27 +72,27 @@ describe('pedirSesion()', () => {
     expect((error as BridgeError).message).toBe('sin sesión');
   });
 
-  it('una respuesta que no es una sesión se rechaza', async () => {
+  it('an answer that is not a session is rejected', async () => {
     fakeNativeApp({ session: { hello: 'mundo' } });
     await expect(requestSession()).rejects.toMatchObject({ reason: 'respuesta' });
   });
 
-  it('sin puente rechaza en vez de romper', async () => {
+  it('without a bridge it rejects instead of breaking', async () => {
     leaveNativeApp();
     await expect(requestSession()).rejects.toMatchObject({ reason: 'sin-puente' });
   });
 });
 
-describe('registrarPuente()', () => {
-  it('fuera de la app no instala nada', () => {
+describe('registerBridge()', () => {
+  it('outside the app it installs nothing', () => {
     leaveNativeApp();
     registerBridge({ ir: () => {}, abrirBusqueda: () => {}, capturado: () => {} });
-    // Un navegador normal no expone una forma de navegar ni de inyectar una
-    // sesión desde fuera.
+    // A normal browser does not expose a way to navigate or to inject a
+    // session from outside.
     expect(window.__coco).toBeUndefined();
   });
 
-  it('en la app publica window.__coco y lo quita al deshacer', () => {
+  it('in the app it publishes window.__coco and removes it on undo', () => {
     fakeNativeApp();
     const ir = vi.fn();
     const capturado = vi.fn();

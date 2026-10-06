@@ -8,62 +8,62 @@ import {
 } from '@/shared/lib/native-contract';
 
 /**
- * El puente con la app del teléfono.
+ * The bridge with the phone app.
  *
- * ── El único sitio que conoce `window.webkit` ───────────────────────────────
- * La web embebida en el `WKWebView` no tiene refresh token: hay UNA familia de
- * refresh por dispositivo y su única dueña es la app, en el llavero. Cuando la
- * web necesita sesión se la PIDE a la app por aquí, y la app contesta con un
- * access token que la web guarda en memoria exactamente como en Safari. Nada
- * viaja por la URL, ni por cookies, ni por la red: el mensaje va dentro del
- * proceso del webview.
+ * ── The only place that knows `window.webkit` ───────────────────────────────
+ * The web embedded in the `WKWebView` has no refresh token: there is ONE
+ * refresh family per device and its only owner is the app, in the keychain.
+ * When the web needs a session it ASKS the app for one here, and the app
+ * answers with an access token the web keeps in memory exactly as in Safari.
+ * Nothing travels in the URL, in cookies or over the network: the message
+ * goes inside the webview's process.
  *
- * Todo lo que habla con la app pasa por este archivo. Si mañana el puente
- * cambia de nombre o de forma, se toca aquí y en ningún otro sitio: `session`
- * solo sabe que hay un `pedirSesion()`, y el armazón solo que hay un
- * `registrarPuente()`.
+ * Everything that talks to the app goes through this file. If tomorrow the
+ * bridge changes name or shape, it is touched here and nowhere else: `session`
+ * only knows there is a `requestSession()`, and the shell only that there is
+ * a `registerBridge()`.
  *
- * ── Dos señales, no una ─────────────────────────────────────────────────────
- * Un `User-Agent` se finge con una extensión del navegador. Con solo esa señal
- * la web normal dejaría de renovar por cookie y se quedaría esperando a una
- * app que no existe. Por eso `enLaApp()` exige además que el puente ESTÉ: que
- * `window.webkit.messageHandlers.cocoSesion.postMessage` sea una función. Lo
- * uno sin lo otro no es la app.
+ * ── Two signals, not one ────────────────────────────────────────────────────
+ * A `User-Agent` can be faked with a browser extension. With that signal alone
+ * the normal web would stop renewing by cookie and sit waiting for an app that
+ * does not exist. That is why `isInNativeApp()` also requires the bridge to BE
+ * there: `window.webkit.messageHandlers.cocoSesion.postMessage` has to be a
+ * function. One without the other is not the app.
  *
- * ── Lo que la app llama hacia la web ────────────────────────────────────────
- * `registrarPuente` vive en
- * `shared/api/native-bridge.ts`: necesita a `session`, y `session` necesita
- * este archivo.
+ * ── What the app calls on the web ───────────────────────────────────────────
+ * `registerBridge` lives in
+ * `shared/api/native-bridge.ts`: it needs `session`, and `session` needs
+ * this file.
  */
 
 /**
- * Lo que la app puede llamar desde Swift (`evaluateJavaScript`). Los avisos
- * sin respuesta (`capturado`, `primerPlano`) son contrato con iOS y viven en
- * `native-contract.ts`.
+ * What the app can call from Swift (`evaluateJavaScript`). The notices
+ * without an answer (`capturado`, `primerPlano`) are a contract with iOS and
+ * live in `native-contract.ts`.
  */
 interface WebBridge extends AvisosDeLaApp {
-  /** Navega sin recargar: `react-router` cambia la ruta por dentro. */
+  /** Navigates without reloading: `react-router` changes the route inside. */
   ir(path: string): void;
-  /** Abre la hoja de búsqueda. La pestaña nativa «Buscar» llama aquí. */
+  /** Opens the search sheet. The native «Buscar» tab calls here. */
   abrirBusqueda(): void;
-  /** La app empuja una sesión: al arrancar sin ella o tras el login nativo. */
+  /** The app pushes a session: on a start without one, or after the native login. */
   recibirSesion(session: BridgeSession): void;
-  /** La app cerró la sesión real (401 al renovar): la web limpia su memoria. */
+  /** The app closed the real session (401 on renewal): the web clears its memory. */
   sesionCerrada(): void;
 }
 
 /*
-  La declaración de `window.webkit` vive AQUÍ y en ningún otro archivo. Es
-  opcional de arriba abajo porque en Safari, en Chrome y en las pruebas no
-  existe nada de esto, y el código tiene que poder preguntarlo sin romperse.
+  The `window.webkit` declaration lives HERE and in no other file. It is
+  optional from top to bottom because in Safari, in Chrome and in the tests
+  none of this exists, and the code has to be able to ask without breaking.
 */
 declare global {
   interface Window {
     webkit?: {
       messageHandlers?: {
-        /** Con respuesta (`WKScriptMessageHandlerWithReply`). */
+        /** With an answer (`WKScriptMessageHandlerWithReply`). */
         cocoSesion?: { postMessage(message: BridgeMessage): Promise<unknown> };
-        /** Sin respuesta (`WKScriptMessageHandler`). */
+        /** Without an answer (`WKScriptMessageHandler`). */
         cocoEventos?: { postMessage(event: BridgeEvent): void };
       };
     };
@@ -72,15 +72,15 @@ declare global {
 }
 
 /**
- * Cuánto se espera a la app antes de darse por vencidos.
+ * How long to wait for the app before giving up.
  *
- * La app responde al instante si tiene el token en memoria, y en lo que tarde
- * `/auth/refresh` si no. Diez segundos cubren una red mala; más que eso es
- * una app colgada, y la web no puede quedarse sin pintar nada mientras tanto.
+ * The app answers at once if it has the token in memory, and in whatever
+ * `/auth/refresh` takes if not. Ten seconds cover a bad network; more than
+ * that is a frozen app, and the web cannot sit there drawing nothing meanwhile.
  */
 const TIMEOUT_MS = 10_000;
 
-/** Por qué falló el puente. `motivo` es estable; el mensaje, para la bitácora. */
+/** Why the bridge failed. `reason` is stable; the message is for the log. */
 export class BridgeError extends Error {
   constructor(
     readonly reason: 'sin-puente' | 'tiempo' | 'sin-sesion' | 'respuesta',
@@ -91,7 +91,7 @@ export class BridgeError extends Error {
   }
 }
 
-/** Si esta web corre DENTRO de la app del teléfono. Ver «dos señales». */
+/** Whether this web runs INSIDE the phone app. See «two signals». */
 export function isInNativeApp(): boolean {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
   return (
@@ -112,13 +112,13 @@ function isBridgeSession(value: unknown): value is BridgeSession {
 }
 
 /**
- * Pide a la app un access token.
+ * Asks the app for an access token.
  *
- * Rechaza con `PuenteError` si no hay puente, si la app no contesta en
- * `TIEMPO_MAXIMO_MS`, si contesta que no tiene sesión o si contesta algo que
- * no es una sesión. Quien llama —`session.renovar()`— trata cualquier rechazo
- * igual: limpia la memoria y deja que `RequireAuth` espere a que la app la
- * empuje. Lo que NUNCA hace es avisar a la app de que borre su llavero.
+ * Rejects with `BridgeError` if there is no bridge, if the app does not answer
+ * within `TIMEOUT_MS`, if it answers that it has no session, or if it answers
+ * something that is not a session. The caller —`session.renew()`— treats any
+ * rejection the same way: it clears the memory and lets `RequireAuth` wait for
+ * the app to push one. What it NEVER does is tell the app to wipe its keychain.
  */
 export function requestSession(): Promise<BridgeSession> {
   const handler = window.webkit?.messageHandlers?.cocoSesion;
@@ -133,8 +133,8 @@ export function requestSession(): Promise<BridgeSession> {
   });
 
   const response = Promise.resolve()
-    // Dentro del `then` para que un `postMessage` que lance de forma síncrona
-    // acabe como rechazo y no como excepción fuera de la promesa.
+    // Inside the `then` so that a `postMessage` that throws synchronously
+    // ends up as a rejection and not as an exception outside the promise.
     .then(() => handler.postMessage({ tipo: 'pedirSesion' }))
     .then(
       (value) => {
@@ -144,8 +144,8 @@ export function requestSession(): Promise<BridgeSession> {
         return value;
       },
       (cause: unknown) => {
-        // `WKScriptMessageHandlerWithReply` rechaza con el texto del error;
-        // según la versión de WebKit llega suelto o envuelto en un `Error`.
+        // `WKScriptMessageHandlerWithReply` rejects with the error's text;
+        // depending on the WebKit version it arrives bare or wrapped in an `Error`.
         const detail =
           cause instanceof Error ? cause.message : typeof cause === 'string' ? cause : undefined;
         throw new BridgeError('sin-sesion', detail);
@@ -156,11 +156,11 @@ export function requestSession(): Promise<BridgeSession> {
 }
 
 /**
- * Cuenta algo a la app, sin esperar respuesta.
+ * Tells the app something, without waiting for an answer.
  *
- * Fuera de la app no hay a quién contárselo y no pasa nada: quien llama ya
- * preguntó `enLaApp()`, y si no lo hizo, tampoco hay que romper la web por un
- * aviso que no tiene destinatario.
+ * Outside the app there is nobody to tell and nothing happens: the caller
+ * already asked `isInNativeApp()`, and if it did not, there is no reason to
+ * break the web for a notice that has no recipient.
  */
 export function notifyApp(event: BridgeEvent): void {
   window.webkit?.messageHandlers?.cocoEventos?.postMessage(event);
