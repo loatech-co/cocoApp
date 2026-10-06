@@ -37,20 +37,20 @@ import type { MoneyDirection } from '@/shared/ui/atoms/amount';
  * pertenece al centro seleccionado. Con uno solo, el resto se deduce y no
  * puede contradecirse.
  */
-export function rutaSeleccionada(
-  arbol: CategoryTree[],
+export function selectedPath(
+  tree: CategoryTree[],
   categoryId?: number,
-): { centro?: CategoryTree; categoria?: CategoryTree; concepto?: CategoryTree } {
+): { costCenter?: CategoryTree; category?: CategoryTree; concept?: CategoryTree } {
   if (categoryId === undefined) return {};
 
-  for (const centro of arbol) {
-    if (centro.id === categoryId) return { centro };
+  for (const costCenter of tree) {
+    if (costCenter.id === categoryId) return { costCenter };
 
-    for (const categoria of centro.children ?? []) {
-      if (categoria.id === categoryId) return { centro, categoria };
+    for (const category of costCenter.children ?? []) {
+      if (category.id === categoryId) return { costCenter, category };
 
-      for (const concepto of categoria.children ?? []) {
-        if (concepto.id === categoryId) return { centro, categoria, concepto };
+      for (const concept of category.children ?? []) {
+        if (concept.id === categoryId) return { costCenter, category, concept };
       }
     }
   }
@@ -78,23 +78,23 @@ export function rutaSeleccionada(
  * pintaba `description`, decía «Sin concepto» de todo lo que se registraba a
  * mano aunque tuviera su concepto elegido.
  */
-export function nombreDelMovimiento(
-  movimiento: Pick<Transaction, 'description' | 'merchant' | 'categoryId'>,
-  arbol: CategoryTree[],
+export function transactionName(
+  transaction: Pick<Transaction, 'description' | 'merchant' | 'categoryId'>,
+  tree: CategoryTree[],
 ): string {
-  const { categoria, concepto } = rutaSeleccionada(arbol, movimiento.categoryId ?? undefined);
+  const { category, concept } = selectedPath(tree, transaction.categoryId ?? undefined);
 
   return (
-    concepto?.name ??
-    categoria?.name ??
-    movimiento.description ??
-    movimiento.merchant ??
+    concept?.name ??
+    category?.name ??
+    transaction.description ??
+    transaction.merchant ??
     t('transactions.noConcept')
   );
 }
 
 /** Hacia dónde va la plata de un movimiento, en el idioma de `Monto`. */
-export function sentidoDelMovimiento(type: TransactionType): MoneyDirection {
+export function transactionDirection(type: TransactionType): MoneyDirection {
   if (type === 'income') return 'in';
   if (type === 'transfer') return 'transfer';
   return 'out';

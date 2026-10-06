@@ -1,12 +1,7 @@
 import { ChartLine } from 'lucide-react';
 
-import { sitioDeLaTarjeta, useTrendPointer } from '@/features/transactions/hooks/use-trend-pointer';
-import {
-  equis,
-  etiquetaDeCubo,
-  etiquetasDelEje,
-  unidad,
-} from '@/features/transactions/model/trend';
+import { cardPosition, useTrendPointer } from '@/features/transactions/hooks/use-trend-pointer';
+import { xAt, bucketLabel, axisLabels, unit } from '@/features/transactions/model/trend';
 import { type TrendPoint } from '@/shared/api/generated/model';
 import { formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
@@ -82,7 +77,7 @@ function Chart({
   const s = summary(points);
   // `maximo` sale de `gastos`, así que siempre se encuentra: el respaldo no se usa.
   const pico = points[s.expenses.indexOf(s.max)] ?? first;
-  const period = unidad(granularity);
+  const period = unit(granularity);
 
   return (
     // `h-full` y el lienzo en `flex-1`: la tarjeta la estira su vecina de al
@@ -98,15 +93,15 @@ function Chart({
           ceiling={s.ceiling}
           ariaLabel={t('transactions.trend.chartLabel', {
             unit: period,
-            from: etiquetaDeCubo(first.bucket),
-            to: etiquetaDeCubo(last.bucket),
+            from: bucketLabel(first.bucket),
+            to: bucketLabel(last.bucket),
             average: formatCOP(s.average),
             peak: formatCOP(s.max),
           })}
         />
       </Canvas>
 
-      <TrendAxis labels={etiquetasDelEje(points, granularity)} total={points.length} />
+      <TrendAxis labels={axisLabels(points, granularity)} total={points.length} />
     </div>
   );
 }
@@ -122,9 +117,10 @@ function Canvas({
   summary: ReturnType<typeof summary>;
   children: React.ReactNode;
 }) {
-  const { lienzo, tarjeta, activo, setActivo, caja, tamTarjeta, apuntar, conTeclado } =
-    useTrendPointer(points.length);
-  const point = activo === null ? null : points[activo];
+  const { canvas, card, active, setActive, box, cardSize, point, withKeyboard } = useTrendPointer(
+    points.length,
+  );
+  const activePoint = active === null ? null : points[active];
 
   return (
     /*
@@ -135,7 +131,7 @@ function Canvas({
       saldría aplastado y un texto deformado.
     */
     <div
-      ref={lienzo}
+      ref={canvas}
       // `min-h-0` deja que el flex lo encoja; sin eso el hijo impone su alto
       // mínimo y el contenedor se desborda.
       className={cn(
@@ -149,25 +145,25 @@ function Canvas({
       )}
       tabIndex={0}
       role="application"
-      aria-label={t('transactions.trend.pointerLabel', { unit: unidad(granularity) })}
-      onPointerDown={(e) => apuntar(e.clientX)}
-      onPointerMove={(e) => apuntar(e.clientX)}
-      onPointerLeave={() => setActivo(null)}
-      onKeyDown={conTeclado}
-      onBlur={() => setActivo(null)}
+      aria-label={t('transactions.trend.pointerLabel', { unit: unit(granularity) })}
+      onPointerDown={(e) => point(e.clientX)}
+      onPointerMove={(e) => point(e.clientX)}
+      onPointerLeave={() => setActive(null)}
+      onKeyDown={withKeyboard}
+      onBlur={() => setActive(null)}
     >
       {children}
 
-      {point && activo !== null && (
+      {activePoint && active !== null && (
         <Highlighted
-          point={point}
-          index={activo}
+          point={activePoint}
+          index={active}
           total={points.length}
           ceiling={ceiling}
           hasIncome={hasIncome}
-          card={tarjeta}
-          box={caja}
-          cardSize={tamTarjeta}
+          card={card}
+          box={box}
+          cardSize={cardSize}
         />
       )}
     </div>
@@ -191,18 +187,18 @@ function Highlighted({
   ceiling: number;
   hasIncome: boolean;
   card: React.RefObject<HTMLDivElement | null>;
-  box: { ancho: number; alto: number };
-  cardSize: { ancho: number; alto: number };
+  box: { width: number; height: number };
+  cardSize: { width: number; height: number };
 }) {
-  const x = equis(index, total);
+  const x = xAt(index, total);
   const value = Number(point.expense);
-  const position = sitioDeLaTarjeta({
-    indice: index,
+  const position = cardPosition({
+    index,
     total,
-    valor: value,
-    techo: ceiling,
-    caja: box,
-    tamTarjeta: cardSize,
+    value,
+    ceiling,
+    box,
+    cardSize,
   });
 
   return (
@@ -220,7 +216,7 @@ function Highlighted({
         card={card}
         point={point}
         position={position}
-        isMeasured={cardSize.ancho !== 0}
+        isMeasured={cardSize.width !== 0}
         hasIncome={hasIncome}
       />
     </>

@@ -1,53 +1,53 @@
 import { describe, expect, it } from 'vitest';
 
-import { SIN_CLASIFICAR, aplicar, type Propuesta } from './precedence';
+import { UNCLASSIFIED, apply, type Proposal } from './precedence';
 
 /**
  * «Una fuente inferior nunca reemplaza a una superior ni a la elección
  * manual.» Es la prueba del plan, palabra por palabra.
  */
-const manual: Propuesta = { categoryId: 1, origen: 'manual' };
-const historial: Propuesta = { categoryId: 2, origen: 'historial' };
-const palabras: Propuesta = { categoryId: 3, origen: 'palabras-clave' };
-const diccionario: Propuesta = { categoryId: 4, origen: 'diccionario' };
+const manual: Proposal = { categoryId: 1, origin: 'manual' };
+const history: Proposal = { categoryId: 2, origin: 'historial' };
+const words: Proposal = { categoryId: 3, origin: 'palabras-clave' };
+const dictionary: Proposal = { categoryId: 4, origin: 'diccionario' };
 
 describe('Precedencia de las fuentes', () => {
   it('sobre nada, cualquiera propone', () => {
-    expect(aplicar(SIN_CLASIFICAR, diccionario)).toEqual(diccionario);
-    expect(aplicar(SIN_CLASIFICAR, historial)).toEqual(historial);
+    expect(apply(UNCLASSIFIED, dictionary)).toEqual(dictionary);
+    expect(apply(UNCLASSIFIED, history)).toEqual(history);
   });
 
   it('lo elegido a mano no lo toca nada automático', () => {
-    expect(aplicar(manual, historial)).toEqual(manual);
-    expect(aplicar(manual, palabras)).toEqual(manual);
-    expect(aplicar(manual, diccionario)).toEqual(manual);
+    expect(apply(manual, history)).toEqual(manual);
+    expect(apply(manual, words)).toEqual(manual);
+    expect(apply(manual, dictionary)).toEqual(manual);
   });
 
   it('y una elección a mano se impone a lo que haya', () => {
-    expect(aplicar(historial, manual)).toEqual(manual);
+    expect(apply(history, manual)).toEqual(manual);
     // También quitar: vaciar a mano es una decisión, no un hueco.
-    const vaciar = { categoryId: undefined, origen: 'manual' as const };
-    expect(aplicar(historial, vaciar)).toEqual(vaciar);
-    expect(aplicar(vaciar, diccionario)).toEqual(vaciar);
+    const empty = { categoryId: undefined, origin: 'manual' as const };
+    expect(apply(history, empty)).toEqual(empty);
+    expect(apply(empty, dictionary)).toEqual(empty);
   });
 
   it('el historial corrige a las palabras clave y al diccionario, no al revés', () => {
-    expect(aplicar(palabras, historial)).toEqual(historial);
-    expect(aplicar(diccionario, historial)).toEqual(historial);
-    expect(aplicar(historial, palabras)).toEqual(historial);
-    expect(aplicar(historial, diccionario)).toEqual(historial);
+    expect(apply(words, history)).toEqual(history);
+    expect(apply(dictionary, history)).toEqual(history);
+    expect(apply(history, words)).toEqual(history);
+    expect(apply(history, dictionary)).toEqual(history);
   });
 
   it('las palabras clave corrigen al diccionario, no al revés', () => {
-    expect(aplicar(diccionario, palabras)).toEqual(palabras);
-    expect(aplicar(palabras, diccionario)).toEqual(palabras);
+    expect(apply(dictionary, words)).toEqual(words);
+    expect(apply(words, dictionary)).toEqual(words);
   });
 
   it('una fuente puede cambiar de opinión sobre sí misma', () => {
     // El historial que sugiere otra cosa al seguir escribiendo sigue siendo el
     // historial: si no pudiera reemplazarse, la primera sugerencia quedaría
     // clavada aunque la descripción ya dijera otra cosa.
-    const otroHistorial: Propuesta = { categoryId: 9, origen: 'historial' };
-    expect(aplicar(historial, otroHistorial)).toEqual(otroHistorial);
+    const otherHistory: Proposal = { categoryId: 9, origin: 'historial' };
+    expect(apply(history, otherHistory)).toEqual(otherHistory);
   });
 });

@@ -8,7 +8,7 @@ vi.mock('@/shared/api/generated/interpretacion-v2/interpretacion-v2', () => ({
   interpretacionInterpret: vi.fn(() => Promise.reject(new Error('sin servidor'))),
 }));
 
-const { leerSoporte, rutasDelOcr } = await import('./read-receipt');
+const { readReceipt, ocrPaths } = await import('./read-receipt');
 
 describe('the OCR engine is served from our own origin', () => {
   beforeEach(() => {
@@ -20,7 +20,7 @@ describe('the OCR engine is served from our own origin', () => {
   });
 
   it('points the worker, the core and the language data at /tesseract/', () => {
-    expect(rutasDelOcr('https://coco.example/cuentas')).toEqual({
+    expect(ocrPaths('https://coco.example/cuentas')).toEqual({
       workerPath: 'https://coco.example/tesseract/worker.min.js',
       corePath: 'https://coco.example/tesseract/core',
       langPath: 'https://coco.example/tesseract/lang',
@@ -30,17 +30,17 @@ describe('the OCR engine is served from our own origin', () => {
   });
 
   it('passes those paths to createWorker, so nothing is fetched from a CDN', async () => {
-    const imagen = new File(['x'], 'recibo.png', { type: 'image/png' });
+    const image = new File(['x'], 'recibo.png', { type: 'image/png' });
 
     // The interpretation fails on purpose: what matters here is the OCR.
-    await expect(leerSoporte(imagen)).rejects.toThrow();
+    await expect(readReceipt(image)).rejects.toThrow();
 
     expect(createWorker).toHaveBeenCalledOnce();
-    const [idioma, , opciones] = createWorker.mock.calls[0] as [string, unknown, object];
-    expect(idioma).toBe('spa');
-    expect(opciones).toMatchObject(rutasDelOcr());
+    const [locale, , options] = createWorker.mock.calls[0] as [string, unknown, object];
+    expect(locale).toBe('spa');
+    expect(options).toMatchObject(ocrPaths());
 
-    const urls = Object.values(opciones).filter((v): v is string => typeof v === 'string');
+    const urls = Object.values(options).filter((v): v is string => typeof v === 'string');
     expect(urls).toHaveLength(3);
     for (const url of urls) {
       expect(new URL(url).origin).toBe(window.location.origin);

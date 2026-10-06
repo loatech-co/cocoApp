@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 
-import type { leerSoporte } from '@/features/transactions/api/read-receipt';
+import type { readReceipt } from '@/features/transactions/api/read-receipt';
 import { TransactionModal } from '@/features/transactions/components/transaction-modal';
 import { type CategoryTree } from '@/shared/api/categories';
 import { type PendingPayment, type Transaction } from '@/shared/api/generated/model';
@@ -77,10 +77,10 @@ export const SPLIT_PAYMENT: PendingPayment = {
 } as unknown as PendingPayment;
 
 /** What the fake reader returns for a Celsia receipt. */
-export const CELSIA_READING: Awaited<ReturnType<typeof leerSoporte>> = {
-  texto: 'CELSIA S.A. E.S.P. Total a pagar 214.500',
-  fuente: 'texto-embebido',
-  lectura: {
+export const CELSIA_READING: Awaited<ReturnType<typeof readReceipt>> = {
+  text: 'CELSIA S.A. E.S.P. Total a pagar 214.500',
+  source: 'texto-embebido',
+  reading: {
     concept: 'Celsia (Energía)',
     category: null,
     costCenter: null,

@@ -11,10 +11,10 @@ import type { Suggestion } from '@/shared/api/generated/model';
  * consulta cuando la persona deja de escribir, que es cuando la descripción ya
  * significa algo.
  */
-const ESPERA_MS = 400;
+const WAIT_MS = 400;
 
 /** Por debajo de esto, la descripción no da para sugerir nada. */
-const MINIMO_DE_CARACTERES = 3;
+const MIN_CHARACTERS = 3;
 
 /**
  * Sugerencia de categoría para lo que se está escribiendo.
@@ -26,25 +26,25 @@ const MINIMO_DE_CARACTERES = 3;
  * Devuelve `null` cuando no hay nada seguro que decir, y la interfaz
  * sencillamente no muestra nada. Sugerir mal es peor que no sugerir.
  */
-export function useSugerenciaDeCategoria(descripcion: string): Suggestion | null {
-  const [estabilizada, setEstabilizada] = useState('');
+export function useCategorySuggestion(description: string): Suggestion | null {
+  const [stabilized, setStabilized] = useState('');
 
   useEffect(() => {
-    const temporizador = setTimeout(() => setEstabilizada(descripcion.trim()), ESPERA_MS);
-    return () => clearTimeout(temporizador);
-  }, [descripcion]);
+    const timer = setTimeout(() => setStabilized(description.trim()), WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [description]);
 
-  const consulta = useQuery({
-    queryKey: ['categorization', 'suggest', estabilizada],
-    enabled: estabilizada.length >= MINIMO_DE_CARACTERES,
+  const query = useQuery({
+    queryKey: ['categorization', 'suggest', stabilized],
+    enabled: stabilized.length >= MIN_CHARACTERS,
     // El historial no cambia entre pulsaciones: recordar la respuesta evita
     // repetir la misma consulta al borrar y volver a escribir.
     staleTime: 60_000,
     queryFn: async () => {
-      const respuesta = await categorizationSuggest({ description: estabilizada });
-      return respuesta.data;
+      const response = await categorizationSuggest({ description: stabilized });
+      return response.data;
     },
   });
 
-  return consulta.data ?? null;
+  return query.data ?? null;
 }

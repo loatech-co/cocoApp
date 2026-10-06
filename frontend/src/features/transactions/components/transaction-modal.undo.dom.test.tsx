@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { leerSoporte } from '@/features/transactions/api/read-receipt';
+import { readReceipt } from '@/features/transactions/api/read-receipt';
 import { type CategoryTree } from '@/shared/api/categories';
 import { keys } from '@/shared/api/query-keys';
 
@@ -44,7 +44,7 @@ vi.mock('@/shared/api/api-client', async () => {
   };
 });
 
-vi.mock('@/features/transactions/api/read-receipt', () => ({ leerSoporte: vi.fn() }));
+vi.mock('@/features/transactions/api/read-receipt', () => ({ readReceipt: vi.fn() }));
 
 /*
   El encogido, de paso.
@@ -85,10 +85,10 @@ const TREE = [
   aquí lo que se prueba es qué pasa cuando la SUBIDA falla, no la lectura.
   Un lector que no saca nada deja el formulario como estaba.
 */
-const EMPTY_READING: Awaited<ReturnType<typeof leerSoporte>> = {
-  texto: '',
-  fuente: 'texto-embebido',
-  lectura: {
+const EMPTY_READING: Awaited<ReturnType<typeof readReceipt>> = {
+  text: '',
+  source: 'texto-embebido',
+  reading: {
     concept: null,
     category: null,
     costCenter: null,
@@ -107,8 +107,8 @@ beforeEach(() => {
   // La lectura espera un piso de cuatro segundos aunque ya haya terminado;
   // con el reloj falso se le pasa por encima en `adjuntar`.
   vi.useFakeTimers();
-  vi.mocked(leerSoporte).mockReset();
-  vi.mocked(leerSoporte).mockResolvedValue(EMPTY_READING);
+  vi.mocked(readReceipt).mockReset();
+  vi.mocked(readReceipt).mockResolvedValue(EMPTY_READING);
   URL.createObjectURL = vi.fn(() => 'blob:prueba');
   URL.revokeObjectURL = vi.fn();
   globalThis.ResizeObserver = class {
@@ -284,6 +284,6 @@ describe('Lo que la web guarda', () => {
     expect(body.amount).toBe('120000');
     // El soporte sí se leyó —es el primero de un movimiento nuevo—, pero no
     // sacó texto, y un texto vacío no viaja como cadena vacía: viaja como nulo.
-    expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();
+    expect(vi.mocked(readReceipt)).toHaveBeenCalledOnce();
   });
 });

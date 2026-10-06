@@ -1,4 +1,4 @@
-import type { ProgresoDeLectura } from '@/features/transactions/api/read-receipt';
+import type { ReadingProgress } from '@/features/transactions/api/read-receipt';
 import { t } from '@/shared/lib/i18n';
 import { useObjectUrl } from '@/shared/lib/object-url';
 import { cn } from '@/shared/lib/utils';
@@ -23,11 +23,11 @@ export function Scanning({
   progress,
 }: {
   file: File | undefined;
-  progress: ProgresoDeLectura | null;
+  progress: ReadingProgress | null;
 }) {
   const url = useObjectUrl(file);
   const isImage = file?.type.startsWith('image/') ?? false;
-  const stage = progress?.etapa ?? t('transactions.reading.reading');
+  const stage = progress?.stage ?? t('transactions.reading.reading');
 
   return (
     <div className="flex flex-col items-center gap-4 py-6" role="status" aria-live="polite">
@@ -65,7 +65,7 @@ export function Scanning({
           barra es la compartida: esta medía 4px de alto y 192 de ancho y la de
           la importación 8px y todo el ancho, siendo la misma espera del mismo
           trabajo. */}
-      <Progress value={progress?.avance ?? 0} label={stage} className="w-full max-w-sm" />
+      <Progress value={progress?.progress ?? 0} label={stage} className="w-full max-w-sm" />
     </div>
   );
 }

@@ -8,29 +8,29 @@ import type { IndexEntry } from '@coco/receipt-parser';
  * conceptos: una categoría elegida en un movimiento viejo no es «lo que suelo
  * usar», es un movimiento que se quedó a medio clasificar.
  */
-export function conceptosRecientes(
-  movimientos: readonly { categoryId: number | null }[] | undefined | null,
-  indice: readonly IndexEntry[],
-  maximo = 5,
+export function recentConcepts(
+  transactions: readonly { categoryId: number | null }[] | undefined | null,
+  index: readonly IndexEntry[],
+  max = 5,
 ): number[] {
   // Si la respuesta no es una lista —una API vieja, un error envuelto— no hay
   // recientes, y ya. Los recientes son una comodidad: no pueden tumbar la ficha.
-  if (!esLista(movimientos)) return [];
+  if (!isList(transactions)) return [];
 
-  const conceptos = new Set(indice.filter((e) => e.level === 'concepto').map((e) => String(e.id)));
-  const vistos = new Set<number>();
-  const salida: number[] = [];
+  const concepts = new Set(index.filter((e) => e.level === 'concepto').map((e) => String(e.id)));
+  const seen = new Set<number>();
+  const output: number[] = [];
 
-  for (const m of movimientos) {
+  for (const m of transactions) {
     if (m.categoryId === null) continue;
-    if (!conceptos.has(String(m.categoryId))) continue;
-    if (vistos.has(m.categoryId)) continue;
-    vistos.add(m.categoryId);
-    salida.push(m.categoryId);
-    if (salida.length >= maximo) break;
+    if (!concepts.has(String(m.categoryId))) continue;
+    if (seen.has(m.categoryId)) continue;
+    seen.add(m.categoryId);
+    output.push(m.categoryId);
+    if (output.length >= max) break;
   }
 
-  return salida;
+  return output;
 }
 
 /**
@@ -38,6 +38,6 @@ export function conceptosRecientes(
  * `categoryId` de abajo pasa a ser `any` para el lint. Un predicado propio
  * conserva el tipo.
  */
-function esLista(x: unknown): x is readonly { categoryId: number | null }[] {
+function isList(x: unknown): x is readonly { categoryId: number | null }[] {
   return Array.isArray(x);
 }

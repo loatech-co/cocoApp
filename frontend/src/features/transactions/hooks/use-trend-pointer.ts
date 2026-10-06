@@ -1,10 +1,10 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 
-import { ALTO_LIENZO, equis, ye } from '@/features/transactions/model/trend';
+import { CANVAS_HEIGHT, xAt, yAt } from '@/features/transactions/model/trend';
 
-interface Tamano {
-  ancho: number;
-  alto: number;
+interface Size {
+  width: number;
+  height: number;
 }
 
 /**
@@ -12,51 +12,51 @@ interface Tamano {
  * flechas— y dónde va la tarjeta que lo explica.
  */
 export function useTrendPointer(total: number) {
-  const lienzo = useRef<HTMLDivElement>(null);
-  const tarjeta = useRef<HTMLDivElement>(null);
-  const [activo, setActivo] = useState<number | null>(null);
+  const canvas = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState<number | null>(null);
   /** El tamaño del lienzo en píxeles, para colocar la tarjeta sin que se salga. */
-  const [caja, setCaja] = useState<Tamano>({ ancho: 0, alto: 0 });
-  const [tamTarjeta, setTamTarjeta] = useState<Tamano>({ ancho: 0, alto: 0 });
+  const [box, setBox] = useState<Size>({ width: 0, height: 0 });
+  const [cardSize, setCardSize] = useState<Size>({ width: 0, height: 0 });
 
   // Se mide DESPUÉS de pintar y antes de que el navegador dibuje: midiendo en
   // el render la tarjeta todavía no existe, y midiendo en un efecto normal se
   // vería un fotograma con la tarjeta en el sitio equivocado.
   useLayoutEffect(() => {
-    if (!tarjeta.current) return;
-    const { offsetWidth, offsetHeight } = tarjeta.current;
-    setTamTarjeta((previo) =>
-      previo.ancho === offsetWidth && previo.alto === offsetHeight
-        ? previo
-        : { ancho: offsetWidth, alto: offsetHeight },
+    if (!card.current) return;
+    const { offsetWidth, offsetHeight } = card.current;
+    setCardSize((previous) =>
+      previous.width === offsetWidth && previous.height === offsetHeight
+        ? previous
+        : { width: offsetWidth, height: offsetHeight },
     );
-  }, [activo]);
+  }, [active]);
 
   /** El punto más cercano al dedo o al puntero. */
-  function apuntar(clientX: number): void {
-    const medida = lienzo.current?.getBoundingClientRect();
-    if (!medida || medida.width === 0) return;
+  function point(clientX: number): void {
+    const size = canvas.current?.getBoundingClientRect();
+    if (!size || size.width === 0) return;
 
-    setCaja({ ancho: medida.width, alto: medida.height });
-    const fraccion = (clientX - medida.left) / medida.width;
-    const indice = Math.round(fraccion * (total - 1));
-    setActivo(Math.min(total - 1, Math.max(0, indice)));
+    setBox({ width: size.width, height: size.height });
+    const fraction = (clientX - size.left) / size.width;
+    const index = Math.round(fraction * (total - 1));
+    setActive(Math.min(total - 1, Math.max(0, index)));
   }
 
-  function conTeclado(e: KeyboardEvent): void {
+  function withKeyboard(e: KeyboardEvent): void {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     e.preventDefault();
 
     // Con el teclado no hay puntero, así que la medida hay que tomarla aquí.
-    const medida = lienzo.current?.getBoundingClientRect();
-    if (medida) setCaja({ ancho: medida.width, alto: medida.height });
+    const size = canvas.current?.getBoundingClientRect();
+    if (size) setBox({ width: size.width, height: size.height });
 
-    const paso = e.key === 'ArrowLeft' ? -1 : 1;
-    const desde = activo ?? (paso === 1 ? -1 : total);
-    setActivo(Math.min(total - 1, Math.max(0, desde + paso)));
+    const step = e.key === 'ArrowLeft' ? -1 : 1;
+    const from = active ?? (step === 1 ? -1 : total);
+    setActive(Math.min(total - 1, Math.max(0, from + step)));
   }
 
-  return { lienzo, tarjeta, activo, setActivo, caja, tamTarjeta, apuntar, conTeclado };
+  return { canvas, card, active, setActive, box, cardSize, point, withKeyboard };
 }
 
 /**
@@ -67,30 +67,30 @@ export function useTrendPointer(total: number) {
  * dato del punto que se está señalando, y siguiendo al puntero sin más se
  * sale del gráfico en los bordes.
  */
-export function sitioDeLaTarjeta({
-  indice,
+export function cardPosition({
+  index,
   total,
-  valor,
-  techo,
-  caja,
-  tamTarjeta,
+  value,
+  ceiling,
+  box,
+  cardSize,
 }: {
-  indice: number;
+  index: number;
   total: number;
-  valor: number;
-  techo: number;
-  caja: Tamano;
-  tamTarjeta: Tamano;
+  value: number;
+  ceiling: number;
+  box: Size;
+  cardSize: Size;
 }): { left: number; top: number } {
-  const px = (equis(indice, total) / 100) * caja.ancho;
-  const py = (ye(valor, techo) / ALTO_LIENZO) * caja.alto;
-  const MARGEN = 12;
+  const px = (xAt(index, total) / 100) * box.width;
+  const py = (yAt(value, ceiling) / CANVAS_HEIGHT) * box.height;
+  const MARGIN = 12;
 
-  const cabeADerecha = px + MARGEN + tamTarjeta.ancho <= caja.ancho;
-  const left = cabeADerecha ? px + MARGEN : Math.max(0, px - MARGEN - tamTarjeta.ancho);
+  const canFitRight = px + MARGIN + cardSize.width <= box.width;
+  const left = canFitRight ? px + MARGIN : Math.max(0, px - MARGIN - cardSize.width);
   const top = Math.min(
-    Math.max(0, py - tamTarjeta.alto / 2),
-    Math.max(0, caja.alto - tamTarjeta.alto),
+    Math.max(0, py - cardSize.height / 2),
+    Math.max(0, box.height - cardSize.height),
   );
 
   return { left, top };

@@ -1,10 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { TransactionsTable } from '@/features/transactions/components/transactions-table';
-import {
-  POR_PAGINA,
-  type useDashboardPage,
-} from '@/features/transactions/hooks/use-dashboard-page';
+import { PAGE_SIZE, type useDashboardPage } from '@/features/transactions/hooks/use-dashboard-page';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
@@ -12,7 +9,7 @@ import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Pager } from '@/shared/ui/atoms/pager';
 import { TableFooter, Td } from '@/shared/ui/molecules/table';
 
-type Table = ReturnType<typeof useDashboardPage>['tabla'];
+type Table = ReturnType<typeof useDashboardPage>['table'];
 
 /** La tabla del resumen: todo lo que cae en el recorte, paginado. */
 export function DashboardMovements({
@@ -24,33 +21,33 @@ export function DashboardMovements({
   tree: Category[];
   onOpen: (transaction: Transaction) => void;
 }) {
-  const { pagina, setPagina, movimientos, ordenDe } = table;
+  const { page, setPage, transactions, orderBy } = table;
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <PageCount page={pagina} total={movimientos.data?.meta.total} />
+      <PageCount page={page} total={transactions.data?.meta.total} />
 
       {/* Not an empty table: «no movements» on a failed load reads as if
           they were gone. */}
-      {movimientos.isError ? (
+      {transactions.isError ? (
         <ErrorAlert message={t('transactions.dashboard.movementsLoadFailed')} />
       ) : (
         <TransactionsTable
-          transactions={movimientos.data?.data ?? []}
+          transactions={transactions.data?.data ?? []}
           tree={tree}
-          isLoading={movimientos.isPending}
+          isLoading={transactions.isPending}
           onOpen={onOpen}
-          sort={ordenDe}
+          sort={orderBy}
           skeletonRows={8}
-          pie={tableFooter(movimientos.data)}
+          pie={tableFooter(transactions.data)}
         />
       )}
 
       <Pager
-        page={pagina}
-        total={movimientos.data?.meta.total ?? 0}
-        perPage={POR_PAGINA}
-        onPageChange={setPagina}
+        page={page}
+        total={transactions.data?.meta.total ?? 0}
+        perPage={PAGE_SIZE}
+        onPageChange={setPage}
       />
     </div>
   );
@@ -65,8 +62,8 @@ function PageCount({ page, total }: { page: number; total: number | undefined })
       {total !== undefined && total > 0 && (
         <p className="text-sm text-muted-foreground" aria-live="polite">
           {t('transactions.dashboard.range', {
-            from: (page - 1) * POR_PAGINA + 1,
-            to: Math.min(page * POR_PAGINA, total),
+            from: (page - 1) * PAGE_SIZE + 1,
+            to: Math.min(page * PAGE_SIZE, total),
             total,
           })}
         </p>
@@ -75,7 +72,7 @@ function PageCount({ page, total }: { page: number; total: number | undefined })
   );
 }
 
-function tableFooter(data: Table['movimientos']['data']): ReactNode {
+function tableFooter(data: Table['transactions']['data']): ReactNode {
   if (!data || data.data.length === 0) return undefined;
   return (
     <TableFooter>

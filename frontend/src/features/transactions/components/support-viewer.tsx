@@ -1,7 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import type { FalloDeSoporte } from '@/features/transactions/model/supports';
+import type { ReceiptFailure } from '@/features/transactions/model/supports';
 import { type Receipt } from '@/shared/api/generated/model';
 import { PAGE_WIDTH, PdfPage } from '@/shared/ui/atoms/pdf-page';
 
@@ -42,7 +42,7 @@ interface ViewerProps {
   list: Receipt[];
   urls: Record<string, string>;
   /** Por qué no se ve cada uno, si es que no se ve. Ver `FalloDeSoporte`. */
-  errors: Readonly<Record<string, FalloDeSoporte>>;
+  errors: Readonly<Record<string, ReceiptFailure>>;
   onRetry: () => void;
   index: number;
   onGoTo: (i: number) => void;
@@ -132,7 +132,7 @@ export function Lightbox(props: ViewerProps) {
 interface ViewerStageProps {
   receipt: Receipt;
   url: string | undefined;
-  error: FalloDeSoporte | undefined;
+  error: ReceiptFailure | undefined;
   onRetry: () => void;
   scale: number;
   page: number;

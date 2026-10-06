@@ -25,7 +25,7 @@ import {
   paquete de lectura.
 */
 vi.mock('@/features/transactions/api/read-receipt', () => ({
-  leerSoporte: vi.fn(),
+  readReceipt: vi.fn(),
 }));
 
 afterEach(cleanup);

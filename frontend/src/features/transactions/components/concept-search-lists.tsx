@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 
-import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
+import type { ReceiptCandidate } from '@/features/transactions/model/movement-form';
 import { t } from '@/shared/lib/i18n';
 import { TextButton } from '@/shared/ui/atoms/text-button';
 import { CreateOption, Option } from '@/shared/ui/organisms/combo';
@@ -51,12 +51,12 @@ export interface ResultsProps {
   query: string;
   results: IndexEntry[];
   recent: IndexEntry[];
-  candidates: readonly CandidatoDelRecibo[];
+  candidates: readonly ReceiptCandidate[];
   chosen: IndexEntry | undefined;
   canCreate: boolean;
   isCreating: boolean;
   onSelect: (e: IndexEntry | undefined) => void;
-  onSelectCandidate: (c: CandidatoDelRecibo) => void;
+  onSelectCandidate: (c: ReceiptCandidate) => void;
   onRequestCategory: () => void;
 }
 
@@ -125,8 +125,8 @@ function NotSearching({ candidates, recent, chosen, onSelect, onSelectCandidate 
               onClick={() => onSelectCandidate(c)}
             >
               <span className="flex min-w-0 items-baseline gap-2">
-                <span className="truncate">{c.nombre}</span>
-                <span className="truncate text-xs text-muted-foreground">{c.ruta}</span>
+                <span className="truncate">{c.name}</span>
+                <span className="truncate text-xs text-muted-foreground">{c.path}</span>
               </span>
             </Option>
           ))}

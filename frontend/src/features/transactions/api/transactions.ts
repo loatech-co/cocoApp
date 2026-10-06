@@ -21,18 +21,18 @@ import { keys, useInvalidateDerived } from '@/shared/api/query-keys';
 
 // ── Movimientos ──────────────────────────────────────────────────────────────
 
-export type FiltrosDeMovimientos = TransactionsListParams;
+export type TransactionFilters = TransactionsListParams;
 
 export function useTransactions(
-  filtros: FiltrosDeMovimientos = {},
+  filters: TransactionFilters = {},
   // `enabled` para quien monta la consulta antes de necesitarla: la ficha de
   // un movimiento está siempre montada y solo quiere los recientes al abrirse.
-  opciones: { enabled?: boolean } = {},
+  options: { enabled?: boolean } = {},
 ) {
   return useQuery({
-    enabled: opciones.enabled ?? true,
-    queryKey: keys.transactions(filtros),
-    queryFn: () => transactionsList(sinVacios(filtros)),
+    enabled: options.enabled ?? true,
+    queryKey: keys.transactions(filters),
+    queryFn: () => transactionsList(withoutEmpty(filters)),
   });
 }
 
@@ -46,7 +46,7 @@ export function useTransactions(
  * salvo que borre el más antiguo, y volver a preguntarlo en cada pantalla
  * sería una consulta por nada.
  */
-export function useHistoria() {
+export function useHistory() {
   return useQuery({
     queryKey: keys.history,
     queryFn: async (): Promise<TransactionHistory> => (await transactionsHistory()).data,
@@ -54,59 +54,59 @@ export function useHistoria() {
   });
 }
 
-export type NuevoMovimiento = CreateTransactionInput;
+export type NewTransaction = CreateTransactionInput;
 
-export function useCrearMovimiento() {
-  const invalidarDerivados = useInvalidateDerived();
+export function useCreateTransaction() {
+  const invalidateDerived = useInvalidateDerived();
 
   return useMutation({
-    mutationFn: async (movimiento: NuevoMovimiento) => {
-      return (await transactionsCreate(movimiento)).data;
+    mutationFn: async (transaction: NewTransaction) => {
+      return (await transactionsCreate(transaction)).data;
     },
-    onSuccess: invalidarDerivados,
+    onSuccess: invalidateDerived,
   });
 }
 
-export function useEliminarMovimiento() {
-  const invalidarDerivados = useInvalidateDerived();
+export function useDeleteTransaction() {
+  const invalidateDerived = useInvalidateDerived();
 
   return useMutation({
     mutationFn: async (id: number) => {
       await transactionsRemove(id);
     },
-    onSuccess: invalidarDerivados,
+    onSuccess: invalidateDerived,
   });
 }
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
-export type FiltrosDeResumen = DashboardGetParams;
+export type SummaryFilters = DashboardGetParams;
 
-export function useDashboard(filtros: FiltrosDeResumen = {}): UseQueryResult<Dashboard> {
+export function useDashboard(filters: SummaryFilters = {}): UseQueryResult<Dashboard> {
   return useQuery({
-    queryKey: keys.dashboard(filtros),
-    queryFn: async () => (await dashboardGet(sinVacios(filtros))).data,
+    queryKey: keys.dashboard(filters),
+    queryFn: async () => (await dashboardGet(withoutEmpty(filters))).data,
     // Mantiene el gráfico anterior mientras llega el nuevo: sin esto, cada
     // cambio de filtro vacía la pantalla y la tendencia parpadea.
-    placeholderData: (anterior) => anterior,
+    placeholderData: (previous) => previous,
   });
 }
 
 // ── Edición ──────────────────────────────────────────────────────────────────
 
-export function useActualizarMovimiento() {
-  const invalidar = useInvalidateDerived();
+export function useUpdateTransaction() {
+  const invalidate = useInvalidateDerived();
 
   return useMutation({
-    mutationFn: async ({ id, cambios }: { id: number; cambios: Changes<UpdateTransactionInput> }) =>
-      (await transactionsUpdate(id, cambios as UpdateTransactionInput)).data,
-    onSuccess: invalidar,
+    mutationFn: async ({ id, changes }: { id: number; changes: Changes<UpdateTransactionInput> }) =>
+      (await transactionsUpdate(id, changes as UpdateTransactionInput)).data,
+    onSuccess: invalidate,
   });
 }
 
 /** A filter left empty —a cleared search box— is no filter: it does not travel. */
-function sinVacios<T extends object>(filtros: T): T {
+function withoutEmpty<T extends object>(filters: T): T {
   return Object.fromEntries(
-    Object.entries(filtros).filter(([, valor]) => valor !== undefined && valor !== ''),
+    Object.entries(filters).filter(([, value]) => value !== undefined && value !== ''),
   ) as T;
 }

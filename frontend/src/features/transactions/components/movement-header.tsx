@@ -1,6 +1,6 @@
 import { Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 
-import { mayuscula, nombreDelTipo } from '@/features/transactions/model/movement-form';
+import { capitalize, typeName } from '@/features/transactions/model/movement-form';
 import { type PendingPayment, type TransactionType } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { Button } from '@/shared/ui/atoms/button';
@@ -26,10 +26,10 @@ function sheetTitle({ type, isEditing, isEditable, isConfirming }: SheetMode): s
     return isConfirming.isMultiPayment
       ? t('transactions.sheet.registerAnother')
       : t('transactions.sheet.confirmPayment');
-  if (!isEditing) return t('transactions.sheet.newOfType', { type: nombreDelTipo(type) });
+  if (!isEditing) return t('transactions.sheet.newOfType', { type: typeName(type) });
   return isEditable
-    ? t('transactions.sheet.editOfType', { type: nombreDelTipo(type) })
-    : mayuscula(nombreDelTipo(type));
+    ? t('transactions.sheet.editOfType', { type: typeName(type) })
+    : capitalize(typeName(type));
 }
 
 /**

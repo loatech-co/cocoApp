@@ -14,13 +14,13 @@ import {
   type Reading,
 } from '@coco/receipt-parser';
 
-import type { Origen } from './precedence';
+import type { Origin } from './precedence';
 
 /** Un concepto que la lectura dejó entre lo que dudar, para el buscador. */
-export interface CandidatoDelRecibo {
+export interface ReceiptCandidate {
   id: number;
-  nombre: string;
-  ruta: string;
+  name: string;
+  path: string;
 }
 
 /**
@@ -31,23 +31,23 @@ export interface CandidatoDelRecibo {
  */
 export interface AutoProposal {
   categoryId: number | undefined;
-  origen: Origen;
-  candidatos?: CandidatoDelRecibo[];
+  origin: Origin;
+  candidates?: ReceiptCandidate[];
 }
 
-export function hoyEnBogota(): string {
+export function todayInBogota(): string {
   return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 /** `expense` → "gasto". El tipo, dicho como se dice. */
-export function nombreDelTipo(tipo: TransactionType): string {
-  return tipo === 'income'
+export function typeName(type: TransactionType): string {
+  return type === 'income'
     ? t('transactions.types.incomeNoun')
     : t('transactions.types.expenseNoun');
 }
 
-export function mayuscula(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
+export function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /**
@@ -77,19 +77,20 @@ export function mayuscula(texto: string): string {
  * hoy. El día 1 es cuándo empieza a contar el ciclo, no cuándo se gastó esto.
  */
 export function initialAmountAndDate(
-  movimiento: Transaction | null | undefined,
-  pago: PendingPayment | null | undefined,
+  transaction: Transaction | null | undefined,
+  payment: PendingPayment | null | undefined,
 ): { amount: string; date: string } {
-  const abonandoAUnConcepto = pago?.isMultiPayment === true;
+  const isPayingIntoConcept = payment?.isMultiPayment === true;
 
   return {
-    amount: movimiento
-      ? String(Number(movimiento.amount))
-      : !abonandoAUnConcepto && pago?.expectedAmount != null
-        ? String(Number(pago.expectedAmount))
+    amount: transaction
+      ? String(Number(transaction.amount))
+      : !isPayingIntoConcept && payment?.expectedAmount != null
+        ? String(Number(payment.expectedAmount))
         : '',
     date:
-      movimiento?.date ?? (abonandoAUnConcepto ? hoyEnBogota() : (pago?.dueDate ?? hoyEnBogota())),
+      transaction?.date ??
+      (isPayingIntoConcept ? todayInBogota() : (payment?.dueDate ?? todayInBogota())),
   };
 }
 
@@ -101,13 +102,13 @@ export function initialAmountAndDate(
  * una persona. "Celsia (Energia)" y "Celsia (Energía)" son el mismo concepto y
  * no hay ninguna razón para que un acento los separe.
  */
-function conceptoLlamado(arbol: CategoryTree[], nombre: string): CategoryTree | undefined {
-  const buscado = normalize(nombre);
+function conceptNamed(tree: CategoryTree[], name: string): CategoryTree | undefined {
+  const wanted = normalize(name);
 
-  for (const centro of arbol) {
-    for (const categoria of centro.children ?? []) {
-      for (const concepto of categoria.children ?? []) {
-        if (normalize(concepto.name) === buscado) return concepto;
+  for (const costCenter of tree) {
+    for (const category of costCenter.children ?? []) {
+      for (const concept of category.children ?? []) {
+        if (normalize(concept.name) === wanted) return concept;
       }
     }
   }
@@ -123,32 +124,32 @@ function conceptoLlamado(arbol: CategoryTree[], nombre: string): CategoryTree | 
  * quedan a la vista en el buscador.
  */
 export function proposalFromText(
-  indice: readonly IndexEntry[],
-  escrito: string,
+  index: readonly IndexEntry[],
+  written: string,
 ): AutoProposal | null {
-  const conceptos = searchInTree(indice, escrito).filter((e) => e.level === 'concepto');
-  const [unico] = conceptos;
-  if (conceptos.length === 1 && unico !== undefined) {
-    return { categoryId: Number(unico.id), origen: 'palabras-clave' };
+  const concepts = searchInTree(index, written).filter((e) => e.level === 'concepto');
+  const [single] = concepts;
+  if (concepts.length === 1 && single !== undefined) {
+    return { categoryId: Number(single.id), origin: 'palabras-clave' };
   }
 
-  const terminos = termsFor(escrito);
-  if (terminos.length === 0) return null;
-  const resuelto = resolveTerms(indice, terminos);
-  if (resuelto.certainty === 'alta' && resuelto.concept) {
-    return { categoryId: Number(resuelto.concept.id), origen: 'diccionario' };
+  const terms = termsFor(written);
+  if (terms.length === 0) return null;
+  const resolved = resolveTerms(index, terms);
+  if (resolved.certainty === 'alta' && resolved.concept) {
+    return { categoryId: Number(resolved.concept.id), origin: 'diccionario' };
   }
-  if (resuelto.certainty === 'media') {
-    const candidatos = resuelto.candidates.map((c) => ({
+  if (resolved.certainty === 'media') {
+    const candidates = resolved.candidates.map((c) => ({
       id: Number(c.id),
-      nombre: c.name,
-      ruta: c.path.join(' › '),
+      name: c.name,
+      path: c.path.join(' › '),
     }));
     return {
-      categoryId: resuelto.category ? Number(resuelto.category.id) : undefined,
-      origen: 'diccionario',
+      categoryId: resolved.category ? Number(resolved.category.id) : undefined,
+      origin: 'diccionario',
       // Del texto, solo se ponen a la vista si hay alguno.
-      ...(candidatos.length > 0 ? { candidatos } : {}),
+      ...(candidates.length > 0 ? { candidates } : {}),
     };
   }
   return null;
@@ -165,36 +166,36 @@ export function proposalFromText(
  * clave; el diccionario, con el suyo. Sin ids —un árbol que no llegó—, por el
  * nombre, como siempre. `null` si el recibo no dijo nada de esto.
  */
-export function proposalFromReading(leida: Reading, arbol: CategoryTree[]): AutoProposal | null {
-  const enElArbol = leida.inTree;
-  if (!enElArbol) {
-    const suyo = leida.concept ? conceptoLlamado(arbol, leida.concept) : undefined;
-    return suyo ? { categoryId: suyo.id, origen: 'palabras-clave' } : null;
+export function proposalFromReading(reading: Reading, tree: CategoryTree[]): AutoProposal | null {
+  const inTree = reading.inTree;
+  if (!inTree) {
+    const own = reading.concept ? conceptNamed(tree, reading.concept) : undefined;
+    return own ? { categoryId: own.id, origin: 'palabras-clave' } : null;
   }
 
-  const origen: Origen =
-    enElArbol.source === 'diccionario'
+  const origin: Origin =
+    inTree.source === 'diccionario'
       ? 'diccionario'
-      : enElArbol.source === 'historial'
+      : inTree.source === 'historial'
         ? 'historial'
         : 'palabras-clave';
 
-  if (enElArbol.certainty === 'alta' && enElArbol.conceptId !== undefined) {
-    return { categoryId: Number(enElArbol.conceptId), origen };
+  if (inTree.certainty === 'alta' && inTree.conceptId !== undefined) {
+    return { categoryId: Number(inTree.conceptId), origin };
   }
-  if (enElArbol.certainty === 'media') {
+  if (inTree.certainty === 'media') {
     return {
-      categoryId: enElArbol.categoryId !== undefined ? Number(enElArbol.categoryId) : undefined,
-      origen,
-      candidatos: enElArbol.candidates.map((c) => ({
+      categoryId: inTree.categoryId !== undefined ? Number(inTree.categoryId) : undefined,
+      origin,
+      candidates: inTree.candidates.map((c) => ({
         id: Number(c.id),
-        nombre: c.name,
-        ruta: c.path,
+        name: c.name,
+        path: c.path,
       })),
     };
   }
   // Hubo lectura en el árbol, aunque no alcanzó para proponer nada.
-  return { categoryId: undefined, origen };
+  return { categoryId: undefined, origin };
 }
 
 /**
@@ -213,10 +214,11 @@ export function proposalFromReading(leida: Reading, arbol: CategoryTree[]): Auto
  * En los dos casos el archivo se queda adjunto: se subió para guardarlo, no
  * solo para leerlo.
  */
-export function unreadNotice(leida: Reading, texto: string): string | null {
-  const algoUtil = leida.value !== null || leida.date !== null || leida.concept !== null;
-  if (algoUtil) return null;
-  return texto.trim() === ''
+export function unreadNotice(reading: Reading, text: string): string | null {
+  const hasSomethingUseful =
+    reading.value !== null || reading.date !== null || reading.concept !== null;
+  if (hasSomethingUseful) return null;
+  return text.trim() === ''
     ? t('transactions.reading.noText')
     : t('transactions.reading.noAmountNorDate');
 }

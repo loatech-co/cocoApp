@@ -1,7 +1,7 @@
 import { Loader2, Maximize2, Minus, Plus } from 'lucide-react';
 import { type CSSProperties, type ReactNode, useRef } from 'react';
 
-import type { FalloDeSoporte } from '@/features/transactions/model/supports';
+import type { ReceiptFailure } from '@/features/transactions/model/supports';
 import { t } from '@/shared/lib/i18n';
 import { usePanZoom } from '@/shared/lib/pan-zoom';
 import { cn } from '@/shared/lib/utils';
@@ -35,7 +35,7 @@ interface PreviewProps {
    * que no iba a llegar giraba para siempre: quien mira no puede distinguir
    * «está tardando» de «no está», que piden cosas distintas.
    */
-  error?: FalloDeSoporte | undefined;
+  error?: ReceiptFailure | undefined;
   /** Solo hace algo con `sin-cargar`: lo ausente no vuelve por reintentarlo. */
   onRetry?: (() => void) | undefined;
   isImage: boolean;
@@ -194,7 +194,7 @@ function PreviewDocument({
   onResize,
 }: {
   url: string | undefined;
-  error: FalloDeSoporte | undefined;
+  error: ReceiptFailure | undefined;
   onRetry: (() => void) | undefined;
   isImage: boolean;
   framing: CSSProperties;

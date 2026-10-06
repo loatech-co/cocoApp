@@ -65,9 +65,9 @@ type Gallery = ReturnType<typeof useSupportGallery>;
  */
 export function Receipts({ transactionId }: { transactionId: number }) {
   const g = useSupportGallery(transactionId);
-  const { lista } = g.files;
+  const { list } = g.files;
 
-  if (g.files.cargando) {
+  if (g.files.isLoading) {
     /*
       ── El alto ya reservado ──────────────────────────────────────────────
       Mientras se piden, la columna ocupa lo mismo que lo que va a llegar:
@@ -98,20 +98,20 @@ export function Receipts({ transactionId }: { transactionId: number }) {
         dice: cuál se está mirando. Lo que hacían —contar, elegir, añadir,
         quitar— cabe sobre el propio documento y ahí no gasta alto.
       */}
-      {lista.length === 0 && (
+      {list.length === 0 && (
         <div className="flex min-h-0 flex-1">
           <DropZone
-            isUploading={g.upload.subiendo}
-            progress={g.upload.progreso}
+            isUploading={g.upload.isUploading}
+            progress={g.upload.progress}
             isAlone
-            onFiles={(a) => void g.upload.aceptar(a)}
+            onFiles={(a) => void g.upload.accept(a)}
           />
         </div>
       )}
 
-      {g.upload.errorDeSubida && (
+      {g.upload.uploadError && (
         <p role="alert" className="text-xs text-destructive">
-          {g.upload.errorDeSubida}
+          {g.upload.uploadError}
         </p>
       )}
 
@@ -122,11 +122,11 @@ export function Receipts({ transactionId }: { transactionId: number }) {
 
 /** El soporte que se está viendo, con sus mandos encima. */
 function GalleryPreview({ g }: { g: Gallery }) {
-  const { lista, urls, fallos } = g.files;
+  const { list, urls, failures } = g.files;
   // El que se está viendo, recortado: borrar el último dejaba el índice
   // apuntando a un soporte que ya no existe.
-  const i = Math.min(g.activeIndex, lista.length - 1);
-  const enseñado = i >= 0 ? lista[i] : undefined;
+  const i = Math.min(g.activeIndex, list.length - 1);
+  const enseñado = i >= 0 ? list[i] : undefined;
   if (!enseñado) return null;
 
   return (
@@ -136,8 +136,8 @@ function GalleryPreview({ g }: { g: Gallery }) {
       // esto viene a quitar.
       key={String(enseñado.id)}
       url={urls[String(enseñado.id)]}
-      error={fallos[String(enseñado.id)]}
-      onRetry={g.files.reintentar}
+      error={failures[String(enseñado.id)]}
+      onRetry={g.files.retry}
       isImage={enseñado.mimeType.startsWith('image/')}
       // Aquí SÍ hay pase a pantalla completa —el soporte ya existe en el
       // servidor, con su descarga y su zoom—, así que la previsualización es
@@ -145,7 +145,7 @@ function GalleryPreview({ g }: { g: Gallery }) {
       onOpen={() => g.setEnlargedIndex(i)}
       actions={
         <>
-          <SupportPager index={i} total={lista.length} onGo={g.setActiveIndex} />
+          <SupportPager index={i} total={list.length} onGo={g.setActiveIndex} />
 
           <OverlayButton
             label={t('transactions.supports.addAnother')}
@@ -170,7 +170,7 @@ function GalleryPreview({ g }: { g: Gallery }) {
 
 /** Lo que se abre encima de la galería: borrar, subir y el pase. */
 function GalleryOverlays({ g, transactionId }: { g: Gallery; transactionId: number }) {
-  const { lista, urls, fallos } = g.files;
+  const { list, urls, failures } = g.files;
 
   return (
     <>
@@ -181,15 +181,15 @@ function GalleryOverlays({ g, transactionId }: { g: Gallery; transactionId: numb
         onDeleted={() => {
           g.setIsDeleting(null);
           // Si se va el último de la fila, se enseña el anterior.
-          g.setActiveIndex((n) => Math.max(0, Math.min(n, lista.length - 2)));
+          g.setActiveIndex((n) => Math.max(0, Math.min(n, list.length - 2)));
         }}
       />
 
       {g.isAdding && (
         <UploadPanel
-          isUploading={g.upload.subiendo}
-          progress={g.upload.progreso}
-          onFiles={(a) => void g.upload.aceptar(a)}
+          isUploading={g.upload.isUploading}
+          progress={g.upload.progress}
+          onFiles={(a) => void g.upload.accept(a)}
           onClose={() => g.setIsAdding(false)}
         />
       )}
@@ -197,11 +197,11 @@ function GalleryOverlays({ g, transactionId }: { g: Gallery; transactionId: numb
       {g.enlargedIndex !== null && (
         <Lightbox
           transactionId={transactionId}
-          list={lista}
+          list={list}
           urls={urls}
-          errors={fallos}
-          onRetry={g.files.reintentar}
-          index={Math.min(g.enlargedIndex, lista.length - 1)}
+          errors={failures}
+          onRetry={g.files.retry}
+          index={Math.min(g.enlargedIndex, list.length - 1)}
           onGoTo={g.setEnlargedIndex}
           onClose={() => g.setEnlargedIndex(null)}
         />

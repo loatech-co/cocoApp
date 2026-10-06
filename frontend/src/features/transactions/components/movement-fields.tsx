@@ -31,8 +31,8 @@ export function MovementFields(props: ComponentProps<typeof MovementClassificati
         rellenaron solos. Encabezando su columna, es el rótulo de lo que hay
         debajo; cruzando la ficha entera, era un cartel.
       */}
-      {sheet.lectura && <WhatWasRead />}
-      {sheet.sinLeer && <CouldNotRead text={sheet.sinLeer} />}
+      {sheet.reading && <WhatWasRead />}
+      {sheet.unreadNotice && <CouldNotRead text={sheet.unreadNotice} />}
 
       <MovementClassification {...props} />
 

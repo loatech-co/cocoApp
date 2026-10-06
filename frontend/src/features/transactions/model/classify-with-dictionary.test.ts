@@ -10,7 +10,7 @@ import { classify, conceptSignatures, type SearchableNode } from '@coco/receipt-
  * diga lleve ids y una certeza —porque es lo que la ficha necesita para
  * proponer sin adivinar—.
  */
-const ARBOL: SearchableNode[] = [
+const TREE: SearchableNode[] = [
   {
     id: 2,
     name: 'Costos variables',
@@ -34,7 +34,7 @@ const ARBOL: SearchableNode[] = [
 ];
 
 /** Las firmas que salen de las palabras clave de ESTE árbol. */
-const firmasPropias = conceptSignatures([
+const ownSignatures = conceptSignatures([
   {
     concept: 'Restaurantes',
     category: 'Alimentación',
@@ -43,18 +43,18 @@ const firmasPropias = conceptSignatures([
   },
 ]);
 
-const leer = (texto: string, arbol: SearchableNode[] = ARBOL) =>
-  classify({ text: texto, source: 'texto-embebido', signatures: firmasPropias, tree: arbol });
+const read = (text: string, tree: SearchableNode[] = TREE) =>
+  classify({ text, source: 'texto-embebido', signatures: ownSignatures, tree });
 
 /** Sin árbol de verdad: la propiedad ni siquiera se pasa. */
-const leerSinArbol = (texto: string) =>
-  classify({ text: texto, source: 'texto-embebido', signatures: firmasPropias });
+const readWithoutTree = (text: string) =>
+  classify({ text, source: 'texto-embebido', signatures: ownSignatures });
 
 describe('El diccionario como última fuente de la lectura', () => {
   it('reconoce un comercio y lo lleva al concepto de la persona: certeza media aquí, porque hay dos «Mercado»', () => {
     // «Mercado» existe dos veces en este árbol —Alimentación y Hogar—, así
     // que el diccionario NO elige: deja los dos a la vista.
-    const l = leer('KOBA COLOMBIA SAS Total 45.000');
+    const l = read('KOBA COLOMBIA SAS Total 45.000');
     expect(l.inTree?.source).toBe('diccionario');
     expect(l.inTree?.certainty).toBe('media');
     expect(l.inTree?.conceptId).toBeUndefined();
@@ -67,14 +67,14 @@ describe('El diccionario como última fuente de la lectura', () => {
   });
 
   it('con un solo destino, certeza alta y el id del concepto', () => {
-    const unSoloMercado: SearchableNode[] = [
+    const singleMarket: SearchableNode[] = [
       {
         id: 2,
         name: 'Costos variables',
         children: [{ id: 20, name: 'Alimentación', children: [{ id: 200, name: 'Mercado' }] }],
       },
     ];
-    const l = leer('Compra en ARA cra 5', unSoloMercado);
+    const l = read('Compra en ARA cra 5', singleMarket);
     expect(l.inTree).toMatchObject({
       source: 'diccionario',
       certainty: 'alta',
@@ -87,20 +87,20 @@ describe('El diccionario como última fuente de la lectura', () => {
   });
 
   it('nunca pasa del umbral de revisión: propone, no decide', () => {
-    const unSoloMercado: SearchableNode[] = [
+    const singleMarket: SearchableNode[] = [
       {
         id: 2,
         name: 'Costos variables',
         children: [{ id: 20, name: 'Alimentación', children: [{ id: 200, name: 'Mercado' }] }],
       },
     ];
-    const l = leer('EXITO Total a pagar 120.000', unSoloMercado);
+    const l = read('EXITO Total a pagar 120.000', singleMarket);
     expect(l.inTree?.certainty).toBe('alta');
     expect(l.confidence).toBeLessThan(0.8);
   });
 
   it('lleva a una categoría sin conceptos: certeza media con la categoría', () => {
-    const l = leer('UBER *TRIP 18.500');
+    const l = read('UBER *TRIP 18.500');
     expect(l.inTree).toMatchObject({ source: 'diccionario', certainty: 'media', categoryId: 21 });
     expect(l.inTree?.conceptId).toBeUndefined();
     expect(l.category).toBe('Transporte');
@@ -109,7 +109,7 @@ describe('El diccionario como última fuente de la lectura', () => {
   it('las palabras clave de la persona le ganan al diccionario', () => {
     // «rappi» es palabra clave de «Restaurantes»: eso es una firma propia, y
     // una firma reconocida apaga al diccionario aunque RAPPI esté en él.
-    const l = leer('RAPPI*PEDIDO 32.000');
+    const l = read('RAPPI*PEDIDO 32.000');
     expect(l.inTree?.source).toBe('palabras-clave');
     expect(l.inTree?.certainty).toBe('alta');
     expect(l.inTree?.conceptId).toBe(201);
@@ -117,13 +117,13 @@ describe('El diccionario como última fuente de la lectura', () => {
   });
 
   it('un comercio desconocido no propone nada', () => {
-    const l = leer('FERRETERIA LA ESQUINA 80.000');
+    const l = read('FERRETERIA LA ESQUINA 80.000');
     expect(l.inTree).toBeNull();
     expect(l.concept).toBeNull();
   });
 
   it('sin el árbol, el diccionario no habla: no hay dónde buscar', () => {
-    const l = leerSinArbol('KOBA COLOMBIA SAS');
+    const l = readWithoutTree('KOBA COLOMBIA SAS');
     expect(l.inTree).toBeNull();
     expect(l.concept).toBeNull();
   });

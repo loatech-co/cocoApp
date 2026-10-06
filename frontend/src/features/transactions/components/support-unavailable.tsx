@@ -1,6 +1,6 @@
 import { FileWarning } from 'lucide-react';
 
-import type { FalloDeSoporte } from '@/features/transactions/model/supports';
+import type { ReceiptFailure } from '@/features/transactions/model/supports';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
@@ -34,7 +34,7 @@ export function UnavailableReceipt({
   onRetry,
   isDark = false,
 }: {
-  error: FalloDeSoporte;
+  error: ReceiptFailure;
   onRetry?: (() => void) | undefined;
   isDark?: boolean;
 }) {

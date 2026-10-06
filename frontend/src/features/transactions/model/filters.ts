@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { useHistoria } from '@/features/transactions/api/transactions';
+import { useHistory } from '@/features/transactions/api/transactions';
 import { t } from '@/shared/lib/i18n';
 
 /**
@@ -23,41 +23,41 @@ export type Preset =
   | 'anio-pasado'
   | 'personalizado';
 
-export const PRESETS: { valor: Preset; etiqueta: string; ayuda: string }[] = [
+export const PRESETS: { value: Preset; label: string; help: string }[] = [
   {
-    valor: 'todo',
-    etiqueta: t('transactions.range.presets.all'),
-    ayuda: t('transactions.range.presets.allHelp'),
+    value: 'todo',
+    label: t('transactions.range.presets.all'),
+    help: t('transactions.range.presets.allHelp'),
   },
   {
-    valor: 'mes-actual',
-    etiqueta: t('transactions.range.presets.thisMonth'),
-    ayuda: t('transactions.range.presets.thisMonthHelp'),
+    value: 'mes-actual',
+    label: t('transactions.range.presets.thisMonth'),
+    help: t('transactions.range.presets.thisMonthHelp'),
   },
   {
-    valor: 'mes-pasado',
-    etiqueta: t('transactions.range.presets.lastMonth'),
-    ayuda: t('transactions.range.presets.lastMonthHelp'),
+    value: 'mes-pasado',
+    label: t('transactions.range.presets.lastMonth'),
+    help: t('transactions.range.presets.lastMonthHelp'),
   },
   {
-    valor: 'trimestre',
-    etiqueta: t('transactions.range.presets.last3Months'),
-    ayuda: t('transactions.range.presets.last3MonthsHelp'),
+    value: 'trimestre',
+    label: t('transactions.range.presets.last3Months'),
+    help: t('transactions.range.presets.last3MonthsHelp'),
   },
   {
-    valor: 'anio-actual',
-    etiqueta: t('transactions.range.presets.thisYear'),
-    ayuda: t('transactions.range.presets.thisYearHelp'),
+    value: 'anio-actual',
+    label: t('transactions.range.presets.thisYear'),
+    help: t('transactions.range.presets.thisYearHelp'),
   },
   {
-    valor: 'anio-pasado',
-    etiqueta: t('transactions.range.presets.lastYear'),
-    ayuda: t('transactions.range.presets.lastYearHelp'),
+    value: 'anio-pasado',
+    label: t('transactions.range.presets.lastYear'),
+    help: t('transactions.range.presets.lastYearHelp'),
   },
   {
-    valor: 'personalizado',
-    etiqueta: t('transactions.range.presets.custom'),
-    ayuda: t('transactions.range.presets.customHelp'),
+    value: 'personalizado',
+    label: t('transactions.range.presets.custom'),
+    help: t('transactions.range.presets.customHelp'),
   },
 ];
 
@@ -68,16 +68,16 @@ export const PRESETS: { valor: Preset; etiqueta: string; ayuda: string }[] = [
  * entonces "hoy" cambiaría según dónde esté la persona. El mes de la app tiene
  * que empezar y terminar igual para todos.
  */
-function hoyEnBogota(): Date {
-  const ahora = new Date();
-  return new Date(ahora.getTime() - 5 * 60 * 60 * 1000);
+function todayInBogota(): Date {
+  const now = new Date();
+  return new Date(now.getTime() - 5 * 60 * 60 * 1000);
 }
 
-const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
+const aISO = (date: Date): string => date.toISOString().slice(0, 10);
 
 /** Hoy en Bogotá, en `YYYY-MM-DD`. */
-function hoyISO(): string {
-  return aISO(hoyEnBogota());
+function todayIso(): string {
+  return aISO(todayInBogota());
 }
 
 /**
@@ -89,10 +89,11 @@ function hoyISO(): string {
  * respuesta a otra pregunta, puesta al lado de las cifras de un periodo que ya
  * cerró. Y ahí no hay nada pendiente, porque ya pasó.
  */
-export function llegaHastaHoy(filtros: { to: string }): boolean {
-  return filtros.to >= hoyISO();
+export function reachesToday(filters: { to: string }): boolean {
+  return filters.to >= todayIso();
 }
-const utc = (anio: number, mes: number, dia: number): Date => new Date(Date.UTC(anio, mes, dia));
+const utc = (year: number, month: number, day: number): Date =>
+  new Date(Date.UTC(year, month, day));
 
 /**
  * El rango de fechas que representa un preset.
@@ -101,14 +102,14 @@ const utc = (anio: number, mes: number, dia: number): Date => new Date(Date.UTC(
  * "Todo", y es opcional porque llega de una consulta: mientras no esté, se cae
  * a un rango amplio, que devuelve exactamente los mismos movimientos.
  */
-export function rangoDe(
+export function rangeOf(
   preset: Preset,
-  historia?: { first: string | null; last: string | null },
+  history?: { first: string | null; last: string | null },
 ): { from: string; to: string } {
-  const hoy = hoyEnBogota();
-  const a = hoy.getUTCFullYear();
-  const m = hoy.getUTCMonth();
-  const d = hoy.getUTCDate();
+  const today = todayInBogota();
+  const a = today.getUTCFullYear();
+  const m = today.getUTCMonth();
+  const d = today.getUTCDate();
 
   switch (preset) {
     case 'todo':
@@ -116,8 +117,8 @@ export function rangoDe(
       // estiraba su eje sobre medio siglo vacío para dibujar cuatro años de
       // datos, y el botón de fechas prometía un periodo que nunca existió.
       return {
-        from: historia?.first ?? '1970-01-01',
-        to: historia?.last ?? aISO(utc(a + 5, 11, 31)),
+        from: history?.first ?? '1970-01-01',
+        to: history?.last ?? aISO(utc(a + 5, 11, 31)),
       };
 
     case 'mes-actual':
@@ -145,7 +146,7 @@ export function rangoDe(
   }
 }
 
-export interface Filtros {
+export interface Filters {
   preset: Preset;
   from: string;
   to: string;
@@ -167,105 +168,102 @@ export interface Filtros {
  * puede ser tanto "mes en curso" como un rango escrito a mano: son estados
  * distintos, porque el primero se mueve solo al día siguiente.
  */
-export function useFiltros(porDefecto: Preset = 'mes-actual'): {
-  filtros: Filtros;
-  aplicar: (cambios: Partial<Filtros>) => void;
-  limpiar: () => void;
-  hayFiltrosActivos: boolean;
+export function useFilters(defaultPreset: Preset = 'mes-actual'): {
+  filters: Filters;
+  apply: (changes: Partial<Filters>) => void;
+  clear: () => void;
+  hasActiveFilters: boolean;
 } {
   const [params, setParams] = useSearchParams();
-  const historia = useHistoria();
+  const history = useHistory();
 
-  const filtros = useMemo<Filtros>(() => {
-    const preset = (params.get('rango') as Preset | null) ?? porDefecto;
-    const rango = rangoDe(preset, historia.data);
+  const filters = useMemo<Filters>(() => {
+    const preset = (params.get('rango') as Preset | null) ?? defaultPreset;
+    const range = rangeOf(preset, history.data);
 
     return {
       preset,
-      from: preset === 'personalizado' ? (params.get('desde') ?? rango.from) : rango.from,
-      to: preset === 'personalizado' ? (params.get('hasta') ?? rango.to) : rango.to,
+      from: preset === 'personalizado' ? (params.get('desde') ?? range.from) : range.from,
+      to: preset === 'personalizado' ? (params.get('hasta') ?? range.to) : range.to,
       categoryIds: (params.get('categorias') ?? '')
         .split(',')
         .map((n) => Number(n))
         .filter((n) => Number.isInteger(n) && n > 0),
       q: params.get('busca') ?? undefined,
     };
-  }, [params, porDefecto, historia.data]);
+  }, [params, defaultPreset, history.data]);
 
-  const aplicar = useCallback(
-    (cambios: Partial<Filtros>) => {
-      const siguiente = writeFilters(params, cambios, porDefecto);
+  const apply = useCallback(
+    (changes: Partial<Filters>) => {
+      const next = writeFilters(params, changes, defaultPreset);
 
-      setParams(siguiente, { replace: true });
+      setParams(next, { replace: true });
     },
-    [params, setParams, porDefecto],
+    [params, setParams, defaultPreset],
   );
 
-  const limpiar = useCallback(
-    () => setParams(new URLSearchParams(), { replace: true }),
-    [setParams],
-  );
+  const clear = useCallback(() => setParams(new URLSearchParams(), { replace: true }), [setParams]);
 
-  const hayFiltrosActivos =
-    filtros.preset !== porDefecto || filtros.categoryIds.length > 0 || (filtros.q ?? '') !== '';
+  const hasActiveFilters =
+    filters.preset !== defaultPreset || filters.categoryIds.length > 0 || (filters.q ?? '') !== '';
 
-  return { filtros, aplicar, limpiar, hayFiltrosActivos };
+  return { filters, apply, clear, hasActiveFilters };
 }
 
 /** Los filtros tal como los espera la API. */
-export function aParametros(filtros: Filtros): {
+export function toApiParams(filters: Filters): {
   from: string;
   to: string;
   categoryIds?: string;
   q?: string;
 } {
   return {
-    from: filtros.from,
-    to: filtros.to,
-    ...(filtros.categoryIds.length > 0 && { categoryIds: filtros.categoryIds.join(',') }),
-    ...(filtros.q && { q: filtros.q }),
+    from: filters.from,
+    to: filters.to,
+    ...(filters.categoryIds.length > 0 && { categoryIds: filters.categoryIds.join(',') }),
+    ...(filters.q && { q: filters.q }),
   };
 }
 
 /** Los parámetros de la URL después de aplicar unos cambios a los filtros. */
 function writeFilters(
   params: URLSearchParams,
-  cambios: Partial<Filtros>,
-  porDefecto: Preset,
+  changes: Partial<Filters>,
+  defaultPreset: Preset,
 ): URLSearchParams {
-  const siguiente = new URLSearchParams(params);
+  const next = new URLSearchParams(params);
 
-  if (cambios.preset !== undefined) {
-    if (cambios.preset === porDefecto) siguiente.delete('rango');
-    else siguiente.set('rango', cambios.preset);
+  if (changes.preset !== undefined) {
+    if (changes.preset === defaultPreset) next.delete('rango');
+    else next.set('rango', changes.preset);
 
     // Cambiar de preset descarta las fechas escritas a mano: dejarlas haría
     // que el rango mostrado no fuera el del botón encendido.
-    if (cambios.preset !== 'personalizado') {
-      siguiente.delete('desde');
-      siguiente.delete('hasta');
+    if (changes.preset !== 'personalizado') {
+      next.delete('desde');
+      next.delete('hasta');
     }
   }
 
   // Escribir una fecha a mano implica pasar a personalizado, o el rango se
   // recalcularía desde el preset y el cambio se perdería al instante.
-  if (cambios.from !== undefined) {
-    siguiente.set('desde', cambios.from);
-    siguiente.set('rango', 'personalizado');
+  if (changes.from !== undefined) {
+    next.set('desde', changes.from);
+    next.set('rango', 'personalizado');
   }
-  if (cambios.to !== undefined) {
-    siguiente.set('hasta', cambios.to);
-    siguiente.set('rango', 'personalizado');
-  }
-
-  if (cambios.categoryIds !== undefined) {
-    if (cambios.categoryIds.length === 0) siguiente.delete('categorias');
-    else siguiente.set('categorias', cambios.categoryIds.join(','));
-  }
-  if (cambios.q !== undefined) {
-    if (cambios.q.trim() === '') siguiente.delete('busca');
-    else siguiente.set('busca', cambios.q);
+  if (changes.to !== undefined) {
+    next.set('hasta', changes.to);
+    next.set('rango', 'personalizado');
   }
 
-  return siguiente;
+  if (changes.categoryIds !== undefined) {
+    if (changes.categoryIds.length === 0) next.delete('categorias');
+    else next.set('categorias', changes.categoryIds.join(','));
+  }
+  if (changes.q !== undefined) {
+    if (changes.q.trim() === '') next.delete('busca');
+    else next.set('busca', changes.q);
+  }
+
+  return next;
 }

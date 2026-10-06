@@ -76,7 +76,7 @@ interface DropZoneProps {
 export function DropZone({ isUploading, progress, isAlone, onPress, onFiles }: DropZoneProps) {
   const field = useRef<HTMLInputElement>(null);
   const isDropping = useFileDrop(isUploading, onFiles);
-  const { pegar, problemaAlPegar } = usePasteScreenshot(onFiles);
+  const { paste, pasteProblem } = usePasteScreenshot(onFiles);
 
   return (
     <div className={cn(isAlone && 'flex w-full self-stretch')} {...isDropping.handlers}>
@@ -95,7 +95,7 @@ export function DropZone({ isUploading, progress, isAlone, onPress, onFiles }: D
             `relative` para quedar por encima del botón que cubre la caja, o el
             clic se lo llevaría él. */}
         {isAlone && !isUploading && (
-          <PasteScreenshot onPaste={() => void pegar()} problem={problemaAlPegar} />
+          <PasteScreenshot onPaste={() => void paste()} problem={pasteProblem} />
         )}
       </DropSurface>
 

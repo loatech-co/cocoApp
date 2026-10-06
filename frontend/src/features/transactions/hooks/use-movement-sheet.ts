@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { rutaSeleccionada } from '@/features/transactions/model/transactions';
+import { selectedPath } from '@/features/transactions/model/transactions';
 import { useCategories } from '@/shared/api/categories';
 
 import { makeReceiptScan } from './receipt-scan';
@@ -8,15 +8,15 @@ import { useClassificationProposals } from './use-classification-proposals';
 import { useMovementForm, type SheetOpening } from './use-movement-form';
 import { useCreateInside, useSaveMovement } from './use-save-movement';
 
-function useCloseOnEscape(abierta: boolean, onCerrar: () => void): void {
+function useCloseOnEscape(isOpen: boolean, onClose: () => void): void {
   useEffect(() => {
-    if (!abierta) return;
-    const alPulsar = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onCerrar();
+    if (!isOpen) return;
+    const onPress = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('keydown', alPulsar);
-    return () => document.removeEventListener('keydown', alPulsar);
-  }, [abierta, onCerrar]);
+    document.addEventListener('keydown', onPress);
+    return () => document.removeEventListener('keydown', onPress);
+  }, [isOpen, onClose]);
 }
 
 /**
@@ -26,20 +26,20 @@ function useCloseOnEscape(abierta: boolean, onCerrar: () => void): void {
  * automáticas, en `useClassificationProposals`; leer un recibo, en
  * `makeReceiptScan`; y guardar, en `useSaveMovement`.
  */
-export function useMovementSheet(apertura: SheetOpening & { onCerrar: () => void }) {
-  const { abierta, movimiento, onCerrar } = apertura;
-  const categorias = useCategories();
-  const ficha = useMovementForm(apertura);
-  const recientes = useClassificationProposals(ficha, {
-    abierta,
-    movimiento,
-    arbol: categorias.data,
+export function useMovementSheet(opening: SheetOpening & { onClose: () => void }) {
+  const { isOpen, transaction, onClose } = opening;
+  const categories = useCategories();
+  const sheet = useMovementForm(opening);
+  const recent = useClassificationProposals(sheet, {
+    isOpen,
+    transaction,
+    tree: categories.data,
   });
-  const guardar = useSaveMovement(ficha, movimiento, onCerrar);
-  const crear = useCreateInside(ficha);
-  useCloseOnEscape(abierta, onCerrar);
+  const save = useSaveMovement(sheet, transaction, onClose);
+  const create = useCreateInside(sheet);
+  useCloseOnEscape(isOpen, onClose);
 
-  const arbol = categorias.data ?? [];
+  const tree = categories.data ?? [];
   /*
     ── Lo que ya está en un centro estático no se mueve ──────────────────────
     Estático es estático: ni desde la tabla ni desde aquí. La estructura de
@@ -52,17 +52,17 @@ export function useMovementSheet(apertura: SheetOpening & { onCerrar: () => void
     desplegables de abajo y dejaba el formulario a medias: entrar sí se puede,
     salir es lo que no.
   */
-  const estatico =
-    rutaSeleccionada(arbol, movimiento?.categoryId ?? undefined).centro?.isStatic ?? false;
+  const isStatic =
+    selectedPath(tree, transaction?.categoryId ?? undefined).costCenter?.isStatic ?? false;
 
   return {
-    ficha,
-    recientes,
-    escanear: makeReceiptScan(ficha, categorias.data),
-    guardar,
-    crear,
-    arbol,
-    estatico,
+    sheet,
+    recent,
+    scan: makeReceiptScan(sheet, categories.data),
+    save,
+    create,
+    tree,
+    isStatic,
   };
 }
 

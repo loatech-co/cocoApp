@@ -114,8 +114,8 @@ en los dos archivos en el mismo commit.
 Un componente que pide sus datos solo sirve donde esos datos existen y solo se
 prueba con un servidor. Lo que sabe qué es un movimiento, un concepto o un
 soporte es un organismo de dominio y vive en `features/<dominio>/components/`,
-con sus datos en el `api/` de su feature: `PanelDeBusqueda` usa
-`useTransactions`, `TablaDeMovimientos` usa `useActualizarMovimiento`.
+con sus datos en el `api/` de su feature: `SearchPanel` usa
+`useTransactions`, `TransactionsTable` usa `useUpdateTransaction`.
 
 **El nivel de un componente es el más bajo que permiten sus importaciones.**
 
@@ -716,7 +716,7 @@ concéntricos.
 
 ## 15. Un movimiento es un REGISTRO; el concepto es estructura
 
-**Regla:** El nombre de un movimiento se deriva de su concepto (`nombreDelMovimiento()`); conceptos, categorías y centros solo se editan en Centros de costos.
+**Regla:** El nombre de un movimiento se deriva de su concepto (`transactionName()`); conceptos, categorías y centros solo se editan en Centros de costos.
 
 Un movimiento no es una cosa con nombre propio: es la anotación de que tal
 día salió tal plata de tal concepto.
@@ -727,7 +727,7 @@ movimientos: «Aseo» pasaría a llamarse «Aseo y limpieza» en Centros de
 costos y en la tabla seguirían los cuarenta viejos diciendo «Aseo». Dos
 nombres para lo mismo y ninguna forma de saber cuál es el bueno.
 
-Está en `nombreDelMovimiento()` (`features/transactions/model/transactions.ts`), con sus dos
+Está en `transactionName()` (`features/transactions/model/transactions.ts`), con sus dos
 respaldos: si solo está clasificado hasta la categoría, su nombre; y
 si no tiene clasificación —un movimiento importado y aún sin clasificar—, lo
 que decía el papel (`description`, `merchant`). Ahí «PAGO PSE COMCEL» es

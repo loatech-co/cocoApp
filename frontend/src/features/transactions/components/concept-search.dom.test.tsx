@@ -175,8 +175,8 @@ describe('Con el buscador en blanco', () => {
   it('si el recibo dejó candidatos, van ellos primero, con su ruta', () => {
     const { onSelect } = renderSearch({
       candidates: [
-        { id: 200, nombre: 'Mercado', ruta: 'Alimentación › Costos variables' },
-        { id: 201, nombre: 'Supermercado', ruta: 'Alimentación › Costos variables' },
+        { id: 200, name: 'Mercado', path: 'Alimentación › Costos variables' },
+        { id: 201, name: 'Supermercado', path: 'Alimentación › Costos variables' },
       ],
       recent: [100],
     });

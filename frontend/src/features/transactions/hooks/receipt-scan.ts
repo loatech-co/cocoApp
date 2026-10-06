@@ -1,4 +1,4 @@
-import { leerSoporte } from '@/features/transactions/api/read-receipt';
+import { readReceipt } from '@/features/transactions/api/read-receipt';
 import { unreadNotice, proposalFromReading } from '@/features/transactions/model/movement-form';
 import { type Category } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
@@ -26,14 +26,14 @@ import type { MovementSheetState } from './use-movement-form';
  * Y es un MÍNIMO, no una pausa que se suma: si la lectura tarda más, no se
  * espera nada.
  */
-const LECTURA_MINIMA_MS = 4000;
+const MIN_READING_MS = 4000;
 
 /** Espera lo que falte para que la lectura haya durado `LECTURA_MINIMA_MS`. */
-async function waitForReadingFloor(empezo: number): Promise<void> {
-  const falta = LECTURA_MINIMA_MS - (Date.now() - empezo);
-  if (falta > 0) {
-    await new Promise<void>((sigue) => {
-      setTimeout(sigue, falta);
+async function waitForReadingFloor(startedAt: number): Promise<void> {
+  const remaining = MIN_READING_MS - (Date.now() - startedAt);
+  if (remaining > 0) {
+    await new Promise<void>((resume) => {
+      setTimeout(resume, remaining);
     });
   }
 }
@@ -46,49 +46,49 @@ async function waitForReadingFloor(empezo: number): Promise<void> {
  * leído que se guarda solo es peor que no leerlo, porque nadie vuelve a mirar
  * lo que ya quedó registrado.
  */
-export function makeReceiptScan(ficha: MovementSheetState, arbol: Category[] | undefined) {
-  return async function escanear(archivo: File): Promise<void> {
-    ficha.setPaso('leyendo');
-    ficha.setError(null);
-    ficha.setPendientes([archivo]);
-    const empezo = Date.now();
+export function makeReceiptScan(sheet: MovementSheetState, tree: Category[] | undefined) {
+  return async function scan(file: File): Promise<void> {
+    sheet.setStep('leyendo');
+    sheet.setError(null);
+    sheet.setPending([file]);
+    const startedAt = Date.now();
 
     try {
-      const { lectura: leida, texto } = await leerSoporte(archivo, {
-        periodo: ficha.date.slice(0, 7),
+      const { reading, text } = await readReceipt(file, {
+        period: sheet.date.slice(0, 7),
         // El árbol y las palabras clave ya no viajan: los tiene el servidor,
         // que es quien interpreta ahora.
-        onProgreso: ficha.setProgresoDeLectura,
+        onProgress: sheet.setReadingProgress,
       });
       // Se guarda con el movimiento: es la única forma de saber después por
       // qué se clasificó como se clasificó, y de reinterpretarlo.
-      ficha.setTextoLeido(texto);
+      sheet.setTextRead(text);
 
-      const aviso = unreadNotice(leida, texto);
-      ficha.setLectura(aviso === null ? leida : null);
-      ficha.setSinLeer(aviso);
+      const notice = unreadNotice(reading, text);
+      sheet.setReading(notice === null ? reading : null);
+      sheet.setUnreadNotice(notice);
 
-      if (leida.value !== null) ficha.setAmount(String(leida.value));
-      if (leida.date) ficha.setDate(leida.date);
-      if (leida.concept) ficha.setDescription(leida.concept);
+      if (reading.value !== null) sheet.setAmount(String(reading.value));
+      if (reading.date) sheet.setDate(reading.date);
+      if (reading.concept) sheet.setDescription(reading.concept);
 
       // Pasa por `proponer`: si ya había algo elegido a mano, no se toca nada.
-      const propuesta = proposalFromReading(leida, arbol ?? []);
-      if (propuesta) {
-        ficha.setHuboSugerencia(true);
-        const { categoryId, origen, candidatos } = propuesta;
-        if (categoryId !== undefined) ficha.proponer({ categoryId, origen });
-        if (candidatos) ficha.setCandidatosDelRecibo(candidatos);
+      const proposal = proposalFromReading(reading, tree ?? []);
+      if (proposal) {
+        sheet.setWasSuggested(true);
+        const { categoryId, origin, candidates } = proposal;
+        if (categoryId !== undefined) sheet.propose({ categoryId, origin });
+        if (candidates) sheet.setReceiptCandidates(candidates);
       }
     } catch (e) {
-      ficha.setError(e instanceof Error ? e.message : t('transactions.reading.fileReadFailed'));
+      sheet.setError(e instanceof Error ? e.message : t('transactions.reading.fileReadFailed'));
     } finally {
       // El piso de la espera, salga bien o mal. También cuando falla: un
       // mensaje de error que aparece de un fogonazo se lee como un fallo de
       // la ficha y no como el resultado de haber intentado leer el archivo.
-      await waitForReadingFloor(empezo);
-      ficha.setProgresoDeLectura(null);
-      ficha.setPaso('formulario');
+      await waitForReadingFloor(startedAt);
+      sheet.setReadingProgress(null);
+      sheet.setStep('formulario');
     }
   };
 }

@@ -2,7 +2,7 @@ import { Loader2 } from 'lucide-react';
 import type { ComponentProps, SubmitEvent } from 'react';
 
 import type { MovementSheetState } from '@/features/transactions/hooks/use-movement-form';
-import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/transactions';
+import { transactionName, selectedPath } from '@/features/transactions/model/transactions';
 import { type Transaction } from '@/shared/api/generated/model';
 import { DEFAULT_CURRENCY } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
@@ -82,7 +82,7 @@ export function MovementSheetForm({
           )}
         </div>
 
-        {sheet.editable ? (
+        {sheet.isEditable ? (
           <MovementFields {...fields} />
         ) : (
           <ReadColumn sheet={sheet} transaction={transaction} tree={fields.tree} />
@@ -98,7 +98,7 @@ export function MovementSheetForm({
       {/* Leyendo no hay pie: no hay nada que cancelar ni que guardar, y para
           salir ya está la equis de la esquina. Un botón "Cerrar" debajo de
           todo es una segunda puerta a la misma salida. */}
-      {sheet.editable && (
+      {sheet.isEditable && (
         <ModalFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             {t('common.cancel')}
@@ -135,21 +135,21 @@ function PendingSupportsColumn({
 }) {
   return (
     <PendingReceipts
-      files={sheet.pendientes}
+      files={sheet.pending}
       onAdd={(added) => {
         const [first, ...rest] = added;
 
-        if (sheet.pendientes.length === 0 && first) {
+        if (sheet.pending.length === 0 && first) {
           void scan(first).then(() => {
-            if (rest.length > 0) sheet.setPendientes((p) => [...p, ...rest]);
+            if (rest.length > 0) sheet.setPending((p) => [...p, ...rest]);
           });
           return;
         }
 
-        sheet.setPendientes((p) => [...p, ...added]);
+        sheet.setPending((p) => [...p, ...added]);
       }}
-      onRemove={(i) => sheet.setPendientes((p) => p.filter((_, n) => n !== i))}
-      onTakePhoto={() => sheet.setPaso('camara')}
+      onRemove={(i) => sheet.setPending((p) => p.filter((_, n) => n !== i))}
+      onTakePhoto={() => sheet.setStep('camara')}
     />
   );
 }
@@ -164,7 +164,7 @@ function ReadColumn({
   transaction: Transaction | null | undefined;
   tree: FieldsProps['tree'];
 }) {
-  const { centro, categoria, concepto } = rutaSeleccionada(tree, sheet.categoryId);
+  const { costCenter, category, concept } = selectedPath(tree, sheet.categoryId);
 
   return (
     <MovementReadColumn
@@ -172,12 +172,12 @@ function ReadColumn({
       // El nombre sale del concepto, igual que en la tabla. Leía `description`,
       // que en un movimiento registrado a mano está vacío desde que la ficha
       // cambió su campo libre por un selector.
-      name={transaction ? nombreDelMovimiento(transaction, tree) : ''}
+      name={transaction ? transactionName(transaction, tree) : ''}
       value={sheet.amount}
       currency={transaction?.currency ?? DEFAULT_CURRENCY}
       date={sheet.date}
       period={transaction?.period}
-      path={[centro?.name, categoria?.name, concepto?.name].filter(Boolean) as string[]}
+      path={[costCenter?.name, category?.name, concept?.name].filter(Boolean) as string[]}
       notes={sheet.notes}
     />
   );

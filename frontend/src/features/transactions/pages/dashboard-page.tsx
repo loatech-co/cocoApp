@@ -18,8 +18,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
  * recita un documento de identidad. Si no hay nombre, el correo tampoco sirve
  * para saludar, así que el saludo se queda solo.
  */
-function nombreDePila(usuario: { displayName?: string | null } | null | undefined): string {
-  return (usuario?.displayName ?? '').trim().split(/\s+/)[0] ?? '';
+function firstName(user: { displayName?: string | null } | null | undefined): string {
+  return (user?.displayName ?? '').trim().split(/\s+/)[0] ?? '';
 }
 
 /**
@@ -34,57 +34,57 @@ function nombreDePila(usuario: { displayName?: string | null } | null | undefine
  */
 export function DashboardPage() {
   const p = useDashboardPage();
-  const { dashboard, tabla, ficha } = p;
+  const { dashboard, table, sheet } = p;
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
-      <Barra pagina={p} />
+      <Bar page={p} />
 
-      {dashboard.isError && <ErrorDelResumen error={dashboard.error} />}
+      {dashboard.isError && <SummaryError error={dashboard.error} />}
 
       {dashboard.isPending && <DashboardSkeleton />}
 
       {dashboard.data && (
         <>
-          <DashboardKpis data={dashboard.data} isUpToDate={p.alDia} />
+          <DashboardKpis data={dashboard.data} isUpToDate={p.isUpToDate} />
           <DashboardCharts
             data={dashboard.data}
-            hasPending={p.hayPendientes}
-            path={p.ruta}
-            onSelectPayment={(pago) => {
-              ficha.setConfirmando(pago);
-              ficha.setTipoNuevo('expense');
-              ficha.setEditando(null);
+            hasPending={p.hasPending}
+            path={p.path}
+            onSelectPayment={(payment) => {
+              sheet.setConfirming(payment);
+              sheet.setNewType('expense');
+              sheet.setEditing(null);
             }}
             onDrillDown={(id) => {
-              tabla.setPagina(1);
-              p.aplicar({ categoryIds: [id] });
+              table.setPage(1);
+              p.apply({ categoryIds: [id] });
             }}
             onDrillUp={() => {
-              tabla.setPagina(1);
-              const anterior = p.ruta[p.ruta.length - 2];
-              p.aplicar({ categoryIds: anterior ? [anterior.id] : [] });
+              table.setPage(1);
+              const previous = p.path[p.path.length - 2];
+              p.apply({ categoryIds: previous ? [previous.id] : [] });
             }}
           />
-          <DashboardMovements table={tabla} tree={p.arbol} onOpen={ficha.setEditando} />
+          <DashboardMovements table={table} tree={p.tree} onOpen={sheet.setEditing} />
         </>
       )}
 
       <TransactionModal
-        isOpen={ficha.editando !== undefined}
-        transaction={ficha.editando}
-        payment={ficha.confirmando}
-        defaultType={ficha.tipoNuevo}
+        isOpen={sheet.editing !== undefined}
+        transaction={sheet.editing}
+        payment={sheet.confirming}
+        defaultType={sheet.newType}
         onClose={() => {
-          ficha.setEditando(undefined);
-          ficha.setConfirmando(null);
+          sheet.setEditing(undefined);
+          sheet.setConfirming(null);
         }}
       />
     </div>
   );
 }
 
-function ErrorDelResumen({ error }: { error: Error }) {
+function SummaryError({ error }: { error: Error }) {
   return (
     <Alert variant="destructive">
       <AlertTitle>{t('transactions.dashboard.loadFailed')}</AlertTitle>
@@ -98,15 +98,15 @@ function ErrorDelResumen({ error }: { error: Error }) {
 }
 
 /** La barra de filtros con el saludo y lo que suma el recorte. */
-function Barra({ pagina: p }: { pagina: ReturnType<typeof useDashboardPage> }) {
+function Bar({ page: p }: { page: ReturnType<typeof useDashboardPage> }) {
   const { user } = useAuth();
-  const { dashboard, tabla, ficha } = p;
+  const { dashboard, table, sheet } = p;
 
   return (
     <ToolbarFilters
       title={
-        nombreDePila(user)
-          ? t('transactions.dashboard.greetingNamed', { name: nombreDePila(user) })
+        firstName(user)
+          ? t('transactions.dashboard.greetingNamed', { name: firstName(user) })
           : t('transactions.dashboard.greeting')
       }
       subtitle={
@@ -117,23 +117,23 @@ function Barra({ pagina: p }: { pagina: ReturnType<typeof useDashboardPage> }) {
             })
           : t('transactions.dashboard.help')
       }
-      filters={p.filtros}
+      filters={p.filters}
       apply={(c) => {
-        tabla.setPagina(1);
-        p.aplicar(c);
+        table.setPage(1);
+        p.apply(c);
       }}
       clear={() => {
-        tabla.setPagina(1);
-        p.limpiar();
+        table.setPage(1);
+        p.clear();
       }}
-      hasActiveFilters={p.hayFiltrosActivos}
-      onNew={(tipo) => {
-        ficha.setTipoNuevo(tipo);
+      hasActiveFilters={p.hasActiveFilters}
+      onNew={(type) => {
+        sheet.setNewType(type);
         // Un movimiento nuevo empieza de cero, venga uno de donde venga: sin
         // esto, abrir «Nuevo gasto» después de haber mirado un pendiente
         // habría reabierto la ficha de confirmar aquel pago.
-        ficha.setConfirmando(null);
-        ficha.setEditando(null);
+        sheet.setConfirming(null);
+        sheet.setEditing(null);
       }}
     />
   );

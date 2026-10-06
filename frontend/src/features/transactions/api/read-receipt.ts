@@ -22,19 +22,19 @@ import type { TreeClassification, Reading } from '@coco/receipt-parser';
  * el precio del peor caso.
  */
 
-export interface SoporteLeido {
-  texto: string;
-  fuente: 'texto-embebido' | 'ocr';
-  lectura: Reading;
+export interface ParsedReceipt {
+  text: string;
+  source: 'texto-embebido' | 'ocr';
+  reading: Reading;
 }
 
-export interface ProgresoDeLectura {
-  avance: number;
-  etapa: string;
+export interface ReadingProgress {
+  progress: number;
+  stage: string;
 }
 
 /** Por debajo de esto, lo que dice tener el PDF no es el recibo. */
-const MINIMO_DE_TEXTO = 20;
+const MIN_TEXT_LENGTH = 20;
 
 /**
  * El texto de un PDF, en líneas.
@@ -44,31 +44,31 @@ const MINIMO_DE_TEXTO = 20;
  * "NIT"—. pdf.js entrega fragmentos sueltos con sus coordenadas, así que se
  * reagrupan por altura: dos fragmentos a la misma Y son la misma línea.
  */
-async function textoDelPdf(archivo: File, paginas = 2): Promise<string> {
+async function pdfText(file: File, pages = 2): Promise<string> {
   const pdfjs = await loadPdfjs();
-  const documento = await pdfjs.getDocument({ data: await archivo.arrayBuffer() }).promise;
+  const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
 
-  const lineas: string[] = [];
+  const lines: string[] = [];
 
-  for (let n = 1; n <= Math.min(paginas, documento.numPages); n += 1) {
-    const pagina = await documento.getPage(n);
-    const contenido = await pagina.getTextContent();
+  for (let n = 1; n <= Math.min(pages, pdf.numPages); n += 1) {
+    const page = await pdf.getPage(n);
+    const content = await page.getTextContent();
 
-    const filas = new Map<number, { x: number; s: string }[]>();
-    for (const item of contenido.items) {
+    const rows = new Map<number, { x: number; s: string }[]>();
+    for (const item of content.items) {
       if (!('str' in item) || item.str.trim() === '') continue;
       // `transform` llega sin tipar desde pdfjs. Es la matriz de 6 números de
       // PDF: las dos últimas posiciones son el desplazamiento, x y luego y.
       // Las seis posiciones están siempre: los valores por defecto no se usan.
       const [, , , , x = 0, y = 0] = item.transform as number[];
-      const renglon = Math.round(y);
-      const fila = filas.get(renglon);
-      if (fila) fila.push({ x, s: item.str });
-      else filas.set(renglon, [{ x, s: item.str }]);
+      const lineY = Math.round(y);
+      const row = rows.get(lineY);
+      if (row) row.push({ x, s: item.str });
+      else rows.set(lineY, [{ x, s: item.str }]);
     }
 
-    for (const [, partes] of [...filas.entries()].sort((a, b) => b[0] - a[0])) {
-      lineas.push(
+    for (const [, partes] of [...rows.entries()].sort((a, b) => b[0] - a[0])) {
+      lines.push(
         partes
           .sort((a, b) => a.x - b.x)
           .map((p) => p.s)
@@ -79,8 +79,8 @@ async function textoDelPdf(archivo: File, paginas = 2): Promise<string> {
     }
   }
 
-  await documento.cleanup();
-  return lineas.join('\n');
+  await pdf.cleanup();
+  return lines.join('\n');
 }
 
 /**
@@ -90,22 +90,22 @@ async function textoDelPdf(archivo: File, paginas = 2): Promise<string> {
  * coste de rasterizar una página más grande es despreciable al lado de lo que
  * tarda el reconocimiento.
  */
-async function primeraPaginaComoImagen(archivo: File): Promise<Blob | null> {
+async function firstPageAsImage(file: File): Promise<Blob | null> {
   const pdfjs = await loadPdfjs();
-  const documento = await pdfjs.getDocument({ data: await archivo.arrayBuffer() }).promise;
-  const pagina = await documento.getPage(1);
-  const vista = pagina.getViewport({ scale: 2 });
+  const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const page = await pdf.getPage(1);
+  const vista = page.getViewport({ scale: 2 });
 
-  const lienzo = document.createElement('canvas');
-  lienzo.width = vista.width;
-  lienzo.height = vista.height;
-  const contexto = lienzo.getContext('2d');
-  if (!contexto) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = vista.width;
+  canvas.height = vista.height;
+  const context = canvas.getContext('2d');
+  if (!context) return null;
 
-  await pagina.render({ canvas: lienzo, canvasContext: contexto, viewport: vista }).promise;
-  await documento.cleanup();
+  await page.render({ canvas, canvasContext: context, viewport: vista }).promise;
+  await pdf.cleanup();
 
-  return new Promise((resolver) => lienzo.toBlob((b) => resolver(b), 'image/png'));
+  return new Promise((resolve) => canvas.toBlob((b) => resolve(b), 'image/png'));
 }
 
 /**
@@ -126,8 +126,8 @@ async function primeraPaginaComoImagen(archivo: File): Promise<Blob | null> {
  *   inside the worker, where a relative path would resolve against the
  *   worker's own script and not against the page.
  */
-export function rutasDelOcr(origen: string = window.location.href) {
-  const base = new URL(`${import.meta.env.BASE_URL}tesseract/`, origen).href;
+export function ocrPaths(origin: string = window.location.href) {
+  const base = new URL(`${import.meta.env.BASE_URL}tesseract/`, origin).href;
   return {
     workerPath: `${base}worker.min.js`,
     corePath: `${base}core`,
@@ -138,24 +138,24 @@ export function rutasDelOcr(origen: string = window.location.href) {
 }
 
 /** OCR. Se carga a demanda: son varios megas que casi nunca hacen falta. */
-async function ocr(fuente: Blob, onProgreso?: (p: ProgresoDeLectura) => void): Promise<string> {
+async function ocr(source: Blob, onProgress?: (p: ReadingProgress) => void): Promise<string> {
   const { createWorker } = await import('tesseract.js');
-  onProgreso?.({ avance: 0.3, etapa: t('transactions.reading.stages.preparing') });
+  onProgress?.({ progress: 0.3, stage: t('transactions.reading.stages.preparing') });
 
   const worker = await createWorker('spa', undefined, {
-    ...rutasDelOcr(),
+    ...ocrPaths(),
     logger: (m: { status: string; progress: number }) => {
       if (m.status === 'recognizing text') {
-        onProgreso?.({
-          avance: 0.4 + m.progress * 0.55,
-          etapa: t('transactions.reading.stages.recognizingText'),
+        onProgress?.({
+          progress: 0.4 + m.progress * 0.55,
+          stage: t('transactions.reading.stages.recognizingText'),
         });
       }
     },
   });
 
   try {
-    const { data } = await worker.recognize(fuente);
+    const { data } = await worker.recognize(source);
     return data.text;
   } finally {
     await worker.terminate();
@@ -177,71 +177,71 @@ async function ocr(fuente: Blob, onProgreso?: (p: ProgresoDeLectura) => void): P
  * expedición, la de vencimiento, la del próximo corte—: la buena es la que
  * cae en el mes del gasto.
  */
-export async function leerSoporte(
-  archivo: File,
-  opciones: {
-    periodo?: string;
-    onProgreso?: (p: ProgresoDeLectura) => void;
+export async function readReceipt(
+  file: File,
+  options: {
+    period?: string;
+    onProgress?: (p: ReadingProgress) => void;
   } = {},
-): Promise<SoporteLeido> {
-  const { onProgreso } = opciones;
-  const { texto, fuente } = await extractText(archivo, onProgreso);
+): Promise<ParsedReceipt> {
+  const { onProgress } = options;
+  const { text, source } = await extractText(file, onProgress);
 
-  onProgreso?.({ avance: 0.9, etapa: t('transactions.reading.stages.interpreting') });
-  const interpretacion = await interpretText(texto, archivo, opciones.periodo);
-  onProgreso?.({ avance: 1, etapa: t('transactions.reading.stages.done') });
+  onProgress?.({ progress: 0.9, stage: t('transactions.reading.stages.interpreting') });
+  const interpretation = await interpretText(text, file, options.period);
+  onProgress?.({ progress: 1, stage: t('transactions.reading.stages.done') });
 
-  return { texto, fuente, lectura: lecturaDesde(interpretacion, fuente) };
+  return { text, source, reading: readingFrom(interpretation, source) };
 }
 
 /** El texto del archivo: el que trae dentro un PDF, o el que reconoce el OCR. */
 async function extractText(
-  archivo: File,
-  onProgreso: ((p: ProgresoDeLectura) => void) | undefined,
-): Promise<{ texto: string; fuente: 'texto-embebido' | 'ocr' }> {
-  const esPdf = archivo.type === 'application/pdf' || /\.pdf$/i.test(archivo.name);
+  file: File,
+  onProgress: ((p: ReadingProgress) => void) | undefined,
+): Promise<{ text: string; source: 'texto-embebido' | 'ocr' }> {
+  const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
 
-  if (!esPdf) {
-    onProgreso?.({ avance: 0.2, etapa: t('transactions.reading.stages.recognizingImage') });
-    return { texto: await ocr(archivo, onProgreso), fuente: 'ocr' };
+  if (!isPdf) {
+    onProgress?.({ progress: 0.2, stage: t('transactions.reading.stages.recognizingImage') });
+    return { text: await ocr(file, onProgress), source: 'ocr' };
   }
 
-  onProgreso?.({ avance: 0.1, etapa: t('transactions.reading.stages.openingDocument') });
-  let texto: string;
+  onProgress?.({ progress: 0.1, stage: t('transactions.reading.stages.openingDocument') });
+  let text: string;
   try {
-    texto = await textoDelPdf(archivo);
+    text = await pdfText(file);
   } catch {
-    texto = '';
+    text = '';
   }
 
-  if (texto.replace(/\s/g, '').length < MINIMO_DE_TEXTO) {
+  if (text.replace(/\s/g, '').length < MIN_TEXT_LENGTH) {
     // Un escaneo: el PDF es una foto con forma de documento.
-    onProgreso?.({ avance: 0.2, etapa: t('transactions.reading.stages.scan') });
-    const imagen = await primeraPaginaComoImagen(archivo);
-    if (imagen) return { texto: await ocr(imagen, onProgreso), fuente: 'ocr' };
+    onProgress?.({ progress: 0.2, stage: t('transactions.reading.stages.scan') });
+    const image = await firstPageAsImage(file);
+    if (image) return { text: await ocr(image, onProgress), source: 'ocr' };
   }
 
-  return { texto, fuente: 'texto-embebido' };
+  return { text, source: 'texto-embebido' };
 }
 
 /** Lo que el servidor entiende del texto. */
 async function interpretText(
-  texto: string,
-  archivo: File,
-  periodo: string | undefined,
+  text: string,
+  file: File,
+  period: string | undefined,
 ): Promise<Interpretation> {
   try {
-    const respuesta = await interpretacionInterpret({
-      text: texto,
-      fileName: archivo.name.replace(/\.[a-z0-9]+$/i, ''),
-      ...(periodo === undefined ? {} : { period: periodo }),
+    const response = await interpretacionInterpret({
+      text,
+      fileName: file.name.replace(/\.[a-z0-9]+$/i, ''),
+      ...(period === undefined ? {} : { period }),
     });
-    return respuesta.data;
+    return response.data;
   } catch (e) {
     // El archivo ya está adjunto; lo que falló es entenderlo. Se dice así, y
     // quien lo lee escribe los datos a mano en la misma ficha.
-    const detalle = e instanceof ApiClientError ? ` (${e.message})` : '';
-    throw new Error(t('transactions.reading.serverFailed', { detail: detalle }), { cause: e });
+    const detail = e instanceof ApiClientError ? ` (${e.message})` : '';
+    throw new Error(t('transactions.reading.serverFailed', { detail }), { cause: e });
   }
 }
 
@@ -253,7 +253,7 @@ async function interpretText(
  * confianza se traduce de la certeza: alta sin revisar es seguro; lo demás,
  * por debajo del umbral, para que la ficha lo diga.
  */
-function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Reading {
+function readingFrom(i: Interpretation, source: 'texto-embebido' | 'ocr'): Reading {
   const c = i.classification;
   return {
     concept: c.conceptId !== null ? c.name : null,
@@ -262,7 +262,7 @@ function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Read
     value: i.amount === null ? null : Number(i.amount),
     date: i.date,
     confidence: !i.needsReview
-      ? fuente === 'ocr'
+      ? source === 'ocr'
         ? 0.85
         : 0.95
       : c.certainty === 'high'
@@ -278,7 +278,7 @@ function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Read
         ? null
         : {
             certainty: c.certainty === 'high' ? 'alta' : 'media',
-            source: FUENTE[c.source ?? 'dictionary'],
+            source: PARSER_SOURCE[c.source ?? 'dictionary'],
             conceptId: c.conceptId ?? undefined,
             categoryId: c.categoryId ?? undefined,
             candidates: c.candidates.map((k) => ({ id: k.id, name: k.name, path: k.path })),
@@ -290,7 +290,7 @@ function lecturaDesde(i: Interpretation, fuente: 'texto-embebido' | 'ocr'): Read
  * The API speaks English (v2); `@coco/receipt-parser`, which the sheet reads, still
  * names its sources in Spanish. Translated here, at the edge.
  */
-const FUENTE: Record<NonNullable<ClassificationSource>, TreeClassification['source']> = {
+const PARSER_SOURCE: Record<NonNullable<ClassificationSource>, TreeClassification['source']> = {
   history: 'historial',
   keywords: 'palabras-clave',
   signature: 'firma',

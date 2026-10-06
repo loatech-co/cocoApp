@@ -2,10 +2,7 @@ import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { useTransactions } from '@/features/transactions/api/transactions';
-import {
-  nombreDelMovimiento,
-  sentidoDelMovimiento,
-} from '@/features/transactions/model/transactions';
+import { transactionName, transactionDirection } from '@/features/transactions/model/transactions';
 import { useCategories } from '@/shared/api/categories';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { shortDay } from '@/shared/lib/format';
@@ -142,7 +139,7 @@ function ResultRow({
   return (
     <PanelRow onClick={() => onSelect(transaction)}>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{nombreDelMovimiento(transaction, tree)}</span>
+        <span className="block truncate font-medium">{transactionName(transaction, tree)}</span>
         <span className="block truncate text-xs text-muted-foreground">
           {shortDay(transaction.date)}
         </span>
@@ -150,7 +147,7 @@ function ResultRow({
       <Amount
         amount={transaction.amount}
         currency={transaction.currency}
-        direction={sentidoDelMovimiento(transaction.type)}
+        direction={transactionDirection(transaction.type)}
         className="shrink-0 text-sm"
       />
     </PanelRow>

@@ -1,7 +1,7 @@
 import { ArrowDownUp, Filter, Plus, TrendingDown, TrendingUp } from 'lucide-react';
 
-import type { Filtros } from '@/features/transactions/model/filters';
-import { ORDENES, type Orden } from '@/features/transactions/model/sort-orders';
+import type { Filters } from '@/features/transactions/model/filters';
+import { SORT_ORDERS, type SortOrder } from '@/features/transactions/model/sort-orders';
 import { type Category, type TransactionType } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { Menu, MenuOption, MenuTitle } from '@/shared/ui/molecules/menu';
@@ -15,7 +15,11 @@ import { ClassificationFilter } from './classification-filter';
  * `toolbar-filters.tsx`.
  */
 
-export function SortMenu({ sort }: { sort: { value: Orden; onChange: (value: Orden) => void } }) {
+export function SortMenu({
+  sort,
+}: {
+  sort: { value: SortOrder; onChange: (value: SortOrder) => void };
+}) {
   return (
     <Menu
       label={t('transactions.toolbar.sort')}
@@ -27,16 +31,16 @@ export function SortMenu({ sort }: { sort: { value: Orden; onChange: (value: Ord
       {(close) => (
         <>
           <MenuTitle>{t('transactions.toolbar.sortBy')}</MenuTitle>
-          {ORDENES.map((o) => (
+          {SORT_ORDERS.map((o) => (
             <MenuOption
-              key={o.valor}
-              isSelected={sort.value === o.valor}
+              key={o.value}
+              isSelected={sort.value === o.value}
               onClick={() => {
-                sort.onChange(o.valor);
+                sort.onChange(o.value);
                 close();
               }}
             >
-              {o.etiqueta}
+              {o.label}
             </MenuOption>
           ))}
         </>
@@ -51,8 +55,8 @@ export function ClassificationMenu({
   apply,
 }: {
   tree: Category[];
-  filters: Filtros;
-  apply: (changes: Partial<Filtros>) => void;
+  filters: Filters;
+  apply: (changes: Partial<Filters>) => void;
 }) {
   return (
     <Menu

@@ -2,7 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import { useEffect, useRef, type RefObject } from 'react';
 
 import { useConceptSearch } from '@/features/transactions/hooks/use-concept-search';
-import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
+import type { ReceiptCandidate } from '@/features/transactions/model/movement-form';
 import { t } from '@/shared/lib/i18n';
 import type { TreeNode } from '@/shared/lib/searchable-tree';
 import { cn } from '@/shared/lib/utils';
@@ -28,7 +28,7 @@ interface ConceptSearchProps {
   /** Ids de los conceptos usados últimamente, del más reciente al más viejo. */
   recent?: readonly number[];
   /** Lo que la lectura de un recibo dejó entre lo que dudar. */
-  candidates?: readonly CandidatoDelRecibo[];
+  candidates?: readonly ReceiptCandidate[];
   /** Debajo del campo: «sugerido por tu historial», un error… */
   description?: string | undefined;
 }
@@ -78,13 +78,13 @@ export function ConceptSearch({
   candidates = [],
   description,
 }: ConceptSearchProps) {
-  const b = useConceptSearch({ arbol: tree, valor: value, recientes: recent });
+  const b = useConceptSearch({ tree, value, recent });
   const field = useRef<HTMLInputElement>(null);
 
   if (isDisabled) {
     return (
       <Field label={t('transactions.fields.concept')} id={id} description={description}>
-        <LockedConcept id={id} chosen={b.elegida} />
+        <LockedConcept id={id} chosen={b.chosen} />
       </Field>
     );
   }
@@ -100,7 +100,7 @@ export function ConceptSearch({
         boxClassName="w-full min-w-0"
         triggerClassName={fieldTrigger()}
         triggerId={id}
-        trigger={({ isOpen }) => <ConceptSearchValue chosen={b.elegida} isOpen={isOpen} />}
+        trigger={({ isOpen }) => <ConceptSearchValue chosen={b.chosen} isOpen={isOpen} />}
       >
         {(close) => (
           <MenuPanel
@@ -121,7 +121,7 @@ export function ConceptSearch({
 interface MenuPanelProps {
   searchBox: ReturnType<typeof useConceptSearch>;
   field: RefObject<HTMLInputElement | null>;
-  candidates: readonly CandidatoDelRecibo[];
+  candidates: readonly ReceiptCandidate[];
   isCreating: boolean;
   close: () => void;
   onSelect: (id: number | undefined) => void;
@@ -139,22 +139,22 @@ function MenuPanel({
   onCreateConcept,
 }: MenuPanelProps) {
   const finish = (): void => {
-    b.limpiar();
+    b.clear();
     close();
   };
 
   return (
     <Panel
       field={field}
-      query={b.busca}
-      setQuery={b.setBusca}
-      mode={b.modo}
-      results={b.resultados}
-      recent={b.entradasRecientes}
+      query={b.query}
+      setQuery={b.setQuery}
+      mode={b.mode}
+      results={b.results}
+      recent={b.recentEntries}
       candidates={candidates}
-      categories={b.categoriasFiltradas}
-      chosen={b.elegida}
-      canCreate={b.puedeCrear}
+      categories={b.filteredCategories}
+      chosen={b.chosen}
+      canCreate={b.canCreate}
       isCreating={isCreating}
       onSelect={(e) => {
         onSelect(e === undefined ? undefined : Number(e.id));
@@ -164,11 +164,11 @@ function MenuPanel({
         onSelect(c.id);
         finish();
       }}
-      newName={b.nombreNuevo}
-      onRequestCategory={b.pedirCategoria}
-      onBack={b.volver}
+      newName={b.newName}
+      onRequestCategory={b.askForCategory}
+      onBack={b.back}
       onCreateIn={(category) => {
-        onCreateConcept(b.nombreNuevo, Number(category.id));
+        onCreateConcept(b.newName, Number(category.id));
         finish();
       }}
     />

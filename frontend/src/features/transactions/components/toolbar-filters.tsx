@@ -1,8 +1,8 @@
 import { Search, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import type { Filtros } from '@/features/transactions/model/filters';
-import type { Orden } from '@/features/transactions/model/sort-orders';
+import type { Filters } from '@/features/transactions/model/filters';
+import type { SortOrder } from '@/features/transactions/model/sort-orders';
 import { useCategories } from '@/shared/api/categories';
 import { type TransactionType } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
@@ -22,12 +22,12 @@ interface ToolbarFiltersProps {
   subtitle?: string;
   /** Alias de `subtitulo`, por compatibilidad con las llamadas existentes. */
   summary?: string;
-  filters: Filtros;
-  apply: (changes: Partial<Filtros>) => void;
+  filters: Filters;
+  apply: (changes: Partial<Filters>) => void;
   clear: () => void;
   hasActiveFilters: boolean;
   /** Solo donde ordenar significa algo: una lista. */
-  sort?: { value: Orden; onChange: (value: Orden) => void };
+  sort?: { value: SortOrder; onChange: (value: SortOrder) => void };
   /** Botones propios de la pantalla, a la derecha del todo. */
   /**
    * Registrar un movimiento nuevo, del tipo que se elija.
@@ -124,7 +124,7 @@ export function ToolbarFilters(props: ToolbarFiltersProps) {
 }
 
 /** Lo escrito en la búsqueda, si el campo está abierto, y el campo mismo. */
-function useToolbarSearch(filters: Filtros, apply: (changes: Partial<Filtros>) => void) {
+function useToolbarSearch(filters: Filters, apply: (changes: Partial<Filters>) => void) {
   // La búsqueda se escribe local y se manda con retraso: sin esto cada tecla
   // dispararía una consulta y la lista parpadearía mientras se escribe.
   const [text, setText] = useState(filters.q ?? '');

@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { leerSoporte } from '@/features/transactions/api/read-receipt';
+import { readReceipt } from '@/features/transactions/api/read-receipt';
 import {
   CELSIA_READING,
   openConfirmation,
@@ -19,7 +19,7 @@ import {
   paquete de lectura.
 */
 vi.mock('@/features/transactions/api/read-receipt', () => ({
-  leerSoporte: vi.fn(),
+  readReceipt: vi.fn(),
 }));
 
 afterEach(cleanup);
@@ -40,11 +40,11 @@ describe('El soporte adjuntado al confirmar un pago', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.mocked(leerSoporte).mockReset();
+    vi.mocked(readReceipt).mockReset();
   });
 
   it('reemplaza el valor y la fecha esperados por los que dice el recibo', async () => {
-    vi.mocked(leerSoporte).mockResolvedValue(CELSIA_READING);
+    vi.mocked(readReceipt).mockResolvedValue(CELSIA_READING);
 
     const { container } = openConfirmation();
 
@@ -71,7 +71,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
       await vi.advanceTimersByTimeAsync(4000);
     });
 
-    expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();
+    expect(vi.mocked(readReceipt)).toHaveBeenCalledOnce();
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('214.500');
     expect(screen.getByLabelText<HTMLInputElement>('Fecha').value).toMatch(/2 de octubre/i);
   });
@@ -81,7 +81,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
     // manualmente» en el «cómo empezar» había dicho que iba a teclearlo. Esa
     // pantalla ya no existe, así que no hay elección que respetar: lo leído
     // entra como propuesta a verificar, igual que al confirmar un pago.
-    vi.mocked(leerSoporte).mockResolvedValue(CELSIA_READING);
+    vi.mocked(readReceipt).mockResolvedValue(CELSIA_READING);
 
     const { container } = openNew();
 
@@ -95,7 +95,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
       await vi.advanceTimersByTimeAsync(4000);
     });
 
-    expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();
+    expect(vi.mocked(readReceipt)).toHaveBeenCalledOnce();
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('214.500');
   });
 });
@@ -115,11 +115,11 @@ describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.mocked(leerSoporte).mockReset();
+    vi.mocked(readReceipt).mockReset();
   });
 
   it('«Cargar archivo» abre el panel de subir, y lo que se da ahí se lee y rellena el formulario', async () => {
-    vi.mocked(leerSoporte).mockResolvedValue(CELSIA_READING);
+    vi.mocked(readReceipt).mockResolvedValue(CELSIA_READING);
     openNew();
 
     expect(screen.queryByRole('dialog', { name: 'Agregar soportes' })).toBeNull();
@@ -136,8 +136,8 @@ describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
       await vi.advanceTimersByTimeAsync(4000);
     });
 
-    expect(vi.mocked(leerSoporte)).toHaveBeenCalledOnce();
-    expect(vi.mocked(leerSoporte).mock.calls[0]?.[0]?.name).toBe('celsia-octubre.png');
+    expect(vi.mocked(readReceipt)).toHaveBeenCalledOnce();
+    expect(vi.mocked(readReceipt).mock.calls[0]?.[0]?.name).toBe('celsia-octubre.png');
     // El panel se cerró, el formulario quedó relleno y el archivo queda como
     // previsualización en la columna del documento.
     expect(screen.queryByRole('dialog', { name: 'Agregar soportes' })).toBeNull();

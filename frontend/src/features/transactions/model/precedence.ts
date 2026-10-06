@@ -19,41 +19,41 @@ import { t } from '@/shared/lib/i18n';
  * caminos distintos —una petición, la lectura de un recibo, un clic— y cada
  * camino tendría su propia versión de la regla. Aquí hay una.
  */
-export type Origen = 'manual' | 'historial' | 'palabras-clave' | 'diccionario';
+export type Origin = 'manual' | 'historial' | 'palabras-clave' | 'diccionario';
 
-const RANGO: Record<Origen, number> = {
+const RANK: Record<Origin, number> = {
   manual: 4,
   historial: 3,
   'palabras-clave': 2,
   diccionario: 1,
 };
 
-export interface Clasificacion {
+export interface Classification {
   categoryId: number | undefined;
   /** `null` es «nadie ha dicho nada todavía». */
-  origen: Origen | null;
+  origin: Origin | null;
 }
 
-export const SIN_CLASIFICAR: Clasificacion = { categoryId: undefined, origen: null };
+export const UNCLASSIFIED: Classification = { categoryId: undefined, origin: null };
 
 /** Lo que una fuente propone. Siempre dice quién es. */
-export interface Propuesta {
+export interface Proposal {
   categoryId: number | undefined;
-  origen: Origen;
+  origin: Origin;
 }
 
 /** Qué queda después de que una fuente proponga algo. */
-export function aplicar(actual: Clasificacion, propuesta: Propuesta): Clasificacion {
-  if (propuesta.origen === 'manual') return { ...propuesta };
-  if (actual.origen === 'manual') return actual;
+export function apply(actual: Classification, proposal: Proposal): Classification {
+  if (proposal.origin === 'manual') return { ...proposal };
+  if (actual.origin === 'manual') return actual;
 
-  const rangoActual = actual.origen === null ? 0 : RANGO[actual.origen];
-  return RANGO[propuesta.origen] >= rangoActual ? { ...propuesta } : actual;
+  const currentRank = actual.origin === null ? 0 : RANK[actual.origin];
+  return RANK[proposal.origin] >= currentRank ? { ...proposal } : actual;
 }
 
 /** Para enseñarlo: «Sugerido por tu historial». */
-export function nombreDelOrigen(origen: Origen): string {
-  switch (origen) {
+export function originName(origin: Origin): string {
+  switch (origin) {
     case 'manual':
       return 'elegido';
     case 'historial':

@@ -1,6 +1,6 @@
 import type { MovementSheetState } from '@/features/transactions/hooks/use-movement-form';
-import { nombreDelOrigen } from '@/features/transactions/model/precedence';
-import { rutaSeleccionada } from '@/features/transactions/model/transactions';
+import { originName } from '@/features/transactions/model/precedence';
+import { selectedPath } from '@/features/transactions/model/transactions';
 import { type CategoryTree } from '@/shared/api/categories';
 import { t } from '@/shared/lib/i18n';
 import { Field } from '@/shared/ui/atoms/field';
@@ -20,13 +20,13 @@ interface ClassificationProps {
 
 /** Lo que el buscador dice debajo: de dónde salió lo que hay puesto. */
 function searchHelp(sheet: MovementSheetState): string | undefined {
-  const { clasificacion, categoryId, candidatosDelRecibo } = sheet;
-  if (clasificacion.origen && clasificacion.origen !== 'manual' && categoryId !== undefined) {
+  const { classification, categoryId, receiptCandidates } = sheet;
+  if (classification.origin && classification.origin !== 'manual' && categoryId !== undefined) {
     return t('transactions.classification.canChange', {
-      origin: nombreDelOrigen(clasificacion.origen).replace(/^\w/, (c) => c.toUpperCase()),
+      origin: originName(classification.origin).replace(/^\w/, (c) => c.toUpperCase()),
     });
   }
-  return candidatosDelRecibo.length > 0 && clasificacion.origen !== 'manual'
+  return receiptCandidates.length > 0 && classification.origin !== 'manual'
     ? t('transactions.classification.severalConcepts')
     : undefined;
 }
@@ -66,11 +66,11 @@ export function MovementClassification({
         tree={tree}
         value={sheet.categoryId}
         disabled={isStatic}
-        onSelect={(id) => sheet.proponer({ categoryId: id, origen: 'manual' })}
+        onSelect={(id) => sheet.propose({ categoryId: id, origin: 'manual' })}
         onCreateConcept={(name, categoryId) => void createInside(name, categoryId)}
         isCreating={isCreating}
         recent={recent}
-        candidates={sheet.candidatosDelRecibo}
+        candidates={sheet.receiptCandidates}
         description={searchHelp(sheet)}
       />
 
@@ -80,16 +80,16 @@ export function MovementClassification({
         <div className="-mt-3 flex self-start">
           <TextButton
             tone="subtle"
-            onClick={() => sheet.setCascadaVisible((isVisible) => !isVisible)}
+            onClick={() => sheet.setIsCascadeVisible((isVisible) => !isVisible)}
           >
-            {sheet.cascadaVisible
+            {sheet.isCascadeVisible
               ? t('transactions.classification.hidePicker')
               : t('transactions.classification.showPicker')}
           </TextButton>
         </div>
       )}
 
-      {(sheet.cascadaVisible || isStatic) && (
+      {(sheet.isCascadeVisible || isStatic) && (
         <ClassificationCascade
           sheet={sheet}
           tree={tree}
@@ -110,31 +110,31 @@ export function MovementClassification({
  */
 function ClassificationCascade(props: ClassificationProps) {
   const { sheet, tree, isStatic, createInside, isCreating } = props;
-  const { centro, categoria, concepto } = rutaSeleccionada(tree, sheet.categoryId);
-  const choose = (id?: number): void => sheet.proponer({ categoryId: id, origen: 'manual' });
+  const { costCenter, category, concept } = selectedPath(tree, sheet.categoryId);
+  const choose = (id?: number): void => sheet.propose({ categoryId: id, origin: 'manual' });
 
   return (
     <>
-      <CostCenterField costCenter={centro} tree={tree} isStatic={isStatic} onSelect={choose} />
+      <CostCenterField costCenter={costCenter} tree={tree} isStatic={isStatic} onSelect={choose} />
 
       <Field label={t('centers.levels.category')} id="mov-categoria">
         <Combo
           id="mov-categoria"
           label={t('centers.levels.category')}
-          value={categoria ? String(categoria.id) : ''}
-          options={(centro?.children ?? []).map((g) => ({
+          value={category ? String(category.id) : ''}
+          options={(costCenter?.children ?? []).map((g) => ({
             value: String(g.id),
             label: g.name,
           }))}
-          disabled={isStatic || !centro}
+          disabled={isStatic || !costCenter}
           emptyLabel={
-            centro
+            costCenter
               ? t('transactions.classification.notChosen')
               : t('transactions.classification.chooseCostCenterFirst')
           }
           isCreating={isCreating}
-          onChange={(v) => choose(v === '' ? centro?.id : Number(v))}
-          onCreate={(name) => void createInside(name, centro?.id)}
+          onChange={(v) => choose(v === '' ? costCenter?.id : Number(v))}
+          onCreate={(name) => void createInside(name, costCenter?.id)}
         />
       </Field>
 
@@ -142,20 +142,20 @@ function ClassificationCascade(props: ClassificationProps) {
         <Combo
           id="mov-concepto-cascada"
           label={t('transactions.fields.concept')}
-          value={concepto ? String(concepto.id) : ''}
-          options={(categoria?.children ?? []).map((c) => ({
+          value={concept ? String(concept.id) : ''}
+          options={(category?.children ?? []).map((c) => ({
             value: String(c.id),
             label: c.name,
           }))}
-          disabled={isStatic || !categoria}
+          disabled={isStatic || !category}
           emptyLabel={
-            categoria
+            category
               ? t('transactions.classification.notChosen')
               : t('transactions.classification.chooseCategoryFirst')
           }
           isCreating={isCreating}
-          onChange={(v) => choose(v === '' ? categoria?.id : Number(v))}
-          onCreate={(name) => void createInside(name, categoria?.id)}
+          onChange={(v) => choose(v === '' ? category?.id : Number(v))}
+          onCreate={(name) => void createInside(name, category?.id)}
         />
       </Field>
     </>

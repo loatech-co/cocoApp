@@ -19,7 +19,7 @@ import { t } from '@/shared/lib/i18n';
  * soporte que sí estaba. Es el mismo error que el 415 que se comía los
  * agotamientos de recursos: dar por definitivo lo que solo era un fallo.
  */
-export type FalloDeSoporte = 'ausente' | 'sin-cargar';
+export type ReceiptFailure = 'ausente' | 'sin-cargar';
 
 /**
  * El texto de la confirmación de borrar un soporte, escrito una vez.
@@ -32,4 +32,4 @@ export type FalloDeSoporte = 'ausente' | 'sin-cargar';
  * que el concepto no se toca: lo que se está borrando se ve DENTRO de lo otro,
  * así que la papelera parece apuntar al contenedor.
  */
-export const BORRAR_UN_SOPORTE = t('transactions.supports.deleteWarning');
+export const DELETE_RECEIPT = t('transactions.supports.deleteWarning');

@@ -18,7 +18,7 @@ import { shrinkReceipts } from '@/shared/lib/shrink-receipt';
  * ocho PDFs de doscientos kilos cada vez que se abre un movimiento sería pagar
  * por adelantado por lo que casi nadie va a abrir.
  */
-export function useSoportes(transactionId: number | undefined) {
+export function useReceipts(transactionId: number | undefined) {
   return useQuery({
     queryKey: keys.receipts(transactionId ?? 0),
     enabled: transactionId !== undefined,
@@ -29,38 +29,38 @@ export function useSoportes(transactionId: number | undefined) {
 }
 
 /** Sube soportes a un movimiento y devuelve la lista ya actualizada. */
-export function useSubirSoportes(transactionId: number) {
+export function useUploadReceipts(transactionId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      archivos,
-      onProgreso,
+      files,
+      onProgress,
     }: {
-      archivos: File[];
-      onProgreso?: (fraccion: number) => void;
+      files: File[];
+      onProgress?: (fraction: number) => void;
     }): Promise<Receipt[]> => {
-      const datos = new FormData();
+      const data = new FormData();
       // Encogidas antes de viajar: una foto de teléfono son cuatro megas de
       // los que el servidor se queda con 1100px de ancho. El porqué largo
       // —incluido el HEIC del iPhone, que allá no se puede abrir— está en
       // `lib/encoger-soporte.ts`.
-      for (const archivo of await shrinkReceipts(archivos)) datos.append('files', archivo);
-      return apiUpload<Receipt[]>(getSoportesUploadUrl(transactionId), datos, onProgreso);
+      for (const file of await shrinkReceipts(files)) data.append('files', file);
+      return apiUpload<Receipt[]>(getSoportesUploadUrl(transactionId), data, onProgress);
     },
     // Se escribe la respuesta en la caché en vez de invalidarla: el servidor
     // acaba de devolver la lista entera y volver a pedirla es un viaje para
     // traer lo que ya está en la mano.
-    onSuccess: (lista) => queryClient.setQueryData(keys.receipts(transactionId), lista),
+    onSuccess: (list) => queryClient.setQueryData(keys.receipts(transactionId), list),
   });
 }
 
-export function useEliminarSoporte(transactionId: number) {
+export function useDeleteReceipt(transactionId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (soporteId: number) => {
-      await soportesRemove(transactionId, soporteId);
+    mutationFn: async (receiptId: number) => {
+      await soportesRemove(transactionId, receiptId);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.receipts(transactionId) }),
   });

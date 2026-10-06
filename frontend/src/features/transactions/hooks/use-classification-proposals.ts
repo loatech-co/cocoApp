@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
 import { useTransactions } from '@/features/transactions/api/transactions';
-import { useSugerenciaDeCategoria } from '@/features/transactions/hooks/use-category-suggestion';
+import { useCategorySuggestion } from '@/features/transactions/hooks/use-category-suggestion';
 import { proposalFromText } from '@/features/transactions/model/movement-form';
-import { conceptosRecientes } from '@/features/transactions/model/recent';
+import { recentConcepts } from '@/features/transactions/model/recent';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
 import { useOnChange } from '@/shared/lib/on-change';
 import { toSearchableNodes } from '@/shared/lib/searchable-tree';
@@ -34,58 +34,55 @@ import type { MovementSheetState } from './use-movement-form';
  * tarjeta de pagos pendientes sin que nadie recuerde haberlo tocado.
  */
 export function useClassificationProposals(
-  ficha: MovementSheetState,
+  sheet: MovementSheetState,
   {
-    abierta,
-    movimiento,
-    arbol,
+    isOpen,
+    transaction,
+    tree,
   }: {
-    abierta: boolean;
-    movimiento: Transaction | null | undefined;
-    arbol: Category[] | undefined;
+    isOpen: boolean;
+    transaction: Transaction | null | undefined;
+    tree: Category[] | undefined;
   },
 ) {
-  const indiceDelArbol = useMemo(() => indexTree(toSearchableNodes(arbol ?? [])), [arbol]);
-  const proponiendo = abierta && ficha.paso === 'formulario' && ficha.editable;
+  const treeIndex = useMemo(() => indexTree(toSearchableNodes(tree ?? [])), [tree]);
+  const isProposing = isOpen && sheet.step === 'formulario' && sheet.isEditable;
 
-  const sugerenciaDelHistorial = useSugerenciaDeCategoria(proponiendo ? ficha.description : '');
-  useOnChange([sugerenciaDelHistorial?.categoryId], () => {
+  const historySuggestion = useCategorySuggestion(isProposing ? sheet.description : '');
+  useOnChange([historySuggestion?.categoryId], () => {
     // Solo con un id de verdad: una respuesta con otra forma no puede vaciar
     // lo que otra fuente ya había puesto.
-    if (typeof sugerenciaDelHistorial?.categoryId !== 'number') return;
-    ficha.setHuboSugerencia(true);
-    ficha.proponer({ categoryId: sugerenciaDelHistorial.categoryId, origen: 'historial' });
+    if (typeof historySuggestion?.categoryId !== 'number') return;
+    sheet.setWasSuggested(true);
+    sheet.propose({ categoryId: historySuggestion.categoryId, origin: 'historial' });
   });
 
-  const propuestaLocal = useMemo(() => {
-    const escrito = ficha.description.trim();
-    if (!proponiendo || escrito.length < 3) return null;
-    return proposalFromText(indiceDelArbol, escrito);
-  }, [indiceDelArbol, ficha.description, proponiendo]);
+  const localProposal = useMemo(() => {
+    const written = sheet.description.trim();
+    if (!isProposing || written.length < 3) return null;
+    return proposalFromText(treeIndex, written);
+  }, [treeIndex, sheet.description, isProposing]);
 
   useOnChange(
     [
-      propuestaLocal?.categoryId,
-      propuestaLocal?.origen,
-      propuestaLocal && (propuestaLocal.candidatos ?? []).map((c) => c.id).join(','),
+      localProposal?.categoryId,
+      localProposal?.origin,
+      localProposal && (localProposal.candidates ?? []).map((c) => c.id).join(','),
     ],
     () => {
-      if (!propuestaLocal) return;
-      ficha.setHuboSugerencia(true);
-      const { categoryId, origen, candidatos } = propuestaLocal;
-      if (categoryId !== undefined) ficha.proponer({ categoryId, origen });
-      if (candidatos) ficha.setCandidatosDelRecibo(candidatos);
+      if (!localProposal) return;
+      sheet.setWasSuggested(true);
+      const { categoryId, origin, candidates } = localProposal;
+      if (categoryId !== undefined) sheet.propose({ categoryId, origin });
+      if (candidates) sheet.setReceiptCandidates(candidates);
     },
   );
 
   // Los conceptos usados últimamente, para el buscador en blanco. Solo al
   // crear: editando, el concepto ya está puesto.
-  const movimientosRecientes = useTransactions(
-    { perPage: 40 },
-    { enabled: abierta && !movimiento },
-  );
+  const recentTransactions = useTransactions({ perPage: 40 }, { enabled: isOpen && !transaction });
   return useMemo(
-    () => conceptosRecientes(movimientosRecientes.data?.data ?? [], indiceDelArbol),
-    [movimientosRecientes.data, indiceDelArbol],
+    () => recentConcepts(recentTransactions.data?.data ?? [], treeIndex),
+    [recentTransactions.data, treeIndex],
   );
 }

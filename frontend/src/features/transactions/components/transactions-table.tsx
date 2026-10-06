@@ -1,8 +1,8 @@
 import { Flag, SearchX } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { useActualizarMovimiento } from '@/features/transactions/api/transactions';
-import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/transactions';
+import { useUpdateTransaction } from '@/features/transactions/api/transactions';
+import { transactionName, selectedPath } from '@/features/transactions/model/transactions';
 import { type CategoryTree } from '@/shared/api/categories';
 import { type Transaction } from '@/shared/api/generated/model';
 import { formatMoney, shortDay, shortMonth } from '@/shared/lib/format';
@@ -107,14 +107,14 @@ interface RowProps {
 }
 
 function Row({ transaction, tree, onOpen }: RowProps) {
-  const update = useActualizarMovimiento();
-  const { centro, categoria } = rutaSeleccionada(tree, transaction.categoryId ?? undefined);
+  const update = useUpdateTransaction();
+  const { costCenter, category } = selectedPath(tree, transaction.categoryId ?? undefined);
 
   // Cambiar el selector guarda EXACTAMENTE lo elegido, sin adivinar el resto.
   // La tentación es "conservar el concepto si existe con el mismo nombre en el
   // categoría nuevo", pero eso mueve plata a un sitio que nadie pidió y nadie ve.
   const reclassify = (id: number | undefined): void => {
-    update.mutate({ id: transaction.id, cambios: { categoryId: id ?? null } });
+    update.mutate({ id: transaction.id, changes: { categoryId: id ?? null } });
   };
 
   // Sin clasificar no es un error, es algo pendiente: la fila se marca para que
@@ -132,9 +132,9 @@ function Row({ transaction, tree, onOpen }: RowProps) {
     hay que mover algo, se hace dinámico el centro desde Centros de costos —un
     acto deliberado, en otra pantalla— y entonces se mueve.
   */
-  const isStatic = centro?.isStatic ?? false;
+  const isStatic = costCenter?.isStatic ?? false;
   const reason = isStatic
-    ? t('transactions.table.staticCenter', { name: centro?.name })
+    ? t('transactions.table.staticCenter', { name: costCenter?.name })
     : undefined;
 
   return (
@@ -153,7 +153,7 @@ function Row({ transaction, tree, onOpen }: RowProps) {
         <span onClick={(e) => e.stopPropagation()}>
           <RowSelector
             aria={t('centers.levels.costCenter')}
-            value={centro?.id}
+            value={costCenter?.id}
             options={tree}
             disabled={isStatic}
             reason={reason}
@@ -166,11 +166,11 @@ function Row({ transaction, tree, onOpen }: RowProps) {
         <span onClick={(e) => e.stopPropagation()}>
           <RowSelector
             aria={t('centers.levels.category')}
-            value={categoria?.id}
-            options={centro?.children ?? []}
-            disabled={isStatic || !centro}
+            value={category?.id}
+            options={costCenter?.children ?? []}
+            disabled={isStatic || !costCenter}
             reason={reason}
-            onSelect={(id) => reclassify(id ?? centro?.id)}
+            onSelect={(id) => reclassify(id ?? costCenter?.id)}
           />
         </span>
       </Td>
@@ -305,7 +305,7 @@ function NameCell({
             por un selector de conceptos —así que todo lo registrado a mano
             decía «Sin concepto» aunque tuviera su concepto elegido—. */}
         <span className="block max-w-56 truncate font-medium">
-          {nombreDelMovimiento(transaction, tree)}
+          {transactionName(transaction, tree)}
         </span>
       </span>
     </Td>

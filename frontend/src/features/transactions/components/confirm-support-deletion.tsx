@@ -1,5 +1,5 @@
-import { useEliminarSoporte } from '@/features/transactions/api/receipts';
-import { BORRAR_UN_SOPORTE } from '@/features/transactions/model/supports';
+import { useDeleteReceipt } from '@/features/transactions/api/receipts';
+import { DELETE_RECEIPT } from '@/features/transactions/model/supports';
 import { type Receipt } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
 import { Confirmation } from '@/shared/ui/organisms/confirmation';
@@ -23,7 +23,7 @@ export function ConfirmSupportDeletion({
   onCancel: () => void;
   onDeleted: () => void;
 }) {
-  const remove = useEliminarSoporte(transactionId);
+  const remove = useDeleteReceipt(transactionId);
 
   return (
     <Confirmation
@@ -38,7 +38,7 @@ export function ConfirmSupportDeletion({
         remove.mutate(receipt.id, { onSuccess: onDeleted });
       }}
     >
-      {BORRAR_UN_SOPORTE}
+      {DELETE_RECEIPT}
     </Confirmation>
   );
 }

@@ -1,14 +1,14 @@
 import type { RefObject } from 'react';
 
 import {
-  ALTO_LIENZO,
+  CANVAS_HEIGHT,
   area,
-  equis,
-  etiquetaDeCubo,
-  fechaLarga,
-  linea,
-  ye,
-  unidad,
+  xAt,
+  bucketLabel,
+  longDate,
+  line,
+  yAt,
+  unit,
 } from '@/features/transactions/model/trend';
 import { type TrendPoint } from '@/shared/api/generated/model';
 import { formatCOP } from '@/shared/lib/format';
@@ -31,13 +31,13 @@ export function TrendSummary({
   return (
     <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-xs text-muted-foreground">
       <span>
-        {t('transactions.trend.averagePer', { unit: unidad(granularity) })}
+        {t('transactions.trend.averagePer', { unit: unit(granularity) })}
         <strong className="tabular font-semibold text-foreground">{formatCOP(average)}</strong>
       </span>
       <span>
         {t('transactions.trend.peak')}
         <strong className="tabular font-semibold text-foreground">{formatCOP(max)}</strong>
-        {t('transactions.trend.peakOn', { bucket: etiquetaDeCubo(pico.bucket) })}
+        {t('transactions.trend.peakOn', { bucket: bucketLabel(pico.bucket) })}
       </span>
     </div>
   );
@@ -72,7 +72,7 @@ export function TrendLines({
 
       <path d={area(expenses, ceiling, total)} fill="url(#tendencia-relleno)" />
       <path
-        d={linea(expenses, ceiling, total)}
+        d={line(expenses, ceiling, total)}
         fill="none"
         stroke="var(--color-expense)"
         strokeWidth="2.5"
@@ -83,7 +83,7 @@ export function TrendLines({
 
       {hasIncome && (
         <path
-          d={linea(income, ceiling, total)}
+          d={line(income, ceiling, total)}
           fill="none"
           stroke="var(--color-income)"
           strokeWidth="1.75"
@@ -127,8 +127,8 @@ function Guides() {
           key={f}
           x1="0"
           x2="100"
-          y1={ALTO_LIENZO * f}
-          y2={ALTO_LIENZO * f}
+          y1={CANVAS_HEIGHT * f}
+          y2={CANVAS_HEIGHT * f}
           stroke="var(--color-border)"
           strokeWidth="0.25"
           vectorEffect="non-scaling-stroke"
@@ -156,7 +156,7 @@ export function Point({
       className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-card"
       style={{
         left: `${x}%`,
-        top: `${(ye(value, ceiling) / ALTO_LIENZO) * 100}%`,
+        top: `${(yAt(value, ceiling) / CANVAS_HEIGHT) * 100}%`,
         backgroundColor: color,
       }}
     />
@@ -193,7 +193,7 @@ export function TrendCard({
         !isMeasured && 'opacity-0',
       )}
     >
-      <p className="text-xs font-semibold text-muted-foreground">{fechaLarga(point.bucket)}</p>
+      <p className="text-xs font-semibold text-muted-foreground">{longDate(point.bucket)}</p>
       <p className="tabular mt-1 font-display text-base font-semibold">
         {formatCOP(Number(point.expense))}
       </p>
@@ -220,16 +220,16 @@ export function TrendAxis({
   labels,
   total,
 }: {
-  labels: { indice: number; texto: string }[];
+  labels: { index: number; text: string }[];
   total: number;
 }) {
   return (
     <div className="relative h-4">
-      {labels.map(({ indice: index, texto: text }) => (
+      {labels.map(({ index, text }) => (
         <span
           key={index}
           className="absolute -translate-x-1/2 whitespace-nowrap text-2xs text-muted-foreground"
-          style={{ left: `${equis(index, total)}%` }}
+          style={{ left: `${xAt(index, total)}%` }}
         >
           {text}
         </span>

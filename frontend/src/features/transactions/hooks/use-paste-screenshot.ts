@@ -13,11 +13,11 @@ import { t } from '@/shared/lib/i18n';
  * La extensión sale del TIPO y no de un nombre que no existe: según de dónde
  * se copie, el portapapeles entrega png, jpeg o webp.
  */
-function nombrarCaptura(contenido: Blob, tipo: string): File {
-  const extension = tipo.split('/')[1]?.replace('jpeg', 'jpg') ?? 'png';
-  const sello = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+function nameScreenshot(content: Blob, type: string): File {
+  const extension = type.split('/')[1]?.replace('jpeg', 'jpg') ?? 'png';
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
 
-  return new File([contenido], `captura-${sello}.${extension}`, { type: tipo });
+  return new File([content], `captura-${stamp}.${extension}`, { type });
 }
 
 /**
@@ -36,32 +36,32 @@ function nombrarCaptura(contenido: Blob, tipo: string): File {
  * existe—, así que el fallo se cuenta y se ofrece la salida de siempre:
  * arrastrar o elegir del equipo.
  */
-export function usePasteScreenshot(onArchivos: (archivos: File[]) => void) {
-  const [problemaAlPegar, setProblemaAlPegar] = useState<string | null>(null);
+export function usePasteScreenshot(onFiles: (files: File[]) => void) {
+  const [pasteProblem, setPasteProblem] = useState<string | null>(null);
 
-  async function pegar(): Promise<void> {
-    setProblemaAlPegar(null);
+  async function paste(): Promise<void> {
+    setPasteProblem(null);
 
     try {
-      const enElPortapapeles = await navigator.clipboard.read();
-      const capturas: File[] = [];
+      const inClipboard = await navigator.clipboard.read();
+      const screenshots: File[] = [];
 
-      for (const elemento of enElPortapapeles) {
-        const tipo = elemento.types.find((t) => t.startsWith('image/'));
-        if (!tipo) continue;
-        capturas.push(nombrarCaptura(await elemento.getType(tipo), tipo));
+      for (const element of inClipboard) {
+        const type = element.types.find((t) => t.startsWith('image/'));
+        if (!type) continue;
+        screenshots.push(nameScreenshot(await element.getType(type), type));
       }
 
-      if (capturas.length === 0) {
-        setProblemaAlPegar(t('transactions.supports.clipboardEmpty'));
+      if (screenshots.length === 0) {
+        setPasteProblem(t('transactions.supports.clipboardEmpty'));
         return;
       }
 
-      onArchivos(capturas);
+      onFiles(screenshots);
     } catch {
-      setProblemaAlPegar(t('transactions.supports.clipboardDenied'));
+      setPasteProblem(t('transactions.supports.clipboardDenied'));
     }
   }
 
-  return { pegar, problemaAlPegar };
+  return { paste, pasteProblem };
 }

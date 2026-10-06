@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CategoryTree as Category } from '@/shared/api/categories';
-import type { PendingPayment as PagoPendiente, Transaction } from '@/shared/api/generated/model';
+import type { PendingPayment, Transaction } from '@/shared/api/generated/model';
 import {
   indexTree,
   type TreeClassification,
@@ -10,10 +10,10 @@ import {
 } from '@coco/receipt-parser';
 
 import {
-  hoyEnBogota,
+  todayInBogota,
   initialAmountAndDate,
-  mayuscula,
-  nombreDelTipo,
+  capitalize,
+  typeName,
   proposalFromReading,
   proposalFromText,
   unreadNotice,
@@ -70,19 +70,19 @@ describe('hoyEnBogota', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-01T03:00:00Z'));
 
-    expect(hoyEnBogota()).toBe('2026-02-28');
+    expect(todayInBogota()).toBe('2026-02-28');
   });
 });
 
 describe('nombreDelTipo and mayuscula', () => {
   it('names an income and everything else as an expense', () => {
-    expect(nombreDelTipo('income')).toBe('ingreso');
-    expect(nombreDelTipo('expense')).toBe('gasto');
+    expect(typeName('income')).toBe('ingreso');
+    expect(typeName('expense')).toBe('gasto');
   });
 
   it('capitalises the first letter only', () => {
-    expect(mayuscula('gasto fijo')).toBe('Gasto fijo');
-    expect(mayuscula('')).toBe('');
+    expect(capitalize('gasto fijo')).toBe('Gasto fijo');
+    expect(capitalize('')).toBe('');
   });
 });
 
@@ -93,13 +93,13 @@ describe('initialAmountAndDate', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  const payment = (parts: Partial<PagoPendiente>) =>
+  const payment = (parts: Partial<PendingPayment>) =>
     ({
       expectedAmount: '120000.00',
       dueDate: '2026-05-05',
       isMultiPayment: false,
       ...parts,
-    }) as PagoPendiente;
+    }) as PendingPayment;
 
   it('opens a movement with its own amount and date', () => {
     const movement = { amount: '45000.50', date: '2026-04-02' } as Transaction;
@@ -142,7 +142,7 @@ describe('proposalFromText', () => {
   it('proposes the only concept a keyword leads to', () => {
     expect(proposalFromText(index, 'rappi')).toEqual({
       categoryId: 201,
-      origen: 'palabras-clave',
+      origin: 'palabras-clave',
     });
   });
 
@@ -153,22 +153,22 @@ describe('proposalFromText', () => {
   it('proposes the concept the dictionary leads to when it is the only one', () => {
     expect(proposalFromText(indexTree(ONE_MARKET), 'koba')).toEqual({
       categoryId: 200,
-      origen: 'diccionario',
+      origin: 'diccionario',
     });
   });
 
   it('never picks between two concepts: it shows both as candidates', () => {
     const proposal = proposalFromText(index, 'koba');
 
-    expect(proposal).toMatchObject({ categoryId: undefined, origen: 'diccionario' });
-    expect(proposal?.candidatos?.map((c) => c.id).sort()).toEqual([200, 220]);
-    expect(proposal?.candidatos?.[0]?.ruta).toContain(' › ');
+    expect(proposal).toMatchObject({ categoryId: undefined, origin: 'diccionario' });
+    expect(proposal?.candidates?.map((c) => c.id).sort()).toEqual([200, 220]);
+    expect(proposal?.candidates?.[0]?.path).toContain(' › ');
   });
 
   it('proposes the category when the dictionary leads only that far', () => {
     expect(proposalFromText(index, 'uber')).toMatchObject({
       categoryId: 21,
-      origen: 'diccionario',
+      origin: 'diccionario',
     });
   });
 });
@@ -185,7 +185,7 @@ describe('proposalFromReading', () => {
 
     expect(proposalFromReading(reading({ concept: 'Celsia (Energia)' }), tree)).toEqual({
       categoryId: 100,
-      origen: 'palabras-clave',
+      origin: 'palabras-clave',
     });
   });
 
@@ -195,71 +195,69 @@ describe('proposalFromReading', () => {
   });
 
   it('proposes the concept of a high-certainty reading with its source', () => {
-    const enElArbol = {
+    const inTree = {
       certainty: 'alta',
       source: 'historial',
       conceptId: '200',
       candidates: [],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)).toEqual({
+    expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)).toEqual({
       categoryId: 200,
-      origen: 'historial',
+      origin: 'historial',
     });
   });
 
   it('ranks the system catalogue as keywords', () => {
-    const enElArbol = {
+    const inTree = {
       certainty: 'alta',
       source: 'firma',
       conceptId: 201,
       candidates: [],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)?.origen).toBe(
-      'palabras-clave',
-    );
+    expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)?.origin).toBe('palabras-clave');
   });
 
   it('proposes the category and shows the candidates of a medium-certainty reading', () => {
-    const enElArbol = {
+    const inTree = {
       certainty: 'media',
       source: 'diccionario',
       categoryId: '20',
       candidates: [{ id: '200', name: 'Mercado', path: 'Costos variables › Alimentación' }],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)).toEqual({
+    expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)).toEqual({
       categoryId: 20,
-      origen: 'diccionario',
-      candidatos: [{ id: 200, nombre: 'Mercado', ruta: 'Costos variables › Alimentación' }],
+      origin: 'diccionario',
+      candidates: [{ id: 200, name: 'Mercado', path: 'Costos variables › Alimentación' }],
     });
   });
 
   it('leaves the category empty when the candidates span several', () => {
-    const enElArbol = {
+    const inTree = {
       certainty: 'media',
       source: 'palabras-clave',
       candidates: [],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)).toEqual({
+    expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)).toEqual({
       categoryId: undefined,
-      origen: 'palabras-clave',
-      candidatos: [],
+      origin: 'palabras-clave',
+      candidates: [],
     });
   });
 
   it('keeps the source but proposes nothing when a high reading has no concept', () => {
-    const enElArbol = {
+    const inTree = {
       certainty: 'alta',
       source: 'diccionario',
       candidates: [],
     } satisfies TreeClassification;
 
-    expect(proposalFromReading(reading({ inTree: enElArbol }), CATEGORY_TREE)).toEqual({
+    expect(proposalFromReading(reading({ inTree }), CATEGORY_TREE)).toEqual({
       categoryId: undefined,
-      origen: 'diccionario',
+      origin: 'diccionario',
     });
   });
 });

@@ -1,7 +1,7 @@
 import { CalendarDays } from 'lucide-react';
 import { useState } from 'react';
 
-import { PRESETS, type Filtros } from '@/features/transactions/model/filters';
+import { PRESETS, type Filters } from '@/features/transactions/model/filters';
 import { longDay, longRange } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { useOnChange } from '@/shared/lib/on-change';
@@ -59,8 +59,8 @@ interface DayProps extends CommonProps {
 
 interface RangeProps extends CommonProps {
   isRange: true;
-  filters: Filtros;
-  apply: (changes: Partial<Filtros>) => void;
+  filters: Filters;
+  apply: (changes: Partial<Filters>) => void;
   /** La columna de periodos hechos: «Este mes», «Últimos 90 días»… */
   hasShortcuts?: boolean;
   /**
@@ -158,13 +158,13 @@ function DayPicker({ id, value, onSelect, required: isRequired, disabled: isDisa
  * obligaría a buscar en qué sitio está el que uno necesita.
  */
 function RangePicker({ filters, apply, hasShortcuts = false, boxClassName }: RangeProps) {
-  const activeIndex = PRESETS.find((p) => p.valor === filters.preset);
+  const activeIndex = PRESETS.find((p) => p.value === filters.preset);
   const label =
     filters.preset === 'todo'
       ? t('transactions.range.allTime')
       : filters.preset === 'personalizado'
         ? longRange(filters.from, filters.to)
-        : (activeIndex?.etiqueta ?? t('transactions.range.range'));
+        : (activeIndex?.label ?? t('transactions.range.range'));
 
   return (
     <Menu

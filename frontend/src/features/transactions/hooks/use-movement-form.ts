@@ -1,16 +1,16 @@
 import { useState } from 'react';
 
-import type { ProgresoDeLectura } from '@/features/transactions/api/read-receipt';
+import type { ReadingProgress } from '@/features/transactions/api/read-receipt';
 import {
-  hoyEnBogota,
+  todayInBogota,
   initialAmountAndDate,
-  type CandidatoDelRecibo,
+  type ReceiptCandidate,
 } from '@/features/transactions/model/movement-form';
 import {
-  SIN_CLASIFICAR,
-  aplicar,
-  type Clasificacion,
-  type Origen,
+  UNCLASSIFIED,
+  apply,
+  type Classification,
+  type Origin,
 } from '@/features/transactions/model/precedence';
 import {
   type PendingPayment,
@@ -22,18 +22,18 @@ import type { Reading } from '@coco/receipt-parser';
 
 /** Con qué se abre la ficha. Cambiar cualquiera de estos la vuelve a llenar. */
 export interface SheetOpening {
-  abierta: boolean;
-  movimiento?: Transaction | null | undefined;
-  pago?: PendingPayment | null | undefined;
-  tipoPorDefecto: TransactionType;
+  isOpen: boolean;
+  transaction?: Transaction | null | undefined;
+  payment?: PendingPayment | null | undefined;
+  defaultType: TransactionType;
 }
 
 /** Lo que se escribe en la ficha: los datos del movimiento y su clasificación. */
-function useMovementFields(apertura: SheetOpening, descartes: number) {
-  const { abierta, movimiento, pago, tipoPorDefecto } = apertura;
+function useMovementFields(opening: SheetOpening, discards: number) {
+  const { isOpen, transaction, payment, defaultType } = opening;
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(hoyEnBogota);
+  const [date, setDate] = useState(todayInBogota);
   const [type, setType] = useState<TransactionType>('expense');
   /*
     ── La clasificación lleva escrito de dónde salió ───────────────────────
@@ -48,18 +48,18 @@ function useMovementFields(apertura: SheetOpening, descartes: number) {
     comparar contra un `categoryId` capturado en un render viejo es cómo una
     sugerencia tardía pisa lo que la persona acaba de elegir.
   */
-  const [clasificacion, setClasificacion] = useState<Clasificacion>(SIN_CLASIFICAR);
+  const [classification, setClassification] = useState<Classification>(UNCLASSIFIED);
   /**
    * Si en esta apertura alguna fuente automática propuso algo. Es lo que
    * decide si al guardar se aprende: solo cuando hubo una sugerencia que la
    * persona aceptó o corrigió, nunca de un movimiento clasificado a mano sin
    * que nadie hubiera dicho nada.
    */
-  const [huboSugerencia, setHuboSugerencia] = useState(false);
+  const [wasSuggested, setWasSuggested] = useState(false);
   /** Lo que la lectura de un recibo dejó entre lo que dudar. */
-  const [candidatosDelRecibo, setCandidatosDelRecibo] = useState<CandidatoDelRecibo[]>([]);
+  const [receiptCandidates, setReceiptCandidates] = useState<ReceiptCandidate[]>([]);
   /** El texto del que salió la lectura, para guardarlo con el movimiento. */
-  const [textoLeido, setTextoLeido] = useState('');
+  const [textRead, setTextRead] = useState('');
   const [notes, setNotes] = useState('');
 
   // Cada vez que se abre se recarga desde el movimiento: sin esto, abrir para
@@ -68,23 +68,23 @@ function useMovementFields(apertura: SheetOpening, descartes: number) {
   // Durante el render y no en un efecto —ver `useAlCambiar`—: así la ficha
   // sale pintada ya con los datos buenos, sin un fotograma con los del
   // movimiento anterior.
-  useOnChange([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
-    if (!abierta) return;
-    const iniciales = initialAmountAndDate(movimiento, pago);
-    setDescription(movimiento?.description ?? '');
-    setAmount(iniciales.amount);
-    setDate(iniciales.date);
-    setType(movimiento?.type ?? tipoPorDefecto);
+  useOnChange([isOpen, transaction, payment, defaultType, discards], () => {
+    if (!isOpen) return;
+    const initials = initialAmountAndDate(transaction, payment);
+    setDescription(transaction?.description ?? '');
+    setAmount(initials.amount);
+    setDate(initials.date);
+    setType(transaction?.type ?? defaultType);
     // Lo que llega puesto —el concepto de un movimiento que se edita, el de un
     // pago pendiente que se confirma— es una elección: lo automático no lo toca.
-    const puesto = movimiento?.categoryId ?? pago?.categoryId;
-    setClasificacion(
-      puesto === undefined ? SIN_CLASIFICAR : { categoryId: puesto, origen: 'manual' },
+    const chosenId = transaction?.categoryId ?? payment?.categoryId;
+    setClassification(
+      chosenId === undefined ? UNCLASSIFIED : { categoryId: chosenId, origin: 'manual' },
     );
-    setHuboSugerencia(false);
-    setCandidatosDelRecibo([]);
-    setTextoLeido('');
-    setNotes(movimiento?.notes ?? '');
+    setWasSuggested(false);
+    setReceiptCandidates([]);
+    setTextRead('');
+    setNotes(transaction?.notes ?? '');
   });
 
   return {
@@ -95,31 +95,31 @@ function useMovementFields(apertura: SheetOpening, descartes: number) {
     date,
     setDate,
     type,
-    clasificacion,
-    categoryId: clasificacion.categoryId,
-    proponer: (propuesta: { categoryId: number | undefined; origen: Origen }): void =>
-      setClasificacion((previa) => aplicar(previa, propuesta)),
-    huboSugerencia,
-    setHuboSugerencia,
-    candidatosDelRecibo,
-    setCandidatosDelRecibo,
-    textoLeido,
-    setTextoLeido,
+    classification,
+    categoryId: classification.categoryId,
+    propose: (proposal: { categoryId: number | undefined; origin: Origin }): void =>
+      setClassification((preview) => apply(preview, proposal)),
+    wasSuggested,
+    setWasSuggested,
+    receiptCandidates,
+    setReceiptCandidates,
+    textRead,
+    setTextRead,
     notes,
     setNotes,
   };
 }
 
 /** En qué punto está la ficha: qué se enseña, qué se está haciendo, qué falló. */
-function useSheetStatus(apertura: SheetOpening, descartes: number) {
-  const { abierta, movimiento, pago, tipoPorDefecto } = apertura;
+function useSheetStatus(opening: SheetOpening, discards: number) {
+  const { isOpen, transaction, payment, defaultType } = opening;
   const [error, setError] = useState<string | null>(null);
-  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false);
+  const [isConfirmingDeletion, setIsConfirmingDeletion] = useState(false);
   /**
    * La cascada de siempre, detrás de un enlace. Sigue existiendo para quien
    * quiera ir nivel a nivel, pero ya no es la puerta: la puerta es el buscador.
    */
-  const [cascadaVisible, setCascadaVisible] = useState(false);
+  const [isCascadeVisible, setIsCascadeVisible] = useState(false);
   /*
     ── Se abre para LEER, no para editar ────────────────────────────────────
     Abrir un movimiento es casi siempre consultarlo: ver cuánto fue, cuándo se
@@ -130,7 +130,7 @@ function useSheetStatus(apertura: SheetOpening, descartes: number) {
 
     Crear es lo contrario: no hay nada que leer, así que nace editable.
   */
-  const [editable, setEditable] = useState(false);
+  const [isEditable, setEditable] = useState(false);
   /*
     ── The form is the first thing you see ──────────────────────────────────
     A new movement used to open on a chooser —"Registrar manualmente",
@@ -143,38 +143,38 @@ function useSheetStatus(apertura: SheetOpening, descartes: number) {
     the reading step still take over the sheet while they last, and come back
     to the form when they finish.
   */
-  const [paso, setPaso] = useState<'camara' | 'leyendo' | 'formulario'>('formulario');
+  const [step, setStep] = useState<'camara' | 'leyendo' | 'formulario'>('formulario');
 
-  useOnChange([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
-    if (!abierta) return;
-    setCascadaVisible(false);
+  useOnChange([isOpen, transaction, payment, defaultType, discards], () => {
+    if (!isOpen) return;
+    setIsCascadeVisible(false);
     setError(null);
-    setConfirmandoBorrado(false);
-    setEditable(!movimiento);
+    setIsConfirmingDeletion(false);
+    setEditable(!transaction);
     // Always the form: a sheet left on the camera or mid-reading would reopen
     // there for the next movement.
-    setPaso('formulario');
+    setStep('formulario');
   });
 
   return {
     error,
     setError,
-    confirmandoBorrado,
-    setConfirmandoBorrado,
-    cascadaVisible,
-    setCascadaVisible,
-    editable,
+    isConfirmingDeletion,
+    setIsConfirmingDeletion,
+    isCascadeVisible,
+    setIsCascadeVisible,
+    isEditable,
     setEditable,
-    paso,
-    setPaso,
+    step,
+    setStep,
   };
 }
 
 /** La lectura de un soporte y los archivos que esperan a que exista el movimiento. */
-function useSheetSupports(apertura: SheetOpening, descartes: number) {
-  const { abierta, movimiento, pago, tipoPorDefecto } = apertura;
-  const [progresoDeLectura, setProgresoDeLectura] = useState<ProgresoDeLectura | null>(null);
-  const [lectura, setLectura] = useState<Reading | null>(null);
+function useSheetSupports(opening: SheetOpening, discards: number) {
+  const { isOpen, transaction, payment, defaultType } = opening;
+  const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
+  const [reading, setReading] = useState<Reading | null>(null);
   /**
    * Lo que NO se pudo leer, para decirlo.
    *
@@ -182,7 +182,7 @@ function useSheetSupports(apertura: SheetOpening, descartes: number) {
    * se miró y no se reconoció nada dentro. Un rojo ahí diría que algo salió
    * mal, y lo que hay que hacer es distinto —escribir los datos a mano—.
    */
-  const [sinLeer, setSinLeer] = useState<string | null>(null);
+  const [unreadNotice, setUnreadNotice] = useState<string | null>(null);
   /*
     Los soportes elegidos antes de que el movimiento exista.
 
@@ -191,38 +191,38 @@ function useSheetSupports(apertura: SheetOpening, descartes: number) {
     inverso —crear el movimiento para poder adjuntar— obligaría a guardar algo
     a medias solo para tener un identificador.
   */
-  const [pendientes, setPendientes] = useState<File[]>([]);
-  const [subiendo, setSubiendo] = useState(false);
+  const [pending, setPending] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   /**
    * El movimiento que se acaba de crear, cuando su soporte se quedó sin subir.
    *
    * Es lo que impide que reintentar cree un segundo movimiento por la misma
    * plata. Ver el porqué largo en `useGuardarMovimiento`.
    */
-  const [registrado, setRegistrado] = useState<number | null>(null);
+  const [registered, setRegistered] = useState<number | null>(null);
 
-  useOnChange([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
-    if (!abierta) return;
-    setLectura(null);
-    setSinLeer(null);
-    setPendientes([]);
-    setProgresoDeLectura(null);
-    setRegistrado(null);
+  useOnChange([isOpen, transaction, payment, defaultType, discards], () => {
+    if (!isOpen) return;
+    setReading(null);
+    setUnreadNotice(null);
+    setPending([]);
+    setReadingProgress(null);
+    setRegistered(null);
   });
 
   return {
-    progresoDeLectura,
-    setProgresoDeLectura,
-    lectura,
-    setLectura,
-    sinLeer,
-    setSinLeer,
-    pendientes,
-    setPendientes,
-    subiendo,
-    setSubiendo,
-    registrado,
-    setRegistrado,
+    readingProgress,
+    setReadingProgress,
+    reading,
+    setReading,
+    unreadNotice,
+    setUnreadNotice,
+    pending,
+    setPending,
+    isUploading,
+    setIsUploading,
+    registered,
+    setRegistered,
   };
 }
 
@@ -232,7 +232,7 @@ function useSheetSupports(apertura: SheetOpening, descartes: number) {
  * Son quince estados, y se recargan juntos cada vez que la ficha se abre o se
  * cancela una edición.
  */
-export function useMovementForm(apertura: SheetOpening) {
+export function useMovementForm(opening: SheetOpening) {
   /*
     Sube cada vez que se cancela una edición.
 
@@ -242,13 +242,13 @@ export function useMovementForm(apertura: SheetOpening) {
     cosa y la base otra, y el siguiente que pulsara el lápiz guardaba sin
     querer un cambio que alguien ya había descartado.
   */
-  const [descartes, setDescartes] = useState(0);
+  const [discards, setDiscards] = useState(0);
 
   return {
-    ...useMovementFields(apertura, descartes),
-    ...useSheetStatus(apertura, descartes),
-    ...useSheetSupports(apertura, descartes),
-    descartar: (): void => setDescartes((n) => n + 1),
+    ...useMovementFields(opening, discards),
+    ...useSheetStatus(opening, discards),
+    ...useSheetSupports(opening, discards),
+    discard: (): void => setDiscards((n) => n + 1),
   };
 }
 

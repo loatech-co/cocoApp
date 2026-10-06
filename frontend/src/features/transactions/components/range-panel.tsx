@@ -1,5 +1,5 @@
-import { useRangeDraft, type Borrador } from '@/features/transactions/hooks/use-range-draft';
-import { PRESETS, type Filtros, type Preset } from '@/features/transactions/model/filters';
+import { useRangeDraft, type Draft } from '@/features/transactions/hooks/use-range-draft';
+import { PRESETS, type Filters, type Preset } from '@/features/transactions/model/filters';
 import { longDay, longRange } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
@@ -30,20 +30,20 @@ export function RangePanel({
   hasShortcuts,
   close,
 }: {
-  filters: Filtros;
-  apply: (changes: Partial<Filtros>) => void;
+  filters: Filters;
+  apply: (changes: Partial<Filters>) => void;
   hasShortcuts: boolean;
   close: () => void;
 }) {
-  const draft = useRangeDraft(filters);
-  const { borrador, ancla, setSobrevolado, vista, setVista, pintado, pinta } = draft;
-  const { elegirPreset, elegirDia } = draft;
+  const rangeDraft = useRangeDraft(filters);
+  const { draft, anchor, setHovered, vista, setVista, painted, isPainted } = rangeDraft;
+  const { choosePreset, chooseDay } = rangeDraft;
 
   function confirm(): void {
-    if (borrador.preset === 'personalizado') {
-      apply({ preset: 'personalizado', from: borrador.from, to: borrador.to });
+    if (draft.preset === 'personalizado') {
+      apply({ preset: 'personalizado', from: draft.from, to: draft.to });
     } else {
-      apply({ preset: borrador.preset });
+      apply({ preset: draft.preset });
     }
     close();
   }
@@ -55,23 +55,23 @@ export function RangePanel({
             En pantalla ancha son una columna; en un teléfono se vuelven fichas
             que fluyen, porque una columna lateral dejaría el calendario en la
             mitad del ancho y sin sitio para los días. */}
-        {hasShortcuts && <RangePresets draft={borrador} onSelect={elegirPreset} />}
+        {hasShortcuts && <RangePresets draft={draft} onSelect={choosePreset} />}
 
         <Calendar
           className="flex-1 p-3"
-          from={pinta ? pintado.from : undefined}
-          to={pinta ? pintado.to : undefined}
+          from={isPainted ? painted.from : undefined}
+          to={isPainted ? painted.to : undefined}
           view={vista}
           onViewChange={setVista}
-          onSelectDay={elegirDia}
-          onHover={(iso) => ancla && setSobrevolado(iso ?? ancla)}
+          onSelectDay={chooseDay}
+          onHover={(iso) => anchor && setHovered(iso ?? anchor)}
         />
       </div>
 
       <RangeFooter
-        draft={borrador}
-        anchor={ancla}
-        first={draft.primero}
+        draft={draft}
+        anchor={anchor}
+        first={rangeDraft.first}
         onCancel={close}
         onApply={confirm}
       />
@@ -86,7 +86,7 @@ function RangeFooter({
   onCancel,
   onApply,
 }: {
-  draft: Borrador;
+  draft: Draft;
   anchor: string | null;
   /** El primer día con movimientos, para decir desde cuándo es «todo». */
   first: string | undefined;
@@ -116,13 +116,7 @@ function RangeFooter({
   );
 }
 
-function RangePresets({
-  draft,
-  onSelect,
-}: {
-  draft: Borrador;
-  onSelect: (preset: Preset) => void;
-}) {
+function RangePresets({ draft, onSelect }: { draft: Draft; onSelect: (preset: Preset) => void }) {
   return (
     <ul
       className={cn(
@@ -130,14 +124,14 @@ function RangePresets({
         'sm:w-44 sm:shrink-0 sm:flex-col sm:flex-nowrap sm:border-b-0 sm:border-r',
       )}
     >
-      {PRESETS.filter((p) => p.valor !== 'personalizado').map((p) => (
-        <li key={p.valor} className="sm:w-full">
+      {PRESETS.filter((p) => p.value !== 'personalizado').map((p) => (
+        <li key={p.value} className="sm:w-full">
           <ToggleOption
-            isOn={draft.preset === p.valor}
-            onClick={() => onSelect(p.valor)}
-            title={p.ayuda}
+            isOn={draft.preset === p.value}
+            onClick={() => onSelect(p.value)}
+            title={p.help}
           >
-            {p.etiqueta}
+            {p.label}
           </ToggleOption>
         </li>
       ))}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { useSoportes, useSubirSoportes } from '@/features/transactions/api/receipts';
-import type { FalloDeSoporte } from '@/features/transactions/model/supports';
+import { useReceipts, useUploadReceipts } from '@/features/transactions/api/receipts';
+import type { ReceiptFailure } from '@/features/transactions/model/supports';
 import { ApiClientError, apiBlob } from '@/shared/api/api-client';
 import { getSoportesDownloadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
 import { t } from '@/shared/lib/i18n';
@@ -21,15 +21,15 @@ import { useOnChange } from '@/shared/lib/on-change';
  * `src`, bastaría también con que alguien copiara el enlace.
  */
 export function useSupportFiles(transactionId: number) {
-  const soportes = useSoportes(transactionId);
-  const lista = soportes.data ?? [];
+  const receipts = useReceipts(transactionId);
+  const list = receipts.data ?? [];
 
   /** El `blob:` de cada soporte, por id. Se descargan una vez y se comparten. */
   const [urls, setUrls] = useState<Record<string, string>>({});
   /** Los que no se están viendo, y POR QUÉ. Ver `FalloDeSoporte`. */
-  const [fallos, setFallos] = useState<Readonly<Record<string, FalloDeSoporte>>>({});
+  const [failures, setFailures] = useState<Readonly<Record<string, ReceiptFailure>>>({});
   /** Sube al reintentar, y con eso vuelve a correr el efecto de las descargas. */
-  const [intento, setIntento] = useState(0);
+  const [attempt, setAttempt] = useState(0);
 
   /*
     Los que el servidor ya dijo que no tiene se marcan de entrada, sin
@@ -42,29 +42,29 @@ export function useSupportFiles(transactionId: number) {
     se limpie. Si la limpieza lo vaciara después, se llevaría la siembra por
     delante.
   */
-  useOnChange([transactionId, lista.length, intento], () => {
-    setFallos(
+  useOnChange([transactionId, list.length, attempt], () => {
+    setFailures(
       Object.fromEntries(
-        lista.filter((s) => !s.isAvailable).map((s) => [String(s.id), 'ausente' as const]),
+        list.filter((s) => !s.isAvailable).map((s) => [String(s.id), 'ausente' as const]),
       ),
     );
   });
 
   useEffect(() => {
-    if (lista.length === 0) return;
+    if (list.length === 0) return;
 
-    const corte = new AbortController();
-    const creados: string[] = [];
+    const cutoff = new AbortController();
+    const created: string[] = [];
 
-    for (const s of lista) {
+    for (const s of list) {
       if (!s.isAvailable) continue;
 
-      apiBlob(getSoportesDownloadUrl(transactionId, s.id), corte.signal)
+      apiBlob(getSoportesDownloadUrl(transactionId, s.id), cutoff.signal)
         .then((blob) => {
-          if (corte.signal.aborted) return;
+          if (cutoff.signal.aborted) return;
           const url = URL.createObjectURL(blob);
-          creados.push(url);
-          setUrls((previo) => ({ ...previo, [String(s.id)]: url }));
+          created.push(url);
+          setUrls((previous) => ({ ...previous, [String(s.id)]: url }));
         })
         .catch(() => {
           // Se cayó la descarga, y eso NO dice que el archivo no esté: puede
@@ -73,52 +73,52 @@ export function useSupportFiles(transactionId: number) {
           //
           // El corte no cuenta: abortamos nosotros al desmontar o al cambiar
           // de movimiento, y eso no es un fallo de nada.
-          if (corte.signal.aborted) return;
-          setFallos((previo) => ({ ...previo, [String(s.id)]: 'sin-cargar' }));
+          if (cutoff.signal.aborted) return;
+          setFailures((previous) => ({ ...previous, [String(s.id)]: 'sin-cargar' }));
         });
     }
 
     return () => {
-      corte.abort();
+      cutoff.abort();
       // Cada blob vive en la memoria de la pestaña hasta que se le suelta. Sin
       // esto, abrir veinte movimientos deja ciento sesenta archivos cargados.
-      for (const url of creados) URL.revokeObjectURL(url);
+      for (const url of created) URL.revokeObjectURL(url);
       setUrls({});
     };
     // `lista.length` y no `lista`: la consulta devuelve un array nuevo en cada
     // render y con él las descargas empezarían otra vez sin parar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactionId, lista.length, intento]);
+  }, [transactionId, list.length, attempt]);
 
   return {
-    cargando: soportes.isPending,
-    lista,
+    isLoading: receipts.isPending,
+    list,
     urls,
-    fallos,
-    reintentar: () => setIntento((n) => n + 1),
+    failures,
+    retry: () => setAttempt((n) => n + 1),
   };
 }
 
 /** Subir soportes a un movimiento ya guardado, con su avance y su error. */
-export function useSupportUpload(transactionId: number, alTerminar: () => void) {
-  const subir = useSubirSoportes(transactionId);
-  const [progreso, setProgreso] = useState(0);
-  const [errorDeSubida, setErrorDeSubida] = useState<string | null>(null);
+export function useSupportUpload(transactionId: number, onDone: () => void) {
+  const upload = useUploadReceipts(transactionId);
+  const [progress, setProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  async function aceptar(archivos: File[]): Promise<void> {
-    if (archivos.length === 0) return;
-    setErrorDeSubida(null);
-    setProgreso(0);
+  async function accept(files: File[]): Promise<void> {
+    if (files.length === 0) return;
+    setUploadError(null);
+    setProgress(0);
 
     try {
-      await subir.mutateAsync({ archivos, onProgreso: setProgreso });
-      alTerminar();
+      await upload.mutateAsync({ files, onProgress: setProgress });
+      onDone();
     } catch (e) {
-      setErrorDeSubida(
+      setUploadError(
         e instanceof ApiClientError ? e.message : t('transactions.supports.uploadFailed'),
       );
     }
   }
 
-  return { subiendo: subir.isPending, progreso, errorDeSubida, aceptar };
+  return { isUploading: upload.isPending, progress, uploadError, accept };
 }
