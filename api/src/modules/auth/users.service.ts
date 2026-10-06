@@ -27,20 +27,16 @@ export class UsersService {
     return this.users.findById(id);
   }
 
-  approve(id: bigint, approvedById: bigint): Promise<User> {
-    return this.users.updateUnchecked(id, {
-      status: 'active',
-      approvedAt: new Date(),
-      approvedById,
-    });
+  approve(adminId: bigint, id: bigint): Promise<User> {
+    return this.users.setAccess(adminId, id, { status: 'active', approve: true });
   }
 
-  setStatus(id: bigint, status: UserStatus): Promise<User> {
-    return this.users.updateUnchecked(id, { status });
+  setStatus(adminId: bigint, id: bigint, status: UserStatus): Promise<User> {
+    return this.users.setAccess(adminId, id, { status });
   }
 
-  setRole(id: bigint, role: UserRole): Promise<User> {
-    return this.users.updateUnchecked(id, { role });
+  setRole(adminId: bigint, id: bigint, role: UserRole): Promise<User> {
+    return this.users.setAccess(adminId, id, { role });
   }
 
   countOtherActiveAdmins(userId: bigint): Promise<number> {

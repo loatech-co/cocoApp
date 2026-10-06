@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma, User, UserStatus } from '@prisma/client';
+import type { Prisma, User, UserRole, UserStatus } from '@prisma/client';
 
+import { Database } from '../../prisma/database';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /** What the auth guard reads on every request: identity, role and status. */
@@ -8,7 +9,11 @@ export type SessionUser = Pick<User, 'id' | 'email' | 'role' | 'status' | 'sessi
 
 @Injectable()
 export class UsersRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    /** Only for `setAccess`: the admin path runs as the admin who acts. */
+    private readonly db: Database,
+  ) {}
 
   findByAuthId(authId: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { authId } });
@@ -31,7 +36,16 @@ export class UsersRepository {
     return this.prisma.user.create({ data });
   }
 
-  update(id: bigint, data: Prisma.UserUpdateInput): Promise<User> {
+  /**
+   * The columns the app may write itself: `coco_app` holds UPDATE only on
+   * `last_login_at`, `sessions_valid_from` and `updated_at` (migration
+   * 20261006000300_users_column_privileges). The role and the status go
+   * through `setAccess`.
+   */
+  update(
+    id: bigint,
+    data: Pick<Prisma.UserUpdateInput, 'lastLoginAt' | 'sessionsValidFrom'>,
+  ): Promise<User> {
     return this.prisma.user.update({ where: { id }, data });
   }
 
@@ -53,8 +67,26 @@ export class UsersRepository {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  updateUnchecked(id: bigint, data: Prisma.UserUncheckedUpdateInput): Promise<User> {
-    return this.prisma.user.update({ where: { id }, data });
+  /**
+   * Approve, suspend, reactivate or change the role of an account, as the
+   * admin `actorId`. Goes through `app_private.set_user_access`, a SECURITY
+   * DEFINER function that refuses unless the unit of work runs as an active
+   * admin: `coco_app` cannot write `role` or `status` by itself.
+   */
+  setAccess(
+    actorId: bigint,
+    targetId: bigint,
+    access: { status?: UserStatus; role?: UserRole; approve?: boolean },
+  ): Promise<User> {
+    return this.db.forUser(actorId, async (tx) => {
+      await tx.$executeRaw`SELECT app_private.set_user_access(
+        ${targetId},
+        ${access.status ?? null}::"UserStatus",
+        ${access.role ?? null}::"UserRole",
+        ${access.approve === true}
+      )`;
+      return tx.user.findUniqueOrThrow({ where: { id: targetId } });
+    });
   }
 
   /** Active administrators other than this user. */

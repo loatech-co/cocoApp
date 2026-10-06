@@ -69,7 +69,7 @@ export class AdminService {
       throw new BadRequestError('Esa cuenta ya está activa.', { code: 'user_already_active' });
     }
 
-    const actualizado = await this.users.approve(userId, adminId);
+    const actualizado = await this.users.approve(adminId, userId);
 
     await this.audit.registrar({
       userId: adminId,
@@ -93,7 +93,7 @@ export class AdminService {
     const usuario = await this.exigirUsuario(userId);
     await this.exigirQueQuedeAlgunAdmin(usuario.role, userId);
 
-    const actualizado = await this.users.setStatus(userId, 'suspended');
+    const actualizado = await this.users.setStatus(adminId, userId, 'suspended');
     await this.auth.revocarTodasLasSesiones(userId);
 
     await this.audit.registrar({
@@ -111,7 +111,7 @@ export class AdminService {
   async reactivar(adminId: bigint, userId: bigint, contexto: Contexto): Promise<Profile> {
     const usuario = await this.exigirUsuario(userId);
 
-    const actualizado = await this.users.setStatus(userId, 'active');
+    const actualizado = await this.users.setStatus(adminId, userId, 'active');
 
     await this.audit.registrar({
       userId: adminId,
@@ -138,7 +138,7 @@ export class AdminService {
       await this.exigirQueQuedeAlgunAdmin(usuario.role, userId);
     }
 
-    const actualizado = await this.users.setRole(userId, rol);
+    const actualizado = await this.users.setRole(adminId, userId, rol);
 
     // El rol se lee de la base en cada petición, así que el cambio ya aplica.
     // Aun así se cierran las sesiones: un cambio de permisos merece que la

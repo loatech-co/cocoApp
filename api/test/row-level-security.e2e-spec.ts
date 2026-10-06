@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 
 import { makeAccount, makeConcept, makeTransaction } from './factories';
 import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
+import { UsersRepository } from '../src/modules/auth/users.repository';
 import { AutoChargeTask } from '../src/modules/dashboard/auto-charge.task';
 import { Database, type UserTx } from '../src/prisma/database';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -426,17 +427,70 @@ describe('Row-level security (e2e)', () => {
     expect(await env.prisma.user.count({ where: { id: bruno.id } })).toBe(1);
   });
 
-  it('the one definer function answers ids, and only to the app', async () => {
+  it('the users directory: the app writes only the session columns, never the role or the status', async () => {
+    await appClient.user.update({
+      where: { id: ana.id },
+      data: { lastLoginAt: new Date(), sessionsValidFrom: new Date() },
+    });
+
+    for (const data of [{ role: 'admin' as const }, { status: 'suspended' as const }]) {
+      await expect(appClient.user.update({ where: { id: ana.id }, data })).rejects.toThrow(
+        /permission denied/,
+      );
+    }
+    await expect(
+      db.forUser(ana.id, (tx) =>
+        tx.user.update({ where: { id: ana.id }, data: { role: 'admin' } }),
+      ),
+    ).rejects.toThrow(/permission denied/);
+
+    expect(
+      await env.prisma.user.findUniqueOrThrow({
+        where: { id: ana.id },
+        select: { role: true, status: true },
+      }),
+    ).toEqual({ role: 'user', status: 'active' });
+  });
+
+  it('role and status change only through the admin path, as an active admin', async () => {
+    const users = env.app.get(UsersRepository);
+    const grant = (actor: bigint) => users.setAccess(actor, ana.id, { role: 'admin' });
+
+    // Ana promoting herself, Bruno promoting her, and nobody at all.
+    await expect(grant(ana.id)).rejects.toThrow(/not an active admin/);
+    await expect(grant(bruno.id)).rejects.toThrow(/not an active admin/);
+    await expect(
+      appClient.$executeRaw`SELECT app_private.set_user_access(${ana.id}, NULL, 'admin', false)`,
+    ).rejects.toThrow(/not an active admin/);
+
+    const admin = await env.crearUsuario({ role: 'admin' });
+    await env.prisma.user.update({ where: { id: bruno.id }, data: { status: 'pending' } });
+    const approved = await users.setAccess(admin.id, bruno.id, { status: 'active', approve: true });
+    expect(approved).toMatchObject({ status: 'active', role: 'user', approvedById: admin.id });
+    expect(approved.approvedAt).not.toBeNull();
+
+    // A suspended admin is no longer one.
+    await env.prisma.user.update({ where: { id: admin.id }, data: { status: 'suspended' } });
+    await expect(grant(admin.id)).rejects.toThrow(/not an active admin/);
+    expect((await env.prisma.user.findUniqueOrThrow({ where: { id: ana.id } })).role).toBe('user');
+  });
+
+  it('the definer functions: the two listed, and only to the app', async () => {
     const definers = await env.prisma.$queryRaw<{ name: string }[]>`
       SELECT p.proname AS name
       FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-      WHERE n.nspname IN ('public', 'app_private') AND p.prosecdef`;
-    expect(definers).toEqual([{ name: 'auto_paid_owner_ids' }]);
+      WHERE n.nspname IN ('public', 'app_private') AND p.prosecdef
+      ORDER BY p.proname`;
+    expect(definers).toEqual([{ name: 'auto_paid_owner_ids' }, { name: 'set_user_access' }]);
 
-    const [shape] = await env.prisma.$queryRaw<{ result: string; anyone: boolean }[]>`
+    const shapes = await env.prisma.$queryRaw<{ result: string; anyone: boolean }[]>`
       SELECT pg_get_function_result(p.oid) AS result,
              has_function_privilege('public', p.oid, 'EXECUTE') AS anyone
-      FROM pg_proc p WHERE p.proname = 'auto_paid_owner_ids'`;
-    expect(shape).toEqual({ result: 'SETOF bigint', anyone: false });
+      FROM pg_proc p WHERE p.proname IN ('auto_paid_owner_ids', 'set_user_access')
+      ORDER BY p.proname`;
+    expect(shapes).toEqual([
+      { result: 'SETOF bigint', anyone: false },
+      { result: 'void', anyone: false },
+    ]);
   });
 });
