@@ -1,7 +1,7 @@
 /**
  * The pieces of the dashboard summary that need no database: the breakdown by
  * category, the trend, the month's pending payments and the account totals.
- * `DashboardService.resumen` reads the data and composes these.
+ * `DashboardService.summary` reads the data and composes these.
  */
 import {
   ancestorAtLevel,
@@ -40,18 +40,18 @@ export function treeOf(categories: readonly SummaryCategory[]): Tree {
 }
 
 /**
- * Rango del mes en `America/Bogota` (UTC−5, sin horario de verano).
+ * The month's range in `America/Bogota` (UTC−5, no daylight saving).
  *
- * Importa hacerlo explícito: si los límites se calcularan en UTC, un gasto del
- * 31 a las 8 p.m. hora de Bogotá caería en el mes siguiente y el usuario vería
- * su plata en el mes equivocado.
+ * Making it explicit matters: if the bounds were computed in UTC, an expense
+ * on the 31st at 8 p.m. Bogotá time would fall in the next month and the user
+ * would see their money in the wrong month.
  */
 export function defaultRange(from?: string, to?: string): { start: Date; end: Date } {
   const nowInBogota = new Date(Date.now() - 5 * 60 * 60 * 1000);
 
-  // Por defecto: del 1 del mes en curso a hoy. Es el "mes hasta la fecha", que
-  // responde la pregunta que uno se hace a diario —"¿cómo voy este mes?"— sin
-  // mezclarla con días que todavía no ocurrieron.
+  // By default: from the 1st of the current month to today. It is
+  // "month to date", which answers the question one asks every day —"how am I
+  // doing this month?"— without mixing in days that have not happened yet.
   const start = from
     ? new Date(`${from}T00:00:00.000Z`)
     : new Date(Date.UTC(nowInBogota.getUTCFullYear(), nowInBogota.getUTCMonth(), 1));
@@ -67,7 +67,7 @@ export function defaultRange(from?: string, to?: string): { start: Date; end: Da
 
 export const toIsoDate = (date: Date): string => date.toISOString().slice(0, 10);
 
-/** En qué nivel está una categoría: 1 centro, 2 categoría, 3 concepto. */
+/** The level a category is at: 1 center, 2 category, 3 concept. */
 function categoryDepth(byId: ReadonlyMap<string, FlatCategory>, id: bigint): number {
   let level = 0;
   let current: bigint | null = id;
@@ -84,7 +84,7 @@ function categoryDepth(byId: ReadonlyMap<string, FlatCategory>, id: bigint): num
   return level;
 }
 
-// ── Desglose, subiendo cada movimiento al nivel que toca ────────────────────
+// ── Breakdown, lifting each movement to the level it belongs to ────────────
 
 function groupAtLevel(
   movements: readonly SummaryMovement[],
@@ -96,7 +96,7 @@ function groupAtLevel(
   for (const m of movements) {
     if (m.type !== 'expense') continue;
 
-    // Con splits, cada parte puede ir a una categoría distinta.
+    // With splits, each part can go to a different category.
     const parts =
       m.splits.length > 0
         ? m.splits.map((s) => ({ categoryId: s.categoryId, amount: toMoney(s.amount) }))
@@ -117,7 +117,7 @@ function groupAtLevel(
   return accumulated;
 }
 
-/** Un nivel agrupado, listo para salir: con nombre, de mayor a menor. */
+/** A grouped level, ready to go out: named, from largest to smallest. */
 function toRows(grouped: Grouped, dataById: ReadonlyMap<string, SummaryCategory>): CategorySpend[] {
   return [...grouped.values()]
     .map((row) => {
@@ -148,14 +148,14 @@ export function breakdown(
   shownLevel: number;
   parent: bigint | null;
 } {
-  // El desglose baja un nivel respecto de lo que se mira: sin filtro se
-  // agrupa por centro; dentro de un centro, por categoría; dentro de una categoría,
-  // por concepto. Dentro de un concepto ya no hay a dónde bajar.
+  // The breakdown goes one level below what is being looked at: with no
+  // filter it groups by center; inside a center, by category; inside a
+  // category, by concept. Inside a concept there is nowhere further down.
   //
-  // Con VARIAS categorías marcadas no hay un "dentro de" único: dos centros
-  // distintos no comparten nivel inferior. Se baja un nivel solo cuando lo
-  // marcado es una sola cosa; si no, se desglosa por centro, que es la
-  // pregunta que sigue teniendo respuesta.
+  // With SEVERAL categories selected there is no single "inside of": two
+  // different centers share no lower level. It goes down a level only when
+  // the selection is a single thing; otherwise it breaks down by center, which
+  // is the question that still has an answer.
   const filteredLevel =
     singleRequested === undefined ? 0 : categoryDepth(tree.byId, singleRequested);
   const drilled = drillWhileSingleRow(
@@ -167,15 +167,17 @@ export function breakdown(
   return {
     byCategory: toRows(drilled.accumulated, tree.dataById),
     /*
-      Fijos contra variables.
+      Fixed against variable.
 
-      Los nombres salen de los CENTROS, no de una lista escrita aquí: quien
-      los llamó "Costos fijos" y "Costos variables" puede llamarlos mañana de
-      otra forma, y el indicador tiene que seguir diciendo la verdad.
+      The names come from the CENTERS, not from a list written here: whoever
+      called them "Costos fijos" and "Costos variables" can call them
+      something else tomorrow, and the indicator has to keep telling the
+      truth.
 
-      Se recalcula el nivel 1 en vez de reutilizar `acumulado` porque ese ya
-      pudo haber bajado: cuando solo un centro tiene gasto, sus filas son
-      categorías, y ahí ya no hay con qué responder esta pregunta.
+      Level 1 is computed again instead of reusing `accumulated` because that
+      one may already have gone down: when only one center has expense, its
+      rows are categories, and there is nothing left there to answer this
+      question with.
     */
     byCostCenter: toRows(groupAtLevel(movements, tree.byId, 1), tree.dataById),
     shownLevel: drilled.shownLevel,
@@ -184,14 +186,14 @@ export function breakdown(
 }
 
 /*
-  ── Si en este nivel solo hay UNA fila, se baja al siguiente ─────────────
+  ── If this level has only ONE row, go down to the next ─────────────────
 
-  Un desglose de una sola fila no desglosa nada: dice "el 100 % de tu plata
-  está en el único sitio donde puede estar". Pasa todo el tiempo al empezar,
-  cuando existe un solo centro de costos, y también al filtrar por uno.
+  A one-row breakdown breaks nothing down: it says "100 % of your money is
+  in the only place it can be". It happens all the time at the start, when
+  there is a single cost center, and also when filtering by one.
 
-  Se sigue bajando mientras la respuesta siga siendo una sola fila, hasta
-  llegar a los conceptos, que es donde ya no hay más abajo.
+  It keeps going down while the answer is still a single row, until it
+  reaches the concepts, where there is nothing further down.
 */
 function drillWhileSingleRow(
   groupAt: (level: number) => Grouped,
@@ -200,8 +202,8 @@ function drillWhileSingleRow(
 ): { accumulated: Grouped; shownLevel: number; parent: bigint | null } {
   let shownLevel = startLevel;
   let accumulated = groupAt(shownLevel);
-  // De quién son las filas que se acaban mostrando. Con un filtro puesto ya
-  // se sabe; si no, lo dirá la fila única por la que se vaya bajando.
+  // Whose rows end up shown. With a filter set it is already known;
+  // otherwise the single row it goes down through will say.
   let parent = requested;
 
   const singleRowOf = (rows: Grouped) => (rows.size === 1 ? [...rows.values()][0] : undefined);
@@ -213,17 +215,17 @@ function drillWhileSingleRow(
   ) {
     const below = groupAt(shownLevel + 1);
     /*
-      Se baja aunque abajo también haya UNA sola fila.
+      It goes down even if below there is also only ONE row.
 
-      Antes se frenaba cuando el nivel de abajo no tenía más filas que el de
-      arriba, y eso dejaba clavado justo el caso más común: un solo centro de
-      costos con un solo categoría se quedaba enseñando el centro, que es la fila
-      que no dice nada. "Costos fijos, 100 %" ya se sabía antes de mirar.
+      It used to stop when the level below had no more rows than the one
+      above, and that left exactly the most common case stuck: a single cost
+      center with a single category kept showing the center, which is the row
+      that says nothing. "Costos fijos, 100 %" was known before looking.
 
-      El único motivo para no bajar es que abajo no haya ningún nombre: si
-      todo lo de este centro está clasificado en el centro mismo y no en
-      ninguno de sus categorías, bajar cambiaría un nombre de verdad por un
-      "Sin clasificar" que informa menos.
+      The only reason not to go down is that there are no names below: if
+      everything in this center is classified in the center itself and in
+      none of its categories, going down would swap a real name for a
+      "Sin clasificar" that tells less.
     */
     const hasNamesBelow = [...below.values()].some((f) => f.id !== null);
     if (!hasNamesBelow) break;
@@ -235,7 +237,7 @@ function drillWhileSingleRow(
   return { accumulated, shownLevel, parent };
 }
 
-// ── Tendencia ───────────────────────────────────────────────────────────────
+// ── Trend ───────────────────────────────────────────────────────────────────
 
 export function trend(
   movements: readonly SummaryMovement[],
@@ -255,26 +257,28 @@ export function trend(
   const lastBucket = keys[keys.length - 1];
 
   for (const m of movements) {
-    // Las transferencias no son gasto ni ingreso: solo cambian de bolsillo.
+    // Transfers are neither expense nor income: they only change pockets.
     if (m.type === 'transfer') continue;
 
-    // ── Por qué la fecha del cubo depende de la granularidad ──────────────
-    // `period` es el MES al que pertenece el gasto, y como fecha siempre es
-    // el día 1. En un eje de meses eso es exactamente lo que se quiere. En
-    // un eje de DÍAS, en cambio, todos los movimientos de agosto caían el 1
-    // de agosto: la línea daba un pico el primer día y quedaba plana el
-    // resto, aunque los pagos fueran el 13 y el 25.
+    // ── Why the bucket date depends on the granularity ────────────────────
+    // `period` is the MONTH the expense belongs to, and as a date it is
+    // always the 1st. On a month axis that is exactly what is wanted. On a
+    // DAY axis, however, every August movement fell on 1 August: the line
+    // spiked on the first day and stayed flat for the rest, even though the
+    // payments were on the 13th and the 25th.
     const when = granularity === 'day' ? m.date : m.period;
 
     let bucket = bucketOf(when, granularity);
 
     if (!buckets.has(bucket)) {
-      // El pago cayó fuera del eje: la factura de marzo pagada el 6 de abril
-      // entra en el rango por su periodo, pero su día no existe en un eje de
-      // marzo. Se arrima al extremo más cercano en vez de descartarse — si
-      // se descartara, la línea sumaría menos que el total de arriba y las
-      // dos cifras de la misma pantalla se contradirían.
-      // Sin eje no hay extremo al que arrimarlo; abajo tampoco habría cubo.
+      // The payment fell outside the axis: the March bill paid on 6 April
+      // enters the range by its period, but its day does not exist on a
+      // March axis. It is moved to the nearest edge instead of being dropped —
+      // if it were dropped, the line would add up to less than the total
+      // above and the two figures on the same screen would contradict each
+      // other.
+      // With no axis there is no edge to move it to; below there would be no
+      // bucket either.
       if (firstBucket === undefined || lastBucket === undefined) continue;
       bucket = bucketOf(when, granularity) < firstBucket ? firstBucket : lastBucket;
     }
@@ -297,7 +301,7 @@ export function trend(
   return { granularity, points };
 }
 
-// ── Lo que falta pagar este mes ─────────────────────────────────────────────
+// ── What is left to pay this month ──────────────────────────────────────────
 
 /** A recurring concept that can be due: it has a periodicity. */
 export type RecurringConcept = SummaryCategory & {
@@ -305,19 +309,20 @@ export type RecurringConcept = SummaryCategory & {
 };
 
 /*
-  Los ARCHIVADOS no entran aquí, y la palabra «aquí» es toda la regla.
+  ARCHIVED concepts do not come in here, and the word «here» is the whole
+  rule.
 
-  Archivar un concepto es decir «esto ya no va a volver»: el gimnasio que
-  se dio de baja, el seguro del carro que se vendió. Seguir pidiéndolo cada
-  mes en pagos pendientes es pedir algo que nadie va a pagar nunca, y esa
-  fila no se puede quitar de la lista más que desarchivando el concepto
-  —que es lo contrario de lo que se quiso hacer—.
+  Archiving a concept says «this is not coming back»: the gym membership
+  that was cancelled, the insurance of the car that was sold. Asking for it
+  every month in pending payments asks for something nobody will ever pay,
+  and that row could only leave the list by unarchiving the concept —the
+  opposite of what was intended—.
 
-  Pero solo sale de ESTA lista y del presupuesto del mes. Lo que ese
-  concepto costó los meses que estuvo vivo sigue contando en la dona, en
-  los totales y en la tendencia: archivarlo mira hacia adelante y no
-  reescribe lo que ya pasó. Por eso el filtro va aquí y no en la consulta
-  de las categorías, que es de donde beben los históricos.
+  But it only leaves THIS list and the month's budget. What the concept
+  cost in the months it was alive still counts in the donut, the totals and
+  the trend: archiving looks forward and does not rewrite what already
+  happened. That is why the filter goes here and not in the categories
+  query, which is what the historical figures read from.
 */
 export function liveRecurring(categories: readonly SummaryCategory[]): RecurringConcept[] {
   return categories.filter(
@@ -326,15 +331,16 @@ export function liveRecurring(categories: readonly SummaryCategory[]): Recurring
 }
 
 /*
-  ── Lo que hace falta este mes ──────────────────────────────────────────
-  La suma de TODOS los conceptos recurrentes que vencen este mes, estén
-  pagados o no. La pregunta es "¿cuánta plata tengo que tener este mes?",
-  y por eso cuenta lo ya pagado: un presupuesto que se encoge cada vez que
-  uno paga algo no es un presupuesto, es el saldo pendiente —y eso ya lo
-  dice la tarjeta de pagos pendientes, que sale de este mismo recorrido—.
+  ── What is needed this month ───────────────────────────────────────────
+  The sum of ALL recurring concepts due this month, paid or not. The
+  question is "how much money do I need this month?", and that is why what
+  was already paid counts: a budget that shrinks every time one pays
+  something is not a budget, it is the outstanding balance —and the pending
+  payments card already says that, from this very same pass—.
 
-  Lo pagado entra por lo que costó DE VERDAD este mes; lo que falta, por
-  lo que costó la última vez, que es lo único que se sabe de antemano.
+  What was paid comes in at what it REALLY cost this month; what is
+  missing, at what it cost last time, which is the only thing known in
+  advance.
 */
 export function pendingThisMonth(
   recurring: readonly RecurringConcept[],
@@ -346,29 +352,29 @@ export function pendingThisMonth(
   let budget = ZERO;
 
   for (const concept of recurring) {
-    // Primero si toca este mes: un trimestral que no cae aquí no cuenta
-    // para el presupuesto ni aparece como pendiente.
+    // First whether it is due this month: a quarterly one that does not fall
+    // here neither counts for the budget nor shows as pending.
     if (!isDueInMonth(concept.periodicity, concept.paymentMonth, currentMonth)) continue;
 
     const key = concept.id.toString();
     const paid = data.paidThisMonth.get(key);
 
-    // La MISMA cifra que se enseña en la lista de pendientes: si el
-    // presupuesto se estimara de otra forma, las dos tarjetas de la misma
-    // pantalla dirían cosas distintas de la misma plata.
+    // The SAME figure shown in the pending list: if the budget were
+    // estimated another way, the two cards on the same screen would say
+    // different things about the same money.
     //
-    // Y el presupuesto del concepto, cuando lo tiene, gana al promedio.
-    // Ver `esperadoDelMes`.
+    // And the concept's budget, when it has one, beats the average.
+    // See `expectedForMonth`.
     const expected = expectedForMonth(
       concept.budget === null ? null : toMoney(concept.budget),
       data.history.get(key) ?? new Map(),
       currentMonth.slice(0, 7),
     );
 
-    // Si sigue faltando y con cuánto entra en el presupuesto lo decide una
-    // sola función, porque las dos respuestas tienen que ser coherentes
-    // entre sí: un concepto que sale de la lista por estar cubierto no
-    // puede entrar al presupuesto por lo que se esperaba.
+    // Whether it is still due and how much it adds to the budget are decided
+    // by a single function, because the two answers have to agree with each
+    // other: a concept that leaves the list for being covered cannot enter
+    // the budget at what was expected.
     const outcome = pendingOutcome({
       isMultiPayment: concept.isMultiPayment,
       hasPayment: paid !== undefined,
@@ -382,7 +388,7 @@ export function pendingThisMonth(
     pending.push(pendingPaymentOf(concept, expected, paid, currentMonth, tree));
   }
 
-  // Por fecha: lo que vence antes es lo que hay que mirar antes.
+  // By date: what is due first is what needs looking at first.
   pending.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   return { pending, budget };
 }
@@ -394,9 +400,9 @@ function pendingPaymentOf(
   currentMonth: string,
   tree: Tree,
 ): PendingPayment {
-  // El camino completo: "Alquiler" solo no dice de qué centro cuelga.
-  // Y de paso queda a la vista la RAÍZ, que es el centro de costos: de
-  // ella sale si esto es fijo o variable.
+  // The full path: "Alquiler" alone does not say which center it hangs
+  // from. And on the way the ROOT shows up, which is the cost center: it is
+  // what says whether this is fixed or variable.
   const ancestors: string[] = [];
   let current = tree.byId.get(concept.id.toString());
   let root = concept.id.toString();
@@ -417,8 +423,8 @@ function pendingPaymentOf(
     expectedAmount: expected === null ? null : serialize(toMoney(expected)),
     costCenterId: BigInt(root),
     costCenter: tree.dataById.get(root)?.name ?? '',
-    // Siempre, también en los normales —donde es cero—, para que la
-    // pantalla no tenga que preguntarse si el campo viene.
+    // Always, in the normal ones too —where it is zero—, so the screen does
+    // not have to wonder whether the field is there.
     paidAmount: serialize(paid ?? ZERO),
     isMultiPayment: concept.isMultiPayment,
   };

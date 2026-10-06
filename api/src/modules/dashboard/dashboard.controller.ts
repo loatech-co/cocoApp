@@ -8,7 +8,7 @@ import { DashboardResponse } from '../../contract/v1/dashboard.response';
 import { ApiAuthenticated, ApiData, ApiErrors } from '../../contract/v1/openapi.decorators';
 import { dashboardV1, type DashboardV1 } from '../../presenters/v1/dashboard.presenter';
 
-/** M5 — Dashboard. Todo derivado; ninguna cifra se almacena. */
+/** M5 — Dashboard. Everything derived; no figure is stored. */
 @ApiAuthenticated()
 @Controller('dashboard')
 export class DashboardController {

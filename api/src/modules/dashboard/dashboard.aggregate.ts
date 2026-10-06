@@ -15,12 +15,13 @@ export interface PeriodFlow {
 }
 
 /**
- * Flujo del periodo.
+ * The period's flow.
  *
- * Las TRANSFERENCIAS se excluyen a propósito: mover dinero de ahorros a la
- * cuenta corriente no es un ingreso ni un gasto, solo cambia de bolsillo.
- * Contarlas inflaría ambas cifras y el usuario vería un mes donde "ingresó" y
- * "gastó" plata que nunca entró ni salió de su patrimonio.
+ * TRANSFERS are left out on purpose: moving money from savings to the
+ * checking account is neither income nor expense, it only changes pockets.
+ * Counting them would inflate both figures and the user would see a month in
+ * which they "earned" and "spent" money that never entered or left their net
+ * worth.
  */
 export function computeFlow(movements: readonly AggregableMovement[]): PeriodFlow {
   let income = ZERO;
@@ -45,16 +46,17 @@ export interface ExpenseByCategory {
 }
 
 /**
- * Reparte el gasto entre categorías.
+ * Spreads the expense across categories.
  *
- * Cuando un movimiento tiene splits, la fuente de verdad para la distribución
- * son los splits, NO el `category_id` de cabecera: si una compra de $150.000 se
- * dividió en mercado y aseo, contarla entera en una sola categoría falsearía
- * ambas cifras.
+ * When a movement has splits, the source of truth for the distribution is the
+ * splits, NOT the header `category_id`: if a $150,000 purchase was split into
+ * groceries and cleaning, counting it whole in a single category would falsify
+ * both figures.
  *
- * Los movimientos sin categoría no se descartan: se agrupan bajo `null` para
- * que el usuario los vea y pueda clasificarlos. Esconderlos haría que el total
- * por categoría no cuadrara con el gasto real, que es peor que mostrarlos.
+ * Movements without a category are not dropped: they are grouped under `null`
+ * so the user sees them and can classify them. Hiding them would make the
+ * total by category not match the real expense, which is worse than showing
+ * them.
  */
 export function computeExpenseByCategory(
   movements: readonly AggregableMovement[],
@@ -94,25 +96,25 @@ export function computeExpenseByCategory(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Jerarquía de tres niveles y tendencia
+// Three-level hierarchy and trend
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** Lo mínimo de una categoría para subir por sus ancestros. */
+/** The least of a category needed to climb its ancestors. */
 export interface FlatCategory {
   id: bigint;
   parentId: bigint | null;
 }
 
 /**
- * Sube desde una categoría hasta el ancestro que ocupa `nivelObjetivo`.
+ * Climbs from a category to the ancestor at `targetLevel`.
  *
- * Los movimientos se cuelgan del CONCEPTO, que es el nivel 3. Para responder
- * "¿cuánto se fue en servicios públicos?" hay que subir del concepto a su
- * categoría; para "¿cuánto en costos fijos?", hasta el centro. Sin esto, un
- * desglose por centro saldría vacío: ningún movimiento apunta a un centro.
+ * Movements hang from the CONCEPT, which is level 3. To answer "how much went
+ * on utilities?" you have to climb from the concept to its category; for "how
+ * much on fixed costs?", up to the center. Without this, a breakdown by center
+ * would come out empty: no movement points at a center.
  *
- * Devuelve `null` si la categoría no llega a ese nivel —un concepto colgado
- * directamente de la raíz no tiene categoría— y quien llame decide qué hacer.
+ * Returns `null` if the category does not reach that level —a concept hanging
+ * straight from the root has no category— and the caller decides what to do.
  */
 export function ancestorAtLevel(
   categories: ReadonlyMap<string, FlatCategory>,
@@ -121,7 +123,7 @@ export function ancestorAtLevel(
 ): bigint | null {
   if (categoryId === null) return null;
 
-  // Se sube hasta la raíz guardando el camino, y después se lee por índice.
+  // Climb to the root keeping the path, then read it by index.
   const chain: bigint[] = [];
   let current: bigint | null = categoryId;
   const visited = new Set<string>();
@@ -134,20 +136,20 @@ export function ancestorAtLevel(
     current = categories.get(key)?.parentId ?? null;
   }
 
-  // cadena[0] es el nivel 1. Si la rama es más corta que el nivel pedido, no
-  // existe tal ancestro.
+  // chain[0] is level 1. If the branch is shorter than the level asked for,
+  // there is no such ancestor.
   return chain[targetLevel - 1] ?? null;
 }
 
 /**
- * Cuántos días cubre el rango, ambos extremos incluidos.
+ * How many days the range covers, both ends included.
  */
 export function daysInRange(from: Date, to: Date): number {
   const MS = 24 * 60 * 60 * 1000;
   return Math.floor((to.getTime() - from.getTime()) / MS) + 1;
 }
 
-/** Cuántos meses de calendario toca el rango, ambos extremos incluidos. */
+/** How many calendar months the range touches, both ends included. */
 function monthsInRange(from: Date, to: Date): number {
   return (
     (to.getUTCFullYear() - from.getUTCFullYear()) * 12 + (to.getUTCMonth() - from.getUTCMonth()) + 1
@@ -155,34 +157,34 @@ function monthsInRange(from: Date, to: Date): number {
 }
 
 /**
- * El tamaño de cubo de la tendencia según lo ancho que sea el rango.
+ * The trend's bucket size, by how wide the range is.
  *
- * Un año en cubos diarios son 365 puntos: la línea se vuelve ruido y no se lee
- * ninguna tendencia. Un mes en cubos mensuales es UN punto, que tampoco dice
- * nada. El corte está en TRES MESES.
+ * A year in daily buckets is 365 points: the line turns into noise and no
+ * trend can be read. A month in monthly buckets is ONE point, which says
+ * nothing either. The cut is at THREE MONTHS.
  *
- * Se cuentan MESES DE CALENDARIO y no días a propósito. Contando días, "los
- * últimos 3 meses" caía a un lado o al otro del corte según el mes en que se
- * mirara —febrero a abril son 61 días y mayo a julio son 92— y el mismo botón
- * dibujaba a veces una línea de días y a veces una de meses. El eje de tiempo
- * no puede cambiar de unidad según el mes en que uno esté.
+ * CALENDAR MONTHS are counted, not days, on purpose. Counting days, "the last
+ * 3 months" fell on one side of the cut or the other depending on the month
+ * it was viewed in —February to April is 61 days and May to July is 92— and
+ * the same button sometimes drew a line of days and sometimes one of months.
+ * The time axis cannot change its unit depending on the current month.
  */
 export function granularityFor(from: Date, to: Date): 'day' | 'month' {
   return monthsInRange(from, to) < 3 ? 'day' : 'month';
 }
 
-/** La etiqueta del cubo al que cae una fecha: `2025-03-14` o `2025-03`. */
+/** The label of the bucket a date falls in: `2025-03-14` or `2025-03`. */
 export function bucketOf(date: Date, granularity: 'day' | 'month'): string {
   const iso = date.toISOString().slice(0, 10);
   return granularity === 'day' ? iso : iso.slice(0, 7);
 }
 
 /**
- * Todos los cubos del rango, incluidos los VACÍOS.
+ * Every bucket of the range, the EMPTY ones included.
  *
- * Los meses sin gasto tienen que aparecer con cero. Si se omitieran, la línea
- * uniría marzo con mayo y dibujaría una pendiente suave donde en realidad hubo
- * un mes en blanco: la forma de la curva mentiría.
+ * Months without expense have to show up with zero. If they were left out,
+ * the line would join March with May and draw a gentle slope where there was
+ * really a blank month: the shape of the curve would lie.
  */
 export function rangeBuckets(from: Date, to: Date, granularity: 'day' | 'month'): string[] {
   const buckets: string[] = [];

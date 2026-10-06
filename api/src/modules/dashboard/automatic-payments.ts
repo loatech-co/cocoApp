@@ -13,14 +13,15 @@ import { CategoryLookupService, type AutoPaidConcept } from '../categories/categ
 import { LedgerService, type MonthlyHistory } from '../transactions/ledger.service';
 
 /**
- * Los conceptos que se cobran solos.
+ * The concepts that charge themselves.
  *
- * ── Qué hace ────────────────────────────────────────────────────────────────
- * Un concepto recurrente con pago automático no espera a que nadie lo
- * registre: cuando llega su día de pago, el movimiento se crea aquí y con eso
- * deja de aparecer en pagos pendientes. Es para lo que se cobra sin que uno
- * haga nada —un débito, una suscripción, una cuota domiciliada—, donde ir a
- * marcarlo cada mes es trabajo de escribano para un dinero que ya salió.
+ * ── What it does ────────────────────────────────────────────────────────────
+ * A recurring concept with automatic payment does not wait for anyone to
+ * record it: when its payment day comes, the movement is created here and
+ * with that it stops showing in pending payments. It is for what gets charged
+ * without anyone doing anything —a debit, a subscription, a direct-debit
+ * instalment—, where going to mark it every month is clerk's work for money
+ * that already left.
  *
  * ── When it runs ────────────────────────────────────────────────────────────
  * From AutoChargeTask (`auto-charge.task.ts`): once a day at 00:05 Bogotá and
@@ -28,13 +29,14 @@ import { LedgerService, type MonthlyHistory } from '../transactions/ledger.servi
  * which made a read write movements and charged nothing for whoever did not
  * open the app that month.
  *
- * ── Y por qué solo el mes EN CURSO ──────────────────────────────────────────
- * Nunca rellena meses pasados. Un mes viejo sin movimiento es un dato —no se
- * pagó, o no se registró— y fabricarlo hacia atrás cambiaría cifras que
- * alguien ya dio por buenas: un promedio, un total de año, una decisión.
+ * ── And why only the CURRENT month ──────────────────────────────────────────
+ * It never backfills past months. An old month without a movement is a
+ * fact —it was not paid, or not recorded— and making it up backwards would
+ * change figures someone already accepted: an average, a year total, a
+ * decision.
  *
- * De ahí sale, sin necesidad de guardar ninguna fecha, que encender el
- * interruptor valga «desde este mes en adelante».
+ * From that follows, without storing any date, that turning the switch on
+ * means «from this month on».
  */
 @Injectable()
 export class AutomaticPaymentsService {
@@ -46,17 +48,18 @@ export class AutomaticPaymentsService {
   ) {}
 
   /**
-   * Cobra lo que toque y devuelve cuántos movimientos creó.
+   * Charges whatever is due and returns how many movements it created.
    *
-   * `mesEnCurso` llega como `YYYY-MM-01` y `hoy` como `YYYY-MM-DD`, los dos ya
-   * en la zona horaria del usuario: quién decide qué día es hoy no es asunto
-   * de esto.
+   * `currentMonth` arrives as `YYYY-MM-01` and `today` as `YYYY-MM-DD`, both
+   * already in the user's time zone: deciding what day today is is not this
+   * method's business.
    */
   async chargeDue(userId: bigint, currentMonth: string, today: string): Promise<number> {
     const concepts = await this.categories.findAutoPaid(userId);
 
-    // Quien no use la función no paga ni una consulta más. Es el caso de casi
-    // todo el mundo casi siempre, y este método corre en CADA resumen.
+    // Whoever does not use the feature pays not one query more. That is the
+    // case for almost everyone almost always, and this runs for EVERY owner
+    // on every sweep.
     if (concepts.length === 0) return 0;
 
     const dueThisMonth = concepts.filter(
@@ -67,13 +70,13 @@ export class AutomaticPaymentsService {
     const ids = dueThisMonth.map((c) => c.id);
 
     /*
-      Lo ya registrado este mes, en CUALQUIER estado.
+      What is already recorded this month, in ANY status.
 
-      Aquí no se filtra por `cleared`, y es a propósito —la lista de pendientes
-      sí lo hace—. Allá la pregunta es «¿esto está resuelto?», y un movimiento
-      sin confirmar no resuelve nada. Aquí es «¿ya hay algo escrito?», y sí lo
-      hay: cobrar encima dejaría el mismo gasto dos veces, uno de ellos
-      inventado por nosotros.
+      There is no `cleared` filter here, on purpose —the pending list does
+      filter—. There the question is «is this settled?», and an uncleared
+      movement settles nothing. Here it is «is something already written?»,
+      and there is: charging on top would leave the same expense twice, one
+      of them made up by us.
     */
     const recorded = await this.ledger.categoriesWithMovementIn(
       userId,
@@ -84,8 +87,8 @@ export class AutomaticPaymentsService {
     const toCharge = dueThisMonth.filter((c) => !recorded.has(c.id.toString()));
     if (toCharge.length === 0) return 0;
 
-    // La historia, solo de los que quedan y solo de ANTES de este mes: de ahí
-    // sale la cifra cuando el concepto no tiene presupuesto puesto.
+    // The history, only of those left and only from BEFORE this month: that
+    // is where the figure comes from when the concept has no budget set.
     const history = await this.ledger.monthlyHistory(
       userId,
       toCharge.map((c) => c.id),
@@ -117,8 +120,8 @@ export class AutomaticPaymentsService {
     );
 
     if (
-      // `tocaCobrarAutomatico` ya responde que no sin monto esperado; se
-      // comprueba aquí también para que `esperado` llegue sin nulo.
+      // `isAutoChargeDue` already says no without an expected amount; it is
+      // checked here too so that `expected` arrives non-null.
       expected === null ||
       !isAutoChargeDue({
         isAutoPaid: true,
@@ -136,18 +139,17 @@ export class AutomaticPaymentsService {
         date: new Date(due),
         period: new Date(currentMonth),
         amount: expected.toFixed(2),
-        // El nombre del concepto, como cualquier movimiento suyo: el de la
-        // ficha sale de la clasificación, no de esto, pero la tabla y las
-        // búsquedas leen `description`.
+        // The concept's name, like any movement of its own: the one on the
+        // card comes from the classification, not from this, but the table
+        // and searches read `description`.
         description: concept.name,
         /*
-          Se dice que lo puso la aplicación, y con qué cifra.
+          It says the app put it there, and with which figure.
 
-          El valor puede ser un ESTIMADO —el promedio de los meses
-          anteriores, cuando el concepto no tiene presupuesto— y eso no
-          puede quedar indistinguible de una cifra que alguien leyó en un
-          recibo. Quien abra el movimiento tiene que poder corregirlo
-          sabiendo que hace falta.
+          The value can be an ESTIMATE —the average of the previous months,
+          when the concept has no budget— and that cannot be
+          indistinguishable from a figure someone read on a bill. Whoever
+          opens the movement has to be able to fix it knowing it is needed.
         */
         notes:
           concept.budget === null
@@ -157,14 +159,13 @@ export class AutomaticPaymentsService {
       });
     } catch (error) {
       /*
-        El choque contra la huella única no llega aquí: es dos peticiones
-        simultáneas queriendo cobrar lo mismo, y la base impidiendo que se
-        duplique. `createAutoCharge` lo devuelve como `false`: gana la primera
-        y la segunda sigue su camino.
+        A clash with the unique fingerprint does not reach here: it is two
+        simultaneous runs wanting to charge the same thing, and the database
+        stopping the duplicate. `createAutoCharge` returns it as `false`: the
+        first one wins and the second goes on its way.
 
-        Cualquier otro error se registra y tampoco tumba el resumen: quedarse
-        sin dashboard porque un cobro automático falló sería cambiar una
-        comodidad por una pantalla en blanco.
+        Any other error is logged and does not bring down the run either: one
+        failed concept must not stop the rest of the user's charges.
       */
       this.logger.error(
         `No se pudo cobrar “${concept.name}” (${concept.id}): ${(error as Error).message}`,

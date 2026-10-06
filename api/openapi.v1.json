@@ -4647,7 +4647,7 @@
             "name": "from",
             "required": false,
             "in": "query",
-            "description": "Inicio del rango, inclusive. Por defecto, el 1 del mes en curso.",
+            "description": "Start of the range, inclusive. By default, the 1st of the current month.",
             "schema": {
               "type": "string"
             }
@@ -4656,7 +4656,7 @@
             "name": "to",
             "required": false,
             "in": "query",
-            "description": "Fin del rango, inclusive. Por defecto, hoy.",
+            "description": "End of the range, inclusive. By default, today.",
             "schema": {
               "type": "string"
             }
@@ -4665,7 +4665,7 @@
             "name": "category_id",
             "required": false,
             "in": "query",
-            "description": "Centro de costos, categoría o concepto. Incluye toda su rama.",
+            "description": "Cost center, category or concept. Includes its whole branch.",
             "schema": {
               "type": "number"
             }
@@ -4674,7 +4674,7 @@
             "name": "category_ids",
             "required": false,
             "in": "query",
-            "description": "Varios, separados por coma. Cada uno arrastra su rama entera.",
+            "description": "Several, comma separated. Each brings its whole branch.",
             "schema": {
               "pattern": "^\\d+(,\\d+)*$",
               "type": "string"
@@ -4684,7 +4684,7 @@
             "name": "q",
             "required": false,
             "in": "query",
-            "description": "Busca en descripción, comercio y notas. Sin distinguir mayúsculas.",
+            "description": "Searches description, merchant and notes, ignoring case.",
             "schema": {
               "maxLength": 255,
               "type": "string"

@@ -5,41 +5,41 @@ import type { Account } from '../accounts/accounts.service';
 export interface PendingPayment {
   categoryId: bigint;
   name: string;
-  /** El camino hasta él, para saber de qué parte de la casa se habla. */
+  /** The path to it, to know which part of the house it is about. */
   path: string;
   periodicity: English<typeof PERIODICITY>;
-  /** `YYYY-MM-DD`. Ya recortado a los meses cortos. */
+  /** `YYYY-MM-DD`. Already clipped to the short months. */
   dueDate: string;
   /**
-   * Lo que se espera que cueste: el promedio de los meses CON pago dentro de
-   * los tres anteriores. `null` si nunca se ha pagado.
+   * What it is expected to cost: the average of the months WITH a payment
+   * among the three previous ones. `null` if it has never been paid.
    */
   expectedAmount: string | null;
   /**
-   * El centro de costos del que cuelga, que es por lo que se filtra la lista.
+   * The cost center it hangs from, which is what the list is filtered by.
    *
-   * Va el `id` además del nombre: el nombre es lo que se lee y el id es lo que
-   * se compara. Renombrar un centro desde la pantalla de al lado no tiene por
-   * qué desmarcar nada.
+   * The `id` goes along with the name: the name is what is read and the id is
+   * what is compared. Renaming a center from the screen next door has no
+   * reason to unselect anything.
    */
   costCenterId: bigint;
   costCenter: string;
   /**
-   * Lo que YA se pagó de esto este mes, confirmado.
+   * What has ALREADY been paid of this this month, cleared.
    *
-   * Casi siempre «0»: un pendiente normal no tiene nada pagado, porque al
-   * primer movimiento desaparece de la lista. Deja de serlo en un concepto que
-   * se paga en varias veces, que es el caso para el que existe: ahí hay algo
-   * pagado y algo que falta A LA VEZ, y la pantalla tiene que poder decir
-   * «llevas 608.350 de 1.200.000».
+   * Almost always «0»: a normal pending payment has nothing paid, because on
+   * the first movement it leaves the list. It stops being zero for a concept
+   * paid in several instalments, which is the case it exists for: there is
+   * something paid and something missing AT THE SAME TIME, and the screen has
+   * to be able to say «608,350 of 1,200,000 so far».
    */
   paidAmount: string;
   /**
-   * Si este se cubre a pedazos.
+   * Whether this one is covered in pieces.
    *
-   * No se deduce de `paidAmount > 0`: un concepto normal con un pago
-   * confirmado no está en esta lista, y uno marcado en su primera ida tiene
-   * cero pagado y sí lo está.
+   * It is not deduced from `paidAmount > 0`: a normal concept with a cleared
+   * payment is not in this list, and a marked one on its first trip has zero
+   * paid and is in it.
    */
   isMultiPayment: boolean;
 }
@@ -55,12 +55,12 @@ export interface CategorySpend {
 }
 
 export interface TrendPoint {
-  /** `2025-03-14` o `2025-03`, según la granularidad. */
+  /** `2025-03-14` or `2025-03`, by granularity. */
   bucket: string;
   expense: string;
   income: string;
   net: string;
-  /** Cuántos movimientos hay detrás del punto. */
+  /** How many movements are behind the point. */
   count: number;
 }
 
@@ -68,49 +68,49 @@ export interface Dashboard {
   period: { from: string; to: string; granularity: English<typeof GRANULARITY> };
   accounts: Account[];
   totals: {
-    /** Suma de las cuentas de activo. */
+    /** Sum of the asset accounts. */
     assets: string;
-    /** Suma de lo adeudado en tarjetas. */
+    /** Sum of what is owed on cards. */
     debts: string;
-    /** Activos − deudas. */
+    /** Assets − debts. */
     netWorth: string;
   };
-  /** Del RANGO filtrado, no del mes. */
+  /** Of the filtered RANGE, not of the month. */
   range: { income: string; expense: string; net: string; count: number };
   /**
-   * Desglose un nivel POR DEBAJO de lo que se está mirando: sin filtro, por
-   * centro de costos; dentro de un centro, por sus categorías; dentro de una categoría,
-   * por sus conceptos. Es lo que permite ir bajando sin cambiar de pantalla.
+   * Breakdown one level BELOW what is being looked at: with no filter, by cost
+   * center; inside a center, by its categories; inside a category, by its
+   * concepts. It is what allows drilling down without changing screens.
    */
   byCategory: CategorySpend[];
   /**
-   * El gasto del rango repartido por CENTRO DE COSTOS, siempre en el nivel de
-   * arriba aunque `byCategory` haya bajado.
+   * The range's expense spread by COST CENTER, always at the top level even
+   * if `byCategory` went down.
    *
-   * Son dos preguntas distintas: `byCategory` es "¿en qué se fue?" y baja
-   * hasta donde haga falta; esto es "¿de qué tipo era?", y ahí el nivel de
-   * arriba —fijos contra variables— ES la respuesta.
+   * They are two different questions: `byCategory` is "what did it go on?"
+   * and goes down as far as needed; this is "what kind was it?", and there
+   * the top level —fixed against variable— IS the answer.
    */
   expenseByCostCenter: CategorySpend[];
   breakdownLevel: English<typeof BREAKDOWN_LEVEL>;
   /**
-   * De quién son las filas del desglose.
+   * Whose rows the breakdown shows.
    *
-   * `null` en el nivel más alto, donde las filas son los centros de costos y
-   * no cuelgan de nadie. En cuanto se baja —porque se filtró por algo, o
-   * porque arriba había una sola fila— es la categoría a la que pertenecen
-   * todas, y es lo único que explica por qué se está viendo ese nivel.
+   * `null` at the top level, where the rows are the cost centers and hang
+   * from nobody. As soon as it goes down —because something was filtered, or
+   * because there was a single row above— it is the category they all belong
+   * to, and it is the only thing that explains why that level is shown.
    */
   breakdownParent: { id: bigint; name: string } | null;
   /**
-   * Lo que hace falta este mes para los costos fijos: la suma de TODOS los
-   * conceptos recurrentes que vencen en el mes, pagados o no.
+   * What the fixed costs need this month: the sum of ALL recurring concepts
+   * due in the month, paid or not.
    *
-   * Del mes en curso, como `pending`, y no del rango filtrado: es una
-   * pregunta sobre lo que viene, no sobre lo que se está revisando.
+   * Of the current month, like `pending`, and not of the filtered range: it
+   * is a question about what is coming, not about what is being reviewed.
    */
   requiredBudget: string;
-  /** Lo que se espera pagar este mes y todavía no aparece. */
+  /** What is expected to be paid this month and does not show up yet. */
   pending: PendingPayment[];
   trend: TrendPoint[];
 }

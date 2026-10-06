@@ -48,7 +48,7 @@ export function msUntilNextDailyRun(now: Date): number {
  * would skip that day's 00:05 run until the next one, 24 h later.
  *
  * ── Why running twice is harmless ───────────────────────────────────────────
- * `cobrarLoQueToque` only charges the CURRENT month, skips a concept already
+ * `chargeDue` only charges the CURRENT month, skips a concept already
  * paid this month, and every movement it writes carries a deterministic
  * `external_ref` that is UNIQUE per user. Two runs —boot and the daily one
  * landing together, or two processes during a deploy— create each movement

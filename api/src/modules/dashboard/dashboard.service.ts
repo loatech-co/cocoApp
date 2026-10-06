@@ -51,8 +51,8 @@ export class DashboardService {
     const tree = treeOf(categories);
     const flat = [...tree.byId.values()];
 
-    // Filtrar por categorías trae TODA su rama: los movimientos cuelgan del
-    // concepto, nunca del centro ni dla categoría.
+    // Filtering by categories brings their WHOLE branch: movements hang from
+    // the concept, never from the center or the category.
     const requested = [
       ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
       ...categoryIds(query.category_ids),
@@ -99,10 +99,11 @@ export class DashboardService {
   }
 
   /**
-   * Lo que falta pagar este mes, y lo que hace falta para todo el mes.
+   * What is left to pay this month, and what the whole month needs.
    *
-   * Del mes EN CURSO, no del rango que se esté mirando: la pregunta "¿qué me
-   * falta pagar?" es siempre sobre hoy, aunque uno esté revisando 2024.
+   * Of the CURRENT month, not of the range being looked at: the question
+   * "what do I still have to pay?" is always about today, even while
+   * reviewing 2024.
    */
   private async monthPending(
     userId: bigint,
@@ -114,21 +115,21 @@ export class DashboardService {
     if (recurring.length === 0) return { pending: [], budget: ZERO };
 
     const ids = recurring.map((c) => c.id);
-    // La historia de los recurrentes, mes a mes: de aquí sale lo que se
-    // espera que cueste cada uno. Solo lo ANTERIOR a este mes; lo de este
-    // mes es un hecho, no una previsión.
+    // The history of the recurring concepts, month by month: this is where
+    // what each one is expected to cost comes from. Only what is BEFORE this
+    // month; this month's is a fact, not a forecast.
     const history = await this.ledger.monthlyHistory(userId, ids, historyWindow(currentMonth));
     /*
-      Lo ya pagado ESTE mes, y CONFIRMADO.
+      What was already paid THIS month, and CLEARED.
 
-      `status: 'cleared'` no es un detalle: un movimiento en `pending` es uno
-      que todavía no se sabe si ocurrió —una transferencia programada, un
-      débito anunciado—. Sacar el concepto de la lista por un pago que no se
-      ha confirmado es prometer que algo está resuelto cuando no lo está, y
-      el mes se cierra con un recibo sin pagar que nadie volvió a mirar.
+      `status: 'cleared'` is not a detail: a `pending` movement is one not
+      yet known to have happened —a scheduled transfer, an announced
+      debit—. Taking the concept off the list for an uncleared payment is
+      promising something is settled when it is not, and the month closes
+      with an unpaid bill nobody looked at again.
 
-      Un pago pendiente es exactamente eso: algo que está en el presupuesto y
-      NO tiene todavía un movimiento confirmado que lo respalde.
+      A pending payment is exactly that: something that is in the budget and
+      does NOT yet have a cleared movement backing it.
     */
     const paidThisMonth = await this.ledger.clearedInMonth(userId, ids, new Date(currentMonth));
 
@@ -137,8 +138,8 @@ export class DashboardService {
 }
 
 /**
- * La búsqueda también entra por la clasificación: "servicios públicos" trae
- * todo lo que cuelga de esa categoría aunque ninguna fila lo diga en su texto.
+ * The search also goes through the classification: "servicios públicos" brings
+ * everything hanging from that category even if no row says it in its text.
  */
 function branchesByName(categories: readonly SummaryCategory[], q: string): bigint[] {
   const needle = q.toLowerCase();
@@ -158,7 +159,7 @@ function toAggregable(m: SummaryMovement): AggregableMovement {
 
 /** The level the breakdown shows, from its depth (1 to 3). */
 function breakdownLevelOf(depth: number): Dashboard['breakdownLevel'] {
-  // `profundidad` va de 1 a 3: el respaldo nunca se usa.
+  // `depth` goes from 1 to 3: the fallback is never used.
   const level = (['cost_center', 'category', 'concept'] as const)[depth - 1];
   return level ?? 'concept';
 }

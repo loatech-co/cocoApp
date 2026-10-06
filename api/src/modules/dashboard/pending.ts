@@ -1,7 +1,7 @@
 import { ZERO, type Money } from '../../common/money/money';
 import type { Periodicity } from '../../generated/prisma/client';
 
-/** Cada cuántos meses vuelve cada periodicidad. */
+/** How many months each periodicity takes to come back. */
 const MONTHS_BETWEEN_PAYMENTS: Record<Periodicity, number> = {
   monthly: 1,
   bimonthly: 2,
@@ -10,27 +10,27 @@ const MONTHS_BETWEEN_PAYMENTS: Record<Periodicity, number> = {
   annual: 12,
 };
 
-/** `2026-09-01` → 24320. Meses absolutos, para restar sin pelear con años. */
+/** `2026-09-01` → 24320. Absolute months, to subtract without fighting over years. */
 export function absoluteMonth(iso: string): number {
-  // `= NaN` es lo que daría una parte ausente: el mismo resultado que antes.
+  // `= NaN` is what a missing part would give: the same result as before.
   const [year = NaN, month = NaN] = iso.split('-').map(Number);
   return year * 12 + (month - 1);
 }
 
 /**
- * Si un concepto recurrente toca en un mes dado.
+ * Whether a recurring concept is due in a given month.
  *
- * ── Por qué hace falta un mes de referencia ─────────────────────────────────
- * Porque "cada tres meses" no dice CUÁLES. Puede ser enero, abril, julio y
- * octubre, o febrero, mayo, agosto y noviembre: son ciclos distintos y el dato
- * que los separa es en qué mes cae uno de ellos.
+ * ── Why a reference month is needed ─────────────────────────────────────────
+ * Because "every three months" does not say WHICH ones. It can be January,
+ * April, July and October, or February, May, August and November: they are
+ * different cycles and what tells them apart is the month one of them falls in.
  *
- * Antes se contaba desde el último pago, que parecía ahorrar el dato pero lo
- * hacía todo frágil: borrar o corregir un movimiento viejo corría el ciclo
- * entero hacia adelante o hacia atrás, y el concepto pasaba a vencer otro mes
- * sin que nadie hubiera tocado su configuración.
+ * It used to count from the last payment, which seemed to save the field but
+ * made everything fragile: deleting or fixing an old movement shifted the
+ * whole cycle forwards or backwards, and the concept became due in another
+ * month without anyone touching its settings.
  *
- * Lo mensual no necesita referencia: toca todos los meses.
+ * Monthly needs no reference: it is due every month.
  */
 export function isDueInMonth(
   periodicity: Periodicity,
@@ -41,9 +41,9 @@ export function isDueInMonth(
 
   const step = MONTHS_BETWEEN_PAYMENTS[periodicity];
 
-  // Sin referencia se asume que toca: es un concepto marcado como recurrente
-  // del que no hay registro este mes. Callarlo sería esconder justo lo que se
-  // quiere ver.
+  // Without a reference it is assumed due: it is a concept marked recurring
+  // with no record this month. Keeping quiet would hide exactly what the user
+  // wants to see.
   if (referenceMonth === null) return true;
 
   const distance = absoluteMonth(month) - (referenceMonth - 1);
@@ -51,11 +51,12 @@ export function isDueInMonth(
 }
 
 /**
- * El día del mes en que vence, recortado a los meses cortos.
+ * The day of the month it is due, clipped to the short months.
  *
- * Quien paga el 31 no deja de pagar en febrero: paga el 28. Sin este recorte
- * el vencimiento caería en un día que no existe y la fecha se desbordaría al
- * mes siguiente, que es peor que redondear.
+ * Whoever pays on the 31st does not stop paying in February: they pay on the
+ * 28th. Without this clip the due date would land on a day that does not
+ * exist and the date would overflow into the next month, which is worse than
+ * rounding.
  */
 export function dueDate(month: string, paymentDay: number | null): string {
   const [year = NaN, monthNumber = NaN] = month.split('-').map(Number);
@@ -65,7 +66,7 @@ export function dueDate(month: string, paymentDay: number | null): string {
   return `${month.slice(0, 7)}-${String(day).padStart(2, '0')}`;
 }
 
-/** Los `cuantos` meses anteriores a `mes`, del más reciente al más viejo. */
+/** The `count` months before `month`, from the most recent to the oldest. */
 export function previousMonths(month: string, count = 3): string[] {
   const [year = NaN, m = NaN] = month.split('-').map(Number);
   return Array.from({ length: count }, (_, i) =>
@@ -74,26 +75,28 @@ export function previousMonths(month: string, count = 3): string[] {
 }
 
 /**
- * Cuánto se espera que cueste un concepto recurrente.
+ * How much a recurring concept is expected to cost.
  *
- * ── El promedio de los tres meses anteriores ────────────────────────────────
- * No lo que costó la última vez: un recibo de luz de un mes de vacaciones, o
- * uno con una recarga puntual, se convertía en la previsión de todos los meses
- * siguientes. Tres meses promedian el ruido sin llegar tan atrás como para
- * arrastrar precios viejos.
+ * ── The average of the three previous months ────────────────────────────────
+ * Not what it cost last time: a power bill from a holiday month, or one with a
+ * one-off top-up, became the forecast for every following month. Three months
+ * average out the noise without reaching so far back that they drag in old
+ * prices.
  *
- * ── Los meses SIN pago no cuentan como cero ─────────────────────────────────
- * Un concepto que se pagó dos de los tres meses cuesta lo que costó esas dos
- * veces, no dos tercios de eso. Contar el mes vacío como un cero abarataría la
- * previsión justo de lo que se paga salteado, que es lo que más sorprende.
+ * ── Months WITHOUT a payment do not count as zero ───────────────────────────
+ * A concept paid in two of the three months costs what it cost those two
+ * times, not two thirds of that. Counting the empty month as a zero would
+ * cheapen the forecast of exactly what is paid irregularly, which is what
+ * surprises the most.
  *
- * ── Y si en los tres meses no hay nada ──────────────────────────────────────
- * Se cae al último mes que sí tuvo pago. No es un caso raro: un concepto
- * ANUAL no tiene pagos en los tres meses anteriores casi nunca, y dejarlo sin
- * cifra sería peor que estimarlo con la única que existe.
+ * ── And if there is nothing in the three months ─────────────────────────────
+ * It falls back to the last month that did have a payment. Not a rare case:
+ * an ANNUAL concept almost never has payments in the three previous months,
+ * and leaving it without a figure would be worse than estimating it with the
+ * only one there is.
  *
- * `porMes` lleva lo que costó cada mes —un mes con dos pagos trae la suma—, y
- * `mes` es el mes que se está estimando, en `YYYY-MM`.
+ * `byMonth` holds what each month cost —a month with two payments brings the
+ * sum—, and `month` is the month being estimated, as `YYYY-MM`.
  */
 export function estimateForMonth(
   byMonth: ReadonlyMap<string, Money>,
@@ -116,10 +119,11 @@ export function estimateForMonth(
 }
 
 /**
- * Qué parte de la historia lee `estimadoDelMes` para estimar `mesEnCurso`
- * (`YYYY-MM-01`): desde el primer día del más viejo de sus `cuantos` meses
- * anteriores hasta el mes en curso, sin incluirlo. Lo que cae más atrás solo
- * importa como último mes con pago, y eso lo resuelve el repositorio.
+ * Which part of the history `estimateForMonth` reads to estimate
+ * `currentMonth` (`YYYY-MM-01`): from the first day of the oldest of its
+ * `count` previous months up to the current month, not included. What lies
+ * further back only matters as the last month with a payment, and the
+ * repository resolves that.
  */
 export function historyWindow(currentMonth: string, count = 3): { before: Date; since: Date } {
   const oldest = previousMonths(currentMonth.slice(0, 7), count).at(-1) ?? currentMonth;
@@ -127,26 +131,29 @@ export function historyWindow(currentMonth: string, count = 3): { before: Date; 
 }
 
 /**
- * Cuánto se espera que cueste, mirando primero lo que se DIJO.
+ * How much it is expected to cost, looking first at what was STATED.
  *
- * ── El presupuesto del concepto manda ───────────────────────────────────────
- * Hay gastos cuyo valor se sabe y no se estima: un alquiler con contrato, una
- * mensualidad de colegio, una cuota fija. Para esos, promediar los tres meses
- * anteriores da una cifra peor que el dato —la arrastra hacia arriba el mes
- * que se pagó con recargo, o hacia abajo el que se pagó a medias— y encima
- * cambia sola de un mes a otro sin que nadie haya tocado nada.
+ * ── The concept's budget rules ──────────────────────────────────────────────
+ * Some expenses have a value that is known, not estimated: a rent with a
+ * contract, a school fee, a fixed instalment. For those, averaging the three
+ * previous months gives a worse figure than the stated one —the month paid
+ * with a surcharge drags it up, the one paid by half drags it down— and on
+ * top of that it changes by itself from one month to the next without anyone
+ * touching anything.
  *
- * Puesto, se usa tal cual, todos los meses. Es la definición de tenerlo: si se
- * mezclara con el promedio, ya no sería el presupuesto sino una influencia.
+ * When set, it is used as is, every month. That is what having one means: if
+ * it were mixed with the average, it would no longer be the budget but an
+ * influence.
  *
- * ── Vacío se sigue promediando ──────────────────────────────────────────────
- * Que es lo correcto para lo que de verdad varía: la luz, el mercado, la
- * gasolina. Ahí el mejor dato disponible es lo que costó últimamente.
+ * ── Empty is still averaged ─────────────────────────────────────────────────
+ * Which is right for what really varies: power, groceries, fuel. There the
+ * best figure available is what it cost lately.
  *
- * ── Y un presupuesto de CERO es un presupuesto ──────────────────────────────
- * No un hueco. Alguien que escribe 0 está diciendo «esto este año no cuesta»,
- * y caer al promedio le devolvería justo la cifra que quiso quitar. Por eso se
- * mira contra `null` y no por si es falso.
+ * ── And a ZERO budget is a budget ───────────────────────────────────────────
+ * Not a gap. Someone who writes 0 is saying «this costs nothing this year»,
+ * and falling back to the average would give back exactly the figure they
+ * meant to remove. That is why it is checked against `null` and not for
+ * falsiness.
  */
 export function expectedForMonth(
   budget: Money | null,
@@ -158,33 +165,35 @@ export function expectedForMonth(
 }
 
 /**
- * La huella de un cobro automático: un concepto, un mes, una vez.
+ * The fingerprint of an automatic charge: one concept, one month, once.
  *
- * Va en `external_ref`, que tiene índice ÚNICO por usuario. El cobro se
- * comprueba antes de insertar, pero dos peticiones simultáneas —dos pestañas
- * abiertas— pueden pasar la comprobación a la vez y llegar las dos a insertar.
- * Con la huella, la segunda choca contra la base en vez de duplicar un gasto.
+ * It goes in `external_ref`, which has a UNIQUE index per user. The charge is
+ * checked before inserting, but two simultaneous runs —two processes during a
+ * deploy— can pass the check at the same time and both reach the insert. With
+ * the fingerprint, the second one hits the database instead of duplicating an
+ * expense.
  */
 export function chargeFingerprint(categoryId: bigint, month: string): string {
   return `auto:${categoryId.toString()}:${month.slice(0, 7)}`;
 }
 
 /**
- * ¿Toca cobrar esto solo, hoy?
+ * Should this be charged by itself, today?
  *
- * ── Tres condiciones, y las tres tienen que darse ───────────────────────────
- * 1. Que el concepto lo pida. Sin `pagoAutomatico` nada se cobra solo: quien
- *    no lo enciende quiere seguir registrando a mano, y adelantarnos sería
- *    escribirle movimientos que no pidió.
- * 2. Que ya haya VENCIDO. Un débito del día 20 no ha salido el día 3, y
- *    anotarlo antes es decir que la plata ya se fue cuando sigue ahí.
- * 3. Que haya una cifra. Sin presupuesto y sin historia no hay número que
- *    poner, y un cobro automático de cero sería una mentira escrita en la
- *    contabilidad. Eso se queda pendiente, que es lo honesto: hay algo que
- *    pagar y no sabemos cuánto.
+ * ── Three conditions, and all three must hold ───────────────────────────────
+ * 1. The concept asks for it. Without `isAutoPaid` nothing charges itself:
+ *    whoever does not turn it on wants to keep recording by hand, and getting
+ *    ahead of them would be writing movements they did not ask for.
+ * 2. It is already DUE. A debit on the 20th has not gone out on the 3rd, and
+ *    recording it earlier says the money is gone when it is still there.
+ * 3. There is a figure. Without a budget and without history there is no
+ *    number to put, and a zero automatic charge would be a lie written into
+ *    the books. That stays pending, which is the honest answer: there is
+ *    something to pay and we do not know how much.
  *
- * Lo que NO se comprueba aquí es si ya está pagado: eso lo sabe quien tiene
- * los movimientos del mes delante, y es su trabajo no llamarnos dos veces.
+ * What is NOT checked here is whether it is already paid: the caller, who has
+ * the month's movements in front of it, knows that, and its job is not to call
+ * twice.
  */
 export function isAutoChargeDue({
   isAutoPaid,
@@ -203,33 +212,33 @@ export function isAutoChargeDue({
 }
 
 /**
- * Cómo queda un concepto recurrente en el mes en curso: si sigue faltando, y
- * con cuánto entra en el presupuesto del mes.
+ * Where a recurring concept stands in the current month: whether it is still
+ * due, and how much it adds to the month's budget.
  *
- * ── El fallo que arregla ────────────────────────────────────────────────────
- * Hasta ahora bastaba UN movimiento confirmado para que el concepto saliera de
- * la lista. Para casi todo está bien —el alquiler se paga una vez y ya está—,
- * pero no para lo que se cubre a pedazos: la primera ida al mercado sacaba
- * «Mercado» de pagos pendientes, y el resto del mes la única pantalla que
- * responde «¿qué me falta pagar?» contestaba que nada, con 320.000 pagados de
- * 1.200.000. La cifra no estaba mal en ningún sitio: estaba ausente justo
- * donde se preguntaba por ella.
+ * ── The bug it fixes ────────────────────────────────────────────────────────
+ * Until now ONE cleared movement was enough to take the concept off the list.
+ * That is right for almost everything —the rent is paid once and that is
+ * it—, but not for what is covered in pieces: the first trip to the market
+ * took «Mercado» off pending payments, and for the rest of the month the only
+ * screen that answers «what do I still have to pay?» said nothing, with
+ * 320,000 paid out of 1,200,000. The figure was not wrong anywhere: it was
+ * missing exactly where it was asked for.
  *
- * ── Qué cambia, y qué NO ────────────────────────────────────────────────────
- * Solo cambia para los conceptos MARCADOS, y solo cuando hay una cifra
- * esperada mayor que cero. Sin un total al que llegar no existe «lo que
- * falta»: un concepto marcado pero sin presupuesto ni historia se comporta
- * como siempre, porque la alternativa sería dejarlo pendiente para siempre
- * —nunca alcanzaría un total que no existe— y un pendiente que no se puede
- * saldar es ruido permanente en la lista.
+ * ── What changes, and what does NOT ─────────────────────────────────────────
+ * It only changes for MARKED concepts, and only when there is an expected
+ * figure above zero. Without a total to reach there is no «what is missing»:
+ * a marked concept with neither budget nor history behaves as always, because
+ * the alternative would be leaving it pending forever —it would never reach a
+ * total that does not exist— and a pending payment that cannot be settled is
+ * permanent noise in the list.
  *
- * ── Por qué el presupuesto toma el MAYOR de los dos ─────────────────────────
- * La pregunta de esa tarjeta es «¿cuánta plata tengo que tener este mes?».
- * Mientras se va cubriendo, la respuesta es lo esperado: lo pagado es un
- * anticipo de eso, no algo que se sume aparte. Pero cuando lo pagado SUPERA lo
- * esperado —el mercado salió más caro— la respuesta pasa a ser lo pagado, que
- * ya es un hecho. Quedarse en lo esperado diría que el mes costó menos de lo
- * que costó, y sumar los dos lo contaría dos veces.
+ * ── Why the budget takes the LARGER of the two ──────────────────────────────
+ * That card asks «how much money do I need this month?». While it is being
+ * covered, the answer is the expected amount: what was paid is an advance on
+ * it, not something added on top. But when what was paid EXCEEDS the expected
+ * amount —the groceries came out dearer— the answer becomes what was paid,
+ * which is already a fact. Staying at the expected amount would say the month
+ * cost less than it did, and adding both would count it twice.
  */
 export function pendingOutcome({
   isMultiPayment,
@@ -239,11 +248,11 @@ export function pendingOutcome({
 }: {
   isMultiPayment: boolean;
   /**
-   * Si hay algún movimiento confirmado, aunque sume cero.
+   * Whether there is any cleared movement, even one that adds up to zero.
    *
-   * Se pregunta por la EXISTENCIA y no por `pagado > 0` a propósito: es como
-   * se comportaba antes, y un movimiento de cero es alguien diciendo «esto
-   * este mes no costó», que es una respuesta y no un vacío.
+   * It asks about EXISTENCE and not `paid > 0` on purpose: that is how it
+   * behaved before, and a zero movement is someone saying «this cost nothing
+   * this month», which is an answer and not a gap.
    */
   hasPayment: boolean;
   paid: Money;
@@ -256,8 +265,8 @@ export function pendingOutcome({
     };
   }
 
-  // Lo de siempre: al primer movimiento confirmado deja de faltar, y el mes
-  // cuenta lo que de verdad costó.
+  // The usual: on the first cleared movement it stops being due, and the month
+  // counts what it really cost.
   if (hasPayment) return { isStillDue: false, towardBudget: paid };
   return { isStillDue: true, towardBudget: expected ?? ZERO };
 }

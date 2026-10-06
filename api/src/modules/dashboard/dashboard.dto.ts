@@ -2,31 +2,31 @@ import { Type } from 'class-transformer';
 import { IsDateString, IsInt, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 /**
- * Los mismos filtros que la lista de movimientos, a propósito.
+ * The same filters as the movements list, on purpose.
  *
- * El resumen y la lista son dos vistas del MISMO recorte: quien filtra por
- * "Servicios públicos" en el resumen y salta a movimientos espera ver esos
- * movimientos, no todos. Dos juegos de filtros distintos garantizarían que las
- * cifras de una pantalla no expliquen las de la otra.
+ * The summary and the list are two views of the SAME slice: whoever filters by
+ * "Servicios públicos" in the summary and jumps to movements expects to see
+ * those movements, not all of them. Two different sets of filters would
+ * guarantee that the figures on one screen do not explain those on the other.
  */
 export class DashboardQueryDto {
-  /** Inicio del rango, inclusive. Por defecto, el 1 del mes en curso. */
+  /** Start of the range, inclusive. By default, the 1st of the current month. */
   @IsOptional()
   @IsDateString({}, { message: 'La fecha desde debe tener formato YYYY-MM-DD.' })
   from?: string;
 
-  /** Fin del rango, inclusive. Por defecto, hoy. */
+  /** End of the range, inclusive. By default, today. */
   @IsOptional()
   @IsDateString({}, { message: 'La fecha hasta debe tener formato YYYY-MM-DD.' })
   to?: string;
 
-  /** Centro de costos, categoría o concepto. Incluye toda su rama. */
+  /** Cost center, category or concept. Includes its whole branch. */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   category_id?: number;
 
-  /** Varios, separados por coma. Cada uno arrastra su rama entera. */
+  /** Several, comma separated. Each brings its whole branch. */
   @IsOptional()
   @IsString()
   @Matches(/^\d+(,\d+)*$/, {
@@ -34,7 +34,7 @@ export class DashboardQueryDto {
   })
   category_ids?: string;
 
-  /** Busca en descripción, comercio y notas. Sin distinguir mayúsculas. */
+  /** Searches description, merchant and notes, ignoring case. */
   @IsOptional()
   @IsString()
   @MaxLength(255)

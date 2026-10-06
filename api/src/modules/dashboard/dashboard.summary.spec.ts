@@ -41,7 +41,7 @@ function makeMovement(
   };
 }
 
-describe('tendencia', () => {
+describe('trend', () => {
   it('snaps a payment outside a day axis to its nearest edge, so the line adds up', () => {
     const { granularity, points } = trend(
       [
@@ -61,7 +61,7 @@ describe('tendencia', () => {
   });
 });
 
-describe('desglose', () => {
+describe('breakdown', () => {
   const tree = treeOf([
     makeCategory({ id: 1n, name: 'Hogar' }),
     makeCategory({ id: 2n, name: 'Oficina' }),
@@ -90,7 +90,7 @@ describe('desglose', () => {
   });
 });
 
-describe('pendientesDelMes', () => {
+describe('pendingThisMonth', () => {
   it('leaves out a quarterly concept that is not due this month', () => {
     const quarterly = makeCategory({
       id: 3n,
