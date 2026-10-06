@@ -1,5 +1,6 @@
 import { enLaApp } from '@/shared/lib/puente-nativo';
 
+import { refocus } from './query-client';
 import { recibirSesion, sesionCerrada } from './session';
 
 /*
@@ -24,6 +25,8 @@ import { recibirSesion, sesionCerrada } from './session';
 export function registrarPuente(acciones: {
   ir: (ruta: string) => void;
   abrirBusqueda: () => void;
+  /** A capture synced in the app: refetch what a new movement changes. */
+  capturado: () => void;
 }): () => void {
   // Fuera de la app no hay nada que quitar.
   if (!enLaApp()) return () => undefined;
@@ -31,6 +34,8 @@ export function registrarPuente(acciones: {
   window.__coco = {
     ir: acciones.ir,
     abrirBusqueda: acciones.abrirBusqueda,
+    capturado: acciones.capturado,
+    primerPlano: refocus,
     recibirSesion,
     sesionCerrada,
   };

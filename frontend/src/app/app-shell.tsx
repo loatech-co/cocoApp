@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Eye } from 'lucide-react';
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
@@ -6,6 +7,7 @@ import { MovimientoModal } from '@/features/transactions/components/movimiento-m
 import { PanelDeBusqueda } from '@/features/transactions/components/panel-de-busqueda';
 import { useAuth } from '@/shared/api/auth-context';
 import { registrarPuente } from '@/shared/api/native-bridge';
+import { invalidateDerived } from '@/shared/api/query-keys';
 import { useEnLaApp, useEsMovil } from '@/shared/lib/movil';
 import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
@@ -109,10 +111,16 @@ function VistaDeUsuario() {
  */
 function PuenteDeNavegacion({ abrirBusqueda }: { abrirBusqueda: () => void }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(
-    () => registrarPuente({ ir: (ruta) => void navigate(ruta), abrirBusqueda }),
-    [navigate, abrirBusqueda],
+    () =>
+      registrarPuente({
+        ir: (ruta) => void navigate(ruta),
+        abrirBusqueda,
+        capturado: () => invalidateDerived(queryClient),
+      }),
+    [navigate, abrirBusqueda, queryClient],
   );
 
   return null;

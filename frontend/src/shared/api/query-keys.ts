@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 /**
  * Claves de caché.
@@ -21,9 +21,12 @@ export const keys = {
 /** Lo que cambia cuando cambia un movimiento: sus listas, las cuentas y el resumen. */
 export function useInvalidarDerivados() {
   const queryClient = useQueryClient();
-  return () => {
-    void queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    void queryClient.invalidateQueries({ queryKey: keys.accounts });
-    void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-  };
+  return () => invalidateDerived(queryClient);
+}
+
+/** The same, outside a hook: for the bridge, when the app says a capture synced. */
+export function invalidateDerived(queryClient: QueryClient): void {
+  void queryClient.invalidateQueries({ queryKey: ['transactions'] });
+  void queryClient.invalidateQueries({ queryKey: keys.accounts });
+  void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 }

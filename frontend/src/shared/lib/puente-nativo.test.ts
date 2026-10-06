@@ -86,7 +86,7 @@ describe('pedirSesion()', () => {
 describe('registrarPuente()', () => {
   it('fuera de la app no instala nada', () => {
     salirDeLaApp();
-    registrarPuente({ ir: () => {}, abrirBusqueda: () => {} });
+    registrarPuente({ ir: () => {}, abrirBusqueda: () => {}, capturado: () => {} });
     // Un navegador normal no expone una forma de navegar ni de inyectar una
     // sesión desde fuera.
     expect(window.__coco).toBeUndefined();
@@ -95,10 +95,14 @@ describe('registrarPuente()', () => {
   it('en la app publica window.__coco y lo quita al deshacer', () => {
     fingirLaApp();
     const ir = vi.fn();
-    const quitar = registrarPuente({ ir, abrirBusqueda: () => {} });
+    const capturado = vi.fn();
+    const quitar = registrarPuente({ ir, abrirBusqueda: () => {}, capturado });
 
     window.__coco!.ir('/cuentas');
     expect(ir).toHaveBeenCalledWith('/cuentas');
+    window.__coco!.capturado();
+    expect(capturado).toHaveBeenCalledOnce();
+    expect(typeof window.__coco!.primerPlano).toBe('function');
     expect(typeof window.__coco!.recibirSesion).toBe('function');
     expect(typeof window.__coco!.sesionCerrada).toBe('function');
 

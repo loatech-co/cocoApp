@@ -1,5 +1,6 @@
 import {
   USER_AGENT_APP,
+  type AvisosDeLaApp,
   type EventoAlPuente,
   type MensajeAlPuente,
   type SesionParaLaWeb,
@@ -34,8 +35,12 @@ import {
  * este archivo.
  */
 
-/** Lo que la app puede llamar desde Swift (`evaluateJavaScript`). */
-interface PuenteWeb {
+/**
+ * Lo que la app puede llamar desde Swift (`evaluateJavaScript`). Los avisos
+ * sin respuesta (`capturado`, `primerPlano`) son contrato con iOS y viven en
+ * `native-contract.ts`.
+ */
+interface PuenteWeb extends AvisosDeLaApp {
   /** Navega sin recargar: `react-router` cambia la ruta por dentro. */
   ir(ruta: string): void;
   /** Abre la hoja de búsqueda. La pestaña nativa «Buscar» llama aquí. */

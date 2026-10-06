@@ -72,6 +72,23 @@ export interface EventoAlPuente {
   tipo: 'salir' | 'sesionCerrada' | 'sinSesion' | 'abrirCaptura';
 }
 
+/**
+ * App → web, no reply: the app calls `window.__coco.<name>()` with
+ * `evaluateJavaScript`, and only if `window.__coco` exists (there is no
+ * `__coco` before there is a session, and then there is nothing to refresh).
+ *
+ * `capturado`: a capture made in the app finished syncing (the API answered
+ * 2xx). The web refetches movements, accounts and the summary, which are what
+ * a new movement changes.
+ * `primerPlano`: the app, or the tab that holds the web view, came back to the
+ * foreground. A `WKWebView` gets no window focus, so without this the web
+ * never refetches what went stale while it was hidden.
+ */
+export interface AvisosDeLaApp {
+  capturado(): void;
+  primerPlano(): void;
+}
+
 // ─── The v1 contract the app still speaks ────────────────────────────────────
 
 /**
