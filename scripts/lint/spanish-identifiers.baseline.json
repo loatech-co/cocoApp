@@ -3939,9 +3939,6 @@
     "variante": 1,
     "variosPagos": 1
   },
-  "scripts/ci": {
-    "soporte": 1
-  },
   "scripts/perf": {
     "SOPORTES_DIR": 1,
     "SOPORTES_STORAGE": 1,
