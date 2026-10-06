@@ -31,6 +31,6 @@ export class DashboardV2Controller {
       category_ids: query.categoryIds,
       q: query.q,
     });
-    return dashboardV2(await this.dashboard.resumen(user.id, v1));
+    return dashboardV2(await this.dashboard.summary(user.id, v1));
   }
 }

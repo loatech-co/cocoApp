@@ -1,23 +1,22 @@
 import { Injectable } from '@nestjs/common';
 
-import { calcularFlujo, type MovimientoAgregable } from './dashboard.aggregate';
+import { computeFlow, type AggregableMovement } from './dashboard.aggregate';
 import type { DashboardQueryDto } from './dashboard.dto';
 import {
-  aISO,
-  arbolDe,
-  desglose,
-  pendientesDelMes,
-  rangoPorDefecto,
-  recurrentesVivos,
-  tendencia,
-  totalesDe,
-  type Arbol,
+  toIsoDate,
+  treeOf,
+  breakdown,
+  pendingThisMonth,
+  defaultRange,
+  liveRecurring,
+  trend,
+  totalsOf,
+  type Tree,
 } from './dashboard.summary';
 import type { Dashboard, PendingPayment } from './dashboard.types';
-import { ventanaDeLaHistoria } from './pendientes';
+import { historyWindow } from './pending';
 import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
 import { ZERO, serialize, toMoney, type Money } from '../../common/money/money';
-import { BREAKDOWN_LEVEL, english, GRANULARITY } from '../../common/vocabulary';
 import { Database } from '../../prisma/database';
 import { AccountsService } from '../accounts/accounts.service';
 import { CategoryLookupService, type SummaryCategory } from '../categories/category-lookup.service';
@@ -38,67 +37,64 @@ export class DashboardService {
    * per-unit BEGIN/set_config/COMMIT, not the policies, is what RLS costs,
    * and this screen is the one that pays it six times.
    */
-  resumen(userId: bigint, query: DashboardQueryDto): Promise<Dashboard> {
-    return this.db.forUser(userId, () => this.leerResumen(userId, query));
+  summary(userId: bigint, query: DashboardQueryDto): Promise<Dashboard> {
+    return this.db.forUser(userId, () => this.readSummary(userId, query));
   }
 
-  private async leerResumen(userId: bigint, query: DashboardQueryDto): Promise<Dashboard> {
-    const { inicio, fin } = rangoPorDefecto(query.from, query.to);
+  private async readSummary(userId: bigint, query: DashboardQueryDto): Promise<Dashboard> {
+    const { start, end } = defaultRange(query.from, query.to);
 
     // A GET only reads. Auto-paid concepts are charged by AutoChargeTask, once
     // a day and at start-up (phase 6.7), not on the way in here.
 
-    const categorias = await this.categories.findForSummary(userId);
-    const arbol = arbolDe(categorias);
-    const planas = [...arbol.porId.values()];
+    const categories = await this.categories.findForSummary(userId);
+    const tree = treeOf(categories);
+    const flat = [...tree.byId.values()];
 
     // Filtrar por categorías trae TODA su rama: los movimientos cuelgan del
     // concepto, nunca del centro ni dla categoría.
-    const pedidas = [
+    const requested = [
       ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
       ...categoryIds(query.category_ids),
     ];
 
-    const [cuentas, movimientos] = await Promise.all([
+    const [accounts, movements] = await Promise.all([
       this.accounts.list(userId, false),
       this.ledger.findForSummary(userId, {
-        from: inicio,
-        to: fin,
-        branch: pedidas.length > 0 ? branchesOf(planas, pedidas) : null,
+        from: start,
+        to: end,
+        branch: requested.length > 0 ? branchesOf(flat, requested) : null,
         q: query.q,
-        byName: query.q ? ramaPorNombre(categorias, query.q) : [],
+        byName: query.q ? branchesByName(categories, query.q) : [],
       }),
     ]);
 
-    const flujo = calcularFlujo(movimientos.map(agregable));
+    const flow = computeFlow(movements.map(toAggregable));
 
-    const partes = desglose(movimientos, arbol, pedidas.length === 1 ? pedidas[0] : undefined);
-    const datosDelPadre =
-      partes.padre === null ? undefined : arbol.datosDe.get(partes.padre.toString());
-    const { granularidad, puntos } = tendencia(movimientos, inicio, fin);
-    const { pendientes, presupuesto } = await this.pendientes(userId, categorias, arbol);
-    const granularity = english(GRANULARITY, granularidad);
+    const parts = breakdown(movements, tree, requested.length === 1 ? requested[0] : undefined);
+    const parentData =
+      parts.parent === null ? undefined : tree.dataById.get(parts.parent.toString());
+    const { granularity, points } = trend(movements, start, end);
+    const { pending, budget } = await this.monthPending(userId, categories, tree);
 
     return {
-      period: { from: aISO(inicio), to: aISO(fin), granularity },
-      accounts: cuentas,
-      totals: totalesDe(cuentas),
+      period: { from: toIsoDate(start), to: toIsoDate(end), granularity },
+      accounts,
+      totals: totalsOf(accounts),
       range: {
-        income: serialize(flujo.income),
-        expense: serialize(flujo.expense),
-        net: serialize(flujo.net),
-        count: movimientos.length,
+        income: serialize(flow.income),
+        expense: serialize(flow.expense),
+        net: serialize(flow.net),
+        count: movements.length,
       },
-      byCategory: partes.porCategoria,
-      expenseByCostCenter: partes.porCentro,
-      breakdownLevel: nivelDelDesglose(partes.nivelMostrado),
+      byCategory: parts.byCategory,
+      expenseByCostCenter: parts.byCostCenter,
+      breakdownLevel: breakdownLevelOf(parts.shownLevel),
       breakdownParent:
-        partes.padre !== null && datosDelPadre
-          ? { id: partes.padre, name: datosDelPadre.name }
-          : null,
-      requiredBudget: serialize(toMoney(presupuesto)),
-      pending: pendientes,
-      trend: puntos,
+        parts.parent !== null && parentData ? { id: parts.parent, name: parentData.name } : null,
+      requiredBudget: serialize(toMoney(budget)),
+      pending,
+      trend: points,
     };
   }
 
@@ -108,24 +104,20 @@ export class DashboardService {
    * Del mes EN CURSO, no del rango que se esté mirando: la pregunta "¿qué me
    * falta pagar?" es siempre sobre hoy, aunque uno esté revisando 2024.
    */
-  private async pendientes(
+  private async monthPending(
     userId: bigint,
-    categorias: readonly SummaryCategory[],
-    arbol: Arbol,
-  ): Promise<{ pendientes: PendingPayment[]; presupuesto: Money }> {
-    const mesEnCurso = `${new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 7)}-01`;
-    const recurrentes = recurrentesVivos(categorias);
-    if (recurrentes.length === 0) return { pendientes: [], presupuesto: ZERO };
+    categories: readonly SummaryCategory[],
+    tree: Tree,
+  ): Promise<{ pending: PendingPayment[]; budget: Money }> {
+    const currentMonth = `${new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 7)}-01`;
+    const recurring = liveRecurring(categories);
+    if (recurring.length === 0) return { pending: [], budget: ZERO };
 
-    const ids = recurrentes.map((c) => c.id);
+    const ids = recurring.map((c) => c.id);
     // La historia de los recurrentes, mes a mes: de aquí sale lo que se
     // espera que cueste cada uno. Solo lo ANTERIOR a este mes; lo de este
     // mes es un hecho, no una previsión.
-    const historiaDe = await this.ledger.monthlyHistory(
-      userId,
-      ids,
-      ventanaDeLaHistoria(mesEnCurso),
-    );
+    const history = await this.ledger.monthlyHistory(userId, ids, historyWindow(currentMonth));
     /*
       Lo ya pagado ESTE mes, y CONFIRMADO.
 
@@ -138,9 +130,9 @@ export class DashboardService {
       Un pago pendiente es exactamente eso: algo que está en el presupuesto y
       NO tiene todavía un movimiento confirmado que lo respalde.
     */
-    const pagadoEsteMes = await this.ledger.clearedInMonth(userId, ids, new Date(mesEnCurso));
+    const paidThisMonth = await this.ledger.clearedInMonth(userId, ids, new Date(currentMonth));
 
-    return pendientesDelMes(recurrentes, { historiaDe, pagadoEsteMes }, mesEnCurso, arbol);
+    return pendingThisMonth(recurring, { history, paidThisMonth }, currentMonth, tree);
   }
 }
 
@@ -148,14 +140,14 @@ export class DashboardService {
  * La búsqueda también entra por la clasificación: "servicios públicos" trae
  * todo lo que cuelga de esa categoría aunque ninguna fila lo diga en su texto.
  */
-function ramaPorNombre(categorias: readonly SummaryCategory[], q: string): bigint[] {
-  const aguja = q.toLowerCase();
-  const coinciden = categorias.filter((c) => c.name.toLowerCase().includes(aguja)).map((c) => c.id);
-  const planas = categorias.map((c) => ({ id: c.id, parentId: c.parentId }));
-  return coinciden.length > 0 ? branchesOf(planas, coinciden) : [];
+function branchesByName(categories: readonly SummaryCategory[], q: string): bigint[] {
+  const needle = q.toLowerCase();
+  const matches = categories.filter((c) => c.name.toLowerCase().includes(needle)).map((c) => c.id);
+  const flat = categories.map((c) => ({ id: c.id, parentId: c.parentId }));
+  return matches.length > 0 ? branchesOf(flat, matches) : [];
 }
 
-function agregable(m: SummaryMovement): MovimientoAgregable {
+function toAggregable(m: SummaryMovement): AggregableMovement {
   return {
     type: m.type,
     amount: toMoney(m.amount),
@@ -165,8 +157,8 @@ function agregable(m: SummaryMovement): MovimientoAgregable {
 }
 
 /** The level the breakdown shows, from its depth (1 to 3). */
-function nivelDelDesglose(profundidad: number): Dashboard['breakdownLevel'] {
+function breakdownLevelOf(depth: number): Dashboard['breakdownLevel'] {
   // `profundidad` va de 1 a 3: el respaldo nunca se usa.
-  const nivel = (['centro de costos', 'categoría', 'concepto'] as const)[profundidad - 1];
-  return english(BREAKDOWN_LEVEL, nivel ?? 'concepto');
+  const level = (['cost_center', 'category', 'concept'] as const)[depth - 1];
+  return level ?? 'concept';
 }

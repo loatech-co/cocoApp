@@ -1,4 +1,4 @@
-import { tocaEnElMes, vencimiento } from './pendientes';
+import { isDueInMonth, dueDate } from './pending';
 import type { Periodicity } from '../../generated/prisma/client';
 
 /*
@@ -20,7 +20,7 @@ function dueMonths(
   year: number,
 ): number[] {
   return monthsOf(year)
-    .filter((month) => tocaEnElMes(periodicity, referenceMonth, month))
+    .filter((month) => isDueInMonth(periodicity, referenceMonth, month))
     .map((month) => Number(month.slice(5, 7)));
 }
 
@@ -32,8 +32,8 @@ function dueDates(
   year: number,
 ): string[] {
   return monthsOf(year)
-    .filter((month) => tocaEnElMes(periodicity, referenceMonth, month))
-    .map((month) => vencimiento(month, paymentDay));
+    .filter((month) => isDueInMonth(periodicity, referenceMonth, month))
+    .map((month) => dueDate(month, paymentDay));
 }
 
 describe('Intermediate periodicities', () => {
@@ -50,9 +50,9 @@ describe('Intermediate periodicities', () => {
     });
 
     it('keeps the cycle across the year boundary', () => {
-      expect(tocaEnElMes('bimonthly', 12, '2026-12-01')).toBe(true);
-      expect(tocaEnElMes('bimonthly', 12, '2027-01-01')).toBe(false);
-      expect(tocaEnElMes('bimonthly', 12, '2027-02-01')).toBe(true);
+      expect(isDueInMonth('bimonthly', 12, '2026-12-01')).toBe(true);
+      expect(isDueInMonth('bimonthly', 12, '2027-01-01')).toBe(false);
+      expect(isDueInMonth('bimonthly', 12, '2027-02-01')).toBe(true);
     });
   });
 
@@ -67,9 +67,9 @@ describe('Intermediate periodicities', () => {
     });
 
     it('keeps the cycle across the year boundary', () => {
-      expect(tocaEnElMes('quarterly', 11, '2026-11-01')).toBe(true);
-      expect(tocaEnElMes('quarterly', 11, '2027-02-01')).toBe(true);
-      expect(tocaEnElMes('quarterly', 11, '2027-01-01')).toBe(false);
+      expect(isDueInMonth('quarterly', 11, '2026-11-01')).toBe(true);
+      expect(isDueInMonth('quarterly', 11, '2027-02-01')).toBe(true);
+      expect(isDueInMonth('quarterly', 11, '2027-01-01')).toBe(false);
     });
   });
 

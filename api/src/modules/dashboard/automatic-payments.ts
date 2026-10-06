@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
-  esperadoDelMes,
-  huellaDelCobro,
-  tocaCobrarAutomatico,
-  tocaEnElMes,
-  vencimiento,
-  ventanaDeLaHistoria,
-} from './pendientes';
+  expectedForMonth,
+  chargeFingerprint,
+  isAutoChargeDue,
+  isDueInMonth,
+  dueDate,
+  historyWindow,
+} from './pending';
 import { toMoney } from '../../common/money/money';
 import { CategoryLookupService, type AutoPaidConcept } from '../categories/category-lookup.service';
 import { LedgerService, type MonthlyHistory } from '../transactions/ledger.service';
@@ -37,8 +37,8 @@ import { LedgerService, type MonthlyHistory } from '../transactions/ledger.servi
  * interruptor valga «desde este mes en adelante».
  */
 @Injectable()
-export class PagosAutomaticosService {
-  private readonly logger = new Logger(PagosAutomaticosService.name);
+export class AutomaticPaymentsService {
+  private readonly logger = new Logger(AutomaticPaymentsService.name);
 
   constructor(
     private readonly categories: CategoryLookupService,
@@ -52,19 +52,19 @@ export class PagosAutomaticosService {
    * en la zona horaria del usuario: quién decide qué día es hoy no es asunto
    * de esto.
    */
-  async cobrarLoQueToque(userId: bigint, mesEnCurso: string, hoy: string): Promise<number> {
-    const conceptos = await this.categories.findAutoPaid(userId);
+  async chargeDue(userId: bigint, currentMonth: string, today: string): Promise<number> {
+    const concepts = await this.categories.findAutoPaid(userId);
 
     // Quien no use la función no paga ni una consulta más. Es el caso de casi
     // todo el mundo casi siempre, y este método corre en CADA resumen.
-    if (conceptos.length === 0) return 0;
+    if (concepts.length === 0) return 0;
 
-    const delMes = conceptos.filter(
-      (c) => c.periodicity !== null && tocaEnElMes(c.periodicity, c.paymentMonth, mesEnCurso),
+    const dueThisMonth = concepts.filter(
+      (c) => c.periodicity !== null && isDueInMonth(c.periodicity, c.paymentMonth, currentMonth),
     );
-    if (delMes.length === 0) return 0;
+    if (dueThisMonth.length === 0) return 0;
 
-    const ids = delMes.map((c) => c.id);
+    const ids = dueThisMonth.map((c) => c.id);
 
     /*
       Lo ya registrado este mes, en CUALQUIER estado.
@@ -75,56 +75,56 @@ export class PagosAutomaticosService {
       hay: cobrar encima dejaría el mismo gasto dos veces, uno de ellos
       inventado por nosotros.
     */
-    const registrado = await this.ledger.categoriesWithMovementIn(
+    const recorded = await this.ledger.categoriesWithMovementIn(
       userId,
       ids,
-      new Date(mesEnCurso),
+      new Date(currentMonth),
     );
 
-    const porCobrar = delMes.filter((c) => !registrado.has(c.id.toString()));
-    if (porCobrar.length === 0) return 0;
+    const toCharge = dueThisMonth.filter((c) => !recorded.has(c.id.toString()));
+    if (toCharge.length === 0) return 0;
 
     // La historia, solo de los que quedan y solo de ANTES de este mes: de ahí
     // sale la cifra cuando el concepto no tiene presupuesto puesto.
-    const historiaDe = await this.ledger.monthlyHistory(
+    const history = await this.ledger.monthlyHistory(
       userId,
-      porCobrar.map((c) => c.id),
-      ventanaDeLaHistoria(mesEnCurso),
+      toCharge.map((c) => c.id),
+      historyWindow(currentMonth),
     );
 
-    let creados = 0;
+    let created = 0;
 
-    for (const concepto of porCobrar) {
-      if (await this.cobrar(userId, concepto, historiaDe, mesEnCurso, hoy)) creados += 1;
+    for (const concept of toCharge) {
+      if (await this.chargeOne(userId, concept, history, currentMonth, today)) created += 1;
     }
 
-    return creados;
+    return created;
   }
 
   /** Charges one concept if its day came. `true` when it wrote the movement. */
-  private async cobrar(
+  private async chargeOne(
     userId: bigint,
-    concepto: AutoPaidConcept,
-    historiaDe: MonthlyHistory,
-    mesEnCurso: string,
-    hoy: string,
+    concept: AutoPaidConcept,
+    history: MonthlyHistory,
+    currentMonth: string,
+    today: string,
   ): Promise<boolean> {
-    const vence = vencimiento(mesEnCurso, concepto.paymentDay);
-    const esperado = esperadoDelMes(
-      concepto.budget === null ? null : toMoney(concepto.budget),
-      historiaDe.get(concepto.id.toString()) ?? new Map(),
-      mesEnCurso.slice(0, 7),
+    const due = dueDate(currentMonth, concept.paymentDay);
+    const expected = expectedForMonth(
+      concept.budget === null ? null : toMoney(concept.budget),
+      history.get(concept.id.toString()) ?? new Map(),
+      currentMonth.slice(0, 7),
     );
 
     if (
       // `tocaCobrarAutomatico` ya responde que no sin monto esperado; se
       // comprueba aquí también para que `esperado` llegue sin nulo.
-      esperado === null ||
-      !tocaCobrarAutomatico({
-        pagoAutomatico: true,
-        vencimientoISO: vence,
-        hoyISO: hoy,
-        esperado,
+      expected === null ||
+      !isAutoChargeDue({
+        isAutoPaid: true,
+        dueDateIso: due,
+        todayIso: today,
+        expected,
       })
     )
       return false;
@@ -132,14 +132,14 @@ export class PagosAutomaticosService {
     try {
       return await this.ledger.createAutoCharge({
         userId,
-        categoryId: concepto.id,
-        date: new Date(vence),
-        period: new Date(mesEnCurso),
-        amount: esperado.toFixed(2),
+        categoryId: concept.id,
+        date: new Date(due),
+        period: new Date(currentMonth),
+        amount: expected.toFixed(2),
         // El nombre del concepto, como cualquier movimiento suyo: el de la
         // ficha sale de la clasificación, no de esto, pero la tabla y las
         // búsquedas leen `description`.
-        description: concepto.name,
+        description: concept.name,
         /*
           Se dice que lo puso la aplicación, y con qué cifra.
 
@@ -150,10 +150,10 @@ export class PagosAutomaticosService {
           sabiendo que hace falta.
         */
         notes:
-          concepto.budget === null
+          concept.budget === null
             ? 'Cobrado automáticamente. El valor es un estimado del promedio de los meses anteriores: corrígelo cuando tengas el recibo.'
             : 'Cobrado automáticamente, por el presupuesto del concepto.',
-        externalRef: huellaDelCobro(concepto.id, mesEnCurso),
+        externalRef: chargeFingerprint(concept.id, currentMonth),
       });
     } catch (error) {
       /*
@@ -167,7 +167,7 @@ export class PagosAutomaticosService {
         comodidad por una pantalla en blanco.
       */
       this.logger.error(
-        `No se pudo cobrar “${concepto.name}” (${concepto.id}): ${(error as Error).message}`,
+        `No se pudo cobrar “${concept.name}” (${concept.id}): ${(error as Error).message}`,
       );
       return false;
     }

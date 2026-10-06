@@ -4,38 +4,38 @@
  * `DashboardService.resumen` reads the data and composes these.
  */
 import {
-  ancestroEnNivel,
-  cuboDe,
-  cubosDelRango,
-  granularidadPara,
-  type CategoriaPlana,
+  ancestorAtLevel,
+  bucketOf,
+  rangeBuckets,
+  granularityFor,
+  type FlatCategory,
 } from './dashboard.aggregate';
 import type { CategorySpend, PendingPayment, TrendPoint } from './dashboard.types';
-import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
+import { pendingOutcome, expectedForMonth, isDueInMonth, dueDate } from './pending';
 import { ZERO, serialize, toMoney, type Money } from '../../common/money/money';
 import type { Account } from '../accounts/accounts.service';
 import type { SummaryCategory } from '../categories/category-lookup.service';
 import type { MonthlyHistory, SummaryMovement } from '../transactions/ledger.service';
 
 /** One row of a breakdown level, before it gets a name. */
-interface FilaAgrupada {
+interface GroupedRow {
   id: bigint | null;
   total: Money;
   count: number;
 }
 
-type Agrupado = Map<string, FilaAgrupada>;
+type Grouped = Map<string, GroupedRow>;
 
 /** The tree, indexed by id: positions and the data of each category. */
-export interface Arbol {
-  porId: ReadonlyMap<string, CategoriaPlana>;
-  datosDe: ReadonlyMap<string, SummaryCategory>;
+export interface Tree {
+  byId: ReadonlyMap<string, FlatCategory>;
+  dataById: ReadonlyMap<string, SummaryCategory>;
 }
 
-export function arbolDe(categorias: readonly SummaryCategory[]): Arbol {
+export function treeOf(categories: readonly SummaryCategory[]): Tree {
   return {
-    porId: new Map(categorias.map((c) => [c.id.toString(), { id: c.id, parentId: c.parentId }])),
-    datosDe: new Map(categorias.map((c) => [c.id.toString(), c])),
+    byId: new Map(categories.map((c) => [c.id.toString(), { id: c.id, parentId: c.parentId }])),
+    dataById: new Map(categories.map((c) => [c.id.toString(), c])),
   };
 }
 
@@ -46,96 +46,89 @@ export function arbolDe(categorias: readonly SummaryCategory[]): Arbol {
  * 31 a las 8 p.m. hora de Bogotá caería en el mes siguiente y el usuario vería
  * su plata en el mes equivocado.
  */
-export function rangoPorDefecto(from?: string, to?: string): { inicio: Date; fin: Date } {
-  const ahoraEnBogota = new Date(Date.now() - 5 * 60 * 60 * 1000);
+export function defaultRange(from?: string, to?: string): { start: Date; end: Date } {
+  const nowInBogota = new Date(Date.now() - 5 * 60 * 60 * 1000);
 
   // Por defecto: del 1 del mes en curso a hoy. Es el "mes hasta la fecha", que
   // responde la pregunta que uno se hace a diario —"¿cómo voy este mes?"— sin
   // mezclarla con días que todavía no ocurrieron.
-  const inicio = from
+  const start = from
     ? new Date(`${from}T00:00:00.000Z`)
-    : new Date(Date.UTC(ahoraEnBogota.getUTCFullYear(), ahoraEnBogota.getUTCMonth(), 1));
+    : new Date(Date.UTC(nowInBogota.getUTCFullYear(), nowInBogota.getUTCMonth(), 1));
 
-  const fin = to
+  const end = to
     ? new Date(`${to}T00:00:00.000Z`)
     : new Date(
-        Date.UTC(
-          ahoraEnBogota.getUTCFullYear(),
-          ahoraEnBogota.getUTCMonth(),
-          ahoraEnBogota.getUTCDate(),
-        ),
+        Date.UTC(nowInBogota.getUTCFullYear(), nowInBogota.getUTCMonth(), nowInBogota.getUTCDate()),
       );
 
-  return { inicio, fin };
+  return { start, end };
 }
 
-export const aISO = (fecha: Date): string => fecha.toISOString().slice(0, 10);
+export const toIsoDate = (date: Date): string => date.toISOString().slice(0, 10);
 
 /** En qué nivel está una categoría: 1 centro, 2 categoría, 3 concepto. */
-function profundidadDeCategoria(porId: ReadonlyMap<string, CategoriaPlana>, id: bigint): number {
-  let nivel = 0;
-  let actual: bigint | null = id;
-  const visitados = new Set<string>();
+function categoryDepth(byId: ReadonlyMap<string, FlatCategory>, id: bigint): number {
+  let level = 0;
+  let current: bigint | null = id;
+  const visited = new Set<string>();
 
-  while (actual !== null) {
-    const clave = actual.toString();
-    if (visitados.has(clave)) break;
-    visitados.add(clave);
-    nivel += 1;
-    actual = porId.get(clave)?.parentId ?? null;
+  while (current !== null) {
+    const key = current.toString();
+    if (visited.has(key)) break;
+    visited.add(key);
+    level += 1;
+    current = byId.get(key)?.parentId ?? null;
   }
 
-  return nivel;
+  return level;
 }
 
 // ── Desglose, subiendo cada movimiento al nivel que toca ────────────────────
 
-function agrupar(
-  movimientos: readonly SummaryMovement[],
-  porId: ReadonlyMap<string, CategoriaPlana>,
-  nivel: number,
-): Agrupado {
-  const acumulado: Agrupado = new Map();
+function groupAtLevel(
+  movements: readonly SummaryMovement[],
+  byId: ReadonlyMap<string, FlatCategory>,
+  level: number,
+): Grouped {
+  const accumulated: Grouped = new Map();
 
-  for (const m of movimientos) {
+  for (const m of movements) {
     if (m.type !== 'expense') continue;
 
     // Con splits, cada parte puede ir a una categoría distinta.
-    const partes =
+    const parts =
       m.splits.length > 0
         ? m.splits.map((s) => ({ categoryId: s.categoryId, amount: toMoney(s.amount) }))
         : [{ categoryId: m.categoryId, amount: toMoney(m.amount) }];
 
-    for (const parte of partes) {
-      const destino = ancestroEnNivel(porId, parte.categoryId, nivel);
-      const clave = destino?.toString() ?? 'sin';
-      const actual = acumulado.get(clave) ?? { id: destino, total: ZERO, count: 0 };
-      acumulado.set(clave, {
-        id: destino,
-        total: actual.total.plus(parte.amount),
-        count: actual.count + 1,
+    for (const part of parts) {
+      const target = ancestorAtLevel(byId, part.categoryId, level);
+      const key = target?.toString() ?? 'sin';
+      const current = accumulated.get(key) ?? { id: target, total: ZERO, count: 0 };
+      accumulated.set(key, {
+        id: target,
+        total: current.total.plus(part.amount),
+        count: current.count + 1,
       });
     }
   }
 
-  return acumulado;
+  return accumulated;
 }
 
 /** Un nivel agrupado, listo para salir: con nombre, de mayor a menor. */
-function aFilas(
-  agrupado: Agrupado,
-  datosDe: ReadonlyMap<string, SummaryCategory>,
-): CategorySpend[] {
-  return [...agrupado.values()]
-    .map((fila) => {
-      const datos = fila.id === null ? undefined : datosDe.get(fila.id.toString());
+function toRows(grouped: Grouped, dataById: ReadonlyMap<string, SummaryCategory>): CategorySpend[] {
+  return [...grouped.values()]
+    .map((row) => {
+      const data = row.id === null ? undefined : dataById.get(row.id.toString());
       return {
-        categoryId: fila.id,
-        name: datos?.name ?? 'Sin clasificar',
-        color: datos?.color ?? null,
-        icon: datos?.icon ?? null,
-        total: serialize(toMoney(fila.total)),
-        count: fila.count,
+        categoryId: row.id,
+        name: data?.name ?? 'Sin clasificar',
+        color: data?.color ?? null,
+        icon: data?.icon ?? null,
+        total: serialize(toMoney(row.total)),
+        count: row.count,
       };
     })
     .sort((a, b) => Number(b.total) - Number(a.total));
@@ -145,15 +138,15 @@ function aFilas(
  * The breakdown one level below what is being looked at, going further down
  * while a level has a single row, plus the spending by cost center.
  */
-export function desglose(
-  movimientos: readonly SummaryMovement[],
-  arbol: Arbol,
-  unicaPedida: bigint | undefined,
+export function breakdown(
+  movements: readonly SummaryMovement[],
+  tree: Tree,
+  singleRequested: bigint | undefined,
 ): {
-  porCategoria: CategorySpend[];
-  porCentro: CategorySpend[];
-  nivelMostrado: number;
-  padre: bigint | null;
+  byCategory: CategorySpend[];
+  byCostCenter: CategorySpend[];
+  shownLevel: number;
+  parent: bigint | null;
 } {
   // El desglose baja un nivel respecto de lo que se mira: sin filtro se
   // agrupa por centro; dentro de un centro, por categoría; dentro de una categoría,
@@ -163,16 +156,16 @@ export function desglose(
   // distintos no comparten nivel inferior. Se baja un nivel solo cuando lo
   // marcado es una sola cosa; si no, se desglosa por centro, que es la
   // pregunta que sigue teniendo respuesta.
-  const nivelFiltrado =
-    unicaPedida === undefined ? 0 : profundidadDeCategoria(arbol.porId, unicaPedida);
-  const bajado = bajarMientrasHayaUnaFila(
-    (nivel) => agrupar(movimientos, arbol.porId, nivel),
-    Math.min(nivelFiltrado + 1, 3),
-    unicaPedida ?? null,
+  const filteredLevel =
+    singleRequested === undefined ? 0 : categoryDepth(tree.byId, singleRequested);
+  const drilled = drillWhileSingleRow(
+    (level) => groupAtLevel(movements, tree.byId, level),
+    Math.min(filteredLevel + 1, 3),
+    singleRequested ?? null,
   );
 
   return {
-    porCategoria: aFilas(bajado.acumulado, arbol.datosDe),
+    byCategory: toRows(drilled.accumulated, tree.dataById),
     /*
       Fijos contra variables.
 
@@ -184,9 +177,9 @@ export function desglose(
       pudo haber bajado: cuando solo un centro tiene gasto, sus filas son
       categorías, y ahí ya no hay con qué responder esta pregunta.
     */
-    porCentro: aFilas(agrupar(movimientos, arbol.porId, 1), arbol.datosDe),
-    nivelMostrado: bajado.nivelMostrado,
-    padre: bajado.padre,
+    byCostCenter: toRows(groupAtLevel(movements, tree.byId, 1), tree.dataById),
+    shownLevel: drilled.shownLevel,
+    parent: drilled.parent,
   };
 }
 
@@ -200,25 +193,25 @@ export function desglose(
   Se sigue bajando mientras la respuesta siga siendo una sola fila, hasta
   llegar a los conceptos, que es donde ya no hay más abajo.
 */
-function bajarMientrasHayaUnaFila(
-  agruparEn: (nivel: number) => Agrupado,
-  nivelDesglose: number,
-  pedida: bigint | null,
-): { acumulado: Agrupado; nivelMostrado: number; padre: bigint | null } {
-  let nivelMostrado = nivelDesglose;
-  let acumulado = agruparEn(nivelMostrado);
+function drillWhileSingleRow(
+  groupAt: (level: number) => Grouped,
+  startLevel: number,
+  requested: bigint | null,
+): { accumulated: Grouped; shownLevel: number; parent: bigint | null } {
+  let shownLevel = startLevel;
+  let accumulated = groupAt(shownLevel);
   // De quién son las filas que se acaban mostrando. Con un filtro puesto ya
   // se sabe; si no, lo dirá la fila única por la que se vaya bajando.
-  let padre = pedida;
+  let parent = requested;
 
-  const filaUnicaDe = (filas: Agrupado) => (filas.size === 1 ? [...filas.values()][0] : undefined);
+  const singleRowOf = (rows: Grouped) => (rows.size === 1 ? [...rows.values()][0] : undefined);
 
   for (
-    let unica = filaUnicaDe(acumulado);
-    nivelMostrado < 3 && unica !== undefined && unica.id !== null;
-    unica = filaUnicaDe(acumulado)
+    let single = singleRowOf(accumulated);
+    shownLevel < 3 && single !== undefined && single.id !== null;
+    single = singleRowOf(accumulated)
   ) {
-    const masAbajo = agruparEn(nivelMostrado + 1);
+    const below = groupAt(shownLevel + 1);
     /*
       Se baja aunque abajo también haya UNA sola fila.
 
@@ -232,36 +225,36 @@ function bajarMientrasHayaUnaFila(
       ninguno de sus categorías, bajar cambiaría un nombre de verdad por un
       "Sin clasificar" que informa menos.
     */
-    const hayNombresAbajo = [...masAbajo.values()].some((f) => f.id !== null);
-    if (!hayNombresAbajo) break;
-    padre = unica.id;
-    nivelMostrado += 1;
-    acumulado = masAbajo;
+    const hasNamesBelow = [...below.values()].some((f) => f.id !== null);
+    if (!hasNamesBelow) break;
+    parent = single.id;
+    shownLevel += 1;
+    accumulated = below;
   }
 
-  return { acumulado, nivelMostrado, padre };
+  return { accumulated, shownLevel, parent };
 }
 
 // ── Tendencia ───────────────────────────────────────────────────────────────
 
-export function tendencia(
-  movimientos: readonly SummaryMovement[],
-  inicio: Date,
-  fin: Date,
-): { granularidad: 'dia' | 'mes'; puntos: TrendPoint[] } {
-  const granularidad = granularidadPara(inicio, fin);
-  const cubos = new Map(
-    cubosDelRango(inicio, fin, granularidad).map((b) => [
+export function trend(
+  movements: readonly SummaryMovement[],
+  start: Date,
+  end: Date,
+): { granularity: 'day' | 'month'; points: TrendPoint[] } {
+  const granularity = granularityFor(start, end);
+  const buckets = new Map(
+    rangeBuckets(start, end, granularity).map((b) => [
       b,
       { expense: ZERO, income: ZERO, count: 0 },
     ]),
   );
 
-  const llaves = [...cubos.keys()];
-  const primerCubo = llaves[0];
-  const ultimoCubo = llaves[llaves.length - 1];
+  const keys = [...buckets.keys()];
+  const firstBucket = keys[0];
+  const lastBucket = keys[keys.length - 1];
 
-  for (const m of movimientos) {
+  for (const m of movements) {
     // Las transferencias no son gasto ni ingreso: solo cambian de bolsillo.
     if (m.type === 'transfer') continue;
 
@@ -271,43 +264,43 @@ export function tendencia(
     // un eje de DÍAS, en cambio, todos los movimientos de agosto caían el 1
     // de agosto: la línea daba un pico el primer día y quedaba plana el
     // resto, aunque los pagos fueran el 13 y el 25.
-    const cuando = granularidad === 'dia' ? m.date : m.period;
+    const when = granularity === 'day' ? m.date : m.period;
 
-    let cubo = cuboDe(cuando, granularidad);
+    let bucket = bucketOf(when, granularity);
 
-    if (!cubos.has(cubo)) {
+    if (!buckets.has(bucket)) {
       // El pago cayó fuera del eje: la factura de marzo pagada el 6 de abril
       // entra en el rango por su periodo, pero su día no existe en un eje de
       // marzo. Se arrima al extremo más cercano en vez de descartarse — si
       // se descartara, la línea sumaría menos que el total de arriba y las
       // dos cifras de la misma pantalla se contradirían.
       // Sin eje no hay extremo al que arrimarlo; abajo tampoco habría cubo.
-      if (primerCubo === undefined || ultimoCubo === undefined) continue;
-      cubo = cuboDe(cuando, granularidad) < primerCubo ? primerCubo : ultimoCubo;
+      if (firstBucket === undefined || lastBucket === undefined) continue;
+      bucket = bucketOf(when, granularity) < firstBucket ? firstBucket : lastBucket;
     }
 
-    const actual = cubos.get(cubo);
-    if (!actual) continue;
-    const monto = toMoney(m.amount);
-    actual.count += 1;
-    if (m.type === 'expense') actual.expense = actual.expense.plus(monto);
-    else actual.income = actual.income.plus(monto);
+    const current = buckets.get(bucket);
+    if (!current) continue;
+    const amount = toMoney(m.amount);
+    current.count += 1;
+    if (m.type === 'expense') current.expense = current.expense.plus(amount);
+    else current.income = current.income.plus(amount);
   }
 
-  const puntos = [...cubos.entries()].map(([bucket, v]) => ({
+  const points = [...buckets.entries()].map(([bucket, v]) => ({
     bucket,
     expense: serialize(toMoney(v.expense)),
     income: serialize(toMoney(v.income)),
     net: serialize(toMoney(v.income.minus(v.expense))),
     count: v.count,
   }));
-  return { granularidad, puntos };
+  return { granularity, points };
 }
 
 // ── Lo que falta pagar este mes ─────────────────────────────────────────────
 
 /** A recurring concept that can be due: it has a periodicity. */
-export type Recurrente = SummaryCategory & {
+export type RecurringConcept = SummaryCategory & {
   periodicity: NonNullable<SummaryCategory['periodicity']>;
 };
 
@@ -326,9 +319,9 @@ export type Recurrente = SummaryCategory & {
   reescribe lo que ya pasó. Por eso el filtro va aquí y no en la consulta
   de las categorías, que es de donde beben los históricos.
 */
-export function recurrentesVivos(categorias: readonly SummaryCategory[]): Recurrente[] {
-  return categorias.filter(
-    (c): c is Recurrente => c.isRecurring && c.periodicity !== null && !c.isArchived,
+export function liveRecurring(categories: readonly SummaryCategory[]): RecurringConcept[] {
+  return categories.filter(
+    (c): c is RecurringConcept => c.isRecurring && c.periodicity !== null && !c.isArchived,
   );
 }
 
@@ -343,22 +336,22 @@ export function recurrentesVivos(categorias: readonly SummaryCategory[]): Recurr
   Lo pagado entra por lo que costó DE VERDAD este mes; lo que falta, por
   lo que costó la última vez, que es lo único que se sabe de antemano.
 */
-export function pendientesDelMes(
-  recurrentes: readonly Recurrente[],
-  datos: { historiaDe: MonthlyHistory; pagadoEsteMes: ReadonlyMap<string, Money> },
-  mesEnCurso: string,
-  arbol: Arbol,
-): { pendientes: PendingPayment[]; presupuesto: Money } {
-  const pendientes: PendingPayment[] = [];
-  let presupuesto = ZERO;
+export function pendingThisMonth(
+  recurring: readonly RecurringConcept[],
+  data: { history: MonthlyHistory; paidThisMonth: ReadonlyMap<string, Money> },
+  currentMonth: string,
+  tree: Tree,
+): { pending: PendingPayment[]; budget: Money } {
+  const pending: PendingPayment[] = [];
+  let budget = ZERO;
 
-  for (const concepto of recurrentes) {
+  for (const concept of recurring) {
     // Primero si toca este mes: un trimestral que no cae aquí no cuenta
     // para el presupuesto ni aparece como pendiente.
-    if (!tocaEnElMes(concepto.periodicity, concepto.paymentMonth, mesEnCurso)) continue;
+    if (!isDueInMonth(concept.periodicity, concept.paymentMonth, currentMonth)) continue;
 
-    const clave = concepto.id.toString();
-    const pagado = datos.pagadoEsteMes.get(clave);
+    const key = concept.id.toString();
+    const paid = data.paidThisMonth.get(key);
 
     // La MISMA cifra que se enseña en la lista de pendientes: si el
     // presupuesto se estimara de otra forma, las dos tarjetas de la misma
@@ -366,87 +359,87 @@ export function pendientesDelMes(
     //
     // Y el presupuesto del concepto, cuando lo tiene, gana al promedio.
     // Ver `esperadoDelMes`.
-    const esperado = esperadoDelMes(
-      concepto.budget === null ? null : toMoney(concepto.budget),
-      datos.historiaDe.get(clave) ?? new Map(),
-      mesEnCurso.slice(0, 7),
+    const expected = expectedForMonth(
+      concept.budget === null ? null : toMoney(concept.budget),
+      data.history.get(key) ?? new Map(),
+      currentMonth.slice(0, 7),
     );
 
     // Si sigue faltando y con cuánto entra en el presupuesto lo decide una
     // sola función, porque las dos respuestas tienen que ser coherentes
     // entre sí: un concepto que sale de la lista por estar cubierto no
     // puede entrar al presupuesto por lo que se esperaba.
-    const estado = comoQuedaElPendiente({
-      variosPagos: concepto.isMultiPayment,
-      hayPago: pagado !== undefined,
-      pagado: pagado ?? ZERO,
-      esperado,
+    const outcome = pendingOutcome({
+      isMultiPayment: concept.isMultiPayment,
+      hasPayment: paid !== undefined,
+      paid: paid ?? ZERO,
+      expected,
     });
 
-    presupuesto = presupuesto.plus(estado.alPresupuesto);
-    if (!estado.sigueFaltando) continue;
+    budget = budget.plus(outcome.towardBudget);
+    if (!outcome.isStillDue) continue;
 
-    pendientes.push(pendienteDe(concepto, esperado, pagado, mesEnCurso, arbol));
+    pending.push(pendingPaymentOf(concept, expected, paid, currentMonth, tree));
   }
 
   // Por fecha: lo que vence antes es lo que hay que mirar antes.
-  pendientes.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-  return { pendientes, presupuesto };
+  pending.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  return { pending, budget };
 }
 
-function pendienteDe(
-  concepto: Recurrente,
-  esperado: Money | null,
-  pagado: Money | undefined,
-  mesEnCurso: string,
-  arbol: Arbol,
+function pendingPaymentOf(
+  concept: RecurringConcept,
+  expected: Money | null,
+  paid: Money | undefined,
+  currentMonth: string,
+  tree: Tree,
 ): PendingPayment {
   // El camino completo: "Alquiler" solo no dice de qué centro cuelga.
   // Y de paso queda a la vista la RAÍZ, que es el centro de costos: de
   // ella sale si esto es fijo o variable.
-  const camino: string[] = [];
-  let actual = arbol.porId.get(concepto.id.toString());
-  let raiz = concepto.id.toString();
-  while (actual?.parentId) {
-    const padre = arbol.datosDe.get(actual.parentId.toString());
-    if (!padre) break;
-    camino.unshift(padre.name);
-    raiz = actual.parentId.toString();
-    actual = arbol.porId.get(actual.parentId.toString());
+  const ancestors: string[] = [];
+  let current = tree.byId.get(concept.id.toString());
+  let root = concept.id.toString();
+  while (current?.parentId) {
+    const parent = tree.dataById.get(current.parentId.toString());
+    if (!parent) break;
+    ancestors.unshift(parent.name);
+    root = current.parentId.toString();
+    current = tree.byId.get(current.parentId.toString());
   }
 
   return {
-    categoryId: concepto.id,
-    name: concepto.name,
-    path: camino.join(' · '),
-    periodicity: concepto.periodicity,
-    dueDate: vencimiento(mesEnCurso, concepto.paymentDay),
-    expectedAmount: esperado === null ? null : serialize(toMoney(esperado)),
-    costCenterId: BigInt(raiz),
-    costCenter: arbol.datosDe.get(raiz)?.name ?? '',
+    categoryId: concept.id,
+    name: concept.name,
+    path: ancestors.join(' · '),
+    periodicity: concept.periodicity,
+    dueDate: dueDate(currentMonth, concept.paymentDay),
+    expectedAmount: expected === null ? null : serialize(toMoney(expected)),
+    costCenterId: BigInt(root),
+    costCenter: tree.dataById.get(root)?.name ?? '',
     // Siempre, también en los normales —donde es cero—, para que la
     // pantalla no tenga que preguntarse si el campo viene.
-    paidAmount: serialize(pagado ?? ZERO),
-    isMultiPayment: concepto.isMultiPayment,
+    paidAmount: serialize(paid ?? ZERO),
+    isMultiPayment: concept.isMultiPayment,
   };
 }
 
 /** Assets (every non-credit account), debts (credit cards) and net worth. */
-export function totalesDe(cuentas: readonly Account[]): {
+export function totalsOf(accounts: readonly Account[]): {
   assets: string;
   debts: string;
   netWorth: string;
 } {
-  const activos = cuentas
+  const assets = accounts
     .filter((c) => c.type !== 'credit')
     .reduce((total, c) => total.plus(toMoney(c.balance)), ZERO);
-  const deudas = cuentas
+  const debts = accounts
     .filter((c) => c.type === 'credit')
     .reduce((total, c) => total.plus(toMoney(c.balance)), ZERO);
 
   return {
-    assets: serialize(toMoney(activos)),
-    debts: serialize(toMoney(deudas)),
-    netWorth: serialize(toMoney(activos.minus(deudas))),
+    assets: serialize(toMoney(assets)),
+    debts: serialize(toMoney(debts)),
+    netWorth: serialize(toMoney(assets.minus(debts))),
   };
 }

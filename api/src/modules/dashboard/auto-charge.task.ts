@@ -5,7 +5,7 @@ import {
   type OnModuleDestroy,
 } from '@nestjs/common';
 
-import { PagosAutomaticosService } from './pagos-automaticos';
+import { AutomaticPaymentsService } from './automatic-payments';
 import { CategoryLookupService } from '../categories/category-lookup.service';
 
 /** Bogotá is UTC−5 all year (no daylight saving). */
@@ -66,7 +66,7 @@ export class AutoChargeTask implements OnApplicationBootstrap, OnModuleDestroy {
 
   constructor(
     private readonly categories: CategoryLookupService,
-    private readonly autoPayments: PagosAutomaticosService,
+    private readonly autoPayments: AutomaticPaymentsService,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -97,7 +97,7 @@ export class AutoChargeTask implements OnApplicationBootstrap, OnModuleDestroy {
         // One user's failure must not stop the others; the service already
         // logs per concept, this catches anything above that.
         try {
-          created += await this.autoPayments.cobrarLoQueToque(userId, currentMonth, today);
+          created += await this.autoPayments.chargeDue(userId, currentMonth, today);
         } catch (error) {
           this.logger.error(
             `Auto-charge failed for user ${String(userId)}: ${(error as Error).message}`,

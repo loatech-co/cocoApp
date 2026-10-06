@@ -107,6 +107,7 @@ const V1_PUBLISHED_IDS: Readonly<Record<string, string>> = {
   TransactionsController_create: 'TransactionsController_crear',
   TransactionsController_update: 'TransactionsController_actualizar',
   TransactionsController_remove: 'TransactionsController_eliminar',
+  DashboardController_get: 'DashboardController_resumen',
 };
 
 /** Every `$ref` reachable from `value`, followed through `schemas`. */

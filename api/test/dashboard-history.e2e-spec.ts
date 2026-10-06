@@ -1,7 +1,7 @@
 import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
 import { ZERO, toMoney, type Money } from '../src/common/money/money';
 import { DashboardService } from '../src/modules/dashboard/dashboard.service';
-import { esperadoDelMes, ventanaDeLaHistoria } from '../src/modules/dashboard/pendientes';
+import { expectedForMonth, historyWindow } from '../src/modules/dashboard/pending';
 import { LedgerService, type MonthlyHistory } from '../src/modules/transactions/ledger.service';
 
 /**
@@ -64,13 +64,13 @@ describe('Dashboard: bounded recurring history (e2e)', () => {
   it('estimates every concept exactly as the full history did', async () => {
     const ids = await recurringIds();
     const ledger = env.app.get(LedgerService);
-    const bounded = await ledger.monthlyHistory(user.id, ids, ventanaDeLaHistoria(CURRENT_MONTH));
+    const bounded = await ledger.monthlyHistory(user.id, ids, historyWindow(CURRENT_MONTH));
     const full = await fullHistory(ids);
 
     for (const id of ids) {
       const key = id.toString();
-      const expected = esperadoDelMes(null, full.get(key) ?? new Map(), '2026-10');
-      const actual = esperadoDelMes(null, bounded.get(key) ?? new Map(), '2026-10');
+      const expected = expectedForMonth(null, full.get(key) ?? new Map(), '2026-10');
+      const actual = expectedForMonth(null, bounded.get(key) ?? new Map(), '2026-10');
       expect(actual?.toString() ?? null).toBe(expected?.toString() ?? null);
     }
 
@@ -85,10 +85,10 @@ describe('Dashboard: bounded recurring history (e2e)', () => {
     const dashboard = env.app.get(DashboardService);
     const ledger = env.app.get(LedgerService);
 
-    const bounded = await dashboard.resumen(user.id, {});
+    const bounded = await dashboard.summary(user.id, {});
     const full = await fullHistory(await recurringIds());
     jest.spyOn(ledger, 'monthlyHistory').mockResolvedValue(full);
-    const reference = await dashboard.resumen(user.id, {});
+    const reference = await dashboard.summary(user.id, {});
 
     expect(bounded.pending.length).toBeGreaterThanOrEqual(4);
     expect(JSON.stringify(bounded)).toBe(JSON.stringify(reference));

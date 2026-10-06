@@ -1,14 +1,14 @@
 import { ZERO, toMoney, type Money } from '../../common/money/money';
 import type { TransactionType } from '../../generated/prisma/client';
 
-export interface MovimientoAgregable {
+export interface AggregableMovement {
   type: TransactionType;
   amount: Money;
   categoryId: bigint | null;
   splits: { categoryId: bigint | null; amount: Money }[];
 }
 
-export interface FlujoDelPeriodo {
+export interface PeriodFlow {
   income: Money;
   expense: Money;
   net: Money;
@@ -22,13 +22,13 @@ export interface FlujoDelPeriodo {
  * Contarlas inflaría ambas cifras y el usuario vería un mes donde "ingresó" y
  * "gastó" plata que nunca entró ni salió de su patrimonio.
  */
-export function calcularFlujo(movimientos: readonly MovimientoAgregable[]): FlujoDelPeriodo {
+export function computeFlow(movements: readonly AggregableMovement[]): PeriodFlow {
   let income = ZERO;
   let expense = ZERO;
 
-  for (const movimiento of movimientos) {
-    if (movimiento.type === 'income') income = income.plus(movimiento.amount);
-    else if (movimiento.type === 'expense') expense = expense.plus(movimiento.amount);
+  for (const movement of movements) {
+    if (movement.type === 'income') income = income.plus(movement.amount);
+    else if (movement.type === 'expense') expense = expense.plus(movement.amount);
   }
 
   return {
@@ -38,7 +38,7 @@ export function calcularFlujo(movimientos: readonly MovimientoAgregable[]): Fluj
   };
 }
 
-export interface GastoPorCategoria {
+export interface ExpenseByCategory {
   category_id: bigint | null;
   total: Money;
   count: number;
@@ -56,39 +56,39 @@ export interface GastoPorCategoria {
  * que el usuario los vea y pueda clasificarlos. Esconderlos haría que el total
  * por categoría no cuadrara con el gasto real, que es peor que mostrarlos.
  */
-export function calcularGastoPorCategoria(
-  movimientos: readonly MovimientoAgregable[],
-): GastoPorCategoria[] {
-  const acumulado = new Map<string, { categoryId: bigint | null; total: Money; count: number }>();
+export function computeExpenseByCategory(
+  movements: readonly AggregableMovement[],
+): ExpenseByCategory[] {
+  const accumulated = new Map<string, { categoryId: bigint | null; total: Money; count: number }>();
 
-  const acumular = (categoryId: bigint | null, monto: Money): void => {
-    const clave = categoryId === null ? 'sin-categoria' : categoryId.toString();
-    const actual = acumulado.get(clave) ?? { categoryId, total: ZERO, count: 0 };
+  const accumulate = (categoryId: bigint | null, amount: Money): void => {
+    const key = categoryId === null ? 'sin-categoria' : categoryId.toString();
+    const current = accumulated.get(key) ?? { categoryId, total: ZERO, count: 0 };
 
-    acumulado.set(clave, {
+    accumulated.set(key, {
       categoryId,
-      total: actual.total.plus(monto),
-      count: actual.count + 1,
+      total: current.total.plus(amount),
+      count: current.count + 1,
     });
   };
 
-  for (const movimiento of movimientos) {
-    if (movimiento.type !== 'expense') continue;
+  for (const movement of movements) {
+    if (movement.type !== 'expense') continue;
 
-    if (movimiento.splits.length > 0) {
-      for (const split of movimiento.splits) {
-        acumular(split.categoryId, split.amount);
+    if (movement.splits.length > 0) {
+      for (const split of movement.splits) {
+        accumulate(split.categoryId, split.amount);
       }
     } else {
-      acumular(movimiento.categoryId, movimiento.amount);
+      accumulate(movement.categoryId, movement.amount);
     }
   }
 
-  return [...acumulado.values()]
-    .map((entrada) => ({
-      category_id: entrada.categoryId,
-      total: toMoney(entrada.total),
-      count: entrada.count,
+  return [...accumulated.values()]
+    .map((entry) => ({
+      category_id: entry.categoryId,
+      total: toMoney(entry.total),
+      count: entry.count,
     }))
     .sort((a, b) => b.total.comparedTo(a.total));
 }
@@ -98,7 +98,7 @@ export function calcularGastoPorCategoria(
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** Lo mínimo de una categoría para subir por sus ancestros. */
-export interface CategoriaPlana {
+export interface FlatCategory {
   id: bigint;
   parentId: bigint | null;
 }
@@ -114,45 +114,43 @@ export interface CategoriaPlana {
  * Devuelve `null` si la categoría no llega a ese nivel —un concepto colgado
  * directamente de la raíz no tiene categoría— y quien llame decide qué hacer.
  */
-export function ancestroEnNivel(
-  categorias: ReadonlyMap<string, CategoriaPlana>,
+export function ancestorAtLevel(
+  categories: ReadonlyMap<string, FlatCategory>,
   categoryId: bigint | null,
-  nivelObjetivo: number,
+  targetLevel: number,
 ): bigint | null {
   if (categoryId === null) return null;
 
   // Se sube hasta la raíz guardando el camino, y después se lee por índice.
-  const cadena: bigint[] = [];
-  let actual: bigint | null = categoryId;
-  const visitados = new Set<string>();
+  const chain: bigint[] = [];
+  let current: bigint | null = categoryId;
+  const visited = new Set<string>();
 
-  while (actual !== null) {
-    const clave = actual.toString();
-    if (visitados.has(clave)) break;
-    visitados.add(clave);
-    cadena.unshift(actual);
-    actual = categorias.get(clave)?.parentId ?? null;
+  while (current !== null) {
+    const key = current.toString();
+    if (visited.has(key)) break;
+    visited.add(key);
+    chain.unshift(current);
+    current = categories.get(key)?.parentId ?? null;
   }
 
   // cadena[0] es el nivel 1. Si la rama es más corta que el nivel pedido, no
   // existe tal ancestro.
-  return cadena[nivelObjetivo - 1] ?? null;
+  return chain[targetLevel - 1] ?? null;
 }
 
 /**
  * Cuántos días cubre el rango, ambos extremos incluidos.
  */
-export function diasDelRango(desde: Date, hasta: Date): number {
+export function daysInRange(from: Date, to: Date): number {
   const MS = 24 * 60 * 60 * 1000;
-  return Math.floor((hasta.getTime() - desde.getTime()) / MS) + 1;
+  return Math.floor((to.getTime() - from.getTime()) / MS) + 1;
 }
 
 /** Cuántos meses de calendario toca el rango, ambos extremos incluidos. */
-function mesesDelRango(desde: Date, hasta: Date): number {
+function monthsInRange(from: Date, to: Date): number {
   return (
-    (hasta.getUTCFullYear() - desde.getUTCFullYear()) * 12 +
-    (hasta.getUTCMonth() - desde.getUTCMonth()) +
-    1
+    (to.getUTCFullYear() - from.getUTCFullYear()) * 12 + (to.getUTCMonth() - from.getUTCMonth()) + 1
   );
 }
 
@@ -169,14 +167,14 @@ function mesesDelRango(desde: Date, hasta: Date): number {
  * dibujaba a veces una línea de días y a veces una de meses. El eje de tiempo
  * no puede cambiar de unidad según el mes en que uno esté.
  */
-export function granularidadPara(desde: Date, hasta: Date): 'dia' | 'mes' {
-  return mesesDelRango(desde, hasta) < 3 ? 'dia' : 'mes';
+export function granularityFor(from: Date, to: Date): 'day' | 'month' {
+  return monthsInRange(from, to) < 3 ? 'day' : 'month';
 }
 
 /** La etiqueta del cubo al que cae una fecha: `2025-03-14` o `2025-03`. */
-export function cuboDe(fecha: Date, granularidad: 'dia' | 'mes'): string {
-  const iso = fecha.toISOString().slice(0, 10);
-  return granularidad === 'dia' ? iso : iso.slice(0, 7);
+export function bucketOf(date: Date, granularity: 'day' | 'month'): string {
+  const iso = date.toISOString().slice(0, 10);
+  return granularity === 'day' ? iso : iso.slice(0, 7);
 }
 
 /**
@@ -186,21 +184,21 @@ export function cuboDe(fecha: Date, granularidad: 'dia' | 'mes'): string {
  * uniría marzo con mayo y dibujaría una pendiente suave donde en realidad hubo
  * un mes en blanco: la forma de la curva mentiría.
  */
-export function cubosDelRango(desde: Date, hasta: Date, granularidad: 'dia' | 'mes'): string[] {
-  const cubos: string[] = [];
+export function rangeBuckets(from: Date, to: Date, granularity: 'day' | 'month'): string[] {
+  const buckets: string[] = [];
   const cursor = new Date(
     Date.UTC(
-      desde.getUTCFullYear(),
-      desde.getUTCMonth(),
-      granularidad === 'dia' ? desde.getUTCDate() : 1,
+      from.getUTCFullYear(),
+      from.getUTCMonth(),
+      granularity === 'day' ? from.getUTCDate() : 1,
     ),
   );
 
-  while (cursor <= hasta) {
-    cubos.push(cuboDe(cursor, granularidad));
-    if (granularidad === 'dia') cursor.setUTCDate(cursor.getUTCDate() + 1);
+  while (cursor <= to) {
+    buckets.push(bucketOf(cursor, granularity));
+    if (granularity === 'day') cursor.setUTCDate(cursor.getUTCDate() + 1);
     else cursor.setUTCMonth(cursor.getUTCMonth() + 1);
   }
 
-  return cubos;
+  return buckets;
 }

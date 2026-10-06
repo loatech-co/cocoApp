@@ -2,7 +2,7 @@ import { ZERO, type Money } from '../../common/money/money';
 import type { Periodicity } from '../../generated/prisma/client';
 
 /** Cada cuántos meses vuelve cada periodicidad. */
-const MESES_ENTRE_PAGOS: Record<Periodicity, number> = {
+const MONTHS_BETWEEN_PAYMENTS: Record<Periodicity, number> = {
   monthly: 1,
   bimonthly: 2,
   quarterly: 3,
@@ -11,10 +11,10 @@ const MESES_ENTRE_PAGOS: Record<Periodicity, number> = {
 };
 
 /** `2026-09-01` → 24320. Meses absolutos, para restar sin pelear con años. */
-export function mesAbsoluto(iso: string): number {
+export function absoluteMonth(iso: string): number {
   // `= NaN` es lo que daría una parte ausente: el mismo resultado que antes.
-  const [anio = NaN, mes = NaN] = iso.split('-').map(Number);
-  return anio * 12 + (mes - 1);
+  const [year = NaN, month = NaN] = iso.split('-').map(Number);
+  return year * 12 + (month - 1);
 }
 
 /**
@@ -32,22 +32,22 @@ export function mesAbsoluto(iso: string): number {
  *
  * Lo mensual no necesita referencia: toca todos los meses.
  */
-export function tocaEnElMes(
-  periodicidad: Periodicity,
-  mesDeReferencia: number | null,
-  mes: string,
+export function isDueInMonth(
+  periodicity: Periodicity,
+  referenceMonth: number | null,
+  month: string,
 ): boolean {
-  if (periodicidad === 'monthly') return true;
+  if (periodicity === 'monthly') return true;
 
-  const cada = MESES_ENTRE_PAGOS[periodicidad];
+  const step = MONTHS_BETWEEN_PAYMENTS[periodicity];
 
   // Sin referencia se asume que toca: es un concepto marcado como recurrente
   // del que no hay registro este mes. Callarlo sería esconder justo lo que se
   // quiere ver.
-  if (mesDeReferencia === null) return true;
+  if (referenceMonth === null) return true;
 
-  const distancia = mesAbsoluto(mes) - (mesDeReferencia - 1);
-  return ((distancia % cada) + cada) % cada === 0;
+  const distance = absoluteMonth(month) - (referenceMonth - 1);
+  return ((distance % step) + step) % step === 0;
 }
 
 /**
@@ -57,19 +57,19 @@ export function tocaEnElMes(
  * el vencimiento caería en un día que no existe y la fecha se desbordaría al
  * mes siguiente, que es peor que redondear.
  */
-export function vencimiento(mes: string, diaDePago: number | null): string {
-  const [anio = NaN, numeroDeMes = NaN] = mes.split('-').map(Number);
-  const ultimoDia = new Date(Date.UTC(anio, numeroDeMes, 0)).getUTCDate();
-  const dia = Math.min(diaDePago ?? ultimoDia, ultimoDia);
+export function dueDate(month: string, paymentDay: number | null): string {
+  const [year = NaN, monthNumber = NaN] = month.split('-').map(Number);
+  const lastDay = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  const day = Math.min(paymentDay ?? lastDay, lastDay);
 
-  return `${mes.slice(0, 7)}-${String(dia).padStart(2, '0')}`;
+  return `${month.slice(0, 7)}-${String(day).padStart(2, '0')}`;
 }
 
 /** Los `cuantos` meses anteriores a `mes`, del más reciente al más viejo. */
-export function mesesAnteriores(mes: string, cuantos = 3): string[] {
-  const [anio = NaN, m = NaN] = mes.split('-').map(Number);
-  return Array.from({ length: cuantos }, (_, i) =>
-    new Date(Date.UTC(anio, m - 1 - (i + 1), 1)).toISOString().slice(0, 7),
+export function previousMonths(month: string, count = 3): string[] {
+  const [year = NaN, m = NaN] = month.split('-').map(Number);
+  return Array.from({ length: count }, (_, i) =>
+    new Date(Date.UTC(year, m - 1 - (i + 1), 1)).toISOString().slice(0, 7),
   );
 }
 
@@ -95,24 +95,24 @@ export function mesesAnteriores(mes: string, cuantos = 3): string[] {
  * `porMes` lleva lo que costó cada mes —un mes con dos pagos trae la suma—, y
  * `mes` es el mes que se está estimando, en `YYYY-MM`.
  */
-export function estimadoDelMes(
-  porMes: ReadonlyMap<string, Money>,
-  mes: string,
-  cuantos = 3,
+export function estimateForMonth(
+  byMonth: ReadonlyMap<string, Money>,
+  month: string,
+  count = 3,
 ): Money | null {
-  const ventana = mesesAnteriores(mes, cuantos)
-    .map((m) => porMes.get(m))
+  const recent = previousMonths(month, count)
+    .map((m) => byMonth.get(m))
     .filter((v): v is Money => v !== undefined);
 
-  if (ventana.length > 0) {
-    return ventana.reduce<Money>((total, v) => total.plus(v), ZERO).dividedBy(ventana.length);
+  if (recent.length > 0) {
+    return recent.reduce<Money>((total, v) => total.plus(v), ZERO).dividedBy(recent.length);
   }
 
-  const ultimo = [...porMes.keys()]
-    .filter((m) => m < mes)
+  const lastPaid = [...byMonth.keys()]
+    .filter((m) => m < month)
     .sort()
     .pop();
-  return ultimo === undefined ? null : (porMes.get(ultimo) ?? null);
+  return lastPaid === undefined ? null : (byMonth.get(lastPaid) ?? null);
 }
 
 /**
@@ -121,12 +121,9 @@ export function estimadoDelMes(
  * anteriores hasta el mes en curso, sin incluirlo. Lo que cae más atrás solo
  * importa como último mes con pago, y eso lo resuelve el repositorio.
  */
-export function ventanaDeLaHistoria(
-  mesEnCurso: string,
-  cuantos = 3,
-): { before: Date; since: Date } {
-  const masViejo = mesesAnteriores(mesEnCurso.slice(0, 7), cuantos).at(-1) ?? mesEnCurso;
-  return { before: new Date(mesEnCurso), since: new Date(`${masViejo.slice(0, 7)}-01`) };
+export function historyWindow(currentMonth: string, count = 3): { before: Date; since: Date } {
+  const oldest = previousMonths(currentMonth.slice(0, 7), count).at(-1) ?? currentMonth;
+  return { before: new Date(currentMonth), since: new Date(`${oldest.slice(0, 7)}-01`) };
 }
 
 /**
@@ -151,13 +148,13 @@ export function ventanaDeLaHistoria(
  * y caer al promedio le devolvería justo la cifra que quiso quitar. Por eso se
  * mira contra `null` y no por si es falso.
  */
-export function esperadoDelMes(
-  presupuesto: Money | null,
-  porMes: ReadonlyMap<string, Money>,
-  mes: string,
-  cuantos = 3,
+export function expectedForMonth(
+  budget: Money | null,
+  byMonth: ReadonlyMap<string, Money>,
+  month: string,
+  count = 3,
 ): Money | null {
-  return presupuesto ?? estimadoDelMes(porMes, mes, cuantos);
+  return budget ?? estimateForMonth(byMonth, month, count);
 }
 
 /**
@@ -168,8 +165,8 @@ export function esperadoDelMes(
  * abiertas— pueden pasar la comprobación a la vez y llegar las dos a insertar.
  * Con la huella, la segunda choca contra la base en vez de duplicar un gasto.
  */
-export function huellaDelCobro(categoryId: bigint, mes: string): string {
-  return `auto:${categoryId.toString()}:${mes.slice(0, 7)}`;
+export function chargeFingerprint(categoryId: bigint, month: string): string {
+  return `auto:${categoryId.toString()}:${month.slice(0, 7)}`;
 }
 
 /**
@@ -189,20 +186,20 @@ export function huellaDelCobro(categoryId: bigint, mes: string): string {
  * Lo que NO se comprueba aquí es si ya está pagado: eso lo sabe quien tiene
  * los movimientos del mes delante, y es su trabajo no llamarnos dos veces.
  */
-export function tocaCobrarAutomatico({
-  pagoAutomatico,
-  vencimientoISO,
-  hoyISO,
-  esperado,
+export function isAutoChargeDue({
+  isAutoPaid,
+  dueDateIso,
+  todayIso,
+  expected,
 }: {
-  pagoAutomatico: boolean;
-  vencimientoISO: string;
-  hoyISO: string;
-  esperado: Money | null;
+  isAutoPaid: boolean;
+  dueDateIso: string;
+  todayIso: string;
+  expected: Money | null;
 }): boolean {
-  if (!pagoAutomatico) return false;
-  if (esperado === null) return false;
-  return vencimientoISO <= hoyISO;
+  if (!isAutoPaid) return false;
+  if (expected === null) return false;
+  return dueDateIso <= todayIso;
 }
 
 /**
@@ -234,13 +231,13 @@ export function tocaCobrarAutomatico({
  * ya es un hecho. Quedarse en lo esperado diría que el mes costó menos de lo
  * que costó, y sumar los dos lo contaría dos veces.
  */
-export function comoQuedaElPendiente({
-  variosPagos,
-  hayPago,
-  pagado,
-  esperado,
+export function pendingOutcome({
+  isMultiPayment,
+  hasPayment,
+  paid,
+  expected,
 }: {
-  variosPagos: boolean;
+  isMultiPayment: boolean;
   /**
    * Si hay algún movimiento confirmado, aunque sume cero.
    *
@@ -248,19 +245,19 @@ export function comoQuedaElPendiente({
    * se comportaba antes, y un movimiento de cero es alguien diciendo «esto
    * este mes no costó», que es una respuesta y no un vacío.
    */
-  hayPago: boolean;
-  pagado: Money;
-  esperado: Money | null;
-}): { sigueFaltando: boolean; alPresupuesto: Money } {
-  if (variosPagos && esperado?.gt(ZERO)) {
+  hasPayment: boolean;
+  paid: Money;
+  expected: Money | null;
+}): { isStillDue: boolean; towardBudget: Money } {
+  if (isMultiPayment && expected?.gt(ZERO)) {
     return {
-      sigueFaltando: pagado.lt(esperado),
-      alPresupuesto: pagado.gt(esperado) ? pagado : esperado,
+      isStillDue: paid.lt(expected),
+      towardBudget: paid.gt(expected) ? paid : expected,
     };
   }
 
   // Lo de siempre: al primer movimiento confirmado deja de faltar, y el mes
   // cuenta lo que de verdad costó.
-  if (hayPago) return { sigueFaltando: false, alPresupuesto: pagado };
-  return { sigueFaltando: true, alPresupuesto: esperado ?? ZERO };
+  if (hasPayment) return { isStillDue: false, towardBudget: paid };
+  return { isStillDue: true, towardBudget: expected ?? ZERO };
 }

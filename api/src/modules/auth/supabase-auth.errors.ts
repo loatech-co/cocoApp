@@ -8,7 +8,7 @@
  * That is why this function was exported «to be testable» and went months
  * without a single test.
  *
- * It is the same device `pendientes.ts`, `categories.tree.ts` and
+ * It is the same device `pending.ts`, `categories.tree.ts` and
  * `common/env.ts` already use: what can be decided without network or
  * database lives in its own file, with no dependencies.
  */

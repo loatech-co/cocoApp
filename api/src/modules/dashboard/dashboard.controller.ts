@@ -17,10 +17,10 @@ export class DashboardController {
   @Get()
   @ApiData(DashboardResponse)
   @ApiErrors(400)
-  async resumen(
+  async get(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: DashboardQueryDto,
   ): Promise<DashboardV1> {
-    return dashboardV1(await this.dashboard.resumen(user.id, query));
+    return dashboardV1(await this.dashboard.summary(user.id, query));
   }
 }
