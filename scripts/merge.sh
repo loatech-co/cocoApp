@@ -35,6 +35,31 @@ if [ "$(git rev-parse "origin/$BRANCH")" != "$(git rev-parse "$BRANCH")" ]; then
   exit 1
 fi
 
+# Right after a push GitHub may not have registered any check yet, and then
+# `gh pr checks` answers "no checks reported" instead of waiting. That must
+# never read as "nothing failed": wait, bounded, for the checks to appear.
+CHECKS_APPEAR_TIMEOUT="${CHECKS_APPEAR_TIMEOUT:-600}" # seconds
+CHECKS_APPEAR_INTERVAL="${CHECKS_APPEAR_INTERVAL:-15}"
+echo "▸ Waiting for the checks of PR #${PR} to be registered…"
+WAITED=0
+while :; do
+  if LISTED=$(gh pr checks "$PR" --json name -q 'length' 2>&1) && [ "${LISTED:-0}" -gt 0 ] 2>/dev/null; then
+    break
+  fi
+  if [ -n "$LISTED" ] && ! printf '%s' "$LISTED" | grep -qiE 'no checks reported|^0$'; then
+    echo "Refusing: could not read the checks of PR #${PR}:" >&2
+    printf '%s\n' "$LISTED" | sed 's/^/  /' >&2
+    exit 1
+  fi
+  if [ "$WAITED" -ge "$CHECKS_APPEAR_TIMEOUT" ]; then
+    echo "Refusing: PR #${PR} still reports no checks after ${CHECKS_APPEAR_TIMEOUT}s." >&2
+    echo "Check that CI was triggered for the pushed head, then run this again." >&2
+    exit 1
+  fi
+  sleep "$CHECKS_APPEAR_INTERVAL"
+  WAITED=$((WAITED + CHECKS_APPEAR_INTERVAL))
+done
+
 echo "▸ Waiting for the checks of PR #${PR}…"
 # The exit code of `gh pr checks --watch` is NOT trusted: on PR #14 it returned
 # 0 while two jobs had been CANCELLED (they never got a runner during a GitHub
@@ -48,7 +73,10 @@ CHECKS=$(gh pr checks "$PR" --json name,bucket,workflow,completedAt -q '
   group_by(.workflow + "/" + .name)
   | map(if any(.bucket == "pending") then (map(select(.bucket == "pending")) | first)
         else max_by(.completedAt) end)
-  | .[] | "\(.bucket)\t\(.workflow)/\(.name)"')
+  | .[] | "\(.bucket)\t\(.workflow)/\(.name)"') || {
+  echo "Refusing: could not read the checks of PR #${PR}." >&2
+  exit 1
+}
 if [ -z "$CHECKS" ]; then
   echo "Refusing: PR #${PR} has no checks at all." >&2
   exit 1
