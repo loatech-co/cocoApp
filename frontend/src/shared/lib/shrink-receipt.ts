@@ -31,10 +31,10 @@
  * que sea ÉL quien decida el recorte final y no se pierda nada por el camino
  * —y por si mañana ese número sube—.
  */
-const ANCHO_MAXIMO = 1600;
+const MAX_SIDE_PX = 1600;
 
 /** Calidad del JPG que viaja. Alta: la compresión de verdad la hace el servidor. */
-const CALIDAD = 0.85;
+const QUALITY = 0.85;
 
 /**
  * Por debajo de esto, y si además CABE, no se toca.
@@ -49,7 +49,7 @@ const CALIDAD = 0.85;
  * «Error creating thread», y por eso fallaba pegar una captura y no fallaba
  * subir una foto —que pesa más, y por pesar más sí se encogía aquí—.
  */
-const DESDE = 900 * 1024;
+const MIN_BYTES = 900 * 1024;
 
 /**
  * Lo que se espera a que el navegador abra la imagen antes de rendirse.
@@ -58,16 +58,16 @@ const DESDE = 900 * 1024;
  * instantáneo salvo que algo vaya mal. Está para que «algo va mal» acabe en un
  * archivo subido sin encoger y no en una pantalla colgada.
  */
-const ESPERA_MAXIMA = 5000;
+const MAX_WAIT_MS = 5000;
 
 /** Un PDF no se toca: tiene páginas, y aplanarlo perdería todas menos una. */
-function esImagen(archivo: File): boolean {
-  return archivo.type.startsWith('image/');
+function isImage(file: File): boolean {
+  return file.type.startsWith('image/');
 }
 
 /** El mismo nombre pero con extensión `.jpg`: lo que viaja ya es un JPG. */
-function comoJpg(nombre: string): string {
-  return `${nombre.replace(/\.[a-z0-9]+$/i, '')}.jpg`;
+function asJpgName(name: string): string {
+  return `${name.replace(/\.[a-z0-9]+$/i, '')}.jpg`;
 }
 
 /**
@@ -77,22 +77,22 @@ function comoJpg(nombre: string): string {
  * orientación EXIF si se le pide— pero no está en todas partes; el `<img>` con
  * un `blob:` funciona en cualquier navegador que abra ese formato.
  */
-async function decodificar(
-  archivo: File,
-): Promise<{ fuente: CanvasImageSource; ancho: number; alto: number } | null> {
+async function decode(
+  file: File,
+): Promise<{ source: CanvasImageSource; width: number; height: number } | null> {
   if (typeof createImageBitmap === 'function') {
     try {
-      const mapa = await createImageBitmap(archivo, { imageOrientation: 'from-image' });
-      return { fuente: mapa, ancho: mapa.width, alto: mapa.height };
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      return { source: bitmap, width: bitmap.width, height: bitmap.height };
     } catch {
       // Y se sigue por el otro camino: hay navegadores que no admiten
       // `imageOrientation`, y otros que no saben con este formato.
     }
   }
 
-  const url = URL.createObjectURL(archivo);
+  const url = URL.createObjectURL(file);
   try {
-    const imagen = await new Promise<HTMLImageElement | null>((resolver) => {
+    const image = await new Promise<HTMLImageElement | null>((resolve) => {
       const el = new Image();
       /*
         ── Con reloj, y no solo con `onload`/`onerror` ──────────────────────
@@ -108,19 +108,19 @@ async function decodificar(
         Rendirse es gratis: se manda el original, que es lo que se hace con
         cualquier otro fallo de aquí.
       */
-      const reloj = setTimeout(() => resolver(null), ESPERA_MAXIMA);
-      const acabar = (resultado: HTMLImageElement | null): void => {
-        clearTimeout(reloj);
-        resolver(resultado);
+      const timer = setTimeout(() => resolve(null), MAX_WAIT_MS);
+      const finish = (result: HTMLImageElement | null): void => {
+        clearTimeout(timer);
+        resolve(result);
       };
 
-      el.onload = () => acabar(el);
-      el.onerror = () => acabar(null);
+      el.onload = () => finish(el);
+      el.onerror = () => finish(null);
       el.src = url;
     });
 
-    if (!imagen) return null;
-    return { fuente: imagen, ancho: imagen.naturalWidth, alto: imagen.naturalHeight };
+    if (!image) return null;
+    return { source: image, width: image.naturalWidth, height: image.naturalHeight };
   } finally {
     URL.revokeObjectURL(url);
   }
@@ -131,11 +131,11 @@ async function decodificar(
  *
  * Nunca lanza: ver «por qué nunca deja de subir», arriba.
  */
-export async function encogerSoporte(archivo: File): Promise<File> {
-  if (!esImagen(archivo)) return archivo;
+export async function shrinkReceipt(file: File): Promise<File> {
+  if (!isImage(file)) return file;
   // Un HEIC se convierte SIEMPRE, mida lo que mida: su problema no es el peso
   // sino el formato, que el servidor no sabe abrir.
-  const esHeic = /hei[cf]/i.test(archivo.type) || /\.hei[cf]$/i.test(archivo.name);
+  const isHeic = /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
 
   try {
     /*
@@ -145,25 +145,25 @@ export async function encogerSoporte(archivo: File): Promise<File> {
       del servidor, y aquí abrirla es barato: la decodifica el navegador, una
       sola vez, con la imagen que el usuario acaba de elegir delante.
     */
-    const abierta = await decodificar(archivo);
-    if (!abierta || abierta.ancho === 0 || abierta.alto === 0) return archivo;
+    const decoded = await decode(file);
+    if (!decoded || decoded.width === 0 || decoded.height === 0) return file;
 
-    const lado = Math.max(abierta.ancho, abierta.alto);
-    if (!esHeic && lado <= ANCHO_MAXIMO && archivo.size < DESDE) return archivo;
+    const longestSide = Math.max(decoded.width, decoded.height);
+    if (!isHeic && longestSide <= MAX_SIDE_PX && file.size < MIN_BYTES) return file;
 
-    const escala = Math.min(1, ANCHO_MAXIMO / lado);
-    const lienzo = document.createElement('canvas');
-    lienzo.width = Math.round(abierta.ancho * escala);
-    lienzo.height = Math.round(abierta.alto * escala);
+    const scale = Math.min(1, MAX_SIDE_PX / longestSide);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(decoded.width * scale);
+    canvas.height = Math.round(decoded.height * scale);
 
-    const pincel = lienzo.getContext('2d');
-    if (!pincel) return archivo;
-    pincel.drawImage(abierta.fuente, 0, 0, lienzo.width, lienzo.height);
+    const context = canvas.getContext('2d');
+    if (!context) return file;
+    context.drawImage(decoded.source, 0, 0, canvas.width, canvas.height);
 
-    const trozo = await new Promise<Blob | null>((resolver) =>
-      lienzo.toBlob(resolver, 'image/jpeg', CALIDAD),
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/jpeg', QUALITY),
     );
-    if (!trozo) return archivo;
+    if (!blob) return file;
 
     /*
       Si no se ganó nada, se manda el original — pero «nada» son las DOS cosas.
@@ -176,18 +176,18 @@ export async function encogerSoporte(archivo: File): Promise<File> {
       Con un HEIC se manda lo convertido igual, pese lo que pese: lo que
       importa de ese es el formato.
     */
-    if (!esHeic && escala === 1 && trozo.size >= archivo.size) return archivo;
+    if (!isHeic && scale === 1 && blob.size >= file.size) return file;
 
-    return new File([trozo], comoJpg(archivo.name), {
+    return new File([blob], asJpgName(file.name), {
       type: 'image/jpeg',
-      lastModified: archivo.lastModified,
+      lastModified: file.lastModified,
     });
   } catch {
-    return archivo;
+    return file;
   }
 }
 
 /** Lo mismo para una tanda. */
-export async function encogerSoportes(archivos: readonly File[]): Promise<File[]> {
-  return Promise.all(archivos.map((archivo) => encogerSoporte(archivo)));
+export async function shrinkReceipts(files: readonly File[]): Promise<File[]> {
+  return Promise.all(files.map((file) => shrinkReceipt(file)));
 }

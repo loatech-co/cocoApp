@@ -1,8 +1,8 @@
 import { FileWarning, Loader2 } from 'lucide-react';
 import { type RefObject, useEffect, useRef, useState } from 'react';
 
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
 import { drawPdfPage } from '@/shared/lib/pdf';
 
 /** The width of a sheet at 100 %: a letter page readable on a laptop without zooming. */
@@ -25,7 +25,7 @@ function usePdfPageDrawing(
 
   // «Painting» from the first render of each change, not a frame later:
   // it is state derived from the document, the page or the scale having changed.
-  useAlCambiar([url, page, scale], () => setIsPainting(true));
+  useOnChange([url, page, scale], () => setIsPainting(true));
 
   useEffect(() => {
     let isAlive = true;

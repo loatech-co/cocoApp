@@ -17,7 +17,7 @@ import {
   type Transaction,
   type TransactionType,
 } from '@/shared/api/generated/model';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { useOnChange } from '@/shared/lib/on-change';
 import type { Reading } from '@coco/receipt-parser';
 
 /** Con qué se abre la ficha. Cambiar cualquiera de estos la vuelve a llenar. */
@@ -68,7 +68,7 @@ function useMovementFields(apertura: SheetOpening, descartes: number) {
   // Durante el render y no en un efecto —ver `useAlCambiar`—: así la ficha
   // sale pintada ya con los datos buenos, sin un fotograma con los del
   // movimiento anterior.
-  useAlCambiar([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
+  useOnChange([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
     if (!abierta) return;
     const iniciales = initialAmountAndDate(movimiento, pago);
     setDescription(movimiento?.description ?? '');
@@ -145,7 +145,7 @@ function useSheetStatus(apertura: SheetOpening, descartes: number) {
   */
   const [paso, setPaso] = useState<'camara' | 'leyendo' | 'formulario'>('formulario');
 
-  useAlCambiar([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
+  useOnChange([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
     if (!abierta) return;
     setCascadaVisible(false);
     setError(null);
@@ -201,7 +201,7 @@ function useSheetSupports(apertura: SheetOpening, descartes: number) {
    */
   const [registrado, setRegistrado] = useState<number | null>(null);
 
-  useAlCambiar([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
+  useOnChange([abierta, movimiento, pago, tipoPorDefecto, descartes], () => {
     if (!abierta) return;
     setLectura(null);
     setSinLeer(null);

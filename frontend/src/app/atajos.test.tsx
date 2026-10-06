@@ -4,14 +4,14 @@ import { LayoutDashboard, ScrollText, ShieldCheck, Tags, UserCog, Wallet } from 
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { olvidarAtajos } from '@/shared/lib/atajos';
+import { forgetShortcuts } from '@/shared/lib/shortcuts';
 import { ToastStack, clearToasts } from '@/shared/ui/molecules/toast';
 
 import { useSuperficieDeAtajos, type PaginaDeAtajo } from './atajos';
 
 afterEach(() => {
   cleanup();
-  olvidarAtajos();
+  forgetShortcuts();
   clearToasts();
 });
 

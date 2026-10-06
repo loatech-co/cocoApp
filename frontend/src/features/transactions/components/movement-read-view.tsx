@@ -1,7 +1,7 @@
 import { ArrowUpRight } from 'lucide-react';
 
 import { type TransactionType } from '@/shared/api/generated/model';
-import { diaLargo, mesLargo, formatMoney } from '@/shared/lib/format';
+import { longDay, longMonth, formatMoney } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card } from '@/shared/ui/atoms/card';
@@ -139,12 +139,12 @@ function ReadDetails({
       )}
 
       <p className="mt-1 text-xs text-muted-foreground">
-        {t('transactions.readView.paidOn', { day: diaLargo(fecha) })}
+        {t('transactions.readView.paidOn', { day: longDay(fecha) })}
       </p>
 
       {desfasado && (
         <p className="text-xs font-medium text-warning">
-          {t('transactions.readView.belongsTo', { month: mesLargo(periodo.slice(0, 7)) })}
+          {t('transactions.readView.belongsTo', { month: longMonth(periodo.slice(0, 7)) })}
         </p>
       )}
     </div>

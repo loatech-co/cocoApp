@@ -4,8 +4,8 @@ import { act, cleanup, render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { olvidarAtajos } from '@/shared/lib/atajos';
-import { CONSULTA_MOVIL } from '@/shared/lib/movil';
+import { MOBILE_QUERY } from '@/shared/lib/mobile';
+import { forgetShortcuts } from '@/shared/lib/shortcuts';
 import { fakeNativeApp, leaveNativeApp } from '@/test-support/fake-app';
 
 import { AppShell } from './app-shell';
@@ -23,7 +23,7 @@ vi.mock('@/features/profile/api/preferences', () => ({ useLlevaCuentas: () => tr
 /** jsdom no evalúa consultas de medios: se le dice la respuesta. */
 function alAncho(esMovil: boolean): void {
   window.matchMedia = ((consulta: string) => ({
-    matches: consulta === CONSULTA_MOVIL ? esMovil : !esMovil,
+    matches: consulta === MOBILE_QUERY ? esMovil : !esMovil,
     media: consulta,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -54,7 +54,7 @@ function pintar() {
   );
 }
 
-beforeEach(olvidarAtajos);
+beforeEach(forgetShortcuts);
 afterEach(() => {
   cleanup();
   leaveNativeApp();

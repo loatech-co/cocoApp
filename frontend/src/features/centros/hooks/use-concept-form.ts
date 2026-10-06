@@ -11,8 +11,8 @@ import {
 import { ApiClientError } from '@/shared/api/api-client';
 import { useCreateCategory } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
 
 interface ConceptFormOptions {
   abierta: boolean;
@@ -83,7 +83,7 @@ function useConceptFields(abierta: boolean, concepto: Category | null | undefine
 
   // Se recarga en cada apertura: sin esto, abrir el segundo concepto mostraría
   // los datos del primero.
-  useAlCambiar([abierta, concepto], () => {
+  useOnChange([abierta, concepto], () => {
     if (!abierta) return;
     setNombre(concepto?.name ?? '');
     setRecurrencia(initialRecurrence(concepto));

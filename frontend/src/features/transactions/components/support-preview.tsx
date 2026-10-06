@@ -113,7 +113,7 @@ export function PreviaDeArchivo({
           `ResizeObserver` se quedaría midiendo una franja.
         */
         'relative min-h-55 flex-1 touch-none select-none overflow-hidden rounded-lg bg-card ring-1 ring-border',
-        vista.sePuedeMover && (vista.arrastrando ? 'cursor-grabbing' : 'cursor-grab'),
+        vista.canPan && (vista.isDragging ? 'cursor-grabbing' : 'cursor-grab'),
       )}
       {...vista.handlers}
     >
@@ -126,7 +126,7 @@ export function PreviaDeArchivo({
       <PreviewZoom
         visible={Boolean(url)}
         zoom={vista.zoom}
-        paso={vista.paso}
+        paso={vista.step}
         onZoom={vista.setZoom}
       />
 
@@ -135,8 +135,8 @@ export function PreviaDeArchivo({
         fallo={fallo}
         onReintentar={onReintentar}
         esImagen={esImagen}
-        encuadre={vista.encuadre}
-        onTamano={(ancho, alto) => vista.setNatural({ ancho, alto })}
+        encuadre={vista.framing}
+        onTamano={(ancho, alto) => vista.setNatural({ width: ancho, height: alto })}
       />
     </div>
   );
@@ -162,7 +162,7 @@ function PreviewZoom({
 }) {
   return (
     <div
-      data-mandos=""
+      data-zoom-controls=""
       hidden={!visible}
       className="absolute bottom-2 right-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
     >
@@ -263,7 +263,7 @@ function PreviewActions({ onAbrir, acciones }: Pick<PreviewProps, 'onAbrir' | 'a
 
   return (
     <div
-      data-mandos=""
+      data-zoom-controls=""
       className="absolute right-2 top-2 z-10 flex items-center gap-0.5 rounded-full bg-sala/75 p-0.5"
     >
       {acciones}

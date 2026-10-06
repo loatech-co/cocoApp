@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { USER_AGENT_APP } from '@/shared/lib/native-contract';
 
-import { CONSULTA_ESCRITORIO, CONSULTA_MOVIL, useEnLaApp } from './movil';
+import { DESKTOP_QUERY, MOBILE_QUERY, useIsInNativeApp } from './mobile';
 
 /**
  * Las dos consultas tienen que ser COMPLEMENTARIAS.
@@ -17,31 +17,31 @@ import { CONSULTA_ESCRITORIO, CONSULTA_MOVIL, useEnLaApp } from './movil';
  * `min-width` y `orientation`, que es todo lo que usan estas dos cadenas— y
  * barre una rejilla de tamaños reales.
  */
-function evalua(consulta: string, ancho: number, alto: number): boolean {
-  return consulta.split(',').some((rama) =>
-    rama
+function evaluate(query: string, width: number, height: number): boolean {
+  return query.split(',').some((branch) =>
+    branch
       .split(' and ')
       .map((c) => c.trim())
-      .every((condicion) => {
-        const [, rasgo, valor] = /^\(([a-z-]+):\s*(.+)\)$/.exec(condicion) ?? [];
-        if (!rasgo) throw new Error(`No sé evaluar: ${condicion}`);
+      .every((condition) => {
+        const [, feature, value] = /^\(([a-z-]+):\s*(.+)\)$/.exec(condition) ?? [];
+        if (!feature) throw new Error(`No sé evaluar: ${condition}`);
 
-        if (rasgo === 'orientation') {
+        if (feature === 'orientation') {
           // La definición de CSS: vertical es alto MAYOR O IGUAL que ancho. Un
           // cuadrado es vertical.
-          return valor === 'portrait' ? alto >= ancho : ancho > alto;
+          return value === 'portrait' ? height >= width : width > height;
         }
 
-        const px = Number(valor!.replace('px', ''));
-        if (rasgo === 'max-width') return ancho <= px;
-        if (rasgo === 'min-width') return ancho >= px;
-        throw new Error(`No sé evaluar: ${condicion}`);
+        const px = Number(value!.replace('px', ''));
+        if (feature === 'max-width') return width <= px;
+        if (feature === 'min-width') return width >= px;
+        throw new Error(`No sé evaluar: ${condition}`);
       }),
   );
 }
 
 /** Aparatos de verdad, no números redondos. */
-const APARATOS: [nombre: string, ancho: number, alto: number, esMovil: boolean][] = [
+const DEVICES: [name: string, width: number, height: number, isMobile: boolean][] = [
   ['iPhone 15 vertical', 390, 844, true],
   ['iPhone 15 horizontal', 844, 390, false],
   ['iPad mini vertical', 744, 1133, true],
@@ -57,24 +57,24 @@ const APARATOS: [nombre: string, ancho: number, alto: number, esMovil: boolean][
 ];
 
 describe('El corte entre el teléfono y el escritorio', () => {
-  it.each(APARATOS)('%s cae donde debe', (_nombre, ancho, alto, esMovil) => {
-    expect(evalua(CONSULTA_MOVIL, ancho, alto)).toBe(esMovil);
-    expect(evalua(CONSULTA_ESCRITORIO, ancho, alto)).toBe(!esMovil);
+  it.each(DEVICES)('%s cae donde debe', (_name, width, height, isMobile) => {
+    expect(evaluate(MOBILE_QUERY, width, height)).toBe(isMobile);
+    expect(evaluate(DESKTOP_QUERY, width, height)).toBe(!isMobile);
   });
 
   it('ningún tamaño cae en las dos ni en ninguna', () => {
-    const sinRespuesta: string[] = [];
+    const unanswered: string[] = [];
 
-    for (let ancho = 200; ancho <= 2000; ancho += 1) {
-      for (const alto of [ancho - 1, ancho, ancho + 1, 400, 900, 1400]) {
-        if (alto < 1) continue;
-        const movil = evalua(CONSULTA_MOVIL, ancho, alto);
-        const escritorio = evalua(CONSULTA_ESCRITORIO, ancho, alto);
-        if (movil === escritorio) sinRespuesta.push(`${ancho}×${alto}`);
+    for (let width = 200; width <= 2000; width += 1) {
+      for (const height of [width - 1, width, width + 1, 400, 900, 1400]) {
+        if (height < 1) continue;
+        const isMobile = evaluate(MOBILE_QUERY, width, height);
+        const isDesktop = evaluate(DESKTOP_QUERY, width, height);
+        if (isMobile === isDesktop) unanswered.push(`${width}×${height}`);
       }
     }
 
-    expect(sinRespuesta.slice(0, 10), sinRespuesta.slice(0, 10).join(', ')).toEqual([]);
+    expect(unanswered.slice(0, 10), unanswered.slice(0, 10).join(', ')).toEqual([]);
   });
 });
 
@@ -82,16 +82,16 @@ describe('La copia de CSS dice lo mismo', () => {
   const css = readFileSync(join(import.meta.dirname, '..', '..', 'index.css'), 'utf8');
 
   it('`movil` y `escritorio` son las mismas cadenas, carácter por carácter', () => {
-    expect(css).toContain(`@media ${CONSULTA_MOVIL}`);
-    expect(css).toContain(`@media ${CONSULTA_ESCRITORIO}`);
+    expect(css).toContain(`@media ${MOBILE_QUERY}`);
+    expect(css).toContain(`@media ${DESKTOP_QUERY}`);
   });
 
   it('nadie escribió el corte a mano en otro sitio', () => {
     // Dos: la variante `movil` y el bloque de reglas del armazón. Más que eso
     // significa que alguien volvió a copiarlo, y entonces cambiarlo ya no es
     // cambiar un sitio.
-    const copias = css.split('(max-width: 767px)').length - 1;
-    expect(copias).toBeLessThanOrEqual(2);
+    const copies = css.split('(max-width: 767px)').length - 1;
+    expect(copies).toBeLessThanOrEqual(2);
   });
 });
 
@@ -101,7 +101,7 @@ describe('Dentro de la app del teléfono', () => {
   // No llama a ningún gancho de React por dentro, así que se puede preguntar
   // fuera de un render: es lo que permite probarlo sin DOM.
   it('sin ventana ni puente, no', () => {
-    expect(useEnLaApp()).toBe(false);
+    expect(useIsInNativeApp()).toBe(false);
   });
 
   it('con la marca y el puente, sí', () => {
@@ -109,12 +109,12 @@ describe('Dentro de la app del teléfono', () => {
     vi.stubGlobal('window', {
       webkit: { messageHandlers: { cocoSesion: { postMessage: () => Promise.resolve() } } },
     });
-    expect(useEnLaApp()).toBe(true);
+    expect(useIsInNativeApp()).toBe(true);
   });
 
   it('con la marca pero sin puente, no', () => {
     vi.stubGlobal('navigator', { userAgent: `Mozilla/5.0 ${USER_AGENT_APP}0.1.0` });
     vi.stubGlobal('window', {});
-    expect(useEnLaApp()).toBe(false);
+    expect(useIsInNativeApp()).toBe(false);
   });
 });

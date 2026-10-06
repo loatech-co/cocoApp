@@ -5,8 +5,8 @@ import { useSugerenciaDeCategoria } from '@/features/transactions/hooks/use-suge
 import { proposalFromText } from '@/features/transactions/model/movement-form';
 import { conceptosRecientes } from '@/features/transactions/model/recientes';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import { comoNodosBuscables } from '@/shared/lib/arbol-buscable';
+import { useOnChange } from '@/shared/lib/on-change';
+import { toSearchableNodes } from '@/shared/lib/searchable-tree';
 import { indexTree } from '@coco/receipt-parser';
 
 import type { MovementSheetState } from './use-movement-form';
@@ -45,11 +45,11 @@ export function useClassificationProposals(
     arbol: Category[] | undefined;
   },
 ) {
-  const indiceDelArbol = useMemo(() => indexTree(comoNodosBuscables(arbol ?? [])), [arbol]);
+  const indiceDelArbol = useMemo(() => indexTree(toSearchableNodes(arbol ?? [])), [arbol]);
   const proponiendo = abierta && ficha.paso === 'formulario' && ficha.editable;
 
   const sugerenciaDelHistorial = useSugerenciaDeCategoria(proponiendo ? ficha.description : '');
-  useAlCambiar([sugerenciaDelHistorial?.categoryId], () => {
+  useOnChange([sugerenciaDelHistorial?.categoryId], () => {
     // Solo con un id de verdad: una respuesta con otra forma no puede vaciar
     // lo que otra fuente ya había puesto.
     if (typeof sugerenciaDelHistorial?.categoryId !== 'number') return;
@@ -63,7 +63,7 @@ export function useClassificationProposals(
     return proposalFromText(indiceDelArbol, escrito);
   }, [indiceDelArbol, ficha.description, proponiendo]);
 
-  useAlCambiar(
+  useOnChange(
     [
       propuestaLocal?.categoryId,
       propuestaLocal?.origen,

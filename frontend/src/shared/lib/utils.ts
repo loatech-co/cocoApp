@@ -21,13 +21,13 @@ export function cn(...inputs: ClassValue[]): string {
  * comas, la misma cifra tendría dos formas según se estuviera leyendo o
  * escribiendo.
  */
-export function agruparMiles(crudo: string): string {
-  const [enteros = '', ...decimales] = crudo.split(',');
-  const agrupados = enteros.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+export function groupThousands(raw: string): string {
+  const [integerPart = '', ...decimalParts] = raw.split(',');
+  const grouped = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
   // La coma se conserva aunque todavía no haya decimales: quien acaba de
   // escribirla está a punto de escribirlos.
-  return decimales.length > 0 ? `${agrupados},${decimales.join('')}` : agrupados;
+  return decimalParts.length > 0 ? `${grouped},${decimalParts.join('')}` : grouped;
 }
 
 /**
@@ -37,10 +37,10 @@ export function agruparMiles(crudo: string): string {
  * aquí los puntos —y no al enviar— evita que el valor viva en dos formas según
  * quién lo mire.
  */
-export function soloCifras(escrito: string): string {
-  const limpio = escrito.replace(/[^\d,]/g, '');
-  const [enteros = '', ...resto] = limpio.split(',');
+export function digitsOnly(typed: string): string {
+  const clean = typed.replace(/[^\d,]/g, '');
+  const [integerPart = '', ...rest] = clean.split(',');
 
   // Dos comas no son un número. Se queda la primera y lo demás se pega detrás.
-  return resto.length > 0 ? `${enteros},${resto.join('')}` : enteros;
+  return rest.length > 0 ? `${integerPart},${rest.join('')}` : integerPart;
 }

@@ -1,6 +1,6 @@
 import { type CategoryTree } from '@/shared/api/categories';
-import { comoNodosBuscables } from '@/shared/lib/arbol-buscable';
 import { t } from '@/shared/lib/i18n';
+import { toSearchableNodes } from '@/shared/lib/searchable-tree';
 import {
   treeSignatures as firmasDelArbolCompartido,
   normalize,
@@ -140,5 +140,5 @@ export function conceptoQueYaLaUsa(
  */
 export function firmasDelArbol(arbol: readonly CategoryTree[]): Signature[] {
   // El recorrido vive en el paquete desde la fase 3: la API lo necesita igual.
-  return firmasDelArbolCompartido(comoNodosBuscables(arbol));
+  return firmasDelArbolCompartido(toSearchableNodes(arbol));
 }

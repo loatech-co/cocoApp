@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { NodoDelArbol } from '@/shared/lib/arbol-buscable';
+import type { TreeNode } from '@/shared/lib/searchable-tree';
 
 import { BuscadorDeConcepto } from './buscador-de-concepto';
 
@@ -16,7 +16,7 @@ import { BuscadorDeConcepto } from './buscador-de-concepto';
  */
 afterEach(cleanup);
 
-const ARBOL: NodoDelArbol[] = [
+const ARBOL: TreeNode[] = [
   {
     id: 1,
     name: 'Costos fijos',

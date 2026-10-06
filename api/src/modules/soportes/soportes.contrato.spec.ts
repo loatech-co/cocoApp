@@ -17,7 +17,7 @@ describe('El contrato de soportes', () => {
   const optimizacion = readFileSync(join(__dirname, 'soportes.optimizacion.ts'), 'utf8');
   const almacen = readFileSync(join(__dirname, 'soportes.almacen.ts'), 'utf8');
   const encoger = readFileSync(
-    join(__dirname, '../../../../frontend/src/shared/lib/encoger-soporte.ts'),
+    join(__dirname, '../../../../frontend/src/shared/lib/shrink-receipt.ts'),
     'utf8',
   );
 
@@ -55,10 +55,10 @@ describe('El contrato de soportes', () => {
 
   it('lo recomendado es lo que hace la web antes de subir', () => {
     expect(numero(contrato, /lado_maximo_px:\s*(\d+)/)).toBe(
-      numero(encoger, /const ANCHO_MAXIMO = ([^;]+);/),
+      numero(encoger, /const MAX_SIDE_PX = ([^;]+);/),
     );
     expect(numero(contrato, /calidad:\s*([\d.]+)/)).toBe(
-      numero(encoger, /const CALIDAD = ([^;]+);/),
+      numero(encoger, /const QUALITY = ([^;]+);/),
     );
   });
 });

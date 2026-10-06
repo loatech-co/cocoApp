@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { Filter } from 'lucide-react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CONSULTA_MOVIL } from '@/shared/lib/movil';
+import { MOBILE_QUERY } from '@/shared/lib/mobile';
 
 import { Menu, MenuOption, MenuSeparator, MenuTitle } from './menu';
 
@@ -17,7 +17,7 @@ afterEach(() => {
 /** jsdom does not evaluate media queries: the test tells it the answer. */
 function onPhone(): void {
   window.matchMedia = ((query: string) => ({
-    matches: query === CONSULTA_MOVIL,
+    matches: query === MOBILE_QUERY,
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},

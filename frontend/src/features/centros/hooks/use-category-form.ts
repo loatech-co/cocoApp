@@ -5,8 +5,8 @@ import { categoryChanges, newCategory } from '@/features/centros/model/category-
 import { ApiClientError } from '@/shared/api/api-client';
 import { useCreateCategory } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
 
 interface CategoryFormOptions {
   abierta: boolean;
@@ -41,7 +41,7 @@ export function useCategoryForm({
 
   // Se rellena en cada apertura con lo que toque: sin esto, lo que se canceló
   // la vez anterior reaparece escrito la siguiente.
-  useAlCambiar([abierta, categoria], () => {
+  useOnChange([abierta, categoria], () => {
     if (!abierta) return;
     setNombre(categoria?.name ?? '');
     setEstatico(categoria?.isStatic ?? false);

@@ -22,7 +22,7 @@ import { type RefObject, useEffect, useEffectEvent } from 'react';
  */
 
 /** Lo que hay que recorrer para que esto deje de ser un temblor. */
-const RECONOCIMIENTO = 8;
+const RECOGNITION_PX = 8;
 
 /**
  * Lo que hay que recorrer para que suelte.
@@ -31,28 +31,28 @@ const RECONOCIMIENTO = 8;
  * a llegar a donde uno estaba—, así que el umbral se pone donde ya no puede
  * ser un roce.
  */
-export const UMBRAL_DE_CIERRE = 120;
+export const CLOSE_THRESHOLD = 120;
 
-export type Cierre = 'abajo' | 'arriba' | 'derecha' | 'izquierda';
+export type SwipeDirection = 'down' | 'up' | 'right' | 'left';
 
-const EJE: Record<Cierre, 'x' | 'y'> = {
-  abajo: 'y',
-  arriba: 'y',
-  derecha: 'x',
-  izquierda: 'x',
+const AXIS: Record<SwipeDirection, 'x' | 'y'> = {
+  down: 'y',
+  up: 'y',
+  right: 'x',
+  left: 'x',
 };
 
 /** Cuánto se ha avanzado HACIA el cierre. Negativo es ir al revés. */
-export function avanceDe(hacia: Cierre, dx: number, dy: number): number {
-  if (hacia === 'abajo') return dy;
-  if (hacia === 'arriba') return -dy;
-  if (hacia === 'derecha') return dx;
+export function progressAlong(direction: SwipeDirection, dx: number, dy: number): number {
+  if (direction === 'down') return dy;
+  if (direction === 'up') return -dy;
+  if (direction === 'right') return dx;
   return -dx;
 }
 
 /** Lo que se mueve en el otro eje. Si manda esto, el gesto no es el nuestro. */
-function cruceDe(hacia: Cierre, dx: number, dy: number): number {
-  return Math.abs(EJE[hacia] === 'y' ? dx : dy);
+function crossOffset(direction: SwipeDirection, dx: number, dy: number): number {
+  return Math.abs(AXIS[direction] === 'y' ? dx : dy);
 }
 
 /**
@@ -61,54 +61,58 @@ function cruceDe(hacia: Cierre, dx: number, dy: number): number {
  * Porque entonces no es un cierre, es un desplazamiento: un panel cuya lista
  * está a la mitad se cierra solo cuando la lista ha vuelto a su borde.
  */
-export function puedeDesplazarse(desde: Element | null, hasta: Element, hacia: Cierre): boolean {
-  let nodo: Element | null = desde;
+export function canScrollToward(
+  from: Element | null,
+  boundary: Element,
+  direction: SwipeDirection,
+): boolean {
+  let node: Element | null = from;
 
-  while (nodo && nodo !== hasta.parentElement) {
-    const estilo = typeof getComputedStyle === 'function' ? getComputedStyle(nodo) : null;
-    const desborde = EJE[hacia] === 'y' ? estilo?.overflowY : estilo?.overflowX;
+  while (node && node !== boundary.parentElement) {
+    const style = typeof getComputedStyle === 'function' ? getComputedStyle(node) : null;
+    const overflow = AXIS[direction] === 'y' ? style?.overflowY : style?.overflowX;
     // `auto` y `scroll` SON desplazables; `clip`, `hidden` y `visible` no.
     // Contarlos mal es exactamente el bug: el panel se mueve y la lista no.
-    const desplazable = desborde === 'auto' || desborde === 'scroll';
+    const isScrollable = overflow === 'auto' || overflow === 'scroll';
 
-    if (desplazable) {
-      const restanteArriba = nodo.scrollTop;
-      const restanteAbajo = nodo.scrollHeight - nodo.clientHeight - nodo.scrollTop;
-      const restanteIzquierda = nodo.scrollLeft;
-      const restanteDerecha = nodo.scrollWidth - nodo.clientWidth - nodo.scrollLeft;
+    if (isScrollable) {
+      const remainingTop = node.scrollTop;
+      const remainingBottom = node.scrollHeight - node.clientHeight - node.scrollTop;
+      const remainingLeft = node.scrollLeft;
+      const remainingRight = node.scrollWidth - node.clientWidth - node.scrollLeft;
 
       // Arrastrar hacia abajo enseña lo que hay ARRIBA: lo consume quien tenga
       // algo por encima todavía sin enseñar.
-      const restante =
-        hacia === 'abajo'
-          ? restanteArriba
-          : hacia === 'arriba'
-            ? restanteAbajo
-            : hacia === 'derecha'
-              ? restanteIzquierda
-              : restanteDerecha;
+      const remaining =
+        direction === 'down'
+          ? remainingTop
+          : direction === 'up'
+            ? remainingBottom
+            : direction === 'right'
+              ? remainingLeft
+              : remainingRight;
 
-      if (restante > 1) return true;
+      if (remaining > 1) return true;
     }
 
-    if (nodo === hasta) break;
-    nodo = nodo.parentElement;
+    if (node === boundary) break;
+    node = node.parentElement;
   }
 
   return false;
 }
 
-export function useDeslizarParaCerrar({
-  elemento,
-  hacia,
-  activo,
-  onCerrar,
+export function useSwipeToClose({
+  element,
+  direction,
+  isEnabled,
+  onClose,
 }: {
-  elemento: RefObject<HTMLElement | null>;
-  hacia: Cierre;
+  element: RefObject<HTMLElement | null>;
+  direction: SwipeDirection;
   /** Solo mientras está abierto: un panel cerrado no se arrastra. */
-  activo: boolean;
-  onCerrar: () => void;
+  isEnabled: boolean;
+  onClose: () => void;
 }): void {
   /**
    * El cierre, como evento de efecto.
@@ -124,97 +128,97 @@ export function useDeslizarParaCerrar({
    * Antes era una ref escrita durante el render, que hace lo mismo a mano y
    * es lo que la regla de los refs prohíbe.
    */
-  const alCerrar = useEffectEvent(onCerrar);
+  const handleClose = useEffectEvent(onClose);
 
   useEffect(() => {
-    const el = elemento.current;
-    if (!el || !activo) return;
+    const el = element.current;
+    if (!el || !isEnabled) return;
 
-    const gesto: Arrastre = { el, hacia, inicio: null, reconocido: false, avance: 0 };
-    const alBajar = (e: PointerEvent): void => empezar(gesto, e);
-    const alMover = (e: PointerEvent): void => mover(gesto, e);
-    const alSoltar = (): void => soltar(gesto, () => alCerrar());
+    const gesture: Drag = { el, direction, start: null, isRecognized: false, progress: 0 };
+    const onPointerDown = (e: PointerEvent): void => startDrag(gesture, e);
+    const onPointerMove = (e: PointerEvent): void => moveDrag(gesture, e);
+    const onPointerUp = (): void => endDrag(gesture, () => handleClose());
 
-    el.addEventListener('pointerdown', alBajar as EventListener);
-    el.addEventListener('pointermove', alMover as EventListener);
-    el.addEventListener('pointerup', alSoltar as EventListener);
-    el.addEventListener('pointercancel', alSoltar as EventListener);
+    el.addEventListener('pointerdown', onPointerDown as EventListener);
+    el.addEventListener('pointermove', onPointerMove as EventListener);
+    el.addEventListener('pointerup', onPointerUp as EventListener);
+    el.addEventListener('pointercancel', onPointerUp as EventListener);
 
     return () => {
-      el.removeEventListener('pointerdown', alBajar as EventListener);
-      el.removeEventListener('pointermove', alMover as EventListener);
-      el.removeEventListener('pointerup', alSoltar as EventListener);
-      el.removeEventListener('pointercancel', alSoltar as EventListener);
-      soltarElControl(el);
+      el.removeEventListener('pointerdown', onPointerDown as EventListener);
+      el.removeEventListener('pointermove', onPointerMove as EventListener);
+      el.removeEventListener('pointerup', onPointerUp as EventListener);
+      el.removeEventListener('pointercancel', onPointerUp as EventListener);
+      releaseElement(el);
     };
-  }, [elemento, hacia, activo]);
+  }, [element, direction, isEnabled]);
 }
 
 /** Un arrastre en curso sobre un panel. */
-interface Arrastre {
+interface Drag {
   el: HTMLElement;
-  hacia: Cierre;
-  inicio: { x: number; y: number } | null;
-  reconocido: boolean;
-  avance: number;
+  direction: SwipeDirection;
+  start: { x: number; y: number } | null;
+  isRecognized: boolean;
+  progress: number;
 }
 
 /** Devuelve el panel a lo que diga su CSS. */
-function soltarElControl(el: HTMLElement): void {
+function releaseElement(el: HTMLElement): void {
   el.style.transform = '';
   el.style.transition = '';
 }
 
-function empezar(gesto: Arrastre, e: PointerEvent): void {
+function startDrag(gesture: Drag, e: PointerEvent): void {
   if (e.button > 0) return;
 
   // El destino puede no ser un elemento —el documento, un nodo de texto—, y
   // esos no tienen `closest`.
-  const objetivo = e.target;
+  const target = e.target;
   // Una región que se maneja el puntero ella misma —una rejilla mientras
   // se reordena— se queda con el gesto entero.
-  if (objetivo instanceof Element && objetivo.closest('[data-sin-deslizar]')) return;
+  if (target instanceof Element && target.closest('[data-no-swipe]')) return;
 
-  gesto.inicio = { x: e.clientX, y: e.clientY };
-  gesto.reconocido = false;
-  gesto.avance = 0;
+  gesture.start = { x: e.clientX, y: e.clientY };
+  gesture.isRecognized = false;
+  gesture.progress = 0;
 }
 
-function mover(gesto: Arrastre, e: PointerEvent): void {
-  const { el, hacia, inicio } = gesto;
-  if (!inicio) return;
+function moveDrag(gesture: Drag, e: PointerEvent): void {
+  const { el, direction, start } = gesture;
+  if (!start) return;
 
-  const dx = e.clientX - inicio.x;
-  const dy = e.clientY - inicio.y;
-  gesto.avance = avanceDe(hacia, dx, dy);
+  const dx = e.clientX - start.x;
+  const dy = e.clientY - start.y;
+  gesture.progress = progressAlong(direction, dx, dy);
 
-  if (!gesto.reconocido && !reconocer(gesto, e, cruceDe(hacia, dx, dy))) return;
+  if (!gesture.isRecognized && !recognize(gesture, e, crossOffset(direction, dx, dy))) return;
 
   // No se arrastra hacia el otro lado: el panel ya está en su sitio.
-  const recorrido = Math.max(0, gesto.avance);
+  const travel = Math.max(0, gesture.progress);
   el.style.transform =
-    EJE[hacia] === 'y'
-      ? `translateY(${hacia === 'abajo' ? recorrido : -recorrido}px)`
-      : `translateX(${hacia === 'derecha' ? recorrido : -recorrido}px)`;
+    AXIS[direction] === 'y'
+      ? `translateY(${direction === 'down' ? travel : -travel}px)`
+      : `translateX(${direction === 'right' ? travel : -travel}px)`;
 }
 
 /** Decide si lo que empezó es este gesto. Si no lo es, lo abandona. */
-function reconocer(gesto: Arrastre, e: PointerEvent, cruce: number): boolean {
-  const { el, hacia, avance } = gesto;
-  if (Math.abs(avance) < RECONOCIMIENTO && cruce < RECONOCIMIENTO) return false;
+function recognize(gesture: Drag, e: PointerEvent, crossOffset: number): boolean {
+  const { el, direction, progress } = gesture;
+  if (Math.abs(progress) < RECOGNITION_PX && crossOffset < RECOGNITION_PX) return false;
 
   // Va para el otro lado, o va de lado: no es este gesto.
-  if (avance <= 0 || cruce > Math.abs(avance)) {
-    gesto.inicio = null;
+  if (progress <= 0 || crossOffset > Math.abs(progress)) {
+    gesture.start = null;
     return false;
   }
 
-  if (puedeDesplazarse(e.target as Element | null, el, hacia)) {
-    gesto.inicio = null;
+  if (canScrollToward(e.target as Element | null, el, direction)) {
+    gesture.start = null;
     return false;
   }
 
-  gesto.reconocido = true;
+  gesture.isRecognized = true;
   // jsdom no lo trae, aunque el tipo diga que todo elemento lo tiene.
   if ('setPointerCapture' in el) el.setPointerCapture(e.pointerId);
   // En línea y no en una clase: con su propia curva encima, el panel
@@ -223,21 +227,21 @@ function reconocer(gesto: Arrastre, e: PointerEvent, cruce: number): boolean {
   return true;
 }
 
-function soltar(gesto: Arrastre, alCerrar: () => void): void {
-  if (!gesto.inicio || !gesto.reconocido) {
-    gesto.inicio = null;
+function endDrag(gesture: Drag, handleClose: () => void): void {
+  if (!gesture.start || !gesture.isRecognized) {
+    gesture.start = null;
     return;
   }
-  gesto.inicio = null;
-  gesto.reconocido = false;
+  gesture.start = null;
+  gesture.isRecognized = false;
 
-  if (gesto.avance <= UMBRAL_DE_CIERRE) {
+  if (gesture.progress <= CLOSE_THRESHOLD) {
     // Se queda: se suelta el control y su propia transición lo devuelve.
-    soltarElControl(gesto.el);
+    releaseElement(gesture.el);
     return;
   }
 
-  alCerrar();
+  handleClose();
 
   /**
    * EL FOTOGRAMA SIGUIENTE, y ahí está todo el truco.
@@ -248,5 +252,5 @@ function soltar(gesto: Arrastre, alCerrar: () => void): void {
    * DESPUÉS es lo que convierte un arrastre y una transición en un solo
    * movimiento continuo.
    */
-  requestAnimationFrame(() => soltarElControl(gesto.el));
+  requestAnimationFrame(() => releaseElement(gesture.el));
 }

@@ -11,10 +11,10 @@ import { t } from '@/shared/lib/i18n';
   Lo que decide cuáles VE cada quien —`useSecciones`— sí es del armazón.
 */
 
-export interface Seccion {
+export interface Section {
   to: string;
   label: string;
-  Icono: ComponentType<{
+  Icon: ComponentType<{
     className?: string;
     'aria-hidden'?: boolean;
     fill?: string;
@@ -23,7 +23,7 @@ export interface Seccion {
   }>;
   exact: boolean;
   /** Preferencia que debe estar activa para que la sección exista. */
-  requiere?: 'cuentas';
+  requires?: 'cuentas';
 }
 
 /**
@@ -43,23 +43,23 @@ export interface Seccion {
  * sección tiene que poder citarse sin entrar por el índice de un arreglo, que
  * se rompe en silencio en cuanto alguien reordena la lista.
  */
-export const DASHBOARD: Seccion = {
+export const DASHBOARD: Section = {
   to: '/',
   label: t('shell.sections.dashboard'),
-  Icono: LayoutDashboard,
+  Icon: LayoutDashboard,
   exact: true,
 };
 
-export const SECCIONES: readonly Seccion[] = [
+export const SECTIONS: readonly Section[] = [
   DASHBOARD,
   // Para quien no lleva cuentas, este enlace no existe. Ni oculto con CSS ni
   // deshabilitado: ausente.
   {
     to: '/cuentas',
     label: t('shell.sections.accounts'),
-    Icono: Wallet,
+    Icon: Wallet,
     exact: false,
-    requiere: 'cuentas',
+    requires: 'cuentas',
   },
   /*
     ── Centros de costos es de TODOS, no de administración ──────────────────
@@ -80,7 +80,7 @@ export const SECCIONES: readonly Seccion[] = [
     Va el último de los tres porque sigue siendo lo que menos se visita: se
     entra a mirar el resumen, no a ordenar la taxonomía.
   */
-  { to: '/centros-de-costos', label: t('shell.sections.costCenters'), Icono: Tags, exact: false },
+  { to: '/centros-de-costos', label: t('shell.sections.costCenters'), Icon: Tags, exact: false },
 ];
 
 /**
@@ -93,23 +93,23 @@ export const SECCIONES: readonly Seccion[] = [
  * Quedan las dos que administran a OTRAS personas, que es lo que hace que un
  * administrador lo sea. Lo que administra lo propio no pertenece aquí.
  */
-export const SECCIONES_DE_ADMIN: readonly Seccion[] = [
+export const ADMIN_SECTIONS: readonly Section[] = [
   // 'Usuarios', no 'Cuentas': en esta misma barra 'Cuentas' ya significa
   // tarjetas y ahorros. Dos cosas distintas con el mismo nombre a diez píxeles
   // de distancia.
-  { to: '/administracion', label: t('shell.sections.users'), Icono: ShieldCheck, exact: true },
+  { to: '/administracion', label: t('shell.sections.users'), Icon: ShieldCheck, exact: true },
   {
     to: '/administracion/bitacora',
     label: t('shell.sections.auditLog'),
-    Icono: ScrollText,
+    Icon: ScrollText,
     exact: false,
   },
 ];
 
 /** Mi cuenta no es una sección del riel, pero sí una página que existe. */
-export const MI_CUENTA: Seccion = {
+export const MY_ACCOUNT: Section = {
   to: '/mi-cuenta',
   label: t('shell.account.myAccount'),
-  Icono: UserCog,
+  Icon: UserCog,
   exact: true,
 };

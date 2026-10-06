@@ -2,7 +2,7 @@ import { ApiClientError } from '@/shared/api/api-client';
 import { interpretacionInterpret } from '@/shared/api/generated/interpretacion-v2/interpretacion-v2';
 import type { ClassificationSource, Interpretation } from '@/shared/api/generated/model';
 import { t } from '@/shared/lib/i18n';
-import { cargarPdfjs } from '@/shared/lib/pdf';
+import { loadPdfjs } from '@/shared/lib/pdf';
 import type { TreeClassification, Reading } from '@coco/receipt-parser';
 
 /**
@@ -45,7 +45,7 @@ const MINIMO_DE_TEXTO = 20;
  * reagrupan por altura: dos fragmentos a la misma Y son la misma línea.
  */
 async function textoDelPdf(archivo: File, paginas = 2): Promise<string> {
-  const pdfjs = await cargarPdfjs();
+  const pdfjs = await loadPdfjs();
   const documento = await pdfjs.getDocument({ data: await archivo.arrayBuffer() }).promise;
 
   const lineas: string[] = [];
@@ -91,7 +91,7 @@ async function textoDelPdf(archivo: File, paginas = 2): Promise<string> {
  * tarda el reconocimiento.
  */
 async function primeraPaginaComoImagen(archivo: File): Promise<Blob | null> {
-  const pdfjs = await cargarPdfjs();
+  const pdfjs = await loadPdfjs();
   const documento = await pdfjs.getDocument({ data: await archivo.arrayBuffer() }).promise;
   const pagina = await documento.getPage(1);
   const vista = pagina.getViewport({ scale: 2 });

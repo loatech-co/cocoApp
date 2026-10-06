@@ -57,23 +57,23 @@ describe('pedirSesion()', () => {
     // Una app colgada: la promesa no se resuelve nunca.
     window.webkit!.messageHandlers!.cocoSesion!.postMessage = () => new Promise(() => {});
 
-    const promesa = requestSession();
-    const resultado = expect(promesa).rejects.toMatchObject({ reason: 'tiempo' });
+    const promise = requestSession();
+    const result = expect(promise).rejects.toMatchObject({ reason: 'tiempo' });
     await vi.advanceTimersByTimeAsync(10_000);
-    await resultado;
+    await result;
   });
 
   it('la app sin sesión es un PuenteError, no un error cualquiera', async () => {
     fakeNativeApp({ failWith: 'sin sesión' });
 
-    const error = await requestSession().catch((causa: unknown) => causa);
+    const error = await requestSession().catch((cause: unknown) => cause);
     expect(error).toBeInstanceOf(BridgeError);
     expect((error as BridgeError).reason).toBe('sin-sesion');
     expect((error as BridgeError).message).toBe('sin sesión');
   });
 
   it('una respuesta que no es una sesión se rechaza', async () => {
-    fakeNativeApp({ session: { hola: 'mundo' } });
+    fakeNativeApp({ session: { hello: 'mundo' } });
     await expect(requestSession()).rejects.toMatchObject({ reason: 'respuesta' });
   });
 
@@ -96,7 +96,7 @@ describe('registrarPuente()', () => {
     fakeNativeApp();
     const ir = vi.fn();
     const capturado = vi.fn();
-    const quitar = registerBridge({ ir, abrirBusqueda: () => {}, capturado });
+    const remove = registerBridge({ ir, abrirBusqueda: () => {}, capturado });
 
     window.__coco!.ir('/cuentas');
     expect(ir).toHaveBeenCalledWith('/cuentas');
@@ -106,7 +106,7 @@ describe('registrarPuente()', () => {
     expect(typeof window.__coco!.recibirSesion).toBe('function');
     expect(typeof window.__coco!.sesionCerrada).toBe('function');
 
-    quitar();
+    remove();
     expect(window.__coco).toBeUndefined();
   });
 });

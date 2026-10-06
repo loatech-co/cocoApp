@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-import { DIAS_DE_LA_SEMANA, diaLargo, MESES_LARGOS } from '@/shared/lib/format';
+import { WEEKDAYS, longDay, LONG_MONTHS } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
@@ -179,7 +179,7 @@ function DayCell({ iso, i, from, to, today, onSelectDay, onHover }: DayCellProps
         type="button"
         onClick={() => onSelectDay(iso)}
         onMouseEnter={() => onHover?.(iso)}
-        aria-label={diaLargo(iso)}
+        aria-label={longDay(iso)}
         aria-pressed={isEdge}
         className={cn(
           'size-full select-none rounded-full text-sm transition-colors',
@@ -240,7 +240,7 @@ function MonthHeader({
         explicit and depends on no exception of the selector.
       */}
       <span aria-live="polite" className="font-display text-sm font-semibold">
-        <span className="capitalize">{MESES_LARGOS[current.month]}</span>
+        <span className="capitalize">{LONG_MONTHS[current.month]}</span>
         {t('ui.calendar.monthOfYear', { year: current.year })}
       </span>
       <Button
@@ -295,7 +295,7 @@ function MonthDays({
 function WeekdayRow() {
   return (
     <div className="grid grid-cols-7">
-      {DIAS_DE_LA_SEMANA.map((d) => (
+      {WEEKDAYS.map((d) => (
         <span
           key={d}
           aria-hidden="true"

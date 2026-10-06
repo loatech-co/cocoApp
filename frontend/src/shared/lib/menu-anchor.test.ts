@@ -1,24 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
-import { panelStyle, type Anclaje } from './menu-anchor';
+import { panelStyle, type Anchor } from './menu-anchor';
 
-const ANCLAJE: Anclaje = { top: 400, left: 16, derecha: 24, ancho: 300 };
+const ANCHOR: Anchor = { top: 400, left: 16, right: 24, width: 300 };
 
 describe('panelStyle', () => {
   it('caps the height at what is left below the trigger, whatever the width', () => {
-    const tope = 'calc(100dvh - 416px)';
+    const cap = 'calc(100dvh - 416px)';
 
-    expect(panelStyle(ANCLAJE, false, 'left').maxHeight).toBe(tope);
-    expect(panelStyle(ANCLAJE, true, 'left').maxHeight).toBe(tope);
-    expect(panelStyle(ANCLAJE, true, 'right').maxHeight).toBe(tope);
+    expect(panelStyle(ANCHOR, false, 'left').maxHeight).toBe(cap);
+    expect(panelStyle(ANCHOR, true, 'left').maxHeight).toBe(cap);
+    expect(panelStyle(ANCHOR, true, 'right').maxHeight).toBe(cap);
   });
 
   it('hangs 8px under the trigger, with its width or anchored by the side asked', () => {
-    expect(panelStyle(ANCLAJE, false, 'left')).toMatchObject({
+    expect(panelStyle(ANCHOR, false, 'left')).toMatchObject({
       top: '408px',
       left: '16px',
       width: '300px',
     });
-    expect(panelStyle(ANCLAJE, true, 'right')).toMatchObject({ top: '408px', right: '24px' });
+    expect(panelStyle(ANCHOR, true, 'right')).toMatchObject({ top: '408px', right: '24px' });
   });
 });

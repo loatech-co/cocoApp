@@ -9,7 +9,7 @@ import {
 } from '@/shared/api/generated/soportes-v2/soportes-v2';
 import { allPages } from '@/shared/api/pages';
 import { keys } from '@/shared/api/query-keys';
-import { encogerSoportes } from '@/shared/lib/encoger-soporte';
+import { shrinkReceipts } from '@/shared/lib/shrink-receipt';
 
 /**
  * Los soportes de un movimiento: la FICHA de cada recibo, no el recibo.
@@ -45,7 +45,7 @@ export function useSubirSoportes(transactionId: number) {
       // los que el servidor se queda con 1100px de ancho. El porqué largo
       // —incluido el HEIC del iPhone, que allá no se puede abrir— está en
       // `lib/encoger-soporte.ts`.
-      for (const archivo of await encogerSoportes(archivos)) datos.append('files', archivo);
+      for (const archivo of await shrinkReceipts(archivos)) datos.append('files', archivo);
       return apiUpload<Receipt[]>(getSoportesUploadUrl(transactionId), datos, onProgreso);
     },
     // Se escribe la respuesta en la caché en vez de invalidarla: el servidor

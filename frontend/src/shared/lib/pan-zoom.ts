@@ -7,11 +7,11 @@ import {
   useState,
 } from 'react';
 
-import { useAlCambiar } from './al-cambiar';
+import { useOnChange } from './on-change';
 
 interface Size {
-  ancho: number;
-  alto: number;
+  width: number;
+  height: number;
 }
 
 interface Point {
@@ -21,39 +21,40 @@ interface Point {
 
 /** La caja de un elemento, medida otra vez cada vez que cambia de tamaño. */
 function useMeasuredBox(ref: RefObject<HTMLElement | null>): Size {
-  const [box, setBox] = useState<Size>({ ancho: 0, alto: 0 });
+  const [box, setBox] = useState<Size>({ width: 0, height: 0 });
 
   // La caja cambia de tamaño con la ventana, y los topes dependen de ella.
   useEffect(() => {
-    const elemento = ref.current;
-    if (!elemento) return;
+    const element = ref.current;
+    if (!element) return;
 
-    const medir = (): void => setBox({ ancho: elemento.clientWidth, alto: elemento.clientHeight });
+    const measure = (): void =>
+      setBox({ width: element.clientWidth, height: element.clientHeight });
 
-    medir();
-    const observador = new ResizeObserver(medir);
-    observador.observe(elemento);
-    return () => observador.disconnect();
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
   }, [ref]);
 
   return box;
 }
 
 /** Arrastrar con `pointer`: el mismo código sirve para el ratón, el dedo y el lápiz. */
-function useDragToPan(enabled: boolean, pos: Point, onMove: (to: Point) => void) {
-  const agarre = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
-  const [arrastrando, setArrastrando] = useState(false);
+function useDragToPan(isEnabled: boolean, pos: Point, onMove: (to: Point) => void) {
+  const grip = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const soltar = (): void => {
-    agarre.current = null;
-    setArrastrando(false);
+  const release = (): void => {
+    grip.current = null;
+    setIsDragging(false);
   };
 
   return {
-    arrastrando,
+    isDragging,
     handlers: {
       onPointerDown: (e: PointerEvent<HTMLElement>) => {
-        if (!enabled) return;
+        if (!isEnabled) return;
         /*
           Los mandos del zoom no arrastran nada.
 
@@ -63,19 +64,19 @@ function useDragToPan(enabled: boolean, pos: Point, onMove: (to: Point) => void)
           estado del zoom nunca cambiaba porque el `onClick` del botón no
           llegaba a dispararse nunca.
         */
-        if ((e.target as HTMLElement).closest('[data-mandos]')) return;
+        if ((e.target as HTMLElement).closest('[data-zoom-controls]')) return;
 
         e.currentTarget.setPointerCapture(e.pointerId);
-        agarre.current = { x: pos.x, y: pos.y, px: e.clientX, py: e.clientY };
-        setArrastrando(true);
+        grip.current = { x: pos.x, y: pos.y, px: e.clientX, py: e.clientY };
+        setIsDragging(true);
       },
       onPointerMove: (e: PointerEvent<HTMLElement>) => {
-        const desde = agarre.current;
-        if (!desde) return;
-        onMove({ x: desde.x + (e.clientX - desde.px), y: desde.y + (e.clientY - desde.py) });
+        const origin = grip.current;
+        if (!origin) return;
+        onMove({ x: origin.x + (e.clientX - origin.px), y: origin.y + (e.clientY - origin.py) });
       },
-      onPointerUp: soltar,
-      onPointerCancel: soltar,
+      onPointerUp: release,
+      onPointerCancel: release,
     },
   };
 }
@@ -97,8 +98,8 @@ function useDragToPan(enabled: boolean, pos: Point, onMove: (to: Point) => void)
  * `pasos` son los saltos del zoom, como múltiplos de la escala que llena la
  * caja; el primero es el 100 %. `marco` es la caja: la crea quien la pinta.
  */
-export function usePanZoom(marco: RefObject<HTMLElement | null>, pasos: readonly number[]) {
-  const caja = useMeasuredBox(marco);
+export function usePanZoom(frame: RefObject<HTMLElement | null>, steps: readonly number[]) {
+  const box = useMeasuredBox(frame);
   /** El tamaño natural de lo dibujado, para saber cuánto sobra por cada lado. */
   const [natural, setNatural] = useState<Size | null>(null);
   const [pos, setPos] = useState<Point>({ x: 0, y: 0 });
@@ -106,43 +107,43 @@ export function usePanZoom(marco: RefObject<HTMLElement | null>, pasos: readonly
 
   // La escala que LLENA la caja: la mayor de las dos proporciones. Con la
   // menor —que es `contain`— quedarían franjas vacías a los lados.
-  const cubrir =
-    natural && caja.ancho > 0 ? Math.max(caja.ancho / natural.ancho, caja.alto / natural.alto) : 1;
+  const coverScale =
+    natural && box.width > 0 ? Math.max(box.width / natural.width, box.height / natural.height) : 1;
   // `zoom` nunca sale de `pasos`: los botones lo recortan.
-  const paso = pasos[zoom] ?? 1;
-  const escala = cubrir * paso;
-  const ancho = natural ? natural.ancho * escala : 0;
-  const alto = natural ? natural.alto * escala : 0;
+  const step = steps[zoom] ?? 1;
+  const scale = coverScale * step;
+  const width = natural ? natural.width * scale : 0;
+  const height = natural ? natural.height * scale : 0;
 
   /** Cuánto se puede mover cada eje. Negativo: es lo que sobra por ver. */
-  const limite = { x: Math.min(0, caja.ancho - ancho), y: Math.min(0, caja.alto - alto) };
-  const recortar = ({ x, y }: Point): Point => ({
-    x: Math.min(0, Math.max(limite.x, x)),
-    y: Math.min(0, Math.max(limite.y, y)),
+  const bounds = { x: Math.min(0, box.width - width), y: Math.min(0, box.height - height) };
+  const clamp = ({ x, y }: Point): Point => ({
+    x: Math.min(0, Math.max(bounds.x, x)),
+    y: Math.min(0, Math.max(bounds.y, y)),
   });
 
   // Empieza CENTRADO, y se recentra al cambiar el zoom: ampliar desde una
   // esquina deja mirando un margen en blanco en vez de lo que se estaba
   // leyendo. Solo al cambiar el documento, la caja o el zoom: recentrar en
   // cada arrastre pelearía con el dedo.
-  useAlCambiar([natural, caja.ancho, caja.alto, zoom], () => {
-    if (!natural || caja.ancho === 0) return;
-    setPos(recortar({ x: limite.x / 2, y: limite.y / 2 }));
+  useOnChange([natural, box.width, box.height, zoom], () => {
+    if (!natural || box.width === 0) return;
+    setPos(clamp({ x: bounds.x / 2, y: bounds.y / 2 }));
   });
 
-  const sePuedeMover = limite.x < 0 || limite.y < 0;
-  const arrastre = useDragToPan(sePuedeMover, pos, (a) => setPos(recortar(a)));
+  const canPan = bounds.x < 0 || bounds.y < 0;
+  const drag = useDragToPan(canPan, pos, (a) => setPos(clamp(a)));
 
-  const encuadre: CSSProperties = {
+  const framing: CSSProperties = {
     position: 'absolute',
     left: pos.x,
     top: pos.y,
-    width: ancho || undefined,
-    height: alto || undefined,
+    width: width || undefined,
+    height: height || undefined,
     // Antes de medir se pinta invisible: un fotograma con el documento a su
     // tamaño natural y sin encuadrar se ve como un salto.
     visibility: natural ? 'visible' : 'hidden',
   };
 
-  return { setNatural, zoom, setZoom, paso, encuadre, sePuedeMover, ...arrastre };
+  return { setNatural, zoom, setZoom, step, framing, canPan, ...drag };
 }

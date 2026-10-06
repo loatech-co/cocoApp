@@ -1,6 +1,6 @@
 import { useRef, useState, type PointerEvent as PointerEventoDeReact } from 'react';
 
-import { moverAtajo } from '@/shared/lib/atajos';
+import { moveShortcut } from '@/shared/lib/shortcuts';
 
 import type { Estado } from './shortcut-types';
 
@@ -47,7 +47,7 @@ export function useShortcutDrag(estado: Estado) {
     if (destino !== null && destino !== arrastre.indice) {
       // Se escribe en el almacén y el render vuelve a dibujar desde él. El DOM
       // nunca es el registro.
-      moverAtajo(arrastre.indice, destino);
+      moveShortcut(arrastre.indice, destino);
       // Reanclado en el dedo: la baldosa acaba de saltar de hueco, así que su
       // desplazamiento vuelve a cero y se queda justo debajo.
       setArrastre({ indice: destino, x: e.clientX, y: e.clientY, dx: 0, dy: 0 });

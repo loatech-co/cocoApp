@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { encogerSoporte, encogerSoportes } from './encoger-soporte';
+import { shrinkReceipt, shrinkReceipts } from './shrink-receipt';
 
 /**
  * Lo que se sube es un JPG liviano, y si no se puede, se sube lo que había.
@@ -10,25 +10,25 @@ import { encogerSoporte, encogerSoportes } from './encoger-soporte';
  * requisito. Un navegador que no sepa abrir el formato no puede quedarse sin
  * poder adjuntar el recibo.
  */
-function archivo(nombre: string, tipo: string, kb: number): File {
-  return new File([new Uint8Array(kb * 1024)], nombre, { type: tipo });
+function file(name: string, type: string, kb: number): File {
+  return new File([new Uint8Array(kb * 1024)], name, { type });
 }
 
 /** jsdom no dibuja: se finge el lienzo y la decodificación. */
-function fingirNavegador({
-  ancho = 4032,
-  alto = 3024,
-  salida = 120 * 1024,
-  decodifica = true,
-  pintaLienzo = true,
+function fakeBrowser({
+  width: width = 4032,
+  height: height = 3024,
+  outputBytes: outputBytes = 120 * 1024,
+  canDecode: canDecode = true,
+  canPaint: canPaint = true,
 }: {
-  ancho?: number;
-  alto?: number;
-  salida?: number | null;
-  decodifica?: boolean;
-  pintaLienzo?: boolean;
-} = {}): { lienzo: () => { width: number; height: number } } {
-  const medidas = { width: 0, height: 0 };
+  width?: number;
+  height?: number;
+  outputBytes?: number | null;
+  canDecode?: boolean;
+  canPaint?: boolean;
+} = {}): { canvas: () => { width: number; height: number } } {
+  const size = { width: 0, height: 0 };
 
   vi.stubGlobal(
     'createImageBitmap',
@@ -36,36 +36,40 @@ function fingirNavegador({
     // que RECHACE cuando el formato no se entiende, y `async` lo conseguía de
     // rebote. Dicho así se lee lo que hace.
     vi.fn(() =>
-      decodifica
-        ? Promise.resolve({ width: ancho, height: alto } as unknown as ImageBitmap)
+      canDecode
+        ? Promise.resolve({ width, height } as unknown as ImageBitmap)
         : Promise.reject(new Error('formato desconocido')),
     ),
   );
 
-  vi.spyOn(document, 'createElement').mockImplementation((etiqueta: string) => {
-    if (etiqueta !== 'canvas') {
-      return Object.getPrototypeOf(document).createElement.call(document, etiqueta);
+  vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+    if (tag !== 'canvas') {
+      return Object.getPrototypeOf(document).createElement.call(document, tag);
     }
     return {
       set width(v: number) {
-        medidas.width = v;
+        size.width = v;
       },
       get width() {
-        return medidas.width;
+        return size.width;
       },
       set height(v: number) {
-        medidas.height = v;
+        size.height = v;
       },
       get height() {
-        return medidas.height;
+        return size.height;
       },
-      getContext: () => (pintaLienzo ? { drawImage: vi.fn() } : null),
+      getContext: () => (canPaint ? { drawImage: vi.fn() } : null),
       toBlob: (cb: (b: Blob | null) => void) =>
-        cb(salida === null ? null : new Blob([new Uint8Array(salida)], { type: 'image/jpeg' })),
+        cb(
+          outputBytes === null
+            ? null
+            : new Blob([new Uint8Array(outputBytes)], { type: 'image/jpeg' }),
+        ),
     } as unknown as HTMLCanvasElement;
   });
 
-  return { lienzo: () => medidas };
+  return { canvas: () => size };
 }
 
 beforeEach(() => {
@@ -80,35 +84,35 @@ afterEach(() => {
 
 describe('Encoger un soporte antes de subirlo', () => {
   it('convierte la foto de un teléfono a JPG y la encoge', async () => {
-    const { lienzo } = fingirNavegador({ ancho: 4032, alto: 3024 });
+    const { canvas } = fakeBrowser({ width: 4032, height: 3024 });
 
-    const salida = await encogerSoporte(archivo('IMG_4821.jpg', 'image/jpeg', 4096));
+    const outputBytes = await shrinkReceipt(file('IMG_4821.jpg', 'image/jpeg', 4096));
 
-    expect(salida.type).toBe('image/jpeg');
-    expect(salida.size).toBeLessThan(4096 * 1024);
+    expect(outputBytes.type).toBe('image/jpeg');
+    expect(outputBytes.size).toBeLessThan(4096 * 1024);
     // El lado largo queda en 1600: por encima del 1100 al que reduce el
     // servidor, para que el recorte final lo decida él.
-    expect(lienzo()).toEqual({ width: 1600, height: 1200 });
+    expect(canvas()).toEqual({ width: 1600, height: 1200 });
   });
 
   it('un HEIC se convierte SIEMPRE, aunque sea pequeño', async () => {
     // Su problema no es el peso: es que el servidor no sabe abrir ese formato,
     // y por eso contestaba «Ocurrió un error inesperado».
-    fingirNavegador({ ancho: 800, alto: 600, salida: 90 * 1024 });
+    fakeBrowser({ width: 800, height: 600, outputBytes: 90 * 1024 });
 
-    const salida = await encogerSoporte(archivo('IMG_4821.HEIC', 'image/heic', 300));
+    const outputBytes = await shrinkReceipt(file('IMG_4821.HEIC', 'image/heic', 300));
 
-    expect(salida.type).toBe('image/jpeg');
-    expect(salida.name).toBe('IMG_4821.jpg');
+    expect(outputBytes.type).toBe('image/jpeg');
+    expect(outputBytes.name).toBe('IMG_4821.jpg');
   });
 
   it('una imagen pequeña Y estrecha no se toca: recodificarla le quita nitidez', async () => {
     // Las dos condiciones. Poco peso por sí solo no basta: ver la prueba de
     // abajo, que es el caso que se nos coló hasta el servidor.
-    fingirNavegador({ ancho: 900, alto: 700 });
-    const original = archivo('recorte.png', 'image/png', 200);
+    fakeBrowser({ width: 900, height: 700 });
+    const original = file('recorte.png', 'image/png', 200);
 
-    expect(await encogerSoporte(original)).toBe(original);
+    expect(await shrinkReceipt(original)).toBe(original);
   });
 
   it('una captura LIVIANA pero enorme sí se encoge', async () => {
@@ -123,25 +127,25 @@ describe('Encoger un soporte antes de subirlo', () => {
       Por eso fallaba PEGAR y no fallaba subir una foto: la foto pesa más, y
       por pesar más sí se encogía aquí.
     */
-    const { lienzo } = fingirNavegador({ ancho: 2560, alto: 1440, salida: 150 * 1024 });
+    const { canvas } = fakeBrowser({ width: 2560, height: 1440, outputBytes: 150 * 1024 });
 
-    const salida = await encogerSoporte(archivo('captura.png', 'image/png', 300));
+    const outputBytes = await shrinkReceipt(file('captura.png', 'image/png', 300));
 
-    expect(salida.type).toBe('image/jpeg');
-    expect(lienzo()).toEqual({ width: 1600, height: 900 });
+    expect(outputBytes.type).toBe('image/jpeg');
+    expect(canvas()).toEqual({ width: 1600, height: 900 });
   });
 
   it('un PDF no se toca: tiene páginas, y aplanarlo perdería todas menos una', async () => {
-    fingirNavegador();
-    const original = archivo('recibo.pdf', 'application/pdf', 4096);
+    fakeBrowser();
+    const original = file('recibo.pdf', 'application/pdf', 4096);
 
-    expect(await encogerSoporte(original)).toBe(original);
+    expect(await shrinkReceipt(original)).toBe(original);
   });
 
   it('si el navegador no sabe abrir el formato, se sube el original', async () => {
     // Encoger es una mejora, no un requisito: convertirlo en un paso que puede
     // impedir la subida sería cambiar un fallo por otro.
-    fingirNavegador({ decodifica: false });
+    fakeBrowser({ canDecode: false });
     vi.stubGlobal(
       'Image',
       class {
@@ -152,26 +156,26 @@ describe('Encoger un soporte antes de subirlo', () => {
       },
     );
 
-    const original = archivo('raro.jxl', 'image/jxl', 4096);
-    expect(await encogerSoporte(original)).toBe(original);
+    const original = file('raro.jxl', 'image/jxl', 4096);
+    expect(await shrinkReceipt(original)).toBe(original);
   });
 
   it('si el lienzo no se puede leer, se sube el original', async () => {
-    fingirNavegador({ pintaLienzo: false });
-    const original = archivo('foto.jpg', 'image/jpeg', 4096);
+    fakeBrowser({ canPaint: false });
+    const original = file('foto.jpg', 'image/jpeg', 4096);
 
-    expect(await encogerSoporte(original)).toBe(original);
+    expect(await shrinkReceipt(original)).toBe(original);
   });
 
   it('una tanda se encoge entera', async () => {
-    fingirNavegador();
-    const salidas = await encogerSoportes([
-      archivo('a.jpg', 'image/jpeg', 4096),
-      archivo('b.pdf', 'application/pdf', 4096),
+    fakeBrowser();
+    const outputs = await shrinkReceipts([
+      file('a.jpg', 'image/jpeg', 4096),
+      file('b.pdf', 'application/pdf', 4096),
     ]);
 
-    expect(salidas[0]!.type).toBe('image/jpeg');
-    expect(salidas[0]!.size).toBeLessThan(4096 * 1024);
-    expect(salidas[1]!.type).toBe('application/pdf');
+    expect(outputs[0]!.type).toBe('image/jpeg');
+    expect(outputs[0]!.size).toBeLessThan(4096 * 1024);
+    expect(outputs[1]!.type).toBe('application/pdf');
   });
 });

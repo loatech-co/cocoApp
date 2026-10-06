@@ -149,8 +149,8 @@ async function withSession(url: string, init: RequestInit): Promise<Response> {
   let response = await send(url, init);
 
   if (response.status === 401) {
-    const renewed = await renew();
-    if (!renewed) {
+    const wasRenewed = await renew();
+    if (!wasRenewed) {
       discardSession();
       throw new ApiClientError(401, 'unauthenticated', t('errors.sessionExpired'));
     }

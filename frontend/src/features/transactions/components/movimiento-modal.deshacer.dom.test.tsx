@@ -54,9 +54,9 @@ vi.mock('@/features/transactions/api/leer-soporte', () => ({ leerSoporte: vi.fn(
   Aquí se prueba qué pasa cuando la SUBIDA falla, no cómo se prepara el archivo
   —eso tiene sus propias pruebas en `lib/encoger-soporte.dom.test.ts`—.
 */
-vi.mock('@/shared/lib/encoger-soporte', () => ({
-  encogerSoportes: (archivos: File[]) => Promise.resolve(archivos),
-  encogerSoporte: (archivo: File) => Promise.resolve(archivo),
+vi.mock('@/shared/lib/shrink-receipt', () => ({
+  shrinkReceipts: (files: File[]) => Promise.resolve(files),
+  shrinkReceipt: (file: File) => Promise.resolve(file),
 }));
 
 const ARBOL = [

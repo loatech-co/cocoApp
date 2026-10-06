@@ -23,8 +23,8 @@ const preview: Preview = {
     onThePage,
     // The app toggles `.dark` on <html> (see `src/main.tsx`); same switch here.
     withThemeByClassName({
-      themes: { Claro: '', Oscuro: 'dark' },
-      defaultTheme: 'Claro',
+      themes: { Light: '', Dark: 'dark' },
+      defaultTheme: 'Light',
       parentSelector: 'html',
     }),
   ],

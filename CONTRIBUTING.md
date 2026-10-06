@@ -87,7 +87,7 @@ Three options differ from the presets, each written with its reason in the
 config: numbers are allowed in template literals; an arrow function shorthand
 may return a void call (`onClick={() => setOpen(false)}`); and `||` is allowed
 on strings, because here `''` means "not given" (`texto?.trim() || null`).
-Tests (`*.spec.ts`, `*.test.ts(x)`, `api/test/`, `frontend/src/pruebas/`) may
+Tests (`*.spec.ts`, `*.test.ts(x)`, `api/test/`, `frontend/src/test-support/`) may
 use `any`-typed values, `!` and empty stubs: in a test, a missing element
 failing right there IS the assertion.
 
@@ -429,7 +429,7 @@ apiFetch<{ display_name: string }[]>('/accounts');
   Orval `mutator`): token, renew-before-expiry, one retry after a 401, and the
   `{ error }` envelope as an `ApiClientError`. Only two things skip it, on
   purpose: the auth calls in `session.ts` (renewing is what the door is built
-  on) and the upload in `apiSubir` (it needs upload progress).
+  on) and the upload in `apiUpload` (it needs upload progress).
 - **Every v2 list is paginated.** A screen that needs the whole set —the
   category tree, the accounts— uses `allPages` (`shared/api/pages.ts`); a
   table passes its own `page` and `perPage` (at most 200).

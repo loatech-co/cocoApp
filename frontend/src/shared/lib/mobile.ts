@@ -29,15 +29,14 @@ import { isInNativeApp } from './bridge';
  * proyecto. Esta de aquí y la de allá son las dos únicas; la prueba comprueba
  * que digan lo mismo, carácter por carácter.
  */
-export const CONSULTA_MOVIL = '(max-width: 767px), (orientation: portrait) and (max-width: 1024px)';
+export const MOBILE_QUERY = '(max-width: 767px), (orientation: portrait) and (max-width: 1024px)';
 
-export const CONSULTA_ESCRITORIO =
-  '(min-width: 1025px), (orientation: landscape) and (min-width: 768px)';
+export const DESKTOP_QUERY = '(min-width: 1025px), (orientation: landscape) and (min-width: 768px)';
 
-function suscribir(alCambiar: () => void): () => void {
-  const lista = window.matchMedia(CONSULTA_MOVIL);
-  lista.addEventListener('change', alCambiar);
-  return () => lista.removeEventListener('change', alCambiar);
+function subscribe(onChange: () => void): () => void {
+  const mediaList = window.matchMedia(MOBILE_QUERY);
+  mediaList.addEventListener('change', onChange);
+  return () => mediaList.removeEventListener('change', onChange);
 }
 
 /**
@@ -50,10 +49,10 @@ function suscribir(alCambiar: () => void): () => void {
  * enlaces en el orden de tabulación, y un panel escondido con CSS es una
  * segunda copia de cada `id` que hay dentro.
  */
-export function useEsMovil(): boolean {
+export function useIsMobile(): boolean {
   return useSyncExternalStore(
-    suscribir,
-    () => window.matchMedia(CONSULTA_MOVIL).matches,
+    subscribe,
+    () => window.matchMedia(MOBILE_QUERY).matches,
     // En un render sin ventana no hay ancho que medir. Escritorio es la
     // respuesta menos destructiva: pinta el riel, que es lo que el HTML
     // servido ya tenía.
@@ -74,6 +73,6 @@ export function useEsMovil(): boolean {
  * recargar el documento.
  */
 // eslint-disable-next-line @eslint-react/no-unnecessary-use-prefix -- rename belongs to step 7.2
-export function useEnLaApp(): boolean {
+export function useIsInNativeApp(): boolean {
   return isInNativeApp();
 }

@@ -13,7 +13,7 @@ import { type RefObject, useEffect, useEffectEvent } from 'react';
  * de un panel es un modal, y dos trampas peleándose por el tabulador son un
  * teclado que no hace nada.
  */
-const ENFOCABLES = [
+const FOCUSABLE = [
   'a[href]',
   'button:not([disabled])',
   'input:not([disabled])',
@@ -22,21 +22,21 @@ const ENFOCABLES = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
-function enfocables(caja: HTMLElement): HTMLElement[] {
-  return Array.from(caja.querySelectorAll<HTMLElement>(ENFOCABLES)).filter(
+function focusablesIn(box: HTMLElement): HTMLElement[] {
+  return Array.from(box.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
     (el) => el.offsetParent !== null || el === document.activeElement,
   );
 }
 
-export function useFocoAtrapado(caja: RefObject<HTMLElement | null>, activo: boolean): void {
+export function useFocusTrap(box: RefObject<HTMLElement | null>, isActive: boolean): void {
   useEffect(() => {
-    const el = caja.current;
-    if (!el || !activo) return;
+    const el = box.current;
+    if (!el || !isActive) return;
 
     // De dónde se vino, para devolverlo al cerrar. Cerrar un panel y dejar el
     // foco al principio de la página obliga a recorrerla entera para volver al
     // botón que se acaba de pulsar.
-    const volverA = document.activeElement;
+    const returnTo = document.activeElement;
 
     /*
       El foco entra en la CAJA, no en su primer control.
@@ -51,57 +51,57 @@ export function useFocoAtrapado(caja: RefObject<HTMLElement | null>, activo: boo
     */
     el.focus();
 
-    function alPulsar(e: KeyboardEvent): void {
+    function onKeyDown(e: KeyboardEvent): void {
       if (e.key !== 'Tab' || !el) return;
       // Hay una ficha encima: el tabulador es suyo.
       if (document.querySelector('[data-modal]')) return;
 
-      const lista = enfocables(el);
-      const primero = lista[0];
-      const ultimo = lista[lista.length - 1];
+      const focusables = focusablesIn(el);
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
       // Vacía: no hay a dónde ir.
-      if (primero === undefined || ultimo === undefined) {
+      if (first === undefined || last === undefined) {
         e.preventDefault();
         return;
       }
 
-      const actual = document.activeElement;
+      const current = document.activeElement;
 
-      if (e.shiftKey && (actual === primero || actual === el)) {
+      if (e.shiftKey && (current === first || current === el)) {
         e.preventDefault();
-        ultimo.focus();
-      } else if (!e.shiftKey && actual === ultimo) {
+        last.focus();
+      } else if (!e.shiftKey && current === last) {
         e.preventDefault();
-        primero.focus();
+        first.focus();
       }
     }
 
-    document.addEventListener('keydown', alPulsar);
+    document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener('keydown', alPulsar);
+      document.removeEventListener('keydown', onKeyDown);
       // `activeElement` es un elemento cualquiera: solo HTML y SVG saben enfocarse.
-      if (volverA instanceof HTMLElement || volverA instanceof SVGElement) volverA.focus();
+      if (returnTo instanceof HTMLElement || returnTo instanceof SVGElement) returnTo.focus();
     };
-  }, [caja, activo]);
+  }, [box, isActive]);
 }
 
 /** Escape cierra. Una de las cuatro salidas que tiene toda superficie. */
-export function useEscape(activo: boolean, onCerrar: () => void): void {
+export function useEscape(isActive: boolean, onClose: () => void): void {
   // Como evento de efecto: `onCerrar` suele ser una función nueva en cada
   // render, y como dependencia haría que el oyente se quitara y se pusiera en
   // cada uno. `useEffectEvent` da una función estable que llama siempre a la
   // más reciente. Antes era una ref escrita durante el render, que es lo que
   // la regla de los refs prohíbe.
-  const alCerrar = useEffectEvent(onCerrar);
+  const handleClose = useEffectEvent(onClose);
 
   useEffect(() => {
-    if (!activo) return;
-    const alPulsar = (e: KeyboardEvent): void => {
+    if (!isActive) return;
+    const onKeyDown = (e: KeyboardEvent): void => {
       // La ficha de encima cierra primero: Escape lo entiende todo el mundo
       // como "quita lo último que abrí", no "quítalo todo".
-      if (e.key === 'Escape' && !document.querySelector('[data-modal]')) alCerrar();
+      if (e.key === 'Escape' && !document.querySelector('[data-modal]')) handleClose();
     };
-    document.addEventListener('keydown', alPulsar);
-    return () => document.removeEventListener('keydown', alPulsar);
-  }, [activo]);
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isActive]);
 }

@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { rangoLargo } from '@/shared/lib/format';
+import { longRange } from '@/shared/lib/format';
 
 import { Calendar, monthCells } from './calendar';
 
@@ -46,15 +46,15 @@ describe('The calendar grid', () => {
 
 describe('The written range', () => {
   it('with full month and year, and without repeating them when they are the same', () => {
-    expect(rangoLargo('2026-09-01', '2026-09-10')).toBe('1 — 10 de septiembre de 2026');
+    expect(longRange('2026-09-01', '2026-09-10')).toBe('1 — 10 de septiembre de 2026');
   });
 
   it('repeats the month when it changes, but the year only once', () => {
-    expect(rangoLargo('2026-08-20', '2026-09-10')).toBe('20 de agosto — 10 de septiembre de 2026');
+    expect(longRange('2026-08-20', '2026-09-10')).toBe('20 de agosto — 10 de septiembre de 2026');
   });
 
   it('writes both years when the range crosses from one to the next', () => {
-    expect(rangoLargo('2025-12-20', '2026-01-05')).toBe(
+    expect(longRange('2025-12-20', '2026-01-05')).toBe(
       '20 de diciembre de 2025 — 5 de enero de 2026',
     );
   });

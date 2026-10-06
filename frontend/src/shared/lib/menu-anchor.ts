@@ -9,29 +9,29 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
  */
 
 /** Dónde está el disparador en la ventana, medido al abrir. */
-export interface Anclaje {
+export interface Anchor {
   top: number;
   left: number;
   /** Lo que queda desde el canto derecho del disparador hasta la ventana. */
-  derecha: number;
-  ancho: number;
+  right: number;
+  width: number;
 }
 
-export function useMenuState(enHoja: boolean) {
-  const [abierto, setAbierto] = useState(false);
-  const caja = useRef<HTMLDivElement>(null);
-  const [anclaje, setAnclaje] = useState<Anclaje | null>(null);
+export function useMenuState(isSheet: boolean) {
+  const [isOpen, setIsOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const [anchor, setAnchor] = useState<Anchor | null>(null);
 
   // Se mide al abrir: la posición de la caja en la ventana es lo único que
   // hace falta para colocar un panel que ya no depende de ella.
-  function medir(): void {
-    const r = caja.current?.getBoundingClientRect();
+  function measure(): void {
+    const r = box.current?.getBoundingClientRect();
     if (r) {
-      setAnclaje({
+      setAnchor({
         top: r.bottom,
         left: r.left,
-        derecha: window.innerWidth - r.right,
-        ancho: r.width,
+        right: window.innerWidth - r.right,
+        width: r.width,
       });
     }
   }
@@ -44,31 +44,31 @@ export function useMenuState(enHoja: boolean) {
     que elegir una opción la habría cerrado antes de que el clic llegara.
   */
   useEffect(() => {
-    if (!abierto || enHoja) return;
+    if (!isOpen || isSheet) return;
 
-    const fuera = (e: MouseEvent): void => {
-      if (caja.current && !caja.current.contains(e.target as Node)) setAbierto(false);
+    const onOutside = (e: MouseEvent): void => {
+      if (box.current && !box.current.contains(e.target as Node)) setIsOpen(false);
     };
-    const escape = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setAbierto(false);
+    const onEscape = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setIsOpen(false);
     };
 
-    document.addEventListener('mousedown', fuera);
-    document.addEventListener('keydown', escape);
+    document.addEventListener('mousedown', onOutside);
+    document.addEventListener('keydown', onEscape);
     return () => {
-      document.removeEventListener('mousedown', fuera);
-      document.removeEventListener('keydown', escape);
+      document.removeEventListener('mousedown', onOutside);
+      document.removeEventListener('keydown', onEscape);
     };
-  }, [abierto, enHoja]);
+  }, [isOpen, isSheet]);
 
-  return { abierto, setAbierto, caja, anclaje, medir };
+  return { isOpen, setIsOpen, box, anchor, measure };
 }
 
 /** Dónde se coloca un panel flotante, medido contra la ventana. */
 export function panelStyle(
-  anclaje: Anclaje,
-  anchoPropio: boolean,
-  alineado: 'left' | 'right',
+  anchor: Anchor,
+  hasOwnWidth: boolean,
+  align: 'left' | 'right',
 ): CSSProperties {
   /*
     El alto, hasta el borde de abajo de la ventana y ni un píxel más.
@@ -79,16 +79,16 @@ export function panelStyle(
     que desplazar para alcanzarlo. Con el tope, el panel se desplaza por
     dentro.
   */
-  const alto = { maxHeight: `calc(100dvh - ${anclaje.top + 16}px)` };
+  const heightCap = { maxHeight: `calc(100dvh - ${anchor.top + 16}px)` };
   // El MISMO ancho que el campo, no un mínimo: un panel más ancho que su
   // disparador se lee como otro elemento, y uno más angosto corta las
   // opciones que el campo sí muestra enteras.
-  if (!anchoPropio) {
+  if (!hasOwnWidth) {
     return {
-      top: `${anclaje.top + 8}px`,
-      left: `${anclaje.left}px`,
-      width: `${anclaje.ancho}px`,
-      ...alto,
+      top: `${anchor.top + 8}px`,
+      left: `${anchor.left}px`,
+      width: `${anchor.width}px`,
+      ...heightCap,
     };
   }
   /*
@@ -102,17 +102,17 @@ export function panelStyle(
     El tope es siempre lo que queda hasta el borde opuesto: lo que se sale de
     la ventana no se puede pulsar.
   */
-  return alineado === 'right'
+  return align === 'right'
     ? {
-        top: `${anclaje.top + 8}px`,
-        right: `${anclaje.derecha}px`,
-        maxWidth: `calc(100vw - ${anclaje.derecha}px - 1rem)`,
-        ...alto,
+        top: `${anchor.top + 8}px`,
+        right: `${anchor.right}px`,
+        maxWidth: `calc(100vw - ${anchor.right}px - 1rem)`,
+        ...heightCap,
       }
     : {
-        top: `${anclaje.top + 8}px`,
-        left: `${anclaje.left}px`,
-        maxWidth: `calc(100vw - ${anclaje.left}px - 1rem)`,
-        ...alto,
+        top: `${anchor.top + 8}px`,
+        left: `${anchor.left}px`,
+        maxWidth: `calc(100vw - ${anchor.left}px - 1rem)`,
+        ...heightCap,
       };
 }

@@ -1,6 +1,6 @@
 import { type ComponentProps } from 'react';
 
-import { agruparMiles, cn, soloCifras } from '@/shared/lib/utils';
+import { groupThousands, cn, digitsOnly } from '@/shared/lib/utils';
 import { Input } from '@/shared/ui/atoms/input';
 
 /**
@@ -43,10 +43,10 @@ export function MoneyField({
     <Input
       inputMode="decimal"
       icon={PesoSign}
-      value={agruparMiles(value)}
+      value={groupThousands(value)}
       className={cn(className)}
       onChange={(e) => {
-        const digits = soloCifras(e.target.value);
+        const digits = digitsOnly(e.target.value);
         const input = e.target;
         const digitsBefore = (input.value.slice(0, input.selectionStart ?? 0).match(/[\d,]/g) ?? [])
           .length;
@@ -54,7 +54,7 @@ export function MoneyField({
         onValueChange(digits);
 
         requestAnimationFrame(() => {
-          const formatted = agruparMiles(digits);
+          const formatted = groupThousands(digits);
           let seen = 0;
           let caret = formatted.length;
           for (let i = 0; i < formatted.length; i += 1) {

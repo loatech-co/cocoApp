@@ -1,5 +1,5 @@
 import { t } from '@/shared/lib/i18n';
-import type { Seccion } from '@/shared/lib/sections';
+import type { Section } from '@/shared/lib/sections';
 import { cn } from '@/shared/lib/utils';
 import { Logo, CompactLogo } from '@/shared/ui/atoms/logo';
 import { RailToggle } from '@/shared/ui/atoms/rail-toggle';
@@ -86,8 +86,8 @@ function RailHeader({ plegada, onAlternar }: { plegada: boolean; onAlternar: () 
   );
 }
 
-function SectionLinks({ secciones, plegada }: { secciones: readonly Seccion[]; plegada: boolean }) {
-  return secciones.map(({ to, label, Icono, exact }) => (
+function SectionLinks({ secciones, plegada }: { secciones: readonly Section[]; plegada: boolean }) {
+  return secciones.map(({ to, label, Icon: Icono, exact }) => (
     <EnlaceDeSeccion key={to} to={to} exact={exact} plegada={plegada} titulo={label}>
       <Icono
         className="size-4.5 shrink-0"

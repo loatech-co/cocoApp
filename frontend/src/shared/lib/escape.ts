@@ -7,13 +7,13 @@ import { useEffect } from 'react';
  * ratón para deshacer lo que se abrió sin querer. Lo usan la ficha y la
  * confirmación; un desplegable tiene su propio Escape en `Menu`.
  */
-export function useEscapeToClose(abierta: boolean, onCerrar: () => void): void {
+export function useEscapeToClose(isOpen: boolean, onClose: () => void): void {
   useEffect(() => {
-    if (!abierta) return;
-    const alPulsar = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onCerrar();
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('keydown', alPulsar);
-    return () => document.removeEventListener('keydown', alPulsar);
-  }, [abierta, onCerrar]);
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 }

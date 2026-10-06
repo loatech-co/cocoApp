@@ -1,5 +1,5 @@
 import { type Dashboard, type CategorySpend } from '@/shared/api/generated/model';
-import { rangoLargo, formatCOP } from '@/shared/lib/format';
+import { longRange, formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { Tag } from '@/shared/ui/atoms/badge';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
@@ -59,7 +59,7 @@ export function DashboardKpis({ datos, alDia }: { datos: Dashboard; alDia: boole
       <Kpi
         etiqueta={t('transactions.kpis.movements')}
         valor={String(datos.range.count)}
-        detalle={rangoLargo(datos.period.from, datos.period.to)}
+        detalle={longRange(datos.period.from, datos.period.to)}
       />
     </div>
   );

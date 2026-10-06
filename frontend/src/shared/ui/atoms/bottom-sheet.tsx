@@ -1,8 +1,8 @@
 import { useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 
-import { useDeslizarParaCerrar } from '@/shared/lib/deslizar';
-import { useEscape, useFocoAtrapado } from '@/shared/lib/foco';
+import { useEscape, useFocusTrap } from '@/shared/lib/focus';
+import { useSwipeToClose } from '@/shared/lib/swipe';
 import { cn } from '@/shared/lib/utils';
 import { FLOATING_SURFACE } from '@/shared/ui/foundations/surface';
 
@@ -63,8 +63,8 @@ export function BottomSheet({
   const visits = useVisitCount(isOpen);
 
   useEscape(isOpen, onClose);
-  useFocoAtrapado(panel, isOpen);
-  useDeslizarParaCerrar({ elemento: panel, hacia: 'abajo', activo: isOpen, onCerrar: onClose });
+  useFocusTrap(panel, isOpen);
+  useSwipeToClose({ element: panel, direction: 'down', isEnabled: isOpen, onClose });
 
   if (typeof document === 'undefined') return null;
 

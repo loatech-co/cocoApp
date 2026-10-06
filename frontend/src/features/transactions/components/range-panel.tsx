@@ -1,6 +1,6 @@
 import { useRangeDraft, type Borrador } from '@/features/transactions/hooks/use-range-draft';
 import { PRESETS, type Filtros, type Preset } from '@/features/transactions/model/filtros';
-import { diaLargo, rangoLargo } from '@/shared/lib/format';
+import { longDay, longRange } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/atoms/button';
@@ -100,9 +100,9 @@ function RangeFooter({
           ? t('transactions.range.chooseEnd')
           : borrador.preset === 'todo'
             ? primero
-              ? t('transactions.range.fromDay', { day: diaLargo(primero) })
+              ? t('transactions.range.fromDay', { day: longDay(primero) })
               : t('transactions.range.allTime')
-            : rangoLargo(borrador.from, borrador.to)}
+            : longRange(borrador.from, borrador.to)}
       </span>
       <div className="flex items-center gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onCancelar}>

@@ -41,16 +41,17 @@ import { useState } from 'react';
  * limpieza. Esto es solo para «cuando cambie esto, el estado tiene que decir
  * aquello».
  */
-export function useAlCambiar(firma: readonly unknown[], reaccionar: () => void): void {
+export function useOnChange(signature: readonly unknown[], react: () => void): void {
   // `null` y no `firma`: así la primera pasada siempre cuenta como cambio y la
   // reacción corre al montar, que es lo que hacía el efecto.
-  const [anterior, setAnterior] = useState<readonly unknown[] | null>(null);
+  const [previous, setPrevious] = useState<readonly unknown[] | null>(null);
 
-  const cambio =
-    anterior?.length !== firma.length || anterior.some((valor, i) => !Object.is(valor, firma[i]));
+  const hasChanged =
+    previous?.length !== signature.length ||
+    previous.some((value, i) => !Object.is(value, signature[i]));
 
-  if (cambio) {
-    setAnterior(firma);
-    reaccionar();
+  if (hasChanged) {
+    setPrevious(signature);
+    react();
   }
 }

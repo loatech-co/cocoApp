@@ -3,8 +3,8 @@ import { useEffect, useRef, type RefObject } from 'react';
 
 import { useConceptSearch } from '@/features/transactions/hooks/use-concept-search';
 import type { CandidatoDelRecibo } from '@/features/transactions/model/movement-form';
-import type { NodoDelArbol } from '@/shared/lib/arbol-buscable';
 import { t } from '@/shared/lib/i18n';
+import type { TreeNode } from '@/shared/lib/searchable-tree';
 import { cn } from '@/shared/lib/utils';
 import { Field } from '@/shared/ui/atoms/field';
 import { SearchBox } from '@/shared/ui/atoms/search-box';
@@ -20,7 +20,7 @@ import {
 
 interface PropsDelBuscador {
   id: string;
-  arbol: readonly NodoDelArbol[];
+  arbol: readonly TreeNode[];
   /** El id elegido: un concepto o una categoría. */
   valor: number | undefined;
   onElegir: (id: number | undefined) => void;

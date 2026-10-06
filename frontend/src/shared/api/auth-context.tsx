@@ -2,8 +2,8 @@ import { createContext, use, useEffect, useMemo, useState, useSyncExternalStore 
 import type { ReactNode } from 'react';
 
 import { type Profile } from '@/shared/api/generated/model';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
 
 import * as session from './session';
 
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     rol a uno mismo. Sin esto quedaría encendida para alguien que ya no tiene
     dónde apagarla: el interruptor solo se le enseña a un administrador.
   */
-  useAlCambiar([isRealAdmin], () => {
+  useOnChange([isRealAdmin], () => {
     if (!isRealAdmin) setIsViewingAsUser(false);
   });
 
@@ -106,8 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: state.user,
       isLoading: state.isLoading,
       isAdmin: isRealAdmin && !isViewingAsUser,
-      isRealAdmin: isRealAdmin,
-      isViewingAsUser: isViewingAsUser,
+      isRealAdmin,
+      isViewingAsUser,
       setViewAsUser: setIsViewingAsUser,
       signIn: session.signIn,
       signUp: session.signUp,

@@ -5,8 +5,8 @@ import { useLocation } from 'react-router-dom';
 import { Ajustes } from '@/features/profile/components/ajustes';
 import { errorDetails, authErrorMessage, useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
-import { useEnLaApp } from '@/shared/lib/movil';
-import { SECCIONES_DE_ADMIN } from '@/shared/lib/sections';
+import { useIsInNativeApp } from '@/shared/lib/mobile';
+import { ADMIN_SECTIONS } from '@/shared/lib/sections';
 import { Alert, AlertDescription, AlertTitle, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
 import { Button } from '@/shared/ui/atoms/button';
@@ -31,7 +31,7 @@ export function CuentaPage() {
     administración y cerrar sesión en ESTE dispositivo. Fuera de la app nada
     de eso aparece, porque ya está en la hoja o en el menú del riel.
   */
-  const embebida = useEnLaApp();
+  const embebida = useIsInNativeApp();
 
   useScrollToHash();
 
@@ -218,8 +218,8 @@ function AdminLinks() {
             del avatar: una segunda lista se separaría de esta la primera
             vez que se añada una pantalla. */}
         <nav aria-label={t('shell.rail.admin')} className="-mx-3 flex flex-col">
-          {SECCIONES_DE_ADMIN.map((seccion) => (
-            <LinkRow key={seccion.to} Icon={seccion.Icono} to={seccion.to}>
+          {ADMIN_SECTIONS.map((seccion) => (
+            <LinkRow key={seccion.to} Icon={seccion.Icon} to={seccion.to}>
               {seccion.label}
             </LinkRow>
           ))}

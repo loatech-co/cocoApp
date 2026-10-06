@@ -2,8 +2,8 @@ import { ChevronLeft, ChevronRight, Download, Minus, Plus, Trash2, X } from 'luc
 import { useCallback, useState } from 'react';
 
 import { type Receipt } from '@/shared/api/generated/model';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
 import { OverlayButton, ControlReadout } from '@/shared/ui/molecules/overlay-control';
 
 /** Los saltos del zoom. Fijos y pocos: un control continuo pide precisión que
@@ -20,7 +20,7 @@ export function useViewerZoom(indice: number) {
 
   // Cambiar de soporte reinicia el zoom y la página: seguir en la página 3 de
   // un recibo de una sola hoja deja el visor en blanco.
-  useAlCambiar([indice], () => {
+  useOnChange([indice], () => {
     setZoom(NORMAL);
     setPagina(1);
     setPaginas(1);

@@ -1,4 +1,4 @@
-import { diaLargo, MESES_CORTOS, mesLargo } from '@/shared/lib/format';
+import { longDay, SHORT_MONTHS, longMonth } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 
 /*
@@ -138,7 +138,7 @@ export function area(serie: number[], techo: number, total: number): string {
  * descifrar una abreviatura y a adivinar si el 26 es el día o el año.
  */
 export function fechaLarga(bucket: string): string {
-  return bucket.length > 7 ? diaLargo(bucket) : mesLargo(bucket);
+  return bucket.length > 7 ? longDay(bucket) : longMonth(bucket);
 }
 
 /** El último día de un mes: 28, 29, 30 o 31 según cuál sea. */
@@ -189,7 +189,7 @@ export function etiquetasDelEje(
       .filter(({ indice }) => indice % cada === 0)
       .map(({ indice, bucket }) => {
         const [anio, mes = ''] = bucket.split('-');
-        const nombre = MESES_CORTOS[Number(mes) - 1] ?? mes;
+        const nombre = SHORT_MONTHS[Number(mes) - 1] ?? mes;
         const conMayuscula = nombre.charAt(0).toUpperCase() + nombre.slice(1);
         // El año ENTERO, no sus dos últimas cifras. "Abr 23" obliga a
         // completarlo mentalmente, y en un histórico que arranca en 2022 eso
@@ -211,7 +211,7 @@ export function etiquetasDelEje(
     if (!esQuinto && !esUltimo) return;
 
     const clave = p.bucket.slice(0, 7);
-    const texto = clave === mesEscrito ? String(dia) : `${dia} ${MESES_CORTOS[mes - 1] ?? mes}`;
+    const texto = clave === mesEscrito ? String(dia) : `${dia} ${SHORT_MONTHS[mes - 1] ?? mes}`;
     mesEscrito = clave;
 
     etiquetas.push({ indice, texto });
@@ -230,7 +230,7 @@ export function etiquetasDelEje(
  */
 export function etiquetaDeCubo(bucket: string, mismoAnio = false): string {
   const [anio = '', mes = '', dia] = bucket.split('-');
-  const nombre = MESES_CORTOS[Number(mes) - 1] ?? mes;
+  const nombre = SHORT_MONTHS[Number(mes) - 1] ?? mes;
   if (dia) return `${Number(dia)} ${nombre}`;
   return mismoAnio ? nombre : `${nombre} ${anio.slice(2)}`;
 }

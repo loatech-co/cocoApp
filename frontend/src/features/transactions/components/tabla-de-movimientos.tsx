@@ -5,7 +5,7 @@ import { useActualizarMovimiento } from '@/features/transactions/api/transaction
 import { nombreDelMovimiento, rutaSeleccionada } from '@/features/transactions/model/movimientos';
 import { type CategoryTree } from '@/shared/api/categories';
 import { type Transaction } from '@/shared/api/generated/model';
-import { formatMoney, diaCorto, mesCorto } from '@/shared/lib/format';
+import { formatMoney, shortDay, shortMonth } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
@@ -144,7 +144,7 @@ function Fila({ movimiento, arbol, onAbrir }: FilaProps) {
       <PeriodCell movimiento={movimiento} />
 
       <Td className="tabular whitespace-nowrap text-muted-foreground">
-        {diaCorto(movimiento.date)}
+        {shortDay(movimiento.date)}
       </Td>
 
       {/* Los selectores paran el clic: desplegar una lista no puede abrir
@@ -262,8 +262,8 @@ function PeriodCell({ movimiento }: { movimiento: Transaction }) {
       {desfasado(movimiento) ? (
         <WithTooltip
           text={t('transactions.table.latePayment', {
-            month: mesCorto(periodo(movimiento)),
-            day: diaCorto(movimiento.date),
+            month: shortMonth(periodo(movimiento)),
+            day: shortDay(movimiento.date),
           })}
           className="items-center gap-1.5 font-medium text-warning"
         >
@@ -271,10 +271,10 @@ function PeriodCell({ movimiento }: { movimiento: Transaction }) {
               columna de texto gris, y quien no lo nota no sabe que hay algo
               que preguntar. */}
           <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-warning" />
-          {mesCorto(periodo(movimiento))}
+          {shortMonth(periodo(movimiento))}
         </WithTooltip>
       ) : (
-        mesCorto(periodo(movimiento))
+        shortMonth(periodo(movimiento))
       )}
     </Td>
   );

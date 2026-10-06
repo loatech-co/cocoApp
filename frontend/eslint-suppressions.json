@@ -354,59 +354,9 @@
       "count": 4
     }
   },
-  "src/shared/api/api-client.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
   "src/shared/api/flags-engine.ts": {
     "@typescript-eslint/naming-convention": {
       "count": 2
-    }
-  },
-  "src/shared/lib/al-cambiar.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/shared/lib/deslizar.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 2
-    }
-  },
-  "src/shared/lib/encoger-soporte.dom.test.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 2
-    }
-  },
-  "src/shared/lib/encoger-soporte.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/shared/lib/escape.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/shared/lib/foco.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 2
-    }
-  },
-  "src/shared/lib/menu-anchor.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 3
-    }
-  },
-  "src/shared/lib/movil.test.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 3
-    }
-  },
-  "src/shared/lib/pan-zoom.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 3
     }
   }
 }

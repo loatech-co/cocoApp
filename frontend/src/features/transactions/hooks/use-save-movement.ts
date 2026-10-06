@@ -10,8 +10,8 @@ import { useCreateCategory } from '@/shared/api/categories';
 import { categorizationLearn } from '@/shared/api/generated/categorization-v2/categorization-v2';
 import { type Transaction } from '@/shared/api/generated/model';
 import { getSoportesUploadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
-import { encogerSoportes } from '@/shared/lib/encoger-soporte';
 import { t } from '@/shared/lib/i18n';
+import { shrinkReceipts } from '@/shared/lib/shrink-receipt';
 
 import type { MovementSheetState } from './use-movement-form';
 
@@ -39,7 +39,7 @@ async function uploadPending(id: number, pendientes: File[]): Promise<void> {
   const datos = new FormData();
   // Ver `shared/lib/encoger-soporte.ts`: lo que sube es un JPG liviano, no la
   // foto de doce megapíxeles que da un teléfono.
-  for (const archivo of await encogerSoportes(pendientes)) {
+  for (const archivo of await shrinkReceipts(pendientes)) {
     datos.append('files', archivo);
   }
   await apiUpload(getSoportesUploadUrl(id), datos);

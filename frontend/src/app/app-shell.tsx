@@ -9,7 +9,7 @@ import { useAuth } from '@/shared/api/auth-context';
 import { registerBridge } from '@/shared/api/native-bridge';
 import { invalidateDerived } from '@/shared/api/query-keys';
 import { t } from '@/shared/lib/i18n';
-import { useEnLaApp, useEsMovil } from '@/shared/lib/movil';
+import { useIsInNativeApp, useIsMobile } from '@/shared/lib/mobile';
 import { cn } from '@/shared/lib/utils';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
@@ -126,7 +126,7 @@ function PuenteDeNavegacion({ abrirBusqueda }: { abrirBusqueda: () => void }) {
 }
 
 export function AppShell() {
-  const esMovil = useEsMovil();
+  const esMovil = useIsMobile();
   /**
    * Dentro de la app del teléfono.
    *
@@ -136,7 +136,7 @@ export function AppShell() {
    * tabulación y una barra fija debajo de otra. La búsqueda y la ficha sí,
    * porque la pestaña nativa «Buscar» abre la de aquí.
    */
-  const embebida = useEnLaApp();
+  const embebida = useIsInNativeApp();
   const shell = useShellState();
 
   return (

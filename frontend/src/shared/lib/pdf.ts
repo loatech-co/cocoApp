@@ -13,13 +13,13 @@
  */
 type Pdfjs = typeof import('pdfjs-dist');
 
-let cargando: Promise<Pdfjs> | null = null;
+let loading: Promise<Pdfjs> | null = null;
 
-export function cargarPdfjs(): Promise<Pdfjs> {
+export function loadPdfjs(): Promise<Pdfjs> {
   // La promesa se guarda, no el módulo: dos llamadas simultáneas —dos
   // miniaturas que empiezan a la vez— comparten la misma carga en vez de
   // pedir el bundle dos veces.
-  cargando ??= import('pdfjs-dist').then((pdfjs) => {
+  loading ??= import('pdfjs-dist').then((pdfjs) => {
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
       'pdfjs-dist/build/pdf.worker.mjs',
       import.meta.url,
@@ -27,7 +27,7 @@ export function cargarPdfjs(): Promise<Pdfjs> {
     return pdfjs;
   });
 
-  return cargando;
+  return loading;
 }
 
 /** What a page drawing ended with: the drawn size in pixels. */
@@ -62,7 +62,7 @@ export async function drawPdfPage({
   /** Called with the page count as soon as the document opens. */
   onPages?: (pages: number) => void;
 }): Promise<PdfPageDrawing | null> {
-  const pdfjs = await cargarPdfjs();
+  const pdfjs = await loadPdfjs();
   const document = await pdfjs.getDocument({ url }).promise;
   if (onPages) {
     if (!isAlive()) return null;

@@ -1,9 +1,9 @@
 import { ChevronLeft, Search } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import { MAXIMO_DE_ATAJOS, anadirAtajo, useAtajos } from '@/shared/lib/atajos';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
+import { MAX_SHORTCUTS, addShortcut, useShortcuts } from '@/shared/lib/shortcuts';
 import { Button } from '@/shared/ui/atoms/button';
 import { Input } from '@/shared/ui/atoms/input';
 import { showToast } from '@/shared/ui/molecules/toast';
@@ -61,14 +61,14 @@ export function useSuperficieDeAtajos({
   porDefecto,
   onIr,
 }: OpcionesDeAtajos): { cabeza: ReactNode; cuerpo: ReactNode } {
-  const rutas = useAtajos(porDefecto);
+  const rutas = useShortcuts(porDefecto);
   const [estado, setEstado] = useState<Estado>('galeria');
   const [busqueda, setBusqueda] = useState('');
   const drag = useShortcutDrag(estado);
 
   // Los tres estados son efímeros, como el almacén: una pantalla que se reabre
   // en mitad de una edición es una pantalla que se reabre mal.
-  useAlCambiar([abierto], () => {
+  useOnChange([abierto], () => {
     if (!abierto) {
       setEstado('galeria');
       setBusqueda('');
@@ -128,11 +128,11 @@ function disponiblesPara(
 }
 
 function anadir(ruta: string): void {
-  if (!anadirAtajo(ruta)) {
+  if (!addShortcut(ruta)) {
     // La respuesta llega cuando se hace la pregunta: ni un contador
     // permanente ni un control apagado, que no contesta nada al pulsarlo.
     showToast(t('shell.shortcuts.fullTitle'), {
-      detail: t('shell.shortcuts.fullDetail', { max: MAXIMO_DE_ATAJOS }),
+      detail: t('shell.shortcuts.fullDetail', { max: MAX_SHORTCUTS }),
       tone: 'warning',
     });
   }

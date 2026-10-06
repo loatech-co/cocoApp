@@ -109,7 +109,7 @@ function LoginBrand() {
         Un <img> roto dejaría el icono de imagen partida.
 
         WebP sin respaldo JPG a propósito: lo soportan todos los navegadores
-        desde 2020. El original vive en frontend/assets-fuente/, con cómo
+        desde 2020. El original vive en frontend/assets-source/, con cómo
         regenerarlo.
       */}
         <div

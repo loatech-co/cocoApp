@@ -1,8 +1,8 @@
 import { Check, ChevronDown } from 'lucide-react';
 import { type ComponentType, type ReactNode } from 'react';
 
-import { panelStyle, useMenuState, type Anclaje } from '@/shared/lib/menu-anchor';
-import { useEsMovil } from '@/shared/lib/movil';
+import { panelStyle, useMenuState, type Anchor } from '@/shared/lib/menu-anchor';
+import { useIsMobile } from '@/shared/lib/mobile';
 import { cn } from '@/shared/lib/utils';
 import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { Button } from '@/shared/ui/atoms/button';
@@ -139,18 +139,18 @@ export function Menu(props: MenuProps) {
   const m = withDefaults(props);
   const { label, kind, isFloating, trigger, children } = m;
   /** Opens as a sheet from the bottom instead of hanging from the button. */
-  const isSheet = useEsMovil() && kind !== 'list' && kind !== 'search';
-  const { abierto: isOpen, setAbierto: setIsOpen, caja, anclaje, medir } = useMenuState(isSheet);
+  const isSheet = useIsMobile() && kind !== 'list' && kind !== 'search';
+  const { isOpen, setIsOpen, box, anchor, measure } = useMenuState(isSheet);
   const close = (): void => setIsOpen(false);
   const content = typeof children === 'function' ? children(close) : children;
 
   function toggle(): void {
-    if (isFloating && !isSheet) medir();
+    if (isFloating && !isSheet) measure();
     setIsOpen((wasOpen) => !wasOpen);
   }
 
   return (
-    <div ref={caja} className={cn('relative', m.boxClassName)}>
+    <div ref={box} className={cn('relative', m.boxClassName)}>
       {trigger ? (
         <button
           type="button"
@@ -184,7 +184,7 @@ export function Menu(props: MenuProps) {
       )}
 
       {isOpen && !isSheet && (
-        <MenuDropdown m={m} anchor={anclaje}>
+        <MenuDropdown m={m} anchor={anchor}>
           {content}
         </MenuDropdown>
       )}
@@ -312,7 +312,7 @@ function MenuDropdown({
   children,
 }: {
   m: MenuConfig;
-  anchor: Anclaje | null;
+  anchor: Anchor | null;
   children: ReactNode;
 }) {
   return (

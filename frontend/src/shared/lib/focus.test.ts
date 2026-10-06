@@ -16,24 +16,24 @@ import { describe, expect, it } from 'vitest';
  * un cursor en él, lo haya puesto quien lo haya puesto. Lo que se prohíbe es
  * la SEÑAL: el anillo, el borde teñido, la etiqueta verde.
  */
-function fuentes(dir: string, ext: string): string[] {
-  return readdirSync(dir).flatMap((nombre) => {
-    const ruta = join(dir, nombre);
-    if (statSync(ruta).isDirectory()) return fuentes(ruta, ext);
-    return ruta.endsWith(ext) && !ruta.includes('.test.') ? [ruta] : [];
+function sourceFiles(dir: string, ext: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) return sourceFiles(path, ext);
+    return path.endsWith(ext) && !path.includes('.test.') ? [path] : [];
   });
 }
 
 const SRC = join(import.meta.dirname, '..', '..');
-const archivos = fuentes(SRC, '.tsx');
+const components = sourceFiles(SRC, '.tsx');
 /*
   Las clases de foco también se escriben en archivos `.ts` sin marcado:
   `FOCO_DEL_CAMPO` vive en `shared/ui/foundations/field.ts`. Las dos pruebas
   de la señal miran los dos tipos de archivo; las del foco que se mueve solo
   miran componentes, que es donde se monta algo.
 */
-const conClases = [...archivos, ...fuentes(SRC, '.ts')];
-const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
+const withClasses = [...components, ...sourceFiles(SRC, '.ts')];
+const relative = (path: string): string => path.split('/src/')[1]!;
 
 /**
  * Quién puede nacer enfocado, y por qué.
@@ -47,7 +47,7 @@ const relativa = (ruta: string): string => ruta.split('/src/')[1]!;
  * rellenarla, y el campo que el programa decida encender no tiene por qué ser
  * el que se venía a cambiar.
  */
-const NACEN_ENFOCADOS: Record<string, string> = {
+const BORN_FOCUSED: Record<string, string> = {
   'app/atajos.tsx':
     'La paleta de páginas: se abre para escribir el nombre de una, y no tiene ningún otro control.',
   'features/transactions/components/toolbar-filtros.tsx':
@@ -67,7 +67,7 @@ const NACEN_ENFOCADOS: Record<string, string> = {
  * lo haya puesto— porque en reposo su sitio lo ocupa la etiqueta flotante. No
  * dice «esto está enfocado»: dice «aquí cabe esto».
  */
-const NO_SON_SENAL = ['focus:placeholder:text-muted-foreground'];
+const NOT_A_SIGNAL = ['focus:placeholder:text-muted-foreground'];
 
 const css = readFileSync(join(SRC, 'index.css'), 'utf8');
 
@@ -82,7 +82,7 @@ const css = readFileSync(join(SRC, 'index.css'), 'utf8');
  *
  * Lo llevan los que sí guardan algo, y los que sin él no se pueden recorrer.
  */
-const LLEVAN_ANILLO: Record<string, string> = {
+const HAVE_RING: Record<string, string> = {
   'shared/ui/foundations/field.ts':
     'Un campo sí: hace falta saber cuál está recibiendo lo que se teclea. Es `FOCO_DEL_CAMPO`, y un desplegable es un campo aunque esté hecho con un <button>.',
   'shared/ui/atoms/input.tsx': 'El del error, que va a plena tinta.',
@@ -95,50 +95,48 @@ const LLEVAN_ANILLO: Record<string, string> = {
 
 describe('Nada nace enfocado', () => {
   it('solo los buscadores llevan autoFocus, y están justificados', () => {
-    const culpables = archivos
+    const culprits = components
       // El atributo, no la palabra: los comentarios que explican por qué NO lo
       // llevan lo nombran entre acentos graves, y sin esto se delatan solos.
-      .filter((ruta) => /(?<!`)\bautoFocus\b(?!`)/.test(readFileSync(ruta, 'utf8')))
-      .map(relativa)
-      .filter((ruta) => !(ruta in NACEN_ENFOCADOS));
+      .filter((path) => /(?<!`)\bautoFocus\b(?!`)/.test(readFileSync(path, 'utf8')))
+      .map(relative)
+      .filter((path) => !(path in BORN_FOCUSED));
 
-    expect(culpables, 'Un campo no se enciende solo: quita el `autoFocus`').toEqual([]);
+    expect(culprits, 'Un campo no se enciende solo: quita el `autoFocus`').toEqual([]);
   });
 
   it('solo los buscadores mueven el foco a mano', () => {
-    const culpables = archivos
-      .filter((ruta) => readFileSync(ruta, 'utf8').includes('.focus()'))
-      .map(relativa)
-      .filter((ruta) => !(ruta in NACEN_ENFOCADOS));
+    const culprits = components
+      .filter((path) => readFileSync(path, 'utf8').includes('.focus()'))
+      .map(relative)
+      .filter((path) => !(path in BORN_FOCUSED));
 
-    expect(culpables, 'Mover el foco al abrir algo enciende lo que nadie eligió').toEqual([]);
+    expect(culprits, 'Mover el foco al abrir algo enciende lo que nadie eligió').toEqual([]);
   });
 });
 
 describe('La señal de foco se escribe con :focus-visible', () => {
   it('ningún componente la pinta con `focus:`', () => {
-    const culpables = conClases.flatMap((ruta) => {
-      const encontrados = readFileSync(ruta, 'utf8').match(
-        /(?<!-visible|-within)\bfocus:[\w:[\]./-]+/g,
-      );
-      return (encontrados ?? [])
-        .filter((clase) => !NO_SON_SENAL.includes(clase))
-        .map((clase) => `${relativa(ruta)} → ${clase}`);
+    const culprits = withClasses.flatMap((path) => {
+      const found = readFileSync(path, 'utf8').match(/(?<!-visible|-within)\bfocus:[\w:[\]./-]+/g);
+      return (found ?? [])
+        .filter((className) => !NOT_A_SIGNAL.includes(className))
+        .map((className) => `${relative(path)} → ${className}`);
     });
 
     expect(
-      culpables,
+      culprits,
       '`focus:` se enciende también con el foco que pone el programa. Usa `focus-visible:`',
     ).toEqual([]);
   });
 
   it('ningún botón dibuja un anillo de foco', () => {
-    const culpables = conClases
-      .filter((ruta) => /focus-visible:(?:ring|border)/.test(readFileSync(ruta, 'utf8')))
-      .map(relativa)
-      .filter((ruta) => !(ruta in LLEVAN_ANILLO));
+    const culprits = withClasses
+      .filter((path) => /focus-visible:(?:ring|border)/.test(readFileSync(path, 'utf8')))
+      .map(relative)
+      .filter((path) => !(path in HAVE_RING));
 
-    expect(culpables, 'Un botón se pulsa y pasa algo: no guarda nada que haya que señalar').toEqual(
+    expect(culprits, 'Un botón se pulsa y pasa algo: no guarda nada que haya que señalar').toEqual(
       [],
     );
   });

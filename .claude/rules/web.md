@@ -43,8 +43,8 @@ demás.
 
 Fechas y dinero (`format.ts`), los textos (`i18n.ts`), foco, gestos, el
 puente con la app. Si algo de
-`lib/` necesita la sesión, es de `shared/api` (por eso `registrarPuente` vive
-en `shared/api/native-bridge.ts` y no en `shared/lib/puente-nativo.ts`).
+`lib/` necesita la sesión, es de `shared/api` (por eso `registerBridge` vive
+en `shared/api/native-bridge.ts` y no en `shared/lib/bridge.ts`).
 
 ## El contrato con la API: `shared/api/generated`
 
@@ -61,12 +61,12 @@ llamando a esas funciones (`useAccounts` → `accountsList`).
 - Toda petición pasa por `apiRequest` (`shared/api/api-client.ts`, el
   `mutator` de Orval). Solo se lo saltan las llamadas de sesión
   (`session.ts`: renovar es en lo que se apoya la puerta) y la subida de
-  soportes (`apiSubir`: necesita el progreso).
+  soportes (`apiUpload`: necesita el progreso).
 - Toda lista de la v2 viene paginada: lo que necesita el conjunto entero usa
   `allPages` (`shared/api/pages.ts`).
 - Lo que habla otro dialecto se traduce en el borde, una vez: la sesión que da
   el puente sigue en v1 (`desdeElPuente`, en `session.ts`); `@coco/lectura` lee
-  `palabras_clave` (`shared/lib/arbol-buscable.ts`); el nivel y la
+  `palabras_clave` (`shared/lib/searchable-tree.ts`); el nivel y la
   granularidad del resumen pasan a las palabras que ve la persona
   (`dashboard-charts.tsx`).
 - Lo que no está en el documento —el puente, la marca del User-Agent de la
@@ -871,7 +871,7 @@ todos: al pulsar un desplegable con el ratón, un `<button>` no coincide con
 no pintaba su anillo y la etiqueta sí se ponía verde.
 
 **Y una superficie con velo mete el foco en su CAJA**, no en su primer
-control (`shared/lib/foco.ts`). Tiene que entrar —si se queda detrás del velo, el
+control (`shared/lib/focus.ts`). Tiene que entrar —si se queda detrás del velo, el
 tabulador recorre una página que no se ve—, pero la caja lleva
 `tabindex="-1"`: recibe el foco sin encender nada, y el primer Tab lleva al
 primer control de dentro.
@@ -884,7 +884,7 @@ formulario no entra nunca: una ficha se abre para leerla antes que para
 rellenarla, y el campo que el programa decida encender no tiene por qué ser
 el que se venía a cambiar.
 
-`shared/lib/foco.test.ts` lee el código fuente y falla si aparece un `autoFocus`
+`shared/lib/focus.test.ts` lee el código fuente y falla si aparece un `autoFocus`
 fuera de esa lista, si alguien mueve el foco a mano al abrir algo, si la
 señal se escribe con `focus:`, si un botón vuelve a dibujar un anillo, o si
 desaparece la línea que los exime del contorno.

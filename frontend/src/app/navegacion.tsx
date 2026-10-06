@@ -5,7 +5,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useLlevaCuentas } from '@/features/profile/api/preferences';
 import { useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
-import { MI_CUENTA, SECCIONES, SECCIONES_DE_ADMIN, type Seccion } from '@/shared/lib/sections';
+import { MY_ACCOUNT, SECTIONS, ADMIN_SECTIONS, type Section } from '@/shared/lib/sections';
 import { cn } from '@/shared/lib/utils';
 import { Menu, MenuOption, MenuSeparator } from '@/shared/ui/molecules/menu';
 
@@ -27,17 +27,17 @@ import { Menu, MenuOption, MenuSeparator } from '@/shared/ui/molecules/menu';
  * la primera vez que se añada una pantalla, y la separación no se vería.
  */
 export function useSecciones(): {
-  diaADia: readonly Seccion[];
-  administracion: readonly Seccion[];
-  biblioteca: readonly Seccion[];
+  diaADia: readonly Section[];
+  administracion: readonly Section[];
+  biblioteca: readonly Section[];
 } {
   const { isAdmin } = useAuth();
   const llevaCuentas = useLlevaCuentas();
 
-  const diaADia = SECCIONES.filter((s) => s.requiere !== 'cuentas' || llevaCuentas);
-  const administracion = isAdmin ? SECCIONES_DE_ADMIN : [];
+  const diaADia = SECTIONS.filter((s) => s.requires !== 'cuentas' || llevaCuentas);
+  const administracion = isAdmin ? ADMIN_SECTIONS : [];
 
-  return { diaADia, administracion, biblioteca: [...diaADia, ...administracion, MI_CUENTA] };
+  return { diaADia, administracion, biblioteca: [...diaADia, ...administracion, MY_ACCOUNT] };
 }
 
 export function EnlaceDeSeccion({

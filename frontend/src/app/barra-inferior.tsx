@@ -88,7 +88,7 @@ export function BarraInferior({
           to={DASHBOARD.to}
           isExact={DASHBOARD.exact}
           label={DASHBOARD.label}
-          Icon={DASHBOARD.Icono}
+          Icon={DASHBOARD.Icon}
         />
         <BarSlotButton
           label={t('shell.bottomBar.search')}

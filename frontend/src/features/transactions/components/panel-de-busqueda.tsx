@@ -8,9 +8,9 @@ import {
 } from '@/features/transactions/model/movimientos';
 import { useCategories } from '@/shared/api/categories';
 import { type Category, type Transaction } from '@/shared/api/generated/model';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import { diaCorto } from '@/shared/lib/format';
+import { shortDay } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
 import { ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Amount } from '@/shared/ui/atoms/amount';
 import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
@@ -144,7 +144,7 @@ function ResultRow({
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{nombreDelMovimiento(movimiento, arbol)}</span>
         <span className="block truncate text-xs text-muted-foreground">
-          {diaCorto(movimiento.date)}
+          {shortDay(movimiento.date)}
         </span>
       </span>
       <Amount
@@ -184,7 +184,7 @@ function useDebouncedSearch(abierto: boolean) {
 
   // Cada apertura empieza en blanco. Reabrir con lo de la vez pasada enseñaría
   // los resultados de una pregunta que ya no se está haciendo.
-  useAlCambiar([abierto], () => {
+  useOnChange([abierto], () => {
     if (!abierto) {
       setTexto('');
       setConsulta('');

@@ -6,8 +6,8 @@ import {
 } from 'react';
 import { Link } from 'react-router-dom';
 
-import { quitarAtajo } from '@/shared/lib/atajos';
 import { t } from '@/shared/lib/i18n';
+import { removeShortcut } from '@/shared/lib/shortcuts';
 import { AddSurface } from '@/shared/ui/atoms/add-surface';
 import { MovableTile, TileRemove, tileClass } from '@/shared/ui/atoms/tile';
 
@@ -40,7 +40,7 @@ export function ShortcutGrid({
       ref={rejilla}
       // Mientras se arregla, la rejilla se queda con el puntero: sin esto, un
       // arrastre hacia abajo para mover una baldosa cerraría el panel.
-      data-sin-deslizar={estado === 'arreglando' ? '' : undefined}
+      data-no-swipe={estado === 'arreglando' ? '' : undefined}
       className="grid grid-cols-3 gap-3"
     >
       {baldosas.map((pagina, indice) => (
@@ -52,7 +52,7 @@ export function ShortcutGrid({
           arrastrada={arrastre?.indice === indice}
           desplazamiento={arrastre?.indice === indice ? arrastre : null}
           onMantener={() => setEstado('arreglando')}
-          onQuitar={() => quitarAtajo(pagina.ruta)}
+          onQuitar={() => removeShortcut(pagina.ruta)}
           onIr={onIr}
           onBajar={alBajar}
           onMover={alMover}

@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useEliminarCategoria, useUsosDeCategoria } from '@/features/centros/api/categories';
 import { ApiClientError } from '@/shared/api/api-client';
 import { type CategoryTree } from '@/shared/api/categories';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
 import { Alert, AlertDescription, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Field } from '@/shared/ui/atoms/field';
 import { Confirmation } from '@/shared/ui/organisms/confirmation';
@@ -146,7 +146,7 @@ function useDeleteCategory({
 
   // Cada apertura empieza limpia: un destino elegido y cancelado la vez
   // anterior no tiene por qué reaparecer apuntando a otra categoría.
-  useAlCambiar([abierta], () => {
+  useOnChange([abierta], () => {
     if (abierta) {
       setDestino('');
       setError(null);

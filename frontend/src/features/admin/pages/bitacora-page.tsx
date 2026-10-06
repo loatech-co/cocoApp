@@ -3,7 +3,7 @@ import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { useBitacora } from '@/features/admin/api/admin-queries';
 import type { AuditEntry } from '@/shared/api/generated/model';
-import { fechaYHora } from '@/shared/lib/format';
+import { dateTime } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Badge } from '@/shared/ui/atoms/badge';
@@ -138,7 +138,7 @@ function Evento({ evento }: { evento: AuditEntry }) {
             dateTime={evento.createdAt}
             className="shrink-0 text-xs tabular-nums text-muted-foreground"
           >
-            {fechaYHora.format(new Date(evento.createdAt))}
+            {dateTime.format(new Date(evento.createdAt))}
           </time>
         </CardContent>
       </Card>

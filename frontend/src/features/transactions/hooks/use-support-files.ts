@@ -4,8 +4,8 @@ import { useSoportes, useSubirSoportes } from '@/features/transactions/api/sopor
 import type { FalloDeSoporte } from '@/features/transactions/model/supports';
 import { ApiClientError, apiBlob } from '@/shared/api/api-client';
 import { getSoportesDownloadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
 
 /**
  * Los archivos de los soportes de un movimiento, ya descargados.
@@ -42,7 +42,7 @@ export function useSupportFiles(transactionId: number) {
     se limpie. Si la limpieza lo vaciara después, se llevaría la siembra por
     delante.
   */
-  useAlCambiar([transactionId, lista.length, intento], () => {
+  useOnChange([transactionId, lista.length, intento], () => {
     setFallos(
       Object.fromEntries(
         lista.filter((s) => !s.isAvailable).map((s) => [String(s.id), 'ausente' as const]),

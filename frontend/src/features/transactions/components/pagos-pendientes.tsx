@@ -2,7 +2,7 @@ import { Filter } from 'lucide-react';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 
 import { type PendingPayment } from '@/shared/api/generated/model';
-import { diaCorto, formatCOP } from '@/shared/lib/format';
+import { shortDay, formatCOP } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Card, CardContent } from '@/shared/ui/atoms/card';
@@ -197,7 +197,7 @@ function PendingSummary({ pago, vencido }: { pago: PendingPayment; vencido: bool
             vencido ? 'font-medium text-warning' : 'text-muted-foreground',
           )}
         >
-          {diaCorto(pago.dueDate)}
+          {shortDay(pago.dueDate)}
         </span>
       </span>
     </span>

@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  DIAS_DE_LA_SEMANA,
-  diaCorto,
-  diaLargo,
-  MESES_CORTOS,
-  MESES_LARGOS,
-  mesCorto,
-  mesLargo,
-  rangoLargo,
+  WEEKDAYS,
+  shortDay,
+  longDay,
+  SHORT_MONTHS,
+  LONG_MONTHS,
+  shortMonth,
+  longMonth,
+  longRange,
 } from './format';
 
 /**
@@ -18,34 +18,34 @@ import {
  */
 describe('dates, written the way Coco writes them', () => {
   it('names the months and the weekdays as the hand-written lists did', () => {
-    expect(MESES_LARGOS.join(' ')).toBe(
+    expect(LONG_MONTHS.join(' ')).toBe(
       'enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre',
     );
-    expect(MESES_CORTOS.join(' ')).toBe('ene feb mar abr may jun jul ago sep oct nov dic');
-    expect(DIAS_DE_LA_SEMANA.join(' ')).toBe('lu ma mi ju vi sá do');
+    expect(SHORT_MONTHS.join(' ')).toBe('ene feb mar abr may jun jul ago sep oct nov dic');
+    expect(WEEKDAYS.join(' ')).toBe('lu ma mi ju vi sá do');
   });
 
   it('writes a day long and short', () => {
-    expect(diaLargo('2026-09-06')).toBe('6 de septiembre de 2026');
-    expect(diaCorto('2026-03-06')).toBe('6 mar 2026');
+    expect(longDay('2026-09-06')).toBe('6 de septiembre de 2026');
+    expect(shortDay('2026-03-06')).toBe('6 mar 2026');
   });
 
   it('writes a month long and short', () => {
-    expect(mesLargo('2026-09')).toBe('Septiembre de 2026');
-    expect(mesLargo('2026-09-01')).toBe('Septiembre de 2026');
-    expect(mesCorto('2026-03-01')).toBe('mar 2026');
+    expect(longMonth('2026-09')).toBe('Septiembre de 2026');
+    expect(longMonth('2026-09-01')).toBe('Septiembre de 2026');
+    expect(shortMonth('2026-03-01')).toBe('mar 2026');
   });
 
   it('writes a range without repeating what both ends share', () => {
-    expect(rangoLargo('2026-09-06', '2026-09-15')).toBe('6 — 15 de septiembre de 2026');
-    expect(rangoLargo('2026-08-06', '2026-09-15')).toBe('6 de agosto — 15 de septiembre de 2026');
-    expect(rangoLargo('2025-12-06', '2026-01-15')).toBe(
+    expect(longRange('2026-09-06', '2026-09-15')).toBe('6 — 15 de septiembre de 2026');
+    expect(longRange('2026-08-06', '2026-09-15')).toBe('6 de agosto — 15 de septiembre de 2026');
+    expect(longRange('2025-12-06', '2026-01-15')).toBe(
       '6 de diciembre de 2025 — 15 de enero de 2026',
     );
   });
 
   it('gives back what it cannot read instead of throwing', () => {
-    expect(diaLargo('no-es-fecha')).toBe('no-es-fecha');
-    expect(mesLargo('2026-13')).toBe('2026-13');
+    expect(longDay('no-es-fecha')).toBe('no-es-fecha');
+    expect(longMonth('2026-13')).toBe('2026-13');
   });
 });

@@ -2,9 +2,9 @@ import { Repeat } from 'lucide-react';
 import { useState } from 'react';
 
 import { PERIODICIDADES, type Periodicidad } from '@/features/centros/model/periodicity';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import { conMayuscula, MESES_LARGOS } from '@/shared/lib/format';
+import { capitalize, LONG_MONTHS } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
+import { useOnChange } from '@/shared/lib/on-change';
 import { cn } from '@/shared/lib/utils';
 import { Field } from '@/shared/ui/atoms/field';
 import { Input } from '@/shared/ui/atoms/input';
@@ -43,7 +43,7 @@ export interface Recurrencia {
   variosPagos: boolean;
 }
 
-const MESES = MESES_LARGOS.map(conMayuscula);
+const MESES = LONG_MONTHS.map(capitalize);
 
 /**
  * Marcar un concepto como un pago que vuelve.
@@ -156,7 +156,7 @@ function CampoDelDia({ dia, onCambiar }: { dia: number; onCambiar: (dia: number)
 
   // El día puede cambiar desde fuera —al abrir la ficha de otro concepto— y lo
   // que se ve tiene que seguirlo.
-  useAlCambiar([dia], () => setEscrito(String(dia)));
+  useOnChange([dia], () => setEscrito(String(dia)));
 
   return (
     <Field label={t('centers.recurrence.dayOfMonth')} id="dia-de-pago">

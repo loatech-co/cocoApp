@@ -28,20 +28,20 @@ import { useSyncExternalStore } from 'react';
  * corto para el que está dibujado esto. Un panel deja de ser una capa sobre la
  * página en cuanto hay que desplazarlo para leerlo entero.
  */
-export const MAXIMO_DE_ATAJOS = 9;
+export const MAX_SHORTCUTS = 9;
 
-const VACIO: readonly string[] = [];
+const EMPTY: readonly string[] = [];
 
-let rutas: readonly string[] | null = null;
-const oyentes = new Set<() => void>();
+let paths: readonly string[] | null = null;
+const listeners = new Set<() => void>();
 
-function anunciar(): void {
-  for (const oyente of oyentes) oyente();
+function announce(): void {
+  for (const listener of listeners) listener();
 }
 
-function suscribir(oyente: () => void): () => void {
-  oyentes.add(oyente);
-  return () => oyentes.delete(oyente);
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
 /**
@@ -50,58 +50,58 @@ function suscribir(oyente: () => void): () => void {
  * Lo de fábrica lo decide quien dibuja, porque depende de quién ha entrado:
  * las páginas de administración no existen para todo el mundo.
  */
-export function sembrarAtajos(porDefecto: readonly string[]): void {
-  if (rutas !== null) return;
-  rutas = porDefecto.slice(0, MAXIMO_DE_ATAJOS);
+export function seedShortcuts(defaults: readonly string[]): void {
+  if (paths !== null) return;
+  paths = defaults.slice(0, MAX_SHORTCUTS);
 }
 
-export function leerAtajos(): readonly string[] {
-  return rutas ?? VACIO;
+export function readShortcuts(): readonly string[] {
+  return paths ?? EMPTY;
 }
 
 /** Devuelve `false` si no cupo. Quien llama decide qué contestar. */
-export function anadirAtajo(ruta: string): boolean {
-  const actuales = leerAtajos();
-  if (actuales.includes(ruta)) return true;
-  if (actuales.length >= MAXIMO_DE_ATAJOS) return false;
+export function addShortcut(path: string): boolean {
+  const current = readShortcuts();
+  if (current.includes(path)) return true;
+  if (current.length >= MAX_SHORTCUTS) return false;
 
-  rutas = [...actuales, ruta];
-  anunciar();
+  paths = [...current, path];
+  announce();
   return true;
 }
 
-export function quitarAtajo(ruta: string): void {
-  const actuales = leerAtajos();
-  if (!actuales.includes(ruta)) return;
+export function removeShortcut(path: string): void {
+  const current = readShortcuts();
+  if (!current.includes(path)) return;
 
-  rutas = actuales.filter((r) => r !== ruta);
-  anunciar();
+  paths = current.filter((r) => r !== path);
+  announce();
 }
 
-export function moverAtajo(desde: number, hasta: number): void {
-  const actuales = leerAtajos();
-  if (desde === hasta) return;
-  if (desde < 0 || hasta < 0 || desde >= actuales.length || hasta >= actuales.length) return;
+export function moveShortcut(from: number, to: number): void {
+  const current = readShortcuts();
+  if (from === to) return;
+  if (from < 0 || to < 0 || from >= current.length || to >= current.length) return;
 
-  const siguiente = [...actuales];
-  const [movido] = siguiente.splice(desde, 1);
-  if (movido === undefined) return;
-  siguiente.splice(hasta, 0, movido);
+  const next = [...current];
+  const [moved] = next.splice(from, 1);
+  if (moved === undefined) return;
+  next.splice(to, 0, moved);
 
-  rutas = siguiente;
-  anunciar();
+  paths = next;
+  announce();
 }
 
 /** Para las pruebas: deja el almacén como recién cargada la página. */
-export function olvidarAtajos(): void {
-  rutas = null;
-  anunciar();
+export function forgetShortcuts(): void {
+  paths = null;
+  announce();
 }
 
-export function useAtajos(porDefecto: readonly string[]): readonly string[] {
+export function useShortcuts(defaults: readonly string[]): readonly string[] {
   // La siembra tiene que ocurrir antes de la primera lectura, y quien tiene lo
   // de fábrica es quien dibuja. Es idempotente —solo actúa si nadie sembró—,
   // así que repetirla en un render doble no cambia nada.
-  sembrarAtajos(porDefecto);
-  return useSyncExternalStore(suscribir, leerAtajos, leerAtajos);
+  seedShortcuts(defaults);
+  return useSyncExternalStore(subscribe, readShortcuts, readShortcuts);
 }

@@ -23,36 +23,36 @@ import { useEffect, useState } from 'react';
  * salidas, y el que se olvide se queda en la memoria de la pestaña con el
  * archivo entero dentro.
  */
-export function useObjectUrl(archivo: File | undefined): string | null {
+export function useObjectUrl(file: File | undefined): string | null {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!archivo) return;
-    const creado = URL.createObjectURL(archivo);
+    if (!file) return;
+    const created = URL.createObjectURL(file);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- recurso con ciclo de vida, ver arriba
-    setUrl(creado);
+    setUrl(created);
     return () => {
-      URL.revokeObjectURL(creado);
+      URL.revokeObjectURL(created);
       setUrl(null);
     };
-  }, [archivo]);
+  }, [file]);
 
   return url;
 }
 
 /** Los `blob:` de una lista de archivos, creados una vez y soltados juntos. */
-export function useObjectUrls(archivos: File[]): string[] {
+export function useObjectUrls(files: File[]): string[] {
   const [urls, setUrls] = useState<string[]>([]);
 
   useEffect(() => {
-    const creados = archivos.map((a) => URL.createObjectURL(a));
+    const created = files.map((a) => URL.createObjectURL(a));
     // eslint-disable-next-line react-hooks/set-state-in-effect -- recurso con ciclo de vida, ver arriba
-    setUrls(creados);
+    setUrls(created);
     // Cada blob vive en la memoria de la pestaña hasta que se le suelta.
     return () => {
-      for (const u of creados) URL.revokeObjectURL(u);
+      for (const u of created) URL.revokeObjectURL(u);
     };
-  }, [archivos]);
+  }, [files]);
 
   return urls;
 }

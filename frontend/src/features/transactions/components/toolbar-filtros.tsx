@@ -5,9 +5,9 @@ import type { Filtros } from '@/features/transactions/model/filtros';
 import type { Orden } from '@/features/transactions/model/sort-orders';
 import { useCategories } from '@/shared/api/categories';
 import { type TransactionType } from '@/shared/api/generated/model';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
-import { useEsMovil } from '@/shared/lib/movil';
+import { useIsMobile } from '@/shared/lib/mobile';
+import { useOnChange } from '@/shared/lib/on-change';
 import { BottomSheet } from '@/shared/ui/atoms/bottom-sheet';
 import { Button } from '@/shared/ui/atoms/button';
 import { Input } from '@/shared/ui/atoms/input';
@@ -65,7 +65,7 @@ export function ToolbarFiltros(props: ToolbarFiltrosProps) {
   const { titulo, subtitulo, resumen, filtros, aplicar, limpiar, hayFiltrosActivos } = props;
   const { orden, onNuevo, acciones } = props;
   const categorias = useCategories();
-  const esMovil = useEsMovil();
+  const esMovil = useIsMobile();
   const busqueda = useToolbarSearch(filtros, aplicar);
 
   return (
@@ -135,7 +135,7 @@ function useToolbarSearch(filtros: Filtros, aplicar: (cambios: Partial<Filtros>)
   const [buscando, setBuscando] = useState((filtros.q ?? '') !== '');
   const campo = useRef<HTMLInputElement>(null);
 
-  useAlCambiar([filtros.q], () => {
+  useOnChange([filtros.q], () => {
     setTexto(filtros.q ?? '');
     // Si el filtro llega puesto desde la URL, el campo tiene que estar a la
     // vista: un recorte activo que no se ve no se puede quitar.

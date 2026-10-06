@@ -2,10 +2,10 @@ import { CalendarDays } from 'lucide-react';
 import { useState } from 'react';
 
 import { PRESETS, type Filtros } from '@/features/transactions/model/filtros';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
-import { diaLargo, rangoLargo } from '@/shared/lib/format';
+import { longDay, longRange } from '@/shared/lib/format';
 import { t } from '@/shared/lib/i18n';
-import { encontrarFecha } from '@/shared/lib/leer-fecha';
+import { useOnChange } from '@/shared/lib/on-change';
+import { findDate } from '@/shared/lib/read-date';
 import { cn } from '@/shared/lib/utils';
 import { fieldTrigger, useInsideField } from '@/shared/ui/foundations/field';
 import { Calendar } from '@/shared/ui/molecules/calendar';
@@ -163,7 +163,7 @@ function DeRango({ filtros, aplicar, atajos = false, claseCaja }: Rango) {
     filtros.preset === 'todo'
       ? t('transactions.range.allTime')
       : filtros.preset === 'personalizado'
-        ? rangoLargo(filtros.from, filtros.to)
+        ? longRange(filtros.from, filtros.to)
         : (activo?.etiqueta ?? t('transactions.range.range'));
 
   return (
@@ -261,7 +261,7 @@ function DisabledDay({ valor, enCampo }: { valor: string; enCampo: boolean }) {
   return (
     <span aria-disabled="true" className={cn(fieldTrigger(), 'opacity-50')}>
       <span className={cn('min-w-0 flex-1 truncate', enCampo && 'pt-4')}>
-        {valor ? diaLargo(valor) : t('transactions.range.chooseDate')}
+        {valor ? longDay(valor) : t('transactions.range.chooseDate')}
       </span>
       <CalendarDays className="size-4 shrink-0 opacity-70" aria-hidden="true" />
     </span>
@@ -286,12 +286,12 @@ function useTypedDate(valor: string, onElegir: (iso: string) => void) {
     fecha, para que dos movimientos registrados el mismo día no se lean
     distinto según cómo los tecleó cada quien.
   */
-  const [escrito, setEscrito] = useState(() => (valor ? diaLargo(valor) : ''));
+  const [escrito, setEscrito] = useState(() => (valor ? longDay(valor) : ''));
 
   // El campo sigue al valor cuando lo cambia otro: el calendario, o abrir la
   // ficha de otro movimiento sin desmontar esto.
-  useAlCambiar([valor], () => {
-    setEscrito(valor ? diaLargo(valor) : '');
+  useOnChange([valor], () => {
+    setEscrito(valor ? longDay(valor) : '');
   });
 
   /*
@@ -308,19 +308,19 @@ function useTypedDate(valor: string, onElegir: (iso: string) => void) {
     const texto = escrito.trim();
 
     if (texto === '') {
-      setEscrito(valor ? diaLargo(valor) : '');
+      setEscrito(valor ? longDay(valor) : '');
       return;
     }
 
-    const leida = encontrarFecha(texto, new Date().getFullYear());
+    const leida = findDate(texto, new Date().getFullYear());
     if (!leida) {
-      setEscrito(valor ? diaLargo(valor) : '');
+      setEscrito(valor ? longDay(valor) : '');
       return;
     }
 
     // Si no cambia, el efecto no se dispara y hay que normalizar aquí: quien
     // escribe «10/09/2026» sobre esa misma fecha tiene que ver cómo se queda.
-    if (leida.iso === valor) setEscrito(diaLargo(leida.iso));
+    if (leida.iso === valor) setEscrito(longDay(leida.iso));
     else onElegir(leida.iso);
   }
 

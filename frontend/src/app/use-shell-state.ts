@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { type Transaction } from '@/shared/api/generated/model';
-import { useAlCambiar } from '@/shared/lib/al-cambiar';
+import { useOnChange } from '@/shared/lib/on-change';
 
 import { useSuperficieDeAtajos } from './atajos';
 import { useSecciones } from './navegacion';
@@ -57,7 +57,7 @@ export function useShellState(): ShellState {
   // Cambiar de página cierra lo que esté tapándola. Una hoja que sobrevive a
   // su propio enlace deja a la persona mirando los atajos de una pantalla que
   // ya no está debajo.
-  useAlCambiar([ubicacion.pathname], () => {
+  useOnChange([ubicacion.pathname], () => {
     setAtajosAbiertos(false);
     setBusquedaAbierta(false);
     setCuentaAbierta(false);
@@ -76,7 +76,11 @@ export function useShellState(): ShellState {
 
   const { cabeza, cuerpo } = useSuperficieDeAtajos({
     abierto: atajosAbiertos,
-    biblioteca: biblioteca.map(({ to, label, Icono }) => ({ ruta: to, etiqueta: label, Icono })),
+    biblioteca: biblioteca.map(({ to, label, Icon: Icono }) => ({
+      ruta: to,
+      etiqueta: label,
+      Icono,
+    })),
     // Lo de fábrica es lo del día a día. Lo de administración se configura una
     // vez y casi no se toca: está en el menú, y se añade desde ahí quien lo use.
     porDefecto: diaADia.map((s) => s.to),
