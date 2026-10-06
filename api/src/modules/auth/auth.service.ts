@@ -152,7 +152,7 @@ export class AuthService {
       );
     }
 
-    await this.audit.registrar({
+    await this.audit.record({
       userId: usuario.id,
       entity: 'users',
       entityId: usuario.id,
@@ -183,7 +183,7 @@ export class AuthService {
     const sesion = await this.supabase.entrar(email, datos.password);
 
     if (!sesion) {
-      await this.audit.registrar({
+      await this.audit.record({
         entity: 'users',
         action: 'auth.login_failed',
         changes: { motivo: 'credenciales_incorrectas' },
@@ -226,7 +226,7 @@ export class AuthService {
       sessionsValidFrom: marca,
     });
 
-    await this.audit.registrar({
+    await this.audit.record({
       userId: actualizado.id,
       entity: 'users',
       entityId: actualizado.id,
@@ -280,7 +280,7 @@ export class AuthService {
     const usuario = await this.users.findByAuthId(sesion.authId);
     if (!usuario) return;
 
-    await this.audit.registrar({
+    await this.audit.record({
       userId: usuario.id,
       entity: 'users',
       entityId: usuario.id,
@@ -293,7 +293,7 @@ export class AuthService {
   /** Cierra sesión en todos los dispositivos, de inmediato. */
   async salirDeTodoslosDispositivos(userId: bigint, contexto: ContextoDePeticion): Promise<void> {
     await this.revocarTodasLasSesiones(userId);
-    await this.audit.registrar({
+    await this.audit.record({
       userId,
       entity: 'users',
       entityId: userId,
@@ -338,7 +338,7 @@ export class AuthService {
     await this.supabase.cambiarContrasena(usuario.authId, datos.nueva);
     await this.revocarTodasLasSesiones(userId);
 
-    await this.audit.registrar({
+    await this.audit.record({
       userId,
       entity: 'users',
       entityId: userId,

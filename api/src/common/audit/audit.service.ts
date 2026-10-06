@@ -4,7 +4,7 @@ import { AuditRepository, type AuditEntryWithUser } from './audit.repository';
 import type { Prisma } from '../../generated/prisma/client';
 
 /** Acciones auditadas. Tipadas para que no se cuelen cadenas sueltas. */
-type AccionAuditada =
+type AuditedAction =
   | 'auth.register'
   | 'auth.login'
   | 'auth.login_failed'
@@ -19,12 +19,12 @@ type AccionAuditada =
   | 'admin.password_reset'
   | 'admin.role_changed';
 
-export interface EventoAuditado {
+export interface AuditedEvent {
   /** NULL cuando el intento no corresponde a ningún usuario conocido. */
   userId?: bigint | null;
   entity: string;
   entityId?: bigint | null;
-  action: AccionAuditada;
+  action: AuditedAction;
   changes?: Prisma.InputJsonValue | undefined;
   ip?: string | null | undefined;
   userAgent?: string | null | undefined;
@@ -47,20 +47,20 @@ export class AuditService {
    * movimientos. La bitácora dice "qué entidad y qué operación", no "cuánto
    * dinero".
    */
-  async registrar(evento: EventoAuditado): Promise<void> {
+  async record(event: AuditedEvent): Promise<void> {
     try {
       await this.repository.create({
-        userId: evento.userId ?? null,
-        entity: evento.entity,
-        entityId: evento.entityId ?? null,
-        action: evento.action,
-        ...(evento.changes !== undefined && { changesJson: evento.changes }),
-        ip: evento.ip ?? null,
-        userAgent: evento.userAgent?.slice(0, 255) ?? null,
+        userId: event.userId ?? null,
+        entity: event.entity,
+        entityId: event.entityId ?? null,
+        action: event.action,
+        ...(event.changes !== undefined && { changesJson: event.changes }),
+        ip: event.ip ?? null,
+        userAgent: event.userAgent?.slice(0, 255) ?? null,
       });
     } catch (error) {
       this.logger.error(
-        `No se pudo auditar ${evento.action}`,
+        `No se pudo auditar ${event.action}`,
         error instanceof Error ? error.stack : String(error),
       );
     }

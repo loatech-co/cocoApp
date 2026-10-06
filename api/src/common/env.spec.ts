@@ -1,11 +1,11 @@
 import {
-  PERMISO_DE_AUTH_DESTRUCTIVA,
-  PERMISO_DE_BASE_REMOTA,
-  esProduccion,
-  leerDelEntorno,
-  porQueNoArrancar,
-  porQueNoTocarCuentasReales,
-  sinComillas,
+  ALLOW_DESTRUCTIVE_AUTH,
+  ALLOW_REMOTE_DATABASE,
+  isProduction,
+  readEnv,
+  whyRefuseToStart,
+  whyNotTouchRealAccounts,
+  stripQuotes,
 } from './env';
 
 /**
@@ -18,50 +18,50 @@ import {
  * trabajo. La carpeta resultante no existe y todo sale no disponible.
  */
 describe('Leer del entorno', () => {
-  const antes = { ...process.env };
+  const original = { ...process.env };
   afterEach(() => {
-    process.env = { ...antes };
+    process.env = { ...original };
   });
 
   it('quita las comillas dobles que envuelven el valor', () => {
     process.env.PRUEBA = '"/home/u523998927/soportes-cocoapp"';
-    expect(leerDelEntorno('PRUEBA')).toBe('/home/u523998927/soportes-cocoapp');
+    expect(readEnv('PRUEBA')).toBe('/home/u523998927/soportes-cocoapp');
   });
 
   it('y las simples', () => {
     process.env.PRUEBA = "'/usr/bin/gs'";
-    expect(leerDelEntorno('PRUEBA')).toBe('/usr/bin/gs');
+    expect(readEnv('PRUEBA')).toBe('/usr/bin/gs');
   });
 
   it('deja en paz un valor normal', () => {
     process.env.PRUEBA = '/home/u523998927/soportes-cocoapp';
-    expect(leerDelEntorno('PRUEBA')).toBe('/home/u523998927/soportes-cocoapp');
+    expect(readEnv('PRUEBA')).toBe('/home/u523998927/soportes-cocoapp');
   });
 
   it('no toca las comillas que NO envuelven', () => {
     // Solo se quitan las emparejadas de los extremos: una ruta que de verdad
     // lleve una comilla en medio se queda como está.
-    expect(sinComillas('/ruta/con"comilla/dentro')).toBe('/ruta/con"comilla/dentro');
-    expect(sinComillas('"sin cerrar')).toBe('"sin cerrar');
-    expect(sinComillas('"mezcladas\'')).toBe('"mezcladas\'');
+    expect(stripQuotes('/ruta/con"comilla/dentro')).toBe('/ruta/con"comilla/dentro');
+    expect(stripQuotes('"sin cerrar')).toBe('"sin cerrar');
+    expect(stripQuotes('"mezcladas\'')).toBe('"mezcladas\'');
   });
 
   it('un valor vacío es como no tenerlo', () => {
     // Para que quien lee pueda usar `??` y caer en su valor de fábrica: unas
     // comillas vacías en el `.env` no deberían apuntar a la raíz.
     process.env.PRUEBA = '""';
-    expect(leerDelEntorno('PRUEBA')).toBeUndefined();
+    expect(readEnv('PRUEBA')).toBeUndefined();
 
     process.env.PRUEBA = '   ';
-    expect(leerDelEntorno('PRUEBA')).toBeUndefined();
+    expect(readEnv('PRUEBA')).toBeUndefined();
 
     delete process.env.PRUEBA;
-    expect(leerDelEntorno('PRUEBA')).toBeUndefined();
+    expect(readEnv('PRUEBA')).toBeUndefined();
   });
 
   it('recorta el espacio de los dos lados de las comillas', () => {
     process.env.PRUEBA = '  " /usr/bin/gs "  ';
-    expect(leerDelEntorno('PRUEBA')).toBe('/usr/bin/gs');
+    expect(readEnv('PRUEBA')).toBe('/usr/bin/gs');
   });
 });
 
@@ -77,45 +77,45 @@ describe('Negarse a arrancar contra una base que no es la mía', () => {
     NODE_ENV: 'development',
     DATABASE_URL: 'postgresql://u:p@localhost:5432/coco_dev',
   };
-  const remota = {
+  const remote = {
     NODE_ENV: 'development',
     DATABASE_URL: 'postgresql://u:p@aws-0-us-east-1.pooler.supabase.com:5432/postgres',
   };
 
   it('deja pasar la base local', () => {
-    expect(porQueNoArrancar(local)).toBeNull();
+    expect(whyRefuseToStart(local)).toBeNull();
     expect(
-      porQueNoArrancar({ ...local, DATABASE_URL: 'postgresql://u:p@127.0.0.1:5432/x' }),
+      whyRefuseToStart({ ...local, DATABASE_URL: 'postgresql://u:p@127.0.0.1:5432/x' }),
     ).toBeNull();
   });
 
   it('frena cualquier host remoto, no solo Supabase', () => {
     // La pregunta no es «¿esto es producción?» sino «¿esto es mi máquina?».
-    expect(porQueNoArrancar(remota)).toContain('no es tu máquina');
+    expect(whyRefuseToStart(remote)).toContain('no es tu máquina');
     expect(
-      porQueNoArrancar({ ...local, DATABASE_URL: 'postgresql://u:p@db.ejemplo.com:5432/x' }),
+      whyRefuseToStart({ ...local, DATABASE_URL: 'postgresql://u:p@db.ejemplo.com:5432/x' }),
     ).toContain('no es tu máquina');
   });
 
   it('en producción no se mete', () => {
-    expect(porQueNoArrancar({ ...remota, NODE_ENV: 'production' })).toBeNull();
+    expect(whyRefuseToStart({ ...remote, NODE_ENV: 'production' })).toBeNull();
   });
 
   it('se puede salir fuera, pero diciéndolo en voz alta', () => {
-    expect(porQueNoArrancar({ ...remota, [PERMISO_DE_BASE_REMOTA]: 'si' })).toBeNull();
+    expect(whyRefuseToStart({ ...remote, [ALLOW_REMOTE_DATABASE]: 'si' })).toBeNull();
     // Cualquier otra cosa no vale: el permiso es explícito o no es.
-    expect(porQueNoArrancar({ ...remota, [PERMISO_DE_BASE_REMOTA]: 'true' })).not.toBeNull();
+    expect(whyRefuseToStart({ ...remote, [ALLOW_REMOTE_DATABASE]: 'true' })).not.toBeNull();
   });
 
   it('el mensaje dice qué hacer, no solo que no', () => {
-    const dicho = porQueNoArrancar(remota) ?? '';
-    expect(dicho).toContain('api/.env.migrate');
-    expect(dicho).toContain(PERMISO_DE_BASE_REMOTA);
+    const message = whyRefuseToStart(remote) ?? '';
+    expect(message).toContain('api/.env.migrate');
+    expect(message).toContain(ALLOW_REMOTE_DATABASE);
   });
 
   it('sin DATABASE_URL no es asunto suyo', () => {
     // Falta la variable: que se queje quien la necesita, con su propio error.
-    expect(porQueNoArrancar({ NODE_ENV: 'development' })).toBeNull();
+    expect(whyRefuseToStart({ NODE_ENV: 'development' })).toBeNull();
   });
 });
 
@@ -125,30 +125,30 @@ describe('Negarse a arrancar contra una base que no es la mía', () => {
  */
 describe('Saber si esto es producción', () => {
   it('reconoce el valor limpio', () => {
-    expect(esProduccion({ NODE_ENV: 'production' })).toBe(true);
-    expect(esProduccion({ NODE_ENV: '  production  ' })).toBe(true);
+    expect(isProduction({ NODE_ENV: 'production' })).toBe(true);
+    expect(isProduction({ NODE_ENV: '  production  ' })).toBe(true);
   });
 
   it('y el entrecomillado, que es como llega la mitad del entorno del servidor', () => {
     // De las ocho variables del despliegue, cuatro llegan con las comillas
     // dentro del valor. Que NODE_ENV no sea una de ellas hoy es suerte.
-    expect(esProduccion({ NODE_ENV: '"production"' })).toBe(true);
-    expect(esProduccion({ NODE_ENV: "'production'" })).toBe(true);
+    expect(isProduction({ NODE_ENV: '"production"' })).toBe(true);
+    expect(isProduction({ NODE_ENV: "'production'" })).toBe(true);
   });
 
   it('no se deja confundir por otra cosa', () => {
-    expect(esProduccion({ NODE_ENV: 'development' })).toBe(false);
-    expect(esProduccion({ NODE_ENV: 'produccion' })).toBe(false);
-    expect(esProduccion({})).toBe(false);
+    expect(isProduction({ NODE_ENV: 'development' })).toBe(false);
+    expect(isProduction({ NODE_ENV: 'produccion' })).toBe(false);
+    expect(isProduction({})).toBe(false);
   });
 
   it('y un NODE_ENV entrecomillado NO impide arrancar en producción', () => {
     // La prueba que de verdad importa: esto es el despliegue cayéndose.
-    const servidor = {
+    const server = {
       NODE_ENV: '"production"',
       DATABASE_URL: 'postgresql://u:p@aws-0-us-east-1.pooler.supabase.com:5432/postgres',
     };
-    expect(porQueNoArrancar(servidor)).toBeNull();
+    expect(whyRefuseToStart(server)).toBeNull();
   });
 });
 
@@ -161,26 +161,26 @@ describe('Saber si esto es producción', () => {
  */
 describe('No tocar cuentas de verdad desde una sesión local', () => {
   it('en producción no se mete', () => {
-    expect(porQueNoTocarCuentasReales({ NODE_ENV: 'production' })).toBeNull();
+    expect(whyNotTouchRealAccounts({ NODE_ENV: 'production' })).toBeNull();
   });
 
   it('fuera de producción, se niega', () => {
-    expect(porQueNoTocarCuentasReales({ NODE_ENV: 'development' })).toContain('cuenta REAL');
+    expect(whyNotTouchRealAccounts({ NODE_ENV: 'development' })).toContain('cuenta REAL');
   });
 
   it('y dice que entrar sí sigue funcionando', () => {
     // Si no lo dijera, el mensaje se leería como «la autenticación está rota».
-    expect(porQueNoTocarCuentasReales({})).toContain('entrar sigue funcionando');
+    expect(whyNotTouchRealAccounts({})).toContain('entrar sigue funcionando');
   });
 
   it('se puede levantar, diciéndolo en voz alta', () => {
     expect(
-      porQueNoTocarCuentasReales({ NODE_ENV: 'development', [PERMISO_DE_AUTH_DESTRUCTIVA]: 'si' }),
+      whyNotTouchRealAccounts({ NODE_ENV: 'development', [ALLOW_DESTRUCTIVE_AUTH]: 'si' }),
     ).toBeNull();
     expect(
-      porQueNoTocarCuentasReales({
+      whyNotTouchRealAccounts({
         NODE_ENV: 'development',
-        [PERMISO_DE_AUTH_DESTRUCTIVA]: 'true',
+        [ALLOW_DESTRUCTIVE_AUTH]: 'true',
       }),
     ).not.toBeNull();
   });

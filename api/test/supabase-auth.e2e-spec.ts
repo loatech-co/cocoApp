@@ -3,7 +3,7 @@ import { SignJWT, exportJWK, generateKeyPair, type JWK } from 'jose';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
-import { PERMISO_DE_AUTH_DESTRUCTIVA } from '../src/common/env';
+import { ALLOW_DESTRUCTIVE_AUTH } from '../src/common/env';
 import { SupabaseAuthService } from '../src/modules/auth/supabase-auth.service';
 
 /**
@@ -87,11 +87,11 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
   beforeEach(() => {
     replies = {};
     calls = [];
-    process.env[PERMISO_DE_AUTH_DESTRUCTIVA] = 'si';
+    process.env[ALLOW_DESTRUCTIVE_AUTH] = 'si';
   });
 
   afterEach(() => {
-    Reflect.deleteProperty(process.env, PERMISO_DE_AUTH_DESTRUCTIVA);
+    Reflect.deleteProperty(process.env, ALLOW_DESTRUCTIVE_AUTH);
   });
 
   const token = (claims: Record<string, unknown>, issuer = `${url}auth/v1`) =>
@@ -240,7 +240,7 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
     });
 
     it('blocks every admin call outside production unless allowed, before the network', async () => {
-      Reflect.deleteProperty(process.env, PERMISO_DE_AUTH_DESTRUCTIVA);
+      Reflect.deleteProperty(process.env, ALLOW_DESTRUCTIVE_AUTH);
       await expect(service.eliminarUsuario('auth-1')).rejects.toThrow(/cuenta REAL/);
       expect(calls).toEqual([]);
     });

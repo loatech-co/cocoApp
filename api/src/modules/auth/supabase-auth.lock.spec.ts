@@ -24,15 +24,13 @@ describe('El candado de las operaciones de administración', () => {
     );
 
     expect(hastaElSiguienteMetodo).toContain("ruta.startsWith('/admin/')");
-    expect(hastaElSiguienteMetodo).toContain('porQueNoTocarCuentasReales');
+    expect(hastaElSiguienteMetodo).toContain('whyNotTouchRealAccounts');
   });
 
   it('y se comprueba ANTES de llamar a la red', () => {
     // Si el `fetch` fuera primero, el candado solo serviría para ocultar la
     // respuesta de una operación que ya ocurrió.
-    expect(fuente.indexOf('porQueNoTocarCuentasReales')).toBeLessThan(
-      fuente.indexOf('await fetch('),
-    );
+    expect(fuente.indexOf('whyNotTouchRealAccounts')).toBeLessThan(fuente.indexOf('await fetch('));
   });
 
   it('no hay ningún `fetch` fuera de `llamar`', () => {

@@ -12,13 +12,13 @@ describe('safety net', () => {
     ['uncaughtException', new Error('PANIC: timer has gone away')],
     ['unhandledRejection', new Error('rejected')],
   ])('%s logs and exits with 0, so LiteSpeed respawns without a penalty', (event, error) => {
-    const proceso = fakeProcess();
+    const proc = fakeProcess();
     const logger = { error: jest.fn() };
-    installSafetyNet(proceso as unknown as NodeJS.Process, logger);
+    installSafetyNet(proc as unknown as NodeJS.Process, logger);
 
-    proceso.emit(event, error);
+    proc.emit(event, error);
 
     expect(logger.error).toHaveBeenCalledTimes(1);
-    expect(proceso.exit).toHaveBeenCalledWith(0);
+    expect(proc.exit).toHaveBeenCalledWith(0);
   });
 });

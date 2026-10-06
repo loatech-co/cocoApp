@@ -6,7 +6,7 @@ import { type FlagName, parseFeatures } from '@coco/flags';
 
 import { CocoFlagProvider } from './coco-flag-provider';
 import { FLAG_CLIENT, FlagsService } from './flags.service';
-import { leerDelEntorno } from '../../common/env';
+import { readEnv } from '../../common/env';
 import { PreferencesService } from '../preferences/preferences.service';
 
 /** The flags `FEATURES` turns on for everyone. */
@@ -30,8 +30,7 @@ const FLAGS_DOMAIN = 'coco';
       inject: [ConfigService],
       useFactory: (config: ConfigService): ReadonlySet<FlagName> =>
         new Set(
-          parseFeatures(leerDelEntorno('FEATURES', { FEATURES: config.get<string>('FEATURES') }))
-            .names,
+          parseFeatures(readEnv('FEATURES', { FEATURES: config.get<string>('FEATURES') })).names,
         ),
     },
     {

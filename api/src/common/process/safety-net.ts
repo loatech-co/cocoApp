@@ -14,13 +14,13 @@ import { Logger } from '@nestjs/common';
  * responde 500 a todo en vez de dejar que la plataforma levante uno sano.
  */
 export function installSafetyNet(
-  proceso: Pick<NodeJS.Process, 'on' | 'exit'> = process,
+  proc: Pick<NodeJS.Process, 'on' | 'exit'> = process,
   logger: Pick<Logger, 'error'> = new Logger('Bootstrap'),
 ): void {
-  proceso.on('uncaughtException', (error: Error) => {
-    const esPanicoDePrisma = /PANIC|timer has gone away/i.test(error.message);
+  proc.on('uncaughtException', (error: Error) => {
+    const isPrismaPanic = /PANIC|timer has gone away/i.test(error.message);
     logger.error(
-      esPanicoDePrisma
+      isPrismaPanic
         ? `El motor de Prisma entró en pánico (${error.message}). El proceso se reinicia.`
         : `Excepción no atrapada: ${error.message}`,
       error.stack,
@@ -29,17 +29,17 @@ export function installSafetyNet(
     // arranque y aplica una espera antes de reintentar, que es lo que convertía
     // un pánico puntual en un 503 pegado durante minutos. Con 0 respawnea en la
     // siguiente petición.
-    proceso.exit(0);
+    proc.exit(0);
   });
 
-  proceso.on('unhandledRejection', (razon: unknown) => {
+  proc.on('unhandledRejection', (reason: unknown) => {
     logger.error(
-      `Promesa rechazada sin manejar: ${razon instanceof Error ? razon.message : String(razon)}`,
-      razon instanceof Error ? razon.stack : undefined,
+      `Promesa rechazada sin manejar: ${reason instanceof Error ? reason.message : String(reason)}`,
+      reason instanceof Error ? reason.stack : undefined,
     );
     // El mismo 0 que arriba, y por lo mismo: una promesa rechazada en marcha
     // es un fallo puntual, no un arranque roto. Con 1, LiteSpeed esperaba
     // antes de levantar otro proceso y el sitio quedaba en 503 durante minutos.
-    proceso.exit(0);
+    proc.exit(0);
   });
 }

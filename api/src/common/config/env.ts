@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { parseFeatures } from '@coco/flags';
 
-import { leerDelEntorno } from '../env';
+import { readEnv } from '../env';
 
 /**
  * The environment the API needs, checked once at boot (step 7.4, D8).
@@ -14,7 +14,7 @@ import { leerDelEntorno } from '../env';
  * required, and `main.ts` refuses to start with ONE message that lists every
  * problem at once.
  *
- * Values are read through `leerDelEntorno` before validating, so the quotes
+ * Values are read through `readEnv` before validating, so the quotes
  * LiteSpeed leaves inside a value on the server (`"production"`) and empty
  * strings are handled exactly as the rest of the code already handles them.
  *
@@ -133,12 +133,12 @@ export const ENV_VARIABLES = Object.keys(envSchema.shape) as (keyof typeof envSc
 /**
  * Why the API must NOT start with this environment, or `null` if it can.
  *
- * Same contract as `porQueNoArrancar`: `main.ts` logs the text and exits 1.
+ * Same contract as `whyRefuseToStart`: `main.ts` logs the text and exits 1.
  * Every problem is listed, one per line, so one restart fixes them all.
  */
 export function whyTheEnvironmentIsInvalid(source: NodeJS.ProcessEnv = process.env): string | null {
   const cleaned: CleanEnv = Object.fromEntries(
-    ENV_VARIABLES.map((key) => [key, leerDelEntorno(key, source)]),
+    ENV_VARIABLES.map((key) => [key, readEnv(key, source)]),
   );
   const result = envSchema.safeParse(cleaned);
 

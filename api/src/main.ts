@@ -1,13 +1,13 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { config as cargarEnv } from 'dotenv';
+import { config as loadDotenv } from 'dotenv';
 import { join } from 'node:path';
 
 import { AppModule } from './app.module';
 import { configureApp, parseOrigins } from './bootstrap';
 import { whyTheEnvironmentIsInvalid } from './common/config/env';
-import { porQueNoArrancar } from './common/env';
+import { whyRefuseToStart } from './common/env';
 import { defaultLogDirectory, JsonLogger, parseLogLevel } from './common/logging/json-logger';
 import { installSafetyNet } from './common/process/safety-net';
 import { installBigIntSerializer } from './common/serialization/bigint';
@@ -48,13 +48,13 @@ import { CONTRACT_VERSIONS, docsPath, setupApiDocs } from './openapi/document';
  * Consecuencia a tener presente: para cambiar la base ya no sirve tocar hPanel,
  * hay que cambiar el archivo `.env` que acompaña al despliegue.
  */
-function cargarConfiguracion(): void {
-  const archivo = join(__dirname, '..', process.env.NODE_ENV === 'test' ? '.env.test' : '.env');
-  const { parsed } = cargarEnv({ path: archivo, override: true });
+function loadConfiguration(): void {
+  const file = join(__dirname, '..', process.env.NODE_ENV === 'test' ? '.env.test' : '.env');
+  const { parsed } = loadDotenv({ path: file, override: true });
   if (!parsed) {
-    Logger.warn(`No se encontró ${archivo}; se usan las variables del entorno.`, 'Bootstrap');
+    Logger.warn(`No se encontró ${file}; se usan las variables del entorno.`, 'Bootstrap');
   }
-  desentrecomillar();
+  unquoteDatabaseUrls();
 }
 
 /**
@@ -71,20 +71,20 @@ function cargarConfiguracion(): void {
  * copiar— porque entonces el valor heredado es lo único que queda, y así al
  * menos es utilizable en vez de fallar por un par de comillas.
  */
-function desentrecomillar(): void {
-  for (const clave of ['DATABASE_URL', 'DIRECT_URL']) {
-    const valor = process.env[clave];
-    if (!valor) continue;
-    const limpio = valor.replace(/^(['"])(.*)\1$/s, '$2');
-    if (limpio !== valor) {
-      process.env[clave] = limpio;
-      Logger.warn(`Se quitaron las comillas de ${clave}, heredada del entorno.`, 'Bootstrap');
+function unquoteDatabaseUrls(): void {
+  for (const key of ['DATABASE_URL', 'DIRECT_URL']) {
+    const value = process.env[key];
+    if (!value) continue;
+    const unquoted = value.replace(/^(['"])(.*)\1$/s, '$2');
+    if (unquoted !== value) {
+      process.env[key] = unquoted;
+      Logger.warn(`Se quitaron las comillas de ${key}, heredada del entorno.`, 'Bootstrap');
     }
   }
 }
 
 async function bootstrap(): Promise<void> {
-  cargarConfiguracion();
+  loadConfiguration();
 
   /*
     Antes de nada: ¿a qué base apunta esto?
@@ -100,9 +100,9 @@ async function bootstrap(): Promise<void> {
   */
   // The environment is checked first, whole (step 7.4): one message listing
   // every missing or invalid variable instead of a crash at the first use.
-  const impedimento = whyTheEnvironmentIsInvalid() ?? porQueNoArrancar();
-  if (impedimento !== null) {
-    new Logger('Bootstrap').error(impedimento);
+  const blocker = whyTheEnvironmentIsInvalid() ?? whyRefuseToStart();
+  if (blocker !== null) {
+    new Logger('Bootstrap').error(blocker);
     process.exit(1);
   }
 

@@ -71,7 +71,7 @@ export class AdminService {
 
     const actualizado = await this.users.approve(adminId, userId);
 
-    await this.audit.registrar({
+    await this.audit.record({
       userId: adminId,
       entity: 'users',
       entityId: userId,
@@ -96,7 +96,7 @@ export class AdminService {
     const actualizado = await this.users.setStatus(adminId, userId, 'suspended');
     await this.auth.revocarTodasLasSesiones(userId);
 
-    await this.audit.registrar({
+    await this.audit.record({
       userId: adminId,
       entity: 'users',
       entityId: userId,
@@ -113,7 +113,7 @@ export class AdminService {
 
     const actualizado = await this.users.setStatus(adminId, userId, 'active');
 
-    await this.audit.registrar({
+    await this.audit.record({
       userId: adminId,
       entity: 'users',
       entityId: userId,
@@ -145,7 +145,7 @@ export class AdminService {
     // persona vuelva a entrar y vea su nuevo contexto desde cero.
     await this.auth.revocarTodasLasSesiones(userId);
 
-    await this.audit.registrar({
+    await this.audit.record({
       userId: adminId,
       entity: 'users',
       entityId: userId,
@@ -189,7 +189,7 @@ export class AdminService {
     await this.supabase.cambiarContrasena(usuario.authId, nueva);
     await this.auth.revocarTodasLasSesiones(userId);
 
-    await this.audit.registrar({
+    await this.audit.record({
       userId: adminId,
       entity: 'users',
       entityId: userId,

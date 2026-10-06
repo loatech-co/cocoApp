@@ -2,7 +2,7 @@ import { unlink } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 
 import { abrir, almacenListo, existe, guardar, rutaDe } from './soportes.almacen';
-import { leerDelEntorno } from '../../common/env';
+import { readEnv } from '../../common/env';
 
 /**
  * Where receipt files live (phase 6.9).
@@ -34,7 +34,7 @@ export const RECEIPT_STORE = Symbol('RECEIPT_STORE');
 
 /** `SOPORTES_STORAGE` if set; otherwise Supabase in production and disk elsewhere. */
 export function chosenStore(env: NodeJS.ProcessEnv): 'supabase' | 'disk' {
-  const declared = leerDelEntorno('SOPORTES_STORAGE');
+  const declared = readEnv('SOPORTES_STORAGE');
   if (declared === 'supabase' || declared === 'disk') return declared;
   return env.NODE_ENV === 'production' ? 'supabase' : 'disk';
 }
@@ -42,12 +42,12 @@ export function chosenStore(env: NodeJS.ProcessEnv): 'supabase' | 'disk' {
 export function createReceiptStore(env: NodeJS.ProcessEnv = process.env): ReceiptStore {
   if (chosenStore(env) === 'disk') return new DiskReceiptStore();
 
-  const url = leerDelEntorno('SUPABASE_URL');
-  const key = leerDelEntorno('SUPABASE_SERVICE_ROLE_KEY');
+  const url = readEnv('SUPABASE_URL');
+  const key = readEnv('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !key) {
     throw new Error('SOPORTES_STORAGE=supabase needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   }
-  return new SupabaseReceiptStore(url, key, leerDelEntorno('SOPORTES_BUCKET') ?? 'soportes');
+  return new SupabaseReceiptStore(url, key, readEnv('SOPORTES_BUCKET') ?? 'soportes');
 }
 
 class DiskReceiptStore implements ReceiptStore {

@@ -571,7 +571,7 @@ Every variable the API reads is declared once, with its type and whether it
 is required, in `api/src/common/config/env.ts` (zod). `main.ts` validates the
 environment before anything else and refuses to start with one message that
 lists every missing or invalid variable; then the "no remote database outside
-production" guard runs. Values go through `leerDelEntorno` first, so quotes
+production" guard runs. Values go through `readEnv` first, so quotes
 LiteSpeed leaves inside a value and empty strings behave as everywhere else.
 
 A new variable goes into the schema (and `api/.env.example`) in the same PR

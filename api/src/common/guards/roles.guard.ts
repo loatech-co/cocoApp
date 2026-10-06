@@ -31,17 +31,17 @@ export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requeridos = this.reflector.getAllAndOverride<UserRole[] | undefined>(ROLES_KEY, [
+    const required = this.reflector.getAllAndOverride<UserRole[] | undefined>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (!requeridos || requeridos.length === 0) return true;
+    if (!required || required.length === 0) return true;
 
     const request = context.switchToHttp().getRequest<Request>();
-    const rol = request.user?.role;
+    const role = request.user?.role;
 
-    if (!rol || !requeridos.includes(rol)) {
+    if (!role || !required.includes(role)) {
       throw new ForbiddenException('No tienes permiso para esta operación.');
     }
 

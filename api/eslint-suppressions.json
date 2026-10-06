@@ -4,11 +4,6 @@
       "count": 1
     }
   },
-  "src/common/process/safety-net.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
   "src/common/proxy/client-ip.ts": {
     "@typescript-eslint/naming-convention": {
       "count": 1

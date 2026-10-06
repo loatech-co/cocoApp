@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 import { esCorreoRepetido } from './supabase-auth.errors';
-import { porQueNoTocarCuentasReales } from '../../common/env';
+import { whyNotTouchRealAccounts } from '../../common/env';
 import {
   AuthenticationError,
   ForbiddenError,
@@ -230,7 +230,7 @@ export class SupabaseAuthService {
       sigue pudiendo usar en local, que es el objetivo.
     */
     if (ruta.startsWith('/admin/')) {
-      const impedimento = porQueNoTocarCuentasReales();
+      const impedimento = whyNotTouchRealAccounts();
       if (impedimento !== null) {
         this.logger.warn(`Operación de administración bloqueada: ${metodo} ${ruta}`);
         throw new ForbiddenError(impedimento, { code: 'real_accounts_protected' });

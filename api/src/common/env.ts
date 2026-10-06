@@ -27,24 +27,21 @@
  * Solo se quitan las comillas EMPAREJADAS de los extremos. Una ruta que de
  * verdad lleve una comilla en medio se queda como está.
  */
-export function leerDelEntorno(
-  nombre: string,
-  entorno: NodeJS.ProcessEnv = process.env,
-): string | undefined {
-  const crudo = entorno[nombre]?.trim();
-  if (!crudo) return undefined;
+export function readEnv(name: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
+  const raw = env[name]?.trim();
+  if (!raw) return undefined;
 
-  const limpio = sinComillas(crudo);
-  return limpio === '' ? undefined : limpio;
+  const clean = stripQuotes(raw);
+  return clean === '' ? undefined : clean;
 }
 
 /** `"algo"` y `'algo'` son `algo`. Lo demás se queda igual. */
-export function sinComillas(valor: string): string {
-  const primera = valor[0];
-  if ((primera === '"' || primera === "'") && valor.length >= 2 && valor.endsWith(primera)) {
-    return valor.slice(1, -1).trim();
+export function stripQuotes(value: string): string {
+  const first = value[0];
+  if ((first === '"' || first === "'") && value.length >= 2 && value.endsWith(first)) {
+    return value.slice(1, -1).trim();
   }
-  return valor;
+  return value;
 }
 
 /**
@@ -67,18 +64,18 @@ export function sinComillas(valor: string): string {
  * Una variable de la que depende el arranque no puede leerse de forma más
  * frágil que `SOPORTES_DIR`.
  */
-export function esProduccion(entorno: NodeJS.ProcessEnv = process.env): boolean {
-  return sinComillas((entorno.NODE_ENV ?? '').trim()) === 'production';
+export function isProduction(env: NodeJS.ProcessEnv = process.env): boolean {
+  return stripQuotes((env.NODE_ENV ?? '').trim()) === 'production';
 }
 
 /** Los únicos hosts que cuentan como «mi máquina». */
 const HOSTS_LOCALES = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0', 'host.docker.internal']);
 
 /** La válvula de escape, para cuando apuntar fuera es deliberado. */
-export const PERMISO_DE_BASE_REMOTA = 'PERMITIR_BASE_REMOTA';
+export const ALLOW_REMOTE_DATABASE = 'PERMITIR_BASE_REMOTA';
 
 /** El host de una URL de conexión, o `null` si no se puede leer. */
-function hostDeLaBase(url: string): string | null {
+function databaseHost(url: string): string | null {
   try {
     return new URL(url).hostname || null;
   } catch {
@@ -111,14 +108,14 @@ function hostDeLaBase(url: string): string | null {
  * entonces es un acto deliberado que se ve en el entorno y en el registro, no
  * un valor heredado que nadie revisó.
  */
-export function porQueNoArrancar(entorno: NodeJS.ProcessEnv = process.env): string | null {
-  if (esProduccion(entorno)) return null;
-  if (leerDelEntorno(PERMISO_DE_BASE_REMOTA, entorno)?.toLowerCase() === 'si') return null;
+export function whyRefuseToStart(env: NodeJS.ProcessEnv = process.env): string | null {
+  if (isProduction(env)) return null;
+  if (readEnv(ALLOW_REMOTE_DATABASE, env)?.toLowerCase() === 'si') return null;
 
-  const url = leerDelEntorno('DATABASE_URL', entorno);
+  const url = readEnv('DATABASE_URL', env);
   if (!url) return null; // Sin URL falla más abajo, con su propio mensaje.
 
-  const host = hostDeLaBase(url);
+  const host = databaseHost(url);
   if (host === null) return null; // Ilegible: que se queje quien la use.
   if (HOSTS_LOCALES.has(host)) return null;
 
@@ -128,12 +125,12 @@ export function porQueNoArrancar(entorno: NodeJS.ProcessEnv = process.env): stri
     `La API no arranca: una sesión de desarrollo no debe escribir en una base ` +
     `remota. Apunta DATABASE_URL y DIRECT_URL al Postgres local —el mismo de ` +
     `api/.env.migrate— o, si de verdad quieres salir fuera, dilo con ` +
-    `${PERMISO_DE_BASE_REMOTA}=si.`
+    `${ALLOW_REMOTE_DATABASE}=si.`
   );
 }
 
 /** La válvula de escape del candado de abajo. */
-export const PERMISO_DE_AUTH_DESTRUCTIVA = 'PERMITIR_AUTH_DESTRUCTIVA';
+export const ALLOW_DESTRUCTIVE_AUTH = 'PERMITIR_AUTH_DESTRUCTIVA';
 
 /**
  * Por qué esta sesión NO puede tocar cuentas de verdad, o `null` si puede.
@@ -159,11 +156,9 @@ export const PERMISO_DE_AUTH_DESTRUCTIVA = 'PERMITIR_AUTH_DESTRUCTIVA';
  * probar el registro sin crear usuarios—. Ese día se enciende el permiso y ya;
  * no hay que volver a tocar este archivo.
  */
-export function porQueNoTocarCuentasReales(
-  entorno: NodeJS.ProcessEnv = process.env,
-): string | null {
-  if (esProduccion(entorno)) return null;
-  if (leerDelEntorno(PERMISO_DE_AUTH_DESTRUCTIVA, entorno)?.toLowerCase() === 'si') return null;
+export function whyNotTouchRealAccounts(env: NodeJS.ProcessEnv = process.env): string | null {
+  if (isProduction(env)) return null;
+  if (readEnv(ALLOW_DESTRUCTIVE_AUTH, env)?.toLowerCase() === 'si') return null;
 
   return (
     `Esta operación cambia una cuenta REAL en Supabase Auth, y NODE_ENV no es ` +
@@ -172,6 +167,6 @@ export function porQueNoTocarCuentasReales(
     `toca en el proyecto del sitio publicado. Para entrar y probar la ` +
     `aplicación no hace falta —entrar sigue funcionando—; para crear, borrar o ` +
     `cambiarle la contraseña a alguien, sí. Si de verdad es lo que querés, ` +
-    `dilo con ${PERMISO_DE_AUTH_DESTRUCTIVA}=si.`
+    `dilo con ${ALLOW_DESTRUCTIVE_AUTH}=si.`
   );
 }
