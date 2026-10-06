@@ -3,7 +3,7 @@ import { MAX_LENGTH, MIN_LENGTH, derivesFromPersonalData, evaluatePolicy } from 
 describe('Política de contraseñas', () => {
   describe('evaluarPolitica', () => {
     it('acepta una contraseña que cumple las cuatro reglas y la longitud', () => {
-      expect(evaluatePolicy('Xk9$Ronda-Verde!')).toEqual({ valid: true, problems: [] });
+      expect(evaluatePolicy('Xk9$Ronda-Verde!')).toEqual({ isValid: true, problems: [] });
     });
 
     it.each([
@@ -13,15 +13,15 @@ describe('Política de contraseñas', () => {
       ['Abcdefghijkl$', 'Debe incluir al menos un número.'],
       ['Abcdefghijkl1', 'Debe incluir al menos un símbolo (por ejemplo: ! @ # $ % & *).'],
     ])('rechaza %p con el motivo exacto', (password, reason) => {
-      const { valid, problems } = evaluatePolicy(password);
-      expect(valid).toBe(false);
+      const { isValid, problems } = evaluatePolicy(password);
+      expect(isValid).toBe(false);
       expect(problems).toContain(reason);
     });
 
     it('acepta exactamente la longitud mínima', () => {
       const password = `Ab1$${'x'.repeat(MIN_LENGTH - 4)}`;
       expect(password).toHaveLength(MIN_LENGTH);
-      expect(evaluatePolicy(password).valid).toBe(true);
+      expect(evaluatePolicy(password).isValid).toBe(true);
     });
 
     it('rechaza por encima del máximo, para que argon2 no sea un vector de denegación', () => {
@@ -38,7 +38,7 @@ describe('Política de contraseñas', () => {
     });
 
     it('acepta espacios EN MEDIO: las frases largas son buenas contraseñas', () => {
-      expect(evaluatePolicy('Un Perro 7 Azul!').valid).toBe(true);
+      expect(evaluatePolicy('Un Perro 7 Azul!').isValid).toBe(true);
     });
 
     it('acumula TODOS los incumplimientos, no solo el primero', () => {

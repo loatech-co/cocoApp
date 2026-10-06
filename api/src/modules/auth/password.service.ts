@@ -41,13 +41,13 @@ export class PasswordService {
     password: string,
     personal: { email?: string | undefined; displayName?: string | undefined } = {},
   ): Promise<void> {
-    const { valid, problems } = evaluatePolicy(password);
+    const { isValid, problems } = evaluatePolicy(password);
 
     if (derivesFromPersonalData(password, personal)) {
       problems.push('No puede contener tu nombre ni tu correo.');
     }
 
-    if (valid && problems.length === 0 && (await this.appearsInBreaches(password))) {
+    if (isValid && problems.length === 0 && (await this.appearsInBreaches(password))) {
       problems.push('Esta contraseña aparece en filtraciones públicas conocidas. Elige otra.');
     }
 

@@ -13,10 +13,10 @@ export class AccountsRepository {
    * Toda consulta filtra por `userId`. No es una convención de estilo: sin ese
    * filtro, cambiar un id en la URL leería datos de otro usuario (IDOR).
    */
-  async list(userId: bigint, includeArchived: boolean): Promise<Account[]> {
+  async list(userId: bigint, shouldIncludeArchived: boolean): Promise<Account[]> {
     return this.db.forUser(userId, (tx) =>
       tx.account.findMany({
-        where: { userId, ...(includeArchived ? {} : { isArchived: false }) },
+        where: { userId, ...(shouldIncludeArchived ? {} : { isArchived: false }) },
         orderBy: [{ isArchived: 'asc' }, { name: 'asc' }],
       }),
     );

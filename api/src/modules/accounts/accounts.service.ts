@@ -34,9 +34,9 @@ export interface Account {
 export class AccountsService {
   constructor(private readonly repo: AccountsRepository) {}
 
-  async list(userId: bigint, includeArchived = false): Promise<Account[]> {
+  async list(userId: bigint, shouldIncludeArchived = false): Promise<Account[]> {
     const [rows, movementsByAccount] = await Promise.all([
-      this.repo.list(userId, includeArchived),
+      this.repo.list(userId, shouldIncludeArchived),
       this.repo.balanceMovements(userId),
     ]);
 

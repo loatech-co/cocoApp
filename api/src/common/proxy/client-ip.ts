@@ -42,10 +42,10 @@ const SAMPLES = 20;
  * process, so leaving it on by mistake cannot flood the log.
  */
 export function proxyHeadersProbe(
-  enabled: boolean,
+  isEnabled: boolean,
   log: (entry: Record<string, unknown>) => void,
 ): (req: Request, res: Response, next: NextFunction) => void {
-  let left = enabled ? SAMPLES : 0;
+  let left = isEnabled ? SAMPLES : 0;
 
   return (req, _res, next) => {
     if (left > 0) {

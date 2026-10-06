@@ -92,7 +92,7 @@ export class AuthService {
   async register(
     input: { email: string; password: string; displayName: string },
     context: RequestContext,
-  ): Promise<{ pendingApproval: boolean }> {
+  ): Promise<{ isPendingApproval: boolean }> {
     const email = normalizeEmail(input.email);
     const displayName = input.displayName.trim();
 
@@ -106,7 +106,7 @@ export class AuthService {
 
     if (!authId) {
       this.logger.warn('Intento de registro sobre un correo ya existente.');
-      return { pendingApproval: true };
+      return { isPendingApproval: true };
     }
 
     const isInitialAdmin = this.initialAdminEmail === email;
@@ -162,7 +162,7 @@ export class AuthService {
       userAgent: context.userAgent,
     });
 
-    return { pendingApproval: user.status === 'pending' };
+    return { isPendingApproval: user.status === 'pending' };
   }
 
   // ── Login ──────────────────────────────────────────────────────────────────

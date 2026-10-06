@@ -21,7 +21,7 @@ export const MIN_LENGTH = 12;
 export const MAX_LENGTH = 128;
 
 export interface PolicyResult {
-  valid: boolean;
+  isValid: boolean;
   /** Todos los incumplimientos, no solo el primero: corregir de a uno es
    *  frustrante y empuja a elegir la contraseña más floja que pase. */
   problems: string[];
@@ -57,7 +57,7 @@ export function evaluatePolicy(password: string): PolicyResult {
     problems.push('No puede empezar ni terminar con espacios.');
   }
 
-  return { valid: problems.length === 0, problems };
+  return { isValid: problems.length === 0, problems };
 }
 
 /**

@@ -1,44 +1,4 @@
 {
-  "src/common/proxy/client-ip.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/main.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/modules/accounts/accounts.repository.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/modules/accounts/accounts.service.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/modules/auth/auth.controller.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/modules/auth/auth.v2.controller.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/modules/auth/password.policy.spec.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
-  "src/modules/auth/password.service.ts": {
-    "@typescript-eslint/naming-convention": {
-      "count": 1
-    }
-  },
   "src/modules/categories/categories.service.ts": {
     "@typescript-eslint/naming-convention": {
       "count": 2

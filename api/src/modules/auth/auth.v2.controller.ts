@@ -95,10 +95,10 @@ export class AuthV2Controller {
     @Body() input: RegisterDto,
     @Req() request: Request,
   ): Promise<{ pendingApproval: boolean; message: string }> {
-    const { pendingApproval } = await this.auth.register(input, contextOf(request));
+    const { isPendingApproval } = await this.auth.register(input, contextOf(request));
     return {
-      pendingApproval,
-      message: pendingApproval
+      pendingApproval: isPendingApproval,
+      message: isPendingApproval
         ? 'Recibimos tu solicitud. Un administrador debe aprobarla antes de que puedas entrar.'
         : 'Tu cuenta de administrador quedó lista. Ya puedes entrar.',
     };
