@@ -73,6 +73,17 @@ It opens **one** read-only SSH connection (`BatchMode`, with a time limit) and
 runs a single `awk` there, because of the account's process limit. With
 `--file api.log …` it reads local files; with `--json` it prints for machines.
 
+### The web moved to the v2 (step 7.4 for the web)
+
+- **After the deploy that moved the web to `/api/v2`, every user signs in
+  once.** The refresh cookie of the v2 lives at `Path=/api/v2/auth`; the old
+  one, at the v1's path, never reaches the v2, so the first visit after that
+  deploy lands on the login. Nothing is lost: it is one sign-in per browser.
+- **`VITE_API_BASE_URL` is now `VITE_API_ORIGIN`**, and it holds only the
+  origin (`http://localhost:3000`), without `/api/v1`: the generated client
+  adds the versioned path. Rename it in every local `frontend/.env`; empty
+  means the same origin, which is what production uses.
+
 ## Roll back
 
 **Undo with `git revert` in a new PR through `merge.sh`. Never force-push

@@ -20,12 +20,20 @@ types and calls generated from it. The plan's default was
 ## Decision outcome
 
 **`@nestjs/swagger@11` (the line that supports Nest 11) → Orval,
-`client: 'fetch'`, generated during `build`. Mock and hook generation stay
-off; a `mutator` adds the auth header in one place.**
+`client: 'fetch'`, from `api/openapi.v2.json`. The generated client is
+COMMITTED (`frontend/src/shared/api/generated/`) and CI regenerates it and
+fails if it differs; it is NOT generated during `build`. Mock and hook
+generation stay off; a `mutator` adds the auth header in one place.**
+
+Amended in step 7.4 for the web: the first wording said "generated during
+`build`". It cannot be: the host (hbuilds) installs without devDependencies,
+so Orval is not there when it builds.
 
 ## Consequences
 
 - Good: types and functions from one stable tool; the plan's reason — hooks
   written by hand per feature — still holds.
-- Bad: a generated client to keep in step with the OpenAPI output; the build
-  regenerates it so it cannot drift silently.
+- Bad: a generated client to keep in step with the OpenAPI output. A PR that
+  changes the v2 contract regenerates it and commits it
+  (`npm run generate:api --workspace frontend`); CI's comparison keeps it
+  from drifting silently.

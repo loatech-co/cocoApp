@@ -105,7 +105,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await use(async () => {
       // Through the page's own request context, so the refresh cookie lands in
       // the browser exactly as a real login leaves it.
-      const response = await page.request.post('/api/v1/auth/login', {
+      const response = await page.request.post('/api/v2/auth/login', {
         data: { email: cuenta.email, password: PASSWORD },
       });
       expect(response.ok()).toBeTruthy();
