@@ -17,7 +17,7 @@
  * and the full name would make them collide.
  */
 
-export const LOCALE = 'es-CO';
+const LOCALE = 'es-CO';
 
 // ── Dates ───────────────────────────────────────────────────────────────────
 

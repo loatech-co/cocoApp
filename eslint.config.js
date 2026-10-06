@@ -27,10 +27,30 @@ import eslintReact from '@eslint-react/eslint-plugin';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import prettier from 'eslint-config-prettier/flat';
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
+import i18next from 'eslint-plugin-i18next';
 import { importX } from 'eslint-plugin-import-x';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+
+// ── Text: the catalog (step 7.3, D5/D6) ─────────────────────────────────────
+/*
+ * Every text a person reads lives in `frontend/src/locales/es.json` and is
+ * read with `t` (`shared/lib/i18n.ts`). `i18next/no-literal-string`, in
+ * `jsx-text-only` mode, fails on any text with letters written as a JSX child
+ * in `frontend/src` (attributes and module strings are not linted: too many
+ * of them are classes, ids and keys; `locales/inventario.test.ts` guards the
+ * catalog's side). Strings without letters (`·`, `—`, `%`, numbers) are
+ * never flagged.
+ *
+ * THE list of exceptions: a text that is not here goes to the catalog. Each
+ * entry is matched as a whole word list (a regex, as the plugin reads it) and
+ * says why it is not text to translate.
+ */
+const TEXT_EXCEPTIONS = [];
+
+/** `·`, `—`, `%`, `/`, a number: punctuation and figures are not language. */
+const NO_LETTERS = /^[^\p{L}]*$/u;
 
 // ── Design: use what shared/ui already has (step 7.4-web-c) ─────────────────
 /*
@@ -342,6 +362,26 @@ export default defineConfig(
     rules: {
       'coco/no-raw-elements': 'error',
       'coco/no-arbitrary-values': 'error',
+    },
+  },
+  {
+    // See «Text: the catalog» at the top. Tests and stories write the text
+    // they look for or show on purpose; the catalog is for the product.
+    files: ['frontend/src/**/*.tsx'],
+    ignores: [
+      'frontend/src/**/*.test.tsx',
+      'frontend/src/**/*.stories.tsx',
+      'frontend/src/pruebas/**',
+    ],
+    plugins: { i18next },
+    rules: {
+      'i18next/no-literal-string': [
+        'error',
+        {
+          mode: 'jsx-text-only',
+          words: { exclude: [NO_LETTERS, ...TEXT_EXCEPTIONS.map((e) => e.text)] },
+        },
+      ],
     },
   },
   {
