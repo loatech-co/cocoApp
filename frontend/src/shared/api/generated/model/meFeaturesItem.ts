@@ -12,10 +12,9 @@
  * Identifiers are integers (int64) and money travels as a decimal string.
  * OpenAPI spec version: 2
  */
-import type { AuthMe200Meta } from './authMe200Meta';
-import type { Me } from './me';
 
-export type AuthMe200 = {
-  data: Me;
-  meta: AuthMe200Meta;
-};
+export type MeFeaturesItem = (typeof MeFeaturesItem)[keyof typeof MeFeaturesItem];
+
+export const MeFeaturesItem = {
+  flags_canary: 'flags_canary',
+} as const;

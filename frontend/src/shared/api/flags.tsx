@@ -11,8 +11,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, type ReactNode } from 'react';
 
-import { apiFetch } from '@/shared/api/api-client';
 import { useAuth } from '@/shared/api/auth-context';
+import { authMe } from '@/shared/api/generated/auth-v2/auth-v2';
 import type { FlagName } from '@coco/flags';
 
 /**
@@ -64,11 +64,6 @@ class ActiveFlagsProvider implements Provider {
 const provider = new ActiveFlagsProvider();
 void OpenFeature.setProviderAndWait(FLAGS_DOMAIN, provider);
 
-/** The part of `/auth/me` this file reads. */
-interface Me {
-  features?: FlagName[];
-}
-
 /**
  * Asks `/auth/me` once per signed-in user and keeps the provider in step.
  * Signing out empties the list, so the next account never sees the last one's
@@ -80,7 +75,8 @@ export function FlagsProvider({ children }: { children: ReactNode }) {
 
   const { data } = useQuery({
     queryKey: ['auth', 'me', 'features', userId],
-    queryFn: async () => (await apiFetch<Me>('/auth/me')).data.features ?? [],
+    // `?? []`: an older API answered without the field.
+    queryFn: async () => ((await authMe()).data.features as FlagName[] | undefined) ?? [],
     enabled: userId !== undefined,
     staleTime: Infinity,
   });

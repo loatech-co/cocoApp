@@ -12,10 +12,17 @@
  * Identifiers are integers (int64) and money travels as a decimal string.
  * OpenAPI spec version: 2
  */
-import type { AuthMe200Meta } from './authMe200Meta';
-import type { Me } from './me';
+import type { MeFeaturesItem } from './meFeaturesItem';
+import type { MeRole } from './meRole';
+import type { MeStatus } from './meStatus';
 
-export type AuthMe200 = {
-  data: Me;
-  meta: AuthMe200Meta;
-};
+export interface Me {
+  role: MeRole;
+  status: MeStatus;
+  features: MeFeaturesItem[];
+  id: number;
+  email: string;
+  /** @nullable */
+  displayName: string | null;
+  createdAt: string;
+}

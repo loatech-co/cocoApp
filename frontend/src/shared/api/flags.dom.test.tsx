@@ -10,14 +10,14 @@ import { FlagsProvider, useFlag } from './flags';
  * turns everything off again. `flags_canary` is the registry's canary.
  */
 const sesion = vi.hoisted(() => ({ usuario: null as { id: number } | null }));
-const apiFetch = vi.hoisted(() => vi.fn());
+const authMe = vi.hoisted(() => vi.fn());
 
 vi.mock('./auth-context', () => ({ useAuth: () => sesion }));
-vi.mock('./api-client', () => ({ apiFetch }));
+vi.mock('./generated/auth-v2/auth-v2', () => ({ authMe }));
 
 afterEach(() => {
   cleanup();
-  apiFetch.mockReset();
+  authMe.mockReset();
 });
 
 function Sonda() {
@@ -42,16 +42,16 @@ describe('FlagsProvider', () => {
     sesion.usuario = null;
     montar();
     expect(screen.getByText('apagada')).toBeTruthy();
-    expect(apiFetch).not.toHaveBeenCalled();
+    expect(authMe).not.toHaveBeenCalled();
   });
 
   it('turns on what /auth/me lists, and off again on signing out', async () => {
     sesion.usuario = { id: 1 };
-    apiFetch.mockResolvedValue({ data: { features: ['flags_canary'] }, meta: {} });
+    authMe.mockResolvedValue({ data: { features: ['flags_canary'] }, meta: {} });
     const { rerender } = montar();
 
     expect(await screen.findByText('encendida')).toBeTruthy();
-    expect(apiFetch).toHaveBeenCalledWith('/auth/me');
+    expect(authMe).toHaveBeenCalledOnce();
 
     sesion.usuario = null;
     rerender();
@@ -60,9 +60,9 @@ describe('FlagsProvider', () => {
 
   it('a response without the field (an older API) means no flags', async () => {
     sesion.usuario = { id: 2 };
-    apiFetch.mockResolvedValue({ data: {}, meta: {} });
+    authMe.mockResolvedValue({ data: {}, meta: {} });
     montar();
-    await vi.waitFor(() => expect(apiFetch).toHaveBeenCalled());
+    await vi.waitFor(() => expect(authMe).toHaveBeenCalled());
     expect(screen.getByText('apagada')).toBeTruthy();
   });
 });

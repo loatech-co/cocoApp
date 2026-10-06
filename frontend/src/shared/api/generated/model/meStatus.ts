@@ -12,10 +12,11 @@
  * Identifiers are integers (int64) and money travels as a decimal string.
  * OpenAPI spec version: 2
  */
-import type { AuthMe200Meta } from './authMe200Meta';
-import type { Me } from './me';
 
-export type AuthMe200 = {
-  data: Me;
-  meta: AuthMe200Meta;
-};
+export type MeStatus = (typeof MeStatus)[keyof typeof MeStatus];
+
+export const MeStatus = {
+  pending: 'pending',
+  active: 'active',
+  suspended: 'suspended',
+} as const;
