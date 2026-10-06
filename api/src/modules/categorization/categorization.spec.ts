@@ -11,29 +11,29 @@ const DELIVERY = 10n;
 const GROCERIES = 20n;
 const TRANSPORT = 30n;
 
-describe('Categorización automática (T1)', () => {
+describe('Automatic categorization (T1)', () => {
   const noContext = { history: [], rules: [] };
 
-  describe('cuándo NO sugiere', () => {
+  describe('when it does NOT suggest', () => {
     it.each<[string, string | null | undefined]>([
       ['vacía', ''],
       ['null', null],
       ['undefined', undefined],
-    ])('devuelve null con una descripción %s', (_, description) => {
+    ])('returns null with a %s description', (_, description) => {
       expect(suggestCategory(description, noContext)).toBeNull();
     });
 
-    it('devuelve null sin historial ni reglas', () => {
+    it('returns null without history or rules', () => {
       expect(suggestCategory('Exito Poblado', noContext)).toBeNull();
     });
 
-    it('devuelve null cuando la descripción es solo ruido', () => {
+    it('returns null when the description is only noise', () => {
       expect(suggestCategory('REF 000123', { history: [], rules: RULES })).toBeNull();
     });
 
-    it('calla cuando el historial está repartido y ninguna categoría domina', () => {
-      // Sugerir mal es peor que no sugerir: una categoría equivocada que se
-      // cuela sin mirar contamina los informes durante meses.
+    it('stays quiet when the history is split and no category dominates', () => {
+      // A wrong suggestion is worse than none: a wrong category that slips in
+      // unnoticed pollutes the reports for months.
       const history: HistoryEntry[] = [
         { description: 'Rappi', categoryId: DELIVERY },
         { description: 'Rappi', categoryId: GROCERIES },
@@ -43,28 +43,28 @@ describe('Categorización automática (T1)', () => {
     });
   });
 
-  describe('aprende del historial', () => {
+  describe('learns from the history', () => {
     const history: HistoryEntry[] = [
       { description: 'RAPPI*RESTAURANTE', categoryId: DELIVERY },
       { description: 'Rappi Comida', categoryId: DELIVERY },
       { description: 'rappi ref 998877', categoryId: DELIVERY },
     ];
 
-    it('sugiere lo que la persona ya viene clasificando', () => {
+    it('suggests what the person has been classifying', () => {
       const suggestion = suggestCategory('RAPPI Domicilio', { history, rules: [] });
       expect(suggestion).toMatchObject({ categoryId: DELIVERY, reason: 'history' });
       expect(suggestion!.confidence).toBe(100);
     });
 
-    it('ignora tildes, mayúsculas y ruido de referencia al comparar', () => {
+    it('ignores accents, case and reference noise when comparing', () => {
       expect(suggestCategory('compra rappi REF 12345', { history, rules: [] })).toMatchObject({
         categoryId: DELIVERY,
       });
     });
 
-    it('el historial GANA a las reglas sembradas', () => {
-      // Las listas envejecen; el historial refleja cómo organiza SUS finanzas
-      // esta persona, no las mías.
+    it('the history BEATS the seeded rules', () => {
+      // Lists age; the history reflects how THIS person organizes their
+      // finances, not how I do.
       const rules: CategoryRule[] = [
         { pattern: 'rappi', categoryId: GROCERIES, priority: 0, isSeeded: true },
       ];
@@ -74,11 +74,11 @@ describe('Categorización automática (T1)', () => {
       });
     });
 
-    it('no sugiere nada si ningún antecedente comparte palabras', () => {
+    it('suggests nothing if no past transaction shares words', () => {
       expect(suggestCategory('Terpel Calle 10', { history, rules: [] })).toBeNull();
     });
 
-    it('la categoría dominante gana aunque haya algo de ruido', () => {
+    it('the dominant category wins even with some noise', () => {
       const mixed: HistoryEntry[] = [...history, { description: 'Rappi', categoryId: GROCERIES }];
       const suggestion = suggestCategory('Rappi', { history: mixed, rules: [] });
       expect(suggestion).toMatchObject({ categoryId: DELIVERY });
@@ -87,15 +87,15 @@ describe('Categorización automática (T1)', () => {
     });
   });
 
-  describe('reglas por palabra clave', () => {
-    it('sugiere desde una regla sembrada, con confianza moderada', () => {
+  describe('keyword rules', () => {
+    it('suggests from a seeded rule, with moderate confidence', () => {
       const suggestion = suggestCategory('EXITO POBLADO', { history: [], rules: RULES });
       expect(suggestion).toMatchObject({ categoryId: GROCERIES, reason: 'seeded_rule' });
-      // Moderada a propósito: una regla sembrada es una suposición nuestra.
+      // Moderate on purpose: a seeded rule is our guess.
       expect(suggestion!.confidence).toBe(60);
     });
 
-    it('una regla propia pesa más que una sembrada', () => {
+    it('an own rule weighs more than a seeded one', () => {
       const rules: CategoryRule[] = [
         { pattern: 'exito', categoryId: GROCERIES, priority: 0, isSeeded: true },
         { pattern: 'exito', categoryId: DELIVERY, priority: 10 },
@@ -105,7 +105,7 @@ describe('Categorización automática (T1)', () => {
       expect(suggestion!.confidence).toBe(85);
     });
 
-    it('a igual prioridad gana el patrón más específico', () => {
+    it('at equal priority the most specific pattern wins', () => {
       const rules: CategoryRule[] = [
         { pattern: 'juan', categoryId: GROCERIES, priority: 0 },
         { pattern: 'juan valdez', categoryId: DELIVERY, priority: 0 },
@@ -115,28 +115,28 @@ describe('Categorización automática (T1)', () => {
       });
     });
 
-    it('ignora patrones vacíos sin reventar', () => {
+    it('ignores empty patterns without blowing up', () => {
       const rules: CategoryRule[] = [{ pattern: '', categoryId: GROCERIES, priority: 99 }];
       expect(suggestCategory('Lo que sea', { history: [], rules })).toBeNull();
     });
   });
 
   describe('tokensSignificativos', () => {
-    it('descarta palabras de menos de tres letras', () => {
+    it('drops words shorter than three letters', () => {
       expect([...significantTokens('d1 la 10 casa')]).toEqual(['casa']);
     });
 
-    it('descarta palabras vacías de comercio', () => {
+    it('drops merchant stop words', () => {
       expect([...significantTokens('exito de la 80 sas colombia')]).toEqual(['exito']);
     });
 
-    it('descarta números sueltos, que suelen ser referencias', () => {
+    it('drops loose numbers, which are usually references', () => {
       expect([...significantTokens('terpel 998877')]).toEqual(['terpel']);
     });
   });
 });
 
-/** Un subconjunto de las reglas sembradas, para las pruebas. */
+/** A subset of the seeded rules, for the tests. */
 const RULES: CategoryRule[] = [
   { pattern: 'exito', categoryId: GROCERIES, priority: 0, isSeeded: true },
   { pattern: 'carulla', categoryId: GROCERIES, priority: 0, isSeeded: true },
@@ -145,11 +145,11 @@ const RULES: CategoryRule[] = [
 ];
 
 /**
- * De qué se aprende y de qué no. «No aprendas de descripciones vacías o
- * genéricas» es lo que impide que una regla «pago → Mercado» convierta en
- * mercado cada «pago de» que llegue después.
+ * What is learned from and what is not. "Do not learn from empty or generic
+ * descriptions" is what keeps a rule "pago → Mercado" from turning every
+ * "pago de" that comes later into groceries.
  */
-describe('El patrón con el que se aprende', () => {
+describe('The pattern it learns with', () => {
   const normal = (t: string) =>
     t
       .normalize('NFD')
@@ -159,28 +159,28 @@ describe('El patrón con el que se aprende', () => {
       .replace(/\s+/g, ' ')
       .trim();
 
-  it('es el token más largo que no sea número', () => {
+  it('is the longest token that is not a number', () => {
     expect(learnablePattern('RAPPI*RESTAURANTE EL SITIO 2025', normal)).toBe('restaurante');
   });
 
-  it('de una descripción vacía no sale nada', () => {
+  it('nothing comes out of an empty description', () => {
     expect(learnablePattern('', normal)).toBeNull();
     expect(learnablePattern(null, normal)).toBeNull();
     expect(learnablePattern('   ', normal)).toBeNull();
   });
 
-  it('de una descripción genérica tampoco', () => {
+  it('nor out of a generic one', () => {
     expect(learnablePattern('Pago', normal)).toBeNull();
     expect(learnablePattern('pago factura servicios', normal)).toBeNull();
     expect(learnablePattern('Transferencia 12345', normal)).toBeNull();
   });
 
-  it('pero una palabra genérica no esconde a la que sí dice algo', () => {
+  it('but a generic word does not hide the one that does say something', () => {
     expect(learnablePattern('Pago Netflix', normal)).toBe('netflix');
     expect(learnablePattern('compra en Carulla', normal)).toBe('carulla');
   });
 
-  it('y las de menos de cuatro letras no cuentan', () => {
+  it('and words shorter than four letters do not count', () => {
     expect(learnablePattern('D1 ARA', normal)).toBeNull();
   });
 });

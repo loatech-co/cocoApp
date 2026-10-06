@@ -37,8 +37,8 @@ export class LedgerRepository {
       tx.transaction.findMany({
         where: {
           userId,
-          // Por PERÍODO, no por fecha de pago: la factura de marzo pagada el
-          // 6 de abril pertenece a marzo, y es en marzo donde uno la busca.
+          // By PERIOD, not by payment date: March's bill paid on April 6
+          // belongs to March, and March is where one looks for it.
           period: { gte: from, lte: to },
           ...(branch && { categoryId: { in: branch } }),
           ...(q && {
@@ -63,14 +63,15 @@ export class LedgerRepository {
   }
 
   /**
-   * Cuánto costó cada concepto en cada mes ANTERIOR a `before`. Un mes con
-   * dos pagos suma los dos: el mes costó lo que costó, no lo que costó uno de
-   * los recibos.
+   * What each concept cost in each month BEFORE `before`. A month with two
+   * payments adds both: the month cost what it cost, not what one of the
+   * receipts cost.
    *
-   * Solo lo que la estimación lee (ADR 0017): los meses desde `since`, y para
-   * el concepto que no tiene nada ahí, su ÚLTIMO mes con pago, que es a lo que
-   * cae la estimación. Antes se traía la historia entera y el resumen se
-   * volvía más lento con cada año de datos sin que cambiara ninguna cifra.
+   * Only what the estimate reads (ADR 0017): the months since `since`, and,
+   * for the concept that has nothing there, its LAST month with a payment,
+   * which is what the estimate falls back to. It used to load the whole
+   * history, and the summary got slower with every year of data without any
+   * figure changing.
    */
   async monthlyHistory(
     userId: bigint,
@@ -78,7 +79,7 @@ export class LedgerRepository {
     { before, since }: { before: Date; since: Date },
   ): Promise<MonthlyHistory> {
     const history = await this.db.forUser(userId, async (tx) => {
-      // El último periodo de cada concepto: un agregado en la base, sin traer filas.
+      // The last period of each concept: an aggregate in the database, no rows loaded.
       const ultimos = await tx.transaction.groupBy({
         by: ['categoryId'],
         where: { userId, categoryId: { in: [...categoryIds] }, period: { lt: before } },
@@ -111,8 +112,8 @@ export class LedgerRepository {
   }
 
   /**
-   * Lo ya pagado en ese mes y CONFIRMADO (`cleared`), sumado por concepto: un
-   * mismo recurrente puede haberse pagado en dos partes.
+   * What was already paid in that month and CLEARED (`cleared`), added up per
+   * concept: the same recurring concept may have been paid in two parts.
    */
   async clearedInMonth(
     userId: bigint,

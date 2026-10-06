@@ -1,5 +1,5 @@
-// Los decoradores de `class-validator` leen metadatos, y quien los enciende es
-// `reflect-metadata`. En la app lo carga Nest al arrancar; aquí no hay Nest.
+// `class-validator` decorators read metadata, and `reflect-metadata` is what
+// turns them on. In the app Nest loads it at startup; there is no Nest here.
 import 'reflect-metadata';
 
 import { plainToInstance } from 'class-transformer';
@@ -9,11 +9,11 @@ import { MAX_KEYWORDS, UpdateCategoryDto } from './category.dto';
 import { mergeKeywords } from '../keywords';
 
 /**
- * Las palabras clave, en la puerta.
+ * Keywords, at the door.
  *
- * La pantalla ya no deja escribir una repetida ni una vacía, pero la pantalla
- * no es la única que llama a esta API. Lo que aquí se comprueba es lo que pasa
- * cuando llega lo que la pantalla no habría mandado.
+ * The screen no longer lets anyone type a repeated or an empty one, but the
+ * screen is not the only caller of this API. What is checked here is what
+ * happens when something arrives that the screen would not have sent.
  */
 async function asReceived(words: unknown): Promise<{ dto: UpdateCategoryDto; errors: string[] }> {
   const dto = plainToInstance(UpdateCategoryDto, { palabras_clave: words });
@@ -22,22 +22,22 @@ async function asReceived(words: unknown): Promise<{ dto: UpdateCategoryDto; err
 }
 
 describe('palabras_clave', () => {
-  it('recorta, aprieta los espacios y tira las vacías', async () => {
+  it('trims, squeezes the spaces and drops the empty ones', async () => {
     const { dto, errors } = await asReceived(['  Celsia ', '', '   ', 'Gases  de  Occidente']);
 
     expect(errors).toEqual([]);
     expect(dto.palabras_clave).toEqual(['Celsia', 'Gases de Occidente']);
   });
 
-  it('quita las repetidas sin mirar tildes ni mayúsculas', async () => {
-    // Guardar las dos haría que el clasificador sumara puntos dos veces por
-    // una sola coincidencia.
+  it('drops repeats regardless of accents and case', async () => {
+    // Keeping both would make the classifier score twice for a single
+    // match.
     const { dto } = await asReceived(['Energía', 'ENERGIA', 'energia ']);
 
     expect(dto.palabras_clave).toEqual(['Energía']);
   });
 
-  it('una lista vacía las borra todas, y no es lo mismo que no mandar nada', async () => {
+  it('an empty list deletes them all, and is not the same as sending nothing', async () => {
     const empty = await asReceived([]);
     expect(empty.errors).toEqual([]);
     expect(empty.dto.palabras_clave).toEqual([]);
@@ -46,12 +46,12 @@ describe('palabras_clave', () => {
     expect(withoutField.palabras_clave).toBeUndefined();
   });
 
-  it('rechaza lo que no es una lista de textos', async () => {
+  it('rejects what is not a list of strings', async () => {
     expect((await asReceived('Celsia')).errors.join(' ')).toContain('array');
     expect((await asReceived([1, 2])).errors.join(' ')).toContain('string');
   });
 
-  it('rechaza una lista interminable y una palabra interminable', async () => {
+  it('rejects an endless list and an endless word', async () => {
     const tooMany = Array.from({ length: MAX_KEYWORDS + 1 }, (_, i) => `palabra${i}`);
     expect((await asReceived(tooMany)).errors.join(' ')).toContain(String(MAX_KEYWORDS));
 
@@ -60,10 +60,10 @@ describe('palabras_clave', () => {
 });
 
 describe('unir', () => {
-  it('junta dos listas sin repetir y respetando el orden en que llegaron', () => {
-    // Es lo que pasa al unificar dos conceptos: las del que queda van primero
-    // y las del que desaparece se añaden detrás. La ficha tiene que seguir
-    // enseñando la lista que se escribió, no una reordenada.
+  it('merges two lists without repeats, keeping the order they came in', () => {
+    // It is what happens when merging two concepts: the kept one's go first
+    // and the removed one's are appended. The form has to keep showing the
+    // list as it was written, not a reordered one.
     expect(mergeKeywords(['Celsia', 'EPSA'], ['celsia', '805027653'])).toEqual([
       'Celsia',
       'EPSA',
@@ -71,7 +71,7 @@ describe('unir', () => {
     ]);
   });
 
-  it('aguanta listas vacías por los dos lados', () => {
+  it('copes with empty lists on either side', () => {
     expect(mergeKeywords([], [])).toEqual([]);
     expect(mergeKeywords(['Celsia'], [])).toEqual(['Celsia']);
   });

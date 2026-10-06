@@ -1,39 +1,39 @@
 import { whyNotMultiPayment } from './multi-payment';
 
 /**
- * Las tres condiciones de «se paga en varias veces», y la razón de que se
- * comprueben sobre el estado RESULTANTE.
+ * The three conditions of "paid in several installments", and why they are
+ * checked on the RESULTING state.
  */
-describe('Quién puede pagarse en varias veces', () => {
+describe('Who can be paid in several installments', () => {
   const concept = { isMultiPayment: true, isAutoPaid: false, isRecurring: true, depth: 3 };
 
-  it('un concepto recurrente del tercer nivel, sí', () => {
+  it('a recurring concept on the third level, yes', () => {
     expect(whyNotMultiPayment(concept)).toBeNull();
   });
 
-  it('un centro de costos o una categoría, no', () => {
-    // Son sumas de lo que cuelga de ellos: no se pagan, ni de una vez ni de
-    // varias.
+  it('a cost center or a category, no', () => {
+    // They are sums of what hangs from them: they are not paid, neither at once
+    // nor in installments.
     expect(whyNotMultiPayment({ ...concept, depth: 1 })).toContain('centro de costos');
     expect(whyNotMultiPayment({ ...concept, depth: 2 })).toContain('categoría');
   });
 
-  it('un concepto que no vuelve, tampoco', () => {
-    // Sin algo que se repita no hay un total al que llegar.
+  it('a concept that does not come back, neither', () => {
+    // Without something that repeats there is no total to reach.
     expect(whyNotMultiPayment({ ...concept, isRecurring: false })).toContain('recurrente');
   });
 
-  it('y nunca junto al pago automático', () => {
+  it('and never together with automatic payment', () => {
     const reason = whyNotMultiPayment({ ...concept, isAutoPaid: true });
     expect(reason).toContain('a la vez');
-    // El mensaje tiene que decir POR QUÉ, no solo que no: son dos marcas que
-    // se contradicen, no un capricho.
+    // The message has to say WHY, not just no: they are two flags that
+    // contradict each other, not a whim.
     expect(reason).toContain('el día que vence');
   });
 
-  it('apagada no exige nada', () => {
-    // Si no, archivar un centro de costos viejo fallaría por una marca que
-    // nadie encendió.
+  it('turned off it requires nothing', () => {
+    // Otherwise, archiving an old cost center would fail because of a flag
+    // nobody turned on.
     for (const state of [
       { isMultiPayment: false, isAutoPaid: true, isRecurring: false, depth: 1 },
       { isMultiPayment: false, isAutoPaid: false, isRecurring: false, depth: 2 },
@@ -43,8 +43,8 @@ describe('Quién puede pagarse en varias veces', () => {
   });
 
   it('cada negativa dice algo distinto', () => {
-    // Tres «no se puede» idénticos dejarían a quien lo recibe adivinando cuál
-    // de las tres condiciones incumplió.
+    // Three identical "not allowed" would leave whoever gets them guessing
+    // which of the three conditions failed.
     const reasons = [
       whyNotMultiPayment({ ...concept, depth: 2 }),
       whyNotMultiPayment({ ...concept, isRecurring: false }),

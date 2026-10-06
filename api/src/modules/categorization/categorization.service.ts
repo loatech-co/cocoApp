@@ -15,18 +15,18 @@ import { CategoryLookupService } from '../categories/category-lookup.service';
 import { LedgerService } from '../transactions/ledger.service';
 
 /**
- * Cuántos movimientos ya categorizados se leen para aprender.
+ * How many already categorized transactions are read to learn.
  *
- * Suficientes para que el patrón de alguien se note, y bastante menos que "todo
- * el historial": traer diez mil filas en cada sugerencia sería absurdo, y los
- * movimientos recientes describen mejor cómo organiza sus finanzas HOY.
+ * Enough for someone's pattern to show, and far fewer than "the whole
+ * history": loading ten thousand rows on every suggestion would be absurd, and
+ * recent transactions describe better how they organize their finances TODAY.
  */
 const HISTORY_SIZE = 400;
 
 /**
- * Prioridad con la que nacen las reglas sembradas por defecto, frente a las que
- * la persona crea o confirma. La diferencia no es decorativa: decide quién gana
- * cuando dos reglas coinciden, y con qué confianza se muestra la sugerencia.
+ * Priority the default seeded rules are born with, against the ones the person
+ * creates or confirms. The difference is not decorative: it decides who wins
+ * when two rules match, and with what confidence the suggestion is shown.
  */
 const SEEDED_PRIORITY = 0;
 const LEARNED_PRIORITY = 10;
@@ -53,11 +53,11 @@ export class CategorizationService {
   ) {}
 
   /**
-   * Sugiere categoría para una descripción suelta (la captura rápida).
+   * Suggests a category for a single description (the quick capture).
    *
-   * Para varias descripciones a la vez —una importación entera— se usa
-   * `prepararContexto` + `sugerirParaLote`: leer el historial una sola vez en
-   * lugar de una por fila.
+   * For several descriptions at once —a whole import— use `loadContext` once
+   * and `suggestCategory` per row: the history is read once instead of once
+   * per row.
    */
   async suggestFor(userId: bigint, description: string): Promise<Suggestion | null> {
     const context = await this.loadContext(userId);
@@ -76,10 +76,10 @@ export class CategorizationService {
   }
 
   /**
-   * Lee de una sola vez todo lo que hace falta para categorizar.
+   * Reads in one go everything categorizing needs.
    *
-   * Se separa a propósito: una importación de cuarenta filas debe costar dos
-   * consultas, no ochenta.
+   * Split out on purpose: an import of forty rows must cost two queries, not
+   * eighty.
    */
   async loadContext(userId: bigint): Promise<{
     history: HistoryEntry[];
@@ -91,8 +91,8 @@ export class CategorizationService {
     ]);
 
     return {
-      // El filtro de la consulta garantiza que no hay nulos; `flatMap` se lo
-      // demuestra a TypeScript sin quitar nada.
+      // The query's filter guarantees there are no nulls; `flatMap` proves it to
+      // TypeScript without dropping anything.
       history: transactions.flatMap((transaction) =>
         transaction.categoryId === null
           ? []
@@ -106,10 +106,10 @@ export class CategorizationService {
   }
 
   /**
-   * Registra que una sugerencia se aceptó, creando o reforzando una regla.
+   * Records that a suggestion was accepted, creating or reinforcing a rule.
    *
-   * Es lo que hace que el sistema mejore con el uso sin pedirle nada a nadie:
-   * la próxima importación acertará más porque esta se corrigió.
+   * It is what makes the system improve with use without asking anyone for
+   * anything: the next import will hit more because this one was corrected.
    */
   async learnFrom(userId: bigint, description: string, categoryId: bigint): Promise<boolean> {
     const pattern = learnablePattern(description, normalizeDescription);
@@ -120,12 +120,12 @@ export class CategorizationService {
   }
 
   /**
-   * Lo mismo, pero desde la ficha: comprueba antes que la categoría sea suya.
+   * The same, but from the form: it first checks the category is theirs.
    *
-   * `aprenderDe` confía en quien lo llama porque la importación ya validó sus
-   * filas. Desde la ficha llega un `category_id` escrito por el cliente, y sin
-   * esta comprobación alguien podría crear una regla que apunte a la categoría
-   * de otra cuenta —inútil para él, pero una fila que no debería existir—.
+   * `learnFrom` trusts its caller because the import already validated its
+   * rows. From the form comes a `category_id` written by the client, and
+   * without this check someone could create a rule pointing at another
+   * account's category —useless to them, but a row that should not exist—.
    */
   async learnFromForm(userId: bigint, description: string, categoryId: bigint): Promise<Learning> {
     if (!(await this.categories.isOwn(userId, categoryId)))

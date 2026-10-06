@@ -1,31 +1,33 @@
 import { LEVELS, MAX_DEPTH } from '../../common/categories/categories.tree';
 import type { CodeWithStatus } from '../../common/errors/domain-error';
 
-/** Una negativa: su código estable (v2) y la frase para la persona. */
+/** A refusal: its stable code (v2) and the sentence for the person. */
 export interface MultiPaymentRejection {
   code: CodeWithStatus<422>;
   message: string;
 }
 
 /**
- * Si un concepto puede llevar la marca de «se paga en varias veces».
+ * Whether a concept may carry the "paid in several installments" flag.
  *
- * ── Por qué se comprueba el estado RESULTANTE y no el DTO ───────────────────
- * Porque las dos reglas de abajo hablan de cómo queda la fila, no de lo que
- * trajo la petición. Mirando solo el DTO, encender `pago_automatico` sobre un
- * concepto que YA tiene `varios_pagos` pasaría sin más: en esa petición no
- * viene `varios_pagos`, así que no habría nada que contrastar, y la fila
- * quedaría con las dos marcas encendidas —que es justo lo que no puede pasar—.
+ * ── Why the RESULTING state is checked and not the request ──────────────────
+ * Because the two rules below are about how the row ends up, not about what
+ * the request brought. Looking only at the request, turning `isAutoPaid` on
+ * for a concept that ALREADY has `isMultiPayment` would just pass: that
+ * request does not carry `isMultiPayment`, so there would be nothing to check
+ * against, and the row would end up with both flags on —which is exactly what
+ * cannot happen—.
  *
- * Quien llama mezcla primero lo que había con lo que viene, y pregunta por el
- * resultado. Por eso esto es una función suelta y no un decorador del DTO:
- * class-validator valida un objeto contra sí mismo, y aquí hacen falta dos.
+ * The caller first merges what was there with what comes, and asks about the
+ * result. That is why this is a plain function and not a DTO decorator:
+ * class-validator validates an object against itself, and two are needed
+ * here.
  *
- * ── Y por qué devuelve el motivo en vez de un booleano ──────────────────────
- * Porque son tres negativas distintas y cada una se arregla de otra forma. Un
- * «no se puede» a secas deja a quien lo recibe adivinando cuál de las tres le
- * tocó. Y cada una lleva su código, para que un cliente no tenga que leer la
- * frase para saber cuál fue.
+ * ── And why it returns the reason instead of a boolean ──────────────────────
+ * Because they are three different refusals and each is fixed another way. A
+ * bare "not allowed" leaves whoever gets it guessing which of the three it
+ * was. And each one carries its code, so a client does not have to read the
+ * sentence to know which one it was.
  */
 export function multiPaymentRejection({
   isMultiPayment,
@@ -38,9 +40,9 @@ export function multiPaymentRejection({
   isRecurring: boolean;
   depth: number;
 }): MultiPaymentRejection | null {
-  // Apagada no restringe nada: lo que no está marcado no tiene por qué cumplir
-  // las condiciones de estarlo. Si no, archivar un centro de costos viejo
-  // fallaría por una marca que nadie encendió.
+  // Turned off it restricts nothing: what is not flagged does not have to meet
+  // the conditions of being flagged. Otherwise, archiving an old cost center
+  // would fail because of a flag nobody turned on.
   if (!isMultiPayment) return null;
 
   if (depth !== MAX_DEPTH) {
@@ -79,7 +81,7 @@ export function multiPaymentRejection({
   return null;
 }
 
-/** La frase de la negativa, o `null` si la marca cabe. */
+/** The sentence of the refusal, or `null` if the flag fits. */
 export function whyNotMultiPayment(
   state: Parameters<typeof multiPaymentRejection>[0],
 ): string | null {

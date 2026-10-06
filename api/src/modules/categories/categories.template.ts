@@ -1,38 +1,38 @@
 /**
- * Con qué estructura nace una cuenta.
+ * The structure an account is born with.
  *
- * ── Cada cuenta tiene la SUYA ───────────────────────────────────────────────
- * Los centros de costos no se comparten entre cuentas: cada fila de
- * `categories` lleva su `user_id` y todas las consultas filtran por él. Esto
- * no es una copia viva de la estructura de nadie — es un punto de partida que
- * se copia UNA VEZ, al crear la cuenta, y desde ese momento es suya: renombra,
- * agrega y borra sin que eso toque a nadie más.
+ * ── Each account has ITS OWN ────────────────────────────────────────────────
+ * Cost centers are not shared between accounts: each `categories` row carries
+ * its `user_id` and every query filters by it. This is not a live copy of
+ * anybody's structure — it is a starting point copied ONCE, when the account
+ * is created, and from then on it is theirs: they rename, add and delete
+ * without touching anyone else.
  *
- * ── Y es un SNAPSHOT, no un espejo ──────────────────────────────────────────
- * Lo de aquí abajo se sacó de la estructura real del 17 de septiembre de 2026,
- * y se quedó quieto. Lo que se cree de aquí en adelante en una cuenta no
- * aparece en las que vengan después: para que aparezca, hay que escribirlo
- * aquí. Es a propósito —una plantilla que siguiera viva convertiría cualquier
- * experimento en estructura obligatoria para todo el mundo— y es la razón de
- * que esto sea un archivo versionado y no una consulta.
+ * ── And it is a SNAPSHOT, not a mirror ──────────────────────────────────────
+ * What is below was taken from the real structure of 17 September 2026, and
+ * it stayed put. What is created from now on in an account does not appear in
+ * the ones that come later: to make it appear, it has to be written here. It
+ * is on purpose —a template that stayed alive would turn any experiment into
+ * mandatory structure for everybody— and it is why this is a versioned file
+ * and not a query.
  *
- * ── Por qué llega hasta las CATEGORÍAS y no hasta los conceptos ─────────────
- * Porque los dos primeros niveles son taxonomía —«Servicios públicos»,
- * «Vehículos»— y el tercero son compromisos de una persona concreta: el nombre
- * del colegio de su hija, el de quien le arrienda, cuánto y qué día paga. Eso
- * no es un punto de partida para nadie más; es información privada que se
- * habría copiado a cada cuenta nueva.
+ * ── Why it reaches the CATEGORIES and not the concepts ──────────────────────
+ * Because the first two levels are taxonomy —«Servicios públicos»,
+ * «Vehículos»— and the third is one specific person's commitments: the name
+ * of their daughter's school, of whoever rents to them, how much and which
+ * day they pay. That is not a starting point for anyone else; it is private
+ * information that would have been copied into every new account.
  *
- * Por lo mismo no se copia la recurrencia ni las palabras clave: las dos viven
- * en el concepto, que es el nivel que no viaja.
+ * For the same reason neither the recurrence nor the keywords are copied:
+ * both live in the concept, which is the level that does not travel.
  */
 export interface TemplateNode {
   name: string;
-  /** Nombre de lucide. El único set permitido. */
+  /** A lucide name. The only allowed set. */
   icon?: string;
   /**
-   * Solo en el primer nivel, y solo se lee de ahí: lo que cuelga de un centro
-   * estático no se reclasifica desde la tabla ni desde la ficha.
+   * Only on the first level, and only read from there: what hangs from a
+   * static cost center is not reclassified from the table or the form.
    */
   isStatic?: boolean;
   children?: readonly TemplateNode[];
@@ -41,8 +41,8 @@ export interface TemplateNode {
 export const NEW_ACCOUNT_TEMPLATE: readonly TemplateNode[] = [
   {
     name: 'Costos fijos',
-    // Estático porque es la estructura que no se improvisa: el alquiler no
-    // cambia de categoría un martes.
+    // Static because it is the structure nobody improvises: the rent does not
+    // change category on a Tuesday.
     isStatic: true,
     children: [
       { name: 'Educación', icon: 'graduation-cap' },

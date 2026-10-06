@@ -19,10 +19,10 @@ export class CategorizationController {
   constructor(private readonly categorization: CategorizationService) {}
 
   /**
-   * Sugerencia para lo que se está escribiendo en la captura rápida.
+   * Suggestion for what is being typed in the quick capture.
    *
-   * Devuelve `{ data: null }` cuando no hay nada seguro que decir. La interfaz
-   * simplemente no muestra nada — sugerir mal es peor que no sugerir.
+   * Returns `{ data: null }` when there is nothing certain to say. The
+   * interface simply shows nothing — a wrong suggestion is worse than none.
    */
   @Get('suggest')
   @ApiData(SuggestionResponse, {
@@ -34,19 +34,20 @@ export class CategorizationController {
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: SuggestQueryDto,
   ): Promise<{ data: SuggestionV1 | null; meta: Record<string, never> }> {
-    // Se arma el envelope a mano: el TransformInterceptor deja pasar `null`
-    // tal cual, y la respuesta saldría con el cuerpo vacío en vez de con la
-    // forma `{ data, meta }` que el cliente espera de TODA respuesta.
+    // The envelope is built by hand: the TransformInterceptor lets `null`
+    // through as is, and the response would go out with an empty body instead
+    // of the `{ data, meta }` shape the client expects from EVERY response.
     const suggestion = await this.categorization.suggestForQuery(user.id, query.description);
     return { data: suggestion && suggestionV1(suggestion), meta: {} };
   }
 
   /**
-   * La ficha avisa de que una sugerencia se aceptó o se corrigió.
+   * The form reports that a suggestion was accepted or corrected.
    *
-   * Solo entonces: un movimiento clasificado a mano sin que hubiera sugerencia
-   * no pasa por aquí, y uno con descripción genérica no deja regla aunque pase.
-   * Devuelve si aprendió algo, para que quien lo llama no tenga que adivinar.
+   * Only then: a transaction classified by hand without a suggestion does not
+   * come through here, and one with a generic description leaves no rule even
+   * if it does. Returns whether it learned something, so the caller does not
+   * have to guess.
    */
   @Post('learn')
   @ApiData(LearnResponse, { status: 201 })

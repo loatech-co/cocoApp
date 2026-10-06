@@ -1,9 +1,11 @@
 /**
- * v2 inputs on their way to the services, which still take the v1 DTOs.
+ * Inputs built field by field on their way to a service.
  *
- * Each v2 controller (or its mapper) builds the v1 DTO field by field with
- * these two helpers; the literals go back to Spanish with `spanish()` from
- * `common/vocabulary.ts`.
+ * Where a service still takes the v1 DTOs, the v2 controller (or its mapper)
+ * builds the v1 DTO with these two helpers, and the literals go back to
+ * Spanish with `spanish()` from `common/vocabulary.ts`. Where the service
+ * already speaks English (categories, since 7.2-e), both controllers build its
+ * input with them.
  */
 
 /**

@@ -40,19 +40,19 @@ export class SplitDto {
 
 export class CreateTransactionDto {
   /**
-   * El mes al que PERTENECE el gasto, como YYYY-MM-DD del día 1.
+   * The month the expense BELONGS to, as the YYYY-MM-DD of day 1.
    *
-   * Opcional: si no viene, se asume el mes de `date`. Solo hace falta cuando el
-   * gasto cruza de mes — la factura de marzo que se paga en abril.
+   * Optional: when absent, the month of `date` is assumed. Only needed when
+   * the expense crosses months — March's bill paid in April.
    */
   @IsOptional()
   @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
   period?: string;
 
   /**
-   * OPCIONAL. Llevar cuentas es una función que se enciende en los ajustes, no
-   * un requisito para registrar un gasto: pedirla aquí obligaría a inventarse
-   * una cuenta antes de poder anotar el primer café.
+   * OPTIONAL. Tracking accounts is a feature turned on in the settings, not a
+   * requirement to record an expense: asking for it here would force inventing
+   * an account before jotting down the first coffee.
    */
   @IsOptional()
   @Type(() => Number)
@@ -63,7 +63,7 @@ export class CreateTransactionDto {
   @IsDateString({}, { message: 'La fecha debe tener formato YYYY-MM-DD.' })
   date!: string;
 
-  /** Siempre positivo: el signo económico lo da `type`, no el número. */
+  /** Always positive: the economic sign comes from `type`, not from the number. */
   @IsPositiveMoney()
   amount!: string;
 
@@ -71,7 +71,7 @@ export class CreateTransactionDto {
   @IsEnum(TransactionType)
   type?: TransactionType;
 
-  /** Opcional a propósito: un movimiento puede existir sin categoría. */
+  /** Optional on purpose: a transaction can exist without a category. */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -101,31 +101,31 @@ export class CreateTransactionDto {
   external_ref?: string | undefined;
 
   /**
-   * ── Captura ──────────────────────────────────────────────────────────────
-   * De dónde entra. La web manda `web`; la app del teléfono, uno de los
-   * suyos. Decide si hay que buscar la otra cara de un mismo pago.
+   * ── Capture ──────────────────────────────────────────────────────────────
+   * Where it comes in from. The web sends `web`; the phone app, one of its
+   * own. It decides whether to look for the other face of the same payment.
    */
   @IsOptional()
   @IsEnum(TransactionSource)
   source?: TransactionSource | undefined;
 
-  /** El texto del que salió: el OCR del recibo, el SMS del banco. */
+  /** The text it came from: the receipt's OCR, the bank's SMS. */
   @IsOptional()
   @IsString()
   @MaxLength(20_000)
   raw_text?: string | null;
 
-  /** Cuándo se capturó, ISO 8601 con zona. */
+  /** When it was captured, ISO 8601 with zone. */
   @IsOptional()
   @IsISO8601()
   captured_at?: string | null;
 
-  /** Si alguien tiene que mirarlo: clasificación insegura o posible duplicado. */
+  /** Whether someone has to look at it: unsure classification or possible duplicate. */
   @IsOptional()
   @IsBoolean()
   por_revisar?: boolean;
 
-  /** Nombres, no ids: la UI las crea al vuelo. */
+  /** Names, not ids: the UI creates them on the fly. */
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(20)
@@ -142,10 +142,10 @@ export class CreateTransactionDto {
 
 export class UpdateTransactionDto {
   /**
-   * El mes al que PERTENECE el gasto, como YYYY-MM-DD del día 1.
+   * The month the expense BELONGS to, as the YYYY-MM-DD of day 1.
    *
-   * Opcional: si no viene, se asume el mes de `date`. Solo hace falta cuando el
-   * gasto cruza de mes — la factura de marzo que se paga en abril.
+   * Optional: when absent, the month of `date` is assumed. Only needed when
+   * the expense crosses months — March's bill paid in April.
    */
   @IsOptional()
   @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
@@ -168,7 +168,7 @@ export class UpdateTransactionDto {
   @IsEnum(TransactionType)
   type?: TransactionType;
 
-  /** `null` explícito quita la categoría. */
+  /** An explicit `null` removes the category. */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -193,26 +193,26 @@ export class UpdateTransactionDto {
   status?: TransactionStatus;
 
   /**
-   * ── Captura ──────────────────────────────────────────────────────────────
-   * De dónde entra. La web manda `web`; la app del teléfono, uno de los
-   * suyos. Decide si hay que buscar la otra cara de un mismo pago.
+   * ── Capture ──────────────────────────────────────────────────────────────
+   * Where it comes in from. The web sends `web`; the phone app, one of its
+   * own. It decides whether to look for the other face of the same payment.
    */
   @IsOptional()
   @IsEnum(TransactionSource)
   source?: TransactionSource;
 
-  /** El texto del que salió: el OCR del recibo, el SMS del banco. */
+  /** The text it came from: the receipt's OCR, the bank's SMS. */
   @IsOptional()
   @IsString()
   @MaxLength(20_000)
   raw_text?: string | null;
 
-  /** Cuándo se capturó, ISO 8601 con zona. */
+  /** When it was captured, ISO 8601 with zone. */
   @IsOptional()
   @IsISO8601()
   captured_at?: string | null;
 
-  /** Si alguien tiene que mirarlo: clasificación insegura o posible duplicado. */
+  /** Whether someone has to look at it: unsure classification or possible duplicate. */
   @IsOptional()
   @IsBoolean()
   por_revisar?: boolean;
@@ -233,10 +233,10 @@ export class UpdateTransactionDto {
 
 export class CreateTransferDto {
   /**
-   * El mes al que PERTENECE el gasto, como YYYY-MM-DD del día 1.
+   * The month the expense BELONGS to, as the YYYY-MM-DD of day 1.
    *
-   * Opcional: si no viene, se asume el mes de `date`. Solo hace falta cuando el
-   * gasto cruza de mes — la factura de marzo que se paga en abril.
+   * Optional: when absent, the month of `date` is assumed. Only needed when
+   * the expense crosses months — March's bill paid in April.
    */
   @IsOptional()
   @IsDateString({}, { message: 'El periodo debe tener formato YYYY-MM-DD.' })
@@ -282,8 +282,8 @@ export class ListTransactionsQueryDto {
   category_id?: number;
 
   /**
-   * Varios ids separados por coma: `?category_ids=3,7`. Cada uno arrastra su
-   * rama entera. Convive con `category_id` para no romper enlaces guardados.
+   * Several comma-separated ids: `?category_ids=3,7`. Each one brings its
+   * whole branch. Lives alongside `category_id` so saved links do not break.
    */
   @IsOptional()
   @IsString()
@@ -305,7 +305,7 @@ export class ListTransactionsQueryDto {
   @IsInt()
   tag_id?: number;
 
-  /** Búsqueda de texto sobre description, merchant y notes. */
+  /** Text search over description, merchant and notes. */
   @IsOptional()
   @IsString()
   @MaxLength(255)
@@ -325,7 +325,7 @@ export class ListTransactionsQueryDto {
   @Min(1)
   page?: number;
 
-  /** Tope de 200: sin él, un cliente podría pedir años de historial de una. */
+  /** Capped at 200: without it, a client could ask for years of history at once. */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -333,7 +333,7 @@ export class ListTransactionsQueryDto {
   @Max(200)
   per_page?: number;
 
-  /** `-campo` para descendente. Solo se aceptan campos de una lista blanca. */
+  /** `-field` for descending. Only fields from an allowlist are accepted. */
   @IsOptional()
   @IsString()
   @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))

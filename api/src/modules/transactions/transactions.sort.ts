@@ -1,12 +1,12 @@
 import type { Prisma } from '../../generated/prisma/client';
 
 /**
- * Lista blanca de campos ordenables.
+ * Allowlist of sortable fields.
  *
- * El cliente NUNCA elige un nombre de columna libremente, ni siquiera para
- * ordenar: pasar entrada del usuario a `orderBy` abre la puerta a filtrar la
- * forma del esquema y, según el motor, a algo peor. Lo que no está en esta
- * tabla no existe.
+ * The client NEVER picks a column name freely, not even to sort: passing user
+ * input to `orderBy` opens the door to leaking the shape of the schema and,
+ * depending on the engine, to something worse. What is not in this table does
+ * not exist.
  */
 const SORTABLE_FIELDS = {
   date: 'date',
@@ -17,22 +17,23 @@ const SORTABLE_FIELDS = {
 
 type SortableField = keyof typeof SORTABLE_FIELDS;
 
-/** Orden por defecto: lo más reciente primero, que es como se lee un extracto. */
+/** Default order: newest first, which is how a statement is read. */
 const DEFAULT_ORDER: Prisma.TransactionOrderByWithRelationInput[] = [
   { date: 'desc' },
   { id: 'desc' },
 ];
 
 /**
- * Traduce `?sort=-date` al `orderBy` de Prisma.
+ * Turns `?sort=-date` into Prisma's `orderBy`.
  *
- * El prefijo `-` indica descendente. Un campo desconocido no revienta la
- * petición: se ignora y se usa el orden por defecto — un parámetro de
- * presentación mal escrito no debería impedirle a alguien ver sus movimientos.
+ * The `-` prefix means descending. An unknown field does not fail the
+ * request: it is ignored and the default order is used — a misspelt
+ * presentation parameter should not keep someone from seeing their
+ * transactions.
  *
- * Siempre desempata por `id` para que la paginación sea estable: sin ese
- * desempate, dos filas con la misma fecha pueden alternar de página entre
- * consultas y el usuario vería un movimiento repetido o se le perdería otro.
+ * Always breaks ties by `id` so pagination is stable: without that tie-break,
+ * two rows with the same date can swap pages between queries and the user
+ * would see a transaction twice or miss another.
  */
 export function parseOrder(sort?: string): Prisma.TransactionOrderByWithRelationInput[] {
   if (!sort) return DEFAULT_ORDER;

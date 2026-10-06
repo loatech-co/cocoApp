@@ -978,7 +978,7 @@
         "tags": ["Categories"]
       },
       "delete": {
-        "description": "BORRA la categoría —y todo lo que cuelga de ella— de verdad.\n\nAntes esta ruta archivaba —dejaba la fila con `is_archived`— y el botón de\nla interfaz decía \"eliminar\": la categoría desaparecía de las listas y\nseguía ocupando su nombre, así que crear otra igual chocaba contra una que\nnadie podía ver.\n\n── `reasignar_a` ────────────────────────────────────────────────────────\nA dónde pasan sus movimientos. Obligatorio si tiene alguno: el servicio no\nlos adivina, porque adivinar significa mover plata a un sitio que nadie\npidió. Sin movimientos no hace falta.\n\nVa en la CONSULTA y no en el cuerpo: un DELETE con cuerpo lo admite la\nespecificación pero lo tiran por el camino unos cuantos proxies, y este\ndato es un identificador, no un documento.",
+        "description": "DELETES the category —and everything that hangs from it— for real.\n\nThis route used to archive —it left the row with `is_archived`— while the\ninterface's button said \"delete\": the category vanished from the lists and\nkept holding its name, so creating another one like it clashed with one\nnobody could see.\n\n── `reasignar_a` ────────────────────────────────────────────────────────\nWhere its transactions go. Required if it has any: the service does not\nguess them, because guessing means moving money somewhere nobody asked\nfor. Without transactions it is not needed.\n\nIt goes in the QUERY and not in the body: the specification allows a\nDELETE with a body, but a few proxies drop it on the way, and this datum\nis an id, not a document.",
         "operationId": "CategoriesController_eliminar",
         "parameters": [
           {
@@ -1085,7 +1085,7 @@
     },
     "/api/v1/categories/seed": {
       "post": {
-        "description": "Siembra el diccionario sugerido. Opcional: el usuario decide si lo quiere.",
+        "description": "Seeds the suggested dictionary. Optional: the user decides whether they want it.",
         "operationId": "CategoriesController_sembrar",
         "parameters": [],
         "responses": {
@@ -1229,7 +1229,7 @@
     },
     "/api/v1/categories/{id}/unificar": {
       "post": {
-        "description": "Funde un concepto en otro.\n\nVa antes de `:id` en el archivo por costumbre, pero aquí no hace falta:\nla ruta lleva un segmento propio después del identificador, así que no\npuede confundirse con ninguna otra.",
+        "description": "Merges one concept into another.\n\nIt goes before `:id` in the file out of habit, but it does not need to:\nthe route has its own segment after the id, so it cannot be mistaken for\nany other.",
         "operationId": "CategoriesController_unificar",
         "parameters": [
           {
@@ -1356,7 +1356,7 @@
     },
     "/api/v1/categories/{id}/usos": {
       "get": {
-        "description": "Archiva. Solo borra físicamente si la categoría nunca se usó — y en ese\ncaso el servicio lo decide, no el cliente.",
+        "description": "What a deletion would take with it, before doing it.\n\nThe interface asks when it opens the confirmation, to be able to say how\nmany transactions will move and ask where to. Without it, deleting would\nbe blind, or one would learn it from the error —which arrives after\npressing «Eliminar»—.",
         "operationId": "CategoriesController_usos",
         "parameters": [
           {
@@ -3198,7 +3198,7 @@
             "name": "category_ids",
             "required": false,
             "in": "query",
-            "description": "Varios ids separados por coma: `?category_ids=3,7`. Cada uno arrastra su\nrama entera. Convive con `category_id` para no romper enlaces guardados.",
+            "description": "Several comma-separated ids: `?category_ids=3,7`. Each one brings its\nwhole branch. Lives alongside `category_id` so saved links do not break.",
             "schema": {
               "pattern": "^\\d+(,\\d+)*$",
               "type": "string"
@@ -3234,7 +3234,7 @@
             "name": "q",
             "required": false,
             "in": "query",
-            "description": "Búsqueda de texto sobre description, merchant y notes.",
+            "description": "Text search over description, merchant and notes.",
             "schema": {
               "maxLength": 255,
               "type": "string"
@@ -3269,7 +3269,7 @@
             "name": "per_page",
             "required": false,
             "in": "query",
-            "description": "Tope de 200: sin él, un cliente podría pedir años de historial de una.",
+            "description": "Capped at 200: without it, a client could ask for years of history at once.",
             "schema": {
               "minimum": 1,
               "maximum": 200,
@@ -3280,7 +3280,7 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "`-campo` para descendente. Solo se aceptan campos de una lista blanca.",
+            "description": "`-field` for descending. Only fields from an allowlist are accepted.",
             "schema": {
               "type": "string"
             }
@@ -3473,7 +3473,7 @@
     },
     "/api/v1/transactions/historia": {
       "get": {
-        "description": "Va antes de `:id` a propósito: si estuviera después, Express intentaría\ninterpretar \"historia\" como un identificador.",
+        "description": "Goes before `:id` on purpose: after it, Express would try to read\n\"historia\" as an id.",
         "operationId": "TransactionsController_historia",
         "parameters": [],
         "responses": {
@@ -3540,7 +3540,7 @@
     },
     "/api/v1/transactions/transfer": {
       "post": {
-        "description": "Va antes de `:id` a propósito: si estuviera después, Express intentaría\ninterpretar \"transfer\" como un identificador.",
+        "description": "Goes before `:id` on purpose: after it, Express would try to read\n\"transfer\" as an id.",
         "operationId": "TransactionsController_crearTransferencia",
         "parameters": [],
         "requestBody": {
@@ -4912,7 +4912,7 @@
     },
     "/api/v1/categorization/suggest": {
       "get": {
-        "description": "Sugerencia para lo que se está escribiendo en la captura rápida.\n\nDevuelve `{ data: null }` cuando no hay nada seguro que decir. La interfaz\nsimplemente no muestra nada — sugerir mal es peor que no sugerir.",
+        "description": "Suggestion for what is being typed in the quick capture.\n\nReturns `{ data: null }` when there is nothing certain to say. The\ninterface simply shows nothing — a wrong suggestion is worse than none.",
         "operationId": "CategorizationController_sugerir",
         "parameters": [
           {
@@ -5004,7 +5004,7 @@
     },
     "/api/v1/categorization/learn": {
       "post": {
-        "description": "La ficha avisa de que una sugerencia se aceptó o se corrigió.\n\nSolo entonces: un movimiento clasificado a mano sin que hubiera sugerencia\nno pasa por aquí, y uno con descripción genérica no deja regla aunque pase.\nDevuelve si aprendió algo, para que quien lo llama no tenga que adivinar.",
+        "description": "The form reports that a suggestion was accepted or corrected.\n\nOnly then: a transaction classified by hand without a suggestion does not\ncome through here, and one with a generic description leaves no rule even\nif it does. Returns whether it learned something, so the caller does not\nhave to guess.",
         "operationId": "CategorizationController_aprender",
         "parameters": [],
         "requestBody": {
@@ -5466,11 +5466,11 @@
           },
           "recurrente": {
             "type": "boolean",
-            "description": "── Recurrencia ─────────────────────────────────────────────────────────\nMarca el concepto como un pago que vuelve. `dia_de_pago` es el día del mes\nen que se debe pagar; en los meses que no llegan a ese día se entiende el\núltimo."
+            "description": "── Recurrence ──────────────────────────────────────────────────────────\nMarks the concept as a payment that comes back. `dia_de_pago` is the day\nof the month it is due; in months that do not reach that day, the last one\nis meant."
           },
           "estatico": {
             "type": "boolean",
-            "description": "Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica desde\nninguna pantalla de movimientos. Solo se lee del centro; en una categoría o un\nconcepto es inerte."
+            "description": "What hangs from a STATIC cost center is not reclassified from any\ntransactions screen. It is only read from the cost center; on a category\nor a concept it does nothing."
           },
           "periodicidad": {
             "type": "string",
@@ -5486,27 +5486,27 @@
           "mes_de_pago": {
             "type": "number",
             "nullable": true,
-            "description": "El mes de referencia del ciclo. Solo cuando no es mensual.",
+            "description": "The reference month of the cycle. Only when it is not monthly.",
             "minimum": 1,
             "maximum": 12
           },
           "pago_automatico": {
             "type": "boolean",
-            "description": "── Pago automático ─────────────────────────────────────────────────────\nEl concepto no espera a que nadie lo registre: al llegar su día de pago,\nel movimiento se crea solo y deja de estar pendiente.\n\nPara lo que se cobra sin que uno haga nada —un débito, una suscripción—.\nSolo desde el mes en que se enciende hacia adelante: nunca rellena meses\npasados.\n\nSolo significa algo en un concepto recurrente."
+            "description": "── Automatic payment ───────────────────────────────────────────────────\nThe concept does not wait for anyone to record it: when its payment day\ncomes, the transaction is created on its own and stops being pending.\n\nFor what is charged without anyone doing anything —a direct debit, a\nsubscription—. Only from the month it is turned on onwards: it never fills\npast months.\n\nIt only means something on a recurring concept."
           },
           "varios_pagos": {
             "type": "boolean",
-            "description": "── Se paga en varias veces ─────────────────────────────────────────────\nEl concepto no se salda con un pago: se va cubriendo. El mercado se hace\nen cuatro idas, la gasolina en seis tanqueadas, y ninguna de esas idas\ntermina el mes.\n\nMarcado, el concepto se queda en pagos pendientes mientras lo pagado sea\nmenor que lo esperado, enseñando cuánto lleva.\n\nTres condiciones, y las comprueba el servicio y no esto: tiene que ser un\nCONCEPTO —el tercer nivel—, tiene que ser RECURRENTE, y no puede llevar\ntambién «pago automático». Las tres hablan de cómo queda la fila después\nde aplicar el cambio, y aquí solo se ve lo que trajo la petición."
+            "description": "── Paid in several installments ────────────────────────────────────────\nThe concept is not settled with one payment: it is covered bit by bit.\nGroceries take four trips, fuel six fill-ups, and none of those trips\ncloses the month.\n\nWhen flagged, the concept stays in pending payments while what was paid is\nless than what was expected, showing how much it has so far.\n\nThree conditions, and the service checks them, not this: it has to be a\nCONCEPT —the third level—, it has to be RECURRING, and it cannot also\ncarry «pago automático». All three are about how the row ends up after the\nchange, and here only the request is visible."
           },
           "presupuesto": {
             "type": "number",
             "nullable": true,
-            "description": "── Presupuesto ─────────────────────────────────────────────────────────\nLo que se espera que cueste cada vez que toca. Puesto, MANDA: la previsión\ndel mes es este número y no el promedio de lo que costó antes.\n\nEs para los gastos cuyo valor se sabe —un alquiler con contrato, una\nmensualidad— donde promediar da una cifra peor que el dato. Vacío se sigue\npromediando, que es lo correcto para lo que varía de verdad.\n\nCero es un valor, no un hueco: dice «esto ahora no cuesta». Para quitarlo\nse manda `null`.\n\nSolo significa algo en un concepto recurrente.",
+            "description": "── Budget ──────────────────────────────────────────────────────────────\nWhat it is expected to cost each time it comes due. When set, it RULES:\nthe month's forecast is this number and not the average of what it cost\nbefore.\n\nIt is for the expenses whose amount is known —a rent with a contract, a\nmonthly fee— where averaging gives a worse figure than the datum. Empty,\nit keeps averaging, which is right for what really varies.\n\nZero is a value, not a gap: it says «this costs nothing now». To clear it,\nsend `null`.\n\nIt only means something on a recurring concept.",
             "minimum": 0,
             "maximum": 9999999999999
           },
           "palabras_clave": {
-            "description": "── Palabras clave ──────────────────────────────────────────────────────\nLo que se busca en el texto de un soporte para reconocer este concepto.\nSolo significan algo en un concepto: un centro de costos y una categoría no\naparecen en ninguna factura.",
+            "description": "── Keywords ────────────────────────────────────────────────────────────\nWhat is searched for in a receipt's text to recognize this concept. They\nonly mean something on a concept: a cost center and a category do not\nappear on any bill.",
             "type": "array",
             "items": {
               "type": "string",
@@ -5663,7 +5663,7 @@
         "properties": {
           "destino_id": {
             "type": "number",
-            "description": "El concepto que SOBREVIVE. El de la ruta es el que desaparece."
+            "description": "The concept that SURVIVES. The one in the route is the one that goes away."
           }
         },
         "required": ["destino_id"]
@@ -5683,7 +5683,7 @@
           "parent_id": {
             "type": "number",
             "nullable": true,
-            "description": "`null` explícito mueve la categoría a la raíz."
+            "description": "An explicit `null` moves the category to the root."
           },
           "color": {
             "type": "string"
@@ -5701,11 +5701,11 @@
           },
           "recurrente": {
             "type": "boolean",
-            "description": "── Recurrencia ─────────────────────────────────────────────────────────\nMarca el concepto como un pago que vuelve. `dia_de_pago` es el día del mes\nen que se debe pagar; en los meses que no llegan a ese día se entiende el\núltimo."
+            "description": "── Recurrence ──────────────────────────────────────────────────────────\nMarks the concept as a payment that comes back. `dia_de_pago` is the day\nof the month it is due; in months that do not reach that day, the last one\nis meant."
           },
           "estatico": {
             "type": "boolean",
-            "description": "Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica desde\nninguna pantalla de movimientos. Solo se lee del centro; en una categoría o un\nconcepto es inerte."
+            "description": "What hangs from a STATIC cost center is not reclassified from any\ntransactions screen. It is only read from the cost center; on a category\nor a concept it does nothing."
           },
           "periodicidad": {
             "type": "string",
@@ -5721,7 +5721,7 @@
           "mes_de_pago": {
             "type": "number",
             "nullable": true,
-            "description": "El mes de referencia del ciclo. Solo cuando no es mensual.",
+            "description": "The reference month of the cycle. Only when it is not monthly.",
             "minimum": 1,
             "maximum": 12
           },
@@ -5731,17 +5731,17 @@
           },
           "varios_pagos": {
             "type": "boolean",
-            "description": "── Se paga en varias veces ─────────────────────────────────────────────\nEl concepto no se salda con un pago: se va cubriendo. El mercado se hace\nen cuatro idas, la gasolina en seis tanqueadas, y ninguna de esas idas\ntermina el mes.\n\nMarcado, el concepto se queda en pagos pendientes mientras lo pagado sea\nmenor que lo esperado, enseñando cuánto lleva.\n\nTres condiciones, y las comprueba el servicio y no esto: tiene que ser un\nCONCEPTO —el tercer nivel—, tiene que ser RECURRENTE, y no puede llevar\ntambién «pago automático». Las tres hablan de cómo queda la fila después\nde aplicar el cambio, y aquí solo se ve lo que trajo la petición."
+            "description": "── Paid in several installments ────────────────────────────────────────\nThe concept is not settled with one payment: it is covered bit by bit.\nGroceries take four trips, fuel six fill-ups, and none of those trips\ncloses the month.\n\nWhen flagged, the concept stays in pending payments while what was paid is\nless than what was expected, showing how much it has so far.\n\nThree conditions, and the service checks them, not this: it has to be a\nCONCEPT —the third level—, it has to be RECURRING, and it cannot also\ncarry «pago automático». All three are about how the row ends up after the\nchange, and here only the request is visible."
           },
           "presupuesto": {
             "type": "number",
             "nullable": true,
-            "description": "Ver `CreateCategoryDto`. `null` lo quita; cero es un valor.",
+            "description": "See `CreateCategoryDto`. `null` clears it; zero is a value.",
             "minimum": 0,
             "maximum": 9999999999999
           },
           "palabras_clave": {
-            "description": "Ver `CreateCategoryDto`. Una lista vacía las borra todas.",
+            "description": "See `CreateCategoryDto`. An empty list deletes them all.",
             "type": "array",
             "items": {
               "type": "string",
@@ -6254,7 +6254,7 @@
         "properties": {
           "period": {
             "type": "string",
-            "description": "El mes al que PERTENECE el gasto, como YYYY-MM-DD del día 1.\n\nOpcional: si no viene, se asume el mes de `date`. Solo hace falta cuando el\ngasto cruza de mes — la factura de marzo que se paga en abril."
+            "description": "The month the expense BELONGS to, as the YYYY-MM-DD of day 1.\n\nOptional: when absent, the month of `date` is assumed. Only needed when\nthe expense crosses months — March's bill paid in April."
           },
           "from_account_id": {
             "type": "number"
@@ -6296,11 +6296,11 @@
         "properties": {
           "period": {
             "type": "string",
-            "description": "El mes al que PERTENECE el gasto, como YYYY-MM-DD del día 1.\n\nOpcional: si no viene, se asume el mes de `date`. Solo hace falta cuando el\ngasto cruza de mes — la factura de marzo que se paga en abril."
+            "description": "The month the expense BELONGS to, as the YYYY-MM-DD of day 1.\n\nOptional: when absent, the month of `date` is assumed. Only needed when\nthe expense crosses months — March's bill paid in April."
           },
           "account_id": {
             "type": "number",
-            "description": "OPCIONAL. Llevar cuentas es una función que se enciende en los ajustes, no\nun requisito para registrar un gasto: pedirla aquí obligaría a inventarse\nuna cuenta antes de poder anotar el primer café.",
+            "description": "OPTIONAL. Tracking accounts is a feature turned on in the settings, not a\nrequirement to record an expense: asking for it here would force inventing\nan account before jotting down the first coffee.",
             "minimum": 1
           },
           "date": {
@@ -6308,7 +6308,7 @@
           },
           "amount": {
             "type": "string",
-            "description": "Siempre positivo: el signo económico lo da `type`, no el número."
+            "description": "Always positive: the economic sign comes from `type`, not from the number."
           },
           "type": {
             "type": "string",
@@ -6316,7 +6316,7 @@
           },
           "category_id": {
             "type": "number",
-            "description": "Opcional a propósito: un movimiento puede existir sin categoría."
+            "description": "Optional on purpose: a transaction can exist without a category."
           },
           "description": {
             "type": "string",
@@ -6339,26 +6339,26 @@
           },
           "source": {
             "type": "string",
-            "description": "── Captura ──────────────────────────────────────────────────────────────\nDe dónde entra. La web manda `web`; la app del teléfono, uno de los\nsuyos. Decide si hay que buscar la otra cara de un mismo pago.",
+            "description": "── Capture ──────────────────────────────────────────────────────────────\nWhere it comes in from. The web sends `web`; the phone app, one of its\nown. It decides whether to look for the other face of the same payment.",
             "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"]
           },
           "raw_text": {
             "type": "string",
             "nullable": true,
-            "description": "El texto del que salió: el OCR del recibo, el SMS del banco.",
+            "description": "The text it came from: the receipt's OCR, the bank's SMS.",
             "maxLength": 20000
           },
           "captured_at": {
             "type": "string",
             "nullable": true,
-            "description": "Cuándo se capturó, ISO 8601 con zona."
+            "description": "When it was captured, ISO 8601 with zone."
           },
           "por_revisar": {
             "type": "boolean",
-            "description": "Si alguien tiene que mirarlo: clasificación insegura o posible duplicado."
+            "description": "Whether someone has to look at it: unsure classification or possible duplicate."
           },
           "tags": {
-            "description": "Nombres, no ids: la UI las crea al vuelo.",
+            "description": "Names, not ids: the UI creates them on the fly.",
             "maxItems": 20,
             "type": "array",
             "items": {
@@ -6380,7 +6380,7 @@
         "properties": {
           "period": {
             "type": "string",
-            "description": "El mes al que PERTENECE el gasto, como YYYY-MM-DD del día 1.\n\nOpcional: si no viene, se asume el mes de `date`. Solo hace falta cuando el\ngasto cruza de mes — la factura de marzo que se paga en abril."
+            "description": "The month the expense BELONGS to, as the YYYY-MM-DD of day 1.\n\nOptional: when absent, the month of `date` is assumed. Only needed when\nthe expense crosses months — March's bill paid in April."
           },
           "account_id": {
             "type": "number"
@@ -6398,7 +6398,7 @@
           "category_id": {
             "type": "number",
             "nullable": true,
-            "description": "`null` explícito quita la categoría."
+            "description": "An explicit `null` removes the category."
           },
           "description": {
             "type": "string",
@@ -6417,23 +6417,23 @@
           },
           "source": {
             "type": "string",
-            "description": "── Captura ──────────────────────────────────────────────────────────────\nDe dónde entra. La web manda `web`; la app del teléfono, uno de los\nsuyos. Decide si hay que buscar la otra cara de un mismo pago.",
+            "description": "── Capture ──────────────────────────────────────────────────────────────\nWhere it comes in from. The web sends `web`; the phone app, one of its\nown. It decides whether to look for the other face of the same payment.",
             "enum": ["web", "ios_manual", "ios_photo", "wallet", "sms"]
           },
           "raw_text": {
             "type": "string",
             "nullable": true,
-            "description": "El texto del que salió: el OCR del recibo, el SMS del banco.",
+            "description": "The text it came from: the receipt's OCR, the bank's SMS.",
             "maxLength": 20000
           },
           "captured_at": {
             "type": "string",
             "nullable": true,
-            "description": "Cuándo se capturó, ISO 8601 con zona."
+            "description": "When it was captured, ISO 8601 with zone."
           },
           "por_revisar": {
             "type": "boolean",
-            "description": "Si alguien tiene que mirarlo: clasificación insegura o posible duplicado."
+            "description": "Whether someone has to look at it: unsure classification or possible duplicate."
           },
           "tags": {
             "maxItems": 20,

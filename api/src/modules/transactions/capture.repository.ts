@@ -21,24 +21,25 @@ export class CaptureRepository {
   constructor(private readonly db: Database) {}
 
   /**
-   * ── Por qué el candado ────────────────────────────────────────────────────
-   * Wallet y el SMS del mismo pago llegan casi a la vez. Sin candado, las dos
-   * capturas buscan la gemela, ninguna ve a la otra —todavía no se ha
-   * escrito— y las dos insertan: el gasto queda duplicado.
+   * ── Why the lock ──────────────────────────────────────────────────────────
+   * Wallet and the SMS of the same payment arrive almost at once. Without a
+   * lock, both captures look for the twin, neither sees the other —it has not
+   * been written yet— and both insert: the expense ends up duplicated.
    *
-   * `pg_advisory_xact_lock` pone en fila a las capturas de la misma persona y
-   * el mismo monto, y se suelta solo al terminar la transacción. La segunda
-   * espera, y cuando entra ya ve la fila de la primera (READ COMMITTED lee lo
-   * confirmado en cada sentencia). La clave lleva persona y monto, no la
-   * fecha: la ventana de duplicados cruza días (`days` es ±1), y una clave con
-   * la fecha dejaría pasar dos capturas de días vecinos a la vez. Lo que
-   * comparten todas las candidatas es el monto, y eso basta para cubrirla.
+   * `pg_advisory_xact_lock` queues the captures of the same person and the
+   * same amount, and is released on its own when the transaction ends. The
+   * second one waits, and when it gets in it already sees the first one's row
+   * (READ COMMITTED reads what is committed at each statement). The key holds
+   * person and amount, not the date: the duplicate window crosses days
+   * (`days` is ±1), and a key with the date would let two captures of
+   * neighbouring days through at once. What every candidate shares is the
+   * amount, and that is enough to cover it.
    *
-   * Todo va por `tx`: una lectura por otra conexión, con el candado tomado,
-   * puede quedarse sin conexión libre en el pool y no volver nunca. Y `tx` es
-   * la unidad de `forUser` (ADR 0019): el candado es su primera sentencia
-   * tras fijar el usuario, así que cubre la búsqueda y la escritura con la
-   * seguridad por filas activa. Otra transacción aparte lo dejaría fuera.
+   * Everything goes through `tx`: a read on another connection, with the lock
+   * held, can be left without a free connection in the pool and never come
+   * back. And `tx` is the unit of `forUser` (ADR 0019): the lock is its first
+   * statement after setting the user, so it covers the search and the write
+   * with row-level security on. A separate transaction would leave it out.
    *
    * A clash on the unique `external_ref` becomes a DuplicateError, as in
    * `createWithDetails`.
@@ -83,8 +84,8 @@ function captureLockKey(criteria: DuplicateCriteria): string {
 }
 
 /**
- * Misma persona, mismo monto, otro origen, cerca en fecha y en tiempo. Sin
- * hora de captura, por la de creación. A lo sumo veinte.
+ * Same person, same amount, another source, close in date and in time.
+ * Without a capture time, by the creation one. Twenty at most.
  */
 function duplicateCandidatesQuery(criteria: DuplicateCriteria) {
   const { userId, source, amount, days, window } = criteria;

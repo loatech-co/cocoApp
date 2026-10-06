@@ -7,7 +7,7 @@ export class SuggestQueryDto {
   description?: string;
 }
 
-/** Lo que la ficha manda al guardar un movimiento con una sugerencia aceptada o corregida. */
+/** What the form sends when it saves a transaction with an accepted or corrected suggestion. */
 export class LearnBodyDto {
   @IsString()
   @MaxLength(255)

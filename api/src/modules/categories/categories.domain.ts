@@ -17,26 +17,26 @@ export interface Category {
   icon: string | null;
   sortOrder: number;
   isArchived: boolean;
-  /** Si el concepto se paga cada cierto tiempo. */
+  /** Whether the concept is paid every so often. */
   isRecurring: boolean;
-  /** Si el centro de costos no se reclasifica desde la tabla de movimientos. */
+  /** Whether the cost center cannot be reclassified from the transactions table. */
   isStatic: boolean;
   periodicity: English<typeof PERIODICITY> | null;
-  /** Día del mes en que se debe pagar. */
+  /** Day of the month it is due. */
   paymentDay: number | null;
-  /** Mes de referencia del ciclo, 1–12. Solo si la periodicidad no es mensual. */
+  /** Reference month of the cycle, 1–12. Only when the periodicity is not monthly. */
   paymentMonth: number | null;
   /**
-   * Lo que se espera que cueste cada vez que toca. Puesto, manda sobre el
-   * promedio de los meses anteriores. Viaja como cadena, igual que todo lo que
-   * es dinero: un decimal en coma flotante pierde centavos.
+   * What it is expected to cost each time it comes due. When set, it overrides
+   * the average of the previous months. Travels as a string, like all money: a
+   * floating-point decimal loses cents.
    */
   budget: string | null;
-  /** Si el movimiento se crea solo al llegar el día de pago. */
+  /** Whether the transaction is created on its own when the payment day comes. */
   isAutoPaid: boolean;
-  /** Si el concepto se cubre a pedazos y no se salda con un solo pago. */
+  /** Whether the concept is covered in pieces and not settled with a single payment. */
   isMultiPayment: boolean;
-  /** Lo que se busca en un soporte para reconocer este concepto. */
+  /** What is searched for in a receipt to recognize this concept. */
   keywords: string[];
 }
 

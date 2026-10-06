@@ -8,52 +8,51 @@
  */
 
 /**
- * Ruido que los extractos meten en la descripción y que cambia entre lecturas
- * del MISMO movimiento. Si no se quitara, la huella nunca coincidiría y el
- * dedupe no serviría de nada.
+ * Noise that statements put in the description and that changes between
+ * readings of the SAME transaction. Left in, the fingerprint would never match
+ * and the dedupe would be useless.
  */
 const NOISE: RegExp[] = [
-  // Referencias de transacción: "REF 000123456", "AUT 45219".
+  // Transaction references: "REF 000123456", "AUT 45219".
   /\b(?:ref|aut|apr|autoriz\w*|comprobante|cus|doc)[\s.:#-]*\d{3,}\b/g,
-  // Fragmentos de tarjeta: "****1234", "XXXX 5678", "terminada en 1234".
-  // Sin `\b` delante: entre un espacio y un `*` NO hay frontera de palabra
-  // —ninguno de los dos es carácter de palabra— y el patrón nunca casaría.
+  // Card fragments: "****1234", "XXXX 5678", "terminada en 1234".
+  // No `\b` in front: between a space and a `*` there is NO word boundary
+  // —neither is a word character— and the pattern would never match.
   /(?:[*x]{2,}\s*\d{4}|\bterminada\s+en\s+\d{4}\b)/g,
-  // Fechas y horas incrustadas.
+  // Embedded dates and times.
   /\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g,
   /\b\d{1,2}:\d{2}(?::\d{2})?\b/g,
-  // Coletillas de banco que no distinguen un movimiento de otro.
+  // Bank boilerplate that does not tell one transaction from another.
   /\b(?:compra|pago|pse|debito|credito|transaccion|trans)\b/g,
 ];
 
 /**
- * Normaliza una descripción para comparar.
+ * Normalizes a description for comparing.
  *
- * Minúsculas, sin tildes, sin ruido, sin puntuación y con los espacios
- * colapsados. `Éxito Poblado  REF 0012` y `EXITO POBLADO ref 9987` acaban
- * siendo la misma cadena, que es exactamente lo que se busca: el mismo
- * comercio leído dos veces.
+ * Lowercase, no accents, no noise, no punctuation and with collapsed spaces.
+ * `Éxito Poblado  REF 0012` and `EXITO POBLADO ref 9987` end up as the same
+ * string, which is exactly the point: the same merchant read twice.
  *
- * ── Sobre la ñ ─────────────────────────────────────────────────────────────
- * Se pliega a `n`, aunque en español sean letras distintas. La entrada de esta
- * función es texto de OCR, y la virgulilla es justo la clase de marca que un
- * OCR pierde: el mismo comercio saldría "Peñalisa" una vez y "Penalisa" otra,
- * y la huella dejaría de coincidir — que es el fallo que esta función existe
- * para evitar.
+ * ── About ñ ────────────────────────────────────────────────────────────────
+ * It folds into `n`, although in Spanish they are different letters. The
+ * input of this function is OCR text, and the tilde is exactly the kind of
+ * mark an OCR loses: the same merchant would come out "Peñalisa" once and
+ * "Penalisa" another, and the fingerprint would stop matching — which is the
+ * failure this function exists to avoid.
  *
- * El costo del pliegue es que dos comercios que solo se diferencien por la ñ
- * podrían marcarse como repetidos. Para que eso ocurra tendrían que coincidir
- * ADEMÁS en cuenta, fecha y monto al centavo, y aun entonces solo se marca:
- * la persona desmarca la casilla. El fallo contrario —duplicados que se cuelan
- * sin avisar— es mucho más caro de descubrir y de limpiar.
+ * The cost of folding is that two merchants that differ only by the ñ could
+ * be flagged as repeated. For that they would ALSO have to match on account,
+ * date and amount to the cent, and even then it is only flagged: the person
+ * unticks the box. The opposite failure —duplicates slipping in unnoticed— is
+ * much more expensive to find and to clean up.
  */
 export function normalizeDescription(text: string | null | undefined): string {
   if (!text) return '';
 
   let result = text
     .toLowerCase()
-    // NFD separa cada letra de su marca diacrítica; el rango ̀-ͯ son
-    // esas marcas. Incluye la virgulilla de la ñ, que aquí se pliega a propósito.
+    // NFD splits each letter from its diacritic; the range ̀-ͯ is
+    // those marks. It includes the tilde of ñ, folded here on purpose.
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '');
 

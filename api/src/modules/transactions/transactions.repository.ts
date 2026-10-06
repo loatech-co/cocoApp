@@ -8,7 +8,7 @@ import { toMoney, type Money } from '../../common/money/money';
 import { Prisma, type TransactionType } from '../../generated/prisma/client';
 import { Database, type UserTx } from '../../prisma/database';
 
-/** Lo que Prisma devuelve cuando se incluyen splits y etiquetas. */
+/** What Prisma returns when splits and tags are included. */
 export type FullTransaction = Prisma.TransactionGetPayload<{
   include: { splits: true; tags: { include: { tag: true } } };
 }>;
@@ -47,9 +47,9 @@ export class TransactionsRepository {
   /**
    * One page of the filtered list, its total, and the sums by type.
    *
-   * Las sumas las hace la BASE, sobre el filtro entero. Traerlas sumando en
-   * memoria obligaría a descargar todas las filas del filtro —no las
-   * cincuenta de la página— solo para pintar un pie de tabla.
+   * The DATABASE does the sums, over the whole filter. Adding them up in memory
+   * would mean downloading every row of the filter —not the fifty of the
+   * page— just to paint a table footer.
    */
   async findPage(
     userId: bigint,
@@ -98,8 +98,8 @@ export class TransactionsRepository {
   }
 
   /**
-   * Todo dentro de una sola transacción: si algo falla a medio camino, no
-   * queda un movimiento huérfano sin su desglose.
+   * Everything in a single database transaction: if something fails halfway,
+   * no orphan transaction is left without its splits.
    *
    * A clash on the unique `external_ref` becomes a DuplicateError: a client
    * retrying the same capture is told "it is already there".
@@ -126,7 +126,7 @@ export class TransactionsRepository {
     }
   }
 
-  /** Las dos patas en la misma transacción, devueltas en orden (`in`, `out`). */
+  /** Both legs in the same database transaction, returned in order (`in`, `out`). */
   createTransfer(
     base: Omit<Prisma.TransactionUncheckedCreateInput, 'accountId' | 'transferDir'> & {
       userId: bigint;
@@ -245,22 +245,22 @@ export class TransactionsRepository {
       ...(query.category_id !== undefined ? [BigInt(query.category_id)] : []),
       ...categoryIds(query.category_ids),
     ];
-    // Filtrar por "Costos fijos" tiene que traer TODO lo que hay debajo: los
-    // movimientos cuelgan del concepto, que es la hoja.
+    // Filtering by "Costos fijos" has to bring EVERYTHING below it: the
+    // transactions hang from the concept, which is the leaf.
     if (requested.length > 0) {
       where.categoryId = { in: branchesOf(await categoryNodes(tx, userId), requested) };
     }
 
     if (query.q) {
-      // La búsqueda también entra por la CLASIFICACIÓN: escribir "servicios
-      // públicos" tiene que traer todo lo que cuelga de esa categoría, aunque
-      // ninguna fila lo diga en su descripción. Quien busca piensa en el
-      // nombre con el que ordenó su plata, no en cómo vino escrito el cargo.
+      // The search also goes through the CLASSIFICATION: typing "servicios
+      // públicos" has to bring everything that hangs from that category, even
+      // if no row says so in its description. Whoever searches thinks of the
+      // name they sorted their money with, not of how the charge was written.
       const byCategoryName = await branchByName(tx, userId, query.q);
 
-      // `mode: 'insensitive'` NO es opcional. Postgres compara distinguiendo
-      // mayúsculas —MariaDB no lo hacía—, así que buscar "celsia" no
-      // encontraría "Celsia (Energia)". Quien busca escribe en minúscula.
+      // `mode: 'insensitive'` is NOT optional. Postgres compares case-sensitively
+      // —MariaDB did not—, so searching "celsia" would not find
+      // "Celsia (Energia)". People search in lowercase.
       where.OR = [
         { description: { contains: query.q, mode: 'insensitive' } },
         { merchant: { contains: query.q, mode: 'insensitive' } },
@@ -284,11 +284,11 @@ function categoryNodes(
 }
 
 /**
- * Las categorías cuyo NOMBRE contiene el texto, con toda su rama.
+ * The categories whose NAME contains the text, with their whole branch.
  *
- * Con la rama, no solo las que coinciden: los movimientos cuelgan del
- * concepto, así que buscar el nombre de una categoría sin expandirla no
- * devolvería ni una fila.
+ * With the branch, not only the matching ones: transactions hang from the
+ * concept, so searching a category's name without expanding it would return
+ * no row at all.
  */
 async function branchByName(tx: UserTx, userId: bigint, text: string): Promise<bigint[]> {
   const nodes = await categoryNodes(tx, userId);
@@ -300,10 +300,10 @@ async function branchByName(tx: UserTx, userId: bigint, text: string): Promise<b
 /** The filters that need no lookup: period, account, type, status, tag, amount. */
 function plainFilters(query: ListTransactionsQueryDto): Prisma.TransactionWhereInput {
   return {
-    // Por PERÍODO: el rango que la persona elige arriba se refiere al mes al
-    // que pertenece el gasto, no al día en que salió la plata. Si filtrara
-    // por `date`, marzo aparecería vacío cuando sus facturas se pagaron en
-    // abril — que es exactamente lo que pasaba.
+    // By PERIOD: the range the person picks at the top refers to the month the
+    // expense belongs to, not to the day the money left. Filtering by `date`,
+    // March would show empty when its bills were paid in April — which is
+    // exactly what used to happen.
     ...((query.from || query.to) && {
       period: {
         ...(query.from && { gte: new Date(query.from) }),

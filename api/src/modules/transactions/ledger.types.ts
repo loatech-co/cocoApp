@@ -15,7 +15,7 @@ export interface DuplicateCandidateRow {
   description: string | null;
 }
 
-/** Misma persona, mismo monto, otro origen, cerca en fecha y en tiempo de captura. */
+/** Same person, same amount, another source, close in date and in capture time. */
 export interface DuplicateCriteria {
   userId: bigint;
   source: TransactionSource;

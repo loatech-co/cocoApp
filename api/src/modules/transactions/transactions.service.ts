@@ -41,11 +41,11 @@ import { TagsService } from '../tags/tags.service';
 export type { Transaction } from './transactions.domain';
 
 /**
- * El primer día del mes de una fecha.
+ * The first day of the month of a date.
  *
- * Es el valor por defecto de `period`: la mayoría de los gastos pertenecen al
- * mes en que se pagaron, y obligar a declararlo en cada registro sería fricción
- * para el caso común. Solo las facturas que cruzan de mes necesitan decirlo.
+ * It is the default of `period`: most expenses belong to the month they were
+ * paid in, and making every record declare it would be friction for the
+ * common case. Only the bills that cross months need to say it.
  */
 function monthOf(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
@@ -76,14 +76,14 @@ export class TransactionsService {
   }
 
   /**
-   * Desde cuándo y hasta cuándo hay historia.
+   * From when and until when there is history.
    *
-   * Existe para que "Todo" signifique algo. Sin esto, el rango arrancaba en
-   * 1970 y terminaba cinco años en el futuro: el eje de la gráfica se estiraba
-   * sobre medio siglo vacío para dibujar cuatro años de datos, y el botón de
-   * fechas prometía un periodo que nunca existió.
+   * It exists so that "Todo" means something. Without it, the range started
+   * in 1970 and ended five years in the future: the chart's axis stretched
+   * over half an empty century to draw four years of data, and the date button
+   * promised a period that never existed.
    *
-   * Por PERIODO y no por fecha de pago: es el eje con el que se mira la app.
+   * By PERIOD and not by payment date: it is the axis the app is read on.
    */
   async history(userId: bigint): Promise<TransactionHistory> {
     const { first, last } = await this.repository.periodRange(userId);
@@ -108,7 +108,7 @@ export class TransactionsService {
    * The capture uses it to write under its own lock (`LedgerService`).
    */
   async prepareCreate(userId: bigint, dto: CreateTransactionDto): Promise<NewTransaction> {
-    // Sin cuenta es un caso válido, no un error: llevarlas es opcional.
+    // Without an account is a valid case, not an error: tracking them is optional.
     const accountId = dto.account_id !== undefined ? BigInt(dto.account_id) : null;
     const categoryId = dto.category_id !== undefined ? BigInt(dto.category_id) : null;
     const amount = toMoney(dto.amount);
@@ -145,13 +145,13 @@ export class TransactionsService {
   }
 
   /**
-   * Una transferencia son DOS filas emparejadas por `transfer_group_id`, no un
-   * movimiento con dos cuentas. Se crean en la misma transacción: jamás debe
-   * existir una pata sin su contraparte, porque entonces el dinero se
-   * "evaporaría" de un lado sin aparecer en el otro.
+   * A transfer is TWO rows paired by `transfer_group_id`, not a transaction
+   * with two accounts. They are created in the same database transaction: a
+   * leg must never exist without its counterpart, because then the money
+   * would "evaporate" from one side without showing up on the other.
    *
-   * No cuenta como gasto ni como ingreso: solo redistribuye saldo entre
-   * bolsillos del propio usuario.
+   * It counts as neither expense nor income: it only moves balance between
+   * the user's own pockets.
    */
   async createTransfer(userId: bigint, dto: CreateTransferDto): Promise<Transfer> {
     const fromAccountId = BigInt(dto.from_account_id);
@@ -202,8 +202,8 @@ export class TransactionsService {
 
     const amount = dto.amount !== undefined ? toMoney(dto.amount) : toMoney(actual.amount);
 
-    // Si llegan splits nuevos, se revalida el cuadre contra el monto resultante;
-    // si no llegan y el monto cambia, el desglose que ya hay tiene que cuadrar.
+    // If new splits come, they are checked against the resulting amount; if
+    // they do not and the amount changes, the existing splits have to reconcile.
     requireReconciledSplits(actual, dto, amount);
     const splits =
       dto.splits !== undefined ? await this.prepareSplits(userId, amount, dto.splits) : null;
@@ -224,9 +224,9 @@ export class TransactionsService {
   }
 
   /**
-   * Borrar una pata de transferencia se lleva la otra: dejar una suelta
-   * descuadraría el patrimonio, porque el dinero saldría de una cuenta sin
-   * entrar a ninguna.
+   * Deleting a transfer leg takes the other one: leaving one alone would
+   * break the net worth, because the money would leave one account without
+   * entering any.
    */
   async remove(userId: bigint, id: bigint): Promise<void> {
     const transaction = await this.requireTransaction(userId, id);
@@ -250,8 +250,8 @@ export class TransactionsService {
   // ── Apoyo ──────────────────────────────────────────────────────────────────
 
   /**
-   * Editar una pata de transferencia edita las dos (como borrar): un monto
-   * distinto en cada pata descuadra los saldos de las dos cuentas.
+   * Editing a transfer leg edits both (like deleting): a different amount on
+   * each leg breaks the balances of both accounts.
    */
   private async partnerLeg(
     userId: bigint,
@@ -281,8 +281,9 @@ export class TransactionsService {
   }
 
   /**
-   * Valida el cuadre y exige que cada categoría sea del usuario (422): sin eso
-   * un split colgaba un movimiento propio de un concepto ajeno.
+   * Checks the splits reconcile and requires each category to be the user's
+   * (422): without it a split hung one's own transaction from someone else's
+   * concept.
    */
   private async prepareSplits(
     userId: bigint,
@@ -305,7 +306,7 @@ export class TransactionsService {
     return transaction;
   }
 
-  /** Sin esta verificación se podría asociar un movimiento a la cuenta de otro. */
+  /** Without this check a transaction could be tied to someone else's account. */
   private async requireOwnAccount(userId: bigint, accountId: bigint): Promise<void> {
     if (!(await this.repository.accountBelongsTo(userId, accountId))) {
       throw new ValidationError('La cuenta indicada no existe o no es tuya.', {

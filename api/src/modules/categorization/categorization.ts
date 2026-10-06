@@ -2,36 +2,36 @@ import { normalizeDescription } from './description';
 import type { English, SUGGESTION_REASON } from '../../common/vocabulary';
 
 /**
- * Categorización automática (T1) — lógica pura.
+ * Automatic categorization (T1) — pure logic.
  *
- * ── El principio que manda ──────────────────────────────────────────────────
- * No-rigidez: el sistema SUGIERE, nunca decide ni bloquea. Un movimiento sin
- * categoría siempre se puede guardar. Por eso todo lo de aquí devuelve una
- * sugerencia con su confianza, y jamás lanza.
+ * ── The ruling principle ────────────────────────────────────────────────────
+ * No rigidity: the system SUGGESTS, it never decides or blocks. A transaction
+ * without a category can always be saved. That is why everything here returns
+ * a suggestion with its confidence, and never throws.
  *
- * ── De dónde sale la sugerencia, en orden de fuerza ─────────────────────────
- * 1. El HISTORIAL del propio usuario. Si ya clasificó "rappi" como Domicilios
- *    ocho veces, esa es la respuesta — y es mejor que cualquier lista que yo
- *    pudiera escribir, porque refleja cómo organiza SUS finanzas, no las mías.
- * 2. Reglas explícitas que la persona haya creado.
- * 3. Un puñado de reglas sembradas para Colombia, para que la primera
- *    importación de alguien que aún no tiene historial no llegue vacía.
+ * ── Where the suggestion comes from, strongest first ────────────────────────
+ * 1. The user's own HISTORY. If they already classified "rappi" as Domicilios
+ *    eight times, that is the answer — and it beats any list I could write,
+ *    because it reflects how THEY organize their finances, not how I do.
+ * 2. Explicit rules the person created.
+ * 3. A handful of rules seeded for Colombia, so the first import of someone
+ *    with no history yet does not arrive empty.
  *
- * El historial gana siempre que exista. Las listas envejecen; el historial no.
+ * The history always wins when it exists. Lists age; the history does not.
  */
 
-/** Confianza mínima para mostrar una sugerencia. Por debajo, mejor callar. */
+/** Minimum confidence to show a suggestion. Below it, better to stay quiet. */
 export const MIN_CONFIDENCE = 40;
 
 export interface SuggestedCategory {
   categoryId: bigint;
-  /** 0–100. Se enseña para que se sepa cuánto fiarse. */
+  /** 0–100. Shown so people know how much to trust it. */
   confidence: number;
-  /** Por qué se sugirió. Aparece en la interfaz: "porque siempre lo clasificas así". */
+  /** Why it was suggested. It shows in the interface: "because you always classify it this way". */
   reason: English<typeof SUGGESTION_REASON>;
 }
 
-/** Un movimiento ya categorizado por la persona, para aprender de él. */
+/** A transaction the person already categorized, to learn from. */
 export interface HistoryEntry {
   description: string | null;
   categoryId: bigint;
@@ -41,17 +41,17 @@ export interface CategoryRule {
   pattern: string;
   categoryId: bigint;
   priority: number;
-  /** Distingue lo que sembramos de lo que creó la persona. */
+  /** Tells what we seeded from what the person created. */
   isSeeded?: boolean;
 }
 
 /**
- * Elige la mejor sugerencia para una descripción.
+ * Picks the best suggestion for a description.
  *
- * Devuelve `null` cuando nada alcanza `CONFIANZA_MINIMA`. Sugerir mal es peor
- * que no sugerir: una categoría equivocada que se cuela sin mirar contamina
- * los informes, y descubrirlo tres meses después cuesta mucho más que haber
- * escrito la categoría a mano.
+ * Returns `null` when nothing reaches `MIN_CONFIDENCE`. A wrong suggestion is
+ * worse than none: a wrong category that slips in unnoticed pollutes the
+ * reports, and finding it three months later costs far more than having
+ * typed the category by hand.
  */
 export function suggestCategory(
   description: string | null | undefined,
@@ -67,12 +67,12 @@ export function suggestCategory(
 }
 
 /**
- * Aprende del historial por coincidencia de tokens.
+ * Learns from the history by token overlap.
  *
- * No compara cadenas enteras: "rappi restaurante x" y "rappi mercado y" no son
- * iguales, pero comparten "rappi", que es lo que importa. Se puntúa cada
- * categoría por cuántos antecedentes comparten tokens significativos, y gana
- * la que domine con claridad.
+ * It does not compare whole strings: "rappi restaurante x" and "rappi mercado
+ * y" are not equal, but they share "rappi", which is what matters. Each
+ * category is scored by how many past transactions share significant tokens,
+ * and the one that clearly dominates wins.
  */
 function fromHistory(normalized: string, history: HistoryEntry[]): SuggestedCategory | null {
   if (history.length === 0) return null;
@@ -93,8 +93,8 @@ function fromHistory(normalized: string, history: HistoryEntry[]): SuggestedCate
     }
     if (shared === 0) continue;
 
-    // Un antecedente que comparte 2 de 2 tokens pesa más que uno que comparte
-    // 1 de 5: se puntúa por proporción, no por conteo bruto.
+    // A past transaction sharing 2 of 2 tokens weighs more than one sharing
+    // 1 of 5: it is scored by proportion, not by raw count.
     const peso = shared / Math.max(tokens.size, entryTokens.size);
     scores.set(entry.categoryId, (scores.get(entry.categoryId) ?? 0) + peso);
     total += peso;
@@ -106,9 +106,9 @@ function fromHistory(normalized: string, history: HistoryEntry[]): SuggestedCate
     actual[1] > best[1] ? actual : best,
   );
 
-  // La confianza es cuánto DOMINA la ganadora sobre las demás, no cuántas
-  // veces apareció. Si el historial está repartido entre tres categorías,
-  // ninguna merece imponerse.
+  // The confidence is how much the winner DOMINATES the rest, not how many
+  // times it appeared. If the history is split among three categories, none
+  // deserves to prevail.
   const confidence = Math.round((score / total) * 100);
 
   return confidence >= MIN_CONFIDENCE
@@ -116,12 +116,12 @@ function fromHistory(normalized: string, history: HistoryEntry[]): SuggestedCate
     : null;
 }
 
-/** Aplica las reglas por palabra clave. Gana la de mayor prioridad. */
+/** Applies the keyword rules. The highest priority wins. */
 function fromRules(normalized: string, rules: CategoryRule[]): SuggestedCategory | null {
   const matches = rules
     .filter((rule) => rule.pattern.length > 0 && normalized.includes(rule.pattern))
-    // A igualdad de prioridad gana el patrón más largo: "juan valdez" es más
-    // específico que "juan" y debe ganarle.
+    // At equal priority the longest pattern wins: "juan valdez" is more
+    // specific than "juan" and must beat it.
     .sort((a, b) => b.priority - a.priority || b.pattern.length - a.pattern.length);
 
   const best = matches[0];
@@ -129,18 +129,18 @@ function fromRules(normalized: string, rules: CategoryRule[]): SuggestedCategory
 
   return {
     categoryId: best.categoryId,
-    // Una regla propia es una decisión explícita de la persona; una sembrada
-    // es una suposición mía. La confianza lo refleja.
+    // An own rule is an explicit decision of the person; a seeded one is my
+    // guess. The confidence reflects it.
     confidence: best.isSeeded ? 60 : 85,
     reason: best.isSeeded ? 'seeded_rule' : 'rule',
   };
 }
 
 /**
- * Palabras que sí identifican un comercio.
+ * Words that do identify a merchant.
  *
- * Fuera las de una y dos letras y las muy comunes: "de", "la", "el" aparecen
- * en medio catálogo y solo introducen ruido en la comparación.
+ * Out go the one- and two-letter ones and the very common ones: "de", "la",
+ * "el" show up in half the catalogue and only add noise to the comparison.
  */
 const STOP_WORDS = new Set([
   'de',
@@ -172,11 +172,12 @@ export function significantTokens(normalized: string): Set<string> {
 }
 
 /**
- * Palabras que describen un pago sin decir de qué es.
+ * Words that describe a payment without saying what it is for.
  *
- * Aprender de ellas crea reglas que lo clasifican todo igual: una regla
- * «pago → Mercado» convertiría en mercado cada «pago de» que llegue después.
- * El plan lo dice tal cual: no se aprende de descripciones vacías ni genéricas.
+ * Learning from them creates rules that classify everything the same: a rule
+ * "pago → Mercado" would turn every "pago de" that comes later into
+ * groceries. The plan says it as is: nothing is learned from empty or generic
+ * descriptions.
  */
 const GENERIC_WORDS: ReadonlySet<string> = new Set([
   'pago',
@@ -211,14 +212,14 @@ const GENERIC_WORDS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * El token con el que se aprende de una descripción, o `null` si no da para
- * aprender nada.
+ * The token a description is learned with, or `null` if it is not enough to
+ * learn anything.
  *
- * El más largo, de cuatro letras o más, que no sea un número ni una palabra
- * genérica. De «RAPPI*RESTAURANTE EL SITIO» sale «restaurante». No es
- * perfecto —a veces el token más largo no es el nombre del comercio— pero la
- * regla convive con el aprendizaje por historial, que corrige por su cuenta,
- * y una regla mala pesa poco frente a un historial consistente.
+ * The longest one, four letters or more, that is neither a number nor a
+ * generic word. «RAPPI*RESTAURANTE EL SITIO» gives «restaurante». It is not
+ * perfect —sometimes the longest token is not the merchant's name— but the
+ * rule lives alongside learning from the history, which corrects on its own,
+ * and a bad rule weighs little against a consistent history.
  */
 export function learnablePattern(
   description: string | null | undefined,

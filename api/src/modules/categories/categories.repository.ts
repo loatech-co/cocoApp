@@ -27,8 +27,8 @@ export class CategoriesRepository {
   }
 
   /**
-   * Solo id y parentId: para validar ciclos y profundidad no hace falta traerse
-   * el árbol completo con nombres y colores.
+   * Only id and parentId: checking cycles and depth does not need the whole
+   * tree with names and colors.
    */
   async treeSkeleton(userId: bigint): Promise<CategoryNode[]> {
     return this.db.forUser(userId, (tx) =>
@@ -45,19 +45,17 @@ export class CategoriesRepository {
   }
 
   /**
-   * ── Por qué el tipo es `UncheckedUpdateMany` y no `UpdateInput` ───────────
-   * Porque esto es un `updateMany`, y `updateMany` NO acepta escrituras
-   * anidadas de relaciones: ni `connect`, ni `disconnect`, ni `create`. Solo
-   * columnas.
+   * ── Why the type is `UncheckedUpdateMany` and not `UpdateInput` ──────────
+   * Because this is an `updateMany`, and `updateMany` does NOT accept nested
+   * relation writes: no `connect`, no `disconnect`, no `create`. Only columns.
    *
-   * Estaba declarado como `CategoryUpdateInput`, que sí las admite, así que
-   * TypeScript daba por bueno un `parent: { connect: … }` que Prisma rechaza
-   * en tiempo de ejecución con «Unknown argument `parent`». El resultado era
-   * un 500 al cambiar de categoría un concepto, y nunca lo vio nadie porque el
-   * tipo mentía.
+   * It was declared as `CategoryUpdateInput`, which does accept them, so
+   * TypeScript allowed a `parent: { connect: … }` that Prisma rejects at run
+   * time with "Unknown argument `parent`". The result was a 500 when moving a
+   * concept to another category, and nobody saw it because the type lied.
    *
-   * `Unchecked` es la variante que expone las claves ajenas como lo que son
-   * —`parentId`, un número—, que es como se cambia un padre desde aquí.
+   * `Unchecked` is the variant that exposes foreign keys as what they are
+   * —`parentId`, a number—, which is how a parent is changed from here.
    */
   async update(
     userId: bigint,
@@ -82,12 +80,12 @@ export class CategoriesRepository {
   }
 
   /**
-   * Cuántos movimientos cuelgan de estas categorías.
+   * How many transactions hang from these categories.
    *
-   * Recibe una LISTA y no un id porque lo que se cuenta es un subárbol: los
-   * movimientos de un centro de costos no están en el centro, están en los
-   * conceptos que hay tres niveles más abajo. Contando solo el id de arriba,
-   * un centro con cuarenta movimientos daba cero.
+   * It takes a LIST and not an id because what is counted is a subtree: the
+   * transactions of a cost center are not in the cost center, they are in the
+   * concepts three levels below. Counting only the top id, a cost center with
+   * forty transactions gave zero.
    */
   async countUsage(userId: bigint, categoryIds: readonly bigint[]): Promise<number> {
     if (categoryIds.length === 0) return 0;
@@ -105,20 +103,20 @@ export class CategoriesRepository {
   }
 
   /**
-   * Borra un subárbol entero, reasignando antes lo que colgaba de él.
+   * Deletes a whole subtree, first reassigning what hung from it.
    *
-   * ── Por qué el subárbol y no la fila ────────────────────────────────────
-   * Porque `parent_id` está declarado `ON DELETE SET NULL`: borrando solo el
-   * categoría, sus conceptos se quedaban con el padre en nulo y ASCENDÍAN a
-   * centros de costos. Un borrado que crea tres centros nuevos no es lo que
-   * nadie pidió.
+   * ── Why the subtree and not the row ─────────────────────────────────────
+   * Because `parent_id` is declared `ON DELETE SET NULL`: deleting only the
+   * category, its concepts were left with a null parent and were PROMOTED to
+   * cost centers. A deletion that creates three new cost centers is not what
+   * anybody asked for.
    *
-   * ── Por qué en una transacción ──────────────────────────────────────────
-   * Porque si la reasignación pasa y el borrado falla, quedan los movimientos
-   * en su destino nuevo y la categoría vieja todavía viva —y nadie sabe que
-   * se movieron—. Y al revés es peor: `category_id` es `ON DELETE SET NULL`,
-   * así que un borrado sin reasignación previa deja los movimientos sin
-   * clasificar en silencio.
+   * ── Why in one transaction ──────────────────────────────────────────────
+   * Because if the reassignment goes through and the deletion fails, the
+   * transactions sit at their new target with the old category still alive
+   * —and nobody knows they moved—. The other way round is worse:
+   * `category_id` is `ON DELETE SET NULL`, so a deletion without a prior
+   * reassignment leaves the transactions unclassified, silently.
    */
   async deleteSubtreeReassigning(
     userId: bigint,
@@ -149,7 +147,7 @@ export class CategoriesRepository {
     });
   }
 
-  /** Reordena en una sola transacción: o queda todo el orden nuevo, o ninguno. */
+  /** Reorders in a single transaction: either the whole new order lands, or none of it. */
   async reorder(
     userId: bigint,
     items: readonly { id: bigint; sortOrder: number }[],
@@ -169,28 +167,29 @@ export class CategoriesRepository {
   }
 
   /**
-   * Copia la plantilla de cuenta nueva. Devuelve cuántas filas creó.
+   * Copies the new-account template. Returns how many rows it created.
    *
-   * La llaman dos sitios que no se conocen entre sí: el registro, para que una
-   * cuenta nazca con su estructura (por `CategoriesService.seedNewAccount`), y
-   * `POST /categories/seed`, para rellenar una que se quedó vacía.
-   * `categories.template.ts` es la ESTRUCTURA y el porqué de cada decisión;
-   * esto es el acceso a la base.
+   * Two places that do not know each other call it: the registration, so an
+   * account is born with its structure (through
+   * `CategoriesService.seedNewAccount`), and `POST /categories/seed`, to fill
+   * one that was left empty. `categories.template.ts` is the STRUCTURE and the
+   * why of each decision; this is the database access.
    *
-   * ── Por qué nivel por nivel y no un `createMany` ────────────────────────────
-   * Porque un hijo necesita el `id` de su padre, y `createMany` no devuelve los
-   * ids que acaba de asignar. El árbol son nueve filas: el ahorro de una sola
-   * consulta no paga tener que resolver eso a mano.
+   * ── Why level by level and not a `createMany` ─────────────────────────────
+   * Because a child needs its parent's `id`, and `createMany` does not return
+   * the ids it just assigned. The tree is nine rows: saving one query does not
+   * pay for solving that by hand.
    */
   async seedTemplate(userId: bigint): Promise<number> {
     return this.db.forUser(userId, (tx) => copyTemplate(tx, userId, NEW_ACCOUNT_TEMPLATE, null));
   }
 
   /**
-   * Mueve todo lo que cuelga de un concepto a otro y borra el primero.
+   * Moves everything that hangs from one concept to another and deletes the
+   * first.
    *
-   * En UNA transacción. A medio camino quedarían movimientos apuntando a una
-   * categoría ya borrada, y eso no se arregla mirando la pantalla.
+   * In ONE transaction. Halfway there would be transactions pointing at an
+   * already deleted category, and that is not fixed by looking at the screen.
    */
   async merge(userId: bigint, sourceId: bigint, targetId: bigint): Promise<number> {
     return this.db.forUser(userId, async (tx) => {
@@ -199,12 +198,12 @@ export class CategoriesRepository {
         data: { categoryId: targetId },
       });
 
-      // Los splits reparten un movimiento entre categorías: si uno apuntaba al
-      // concepto que desaparece, hay que moverlo o se quedaría sin clasificar.
-      // Ni los splits ni las filas de importación llevan `user_id`: se filtran
-      // por el dueño del movimiento o del lote. Sin ese filtro, una fila ajena
-      // que apuntara al origen (de cuando los splits no validaban la categoría)
-      // saltaría al árbol de este usuario.
+      // Splits spread a transaction across categories: if one pointed at the
+      // concept that goes away, it has to move or it would be left unclassified.
+      // Neither splits nor import rows carry `user_id`: they are filtered by the
+      // owner of the transaction or of the batch. Without that filter, someone
+      // else's row pointing at the source (from when splits did not validate
+      // the category) would jump into this user's tree.
       await tx.transactionSplit.updateMany({
         where: { categoryId: sourceId, transaction: { userId } },
         data: { categoryId: targetId },
@@ -215,26 +214,26 @@ export class CategoriesRepository {
         data: { categoryId: targetId },
       });
 
-      // Las reglas aprendidas son únicas por (usuario, patrón), así que
-      // cambiarles la categoría nunca choca con las del destino.
+      // Learned rules are unique per (user, pattern), so changing their
+      // category never clashes with the target's.
       await tx.categoryRule.updateMany({
         where: { userId, categoryId: sourceId },
         data: { categoryId: targetId },
       });
 
       /*
-        Las palabras clave del que desaparece pasan al que queda.
+        The keywords of the one that goes away move to the one that stays.
 
-        Son lo que hace que el próximo recibo de ese acreedor se reconozca
-        solo, y unificar «Movistar» en «MOVISTAR S.A.» es decir que son el
-        mismo: las palabras que reconocían al primero reconocen al segundo.
-        Dejándolas morir con la fila, la unificación arreglaba los totales y
-        rompía la lectura, y eso no se ve hasta el mes siguiente —cuando un
-        recibo que entraba clasificado deja de entrar— y para entonces nadie
-        lo relaciona con haber unificado dos conceptos.
+        They are what makes the next receipt from that creditor be recognized
+        on its own, and merging «Movistar» into «MOVISTAR S.A.» says they are
+        the same: the words that recognized the first recognize the second.
+        Letting them die with the row, the merge fixed the totals and broke the
+        reading, and that does not show until the next month —when a receipt
+        that used to come in classified stops doing so— and by then nobody
+        links it to having merged two concepts.
 
-        `unir` las junta sin repetir: el nombre del acreedor suele estar en
-        los dos, que es justo por lo que se crearon duplicados.
+        `mergeKeywords` joins them without repeats: the creditor's name is
+        usually in both, which is exactly why duplicates were created.
       */
       const [source, target] = await Promise.all([
         tx.category.findUnique({ where: { id: sourceId }, select: { keywords: true } }),
@@ -266,17 +265,16 @@ async function copyTemplate(
       data: {
         userId,
         name: node.name,
-        // Todo lo de la plantilla es gasto. Los ingresos no se clasifican
-        // todavía en esta app —la opción está apagada y rotulada «Pronto»—,
-        // así que sembrar un árbol de ingresos sería sembrar algo que no se
-        // puede usar.
+        // Everything in the template is an expense. Income is not classified in
+        // this app yet —the option is off and labelled «Pronto»—, so seeding an
+        // income tree would be seeding something that cannot be used.
         kind: 'expense',
         parentId,
         icon: node.icon ?? null,
         isStatic: node.isStatic ?? false,
-        // Explícito y correlativo, no el 0 de fábrica: con todo en cero el
-        // orden lo acaba decidiendo el id, que es el orden de inserción por
-        // casualidad y no por decisión.
+        // Explicit and consecutive, not the factory 0: with everything at zero
+        // the order ends up decided by the id, which is insertion order by
+        // chance and not by decision.
         sortOrder: position,
       },
     });

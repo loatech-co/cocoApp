@@ -42,7 +42,7 @@ import {
   type TransferV1,
 } from '../../presenters/v1/transactions.presenter';
 
-/** M1 — Movimientos. El núcleo: todo lo demás se deriva de aquí. */
+/** M1 — Transactions. The core: everything else derives from here. */
 @ApiAuthenticated()
 @Controller('transactions')
 export class TransactionsController {
@@ -59,8 +59,8 @@ export class TransactionsController {
   }
 
   /**
-   * Va antes de `:id` a propósito: si estuviera después, Express intentaría
-   * interpretar "historia" como un identificador.
+   * Goes before `:id` on purpose: after it, Express would try to read
+   * "historia" as an id.
    */
   @Get('historia')
   @ApiData(TransactionHistoryResponse)
@@ -69,8 +69,8 @@ export class TransactionsController {
   }
 
   /**
-   * Va antes de `:id` a propósito: si estuviera después, Express intentaría
-   * interpretar "transfer" como un identificador.
+   * Goes before `:id` on purpose: after it, Express would try to read
+   * "transfer" as an id.
    */
   @Post('transfer')
   @ApiData(TransferResponse, { status: 201 })

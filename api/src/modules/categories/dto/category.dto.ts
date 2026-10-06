@@ -24,27 +24,27 @@ import { mergeKeywords } from '../keywords';
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 /**
- * Cuántas palabras clave admite un concepto y cuánto puede medir cada una.
+ * How many keywords a concept accepts and how long each one may be.
  *
- * El tope no es un límite técnico: treinta palabras para reconocer un acreedor
- * ya no son señales, son una red que atrapa cualquier recibo. Y está aquí —en
- * el contrato— para que un cliente que no sea esta pantalla tampoco pueda
- * llenar la columna.
+ * The cap is not a technical limit: thirty words to recognize a creditor are
+ * no longer signals, they are a net that catches any receipt. And it lives
+ * here —in the contract— so a client other than this screen cannot fill the
+ * column either.
  */
 export const MAX_KEYWORDS = 30;
 const MAX_KEYWORD_LENGTH = 60;
 
 /**
- * Limpia la lista antes de validarla: recorta, tira las vacías y quita las
- * repetidas sin mirar tildes ni mayúsculas.
+ * Cleans the list before validating it: trims, drops the empty ones and
+ * removes repeats regardless of accents and case.
  *
- * Se hace aquí y no en el servicio porque es parte de lo que significa el
- * campo, no de lo que se hace con él: «Claro» y «claro » son la misma palabra
- * dicha dos veces, y guardarlas las dos haría que el clasificador sumara
- * puntos dos veces por una sola coincidencia.
+ * It is done here and not in the service because it is part of what the field
+ * means, not of what is done with it: «Claro» and «claro » are the same word
+ * said twice, and keeping both would make the classifier score twice for a
+ * single match.
  *
- * Lo que no sea una lista de textos se devuelve intacto: rechazarlo es trabajo
- * de `@IsArray` y `@IsString`, que dan un mensaje que se entiende.
+ * What is not a list of strings is returned untouched: rejecting it is the job
+ * of `@IsArray` and `@IsString`, which give a message that makes sense.
  */
 function cleanKeywords({ value }: { value: unknown }): unknown {
   if (!Array.isArray(value)) return value;
@@ -83,19 +83,19 @@ export class CreateCategoryDto {
   sort_order?: number;
 
   /**
-   * ── Recurrencia ─────────────────────────────────────────────────────────
-   * Marca el concepto como un pago que vuelve. `dia_de_pago` es el día del mes
-   * en que se debe pagar; en los meses que no llegan a ese día se entiende el
-   * último.
+   * ── Recurrence ──────────────────────────────────────────────────────────
+   * Marks the concept as a payment that comes back. `dia_de_pago` is the day
+   * of the month it is due; in months that do not reach that day, the last one
+   * is meant.
    */
   @IsOptional()
   @IsBoolean()
   recurrente?: boolean;
 
   /**
-   * Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica desde
-   * ninguna pantalla de movimientos. Solo se lee del centro; en una categoría o un
-   * concepto es inerte.
+   * What hangs from a STATIC cost center is not reclassified from any
+   * transactions screen. It is only read from the cost center; on a category
+   * or a concept it does nothing.
    */
   @IsOptional()
   @IsBoolean()
@@ -112,7 +112,7 @@ export class CreateCategoryDto {
   @Max(31, { message: 'El día de pago va del 1 al 31.' })
   dia_de_pago?: number | null;
 
-  /** El mes de referencia del ciclo. Solo cuando no es mensual. */
+  /** The reference month of the cycle. Only when it is not monthly. */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -121,51 +121,52 @@ export class CreateCategoryDto {
   mes_de_pago?: number | null;
 
   /**
-   * ── Pago automático ─────────────────────────────────────────────────────
-   * El concepto no espera a que nadie lo registre: al llegar su día de pago,
-   * el movimiento se crea solo y deja de estar pendiente.
+   * ── Automatic payment ───────────────────────────────────────────────────
+   * The concept does not wait for anyone to record it: when its payment day
+   * comes, the transaction is created on its own and stops being pending.
    *
-   * Para lo que se cobra sin que uno haga nada —un débito, una suscripción—.
-   * Solo desde el mes en que se enciende hacia adelante: nunca rellena meses
-   * pasados.
+   * For what is charged without anyone doing anything —a direct debit, a
+   * subscription—. Only from the month it is turned on onwards: it never fills
+   * past months.
    *
-   * Solo significa algo en un concepto recurrente.
+   * It only means something on a recurring concept.
    */
   @IsOptional()
   @IsBoolean()
   pago_automatico?: boolean;
 
   /**
-   * ── Se paga en varias veces ─────────────────────────────────────────────
-   * El concepto no se salda con un pago: se va cubriendo. El mercado se hace
-   * en cuatro idas, la gasolina en seis tanqueadas, y ninguna de esas idas
-   * termina el mes.
+   * ── Paid in several installments ────────────────────────────────────────
+   * The concept is not settled with one payment: it is covered bit by bit.
+   * Groceries take four trips, fuel six fill-ups, and none of those trips
+   * closes the month.
    *
-   * Marcado, el concepto se queda en pagos pendientes mientras lo pagado sea
-   * menor que lo esperado, enseñando cuánto lleva.
+   * When flagged, the concept stays in pending payments while what was paid is
+   * less than what was expected, showing how much it has so far.
    *
-   * Tres condiciones, y las comprueba el servicio y no esto: tiene que ser un
-   * CONCEPTO —el tercer nivel—, tiene que ser RECURRENTE, y no puede llevar
-   * también «pago automático». Las tres hablan de cómo queda la fila después
-   * de aplicar el cambio, y aquí solo se ve lo que trajo la petición.
+   * Three conditions, and the service checks them, not this: it has to be a
+   * CONCEPT —the third level—, it has to be RECURRING, and it cannot also
+   * carry «pago automático». All three are about how the row ends up after the
+   * change, and here only the request is visible.
    */
   @IsOptional()
   @IsBoolean()
   varios_pagos?: boolean;
 
   /**
-   * ── Presupuesto ─────────────────────────────────────────────────────────
-   * Lo que se espera que cueste cada vez que toca. Puesto, MANDA: la previsión
-   * del mes es este número y no el promedio de lo que costó antes.
+   * ── Budget ──────────────────────────────────────────────────────────────
+   * What it is expected to cost each time it comes due. When set, it RULES:
+   * the month's forecast is this number and not the average of what it cost
+   * before.
    *
-   * Es para los gastos cuyo valor se sabe —un alquiler con contrato, una
-   * mensualidad— donde promediar da una cifra peor que el dato. Vacío se sigue
-   * promediando, que es lo correcto para lo que varía de verdad.
+   * It is for the expenses whose amount is known —a rent with a contract, a
+   * monthly fee— where averaging gives a worse figure than the datum. Empty,
+   * it keeps averaging, which is right for what really varies.
    *
-   * Cero es un valor, no un hueco: dice «esto ahora no cuesta». Para quitarlo
-   * se manda `null`.
+   * Zero is a value, not a gap: it says «this costs nothing now». To clear it,
+   * send `null`.
    *
-   * Solo significa algo en un concepto recurrente.
+   * It only means something on a recurring concept.
    */
   @IsOptional()
   @Type(() => Number)
@@ -175,10 +176,10 @@ export class CreateCategoryDto {
   presupuesto?: number | null;
 
   /**
-   * ── Palabras clave ──────────────────────────────────────────────────────
-   * Lo que se busca en el texto de un soporte para reconocer este concepto.
-   * Solo significan algo en un concepto: un centro de costos y una categoría no
-   * aparecen en ninguna factura.
+   * ── Keywords ────────────────────────────────────────────────────────────
+   * What is searched for in a receipt's text to recognize this concept. They
+   * only mean something on a concept: a cost center and a category do not
+   * appear on any bill.
    */
   @IsOptional()
   @Transform(cleanKeywords)
@@ -202,7 +203,7 @@ export class UpdateCategoryDto {
   @IsEnum(CategoryKind)
   kind?: CategoryKind;
 
-  /** `null` explícito mueve la categoría a la raíz. */
+  /** An explicit `null` moves the category to the root. */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -228,19 +229,19 @@ export class UpdateCategoryDto {
   is_archived?: boolean;
 
   /**
-   * ── Recurrencia ─────────────────────────────────────────────────────────
-   * Marca el concepto como un pago que vuelve. `dia_de_pago` es el día del mes
-   * en que se debe pagar; en los meses que no llegan a ese día se entiende el
-   * último.
+   * ── Recurrence ──────────────────────────────────────────────────────────
+   * Marks the concept as a payment that comes back. `dia_de_pago` is the day
+   * of the month it is due; in months that do not reach that day, the last one
+   * is meant.
    */
   @IsOptional()
   @IsBoolean()
   recurrente?: boolean;
 
   /**
-   * Lo que cuelga de un centro de costos ESTÁTICO no se reclasifica desde
-   * ninguna pantalla de movimientos. Solo se lee del centro; en una categoría o un
-   * concepto es inerte.
+   * What hangs from a STATIC cost center is not reclassified from any
+   * transactions screen. It is only read from the cost center; on a category
+   * or a concept it does nothing.
    */
   @IsOptional()
   @IsBoolean()
@@ -257,7 +258,7 @@ export class UpdateCategoryDto {
   @Max(31, { message: 'El día de pago va del 1 al 31.' })
   dia_de_pago?: number | null;
 
-  /** El mes de referencia del ciclo. Solo cuando no es mensual. */
+  /** The reference month of the cycle. Only when it is not monthly. */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -271,24 +272,24 @@ export class UpdateCategoryDto {
   pago_automatico?: boolean;
 
   /**
-   * ── Se paga en varias veces ─────────────────────────────────────────────
-   * El concepto no se salda con un pago: se va cubriendo. El mercado se hace
-   * en cuatro idas, la gasolina en seis tanqueadas, y ninguna de esas idas
-   * termina el mes.
+   * ── Paid in several installments ────────────────────────────────────────
+   * The concept is not settled with one payment: it is covered bit by bit.
+   * Groceries take four trips, fuel six fill-ups, and none of those trips
+   * closes the month.
    *
-   * Marcado, el concepto se queda en pagos pendientes mientras lo pagado sea
-   * menor que lo esperado, enseñando cuánto lleva.
+   * When flagged, the concept stays in pending payments while what was paid is
+   * less than what was expected, showing how much it has so far.
    *
-   * Tres condiciones, y las comprueba el servicio y no esto: tiene que ser un
-   * CONCEPTO —el tercer nivel—, tiene que ser RECURRENTE, y no puede llevar
-   * también «pago automático». Las tres hablan de cómo queda la fila después
-   * de aplicar el cambio, y aquí solo se ve lo que trajo la petición.
+   * Three conditions, and the service checks them, not this: it has to be a
+   * CONCEPT —the third level—, it has to be RECURRING, and it cannot also
+   * carry «pago automático». All three are about how the row ends up after the
+   * change, and here only the request is visible.
    */
   @IsOptional()
   @IsBoolean()
   varios_pagos?: boolean;
 
-  /** Ver `CreateCategoryDto`. `null` lo quita; cero es un valor. */
+  /** See `CreateCategoryDto`. `null` clears it; zero is a value. */
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 }, { message: 'El presupuesto admite hasta dos decimales.' })
@@ -296,7 +297,7 @@ export class UpdateCategoryDto {
   @Max(9_999_999_999_999, { message: 'Ese presupuesto es demasiado grande.' })
   presupuesto?: number | null;
 
-  /** Ver `CreateCategoryDto`. Una lista vacía las borra todas. */
+  /** See `CreateCategoryDto`. An empty list deletes them all. */
   @IsOptional()
   @Transform(cleanKeywords)
   @IsArray()
@@ -338,7 +339,7 @@ export class ReorderCategoriesDto {
 }
 
 export class MergeCategoryDto {
-  /** El concepto que SOBREVIVE. El de la ruta es el que desaparece. */
+  /** The concept that SURVIVES. The one in the route is the one that goes away. */
   @Type(() => Number)
   @IsInt()
   destino_id!: number;

@@ -5,14 +5,15 @@ import { toMoney, type Money } from '../../common/money/money';
 import { checkSplitsReconcile } from '../../common/money/splits';
 
 /**
- * ── Editar sin descuadrar ────────────────────────────────────────────────────
- * Lo que un PATCH no puede dejar a medias: el desglose de un movimiento y la
- * otra pata de una transferencia. Funciones puras; el servicio las aplica.
+ * ── Editing without breaking the balance ─────────────────────────────────────
+ * What a PATCH cannot leave half done: the splits of a transaction and the
+ * other leg of a transfer. Pure functions; the service applies them.
  */
 
 /**
- * Cambiar el monto de un movimiento con desglose sin mandar el desglose nuevo
- * es 422. El sistema no reparte la diferencia: no sabe a qué concepto le toca.
+ * Changing the amount of a split transaction without sending the new splits
+ * is 422. The system does not spread the difference: it does not know which
+ * concept it belongs to.
  */
 export function requireReconciledSplits(
   actual: FullTransaction,
@@ -33,9 +34,9 @@ export function requireReconciledSplits(
 }
 
 /**
- * Lo que una pata de transferencia comparte con la otra: si cambia en una,
- * cambia en las dos, en la misma transacción. La cuenta no: cada pata tiene
- * la suya.
+ * What a transfer leg shares with the other one: if it changes in one, it
+ * changes in both, in the same database transaction. Not the account: each
+ * leg has its own.
  */
 export function partnerLegChanges(changes: TransactionChanges): TransactionChanges {
   const { date, period, amount, description, status } = changes;
@@ -48,7 +49,7 @@ export function partnerLegChanges(changes: TransactionChanges): TransactionChang
   };
 }
 
-/** Una pata no se vuelve gasto ni ingreso: dejaría a la otra sola. */
+/** A leg does not become an expense or an income: it would leave the other one alone. */
 export function requireStillTransfer(dto: UpdateTransactionDto): void {
   if (dto.type !== undefined && dto.type !== 'transfer') {
     throw new ValidationError(

@@ -1,38 +1,38 @@
 /**
- * Las palabras clave de un concepto: lo que se busca en un soporte para saber
- * que es suyo.
+ * A concept's keywords: what is searched for in a receipt to know it belongs
+ * to it.
  *
- * ── Qué hace este archivo ───────────────────────────────────────────────────
- * Una sola cosa: decidir cuándo dos palabras son la MISMA. «Celsia», «celsia »
- * y «CELSIA» lo son, y guardarlas las tres haría que el clasificador sumara
- * tres veces puntos por una sola coincidencia en el recibo.
+ * ── What this file does ─────────────────────────────────────────────────────
+ * One thing: decide when two words are the SAME. "Celsia", "celsia " and
+ * "CELSIA" are, and keeping all three would make the classifier score three
+ * times for a single match on the receipt.
  *
- * Vive aparte del DTO porque hacen falta en dos sitios que no se parecen: al
- * guardar lo que manda un cliente, y al unificar dos conceptos —donde las
- * palabras del que desaparece pasan al que queda—. Escrito dos veces, un día
- * uno de los dos deja de mirar las tildes.
+ * It lives apart from the DTO because two very different places need it:
+ * saving what a client sends, and merging two concepts —where the removed
+ * one's words move to the kept one—. Written twice, one day one of them stops
+ * looking at accents.
  *
- * Se guardan TAL COMO se escribieron: bajar a minúsculas al guardar
- * convertiría «Aquaoccidente» en «aquaoccidente» en la pantalla de quien lo
- * escribió. Lo de aquí es la comparación, no el almacenamiento.
+ * They are stored AS they were written: lowercasing on save would turn
+ * "Aquaoccidente" into "aquaoccidente" on the screen of whoever wrote it.
+ * This is the comparison, not the storage.
  */
 
-/** Sin tildes, en minúscula y con los espacios apretados. Para comparar. */
+/** Without accents, lowercase and with squeezed spaces. For comparing. */
 function comparisonKey(word: string): string {
   return word.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
-/** Recorta y aprieta los espacios, conservando tildes y mayúsculas. */
+/** Trims and squeezes the spaces, keeping accents and case. */
 function clean(word: string): string {
   return word.replace(/\s+/g, ' ').trim();
 }
 
 /**
- * Una lista sin vacías y sin repetidas, en el orden en que llegaron.
+ * One list without empties or repeats, in the order they came in.
  *
- * El orden importa poco para clasificar —todas valen lo mismo— y mucho para
- * quien las lee: reordenarlas haría que la ficha enseñara otra lista de la que
- * se escribió.
+ * Order matters little for classifying —they all weigh the same— and a lot
+ * for whoever reads them: reordering them would make the form show a
+ * different list from the one that was written.
  */
 export function mergeKeywords(...lists: readonly (readonly string[])[]): string[] {
   const seen = new Set<string>();

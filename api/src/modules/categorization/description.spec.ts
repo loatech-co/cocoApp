@@ -1,20 +1,20 @@
 import { normalizeDescription } from './description';
 
 describe('normalizarDescripcion', () => {
-  it('quita tildes y baja a minúsculas', () => {
+  it('strips accents and lowercases', () => {
     expect(normalizeDescription('Éxito Poblado')).toBe('exito poblado');
     expect(normalizeDescription('CAFÉ QUINDÍO')).toBe('cafe quindio');
   });
 
-  it('pliega la ñ a n, porque el OCR pierde la virgulilla', () => {
-    // Decisión deliberada, no descuido: si "Peñalisa" y "Penalisa"
-    // produjeran huellas distintas, el mismo comercio leído dos veces
-    // pasaría por dos movimientos. Ver el comentario en fingerprint.ts.
+  it('folds ñ into n, because OCR loses the tilde', () => {
+    // A deliberate decision, not an oversight: if "Peñalisa" and "Penalisa"
+    // produced different fingerprints, the same merchant read twice would
+    // pass as two transactions. See the comment in fingerprint.ts.
     expect(normalizeDescription('Peñalisa')).toBe('penalisa');
     expect(normalizeDescription('PENALISA')).toBe('penalisa');
   });
 
-  it('colapsa espacios y recorta los extremos', () => {
+  it('collapses spaces and trims the ends', () => {
     expect(normalizeDescription('  D1   calle   10  ')).toBe('d1 calle 10');
   });
 
@@ -28,28 +28,28 @@ describe('normalizarDescripcion', () => {
     ['Juan Valdez 14:32', 'juan valdez'],
     ['COMPRA Falabella', 'falabella'],
     ['PAGO PSE Claro', 'claro'],
-  ])('quita el ruido de %p → %p', (input, expected) => {
+  ])('removes the noise from %p → %p', (input, expected) => {
     expect(normalizeDescription(input)).toBe(expected);
   });
 
-  it('el MISMO comercio leído dos veces produce la misma cadena', () => {
-    // Este es el caso que justifica todo el archivo: el banco escribe la
-    // misma compra distinto en el extracto de un mes y en el del siguiente.
+  it('the SAME merchant read twice produces the same string', () => {
+    // This is the case that justifies the whole file: the bank writes the
+    // same purchase differently in one month's statement and the next.
     const a = normalizeDescription('COMPRA Éxito Poblado  REF 000123456');
     const b = normalizeDescription('exito poblado ref 987654321');
     expect(a).toBe(b);
     expect(a).toBe('exito poblado');
   });
 
-  it('tolera vacío, null y undefined', () => {
+  it('tolerates empty, null and undefined', () => {
     expect(normalizeDescription('')).toBe('');
     expect(normalizeDescription(null)).toBe('');
     expect(normalizeDescription(undefined)).toBe('');
   });
 
-  it('no deja una cadena vacía cuando TODO era ruido', () => {
-    // Queda vacía, y eso está bien: la huella se apoya además en cuenta,
-    // fecha y monto. Lo que no puede es reventar.
+  it('does not leave an empty string when EVERYTHING was noise', () => {
+    // It ends up empty, and that is fine: the fingerprint also relies on the
+    // account, date and amount. What it cannot do is blow up.
     expect(normalizeDescription('REF 000123')).toBe('');
   });
 });

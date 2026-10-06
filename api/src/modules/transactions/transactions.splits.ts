@@ -4,7 +4,7 @@ import { ValidationError } from '../../common/errors/domain-error';
 import { serialize, toMoney, type Money } from '../../common/money/money';
 import { checkSplitsReconcile } from '../../common/money/splits';
 
-/** Valida el cuadre y normaliza los splits. Lanza 422 si no cuadran. */
+/** Checks that the splits reconcile and normalizes them. Throws 422 if they do not. */
 export function splitsToWrite(
   headerAmount: Money,
   splits: readonly SplitDto[] | undefined,
@@ -23,7 +23,7 @@ export function splitsToWrite(
 
   return splits.map((split, index) => ({
     categoryId: split.category_id !== undefined ? BigInt(split.category_id) : null,
-    amount: amounts[index] ?? toMoney(split.amount), // mismo valor: montos[i] es este
+    amount: amounts[index] ?? toMoney(split.amount), // same value: amounts[i] is this one
     note: split.note ?? null,
   }));
 }

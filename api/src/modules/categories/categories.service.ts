@@ -27,7 +27,7 @@ import type { Category as CategoryRow, CategoryKind } from '../../generated/pris
 export class CategoriesService {
   constructor(private readonly repo: CategoriesRepository) {}
 
-  /** Devuelve el árbol anidado, no la lista plana: es como lo consume la UI. */
+  /** Returns the nested tree, not the flat list: it is how the UI consumes it. */
   async listTree(
     userId: bigint,
     filters: { kind?: CategoryKind | undefined; includeArchived?: boolean },
@@ -42,14 +42,14 @@ export class CategoriesService {
 
   async create(userId: bigint, input: NewCategory): Promise<Category> {
     const parentId = input.parentId ?? null;
-    // Sin padre es un centro de costos, que es el primer nivel.
+    // Without a parent it is a cost center, which is the first level.
     let depth = 1;
 
     if (parentId !== null) {
       const parent = await this.requireCategory(userId, parentId);
       const skeleton = await this.repo.treeSkeleton(userId);
 
-      // Una categoría nueva no tiene hijos: su profundidad es la del padre + 1.
+      // A new category has no children: its depth is the parent's + 1.
       depth = resultingDepth(
         [...skeleton, { id: BigInt(-1), parentId: parent.id }],
         BigInt(-1),
@@ -73,9 +73,9 @@ export class CategoriesService {
       color: input.color ?? null,
       icon: input.icon ?? null,
       sortOrder: input.sortOrder ?? 0,
-      // La fila se arma campo por campo, así que un dato nuevo del DTO no
-      // llega solo: hay que nombrarlo aquí o se pierde en silencio, con la
-      // API devolviendo 201 y el concepto creado sin su recurrencia.
+      // The row is built field by field, so a new input field does not
+      // arrive on its own: it has to be named here or it is silently lost, with
+      // the API answering 201 and the concept created without its recurrence.
       isRecurring: input.isRecurring ?? false,
       isStatic: input.isStatic ?? false,
       periodicity: input.periodicity ?? null,
@@ -94,12 +94,12 @@ export class CategoriesService {
     const actual = await this.requireCategory(userId, id);
 
     /*
-      El árbol se pide UNA vez y se reparte, porque lo necesitan dos
-      comprobaciones distintas —mover de padre y la marca de varias veces— y
-      pedirlo dos veces en la misma petición es una consulta de regalo.
+      The tree is fetched ONCE and shared, because two different checks need
+      it —moving the parent and the multi-payment flag— and fetching it twice
+      in the same request is a free extra query.
 
-      Perezoso, eso sí: la mayoría de las actualizaciones no tocan ni el padre
-      ni esa marca, y entonces no hace falta ninguna.
+      Lazily, though: most updates touch neither the parent nor that flag,
+      and then no query is needed.
     */
     let skeleton: Awaited<ReturnType<typeof this.repo.treeSkeleton>> | null = null;
     const tree = async (): Promise<NonNullable<typeof skeleton>> =>
@@ -120,13 +120,13 @@ export class CategoriesService {
     }
 
     /*
-      Lo que se comprueba es cómo queda la fila, no lo que trajo la petición.
+      What is checked is how the row ends up, not what the request brought.
 
-      Encender `pago_automatico` sobre un concepto que YA se paga en varias
-      veces no trae `varios_pagos` en el cuerpo, así que mirando solo el DTO
-      pasaría, y la fila quedaría con las dos marcas encendidas —que es
-      exactamente lo que no puede ocurrir—. Por eso cada campo se lee del DTO
-      si viene y de la fila que hay si no.
+      Turning `isAutoPaid` on for a concept that is ALREADY paid in several
+      installments does not bring `isMultiPayment` in the body, so looking
+      only at the request it would pass, and the row would end up with both
+      flags on —which is exactly what cannot happen—. That is why each field
+      is read from the changes when present and from the existing row when not.
     */
     const isMultiPaymentAfter = changes.isMultiPayment ?? actual.isMultiPayment;
     if (isMultiPaymentAfter) {
@@ -150,9 +150,9 @@ export class CategoriesService {
   }
 
   /**
-   * La operación por defecto es ARCHIVAR, no borrar: los reportes de periodos
-   * pasados dejarían de cuadrar si desapareciera una categoría en uso.
-   * El borrado físico solo se permite cuando nunca se usó.
+   * The default operation is to ARCHIVE, not delete: the reports of past
+   * periods would stop adding up if a category in use disappeared.
+   * Physical deletion is only allowed when it was never used.
    */
   async archive(userId: bigint, id: bigint, shouldCascade: boolean): Promise<void> {
     await this.requireCategory(userId, id);
@@ -171,12 +171,12 @@ export class CategoriesService {
   }
 
   /**
-   * Cuánto arrastra un borrado, antes de hacerlo.
+   * What a deletion would take with it, before doing it.
    *
-   * La interfaz lo pregunta al abrir la confirmación: sin esto tendría que
-   * elegir entre no decir nada —y entonces borrar es a ciegas— o intentarlo y
-   * enterarse por el error, que es peor, porque el error llega después de
-   * pulsar «Eliminar».
+   * The interface asks when it opens the confirmation: without this it would
+   * have to choose between saying nothing —and then deleting is blind— or
+   * trying and learning from the error, which is worse, because the error
+   * arrives after pressing «Eliminar».
    */
   async usageOf(userId: bigint, id: bigint): Promise<CategoryUsage> {
     await this.requireCategory(userId, id);
@@ -191,27 +191,29 @@ export class CategoriesService {
   }
 
   /**
-   * Elimina una categoría —y todo lo que cuelga de ella—, reasignando sus
-   * movimientos.
+   * Deletes a category —and everything that hangs from it—, reassigning its
+   * transactions.
    *
-   * ── Por qué ya no se niega ──────────────────────────────────────────────
-   * Antes se negaba en cuanto había un movimiento usándola: «archívala en vez
-   * de borrarla». Eso dejaba la estructura sin forma de corregirse —un
-   * concepto mal creado con un movimiento dentro no se podía quitar nunca— y
-   * obligaba a explicar en la interfaz una regla del sistema en vez de
-   * resolver el problema de quien la está usando.
+   * ── Why it no longer refuses ────────────────────────────────────────────
+   * It used to refuse as soon as a transaction used it: "archive it instead of
+   * deleting it". That left the structure with no way to be corrected —a
+   * concept created by mistake with one transaction inside could never be
+   * removed— and forced the interface to explain a rule of the system instead
+   * of solving the problem of whoever is using it.
    *
-   * Ahora se borra, y lo que hacía falta era preguntar A DÓNDE PASAN sus
-   * movimientos. Eso es un dato, no un impedimento.
+   * Now it deletes, and what was missing was asking WHERE its transactions
+   * GO. That is a datum, not an obstacle.
    *
-   * ── Cuándo sigue siendo un error ────────────────────────────────────────
-   * Cuando hay movimientos y no se dice a dónde van. No se eligen solos: el
-   * sistema no sabe si el alquiler mal clasificado pertenece a «Vivienda» o a
-   * «Oficina», y adivinar significa mover plata a un sitio que nadie pidió.
+   * ── When it is still an error ───────────────────────────────────────────
+   * When there are transactions and it is not said where they go. They are
+   * not picked on their own: the system does not know whether the
+   * misclassified rent belongs to «Vivienda» or to «Oficina», and guessing
+   * means moving money somewhere nobody asked for.
    *
-   * Y cuando el destino está DENTRO de lo que se va a borrar: reasignar a algo
-   * que desaparece en la misma operación deja los movimientos sin clasificar
-   * por el `ON DELETE SET NULL`, que es exactamente lo que se quería evitar.
+   * And when the target is INSIDE what is about to be deleted: reassigning to
+   * something that disappears in the same operation leaves the transactions
+   * unclassified through the `ON DELETE SET NULL`, which is exactly what was
+   * to be avoided.
    */
   async remove(
     userId: bigint,
@@ -255,11 +257,11 @@ export class CategoriesService {
   }
 
   /**
-   * Siembra el diccionario sugerido del Anexo A.
+   * Seeds the suggested dictionary of Annex A.
    *
-   * Solo corre si el usuario no tiene categorías: no es una migración que se
-   * reaplica, es un punto de partida. Y es opcional por diseño — quien prefiera
-   * armar su propia taxonomía simplemente no lo llama.
+   * It only runs if the user has no categories: it is not a migration that is
+   * reapplied, it is a starting point. And it is optional by design — whoever
+   * prefers to build their own taxonomy simply does not call it.
    */
   async seed(userId: bigint): Promise<CategorySeed> {
     const existentes = await this.repo.countForUser(userId);
@@ -270,9 +272,9 @@ export class CategoriesService {
       );
     }
 
-    // La MISMA plantilla que se copia al crear la cuenta. Dos listas se
-    // separan en cuanto alguien toque una: la cuenta nueva nacería con una
-    // estructura y la que se quedó vacía se rellenaría con otra.
+    // The SAME template that is copied when the account is created. Two lists
+    // drift apart as soon as someone touches one: the new account would be born
+    // with one structure and the one left empty would be filled with another.
     return { created: await this.repo.seedTemplate(userId) };
   }
 
@@ -303,22 +305,23 @@ export class CategoriesService {
   }
 
   /**
-   * Funde un concepto en otro: todo lo que colgaba del primero pasa al
-   * segundo y el primero desaparece.
+   * Merges one concept into another: everything that hung from the first
+   * moves to the second and the first disappears.
    *
-   * ── Por qué existe ──────────────────────────────────────────────────────
-   * Porque los duplicados aparecen solos. Una importación crea "Movistar",
-   * otra crea "MOVISTAR S.A.", y a partir de ahí la misma factura está
-   * repartida en dos conceptos que suman por separado: ningún total cuadra y
-   * la dona muestra dos porciones donde hay una.
+   * ── Why it exists ───────────────────────────────────────────────────────
+   * Because duplicates show up on their own. One import creates "Movistar",
+   * another creates "MOVISTAR S.A.", and from then on the same bill is split
+   * across two concepts that add up separately: no total adds up and the donut
+   * shows two slices where there is one.
    *
-   * ── Por qué no basta con renombrar ──────────────────────────────────────
-   * Renombrar deja dos conceptos con el mismo nombre, que es peor: se ven
-   * iguales y siguen sumando aparte. La única salida es mover los
-   * movimientos y borrar el que sobra.
+   * ── Why renaming is not enough ──────────────────────────────────────────
+   * Renaming leaves two concepts with the same name, which is worse: they look
+   * the same and keep adding up apart. The only way out is to move the
+   * transactions and delete the one that is left over.
    *
-   * Todo en UNA transacción. A medio camino quedarían movimientos apuntando a
-   * una categoría ya borrada, y eso no se arregla mirando la pantalla.
+   * All in ONE transaction. Halfway there would be transactions pointing at
+   * an already deleted category, and that is not fixed by looking at the
+   * screen.
    */
   async merge(userId: bigint, sourceId: bigint, targetId: bigint): Promise<CategoryMerge> {
     if (sourceId === targetId) {
@@ -330,9 +333,9 @@ export class CategoriesService {
     const source = await this.requireCategory(userId, sourceId);
     const target = await this.requireCategory(userId, targetId);
 
-    // Solo entre conceptos. Fundir una categoría en otro movería sus hijos sin que
-    // nadie lo haya pedido, y un centro de costos ni siquiera tiene
-    // movimientos propios que mover.
+    // Only between concepts. Merging a category into another would move its
+    // children without anybody asking for it, and a cost center does not even
+    // have transactions of its own to move.
     if (source.parentId === null || target.parentId === null) {
       throw new ValidationError(
         'Solo se pueden unificar conceptos, no centros de costos ni categorías.',
@@ -340,8 +343,8 @@ export class CategoriesService {
       );
     }
 
-    // Un concepto con cosas dentro no es un concepto: es una categoría mal puesto,
-    // y fundirlo movería sus hijos sin que nadie lo haya pedido.
+    // A concept with things inside is not a concept: it is a misplaced
+    // category, and merging it would move its children without anybody asking.
     const allCategories = await this.repo.list(userId, { includeArchived: true });
     const childCount = allCategories.filter((c) => c.parentId === sourceId).length;
     if (childCount > 0) {
@@ -364,7 +367,7 @@ function columnsOf(changes: CategoryChanges): Parameters<CategoriesRepository['u
   return {
     ...(changes.name !== undefined && { name: changes.name }),
     ...(changes.kind !== undefined && { kind: changes.kind }),
-    // La COLUMNA, no la relación: ver el porqué en `repo.actualizar`.
+    // The COLUMN, not the relation: see why in `repo.update`.
     ...(changes.parentId !== undefined && { parentId: changes.parentId }),
     ...(changes.color !== undefined && { color: changes.color }),
     ...(changes.icon !== undefined && { icon: changes.icon }),
@@ -375,7 +378,7 @@ function columnsOf(changes: CategoryChanges): Parameters<CategoriesRepository['u
     ...(changes.periodicity !== undefined && { periodicity: changes.periodicity }),
     ...(changes.paymentDay !== undefined && { paymentDay: changes.paymentDay }),
     ...(changes.paymentMonth !== undefined && { paymentMonth: changes.paymentMonth }),
-    // `!== undefined` y no un truthy: `null` lo quita y CERO es un valor.
+    // `!== undefined` and not a truthy check: `null` clears it and ZERO is a value.
     ...(changes.budget !== undefined && { budget: changes.budget }),
     ...(changes.isAutoPaid !== undefined && { isAutoPaid: changes.isAutoPaid }),
     ...(changes.isMultiPayment !== undefined && { isMultiPayment: changes.isMultiPayment }),

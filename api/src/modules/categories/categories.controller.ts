@@ -138,7 +138,7 @@ export class CategoriesController {
     return categoryV1(await this.categories.create(user.id, newCategoryOf(dto)));
   }
 
-  /** Siembra el diccionario sugerido. Opcional: el usuario decide si lo quiere. */
+  /** Seeds the suggested dictionary. Optional: the user decides whether they want it. */
   @Post('seed')
   @ApiData(CategorySeedResponse, { status: 201 })
   async seed(@CurrentUser() user: AuthenticatedUser): Promise<ReturnType<typeof categorySeedV1>> {
@@ -160,11 +160,11 @@ export class CategoriesController {
   }
 
   /**
-   * Funde un concepto en otro.
+   * Merges one concept into another.
    *
-   * Va antes de `:id` en el archivo por costumbre, pero aquí no hace falta:
-   * la ruta lleva un segmento propio después del identificador, así que no
-   * puede confundirse con ninguna otra.
+   * It goes before `:id` in the file out of habit, but it does not need to:
+   * the route has its own segment after the id, so it cannot be mistaken for
+   * any other.
    */
   @Post(':id/unificar')
   @ApiData(CategoryMergeResponse, { status: 201 })
@@ -189,16 +189,12 @@ export class CategoriesController {
   }
 
   /**
-   * Archiva. Solo borra físicamente si la categoría nunca se usó — y en ese
-   * caso el servicio lo decide, no el cliente.
-   */
-  /**
-   * Cuánto arrastra un borrado, antes de hacerlo.
+   * What a deletion would take with it, before doing it.
    *
-   * Lo pregunta la interfaz al abrir la confirmación, para poder decir cuántos
-   * movimientos se van a mover y pedir a dónde. Sin esto, borrar sería a
-   * ciegas o habría que enterarse por el error —que llega después de pulsar
-   * «Eliminar»—.
+   * The interface asks when it opens the confirmation, to be able to say how
+   * many transactions will move and ask where to. Without it, deleting would
+   * be blind, or one would learn it from the error —which arrives after
+   * pressing «Eliminar»—.
    */
   @Get(':id/usos')
   @ApiData(CategoryUsageResponse)
@@ -211,21 +207,21 @@ export class CategoriesController {
   }
 
   /**
-   * BORRA la categoría —y todo lo que cuelga de ella— de verdad.
+   * DELETES the category —and everything that hangs from it— for real.
    *
-   * Antes esta ruta archivaba —dejaba la fila con `is_archived`— y el botón de
-   * la interfaz decía "eliminar": la categoría desaparecía de las listas y
-   * seguía ocupando su nombre, así que crear otra igual chocaba contra una que
-   * nadie podía ver.
+   * This route used to archive —it left the row with `is_archived`— while the
+   * interface's button said "delete": the category vanished from the lists and
+   * kept holding its name, so creating another one like it clashed with one
+   * nobody could see.
    *
    * ── `reasignar_a` ────────────────────────────────────────────────────────
-   * A dónde pasan sus movimientos. Obligatorio si tiene alguno: el servicio no
-   * los adivina, porque adivinar significa mover plata a un sitio que nadie
-   * pidió. Sin movimientos no hace falta.
+   * Where its transactions go. Required if it has any: the service does not
+   * guess them, because guessing means moving money somewhere nobody asked
+   * for. Without transactions it is not needed.
    *
-   * Va en la CONSULTA y no en el cuerpo: un DELETE con cuerpo lo admite la
-   * especificación pero lo tiran por el camino unos cuantos proxies, y este
-   * dato es un identificador, no un documento.
+   * It goes in the QUERY and not in the body: the specification allows a
+   * DELETE with a body, but a few proxies drop it on the way, and this datum
+   * is an id, not a document.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

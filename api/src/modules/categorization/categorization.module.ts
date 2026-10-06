@@ -8,8 +8,8 @@ import { CategoriesModule } from '../categories/categories.module';
 import { TransactionsModule } from '../transactions/transactions.module';
 
 /**
- * Global porque el módulo de importación necesita el servicio, y en el futuro
- * también lo necesitará el de conceptos fijos.
+ * Global because the import module needs the service, and so will the fixed
+ * concepts module in the future.
  */
 @Global()
 @Module({
