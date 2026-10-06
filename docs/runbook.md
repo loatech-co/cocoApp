@@ -129,6 +129,63 @@ scripts/desplegar-migraciones.sh              # production: status, confirm, dep
   are for data; a hand-written `CREATE TABLE` is outside `schema.prisma` and
   the next diff would try to create it again.
 
+## Row-level security
+
+**Production connects as `coco_app`, a role without `BYPASSRLS`; migrations
+connect as the owner.** `DATABASE_URL` in `$CONFIG/.env` on the server
+(`~/domains/dev-cocoapp.viteri.me/hbuilds/config`) is `coco_app` through the
+transaction pooler; `DIRECT_URL` stays the owner. Design and cost:
+[ADR 0019](adr/0019-rls-for-user-cross-user-paths-and-cost.md),
+[ADR 0024](adr/0024-rls-active-in-production.md). (This section replaces the
+working document `docs/rls-rollout.md` that the RLS migrations' comments name.)
+
+Why: the policies are the second lock behind the code's `user_id` filters. A
+query that forgets its filter, or one that runs outside `Database.forUser`,
+sees no other user's rows.
+
+- **The owner (`postgres` in Supabase) must keep `BYPASSRLS`.** With `FORCE`
+  on every table it is bound by the policies otherwise, and every migration
+  and backup would see empty tables. Check before any change to roles:
+  `npm run sql:supabase -- "SELECT rolname, rolbypassrls FROM pg_roles WHERE rolname = 'postgres'"` → `t`.
+- **`coco_app` updates only the session columns of `users`.** Role, status
+  and approval go through `app_private.set_user_access`, which refuses unless
+  the unit runs as an active admin.
+- **Rotate its password** with `scripts/db/create-app-role.sh` (idempotent),
+  `ADMIN_DATABASE_URL` = the owner's `DIRECT_URL`, `COCO_APP_DB_PASSWORD` from
+  the environment, never on a command line; then the same value in
+  `DATABASE_URL` on the server. Through Supavisor the user is
+  `coco_app.<project-ref>`; host, port (6543) and parameters stay as they were.
+- **A restore needs `coco_app` first**: the policies and grants name it.
+- **After a migration**, `scripts/cerrar-el-api-de-datos.sql` prints
+  `politicas = 14`, and every public table except `_prisma_migrations` is
+  forced:
+  `SELECT count(*) FILTER (WHERE NOT relforcerowsecurity) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname <> '_prisma_migrations'` → `0`.
+
+### Undo, from the cheapest
+
+1. **Back to the owner** (an empty dashboard after a deploy means the setting
+   is not reaching the policies): restore `.env.before-rls` next to the `.env`
+   on the server (`cp .env.before-rls .env`, mode 600), and restart
+   (`touch ~/domains/dev-cocoapp.viteri.me/hbuilds/current/nodejs/tmp/restart.txt`).
+   The policies stay, inert for the owner. Delete `.env.before-rls` after a
+   week without incidents (ask).
+2. **No FORCE**: `ALTER TABLE public.<table> NO FORCE ROW LEVEL SECURITY;` for
+   each table, as the owner.
+3. **No policies** (deletes structure: stop table first): drop every policy in
+   `public`, `DROP SCHEMA app_private CASCADE`, `GRANT DELETE, UPDATE ON TABLE
+public.users TO coco_app`, and delete the four `2026100600*` rows of
+   `_prisma_migrations`. RLS stays ENABLED, as ADR 0007 left it.
+
+### Local and CI
+
+- Once per machine: `ADMIN_DATABASE_URL=postgresql://localhost:5432/postgres
+COCO_APP_DB_PASSWORD=<local, ≥16> MIGRATION_ROLE=coco_migrate bash scripts/db/create-app-role.sh`.
+  Then `api/.env` and `api/.env.test`: `DATABASE_URL` as `coco_app`,
+  `DIRECT_URL` as `coco_migrate`.
+- The journeys run the API as `coco_app` when `E2E_APP_DATABASE_URL` is set
+  (CI sets it); `api-bench.mjs` does with `COCO_BENCH_APP_DATABASE_URL`.
+- `scripts/traer-datos-a-local.sh` writes through `DIRECT_URL`.
+
 ## Backups and restore
 
 **Back up before any migration that is not purely additive, and before any

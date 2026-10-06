@@ -16,14 +16,15 @@ import { mkdtempSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir, userInfo } from 'node:os';
 import { join, resolve } from 'node:path';
+import pg from 'pg';
 
 const ACCESS_TOKEN = 'bench.access';
 const REFRESH_TOKEN = 'bench.refresh';
 
-function benchDatabaseUrl() {
-  const url =
-    process.env.COCO_BENCH_DATABASE_URL ??
-    `postgresql://${userInfo().username}@localhost:5432/coco_bench`;
+function benchDatabaseUrl(
+  url = process.env.COCO_BENCH_DATABASE_URL ??
+    `postgresql://${userInfo().username}@localhost:5432/coco_bench`,
+) {
   const parsed = new URL(url);
   const name = parsed.pathname.replace(/^\//, '');
   if (!['localhost', '127.0.0.1'].includes(parsed.hostname) || !name.startsWith('coco_bench')) {
@@ -34,14 +35,22 @@ function benchDatabaseUrl() {
 
 /** @param {{ port?: number }} options */
 export async function startBenchApi({ port = 0 } = {}) {
+  // The owner finds the user and cleans up; the API connects as
+  // COCO_BENCH_APP_DATABASE_URL when set (`coco_app`, under row-level
+  // security, as production), or as the owner. With coco_app the API's own
+  // client sees no rows outside a unit of work, so it cannot do either.
   const url = benchDatabaseUrl();
+  const appUrl = benchDatabaseUrl(process.env.COCO_BENCH_APP_DATABASE_URL ?? url);
+  if (new URL(appUrl).pathname !== new URL(url).pathname) {
+    throw new Error('bench: COCO_BENCH_APP_DATABASE_URL must be the same database');
+  }
   const repo = resolve(import.meta.dirname, '../..');
 
   // Before anything from the API is loaded: Prisma and ConfigModule both read
   // process.env first and neither overwrites what is already there.
   Object.assign(process.env, {
     NODE_ENV: 'test',
-    DATABASE_URL: url,
+    DATABASE_URL: appUrl,
     DIRECT_URL: url,
     LOG_LEVEL: 'silent',
     JWT_SECRET: 'bench-only-secret-never-used-anywhere-else',
@@ -65,7 +74,6 @@ export async function startBenchApi({ port = 0 } = {}) {
   const { configureApp } = fromDist('bootstrap.js');
   const { installBigIntSerializer } = fromDist('common/serialization/bigint.js');
   const { SupabaseAuthService } = fromDist('modules/auth/supabase-auth.service.js');
-  const { PrismaService } = fromDist('prisma/prisma.service.js');
 
   let authId = '';
   const session = () => ({
@@ -97,29 +105,38 @@ export async function startBenchApi({ port = 0 } = {}) {
   await app.listen(port, '127.0.0.1');
   const origin = `http://127.0.0.1:${app.getHttpServer().address().port}`;
 
-  const prisma = app.get(PrismaService);
-  const [{ db }] = await prisma.$queryRaw`SELECT current_database()::text AS db`;
+  const owner = new pg.Client({ connectionString: url });
+  await owner.connect();
+  const {
+    rows: [{ db }],
+  } = await owner.query('SELECT current_database()::text AS db');
   if (!db.startsWith('coco_bench')) throw new Error(`bench: connected to ${db}`);
 
   // The user with the most movements: that is the realistic one.
-  const [top] = await prisma.transaction.groupBy({
-    by: ['userId'],
-    _count: { _all: true },
-    orderBy: { _count: { userId: 'desc' } },
-    take: 1,
-  });
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: top.userId } });
-  authId = user.authId;
+  const {
+    rows: [top],
+  } = await owner.query(
+    `SELECT u.id::text AS id, u.auth_id::text AS auth_id, count(*)::int AS rows
+       FROM transactions t JOIN users u ON u.id = t.user_id
+      GROUP BY u.id ORDER BY count(*) DESC LIMIT 1`,
+  );
+  authId = top.auth_id;
 
   return {
     origin,
     base: `${origin}/api/v1`,
     database: db,
-    rows: top._count._all,
-    userId: user.id,
-    prisma,
+    rows: top.rows,
+    /** The captures write rows: take them back out so the next run starts equal. */
+    removeBenchRows: () =>
+      owner.query(`DELETE FROM transactions WHERE user_id = $1 AND external_ref LIKE 'bench-%'`, [
+        top.id,
+      ]),
     accessToken: ACCESS_TOKEN,
     refreshToken: REFRESH_TOKEN,
-    close: () => app.close(),
+    close: async () => {
+      await app.close();
+      await owner.end();
+    },
   };
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Creates (or updates) `coco_app`, the role the API connects as. Idempotent:
-# run it again to rotate the password. ADR 0019, docs/rls-rollout.md.
+# run it again to rotate the password. ADR 0019 and 0024; docs/runbook.md, "Row-level security".
 #
 #   ADMIN_DATABASE_URL=postgresql://<a role that can create roles>@host/db \
 #   COCO_APP_DB_PASSWORD=... \

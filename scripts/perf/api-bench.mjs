@@ -105,9 +105,7 @@ try {
   }
 } finally {
   // The captures wrote rows: take them back out so the next run starts equal.
-  await api.prisma.transaction.deleteMany({
-    where: { userId: api.userId, externalRef: { startsWith: 'bench-' } },
-  });
+  await api.removeBenchRows();
   await api.close();
 }
 

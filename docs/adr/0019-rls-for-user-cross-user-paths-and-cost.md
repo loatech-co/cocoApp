@@ -1,6 +1,6 @@
 # 0019 — Row-level security: `forUser`, the paths that cross users, and its cost
 
-- Status: accepted — prepared, **not active in production** (see Decision outcome)
+- Status: accepted; its "prepared, not activated" outcome is superseded by [0024](0024-rls-active-in-production.md)
 - Date: 2026-10-05 (step 7.11-b)
 - Deciders: the owner, phase 7
 - Implements [0010](0010-rls-with-application-role.md); the setting is named
@@ -141,7 +141,7 @@ What the numbers say:
 while the owner connects), the `forUser` code (identical behaviour as owner),
 and local, CI and the e2e suites running as `coco_app`, so every change is
 tested against the policies from now on. Activating is one reversible
-environment change, steps 5–7 of `docs/rls-rollout.md`.
+environment change, steps 5–7 of the rollout, now in `docs/runbook.md` ("Row-level security").
 
 **When to activate:** re-measure on an idle machine once #27 and this step are
 both in `Dev`; if the full-range dashboard p95 with RLS is at or under the
