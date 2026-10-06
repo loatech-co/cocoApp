@@ -54,7 +54,7 @@ type EnrichChanges = Partial<Record<'rawText' | 'merchant' | 'description', stri
 
 /** A movement already validated by `TransactionsService.prepareNew`, ready to write. */
 export interface NewTransaction {
-  data: Prisma.TransactionUncheckedCreateInput;
+  data: Prisma.TransactionUncheckedCreateInput & { userId: bigint };
   splits: SplitToWrite[];
   tagIds: bigint[];
 }
