@@ -2,19 +2,19 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  ARBOL,
-  MOVIMIENTO,
-  PAGO,
-  PAGO_A_PEDAZOS,
-  abrirConfirmacion,
-  abrirFicha,
-  abrirNuevo,
-  arbolCon,
-  clienteDePrueba,
-  pintarFicha,
-} from '@/pruebas/movement-sheet';
 import { keys } from '@/shared/api/query-keys';
+import {
+  TREE,
+  TRANSACTION,
+  PAYMENT,
+  SPLIT_PAYMENT,
+  openConfirmation,
+  openSheet,
+  openNew,
+  treeWith,
+  testQueryClient,
+  renderSheet,
+} from '@/test-support/movement-sheet';
 
 /*
   El lector de soportes, de mentira.
@@ -45,7 +45,7 @@ afterEach(cleanup);
  */
 describe('La ficha de un movimiento que se edita', () => {
   it('llega con su centro de costos, su categoría y su concepto puestos', () => {
-    abrirFicha(ARBOL);
+    openSheet(TREE);
 
     // La ficha abre en modo lectura: los campos se desbloquean al pedirlo.
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
@@ -77,7 +77,7 @@ describe('La ficha de un movimiento que se edita', () => {
       Bloqueado quiere decir «esto no se cambia desde aquí», nunca «esto está
       vacío».
     */
-    abrirFicha(arbolCon(true));
+    openSheet(treeWith(true));
 
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
 
@@ -94,11 +94,11 @@ describe('La ficha de un movimiento que se edita', () => {
     // El caso real: la ficha se abre antes de que responda la consulta de
     // categorías. Si la clasificación se resolviera una sola vez al montar, los
     // tres desplegables se quedarían vacíos para siempre.
-    const cliente = clienteDePrueba();
-    pintarFicha({ movimiento: MOVIMIENTO }, cliente);
+    const cliente = testQueryClient();
+    renderSheet({ movimiento: TRANSACTION }, cliente);
 
     fireEvent.click(screen.getByRole('button', { name: 'Editar movimiento' }));
-    cliente.setQueryData([...keys.categories, 'todas'], ARBOL);
+    cliente.setQueryData([...keys.categories, 'todas'], TREE);
 
     expect(await screen.findByText(/Servicios públicos › Costos fijos/)).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
@@ -118,14 +118,14 @@ describe('La ficha de un movimiento que se edita', () => {
  */
 describe('La ficha de confirmar un pago pendiente', () => {
   it('se titula «Confirmar pago» y dice cuál', () => {
-    abrirConfirmacion();
+    openConfirmation();
 
     expect(screen.getByRole('heading', { name: 'Confirmar pago' })).toBeDefined();
     expect(screen.getByText(/Celsia \(Energía\)\./)).toBeDefined();
   });
 
   it('llega con el valor esperado y la fecha de vencimiento puestos', () => {
-    abrirConfirmacion();
+    openConfirmation();
 
     // Se enseña agrupado y se guarda sin puntos.
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
@@ -133,14 +133,14 @@ describe('La ficha de confirmar un pago pendiente', () => {
   });
 
   it('llega con su clasificación puesta, sin preguntarla otra vez', () => {
-    abrirConfirmacion();
+    openConfirmation();
 
     expect(screen.getByText(/Servicios públicos › Costos fijos/)).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
   });
 
   it('abre directamente en el formulario, sin ninguna pantalla delante', () => {
-    abrirConfirmacion();
+    openConfirmation();
 
     expect(screen.getByLabelText('Valor')).toBeDefined();
     expect(screen.queryByText('Registrar manualmente')).toBeNull();
@@ -150,13 +150,13 @@ describe('La ficha de confirmar un pago pendiente', () => {
   it('avisa de que el valor es un esperado, no un dato', () => {
     // Sin esto, un promedio de tres meses se ve igual que una cifra copiada del
     // recibo, y quien confirme sin mirar registra el promedio.
-    abrirConfirmacion();
+    openConfirmation();
 
     expect(screen.getByText(/son los esperados/i)).toBeDefined();
   });
 
   it('un concepto que nunca se ha pagado abre sin valor, y lo dice de otra forma', () => {
-    abrirConfirmacion({ ...PAGO, expectedAmount: null });
+    openConfirmation({ ...PAYMENT, expectedAmount: null });
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('');
     expect(screen.getByText(/se leen el valor y la fecha/i)).toBeDefined();
@@ -166,7 +166,7 @@ describe('La ficha de confirmar un pago pendiente', () => {
     // La pantalla de «cómo empezar» que había delante se retiró: costaba un
     // clic en cada movimiento nuevo para una pregunta que casi siempre se
     // contestaba igual. Sus dos otras vías viven ahora dentro del formulario.
-    abrirNuevo();
+    openNew();
 
     expect(screen.getByRole('heading', { name: /Nuevo/ })).toBeDefined();
     expect(screen.getByLabelText('Valor')).toBeDefined();
@@ -192,7 +192,7 @@ describe('La ficha de un concepto que se paga en varias veces', () => {
   }
 
   it('abre con el valor VACÍO, no con el total del mes', () => {
-    abrirConfirmacion(PAGO_A_PEDAZOS);
+    openConfirmation(SPLIT_PAYMENT);
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('');
   });
@@ -200,7 +200,7 @@ describe('La ficha de un concepto que se paga en varias veces', () => {
   it('y con la fecha de HOY, no con la del vencimiento', () => {
     // La ida al mercado fue hoy. El día del vencimiento es cuándo empieza a
     // contar el ciclo, no cuándo se gastó esto.
-    abrirConfirmacion(PAGO_A_PEDAZOS);
+    openConfirmation(SPLIT_PAYMENT);
 
     const fecha = screen.getByLabelText<HTMLInputElement>('Fecha').value;
     expect(fecha).toContain(String(hoy().getUTCDate()));
@@ -210,7 +210,7 @@ describe('La ficha de un concepto que se paga en varias veces', () => {
   it('se titula «Registrar otro», que es lo que ofrecía la lista', () => {
     // Abrir «Registrar otro» y encontrarse «Confirmar pago» es prometer que
     // esto cierra el mes.
-    abrirConfirmacion(PAGO_A_PEDAZOS);
+    openConfirmation(SPLIT_PAYMENT);
 
     expect(screen.getByRole('heading', { name: 'Registrar otro' })).toBeDefined();
   });
@@ -218,14 +218,14 @@ describe('La ficha de un concepto que se paga en varias veces', () => {
   it('avisa de que se anota lo de ESTA vez', () => {
     // Sin decirlo, la caja vacía se lee como un campo que falta por llenar
     // con el total, que es justo lo contrario.
-    abrirConfirmacion(PAGO_A_PEDAZOS);
+    openConfirmation(SPLIT_PAYMENT);
 
     expect(screen.getByText(/no el total del mes/i)).toBeDefined();
   });
 
   it('pero la clasificación sí viene puesta, como en cualquier pago', () => {
     // Lo que cambia es el importe y la fecha; de qué concepto es, no.
-    abrirConfirmacion(PAGO_A_PEDAZOS);
+    openConfirmation(SPLIT_PAYMENT);
 
     expect(screen.getByText(/Servicios públicos › Costos fijos/)).toBeDefined();
     expect(screen.getAllByText('Celsia (Energía)').length).toBeGreaterThan(0);
@@ -233,7 +233,7 @@ describe('La ficha de un concepto que se paga en varias veces', () => {
 
   it('y uno normal sigue llegando con su valor esperado', () => {
     // La prueba que impide «arreglarlo» para todos: el alquiler se confirma.
-    abrirConfirmacion(PAGO);
+    openConfirmation(PAYMENT);
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
   });

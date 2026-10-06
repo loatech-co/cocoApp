@@ -6,7 +6,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { MovimientoModal } from '@/features/transactions/components/movimiento-modal';
 import { PanelDeBusqueda } from '@/features/transactions/components/panel-de-busqueda';
 import { useAuth } from '@/shared/api/auth-context';
-import { registrarPuente } from '@/shared/api/native-bridge';
+import { registerBridge } from '@/shared/api/native-bridge';
 import { invalidateDerived } from '@/shared/api/query-keys';
 import { t } from '@/shared/lib/i18n';
 import { useEnLaApp, useEsMovil } from '@/shared/lib/movil';
@@ -67,9 +67,9 @@ import { type ShellState, useShellState } from './use-shell-state';
  * exactamente lo que dice el tono de aviso del tema.
  */
 function VistaDeUsuario() {
-  const { viendoComoUsuario, verComoUsuario } = useAuth();
+  const { isViewingAsUser, setViewAsUser } = useAuth();
 
-  if (!viendoComoUsuario) return null;
+  if (!isViewingAsUser) return null;
 
   return (
     <Alert variant="warning" className="mb-4 items-center">
@@ -81,7 +81,7 @@ function VistaDeUsuario() {
           variant="outline"
           size="sm"
           className="shrink-0"
-          onClick={() => verComoUsuario(false)}
+          onClick={() => setViewAsUser(false)}
         >
           {t('common.backToAdmin')}
         </Button>
@@ -114,7 +114,7 @@ function PuenteDeNavegacion({ abrirBusqueda }: { abrirBusqueda: () => void }) {
 
   useEffect(
     () =>
-      registrarPuente({
+      registerBridge({
         ir: (ruta) => void navigate(ruta),
         abrirBusqueda,
         capturado: () => invalidateDerived(queryClient),
@@ -261,11 +261,11 @@ export function AppShell() {
 
 /** La barra de abajo y sus dos hojas: solo en el teléfono, fuera de la app. */
 function PhoneSheets({ shell }: { shell: ShellState }) {
-  const { usuario } = useAuth();
+  const { user } = useAuth();
   return (
     <>
       <BarraInferior
-        nombre={usuario?.displayName ?? usuario?.email ?? '?'}
+        nombre={user?.displayName ?? user?.email ?? '?'}
         busquedaAbierta={shell.busquedaAbierta}
         onBuscar={() => shell.setBusquedaAbierta(true)}
         // Directo al gasto, sin menú de por medio: es la única opción viva

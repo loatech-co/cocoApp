@@ -12,14 +12,14 @@ export const keys = {
   accounts: ['accounts'] as const,
   categories: ['categories'] as const,
   tags: ['tags'] as const,
-  transactions: (filtros?: object) => ['transactions', filtros ?? {}] as const,
-  dashboard: (filtros?: object) => ['dashboard', filtros ?? {}] as const,
-  historia: ['historia'] as const,
-  soportes: (transactionId: number) => ['soportes', transactionId] as const,
+  transactions: (filters?: object) => ['transactions', filters ?? {}] as const,
+  dashboard: (filters?: object) => ['dashboard', filters ?? {}] as const,
+  history: ['historia'] as const,
+  receipts: (transactionId: number) => ['soportes', transactionId] as const,
 };
 
 /** Lo que cambia cuando cambia un movimiento: sus listas, las cuentas y el resumen. */
-export function useInvalidarDerivados() {
+export function useInvalidateDerived() {
   const queryClient = useQueryClient();
   return () => invalidateDerived(queryClient);
 }

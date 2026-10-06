@@ -2,9 +2,9 @@ import { t } from '@/shared/lib/i18n';
 import {
   USER_AGENT_APP,
   type AvisosDeLaApp,
-  type EventoAlPuente,
-  type MensajeAlPuente,
-  type SesionParaLaWeb,
+  type BridgeEvent,
+  type BridgeMessage,
+  type BridgeSession,
 } from '@/shared/lib/native-contract';
 
 /**
@@ -41,13 +41,13 @@ import {
  * sin respuesta (`capturado`, `primerPlano`) son contrato con iOS y viven en
  * `native-contract.ts`.
  */
-interface PuenteWeb extends AvisosDeLaApp {
+interface WebBridge extends AvisosDeLaApp {
   /** Navega sin recargar: `react-router` cambia la ruta por dentro. */
-  ir(ruta: string): void;
+  ir(path: string): void;
   /** Abre la hoja de búsqueda. La pestaña nativa «Buscar» llama aquí. */
   abrirBusqueda(): void;
   /** La app empuja una sesión: al arrancar sin ella o tras el login nativo. */
-  recibirSesion(sesion: SesionParaLaWeb): void;
+  recibirSesion(session: BridgeSession): void;
   /** La app cerró la sesión real (401 al renovar): la web limpia su memoria. */
   sesionCerrada(): void;
 }
@@ -62,12 +62,12 @@ declare global {
     webkit?: {
       messageHandlers?: {
         /** Con respuesta (`WKScriptMessageHandlerWithReply`). */
-        cocoSesion?: { postMessage(mensaje: MensajeAlPuente): Promise<unknown> };
+        cocoSesion?: { postMessage(message: BridgeMessage): Promise<unknown> };
         /** Sin respuesta (`WKScriptMessageHandler`). */
-        cocoEventos?: { postMessage(evento: EventoAlPuente): void };
+        cocoEventos?: { postMessage(event: BridgeEvent): void };
       };
     };
-    __coco?: PuenteWeb;
+    __coco?: WebBridge;
   }
 }
 
@@ -78,21 +78,21 @@ declare global {
  * `/auth/refresh` si no. Diez segundos cubren una red mala; más que eso es
  * una app colgada, y la web no puede quedarse sin pintar nada mientras tanto.
  */
-const TIEMPO_MAXIMO_MS = 10_000;
+const TIMEOUT_MS = 10_000;
 
 /** Por qué falló el puente. `motivo` es estable; el mensaje, para la bitácora. */
-export class PuenteError extends Error {
+export class BridgeError extends Error {
   constructor(
-    readonly motivo: 'sin-puente' | 'tiempo' | 'sin-sesion' | 'respuesta',
+    readonly reason: 'sin-puente' | 'tiempo' | 'sin-sesion' | 'respuesta',
     message = t('errors.bridge.noSession'),
   ) {
     super(message);
-    this.name = 'PuenteError';
+    this.name = 'BridgeError';
   }
 }
 
 /** Si esta web corre DENTRO de la app del teléfono. Ver «dos señales». */
-export function enLaApp(): boolean {
+export function isInNativeApp(): boolean {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
   return (
     navigator.userAgent.includes(USER_AGENT_APP) &&
@@ -100,14 +100,14 @@ export function enLaApp(): boolean {
   );
 }
 
-function esUnaSesion(valor: unknown): valor is SesionParaLaWeb {
-  if (typeof valor !== 'object' || valor === null) return false;
-  const sesion = valor as Record<string, unknown>;
+function isBridgeSession(value: unknown): value is BridgeSession {
+  if (typeof value !== 'object' || value === null) return false;
+  const session = value as Record<string, unknown>;
   return (
-    typeof sesion.access_token === 'string' &&
-    typeof sesion.expires_in === 'number' &&
-    typeof sesion.user === 'object' &&
-    sesion.user !== null
+    typeof session.access_token === 'string' &&
+    typeof session.expires_in === 'number' &&
+    typeof session.user === 'object' &&
+    session.user !== null
   );
 }
 
@@ -120,39 +120,39 @@ function esUnaSesion(valor: unknown): valor is SesionParaLaWeb {
  * igual: limpia la memoria y deja que `RequireAuth` espere a que la app la
  * empuje. Lo que NUNCA hace es avisar a la app de que borre su llavero.
  */
-export function pedirSesion(): Promise<SesionParaLaWeb> {
-  const puente = window.webkit?.messageHandlers?.cocoSesion;
-  if (!puente) return Promise.reject(new PuenteError('sin-puente', t('errors.bridge.missing')));
+export function requestSession(): Promise<BridgeSession> {
+  const handler = window.webkit?.messageHandlers?.cocoSesion;
+  if (!handler) return Promise.reject(new BridgeError('sin-puente', t('errors.bridge.missing')));
 
-  let temporizador: ReturnType<typeof setTimeout> | undefined;
-  const tiempo = new Promise<never>((_, rechazar) => {
-    temporizador = setTimeout(
-      () => rechazar(new PuenteError('tiempo', t('errors.bridge.timeout'))),
-      TIEMPO_MAXIMO_MS,
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new BridgeError('tiempo', t('errors.bridge.timeout'))),
+      TIMEOUT_MS,
     );
   });
 
-  const respuesta = Promise.resolve()
+  const response = Promise.resolve()
     // Dentro del `then` para que un `postMessage` que lance de forma síncrona
     // acabe como rechazo y no como excepción fuera de la promesa.
-    .then(() => puente.postMessage({ tipo: 'pedirSesion' }))
+    .then(() => handler.postMessage({ tipo: 'pedirSesion' }))
     .then(
-      (valor) => {
-        if (!esUnaSesion(valor)) {
-          throw new PuenteError('respuesta', t('errors.bridge.notASession'));
+      (value) => {
+        if (!isBridgeSession(value)) {
+          throw new BridgeError('respuesta', t('errors.bridge.notASession'));
         }
-        return valor;
+        return value;
       },
-      (causa: unknown) => {
+      (cause: unknown) => {
         // `WKScriptMessageHandlerWithReply` rechaza con el texto del error;
         // según la versión de WebKit llega suelto o envuelto en un `Error`.
-        const texto =
-          causa instanceof Error ? causa.message : typeof causa === 'string' ? causa : undefined;
-        throw new PuenteError('sin-sesion', texto);
+        const detail =
+          cause instanceof Error ? cause.message : typeof cause === 'string' ? cause : undefined;
+        throw new BridgeError('sin-sesion', detail);
       },
     );
 
-  return Promise.race([respuesta, tiempo]).finally(() => clearTimeout(temporizador));
+  return Promise.race([response, timeout]).finally(() => clearTimeout(timer));
 }
 
 /**
@@ -162,6 +162,6 @@ export function pedirSesion(): Promise<SesionParaLaWeb> {
  * preguntó `enLaApp()`, y si no lo hizo, tampoco hay que romper la web por un
  * aviso que no tiene destinatario.
  */
-export function avisar(evento: EventoAlPuente): void {
-  window.webkit?.messageHandlers?.cocoEventos?.postMessage(evento);
+export function notifyApp(event: BridgeEvent): void {
+  window.webkit?.messageHandlers?.cocoEventos?.postMessage(event);
 }

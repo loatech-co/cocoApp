@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { Providers } from '@/app/providers';
 import { instalarRecargaPorVersion } from '@/app/recarga-por-version';
 import { AppRouter } from '@/app/router';
-import { enLaApp } from '@/shared/lib/puente-nativo';
+import { isInNativeApp } from '@/shared/lib/bridge';
 import './index.css';
 
 // Tema inicial: se respeta la preferencia del sistema. Más adelante (T5) el
@@ -16,7 +16,7 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 // Dentro de la app del teléfono la barra de abajo es la nativa, fuera del
 // webview: el CSS lee esta marca para no reservarle hueco a una que no está.
 // Se pone antes del primer render, para que ningún pintado la vea cambiar.
-if (enLaApp()) {
+if (isInNativeApp()) {
   document.documentElement.dataset.embebido = 'si';
 }
 

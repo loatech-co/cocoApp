@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiSubir } from '@/shared/api/api-client';
+import { apiUpload } from '@/shared/api/api-client';
 import type { Receipt } from '@/shared/api/generated/model';
 import {
   getSoportesUploadUrl,
@@ -20,7 +20,7 @@ import { encogerSoportes } from '@/shared/lib/encoger-soporte';
  */
 export function useSoportes(transactionId: number | undefined) {
   return useQuery({
-    queryKey: keys.soportes(transactionId ?? 0),
+    queryKey: keys.receipts(transactionId ?? 0),
     enabled: transactionId !== undefined,
     // `enabled` guarantees the id; the `?? 0` only satisfies the type.
     queryFn: (): Promise<Receipt[]> =>
@@ -46,12 +46,12 @@ export function useSubirSoportes(transactionId: number) {
       // —incluido el HEIC del iPhone, que allá no se puede abrir— está en
       // `lib/encoger-soporte.ts`.
       for (const archivo of await encogerSoportes(archivos)) datos.append('files', archivo);
-      return apiSubir<Receipt[]>(getSoportesUploadUrl(transactionId), datos, onProgreso);
+      return apiUpload<Receipt[]>(getSoportesUploadUrl(transactionId), datos, onProgreso);
     },
     // Se escribe la respuesta en la caché en vez de invalidarla: el servidor
     // acaba de devolver la lista entera y volver a pedirla es un viaje para
     // traer lo que ya está en la mano.
-    onSuccess: (lista) => queryClient.setQueryData(keys.soportes(transactionId), lista),
+    onSuccess: (lista) => queryClient.setQueryData(keys.receipts(transactionId), lista),
   });
 }
 
@@ -62,6 +62,6 @@ export function useEliminarSoporte(transactionId: number) {
     mutationFn: async (soporteId: number) => {
       await soportesRemove(transactionId, soporteId);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.soportes(transactionId) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.receipts(transactionId) }),
   });
 }

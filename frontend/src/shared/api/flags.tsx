@@ -63,8 +63,8 @@ function setActive(names: readonly string[]): void {
  * flags. It renders nothing of its own.
  */
 export function FlagsProvider({ children }: { children: ReactNode }) {
-  const { usuario } = useAuth();
-  const userId = usuario?.id;
+  const { user } = useAuth();
+  const userId = user?.id;
 
   const { data } = useQuery({
     queryKey: ['auth', 'me', 'features', userId],

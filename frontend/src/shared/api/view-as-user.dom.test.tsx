@@ -5,50 +5,49 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from './auth-context';
 
 /** Una sesión de administrador, quieta: aquí no se prueba cómo se abre. */
-const ESTADO = {
-  usuario: {
+const STATE = {
+  user: {
     id: 2,
     displayName: 'Gerardo',
     email: 'g@coco.app',
     role: 'admin',
     status: 'active',
   },
-  cargando: false,
+  isLoading: false,
 };
 
 vi.mock('./session', () => ({
-  suscribirse: () => () => {},
-  estadoActual: () => ESTADO,
-  restaurar: vi.fn(),
-  entrar: vi.fn(),
-  registrarse: vi.fn(),
-  salir: vi.fn(),
-  salirDeTodosLosDispositivos: vi.fn(),
-  cambiarContrasena: vi.fn(),
+  subscribe: () => () => {},
+  currentState: () => STATE,
+  restore: vi.fn(),
+  signIn: vi.fn(),
+  signUp: vi.fn(),
+  signOut: vi.fn(),
+  signOutEverywhere: vi.fn(),
+  changePassword: vi.fn(),
 }));
 
 afterEach(cleanup);
 
-function Sonda() {
-  const { esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario } = useAuth();
+function Probe() {
+  const { isAdmin, isRealAdmin, isViewingAsUser, setViewAsUser } = useAuth();
 
   return (
     <>
       <p>
-        {esAdmin ? 've el panel' : 'no ve el panel'} ·{' '}
-        {esAdminDeVerdad ? 'es admin' : 'no es admin'}
+        {isAdmin ? 've el panel' : 'no ve el panel'} · {isRealAdmin ? 'es admin' : 'no es admin'}
       </p>
-      <button type="button" onClick={() => verComoUsuario(!viendoComoUsuario)}>
+      <button type="button" onClick={() => setViewAsUser(!isViewingAsUser)}>
         alternar
       </button>
     </>
   );
 }
 
-function montar() {
+function mount() {
   return render(
     <AuthProvider>
-      <Sonda />
+      <Probe />
     </AuthProvider>,
   );
 }
@@ -63,7 +62,7 @@ function montar() {
  */
 describe('La vista de usuario', () => {
   it('apaga el panel sin tocar el rol', () => {
-    montar();
+    mount();
     expect(screen.getByText(/ve el panel · es admin/)).toBeDefined();
 
     fireEvent.click(screen.getByText('alternar'));
@@ -74,7 +73,7 @@ describe('La vista de usuario', () => {
   });
 
   it('se puede volver', () => {
-    montar();
+    mount();
     fireEvent.click(screen.getByText('alternar'));
     fireEvent.click(screen.getByText('alternar'));
 
@@ -85,7 +84,7 @@ describe('La vista de usuario', () => {
     // Quien lo enseña pregunta por `esAdminDeVerdad`. Con `esAdmin`, el
     // interruptor desaparecería en el mismo clic que lo enciende, y la única
     // salida sería recargar sin saber por qué.
-    montar();
+    mount();
     fireEvent.click(screen.getByText('alternar'));
 
     expect(screen.getByText(/es admin/)).toBeDefined();
@@ -96,12 +95,12 @@ describe('La vista de usuario', () => {
     // Vive en memoria y se olvida al recargar, a propósito: es la red de
     // seguridad de un modo que QUITA cosas de la pantalla. Nunca se puede
     // quedar encendido de una forma de la que no se sepa salir.
-    montar();
+    mount();
     fireEvent.click(screen.getByText('alternar'));
     expect(screen.getByText(/no ve el panel/)).toBeDefined();
 
     cleanup();
-    montar();
+    mount();
 
     expect(screen.getByText(/ve el panel · es admin/)).toBeDefined();
   });

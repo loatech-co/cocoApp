@@ -1,7 +1,7 @@
-import { enLaApp } from '@/shared/lib/puente-nativo';
+import { isInNativeApp } from '@/shared/lib/bridge';
 
 import { refocus } from './query-client';
-import { recibirSesion, sesionCerrada } from './session';
+import { receiveSession, sessionClosed } from './session';
 
 /*
   Por qué esto no vive en `puente-nativo`.
@@ -22,22 +22,22 @@ import { recibirSesion, sesionCerrada } from './session';
  * es la app. Devuelve cómo quitarlo, para que el `useEffect` que lo registra
  * lo deje limpio al desmontarse (y `StrictMode` no deje dos copias).
  */
-export function registrarPuente(acciones: {
-  ir: (ruta: string) => void;
+export function registerBridge(actions: {
+  ir: (path: string) => void;
   abrirBusqueda: () => void;
   /** A capture synced in the app: refetch what a new movement changes. */
   capturado: () => void;
 }): () => void {
   // Fuera de la app no hay nada que quitar.
-  if (!enLaApp()) return () => undefined;
+  if (!isInNativeApp()) return () => undefined;
 
   window.__coco = {
-    ir: acciones.ir,
-    abrirBusqueda: acciones.abrirBusqueda,
-    capturado: acciones.capturado,
+    ir: actions.ir,
+    abrirBusqueda: actions.abrirBusqueda,
+    capturado: actions.capturado,
     primerPlano: refocus,
-    recibirSesion,
-    sesionCerrada,
+    recibirSesion: receiveSession,
+    sesionCerrada: sessionClosed,
   };
 
   return () => {

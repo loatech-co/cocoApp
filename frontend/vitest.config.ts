@@ -17,7 +17,7 @@ export default defineConfig({
     // Lo que jsdom no trae. Se carga en TODOS los archivos, también en los que
     // corren sin DOM: el propio archivo comprueba si hay ventana antes de
     // tocar nada, que es más barato que mantener aquí una lista de cuáles sí.
-    setupFiles: ['./src/pruebas/entorno.ts'],
+    setupFiles: ['./src/test-support/setup.ts'],
     // Plan 7.7: 70 % of lines and branches in `frontend/src`. The thresholds
     // only go up: a PR that lowers them needs a written reason in its ADR.
     coverage: {
@@ -26,7 +26,7 @@ export default defineConfig({
       exclude: [
         'src/**/*.test.{ts,tsx}',
         'src/**/*.stories.tsx',
-        'src/pruebas/**',
+        'src/test-support/**',
         'src/**/*.d.ts',
         // Written by Orval from the v2 contract (D11), not by us: measuring it
         // would grade the generator, and every endpoint the web does not call

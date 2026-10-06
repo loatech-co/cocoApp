@@ -30,4 +30,4 @@ export async function allPages<T>(
  * (`@IsOptional`), but the v2 document only says "optional": until it says
  * "nullable" too, the generated input type is widened here, in one place.
  */
-export type Cambios<T> = { [K in keyof T]?: T[K] | null };
+export type Changes<T> = { [K in keyof T]?: T[K] | null };

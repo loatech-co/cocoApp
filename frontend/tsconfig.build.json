@@ -12,7 +12,7 @@
   // el build de producción se caía por el archivo de un runner que no se
   // despliega. Pasó el 4 de octubre de 2026.
   //
-  // Y `src/pruebas/` entera: son los ayudantes que comparten las pruebas, y
+  // Y `src/test-support/` entera: son los ayudantes que comparten las pruebas, y
   // uno de ellos importa `vitest`. Volvió a pasar el 5 de octubre de 2026 con
   // `app-falsa.ts`; una carpeta excluida no se olvida como un sufijo.
   //
@@ -25,7 +25,7 @@
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
     "src/**/*.stories.tsx",
-    "src/pruebas",
+    "src/test-support",
     ".storybook",
     "vitest.config.ts",
     "orval.config.ts",

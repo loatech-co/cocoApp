@@ -360,7 +360,7 @@ export default defineConfig(
     ignores: [
       'frontend/src/shared/ui/**',
       'frontend/src/**/*.test.{ts,tsx}',
-      'frontend/src/pruebas/**',
+      'frontend/src/test-support/**',
     ],
     plugins: { coco: cocoDesign },
     rules: {
@@ -375,7 +375,7 @@ export default defineConfig(
     ignores: [
       'frontend/src/**/*.test.tsx',
       'frontend/src/**/*.stories.tsx',
-      'frontend/src/pruebas/**',
+      'frontend/src/test-support/**',
     ],
     plugins: { i18next },
     rules: {
@@ -410,7 +410,7 @@ export default defineConfig(
       'api/src/**/*.spec.ts',
       'packages/*/src/**/*.spec.ts',
       'frontend/src/**/*.test.{ts,tsx}',
-      'frontend/src/pruebas/**',
+      'frontend/src/test-support/**',
     ],
     rules: { 'max-lines-per-function': 'off' },
   },
@@ -516,7 +516,7 @@ export default defineConfig(
       'api/src/**/*.spec.ts',
       'packages/*/src/**/*.spec.ts',
       'frontend/src/**/*.test.{ts,tsx}',
-      'frontend/src/pruebas/**',
+      'frontend/src/test-support/**',
     ],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',

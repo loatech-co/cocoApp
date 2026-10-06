@@ -5,8 +5,8 @@ import {
   useCrearMovimiento,
   useEliminarMovimiento,
 } from '@/features/transactions/api/transactions';
-import { ApiClientError, apiSubir } from '@/shared/api/api-client';
-import { useCrearCategoria } from '@/shared/api/categories';
+import { ApiClientError, apiUpload } from '@/shared/api/api-client';
+import { useCreateCategory } from '@/shared/api/categories';
 import { categorizationLearn } from '@/shared/api/generated/categorization-v2/categorization-v2';
 import { type Transaction } from '@/shared/api/generated/model';
 import { getSoportesUploadUrl } from '@/shared/api/generated/soportes-v2/soportes-v2';
@@ -42,7 +42,7 @@ async function uploadPending(id: number, pendientes: File[]): Promise<void> {
   for (const archivo of await encogerSoportes(pendientes)) {
     datos.append('files', archivo);
   }
-  await apiSubir(getSoportesUploadUrl(id), datos);
+  await apiUpload(getSoportesUploadUrl(id), datos);
 }
 
 /**
@@ -81,7 +81,7 @@ function learnFromSuggestion(cuerpo: ReturnType<typeof movementPayload>): void {
  * mismo. Su combo no ofrece crear, y esto no se llama desde ahí.
  */
 export function useCreateInside(ficha: MovementSheetState) {
-  const crearCategoria = useCrearCategoria();
+  const crearCategoria = useCreateCategory();
 
   async function crearDentro(nombre: string, padreId: number | undefined): Promise<void> {
     if (nombre.trim() === '' || padreId === undefined) return;

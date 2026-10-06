@@ -31,11 +31,11 @@ export function useSecciones(): {
   administracion: readonly Seccion[];
   biblioteca: readonly Seccion[];
 } {
-  const { esAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const llevaCuentas = useLlevaCuentas();
 
   const diaADia = SECCIONES.filter((s) => s.requiere !== 'cuentas' || llevaCuentas);
-  const administracion = esAdmin ? SECCIONES_DE_ADMIN : [];
+  const administracion = isAdmin ? SECCIONES_DE_ADMIN : [];
 
   return { diaADia, administracion, biblioteca: [...diaADia, ...administracion, MI_CUENTA] };
 }
@@ -154,18 +154,18 @@ export function MenuDeLaCuenta({ plegada = false }: { plegada?: boolean }) {
 }
 
 function AccountTrigger({ plegada }: { plegada: boolean }) {
-  const { usuario } = useAuth();
-  const nombre = usuario?.displayName ?? usuario?.email ?? '?';
+  const { user } = useAuth();
+  const nombre = user?.displayName ?? user?.email ?? '?';
   return (
     <>
       <Avatar nombre={nombre} />
       {!plegada && (
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-sidebar-foreground">
-            {usuario?.displayName ?? '—'}
+            {user?.displayName ?? '—'}
           </span>
-          {usuario?.email && (
-            <span className="block truncate text-2xs text-sidebar-muted">{usuario.email}</span>
+          {user?.email && (
+            <span className="block truncate text-2xs text-sidebar-muted">{user.email}</span>
           )}
         </span>
       )}
@@ -174,7 +174,7 @@ function AccountTrigger({ plegada }: { plegada: boolean }) {
 }
 
 function AccountOptions({ cerrar }: { cerrar: () => void }) {
-  const { esAdmin, esAdminDeVerdad, viendoComoUsuario, verComoUsuario, salir } = useAuth();
+  const { isAdmin, isRealAdmin, isViewingAsUser, setViewAsUser, signOut } = useAuth();
   const navegar = useNavigate();
 
   // `void` delante de `navegar` no es adorno: en react-router 7 `navigate`
@@ -197,7 +197,7 @@ function AccountOptions({ cerrar }: { cerrar: () => void }) {
         {t('shell.sections.costCenters')}
       </MenuOption>
 
-      {esAdmin && (
+      {isAdmin && (
         <>
           <MenuOption Icon={ShieldCheck} onClick={() => ir('/administracion')}>
             {t('shell.sections.users')}
@@ -219,23 +219,23 @@ function AccountOptions({ cerrar }: { cerrar: () => void }) {
         Va aquí abajo, con cerrar sesión y no con las páginas: no lleva a
         ninguna parte, cambia cómo se ve todo lo demás.
       */}
-      {esAdminDeVerdad && (
+      {isRealAdmin && (
         <MenuOption
-          Icon={viendoComoUsuario ? ShieldCheck : Eye}
+          Icon={isViewingAsUser ? ShieldCheck : Eye}
           onClick={() => {
             cerrar();
-            verComoUsuario(!viendoComoUsuario);
+            setViewAsUser(!isViewingAsUser);
             // Encendiéndola desde una pantalla de administración, quedarse
             // sería quedarse mirando un «no tienes acceso». Se sale al
             // resumen, que es de donde parte quien no administra nada.
-            if (!viendoComoUsuario) void navegar('/');
+            if (!isViewingAsUser) void navegar('/');
           }}
         >
-          {viendoComoUsuario ? t('common.backToAdmin') : t('shell.account.viewAsUser')}
+          {isViewingAsUser ? t('common.backToAdmin') : t('shell.account.viewAsUser')}
         </MenuOption>
       )}
 
-      <MenuOption Icon={LogOut} isDestructive onClick={() => void salir()}>
+      <MenuOption Icon={LogOut} isDestructive onClick={() => void signOut()}>
         {t('shell.account.signOut')}
       </MenuOption>
     </>

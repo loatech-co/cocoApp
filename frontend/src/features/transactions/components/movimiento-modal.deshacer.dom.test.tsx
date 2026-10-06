@@ -22,7 +22,7 @@ const { ApiClientError } =
   await vi.importActual<typeof import('@/shared/api/api-client')>('@/shared/api/api-client');
 
 const red = vi.fn();
-const apiSubir = vi.fn();
+const apiUpload = vi.fn();
 /**
  * The generated client calls `apiRequest(url, init)` with the full v2 path and
  * a JSON string; the spy sees the route without `/api/v2` and the body as an
@@ -40,7 +40,7 @@ vi.mock('@/shared/api/api-client', async () => {
   return {
     ...real,
     apiRequest: (url: string, init?: RequestInit) => comoRuta(url, init),
-    apiSubir: (...args: unknown[]) => apiSubir(...args),
+    apiUpload: (...args: unknown[]) => apiUpload(...args),
   };
 });
 
@@ -103,7 +103,7 @@ const LECTURA_VACIA: Awaited<ReturnType<typeof leerSoporte>> = {
 
 beforeEach(() => {
   red.mockReset();
-  apiSubir.mockReset();
+  apiUpload.mockReset();
   // La lectura espera un piso de cuatro segundos aunque ya haya terminado;
   // con el reloj falso se le pasa por encima en `adjuntar`.
   vi.useFakeTimers();
@@ -215,7 +215,7 @@ function responder({ alBorrar }: { alBorrar: () => Promise<unknown> }): void {
 describe('Cuando el soporte falla al registrar', () => {
   it('borra el movimiento que se acababa de crear', async () => {
     responder({ alBorrar: () => Promise.resolve({ data: undefined }) });
-    apiSubir.mockRejectedValue(
+    apiUpload.mockRejectedValue(
       new ApiClientError(503, 'service_unavailable', 'Al servidor se le acabaron los recursos.'),
     );
 
@@ -224,7 +224,7 @@ describe('Cuando el soporte falla al registrar', () => {
     await registrar();
 
     // Se creó, falló el soporte, y lo creado se fue.
-    expect(apiSubir).toHaveBeenCalledOnce();
+    expect(apiUpload).toHaveBeenCalledOnce();
     expect(llamadas()).toContainEqual(['/transactions/42', 'DELETE']);
 
     // Y se dice sin rodeos: no quedó nada. Quien lea otra cosa se va a quedar
@@ -234,7 +234,9 @@ describe('Cuando el soporte falla al registrar', () => {
 
   it('si tampoco se pudo deshacer, lo dice y no duplica al reintentar', async () => {
     responder({ alBorrar: () => Promise.reject(new Error('sin conexión')) });
-    apiSubir.mockRejectedValue(new ApiClientError(503, 'service_unavailable', 'Falló el soporte.'));
+    apiUpload.mockRejectedValue(
+      new ApiClientError(503, 'service_unavailable', 'Falló el soporte.'),
+    );
 
     const { container } = abrirFichaNueva();
     await adjuntar(container);
@@ -269,7 +271,7 @@ describe('Lo que la web guarda', () => {
 
   it('manda source «web»; sin texto leído, rawText va vacío', async () => {
     responder({ alBorrar: () => Promise.resolve({ data: undefined }) });
-    apiSubir.mockResolvedValue({ data: [] });
+    apiUpload.mockResolvedValue({ data: [] });
 
     const { container } = abrirFichaNueva();
     await adjuntar(container);

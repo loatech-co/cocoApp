@@ -36,8 +36,8 @@ import { Avatar } from './navegacion';
  * apagadas ni escondidas con CSS. Ausentes, como en el riel.
  */
 export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
-  const { usuario, esAdmin, esAdminDeVerdad, salir } = useAuth();
-  const nombre = usuario?.displayName ?? usuario?.email ?? '?';
+  const { user, isAdmin, isRealAdmin, signOut } = useAuth();
+  const nombre = user?.displayName ?? user?.email ?? '?';
 
   return (
     <BottomSheet
@@ -58,7 +58,7 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
           {t('shell.account.settings')}
         </LinkRow>
 
-        {esAdmin && (
+        {isAdmin && (
           <LinkRow Icon={ShieldCheck} to="/administracion" onNavigate={onCerrar}>
             {t('shell.sections.users')}
           </LinkRow>
@@ -68,7 +68,7 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
           {t('shell.account.security')}
         </LinkRow>
 
-        {esAdmin && (
+        {isAdmin && (
           <LinkRow Icon={ScrollText} to="/administracion/bitacora" onNavigate={onCerrar}>
             {t('shell.sections.auditLog')}
           </LinkRow>
@@ -84,9 +84,9 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
           vista, `esAdmin` es falso —para eso está— y con esa condición el
           interruptor desaparecería justo cuando hace falta para apagarlo.
         */}
-        {esAdminDeVerdad && <ViewAsUserRow onCerrar={onCerrar} />}
+        {isRealAdmin && <ViewAsUserRow onCerrar={onCerrar} />}
 
-        <PanelRow tone="danger" onClick={() => void salir()}>
+        <PanelRow tone="danger" onClick={() => void signOut()}>
           <LogOut className="size-4 shrink-0" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate">{t('shell.account.signOut')}</span>
         </PanelRow>
@@ -103,7 +103,7 @@ export function PanelDeLaCuenta({ abierto, onCerrar }: { abierto: boolean; onCer
  * trozos suyos.
  */
 function Perfil({ nombre }: { nombre: string }) {
-  const { usuario } = useAuth();
+  const { user } = useAuth();
 
   return (
     <Link
@@ -114,10 +114,10 @@ function Perfil({ nombre }: { nombre: string }) {
       <Avatar nombre={nombre} className="size-10" />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-display text-base font-semibold">
-          {usuario?.displayName ?? '—'}
+          {user?.displayName ?? '—'}
         </span>
-        {usuario?.email && (
-          <span className="block truncate text-xs text-muted-foreground">{usuario.email}</span>
+        {user?.email && (
+          <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
         )}
       </span>
     </Link>
@@ -126,25 +126,25 @@ function Perfil({ nombre }: { nombre: string }) {
 
 /** El interruptor de la vista de usuario, en forma de fila. */
 function ViewAsUserRow({ onCerrar }: { onCerrar: () => void }) {
-  const { viendoComoUsuario, verComoUsuario } = useAuth();
+  const { isViewingAsUser, setViewAsUser } = useAuth();
   const navegar = useNavigate();
   return (
     <PanelRow
       onClick={() => {
         onCerrar();
-        verComoUsuario(!viendoComoUsuario);
+        setViewAsUser(!isViewingAsUser);
         // Encendiéndola desde una pantalla de administración, quedarse
         // sería quedarse mirando un «no tienes acceso».
-        if (!viendoComoUsuario) void navegar('/');
+        if (!isViewingAsUser) void navegar('/');
       }}
     >
-      {viendoComoUsuario ? (
+      {isViewingAsUser ? (
         <ShieldCheck className="size-4 shrink-0 opacity-70" aria-hidden="true" />
       ) : (
         <Eye className="size-4 shrink-0 opacity-70" aria-hidden="true" />
       )}
       <span className="min-w-0 flex-1 truncate">
-        {viendoComoUsuario ? t('common.backToAdmin') : t('shell.account.viewAsUser')}
+        {isViewingAsUser ? t('common.backToAdmin') : t('shell.account.viewAsUser')}
       </span>
     </PanelRow>
   );

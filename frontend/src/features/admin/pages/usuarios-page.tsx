@@ -25,7 +25,7 @@ const FILTROS: { valor: ProfileStatus | undefined; etiqueta: string }[] = [
  * el trabajo del administrador es responderlas, no navegar hasta encontrarlas.
  */
 export function UsuariosPage() {
-  const { usuario: yo } = useAuth();
+  const { user: yo } = useAuth();
   const [filtro, setFiltro] = useState<ProfileStatus | undefined>('pending');
   const consulta = useUsuarios(filtro);
 

@@ -1,7 +1,7 @@
 import { focusManager, QueryClient } from '@tanstack/react-query';
 
 import { ApiClientError } from './api-client';
-import { estadoActual, suscribirse } from './session';
+import { currentState, subscribe } from './session';
 
 /** One retry, as before: enough for a blip, not enough to hide an outage. */
 const MAX_RETRIES = 1;
@@ -64,9 +64,9 @@ export function refocus(): void {
  * would see the previous one's movements until each query refetched.
  */
 export function clearCacheOnUserChange(queryClient: QueryClient): () => void {
-  let userId = estadoActual().usuario?.id ?? null;
-  return suscribirse((estado) => {
-    const next = estado.usuario?.id ?? null;
+  let userId = currentState().user?.id ?? null;
+  return subscribe((state) => {
+    const next = state.user?.id ?? null;
     if (next !== userId && userId !== null) queryClient.clear();
     userId = next;
   });

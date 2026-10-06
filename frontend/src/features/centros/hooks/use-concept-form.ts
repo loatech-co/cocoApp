@@ -9,7 +9,7 @@ import {
   newConcept,
 } from '@/features/centros/model/concept-form';
 import { ApiClientError } from '@/shared/api/api-client';
-import { useCrearCategoria } from '@/shared/api/categories';
+import { useCreateCategory } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
@@ -23,7 +23,7 @@ interface ConceptFormOptions {
 
 /** El estado de la ficha de un concepto, y cómo se guarda o se funde con otro. */
 export function useConceptForm({ abierta, concepto, categoriaId, onCerrar }: ConceptFormOptions) {
-  const crear = useCrearCategoria();
+  const crear = useCreateCategory();
   const actualizar = useActualizarCategoria();
   const unificar = useUnificarCategoria();
   const campos = useConceptFields(abierta, concepto);

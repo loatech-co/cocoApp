@@ -7,7 +7,7 @@ import {
 } from '@/shared/api/generated/accounts-v2/accounts-v2';
 import type { Account, CreateAccountInput } from '@/shared/api/generated/model';
 import { allPages } from '@/shared/api/pages';
-import { keys, useInvalidarDerivados } from '@/shared/api/query-keys';
+import { keys, useInvalidateDerived } from '@/shared/api/query-keys';
 
 // ── Cuentas ──────────────────────────────────────────────────────────────────
 
@@ -25,7 +25,7 @@ export type NuevaCuenta = CreateAccountInput;
 
 export function useCrearCuenta() {
   const queryClient = useQueryClient();
-  const invalidarDerivados = useInvalidarDerivados();
+  const invalidarDerivados = useInvalidateDerived();
 
   return useMutation({
     mutationFn: async (cuenta: NuevaCuenta) => {

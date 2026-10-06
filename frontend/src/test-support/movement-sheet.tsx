@@ -17,13 +17,13 @@ import { keys } from '@/shared/api/query-keys';
 */
 
 /** Un centro, una categoría y un concepto; `estatico` bloquea el centro entero. */
-export const arbolCon = (estatico: boolean): CategoryTree[] =>
+export const treeWith = (isStatic: boolean): CategoryTree[] =>
   [
     {
       id: 1,
       name: 'Costos fijos',
       kind: 'expense',
-      isStatic: estatico,
+      isStatic: isStatic,
       children: [
         {
           id: 10,
@@ -35,9 +35,9 @@ export const arbolCon = (estatico: boolean): CategoryTree[] =>
     },
   ] as unknown as CategoryTree[];
 
-export const ARBOL = arbolCon(false);
+export const TREE = treeWith(false);
 
-export const MOVIMIENTO: Transaction = {
+export const TRANSACTION: Transaction = {
   id: 7,
   description: 'Celsia septiembre',
   amount: '120000',
@@ -50,7 +50,7 @@ export const MOVIMIENTO: Transaction = {
 } as unknown as Transaction;
 
 /** Un pago pendiente de Celsia, con su valor esperado y su vencimiento. */
-export const PAGO: PendingPayment = {
+export const PAYMENT: PendingPayment = {
   categoryId: 100,
   name: 'Celsia (Energía)',
   path: 'Costos fijos · Servicios públicos',
@@ -65,7 +65,7 @@ export const PAGO: PendingPayment = {
  * El vencimiento va lejos de hoy A PROPÓSITO: si los dos cayeran en el mismo
  * día, la prueba de que la fecha es la de HOY pasaría igual estando mal.
  */
-export const PAGO_A_PEDAZOS: PendingPayment = {
+export const SPLIT_PAYMENT: PendingPayment = {
   categoryId: 100,
   name: 'Celsia (Energía)',
   path: 'Costos fijos · Servicios públicos',
@@ -77,7 +77,7 @@ export const PAGO_A_PEDAZOS: PendingPayment = {
 } as unknown as PendingPayment;
 
 /** Lo que el lector de mentira devuelve por un recibo de Celsia. */
-export const LECTURA_DE_CELSIA: Awaited<ReturnType<typeof leerSoporte>> = {
+export const CELSIA_READING: Awaited<ReturnType<typeof leerSoporte>> = {
   texto: 'CELSIA S.A. E.S.P. Total a pagar 214.500',
   fuente: 'texto-embebido',
   lectura: {
@@ -94,21 +94,21 @@ export const LECTURA_DE_CELSIA: Awaited<ReturnType<typeof leerSoporte>> = {
 };
 
 /** Un cliente de consultas sin reintentos, con el árbol ya en la caché si se da. */
-export function clienteDePrueba(arbol?: CategoryTree[]): QueryClient {
-  const cliente = new QueryClient({
+export function testQueryClient(tree?: CategoryTree[]): QueryClient {
+  const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
-  if (arbol) cliente.setQueryData([...keys.categories, 'todas'], arbol);
-  return cliente;
+  if (tree) client.setQueryData([...keys.categories, 'todas'], tree);
+  return client;
 }
 
 /** La ficha abierta con esas props, dentro de su cliente y su router. */
-export function pintarFicha(
+export function renderSheet(
   props: Omit<ComponentProps<typeof MovimientoModal>, 'abierta' | 'onCerrar'>,
-  cliente: QueryClient = clienteDePrueba(ARBOL),
+  client: QueryClient = testQueryClient(TREE),
 ) {
   return render(
-    <QueryClientProvider client={cliente}>
+    <QueryClientProvider client={client}>
       <MemoryRouter>
         <MovimientoModal abierta {...props} onCerrar={() => {}} />
       </MemoryRouter>
@@ -116,16 +116,16 @@ export function pintarFicha(
   );
 }
 
-export function abrirFicha(arbol: CategoryTree[]) {
-  return pintarFicha({ movimiento: MOVIMIENTO }, clienteDePrueba(arbol));
+export function openSheet(tree: CategoryTree[]) {
+  return renderSheet({ movimiento: TRANSACTION }, testQueryClient(tree));
 }
 
-export function abrirConfirmacion(pago: PendingPayment = PAGO) {
-  return pintarFicha({ movimiento: null, pago });
+export function openConfirmation(payment: PendingPayment = PAYMENT) {
+  return renderSheet({ movimiento: null, pago: payment });
 }
 
-export function abrirNuevo() {
-  return pintarFicha({ movimiento: null });
+export function openNew() {
+  return renderSheet({ movimiento: null });
 }
 
 /**
@@ -135,7 +135,7 @@ export function abrirNuevo() {
  * `ResizeObserver`, que es con lo que el visor del soporte mide su marco para
  * encajar el documento dentro.
  */
-export function fingirElNavegadorDelSoporte(): void {
+export function fakeReceiptBrowser(): void {
   URL.createObjectURL = vi.fn(() => 'blob:prueba');
   URL.revokeObjectURL = vi.fn();
   globalThis.ResizeObserver = class {

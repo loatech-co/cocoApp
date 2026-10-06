@@ -47,7 +47,7 @@ interface BridgeProfile {
  * family would kill it. The web asks for an access token over the bridge,
  * keeps it in memory, and never sees a long-lived credential.
  */
-export interface SesionParaLaWeb {
+export interface BridgeSession {
   access_token: string;
   /** Seconds the access token lives. */
   expires_in: number;
@@ -55,7 +55,7 @@ export interface SesionParaLaWeb {
 }
 
 /** Web → app, with a reply (`WKScriptMessageHandlerWithReply`). */
-export interface MensajeAlPuente {
+export interface BridgeMessage {
   tipo: 'pedirSesion';
 }
 
@@ -68,7 +68,7 @@ export interface MensajeAlPuente {
  * anything. `sinSesion`: the web started without a session and waits for the
  * app to push one. `abrirCaptura`: open the native quick form.
  */
-export interface EventoAlPuente {
+export interface BridgeEvent {
   tipo: 'salir' | 'sesionCerrada' | 'sinSesion' | 'abrirCaptura';
 }
 
@@ -96,7 +96,7 @@ export interface AvisosDeLaApp {
  * (v2: `x-coco-client: native`). The web never sends it.
  * @public read by `ios/CocoTests/ContratosTests.swift`
  */
-export const CABECERA_CLIENTE_NATIVO = 'x-coco-cliente';
+export const NATIVE_CLIENT_HEADER = 'x-coco-cliente';
 
 /**
  * The receipts upload as the app does it (v1). The web uploads through v2,

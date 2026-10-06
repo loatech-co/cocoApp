@@ -2,8 +2,8 @@ import { t } from '@/shared/lib/i18n';
 
 import type { ProblemFieldError } from './generated/model';
 import { API_ORIGIN } from './origin';
-import { leerProblema } from './problem';
-import { descartarSesion, renovar, tokenActual, tokenPorExpirar } from './session';
+import { readProblem } from './problem';
+import { discardSession, renew, currentToken, isTokenExpiring } from './session';
 
 /**
  * Error de API ya normalizado. Trae el `code` estable que el backend garantiza,
@@ -20,12 +20,12 @@ export class ApiClientError extends Error {
     this.name = 'ApiClientError';
   }
 
-  get esNoAutenticado(): boolean {
+  get isUnauthenticated(): boolean {
     return this.status === 401;
   }
 
   /** Cuenta pendiente de aprobación o suspendida. */
-  get esSinPermiso(): boolean {
+  get isForbidden(): boolean {
     return this.status === 403;
   }
 }
@@ -50,15 +50,15 @@ export class ApiClientError extends Error {
  * respuesta no es JSON (un soporte), o nada si es un 204.
  */
 export async function apiRequest<T>(url: string, init: RequestInit = {}): Promise<T> {
-  const respuesta = await conSesion(url, init);
+  const response = await withSession(url, init);
 
-  if (respuesta.status === 204) return undefined as T;
+  if (response.status === 204) return undefined as T;
 
-  if (!respuesta.ok) throw await errorDe(respuesta, t('errors.operationFailed'));
+  if (!response.ok) throw await errorFrom(response, t('errors.operationFailed'));
 
-  const tipo = respuesta.headers.get('Content-Type') ?? '';
-  if (!tipo.includes('json')) return (await respuesta.blob()) as T;
-  return (await respuesta.json()) as T;
+  const contentType = response.headers.get('Content-Type') ?? '';
+  if (!contentType.includes('json')) return (await response.blob()) as T;
+  return (await response.json()) as T;
 }
 
 /**
@@ -78,12 +78,12 @@ export async function apiRequest<T>(url: string, init: RequestInit = {}): Promis
  * queda en memoria hasta que se recargue la página.
  */
 export async function apiBlob(url: string, signal?: AbortSignal): Promise<Blob> {
-  const respuesta = await conSesion(url, signal === undefined ? {} : { signal });
+  const response = await withSession(url, signal === undefined ? {} : { signal });
 
   // El cuerpo de un error SÍ es JSON aunque la ruta devuelva binarios.
-  if (!respuesta.ok) throw await errorDe(respuesta, t('errors.fileOpenFailed'));
+  if (!response.ok) throw await errorFrom(response, t('errors.fileOpenFailed'));
 
-  return respuesta.blob();
+  return response.blob();
 }
 
 /**
@@ -100,80 +100,80 @@ export async function apiBlob(url: string, signal?: AbortSignal): Promise<Blob> 
  * cabecera a mano —aunque sea la correcta— rompe la petición, porque la
  * frontera que se declara no es la que el cuerpo lleva dentro.
  */
-export async function apiSubir<TData>(
+export async function apiUpload<TData>(
   url: string,
-  datos: FormData,
-  onProgreso?: (fraccion: number) => void,
+  data: FormData,
+  onProgress?: (fraction: number) => void,
 ): Promise<TData> {
-  if (tokenPorExpirar()) await renovar();
+  if (isTokenExpiring()) await renew();
 
-  return new Promise<TData>((resolver, rechazar) => {
-    const peticion = new XMLHttpRequest();
-    peticion.open('POST', `${API_ORIGIN}${url}`);
+  return new Promise<TData>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('POST', `${API_ORIGIN}${url}`);
 
-    const token = tokenActual();
-    if (token) peticion.setRequestHeader('Authorization', `Bearer ${token}`);
+    const token = currentToken();
+    if (token) request.setRequestHeader('Authorization', `Bearer ${token}`);
 
-    peticion.upload.onprogress = (e) => {
-      if (e.lengthComputable) onProgreso?.(e.loaded / e.total);
+    request.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(e.loaded / e.total);
     };
 
-    peticion.onload = () => {
-      const cuerpo: unknown = ((): unknown => {
+    request.onload = () => {
+      const body: unknown = ((): unknown => {
         try {
-          return JSON.parse(peticion.responseText);
+          return JSON.parse(request.responseText);
         } catch {
           return null;
         }
       })();
 
-      if (peticion.status >= 200 && peticion.status < 300) {
-        resolver((cuerpo as { data: TData }).data);
+      if (request.status >= 200 && request.status < 300) {
+        resolve((body as { data: TData }).data);
         return;
       }
 
-      if (peticion.status === 401) descartarSesion();
-      rechazar(errorDelCuerpo(peticion.status, cuerpo, t('errors.uploadFailed')));
+      if (request.status === 401) discardSession();
+      reject(errorFromBody(request.status, body, t('errors.uploadFailed')));
     };
 
-    peticion.onerror = () => rechazar(new ApiClientError(0, 'network_error', t('errors.offline')));
+    request.onerror = () => reject(new ApiClientError(0, 'network_error', t('errors.offline')));
 
-    peticion.send(datos);
+    request.send(data);
   });
 }
 
 /** Sale a la red con el token, renovándolo antes si hace falta y una vez tras un 401. */
-async function conSesion(url: string, init: RequestInit): Promise<Response> {
-  if (tokenPorExpirar()) await renovar();
+async function withSession(url: string, init: RequestInit): Promise<Response> {
+  if (isTokenExpiring()) await renew();
 
-  let respuesta = await enviar(url, init);
+  let response = await send(url, init);
 
-  if (respuesta.status === 401) {
-    const renovada = await renovar();
-    if (!renovada) {
-      descartarSesion();
+  if (response.status === 401) {
+    const renewed = await renew();
+    if (!renewed) {
+      discardSession();
       throw new ApiClientError(401, 'unauthenticated', t('errors.sessionExpired'));
     }
-    respuesta = await enviar(url, init);
+    response = await send(url, init);
   }
 
-  return respuesta;
+  return response;
 }
 
-async function errorDe(respuesta: Response, porDefecto: string): Promise<ApiClientError> {
-  const cuerpo: unknown = await respuesta.json().catch(() => null);
-  if (respuesta.status === 401) descartarSesion();
-  return errorDelCuerpo(respuesta.status, cuerpo, porDefecto);
+async function errorFrom(response: Response, fallback: string): Promise<ApiClientError> {
+  const body: unknown = await response.json().catch(() => null);
+  if (response.status === 401) discardSession();
+  return errorFromBody(response.status, body, fallback);
 }
 
-function errorDelCuerpo(status: number, cuerpo: unknown, porDefecto: string): ApiClientError {
-  const { code, message, details } = leerProblema(cuerpo, porDefecto);
+function errorFromBody(status: number, body: unknown, fallback: string): ApiClientError {
+  const { code, message, details } = readProblem(body, fallback);
   return new ApiClientError(status, code, message, details);
 }
 
-function enviar(url: string, init: RequestInit): Promise<Response> {
+function send(url: string, init: RequestInit): Promise<Response> {
   const headers = new Headers(init.headers);
-  const token = tokenActual();
+  const token = currentToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   return fetch(`${API_ORIGIN}${url}`, { ...init, headers });

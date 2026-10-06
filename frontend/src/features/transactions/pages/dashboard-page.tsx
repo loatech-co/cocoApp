@@ -99,14 +99,14 @@ function ErrorDelResumen({ error }: { error: Error }) {
 
 /** La barra de filtros con el saludo y lo que suma el recorte. */
 function Barra({ pagina: p }: { pagina: ReturnType<typeof useDashboardPage> }) {
-  const { usuario } = useAuth();
+  const { user } = useAuth();
   const { dashboard, tabla, ficha } = p;
 
   return (
     <ToolbarFiltros
       titulo={
-        nombreDePila(usuario)
-          ? t('transactions.dashboard.greetingNamed', { name: nombreDePila(usuario) })
+        nombreDePila(user)
+          ? t('transactions.dashboard.greetingNamed', { name: nombreDePila(user) })
           : t('transactions.dashboard.greeting')
       }
       subtitulo={

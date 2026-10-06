@@ -4,11 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { leerSoporte } from '@/features/transactions/api/leer-soporte';
 import {
-  LECTURA_DE_CELSIA,
-  abrirConfirmacion,
-  abrirNuevo,
-  fingirElNavegadorDelSoporte,
-} from '@/pruebas/movement-sheet';
+  CELSIA_READING,
+  openConfirmation,
+  openNew,
+  fakeReceiptBrowser,
+} from '@/test-support/movement-sheet';
 
 /*
   El lector de soportes, de mentira.
@@ -35,7 +35,7 @@ afterEach(cleanup);
 describe('El soporte adjuntado al confirmar un pago', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    fingirElNavegadorDelSoporte();
+    fakeReceiptBrowser();
   });
 
   afterEach(() => {
@@ -44,9 +44,9 @@ describe('El soporte adjuntado al confirmar un pago', () => {
   });
 
   it('reemplaza el valor y la fecha esperados por los que dice el recibo', async () => {
-    vi.mocked(leerSoporte).mockResolvedValue(LECTURA_DE_CELSIA);
+    vi.mocked(leerSoporte).mockResolvedValue(CELSIA_READING);
 
-    const { container } = abrirConfirmacion();
+    const { container } = openConfirmation();
 
     expect(screen.getByLabelText<HTMLInputElement>('Valor').value).toBe('180.000');
 
@@ -81,9 +81,9 @@ describe('El soporte adjuntado al confirmar un pago', () => {
     // manualmente» en el «cómo empezar» había dicho que iba a teclearlo. Esa
     // pantalla ya no existe, así que no hay elección que respetar: lo leído
     // entra como propuesta a verificar, igual que al confirmar un pago.
-    vi.mocked(leerSoporte).mockResolvedValue(LECTURA_DE_CELSIA);
+    vi.mocked(leerSoporte).mockResolvedValue(CELSIA_READING);
 
-    const { container } = abrirNuevo();
+    const { container } = openNew();
 
     const campo = container.querySelector('input[type="file"]')!;
     fireEvent.change(campo, {
@@ -110,7 +110,7 @@ describe('El soporte adjuntado al confirmar un pago', () => {
 describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    fingirElNavegadorDelSoporte();
+    fakeReceiptBrowser();
   });
 
   afterEach(() => {
@@ -119,8 +119,8 @@ describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
   });
 
   it('«Cargar archivo» abre el panel de subir, y lo que se da ahí se lee y rellena el formulario', async () => {
-    vi.mocked(leerSoporte).mockResolvedValue(LECTURA_DE_CELSIA);
-    abrirNuevo();
+    vi.mocked(leerSoporte).mockResolvedValue(CELSIA_READING);
+    openNew();
 
     expect(screen.queryByRole('dialog', { name: 'Agregar soportes' })).toBeNull();
 
@@ -147,7 +147,7 @@ describe('Cargar archivo y Tomar foto, dentro del formulario', () => {
   });
 
   it('«Tomar foto» pasa a la cámara, y cancelar vuelve al formulario', () => {
-    abrirNuevo();
+    openNew();
 
     fireEvent.click(screen.getByRole('button', { name: 'Tomar foto' }));
 

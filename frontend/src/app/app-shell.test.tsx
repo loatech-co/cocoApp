@@ -4,9 +4,9 @@ import { act, cleanup, render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
 import { olvidarAtajos } from '@/shared/lib/atajos';
 import { CONSULTA_MOVIL } from '@/shared/lib/movil';
+import { fakeNativeApp, leaveNativeApp } from '@/test-support/fake-app';
 
 import { AppShell } from './app-shell';
 
@@ -57,7 +57,7 @@ function pintar() {
 beforeEach(olvidarAtajos);
 afterEach(() => {
   cleanup();
-  salirDeLaApp();
+  leaveNativeApp();
 });
 
 describe('El armazón por debajo del corte', () => {
@@ -137,7 +137,7 @@ describe('El armazón embebido en la app', () => {
   // depende del ancho: en una tableta tampoco hay riel.
   beforeEach(() => {
     alAncho(true);
-    fingirLaApp();
+    fakeNativeApp();
   });
 
   it('no monta el techo, ni la barra, ni la hoja de atajos ni la de la cuenta', () => {

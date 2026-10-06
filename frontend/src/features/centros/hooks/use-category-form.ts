@@ -3,7 +3,7 @@ import { useState, type SubmitEvent } from 'react';
 import { useActualizarCategoria } from '@/features/centros/api/categories';
 import { categoryChanges, newCategory } from '@/features/centros/model/category-form';
 import { ApiClientError } from '@/shared/api/api-client';
-import { useCrearCategoria } from '@/shared/api/categories';
+import { useCreateCategory } from '@/shared/api/categories';
 import { type Category } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
@@ -30,7 +30,7 @@ export function useCategoryForm({
   padreId,
   onCerrar,
 }: CategoryFormOptions) {
-  const crear = useCrearCategoria();
+  const crear = useCreateCategory();
   const actualizar = useActualizarCategoria();
   const [nombre, setNombre] = useState('');
   const [estatico, setEstatico] = useState(false);

@@ -4,8 +4,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { useAuth } from '@/shared/api/auth-context';
+import { notifyApp, isInNativeApp } from '@/shared/lib/bridge';
 import { t } from '@/shared/lib/i18n';
-import { avisar, enLaApp } from '@/shared/lib/puente-nativo';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
 
@@ -36,7 +36,7 @@ function SinSesion({ enElIndice }: { enElIndice: boolean }) {
   // ella quien la empuja. Nada de `LoginPage`, y nada de `Navigate`: la ruta
   // se queda donde la app la puso, para que al llegar la sesión se pinte esa
   // página y no el resumen.
-  if (enLaApp()) return <SesionDesdeLaApp />;
+  if (isInNativeApp()) return <SesionDesdeLaApp />;
 
   // En cualquier otra ruta se vuelve al índice primero: si no, la barra de
   // direcciones se queda en una página que ya no se está viendo —el login
@@ -54,7 +54,7 @@ function SinSesion({ enElIndice }: { enElIndice: boolean }) {
  */
 function SesionDesdeLaApp() {
   useEffect(() => {
-    avisar({ tipo: 'sinSesion' });
+    notifyApp({ tipo: 'sinSesion' });
   }, []);
 
   return <Esperando texto={t('auth.guard.openingFromApp')} />;
@@ -68,14 +68,14 @@ function SesionDesdeLaApp() {
  * alguien forzara la ruta, la API no le devolvería un solo dato.
  */
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { usuario, cargando } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
 
-  if (cargando) {
+  if (isLoading) {
     return <Esperando />;
   }
 
-  if (!usuario) {
+  if (!user) {
     return <SinSesion enElIndice={location.pathname === '/'} />;
   }
 
@@ -90,18 +90,18 @@ export function RequireAuth({ children }: { children: ReactNode }) {
  * perfil que devuelve el servidor, nunca de algo que el cliente pueda alterar.
  */
 export function RequireAdmin({ children }: { children: ReactNode }) {
-  const { usuario, cargando, esAdmin } = useAuth();
+  const { user, isLoading, isAdmin } = useAuth();
   const location = useLocation();
 
-  if (cargando) {
+  if (isLoading) {
     return <Esperando />;
   }
 
-  if (!usuario) {
+  if (!user) {
     return <SinSesion enElIndice={location.pathname === '/'} />;
   }
 
-  if (!esAdmin) {
+  if (!isAdmin) {
     return (
       <div className="mx-auto max-w-md py-10">
         <Alert variant="destructive">

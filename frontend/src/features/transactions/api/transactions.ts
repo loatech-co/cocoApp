@@ -16,8 +16,8 @@ import {
   transactionsRemove,
   transactionsUpdate,
 } from '@/shared/api/generated/transactions-v2/transactions-v2';
-import type { Cambios } from '@/shared/api/pages';
-import { keys, useInvalidarDerivados } from '@/shared/api/query-keys';
+import type { Changes } from '@/shared/api/pages';
+import { keys, useInvalidateDerived } from '@/shared/api/query-keys';
 
 // ── Movimientos ──────────────────────────────────────────────────────────────
 
@@ -48,7 +48,7 @@ export function useTransactions(
  */
 export function useHistoria() {
   return useQuery({
-    queryKey: keys.historia,
+    queryKey: keys.history,
     queryFn: async (): Promise<TransactionHistory> => (await transactionsHistory()).data,
     staleTime: 5 * 60 * 1000,
   });
@@ -57,7 +57,7 @@ export function useHistoria() {
 export type NuevoMovimiento = CreateTransactionInput;
 
 export function useCrearMovimiento() {
-  const invalidarDerivados = useInvalidarDerivados();
+  const invalidarDerivados = useInvalidateDerived();
 
   return useMutation({
     mutationFn: async (movimiento: NuevoMovimiento) => {
@@ -68,7 +68,7 @@ export function useCrearMovimiento() {
 }
 
 export function useEliminarMovimiento() {
-  const invalidarDerivados = useInvalidarDerivados();
+  const invalidarDerivados = useInvalidateDerived();
 
   return useMutation({
     mutationFn: async (id: number) => {
@@ -95,10 +95,10 @@ export function useDashboard(filtros: FiltrosDeResumen = {}): UseQueryResult<Das
 // ── Edición ──────────────────────────────────────────────────────────────────
 
 export function useActualizarMovimiento() {
-  const invalidar = useInvalidarDerivados();
+  const invalidar = useInvalidateDerived();
 
   return useMutation({
-    mutationFn: async ({ id, cambios }: { id: number; cambios: Cambios<UpdateTransactionInput> }) =>
+    mutationFn: async ({ id, cambios }: { id: number; cambios: Changes<UpdateTransactionInput> }) =>
       (await transactionsUpdate(id, cambios as UpdateTransactionInput)).data,
     onSuccess: invalidar,
   });

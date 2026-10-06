@@ -2,7 +2,7 @@ import { Loader2, UserPlus } from 'lucide-react';
 import { useState, type SubmitEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 
-import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
+import { errorDetails, authErrorMessage, useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription, AlertTitle, ErrorAlert } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
@@ -21,10 +21,10 @@ import { TextLink } from '@/shared/ui/atoms/text-link';
  * se registre esperando entrar de inmediato.
  */
 export function RegisterPage() {
-  const { usuario, cargando, registrarse } = useAuth();
-  const form = useRegisterForm(registrarse);
+  const { user, isLoading, signUp } = useAuth();
+  const form = useRegisterForm(signUp);
 
-  if (!cargando && usuario) {
+  if (!isLoading && user) {
     return <Navigate to="/" replace />;
   }
 
@@ -188,7 +188,7 @@ function RegisterErrors({ error, problemas }: { error: string | null; problemas:
 }
 
 /** Los campos de la solicitud, sus errores y el envío. */
-function useRegisterForm(registrarse: ReturnType<typeof useAuth>['registrarse']) {
+function useRegisterForm(registrarse: ReturnType<typeof useAuth>['signUp']) {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -206,10 +206,10 @@ function useRegisterForm(registrarse: ReturnType<typeof useAuth>['registrarse'])
     void registrarse(email, password, nombre)
       .then((respuesta) => setEnviado(respuesta.pendingApproval ? 'pendiente' : 'lista'))
       .catch((causa: unknown) => {
-        setError(mensajeDeErrorDeAuth(causa));
+        setError(authErrorMessage(causa));
         // La API dice exactamente qué le falta a la contraseña; ocultarlo
         // obligaría a adivinar y empujaría a elegir lo más flojo que pase.
-        setProblemas(detallesDeError(causa));
+        setProblemas(errorDetails(causa));
       })
       .finally(() => setEnviando(false));
   }

@@ -3,11 +3,11 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
+import { fakeNativeApp, leaveNativeApp } from '@/test-support/fake-app';
 
 import { RequireAdmin, RequireAuth } from './require-auth';
 
-const auth = { usuario: null as unknown, cargando: false, esAdmin: false };
+const auth = { user: null as unknown, isLoading: false, isAdmin: false };
 
 vi.mock('@/shared/api/auth-context', () => ({ useAuth: () => auth }));
 vi.mock('@/features/auth/pages/login-page', () => ({
@@ -26,18 +26,18 @@ function pintar(guardia: 'auth' | 'admin', ruta = '/') {
 }
 
 beforeEach(() => {
-  auth.usuario = null;
-  auth.cargando = false;
+  auth.user = null;
+  auth.isLoading = false;
 });
 
 afterEach(() => {
   cleanup();
-  salirDeLaApp();
+  leaveNativeApp();
 });
 
 describe('Sin sesión, embebida en la app', () => {
   it('no dibuja el formulario de entrar y avisa «sinSesion» una sola vez', () => {
-    const { cocoEventos } = fingirLaApp();
+    const { cocoEventos } = fakeNativeApp();
     const { rerender } = pintar('auth');
 
     expect(screen.queryByRole('form', { name: 'Entrar' })).toBeNull();
@@ -56,7 +56,7 @@ describe('Sin sesión, embebida en la app', () => {
   });
 
   it('en otra ruta se queda donde está, sin volver al índice', () => {
-    fingirLaApp();
+    fakeNativeApp();
     pintar('auth', '/centros-de-costos');
 
     // Si la app pidió una ruta, al llegar la sesión tiene que pintarse ESA.
@@ -65,7 +65,7 @@ describe('Sin sesión, embebida en la app', () => {
   });
 
   it('la guardia de administración hace lo mismo', () => {
-    const { cocoEventos } = fingirLaApp();
+    const { cocoEventos } = fakeNativeApp();
     pintar('admin', '/administracion');
 
     expect(screen.queryByRole('form', { name: 'Entrar' })).toBeNull();
@@ -74,8 +74,8 @@ describe('Sin sesión, embebida en la app', () => {
   });
 
   it('con sesión pinta la página', () => {
-    fingirLaApp();
-    auth.usuario = { email: 'g@coco.app' };
+    fakeNativeApp();
+    auth.user = { email: 'g@coco.app' };
     pintar('auth');
     expect(screen.getByText('la página')).toBeTruthy();
   });
@@ -83,7 +83,7 @@ describe('Sin sesión, embebida en la app', () => {
 
 describe('Sin sesión, fuera de la app', () => {
   it('sigue dibujando el login en /', () => {
-    salirDeLaApp();
+    leaveNativeApp();
     pintar('auth');
     expect(screen.getByRole('form', { name: 'Entrar' })).toBeTruthy();
   });

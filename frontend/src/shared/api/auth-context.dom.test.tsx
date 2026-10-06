@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthProvider, useAuth } from './auth-context';
-import { estadoActual } from './session';
+import { currentState } from './session';
 
 /**
  * Que la aplicación RENDERICE.
@@ -49,7 +49,7 @@ describe('Arranque de la aplicación', () => {
   it('la instantánea de la sesión es ESTABLE entre llamadas', () => {
     // Es la condición que `useSyncExternalStore` exige y que, al romperse,
     // deja la pantalla vacía sin ningún error en el servidor.
-    expect(estadoActual()).toBe(estadoActual());
+    expect(currentState()).toBe(currentState());
   });
 
   it('AuthProvider monta y pinta a sus hijos', () => {
@@ -63,18 +63,18 @@ describe('Arranque de la aplicación', () => {
   });
 
   it('expone el estado inicial sin sesión', () => {
-    function Sonda() {
-      const { usuario, esAdmin } = useAuth();
+    function Probe() {
+      const { user, isAdmin } = useAuth();
       return (
         <p>
-          {usuario === null ? 'sin sesión' : 'con sesión'} · {esAdmin ? 'admin' : 'no admin'}
+          {user === null ? 'sin sesión' : 'con sesión'} · {isAdmin ? 'admin' : 'no admin'}
         </p>
       );
     }
 
     render(
       <AuthProvider>
-        <Sonda />
+        <Probe />
       </AuthProvider>,
     );
 
@@ -84,13 +84,13 @@ describe('Arranque de la aplicación', () => {
   it('useAuth fuera del proveedor falla con un mensaje útil', () => {
     // Sin esto, el error sería "cannot read property of null" en algún punto
     // lejano del árbol.
-    function Suelto() {
+    function Unwrapped() {
       useAuth();
       return null;
     }
 
-    const silencio = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(<Suelto />)).toThrow(/dentro de <AuthProvider>/);
-    silencio.mockRestore();
+    const silence = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => render(<Unwrapped />)).toThrow(/inside <AuthProvider>/);
+    silence.mockRestore();
   });
 });

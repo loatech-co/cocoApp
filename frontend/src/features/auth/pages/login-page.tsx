@@ -2,7 +2,7 @@ import { Loader2, LogIn } from 'lucide-react';
 import { useState, type SubmitEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
+import { authErrorMessage, useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { Alert, AlertDescription } from '@/shared/ui/atoms/alert';
 import { Button } from '@/shared/ui/atoms/button';
@@ -21,9 +21,9 @@ import { TextLink } from '@/shared/ui/atoms/text-link';
  * desde el panel. Cuando exista el envío de correo, aquí va el enlace.
  */
 export function LoginPage() {
-  const { usuario, cargando, entrar } = useAuth();
+  const { user, isLoading, signIn } = useAuth();
 
-  const form = useLoginForm(entrar);
+  const form = useLoginForm(signIn);
 
   /*
     Con sesión, aquí no hay nada que hacer.
@@ -34,7 +34,7 @@ export function LoginPage() {
     desde otra—, y para que la página valga por sí sola si algún día vuelve a
     tener ruta propia.
   */
-  if (!cargando && usuario) {
+  if (!isLoading && user) {
     return <Navigate to="/" replace />;
   }
 
@@ -199,7 +199,7 @@ function LoginCard({ form }: { form: ReturnType<typeof useLoginForm> }) {
 }
 
 /** El correo, la contraseña y el envío del formulario de entrada. */
-function useLoginForm(entrar: ReturnType<typeof useAuth>['entrar']) {
+function useLoginForm(entrar: ReturnType<typeof useAuth>['signIn']) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -210,7 +210,7 @@ function useLoginForm(entrar: ReturnType<typeof useAuth>['entrar']) {
     setEnviando(true);
 
     void entrar(email, password)
-      .catch((causa: unknown) => setError(mensajeDeErrorDeAuth(causa)))
+      .catch((causa: unknown) => setError(authErrorMessage(causa)))
       .finally(() => setEnviando(false));
   }
 

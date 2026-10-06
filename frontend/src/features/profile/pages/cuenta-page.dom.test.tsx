@@ -3,22 +3,22 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fingirLaApp, salirDeLaApp } from '@/pruebas/app-falsa';
+import { fakeNativeApp, leaveNativeApp } from '@/test-support/fake-app';
 
 import { CuentaPage } from './cuenta-page';
 
 const auth = {
-  usuario: { email: 'g@coco.app', displayName: 'Gerardo' },
-  esAdmin: false,
-  salir: vi.fn(() => Promise.resolve()),
-  salirDeTodosLosDispositivos: vi.fn(() => Promise.resolve()),
-  cambiarContrasena: vi.fn(() => Promise.resolve()),
+  user: { email: 'g@coco.app', displayName: 'Gerardo' },
+  isAdmin: false,
+  signOut: vi.fn(() => Promise.resolve()),
+  signOutEverywhere: vi.fn(() => Promise.resolve()),
+  changePassword: vi.fn(() => Promise.resolve()),
 };
 
 vi.mock('@/shared/api/auth-context', () => ({
   useAuth: () => auth,
-  mensajeDeErrorDeAuth: () => '',
-  detallesDeError: () => [],
+  authErrorMessage: () => '',
+  errorDetails: () => [],
 }));
 
 // Los ajustes traen sus propias consultas; no son lo que se mira aquí.
@@ -33,24 +33,24 @@ function pintar() {
 }
 
 beforeEach(() => {
-  auth.esAdmin = false;
-  auth.salir.mockClear();
+  auth.isAdmin = false;
+  auth.signOut.mockClear();
 });
 
 afterEach(() => {
   cleanup();
-  salirDeLaApp();
+  leaveNativeApp();
 });
 
 describe('Mi cuenta dentro de la app', () => {
-  beforeEach(() => fingirLaApp());
+  beforeEach(() => fakeNativeApp());
 
   it('ofrece cerrar sesión en este dispositivo, y llama a salir()', () => {
     pintar();
 
     const boton = screen.getByRole('button', { name: 'Cerrar sesión' });
     fireEvent.click(boton);
-    expect(auth.salir).toHaveBeenCalledTimes(1);
+    expect(auth.signOut).toHaveBeenCalledTimes(1);
 
     // La de siempre sigue estando: son dos cosas distintas.
     expect(screen.getByRole('button', { name: 'Cerrar todo' })).toBeTruthy();
@@ -62,7 +62,7 @@ describe('Mi cuenta dentro de la app', () => {
   });
 
   it('con rol de administrador, las secciones de administración como enlaces', () => {
-    auth.esAdmin = true;
+    auth.isAdmin = true;
     pintar();
 
     const bloque = screen.getByRole('navigation', { name: 'Administración' });
@@ -79,8 +79,8 @@ describe('Mi cuenta dentro de la app', () => {
 
 describe('Mi cuenta fuera de la app', () => {
   it('nada cambia: ni cerrar sesión aquí ni bloque de administración', () => {
-    salirDeLaApp();
-    auth.esAdmin = true;
+    leaveNativeApp();
+    auth.isAdmin = true;
     pintar();
 
     expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).toBeNull();

@@ -1,10 +1,10 @@
+import { notifyApp, isInNativeApp, requestSession } from '@/shared/lib/bridge';
 import { t } from '@/shared/lib/i18n';
-import { type SesionParaLaWeb } from '@/shared/lib/native-contract';
-import { avisar as avisarALaApp, enLaApp, pedirSesion } from '@/shared/lib/puente-nativo';
+import { type BridgeSession } from '@/shared/lib/native-contract';
 
 import type { ProblemFieldError, Profile, Registration, Session } from './generated/model';
 import { API_ORIGIN } from './origin';
-import { leerProblema } from './problem';
+import { readProblem } from './problem';
 
 /**
  * The auth routes, written here and not taken from the generated client.
@@ -59,20 +59,20 @@ const AUTH = {
  * de vida y `programarRenovacion()` nunca cae en su espera mínima de 5 s
  * pidiendo una y otra vez un token que la app aún no ha renovado.
  */
-const MARGEN_DE_RENOVACION_MS = 60_000;
+const RENEWAL_MARGIN_MS = 60_000;
 
-export interface EstadoDeSesion {
-  usuario: Profile | null;
+export interface SessionState {
+  user: Profile | null;
   /** `true` hasta que el primer intento de restaurar la sesión termina. */
-  cargando: boolean;
+  isLoading: boolean;
 }
 
 let accessToken: string | null = null;
-let expiraEn = 0;
-let usuario: Profile | null = null;
-let cargando = true;
+let expiresAt = 0;
+let user: Profile | null = null;
+let isLoading = true;
 
-let temporizador: ReturnType<typeof setTimeout> | null = null;
+let renewalTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
  * Renovación en vuelo.
@@ -83,16 +83,16 @@ let temporizador: ReturnType<typeof setTimeout> | null = null;
  * tercera parecerían un robo y cerrarían la sesión del usuario legítimo.
  * Por eso todas comparten la MISMA promesa.
  */
-let renovacionEnVuelo: Promise<boolean> | null = null;
+let renewalInFlight: Promise<boolean> | null = null;
 
 // ── Suscripción ──────────────────────────────────────────────────────────────
 
-const oyentes = new Set<(estado: EstadoDeSesion) => void>();
+const listeners = new Set<(state: SessionState) => void>();
 
-export function suscribirse(oyente: (estado: EstadoDeSesion) => void): () => void {
-  oyentes.add(oyente);
+export function subscribe(listener: (state: SessionState) => void): () => void {
+  listeners.add(listener);
   return () => {
-    oyentes.delete(oyente);
+    listeners.delete(listener);
   };
 }
 
@@ -109,43 +109,43 @@ export function suscribirse(oyente: (estado: EstadoDeSesion) => void): () => voi
  * El síntoma es una PANTALLA EN BLANCO sin un solo error en el servidor: el
  * HTML, los assets y la API responden perfectamente. Pasó en producción.
  */
-let instantanea: EstadoDeSesion = { usuario: null, cargando: true };
+let snapshot: SessionState = { user: null, isLoading: true };
 
-export function estadoActual(): EstadoDeSesion {
-  return instantanea;
+export function currentState(): SessionState {
+  return snapshot;
 }
 
-function avisar(): void {
+function notifyListeners(): void {
   // Se construye UNA vez por cambio real, no una por lectura.
-  instantanea = { usuario, cargando };
-  for (const oyente of oyentes) oyente(instantanea);
+  snapshot = { user, isLoading };
+  for (const listener of listeners) listener(snapshot);
 }
 
 // ── Token ────────────────────────────────────────────────────────────────────
 
-export function tokenActual(): string | null {
+export function currentToken(): string | null {
   return accessToken;
 }
 
-function guardarSesion(sesion: Session): void {
-  accessToken = sesion.accessToken;
-  expiraEn = Date.now() + sesion.expiresIn * 1000;
-  usuario = sesion.user;
-  cargando = false;
-  programarRenovacion();
-  avisar();
+function storeSession(session: Session): void {
+  accessToken = session.accessToken;
+  expiresAt = Date.now() + session.expiresIn * 1000;
+  user = session.user;
+  isLoading = false;
+  scheduleRenewal();
+  notifyListeners();
 }
 
-function limpiarSesion(): void {
+function clearSession(): void {
   accessToken = null;
-  expiraEn = 0;
-  usuario = null;
-  cargando = false;
-  if (temporizador) {
-    clearTimeout(temporizador);
-    temporizador = null;
+  expiresAt = 0;
+  user = null;
+  isLoading = false;
+  if (renewalTimer) {
+    clearTimeout(renewalTimer);
+    renewalTimer = null;
   }
-  avisar();
+  notifyListeners();
 }
 
 /**
@@ -155,17 +155,17 @@ function limpiarSesion(): void {
  * fallida cada quince minutos —y con ella un parpadeo o un reintento visible—.
  * Renovar un minuto antes hace que eso no ocurra nunca en uso normal.
  */
-function programarRenovacion(): void {
-  if (temporizador) clearTimeout(temporizador);
+function scheduleRenewal(): void {
+  if (renewalTimer) clearTimeout(renewalTimer);
 
-  const espera = Math.max(expiraEn - Date.now() - MARGEN_DE_RENOVACION_MS, 5_000);
-  temporizador = setTimeout(() => {
-    void renovar();
-  }, espera);
+  const delay = Math.max(expiresAt - Date.now() - RENEWAL_MARGIN_MS, 5_000);
+  renewalTimer = setTimeout(() => {
+    void renew();
+  }, delay);
 }
 
-export function tokenPorExpirar(): boolean {
-  return accessToken !== null && Date.now() >= expiraEn - MARGEN_DE_RENOVACION_MS;
+export function isTokenExpiring(): boolean {
+  return accessToken !== null && Date.now() >= expiresAt - RENEWAL_MARGIN_MS;
 }
 
 // ── Operaciones ──────────────────────────────────────────────────────────────
@@ -176,31 +176,31 @@ export function tokenPorExpirar(): boolean {
  * `credentials: 'include'` es imprescindible en /auth: es lo que hace que el
  * navegador envíe y acepte la cookie httpOnly de refresh.
  */
-async function llamarAuth<T>(
+async function callAuth<T>(
   url: string,
-  opciones: { method?: string; body?: unknown } = {},
+  options: { method?: string; body?: unknown } = {},
 ): Promise<T> {
-  const respuesta = await fetch(`${API_ORIGIN}${url}`, {
-    method: opciones.method ?? 'POST',
+  const response = await fetch(`${API_ORIGIN}${url}`, {
+    method: options.method ?? 'POST',
     credentials: 'include',
-    headers: opciones.body === undefined ? {} : { 'Content-Type': 'application/json' },
-    ...(opciones.body === undefined ? {} : { body: JSON.stringify(opciones.body) }),
+    headers: options.body === undefined ? {} : { 'Content-Type': 'application/json' },
+    ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   });
 
-  if (respuesta.status === 204) return undefined as T;
+  if (response.status === 204) return undefined as T;
 
-  const cuerpo: unknown = await respuesta.json().catch(() => null);
+  const body: unknown = await response.json().catch(() => null);
 
-  if (!respuesta.ok) {
-    const { code, message, details } = leerProblema(cuerpo, t('errors.operationFailed'));
-    throw new SesionError(respuesta.status, code, message, details);
+  if (!response.ok) {
+    const { code, message, details } = readProblem(body, t('errors.operationFailed'));
+    throw new SessionError(response.status, code, message, details);
   }
 
-  return (cuerpo as { data: T }).data;
+  return (body as { data: T }).data;
 }
 
 /** Error de una operación de sesión, con el `code` estable de la API. */
-export class SesionError extends Error {
+export class SessionError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
@@ -208,20 +208,20 @@ export class SesionError extends Error {
     readonly details: ProblemFieldError[] = [],
   ) {
     super(message);
-    this.name = 'SesionError';
+    this.name = 'SessionError';
   }
 }
 
-export async function entrar(email: string, password: string): Promise<void> {
-  guardarSesion(await llamarAuth<Session>(AUTH.login, { body: { email, password } }));
+export async function signIn(email: string, password: string): Promise<void> {
+  storeSession(await callAuth<Session>(AUTH.login, { body: { email, password } }));
 }
 
-export async function registrarse(
+export async function signUp(
   email: string,
   password: string,
   displayName: string,
 ): Promise<Registration> {
-  return llamarAuth(AUTH.register, { body: { email, password, displayName } });
+  return callAuth(AUTH.register, { body: { email, password, displayName } });
 }
 
 /**
@@ -236,70 +236,69 @@ export async function registrarse(
  * haría borrar un refresh perfectamente válido. La web limpia su memoria y
  * `RequireAuth` espera a que la app le empuje la sesión.
  */
-export async function renovar(): Promise<boolean> {
-  renovacionEnVuelo ??= (async () => {
+export async function renew(): Promise<boolean> {
+  renewalInFlight ??= (async () => {
     try {
       // Dentro de la MISMA promesa compartida: dos `renovar()` a la vez son
       // un solo mensaje a la app, igual que fuera son una sola petición.
-      guardarSesion(
-        enLaApp() ? desdeElPuente(await pedirSesion()) : await llamarAuth<Session>(AUTH.refresh),
+      storeSession(
+        isInNativeApp()
+          ? fromBridge(await requestSession())
+          : await callAuth<Session>(AUTH.refresh),
       );
       return true;
     } catch {
-      limpiarSesion();
+      clearSession();
       return false;
     } finally {
-      renovacionEnVuelo = null;
+      renewalInFlight = null;
     }
   })();
 
-  return renovacionEnVuelo;
+  return renewalInFlight;
 }
 
 /** Se llama una vez al arrancar la app. */
-export async function restaurar(): Promise<void> {
-  await renovar();
+export async function restore(): Promise<void> {
+  await renew();
 }
 
-export async function salir(): Promise<void> {
+export async function signOut(): Promise<void> {
   // En la app, la sesión real es la suya: ella llama a `/auth/logout` con su
   // refresh y borra el llavero. La web solo avisa y olvida su memoria; llamar
   // además desde aquí sería un logout sin cookie que no cierra nada.
-  if (enLaApp()) {
-    avisarALaApp({ tipo: 'salir' });
-    limpiarSesion();
+  if (isInNativeApp()) {
+    notifyApp({ tipo: 'salir' });
+    clearSession();
     return;
   }
 
   try {
-    await llamarAuth<unknown>(AUTH.logout);
+    await callAuth<unknown>(AUTH.logout);
   } finally {
     // Aunque el servidor falle, localmente la sesión se cierra: dejar al
     // usuario "dentro" tras pulsar Salir sería lo peor de los dos mundos.
-    limpiarSesion();
+    clearSession();
   }
 }
 
-export async function salirDeTodosLosDispositivos(): Promise<void> {
-  const respuesta = await fetch(`${API_ORIGIN}${AUTH.logoutAll}`, {
+export async function signOutEverywhere(): Promise<void> {
+  const response = await fetch(`${API_ORIGIN}${AUTH.logoutAll}`, {
     method: 'POST',
     credentials: 'include',
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
-  limpiarSesion();
+  clearSession();
   // El servidor ya mató la familia entera, incluida la del llavero: la app
   // solo tiene que descartarlo, sin llamar a nada.
-  if (enLaApp()) avisarALaApp({ tipo: 'sesionCerrada' });
-  if (!respuesta.ok && respuesta.status !== 401) {
-    throw new SesionError(respuesta.status, 'logout_all_failed', t('errors.signOutAllFailed'));
+  if (isInNativeApp()) notifyApp({ tipo: 'sesionCerrada' });
+  if (!response.ok && response.status !== 401) {
+    throw new SessionError(response.status, 'logout_all_failed', t('errors.signOutAllFailed'));
   }
 }
 
-export async function cambiarContrasena(
-  currentPassword: string,
-  newPassword: string,
-): Promise<void> {
-  const respuesta = await fetch(`${API_ORIGIN}${AUTH.changePassword}`, {
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const response = await fetch(`${API_ORIGIN}${AUTH.changePassword}`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -309,16 +308,16 @@ export async function cambiarContrasena(
     body: JSON.stringify({ currentPassword, newPassword }),
   });
 
-  if (!respuesta.ok) {
-    const cuerpo: unknown = await respuesta.json().catch(() => null);
-    const { code, message, details } = leerProblema(cuerpo, t('errors.passwordChangeFailed'));
-    throw new SesionError(respuesta.status, code, message, details);
+  if (!response.ok) {
+    const body: unknown = await response.json().catch(() => null);
+    const { code, message, details } = readProblem(body, t('errors.passwordChangeFailed'));
+    throw new SessionError(response.status, code, message, details);
   }
 
   // Cambiar la contraseña cierra TODAS las sesiones en el servidor, incluida
   // esta. Reflejarlo aquí evita que la app siga creyéndose autenticada.
-  limpiarSesion();
-  if (enLaApp()) avisarALaApp({ tipo: 'sesionCerrada' });
+  clearSession();
+  if (isInNativeApp()) notifyApp({ tipo: 'sesionCerrada' });
 }
 
 /**
@@ -328,15 +327,15 @@ export async function cambiarContrasena(
  * caducó mientras el teléfono dormía, y la app sigue teniendo un refresh
  * bueno con el que empujar una sesión nueva.
  */
-export function descartarSesion(): void {
-  limpiarSesion();
+export function discardSession(): void {
+  clearSession();
 }
 
 // ── Lo que la app llama hacia la web (`window.__coco`) ──────────────────────
 
 /** La app empuja una sesión: al arrancar sin ella, o tras el login nativo. */
-export function recibirSesion(sesion: SesionParaLaWeb): void {
-  guardarSesion(desdeElPuente(sesion));
+export function receiveSession(session: BridgeSession): void {
+  storeSession(fromBridge(session));
 }
 
 /**
@@ -344,16 +343,16 @@ export function recibirSesion(sesion: SesionParaLaWeb): void {
  * v2, together with this function. Until then the web translates at the edge
  * and nothing inside it knows.
  */
-function desdeElPuente(sesion: SesionParaLaWeb): Session {
-  const { display_name, created_at, ...resto } = sesion.user;
+function fromBridge(session: BridgeSession): Session {
+  const { display_name, created_at, ...rest } = session.user;
   return {
-    accessToken: sesion.access_token,
-    expiresIn: sesion.expires_in,
-    user: { ...resto, displayName: display_name, createdAt: created_at },
+    accessToken: session.access_token,
+    expiresIn: session.expires_in,
+    user: { ...rest, displayName: display_name, createdAt: created_at },
   };
 }
 
 /** La app cerró la sesión real (401 al renovar): la web olvida la suya. */
-export function sesionCerrada(): void {
-  limpiarSesion();
+export function sessionClosed(): void {
+  clearSession();
 }

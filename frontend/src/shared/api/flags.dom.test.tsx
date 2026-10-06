@@ -9,10 +9,10 @@ import { FlagsProvider, useFlag } from './flags';
  * The web reads flags only from `/auth/me`: no list, no flag; signing out
  * turns everything off again. `flags_canary` is the registry's canary.
  */
-const sesion = vi.hoisted(() => ({ usuario: null as { id: number } | null }));
+const session = vi.hoisted(() => ({ user: null as { id: number } | null }));
 const authMe = vi.hoisted(() => vi.fn());
 
-vi.mock('./auth-context', () => ({ useAuth: () => sesion }));
+vi.mock('./auth-context', () => ({ useAuth: () => session }));
 vi.mock('./generated/auth-v2/auth-v2', () => ({ authMe }));
 
 afterEach(() => {
@@ -20,67 +20,65 @@ afterEach(() => {
   authMe.mockReset();
 });
 
-function Sonda() {
+function Probe() {
   return <p>{useFlag('flags_canary') ? 'encendida' : 'apagada'}</p>;
 }
 
-function montar() {
+function mount() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const arbol = () => (
+  const tree = () => (
     <QueryClientProvider client={client}>
       <FlagsProvider>
-        <Sonda />
+        <Probe />
       </FlagsProvider>
     </QueryClientProvider>
   );
-  const vista = render(arbol());
-  return { rerender: () => vista.rerender(arbol()) };
+  const vista = render(tree());
+  return { rerender: () => vista.rerender(tree()) };
 }
 
 describe('FlagsProvider', () => {
   it('without a session every flag is off and /auth/me is not asked', () => {
-    sesion.usuario = null;
-    montar();
+    session.user = null;
+    mount();
     expect(screen.getByText('apagada')).toBeTruthy();
     expect(authMe).not.toHaveBeenCalled();
   });
 
   it('turns on what /auth/me lists, and off again on signing out', async () => {
-    sesion.usuario = { id: 1 };
+    session.user = { id: 1 };
     authMe.mockResolvedValue({ data: { features: ['flags_canary'] }, meta: {} });
-    const { rerender } = montar();
+    const { rerender } = mount();
 
     expect(await screen.findByText('encendida')).toBeTruthy();
     expect(authMe).toHaveBeenCalledOnce();
 
-    sesion.usuario = null;
+    session.user = null;
     rerender();
     expect(await screen.findByText('apagada')).toBeTruthy();
   });
 
   it('keeps OpenFeature out of the initial bundle: only flags-engine imports it', () => {
-    const fuentes = import.meta.glob<string>('/src/**/*.{ts,tsx}', {
+    const sources = import.meta.glob<string>('/src/**/*.{ts,tsx}', {
       query: '?raw',
       import: 'default',
       eager: true,
     });
-    const conOpenFeature = Object.entries(fuentes)
-      .filter(([ruta, codigo]) => !ruta.includes('.test.') && codigo.includes('@openfeature/'))
-      .map(([ruta]) => ruta);
-    expect(conOpenFeature).toEqual(['/src/shared/api/flags-engine.ts']);
+    const withOpenFeature = Object.entries(sources)
+      .filter(([path, code]) => !path.includes('.test.') && code.includes('@openfeature/'))
+      .map(([path]) => path);
+    expect(withOpenFeature).toEqual(['/src/shared/api/flags-engine.ts']);
 
-    const vecinos = Object.entries(fuentes)
-      .filter(
-        ([ruta, codigo]) => !ruta.includes('.test.') && /from '[^']*flags-engine'/.test(codigo),
-      )
-      .filter(([, codigo]) => !/import type \* as \w+ from '\.\/flags-engine'/.test(codigo));
-    expect(vecinos.map(([ruta]) => ruta)).toEqual([]);
+    const importers = Object.entries(sources)
+      .filter(([path, code]) => !path.includes('.test.') && /from '[^']*flags-engine'/.test(code))
+      .filter(([, code]) => !/import type \* as \w+ from '\.\/flags-engine'/.test(code));
+    expect(importers.map(([path]) => path)).toEqual([]);
   });
 
   it('a response without the field (an older API) means no flags', async () => {
-    sesion.usuario = { id: 2 };
+    session.user = { id: 2 };
     authMe.mockResolvedValue({ data: {}, meta: {} });
-    montar();
+    mount();
     await vi.waitFor(() => expect(authMe).toHaveBeenCalled());
     expect(screen.getByText('apagada')).toBeTruthy();
   });

@@ -15,9 +15,9 @@
  * esto solo se pone si no hay nada puesto.
  */
 if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
-  window.matchMedia = (consulta: string) => ({
+  window.matchMedia = (query: string) => ({
     matches: false,
-    media: consulta,
+    media: query,
     onchange: null,
     addListener: () => {},
     removeListener: () => {},

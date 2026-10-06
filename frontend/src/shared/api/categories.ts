@@ -21,11 +21,11 @@ export function useCategories(kind?: Category['kind']): UseQueryResult<CategoryT
   });
 }
 
-export function useCrearCategoria() {
+export function useCreateCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (categoria: CreateCategoryInput) => (await categoriesCreate(categoria)).data,
+    mutationFn: async (category: CreateCategoryInput) => (await categoriesCreate(category)).data,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.categories }),
   });
 }

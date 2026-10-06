@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-import { enLaApp } from './puente-nativo';
+import { isInNativeApp } from './bridge';
 
 /**
  * EL CORTE. Uno solo, y hace DOS preguntas.
@@ -75,5 +75,5 @@ export function useEsMovil(): boolean {
  */
 // eslint-disable-next-line @eslint-react/no-unnecessary-use-prefix -- rename belongs to step 7.2
 export function useEnLaApp(): boolean {
-  return enLaApp();
+  return isInNativeApp();
 }

@@ -5,13 +5,13 @@ import { type Profile } from '@/shared/api/generated/model';
 import { useAlCambiar } from '@/shared/lib/al-cambiar';
 import { t } from '@/shared/lib/i18n';
 
-import * as sesion from './session';
+import * as session from './session';
 
 interface AuthState {
-  usuario: Profile | null;
+  user: Profile | null;
   /** `true` mientras se intenta restaurar la sesión desde la cookie de refresh.
    *  Sin esto, la app parpadearía mostrando el login a alguien ya autenticado. */
-  cargando: boolean;
+  isLoading: boolean;
   /**
    * Si esta pantalla se dibuja como la de un administrador.
    *
@@ -20,10 +20,10 @@ interface AuthState {
    * de la cuenta, `RequireAdmin`— y por eso la vista funciona sin que ninguno
    * de ellos sepa que existe.
    */
-  esAdmin: boolean;
+  isAdmin: boolean;
   /** El rol de verdad. Solo para lo que tiene que sobrevivir a la vista. */
-  esAdminDeVerdad: boolean;
-  viendoComoUsuario: boolean;
+  isRealAdmin: boolean;
+  isViewingAsUser: boolean;
   /**
    * Enciende o apaga la vista de usuario.
    *
@@ -41,16 +41,16 @@ interface AuthState {
    * Tampoco es entrar como OTRA persona: no hay segunda sesión ni otro
    * usuario. Es la misma cuenta, con sus mismos movimientos, sin el panel.
    */
-  verComoUsuario: (valor: boolean) => void;
-  entrar: (email: string, password: string) => Promise<void>;
-  registrarse: (
+  setViewAsUser: (value: boolean) => void;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (
     email: string,
     password: string,
-    nombre: string,
+    displayName: string,
   ) => Promise<{ pendingApproval: boolean; message: string }>;
-  salir: () => Promise<void>;
-  salirDeTodosLosDispositivos: () => Promise<void>;
-  cambiarContrasena: (actual: string, nueva: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  signOutEverywhere: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -67,7 +67,7 @@ const AuthContext = createContext<AuthState | null>(null);
  * propia de punta a punta.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const estado = useSyncExternalStore(sesion.suscribirse, sesion.estadoActual);
+  const state = useSyncExternalStore(session.subscribe, session.currentState);
 
   /*
     ── La vista de usuario vive en memoria, y se olvida al recargar ──────────
@@ -81,8 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     pantalla: nunca se puede quedar encendido de una forma de la que no se sepa
     salir.
   */
-  const [viendoComoUsuario, setViendoComoUsuario] = useState(false);
-  const esAdminDeVerdad = estado.usuario?.role === 'admin';
+  const [isViewingAsUser, setIsViewingAsUser] = useState(false);
+  const isRealAdmin = state.user?.role === 'admin';
 
   /*
     Dejar de ser admin la apaga sola.
@@ -91,31 +91,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     rol a uno mismo. Sin esto quedaría encendida para alguien que ya no tiene
     dónde apagarla: el interruptor solo se le enseña a un administrador.
   */
-  useAlCambiar([esAdminDeVerdad], () => {
-    if (!esAdminDeVerdad) setViendoComoUsuario(false);
+  useAlCambiar([isRealAdmin], () => {
+    if (!isRealAdmin) setIsViewingAsUser(false);
   });
 
   useEffect(() => {
     // Un único intento al arrancar: si hay cookie de refresh viva, la sesión
     // vuelve sola; si no, `cargando` pasa a false y se muestra el login.
-    void sesion.restaurar();
+    void session.restore();
   }, []);
 
   const value = useMemo<AuthState>(
     () => ({
-      usuario: estado.usuario,
-      cargando: estado.cargando,
-      esAdmin: esAdminDeVerdad && !viendoComoUsuario,
-      esAdminDeVerdad,
-      viendoComoUsuario,
-      verComoUsuario: setViendoComoUsuario,
-      entrar: sesion.entrar,
-      registrarse: sesion.registrarse,
-      salir: sesion.salir,
-      salirDeTodosLosDispositivos: sesion.salirDeTodosLosDispositivos,
-      cambiarContrasena: sesion.cambiarContrasena,
+      user: state.user,
+      isLoading: state.isLoading,
+      isAdmin: isRealAdmin && !isViewingAsUser,
+      isRealAdmin: isRealAdmin,
+      isViewingAsUser: isViewingAsUser,
+      setViewAsUser: setIsViewingAsUser,
+      signIn: session.signIn,
+      signUp: session.signUp,
+      signOut: session.signOut,
+      signOutEverywhere: session.signOutEverywhere,
+      changePassword: session.changePassword,
     }),
-    [estado, esAdminDeVerdad, viendoComoUsuario],
+    [state, isRealAdmin, isViewingAsUser],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth(): AuthState {
   const context = use(AuthContext);
   if (!context) {
-    throw new Error('useAuth debe usarse dentro de <AuthProvider>.');
+    throw new Error('useAuth must be used inside <AuthProvider>.');
   }
   return context;
 }
@@ -136,8 +136,8 @@ export function useAuth(): AuthState {
  * de más —"correo o contraseña incorrectos" es idéntico exista o no la cuenta—.
  * Aquí solo se cubre el caso de que no haya respuesta útil.
  */
-export function mensajeDeErrorDeAuth(error: unknown): string {
-  if (error instanceof sesion.SesionError) return error.message;
+export function authErrorMessage(error: unknown): string {
+  if (error instanceof session.SessionError) return error.message;
   if (error instanceof TypeError) {
     return t('errors.offlineRetry');
   }
@@ -145,9 +145,9 @@ export function mensajeDeErrorDeAuth(error: unknown): string {
 }
 
 /** Detalles por campo de un error de validación (p. ej. la política de contraseñas). */
-export function detallesDeError(error: unknown): string[] {
-  if (error instanceof sesion.SesionError) {
-    return error.details.map((detalle) => detalle.message);
+export function errorDetails(error: unknown): string[] {
+  if (error instanceof session.SessionError) {
+    return error.details.map((detail) => detail.message);
   }
   return [];
 }

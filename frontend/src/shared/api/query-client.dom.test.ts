@@ -2,12 +2,12 @@
 import { QueryObserver } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SESION_DE_LA_APP } from '@/pruebas/app-falsa';
+import { APP_SESSION } from '@/test-support/fake-app';
 
 import { ApiClientError } from './api-client';
 import { clearCacheOnUserChange, createQueryClient, refocus, shouldRetry } from './query-client';
 import { invalidateDerived, keys } from './query-keys';
-import { descartarSesion, recibirSesion } from './session';
+import { discardSession, receiveSession } from './session';
 
 const error = (status: number) => new ApiClientError(status, 'x', 'x');
 
@@ -65,11 +65,11 @@ describe('invalidateDerived(): what `capturado` refreshes', () => {
 describe('clearCacheOnUserChange()', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    descartarSesion();
+    discardSession();
   });
 
   afterEach(() => {
-    descartarSesion();
+    discardSession();
     vi.useRealTimers();
   });
 
@@ -77,11 +77,11 @@ describe('clearCacheOnUserChange()', () => {
     const client = createQueryClient();
     const stop = clearCacheOnUserChange(client);
 
-    recibirSesion(SESION_DE_LA_APP);
+    receiveSession(APP_SESSION);
     client.setQueryData(keys.accounts, [{ id: 1 }]);
     expect(client.getQueryData(keys.accounts)).toBeDefined();
 
-    descartarSesion();
+    discardSession();
     expect(client.getQueryData(keys.accounts)).toBeUndefined();
     stop();
   });
@@ -91,11 +91,11 @@ describe('clearCacheOnUserChange()', () => {
     const stop = clearCacheOnUserChange(client);
 
     client.setQueryData(['previa'], 'antes');
-    recibirSesion(SESION_DE_LA_APP);
+    receiveSession(APP_SESSION);
     expect(client.getQueryData(['previa'])).toBe('antes');
 
     client.setQueryData(keys.accounts, [{ id: 1 }]);
-    recibirSesion({ ...SESION_DE_LA_APP, user: { ...SESION_DE_LA_APP.user, id: 999 } });
+    receiveSession({ ...APP_SESSION, user: { ...APP_SESSION.user, id: 999 } });
     expect(client.getQueryData(keys.accounts)).toBeUndefined();
     stop();
   });

@@ -3,7 +3,7 @@ import { useEffect, useState, type SubmitEvent } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { Ajustes } from '@/features/profile/components/ajustes';
-import { detallesDeError, mensajeDeErrorDeAuth, useAuth } from '@/shared/api/auth-context';
+import { errorDetails, authErrorMessage, useAuth } from '@/shared/api/auth-context';
 import { t } from '@/shared/lib/i18n';
 import { useEnLaApp } from '@/shared/lib/movil';
 import { SECCIONES_DE_ADMIN } from '@/shared/lib/sections';
@@ -24,7 +24,7 @@ import { LinkRow } from '@/shared/ui/molecules/link-row';
  * está comprometida, sin depender de nadie.
  */
 export function CuentaPage() {
-  const { usuario, esAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   /*
     Dentro de la app del teléfono esta página es la pestaña «Más», y hace lo
     que fuera hace la hoja del avatar —que allí no se monta—: llevar a la
@@ -37,9 +37,9 @@ export function CuentaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={t('shell.account.myAccount')} description={usuario?.email} />
+      <PageHeader title={t('shell.account.myAccount')} description={user?.email} />
 
-      {esAdmin && (
+      {isAdmin && (
         <Badge variant="info" className="self-start">
           <ShieldCheck aria-hidden="true" />
           {t('admin.userRow.roleAdmin')}
@@ -53,7 +53,7 @@ export function CuentaPage() {
         <Ajustes />
       </section>
 
-      {embebida && esAdmin && <AdminLinks />}
+      {embebida && isAdmin && <AdminLinks />}
 
       {/* Las dos cosas que hace alguien que sospecha que su cuenta está
           comprometida, juntas y con un nombre: cambiar la contraseña y echar
@@ -144,7 +144,7 @@ function PasswordErrors({ error, problemas }: { error: string; problemas: string
 
 /** Las dos contraseñas, sus errores y el envío del cambio. */
 function usePasswordChange() {
-  const { cambiarContrasena } = useAuth();
+  const { changePassword } = useAuth();
 
   const [actual, setActual] = useState('');
   const [nueva, setNueva] = useState('');
@@ -159,11 +159,11 @@ function usePasswordChange() {
     setProblemas([]);
     setEnviando(true);
 
-    void cambiarContrasena(actual, nueva)
+    void changePassword(actual, nueva)
       .then(() => setHecho(true))
       .catch((causa: unknown) => {
-        setError(mensajeDeErrorDeAuth(causa));
-        setProblemas(detallesDeError(causa));
+        setError(authErrorMessage(causa));
+        setProblemas(errorDetails(causa));
       })
       .finally(() => setEnviando(false));
   }
@@ -173,7 +173,7 @@ function usePasswordChange() {
 
 /** Cerrar sesión: aquí, dentro de la app, y en todos los dispositivos. */
 function SessionCards({ embebida }: { embebida: boolean }) {
-  const { salir, salirDeTodosLosDispositivos } = useAuth();
+  const { signOut, signOutEverywhere } = useAuth();
   return (
     <>
       {embebida && (
@@ -183,7 +183,7 @@ function SessionCards({ embebida }: { embebida: boolean }) {
             <CardDescription>{t('profile.account.signOutHelp')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" size="sm" onClick={() => void salir()}>
+            <Button variant="outline" size="sm" onClick={() => void signOut()}>
               <LogOut aria-hidden="true" />
               {t('shell.account.signOut')}
             </Button>
@@ -197,7 +197,7 @@ function SessionCards({ embebida }: { embebida: boolean }) {
           <CardDescription>{t('profile.account.signOutAllHelp')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" onClick={() => void salirDeTodosLosDispositivos()}>
+          <Button variant="outline" onClick={() => void signOutEverywhere()}>
             <LogOut aria-hidden="true" />
             {t('profile.account.signOutAll')}
           </Button>

@@ -7,14 +7,14 @@ import {
   categoriesUsage,
 } from '@/shared/api/generated/categories-v2/categories-v2';
 import type { UpdateCategoryInput } from '@/shared/api/generated/model';
-import type { Cambios } from '@/shared/api/pages';
+import type { Changes } from '@/shared/api/pages';
 import { keys } from '@/shared/api/query-keys';
 
 export function useActualizarCategoria() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, cambios }: { id: number; cambios: Cambios<UpdateCategoryInput> }) =>
+    mutationFn: async ({ id, cambios }: { id: number; cambios: Changes<UpdateCategoryInput> }) =>
       (await categoriesUpdate(id, cambios as UpdateCategoryInput)).data,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.categories });
