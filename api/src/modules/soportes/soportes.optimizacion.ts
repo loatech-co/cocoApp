@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
 
-import { leerDelEntorno } from '../../common/entorno';
+import { leerDelEntorno } from '../../common/env';
 
 /**
  * El tratamiento de un soporte antes de guardarlo.

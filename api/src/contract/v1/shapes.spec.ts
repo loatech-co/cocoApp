@@ -12,7 +12,7 @@ import type { DashboardResponse } from './dashboard.response';
 import type { LivenessResponse, ReadinessResponse } from './health.response';
 import type { CaptureResponse, InterpretationResponse } from './interpretation.response';
 import type { PreferencesResponse } from './preferences.response';
-import type { SoporteResponse } from './soportes.response';
+import type { SoporteResponse } from './receipts.response';
 import type { TagResponse } from './tags.response';
 import type {
   TransactionHistoryResponse,

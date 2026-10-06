@@ -9,7 +9,7 @@
  * poder probarla» y llevara meses sin una sola prueba.
  *
  * Es el mismo recurso que ya usan `pendientes.ts`, `categories.tree.ts` y
- * `common/entorno.ts`: lo que se puede decidir sin red ni base vive en su
+ * `common/env.ts`: lo que se puede decidir sin red ni base vive en su
  * propio archivo, sin dependencias.
  */
 

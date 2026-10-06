@@ -6,7 +6,7 @@ import {
   porQueNoArrancar,
   porQueNoTocarCuentasReales,
   sinComillas,
-} from './entorno';
+} from './env';
 
 /**
  * Una variable de entorno con comillas dentro del valor.

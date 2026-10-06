@@ -6,7 +6,7 @@ import { type FlagName, parseFeatures } from '@coco/flags';
 
 import { CocoFlagProvider } from './coco-flag-provider';
 import { FLAG_CLIENT, FlagsService } from './flags.service';
-import { leerDelEntorno } from '../../common/entorno';
+import { leerDelEntorno } from '../../common/env';
 import { PreferencesService } from '../preferences/preferences.service';
 
 /** The flags `FEATURES` turns on for everyone. */

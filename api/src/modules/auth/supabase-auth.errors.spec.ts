@@ -1,4 +1,4 @@
-import { esCorreoRepetido } from './supabase-auth.errores';
+import { esCorreoRepetido } from './supabase-auth.errors';
 
 /**
  * Qué cuenta como «ese correo ya está registrado».

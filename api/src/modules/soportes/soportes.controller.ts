@@ -26,7 +26,7 @@ import {
   ApiErrors,
   ApiNoContent,
 } from '../../contract/v1/openapi.decorators';
-import { SoporteResponse } from '../../contract/v1/soportes.response';
+import { SoporteResponse } from '../../contract/v1/receipts.response';
 import { receiptV1, type ReceiptV1 } from '../../presenters/v1/receipts.presenter';
 
 /** Cuántos archivos se aceptan de una vez. Ocho es el récord del lote. */

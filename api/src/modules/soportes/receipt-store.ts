@@ -2,7 +2,7 @@ import { unlink } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 
 import { abrir, almacenListo, existe, guardar, rutaDe } from './soportes.almacen';
-import { leerDelEntorno } from '../../common/entorno';
+import { leerDelEntorno } from '../../common/env';
 
 /**
  * Where receipt files live (phase 6.9).

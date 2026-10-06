@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { parseFeatures } from '@coco/flags';
 
-import { leerDelEntorno } from '../entorno';
+import { leerDelEntorno } from '../env';
 
 /**
  * The environment the API needs, checked once at boot (step 7.4, D8).

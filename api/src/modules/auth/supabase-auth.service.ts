@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-import { esCorreoRepetido } from './supabase-auth.errores';
-import { porQueNoTocarCuentasReales } from '../../common/entorno';
+import { esCorreoRepetido } from './supabase-auth.errors';
+import { porQueNoTocarCuentasReales } from '../../common/env';
 import {
   AuthenticationError,
   ForbiddenError,

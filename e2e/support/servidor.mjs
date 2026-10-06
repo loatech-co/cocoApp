@@ -116,7 +116,7 @@ async function startApi() {
   const { configureApp } = fromApi(join(API_DIST, 'bootstrap.js'));
   const { installBigIntSerializer } = fromApi(join(API_DIST, 'common/serialization/bigint.js'));
   const { whyTheEnvironmentIsInvalid } = fromApi(join(API_DIST, 'common/config/env.js'));
-  const { porQueNoArrancar } = fromApi(join(API_DIST, 'common/entorno.js'));
+  const { porQueNoArrancar } = fromApi(join(API_DIST, 'common/env.js'));
 
   const problem = whyTheEnvironmentIsInvalid() ?? porQueNoArrancar();
   if (problem !== null) throw new Error(problem);

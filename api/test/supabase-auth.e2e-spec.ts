@@ -3,7 +3,7 @@ import { SignJWT, exportJWK, generateKeyPair, type JWK } from 'jose';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
-import { PERMISO_DE_AUTH_DESTRUCTIVA } from '../src/common/entorno';
+import { PERMISO_DE_AUTH_DESTRUCTIVA } from '../src/common/env';
 import { SupabaseAuthService } from '../src/modules/auth/supabase-auth.service';
 
 /**

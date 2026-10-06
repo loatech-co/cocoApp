@@ -3,7 +3,7 @@ import { createReadStream, existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve, sep } from 'node:path';
 
-import { leerDelEntorno } from '../../common/entorno';
+import { leerDelEntorno } from '../../common/env';
 
 /**
  * El almacén privado de los soportes.
@@ -49,7 +49,7 @@ export function carpetaDelAlmacen(): string {
   // `leerDelEntorno` y no `process.env` a secas: en el servidor la variable
   // llega con las comillas dentro del valor, y una ruta que empieza por `"` no
   // es absoluta, así que `resolve` la colgaba del directorio de trabajo. Ver
-  // `common/entorno.ts`.
+  // `common/env.ts`.
   const declarada = leerDelEntorno('SOPORTES_DIR');
   if (declarada) return resolve(declarada);
   return resolve(__dirname, '..', '..', '..', '.soportes');

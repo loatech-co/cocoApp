@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { AppModule } from './app.module';
 import { configureApp, parseOrigins } from './bootstrap';
 import { whyTheEnvironmentIsInvalid } from './common/config/env';
-import { porQueNoArrancar } from './common/entorno';
+import { porQueNoArrancar } from './common/env';
 import { defaultLogDirectory, JsonLogger, parseLogLevel } from './common/logging/json-logger';
 import { installSafetyNet } from './common/process/safety-net';
 import { installBigIntSerializer } from './common/serialization/bigint';
