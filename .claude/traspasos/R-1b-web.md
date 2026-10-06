@@ -33,3 +33,8 @@ Rama `fix/web-hardening`, PR contra `Dev` sin integrar. Los tres puntos del reto
 ## Bases de prueba
 
 `coco_e2e_webh_test` (api e2e) y `coco_e2e_webh_pw_test` (Playwright), locales.
+
+## R-bundle
+
+- OpenFeature pasa a `shared/api/flags-engine.ts`, cargado con `import()` tras el primer pintado; `useFlag` lee apagado hasta que llega. Bundle inicial 200.37 → 193.24 kB gz, presupuesto sin tocar.
+- `flags.dom.test.tsx` falla si otro archivo importa `@openfeature/` o `flags-engine` de forma estática. Bases: `coco_e2e_bnd_test` y `coco_e2e_bndpw_test`.
