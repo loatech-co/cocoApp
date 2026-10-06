@@ -3,14 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { groupThousands, digitsOnly } from './utils';
 
 /**
- * El campo del valor se escribe con los puntos puestos.
+ * The value field is typed with the dots in place.
  *
- * «453132» no se lee: hay que contar los dígitos de tres en tres para saber si
- * son cuatrocientos mil o cuatro millones, y es el dato más importante de la
- * ficha. Lo que se prueba aquí es que agrupar no estorbe mientras se teclea:
- * una cifra a medias tiene que sobrevivir, y la coma decimal también.
+ * «453132» cannot be read: you have to count the digits in threes to know
+ * whether it is four hundred thousand or four million, and it is the most
+ * important figure on the sheet. What is tested here is that grouping does
+ * not get in the way while typing: a half-typed figure has to survive, and so
+ * does the decimal comma.
  */
-describe('Agrupar los miles', () => {
+describe('Grouping the thousands', () => {
   it.each([
     ['0', '0'],
     ['1', '1'],
@@ -19,38 +20,38 @@ describe('Agrupar los miles', () => {
     ['453132', '453.132'],
     ['1504200', '1.504.200'],
     ['1234567890', '1.234.567.890'],
-  ])('«%s» se escribe «%s»', (raw, typed) => {
+  ])('«%s» is written «%s»', (raw, typed) => {
     expect(groupThousands(raw)).toBe(typed);
   });
 
-  it('la coma decimal se respeta, incluso a medio escribir', () => {
-    // Borrar la coma que alguien acaba de teclear es la forma más rápida de
-    // que un campo se vuelva imposible de usar.
+  it('the decimal comma is respected, even half-typed', () => {
+    // Deleting the comma someone just typed is the fastest way to make a
+    // field impossible to use.
     expect(groupThousands('1234,')).toBe('1.234,');
     expect(groupThousands('1234,5')).toBe('1.234,5');
     expect(groupThousands('1234,50')).toBe('1.234,50');
   });
 
-  it('el vacío se queda vacío', () => {
+  it('empty stays empty', () => {
     expect(groupThousands('')).toBe('');
   });
 });
 
-describe('Lo que se guarda de lo tecleado', () => {
-  it('se queda con las cifras y quita los puntos', () => {
+describe('What is kept of what was typed', () => {
+  it('keeps the digits and removes the dots', () => {
     expect(digitsOnly('1.504.200')).toBe('1504200');
     expect(digitsOnly('$ 453.132')).toBe('453132');
     expect(digitsOnly('mil')).toBe('');
   });
 
-  it('una sola coma: dos no son un número', () => {
+  it('a single comma: two are not a number', () => {
     expect(digitsOnly('1234,5')).toBe('1234,5');
     expect(digitsOnly('1,2,3')).toBe('1,23');
   });
 
-  it('lo guardado se puede volver a agrupar sin perder nada', () => {
-    // El viaje de ida y vuelta es lo que garantiza que el valor no se
-    // transforme solo al pasar por el campo.
+  it('what is kept can be grouped again without losing anything', () => {
+    // The round trip is what guarantees the value does not transform on its
+    // own when it passes through the field.
     for (const typed of ['1.504.200', '453.132', '1.234,50']) {
       expect(groupThousands(digitsOnly(typed))).toBe(typed);
     }

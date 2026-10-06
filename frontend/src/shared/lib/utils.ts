@@ -1,46 +1,46 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-/** Compone clases de Tailwind resolviendo conflictos (la última gana). */
+/** Composes Tailwind classes resolving conflicts (the last one wins). */
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Agrupa los miles mientras se escribe una cifra.
+ * Groups the thousands while a figure is being typed.
  *
- * ── Por qué no `formatCOP` ──────────────────────────────────────────────────
- * Porque `formatCOP` formatea un NÚMERO ya escrito y aquí lo que hay es un
- * texto a medias. «1234,» no es un número —`Number` lo redondea o lo rechaza—
- * y borrar la coma que alguien acaba de teclear es la forma más rápida de que
- * un campo se vuelva imposible de usar. Esto solo mira el texto: separa por la
- * coma, agrupa la parte de la izquierda y devuelve la derecha tal cual.
+ * ── Why not `formatCOP` ─────────────────────────────────────────────────────
+ * Because `formatCOP` formats a NUMBER already written and what there is here
+ * is a half-typed text. «1234,» is not a number —`Number` rounds or rejects
+ * it— and deleting the comma someone just typed is the fastest way to make a
+ * field impossible to use. This only looks at the text: it splits at the
+ * comma, groups the left part and returns the right part as is.
  *
- * Con punto de miles y coma decimal, que es como se escribe el dinero en
- * Colombia y como lo devuelve `formatCOP`: si el campo se escribiera con
- * comas, la misma cifra tendría dos formas según se estuviera leyendo o
- * escribiendo.
+ * With a thousands dot and a decimal comma, which is how money is written in
+ * Colombia and how `formatCOP` returns it: if the field were typed with
+ * commas, the same figure would have two forms depending on whether it was
+ * being read or typed.
  */
 export function groupThousands(raw: string): string {
   const [integerPart = '', ...decimalParts] = raw.split(',');
   const grouped = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
-  // La coma se conserva aunque todavía no haya decimales: quien acaba de
-  // escribirla está a punto de escribirlos.
+  // The comma is kept even when there are no decimals yet: whoever just
+  // typed it is about to type them.
   return decimalParts.length > 0 ? `${grouped},${decimalParts.join('')}` : grouped;
 }
 
 /**
- * Lo que queda de lo tecleado: dígitos y una sola coma.
+ * What is left of what was typed: digits and a single comma.
  *
- * Es lo que se GUARDA, y de ahí sale el número que se manda a la API. Quitar
- * aquí los puntos —y no al enviar— evita que el valor viva en dos formas según
- * quién lo mire.
+ * It is what gets SAVED, and the number sent to the API comes from it.
+ * Removing the dots here —and not on sending— keeps the value from living in
+ * two forms depending on who looks at it.
  */
 export function digitsOnly(typed: string): string {
   const clean = typed.replace(/[^\d,]/g, '');
   const [integerPart = '', ...rest] = clean.split(',');
 
-  // Dos comas no son un número. Se queda la primera y lo demás se pega detrás.
+  // Two commas are not a number. The first stays and the rest is appended after it.
   return rest.length > 0 ? `${integerPart},${rest.join('')}` : integerPart;
 }

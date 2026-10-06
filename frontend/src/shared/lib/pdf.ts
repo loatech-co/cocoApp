@@ -1,24 +1,25 @@
 /**
- * pdf.js, cargado una sola vez y con su worker en su sitio.
+ * pdf.js, loaded only once and with its worker in place.
  *
- * ── Por qué el worker se sirve del propio bundle ────────────────────────────
- * Un CDN externo rompería la CSP y, peor, haría que abrir un recibo dependiera
- * de un tercero. Si mañana ese CDN cambia de versión o se cae, los soportes
- * dejan de verse sin que nadie haya tocado nada aquí.
+ * ── Why the worker is served from our own bundle ────────────────────────────
+ * An external CDN would break the CSP and, worse, would make opening a
+ * receipt depend on a third party. If tomorrow that CDN changes version or
+ * goes down, receipts stop showing without anyone having touched anything
+ * here.
  *
- * ── Por qué está en un módulo y no en cada sitio que lo usa ─────────────────
- * Porque son dos —el OCR de las importaciones y las miniaturas de los
- * soportes— y la línea del worker es exactamente la clase de detalle que se
- * copia bien la primera vez y mal la segunda.
+ * ── Why it is in a module and not in every place that uses it ───────────────
+ * Because there are two —the OCR of the imports and the receipt thumbnails—
+ * and the worker line is exactly the kind of detail that gets copied right
+ * the first time and wrong the second.
  */
 type Pdfjs = typeof import('pdfjs-dist');
 
 let loading: Promise<Pdfjs> | null = null;
 
 export function loadPdfjs(): Promise<Pdfjs> {
-  // La promesa se guarda, no el módulo: dos llamadas simultáneas —dos
-  // miniaturas que empiezan a la vez— comparten la misma carga en vez de
-  // pedir el bundle dos veces.
+  // The promise is kept, not the module: two simultaneous calls —two
+  // thumbnails starting at once— share the same load instead of asking for
+  // the bundle twice.
   loading ??= import('pdfjs-dist').then((pdfjs) => {
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
       'pdfjs-dist/build/pdf.worker.mjs',

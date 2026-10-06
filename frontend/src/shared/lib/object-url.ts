@@ -1,27 +1,28 @@
 import { useEffect, useState } from 'react';
 
 /*
-  ── Por qué un efecto que escribe estado ─────────────────────────────────────
-  Un `blob:` es un recurso del navegador con ciclo de vida —se crea, se usa, se
-  suelta— y el sitio de un ciclo de vida es un efecto con su limpieza. La regla
-  pide no escribir estado dentro de un efecto, pero aquí el estado es solo el
-  asa del recurso: no hay forma de tener el `blob:` sin crearlo, y crearlo en
-  el render sería un efecto secundario sin limpieza posible.
+  ── Why an effect that writes state ─────────────────────────────────────────
+  A `blob:` is a browser resource with a life cycle —it is created, used,
+  released— and the place for a life cycle is an effect with its cleanup. The
+  rule asks not to write state inside an effect, but here the state is only
+  the handle of the resource: there is no way to have the `blob:` without
+  creating it, and creating it in the render would be a side effect with no
+  possible cleanup.
 
-  La alternativa que la regla sugiere —`useMemo` para crearlo y un efecto solo
-  para soltarlo— se rompe con `StrictMode`: React simula desmontar y volver a
-  montar, la limpieza suelta el `blob:` y el memo, que no se repite, queda
-  apuntando a uno que ya no existe. La imagen sale rota en desarrollo. Esta es
-  la forma correcta, y la excepción lo dice.
+  The alternative the rule suggests —`useMemo` to create it and an effect
+  only to release it— breaks with `StrictMode`: React simulates unmounting
+  and mounting again, the cleanup releases the `blob:` and the memo, which is
+  not repeated, is left pointing to one that no longer exists. The image comes
+  out broken in development. This is the right form, and the exception says so.
 */
 
 /**
- * El `blob:` de un archivo, mientras el archivo siga siendo el mismo.
+ * A file's `blob:`, for as long as the file stays the same.
  *
- * Se crea y se suelta aquí porque vive exactamente lo que vive quien lo usa.
- * Creado más arriba habría que acordarse de soltarlo en cada una de las
- * salidas, y el que se olvide se queda en la memoria de la pestaña con el
- * archivo entero dentro.
+ * It is created and released here because it lives exactly as long as
+ * whoever uses it. Created higher up, it would have to be remembered at each
+ * of the exits, and the one that forgets stays in the tab's memory with the
+ * whole file inside.
  */
 export function useObjectUrl(file: File | undefined): string | null {
   const [url, setUrl] = useState<string | null>(null);
@@ -29,7 +30,7 @@ export function useObjectUrl(file: File | undefined): string | null {
   useEffect(() => {
     if (!file) return;
     const created = URL.createObjectURL(file);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- recurso con ciclo de vida, ver arriba
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resource with a life cycle, see above
     setUrl(created);
     return () => {
       URL.revokeObjectURL(created);
@@ -40,15 +41,15 @@ export function useObjectUrl(file: File | undefined): string | null {
   return url;
 }
 
-/** Los `blob:` de una lista de archivos, creados una vez y soltados juntos. */
+/** The `blob:`s of a list of files, created once and released together. */
 export function useObjectUrls(files: File[]): string[] {
   const [urls, setUrls] = useState<string[]>([]);
 
   useEffect(() => {
     const created = files.map((a) => URL.createObjectURL(a));
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- recurso con ciclo de vida, ver arriba
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resource with a life cycle, see above
     setUrls(created);
-    // Cada blob vive en la memoria de la pestaña hasta que se le suelta.
+    // Each blob lives in the tab's memory until it is released.
     return () => {
       for (const u of created) URL.revokeObjectURL(u);
     };
