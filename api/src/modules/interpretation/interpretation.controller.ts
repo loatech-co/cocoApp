@@ -23,7 +23,7 @@ import {
 export class InterpretationController {
   constructor(private readonly interpretation: InterpretationService) {}
 
-  /** Sin efectos: interpreta y devuelve, para rellenar una ficha. */
+  /** No side effects: interprets and returns, to fill a form. */
   @Post('interpret')
   @HttpCode(HttpStatus.OK)
   @ApiData(InterpretationResponse)
@@ -36,12 +36,12 @@ export class InterpretationController {
   }
 
   /**
-   * Interpreta, clasifica, busca duplicados y crea, de una.
+   * Interprets, classifies, looks for duplicates and creates, all at once.
    *
-   * Siempre 200, también cuando crea: la respuesta es «esto es lo que hay con
-   * tu referencia», sea nuevo, repetido o fusionado, y el cliente lo distingue
-   * por los dos indicadores del cuerpo. Un 201 solo a veces obligaría a quien
-   * reintenta a tratar dos códigos como el mismo resultado.
+   * Always 200, also when it creates: the answer is «this is what there is
+   * under your reference», whether new, repeated or merged, and the client
+   * tells them apart by the two flags in the body. A 201 only sometimes would
+   * force whoever retries to treat two codes as the same result.
    */
   @Post('capture')
   @HttpCode(HttpStatus.OK)

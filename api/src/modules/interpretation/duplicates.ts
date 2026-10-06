@@ -1,27 +1,30 @@
 /**
- * La misma plata, dos veces: Wallet y el SMS del banco.
+ * The same money, twice: Wallet and the bank's SMS.
  *
- * ── El problema ─────────────────────────────────────────────────────────────
- * Un pago con Apple Pay produce DOS capturas: la transacción de Wallet, que
- * la app manda al instante, y el SMS del banco, que llega segundos o minutos
- * después. Son el mismo gasto. Registrados los dos, el mes cuesta el doble.
+ * ── The problem ─────────────────────────────────────────────────────────────
+ * An Apple Pay payment produces TWO captures: the Wallet transaction, which
+ * the app sends at once, and the bank's SMS, which arrives seconds or minutes
+ * later. They are the same expense. With both recorded, the month costs
+ * double.
  *
- * ── Qué se hace ─────────────────────────────────────────────────────────────
- * Al capturar desde `wallet` o `sms` se busca un gasto de la misma persona
- * con el mismo monto, la misma fecha y OTRO origen, capturado dentro de una
- * ventana corta. Si está, no se crea otro ni se borra nada: se enriquece el
- * que había con lo que le falte —el SMS trae el texto; Wallet, el comercio—.
- * Si el parecido es parcial —mismo monto, pero otra fecha o fuera de la
- * ventana— se crea, pero marcado para revisar: ni se pierde ni se da por bueno.
+ * ── What is done ────────────────────────────────────────────────────────────
+ * A capture from `wallet` or `sms` looks for an expense of the same person
+ * with the same amount, the same date and ANOTHER source, captured within a
+ * short window. If it is there, nothing new is created and nothing is
+ * deleted: the existing one is enriched with what it lacks —the SMS brings
+ * the text; Wallet, the merchant—. If the match is partial —same amount, but
+ * another date or outside the window— it is created, but flagged for review:
+ * neither lost nor taken as good.
  *
- * ── La ventana: diez minutos ────────────────────────────────────────────────
- * El SMS de un banco colombiano llega entre segundos y un par de minutos
- * después del pago; diez minutos cubre un banco lento y una app que estaba en
- * segundo plano. Más ancha empezaría a juntar dos compras iguales en el mismo
- * sitio —dos cafés de $6.000 con media hora de diferencia—, que no son la
- * misma plata.
+ * ── The window: ten minutes ─────────────────────────────────────────────────
+ * A Colombian bank's SMS arrives between seconds and a couple of minutes
+ * after the payment; ten minutes covers a slow bank and an app that was in
+ * the background. Any wider would start merging two equal purchases at the
+ * same place —two $6.000 coffees half an hour apart—, which are not the same
+ * money.
  *
- * Es una función pura: quien tiene la base trae las candidatas, y esto decide.
+ * It is a pure function: whoever has the database brings the candidates, and
+ * this decides.
  */
 
 import { toMoney } from '../../common/money/money';
@@ -33,10 +36,10 @@ import type {
 } from '../transactions/ledger.service';
 
 export const DUPLICATE_WINDOW_MS = 10 * 60_000;
-/** Hasta dónde un parecido cuenta como parcial y no como casualidad. */
+/** How far a resemblance counts as partial and not as chance. */
 const PARTIAL_WINDOW_MS = 24 * 60 * 60_000;
 
-/** Los orígenes que producen la otra cara de un mismo pago. */
+/** The sources that produce the other side of the same payment. */
 export const DUPLICATING_SOURCES: ReadonlySet<string> = new Set(['wallet', 'sms']);
 
 export interface KnownCapture {
@@ -44,7 +47,7 @@ export interface KnownCapture {
   source: string;
   /** `YYYY-MM-DD`. */
   date: string;
-  /** Decimal como cadena, tal como lo guarda la base. */
+  /** Decimal as a string, as the database stores it. */
   amount: string;
   capturedAt: Date | null;
   createdAt: Date;
@@ -99,8 +102,8 @@ export function decideDuplicate(
 }
 
 /**
- * Lo que la captura nueva le aporta a la que ya estaba: solo lo que falte.
- * Nunca se pisa lo que había, que fue lo primero que se supo.
+ * What the new capture adds to the existing one: only what is missing. What
+ * was there is never overwritten, because it was the first thing known.
  */
 export function enrich(
   existing: KnownCapture,
@@ -124,9 +127,9 @@ function daysBetween(a: string, b: string): number {
 const DAY_MS = 24 * 60 * 60_000;
 
 /**
- * Lo que se le pide a la base: misma persona, mismo monto, otro origen, ±1 día
- * de fecha y dentro de la ventana parcial de captura. Lo fino lo decide
- * `decidirDuplicado`.
+ * What the database is asked for: same person, same amount, another source,
+ * ±1 day of date and within the partial capture window. The fine decision is
+ * `decideDuplicate`'s.
  */
 export function twinCriteria(
   userId: bigint,
@@ -147,7 +150,7 @@ export function twinCriteria(
   };
 }
 
-/** El veredicto, dicho como lo escribe la base: fusionar en una, o crear (marcada si fue parcial). */
+/** The verdict, said the way the database writes it: merge into one, or create (flagged if partial). */
 export function twinVerdict(
   incoming: NewCapture,
   rows: readonly DuplicateCandidateRow[],

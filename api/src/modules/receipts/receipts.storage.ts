@@ -6,30 +6,30 @@ import { dirname, resolve, sep } from 'node:path';
 import { readEnv } from '../../common/env';
 
 /**
- * El almacén privado de los soportes.
+ * The private store of receipts (on disk).
  *
- * ── Por qué fuera del árbol web ─────────────────────────────────────────────
- * Porque un recibo lleva el nombre del titular, un número de cuenta, a veces
- * un consumo que dice si la casa estuvo vacía en agosto. Puesto bajo
- * `public/`, el servidor lo entrega a quien acierte la URL, y una URL se
- * acierta: los nombres de archivo son predecibles y los buscadores indexan
- * directorios. Aquí no hay URL que acertar —no hay ruta pública al archivo—,
- * solo un endpoint que primero comprueba de quién es.
+ * ── Why outside the web tree ────────────────────────────────────────────────
+ * Because a receipt carries the holder's name, an account number, sometimes a
+ * consumption that tells whether the house was empty in August. Put under
+ * `public/`, the server hands it to whoever guesses the URL, and URLs get
+ * guessed: file names are predictable and search engines index directories.
+ * Here there is no URL to guess —no public path to the file—, only an
+ * endpoint that first checks whose it is.
  *
- * ── Por qué la clave la escribe el servidor ─────────────────────────────────
- * `<userId>/<uuid>.<ext>`. Ni una letra viene del nombre original. Con el
- * nombre del usuario en la ruta, un archivo llamado `../../.env` deja de ser
- * una travesura y pasa a ser un incidente; con un uuid, no hay nada que
- * inventar desde fuera. Y aun así se comprueba al resolver: defensa en dos
- * sitios, porque el día que alguien meta una clave a mano el `resolve` es lo
- * único que queda entre eso y el sistema de archivos.
+ * ── Why the server writes the key ───────────────────────────────────────────
+ * `<userId>/<uuid>.<ext>`. Not one letter comes from the original name. With
+ * the user's file name in the path, a file called `../../.env` stops being a
+ * prank and becomes an incident; with a uuid, there is nothing to make up
+ * from outside. And it is still checked when resolving: defence in two
+ * places, because the day somebody puts a key in by hand, `resolve` is all
+ * that stands between that and the file system.
  */
 
 /**
- * Lo único que se acepta. Un SVG, por ejemplo, es un documento ejecutable.
+ * The only things accepted. An SVG, for instance, is an executable document.
  *
- * @public — nada lo importa: `soportes.contrato.spec.ts` lo lee como texto
- * para comprobar que el contrato publica estos mismos tipos (excepción de knip).
+ * @public — nothing imports it: `receipts.contract.spec.ts` reads it as text
+ * to check that the contract publishes these same types (a knip exception).
  */
 export const ACCEPTED_TYPES: Record<string, string> = {
   pdf: 'application/pdf',
@@ -39,16 +39,16 @@ export const ACCEPTED_TYPES: Record<string, string> = {
 };
 
 /**
- * La carpeta del almacén.
+ * The store's folder.
  *
- * En producción la fija `SOPORTES_DIR` y apunta FUERA de `public_html`. En
- * desarrollo cae a `api/.soportes`, que está en el `.gitignore`: los recibos
- * de verdad no entran al repositorio ni por descuido.
+ * In production `SOPORTES_DIR` sets it and it points OUTSIDE `public_html`.
+ * In development it falls back to `api/.soportes`, which is in `.gitignore`:
+ * real receipts never get into the repository, not even by accident.
  */
 export function storeFolder(): string {
-  // `readEnv` y no `process.env` a secas: en el servidor la variable
-  // llega con las comillas dentro del valor, y una ruta que empieza por `"` no
-  // es absoluta, así que `resolve` la colgaba del directorio de trabajo. Ver
+  // `readEnv` and not plain `process.env`: on the server the variable arrives
+  // with the quotes inside the value, and a path starting with `"` is not
+  // absolute, so `resolve` hung it from the working directory. See
   // `common/env.ts`.
   const declared = readEnv('SOPORTES_DIR');
   if (declared) return resolve(declared);
@@ -56,13 +56,13 @@ export function storeFolder(): string {
 }
 
 /**
- * ¿Está donde dice que está?
+ * Is it where it says it is?
  *
- * Se comprueba al arrancar y se grita si no. El almacén mal apuntado no rompe
- * nada visible: la API sigue en pie, la lista de soportes sigue llegando y lo
- * único que cambia es que TODOS salen como no disponibles. Sin esta línea, eso
- * se diagnostica mirando `/proc/<pid>/environ` del proceso en producción, que
- * es donde acabamos la primera vez.
+ * Checked at start-up, and shouted about if not. A mis-pointed store breaks
+ * nothing visible: the API stays up, the receipt list keeps coming and the
+ * only change is that ALL of them show as unavailable. Without this line,
+ * that is diagnosed by reading the production process's `/proc/<pid>/environ`,
+ * which is where we ended up the first time.
  */
 export function diskStoreStatus(): { folder: string; exists: boolean } {
   const folder = storeFolder();
@@ -70,35 +70,35 @@ export function diskStoreStatus(): { folder: string; exists: boolean } {
 }
 
 /**
- * La ruta absoluta de una clave, comprobando que no se sale del almacén.
+ * The absolute path of a key, checking it does not leave the store.
  *
- * Devuelve `null` en vez de lanzar cuando la clave apunta afuera: para quien
- * pregunta, un archivo que no existe y un archivo que no puede tocar tienen
- * que verse igual.
+ * Returns `null` instead of throwing when the key points outside: to the
+ * caller, a file that does not exist and a file it may not touch have to
+ * look the same.
  */
 export function diskPathOf(storageKey: string): string | null {
   const base = storeFolder();
   const target = resolve(base, storageKey);
 
-  // `resolve` ya colapsó los `..`, así que aquí se ve el resultado real. El
-  // separador al final del prefijo importa: sin él, `/soportes-otro` pasaría
-  // por estar dentro de `/soportes`.
+  // `resolve` already collapsed the `..`, so this sees the real result. The
+  // separator at the end of the prefix matters: without it, `/soportes-otro`
+  // would pass for being inside `/soportes`.
   if (target !== base && !target.startsWith(base + sep)) return null;
   return target;
 }
 
-/** sha256 del contenido: dos veces el mismo archivo es el mismo soporte. */
+/** sha256 of the content: the same file twice is the same receipt. */
 export function hashOf(content: Buffer): string {
   return createHash('sha256').update(content).digest('hex');
 }
 
-/** La clave que le toca a un archivo nuevo. La escribe el servidor, entera. */
+/** The key a new file gets. The server writes all of it. */
 export function newStorageKey(userId: bigint, extension: string): string {
   const ext = extension.toLowerCase().replace(/[^a-z0-9]/g, '');
   return `${userId.toString()}/${randomUUID()}.${ext}`;
 }
 
-/** Guarda el binario. No pisa nada: la clave lleva un uuid recién hecho. */
+/** Saves the binary. Overwrites nothing: the key carries a fresh uuid. */
 export async function saveToDisk(storageKey: string, content: Buffer): Promise<void> {
   const target = diskPathOf(storageKey);
   if (target === null) throw new Error(`Clave de almacenamiento inválida: ${storageKey}`);
@@ -107,13 +107,13 @@ export async function saveToDisk(storageKey: string, content: Buffer): Promise<v
   await writeFile(target, content, { flag: 'wx' });
 }
 
-/** Si el binario está en disco. La ficha puede existir sin él —y al revés—. */
+/** Whether the binary is on disk. The row can exist without it —and the other way round—. */
 export function exists(storageKey: string): boolean {
   const target = diskPathOf(storageKey);
   return target !== null && existsSync(target);
 }
 
-/** El binario, en un flujo. No se carga entero en memoria para entregarlo. */
+/** The binary, as a stream. It is not loaded whole into memory to serve it. */
 export function openFromDisk(storageKey: string): ReturnType<typeof createReadStream> | null {
   const target = diskPathOf(storageKey);
   if (target === null || !existsSync(target)) return null;

@@ -28,7 +28,7 @@ const context = (history: { categoryId: string; confidence: number } | null = nu
   today: '2026-10-04',
 });
 
-describe('interpretar', () => {
+describe('interpret', () => {
   it('uses a history that points to a category, as a doubt', () => {
     const result = interpret({ merchant: 'Tienda' }, context({ categoryId: '10', confidence: 50 }));
     expect(result.classification).toMatchObject({
@@ -77,7 +77,7 @@ describe('interpretar', () => {
   );
 });
 
-describe('resumenDe', () => {
+describe('summaryOf', () => {
   const classification = (overrides: Partial<InterpretedClassification>) => ({
     certainty: 'ninguna' as const,
     source: null,

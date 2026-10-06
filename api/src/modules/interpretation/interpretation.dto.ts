@@ -4,12 +4,12 @@ import { IsEnum, IsISO8601, IsOptional, IsString, Matches, MaxLength } from 'cla
 import { TransactionSource } from '../../generated/prisma/client';
 
 /**
- * Lo que se le da a interpretar: texto libre, o datos ya estructurados.
+ * What is given to interpret: free text, or data already structured.
  *
- * Las dos formas, porque las dos existen: el OCR de un recibo y el SMS del
- * banco son texto; el disparador de Wallet entrega comercio, monto y fecha ya
- * separados. Al menos una de las dos tiene que venir; eso lo comprueba el
- * servicio, que es quien sabe qué hacer con cada una.
+ * Both forms, because both exist: a receipt's OCR and the bank's SMS are
+ * text; the Wallet trigger delivers merchant, amount and date already
+ * separate. At least one of the two has to come; the service checks it,
+ * since it is the one that knows what to do with each.
  */
 export class InterpretBodyDto {
   @IsOptional()
@@ -22,7 +22,7 @@ export class InterpretBodyDto {
   @MaxLength(255)
   comercio?: string;
 
-  /** Como cadena decimal. Un número en el JSON se convierte antes de validar. */
+  /** As a decimal string. A number in the JSON is converted before validating. */
   @IsOptional()
   @Type(() => String)
   @Matches(/^\d+([.,]\d{1,2})?$/, { message: 'El monto va en pesos, con hasta dos decimales.' })
@@ -37,39 +37,40 @@ export class InterpretBodyDto {
   @MaxLength(255)
   nombre_de_archivo?: string;
 
-  /** `YYYY-MM`: el mes al que pertenece, para elegir entre las fechas de un recibo. */
+  /** `YYYY-MM`: the month it belongs to, to choose among a receipt's dates. */
   @IsOptional()
   @Matches(/^\d{4}-\d{2}$/)
   periodo?: string;
 }
 
-/** Lo mismo, más lo que hace falta para GUARDARLO de forma idempotente. */
+/** The same, plus what it takes to SAVE it idempotently. */
 export class CaptureBodyDto extends InterpretBodyDto {
   @IsEnum(TransactionSource)
   source!: TransactionSource;
 
   /**
-   * La llave de la idempotencia. El cliente la genera al capturar —un UUID—
-   * y la repite si reintenta: la segunda vez recibe lo que ya se creó.
+   * The idempotency key. The client generates it when capturing —a UUID— and
+   * repeats it when it retries: the second time it gets what was already
+   * created.
    */
   @IsString()
   @MaxLength(255)
   external_ref!: string;
 
-  /** Cuándo se capturó, ISO 8601 con zona. Sin él, ahora. */
+  /** When it was captured, ISO 8601 with a zone. Without it, now. */
   @IsOptional()
   @IsISO8601()
   captured_at?: string;
 
   /**
-   * El concepto —o la categoría— que la persona eligió en el formulario rápido
-   * del teléfono. Lo elegido MANDA sobre lo que proponga el motor; con esto y
-   * el monto no hace falta texto ni comercio.
+   * The concept —or the category— the person chose in the phone's quick
+   * form. The choice WINS over whatever the engine proposes; with this and
+   * the amount, no text or merchant is needed.
    *
-   * Va aquí y no en `POST /transactions` porque la cola del teléfono necesita
-   * UN solo endpoint idempotente —siempre 200, `repetido`, `resumen`— para
-   * todos sus elementos. Mandar lo manual por el otro camino obligaría a leer
-   * el 409 del índice único como éxito y partiría la cola en dos.
+   * It goes here and not in `POST /transactions` because the phone's queue
+   * needs ONE idempotent endpoint —always 200, `repetido`, `resumen`— for all
+   * its items. Sending the manual ones the other way would force reading the
+   * unique index's 409 as a success and would split the queue in two.
    */
   @IsOptional()
   @Matches(/^\d+$/)

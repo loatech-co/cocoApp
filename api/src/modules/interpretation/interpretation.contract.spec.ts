@@ -2,25 +2,27 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * `CapturaRequest`, en `frontend/src/shared/lib/native-contract.ts`, es el espejo de `CaptureBodyDto`. Tienen
- * que tener las MISMAS claves: el ValidationPipe lleva `forbidNonWhitelisted`,
- * así que un campo que el teléfono mande y el DTO no declare es un 400 —y la
- * cola lo marcaría como fallido para siempre—; y uno que el DTO acepte y el
- * contrato no publique es un campo que ningún cliente llega a usar.
+ * `CapturaRequest`, in `frontend/src/shared/lib/native-contract.ts`, mirrors
+ * `CaptureBodyDto`. They must have the SAME keys: the ValidationPipe runs with
+ * `forbidNonWhitelisted`, so a field the phone sends and the DTO does not
+ * declare is a 400 —and the queue would mark it failed forever—; and one the
+ * DTO accepts and the contract does not publish is a field no client ever
+ * uses.
  *
- * Se comprueba leyendo el código fuente de los dos lados, como hace
- * `soportes.contrato.spec.ts`: la API no importa valores de `frontend/src/shared/lib/native-contract.ts` en
- * tiempo de ejecución —son tipos— y un DTO con decoradores no se puede
- * recorrer por reflexión sin instanciarlo con datos.
+ * It is checked by reading the source of both sides, as
+ * `receipts.contract.spec.ts` does: the API imports no values from
+ * `frontend/src/shared/lib/native-contract.ts` at run time —they are types—
+ * and a decorated DTO cannot be walked by reflection without instantiating
+ * it with data.
  */
-describe('El contrato de captura', () => {
+describe('The capture contract', () => {
   const nativeContract = readFileSync(
     join(__dirname, '../../../../frontend/src/shared/lib/native-contract.ts'),
     'utf8',
   );
   const dto = readFileSync(join(__dirname, 'interpretation.dto.ts'), 'utf8');
 
-  /** El cuerpo entre llaves de la primera declaración que empiece así. */
+  /** The body between braces of the first declaration that starts like this. */
   const bodyOf = (source: string, header: RegExp): string => {
     const m = header.exec(source);
     if (!m) throw new Error(`No encontré ${String(header)}`);
@@ -28,11 +30,11 @@ describe('El contrato de captura', () => {
     return source.slice(start + 1, source.indexOf('\n}', start));
   };
 
-  /** Los nombres de propiedad: la palabra al inicio de una línea seguida de `?:`, `!:` o `:`. */
+  /** The property names: the word at the start of a line followed by `?:`, `!:` or `:`. */
   const keysOf = (body: string): Set<string> =>
     new Set([...body.matchAll(/^\s+([a-z_]+)[?!]?:/gm)].map((m) => m[1]!));
 
-  it('CaptureBodyDto y CapturaRequest tienen exactamente las mismas claves', () => {
+  it('CaptureBodyDto and CapturaRequest have exactly the same keys', () => {
     const fromDto = new Set([
       ...keysOf(bodyOf(dto, /export class InterpretBodyDto/)),
       ...keysOf(bodyOf(dto, /export class CaptureBodyDto extends InterpretBodyDto/)),
@@ -44,7 +46,7 @@ describe('El contrato de captura', () => {
       ),
     ]);
 
-    // Que la lectura encontró algo: una regex que no casa daría dos vacíos iguales.
+    // That the read found something: a regex that does not match would give two equal empties.
     expect(fromDto.has('external_ref')).toBe(true);
     expect(fromDto.has('category_id')).toBe(true);
     expect([...fromDto].sort()).toEqual([...fromContract].sort());

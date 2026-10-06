@@ -22,7 +22,7 @@ import {
   UnsupportedMediaTypeError,
 } from '../../common/errors/domain-error';
 
-/** Un archivo tal como llega del formulario. */
+/** A file as it arrives from the form. */
 export interface IncomingFile {
   originalname: string;
   mimetype: string;
@@ -30,7 +30,7 @@ export interface IncomingFile {
   buffer: Buffer;
 }
 
-/** La ficha de un soporte, sin el binario (el dominio). Es lo que se lista en el modal. */
+/** A receipt's row, without the binary (the domain). It is what the modal lists. */
 export interface Receipt {
   id: bigint;
   /** Order among the transaction's receipts. */
@@ -38,7 +38,7 @@ export interface Receipt {
   fileName: string;
   mimeType: string;
   sizeBytes: number;
-  /** Si el binario está de verdad en el almacén. */
+  /** Whether the binary really is in the store. */
   isAvailable: boolean;
 }
 
@@ -52,17 +52,17 @@ export class ReceiptsService implements OnModuleInit {
   ) {}
 
   /**
-   * Decir al arrancar si el almacén está donde dice estar.
+   * Say at start-up whether the store is where it says it is.
    *
-   * Un almacén mal apuntado no rompe nada VISIBLE: la API sigue en pie, la
-   * lista de soportes sigue llegando y lo único que cambia es que todos salen
-   * como no disponibles. Eso en pantalla se lee como «no cargan las imágenes»,
-   * que es lo más lejos que se puede estar de la causa.
+   * A mis-pointed store breaks nothing VISIBLE: the API stays up, the receipt
+   * list keeps coming and the only change is that all of them show as
+   * unavailable. On screen that reads as «the images do not load», which is
+   * as far from the cause as one can get.
    *
-   * Pasó: `SOPORTES_DIR` llegaba con las comillas dentro del valor, así que la
-   * ruta dejaba de ser absoluta y se resolvía contra el directorio de trabajo.
-   * Diagnosticarlo costó leer `/proc/<pid>/environ` del proceso en producción.
-   * Esta línea lo habría dicho en el primer reinicio.
+   * It happened: `SOPORTES_DIR` arrived with the quotes inside the value, so
+   * the path stopped being absolute and resolved against the working
+   * directory. Diagnosing it took reading the production process's
+   * `/proc/<pid>/environ`. This line would have said it at the first restart.
    */
   async onModuleInit(): Promise<void> {
     const { ok: isReady, detail } = await this.store.check().catch((error: unknown) => ({
@@ -82,13 +82,13 @@ export class ReceiptsService implements OnModuleInit {
   }
 
   /**
-   * Los soportes de un movimiento.
+   * A transaction's receipts.
    *
-   * ── Por qué el `userId` va en el WHERE y no en un `if` ──────────────────
-   * Porque un `if` se olvida y un `where` no. Pedir los soportes de un
-   * movimiento ajeno no devuelve "prohibido": devuelve la lista vacía, porque
-   * para esta consulta esos soportes no existen. No hay una rama del código
-   * donde la comprobación pueda saltarse.
+   * ── Why `userId` goes in the WHERE and not in an `if` ───────────────────
+   * Because an `if` gets forgotten and a `where` does not. Asking for the
+   * receipts of someone else's transaction does not return "forbidden": it
+   * returns the empty list, because for this query those receipts do not
+   * exist. There is no branch of the code where the check can be skipped.
    */
   async list(userId: bigint, transactionId: bigint): Promise<Receipt[]> {
     const rows = await this.repository.findByTransaction(userId, transactionId);
@@ -104,23 +104,23 @@ export class ReceiptsService implements OnModuleInit {
       fileName: s.fileName,
       mimeType: s.mimeType,
       sizeBytes: s.sizeBytes,
-      // Promise.all devuelve uno por fila: el respaldo nunca se usa.
+      // Promise.all returns one per row: the fallback is never used.
       isAvailable: availability[index] ?? false,
     }));
   }
 
   /**
-   * El binario de un soporte, con su ficha.
+   * A receipt's binary, with its row.
    *
-   * Las TRES condiciones van juntas en el mismo `where`: el soporte, su
-   * movimiento y su dueño. Pedir el soporte de otro con un id de movimiento
-   * propio —o al revés— no encuentra nada.
+   * The THREE conditions go together in the same `where`: the receipt, its
+   * transaction and its owner. Asking for someone else's receipt with an id of
+   * one's own transaction —or the other way round— finds nothing.
    *
-   * ── Por qué 404 y no 403 ────────────────────────────────────────────────
-   * Un 403 confirma que el recurso existe. Con una lista de ids y un puñado
-   * de peticiones, esa diferencia dibuja el mapa de lo que hay en la base de
-   * otro. Para quien no es el dueño, aquí no hay nada, y eso es lo que se
-   * responde.
+   * ── Why 404 and not 403 ─────────────────────────────────────────────────
+   * A 403 confirms the resource exists. With a list of ids and a handful of
+   * requests, that difference draws the map of what someone else has in the
+   * database. For whoever is not the owner there is nothing here, and that is
+   * the answer.
    */
   async download(
     userId: bigint,
@@ -133,9 +133,9 @@ export class ReceiptsService implements OnModuleInit {
 
     const stream = await this.store.open(receipt.storageKey);
     if (!stream) {
-      // La ficha está y el archivo no. Es un estado posible —un almacén a
-      // medio sincronizar— y decirlo así es más útil que un 404 pelado, que
-      // haría pensar que el soporte nunca existió.
+      // The row is there and the file is not. It is a possible state —a store
+      // half synchronised— and saying so is more useful than a bare 404, which
+      // would suggest the receipt never existed.
       throw new NotFoundError('El archivo de ese soporte no está en el almacén.', {
         code: 'receipt_file_missing',
       });
@@ -150,19 +150,19 @@ export class ReceiptsService implements OnModuleInit {
   }
 
   /**
-   * Sube uno o varios soportes a un movimiento.
+   * Uploads one or several receipts to a transaction.
    *
-   * ── El orden de las comprobaciones importa ──────────────────────────────
-   * La propiedad del movimiento se verifica ANTES de tocar un solo byte. Al
-   * revés —optimizar y luego mirar de quién es— un desconocido podría hacer
-   * trabajar al servidor con ghostscript y sharp mandando archivos a
-   * movimientos que no son suyos, que es una forma barata de tumbarlo.
+   * ── The order of the checks matters ─────────────────────────────────────
+   * Ownership of the transaction is verified BEFORE touching a single byte.
+   * The other way round —optimise and then look whose it is— a stranger could
+   * make the server work with ghostscript and sharp by sending files to
+   * transactions that are not theirs, which is a cheap way to bring it down.
    *
-   * ── Por qué se procesa antes de mirar si está repetido ──────────────────
-   * Porque la huella es del archivo YA TRATADO, no del que llegó. Dos fotos
-   * de la misma hoja tomadas con un segundo de diferencia son dos archivos
-   * distintos en origen y el mismo JPG en gris a 1100px. Comparar lo que
-   * llega dejaría entrar el duplicado que uno quería evitar.
+   * ── Why it is processed before checking for a repeat ────────────────────
+   * Because the hash is of the file ALREADY PROCESSED, not of what arrived.
+   * Two photos of the same sheet taken a second apart are two different files
+   * at the source and the same grey 1100px JPG. Comparing what arrives would
+   * let in the very duplicate one wanted to avoid.
    */
   async upload(userId: bigint, transactionId: bigint, files: IncomingFile[]): Promise<Receipt[]> {
     const transaction = await this.repository.findMovementForUpload(userId, transactionId);
@@ -170,8 +170,8 @@ export class ReceiptsService implements OnModuleInit {
     if (!transaction) throw new NotFoundError('El movimiento no existe.');
     validateUploads(files);
 
-    // El nombre sale del MOVIMIENTO, no del archivo: `IMG_4821.HEIC` no dice
-    // de qué pago es, y así lo subido queda igual que lo importado.
+    // The name comes from the TRANSACTION, not the file: `IMG_4821.HEIC` does
+    // not say which payment it is, and this way uploads match imports.
     const concept =
       transaction.description ?? transaction.merchant ?? transaction.category?.name ?? 'Soporte';
     const date = transaction.date.toISOString().slice(0, 10);
@@ -182,15 +182,15 @@ export class ReceiptsService implements OnModuleInit {
       const { content, mime, extension } = await this.optimizeOrFail(file);
       const hash = hashOf(content);
 
-      // Reintentar la misma subida no duplica: el único de (movimiento,
-      // huella) lo impediría en la base, pero fallar con un 500 no es una
-      // respuesta; se salta y ya.
+      // Retrying the same upload does not duplicate: the unique (transaction,
+      // hash) would stop it in the database, but failing with a 500 is not an
+      // answer; it is simply skipped.
       if (await this.repository.existsWithHash(userId, transactionId, hash)) continue;
 
       const storageKey = newStorageKey(userId, extension);
-      // El archivo primero y la ficha después: si se corta en medio queda un
-      // binario que nadie alcanza, que es inofensivo. Al revés quedaría un
-      // soporte que la aplicación promete y no puede enseñar.
+      // The file first and the row after: if it is cut in the middle, a binary
+      // nobody reaches is left, which is harmless. The other way round would
+      // leave a receipt the app promises and cannot show.
       await this.store.save(storageKey, content, mime);
 
       await this.repository.create({
@@ -211,27 +211,28 @@ export class ReceiptsService implements OnModuleInit {
   }
 
   /*
-    Tratar el archivo puede fallar por DOS motivos, y no se contestan igual.
+    Processing the file can fail for TWO reasons, and they are not answered
+    the same way.
 
-    ── No sé abrirlo ─────────────────────────────────────────────────────
-    El caso real es el HEIC del iPhone: está en `TIPOS_DE_ENTRADA` porque
-    es un formato de imagen legítimo, pero la librería que las procesa solo
-    lo entiende si se compiló con soporte para él —y casi nunca lo está,
-    porque va aparte por licencia—. Es definitivo: por más que se reintente
-    ese archivo no va a entrar, así que lo que hay que decir es con qué
-    volver.
+    ── I cannot open it ──────────────────────────────────────────────────
+    The real case is the iPhone's HEIC: it is in `INPUT_TYPES` because it is
+    a legitimate image format, but the library that processes images only
+    understands it when compiled with support for it —and it almost never
+    is, since that ships separately for licensing—. It is final: however
+    often it is retried that file will not get in, so what must be said is
+    what to come back with.
 
-    ── No PUEDO ahora mismo ──────────────────────────────────────────────
-    El servidor se quedó sin hilos o sin memoria para tratar la imagen. El
-    archivo está perfecto y reintentar es exactamente lo que hay que hacer.
+    ── I CANNOT right now ────────────────────────────────────────────────
+    The server ran out of threads or memory to process the image. The file
+    is perfect and retrying is exactly the right thing to do.
 
-    Iban por el mismo camino, y el resultado era el peor de los dos: una
-    captura PNG recibía «este servidor no sabe abrir ese formato, vuelve a
-    intentarlo con un JPG o un PNG» —un consejo imposible de seguir, porque
-    ya era un PNG— y la causa real quedaba escondida en el paréntesis.
+    They went down the same path, and the result was the worse of both: a
+    PNG screenshot got «this server cannot open that format, try again with
+    a JPG or a PNG» —advice impossible to follow, since it already was a
+    PNG— and the real cause stayed hidden in the parenthesis.
 
-    El código de estado también cambia, y no es un detalle: 415 dice «no
-    mandes esto», 503 dice «vuelve a mandarlo». Son instrucciones opuestas.
+    The status code changes too, and it is no detail: 415 says «do not send
+    this», 503 says «send it again». They are opposite instructions.
   */
   private async optimizeOrFail(file: IncomingFile): Promise<OptimizedReceipt> {
     return optimize(file.buffer, file.mimetype).catch((cause: unknown) => {
@@ -239,22 +240,22 @@ export class ReceiptsService implements OnModuleInit {
 
       if (isOutOfResources(cause)) {
         /*
-          Se guarda lo que llegó, sin tratar.
+          What arrived is saved, unprocessed.
 
-          Tratar la imagen es una MEJORA —gris, 1100px, un tercio del
-          peso—, no un requisito: el recibo se ve igual sin ella. Tirar el
-          soporte porque al servidor le faltaban hilos en ese segundo es
-          cambiar una mejora por un fallo.
+          Processing the image is an IMPROVEMENT —grey, 1100px, a third of
+          the weight—, not a requirement: the receipt looks the same without
+          it. Throwing the receipt away because the server was short of
+          threads in that second trades an improvement for a failure.
 
-          Y el fallo era REAL y frecuente: en un plan compartido la cuota
-          de procesos va y viene, así que pegar una captura funcionaba o no
-          según lo que estuviera haciendo el vecino. Pedirle a alguien que
-          «espere unos segundos y vuelva a intentarlo» con el recibo
-          delante es pedirle que haga de reintento manual.
+          And the failure was REAL and frequent: on a shared plan the
+          process quota comes and goes, so pasting a screenshot worked or
+          not depending on what the neighbour was doing. Asking somebody to
+          «wait a few seconds and try again» with the receipt in hand is
+          asking them to be a manual retry.
 
-          Solo para lo que el visor sabe abrir. Un HEIC sin tratar sería un
-          archivo que después no se puede mirar: ahí el problema es el
-          formato, y ceder no arregla nada.
+          Only for what the viewer can open. An unprocessed HEIC would be a
+          file nobody can look at afterwards: there the problem is the
+          format, and giving way fixes nothing.
         */
         const unprocessed = asReceived(file.buffer, file.mimetype);
         if (unprocessed) {
@@ -281,12 +282,11 @@ export class ReceiptsService implements OnModuleInit {
   }
 
   /**
-   * Borra un soporte.
+   * Deletes a receipt.
    *
-   * El binario se queda en el almacén a propósito: es un archivo huérfano que
-   * nadie alcanza —no hay ruta que llegue a él sin su ficha— y borrarlo aquí
-   * haría que un fallo a mitad dejara una ficha apuntando a nada, que sí se
-   * ve. La basura se recoge aparte, si alguna vez hace falta.
+   * Its file is removed after the row (`removeFiles`): a file without a row is
+   * an orphan nobody reaches —no route gets to it without its row—, while a
+   * row without a file would show up broken.
    */
   async remove(userId: bigint, transactionId: bigint, receiptId: bigint): Promise<void> {
     const receipt = await this.repository.findOne(userId, transactionId, receiptId);
@@ -335,7 +335,7 @@ function validateUploads(files: readonly IncomingFile[]): void {
         code: 'file_type_not_allowed',
       });
     }
-    // The declared type comes from the client; the bytes decide (see FIRMAS).
+    // The declared type comes from the client; the bytes decide (see MAGIC_BYTES).
     if (!matchesDeclaredType(file.buffer, file.mimetype)) {
       throw new UnsupportedMediaTypeError(
         `“${file.originalname}” no es lo que dice ser: su contenido no es un ${file.mimetype}.`,

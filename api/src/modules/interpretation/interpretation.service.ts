@@ -27,17 +27,17 @@ import { LedgerService } from '../transactions/ledger.service';
 import { TransactionsService, type Transaction } from '../transactions/transactions.service';
 
 /**
- * El único cerebro: interpreta, clasifica, detecta duplicados y registra.
+ * The one brain: interprets, classifies, detects duplicates and records.
  *
- * ── Dos puertas, una cabeza ─────────────────────────────────────────────────
- * `interpretar` no escribe nada: es para rellenar una ficha antes de confirmar.
- * `capturar` hace todo de una —interpretar, clasificar, buscar la otra cara
- * del mismo pago y crear— para quien no tiene una ficha delante: una acción
- * de Atajos en segundo plano, un SMS que llega.
+ * ── Two doors, one head ─────────────────────────────────────────────────────
+ * `interpret` writes nothing: it fills a form before confirming. `capture`
+ * does it all at once —interpret, classify, look for the other side of the
+ * same payment and create— for whoever has no form in front of them: a
+ * Shortcuts action in the background, an incoming SMS.
  *
- * La decisión en sí está en `interpretar()` y `decidirDuplicado()`, que son
- * funciones puras; aquí solo se les trae lo que necesitan de la base y se
- * escribe lo que digan.
+ * The decision itself lives in `interpret()` and `decideDuplicate()`, which
+ * are pure functions; here they are only handed what they need from the
+ * database, and what they say gets written.
  */
 @Injectable()
 export class InterpretationService {
@@ -55,20 +55,20 @@ export class InterpretationService {
 
   async capture(userId: bigint, dto: CaptureBodyDto): Promise<Capture> {
     /*
-      ── Idempotencia, antes que nada ────────────────────────────────────────
-      Un cliente que reintenta manda el mismo `external_ref`. Si ya está, se
-      devuelve lo que hay y no se interpreta ni se crea nada: la respuesta es
-      la misma que recibió —o no llegó a recibir— la primera vez.
+      ── Idempotency, before anything else ───────────────────────────────────
+      A client that retries sends the same `external_ref`. If it is already
+      there, what exists is returned and nothing is interpreted or created:
+      the answer is the same one it got —or never got— the first time.
     */
     const existingId = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
     if (existingId !== null) return this.alreadyRecorded(userId, existingId, dto, true, false);
 
     /*
-      ── Lo elegido manda ────────────────────────────────────────────────────
-      Si la persona ya eligió el concepto en el formulario rápido, el motor no
-      tiene nada que proponer: se comprueba que lo elegido sea suyo y sirva
-      para clasificar, y se guarda tal cual. Se resuelve ANTES de interpretar
-      para que un id malo responda 422 sin gastar una lectura del árbol.
+      ── The choice wins ─────────────────────────────────────────────────────
+      If the person already chose the concept in the quick form, the engine
+      has nothing to propose: the choice is checked to be theirs and able to
+      classify, and saved as is. It is resolved BEFORE interpreting so a bad
+      id answers 422 without spending a read of the tree.
     */
     const chosen =
       dto.category_id === undefined
@@ -79,12 +79,12 @@ export class InterpretationService {
 
     const incoming: NewCapture = {
       source: dto.source,
-      // Sin fecha legible, la del momento de la captura: un gasto necesita un
-      // día, y el de la captura es la mejor aproximación. Queda marcado.
+      // With no readable date, the moment of the capture: an expense needs a
+      // day, and the capture's is the best approximation. It stays flagged.
       date: interpreted.date ?? capturedAt.toISOString().slice(0, 10),
-      // Sin monto, cero y marcado: Wallet a veces agota su espera y manda la
-      // transacción sin valor. Perderla sería peor que registrarla en cero
-      // para que alguien le ponga la cifra.
+      // With no amount, zero and flagged: Wallet sometimes runs out of time and
+      // sends the transaction without a value. Losing it would be worse than
+      // recording it at zero for somebody to fill in the figure.
       amount: interpreted.amount ?? '0',
       capturedAt,
       rawText: dto.texto ?? null,
@@ -96,12 +96,12 @@ export class InterpretationService {
   }
 
   /*
-    ── La otra cara del mismo pago ─────────────────────────────────────────
-    Solo desde Wallet o SMS. La búsqueda de la gemela y la escritura van en
-    UNA transacción, bajo un candado por persona y monto (`LedgerService.
-    createUnlessTwin`): si Wallet y el SMS llegan a la vez, el segundo espera
-    al primero y lo encuentra. Exacto: se enriquece la que había y se
-    devuelve. Parcial: se crea, pero marcada. Decide la función pura.
+    ── The other side of the same payment ──────────────────────────────────
+    Only from Wallet or SMS. Looking for the twin and writing go in ONE
+    transaction, under a lock per person and amount (`LedgerService.
+    createUnlessTwin`): if Wallet and the SMS arrive together, the second
+    waits for the first and finds it. Exact: the existing one is enriched and
+    returned. Partial: it is created, but flagged. The pure function decides.
   */
   private async record(
     userId: bigint,
@@ -133,11 +133,11 @@ export class InterpretationService {
       return createdCapture(await this.transactions.get(userId, outcome.id), interpreted);
     } catch (error) {
       /*
-        Dos capturas con el mismo `external_ref` a la vez —dos reintentos que
-        se cruzan— pasan las dos la comprobación de arriba y llegan las dos a
-        insertar. La segunda choca con el índice único: es la idempotencia
-        haciendo su trabajo en la base, y se contesta igual que si hubiera
-        estado desde el principio.
+        Two captures with the same `external_ref` at once —two retries that
+        cross— both pass the check above and both get to insert. The second
+        hits the unique index: that is idempotency doing its job in the
+        database, and the answer is the same as if it had been there from the
+        start.
       */
       if (!(error instanceof DuplicateError)) throw error;
       const existingId = await this.ledger.findIdByExternalRef(userId, dto.external_ref);
@@ -147,7 +147,7 @@ export class InterpretationService {
     }
   }
 
-  // ── Plomería ───────────────────────────────────────────────────────────────
+  // ── Plumbing ───────────────────────────────────────────────────────────────
 
   private async read(
     userId: bigint,
@@ -157,11 +157,12 @@ export class InterpretationService {
     const amount = dto.monto?.replace(',', '.');
     if (!dto.texto?.trim() && !dto.comercio?.trim()) {
       /*
-        Un gasto anotado a mano en el teléfono —concepto y monto, nada más— no
-        tiene nada que interpretar: no hay texto del que sacar un comercio ni
-        una fecha, y la clasificación ya está decidida. Se arma el resultado
-        directo sin pasar por `interpretar()`, que seguiría buscando en vacío.
-        Sin monto o sin elección, sí falta algo que leer.
+        An expense typed by hand on the phone —concept and amount, nothing
+        else— has nothing to interpret: there is no text to get a merchant or a
+        date from, and the classification is already decided. The result is
+        built directly without going through `interpret()`, which would keep
+        searching in the void. Without an amount or a choice, something is
+        indeed missing.
       */
       if (chosen && amount !== undefined) {
         return {
@@ -180,9 +181,9 @@ export class InterpretationService {
 
     const [tree, history] = await Promise.all([
       this.treeOf(userId),
-      // El historial se consulta con lo más parecido a una descripción: el
-      // comercio si viene; si no, el texto. Un SMS entero trae mucho ruido de
-      // banco y el historial lo nota en la confianza, que es lo correcto.
+      // The history is asked with the closest thing to a description: the
+      // merchant if it came; otherwise the text. A whole SMS carries a lot of
+      // bank noise and the history shows it in its confidence, which is right.
       this.categorization.suggestFor(userId, dto.comercio?.trim() || dto.texto?.trim() || ''),
     ]);
 
@@ -205,31 +206,32 @@ export class InterpretationService {
     );
     if (!chosen) return parsed;
 
-    // Lo que el motor entendió del texto —monto, fecha, comercio— se queda;
-    // lo que propuso como clasificación, no: la persona ya lo decidió. Y lo
-    // que marca para revisar es solo la elección a medias (una categoría sin
-    // concepto), no la duda del motor, que aquí no cuenta.
+    // What the engine understood from the text —amount, date, merchant—
+    // stays; what it proposed as a classification does not: the person
+    // already decided. And what flags for review is only a half choice (a
+    // category without a concept), not the engine's doubt, which does not
+    // count here.
     return { ...parsed, classification: chosen, needsReview: chosen.certainty !== 'alta' };
   }
 
   /**
-   * La clasificación que la persona eligió a mano, con la misma forma que la
-   * que propone el motor para que el resto del camino no distinga.
+   * The classification the person chose by hand, with the same shape as the
+   * engine's proposal so the rest of the way cannot tell them apart.
    *
-   * Un concepto (profundidad 3) es certeza alta: queda clasificado del todo.
-   * Una categoría (profundidad 2) es media y por revisar: está en el sitio
-   * correcto a medias, igual que cuando el motor solo llega hasta ahí y que
-   * en el buscador de la web, que ofrece las dos. Un centro de costos no
-   * clasifica nada —los movimientos viven tres niveles más abajo— y lo
-   * archivado ya no vuelve, así que ninguno de los dos se acepta.
+   * A concept (depth 3) is high certainty: fully classified. A category
+   * (depth 2) is medium and for review: halfway in the right place, just as
+   * when the engine only gets that far and as in the web's search, which
+   * offers both. A cost center classifies nothing —transactions live three
+   * levels below— and what is archived does not come back, so neither is
+   * accepted.
    */
   private async chosenClassification(
     userId: bigint,
     id: bigint,
   ): Promise<InterpretedClassification> {
     const row = await this.categories.findChosen(userId, id);
-    // La misma respuesta para «no existe» y «no es tuya»: decir cuál de las
-    // dos es revelaría ids ajenos.
+    // The same answer for «does not exist» and «is not yours»: telling which
+    // would reveal other people's ids.
     if (!row)
       throw new ValidationError('La categoría indicada no existe o no es tuya.', {
         code: 'category_not_owned',
@@ -254,10 +256,10 @@ export class InterpretationService {
   }
 
   /**
-   * El árbol de la persona, con ids como cadenas, sin lo archivado.
+   * The person's tree, with ids as strings, without what is archived.
    *
-   * Archivado quiere decir «esto ya no vuelve»: proponerlo sería clasificar
-   * un gasto de hoy en el gimnasio que se dio de baja.
+   * Archived means «this is not coming back»: proposing it would classify
+   * today's expense under the gym that was cancelled.
    */
   private async treeOf(userId: bigint): Promise<SearchableNode[]> {
     const rows = await this.categories.findSearchable(userId);
@@ -285,8 +287,8 @@ export class InterpretationService {
   ): Promise<Capture> {
     const transaction = await this.transactions.get(userId, id);
     const shown: InterpretedClassification = classification ??
-      // De una repetida no se vuelve a interpretar: lo que importa es lo que
-      // quedó guardado, que es lo que se le dice.
+      // A repeat is not interpreted again: what matters is what was saved,
+      // and that is what it is told.
       {
         certainty: transaction.categoryId === null ? 'ninguna' : 'alta',
         source: null,
@@ -308,10 +310,10 @@ export class InterpretationService {
   }
 }
 
-/** Lo que `TransactionsService` pide para crear, sin importar su DTO (los módulos hablan por servicios). */
+/** What `TransactionsService` needs to create, without importing its DTO (modules talk through services). */
 type NewTransaction = Parameters<TransactionsService['create']>[1];
 
-/** Lo que se escribe de una captura, como lo pide `TransactionsService`. */
+/** What a capture writes, as `TransactionsService` asks for it. */
 function newTransactionOf(
   dto: CaptureBodyDto,
   incoming: NewCapture,

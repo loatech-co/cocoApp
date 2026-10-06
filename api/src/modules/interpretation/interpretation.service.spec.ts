@@ -7,16 +7,17 @@ import type { LedgerService } from '../transactions/ledger.service';
 import type { TransactionsService } from '../transactions/transactions.service';
 
 /**
- * Lo que la persona eligió a mano manda sobre lo que el motor proponga, y un
- * gasto anotado con concepto y monto —sin texto ni comercio— se registra sin
- * pasar por `interpretar()`. Se prueba con dobles mínimos de la base: lo que
- * se decide aquí es la forma de la clasificación y a qué se llama, no el SQL.
+ * What the person chose by hand wins over what the engine proposes, and an
+ * expense noted with concept and amount —no text or merchant— is recorded
+ * without going through `interpret()`. Tested with minimal database doubles:
+ * what is decided here is the shape of the classification and what gets
+ * called, not the SQL.
  */
-describe('InterpretacionService con una clasificación elegida', () => {
+describe('InterpretationService with a chosen classification', () => {
   const USER_ID = 1n;
 
   // Costos variables (10) › Alimentación (20) › Mercado (30); Transporte (21)
-  // es categoría sin conceptos; Gimnasio (31) está archivado.
+  // is a category without concepts; Gimnasio (31) is archived.
   const rows = new Map<
     bigint,
     {
@@ -44,7 +45,7 @@ describe('InterpretacionService con una clasificación elegida', () => {
     create = jest.fn((_userId: bigint, dto: Record<string, unknown>) =>
       Promise.resolve({ ...dto, id: 99n }),
     );
-    // Sin repetidas ni candidatas a duplicado: aquí se prueba la clasificación.
+    // No repeats and no duplicate candidates: the classification is what is tested here.
     const ledger = {
       findIdByExternalRef: jest.fn().mockResolvedValue(null),
       createUnlessTwin: jest.fn().mockResolvedValue({ kind: 'created', id: 99n }),
@@ -63,8 +64,8 @@ describe('InterpretacionService con una clasificación elegida', () => {
     const categorization = {
       suggestFor: jest.fn().mockResolvedValue(null),
     } as unknown as CategorizationService;
-    // Wallet y SMS pasan por `prepararAlta` y la escritura con candado; lo
-    // que se escribe es lo mismo, así que las dos puertas comparten el doble.
+    // Wallet and SMS go through `prepareCreate` and the locked write; what is
+    // written is the same, so both doors share the double.
     const transactions = {
       create,
       prepareCreate: create,
@@ -79,7 +80,7 @@ describe('InterpretacionService con una clasificación elegida', () => {
   const capture = (body: Record<string, unknown>) =>
     service.capture(USER_ID, { source: 'ios_manual', external_ref: 'ref-1', ...body } as never);
 
-  it('un concepto elegido se guarda con certeza alta, sin fuente y sin revisar', async () => {
+  it('a chosen concept is saved with high certainty, no source and not for review', async () => {
     const r = await capture({ monto: '45000', category_id: '30' });
 
     expect(r.classification).toMatchObject({
@@ -96,7 +97,7 @@ describe('InterpretacionService con una clasificación elegida', () => {
     );
   });
 
-  it('una categoría elegida (profundidad 2) queda con certeza media y por revisar', async () => {
+  it('a chosen category (depth 2) gets medium certainty and is for review', async () => {
     const r = await capture({ monto: '18500', category_id: '21' });
 
     expect(r.classification).toMatchObject({
@@ -111,20 +112,20 @@ describe('InterpretacionService con una clasificación elegida', () => {
     );
   });
 
-  it('un centro de costos no clasifica nada: 422', async () => {
+  it('a cost center classifies nothing: 422', async () => {
     await expect(capture({ monto: '1000', category_id: '10' })).rejects.toBeInstanceOf(
       ValidationError,
     );
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('un concepto archivado, 422', async () => {
+  it('an archived concept, 422', async () => {
     await expect(capture({ monto: '1000', category_id: '31' })).rejects.toBeInstanceOf(
       ValidationError,
     );
   });
 
-  it('un id ajeno o inexistente, 422', async () => {
+  it("someone else's or a missing id, 422", async () => {
     await expect(capture({ monto: '1000', category_id: '404' })).rejects.toBeInstanceOf(
       ValidationError,
     );
@@ -138,8 +139,8 @@ describe('InterpretacionService con una clasificación elegida', () => {
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it('sin texto ni comercio, con concepto y monto, construye el resultado sin llamar a interpretar()', async () => {
-    // La coma decimal se normaliza aquí, igual que cuando pasa por el motor.
+  it('without text or merchant, with concept and amount, builds the result without calling interpret()', async () => {
+    // The decimal comma is normalised here, as when it goes through the engine.
     const r = await capture({ monto: '45000,00', fecha: '2026-10-03', category_id: '30' });
 
     expect(interpretSpy).not.toHaveBeenCalled();
@@ -155,12 +156,12 @@ describe('InterpretacionService con una clasificación elegida', () => {
     expect(r.summary).toBe('Registrado: $45.000 · Mercado');
   });
 
-  it('sin texto, sin comercio y sin concepto sigue siendo 422, aunque venga el monto', async () => {
+  it('without text, merchant or concept it is still 422, even with an amount', async () => {
     await expect(capture({ monto: '45000' })).rejects.toBeInstanceOf(ValidationError);
     expect(interpretSpy).not.toHaveBeenCalled();
   });
 
-  it('con texto, lo elegido manda sobre lo que el motor propone', async () => {
+  it('with text, the choice wins over what the engine proposes', async () => {
     const r = await capture({
       texto: 'compra por $45.000 en KOBA COLOMBIA el 03/10/2026',
       source: 'sms',
@@ -173,14 +174,14 @@ describe('InterpretacionService con una clasificación elegida', () => {
       categoryId: 21n,
       reason: 'Lo eligió la persona.',
     });
-    // Y lo leído del texto se conserva.
+    // And what was read from the text is kept.
     expect(create).toHaveBeenCalledWith(
       USER_ID,
       expect.objectContaining({ amount: '45000', date: '2026-10-03', category_id: 21 }),
     );
   });
 
-  it('la nota va a notes, y sin monto se le añade el aviso', async () => {
+  it('the note goes to notes, and without an amount the warning is added', async () => {
     await capture({ monto: '1000', category_id: '30', nota: 'Para la semana' });
     expect(create).toHaveBeenLastCalledWith(
       USER_ID,

@@ -4036,7 +4036,7 @@
         "tags": ["Soportes"]
       },
       "post": {
-        "description": "Sube uno o varios soportes.\n\nLos archivos van a MEMORIA y no a disco. Dos razones: el tratamiento —gris\ny compresión— trabaja sobre el búfer de todas formas, y un archivo\ntemporal en disco es un recibo de alguien tirado fuera del almacén\nprivado, aunque sea por un segundo.\n\nEl límite de tamaño se declara DOS veces a propósito: aquí lo corta multer\nantes de leer el cuerpo entero —que es lo que protege la memoria— y en el\nservicio se vuelve a comprobar para dar un mensaje que diga cuál archivo\nfue.",
+        "description": "Uploads one or several receipts.\n\nThe files go to MEMORY and not to disk. Two reasons: the processing —grey\nand compression— works on the buffer anyway, and a temporary file on disk\nis somebody's receipt lying outside the private store, even if only for a\nsecond.\n\nThe size limit is declared TWICE on purpose: here multer cuts it before\nreading the whole body —which is what protects memory— and the service\nchecks again to give a message that says which file it was.",
         "operationId": "SoportesController_subir",
         "parameters": [
           {
@@ -4427,7 +4427,7 @@
     },
     "/api/v1/transactions/interpret": {
       "post": {
-        "description": "Sin efectos: interpreta y devuelve, para rellenar una ficha.",
+        "description": "No side effects: interprets and returns, to fill a form.",
         "operationId": "InterpretacionController_interpretar",
         "parameters": [],
         "requestBody": {
@@ -4524,7 +4524,7 @@
     },
     "/api/v1/transactions/capture": {
       "post": {
-        "description": "Interpreta, clasifica, busca duplicados y crea, de una.\n\nSiempre 200, también cuando crea: la respuesta es «esto es lo que hay con\ntu referencia», sea nuevo, repetido o fusionado, y el cliente lo distingue\npor los dos indicadores del cuerpo. Un 201 solo a veces obligaría a quien\nreintenta a tratar dos códigos como el mismo resultado.",
+        "description": "Interprets, classifies, looks for duplicates and creates, all at once.\n\nAlways 200, also when it creates: the answer is «this is what there is\nunder your reference», whether new, repeated or merged, and the client\ntells them apart by the two flags in the body. A 201 only sometimes would\nforce whoever retries to treat two codes as the same result.",
         "operationId": "InterpretacionController_capturar",
         "parameters": [],
         "requestBody": {
@@ -6577,7 +6577,7 @@
           },
           "monto": {
             "type": "string",
-            "description": "Como cadena decimal. Un número en el JSON se convierte antes de validar.",
+            "description": "As a decimal string. A number in the JSON is converted before validating.",
             "pattern": "^\\d+([.,]\\d{1,2})?$"
           },
           "fecha": {
@@ -6590,7 +6590,7 @@
           },
           "periodo": {
             "type": "string",
-            "description": "`YYYY-MM`: el mes al que pertenece, para elegir entre las fechas de un recibo.",
+            "description": "`YYYY-MM`: the month it belongs to, to choose among a receipt's dates.",
             "pattern": "^\\d{4}-\\d{2}$"
           }
         }
@@ -6629,7 +6629,7 @@
           },
           "monto": {
             "type": "string",
-            "description": "Como cadena decimal. Un número en el JSON se convierte antes de validar.",
+            "description": "As a decimal string. A number in the JSON is converted before validating.",
             "pattern": "^\\d+([.,]\\d{1,2})?$"
           },
           "fecha": {
@@ -6642,7 +6642,7 @@
           },
           "periodo": {
             "type": "string",
-            "description": "`YYYY-MM`: el mes al que pertenece, para elegir entre las fechas de un recibo.",
+            "description": "`YYYY-MM`: the month it belongs to, to choose among a receipt's dates.",
             "pattern": "^\\d{4}-\\d{2}$"
           },
           "source": {
@@ -6651,16 +6651,16 @@
           },
           "external_ref": {
             "type": "string",
-            "description": "La llave de la idempotencia. El cliente la genera al capturar —un UUID—\ny la repite si reintenta: la segunda vez recibe lo que ya se creó.",
+            "description": "The idempotency key. The client generates it when capturing —a UUID— and\nrepeats it when it retries: the second time it gets what was already\ncreated.",
             "maxLength": 255
           },
           "captured_at": {
             "type": "string",
-            "description": "Cuándo se capturó, ISO 8601 con zona. Sin él, ahora."
+            "description": "When it was captured, ISO 8601 with a zone. Without it, now."
           },
           "category_id": {
             "type": "string",
-            "description": "El concepto —o la categoría— que la persona eligió en el formulario rápido\ndel teléfono. Lo elegido MANDA sobre lo que proponga el motor; con esto y\nel monto no hace falta texto ni comercio.\n\nVa aquí y no en `POST /transactions` porque la cola del teléfono necesita\nUN solo endpoint idempotente —siempre 200, `repetido`, `resumen`— para\ntodos sus elementos. Mandar lo manual por el otro camino obligaría a leer\nel 409 del índice único como éxito y partiría la cola en dos.",
+            "description": "The concept —or the category— the person chose in the phone's quick\nform. The choice WINS over whatever the engine proposes; with this and\nthe amount, no text or merchant is needed.\n\nIt goes here and not in `POST /transactions` because the phone's queue\nneeds ONE idempotent endpoint —always 200, `repetido`, `resumen`— for all\nits items. Sending the manual ones the other way would force reading the\nunique index's 409 as a success and would split the queue in two.",
             "pattern": "^\\d+$"
           },
           "nota": {

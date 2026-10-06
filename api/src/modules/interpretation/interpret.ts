@@ -9,53 +9,54 @@ import {
 } from '@coco/receipt-parser';
 
 /**
- * El cerebro: de un texto o de unos datos, a un gasto interpretado.
+ * The brain: from a text or some data, to an interpreted expense.
  *
- * ── Por qué está en la API y no solo en el navegador ────────────────────────
- * La interpretación vivía en `@coco/receipt-parser` y corría solo en el navegador. La
- * API no clasificaba, no sabía de dónde venía un gasto y descartaba el texto
- * leído; una app externa no tenía a quién preguntarle. Ahora el paquete corre
- * aquí tal cual —no se movió ni se duplicó— y la web usa el mismo motor.
+ * ── Why it lives in the API and not only in the browser ─────────────────────
+ * Interpretation lived in `@coco/receipt-parser` and ran only in the browser.
+ * The API did not classify, did not know where an expense came from and threw
+ * away the text it read; an external app had nobody to ask. Now the package
+ * runs here as is —it was neither moved nor duplicated— and the web uses the
+ * same engine.
  *
- * ── Las fuentes, en su orden ────────────────────────────────────────────────
- * 1. El HISTORIAL de la persona: lo que el servidor sabe porque así lo
- *    clasificó antes. Aquí sí está disponible, que es lo que el navegador no
- *    podía tener.
- * 2. Sus PALABRAS CLAVE, y el catálogo de firmas del sistema.
- * 3. El DICCIONARIO del sistema, cuando nadie reconoció al acreedor.
- * Una fuente inferior nunca reemplaza a una superior.
+ * ── The sources, in order ───────────────────────────────────────────────────
+ * 1. The person's HISTORY: what the server knows because it was classified
+ *    that way before. It is available here, which is what the browser could
+ *    not have.
+ * 2. Their KEYWORDS, and the system's catalogue of signatures.
+ * 3. The system's DICTIONARY, when nobody recognised the payee.
+ * A lower source never replaces a higher one.
  *
- * ── Y la certeza ────────────────────────────────────────────────────────────
- * ALTA es un concepto concreto. MEDIA es una categoría, o varios conceptos
- * entre los que no se elige. NINGUNA es nada. Con lo que no sea alta, quien
- * capture guarda sin clasificar o con la categoría, y marca para revisar.
- * Nunca se adivina.
+ * ── And the certainty ───────────────────────────────────────────────────────
+ * HIGH (`alta`) is one concrete concept. MEDIUM (`media`) is a category, or
+ * several concepts with no choice among them. NONE (`ninguna`) is nothing.
+ * With anything short of high, the capture saves unclassified or with the
+ * category, and flags it for review. It never guesses.
  *
- * Es una función pura: todo lo que necesita —el árbol, la sugerencia del
- * historial— se lo da quien la llama, que es quien tiene la base.
+ * It is a pure function: everything it needs —the tree, the history's
+ * suggestion— comes from the caller, which is the one with the database.
  */
 export type InterpretedCertainty = 'alta' | 'media' | 'ninguna';
 export type InterpretedSource = 'historial' | 'palabras-clave' | 'firma' | 'diccionario';
 
 export interface InterpretationInput {
-  /** Texto libre: el OCR de un recibo, el SMS del banco. */
+  /** Free text: the OCR of a receipt, the bank's SMS. */
   text?: string | null | undefined;
-  /** O datos ya estructurados, como los entrega el disparador de Wallet. */
+  /** Or data already structured, as the Wallet trigger sends it. */
   merchant?: string | null | undefined;
   amount?: string | number | null | undefined;
   /** `YYYY-MM-DD`. */
   date?: string | null | undefined;
   fileName?: string | null | undefined;
-  /** El mes al que pertenece, `YYYY-MM`. Ayuda a elegir la fecha. */
+  /** The month it belongs to, `YYYY-MM`. Helps to pick the date. */
   period?: string | null | undefined;
 }
 
 export interface InterpretationContext {
-  /** El árbol de la persona, con ids como cadenas. */
+  /** The person's tree, with ids as strings. */
   tree: readonly SearchableNode[];
-  /** Lo que el historial sugiere para este texto, si algo. */
+  /** What the history suggests for this text, if anything. */
   history: { categoryId: string; confidence: number } | null;
-  /** Hoy, `YYYY-MM-DD`, para no aceptar fechas futuras de un OCR torcido. */
+  /** Today, `YYYY-MM-DD`, so a crooked OCR's future dates are not accepted. */
   today: string;
 }
 
@@ -79,13 +80,13 @@ export interface Interpreted {
 }
 
 /**
- * Por encima de esto, una sugerencia del historial vale como certeza ALTA.
+ * From this up, a history suggestion counts as HIGH certainty.
  *
- * El historial contesta con un porcentaje de dominio: 100 cuando todo lo
- * parecido fue a la misma categoría, 85 para una regla que la persona creó,
- * 60 para una regla sembrada. Con 80 se cuelan la unanimidad y las reglas
- * propias, y se quedan fuera las sembradas y los historiales repartidos, que
- * es justo lo que no debería guardarse sin que alguien lo mire.
+ * The history answers with a dominance percentage: 100 when everything alike
+ * went to the same category, 85 for a rule the person created, 60 for a
+ * seeded rule. At 80 unanimity and the person's own rules get through, and
+ * seeded rules and split histories stay out, which is exactly what should not
+ * be saved without somebody looking at it.
  */
 export const SAFE_HISTORY_CONFIDENCE = 80;
 
@@ -94,9 +95,9 @@ export function interpret(input: InterpretationInput, context: InterpretationCon
   const freeText = (input.text ?? '').trim();
   const merchant = (input.merchant ?? '').trim();
 
-  // Lo que se le da a leer: el texto si lo hay; si no, el comercio solo. Un
-  // comercio es un texto muy corto, y el lector sabe sacar de ahí el acreedor
-  // aunque no haya monto ni fecha que leer.
+  // What it is given to read: the text if there is one; otherwise the merchant
+  // alone. A merchant is a very short text, and the reader knows how to get the
+  // payee out of it even with no amount or date to read.
   const reading = classify({
     text: freeText || merchant,
     source: 'texto-embebido',
@@ -106,8 +107,8 @@ export function interpret(input: InterpretationInput, context: InterpretationCon
     tree: context.tree,
   });
 
-  // Lo estructurado manda sobre lo leído: si quien captura ya sabe el monto,
-  // no hay nada que adivinar en el texto.
+  // Structured data wins over what was read: if the capture already knows the
+  // amount, there is nothing to guess from the text.
   const amount = amountOf(input.amount) ?? (reading.value === null ? null : String(reading.value));
   const date = validDate(input.date, context.today) ?? validDate(reading.date, context.today);
 
@@ -121,12 +122,12 @@ export function interpret(input: InterpretationInput, context: InterpretationCon
     amount,
     date,
     merchant: merchant || reading.concept || null,
-    // La descripción es lo que se lee de un vistazo en la tabla: el comercio
-    // si se sabe; si no, el concepto reconocido; si no, nada.
+    // The description is what the table shows at a glance: the merchant if
+    // known; otherwise the recognised concept; otherwise nothing.
     description: merchant || reading.concept || null,
     classification,
-    // Falta algo que alguien tiene que poner —el monto, la fecha— o la
-    // clasificación no es segura: a revisar.
+    // Something is missing that somebody has to fill in —the amount, the date—
+    // or the classification is not certain: flag it for review.
     needsReview: classification.certainty !== 'alta' || amount === null || date === null,
   };
 }
@@ -151,7 +152,7 @@ function classifyWith(
   );
 }
 
-/** 1. El historial, si tiene algo que decir. */
+/** 1. The history, if it has something to say. */
 function byHistory(
   context: InterpretationContext,
   index: readonly IndexEntry[],
@@ -179,7 +180,7 @@ function byHistory(
   return null;
 }
 
-/** 2 y 3. Lo que la lectura reconoció, por palabras clave, firma o diccionario. */
+/** 2 and 3. What the reading recognised, by keywords, signature or dictionary. */
 function byReading(
   index: readonly IndexEntry[],
   inTree: NonNullable<ReturnType<typeof classify>['inTree']>,
@@ -208,7 +209,7 @@ function byReading(
   };
 }
 
-/** Un monto estructurado, como cadena decimal, o `null` si no sirve. */
+/** A structured amount, as a decimal string, or `null` if it is no good. */
 function amountOf(amount: string | number | null | undefined): string | null {
   if (amount === null || amount === undefined || amount === '') return null;
   const n = typeof amount === 'number' ? amount : Number(amount.replace(',', '.'));
@@ -216,7 +217,7 @@ function amountOf(amount: string | number | null | undefined): string | null {
   return String(n);
 }
 
-/** `YYYY-MM-DD`, real y no futura. Lo demás es `null`. */
+/** `YYYY-MM-DD`, a real date and not a future one. Anything else is `null`. */
 function validDate(date: string | null | undefined, today: string): string | null {
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
   if (Number.isNaN(Date.parse(date))) return null;
@@ -225,8 +226,8 @@ function validDate(date: string | null | undefined, today: string): string | nul
 }
 
 /**
- * Para una notificación: «Registrado: $45.000 · Alimentación», o «Pendiente
- * de clasificar». Tres palabras, que es como se lee una notificación.
+ * For a notification: «Registrado: $45.000 · Alimentación», or «Pendiente de
+ * clasificar». Three words, which is how a notification is read.
  */
 export function summaryOf(
   amount: string | null,
@@ -244,7 +245,7 @@ export function summaryOf(
     : 'Pendiente de clasificar';
 }
 
-/** `45000` → `$45.000`. Sin decimales: así se escribe la plata aquí. */
+/** `45000` → `$45.000`. No decimals: that is how money is written here. */
 export function pesos(amount: string | number): string {
   const n = Math.round(Number(amount));
   if (!Number.isFinite(n)) return '$0';

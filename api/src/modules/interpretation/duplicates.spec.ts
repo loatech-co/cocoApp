@@ -1,9 +1,9 @@
 import { DUPLICATE_WINDOW_MS, decideDuplicate, enrich, type KnownCapture } from './duplicates';
 
 /**
- * Wallet y SMS: la misma plata, dos veces. Lo que no puede fallar: que se
- * fusionen cuando son lo mismo, que se marque cuando se parecen, y que dos
- * capturas del MISMO origen nunca se junten.
+ * Wallet and SMS: the same money, twice. What cannot fail: that they merge
+ * when they are the same, that it is flagged when they look alike, and that
+ * two captures from the SAME source are never merged.
  */
 const t0 = new Date('2026-10-04T15:00:00Z');
 const later = (ms: number) => new Date(t0.getTime() + ms);
@@ -31,24 +31,24 @@ const sms = (ms: number, extra: Partial<Parameters<typeof decideDuplicate>[0]> =
   ...extra,
 });
 
-describe('Wallet seguido de SMS', () => {
-  it('dentro de la ventana, mismo monto y misma fecha: es el mismo pago', () => {
+describe('Wallet followed by SMS', () => {
+  it('within the window, same amount and same date: it is the same payment', () => {
     const v = decideDuplicate(sms(90_000), [wallet]);
     expect(v.kind).toBe('exact');
     if (v.kind === 'exact') expect(v.match.id).toBe(1n);
   });
 
-  it('justo en el borde de la ventana todavía cuenta', () => {
+  it('right at the edge of the window still counts', () => {
     expect(decideDuplicate(sms(DUPLICATE_WINDOW_MS), [wallet]).kind).toBe('exact');
   });
 
-  it('fuera de la ventana pero el mismo día: parecido parcial, a revisar', () => {
+  it('outside the window but the same day: a partial match, for review', () => {
     expect(decideDuplicate(sms(DUPLICATE_WINDOW_MS + 1), [wallet]).kind).toBe('partial');
   });
 
-  it('otra fecha pero a minutos de distancia —medianoche—: parcial', () => {
-    // Pago a las 23:58 del 3, SMS a las 00:02 del 4. Es el mismo pago, pero
-    // la fecha no coincide: se guarda y se marca, no se adivina.
+  it('another date but minutes apart —midnight—: partial', () => {
+    // Payment at 23:58 on the 3rd, SMS at 00:02 on the 4th. It is the same
+    // payment, but the date does not match: it is saved and flagged, not guessed.
     const lastNight = {
       ...wallet,
       date: '2026-10-03',
@@ -61,21 +61,21 @@ describe('Wallet seguido de SMS', () => {
     expect(v.kind).toBe('partial');
   });
 
-  it('otro monto no es duplicado de nada', () => {
+  it('another amount is a duplicate of nothing', () => {
     expect(decideDuplicate(sms(60_000, { amount: '46000' }), [wallet]).kind).toBe('none');
   });
 
-  it('el mismo origen NUNCA se fusiona: dos SMS son dos compras', () => {
+  it('the same source NEVER merges: two SMS are two purchases', () => {
     const otherSms: KnownCapture = { ...wallet, id: 2n, source: 'sms' };
     expect(decideDuplicate(sms(30_000), [otherSms]).kind).toBe('none');
   });
 
-  it('una captura desde la web o a mano no busca duplicados', () => {
+  it('a capture from the web or by hand does not look for duplicates', () => {
     expect(decideDuplicate(sms(30_000, { source: 'web' }), [wallet]).kind).toBe('none');
     expect(decideDuplicate(sms(30_000, { source: 'ios_manual' }), [wallet]).kind).toBe('none');
   });
 
-  it('entre varias candidatas gana la más cercana en el tiempo', () => {
+  it('among several candidates the closest in time wins', () => {
     const distant: KnownCapture = {
       ...wallet,
       id: 9n,
@@ -87,24 +87,24 @@ describe('Wallet seguido de SMS', () => {
     if (v.kind === 'exact') expect(v.match.id).toBe(1n);
   });
 
-  it('sin capturedAt en la conocida se usa cuándo llegó', () => {
+  it('without capturedAt on the known one, its arrival time is used', () => {
     const withoutCapturedAt: KnownCapture = { ...wallet, capturedAt: null };
     expect(decideDuplicate(sms(60_000), [withoutCapturedAt]).kind).toBe('exact');
   });
 });
 
-describe('Enriquecer la que ya estaba', () => {
-  it('aporta solo lo que falta: el texto del SMS, no el comercio que Wallet ya trajo', () => {
+describe('Enriching the existing one', () => {
+  it('adds only what is missing: the SMS text, not the merchant Wallet already brought', () => {
     const changes = enrich(wallet, sms(0));
     expect(changes).toEqual({ rawText: 'Bancolombia: compra por $45.000 en EXITO POBLADO' });
   });
 
-  it('nunca pisa lo que había', () => {
+  it('never overwrites what was there', () => {
     const withText: KnownCapture = { ...wallet, rawText: 'lo primero que se supo' };
     expect(enrich(withText, sms(0))).toEqual({});
   });
 
-  it('un SMS primero y Wallet después: Wallet aporta el comercio', () => {
+  it('an SMS first and Wallet later: Wallet adds the merchant', () => {
     const smsFirst: KnownCapture = {
       ...wallet,
       source: 'sms',

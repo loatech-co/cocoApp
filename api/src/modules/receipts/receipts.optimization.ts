@@ -8,69 +8,69 @@ import sharp from 'sharp';
 import { readEnv } from '../../common/env';
 
 /**
- * El tratamiento de un soporte antes de guardarlo.
+ * What a receipt goes through before it is saved.
  *
- * ── Por qué se toca el archivo ──────────────────────────────────────────────
- * Un recibo es una hoja escaneada o una foto del móvil: llega a color, a
- * cuatro mil píxeles de ancho y pesando tres megas, y no hace falta nada de
- * eso. Lo que se consulta de un recibo es el valor, la fecha y el membrete, y
- * eso se lee igual en gris y a 120 ppp. La diferencia es de cien a uno en
- * disco y en lo que tarda en abrirse.
+ * ── Why the file is touched ─────────────────────────────────────────────────
+ * A receipt is a scanned sheet or a phone photo: it arrives in colour, four
+ * thousand pixels wide and weighing three megabytes, and none of that is
+ * needed. What anyone looks up in a receipt is the value, the date and the
+ * letterhead, and those read the same in grey at 120 dpi. The difference is a
+ * hundred to one on disk and in how long it takes to open.
  *
- * ── Por qué gris y no solo comprimir ────────────────────────────────────────
- * Porque casi todos los recibos SON grises —tinta negra sobre papel— y el
- * color que traen es el ruido del escáner: un fondo levemente azul, un sello
- * que no aporta. Quitarlo pesa menos y además deja el lote entero con el
- * mismo aspecto, que es lo que hace que una lista de ocho miniaturas se lea
- * como un conjunto y no como ocho fotos sueltas.
+ * ── Why grey and not just compression ───────────────────────────────────────
+ * Because almost every receipt IS grey —black ink on paper— and the colour it
+ * carries is scanner noise: a faintly blue background, a stamp that adds
+ * nothing. Removing it weighs less and also gives the whole batch the same
+ * look, which is what makes a row of eight thumbnails read as a set and not
+ * as eight loose photos.
  *
- * ── Estos parámetros y no otros ─────────────────────────────────────────────
- * Son los del lote que ya está cargado. No se eligieron aquí: se copian para
- * que un soporte subido desde la aplicación quede indistinguible de los 443
- * que entraron por el importador. Si algún día se cambian, se cambian para
- * los dos sitios a la vez, que es justo por lo que este módulo existe.
+ * ── These parameters and no others ──────────────────────────────────────────
+ * They are the ones of the batch already loaded. They were not chosen here:
+ * they are copied so a receipt uploaded from the app is indistinguishable
+ * from the 443 that came in through the importer. If they ever change, they
+ * change in both places at once, which is exactly why this module exists.
  */
 
 /*
-  ── libvips trabaja con UN hilo, y no es una optimización ────────────────────
-  Es lo que hace que funcione en el servidor donde esto vive.
+  ── libvips works with ONE thread, and it is not an optimisation ─────────────
+  It is what makes it work on the server where this lives.
 
-  `sharp` es un envoltorio de libvips, que de fábrica abre una piscina de hilos
-  del tamaño del número de núcleos que ve. En un hosting COMPARTIDO eso es una
-  trampa: la máquina declara dieciséis núcleos porque los tiene, pero la cuenta
-  tiene un cupo de procesos e hilos muy por debajo de eso y compartido con todo
-  lo demás que esté corriendo. libvips pide su piscina, `pthread_create`
-  devuelve EAGAIN y el error que sale por abajo es
+  `sharp` wraps libvips, which by default opens a thread pool as large as the
+  number of cores it sees. On SHARED hosting that is a trap: the machine
+  reports sixteen cores because it has them, but the account has a process
+  and thread quota far below that, shared with everything else running.
+  libvips asks for its pool, `pthread_create` returns EAGAIN and the error
+  that comes out at the bottom is
 
       glib: Error creating thread: Resource temporarily unavailable
 
-  que además es INTERMITENTE —depende de cuánto esté gastando el vecino en ese
-  segundo—, así que la misma captura falla una vez y entra a la siguiente. Es
-  el mismo cupo que ya nos había mordido en los despliegues.
+  which is also INTERMITTENT —it depends on how much the neighbour is using in
+  that second—, so the same capture fails once and goes through the next
+  time. It is the same quota that had already bitten us in deployments.
 
-  Con la concurrencia en 1, libvips hace el trabajo en el hilo que ya tiene y
-  no pide ninguno. Se pierde velocidad en una imagen grande y no se pierde
-  nada más: aquí se trata UN recibo de 1100px de ancho, no un lote.
+  With concurrency at 1, libvips does the work on the thread it already has
+  and asks for none. A large image loses speed and nothing else is lost:
+  this processes ONE receipt 1100px wide, not a batch.
 
-  Se deja configurable porque en una máquina propia —un contenedor con sus
-  núcleos— subirlo sí compensa. El valor de fábrica es el que aguanta en el
-  sitio donde de verdad está desplegado.
+  It stays configurable because on a machine of our own —a container with its
+  cores— raising it does pay off. The default is the one that holds where it
+  is really deployed.
 
-  `cache(false)` va por lo mismo: la caché de libvips reserva memoria y abre
-  descriptores para reutilizar operaciones entre llamadas, y aquí no hay nada
-  que reutilizar —cada soporte se trata una vez y no vuelve—.
+  `cache(false)` is for the same reason: libvips's cache reserves memory and
+  opens descriptors to reuse operations between calls, and there is nothing
+  to reuse here —each receipt is processed once and never comes back—.
 */
 sharp.concurrency(Number(process.env.SHARP_CONCURRENCY) || 1);
 sharp.cache(false);
 
-/** Ancho máximo de una imagen. Un recibo más ancho no se lee mejor. */
+/** Maximum width of an image. A wider receipt does not read any better. */
 const MAX_WIDTH = 1100;
-/** Calidad JPEG. Por debajo de 50 el valor empieza a costar de leer. */
+/** JPEG quality. Below 50 the value starts to be hard to read. */
 const JPEG_QUALITY = 55;
-/** Resolución de las imágenes dentro de un PDF. */
+/** Resolution of the images inside a PDF. */
 const PPP = 120;
 
-/** Lo que se acepta subir, por tipo declarado. */
+/** What may be uploaded, by declared type. */
 export const INPUT_TYPES = new Set([
   'application/pdf',
   'image/jpeg',
@@ -81,15 +81,15 @@ export const INPUT_TYPES = new Set([
 ]);
 
 /**
- * La firma con la que empieza cada tipo de entrada.
+ * The signature each input type starts with.
  *
- * El `mimetype` lo escribe el cliente: se puede mandar cualquier cosa
- * etiquetada como `application/pdf` y llegaría tal cual a ghostscript, que es
- * un intérprete de PostScript. Lo que se procesa es lo que los PRIMEROS bytes
- * dicen que es, y tiene que coincidir con lo que se declaró.
+ * The client writes the `mimetype`: anything labelled `application/pdf` could
+ * be sent and would reach ghostscript as is, and ghostscript is a PostScript
+ * interpreter. What gets processed is what the FIRST bytes say it is, and it
+ * has to match what was declared.
  *
- * HEIC/HEIF son contenedores ISO BMFF (`ftyp` en el byte 4); WEBP es RIFF con
- * `WEBP` en el byte 8.
+ * HEIC/HEIF are ISO BMFF containers (`ftyp` at byte 4); WEBP is RIFF with
+ * `WEBP` at byte 8.
  */
 const MAGIC_BYTES: Record<string, readonly { offset: number; bytes: Buffer }[]> = {
   'application/pdf': [{ offset: 0, bytes: Buffer.from('%PDF-', 'latin1') }],
@@ -105,7 +105,7 @@ const MAGIC_BYTES: Record<string, readonly { offset: number; bytes: Buffer }[]> 
   ],
 };
 
-/** ¿Los bytes del archivo son de verdad del tipo que se declaró? */
+/** Are the file's bytes really of the declared type? */
 export function matchesDeclaredType(content: Buffer, mime: string): boolean {
   const signatures = MAGIC_BYTES[mime];
   if (!signatures) return false;
@@ -115,42 +115,42 @@ export function matchesDeclaredType(content: Buffer, mime: string): boolean {
 }
 
 /**
- * Lo más que puede tardar ghostscript con un PDF. Uno legítimo de recibos
- * tarda segundos; uno hecho para colgarlo se queda con un proceso de una
- * cuota que en el hosting es mínima. Pasado el tope, se mata.
+ * The longest ghostscript may take with a PDF. A legitimate receipt PDF takes
+ * seconds; one crafted to hang it keeps a process out of a quota that is tiny
+ * on the hosting. Past the limit, it is killed.
  */
 const GHOSTSCRIPT_TIMEOUT_MS = 20_000;
 
-/** Tope de entrada. Lo que salga de aquí pesará una fracción. */
+/** Input limit. Whatever comes out of here weighs a fraction. */
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
 export interface OptimizedReceipt {
   content: Buffer;
   mime: string;
-  /** Sin punto: `pdf` o `jpg`. */
+  /** Without the dot: `pdf` or `jpg`. */
   extension: 'pdf' | 'jpg' | 'png';
 }
 
 /**
- * El binario de ghostscript.
+ * The ghostscript binary.
  *
- * Configurable porque no está en el mismo sitio en todas partes —en el
- * servidor es `/usr/bin/gs`, en un Mac con Homebrew cuelga de `/opt/homebrew`—
- * y porque si algún día no está, conviene poder apuntarlo a otro sin tocar
- * código.
+ * Configurable because it is not in the same place everywhere —on the server
+ * it is `/usr/bin/gs`, on a Mac with Homebrew it hangs from `/opt/homebrew`—
+ * and because if it is ever missing, it is worth being able to point at
+ * another one without touching code.
  */
 function ghostscriptBinary(): string {
-  // Con comillas dentro del valor —que es como llega en el servidor— `spawn`
-  // busca un ejecutable llamado `"/usr/bin/gs"` y ningún PDF se optimiza.
+  // With quotes inside the value —which is how it arrives on the server—
+  // `spawn` looks for an executable called `"/usr/bin/gs"` and no PDF is optimised.
   return readEnv('GHOSTSCRIPT_BIN') ?? 'gs';
 }
 
 /**
- * Deja un soporte listo para guardarse: en gris y liviano.
+ * Gets a receipt ready to be saved: grey and light.
  *
- * Un PDF sigue siendo un PDF —tiene páginas, y aplanarlo a una imagen perdería
- * las que no son la primera— y cualquier imagen sale como JPG, venga como
- * venga: png, webp o la foto HEIC de un iPhone.
+ * A PDF stays a PDF —it has pages, and flattening it to an image would lose
+ * all but the first— and any image comes out as JPG, whatever it came as:
+ * png, webp or an iPhone's HEIC photo.
  */
 export async function optimize(content: Buffer, mime: string): Promise<OptimizedReceipt> {
   if (mime === 'application/pdf') {
@@ -161,27 +161,27 @@ export async function optimize(content: Buffer, mime: string): Promise<Optimized
 }
 
 /**
- * Imagen → JPG en gris, como mucho 1100px de ancho.
+ * Image → grey JPG, at most 1100px wide.
  *
- * `withoutEnlargement` para no inflar una captura pequeña hasta 1100: subirla
- * de tamaño no añade un solo detalle y sí peso.
+ * `withoutEnlargement` so a small screenshot is not blown up to 1100:
+ * enlarging it adds no detail and does add weight.
  *
- * Y se descartan los METADATOS al no pedirlos: una foto de un recibo lleva el
- * modelo del teléfono y, si el GPS estaba encendido, las coordenadas de dónde
- * se tomó. Eso no es parte del recibo.
+ * And the METADATA is dropped by not asking for it: a photo of a receipt
+ * carries the phone model and, if GPS was on, the coordinates where it was
+ * taken. That is not part of the receipt.
  */
 async function optimizeImage(content: Buffer): Promise<Buffer> {
   return (
     sharp(content, { failOn: 'none' })
-      .rotate() // Respeta el EXIF antes de tirarlo: si no, la foto sale tumbada.
+      .rotate() // Honours the EXIF before dropping it: otherwise the photo comes out sideways.
       .grayscale()
       /*
-        `toColourspace('b-w')` además de `grayscale()`, y no es redundante.
+        `toColourspace('b-w')` on top of `grayscale()`, and it is not redundant.
 
-        `grayscale()` deja la imagen gris pero el JPEG sale igual con sus tres
-        canales —los tres con el mismo valor— y pesa un tercio más para no
-        decir nada nuevo. Esto lo escribe con UN canal, que es lo que hace
-        `-colorspace Gray` en ImageMagick, con el que se trató el lote.
+        `grayscale()` makes the image grey but the JPEG still comes out with
+        its three channels —all three with the same value— and weighs a third
+        more to say nothing new. This writes it with ONE channel, which is
+        what `-colorspace Gray` does in ImageMagick, used for the batch.
       */
       .toColourspace('b-w')
       .resize({ width: MAX_WIDTH, withoutEnlargement: true })
@@ -191,20 +191,19 @@ async function optimizeImage(content: Buffer): Promise<Buffer> {
 }
 
 /**
- * PDF → PDF en gris, comprimido y remuestreado a 120 ppp.
+ * PDF → grey PDF, compressed and resampled to 120 dpi.
  *
- * ── Por qué ghostscript y no una librería de Node ───────────────────────────
- * Porque lo que hay que hacer no es reescribir el PDF sino REPROCESAR lo que
- * lleva dentro: convertir cada imagen incrustada a gris y bajarle la
- * resolución. Las librerías de Node saben manipular la estructura de un PDF
- * —páginas, campos, firmas— pero no recodifican sus imágenes, que es donde
- * está todo el peso de un escaneo.
+ * ── Why ghostscript and not a Node library ──────────────────────────────────
+ * Because the job is not rewriting the PDF but REPROCESSING what is inside:
+ * turning each embedded image grey and lowering its resolution. Node
+ * libraries can handle a PDF's structure —pages, fields, signatures— but do
+ * not re-encode its images, which is where all the weight of a scan is.
  *
- * ── Por qué por archivos y no por tuberías ──────────────────────────────────
- * Ghostscript lee de la entrada estándar con `-`, pero para escribir en la
- * salida estándar hay que pedirle `-sOutputFile=-`, y entonces mezcla el PDF
- * con sus propios avisos en el mismo flujo. Un archivo temporal cuesta dos
- * escrituras y no tiene forma de salir corrupto.
+ * ── Why files and not pipes ─────────────────────────────────────────────────
+ * Ghostscript reads standard input with `-`, but writing to standard output
+ * needs `-sOutputFile=-`, and then it mixes the PDF with its own warnings in
+ * the same stream. A temporary file costs two writes and has no way to come
+ * out corrupt.
  */
 async function optimizePdf(content: Buffer): Promise<Buffer> {
   const folder = await mkdtemp(join(tmpdir(), 'coco-soporte-'));
@@ -219,12 +218,12 @@ async function optimizePdf(content: Buffer): Promise<Buffer> {
     const result = await readFile(output);
 
     /*
-      Si el tratamiento no adelgaza, se queda el original.
+      If processing does not slim it down, the original stays.
 
-      Pasa con los PDF que ya vienen optimizados —los del lote, sin ir más
-      lejos— donde reprocesar añade la estructura de ghostscript sin quitar
-      nada. Quedarse con el resultado más grande sería pagar por el trabajo de
-      empeorarlo.
+      It happens with PDFs that arrive already optimised —the batch's, to
+      begin with— where reprocessing adds ghostscript's structure without
+      removing anything. Keeping the larger result would be paying for the
+      work of making it worse.
     */
     return result.length > 0 && result.length < content.length ? result : content;
   } finally {
@@ -233,10 +232,10 @@ async function optimizePdf(content: Buffer): Promise<Buffer> {
 }
 
 /**
- * Los argumentos de ghostscript. `-dSAFER` va primero y es la protección: sin
- * él, un PDF puede pedirle al intérprete que lea o escriba archivos del
- * servidor y que ejecute órdenes. Las versiones recientes lo traen por
- * defecto; se escribe igual para no depender de la que haya instalada.
+ * The ghostscript arguments. `-dSAFER` goes first and is the protection:
+ * without it, a PDF can ask the interpreter to read or write the server's
+ * files and to run commands. Recent versions have it by default; it is
+ * written anyway so as not to depend on the installed one.
  */
 export function ghostscriptArgs(input: string, output: string): string[] {
   return [
@@ -259,7 +258,7 @@ export function ghostscriptArgs(input: string, output: string): string[] {
   ];
 }
 
-/** Ejecuta un proceso y falla con su salida de error, que es la que explica. */
+/** Runs a process and fails with its error output, which is what explains it. */
 export function run(
   binary: string,
   args: string[],
@@ -270,8 +269,8 @@ export function run(
     let error = '';
     let isTimedOut = false;
 
-    // SIGKILL y no SIGTERM: un intérprete atascado puede ignorar la petición
-    // de terminar, y lo que se quiere es recuperar el proceso.
+    // SIGKILL and not SIGTERM: a stuck interpreter may ignore the request to
+    // finish, and what is wanted is to get the process back.
     const timer = setTimeout(() => {
       isTimedOut = true;
       child.kill('SIGKILL');
@@ -305,28 +304,27 @@ export function run(
 }
 
 /**
- * Lo que llegó, sin tratar, si es algo que la aplicación sabe enseñar.
+ * What arrived, unprocessed, if it is something the app knows how to show.
  *
- * ── Para cuándo es ─────────────────────────────────────────────────────────
- * Para cuando tratar la imagen falla por falta de recursos. Tratarla es una
- * MEJORA —gris, 1100px, un tercio del peso—, no un requisito: el recibo se ve
- * igual sin ella. Perder el soporte porque al servidor le faltaban hilos en
- * ese segundo es cambiar una mejora por un fallo, que es exactamente lo que
- * hacía: «no se pudo procesar», y el archivo a la basura.
+ * ── When it is for ─────────────────────────────────────────────────────────
+ * For when processing the image fails for lack of resources. Processing is an
+ * IMPROVEMENT —grey, 1100px, a third of the weight—, not a requirement: the
+ * receipt looks the same without it. Losing the receipt because the server
+ * was short of threads in that second trades an improvement for a failure,
+ * which is exactly what it did: «could not process», and the file in the bin.
  *
- * Es el mismo trato que ya se da en el navegador, donde encoger antes de subir
- * también cede el paso al original si no se puede.
+ * It is the same treatment the browser already gives, where shrinking before
+ * upload also falls back to the original when it cannot.
  *
- * ── Por qué solo estos tres ────────────────────────────────────────────────
- * Porque son los que el visor de la aplicación sabe abrir. Guardar un HEIC sin
- * tratar sería guardar un archivo que después no se puede mirar: ahí el
- * problema es el formato y ceder no arregla nada.
+ * ── Why only these three ───────────────────────────────────────────────────
+ * Because they are the ones the app's viewer can open. Saving an
+ * unprocessed HEIC would save a file nobody can look at afterwards: there the
+ * problem is the format, and giving way fixes nothing.
  */
 export function asReceived(content: Buffer, mime: string): OptimizedReceipt | null {
-  // La extensión dice la VERDAD de lo que se guarda. Un PNG con nombre `.jpg`
-  // es un archivo que miente sobre sí mismo, y el día que alguien lea el
-  // almacén por fuera de la aplicación —un respaldo, un script— se encuentra
-  // con que la mitad de los `.jpg` no lo son.
+  // The extension tells the TRUTH about what is saved. A PNG named `.jpg` is a
+  // file that lies about itself, and the day somebody reads the store from
+  // outside the app —a backup, a script— they find that half the `.jpg` are not.
   if (mime === 'application/pdf') return { content, mime, extension: 'pdf' };
   if (mime === 'image/jpeg') return { content, mime, extension: 'jpg' };
   if (mime === 'image/png') return { content, mime, extension: 'png' };
@@ -334,26 +332,25 @@ export function asReceived(content: Buffer, mime: string): OptimizedReceipt | nu
 }
 
 /**
- * ¿Esto falló por falta de RECURSOS del servidor, y no por el archivo?
+ * Did this fail for lack of server RESOURCES, and not because of the file?
  *
- * ── Por qué hay que distinguirlo ────────────────────────────────────────────
- * Porque las dos cosas se contestan al revés. Un formato que la librería no
- * sabe abrir —el HEIC de un iPhone— es definitivo: por más que se reintente,
- * ese archivo no va a entrar, y lo que hay que decir es «manda un JPG». Un
- * hilo que no se pudo crear es pasajero: el archivo está perfecto y lo único
- * que hay que hacer es esperar un momento.
+ * ── Why it must be told apart ───────────────────────────────────────────────
+ * Because the two are answered in opposite ways. A format the library cannot
+ * open —an iPhone's HEIC— is final: however often it is retried, that file
+ * will not get in, and what has to be said is «send a JPG». A thread that
+ * could not be created is passing: the file is perfect and the only thing to
+ * do is wait a moment.
  *
- * Estaban mezclados, y el resultado era el peor de los dos: una captura PNG
- * recibía «este servidor no sabe abrir ese formato, vuelve a intentarlo con un
- * JPG o un PNG» —es decir, un consejo imposible de seguir, porque ya era un
- * PNG— y el problema real quedaba escondido en el paréntesis del final.
+ * They were mixed, and the result was the worse of both: a PNG screenshot got
+ * «this server cannot open that format, try again with a JPG or a PNG» —a
+ * piece of advice impossible to follow, since it already was a PNG— and the
+ * real problem stayed hidden in the closing parenthesis.
  *
- * ── Qué se mira ─────────────────────────────────────────────────────────────
- * El texto, porque es lo único que hay: libvips y ghostscript no devuelven un
- * código, devuelven la cadena que les dio el sistema operativo. Son los
- * errores de agotamiento de toda la vida —no poder crear un hilo, no poder
- * reservar memoria, no quedar descriptores— y sus nombres no los inventa
- * ninguna librería: los pone `errno`.
+ * ── What is looked at ───────────────────────────────────────────────────────
+ * The text, because it is all there is: libvips and ghostscript return no
+ * code, they return the string the operating system gave them. They are the
+ * classic exhaustion errors —cannot create a thread, cannot reserve memory,
+ * no descriptors left— and no library invents their names: `errno` does.
  */
 export function isOutOfResources(cause: unknown): boolean {
   const message = cause instanceof Error ? cause.message : String(cause);
@@ -364,28 +361,28 @@ export function isOutOfResources(cause: unknown): boolean {
 }
 
 /**
- * El nombre con el que se guarda un soporte: `<Concepto> - <Fecha de pago>`.
+ * The name a receipt is saved under: `<Concept> - <Payment date>`.
  *
- * ── Por qué NO el nombre que traía el archivo ───────────────────────────────
- * Porque el nombre que trae es `IMG_4821.HEIC` o `scan0007.pdf`, que no dice
- * de qué pago es. El del movimiento sí, y además hace que lo subido desde la
- * aplicación quede igual que los 443 del lote, que se nombraron así.
+ * ── Why NOT the name the file came with ─────────────────────────────────────
+ * Because the name it brings is `IMG_4821.HEIC` or `scan0007.pdf`, which does
+ * not say which payment it is. The transaction's does, and it also makes what
+ * is uploaded from the app match the 443 of the batch, named that way.
  *
- * ── Por qué sin el "i de N" ─────────────────────────────────────────────────
- * Porque el total cambia en cuanto se añade uno. Horneado en el nombre, el
- * cuarto soporte de un movimiento que decía "1 de 3" obligaría a renombrar los
- * tres anteriores. El orden vive en su columna y el "i de N" se calcula al
- * mirarlo.
+ * ── Why without the "i of N" ────────────────────────────────────────────────
+ * Because the total changes as soon as one is added. Baked into the name, a
+ * transaction's fourth receipt would force renaming the three earlier ones
+ * that said "1 of 3". The order lives in its column and the "i of N" is
+ * computed when it is looked at.
  */
 export function receiptFileName(concept: string, isoDate: string, extension: string): string {
   return `${sanitized(concept)} - ${isoDate}.${extension}`;
 }
 
 /**
- * Un nombre que el sistema de archivos y una descarga aceptan.
+ * A name the file system and a download accept.
  *
- * La barra es el caso real: "PILA / Seguridad Social" no cabe en un nombre de
- * archivo y en el lote se guardó como "PILA - Seguridad Social".
+ * The slash is the real case: "PILA / Seguridad Social" does not fit in a file
+ * name and the batch saved it as "PILA - Seguridad Social".
  */
 function sanitized(text: string): string {
   return (

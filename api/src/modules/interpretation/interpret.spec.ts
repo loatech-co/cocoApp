@@ -3,8 +3,8 @@ import type { SearchableNode } from '@coco/receipt-parser';
 import { SAFE_HISTORY_CONFIDENCE, interpret, pesos, summaryOf } from './interpret';
 
 /**
- * El cerebro, a solas: de un texto a un gasto interpretado, con la precedencia
- * del plan y sin adivinar.
+ * The brain, on its own: from a text to an interpreted expense, with the
+ * plan's precedence and without guessing.
  */
 const TREE: SearchableNode[] = [
   {
@@ -30,8 +30,8 @@ const context = (history: { categoryId: string; confidence: number } | null = nu
   today: '2026-10-04',
 });
 
-describe('Interpretar un texto', () => {
-  it('un SMS de banco: saca el monto, la fecha y clasifica por el diccionario', () => {
+describe('Interpreting a text', () => {
+  it('a bank SMS: gets the amount, the date and classifies by the dictionary', () => {
     const r = interpret(
       { text: 'Compra por $45.000 en KOBA COLOMBIA el 03/10/2026 con tu tarjeta *1234' },
       context(),
@@ -48,7 +48,7 @@ describe('Interpretar un texto', () => {
     expect(r.needsReview).toBe(false);
   });
 
-  it('las palabras clave de la persona le ganan al diccionario', () => {
+  it("the person's keywords beat the dictionary", () => {
     const r = interpret({ text: 'RAPPI*PEDIDO 32.000' }, context());
     expect(r.classification).toMatchObject({
       source: 'palabras-clave',
@@ -57,9 +57,9 @@ describe('Interpretar un texto', () => {
     });
   });
 
-  it('y el historial le gana a todo lo demás', () => {
-    // El texto dice KOBA (mercado), pero el historial dice que esto va a
-    // Restaurantes el 100% de las veces: manda el historial.
+  it('and the history beats everything else', () => {
+    // The text says KOBA (groceries), but the history says this goes to
+    // Restaurantes 100% of the time: the history wins.
     const r = interpret(
       { text: 'KOBA COLOMBIA 45.000' },
       context({ categoryId: '201', confidence: 100 }),
@@ -71,7 +71,7 @@ describe('Interpretar un texto', () => {
     });
   });
 
-  it('un historial repartido es certeza MEDIA: propone, pero a revisar', () => {
+  it('a split history is MEDIUM certainty: it proposes, but for review', () => {
     const r = interpret(
       { text: 'KOBA COLOMBIA 45.000' },
       context({ categoryId: '201', confidence: SAFE_HISTORY_CONFIDENCE - 1 }),
@@ -81,7 +81,7 @@ describe('Interpretar un texto', () => {
     expect(r.needsReview).toBe(true);
   });
 
-  it('un comercio que lleva a una categoría sin conceptos: MEDIA con la categoría', () => {
+  it('a merchant that leads to a category without concepts: MEDIUM with the category', () => {
     const r = interpret({ text: 'UBER *TRIP 18.500' }, context());
     expect(r.classification).toMatchObject({
       certainty: 'media',
@@ -93,14 +93,14 @@ describe('Interpretar un texto', () => {
     expect(r.needsReview).toBe(true);
   });
 
-  it('un comercio desconocido: NINGUNA, y a revisar', () => {
+  it('an unknown merchant: NONE, and for review', () => {
     const r = interpret({ text: 'FERRETERIA LA ESQUINA 80.000' }, context());
     expect(r.classification.certainty).toBe('ninguna');
     expect(r.classification.conceptId).toBeNull();
     expect(r.needsReview).toBe(true);
   });
 
-  it('sin monto o sin fecha, a revisar aunque la clasificación sea alta', () => {
+  it('without an amount or a date, for review even when the classification is high', () => {
     const r = interpret({ text: 'KOBA COLOMBIA' }, context());
     expect(r.classification.certainty).toBe('alta');
     expect(r.amount).toBeNull();
@@ -108,8 +108,8 @@ describe('Interpretar un texto', () => {
   });
 });
 
-describe('Interpretar datos estructurados (Wallet)', () => {
-  it('lo estructurado manda: el monto y la fecha vienen dados, el comercio clasifica', () => {
+describe('Interpreting structured data (Wallet)', () => {
+  it('structured data wins: amount and date are given, the merchant classifies', () => {
     const r = interpret(
       { merchant: 'Exito Poblado', amount: 120000, date: '2026-10-02' },
       context(),
@@ -121,13 +121,13 @@ describe('Interpretar datos estructurados (Wallet)', () => {
     expect(r.needsReview).toBe(false);
   });
 
-  it('Wallet a veces llega sin amount: se interpreta igual, y a revisar', () => {
+  it('Wallet sometimes arrives without an amount: interpreted anyway, and for review', () => {
     const r = interpret({ merchant: 'Exito Poblado', date: '2026-10-02' }, context());
     expect(r.amount).toBeNull();
     expect(r.needsReview).toBe(true);
   });
 
-  it('una fecha futura o rota no se acepta', () => {
+  it('a future or broken date is not accepted', () => {
     expect(
       interpret({ merchant: 'Exito', amount: 1, date: '2027-01-01' }, context()).date,
     ).toBeNull();
@@ -135,7 +135,7 @@ describe('Interpretar datos estructurados (Wallet)', () => {
   });
 });
 
-describe('El resumen para la notificación', () => {
+describe('The summary for the notification', () => {
   const high = {
     certainty: 'alta' as const,
     source: 'diccionario' as const,
@@ -146,17 +146,17 @@ describe('El resumen para la notificación', () => {
     reason: '',
   };
 
-  it('tres palabras: qué, cuánto, dónde', () => {
+  it('three words: what, how much, where', () => {
     expect(summaryOf('45000', high)).toBe('Registrado: $45.000 · Mercado');
   });
 
-  it('con certeza media lo dice', () => {
+  it('with medium certainty it says so', () => {
     expect(summaryOf('18500', { ...high, certainty: 'media', name: 'Transporte' })).toBe(
       'Registrado: $18.500 · Transporte (por revisar)',
     );
   });
 
-  it('sin clasificación, pendiente', () => {
+  it('without a classification, pending', () => {
     expect(summaryOf('80000', { ...high, certainty: 'ninguna', name: null })).toBe(
       'Registrado: $80.000 · Pendiente de clasificar',
     );
@@ -165,7 +165,7 @@ describe('El resumen para la notificación', () => {
     );
   });
 
-  it('la plata se escribe como aquí', () => {
+  it('money is written the local way', () => {
     expect(pesos('1200000')).toBe('$1.200.000');
     expect(pesos(45000.5)).toBe('$45.001');
   });

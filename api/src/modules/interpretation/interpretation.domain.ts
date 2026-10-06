@@ -46,11 +46,11 @@ export interface Capture {
 }
 
 /**
- * Lo que la persona escribió, y debajo el aviso de que falta el monto.
+ * What the person wrote, and under it the warning that the amount is missing.
  *
- * Wallet a veces agota su espera y manda la transacción sin valor; el aviso
- * es lo que hace que alguien le ponga la cifra. Con una nota de por medio no
- * se pierde ninguna de las dos cosas.
+ * Wallet sometimes runs out of time and sends the transaction without a
+ * value; the warning is what makes somebody fill in the figure. With a note
+ * in between, neither of the two is lost.
  */
 export function notesOf(note: string | undefined, amount: string | null): string | undefined {
   const parts = [
@@ -61,8 +61,8 @@ export function notesOf(note: string | undefined, amount: string | null): string
 }
 
 export function categoryIdToSave(c: InterpretedClassification): number | undefined {
-  // Alta: el concepto. Media: la categoría, si la hay —queda marcado para
-  // revisar, pero ya está en el sitio correcto a medias—. Ninguna: nada.
+  // High: the concept. Medium: the category, if any —flagged for review, but
+  // already halfway in the right place—. None: nothing.
   const id =
     c.certainty === 'alta'
       ? (c.conceptId ?? c.categoryId)

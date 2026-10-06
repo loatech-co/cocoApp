@@ -7,25 +7,25 @@ import {
 } from './receipts.optimization';
 
 /**
- * Qué se le contesta a quien sube un soporte que no se pudo tratar.
+ * What whoever uploads a receipt that could not be processed is told.
  *
- * Son dos respuestas OPUESTAS y las decide esta función: «manda otra cosa»
- * cuando el formato no se puede abrir, y «vuelve a mandar lo mismo» cuando al
- * servidor se le acabaron los hilos. Equivocarse aquí es mandar a alguien a
- * convertir un archivo que ya estaba bien, o a reintentar para siempre uno que
- * nunca va a entrar.
+ * They are two OPPOSITE answers and this function decides them: «send
+ * something else» when the format cannot be opened, and «send the same again»
+ * when the server ran out of threads. Getting it wrong sends somebody to
+ * convert a file that was already fine, or to retry forever one that will
+ * never get in.
  */
-describe('Falta de recursos contra formato que no se entiende', () => {
-  it('reconoce el hilo que no se pudo crear', () => {
-    // El caso real, tal como sale de libvips en el hosting compartido: la
-    // cuenta tiene un cupo de procesos, libvips pide su piscina de hilos y
-    // `pthread_create` devuelve EAGAIN.
+describe('Lack of resources versus a format that is not understood', () => {
+  it('recognises the thread that could not be created', () => {
+    // The real case, as libvips reports it on the shared hosting: the account
+    // has a process quota, libvips asks for its thread pool and
+    // `pthread_create` returns EAGAIN.
     expect(
       isOutOfResources(new Error('glib: Error creating thread: Resource temporarily unavailable')),
     ).toBe(true);
   });
 
-  it('reconoce quedarse sin memoria y sin descriptores', () => {
+  it('recognises running out of memory and descriptors', () => {
     for (const message of [
       'Cannot allocate memory',
       'vips__init: out of memory',
@@ -37,10 +37,10 @@ describe('Falta de recursos contra formato que no se entiende', () => {
     }
   });
 
-  it('NO confunde un formato que la librería no sabe abrir', () => {
-    // El HEIC del iPhone: libvips solo lo entiende si se compiló con soporte
-    // para él, y casi nunca lo está. Reintentarlo no cambia nada, así que esto
-    // tiene que seguir contestando 415 y no 503.
+  it('does NOT mistake a format the library cannot open', () => {
+    // The iPhone's HEIC: libvips only understands it when compiled with
+    // support for it, and it almost never is. Retrying changes nothing, so this
+    // must keep answering 415 and not 503.
     for (const message of [
       'Input buffer contains unsupported image format',
       'heifload: unsupported compression',
@@ -50,9 +50,9 @@ describe('Falta de recursos contra formato que no se entiende', () => {
     }
   });
 
-  it('aguanta lo que no es un Error', () => {
-    // Una librería nativa puede rechazar con una cadena suelta, y el camino
-    // que lee `causa.message` se caería justo dentro del manejador de errores.
+  it('copes with what is not an Error', () => {
+    // A native library may reject with a bare string, and the path that reads
+    // `cause.message` would crash right inside the error handler.
     expect(isOutOfResources('Resource temporarily unavailable')).toBe(true);
     expect(isOutOfResources(undefined)).toBe(false);
     expect(isOutOfResources(null)).toBe(false);
@@ -60,18 +60,18 @@ describe('Falta de recursos contra formato que no se entiende', () => {
 });
 
 /**
- * Lo que se guarda cuando tratar la imagen no se pudo por falta de recursos.
+ * What is saved when the image could not be processed for lack of resources.
  *
- * Tratar es una mejora, no un requisito: el recibo se ve igual sin ella.
- * Perder el soporte porque al servidor le faltaban hilos ese segundo sería
- * cambiar una mejora por un fallo.
+ * Processing is an improvement, not a requirement: the receipt looks the same
+ * without it. Losing the receipt because the server was short of threads in
+ * that second would trade an improvement for a failure.
  */
-describe('Guardar el archivo tal como llegó', () => {
-  it('acepta lo que el visor sabe abrir, con su extensión de verdad', () => {
+describe('Saving the file as it arrived', () => {
+  it('accepts what the viewer can open, with its true extension', () => {
     const bytes = Buffer.from([1, 2, 3]);
 
-    // La extensión dice la verdad: un PNG guardado como `.jpg` es un archivo
-    // que miente sobre sí mismo.
+    // The extension tells the truth: a PNG saved as `.jpg` is a file that lies
+    // about itself.
     expect(asReceived(bytes, 'image/png')).toEqual({
       content: bytes,
       mime: 'image/png',
@@ -81,21 +81,21 @@ describe('Guardar el archivo tal como llegó', () => {
     expect(asReceived(bytes, 'application/pdf')?.extension).toBe('pdf');
   });
 
-  it('se niega con lo que después no se podría mirar', () => {
-    // Un HEIC sin tratar es un archivo que el visor no abre: ahí el problema
-    // es el formato, y guardarlo igual solo aplaza el fallo.
+  it('refuses what could not be looked at afterwards', () => {
+    // An unprocessed HEIC is a file the viewer cannot open: there the problem
+    // is the format, and saving it anyway only postpones the failure.
     expect(asReceived(Buffer.alloc(0), 'image/heic')).toBeNull();
     expect(asReceived(Buffer.alloc(0), 'image/webp')).toBeNull();
   });
 });
 
-describe('Lo que se sube es lo que dice ser', () => {
+describe('What is uploaded is what it says it is', () => {
   const PDF = Buffer.from('%PDF-1.7\n', 'latin1');
   const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]);
   const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0]);
   const POSTSCRIPT = Buffer.from('%!PS-Adobe-3.0\n', 'latin1');
 
-  it('acepta cada tipo con su firma', () => {
+  it('accepts each type with its signature', () => {
     expect(matchesDeclaredType(PDF, 'application/pdf')).toBe(true);
     expect(matchesDeclaredType(JPEG, 'image/jpeg')).toBe(true);
     expect(matchesDeclaredType(PNG, 'image/png')).toBe(true);
@@ -103,8 +103,8 @@ describe('Lo que se sube es lo que dice ser', () => {
     expect(matchesDeclaredType(Buffer.from('RIFF....WEBPVP8 ', 'latin1'), 'image/webp')).toBe(true);
   });
 
-  it('rechaza lo que no coincide con el tipo declarado', () => {
-    // Un PostScript etiquetado como PDF llegaría directo al intérprete.
+  it('rejects what does not match the declared type', () => {
+    // A PostScript labelled as PDF would go straight to the interpreter.
     expect(matchesDeclaredType(POSTSCRIPT, 'application/pdf')).toBe(false);
     expect(matchesDeclaredType(PNG, 'image/jpeg')).toBe(false);
     expect(matchesDeclaredType(JPEG, 'application/pdf')).toBe(false);
@@ -113,12 +113,12 @@ describe('Lo que se sube es lo que dice ser', () => {
   });
 });
 
-describe('Ghostscript con protecciones', () => {
-  it('corre en modo seguro', () => {
+describe('Ghostscript with protections', () => {
+  it('runs in safe mode', () => {
     expect(ghostscriptArgs('/tmp/a.pdf', '/tmp/b.pdf')[0]).toBe('-dSAFER');
   });
 
-  it('mata el proceso que pasa del tiempo límite', async () => {
+  it('kills the process that goes past the time limit', async () => {
     const start = Date.now();
     await expect(run('sleep', ['5'], 100)).rejects.toThrow(/tardó más de/);
     expect(Date.now() - start).toBeLessThan(2000);
