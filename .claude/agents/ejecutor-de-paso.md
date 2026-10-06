@@ -39,12 +39,13 @@ contexto es pequeño a propósito: no lo llenes.
 - **Nunca se desarrolla contra producción.** Ni base remota, ni ssh, ni datos
   reales en local salvo los traídos con los scripts previstos.
 - **Migraciones aditivas y aplicadas antes que el código.** Lo que rompe
-  (renombrar, borrar, cambiar tipo) va por expandir y contraer, y borrar en la
-  base o en el servidor es una parada: se pregunta al director.
+  (renombrar, borrar, cambiar tipo) va por expandir y contraer.
+- **Paradas y borrados:** los manda la tabla única de `CLAUDE.md`; no hay otra.
 - **Código nuevo en inglés; el texto que ve el usuario, en español.**
 - **Nada de secretos, datos personales ni importes** en logs, pruebas,
   commits ni traspasos.
-- Las reglas de la interfaz de `CLAUDE.md` y las de `CONTRIBUTING.md` se
-  cumplen; si una prueba las protege, no se desactiva.
+- Las reglas de `.claude/rules/` (las 18 de la interfaz están en `web.md`) y
+  las de `CONTRIBUTING.md` se cumplen; si una prueba las protege, no se
+  desactiva.
 - Nada fuera del paso: lo que convenga y no esté en el plan va a "pendiente"
   del traspaso, no al código.

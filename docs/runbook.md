@@ -59,7 +59,8 @@ fine and changed nothing.
 
 **No probe, monitor or check points at the v1.** Every request to `/api/v1`
 leaves a `v1_used` line in the API log, and a probe counted as a client would
-never let the v1 reach the seven days without use it needs to be contracted.
+never let the v1 reach the time without use it needs to be contracted (how
+long: the stop table in [`CLAUDE.md`](../CLAUDE.md)).
 
 ### v1 usage
 
@@ -102,7 +103,8 @@ tested deploy.
 ## Migrations
 
 **Additive, applied to production before the code; anything that breaks goes
-by expand and contract; dropping anything is a stop for the owner.**
+by expand and contract.** Dropping anything follows the stop table in
+[`CLAUDE.md`](../CLAUDE.md), the only one.
 
 ```bash
 scripts/nueva-migracion.sh <verb>_<object>   # create and apply LOCALLY
@@ -132,7 +134,9 @@ scripts/desplegar-migraciones.sh              # production: status, confirm, dep
 
 **Back up before any migration that is not purely additive, and before any
 operation on production data.** A full, tested backup is a precondition of
-every deletion in production (step 7.10 included).
+every deletion in production (step 7.10 included); what a deletion requires
+(full backup and a restore tested right before) is in the stop table of
+[`CLAUDE.md`](../CLAUDE.md).
 
 ```bash
 npm run respaldar              # full backup → $COCO_DATA_DIR/respaldos/coco-<date>.tar.age, restore-tested
@@ -207,6 +211,9 @@ expire.
 
 ### Restore
 
+Restoring into production: see the stop table in [`CLAUDE.md`](../CLAUDE.md).
+To check or recover:
+
 ```bash
 bash scripts/restaurar.sh [coco-<date>.tar.age | decrypted folder]
 ```
@@ -234,8 +241,8 @@ bash scripts/restaurar.sh [coco-<date>.tar.age | decrypted folder]
 
 ### Retention — PROPOSAL, not in force
 
-**Nothing is deleted without the owner.** `respaldar.sh` no longer prunes.
-Proposed policy:
+Deleting a backup follows the stop table in [`CLAUDE.md`](../CLAUDE.md).
+`respaldar.sh` no longer prunes. Proposed policy:
 
 - the 14 most recent daily backups;
 - the last backup of each month, for 12 months;
@@ -301,7 +308,7 @@ Supabase before touching the app.**
 2. Pooler URLs: the app uses the transaction pooler (6543); migrations and
    `pg_dump` need the session one (5432) — a dump through 6543 is cut midway.
 3. If the project is lost, restore the last backup into a new project
-   ([Restore](#restore)) — with the owner.
+   ([Restore](#restore)); see the stop table in [`CLAUDE.md`](../CLAUDE.md).
 
 ### Supabase Auth is down
 
