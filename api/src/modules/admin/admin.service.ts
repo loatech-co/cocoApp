@@ -90,7 +90,7 @@ export class AdminService {
     await this.requireAnotherAdmin(user.role, userId);
 
     const updated = await this.users.setStatus(adminId, userId, 'suspended');
-    await this.auth.revocarTodasLasSesiones(userId);
+    await this.auth.revokeAllSessions(userId);
 
     await this.audit.record({
       userId: adminId,
@@ -139,7 +139,7 @@ export class AdminService {
     // El rol se lee de la base en cada petición, así que el cambio ya aplica.
     // Aun así se cierran las sesiones: un cambio de permisos merece que la
     // persona vuelva a entrar y vea su nuevo contexto desde cero.
-    await this.auth.revocarTodasLasSesiones(userId);
+    await this.auth.revokeAllSessions(userId);
 
     await this.audit.record({
       userId: adminId,
@@ -170,7 +170,7 @@ export class AdminService {
   ): Promise<void> {
     const user = await this.requireUser(userId);
 
-    await this.passwords.exigirQueSeaFuerte(newPassword, {
+    await this.passwords.requireStrong(newPassword, {
       email: user.email,
       displayName: user.displayName ?? undefined,
     });
@@ -182,8 +182,8 @@ export class AdminService {
         { code: 'password_reset_not_managed' },
       );
     }
-    await this.supabase.cambiarContrasena(user.authId, newPassword);
-    await this.auth.revocarTodasLasSesiones(userId);
+    await this.supabase.changePassword(user.authId, newPassword);
+    await this.auth.revokeAllSessions(userId);
 
     await this.audit.record({
       userId: adminId,

@@ -1,4 +1,4 @@
-import type { Me, ParDeTokens, Profile } from '../../modules/auth/auth.service';
+import type { Me, TokenPair, Profile } from '../../modules/auth/auth.service';
 
 export interface ProfileV1 {
   id: bigint;
@@ -35,7 +35,7 @@ export function meV1(me: Me): MeV1 {
 }
 
 /** The session; the refresh token goes in the body only for a native client. */
-export function sessionV1(tokens: ParDeTokens, profile: Profile, inBody: boolean): SessionV1 {
+export function sessionV1(tokens: TokenPair, profile: Profile, inBody: boolean): SessionV1 {
   const session: SessionV1 = {
     access_token: tokens.accessToken,
     expires_in: tokens.expiresIn,

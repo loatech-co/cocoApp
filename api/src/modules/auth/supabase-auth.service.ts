@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-import { esCorreoRepetido } from './supabase-auth.errors';
+import { isDuplicateEmail } from './supabase-auth.errors';
 import { whyNotTouchRealAccounts } from '../../common/env';
 import {
   AuthenticationError,
@@ -38,14 +38,14 @@ export class SupabaseAuthService {
   private readonly anonKey: string;
   private readonly serviceKey: string;
   private readonly jwks: ReturnType<typeof createRemoteJWKSet>;
-  private readonly emisor: string;
+  private readonly issuer: string;
 
   constructor(config: ConfigService) {
-    this.url = exigir(config, 'SUPABASE_URL').replace(/\/+$/, '');
-    this.anonKey = exigir(config, 'SUPABASE_ANON_KEY');
-    this.serviceKey = exigir(config, 'SUPABASE_SERVICE_ROLE_KEY');
-    this.emisor = `${this.url}/auth/v1`;
-    this.jwks = createRemoteJWKSet(new URL(`${this.emisor}/.well-known/jwks.json`));
+    this.url = requireSetting(config, 'SUPABASE_URL').replace(/\/+$/, '');
+    this.anonKey = requireSetting(config, 'SUPABASE_ANON_KEY');
+    this.serviceKey = requireSetting(config, 'SUPABASE_SERVICE_ROLE_KEY');
+    this.issuer = `${this.url}/auth/v1`;
+    this.jwks = createRemoteJWKSet(new URL(`${this.issuer}/.well-known/jwks.json`));
   }
 
   // ── Verificación ───────────────────────────────────────────────────────────
@@ -58,12 +58,12 @@ export class SupabaseAuthService {
    * dos unidades daría por válido cualquier token emitido en los últimos 54
    * años, que es exactamente el fallo que uno no detecta en pruebas.
    */
-  async verificarAccessToken(
+  async verifyAccessToken(
     token: string,
   ): Promise<{ authId: string; email: string; iatMs: number }> {
     try {
       const { payload } = await jwtVerify(token, this.jwks, {
-        issuer: this.emisor,
+        issuer: this.issuer,
         audience: 'authenticated',
       });
 
@@ -86,25 +86,25 @@ export class SupabaseAuthService {
   // ── Sesiones ───────────────────────────────────────────────────────────────
 
   /** Canjea correo y contraseña por una sesión. `null` si no son válidos. */
-  async entrar(email: string, password: string): Promise<SesionDeSupabase | null> {
-    const respuesta = await this.llamar('POST', '/token?grant_type=password', {
-      cuerpo: { email, password },
-      clave: this.anonKey,
+  async signIn(email: string, password: string): Promise<SupabaseSession | null> {
+    const response = await this.call('POST', '/token?grant_type=password', {
+      body: { email, password },
+      key: this.anonKey,
     });
 
-    if (respuesta.estado === 400 || respuesta.estado === 401) return null;
-    return this.aSesion(respuesta);
+    if (response.status === 400 || response.status === 401) return null;
+    return this.toSession(response);
   }
 
   /** Canjea un refresh token por una sesión nueva. `null` si ya no sirve. */
-  async refrescar(refreshToken: string): Promise<SesionDeSupabase | null> {
-    const respuesta = await this.llamar('POST', '/token?grant_type=refresh_token', {
-      cuerpo: { refresh_token: refreshToken },
-      clave: this.anonKey,
+  async refresh(refreshToken: string): Promise<SupabaseSession | null> {
+    const response = await this.call('POST', '/token?grant_type=refresh_token', {
+      body: { refresh_token: refreshToken },
+      key: this.anonKey,
     });
 
-    if (respuesta.estado === 400 || respuesta.estado === 401) return null;
-    return this.aSesion(respuesta);
+    if (response.status === 400 || response.status === 401) return null;
+    return this.toSession(response);
   }
 
   /**
@@ -114,21 +114,21 @@ export class SupabaseAuthService {
    * token, no con el refresh. Si el canje falla, la sesión ya estaba muerta y
    * no hay nada que revocar.
    */
-  async cerrarSesion(refreshToken: string): Promise<void> {
-    const sesion = await this.refrescar(refreshToken);
-    if (!sesion) return;
+  async signOut(refreshToken: string): Promise<void> {
+    const session = await this.refresh(refreshToken);
+    if (!session) return;
 
-    await this.llamar('POST', '/logout?scope=local', {
-      clave: this.anonKey,
-      autorizacion: sesion.accessToken,
+    await this.call('POST', '/logout?scope=local', {
+      key: this.anonKey,
+      authorization: session.accessToken,
     });
   }
 
   /** Revoca TODAS las sesiones de la persona en Supabase. */
-  async cerrarTodasLasSesiones(authId: string): Promise<void> {
+  async signOutEverywhere(authId: string): Promise<void> {
     // El endpoint de administración acepta el id y corta todas las familias de
     // refresh tokens de esa cuenta de una vez.
-    await this.llamar('POST', `/admin/users/${authId}/logout`, { clave: this.serviceKey });
+    await this.call('POST', `/admin/users/${authId}/logout`, { key: this.serviceKey });
   }
 
   // ── Administración de cuentas ──────────────────────────────────────────────
@@ -166,52 +166,52 @@ export class SupabaseAuthService {
    * 500, que es lo que es: quien solicita ve que algo falló y puede reintentar
    * o avisar, y el registro del servidor dice qué contestó Supabase.
    */
-  async crearUsuario(email: string, password: string): Promise<string | null> {
-    const respuesta = await this.llamar('POST', '/admin/users', {
-      cuerpo: { email, password, email_confirm: true },
-      clave: this.serviceKey,
+  async createUser(email: string, password: string): Promise<string | null> {
+    const response = await this.call('POST', '/admin/users', {
+      body: { email, password, email_confirm: true },
+      key: this.serviceKey,
     });
 
-    if (esCorreoRepetido(respuesta.estado, respuesta.datos)) return null;
-    if (respuesta.estado >= 400) this.reventar(respuesta, 'crear el usuario');
+    if (isDuplicateEmail(response.status, response.data)) return null;
+    if (response.status >= 400) this.fail(response, 'crear el usuario');
 
-    const id = respuesta.datos?.id;
-    if (typeof id !== 'string') this.reventar(respuesta, 'crear el usuario');
+    const id = response.data?.id;
+    if (typeof id !== 'string') this.fail(response, 'crear el usuario');
     return id;
   }
 
-  async cambiarContrasena(authId: string, nueva: string): Promise<void> {
-    const respuesta = await this.llamar('PUT', `/admin/users/${authId}`, {
-      cuerpo: { password: nueva },
-      clave: this.serviceKey,
+  async changePassword(authId: string, newPassword: string): Promise<void> {
+    const response = await this.call('PUT', `/admin/users/${authId}`, {
+      body: { password: newPassword },
+      key: this.serviceKey,
     });
-    if (respuesta.estado >= 400) this.reventar(respuesta, 'cambiar la contraseña');
+    if (response.status >= 400) this.fail(response, 'cambiar la contraseña');
   }
 
-  async eliminarUsuario(authId: string): Promise<void> {
-    await this.llamar('DELETE', `/admin/users/${authId}`, { clave: this.serviceKey });
+  async deleteUser(authId: string): Promise<void> {
+    await this.call('DELETE', `/admin/users/${authId}`, { key: this.serviceKey });
   }
 
   /** Comprueba una contraseña sin abrir sesión, para reautenticar. */
-  async contrasenaEsCorrecta(email: string, password: string): Promise<boolean> {
-    const sesion = await this.entrar(email, password);
-    if (!sesion) return false;
+  async isPasswordCorrect(email: string, password: string): Promise<boolean> {
+    const session = await this.signIn(email, password);
+    if (!session) return false;
     // La sesión se descarta: solo interesaba la comprobación. Dejarla viva
     // sería una sesión que nadie pidió y que nadie va a cerrar.
-    await this.llamar('POST', '/logout?scope=local', {
-      clave: this.anonKey,
-      autorizacion: sesion.accessToken,
+    await this.call('POST', '/logout?scope=local', {
+      key: this.anonKey,
+      authorization: session.accessToken,
     });
     return true;
   }
 
   // ── Plomería ───────────────────────────────────────────────────────────────
 
-  private async llamar(
-    metodo: 'GET' | 'POST' | 'PUT' | 'DELETE',
-    ruta: string,
-    opciones: { cuerpo?: unknown; clave: string; autorizacion?: string },
-  ): Promise<Respuesta> {
+  private async call(
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    path: string,
+    options: { body?: unknown; key: string; authorization?: string },
+  ): Promise<SupabaseReply> {
     /*
       El candado de las cuentas reales va AQUÍ, y no en los cuatro métodos.
 
@@ -229,26 +229,26 @@ export class SupabaseAuthService {
       clave anónima y rutas que no son de administración. Así la aplicación se
       sigue pudiendo usar en local, que es el objetivo.
     */
-    if (ruta.startsWith('/admin/')) {
-      const impedimento = whyNotTouchRealAccounts();
-      if (impedimento !== null) {
-        this.logger.warn(`Operación de administración bloqueada: ${metodo} ${ruta}`);
-        throw new ForbiddenError(impedimento, { code: 'real_accounts_protected' });
+    if (path.startsWith('/admin/')) {
+      const blocker = whyNotTouchRealAccounts();
+      if (blocker !== null) {
+        this.logger.warn(`Operación de administración bloqueada: ${method} ${path}`);
+        throw new ForbiddenError(blocker, { code: 'real_accounts_protected' });
       }
     }
 
-    const cabeceras: Record<string, string> = {
-      apikey: opciones.clave,
-      Authorization: `Bearer ${opciones.autorizacion ?? opciones.clave}`,
+    const headers: Record<string, string> = {
+      apikey: options.key,
+      Authorization: `Bearer ${options.authorization ?? options.key}`,
     };
-    if (opciones.cuerpo !== undefined) cabeceras['Content-Type'] = 'application/json';
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
 
-    let respuesta: Response;
+    let response: Response;
     try {
-      respuesta = await fetch(`${this.emisor}${ruta}`, {
-        method: metodo,
-        headers: cabeceras,
-        ...(opciones.cuerpo !== undefined && { body: JSON.stringify(opciones.cuerpo) }),
+      response = await fetch(`${this.issuer}${path}`, {
+        method,
+        headers,
+        ...(options.body !== undefined && { body: JSON.stringify(options.body) }),
         signal: AbortSignal.timeout(15_000),
       });
     } catch (error) {
@@ -261,46 +261,46 @@ export class SupabaseAuthService {
       });
     }
 
-    const texto = await respuesta.text();
-    let datos: Record<string, unknown> | null;
+    const text = await response.text();
+    let data: Record<string, unknown> | null;
     try {
-      datos = texto ? (JSON.parse(texto) as Record<string, unknown>) : null;
+      data = text ? (JSON.parse(text) as Record<string, unknown>) : null;
     } catch {
-      datos = null;
+      data = null;
     }
 
-    return { estado: respuesta.status, datos };
+    return { status: response.status, data };
   }
 
-  private aSesion(respuesta: Respuesta): SesionDeSupabase {
-    const d = respuesta.datos;
+  private toSession(response: SupabaseReply): SupabaseSession {
+    const d = response.data;
     const accessToken = d?.access_token;
     const refreshToken = d?.refresh_token;
-    const usuario = d?.user as { id?: string; email?: string } | undefined;
+    const user = d?.user as { id?: string; email?: string } | undefined;
 
-    if (typeof accessToken !== 'string' || typeof refreshToken !== 'string' || !usuario?.id) {
-      this.reventar(respuesta, 'abrir la sesión');
+    if (typeof accessToken !== 'string' || typeof refreshToken !== 'string' || !user?.id) {
+      this.fail(response, 'abrir la sesión');
     }
 
     return {
       accessToken,
       refreshToken,
       expiresIn: typeof d?.expires_in === 'number' ? d.expires_in : 3600,
-      authId: usuario.id,
-      email: usuario.email ?? '',
+      authId: user.id,
+      email: user.email ?? '',
     };
   }
 
-  private reventar(respuesta: Respuesta, quehacer: string): never {
-    const detalle = respuesta.datos?.msg ?? respuesta.datos?.message ?? 'sin detalle';
+  private fail(response: SupabaseReply, action: string): never {
+    const detail = response.data?.msg ?? response.data?.message ?? 'sin detalle';
     this.logger.error(
-      `Supabase Auth falló al ${quehacer}: ${respuesta.estado} ${typeof detalle === 'string' ? detalle : JSON.stringify(detalle)}`,
+      `Supabase Auth falló al ${action}: ${response.status} ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`,
     );
-    throw new InternalError(`No se pudo ${quehacer}.`, { code: 'identity_provider_failed' });
+    throw new InternalError(`No se pudo ${action}.`, { code: 'identity_provider_failed' });
   }
 }
 
-export interface SesionDeSupabase {
+export interface SupabaseSession {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
@@ -308,9 +308,9 @@ export interface SesionDeSupabase {
   email: string;
 }
 
-interface Respuesta {
-  estado: number;
-  datos: Record<string, unknown> | null;
+interface SupabaseReply {
+  status: number;
+  data: Record<string, unknown> | null;
 }
 
 /**
@@ -334,10 +334,10 @@ interface Respuesta {
  * Es una función suelta y exportada para poder probarla con las respuestas de
  * verdad, sin levantar el servicio ni tocar la red.
  */
-function exigir(config: ConfigService, clave: string): string {
-  const valor = config.get<string>(clave)?.trim();
-  if (!valor) {
-    throw new Error(`Falta ${clave}. Sin ella la autenticación no puede funcionar.`);
+function requireSetting(config: ConfigService, key: string): string {
+  const value = config.get<string>(key)?.trim();
+  if (!value) {
+    throw new Error(`Falta ${key}. Sin ella la autenticación no puede funcionar.`);
   }
-  return valor;
+  return value;
 }

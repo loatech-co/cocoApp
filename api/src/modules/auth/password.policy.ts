@@ -16,48 +16,48 @@
  * composición sola sería insuficiente; junto al contraste, es sólida.
  */
 
-export const LONGITUD_MINIMA = 12;
+export const MIN_LENGTH = 12;
 /** Tope alto para que argon2 no se convierta en un vector de denegación. */
-export const LONGITUD_MAXIMA = 128;
+export const MAX_LENGTH = 128;
 
-export interface ResultadoDePolitica {
-  valida: boolean;
+export interface PolicyResult {
+  valid: boolean;
   /** Todos los incumplimientos, no solo el primero: corregir de a uno es
    *  frustrante y empuja a elegir la contraseña más floja que pase. */
-  problemas: string[];
+  problems: string[];
 }
 
-const REGLAS: { prueba: RegExp; problema: string }[] = [
-  { prueba: /[a-z]/, problema: 'Debe incluir al menos una letra minúscula.' },
-  { prueba: /[A-Z]/, problema: 'Debe incluir al menos una letra mayúscula.' },
-  { prueba: /[0-9]/, problema: 'Debe incluir al menos un número.' },
+const RULES: { test: RegExp; problem: string }[] = [
+  { test: /[a-z]/, problem: 'Debe incluir al menos una letra minúscula.' },
+  { test: /[A-Z]/, problem: 'Debe incluir al menos una letra mayúscula.' },
+  { test: /[0-9]/, problem: 'Debe incluir al menos un número.' },
   {
-    prueba: /[^A-Za-z0-9]/,
-    problema: 'Debe incluir al menos un símbolo (por ejemplo: ! @ # $ % & *).',
+    test: /[^A-Za-z0-9]/,
+    problem: 'Debe incluir al menos un símbolo (por ejemplo: ! @ # $ % & *).',
   },
 ];
 
-export function evaluarPolitica(password: string): ResultadoDePolitica {
-  const problemas: string[] = [];
+export function evaluatePolicy(password: string): PolicyResult {
+  const problems: string[] = [];
 
-  if (password.length < LONGITUD_MINIMA) {
-    problemas.push(`Debe tener al menos ${LONGITUD_MINIMA} caracteres.`);
+  if (password.length < MIN_LENGTH) {
+    problems.push(`Debe tener al menos ${MIN_LENGTH} caracteres.`);
   }
-  if (password.length > LONGITUD_MAXIMA) {
-    problemas.push(`No puede superar los ${LONGITUD_MAXIMA} caracteres.`);
+  if (password.length > MAX_LENGTH) {
+    problems.push(`No puede superar los ${MAX_LENGTH} caracteres.`);
   }
 
-  for (const regla of REGLAS) {
-    if (!regla.prueba.test(password)) problemas.push(regla.problema);
+  for (const rule of RULES) {
+    if (!rule.test.test(password)) problems.push(rule.problem);
   }
 
   // Un espacio al inicio o al final casi siempre es un error de copiado, y
   // produce un "la contraseña no funciona" imposible de diagnosticar.
   if (password !== password.trim()) {
-    problemas.push('No puede empezar ni terminar con espacios.');
+    problems.push('No puede empezar ni terminar con espacios.');
   }
 
-  return { valida: problemas.length === 0, problemas };
+  return { valid: problems.length === 0, problems };
 }
 
 /**
@@ -66,19 +66,19 @@ export function evaluarPolitica(password: string): ResultadoDePolitica {
  * `Gerardo2026!` cumple todas las reglas de composición y es de lo primero que
  * probaría alguien que conozca al dueño de la cuenta.
  */
-export function derivaDeDatosPersonales(
+export function derivesFromPersonalData(
   password: string,
-  datos: { email?: string | undefined; displayName?: string | undefined },
+  personal: { email?: string | undefined; displayName?: string | undefined },
 ): boolean {
-  const normalizado = password.toLowerCase();
+  const normalized = password.toLowerCase();
 
-  const fragmentos = [
-    datos.email?.split('@')[0],
-    ...(datos.displayName?.split(/\s+/) ?? []),
+  const fragments = [
+    personal.email?.split('@')[0],
+    ...(personal.displayName?.split(/\s+/) ?? []),
     'coco',
   ]
-    .filter((fragmento): fragmento is string => Boolean(fragmento && fragmento.length >= 4))
-    .map((fragmento) => fragmento.toLowerCase());
+    .filter((fragment): fragment is string => Boolean(fragment && fragment.length >= 4))
+    .map((fragment) => fragment.toLowerCase());
 
-  return fragmentos.some((fragmento) => normalizado.includes(fragmento));
+  return fragments.some((fragment) => normalized.includes(fragment));
 }

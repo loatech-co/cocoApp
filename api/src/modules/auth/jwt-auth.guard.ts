@@ -34,24 +34,24 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const esPublica = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (esPublica) return true;
+    if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<Request>();
-    const token = extraerBearer(request.headers.authorization);
+    const token = extractBearer(request.headers.authorization);
 
     if (!token) {
       throw new AuthenticationError('Autenticación requerida.');
     }
 
-    const { authId, iatMs } = await this.supabase.verificarAccessToken(token);
+    const { authId, iatMs } = await this.supabase.verifyAccessToken(token);
 
-    const usuario = await this.users.findSessionUser(authId);
+    const user = await this.users.findSessionUser(authId);
 
-    if (!usuario) {
+    if (!user) {
       // Token válido de Supabase, pero sin perfil en la aplicación. Pasa si la
       // cuenta se creó desde el panel de Supabase saltándose el registro. Sin
       // perfil no hay rol ni estado, así que no hay nada que autorizar.
@@ -73,14 +73,14 @@ export class JwtAuthGuard implements CanActivate {
     // en el mismo segundo en que cerró todas sus sesiones, su token nuevo puede
     // caer del lado equivocado y tener que reintentar. Rechazar de más durante
     // 600 ms es preferible a aceptar de menos.
-    if (iatMs < usuario.sessionsValidFrom.getTime()) {
+    if (iatMs < user.sessionsValidFrom.getTime()) {
       throw new AuthenticationError('La sesión fue cerrada. Vuelve a entrar.', {
         code: 'session_revoked',
       });
     }
 
-    if (usuario.status !== 'active') {
-      throw usuario.status === 'pending'
+    if (user.status !== 'active') {
+      throw user.status === 'pending'
         ? new ForbiddenError('Tu cuenta está pendiente de aprobación.', {
             code: 'account_pending_approval',
           })
@@ -89,13 +89,13 @@ export class JwtAuthGuard implements CanActivate {
 
     // El rol sale de la BASE, no del token: si un admin degrada a alguien, el
     // cambio aplica en la siguiente petición y no cuando expire su token.
-    request.user = { id: usuario.id, email: usuario.email, role: usuario.role };
+    request.user = { id: user.id, email: user.email, role: user.role };
     return true;
   }
 }
 
-function extraerBearer(header: string | undefined): string | null {
+function extractBearer(header: string | undefined): string | null {
   if (!header) return null;
-  const [esquema, valor] = header.split(' ');
-  return esquema === 'Bearer' && valor ? valor : null;
+  const [scheme, value] = header.split(' ');
+  return scheme === 'Bearer' && value ? value : null;
 }

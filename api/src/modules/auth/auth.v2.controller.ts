@@ -6,8 +6,8 @@ import type { CookieOptions, Request, Response } from 'express';
 
 import {
   AuthService,
-  type ContextoDePeticion,
-  type ParDeTokens,
+  type RequestContext,
+  type TokenPair,
   type Me as MeBody,
   type Profile,
 } from './auth.service';
@@ -57,7 +57,7 @@ function isNativeClient(request: Request): boolean {
   return (Array.isArray(value) ? value[0] : value) === NATIVE_CLIENT;
 }
 
-function contextOf(request: Request): ContextoDePeticion {
+function contextOf(request: Request): RequestContext {
   return { ip: request.ip, userAgent: request.headers['user-agent'] };
 }
 
@@ -95,10 +95,10 @@ export class AuthV2Controller {
     @Body() input: RegisterDto,
     @Req() request: Request,
   ): Promise<{ pendingApproval: boolean; message: string }> {
-    const { pendienteDeAprobacion } = await this.auth.registrar(input, contextOf(request));
+    const { pendingApproval } = await this.auth.register(input, contextOf(request));
     return {
-      pendingApproval: pendienteDeAprobacion,
-      message: pendienteDeAprobacion
+      pendingApproval,
+      message: pendingApproval
         ? 'Recibimos tu solicitud. Un administrador debe aprobarla antes de que puedas entrar.'
         : 'Tu cuenta de administrador quedó lista. Ya puedes entrar.',
     };
@@ -116,8 +116,8 @@ export class AuthV2Controller {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<SessionV2> {
-    const { tokens, perfil } = await this.auth.entrar(input, contextOf(request));
-    return this.deliver(request, response, tokens, perfil);
+    const { tokens, profile } = await this.auth.signIn(input, contextOf(request));
+    return this.deliver(request, response, tokens, profile);
   }
 
   @Public()
@@ -137,8 +137,8 @@ export class AuthV2Controller {
       throw new AuthenticationError('No hay sesión que renovar.', { code: 'session_expired' });
     }
     try {
-      const { tokens, perfil } = await this.auth.refrescar(refreshToken, contextOf(request));
-      return this.deliver(request, response, tokens, perfil);
+      const { tokens, profile } = await this.auth.refresh(refreshToken, contextOf(request));
+      return this.deliver(request, response, tokens, profile);
     } catch (error) {
       // A refresh token that no longer works must not stay in the browser.
       if (!isNativeClient(request)) this.clearCookie(response);
@@ -157,7 +157,7 @@ export class AuthV2Controller {
     @Res({ passthrough: true }) response: Response,
     @Body() input: RefreshInput,
   ): Promise<void> {
-    await this.auth.salir(this.refreshTokenOf(request, input), contextOf(request));
+    await this.auth.signOut(this.refreshTokenOf(request, input), contextOf(request));
     if (!isNativeClient(request)) this.clearCookie(response);
   }
 
@@ -170,7 +170,7 @@ export class AuthV2Controller {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
-    await this.auth.salirDeTodoslosDispositivos(user.id, contextOf(request));
+    await this.auth.signOutEverywhere(user.id, contextOf(request));
     this.clearCookie(response);
   }
 
@@ -179,7 +179,7 @@ export class AuthV2Controller {
   @ApiDataV2(Me)
   async me(@CurrentUser() user: AuthenticatedUser): Promise<MeBody> {
     const [profile, features] = await Promise.all([
-      this.auth.perfilDe(user.id),
+      this.auth.getProfile(user.id),
       this.flags.activeFor(user.id),
     ]);
     return meV2({ ...profile, features });
@@ -196,9 +196,9 @@ export class AuthV2Controller {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
-    await this.auth.cambiarContrasena(
+    await this.auth.changePassword(
       user.id,
-      { actual: input.currentPassword, nueva: input.newPassword },
+      { currentPassword: input.currentPassword, newPassword: input.newPassword },
       contextOf(request),
     );
     this.clearCookie(response);
@@ -213,7 +213,7 @@ export class AuthV2Controller {
   private deliver(
     request: Request,
     response: Response,
-    tokens: ParDeTokens,
+    tokens: TokenPair,
     profile: Profile,
   ): SessionV2 {
     if (isNativeClient(request)) return sessionV2(tokens, profile, true);

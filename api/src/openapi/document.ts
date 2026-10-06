@@ -64,6 +64,13 @@ function operationId(controllerKey: string, methodKey: string): string {
  * table goes with v1 (7.10).
  */
 const V1_PUBLISHED_IDS: Readonly<Record<string, string>> = {
+  AuthController_register: 'AuthController_registrar',
+  AuthController_login: 'AuthController_entrar',
+  AuthController_refresh: 'AuthController_refrescar',
+  AuthController_logout: 'AuthController_salir',
+  AuthController_logoutAll: 'AuthController_salirDeTodo',
+  AuthController_me: 'AuthController_perfil',
+  AuthController_changePassword: 'AuthController_cambiarContrasena',
   AccountsController_list: 'AccountsController_listar',
   AccountsController_get: 'AccountsController_obtener',
   AccountsController_create: 'AccountsController_crear',

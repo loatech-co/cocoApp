@@ -1,4 +1,4 @@
-import type { Me, ParDeTokens, Profile } from '../../modules/auth/auth.service';
+import type { Me, TokenPair, Profile } from '../../modules/auth/auth.service';
 
 /** v2 bodies of the session and the profile (see `transactions.presenter.ts`). */
 
@@ -19,7 +19,7 @@ export function meV2(me: Me): Me {
 }
 
 /** The session; the refresh token goes in the body only for a native client. */
-export function sessionV2(tokens: ParDeTokens, profile: Profile, inBody: boolean): SessionV2 {
+export function sessionV2(tokens: TokenPair, profile: Profile, inBody: boolean): SessionV2 {
   const session: SessionV2 = {
     accessToken: tokens.accessToken,
     expiresIn: tokens.expiresIn,

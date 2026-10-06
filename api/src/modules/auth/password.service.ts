@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 
-import { derivaDeDatosPersonales, evaluarPolitica } from './password.policy';
+import { derivesFromPersonalData, evaluatePolicy } from './password.policy';
 import { ValidationError } from '../../common/errors/domain-error';
 
 /**
@@ -26,35 +26,35 @@ import { ValidationError } from '../../common/errors/domain-error';
 @Injectable()
 export class PasswordService {
   private readonly logger = new Logger(PasswordService.name);
-  private readonly verificarFiltradas: boolean;
+  private readonly checkBreaches: boolean;
 
   constructor(config: ConfigService) {
     // Se puede apagar para entornos sin salida a internet (CI, pruebas).
-    this.verificarFiltradas = config.get<string>('CHECK_BREACHED_PASSWORDS', 'true') !== 'false';
+    this.checkBreaches = config.get<string>('CHECK_BREACHED_PASSWORDS', 'true') !== 'false';
   }
 
   /**
    * Valida una contraseña candidata contra las tres capas: composición,
    * relación con los datos de la cuenta, y filtraciones conocidas.
    */
-  async exigirQueSeaFuerte(
+  async requireStrong(
     password: string,
-    datos: { email?: string | undefined; displayName?: string | undefined } = {},
+    personal: { email?: string | undefined; displayName?: string | undefined } = {},
   ): Promise<void> {
-    const { valida, problemas } = evaluarPolitica(password);
+    const { valid, problems } = evaluatePolicy(password);
 
-    if (derivaDeDatosPersonales(password, datos)) {
-      problemas.push('No puede contener tu nombre ni tu correo.');
+    if (derivesFromPersonalData(password, personal)) {
+      problems.push('No puede contener tu nombre ni tu correo.');
     }
 
-    if (valida && problemas.length === 0 && (await this.apareceEnFiltraciones(password))) {
-      problemas.push('Esta contraseña aparece en filtraciones públicas conocidas. Elige otra.');
+    if (valid && problems.length === 0 && (await this.appearsInBreaches(password))) {
+      problems.push('Esta contraseña aparece en filtraciones públicas conocidas. Elige otra.');
     }
 
-    if (problemas.length > 0) {
+    if (problems.length > 0) {
       throw new ValidationError('La contraseña no cumple los requisitos.', {
         code: 'weak_password',
-        details: problemas.map((problema) => ({ field: 'password', message: problema })),
+        details: problems.map((problem) => ({ field: 'password', message: problem })),
       });
     }
   }
@@ -70,25 +70,23 @@ export class PasswordService {
    * registro. Perder disponibilidad por un chequeo complementario sería peor
    * que aceptar una contraseña que ya pasó las otras dos capas.
    */
-  private async apareceEnFiltraciones(password: string): Promise<boolean> {
-    if (!this.verificarFiltradas) return false;
+  private async appearsInBreaches(password: string): Promise<boolean> {
+    if (!this.checkBreaches) return false;
 
     const sha1 = createHash('sha1').update(password).digest('hex').toUpperCase();
-    const prefijo = sha1.slice(0, 5);
-    const sufijo = sha1.slice(5);
+    const prefix = sha1.slice(0, 5);
+    const suffix = sha1.slice(5);
 
     try {
-      const respuesta = await fetch(`https://api.pwnedpasswords.com/range/${prefijo}`, {
+      const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
         headers: { 'Add-Padding': 'true' },
         signal: AbortSignal.timeout(3000),
       });
 
-      if (!respuesta.ok) return false;
+      if (!response.ok) return false;
 
-      const cuerpo = await respuesta.text();
-      return cuerpo
-        .split('\n')
-        .some((linea) => linea.split(':')[0]?.trim().toUpperCase() === sufijo);
+      const body = await response.text();
+      return body.split('\n').some((line) => line.split(':')[0]?.trim().toUpperCase() === suffix);
     } catch {
       this.logger.warn('No se pudo consultar la base de contraseñas filtradas; se omite.');
       return false;

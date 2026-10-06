@@ -1,7 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import type { SesionDeSupabase } from '../../src/modules/auth/supabase-auth.service';
+import type { SupabaseSession } from '../../src/modules/auth/supabase-auth.service';
 
 /**
  * Doble en memoria de Supabase Auth para las pruebas e2e.
@@ -30,7 +30,7 @@ export class SupabaseAuthFalso {
 
   // ── Lo que consume el guard ────────────────────────────────────────────────
 
-  verificarAccessToken(token: string): Promise<{ authId: string; email: string; iatMs: number }> {
+  verifyAccessToken(token: string): Promise<{ authId: string; email: string; iatMs: number }> {
     const partes = token.split('.');
     if (partes.length !== 3 || partes[0] !== 'falso') {
       return Promise.reject(new UnauthorizedException('Token inválido o expirado.'));
@@ -47,13 +47,13 @@ export class SupabaseAuthFalso {
 
   // ── Sesiones ───────────────────────────────────────────────────────────────
 
-  entrar(email: string, password: string): Promise<SesionDeSupabase | null> {
+  signIn(email: string, password: string): Promise<SupabaseSession | null> {
     const entrada = [...this.cuentas.entries()].find(([, c]) => c.email === email);
     if (entrada?.[1].password !== password) return Promise.resolve(null);
     return Promise.resolve(this.abrirSesion(entrada[0], email));
   }
 
-  refrescar(refreshToken: string): Promise<SesionDeSupabase | null> {
+  refresh(refreshToken: string): Promise<SupabaseSession | null> {
     const authId = this.refrescos.get(refreshToken);
     if (!authId) return Promise.resolve(null);
     const cuenta = this.cuentas.get(authId);
@@ -65,12 +65,12 @@ export class SupabaseAuthFalso {
     return Promise.resolve(this.abrirSesion(authId, cuenta.email));
   }
 
-  cerrarSesion(refreshToken: string): Promise<void> {
+  signOut(refreshToken: string): Promise<void> {
     this.refrescos.delete(refreshToken);
     return Promise.resolve();
   }
 
-  cerrarTodasLasSesiones(authId: string): Promise<void> {
+  signOutEverywhere(authId: string): Promise<void> {
     for (const [token, id] of this.refrescos) {
       if (id === authId) this.refrescos.delete(token);
     }
@@ -79,26 +79,26 @@ export class SupabaseAuthFalso {
 
   // ── Cuentas ────────────────────────────────────────────────────────────────
 
-  crearUsuario(email: string, password: string): Promise<string | null> {
+  createUser(email: string, password: string): Promise<string | null> {
     if ([...this.cuentas.values()].some((c) => c.email === email)) return Promise.resolve(null);
     const authId = randomUUID();
     this.cuentas.set(authId, { email, password });
     return Promise.resolve(authId);
   }
 
-  cambiarContrasena(authId: string, nueva: string): Promise<void> {
+  changePassword(authId: string, newPassword: string): Promise<void> {
     const cuenta = this.cuentas.get(authId);
-    if (cuenta) this.cuentas.set(authId, { ...cuenta, password: nueva });
+    if (cuenta) this.cuentas.set(authId, { ...cuenta, password: newPassword });
     return Promise.resolve();
   }
 
-  contrasenaEsCorrecta(email: string, password: string): Promise<boolean> {
+  isPasswordCorrect(email: string, password: string): Promise<boolean> {
     return Promise.resolve(
       [...this.cuentas.values()].some((c) => c.email === email && c.password === password),
     );
   }
 
-  eliminarUsuario(authId: string): Promise<void> {
+  deleteUser(authId: string): Promise<void> {
     this.cuentas.delete(authId);
     return Promise.resolve();
   }
@@ -117,7 +117,7 @@ export class SupabaseAuthFalso {
     return `falso.${authId}.${Math.floor(emitidoEn.getTime() / 1000)}`;
   }
 
-  abrirSesion(authId: string, email: string): SesionDeSupabase {
+  abrirSesion(authId: string, email: string): SupabaseSession {
     const refreshToken = `refresco-${randomUUID()}`;
     this.refrescos.set(refreshToken, authId);
     return {

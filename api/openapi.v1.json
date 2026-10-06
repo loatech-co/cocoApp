@@ -213,7 +213,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RefreshNativoDto"
+                "$ref": "#/components/schemas/RefreshNativeDto"
               }
             }
           }
@@ -316,7 +316,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RefreshNativoDto"
+                "$ref": "#/components/schemas/RefreshNativeDto"
               }
             }
           }
@@ -5267,7 +5267,7 @@
         },
         "required": ["email", "password"]
       },
-      "RefreshNativoDto": {
+      "RefreshNativeDto": {
         "type": "object",
         "properties": {
           "refresh_token": {

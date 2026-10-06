@@ -24,27 +24,27 @@
  *
  * El número sí se acepta: las versiones viejas de GoTrue mandan `code: 422`.
  */
-function comoTexto(valor: unknown): string {
-  if (typeof valor === 'string') return valor;
-  if (typeof valor === 'number') return String(valor);
+function asText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
   return '';
 }
 
-export function esCorreoRepetido(estado: number, datos: Record<string, unknown> | null): boolean {
-  if (estado === 409) return true;
-  if (estado !== 422 && estado !== 400) return false;
+export function isDuplicateEmail(status: number, data: Record<string, unknown> | null): boolean {
+  if (status === 409) return true;
+  if (status !== 422 && status !== 400) return false;
 
-  const codigo = (comoTexto(datos?.error_code) || comoTexto(datos?.code)).toLowerCase();
-  if (codigo === 'email_exists' || codigo === 'user_already_exists') return true;
+  const code = (asText(data?.error_code) || asText(data?.code)).toLowerCase();
+  if (code === 'email_exists' || code === 'user_already_exists') return true;
 
   // Solo se consulta el texto cuando no vino código: con código, el código
   // manda, y un `msg` que hable de otra cosa no puede contradecirlo.
-  if (codigo !== '' && codigo !== '422' && codigo !== '400') return false;
+  if (code !== '' && code !== '422' && code !== '400') return false;
 
-  const mensaje = (comoTexto(datos?.msg) || comoTexto(datos?.message)).toLowerCase();
+  const message = (asText(data?.msg) || asText(data?.message)).toLowerCase();
   return (
-    mensaje.includes('already been registered') ||
-    mensaje.includes('already registered') ||
-    mensaje.includes('already exists')
+    message.includes('already been registered') ||
+    message.includes('already registered') ||
+    message.includes('already exists')
   );
 }

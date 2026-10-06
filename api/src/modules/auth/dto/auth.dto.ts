@@ -1,7 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
-import { LONGITUD_MAXIMA, LONGITUD_MINIMA } from '../password.policy';
+import { MAX_LENGTH, MIN_LENGTH } from '../password.policy';
 
 /**
  * Los DTO validan FORMA, no fortaleza: la política completa de contraseñas
@@ -18,22 +18,22 @@ import { LONGITUD_MAXIMA, LONGITUD_MINIMA } from '../password.policy';
  * de saber que el problema es un espacio invisible. Además garantiza que la
  * misma dirección escrita de dos maneras sea siempre la misma cuenta.
  */
-const NormalizarCorreo = (): PropertyDecorator =>
+const NormalizeEmail = (): PropertyDecorator =>
   Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   );
 
 export class RegisterDto {
-  @NormalizarCorreo()
+  @NormalizeEmail()
   @IsEmail({}, { message: 'El correo no tiene un formato válido.' })
   @MaxLength(255)
   email!: string;
 
   @IsString()
-  @MinLength(LONGITUD_MINIMA, {
-    message: `La contraseña debe tener al menos ${LONGITUD_MINIMA} caracteres.`,
+  @MinLength(MIN_LENGTH, {
+    message: `La contraseña debe tener al menos ${MIN_LENGTH} caracteres.`,
   })
-  @MaxLength(LONGITUD_MAXIMA)
+  @MaxLength(MAX_LENGTH)
   password!: string;
 
   @IsString()
@@ -43,7 +43,7 @@ export class RegisterDto {
 }
 
 export class LoginDto {
-  @NormalizarCorreo()
+  @NormalizeEmail()
   @IsEmail({}, { message: 'El correo no tiene un formato válido.' })
   @MaxLength(255)
   email!: string;
@@ -52,18 +52,18 @@ export class LoginDto {
   // intenta entrar, y además haría que una contraseña vieja y corta fallara
   // con un mensaje distinto al de "credenciales incorrectas".
   @IsString()
-  @MaxLength(LONGITUD_MAXIMA)
+  @MaxLength(MAX_LENGTH)
   password!: string;
 }
 
 export class ChangePasswordDto {
   @IsString()
-  @MaxLength(LONGITUD_MAXIMA)
+  @MaxLength(MAX_LENGTH)
   currentPassword!: string;
 
   @IsString()
-  @MinLength(LONGITUD_MINIMA)
-  @MaxLength(LONGITUD_MAXIMA)
+  @MinLength(MIN_LENGTH)
+  @MaxLength(MAX_LENGTH)
   newPassword!: string;
 }
 
@@ -71,7 +71,7 @@ export class ChangePasswordDto {
  * Lo que trae el cuerpo de `/auth/refresh` y `/auth/logout` cuando el cliente
  * es nativo. En la web el cuerpo va vacío y la credencial es la cookie.
  */
-export class RefreshNativoDto {
+export class RefreshNativeDto {
   @IsOptional()
   @IsString()
   @MaxLength(4096)

@@ -11,7 +11,7 @@ import { AuthenticationError, ForbiddenError } from '../../common/errors/domain-
 import type { User } from '../../generated/prisma/client';
 import { CategoriesService } from '../categories/categories.service';
 
-export interface ContextoDePeticion {
+export interface RequestContext {
   ip?: string | undefined;
   userAgent?: string | undefined;
 }
@@ -30,7 +30,7 @@ export interface Profile {
 export type Me = Profile & { features: FlagName[] };
 
 /** Lo que el controlador necesita para responder y poner la cookie. */
-export interface ParDeTokens {
+export interface TokenPair {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
@@ -61,7 +61,7 @@ export interface ParDeTokens {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly correoDelAdminInicial: string | null;
+  private readonly initialAdminEmail: string | null;
 
   constructor(
     private readonly users: UsersRepository,
@@ -71,7 +71,7 @@ export class AuthService {
     private readonly audit: AuditService,
     config: ConfigService,
   ) {
-    this.correoDelAdminInicial =
+    this.initialAdminEmail =
       config.get<string>('BOOTSTRAP_ADMIN_EMAIL')?.trim().toLowerCase() || null;
   }
 
@@ -89,40 +89,40 @@ export class AuthService {
    * así, y no "el primer registro gana", porque si la app estuviera desplegada
    * antes de que el dueño se registre, cualquiera se llevaría el panel.
    */
-  async registrar(
-    datos: { email: string; password: string; displayName: string },
-    contexto: ContextoDePeticion,
-  ): Promise<{ pendienteDeAprobacion: boolean }> {
-    const email = normalizarCorreo(datos.email);
-    const displayName = datos.displayName.trim();
+  async register(
+    input: { email: string; password: string; displayName: string },
+    context: RequestContext,
+  ): Promise<{ pendingApproval: boolean }> {
+    const email = normalizeEmail(input.email);
+    const displayName = input.displayName.trim();
 
     // La política se valida SIEMPRE, antes de mirar si el correo existe: si
     // solo se validara para correos nuevos, el tiempo de respuesta los delataría.
-    await this.passwords.exigirQueSeaFuerte(datos.password, { email, displayName });
+    await this.passwords.requireStrong(input.password, { email, displayName });
 
     // Se llama a Supabase exista o no el correo, para que la duración de la
     // respuesta sea la misma en ambos casos. Devuelve null si ya existía.
-    const authId = await this.supabase.crearUsuario(email, datos.password);
+    const authId = await this.supabase.createUser(email, input.password);
 
     if (!authId) {
       this.logger.warn('Intento de registro sobre un correo ya existente.');
-      return { pendienteDeAprobacion: true };
+      return { pendingApproval: true };
     }
 
-    const esAdminInicial = this.correoDelAdminInicial === email;
+    const isInitialAdmin = this.initialAdminEmail === email;
 
-    const usuario = await this.users.create({
+    const user = await this.users.create({
       authId,
       email,
       displayName,
-      role: esAdminInicial ? 'admin' : 'user',
-      status: esAdminInicial ? 'active' : 'pending',
-      approvedAt: esAdminInicial ? new Date() : null,
+      role: isInitialAdmin ? 'admin' : 'user',
+      status: isInitialAdmin ? 'active' : 'pending',
+      approvedAt: isInitialAdmin ? new Date() : null,
       // Explícito, no por DEFAULT del motor. El guard compara este valor
       // contra el `iat` del token que emite Supabase; si uno lo pusiera el
       // reloj de Postgres y el otro el de Supabase, un desfase de
       // milisegundos entre relojes invalidaría sesiones legítimas.
-      sessionsValidFrom: alSegundo(new Date()),
+      sessionsValidFrom: toSecond(new Date()),
     });
 
     /*
@@ -145,24 +145,24 @@ export class AuthService {
       después desde `POST /categories/seed`.
     */
     try {
-      await this.categories.seedNewAccount(usuario.id);
+      await this.categories.seedNewAccount(user.id);
     } catch (error) {
       this.logger.error(
-        `No se pudo sembrar la plantilla de la cuenta ${usuario.id}: ${(error as Error).message}`,
+        `No se pudo sembrar la plantilla de la cuenta ${user.id}: ${(error as Error).message}`,
       );
     }
 
     await this.audit.record({
-      userId: usuario.id,
+      userId: user.id,
       entity: 'users',
-      entityId: usuario.id,
+      entityId: user.id,
       action: 'auth.register',
-      changes: { role: usuario.role, status: usuario.status },
-      ip: contexto.ip,
-      userAgent: contexto.userAgent,
+      changes: { role: user.role, status: user.status },
+      ip: context.ip,
+      userAgent: context.userAgent,
     });
 
-    return { pendienteDeAprobacion: usuario.status === 'pending' };
+    return { pendingApproval: user.status === 'pending' };
   }
 
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -175,39 +175,39 @@ export class AuthService {
    * solo los ve quien ya demostró conocer la contraseña. Al revés, cualquiera
    * podría averiguar qué correos tienen cuenta.
    */
-  async entrar(
-    datos: { email: string; password: string },
-    contexto: ContextoDePeticion,
-  ): Promise<{ tokens: ParDeTokens; perfil: Profile }> {
-    const email = normalizarCorreo(datos.email);
-    const sesion = await this.supabase.entrar(email, datos.password);
+  async signIn(
+    input: { email: string; password: string },
+    context: RequestContext,
+  ): Promise<{ tokens: TokenPair; profile: Profile }> {
+    const email = normalizeEmail(input.email);
+    const session = await this.supabase.signIn(email, input.password);
 
-    if (!sesion) {
+    if (!session) {
       await this.audit.record({
         entity: 'users',
         action: 'auth.login_failed',
         changes: { motivo: 'credenciales_incorrectas' },
-        ip: contexto.ip,
-        userAgent: contexto.userAgent,
+        ip: context.ip,
+        userAgent: context.userAgent,
       });
       throw new AuthenticationError('Correo o contraseña incorrectos.', {
         code: 'invalid_credentials',
       });
     }
 
-    const usuario = await this.users.findByAuthId(sesion.authId);
+    const user = await this.users.findByAuthId(session.authId);
 
-    if (!usuario) {
+    if (!user) {
       // La cuenta existe en Supabase pero no tiene perfil aquí. Pasa si se creó
       // desde el panel de Supabase saltándose el registro de la app. Sin perfil
       // no hay rol ni estado, así que no se puede autorizar nada.
-      this.logger.error(`Cuenta de Supabase ${sesion.authId} sin perfil en la aplicación.`);
+      this.logger.error(`Cuenta de Supabase ${session.authId} sin perfil en la aplicación.`);
       throw new ForbiddenError('Tu cuenta no está habilitada. Contacta al administrador.', {
         code: 'account_not_enabled',
       });
     }
 
-    this.exigirCuentaUsable(usuario);
+    this.requireUsableAccount(user);
 
     // Si la marca de revocación quedó por delante del token que Supabase acaba
     // de emitir, se baja hasta él. Pasa al volver a entrar en el mismo segundo
@@ -217,41 +217,40 @@ export class AuthService {
     // Bajarla solo puede revivir tokens emitidos en ESE segundo, y solo cuando
     // alguien acaba de demostrar que conoce la contraseña. Lo anterior a ese
     // segundo sigue muerto.
-    const inicioDeSesion = new Date(Math.floor(Date.now() / 1000) * 1000);
-    const marca =
-      usuario.sessionsValidFrom > inicioDeSesion ? inicioDeSesion : usuario.sessionsValidFrom;
+    const signedInAt = new Date(Math.floor(Date.now() / 1000) * 1000);
+    const stamp = user.sessionsValidFrom > signedInAt ? signedInAt : user.sessionsValidFrom;
 
-    const actualizado = await this.users.update(usuario.id, {
+    const updated = await this.users.update(user.id, {
       lastLoginAt: new Date(),
-      sessionsValidFrom: marca,
+      sessionsValidFrom: stamp,
     });
 
     await this.audit.record({
-      userId: actualizado.id,
+      userId: updated.id,
       entity: 'users',
-      entityId: actualizado.id,
+      entityId: updated.id,
       action: 'auth.login',
-      ip: contexto.ip,
-      userAgent: contexto.userAgent,
+      ip: context.ip,
+      userAgent: context.userAgent,
     });
 
-    return { tokens: aParDeTokens(sesion), perfil: profileOf(actualizado) };
+    return { tokens: toTokenPair(session), profile: profileOf(updated) };
   }
 
   // ── Sesión ─────────────────────────────────────────────────────────────────
 
-  async refrescar(
+  async refresh(
     refreshToken: string,
-    _contexto: ContextoDePeticion,
-  ): Promise<{ tokens: ParDeTokens; perfil: Profile }> {
-    const sesion = await this.supabase.refrescar(refreshToken);
-    if (!sesion)
+    _context: RequestContext,
+  ): Promise<{ tokens: TokenPair; profile: Profile }> {
+    const session = await this.supabase.refresh(refreshToken);
+    if (!session)
       throw new AuthenticationError('La sesión expiró. Vuelve a entrar.', {
         code: 'session_expired',
       });
 
-    const usuario = await this.users.findByAuthId(sesion.authId);
-    if (!usuario)
+    const user = await this.users.findByAuthId(session.authId);
+    if (!user)
       throw new AuthenticationError('La sesión ya no es válida.', { code: 'session_revoked' });
 
     // El estado se revisa también al refrescar: si suspenden una cuenta, no
@@ -263,43 +262,43 @@ export class AuthService {
     // segundo plano, y un 401 le dice "esta sesión murió, mandá a entrar de
     // nuevo". Un 403 lo dejaría reintentando contra una sesión que no va a
     // revivir.
-    if (usuario.status !== 'active') {
+    if (user.status !== 'active') {
       throw new AuthenticationError('La sesión ya no es válida.', { code: 'session_revoked' });
     }
 
-    return { tokens: aParDeTokens(sesion), perfil: profileOf(usuario) };
+    return { tokens: toTokenPair(session), profile: profileOf(user) };
   }
 
-  async salir(refreshToken: string | undefined, contexto: ContextoDePeticion): Promise<void> {
+  async signOut(refreshToken: string | undefined, context: RequestContext): Promise<void> {
     if (!refreshToken) return;
 
-    const sesion = await this.supabase.refrescar(refreshToken);
-    await this.supabase.cerrarSesion(refreshToken);
+    const session = await this.supabase.refresh(refreshToken);
+    await this.supabase.signOut(refreshToken);
 
-    if (!sesion) return;
-    const usuario = await this.users.findByAuthId(sesion.authId);
-    if (!usuario) return;
+    if (!session) return;
+    const user = await this.users.findByAuthId(session.authId);
+    if (!user) return;
 
     await this.audit.record({
-      userId: usuario.id,
+      userId: user.id,
       entity: 'users',
-      entityId: usuario.id,
+      entityId: user.id,
       action: 'auth.logout',
-      ip: contexto.ip,
-      userAgent: contexto.userAgent,
+      ip: context.ip,
+      userAgent: context.userAgent,
     });
   }
 
   /** Cierra sesión en todos los dispositivos, de inmediato. */
-  async salirDeTodoslosDispositivos(userId: bigint, contexto: ContextoDePeticion): Promise<void> {
-    await this.revocarTodasLasSesiones(userId);
+  async signOutEverywhere(userId: bigint, context: RequestContext): Promise<void> {
+    await this.revokeAllSessions(userId);
     await this.audit.record({
       userId,
       entity: 'users',
       entityId: userId,
       action: 'auth.logout_all',
-      ip: contexto.ip,
-      userAgent: contexto.userAgent,
+      ip: context.ip,
+      userAgent: context.userAgent,
     });
   }
 
@@ -312,43 +311,43 @@ export class AuthService {
    * apoderarse de la cuenta cambiándola. Al terminar cierra todas las sesiones
    * — incluida la del atacante, si la hubiera.
    */
-  async cambiarContrasena(
+  async changePassword(
     userId: bigint,
-    datos: { actual: string; nueva: string },
-    contexto: ContextoDePeticion,
+    input: { currentPassword: string; newPassword: string },
+    context: RequestContext,
   ): Promise<void> {
-    const usuario = await this.users.findByIdOrThrow(userId);
-    if (!usuario.authId) {
+    const user = await this.users.findByIdOrThrow(userId);
+    if (!user.authId) {
       throw new ForbiddenError('Esta cuenta no tiene credenciales gestionadas.', {
         code: 'credentials_not_managed',
       });
     }
 
-    if (!(await this.supabase.contrasenaEsCorrecta(usuario.email, datos.actual))) {
+    if (!(await this.supabase.isPasswordCorrect(user.email, input.currentPassword))) {
       throw new AuthenticationError('La contraseña actual no es correcta.', {
         code: 'wrong_current_password',
       });
     }
 
-    await this.passwords.exigirQueSeaFuerte(datos.nueva, {
-      email: usuario.email,
-      displayName: usuario.displayName ?? undefined,
+    await this.passwords.requireStrong(input.newPassword, {
+      email: user.email,
+      displayName: user.displayName ?? undefined,
     });
 
-    await this.supabase.cambiarContrasena(usuario.authId, datos.nueva);
-    await this.revocarTodasLasSesiones(userId);
+    await this.supabase.changePassword(user.authId, input.newPassword);
+    await this.revokeAllSessions(userId);
 
     await this.audit.record({
       userId,
       entity: 'users',
       entityId: userId,
       action: 'auth.password_changed',
-      ip: contexto.ip,
-      userAgent: contexto.userAgent,
+      ip: context.ip,
+      userAgent: context.userAgent,
     });
   }
 
-  async perfilDe(userId: bigint): Promise<Profile> {
+  async getProfile(userId: bigint): Promise<Profile> {
     return profileOf(await this.users.findByIdOrThrow(userId));
   }
 
@@ -364,24 +363,24 @@ export class AuthService {
    * la primera sin la segunda permite refrescar para siempre; la segunda sin la
    * primera deja vivo el access token actual hasta que expire.
    */
-  async revocarTodasLasSesiones(userId: bigint): Promise<void> {
-    const usuario = await this.users.update(userId, {
-      sessionsValidFrom: alSegundoSiguiente(new Date()),
+  async revokeAllSessions(userId: bigint): Promise<void> {
+    const user = await this.users.update(userId, {
+      sessionsValidFrom: toNextSecond(new Date()),
     });
 
-    if (usuario.authId) {
-      await this.supabase.cerrarTodasLasSesiones(usuario.authId);
+    if (user.authId) {
+      await this.supabase.signOutEverywhere(user.authId);
     }
   }
 
-  private exigirCuentaUsable(usuario: User): void {
-    if (usuario.status === 'pending') {
+  private requireUsableAccount(user: User): void {
+    if (user.status === 'pending') {
       throw new ForbiddenError(
         'Tu cuenta está pendiente de aprobación. Te avisaremos cuando esté lista.',
         { code: 'account_pending_approval' },
       );
     }
-    if (usuario.status === 'suspended') {
+    if (user.status === 'suspended') {
       throw new ForbiddenError('Tu cuenta está suspendida. Contacta al administrador.', {
         code: 'account_suspended',
       });
@@ -390,18 +389,18 @@ export class AuthService {
 }
 
 /** Minúsculas y sin espacios: `Gerardo@X.com ` y `gerardo@x.com` son la misma cuenta. */
-function normalizarCorreo(email: string): string {
+function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-export function profileOf(usuario: User): Profile {
+export function profileOf(user: User): Profile {
   return {
-    id: usuario.id,
-    email: usuario.email,
-    displayName: usuario.displayName,
-    role: usuario.role,
-    status: usuario.status,
-    createdAt: usuario.createdAt,
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    role: user.role,
+    status: user.status,
+    createdAt: user.createdAt,
   };
 }
 
@@ -411,8 +410,8 @@ export function profileOf(usuario: User): Profile {
  * se guardaran milisegundos, un token emitido en el mismo segundo parecería
  * ANTERIOR a su propia sesión y el guard lo rechazaría nada más nacer.
  */
-function alSegundo(momento: Date): Date {
-  return new Date(Math.floor(momento.getTime() / 1000) * 1000);
+function toSecond(instant: Date): Date {
+  return new Date(Math.floor(instant.getTime() / 1000) * 1000);
 }
 
 /**
@@ -424,18 +423,18 @@ function alSegundo(momento: Date): Date {
  * se redondea hacia arriba. El precio es un borde de menos de un segundo al
  * volver a entrar, que `entrar` resuelve.
  */
-function alSegundoSiguiente(momento: Date): Date {
-  return new Date(Math.floor(momento.getTime() / 1000) * 1000 + 1000);
+function toNextSecond(instant: Date): Date {
+  return new Date(Math.floor(instant.getTime() / 1000) * 1000 + 1000);
 }
 
-function aParDeTokens(sesion: {
+function toTokenPair(session: {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
-}): ParDeTokens {
+}): TokenPair {
   return {
-    accessToken: sesion.accessToken,
-    refreshToken: sesion.refreshToken,
-    expiresIn: sesion.expiresIn,
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken,
+    expiresIn: session.expiresIn,
   };
 }

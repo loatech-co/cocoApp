@@ -111,7 +111,7 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
 
   describe('verificarAccessToken', () => {
     it('accepts a token signed by the project and returns its subject', async () => {
-      const result = await service.verificarAccessToken(
+      const result = await service.verifyAccessToken(
         await token({ sub: 'auth-1', email: 'ana@pruebas.coco' }),
       );
       expect(result).toMatchObject({ authId: 'auth-1', email: 'ana@pruebas.coco' });
@@ -119,7 +119,7 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
     });
 
     it('returns an empty email when the token carries none', async () => {
-      const result = await service.verificarAccessToken(await token({ sub: 'auth-1' }));
+      const result = await service.verifyAccessToken(await token({ sub: 'auth-1' }));
       expect(result.email).toBe('');
     });
 
@@ -128,7 +128,7 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
       ['from another issuer', () => token({ sub: 'x' }, 'https://otro.example/auth/v1')],
       ['that is not a JWT', () => Promise.resolve('basura')],
     ])('rejects a token %s', async (_, make) => {
-      await expect(service.verificarAccessToken(await make())).rejects.toThrow(
+      await expect(service.verifyAccessToken(await make())).rejects.toThrow(
         'Token inválido o expirado.',
       );
     });
@@ -138,7 +138,7 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
     it('opens a session with the password grant and the anon key', async () => {
       replies['POST /token?grant_type=password'] = { status: 200, body: session };
 
-      const result = await service.entrar('ana@pruebas.coco', 'secreta');
+      const result = await service.signIn('ana@pruebas.coco', 'secreta');
 
       expect(result).toEqual({
         accessToken: 'access',
@@ -156,24 +156,24 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
     it('reads 400 and 401 as wrong credentials, not as a failure', async () => {
       replies['POST /token?grant_type=password'] = { status: 400, body: { msg: 'invalid' } };
       replies['POST /token?grant_type=refresh_token'] = { status: 401 };
-      expect(await service.entrar('a@b.co', 'x')).toBeNull();
-      expect(await service.refrescar('r')).toBeNull();
+      expect(await service.signIn('a@b.co', 'x')).toBeNull();
+      expect(await service.refresh('r')).toBeNull();
     });
 
     it('fails loudly on a session without tokens, and defaults what is optional', async () => {
       replies['POST /token?grant_type=refresh_token'] = { status: 200, raw: 'no es json' };
-      await expect(service.refrescar('r')).rejects.toThrow('No se pudo abrir la sesión.');
+      await expect(service.refresh('r')).rejects.toThrow('No se pudo abrir la sesión.');
 
       replies['POST /token?grant_type=refresh_token'] = {
         status: 200,
         body: { ...session, expires_in: undefined, user: { id: 'auth-1' } },
       };
-      expect(await service.refrescar('r')).toMatchObject({ expiresIn: 3600, email: '' });
+      expect(await service.refresh('r')).toMatchObject({ expiresIn: 3600, email: '' });
     });
 
     it('closes its own session with the session token', async () => {
       replies['POST /token?grant_type=refresh_token'] = { status: 200, body: session };
-      await service.cerrarSesion('refresh');
+      await service.signOut('refresh');
       expect(calls.map((c) => c.url)).toEqual([
         '/token?grant_type=refresh_token',
         '/logout?scope=local',
@@ -183,24 +183,24 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
 
     it('does nothing to close a session that is already dead', async () => {
       replies['POST /token?grant_type=refresh_token'] = { status: 401 };
-      await service.cerrarSesion('muerto');
+      await service.signOut('muerto');
       expect(calls).toHaveLength(1);
     });
 
     it('checks a password by opening and closing a throwaway session', async () => {
       replies['POST /token?grant_type=password'] = { status: 200, body: session };
-      expect(await service.contrasenaEsCorrecta('a@b.co', 'bien')).toBe(true);
+      expect(await service.isPasswordCorrect('a@b.co', 'bien')).toBe(true);
       expect(calls.map((c) => c.url)).toContain('/logout?scope=local');
 
       replies['POST /token?grant_type=password'] = { status: 400 };
-      expect(await service.contrasenaEsCorrecta('a@b.co', 'mal')).toBe(false);
+      expect(await service.isPasswordCorrect('a@b.co', 'mal')).toBe(false);
     });
   });
 
   describe('administration', () => {
     it('creates a confirmed user with the service key and returns its id', async () => {
       replies['POST /admin/users'] = { status: 200, body: { id: 'auth-9' } };
-      expect(await service.crearUsuario('n@pruebas.coco', 'pw')).toBe('auth-9');
+      expect(await service.createUser('n@pruebas.coco', 'pw')).toBe('auth-9');
       expect(calls[0]).toMatchObject({
         auth: 'Bearer service',
         body: { email: 'n@pruebas.coco', password: 'pw', email_confirm: true },
@@ -209,24 +209,24 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
 
     it('returns null for an email that already exists', async () => {
       replies['POST /admin/users'] = { status: 422, body: { error_code: 'email_exists' } };
-      expect(await service.crearUsuario('n@pruebas.coco', 'pw')).toBeNull();
+      expect(await service.createUser('n@pruebas.coco', 'pw')).toBeNull();
     });
 
     it('fails on any other error, or on a reply without an id', async () => {
       replies['POST /admin/users'] = { status: 422, body: { msg: 'weak password' } };
-      await expect(service.crearUsuario('n@pruebas.coco', 'pw')).rejects.toThrow(
+      await expect(service.createUser('n@pruebas.coco', 'pw')).rejects.toThrow(
         'No se pudo crear el usuario.',
       );
       replies['POST /admin/users'] = { status: 200, body: { message: { otro: 1 } } };
-      await expect(service.crearUsuario('n@pruebas.coco', 'pw')).rejects.toThrow(
+      await expect(service.createUser('n@pruebas.coco', 'pw')).rejects.toThrow(
         'No se pudo crear el usuario.',
       );
     });
 
     it('changes a password, signs a user out everywhere and deletes it', async () => {
-      await service.cambiarContrasena('auth-1', 'nueva');
-      await service.cerrarTodasLasSesiones('auth-1');
-      await service.eliminarUsuario('auth-1');
+      await service.changePassword('auth-1', 'nueva');
+      await service.signOutEverywhere('auth-1');
+      await service.deleteUser('auth-1');
       expect(calls.map((c) => `${c.method} ${c.url}`)).toEqual([
         'PUT /admin/users/auth-1',
         'POST /admin/users/auth-1/logout',
@@ -234,14 +234,14 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
       ]);
 
       replies['PUT /admin/users/auth-1'] = { status: 500 };
-      await expect(service.cambiarContrasena('auth-1', 'nueva')).rejects.toThrow(
+      await expect(service.changePassword('auth-1', 'nueva')).rejects.toThrow(
         'No se pudo cambiar la contraseña.',
       );
     });
 
     it('blocks every admin call outside production unless allowed, before the network', async () => {
       Reflect.deleteProperty(process.env, ALLOW_DESTRUCTIVE_AUTH);
-      await expect(service.eliminarUsuario('auth-1')).rejects.toThrow(/cuenta REAL/);
+      await expect(service.deleteUser('auth-1')).rejects.toThrow(/cuenta REAL/);
       expect(calls).toEqual([]);
     });
   });
@@ -254,7 +254,7 @@ describe('SupabaseAuthService (against a local GoTrue)', () => {
         SUPABASE_SERVICE_ROLE_KEY: 'service',
       }),
     );
-    await expect(offline.entrar('a@b.co', 'x')).rejects.toThrow(
+    await expect(offline.signIn('a@b.co', 'x')).rejects.toThrow(
       'El servicio de identidad no está disponible.',
     );
   });

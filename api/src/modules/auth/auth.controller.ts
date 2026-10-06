@@ -4,13 +4,8 @@ import { ApiHeader } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 
-import {
-  AuthService,
-  type ContextoDePeticion,
-  type ParDeTokens,
-  type Profile,
-} from './auth.service';
-import { ChangePasswordDto, LoginDto, RefreshNativoDto, RegisterDto } from './dto/auth.dto';
+import { AuthService, type RequestContext, type TokenPair, type Profile } from './auth.service';
+import { ChangePasswordDto, LoginDto, RefreshNativeDto, RegisterDto } from './dto/auth.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthenticationError } from '../../common/errors/domain-error';
@@ -48,35 +43,35 @@ const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
  * Nunca en la URL: una URL queda en registros de servidores, proxies e
  * historiales.
  */
-const CABECERA_CLIENTE = 'x-coco-cliente';
-const CLIENTE_NATIVO = 'nativo';
+const CLIENT_HEADER = 'x-coco-cliente';
+const NATIVE_CLIENT = 'nativo';
 
 /** How the OpenAPI document tells a native client which header to send. */
 const NATIVE_CLIENT_HEADER = {
-  name: CABECERA_CLIENTE,
+  name: CLIENT_HEADER,
   required: false,
-  enum: [CLIENTE_NATIVO],
+  enum: [NATIVE_CLIENT],
   description:
     'Native clients send `nativo`: the refresh token then travels in the body ' +
     '(`refresh_token`) instead of the httpOnly `coco_refresh` cookie the web uses.',
 };
 
-function esClienteNativo(request: Request): boolean {
-  const valor = request.headers[CABECERA_CLIENTE];
-  return (Array.isArray(valor) ? valor[0] : valor) === CLIENTE_NATIVO;
+function isNativeClient(request: Request): boolean {
+  const value = request.headers[CLIENT_HEADER];
+  return (Array.isArray(value) ? value[0] : value) === NATIVE_CLIENT;
 }
 
 @ApiPublic()
 @Controller('auth')
 export class AuthController {
-  private readonly enProduccion: boolean;
+  private readonly inProduction: boolean;
 
   constructor(
     private readonly auth: AuthService,
     private readonly flags: FlagsService,
     config: ConfigService,
   ) {
-    this.enProduccion = config.get<string>('NODE_ENV') === 'production';
+    this.inProduction = config.get<string>('NODE_ENV') === 'production';
   }
 
   // ── Público ────────────────────────────────────────────────────────────────
@@ -91,15 +86,15 @@ export class AuthController {
   @Post('register')
   @ApiData(RegisterResponse, { status: 201 })
   @ApiErrors(400, 409, 422)
-  async registrar(
+  async register(
     @Body() dto: RegisterDto,
     @Req() request: Request,
   ): Promise<{ pending_approval: boolean; message: string }> {
-    const { pendienteDeAprobacion } = await this.auth.registrar(dto, contextoDe(request));
+    const { pendingApproval } = await this.auth.register(dto, contextOf(request));
 
     return {
-      pending_approval: pendienteDeAprobacion,
-      message: pendienteDeAprobacion
+      pending_approval: pendingApproval,
+      message: pendingApproval
         ? 'Recibimos tu solicitud. Un administrador debe aprobarla antes de que puedas entrar.'
         : 'Tu cuenta de administrador quedó lista. Ya puedes entrar.',
     };
@@ -112,13 +107,13 @@ export class AuthController {
   @ApiHeader(NATIVE_CLIENT_HEADER)
   @ApiData(SessionResponse)
   @ApiErrors(400, 401, 403)
-  async entrar(
+  async login(
     @Body() dto: LoginDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<SessionV1> {
-    const { tokens, perfil } = await this.auth.entrar(dto, contextoDe(request));
-    return this.entregarSesion(request, response, tokens, perfil);
+    const { tokens, profile } = await this.auth.signIn(dto, contextOf(request));
+    return this.deliverSession(request, response, tokens, profile);
   }
 
   /**
@@ -132,25 +127,25 @@ export class AuthController {
   @ApiHeader(NATIVE_CLIENT_HEADER)
   @ApiData(SessionResponse)
   @ApiErrors(400, 401, 403)
-  async refrescar(
+  async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-    @Body() cuerpo: RefreshNativoDto,
+    @Body() body: RefreshNativeDto,
   ): Promise<SessionV1> {
-    const refreshToken = this.refreshTokenDe(request, cuerpo);
+    const refreshToken = this.refreshTokenOf(request, body);
     if (!refreshToken) {
       throw new AuthenticationError('No hay sesión que renovar.', { code: 'session_expired' });
     }
 
     try {
-      const { tokens, perfil } = await this.auth.refrescar(refreshToken, contextoDe(request));
-      return this.entregarSesion(request, response, tokens, perfil);
+      const { tokens, profile } = await this.auth.refresh(refreshToken, contextOf(request));
+      return this.deliverSession(request, response, tokens, profile);
     } catch (error) {
       // Si la sesión murió, la cookie sobra: dejarla haría que el cliente
       // reintentara en bucle contra un token que ya no sirve. A un cliente
       // nativo no se le borra nada: el token vive en su llavero, y el 401 le
       // dice que lo tire.
-      if (!esClienteNativo(request)) this.borrarCookie(response);
+      if (!isNativeClient(request)) this.clearCookie(response);
       throw error;
     }
   }
@@ -168,13 +163,13 @@ export class AuthController {
   @ApiHeader(NATIVE_CLIENT_HEADER)
   @ApiNoContent()
   @ApiErrors(400)
-  async salir(
+  async logout(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
-    @Body() cuerpo: RefreshNativoDto,
+    @Body() body: RefreshNativeDto,
   ): Promise<void> {
-    await this.auth.salir(this.refreshTokenDe(request, cuerpo), contextoDe(request));
-    if (!esClienteNativo(request)) this.borrarCookie(response);
+    await this.auth.signOut(this.refreshTokenOf(request, body), contextOf(request));
+    if (!isNativeClient(request)) this.clearCookie(response);
   }
 
   /** Cierra la sesión en todos los dispositivos, con efecto inmediato. */
@@ -182,25 +177,25 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiAuthenticated()
   @ApiNoContent()
-  async salirDeTodo(
+  async logoutAll(
     @CurrentUser() user: AuthenticatedUser,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
-    await this.auth.salirDeTodoslosDispositivos(user.id, contextoDe(request));
-    this.borrarCookie(response);
+    await this.auth.signOutEverywhere(user.id, contextOf(request));
+    this.clearCookie(response);
   }
 
   /** `features`: the flags on for this user (step 7.8), read by the web and iOS. */
   @Get('me')
   @ApiAuthenticated()
   @ApiData(MeResponse)
-  async perfil(@CurrentUser() user: AuthenticatedUser): Promise<MeV1> {
-    const [perfil, features] = await Promise.all([
-      this.auth.perfilDe(user.id),
+  async me(@CurrentUser() user: AuthenticatedUser): Promise<MeV1> {
+    const [profile, features] = await Promise.all([
+      this.auth.getProfile(user.id),
       this.flags.activeFor(user.id),
     ]);
-    return meV1({ ...perfil, features });
+    return meV1({ ...profile, features });
   }
 
   @Post('change-password')
@@ -208,20 +203,20 @@ export class AuthController {
   @ApiAuthenticated()
   @ApiNoContent()
   @ApiErrors(400, 422)
-  async cambiarContrasena(
+  async changePassword(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ChangePasswordDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
-    await this.auth.cambiarContrasena(
+    await this.auth.changePassword(
       user.id,
-      { actual: dto.currentPassword, nueva: dto.newPassword },
-      contextoDe(request),
+      { currentPassword: dto.currentPassword, newPassword: dto.newPassword },
+      contextOf(request),
     );
     // Cambiar la contraseña cierra todas las sesiones, incluida esta: si un
     // atacante tenía una abierta, muere aquí.
-    this.borrarCookie(response);
+    this.clearCookie(response);
   }
 
   // ── Web o nativo ───────────────────────────────────────────────────────────
@@ -232,22 +227,22 @@ export class AuthController {
    * también una cookie estaría mezclando dos mundos, y se le hace caso al
    * suyo.
    */
-  private refreshTokenDe(request: Request, cuerpo: RefreshNativoDto): string | undefined {
-    if (esClienteNativo(request)) return cuerpo.refresh_token?.trim() || undefined;
-    return leerCookie(request, COOKIE_REFRESH);
+  private refreshTokenOf(request: Request, body: RefreshNativeDto): string | undefined {
+    if (isNativeClient(request)) return body.refresh_token?.trim() || undefined;
+    return readCookie(request, COOKIE_REFRESH);
   }
 
   /** La sesión, por donde corresponda: cookie para la web, cuerpo para la app. */
-  private entregarSesion(
+  private deliverSession(
     request: Request,
     response: Response,
-    tokens: ParDeTokens,
-    perfil: Profile,
+    tokens: TokenPair,
+    profile: Profile,
   ): SessionV1 {
-    if (esClienteNativo(request)) return sessionV1(tokens, perfil, true);
+    if (isNativeClient(request)) return sessionV1(tokens, profile, true);
     // El refresh token NO se devuelve en el cuerpo: solo va en la cookie httpOnly.
-    this.ponerCookie(response, tokens.refreshToken);
-    return sessionV1(tokens, perfil, false);
+    this.setCookie(response, tokens.refreshToken);
+    return sessionV1(tokens, profile, false);
   }
 
   // ── Cookie ─────────────────────────────────────────────────────────────────
@@ -258,40 +253,40 @@ export class AuthController {
    * desde otro sitio, que es lo que neutraliza el CSRF sobre este endpoint.
    * `path` acotado a /auth para que no se envíe en cada llamada a la API.
    */
-  private opcionesDeCookie(): CookieOptions {
+  private cookieOptions(): CookieOptions {
     return {
       httpOnly: true,
-      secure: this.enProduccion,
+      secure: this.inProduction,
       sameSite: 'strict',
       path: '/api/v1/auth',
     };
   }
 
-  private ponerCookie(response: Response, refreshToken: string): void {
+  private setCookie(response: Response, refreshToken: string): void {
     response.cookie(COOKIE_REFRESH, refreshToken, {
-      ...this.opcionesDeCookie(),
+      ...this.cookieOptions(),
       maxAge: REFRESH_TTL_MS,
     });
   }
 
-  private borrarCookie(response: Response): void {
-    response.clearCookie(COOKIE_REFRESH, this.opcionesDeCookie());
+  private clearCookie(response: Response): void {
+    response.clearCookie(COOKIE_REFRESH, this.cookieOptions());
   }
 }
 
-function contextoDe(request: Request): ContextoDePeticion {
+function contextOf(request: Request): RequestContext {
   return {
     ip: request.ip,
     userAgent: request.headers['user-agent'],
   };
 }
 
-function leerCookie(request: Request, nombre: string): string | undefined {
+function readCookie(request: Request, name: string): string | undefined {
   // cookie-parser deja aquí las cookies ya decodificadas. Express no las tipa,
   // así que se estrecha explícitamente en vez de arrastrar un `any`.
   const cookies: unknown = (request as Request & { cookies?: unknown }).cookies;
   if (typeof cookies !== 'object' || cookies === null) return undefined;
 
-  const valor = (cookies as Record<string, unknown>)[nombre];
-  return typeof valor === 'string' ? valor : undefined;
+  const value = (cookies as Record<string, unknown>)[name];
+  return typeof value === 'string' ? value : undefined;
 }
