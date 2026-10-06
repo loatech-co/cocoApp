@@ -647,9 +647,9 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Titulares sin interletraje: el tema lo declara en 0 y Geist ya viene
-     cerrada de por sí. El −0.02em de antes compensaba una familia más suelta;
-     aplicado a esta, los títulos se apiñan. */
+  /* Headings without letter spacing: the theme declares it as 0 and Geist
+     already comes tight on its own. The −0.02em from before made up for a
+     looser family; applied to this one, the titles crowd together. */
   h1,
   h2,
   h3 {
@@ -657,41 +657,41 @@
     font-weight: 600;
   }
 
-  /* Las cifras, en la misma familia y tabulares: una columna de montos tiene
-     que alinear por dígito. */
+  /* Figures, in the same family and tabular: a column of amounts has to
+     align by digit. */
   .tabular,
   .cifra {
     font-family: var(--font-display);
   }
 
-  /* Los montos en cifras tabulares: las columnas de dinero alinean por dígito. */
+  /* Amounts in tabular figures: money columns align by digit. */
   .tabular {
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum' 1;
   }
 
-  /* El contorno de foco de todo lo que lo recibe: enlaces, celdas
-     tabulables, la gráfica. Dos píxeles del anillo del tema, separados otros
-     dos para que no se coman el canto de lo que rodean. */
+  /* The focus outline of everything that receives it: links, tabbable cells,
+     the chart. Two pixels of the theme's ring, offset another two so they do
+     not eat the edge of what they surround. */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 
   /*
-    ── Salvo los BOTONES, que no lo llevan ──────────────────────────────────
-    Un botón no guarda nada ni recibe lo que se escribe: se pulsa y pasa algo.
-    Y el foco vuelve a él solo, sin que nadie lo pida, cada vez que se cierra
-    lo que abrió —una ficha, un desplegable—; si la ficha se cerró con Escape,
-    la última interacción fue de teclado y `:focus-visible` se enciende. El
-    resultado es un botón con un contorno de dos píxeles del color de acento
-    que aparece al SALIR de otra cosa, que es lo contrario de lo que un
-    contorno de foco tiene que decir.
+    ── Except BUTTONS, which do not carry it ────────────────────────────────
+    A button keeps nothing and receives nothing typed: it is pressed and
+    something happens. And focus returns to it on its own, without anyone
+    asking, every time what it opened closes —a sheet, a dropdown—; if the
+    sheet was closed with Escape, the last interaction was the keyboard and
+    `:focus-visible` lights up. The result is a button with a two-pixel
+    accent-colored outline that appears on LEAVING something else, which is
+    the opposite of what a focus outline has to say.
 
-    Lo que sí lo conserva es el CAMPO —donde de verdad importa saber cuál está
-    recibiendo lo que se teclea—, y lo lleva a su manera: `FOCO_DEL_CAMPO`, un
-    borde teñido y un halo, no este contorno. Un desplegable es un campo aunque
-    esté hecho con un `<button>`, así que también.
+    What does keep it is the FIELD —where it really matters to know which one
+    is receiving what is typed—, and it carries it its own way: `FIELD_FOCUS`,
+    a tinted border and a halo, not this outline. A dropdown is a field even
+    when it is built with a `<button>`, so it does too.
   */
   button:focus-visible {
     outline: none;
@@ -699,33 +699,34 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   EL BARRIDO DEL ESCÁNER
+   THE SCANNER SWEEP
 
-   Una banda de luz que cruza el documento de lado a lado mientras se lee.
+   A band of light that crosses the document from side to side while it is
+   being read.
 
-   ── Por qué no un girador ─────────────────────────────────────────────────
-   Porque un girador dice «espera» y nada más: es el mismo dibujo para cargar
-   una lista, guardar un formulario o leer un recibo. Aquí está pasando algo
-   concreto y que se puede enseñar —una máquina está mirando ese papel— y
-   enseñarlo hace dos cosas que el girador no: se entiende que la espera tiene
-   un motivo, y se ve QUÉ documento se está leyendo, que es el dato que hace
-   falta si lo que salió no cuadra.
+   ── Why not a spinner ─────────────────────────────────────────────────────
+   Because a spinner says «wait» and nothing else: it is the same drawing for
+   loading a list, saving a form or reading a receipt. Here something
+   concrete is happening that can be shown —a machine is looking at that
+   paper— and showing it does two things the spinner does not: you understand
+   the wait has a reason, and you see WHICH document is being read, which is
+   the fact you need if what came out does not add up.
 
-   ── Dos capas, y cada una dice algo ──────────────────────────────────────
-   · `barre` es la banda: un degradado que va de transparente al acento y
-     vuelve a transparente, con una línea brillante en su canto de avance.
-   · `se-revela-al-paso` es el rastro: lo ya barrido queda un poco más claro
-     que lo que falta, así que la banda no parece un reflejo suelto sino algo
-     que va dejando el trabajo hecho detrás.
+   ── Two layers, and each says something ──────────────────────────────────
+   · `barre` is the band: a gradient that goes from transparent to the accent
+     and back to transparent, with a bright line on its leading edge.
+   · `se-revela-al-paso` is the trail: what has already been swept stays a
+     little lighter than what is left, so the band does not look like a stray
+     reflection but like something leaving the work done behind it.
 
-   1.8s por pasada: por debajo de un segundo parece nervioso y por encima de
-   dos parece que se colgó. Y no alterna de vuelta —un escáner de verdad
-   vuelve, pero la vuelta se lee como «va otra vez desde el principio», que es
-   lo contrario de lo que se quiere decir—.
+   1.8s per pass: under a second it looks nervous and over two it looks
+   frozen. And it does not alternate back —a real scanner does come back, but
+   the return reads as «it is starting over from the beginning», which is the
+   opposite of what is meant—.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* El borde seguro del teléfono —la barra del sistema, la muesca de abajo—
-   como relleno. Lo que va pegado al pie lo reserva para no quedar debajo. */
+/* The phone's safe edge —the system bar, the notch at the bottom— as
+   padding. What sticks to the bottom reserves it so as not to end up under it. */
 @utility pb-seguro {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -751,7 +752,7 @@
   }
 }
 
-/* El rastro: crece de izquierda a derecha al mismo ritmo que la banda. */
+/* The trail: it grows from left to right at the same pace as the band. */
 @utility deja-rastro {
   animation: rastro 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -765,9 +766,9 @@
   }
 }
 
-/* Quien pide menos movimiento no recibe una banda cruzando la pantalla cada
-   segundo y ocho. Se queda el documento quieto, y la barra de progreso sigue
-   diciendo que la cosa avanza. */
+/* Whoever asks for less motion does not get a band crossing the screen every
+   one point eight seconds. The document stays still, and the progress bar
+   keeps saying things are moving. */
 @media (prefers-reduced-motion: reduce) {
   .barre,
   .deja-rastro {
@@ -780,49 +781,49 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   EL CAMPO Y SU ETIQUETA FLOTANTE
+   THE FIELD AND ITS FLOATING LABEL
 
-   La etiqueta empieza DENTRO del campo, donde estaría el marcador, y al
-   enfocar se encoge y se sube a apoyarse en el borde. Si se escribió algo, se
-   queda arriba; si no, vuelve a bajar.
+   The label starts INSIDE the field, where the placeholder would be, and on
+   focus it shrinks and rises to rest on the edge. If something was typed, it
+   stays up; if not, it goes back down.
 
-   ── Por qué vive aquí y no en el componente ────────────────────────────────
-   Porque es una máquina de estados con CUATRO disparadores que significan lo
-   mismo —«esta etiqueta tiene que estar arriba»— y ninguno de ellos lo sabe
-   el componente que la pinta:
+   ── Why it lives here and not in the component ─────────────────────────────
+   Because it is a state machine with FOUR triggers that mean the same thing
+   —«this label has to be up»— and none of them is known to the component
+   that paints it:
 
-   · el foco está en cualquier parte del campo (`:focus-within`),
-   · el desplegable está abierto (`aria-expanded`),
-   · el campo de texto tiene algo escrito (`:placeholder-shown` al revés),
-   · el desplegable tiene algo elegido (`data-lleno`).
+   · focus is anywhere in the field (`:focus-within`),
+   · the dropdown is open (`aria-expanded`),
+   · the text field has something typed (`:placeholder-shown` reversed),
+   · the dropdown has something chosen (`data-lleno`).
 
-   Escrito con utilidades habría que repetir las cinco propiedades de la
-   posición subida una vez por disparador, y el día que cambie una, cambia en
-   cuatro sitios. Aquí la lista de disparadores es una línea y el estado uno.
+   Written with utilities, the five properties of the raised position would
+   have to be repeated once per trigger, and the day one changes, it changes
+   in four places. Here the list of triggers is one line and the state one.
 
-   Y va en `@layer components`, no fuera de las capas: así una utilidad en el
-   `className` de una llamada todavía le gana, que es lo que se espera.
+   And it goes in `@layer components`, not outside the layers: that way a
+   utility in a call's `className` still wins, which is what is expected.
 
-   ── Dónde queda subida: DENTRO del campo, arriba ───────────────────────────
-   No apoyada en el borde con una muesca, que es la otra convención. Dentro, lo
-   que obliga es a que el valor baje para dejarle sitio: el campo reserva
-   20px arriba y 4 abajo, así que el valor deja de estar centrado en sus 44px
-   y se apoya en la mitad de abajo. A cambio, el alto sigue siendo el mismo
-   que el de un botón —que es la regla— y no hay que pintar ningún trozo de
-   fondo encima de la línea, que en oscuro nunca acaba de coincidir.
+   ── Where it sits when raised: INSIDE the field, at the top ────────────────
+   Not resting on the border with a notch, which is the other convention.
+   Inside, what it forces is for the value to move down to make room: the
+   field reserves 20px on top and 4 below, so the value stops being centered
+   in its 44px and rests on the lower half. In exchange, the height stays the
+   same as a button's —which is the rule— and no piece of background has to be
+   painted over the line, which in dark never quite matches.
 
-   Ese hueco de arriba lo reserva cada control, no esta hoja: hay cinco
-   estructuras distintas —un `<input>` suelto, un `<input>` con iconos en
-   absoluto, un `<textarea>`, el disparador de un desplegable dentro de la
-   caja de `Menu`, y el del selector de fecha— y un selector estructural que
-   acertara con las cinco sería más frágil que un contexto de React. El
-   contexto está en `shared/ui/atoms/field.tsx`.
+   That room at the top is reserved by each control, not by this stylesheet:
+   there are five different structures —a bare `<input>`, an `<input>` with
+   absolutely positioned icons, a `<textarea>`, a dropdown's trigger inside
+   `Menu`'s box, and the date picker's— and a structural selector that got
+   all five right would be more fragile than a React context. The context is
+   in `shared/ui/foundations/field.ts`.
 
-   ── Por qué el marcador solo aparece con el foco ───────────────────────────
-   Porque en reposo el sitio del marcador lo ocupa la ETIQUETA. Los dos a la
-   vez serían dos textos grises pisándose. Al enfocar, la etiqueta sube y deja
-   el sitio libre: ahí entra el marcador, que es el ejemplo —«dd/mm/aaaa»,
-   «Opcional»— y no el nombre del campo.
+   ── Why the placeholder only appears with focus ────────────────────────────
+   Because at rest the placeholder's place is taken by the LABEL. Both at
+   once would be two gray texts overlapping. On focus, the label rises and
+   leaves the place free: that is where the placeholder comes in, which is the
+   example —«dd/mm/aaaa», «Opcional»— and not the field's name.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer components {
@@ -830,7 +831,7 @@
     position: relative;
   }
 
-  /* ── En reposo: donde estaría el marcador ──────────────────────────────── */
+  /* ── At rest: where the placeholder would be ───────────────────────────── */
   .campo > label {
     position: absolute;
     top: 50%;
@@ -844,26 +845,26 @@
     font-weight: 400;
     line-height: 1;
     color: var(--muted-foreground);
-    /* El clic atraviesa la etiqueta y llega al control de debajo. Sin esto,
-       la mitad del campo no se puede pulsar. */
+    /* The click goes through the label and reaches the control below. Without
+       this, half the field cannot be pressed. */
     pointer-events: none;
     transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Con un icono a la izquierda, la etiqueta arranca después de él. */
+  /* With an icon on the left, the label starts after it. */
   .campo:has([data-icono]) > label {
     left: 2.25rem;
   }
 
-  /* Un área de texto no tiene una línea: la etiqueta se alinea con la
-     PRIMERA, no con el centro de las tres. */
+  /* A text area does not have one line: the label aligns with the FIRST one,
+     not with the middle of the three. */
   .campo:has(textarea) > label {
     top: 1.125rem;
   }
 
-  /* ── Subida ──────────────────────────────────────────────────────────────
-     No toca `left`: así se queda alineada con el valor, ya esté indentado por
-     un icono o no. */
+  /* ── Raised ──────────────────────────────────────────────────────────────
+     It does not touch `left`: that way it stays aligned with the value,
+     whether indented by an icon or not. */
   .campo:focus-within > label,
   .campo:has([aria-expanded='true']) > label,
   .campo:has(input:not(:placeholder-shown)) > label,
@@ -876,25 +877,24 @@
   }
 
   /*
-    Enfocada, la etiqueta se tiñe como el anillo: dice cuál de los campos está
-    recibiendo lo que se escribe sin tener que mirar el cursor.
+    Focused, the label tints like the ring: it says which of the fields is
+    receiving what is typed without having to look at the cursor.
 
-    ── Por qué aquí sí es `:focus-visible` y arriba no ─────────────────────
-    Son dos cosas distintas con el mismo disparador, y por eso no llevan el
-    mismo selector:
+    ── Why here it is `:focus-visible` and above it is not ──────────────────
+    They are two different things with the same trigger, and that is why they
+    do not carry the same selector:
 
-    · SUBIR la etiqueta es estructural. Tiene que pasar siempre que haya un
-      cursor en el campo, lo haya puesto quien lo haya puesto: si no sube, el
-      texto que se escribe se pisa con el nombre del campo. Va con
-      `:focus-within`.
-    · TEÑIRLA es la señal de foco, y esa solo se pinta cuando el foco se pidió.
-      Va con `:focus-visible`, igual que el anillo del propio campo.
+    · RAISING the label is structural. It has to happen whenever there is a
+      cursor in the field, whoever put it there: if it does not rise, the text
+      being typed overlaps the field's name. It goes with `:focus-within`.
+    · TINTING it is the focus signal, and that one is only painted when focus
+      was asked for. It goes with `:focus-visible`, like the field's own ring.
 
-    Escritas las dos con `:focus-within` se contradecían en el caso más
-    corriente de todos: al pulsar un desplegable con el ratón, un `<button>` no
-    coincide con `:focus-visible` —los navegadores lo reservan al teclado—, así
-    que el campo no pintaba su anillo y la etiqueta sí se ponía verde. La
-    etiqueta decía «enfocado» y la caja decía que no.
+    Written both with `:focus-within` they contradicted each other in the
+    most ordinary case of all: on pressing a dropdown with the mouse, a
+    `<button>` does not match `:focus-visible` —browsers reserve it for the
+    keyboard—, so the field did not paint its ring and the label did turn
+    green. The label said «focused» and the box said no.
   */
   .campo:has(:focus-visible) > label {
     color: var(--ring);
