@@ -33,14 +33,19 @@ final class APIClientTests: XCTestCase {
 
     func test401() async {
         let e = await error(
-            FakeTransport([.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"La sesión expiró."}}"#)]))
+            FakeTransport([
+                .http(
+                    401,
+                    #"{"type":"https://dev-cocoapp.viteri.me/problems/session_expired","title":"La sesión expiró","status":401,"detail":"La sesión expiró.","code":"session_expired"}"#
+                )
+            ]))
         XCTAssertEqual(e, .unauthenticated)
         XCTAssertEqual(e?.isRetryable, false)
     }
 
     func test422WithCodeAndMessage() async {
         let e = await error(
-            FakeTransport([.http(422, #"{"error":{"code":"VALIDACION","message":"Falta el monto","details":[]}}"#)]))
+            FakeTransport([.http(422, #"{"status":422,"detail":"Falta el monto","code":"VALIDACION"}"#)]))
         XCTAssertEqual(e, .rejected(APIProblem(status: 422, code: .other("VALIDACION"), detail: "Falta el monto")))
         XCTAssertEqual(e?.isRetryable, false)
     }

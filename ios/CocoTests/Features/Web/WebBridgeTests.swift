@@ -163,12 +163,12 @@ final class WebBridgeTests: XCTestCase {
             isMainFrame: true, originProtocol: "https", host: "dev-cocoapp.viteri.me", port: 443)
         XCTAssertNil(error)
         let dict = try XCTUnwrap(value as? [String: Any])
-        XCTAssertEqual(Set(dict.keys), ["access_token", "expires_in", "user"])
-        XCTAssertEqual(dict["access_token"] as? String, "token-1")
-        XCTAssertEqual(dict["expires_in"] as? Int, 3600)
+        XCTAssertEqual(Set(dict.keys), ["accessToken", "expiresIn", "user"])
+        XCTAssertEqual(dict["accessToken"] as? String, "token-1")
+        XCTAssertEqual(dict["expiresIn"] as? Int, 3600)
         let user = try XCTUnwrap(dict["user"] as? [String: Any])
         XCTAssertEqual(user["email"] as? String, "ana@coco.test")
-        XCTAssertEqual(user["created_at"] as? String, "2026-01-01T00:00:00Z")
+        XCTAssertEqual(user["createdAt"] as? String, "2026-01-01T00:00:00Z")
         XCTAssertNil(dict["refresh_token"])
     }
 

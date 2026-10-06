@@ -140,7 +140,12 @@ final class NativeSessionTests: XCTestCase {
     // MARK: Qué borra el llavero y qué no
 
     func testA401OnRefreshClearsTheKeychainAndSignsOut() async {
-        let a = harness(replies: [.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"La sesión expiró."}}"#)])
+        let a = harness(replies: [
+            .http(
+                401,
+                #"{"type":"https://dev-cocoapp.viteri.me/problems/session_expired","title":"La sesión expiró","status":401,"detail":"La sesión expiró.","code":"session_expired"}"#
+            )
+        ])
         do {
             _ = try await a.session.validAccessToken()
             XCTFail("tenía que fallar")
@@ -229,12 +234,18 @@ final class NativeSessionTests: XCTestCase {
     func testSignInWithBadCredentialsDoesNotTouchTheKeychain() async {
         let a = harness(
             refresh: nil,
-            replies: [.http(401, #"{"error":{"code":"NO_AUTENTICADO","message":"Credenciales inválidas."}}"#)])
+            replies: [
+                .http(
+                    401,
+                    #"{"status":401,"title":"Credenciales inválidas","detail":"Credenciales inválidas.","code":"invalid_credentials"}"#
+                )
+            ])
         do {
             _ = try await a.session.signIn(email: "ana@coco.co", password: "mal")
             XCTFail("tenía que fallar")
         } catch {
-            XCTAssertEqual(error as? APIError, .unauthenticated)
+            guard case .rejected(let problem)? = error as? APIError else { return XCTFail("\(error)") }
+            XCTAssertEqual(problem.code, .invalidCredentials)
         }
         XCTAssertTrue(a.keychain.writes.isEmpty)
     }
@@ -263,11 +274,11 @@ final class NativeSessionTests: XCTestCase {
         XCTAssertEqual(s.userJSON, Data(Self.userJSON.utf8))
         let dict = try s.asDictionary()
         XCTAssertNil(dict["refresh_token"])
-        XCTAssertEqual(Set(dict.keys), ["access_token", "expires_in", "user"])
-        // La web sigue en la v1: el perfil le llega con SUS claves.
+        XCTAssertEqual(Set(dict.keys), ["accessToken", "expiresIn", "user"])
+        // El perfil le llega a la web tal cual lo dio la API.
         let user = try XCTUnwrap(dict["user"] as? [String: Any])
-        XCTAssertEqual(Set(user.keys), ["id", "email", "display_name", "role", "status", "created_at"])
-        XCTAssertEqual(user["created_at"] as? String, "2026-01-01T00:00:00Z")
+        XCTAssertEqual(user["createdAt"] as? String, "2026-01-01T00:00:00Z")
+        XCTAssertNil(user["created_at"])
         XCTAssertEqual(a.transport.received.count, 1)
     }
 

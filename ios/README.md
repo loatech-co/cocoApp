@@ -55,9 +55,7 @@ Las reglas completas están en `CONTRIBUTING.md`, sección «iOS». En corto:
   de la app: se guarda en la cola con sus claves y se traduce al enviar.
 - **Lo único en español que no es texto de usuario** es contrato con algo de
   fuera y no se toca desde aquí: los nombres de los mensajes del puente con la
-  web y las claves del perfil que el puente le entrega
-  (`WebSession.webProfileKeys`), que define el frontend mientras siga en la
-  `v1`.
+  web.
 - **Lo guardado en disco** usa las claves sintetizadas (los nombres de las
   propiedades). `StoredFormatTests` las fija, junto con las carpetas, las
   claves de UserDefaults y Keychain y las tareas de fondo: renombrar una

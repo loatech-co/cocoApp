@@ -14,7 +14,7 @@ enum ProblemCode: Equatable, Sendable {
     case accountNotOwned, categoryNotOwned, conceptArchived, costCenterCannotClassify
     // Lo que se reintenta
     case rateLimited, serviceUnavailable, internalError
-    /// Un código que la app no conoce, o uno de la v1 (`VALIDACION`).
+    /// Un código que la app no conoce.
     case other(String)
 
     private static let known: [String: ProblemCode] = [
@@ -71,10 +71,6 @@ struct APIProblem: Equatable, Sendable {
             return APIProblem(
                 status: status, code: ProblemCode(p.code), title: p.title ?? "", detail: p.detail ?? "",
                 errors: p.errors ?? [])
-        }
-        if let legacy = try? decoder.decode(APIErrorBody.self, from: data) {
-            return APIProblem(
-                status: status, code: ProblemCode(legacy.error.code), detail: legacy.error.message)
         }
         return nil
     }

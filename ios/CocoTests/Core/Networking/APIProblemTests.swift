@@ -46,13 +46,10 @@ final class APIProblemTests: XCTestCase {
             ])
     }
 
-    /// Hasta que el #53 esté desplegado la v2 sigue contestando la forma vieja.
-    func testReadsTheOldShapeToo() throws {
+    /// La forma de la v1 retirada (`{error:{…}}`) ya no es un problema.
+    func testTheRetiredShapeIsNotAProblem() {
         let body = #"{"error":{"code":"VALIDACION","message":"Falta el monto","details":[]}}"#
-        let p = try XCTUnwrap(APIProblem.decode(Data(body.utf8), status: 422))
-        XCTAssertEqual(p.code, .other("VALIDACION"))
-        XCTAssertEqual(p.detail, "Falta el monto")
-        XCTAssertEqual(p.errors, [])
+        XCTAssertNil(APIProblem.decode(Data(body.utf8), status: 422))
     }
 
     func testWhatIsNotAProblemIsNil() {

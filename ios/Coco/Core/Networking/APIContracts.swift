@@ -160,15 +160,6 @@ struct TreeNode: Codable, Equatable, Sendable {
     }
 }
 
-/// El cuerpo de un error de la API: `{error:{code,message,details}}`.
-struct APIErrorBody: Decodable, Sendable {
-    struct Detail: Decodable, Sendable {
-        let code: String
-        let message: String
-    }
-    let error: Detail
-}
-
 /// El sobre `{data, meta}` que arma el TransformInterceptor.
 struct Envelope<T: Decodable>: Decodable {
     let data: T

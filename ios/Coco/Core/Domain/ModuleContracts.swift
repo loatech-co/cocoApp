@@ -12,28 +12,17 @@ enum SessionState: Equatable, Sendable {
     case offline(last: PublicProfile?)
 }
 
-/// Lo que el puente entrega a la web: `SesionParaLaWeb` de @coco/types, con el
-/// perfil como JSON crudo para no tocar más que lo necesario.
-///
-/// El puente lo define la web, que sigue en la `v1`: la app habla con la v2
-/// pero entrega el perfil con las claves de la v1 (`webProfileKeys`). Cuando
-/// la web pase a la v2, la tabla se borra y el perfil viaja tal cual llegó.
+/// Lo que el puente entrega a la web: `BridgeSession` de
+/// `frontend/src/shared/lib/native-contract.ts`, la sesión de la v2 sin el
+/// refresh. El perfil va como JSON crudo: viaja tal cual llegó de la API.
 struct WebSession: Sendable {
     let accessToken: String
     let expiresIn: Int
     let userJSON: Data
 
-    /// Claves del `Profile` de la v2 que la `PerfilPublico` de la v1 escribe
-    /// distinto. Las demás (`id`, `email`, `role`, `status`) son iguales.
-    static let webProfileKeys = ["displayName": "display_name", "createdAt": "created_at"]
-
     func asDictionary() throws -> [String: Any] {
-        var user = try JSONSerialization.jsonObject(with: userJSON)
-        if let profile = user as? [String: Any] {
-            user = Dictionary(
-                profile.map { (Self.webProfileKeys[$0.key] ?? $0.key, $0.value) }, uniquingKeysWith: { a, _ in a })
-        }
-        return ["access_token": accessToken, "expires_in": expiresIn, "user": user]
+        let user = try JSONSerialization.jsonObject(with: userJSON)
+        return ["accessToken": accessToken, "expiresIn": expiresIn, "user": user]
     }
 }
 

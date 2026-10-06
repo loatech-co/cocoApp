@@ -71,13 +71,6 @@ final class ContractsTests: XCTestCase {
         XCTAssertEqual(roots.first?.children?.first?.keywords, ["jabón"])
     }
 
-    func testAPIError() throws {
-        let e = try JSONDecoder().decode(
-            APIErrorBody.self,
-            from: Data(#"{"error":{"code":"VALIDACION","message":"Falta el monto","details":[]}}"#.utf8))
-        XCTAssertEqual(e.error.code, "VALIDACION")
-    }
-
     func testCaptureRequestIsFlattenedAndCategoryIdIsAString() throws {
         let r = CaptureRequest(
             source: .iosManual, externalRef: "E1", capturedAt: "2026-10-03T20:00:00Z",
