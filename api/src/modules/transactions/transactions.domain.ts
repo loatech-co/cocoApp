@@ -1,5 +1,5 @@
 import type { TransaccionCompleta } from './transactions.repository';
-import { serializar, toMoney } from '../../common/money/money';
+import { serialize, toMoney } from '../../common/money/money';
 import type {
   TransactionSource,
   TransactionStatus,
@@ -82,7 +82,7 @@ export function transactionFromRow(row: TransaccionCompleta): Transaction {
     accountId: row.accountId,
     date: row.date.toISOString().slice(0, 10),
     period: row.period.toISOString().slice(0, 10),
-    amount: serializar(toMoney(row.amount)),
+    amount: serialize(toMoney(row.amount)),
     currency: row.currency,
     type: row.type,
     categoryId: row.categoryId,
@@ -101,7 +101,7 @@ export function transactionFromRow(row: TransaccionCompleta): Transaction {
     splits: row.splits.map((split) => ({
       id: split.id,
       categoryId: split.categoryId,
-      amount: serializar(toMoney(split.amount)),
+      amount: serialize(toMoney(split.amount)),
       note: split.note,
     })),
     createdAt: row.createdAt,

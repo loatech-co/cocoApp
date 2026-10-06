@@ -16,7 +16,7 @@ import {
 import type { Dashboard, PendingPayment } from './dashboard.types';
 import { ventanaDeLaHistoria } from './pendientes';
 import { categoryIds, branchesOf } from '../../common/categories/categories.tree';
-import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
+import { ZERO, serialize, toMoney, type Money } from '../../common/money/money';
 import { BREAKDOWN_LEVEL, english, GRANULARITY } from '../../common/vocabulary';
 import { Database } from '../../prisma/database';
 import { AccountsService } from '../accounts/accounts.service';
@@ -84,9 +84,9 @@ export class DashboardService {
       accounts: cuentas,
       totals: totalesDe(cuentas),
       range: {
-        income: serializar(flujo.income),
-        expense: serializar(flujo.expense),
-        net: serializar(flujo.net),
+        income: serialize(flujo.income),
+        expense: serialize(flujo.expense),
+        net: serialize(flujo.net),
         count: movimientos.length,
       },
       byCategory: partes.porCategoria,
@@ -96,7 +96,7 @@ export class DashboardService {
         partes.padre !== null && datosDelPadre
           ? { id: partes.padre, name: datosDelPadre.name }
           : null,
-      requiredBudget: serializar(toMoney(presupuesto)),
+      requiredBudget: serialize(toMoney(presupuesto)),
       pending: pendientes,
       trend: puntos,
     };
@@ -115,7 +115,7 @@ export class DashboardService {
   ): Promise<{ pendientes: PendingPayment[]; presupuesto: Money }> {
     const mesEnCurso = `${new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 7)}-01`;
     const recurrentes = recurrentesVivos(categorias);
-    if (recurrentes.length === 0) return { pendientes: [], presupuesto: CERO };
+    if (recurrentes.length === 0) return { pendientes: [], presupuesto: ZERO };
 
     const ids = recurrentes.map((c) => c.id);
     // La historia de los recurrentes, mes a mes: de aquí sale lo que se

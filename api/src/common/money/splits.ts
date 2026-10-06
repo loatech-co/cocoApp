@@ -1,10 +1,10 @@
-import { sonIguales, sumar, toMoney, type Money } from './money';
+import { areEqual, sum, toMoney, type Money } from './money';
 
-export interface ResultadoDeCuadre {
-  cuadra: boolean;
-  suma: Money;
+export interface ReconciliationResult {
+  balances: boolean;
+  total: Money;
   /** `suma − amount`. Positivo: los splits se pasan. Negativo: faltan. */
-  diferencia: Money;
+  difference: Money;
 }
 
 /**
@@ -18,16 +18,16 @@ export interface ResultadoDeCuadre {
  * La `diferencia` se devuelve para que la UI pueda ofrecer "ajustar al
  * restante" en vez de solo decir que está mal.
  */
-export function verificarCuadreDeSplits(
-  amountCabecera: Money,
-  montosDeSplits: readonly Money[],
-): ResultadoDeCuadre {
-  const suma = toMoney(sumar(montosDeSplits));
-  const cabecera = toMoney(amountCabecera);
+export function checkSplitsReconcile(
+  headerAmount: Money,
+  splitAmounts: readonly Money[],
+): ReconciliationResult {
+  const total = toMoney(sum(splitAmounts));
+  const header = toMoney(headerAmount);
 
   return {
-    cuadra: sonIguales(suma, cabecera),
-    suma,
-    diferencia: toMoney(suma.minus(cabecera)),
+    balances: areEqual(total, header),
+    total,
+    difference: toMoney(total.minus(header)),
   };
 }

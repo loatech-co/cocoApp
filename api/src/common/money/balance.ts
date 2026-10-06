@@ -1,4 +1,4 @@
-import { CERO, toMoney, type Money } from './money';
+import { ZERO, toMoney, type Money } from './money';
 import type {
   AccountType,
   TransactionStatus,
@@ -7,7 +7,7 @@ import type {
 } from '../../generated/prisma/client';
 
 /** Lo mínimo que hace falta de un movimiento para calcular un saldo. */
-export interface MovimientoDeSaldo {
+export interface BalanceMovement {
   type: TransactionType;
   /** Solo relevante cuando `type === 'transfer'`. */
   transferDir: TransferDirection | null;
@@ -15,18 +15,18 @@ export interface MovimientoDeSaldo {
   status: TransactionStatus;
 }
 
-export interface SaldoDerivado {
+export interface DerivedBalance {
   /** Solo movimientos `cleared`. Es el saldo que el banco confirmaría. */
   cleared: Money;
   /** Incluye los `pending`. Es "cuánto voy a tener cuando todo aterrice". */
-  proyectado: Money;
+  projected: Money;
 }
 
 /** Las cuentas de crédito son PASIVO: el saldo representa deuda, no dinero. */
-const TIPOS_DE_PASIVO: ReadonlySet<AccountType> = new Set<AccountType>(['credit']);
+const LIABILITY_TYPES: ReadonlySet<AccountType> = new Set<AccountType>(['credit']);
 
-function esCuentaDePasivo(tipo: AccountType): boolean {
-  return TIPOS_DE_PASIVO.has(tipo);
+function isLiabilityAccount(type: AccountType): boolean {
+  return LIABILITY_TYPES.has(type);
 }
 
 /**
@@ -40,16 +40,16 @@ function esCuentaDePasivo(tipo: AccountType): boolean {
  * Una transferencia sin dirección es un dato corrupto: no se puede adivinar de
  * qué lado está el dinero, así que aporta cero en vez de inventar un signo.
  */
-function deltaComoActivo(movimiento: MovimientoDeSaldo): Money {
-  switch (movimiento.type) {
+function deltaAsAsset(movement: BalanceMovement): Money {
+  switch (movement.type) {
     case 'income':
-      return movimiento.amount;
+      return movement.amount;
     case 'expense':
-      return movimiento.amount.negated();
+      return movement.amount.negated();
     case 'transfer':
-      if (movimiento.transferDir === 'in') return movimiento.amount;
-      if (movimiento.transferDir === 'out') return movimiento.amount.negated();
-      return CERO;
+      if (movement.transferDir === 'in') return movement.amount;
+      if (movement.transferDir === 'out') return movement.amount.negated();
+      return ZERO;
   }
 }
 
@@ -65,26 +65,26 @@ function deltaComoActivo(movimiento: MovimientoDeSaldo): Money {
  * así que un gasto lo aumenta y un pago (una transferencia que entra a la
  * tarjeta) lo reduce.
  */
-export function calcularSaldo(
-  tipoDeCuenta: AccountType,
+export function computeBalance(
+  accountType: AccountType,
   openingBalance: Money,
-  movimientos: readonly MovimientoDeSaldo[],
-): SaldoDerivado {
-  const esPasivo = esCuentaDePasivo(tipoDeCuenta);
+  movements: readonly BalanceMovement[],
+): DerivedBalance {
+  const isLiability = isLiabilityAccount(accountType);
 
   let cleared = toMoney(openingBalance);
-  let proyectado = toMoney(openingBalance);
+  let projected = toMoney(openingBalance);
 
-  for (const movimiento of movimientos) {
-    const delta = esPasivo ? deltaComoActivo(movimiento).negated() : deltaComoActivo(movimiento);
+  for (const movement of movements) {
+    const delta = isLiability ? deltaAsAsset(movement).negated() : deltaAsAsset(movement);
 
-    proyectado = proyectado.plus(delta);
-    if (movimiento.status === 'cleared') {
+    projected = projected.plus(delta);
+    if (movement.status === 'cleared') {
       cleared = cleared.plus(delta);
     }
   }
 
-  return { cleared: toMoney(cleared), proyectado: toMoney(proyectado) };
+  return { cleared: toMoney(cleared), projected: toMoney(projected) };
 }
 
 /**
@@ -93,10 +93,10 @@ export function calcularSaldo(
  * Puede quedar negativo si se excedió el cupo. El sistema lo informa y no lo
  * bloquea: no-rigidez.
  */
-export function calcularCupoDisponible(
+export function computeAvailableCredit(
   creditLimit: Money | null,
-  saldoAdeudado: Money,
+  balanceOwed: Money,
 ): Money | null {
   if (creditLimit === null) return null;
-  return toMoney(creditLimit.minus(saldoAdeudado));
+  return toMoney(creditLimit.minus(balanceOwed));
 }

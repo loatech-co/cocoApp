@@ -1,4 +1,4 @@
-import { CERO, toMoney, type Money } from '../../common/money/money';
+import { ZERO, toMoney, type Money } from '../../common/money/money';
 import type { TransactionType } from '../../generated/prisma/client';
 
 export interface MovimientoAgregable {
@@ -23,8 +23,8 @@ export interface FlujoDelPeriodo {
  * "gastó" plata que nunca entró ni salió de su patrimonio.
  */
 export function calcularFlujo(movimientos: readonly MovimientoAgregable[]): FlujoDelPeriodo {
-  let income = CERO;
-  let expense = CERO;
+  let income = ZERO;
+  let expense = ZERO;
 
   for (const movimiento of movimientos) {
     if (movimiento.type === 'income') income = income.plus(movimiento.amount);
@@ -63,7 +63,7 @@ export function calcularGastoPorCategoria(
 
   const acumular = (categoryId: bigint | null, monto: Money): void => {
     const clave = categoryId === null ? 'sin-categoria' : categoryId.toString();
-    const actual = acumulado.get(clave) ?? { categoryId, total: CERO, count: 0 };
+    const actual = acumulado.get(clave) ?? { categoryId, total: ZERO, count: 0 };
 
     acumulado.set(clave, {
       categoryId,

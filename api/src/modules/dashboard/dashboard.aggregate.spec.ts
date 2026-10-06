@@ -7,7 +7,7 @@ import {
   granularidadPara,
   type MovimientoAgregable,
 } from './dashboard.aggregate';
-import { serializar, toMoney } from '../../common/money/money';
+import { serialize, toMoney } from '../../common/money/money';
 
 const mov = (
   type: MovimientoAgregable['type'],
@@ -32,9 +32,9 @@ describe('Flujo del periodo', () => {
       mov('expense', '800000'),
     ]);
 
-    expect(serializar(flujo.income)).toBe('5200000.00');
-    expect(serializar(flujo.expense)).toBe('3980000.00');
-    expect(serializar(flujo.net)).toBe('1220000.00');
+    expect(serialize(flujo.income)).toBe('5200000.00');
+    expect(serialize(flujo.expense)).toBe('3980000.00');
+    expect(serialize(flujo.net)).toBe('1220000.00');
   });
 
   it('EXCLUYE las transferencias: no son ingreso ni gasto', () => {
@@ -45,20 +45,20 @@ describe('Flujo del periodo', () => {
       mov('transfer', '300000'),
     ]);
 
-    expect(serializar(conTransferencias.income)).toBe('1000000.00');
-    expect(serializar(conTransferencias.expense)).toBe('400000.00');
-    expect(serializar(conTransferencias.net)).toBe('600000.00');
+    expect(serialize(conTransferencias.income)).toBe('1000000.00');
+    expect(serialize(conTransferencias.expense)).toBe('400000.00');
+    expect(serialize(conTransferencias.net)).toBe('600000.00');
   });
 
   it('un periodo sin movimientos da ceros, no NaN', () => {
     const flujo = calcularFlujo([]);
-    expect(serializar(flujo.income)).toBe('0.00');
-    expect(serializar(flujo.net)).toBe('0.00');
+    expect(serialize(flujo.income)).toBe('0.00');
+    expect(serialize(flujo.net)).toBe('0.00');
   });
 
   it('el neto puede ser negativo y se reporta tal cual', () => {
     const flujo = calcularFlujo([mov('income', '1000000'), mov('expense', '1500000')]);
-    expect(serializar(flujo.net)).toBe('-500000.00');
+    expect(serialize(flujo.net)).toBe('-500000.00');
   });
 });
 
@@ -72,8 +72,8 @@ describe('Gasto por categoría', () => {
 
     expect(resultado).toHaveLength(2);
     expect(resultado[0]!.category_id).toBe(BigInt(2));
-    expect(serializar(resultado[0]!.total)).toBe('500000.00');
-    expect(serializar(resultado[1]!.total)).toBe('150000.00');
+    expect(serialize(resultado[0]!.total)).toBe('500000.00');
+    expect(serialize(resultado[1]!.total)).toBe('150000.00');
     expect(resultado[1]!.count).toBe(2);
   });
 
@@ -89,8 +89,8 @@ describe('Gasto por categoría', () => {
     const mercado = resultado.find((fila) => fila.category_id === BigInt(5))!;
     const aseo = resultado.find((fila) => fila.category_id === BigInt(9))!;
 
-    expect(serializar(mercado.total)).toBe('105000.00');
-    expect(serializar(aseo.total)).toBe('45000.00');
+    expect(serialize(mercado.total)).toBe('105000.00');
+    expect(serialize(aseo.total)).toBe('45000.00');
     // Y no se contó 150.000 de más en la categoría de cabecera.
     expect(resultado).toHaveLength(2);
   });
@@ -103,7 +103,7 @@ describe('Gasto por categoría', () => {
 
     expect(resultado).toHaveLength(1);
     expect(resultado[0]!.category_id).toBeNull();
-    expect(serializar(resultado[0]!.total)).toBe('100000.00');
+    expect(serialize(resultado[0]!.total)).toBe('100000.00');
   });
 
   it('ignora ingresos y transferencias', () => {
@@ -114,7 +114,7 @@ describe('Gasto por categoría', () => {
     ]);
 
     expect(resultado).toHaveLength(1);
-    expect(serializar(resultado[0]!.total)).toBe('100000.00');
+    expect(serialize(resultado[0]!.total)).toBe('100000.00');
   });
 
   it('el total por categoría cuadra con el gasto total del flujo', () => {
@@ -136,7 +136,7 @@ describe('Gasto por categoría', () => {
     );
 
     // Si estas dos cifras no coinciden, el dashboard estaría mintiendo.
-    expect(serializar(sumaPorCategoria)).toBe(serializar(flujo.expense));
+    expect(serialize(sumaPorCategoria)).toBe(serialize(flujo.expense));
   });
 });
 

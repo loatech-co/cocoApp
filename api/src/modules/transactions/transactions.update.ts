@@ -2,7 +2,7 @@ import type { UpdateTransactionDto } from './dto/transaction.dto';
 import type { TransaccionCompleta, TransactionChanges } from './transactions.repository';
 import { ValidationError } from '../../common/errors/domain-error';
 import { toMoney, type Money } from '../../common/money/money';
-import { verificarCuadreDeSplits } from '../../common/money/splits';
+import { checkSplitsReconcile } from '../../common/money/splits';
 
 /**
  * ── Editar sin descuadrar ────────────────────────────────────────────────────
@@ -20,11 +20,11 @@ export function exigirDesgloseCuadrado(
   amount: Money,
 ): void {
   if (dto.amount === undefined || dto.splits !== undefined || actual.splits.length === 0) return;
-  const cuadre = verificarCuadreDeSplits(
+  const cuadre = checkSplitsReconcile(
     amount,
     actual.splits.map((split) => toMoney(split.amount)),
   );
-  if (!cuadre.cuadra) {
+  if (!cuadre.balances) {
     throw new ValidationError(
       'El monto nuevo no coincide con la suma del desglose. Envía también los splits ajustados al monto nuevo.',
       { code: 'amount_breaks_splits' },

@@ -1,5 +1,5 @@
 import { levantarApp, type EntornoDePruebas, type UsuarioDePrueba } from './helpers/app';
-import { CERO, toMoney, type Money } from '../src/common/money/money';
+import { ZERO, toMoney, type Money } from '../src/common/money/money';
 import { DashboardService } from '../src/modules/dashboard/dashboard.service';
 import { esperadoDelMes, ventanaDeLaHistoria } from '../src/modules/dashboard/pendientes';
 import { LedgerService, type MonthlyHistory } from '../src/modules/transactions/ledger.service';
@@ -47,7 +47,7 @@ describe('Dashboard: bounded recurring history (e2e)', () => {
       if (key === undefined) continue;
       const month = row.period.toISOString().slice(0, 7);
       const months = history.get(key) ?? new Map<string, Money>();
-      months.set(month, (months.get(month) ?? CERO).plus(toMoney(row.amount)));
+      months.set(month, (months.get(month) ?? ZERO).plus(toMoney(row.amount)));
       history.set(key, months);
     }
     return history;

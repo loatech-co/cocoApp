@@ -5,7 +5,7 @@ import {
 } from 'class-validator';
 
 import { Prisma } from '../../generated/prisma/client';
-import { motivoDeRechazo } from '../money/money';
+import { rejectionReason } from '../money/money';
 
 /**
  * Valida que un campo sea un monto representable en DECIMAL(15,2).
@@ -25,7 +25,7 @@ export function IsMoney(options?: ValidationOptions) {
         validate(value: unknown): boolean {
           if (typeof value !== 'string' && typeof value !== 'number') return false;
           try {
-            return motivoDeRechazo(new Prisma.Decimal(value)) === null;
+            return rejectionReason(new Prisma.Decimal(value)) === null;
           } catch {
             return false;
           }
@@ -37,7 +37,7 @@ export function IsMoney(options?: ValidationOptions) {
           }
           try {
             return (
-              motivoDeRechazo(new Prisma.Decimal(value)) ??
+              rejectionReason(new Prisma.Decimal(value)) ??
               `${args.property} no es un monto válido.`
             );
           } catch {
@@ -66,7 +66,7 @@ export function IsPositiveMoney(options?: ValidationOptions) {
           if (typeof value !== 'string' && typeof value !== 'number') return false;
           try {
             const decimal = new Prisma.Decimal(value);
-            return motivoDeRechazo(decimal) === null && decimal.greaterThan(0);
+            return rejectionReason(decimal) === null && decimal.greaterThan(0);
           } catch {
             return false;
           }

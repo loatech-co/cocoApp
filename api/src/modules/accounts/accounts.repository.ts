@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type { MovimientoDeSaldo } from '../../common/money/balance';
+import type { BalanceMovement } from '../../common/money/balance';
 import { toMoney } from '../../common/money/money';
 import type { Account, Prisma } from '../../generated/prisma/client';
 import { Database } from '../../prisma/database';
@@ -63,7 +63,7 @@ export class AccountsRepository {
    * signo después da exactamente el mismo resultado que recorrer cada fila, y
    * evita traerse años de historial a memoria solo para listar cuentas.
    */
-  async agregadosDeSaldo(userId: bigint, hasta?: Date): Promise<Map<string, MovimientoDeSaldo[]>> {
+  async agregadosDeSaldo(userId: bigint, hasta?: Date): Promise<Map<string, BalanceMovement[]>> {
     const grupos = await this.db.forUser(userId, (tx) =>
       tx.transaction.groupBy({
         by: ['accountId', 'type', 'transferDir', 'status'],
@@ -80,7 +80,7 @@ export class AccountsRepository {
       }),
     );
 
-    const porCuenta = new Map<string, MovimientoDeSaldo[]>();
+    const porCuenta = new Map<string, BalanceMovement[]>();
 
     for (const grupo of grupos) {
       // El filtro del where ya lo garantiza; TypeScript no puede saberlo.

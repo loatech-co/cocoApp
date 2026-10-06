@@ -12,7 +12,7 @@ import {
 } from './dashboard.aggregate';
 import type { CategorySpend, PendingPayment, TrendPoint } from './dashboard.types';
 import { comoQuedaElPendiente, esperadoDelMes, tocaEnElMes, vencimiento } from './pendientes';
-import { CERO, serializar, toMoney, type Money } from '../../common/money/money';
+import { ZERO, serialize, toMoney, type Money } from '../../common/money/money';
 import type { Account } from '../accounts/accounts.service';
 import type { SummaryCategory } from '../categories/category-lookup.service';
 import type { MonthlyHistory, SummaryMovement } from '../transactions/ledger.service';
@@ -109,7 +109,7 @@ function agrupar(
     for (const parte of partes) {
       const destino = ancestroEnNivel(porId, parte.categoryId, nivel);
       const clave = destino?.toString() ?? 'sin';
-      const actual = acumulado.get(clave) ?? { id: destino, total: CERO, count: 0 };
+      const actual = acumulado.get(clave) ?? { id: destino, total: ZERO, count: 0 };
       acumulado.set(clave, {
         id: destino,
         total: actual.total.plus(parte.amount),
@@ -134,7 +134,7 @@ function aFilas(
         name: datos?.name ?? 'Sin clasificar',
         color: datos?.color ?? null,
         icon: datos?.icon ?? null,
-        total: serializar(toMoney(fila.total)),
+        total: serialize(toMoney(fila.total)),
         count: fila.count,
       };
     })
@@ -253,7 +253,7 @@ export function tendencia(
   const cubos = new Map(
     cubosDelRango(inicio, fin, granularidad).map((b) => [
       b,
-      { expense: CERO, income: CERO, count: 0 },
+      { expense: ZERO, income: ZERO, count: 0 },
     ]),
   );
 
@@ -296,9 +296,9 @@ export function tendencia(
 
   const puntos = [...cubos.entries()].map(([bucket, v]) => ({
     bucket,
-    expense: serializar(toMoney(v.expense)),
-    income: serializar(toMoney(v.income)),
-    net: serializar(toMoney(v.income.minus(v.expense))),
+    expense: serialize(toMoney(v.expense)),
+    income: serialize(toMoney(v.income)),
+    net: serialize(toMoney(v.income.minus(v.expense))),
     count: v.count,
   }));
   return { granularidad, puntos };
@@ -350,7 +350,7 @@ export function pendientesDelMes(
   arbol: Arbol,
 ): { pendientes: PendingPayment[]; presupuesto: Money } {
   const pendientes: PendingPayment[] = [];
-  let presupuesto = CERO;
+  let presupuesto = ZERO;
 
   for (const concepto of recurrentes) {
     // Primero si toca este mes: un trimestral que no cae aquí no cuenta
@@ -379,7 +379,7 @@ export function pendientesDelMes(
     const estado = comoQuedaElPendiente({
       variosPagos: concepto.isMultiPayment,
       hayPago: pagado !== undefined,
-      pagado: pagado ?? CERO,
+      pagado: pagado ?? ZERO,
       esperado,
     });
 
@@ -421,12 +421,12 @@ function pendienteDe(
     path: camino.join(' · '),
     periodicity: concepto.periodicity,
     dueDate: vencimiento(mesEnCurso, concepto.paymentDay),
-    expectedAmount: esperado === null ? null : serializar(toMoney(esperado)),
+    expectedAmount: esperado === null ? null : serialize(toMoney(esperado)),
     costCenterId: BigInt(raiz),
     costCenter: arbol.datosDe.get(raiz)?.name ?? '',
     // Siempre, también en los normales —donde es cero—, para que la
     // pantalla no tenga que preguntarse si el campo viene.
-    paidAmount: serializar(pagado ?? CERO),
+    paidAmount: serialize(pagado ?? ZERO),
     isMultiPayment: concepto.isMultiPayment,
   };
 }
@@ -439,14 +439,14 @@ export function totalesDe(cuentas: readonly Account[]): {
 } {
   const activos = cuentas
     .filter((c) => c.type !== 'credit')
-    .reduce((total, c) => total.plus(toMoney(c.balance)), CERO);
+    .reduce((total, c) => total.plus(toMoney(c.balance)), ZERO);
   const deudas = cuentas
     .filter((c) => c.type === 'credit')
-    .reduce((total, c) => total.plus(toMoney(c.balance)), CERO);
+    .reduce((total, c) => total.plus(toMoney(c.balance)), ZERO);
 
   return {
-    assets: serializar(toMoney(activos)),
-    debts: serializar(toMoney(deudas)),
-    netWorth: serializar(toMoney(activos.minus(deudas))),
+    assets: serialize(toMoney(activos)),
+    debts: serialize(toMoney(deudas)),
+    netWorth: serialize(toMoney(activos.minus(deudas))),
   };
 }

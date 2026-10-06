@@ -5,7 +5,7 @@ import {
   recurrentesVivos,
   tendencia,
 } from './dashboard.summary';
-import { serializar } from '../../common/money/money';
+import { serialize } from '../../common/money/money';
 import { Prisma } from '../../generated/prisma/client';
 import type { SummaryCategory } from '../categories/category-lookup.service';
 import type { SummaryMovement } from '../transactions/ledger.service';
@@ -114,6 +114,6 @@ describe('pendientesDelMes', () => {
       arbolDe([quarterly]),
     );
     expect(result.pendientes).toEqual([]);
-    expect(serializar(result.presupuesto)).toBe('0.00');
+    expect(serialize(result.presupuesto)).toBe('0.00');
   });
 });

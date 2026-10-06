@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { AccountsRepository } from './accounts.repository';
 import type { CreateAccountDto, UpdateAccountDto } from './dto/account.dto';
 import { BadRequestError, ConflictError, NotFoundError } from '../../common/errors/domain-error';
-import { calcularCupoDisponible, calcularSaldo } from '../../common/money/balance';
-import { serializar, toMoney } from '../../common/money/money';
+import { computeAvailableCredit, computeBalance } from '../../common/money/balance';
+import { serialize, toMoney } from '../../common/money/money';
 import type { Account as AccountRow } from '../../generated/prisma/client';
 
 /** Una cuenta como la entrega el servicio (el dominio). Montos como string decimal. */
@@ -143,11 +143,14 @@ export class AccountsService {
     }
   }
 
-  private presentar(cuenta: AccountRow, movimientos: Parameters<typeof calcularSaldo>[2]): Account {
+  private presentar(
+    cuenta: AccountRow,
+    movimientos: Parameters<typeof computeBalance>[2],
+  ): Account {
     const openingBalance = toMoney(cuenta.openingBalance);
-    const saldo = calcularSaldo(cuenta.type, openingBalance, movimientos);
+    const saldo = computeBalance(cuenta.type, openingBalance, movimientos);
     const creditLimit = cuenta.creditLimit ? toMoney(cuenta.creditLimit) : null;
-    const cupo = calcularCupoDisponible(creditLimit, saldo.cleared);
+    const cupo = computeAvailableCredit(creditLimit, saldo.cleared);
 
     return {
       id: cuenta.id,
@@ -156,14 +159,14 @@ export class AccountsService {
       currency: cuenta.currency,
       institution: cuenta.institution,
       last4: cuenta.last4,
-      creditLimit: creditLimit ? serializar(creditLimit) : null,
+      creditLimit: creditLimit ? serialize(creditLimit) : null,
       cutoffDay: cuenta.cutoffDay,
       paymentDay: cuenta.paymentDay,
-      openingBalance: serializar(openingBalance),
+      openingBalance: serialize(openingBalance),
       isArchived: cuenta.isArchived,
-      balance: serializar(saldo.cleared),
-      balanceProjected: serializar(saldo.proyectado),
-      availableCredit: cupo ? serializar(cupo) : null,
+      balance: serialize(saldo.cleared),
+      balanceProjected: serialize(saldo.projected),
+      availableCredit: cupo ? serialize(cupo) : null,
       createdAt: cuenta.createdAt,
     };
   }

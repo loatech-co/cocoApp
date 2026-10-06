@@ -1,4 +1,4 @@
-import { CERO, type Money } from '../../common/money/money';
+import { ZERO, type Money } from '../../common/money/money';
 import type { Periodicity } from '../../generated/prisma/client';
 
 /** Cada cuántos meses vuelve cada periodicidad. */
@@ -105,7 +105,7 @@ export function estimadoDelMes(
     .filter((v): v is Money => v !== undefined);
 
   if (ventana.length > 0) {
-    return ventana.reduce<Money>((total, v) => total.plus(v), CERO).dividedBy(ventana.length);
+    return ventana.reduce<Money>((total, v) => total.plus(v), ZERO).dividedBy(ventana.length);
   }
 
   const ultimo = [...porMes.keys()]
@@ -252,7 +252,7 @@ export function comoQuedaElPendiente({
   pagado: Money;
   esperado: Money | null;
 }): { sigueFaltando: boolean; alPresupuesto: Money } {
-  if (variosPagos && esperado?.gt(CERO)) {
+  if (variosPagos && esperado?.gt(ZERO)) {
     return {
       sigueFaltando: pagado.lt(esperado),
       alPresupuesto: pagado.gt(esperado) ? pagado : esperado,
@@ -262,5 +262,5 @@ export function comoQuedaElPendiente({
   // Lo de siempre: al primer movimiento confirmado deja de faltar, y el mes
   // cuenta lo que de verdad costó.
   if (hayPago) return { sigueFaltando: false, alPresupuesto: pagado };
-  return { sigueFaltando: true, alPresupuesto: esperado ?? CERO };
+  return { sigueFaltando: true, alPresupuesto: esperado ?? ZERO };
 }

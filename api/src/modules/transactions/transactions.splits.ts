@@ -1,8 +1,8 @@
 import type { SplitDto } from './dto/transaction.dto';
 import type { SplitToWrite } from './transactions.repository';
 import { ValidationError } from '../../common/errors/domain-error';
-import { serializar, toMoney, type Money } from '../../common/money/money';
-import { verificarCuadreDeSplits } from '../../common/money/splits';
+import { serialize, toMoney, type Money } from '../../common/money/money';
+import { checkSplitsReconcile } from '../../common/money/splits';
 
 /** Valida el cuadre y normaliza los splits. Lanza 422 si no cuadran. */
 export function splitsParaEscribir(
@@ -12,11 +12,11 @@ export function splitsParaEscribir(
   if (!splits || splits.length === 0) return [];
 
   const montos = splits.map((split) => toMoney(split.amount));
-  const cuadre = verificarCuadreDeSplits(amountCabecera, montos);
+  const cuadre = checkSplitsReconcile(amountCabecera, montos);
 
-  if (!cuadre.cuadra) {
+  if (!cuadre.balances) {
     throw new ValidationError(
-      `La suma de los splits (${serializar(cuadre.suma)}) no coincide con el monto (${serializar(amountCabecera)}). Diferencia: ${serializar(cuadre.diferencia)}.`,
+      `La suma de los splits (${serialize(cuadre.total)}) no coincide con el monto (${serialize(amountCabecera)}). Diferencia: ${serialize(cuadre.difference)}.`,
       { code: 'splits_unbalanced' },
     );
   }

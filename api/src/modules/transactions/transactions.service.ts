@@ -32,7 +32,7 @@ import {
   exigirQueSigaSiendoTransferencia,
 } from './transactions.update';
 import { NotFoundError, ValidationError } from '../../common/errors/domain-error';
-import { serializar, toMoney, type Money } from '../../common/money/money';
+import { serialize, toMoney, type Money } from '../../common/money/money';
 import type { TransactionType } from '../../generated/prisma/client';
 import { SoportesService } from '../soportes/soportes.service';
 import { TagsService } from '../tags/tags.service';
@@ -71,7 +71,7 @@ export class TransactionsService {
       skip,
       take,
     });
-    const sumaDe = (tipo: TransactionType): string => serializar(sumOf(tipo));
+    const sumaDe = (tipo: TransactionType): string => serialize(sumOf(tipo));
 
     return {
       data: filas.map(transactionFromRow),

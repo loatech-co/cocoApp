@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import type { AutoCharge, MonthlyHistory, SummaryFilter, SummaryMovement } from './ledger.types';
-import { CERO, toMoney, type Money } from '../../common/money/money';
+import { ZERO, toMoney, type Money } from '../../common/money/money';
 import { Database } from '../../prisma/database';
 
 /** The reads and writes other modules need from the transactions table. */
@@ -104,7 +104,7 @@ export class LedgerRepository {
       if (clave === undefined) continue;
       const mes = t.period.toISOString().slice(0, 7);
       const meses = historiaDe.get(clave) ?? new Map<string, Money>();
-      meses.set(mes, (meses.get(mes) ?? CERO).plus(toMoney(t.amount)));
+      meses.set(mes, (meses.get(mes) ?? ZERO).plus(toMoney(t.amount)));
       historiaDe.set(clave, meses);
     }
     return historiaDe;
@@ -135,7 +135,7 @@ export class LedgerRepository {
     for (const t of pagados) {
       const clave = t.categoryId?.toString();
       if (clave === undefined) continue;
-      pagado.set(clave, (pagado.get(clave) ?? CERO).plus(toMoney(t.amount)));
+      pagado.set(clave, (pagado.get(clave) ?? ZERO).plus(toMoney(t.amount)));
     }
     return pagado;
   }
