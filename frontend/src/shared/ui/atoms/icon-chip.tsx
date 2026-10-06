@@ -3,18 +3,18 @@ import type { ComponentType } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Los pasteles con los que la app marca sus cosas.
+ * The pastels the app marks its things with.
  *
- * ── Se nombran por su PAPEL, no por su color ────────────────────────────────
- * Eran `violeta`, `turquesa`, `verde` y `lima`, y ese nombre es exactamente lo
- * que obliga a renombrarlo todo cuando cambia el tema: el chip del gasto pasó
- * de violeta a pino y el nombre se volvió mentira. Con el papel en el nombre,
- * un tema nuevo cambia dos líneas en `index.css` y ni una llamada.
+ * ── They are named by their ROLE, not by their color ────────────────────────
+ * They were `violeta`, `turquesa`, `verde` and `lima`, and that name is exactly what
+ * forces renaming everything when the theme changes: the expense chip went
+ * from violet to pine and the name became a lie. With the role in the name,
+ * a new theme changes two lines in `index.css` and not a single call.
  *
- * Y viven aquí y no en cada pantalla porque el COLOR SIGNIFICA: el del gasto
- * es el mismo en el indicador de arriba y en el menú que lo registra.
- * Repetidos en dos sitios, un día alguien cambia uno y la misma cosa pasa a
- * tener dos colores según por dónde se entre.
+ * And they live here and not in each screen because the COLOR MEANS SOMETHING: the expense one
+ * is the same in the indicator at the top and in the menu that records it.
+ * Repeated in two places, one day someone changes one and the same thing ends up
+ * having two colors depending on where one comes in from.
  */
 const CHIPS = {
   expense: { background: 'var(--chip-gasto)', ink: 'var(--chip-gasto-tinta)' },
@@ -26,11 +26,11 @@ const CHIPS = {
 export type ChipColor = keyof typeof CHIPS;
 
 /**
- * Un icono dentro de su pastel.
+ * An icon inside its pastel.
  *
- * El tamaño se elige por nombre y no se escribe en la llamada, por la misma
- * razón que en los botones: dos pasteles de medidas parecidas pero distintas
- * se leen como un descuido.
+ * The size is chosen by name and not written in the call, for the same
+ * reason as with buttons: two pastels of similar but different sizes
+ * read as an oversight.
  */
 export function IconChip({
   Icon,
@@ -46,7 +46,7 @@ export function IconChip({
     strokeWidth?: number;
   }>;
   color: ChipColor;
-  /** `sm` para una fila de menú; `default` para una tarjeta. */
+  /** `sm` for a menu row; `default` for a card. */
   size?: 'sm' | 'default';
   className?: string;
 }) {

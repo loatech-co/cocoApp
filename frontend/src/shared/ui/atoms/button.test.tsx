@@ -17,24 +17,24 @@ const VARIANTS = [
 ] as const;
 
 /**
- * Los DOS tamaños, y sus dos gemelos en cuadrado.
+ * The TWO sizes, and their two square twins.
  *
- * Eran ocho —`default`, `lg`, `icon`, `chip`…— y esta lista se quedó nombrando
- * los viejos cuando se redujeron: al pasarle a `cva` un tamaño que ya no
- * existe, devuelve la base sin ninguna clase de alto, así que las
- * comprobaciones seguían en verde comparando el vacío contra el vacío. Una
- * prueba que mide algo inexistente no avisa de nada.
+ * There were eight —`default`, `lg`, `icon`, `chip`…— and this list kept naming
+ * the old ones when they were reduced: when `cva` is given a size that no longer
+ * exists, it returns the base without any height class, so the
+ * checks stayed green comparing nothing against nothing. A
+ * test that measures something nonexistent warns about nothing.
  */
 const SIZES = ['sm', 'md', 'sm-icon', 'md-icon'] as const;
 
-/** Las clases que fijan el alto: `h-9`, `size-9`, `sm:size-10`… */
+/** The classes that set the height: `h-9`, `size-9`, `sm:size-10`… */
 const heights = (classes: string): string[] =>
   classes
     .split(/\s+/)
     .filter((c) => /^(sm:)?(h|size)-/.test(c))
     .sort();
 
-/** Las clases que fijan el radio. */
+/** The classes that set the radius. */
 const radios = (classes: string): string[] =>
   classes
     .split(/\s+/)
@@ -47,10 +47,10 @@ const weight = (classes: string): string[] =>
     .filter((c) => c.startsWith('font-'))
     .sort();
 
-describe('El botón mide lo mismo con cualquier variante', () => {
-  it('los tamaños que se prueban son los que existen', () => {
-    // Si alguien añade o quita un tamaño, esta falla antes que las otras y dice
-    // exactamente qué pasó, en vez de dejarlas midiendo el vacío.
+describe('The button measures the same with any variant', () => {
+  it('the sizes under test are the ones that exist', () => {
+    // If someone adds or removes a size, this one fails before the others and says
+    // exactly what happened, instead of leaving them measuring nothing.
     for (const size of SIZES) {
       expect(heights(buttonVariants({ size })), `el tamaño ${size} fija un alto`).not.toHaveLength(
         0,
@@ -59,11 +59,11 @@ describe('El botón mide lo mismo con cualquier variante', () => {
   });
 
   for (const size of SIZES) {
-    it(`tamaño ${size}: todas las variantes comparten alto y radio`, () => {
-      // Esto es lo que se rompía: el alto y el radio vivían en la base, así que
-      // una variante que necesitara otras esquinas los pisaba con un className
-      // y de paso se llevaba el alto. En una misma barra acabaron conviviendo
-      // cuatro alturas distintas.
+    it(`size ${size}: every variant shares height and radius`, () => {
+      // This is what used to break: the height and the radius lived in the base, so
+      // a variant that needed other corners overrode them with a className
+      // and took the height along with it. In the same bar four different
+      // heights ended up living side by side.
       const reference = buttonVariants({ variant: 'default', size });
 
       for (const variant of VARIANTS) {
@@ -74,14 +74,14 @@ describe('El botón mide lo mismo con cualquier variante', () => {
     });
   }
 
-  it('ninguna variante de ACCIÓN cambia el peso de la letra', () => {
-    // Dos botones del mismo alto pero con pesos distintos se leen como dos
-    // tamaños: es lo que pasaba con Cancelar contra Aplicar.
+  it('no ACTION variant changes the font weight', () => {
+    // Two buttons of the same height but with different weights read as two
+    // sizes: it is what happened with Cancelar against Aplicar.
     //
-    // `campo` queda fuera a propósito, y es la única: no es una acción sino un
-    // campo —el selector de fecha—, y lo que enseña es un VALOR. Un valor en
-    // semibold dentro de una fila de campos pesa más que la etiqueta que lo
-    // nombra, y la fila se lee al revés.
+    // `field` is left out on purpose, and it is the only one: it is not an action but a
+    // field —the date picker—, and what it shows is a VALUE. A value in
+    // semibold inside a row of fields weighs more than the label that
+    // names it, and the row reads backwards.
     const actionVariants = VARIANTS.filter((v) => v !== 'field');
     const reference = weight(buttonVariants({ variant: 'default', size: 'sm' }));
 
@@ -90,13 +90,13 @@ describe('El botón mide lo mismo con cualquier variante', () => {
     }
   });
 
-  it('ninguna VARIANTE trae alto ni radio: eso lo decide el tamaño', () => {
+  it('no VARIANT carries height or radius: the size decides that', () => {
     for (const variant of VARIANTS) {
       const variantOnly = buttonVariants({ variant, size: undefined })
         .split(/\s+/)
         .filter((c) => /^(sm:)?(h|size)-/.test(c) || c.startsWith('rounded'));
 
-      // `size` sin valor cae en el por defecto, así que se compara contra él.
+      // `size` without a value falls back to the default, so it is compared against it.
       const base = buttonVariants({ variant: 'default', size: undefined })
         .split(/\s+/)
         .filter((c) => /^(sm:)?(h|size)-/.test(c) || c.startsWith('rounded'));
@@ -105,8 +105,8 @@ describe('El botón mide lo mismo con cualquier variante', () => {
     }
   });
 
-  it('Cancelar y Aplicar del calendario salen con el mismo alto', () => {
-    // El par exacto que se veía descuadrado.
+  it("the calendar's Cancelar and Aplicar come out at the same height", () => {
+    // The exact pair that looked misaligned.
     const { getByText } = render(
       <>
         <Button variant="tool" size="sm">

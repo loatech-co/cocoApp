@@ -6,7 +6,7 @@ import { CATEGORY_ICONS, CategoryIcon } from './icons';
 
 afterEach(cleanup);
 
-describe('IconoDeCategoria', () => {
+describe('CategoryIcon', () => {
   it('draws every icon offered to the user', () => {
     for (const { name } of CATEGORY_ICONS) {
       const { container, unmount } = render(<CategoryIcon name={name} />);

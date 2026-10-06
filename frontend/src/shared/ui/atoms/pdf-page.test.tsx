@@ -21,7 +21,7 @@ afterEach(() => {
   draw.mockReset();
 });
 
-describe('PaginaPdf', () => {
+describe('PdfPage', () => {
   it('draws the asked page at twice the shown size and hides the spinner when done', async () => {
     draw.mockResolvedValue({ width: 1240, height: 1600 });
     const onPageCount = vi.fn();

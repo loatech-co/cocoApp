@@ -8,34 +8,34 @@ import {
 } from '@/shared/ui/foundations/field';
 
 /**
- * Un campo de texto.
+ * A text field.
  *
- * ── Los mismos DOS tamaños que el botón ─────────────────────────────────────
- * `sm` mide 36 y `md` mide 44, y son los mismos dos de `button.tsx`, del
- * `Select`, del `Combo` y del selector de fecha. Una fila donde el botón mide
- * 44, el campo 40 y el desplegable 36 se ve temblorosa aunque nadie sepa
- * señalar por qué.
+ * ── The same TWO sizes as the button ────────────────────────────────────────
+ * `sm` measures 36 and `md` measures 44, and they are the same two as `button.tsx`,
+ * the `Select`, the `Combo` and the date picker. A row where the button measures
+ * 44, the field 40 and the dropdown 36 looks shaky even though nobody can
+ * point out why.
  *
- * ── Los iconos: uno a la izquierda, hasta dos a la derecha ──────────────────
- * No son el mismo papel y por eso son dos propiedades y no una lista:
+ * ── The icons: one on the left, up to two on the right ──────────────────────
+ * They do not play the same role and that is why they are two props and not one list:
  *
- * · `icono` es INFORMATIVO. Dice de qué es el campo —una persona, una lupa, un
- *   calendario— y no se puede pulsar. Va a la izquierda, que es donde empieza
- *   a leerse.
- * · `acciones` son ACTIVAS. Hacen algo: borrar lo escrito, desplegar una
- *   lista, enseñar la contraseña. Van a la derecha, donde está el pulgar en un
- *   teléfono y donde no estorban al texto que se escribe.
+ * · `icon` is INFORMATIVE. It says what the field is for —a person, a magnifier, a
+ *   calendar— and it cannot be clicked. It goes on the left, which is where reading
+ *   starts.
+ * · `actions` are ACTIVE. They do something: clear what was typed, open a
+ *   list, show the password. They go on the right, where the thumb is on a
+ *   phone and where they do not get in the way of the text being typed.
  *
- * Es una LISTA y no un `ReactNode` suelto a propósito: el campo necesita saber
- * CUÁNTAS son para reservarles sitio con su relleno derecho, y contar los
- * hijos de un fragmento no se puede hacer de forma fiable. Dos es el tope
- * —limpiar y buscar, limpiar y desplegar—; con tres, la mitad del campo son
- * botones.
+ * It is a LIST and not a loose `ReactNode` on purpose: the field needs to know
+ * HOW MANY there are to reserve room for them with its right padding, and counting the
+ * children of a fragment cannot be done reliably. Two is the cap
+ * —clear and search, clear and open—; with three, half the field is
+ * buttons.
  *
- * ── Por qué los iconos van en absoluto y no en una fila ─────────────────────
- * Porque un `<input>` no puede tener hijos: es un elemento vacío. Un
- * desplegable sí puede, y por eso allí los iconos van en la fila y no hace
- * falta reservar nada.
+ * ── Why the icons are absolutely positioned and not in a row ────────────────
+ * Because an `<input>` cannot have children: it is a void element. A
+ * dropdown can, and that is why there the icons go in the row and nothing
+ * needs reserving.
  */
 export function Input({
   className,
@@ -47,25 +47,25 @@ export function Input({
   ...props
 }: Omit<ComponentProps<'input'>, 'size'> & {
   size?: 'sm' | 'md';
-  /** A la izquierda, informativo: de qué es este campo. */
+  /** On the left, informative: what this field is for. */
   icon?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  /** A la derecha, activas. Una o dos. */
+  /** On the right, active. One or two. */
   actions?: ReactNode[];
 }) {
   const right = actions?.filter(Boolean) ?? [];
-  // Dentro de un `Campo`, el valor baja para dejarle sitio a la etiqueta.
+  // Inside a `Field`, the value moves down to make room for the label.
   const isInField = useDentroDeUnCampo();
 
   const field = (
     <input
       type={type}
       /*
-        Siempre hay un marcador, aunque sea un espacio.
+        There is always a placeholder, even if it is a space.
 
-        Es lo que hace que `:placeholder-shown` funcione, y de ahí sale el
-        estado «este campo tiene algo escrito» que sube la etiqueta flotante.
-        Sin atributo, el selector no engancha nunca y la etiqueta se queda
-        arriba desde el principio, tapando un campo vacío.
+        It is what makes `:placeholder-shown` work, and from it comes the
+        "this field has something typed" state that raises the floating label.
+        Without the attribute, the selector never matches and the label stays
+        up from the start, covering an empty field.
       */
       placeholder={placeholder ?? ' '}
       className={cn(inputClass(size, isInField, Boolean(Icon), right.length), className)}
@@ -81,8 +81,8 @@ export function Input({
 
       {Icon && (
         <span
-          // `data-icono` es lo que le dice a la etiqueta flotante que tiene que
-          // arrancar más a la derecha. Lo lee `.campo` en `index.css`.
+          // `data-icono` is what tells the floating label it has to
+          // start further to the right. `.campo` reads it in `index.css`.
           data-icono=""
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         >
@@ -93,9 +93,9 @@ export function Input({
       {right.length > 0 && (
         <span className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
           {right.map((action, i) => (
-            // El índice como clave: esta lista no se reordena ni se filtra,
-            // son uno o dos botones fijos que el campo declara al construirse.
-            // eslint-disable-next-line @eslint-react/no-array-index-key -- lista fija y posicional, sin id propio
+            // The index as key: this list is never reordered or filtered,
+            // they are one or two fixed buttons the field declares when it is built.
+            // eslint-disable-next-line @eslint-react/no-array-index-key -- fixed, positional list with no id of its own
             <span key={i}>{action}</span>
           ))}
         </span>
@@ -104,7 +104,7 @@ export function Input({
   );
 }
 
-/** Las clases del `<input>`: su tamaño, su foco y el sitio de sus iconos. */
+/** The classes of the `<input>`: its size, its focus and the room for its icons. */
 function inputClass(
   size: 'sm' | 'md',
   isInField: boolean,
@@ -114,37 +114,37 @@ function inputClass(
   return cn(
     'flex w-full rounded-lg border border-input bg-card px-3',
     size === 'sm' ? 'h-9 text-sm' : 'h-11 text-base',
-    // El suelo táctil, aunque en `md` sobre: 44 ya pasa de 42. Se declara
-    // igual porque `piso-tactil.test.ts` pide que quien dibuja un control
-    // lo diga, y el día que alguien baje este alto el suelo sigue puesto.
+    // The touch floor, even if in `md` it is redundant: 44 is already over 42. It is declared
+    // anyway because `piso-tactil.test.ts` asks whoever draws a control
+    // to say so, and the day someone lowers this height the floor is still in place.
     'movil:min-h-[42px]',
     /*
-      Dentro de un campo, el marcador SOLO se ve con el foco: en reposo su
-      sitio lo ocupa la etiqueta, y los dos a la vez son dos textos grises
-      pisándose —que es exactamente lo que pasaba—.
+      Inside a field, the placeholder is ONLY shown with focus: at rest its
+      place is taken by the label, and both at once are two gray texts
+      stepping on each other —which is exactly what was happening—.
 
-      Va aquí y no en la hoja de estilos porque una utilidad le gana a la
-      capa `components`, y esta clase es justo la que ganaba.
+      It goes here and not in the stylesheet because a utility beats the
+      `components` layer, and this class is exactly the one that was winning.
     */
     isInField
       ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
       : 'placeholder:text-muted-foreground',
-    // Al pasar por encima se tiñe el BORDE, igual que el `Select` y el
-    // `Combo` que lleva al lado. Sin esto, en una misma fila un control
-    // respondía al ratón y el de al lado no, y parecía que uno estaba
-    // apagado.
+    // On hover the BORDER is tinted, just like the `Select` and the
+    // `Combo` next to it. Without this, in the same row one control
+    // responded to the mouse and the one next to it did not, and it looked like one was
+    // disabled.
     'transition-colors hover:border-ring/40',
-    // El porqué del grosor y de `:focus-visible`, en `field.tsx`.
+    // The why of the thickness and of `:focus-visible`, in `field.tsx`.
     FOCO_DEL_CAMPO,
     'disabled:cursor-not-allowed disabled:opacity-50',
     'aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive',
-    // 16px por debajo del corte y 14 por encima, y el corte es el de la
-    // app —no el `md:` de Tailwind, que mide solo el ancho—: una tableta
-    // en vertical es táctil aunque mida 800, y Safari amplía la página
-    // entera al enfocar un campo de menos de 16px.
+    // 16px below the breakpoint and 14 above it, and the breakpoint is the app's
+    // —not Tailwind's `md:`, which only measures the width—: a tablet
+    // in portrait is touch even if it measures 800, and Safari zooms the whole
+    // page when focusing a field under 16px.
     size === 'md' && 'escritorio:text-sm',
-    // Sitio para los iconos. A la izquierda: 12 de margen, 16 de icono y 8
-    // de aire. A la derecha, lo mismo por cada botón de 28.
+    // Room for the icons. On the left: 12 of margin, 16 of icon and 8
+    // of air. On the right, the same for each 28 button.
     hasIcon && 'pl-9',
     actions === 1 && 'pr-11',
     actions >= 2 && 'pr-19',
@@ -153,9 +153,9 @@ function inputClass(
 }
 
 /**
- * Una de las `acciones` de un campo: un icono de 28 que se pulsa, dentro de
- * la caja y a la derecha. Lo que la acción hace lo dice `etiqueta`, que es su
- * nombre accesible y su pista.
+ * One of a field's `actions`: a 28 icon that is clicked, inside
+ * the box and on the right. What the action does is said by `label`, which is its
+ * accessible name and its hint.
  */
 export function FieldAction({
   Icon,
@@ -165,7 +165,7 @@ export function FieldAction({
 }: Omit<ComponentProps<'button'>, 'className' | 'children' | 'type'> & {
   Icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   label: string;
-  /** La pista al pasar por encima, si es más corta que `etiqueta`. */
+  /** The hover hint, if it is shorter than `label`. */
   hint?: string;
 }) {
   return (

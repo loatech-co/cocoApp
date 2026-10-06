@@ -6,7 +6,7 @@ import { BLOCK, Block } from './block';
 
 afterEach(cleanup);
 
-describe('Bloque', () => {
+describe('Block', () => {
   it('is a div with the block surface, its own classes and its props', () => {
     render(
       <Block className="gap-3" role="group" aria-label="Detalle">

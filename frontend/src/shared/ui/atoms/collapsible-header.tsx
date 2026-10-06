@@ -2,15 +2,15 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 /**
- * La cabecera de una tarjeta que se pliega: un galón y lo que la nombra.
+ * The header of a card that collapses: a chevron and what names it.
  *
- * El galón mira a la derecha cerrada y abajo abierta, y la cabecera ENTERA es
- * el control —no solo el galón—, con `aria-expanded`. Ocupa el ancho que
- * deje libre lo que vaya a su lado (un menú de la tarjeta, por ejemplo).
+ * The chevron points right when closed and down when open, and the WHOLE header is
+ * the control —not just the chevron—, with `aria-expanded`. It takes the width
+ * left free by whatever goes beside it (a card menu, for example).
  *
- * `p-3 sm:p-4` y no `p-4 sm:p-6`: veinticuatro píxeles por encima de un título
- * de 18 son más aire que letra, y una cabecera no es el contenido de la
- * tarjeta —lo que se viene a leer está debajo—.
+ * `p-3 sm:p-4` and not `p-4 sm:p-6`: twenty-four pixels above an 18px
+ * title is more air than text, and a header is not the content of the
+ * card —what one comes to read is below—.
  */
 export function CollapsibleHeader({
   isOpen,

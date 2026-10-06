@@ -8,18 +8,18 @@ import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 
 interface BottomSheetProps {
   isOpen: boolean;
-  /** Su nombre accesible. Lo que se ve lo decide `cabeza`. */
+  /** Its accessible name. What is shown is decided by `head`. */
   title: string;
   head?: ReactNode;
   /**
-   * En qué capa se dibuja.
+   * Which layer it is drawn on.
    *
-   * De fábrica va en `z-40`: por encima del armazón —la barra está en 15 y el
-   * techo en 20— y por debajo de una ficha, que vive en 50.
+   * By default it sits at `z-40`: above the shell —the bar is at 15 and the
+   * top bar at 20— and below a sheet (modal), which lives at 50.
    *
-   * Lo sube quien SALE DE algo que ya está arriba: el desplegable de un menú
-   * se abre desde dentro de una ficha, así que un panel en 40 se dibujaría
-   * detrás de la ficha que lo pidió.
+   * Whoever comes OUT OF something that is already on top raises it: a menu's
+   * dropdown opens from inside a modal, so a sheet at 40 would be drawn
+   * behind the modal that asked for it.
    */
   layer?: string;
   onClose: () => void;
@@ -27,28 +27,28 @@ interface BottomSheetProps {
 }
 
 /**
- * Un panel que sube desde el borde de abajo.
+ * A panel that rises from the bottom edge.
  *
- * ── Por qué se monta una vez y se RELLENA ───────────────────────────────────
- * Todo lo demás en esta carpeta se dibuja entero en cada render. Esto no
- * puede: el deslizamiento es una transición de CSS, y un elemento reconstruido
- * en cada render no tiene posición anterior desde la que viajar — aparecería,
- * nunca llegaría.
+ * ── Why it is mounted once and FILLED ───────────────────────────────────────
+ * Everything else in this folder is drawn whole on every render. This
+ * cannot be: the slide is a CSS transition, and an element rebuilt
+ * on every render has no previous position to travel from — it would appear,
+ * it would never arrive.
  *
- * Por eso se monta SIEMPRE, abierto o cerrado, y lo que cambia es su contenido
- * y su estado. En React eso quiere decir que la llamada nunca lleva
- * `{abierto && <PanelInferior />}`: eso es reconstruirlo.
+ * That is why it is ALWAYS mounted, open or closed, and what changes is its content
+ * and its state. In React that means the call site never does
+ * `{isOpen && <BottomSheet />}`: that is rebuilding it.
  *
- * ── Por qué está contra el `body` ───────────────────────────────────────────
- * Para que haya UN panel por documento y no uno por pantalla. Es una capa
- * fija: dónde viva en el árbol no cambia en nada dónde se pinta, y contra el
- * `body` queda por delante de cualquier tarjeta con `overflow` que lo habría
- * recortado.
+ * ── Why it sits against the `body` ──────────────────────────────────────────
+ * So that there is ONE sheet per document and not one per screen. It is a fixed
+ * layer: where it lives in the tree changes nothing about where it paints, and against the
+ * `body` it stays in front of any card with `overflow` that would have
+ * clipped it.
  *
- * ── Las cuatro salidas ──────────────────────────────────────────────────────
- * El tirador, el velo, Escape y deslizar hacia abajo. Un panel que se puede
- * abrir y no cerrar es el fallo de diseño en su forma más pura, así que las
- * cuatro son del componente: ninguna se le encarga a quien lo abre.
+ * ── The four exits ──────────────────────────────────────────────────────────
+ * The handle, the scrim, Escape and swiping down. A panel that can be
+ * opened and not closed is the design flaw in its purest form, so all
+ * four belong to the component: none is left to whoever opens it.
  */
 export function BottomSheet({
   isOpen,
@@ -70,8 +70,8 @@ export function BottomSheet({
 
   return createPortal(
     <div
-      // El velo. Se desvanece; no se monta y se desmonta: un elemento que
-      // acaba de nacer no tiene opacidad anterior desde la que viajar.
+      // The scrim. It fades; it is not mounted and unmounted: an element that
+      // has just been born has no previous opacity to travel from.
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
       className={cn(
         'fixed inset-0 bg-[var(--velo)] transition-opacity duration-200 ease-[ease]',
@@ -86,9 +86,9 @@ export function BottomSheet({
         aria-label={title}
         data-superficie="panel"
         data-abierta={isOpen ? 'si' : 'no'}
-        // Cerrado no es solo invisible: no se tabula. Un panel apagado que
-        // conserva sus ocho enlaces en el orden del teclado es una página que
-        // tiene el doble de paradas de las que enseña.
+        // Closed is not just invisible: it is not tabbable. A hidden panel that
+        // keeps its eight links in the keyboard order is a page that
+        // has twice as many stops as it shows.
         inert={!isOpen}
         tabIndex={-1}
         style={{ height: height ?? undefined }}
@@ -106,15 +106,15 @@ export function BottomSheet({
 }
 
 /**
- * El tirador.
+ * The handle.
  *
- * Es un INDICADOR, no un control: dice que esto se puede arrastrar y por
- * dónde. Por eso está exento del suelo táctil de 42 y por eso el gesto se lee
- * en todo el panel y no encima de él — apuntar a una raya de 5px con el pulgar
- * sería un gesto peor que el que sustituye.
+ * It is an INDICATOR, not a control: it says this can be dragged and from
+ * where. That is why it is exempt from the 42 touch floor and why the gesture is read
+ * on the whole panel and not on top of it — aiming at a 5px line with the thumb
+ * would be a worse gesture than the one it replaces.
  *
- * En el borde de abajo va esto y no una equis: una equis en la cabeza de un
- * panel que sube desde abajo compite con el título, y el borde ya está ahí.
+ * On the bottom edge this goes and not an X: an X in the head of a
+ * panel that rises from below competes with the title, and the edge is already there.
  */
 function Handle() {
   return (
@@ -125,17 +125,17 @@ function Handle() {
 }
 
 /**
- * El alto se MIDE.
+ * The height is MEASURED.
  *
- * El panel mide lo que mide su contenido —seis baldosas son dos filas; la
- * lista de páginas es el alto entero—, y pasar de uno a otro era un salto
- * mientras entrar y salir eran suaves.
+ * The panel measures what its content measures —six tiles are two rows; the
+ * list of pages is the full height—, and going from one to another was a jump
+ * while entering and leaving were smooth.
  *
- * Y se mide en vez de dejarlo en `auto` porque una transición necesita dos
- * valores definidos: de `auto` a `auto` el valor declarado no cambia, así
- * que no hay nada que animar por mucho que el contenido mida otra cosa.
- * `interpolate-size` resuelve ir DE una palabra clave A un número, que es
- * otro problema. Con la medida, el alto es siempre un número.
+ * And it is measured instead of left at `auto` because a transition needs two
+ * defined values: from `auto` to `auto` the declared value does not change, so
+ * there is nothing to animate however much the content measures something else.
+ * `interpolate-size` solves going FROM a keyword TO a number, which is
+ * another problem. With the measurement, the height is always a number.
  */
 function useMeasuredHeight(): [RefObject<HTMLDivElement | null>, number | null] {
   const column = useRef<HTMLDivElement>(null);
@@ -154,17 +154,17 @@ function useMeasuredHeight(): [RefObject<HTMLDivElement | null>, number | null] 
 }
 
 function useVisitCount(isOpen: boolean): number {
-  // Cada apertura es una visita nueva. La llave remonta el contenido, y eso
-  // hace dos cosas de una: dispara la animación de entrada —que corre por
-  // EXISTIR, porque el cuerpo se reemplaza entero— y devuelve a su estado
-  // inicial cualquier cosa que estuviera a medias. Una pantalla que se reabre
-  // en mitad de una edición es una pantalla que se reabre mal.
+  // Every opening is a new visit. The key remounts the content, and that
+  // does two things in one: it triggers the enter animation —which runs by
+  // EXISTING, because the body is replaced whole— and it returns to its initial
+  // state anything that was half done. A screen that reopens
+  // in the middle of an edit is a screen that reopens badly.
   //
-  // Es ESTADO y no una ref: se lee en el render —va en la `key`—, y una ref
-  // leída en el render es justo lo que la regla de los refs prohíbe, porque
-  // React no se entera de que cambió. El ajuste va en el propio render, que
-  // es lo que React documenta para «estado que depende del anterior»: cuenta
-  // solo la transición de cerrado a abierto, y no el montaje.
+  // It is STATE and not a ref: it is read in render —it goes in the `key`—, and a ref
+  // read in render is exactly what the rule of refs forbids, because
+  // React does not find out it changed. The adjustment goes in the render itself, which
+  // is what React documents for "state that depends on the previous one": it counts
+  // only the transition from closed to open, and not the mount.
   const [visits, setVisits] = useState(0);
   const [wasOpen, setWasOpen] = useState(isOpen);
   if (isOpen !== wasOpen) {
@@ -174,33 +174,33 @@ function useVisitCount(isOpen: boolean): number {
   return visits;
 }
 
-/** La hoja: dónde está, su canto y cómo viaja. */
+/** The sheet: where it is, its edge and how it travels. */
 function sheetClass(isOpen: boolean): string {
   return cn(
     'fixed inset-x-0 bottom-0 flex max-h-[88dvh] flex-col overflow-hidden outline-none',
     /*
-      Solo arriba: las esquinas de abajo caen fuera de la pantalla y
-      curvarlas deja dos muescas del fondo.
+      Only on top: the bottom corners fall off the screen and
+      rounding them leaves two notches of the background.
 
-      ── Y 16px, por encima del radio estándar ─────────────────────────
-      Es la segunda excepción de la app, junto al pozo, y por el mismo
-      motivo: esta esquina mide el ANCHO ENTERO de la pantalla, y en un
-      canto tan largo 10px casi no se ven. Lo que la curva tiene que
-      contar —que esto es una hoja que SUBIÓ y que la página sigue
-      debajo— depende de que se vea.
+      ── And 16px, above the standard radius ───────────────────────────
+      It is the second exception in the app, next to the well, and for the same
+      reason: this corner measures the FULL WIDTH of the screen, and on
+      such a long edge 10px can barely be seen. What the curve has to
+      tell —that this is a sheet that ROSE and that the page is still
+      underneath— depends on it being seen.
 
-      Y no rompe la regla, que habla de contenedores VECINOS: el panel
-      no tiene vecinos, está encima de todo. Está registrada con su
-      motivo en `components/ui/radio.test.ts`.
+      And it does not break the rule, which talks about NEIGHBORING containers: the panel
+      has no neighbors, it is on top of everything. It is registered with its
+      reason in `shared/ui/radio.test.ts`.
     */
     'rounded-t-[16px]',
     SUPERFICIE_FLOTANTE,
-    // La misma duración y la misma curva para el viaje y para el alto:
-    // crece y encoge con el mismo gesto con el que llegó.
+    // The same duration and the same curve for the travel and for the height:
+    // it grows and shrinks with the same gesture it arrived with.
     'transition-[transform,height] duration-[220ms] ease-[cubic-bezier(.4,0,.2,1)]',
     isOpen ? 'translate-y-0' : 'translate-y-full',
-    // El panel entero es del gesto; el cuerpo se queda con el suyo para
-    // poder desplazarse, y no se lo pasa a la página de detrás.
+    // The whole panel belongs to the gesture; the body keeps its own so it
+    // can scroll, and does not pass it to the page behind.
     'touch-none',
   );
 }
@@ -213,36 +213,36 @@ function SheetContent({
 }: Pick<BottomSheetProps, 'title' | 'head' | 'children'> & { visits: number }) {
   return (
     <>
-      {/* ── La cabeza ──────────────────────────────────────────────────
-          Con suelo de 78px. Una cabeza con una sola línea de título es
-          tan baja que dos paneles de la misma familia abrían a alturas
-          distintas, y lo que el ojo lee como cambiado es la cabeza. Una
-          con buscador es más alta porque su CONTENIDO es más alto, que es
-          la única razón por la que debería pasarse del suelo.
+      {/* ── The head ──────────────────────────────────────────────────
+          With a 78px floor. A head with a single title line is
+          so short that two panels of the same family opened at different
+          heights, and what the eye reads as changed is the head. One
+          with a search box is taller because its CONTENT is taller, which is
+          the only reason it should go past the floor.
 
-          Un recuadro, 24 a los lados; 12 hasta el cuerpo. Una cabeza se
-          lee por sus BORDES, no por sus partes.
+          A box, 24 on the sides; 12 down to the body. A head is
+          read by its EDGES, not by its parts.
 
-          24 y no 16: con 16, el título y el primer renglón del cuerpo
-          quedaban casi a ras del canto de la pantalla —la hoja ocupa el
-          ancho entero, así que su relleno es lo ÚNICO que separa lo
-          escrito del borde del teléfono— y el texto se leía comido. */}
+          24 and not 16: with 16, the title and the first line of the body
+          sat almost flush with the edge of the screen —the sheet takes the
+          full width, so its padding is the ONLY thing that separates what is
+          written from the edge of the phone— and the text read as cramped. */}
       <div className="min-h-[78px] shrink-0 px-6 pb-3">
         <Handle />
         {head ?? <h2 className="font-display text-lg font-semibold">{title}</h2>}
       </div>
 
-      {/* El borde seguro va en el RELLENO DEL CUERPO y no en el panel: un
-          panel con relleno deja una franja de color muerta debajo del
-          desplazamiento en vez de dejar que el contenido pase por debajo.
+      {/* The safe edge goes in the BODY PADDING and not on the panel: a
+          padded panel leaves a dead strip of color under the
+          scroll instead of letting the content pass underneath.
 
-          24 a los lados, los mismos de la cabeza: dos sangrados distintos
-          se ven como un escalón en el canto izquierdo de la hoja.
+          24 on the sides, the same as the head: two different insets
+          look like a step on the left edge of the sheet.
 
-          Y 30 abajo, más que los lados a propósito: ahí no hay canto de
-          pantalla sino el borde de abajo del teléfono, donde vive el gesto
-          de volver al inicio. La última fila necesita más aire que las
-          otras para no quedar debajo de él. */}
+          And 30 at the bottom, more than the sides on purpose: there is no screen
+          edge there but the bottom edge of the phone, where the go-home
+          gesture lives. The last row needs more air than the
+          others so it does not end up under it. */}
       <div
         key={visits}
         data-cuerpo

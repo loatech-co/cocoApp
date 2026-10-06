@@ -5,11 +5,11 @@ import { drawPdfPage } from '@/shared/lib/pdf';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * La primera página de un PDF, pintada en un lienzo.
+ * The first page of a PDF, painted on a canvas.
  *
- * Se dibuja más grande que su caja y se encoge por CSS: en una pantalla
- * retina, dibujarla al tamaño de la caja deja un texto borroso que parece un
- * escaneo malo cuando el escaneo está bien.
+ * It is drawn larger than its box and shrunk by CSS: on a retina
+ * screen, drawing it at the box size leaves blurry text that looks like a
+ * bad scan when the scan is fine.
  */
 export function PdfCanvas({
   url,
@@ -20,35 +20,35 @@ export function PdfCanvas({
 }: {
   url: string;
   /**
-   * `cover` recorta por arriba; `contain` enseña la hoja entera.
+   * `cover` crops from the top; `contain` shows the whole sheet.
    *
-   * En una miniatura de 104px recortar es lo correcto: lo que distingue un
-   * recibo de otro es el membrete. En una previsualización que existe para
-   * COMPROBAR una cifra, recortar esconde justo lo que se viene a leer, que
-   * casi nunca está en la cabecera.
+   * In a 104px thumbnail cropping is right: what tells one
+   * receipt from another is the letterhead. In a preview that exists to
+   * CHECK a figure, cropping hides exactly what one came to read, which
+   * is almost never in the header.
    */
   fit?: 'cover' | 'contain';
-  /** A cuántos píxeles se dibuja la página. Más, para verla grande. */
+  /** How many pixels the page is drawn at. More, to see it large. */
   width?: number;
-  /** El tamaño real del dibujo, para quien necesite encuadrarlo. */
+  /** The real size of the drawing, for whoever needs to frame it. */
   onResize?: (width: number, height: number) => void;
-  /** Si se pasa, el lienzo se mide por aquí en vez de llenar su caja. */
+  /** If passed, the canvas is sized by this instead of filling its box. */
   style?: CSSProperties;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [hasFailed, setHasFailed] = useState(false);
 
-  // El aviso del tamaño como evento de efecto: en las dependencias haría que
-  // el PDF se volviera a dibujar en cada render del padre. `useEffectEvent`
-  // da una función estable que llama siempre a la versión más reciente sin
-  // ser dependencia. Antes era una ref escrita durante el render, que hace lo
-  // mismo a mano y es lo que la regla de los refs prohíbe.
+  // The size notification as an effect event: in the dependencies it would make
+  // the PDF redraw on every render of the parent. `useEffectEvent`
+  // gives a stable function that always calls the latest version without
+  // being a dependency. It used to be a ref written during render, which does the
+  // same by hand and is what the rule of refs forbids.
   const reportSize = useEffectEvent((width: number, height: number) => onResize?.(width, height));
 
   useEffect(() => {
     let isAlive = true;
-    // Se lee con una función: el análisis de tipos no ve que la limpieza lo
-    // apaga mientras se espera, y daría cada comprobación por inútil.
+    // It is read through a function: type analysis does not see that the cleanup
+    // turns it off while waiting, and would flag every check as useless.
     const isStillAlive = (): boolean => isAlive;
 
     drawPdfPage({

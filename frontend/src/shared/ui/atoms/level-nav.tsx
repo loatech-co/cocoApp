@@ -5,16 +5,16 @@ import { cn } from '@/shared/lib/utils';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
 /*
- * Moverse por un árbol de niveles —centros, categorías, conceptos— dentro de
- * una lista: bajar a lo que hay dentro de una fila y volver al de arriba.
+ * Moving through a tree of levels —centers, categories, concepts— inside
+ * a list: drilling into what is inside a row and going back to the one above.
  */
 
 /**
- * La vuelta al nivel de arriba: un galón y los niveles recorridos.
+ * The way back to the level above: a chevron and the levels walked.
  *
- * Bajar de nivel es un clic; subir tiene que serlo también. La usan la dona
- * del resumen y el filtro de clasificación. `fuerte` es el peso del filtro,
- * donde el camino hace de título del desplegable.
+ * Going down a level is one click; going up has to be one too. The dashboard
+ * donut and the classification filter use it. `isStrong` is the filter's weight,
+ * where the path acts as the dropdown's title.
  */
 export function BackCrumb({
   path,
@@ -41,10 +41,10 @@ export function BackCrumb({
 }
 
 /**
- * Bajar a lo que hay dentro de una fila: el galón a la derecha.
+ * Drilling into what is inside a row: the chevron on the right.
  *
- * Ocupa el alto ENTERO de la fila y 36 de ancho, porque la fila ya es otro
- * control —marcar— y este es una segunda puerta en el mismo renglón.
+ * It takes the FULL height of the row and 36 of width, because the row is already another
+ * control —checking— and this is a second door on the same line.
  */
 export function DrillButton({ name, onDrill }: { name: string; onDrill: () => void }) {
   return (

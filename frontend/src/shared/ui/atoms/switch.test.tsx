@@ -6,7 +6,7 @@ import { Switch } from './switch';
 
 afterEach(cleanup);
 
-describe('Interruptor', () => {
+describe('Switch', () => {
   it('is announced as a switch with the name the caller gives it', () => {
     render(<Switch aria-label="Pago automático" />);
 

@@ -11,7 +11,7 @@ afterEach(cleanup);
 // A neutral sample: these tests are about the sign and the colour, not the figure.
 const AMOUNT = '1';
 
-describe('Monto', () => {
+describe('Amount', () => {
   it('reads an expense with a minus sign, its colour and a spoken label', () => {
     const { container } = render(<Amount amount={AMOUNT} />);
 
@@ -46,7 +46,7 @@ describe('Monto', () => {
   });
 });
 
-describe('Saldo', () => {
+describe('Balance', () => {
   it('marks a negative balance with the pending colour, not with red', () => {
     const { container } = render(<Balance amount="-1" />);
 

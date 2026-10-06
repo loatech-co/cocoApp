@@ -5,28 +5,28 @@ import type { ComponentProps, ComponentType } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Un aviso EN LÍNEA: se queda donde está hasta que deja de ser cierto.
+ * An INLINE notice: it stays where it is until it stops being true.
  *
- * ── En qué se diferencia del aviso flotante ─────────────────────────────────
- * El de `ui/aviso.tsx` aparece en una esquina, dice algo y se va: sirve para
- * confirmar una acción que ya pasó —"se guardó"—. Este no se va, porque
- * explica el estado de lo que tiene debajo: un formulario que no se pudo
- * enviar, una lista vacía por un filtro, una cuenta sin aprobar. Si se fuera,
- * el motivo desaparecería y quedaría la pantalla sin explicación.
+ * ── How it differs from the floating notice ─────────────────────────────────
+ * The one in `molecules/aviso.tsx` appears in a corner, says something and leaves: it serves to
+ * confirm an action that already happened —"it was saved"—. This one does not leave, because
+ * it explains the state of what is underneath it: a form that could not be
+ * submitted, a list empty because of a filter, an account not yet approved. If it left,
+ * the reason would disappear and the screen would be left without explanation.
  *
- * ── Los cuatro tonos, y cuándo es cada uno ──────────────────────────────────
- * · `destructive` — algo FALLÓ. Es el único rojo, y por eso es el único que se
- *   puede ignorar menos: si todo fuera rojo, el rojo no diría nada.
- * · `warning` — algo está PENDIENTE y todavía se puede hacer. Va en el oro del
- *   tema. Un pago sin registrar no es un error.
- * · `success` — algo salió bien y hace falta decirlo donde ocurrió.
- * · `info` — un dato que ayuda y que nadie tiene que resolver.
+ * ── The four tones, and when each one applies ───────────────────────────────
+ * · `destructive` — something FAILED. It is the only red, and that is why it is the one that
+ *   can be ignored the least: if everything were red, red would say nothing.
+ * · `warning` — something is PENDING and can still be done. It goes in the theme's
+ *   gold. An unrecorded payment is not an error.
+ * · `success` — something went well and it needs saying where it happened.
+ * · `info` — a fact that helps and that nobody has to resolve.
  *
- * ── Por qué cada tono trae su icono ─────────────────────────────────────────
- * Porque el color solo no basta: uno de cada doce hombres no distingue el rojo
- * del verde, y ninguno de los dos se ve en una captura en blanco y negro. El
- * icono dice lo mismo por otra vía, y va puesto por el componente para que no
- * dependa de que cada llamada se acuerde.
+ * ── Why each tone brings its icon ───────────────────────────────────────────
+ * Because color alone is not enough: one in twelve men cannot tell red
+ * from green, and neither shows in a black-and-white screenshot. The
+ * icon says the same thing another way, and the component sets it so that it does not
+ * depend on every call remembering.
  */
 const alertVariants = cva(
   cn(
@@ -38,7 +38,7 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: 'border-border bg-card text-card-foreground',
-        /* Rojo. Solo lo que falló — nunca lo que está pendiente. */
+        /* Red. Only what failed — never what is pending. */
         destructive: 'border-destructive/30 bg-destructive-surface text-destructive',
         warning: 'border-warning/30 bg-warning-surface text-warning',
         success: 'border-success/30 bg-success-surface text-success',
@@ -52,11 +52,11 @@ const alertVariants = cva(
 export type AlertTone = NonNullable<VariantProps<typeof alertVariants>['variant']>;
 
 /**
- * El icono de cada tono. `default` no lleva: no anuncia nada.
+ * The icon of each tone. `default` has none: it announces nothing.
  *
- * Se exporta porque el aviso FLOTANTE tiene los mismos cuatro tonos y tiene
- * que usar los mismos cuatro iconos: un error que en línea es un círculo y
- * flotando es un triángulo son dos errores distintos para quien mira.
+ * It is exported because the FLOATING notice has the same four tones and has
+ * to use the same four icons: an error that is a circle inline and
+ * a triangle floating is two different errors for whoever is looking.
  */
 const TONE_ICONS: Record<AlertTone, ComponentType<{ className?: string }> | null> = {
   default: null,
@@ -75,9 +75,9 @@ export function Alert({
   const Icon = TONE_ICONS[variant ?? 'default'];
 
   return (
-    // `role="alert"` solo en lo que salió mal: un lector de pantalla interrumpe
-    // lo que esté diciendo para leerlo, y hacer eso por un dato informativo es
-    // enseñarle a la gente a ignorar las interrupciones.
+    // `role="alert"` only on what went wrong: a screen reader interrupts
+    // whatever it is saying to read it, and doing that for an informative fact is
+    // teaching people to ignore interruptions.
     <div
       role={variant === 'destructive' ? 'alert' : 'status'}
       className={cn(alertVariants({ variant }), className)}
@@ -98,12 +98,12 @@ export function AlertDescription({ className, ...props }: ComponentProps<'div'>)
 }
 
 /**
- * Lo que falló y, debajo, cada cosa que lo explica: «La contraseña no cumple
- * la política» y la lista de lo que le falta.
+ * What failed and, below it, each thing that explains it: «La contraseña no cumple
+ * la política» and the list of what it is missing.
  *
- * Estaba escrito tres veces —el registro, el cambio de contraseña y el
- * restablecimiento desde administración— y una copia ya había empezado a
- * leer los detalles de otro sitio. Sin detalles es un aviso de error normal.
+ * It was written three times —sign-up, password change and the
+ * reset from admin— and one copy had already started
+ * reading the details from somewhere else. Without details it is a normal error notice.
  */
 export function ErrorAlert({ message, details = [] }: { message: string; details?: string[] }) {
   return (

@@ -5,12 +5,12 @@ import { NavLink } from 'react-router-dom';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Los huecos de la barra de abajo del teléfono.
+ * The slots of the phone's bottom bar.
  *
- * Todos miden lo mismo —60 de alto y un reparto igual del ancho— y llevan el
- * mismo par de colores, lleven a otra pantalla o abran algo encima: quien
- * mira la barra no tiene por qué saber cuál de los cinco cambia de pantalla y
- * cuál levanta una hoja. Lo que los distingue es lo que pasa al tocarlos.
+ * They all measure the same —60 high and an equal share of the width— and carry the
+ * same pair of colors, whether they lead to another screen or open something on top: whoever
+ * looks at the bar has no reason to know which of the five changes screen and
+ * which lifts a sheet. What tells them apart is what happens when tapping them.
  */
 const SLOT =
   'flex h-15 min-w-0 flex-1 items-center justify-center transition-colors duration-[120ms]';
@@ -25,7 +25,7 @@ type BarIconComponent = ComponentType<{
   strokeWidth?: number;
 }>;
 
-/** El icono de un hueco: relleno al 18 % de su propio color, trazo 1,75. */
+/** The icon of a slot: filled at 18 % of its own color, stroke 1.75. */
 export function BarIcon({ Icon }: { Icon: BarIconComponent }) {
   return (
     <Icon
@@ -38,7 +38,7 @@ export function BarIcon({ Icon }: { Icon: BarIconComponent }) {
   );
 }
 
-/** Un hueco que lleva a una sección. */
+/** A slot that leads to a section. */
 export function BarSlotLink({
   to,
   isExact,
@@ -62,7 +62,7 @@ export function BarSlotLink({
   );
 }
 
-/** Un hueco que no lleva a ninguna parte: abre algo sobre la página. */
+/** A slot that leads nowhere: it opens something over the page. */
 export function BarSlotButton({
   label,
   isOn,
@@ -88,12 +88,12 @@ export function BarSlotButton({
 }
 
 /**
- * La acción de la barra: registrar un gasto.
+ * The bar's action: record an expense.
  *
- * Redonda, no baldosa con esquinas: una baldosa se leería como una más de las
- * que abre, y el único control de la barra que no es un destino no debería
- * parecer uno de ellos. Sube 16 por encima de la raya, y quedan 20 de barra
- * por debajo. Al pulsarla baja 2, como una tecla.
+ * Round, not a tile with corners: a tile would read as one more of the ones
+ * it opens, and the only control in the bar that is not a destination should not
+ * look like one of them. It rises 16 above the line, and 20 of bar remain
+ * below. When pressed it drops 2, like a key.
  */
 export function BarFab({ label, onClick }: { label: string; onClick: () => void }) {
   return (

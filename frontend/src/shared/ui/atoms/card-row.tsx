@@ -4,19 +4,19 @@ import { cn } from '@/shared/lib/utils';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
 /**
- * Una fila de una lista DENTRO de una tarjeta, que se puede pulsar: un pago
- * pendiente. En columna, para que lo que vaya debajo —un progreso— se apile.
+ * A row of a list INSIDE a card, which can be clicked: a pending
+ * payment. In a column, so that whatever goes below —a progress bar— stacks.
  *
- * El resaltado es un FONDO, no una bajada de opacidad: atenuar el texto al
- * pasar por encima es lo que hace un control apagado, y la fila que sí se
- * puede pulsar parecía la que no. Y no se sale de la tarjeta: ocupa el ancho
- * de la columna, alineado con el título, con 12px de aire a cada lado.
+ * The highlight is a BACKGROUND, not a drop in opacity: dimming the text on
+ * hover is what a disabled control does, and the row that can be
+ * clicked looked like the one that cannot. And it does not leave the card: it takes the width
+ * of the column, aligned with the title, with 12px of air on each side.
  *
- * El realce es el acento como TINTA (`REALCE`), no la superficie de acento:
- * sobre una tarjeta que ya es tenue, `accent` apenas distinguía la fila
- * señalada de sus vecinas.
+ * The highlight is the accent as INK (`REALCE`), not the accent surface:
+ * on a card that is already faint, `accent` barely told the highlighted row
+ * apart from its neighbors.
  *
- * Sin `onClick` la fila se queda quieta: ni realce ni mano.
+ * Without `onClick` the row stays still: no highlight and no hand cursor.
  */
 export function CardRow({
   onClick,

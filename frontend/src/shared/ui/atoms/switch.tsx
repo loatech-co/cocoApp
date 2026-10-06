@@ -4,21 +4,21 @@ import type { ComponentProps } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Un interruptor de encendido y apagado.
+ * An on/off switch.
  *
- * ── Cuándo esto y cuándo una casilla ────────────────────────────────────────
- * La casilla es para ELEGIR de una lista: marcar tres centros de costos entre
- * diez. El interruptor es para ENCENDER algo que cambia lo que se ve —aquí,
- * una sección entera de campos que aparece debajo—. Son dos gestos distintos y
- * se leen distinto: uno responde "¿cuáles?", el otro "¿sí o no?".
+ * ── When this and when a checkbox ───────────────────────────────────────────
+ * The checkbox is for CHOOSING from a list: ticking three cost centers out of
+ * ten. The switch is for TURNING ON something that changes what is shown —here,
+ * a whole section of fields that appears below—. They are two different gestures and
+ * they read differently: one answers "which ones?", the other "yes or no?".
  *
- * El `<input>` sigue debajo, invisible: el teclado, el foco y los lectores de
- * pantalla funcionan igual que con cualquier casilla.
+ * The `<input>` is still underneath, invisible: the keyboard, the focus and screen
+ * readers work just like with any checkbox.
  *
- * `cargando` es para el que guarda al cambiar (los ajustes de Mi cuenta): la
- * perilla gira mientras el servidor responde y el interruptor no se puede
- * volver a pulsar. Ajustes dibujaba el suyo, cuatro píxeles más ancho y con
- * otra perilla en oscuro; dos copias que ya se habían separado.
+ * `isLoading` is for the one that saves on change (the Mi cuenta settings): the
+ * knob spins while the server responds and the switch cannot be
+ * pressed again. Settings drew its own, four pixels wider and with
+ * a different knob in dark; two copies that had already drifted apart.
  */
 export function Switch({
   className,
@@ -42,16 +42,16 @@ export function Switch({
           'bg-input peer-checked:bg-primary peer-checked:[&>span]:translate-x-4',
           'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background',
           'peer-disabled:opacity-40',
-          // ── La perilla tiene que ser lo CLARO sobre lo oscuro ─────────────
-          // Era `bg-card` siempre. En claro funciona —blanco sobre gris—, pero
-          // en oscuro `--card` es casi negro sobre una vía gris verdosa: la
-          // perilla quedaba más oscura que su carril y se leía como un agujero
-          // en vez de como algo que se desliza.
+          // ── The knob has to be the LIGHT thing on the dark ─────────────
+          // It was always `bg-card`. In light it works —white on gray—, but
+          // in dark `--card` is almost black on a greenish gray track: the
+          // knob ended up darker than its track and read as a hole
+          // instead of as something that slides.
           //
-          // Apagado en oscuro pasa a la tinta de la página, que es clara;
-          // encendido, a la tinta del primario, que sobre el teal claro del
-          // carril vuelve a ser la oscura. Los dos son tokens: en cualquier
-          // tema la perilla se separa de su carril sin que haya que elegir.
+          // Off in dark it switches to the page ink, which is light;
+          // on, to the primary's ink, which on the light teal of the
+          // track is the dark one again. Both are tokens: in any
+          // theme the knob stands apart from its track without having to choose.
           'dark:[&>span]:bg-foreground dark:peer-checked:[&>span]:bg-primary-foreground',
           className,
         )}

@@ -4,12 +4,12 @@ import { cn } from '@/shared/lib/utils';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
 /**
- * Una opción de una lista corta que se ENCIENDE: los atajos de rango («Este
- * mes», «Últimos 90 días»…) al lado del calendario.
+ * An option of a short list that is TURNED ON: the range shortcuts («Este
+ * mes», «Últimos 90 días»…) next to the calendar.
  *
- * No lleva palomita ni otra marca, así que lo encendido se pinta con el
- * acento y el paso del cursor con el realce: la excepción de la regla 8, la
- * misma que el botón `herramienta`. Se anuncia con `aria-pressed`.
+ * It carries no check mark or other mark, so what is on is painted with the
+ * accent and the hover with the highlight: the exception of rule 8, the
+ * same as the `tool` button. It is announced with `aria-pressed`.
  */
 export function ToggleOption({
   isOn,

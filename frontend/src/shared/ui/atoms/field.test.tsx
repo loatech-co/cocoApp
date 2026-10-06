@@ -13,23 +13,23 @@ import { Textarea } from './textarea';
 afterEach(cleanup);
 
 /**
- * La etiqueta flotante es una máquina de estados repartida entre CSS y React,
- * y las dos mitades se rompen sin hacer ruido.
+ * The floating label is a state machine split between CSS and React,
+ * and both halves break without making noise.
  *
- * Lo que se comprueba aquí es lo que el CSS necesita que el marcado le dé:
- * el orden de los hermanos, el atributo de marcador que hace funcionar
- * `:placeholder-shown`, y los `data-` con los que un desplegable dice si tiene
- * algo elegido. La posición y el tamaño de la etiqueta son CSS y jsdom no los
- * calcula; lo que sí se puede exigir es que los ganchos existan, porque sin
- * ellos la etiqueta se queda abajo tapando un valor o arriba sobre un campo
- * vacío, y las dos cosas se ven igual de mal.
+ * What is checked here is what the CSS needs the markup to give it:
+ * the order of the siblings, the placeholder attribute that makes
+ * `:placeholder-shown` work, and the `data-` with which a dropdown says whether it has
+ * something selected. The position and size of the label are CSS and jsdom does not
+ * compute them; what can be required is that the hooks exist, because without
+ * them the label stays down covering a value or up over an empty
+ * field, and both look equally bad.
  */
-describe('El campo con etiqueta flotante', () => {
-  it('pone el control ANTES de la etiqueta', () => {
-    // El orden importa: los selectores de `.campo` en `index.css` buscan la
-    // etiqueta como `> label` dentro de una caja que ya contiene el control.
-    // Con la etiqueta primero, el marcado sigue leyéndose igual y ninguna de
-    // las reglas engancha.
+describe('The field with a floating label', () => {
+  it('puts the control BEFORE the label', () => {
+    // The order matters: the `.campo` selectors in `index.css` look for the
+    // label as `> label` inside a box that already contains the control.
+    // With the label first, the markup still reads the same and none of
+    // the rules match.
     const { container } = render(
       <Field label="Concepto" id="c">
         <Input id="c" />
@@ -43,7 +43,7 @@ describe('El campo con etiqueta flotante', () => {
     expect(box?.children[1]!.tagName).toBe('LABEL');
   });
 
-  it('ata la etiqueta al control', () => {
+  it('ties the label to the control', () => {
     const { container } = render(
       <Field label="Concepto" id="mi-campo">
         <Input id="mi-campo" />
@@ -54,10 +54,10 @@ describe('El campo con etiqueta flotante', () => {
     expect(container.querySelector('input')?.id).toBe('mi-campo');
   });
 
-  it('un campo de texto SIEMPRE lleva marcador, aunque nadie le pase uno', () => {
-    // Es lo que hace que `:placeholder-shown` funcione. Sin atributo, el
-    // selector no engancha nunca y la etiqueta se queda arriba desde el
-    // principio, sobre un campo vacío.
+  it('a text field ALWAYS has a placeholder, even if nobody passes one', () => {
+    // It is what makes `:placeholder-shown` work. Without the attribute, the
+    // selector never matches and the label stays up from the
+    // start, over an empty field.
     const { container } = render(<Input />);
     expect(container.querySelector('input')?.getAttribute('placeholder')).toBe(' ');
 
@@ -68,16 +68,16 @@ describe('El campo con etiqueta flotante', () => {
     );
   });
 
-  it('un área de texto también', () => {
+  it('so does a text area', () => {
     const { container } = render(<Textarea />);
     expect(container.querySelector('textarea')?.getAttribute('placeholder')).toBe(' ');
   });
 
-  it('dentro de un campo, el marcador está apagado hasta que hay foco', () => {
-    // Esto se rompió una vez y se veía así: la etiqueta centrada y el
-    // marcador ocho píxeles más abajo, cruzándose. El apagado estaba en la
-    // hoja de estilos, en la capa `components`, y el
-    // `placeholder:text-muted-foreground` del propio campo le ganaba.
+  it('inside a field, the placeholder is hidden until there is focus', () => {
+    // This broke once and looked like this: the label centered and the
+    // placeholder eight pixels lower, crossing each other. The hiding was in the
+    // stylesheet, in the `components` layer, and the field's own
+    // `placeholder:text-muted-foreground` beat it.
     const inside = render(
       <Field label="Valor" id="v">
         <Input id="v" placeholder="0" />
@@ -89,14 +89,14 @@ describe('El campo con etiqueta flotante', () => {
 
     cleanup();
 
-    // Y fuera de un campo no hay etiqueta que estorbe: el marcador se ve.
+    // And outside a field there is no label in the way: the placeholder shows.
     const outside = render(<Input placeholder="Buscar…" />);
     expect(outside.container.querySelector('input')?.className).toContain(
       'placeholder:text-muted-foreground',
     );
   });
 
-  it('un desplegable dice si tiene algo elegido, y esconde su «sin elegir» si no', () => {
+  it('a dropdown says whether something is selected, and hides its «nothing selected» if not', () => {
     const options = [{ valor: '1', etiqueta: 'Arriendo' }];
 
     const empty = render(
@@ -109,8 +109,8 @@ describe('El campo con etiqueta flotante', () => {
       />,
     );
     expect(empty.container.querySelector('[data-lleno]')?.getAttribute('data-lleno')).toBe('no');
-    // Con `data-vacio` puesto, el CSS lo esconde mientras la etiqueta ocupa su
-    // sitio; sin él se verían los dos textos pisándose.
+    // With `data-vacio` set, the CSS hides it while the label takes its
+    // place; without it both texts would show stepping on each other.
     expect(empty.container.querySelector('[data-vacio]')).not.toBeNull();
 
     cleanup();
@@ -128,12 +128,12 @@ describe('El campo con etiqueta flotante', () => {
     expect(filled.container.querySelector('[data-vacio]')).toBeNull();
   });
 
-  it('el campo de texto reserva sitio para sus iconos', () => {
+  it('the text field reserves room for its icons', () => {
     const Person = () => <svg data-prueba="persona" />;
 
     const left = render(<Input icon={Person} />);
     expect(left.container.querySelector('input')?.className).toContain('pl-9');
-    // `data-icono` es lo que corre la etiqueta para que no caiga encima.
+    // `data-icono` is what shifts the label so it does not fall on top.
     expect(left.container.querySelector('[data-icono]')).not.toBeNull();
 
     cleanup();
@@ -143,7 +143,7 @@ describe('El campo con etiqueta flotante', () => {
   });
 });
 
-/** Los archivos del proyecto, para la comprobación que lee el código. */
+/** The project files, for the check that reads the code. */
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
@@ -152,18 +152,18 @@ function sources(dir: string): string[] {
   });
 }
 
-describe('Ningún formulario vuelve a poner el nombre encima del campo', () => {
+describe('No form puts the name above the field again', () => {
   const files = sources(join(import.meta.dirname, '..', '..', '..'));
 
-  it('encuentra los archivos del proyecto', () => {
+  it('finds the project files', () => {
     expect(files.length).toBeGreaterThan(10);
   });
 
-  it('nadie usa <Label> suelto en una pantalla', () => {
-    // `Label` sigue existiendo —lo usa `Campo` por dentro, y una casilla o un
-    // interruptor lo necesitan porque su nombre va al LADO y no dentro—, pero
-    // una pantalla que lo escriba está volviendo a poner el nombre encima del
-    // campo, y entonces la mitad del formulario flota y la otra mitad no.
+  it('nobody uses a loose <Label> in a screen', () => {
+    // `Label` still exists —`Field` uses it inside, and a checkbox or a
+    // switch need it because their name goes BESIDE and not inside—, but
+    // a screen that writes it is putting the name above the
+    // field again, and then half the form floats and the other half does not.
     const offenders: string[] = [];
 
     for (const path of files) {

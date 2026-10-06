@@ -4,16 +4,16 @@ import type { ComponentProps } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * La caja de filtrar una lista que ya está a la vista: una lupa y el texto.
+ * The box for filtering a list that is already in view: a magnifier and the text.
  *
- * No es un `Input`. Un campo de formulario guarda un dato y lleva su etiqueta
- * flotante y su anillo; esto solo estrecha lo que hay debajo, y se lee como
- * parte de la lista y no como un campo más de la ficha.
+ * It is not an `Input`. A form field stores a value and carries its floating
+ * label and its ring; this only narrows what is underneath, and it reads as
+ * part of the list and not as one more field of the sheet.
  *
- * | Forma      | Dónde                                                        |
- * | ---------- | ------------------------------------------------------------ |
- * | `cabecera` | Arriba de un desplegable, separada de la lista por una raya  |
- * | `caja`     | Dentro de un bloque, sobre una rejilla: la de los iconos     |
+ * | Shape    | Where                                                        |
+ * | -------- | ------------------------------------------------------------ |
+ * | `header` | At the top of a dropdown, separated from the list by a rule  |
+ * | `box`    | Inside a block, over a grid: the icons one                   |
  */
 const SHAPES = {
   header: { box: 'border-b border-border px-3 py-2', field: '' },

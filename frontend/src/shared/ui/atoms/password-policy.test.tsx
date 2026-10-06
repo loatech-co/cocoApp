@@ -9,7 +9,7 @@ afterEach(cleanup);
 // Synthetic samples that only exist to hit each requirement.
 const COMPLETE = 'Abcdefghij1!';
 
-describe('cumpleLaPolitica', () => {
+describe('meetsPolicy', () => {
   it('accepts a password that meets every requirement', () => {
     expect(meetsPolicy(COMPLETE)).toBe(true);
   });
@@ -25,7 +25,7 @@ describe('cumpleLaPolitica', () => {
   });
 });
 
-describe('PoliticaDeContrasena', () => {
+describe('PasswordPolicy', () => {
   it('lists the five requirements under an accessible name', () => {
     render(<PasswordPolicy password="" />);
 

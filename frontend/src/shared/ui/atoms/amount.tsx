@@ -5,12 +5,12 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Hacia dónde va la plata: entra, sale o solo se mueve entre cuentas.
+ * Where the money goes: it comes in, goes out or just moves between accounts.
  *
- * Es lo único que `Monto` necesita saber, y no es un tipo del dominio: quien
- * tiene un movimiento traduce su `type` con `sentidoDelMovimiento`
- * (`features/transactions/model/movimientos.ts`). Así `shared/ui` no conoce
- * qué es un movimiento.
+ * It is the only thing `Amount` needs to know, and it is not a domain type: whoever
+ * has a transaction translates its `type` with `sentidoDelMovimiento`
+ * (`features/transactions/model/movimientos.ts`). That way `shared/ui` does not know
+ * what a transaction is.
  */
 export type MoneyDirection = 'in' | 'out' | 'transfer';
 
@@ -20,20 +20,20 @@ interface AmountProps {
   currency?: string;
   direction?: MoneyDirection;
   className?: string;
-  /** Oculta el icono cuando el contexto ya deja clarísimo el signo. */
+  /** Hides the icon when the context already makes the sign crystal clear. */
   isTextOnly?: boolean;
 }
 
 /**
- * Muestra un monto con su semántica.
+ * Shows an amount with its semantics.
  *
- * Regla de accesibilidad que se respeta aquí: el estado NUNCA depende solo del
- * color. Cada monto lleva además signo e icono, así que alguien con daltonismo
- * —o mirando una impresión en blanco y negro— distingue igual un ingreso de un
- * gasto.
+ * Accessibility rule honored here: the state NEVER depends on
+ * color alone. Each amount also carries a sign and an icon, so someone with color blindness
+ * —or looking at a black-and-white printout— tells an income from an
+ * expense just the same.
  *
- * Semántica: ingreso = teal, gasto = morado. El rojo NO se usa para gastos;
- * está reservado para errores y acciones destructivas.
+ * Semantics: income = teal, expense = purple. Red is NOT used for expenses;
+ * it is reserved for errors and destructive actions.
  */
 export function Amount({
   amount,
@@ -80,9 +80,9 @@ export function Amount({
 }
 
 /**
- * Monto neutro para saldos: sin signo forzado, pero coloreado si es negativo.
- * Un saldo negativo se marca en ámbar (atención), no en rojo: no es un error
- * del sistema, es información.
+ * Neutral amount for balances: no forced sign, but colored if negative.
+ * A negative balance is marked in amber (attention), not in red: it is not a system
+ * error, it is information.
  */
 export function Balance({ amount, className }: { amount: string; className?: string }) {
   const value = Number.parseFloat(amount);

@@ -4,21 +4,21 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Paginador. Uno solo para toda la app.
+ * Pager. A single one for the whole app.
  *
- * Existe como componente y no suelto en cada pantalla porque las reglas de
- * borde —deshabilitar en los extremos, no mostrarse con una sola página,
- * qué números caben— se olvidan la mitad de las veces si hay que reescribirlas.
+ * It exists as a component and not loose in each screen because the edge
+ * rules —disable at the ends, do not show with a single page,
+ * which numbers fit— are forgotten half the time if they have to be rewritten.
  *
- * ── Por qué los números y no solo "anterior / siguiente" ────────────────────
- * Porque con ocho páginas uno quiere saltar a la cinco, no pulsar tres veces.
- * Y porque el número encendido dice dónde está uno sin tener que leer un
- * contador aparte.
+ * ── Why the numbers and not just "previous / next" ─────────────────────────
+ * Because with eight pages one wants to jump to five, not click three times.
+ * And because the highlighted number says where one is without having to read a
+ * separate counter.
  *
- * ── Por qué es un grupo pegado y no botones sueltos ─────────────────────────
- * Un solo borde alrededor de todo lo presenta como UN control: los botones
- * sueltos con espacio entre ellos se leen como acciones distintas, y "3" no es
- * una acción distinta de "4".
+ * ── Why it is a joined group and not loose buttons ──────────────────────────
+ * A single border around everything presents it as ONE control: loose
+ * buttons with space between them read as different actions, and "3" is not
+ * a different action from "4".
  */
 export function Pager({
   page,
@@ -28,7 +28,7 @@ export function Pager({
   className,
 }: {
   page: number;
-  /** Total de FILAS, no de páginas: es lo que devuelve la API. */
+  /** Total ROWS, not pages: it is what the API returns. */
   total: number;
   perPage: number;
   onPageChange: (page: number) => void;
@@ -36,20 +36,20 @@ export function Pager({
 }) {
   const pages = Math.max(1, Math.ceil(total / perPage));
 
-  // Con una sola página no hay nada que paginar, y mostrar dos botones muertos
-  // solo añade ruido.
+  // With a single page there is nothing to paginate, and showing two dead buttons
+  // only adds noise.
   if (pages <= 1) return null;
 
   return (
     <nav className={cn('flex justify-center', className)} aria-label={t('common.pagination')}>
       {/*
-        Sin relleno propio: el paginador se apoya en el fondo de la página en
-        vez de flotar sobre él. Con `bg-card` se leía como una tarjeta más —del
-        mismo color que las que tienen contenido— y competía por atención con
-        la tabla que acaba de terminar de leerse.
+        No fill of its own: the pager rests on the page background
+        instead of floating over it. With `bg-card` it read as one more card —the
+        same color as the ones with content— and competed for attention with
+        the table that has just been read.
 
-        Se queda el marco, fino y tenue, porque es lo que lo presenta como UN
-        control y no como siete botones sueltos.
+        The frame stays, thin and faint, because it is what presents it as ONE
+        control and not as seven loose buttons.
       */}
       <ul className="inline-flex items-stretch divide-x divide-border/70 overflow-hidden rounded-lg border border-border/70">
         <li>
@@ -112,12 +112,12 @@ function Cell({
 }
 
 /**
- * Qué números se dibujan. `null` es un salto (…).
+ * Which numbers are drawn. `null` is a gap (…).
  *
- * Con cincuenta páginas no caben cincuenta botones, así que se muestran los
- * extremos, la actual y sus vecinas. Los extremos siempre: son los dos saltos
- * que uno quiere dar —al principio y al final— y sin ellos hay que pulsar
- * "siguiente" cuarenta veces.
+ * With fifty pages fifty buttons do not fit, so the
+ * ends, the current one and its neighbors are shown. The ends always: they are the two jumps
+ * one wants to make —to the start and to the end— and without them one has to click
+ * "next" forty times.
  */
 export function visiblePageNumbers(page: number, pages: number, gap = 1): (number | null)[] {
   if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1);
@@ -133,8 +133,8 @@ export function visiblePageNumbers(page: number, pages: number, gap = 1): (numbe
 
   let previous: number | undefined;
   for (const isCurrent of order) {
-    // Un salto de UN número no se dibuja con puntos: "1 … 3" ocupa lo mismo
-    // que "1 2 3" y esconde una página por nada.
+    // A gap of ONE number is not drawn with dots: "1 … 3" takes the same room
+    // as "1 2 3" and hides a page for nothing.
     if (previous !== undefined && isCurrent - previous > 1) {
       result.push(isCurrent - previous === 2 ? isCurrent - 1 : null);
     }
@@ -145,7 +145,7 @@ export function visiblePageNumbers(page: number, pages: number, gap = 1): (numbe
   return result;
 }
 
-/** Los números de página, con sus saltos. */
+/** The page numbers, with their gaps. */
 function PageNumbers({
   page,
   pages,
@@ -159,7 +159,7 @@ function PageNumbers({
     <>
       {visiblePageNumbers(page, pages).map((n, i) =>
         n === null ? (
-          // eslint-disable-next-line @eslint-react/no-array-index-key -- un salto «…» no tiene más identidad que su posición
+          // eslint-disable-next-line @eslint-react/no-array-index-key -- a «…» gap has no identity beyond its position
           <li key={`salto-${i}`}>
             <span className="grid h-9 w-9 place-items-center text-sm text-muted-foreground">…</span>
           </li>

@@ -87,25 +87,25 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Los iconos con los que se marca una categoría.
+ * The icons a category is marked with.
  *
- * ── Por qué una tabla y no `lucide[nombre]` ─────────────────────────────────
- * Porque resolver el nombre contra el paquete entero obliga a importarlo
- * entero: mil quinientos iconos en el bundle para enseñar cincuenta. Con una
- * tabla explícita, el empaquetador se lleva solo estos.
+ * ── Why a table and not `lucide[name]` ──────────────────────────────────────
+ * Because resolving the name against the whole package forces importing it
+ * whole: fifteen hundred icons in the bundle to show fifty. With an
+ * explicit table, the bundler takes only these.
  *
- * ── Por qué el nombre se guarda en minúsculas y con guiones ─────────────────
- * Porque es como ya están guardados los que sembró el diccionario inicial
- * —`house`, `spray-can`, `graduation-cap`— y es además el nombre con el que
- * lucide los publica. Guardar `House` habría dejado dos formatos en la misma
- * columna y un icono que se ve o no según quién lo creó.
+ * ── Why the name is stored in lowercase and with hyphens ────────────────────
+ * Because that is how the ones seeded by the initial dictionary are already stored
+ * —`house`, `spray-can`, `graduation-cap`— and it is also the name under which
+ * lucide publishes them. Storing `House` would have left two formats in the same
+ * column and an icon that shows or not depending on who created it.
  *
- * ── Por qué la tabla es más larga que la lista que se ofrece ────────────────
- * Se OFRECEN cincuenta, los que tienen sentido para una categoría de gasto. Pero el
- * diccionario inicial siembra sesenta y seis nombres distintos, y muchos no
- * están entre esos cincuenta: si la tabla solo tuviera los elegibles, todos
- * esas categorías se quedarían sin su icono el día que alguien abriera esta
- * pantalla. La tabla cubre la unión; el selector, solo lo elegible.
+ * ── Why the table is longer than the list that is offered ───────────────────
+ * FIFTY are OFFERED, the ones that make sense for a spending category. But the
+ * initial dictionary seeds sixty-six different names, and many are not
+ * among those fifty: if the table only had the eligible ones, all
+ * those categories would lose their icon the day someone opened this
+ * screen. The table covers the union; the picker, only the eligible ones.
  */
 const BY_NAME: Record<string, LucideIcon> = {
   'arrow-left-right': ArrowLeftRight,
@@ -191,7 +191,7 @@ const BY_NAME: Record<string, LucideIcon> = {
   zap: Zap,
 };
 
-/** Lo que se ofrece al crear o editar una categoría. */
+/** What is offered when creating or editing a category. */
 export const CATEGORY_ICONS: readonly { name: string; label: string }[] = [
   { name: 'house', label: t('ui.icons.home') },
   { name: 'zap', label: t('ui.icons.energy') },
@@ -246,12 +246,12 @@ export const CATEGORY_ICONS: readonly { name: string; label: string }[] = [
 ];
 
 /**
- * Pinta el icono de una categoría.
+ * Paints the icon of a category.
  *
- * Con un nombre que no está en la tabla —uno sembrado hace tiempo, uno escrito
- * a mano en la base— no se pinta NADA en vez de pintar un interrogante: un
- * icono equivocado dice algo falso dla categoría, y ninguno no dice nada, que es
- * exactamente lo que se sabe.
+ * With a name that is not in the table —one seeded long ago, one written
+ * by hand in the database— NOTHING is painted instead of a question mark: a
+ * wrong icon says something false about the category, and none says nothing, which is
+ * exactly what is known.
  */
 export function CategoryIcon({ name, className }: { name?: string | null; className?: string }) {
   const Icon = name ? BY_NAME[name] : undefined;

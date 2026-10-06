@@ -7,21 +7,21 @@ import { cn } from '@/shared/lib/utils';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
 /**
- * Etiquetas y chips: dos cosas parecidas que NO son la misma.
+ * Tags and chips: two similar things that are NOT the same.
  *
- * ── La diferencia, y por qué importa ────────────────────────────────────────
- * Una ETIQUETA describe: dice de qué es algo —"Pendiente", "Ingreso"— y no se
- * puede pulsar. Un CHIP es un control: se enciende, se apaga o se quita.
+ * ── The difference, and why it matters ──────────────────────────────────────
+ * A TAG describes: it says what something is —"Pendiente", "Ingreso"— and it cannot
+ * be clicked. A CHIP is a control: it is turned on, turned off or removed.
  *
- * Si se dibujan igual, la gente intenta pulsar las etiquetas y no encuentra
- * los chips; y como la única forma de saber cuál es cuál sería probar, acaban
- * pulsándose todas. Por eso son dos componentes y no uno con una bandera: el
- * chip es un `<button>` de verdad, con su foco y su estado, y la etiqueta es
- * un `<span>` que no lo finge.
+ * If they are drawn the same, people try to click the tags and do not find
+ * the chips; and since the only way to know which is which would be to try, they end up
+ * clicking all of them. That is why they are two components and not one with a flag: the
+ * chip is a real `<button>`, with its focus and its state, and the tag is
+ * a `<span>` that does not pretend to be one.
  *
- * ── Los colores salen del significado ───────────────────────────────────────
- * `ingreso`, `gasto`, `pendiente`, `error`: nunca "verde" o "ámbar". El día
- * que cambie el tema, el gasto seguirá siendo el gasto.
+ * ── The colors come from the meaning ────────────────────────────────────────
+ * `income`, `expense`, `pending`, `error`: never "green" or "amber". The day
+ * the theme changes, the expense will still be the expense.
  */
 
 const tagVariants = cva(
@@ -33,14 +33,14 @@ const tagVariants = cva(
     variants: {
       tone: {
         neutral: 'border-transparent bg-muted text-foreground',
-        // Lo que todavía no está —«Pronto»—. Se apaga con la tinta apagada
-        // del tema y nunca con opacidad: `muted-foreground` sobre `muted` da
-        // 5:1 en los dos temas, y la misma etiqueta al 60 % daba 2,3:1.
+        // What is not here yet —«Pronto»—. It is dimmed with the theme's muted
+        // ink and never with opacity: `muted-foreground` on `muted` gives
+        // 5:1 in both themes, and the same tag at 60 % gave 2.3:1.
         muted: 'border-transparent bg-muted text-muted-foreground',
         outline: 'border-border text-foreground',
-        // `income`, no `success`: valen lo mismo —en una app de dinero «se
-        // guardó» y «entró plata» son la misma buena noticia— pero esta
-        // etiqueta dice INGRESO, y el token que lo nombra existe.
+        // `income`, not `success`: they are worth the same —in a money app "it
+        // was saved" and "money came in" are the same good news— but this
+        // tag says INCOME, and the token that names it exists.
         income: 'border-transparent bg-income-surface text-income',
         expense: 'border-transparent bg-expense-surface text-expense',
         pending: 'border-transparent bg-warning-surface text-warning',
@@ -52,7 +52,7 @@ const tagVariants = cva(
   },
 );
 
-/** Un rótulo que describe algo. No se pulsa. */
+/** A label that describes something. It is not clicked. */
 export function Tag({
   className,
   tone,
@@ -62,14 +62,14 @@ export function Tag({
 }
 
 /**
- * Un chip: se pulsa.
+ * A chip: it is clicked.
  *
- * Con `onQuitar` lleva su aspa y se comporta como un filtro puesto; sin él, es
- * una opción que se enciende y se apaga y lo dice con `aria-pressed`.
+ * With `onRemove` it carries its X and behaves like an applied filter; without it, it is
+ * an option that turns on and off and says so with `aria-pressed`.
  *
- * El aspa va en su propio botón y no en el del chip: pulsar "Costos fijos"
- * para abrirlo y pulsarlo para quitarlo no pueden ser el mismo gesto, y un
- * solo botón obligaría a adivinar cuál de las dos cosas va a pasar.
+ * The X goes in its own button and not in the chip's: clicking "Costos fijos"
+ * to open it and clicking it to remove it cannot be the same gesture, and a
+ * single button would force guessing which of the two things is going to happen.
  */
 export function Chip({
   isActive = false,
@@ -81,7 +81,7 @@ export function Chip({
 }: Omit<ComponentProps<'button'>, 'children'> & {
   isActive?: boolean;
   onRemove?: () => void;
-  /** Nombre accesible del aspa. Sin él, un lector dice solo "botón". */
+  /** Accessible name of the X. Without it, a screen reader says just "button". */
   removeLabel?: string;
   children: ReactNode;
 }) {
@@ -98,18 +98,18 @@ export function Chip({
   return (
     <span className={cn(shape, 'pr-1', className)}>
       {/*
-        El nombre es un botón solo si abre algo.
+        The name is a button only if it opens something.
 
-        Con `onQuitar` y sin `onClick` —una palabra clave de un concepto, que se
-        pone y se quita y no lleva a ninguna parte— era un `<button>` que al
-        pulsarlo no hacía nada: un lector de pantalla lo anuncia como pulsable,
-        el cursor cambia a mano, y el único gesto que funciona es el aspa de al
-        lado. Un nombre que no hace nada es texto, y se escribe como texto.
+        With `onRemove` and without `onClick` —a keyword of a concept, which is
+        added and removed and leads nowhere— it was a `<button>` that
+        did nothing when clicked: a screen reader announces it as clickable,
+        the cursor turns into a hand, and the only gesture that works is the X next to
+        it. A name that does nothing is text, and it is written as text.
 
-        Sin contorno de foco, como todos los botones: lo quita la regla de
-        `index.css`. Aquí sobraba además por el sitio —este botón vive pegado
-        contra el canto redondeado del chip, así que cualquier anillo suyo se
-        saldría de él—.
+        Without a focus outline, like every button: the rule in
+        `index.css` removes it. Here it was also out of place —this button lives pressed
+        against the rounded edge of the chip, so any ring of its own would
+        spill out of it—.
       */}
       {props.onClick ? (
         <button type="button" className="min-w-0 truncate rounded-md" {...props}>
@@ -125,10 +125,10 @@ export function Chip({
         title={removeLabel ?? t('ui.badge.remove')}
         className={cn(
           'flex size-4 shrink-0 items-center justify-center rounded-full transition-colors',
-          // Encendido, el chip es `--primary` y el aspa lleva su tinta: el
-          // resaltado tiene que ser esa misma tinta rebajada, no un negro.
-          // En oscuro el primario es teal CLARO, así que un negro al 20 %
-          // hacía un borrón oscuro sobre un chip claro.
+          // When on, the chip is `--primary` and the X carries its ink: the
+          // highlight has to be that same ink toned down, not a black.
+          // In dark the primary is LIGHT teal, so a black at 20 %
+          // made a dark smudge on a light chip.
           isActive ? 'hover:bg-primary-foreground/20' : 'hover:bg-muted-foreground/20',
         )}
       >
@@ -139,10 +139,10 @@ export function Chip({
 }
 
 /**
- * El nombre viejo, para no romper las cinco pantallas que ya lo usan.
+ * The old name, so as not to break the five screens that already use it.
  *
- * `Badge` con `variant` era el nombre de shadcn, en inglés y describiendo la
- * forma en vez del papel. Se migran cuando se toquen; mientras, esto traduce.
+ * `Badge` with `variant` was shadcn's name, describing the
+ * shape instead of the role. They are migrated when touched; meanwhile, this translates.
  */
 export function Badge({
   variant,
@@ -163,52 +163,52 @@ export function Badge({
   return <Tag tone={mapping[variant ?? 'default']} className={className} {...props} />;
 }
 
-/** La forma del chip, encendido o apagado. */
+/** The shape of the chip, on or off. */
 function chipShape(isActive: boolean): string {
   return cn(
     /*
-      ── La esquina: 6px, no una píldora ─────────────────────────────────────
-      El `rounded-full` no lo decidió nadie: es el redondeo por defecto de un
-      chip en cualquier librería. Pero aquí el chip no anda solo —vive dentro
-      de un bloque de 10px, dentro de una tarjeta de 10px— y una píldora al
-      lado de dos esquinas cuadradas es lo que la regla del radio llama dos
-      sistemas distintos. Menor que el estándar sí, que es lo que la regla
-      permite a un chip; con otra forma, no.
+      ── The corner: 6px, not a pill ─────────────────────────────────────────
+      Nobody decided the `rounded-full`: it is the default rounding of a
+      chip in any library. But here the chip is not alone —it lives inside
+      a 10px block, inside a 10px card— and a pill next to
+      two square corners is what the radius rule calls two
+      different systems. Smaller than the standard yes, which is what the rule
+      allows a chip; with another shape, no.
 
-      ── El alto: 32px ───────────────────────────────────────────────────────
-      Medía 26, que es lo que salía de sumar 12 de letra y 4 de relleno arriba
-      y abajo: un alto que no eligió nadie tampoco. 32 es el escalón de la
-      escala que queda debajo de los 36 de un control, así que un chip sigue
-      leyéndose como contenido y no como un botón, pero ya se puede pulsar con
-      el dedo. El aire lateral sube con él, de 10 a 12: en una caja más alta,
-      el mismo relleno estrecho hace que el nombre parezca pegado al canto.
+      ── The height: 32px ────────────────────────────────────────────────────
+      It measured 26, which is what came from adding 12 of text and 4 of padding top
+      and bottom: a height nobody chose either. 32 is the step of the
+      scale just below the 36 of a control, so a chip still
+      reads as content and not as a button, but it can now be pressed with
+      a finger. The side air goes up with it, from 10 to 12: in a taller box,
+      the same narrow padding makes the name look stuck to the edge.
     */
     'inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-xs',
-    // El nombre de un concepto es un nombre propio: a 12px, el peso normal se
-    // deshace contra el relleno del chip.
+    // The name of a concept is a proper name: at 12px, the normal weight
+    // dissolves against the chip's padding.
     'font-medium transition-colors [&_svg]:size-3.5',
     isActive
       ? 'border-transparent bg-primary text-primary-foreground'
       : /*
-          ── El relleno: la tinta al 10 %, y no una superficie del tema ────────
-          Llevaba `bg-card`, y un relleno fijo solo funciona si queda escalón
-          contra lo que tiene detrás. Este chip vive dentro de un bloque, que es
-          `muted`, y el escalón salía en sentidos contrarios: en claro `card` es
-          blanco sobre un lienzo cálido y el chip se levanta; en oscuro `card`
-          es más OSCURO que el bloque, así que el mismo chip se hunde y se lee
-          como un agujero. Quitarle el relleno del todo tampoco valía: el canto
-          solo está diez puntos por encima de la superficie y no sostiene nada.
+          ── The fill: the ink at 10 %, and not a theme surface ────────────────
+          It had `bg-card`, and a fixed fill only works if there is a step
+          against what is behind it. This chip lives inside a block, which is
+          `muted`, and the step went in opposite directions: in light `card` is
+          white on a warm canvas and the chip rises; in dark `card`
+          is DARKER than the block, so the same chip sinks and reads
+          as a hole. Removing the fill entirely did not work either: the edge
+          is only ten points above the surface and holds nothing up.
 
-          La tinta al 10 % se mueve SIEMPRE hacia el texto: en claro oscurece,
-          en oscuro aclara. Es decir, hace exactamente lo que la regla de las
-          tres superficies pide en cada tema —dentro baja en claro y sube en
-          oscuro— sin depender de qué superficie tenga debajo, que es lo que
-          aquí no se puede saber.
+          The ink at 10 % ALWAYS moves toward the text: in light it darkens,
+          in dark it lightens. That is, it does exactly what the rule of the
+          three surfaces asks for in each theme —inside goes down in light and up in
+          dark— without depending on which surface is underneath, which is what
+          cannot be known here.
 
-          ── Y responde con el realce compartido ───────────────────────────────
-          El `hover:bg-muted` que tenía era un fallo aparte: dentro de un bloque
-          `muted`, señalar el chip le daba exactamente el color de la caja que
-          lo contiene y desaparecía.
+          ── And it responds with the shared highlight ─────────────────────────
+          The `hover:bg-muted` it had was a separate bug: inside a `muted`
+          block, hovering the chip gave it exactly the color of the box that
+          contains it and it disappeared.
         */
         cn('border-border bg-foreground/10 text-foreground', REALCE),
   );

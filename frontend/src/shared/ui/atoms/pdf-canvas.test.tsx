@@ -21,7 +21,7 @@ afterEach(() => {
   draw.mockReset();
 });
 
-describe('LienzoPdf', () => {
+describe('PdfCanvas', () => {
   it('draws the first page at the asked width and reports the drawn size', async () => {
     draw.mockResolvedValue({ width: 240, height: 320 });
     const onResize = vi.fn();

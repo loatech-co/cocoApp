@@ -9,7 +9,7 @@ import { PageHeader, PAGE_TITLE } from './page-header';
 
 // This file stays `.ts` because CLAUDE.md names it by path; the render tests
 // below build their elements with `createElement` for that reason.
-describe('CabeceraDePagina', () => {
+describe('PageHeader', () => {
   afterEach(cleanup);
 
   it('renders the one level-1 heading of the screen, inside a banner', () => {
@@ -42,16 +42,16 @@ describe('CabeceraDePagina', () => {
 });
 
 /**
- * La cabecera de una pantalla se dibuja en un solo sitio.
+ * A screen's header is drawn in a single place.
  *
- * Esta regla ya se rompió sola una vez y no por descuido de nadie en
- * particular: ocho pantallas escribían su título a mano y salieron TRES
- * tipografías distintas. Se unificaron, y a la vuelta seguía habiendo una
- * novena —el 404— con la suya.
+ * This rule already broke on its own once and not through anyone's carelessness in
+ * particular: eight screens wrote their title by hand and THREE
+ * different typographies came out. They were unified, and on the way back there was still a
+ * ninth —the 404— with its own.
  *
- * Lee el código fuente, como las de los botones, el radio, la superficie y la
- * tipografía, porque el problema no está en el componente sino en quién decide
- * no usarlo.
+ * It reads the source code, like the ones for buttons, radius, surface and
+ * typography, because the problem is not in the component but in whoever decides
+ * not to use it.
  */
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -66,11 +66,11 @@ const files = sources(root).filter((r) => !r.endsWith('page-header.tsx'));
 const relative = (path: string): string => path.split('/src/')[1]!;
 
 /**
- * El contenido de `acciones={…}`, contando llaves.
+ * The content of `actions={…}` (and `acciones={…}`), counting braces.
  *
- * Hace falta contarlas porque dentro hay JSX con sus propias llaves —un
- * `onClick={() => …}`, un `aria-label={…}`— y cortar en la primera `}` dejaría
- * fuera justo el botón que hay que comprobar.
+ * Counting them is needed because inside there is JSX with its own braces —an
+ * `onClick={() => …}`, an `aria-label={…}`— and cutting at the first `}` would leave
+ * out exactly the button that has to be checked.
  */
 function actionBlocks(code: string): string[] {
   const blocks: string[] = [];
@@ -97,15 +97,15 @@ function actionBlocks(code: string): string[] {
   return blocks;
 }
 
-describe('La cabecera de una pantalla se dibuja en un solo sitio', () => {
-  it('encuentra los archivos del proyecto', () => {
+describe("A screen's header is drawn in a single place", () => {
+  it('finds the project files', () => {
     expect(files.length).toBeGreaterThan(10);
   });
 
-  it('ninguna pantalla escribe su propio título de nivel 1', () => {
-    // Se permiten dos formas, y solo dos: la clase compartida —para una
-    // pantalla que no es una cabecera, como el 404— y un `sr-only`, que no
-    // pinta nada y existe para que la página tenga jerarquía.
+  it('no screen writes its own level-1 heading', () => {
+    // Two forms are allowed, and only two: the shared class —for a
+    // screen that is not a header, like the 404— and an `sr-only`, which
+    // paints nothing and exists so that the page has a hierarchy.
     const offenders: string[] = [];
 
     for (const path of files) {
@@ -123,11 +123,11 @@ describe('La cabecera de una pantalla se dibuja en un solo sitio', () => {
     ).toEqual([]);
   });
 
-  it('la acción de una cabecera mide `sm`', () => {
-    // El tamaño por defecto del botón es `md` (44px), así que un `<Button>` sin
-    // `size` dentro de `acciones` es exactamente el error que se acaba de
-    // corregir: la misma acción medía 44 en Centros de costos y 36 en el
-    // resumen, donde la pone el `Menu`.
+  it('a header action is `sm`', () => {
+    // The default button size is `md` (44px), so a `<Button>` without
+    // `size` inside `actions` is exactly the bug that was just
+    // fixed: the same action measured 44 in Cost centers and 36 in the
+    // dashboard, where the `Menu` sets it.
     const offenders: string[] = [];
 
     for (const path of files) {
@@ -142,12 +142,12 @@ describe('La cabecera de una pantalla se dibuja en un solo sitio', () => {
     expect(offenders, 'una acción de cabecera lleva size="sm"').toEqual([]);
   });
 
-  it('la clase del título trae familia, peso y el escalón de la pantalla', () => {
+  it('the title class carries family, weight and the screen step', () => {
     expect(PAGE_TITLE).toContain('font-display');
     expect(PAGE_TITLE).toContain('font-semibold');
     expect(PAGE_TITLE).toContain('text-2xl');
     expect(PAGE_TITLE).toContain('sm:text-3xl');
-    // El interletraje lo declara el tema en cero y Geist ya viene cerrada.
+    // The theme declares letter spacing as zero and Geist already comes tight.
     expect(PAGE_TITLE).not.toContain('tracking-');
   });
 });

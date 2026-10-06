@@ -6,7 +6,7 @@ import { Checkbox } from './checkbox';
 
 afterEach(cleanup);
 
-describe('Casilla', () => {
+describe('Checkbox', () => {
   it('is a real checkbox that takes its accessible name from the caller', () => {
     render(<Checkbox aria-label="Elegir fila" />);
 

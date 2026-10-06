@@ -4,15 +4,15 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Requisitos de contraseña, comprobados en vivo.
+ * Password requirements, checked live.
  *
- * ESPEJO de `api/src/modules/auth/password.policy.ts`, no la fuente de verdad:
- * el servidor valida siempre, y si alguien desactivara este componente no
- * ganaría nada. Su trabajo es que nadie descubra los requisitos a base de
- * errores — eso es lo que empuja a la gente a elegir la contraseña más floja
- * que pase.
+ * MIRROR of `api/src/modules/auth/password.policy.ts`, not the source of truth:
+ * the server always validates, and if someone disabled this component they would
+ * gain nothing. Its job is that nobody discovers the requirements by way of
+ * errors — that is what pushes people to pick the weakest password
+ * that passes.
  *
- * Si la política cambia en el backend, este archivo cambia en el MISMO commit.
+ * If the policy changes in the backend, this file changes in the SAME commit.
  */
 
 const MIN_LENGTH = 12;
@@ -42,8 +42,8 @@ export function PasswordPolicy({ password }: { password: string }) {
     <ul className="mt-2 space-y-1" aria-label={t('ui.passwordPolicy.label')}>
       {REQUIREMENTS.map((requirement) => {
         const isMet = requirement.isMet(password);
-        // El icono acompaña al color, nunca lo sustituye: el estado tiene que
-        // leerse igual sin distinguir colores.
+        // The icon goes with the color, never replaces it: the state has to
+        // read the same without telling colors apart.
         const Icon = isMet ? Check : X;
 
         return (

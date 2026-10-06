@@ -4,43 +4,43 @@ import { cn } from '@/shared/lib/utils';
 import { FOCO_DEL_CAMPO, useDentroDeUnCampo } from '@/shared/ui/foundations/field';
 
 /**
- * Un campo de varias líneas.
+ * A multi-line field.
  *
- * ── Por qué existe ──────────────────────────────────────────────────────────
- * Había uno solo en toda la app —las notas de un movimiento— y estaba escrito
- * a mano: `rounded-lg border bg-card px-3 py-2 text-sm` con el color del borde
- * puesto por un `style` en línea. Le faltaba todo lo demás. Sin anillo de
- * foco, quien navega con el tabulador no sabía nunca dónde estaba; sin color
- * de marcador, su texto salía del mismo tono que lo escrito; sin estado
- * apagado ni inválido, un formulario que no se pudo enviar no podía señalarlo.
+ * ── Why it exists ───────────────────────────────────────────────────────────
+ * There was only one in the whole app —the notes of a transaction— and it was written
+ * by hand: `rounded-lg border bg-card px-3 py-2 text-sm` with the border color
+ * set by an inline `style`. It was missing everything else. Without a focus
+ * ring, whoever navigates with the tab key never knew where they were; without a
+ * placeholder color, its text came out the same tone as what was typed; without a disabled
+ * or invalid state, a form that could not be submitted could not point it out.
  *
- * Y sin nada de eso en común con el `Input` que tiene justo encima: dos campos
- * pegados, uno que se ilumina al enfocarse y otro que no.
+ * And with none of that in common with the `Input` right above it: two fields
+ * side by side, one that lights up when focused and one that does not.
  *
- * ── Qué comparte con el campo de una línea ──────────────────────────────────
- * Todo menos el alto: el mismo borde, el mismo radio, el mismo anillo de 1px,
- * la misma respuesta al cursor y el mismo tamaño de letra —16px por debajo del
- * corte para que Safari no amplíe la página al enfocarlo, 14 por encima—.
+ * ── What it shares with the single-line field ───────────────────────────────
+ * Everything but the height: the same border, the same radius, the same 1px ring,
+ * the same response to the cursor and the same font size —16px below the
+ * breakpoint so that Safari does not zoom the page when focusing it, 14 above—.
  *
- * El alto lo da `rows`, que es del propio elemento, y `min-h-0` no aplica
- * aquí: un área de texto que se pueda encoger por debajo de sus filas deja de
- * mostrar lo que se está escribiendo.
+ * The height comes from `rows`, which belongs to the element itself, and `min-h-0` does not apply
+ * here: a text area that can shrink below its rows stops
+ * showing what is being typed.
  */
 export function Textarea({ className, placeholder, ...props }: ComponentProps<'textarea'>) {
-  // Dentro de un `Campo`, la primera línea baja para dejarle sitio a la
-  // etiqueta; fuera, el relleno es simétrico.
+  // Inside a `Field`, the first line moves down to make room for the
+  // label; outside, the padding is symmetric.
   const isInField = useDentroDeUnCampo();
 
   return (
     <textarea
-      // Siempre un marcador, aunque sea un espacio: es lo que hace que
-      // `:placeholder-shown` funcione, y de ahí sale el estado que sube la
-      // etiqueta flotante.
+      // Always a placeholder, even if it is a space: it is what makes
+      // `:placeholder-shown` work, and from it comes the state that raises the
+      // floating label.
       placeholder={placeholder ?? ' '}
       className={cn(
         'flex w-full rounded-lg border border-input bg-card px-3 py-2 text-base',
         isInField && 'pb-2 pt-6',
-        // Dentro de un campo, el marcador solo con el foco. Ver `input.tsx`.
+        // Inside a field, the placeholder only with focus. See `input.tsx`.
         isInField
           ? 'placeholder:text-transparent focus:placeholder:text-muted-foreground'
           : 'placeholder:text-muted-foreground',

@@ -20,7 +20,7 @@ describe('Logo', () => {
   });
 });
 
-describe('LogoCompacto', () => {
+describe('CompactLogo', () => {
   it('is an image named after the app', () => {
     render(<CompactLogo className="size-8" />);
 

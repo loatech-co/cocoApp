@@ -1,13 +1,13 @@
 import type { RefObject } from 'react';
 
 /**
- * El campo de archivos del navegador, ESCONDIDO.
+ * The browser's file field, HIDDEN.
  *
- * El nativo no se puede peinar: lo que se ve es otro control (un cuadro donde
- * soltar, un botón) que lo abre con `ref.current?.click()`. Entrega la lista
- * de archivos y se vacía al hacerlo, para que elegir DOS VECES el mismo
- * archivo dispare el evento la segunda: sin eso el valor no cambia y no pasa
- * nada.
+ * The native one cannot be styled: what is seen is another control (a box to
+ * drop on, a button) that opens it with `ref.current?.click()`. It hands over the list
+ * of files and empties itself while doing so, so that picking the same
+ * file TWICE fires the event the second time: without that the value does not change and nothing
+ * happens.
  */
 export function FilePicker({
   ref,
@@ -16,7 +16,7 @@ export function FilePicker({
   onFiles,
 }: {
   ref: RefObject<HTMLInputElement | null>;
-  /** Los tipos que se aceptan, como en `accept`. */
+  /** The accepted types, as in `accept`. */
   accept: string;
   multiple?: boolean;
   onFiles: (files: File[]) => void;

@@ -4,31 +4,31 @@ import { cn } from '@/shared/lib/utils';
 import { DentroDeUnCampo } from '@/shared/ui/foundations/field';
 
 /**
- * Un campo de formulario: su nombre DENTRO del control, y el control.
+ * A form field: its name INSIDE the control, and the control.
  *
- * ── Qué hace ────────────────────────────────────────────────────────────────
- * La etiqueta empieza donde estaría el marcador. Al enfocar el campo se
- * encoge y se sube a la parte de arriba del propio campo, dejando su sitio al
- * marcador —que es el ejemplo, no el nombre—. Al escribir, el marcador
- * desaparece y queda lo escrito. Al soltar el campo, la etiqueta se queda
- * arriba si hay algo y baja si no.
+ * ── What it does ────────────────────────────────────────────────────────────
+ * The label starts where the placeholder would be. When the field is focused it
+ * shrinks and moves up to the top of the field itself, leaving its place to the
+ * placeholder —which is the example, not the name—. When typing, the placeholder
+ * disappears and what was typed remains. When the field is left, the label stays
+ * up if there is something and goes down if not.
  *
- * La máquina de estados está en `index.css`, bajo `.campo`, y no aquí: son
- * cuatro disparadores distintos que significan lo mismo y ninguno lo sabe este
- * componente. El porqué está escrito allí.
+ * The state machine is in `index.css`, under `.campo`, and not here: they are
+ * four different triggers that mean the same thing and this component knows none
+ * of them. The why is written there.
  *
- * ── Por qué el nombre va dentro y no encima ─────────────────────────────────
- * Antes iba encima, con este argumento: un marcador desaparece al escribir, así
- * que al revisar un formulario ya lleno nadie sabe qué era cada caja. El
- * argumento sigue en pie y por eso la etiqueta NO es un marcador: cuando hay
- * algo escrito no se va, se queda pequeña sobre el borde. Lo que se gana es el
- * renglón que ocupaba encima de cada campo —seis campos son seis renglones— y
- * que el nombre y el valor se lean como una sola cosa en vez de dos.
+ * ── Why the name goes inside and not above ──────────────────────────────────
+ * It used to go above, with this argument: a placeholder disappears when typing, so
+ * when reviewing an already filled form nobody knows what each box was. The
+ * argument still stands and that is why the label is NOT a placeholder: when there is
+ * something typed it does not leave, it stays small on the border. What is gained is the
+ * line it took above each field —six fields are six lines— and
+ * that the name and the value read as a single thing instead of two.
  *
- * ── Por qué el `id` es obligatorio ──────────────────────────────────────────
- * Es lo único que ata la etiqueta al control para quien navega con lector de
- * pantalla. Una etiqueta flotante que no está asociada es decoración: se ve el
- * nombre y no se oye.
+ * ── Why the `id` is mandatory ───────────────────────────────────────────────
+ * It is the only thing that ties the label to the control for whoever navigates with a screen
+ * reader. A floating label that is not associated is decoration: the
+ * name is seen and not heard.
  */
 export function Field({
   label,
@@ -38,9 +38,9 @@ export function Field({
   children,
 }: {
   label: string;
-  /** El mismo `id` que lleva el control: es lo que los ata. */
+  /** The same `id` the control carries: it is what ties them. */
   id: string;
-  /** Una línea debajo, para lo que el nombre no alcanza a decir. */
+  /** A line below, for what the name cannot quite say. */
   description?: string | undefined;
   className?: string;
   children: ReactNode;
@@ -48,11 +48,11 @@ export function Field({
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
       {/*
-        El control va PRIMERO y la etiqueta después, aunque se vea al
-        contrario: la etiqueta está colocada en absoluto encima de él, y
-        ponerla antes en el marcado obligaría a que el control fuera el
-        hermano siguiente, que es justo lo que los selectores de `.campo` no
-        necesitan saber.
+        The control goes FIRST and the label after, even though it looks the
+        other way round: the label is absolutely positioned on top of it, and
+        putting it first in the markup would force the control to be the
+        next sibling, which is exactly what the `.campo` selectors do not
+        need to know.
       */}
       <div className="campo">
         <DentroDeUnCampo.Provider value={true}>{children}</DentroDeUnCampo.Provider>

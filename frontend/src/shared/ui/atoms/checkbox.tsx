@@ -4,17 +4,17 @@ import type { ComponentProps } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Una casilla de verificación.
+ * A checkbox.
  *
- * ── Por qué no es el `<input type="checkbox">` a secas ──────────────────────
- * Porque el nativo se pinta con los colores del sistema operativo y no con los
- * del producto: en modo oscuro aparece un cuadro blanco de Windows en medio de
- * un menú verde. El input sigue ahí —invisible pero presente— para que el
- * teclado, el foco y los lectores de pantalla funcionen igual que siempre; lo
- * que se ve es el recuadro de al lado.
+ * ── Why it is not a bare `<input type="checkbox">` ──────────────────────────
+ * Because the native one is painted with the operating system's colors and not with
+ * the product's: in dark mode a white Windows box shows up in the middle of
+ * a green menu. The input is still there —invisible but present— so that the
+ * keyboard, the focus and screen readers work as always; what
+ * is seen is the box next to it.
  *
- * `indeterminado` es para un padre con solo algunos hijos marcados: decir "sí"
- * cuando faltan la mitad es mentir, y decir "no" también.
+ * `isIndeterminate` is for a parent with only some children checked: saying "yes"
+ * when half are missing is lying, and saying "no" too.
  */
 export function Checkbox({
   className,
@@ -31,14 +31,14 @@ export function Checkbox({
       <span
         aria-hidden="true"
         className={cn(
-          // `rounded-sm` es `--radius` menos 4, o sea 6px: sale de la escala
-          // del tema. Era un `rounded-[5px]` a mano, de cuando la escala
-          // estaba corrida y ningún nombre daba un valor bajo.
+          // `rounded-sm` is `--radius` minus 4, that is 6px: it comes from the theme's
+          // scale. It was a hand-written `rounded-[5px]`, from when the scale
+          // was shifted and no name gave a low value.
           'pointer-events-none grid size-4 place-items-center rounded-sm border transition-colors',
           'border-input bg-card text-primary-foreground',
-          // Se tiñe el borde al pasar por encima, igual que un campo: la
-          // casilla es el control más pequeño de la app y sin esto no hay
-          // forma de saber que se puede pulsar hasta que se pulsa.
+          // The border is tinted on hover, just like a field: the
+          // checkbox is the smallest control in the app and without this there is no
+          // way of knowing it can be clicked until it is clicked.
           'peer-hover:border-ring/50',
           'peer-checked:border-primary peer-checked:bg-primary peer-checked:[&>svg]:opacity-100',
           'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-background',

@@ -5,34 +5,34 @@ import type { ComponentProps } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * El botón. TODOS los botones.
+ * The button. ALL the buttons.
  *
- * ── Por qué la altura y el radio viven en `size` y no en la base ────────────
- * Porque son lo que hay que cambiar junto. Cuando el radio estaba en la base,
- * cualquier botón que necesitara esquinas menos redondas lo pisaba con un
- * `className`, y con él se colaba también una altura distinta: así acabaron
- * conviviendo cuatro alturas en una misma barra. Ahora elegir un tamaño elige
- * las dos cosas, y no hay nada que pisar.
+ * ── Why the height and the radius live in `size` and not in the base ────────
+ * Because they are what has to change together. When the radius was in the base,
+ * any button that needed less rounded corners overrode it with a
+ * `className`, and a different height sneaked in with it: that is how four
+ * heights ended up living side by side in the same bar. Now picking a size picks
+ * both things, and there is nothing to override.
  *
- * Si hace falta una medida nueva, se añade un `size` aquí. Un `className` con
- * `h-` o `rounded-` en una llamada suelta es la señal de que falta un tamaño.
+ * If a new measurement is needed, a `size` is added here. A `className` with
+ * `h-` or `rounded-` in a stray call is the sign that a size is missing.
  *
- * El PESO de la letra también es de la base, por lo mismo: una variante lo
- * bajó a `font-medium` y su botón parecía más pequeño que el de al lado aunque
- * los dos medían exactamente igual.
+ * The font WEIGHT also belongs to the base, for the same reason: a variant lowered it
+ * to `font-medium` and its button looked smaller than the one next to it even though
+ * both measured exactly the same.
  *
- * ── El suelo táctil, y por qué está en la BASE ──────────────────────────────
- * Por debajo del corte, 42px de alto y de ancho como mínimo. Los tamaños están
- * dibujados para un puntero: `sm` mide 36 y `default` 40. Apple dice 44 y
- * Material dice 48, así que 42 es el MÍNIMO, no la meta.
+ * ── The touch floor, and why it is in the BASE ──────────────────────────────
+ * Below the breakpoint, 42px high and wide at least. The sizes are
+ * drawn for a pointer: `sm` measures 36 and `default` 40. Apple says 44 and
+ * Material says 48, so 42 is the MINIMUM, not the goal.
  *
- * `min-height`, no `height`: un control que ya es más alto se queda como está,
- * y por eso puede vivir en la base sin pelearse con ningún tamaño.
+ * `min-height`, not `height`: a control that is already taller stays as it is,
+ * and that is why it can live in the base without fighting any size.
  *
- * En la base y no en cada llamada porque una excepción tiene que CONCEDERSE,
- * no descubrirse: desde fuera no se puede rebajar —la prueba de las llamadas
- * rechaza cualquier `min-h-0` igual que rechaza un `h-9`—, así que la única
- * forma de tener un botón más pequeño es añadir aquí un tamaño que lo diga.
+ * In the base and not in each call because an exception has to be GRANTED,
+ * not discovered: from outside it cannot be lowered —the call-site test
+ * rejects any `min-h-0` just as it rejects an `h-9`—, so the only
+ * way to have a smaller button is to add a size here that says so.
  */
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 outline-none movil:min-h-[42px] movil:min-w-[42px]",
@@ -40,81 +40,81 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        /** El acento del tema: una superficie tenue con su propia tinta. */
+        /** The theme's accent: a faint surface with its own ink. */
         accent: 'bg-accent text-accent-foreground hover:brightness-95',
         /**
-         * El `secondary` del TEMA, que aquí es el oro.
+         * The THEME's `secondary`, which here is the gold.
          *
-         * No es "un botón gris": para eso están `ghost` y `outline`. Este
-         * existe para la acción secundaria que sí quiere destacar, y lleva la
-         * tinta que el tema declara para él —nunca blanco por costumbre—.
+         * It is not "a gray button": that is what `ghost` and `outline` are for. This one
+         * exists for the secondary action that does want to stand out, and it carries the
+         * ink the theme declares for it —never white out of habit—.
          */
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/90',
         outline: 'border border-input bg-background hover:bg-muted hover:text-foreground',
         ghost: 'hover:bg-muted hover:text-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
-        /** Rojo. Reservado para acciones destructivas — nada más. */
+        /** Red. Reserved for destructive actions — nothing else. */
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         /**
-         * Los controles de una barra de herramientas: sobre el fondo de la
-         * página, con el mismo peso que un campo de texto y no el de una
-         * acción principal. Se encienden con `aria-pressed`.
+         * The controls of a toolbar: on the page background,
+         * with the same weight as a text field and not that of a
+         * primary action. They are turned on with `aria-pressed`.
          */
         /*
-          Encendido lleva el ACENTO, igual que la sección en la que uno está
-          dentro del riel: lavado plano del color al 15 % y la letra del
-          color. Antes se encendía con `accent`, que es la superficie de lo
-          que responde al cursor: encendido y señalado se pintaban casi
-          igual, y en una barra de herramientas —donde lo encendido no tiene
-          ni palomita ni texto que lo diga— el color más fuerte tiene que ir
-          a lo encendido. Es la excepción que la regla 8 ya contemplaba.
+          On carries the ACCENT, just like the section one is in
+          inside the rail: a flat wash of the color at 15 % and the text in the
+          color. It used to turn on with `accent`, which is the surface of what
+          responds to the cursor: on and hovered were painted almost
+          the same, and in a toolbar —where what is on has
+          neither a check mark nor text that says so— the strongest color has to go
+          to what is on. It is the exception rule 8 already allowed for.
         */
         tool: 'border border-border bg-card text-foreground hover:bg-muted aria-pressed:border-primary/40 aria-pressed:bg-primary/15 aria-pressed:text-primary',
         /**
-         * Un botón que hace de CAMPO: el selector de fecha, que por dentro es
-         * un botón porque abre un calendario, pero en la fila de un formulario
-         * es un campo más y tiene que leerse como tal.
+         * A button that acts as a FIELD: the date picker, which inside is
+         * a button because it opens a calendar, but in a form row
+         * is one more field and has to read as such.
          *
-         * Se diferencia de `herramienta` en dos cosas, y las dos importan:
-         * lleva el borde de los campos —`--input`, no `--border`— y al pasar
-         * por encima TIÑE EL BORDE en vez de rellenarse. Un campo que se
-         * rellena al pasar el ratón se lee como un botón, y en una fila donde
-         * el de al lado es un `Select` que solo se tiñe, uno de los dos
-         * parpadea y el otro no.
+         * It differs from `tool` in two things, and both matter:
+         * it carries the field border —`--input`, not `--border`— and on hover
+         * it TINTS THE BORDER instead of filling. A field that
+         * fills on mouse hover reads as a button, and in a row where
+         * the one next to it is a `Select` that only tints, one of the two
+         * flickers and the other does not.
          *
-         * El peso también baja: lo que se lee ahí es un valor, no una acción.
+         * The weight also drops: what is read there is a value, not an action.
          */
         /*
-         * El relleno horizontal NO se puede fijar aquí, y hace falta decirlo
-         * porque se intentó: `cva` emite las clases en el orden de su
-         * configuración —base, variante, tamaño—, así que el `px-5` del
-         * tamaño va DESPUÉS y le gana. Un `px-3` escrito en esta variante no
-         * hace nada, y el selector de fecha quedaba con su valor ocho píxeles
-         * más adentro que la etiqueta que lo nombra.
+         * The horizontal padding can NOT be set here, and it needs saying
+         * because it was tried: `cva` emits the classes in the order of its
+         * configuration —base, variant, size—, so the size's `px-5`
+         * comes AFTER and wins. A `px-3` written in this variant
+         * does nothing, and the date picker ended up with its value eight pixels
+         * further in than the label that names it.
          *
-         * Lo pone su llamada, que es lo último que ve `cn`. La prueba de las
-         * llamadas lo permite a propósito: prohíbe el alto, el relleno
-         * VERTICAL y el radio —que son del tamaño— y no el horizontal.
+         * Its call site sets it, which is the last thing `cn` sees. The call-site
+         * test allows it on purpose: it forbids the height, the VERTICAL
+         * padding and the radius —which belong to the size— and not the horizontal one.
          */
         field:
           'border border-input bg-card font-normal text-foreground transition-colors hover:border-ring/40 aria-expanded:border-ring',
       },
       /*
-        ── DOS tamaños, y los mismos para todo ──────────────────────────────
-        `sm` mide 36 y `md` mide 44, y esas dos alturas valen para un botón,
-        un campo de texto, un desplegable y un selector de fecha. Una fila de
-        controles donde el botón mide 40, el campo 42 y el selector 36 se ve
-        temblorosa aunque nadie sepa decir por qué.
+        ── TWO sizes, and the same ones for everything ──────────────────────────────
+        `sm` measures 36 and `md` measures 44, and those two heights apply to a button,
+        a text field, a dropdown and a date picker. A row of
+        controls where the button measures 40, the field 42 and the picker 36 looks
+        shaky even though nobody can say why.
 
-        Eran ocho —default, sm, lg, icon, icon-sm, chip, chip-icon, campo— y
-        cada uno con su alto y su radio. Ocho medidas es no tener ninguna: se
-        elegía la que se pareciera a la de al lado, y así se separaron.
+        There were eight —default, sm, lg, icon, icon-sm, chip, chip-icon, campo— and
+        each with its own height and radius. Eight measurements is having none: people
+        picked whichever looked like the one next to it, and that is how they drifted apart.
 
-        Las variantes de icono son las mismas alturas en cuadrado. No son un
-        tamaño más: son el mismo, sin texto.
+        The icon variants are the same heights as squares. They are not one
+        more size: they are the same one, without text.
 
-        44 es además el objetivo táctil mínimo que pide la accesibilidad, así
-        que el tamaño de formulario ya lo cumple sin excepciones para el móvil.
+        44 is also the minimum touch target accessibility asks for, so
+        the form size already meets it with no exceptions for mobile.
       */
       size: {
         sm: 'h-9 rounded-lg px-3',
@@ -122,16 +122,16 @@ const buttonVariants = cva(
         'sm-icon': 'size-9 rounded-lg',
         'md-icon': 'size-11 rounded-lg',
         /*
-          El mismo botón de icono, con el canto redondo.
+          The same icon button, with a round edge.
 
-          Es una EXCEPCIÓN al radio estándar y está aquí y no en una llamada
-          porque el radio es del tamaño: escrito fuera, el siguiente que lo
-          necesite lo escribirá distinto.
+          It is an EXCEPTION to the standard radius and it is here and not in a call
+          because the radius belongs to the size: written outside, the next one who
+          needs it will write it differently.
         
-          Existe para los mandos que viven sobre un documento —el zoom, el
-          pase, el borrar— y que van dentro de una pastilla redonda. Un
-          resaltado cuadrado dentro de una píldora deja dos esquinas asomando
-          en cada extremo, y eso se ve más que el propio botón.
+          It exists for the controls that live over a document —the zoom, the
+          full-screen toggle, the delete— and that go inside a round pill. A
+          square highlight inside a pill leaves two corners poking out
+          at each end, and that shows more than the button itself.
         */
         'sm-icon-round': 'size-9 rounded-full',
       },

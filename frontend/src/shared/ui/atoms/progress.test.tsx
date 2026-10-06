@@ -6,7 +6,7 @@ import { Progress } from './progress';
 
 afterEach(cleanup);
 
-describe('Progreso', () => {
+describe('Progress', () => {
   it('is a named progress bar from 0 to 100', () => {
     render(<Progress value={0.42} label="Pagado este mes" />);
 

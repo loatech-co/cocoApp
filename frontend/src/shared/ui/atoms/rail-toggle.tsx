@@ -4,15 +4,15 @@ import { t } from '@/shared/lib/i18n';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Plegar y desplegar el riel del escritorio.
+ * Collapse and expand the desktop rail.
  *
- * Desplegado va arriba a la derecha, junto al logotipo, y lo que se alinea es
- * el ICONO, no su área de toque: el botón mide 36 y el icono 18, así que lleva
- * 9 de aire a cada lado, y el margen negativo (`-mr-2.25`, 9px) saca el área
- * de toque para que el canto del icono caiga sobre el de las filas de
- * navegación. Con el botón a ras del riel el icono se leía descolgado.
+ * Expanded it sits top right, next to the logotype, and what is aligned is
+ * the ICON, not its touch area: the button measures 36 and the icon 18, so it has
+ * 9 of air on each side, and the negative margin (`-mr-2.25`, 9px) pushes out the touch
+ * area so that the edge of the icon falls on that of the navigation
+ * rows. With the button flush with the rail the icon read as hanging loose.
  *
- * Plegado ocupa el ancho del riel, encima de las secciones.
+ * Collapsed it takes the width of the rail, above the sections.
  */
 export function RailToggle({
   isCollapsed,

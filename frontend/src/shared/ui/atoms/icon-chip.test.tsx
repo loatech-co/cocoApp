@@ -7,7 +7,7 @@ import { IconChip } from './icon-chip';
 
 afterEach(cleanup);
 
-describe('ChipIcono', () => {
+describe('IconChip', () => {
   it.each([
     ['expense', 'gasto'],
     ['income', 'ingreso'],

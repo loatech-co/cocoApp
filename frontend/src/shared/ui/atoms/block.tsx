@@ -3,35 +3,35 @@ import type { ComponentProps } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Una superficie DENTRO de otra: un apartado de una ficha, una caja de
- * opciones, un aviso con su propio marco.
+ * A surface INSIDE another: a section of a sheet, a box of
+ * options, a notice with its own frame.
  *
- * ── Por qué se separa con RELLENO y no con borde ────────────────────────────
- * Llevó borde mientras el relleno no funcionaba: `card` y `popover` eran los
- * dos blanco en claro, y en oscuro `muted` y `popover` se llevaban un escalón
- * de nada. Un bloque relleno dentro de un modal era invisible, así que lo que
- * hacía el trabajo era la línea.
+ * ── Why it is separated by FILL and not by border ───────────────────────────
+ * It had a border while the fill did not work: `card` and `popover` were
+ * both white in light, and in dark `muted` and `popover` were a step
+ * of nothing apart. A filled block inside a modal was invisible, so what
+ * did the job was the line.
  *
- * Con tres superficies eso se acabó. `--muted` es LO ELEGIDO y está a un
- * escalón de verdad del material en los dos temas, y el escalón va en el
- * sentido que toca en cada uno: en claro hacia abajo —un bloque es un hueco
- * en la tarjeta, como el pozo lo es en la página— y en oscuro hacia arriba,
- * porque ahí lo que está más cerca es lo más claro.
+ * With three surfaces that is over. `--muted` is THE SELECTED and sits a
+ * real step away from the material in both themes, and the step goes in the
+ * direction each one needs: in light downward —a block is a hollow
+ * in the card, as the well is in the page— and in dark upward,
+ * because there what is closer is what is lighter.
  *
- * Y va a plena opacidad, no al 40 %: un relleno al 40 % sobre una superficie
- * que casi no contrasta es la mitad de casi nada, que es justo por lo que
- * antes hacía falta la línea.
+ * And it goes at full opacity, not at 40 %: a fill at 40 % over a surface
+ * that barely contrasts is half of almost nothing, which is exactly why
+ * the line used to be needed.
  */
 /**
- * La clase, para lo que no es un `<div>`.
+ * The class, for what is not a `<div>`.
  *
- * Un bloque puede ser una etiqueta que envuelve un interruptor o un botón
- * entero; ninguno de los dos puede ser un `<div>` sin perder lo que es. Esos
- * usan la clase y siguen siendo un solo sitio donde cambia el aspecto.
+ * A block can be a label that wraps a switch or a whole
+ * button; neither of them can be a `<div>` without losing what it is. Those
+ * use the class and are still a single place where the look changes.
  *
- * Seis sitios lo escribían a mano con CUATRO rellenos distintos —30, 40 y 60
- * por ciento— y dos radios, que es exactamente cómo se ve que nadie lo
- * decidió: se escribió seis veces y salieron seis.
+ * Six places wrote it by hand with FOUR different fills —30, 40 and 60
+ * percent— and two radii, which is exactly how you can tell nobody
+ * decided it: it was written six times and six came out.
  */
 export const BLOCK = 'rounded-lg bg-muted p-3';
 

@@ -1,16 +1,16 @@
 /**
- * El logotipo de Coco.
+ * The Coco logotype.
  *
- * ── Por qué es un componente y no un archivo .svg ───────────────────────────
- * Para que herede `currentColor`. El original viene sin color —los `path` sin
- * `fill` se pintan de negro— y el logo tiene que verse blanco sobre la barra
- * lateral, tinta sobre el lienzo claro y lima sobre el fondo de marca. Como
- * imagen habría que mantener tres copias y acordarse de cambiarlas las tres.
+ * ── Why it is a component and not an .svg file ──────────────────────────────
+ * So that it inherits `currentColor`. The original comes without color —the `path`s without
+ * `fill` are painted black— and the logo has to look white on the side
+ * bar, ink on the light canvas and lime on the brand background. As an
+ * image three copies would have to be maintained and all three remembered when changing.
  *
- * Además así no hay una petición de red extra para 2 KB de trazado.
+ * Also, this way there is no extra network request for 2 KB of path data.
  *
- * La proporción es 3.82:1, muy apaisada: se le da ALTO y el ancho sale solo.
- * Fijar el ancho lo deja demasiado bajito para leerse.
+ * The aspect ratio is 3.82:1, very wide: it is given HEIGHT and the width follows.
+ * Setting the width leaves it too short to be read.
  */
 export function Logo({ className, title = 'Coco' }: { className?: string; title?: string }) {
   return (
@@ -28,13 +28,13 @@ export function Logo({ className, title = 'Coco' }: { className?: string; title?
 }
 
 /**
- * La marca apilada, para cuadrados: la barra lateral plegada, el favicon, un
- * avatar. El logotipo completo es 3.82:1 y dentro de un cuadrado quedaría
- * ilegible de lo pequeño.
+ * The stacked mark, for squares: the collapsed side bar, the favicon, an
+ * avatar. The full logotype is 3.82:1 and inside a square it would be
+ * illegibly small.
  *
- * Mismo motivo que el `Logo` para ser componente y no un `.svg`: hereda
- * `currentColor` y así es lima sobre la barra y tinta sobre el lienzo claro,
- * sin mantener tres copias del archivo.
+ * Same reason as `Logo` for being a component and not an `.svg`: it inherits
+ * `currentColor` and so it is lime on the bar and ink on the light canvas,
+ * without maintaining three copies of the file.
  */
 export function CompactLogo({ className }: { className?: string }) {
   return (

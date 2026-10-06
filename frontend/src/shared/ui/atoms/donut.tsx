@@ -6,13 +6,13 @@ import { cn } from '@/shared/lib/utils';
 import { SUPERFICIE_FLOTANTE } from '@/shared/ui/foundations/superficie';
 
 /**
- * Los colores de las porciones. Viven en `index.css` porque cambian con el
- * tema: en claro la primera es el pino de la marca, y en oscuro tiene que ser
- * clara o la porción se confunde con la tarjeta y la dona parece vacía.
+ * The colors of the slices. They live in `index.css` because they change with
+ * the theme: in light the first one is the brand's pine, and in dark it has to be
+ * light or the slice blends into the card and the donut looks empty.
  *
- * Y son una rampa PROPIA, distinta de la del tema: estas porciones pintan
- * áreas grandes, y un color que se distingue bien como trazo de 2px puede ser
- * invisible como relleno.
+ * And they are a ramp of their OWN, separate from the theme's: these slices paint
+ * large areas, and a color that stands out well as a 2px stroke can be
+ * invisible as a fill.
  */
 const PALETTE = [
   'var(--dona-1)',
@@ -22,17 +22,17 @@ const PALETTE = [
   'var(--dona-5)',
 ] as const;
 /*
-  ── El lienzo es CUADRADO y ajustado al aro ─────────────────────────────────
-  Los nombres viven fuera del SVG, en su propia lista, así que el dibujo no
-  necesita reservar sitio para ellos. Antes el lienzo era mucho más ancho que
-  el aro —para que cupieran los rótulos y sus líneas— y el aro terminaba
-  ocupando menos de la mitad de lo que medía la tarjeta.
+  ── The canvas is SQUARE and fitted to the ring ─────────────────────────────
+  The names live outside the SVG, in their own list, so the drawing does not
+  need to reserve room for them. The canvas used to be much wider than
+  the ring —so the labels and their leader lines would fit— and the ring ended
+  up taking less than half of what the card measured.
 */
 const RADIO = 68;
 const THICKNESS = 26;
 const SIDE = (RADIO + THICKNESS / 2) * 2 + 4;
 const CENTER = SIDE / 2;
-/** Los dos cantos del aro. */
+/** The two edges of the ring. */
 const OUTSIDE = RADIO + THICKNESS / 2;
 const INSIDE = RADIO - THICKNESS / 2;
 
@@ -40,17 +40,17 @@ export interface DonutArc extends DonutPortion {
   color: string;
   fraction: number;
   percentage: number;
-  /** Dónde arranca, en vueltas. 0 son las doce. */
+  /** Where it starts, in turns. 0 is twelve o'clock. */
   from: number;
-  /** Dónde termina lo que PINTA, que es donde terminan todos los datos. */
+  /** Where what it PAINTS ends, which is where all the data ends. */
   to: number;
 }
 
 /**
- * Un punto del aro. `f` va de 0 —las doce— a 1, en el sentido del reloj.
+ * A point on the ring. `f` goes from 0 —twelve o'clock— to 1, clockwise.
  *
- * Empieza arriba y no a las tres en punto porque es donde uno empieza a leer
- * un reloj y también una dona.
+ * It starts at the top and not at three o'clock because that is where one starts
+ * reading a clock, and a donut too.
  */
 function point(f: number, radio: number): [number, number] {
   const angle = f * 2 * Math.PI - Math.PI / 2;
@@ -58,26 +58,26 @@ function point(f: number, radio: number): [number, number] {
 }
 
 /**
- * El contorno de una porción: un sector de corona, con sus dos cortes RADIALES.
+ * The outline of a slice: an annular sector, with its two RADIAL cuts.
  *
- * ── Por qué un contorno y no un trazo con guiones ───────────────────────────
- * El aro se dibujaba con un círculo por porción, un `stroke` de 26 y un
- * `stroke-dasharray` que dejaba ver solo su trozo. Es la forma corta de
- * escribir una dona y tiene un defecto que no se puede ajustar: el corte de un
- * guion lo pone el navegador PERPENDICULAR A LA TANGENTE del trazo, y esa
- * tangente sale de una curva aproximada por segmentos. Un error de medio grado
- * en la tangente, sobre un trazo que mide 26 de ancho, mueve el canto de fuera
- * varias décimas respecto al de dentro: el corte se ve torcido, o escalonado,
- * según dónde caiga el punto en la aproximación. Con un aro fino no se nota;
- * con uno que mide el 38 % del radio, sí.
+ * ── Why an outline and not a dashed stroke ──────────────────────────────────
+ * The ring used to be drawn with one circle per slice, a `stroke` of 26 and a
+ * `stroke-dasharray` that showed only its piece. It is the short way to
+ * write a donut and it has a flaw that cannot be tuned away: the browser cuts a
+ * dash PERPENDICULAR TO THE TANGENT of the stroke, and that
+ * tangent comes from a curve approximated by segments. Half a degree of error
+ * in the tangent, on a stroke 26 wide, moves the outer edge
+ * several tenths relative to the inner one: the cut looks skewed, or stepped,
+ * depending on where the point falls in the approximation. With a thin ring it
+ * does not show; with one that measures 38 % of the radius, it does.
  *
- * Un sector no depende de ninguna tangente. Sus dos cortes son el segmento que
- * une el canto de dentro con el de fuera EN EL MISMO ÁNGULO, así que son
- * radiales por construcción y no pueden ser otra cosa.
+ * A sector does not depend on any tangent. Its two cuts are the segment that
+ * joins the inner edge to the outer one AT THE SAME ANGLE, so they are
+ * radial by construction and cannot be anything else.
  *
- * `A` con el barrido a 1 va en el sentido del reloj por el canto de fuera, y a
- * 0 vuelve por el de dentro. El `1` del arco grande hace falta pasada la media
- * vuelta: sin él, el navegador elige el arco corto y la porción sale al revés.
+ * `A` with the sweep at 1 goes clockwise along the outer edge, and at
+ * 0 comes back along the inner one. The large-arc `1` is needed past half a
+ * turn: without it, the browser picks the short arc and the slice comes out inverted.
  */
 export function donutSector(from: number, to: number): string {
   const sweep = to - from;
@@ -100,44 +100,44 @@ export function donutSector(from: number, to: number): string {
 }
 
 /**
- * Los arcos de la dona, en orden de pintado.
+ * The arcs of the donut, in paint order.
  *
- * Es una función aparte y no un cálculo dentro del componente porque es
- * geometría: se puede probar con números, y lo que hace falta comprobar son
- * invariantes que a ojo no se ven —que las capas lleguen todas al mismo sitio,
- * que una porción de cero no dibuje nada, que nada se pase de una vuelta—. Es
- * la misma razón por la que las celdas del mes y los números del paginador
- * viven fuera de sus componentes.
+ * It is a separate function and not a calculation inside the component because it is
+ * geometry: it can be tested with numbers, and what needs checking are
+ * invariants that the eye does not see —that the layers all reach the same place,
+ * that a zero slice draws nothing, that nothing goes past one turn—. It is
+ * the same reason the month cells and the pager numbers
+ * live outside their components.
  *
- * ── Todas las porciones, sin agrupar el final en un "Otros" ────────────────
- * Agrupar parecía razonable hasta que se vio en pantalla: "Otros (1)" es un
- * nombre inventado para UNA categoría que sí existe y sí tiene nombre, y
- * además no se podía pulsar —no hay ninguna categoría a la que bajar—, así
- * que era la única fila de la lista que no filtraba nada.
+ * ── Every slice, without grouping the tail into an "Others" ────────────────
+ * Grouping looked reasonable until it was seen on screen: "Otros (1)" is a
+ * made-up name for ONE category that does exist and does have a name, and
+ * on top of that it could not be clicked —there is no category to drill into—, so
+ * it was the only row in the list that filtered nothing.
  *
- * ── El total manda sobre la suma de las porciones ──────────────────────────
- * Si hay gasto sin clasificar, el aro queda con un HUECO en vez de repartirlo
- * entre las demás. Un anillo cerrado diría que todo el gasto está en estas
- * categorías, y no lo está.
+ * ── The total rules over the sum of the slices ─────────────────────────────
+ * If there is unclassified spending, the ring is left with a GAP instead of spreading it
+ * among the others. A closed ring would say that all the spending is in these
+ * categories, and it is not.
  *
- * ── Por qué cada porción se pinta hasta el FINAL de los datos ──────────────
- * Dos sectores pegados que comparten un canto dejan pasar el fondo por esa
- * línea: el suavizado reparte el píxel entre los dos y ninguno lo cubre
- * entero, así que aparece un pelo oscuro cruzando el aro.
+ * ── Why every slice is painted up to the END of the data ──────────────────
+ * Two adjacent sectors that share an edge let the background through along that
+ * line: antialiasing splits the pixel between the two and neither covers it
+ * fully, so a dark hairline shows up across the ring.
  *
- * Así que ninguna porción termina donde le toca: todas siguen hasta donde
- * terminan TODOS los datos, y la siguiente las tapa desde su sitio. El aro se
- * construye por capas, como quien pinta una pared y luego otra encima. Cada
- * corte a la vista es entonces el canto de ARRANQUE de la porción de encima
- * —uno solo, y radial— apoyado sobre color opaco y nunca sobre el fondo.
+ * So no slice ends where it should: they all run on to where
+ * ALL the data ends, and the next one covers them from its own place. The ring is
+ * built in layers, like someone painting one wall and then another on top. Every
+ * visible cut is then the STARTING edge of the slice on top
+ * —just one, and radial— resting on opaque color and never on the background.
  *
- * Tiene dos consecuencias que no se pueden separar de esto:
+ * It has two consequences that cannot be separated from this:
  *
- * · El hueco de lo que falta por clasificar sigue estando, porque las capas
- *   terminan donde terminan los datos y no donde termina el aro.
- * · Señalar una porción tiene que atenuar con COLOR y no con opacidad: una
- *   capa translúcida enseña la que tiene debajo, que es la porción anterior
- *   entera.
+ * · The gap of what is still unclassified is still there, because the layers
+ *   end where the data ends and not where the ring ends.
+ * · Highlighting a slice has to dim with COLOR and not with opacity: a
+ *   translucent layer shows the one underneath, which is the whole previous
+ *   slice.
  */
 export function donutArcs(portions: DonutPortion[], total: number): DonutArc[] {
   const segments = [...portions]
@@ -146,8 +146,8 @@ export function donutArcs(portions: DonutPortion[], total: number): DonutArc[] {
 
   const sum = segments.reduce((s, p) => s + p.value, 0);
   const base = total > 0 ? total : sum || 1;
-  // Dónde acaban los datos. Nunca más de una vuelta: si las porciones suman
-  // más que el total —redondeos—, el aro cierra y ya está.
+  // Where the data ends. Never more than one turn: if the slices add up to
+  // more than the total —rounding—, the ring closes and that is it.
   const end = Math.min(1, sum / base);
 
   let covered = 0;
@@ -174,23 +174,23 @@ export interface DonutPortion {
 }
 
 /**
- * En qué se reparte el gasto: una lista y un aro.
+ * What the spending splits into: a list and a ring.
  *
- * ── Por qué la lista y no rótulos alrededor ─────────────────────────────────
- * Se intentó con nombres alrededor del aro unidos por líneas. En una tarjeta
- * de un tercio de pantalla no entra: o los nombres se cortan hasta dejar de
- * decir nada, o el aro se encoge hasta que la proporción —lo único que una
- * dona responde— deja de leerse.
+ * ── Why the list and not labels around it ──────────────────────────────────
+ * Names around the ring joined by leader lines were tried. In a card
+ * a third of the screen wide they do not fit: either the names get cut until they stop
+ * saying anything, or the ring shrinks until the proportion —the only thing a
+ * donut answers— can no longer be read.
  *
- * Una lista ordenada de mayor a menor responde la misma pregunta mejor: ya
- * viene con el ranking hecho, los nombres caben enteros y el aro se queda con
- * todo el espacio que le sobra a la columna.
+ * A list sorted from largest to smallest answers the same question better: it
+ * comes with the ranking already done, the names fit whole and the ring keeps
+ * all the space the column has left over.
  *
- * ── Por qué la lista son solo nombres ───────────────────────────────────────
- * Porque el orden ya dice cuál pesa más y el aro ya dice cuánto. Repetirlo en
- * cifras al lado de cada nombre convierte la lista en una tabla peor que una
- * tabla, y tapa lo único que hay que leer de un vistazo: en qué se va la
- * plata. El cuánto exacto es otra pregunta, y se hace señalando.
+ * ── Why the list is only names ──────────────────────────────────────────────
+ * Because the order already says which weighs more and the ring already says how much. Repeating it in
+ * figures next to each name turns the list into a table worse than a
+ * table, and hides the only thing to read at a glance: where the
+ * money goes. The exact amount is another question, and it is asked by pointing.
  */
 export function Donut({
   portions,
@@ -200,9 +200,9 @@ export function Donut({
   className,
 }: {
   portions: DonutPortion[];
-  /** El total del recorte. Manda sobre la suma de las porciones. */
+  /** The total of the cut. It rules over the sum of the slices. */
   total: number;
-  /** Con la lista oculta, el aro se centra pero NO cambia de tamaño. */
+  /** With the list hidden, the ring is centered but does NOT change size. */
   isListVisible?: boolean;
   onSelect?: ((id: number) => void) | undefined;
   className?: string;
@@ -220,9 +220,9 @@ export function Donut({
       onPointerMove={follow}
       onPointerLeave={() => setActiveIndex(null)}
     >
-      {/* La lista se desplaza dentro de su tarjeta. Sin esto, con doce
-          conceptos crecía más que la fila y se derramaba por debajo,
-          montándose sobre la tabla de movimientos. */}
+      {/* The list scrolls inside its card. Without this, with twelve
+          concepts it grew taller than the row and spilled out below,
+          riding over the transactions table. */}
       {isListVisible && <DonutLegend {...marks} />}
 
       <DonutRing {...marks} isListVisible={isListVisible} />
@@ -239,7 +239,7 @@ export function Donut({
   );
 }
 
-/** Qué porción está señalada, y lo que hace falta para señalarla o bajar a ella. */
+/** Which slice is highlighted, and what is needed to highlight it or drill into it. */
 interface DonutMarks {
   strokes: DonutArc[];
   activeIndex: number | null;
@@ -247,7 +247,7 @@ interface DonutMarks {
   onSelect: ((id: number) => void) | undefined;
 }
 
-/** El puntero sobre la dona y la tarjeta que lo sigue. */
+/** The pointer over the donut and the card that follows it. */
 function useDonutPointer() {
   const box = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
@@ -256,9 +256,9 @@ function useDonutPointer() {
   const [bounds, setBounds] = useState({ width: 0, height: 0 });
   const [tipSize, setTipSize] = useState({ width: 0, height: 0 });
 
-  // Se mide después de pintar y antes de que el navegador dibuje: en el render
-  // la tarjeta todavía no existe, y en un efecto normal se vería un fotograma
-  // con ella en el sitio equivocado.
+  // It is measured after painting and before the browser draws: in render
+  // the card does not exist yet, and in a normal effect a frame would show
+  // with it in the wrong place.
   useLayoutEffect(() => {
     if (!card.current) return;
     const { offsetWidth, offsetHeight } = card.current;
@@ -276,8 +276,8 @@ function useDonutPointer() {
     setPointer({ x: e.clientX - r.left, y: e.clientY - r.top });
   }
 
-  // La tarjeta salta al lado contrario del puntero cuando no cabe: siguiéndolo
-  // sin más se sale de la tarjeta en los bordes.
+  // The card jumps to the side opposite the pointer when it does not fit: just following
+  // it, it falls off the card at the edges.
   const position = {
     left: Math.max(
       0,
@@ -343,30 +343,30 @@ function DonutRing({ isListVisible, ...marks }: DonutMarks & { isListVisible: bo
     <svg
       viewBox={`0 0 ${SIDE} ${SIDE}`}
       /*
-        El tamaño sale del ANCHO, y el alto lo sigue.
+        The size comes from the WIDTH, and the height follows it.
 
-        Sacarlo del alto —`h-80% w-auto`— parecía más fino: la dona llenaba
-        su tarjeta. Pero el ancho que salía de ese alto no sabía nada de la
-        lista que tiene al lado, así que el aro se llevaba la fila entera y
-        los nombres se encogían hasta desaparecer.
+        Deriving it from the height —`h-80% w-auto`— looked neater: the donut filled
+        its card. But the width that came out of that height knew nothing about the
+        list next to it, so the ring took the whole row and
+        the names shrank until they disappeared.
 
-        Repartiendo el ANCHO entre los dos, cada uno tiene lo suyo: el aro el
-        62 % y la lista el 38 %. `max-h-full` es el freno por si la tarjeta
-        resulta más baja que ancha; el lienzo es cuadrado, así que al
-        achicarse sigue siendo un círculo, solo que más chico.
+        Splitting the WIDTH between the two, each one has its own: the ring
+        62 % and the list 38 %. `max-h-full` is the brake in case the card
+        turns out shorter than it is wide; the canvas is square, so when it
+        shrinks it is still a circle, only smaller.
 
-        Para agrandar el aro hay dos mandos, y los dos están fuera de este
-        archivo o justo aquí: este porcentaje —que se lo quita a la lista— y
-        el ancho de la columna en el resumen, que se lo quita a la gráfica.
+        To enlarge the ring there are two knobs, and both are outside this
+        file or right here: this percentage —which it takes from the list— and
+        the width of the column in the dashboard, which it takes from the chart.
       */
-      // Con la lista oculta el aro se CENTRA, no crece: creciendo, el ancho
-      // de la tarjeta dejaría de ser el mismo con y sin nombres y la fila
-      // entera se recolocaría cada vez que se pulsa el botón.
+      // With the list hidden the ring is CENTERED, it does not grow: growing, the width
+      // of the card would stop being the same with and without names and the whole row
+      // would rearrange itself every time the button is pressed.
       className={cn('max-h-full w-[62%] shrink-0', !isListVisible && 'mx-auto')}
       role="img"
       aria-label={t('ui.donut.label')}
     >
-      {/* El aro de fondo: es lo que se ve donde no llega ninguna porción. */}
+      {/* The background ring: it is what shows where no slice reaches. */}
       <circle
         cx={CENTER}
         cy={CENTER}
@@ -395,12 +395,12 @@ function DonutSlice({
   if (sweep <= 0) return null;
 
   /*
-    ── Atenuar con COLOR, nunca con opacidad ─────────────────────────
-    Señalar una porción apaga las demás. Con `opacity` se vuelven
-    translúcidas, y debajo de cada una está la anterior entera —el aro
-    se pinta por capas—, así que asomaría por debajo. Mezclando el
-    color con el de la tarjeta se apaga igual sin dejar de ser opaca.
-    `transition-colors` incluye el relleno, así que sigue siendo
+    ── Dim with COLOR, never with opacity ───────────────────────────
+    Highlighting a slice dims the others. With `opacity` they turn
+    translucent, and under each one is the whole previous one —the ring
+    is painted in layers—, so it would show through. Mixing the
+    color with the card's dims it just the same while staying opaque.
+    `transition-colors` includes the fill, so it is still
     gradual.
   */
   const color =
@@ -416,8 +416,8 @@ function DonutSlice({
     className: cn('transition-colors', canDrillDown && 'cursor-pointer'),
   };
 
-  // La vuelta entera no es un sector: sus dos cortes caerían en el
-  // mismo sitio y el arco quedaría indefinido. Ahí es un aro y ya.
+  // The full turn is not a sector: its two cuts would fall in the
+  // same place and the arc would be undefined. There it is just a ring.
   return sweep >= 1 ? (
     <circle
       cx={CENTER}
@@ -441,7 +441,7 @@ function DonutTooltip({
 }: {
   card: RefObject<HTMLDivElement | null>;
   position: { left: number; top: number };
-  /** Ya se sabe cuánto mide: hasta entonces no se enseña. */
+  /** Its size is known: until then it is not shown. */
   isMeasured: boolean;
   highlighted: DonutArc;
 }) {
@@ -452,8 +452,8 @@ function DonutTooltip({
       className={cn(
         'pointer-events-none absolute z-10 min-w-36 rounded-lg p-3',
         SUPERFICIE_FLOTANTE,
-        // Sin medir todavía se pinta invisible: un primer fotograma en la
-        // esquina y otro en su sitio se ve como un salto.
+        // Not measured yet, it is painted invisible: a first frame in the
+        // corner and another in its place looks like a jump.
         !isMeasured && 'opacity-0',
       )}
     >

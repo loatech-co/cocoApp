@@ -23,7 +23,7 @@ function renderTooltip() {
   return screen.getByText('icono').parentElement!;
 }
 
-describe('ConTooltip', () => {
+describe('WithTooltip', () => {
   it('hides the hint until it is asked for', () => {
     renderTooltip();
 
@@ -67,7 +67,7 @@ describe('ConTooltip', () => {
  * `aria-describedby`, and the reference holds before it appears, which is
  * exactly when a screen reader reaches the anchor.
  */
-describe('ConTooltip and the screen reader', () => {
+describe('WithTooltip and the screen reader', () => {
   it('points the anchor at the hint before showing it', () => {
     const anchor = renderTooltip();
     const id = anchor.getAttribute('aria-describedby');

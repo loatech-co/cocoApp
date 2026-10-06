@@ -6,37 +6,37 @@ import { visiblePageNumbers, Pager } from './pager';
 
 afterEach(cleanup);
 
-describe('Qué números se ven en el paginador', () => {
-  it('con siete páginas o menos, todas', () => {
+describe('Which numbers the pager shows', () => {
+  it('with seven pages or fewer, all of them', () => {
     expect(visiblePageNumbers(1, 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
   });
 
-  it('siempre están el primero y el último', () => {
-    // Son los dos saltos que uno quiere dar; sin ellos hay que pulsar
-    // "siguiente" cuarenta veces.
+  it('the first and the last are always there', () => {
+    // They are the two jumps one wants to make; without them one has to click
+    // "next" forty times.
     const nums = visiblePageNumbers(25, 50);
     expect(nums[0]).toBe(1);
     expect(nums.at(-1)).toBe(50);
   });
 
-  it('la actual va con sus vecinas', () => {
+  it('the current one comes with its neighbors', () => {
     expect(visiblePageNumbers(25, 50)).toEqual([1, null, 24, 25, 26, null, 50]);
   });
 
-  it('un salto de UNA página se dibuja como la página, no como puntos', () => {
-    // "1 … 3" ocupa lo mismo que "1 2 3" y esconde una página por nada.
+  it('a gap of ONE page is drawn as the page, not as dots', () => {
+    // "1 … 3" takes the same room as "1 2 3" and hides a page for nothing.
     expect(visiblePageNumbers(3, 20)).toEqual([1, 2, 3, 4, null, 20]);
   });
 
-  it('al principio no deja un salto delante', () => {
+  it('at the start it leaves no gap in front', () => {
     expect(visiblePageNumbers(1, 20)).toEqual([1, 2, null, 20]);
   });
 
-  it('al final no deja un salto detrás', () => {
+  it('at the end it leaves no gap behind', () => {
     expect(visiblePageNumbers(20, 20)).toEqual([1, null, 19, 20]);
   });
 
-  it('nunca repite un número', () => {
+  it('never repeats a number', () => {
     for (const p of [1, 2, 3, 10, 19, 20]) {
       const nums = visiblePageNumbers(p, 20).filter((n): n is number => n !== null);
       expect(new Set(nums).size).toBe(nums.length);
@@ -44,7 +44,7 @@ describe('Qué números se ven en el paginador', () => {
   });
 });
 
-describe('Paginador', () => {
+describe('Pager', () => {
   it('renders nothing when everything fits in one page', () => {
     const { container } = render(<Pager page={1} total={10} perPage={25} onPageChange={vi.fn()} />);
 

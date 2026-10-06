@@ -3,16 +3,16 @@ import type { ComponentType, ReactNode } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Lo que se muestra cuando no hay nada que mostrar.
+ * What is shown when there is nothing to show.
  *
- * ── Por qué no basta con dejarlo en blanco o pintar ceros ───────────────────
- * Una gráfica en cero NO significa "no hay datos": significa "gastaste cero",
- * que es una afirmación distinta y casi siempre falsa. Con un filtro puesto,
- * la línea plana hace creer que ese mes no hubo movimiento cuando lo que pasa
- * es que el recorte los dejó todos fuera.
+ * ── Why leaving it blank or painting zeros is not enough ───────────────────
+ * A chart at zero does NOT mean "there is no data": it means "you spent zero",
+ * which is a different statement and almost always false. With a filter applied,
+ * the flat line makes one believe that month had no movement when what happens
+ * is that the cut left them all out.
  *
- * Por eso el estado vacío dice DOS cosas: que no hay nada, y qué hacer para
- * que lo haya. Un hueco en blanco no dice ninguna de las dos.
+ * That is why the empty state says TWO things: that there is nothing, and what to do so
+ * that there is. A blank gap says neither.
  */
 export function EmptyState({
   Icon,
@@ -23,7 +23,7 @@ export function EmptyState({
 }: {
   Icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   title: string;
-  /** Qué hacer para salir de aquí. */
+  /** What to do to get out of here. */
   description?: string;
   action?: ReactNode;
   className?: string;

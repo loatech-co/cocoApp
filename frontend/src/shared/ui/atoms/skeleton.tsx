@@ -3,8 +3,8 @@ import type { ComponentProps } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Placeholder con la FORMA del contenido que va a llegar, no un spinner
- * genérico: la pantalla no salta cuando los datos aterrizan.
+ * Placeholder with the SHAPE of the content that is about to arrive, not a generic
+ * spinner: the screen does not jump when the data lands.
  */
 export function Skeleton({ className, ...props }: ComponentProps<'div'>) {
   return (

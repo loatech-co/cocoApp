@@ -6,24 +6,24 @@ import { cn } from '@/shared/lib/utils';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
 /**
- * Las baldosas de la rejilla de atajos: un icono y un nombre en un cuadrado.
+ * The tiles of the shortcuts grid: an icon and a name in a square.
  *
- * Arreglándolas, tiemblan y se arrastran; la que va en la mano se levanta con
- * la sombra flotante (levantar, no flotar: ver `superficie.test.ts`). Fuera de
- * ese modo son enlaces, y quien las dibuja como enlace usa `tileClass`.
+ * While arranging them, they wiggle and can be dragged; the one in hand is lifted with
+ * the floating shadow (lift, not float: see `superficie.test.ts`). Outside
+ * that mode they are links, and whoever draws them as a link uses `tileClass`.
  */
 export function tileClass(isArranging: boolean, isDragging: boolean): string {
   return cn(
     'relative flex aspect-square flex-col items-center justify-center gap-2 rounded-lg bg-muted p-2 text-center text-foreground transition-colors',
     REALCE,
-    // La baldosa que va en el dedo no tiembla: la animación pisaría el
-    // desplazamiento en línea y se quedaría quieta bajo el dedo.
+    // The tile under the finger does not wiggle: the animation would override the
+    // inline offset and it would stay still under the finger.
     isArranging && !isDragging && 'animate-[baldosa-tiembla_.4s_ease-in-out_infinite]',
     isDragging && 'z-10 scale-105 shadow-[var(--sombra-flotante)]',
   );
 }
 
-/** La baldosa mientras se arregla la rejilla: se agarra y se arrastra. */
+/** The tile while the grid is being arranged: it is grabbed and dragged. */
 export function MovableTile({
   isDragging,
   label,
@@ -58,12 +58,12 @@ export function MovableTile({
 }
 
 /**
- * El menos.
+ * The minus.
  *
- * 24, por debajo del suelo táctil de 42, y es una excepción CONCEDIDA,
- * no descubierta: se llega a él dentro de un modo al que se entra
- * manteniendo pulsada una baldosa, y uno más grande se pulsaría sin
- * querer justo al arrastrar, que es lo otro que se hace aquí.
+ * 24, below the 42 touch floor, and it is a GRANTED exception,
+ * not a discovered one: it is reached inside a mode entered
+ * by long-pressing a tile, and a larger one would be pressed by
+ * accident right while dragging, which is the other thing done here.
  */
 export function TileRemove({
   label,

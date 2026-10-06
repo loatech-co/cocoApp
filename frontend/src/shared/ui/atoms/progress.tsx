@@ -1,33 +1,33 @@
 import { cn } from '@/shared/lib/utils';
 
 /**
- * Cuánto falta.
+ * How much is left.
  *
- * ── Por qué es un componente ────────────────────────────────────────────────
- * Había dos, escritas a mano, y ya no medían lo mismo: la de la importación
- * 8px de alto y todo el ancho, la de la lectura de un soporte 4px y 192 fijos.
- * Son la misma barra en dos momentos del mismo trabajo —leer un documento— y
- * se veían como dos cosas distintas.
+ * ── Why it is a component ───────────────────────────────────────────────────
+ * There were two, written by hand, and they no longer measured the same: the import one
+ * 8px high and full width, the receipt-reading one 4px and a fixed 192.
+ * They are the same bar at two moments of the same job —reading a document— and
+ * they looked like two different things.
  *
- * ── Por qué lleva `role="progressbar"` y sus valores ────────────────────────
- * Porque un `<div>` que crece no dice nada a un lector de pantalla: sin
- * `aria-valuenow` se anuncia como un contenedor vacío, y quien no ve la
- * pantalla no tiene forma de saber si la espera avanza o está colgada. Las dos
- * que había eran divs a secas.
+ * ── Why it carries `role="progressbar"` and its values ──────────────────────
+ * Because a `<div>` that grows says nothing to a screen reader: without
+ * `aria-valuenow` it is announced as an empty container, and whoever cannot see the
+ * screen has no way of knowing whether the wait is progressing or stuck. The two
+ * there were were plain divs.
  *
- * ── Por qué no es un `<progress>` ───────────────────────────────────────────
- * Por lo mismo que no hay `<select>` nativos en esta app: lo dibuja el sistema
- * operativo. En macOS sale una píldora azul rayada y en Windows un rectángulo
- * verde, y ninguna de las dos se parece a nada de aquí.
+ * ── Why it is not a `<progress>` ────────────────────────────────────────────
+ * For the same reason there are no native `<select>`s in this app: the operating
+ * system draws it. On macOS it comes out as a striped blue pill and on Windows a green
+ * rectangle, and neither looks like anything here.
  */
 export function Progress({
   value,
   label,
   className,
 }: {
-  /** De 0 a 1. Se recorta: un 1.02 por un redondeo no desborda la vía. */
+  /** From 0 to 1. It is clamped: a 1.02 from rounding does not overflow the track. */
   value: number;
-  /** Qué se está esperando. Es el nombre accesible de la barra. */
+  /** What is being waited for. It is the accessible name of the bar. */
   label: string;
   className?: string;
 }) {

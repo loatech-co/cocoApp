@@ -4,26 +4,26 @@ import { cn } from '@/shared/lib/utils';
 import { REALCE } from '@/shared/ui/foundations/superficie';
 
 /**
- * Una acción que se lee como TEXTO dentro de una línea: «Limpiar», «Volver»,
+ * An action that reads as TEXT within a line: «Limpiar», «Volver»,
  * «Elegir por centro y categoría».
  *
- * No es un `Button`: un botón tiene alto, relleno y peso propios, y en medio
- * de una frase o junto a un contador se come el renglón. Esta va al tamaño de
- * la letra que la rodea y no reserva sitio.
+ * It is not a `Button`: a button has its own height, padding and weight, and in the middle
+ * of a sentence or next to a counter it eats the line. This one goes at the size of
+ * the surrounding text and reserves no room.
  *
- * | Tono       | Dónde                                                     |
- * | ---------- | --------------------------------------------------------- |
- * | `primario` | La acción de un contador: «3 marcados · Limpiar»          |
- * | `tenue`    | Una alternativa debajo de un campo, en letra pequeña      |
- * | `realce`   | Una salida dentro de un desplegable, con el realce del menú |
+ * | Tone        | Where                                                     |
+ * | ----------- | --------------------------------------------------------- |
+ * | `primary`   | The action of a counter: «3 marcados · Limpiar»           |
+ * | `subtle`    | An alternative below a field, in small print              |
+ * | `highlight` | An exit inside a dropdown, with the menu's highlight      |
  *
- * Sin `className`: lo que haga falta distinto es un tono más aquí.
+ * No `className`: whatever needs to be different is one more tone here.
  */
 const TONES = {
   primary: 'rounded-sm font-medium text-primary hover:underline',
-  // 24px de alto aunque la letra mida 12: vive junto a un campo, y un blanco
-  // de 16 queda por debajo del mínimo táctil (WCAG 2.5.8). El texto se centra
-  // en esa caja, así que a la vista no crece.
+  // 24px high even though the text measures 12: it lives next to a field, and a target
+  // of 16 falls below the touch minimum (WCAG 2.5.8). The text is centered
+  // in that box, so visually it does not grow.
   subtle: cn(
     'inline-flex min-h-6 items-center',
     'text-xs text-muted-foreground underline-offset-2 hover:underline',

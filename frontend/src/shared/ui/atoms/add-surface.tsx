@@ -5,23 +5,23 @@ import { cn } from '@/shared/lib/utils';
 import { REALCE_DE_SUPERFICIE } from '@/shared/ui/foundations/superficie';
 
 /**
- * El hueco punteado donde va a ir lo siguiente: «Agregar categoría»,
- * «Agregar atajo». Un más y una frase, a todo el ancho.
+ * The dashed slot where the next thing will go: «Agregar categoría»,
+ * «Agregar atajo». A plus and a phrase, full width.
  *
- * | Forma   | Dónde                                                          |
- * | ------- | -------------------------------------------------------------- |
- * | `hueco` | Lo ÚNICO que hay —un centro sin categorías—: alto y apilado    |
- * | `barra` | Debajo de lo que ya hay: el icono y el texto en una fila       |
- * | `fila`  | Dentro de una rejilla de baldosas: trazo fino y el suelo táctil |
+ * | Shape  | Where                                                          |
+ * | ------ | -------------------------------------------------------------- |
+ * | `slot` | The ONLY thing there is —a center without categories—: tall and stacked |
+ * | `bar`  | Below what is already there: the icon and the text in a row    |
+ * | `row`  | Inside a grid of tiles: thin stroke and the touch floor        |
  *
- * Sin categorías, el hueco no es una baldosa más: es el sitio donde va a
- * empezar la estructura, y `min-h-64` (256px, el escalón de la escala) lo dice.
- * Con algo encima es una barra: apilado y alto sería un rectángulo punteado
- * más grande que cualquiera de las tarjetas, y lo que hay que mirar son ellas.
+ * Without categories, the slot is not one more tile: it is the place where the
+ * structure will start, and `min-h-64` (256px, the step of the scale) says so.
+ * With something above it is a bar: stacked and tall it would be a dashed rectangle
+ * larger than any of the cards, and what has to be looked at is them.
  *
- * Las dos grandes responden con `REALCE_DE_SUPERFICIE`, el realce bajo de las
- * superficies grandes (el porqué está en `superficie.ts`): el acento entero en
- * mil por doscientos cincuenta píxeles es un fogonazo.
+ * The two large ones respond with `REALCE_DE_SUPERFICIE`, the low highlight of
+ * large surfaces (the why is in `superficie.ts`): the full accent over
+ * a thousand by two hundred fifty pixels is a flash.
  */
 const SHAPES = {
   slot: cn('min-h-64 flex-col gap-2 border-2 p-4', REALCE_DE_SUPERFICIE),

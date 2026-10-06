@@ -4,21 +4,21 @@ import { cn } from '@/shared/lib/utils';
 import { REALCE_DE_SUPERFICIE } from '@/shared/ui/foundations/superficie';
 
 /**
- * El cuadro punteado donde se sueltan archivos o se pulsa para elegirlos.
+ * The dashed box where files are dropped or clicked to pick them.
  *
- * ── Una CAJA, no un botón ───────────────────────────────────────────────────
- * Un botón dentro de otro no es HTML válido, y dentro del cuadro caben otros
- * controles (el de pegar una captura). Así que el cuadro es una caja, y quien
- * responde al clic es un botón SIN contenido que la cubre entera y va primero:
- * lo que se lee encima no intercepta el ratón, y el clic cae donde caiga. Lo
- * que tenga que pulsarse aparte lleva `relative` para quedar por encima.
+ * ── A BOX, not a button ─────────────────────────────────────────────────────
+ * A button inside another is not valid HTML, and other controls fit inside the box
+ * (the one for pasting a screenshot). So the box is a box, and what
+ * responds to the click is a button WITHOUT content that covers it whole and goes first:
+ * what reads on top does not intercept the mouse, and the click lands wherever it lands. Whatever
+ * has to be clicked separately carries `relative` to stay on top.
  *
- * | Forma      | Dónde                                                  |
- * | ---------- | ------------------------------------------------------ |
- * | `cuadro`   | Junto a las miniaturas: una baldosa más, de 104        |
- * | `completa` | Sin nada al lado: ocupa el ancho y el alto que le den  |
+ * | Shape    | Where                                                  |
+ * | -------- | ------------------------------------------------------ |
+ * | `square` | Next to the thumbnails: one more tile, 104 wide        |
+ * | `full`   | With nothing beside it: takes the width and height given |
  *
- * `encima` mientras se arrastra algo por encima; `ocupada` mientras se sube.
+ * `isOver` while something is dragged over it; `isBusy` while uploading.
  */
 export function DropSurface({
   shape,
@@ -31,7 +31,7 @@ export function DropSurface({
   shape: 'square' | 'full';
   isOver: boolean;
   isBusy: boolean;
-  /** El nombre accesible del botón que la cubre: «Agregar soportes». */
+  /** The accessible name of the button that covers it: «Agregar soportes». */
   label: string;
   onPick: () => void;
   children: ReactNode;
@@ -49,8 +49,8 @@ export function DropSurface({
             : cn('border-border text-muted-foreground', REALCE_DE_SUPERFICIE),
       )}
     >
-      {/* Sin anillo propio: el foco de un botón lo resuelve `index.css` para
-          todos a la vez (regla 18). */}
+      {/* No ring of its own: `index.css` resolves the focus of a button for
+          all of them at once (rule 18). */}
       <button
         type="button"
         onClick={onPick}

@@ -28,21 +28,21 @@ function Host({ onClose }: { onClose?: () => void }) {
   );
 }
 
-describe('El panel inferior', () => {
-  it('está montado antes de abrirse: lo que se desliza no se reconstruye', () => {
+describe('The bottom sheet', () => {
+  it('is mounted before opening: what slides is not rebuilt', () => {
     render(<Host />);
     const panel = screen.getByRole('dialog', { hidden: true });
 
     expect(panel.dataset.abierta).toBe('no');
 
-    // El MISMO nodo después de abrir. Uno reconstruido no tendría posición
-    // anterior desde la que viajar: aparecería, nunca llegaría.
+    // The SAME node after opening. A rebuilt one would have no previous
+    // position to travel from: it would appear, it would never arrive.
     fireEvent.click(screen.getByText('abrir'));
     expect(screen.getByRole('dialog').isSameNode(panel)).toBe(true);
     expect(panel.dataset.abierta).toBe('si');
   });
 
-  it('cerrado no se tabula', () => {
+  it('is not tabbable when closed', () => {
     render(<Host />);
     expect(screen.getByRole('dialog', { hidden: true }).hasAttribute('inert')).toBe(true);
 
@@ -50,7 +50,7 @@ describe('El panel inferior', () => {
     expect(screen.getByRole('dialog').hasAttribute('inert')).toBe(false);
   });
 
-  it('Escape es una de las salidas', () => {
+  it('Escape is one of the exits', () => {
     const close = vi.fn();
     render(<Host onClose={close} />);
     fireEvent.click(screen.getByText('abrir'));
@@ -59,7 +59,7 @@ describe('El panel inferior', () => {
     expect(close).toHaveBeenCalled();
   });
 
-  it('el velo es otra', () => {
+  it('the scrim is another', () => {
     const close = vi.fn();
     render(<Host onClose={close} />);
     fireEvent.click(screen.getByText('abrir'));
@@ -69,11 +69,11 @@ describe('El panel inferior', () => {
     expect(close).toHaveBeenCalled();
   });
 
-  it('y el tirador está ahí, aunque no sea un control', () => {
+  it('and the handle is there, even though it is not a control', () => {
     render(<Host />);
     const panel = screen.getByRole('dialog', { hidden: true });
-    // Un indicador: sin nombre accesible, sin ser un botón. El gesto se lee en
-    // todo el panel, no encima de la raya.
+    // An indicator: no accessible name, not a button. The gesture is read on
+    // the whole panel, not on top of the line.
     expect(panel.querySelector('[aria-hidden="true"] .rounded-full')).toBeTruthy();
   });
 });

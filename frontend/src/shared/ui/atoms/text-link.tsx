@@ -2,14 +2,14 @@ import type { ComponentProps } from 'react';
 import { Link } from 'react-router-dom';
 
 /**
- * Un enlace dentro de una frase: «¿No tienes cuenta? Solicitar acceso».
+ * A link inside a sentence: «¿No tienes cuenta? Solicitar acceso».
  *
- * Va SUBRAYADO en reposo, no solo al pasar por encima. Dentro de un texto lo
- * único que lo separaba de la frase era el color, y el primario contra el gris
- * de la frase da 1,95:1 —por debajo de los 3:1 que pide WCAG 1.4.1—; en un
- * teléfono, donde no hay «por encima», no se sabía que se podía pulsar.
+ * It is UNDERLINED at rest, not only on hover. Inside a text the
+ * only thing separating it from the sentence was the color, and the primary against the gray
+ * of the sentence gives 1.95:1 —below the 3:1 WCAG 1.4.1 asks for—; on a
+ * phone, where there is no «hover», nobody knew it could be tapped.
  *
- * Sin `className`: lo que haga falta distinto es una variante aquí.
+ * No `className`: whatever needs to be different is a variant here.
  */
 export function TextLink(props: Omit<ComponentProps<typeof Link>, 'className'>) {
   return (

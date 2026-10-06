@@ -7,7 +7,7 @@ import { EmptyState } from './empty-state';
 
 afterEach(cleanup);
 
-describe('EstadoVacio', () => {
+describe('EmptyState', () => {
   it('shows the title, the help and the action', () => {
     render(
       <EmptyState

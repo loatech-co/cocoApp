@@ -6,32 +6,32 @@ export function Card({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        // 10px, que es el radio ESTÁNDAR de todo contenedor de la app: las
-        // tarjetas, los desplegables y los modales. Puede ser menor donde haga
-        // falta —una casilla, un chip— pero nunca mayor: dos contenedores
-        // vecinos con esquinas distintas se leen como dos sistemas distintos.
+        // 10px, which is the STANDARD radius of every container in the app: the
+        // cards, the dropdowns and the modals. It can be smaller where
+        // needed —a checkbox, a chip— but never larger: two neighboring
+        // containers with different corners read as two different systems.
         //
-        // ── SIN borde ─────────────────────────────────────────────────────
-        // Lo que separa la tarjeta del fondo es el ESCALÓN DE SUPERFICIE: la
-        // tarjeta es el material y se apoya en el pozo, que va por debajo.
-        // Ese escalón existe en los dos temas y no dibuja ninguna línea.
+        // ── NO border ─────────────────────────────────────────────────────
+        // What separates the card from the background is the SURFACE STEP: the
+        // card is the material and rests on the well, which goes underneath.
+        // That step exists in both themes and draws no line.
         //
-        // El borde hacía ese trabajo porque antes no había escalón —el lienzo
-        // y la tarjeta eran casi el mismo color, así que hacía falta una línea
-        // para decir dónde acababa una—. El resultado era una retícula de
-        // líneas de 1px por toda la pantalla, que es la firma visual de un
-        // panel de administración de hace diez años, y encima doblada con la
-        // sombra.
+        // The border did that job because there used to be no step —the canvas
+        // and the card were almost the same color, so a line was needed
+        // to say where one ended—. The result was a grid of
+        // 1px lines all over the screen, which is the visual signature of an
+        // admin panel from ten years ago, and doubled up with the
+        // shadow on top.
         //
-        // Lo que SÍ conserva el canto es lo que flota (regla 9): un
-        // desplegable del color del material, abierto sobre una tarjeta del
-        // mismo color, no tiene otra forma de decir dónde empieza.
+        // What DOES keep the edge is what floats (rule 9): a
+        // dropdown the color of the material, open over a card of the
+        // same color, has no other way of saying where it starts.
         //
-        // La sombra se queda, y solo trabaja en claro: es `--sombra-pegada`,
-        // la del tema para lo APOYADO en la página. Sobre un pozo casi negro
-        // no proyecta nada —lo oscuro sobre lo oscuro no hace sombra— y ahí
-        // el escalón es lo único que separa. En claro añade el medio
-        // milímetro de despegue que el escalón por sí solo no da.
+        // The shadow stays, and it only works in light: it is `--sombra-pegada`,
+        // the theme's one for what RESTS on the page. On an almost black well
+        // it casts nothing —dark on dark makes no shadow— and there
+        // the step is the only thing that separates. In light it adds the half
+        // millimeter of lift that the step alone does not give.
         'rounded-lg bg-card text-card-foreground',
         'shadow-[var(--sombra-pegada)]',
         className,
@@ -46,9 +46,9 @@ export function CardHeader({ className, ...props }: ComponentProps<'div'>) {
 }
 
 export function CardTitle({ className, ...props }: ComponentProps<'h2'>) {
-  // Sin `tracking-tight`: el tema declara el interletraje en cero y Geist ya
-  // viene cerrada de por sí. Apretarla apiña los títulos de 18px; el −0.025em
-  // que llevaba compensaba una familia más suelta que ya no es esta.
+  // Without `tracking-tight`: the theme declares letter spacing as zero and Geist already
+  // comes tight on its own. Squeezing it crams the 18px titles; the −0.025em
+  // it carried compensated for a looser family that is no longer this one.
   return <h2 className={cn('text-lg font-semibold leading-tight', className)} {...props} />;
 }
 
