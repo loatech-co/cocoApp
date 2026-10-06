@@ -1248,17 +1248,19 @@
   "tables": [
     {
       "from": "soportes",
-      "to": "receipts",
-      "breaking": true,
+      "to": "soportes",
+      "breaking": false,
       "consumers": ["api (Prisma @@map)", "scripts/receipts/*", "scripts/respaldar.sh"],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "model Receipt"
     },
     {
       "from": "audit_log",
-      "to": "audit_logs",
-      "breaking": true,
+      "to": "audit_log",
+      "breaking": false,
       "consumers": ["api (Prisma @@map)", "admin audit-log screen via API"],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "model AuditLog"
     },
     {
       "from": "import_batches",
@@ -1280,180 +1282,194 @@
   "columns": [
     {
       "from": "categories.recurrente",
-      "to": "categories.is_recurring",
-      "breaking": true,
+      "to": "categories.recurrente",
+      "breaking": false,
       "consumers": [
         "api",
         "ck_categories_* CHECK constraints",
         "scripts/cargar-historico.mjs",
         "scripts/sembrar-local.mjs"
       ],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Category.isRecurring"
     },
     {
       "from": "categories.periodicidad",
-      "to": "categories.periodicity",
-      "breaking": true,
+      "to": "categories.periodicidad",
+      "breaking": false,
       "consumers": [
         "api",
         "ck_categories_* CHECK constraints",
         "scripts/cargar-historico.mjs",
         "scripts/sembrar-local.mjs"
       ],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Category.periodicity"
     },
     {
       "from": "categories.dia_de_pago",
-      "to": "categories.payment_day",
-      "breaking": true,
+      "to": "categories.dia_de_pago",
+      "breaking": false,
       "consumers": [
         "api",
         "ck_categories_* CHECK constraints",
         "scripts/cargar-historico.mjs",
         "scripts/sembrar-local.mjs"
       ],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Category.paymentDay"
     },
     {
       "from": "categories.mes_de_pago",
-      "to": "categories.payment_month",
-      "breaking": true,
+      "to": "categories.mes_de_pago",
+      "breaking": false,
       "consumers": [
         "api",
         "ck_categories_* CHECK constraints",
         "scripts/cargar-historico.mjs",
         "scripts/sembrar-local.mjs"
       ],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Category.paymentMonth"
     },
     {
       "from": "categories.estatico",
-      "to": "categories.is_static",
-      "breaking": true,
+      "to": "categories.estatico",
+      "breaking": false,
       "consumers": [
         "api",
         "ck_categories_* CHECK constraints",
         "scripts/cargar-historico.mjs",
         "scripts/sembrar-local.mjs"
       ],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Category.isStatic"
     },
     {
       "from": "categories.palabras_clave",
-      "to": "categories.keywords",
-      "breaking": true,
+      "to": "categories.palabras_clave",
+      "breaking": false,
       "consumers": [
         "api",
         "ck_categories_* CHECK constraints",
         "scripts/cargar-historico.mjs",
         "scripts/sembrar-local.mjs"
       ],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Category.keywords"
     },
     {
       "from": "categories.presupuesto",
-      "to": "categories.budget",
-      "breaking": true,
+      "to": "categories.presupuesto",
+      "breaking": false,
       "consumers": [
         "api",
         "ck_categories_* CHECK constraints",
         "scripts/cargar-historico.mjs",
         "scripts/sembrar-local.mjs"
       ],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Category.budget"
     },
     {
       "from": "categories.pago_automatico",
-      "to": "categories.is_auto_paid",
-      "breaking": true,
+      "to": "categories.pago_automatico",
+      "breaking": false,
       "consumers": [
         "api",
         "ck_categories_* CHECK constraints",
         "scripts/cargar-historico.mjs",
         "scripts/sembrar-local.mjs"
       ],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Category.isAutoPaid"
     },
     {
       "from": "categories.varios_pagos",
-      "to": "categories.is_multi_payment",
-      "breaking": true,
+      "to": "categories.varios_pagos",
+      "breaking": false,
       "consumers": [
         "api",
         "ck_categories_* CHECK constraints",
         "scripts/cargar-historico.mjs",
         "scripts/sembrar-local.mjs"
       ],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Category.isMultiPayment"
     },
     {
       "from": "transactions.por_revisar",
-      "to": "transactions.needs_review",
-      "breaking": true,
+      "to": "transactions.por_revisar",
+      "breaking": false,
       "consumers": ["api"],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Transaction.needsReview"
     },
     {
       "from": "soportes.orden",
-      "to": "receipts.position",
-      "breaking": true,
+      "to": "soportes.orden",
+      "breaking": false,
       "consumers": ["api"],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Receipt.position"
     },
     {
       "from": "soportes.nombre_archivo",
-      "to": "receipts.file_name",
-      "breaking": true,
+      "to": "soportes.nombre_archivo",
+      "breaking": false,
       "consumers": ["api", "scripts/receipts/*"],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Receipt.fileName"
     },
     {
       "from": "soportes.tamano",
-      "to": "receipts.size_bytes",
-      "breaking": true,
+      "to": "soportes.tamano",
+      "breaking": false,
       "consumers": ["api", "scripts/receipts/*"],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Receipt.sizeBytes"
     },
     {
       "from": "soportes.huella",
-      "to": "receipts.content_hash",
-      "breaking": true,
+      "to": "soportes.huella",
+      "breaking": false,
       "consumers": ["api", "scripts/receipts/*"],
-      "note": "SHA-256 of the file",
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "Receipt.contentHash"
     },
     {
       "from": "audit_log.changes_json",
-      "to": "audit_logs.changes",
-      "breaking": true,
+      "to": "audit_log.changes_json",
+      "breaking": false,
       "consumers": ["api"],
-      "note": "optional: drop the type suffix",
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "AuditLog.changesJson"
     },
     {
       "from": "user_preferences.pref_key",
-      "to": "user_preferences.key",
-      "breaking": true,
+      "to": "user_preferences.pref_key",
+      "breaking": false,
       "consumers": ["api"],
-      "note": "optional: redundant prefix",
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "UserPreference.prefKey"
     },
     {
       "from": "user_preferences.pref_value",
-      "to": "user_preferences.value",
-      "breaking": true,
+      "to": "user_preferences.pref_value",
+      "breaking": false,
       "consumers": ["api"],
-      "note": "optional: redundant prefix",
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "UserPreference.prefValue"
     }
   ],
   "enumTypes": [
     {
       "from": "Periodicidad",
-      "to": "periodicity",
-      "breaking": true,
+      "to": "Periodicidad",
+      "breaking": false,
       "consumers": ["api (Prisma)", "ck_categories_payment_month_not_monthly"],
-      "strategy": "expand-contract"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026)",
+      "client": "enum Periodicity (@@map(\"Periodicidad\"))"
     },
     {
       "from": "AccountType",
@@ -1547,8 +1563,8 @@
   "enumValues": [
     {
       "from": "Periodicidad.mensual",
-      "to": "periodicity.monthly",
-      "breaking": true,
+      "to": "Periodicidad.mensual",
+      "breaking": false,
       "consumers": [
         "api",
         "web (PERIODICIDADES, recurrence fields, pending payments)",
@@ -1556,13 +1572,13 @@
         "ck_categories_payment_month_not_monthly",
         "JSON field periodicity"
       ],
-      "strategy": "expand-contract",
-      "how": "new enum type + new column, backfilled; v1 maps the old literal"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026); v1 keeps the Spanish value on the wire (SPANISH_PERIODICITIES)",
+      "client": "Periodicity.monthly"
     },
     {
       "from": "Periodicidad.bimestral",
-      "to": "periodicity.bimonthly",
-      "breaking": true,
+      "to": "Periodicidad.bimestral",
+      "breaking": false,
       "consumers": [
         "api",
         "web (PERIODICIDADES, recurrence fields, pending payments)",
@@ -1570,13 +1586,13 @@
         "ck_categories_payment_month_not_monthly",
         "JSON field periodicity"
       ],
-      "strategy": "expand-contract",
-      "how": "new enum type + new column, backfilled; v1 maps the old literal"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026); v1 keeps the Spanish value on the wire (SPANISH_PERIODICITIES)",
+      "client": "Periodicity.bimonthly"
     },
     {
       "from": "Periodicidad.trimestral",
-      "to": "periodicity.quarterly",
-      "breaking": true,
+      "to": "Periodicidad.trimestral",
+      "breaking": false,
       "consumers": [
         "api",
         "web (PERIODICIDADES, recurrence fields, pending payments)",
@@ -1584,13 +1600,13 @@
         "ck_categories_payment_month_not_monthly",
         "JSON field periodicity"
       ],
-      "strategy": "expand-contract",
-      "how": "new enum type + new column, backfilled; v1 maps the old literal"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026); v1 keeps the Spanish value on the wire (SPANISH_PERIODICITIES)",
+      "client": "Periodicity.quarterly"
     },
     {
       "from": "Periodicidad.semestral",
-      "to": "periodicity.semiannual",
-      "breaking": true,
+      "to": "Periodicidad.semestral",
+      "breaking": false,
       "consumers": [
         "api",
         "web (PERIODICIDADES, recurrence fields, pending payments)",
@@ -1598,13 +1614,13 @@
         "ck_categories_payment_month_not_monthly",
         "JSON field periodicity"
       ],
-      "strategy": "expand-contract",
-      "how": "new enum type + new column, backfilled; v1 maps the old literal"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026); v1 keeps the Spanish value on the wire (SPANISH_PERIODICITIES)",
+      "client": "Periodicity.semiannual"
     },
     {
       "from": "Periodicidad.anual",
-      "to": "periodicity.annual",
-      "breaking": true,
+      "to": "Periodicidad.anual",
+      "breaking": false,
       "consumers": [
         "api",
         "web (PERIODICIDADES, recurrence fields, pending payments)",
@@ -1612,8 +1628,8 @@
         "ck_categories_payment_month_not_monthly",
         "JSON field periodicity"
       ],
-      "strategy": "expand-contract",
-      "how": "new enum type + new column, backfilled; v1 maps the old literal"
+      "strategy": "done with @map in 7.2-c: the database does not move (ADR 0026); v1 keeps the Spanish value on the wire (SPANISH_PERIODICITIES)",
+      "client": "Periodicity.annual"
     }
   ],
   "constraints": [
@@ -2328,49 +2344,56 @@
   "prismaOnly": [
     {
       "from": "model Soporte",
-      "to": "model Receipt (@@map(\"soportes\") until the table moves)",
+      "to": "model Receipt (@@map(\"soportes\"))",
       "breaking": false,
-      "consumers": ["api"]
+      "consumers": ["api"],
+      "done": "7.2-c"
     },
     {
       "from": "enum Periodicidad (Prisma name)",
-      "to": "enum Periodicity (@@map(\"Periodicidad\") until the type moves)",
+      "to": "enum Periodicity (@@map(\"Periodicidad\"))",
       "breaking": false,
-      "consumers": ["api"]
+      "consumers": ["api"],
+      "done": "7.2-c"
     },
     {
       "from": "relation \"AprobadoPor\"",
       "to": "\"ApprovedBy\"",
       "breaking": false,
       "consumers": ["api"],
-      "note": "relation names live only in the Prisma schema"
+      "note": "relation names live only in the Prisma schema",
+      "done": "7.2-c"
     },
     {
       "from": "relation \"PosibleDuplicado\"",
       "to": "\"PossibleDuplicate\"",
       "breaking": false,
       "consumers": ["api"],
-      "note": "goes away with import_rows in 7.10"
+      "note": "goes away with import_rows in 7.10",
+      "done": "7.2-c"
     },
     {
       "from": "User.aprobados",
       "to": "User.approvedUsers",
       "breaking": false,
-      "consumers": ["api"]
+      "consumers": ["api"],
+      "done": "7.2-c"
     },
     {
       "from": "Transaction.posiblesCopias",
       "to": "Transaction.possibleDuplicates",
       "breaking": false,
       "consumers": ["api"],
-      "note": "goes away with import_rows"
+      "note": "goes away with import_rows",
+      "done": "7.2-c"
     },
     {
       "from": "Spanish Prisma fields (recurrente, periodicidad, diaDePago, mesDePago, presupuesto, pagoAutomatico, variosPagos, estatico, palabrasClave, porRevisar, orden, nombreArchivo, tamano, huella)",
       "to": "English field + @map(\"<old column>\")",
       "breaking": false,
       "consumers": ["api"],
-      "note": "the client API changes, the SQL does not: direct rename in the api slices, before the columns move"
+      "note": "the client API changed, the SQL did not",
+      "done": "7.2-c"
     }
   ],
   "migrationsKept": {
@@ -2393,7 +2416,8 @@
       "from": "api/prisma/migraciones-mysql-archivadas",
       "to": "api/prisma/archived-mysql-migrations",
       "breaking": false,
-      "note": "Prisma does not read it; plain folder rename"
+      "note": "Prisma does not read it; plain folder rename",
+      "done": "7.2-c: parent folder only; the inner folders are applied names of the MySQL era and the Spanish-identifiers lint ignores them, like api/prisma/migrations"
     }
   },
   "routes": [
@@ -21140,7 +21164,7 @@
           "breaking": true,
           "consumers": ["database"],
           "contract": "database column read by a script",
-          "renameWhen": "with the column (7.2-r4)"
+          "renameWhen": "never: SQL column name, the database keeps it (7.2-c, ADR 0026)"
         },
         { "from": "fila", "to": "row", "breaking": false, "alsoIn": 1, "review": true },
         { "from": "monto", "to": "amount", "breaking": false, "review": true },
@@ -21152,7 +21176,7 @@
           "breaking": true,
           "consumers": ["database"],
           "contract": "database column read by a script",
-          "renameWhen": "with the column (7.2-r4)"
+          "renameWhen": "never: SQL column name, the database keeps it (7.2-c, ADR 0026)"
         },
         {
           "from": "presupuesto",
@@ -21160,7 +21184,7 @@
           "breaking": true,
           "consumers": ["database"],
           "contract": "database column read by a script",
-          "renameWhen": "with the column (7.2-r4)"
+          "renameWhen": "never: SQL column name, the database keeps it (7.2-c, ADR 0026)"
         },
         {
           "from": "recurrente",
@@ -21168,7 +21192,7 @@
           "breaking": true,
           "consumers": ["database"],
           "contract": "database column read by a script",
-          "renameWhen": "with the column (7.2-r4)"
+          "renameWhen": "never: SQL column name, the database keeps it (7.2-c, ADR 0026)"
         },
         { "from": "usuarios", "to": "users", "breaking": false, "review": true },
         { "from": "variosPagos", "to": "multiplePayments", "breaking": false, "review": true }
@@ -21192,7 +21216,7 @@
           "alsoIn": 1,
           "consumers": ["database"],
           "contract": "database column read by a script",
-          "renameWhen": "with the column (7.2-r4)"
+          "renameWhen": "never: SQL column name, the database keeps it (7.2-c, ADR 0026)"
         },
         { "from": "huerfanos", "to": "orphans", "breaking": false, "review": true },
         { "from": "ilegibles", "to": "unreadable", "breaking": false, "review": true },
@@ -21206,7 +21230,7 @@
           "alsoIn": 1,
           "consumers": ["database"],
           "contract": "database column read by a script",
-          "renameWhen": "with the column (7.2-r4)"
+          "renameWhen": "never: SQL column name, the database keeps it (7.2-c, ADR 0026)"
         },
         { "from": "periodo", "to": "period", "breaking": false, "review": true },
         { "from": "relativa", "to": "relative", "breaking": false, "review": true },
@@ -21219,7 +21243,7 @@
           "alsoIn": 1,
           "consumers": ["database"],
           "contract": "database column read by a script",
-          "renameWhen": "with the column (7.2-r4)"
+          "renameWhen": "never: SQL column name, the database keeps it (7.2-c, ADR 0026)"
         },
         { "from": "valor", "to": "value", "breaking": false, "review": true }
       ],
