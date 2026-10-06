@@ -194,7 +194,7 @@
     },
     "/api/v1/auth/refresh": {
       "post": {
-        "description": "Renueva el access token. Es público porque el access token ya expiró: la\ncredencial aquí es la cookie de refresh.",
+        "description": "Renews the access token. It is public because the access token has already\nexpired: the credential here is the refresh cookie.",
         "operationId": "AuthController_refrescar",
         "parameters": [
           {
@@ -297,7 +297,7 @@
     },
     "/api/v1/auth/logout": {
       "post": {
-        "description": "Cerrar sesión es público a propósito: la credencial aquí es la cookie, no\nel access token. Si exigiera un access token vigente, quien lo tuviera\nexpirado quedaría en un callejón sin salida —sin poder cerrar sesión y con\nla cookie de refresh todavía viva—, que es justo lo contrario de lo que\nuno quiere de un botón de \"salir\".",
+        "description": "Signing out is public on purpose: the credential here is the cookie, not\nthe access token. If it required a valid access token, someone whose token\nhad expired would be stuck —unable to sign out and with the refresh cookie\nstill alive—, which is the exact opposite of what one wants from a \"sign\nout\" button.",
         "operationId": "AuthController_salir",
         "parameters": [
           {
@@ -362,7 +362,7 @@
     },
     "/api/v1/auth/logout-all": {
       "post": {
-        "description": "Cierra la sesión en todos los dispositivos, con efecto inmediato.",
+        "description": "Signs out on every device, effective immediately.",
         "operationId": "AuthController_salirDeTodo",
         "parameters": [],
         "responses": {
@@ -5984,7 +5984,7 @@
           },
           "credit_limit": {
             "type": "string",
-            "description": "Solo aplica a `type: 'credit'`. El servicio valida esa coherencia."
+            "description": "Only applies to `type: 'credit'`. The service checks that consistency."
           },
           "cutoff_day": {
             "type": "number",
@@ -5998,7 +5998,7 @@
           },
           "opening_balance": {
             "type": "string",
-            "description": "Punto de partida del saldo derivado. Puede ser negativo (sobregiro)."
+            "description": "Starting point of the derived balance. It can be negative (overdraft)."
           }
         },
         "required": ["name", "type"]
@@ -6041,7 +6041,7 @@
           },
           "is_archived": {
             "type": "boolean",
-            "description": "Archivar es la operación por defecto: nunca se borra historial."
+            "description": "Archiving is the default operation: history is never deleted."
           }
         }
       },
