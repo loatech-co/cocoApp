@@ -71,7 +71,7 @@ describe('aParametros', () => {
     expect(aParametros({ ...base, categoryIds: [3, 7], q: 'celsia' })).toEqual({
       from: '2026-05-01',
       to: '2026-05-20',
-      category_ids: '3,7',
+      categoryIds: '3,7',
       q: 'celsia',
     });
   });

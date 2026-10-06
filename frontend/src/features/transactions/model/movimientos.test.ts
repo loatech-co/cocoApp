@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Category } from '@coco/types';
+import type { CategoryTree as Category } from '@/shared/api/categories';
 
 import { nombreDelMovimiento, rutaSeleccionada, sentidoDelMovimiento } from './movimientos';
 
@@ -40,27 +40,27 @@ describe('rutaSeleccionada', () => {
 
 describe('nombreDelMovimiento', () => {
   it('takes the name of its concept over what the paper said', () => {
-    expect(nombreDelMovimiento({ ...PAPER, category_id: 100 }, TREE)).toBe('Aseo');
+    expect(nombreDelMovimiento({ ...PAPER, categoryId: 100 }, TREE)).toBe('Aseo');
   });
 
   it('takes the name of its category when classified only that far', () => {
-    expect(nombreDelMovimiento({ ...PAPER, category_id: 10 }, TREE)).toBe('Aseo y limpieza');
+    expect(nombreDelMovimiento({ ...PAPER, categoryId: 10 }, TREE)).toBe('Aseo y limpieza');
   });
 
   it('falls back to the description of an unclassified movement', () => {
-    expect(nombreDelMovimiento({ ...PAPER, category_id: null }, TREE)).toBe('PAGO PSE COMCEL');
+    expect(nombreDelMovimiento({ ...PAPER, categoryId: null }, TREE)).toBe('PAGO PSE COMCEL');
   });
 
   it('falls back to the merchant when there is no description', () => {
     expect(
-      nombreDelMovimiento({ description: null, merchant: 'COMCEL', category_id: null }, TREE),
+      nombreDelMovimiento({ description: null, merchant: 'COMCEL', categoryId: null }, TREE),
     ).toBe('COMCEL');
   });
 
   it('says it has no concept when nothing else is known', () => {
-    expect(
-      nombreDelMovimiento({ description: null, merchant: null, category_id: null }, TREE),
-    ).toBe('Sin concepto');
+    expect(nombreDelMovimiento({ description: null, merchant: null, categoryId: null }, TREE)).toBe(
+      'Sin concepto',
+    );
   });
 });
 

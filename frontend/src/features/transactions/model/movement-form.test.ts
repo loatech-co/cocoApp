@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { CategoryTree as Category } from '@/shared/api/categories';
+import type { PendingPayment as PagoPendiente, Transaction } from '@/shared/api/generated/model';
 import {
   indexarArbol,
   type ClasificacionEnElArbol,
   type Lectura,
   type NodoBuscable,
 } from '@coco/lectura';
-import type { Category, PagoPendiente, Transaction } from '@coco/types';
 
 import {
   hoyEnBogota,
@@ -94,9 +95,9 @@ describe('initialAmountAndDate', () => {
 
   const payment = (parts: Partial<PagoPendiente>) =>
     ({
-      expected_amount: '120000.00',
-      due_date: '2026-05-05',
-      varios_pagos: false,
+      expectedAmount: '120000.00',
+      dueDate: '2026-05-05',
+      isMultiPayment: false,
       ...parts,
     }) as PagoPendiente;
 
@@ -117,14 +118,14 @@ describe('initialAmountAndDate', () => {
   });
 
   it('leaves the amount empty and uses today for a payment made in parts', () => {
-    expect(initialAmountAndDate(null, payment({ varios_pagos: true }))).toEqual({
+    expect(initialAmountAndDate(null, payment({ isMultiPayment: true }))).toEqual({
       amount: '',
       date: '2026-05-20',
     });
   });
 
   it('leaves the amount empty when nothing is expected yet', () => {
-    expect(initialAmountAndDate(undefined, payment({ expected_amount: null }))).toEqual({
+    expect(initialAmountAndDate(undefined, payment({ expectedAmount: null }))).toEqual({
       amount: '',
       date: '2026-05-05',
     });

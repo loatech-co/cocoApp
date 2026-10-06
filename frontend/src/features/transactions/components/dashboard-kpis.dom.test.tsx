@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { Dashboard } from '@coco/types';
+import type { Dashboard } from '@/shared/api/generated/model';
 
 import { DashboardKpis } from './dashboard-kpis';
 

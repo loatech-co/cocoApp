@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { Category } from '@coco/types';
+import type { CategoryTree as Category } from '@/shared/api/categories';
 
 import {
   conceptChanges,
@@ -16,16 +16,16 @@ function node(id: number, name: string, extra: Partial<Category> = {}): Category
   return {
     id,
     name,
-    parent_id: null,
+    parentId: null,
     kind: 'expense',
     color: null,
     icon: null,
-    sort_order: 0,
-    is_archived: false,
-    recurrente: false,
-    periodicidad: null,
-    dia_de_pago: null,
-    mes_de_pago: null,
+    sortOrder: 0,
+    isArchived: false,
+    isRecurring: false,
+    periodicity: null,
+    paymentDay: null,
+    paymentMonth: null,
     ...extra,
   } as Category;
 }
@@ -34,26 +34,24 @@ const TREE: Category[] = [
   node(1, 'Costos fijos', {
     children: [
       node(10, 'Vivienda', {
-        parent_id: 1,
+        parentId: 1,
         children: [
-          node(100, 'Arriendo', { parent_id: 10 }),
-          node(101, 'Movistar', { parent_id: 10 }),
+          node(100, 'Arriendo', { parentId: 10 }),
+          node(101, 'Movistar', { parentId: 10 }),
         ],
       }),
-      node(11, 'Servicios públicos', { parent_id: 1, children: [] }),
+      node(11, 'Servicios públicos', { parentId: 1, children: [] }),
     ],
   }),
   node(2, 'Costos variables', {
-    children: [
-      node(20, 'Mercado', { parent_id: 2, children: [node(200, 'D1', { parent_id: 20 })] }),
-    ],
+    children: [node(20, 'Mercado', { parentId: 2, children: [node(200, 'D1', { parentId: 20 })] })],
   }),
   node(3, 'Sin ramas'),
 ];
 
 const RECURRENCE: Recurrencia = {
   recurrente: true,
-  periodicidad: 'trimestral',
+  periodicidad: 'quarterly',
   diaDePago: 15,
   mesDePago: 3,
   presupuesto: '180000',
@@ -70,7 +68,7 @@ describe('initialRecurrence', () => {
 
     expect(initialRecurrence(null)).toEqual({
       recurrente: false,
-      periodicidad: 'mensual',
+      periodicidad: 'monthly',
       diaDePago: 1,
       mesDePago: 7,
       presupuesto: '',
@@ -81,18 +79,18 @@ describe('initialRecurrence', () => {
 
   it('reads the concept recurrence and drops the decimals of the budget', () => {
     const concept = node(100, 'Arriendo', {
-      recurrente: true,
-      periodicidad: 'anual',
-      dia_de_pago: 5,
-      mes_de_pago: 2,
-      presupuesto: '180000.00',
-      pago_automatico: true,
-      varios_pagos: false,
+      isRecurring: true,
+      periodicity: 'annual',
+      paymentDay: 5,
+      paymentMonth: 2,
+      budget: '180000.00',
+      isAutoPaid: true,
+      isMultiPayment: false,
     });
 
     expect(initialRecurrence(concept)).toEqual({
       recurrente: true,
-      periodicidad: 'anual',
+      periodicidad: 'annual',
       diaDePago: 5,
       mesDePago: 2,
       presupuesto: '180000',
@@ -102,7 +100,7 @@ describe('initialRecurrence', () => {
   });
 
   it('rounds a fractional budget to whole pesos', () => {
-    const concept = node(100, 'Arriendo', { presupuesto: '99.6' });
+    const concept = node(100, 'Arriendo', { budget: '99.6' });
 
     expect(initialRecurrence(concept).presupuesto).toBe('100');
   });
@@ -153,29 +151,29 @@ describe('conceptFields', () => {
   it('saves the full recurrence of a quarterly concept', () => {
     expect(conceptFields('  Arriendo ', RECURRENCE, ['arriendo'])).toEqual({
       name: 'Arriendo',
-      recurrente: true,
-      periodicidad: 'trimestral',
-      dia_de_pago: 15,
-      mes_de_pago: 3,
-      presupuesto: 180000,
-      pago_automatico: false,
-      varios_pagos: false,
-      palabras_clave: ['arriendo'],
+      isRecurring: true,
+      periodicity: 'quarterly',
+      paymentDay: 15,
+      paymentMonth: 3,
+      budget: 180000,
+      isAutoPaid: false,
+      isMultiPayment: false,
+      keywords: ['arriendo'],
     });
   });
 
   it('drops the month of a monthly concept', () => {
-    expect(conceptFields('A', { ...RECURRENCE, periodicidad: 'mensual' }, []).mes_de_pago).toBe(
+    expect(conceptFields('A', { ...RECURRENCE, periodicidad: 'monthly' }, []).paymentMonth).toBe(
       null,
     );
   });
 
   it('sends an empty budget as null, not zero', () => {
-    expect(conceptFields('A', { ...RECURRENCE, presupuesto: '  ' }, []).presupuesto).toBeNull();
+    expect(conceptFields('A', { ...RECURRENCE, presupuesto: '  ' }, []).budget).toBeNull();
   });
 
   it('keeps an explicit zero budget', () => {
-    expect(conceptFields('A', { ...RECURRENCE, presupuesto: '0' }, []).presupuesto).toBe(0);
+    expect(conceptFields('A', { ...RECURRENCE, presupuesto: '0' }, []).budget).toBe(0);
   });
 
   it('clears everything recurring when the concept stops recurring', () => {
@@ -186,13 +184,13 @@ describe('conceptFields', () => {
     );
 
     expect(fields).toMatchObject({
-      recurrente: false,
-      periodicidad: null,
-      dia_de_pago: null,
-      mes_de_pago: null,
-      presupuesto: null,
-      pago_automatico: false,
-      varios_pagos: false,
+      isRecurring: false,
+      periodicity: null,
+      paymentDay: null,
+      paymentMonth: null,
+      budget: null,
+      isAutoPaid: false,
+      isMultiPayment: false,
     });
   });
 
@@ -203,29 +201,29 @@ describe('conceptFields', () => {
       [],
     );
 
-    expect(fields.pago_automatico).toBe(true);
-    expect(fields.varios_pagos).toBe(false);
+    expect(fields.isAutoPaid).toBe(true);
+    expect(fields.isMultiPayment).toBe(false);
   });
 
   it('sends several payments when automatic payment is off', () => {
-    expect(conceptFields('A', { ...RECURRENCE, variosPagos: true }, []).varios_pagos).toBe(true);
+    expect(conceptFields('A', { ...RECURRENCE, variosPagos: true }, []).isMultiPayment).toBe(true);
   });
 });
 
 describe('conceptChanges', () => {
   const fields = conceptFields('Arriendo', RECURRENCE, []);
-  const concept = node(100, 'Arriendo', { parent_id: 10 });
+  const concept = node(100, 'Arriendo', { parentId: 10 });
 
   it('includes the new category when it changed', () => {
-    expect(conceptChanges(fields, '11', concept)).toEqual({ ...fields, parent_id: 11 });
+    expect(conceptChanges(fields, '11', concept)).toEqual({ ...fields, parentId: 11 });
   });
 
   it('leaves the category out when it is the same one', () => {
-    expect(conceptChanges(fields, '10', concept)).not.toHaveProperty('parent_id');
+    expect(conceptChanges(fields, '10', concept)).not.toHaveProperty('parentId');
   });
 
   it('leaves the category out when none is chosen', () => {
-    expect(conceptChanges(fields, '', concept)).not.toHaveProperty('parent_id');
+    expect(conceptChanges(fields, '', concept)).not.toHaveProperty('parentId');
   });
 });
 
@@ -233,7 +231,7 @@ describe('newConcept', () => {
   const fields = conceptFields('Arriendo', RECURRENCE, []);
 
   it('creates an expense hanging from the given category', () => {
-    expect(newConcept(fields, 10)).toEqual({ ...fields, kind: 'expense', parent_id: 10 });
+    expect(newConcept(fields, 10)).toEqual({ ...fields, kind: 'expense', parentId: 10 });
   });
 
   it('creates it without a parent when no category opened the sheet', () => {

@@ -7,7 +7,7 @@ const CATEGORY = { esCentro: false, nombre: ' Transporte ', estatico: true, icon
 
 describe('categoryChanges', () => {
   it('saves the name and the static flag of a cost center, not its icon', () => {
-    expect(categoryChanges(CENTER)).toEqual({ name: 'Negocio', estatico: true });
+    expect(categoryChanges(CENTER)).toEqual({ name: 'Negocio', isStatic: true });
   });
 
   it('saves the name and the icon of a category, not the static flag', () => {
@@ -24,14 +24,14 @@ describe('categoryChanges', () => {
 
 describe('newCategory', () => {
   it('creates a cost center with its static flag and no parent', () => {
-    expect(newCategory(CENTER, 7)).toEqual({ name: 'Negocio', kind: 'expense', estatico: true });
+    expect(newCategory(CENTER, 7)).toEqual({ name: 'Negocio', kind: 'expense', isStatic: true });
   });
 
   it('creates a category under its parent with its icon', () => {
     expect(newCategory(CATEGORY, 7)).toEqual({
       name: 'Transporte',
       kind: 'expense',
-      parent_id: 7,
+      parentId: 7,
       icon: 'car',
     });
   });
